@@ -188,10 +188,13 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             echo
 
             # Determine which prompt to use based on project state
-            if ! determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR"; then
+            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
+            if [[ $? -ne 0 ]]; then
                 log_error "Failed to determine prompt"
                 exit $EXIT_GENERAL_ERROR
             fi
+            PROMPT_PATH="${PROMPT_INFO%|*}"
+            PROMPT_TYPE="${PROMPT_INFO#*|}"
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
             if [[ "$PROMPT_TYPE" != "coding" ]]; then
@@ -251,10 +254,13 @@ else
             echo
 
             # Determine which prompt to use based on project state
-            if ! determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR"; then
+            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
+            if [[ $? -ne 0 ]]; then
                 log_error "Failed to determine prompt"
                 exit $EXIT_GENERAL_ERROR
             fi
+            PROMPT_PATH="${PROMPT_INFO%|*}"
+            PROMPT_TYPE="${PROMPT_INFO#*|}"
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
             if [[ "$PROMPT_TYPE" != "coding" ]]; then

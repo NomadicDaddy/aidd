@@ -102,20 +102,3 @@ get_cli_version() {
     esac
 }
 
-# Simple CLI execution without monitoring
-# Usage: cli_simple <project_dir> <prompt_path> [model_args...]
-# Returns: Exit code from CLI
-cli_simple() {
-    case "$CLI_TYPE" in
-        opencode)
-            opencode_simple "$@"
-            ;;
-        kilocode)
-            kilocode_simple "$@"
-            ;;
-        *)
-            echo "Error: CLI not initialized. Call init_cli() first." >&2
-            return "$EXIT_CLI_ERROR"
-            ;;
-    esac
-}

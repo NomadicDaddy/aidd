@@ -131,22 +131,3 @@ get_kilocode_version() {
     fi
 }
 
-# Simple KiloCode execution without monitoring
-# Usage: kilocode_simple <project_dir> <prompt_path> [model_args...]
-# Returns: Exit code from KiloCode
-kilocode_simple() {
-    local project_dir="$1"
-    local prompt_path="$2"
-    shift 2
-
-    local -a model_args=("$@")
-
-    log_debug "Simple KiloCode execution: $prompt_path"
-
-    (cd "$project_dir" && cat "$prompt_path" | \
-     kilocode --mode "$KILOCODE_MODE" "$KILOCODE_AUTO_FLAG" \
-               --timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" "$KILOCODE_NOSPLASH_FLAG" \
-               "${model_args[@]}")
-
-    return $?
-}

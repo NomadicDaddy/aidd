@@ -93,27 +93,6 @@ log_info() { log $LOG_INFO "$@"; }
 log_warn() { log $LOG_WARN "$@"; }
 log_error() { log $LOG_ERROR "$@"; }
 
-# Print a section header
-print_header() {
-    local title="$1"
-    local width=60
-    local padding=$(( (width - ${#title} - 2) / 2 ))
-
-    echo ""
-    printf '=%.0s' $(seq 1 $width)
-    echo ""
-    printf ' %.0s' $(seq 1 $padding)
-    if supports_color; then
-        echo -e "${COLOR_BLUE}${title}${COLOR_RESET}"
-    else
-        echo "$title"
-    fi
-    printf ' %.0s' $(seq 1 $padding)
-    echo ""
-    printf '=%.0s' $(seq 1 $width)
-    echo ""
-}
-
 # Print a section header using log system
 log_header() {
     local title="$1"
@@ -135,22 +114,6 @@ log_header() {
     echo ""
 }
 
-# Print a progress indicator
-print_progress() {
-    local current="$1"
-    local total="$2"
-    local prefix="${3:-Progress}"
-    local width=40
-    local percent=$((current * 100 / total))
-    local filled=$((width * current / total))
-    local empty=$((width - filled))
-
-    printf "\r${prefix}: ["
-    printf '#%.0s' $(seq 1 $filled)
-    printf '.%.0s' $(seq 1 $empty)
-    printf "] %d%%" "$percent"
-}
-
 # -----------------------------------------------------------------------------
 # File Operations
 # -----------------------------------------------------------------------------
@@ -161,15 +124,6 @@ ensure_dir() {
     if [[ ! -d "$dir" ]]; then
         mkdir -p "$dir"
         log_debug "Created directory: $dir"
-    fi
-}
-
-# Remove directory if it exists
-remove_dir() {
-    local dir="$1"
-    if [[ -d "$dir" ]]; then
-        rm -rf "$dir"
-        log_debug "Removed directory: $dir"
     fi
 }
 
@@ -187,152 +141,15 @@ abs_path() {
     fi
 }
 
-# Check if file is readable
-is_readable() {
-    local file="$1"
-    [[ -f "$file" && -r "$file" ]]
-}
-
-# Check if file is writable
-is_writable() {
-    local file="$1"
-    [[ -f "$file" && -w "$file" ]]
-}
-
 # Check if command exists
 command_exists() {
     local cmd="$1"
     command -v "$cmd" >/dev/null 2>&1
 }
 
-# Get file size in bytes
-file_size() {
-    local file="$1"
-    if [[ -f "$file" ]]; then
-        stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo 0
-    else
-        echo 0
-    fi
-}
-
-# Get file modification time (Unix timestamp)
-file_mtime() {
-    local file="$1"
-    if [[ -f "$file" ]]; then
-        stat -c%Y "$file" 2>/dev/null || stat -f%m "$file" 2>/dev/null || echo 0
-    else
-        echo 0
-    fi
-}
-
 # -----------------------------------------------------------------------------
-# Command Helpers
+# Cleanup Handler
 # -----------------------------------------------------------------------------
-
-# Execute command with timeout
-exec_with_timeout() {
-    local timeout="$1"
-    shift
-    local cmd="$@"
-
-    if command_exists timeout; then
-        timeout "$timeout" bash -c "$cmd"
-    else
-        # Fallback without timeout
-        eval "$cmd"
-    fi
-}
-
-# Retry a command multiple times
-retry_command() {
-    local max_attempts="$1"
-    local delay="$2"
-    shift 2
-    local cmd="$@"
-    local attempt=1
-
-    while [[ $attempt -le $max_attempts ]]; do
-        log_debug "Attempt $attempt of $max_attempts: $cmd"
-        if eval "$cmd"; then
-            return 0
-        fi
-
-        if [[ $attempt -lt $max_attempts ]]; then
-            log_warn "Command failed, retrying in $delay seconds..."
-            sleep "$delay"
-        fi
-
-        attempt=$((attempt + 1))
-    done
-
-    log_error "Command failed after $max_attempts attempts: $cmd"
-    return 1
-}
-
-# -----------------------------------------------------------------------------
-# String Utilities
-# -----------------------------------------------------------------------------
-
-# Sanitize string for safe filename
-sanitize_filename() {
-    local string="$1"
-    echo "$string" | sed 's/[^a-zA-Z0-9._-]/_/g' | tr '[:upper:]' '[:lower:]'
-}
-
-# Truncate string with ellipsis
-truncate_string() {
-    local string="$1"
-    local max_length="$2"
-    local ellipsis="${3:-...}"
-
-    if [[ ${#string} -le $max_length ]]; then
-        echo "$string"
-    else
-        echo "${string:0:$((max_length - ${#ellipsis}))}${ellipsis}"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# Duration Formatting
-# -----------------------------------------------------------------------------
-
-# Format duration in seconds to human readable
-format_duration() {
-    local seconds="$1"
-
-    if [[ $seconds -lt 60 ]]; then
-        echo "${seconds}s"
-    elif [[ $seconds -lt 3600 ]]; then
-        local minutes=$((seconds / 60))
-        local remaining=$((seconds % 60))
-        if [[ $remaining -eq 0 ]]; then
-            echo "${minutes}m"
-        else
-            echo "${minutes}m ${remaining}s"
-        fi
-    else
-        local hours=$((seconds / 3600))
-        local minutes=$(( (seconds % 3600) / 60 ))
-        local remaining=$((seconds % 60))
-        if [[ $minutes -eq 0 && $remaining -eq 0 ]]; then
-            echo "${hours}h"
-        elif [[ $remaining -eq 0 ]]; then
-            echo "${hours}h ${minutes}m"
-        else
-            echo "${hours}h ${minutes}m ${remaining}s"
-        fi
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# Temporary Directory Management
-# -----------------------------------------------------------------------------
-
-# Create temporary directory with prefix
-temp_dir() {
-    local prefix="${1:-aidd}"
-    mktemp -d "/tmp/${prefix}.XXXXXX"
-}
 
 # Cleanup on exit
 cleanup_on_exit() {
@@ -347,6 +164,3 @@ cleanup_on_exit() {
     fi
     exit $exit_code
 }
-
-# Register cleanup handler
-trap cleanup_on_exit EXIT INT TERM

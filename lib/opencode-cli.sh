@@ -121,14 +121,3 @@ get_opencode_version() {
     fi
 }
 
-# Simple OpenCode execution without monitoring
-# Usage: opencode_simple <project_dir> <prompt_content>
-# Returns: Exit code from OpenCode
-opencode_simple() {
-    local project_dir="$1"
-    local prompt_content="$2"
-
-    log_debug "Simple OpenCode execution in: $project_dir"
-
-    (cd "$project_dir" && echo "$prompt_content" | opencode run) 2>&1
-}

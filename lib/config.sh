@@ -1,0 +1,171 @@
+#!/bin/bash
+# =============================================================================
+# lib/config.sh - Configuration Constants and Defaults for AIDD
+# =============================================================================
+# Exit codes, default values, and pattern constants for error detection
+# Supports both OpenCode and KiloCode CLIs
+
+# -----------------------------------------------------------------------------
+# Exit Codes (Standard)
+# -----------------------------------------------------------------------------
+: "${EXIT_SUCCESS:=0}"              # Successful execution
+: "${EXIT_GENERAL_ERROR:=1}"        # General/unspecified error
+: "${EXIT_INVALID_ARGS:=2}"         # Invalid command-line arguments
+: "${EXIT_NOT_FOUND:=3}"            # File or resource not found
+: "${EXIT_PERMISSION_DENIED:=4}"    # Permission denied
+: "${EXIT_TIMEOUT:=5}"              # Timeout occurred
+: "${EXIT_ABORTED:=6}"              # Operation aborted by user
+: "${EXIT_VALIDATION_ERROR:=7}"     # Validation failed
+: "${EXIT_CLI_ERROR:=8}"            # CLI error
+
+readonly EXIT_SUCCESS
+readonly EXIT_GENERAL_ERROR
+readonly EXIT_INVALID_ARGS
+readonly EXIT_NOT_FOUND
+readonly EXIT_PERMISSION_DENIED
+readonly EXIT_TIMEOUT
+readonly EXIT_ABORTED
+readonly EXIT_VALIDATION_ERROR
+readonly EXIT_CLI_ERROR
+
+# -----------------------------------------------------------------------------
+# Exit Codes (CLI-Specific)
+# -----------------------------------------------------------------------------
+: "${EXIT_NO_ASSISTANT:=70}"        # Model returned no assistant messages
+: "${EXIT_IDLE_TIMEOUT:=71}"        # Idle timeout
+: "${EXIT_PROVIDER_ERROR:=72}"      # Provider error
+: "${EXIT_SIGNAL_TERMINATED:=124}"  # Terminated by signal (SIGINT/SIGTERM)
+
+readonly EXIT_NO_ASSISTANT
+readonly EXIT_IDLE_TIMEOUT
+readonly EXIT_PROVIDER_ERROR
+readonly EXIT_SIGNAL_TERMINATED
+
+# -----------------------------------------------------------------------------
+# Default Values
+# -----------------------------------------------------------------------------
+: "${DEFAULT_CLI:="opencode"}"           # Default CLI to use
+: "${DEFAULT_MAX_ITERATIONS:=10}"        # Default max iterations (0 = unlimited)
+: "${DEFAULT_TIMEOUT:=600}"              # Default timeout in seconds (10 minutes)
+: "${DEFAULT_IDLE_TIMEOUT:=180}"         # Default idle timeout in seconds (3 minutes)
+: "${DEFAULT_NO_CLEAN:=false}"           # Default: clean up artifacts
+: "${DEFAULT_QUIT_ON_ABORT:=0}"          # Default: continue on abort indefinitely
+
+readonly DEFAULT_CLI
+readonly DEFAULT_MAX_ITERATIONS
+readonly DEFAULT_TIMEOUT
+readonly DEFAULT_IDLE_TIMEOUT
+readonly DEFAULT_NO_CLEAN
+readonly DEFAULT_QUIT_ON_ABORT
+
+# -----------------------------------------------------------------------------
+# Directory and File Names
+# -----------------------------------------------------------------------------
+: "${DEFAULT_METADATA_DIR:=".aidd"}"                    # Metadata directory name (hidden)
+: "${DEFAULT_PROMPTS_DIR:="prompts"}"                   # Prompts directory name
+: "${DEFAULT_ITERATIONS_DIR:="iterations"}"             # Iterations directory name
+: "${DEFAULT_SCAFFOLDING_DIR:="scaffolding"}"           # Scaffolding directory name
+: "${DEFAULT_ARTIFACTS_DIR:="artifacts"}"               # Artifacts directory name
+: "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
+: "${DEFAULT_FEATURE_LIST_FILE:="feature_list.json"}"   # Feature list file name
+: "${DEFAULT_SPEC_FILE:="spec.txt"}"                    # Spec file name
+: "${DEFAULT_TODO_FILE:="todo.md"}"                     # Todo file name
+: "${DEFAULT_PROJECT_STRUCTURE_FILE:="project_structure.md"}"  # Project structure file name
+: "${DEFAULT_PIPELINE_FILE:="pipeline.json"}"           # Pipeline file name
+
+readonly DEFAULT_METADATA_DIR
+readonly DEFAULT_PROMPTS_DIR
+readonly DEFAULT_ITERATIONS_DIR
+readonly DEFAULT_SCAFFOLDING_DIR
+readonly DEFAULT_ARTIFACTS_DIR
+readonly DEFAULT_STATE_FILE
+readonly DEFAULT_FEATURE_LIST_FILE
+readonly DEFAULT_SPEC_FILE
+readonly DEFAULT_TODO_FILE
+readonly DEFAULT_PROJECT_STRUCTURE_FILE
+readonly DEFAULT_PIPELINE_FILE
+
+# -----------------------------------------------------------------------------
+# Legacy Metadata Directory Names (for migration)
+# -----------------------------------------------------------------------------
+: "${LEGACY_METADATA_DIR_OPENCODE:=".autoo"}"      # Legacy OpenCode metadata directory
+: "${LEGACY_METADATA_DIR_KILOCODE:=".autok"}"      # Legacy KiloCode metadata directory
+: "${LEGACY_METADATA_DIR_AUTOMAKER:=".automaker"}" # Legacy Automaker metadata directory
+
+readonly LEGACY_METADATA_DIR_OPENCODE
+readonly LEGACY_METADATA_DIR_KILOCODE
+readonly LEGACY_METADATA_DIR_AUTOMAKER
+
+# -----------------------------------------------------------------------------
+# Pattern Constants for Error Detection (CLI-Agnostic)
+# -----------------------------------------------------------------------------
+: "${PATTERN_NO_ASSISTANT:="The model returned no assistant messages"}"
+: "${PATTERN_PROVIDER_ERROR:="Provider returned error"}"
+
+readonly PATTERN_NO_ASSISTANT
+readonly PATTERN_PROVIDER_ERROR
+
+# General error patterns
+: "${PATTERN_GENERAL_ERROR:="ERROR|error:|Error"}"
+: "${PATTERN_WARNING:="WARNING|Warning|warning:"}"
+: "${PATTERN_PERMISSION_DENIED:="permission denied|access denied|not authorized"}"
+: "${PATTERN_NOT_FOUND:="not found|does not exist|no such file"}"
+
+readonly PATTERN_GENERAL_ERROR
+readonly PATTERN_WARNING
+readonly PATTERN_PERMISSION_DENIED
+readonly PATTERN_NOT_FOUND
+
+# Session/connection patterns
+: "${PATTERN_SESSION_ENDED:="session ended|disconnected|connection lost"}"
+: "${PATTERN_AUTH_ERROR:="authentication|auth:|unauthorized|401|403"}"
+
+readonly PATTERN_SESSION_ENDED
+readonly PATTERN_AUTH_ERROR
+
+# File operation patterns
+: "${PATTERN_FILE_ERROR:="cannot open|cannot write|cannot read|read-only|write-protected"}"
+
+readonly PATTERN_FILE_ERROR
+
+# Timeout patterns
+: "${PATTERN_TIMEOUT_ERROR:="timed out|timeout|deadline exceeded|took too long"}"
+
+readonly PATTERN_TIMEOUT_ERROR
+
+# -----------------------------------------------------------------------------
+# Template Markers
+# -----------------------------------------------------------------------------
+: "${TEMPLATE_DATE_MARKER:="{yyyy-mm-dd}"}"
+: "${TEMPLATE_FEATURE_MARKER:="{Short name of the feature}"}"
+
+readonly TEMPLATE_DATE_MARKER
+readonly TEMPLATE_FEATURE_MARKER
+
+# -----------------------------------------------------------------------------
+# Iteration State Constants
+# -----------------------------------------------------------------------------
+: "${STATE_IDLE:="idle"}"
+: "${STATE_RUNNING:="running"}"
+: "${STATE_PAUSED:="paused"}"
+: "${STATE_COMPLETED:="completed"}"
+: "${STATE_FAILED:="failed"}"
+: "${STATE_ABORTED:="aborted"}"
+
+readonly STATE_IDLE
+readonly STATE_RUNNING
+readonly STATE_PAUSED
+readonly STATE_COMPLETED
+readonly STATE_FAILED
+readonly STATE_ABORTED
+
+# -----------------------------------------------------------------------------
+# Phase Constants
+# -----------------------------------------------------------------------------
+: "${PHASE_ONBOARDING:="onboarding"}"
+: "${PHASE_INITIALIZER:="initializer"}"
+: "${PHASE_CODING:="coding"}"
+
+readonly PHASE_ONBOARDING
+readonly PHASE_INITIALIZER
+readonly PHASE_CODING

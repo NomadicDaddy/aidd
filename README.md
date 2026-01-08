@@ -1,0 +1,268 @@
+# AIDD - AI Development Driver
+
+A unified shell script that orchestrates autonomous development sessions using either **OpenCode** or **KiloCode** AI CLIs. AIDD provides a consistent interface for AI-driven development regardless of which CLI you prefer.
+
+## Features
+
+- **Dual CLI Support**: Seamlessly switch between OpenCode and KiloCode
+- **Unified Interface**: Identical workflow and features across both CLIs
+- **Project Management**: Automatic project initialization, scaffolding, and metadata tracking
+- **Iteration Management**: Built-in retry logic, failure handling, and progress tracking
+- **Feature Tracking**: JSON-based feature list with status tracking
+- **Legacy Migration**: Automatic migration from `.autoo`, `.autok`, and `.automaker` directories
+
+## Supported CLIs
+
+### OpenCode
+
+- Command: `opencode run`
+- Default CLI if `--cli` is not specified
+- Legacy directory: `.autoo`
+
+### KiloCode
+
+- Command: `kilocode --mode code --auto`
+- Specify with `--cli kilocode`
+- Legacy directory: `.autok`
+
+## Installation
+
+1. Ensure you have either OpenCode or KiloCode installed
+2. Clone or download AIDD to your local machine
+3. Make the script executable:
+    ```bash
+    chmod +x aidd.sh
+    ```
+
+## Usage
+
+### Basic Syntax
+
+```bash
+./aidd.sh [--cli {opencode|kilocode}] --project-dir <dir> [OPTIONS]
+```
+
+### Required Arguments
+
+- `--project-dir DIR`: Target project directory
+
+### Optional Arguments
+
+- `--cli CLI`: CLI to use (`opencode` or `kilocode`, default: `opencode`)
+- `--spec FILE`: Specification file (required for new projects)
+- `--max-iterations N`: Number of iterations (unlimited if not specified)
+- `--timeout N`: Timeout in seconds (default: 600)
+- `--idle-timeout N`: Idle timeout in seconds (default: 180)
+- `--model MODEL`: Model to use (optional)
+- `--init-model MODEL`: Model for initializer/onboarding prompts
+- `--code-model MODEL`: Model for coding prompts
+- `--no-clean`: Skip log cleaning on exit
+- `--quit-on-abort N`: Quit after N consecutive failures (default: 0=continue indefinitely)
+- `--continue-on-timeout`: Continue to next iteration on timeout
+- `--feature-list`: Display project feature list status and exit
+- `--todo`: Use TODO mode (work on todo items instead of new features)
+- `--help`: Show help message
+
+## Examples
+
+### Using OpenCode (Default)
+
+```bash
+# New project with OpenCode
+./aidd.sh --project-dir ./myproject --spec ./specs/myapp.md
+
+# Existing project with specific model
+./aidd.sh --project-dir ./myproject --model gpt-4 --max-iterations 5
+
+# With different models for init and coding
+./aidd.sh --project-dir ./myproject --init-model claude --code-model gpt-4
+```
+
+### Using KiloCode
+
+```bash
+# New project with KiloCode
+./aidd.sh --cli kilocode --project-dir ./myproject --spec ./specs/myapp.md
+
+# Existing project
+./aidd.sh --cli kilocode --project-dir ./myproject --max-iterations 10
+```
+
+### Other Operations
+
+```bash
+# Display feature list
+./aidd.sh --project-dir ./myproject --feature-list
+
+# TODO mode
+./aidd.sh --project-dir ./myproject --todo
+```
+
+## Workflows
+
+### New Project Workflow
+
+For empty or non-existent directories:
+
+1. Creates project directory if it doesn't exist
+2. Copies scaffolding files from `scaffolding/` directory
+3. Copies artifacts into `project-dir/.aidd/`
+4. Copies spec file to `.aidd/spec.txt` (if `--spec` is provided)
+5. Uses `initializer` prompt to set up initial project structure
+6. Creates `feature_list.json` based on the provided spec
+
+### Existing Codebase Workflow
+
+For directories containing code but no `.aidd/` files:
+
+1. Skips copying scaffolding files
+2. Does NOT copy spec file
+3. Uses `onboarding` prompt to:
+    - Analyze existing codebase
+    - Generate `spec.txt` based on discovered functionality
+    - Create `feature_list.json` with existing features marked as complete
+    - Document project structure and technical debt
+
+### Subsequent Iterations
+
+Once `.aidd/spec.txt` and `.aidd/feature_list.json` exist:
+
+- Uses `coding` prompt for continued development
+- Implements remaining features from the feature list
+
+## Project Structure
+
+```
+aidd2/
+├── aidd.sh                 # Main script
+├── lib/
+│   ├── config.sh          # Configuration constants
+│   ├── utils.sh           # Utility functions
+│   ├── log-cleaner.sh     # Native bash log cleaning
+│   ├── args.sh            # Argument parsing
+│   ├── cli-factory.sh     # CLI abstraction layer
+│   ├── opencode-cli.sh    # OpenCode CLI implementation
+│   ├── kilocode-cli.sh    # KiloCode CLI implementation
+│   ├── project.sh         # Project management
+│   └── iteration.sh       # Iteration handling
+├── prompts/
+│   ├── onboarding.md      # Onboarding prompt (existing codebases)
+│   ├── initializer.md     # Initializer prompt (new projects)
+│   ├── coding.md          # Coding prompt (development iterations)
+│   └── todo.md            # TODO mode prompt
+├── scaffolding/           # Template files for new projects
+├── artifacts/             # Project metadata templates
+└── specs/                 # Specification examples
+
+Project Metadata (.aidd/):
+.aidd/
+├── spec.txt               # Project specification
+├── feature_list.json      # Feature tracking
+├── todo.md                # TODO items
+├── project_structure.md   # Architecture documentation
+└── iterations/            # Iteration logs
+    ├── 001.log
+    ├── 002.log
+    └── ...
+```
+
+## How It Works
+
+1. **CLI Initialization**: Determines which CLI to use (OpenCode or KiloCode)
+2. **Project Detection**: Detects if the target directory is an existing codebase
+3. **Metadata Setup**: Creates or migrates `.aidd` directory
+4. **Iteration Loop**: Runs in a loop based on `--max-iterations`:
+    - Determines appropriate prompt (onboarding, initializer, or coding)
+    - Executes prompt through selected CLI
+    - Captures transcript to numbered log file
+    - Handles failures with retry logic
+5. **Log Cleanup**: Optionally cleans up iteration logs on exit
+
+## Iteration Transcripts
+
+Each iteration writes a transcript file under:
+
+```
+project-dir/.aidd/iterations/001.log
+project-dir/.aidd/iterations/002.log
+...
+```
+
+The transcript captures the console output for that iteration. The log index is chosen as the next number after the highest existing numeric `*.log` in that directory, so logs are never overwritten across re-runs.
+
+## CLI Abstraction
+
+AIDD uses a factory pattern to abstract CLI differences:
+
+- **cli-factory.sh**: Provides unified interface (`run_cli_prompt`, `check_cli_available`, etc.)
+- **opencode-cli.sh**: OpenCode-specific implementation
+- **kilocode-cli.sh**: KiloCode-specific implementation
+
+This allows the same codebase to support both CLIs with minimal differences.
+
+## Legacy Migration
+
+AIDD automatically migrates metadata from legacy directories:
+
+- `.autoo` (OpenCode legacy) → `.aidd`
+- `.autok` (KiloCode legacy) → `.aidd`
+- `.automaker` (Automaker legacy) → `.aidd` (read-only fallback)
+
+## Error Handling
+
+AIDD includes comprehensive error handling:
+
+- **Exit Codes**: 0 (success), 1 (general error), 2 (invalid args), 70 (no assistant), 71 (idle timeout), 72 (provider error), 124 (signal terminated)
+- **Retry Logic**: Configurable with `--quit-on-abort`
+- **Timeout Detection**: Monitors both overall timeout and idle timeout
+- **Provider Error Detection**: Detects and handles API errors gracefully
+
+## Requirements
+
+- Bash 4.0+
+- Either OpenCode or KiloCode CLI installed and in PATH
+- jq (optional, for `--feature-list` display)
+
+## Version History
+
+- **v2.0.0** (2026-01-08): Unified AIDD supporting both OpenCode and KiloCode
+- **v1.1.0**: aidd-o (OpenCode) and aidd-k (KiloCode) as separate projects
+- **v1.0.0**: Initial aidd-o release
+
+## Architecture
+
+AIDD follows a modular architecture with clear separation of concerns:
+
+1. **Configuration Layer** (`config.sh`): Defines all constants and defaults
+2. **Utility Layer** (`utils.sh`): Provides logging, file operations, and helpers
+3. **CLI Abstraction Layer** (`cli-factory.sh`, `*-cli.sh`): Abstracts CLI differences
+4. **Business Logic Layer** (`args.sh`, `project.sh`, `iteration.sh`): Core functionality
+5. **Main Script** (`aidd.sh`): Orchestrates everything
+
+## Contributing
+
+AIDD was created by merging and homogenizing aidd-o and aidd-k. The original projects remain at:
+
+- `d:/applications/aidd-o` (OpenCode)
+- `d:/applications/aidd-k` (KiloCode)
+
+## License
+
+Same license as the original aidd-o and aidd-k projects.
+
+## Support
+
+For issues or questions:
+
+1. Check the `--help` output
+2. Review iteration logs in `.aidd/iterations/`
+3. Check CLI-specific documentation for OpenCode or KiloCode
+4. Refer to the original aidd-o or aidd-k projects for historical context
+
+## Credits
+
+Inspired by:
+
+- Anthropic's Claude Quickstarts
+- Autonomous Coding Agent Demo
+- NomadicDaddy's improved autonomous agent demo

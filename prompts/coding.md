@@ -219,6 +219,55 @@ If any tooling command fails (linting, type checking, formatting, etc.), you MUS
 # Commit: git add .eslintrc.js && git commit -m "Add ESLint configuration"
 ```
 
+**CRITICAL: ERROR RECOVERY STRATEGY**
+
+When code quality checks fail (linting, type checking, build errors), follow this recovery process:
+
+1. **First Failure - Fix Immediately**
+    - Read the error message carefully
+    - Identify the root cause (syntax error, missing import, type mismatch, etc.)
+    - Fix the specific error
+    - Re-run the failing tooling command
+    - If fixed: Continue with implementation
+    - If still failing: Go to step 2
+
+2. **Second Failure - Change Approach**
+    - If the same error persists after one fix attempt:
+        - STOP editing the same file repeatedly
+        - Take a different approach entirely
+        - Consider reverting problematic changes
+        - Start from a clean state
+    - Examples of different approaches:
+        - Instead of complex one-line regex, write multi-line readable code
+        - Instead of inline TypeScript types, create explicit interfaces
+        - Instead of refactoring entire module, add new function
+    - Re-run tooling to verify the new approach works
+
+3. **Third Failure - Abort Feature**
+    - If THREE attempts fail to resolve the same error:
+        - Mark current feature as "status": "open" (not "in_progress")
+        - Document the blocking issue in `/.aidd/progress.md`
+        - Commit any partial progress with clear description
+        - Skip to next feature in STEP 6
+    - This prevents getting stuck in infinite error-fixing loops
+    - The next iteration can try with fresh context
+
+4. **Never Ignore Errors**
+    - DO NOT mark a feature as "passes": true if tooling fails
+    - DO NOT proceed to other features with broken build
+    - DO NOT skip quality checks because they're "too strict"
+    - Production code must pass all quality gates
+
+**Common Error Patterns and Solutions:**
+
+| Error Type                             | Common Cause                   | Solution                               |
+| -------------------------------------- | ------------------------------ | -------------------------------------- |
+| TypeScript syntax errors (100+ errors) | Malformed code, bad file write | Revert file, rewrite completely        |
+| Unterminated regex literal             | Bad escape sequences           | Write regex in separate variable       |
+| Missing imports/exports                | Forgot to add dependencies     | Add import or check package.json       |
+| Type mismatches                        | Wrong type annotation          | Remove annotation or add explicit cast |
+| ESLint errors                          | Code style violations          | Follow existing patterns in codebase   |
+
 **ADDITIONAL SPEC COMPLIANCE VERIFICATION:**
 
 Before testing features, verify the implementation still aligns with the spec:
@@ -280,6 +329,52 @@ For example, if this were a chat app, you should perform a test that logs into t
 # Count unimplemented features
 grep -c '"passes": false' .aidd/feature_list.json
 # If result is 0 and todo.md is empty/missing, exit
+```
+
+### STEP 5.75: TIME AWARENESS CHECK
+
+**CRITICAL: Before selecting a feature, assess remaining time budget and feature complexity.**
+
+1. **Estimate Feature Complexity:**
+   For each feature with `"passes": false`, assess complexity:
+    - **Simple**: Small UI change, one file, 5-15 minutes
+    - **Medium**: Multiple files, moderate logic, 20-45 minutes
+    - **Complex**: New architecture, multiple systems, 45-90+ minutes
+    - **Very Complex**: Large refactoring, new systems, 90-180+ minutes
+
+2. **Check Time Remaining:**
+    - Current iteration started at: `$(date +%s)`
+    - Time budget: ${TIMEOUT:-600} seconds (10 minutes default)
+    - Time elapsed: Calculate current timestamp minus start time
+    - Time remaining: Time budget minus time elapsed
+    - Safe threshold: Use only 80% of remaining time for feature work (20% buffer)
+
+3. **Feature Selection Rules:**
+    - If time remaining < 180 seconds (3 minutes):
+        - Skip complex features
+        - Skip medium features
+        - Only attempt simple features
+    - If time remaining < 360 seconds (6 minutes):
+        - Skip very complex features
+        - Prefer simple/medium features
+    - Always prioritize features already marked "status": "in_progress"
+
+4. **Avoid Timeout Traps:**
+    - Do NOT start very complex features late in the iteration
+    - Do NOT attempt multiple features in one iteration
+    - If feature looks too large for remaining time, mark it and defer to next iteration
+    - Quality over quantity: One complete feature is better than three half-done ones
+
+**Example Time-Aware Selection:**
+
+```bash
+# Time remaining: 240 seconds (4 minutes)
+# Available features:
+# 1. Simple UI fix (15 min) - ✅ Good fit
+# 2. Medium feature (30 min) - ⚠️ Risky, may timeout
+# 3. Complex refactoring (90 min) - ❌ Too large, skip
+
+# Decision: Choose simple UI fix, defer complex feature
 ```
 
 ### STEP 6: CHOOSE ONE FEATURE TO IMPLEMENT
@@ -453,6 +548,8 @@ If `git` reports “not a git repository”, do not force commits. Document the 
 
 ### STEP 11: UPDATE PROGRESS NOTES
 
+**CRITICAL: ONLY write to `/.aidd/progress.md`. NEVER write directly to iteration log files.**
+
 Update `/.aidd/progress.md` with:
 
 - Session summary header with date, start time, end time, and elapsed time:
@@ -468,6 +565,12 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 - Any issues discovered or fixed
 - What should be worked on next
 - Current completion status (e.g., "45/200 tests passing")
+
+**IMPORTANT:**
+
+- Do NOT write to `/.aidd/iterations/` directory - that's for the main script only
+- Do NOT write "Session 00X" documents as iteration logs
+- Only write session summaries to `/.aidd/progress.md`
 
 ### STEP 12: END SESSION CLEANLY
 
@@ -520,6 +623,15 @@ Test like a human user with mouse and keyboard. Don't take shortcuts that bypass
 - **PREFER** `execute_command` with shell redirection for schema files and large edits
 - **IMMEDIATELY** retry with a different approach if `mcp_filesystem_edit_file` fails
 - **DOCUMENT** any file corruption incidents in `/.aidd/progress.md`
+
+**ITERATION MANAGEMENT:**
+
+- **TIME AWARENESS**: Always check remaining time before starting complex features
+- **COMPLEXITY ESTIMATION**: Assess feature complexity before implementation
+- **ABORT CRITERIA**: After 3 failed attempts on same error, skip to next feature
+- **QUALITY OVER QUANTITY**: One complete feature > multiple half-done features
+- **NO RUSHING**: Take time to write clean, testable code
+- **AVOID TIMEOUTS**: Don't start large features late in iteration
 
 You have unlimited time. Take as long as needed to get it right. The most important thing is that you
 leave the code base in a clean state before terminating the session (Step 10).

@@ -1,0 +1,5 @@
+node_modules
+scaffolding
+bun.lock
+bun.lockb
+package-lock.json

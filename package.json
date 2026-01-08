@@ -1,0 +1,18 @@
+{
+	"name": "aidd",
+	"version": "2.0.0",
+	"description": "AI Development Driver",
+	"type": "module",
+	"main": "./aidd.sh",
+	"scripts": {
+		"start": "bun ./aidd.sh",
+		"format": "prettier --write ."
+	},
+	"devDependencies": {
+		"@trivago/prettier-plugin-sort-imports": "^6.0.2",
+		"prettier": "^3.7.4",
+		"prettier-plugin-organize-attributes": "^1.0.0",
+		"prettier-plugin-sort-json": "^4.1.1",
+		"prettier-plugin-tailwindcss": "^0.7.2"
+	}
+}

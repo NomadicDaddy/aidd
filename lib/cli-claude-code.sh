@@ -14,11 +14,9 @@ fi
 # Claude Code CLI Configuration
 # -----------------------------------------------------------------------------
 : "${CLAUDE_CODE_CLI:="claude"}"
-: "${CLAUDE_CODE_PRINT_FLAG:="--print"}"
 : "${CLAUDE_CODE_NO_SESSION_PERSISTENCE:="--no-session-persistence"}"
 
 readonly CLAUDE_CODE_CLI
-readonly CLAUDE_CODE_PRINT_FLAG
 readonly CLAUDE_CODE_NO_SESSION_PERSISTENCE
 
 # -----------------------------------------------------------------------------
@@ -36,7 +34,7 @@ run_claude_code_prompt() {
     local -a model_args=("$@")
 
     # Build Claude Code command
-    local claude_cmd="$CLAUDE_CODE_CLI $CLAUDE_CODE_PRINT_FLAG $CLAUDE_CODE_NO_SESSION_PERSISTENCE"
+    local claude_cmd="$CLAUDE_CODE_CLI $CLAUDE_CODE_NO_SESSION_PERSISTENCE"
     if [[ ${#model_args[@]} -gt 0 ]]; then
         claude_cmd="$claude_cmd ${model_args[*]}"
     fi

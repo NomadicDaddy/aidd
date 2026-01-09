@@ -28,7 +28,7 @@ A unified shell script that orchestrates autonomous development sessions using *
 
 ### Claude Code
 
-- Command: `claude --print`
+- Command: `claude --no-session-persistence`
 - Specify with `--cli claude-code`
 - Uses your Claude Pro subscription
 - No legacy directory (new integration)

@@ -316,17 +316,17 @@ browser_action.launch http://localhost:{frontendPort}
 // Before
 // TODO: Add error handling for network failures
 async function fetchData() {
-  return await api.get('/data');
+	return await api.get('/data');
 }
 
 // After (TODO removed, feature implemented)
 async function fetchData() {
-  try {
-    return await api.get('/data');
-  } catch (error) {
-    console.error('Network error:', error);
-    throw new Error('Failed to fetch data');
-  }
+	try {
+		return await api.get('/data');
+	} catch (error) {
+		console.error('Network error:', error);
+		throw new Error('Failed to fetch data');
+	}
 }
 ```
 
@@ -343,6 +343,7 @@ async function fetchData() {
 - Group related items together if helpful
 
 ---
+
 ### STEP 6: COMMIT PROGRESS
 
 **Only execute if TODO items exist.**

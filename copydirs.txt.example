@@ -1,0 +1,21 @@
+# AIDD Shared Directory Synchronization
+#
+# This file lists directories to sync to all projects at the start of each iteration.
+# Rename this file to "copydirs.txt" and add absolute paths (one per line).
+#
+# Use cases:
+# - Sync IDE configuration (.vscode, .windsurf, .claude)
+# - Share linting rules across projects
+# - Distribute common scripts or templates
+# - Keep project guidelines up to date
+#
+# Format: One absolute path per line
+# Lines starting with # are comments and are ignored
+# Empty lines are ignored
+#
+# Examples (uncomment and modify for your environment):
+#
+# /d/applications/.claude
+# /d/applications/.windsurf
+# /home/user/.vscode
+# /Users/username/dev/shared-configs/.eslintrc.json

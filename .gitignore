@@ -1,2 +1,35 @@
-node_modules
+# Dependencies
+node_modules/
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+*.test.log
+
+# Local configuration
 scaffolding
+copydirs.txt
+
+# Temporary files
+*.tmp
+*.bak
+.tmp/
+
+# Do not ignore scaffolding - it's part of the distribution
+# scaffolding/

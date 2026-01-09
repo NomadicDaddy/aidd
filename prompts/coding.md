@@ -17,13 +17,22 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 2. If there is a **blocking ambiguity** or missing requirements, **stop** and record the question in `/.aidd/progress.md`.
 3. Do not run any blocking processes else you will get stuck.
 
-**CRITICAL: Never start blocking dev servers inline**
+**CRITICAL: Never start blocking dev servers inline - ALWAYS reuse existing servers**
 
-- Check if a dev server is already running before starting one (e.g., `lsof -ti:5173` or check if port responds)
-- If a dev server MUST be started, run it in the background with `&` and wait briefly for startup
-- NEVER run commands like `npm run dev`, `vite`, `next dev`, etc. directly - they block indefinitely
+- **FIRST: Check if a dev server is already running** before starting one:
+  - Check for running processes: `ps aux | grep -E "vite|next|react-scripts|webpack"` (Linux/Mac)
+  - Check specific port: `lsof -ti:5173` (Mac/Linux) or `netstat -ano | findstr :5173` (Windows)
+  - Try curl: `curl -s http://localhost:5173 >/dev/null && echo "Server running" || echo "Server not running"`
+- **REUSE existing servers whenever possible**:
+  - If dev server is already running on port 5173, use that port
+  - If dev server is running on a different port (5174, 5175, etc.), note and use that port
+  - Check recent log files (vite.log, electron.log) to find which port was last used
+  - **DO NOT** kill and restart dev servers unnecessarily - reuse what's running
+- **ONLY IF no server is running**: Start a new one in the background with `&` and wait briefly for startup
+- **NEVER** run commands like `npm run dev`, `vite`, `next dev`, etc. directly - they block indefinitely
 - If you need to verify the dev server is accessible, use a curl check or browser automation instead
-- Blocking processes will timeout after 5 minutes and cause the AI driver to abort
+- Blocking processes will timeout after 6 minutes and cause the AI driver to abort
+- **REMEMBER**: Starting new servers wastes time; reusing existing servers is faster and preferred
 
 ### STEP 0: INGEST ASSISTANT RULES
 

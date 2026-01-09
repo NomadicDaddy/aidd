@@ -28,10 +28,11 @@ A unified shell script that orchestrates autonomous development sessions using *
 
 ### Claude Code
 
-- Command: `claude --no-session-persistence`
+- Command: `claude --print --output-format stream-json --verbose --dangerously-skip-permissions --no-session-persistence`
 - Specify with `--cli claude-code`
 - Uses your Claude Pro subscription
 - No legacy directory (new integration)
+- **Note**: Uses stream-json format for tool usage support (experimental)
 
 ## Installation
 

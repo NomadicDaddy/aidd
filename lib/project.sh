@@ -127,3 +127,80 @@ copy_artifacts() {
 
     return 0
 }
+
+# Copy shared directories to project
+# Usage: copy_shared_directories <project_dir> <script_dir>
+# Returns: 0 on success
+# Reads copydirs.txt and copies listed directories to the target project
+copy_shared_directories() {
+    local project_dir="$1"
+    local script_dir="$2"
+    local copydirs_file="$script_dir/copydirs.txt"
+
+    # Check if copydirs.txt exists
+    if [[ ! -f "$copydirs_file" ]]; then
+        log_debug "No copydirs.txt found, skipping shared directory copy"
+        return 0
+    fi
+
+    log_debug "Copying shared directories from copydirs.txt..."
+    local copied_count=0
+    local skipped_count=0
+    local failed_count=0
+
+    # Read copydirs.txt line by line
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }" ]] && continue
+
+        # Trim whitespace
+        local source_dir="${line// /}"
+
+        # Check if source directory exists
+        if [[ ! -d "$source_dir" ]]; then
+            log_warn "Shared directory not found, skipping: $source_dir"
+            ((skipped_count++))
+            continue
+        fi
+
+        # Get directory basename
+        local dir_name=$(basename "$source_dir")
+        local target_path="$project_dir/$dir_name"
+
+        # Copy directory (rsync preferred for efficiency, fallback to cp)
+        if command -v rsync &> /dev/null; then
+            # Use rsync for efficient directory copying (only updates changed files)
+            if rsync -a --delete "$source_dir/" "$target_path/" 2>/dev/null; then
+                log_debug "Synchronized shared directory: $dir_name"
+                ((copied_count++))
+            else
+                log_warn "Failed to copy shared directory: $source_dir"
+                ((failed_count++))
+            fi
+        else
+            # Fallback to cp -r (remove and recopy)
+            if [[ -d "$target_path" ]]; then
+                rm -rf "$target_path"
+            fi
+            if cp -r "$source_dir" "$project_dir/" 2>/dev/null; then
+                log_debug "Copied shared directory: $dir_name"
+                ((copied_count++))
+            else
+                log_warn "Failed to copy shared directory: $source_dir"
+                ((failed_count++))
+            fi
+        fi
+    done < "$copydirs_file"
+
+    # Log summary
+    if [[ $copied_count -gt 0 ]]; then
+        log_info "Refreshed $copied_count shared director$([[ $copied_count -eq 1 ]] && echo "y" || echo "ies")"
+    fi
+
+    if [[ $failed_count -gt 0 ]]; then
+        log_warn "Failed to copy $failed_count shared director$([[ $failed_count -eq 1 ]] && echo "y" || echo "ies")"
+    fi
+
+    return 0
+}

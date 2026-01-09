@@ -1,0 +1,16 @@
+# AIDD Shared Directories
+#
+# These directories are copied to the target project on every iteration.
+# This ensures projects always have the latest shared configurations.
+#
+# Format: One absolute path per line
+# Lines starting with # are comments
+# Empty lines are ignored
+#
+# Examples:
+# /d/applications/.claude
+# /d/applications/.windsurf
+# /c/shared/configs
+
+/d/applications/.claude
+/d/applications/.windsurf

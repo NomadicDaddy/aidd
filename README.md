@@ -7,8 +7,9 @@ A unified shell script that orchestrates autonomous development sessions using e
 - **Dual CLI Support**: Seamlessly switch between OpenCode and KiloCode
 - **Unified Interface**: Identical workflow and features across both CLIs
 - **Project Management**: Automatic project initialization, scaffolding, and metadata tracking
-- **Iteration Management**: Built-in retry logic, failure handling, and progress tracking
+- **Iteration Management**: Built-in retry logic, failure handling, and progress tracking with two-stage idle timeout and agent nudging
 - **Feature Tracking**: JSON-based feature list with status tracking
+- **Shared Directory Sync**: Automatic synchronization of shared configuration directories (e.g., `.claude`, `.windsurf`) to projects
 - **Legacy Migration**: Automatic migration from `.autoo`, `.autok`, and `.automaker` directories
 
 ## Supported CLIs
@@ -52,7 +53,8 @@ A unified shell script that orchestrates autonomous development sessions using e
 - `--spec FILE`: Specification file (required for new projects)
 - `--max-iterations N`: Number of iterations (unlimited if not specified)
 - `--timeout N`: Timeout in seconds (default: 600)
-- `--idle-timeout N`: Idle timeout in seconds (default: 180)
+- `--idle-timeout N`: Idle timeout in seconds (default: 360)
+- `--idle-nudge-timeout N`: Idle nudge timeout in seconds - sends "are you stuck?" message (default: 180)
 - `--model MODEL`: Model to use (optional)
 - `--init-model MODEL`: Model for initializer/onboarding prompts
 - `--code-model MODEL`: Model for coding prompts
@@ -130,11 +132,40 @@ Once `.aidd/spec.txt` and `.aidd/feature_list.json` exist:
 - Uses `coding` prompt for continued development
 - Implements remaining features from the feature list
 
+### Shared Directory Synchronization
+
+AIDD can automatically synchronize shared configuration directories to projects at the start of each iteration. This is useful for ensuring all projects have the latest IDE configurations, linting rules, or other shared resources.
+
+**Configuration:**
+
+Create a `copydirs.txt` file in the AIDD directory with one absolute path per line:
+
+```
+# copydirs.txt example
+/d/applications/.claude
+/d/applications/.windsurf
+```
+
+**Behavior:**
+
+- Runs at the start of each iteration before the CLI prompt
+- Uses `rsync -av --delete` (falls back to `cp -R` if rsync unavailable)
+- Logs which directories were refreshed
+- Skips missing source directories with a warning
+
+**Common Use Cases:**
+
+- Syncing IDE configuration (`.vscode`, `.windsurf`, `.claude`)
+- Sharing linting rules across projects
+- Distributing common scripts or templates
+- Keeping project guidelines up to date
+
 ## Project Structure
 
 ```
-aidd2/
+aidd/
 ├── aidd.sh                 # Main script
+├── copydirs.txt           # List of shared directories to sync to projects
 ├── lib/
 │   ├── config.sh          # Configuration constants
 │   ├── utils.sh           # Utility functions
@@ -146,10 +177,19 @@ aidd2/
 │   ├── project.sh         # Project management
 │   └── iteration.sh       # Iteration handling
 ├── prompts/
+│   ├── _common/           # Shared prompt modules (refactored v2.0)
+│   │   ├── assistant-rules-loading.md
+│   │   ├── project-overrides.md
+│   │   ├── testing-requirements.md
+│   │   ├── file-integrity.md
+│   │   ├── hard-constraints.md
+│   │   ├── tool-selection-guide.md
+│   │   └── error-handling-patterns.md
 │   ├── onboarding.md      # Onboarding prompt (existing codebases)
 │   ├── initializer.md     # Initializer prompt (new projects)
 │   ├── coding.md          # Coding prompt (development iterations)
-│   └── todo.md            # TODO mode prompt
+│   ├── todo.md            # TODO mode prompt
+│   └── PROMPT_CHANGELOG.md # Detailed changelog for prompt refactoring
 ├── scaffolding/           # Template files for new projects
 ├── artifacts/             # Project metadata templates
 └── specs/                 # Specification examples
@@ -214,6 +254,10 @@ AIDD includes comprehensive error handling:
 
 - **Exit Codes**: 0 (success), 1 (general error), 2 (invalid args), 70 (no assistant), 71 (idle timeout), 72 (provider error), 124 (signal terminated)
 - **Retry Logic**: Configurable with `--quit-on-abort`
+- **Two-Stage Idle Timeout**: When an agent becomes unresponsive:
+    - Stage 1: After idle-nudge-timeout (default 180s), sends "are you stuck?" message to the agent
+    - Stage 2: If still no response after remaining time, terminates the session
+    - Total timeout is still controlled by `--idle-timeout` (default 360s)
 - **Timeout Detection**: Monitors both overall timeout and idle timeout
 - **Provider Error Detection**: Detects and handles API errors gracefully
 
@@ -225,6 +269,12 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v2.1.0** (2026-01-09):
+    - Added two-stage idle timeout with agent nudging feature
+    - Added shared directory synchronization (copydirs.txt)
+    - Refactored prompts to modular architecture (see prompts/PROMPT_CHANGELOG.md)
+    - Fixed CLI name display bug in error messages
+    - Fixed coprocess file descriptor handling in nudge feature
 - **v2.0.0** (2026-01-08): Unified AIDD supporting both OpenCode and KiloCode
 - **v1.1.0**: aidd-o (OpenCode) and aidd-k (KiloCode) as separate projects
 - **v1.0.0**: Initial aidd-o release

@@ -11,209 +11,542 @@ You are in Code mode and ready to begin integrating with an existing codebase to
 - **Progress log:** `/.aidd/progress.md`
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
+### COMMON GUIDELINES
+
+**See shared documentation in `/_common/` for:**
+
+- **hard-constraints.md** - Non-negotiable constraints
+- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
+- **project-overrides.md** - How to handle project.txt overrides (Step 1)
+- **tool-selection-guide.md** - When to use MCP tools vs execute_command
+- **file-integrity.md** - Safe file editing and verification protocols
+- **error-handling-patterns.md** - Common errors and recovery strategies
+
 ### HARD CONSTRAINTS
 
-1. **Stop after initialization.** Do not implement product features.
-2. Do not write application business logic. Only create the setup/tracking/scaffolding files described below.
-3. Do not run any blocking processes else you will get stuck.
+**See `/_common/hard-constraints.md` for details.**
 
-### STEP 0:: INGEST ASSISTANT RULES
+1. **Stop after onboarding.** Do not implement product features.
+2. Do not write application business logic. Only create tracking/scaffolding files.
+3. Do not run any blocking processes (no dev servers).
 
-**CRITICAL: Before proceeding, check for and ingest assistant rule files.**
+---
 
-1. **Check for Assistant Rule Files:**
-    - Look for and read the following files in order of priority:
-        - `.windsurf/rules/best-practices.md`
-        - `.windsurf/rules/style.md`
-        - `.windsurf/rules/user.md`
-        - `AGENTS.md`
-        - `CLAUDE.md`
-    - These files contain important project rules, guidelines, and conventions
-    - If any of these files exist, read them immediately before continuing
+## WORKFLOW STEPS
 
-2. **Apply Assistant Rules:**
-    - Instructions in assistant rule files take precedence over generic steps in this prompt
-    - Document any rules found in your initial assessment
-    - If assistant rule files conflict with this prompt, follow assistant rule files
-    - These rules may include:
-        - Coding style and formatting conventions
-        - Architectural patterns and best practices
-        - Project-specific constraints or requirements
-        - Development workflow guidelines
+### STEP 0: INGEST ASSISTANT RULES
 
-**Example:**
-If `.windsurf/rules/best-practices.md` contains specific architectural guidelines or CLAUDE.md has coding standards, follow those instead of generic instructions in this prompt.
+**CRITICAL: Execute FIRST, before any other steps.**
 
-### STEP 1: PROJECT-SPECIFIC INSTRUCTIONS
+See `/_common/assistant-rules-loading.md` for complete instructions.
 
-**CRITICAL: Before proceeding, check for project-specific overrides.**
+**Quick summary:**
 
-1. **Check for project.txt:**
-    - Look for `/.aidd/project.txt` in the project directory
-    - If it exists, read it immediately as it contains project-specific instructions that override generic instructions
-    - These instructions may include:
-        - Custom scaffolding requirements
-        - Specific directory structures
-        - Special configuration needs
-        - Modified initialization steps
+1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+2. Apply these rules throughout the session
+3. Assistant rules OVERRIDE generic instructions
+4. Document key rules in your initial assessment
 
-2. **Check for Existing .aidd Files (migrate legacy directories if present):**
-    - Look for existing `/.aidd/feature_list.json`, `/.aidd/progress.md`, or other `.aidd` files (copy legacy `/.auto*/*` into `.aidd/*` if needed)
-    - If they exist, preserve and merge their content with new findings
-    - Document existing state in your initial assessment
+---
 
-3. **Handle Missing spec.txt:**
-    - If `/.aidd/spec.txt` doesn't exist (legacy codebase), create one based on your analysis of the existing codebase
-    - Infer the application's purpose from the code structure, package.json, and existing documentation
+### STEP 1: CHECK PROJECT OVERRIDES
 
-4. **Apply Overrides:**
-    - Any instructions in project.txt take precedence over the generic steps in this prompt
-    - Document the overrides in your initial assessment
-    - If project.txt conflicts with this prompt, follow project.txt
+**CRITICAL: Check for `/.aidd/project.txt` before proceeding.**
 
-**Example:**
-If project.txt contains specific requirements for project structure or configuration, follow those instead of the generic initialization instructions.
+See `/_common/project-overrides.md` for complete instructions.
+
+**Quick summary:**
+
+1. Read `/.aidd/project.txt` if it exists
+2. Apply all overrides throughout the session
+3. Project overrides have HIGHEST priority
+4. Document overrides in your initial assessment
+
+---
 
 ### STEP 2: GET YOUR BEARINGS
 
-Start by orienting yourself with the existing codebase:
+Start by orienting yourself with the existing codebase.
 
-- Use `mcp_filesystem_list_directory` / `mcp_filesystem_search_files` / `mcp_filesystem_read_text_file` to locate and inspect `/.aidd/spec.txt`.
-- Use `mcp_filesystem_list_directory` to understand the existing project structure (frontend/, backend/, scripts/, etc.).
-- Use `list_code_definition_names` on key directories to map the existing codebase architecture. - **IMPORTANT: `list_code_definition_names` only processes files at the top level of the specified directory, not subdirectories.** To explore subdirectories, you must call `list_code_definition_names` on each subdirectory path individually.
-- Record the directory that contains `/.aidd/spec.txt` as your **project root**.
-- Use that project root as the `cwd` for all subsequent `execute_command` calls.
+**Use MCP tools (see `/_common/tool-selection-guide.md`):**
 
-Sanity check: after selecting the project root, `mcp_filesystem_list_directory` at that path should show the existing project entries. If `mcp_filesystem_list_directory` shows `0 items` unexpectedly, stop and re-check the path.
+- `mcp_filesystem_read_text_file` - Read existing files
+- `mcp_filesystem_list_directory` - Explore directory structure
+- `mcp_filesystem_search_files` - Find specific files or patterns
+- `list_code_definition_names` - Map code structure (call per subdirectory)
 
-### STEP 3: Analyze Existing Codebase and Create /.aidd/feature_list.json
+#### 2.1 Locate or Create Spec
 
-First, analyze the existing codebase to understand what's already implemented:
+**If `/.aidd/spec.txt` exists:**
 
-1. **Inventory Existing Features:**
-    - Examine package.json files to identify the tech stack
-    - Review existing routes, components, and API endpoints
-    - Check for existing configuration files, databases, and services
-    - Identify any existing tests or documentation
-    - Check for CI/CD configurations and incorporate their results
-    - Look for existing test coverage reports or test results
+- Read it with `mcp_filesystem_read_text_file`
+- Use its directory as your **project root**
+- Verify it accurately describes the existing codebase
 
-2. **Populate /.aidd/feature_list.json:**
-   Based on `/.aidd/spec.txt` AND your analysis of the existing codebase, update `/.aidd/feature_list.json` with 20 detailed end-to-end test cases.
-    - For features that already exist and are verified, set "passes": true
-    - For features that need implementation, set "passes": false
-    - Include any existing functionality that wasn't in the original spec but is present in the codebase
-    - If an existing feature_list.json is present, merge it with your findings
-    - Add additional features to ensure at least 10 incomplete exist
+**If `/.aidd/spec.txt` doesn't exist (legacy codebase):**
 
-**CRITICAL: ACCURATE FEATURE TRACKING**
+- Create spec.txt based on your analysis
+- Infer application purpose from:
+    - package.json and dependencies
+    - README.md or documentation
+    - Directory structure
+    - Existing routes/components
+    - Database schema
 
-The feature list must accurately reflect both the specification and the existing codebase:
+#### 2.2 Check for Existing .aidd Files
 
-1. **Spec and Codebase Alignment:**
-    - Read the spec carefully to understand the application type (e.g., todo list, user management, chat app)
-    - Analyze the existing codebase to identify what's already implemented
-    - Ensure ALL features correspond to either spec requirements OR existing functionality
-    - Do NOT omit major functionality that exists in the codebase
-    - Mark existing features as "passes": true after verification
+**Look for existing AIDD files:**
 
-2. **Initial Status:**
-    - Features already implemented and verified should start with "passes": true
-    - Features needing implementation MUST start with "passes": false
-    - NO exceptions - verify existing functionality before marking as passing
-    - Features are only marked "passing" after full implementation and testing
+```bash
+# Check for .aidd directory
+mcp_filesystem_list_directory .aidd
 
-3. **Preventing False Positives:**
-    - Only mark features as passing if they exist AND work correctly
-    - Each feature must have concrete, testable steps
-    - Tests must verify actual functionality, not just code presence
-    - When in doubt, mark as "passes": false to be conservative
+# Check for legacy .auto* directories
+mcp_filesystem_list_directory .
 
-After writing `/.aidd/feature_list.json`, immediately `mcp_filesystem_read_text_file` it to confirm it is valid JSON and matches the required structure.
+# Look for existing feature_list.json, progress.md, etc.
+```
 
-**Format:**
+**If legacy directories exist (`.auto*`):**
+
+- Copy relevant content to `.aidd/*`
+- Preserve existing feature lists
+- Migrate progress notes
+- Document migration in progress.md
+
+#### 2.3 Explore Existing Codebase
+
+**Inventory the codebase:**
+
+- Review package.json files to identify tech stack
+- List existing routes, components, API endpoints
+- Check for configuration files (tsconfig, eslint, etc.)
+- Identify existing tests or test coverage
+- Look for CI/CD configurations
+- Check for existing documentation
+
+**Document findings:**
+
+- Note tech stack (React, Express, Postgres, etc.)
+- List main features already implemented
+- Identify any obvious gaps or issues
+- Record architecture patterns used
+
+---
+
+### STEP 3: ANALYZE CODEBASE AND CREATE FEATURE LIST
+
+**Create or update `/.aidd/feature_list.json` based on spec AND existing code.**
+
+**See `/_common/file-integrity.md` for safe JSON editing.**
+
+#### 3.1 Inventory Existing Features
+
+**Systematically analyze what exists:**
+
+1. **Backend analysis:**
+    - Use `list_code_definition_names` on backend directories (per subdirectory)
+    - Identify API routes and endpoints
+    - Check database models (schema.prisma, models/, etc.)
+    - Note authentication/authorization
+    - Document data validation
+
+2. **Frontend analysis:**
+    - Use `list_code_definition_names` on frontend directories (per subdirectory)
+    - List components and pages
+    - Identify routing structure
+    - Check for state management
+    - Note UI patterns used
+
+3. **Testing analysis:**
+    - Look for test files (_.test._, _.spec._)
+    - Check test coverage if available
+    - Review CI/CD test results
+
+4. **Documentation analysis:**
+    - Read README.md
+    - Check for API docs
+    - Review any architecture docs
+
+#### 3.2 Create/Update Feature List
+
+**Principle: Conservative Feature Marking**
+
+Default ALL features to `"passes": false`. Only mark `"passes": true` if:
+
+1. ✅ Found the code
+2. ✅ Read and understood it
+3. ✅ Verified it works via test/inspection
+4. ✅ Confirmed it matches spec requirements
+
+**If existing feature_list.json present:**
+
+- Merge it with your new findings
+- Add missing features from spec
+- Add features found in codebase but not in spec
+- Ensure minimum 10 features with `"passes": false` remain
+
+**Format (same as initializer):**
 
 ```json
 [
 	{
 		"area": "database|backend|frontend|testing|security|devex|docs",
 		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
-		"closed_at": "{yyyy-mm-dd}",
-		"created_at": "{yyyy-mm-dd}",
-		"description": "{Short name of the feature/capability being validated or technical debt item}",
-		"passes": false,
+		"closed_at": null,
+		"created_at": "2026-01-09",
+		"description": "Short name of feature/capability being validated",
+		"passes": false, // Default to false!
 		"priority": "critical|high|medium|low",
-		"status": "open|in_progress|resolved|deferred",
+		"status": "open",
 		"steps": [
-			"Step 1: {Navigate to the relevant page/area}",
-			"Step 2: {Perform the action}",
-			"Step 3: {Verify expected UI/API outcome}",
-			"Step 4: {Verify persistence (DB) if applicable}",
-			"Step 5: {Verify audit logs / metrics / permissions if applicable}"
+			"Step 1: Navigate to the relevant page/area",
+			"Step 2: Perform the action",
+			"Step 3: Verify expected UI/API outcome",
+			"Step 4: Verify persistence (DB) if applicable"
 		]
 	}
 ]
 ```
 
-**Requirements for /.aidd/feature_list.json:**
+#### 3.3 Feature List Requirements
 
-- Minimum 20 features total with testing steps for each
+**Minimum standards:**
+
+- Minimum 20 features total
 - Both "functional" and "style" categories
-- Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
-- At least 2-5 tests MUST have 10+ steps each
-- Order features by priority: fundamental features first
-- Existing verified features start with "passes": true ONLY after verifying they actually work through testing or code inspection
-- Missing features start with "passes": false
-- Cover every feature in the spec AND existing codebase exhaustively
-- Ensure tests align with the actual application type defined in the spec
+- Mix of narrow (2-5 steps) and comprehensive (10+ steps) tests
+- At least 2-5 tests with 10+ steps each
+- Order by priority: fundamental features first
+- Conservative marking: default to `"passes": false`
+- Cover spec AND existing codebase exhaustively
 
-This ensures no functionality is missed.
+#### 3.4 Document Codebase State
 
-### STEP 4: Analyze and Document Project Structure
+**In `/.aidd/project_structure.md`, document:**
 
-Analyze the existing project structure and document it:
+- Technology stack identified
+- Major features implemented
+- Code quality observations
+- Architecture patterns
+- Technical debt noted
+- Testing coverage
+- Missing functionality
 
-- Identify the technology stack from package.json files
-- Note any existing configuration files, databases, or external services
-- Document any special build or deployment processes
-- Identify any missing directories or files that should exist based on best practices
-- Update `/.aidd/feature_list.json` to include any uncovered issues, technical debt, or improvements discovered during analysis
+---
 
-### STEP 5: Update or Create README.md
+### STEP 4: VERIFY EXISTING FUNCTIONALITY
 
-If a README.md already exists, update it to include:
+**Before marking any feature as passing, verify it actually works.**
 
-1. Current project overview (preserving existing information)
-2. Setup instructions (including any new steps from scripts/setup.ts)
-3. How to run the application (verify existing instructions are correct)
-4. Any other relevant information for new developers
+#### 4.1 Selective Verification
 
-If no README.md exists, create one with the above information.
+**For features you consider marking `"passes": true`:**
 
-### STEP 6: Initialize or Update Git
+1. **Code inspection:**
+    - Read the implementation
+    - Check for obvious bugs
+    - Verify completeness
 
-- **If no git repository exists:** Create one and make your first commit with all files present in the project directory.
-- **If git repository exists:** Ensure all changes are committed with descriptive messages.
+2. **Test verification (if possible):**
+    - Run existing tests if they exist
+    - Check test results
+    - Note any failures
 
-Commit message: "onboard" (for new repos) or descriptive message for existing repos.
+3. **Manual testing (if feasible):**
+    - Try to run the application
+    - Test the specific feature
+    - Verify it works as expected
 
-Note: Run git commands via `execute_command`, adapting to the current shell.
+**When in doubt → Mark as `"passes": false`**
 
-### STEP 7: ENDING THIS SESSION
+Better to retest later than claim something works when it doesn't.
 
-**STOP IMMEDIATELY AFTER COMPLETING TASKS ABOVE**
+#### 4.2 Handle Broken Features
 
-Before your context fills up:
+**If you discover broken functionality:**
 
-1. Commit all work with descriptive messages using execute_command
-2. Update `/.aidd/progress.md` with a summary of what you accomplished and the current state of the codebase
-3. Ensure /.aidd/feature_list.json accurately reflects the existing codebase including discovered issues and improvement opportunities
-4. Ensure /.aidd/project_structure.md exists and documents the current architecture
-5. Leave the environment in a clean state
-6. Use attempt_completion to present final results
+- Mark as `"passes": false`
+- Document the issue in feature steps or description
+- Add to todo.md if it's a known issue to fix
+- Note in progress.md
 
-**DO NOT IMPLEMENT NEW FEATURES**
-**DO NOT MODIFY EXISTING APPLICATION CODE**
-**DO NOT START SERVERS**
+---
 
-The next agent will continue from here with a fresh context window, ready to implement missing features or modify existing functionality.
+### STEP 5: UPDATE OR CREATE README
+
+**Update existing README.md or create if missing.**
+
+#### 5.1 If README Exists
+
+**Preserve existing information and enhance:**
+
+- Keep current project overview
+- Verify setup instructions are accurate
+- Add AIDD-specific sections if needed
+- Update outdated information
+- Add missing sections
+
+#### 5.2 If README Missing
+
+**Create comprehensive README with:**
+
+1. Project overview (from spec analysis)
+2. Prerequisites (from package.json)
+3. Setup instructions (inferred from codebase)
+4. Running the application
+5. Project structure
+6. Testing approach
+7. Additional notes
+
+#### 5.3 Verify README
+
+```bash
+# Read README to confirm accuracy
+mcp_filesystem_read_text_file README.md
+
+# Ensure it reflects actual codebase state
+# Not just generic boilerplate
+```
+
+---
+
+### STEP 6: INITIALIZE OR UPDATE GIT
+
+**Ensure git repository is properly configured.**
+
+#### 6.1 If Git Repository Exists
+
+**Verify git status:**
+
+```bash
+git status
+git log --oneline -5
+```
+
+**Commit onboarding changes:**
+
+```bash
+git add .
+git commit -m "onboard: Add AIDD tracking files and documentation"
+```
+
+#### 6.2 If No Git Repository
+
+**Initialize git:**
+
+```bash
+git init
+git add .
+git commit -m "onboard"
+```
+
+**Handle git failures:**
+
+- See `/_common/error-handling-patterns.md`
+- Document issues in progress.md
+- Git is optional if not in spec
+
+---
+
+### STEP 7: CREATE TODO LIST FOR ISSUES
+
+**If you discovered issues, technical debt, or improvements needed.**
+
+#### 7.1 Create /.aidd/todo.md
+
+**Document discovered issues:**
+
+```markdown
+# TODO List
+
+## High Priority
+
+- [ ] Fix broken authentication (returns 500 on login)
+- [ ] Complete missing user profile page (referenced but not implemented)
+
+## Medium Priority
+
+- [ ] Add input validation to contact form
+- [ ] Fix TypeScript errors in utils/helpers.ts
+- [ ] Improve error handling in API routes
+
+## Low Priority
+
+- [ ] Add loading spinners to async operations
+- [ ] Refactor duplicate code in components/
+- [ ] Update outdated dependencies
+
+## Technical Debt
+
+- [ ] Add unit tests for backend services
+- [ ] Document API endpoints
+- [ ] Add error boundaries to React components
+```
+
+#### 7.2 Prioritize Issues
+
+**When creating todo.md:**
+
+- Group by priority (high, medium, low)
+- Include enough context to be actionable
+- Link to specific files/line numbers when possible
+- Note dependencies between items
+
+---
+
+### STEP 8: UPDATE PROGRESS LOG
+
+**Create `/.aidd/progress.md` with onboarding summary.**
+
+```markdown
+# Progress Log
+
+## Session 1: Onboarding - 2026-01-09
+
+### Codebase Analysis:
+
+- **Tech Stack:** React + TypeScript, Express, PostgreSQL
+- **Features Found:** User authentication, dashboard, data visualization
+- **Tests:** 45 unit tests, 12 integration tests (all passing)
+- **Issues Discovered:** 3 broken features, 5 missing features, 8 technical debt items
+
+### Onboarding Actions:
+
+- Created spec.txt from codebase analysis
+- Built feature list with 30 tests (15 verified passing, 15 need implementation)
+- Updated README.md with accurate setup instructions
+- Created todo.md with 16 action items
+- Documented architecture in project_structure.md
+
+### Project State:
+
+- Feature list: 15/30 tests passing
+- Ready for feature implementation in next session
+- High-priority issues identified in todo.md
+
+### Next Steps:
+
+- Session 2 should start with TODO mode to fix broken features
+- Then continue with implementing missing features
+- Follow spec requirements for new features
+```
+
+---
+
+### STEP 9: VERIFY ONBOARDING COMPLETE
+
+**Before ending session, verify all onboarding steps completed.**
+
+#### 9.1 Verification Checklist
+
+- [ ] `/.aidd/spec.txt` exists and describes the application
+- [ ] `/.aidd/feature_list.json` exists with accurate feature inventory
+- [ ] Feature list minimum 20 features, conservatively marked
+- [ ] `/.aidd/project_structure.md` documents architecture
+- [ ] `/.aidd/todo.md` created if issues discovered
+- [ ] `/.aidd/progress.md` created with onboarding summary
+- [ ] README.md updated/created with accurate information
+- [ ] Git repository initialized/updated with commits
+- [ ] No corrupted files
+- [ ] No uncommitted changes
+
+#### 9.2 Run Verification Commands
+
+```bash
+# Verify critical files exist
+mcp_filesystem_read_text_file .aidd/spec.txt | head -20
+mcp_filesystem_read_text_file .aidd/feature_list.json | head -50
+mcp_filesystem_read_text_file .aidd/progress.md
+
+# Count features
+grep -c '"passes"' .aidd/feature_list.json
+
+# Check git status
+git status
+git log -1
+
+# Verify no uncommitted changes
+git diff
+```
+
+---
+
+### STEP 10: EXIT CLEANLY
+
+**Use attempt_completion to present final results.**
+
+#### 10.1 Summary to Present
+
+**Include:**
+
+- What was discovered in codebase
+- How many features already implemented
+- How many features need work
+- Any critical issues found
+- What the next session should focus on
+
+#### 10.2 DO NOT
+
+- Do NOT implement new features
+- Do NOT modify existing application code (except docs)
+- Do NOT start dev servers
+- Do NOT continue beyond onboarding
+
+---
+
+## IMPORTANT REMINDERS
+
+### Your Goal
+
+**Understand existing codebase and set up tracking for future development.**
+
+### This Session's Goal
+
+**Complete onboarding only - no feature implementation.**
+
+### What to Create/Update
+
+- Spec (/.aidd/spec.txt) if missing
+- Feature list (/.aidd/feature_list.json)
+- Architecture docs (/.aidd/project_structure.md)
+- Progress log (/.aidd/progress.md)
+- Todo list (/.aidd/todo.md) if issues found
+- README.md (update or create)
+- Git commits
+
+### What NOT to Do
+
+- Do NOT implement features
+- Do NOT modify application business logic
+- Do NOT start dev servers
+- Do NOT run blocking processes
+
+### Conservative Principle
+
+**Default to `"passes": false`** unless you've verified the feature works through code inspection, testing, or manual verification.
+
+### Quality Standards
+
+- All JSON files must be valid
+- Feature list must accurately reflect codebase
+- Documentation must match reality (not generic boilerplate)
+- Git repository must be properly configured
+- All work must be committed
+
+---
+
+## APPENDICES
+
+**See `/_common/` directory for detailed references:**
+
+- **error-handling-patterns.md** - Common errors and recovery
+- **tool-selection-guide.md** - Tool selection guidance
+- **file-integrity.md** - Safe file editing protocols
+- **hard-constraints.md** - Non-negotiable constraints
+- **assistant-rules-loading.md** - How to load project rules
+- **project-overrides.md** - How to handle project.txt
+
+---
+
+Begin by running Step 0 now.

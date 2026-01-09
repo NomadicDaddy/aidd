@@ -220,6 +220,9 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             log_info "Started: $(date -Is 2>/dev/null || date)"
             echo
 
+            # Copy shared directories from copydirs.txt
+            copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
+
             # Determine which prompt to use based on project state
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
             if [[ $? -ne 0 ]]; then
@@ -285,6 +288,9 @@ else
             log_info "Transcript: $LOG_FILE"
             log_info "Started: $(date -Is 2>/dev/null || date)"
             echo
+
+            # Copy shared directories from copydirs.txt
+            copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
 
             # Determine which prompt to use based on project state
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")

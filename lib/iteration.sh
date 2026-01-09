@@ -53,7 +53,7 @@ handle_failure() {
 
     # Increment failure counter
     ((CONSECUTIVE_FAILURES++))
-    log_warn "KiloCode failed (exit=$exit_code); this is failure #$CONSECUTIVE_FAILURES"
+    log_warn "$CLI_NAME failed (exit=$exit_code); this is failure #$CONSECUTIVE_FAILURES"
 
     # Check if we should quit or continue
     if [[ $QUIT_ON_ABORT -gt 0 && $CONSECUTIVE_FAILURES -ge $QUIT_ON_ABORT ]]; then

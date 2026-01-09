@@ -23,12 +23,12 @@ export LOG_LEVEL="${LOG_LEVEL:-1}"
 # -----------------------------------------------------------------------------
 # Colors for Terminal Output
 # -----------------------------------------------------------------------------
-: "${COLOR_RED:='\033[0;31m'}"
-: "${COLOR_GREEN:='\033[0;32m'}"
-: "${COLOR_YELLOW:='\033[0;33m'}"
-: "${COLOR_BLUE:='\033[0;34m'}"
-: "${COLOR_CYAN:='\033[0;36m'}"
-: "${COLOR_RESET:='\033[0m'}"
+: "${COLOR_RED:=$'\033[0;31m'}"
+: "${COLOR_GREEN:=$'\033[0;32m'}"
+: "${COLOR_YELLOW:=$'\033[0;33m'}"
+: "${COLOR_BLUE:=$'\033[0;34m'}"
+: "${COLOR_CYAN:=$'\033[0;36m'}"
+: "${COLOR_RESET:=$'\033[0m'}"
 
 readonly COLOR_RED
 readonly COLOR_GREEN
@@ -432,12 +432,33 @@ monitor_coprocess_output() {
     local saw_no_assistant=false
     local saw_idle_timeout=false
     local saw_provider_error=false
+    local nudge_sent=false
+
+    local nudge_timeout="${IDLE_NUDGE_TIMEOUT:-$DEFAULT_IDLE_NUDGE_TIMEOUT}"
+    local final_timeout=$((${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT} - nudge_timeout))
 
     # Monitor output for error patterns and idle timeout
     while true; do
         local line=""
-        if IFS= read -r -t "${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}" line <&"${COPROC[0]}"; then
+        local timeout_value="$nudge_timeout"
+        [[ "$nudge_sent" == true ]] && timeout_value="$final_timeout"
+
+        # Check if coprocess is still alive and file descriptors are valid
+        if ! kill -0 "$COPROC_PID" 2>/dev/null; then
+            # Process has terminated
+            break
+        fi
+
+        if [[ -z "${COPROC[0]}" ]] || [[ -z "${COPROC[1]}" ]]; then
+            # File descriptors not set, coprocess not properly initialized
+            break
+        fi
+
+        if IFS= read -r -t "$timeout_value" line <&"${COPROC[0]}" 2>/dev/null; then
             echo "$line"
+
+            # Reset nudge state if we got output
+            nudge_sent=false
 
             # Check for "no assistant messages" pattern
             if [[ "$line" == *"$PATTERN_NO_ASSISTANT"* ]]; then
@@ -466,13 +487,45 @@ monitor_coprocess_output() {
             continue
         fi
 
-        # Check if process is still running (idle timeout)
+        # Check if process is still running
         if kill -0 "$COPROC_PID" 2>/dev/null; then
+            # First timeout: Send nudge message
+            if [[ "$nudge_sent" == false ]]; then
+                nudge_sent=true
+                log_warn "No output for ${nudge_timeout}s. Sending nudge to agent..."
+
+                # Send nudge message via stdin (if coprocess supports it)
+                cat << 'EOF' >&"${COPROC[1]}" 2>/dev/null || true
+
+---
+
+SYSTEM NUDGE: You haven't produced any output for several minutes. Are you stuck?
+
+If you're encountering repeated errors that you can't resolve:
+1. Describe what you've tried and what's blocking you
+2. Consider following the three-strike rule from error-handling-patterns.md:
+   - After 3 failed attempts, abort the current task
+   - Document the issue in progress.md or todo.md
+   - Move on to the next feature
+3. Commit any working progress before moving on
+
+Please respond with either:
+- Your current status and what you're working on, OR
+- A decision to abort and move to the next task
+
+---
+
+EOF
+                log_debug "Nudge sent. Waiting ${final_timeout}s for response..."
+                continue
+            fi
+
+            # Second timeout: Hard kill
             saw_idle_timeout=true
             if [[ "$error_log_level" == "error" ]]; then
-                log_error "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s) waiting for output; aborting."
+                log_error "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s total) waiting for output; aborting."
             else
-                log_warn "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s) waiting for output"
+                log_warn "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s total) waiting for output"
             fi
             kill -TERM "$COPROC_PID" 2>/dev/null || true
             break

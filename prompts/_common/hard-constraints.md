@@ -1,0 +1,158 @@
+## HARD CONSTRAINTS
+
+**These constraints are NON-NEGOTIABLE. Violating them will cause session failures.**
+
+### Blocking Process Prohibition
+
+**CRITICAL: Never start blocking dev servers inline - ALWAYS reuse existing servers**
+
+**The Problem:**
+
+- Blocking processes (dev servers, watchers) run indefinitely
+- They cause the session to hang and timeout after 6 minutes
+- This wastes compute time and blocks progress
+
+**The Solution:**
+
+1. **FIRST: Check if a dev server is already running**
+
+    ```bash
+    # Check for running processes (Linux/Mac)
+    ps aux | grep -E "vite|next|react-scripts|webpack"
+
+    # Check specific port (Mac/Linux)
+    lsof -ti:5173
+
+    # Check specific port (Windows)
+    netstat -ano | findstr :5173
+
+    # Try curl test
+    curl -s http://localhost:5173 >/dev/null && echo "Server running" || echo "Server not running"
+    ```
+
+2. **REUSE existing servers whenever possible**
+    - If dev server is running on expected port → Use it
+    - If dev server is running on different port → Note and use that port
+    - Check recent log files (vite.log, electron.log) to find last-used port
+    - **DO NOT** kill and restart servers unnecessarily
+
+3. **ONLY IF no server is running: Start in background**
+
+    ```bash
+    # Start in background with & and redirect output
+    npm run dev > dev.log 2>&1 &
+
+    # Wait briefly for startup
+    sleep 3
+
+    # Verify it started
+    curl -s http://localhost:5173
+    ```
+
+4. **NEVER run these commands directly (they block indefinitely):**
+    - `npm run dev`
+    - `vite`
+    - `next dev`
+    - `webpack serve`
+    - `react-scripts start`
+    - Any other dev server command without `&`
+
+5. **To verify dev server accessibility:**
+    - Use curl checks: `curl -s http://localhost:5173`
+    - Use browser automation: `browser_action.launch http://localhost:5173`
+    - **DO NOT** start the command and wait for it
+
+**Remember:** Starting new servers wastes time; reusing existing servers is faster and preferred.
+
+### Setup Script Prohibition
+
+**CRITICAL: Do not run `scripts/setup.ts` or other setup scripts (except in initializer session)**
+
+**Why:**
+
+- Setup is performed by the initializer session
+- Re-running setup can corrupt project state
+- Setup scripts may perform destructive operations
+- Time is better spent on feature implementation
+
+**Exception:**
+
+- Initializer session is specifically designed to run setup
+- All other sessions assume setup is complete
+
+### Blocking Ambiguity Resolution
+
+**CRITICAL: Stop and record questions when blocked by ambiguity**
+
+**When to stop:**
+
+- Requirements are unclear or contradictory
+- Multiple valid implementations exist with no clear guidance
+- Spec is missing critical information
+- Technical decision requires human judgment
+
+**What to do:**
+
+1. Stop implementation immediately
+2. Document the specific question in `/.aidd/progress.md`
+3. Include context and options considered
+4. Mark current feature as "status": "open" (not "in_progress")
+5. Move to next feature or end session cleanly
+
+**What NOT to do:**
+
+- Don't guess at requirements
+- Don't implement arbitrary choices
+- Don't ask the AI for decisions (it can't contact the user)
+- Don't proceed hoping to fix later
+
+**Example:**
+
+```markdown
+## Blocker Recorded: 2026-01-09
+
+**Feature:** User authentication
+**Question:** Should password reset use email or SMS?
+**Context:** Spec mentions "user can reset password" but doesn't specify method
+**Options considered:**
+
+1. Email-based reset (simpler, no SMS service needed)
+2. SMS-based reset (more secure, requires Twilio integration)
+3. Both options (complex, time-consuming)
+
+**Waiting for:** User clarification on preferred method
+
+**Next action:** Moved to next feature (todo list display)
+```
+
+### Non-Destructive Operations Only
+
+**CRITICAL: Never run destructive operations without explicit instruction**
+
+**Prohibited unless explicitly requested:**
+
+- `git reset --hard`
+- `git push --force`
+- `rm -rf` on important directories
+- `DROP DATABASE` or `DROP TABLE`
+- Deleting production data
+- Removing user files
+
+**Always safe (encouraged):**
+
+- `git checkout -- <file>` (single file rollback)
+- `git status`, `git diff`, `git log` (read-only)
+- Reading files
+- Testing in local environment
+- Browser automation
+
+### Constraint Verification
+
+Before starting work, confirm understanding:
+
+- [ ] I will not start blocking dev servers inline
+- [ ] I will reuse existing servers when possible
+- [ ] I will not run setup scripts (except in initializer)
+- [ ] I will stop and document blocking ambiguities
+- [ ] I will not run destructive operations
+- [ ] I understand these are non-negotiable constraints

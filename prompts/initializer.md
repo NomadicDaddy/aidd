@@ -11,201 +11,583 @@ You are in Code mode and ready to begin setting up the foundation for all future
 - **Progress log:** `/.aidd/progress.md`
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
+### COMMON GUIDELINES
+
+**See shared documentation in `/_common/` for:**
+
+- **hard-constraints.md** - Non-negotiable constraints (DO NOT run setup after initialization!)
+- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
+- **project-overrides.md** - How to handle project.txt overrides (Step 1)
+- **tool-selection-guide.md** - When to use MCP tools vs execute_command
+- **file-integrity.md** - Safe file editing and verification protocols
+- **error-handling-patterns.md** - Common errors and recovery strategies
+
 ### HARD CONSTRAINTS
 
+**See `/_common/hard-constraints.md` for details.**
+
 1. **Stop after initialization.** Do not implement product features.
-2. Do not write application business logic. Only create the setup/tracking/scaffolding files described below.
-3. Do not run any blocking processes else you will get stuck.
+2. Do not write application business logic. Only create setup/tracking/scaffolding files.
+3. Do not run any blocking processes (no dev servers).
+
+---
+
+## WORKFLOW STEPS
 
 ### STEP 0: INGEST ASSISTANT RULES
 
-**CRITICAL: Before proceeding, check for and ingest assistant rule files.**
+**CRITICAL: Execute FIRST, before any other steps.**
 
-1. **Check for Assistant Rule Files:**
-    - Look for and read the following files in order of priority:
-        - `.windsurf/rules/best-practices.md`
-        - `.windsurf/rules/style.md`
-        - `.windsurf/rules/user.md`
-        - `AGENTS.md`
-        - `CLAUDE.md`
-    - These files contain important project rules, guidelines, and conventions
-    - If any of these files exist, read them immediately before continuing
+See `/_common/assistant-rules-loading.md` for complete instructions.
 
-2. **Apply Assistant Rules:**
-    - Instructions in assistant rule files take precedence over generic steps in this prompt
-    - Document any rules found in your initial assessment
-    - If assistant rule files conflict with this prompt, follow assistant rule files
-    - These rules may include:
-        - Coding style and formatting conventions
-        - Architectural patterns and best practices
-        - Project-specific constraints or requirements
-        - Development workflow guidelines
+**Quick summary:**
 
-**Example:**
-If `.windsurf/rules/best-practices.md` contains specific architectural guidelines or CLAUDE.md has coding standards, follow those instead of generic instructions in this prompt.
+1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+2. Apply these rules throughout the session
+3. Assistant rules OVERRIDE generic instructions
+4. Document key rules in your initial assessment
 
-### STEP 1: PROJECT-SPECIFIC INSTRUCTIONS
+---
 
-**CRITICAL: Before proceeding, check for project-specific overrides.**
+### STEP 1: CHECK PROJECT OVERRIDES
 
-1. **Check for project.txt:**
-    - Look for `/.aidd/project.txt` in the project directory
-    - If it exists, read it immediately as it contains project-specific instructions that override generic instructions
-    - These instructions may include:
-        - Custom scaffolding requirements
-        - Specific directory structures
-        - Special configuration needs
-        - Modified initialization steps
+**CRITICAL: Check for `/.aidd/project.txt` before proceeding.**
 
-2. **Apply Overrides:**
-    - Any instructions in project.txt take precedence over the generic steps in this prompt
-    - Document the overrides in your initial assessment
-    - If project.txt conflicts with this prompt, follow project.txt
+See `/_common/project-overrides.md` for complete instructions.
 
-**Example:**
-If project.txt contains specific requirements for project structure or configuration, follow those instead of the generic initialization instructions.
+**Quick summary:**
+
+1. Read `/.aidd/project.txt` if it exists
+2. Apply all overrides throughout the session
+3. Project overrides have HIGHEST priority
+4. Document overrides in your initial assessment
+
+---
 
 ### STEP 2: GET YOUR BEARINGS
 
-Start by orienting yourself:
+Start by orienting yourself with the project.
 
-- Use `mcp_filesystem_list_directory` / `mcp_filesystem_search_files` / `mcp_filesystem_read_text_file` to locate and inspect `/.aidd/spec.txt`.
-- Use `mcp_filesystem_list_directory` to understand the existing project structure (frontend/, backend/, scripts/, etc.).
-- Use `list_code_definition_names` on key directories to map the existing codebase architecture. - **IMPORTANT: `list_code_definition_names` only processes files at the top level of the specified directory, not subdirectories.** To explore subdirectories, you must call `list_code_definition_names` on each subdirectory path individually.
-- Record the directory that contains `/.aidd/spec.txt` as your **project root**.
-- Use that project root as the `cwd` for all subsequent `execute_command` calls.
+**Use MCP tools (see `/_common/tool-selection-guide.md`):**
 
-Sanity check: after selecting the project root, `mcp_filesystem_list_directory` at that path should show expected entries (e.g. `/.aidd/`, `backend/`, `frontend/`, `scripts/`). If `mcp_filesystem_list_directory` shows `0 items` unexpectedly, stop and re-check the path (use `mcp_filesystem_search_files` again or confirm with `execute_command`).
+- `mcp_filesystem_read_text_file` - Read spec and existing files
+- `mcp_filesystem_list_directory` - Explore project structure
+- `mcp_filesystem_search_files` - Find specific files
+- `list_code_definition_names` - Map existing code (call per subdirectory)
 
-### STEP 3: Populate /.aidd/feature_list.json
+**Locate and read the spec:**
 
-Based on `/.aidd/spec.txt`, update `/.aidd/feature_list.json` by populating it with 20 detailed end-to-end test cases. This file is the single source of truth for what needs to be built.
+- Use `mcp_filesystem_search_files` to find `/.aidd/spec.txt`
+- Read it with `mcp_filesystem_read_text_file`
+- Record the directory containing it as your **project root**
+- Use that project root as `cwd` for all `execute_command` calls
 
-**CRITICAL: ACCURATE FEATURE TRACKING**
+**Sanity check:**
 
-The feature list must accurately reflect the specification:
+- After selecting project root, `mcp_filesystem_list_directory` should show expected entries
+- Should see directories like `backend/`, `frontend/`, `scripts/`, etc.
+- If `mcp_filesystem_list_directory` shows `0 items`, re-check the path
 
-1. **Spec Alignment:**
-    - Read the spec carefully to understand the application type (e.g., todo list, user management, chat app)
-    - Ensure ALL features directly correspond to spec requirements
-    - Do NOT include features not mentioned in the spec
-    - Do NOT omit any major functionality described in the spec
+**Understand the project:**
 
-2. **Initial Status:**
-    - ALL features MUST start with "passes": false
-    - NO exceptions - even if setup seems trivial
-    - Features are only marked "passing" after full implementation and testing
+- Review existing project structure
+- Note any existing directories or files
+- Identify the technology stack
 
-3. **Preventing False Positives:**
-    - Never mark features as passing during initialization
-    - Each feature must have concrete, testable steps
-    - Tests must verify actual functionality, not just code presence
+---
 
-After writing `/.aidd/feature_list.json`, immediately `mcp_filesystem_read_text_file` it to confirm it is valid JSON and matches the required structure.
+### STEP 3: CREATE FEATURE LIST
 
-**Format:**
+**Based on `/.aidd/spec.txt`, create `/.aidd/feature_list.json` with 20+ detailed tests.**
+
+**See `/_common/file-integrity.md` for safe JSON editing.**
+
+#### 3.1 Read and Understand Spec
+
+**CRITICAL: Accurate feature tracking prevents implementation drift.**
+
+1. **Read spec carefully:**
+    - Understand the application type (todo app, chat app, dashboard, etc.)
+    - Identify all core features mentioned
+    - Note technical requirements
+
+2. **Align features with spec:**
+    - ALL features must directly correspond to spec requirements
+    - Do NOT include features not mentioned in spec
+    - Do NOT omit any major functionality from spec
+
+3. **Initial status rules:**
+    - ALL features MUST start with `"passes": false`
+    - NO exceptions - even setup tasks start as false
+    - Features marked passing only after implementation and testing
+
+#### 3.2 Feature List Format
 
 ```json
 [
 	{
 		"area": "database|backend|frontend|testing|security|devex|docs",
 		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
-		"closed_at": "{yyyy-mm-dd}",
-		"created_at": "{yyyy-mm-dd}",
-		"description": "{Short name of the feature/capability being validated or technical debt item}",
+		"closed_at": null,
+		"created_at": "2026-01-09",
+		"description": "Short name of feature/capability being validated",
 		"passes": false,
 		"priority": "critical|high|medium|low",
-		"status": "open|in_progress|resolved|deferred",
+		"status": "open",
 		"steps": [
-			"Step 1: {Navigate to the relevant page/area}",
-			"Step 2: {Perform the action}",
-			"Step 3: {Verify expected UI/API outcome}",
-			"Step 4: {Verify persistence (DB) if applicable}",
-			"Step 5: {Verify audit logs / metrics / permissions if applicable}"
+			"Step 1: Navigate to the relevant page/area",
+			"Step 2: Perform the action",
+			"Step 3: Verify expected UI/API outcome",
+			"Step 4: Verify persistence (DB) if applicable",
+			"Step 5: Verify audit logs / metrics / permissions if applicable"
 		]
 	}
 ]
 ```
 
-**Requirements for /.aidd/feature_list.json:**
+#### 3.3 Feature List Requirements
+
+**Minimum standards:**
 
 - Minimum 20 features total with testing steps for each
 - Both "functional" and "style" categories
 - Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
 - At least 2-5 tests MUST have 10+ steps each
 - Order features by priority: fundamental features first
-- ALL tests start with "passes": false
-- Cover every feature in the spec exhaustively
-- Ensure tests align with the actual application type defined in the spec
+- ALL tests start with `"passes": false`
+- Cover every feature in spec exhaustively
+- Tests align with actual application type from spec
 
-This ensures no functionality is missed.
+#### 3.4 Verify Feature List
 
-### STEP 4: Create scripts/setup.ts
-
-If a `scripts/setup.ts` file already exists, skip this task.
-
-Otherwise, create one that initializes the development environment:
-
-1. Install any required dependencies
-2. Validate prerequisites (ports, env vars, required binaries) and create any required local config files
-3. Print helpful information about how to start the application
-
-Base the script on the technology stack specified in `/.aidd/spec.txt` and ensure it accepts and uses the parameters described in Step 5.
-
-After creating or editing `scripts/setup.ts`, immediately `mcp_filesystem_read_text_file` it to confirm the intended contents were written.
-
-**Important:** This initializer session must not start servers. The setup script should print the commands a later session can run to start the app.
-
-### STEP 5: Execute scripts/setup.ts
-
-If `scripts/setup.ts` exists, run it with the following parameters:
-
-slug: project_dir basename (e.g., "myapp" for directory "myapp/")
-name: application name from spec
-description: application description from spec
-frontendPort: default 3330 unless specified in spec
-backendPort: default 3331 unless specified in spec
+**After writing, immediately verify:**
 
 ```bash
-bun scripts/setup.ts --slug {slug} --name "{name}" --description "{description}" --frontend-port {frontendPort} --backend-port {backendPort}
+# Read file to confirm valid JSON
+mcp_filesystem_read_text_file .aidd/feature_list.json
+
+# Check structure is correct
+# Verify all features have "passes": false
+# Confirm at least 20 features exist
 ```
 
-### STEP 6: Create Project Structure
+**If file is corrupted:**
 
-Set up the basic project structure based on what's specified in `/.aidd/spec.txt`.
-This typically includes directories for frontend, backend, and any other components mentioned in the spec that do not yet exist.
+- See `/_common/file-integrity.md` for recovery
+- Use `git checkout -- .aidd/feature_list.json` to rollback
+- Retry with different approach
 
-### STEP 7: Create README.md
+---
 
-Create a comprehensive README.md that includes:
+### STEP 4: CREATE SETUP SCRIPT
 
-1. Project overview
-2. Setup instructions
-3. How to run the application
-4. Any other relevant information
+**Check if `scripts/setup.ts` already exists. If yes, skip this step.**
 
-### STEP 8: Initialize Git
+#### 4.1 Create Setup Script
 
-Create a git repository and make your first commit with all files present in the project directory.
+If `scripts/setup.ts` doesn't exist, create it to initialize the development environment:
 
-Commit message: "init"
+**Setup script responsibilities:**
 
-Note: Run git commands via `execute_command`, adapting to the current shell.
+1. Install required dependencies
+2. Validate prerequisites (ports, env vars, required binaries)
+3. Create required local config files
+4. Print helpful information about starting the application
 
-### STEP 9: ENDING THIS SESSION
+**Important:** This script should NOT start servers. It should print the commands that later sessions can use to start the app.
 
-**STOP IMMEDIATELY AFTER COMPLETING TASKS ABOVE**
+#### 4.2 Base Script on Tech Stack
 
-Before your context fills up:
+Review `/.aidd/spec.txt` to identify:
 
-1. Commit all work with descriptive messages using execute_command
-2. Update `/.aidd/progress.md` with a summary of what you accomplished (create it if missing)
-3. Ensure /.aidd/feature_list.json is complete and saved
-4. Leave the environment in a clean state
-5. Use attempt_completion to present final results
+- Frontend framework (React, Vue, etc.)
+- Backend framework (Express, FastAPI, etc.)
+- Database (Postgres, MongoDB, etc.)
+- Package manager (npm, bun, pip, etc.)
 
-**DO NOT IMPLEMENT ANY FEATURES**
-**DO NOT WRITE APPLICATION CODE**
-**DO NOT START SERVERS**
+**Ensure script accepts parameters:**
 
-The next agent will continue from here with a fresh context window.
+- `--slug`: Project directory basename
+- `--name`: Application name from spec
+- `--description`: Application description from spec
+- `--frontend-port`: Default 3330 unless specified
+- `--backend-port`: Default 3331 unless specified
+
+#### 4.3 Verify Script
+
+After creating `scripts/setup.ts`:
+
+```bash
+# Read script to confirm content
+mcp_filesystem_read_text_file scripts/setup.ts
+
+# Verify script is executable
+ls -l scripts/setup.ts
+```
+
+---
+
+### STEP 5: EXECUTE SETUP SCRIPT
+
+**If `scripts/setup.ts` exists, run it with appropriate parameters.**
+
+#### 5.1 Extract Parameters from Spec
+
+**Read spec to find:**
+
+- Application name (use for `--name`)
+- Application description (use for `--description`)
+- Frontend port (default to 3330 if not specified)
+- Backend port (default to 3331 if not specified)
+
+**Calculate slug:**
+
+- Use project directory basename
+- Example: Directory "myapp/" → slug "myapp"
+
+#### 5.2 Run Setup
+
+```bash
+# Determine package manager from spec (bun, npm, etc.)
+# If package.json has "engines": {"bun": ...}, use bun
+# Otherwise use npm
+
+# Run setup with parameters
+bun scripts/setup.ts \
+  --slug myapp \
+  --name "My Application" \
+  --description "Application description from spec" \
+  --frontend-port 3330 \
+  --backend-port 3331
+```
+
+#### 5.3 Handle Setup Failures
+
+**If setup fails:**
+
+1. Read error message carefully
+2. Identify missing dependencies or configuration
+3. Fix the issue
+4. Re-run setup script
+5. Document issue in `/.aidd/progress.md`
+
+**Common failures:**
+
+- Missing system dependencies (Node.js, Python, etc.)
+- Port conflicts (ports already in use)
+- Missing environment variables
+- Network issues during dependency installation
+
+**See `/_common/error-handling-patterns.md` for recovery strategies.**
+
+---
+
+### STEP 6: CREATE PROJECT STRUCTURE
+
+**Set up basic project structure based on spec requirements.**
+
+#### 6.1 Identify Required Directories
+
+From `/.aidd/spec.txt`, identify:
+
+- Frontend directory (typically `frontend/`)
+- Backend directory (typically `backend/`)
+- Scripts directory (typically `scripts/`)
+- Docs directory (if mentioned)
+- Any other components
+
+#### 6.2 Create Missing Directories
+
+Only create directories that don't already exist:
+
+```bash
+# Example structure for typical full-stack app
+mkdir -p frontend/src
+mkdir -p backend/src
+mkdir -p scripts
+mkdir -p docs
+
+# Create other directories as needed per spec
+```
+
+#### 6.3 Verify Structure
+
+```bash
+# List root directory to verify structure
+mcp_filesystem_list_directory .
+
+# Should see expected directories
+# Verify structure matches spec requirements
+```
+
+---
+
+### STEP 7: CREATE README
+
+**Create comprehensive README.md for the project.**
+
+#### 7.1 README Contents
+
+Include the following sections:
+
+**1. Project Overview:**
+
+- Application name (from spec)
+- Description (from spec)
+- Purpose and goals
+- Key features
+
+**2. Prerequisites:**
+
+- Required system dependencies
+- Node.js/Python/etc. versions
+- Database requirements
+- Environment setup
+
+**3. Setup Instructions:**
+
+- Clone repository
+- Install dependencies
+- Configure environment variables
+- Run setup script
+- Database initialization
+
+**4. Running the Application:**
+
+- How to start frontend
+- How to start backend
+- How to run tests
+- Development workflow
+
+**5. Project Structure:**
+
+- Overview of directory structure
+- Key files and their purposes
+- Architecture notes
+
+**6. Additional Information:**
+
+- Testing approach
+- Deployment notes (if applicable)
+- Contributing guidelines (if applicable)
+- License (if applicable)
+
+#### 7.2 Create README
+
+```bash
+# Create README.md with comprehensive content
+# Use mcp_filesystem_edit_file or execute_command with heredoc
+```
+
+#### 7.3 Verify README
+
+```bash
+# Read README to confirm content
+mcp_filesystem_read_text_file README.md
+
+# Verify all sections present
+# Check for accuracy and completeness
+```
+
+---
+
+### STEP 8: INITIALIZE GIT
+
+**Create git repository and make initial commit.**
+
+#### 8.1 Initialize Git
+
+```bash
+# Initialize git if not already initialized
+git init
+
+# Verify git initialized
+git status
+```
+
+#### 8.2 Create .gitignore
+
+**If .gitignore doesn't exist, create it:**
+
+```bash
+# Add common patterns to .gitignore
+# node_modules/, .env, dist/, build/, etc.
+```
+
+#### 8.3 Make Initial Commit
+
+```bash
+# Stage all files
+git add .
+
+# Create initial commit
+git commit -m "init"
+
+# Verify commit
+git log -1
+```
+
+**Handle git failures:**
+
+- If git not installed → Document in progress.md
+- If git user not configured → Set user.name and user.email
+- If commit fails → Read error, fix issue, retry
+
+---
+
+### STEP 9: VERIFY INITIALIZATION
+
+**Before ending session, verify all initialization steps completed successfully.**
+
+#### 9.1 Verification Checklist
+
+- [ ] `/.aidd/feature_list.json` exists and is valid JSON
+- [ ] Feature list has minimum 20 features, all with `"passes": false`
+- [ ] `scripts/setup.ts` exists or was skipped (if already present)
+- [ ] Setup script executed successfully (if it exists)
+- [ ] Project structure created (frontend/, backend/, etc.)
+- [ ] README.md created with comprehensive content
+- [ ] Git initialized and initial commit made
+- [ ] No corrupted files
+- [ ] No uncommitted changes
+
+#### 9.2 Run Verification Commands
+
+```bash
+# Verify feature list
+mcp_filesystem_read_text_file .aidd/feature_list.json | head -50
+
+# Count features
+grep -c '"passes"' .aidd/feature_list.json
+
+# Verify project structure
+mcp_filesystem_list_directory .
+
+# Check git status
+git status
+git log -1
+
+# Verify no uncommitted changes
+git diff
+```
+
+#### 9.3 Fix Any Issues
+
+**If verification fails:**
+
+1. Identify specific issue
+2. Fix the problem
+3. Re-run verification
+4. Document in progress.md
+
+---
+
+### STEP 10: UPDATE PROGRESS AND EXIT
+
+**Document initialization work and exit cleanly.**
+
+#### 10.1 Create Progress Log
+
+**Create `/.aidd/progress.md` with initialization summary:**
+
+```markdown
+# Progress Log
+
+## Session 1: Initialization - 2026-01-09
+
+### Accomplished:
+
+- Created feature list with 25 tests covering all spec requirements
+- Executed setup script successfully
+- Created project structure (frontend, backend, scripts)
+- Wrote comprehensive README.md
+- Initialized git repository with initial commit
+
+### Project State:
+
+- All files created and committed
+- Feature list: 0/25 tests passing (all marked false, as expected)
+- Ready for feature implementation in next session
+
+### Next Steps:
+
+- Session 2 will begin implementing features from feature_list.json
+- Start with highest priority features (critical/high)
+- Follow spec requirements carefully
+```
+
+#### 10.2 Final Commit
+
+```bash
+# Ensure all changes committed
+git add .
+git commit -m "Complete initialization - ready for development"
+```
+
+#### 10.3 Exit Cleanly
+
+**Use attempt_completion to present final results:**
+
+- Summarize what was accomplished
+- Confirm initialization complete
+- Note next session will implement features
+- List any issues or warnings
+
+**DO NOT:**
+
+- Implement any features
+- Write application code
+- Start dev servers
+- Continue beyond initialization
+
+---
+
+## IMPORTANT REMINDERS
+
+### Your Goal
+
+**Set up foundation for all future development sessions.**
+
+### This Session's Goal
+
+**Complete initialization only - no feature implementation.**
+
+### What to Create
+
+- Feature list (/.aidd/feature_list.json)
+- Setup script (scripts/setup.ts, if needed)
+- Project structure (directories)
+- README.md
+- Git repository
+
+### What NOT to Do
+
+- Do NOT implement features
+- Do NOT write application business logic
+- Do NOT start dev servers
+- Do NOT run blocking processes
+
+### Quality Standards
+
+- All JSON files must be valid
+- Feature list must align with spec
+- README must be comprehensive
+- Git repository must be initialized
+- All work must be committed
+
+---
+
+## APPENDICES
+
+**See `/_common/` directory for detailed references:**
+
+- **error-handling-patterns.md** - Common errors and recovery
+- **tool-selection-guide.md** - Tool selection guidance
+- **file-integrity.md** - Safe file editing protocols
+- **hard-constraints.md** - Non-negotiable constraints
+- **assistant-rules-loading.md** - How to load project rules
+- **project-overrides.md** - How to handle project.txt
+
+---
+
+Begin by running Step 0 now.

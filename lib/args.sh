@@ -49,6 +49,7 @@ OPTIONS:
     --max-iterations N      Maximum iterations (optional, unlimited if not specified)
     --timeout N             Timeout in seconds (optional, default: $DEFAULT_TIMEOUT)
     --idle-timeout N        Idle timeout in seconds (optional, default: $DEFAULT_IDLE_TIMEOUT)
+    --idle-nudge-timeout N  Idle nudge timeout in seconds (optional, default: $DEFAULT_IDLE_NUDGE_TIMEOUT)
     --model MODEL           Model to use (optional)
     --init-model MODEL      Model for initializer/onboarding prompts (optional, overrides --model)
     --code-model MODEL      Model for coding prompts (optional, overrides --model)
@@ -116,6 +117,10 @@ parse_args() {
                 ;;
             --idle-timeout)
                 IDLE_TIMEOUT="$2"
+                shift 2
+                ;;
+            --idle-nudge-timeout)
+                IDLE_NUDGE_TIMEOUT="$2"
                 shift 2
                 ;;
             --no-clean)

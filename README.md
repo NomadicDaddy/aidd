@@ -76,6 +76,9 @@ A unified shell script that orchestrates autonomous development sessions using e
 # Existing project with specific model
 ./aidd.sh --project-dir ./myproject --model gpt-4 --max-iterations 5
 
+# Existing project with specific model, in todo prioritizing mode
+./aidd.sh --project-dir ./myproject --model gpt-4 --todo
+
 # With different models for init and coding
 ./aidd.sh --project-dir ./myproject --init-model claude --code-model gpt-4
 ```
@@ -95,9 +98,6 @@ A unified shell script that orchestrates autonomous development sessions using e
 ```bash
 # Display feature list
 ./aidd.sh --project-dir ./myproject --feature-list
-
-# TODO mode
-./aidd.sh --project-dir ./myproject --todo
 ```
 
 ## Workflows
@@ -144,6 +144,8 @@ Create a `copydirs.txt` file in the AIDD directory with one absolute path per li
 # copydirs.txt example
 /d/applications/.claude
 /d/applications/.windsurf
+/home/user/.vscode
+/Users/username/dev/shared-configs/.eslintrc.json
 ```
 
 **Behavior:**
@@ -189,7 +191,6 @@ aidd/
 │   ├── initializer.md     # Initializer prompt (new projects)
 │   ├── coding.md          # Coding prompt (development iterations)
 │   ├── todo.md            # TODO mode prompt
-│   └── PROMPT_CHANGELOG.md # Detailed changelog for prompt refactoring
 ├── scaffolding/           # Template files for new projects
 ├── artifacts/             # Project metadata templates
 └── specs/                 # Specification examples
@@ -289,17 +290,6 @@ AIDD follows a modular architecture with clear separation of concerns:
 4. **Business Logic Layer** (`args.sh`, `project.sh`, `iteration.sh`): Core functionality
 5. **Main Script** (`aidd.sh`): Orchestrates everything
 
-## Contributing
-
-AIDD was created by merging and homogenizing aidd-o and aidd-k. The original projects remain at:
-
-- `d:/applications/aidd-o` (OpenCode)
-- `d:/applications/aidd-k` (KiloCode)
-
-## License
-
-Same license as the original aidd-o and aidd-k projects.
-
 ## Support
 
 For issues or questions:
@@ -308,11 +298,3 @@ For issues or questions:
 2. Review iteration logs in `.aidd/iterations/`
 3. Check CLI-specific documentation for OpenCode or KiloCode
 4. Refer to the original aidd-o or aidd-k projects for historical context
-
-## Credits
-
-Inspired by:
-
-- Anthropic's Claude Quickstarts
-- Autonomous Coding Agent Demo
-- NomadicDaddy's improved autonomous agent demo

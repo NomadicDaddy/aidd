@@ -81,9 +81,9 @@ log() {
     esac
 
     if supports_color; then
-        echo -e "${color}${prefix}${COLOR_RESET} $message"
+        echo -e "${color}${prefix}${COLOR_RESET} $message" >&2
     else
-        echo "$prefix $message"
+        echo "$prefix $message" >&2
     fi
 }
 
@@ -99,19 +99,19 @@ log_header() {
     local width=60
     local padding=$(( (width - ${#title} - 2) / 2 ))
 
-    echo ""
-    printf '=%.0s' $(seq 1 $width)
-    echo ""
-    printf ' %.0s' $(seq 1 $padding)
+    echo "" >&2
+    printf '=%.0s' $(seq 1 $width) >&2
+    echo "" >&2
+    printf ' %.0s' $(seq 1 $padding) >&2
     if supports_color; then
-        echo -e "${COLOR_BLUE}${title}${COLOR_RESET}"
+        echo -e "${COLOR_BLUE}${title}${COLOR_RESET}" >&2
     else
-        echo "$title"
+        echo "$title" >&2
     fi
-    printf ' %.0s' $(seq 1 $padding)
-    echo ""
-    printf '=%.0s' $(seq 1 $width)
-    echo ""
+    printf ' %.0s' $(seq 1 $padding) >&2
+    echo "" >&2
+    printf '=%.0s' $(seq 1 $width) >&2
+    echo "" >&2
 }
 
 # -----------------------------------------------------------------------------

@@ -171,7 +171,16 @@ copy_shared_directories() {
         # Copy directory (rsync preferred for efficiency, fallback to cp)
         if command -v rsync &> /dev/null; then
             # Use rsync for efficient directory copying (only updates changed files)
-            if rsync -a --delete "$source_dir/" "$target_path/" 2>/dev/null; then
+            # Exclude common directories and lock files that shouldn't be synced
+            if rsync -a --delete \
+                --exclude='node_modules' \
+                --exclude='.git' \
+                --exclude='bun.lock' \
+                --exclude='bun.lockb' \
+                --exclude='package-lock.json' \
+                --exclude='yarn.lock' \
+                --exclude='pnpm-lock.yaml' \
+                "$source_dir/" "$target_path/" 2>/dev/null; then
                 log_debug "Synchronized shared directory: $dir_name"
                 ((copied_count++))
             else
@@ -179,12 +188,23 @@ copy_shared_directories() {
                 ((failed_count++))
             fi
         else
-            # Fallback to cp -r (remove and recopy)
+            # Fallback to manual copy with exclusions
             if [[ -d "$target_path" ]]; then
                 rm -rf "$target_path"
             fi
-            if cp -r "$source_dir" "$project_dir/" 2>/dev/null; then
-                log_debug "Copied shared directory: $dir_name"
+            mkdir -p "$target_path"
+
+            # Use find to copy while excluding specific patterns
+            if (cd "$source_dir" && find . -type f \
+                ! -path '*/node_modules/*' \
+                ! -path '*/.git/*' \
+                ! -name 'bun.lock' \
+                ! -name 'bun.lockb' \
+                ! -name 'package-lock.json' \
+                ! -name 'yarn.lock' \
+                ! -name 'pnpm-lock.yaml' \
+                -exec sh -c 'mkdir -p "'"$target_path"'/$(dirname "$1")" && cp "$1" "'"$target_path"'/$1"' _ {} \; 2>/dev/null); then
+                log_debug "Copied shared directory (with exclusions): $dir_name"
                 ((copied_count++))
             else
                 log_warn "Failed to copy shared directory: $source_dir"

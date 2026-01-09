@@ -96,65 +96,83 @@ graph TD
 ## Key Decision Points
 
 ### 1. CLI Selection
+
 - **OpenCode** (default): `opencode run`
 - **KiloCode**: Specify with `--cli kilocode`
 
 ### 2. Project Directory Check
+
 Determines if we're working with an existing codebase or creating a new project.
 
 ### 3. Spec Requirement
+
 - **New projects**: Require `--spec` argument
 - **Existing projects**: Spec generated during onboarding
 
 ### 4. Iteration Mode
+
 Can run unlimited iterations or a specific number via `--max-iterations`.
 
 ### 5. Shared Directory Sync (v2.1.0+)
+
 At the start of each iteration, syncs directories listed in `copydirs.txt`:
+
 - IDE configurations (`.claude`, `.windsurf`, `.vscode`)
 - Shared linting rules
 - Common templates
 
 ### 6. Two-Stage Idle Timeout (v2.1.0+)
+
 When agent becomes unresponsive:
+
 - **Stage 1** (default 180s): Send nudge message asking if agent is stuck
 - **Stage 2** (remaining time): Hard kill if still no response
 - Total timeout controlled by `--idle-timeout` (default 360s)
 
 ### 7. Onboarding Completion
+
 If `feature_list.json` appears to be a template with placeholders like `{yyyy-mm-dd}`, onboarding is considered incomplete.
 
 ### 8. Prompt Selection
+
 Based on project state:
+
 - **Onboarding**: Existing codebases when `.aidd` files missing/incomplete
 - **Initializer**: New/empty projects where spec is copied
 - **Coding**: When spec and feature_list exist and onboarding complete
 - **TODO**: When `--todo` flag is used (work on todo items)
 
 ### 9. Abort/Failure Policy
+
 `--quit-on-abort N` stops after N consecutive failures.
 
 ## File Operations
 
 ### Scaffolding Copy
+
 Only for new projects - copies template structure.
 
 ### Artifacts Copy
+
 Copies metadata templates into `.aidd/` without overwriting existing files:
+
 - `feature_list.json` template
 - `progress.md` template
 - `project_structure.md` template
 - `todo.md` template
 
 ### Spec Copy
+
 If `--spec` provided, copied to `.aidd/spec.txt` during initializer flow.
 
 ### Log Management
+
 - Automatic cleanup on exit unless `--no-clean` is set
 - Logs stored in `.aidd/iterations/NNN.log`
 - Sequential numbering prevents overwrites
 
 ### Shared Directory Sync
+
 - Reads `copydirs.txt` for directory paths
 - Uses `rsync -av --delete` (falls back to `cp -R`)
 - Runs at start of each iteration
@@ -162,6 +180,7 @@ If `--spec` provided, copied to `.aidd/spec.txt` during initializer flow.
 ## Error Handling
 
 ### Exit Codes
+
 - **0**: Success
 - **1**: General error
 - **2**: Invalid arguments
@@ -171,6 +190,7 @@ If `--spec` provided, copied to `.aidd/spec.txt` during initializer flow.
 - **124**: Signal terminated
 
 ### Early Abort Conditions
+
 - Missing required arguments → immediate exit
 - Spec file not found when provided → immediate exit
 - No assistant messages → exit code 70
@@ -178,6 +198,7 @@ If `--spec` provided, copied to `.aidd/spec.txt` during initializer flow.
 - Idle timeout → exit code 71 (after nudge attempt)
 
 ### Cleanup
+
 Trap ensures logs are cleaned on exit even on interruption (unless `--no-clean`).
 
 ## Prompt Architecture (v2.0+)
@@ -185,6 +206,7 @@ Trap ensures logs are cleaned on exit even on interruption (unless `--no-clean`)
 All prompts follow modular structure with shared `_common/` modules:
 
 ### Common Modules
+
 - `assistant-rules-loading.md` - Load project-specific rules
 - `project-overrides.md` - Handle project.txt overrides
 - `testing-requirements.md` - UI testing guidelines
@@ -194,11 +216,13 @@ All prompts follow modular structure with shared `_common/` modules:
 - `error-handling-patterns.md` - Error recovery strategies
 
 ### Workflow Steps (All Prompts)
+
 1. **Step 0**: Ingest assistant rules (highest priority)
 2. **Step 1**: Check project overrides
 3. **Step 2+**: Prompt-specific workflow
 
 This modular approach:
+
 - Reduces token usage by 25-30%
 - Ensures consistency across prompts
 - Simplifies maintenance
@@ -207,6 +231,7 @@ This modular approach:
 ## CLI Abstraction
 
 Uses factory pattern to support multiple CLIs:
+
 - `cli-factory.sh` - Unified interface
 - `opencode-cli.sh` - OpenCode implementation
 - `kilocode-cli.sh` - KiloCode implementation

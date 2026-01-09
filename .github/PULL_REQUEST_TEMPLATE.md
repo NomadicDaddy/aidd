@@ -24,11 +24,13 @@
 <!-- Describe the tests you ran and how to reproduce them -->
 
 **Test Configuration**:
+
 - OS:
 - Bash version:
 - CLI (OpenCode/KiloCode):
 
 **Test Scenarios**:
+
 - [ ] New project initialization
 - [ ] Existing codebase onboarding
 - [ ] Development iterations

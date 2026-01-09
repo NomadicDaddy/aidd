@@ -11,6 +11,7 @@ This project follows a simple code of conduct: be respectful, constructive, and 
 ### Reporting Bugs
 
 If you find a bug, please open an issue with:
+
 - A clear, descriptive title
 - Steps to reproduce the bug
 - Expected vs actual behavior
@@ -20,6 +21,7 @@ If you find a bug, please open an issue with:
 ### Suggesting Enhancements
 
 Enhancement suggestions are welcome! Please open an issue with:
+
 - A clear description of the enhancement
 - Why it would be useful
 - Example use cases
@@ -30,10 +32,10 @@ Enhancement suggestions are welcome! Please open an issue with:
 1. **Fork the repository** and create your branch from `main`
 2. **Make your changes** following the coding style of the project
 3. **Test your changes** thoroughly:
-   - Test with both OpenCode and KiloCode if applicable
-   - Test new project initialization
-   - Test existing codebase onboarding
-   - Test iteration workflows
+    - Test with both OpenCode and KiloCode if applicable
+    - Test new project initialization
+    - Test existing codebase onboarding
+    - Test iteration workflows
 4. **Update documentation** if needed (README.md, prompts/, etc.)
 5. **Commit your changes** with clear, descriptive commit messages
 6. **Push to your fork** and submit a pull request
@@ -64,18 +66,18 @@ chmod +x aidd.sh
 
 - `aidd.sh` - Main entry point
 - `lib/` - Core library modules
-  - `config.sh` - Configuration constants
-  - `utils.sh` - Utility functions
-  - `args.sh` - Argument parsing
-  - `cli-factory.sh` - CLI abstraction
-  - `project.sh` - Project management
-  - `iteration.sh` - Iteration handling
+    - `config.sh` - Configuration constants
+    - `utils.sh` - Utility functions
+    - `args.sh` - Argument parsing
+    - `cli-factory.sh` - CLI abstraction
+    - `project.sh` - Project management
+    - `iteration.sh` - Iteration handling
 - `prompts/` - Prompt templates for AI agents
-  - `_common/` - Shared prompt modules
-  - `onboarding.md` - Existing codebase prompt
-  - `initializer.md` - New project prompt
-  - `coding.md` - Development iterations prompt
-  - `todo.md` - TODO mode prompt
+    - `_common/` - Shared prompt modules
+    - `onboarding.md` - Existing codebase prompt
+    - `initializer.md` - New project prompt
+    - `coding.md` - Development iterations prompt
+    - `todo.md` - TODO mode prompt
 - `scaffolding/` - Template files for new projects
 - `artifacts/` - Project metadata templates
 - `specs/` - Example specification files
@@ -93,6 +95,7 @@ chmod +x aidd.sh
 ## Testing
 
 Before submitting a PR, test your changes with:
+
 - A new empty project
 - An existing codebase
 - Both OpenCode and KiloCode (if modifying CLI-related code)

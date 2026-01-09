@@ -16,10 +16,10 @@ If you discover a security vulnerability in AIDD, please report it responsibly:
 1. **Do NOT** open a public GitHub issue
 2. Email the maintainer directly (check GitHub profile for contact info)
 3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Any suggested fixes
+    - Description of the vulnerability
+    - Steps to reproduce
+    - Potential impact
+    - Any suggested fixes
 
 We will acknowledge receipt within 48 hours and provide a more detailed response within 7 days.
 
@@ -28,6 +28,7 @@ We will acknowledge receipt within 48 hours and provide a more detailed response
 ### Prompt Injection
 
 AIDD executes AI-generated commands and code. Users should:
+
 - Review iteration logs in `.aidd/iterations/`
 - Monitor git commits for unexpected changes
 - Use in controlled environments
@@ -36,6 +37,7 @@ AIDD executes AI-generated commands and code. Users should:
 ### File System Access
 
 AIDD has full file system access within project directories. Users should:
+
 - Only run AIDD on projects they control
 - Review the `copydirs.txt` file before using shared directory sync
 - Ensure proper file permissions on sensitive directories
@@ -43,6 +45,7 @@ AIDD has full file system access within project directories. Users should:
 ### API Keys and Credentials
 
 AIDD relies on OpenCode or KiloCode CLIs for AI access. Users should:
+
 - Follow the security guidelines of their chosen CLI
 - Ensure API keys are properly secured
 - Not commit API keys to version control
@@ -51,6 +54,7 @@ AIDD relies on OpenCode or KiloCode CLIs for AI access. Users should:
 ### Dependencies
 
 AIDD is a shell script with minimal dependencies:
+
 - Bash 4.0+
 - OpenCode or KiloCode CLI
 - jq (optional)
@@ -70,6 +74,7 @@ Users should ensure these dependencies come from trusted sources.
 ## Scope
 
 AIDD is a development tool intended for use by developers on their own projects. It is not designed for:
+
 - Production deployment
 - Multi-tenant environments
 - Untrusted code execution

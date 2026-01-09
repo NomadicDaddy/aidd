@@ -280,9 +280,11 @@ browser_action.launch http://localhost:{frontendPort}
 
 **Only execute if TODO items exist.**
 
-**CRITICAL: Update `/.aidd/todo.md` to reflect completed work.**
+**CRITICAL: Update both .aidd/todo.md AND remove completed TODO comments from code.**
 
 #### 5.1 Remove or Mark Completed Item
+
+**For items from .aidd/todo.md:**
 
 **Option 1: Remove completed item:**
 
@@ -306,19 +308,41 @@ browser_action.launch http://localhost:{frontendPort}
 - [x] Fix login form validation [✅ DONE 2026-01-09]
 ```
 
+**For TODO comments from code files:**
+
+**CRITICAL: Remove the TODO comment from the source file after completing it.**
+
+```typescript
+// Before
+// TODO: Add error handling for network failures
+async function fetchData() {
+  return await api.get('/data');
+}
+
+// After (TODO removed, feature implemented)
+async function fetchData() {
+  try {
+    return await api.get('/data');
+  } catch (error) {
+    console.error('Network error:', error);
+    throw new Error('Failed to fetch data');
+  }
+}
+```
+
 **If all items complete:**
 
-- Remove entire `/.aidd/todo.md` file
+- Remove entire `/.aidd/todo.md` file if it exists
+- Ensure all TODO comments have been removed from code
 - Document completion in progress.md
 
-#### 5.2 Keep List Organized
+#### 5.2 Keep Lists Organized
 
 - Maintain proper formatting and structure
 - Add any new TODOs discovered during implementation
 - Group related items together if helpful
 
 ---
-
 ### STEP 6: COMMIT PROGRESS
 
 **Only execute if TODO items exist.**

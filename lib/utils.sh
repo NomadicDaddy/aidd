@@ -148,6 +148,365 @@ command_exists() {
 }
 
 # -----------------------------------------------------------------------------
+# System Compatibility Checks
+# -----------------------------------------------------------------------------
+
+# Check Bash version (requires 4.0+)
+# Usage: check_bash_version
+# Returns: 0 if compatible, 1 if not
+check_bash_version() {
+    local required_major=4
+    local required_minor=0
+
+    if [[ -z "${BASH_VERSINFO[0]}" ]]; then
+        log_error "Unable to determine Bash version"
+        return 1
+    fi
+
+    local major="${BASH_VERSINFO[0]}"
+    local minor="${BASH_VERSINFO[1]:-0}"
+
+    if [[ $major -lt $required_major ]]; then
+        log_error "Bash $required_major.$required_minor or higher is required (found: $major.$minor)"
+        return 1
+    fi
+
+    log_debug "Bash version check passed: $major.$minor"
+    return 0
+}
+
+# Check platform compatibility
+# Usage: check_platform_compatibility
+# Returns: 0 if compatible, 1 if not
+check_platform_compatibility() {
+    local platform
+    platform="$(uname -s 2>/dev/null)"
+
+    case "$platform" in
+        Linux*|Darwin*|CYGWIN*|MINGW*|MSYS*)
+            log_debug "Platform check passed: $platform"
+            return 0
+            ;;
+        *)
+            log_warn "Unsupported or unknown platform: $platform (may experience issues)"
+            return 0  # Warning only, don't fail
+            ;;
+    esac
+}
+
+# Check required external dependencies
+# Usage: check_required_dependencies
+# Returns: 0 if all found, 1 if any missing
+check_required_dependencies() {
+    local -a required_commands=("cat" "grep" "find" "mkdir" "basename" "dirname")
+    local missing=false
+
+    for cmd in "${required_commands[@]}"; do
+        if ! command_exists "$cmd"; then
+            log_error "Required command not found: $cmd"
+            missing=true
+        fi
+    done
+
+    if [[ "$missing" == true ]]; then
+        return 1
+    fi
+
+    log_debug "Required dependencies check passed"
+    return 0
+}
+
+# Run all system compatibility checks
+# Usage: check_system_compatibility
+# Returns: 0 if all checks pass, 1 if any fail
+check_system_compatibility() {
+    local all_passed=true
+
+    if ! check_bash_version; then
+        all_passed=false
+    fi
+
+    if ! check_platform_compatibility; then
+        all_passed=false
+    fi
+
+    if ! check_required_dependencies; then
+        all_passed=false
+    fi
+
+    if [[ "$all_passed" == false ]]; then
+        log_error "System compatibility checks failed"
+        return 1
+    fi
+
+    log_debug "All system compatibility checks passed"
+    return 0
+}
+
+# -----------------------------------------------------------------------------
+# Security Functions
+# -----------------------------------------------------------------------------
+
+# Validate path to prevent path traversal attacks
+# Usage: validate_path <path> <base_dir>
+# Returns: 0 if valid, 1 if invalid
+validate_path() {
+    local path="$1"
+    local base_dir="$2"
+
+    # Check for path traversal patterns
+    if [[ "$path" == *".."* ]]; then
+        log_error "Path traversal detected: $path"
+        return 1
+    fi
+
+    # If base_dir provided, ensure resolved path is within it
+    if [[ -n "$base_dir" ]]; then
+        local resolved_base
+        local resolved_path
+
+        resolved_base=$(cd "$base_dir" && pwd) || return 1
+
+        # For paths that don't exist yet, validate the parent directory
+        if [[ ! -e "$path" ]]; then
+            local parent_dir
+            parent_dir=$(dirname "$path")
+            if [[ -d "$parent_dir" ]]; then
+                resolved_path=$(cd "$parent_dir" && pwd)/$(basename "$path")
+            else
+                # Parent doesn't exist, validate the path string directly
+                resolved_path="$resolved_base/$path"
+            fi
+        else
+            resolved_path=$(cd "$(dirname "$path")" && pwd)/$(basename "$path")
+        fi
+
+        # Check if resolved path starts with base directory
+        if [[ "$resolved_path" != "$resolved_base"* ]]; then
+            log_error "Path outside base directory: $path (base: $base_dir)"
+            return 1
+        fi
+    fi
+
+    return 0
+}
+
+# Validate file for safe copying
+# Usage: validate_file_for_copy <file_path> [max_size_mb]
+# Returns: 0 if valid, 1 if invalid
+validate_file_for_copy() {
+    local file_path="$1"
+    local max_size_mb="${2:-100}"  # Default 100MB limit
+    local max_size_bytes=$((max_size_mb * 1024 * 1024))
+
+    # Check if file exists
+    if [[ ! -e "$file_path" ]]; then
+        log_error "File does not exist: $file_path"
+        return 1
+    fi
+
+    # Check if we have read permission
+    if [[ ! -r "$file_path" ]]; then
+        log_error "No read permission for: $file_path"
+        return 1
+    fi
+
+    # For regular files, check size
+    if [[ -f "$file_path" ]]; then
+        local file_size
+        file_size=$(stat -c%s "$file_path" 2>/dev/null || stat -f%z "$file_path" 2>/dev/null)
+
+        if [[ -n "$file_size" && $file_size -gt $max_size_bytes ]]; then
+            log_error "File too large: $file_path ($(( file_size / 1024 / 1024 ))MB > ${max_size_mb}MB)"
+            return 1
+        fi
+    fi
+
+    return 0
+}
+
+# Safe copy with validation and permission checks
+# Usage: safe_copy <source> <destination> [base_dir] [max_size_mb]
+# Returns: 0 on success, 1 on failure
+safe_copy() {
+    local source="$1"
+    local destination="$2"
+    local base_dir="$3"
+    local max_size_mb="${4:-100}"
+
+    # Validate source path
+    if ! validate_file_for_copy "$source" "$max_size_mb"; then
+        return 1
+    fi
+
+    # Validate destination path if base_dir provided
+    if [[ -n "$base_dir" ]]; then
+        if ! validate_path "$destination" "$base_dir"; then
+            return 1
+        fi
+    fi
+
+    # Ensure destination directory exists and is writable
+    local dest_dir
+    dest_dir=$(dirname "$destination")
+    if [[ ! -d "$dest_dir" ]]; then
+        if ! mkdir -p "$dest_dir" 2>/dev/null; then
+            log_error "Cannot create destination directory: $dest_dir"
+            return 1
+        fi
+    fi
+
+    if [[ ! -w "$dest_dir" ]]; then
+        log_error "No write permission for directory: $dest_dir"
+        return 1
+    fi
+
+    # Perform the copy with error handling
+    if [[ -d "$source" ]]; then
+        if ! cp -r "$source" "$destination" 2>/dev/null; then
+            log_error "Failed to copy directory: $source -> $destination"
+            return 1
+        fi
+    else
+        if ! cp "$source" "$destination" 2>/dev/null; then
+            log_error "Failed to copy file: $source -> $destination"
+            return 1
+        fi
+    fi
+
+    log_debug "Safely copied: $source -> $destination"
+    return 0
+}
+
+# Validate CLI command path to prevent command injection
+# Usage: validate_cli_command <command_name>
+# Returns: 0 if valid, 1 if invalid
+validate_cli_command() {
+    local cmd="$1"
+
+    # Check if command contains dangerous characters (use grep for complex pattern)
+    if echo "$cmd" | grep -qE '[;&|<>`$()]'; then
+        log_error "Invalid characters in command: $cmd"
+        return 1
+    fi
+
+    # Verify the command exists and get its full path
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        log_error "Command not found: $cmd"
+        return 1
+    fi
+
+    return 0
+}
+
+# Sanitize model arguments to prevent injection
+# Usage: sanitize_model_args <args...>
+# Returns: Sanitized arguments via stdout
+sanitize_model_args() {
+    local -a sanitized_args=()
+    local arg
+
+    for arg in "$@"; do
+        # Remove dangerous characters from arguments
+        # Allow alphanumeric, dashes, underscores, dots, slashes, colons, equals
+        if [[ "$arg" =~ ^[a-zA-Z0-9._/:=-]+$ ]]; then
+            sanitized_args+=("$arg")
+        else
+            log_warn "Skipping potentially dangerous argument: $arg"
+        fi
+    done
+
+    echo "${sanitized_args[@]}"
+}
+
+# -----------------------------------------------------------------------------
+# CLI Process Monitoring
+# -----------------------------------------------------------------------------
+
+# Monitor coprocess output for error patterns with idle timeout detection
+# Usage: monitor_coprocess_output <log_level_for_errors>
+# Requires: COPROC to be set up, global error pattern variables
+# Returns: Exit code based on detected conditions or actual process exit code
+monitor_coprocess_output() {
+    local error_log_level="${1:-warn}"  # Default to warn, can be "error"
+    local saw_no_assistant=false
+    local saw_idle_timeout=false
+    local saw_provider_error=false
+
+    # Monitor output for error patterns and idle timeout
+    while true; do
+        local line=""
+        if IFS= read -r -t "${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}" line <&"${COPROC[0]}"; then
+            echo "$line"
+
+            # Check for "no assistant messages" pattern
+            if [[ "$line" == *"$PATTERN_NO_ASSISTANT"* ]]; then
+                saw_no_assistant=true
+                if [[ "$error_log_level" == "error" ]]; then
+                    log_error "Detected 'no assistant messages' from model; aborting."
+                else
+                    log_warn "Detected 'no assistant messages' from model"
+                fi
+                kill -TERM "$COPROC_PID" 2>/dev/null || true
+                break
+            fi
+
+            # Check for provider error pattern
+            if [[ "$line" == *"$PATTERN_PROVIDER_ERROR"* ]]; then
+                saw_provider_error=true
+                if [[ "$error_log_level" == "error" ]]; then
+                    log_error "Detected 'provider error' from model; aborting."
+                else
+                    log_warn "Detected 'provider error' from model"
+                fi
+                kill -TERM "$COPROC_PID" 2>/dev/null || true
+                break
+            fi
+
+            continue
+        fi
+
+        # Check if process is still running (idle timeout)
+        if kill -0 "$COPROC_PID" 2>/dev/null; then
+            saw_idle_timeout=true
+            if [[ "$error_log_level" == "error" ]]; then
+                log_error "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s) waiting for output; aborting."
+            else
+                log_warn "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s) waiting for output"
+            fi
+            kill -TERM "$COPROC_PID" 2>/dev/null || true
+            break
+        fi
+
+        # Process has finished
+        break
+    done
+
+    # Wait for process to finish and get exit code
+    wait "$COPROC_PID" 2>/dev/null
+    local exit_code=$?
+
+    # Return custom exit codes based on detected conditions
+    if [[ "$saw_no_assistant" == true ]]; then
+        [[ "$error_log_level" != "error" ]] && log_debug "Exiting with NO_ASSISTANT code: $EXIT_NO_ASSISTANT"
+        return "$EXIT_NO_ASSISTANT"
+    fi
+
+    if [[ "$saw_idle_timeout" == true ]]; then
+        [[ "$error_log_level" != "error" ]] && log_debug "Exiting with IDLE_TIMEOUT code: $EXIT_IDLE_TIMEOUT"
+        return "$EXIT_IDLE_TIMEOUT"
+    fi
+
+    if [[ "$saw_provider_error" == true ]]; then
+        [[ "$error_log_level" != "error" ]] && log_debug "Exiting with PROVIDER_ERROR code: $EXIT_PROVIDER_ERROR"
+        return "$EXIT_PROVIDER_ERROR"
+    fi
+
+    [[ "$error_log_level" != "error" ]] && log_debug "Exiting with exit code: $exit_code"
+    return "$exit_code"
+}
+
+# -----------------------------------------------------------------------------
 # Cleanup Handler
 # -----------------------------------------------------------------------------
 

@@ -26,6 +26,14 @@ source "${SCRIPT_DIR}/lib/utils.sh"
 source "${SCRIPT_DIR}/lib/log-cleaner.sh"
 source "${SCRIPT_DIR}/lib/args.sh"
 
+# -----------------------------------------------------------------------------
+# System Compatibility Checks
+# -----------------------------------------------------------------------------
+if ! check_system_compatibility; then
+    echo "ERROR: System compatibility checks failed. Please see errors above." >&2
+    exit $EXIT_VALIDATION_ERROR
+fi
+
 # ---------------------------------------------------------------------------
 # ARGUMENT PARSING
 # ---------------------------------------------------------------------------
@@ -47,7 +55,14 @@ if ! check_cli_available; then
     exit $EXIT_CLI_ERROR
 fi
 
-log_info "Using CLI: $CLI_NAME ($CLI_TYPE)"
+# Log CLI version information
+CLI_VERSION=$(get_cli_version)
+if [[ -n "$CLI_VERSION" && "$CLI_VERSION" != "unknown" && "$CLI_VERSION" != "not installed" ]]; then
+    log_info "Using CLI: $CLI_NAME ($CLI_TYPE) version $CLI_VERSION"
+else
+    log_info "Using CLI: $CLI_NAME ($CLI_TYPE)"
+    log_warn "Unable to determine $CLI_NAME version"
+fi
 
 # Source remaining modules that depend on CLI being initialized
 source "${SCRIPT_DIR}/lib/project.sh"
@@ -80,14 +95,32 @@ if [[ ! -d "$PROJECT_DIR" ]]; then
     # Copy scaffolding files to the new project directory (including hidden files)
     log_info "Copying scaffolding files to '$PROJECT_DIR'..."
     if [[ -d "$SCRIPT_DIR/$DEFAULT_SCAFFOLDING_DIR" ]]; then
-        find "$SCRIPT_DIR/$DEFAULT_SCAFFOLDING_DIR" -mindepth 1 -maxdepth 1 -exec cp -r {} "$PROJECT_DIR/" \;
+        for item in "$SCRIPT_DIR/$DEFAULT_SCAFFOLDING_DIR"/*; do
+            if [[ -e "$item" ]]; then
+                local basename=$(basename "$item")
+                if safe_copy "$item" "$PROJECT_DIR/$basename" "$PROJECT_DIR"; then
+                    log_debug "Copied scaffolding: $basename"
+                else
+                    log_warn "Failed to copy scaffolding: $basename"
+                fi
+            fi
+        done
     fi
 
     # Copy artifacts contents to project's metadata folder
     log_info "Copying artifacts to '$METADATA_DIR'..."
-    mkdir -p "$METADATA_DIR"
+    mkdir -p "$METADATA_DIR" && chmod 755 "$METADATA_DIR"
     if [[ -d "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR" ]]; then
-        find "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR" -mindepth 1 -maxdepth 1 -exec cp -r {} "$METADATA_DIR/" \;
+        for item in "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR"/*; do
+            if [[ -e "$item" ]]; then
+                local basename=$(basename "$item")
+                if safe_copy "$item" "$METADATA_DIR/$basename" "$PROJECT_DIR"; then
+                    log_debug "Copied artifact: $basename"
+                else
+                    log_warn "Failed to copy artifact: $basename"
+                fi
+            fi
+        done
     fi
 else
     # Check if this is an existing codebase
@@ -142,11 +175,11 @@ handle_script_exit() {
     local exit_code=$?
 
     case $exit_code in
-        0) return ;;  # Success, no message needed
-        70) return ;;  # No assistant messages
-        71) return ;;  # Idle timeout
-        72) return ;;  # Provider error
-        124)
+        $EXIT_SUCCESS) return ;;  # Success, no message needed
+        $EXIT_NO_ASSISTANT) return ;;  # No assistant messages
+        $EXIT_IDLE_TIMEOUT) return ;;  # Idle timeout
+        $EXIT_PROVIDER_ERROR) return ;;  # Provider error
+        $EXIT_SIGNAL_TERMINATED)
             # Don't log error here - handle_failure() already logged whether we're aborting or continuing
             # This trap only runs on final script exit, not on per-iteration timeout
             return 1
@@ -232,7 +265,7 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
-            if [[ $ITERATION_EXIT_CODE -eq 124 && $CONTINUE_ON_TIMEOUT == true ]]; then
+            if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
                 log_warn "Timeout detected on iteration $i, continuing to next iteration..."
             else
                 exit "$ITERATION_EXIT_CODE"
@@ -304,7 +337,7 @@ else
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
-            if [[ $ITERATION_EXIT_CODE -eq 124 && $CONTINUE_ON_TIMEOUT == true ]]; then
+            if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
                 log_warn "Timeout detected on iteration $i, continuing to next iteration..."
             else
                 exit "$ITERATION_EXIT_CODE"

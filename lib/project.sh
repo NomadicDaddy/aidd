@@ -19,8 +19,8 @@ find_or_create_metadata_dir() {
     local dir="$1"
 
     # Check if .aidd directory exists
-    if [[ -d "$dir/$METADATA_DIR_NAME" ]]; then
-        echo "$dir/$METADATA_DIR_NAME"
+    if [[ -d "$dir/$DEFAULT_METADATA_DIR" ]]; then
+        echo "$dir/$DEFAULT_METADATA_DIR"
         return 0
     fi
 
@@ -28,10 +28,20 @@ find_or_create_metadata_dir() {
     # Check CLI-specific legacy directory first (set by cli-factory.sh)
     if [[ -n "$CLI_LEGACY_METADATA_DIR" && -d "$dir/$CLI_LEGACY_METADATA_DIR" ]]; then
         local legacy="$dir/$CLI_LEGACY_METADATA_DIR"
-        local target="$dir/$METADATA_DIR_NAME"
+        local target="$dir/$DEFAULT_METADATA_DIR"
         mkdir -p "$target"
-        cp -R "$legacy/." "$target/" 2>/dev/null || true
-        log_info "Migrated legacy metadata from $CLI_LEGACY_METADATA_DIR to $METADATA_DIR_NAME"
+
+        # Safely copy legacy metadata files
+        for item in "$legacy"/*; do
+            if [[ -e "$item" ]]; then
+                local basename=$(basename "$item")
+                if ! safe_copy "$item" "$target/$basename" "$dir"; then
+                    log_warn "Failed to migrate: $basename"
+                fi
+            fi
+        done
+
+        log_info "Migrated legacy metadata from $CLI_LEGACY_METADATA_DIR to $DEFAULT_METADATA_DIR"
         echo "$target"
         return 0
     fi
@@ -44,9 +54,9 @@ find_or_create_metadata_dir() {
     fi
 
     # Create new .aidd directory
-    mkdir -p "$dir/$METADATA_DIR_NAME"
-    log_debug "Created metadata directory: $dir/$METADATA_DIR_NAME"
-    echo "$dir/$METADATA_DIR_NAME"
+    mkdir -p "$dir/$DEFAULT_METADATA_DIR"
+    log_debug "Created metadata directory: $dir/$DEFAULT_METADATA_DIR"
+    echo "$dir/$DEFAULT_METADATA_DIR"
     return 0
 }
 
@@ -64,7 +74,7 @@ is_existing_codebase() {
     # Find files/directories excluding common metadata and IDE directories
     local has_files=$(find "$dir" -mindepth 1 -maxdepth 1 \
         ! -name '.git' \
-        ! -name "$METADATA_DIR_NAME" \
+        ! -name "$DEFAULT_METADATA_DIR" \
         ! -name '.auto' \
         ! -name '.autok' \
         ! -name '.automaker' \
@@ -104,8 +114,11 @@ copy_artifacts() {
             local basename
             basename=$(basename "$artifact")
             if [[ ! -e "$project_metadata_dir/$basename" ]]; then
-                cp -r "$artifact" "$project_metadata_dir/"
-                log_debug "Copied artifact: $basename"
+                if safe_copy "$artifact" "$project_metadata_dir/$basename" "$project_dir"; then
+                    log_debug "Copied artifact: $basename"
+                else
+                    log_warn "Failed to copy artifact: $basename"
+                fi
             else
                 log_debug "Artifact already exists, skipping: $basename"
             fi

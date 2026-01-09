@@ -5,7 +5,10 @@
 # Functions for interacting with OpenCode CLI, including error detection
 
 # Note: This module is sourced by cli-factory.sh and should not be sourced directly
-# Config and utils are assumed to be already loaded by cli-factory.sh
+# Ensure utils.sh is loaded for monitor_coprocess_output function
+if ! declare -f monitor_coprocess_output >/dev/null 2>&1; then
+    source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
+fi
 
 # -----------------------------------------------------------------------------
 # OpenCode CLI Interaction Functions
@@ -20,9 +23,6 @@ run_opencode_prompt() {
     shift 2
 
     local -a model_args=("$@")
-    local saw_no_assistant=false
-    local saw_idle_timeout=false
-    local saw_provider_error=false
 
     local opencode_cmd="opencode run"
     if [[ ${#model_args[@]} -gt 0 ]]; then
@@ -34,67 +34,11 @@ run_opencode_prompt() {
     log_debug "Timeout: ${TIMEOUT:-$DEFAULT_TIMEOUT}s, Idle: ${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s"
 
     # Execute OpenCode in a coprocess to monitor output
-    coproc OPENCODE_PROC { (cd "$project_dir" && timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" bash -c "cat '$prompt_path' | $opencode_cmd") 2>&1; }
+    coproc { (cd "$project_dir" && timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" bash -c "cat \"\$1\" | $opencode_cmd" _ "$prompt_path") 2>&1; }
 
-    # Monitor output for error patterns and idle timeout
-    while true; do
-        local line=""
-        if IFS= read -r -t "${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}" line <&"${OPENCODE_PROC[0]}"; then
-            echo "$line"
-
-            # Check for "no assistant messages" pattern
-            if [[ "$line" == *"$PATTERN_NO_ASSISTANT"* ]]; then
-                saw_no_assistant=true
-                log_warn "Detected 'no assistant messages' from model"
-                kill -TERM "$OPENCODE_PROC_PID" 2>/dev/null || true
-                break
-            fi
-
-            # Check for provider error pattern
-            if [[ "$line" == *"$PATTERN_PROVIDER_ERROR"* ]]; then
-                saw_provider_error=true
-                log_warn "Detected 'provider error' from model"
-                kill -TERM "$OPENCODE_PROC_PID" 2>/dev/null || true
-                break
-            fi
-
-            continue
-        fi
-
-        # Check if process is still running (idle timeout)
-        if kill -0 "$OPENCODE_PROC_PID" 2>/dev/null; then
-            saw_idle_timeout=true
-            log_warn "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s) waiting for OpenCode output"
-            kill -TERM "$OPENCODE_PROC_PID" 2>/dev/null || true
-            break
-        fi
-
-        # Process has finished
-        break
-    done
-
-    # Wait for process to finish and get exit code
-    wait "$OPENCODE_PROC_PID" 2>/dev/null
-    local exit_code=$?
-
-    # Return custom exit codes based on detected conditions
-    if [[ "$saw_no_assistant" == true ]]; then
-        log_debug "Exiting with NO_ASSISTANT code: $EXIT_NO_ASSISTANT"
-        return "$EXIT_NO_ASSISTANT"
-    fi
-
-    if [[ "$saw_idle_timeout" == true ]]; then
-        log_debug "Exiting with IDLE_TIMEOUT code: $EXIT_IDLE_TIMEOUT"
-        return "$EXIT_IDLE_TIMEOUT"
-    fi
-
-    if [[ "$saw_provider_error" == true ]]; then
-        log_debug "Exiting with PROVIDER_ERROR code: $EXIT_PROVIDER_ERROR"
-        return "$EXIT_PROVIDER_ERROR"
-    fi
-
-    log_debug "Exiting with OpenCode exit code: $exit_code"
-    return "$exit_code"
+    # Use shared monitoring function (with "warn" log level for errors)
+    monitor_coprocess_output "warn"
+    return $?
 }
 
 # Check if OpenCode is available

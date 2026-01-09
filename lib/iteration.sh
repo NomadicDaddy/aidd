@@ -38,7 +38,7 @@ handle_failure() {
     local exit_code="$1"
 
     # Don't count timeout (exit 124) as a failure if CONTINUE_ON_TIMEOUT is set
-    if [[ $exit_code -eq 124 && $CONTINUE_ON_TIMEOUT == true ]]; then
+    if [[ $exit_code -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
         log_warn "Timeout detected (exit=$exit_code), continuing to next iteration..."
         # Increment failure counter to track repeated timeouts
         ((CONSECUTIVE_FAILURES++))

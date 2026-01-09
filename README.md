@@ -1,11 +1,11 @@
 # AIDD - AI Development Driver
 
-A unified shell script that orchestrates autonomous development sessions using either **OpenCode** or **KiloCode** AI CLIs. AIDD provides a consistent interface for AI-driven development regardless of which CLI you prefer.
+A unified shell script that orchestrates autonomous development sessions using **OpenCode**, **KiloCode**, or **Claude Code** AI CLIs. AIDD provides a consistent interface for AI-driven development regardless of which CLI you prefer.
 
 ## Features
 
-- **Dual CLI Support**: Seamlessly switch between OpenCode and KiloCode
-- **Unified Interface**: Identical workflow and features across both CLIs
+- **Multiple CLI Support**: Seamlessly switch between OpenCode, KiloCode, and Claude Code
+- **Unified Interface**: Identical workflow and features across all CLIs
 - **Project Management**: Automatic project initialization, scaffolding, and metadata tracking
 - **Iteration Management**: Built-in retry logic, failure handling, and progress tracking with two-stage idle timeout and agent nudging
 - **Feature Tracking**: JSON-based feature list with status tracking
@@ -26,9 +26,19 @@ A unified shell script that orchestrates autonomous development sessions using e
 - Specify with `--cli kilocode`
 - Legacy directory: `.autok`
 
+### Claude Code
+
+- Command: `claude --print`
+- Specify with `--cli claude-code`
+- Uses your Claude Pro subscription
+- No legacy directory (new integration)
+
 ## Installation
 
-1. Ensure you have either OpenCode or KiloCode installed
+1. Ensure you have one of the supported CLIs installed:
+    - **OpenCode**: [Installation instructions](https://opencode.ai)
+    - **KiloCode**: [Installation instructions](https://kilocode.ai)
+    - **Claude Code**: Install from [claude.com/claude-code](https://claude.com/claude-code)
 2. Clone or download AIDD to your local machine
 3. Make the script executable:
     ```bash
@@ -40,7 +50,7 @@ A unified shell script that orchestrates autonomous development sessions using e
 ### Basic Syntax
 
 ```bash
-./aidd.sh [--cli {opencode|kilocode}] --project-dir <dir> [OPTIONS]
+./aidd.sh [--cli {opencode|kilocode|claude-code}] --project-dir <dir> [OPTIONS]
 ```
 
 ### Required Arguments
@@ -49,7 +59,7 @@ A unified shell script that orchestrates autonomous development sessions using e
 
 ### Optional Arguments
 
-- `--cli CLI`: CLI to use (`opencode` or `kilocode`, default: `opencode`)
+- `--cli CLI`: CLI to use (`opencode`, `kilocode`, or `claude-code`, default: `opencode`)
 - `--spec FILE`: Specification file (required for new projects)
 - `--max-iterations N`: Number of iterations (unlimited if not specified)
 - `--timeout N`: Timeout in seconds (default: 600)
@@ -91,6 +101,19 @@ A unified shell script that orchestrates autonomous development sessions using e
 
 # Existing project
 ./aidd.sh --cli kilocode --project-dir ./myproject --max-iterations 10
+```
+
+### Using Claude Code
+
+```bash
+# New project with Claude Code
+./aidd.sh --cli claude-code --project-dir ./myproject --spec ./specs/myapp.md
+
+# Existing project with specific model
+./aidd.sh --cli claude-code --project-dir ./myproject --model sonnet --max-iterations 10
+
+# Using different models for init and coding
+./aidd.sh --cli claude-code --project-dir ./myproject --init-model opus --code-model sonnet
 ```
 
 ### Other Operations
@@ -169,15 +192,16 @@ aidd/
 ├── aidd.sh                 # Main script
 ├── copydirs.txt           # List of shared directories to sync to projects
 ├── lib/
-│   ├── config.sh          # Configuration constants
-│   ├── utils.sh           # Utility functions
-│   ├── log-cleaner.sh     # Native bash log cleaning
 │   ├── args.sh            # Argument parsing
+│   ├── cli-claude-code.sh # Claude Code CLI implementation
 │   ├── cli-factory.sh     # CLI abstraction layer
-│   ├── opencode-cli.sh    # OpenCode CLI implementation
-│   ├── kilocode-cli.sh    # KiloCode CLI implementation
+│   ├── cli-kilocode.sh    # KiloCode CLI implementation
+│   ├── cli-opencode.sh    # OpenCode CLI implementation
+│   ├── config.sh          # Configuration constants
+│   ├── iteration.sh       # Iteration handling
+│   ├── log-cleaner.sh     # Native bash log cleaning
 │   ├── project.sh         # Project management
-│   └── iteration.sh       # Iteration handling
+│   └── utils.sh           # Utility functions
 ├── prompts/
 │   ├── _common/           # Shared prompt modules (refactored v2.0)
 │   │   ├── assistant-rules-loading.md
@@ -236,10 +260,11 @@ The transcript captures the console output for that iteration. The log index is 
 AIDD uses a factory pattern to abstract CLI differences:
 
 - **cli-factory.sh**: Provides unified interface (`run_cli_prompt`, `check_cli_available`, etc.)
-- **opencode-cli.sh**: OpenCode-specific implementation
-- **kilocode-cli.sh**: KiloCode-specific implementation
+- **cli-opencode.sh**: OpenCode-specific implementation
+- **cli-kilocode.sh**: KiloCode-specific implementation
+- **cli-claude-code.sh**: Claude Code-specific implementation
 
-This allows the same codebase to support both CLIs with minimal differences.
+This allows the same codebase to support all CLIs with minimal differences.
 
 ## Legacy Migration
 
@@ -265,11 +290,18 @@ AIDD includes comprehensive error handling:
 ## Requirements
 
 - Bash 4.0+
-- Either OpenCode or KiloCode CLI installed and in PATH
+- One of the supported CLIs installed and in PATH:
+    - OpenCode (`opencode`)
+    - KiloCode (`kilocode`)
+    - Claude Code (`claude`)
 - jq (optional, for `--feature-list` display)
+- rsync (optional, for shared directory synchronization - falls back to `cp` if unavailable)
 
 ## Version History
 
+- **v2.2.0** (2026-01-09):
+    - Added Claude Code CLI support
+    - Updated all documentation to reflect triple CLI support
 - **v2.1.0** (2026-01-09):
     - Added two-stage idle timeout with agent nudging feature
     - Added shared directory synchronization (copydirs.txt)
@@ -296,5 +328,8 @@ For issues or questions:
 
 1. Check the `--help` output
 2. Review iteration logs in `.aidd/iterations/`
-3. Check CLI-specific documentation for OpenCode or KiloCode
+3. Check CLI-specific documentation:
+    - OpenCode: [opencode.ai/docs](https://opencode.ai/docs)
+    - KiloCode: [kilocode.ai/docs](https://kilocode.ai/docs)
+    - Claude Code: [claude.com/claude-code](https://claude.com/claude-code)
 4. Refer to the original aidd-o or aidd-k projects for historical context

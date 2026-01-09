@@ -3,7 +3,7 @@
 # lib/args.sh - Argument Parsing Module for AIDD
 # =============================================================================
 # Command-line argument parsing, validation, and default application
-# Supports both OpenCode and KiloCode CLIs
+# Supports OpenCode, KiloCode, and Claude Code CLIs
 
 # Source configuration for defaults
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
@@ -40,10 +40,10 @@ print_help() {
 Usage: $0 [OPTIONS]
 
 AIDD - AI Development Driver
-Supports both OpenCode and KiloCode CLIs
+Supports OpenCode, KiloCode, and Claude Code CLIs
 
 OPTIONS:
-    --cli CLI               CLI to use: opencode or kilocode (optional, default: $DEFAULT_CLI)
+    --cli CLI               CLI to use: opencode, kilocode, or claude-code (optional, default: $DEFAULT_CLI)
     --project-dir DIR       Project directory (required unless --feature-list or --todo is specified)
     --spec FILE             Specification file (optional for existing codebases, required for new projects)
     --max-iterations N      Maximum iterations (optional, unlimited if not specified)
@@ -68,6 +68,10 @@ EXAMPLES:
     # Using KiloCode
     $0 --cli kilocode --project-dir ./myproject --spec ./spec.txt
     $0 --cli kilocode --project-dir ./myproject --init-model claude --code-model gpt-4 --no-clean
+
+    # Using Claude Code
+    $0 --cli claude-code --project-dir ./myproject --spec ./spec.txt
+    $0 --cli claude-code --project-dir ./myproject --model sonnet --max-iterations 10
 
     # Other operations
     $0 --project-dir ./myproject --feature-list
@@ -166,12 +170,12 @@ validate_args() {
     fi
 
     case "$CLI_TYPE" in
-        opencode|kilocode)
+        opencode|kilocode|claude-code)
             # Valid CLI type
             ;;
         *)
             log_error "Invalid CLI type: $CLI_TYPE"
-            log_info "Valid options: opencode, kilocode"
+            log_info "Valid options: opencode, kilocode, claude-code"
             return $EXIT_INVALID_ARGS
             ;;
     esac

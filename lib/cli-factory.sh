@@ -3,7 +3,7 @@
 # lib/cli-factory.sh - CLI Abstraction Factory for AIDD
 # =============================================================================
 # Provides a common interface for interacting with different CLI tools
-# (OpenCode, KiloCode) through a factory pattern
+# (OpenCode, KiloCode, Claude Code) through a factory pattern
 
 # Source configuration
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
@@ -24,18 +24,25 @@ init_cli() {
             export CLI_NAME="OpenCode"
             export CLI_COMMAND="opencode run"
             export CLI_LEGACY_METADATA_DIR="$LEGACY_METADATA_DIR_OPENCODE"
-            source "$(dirname "${BASH_SOURCE[0]}")/opencode-cli.sh"
+            source "$(dirname "${BASH_SOURCE[0]}")/cli-opencode.sh"
             ;;
         kilocode)
             export CLI_TYPE="kilocode"
             export CLI_NAME="KiloCode"
             export CLI_COMMAND="kilocode"
             export CLI_LEGACY_METADATA_DIR="$LEGACY_METADATA_DIR_KILOCODE"
-            source "$(dirname "${BASH_SOURCE[0]}")/kilocode-cli.sh"
+            source "$(dirname "${BASH_SOURCE[0]}")/cli-kilocode.sh"
+            ;;
+        claude-code)
+            export CLI_TYPE="claude-code"
+            export CLI_NAME="Claude Code"
+            export CLI_COMMAND="claude"
+            export CLI_LEGACY_METADATA_DIR=""  # No legacy metadata dir for Claude Code
+            source "$(dirname "${BASH_SOURCE[0]}")/cli-claude-code.sh"
             ;;
         *)
             echo "Error: Unknown CLI type '$cli_type'" >&2
-            echo "Supported CLIs: opencode, kilocode" >&2
+            echo "Supported CLIs: opencode, kilocode, claude-code" >&2
             return "$EXIT_INVALID_ARGS"
             ;;
     esac
@@ -60,6 +67,9 @@ run_cli_prompt() {
         kilocode)
             run_kilocode_prompt "$@"
             ;;
+        claude-code)
+            run_claude_code_prompt "$@"
+            ;;
         *)
             echo "Error: CLI not initialized. Call init_cli() first." >&2
             return "$EXIT_CLI_ERROR"
@@ -78,6 +88,9 @@ check_cli_available() {
         kilocode)
             check_kilocode_available
             ;;
+        claude-code)
+            check_claude_code_available
+            ;;
         *)
             echo "Error: CLI not initialized. Call init_cli() first." >&2
             return 1
@@ -95,6 +108,9 @@ get_cli_version() {
             ;;
         kilocode)
             get_kilocode_version
+            ;;
+        claude-code)
+            get_claude_code_version
             ;;
         *)
             echo "unknown"

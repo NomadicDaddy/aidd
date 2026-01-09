@@ -530,7 +530,7 @@ Error: Model "User" is defined multiple times
 **Symptoms:**
 
 ```
-Error: listen EADDRINUSE: address already in use :::5173
+Error: listen EADDRINUSE: address already in use :::3000
 ```
 
 **Common Causes:**
@@ -546,13 +546,13 @@ Error: listen EADDRINUSE: address already in use :::5173
 
     ```bash
     # Linux/Mac
-    lsof -ti:5173
+    lsof -ti:3000
 
     # Windows
-    netstat -ano | findstr :5173
+    netstat -ano | findstr :3000
 
     # Test connection
-    curl http://localhost:5173
+    curl http://localhost:3000
     ```
 
 2. **If service is running:** Use existing service
@@ -571,17 +571,17 @@ Error: listen EADDRINUSE: address already in use :::5173
 
     ```bash
     # Start on different port
-    PORT=5174 npm run dev &
+    PORT=3001 npm run dev &
     ```
 
 5. **Kill old process only if necessary:**
 
     ```bash
     # Linux/Mac
-    kill $(lsof -ti:5173)
+    kill $(lsof -ti:3000)
 
     # Windows
-    # Find PID: netstat -ano | findstr :5173
+    # Find PID: netstat -ano | findstr :3000
     # Kill: taskkill /PID [pid] /F
     ```
 
@@ -656,13 +656,13 @@ Error: Navigation timeout exceeded
 1. **Verify frontend is running:**
 
     ```bash
-    curl http://localhost:3330
+    curl http://localhost:3000
     ```
 
 2. **Check correct port:**
     - Review dev.log
     - Check package.json scripts
-    - Try common ports (3000, 3330, 5173)
+    - Try common ports (3000, 3000)
 
 3. **Take screenshot to see actual state:**
 
@@ -677,7 +677,7 @@ Error: Navigation timeout exceeded
 
 5. **Fall back to API testing if UI blocked:**
     ```bash
-    curl -X POST http://localhost:3331/api/login -d '...'
+    curl -X POST http://localhost:3001/api/login -d '...'
     ```
 
 ---

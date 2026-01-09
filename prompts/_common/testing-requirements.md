@@ -124,7 +124,7 @@
 **Comprehensive test:**
 
 ```
-1. Launch http://localhost:3330
+1. Launch http://localhost:3000
 2. Click "Login" button
 3. Type email: "test@example.com"
 4. Type password: "correct-password"

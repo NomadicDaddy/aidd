@@ -21,13 +21,13 @@
     ps aux | grep -E "vite|next|react-scripts|webpack"
 
     # Check specific port (Mac/Linux)
-    lsof -ti:5173
+    lsof -ti:3000
 
     # Check specific port (Windows)
-    netstat -ano | findstr :5173
+    netstat -ano | findstr :3000
 
     # Try curl test
-    curl -s http://localhost:5173 >/dev/null && echo "Server running" || echo "Server not running"
+    curl -s http://localhost:3000 >/dev/null && echo "Server running" || echo "Server not running"
     ```
 
 2. **REUSE existing servers whenever possible**
@@ -46,7 +46,7 @@
     sleep 3
 
     # Verify it started
-    curl -s http://localhost:5173
+    curl -s http://localhost:3000
     ```
 
 4. **NEVER run these commands directly (they block indefinitely):**
@@ -58,8 +58,8 @@
     - Any other dev server command without `&`
 
 5. **To verify dev server accessibility:**
-    - Use curl checks: `curl -s http://localhost:5173`
-    - Use browser automation: `browser_action.launch http://localhost:5173`
+    - Use curl checks: `curl -s http://localhost:3000`
+    - Use browser automation: `browser_action.launch http://localhost:3000`
     - **DO NOT** start the command and wait for it
 
 **Remember:** Starting new servers wastes time; reusing existing servers is faster and preferred.

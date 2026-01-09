@@ -78,8 +78,8 @@ Only run: bun run smoke:qc
 ## Server Management Override
 Dev servers are managed externally by Docker Compose.
 Do NOT attempt to start or stop servers.
-Frontend: http://localhost:3330 (always running)
-Backend: http://localhost:3331 (always running)
+Frontend: http://localhost:3000 (always running)
+Backend: http://localhost:3001 (always running)
 
 ## Feature Implementation Override
 All features must be implemented behind feature flags.

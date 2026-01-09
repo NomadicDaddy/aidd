@@ -104,8 +104,8 @@ tsc
 
 ```bash
 ps aux | grep vite
-lsof -ti:5173
-netstat -ano | findstr :5173
+lsof -ti:3000
+netstat -ano | findstr :3000
 ```
 
 **Why use execute_command:**
@@ -122,7 +122,7 @@ netstat -ano | findstr :5173
 **browser_action.launch** - Open browser
 
 ```
-browser_action.launch http://localhost:3330
+browser_action.launch http://localhost:3000
 ```
 
 **browser_action.click** - Click elements
@@ -230,10 +230,10 @@ mcp_filesystem_search_files: pattern="TODO", path="src/"
 
 ```bash
 # ❌ WRONG (for UI testing)
-execute_command: curl http://localhost:3330
+execute_command: curl http://localhost:3000
 
 # ✅ CORRECT
-browser_action.launch http://localhost:3330
+browser_action.launch http://localhost:3000
 ```
 
 **MISTAKE 4: Using echo for file editing**

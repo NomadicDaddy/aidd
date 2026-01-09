@@ -210,8 +210,8 @@ Review `/.aidd/spec.txt` to identify:
 - `--slug`: Project directory basename
 - `--name`: Application name from spec
 - `--description`: Application description from spec
-- `--frontend-port`: Default 3330 unless specified
-- `--backend-port`: Default 3331 unless specified
+- `--frontend-port`: Default 3000 unless specified
+- `--backend-port`: Default 3001 unless specified
 
 #### 4.3 Verify Script
 
@@ -237,8 +237,8 @@ ls -l scripts/setup.ts
 
 - Application name (use for `--name`)
 - Application description (use for `--description`)
-- Frontend port (default to 3330 if not specified)
-- Backend port (default to 3331 if not specified)
+- Frontend port (default to 3000 if not specified)
+- Backend port (default to 3001 if not specified)
 
 **Calculate slug:**
 
@@ -257,8 +257,8 @@ bun scripts/setup.ts \
   --slug myapp \
   --name "My Application" \
   --description "Application description from spec" \
-  --frontend-port 3330 \
-  --backend-port 3331
+  --frontend-port 3000 \
+  --backend-port 3001
 ```
 
 #### 5.3 Handle Setup Failures

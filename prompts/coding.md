@@ -1,6 +1,6 @@
 ## YOUR ROLE - CODING AGENT (Session 2+)
 
-You are in Code mode and ready to continue work on a long-running autonomous development task.
+You are in Code mode and ready to continue work on a long-running autonomous development task. You have no time limit for this session.
 
 ### QUICK REFERENCES
 

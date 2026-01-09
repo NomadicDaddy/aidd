@@ -27,6 +27,14 @@ readonly CLAUDE_CODE_VERBOSE
 readonly CLAUDE_CODE_SKIP_PERMISSIONS
 readonly CLAUDE_CODE_NO_SESSION_PERSISTENCE
 
+# Source JSON parser if available
+if [[ -f "$(dirname "${BASH_SOURCE[0]}")/json-parser.sh" ]]; then
+    source "$(dirname "${BASH_SOURCE[0]}")/json-parser.sh"
+    CLAUDE_JSON_PARSER_AVAILABLE=true
+else
+    CLAUDE_JSON_PARSER_AVAILABLE=false
+fi
+
 # -----------------------------------------------------------------------------
 # Claude Code CLI Interaction Functions
 # -----------------------------------------------------------------------------
@@ -52,8 +60,30 @@ run_claude_code_prompt() {
     log_debug "Command: $claude_cmd"
     log_debug "Timeout: ${TIMEOUT:-$DEFAULT_TIMEOUT}s, Idle: ${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s"
 
-    # Execute Claude Code in a coprocess to monitor output
-    coproc { (cd "$project_dir" && timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" bash -c "cat \"\$1\" | $claude_cmd" _ "$prompt_path") 2>&1; }
+    # Execute Claude Code with JSON parsing if available
+    if [[ "$CLAUDE_JSON_PARSER_AVAILABLE" == "true" ]]; then
+        # Get absolute path to JSON parser
+        local parser_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/json-parser.sh"
+
+        # Parse JSON output while keeping full JSON in transcript
+        coproc {
+            (cd "$project_dir" && timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" bash -c '
+                # Source the JSON parser in this subshell
+                source "$2"
+
+                cat "$1" | '"$claude_cmd"' 2>&1 | while IFS= read -r line; do
+                    # Write full JSON to stderr (for transcript)
+                    echo "$line" >&2
+
+                    # Parse and output formatted text to stdout
+                    parse_claude_json_line "$line"
+                done
+            ' _ "$prompt_path" "$parser_path")
+        }
+    else
+        # Fallback: no parsing, output raw JSON
+        coproc { (cd "$project_dir" && timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" bash -c "cat \"\$1\" | $claude_cmd" _ "$prompt_path") 2>&1; }
+    fi
 
     # Use shared monitoring function (with "warn" log level for errors)
     monitor_coprocess_output "warn"

@@ -181,3 +181,52 @@ get_next_log_index() {
 
     echo $((max + 1))
 }
+
+# -----------------------------------------------------------------------------
+# Project Completion Detection
+# -----------------------------------------------------------------------------
+
+# Check if project is complete
+# Usage: check_project_completion <metadata_dir>
+# Returns: 0 if complete (all features pass, no todos), 1 if not complete
+check_project_completion() {
+    local metadata_dir="$1"
+    local feature_list_path="$metadata_dir/${DEFAULT_FEATURE_LIST_FILE}"
+    local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
+
+    # Check if feature_list.json exists
+    if [[ ! -f "$feature_list_path" ]]; then
+        log_debug "Feature list not found, project not complete"
+        return 1
+    fi
+
+    # Count features with "passes": false
+    local failing_count=0
+    if command -v jq >/dev/null 2>&1; then
+        # Use jq if available for accurate JSON parsing
+        failing_count=$(jq '[.[] | select(.passes == false)] | length' "$feature_list_path" 2>/dev/null || echo "0")
+    else
+        # Fallback to grep
+        failing_count=$(grep -c '"passes"[[:space:]]*:[[:space:]]*false' "$feature_list_path" 2>/dev/null || echo "0")
+    fi
+
+    # Check if todo.md exists and has content (beyond just whitespace/headers)
+    local has_todos=false
+    if [[ -f "$todo_path" ]]; then
+        # Check if file has any non-empty, non-comment content
+        if grep -q -E '^[^#[:space:]]' "$todo_path" 2>/dev/null; then
+            has_todos=true
+        fi
+    fi
+
+    # Log status
+    log_debug "Completion check: failing_count=$failing_count, has_todos=$has_todos"
+
+    # Project is complete if no failing features and no todos
+    if [[ "$failing_count" -eq 0 && "$has_todos" == false ]]; then
+        log_info "Project completion detected: All features pass, no todos remaining"
+        return 0
+    fi
+
+    return 1
+}

@@ -258,6 +258,12 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             else
                 # Reset failure counter on successful iteration
                 reset_failure_counter
+
+                # Check if project is complete
+                if check_project_completion "$METADATA_DIR"; then
+                    log_info "All features complete and no todos remaining. Exiting successfully."
+                    exit $EXIT_SUCCESS
+                fi
             fi
 
             log_info "--- End of iteration $i ---"
@@ -327,6 +333,12 @@ else
             else
                 # Reset failure counter on successful iteration
                 reset_failure_counter
+
+                # Check if project is complete
+                if check_project_completion "$METADATA_DIR"; then
+                    log_info "All features complete and no todos remaining. Exiting successfully."
+                    exit $EXIT_SUCCESS
+                fi
             fi
 
             # If this is not the last iteration, add a separator

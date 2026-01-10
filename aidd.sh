@@ -242,6 +242,23 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
                 cp "$SPEC_FILE" "$SPEC_CHECK_PATH"
             fi
 
+            # Generate status report BEFORE sending prompt
+            # This ensures we always have up-to-date status regardless of agent exit code
+            log_info "Generating project status before iteration..."
+            local status_file="$METADATA_DIR/status.md"
+            mkdir -p "$(dirname "$status_file")" 2>/dev/null
+            {
+                show_status "$PROJECT_DIR"
+            } > "$status_file" 2>&1
+            log_info "Project status saved to: $status_file"
+
+            # Check if project is complete BEFORE sending prompt
+            # This prevents unnecessary agent invocations when already done
+            if check_project_completion "$METADATA_DIR"; then
+                log_info "All features complete and no todos remaining. Exiting successfully."
+                exit $EXIT_SUCCESS
+            fi
+
             # Run the appropriate prompt
             log_info "Sending $PROMPT_TYPE prompt to $CLI_NAME..."
             if [[ "$PROMPT_TYPE" == "coding" ]]; then
@@ -258,26 +275,6 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             else
                 # Reset failure counter on successful iteration
                 reset_failure_counter
-
-                # Generate status report after every iteration
-                log_info "Generating project status..."
-
-                # Generate status report and save to .aidd/status.md
-                local status_file="$METADATA_DIR/status.md"
-                mkdir -p "$(dirname "$status_file")" 2>/dev/null
-
-                # Capture status output
-                {
-                    show_status "$PROJECT_DIR"
-                } > "$status_file" 2>&1
-
-                log_info "Project status saved to: $status_file"
-
-                # Check if project is complete
-                if check_project_completion "$METADATA_DIR"; then
-                    log_info "All features complete and no todos remaining. Exiting successfully."
-                    exit $EXIT_SUCCESS
-                fi
             fi
 
             log_info "--- End of iteration $i ---"
@@ -331,6 +328,23 @@ else
                 cp "$SPEC_FILE" "$SPEC_CHECK_PATH"
             fi
 
+            # Generate status report BEFORE sending prompt
+            # This ensures we always have up-to-date status regardless of agent exit code
+            log_info "Generating project status before iteration..."
+            local status_file="$METADATA_DIR/status.md"
+            mkdir -p "$(dirname "$status_file")" 2>/dev/null
+            {
+                show_status "$PROJECT_DIR"
+            } > "$status_file" 2>&1
+            log_info "Project status saved to: $status_file"
+
+            # Check if project is complete BEFORE sending prompt
+            # This prevents unnecessary agent invocations when already done
+            if check_project_completion "$METADATA_DIR"; then
+                log_info "All features complete and no todos remaining. Exiting successfully."
+                exit $EXIT_SUCCESS
+            fi
+
             # Run the appropriate prompt
             log_info "Sending $PROMPT_TYPE prompt to $CLI_NAME..."
             if [[ "$PROMPT_TYPE" == "coding" ]]; then
@@ -347,12 +361,6 @@ else
             else
                 # Reset failure counter on successful iteration
                 reset_failure_counter
-
-                # Check if project is complete
-                if check_project_completion "$METADATA_DIR"; then
-                    log_info "All features complete and no todos remaining. Exiting successfully."
-                    exit $EXIT_SUCCESS
-                fi
             fi
 
             # If this is not the last iteration, add a separator

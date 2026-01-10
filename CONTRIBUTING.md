@@ -79,7 +79,7 @@ chmod +x aidd.sh
     - `coding.md` - Development iterations prompt
     - `todo.md` - TODO mode prompt
 - `scaffolding/` - Template files for new projects
-- `artifacts/` - Project metadata templates
+- `templates/` - Project metadata templates
 - `specs/` - Example specification files
 
 ## Coding Style

@@ -108,7 +108,7 @@ if [[ ! -d "$PROJECT_DIR" ]]; then
     fi
 
     # Copy artifacts contents to project's metadata folder
-    log_info "Copying artifacts to '$METADATA_DIR'..."
+    log_info "Copying templates to '$METADATA_DIR'..."
     mkdir -p "$METADATA_DIR" && chmod 755 "$METADATA_DIR"
     if [[ -d "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR" ]]; then
         for item in "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR"/*; do
@@ -234,7 +234,7 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
             if [[ "$PROMPT_TYPE" != "coding" ]]; then
-                copy_artifacts "$PROJECT_DIR" "$SCRIPT_DIR"
+                copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
             fi
 
             # Copy spec file if this is a new project with spec
@@ -323,7 +323,7 @@ else
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
             if [[ "$PROMPT_TYPE" != "coding" ]]; then
-                copy_artifacts "$PROJECT_DIR" "$SCRIPT_DIR"
+                copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
             fi
 
             # Copy spec file if this is a new project with spec

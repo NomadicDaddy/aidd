@@ -67,7 +67,7 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_PROMPTS_DIR:="prompts"}"                   # Prompts directory name
 : "${DEFAULT_ITERATIONS_DIR:="iterations"}"             # Iterations directory name
 : "${DEFAULT_SCAFFOLDING_DIR:="scaffolding"}"           # Scaffolding directory name
-: "${DEFAULT_ARTIFACTS_DIR:="artifacts"}"               # Artifacts directory name
+: "${DEFAULT_TEMPLATES_DIR:="templates"}"               # Artifacts directory name
 : "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
 : "${DEFAULT_FEATURE_LIST_FILE:="feature_list.json"}"   # Feature list file name
 : "${DEFAULT_SPEC_FILE:="spec.txt"}"                    # Spec file name

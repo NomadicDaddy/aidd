@@ -136,7 +136,7 @@ For empty or non-existent directories:
 
 1. Creates project directory if it doesn't exist
 2. Copies scaffolding files from `scaffolding/` directory
-3. Copies artifacts into `project-dir/.aidd/`
+3. Copies templates into `project-dir/.aidd/`
 4. Copies spec file to `.aidd/spec.txt` (if `--spec` is provided)
 5. Uses `initializer` prompt to set up initial project structure
 6. Creates `feature_list.json` based on the provided spec
@@ -222,7 +222,7 @@ aidd/
 │   ├── coding.md          # Coding prompt (development iterations)
 │   ├── todo.md            # TODO mode prompt
 ├── scaffolding/           # Template files for new projects
-├── artifacts/             # Project metadata templates
+├── templates/             # Project metadata templates
 └── specs/                 # Specification examples
 
 Project Metadata (.aidd/):

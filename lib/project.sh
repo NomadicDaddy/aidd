@@ -92,35 +92,35 @@ is_existing_codebase() {
 }
 
 # -----------------------------------------------------------------------------
-# Artifact Management Functions
+# Template Management Functions
 # -----------------------------------------------------------------------------
 
-# Copy artifacts to metadata directory
-# Usage: copy_artifacts <project_dir> <script_dir>
+# Copy templates to metadata directory
+# Usage: copy_templates <project_dir> <script_dir>
 # Returns: 0 on success
-copy_artifacts() {
+copy_templates() {
     local project_dir="$1"
     local script_dir="$2"
     local project_metadata_dir
 
     project_metadata_dir=$(find_or_create_metadata_dir "$project_dir")
 
-    log_info "Copying artifacts to '$project_metadata_dir'..."
+    log_info "Copying templates to '$project_metadata_dir'..."
     mkdir -p "$project_metadata_dir"
 
-    # Copy all artifacts contents, but don't overwrite existing files
-    for artifact in "$script_dir/artifacts"/*; do
+    # Copy all templates contents, but don't overwrite existing files
+    for template in "$script_dir/templates"/*; do
         if [[ -e "$artifact" ]]; then
             local basename
             basename=$(basename "$artifact")
             if [[ ! -e "$project_metadata_dir/$basename" ]]; then
                 if safe_copy "$artifact" "$project_metadata_dir/$basename" "$project_dir"; then
-                    log_debug "Copied artifact: $basename"
+                    log_debug "Copied template: $basename"
                 else
-                    log_warn "Failed to copy artifact: $basename"
+                    log_warn "Failed to copy template: $basename"
                 fi
             else
-                log_debug "Artifact already exists, skipping: $basename"
+                log_debug "Template already exists, skipping: $basename"
             fi
         fi
     done

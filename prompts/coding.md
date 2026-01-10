@@ -513,7 +513,6 @@ git commit -m "Session work: [summary]"
 
 #### 12.2 Update Documentation
 
-
 - `/.aidd/feature_list.json` updated if tests verified
 
 #### 12.3 Final Feature Status Audit

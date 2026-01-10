@@ -32,7 +32,11 @@ A unified shell script that orchestrates autonomous development sessions using *
 - Specify with `--cli claude-code`
 - Uses your Claude Pro subscription
 - No legacy directory (new integration)
-- **Note**: Uses stream-json format for tool usage support (experimental)
+- **Features**:
+    - Stream-json output with real-time JSON parsing
+    - Formatted console output ([ASSISTANT], [TOOL USE], [TOKENS])
+    - Full JSON preserved in transcript files for debugging
+    - Token usage tracking including cache hits
 
 ## Installation
 
@@ -200,6 +204,7 @@ aidd/
 │   ├── cli-opencode.sh    # OpenCode CLI implementation
 │   ├── config.sh          # Configuration constants
 │   ├── iteration.sh       # Iteration handling
+│   ├── json-parser.sh     # JSON stream parser for Claude Code
 │   ├── log-cleaner.sh     # Native bash log cleaning
 │   ├── project.sh         # Project management
 │   └── utils.sh           # Utility functions
@@ -295,13 +300,15 @@ AIDD includes comprehensive error handling:
     - OpenCode (`opencode`)
     - KiloCode (`kilocode`)
     - Claude Code (`claude`)
-- jq (optional, for `--feature-list` display)
+- jq (required for Claude Code JSON parsing; optional for `--feature-list` display)
 - rsync (optional, for shared directory synchronization - falls back to `cp` if unavailable)
 
 ## Version History
 
 - **v2.2.0** (2026-01-09):
-    - Added Claude Code CLI support
+    - Added Claude Code CLI support with stream-json parsing
+    - Implemented JSON parser for readable console output
+    - Added token usage tracking for Claude Code
     - Updated all documentation to reflect triple CLI support
 - **v2.1.0** (2026-01-09):
     - Added two-stage idle timeout with agent nudging feature

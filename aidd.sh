@@ -259,6 +259,20 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
                 # Reset failure counter on successful iteration
                 reset_failure_counter
 
+                # Generate status report after every iteration
+                log_info "Generating project status..."
+
+                # Generate status report and save to .aidd/status.md
+                local status_file="$METADATA_DIR/status.md"
+                mkdir -p "$(dirname "$status_file")" 2>/dev/null
+
+                # Capture status output
+                {
+                    show_status "$PROJECT_DIR"
+                } > "$status_file" 2>&1
+
+                log_info "Project status saved to: $status_file"
+
                 # Check if project is complete
                 if check_project_completion "$METADATA_DIR"; then
                     log_info "All features complete and no todos remaining. Exiting successfully."

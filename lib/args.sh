@@ -23,7 +23,7 @@ export IDLE_TIMEOUT=""
 export NO_CLEAN=false
 export QUIT_ON_ABORT="0"
 export CONTINUE_ON_TIMEOUT=false
-export SHOW_FEATURE_LIST=false
+export SHOW_STATUS=false
 export TODO_MODE=false
 
 # Effective model values (computed after parsing)
@@ -44,7 +44,7 @@ Supports OpenCode, KiloCode, and Claude Code CLIs
 
 OPTIONS:
     --cli CLI               CLI to use: opencode, kilocode, or claude-code (optional, default: $DEFAULT_CLI)
-    --project-dir DIR       Project directory (required unless --feature-list or --todo is specified)
+    --project-dir DIR       Project directory (required unless --status or --todo is specified)
     --spec FILE             Specification file (optional for existing codebases, required for new projects)
     --max-iterations N      Maximum iterations (optional, unlimited if not specified)
     --timeout N             Timeout in seconds (optional, default: $DEFAULT_TIMEOUT)
@@ -56,7 +56,7 @@ OPTIONS:
     --no-clean              Skip log cleaning on exit (optional)
     --quit-on-abort N       Quit after N consecutive failures (optional, default: 0=continue indefinitely)
     --continue-on-timeout   Continue to next iteration if CLI times out (exit 124) instead of aborting (optional)
-    --feature-list          Display project feature list status and exit (optional)
+    --status               Display project status (features + TODOs) and exit (optional)
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
     --help                  Show this help message
 
@@ -74,7 +74,7 @@ EXAMPLES:
     $0 --cli claude-code --project-dir ./myproject --model sonnet --max-iterations 10
 
     # Other operations
-    $0 --project-dir ./myproject --feature-list
+    $0 --project-dir ./myproject --status
     $0 --project-dir ./myproject --todo
 
 For more information, visit: https://github.com/example/aidd
@@ -139,8 +139,8 @@ parse_args() {
                 CONTINUE_ON_TIMEOUT=true
                 shift
                 ;;
-            --feature-list)
-                SHOW_FEATURE_LIST=true
+            --status)
+                SHOW_STATUS=true
                 shift
                 ;;
             --todo)
@@ -180,8 +180,8 @@ validate_args() {
             ;;
     esac
 
-    # Check required --project-dir argument (unless --feature-list or --todo is specified)
-    if [[ "$SHOW_FEATURE_LIST" != true && "$TODO_MODE" != true && -z "$PROJECT_DIR" ]]; then
+    # Check required --project-dir argument (unless --status or --todo is specified)
+    if [[ "$SHOW_STATUS" != true && "$TODO_MODE" != true && -z "$PROJECT_DIR" ]]; then
         log_error "Missing required argument --project-dir"
         log_info "Use --help for usage information"
         return $EXIT_INVALID_ARGS
@@ -236,11 +236,12 @@ get_effective_models() {
 }
 
 # -----------------------------------------------------------------------------
-# Show Feature List Status
+# Show Project Status
 # -----------------------------------------------------------------------------
-show_feature_list() {
+show_status() {
     local project_dir="$1"
     local feature_list_file="$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_FEATURE_LIST_FILE"
+    local todo_file=""
 
     if [[ ! -f "$feature_list_file" ]]; then
         log_error "Feature list not found at: $feature_list_file"
@@ -248,10 +249,25 @@ show_feature_list() {
         return $EXIT_NOT_FOUND
     fi
 
+    # Search for todo files in priority order
+    # First check .aidd/todo.md (standard location)
+    if [[ -f "$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_TODO_FILE" ]]; then
+        todo_file="$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_TODO_FILE"
+    else
+        # Search for common todo file names in project directory
+        local todo_patterns=("todo.md" "todos.md" "TODO.md" "TODOs.md" "TODO-list.md" "todo-list.md" "tasks.md" "TASKS.md")
+        for pattern in "${todo_patterns[@]}"; do
+            if [[ -f "$project_dir/$pattern" ]]; then
+                todo_file="$project_dir/$pattern"
+                break
+            fi
+        done
+    fi
+
     # Parse feature_list.json using jq if available
     if ! command_exists jq; then
-        log_error "'jq' command is required for --feature-list option"
-        log_info "Install jq to display feature list: https://stedolan.github.io/jq/"
+        log_error "'jq' command is required for --status option"
+        log_info "Install jq to display status: https://stedolan.github.io/jq/"
         return $EXIT_GENERAL_ERROR
     fi
 
@@ -282,7 +298,11 @@ show_feature_list() {
     printf "%-15s %s\n" "Failing:" "$failing"
     printf "%-15s %s\n" "Open:" "$open"
     printf "%-15s %s\n" "Closed:" "$closed"
-    printf "%-15s %s\n" "Complete:" "$((passing * 100 / total))%"
+    if [[ $total -gt 0 ]]; then
+        printf "%-15s %s\n" "Complete:" "$((passing * 100 / total))%"
+    else
+        printf "%-15s %s\n" "Complete:" "0%"
+    fi
     echo ""
 
     # Group by status
@@ -337,6 +357,86 @@ show_feature_list() {
     done
     echo ""
 
+    # Display TODO items from todo file if it exists
+    if [[ -n "$todo_file" && -f "$todo_file" ]]; then
+        local todo_filename=$(basename "$todo_file")
+        echo "=============================================================================="
+        echo "TODO Items from $todo_filename:"
+        echo "=============================================================================="
+        echo ""
+
+        # Count total, completed, and incomplete todo items
+        local todo_total=0
+        local todo_completed=0
+        local todo_incomplete=0
+
+        while IFS= read -r line; do
+            # Skip empty lines and lines that don't start with -
+            [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
+            
+            ((todo_total++))
+            
+            # Check if line contains [x] for completed or [ ] for incomplete
+            # Using grep for pattern matching to avoid bash regex issues
+            if echo "$line" | grep -q '\[x\]'; then
+                ((todo_completed++))
+            elif echo "$line" | grep -q '\[ \]'; then
+                ((todo_incomplete++))
+            fi
+        done < "$todo_file"
+
+        printf "%-20s %s\n" "Total TODOs:" "$todo_total"
+        printf "%-20s %s\n" "Completed:" "$todo_completed"
+        printf "%-20s %s\n" "Incomplete:" "$todo_incomplete"
+        if [[ $todo_total -gt 0 ]]; then
+            printf "%-20s %s\n" "Complete:" "$((todo_completed * 100 / todo_total))%"
+        else
+            printf "%-20s %s\n" "Complete:" "0%"
+        fi
+        echo ""
+
+        # Display incomplete TODOs
+        if [[ $todo_incomplete -gt 0 ]]; then
+            echo "⚠️  INCOMPLETE TODOs ($todo_incomplete items):"
+            echo ""
+            while IFS= read -r line; do
+                # Skip empty lines and lines that don't start with -
+                [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
+                
+                # Check for incomplete todo items (-[ ])
+                if echo "$line" | grep -q '\[ \]'; then
+                    # Extract the todo text (remove the -[ ] prefix)
+                    local todo_text="${line#- [ ]}"
+                    echo "  •$todo_text"
+                fi
+            done < "$todo_file"
+            echo ""
+        fi
+
+        # Display completed TODOs
+        if [[ $todo_completed -gt 0 ]]; then
+            echo "✅ COMPLETED TODOs ($todo_completed items):"
+            echo ""
+            while IFS= read -r line; do
+                # Skip empty lines and lines that don't start with -
+                [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
+                
+                # Check for completed todo items (-[x])
+                if echo "$line" | grep -q '\[x\]'; then
+                    # Extract the todo text (remove the -[x] prefix)
+                    local todo_text="${line#- [x]}"
+                    echo "  •$todo_text"
+                fi
+            done < "$todo_file"
+            echo ""
+        fi
+    else
+        echo "------------------------------------------------------------------------------"
+        echo "No todo file found (searched: .aidd/todo.md, todo.md, todos.md, TODO.md, TODOs.md, TODO-list.md, todo-list.md, tasks.md, TASKS.md)"
+        echo "------------------------------------------------------------------------------"
+        echo ""
+    fi
+
     echo "=============================================================================="
     echo ""
 
@@ -357,9 +457,9 @@ init_args() {
     apply_defaults
     get_effective_models
 
-    # Handle --feature-list option (display and exit)
-    if [[ "$SHOW_FEATURE_LIST" == true ]]; then
-        show_feature_list "$PROJECT_DIR"
+    # Handle --status option (display and exit)
+    if [[ "$SHOW_STATUS" == true ]]; then
+        show_status "$PROJECT_DIR"
         exit $EXIT_SUCCESS
     fi
 

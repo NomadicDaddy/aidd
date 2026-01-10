@@ -5,8 +5,9 @@
 	"type": "module",
 	"main": "./aidd.sh",
 	"scripts": {
-		"start": "bun ./aidd.sh",
-		"format": "prettier --write ."
+		"start": "bash ./aidd.sh",
+		"format": "prettier --write .",
+		"lint": "bash -n *.sh && bash -n lib/*.sh"
 	},
 	"devDependencies": {
 		"@trivago/prettier-plugin-sort-imports": "^6.0.2",

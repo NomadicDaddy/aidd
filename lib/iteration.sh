@@ -117,17 +117,11 @@ determine_prompt() {
 
     # Check for TODO mode first
     if [[ "$TODO_MODE" == true ]]; then
-        # Check if todo.md exists
-        if [[ -f "$todo_check_path" ]]; then
-            log_info "Using todo.md to complete existing work items"
-            prompt_path="$script_dir/prompts/todo.md"
-            phase="$PHASE_CODING"
-            echo "$prompt_path|$phase"
-            return 0
-        else
-            log_error "No todo.md found in project directory"
-            return 1
-        fi
+        log_info "Using TODO mode - will search for TODO items in codebase"
+        prompt_path="$script_dir/prompts/todo.md"
+        phase="$PHASE_CODING"
+        echo "$prompt_path|$phase"
+        return 0
     fi
 
     # Check if onboarding is complete

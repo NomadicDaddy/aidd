@@ -243,21 +243,30 @@ For example:
 #### 5.1 Count Remaining Work
 
 ```bash
-# Count features with "passes": false
+# Count ALL features with "passes": false (no filtering, no interpretation)
 grep -c '"passes": false' .aidd/feature_list.json
 
 # Check todo.md for incomplete items
 cat .aidd/todo.md
 ```
 
+**CRITICAL:** The count above is the LITERAL count of all features marked `"passes": false` in the JSON file. Do NOT interpret this count or apply filters. Do NOT categorize features as "MVP" vs "post-MVP" or "required" vs "optional". The number you see is the number of features remaining to implement.
+
 #### 5.2 Early Termination Conditions
 
 **If BOTH conditions are true, TERMINATE IMMEDIATELY:**
 
-- Zero features with `"passes": false`
+- **Zero features in `feature_list.json` with `"passes": false`** (count ALL features, no filtering allowed)
 - No incomplete todo items in `todo.md`
 
-**Exit cleanly:**
+**CRITICAL RULES:**
+
+- Count **ALL** features in `feature_list.json` - do NOT filter by priority, category, or any other field
+- Do NOT invent distinctions like "MVP-required" vs "post-MVP" - if a feature is in the list with `"passes": false`, it counts
+- Do NOT interpret spec.txt phases or categories as filters - the termination condition is purely about `feature_list.json`
+- If the count from Step 5.1 is greater than zero, you MUST continue working on features
+
+**Exit cleanly (ONLY if both conditions met):**
 
 1. Document completion in `/.aidd/CHANGELOG.md`
 2. Exit with code 0

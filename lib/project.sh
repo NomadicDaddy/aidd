@@ -137,6 +137,12 @@ copy_shared_directories() {
     local script_dir="$2"
     local copydirs_file="$script_dir/copydirs.txt"
 
+    # Convert project_dir to absolute path to avoid rsync confusion
+    project_dir="$(cd "$project_dir" && pwd)" || {
+        log_error "Failed to resolve project directory: $1"
+        return 1
+    }
+
     # Check if copydirs.txt exists
     if [[ ! -f "$copydirs_file" ]]; then
         log_debug "No copydirs.txt found, skipping shared directory copy"
@@ -144,6 +150,7 @@ copy_shared_directories() {
     fi
 
     log_debug "Copying shared directories from copydirs.txt..."
+    log_debug "Target project directory: $project_dir"
     local copied_count=0
     local skipped_count=0
     local failed_count=0
@@ -154,8 +161,9 @@ copy_shared_directories() {
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// }" ]] && continue
 
-        # Trim whitespace
-        local source_dir="${line// /}"
+        # Trim leading and trailing whitespace
+        local source_dir="${line#"${line%%[![:space:]]*}"}"
+        source_dir="${source_dir%"${source_dir##*[![:space:]]}"}"
 
         # Check if source directory exists
         if [[ ! -d "$source_dir" ]]; then
@@ -168,11 +176,15 @@ copy_shared_directories() {
         local dir_name=$(basename "$source_dir")
         local target_path="$project_dir/$dir_name"
 
+        log_debug "Syncing: $source_dir -> $target_path"
+
         # Copy directory (rsync preferred for efficiency, fallback to cp)
         if command -v rsync &> /dev/null; then
             # Use rsync for efficient directory copying (only updates changed files)
             # Exclude common directories and lock files that shouldn't be synced
-            if rsync -a --delete \
+            # --max-depth=10 prevents infinite recursion loops
+            # --no-links prevents following symlinks
+            if rsync -a --delete --max-depth=10 --no-links \
                 --exclude='node_modules' \
                 --exclude='.git' \
                 --exclude='bun.lock' \

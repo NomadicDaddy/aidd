@@ -9,6 +9,7 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Todo list:** `/.aidd/todo.md`
 - **Progress log:** `/.aidd/progress.md`
+- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
 ### COMMON GUIDELINES

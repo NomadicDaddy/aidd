@@ -6,6 +6,7 @@ You are in TODO mode and ready to complete existing work items in project.
 
 - **Todo list:** `/.aidd/todo.md`
 - **Progress log:** `/.aidd/progress.md`
+- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Architecture map:** `/.aidd/project_structure.md`
 - **Project overrides (highest priority):** `/.aidd/project.txt`

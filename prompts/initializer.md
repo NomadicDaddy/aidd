@@ -9,6 +9,7 @@ You are in Code mode and ready to begin setting up the foundation for all future
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Todo list:** `/.aidd/todo.md`
 - **Progress log:** `/.aidd/progress.md`
+- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
 ### COMMON GUIDELINES
@@ -486,7 +487,36 @@ git diff
 
 **Document initialization work and exit cleanly.**
 
-#### 10.1 Create Progress Log
+#### 10.1 Create Changelog
+
+**Create `/.aidd/CHANGELOG.md` following Keep a Changelog format:**
+
+```markdown
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Initial project scaffolding and setup
+- Feature list with comprehensive test coverage
+- Project documentation (README, progress tracking)
+
+## [0.1.0] - YYYY-MM-DD
+
+### Added
+
+- Project initialization complete
+```
+
+**Replace YYYY-MM-DD with actual date.**
+
+#### 10.2 Create Progress Log
 
 **Create `/.aidd/progress.md` with initialization summary:**
 
@@ -516,7 +546,7 @@ git diff
 - Follow spec requirements carefully
 ```
 
-#### 10.2 Final Commit
+#### 10.3 Final Commit
 
 ```bash
 # Ensure all changes committed
@@ -524,7 +554,7 @@ git add .
 git commit -m "Complete initialization - ready for development"
 ```
 
-#### 10.3 Exit Cleanly
+#### 10.4 Exit Cleanly
 
 **Use attempt_completion to present final results:**
 

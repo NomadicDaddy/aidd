@@ -245,12 +245,12 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             # Generate status report BEFORE sending prompt
             # This ensures we always have up-to-date status regardless of agent exit code
             log_info "Generating project status before iteration..."
-            local status_file="$METADATA_DIR/status.md"
-            mkdir -p "$(dirname "$status_file")" 2>/dev/null
+            STATUS_FILE="$METADATA_DIR/status.md"
+            mkdir -p "$(dirname "$STATUS_FILE")" 2>/dev/null
             {
                 show_status "$PROJECT_DIR"
-            } > "$status_file" 2>&1
-            log_info "Project status saved to: $status_file"
+            } > "$STATUS_FILE" 2>&1
+            log_info "Project status saved to: $STATUS_FILE"
 
             # Check if project is complete BEFORE sending prompt
             # This prevents unnecessary agent invocations when already done
@@ -331,12 +331,12 @@ else
             # Generate status report BEFORE sending prompt
             # This ensures we always have up-to-date status regardless of agent exit code
             log_info "Generating project status before iteration..."
-            local status_file="$METADATA_DIR/status.md"
-            mkdir -p "$(dirname "$status_file")" 2>/dev/null
+            STATUS_FILE="$METADATA_DIR/status.md"
+            mkdir -p "$(dirname "$STATUS_FILE")" 2>/dev/null
             {
                 show_status "$PROJECT_DIR"
-            } > "$status_file" 2>&1
-            log_info "Project status saved to: $status_file"
+            } > "$STATUS_FILE" 2>&1
+            log_info "Project status saved to: $STATUS_FILE"
 
             # Check if project is complete BEFORE sending prompt
             # This prevents unnecessary agent invocations when already done

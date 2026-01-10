@@ -5,7 +5,6 @@ You are in TODO mode and ready to complete existing work items in project.
 ### QUICK REFERENCES
 
 - **Todo list:** `/.aidd/todo.md`
-- **Progress log:** `/.aidd/progress.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Architecture map:** `/.aidd/project_structure.md`
@@ -28,7 +27,7 @@ You are in TODO mode and ready to complete existing work items in project.
 **See `/_common/hard-constraints.md` for details.**
 
 1. **Do not run** `scripts/setup.ts` or any other setup scripts.
-2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.aidd/progress.md`.
+2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.aidd/CHANGELOG.md`.
 3. Do not run any blocking processes (no dev servers inline).
 
 ---
@@ -134,7 +133,7 @@ mcp_filesystem_read_text_file .aidd/todo.md
     - If no incomplete features → Report "Project complete!"
 
 3. **Exit cleanly:**
-    - Document completion in progress.md
+    - Document completion in CHANGELOG.md
     - Exit with code 0
     - Next iteration will use standard coding.md prompt
 
@@ -335,7 +334,7 @@ async function fetchData() {
 
 - Remove entire `/.aidd/todo.md` file if it exists
 - Ensure all TODO comments have been removed from code
-- Document completion in progress.md
+- Document completion in CHANGELOG.md
 
 #### 5.2 Keep Lists Organized
 
@@ -371,7 +370,7 @@ git commit -m "Complete todo item: [description]" \
 
 **Only execute if TODO items exist.**
 
-**Update `/.aidd/progress.md`:**
+**Update `/.aidd/CHANGELOG.md`:**
 
 ```txt
 -----------------------------------------------------------------------------------------------------------------------
@@ -397,7 +396,7 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 
 1. Commit all working code using `execute_command`
 2. Update `/.aidd/todo.md` (if it exists)
-3. Update `/.aidd/progress.md`
+3. Update `/.aidd/CHANGELOG.md`
 4. Ensure no uncommitted changes
 5. Leave codebase in working state
 6. Use attempt_completion to present results
@@ -432,7 +431,7 @@ See `/_common/file-integrity.md`:
 - **NEVER** skip post-edit verification
 - **ALWAYS** use `git checkout` if corruption detected
 - **IMMEDIATELY** retry with different approach if edit fails
-- **DOCUMENT** corruption incidents in progress.md
+- **DOCUMENT** corruption incidents in CHANGELOG.md
 
 ### Transition Logic
 

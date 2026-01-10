@@ -8,7 +8,7 @@ You are in Code mode and ready to begin integrating with an existing codebase to
 - **Architecture map:** `/.aidd/project_structure.md`
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Todo list:** `/.aidd/todo.md`
-- **Progress log:** `/.aidd/progress.md`
+- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
 ### COMMON GUIDELINES
@@ -104,7 +104,7 @@ mcp_filesystem_list_directory .aidd
 # Check for legacy .auto* directories
 mcp_filesystem_list_directory .
 
-# Look for existing feature_list.json, progress.md, etc.
+# Look for existing feature_list.json, CHANGELOG.md, etc.
 ```
 
 **If legacy directories exist (`.auto*`):**
@@ -112,7 +112,7 @@ mcp_filesystem_list_directory .
 - Copy relevant content to `.aidd/*`
 - Preserve existing feature lists
 - Migrate progress notes
-- Document migration in progress.md
+- Document migration in CHANGELOG.md
 
 #### 2.3 Explore Existing Codebase
 
@@ -269,7 +269,7 @@ Better to retest later than claim something works when it doesn't.
 - Mark as `"passes": false`
 - Document the issue in feature steps or description
 - Add to todo.md if it's a known issue to fix
-- Note in progress.md
+- Note in CHANGELOG.md
 
 ---
 
@@ -344,7 +344,7 @@ git commit -m "onboard"
 **Handle git failures:**
 
 - See `/_common/error-handling-patterns.md`
-- Document issues in progress.md
+- Document issues in CHANGELOG.md
 - Git is optional if not in spec
 
 ---
@@ -397,7 +397,7 @@ git commit -m "onboard"
 
 ### STEP 8: UPDATE PROGRESS LOG
 
-**Create `/.aidd/progress.md` with onboarding summary.**
+**Create `/.aidd/CHANGELOG.md` with onboarding summary.**
 
 ```markdown
 # Progress Log
@@ -445,7 +445,7 @@ git commit -m "onboard"
 - [ ] Feature list minimum 20 features, conservatively marked
 - [ ] `/.aidd/project_structure.md` documents architecture
 - [ ] `/.aidd/todo.md` created if issues discovered
-- [ ] `/.aidd/progress.md` created with onboarding summary
+- [ ] `/.aidd/CHANGELOG.md` created with onboarding summary
 - [ ] README.md updated/created with accurate information
 - [ ] Git repository initialized/updated with commits
 - [ ] No corrupted files
@@ -457,7 +457,7 @@ git commit -m "onboard"
 # Verify critical files exist
 mcp_filesystem_read_text_file .aidd/spec.txt | head -20
 mcp_filesystem_read_text_file .aidd/feature_list.json | head -50
-mcp_filesystem_read_text_file .aidd/progress.md
+mcp_filesystem_read_text_file .aidd/CHANGELOG.md
 
 # Count features
 grep -c '"passes"' .aidd/feature_list.json
@@ -510,7 +510,7 @@ git diff
 - Spec (/.aidd/spec.txt) if missing
 - Feature list (/.aidd/feature_list.json)
 - Architecture docs (/.aidd/project_structure.md)
-- Progress log (/.aidd/progress.md)
+- Progress log (/.aidd/CHANGELOG.md)
 - Todo list (/.aidd/todo.md) if issues found
 - README.md (update or create)
 - Git commits

@@ -8,7 +8,6 @@ You are in Code mode and ready to begin setting up the foundation for all future
 - **Architecture map:** `/.aidd/project_structure.md`
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Todo list:** `/.aidd/todo.md`
-- **Progress log:** `/.aidd/progress.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
@@ -270,7 +269,7 @@ bun scripts/setup.ts \
 2. Identify missing dependencies or configuration
 3. Fix the issue
 4. Re-run setup script
-5. Document issue in `/.aidd/progress.md`
+5. Document issue in `/.aidd/CHANGELOG.md`
 
 **Common failures:**
 
@@ -430,7 +429,7 @@ git log -1
 
 **Handle git failures:**
 
-- If git not installed → Document in progress.md
+- If git not installed → Document in CHANGELOG.md
 - If git user not configured → Set user.name and user.email
 - If commit fails → Read error, fix issue, retry
 
@@ -479,7 +478,7 @@ git diff
 1. Identify specific issue
 2. Fix the problem
 3. Re-run verification
-4. Document in progress.md
+4. Document in CHANGELOG.md
 
 ---
 
@@ -516,37 +515,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Replace YYYY-MM-DD with actual date.**
 
-#### 10.2 Create Progress Log
-
-**Create `/.aidd/progress.md` with initialization summary:**
-
-```markdown
-# Progress Log
-
-## Session 1: Initialization - 2026-01-09
-
-### Accomplished:
-
-- Created feature list with 25 tests covering all spec requirements
-- Executed setup script successfully
-- Created project structure (frontend, backend, scripts)
-- Wrote comprehensive README.md
-- Initialized git repository with initial commit
-
-### Project State:
-
-- All files created and committed
-- Feature list: 0/25 tests passing (all marked false, as expected)
-- Ready for feature implementation in next session
-
-### Next Steps:
-
-- Session 2 will begin implementing features from feature_list.json
-- Start with highest priority features (critical/high)
-- Follow spec requirements carefully
-```
-
-#### 10.3 Final Commit
+#### 10.2 Final Commit
 
 ```bash
 # Ensure all changes committed
@@ -554,7 +523,7 @@ git add .
 git commit -m "Complete initialization - ready for development"
 ```
 
-#### 10.4 Exit Cleanly
+#### 10.3 Exit Cleanly
 
 **Use attempt_completion to present final results:**
 

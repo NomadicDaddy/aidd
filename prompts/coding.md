@@ -8,7 +8,6 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 - **Architecture map:** `/.aidd/project_structure.md`
 - **Feature tests checklist:** `/.aidd/feature_list.json`
 - **Todo list:** `/.aidd/todo.md`
-- **Progress log:** `/.aidd/progress.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
@@ -82,11 +81,7 @@ Start by orienting yourself with the project state.
 pwd
 git log --oneline -20
 
-# Create progress.md if missing
-if [ ! -f .aidd/progress.md ]; then
-  echo "PROGRESS TRACKING INITIALIZED: $(date)" > .aidd/progress.md
-  echo "Session start: New context window" >> .aidd/progress.md
-fi
+
 ```
 
 **Understand the spec:**
@@ -201,7 +196,7 @@ The previous session may have introduced bugs. Always verify before adding new c
 
 1. **First failure:** Fix specific error, retry
 2. **Second failure:** Change approach entirely, retry
-3. **Third failure:** Abort feature, document in progress.md, move to next feature
+3. **Third failure:** Abort feature, document in CHANGELOG.md, move to next feature
 
 **Never:**
 
@@ -264,7 +259,7 @@ cat .aidd/todo.md
 
 **Exit cleanly:**
 
-1. Document completion in `/.aidd/progress.md`
+1. Document completion in `/.aidd/CHANGELOG.md`
 2. Exit with code 0
 3. Do NOT continue to feature implementation
 
@@ -500,40 +495,12 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 **If git reports "not a git repository":**
 
 - Don't force commits
-- Document state in progress.md
+- Document state in CHANGELOG.md
 - Initialize git only if spec expects it
 
 ---
 
-### STEP 11: UPDATE PROGRESS NOTES
-
-**CRITICAL: ONLY write to `/.aidd/progress.md` (not iteration logs).**
-
-**Add to progress.md:**
-
-```txt
------------------------------------------------------------------------------------------------------------------------
-SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
------------------------------------------------------------------------------------------------------------------------
-```
-
-**Include:**
-
-- What you accomplished this session
-- Which test(s) you completed
-- Any issues discovered or fixed
-- What should be worked on next
-- Current completion status (e.g., "45/200 tests passing")
-
-**Do NOT:**
-
-- Write to `/.aidd/iterations/` directory
-- Create "Session 00X" documents
-- Generate iteration logs (main script does this)
-
----
-
-### STEP 12: FINAL VALIDATION AND CLEAN EXIT
+### STEP 11: FINAL VALIDATION AND CLEAN EXIT
 
 **Before ending session:**
 
@@ -546,7 +513,7 @@ git commit -m "Session work: [summary]"
 
 #### 12.2 Update Documentation
 
-- `/.aidd/progress.md` updated
+
 - `/.aidd/feature_list.json` updated if tests verified
 
 #### 12.3 Final Feature Status Audit
@@ -600,7 +567,7 @@ See `/_common/file-integrity.md`:
 - **ALWAYS** use `git checkout` if corruption detected
 - **PREFER** safe editing approaches
 - **IMMEDIATELY** retry with different approach if edit fails
-- **DOCUMENT** corruption incidents in progress.md
+- **DOCUMENT** corruption incidents in CHANGELOG.md
 
 ### Iteration Management
 

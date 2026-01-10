@@ -505,7 +505,7 @@ If you're encountering repeated errors that you can't resolve:
 1. Describe what you've tried and what's blocking you
 2. Consider following the three-strike rule from error-handling-patterns.md:
    - After 3 failed attempts, abort the current task
-   - Document the issue in progress.md or todo.md
+   - Document the issue in CHANGELOG.md or todo.md
    - Move on to the next feature
 3. Commit any working progress before moving on
 

@@ -269,8 +269,12 @@ cat .aidd/todo.md
 **Exit cleanly (ONLY if both conditions met):**
 
 1. Document completion in `/.aidd/CHANGELOG.md`
-2. Exit with code 0
+2. **Complete the session successfully** - Do NOT throw errors or use error exit codes
+   - Simply finish your response normally after documenting completion
+   - The CLI will handle the exit code based on whether you completed without errors
 3. Do NOT continue to feature implementation
+
+**CRITICAL:** When terminating due to completion, ensure you exit cleanly without errors so the wrapper script can generate the final status report. Do not use error-indicating completion methods.
 
 ---
 

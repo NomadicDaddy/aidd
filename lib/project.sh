@@ -12,6 +12,32 @@ source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
 # Project Directory Functions
 # -----------------------------------------------------------------------------
 
+# Helper function to migrate legacy metadata to .aidd
+# Usage: migrate_legacy_metadata <project_dir> <legacy_dir_name>
+# Returns: 0 on success, 1 on failure
+migrate_legacy_metadata() {
+    local dir="$1"
+    local legacy_name="$2"
+    local legacy="$dir/$legacy_name"
+    local target="$dir/$DEFAULT_METADATA_DIR"
+
+    mkdir -p "$target"
+    log_info "Migrating legacy metadata from $legacy_name to $DEFAULT_METADATA_DIR"
+
+    # Safely copy legacy metadata files
+    for item in "$legacy"/*; do
+        if [[ -e "$item" ]]; then
+            local basename=$(basename "$item")
+            if ! safe_copy "$item" "$target/$basename" "$dir"; then
+                log_warn "Failed to migrate: $basename"
+            fi
+        fi
+    done
+
+    log_info "Migration complete. Using $DEFAULT_METADATA_DIR (legacy $legacy_name will not be modified)"
+    return 0
+}
+
 # Find or create metadata directory
 # Usage: find_or_create_metadata_dir <project_dir>
 # Returns: Path to metadata directory
@@ -24,34 +50,26 @@ find_or_create_metadata_dir() {
         return 0
     fi
 
-    # Migrate legacy metadata directories into .aidd (read-only fallback)
-    # Check CLI-specific legacy directory first (set by cli-factory.sh)
-    if [[ -n "$CLI_LEGACY_METADATA_DIR" && -d "$dir/$CLI_LEGACY_METADATA_DIR" ]]; then
-        local legacy="$dir/$CLI_LEGACY_METADATA_DIR"
-        local target="$dir/$DEFAULT_METADATA_DIR"
-        mkdir -p "$target"
+    # Check for legacy directories and migrate them
+    # Priority: CLI-specific legacy first, then generic automaker
+    local legacy_dirs=()
 
-        # Safely copy legacy metadata files
-        for item in "$legacy"/*; do
-            if [[ -e "$item" ]]; then
-                local basename=$(basename "$item")
-                if ! safe_copy "$item" "$target/$basename" "$dir"; then
-                    log_warn "Failed to migrate: $basename"
-                fi
-            fi
-        done
-
-        log_info "Migrated legacy metadata from $CLI_LEGACY_METADATA_DIR to $DEFAULT_METADATA_DIR"
-        echo "$target"
-        return 0
+    # Add CLI-specific legacy directory if set
+    if [[ -n "$CLI_LEGACY_METADATA_DIR" ]]; then
+        legacy_dirs+=("$CLI_LEGACY_METADATA_DIR")
     fi
 
-    # Check generic automaker legacy directory
-    if [[ -d "$dir/$LEGACY_METADATA_DIR_AUTOMAKER" ]]; then
-        log_info "Using legacy metadata directory: $LEGACY_METADATA_DIR_AUTOMAKER"
-        echo "$dir/$LEGACY_METADATA_DIR_AUTOMAKER"
-        return 0
-    fi
+    # Add generic legacy directories
+    legacy_dirs+=("$LEGACY_METADATA_DIR_AUTOMAKER")
+
+    # Check each legacy directory in priority order
+    for legacy_name in "${legacy_dirs[@]}"; do
+        if [[ -d "$dir/$legacy_name" ]]; then
+            migrate_legacy_metadata "$dir" "$legacy_name"
+            echo "$dir/$DEFAULT_METADATA_DIR"
+            return 0
+        fi
+    done
 
     # Create new .aidd directory
     mkdir -p "$dir/$DEFAULT_METADATA_DIR"
@@ -75,7 +93,7 @@ is_existing_codebase() {
     local has_files=$(find "$dir" -mindepth 1 -maxdepth 1 \
         ! -name '.git' \
         ! -name "$DEFAULT_METADATA_DIR" \
-        ! -name '.auto' \
+        ! -name '.autoo' \
         ! -name '.autok' \
         ! -name '.automaker' \
         ! -name '.DS_Store' \

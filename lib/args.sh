@@ -25,6 +25,7 @@ export QUIT_ON_ABORT="0"
 export CONTINUE_ON_TIMEOUT=false
 export SHOW_STATUS=false
 export TODO_MODE=false
+export CUSTOM_PROMPT=""
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -58,6 +59,7 @@ OPTIONS:
     --continue-on-timeout   Continue to next iteration if CLI times out (exit 124) instead of aborting (optional)
     --status               Display project status (features + TODOs) and exit (optional)
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
+    --prompt "DIRECTIVE"    Use custom directive instead of automatic prompt selection (optional)
     --help                  Show this help message
 
 EXAMPLES:
@@ -77,7 +79,12 @@ EXAMPLES:
     $0 --project-dir ./myproject --status
     $0 --project-dir ./myproject --todo
 
-For more information, visit: https://github.com/example/aidd
+    # Custom directive mode
+    $0 --project-dir ./myproject --prompt "perform a full quality control check against the project"
+    $0 --project-dir ./myproject --prompt "review all security vulnerabilities and fix them"
+    $0 --project-dir ./myproject --prompt "optimize performance bottlenecks" --max-iterations 1
+
+For more information, visit: https://github.com/NomadicDaddy/aidd
 EOF
 }
 
@@ -146,6 +153,10 @@ parse_args() {
             --todo)
                 TODO_MODE=true
                 shift
+                ;;
+            --prompt)
+                CUSTOM_PROMPT="$2"
+                shift 2
                 ;;
             -h|--help)
                 print_help
@@ -311,19 +322,73 @@ show_status() {
     echo "------------------------------------------------------------------------------"
     echo ""
 
-    # Passing features
+    # Passing features - sorted by priority (critical → high → medium → low)
     echo "✅ PASSING ($passing features):"
     echo ""
-    echo "$features_json" | jq -r '.[] | select(.passes == true) | "\(.description)"' | while IFS= read -r line; do
-        echo "  • $line"
+    echo "$features_json" | jq -r '
+        .[] |
+        select(.passes == true) |
+        {
+            description: .description,
+            priority: .priority,
+            deps: (.depends_on | length // 0)
+        } |
+        "\(.description)|\(.priority)|\(.deps)"
+    ' | awk -F'|' '
+        {
+            priority_val = $2;
+            if (priority_val == "critical") priority_num = 4;
+            else if (priority_val == "high") priority_num = 3;
+            else if (priority_val == "medium") priority_num = 2;
+            else if (priority_val == "low") priority_num = 1;
+            else priority_num = 0;
+            print priority_num "|" $0;
+        }
+    ' | sort -t'|' -k1 -nr | cut -d'|' -f2- | while IFS='|' read -r description priority deps; do
+        if [[ "$deps" -gt 0 ]]; then
+            if [[ "$deps" -eq 1 ]]; then
+                echo "  • $description [$priority] ($deps dep)"
+            else
+                echo "  • $description [$priority] ($deps deps)"
+            fi
+        else
+            echo "  • $description [$priority]"
+        fi
     done
     echo ""
 
-    # Open/failing features
+    # Open/failing features - sorted by priority (critical → high → medium → low)
     echo "⚠️  OPEN ($failing features):"
     echo ""
-    echo "$features_json" | jq -r '.[] | select(.passes == false and .status == "open") | "\(.description) - [\(.priority)]"' | while IFS= read -r line; do
-        echo "  • $line"
+    echo "$features_json" | jq -r '
+        .[] |
+        select(.passes == false and .status == "open") |
+        {
+            description: .description,
+            priority: .priority,
+            deps: (.depends_on | length // 0)
+        } |
+        "\(.description)|\(.priority)|\(.deps)"
+    ' | awk -F'|' '
+        {
+            priority_val = $2;
+            if (priority_val == "critical") priority_num = 4;
+            else if (priority_val == "high") priority_num = 3;
+            else if (priority_val == "medium") priority_num = 2;
+            else if (priority_val == "low") priority_num = 1;
+            else priority_num = 0;
+            print priority_num "|" $0;
+        }
+    ' | sort -t'|' -k1 -nr | cut -d'|' -f2- | while IFS='|' read -r description priority deps; do
+        if [[ "$deps" -gt 0 ]]; then
+            if [[ "$deps" -eq 1 ]]; then
+                echo "  • $description [$priority] ($deps dep)"
+            else
+                echo "  • $description [$priority] ($deps deps)"
+            fi
+        else
+            echo "  • $description [$priority]"
+        fi
     done
     echo ""
 
@@ -373,9 +438,9 @@ show_status() {
         while IFS= read -r line; do
             # Skip empty lines and lines that don't start with -
             [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
-            
+
             ((todo_total++))
-            
+
             # Check if line contains [x] for completed or [ ] for incomplete
             # Using grep for pattern matching to avoid bash regex issues
             if echo "$line" | grep -q '\[x\]'; then
@@ -402,7 +467,7 @@ show_status() {
             while IFS= read -r line; do
                 # Skip empty lines and lines that don't start with -
                 [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
-                
+
                 # Check for incomplete todo items (-[ ])
                 if echo "$line" | grep -q '\[ \]'; then
                     # Extract the todo text (remove the -[ ] prefix)
@@ -420,7 +485,7 @@ show_status() {
             while IFS= read -r line; do
                 # Skip empty lines and lines that don't start with -
                 [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
-                
+
                 # Check for completed todo items (-[x])
                 if echo "$line" | grep -q '\[x\]'; then
                     # Extract the todo text (remove the -[x] prefix)

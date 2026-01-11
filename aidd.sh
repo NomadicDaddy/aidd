@@ -229,11 +229,16 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
                 log_error "Failed to determine prompt"
                 exit $EXIT_GENERAL_ERROR
             fi
+            # Validate that the prompt file exists
             PROMPT_PATH="${PROMPT_INFO%|*}"
             PROMPT_TYPE="${PROMPT_INFO#*|}"
+            if [[ ! -f "$PROMPT_PATH" ]]; then
+                log_error "Prompt file does not exist: $PROMPT_PATH"
+                exit $EXIT_GENERAL_ERROR
+            fi
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
-            if [[ "$PROMPT_TYPE" != "coding" ]]; then
+            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" ]]; then
                 copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
             fi
 
@@ -261,7 +266,7 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
 
             # Run the appropriate prompt
             log_info "Sending $PROMPT_TYPE prompt to $CLI_NAME..."
-            if [[ "$PROMPT_TYPE" == "coding" ]]; then
+            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
@@ -315,11 +320,16 @@ else
                 log_error "Failed to determine prompt"
                 exit $EXIT_GENERAL_ERROR
             fi
+            # Validate that the prompt file exists
             PROMPT_PATH="${PROMPT_INFO%|*}"
             PROMPT_TYPE="${PROMPT_INFO#*|}"
+            if [[ ! -f "$PROMPT_PATH" ]]; then
+                log_error "Prompt file does not exist: $PROMPT_PATH"
+                exit $EXIT_GENERAL_ERROR
+            fi
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
-            if [[ "$PROMPT_TYPE" != "coding" ]]; then
+            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" ]]; then
                 copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
             fi
 
@@ -347,7 +357,7 @@ else
 
             # Run the appropriate prompt
             log_info "Sending $PROMPT_TYPE prompt to $CLI_NAME..."
-            if [[ "$PROMPT_TYPE" == "coding" ]]; then
+            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"

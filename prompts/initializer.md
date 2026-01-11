@@ -130,6 +130,7 @@ Start by orienting yourself with the project.
 		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
 		"closed_at": null,
 		"created_at": "2026-01-09",
+		"depends_on": [], // Array of feature descriptions this feature depends on (empty if no dependencies)
 		"description": "Short name of feature/capability being validated",
 		"passes": false,
 		"priority": "critical|high|medium|low",
@@ -145,7 +146,45 @@ Start by orienting yourself with the project.
 ]
 ```
 
-#### 3.3 Feature List Requirements
+#### 3.3 Dependency Tracking
+
+**CRITICAL: Track feature dependencies in `depends_on` field:**
+
+- For each feature, identify which other features MUST be implemented first
+- Reference dependencies by their exact `description` field value
+- Use empty array `[]` if feature has no dependencies
+- Dependencies create implementation order constraints
+
+**Examples:**
+
+```json
+{
+	"description": "Database schema setup",
+	"depends_on": [], // Foundation feature - no dependencies
+	...
+}
+{
+	"description": "User CRUD API endpoints",
+	"depends_on": ["Database schema setup"], // Needs database first
+	...
+}
+{
+	"description": "User profile page",
+	"depends_on": ["User CRUD API endpoints"], // Needs API before UI
+	...
+}
+```
+
+**Dependency guidelines:**
+
+- Only list direct dependencies (not transitive)
+- Foundation features (database, backend server) typically have no dependencies
+- Backend API features often depend on database/schema
+- Frontend features typically depend on corresponding backend APIs
+- Test features depend on the feature being tested
+- Advanced features depend on basic versions
+
+#### 3.4 Feature List Requirements
 
 **Minimum standards:**
 
@@ -155,10 +194,11 @@ Start by orienting yourself with the project.
 - At least 2-5 tests MUST have 10+ steps each
 - Order features by priority: fundamental features first
 - ALL tests start with `"passes": false`
+- ALL features must have `depends_on` field (even if empty array)
 - Cover every feature in spec exhaustively
 - Tests align with actual application type from spec
 
-#### 3.4 Verify Feature List
+#### 3.5 Verify Feature List
 
 **After writing, immediately verify:**
 

@@ -323,20 +323,70 @@ For each feature with `"passes": false`:
 3. Remove items from todo.md as you add them
 4. Delete or empty todo.md when complete
 
-#### 6.5 Select Feature from Feature List
+#### 6.5 Validate Feature Dependencies
+
+**CRITICAL: Before selecting a feature, ensure it has dependency tracking:**
+
+1. **Check for `depends_on` field:**
+   ```bash
+   # Count features without depends_on field
+   jq '[.[] | select(has("depends_on") | not)] | length' .aidd/feature_list.json
+   ```
+
+2. **If ANY features lack `depends_on` field:**
+   - STOP feature selection
+   - Review each feature and add `depends_on` field
+   - Set to empty array `[]` if no dependencies
+   - Identify actual dependencies and list them by exact `description`
+   - Commit the updated feature_list.json
+   - Then resume feature selection
+
+3. **Dependency reference format:**
+   ```json
+   {
+     "description": "Advanced feature",
+     "depends_on": ["Basic feature", "Another prerequisite"],
+     ...
+   }
+   ```
+
+#### 6.6 Select Feature from Feature List
 
 **Review `/.aidd/feature_list.json`:**
 
 - Filter to `"passes": false`
 - Group by priority (critical > high > medium > low)
 - Prefer `"status": "in_progress"` over `"status": "open"`
+- **CRITICAL: Check dependencies are satisfied**
 - Select one feature that fits time budget
+
+**Dependency validation:**
+
+1. **For each candidate feature, check `depends_on` array:**
+   ```bash
+   # Example: Check if dependencies are satisfied
+   # Feature has: "depends_on": ["User authentication API", "Database schema"]
+   # Verify both features have "passes": true
+   jq '.[] | select(.description == "User authentication API") | .passes' .aidd/feature_list.json
+   jq '.[] | select(.description == "Database schema") | .passes' .aidd/feature_list.json
+   ```
+
+2. **Skip features with unsatisfied dependencies:**
+   - If ANY dependency has `"passes": false`, skip this feature
+   - Only select features where ALL dependencies have `"passes": true`
+   - This ensures proper implementation order
+
+3. **Include dependency context in coding prompt:**
+   - When implementing a feature, review its dependencies
+   - Read the code for dependent features to understand patterns
+   - Ensure consistency with existing implementations
 
 **CRITICAL: Update feature status BEFORE implementing:**
 
 1. Mark status as `"in_progress"` (edit `"status": "open"` → `"status": "in_progress"`)
-2. Read feature's `description` and `steps` fields
-3. Record selection in initial assessment
+2. Read feature's `description`, `steps`, and `depends_on` fields
+3. For each dependency, review implementation to understand patterns
+4. Record selection and dependency check in initial assessment
 
 **Focus on completing ONE feature perfectly before moving to others.**
 
@@ -452,13 +502,14 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 3. **UI testing:** Tested in actual browser, not just API
 4. **Spec alignment:** Implementation matches spec requirements
 
-#### 9.2 SESSION 2+ RULE: ONLY MODIFY "passes" FIELD
+#### 9.2 SESSION 2+ RULE: ONLY MODIFY "passes" AND "status" FIELDS
 
 **You may change:**
 
 ```json
 "passes": false  →  "passes": true   (after full verification)
 "passes": true   →  "passes": false  (if discovered broken)
+"status": "open" →  "status": "in_progress" → "status": "resolved"
 ```
 
 **NEVER in Session 2+:**
@@ -466,6 +517,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 - Remove tests
 - Edit test descriptions
 - Modify test steps
+- Modify `depends_on` field
 - Combine or consolidate tests
 - Reorder tests
 - Change any other fields

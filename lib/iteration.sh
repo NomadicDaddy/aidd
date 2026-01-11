@@ -84,9 +84,23 @@ reset_failure_counter() {
 # Returns: 0 if onboarding complete, 1 if incomplete
 check_onboarding_status() {
     local feature_list_path="$1"
+    local metadata_dir=$(dirname "$feature_list_path")
 
-    # Check if feature_list.json exists
+    # Check if critical onboarding artifacts exist
+    # These files are ALWAYS created during onboarding
+    local spec_path="$metadata_dir/spec.txt"
+    local changelog_path="$metadata_dir/CHANGELOG.md"
+
+    # All three critical files must exist
     if [[ ! -f "$feature_list_path" ]]; then
+        return 1
+    fi
+
+    if [[ ! -f "$spec_path" ]]; then
+        return 1
+    fi
+
+    if [[ ! -f "$changelog_path" ]]; then
         return 1
     fi
 
@@ -96,6 +110,7 @@ check_onboarding_status() {
         return 1
     fi
 
+    # All checks passed - onboarding is complete
     return 0
 }
 
@@ -115,6 +130,101 @@ determine_prompt() {
     local todo_check_path="$metadata_dir/todo.md"
     local feature_list_path="$metadata_dir/${DEFAULT_FEATURE_LIST_FILE}"
 
+    # Check for custom directive mode first (highest priority)
+    if [[ -n "$CUSTOM_PROMPT" ]]; then
+        log_info "Using custom directive mode"
+        # Create a temporary directive prompt file
+        local directive_file="$metadata_dir/directive.md"
+        # Ensure metadata directory exists
+        if ! mkdir -p "$metadata_dir" 2>/dev/null; then
+            log_error "Failed to create metadata directory: $metadata_dir"
+            return 1
+        fi
+        # Create the directive file with error checking
+        if ! cat > "$directive_file" << 'HEREDOC_END'
+## YOUR ROLE - CUSTOM DIRECTIVE MODE
+
+You are an AI development assistant executing a custom user directive.
+
+### CRITICAL INSTRUCTIONS
+
+1. **Read and understand the directive below**
+2. **Execute ONLY what is requested in the directive**
+3. **Do NOT modify feature_list.json unless explicitly requested**
+4. **Do NOT implement new features unless directive asks for it**
+5. **Focus on completing the directive thoroughly and accurately**
+
+### USER DIRECTIVE
+
+HEREDOC_END
+        then
+            log_error "Failed to create directive file: $directive_file"
+            return 1
+        fi
+        # Append the custom prompt safely using printf
+        if ! printf '%s\n' "$CUSTOM_PROMPT" >> "$directive_file"; then
+            log_error "Failed to append custom prompt to directive file"
+            return 1
+        fi
+        if ! cat >> "$directive_file" << 'HEREDOC_END'
+
+### EXECUTION GUIDELINES
+
+- If the directive requires code changes, make them carefully
+- If the directive requires analysis, provide thorough analysis
+- If the directive requires testing, run comprehensive tests
+- If the directive requires fixes, fix all identified issues
+- Document your work in .aidd/CHANGELOG.md
+- Commit your changes with descriptive messages
+
+### PROJECT CONTEXT
+
+**Quick References:**
+
+- **Spec (source of truth):** `/.aidd/spec.txt`
+- **Architecture map:** `/.aidd/project_structure.md`
+- **Feature tests checklist:** `/.aidd/feature_list.json`
+- **Todo list:** `/.aidd/todo.md`
+- **Changelog:** `/.aidd/CHANGELOG.md`
+
+### ASSISTANT RULES
+
+**STEP 0: Load project rules (if they exist):**
+
+- Read `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+- Apply these rules throughout your work
+- Assistant rules override generic instructions
+
+### COMPLETION
+
+When you've completed the directive:
+
+1. Document what you did in .aidd/CHANGELOG.md
+2. Commit all changes
+3. Summarize your work
+4. Exit cleanly
+
+---
+
+Begin by understanding the directive and executing it now.
+HEREDOC_END
+        then
+            log_error "Failed to append execution guidelines to directive file"
+            return 1
+        fi
+        # Verify the file was created successfully
+        if [[ ! -f "$directive_file" ]]; then
+            log_error "Directive file was not created: $directive_file"
+            return 1
+        fi
+        # Ensure file is written to disk
+        sync "$directive_file" 2>/dev/null || true
+        prompt_path="$directive_file"
+        phase="directive"
+        echo "$prompt_path|$phase"
+        return 0
+    fi
+
     # Check for TODO mode first
     if [[ "$TODO_MODE" == true ]]; then
         log_info "Using TODO mode - will search for TODO items in codebase"
@@ -124,9 +234,10 @@ determine_prompt() {
         return 0
     fi
 
-    # Check if onboarding is complete
+    # Check if onboarding is complete by checking for natural artifacts
+    # (spec.txt, feature_list.json with real data, and CHANGELOG.md)
     if check_onboarding_status "$feature_list_path"; then
-        # Onboarding complete, use coding prompt
+        log_info "Onboarding complete (all required files found) - proceeding to development"
         prompt_path="$script_dir/prompts/coding.md"
         phase="$PHASE_CODING"
         echo "$prompt_path|$phase"

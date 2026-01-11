@@ -195,6 +195,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
 		"closed_at": null,
 		"created_at": "2026-01-09",
+		"depends_on": [], // Array of feature descriptions this feature depends on (empty if no dependencies)
 		"description": "Short name of feature/capability being validated",
 		"passes": false, // Default to false!
 		"priority": "critical|high|medium|low",
@@ -209,7 +210,44 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 ]
 ```
 
-#### 3.3 Feature List Requirements
+#### 3.3 Dependency Tracking
+
+**CRITICAL: Track feature dependencies in `depends_on` field:**
+
+- For each feature, identify which other features MUST be implemented first
+- Reference dependencies by their exact `description` field value
+- Use empty array `[]` if feature has no dependencies
+- Dependencies create implementation order constraints
+
+**Examples:**
+
+```json
+{
+	"description": "User login form",
+	"depends_on": [], // No dependencies - foundational feature
+	...
+}
+{
+	"description": "Password reset functionality",
+	"depends_on": ["User login form"], // Depends on login existing
+	...
+}
+{
+	"description": "Social media OAuth login",
+	"depends_on": ["User login form", "User authentication backend"], // Multiple dependencies
+	...
+}
+```
+
+**Dependency guidelines:**
+
+- Only list direct dependencies (not transitive)
+- Foundation features (database, backend server) typically have no dependencies
+- UI features often depend on corresponding API endpoints
+- Advanced features depend on basic versions
+- Test-related features depend on the feature being tested
+
+#### 3.4 Feature List Requirements
 
 **Minimum standards:**
 
@@ -220,8 +258,9 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - Order by priority: fundamental features first
 - Conservative marking: default to `"passes": false`
 - Cover spec AND existing codebase exhaustively
+- ALL features must have `depends_on` field (even if empty array)
 
-#### 3.4 Document Codebase State
+#### 3.5 Document Codebase State
 
 **In `/.aidd/project_structure.md`, document:**
 

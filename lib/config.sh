@@ -70,10 +70,17 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_TEMPLATES_DIR:="templates"}"               # Artifacts directory name
 : "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
 : "${DEFAULT_FEATURE_LIST_FILE:="feature_list.json"}"   # Feature list file name
+: "${DEFAULT_FEATURES_DIR:="features"}"                      # Features subdirectory name
+: "${FEATURE_FILE_NAME:="feature.json"}"                      # Individual feature file name
 : "${DEFAULT_SPEC_FILE:="spec.txt"}"                    # Spec file name
 : "${DEFAULT_TODO_FILE:="todo.md"}"                     # Todo file name
 : "${DEFAULT_PROJECT_STRUCTURE_FILE:="project_structure.md"}"  # Project structure file name
 : "${DEFAULT_PIPELINE_FILE:="pipeline.json"}"           # Pipeline file name
+: "${DEFAULT_AUTOMAKER_DIR:=".automaker"}"              # AutoMaker metadata directory name
+: "${DEFAULT_AUTOMAKER_FEATURES_DIR:="features"}"       # AutoMaker features subdirectory name
+: "${DEFAULT_AUTOMAKER_SPEC_FILE:="app_spec.txt"}"      # AutoMaker spec file name
+: "${DEFAULT_AIDD_SPEC_FILE:="app_spec.txt"}"               # AIDD spec file name
+: "${SYNC_SIMILARITY_THRESHOLD:=85}"                    # Percentage for description matching in sync
 
 readonly DEFAULT_METADATA_DIR
 readonly DEFAULT_PROMPTS_DIR
@@ -81,7 +88,14 @@ readonly DEFAULT_ITERATIONS_DIR
 readonly DEFAULT_SCAFFOLDING_DIR
 readonly DEFAULT_ARTIFACTS_DIR
 readonly DEFAULT_STATE_FILE
+readonly DEFAULT_AUTOMAKER_DIR
+readonly DEFAULT_AUTOMAKER_FEATURES_DIR
+readonly DEFAULT_AUTOMAKER_SPEC_FILE
+readonly DEFAULT_AIDD_SPEC_FILE
+readonly SYNC_SIMILARITY_THRESHOLD
 readonly DEFAULT_FEATURE_LIST_FILE
+readonly DEFAULT_FEATURES_DIR
+readonly FEATURE_FILE_NAME
 readonly DEFAULT_SPEC_FILE
 readonly DEFAULT_TODO_FILE
 readonly DEFAULT_PROJECT_STRUCTURE_FILE
@@ -90,12 +104,8 @@ readonly DEFAULT_PIPELINE_FILE
 # -----------------------------------------------------------------------------
 # Legacy Metadata Directory Names (for migration)
 # -----------------------------------------------------------------------------
-: "${LEGACY_METADATA_DIR_OPENCODE:=".autoo"}"      # Legacy OpenCode metadata directory
-: "${LEGACY_METADATA_DIR_KILOCODE:=".autok"}"      # Legacy KiloCode metadata directory
 : "${LEGACY_METADATA_DIR_AUTOMAKER:=".automaker"}" # Legacy Automaker metadata directory
 
-readonly LEGACY_METADATA_DIR_OPENCODE
-readonly LEGACY_METADATA_DIR_KILOCODE
 readonly LEGACY_METADATA_DIR_AUTOMAKER
 
 # -----------------------------------------------------------------------------

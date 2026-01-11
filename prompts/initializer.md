@@ -4,9 +4,9 @@ You are in Code mode and ready to begin setting up the foundation for all future
 
 ### QUICK REFERENCES
 
-- **Spec (source of truth):** `/.aidd/spec.txt`
+- **Spec (source of truth):** `/.aidd/app_spec.txt`
 - **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/feature_list.json`
+- **Feature tests checklist:** `/.aidd/features/{feature-id}/feature.json`
 - **Todo list:** `/.aidd/todo.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
@@ -77,7 +77,7 @@ Start by orienting yourself with the project.
 
 **Locate and read the spec:**
 
-- Use `mcp_filesystem_search_files` to find `/.aidd/spec.txt`
+- Use `mcp_filesystem_search_files` to find `/.aidd/app_spec.txt`
 - Read it with `mcp_filesystem_read_text_file`
 - Record the directory containing it as your **project root**
 - Use that project root as `cwd` for all `execute_command` calls
@@ -98,7 +98,7 @@ Start by orienting yourself with the project.
 
 ### STEP 3: CREATE FEATURE LIST
 
-**Based on `/.aidd/spec.txt`, create `/.aidd/feature_list.json` with 20+ detailed tests.**
+**Based on `/.aidd/app_spec.txt`, create `/.aidd/features/{feature-id}/feature.json` with 20+ detailed tests.**
 
 **See `/_common/file-integrity.md` for safe JSON editing.**
 
@@ -121,29 +121,32 @@ Start by orienting yourself with the project.
     - NO exceptions - even setup tasks start as false
     - Features marked passing only after implementation and testing
 
+4. **Timestamp format:**
+    - `created_at` and `closed_at` MUST use ISO 8601 format with timezone
+    - Format: `"YYYY-MM-DDTHH:MM:SS.sssZ"` (e.g., `"2026-01-09T14:23:45.000Z"`)
+    - Always use current UTC timestamp: `date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
+
 #### 3.2 Feature List Format
 
 ```json
-[
-	{
-		"area": "database|backend|frontend|testing|security|devex|docs",
-		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
-		"closed_at": null,
-		"created_at": "2026-01-09",
-		"depends_on": [], // Array of feature descriptions this feature depends on (empty if no dependencies)
-		"description": "Short name of feature/capability being validated",
-		"passes": false,
-		"priority": "critical|high|medium|low",
-		"status": "open",
-		"steps": [
-			"Step 1: Navigate to the relevant page/area",
-			"Step 2: Perform the action",
-			"Step 3: Verify expected UI/API outcome",
-			"Step 4: Verify persistence (DB) if applicable",
-			"Step 5: Verify audit logs / metrics / permissions if applicable"
-		]
+{
+	"id": "feature-slug-from-description",
+	"description": "Short name of feature/capability being validated",
+	"category": "Core|UI|Security|Performance|Testing|DevEx|Documentation",
+	"priority": 1,  // 1=critical, 2=high, 3=medium, 4=low
+	"status": "backlog",  // backlog, inProgress, completed, blocked
+	"createdAt": "2026-01-09T14:23:45.000Z",
+	"updatedAt": "2026-01-09T14:23:45.000Z",
+	"justFinishedAt": null,  // Set when status changes to completed
+	"dependencies": [],  // Array of feature IDs this feature depends on
+	"spec": "1. Step description
+2. Another step
+3. Verify outcome",
+	"metadata": {
+		"aidd_area": "database|backend|frontend|testing|security|devex|docs",
+		"aidd_passes": false
 	}
-]
+}
 ```
 
 #### 3.3 Dependency Tracking
@@ -151,7 +154,7 @@ Start by orienting yourself with the project.
 **CRITICAL: Track feature dependencies in `depends_on` field:**
 
 - For each feature, identify which other features MUST be implemented first
-- Reference dependencies by their exact `description` field value
+- Reference dependencies by their exact `id` field value (feature slug)
 - Use empty array `[]` if feature has no dependencies
 - Dependencies create implementation order constraints
 
@@ -204,7 +207,7 @@ Start by orienting yourself with the project.
 
 ```bash
 # Read file to confirm valid JSON
-mcp_filesystem_read_text_file .aidd/feature_list.json
+mcp_filesystem_read_text_file .aidd/features/{id}/feature.json
 
 # Check structure is correct
 # Verify all features have "passes": false
@@ -214,7 +217,7 @@ mcp_filesystem_read_text_file .aidd/feature_list.json
 **If file is corrupted:**
 
 - See `/_common/file-integrity.md` for recovery
-- Use `git checkout -- .aidd/feature_list.json` to rollback
+- Use `git checkout -- .aidd/features/{id}/feature.json` to rollback
 - Retry with different approach
 
 ---
@@ -238,7 +241,7 @@ If `scripts/setup.ts` doesn't exist, create it to initialize the development env
 
 #### 4.2 Base Script on Tech Stack
 
-Review `/.aidd/spec.txt` to identify:
+Review `/.aidd/app_spec.txt` to identify:
 
 - Frontend framework (React, Vue, etc.)
 - Backend framework (Express, FastAPI, etc.)
@@ -328,7 +331,7 @@ bun scripts/setup.ts \
 
 #### 6.1 Identify Required Directories
 
-From `/.aidd/spec.txt`, identify:
+From `/.aidd/app_spec.txt`, identify:
 
 - Frontend directory (typically `frontend/`)
 - Backend directory (typically `backend/`)
@@ -481,7 +484,7 @@ git log -1
 
 #### 9.1 Verification Checklist
 
-- [ ] `/.aidd/feature_list.json` exists and is valid JSON
+- [ ] `/.aidd/features/{feature-id}/feature.json` exists and is valid JSON
 - [ ] Feature list has minimum 20 features, all with `"passes": false`
 - [ ] `scripts/setup.ts` exists or was skipped (if already present)
 - [ ] Setup script executed successfully (if it exists)
@@ -495,10 +498,10 @@ git log -1
 
 ```bash
 # Verify feature list
-mcp_filesystem_read_text_file .aidd/feature_list.json | head -50
+mcp_filesystem_read_text_file .aidd/features/{id}/feature.json | head -50
 
 # Count features
-grep -c '"passes"' .aidd/feature_list.json
+grep -c '"passes"' .aidd/features/{id}/feature.json
 
 # Verify project structure
 mcp_filesystem_list_directory .
@@ -593,7 +596,7 @@ git commit -m "Complete initialization - ready for development"
 
 ### What to Create
 
-- Feature list (/.aidd/feature_list.json)
+- Feature list (/.aidd/features/{id}/feature.json)
 - Setup script (scripts/setup.ts, if needed)
 - Project structure (directories)
 - README.md

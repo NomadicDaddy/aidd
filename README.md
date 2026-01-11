@@ -10,7 +10,7 @@ A unified shell script that orchestrates autonomous development sessions using *
 - **Iteration Management**: Built-in retry logic, failure handling, and progress tracking with two-stage idle timeout and agent nudging
 - **Feature Tracking**: JSON-based feature list with status tracking
 - **Shared Directory Sync**: Automatic synchronization of shared configuration directories (e.g., `.claude`, `.windsurf`) to projects
-- **Legacy Migration**: Automatic migration from `.autoo`, `.autok`, and `.automaker` directories
+- **Legacy Migration**: Automatic migration from `.automaker` directories
 
 ## Supported CLIs
 
@@ -18,13 +18,11 @@ A unified shell script that orchestrates autonomous development sessions using *
 
 - Command: `opencode run`
 - Default CLI if `--cli` is not specified
-- Legacy directory: `.autoo`
 
 ### KiloCode
 
 - Command: `kilocode --mode code --auto`
 - Specify with `--cli kilocode`
-- Legacy directory: `.autok`
 
 ### Claude Code
 
@@ -274,11 +272,7 @@ This allows the same codebase to support all CLIs with minimal differences.
 
 ## Legacy Migration
 
-AIDD automatically migrates metadata from legacy directories:
-
-- `.autoo` (OpenCode legacy) → `.aidd`
-- `.autok` (KiloCode legacy) → `.aidd`
-- `.automaker` (Automaker legacy) → `.aidd` (read-only fallback)
+AIDD automatically migrates metadata from `.automaker` directories to `.aidd`.
 
 ## Error Handling
 

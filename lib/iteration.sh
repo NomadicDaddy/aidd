@@ -236,7 +236,7 @@ HEREDOC_END
 
     # Check if onboarding is complete by checking for natural artifacts
     # (spec.txt, feature_list.json with real data, and CHANGELOG.md)
-    if check_onboarding_status "$feature_list_path"; then
+    if check_onboarding_status "$features_dir"; then
         log_info "Onboarding complete (all required files found) - proceeding to development"
         prompt_path="$script_dir/prompts/coding.md"
         phase="$PHASE_CODING"

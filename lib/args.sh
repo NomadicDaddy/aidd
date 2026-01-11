@@ -24,6 +24,8 @@ export NO_CLEAN=false
 export QUIT_ON_ABORT="0"
 export CONTINUE_ON_TIMEOUT=false
 export SHOW_STATUS=false
+export SYNC_MODE=false
+export DRY_RUN_MODE=false
 export TODO_MODE=false
 export CUSTOM_PROMPT=""
 
@@ -58,6 +60,13 @@ OPTIONS:
     --quit-on-abort N       Quit after N consecutive failures (optional, default: 0=continue indefinitely)
     --continue-on-timeout   Continue to next iteration if CLI times out (exit 124) instead of aborting (optional)
     --status               Display project status (features + TODOs) and exit (optional)
+    --sync                  Synchronize AIDD and AutoMaker data:
+                            - Features: .aidd/feature_list.json ↔ .automaker/features/*/feature.json
+                              (matches by description, copies unique features both ways,
+                              resolves conflicts using most recent timestamp)
+                            - Spec files: .aidd/spec.txt ↔ .automaker/app_spec.txt
+                              (copies only if missing on one side)
+    --dry-run               Preview sync changes without modifying files (use with --sync)
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
     --prompt "DIRECTIVE"    Use custom directive instead of automatic prompt selection (optional)
     --help                  Show this help message
@@ -154,6 +163,14 @@ parse_args() {
                 TODO_MODE=true
                 shift
                 ;;
+            --sync)
+                SYNC_MODE=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN_MODE=true
+                shift
+                ;;
             --prompt)
                 CUSTOM_PROMPT="$2"
                 shift 2
@@ -192,7 +209,17 @@ validate_args() {
     esac
 
     # Check required --project-dir argument (unless --status or --todo is specified)
-    if [[ "$SHOW_STATUS" != true && "$TODO_MODE" != true && -z "$PROJECT_DIR" ]]; then
+    
+    # Validate --sync requirements (jq dependency)
+    if [[ "$SYNC_MODE" == true ]]; then
+        if ! command -v jq &> /dev/null; then
+            log_error "--sync requires 'jq' for JSON processing"
+            log_error "Install with: apt-get install jq (Linux) or brew install jq (macOS)"
+            return $EXIT_CLI_ERROR
+        fi
+    fi
+
+    if [[ "$SHOW_STATUS" != true && "$TODO_MODE" != true && "$SYNC_MODE" != true && -z "$PROJECT_DIR" ]]; then
         log_error "Missing required argument --project-dir"
         log_info "Use --help for usage information"
         return $EXIT_INVALID_ARGS
@@ -205,6 +232,11 @@ validate_args() {
 # Apply Defaults for Unset Arguments
 # -----------------------------------------------------------------------------
 apply_defaults() {
+    # Default project directory to current directory for --status, --todo, and --sync modes
+    if [[ -z "$PROJECT_DIR" && ("$SHOW_STATUS" == true || "$TODO_MODE" == true || "$SYNC_MODE" == true) ]]; then
+        PROJECT_DIR="."
+    fi
+
     # Default timeout
     if [[ -z "$TIMEOUT" ]]; then
         TIMEOUT=$DEFAULT_TIMEOUT
@@ -251,11 +283,12 @@ get_effective_models() {
 # -----------------------------------------------------------------------------
 show_status() {
     local project_dir="$1"
-    local feature_list_file="$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_FEATURE_LIST_FILE"
+    local features_dir="$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_FEATURES_DIR"
     local todo_file=""
+    local status_file="$project_dir/$DEFAULT_METADATA_DIR/status.md"
 
-    if [[ ! -f "$feature_list_file" ]]; then
-        log_error "Feature list not found at: $feature_list_file"
+    if [[ ! -d "$features_dir" ]]; then
+        log_error "Features directory not found at: $features_dir"
         log_info "Run in an existing AIDD project or specify --project-dir"
         return $EXIT_NOT_FOUND
     fi
@@ -275,15 +308,25 @@ show_status() {
         done
     fi
 
-    # Parse feature_list.json using jq if available
+    # Parse features from distributed structure using jq
     if ! command_exists jq; then
         log_error "'jq' command is required for --status option"
         log_info "Install jq to display status: https://stedolan.github.io/jq/"
         return $EXIT_GENERAL_ERROR
     fi
 
-    local features_json
-    features_json=$(cat "$feature_list_file")
+    # Collect all features into a JSON array
+    local features_json="["
+    local first=true
+    while IFS= read -r -d '' feature_file; do
+        if [[ "$first" == true ]]; then
+            first=false
+        else
+            features_json+=","
+        fi
+        features_json+=$(cat "$feature_file")
+    done < <(find "$features_dir" -type f -name "feature.json" -print0 2>/dev/null)
+    features_json+="]"
 
     # Get overall statistics
     local total
@@ -293,12 +336,15 @@ show_status() {
     local closed
 
     total=$(echo "$features_json" | jq '. | length')
-    passing=$(echo "$features_json" | jq '[.[] | select(.passes == true)] | length')
-    failing=$(echo "$features_json" | jq '[.[] | select(.passes == false and .status == "open")] | length')
-    closed=$(echo "$features_json" | jq '[.[] | select(.status == "resolved")] | length')
-    open=$(echo "$features_json" | jq '[.[] | select(.status == "open")] | length')
+    passing=$(echo "$features_json" | jq '[.[] | select(.metadata.aidd_passes == true)] | length')
+    failing=$(echo "$features_json" | jq '[.[] | select(.metadata.aidd_passes == false and .status == "backlog")] | length')
+    closed=$(echo "$features_json" | jq '[.[] | select(.status == "completed")] | length')
+    open=$(echo "$features_json" | jq '[.[] | select(.status == "backlog")] | length')
 
     # Print summary header
+    # Write output to temp file, then display and save
+    local temp_status="/tmp/aidd_status_$$.md"
+    {
     echo ""
     echo "=============================================================================="
     echo "Project Feature List Status: $project_dir"
@@ -327,7 +373,7 @@ show_status() {
     echo ""
     echo "$features_json" | jq -r '
         .[] |
-        select(.passes == true) |
+        select(.metadata.aidd_passes == true) |
         {
             description: .description,
             priority: .priority,
@@ -337,12 +383,12 @@ show_status() {
     ' | awk -F'|' '
         {
             priority_val = $2;
-            if (priority_val == "critical") priority_num = 4;
-            else if (priority_val == "high") priority_num = 3;
-            else if (priority_val == "medium") priority_num = 2;
-            else if (priority_val == "low") priority_num = 1;
-            else priority_num = 0;
-            print priority_num "|" $0;
+            if (priority_val == "1") { priority_num = 4; priority_str = "critical"; }
+            else if (priority_val == "2") { priority_num = 3; priority_str = "high"; }
+            else if (priority_val == "3") { priority_num = 2; priority_str = "medium"; }
+            else if (priority_val == "4") { priority_num = 1; priority_str = "low"; }
+            else { priority_num = 0; priority_str = "unknown"; }
+            print priority_num "|" $1 "|" priority_str "|" $3;
         }
     ' | sort -t'|' -k1 -nr | cut -d'|' -f2- | while IFS='|' read -r description priority deps; do
         if [[ "$deps" -gt 0 ]]; then
@@ -362,7 +408,7 @@ show_status() {
     echo ""
     echo "$features_json" | jq -r '
         .[] |
-        select(.passes == false and .status == "open") |
+        select(.metadata.aidd_passes == false and .status == "backlog") |
         {
             description: .description,
             priority: .priority,
@@ -372,12 +418,12 @@ show_status() {
     ' | awk -F'|' '
         {
             priority_val = $2;
-            if (priority_val == "critical") priority_num = 4;
-            else if (priority_val == "high") priority_num = 3;
-            else if (priority_val == "medium") priority_num = 2;
-            else if (priority_val == "low") priority_num = 1;
-            else priority_num = 0;
-            print priority_num "|" $0;
+            if (priority_val == "1") { priority_num = 4; priority_str = "critical"; }
+            else if (priority_val == "2") { priority_num = 3; priority_str = "high"; }
+            else if (priority_val == "3") { priority_num = 2; priority_str = "medium"; }
+            else if (priority_val == "4") { priority_num = 1; priority_str = "low"; }
+            else { priority_num = 0; priority_str = "unknown"; }
+            print priority_num "|" $1 "|" priority_str "|" $3;
         }
     ' | sort -t'|' -k1 -nr | cut -d'|' -f2- | while IFS='|' read -r description priority deps; do
         if [[ "$deps" -gt 0 ]]; then
@@ -398,7 +444,7 @@ show_status() {
     echo "------------------------------------------------------------------------------"
     echo ""
 
-    for category in functional style performance testing devex docs process; do
+    for category in Core UI Security Performance Testing DevEx Documentation; do
         local count
         count=$(echo "$features_json" | jq --arg cat "$category" '[.[] | select(.category == $cat)] | length')
         if [[ $count -gt 0 ]]; then
@@ -413,11 +459,19 @@ show_status() {
     echo "------------------------------------------------------------------------------"
     echo ""
 
-    for priority in critical high medium low; do
+    # Priorities are now numbers: 1=critical, 2=high, 3=medium, 4=low
+    for priority_num in 1 2 3 4; do
+        local priority_name
+        case $priority_num in
+            1) priority_name="critical" ;;
+            2) priority_name="high" ;;
+            3) priority_name="medium" ;;
+            4) priority_name="low" ;;
+        esac
         local count
-        count=$(echo "$features_json" | jq --arg pri "$priority" '[.[] | select(.priority == $pri)] | length')
+        count=$(echo "$features_json" | jq --argjson pri "$priority_num" '[.[] | select(.priority == $pri)] | length')
         if [[ $count -gt 0 ]]; then
-            printf "%-20s %s\n" "$priority:" "$count features"
+            printf "%-20s %s\n" "$priority_name:" "$count features"
         fi
     done
     echo ""
@@ -505,6 +559,14 @@ show_status() {
     echo "=============================================================================="
     echo ""
 
+    } > "$temp_status"
+    
+    # Display the output
+    cat "$temp_status"
+    
+    # Save to status.md
+    mv "$temp_status" "$status_file"
+
     return 0
 }
 
@@ -523,6 +585,25 @@ init_args() {
     get_effective_models
 
     # Handle --status option (display and exit)
+    
+    # Handle --sync option (synchronize and exit)
+    if [[ "$SYNC_MODE" == true ]]; then
+        # Find metadata directory
+        local metadata_dir=""
+        if [[ -d "$PROJECT_DIR/$DEFAULT_METADATA_DIR" ]]; then
+            metadata_dir="$PROJECT_DIR/$DEFAULT_METADATA_DIR"
+        else
+            log_error "Metadata directory not found: $PROJECT_DIR/$DEFAULT_METADATA_DIR"
+            log_info "Run aidd normally first to initialize the project"
+            exit $EXIT_NOT_FOUND
+        fi
+        
+        # Source and run sync
+        source "$(dirname "${BASH_SOURCE[0]}")/sync.sh"
+        sync_features "$PROJECT_DIR" "$metadata_dir"
+        exit $EXIT_SUCCESS
+    fi
+
     if [[ "$SHOW_STATUS" == true ]]; then
         show_status "$PROJECT_DIR"
         exit $EXIT_SUCCESS

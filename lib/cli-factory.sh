@@ -23,21 +23,18 @@ init_cli() {
             export CLI_TYPE="opencode"
             export CLI_NAME="OpenCode"
             export CLI_COMMAND="opencode run"
-            export CLI_LEGACY_METADATA_DIR="$LEGACY_METADATA_DIR_OPENCODE"
             source "$(dirname "${BASH_SOURCE[0]}")/cli-opencode.sh"
             ;;
         kilocode)
             export CLI_TYPE="kilocode"
             export CLI_NAME="KiloCode"
             export CLI_COMMAND="kilocode"
-            export CLI_LEGACY_METADATA_DIR="$LEGACY_METADATA_DIR_KILOCODE"
             source "$(dirname "${BASH_SOURCE[0]}")/cli-kilocode.sh"
             ;;
         claude-code)
             export CLI_TYPE="claude-code"
             export CLI_NAME="Claude Code"
             export CLI_COMMAND="claude"
-            export CLI_LEGACY_METADATA_DIR=""  # No legacy metadata dir for Claude Code
             source "$(dirname "${BASH_SOURCE[0]}")/cli-claude-code.sh"
             ;;
         *)

@@ -4,9 +4,9 @@ You are in Code mode and ready to begin integrating with an existing codebase to
 
 ### QUICK REFERENCES
 
-- **Spec (source of truth):** `/.aidd/spec.txt`
+- **Spec (source of truth):** `/.aidd/app_spec.txt`
 - **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/feature_list.json`
+- **Feature tests checklist:** `/.aidd/features/{feature-id}/feature.json`
 - **Todo list:** `/.aidd/todo.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
@@ -77,15 +77,15 @@ Start by orienting yourself with the existing codebase.
 
 #### 2.1 Locate or Create Spec
 
-**If `/.aidd/spec.txt` exists:**
+**If `/.aidd/app_spec.txt` exists:**
 
 - Read it with `mcp_filesystem_read_text_file`
 - Use its directory as your **project root**
 - Verify it accurately describes the existing codebase
 
-**If `/.aidd/spec.txt` doesn't exist (legacy codebase):**
+**If `/.aidd/app_spec.txt` doesn't exist (legacy codebase):**
 
-- Create spec.txt based on your analysis
+- Create app_spec.txt based on your analysis
 - Infer application purpose from:
     - package.json and dependencies
     - README.md or documentation
@@ -104,7 +104,7 @@ mcp_filesystem_list_directory .aidd
 # Check for legacy .auto* directories
 mcp_filesystem_list_directory .
 
-# Look for existing feature_list.json, CHANGELOG.md, etc.
+# Look for existing features/{feature-id}/feature.json, CHANGELOG.md, etc.
 ```
 
 **If legacy directories exist (`.auto*`):**
@@ -136,7 +136,7 @@ mcp_filesystem_list_directory .
 
 ### STEP 3: ANALYZE CODEBASE AND CREATE FEATURE LIST
 
-**Create or update `/.aidd/feature_list.json` based on spec AND existing code.**
+**Create or update `/.aidd/features/{feature-id}/feature.json` based on spec AND existing code.**
 
 **See `/_common/file-integrity.md` for safe JSON editing.**
 
@@ -179,7 +179,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 3. ✅ Verified it works via test/inspection
 4. ✅ Confirmed it matches spec requirements
 
-**If existing feature_list.json present:**
+**If existing features/{feature-id}/feature.json present:**
 
 - Merge it with your new findings
 - Add missing features from spec
@@ -188,13 +188,17 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 **Format (same as initializer):**
 
+**Timestamp format:**
+- `created_at` and `closed_at` MUST use ISO 8601 format: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
+- Always use current UTC timestamp: `date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
+
 ```json
 [
 	{
 		"area": "database|backend|frontend|testing|security|devex|docs",
 		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
 		"closed_at": null,
-		"created_at": "2026-01-09",
+		"created_at": "2026-01-09T14:23:45.000Z",
 		"depends_on": [], // Array of feature descriptions this feature depends on (empty if no dependencies)
 		"description": "Short name of feature/capability being validated",
 		"passes": false, // Default to false!
@@ -215,7 +219,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 **CRITICAL: Track feature dependencies in `depends_on` field:**
 
 - For each feature, identify which other features MUST be implemented first
-- Reference dependencies by their exact `description` field value
+- Reference dependencies by their exact `id` field value (feature slug)
 - Use empty array `[]` if feature has no dependencies
 - Dependencies create implementation order constraints
 
@@ -452,7 +456,7 @@ git commit -m "onboard"
 
 ### Onboarding Actions:
 
-- Created spec.txt from codebase analysis
+- Created app_spec.txt from codebase analysis
 - Built feature list with 30 tests (15 verified passing, 15 need implementation)
 - Updated README.md with accurate setup instructions
 - Created todo.md with 16 action items
@@ -479,8 +483,8 @@ git commit -m "onboard"
 
 #### 9.1 Verification Checklist
 
-- [ ] `/.aidd/spec.txt` exists and describes the application
-- [ ] `/.aidd/feature_list.json` exists with accurate feature inventory
+- [ ] `/.aidd/app_spec.txt` exists and describes the application
+- [ ] `/.aidd/features/{feature-id}/feature.json` exists with accurate feature inventory
 - [ ] Feature list minimum 20 features, conservatively marked
 - [ ] `/.aidd/project_structure.md` documents architecture
 - [ ] `/.aidd/todo.md` created if issues discovered
@@ -494,12 +498,12 @@ git commit -m "onboard"
 
 ```bash
 # Verify critical files exist
-mcp_filesystem_read_text_file .aidd/spec.txt | head -20
-mcp_filesystem_read_text_file .aidd/feature_list.json | head -50
+mcp_filesystem_read_text_file .aidd/app_spec.txt | head -20
+mcp_filesystem_read_text_file .aidd/features/{feature-id}/feature.json | head -50
 mcp_filesystem_read_text_file .aidd/CHANGELOG.md
 
 # Count features
-grep -c '"passes"' .aidd/feature_list.json
+grep -c '"passes"' .aidd/features/{feature-id}/feature.json
 
 # Check git status
 git status
@@ -546,8 +550,8 @@ git diff
 
 ### What to Create/Update
 
-- Spec (/.aidd/spec.txt) if missing
-- Feature list (/.aidd/feature_list.json)
+- Spec (/.aidd/app_spec.txt) if missing
+- Feature list (/.aidd/features/{feature-id}/feature.json)
 - Architecture docs (/.aidd/project_structure.md)
 - Progress log (/.aidd/CHANGELOG.md)
 - Todo list (/.aidd/todo.md) if issues found

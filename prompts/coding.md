@@ -4,9 +4,9 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 
 ### QUICK REFERENCES
 
-- **Spec (source of truth):** `/.aidd/spec.txt`
+- **Spec (source of truth):** `/.aidd/app_spec.txt`
 - **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/feature_list.json`
+- **Feature tests checklist:** `/.aidd/features/*/feature.json`
 - **Todo list:** `/.aidd/todo.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
@@ -70,7 +70,7 @@ Start by orienting yourself with the project state.
 
 **Record the project root:**
 
-- Locate `/.aidd/spec.txt`
+- Locate `/.aidd/app_spec.txt`
 - Use that directory as `cwd` for all `execute_command` calls
 - Verify with `mcp_filesystem_list_directory` (should show `/.aidd/`, `backend/`, `frontend/`, etc.)
 
@@ -86,7 +86,7 @@ git log --oneline -20
 
 **Understand the spec:**
 
-- Read `/.aidd/spec.txt` carefully - it's your source of truth
+- Read `/.aidd/app_spec.txt` carefully - it's your source of truth
 - Note application type and core requirements
 - Identify main features described
 
@@ -103,7 +103,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 #### 3.1 Core Models Verification
 
 1. **Identify required models from spec:**
-    - Read `/.aidd/spec.txt` to find data models (e.g., Todo, User, Tag)
+    - Read `/.aidd/app_spec.txt` to find data models (e.g., Todo, User, Tag)
     - List core entities the application manages
 
 2. **Verify models exist in codebase:**
@@ -131,7 +131,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 
 #### 3.3 Feature List Alignment
 
-1. **Cross-reference `/.aidd/feature_list.json` with spec**
+1. **Cross-reference `/.aidd/features/*/feature.json` with spec**
 2. **Ensure ALL major spec features have corresponding tests**
 3. **Flag features marked `"passes": true` that aren't actually implemented**
 
@@ -244,7 +244,7 @@ For example:
 
 ```bash
 # Count ALL features with "passes": false (no filtering, no interpretation)
-grep -c '"passes": false' .aidd/feature_list.json
+grep -c '"passes": false' .aidd/features/*/feature.json
 
 # Check todo.md for incomplete items
 cat .aidd/todo.md
@@ -256,14 +256,14 @@ cat .aidd/todo.md
 
 **If BOTH conditions are true, TERMINATE IMMEDIATELY:**
 
-- **Zero features in `feature_list.json` with `"passes": false`** (count ALL features, no filtering allowed)
+- **Zero features in `features/*/feature.json` with `"passes": false`** (count ALL features, no filtering allowed)
 - No incomplete todo items in `todo.md`
 
 **CRITICAL RULES:**
 
-- Count **ALL** features in `feature_list.json` - do NOT filter by priority, category, or any other field
+- Count **ALL** features in `features/*/feature.json` - do NOT filter by priority, category, or any other field
 - Do NOT invent distinctions like "MVP-required" vs "post-MVP" - if a feature is in the list with `"passes": false`, it counts
-- Do NOT interpret spec.txt phases or categories as filters - the termination condition is purely about `feature_list.json`
+- Do NOT interpret app_spec.txt phases or categories as filters - the termination condition is purely about `features/*/feature.json`
 - If the count from Step 5.1 is greater than zero, you MUST continue working on features
 
 **Exit cleanly (ONLY if both conditions met):**
@@ -318,8 +318,8 @@ For each feature with `"passes": false`:
 
 **Check `/.aidd/todo.md` for priority work:**
 
-1. If todo.md exists and has items, intelligently convert each to `feature_list.json` entry
-2. This is the ONLY time you may ADD to feature_list.json
+1. If todo.md exists and has items, intelligently convert each to `features/*/feature.json` entry
+2. This is the ONLY time you may ADD to features/*/feature.json
 3. Remove items from todo.md as you add them
 4. Delete or empty todo.md when complete
 
@@ -330,7 +330,7 @@ For each feature with `"passes": false`:
 1. **Check for `depends_on` field:**
    ```bash
    # Count features without depends_on field
-   jq '[.[] | select(has("depends_on") | not)] | length' .aidd/feature_list.json
+   jq '[.[] | select(has("depends_on") | not)] | length' .aidd/features/*/feature.json
    ```
 
 2. **If ANY features lack `depends_on` field:**
@@ -338,7 +338,7 @@ For each feature with `"passes": false`:
    - Review each feature and add `depends_on` field
    - Set to empty array `[]` if no dependencies
    - Identify actual dependencies and list them by exact `description`
-   - Commit the updated feature_list.json
+   - Commit the updated features/*/feature.json
    - Then resume feature selection
 
 3. **Dependency reference format:**
@@ -352,7 +352,7 @@ For each feature with `"passes": false`:
 
 #### 6.6 Select Feature from Feature List
 
-**Review `/.aidd/feature_list.json`:**
+**Review `/.aidd/features/*/feature.json`:**
 
 - Filter to `"passes": false`
 - Group by priority (critical > high > medium > low)
@@ -367,8 +367,8 @@ For each feature with `"passes": false`:
    # Example: Check if dependencies are satisfied
    # Feature has: "depends_on": ["User authentication API", "Database schema"]
    # Verify both features have "passes": true
-   jq '.[] | select(.description == "User authentication API") | .passes' .aidd/feature_list.json
-   jq '.[] | select(.description == "Database schema") | .passes' .aidd/feature_list.json
+   jq '.[] | select(.description == "User authentication API") | .metadata.aidd_passes' .aidd/features/*/feature.json
+   jq '.[] | select(.description == "Database schema") | .metadata.aidd_passes' .aidd/features/*/feature.json
    ```
 
 2. **Skip features with unsatisfied dependencies:**
@@ -548,7 +548,7 @@ git add .
 git commit -m "Implement [feature name] - verified end-to-end" \
   -m "- Added [specific changes]" \
   -m "- Tested via UI (browser_action)" \
-  -m "- Updated /.aidd/feature_list.json: marked test #X as passing" \
+  -m "- Updated /.aidd/features/*/feature.json: marked test #X as passing" \
   -m "- Screenshots (if captured) saved under verification/"
 ```
 
@@ -578,11 +578,11 @@ git commit -m "Session work: [summary]"
 
 #### 12.2 Update Documentation
 
-- `/.aidd/feature_list.json` updated if tests verified
+- `/.aidd/features/*/feature.json` updated if tests verified
 
 #### 12.3 Final Feature Status Audit
 
-- Perform final audit of `/.aidd/feature_list.json`
+- Perform final audit of `/.aidd/features/*/feature.json`
 - Verify all `"passes": true` features actually work
 - Confirm no false positives
 - Document any discrepancies

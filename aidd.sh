@@ -74,14 +74,14 @@ source "${SCRIPT_DIR}/lib/iteration.sh"
 # Find or create metadata directory
 METADATA_DIR=$(find_or_create_metadata_dir "$PROJECT_DIR")
 
-# Check if spec is required (only for new projects or when metadata dir doesn't have spec.txt)
+# Check if spec is required (only for new projects or when metadata dir doesn't have app_spec.txt)
 NEEDS_SPEC=false
 if [[ ! -d "$PROJECT_DIR" ]] || ! is_existing_codebase "$PROJECT_DIR"; then
     NEEDS_SPEC=true
 fi
 
 if [[ "$NEEDS_SPEC" == true && -z "$SPEC_FILE" ]]; then
-    log_error "Missing required argument --spec (required for new projects or when spec.txt doesn't exist)"
+    log_error "Missing required argument --spec (required for new projects or when app_spec.txt doesn't exist)"
     log_info "Use --help for usage information"
     exit $EXIT_INVALID_ARGS
 fi
@@ -260,8 +260,8 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             # Check if project is complete BEFORE sending prompt
             # This prevents unnecessary agent invocations when already done
             if check_project_completion "$METADATA_DIR"; then
-                log_info "All features complete and no todos remaining. Exiting successfully."
-                exit $EXIT_SUCCESS
+                log_info "Project completion CONFIRMED. All features pass, thorough review complete."
+                exit $EXIT_PROJECT_COMPLETE
             fi
 
             # Run the appropriate prompt
@@ -273,6 +273,12 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             fi
 
             CLI_EXIT_CODE=$?
+
+            # Clean up directive.md after directive mode completes
+            if [[ "$PROMPT_TYPE" == "directive" ]]; then
+                rm -f "$METADATA_DIR/directive.md" 2>/dev/null
+                log_debug "Removed directive.md"
+            fi
 
             if [[ $CLI_EXIT_CODE -ne 0 ]]; then
                 # Handle failure
@@ -288,6 +294,11 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
         } 2>&1 | tee "$LOG_FILE"
 
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
+        # Handle project completion (exit cleanly with success)
+        if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
+            log_info "AI development driver completed: project finished"
+            exit $EXIT_SUCCESS
+        fi
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
             if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
@@ -351,8 +362,8 @@ else
             # Check if project is complete BEFORE sending prompt
             # This prevents unnecessary agent invocations when already done
             if check_project_completion "$METADATA_DIR"; then
-                log_info "All features complete and no todos remaining. Exiting successfully."
-                exit $EXIT_SUCCESS
+                log_info "Project completion CONFIRMED. All features pass, thorough review complete."
+                exit $EXIT_PROJECT_COMPLETE
             fi
 
             # Run the appropriate prompt
@@ -364,6 +375,12 @@ else
             fi
 
             CLI_EXIT_CODE=$?
+
+            # Clean up directive.md after directive mode completes
+            if [[ "$PROMPT_TYPE" == "directive" ]]; then
+                rm -f "$METADATA_DIR/directive.md" 2>/dev/null
+                log_debug "Removed directive.md"
+            fi
 
             if [[ $CLI_EXIT_CODE -ne 0 ]]; then
                 # Handle failure
@@ -385,6 +402,11 @@ else
         } 2>&1 | tee "$LOG_FILE"
 
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
+        # Handle project completion (exit cleanly with success)
+        if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
+            log_info "AI development driver completed: project finished"
+            exit $EXIT_SUCCESS
+        fi
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
             if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then

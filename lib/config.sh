@@ -34,11 +34,13 @@ readonly EXIT_CLI_ERROR
 : "${EXIT_NO_ASSISTANT:=70}"        # Model returned no assistant messages
 : "${EXIT_IDLE_TIMEOUT:=71}"        # Idle timeout
 : "${EXIT_PROVIDER_ERROR:=72}"      # Provider error
+: "${EXIT_PROJECT_COMPLETE:=73}"    # Project completion confirmed (stop iterations)
 : "${EXIT_SIGNAL_TERMINATED:=124}"  # Terminated by signal (SIGINT/SIGTERM)
 
 readonly EXIT_NO_ASSISTANT
 readonly EXIT_IDLE_TIMEOUT
 readonly EXIT_PROVIDER_ERROR
+readonly EXIT_PROJECT_COMPLETE
 readonly EXIT_SIGNAL_TERMINATED
 
 # -----------------------------------------------------------------------------
@@ -69,10 +71,8 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_SCAFFOLDING_DIR:="scaffolding"}"           # Scaffolding directory name
 : "${DEFAULT_TEMPLATES_DIR:="templates"}"               # Artifacts directory name
 : "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
-: "${DEFAULT_FEATURE_LIST_FILE:="feature_list.json"}"   # Feature list file name
 : "${DEFAULT_FEATURES_DIR:="features"}"                      # Features subdirectory name
 : "${FEATURE_FILE_NAME:="feature.json"}"                      # Individual feature file name
-: "${DEFAULT_SPEC_FILE:="spec.txt"}"                    # Spec file name
 : "${DEFAULT_TODO_FILE:="todo.md"}"                     # Todo file name
 : "${DEFAULT_PROJECT_STRUCTURE_FILE:="project_structure.md"}"  # Project structure file name
 : "${DEFAULT_PIPELINE_FILE:="pipeline.json"}"           # Pipeline file name
@@ -93,10 +93,8 @@ readonly DEFAULT_AUTOMAKER_FEATURES_DIR
 readonly DEFAULT_AUTOMAKER_SPEC_FILE
 readonly DEFAULT_AIDD_SPEC_FILE
 readonly SYNC_SIMILARITY_THRESHOLD
-readonly DEFAULT_FEATURE_LIST_FILE
 readonly DEFAULT_FEATURES_DIR
 readonly FEATURE_FILE_NAME
-readonly DEFAULT_SPEC_FILE
 readonly DEFAULT_TODO_FILE
 readonly DEFAULT_PROJECT_STRUCTURE_FILE
 readonly DEFAULT_PIPELINE_FILE

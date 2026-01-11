@@ -135,9 +135,9 @@ For empty or non-existent directories:
 1. Creates project directory if it doesn't exist
 2. Copies scaffolding files from `scaffolding/` directory
 3. Copies templates into `project-dir/.aidd/`
-4. Copies spec file to `.aidd/spec.txt` (if `--spec` is provided)
+4. Copies spec file to `.aidd/app_spec.txt` (if `--spec` is provided)
 5. Uses `initializer` prompt to set up initial project structure
-6. Creates `feature_list.json` based on the provided spec
+6. Creates `features/*/feature.json` based on the provided spec
 
 ### Existing Codebase Workflow
 
@@ -147,13 +147,13 @@ For directories containing code but no `.aidd/` files:
 2. Does NOT copy spec file
 3. Uses `onboarding` prompt to:
     - Analyze existing codebase
-    - Generate `spec.txt` based on discovered functionality
-    - Create `feature_list.json` with existing features marked as complete
+    - Generate `app_spec.txt` based on discovered functionality
+    - Create `features/*/feature.json` with existing features marked as complete
     - Document project structure and technical debt
 
 ### Subsequent Iterations
 
-Once `.aidd/spec.txt` and `.aidd/feature_list.json` exist:
+Once `.aidd/app_spec.txt` and `.aidd/features/` exist:
 
 - Uses `coding` prompt for continued development
 - Implements remaining features from the feature list
@@ -225,8 +225,8 @@ aidd/
 
 Project Metadata (.aidd/):
 .aidd/
-├── spec.txt               # Project specification
-├── feature_list.json      # Feature tracking
+├── app_spec.txt           # Project specification
+├── features/              # Feature tracking (one dir per feature)
 ├── todo.md                # TODO items
 ├── project_structure.md   # Architecture documentation
 └── iterations/            # Iteration logs

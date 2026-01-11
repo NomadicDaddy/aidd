@@ -28,7 +28,7 @@
 
 **JSON files:**
 
-- `/.aidd/feature_list.json` - Feature tracking (mission-critical)
+- `/.aidd/features/*/feature.json` - Feature tracking (mission-critical)
 - `package.json` - Dependencies and scripts
 - `tsconfig.json` - TypeScript configuration
 - Any `.json` configuration files

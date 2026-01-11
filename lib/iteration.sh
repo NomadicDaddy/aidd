@@ -80,37 +80,45 @@ reset_failure_counter() {
 # -----------------------------------------------------------------------------
 
 # Check onboarding status
-# Usage: check_onboarding_status <feature_list_path>
+# Usage: check_onboarding_status <metadata_dir>
 # Returns: 0 if onboarding complete, 1 if incomplete
 check_onboarding_status() {
-    local feature_list_path="$1"
-    local metadata_dir=$(dirname "$feature_list_path")
+    local metadata_dir="$1"
 
     # Check if critical onboarding artifacts exist
-    # These files are ALWAYS created during onboarding
-    local spec_path="$metadata_dir/spec.txt"
+    # These files/directories are ALWAYS created during onboarding
+    local features_dir="$metadata_dir/$DEFAULT_FEATURES_DIR"
+    local spec_path="$metadata_dir/$DEFAULT_AIDD_SPEC_FILE"
     local changelog_path="$metadata_dir/CHANGELOG.md"
 
-    # All three critical files must exist
-    if [[ ! -f "$feature_list_path" ]]; then
+    # Features directory must exist with at least one feature
+    if [[ ! -d "$features_dir" ]]; then
+        log_debug "Onboarding incomplete: features directory not found"
         return 1
     fi
 
+    # Check if features directory has any feature.json files
+    local feature_count
+    feature_count=$(find "$features_dir" -type f -name "feature.json" 2>/dev/null | wc -l)
+    if [[ "$feature_count" -eq 0 ]]; then
+        log_debug "Onboarding incomplete: no features found"
+        return 1
+    fi
+
+    # Spec file must exist
     if [[ ! -f "$spec_path" ]]; then
+        log_debug "Onboarding incomplete: spec file not found at $spec_path"
         return 1
     fi
 
+    # Changelog must exist
     if [[ ! -f "$changelog_path" ]]; then
-        return 1
-    fi
-
-    # Check if feature_list.json contains actual data (not just template)
-    if grep -q "$TEMPLATE_DATE_MARKER" "$feature_list_path" || \
-       grep -q "$TEMPLATE_FEATURE_MARKER" "$feature_list_path"; then
+        log_debug "Onboarding incomplete: CHANGELOG.md not found"
         return 1
     fi
 
     # All checks passed - onboarding is complete
+    log_debug "Onboarding complete: found $feature_count features, spec, and changelog"
     return 0
 }
 
@@ -150,7 +158,7 @@ You are an AI development assistant executing a custom user directive.
 
 1. **Read and understand the directive below**
 2. **Execute ONLY what is requested in the directive**
-3. **Do NOT modify feature_list.json unless explicitly requested**
+3. **Do NOT modify features unless explicitly requested**
 4. **Do NOT implement new features unless directive asks for it**
 5. **Focus on completing the directive thoroughly and accurately**
 
@@ -181,9 +189,9 @@ HEREDOC_END
 
 **Quick References:**
 
-- **Spec (source of truth):** `/.aidd/spec.txt`
+- **Spec (source of truth):** `/.aidd/app_spec.txt`
 - **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/feature_list.json`
+- **Feature tests checklist:** `/.aidd/features/*/feature.json`
 - **Todo list:** `/.aidd/todo.md`
 - **Changelog:** `/.aidd/CHANGELOG.md`
 
@@ -225,6 +233,17 @@ HEREDOC_END
         return 0
     fi
 
+    # Check for project completion pending state (two-phase completion)
+    # If pending, force TODO mode for thorough review
+    local completion_state_file="$metadata_dir/.project_completion_pending"
+    if [[ -f "$completion_state_file" ]]; then
+        log_info "Project completion pending - running thorough TODO review"
+        prompt_path="$script_dir/prompts/todo.md"
+        phase="$PHASE_CODING"
+        echo "$prompt_path|$phase"
+        return 0
+    fi
+
     # Check for TODO mode first
     if [[ "$TODO_MODE" == true ]]; then
         log_info "Using TODO mode - will search for TODO items in codebase"
@@ -235,8 +254,8 @@ HEREDOC_END
     fi
 
     # Check if onboarding is complete by checking for natural artifacts
-    # (spec.txt, feature_list.json with real data, and CHANGELOG.md)
-    if check_onboarding_status "$features_dir"; then
+    # (app_spec.txt, features directory with data, and CHANGELOG.md)
+    if check_onboarding_status "$metadata_dir"; then
         log_info "Onboarding complete (all required files found) - proceeding to development"
         prompt_path="$script_dir/prompts/coding.md"
         phase="$PHASE_CODING"
@@ -291,17 +310,22 @@ get_next_log_index() {
 # Project Completion Detection
 # -----------------------------------------------------------------------------
 
-# Check if project is complete
+# Check if project is complete (two-phase detection)
 # Usage: check_project_completion <metadata_dir>
-# Returns: 0 if complete (all features pass, no todos), 1 if not complete
+# Returns: 0 if confirmed complete (second detection), 1 if not complete or needs todo pass
+# Phase 1: First detection creates state file and returns 1 (allows TODO pass to run)
+# Phase 2: Second detection (state file exists) returns 0 (confirmed complete)
 check_project_completion() {
     local metadata_dir="$1"
     local feature_list_path="$metadata_dir/${DEFAULT_FEATURE_LIST_FILE}"
     local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
+    local completion_state_file="$metadata_dir/.project_completion_pending"
 
-    # Check if feature_list.json exists
+    # Check if features directory exists
     if [[ ! -f "$feature_list_path" ]]; then
         log_debug "Feature list not found, project not complete"
+        # Clear pending state if project regressed
+        rm -f "$completion_state_file" 2>/dev/null
         return 1
     fi
 
@@ -329,9 +353,22 @@ check_project_completion() {
 
     # Project is complete if no failing features and no todos
     if [[ "$failing_count" -eq 0 && "$has_todos" == false ]]; then
-        log_info "Project completion detected: All features pass, no todos remaining"
-        return 0
+        # Check if this is first or second detection
+        if [[ -f "$completion_state_file" ]]; then
+            # Phase 2: State file exists, this is second detection - confirmed complete
+            log_info "Project completion CONFIRMED: All features pass after thorough TODO review"
+            rm -f "$completion_state_file" 2>/dev/null
+            return 0
+        else
+            # Phase 1: First detection - create state file, allow TODO pass to run
+            log_info "Project completion PENDING: All features pass, running thorough TODO review..."
+            echo "$(date -Is 2>/dev/null || date)" > "$completion_state_file"
+            # Return 1 to allow the iteration to proceed with TODO prompt
+            return 1
+        fi
     fi
 
+    # Not complete - clear any pending state
+    rm -f "$completion_state_file" 2>/dev/null
     return 1
 }

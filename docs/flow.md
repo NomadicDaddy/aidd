@@ -31,7 +31,7 @@ graph TD
 
     T --> V[If Spec File Provided, Validate It Exists]
     U --> V
-    V --> W[Define Paths: .aidd/spec.txt, feature_list.json, iterations/]
+    V --> W[Define Paths: .aidd/app_spec.txt, features/, iterations/]
     W --> X[Create Iterations Directory]
     X --> Y[Get Next Log Index]
     Y --> Z[Init Failure Counter]
@@ -56,7 +56,7 @@ graph TD
     AL --> AM[Send Onboarding Prompt]
 
     AK -->|No| AN[Copy Artifacts no overwrite]
-    AN --> AO[If Spec Provided, Copy to .aidd/spec.txt]
+    AN --> AO[If Spec Provided, Copy to .aidd/app_spec.txt]
     AO --> AP[Send Initializer Prompt]
 
     AJ --> AQ[run_cli_prompt via coprocess]
@@ -131,7 +131,7 @@ When agent becomes unresponsive:
 
 ### 7. Onboarding Completion
 
-If `feature_list.json` appears to be a template with placeholders like `{yyyy-mm-dd}`, onboarding is considered incomplete.
+If `features/` directory is empty or missing, onboarding is considered incomplete.
 
 ### 8. Prompt Selection
 
@@ -156,14 +156,14 @@ Only for new projects - copies template structure.
 
 Copies metadata templates into `.aidd/` without overwriting existing files:
 
-- `feature_list.json` template
+- `features/` directory structure
 - `progress.md` template
 - `project_structure.md` template
 - `todo.md` template
 
 ### Spec Copy
 
-If `--spec` provided, copied to `.aidd/spec.txt` during initializer flow.
+If `--spec` provided, copied to `.aidd/app_spec.txt` during initializer flow.
 
 ### Log Management
 

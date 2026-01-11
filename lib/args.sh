@@ -61,10 +61,10 @@ OPTIONS:
     --continue-on-timeout   Continue to next iteration if CLI times out (exit 124) instead of aborting (optional)
     --status               Display project status (features + TODOs) and exit (optional)
     --sync                  Synchronize AIDD and AutoMaker data:
-                            - Features: .aidd/feature_list.json ↔ .automaker/features/*/feature.json
+                            - Features: .aidd/features/*/feature.json ↔ .automaker/features/*/feature.json
                               (matches by description, copies unique features both ways,
                               resolves conflicts using most recent timestamp)
-                            - Spec files: .aidd/spec.txt ↔ .automaker/app_spec.txt
+                            - Spec files: .aidd/app_spec.txt ↔ .automaker/app_spec.txt
                               (copies only if missing on one side)
     --dry-run               Preview sync changes without modifying files (use with --sync)
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
@@ -73,15 +73,15 @@ OPTIONS:
 
 EXAMPLES:
     # Using OpenCode (default)
-    $0 --project-dir ./myproject --spec ./spec.txt
+    $0 --project-dir ./myproject --spec ./app_spec.txt
     $0 --cli opencode --project-dir ./myproject --model gpt-4 --max-iterations 5
 
     # Using KiloCode
-    $0 --cli kilocode --project-dir ./myproject --spec ./spec.txt
+    $0 --cli kilocode --project-dir ./myproject --spec ./app_spec.txt
     $0 --cli kilocode --project-dir ./myproject --init-model claude --code-model gpt-4 --no-clean
 
     # Using Claude Code
-    $0 --cli claude-code --project-dir ./myproject --spec ./spec.txt
+    $0 --cli claude-code --project-dir ./myproject --spec ./app_spec.txt
     $0 --cli claude-code --project-dir ./myproject --model sonnet --max-iterations 10
 
     # Other operations
@@ -219,12 +219,6 @@ validate_args() {
         fi
     fi
 
-    if [[ "$SHOW_STATUS" != true && "$TODO_MODE" != true && "$SYNC_MODE" != true && -z "$PROJECT_DIR" ]]; then
-        log_error "Missing required argument --project-dir"
-        log_info "Use --help for usage information"
-        return $EXIT_INVALID_ARGS
-    fi
-
     return 0
 }
 
@@ -232,8 +226,8 @@ validate_args() {
 # Apply Defaults for Unset Arguments
 # -----------------------------------------------------------------------------
 apply_defaults() {
-    # Default project directory to current directory for --status, --todo, and --sync modes
-    if [[ -z "$PROJECT_DIR" && ("$SHOW_STATUS" == true || "$TODO_MODE" == true || "$SYNC_MODE" == true) ]]; then
+    # Default project directory to current directory if not specified
+    if [[ -z "$PROJECT_DIR" ]]; then
         PROJECT_DIR="."
     fi
 
@@ -576,12 +570,12 @@ show_status() {
 # Usage: source lib/args.sh && init_args "$@"
 init_args() {
     parse_args "$@"
+    apply_defaults
     validate_args
     local result=$?
     if [[ $result -ne 0 ]]; then
         return $result
     fi
-    apply_defaults
     get_effective_models
 
     # Handle --status option (display and exit)

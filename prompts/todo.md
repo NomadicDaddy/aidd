@@ -6,7 +6,7 @@ You are in TODO mode and ready to complete existing work items in project.
 
 - **Todo list:** `/.aidd/todo.md`
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
-- **Feature tests checklist:** `/.aidd/feature_list.json`
+- **Feature tests checklist:** `/.aidd/features/*/feature.json`
 - **Architecture map:** `/.aidd/project_structure.md`
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
@@ -124,8 +124,8 @@ mcp_filesystem_read_text_file .aidd/todo.md
 1. **Check feature list status:**
 
     ```bash
-    mcp_filesystem_read_text_file .aidd/feature_list.json
-    grep -c '"passes": false' .aidd/feature_list.json
+    find .aidd/features -name "feature.json" | head -5
+    find .aidd/features -name 'feature.json' -exec grep -l '"passes": false' {} \; | wc -l
     ```
 
 2. **Determine next mode:**

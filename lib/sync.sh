@@ -2,7 +2,7 @@
 # =============================================================================
 # lib/sync.sh - Feature and Spec File Synchronization for AIDD <-> AutoMaker
 # =============================================================================
-# Synchronizes feature_list.json and spec files between AIDD and AutoMaker
+# Synchronizes features and spec files between AIDD and AutoMaker
 
 # Source dependencies
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
@@ -382,18 +382,18 @@ sync_spec_files() {
 
     if $aidd_exists && ! $automaker_exists; then
         if [[ "$DRY_RUN_MODE" == true ]]; then
-            log_info "[DRY RUN] Would copy spec.txt → app_spec.txt"
+            log_info "[DRY RUN] Would copy app_spec.txt → app_spec.txt"
         else
             mkdir -p "$(dirname "$automaker_spec")"
             cp "$aidd_spec" "$automaker_spec"
-            log_info "Copied spec.txt → app_spec.txt"
+            log_info "Copied app_spec.txt → app_spec.txt"
         fi
     elif ! $aidd_exists && $automaker_exists; then
         if [[ "$DRY_RUN_MODE" == true ]]; then
-            log_info "[DRY RUN] Would copy app_spec.txt → spec.txt"
+            log_info "[DRY RUN] Would copy app_spec.txt (AutoMaker → AIDD)"
         else
             cp "$automaker_spec" "$aidd_spec"
-            log_info "Copied app_spec.txt → spec.txt"
+            log_info "Copied app_spec.txt (AutoMaker → AIDD)"
         fi
     elif $aidd_exists && $automaker_exists; then
         log_info "Both spec files exist, no sync needed"

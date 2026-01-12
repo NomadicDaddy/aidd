@@ -11,6 +11,79 @@ if ! declare -f monitor_coprocess_output >/dev/null 2>&1; then
 fi
 
 # -----------------------------------------------------------------------------
+# OpenCode CLI Configuration
+# -----------------------------------------------------------------------------
+: "${OPENCODE_CONFIG_FILE:="opencode.json"}"
+
+readonly OPENCODE_CONFIG_FILE
+
+# -----------------------------------------------------------------------------
+# OpenCode Permission Configuration
+# -----------------------------------------------------------------------------
+
+# Ensure opencode.json exists with permissive settings to prevent blocking prompts
+# Unlike Claude Code (--dangerously-skip-permissions flag), OpenCode uses config files
+# Usage: ensure_opencode_config <project_dir>
+# Returns: 0 on success, 1 on failure
+ensure_opencode_config() {
+    local project_dir="$1"
+    local config_path="$project_dir/$OPENCODE_CONFIG_FILE"
+
+    # Define the permissive config (all permissions allowed, no prompts)
+    local permissive_config='{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "*": "allow"
+  }
+}'
+
+    if [[ -f "$config_path" ]]; then
+        # Config exists - check if it has permissive settings
+        if command -v jq >/dev/null 2>&1; then
+            local current_permission
+            current_permission=$(jq -r '.permission // empty' "$config_path" 2>/dev/null)
+
+            if [[ -n "$current_permission" ]]; then
+                # Check if already permissive (either "*": "allow" or direct "allow")
+                local global_perm
+                global_perm=$(jq -r '.permission["*"] // .permission // empty' "$config_path" 2>/dev/null)
+
+                if [[ "$global_perm" == "allow" ]]; then
+                    log_debug "OpenCode config already permissive: $config_path"
+                    return 0
+                fi
+            fi
+
+            # Merge permissive settings into existing config
+            log_info "Updating OpenCode config with permissive permissions: $config_path"
+            local merged
+            merged=$(jq '.permission = {"*": "allow"}' "$config_path" 2>/dev/null)
+            if [[ -n "$merged" ]]; then
+                echo "$merged" > "$config_path"
+                return 0
+            fi
+        fi
+
+        # jq not available or merge failed - warn but don't overwrite
+        log_warn "OpenCode config exists but cannot verify permissions (jq unavailable): $config_path"
+        log_warn "Ensure 'permission: {\"*\": \"allow\"}' is set to prevent blocking prompts"
+        return 0
+    fi
+
+    # Config doesn't exist - create it
+    log_info "Creating permissive OpenCode config: $config_path"
+    echo "$permissive_config" > "$config_path"
+
+    if [[ -f "$config_path" ]]; then
+        log_debug "OpenCode config created successfully"
+        return 0
+    else
+        log_error "Failed to create OpenCode config: $config_path"
+        return 1
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # OpenCode CLI Interaction Functions
 # -----------------------------------------------------------------------------
 
@@ -23,6 +96,9 @@ run_opencode_prompt() {
     shift 2
 
     local -a model_args=("$@")
+
+    # Ensure permissive OpenCode config exists to prevent blocking permission prompts
+    ensure_opencode_config "$project_dir"
 
     local opencode_cmd="opencode run"
     if [[ ${#model_args[@]} -gt 0 ]]; then
@@ -64,4 +140,3 @@ get_opencode_version() {
         echo "not installed"
     fi
 }
-

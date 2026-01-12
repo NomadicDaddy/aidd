@@ -139,11 +139,13 @@ mcp_filesystem_list_directory .
 **Create or update individual feature files at `/.aidd/features/{feature-id}/feature.json` based on spec AND existing code.**
 
 **CRITICAL: Each feature MUST be in its own file!**
+
 - Create a directory for each feature: `/.aidd/features/{feature-id}/`
 - Place a single `feature.json` file in each directory
 - The `{feature-id}` should match the `id` field value in the JSON
 
 **Example structure:**
+
 ```
 .aidd/
   features/

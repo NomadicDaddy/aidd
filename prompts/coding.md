@@ -11,7 +11,7 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 - **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.aidd/project.txt`
 
-### COMMON GUIDELINES
+### COMMON GUIDELINES **MUST READ**
 
 **See shared documentation in `/_common/` for:**
 
@@ -282,6 +282,12 @@ cat .aidd/todo.md
 
 **Before selecting a feature, assess time and complexity.**
 
+> **CRITICAL DEPENDENCY RULE:** NEVER select a feature whose dependencies are not satisfied.
+> Before implementing ANY feature, verify that ALL features listed in its `depends_on` array
+> have `"metadata.aidd_passes": true`. If ANY dependency is not passing, SKIP that feature
+> and select a different one. Implementing features with unmet dependencies wastes time
+> and creates broken functionality.
+
 #### 6.1 Estimate Feature Complexity
 
 For each feature with `"passes": false`:
@@ -310,6 +316,7 @@ For each feature with `"passes": false`:
 
 **Always:**
 
+- **NEVER select features with unsatisfied dependencies** (check `depends_on` first!)
 - Prioritize features already marked `"status": "in_progress"`
 - Don't start large features late in iteration
 - Quality over quantity: One complete feature > three half-done
@@ -583,6 +590,7 @@ git commit -m "Session work: [summary]"
 #### 12.2 Update Documentation
 
 - `/.aidd/features/*/feature.json` updated if tests verified
+- `/.aidd/app_spec.txt` updated if changed/needed
 
 #### 12.3 Final Feature Status Audit
 

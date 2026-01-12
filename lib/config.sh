@@ -48,7 +48,7 @@ readonly EXIT_SIGNAL_TERMINATED
 # -----------------------------------------------------------------------------
 : "${DEFAULT_CLI:="opencode"}"           # Default CLI to use
 : "${DEFAULT_MAX_ITERATIONS:=10}"        # Default max iterations (0 = unlimited)
-: "${DEFAULT_TIMEOUT:=1200}"             # Default timeout in seconds (20 minutes)
+: "${DEFAULT_TIMEOUT:=3600}"             # Default timeout in seconds (60 minutes)
 : "${DEFAULT_IDLE_TIMEOUT:=900}"         # Default idle timeout in seconds (15 minutes)
 : "${DEFAULT_IDLE_NUDGE_TIMEOUT:=300}"   # Default idle nudge timeout in seconds (5 minutes)
 : "${DEFAULT_NO_CLEAN:=false}"           # Default: clean up artifacts

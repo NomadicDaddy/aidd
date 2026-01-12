@@ -327,18 +327,35 @@ show_status() {
         return $EXIT_GENERAL_ERROR
     fi
 
-    # Collect all features into a JSON array
+    # Collect all features into a JSON array (with validation)
     local features_json="["
     local first=true
+    local invalid_count=0
+    local invalid_files=""
     while IFS= read -r -d '' feature_file; do
+        # Validate JSON before adding
+        local file_content
+        file_content=$(cat "$feature_file")
+        if ! echo "$file_content" | jq -e . >/dev/null 2>&1; then
+            ((invalid_count++))
+            invalid_files+="  - $feature_file
+"
+            continue
+        fi
         if [[ "$first" == true ]]; then
             first=false
         else
             features_json+=","
         fi
-        features_json+=$(cat "$feature_file")
+        features_json+="$file_content"
     done < <(find "$features_dir" -type f -name "feature.json" -print0 2>/dev/null)
     features_json+="]"
+
+    # Report invalid files if any
+    if [[ $invalid_count -gt 0 ]]; then
+        log_warn "$invalid_count feature.json file(s) have invalid JSON and were skipped:"
+        echo -e "$invalid_files" >&2
+    fi
 
     # Get overall statistics
     local total

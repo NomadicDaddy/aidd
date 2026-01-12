@@ -4,7 +4,7 @@
 
 ### 1. Check for project.txt
 
-Look for `/.aidd/project.txt` in the project directory. This file contains project-specific instructions that **OVERRIDE** generic instructions in this prompt.
+Look for `/.automaker/project.txt` in the project directory. This file contains project-specific instructions that **OVERRIDE** generic instructions in this prompt.
 
 **If project.txt exists:**
 
@@ -54,7 +54,7 @@ Project.txt may include:
 
 **Priority order (highest to lowest):**
 
-1. `/.aidd/project.txt` - Highest priority, overrides everything
+1. `/.automaker/project.txt` - Highest priority, overrides everything
 2. Assistant rule files (`.windsurf/rules/`, `CLAUDE.md`, etc.)
 3. Generic prompt instructions
 4. Default behaviors
@@ -90,7 +90,7 @@ Use: import { isFeatureEnabled } from '@/lib/features'
 
 Before proceeding to the next step, confirm:
 
-- [ ] Searched for `/.aidd/project.txt`
+- [ ] Searched for `/.automaker/project.txt`
 - [ ] If found, read and understood all overrides
 - [ ] Documented overrides in initial assessment
 - [ ] Understand which instructions take precedence

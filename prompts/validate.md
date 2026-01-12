@@ -4,11 +4,11 @@ You are in VALIDATE mode and ready to verify incomplete features and pending tod
 
 ### QUICK REFERENCES
 
-- **Todo list:** `/.aidd/todo.md`
-- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
-- **Feature tests checklist:** `/.aidd/features/*/feature.json`
-- **Architecture map:** `/.aidd/project_structure.md`
-- **Project overrides (highest priority):** `/.aidd/project.txt`
+- **Todo list:** `/.automaker/todo.md`
+- **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES
 
@@ -27,7 +27,7 @@ You are in VALIDATE mode and ready to verify incomplete features and pending tod
 **See `/_common/hard-constraints.md` for details.**
 
 1. **Do not run** `scripts/setup.ts` or any other setup scripts.
-2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.aidd/CHANGELOG.md`.
+2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.automaker/CHANGELOG.md`.
 3. Do not run any blocking processes (no dev servers inline).
 
 ---
@@ -59,14 +59,14 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 ```bash
 # List all feature files with "passes": false
-find .aidd/features -name 'feature.json' -exec grep -l '"passes": false' {} \;
+find .automaker/features -name 'feature.json' -exec grep -l '"passes": false' {} \;
 ```
 
 **Count incomplete features:**
 
 ```bash
 # Count total incomplete features
-grep -c '"passes": false' .aidd/features/*/feature.json
+grep -c '"passes": false' .automaker/features/*/feature.json
 ```
 
 **If no incomplete features found:**
@@ -82,7 +82,7 @@ grep -c '"passes": false' .aidd/features/*/feature.json
 
 ```bash
 # Example: Read a specific feature
-mcp_filesystem_read_text_file .aidd/features/add-user-auth/feature.json
+mcp_filesystem_read_text_file .automaker/features/add-user-auth/feature.json
 ```
 
 2. **Parse feature data:**
@@ -152,7 +152,7 @@ mcp_filesystem_search_text --pattern "login.*password"
 **If feature status is ambiguous:**
 
 - Leave `passes` as `false`
-- Add note to `/.aidd/CHANGELOG.md` under "Validation Ambiguities" section
+- Add note to `/.automaker/CHANGELOG.md` under "Validation Ambiguities" section
 - Document what evidence was found and what's unclear
 - Continue with other features
 
@@ -164,10 +164,10 @@ mcp_filesystem_search_text --pattern "login.*password"
 
 #### 2.1 Read TODO List from File
 
-**Check for `/.aidd/todo.md`:**
+**Check for `/.automaker/todo.md`:**
 
 ```bash
-mcp_filesystem_read_text_file .aidd/todo.md
+mcp_filesystem_read_text_file .automaker/todo.md
 ```
 
 **If todo.md exists:**
@@ -401,10 +401,10 @@ execute_command "git status"
 
 **Expected changes:**
 
-- `.aidd/features/*/feature.json` - Updated feature files
-- `.aidd/todo.md` - Removed/completed items
+- `.automaker/features/*/feature.json` - Updated feature files
+- `.automaker/todo.md` - Removed/completed items
 - Source files - Removed TODO comments
-- `.aidd/CHANGELOG.md` - Validation summary
+- `.automaker/CHANGELOG.md` - Validation summary
 
 #### 4.2 Stage and Commit
 
@@ -450,7 +450,7 @@ mcp_git_commit "chore(validation): validate features and todos [aidd-validate]
 - Y completed/removed
 - Z remain incomplete
 
-See .aidd/CHANGELOG.md for detailed report.
+See .automaker/CHANGELOG.md for detailed report.
 ```
 
 2. **Exit normally:**
@@ -540,7 +540,7 @@ See .aidd/CHANGELOG.md for detailed report.
 
 ```markdown
 - TODO: Implement feature X
-    - Evidence: Feature X exists in .aidd/features and passes: true
+    - Evidence: Feature X exists in .automaker/features and passes: true
     - Action: Removed from todo.md
 ```
 

@@ -4,11 +4,11 @@ You are in TODO mode and ready to complete existing work items in project.
 
 ### QUICK REFERENCES
 
-- **Todo list:** `/.aidd/todo.md`
-- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
-- **Feature tests checklist:** `/.aidd/features/*/feature.json`
-- **Architecture map:** `/.aidd/project_structure.md`
-- **Project overrides (highest priority):** `/.aidd/project.txt`
+- **Todo list:** `/.automaker/todo.md`
+- **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES
 
@@ -27,7 +27,7 @@ You are in TODO mode and ready to complete existing work items in project.
 **See `/_common/hard-constraints.md` for details.**
 
 1. **Do not run** `scripts/setup.ts` or any other setup scripts.
-2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.aidd/CHANGELOG.md`.
+2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.automaker/CHANGELOG.md`.
 3. Do not run any blocking processes (no dev servers inline).
 
 ---
@@ -55,10 +55,10 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 #### 1.1 Read Todo List
 
-**Check for `/.aidd/todo.md`:**
+**Check for `/.automaker/todo.md`:**
 
 ```bash
-mcp_filesystem_read_text_file .aidd/todo.md
+mcp_filesystem_read_text_file .automaker/todo.md
 ```
 
 **If todo.md exists and has incomplete items:**
@@ -124,8 +124,8 @@ mcp_filesystem_read_text_file .aidd/todo.md
 1. **Check feature list status:**
 
     ```bash
-    find .aidd/features -name "feature.json" | head -5
-    find .aidd/features -name 'feature.json' -exec grep -l '"passes": false' {} \; | wc -l
+    find .automaker/features -name "feature.json" | head -5
+    find .automaker/features -name 'feature.json' -exec grep -l '"passes": false' {} \; | wc -l
     ```
 
 2. **Determine next mode:**
@@ -280,11 +280,11 @@ browser_action.launch http://localhost:{frontendPort}
 
 **Only execute if TODO items exist.**
 
-**CRITICAL: Update both .aidd/todo.md AND remove completed TODO comments from code.**
+**CRITICAL: Update both .automaker/todo.md AND remove completed TODO comments from code.**
 
 #### 5.1 Remove or Mark Completed Item
 
-**For items from .aidd/todo.md:**
+**For items from .automaker/todo.md:**
 
 **Option 1: Remove completed item:**
 
@@ -332,7 +332,7 @@ async function fetchData() {
 
 **If all items complete:**
 
-- Remove entire `/.aidd/todo.md` file if it exists
+- Remove entire `/.automaker/todo.md` file if it exists
 - Ensure all TODO comments have been removed from code
 - Document completion in CHANGELOG.md
 
@@ -355,7 +355,7 @@ git add .
 git commit -m "Complete todo item: [description]" \
   -m "- Implemented [specific changes]" \
   -m "- Tested via UI (browser_action)" \
-  -m "- Updated /.aidd/todo.md: removed completed item" \
+  -m "- Updated /.automaker/todo.md: removed completed item" \
   -m "- Screenshots (if captured) saved under verification/"
 ```
 
@@ -370,7 +370,7 @@ git commit -m "Complete todo item: [description]" \
 
 **Only execute if TODO items exist.**
 
-**Update `/.aidd/CHANGELOG.md`:**
+**Update `/.automaker/CHANGELOG.md`:**
 
 ```txt
 -----------------------------------------------------------------------------------------------------------------------
@@ -395,8 +395,8 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 **Before context fills up:**
 
 1. Commit all working code using `execute_command`
-2. Update `/.aidd/todo.md` (if it exists)
-3. Update `/.aidd/CHANGELOG.md`
+2. Update `/.automaker/todo.md` (if it exists)
+3. Update `/.automaker/CHANGELOG.md`
 4. Ensure no uncommitted changes
 5. Leave codebase in working state
 6. Use attempt_completion to present results

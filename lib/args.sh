@@ -24,8 +24,6 @@ export NO_CLEAN=false
 export QUIT_ON_ABORT="0"
 export CONTINUE_ON_TIMEOUT=false
 export SHOW_STATUS=false
-export SYNC_MODE=false
-export DRY_RUN_MODE=false
 export TODO_MODE=false
 export VALIDATE_MODE=false
 export CUSTOM_PROMPT=""
@@ -63,13 +61,6 @@ OPTIONS:
     --quit-on-abort N       Quit after N consecutive failures (optional, default: 0=continue indefinitely)
     --continue-on-timeout   Continue to next iteration if CLI times out (exit 124) instead of aborting (optional)
     --status               Display project status (features + TODOs) and exit (optional)
-    --sync                  Synchronize AIDD and AutoMaker data:
-                            - Features: .aidd/features/*/feature.json ↔ .automaker/features/*/feature.json
-                              (matches by description, copies unique features both ways,
-                              resolves conflicts using most recent timestamp)
-                            - Spec files: .aidd/app_spec.txt ↔ .automaker/app_spec.txt
-                              (copies only if missing on one side)
-    --dry-run               Preview sync changes without modifying files (use with --sync)
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
     --validate              Run validation mode to check incomplete features and todos (optional)
     --prompt "DIRECTIVE"    Use custom directive instead of automatic prompt selection (optional)
@@ -173,14 +164,6 @@ parse_args() {
                 VALIDATE_MODE=true
                 shift
                 ;;
-            --sync)
-                SYNC_MODE=true
-                shift
-                ;;
-            --dry-run)
-                DRY_RUN_MODE=true
-                shift
-                ;;
             --extract-structured)
                 EXTRACT_STRUCTURED=true
                 shift
@@ -227,15 +210,6 @@ validate_args() {
     esac
 
     # Check required --project-dir argument (unless --status or --todo is specified)
-    
-    # Validate --sync requirements (jq dependency)
-    if [[ "$SYNC_MODE" == true ]]; then
-        if ! command -v jq &> /dev/null; then
-            log_error "--sync requires 'jq' for JSON processing"
-            log_error "Install with: apt-get install jq (Linux) or brew install jq (macOS)"
-            return $EXIT_CLI_ERROR
-        fi
-    fi
 
     return 0
 }
@@ -306,7 +280,7 @@ show_status() {
     fi
 
     # Search for todo files in priority order
-    # First check .aidd/todo.md (standard location)
+    # First check .automaker/todo.md (standard location)
     if [[ -f "$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_TODO_FILE" ]]; then
         todo_file="$project_dir/$DEFAULT_METADATA_DIR/$DEFAULT_TODO_FILE"
     else
@@ -580,7 +554,7 @@ show_status() {
         fi
     else
         echo "------------------------------------------------------------------------------"
-        echo "No todo file found (searched: .aidd/todo.md, todo.md, todos.md, TODO.md, TODOs.md, TODO-list.md, todo-list.md, tasks.md, TASKS.md)"
+        echo "No todo file found (searched: .automaker/todo.md, todo.md, todos.md, TODO.md, TODOs.md, TODO-list.md, todo-list.md, tasks.md, TASKS.md)"
         echo "------------------------------------------------------------------------------"
         echo ""
     fi
@@ -589,10 +563,10 @@ show_status() {
     echo ""
 
     } > "$temp_status"
-    
+
     # Display the output
     cat "$temp_status"
-    
+
     # Save to status.md
     mv "$temp_status" "$status_file"
 
@@ -614,7 +588,7 @@ init_args() {
     get_effective_models
 
     # Handle --status option (display and exit)
-    
+
     # Handle --extract-batch option (batch extract and exit)
     if [[ "$EXTRACT_BATCH" == true ]]; then
         # Find metadata directory
@@ -626,34 +600,16 @@ init_args() {
             log_info "Run aidd normally first to initialize the project"
             exit $EXIT_NOT_FOUND
         fi
-        
+
         local iterations_dir="$metadata_dir/$DEFAULT_ITERATIONS_DIR"
         if [[ ! -d "$iterations_dir" ]]; then
             log_error "Iterations directory not found: $iterations_dir"
             exit $EXIT_NOT_FOUND
         fi
-        
+
         # Source and run extraction
         source "$(dirname "${BASH_SOURCE[0]}")/log-extractor.sh"
         extract_all_logs "$iterations_dir" "$metadata_dir"
-        exit $EXIT_SUCCESS
-    fi
-
-    # Handle --sync option (synchronize and exit)
-    if [[ "$SYNC_MODE" == true ]]; then
-        # Find metadata directory
-        local metadata_dir=""
-        if [[ -d "$PROJECT_DIR/$DEFAULT_METADATA_DIR" ]]; then
-            metadata_dir="$PROJECT_DIR/$DEFAULT_METADATA_DIR"
-        else
-            log_error "Metadata directory not found: $PROJECT_DIR/$DEFAULT_METADATA_DIR"
-            log_info "Run aidd normally first to initialize the project"
-            exit $EXIT_NOT_FOUND
-        fi
-        
-        # Source and run sync
-        source "$(dirname "${BASH_SOURCE[0]}")/sync.sh"
-        sync_features "$PROJECT_DIR" "$metadata_dir"
         exit $EXIT_SUCCESS
     fi
 

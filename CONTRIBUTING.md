@@ -16,7 +16,7 @@ If you find a bug, please open an issue with:
 - Steps to reproduce the bug
 - Expected vs actual behavior
 - Your environment (OS, Bash version, CLI being used)
-- Relevant log files from `.aidd/iterations/`
+- Relevant log files from `.automaker/iterations/`
 
 ### Suggesting Enhancements
 

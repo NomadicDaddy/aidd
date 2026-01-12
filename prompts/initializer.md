@@ -4,12 +4,12 @@ You are in Code mode and ready to begin setting up the foundation for all future
 
 ### QUICK REFERENCES
 
-- **Spec (source of truth):** `/.aidd/app_spec.txt`
-- **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/features/{feature-id}/feature.json`
-- **Todo list:** `/.aidd/todo.md`
-- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
-- **Project overrides (highest priority):** `/.aidd/project.txt`
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/{feature-id}/feature.json`
+- **Todo list:** `/.automaker/todo.md`
+- **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
+- **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES
 
@@ -51,13 +51,13 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 ### STEP 1: CHECK PROJECT OVERRIDES
 
-**CRITICAL: Check for `/.aidd/project.txt` before proceeding.**
+**CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
 
 See `/_common/project-overrides.md` for complete instructions.
 
 **Quick summary:**
 
-1. Read `/.aidd/project.txt` if it exists
+1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
 3. Project overrides have HIGHEST priority
 4. Document overrides in your initial assessment
@@ -77,7 +77,7 @@ Start by orienting yourself with the project.
 
 **Locate and read the spec:**
 
-- Use `mcp_filesystem_search_files` to find `/.aidd/app_spec.txt`
+- Use `mcp_filesystem_search_files` to find `/.automaker/app_spec.txt`
 - Read it with `mcp_filesystem_read_text_file`
 - Record the directory containing it as your **project root**
 - Use that project root as `cwd` for all `execute_command` calls
@@ -98,7 +98,7 @@ Start by orienting yourself with the project.
 
 ### STEP 3: CREATE FEATURE LIST
 
-**Based on `/.aidd/app_spec.txt`, create `/.aidd/features/{feature-id}/feature.json` with 20+ detailed tests.**
+**Based on `/.automaker/app_spec.txt`, create `/.automaker/features/{feature-id}/feature.json` with 20+ detailed tests.**
 
 **See `/_common/file-integrity.md` for safe JSON editing.**
 
@@ -203,7 +203,7 @@ Feature JSON must follow AutoMaker format exactly:
 
 ```bash
 # Read file to confirm valid JSON
-mcp_filesystem_read_text_file .aidd/features/{id}/feature.json
+mcp_filesystem_read_text_file .automaker/features/{id}/feature.json
 
 # Check structure is correct
 # Verify all features have "passes": false
@@ -213,7 +213,7 @@ mcp_filesystem_read_text_file .aidd/features/{id}/feature.json
 **If file is corrupted:**
 
 - See `/_common/file-integrity.md` for recovery
-- Use `git checkout -- .aidd/features/{id}/feature.json` to rollback
+- Use `git checkout -- .automaker/features/{id}/feature.json` to rollback
 - Retry with different approach
 
 ---
@@ -237,7 +237,7 @@ If `scripts/setup.ts` doesn't exist, create it to initialize the development env
 
 #### 4.2 Base Script on Tech Stack
 
-Review `/.aidd/app_spec.txt` to identify:
+Review `/.automaker/app_spec.txt` to identify:
 
 - Frontend framework (React, Vue, etc.)
 - Backend framework (Express, FastAPI, etc.)
@@ -308,7 +308,7 @@ bun scripts/setup.ts \
 2. Identify missing dependencies or configuration
 3. Fix the issue
 4. Re-run setup script
-5. Document issue in `/.aidd/CHANGELOG.md`
+5. Document issue in `/.automaker/CHANGELOG.md`
 
 **Common failures:**
 
@@ -327,7 +327,7 @@ bun scripts/setup.ts \
 
 #### 6.1 Identify Required Directories
 
-From `/.aidd/app_spec.txt`, identify:
+From `/.automaker/app_spec.txt`, identify:
 
 - Frontend directory (typically `frontend/`)
 - Backend directory (typically `backend/`)
@@ -480,7 +480,7 @@ git log -1
 
 #### 9.1 Verification Checklist
 
-- [ ] `/.aidd/features/{feature-id}/feature.json` exists and is valid JSON
+- [ ] `/.automaker/features/{feature-id}/feature.json` exists and is valid JSON
 - [ ] Feature list has minimum 20 features, all with `"passes": false`
 - [ ] `scripts/setup.ts` exists or was skipped (if already present)
 - [ ] Setup script executed successfully (if it exists)
@@ -494,10 +494,10 @@ git log -1
 
 ```bash
 # Verify feature list
-mcp_filesystem_read_text_file .aidd/features/{id}/feature.json | head -50
+mcp_filesystem_read_text_file .automaker/features/{id}/feature.json | head -50
 
 # Count features
-grep -c '"passes"' .aidd/features/{id}/feature.json
+grep -c '"passes"' .automaker/features/{id}/feature.json
 
 # Verify project structure
 mcp_filesystem_list_directory .
@@ -527,7 +527,7 @@ git diff
 
 #### 10.1 Create Changelog
 
-**Create `/.aidd/CHANGELOG.md` following Keep a Changelog format:**
+**Create `/.automaker/CHANGELOG.md` following Keep a Changelog format:**
 
 ```markdown
 # Changelog
@@ -592,7 +592,7 @@ git commit -m "Complete initialization - ready for development"
 
 ### What to Create
 
-- Feature list (/.aidd/features/{id}/feature.json)
+- Feature list (/.automaker/features/{id}/feature.json)
 - Setup script (scripts/setup.ts, if needed)
 - Project structure (directories)
 - README.md

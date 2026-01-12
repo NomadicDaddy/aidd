@@ -178,7 +178,6 @@ determine_prompt() {
     local prompt_path=""
     local phase=""
     local todo_check_path="$metadata_dir/todo.md"
-    local feature_list_path="$metadata_dir/${DEFAULT_FEATURE_LIST_FILE}"
 
     # Check for custom directive mode first (highest priority)
     if [[ -n "$CUSTOM_PROMPT" ]]; then
@@ -224,18 +223,18 @@ HEREDOC_END
 - If the directive requires analysis, provide thorough analysis
 - If the directive requires testing, run comprehensive tests
 - If the directive requires fixes, fix all identified issues
-- Document your work in .aidd/CHANGELOG.md
+- Document your work in .automaker/CHANGELOG.md
 - Commit your changes with descriptive messages
 
 ### PROJECT CONTEXT
 
 **Quick References:**
 
-- **Spec (source of truth):** `/.aidd/app_spec.txt`
-- **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/features/*/feature.json`
-- **Todo list:** `/.aidd/todo.md`
-- **Changelog:** `/.aidd/CHANGELOG.md`
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
+- **Todo list:** `/.automaker/todo.md`
+- **Changelog:** `/.automaker/CHANGELOG.md`
 
 ### ASSISTANT RULES
 
@@ -249,7 +248,7 @@ HEREDOC_END
 
 When you've completed the directive:
 
-1. Document what you did in .aidd/CHANGELOG.md
+1. Document what you did in .automaker/CHANGELOG.md
 2. Commit all changes
 3. Summarize your work
 4. Exit cleanly

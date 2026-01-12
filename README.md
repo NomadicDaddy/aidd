@@ -10,7 +10,6 @@ A unified shell script that orchestrates autonomous development sessions using *
 - **Iteration Management**: Built-in retry logic, failure handling, and progress tracking with two-stage idle timeout and agent nudging
 - **Feature Tracking**: JSON-based feature list with status tracking
 - **Shared Directory Sync**: Automatic synchronization of shared configuration directories (e.g., `.claude`, `.windsurf`) to projects
-- **Shared Feature Tracking**: Automatic migration from and on-demand sync to `.automaker`
 
 ## Supported CLIs
 
@@ -134,14 +133,14 @@ For empty or non-existent directories:
 
 1. Creates project directory if it doesn't exist
 2. Copies scaffolding files from `scaffolding/` directory
-3. Copies templates into `project-dir/.aidd/`
-4. Copies spec file to `.aidd/app_spec.txt` (if `--spec` is provided)
+3. Copies templates into `project-dir/.automaker/`
+4. Copies spec file to `.automaker/app_spec.txt` (if `--spec` is provided)
 5. Uses `initializer` prompt to set up initial project structure
 6. Creates `features/*/feature.json` based on the provided spec
 
 ### Existing Codebase Workflow
 
-For directories containing code but no `.aidd/` files:
+For directories containing code but no `.automaker/` files:
 
 1. Skips copying scaffolding files
 2. Does NOT copy spec file
@@ -153,7 +152,7 @@ For directories containing code but no `.aidd/` files:
 
 ### Subsequent Iterations
 
-Once `.aidd/app_spec.txt` and `.aidd/features/` exist:
+Once `.automaker/app_spec.txt` and `.automaker/features/` exist:
 
 - Uses `coding` prompt for continued development
 - Implements remaining features from the feature list
@@ -223,8 +222,8 @@ aidd/
 ├── templates/             # Project metadata templates
 └── specs/                 # Specification examples
 
-Project Metadata (.aidd/):
-.aidd/
+Project Metadata (.automaker/):
+.automaker/
 ├── app_spec.txt           # Project specification
 ├── features/              # Feature tracking (one dir per feature)
 ├── todo.md                # TODO items
@@ -239,7 +238,7 @@ Project Metadata (.aidd/):
 
 1. **CLI Initialization**: Determines which CLI to use (OpenCode or KiloCode)
 2. **Project Detection**: Detects if the target directory is an existing codebase
-3. **Metadata Setup**: Creates or migrates `.aidd` directory
+3. **Metadata Setup**: Creates or migrates `.automaker` directory
 4. **Iteration Loop**: Runs in a loop based on `--max-iterations`:
     - Determines appropriate prompt (onboarding, initializer, or coding)
     - Executes prompt through selected CLI
@@ -252,8 +251,8 @@ Project Metadata (.aidd/):
 Each iteration writes a transcript file under:
 
 ```
-project-dir/.aidd/iterations/001.log
-project-dir/.aidd/iterations/002.log
+project-dir/.automaker/iterations/001.log
+project-dir/.automaker/iterations/002.log
 ...
 ```
 
@@ -269,10 +268,6 @@ AIDD uses a factory pattern to abstract CLI differences:
 - **cli-claude-code.sh**: Claude Code-specific implementation
 
 This allows the same codebase to support all CLIs with minimal differences.
-
-## Legacy Migration
-
-AIDD automatically migrates metadata from `.automaker` directories to `.aidd`.
 
 ## Error Handling
 
@@ -329,7 +324,7 @@ AIDD follows a modular architecture with clear separation of concerns:
 For issues or questions:
 
 1. Check the `--help` output
-2. Review iteration logs in `.aidd/iterations/`
+2. Review iteration logs in `.automaker/iterations/`
 3. Check CLI-specific documentation:
     - OpenCode: [opencode.ai/docs](https://opencode.ai/docs)
     - KiloCode: [kilocode.ai/docs](https://kilocode.ai/docs)

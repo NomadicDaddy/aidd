@@ -15,7 +15,7 @@
     - Run `git checkout -- <file>` IMMEDIATELY
     - Analyze what went wrong
     - Retry with a different approach
-    - Document the incident in `/.aidd/progress.md`
+    - Document the incident in `/.automaker/progress.md`
 
 3. **Never proceed without verification:**
     - Don't assume edits succeeded
@@ -28,7 +28,7 @@
 
 **JSON files:**
 
-- `/.aidd/features/*/feature.json` - Feature tracking (mission-critical)
+- `/.automaker/features/*/feature.json` - Feature tracking (mission-critical)
 - `package.json` - Dependencies and scripts
 - `tsconfig.json` - TypeScript configuration
 - Any `.json` configuration files

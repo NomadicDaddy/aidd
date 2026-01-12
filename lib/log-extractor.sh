@@ -259,8 +259,8 @@ extract_feature_slug() {
 
     # Method 2: Look for feature directory references
     if [[ -z "$feature_slug" ]]; then
-        # Pattern: .aidd/features/feature-slug/feature.json
-        feature_slug=$(grep -oP '\.aidd/features/\K[^/]+(?=/feature\.json)' "$log_file" | head -1)
+        # Pattern: .automaker/features/feature-slug/feature.json
+        feature_slug=$(grep -oP '\.automaker/features/\K[^/]+(?=/feature\.json)' "$log_file" | head -1)
     fi
 
     # Method 3: Parse from "Sending X prompt" context if we have feature references

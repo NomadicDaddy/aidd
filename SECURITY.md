@@ -29,7 +29,7 @@ We will acknowledge receipt within 48 hours and provide a more detailed response
 
 AIDD executes AI-generated commands and code. Users should:
 
-- Review iteration logs in `.aidd/iterations/`
+- Review iteration logs in `.automaker/iterations/`
 - Monitor git commits for unexpected changes
 - Use in controlled environments
 - Not use on production systems without review
@@ -69,7 +69,7 @@ Users should ensure these dependencies come from trusted sources.
 3. **Test in isolated environments** before production use
 4. **Monitor iteration logs** for unexpected behavior
 5. **Keep CLIs updated** to latest secure versions
-6. **Use project-specific rules** (`.aidd/project.txt`) to enforce constraints
+6. **Use project-specific rules** (`.automaker/project.txt`) to enforce constraints
 
 ## Scope
 

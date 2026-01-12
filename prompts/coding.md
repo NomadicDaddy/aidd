@@ -4,12 +4,12 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 
 ### QUICK REFERENCES
 
-- **Spec (source of truth):** `/.aidd/app_spec.txt`
-- **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/features/*/feature.json`
-- **Todo list:** `/.aidd/todo.md`
-- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
-- **Project overrides (highest priority):** `/.aidd/project.txt`
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
+- **Todo list:** `/.automaker/todo.md`
+- **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
+- **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES **MUST READ**
 
@@ -44,13 +44,13 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 ### STEP 1: CHECK PROJECT OVERRIDES
 
-**CRITICAL: Check for `/.aidd/project.txt` before proceeding.**
+**CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
 
 See `/_common/project-overrides.md` for complete instructions.
 
 **Quick summary:**
 
-1. Read `/.aidd/project.txt` if it exists
+1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
 3. Project overrides have HIGHEST priority
 4. Document overrides in your initial assessment
@@ -70,9 +70,9 @@ Start by orienting yourself with the project state.
 
 **Record the project root:**
 
-- Locate `/.aidd/app_spec.txt`
+- Locate `/.automaker/app_spec.txt`
 - Use that directory as `cwd` for all `execute_command` calls
-- Verify with `mcp_filesystem_list_directory` (should show `/.aidd/`, `backend/`, `frontend/`, etc.)
+- Verify with `mcp_filesystem_list_directory` (should show `/.automaker/`, `backend/`, `frontend/`, etc.)
 
 **Review key files:**
 
@@ -86,7 +86,7 @@ git log --oneline -20
 
 **Understand the spec:**
 
-- Read `/.aidd/app_spec.txt` carefully - it's your source of truth
+- Read `/.automaker/app_spec.txt` carefully - it's your source of truth
 - Note application type and core requirements
 - Identify main features described
 
@@ -103,7 +103,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 #### 3.1 Core Models Verification
 
 1. **Identify required models from spec:**
-    - Read `/.aidd/app_spec.txt` to find data models (e.g., Todo, User, Tag)
+    - Read `/.automaker/app_spec.txt` to find data models (e.g., Todo, User, Tag)
     - List core entities the application manages
 
 2. **Verify models exist in codebase:**
@@ -131,7 +131,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 
 #### 3.3 Feature List Alignment
 
-1. **Cross-reference `/.aidd/features/*/feature.json` with spec**
+1. **Cross-reference `/.automaker/features/*/feature.json` with spec**
 2. **Ensure ALL major spec features have corresponding tests**
 3. **Flag features marked `"passes": true` that aren't actually implemented**
 
@@ -244,10 +244,10 @@ For example:
 
 ```bash
 # Count ALL features with "passes": false (no filtering, no interpretation)
-grep -c '"passes": false' .aidd/features/*/feature.json
+grep -c '"passes": false' .automaker/features/*/feature.json
 
 # Check todo.md for incomplete items
-cat .aidd/todo.md
+cat .automaker/todo.md
 ```
 
 **CRITICAL:** The count above is the LITERAL count of all features marked `"passes": false` in the JSON file. Do NOT interpret this count or apply filters. Do NOT categorize features as "MVP" vs "post-MVP" or "required" vs "optional". The number you see is the number of features remaining to implement.
@@ -268,7 +268,7 @@ cat .aidd/todo.md
 
 **Exit cleanly (ONLY if both conditions met):**
 
-1. Document completion in `/.aidd/CHANGELOG.md`
+1. Document completion in `/.automaker/CHANGELOG.md`
 2. **Complete the session successfully** - Do NOT throw errors or use error exit codes
     - Simply finish your response normally after documenting completion
     - The CLI will handle the exit code based on whether you completed without errors
@@ -323,7 +323,7 @@ For each feature with `"passes": false`:
 
 #### 6.4 Ingest Todo List First
 
-**Check `/.aidd/todo.md` for priority work:**
+**Check `/.automaker/todo.md` for priority work:**
 
 1. If todo.md exists and has items, intelligently convert each to `features/*/feature.json` entry
 2. This is the ONLY time you may ADD to features/\*/feature.json
@@ -338,7 +338,7 @@ For each feature with `"passes": false`:
 
     ```bash
     # Count features without dependencies field
-    jq 'if has("dependencies") | not then 1 else 0 end' .aidd/features/*/feature.json
+    jq 'if has("dependencies") | not then 1 else 0 end' .automaker/features/*/feature.json
     ```
 
 2. **If ANY features lack `dependencies` field:**
@@ -362,7 +362,7 @@ For each feature with `"passes": false`:
 
 Feature JSON must follow AutoMaker format exactly.
 
-**Review `/.aidd/features/*/feature.json`:**
+**Review `/.automaker/features/*/feature.json`:**
 
 - Filter to `"passes": false`
 - Group by priority (critical > high > medium > low)
@@ -378,8 +378,8 @@ Feature JSON must follow AutoMaker format exactly.
     # Example: Check if dependencies are satisfied
     # Feature has: "dependencies": ["User authentication API", "Database schema"]
     # Verify both features have "passes": true
-    jq 'select(.description == "User authentication API") | .passes' .aidd/features/*/feature.json
-    jq 'select(.description == "Database schema") | .passes' .aidd/features/*/feature.json
+    jq 'select(.description == "User authentication API") | .passes' .automaker/features/*/feature.json
+    jq 'select(.description == "Database schema") | .passes' .automaker/features/*/feature.json
     ```
 
 2. **Skip features with unsatisfied dependencies:**
@@ -559,7 +559,7 @@ git add .
 git commit -m "Implement [feature name] - verified end-to-end" \
   -m "- Added [specific changes]" \
   -m "- Tested via UI (browser_action)" \
-  -m "- Updated /.aidd/features/*/feature.json: marked test #X as passing" \
+  -m "- Updated /.automaker/features/*/feature.json: marked test #X as passing" \
   -m "- Screenshots (if captured) saved under verification/"
 ```
 
@@ -589,12 +589,12 @@ git commit -m "Session work: [summary]"
 
 #### 12.2 Update Documentation
 
-- `/.aidd/features/*/feature.json` updated if tests verified
-- `/.aidd/app_spec.txt` updated if changed/needed
+- `/.automaker/features/*/feature.json` updated if tests verified
+- `/.automaker/app_spec.txt` updated if changed/needed
 
 #### 12.3 Final Feature Status Audit
 
-- Perform final audit of `/.aidd/features/*/feature.json`
+- Perform final audit of `/.automaker/features/*/feature.json`
 - Verify all `"passes": true` features actually work
 - Confirm no false positives
 - Document any discrepancies

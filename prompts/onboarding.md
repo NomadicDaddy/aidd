@@ -4,12 +4,12 @@ You are in Code mode and ready to begin integrating with an existing codebase to
 
 ### QUICK REFERENCES
 
-- **Spec (source of truth):** `/.aidd/app_spec.txt`
-- **Architecture map:** `/.aidd/project_structure.md`
-- **Feature tests checklist:** `/.aidd/features/{feature-id}/feature.json`
-- **Todo list:** `/.aidd/todo.md`
-- **Changelog:** `/.aidd/CHANGELOG.md` (Keep a Changelog format)
-- **Project overrides (highest priority):** `/.aidd/project.txt`
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/{feature-id}/feature.json`
+- **Todo list:** `/.automaker/todo.md`
+- **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
+- **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES
 
@@ -51,13 +51,13 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 ### STEP 1: CHECK PROJECT OVERRIDES
 
-**CRITICAL: Check for `/.aidd/project.txt` before proceeding.**
+**CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
 
 See `/_common/project-overrides.md` for complete instructions.
 
 **Quick summary:**
 
-1. Read `/.aidd/project.txt` if it exists
+1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
 3. Project overrides have HIGHEST priority
 4. Document overrides in your initial assessment
@@ -77,13 +77,13 @@ Start by orienting yourself with the existing codebase.
 
 #### 2.1 Locate or Create Spec
 
-**If `/.aidd/app_spec.txt` exists:**
+**If `/.automaker/app_spec.txt` exists:**
 
 - Read it with `mcp_filesystem_read_text_file`
 - Use its directory as your **project root**
 - Verify it accurately describes the existing codebase
 
-**If `/.aidd/app_spec.txt` doesn't exist (legacy codebase):**
+**If `/.automaker/app_spec.txt` doesn't exist (legacy codebase):**
 
 - Create app_spec.txt based on your analysis
 - Infer application purpose from:
@@ -93,13 +93,13 @@ Start by orienting yourself with the existing codebase.
     - Existing routes/components
     - Database schema
 
-#### 2.2 Check for Existing .aidd Files
+#### 2.2 Check for Existing .automaker Files
 
 **Look for existing AIDD files:**
 
 ```bash
-# Check for .aidd directory
-mcp_filesystem_list_directory .aidd
+# Check for .automaker directory
+mcp_filesystem_list_directory .automaker
 
 # Check for legacy .auto* directories
 mcp_filesystem_list_directory .
@@ -109,7 +109,7 @@ mcp_filesystem_list_directory .
 
 **If legacy directories exist (`.auto*`):**
 
-- Copy relevant content to `.aidd/*`
+- Copy relevant content to `.automaker/*`
 - Preserve existing feature lists
 - Migrate progress notes
 - Document migration in CHANGELOG.md
@@ -136,18 +136,18 @@ mcp_filesystem_list_directory .
 
 ### STEP 3: ANALYZE CODEBASE AND CREATE FEATURE LIST
 
-**Create or update individual feature files at `/.aidd/features/{feature-id}/feature.json` based on spec AND existing code.**
+**Create or update individual feature files at `/.automaker/features/{feature-id}/feature.json` based on spec AND existing code.**
 
 **CRITICAL: Each feature MUST be in its own file!**
 
-- Create a directory for each feature: `/.aidd/features/{feature-id}/`
+- Create a directory for each feature: `/.automaker/features/{feature-id}/`
 - Place a single `feature.json` file in each directory
 - The `{feature-id}` should match the `id` field value in the JSON
 
 **Example structure:**
 
 ```
-.aidd/
+.automaker/
   features/
     user-authentication/
       feature.json
@@ -286,7 +286,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 #### 3.5 Document Codebase State
 
-**In `/.aidd/project_structure.md`, document:**
+**In `/.automaker/project_structure.md`, document:**
 
 - Technology stack identified
 - Major features implemented
@@ -416,7 +416,7 @@ git commit -m "onboard"
 
 **If you discovered issues, technical debt, or improvements needed.**
 
-#### 7.1 Create /.aidd/todo.md
+#### 7.1 Create /.automaker/todo.md
 
 **Document discovered issues:**
 
@@ -460,7 +460,7 @@ git commit -m "onboard"
 
 ### STEP 8: UPDATE PROGRESS LOG
 
-**Create `/.aidd/CHANGELOG.md` with onboarding summary.**
+**Create `/.automaker/CHANGELOG.md` with onboarding summary.**
 
 ```markdown
 # Progress Log
@@ -503,12 +503,12 @@ git commit -m "onboard"
 
 #### 9.1 Verification Checklist
 
-- [ ] `/.aidd/app_spec.txt` exists and describes the application
-- [ ] Individual feature files exist at `/.aidd/features/{feature-id}/feature.json` (minimum 20)
+- [ ] `/.automaker/app_spec.txt` exists and describes the application
+- [ ] Individual feature files exist at `/.automaker/features/{feature-id}/feature.json` (minimum 20)
 - [ ] Feature list minimum 20 features, conservatively marked
-- [ ] `/.aidd/project_structure.md` documents architecture
-- [ ] `/.aidd/todo.md` created if issues discovered
-- [ ] `/.aidd/CHANGELOG.md` created with onboarding summary
+- [ ] `/.automaker/project_structure.md` documents architecture
+- [ ] `/.automaker/todo.md` created if issues discovered
+- [ ] `/.automaker/CHANGELOG.md` created with onboarding summary
 - [ ] README.md updated/created with accurate information
 - [ ] Git repository initialized/updated with commits
 - [ ] No corrupted files
@@ -518,17 +518,17 @@ git commit -m "onboard"
 
 ```bash
 # Verify critical files exist
-mcp_filesystem_read_text_file .aidd/app_spec.txt | head -20
-mcp_filesystem_read_text_file .aidd/CHANGELOG.md
+mcp_filesystem_read_text_file .automaker/app_spec.txt | head -20
+mcp_filesystem_read_text_file .automaker/CHANGELOG.md
 
 # List all feature directories to verify structure
-ls -la .aidd/features/
+ls -la .automaker/features/
 
 # Count features (each feature should have its own directory)
-find .aidd/features/ -name "feature.json" | wc -l
+find .automaker/features/ -name "feature.json" | wc -l
 
 # Verify each feature file is valid JSON
-for f in .aidd/features/*/feature.json; do
+for f in .automaker/features/*/feature.json; do
   echo "Checking $f..."
   cat "$f" | head -5
 done
@@ -578,11 +578,11 @@ git diff
 
 ### What to Create/Update
 
-- Spec (/.aidd/app_spec.txt) if missing
-- Feature list (/.aidd/features/{feature-id}/feature.json)
-- Architecture docs (/.aidd/project_structure.md)
-- Progress log (/.aidd/CHANGELOG.md)
-- Todo list (/.aidd/todo.md) if issues found
+- Spec (/.automaker/app_spec.txt) if missing
+- Feature list (/.automaker/features/{feature-id}/feature.json)
+- Architecture docs (/.automaker/project_structure.md)
+- Progress log (/.automaker/CHANGELOG.md)
+- Todo list (/.automaker/todo.md) if issues found
 - README.md (update or create)
 - Git commits
 

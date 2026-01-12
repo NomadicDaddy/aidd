@@ -34,7 +34,7 @@ What actually happened.
 
 ## Log Files
 
-Please attach relevant logs from `.aidd/iterations/` if available.
+Please attach relevant logs from `.automaker/iterations/` if available.
 
 ```
 Paste relevant log excerpts here

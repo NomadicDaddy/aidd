@@ -18,13 +18,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
 find_or_create_metadata_dir() {
     local dir="$1"
 
-    # Check if .aidd directory exists
+    # Check if .automaker directory exists
     if [[ -d "$dir/$DEFAULT_METADATA_DIR" ]]; then
         echo "$dir/$DEFAULT_METADATA_DIR"
         return 0
     fi
 
-    # Create new .aidd directory
+    # Create new .automaker directory
     mkdir -p "$dir/$DEFAULT_METADATA_DIR"
     log_debug "Created metadata directory: $dir/$DEFAULT_METADATA_DIR"
     echo "$dir/$DEFAULT_METADATA_DIR"

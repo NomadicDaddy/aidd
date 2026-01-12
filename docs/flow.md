@@ -25,13 +25,13 @@ graph TD
     O --> P{Project Dir Exists?}
     P -->|No| Q[Create Project Directory]
     Q --> R[Copy Scaffolding Files]
-    R --> S[Copy Artifacts to .aidd]
+    R --> S[Copy Artifacts to .automaker]
     S --> T[Mark NEW_PROJECT_CREATED=true]
     P -->|Yes| U[Print Existing Codebase Detected]
 
     T --> V[If Spec File Provided, Validate It Exists]
     U --> V
-    V --> W[Define Paths: .aidd/app_spec.txt, features/, iterations/]
+    V --> W[Define Paths: .automaker/app_spec.txt, features/, iterations/]
     W --> X[Create Iterations Directory]
     X --> Y[Get Next Log Index]
     Y --> Z[Init Failure Counter]
@@ -56,7 +56,7 @@ graph TD
     AL --> AM[Send Onboarding Prompt]
 
     AK -->|No| AN[Copy Artifacts no overwrite]
-    AN --> AO[If Spec Provided, Copy to .aidd/app_spec.txt]
+    AN --> AO[If Spec Provided, Copy to .automaker/app_spec.txt]
     AO --> AP[Send Initializer Prompt]
 
     AJ --> AQ[run_cli_prompt via coprocess]
@@ -137,7 +137,7 @@ If `features/` directory is empty or missing, onboarding is considered incomplet
 
 Based on project state:
 
-- **Onboarding**: Existing codebases when `.aidd` files missing/incomplete
+- **Onboarding**: Existing codebases when `.automaker` files missing/incomplete
 - **Initializer**: New/empty projects where spec is copied
 - **Coding**: When spec and feature_list exist and onboarding complete
 - **TODO**: When `--todo` flag is used (work on todo items)
@@ -154,7 +154,7 @@ Only for new projects - copies template structure.
 
 ### Artifacts Copy
 
-Copies metadata templates into `.aidd/` without overwriting existing files:
+Copies metadata templates into `.automaker/` without overwriting existing files:
 
 - `features/` directory structure
 - `progress.md` template
@@ -163,12 +163,12 @@ Copies metadata templates into `.aidd/` without overwriting existing files:
 
 ### Spec Copy
 
-If `--spec` provided, copied to `.aidd/app_spec.txt` during initializer flow.
+If `--spec` provided, copied to `.automaker/app_spec.txt` during initializer flow.
 
 ### Log Management
 
 - Automatic cleanup on exit unless `--no-clean` is set
-- Logs stored in `.aidd/iterations/NNN.log`
+- Logs stored in `.automaker/iterations/NNN.log`
 - Sequential numbering prevents overwrites
 
 ### Shared Directory Sync

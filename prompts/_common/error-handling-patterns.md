@@ -424,7 +424,7 @@ fatal: not a git repository (or any of the parent directories): .git
 
 3. **Verify project root:**
     - Ensure you're in the correct directory
-    - Check for `/.aidd/` marker
+    - Check for `/.automaker/` marker
 
 4. **Document issue:**
     - Note in progress.md

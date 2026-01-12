@@ -261,10 +261,10 @@ mcp_filesystem_edit_file: old_string="...", new_string='{"key": "value"}'
 
 ```bash
 # Bash/Zsh
-find .aidd/features -name 'feature.json' -exec grep -l '"passes": false' {} \; | wc -l
+find .automaker/features -name 'feature.json' -exec grep -l '"passes": false' {} \; | wc -l
 
 # PowerShell
-(Get-ChildItem .aidd/features -Recurse -Filter feature.json | Select-String '"passes": false').Count
+(Get-ChildItem .automaker/features -Recurse -Filter feature.json | Select-String '"passes": false').Count
 ```
 
 **Prefer shell-agnostic approaches:**

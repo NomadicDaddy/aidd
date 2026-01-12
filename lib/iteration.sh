@@ -253,6 +253,15 @@ HEREDOC_END
         return 0
     fi
 
+    # Check for VALIDATE mode
+    if [[ "$VALIDATE_MODE" == true ]]; then
+        log_info "Using VALIDATE mode - will validate incomplete features and todos"
+        prompt_path="$script_dir/prompts/validate.md"
+        phase="$PHASE_CODING"
+        echo "$prompt_path|$phase"
+        return 0
+    fi
+
     # Check if onboarding is complete by checking for natural artifacts
     # (app_spec.txt, features directory with data, and CHANGELOG.md)
     if check_onboarding_status "$metadata_dir"; then

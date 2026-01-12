@@ -27,6 +27,7 @@ export SHOW_STATUS=false
 export SYNC_MODE=false
 export DRY_RUN_MODE=false
 export TODO_MODE=false
+export VALIDATE_MODE=false
 export CUSTOM_PROMPT=""
 
 # Effective model values (computed after parsing)
@@ -68,6 +69,7 @@ OPTIONS:
                               (copies only if missing on one side)
     --dry-run               Preview sync changes without modifying files (use with --sync)
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
+    --validate              Run validation mode to check incomplete features and todos (optional)
     --prompt "DIRECTIVE"    Use custom directive instead of automatic prompt selection (optional)
     --help                  Show this help message
 
@@ -161,6 +163,10 @@ parse_args() {
                 ;;
             --todo)
                 TODO_MODE=true
+                shift
+                ;;
+            --validate)
+                VALIDATE_MODE=true
                 shift
                 ;;
             --sync)

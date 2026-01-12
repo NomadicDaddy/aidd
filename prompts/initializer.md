@@ -128,6 +128,8 @@ Start by orienting yourself with the project.
 
 #### 3.2 Feature List Format
 
+CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and aidd_area (string). Never set metadata to a string.
+
 ```json
 {
 	"id": "feature-slug-from-description",

@@ -331,7 +331,7 @@ For each feature with `"passes": false`:
 
     ```bash
     # Count features without depends_on field
-    jq '[.[] | select(has("depends_on") | not)] | length' .aidd/features/*/feature.json
+    jq 'if has("depends_on") | not then 1 else 0 end' .aidd/features/*/feature.json
     ```
 
 2. **If ANY features lack `depends_on` field:**
@@ -353,6 +353,8 @@ For each feature with `"passes": false`:
 
 #### 6.6 Select Feature from Feature List
 
+CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and aidd_area (string). Never set metadata to a string.
+
 **Review `/.aidd/features/*/feature.json`:**
 
 - Filter to `"passes": false`
@@ -369,8 +371,8 @@ For each feature with `"passes": false`:
     # Example: Check if dependencies are satisfied
     # Feature has: "depends_on": ["User authentication API", "Database schema"]
     # Verify both features have "passes": true
-    jq '.[] | select(.description == "User authentication API") | .metadata.aidd_passes' .aidd/features/*/feature.json
-    jq '.[] | select(.description == "Database schema") | .metadata.aidd_passes' .aidd/features/*/feature.json
+    jq 'select(.description == "User authentication API") | .metadata.aidd_passes' .aidd/features/*/feature.json
+    jq 'select(.description == "Database schema") | .metadata.aidd_passes' .aidd/features/*/feature.json
     ```
 
 2. **Skip features with unsatisfied dependencies:**

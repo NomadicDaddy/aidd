@@ -28,6 +28,47 @@ readonly PHASE_INITIALIZER
 readonly PHASE_CODING
 
 # -----------------------------------------------------------------------------
+# Feature File Validation Functions
+# -----------------------------------------------------------------------------
+
+# Validate feature.json file structure
+validate_feature_file() {
+    local feature_file="$1"
+
+    if [[ ! -f "$feature_file" ]]; then
+        log_error "Feature file does not exist: $feature_file"
+        return 1
+    fi
+
+    if ! jq empty "$feature_file" 2>/dev/null; then
+        log_error "Invalid JSON in feature file: $feature_file"
+        return 1
+    fi
+
+    if ! jq -e 'type == "object"' "$feature_file" >/dev/null 2>&1; then
+        log_error "Feature file must be a JSON object: $feature_file"
+        return 1
+    fi
+
+    if ! jq -e 'has("metadata")' "$feature_file" >/dev/null 2>&1; then
+        log_error "Missing metadata field in feature file: $feature_file"
+        return 1
+    fi
+
+    if ! jq -e '.metadata | type == "object"' "$feature_file" >/dev/null 2>&1; then
+        log_error "metadata must be an object in feature file: $feature_file"
+        return 1
+    fi
+
+    if ! jq -e '.metadata | has("aidd_passes")' "$feature_file" >/dev/null 2>&1; then
+        log_error "metadata.aidd_passes field missing in feature file: $feature_file"
+        return 1
+    fi
+
+    return 0
+}
+
+# -----------------------------------------------------------------------------
 # Failure Handling Functions
 # -----------------------------------------------------------------------------
 
@@ -345,8 +386,18 @@ check_project_completion() {
         # Check each individual feature file
         for feature_file in "$features_dir"/*/feature.json; do
             if [[ -f "$feature_file" ]]; then
-                local passes=$(jq -r '.metadata.aidd_passes // false' "$feature_file" 2>/dev/null)
-                if [[ "$passes" == "false" ]]; then
+                # Validate feature file structure first
+                if ! validate_feature_file "$feature_file"; then
+                    log_error "Invalid feature file structure: $feature_file"
+                    ((failing_count++))
+                    continue
+                fi
+
+                local passes=$(jq -r '.metadata.aidd_passes // false' "$feature_file" 2>/dev/null || echo "error")
+                if [[ "$passes" == "error" ]]; then
+                    log_error "Failed to parse metadata in $feature_file"
+                    ((failing_count++))
+                elif [[ "$passes" == "false" ]]; then
                     ((failing_count++))
                 fi
             fi

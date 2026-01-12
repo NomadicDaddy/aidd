@@ -6,7 +6,8 @@
 	"main": "./aidd.sh",
 	"scripts": {
 		"start": "bash ./aidd.sh",
-		"format": "prettier --write .",
+		"format": "bunx prettier --write .",
+		"format:check": "bunx prettier --check .",
 		"lint": "bash ./lint.sh"
 	},
 	"devDependencies": {

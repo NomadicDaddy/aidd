@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+bun run lint
+bun run format:check
+
+printf "\n[pre-commit] OK ✅\n"

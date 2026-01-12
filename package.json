@@ -7,7 +7,7 @@
 	"scripts": {
 		"start": "bash ./aidd.sh",
 		"format": "prettier --write .",
-		"lint": "bash -n *.sh && bash -n lib/*.sh"
+		"lint": "bash ./lint.sh"
 	},
 	"devDependencies": {
 		"@trivago/prettier-plugin-sort-imports": "^6.0.2",

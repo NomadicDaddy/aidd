@@ -270,8 +270,8 @@ cat .aidd/todo.md
 
 1. Document completion in `/.aidd/CHANGELOG.md`
 2. **Complete the session successfully** - Do NOT throw errors or use error exit codes
-   - Simply finish your response normally after documenting completion
-   - The CLI will handle the exit code based on whether you completed without errors
+    - Simply finish your response normally after documenting completion
+    - The CLI will handle the exit code based on whether you completed without errors
 3. Do NOT continue to feature implementation
 
 **CRITICAL:** When terminating due to completion, ensure you exit cleanly without errors so the wrapper script can generate the final status report. Do not use error-indicating completion methods.
@@ -319,7 +319,7 @@ For each feature with `"passes": false`:
 **Check `/.aidd/todo.md` for priority work:**
 
 1. If todo.md exists and has items, intelligently convert each to `features/*/feature.json` entry
-2. This is the ONLY time you may ADD to features/*/feature.json
+2. This is the ONLY time you may ADD to features/\*/feature.json
 3. Remove items from todo.md as you add them
 4. Delete or empty todo.md when complete
 
@@ -328,27 +328,28 @@ For each feature with `"passes": false`:
 **CRITICAL: Before selecting a feature, ensure it has dependency tracking:**
 
 1. **Check for `depends_on` field:**
-   ```bash
-   # Count features without depends_on field
-   jq '[.[] | select(has("depends_on") | not)] | length' .aidd/features/*/feature.json
-   ```
+
+    ```bash
+    # Count features without depends_on field
+    jq '[.[] | select(has("depends_on") | not)] | length' .aidd/features/*/feature.json
+    ```
 
 2. **If ANY features lack `depends_on` field:**
-   - STOP feature selection
-   - Review each feature and add `depends_on` field
-   - Set to empty array `[]` if no dependencies
-   - Identify actual dependencies and list them by exact `description`
-   - Commit the updated features/*/feature.json
-   - Then resume feature selection
+    - STOP feature selection
+    - Review each feature and add `depends_on` field
+    - Set to empty array `[]` if no dependencies
+    - Identify actual dependencies and list them by exact `description`
+    - Commit the updated features/\*/feature.json
+    - Then resume feature selection
 
 3. **Dependency reference format:**
-   ```json
-   {
-     "description": "Advanced feature",
-     "depends_on": ["Basic feature", "Another prerequisite"],
-     ...
-   }
-   ```
+    ```json
+    {
+      "description": "Advanced feature",
+      "depends_on": ["Basic feature", "Another prerequisite"],
+      ...
+    }
+    ```
 
 #### 6.6 Select Feature from Feature List
 
@@ -363,23 +364,24 @@ For each feature with `"passes": false`:
 **Dependency validation:**
 
 1. **For each candidate feature, check `depends_on` array:**
-   ```bash
-   # Example: Check if dependencies are satisfied
-   # Feature has: "depends_on": ["User authentication API", "Database schema"]
-   # Verify both features have "passes": true
-   jq '.[] | select(.description == "User authentication API") | .metadata.aidd_passes' .aidd/features/*/feature.json
-   jq '.[] | select(.description == "Database schema") | .metadata.aidd_passes' .aidd/features/*/feature.json
-   ```
+
+    ```bash
+    # Example: Check if dependencies are satisfied
+    # Feature has: "depends_on": ["User authentication API", "Database schema"]
+    # Verify both features have "passes": true
+    jq '.[] | select(.description == "User authentication API") | .metadata.aidd_passes' .aidd/features/*/feature.json
+    jq '.[] | select(.description == "Database schema") | .metadata.aidd_passes' .aidd/features/*/feature.json
+    ```
 
 2. **Skip features with unsatisfied dependencies:**
-   - If ANY dependency has `"passes": false`, skip this feature
-   - Only select features where ALL dependencies have `"passes": true`
-   - This ensures proper implementation order
+    - If ANY dependency has `"passes": false`, skip this feature
+    - Only select features where ALL dependencies have `"passes": true`
+    - This ensures proper implementation order
 
 3. **Include dependency context in coding prompt:**
-   - When implementing a feature, review its dependencies
-   - Read the code for dependent features to understand patterns
-   - Ensure consistency with existing implementations
+    - When implementing a feature, review its dependencies
+    - Read the code for dependent features to understand patterns
+    - Ensure consistency with existing implementations
 
 **CRITICAL: Update feature status BEFORE implementing:**
 

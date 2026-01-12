@@ -172,7 +172,7 @@ mcp_filesystem_list_directory .
 
 **Principle: Conservative Feature Marking**
 
-Default ALL features to `"passes": false`. Only mark `"passes": true` if:
+Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.aidd_passes": true` if:
 
 1. ✅ Found the code
 2. ✅ Read and understood it
@@ -184,39 +184,39 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - Merge it with your new findings
 - Add missing features from spec
 - Add features found in codebase but not in spec
-- Ensure minimum 10 features with `"passes": false` remain
+- Ensure minimum 10 features with `"metadata.aidd_passes": false` remain
 
 **Format (same as initializer):**
 
 **Timestamp format:**
-- `created_at` and `closed_at` MUST use ISO 8601 format: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
+
+- `createdAt` and `updatedAt` MUST use ISO 8601 format: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
 - Always use current UTC timestamp: `date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
 
 ```json
-[
-	{
-		"area": "database|backend|frontend|testing|security|devex|docs",
-		"category": "functional|style|security|performance|accessibility|devex|improvement|refactoring|security_consideration|scalability|process",
-		"closed_at": null,
-		"created_at": "2026-01-09T14:23:45.000Z",
-		"depends_on": [], // Array of feature descriptions this feature depends on (empty if no dependencies)
-		"description": "Short name of feature/capability being validated",
-		"passes": false, // Default to false!
-		"priority": "critical|high|medium|low",
-		"status": "open",
-		"steps": [
-			"Step 1: Navigate to the relevant page/area",
-			"Step 2: Perform the action",
-			"Step 3: Verify expected UI/API outcome",
-			"Step 4: Verify persistence (DB) if applicable"
-		]
+{
+	"id": "feature-slug-from-description",
+	"description": "Short name of feature/capability being validated",
+	"category": "Core|UI|Security|Performance|Testing|DevEx|Documentation",
+	"priority": 1,  // 1=critical, 2=high, 3=medium, 4=low
+	"status": "backlog",  // backlog, inProgress, completed, blocked
+	"createdAt": "2026-01-09T14:23:45.000Z",
+	"updatedAt": "2026-01-09T14:23:45.000Z",
+	"justFinishedAt": null,  // Set when status changes to completed
+	"dependencies": [],  // Array of feature IDs this feature depends on
+	"spec": "1. Step description
+2. Another step
+3. Verify outcome",
+	"metadata": {
+		"aidd_area": "database|backend|frontend|testing|security|devex|docs",
+		"aidd_passes": false
 	}
-]
+}
 ```
 
 #### 3.3 Dependency Tracking
 
-**CRITICAL: Track feature dependencies in `depends_on` field:**
+**CRITICAL: Track feature dependencies in `dependencies` field:**
 
 - For each feature, identify which other features MUST be implemented first
 - Reference dependencies by their exact `id` field value (feature slug)
@@ -227,18 +227,21 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 ```json
 {
+	"id": "user-login-form",
 	"description": "User login form",
-	"depends_on": [], // No dependencies - foundational feature
+	"dependencies": [], // No dependencies - foundational feature
 	...
 }
 {
+	"id": "password-reset",
 	"description": "Password reset functionality",
-	"depends_on": ["User login form"], // Depends on login existing
+	"dependencies": ["user-login-form"], // Depends on login existing
 	...
 }
 {
+	"id": "social-oauth-login",
 	"description": "Social media OAuth login",
-	"depends_on": ["User login form", "User authentication backend"], // Multiple dependencies
+	"dependencies": ["user-login-form", "user-authentication-backend"], // Multiple dependencies
 	...
 }
 ```
@@ -256,13 +259,14 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 **Minimum standards:**
 
 - Minimum 20 features total
-- Both "functional" and "style" categories
-- Mix of narrow (2-5 steps) and comprehensive (10+ steps) tests
+- Both "Core" and "UI" categories (or other valid categories)
+- Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
 - At least 2-5 tests with 10+ steps each
-- Order by priority: fundamental features first
-- Conservative marking: default to `"passes": false`
+- Order by priority (1=critical first): fundamental features first
+- Conservative marking: default to `"metadata.aidd_passes": false`
 - Cover spec AND existing codebase exhaustively
-- ALL features must have `depends_on` field (even if empty array)
+- ALL features must have `dependencies` field (even if empty array)
+- ALL features must have `id` field (feature slug)
 
 #### 3.5 Document Codebase State
 
@@ -284,7 +288,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 #### 4.1 Selective Verification
 
-**For features you consider marking `"passes": true`:**
+**For features you consider marking `"metadata.aidd_passes": true`:**
 
 1. **Code inspection:**
     - Read the implementation
@@ -301,7 +305,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
     - Test the specific feature
     - Verify it works as expected
 
-**When in doubt → Mark as `"passes": false`**
+**When in doubt → Mark as `"metadata.aidd_passes": false`**
 
 Better to retest later than claim something works when it doesn't.
 
@@ -309,8 +313,8 @@ Better to retest later than claim something works when it doesn't.
 
 **If you discover broken functionality:**
 
-- Mark as `"passes": false`
-- Document the issue in feature steps or description
+- Mark as `"metadata.aidd_passes": false`
+- Document the issue in feature spec or description
 - Add to todo.md if it's a known issue to fix
 - Note in CHANGELOG.md
 
@@ -503,7 +507,7 @@ mcp_filesystem_read_text_file .aidd/features/{feature-id}/feature.json | head -5
 mcp_filesystem_read_text_file .aidd/CHANGELOG.md
 
 # Count features
-grep -c '"passes"' .aidd/features/{feature-id}/feature.json
+grep -c '"aidd_passes"' .aidd/features/{feature-id}/feature.json
 
 # Check git status
 git status
@@ -567,7 +571,7 @@ git diff
 
 ### Conservative Principle
 
-**Default to `"passes": false`** unless you've verified the feature works through code inspection, testing, or manual verification.
+**Default to `"metadata.aidd_passes": false`** unless you've verified the feature works through code inspection, testing, or manual verification.
 
 ### Quality Standards
 

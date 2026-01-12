@@ -86,16 +86,16 @@ mcp_filesystem_read_text_file .aidd/features/add-user-auth/feature.json
 ```
 
 2. **Parse feature metadata:**
-   - `id` - Unique feature identifier
-   - `description` - What the feature does
-   - `spec` - Step-by-step implementation checklist
-   - `status` - Current status (should be "backlog" or "inProgress")
-   - `metadata.aidd_passes` - Should be `false`
+    - `id` - Unique feature identifier
+    - `description` - What the feature does
+    - `spec` - Step-by-step implementation checklist
+    - `status` - Current status (should be "backlog" or "inProgress")
+    - `metadata.aidd_passes` - Should be `false`
 
 3. **Search codebase for evidence of implementation:**
-   - Extract key terms from feature description and spec
-   - Search for file names, component names, function names mentioned in spec
-   - Look for related code patterns
+    - Extract key terms from feature description and spec
+    - Search for file names, component names, function names mentioned in spec
+    - Look for related code patterns
 
 ```bash
 # Example searches based on feature spec
@@ -105,16 +105,16 @@ mcp_filesystem_search_text --pattern "login.*password"
 ```
 
 4. **Verify feature implementation:**
-   - Read relevant files found in searches
-   - Check if spec items are implemented
-   - Look for related tests
-   - Check UI files if it's a frontend feature
-   - Check API endpoints if it's a backend feature
+    - Read relevant files found in searches
+    - Check if spec items are implemented
+    - Look for related tests
+    - Check UI files if it's a frontend feature
+    - Check API endpoints if it's a backend feature
 
 5. **Make determination:**
-   - **Feature IS complete:** All spec items are implemented and verifiable
-   - **Feature IS incomplete:** One or more spec items are missing or broken
-   - **Ambiguous:** Cannot determine status without running code or additional context
+    - **Feature IS complete:** All spec items are implemented and verifiable
+    - **Feature IS incomplete:** One or more spec items are missing or broken
+    - **Ambiguous:** Cannot determine status without running code or additional context
 
 #### 1.3 Update Feature Metadata
 
@@ -123,9 +123,9 @@ mcp_filesystem_search_text --pattern "login.*password"
 **If feature IS complete but marked as incomplete:**
 
 1. **Update the feature.json file:**
-   - Set `metadata.aidd_passes` to `true`
-   - Set `status` to `"completed"`
-   - Update `updatedAt` timestamp to current ISO format
+    - Set `metadata.aidd_passes` to `true`
+    - Set `status` to `"completed"`
+    - Update `updatedAt` timestamp to current ISO format
 
 ```bash
 # Read, modify, and write back the feature.json
@@ -140,7 +140,7 @@ mcp_filesystem_search_text --pattern "login.*password"
 #### Validated Complete (aidd_passes: false → true)
 
 - Feature: [feature description] - Found implemented in [file paths]
-  - Reason: [brief explanation of evidence found]
+    - Reason: [brief explanation of evidence found]
 ```
 
 **If feature is legitimately incomplete:**
@@ -232,13 +232,13 @@ mcp_filesystem_search_text --pattern "HACK:"
 **For every TODO item marked incomplete (`- [ ]` or code comment), perform validation:**
 
 1. **Understand the TODO:**
-   - What work does it describe?
-   - Which files/components does it relate to?
-   - What is the expected outcome?
+    - What work does it describe?
+    - Which files/components does it relate to?
+    - What is the expected outcome?
 
 2. **Search codebase for evidence of completion:**
-   - Extract key terms from TODO description
-   - Search for related files, functions, or components
+    - Extract key terms from TODO description
+    - Search for related files, functions, or components
 
 ```bash
 # Example searches based on TODO content
@@ -247,19 +247,19 @@ mcp_filesystem_search_files --pattern "related_file_name"
 ```
 
 3. **Cross-reference with features:**
-   - Check if a related feature was completed (from Step 1)
-   - TODOs related to complete features might also be done
+    - Check if a related feature was completed (from Step 1)
+    - TODOs related to complete features might also be done
 
 4. **Verify implementation:**
-   - Read relevant files
-   - Check if the work described in TODO is present
-   - Look for tests or documentation
+    - Read relevant files
+    - Check if the work described in TODO is present
+    - Look for tests or documentation
 
 5. **Make determination:**
-   - **TODO IS complete:** Work is fully implemented
-   - **TODO IS incomplete:** Work is not done or partially done
-   - **TODO is stale/invalid:** No longer applicable (requirements changed, feature removed, etc.)
-   - **Ambiguous:** Cannot determine without more context
+    - **TODO IS complete:** Work is fully implemented
+    - **TODO IS incomplete:** Work is not done or partially done
+    - **TODO is stale/invalid:** No longer applicable (requirements changed, feature removed, etc.)
+    - **Ambiguous:** Cannot determine without more context
 
 #### 2.5 Update TODO List
 
@@ -268,12 +268,12 @@ mcp_filesystem_search_files --pattern "related_file_name"
 **If TODO is complete:**
 
 1. **Update todo.md:**
-   - Change `- [ ] Item` to `- [x] Item` OR
-   - Remove the line entirely (preferred for completed items)
+    - Change `- [ ] Item` to `- [x] Item` OR
+    - Remove the line entirely (preferred for completed items)
 
 2. **Remove from code (if code comment):**
-   - Delete the TODO comment from source files
-   - Ensure code still makes sense without the comment
+    - Delete the TODO comment from source files
+    - Ensure code still makes sense without the comment
 
 3. **Document in CHANGELOG.md:**
 
@@ -283,7 +283,7 @@ mcp_filesystem_search_files --pattern "related_file_name"
 #### TODOs Completed/Removed
 
 - TODO: [description] - Found implemented in [file paths]
-  - Action: Removed from todo.md
+    - Action: Removed from todo.md
 ```
 
 **If TODO is stale/invalid:**
@@ -295,7 +295,7 @@ mcp_filesystem_search_files --pattern "related_file_name"
 #### TODOs Removed (Stale/Invalid)
 
 - TODO: [description]
-  - Reason: [why it's no longer applicable]
+    - Reason: [why it's no longer applicable]
 ```
 
 **If TODO is legitimately incomplete:**
@@ -361,29 +361,29 @@ todos_stale_removed=[count removed as stale]
 [List each feature that was updated with brief rationale]
 
 - Feature: [description]
-  - Evidence: [what files/code proved it was complete]
+    - Evidence: [what files/code proved it was complete]
 
 #### TODOs Completed/Removed
 
 [List each TODO that was removed with brief rationale]
 
 - TODO: [description]
-  - Evidence: [what proved it was complete]
+    - Evidence: [what proved it was complete]
 
 #### TODOs Removed (Stale)
 
 [List each stale TODO with reason]
 
 - TODO: [description]
-  - Reason: [why it's stale]
+    - Reason: [why it's stale]
 
 #### Validation Ambiguities
 
 [List items that couldn't be definitively validated]
 
 - Feature/TODO: [description]
-  - Issue: [what's unclear]
-  - Recommendation: [manual review needed, run tests, etc.]
+    - Issue: [what's unclear]
+    - Recommendation: [manual review needed, run tests, etc.]
 ```
 
 ---
@@ -454,9 +454,9 @@ See .aidd/CHANGELOG.md for detailed report.
 ```
 
 2. **Exit normally:**
-   - Do NOT throw errors
-   - Complete the session successfully
-   - The CLI will handle exit codes
+    - Do NOT throw errors
+    - Complete the session successfully
+    - The CLI will handle exit codes
 
 ---
 
@@ -469,11 +469,11 @@ See .aidd/CHANGELOG.md for detailed report.
 1. **Read the spec carefully** - Understand all implementation requirements
 2. **Search systematically** - Use feature description keywords, file names from spec
 3. **Check multiple sources:**
-   - Source code files
-   - Test files
-   - UI component files
-   - API endpoint files
-   - Configuration files
+    - Source code files
+    - Test files
+    - UI component files
+    - API endpoint files
+    - Configuration files
 4. **Verify completeness** - All spec items should be addressed
 5. **Consider quality** - Implementation should actually work, not just exist
 
@@ -526,8 +526,8 @@ See .aidd/CHANGELOG.md for detailed report.
 
 ```markdown
 - Feature: [description]
-  - Status: Incomplete (implementation exists but no tests found)
-  - Recommendation: Add tests then re-validate
+    - Status: Incomplete (implementation exists but no tests found)
+    - Recommendation: Add tests then re-validate
 ```
 
 ### Pattern 2: TODO for Feature That Was Completed
@@ -540,8 +540,8 @@ See .aidd/CHANGELOG.md for detailed report.
 
 ```markdown
 - TODO: Implement feature X
-  - Evidence: Feature X exists in .aidd/features and passes: true
-  - Action: Removed from todo.md
+    - Evidence: Feature X exists in .aidd/features and passes: true
+    - Action: Removed from todo.md
 ```
 
 ### Pattern 3: Stale TODO for Deprecated Approach
@@ -554,8 +554,8 @@ See .aidd/CHANGELOG.md for detailed report.
 
 ```markdown
 - TODO: [description]
-  - Reason: Project now uses different approach (found [new approach] in [files])
-  - Action: Removed as stale
+    - Reason: Project now uses different approach (found [new approach] in [files])
+    - Action: Removed as stale
 ```
 
 ### Pattern 4: Partial Implementation
@@ -568,9 +568,9 @@ See .aidd/CHANGELOG.md for detailed report.
 
 ```markdown
 - Feature: [description]
-  - Status: Incomplete (partial implementation found)
-  - Evidence: Found [completed items] but missing [incomplete items]
-  - Recommendation: Complete remaining spec items
+    - Status: Incomplete (partial implementation found)
+    - Evidence: Found [completed items] but missing [incomplete items]
+    - Recommendation: Complete remaining spec items
 ```
 
 ### Pattern 5: Cannot Verify Without Running
@@ -585,8 +585,8 @@ See .aidd/CHANGELOG.md for detailed report.
 ### Validation Ambiguities
 
 - Feature: [description]
-  - Issue: Implementation found but cannot verify correctness without runtime testing
-  - Recommendation: Run manual tests or automated test suite
+    - Issue: Implementation found but cannot verify correctness without runtime testing
+    - Recommendation: Run manual tests or automated test suite
 ```
 
 ---

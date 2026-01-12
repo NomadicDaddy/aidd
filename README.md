@@ -10,7 +10,7 @@ A unified shell script that orchestrates autonomous development sessions using *
 - **Iteration Management**: Built-in retry logic, failure handling, and progress tracking with two-stage idle timeout and agent nudging
 - **Feature Tracking**: JSON-based feature list with status tracking
 - **Shared Directory Sync**: Automatic synchronization of shared configuration directories (e.g., `.claude`, `.windsurf`) to projects
-- **Legacy Migration**: Automatic migration from `.automaker` directories
+- **Shared Feature Tracking**: Automatic migration from and on-demand sync to `.automaker`
 
 ## Supported CLIs
 
@@ -334,4 +334,3 @@ For issues or questions:
     - OpenCode: [opencode.ai/docs](https://opencode.ai/docs)
     - KiloCode: [kilocode.ai/docs](https://kilocode.ai/docs)
     - Claude Code: [claude.com/claude-code](https://claude.com/claude-code)
-4. Refer to the original aidd-o or aidd-k projects for historical context

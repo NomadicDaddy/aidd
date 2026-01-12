@@ -24,6 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh"
 source "${SCRIPT_DIR}/lib/utils.sh"
 source "${SCRIPT_DIR}/lib/log-cleaner.sh"
+source "${SCRIPT_DIR}/lib/log-extractor.sh"
 source "${SCRIPT_DIR}/lib/args.sh"
 
 # -----------------------------------------------------------------------------
@@ -293,17 +294,38 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             echo
         } 2>&1 | tee "$LOG_FILE"
 
+        # After iteration block, check if we should continue to next iteration
+        # Track handle_failure return status
+        HANDLE_FAILURE_RETURN=0
+        if [[ $CLI_EXIT_CODE -ne 0 ]]; then
+            handle_failure "$CLI_EXIT_CODE"
+            HANDLE_FAILURE_RETURN=$?
+            # Check if handle_failure wants us to continue
+            if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
+                # Continue to next iteration - skip rest of this iteration
+                continue
+            fi
+        fi
+
+        # Extract structured log if enabled
+        if [[ "$EXTRACT_STRUCTURED" == true ]]; then
+            extract_single_log "$LOG_FILE" "$METADATA_DIR"
+        fi
+
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
+
         # Handle project completion (exit cleanly with success)
         if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
             log_info "AI development driver completed: project finished"
             exit $EXIT_SUCCESS
         fi
+
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
             if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
                 log_warn "Timeout detected on iteration $i, continuing to next iteration..."
-            else
+            elif [[ $HANDLE_FAILURE_RETURN -ne 0 ]]; then
+                # Only exit if handle_failure didn't want us to continue
                 exit "$ITERATION_EXIT_CODE"
             fi
         fi
@@ -401,6 +423,24 @@ else
             fi
         } 2>&1 | tee "$LOG_FILE"
 
+        # After iteration block, check if we should continue to next iteration
+        # Track handle_failure return status
+        HANDLE_FAILURE_RETURN=0
+        if [[ $CLI_EXIT_CODE -ne 0 ]]; then
+            handle_failure "$CLI_EXIT_CODE"
+            HANDLE_FAILURE_RETURN=$?
+            # Check if handle_failure wants us to continue
+            if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
+                # Continue to next iteration
+                continue
+            fi
+        fi
+
+        # Extract structured log if enabled
+        if [[ "$EXTRACT_STRUCTURED" == true ]]; then
+            extract_single_log "$LOG_FILE" "$METADATA_DIR"
+        fi
+
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
         # Handle project completion (exit cleanly with success)
         if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
@@ -411,7 +451,8 @@ else
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
             if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
                 log_warn "Timeout detected on iteration $i, continuing to next iteration..."
-            else
+            elif [[ $HANDLE_FAILURE_RETURN -ne 0 ]]; then
+                # Only exit if handle_failure didn't want us to continue
                 exit "$ITERATION_EXIT_CODE"
             fi
         fi

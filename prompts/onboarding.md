@@ -136,7 +136,24 @@ mcp_filesystem_list_directory .
 
 ### STEP 3: ANALYZE CODEBASE AND CREATE FEATURE LIST
 
-**Create or update `/.aidd/features/{feature-id}/feature.json` based on spec AND existing code.**
+**Create or update individual feature files at `/.aidd/features/{feature-id}/feature.json` based on spec AND existing code.**
+
+**CRITICAL: Each feature MUST be in its own file!**
+- Create a directory for each feature: `/.aidd/features/{feature-id}/`
+- Place a single `feature.json` file in each directory
+- The `{feature-id}` should match the `id` field value in the JSON
+
+**Example structure:**
+```
+.aidd/
+  features/
+    user-authentication/
+      feature.json
+    user-profile-page/
+      feature.json
+    timeline-crud/
+      feature.json
+```
 
 **See `/_common/file-integrity.md` for safe JSON editing.**
 
@@ -488,7 +505,7 @@ git commit -m "onboard"
 #### 9.1 Verification Checklist
 
 - [ ] `/.aidd/app_spec.txt` exists and describes the application
-- [ ] `/.aidd/features/{feature-id}/feature.json` exists with accurate feature inventory
+- [ ] Individual feature files exist at `/.aidd/features/{feature-id}/feature.json` (minimum 20)
 - [ ] Feature list minimum 20 features, conservatively marked
 - [ ] `/.aidd/project_structure.md` documents architecture
 - [ ] `/.aidd/todo.md` created if issues discovered
@@ -503,11 +520,19 @@ git commit -m "onboard"
 ```bash
 # Verify critical files exist
 mcp_filesystem_read_text_file .aidd/app_spec.txt | head -20
-mcp_filesystem_read_text_file .aidd/features/{feature-id}/feature.json | head -50
 mcp_filesystem_read_text_file .aidd/CHANGELOG.md
 
-# Count features
-grep -c '"aidd_passes"' .aidd/features/{feature-id}/feature.json
+# List all feature directories to verify structure
+ls -la .aidd/features/
+
+# Count features (each feature should have its own directory)
+find .aidd/features/ -name "feature.json" | wc -l
+
+# Verify each feature file is valid JSON
+for f in .aidd/features/*/feature.json; do
+  echo "Checking $f..."
+  cat "$f" | head -5
+done
 
 # Check git status
 git status

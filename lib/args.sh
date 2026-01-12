@@ -29,6 +29,8 @@ export DRY_RUN_MODE=false
 export TODO_MODE=false
 export VALIDATE_MODE=false
 export CUSTOM_PROMPT=""
+export EXTRACT_STRUCTURED=false
+export EXTRACT_BATCH=false
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -71,6 +73,8 @@ OPTIONS:
     --todo                  Use TODO mode: look for and complete todo items instead of new features (optional)
     --validate              Run validation mode to check incomplete features and todos (optional)
     --prompt "DIRECTIVE"    Use custom directive instead of automatic prompt selection (optional)
+    --extract-structured    Extract structured JSON from iteration logs after each iteration (optional)
+    --extract-batch         Batch extract structured JSON from all existing iteration logs and exit
     --help                  Show this help message
 
 EXAMPLES:
@@ -175,6 +179,14 @@ parse_args() {
                 ;;
             --dry-run)
                 DRY_RUN_MODE=true
+                shift
+                ;;
+            --extract-structured)
+                EXTRACT_STRUCTURED=true
+                shift
+                ;;
+            --extract-batch)
+                EXTRACT_BATCH=true
                 shift
                 ;;
             --prompt)
@@ -586,6 +598,30 @@ init_args() {
 
     # Handle --status option (display and exit)
     
+    # Handle --extract-batch option (batch extract and exit)
+    if [[ "$EXTRACT_BATCH" == true ]]; then
+        # Find metadata directory
+        local metadata_dir=""
+        if [[ -d "$PROJECT_DIR/$DEFAULT_METADATA_DIR" ]]; then
+            metadata_dir="$PROJECT_DIR/$DEFAULT_METADATA_DIR"
+        else
+            log_error "Metadata directory not found: $PROJECT_DIR/$DEFAULT_METADATA_DIR"
+            log_info "Run aidd normally first to initialize the project"
+            exit $EXIT_NOT_FOUND
+        fi
+        
+        local iterations_dir="$metadata_dir/$DEFAULT_ITERATIONS_DIR"
+        if [[ ! -d "$iterations_dir" ]]; then
+            log_error "Iterations directory not found: $iterations_dir"
+            exit $EXIT_NOT_FOUND
+        fi
+        
+        # Source and run extraction
+        source "$(dirname "${BASH_SOURCE[0]}")/log-extractor.sh"
+        extract_all_logs "$iterations_dir" "$metadata_dir"
+        exit $EXIT_SUCCESS
+    fi
+
     # Handle --sync option (synchronize and exit)
     if [[ "$SYNC_MODE" == true ]]; then
         # Find metadata directory

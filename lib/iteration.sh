@@ -326,26 +326,34 @@ get_next_log_index() {
 # Phase 2: Second detection (state file exists) returns 0 (confirmed complete)
 check_project_completion() {
     local metadata_dir="$1"
-    local feature_list_path="$metadata_dir/${DEFAULT_FEATURE_LIST_FILE}"
+    local features_dir="$metadata_dir/${DEFAULT_FEATURES_DIR}"
     local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
     local completion_state_file="$metadata_dir/.project_completion_pending"
 
     # Check if features directory exists
-    if [[ ! -f "$feature_list_path" ]]; then
-        log_debug "Feature list not found, project not complete"
+    if [[ ! -d "$features_dir" ]]; then
+        log_debug "Features directory not found, project not complete"
         # Clear pending state if project regressed
         rm -f "$completion_state_file" 2>/dev/null
         return 1
     fi
 
-    # Count features with "passes": false
+    # Count features with "aidd_passes": false in individual feature files
     local failing_count=0
     if command -v jq >/dev/null 2>&1; then
         # Use jq if available for accurate JSON parsing
-        failing_count=$(jq '[.[] | select(.passes == false)] | length' "$feature_list_path" 2>/dev/null || echo "0")
+        # Check each individual feature file
+        for feature_file in "$features_dir"/*/feature.json; do
+            if [[ -f "$feature_file" ]]; then
+                local passes=$(jq -r '.metadata.aidd_passes // false' "$feature_file" 2>/dev/null)
+                if [[ "$passes" == "false" ]]; then
+                    ((failing_count++))
+                fi
+            fi
+        done
     else
-        # Fallback to grep
-        failing_count=$(grep -c '"passes"[[:space:]]*:[[:space:]]*false' "$feature_list_path" 2>/dev/null || echo "0")
+        # Fallback to grep - search for "aidd_passes": false in all feature files
+        failing_count=$(grep -r '"aidd_passes"[[:space:]]*:[[:space:]]*false' "$features_dir" 2>/dev/null | wc -l || echo "0")
     fi
 
     # Check if todo.md exists and has content (beyond just whitespace/headers)

@@ -73,6 +73,7 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
 : "${DEFAULT_FEATURES_DIR:="features"}"                      # Features subdirectory name
 : "${FEATURE_FILE_NAME:="feature.json"}"                      # Individual feature file name
+: "${DEFAULT_FEATURE_LIST_FILE:="features.json"}"         # Feature list file name (legacy monolithic)
 : "${DEFAULT_TODO_FILE:="todo.md"}"                     # Todo file name
 : "${DEFAULT_PROJECT_STRUCTURE_FILE:="project_structure.md"}"  # Project structure file name
 : "${DEFAULT_PIPELINE_FILE:="pipeline.json"}"           # Pipeline file name
@@ -81,6 +82,7 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_AUTOMAKER_SPEC_FILE:="app_spec.txt"}"      # AutoMaker spec file name
 : "${DEFAULT_AIDD_SPEC_FILE:="app_spec.txt"}"               # AIDD spec file name
 : "${SYNC_SIMILARITY_THRESHOLD:=85}"                    # Percentage for description matching in sync
+: "${DEFAULT_STRUCTURED_LOG_SUFFIX:="-structured.json"}" # Structured log file suffix
 
 readonly DEFAULT_METADATA_DIR
 readonly DEFAULT_PROMPTS_DIR
@@ -95,9 +97,11 @@ readonly DEFAULT_AIDD_SPEC_FILE
 readonly SYNC_SIMILARITY_THRESHOLD
 readonly DEFAULT_FEATURES_DIR
 readonly FEATURE_FILE_NAME
+readonly DEFAULT_FEATURE_LIST_FILE
 readonly DEFAULT_TODO_FILE
 readonly DEFAULT_PROJECT_STRUCTURE_FILE
 readonly DEFAULT_PIPELINE_FILE
+readonly DEFAULT_STRUCTURED_LOG_SUFFIX
 
 # -----------------------------------------------------------------------------
 # Legacy Metadata Directory Names (for migration)

@@ -365,8 +365,8 @@ show_status() {
     local closed
 
     total=$(echo "$features_json" | jq '. | length')
-    passing=$(echo "$features_json" | jq '[.[] | select(.metadata.aidd_passes == true)] | length')
-    failing=$(echo "$features_json" | jq '[.[] | select(.metadata.aidd_passes == false and .status == "backlog")] | length')
+    passing=$(echo "$features_json" | jq '[.[] | select(.passes == true)] | length')
+    failing=$(echo "$features_json" | jq '[.[] | select(.passes == false and .status == "backlog")] | length')
     closed=$(echo "$features_json" | jq '[.[] | select(.status == "completed")] | length')
     open=$(echo "$features_json" | jq '[.[] | select(.status == "backlog")] | length')
 
@@ -402,11 +402,11 @@ show_status() {
     echo ""
     echo "$features_json" | jq -r '
         .[] |
-        select(.metadata.aidd_passes == true) |
+        select(.passes == true) |
         {
             description: .description,
             priority: .priority,
-            deps: (.depends_on | length // 0)
+            deps: (.dependencies | length // 0)
         } |
         "\(.description)|\(.priority)|\(.deps)"
     ' | awk -F'|' '
@@ -437,11 +437,11 @@ show_status() {
     echo ""
     echo "$features_json" | jq -r '
         .[] |
-        select(.metadata.aidd_passes == false and .status == "backlog") |
+        select(.passes == false and .status == "backlog") |
         {
             description: .description,
             priority: .priority,
-            deps: (.depends_on | length // 0)
+            deps: (.dependencies | length // 0)
         } |
         "\(.description)|\(.priority)|\(.deps)"
     ' | awk -F'|' '

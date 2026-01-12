@@ -85,12 +85,12 @@ grep -c '"passes": false' .aidd/features/*/feature.json
 mcp_filesystem_read_text_file .aidd/features/add-user-auth/feature.json
 ```
 
-2. **Parse feature metadata:**
+2. **Parse feature data:**
     - `id` - Unique feature identifier
     - `description` - What the feature does
     - `spec` - Step-by-step implementation checklist
     - `status` - Current status (should be "backlog" or "inProgress")
-    - `metadata.aidd_passes` - Should be `false`
+    - `passes` - Should be `false`
 
 3. **Search codebase for evidence of implementation:**
     - Extract key terms from feature description and spec
@@ -123,7 +123,7 @@ mcp_filesystem_search_text --pattern "login.*password"
 **If feature IS complete but marked as incomplete:**
 
 1. **Update the feature.json file:**
-    - Set `metadata.aidd_passes` to `true`
+    - Set `passes` to `true`
     - Set `status` to `"completed"`
     - Update `updatedAt` timestamp to current ISO format
 
@@ -137,7 +137,7 @@ mcp_filesystem_search_text --pattern "login.*password"
 ```markdown
 ### [YYYY-MM-DD] - Validation Update
 
-#### Validated Complete (aidd_passes: false → true)
+#### Validated Complete (passes: false → true)
 
 - Feature: [feature description] - Found implemented in [file paths]
     - Reason: [brief explanation of evidence found]
@@ -145,13 +145,13 @@ mcp_filesystem_search_text --pattern "login.*password"
 
 **If feature is legitimately incomplete:**
 
-- Leave `metadata.aidd_passes` as `false`
+- Leave `passes` as `false`
 - Leave `status` unchanged
 - Note in validation summary (Step 4)
 
 **If feature status is ambiguous:**
 
-- Leave `metadata.aidd_passes` as `false`
+- Leave `passes` as `false`
 - Add note to `/.aidd/CHANGELOG.md` under "Validation Ambiguities" section
 - Document what evidence was found and what's unclear
 - Continue with other features
@@ -401,7 +401,7 @@ execute_command "git status"
 
 **Expected changes:**
 
-- `.aidd/features/*/feature.json` - Updated metadata
+- `.aidd/features/*/feature.json` - Updated feature files
 - `.aidd/todo.md` - Removed/completed items
 - Source files - Removed TODO comments
 - `.aidd/CHANGELOG.md` - Validation summary

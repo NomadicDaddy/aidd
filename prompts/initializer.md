@@ -128,32 +128,26 @@ Start by orienting yourself with the project.
 
 #### 3.2 Feature List Format
 
-CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and aidd_area (string). Never set metadata to a string.
+Feature JSON must follow AutoMaker format exactly:
 
 ```json
 {
-	"id": "feature-slug-from-description",
-	"description": "Short name of feature/capability being validated",
 	"category": "Core|UI|Security|Performance|Testing|DevEx|Documentation",
-	"priority": 1,  // 1=critical, 2=high, 3=medium, 4=low
-	"status": "backlog",  // backlog, inProgress, completed, blocked
 	"createdAt": "2026-01-09T14:23:45.000Z",
-	"updatedAt": "2026-01-09T14:23:45.000Z",
-	"justFinishedAt": null,  // Set when status changes to completed
-	"dependencies": [],  // Array of feature IDs this feature depends on
-	"spec": "1. Step description
-2. Another step
-3. Verify outcome",
-	"metadata": {
-		"aidd_area": "database|backend|frontend|testing|security|devex|docs",
-		"aidd_passes": false
-	}
+	"dependencies": [],
+	"description": "Short name of feature/capability being validated",
+	"id": "feature-slug-from-description",
+	"passes": false,
+	"priority": 1,
+	"spec": "1. Step description\n2. Another step\n3. Verify outcome",
+	"status": "backlog",
+	"updatedAt": "2026-01-09T14:23:45.000Z"
 }
 ```
 
 #### 3.3 Dependency Tracking
 
-**CRITICAL: Track feature dependencies in `depends_on` field:**
+**CRITICAL: Track feature dependencies in `dependencies` field:**
 
 - For each feature, identify which other features MUST be implemented first
 - Reference dependencies by their exact `id` field value (feature slug)
@@ -165,17 +159,17 @@ CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and ai
 ```json
 {
 	"description": "Database schema setup",
-	"depends_on": [], // Foundation feature - no dependencies
+	"dependencies": [], // Foundation feature - no dependencies
 	...
 }
 {
 	"description": "User CRUD API endpoints",
-	"depends_on": ["Database schema setup"], // Needs database first
+	"dependencies": ["Database schema setup"], // Needs database first
 	...
 }
 {
 	"description": "User profile page",
-	"depends_on": ["User CRUD API endpoints"], // Needs API before UI
+	"dependencies": ["User CRUD API endpoints"], // Needs API before UI
 	...
 }
 ```
@@ -199,7 +193,7 @@ CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and ai
 - At least 2-5 tests MUST have 10+ steps each
 - Order features by priority: fundamental features first
 - ALL tests start with `"passes": false`
-- ALL features must have `depends_on` field (even if empty array)
+- ALL features must have `dependencies` field (even if empty array)
 - Cover every feature in spec exhaustively
 - Tests align with actual application type from spec
 

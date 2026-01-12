@@ -283,8 +283,8 @@ cat .aidd/todo.md
 **Before selecting a feature, assess time and complexity.**
 
 > **CRITICAL DEPENDENCY RULE:** NEVER select a feature whose dependencies are not satisfied.
-> Before implementing ANY feature, verify that ALL features listed in its `depends_on` array
-> have `"metadata.aidd_passes": true`. If ANY dependency is not passing, SKIP that feature
+> Before implementing ANY feature, verify that ALL features listed in its `dependencies` array
+> have `"passes": true`. If ANY dependency is not passing, SKIP that feature
 > and select a different one. Implementing features with unmet dependencies wastes time
 > and creates broken functionality.
 
@@ -316,7 +316,7 @@ For each feature with `"passes": false`:
 
 **Always:**
 
-- **NEVER select features with unsatisfied dependencies** (check `depends_on` first!)
+- **NEVER select features with unsatisfied dependencies** (check `dependencies` first!)
 - Prioritize features already marked `"status": "in_progress"`
 - Don't start large features late in iteration
 - Quality over quantity: One complete feature > three half-done
@@ -334,16 +334,16 @@ For each feature with `"passes": false`:
 
 **CRITICAL: Before selecting a feature, ensure it has dependency tracking:**
 
-1. **Check for `depends_on` field:**
+1. **Check for `dependencies` field:**
 
     ```bash
-    # Count features without depends_on field
-    jq 'if has("depends_on") | not then 1 else 0 end' .aidd/features/*/feature.json
+    # Count features without dependencies field
+    jq 'if has("dependencies") | not then 1 else 0 end' .aidd/features/*/feature.json
     ```
 
-2. **If ANY features lack `depends_on` field:**
+2. **If ANY features lack `dependencies` field:**
     - STOP feature selection
-    - Review each feature and add `depends_on` field
+    - Review each feature and add `dependencies` field
     - Set to empty array `[]` if no dependencies
     - Identify actual dependencies and list them by exact `description`
     - Commit the updated features/\*/feature.json
@@ -353,14 +353,14 @@ For each feature with `"passes": false`:
     ```json
     {
       "description": "Advanced feature",
-      "depends_on": ["Basic feature", "Another prerequisite"],
+      "dependencies": ["Basic feature", "Another prerequisite"],
       ...
     }
     ```
 
 #### 6.6 Select Feature from Feature List
 
-CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and aidd_area (string). Never set metadata to a string.
+Feature JSON must follow AutoMaker format exactly.
 
 **Review `/.aidd/features/*/feature.json`:**
 
@@ -372,14 +372,14 @@ CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and ai
 
 **Dependency validation:**
 
-1. **For each candidate feature, check `depends_on` array:**
+1. **For each candidate feature, check `dependencies` array:**
 
     ```bash
     # Example: Check if dependencies are satisfied
-    # Feature has: "depends_on": ["User authentication API", "Database schema"]
+    # Feature has: "dependencies": ["User authentication API", "Database schema"]
     # Verify both features have "passes": true
-    jq 'select(.description == "User authentication API") | .metadata.aidd_passes' .aidd/features/*/feature.json
-    jq 'select(.description == "Database schema") | .metadata.aidd_passes' .aidd/features/*/feature.json
+    jq 'select(.description == "User authentication API") | .passes' .aidd/features/*/feature.json
+    jq 'select(.description == "Database schema") | .passes' .aidd/features/*/feature.json
     ```
 
 2. **Skip features with unsatisfied dependencies:**
@@ -395,7 +395,7 @@ CRITICAL: metadata field must be a JSON object with aidd_passes (boolean) and ai
 **CRITICAL: Update feature status BEFORE implementing:**
 
 1. Mark status as `"in_progress"` (edit `"status": "open"` → `"status": "in_progress"`)
-2. Read feature's `description`, `steps`, and `depends_on` fields
+2. Read feature's `description`, `steps`, and `dependencies` fields
 3. For each dependency, review implementation to understand patterns
 4. Record selection and dependency check in initial assessment
 
@@ -528,7 +528,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 - Remove tests
 - Edit test descriptions
 - Modify test steps
-- Modify `depends_on` field
+- Modify `dependencies` field
 - Combine or consolidate tests
 - Reorder tests
 - Change any other fields

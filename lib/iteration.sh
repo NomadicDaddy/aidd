@@ -50,18 +50,19 @@ validate_feature_file() {
         return 1
     fi
 
-    if ! jq -e 'has("metadata")' "$feature_file" >/dev/null 2>&1; then
-        log_error "Missing metadata field in feature file: $feature_file"
+    # format requires: id, category, description
+    if ! jq -e 'has("id")' "$feature_file" >/dev/null 2>&1; then
+        log_error "Missing id field in feature file: $feature_file"
         return 1
     fi
 
-    if ! jq -e '.metadata | type == "object"' "$feature_file" >/dev/null 2>&1; then
-        log_error "metadata must be an object in feature file: $feature_file"
+    if ! jq -e 'has("category")' "$feature_file" >/dev/null 2>&1; then
+        log_error "Missing category field in feature file: $feature_file"
         return 1
     fi
 
-    if ! jq -e '.metadata | has("aidd_passes")' "$feature_file" >/dev/null 2>&1; then
-        log_error "metadata.aidd_passes field missing in feature file: $feature_file"
+    if ! jq -e 'has("description")' "$feature_file" >/dev/null 2>&1; then
+        log_error "Missing description field in feature file: $feature_file"
         return 1
     fi
 
@@ -379,7 +380,7 @@ check_project_completion() {
         return 1
     fi
 
-    # Count features with "aidd_passes": false in individual feature files
+    # Count features with "passes": false in individual feature files
     local failing_count=0
     if command -v jq >/dev/null 2>&1; then
         # Use jq if available for accurate JSON parsing
@@ -393,7 +394,7 @@ check_project_completion() {
                     continue
                 fi
 
-                local passes=$(jq -r '.metadata.aidd_passes // false' "$feature_file" 2>/dev/null || echo "error")
+                local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "error")
                 if [[ "$passes" == "error" ]]; then
                     log_error "Failed to parse metadata in $feature_file"
                     ((failing_count++))
@@ -403,8 +404,8 @@ check_project_completion() {
             fi
         done
     else
-        # Fallback to grep - search for "aidd_passes": false in all feature files
-        failing_count=$(grep -r '"aidd_passes"[[:space:]]*:[[:space:]]*false' "$features_dir" 2>/dev/null | wc -l || echo "0")
+        # Fallback to grep - search for "passes": false in all feature files
+        failing_count=$(grep -r '"passes"[[:space:]]*:[[:space:]]*false' "$features_dir" 2>/dev/null | wc -l || echo "0")
     fi
 
     # Check if todo.md exists and has content (beyond just whitespace/headers)

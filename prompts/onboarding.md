@@ -191,7 +191,7 @@ mcp_filesystem_list_directory .
 
 **Principle: Conservative Feature Marking**
 
-Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.aidd_passes": true` if:
+Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 1. ✅ Found the code
 2. ✅ Read and understood it
@@ -203,7 +203,7 @@ Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.ai
 - Merge it with your new findings
 - Add missing features from spec
 - Add features found in codebase but not in spec
-- Ensure minimum 10 features with `"metadata.aidd_passes": false` remain
+- Ensure minimum 10 features with `"passes": false` remain
 
 **Format (same as initializer):**
 
@@ -226,10 +226,7 @@ Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.ai
 	"spec": "1. Step description
 2. Another step
 3. Verify outcome",
-	"metadata": {
-		"aidd_area": "database|backend|frontend|testing|security|devex|docs",
-		"aidd_passes": false
-	}
+	"passes": false
 }
 ```
 
@@ -282,7 +279,7 @@ Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.ai
 - Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
 - At least 2-5 tests with 10+ steps each
 - Order by priority (1=critical first): fundamental features first
-- Conservative marking: default to `"metadata.aidd_passes": false`
+- Conservative marking: default to `"passes": false`
 - Cover spec AND existing codebase exhaustively
 - ALL features must have `dependencies` field (even if empty array)
 - ALL features must have `id` field (feature slug)
@@ -307,7 +304,7 @@ Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.ai
 
 #### 4.1 Selective Verification
 
-**For features you consider marking `"metadata.aidd_passes": true`:**
+**For features you consider marking `"passes": true`:**
 
 1. **Code inspection:**
     - Read the implementation
@@ -324,7 +321,7 @@ Default ALL features to `"metadata.aidd_passes": false`. Only mark `"metadata.ai
     - Test the specific feature
     - Verify it works as expected
 
-**When in doubt → Mark as `"metadata.aidd_passes": false`**
+**When in doubt → Mark as `"passes": false`**
 
 Better to retest later than claim something works when it doesn't.
 
@@ -332,7 +329,7 @@ Better to retest later than claim something works when it doesn't.
 
 **If you discover broken functionality:**
 
-- Mark as `"metadata.aidd_passes": false`
+- Mark as `"passes": false`
 - Document the issue in feature spec or description
 - Add to todo.md if it's a known issue to fix
 - Note in CHANGELOG.md
@@ -598,7 +595,7 @@ git diff
 
 ### Conservative Principle
 
-**Default to `"metadata.aidd_passes": false`** unless you've verified the feature works through code inspection, testing, or manual verification.
+**Default to `"passes": false`** unless you've verified the feature works through code inspection, testing, or manual verification.
 
 ### Quality Standards
 

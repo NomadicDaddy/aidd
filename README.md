@@ -87,8 +87,14 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--no-clean`: Skip log cleaning on exit
 - `--quit-on-abort N`: Quit after N consecutive failures (default: 0=continue indefinitely)
 - `--continue-on-timeout`: Continue to next iteration on timeout
-- `--feature-list`: Display project feature list status and exit
+- `--status`: Display project feature list status and exit
 - `--todo`: Use TODO mode (work on todo items instead of new features)
+- `--validate`: Run validation mode to check incomplete features and todos
+- `--in-progress`: Focus only on features with `"status": "in_progress"`
+- `--prompt "DIRECTIVE"`: Use custom directive instead of automatic prompt selection
+- `--extract-structured`: Extract structured JSON from iteration logs after each iteration
+- `--extract-batch`: Batch extract structured JSON from all existing iteration logs and exit
+- `--check-features`: Validate all feature.json files against schema and exit
 - `--help`: Show help message
 
 ## Examples
@@ -135,8 +141,17 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 ### Other Operations
 
 ```bash
-# Display feature list
-./aidd.sh --project-dir ./myproject --feature-list
+# Display feature list status
+./aidd.sh --project-dir ./myproject --status
+
+# Validate feature.json files against schema
+./aidd.sh --project-dir ./myproject --check-features
+
+# Run with custom directive (one-shot mode)
+./aidd.sh --project-dir ./myproject --prompt "perform a security audit" --max-iterations 1
+
+# Extract structured logs from all iterations
+./aidd.sh --project-dir ./myproject --extract-batch
 ```
 
 ## Workflows
@@ -304,7 +319,7 @@ AIDD includes comprehensive error handling:
     - OpenCode (`opencode`)
     - KiloCode (`kilocode`)
     - Claude Code (`claude`)
-- jq (required for Claude Code JSON parsing; optional for `--feature-list` display)
+- jq (required for Claude Code JSON parsing; also required for `--status` and `--check-features`)
 - rsync (optional, for shared directory synchronization - falls back to `cp` if unavailable)
 
 ## Version History

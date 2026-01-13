@@ -303,6 +303,15 @@ HEREDOC_END
         return 0
     fi
 
+    # Check for IN_PROGRESS mode
+    if [[ "$IN_PROGRESS_MODE" == true ]]; then
+        log_info "Using IN_PROGRESS mode - focusing on in-progress features only"
+        prompt_path="$script_dir/prompts/in-progress.md"
+        phase="$PHASE_CODING"
+        echo "$prompt_path|$phase"
+        return 0
+    fi
+
     # Check if onboarding is complete by checking for natural artifacts
     # (app_spec.txt, features directory with data, and CHANGELOG.md)
     if check_onboarding_status "$metadata_dir"; then

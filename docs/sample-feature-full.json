@@ -1,0 +1,103 @@
+{
+	"assignedTo": "security-team",
+	"branchName": "feature/user-management-mfa",
+	"category": "Security & Authentication",
+	"complexity": "high",
+	"complianceRequirements": ["GDPR", "SOC2", "ISO27001"],
+	"createdAt": "2025-01-13T08:00:00.000Z",
+	"dependencies": ["feature-1736789000000-def456ghi789", "feature-1736789050000-ghi789jkl012"],
+	"deploymentNotes": "Requires database migration. Must be deployed during maintenance window.",
+	"description": "Implement a comprehensive user management system with secure authentication, role-based access control, multi-factor authentication, user profile management, and audit logging. This feature will integrate with the existing database and provide RESTful APIs for all user operations.",
+	"descriptionHistory": [
+		{
+			"description": "Basic user authentication system",
+			"source": "initial",
+			"timestamp": "2025-01-13T08:00:00.000Z"
+		},
+		{
+			"description": "User authentication with role-based access control",
+			"source": "edit",
+			"timestamp": "2025-01-13T08:45:00.000Z"
+		},
+		{
+			"description": "Advanced user management system with multi-factor authentication",
+			"enhancementMode": "improve",
+			"source": "enhance",
+			"timestamp": "2025-01-13T09:00:00.000Z"
+		},
+		{
+			"description": "Implement a comprehensive user management system with secure authentication, role-based access control, multi-factor authentication, user profile management, and audit logging. This feature will integrate with the existing database and provide RESTful APIs for all user operations.",
+			"enhancementMode": "technical",
+			"source": "enhance",
+			"timestamp": "2025-01-13T09:30:00.000Z"
+		}
+	],
+	"error": null,
+	"estimatedHours": 40,
+	"id": "feature-1736789123456-abc123def789",
+	"imagePaths": [
+		"/absolute/path/to/user-flow-diagram.png",
+		{
+			"description": "Database schema for user tables",
+			"filename": "schema.png",
+			"id": "img-1",
+			"mimeType": "image/png",
+			"path": "/absolute/path/to/database-schema.png"
+		},
+		{
+			"generated": "2025-01-13T09:00:00.000Z",
+			"path": "/absolute/path/to/api-endpoints.png",
+			"type": "diagram"
+		}
+	],
+	"model": "claude-3.5-sonnet",
+	"passes": true,
+	"planSpec": {
+		"approvedAt": "2025-01-13T09:15:00.000Z",
+		"content": "## Implementation Plan\n\n### Phase 1: Core Authentication\n- Implement user registration endpoint\n- Add email verification service\n- Create password reset functionality\n\n### Phase 2: Multi-Factor Authentication\n- Integrate TOTP library\n- Implement backup code generation\n- Add MFA verification endpoints\n\n### Phase 3: Role-Based Access Control\n- Design role and permission models\n- Implement role assignment API\n- Create middleware for permission checking\n\n### Phase 4: Audit Logging\n- Implement audit trail service\n- Add logging for all user operations\n- Create audit report endpoints",
+		"generatedAt": "2025-01-13T08:30:00.000Z",
+		"reviewedByUser": true,
+		"status": "generated",
+		"tasksCompleted": 5,
+		"tasksTotal": 12,
+		"version": 3
+	},
+	"planningMode": "spec",
+	"priority": 1,
+	"reasoningEffort": "high",
+	"requirePlanApproval": true,
+	"riskLevel": "medium",
+	"rollbackPlan": "Database backup required. Feature flag can be disabled if issues arise.",
+	"skipTests": false,
+	"spec": "The system shall support user registration, email verification, password reset, MFA setup using TOTP and backup codes, role assignment, permission management, and comprehensive audit trails. All sensitive data must be encrypted at rest.",
+	"startedAt": null,
+	"status": "backlog",
+	"summary": "Complete user authentication and authorization system with MFA support",
+	"tags": ["security", "authentication", "mfa", "rbac", "audit"],
+	"testingRequirements": {
+		"integrationTests": true,
+		"performanceTests": true,
+		"securityTests": true,
+		"unitTestCoverage": 95
+	},
+	"textFilePaths": [
+		{
+			"content": "bcrypt>=2.0.0\npyotp>=2.8.0\nqrcode>=7.4.0",
+			"filename": "requirements.txt",
+			"id": "doc-1",
+			"mimeType": "text/plain",
+			"path": "/absolute/path/to/requirements.txt"
+		},
+		{
+			"content": "# Test Scenarios\n\n1. User registration with valid email\n2. Email verification process\n3. Password reset flow\n4. MFA setup and validation",
+			"filename": "test-scenarios.md",
+			"id": "doc-2",
+			"mimeType": "text/markdown",
+			"path": "/absolute/path/to/test-scenarios.md"
+		}
+	],
+	"thinkingLevel": "high",
+	"title": "Advanced User Management System with Multi-Factor Authentication",
+	"titleGenerating": false,
+	"updatedAt": "2025-01-13T09:30:00.000Z"
+}

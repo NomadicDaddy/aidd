@@ -1,15 +1,29 @@
 # AIDD - AI Development Driver
 
-A unified shell script that orchestrates autonomous development sessions using **OpenCode**, **KiloCode**, or **Claude Code** AI CLIs. AIDD provides a consistent interface for AI-driven development regardless of which CLI you prefer.
+**Run AI coding agents unattended. Wake up to working features.**
+
+AIDD is a headless orchestrator for autonomous AI development sessions. Point it at a project, walk away, and let AI agents implement features while you sleep, eat, or touch grass. It handles iteration loops, failure recovery, idle detection, and progress tracking—so you don't have to babysit the terminal.
+
+Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
+
+## Why AIDD?
+
+- **Unattended Operation**: Launch overnight batch runs. AIDD handles retries, timeouts, and stuck agents automatically.
+- **AutoMaker Compatible**: Uses the same `.automaker/` metadata format as [AutoMaker](https://github.com/AutoMaker-Org/automaker). Start features in the GUI, finish them headless—or vice versa. Seamless handoff between interactive and batch workflows.
+- **Structured Progress Tracking**: JSON-based feature files, changelogs, and iteration transcripts. Always know what got done and what's left.
+- **Agent Babysitting Built-In**: Two-stage idle timeout nudges stuck agents ("Are you stuck?") before killing them. Consecutive failure limits prevent runaway loops.
+- **CLI Agnostic**: Same workflow whether you're on OpenCode, KiloCode, or Claude Code. Switch providers without changing your process.
+- **Onboarding for Existing Codebases**: Drop AIDD into any project. It analyzes the codebase, generates a spec, and creates a feature backlog automatically.
 
 ## Features
 
-- **Multiple CLI Support**: Seamlessly switch between OpenCode, KiloCode, and Claude Code
-- **Unified Interface**: Identical workflow and features across all CLIs
-- **Project Management**: Automatic project initialization, scaffolding, and metadata tracking
-- **Iteration Management**: Built-in retry logic, failure handling, and progress tracking with two-stage idle timeout and agent nudging
-- **Feature Tracking**: JSON-based feature list with status tracking
-- **Shared Directory Sync**: Automatic synchronization of shared configuration directories (e.g., `.claude`, `.windsurf`) to projects
+- **Multiple CLI Support**: OpenCode, KiloCode, and Claude Code with unified interface
+- **AutoMaker Integration**: Shared `.automaker/` metadata enables GUI↔CLI workflow handoff
+- **Intelligent Iteration**: Automatic retry logic, configurable failure thresholds, idle detection with agent nudging
+- **Feature-Driven Development**: JSON feature files with status tracking, dependencies, and pipeline steps
+- **Codebase Onboarding**: Automatically analyzes existing projects and generates structured metadata
+- **Shared Directory Sync**: Keep IDE configs (`.claude`, `.windsurf`, `.vscode`) synchronized across projects
+- **Full Transcripts**: Every iteration logged for debugging and audit trails
 
 ## Supported CLIs
 
@@ -152,7 +166,7 @@ For directories containing code but no `.automaker/` files:
 
 ### Subsequent Iterations
 
-Once `.automaker/app_spec.txt` and `.automaker/features/` exist:
+Once onboarding artifacts exist (`app_spec.txt`, `features/`, `CHANGELOG.md`):
 
 - Uses `coding` prompt for continued development
 - Implements remaining features from the feature list
@@ -225,6 +239,7 @@ aidd/
 Project Metadata (.automaker/):
 .automaker/
 ├── app_spec.txt           # Project specification
+├── CHANGELOG.md           # Progress log (Keep a Changelog format)
 ├── features/              # Feature tracking (one dir per feature)
 ├── todo.md                # TODO items
 ├── project_structure.md   # Architecture documentation

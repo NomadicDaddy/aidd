@@ -131,7 +131,11 @@ When agent becomes unresponsive:
 
 ### 7. Onboarding Completion
 
-If `features/` directory is empty or missing, onboarding is considered incomplete.
+Onboarding is complete when ALL of these exist in `.automaker/`:
+
+- `features/` directory with at least one `feature.json`
+- `app_spec.txt` spec file
+- `CHANGELOG.md`
 
 ### 8. Prompt Selection
 

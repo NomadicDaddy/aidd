@@ -73,6 +73,7 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
 : "${DEFAULT_FEATURES_DIR:="features"}"                      # Features subdirectory name
 : "${FEATURE_FILE_NAME:="feature.json"}"                      # Individual feature file name
+: "${DEFAULT_SPEC_FILE:="app_spec.txt"}"                      # Application spec file name
 : "${DEFAULT_TODO_FILE:="todo.md"}"                     # Todo file name
 : "${DEFAULT_PROJECT_STRUCTURE_FILE:="project_structure.md"}"  # Project structure file name
 : "${DEFAULT_PIPELINE_FILE:="pipeline.json"}"           # Pipeline file name
@@ -87,6 +88,7 @@ readonly DEFAULT_STATE_FILE
 readonly DEFAULT_FEATURES_DIR
 readonly FEATURE_FILE_NAME
 readonly DEFAULT_TODO_FILE
+readonly DEFAULT_SPEC_FILE
 readonly DEFAULT_PROJECT_STRUCTURE_FILE
 readonly DEFAULT_PIPELINE_FILE
 readonly DEFAULT_STRUCTURED_LOG_SUFFIX

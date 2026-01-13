@@ -130,7 +130,7 @@ check_onboarding_status() {
     # Check if critical onboarding artifacts exist
     # These files/directories are ALWAYS created during onboarding
     local features_dir="$metadata_dir/$DEFAULT_FEATURES_DIR"
-    local spec_path="$metadata_dir/$DEFAULT_AIDD_SPEC_FILE"
+    local spec_path="$metadata_dir/$DEFAULT_SPEC_FILE"
     local changelog_path="$metadata_dir/CHANGELOG.md"
 
     # Features directory must exist with at least one feature

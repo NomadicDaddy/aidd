@@ -31,6 +31,7 @@ export CUSTOM_PROMPT=""
 export EXTRACT_STRUCTURED=false
 export EXTRACT_BATCH=false
 export CHECK_FEATURES=false
+export STOP_WHEN_DONE=false
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -70,6 +71,7 @@ OPTIONS:
     --extract-structured    Extract structured JSON from iteration logs after each iteration (optional)
     --extract-batch         Batch extract structured JSON from all existing iteration logs and exit
     --check-features        Validate all feature.json files against schema and exit
+    --stop-when-done      Stop early when TODO/in-progress mode has no remaining items (optional)
     --help                  Show this help message
 
 EXAMPLES:
@@ -88,6 +90,8 @@ EXAMPLES:
     # Other operations
     $0 --project-dir ./myproject --status
     $0 --project-dir ./myproject --todo
+    $0 --project-dir ./myproject --todo --stop-when-done
+    $0 --project-dir ./myproject --in-progress --stop-when-done
 
     # Custom directive mode
     $0 --project-dir ./myproject --prompt "perform a full quality control check against the project"
@@ -182,6 +186,10 @@ parse_args() {
                 ;;
             --check-features)
                 CHECK_FEATURES=true
+                shift
+                ;;
+            --stop-when-done)
+                STOP_WHEN_DONE=true
                 shift
                 ;;
             --prompt)
@@ -731,10 +739,10 @@ validate_features() {
 
             # Required field: category
             [[ -z "$category_val" ]] && file_errors+="  ✗ Missing required field: category\n"
-            
+
             # Required field: description
             [[ -z "$desc_val" ]] && file_errors+="  ✗ Missing required field: description\n"
-            
+
             # Required field: title
             [[ "$title_type" == "absent" ]] && file_errors+="  ✗ Missing required field: title\n"
 

@@ -264,8 +264,16 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
                 exit $EXIT_PROJECT_COMPLETE
             fi
 
+            # Check if current mode should stop early (TODO/in-progress with no items)
+            # This prevents unnecessary agent invocations when mode-specific work is done
+            if should_stop_current_mode "$METADATA_DIR"; then
+                log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
+                exit $EXIT_SUCCESS
+            fi
+
             # Run the appropriate prompt
-            log_info "Sending $PROMPT_TYPE prompt to $CLI_NAME..."
+            prompt_name=$(basename "$PROMPT_PATH" .md)
+            log_info "Sending $prompt_name prompt to $CLI_NAME..."
             if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
@@ -316,6 +324,13 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
         # Handle project completion (exit cleanly with success)
         if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
             log_info "AI development driver completed: project finished"
+            exit $EXIT_SUCCESS
+        fi
+
+        # Check if current mode should stop early (TODO/in-progress with no items)
+        # This prevents unnecessary next iterations when mode-specific work is done
+        if should_stop_current_mode "$METADATA_DIR"; then
+            log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
             exit $EXIT_SUCCESS
         fi
 
@@ -387,8 +402,16 @@ else
                 exit $EXIT_PROJECT_COMPLETE
             fi
 
+            # Check if current mode should stop early (TODO/in-progress with no items)
+            # This prevents unnecessary agent invocations when mode-specific work is done
+            if should_stop_current_mode "$METADATA_DIR"; then
+                log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
+                exit $EXIT_SUCCESS
+            fi
+
             # Run the appropriate prompt
-            log_info "Sending $PROMPT_TYPE prompt to $CLI_NAME..."
+            prompt_name=$(basename "$PROMPT_PATH" .md)
+            log_info "Sending $prompt_name prompt to $CLI_NAME..."
             if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
@@ -444,6 +467,13 @@ else
         # Handle project completion (exit cleanly with success)
         if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
             log_info "AI development driver completed: project finished"
+            exit $EXIT_SUCCESS
+        fi
+
+        # Check if current mode should stop early (TODO/in-progress with no items)
+        # This prevents unnecessary next iterations when mode-specific work is done
+        if should_stop_current_mode "$METADATA_DIR"; then
+            log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
             exit $EXIT_SUCCESS
         fi
         # Don't abort on timeout (exit 124) if continue-on-timeout is set

@@ -22,10 +22,12 @@ export NEXT_LOG_INDEX=0
 : "${PHASE_ONBOARDING:="onboarding"}"
 : "${PHASE_INITIALIZER:="initializer"}"
 : "${PHASE_CODING:="coding"}"
+: "${PHASE_IN_PROGRESS:="in-progress"}"
 
 readonly PHASE_ONBOARDING
 readonly PHASE_INITIALIZER
 readonly PHASE_CODING
+readonly PHASE_IN_PROGRESS
 
 # -----------------------------------------------------------------------------
 # Feature File Validation Functions
@@ -269,7 +271,7 @@ HEREDOC_END
         # Ensure file is written to disk
         sync "$directive_file" 2>/dev/null || true
         prompt_path="$directive_file"
-        phase="directive"
+        phase="$PHASE_DIRECTIVE"
         echo "$prompt_path|$phase"
         return 0
     fi
@@ -280,7 +282,7 @@ HEREDOC_END
     if [[ -f "$completion_state_file" ]]; then
         log_info "Project completion pending - running thorough TODO review"
         prompt_path="$script_dir/prompts/todo.md"
-        phase="$PHASE_CODING"
+        phase="$PHASE_TODO"
         echo "$prompt_path|$phase"
         return 0
     fi
@@ -289,7 +291,7 @@ HEREDOC_END
     if [[ "$TODO_MODE" == true ]]; then
         log_info "Using TODO mode - will search for TODO items in codebase"
         prompt_path="$script_dir/prompts/todo.md"
-        phase="$PHASE_CODING"
+        phase="$PHASE_TODO"
         echo "$prompt_path|$phase"
         return 0
     fi
@@ -298,7 +300,7 @@ HEREDOC_END
     if [[ "$VALIDATE_MODE" == true ]]; then
         log_info "Using VALIDATE mode - will validate incomplete features and todos"
         prompt_path="$script_dir/prompts/validate.md"
-        phase="$PHASE_CODING"
+        phase="$PHASE_VALIDATE"
         echo "$prompt_path|$phase"
         return 0
     fi
@@ -307,7 +309,7 @@ HEREDOC_END
     if [[ "$IN_PROGRESS_MODE" == true ]]; then
         log_info "Using IN_PROGRESS mode - focusing on in-progress features only"
         prompt_path="$script_dir/prompts/in-progress.md"
-        phase="$PHASE_CODING"
+        phase="$PHASE_IN_PROGRESS"
         echo "$prompt_path|$phase"
         return 0
     fi
@@ -447,5 +449,115 @@ check_project_completion() {
 
     # Not complete - clear any pending state
     rm -f "$completion_state_file" 2>/dev/null
+    return 1
+}
+
+# -----------------------------------------------------------------------------
+# Mode Completion Detection
+# -----------------------------------------------------------------------------
+
+# Check if TODO mode should stop (no todos remaining)
+# Usage: should_stop_todo_mode <metadata_dir>
+# Returns: 0 if no todos remain (should stop), 1 if todos exist
+should_stop_todo_mode() {
+    local metadata_dir="$1"
+    local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
+
+    # If todo file doesn't exist, we should stop
+    if [[ ! -f "$todo_path" ]]; then
+        log_debug "No todo file found, TODO mode can stop"
+        return 0
+    fi
+
+    # Check for various incomplete TODO patterns
+    # Pattern 1: Standard markdown checkbox: - [ ]
+    # Pattern 2: With spaces: - [   ]
+    # Pattern 3: Alternative format: - [ ]
+    # Pattern 4: TODO comments: # TODO or // TODO
+    if grep -q -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null; then
+        log_debug "Found incomplete markdown checkbox TODOs, continuing"
+        return 1
+    elif grep -q -E '^\s*#\s*TODO\b|^\s*//\s*TODO\b' "$todo_path" 2>/dev/null; then
+        log_debug "Found TODO comments, continuing"
+        return 1
+    else
+        # Check if file contains "ALL TODO ITEMS COMPLETE" or similar
+        if grep -q -i "ALL TODO ITEMS COMPLETE\|TODO.*COMPLETE\|no.*todo.*remain" "$todo_path" 2>/dev/null; then
+            log_debug "TODO file indicates all items complete"
+            return 0
+        fi
+        log_debug "No incomplete TODO items remaining"
+        return 0
+    fi
+}
+
+# Check if IN_PROGRESS mode should stop (no in-progress features)
+# Usage: should_stop_in_progress_mode <metadata_dir>
+# Returns: 0 if no in-progress features (should stop), 1 if in-progress features exist
+should_stop_in_progress_mode() {
+    local metadata_dir="$1"
+    local features_dir="$metadata_dir/${DEFAULT_FEATURES_DIR}"
+
+    # If features directory doesn't exist, we should stop
+    if [[ ! -d "$features_dir" ]]; then
+        log_debug "No features directory, IN_PROGRESS mode can stop"
+        return 0
+    fi
+
+    # Check for in-progress features using jq if available
+    if command -v jq >/dev/null 2>&1; then
+        local in_progress_count=0
+        for feature_file in "$features_dir"/*/feature.json; do
+            if [[ -f "$feature_file" ]]; then
+                local status=$(jq -r '.status // ""' "$feature_file" 2>/dev/null)
+                if [[ "$status" == "in_progress" ]]; then
+                    ((in_progress_count++))
+                fi
+            fi
+        done
+
+        if [[ $in_progress_count -gt 0 ]]; then
+            log_debug "Found $in_progress_count in-progress features, continuing"
+            return 1
+        else
+            log_debug "No in-progress features remaining"
+            return 0
+        fi
+    else
+        # Fallback to grep
+        if grep -r '"status"[[:space:]]*:[[:space:]]*"in_progress"' "$features_dir" >/dev/null 2>&1; then
+            log_debug "Found in-progress features (grep), continuing"
+            return 1
+        else
+            log_debug "No in-progress features remaining (grep)"
+            return 0
+        fi
+    fi
+}
+
+# Check if current mode should stop early
+# Usage: should_stop_current_mode <metadata_dir>
+# Returns: 0 if should stop, 1 if should continue
+should_stop_current_mode() {
+    local metadata_dir="$1"
+
+    # Only check if STOP_WHEN_DONE flag is enabled
+    if [[ "$STOP_WHEN_DONE" != "true" ]]; then
+        return 1
+    fi
+
+    # Check based on current mode
+    if [[ "$TODO_MODE" == "true" ]]; then
+        if should_stop_todo_mode "$metadata_dir"; then
+            log_info "TODO mode: No remaining TODO items and --stop-when-done enabled"
+            return 0
+        fi
+    elif [[ "$IN_PROGRESS_MODE" == "true" ]]; then
+        if should_stop_in_progress_mode "$metadata_dir"; then
+            log_info "IN_PROGRESS mode: No remaining in-progress features and --stop-when-done enabled"
+            return 0
+        fi
+    fi
+
     return 1
 }

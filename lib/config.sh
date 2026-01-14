@@ -162,7 +162,15 @@ readonly STATE_ABORTED
 : "${PHASE_ONBOARDING:="onboarding"}"
 : "${PHASE_INITIALIZER:="initializer"}"
 : "${PHASE_CODING:="coding"}"
+: "${PHASE_TODO:="todo"}"
+: "${PHASE_VALIDATE:="validate"}"
+: "${PHASE_DIRECTIVE:="directive"}"
+: "${PHASE_IN_PROGRESS:="in-progress"}"
 
 readonly PHASE_ONBOARDING
 readonly PHASE_INITIALIZER
 readonly PHASE_CODING
+readonly PHASE_TODO
+readonly PHASE_VALIDATE
+readonly PHASE_DIRECTIVE
+readonly PHASE_IN_PROGRESS

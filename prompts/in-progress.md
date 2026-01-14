@@ -273,7 +273,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 {
 	"description": "Feature name",
 	"passes": true,
-	"status": "resolved"
+	"status": "completed"
 }
 ```
 

@@ -366,7 +366,7 @@ Feature JSON must follow AutoMaker format exactly.
 
 - Filter to `"passes": false`
 - Group by priority (critical > high > medium > low)
-- Prefer `"status": "in_progress"` over `"status": "open"`
+- Prefer `"status": "in_progress"` over `"status": "backlog"`
 - **CRITICAL: Check dependencies are satisfied**
 - Select one feature that fits time budget
 
@@ -394,7 +394,7 @@ Feature JSON must follow AutoMaker format exactly.
 
 **CRITICAL: Update feature status BEFORE implementing:**
 
-1. Mark status as `"in_progress"` (edit `"status": "open"` → `"status": "in_progress"`)
+1. Mark status as `"in_progress"` (edit `"status": "backlog"` → `"status": "in_progress"`)
 2. Read feature's `description`, `steps`, and `dependencies` fields
 3. For each dependency, review implementation to understand patterns
 4. Record selection and dependency check in initial assessment
@@ -520,7 +520,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 ```json
 "passes": false  →  "passes": true   (after full verification)
 "passes": true   →  "passes": false  (if discovered broken)
-"status": "open" →  "status": "in_progress" → "status": "resolved"
+"status": "backlog" →  "status": "in_progress" →  "status": "completed"
 ```
 
 **NEVER in Session 2+:**
@@ -541,7 +541,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 {
 	"description": "Feature name",
 	"passes": true, // ← Change this after verification
-	"status": "resolved" // ← Update status to resolved
+	"status": "completed" // ← Update status to completed
 	// ... other fields unchanged
 }
 ```

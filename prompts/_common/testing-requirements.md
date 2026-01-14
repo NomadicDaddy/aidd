@@ -2,6 +2,21 @@
 
 **ALL testing must use appropriate tools for comprehensive verification.**
 
+### CRITICAL: No Test Suites or Harnesses
+
+**DO NOT install or create test suites, test harnesses, or testing frameworks.**
+
+- **NO** unit test frameworks (Jest, Vitest, Mocha, etc.)
+- **NO** testing libraries or utilities
+- **NO** test runner setups
+- **NO** fixture files or test data factories
+- **NO** mock/stub frameworks
+
+**ONLY TWO TESTING METHODS ALLOWED:**
+
+1. **Direct browser control/automation** using `browser_action`
+2. **Puppeteer scripted testing** (when explicitly required)
+
 ### Available Testing Tools
 
 **browser_action** - UI verification and interaction

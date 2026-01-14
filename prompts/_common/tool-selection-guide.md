@@ -76,20 +76,22 @@ git checkout -- file
 ```bash
 npm install
 npm run build
-npm run test
 bun install
 bun run dev
 pip install -r requirements.txt
 ```
 
-**Test runners:**
+**IMPORTANT: No Test Runners or Testing Frameworks**
 
-```bash
-npm test
-pytest
-jest
-cargo test
-```
+DO NOT install or use:
+
+- npm test
+- pytest
+- jest
+- cargo test
+- Any other test runners or frameworks
+
+**Only use browser automation for testing.**
 
 **Build tools:**
 

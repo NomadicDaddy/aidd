@@ -160,8 +160,10 @@ The previous session may have introduced bugs. Always verify before adding new c
 
 - Linting: `npm run lint` or equivalent
 - Type checking: `npm run type-check` or `tsc --noEmit`
-- Tests: `npm test` (if applicable)
+- Tests: `npm test` (if applicable) - **NOTE: Only if pre-existing, do not create test suites**
 - Formatting: `npm run format:check` or equivalent
+
+**IMPORTANT:** Do not install or create test suites or testing frameworks. Use only browser automation for testing.
 
 **If ANY tooling fails:**
 

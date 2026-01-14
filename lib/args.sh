@@ -360,11 +360,38 @@ show_status() {
     local open
     local closed
 
-    total=$(echo "$features_json" | jq '. | length')
-    passing=$(echo "$features_json" | jq '[.[] | select(.passes == true)] | length')
-    failing=$(echo "$features_json" | jq '[.[] | select(.passes == false and .status == "backlog")] | length')
-    closed=$(echo "$features_json" | jq '[.[] | select(.status == "completed")] | length')
-    open=$(echo "$features_json" | jq '[.[] | select(.status == "backlog")] | length')
+    total=$(echo "$features_json" | jq '. | length // 0')
+    passing=$(echo "$features_json" | jq '[.[] | select(.passes == true)] | length // 0')
+    failing=$(echo "$features_json" | jq '[.[] | select(.passes == false and .status == "backlog")] | length // 0')
+    closed=$(echo "$features_json" | jq '[.[] | select(.status == "completed")] | length // 0')
+    open=$(echo "$features_json" | jq '[.[] | select(.status == "backlog")] | length // 0')
+
+    # Ensure variables are numeric integers
+    if [[ -n "$total" && "$total" =~ ^[0-9]+$ ]]; then
+        total=$((total))
+    else
+        total=0
+    fi
+    if [[ -n "$passing" && "$passing" =~ ^[0-9]+$ ]]; then
+        passing=$((passing))
+    else
+        passing=0
+    fi
+    if [[ -n "$failing" && "$failing" =~ ^[0-9]+$ ]]; then
+        failing=$((failing))
+    else
+        failing=0
+    fi
+    if [[ -n "$closed" && "$closed" =~ ^[0-9]+$ ]]; then
+        closed=$((closed))
+    else
+        closed=0
+    fi
+    if [[ -n "$open" && "$open" =~ ^[0-9]+$ ]]; then
+        open=$((open))
+    else
+        open=0
+    fi
 
     # Print summary header
     # Write output to temp file, then display and save
@@ -372,7 +399,7 @@ show_status() {
     {
     echo ""
     echo "=============================================================================="
-    echo "Project Feature List Status: $project_dir"
+    echo "Project Feature List Status: $(basename "$project_dir")"
     echo "=============================================================================="
     echo ""
     printf "%-15s %s\n" "Total Features:" "$total"
@@ -385,106 +412,20 @@ show_status() {
     else
         printf "%-15s %s\n" "Complete:" "0%"
     fi
+
+    echo ""
+    echo "---"
     echo ""
 
     # Group by status
-    echo "------------------------------------------------------------------------------"
-    echo "Features by Status:"
-    echo "------------------------------------------------------------------------------"
+    echo "## Features by Status/Priority:"
+    echo ""
     echo ""
 
-    # Passing features - sorted by priority (critical → high → medium → low)
+    # Passing features - grouped by priority
     echo "✅ PASSING ($passing features):"
     echo ""
-    echo "$features_json" | jq -r '
-        .[] |
-        select(.passes == true) |
-        {
-            description: .description,
-            priority: .priority,
-            deps: (.dependencies | length // 0)
-        } |
-        "\(.description)|\(.priority)|\(.deps)"
-    ' | awk -F'|' '
-        {
-            priority_val = $2;
-            if (priority_val == "1") { priority_num = 4; priority_str = "critical"; }
-            else if (priority_val == "2") { priority_num = 3; priority_str = "high"; }
-            else if (priority_val == "3") { priority_num = 2; priority_str = "medium"; }
-            else if (priority_val == "4") { priority_num = 1; priority_str = "low"; }
-            else { priority_num = 0; priority_str = "unknown"; }
-            print priority_num "|" $1 "|" priority_str "|" $3;
-        }
-    ' | sort -t'|' -k1 -nr | cut -d'|' -f2- | while IFS='|' read -r description priority deps; do
-        if [[ "$deps" -gt 0 ]]; then
-            if [[ "$deps" -eq 1 ]]; then
-                echo "  • $description [$priority] ($deps dep)"
-            else
-                echo "  • $description [$priority] ($deps deps)"
-            fi
-        else
-            echo "  • $description [$priority]"
-        fi
-    done
-    echo ""
 
-    # Open/failing features - sorted by priority (critical → high → medium → low)
-    echo "⚠️  OPEN ($failing features):"
-    echo ""
-    echo "$features_json" | jq -r '
-        .[] |
-        select(.passes == false and .status == "backlog") |
-        {
-            description: .description,
-            priority: .priority,
-            deps: (.dependencies | length // 0)
-        } |
-        "\(.description)|\(.priority)|\(.deps)"
-    ' | awk -F'|' '
-        {
-            priority_val = $2;
-            if (priority_val == "1") { priority_num = 4; priority_str = "critical"; }
-            else if (priority_val == "2") { priority_num = 3; priority_str = "high"; }
-            else if (priority_val == "3") { priority_num = 2; priority_str = "medium"; }
-            else if (priority_val == "4") { priority_num = 1; priority_str = "low"; }
-            else { priority_num = 0; priority_str = "unknown"; }
-            print priority_num "|" $1 "|" priority_str "|" $3;
-        }
-    ' | sort -t'|' -k1 -nr | cut -d'|' -f2- | while IFS='|' read -r description priority deps; do
-        if [[ "$deps" -gt 0 ]]; then
-            if [[ "$deps" -eq 1 ]]; then
-                echo "  • $description [$priority] ($deps dep)"
-            else
-                echo "  • $description [$priority] ($deps deps)"
-            fi
-        else
-            echo "  • $description [$priority]"
-        fi
-    done
-    echo ""
-
-    # Group by category
-    echo "------------------------------------------------------------------------------"
-    echo "Features by Category:"
-    echo "------------------------------------------------------------------------------"
-    echo ""
-
-    for category in Core UI Security Performance Testing DevEx Documentation; do
-        local count
-        count=$(echo "$features_json" | jq --arg cat "$category" '[.[] | select(.category == $cat)] | length')
-        if [[ $count -gt 0 ]]; then
-            printf "%-20s %s\n" "$category:" "$count features"
-        fi
-    done
-    echo ""
-
-    # Group by priority
-    echo "------------------------------------------------------------------------------"
-    echo "Features by Priority:"
-    echo "------------------------------------------------------------------------------"
-    echo ""
-
-    # Priorities are now numbers: 1=critical, 2=high, 3=medium, 4=low
     for priority_num in 1 2 3 4; do
         local priority_name
         case $priority_num in
@@ -493,10 +434,129 @@ show_status() {
             3) priority_name="medium" ;;
             4) priority_name="low" ;;
         esac
-        local count
-        count=$(echo "$features_json" | jq --argjson pri "$priority_num" '[.[] | select(.priority == $pri)] | length')
-        if [[ $count -gt 0 ]]; then
-            printf "%-20s %s\n" "$priority_name:" "$count features"
+
+        # Get features for this priority
+        local priority_features
+        priority_features=$(echo "$features_json" | jq -r "
+            .[] |
+            select(.passes == true and .priority == $priority_num) |
+            {
+                description: .description,
+                deps: ((.dependencies | length // 0) | tostring)
+            } |
+            \"\(.description)|\(.deps)\"
+        ")
+
+        if [[ -n "$priority_features" ]]; then
+            echo "[$priority_name]"
+            echo "$priority_features" | while IFS='|' read -r description deps; do
+                # Ensure deps is numeric
+                if [[ -n "$deps" && "$deps" =~ ^[0-9]+$ ]]; then
+                    deps=$((deps))
+                else
+                    deps=0
+                fi
+                if [[ "$deps" -gt 0 ]]; then
+                    echo "• $description ($deps deps)"
+                else
+                    echo "• $description"
+                fi
+            done
+            echo ""
+        fi
+    done
+
+    # Open/failing features - grouped by priority
+    echo "⚠️ OPEN ($failing features):"
+    echo ""
+
+    for priority_num in 1 2 3 4; do
+        local priority_name
+        case $priority_num in
+            1) priority_name="critical" ;;
+            2) priority_name="high" ;;
+            3) priority_name="medium" ;;
+            4) priority_name="low" ;;
+        esac
+
+        # Get features for this priority
+        local priority_features
+        priority_features=$(echo "$features_json" | jq -r "
+            .[] |
+            select(.passes == false and .status == \"backlog\" and .priority == $priority_num) |
+            {
+                description: .description,
+                deps: ((.dependencies | length // 0) | tostring)
+            } |
+            \"\(.description)|\(.deps)\"
+        ")
+
+        if [[ -n "$priority_features" ]]; then
+            echo "[$priority_name]"
+            echo "$priority_features" | while IFS='|' read -r description deps; do
+                # Ensure deps is numeric
+                if [[ -n "$deps" && "$deps" =~ ^[0-9]+$ ]]; then
+                    deps=$((deps))
+                else
+                    deps=0
+                fi
+                if [[ "$deps" -gt 0 ]]; then
+                    echo "• $description ($deps deps)"
+                else
+                    echo "• $description"
+                fi
+            done
+            echo ""
+        fi
+    done
+
+    echo ""
+    echo ""
+
+    echo "---"
+    echo ""
+    echo "## Features by Category/Priority:"
+    echo ""
+    echo ""
+
+    # Print header row
+    printf "%-20s\t%s\t%s\t%s\t %s\n" "" "critical" "high" "medium" "low"
+    echo ""
+
+    # Print counts for each category by priority
+    for category in Core UI Security Performance DevEx; do
+        local counts=()
+        local has_features=false
+
+        for priority_num in 1 2 3 4; do
+            local count
+            count=$(echo "$features_json" | jq --arg cat "$category" --argjson pri "$priority_num" '[.[] | select(.category == $cat and .priority == $pri)] | length // 0')
+            # Ensure count is numeric integer
+            if [[ -n "$count" && "$count" =~ ^[0-9]+$ ]]; then
+                count=$((count))
+            else
+                count=0
+            fi
+            counts+=("$count")
+            if [[ $count -gt 0 ]]; then
+                has_features=true
+            fi
+        done
+
+        if [[ "$has_features" == true ]]; then
+            local total_count=0
+            for count in "${counts[@]}"; do
+                total_count=$((total_count + count))
+            done
+            printf "%-20s\t" "$category ($total_count)"
+            for count in "${counts[@]}"; do
+                if [[ $count -gt 0 ]]; then
+                    printf "%s\t" "$count"
+                else
+                    printf "\t"
+                fi
+            done
+            echo ""
         fi
     done
     echo ""
@@ -575,12 +635,11 @@ show_status() {
             echo ""
         fi
     else
-        echo "------------------------------------------------------------------------------"
-        echo "No todo file found (searched: .automaker/todo.md, todo.md, todos.md, TODO.md, TODOs.md, TODO-list.md, todo-list.md, tasks.md, TASKS.md)"
-        echo "------------------------------------------------------------------------------"
+        echo "## No todo file found (searched: .automaker/todo.md, todo.md, todos.md, TODO.md, TODOs.md, TODO-list.md, todo-list.md, tasks.md, TASKS.md)"
         echo ""
     fi
 
+    echo ""
     echo "=============================================================================="
     echo ""
 

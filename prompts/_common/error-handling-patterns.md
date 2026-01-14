@@ -199,12 +199,24 @@ error  Missing return type on function  @typescript-eslint/explicit-function-ret
 
 **Recovery:**
 
-1. **Follow existing patterns in codebase:**
+1. **Common error patterns and solutions:**
+
+| Error Type                      | Solution                               |
+| ------------------------------- | -------------------------------------- |
+| TypeScript syntax errors (100+) | Revert file, rewrite completely        |
+| Unterminated regex literal      | Write regex in separate variable       |
+| Missing imports/exports         | Add import or check package.json       |
+| Type mismatches                 | Remove annotation or add explicit cast |
+| ESLint errors                   | Follow existing patterns in codebase   |
+
+**IMPORTANT:** Do not install or create test suites or testing frameworks. Use only browser automation for testing.
+
+2. **Follow existing patterns in codebase:**
     - Read similar files
     - Match their style
     - Use same conventions
 
-2. **Remove unused imports:**
+3. **Remove unused imports:**
 
     ```typescript
     // ❌ WRONG
@@ -214,7 +226,7 @@ error  Missing return type on function  @typescript-eslint/explicit-function-ret
     import { useState } from 'react'
     ```
 
-3. **Add missing annotations:**
+4. **Add missing annotations:**
 
     ```typescript
     // ❌ WRONG
@@ -228,7 +240,7 @@ error  Missing return type on function  @typescript-eslint/explicit-function-ret
     }
     ```
 
-4. **Run auto-fix if available:**
+5. **Run auto-fix if available:**
     ```bash
     npm run lint -- --fix
     ```

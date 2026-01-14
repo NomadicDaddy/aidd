@@ -25,6 +25,7 @@ coverage/
 # Local configuration
 scaffolding
 copydirs.txt
+copyfiles.txt
 
 # Temporary files
 *.tmp

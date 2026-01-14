@@ -223,6 +223,9 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             # Copy shared directories from copydirs.txt
             copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
 
+            # Copy shared files from copyfiles.txt
+            copy_shared_files "$PROJECT_DIR" "$SCRIPT_DIR"
+
             # Determine which prompt to use based on project state
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
             if [[ $? -ne 0 ]]; then
@@ -360,6 +363,9 @@ else
 
             # Copy shared directories from copydirs.txt
             copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
+
+            # Copy shared files from copyfiles.txt
+            copy_shared_files "$PROJECT_DIR" "$SCRIPT_DIR"
 
             # Determine which prompt to use based on project state
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")

@@ -205,3 +205,102 @@ copy_shared_directories() {
 
     return 0
 }
+
+# Copy shared files to project
+# Usage: copy_shared_files <project_dir> <script_dir>
+# Returns: 0 on success
+# Reads copyfiles.txt and copies listed files to the target project
+# Each line format: <source_path> [-> <target_path>]
+# If target_path is omitted, file is placed in project root with same basename
+copy_shared_files() {
+    local project_dir="$1"
+    local script_dir="$2"
+    local copyfiles_file="$script_dir/copyfiles.txt"
+
+    # Convert project_dir to absolute path
+    project_dir="$(cd "$project_dir" && pwd)" || {
+        log_error "Failed to resolve project directory: $1"
+        return 1
+    }
+
+    # Check if copyfiles.txt exists
+    if [[ ! -f "$copyfiles_file" ]]; then
+        log_debug "No copyfiles.txt found, skipping shared file copy"
+        return 0
+    fi
+
+    log_debug "Copying shared files from copyfiles.txt..."
+    log_debug "Target project directory: $project_dir"
+    local copied_count=0
+    local skipped_count=0
+    local failed_count=0
+
+    # Read copyfiles.txt line by line
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }" ]] && continue
+
+        # Trim leading and trailing whitespace
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+
+        # Parse source and optional target (format: source -> target)
+        local source_file=""
+        local target_rel=""
+
+        if [[ "$line" == *" -> "* ]]; then
+            # Custom target path specified
+            source_file="${line%% -> *}"
+            target_rel="${line##* -> }"
+            # Trim whitespace from both
+            source_file="${source_file%"${source_file##*[![:space:]]}"}"
+            target_rel="${target_rel#"${target_rel%%[![:space:]]*}"}"
+        else
+            # No target specified, use basename in project root
+            source_file="$line"
+            target_rel="$(basename "$source_file")"
+        fi
+
+        # Check if source file exists
+        if [[ ! -f "$source_file" ]]; then
+            log_warn "Shared file not found, skipping: $source_file"
+            ((skipped_count++))
+            continue
+        fi
+
+        local target_path="$project_dir/$target_rel"
+        local target_dir="$(dirname "$target_path")"
+
+        log_debug "Copying: $source_file -> $target_path"
+
+        # Create target directory if needed
+        if [[ ! -d "$target_dir" ]]; then
+            mkdir -p "$target_dir" 2>/dev/null || {
+                log_warn "Failed to create directory: $target_dir"
+                ((failed_count++))
+                continue
+            }
+        fi
+
+        # Copy file
+        if cp -f "$source_file" "$target_path" 2>/dev/null; then
+            log_debug "Copied shared file: $target_rel"
+            ((copied_count++))
+        else
+            log_warn "Failed to copy shared file: $source_file"
+            ((failed_count++))
+        fi
+    done < "$copyfiles_file"
+
+    # Log summary
+    if [[ $copied_count -gt 0 ]]; then
+        log_info "Refreshed $copied_count shared file$([[ $copied_count -eq 1 ]] && echo "" || echo "s")"
+    fi
+
+    if [[ $failed_count -gt 0 ]]; then
+        log_warn "Failed to copy $failed_count shared file$([[ $failed_count -eq 1 ]] && echo "" || echo "s")"
+    fi
+
+    return 0
+}

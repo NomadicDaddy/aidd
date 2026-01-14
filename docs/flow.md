@@ -44,7 +44,8 @@ graph TD
     AC --> AE[Iteration Loop Start]
     AD --> AE
     AE --> AE1[Sync Shared Directories from copydirs.txt]
-    AE1 --> AF[Create Log File]
+    AE1 --> AE2[Sync Shared Files from copyfiles.txt]
+    AE2 --> AF[Create Log File]
     AF --> AG[Start Logging via tee/coprocess]
     AG --> AH[Compute ONBOARDING_COMPLETE]
     AH --> AI{Have spec+feature_list AND onboarding complete?}
@@ -91,6 +92,8 @@ graph TD
     style BA fill:#ffebee
     style BD fill:#e8f5e9
     style AT fill:#fff9c4
+    style AE1 fill:#e3f2fd
+    style AE2 fill:#e3f2fd
 ```
 
 ## Key Decision Points
@@ -113,13 +116,21 @@ Determines if we're working with an existing codebase or creating a new project.
 
 Can run unlimited iterations or a specific number via `--max-iterations`.
 
-### 5. Shared Directory Sync (v2.1.0+)
+### 5. Shared Resource Sync (v2.1.0+)
 
-At the start of each iteration, syncs directories listed in `copydirs.txt`:
+At the start of each iteration, syncs resources from config files:
+
+**Directories** (`copydirs.txt`):
 
 - IDE configurations (`.claude`, `.windsurf`, `.vscode`)
 - Shared linting rules
 - Common templates
+
+**Files** (`copyfiles.txt`):
+
+- Individual config files (`.prettierrc`, `.editorconfig`)
+- License files
+- Supports custom target paths via `source -> target` syntax
 
 ### 6. Two-Stage Idle Timeout (v2.1.0+)
 
@@ -175,11 +186,21 @@ If `--spec` provided, copied to `.automaker/app_spec.txt` during initializer flo
 - Logs stored in `.automaker/iterations/NNN.log`
 - Sequential numbering prevents overwrites
 
-### Shared Directory Sync
+### Shared Resource Sync
 
-- Reads `copydirs.txt` for directory paths
+**Directories** (`copydirs.txt`):
+
+- Reads directory paths (one per line)
 - Uses `rsync -av --delete` (falls back to `cp -R`)
 - Runs at start of each iteration
+
+**Files** (`copyfiles.txt`):
+
+- Reads file paths (one per line)
+- Simple format: `<source>` copies to project root
+- Custom target: `<source> -> <target>` for specific paths
+- Creates target directories as needed
+- Runs after directory sync
 
 ## Error Handling
 

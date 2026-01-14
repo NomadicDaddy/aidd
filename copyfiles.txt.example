@@ -1,0 +1,24 @@
+# AIDD Shared File Synchronization
+#
+# This file lists individual files to copy to all projects at the start of each iteration.
+# Rename this file to "copyfiles.txt" and add file paths (one per line).
+#
+# Use cases:
+# - Sync specific config files (e.g., .prettierrc, .editorconfig)
+# - Share individual templates or scripts
+# - Distribute license files or common documentation
+#
+# Format: One entry per line, with optional target path
+#   <source_path>                      - copies to project root with same filename
+#   <source_path> -> <target_path>     - copies to specified relative path in project
+#
+# Lines starting with # are comments and are ignored
+# Empty lines are ignored
+#
+# Examples (uncomment and modify for your environment):
+#
+# /d/applications/shared/.prettierrc
+# /d/applications/shared/.editorconfig
+# /d/applications/shared/LICENSE -> LICENSE
+# /d/applications/configs/tsconfig.base.json -> configs/tsconfig.base.json
+# /home/user/templates/eslintrc.json -> .eslintrc.json

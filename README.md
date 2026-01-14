@@ -186,11 +186,11 @@ Once onboarding artifacts exist (`app_spec.txt`, `features/`, `CHANGELOG.md`):
 - Uses `coding` prompt for continued development
 - Implements remaining features from the feature list
 
-### Shared Directory Synchronization
+### Shared Resource Synchronization
 
-AIDD can automatically synchronize shared configuration directories to projects at the start of each iteration. This is useful for ensuring all projects have the latest IDE configurations, linting rules, or other shared resources.
+AIDD can automatically synchronize shared configuration directories and files to projects at the start of each iteration. This ensures all projects have the latest IDE configurations, linting rules, or other shared resources.
 
-**Configuration:**
+#### Directory Sync (copydirs.txt)
 
 Create a `copydirs.txt` file in the AIDD directory with one absolute path per line:
 
@@ -199,7 +199,6 @@ Create a `copydirs.txt` file in the AIDD directory with one absolute path per li
 /d/applications/.claude
 /d/applications/.windsurf
 /home/user/.vscode
-/Users/username/dev/shared-configs/.eslintrc.json
 ```
 
 **Behavior:**
@@ -209,12 +208,35 @@ Create a `copydirs.txt` file in the AIDD directory with one absolute path per li
 - Logs which directories were refreshed
 - Skips missing source directories with a warning
 
-**Common Use Cases:**
+#### File Sync (copyfiles.txt)
+
+Create a `copyfiles.txt` file in the AIDD directory for individual files:
+
+```
+# copyfiles.txt example - simple format (copies to project root)
+/d/applications/shared/.prettierrc
+/d/applications/shared/.editorconfig
+
+# With custom target path (source -> target)
+/d/applications/configs/tsconfig.base.json -> configs/tsconfig.base.json
+/home/user/templates/eslintrc.json -> .eslintrc.json
+```
+
+**Behavior:**
+
+- Runs at the start of each iteration after directory sync
+- Simple format places file in project root with same filename
+- Arrow format (`->`) specifies custom relative target path
+- Creates target directories as needed
+- Logs which files were refreshed
+
+#### Common Use Cases
 
 - Syncing IDE configuration (`.vscode`, `.windsurf`, `.claude`)
 - Sharing linting rules across projects
 - Distributing common scripts or templates
 - Keeping project guidelines up to date
+- Sharing individual config files (`.prettierrc`, `.editorconfig`, `LICENSE`)
 
 ## Project Structure
 
@@ -222,6 +244,7 @@ Create a `copydirs.txt` file in the AIDD directory with one absolute path per li
 aidd/
 ├── aidd.sh                 # Main script
 ├── copydirs.txt           # List of shared directories to sync to projects
+├── copyfiles.txt          # List of shared files to sync to projects
 ├── lib/
 │   ├── args.sh            # Argument parsing
 │   ├── cli-claude-code.sh # Claude Code CLI implementation

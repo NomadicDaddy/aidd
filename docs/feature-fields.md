@@ -9,6 +9,7 @@ Based on the code analysis, here are all the supported fields in AutoMaker's fea
 | **id**          | `string` | Unique identifier for the feature (format: `feature-{timestamp}-{random}`) |
 | **category**    | `string` | Feature category (e.g., "UI", "Backend", "Uncategorized")                  |
 | **description** | `string` | Detailed description of the feature                                        |
+| **title**       | `string` | Feature title                                                              |
 
 ## Optional Fields
 
@@ -16,7 +17,6 @@ Based on the code analysis, here are all the supported fields in AutoMaker's fea
 
 | Field               | Type       | Description                                                                                                                  |
 | ------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **title**           | `string`   | Feature title                                                                                                                |
 | **titleGenerating** | `boolean`  | Whether title is currently being generated                                                                                   |
 | **passes**          | `boolean`  | Whether feature passes validation                                                                                            |
 | **priority**        | `number`   | Feature priority level                                                                                                       |

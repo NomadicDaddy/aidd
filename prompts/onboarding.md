@@ -214,7 +214,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 ```json
 {
-	"id": "feature-slug-from-description",
+	"id": "feature-{timestamp}-{random}",
 	"description": "Short name of feature/capability being validated",
 	"category": "Core|UI|Security|Performance|Testing|DevEx|Documentation",
 	"priority": 1,  // 1=critical, 2=high, 3=medium, 4=low
@@ -226,7 +226,8 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 	"spec": "1. Step description
 2. Another step
 3. Verify outcome",
-	"passes": false
+	"passes": false,
+	"title": "Short descriptive title"
 }
 ```
 
@@ -235,7 +236,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 **CRITICAL: Track feature dependencies in `dependencies` field:**
 
 - For each feature, identify which other features MUST be implemented first
-- Reference dependencies by their exact `id` field value (feature slug)
+- Reference dependencies by their exact `id` field value (format: `feature-{timestamp}-{random}`)
 - Use empty array `[]` if feature has no dependencies
 - Dependencies create implementation order constraints
 
@@ -243,21 +244,21 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 ```json
 {
-	"id": "user-login-form",
+	"id": "feature-20260109142345-abc123def",
 	"description": "User login form",
 	"dependencies": [], // No dependencies - foundational feature
 	...
 }
 {
-	"id": "password-reset",
+	"id": "feature-20260109142346-xyz789ghi",
 	"description": "Password reset functionality",
-	"dependencies": ["user-login-form"], // Depends on login existing
+	"dependencies": ["feature-20260109142345-abc123def"], // Depends on login existing (references exact ID)
 	...
 }
 {
-	"id": "social-oauth-login",
+	"id": "feature-20260109142347-lmn456opq",
 	"description": "Social media OAuth login",
-	"dependencies": ["user-login-form", "user-authentication-backend"], // Multiple dependencies
+	"dependencies": ["feature-20260109142345-abc123def", "feature-20260109142348-rst012uvw"], // Multiple dependencies
 	...
 }
 ```
@@ -282,7 +283,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - Conservative marking: default to `"passes": false`
 - Cover spec AND existing codebase exhaustively
 - ALL features must have `dependencies` field (even if empty array)
-- ALL features must have `id` field (feature slug)
+- ALL features must have `id` field (format: `feature-{timestamp}-{random}`)
 
 #### 3.5 Document Codebase State
 

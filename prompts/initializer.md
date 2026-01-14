@@ -136,11 +136,12 @@ Feature JSON must follow AutoMaker format exactly:
 	"createdAt": "2026-01-09T14:23:45.000Z",
 	"dependencies": [],
 	"description": "Short name of feature/capability being validated",
-	"id": "feature-slug-from-description",
+	"id": "feature-{timestamp}-{random}",
 	"passes": false,
 	"priority": 1,
 	"spec": "1. Step description\n2. Another step\n3. Verify outcome",
 	"status": "backlog",
+	"title": "Short descriptive title",
 	"updatedAt": "2026-01-09T14:23:45.000Z"
 }
 ```
@@ -150,7 +151,7 @@ Feature JSON must follow AutoMaker format exactly:
 **CRITICAL: Track feature dependencies in `dependencies` field:**
 
 - For each feature, identify which other features MUST be implemented first
-- Reference dependencies by their exact `id` field value (feature slug)
+- Reference dependencies by their exact `id` field value (format: `feature-{timestamp}-{random}`)
 - Use empty array `[]` if feature has no dependencies
 - Dependencies create implementation order constraints
 
@@ -159,17 +160,20 @@ Feature JSON must follow AutoMaker format exactly:
 ```json
 {
 	"description": "Database schema setup",
+	"id": "feature-20260109142345-abc123def",
 	"dependencies": [], // Foundation feature - no dependencies
 	...
 }
 {
 	"description": "User CRUD API endpoints",
-	"dependencies": ["Database schema setup"], // Needs database first
+	"id": "feature-20260109142346-xyz789ghi",
+	"dependencies": ["feature-20260109142345-abc123def"], // Needs database first (references exact ID)
 	...
 }
 {
 	"description": "User profile page",
-	"dependencies": ["User CRUD API endpoints"], // Needs API before UI
+	"id": "feature-20260109142347-lmn456opq",
+	"dependencies": ["feature-20260109142346-xyz789ghi"], // Needs API before UI (references exact ID)
 	...
 }
 ```

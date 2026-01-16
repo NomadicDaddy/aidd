@@ -180,7 +180,7 @@ aidd --project-dir ./app --audit PERFORMANCE,LIGHTHOUSE,FRONTEND
 
 Each audit creates:
 
-- **Feature issues** in `.automaker/features/audit-{name}-*/feature.json`
+- **Feature issues** in `.automaker/features/audit-{name}-{unix_timestamp}-{descriptive-slug}/feature.json`
 - **Audit report** in `.automaker/audit-reports/{AUDIT_NAME}-{timestamp}.md`
 - **Changelog entry** with audit summary
 

@@ -383,7 +383,12 @@ HEREDOC_HEADER
 | Medium         | 3                |
 | Low            | 4                |
 
-**File Location:** \`/.automaker/features/audit-${audit_name_lower}-{timestamp}-{random}/feature.json\`
+**File Location:** \`/.automaker/features/audit-${audit_name_lower}-{unix_timestamp}-{descriptive-slug}/feature.json\`
+
+**Directory Naming Convention:**
+- \`{unix_timestamp}\` = Unix epoch timestamp (e.g., 1736985600)
+- \`{descriptive-slug}\` = kebab-case description of the specific issue (e.g., kdf-sha256, cors-null-origin, validation-missing)
+- Example: \`audit-security-1736985600-jwt-contains-email\`
 
 ---
 
@@ -458,8 +463,8 @@ HEREDOC_HEADER
 - **Low:** {count}
 
 ### Issues Created
-- feature-{timestamp}-{random1}: {title} (${audit_name})
-- feature-{timestamp}-{random2}: {title} (${audit_name})
+- audit-${audit_name_lower}-{unix_timestamp}-{descriptive-slug}: {title}
+- audit-${audit_name_lower}-{unix_timestamp}-{descriptive-slug}: {title}
 ...
 
 ### Report Location

@@ -130,6 +130,13 @@ Start by orienting yourself with the project.
 
 Feature JSON must follow AutoMaker format exactly:
 
+**ID format:** `feature-{timestamp}-{random}` where:
+
+- `{timestamp}` = Unix timestamp or YYYYMMDDHHMMSS (digits only)
+- `{random}` = 4-12 alphanumeric characters (a-z, A-Z, 0-9 only, NO hyphens or special chars)
+- Example: `feature-20260109142345-abc123def` ✓
+- Invalid: `feature-20260109142345-my-feature` ✗ (hyphens in random part)
+
 ```json
 {
 	"category": "Core|UI|Security|Performance|Testing|DevEx|Documentation",

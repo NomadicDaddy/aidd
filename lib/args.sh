@@ -726,6 +726,14 @@ validate_features() {
     local valid_desc_sources="initial enhance edit"
     local valid_enhancement_modes="improve technical simplify acceptance ux-reviewer"
 
+    # Collect all valid feature IDs for dependency validation
+    local all_feature_ids=""
+    while IFS= read -r f; do
+        [[ -z "$f" || ! -f "$f" ]] && continue
+        local fid=$(jq -r '.id // empty' "$f" 2>/dev/null)
+        [[ -n "$fid" ]] && all_feature_ids+="$fid "
+    done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
+
     # Use ls with while loop (most reliable on Windows/Git Bash)
     # Single jq call per file for performance (instead of 30+ calls)
     while IFS= read -r feature_file; do
@@ -753,6 +761,7 @@ validate_features() {
                 status: .status,
                 dependencies_type: (if has("dependencies") then (.dependencies | type) else "absent" end),
                 dependencies_invalid: (if (.dependencies | type) == "array" then ([.dependencies[] | select(type != "string")] | length > 0) else false end),
+                dependencies_list: (if (.dependencies | type) == "array" then (.dependencies | join(",")) else "" end),
                 skipTests_type: (if has("skipTests") then (.skipTests | type) else "absent" end),
                 thinkingLevel: .thinkingLevel,
                 reasoningEffort: .reasoningEffort,
@@ -802,6 +811,7 @@ validate_features() {
                 "priority_type=" + (.priority_type // "" | @sh) + "\n" +
                 "dependencies_type=" + (.dependencies_type // "" | @sh) + "\n" +
                 "dependencies_invalid=" + (.dependencies_invalid | tostring | @sh) + "\n" +
+                "dependencies_list=" + (.dependencies_list // "" | @sh) + "\n" +
                 "skipTests_type=" + (.skipTests_type // "" | @sh) + "\n" +
                 "requirePlanApproval_type=" + (.requirePlanApproval_type // "" | @sh) + "\n" +
                 "planSpec_type=" + (.planSpec_type // "" | @sh) + "\n" +
@@ -849,6 +859,17 @@ validate_features() {
             # Array type checks
             [[ "$dependencies_type" != "absent" && "$dependencies_type" != "array" && "$dependencies_type" != "null" ]] && file_errors+="  ✗ Field 'dependencies' must be an array (got: $dependencies_type)\n"
             [[ "$dependencies_invalid" == "true" ]] && file_errors+="  ✗ Field 'dependencies' must contain only strings\n"
+
+            # Check that each dependency references an existing feature
+            if [[ -n "$dependencies_list" && "$dependencies_invalid" != "true" ]]; then
+                IFS=',' read -ra dep_array <<< "$dependencies_list"
+                for dep in "${dep_array[@]}"; do
+                    if [[ ! " $all_feature_ids " =~ " $dep " ]]; then
+                        file_errors+="  ✗ Dependency '$dep' does not exist in project\n"
+                    fi
+                done
+            fi
+
             [[ "$imagePaths_type" != "absent" && "$imagePaths_type" != "array" && "$imagePaths_type" != "null" ]] && file_errors+="  ✗ Field 'imagePaths' must be an array (got: $imagePaths_type)\n"
             [[ "$textFilePaths_type" != "absent" && "$textFilePaths_type" != "array" && "$textFilePaths_type" != "null" ]] && file_errors+="  ✗ Field 'textFilePaths' must be an array (got: $textFilePaths_type)\n"
             [[ "$descriptionHistory_type" != "absent" && "$descriptionHistory_type" != "array" && "$descriptionHistory_type" != "null" ]] && file_errors+="  ✗ Field 'descriptionHistory' must be an array (got: $descriptionHistory_type)\n"

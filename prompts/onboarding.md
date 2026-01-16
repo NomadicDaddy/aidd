@@ -212,6 +212,13 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - `createdAt` and `updatedAt` MUST use ISO 8601 format: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
 - Always use current UTC timestamp: `date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
 
+**ID format:** `feature-{timestamp}-{random}` where:
+
+- `{timestamp}` = Unix timestamp or YYYYMMDDHHMMSS (digits only)
+- `{random}` = 4-12 alphanumeric characters (a-z, A-Z, 0-9 only, NO hyphens or special chars)
+- Example: `feature-20260109142345-abc123def` ✓
+- Invalid: `feature-20260109142345-my-feature` ✗ (hyphens in random part)
+
 ```json
 {
 	"id": "feature-{timestamp}-{random}",

@@ -14,6 +14,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - **Agent Babysitting Built-In**: Two-stage idle timeout nudges stuck agents ("Are you stuck?") before killing them. Consecutive failure limits prevent runaway loops.
 - **CLI Agnostic**: Same workflow whether you're on OpenCode, KiloCode, or Claude Code. Switch providers without changing your process.
 - **Onboarding for Existing Codebases**: Drop AIDD into any project. It analyzes the codebase, generates a spec, and creates a feature backlog automatically.
+- **Automated Audits**: Run comprehensive code audits (security, performance, architecture, etc.) that generate actionable issue backlogs.
 
 ## Features
 
@@ -24,6 +25,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - **Codebase Onboarding**: Automatically analyzes existing projects and generates structured metadata
 - **Shared Directory Sync**: Keep IDE configs (`.claude`, `.windsurf`, `.vscode`) synchronized across projects
 - **Full Transcripts**: Every iteration logged for debugging and audit trails
+- **Audit Mode**: Run specialized audits (SECURITY, PERFORMANCE, CODE_QUALITY, etc.) with automatic issue generation
 
 ## Supported CLIs
 
@@ -95,6 +97,8 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--extract-structured`: Extract structured JSON from iteration logs after each iteration
 - `--extract-batch`: Batch extract structured JSON from all existing iteration logs and exit
 - `--check-features`: Validate all feature.json files against schema and exit
+- `--stop-when-done`: Stop early when TODO/in-progress mode has no remaining items
+- `--audit AUDIT[,...]`: Run audit mode with one or more audits (e.g., `SECURITY` or `SECURITY,CODE_QUALITY`)
 - `--help`: Show help message
 
 ## Examples
@@ -136,6 +140,23 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 
 # Using different models for init and coding
 ./aidd.sh --cli claude-code --project-dir ./myproject --init-model opus --code-model sonnet
+```
+
+### Audit Mode
+
+```bash
+# Run a single audit
+./aidd.sh --project-dir ./myproject --audit SECURITY
+
+# Run multiple audits sequentially
+./aidd.sh --project-dir ./myproject --audit SECURITY,CODE_QUALITY,ARCHITECTURE
+
+# Audit with limited iterations per audit
+./aidd.sh --project-dir ./myproject --audit DEAD_CODE,PERFORMANCE --max-iterations 2
+
+# Available audits: SECURITY, CODE_QUALITY, ARCHITECTURE, PERFORMANCE,
+#                   FRONTEND, DATABASE, TESTING, TECHDEBT, DEAD_CODE, and more
+# See docs/AUDIT_GUIDE.md for full list
 ```
 
 ### Other Operations
@@ -185,6 +206,18 @@ Once onboarding artifacts exist (`app_spec.txt`, `features/`, `CHANGELOG.md`):
 
 - Uses `coding` prompt for continued development
 - Implements remaining features from the feature list
+
+### Audit Mode Workflow
+
+Run specialized code audits that generate actionable issue backlogs:
+
+1. **Audit Selection**: Choose from 20+ audit types (SECURITY, PERFORMANCE, CODE_QUALITY, etc.)
+2. **Multi-Audit Support**: Combine audits with commas: `--audit SECURITY,CODE_QUALITY`
+3. **Sequential Execution**: Each audit runs independently with its own iterations
+4. **Issue Generation**: Creates `feature.json` files for each finding in `.automaker/features/audit-{name}-*/`
+5. **Audit Reports**: Generates detailed reports in `.automaker/audit-reports/`
+
+See [docs/AUDIT_GUIDE.md](docs/AUDIT_GUIDE.md) for the complete audit catalog and recommendations.
 
 ### Shared Resource Synchronization
 
@@ -269,7 +302,14 @@ aidd/
 │   ├── onboarding.md      # Onboarding prompt (existing codebases)
 │   ├── initializer.md     # Initializer prompt (new projects)
 │   ├── coding.md          # Coding prompt (development iterations)
-│   ├── todo.md            # TODO mode prompt
+│   └── todo.md            # TODO mode prompt
+├── audits/                # Audit definition files
+│   ├── SECURITY.md        # Security audit guidelines
+│   ├── PERFORMANCE.md     # Performance audit guidelines
+│   ├── CODE_QUALITY.md    # Code quality audit
+│   └── ...                # 20+ specialized audits
+├── docs/
+│   └── AUDIT_GUIDE.md     # Audit selection guide
 ├── scaffolding/           # Template files for new projects
 ├── templates/             # Project metadata templates
 └── specs/                 # Specification examples
@@ -279,6 +319,10 @@ Project Metadata (.automaker/):
 ├── app_spec.txt           # Project specification
 ├── CHANGELOG.md           # Progress log (Keep a Changelog format)
 ├── features/              # Feature tracking (one dir per feature)
+│   ├── feature-*/         # Regular features
+│   └── audit-*/           # Audit-generated issues
+├── audit-reports/         # Audit summary reports
+├── audits/                # Referenced audit guidelines (runtime copy)
 ├── todo.md                # TODO items
 ├── project_structure.md   # Architecture documentation
 └── iterations/            # Iteration logs
@@ -347,6 +391,13 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v2.3.0** (2026-01-15):
+    - Added audit mode with 20+ specialized audits (SECURITY, PERFORMANCE, etc.)
+    - Multi-audit support: run multiple audits sequentially with comma-separated names
+    - Audit cross-reference support: referenced audit files copied to target project
+    - Automatic issue deduplication during audits
+    - Added `--stop-when-done` flag for TODO/in-progress modes
+    - Added comprehensive AUDIT_GUIDE.md documentation
 - **v2.2.0** (2026-01-09):
     - Added Claude Code CLI support with stream-json parsing
     - Implemented JSON parser for readable console output

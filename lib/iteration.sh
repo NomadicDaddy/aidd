@@ -167,6 +167,393 @@ check_onboarding_status() {
 }
 
 # -----------------------------------------------------------------------------
+# Audit Prompt Generation
+# -----------------------------------------------------------------------------
+
+# Copy audit files referenced by the main audit to the target project
+# Arguments: $1 = main audit file path, $2 = target audits directory, $3 = source audits directory
+# Returns: 0 on success
+copy_referenced_audits() {
+    local audit_file="$1"
+    local target_dir="$2"
+    local source_dir="$3"
+
+    # Create target directory if it doesn't exist
+    mkdir -p "$target_dir"
+
+    # Always copy the main audit file
+    cp "$audit_file" "$target_dir/"
+
+    # Find all cross-references like [NAME.md](./NAME.md) or [NAME](./NAME.md)
+    local refs
+    refs=$(grep -oE '\[.*?\]\(\./[A-Z_]+\.md\)' "$audit_file" 2>/dev/null | \
+           grep -oE '\./[A-Z_]+\.md' | \
+           sed 's|^\./||' | \
+           sort -u)
+
+    # Copy each referenced file
+    local copied=0
+    for ref_file in $refs; do
+        local source_path="$source_dir/$ref_file"
+        if [[ -f "$source_path" ]]; then
+            cp "$source_path" "$target_dir/"
+            ((copied++))
+            log_debug "Copied referenced audit: $ref_file"
+        fi
+    done
+
+    if [[ $copied -gt 0 ]]; then
+        log_info "Copied $copied referenced audit file(s) to $target_dir"
+    fi
+
+    return 0
+}
+
+# Generate audit prompt file from audit guidelines
+# Usage: generate_audit_prompt <audit_file> <output_file> <audit_name>
+# Returns: 0 on success, 1 on failure
+generate_audit_prompt() {
+    local audit_file="$1"
+    local output_file="$2"
+    local audit_name="$3"
+
+    # Ensure parent directory exists
+    local output_dir
+    output_dir=$(dirname "$output_file")
+    if ! mkdir -p "$output_dir" 2>/dev/null; then
+        log_error "Failed to create directory: $output_dir"
+        return 1
+    fi
+
+    # Extract frontmatter from audit file
+    local audit_category audit_priority
+    audit_category=$(sed -n '/^---$/,/^---$/p' "$audit_file" | grep "^category:" | sed "s/category:[[:space:]]*['\"]\\?\\([^'\"]*\\)['\"]\\?/\\1/")
+    audit_priority=$(sed -n '/^---$/,/^---$/p' "$audit_file" | grep "^priority:" | sed "s/priority:[[:space:]]*['\"]\\?\\([^'\"]*\\)['\"]\\?/\\1/")
+
+    # Default values if not found
+    [[ -z "$audit_category" ]] && audit_category="Audit"
+    [[ -z "$audit_priority" ]] && audit_priority="High"
+
+    # Copy referenced audit files to target project
+    local target_audits_dir="$output_dir/$DEFAULT_TARGET_AUDITS_DIR"
+    copy_referenced_audits "$audit_file" "$target_audits_dir" "$(dirname "$audit_file")"
+
+    # Convert audit name to lowercase for IDs
+    local audit_name_lower="${audit_name,,}"
+
+    # Generate the audit prompt header
+    cat > "$output_file" << 'HEREDOC_HEADER'
+## YOUR ROLE - AUDIT AGENT
+
+You are in AUDIT mode performing a comprehensive codebase audit.
+
+### CRITICAL INSTRUCTIONS
+
+1. **Perform a thorough audit** of the codebase following the audit guidelines below
+2. **Create feature.json files** for each issue found in `/.automaker/features/`
+3. **Do NOT fix issues directly** - only document them as issues for later resolution
+4. **Generate an audit report** summarizing all findings
+5. **Be thorough and systematic** - cover all areas specified in the audit
+
+### QUICK REFERENCES
+
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
+- **Changelog:** `/.automaker/CHANGELOG.md`
+- **Audit reference materials:** `/.automaker/audits/` (if audit guidelines reference other audits)
+- **Project overrides (highest priority):** `/.automaker/project.txt`
+
+### COMMON GUIDELINES
+
+**See shared documentation in `/_common/` for:**
+
+- **hard-constraints.md** - Non-negotiable constraints
+- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
+- **project-overrides.md** - How to handle project.txt overrides
+
+### HARD CONSTRAINTS
+
+1. **Do not run** `scripts/setup.ts` or any other setup scripts.
+2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.automaker/CHANGELOG.md`.
+3. Do not run any blocking processes (no dev servers inline).
+4. **Do NOT fix issues** - only document them as feature.json files.
+
+---
+
+## WORKFLOW STEPS
+
+### STEP 0: INGEST ASSISTANT RULES
+
+**CRITICAL: Execute FIRST, before any other steps.**
+
+See `/_common/assistant-rules-loading.md` for complete instructions.
+
+---
+
+### STEP 1: LOAD AUDIT GUIDELINES
+
+**Read and understand the complete audit framework below.**
+
+The audit guidelines define:
+- What areas to examine
+- What criteria to use
+- How to classify severity
+- What deliverables to produce
+
+---
+
+### STEP 2: PERFORM SYSTEMATIC AUDIT
+
+**Follow the audit checklist systematically:**
+
+1. **Examine each area** specified in the audit guidelines
+2. **Search for violations** using grep, file reading, and code analysis
+3. **Document each finding** with:
+   - Exact file path and line number
+   - Description of the issue
+   - Severity classification
+   - Recommended remediation
+4. **Cross-reference** with project spec and architecture
+
+---
+
+### STEP 3: CHECK FOR EXISTING FEATURES
+
+**Before creating any issue, check for duplicates:**
+
+1. **Read existing features** in \`/.automaker/features/*/feature.json\`
+2. **Compare by affected files and issue type** - not just title
+3. **Skip creation if:**
+   - An existing feature covers the same file(s) AND issue type
+   - The existing feature has \`status: "in-progress"\` or \`status: "done"\`
+   - The existing feature's \`spec\` already addresses this exact issue
+4. **Update existing feature if:**
+   - Same issue but new affected files discovered
+   - Additional context improves the existing spec
+
+**Deduplication Criteria:**
+- Same \`affectedFiles[]\` entries + same issue category = likely duplicate (skip)
+- Similar \`title\` + same \`auditSource\` from previous audit = already tracked (skip)
+- Existing feature with \`passes: false\` = issue still tracked, don't create duplicate
+- Existing feature with \`passes: true\` = issue resolved, verify fix still valid before skipping
+
+**Only create new feature if:**
+- No existing feature covers the same file(s) AND issue type
+- The issue is genuinely new and not already in backlog/in-progress
+
+---
+
+### STEP 4: CREATE ISSUES AS FEATURE.JSON FILES
+
+**For each NEW issue found (after deduplication), create a feature.json file:**
+
+HEREDOC_HEADER
+
+    # Add dynamic content with audit-specific values
+    cat >> "$output_file" << HEREDOC_DYNAMIC
+**Issue ID Format:** \`feature-{timestamp}-{random}\` (standard automaker format)
+
+**Feature JSON Structure:**
+
+\`\`\`json
+{
+  "id": "feature-{timestamp}-{random}",
+  "title": "Brief title of the issue",
+  "description": "Detailed description of the issue found",
+  "status": "backlog",
+  "category": "${audit_category}",
+  "priority": {severity_based_priority},
+  "passes": false,
+  "spec": "Detailed remediation steps:\\n1. Step one\\n2. Step two\\n...",
+  "createdAt": "{ISO_timestamp}",
+  "updatedAt": "{ISO_timestamp}",
+  "auditSource": "${audit_name}",
+  "auditSeverity": "{Critical|High|Medium|Low}",
+  "affectedFiles": ["path/to/file1.ts", "path/to/file2.ts"]
+}
+\`\`\`
+
+**Severity to Priority Mapping:**
+
+| Audit Severity | Feature Priority |
+|----------------|------------------|
+| Critical       | 1                |
+| High           | 2                |
+| Medium         | 3                |
+| Low            | 4                |
+
+**File Location:** \`/.automaker/features/audit-${audit_name_lower}-{timestamp}-{random}/feature.json\`
+
+---
+
+### STEP 5: GENERATE AUDIT REPORT
+
+**Create audit report at:** \`/.automaker/${DEFAULT_AUDIT_REPORTS_DIR}/${audit_name}-{timestamp}.md\`
+
+**Report Structure:**
+
+\`\`\`markdown
+# ${audit_name} Audit Report - {YYYY-MM-DD}
+
+## Executive Summary
+
+**Audit Name:** ${audit_name}
+**Date:** {YYYY-MM-DD}
+**Overall Score:** {X}/100
+**Critical Issues:** {count}
+**High Priority Issues:** {count}
+**Medium Priority Issues:** {count}
+**Low Priority Issues:** {count}
+
+## Key Findings
+
+[Bullet summary of most important findings]
+
+## Issues by Severity
+
+### Critical Issues (Priority 1)
+[List with links to feature.json files]
+
+### High Priority Issues (Priority 2)
+[List with links to feature.json files]
+
+### Medium Priority Issues (Priority 3)
+[List with links to feature.json files]
+
+### Low Priority Issues (Priority 4)
+[List with links to feature.json files]
+
+## Recommendations
+
+### Immediate Actions (0-24 hours)
+[Critical issues to address]
+
+### Short-term Actions (1-2 weeks)
+[High priority issues]
+
+### Long-term Actions (1-3 months)
+[Medium/Low priority issues]
+
+---
+
+**Auditor:** AIDD Audit Agent
+**Audit Framework:** ${audit_name}
+\`\`\`
+
+---
+
+### STEP 6: UPDATE CHANGELOG
+
+**Add audit summary to \`/.automaker/CHANGELOG.md\`:**
+
+\`\`\`markdown
+## [{YYYY-MM-DD}] - ${audit_name} Audit
+
+### Audit Summary
+- **Issues Found:** {total_count}
+- **Critical:** {count}
+- **High:** {count}
+- **Medium:** {count}
+- **Low:** {count}
+
+### Issues Created
+- feature-{timestamp}-{random1}: {title} (${audit_name})
+- feature-{timestamp}-{random2}: {title} (${audit_name})
+...
+
+### Report Location
+- Full report: \`.automaker/${DEFAULT_AUDIT_REPORTS_DIR}/${audit_name}-{timestamp}.md\`
+\`\`\`
+
+---
+
+### STEP 7: COMMIT AND EXIT
+
+**Commit all changes:**
+
+\`\`\`bash
+git add .
+git commit -m "audit(${audit_name_lower}): Complete ${audit_name} audit
+
+- Found {total} issues ({critical} critical, {high} high, {medium} medium, {low} low)
+- Created feature.json files for each issue
+- Generated audit report at .automaker/${DEFAULT_AUDIT_REPORTS_DIR}/${audit_name}-{timestamp}.md"
+\`\`\`
+
+---
+
+## REFERENCE MATERIALS
+
+If the audit guidelines below reference other audit files (e.g., "See [PERFORMANCE.md](./PERFORMANCE.md)"),
+those referenced files have been copied to \`/.automaker/${DEFAULT_TARGET_AUDITS_DIR}/\` for your reference.
+
+Read referenced audit files when:
+- The main audit refers you to another audit for detailed criteria
+- You need additional context for severity classification
+- Specialized patterns or thresholds are documented elsewhere
+
+---
+
+## AUDIT GUIDELINES
+
+**The following audit framework defines the scope, criteria, and deliverables for this audit:**
+
+---
+
+HEREDOC_DYNAMIC
+
+    # Append the actual audit file content (skip frontmatter)
+    sed '1,/^---$/d; 1,/^---$/d' "$audit_file" >> "$output_file"
+
+    # Add closing instructions
+    cat >> "$output_file" << 'HEREDOC_FOOTER'
+
+---
+
+## IMPORTANT REMINDERS
+
+### Your Goal
+
+**Systematically audit the codebase and create issue files for all findings.**
+
+### This Session's Goal
+
+**Complete the entire audit framework, documenting all issues found.**
+
+### Quality Bar
+
+- **Thoroughness:** Cover all areas specified in the audit
+- **Accuracy:** Correct severity classifications
+- **Actionability:** Clear remediation steps in each issue
+- **Documentation:** Complete audit report with all findings
+
+### Do NOT
+
+- Fix issues directly (only document them)
+- Skip sections of the audit
+- Guess at severity (use the classification guidelines)
+- Create duplicate issues for the same problem
+
+---
+
+Begin by running Step 0 now.
+HEREDOC_FOOTER
+
+    # Verify file was created
+    if [[ ! -f "$output_file" ]]; then
+        log_error "Failed to create audit prompt file: $output_file"
+        return 1
+    fi
+
+    # Ensure file is written to disk
+    sync "$output_file" 2>/dev/null || true
+
+    log_debug "Generated audit prompt at $output_file"
+    return 0
+}
+
+# -----------------------------------------------------------------------------
 # Prompt Determination Functions
 # -----------------------------------------------------------------------------
 
@@ -177,6 +564,12 @@ determine_prompt() {
     local project_dir="$1"
     local script_dir="$2"
     local metadata_dir="$3"
+
+    # Convert metadata_dir to absolute path to avoid relative path issues
+    if [[ ! "$metadata_dir" = /* ]]; then
+        metadata_dir="$(cd "$(dirname "$metadata_dir")" && pwd)/$(basename "$metadata_dir")"
+    fi
+
     local prompt_path=""
     local phase=""
     local todo_check_path="$metadata_dir/todo.md"
@@ -272,6 +665,31 @@ HEREDOC_END
         sync "$directive_file" 2>/dev/null || true
         prompt_path="$directive_file"
         phase="$PHASE_DIRECTIVE"
+        echo "$prompt_path|$phase"
+        return 0
+    fi
+
+    # Check for audit mode
+    if [[ "$AUDIT_MODE" == true ]]; then
+        log_info "Using AUDIT mode - will perform $AUDIT_NAME audit"
+
+        # Validate audit file exists and get path
+        local audit_file
+        audit_file=$(validate_audit "$AUDIT_NAME" "$script_dir")
+        if [[ $? -ne 0 ]]; then
+            log_error "Audit validation failed"
+            return 1
+        fi
+
+        # Generate audit prompt file
+        local audit_prompt_file="$metadata_dir/audit-prompt.md"
+        if ! generate_audit_prompt "$audit_file" "$audit_prompt_file" "$AUDIT_NAME"; then
+            log_error "Failed to generate audit prompt"
+            return 1
+        fi
+
+        prompt_path="$audit_prompt_file"
+        phase="$PHASE_AUDIT"
         echo "$prompt_path|$phase"
         return 0
     fi
@@ -535,13 +953,45 @@ should_stop_in_progress_mode() {
     fi
 }
 
+# Check if AUDIT mode should stop (audit report generated)
+# Usage: should_stop_audit_mode <metadata_dir>
+# Returns: 0 if audit complete (should stop), 1 if audit in progress
+should_stop_audit_mode() {
+    local metadata_dir="$1"
+    local audit_reports_dir="$metadata_dir/$DEFAULT_AUDIT_REPORTS_DIR"
+
+    # Check if an audit report was generated in this session
+    # The audit prompt instructs the agent to create a report
+    # If a report exists with today's date and matches AUDIT_NAME, audit is complete
+    if [[ -d "$audit_reports_dir" ]]; then
+        local today
+        today=$(date +%Y-%m-%d)
+        if ls "$audit_reports_dir"/${AUDIT_NAME}*${today}*.md >/dev/null 2>&1; then
+            log_debug "Audit report found for $AUDIT_NAME on $today"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 # Check if current mode should stop early
 # Usage: should_stop_current_mode <metadata_dir>
 # Returns: 0 if should stop, 1 if should continue
 should_stop_current_mode() {
     local metadata_dir="$1"
 
-    # Only check if STOP_WHEN_DONE flag is enabled
+    # Audit mode always auto-stops when complete (implies --stop-when-done)
+    if [[ "$AUDIT_MODE" == "true" ]]; then
+        if should_stop_audit_mode "$metadata_dir"; then
+            log_info "AUDIT mode: Audit complete - report generated"
+            return 0
+        fi
+        # Continue if audit not yet complete
+        return 1
+    fi
+
+    # Only check if STOP_WHEN_DONE flag is enabled for other modes
     if [[ "$STOP_WHEN_DONE" != "true" ]]; then
         return 1
     fi

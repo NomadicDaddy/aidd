@@ -166,6 +166,7 @@ readonly STATE_ABORTED
 : "${PHASE_VALIDATE:="validate"}"
 : "${PHASE_DIRECTIVE:="directive"}"
 : "${PHASE_IN_PROGRESS:="in-progress"}"
+: "${PHASE_AUDIT:="audit"}"
 
 readonly PHASE_ONBOARDING
 readonly PHASE_INITIALIZER
@@ -174,3 +175,15 @@ readonly PHASE_TODO
 readonly PHASE_VALIDATE
 readonly PHASE_DIRECTIVE
 readonly PHASE_IN_PROGRESS
+readonly PHASE_AUDIT
+
+# -----------------------------------------------------------------------------
+# Audit Configuration
+# -----------------------------------------------------------------------------
+: "${DEFAULT_AUDITS_DIR:="audits"}"
+: "${DEFAULT_AUDIT_REPORTS_DIR:="audit-reports"}"
+: "${DEFAULT_TARGET_AUDITS_DIR:="audits"}"
+
+readonly DEFAULT_AUDITS_DIR
+readonly DEFAULT_AUDIT_REPORTS_DIR
+readonly DEFAULT_TARGET_AUDITS_DIR

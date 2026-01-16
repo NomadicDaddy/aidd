@@ -76,9 +76,12 @@ source "${SCRIPT_DIR}/lib/iteration.sh"
 METADATA_DIR=$(find_or_create_metadata_dir "$PROJECT_DIR")
 
 # Check if spec is required (only for new projects or when metadata dir doesn't have app_spec.txt)
+# Audit mode skips spec requirement - audits run against existing codebases
 NEEDS_SPEC=false
-if [[ ! -d "$PROJECT_DIR" ]] || ! is_existing_codebase "$PROJECT_DIR"; then
-    NEEDS_SPEC=true
+if [[ "$AUDIT_MODE" != "true" ]]; then
+    if [[ ! -d "$PROJECT_DIR" ]] || ! is_existing_codebase "$PROJECT_DIR"; then
+        NEEDS_SPEC=true
+    fi
 fi
 
 if [[ "$NEEDS_SPEC" == true && -z "$SPEC_FILE" ]]; then
@@ -206,8 +209,25 @@ trap cleanup_logs EXIT
 
 log_info "Starting AI development driver with $CLI_NAME"
 
-# Check for unlimited iterations or fixed count
-if [[ -z "$MAX_ITERATIONS" ]]; then
+# ---------------------------------------------------------------------------
+# Multi-Audit Loop (runs once if not in audit mode or single audit)
+# ---------------------------------------------------------------------------
+run_single_audit_or_all() {
+    local current_audit="$1"
+    local audit_num="$2"
+    local total_audits="$3"
+
+    # Set AUDIT_NAME for this iteration
+    if [[ -n "$current_audit" ]]; then
+        AUDIT_NAME="$current_audit"
+        export AUDIT_NAME
+        if [[ $total_audits -gt 1 ]]; then
+            log_header "AUDIT $audit_num of $total_audits: $AUDIT_NAME"
+        fi
+    fi
+
+    # Check for unlimited iterations or fixed count
+    if [[ -z "$MAX_ITERATIONS" ]]; then
     log_info "Running unlimited iterations (use Ctrl+C to stop)"
     i=1
     while true; do
@@ -241,7 +261,7 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             fi
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
-            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" ]]; then
+            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" && "$PROMPT_TYPE" != "audit" ]]; then
                 copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
             fi
 
@@ -262,7 +282,8 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
 
             # Check if project is complete BEFORE sending prompt
             # This prevents unnecessary agent invocations when already done
-            if check_project_completion "$METADATA_DIR"; then
+            # Skip this check for audit mode - audits should always run regardless of completion
+            if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
                 log_info "Project completion CONFIRMED. All features pass, thorough review complete."
                 exit $EXIT_PROJECT_COMPLETE
             fi
@@ -277,7 +298,7 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             # Run the appropriate prompt
             prompt_name=$(basename "$PROMPT_PATH" .md)
             log_info "Sending $prompt_name prompt to $CLI_NAME..."
-            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
+            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" || "$PROMPT_TYPE" == "audit" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
@@ -289,6 +310,12 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
             if [[ "$PROMPT_TYPE" == "directive" ]]; then
                 rm -f "$METADATA_DIR/directive.md" 2>/dev/null
                 log_debug "Removed directive.md"
+            fi
+
+            # Clean up audit-prompt.md after audit mode completes
+            if [[ "$PROMPT_TYPE" == "audit" ]]; then
+                rm -f "$METADATA_DIR/audit-prompt.md" 2>/dev/null
+                log_debug "Removed audit-prompt.md"
             fi
 
             if [[ $CLI_EXIT_CODE -ne 0 ]]; then
@@ -324,17 +351,17 @@ if [[ -z "$MAX_ITERATIONS" ]]; then
 
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
 
-        # Handle project completion (exit cleanly with success)
+        # Handle project completion (return to allow multi-audit to continue)
         if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
             log_info "AI development driver completed: project finished"
-            exit $EXIT_SUCCESS
+            return 0
         fi
 
         # Check if current mode should stop early (TODO/in-progress with no items)
         # This prevents unnecessary next iterations when mode-specific work is done
         if should_stop_current_mode "$METADATA_DIR"; then
             log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
-            exit $EXIT_SUCCESS
+            return 0
         fi
 
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
@@ -382,7 +409,7 @@ else
             fi
 
             # Copy artifacts if needed (for onboarding/initializer prompts)
-            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" ]]; then
+            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" && "$PROMPT_TYPE" != "audit" ]]; then
                 copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
             fi
 
@@ -403,7 +430,8 @@ else
 
             # Check if project is complete BEFORE sending prompt
             # This prevents unnecessary agent invocations when already done
-            if check_project_completion "$METADATA_DIR"; then
+            # Skip this check for audit mode - audits should always run regardless of completion
+            if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
                 log_info "Project completion CONFIRMED. All features pass, thorough review complete."
                 exit $EXIT_PROJECT_COMPLETE
             fi
@@ -418,7 +446,7 @@ else
             # Run the appropriate prompt
             prompt_name=$(basename "$PROMPT_PATH" .md)
             log_info "Sending $prompt_name prompt to $CLI_NAME..."
-            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
+            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" || "$PROMPT_TYPE" == "audit" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
@@ -430,6 +458,12 @@ else
             if [[ "$PROMPT_TYPE" == "directive" ]]; then
                 rm -f "$METADATA_DIR/directive.md" 2>/dev/null
                 log_debug "Removed directive.md"
+            fi
+
+            # Clean up audit-prompt.md after audit mode completes
+            if [[ "$PROMPT_TYPE" == "audit" ]]; then
+                rm -f "$METADATA_DIR/audit-prompt.md" 2>/dev/null
+                log_debug "Removed audit-prompt.md"
             fi
 
             if [[ $CLI_EXIT_CODE -ne 0 ]]; then
@@ -470,17 +504,17 @@ else
         fi
 
         ITERATION_EXIT_CODE=${PIPESTATUS[0]}
-        # Handle project completion (exit cleanly with success)
+        # Handle project completion (return to allow multi-audit to continue)
         if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
             log_info "AI development driver completed: project finished"
-            exit $EXIT_SUCCESS
+            return 0
         fi
 
         # Check if current mode should stop early (TODO/in-progress with no items)
         # This prevents unnecessary next iterations when mode-specific work is done
         if should_stop_current_mode "$METADATA_DIR"; then
             log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
-            exit $EXIT_SUCCESS
+            return 0
         fi
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
@@ -494,5 +528,39 @@ else
     done
 fi
 
-log_info "AI development driver completed successfully"
+log_info "Audit iterations completed for: $AUDIT_NAME"
+}
+
+# ---------------------------------------------------------------------------
+# Execute Audit(s)
+# ---------------------------------------------------------------------------
+if [[ "$AUDIT_MODE" == "true" && ${#AUDIT_NAMES[@]} -gt 1 ]]; then
+    # Multiple audits - run each sequentially
+    total_audits=${#AUDIT_NAMES[@]}
+    log_info "Running $total_audits audits sequentially: ${AUDIT_NAMES[*]}"
+
+    for ((audit_idx=0; audit_idx<total_audits; audit_idx++)); do
+        current_audit="${AUDIT_NAMES[$audit_idx]}"
+        AUDIT_INDEX=$audit_idx
+        export AUDIT_INDEX
+
+        run_single_audit_or_all "$current_audit" "$((audit_idx + 1))" "$total_audits"
+
+        # Clean up audit-specific files between audits
+        rm -f "$METADATA_DIR/audit-prompt.md" 2>/dev/null
+
+        if [[ $audit_idx -lt $((total_audits - 1)) ]]; then
+            log_info ""
+            log_info "Proceeding to next audit..."
+            log_info ""
+        fi
+    done
+
+    log_info "All $total_audits audits completed successfully"
+else
+    # Single audit or non-audit mode - run once
+    run_single_audit_or_all "$AUDIT_NAME" "1" "1"
+    log_info "AI development driver completed successfully"
+fi
+
 exit $EXIT_SUCCESS

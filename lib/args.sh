@@ -32,6 +32,10 @@ export EXTRACT_STRUCTURED=false
 export EXTRACT_BATCH=false
 export CHECK_FEATURES=false
 export STOP_WHEN_DONE=false
+export AUDIT_MODE=false
+export AUDIT_NAME=""
+export AUDIT_NAMES=()
+export AUDIT_INDEX=0
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -72,6 +76,7 @@ OPTIONS:
     --extract-batch         Batch extract structured JSON from all existing iteration logs and exit
     --check-features        Validate all feature.json files against schema and exit
     --stop-when-done      Stop early when TODO/in-progress mode has no remaining items (optional)
+    --audit AUDIT[,...]   Run audit mode with one or more audits (e.g., SECURITY or DEAD_CODE,PERFORMANCE)
     --help                  Show this help message
 
 EXAMPLES:
@@ -97,6 +102,14 @@ EXAMPLES:
     $0 --project-dir ./myproject --prompt "perform a full quality control check against the project"
     $0 --project-dir ./myproject --prompt "review all security vulnerabilities and fix them"
     $0 --project-dir ./myproject --prompt "optimize performance bottlenecks" --max-iterations 1
+
+    # Audit mode (single audit)
+    $0 --project-dir ./myproject --audit SECURITY
+    $0 --project-dir ./myproject --audit CODE_QUALITY --max-iterations 1
+
+    # Audit mode (multiple audits - run sequentially)
+    $0 --project-dir ./myproject --audit DEAD_CODE,PERFORMANCE
+    $0 --project-dir ./myproject --audit SECURITY,CODE_QUALITY,TECHDEBT --max-iterations 2
 
 For more information, visit: https://github.com/NomadicDaddy/aidd
 EOF
@@ -194,6 +207,26 @@ parse_args() {
                 ;;
             --prompt)
                 CUSTOM_PROMPT="$2"
+                shift 2
+                ;;
+            --audit)
+                AUDIT_MODE=true
+                # Parse comma-separated audit names (e.g., "DEAD_CODE, PERFORMANCE")
+                local audit_input="$2"
+                # Remove spaces around commas and split by comma
+                IFS=',' read -ra audit_array <<< "$audit_input"
+                for audit in "${audit_array[@]}"; do
+                    # Trim whitespace from each audit name
+                    audit="${audit#"${audit%%[![:space:]]*}"}"
+                    audit="${audit%"${audit##*[![:space:]]}"}"
+                    if [[ -n "$audit" ]]; then
+                        AUDIT_NAMES+=("$audit")
+                    fi
+                done
+                # Set first audit as current (for backwards compatibility)
+                if [[ ${#AUDIT_NAMES[@]} -gt 0 ]]; then
+                    AUDIT_NAME="${AUDIT_NAMES[0]}"
+                fi
                 shift 2
                 ;;
             -h|--help)
@@ -879,6 +912,34 @@ validate_features() {
 }
 
 # -----------------------------------------------------------------------------
+# Validate Audit File Exists
+# -----------------------------------------------------------------------------
+# Usage: validate_audit <audit_name> <script_dir>
+# Returns: Audit file path on success (stdout), exit code 0
+# On failure: logs error, lists available audits, returns EXIT_NOT_FOUND
+validate_audit() {
+    local audit_name="$1"
+    local script_dir="$2"
+    local audits_dir="$script_dir/$DEFAULT_AUDITS_DIR"
+
+    # Normalize audit name (handle with/without .md extension)
+    local audit_file_base="${audit_name%.md}"
+    local audit_file="$audits_dir/${audit_file_base}.md"
+
+    if [[ ! -f "$audit_file" ]]; then
+        log_error "Audit file not found: $audit_file"
+        log_info "Available audits:"
+        ls -1 "$audits_dir"/*.md 2>/dev/null | xargs -n1 basename | sed 's/\.md$//' | while read -r name; do
+            log_info "  - $name"
+        done
+        return $EXIT_NOT_FOUND
+    fi
+
+    echo "$audit_file"
+    return 0
+}
+
+# -----------------------------------------------------------------------------
 # Main Entry Point for Argument Parsing
 # -----------------------------------------------------------------------------
 # Usage: source lib/args.sh && init_args "$@"
@@ -933,6 +994,20 @@ init_args() {
     # Handle --todo option (export mode flag for use by main script)
     # TODO_MODE is handled by determine_prompt() in lib/iteration.sh
     # We just need to pass through and let iteration.sh handle it
+
+    # Validate --audit option
+    if [[ "$AUDIT_MODE" == true ]]; then
+        if [[ ${#AUDIT_NAMES[@]} -eq 0 ]]; then
+            log_error "Missing audit name. Usage: --audit AUDIT_NAME[,AUDIT_NAME,...]"
+            log_info "Example: --audit SECURITY"
+            log_info "Example: --audit DEAD_CODE,PERFORMANCE"
+            return $EXIT_INVALID_ARGS
+        fi
+        if [[ ${#AUDIT_NAMES[@]} -gt 1 ]]; then
+            log_info "Multiple audits specified: ${AUDIT_NAMES[*]}"
+            log_info "Each audit will run sequentially with its own iterations"
+        fi
+    fi
 
     return 0
 }

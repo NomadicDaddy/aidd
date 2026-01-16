@@ -12,7 +12,11 @@ graph TD
     G --> H[Build Model Args]
     H --> H1[Determine CLI: OpenCode or KiloCode]
 
-    H1 --> I[Check if Existing Codebase]
+    H1 --> H2{Audit Mode?}
+    H2 -->|Yes| H3[Multi-Audit Loop]
+    H3 --> H4[Set Current Audit Name]
+    H4 --> I
+    H2 -->|No| I[Check if Existing Codebase]
     I --> J{Dir Exists & Has Non-Ignored Files?}
     J -->|No| K[Set NEEDS_SPEC=true]
     J -->|Yes| L[Set NEEDS_SPEC=false]
@@ -50,7 +54,9 @@ graph TD
     AG --> AH[Compute ONBOARDING_COMPLETE]
     AH --> AI{Have spec+feature_list AND onboarding complete?}
 
-    AI -->|Yes| AJ[Send Coding Prompt]
+    AI -->|Yes| AI2{Audit Mode?}
+    AI2 -->|Yes| AI3[Send Audit Prompt]
+    AI2 -->|No| AJ[Send Coding Prompt]
     AI -->|No| AK{Existing Codebase AND not NEW_PROJECT_CREATED?}
 
     AK -->|Yes| AL[Copy Artifacts no overwrite]
@@ -61,6 +67,7 @@ graph TD
     AO --> AP[Send Initializer Prompt]
 
     AJ --> AQ[run_cli_prompt via coprocess]
+    AI3 --> AQ
     AM --> AQ
     AP --> AQ
 
@@ -94,6 +101,8 @@ graph TD
     style AT fill:#fff9c4
     style AE1 fill:#e3f2fd
     style AE2 fill:#e3f2fd
+    style H3 fill:#f3e5f5
+    style AI3 fill:#f3e5f5
 ```
 
 ## Key Decision Points
@@ -102,6 +111,7 @@ graph TD
 
 - **OpenCode** (default): `opencode run`
 - **KiloCode**: Specify with `--cli kilocode`
+- **Claude Code**: Specify with `--cli claude-code`
 
 ### 2. Project Directory Check
 
@@ -156,8 +166,20 @@ Based on project state:
 - **Initializer**: New/empty projects where spec is copied
 - **Coding**: When spec and feature_list exist and onboarding complete
 - **TODO**: When `--todo` flag is used (work on todo items)
+- **Audit**: When `--audit AUDIT_NAME` is used (specialized code audits)
 
-### 9. Abort/Failure Policy
+### 9. Audit Mode (v2.3.0+)
+
+Run specialized code audits that generate actionable issue backlogs:
+
+- **Single Audit**: `--audit SECURITY`
+- **Multi-Audit**: `--audit SECURITY,CODE_QUALITY,ARCHITECTURE` (comma-separated)
+- **Sequential Execution**: Each audit runs independently with its own iterations
+- **Issue Generation**: Creates `feature.json` files in `.automaker/features/audit-{name}-*/`
+- **Audit Reports**: Generates reports in `.automaker/audit-reports/`
+- **Cross-References**: Referenced audit files copied to `.automaker/audits/`
+
+### 10. Abort/Failure Policy
 
 `--quit-on-abort N` stops after N consecutive failures.
 
@@ -258,7 +280,8 @@ This modular approach:
 Uses factory pattern to support multiple CLIs:
 
 - `cli-factory.sh` - Unified interface
-- `opencode-cli.sh` - OpenCode implementation
-- `kilocode-cli.sh` - KiloCode implementation
+- `cli-opencode.sh` - OpenCode implementation
+- `cli-kilocode.sh` - KiloCode implementation
+- `cli-claude-code.sh` - Claude Code implementation
 
-Same codebase supports both CLIs with minimal differences.
+Same codebase supports all three CLIs with minimal differences.

@@ -90,6 +90,7 @@ Legitimate application-specific differences:
 | `[ ]` | 5-tier RBAC system (SYSOP > ADMIN > MANAGER > OPERATOR > VIEWER) | Check role definitions                              |
 | `[ ]` | Soft delete pattern on all entities                              | Verify `isDeleted`, `deletedAt`, `deletedBy` fields |
 | `[ ]` | Audit trail logging service                                      | Verify auditService implementation                  |
+| `[ ]` | WebSocket using native `ws` package (NOT Socket.IO)              | Replace socket.io with ws if present                |
 
 ## 1.3 Frontend Structure
 
@@ -442,6 +443,8 @@ Ensure `frontend/src/tailwind.css` `@layer components` block includes:
 | `frontend/src/services/api.ts` | `[ ]` | Review and align pattern                     |
 | `frontend/vite.config.ts`      | `[ ]` | Verify `manualChunks` matches template       |
 | `backend/src/middleware/`      | `[ ]` | Align middleware implementations             |
+| `backend/src/services/websocket/*.ts` | `[ ]` | Verify native ws pattern, no socket.io |
+| `frontend/src/services/wsClient.ts`   | `[ ]` | Verify native WebSocket client         |
 
 ## 5.2 Component Presence
 
@@ -583,6 +586,7 @@ Copy this section for each application audit:
 | Component-based router       | `<BrowserRouter>` in App.tsx           | Migrate to `createBrowserRouter`  |
 | Missing soft delete          | No `isDeleted` field on models         | Add fields to Prisma schema       |
 | Inconsistent response format | Varied API response shapes             | Standardize to envelope format    |
+| Socket.IO usage              | `socket.io` in package.json            | Replace with native `ws` package  |
 
 ---
 

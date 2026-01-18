@@ -835,8 +835,8 @@ validate_features() {
             # Required field: id
             if [[ -z "$id_val" ]]; then
                 file_errors+="  ✗ Missing required field: id\n"
-            elif [[ ! "$id_val" =~ ^feature-[0-9]+-[a-zA-Z0-9]+$ ]]; then
-                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{random})\n"
+            elif [[ ! "$id_val" =~ ^(feature|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+$ ]]; then
+                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{random} or audit-{type}-{timestamp}-{description})\n"
             fi
 
             # Required field: category

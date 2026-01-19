@@ -16,12 +16,12 @@ This document provides a structured audit framework for evaluating derived appli
 
 ## Related Documents
 
-| Document              | Path                                          | Purpose                                      |
-| --------------------- | --------------------------------------------- | -------------------------------------------- |
-| Stack Reference       | `stack-spernakit.md`                          | Core architecture and commands               |
-| Frontend API Standard | `std-frontend-api.md`                         | API service patterns                         |
-| Template Refactor     | `.claude/commands/template-refactor.md`       | Bidirectional enhancement detection workflow |
-| Enhancement Log       | `.claude/logs/template-enhancements.md`      | Historical record of template improvements  |
+| Document              | Path                                    | Purpose                                      |
+| --------------------- | --------------------------------------- | -------------------------------------------- |
+| Stack Reference       | `stack-spernakit.md`                    | Core architecture and commands               |
+| Frontend API Standard | `std-frontend-api.md`                   | API service patterns                         |
+| Template Refactor     | `.claude/commands/template-refactor.md` | Bidirectional enhancement detection workflow |
+| Enhancement Log       | `.claude/logs/template-enhancements.md` | Historical record of template improvements   |
 
 ## Audit Objectives
 

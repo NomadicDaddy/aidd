@@ -4,13 +4,9 @@
 	"bracketSameLine": true,
 	"bracketSpacing": true,
 	"endOfLine": "lf",
-	"importOrder": ["<THIRD_PARTY_MODULES>", "^@/(.*)$", "^[./]"],
-	"importOrderSeparation": true,
-	"importOrderSortSpecifiers": true,
 	"jsonRecursiveSort": true,
 	"jsxSingleQuote": false,
 	"plugins": [
-		"@trivago/prettier-plugin-sort-imports",
 		"prettier-plugin-organize-attributes",
 		"prettier-plugin-sort-json",
 		"prettier-plugin-tailwindcss"

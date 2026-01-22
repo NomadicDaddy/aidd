@@ -51,10 +51,10 @@ error TS1128: Declaration or statement expected.
 
 ```typescript
 // ❌ CORRUPTED (unterminated regex)
-const pattern = /TODO:.*/
+const pattern = /TODO:.*/;
 
 // ✅ FIXED (proper escaping)
-const pattern = /TODO:.*$/
+const pattern = /TODO:.*$/;
 ```
 
 ---
@@ -79,11 +79,11 @@ error TS1161: Unterminated regular expression literal.
 
     ```typescript
     // ❌ WRONG
-    const match = content.match(/TODO: .*/g)
+    const match = content.match(/TODO: .*/g);
 
     // ✅ CORRECT
-    const todoPattern = new RegExp('TODO: .*', 'g')
-    const match = content.match(todoPattern)
+    const todoPattern = new RegExp('TODO: .*', 'g');
+    const match = content.match(todoPattern);
     ```
 
 2. **Use string literals instead:**
@@ -154,10 +154,10 @@ error TS2345: Argument of type 'undefined' is not assignable to parameter of typ
 
     ```typescript
     // ❌ WRONG
-    const count: string = items.length
+    const count: string = items.length;
 
     // ✅ CORRECT
-    const count = items.length // TypeScript infers number
+    const count = items.length; // TypeScript infers number
     ```
 
 2. **Add explicit cast** (if you're certain):
@@ -220,10 +220,10 @@ error  Missing return type on function  @typescript-eslint/explicit-function-ret
 
     ```typescript
     // ❌ WRONG
-    import React, { useState } from 'react' // React unused
+    import React, { useState } from 'react'; // React unused
 
     // ✅ CORRECT
-    import { useState } from 'react'
+    import { useState } from 'react';
     ```
 
 4. **Add missing annotations:**
@@ -330,10 +330,10 @@ Module not found: Error: Can't resolve './component'
 
     ```typescript
     // ❌ WRONG
-    import Component from './component'
+    import Component from './component';
 
     // ✅ CORRECT
-    import Component from './components/Component'
+    import Component from './components/Component';
     ```
 
 3. **Clear build cache:**

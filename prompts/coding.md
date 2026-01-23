@@ -280,9 +280,9 @@ cat .automaker/todo.md
 
 ---
 
-### STEP 6: SELECT FEATURE (TIME-AWARE)
+### STEP 6: SELECT FEATURE
 
-**Before selecting a feature, assess time and complexity.**
+**Before selecting a feature, check for audit-based findings and prioritize those. Resolve multiple audit findings in the same session if possible.**
 
 > **CRITICAL DEPENDENCY RULE:** NEVER select a feature whose dependencies are not satisfied.
 > Before implementing ANY feature, verify that ALL features listed in its `dependencies` array
@@ -299,31 +299,7 @@ For each feature with `"passes": false`:
 - **Complex:** New architecture, multiple systems, 45-90 minutes
 - **Very Complex:** Large refactoring, 90-180+ minutes
 
-#### 6.2 Check Time Remaining
-
-- **Default time budget:** 10 minutes per iteration (600 seconds)
-- **Calculate remaining time:** Budget minus elapsed
-- **Use only 80%** of remaining time (20% buffer for commit/cleanup)
-
-#### 6.3 Feature Selection Rules
-
-**If time remaining < 3 minutes:**
-
-- Only attempt simple features
-
-**If time remaining < 6 minutes:**
-
-- Skip very complex features
-- Prefer simple/medium features
-
-**Always:**
-
-- **NEVER select features with unsatisfied dependencies** (check `dependencies` first!)
-- Prioritize features already marked `"status": "in_progress"`
-- Don't start large features late in iteration
-- Quality over quantity: One complete feature > three half-done
-
-#### 6.4 Ingest Todo List First
+#### 6.2 Ingest Todo List First
 
 **Check `/.automaker/todo.md` for priority work:**
 
@@ -332,7 +308,7 @@ For each feature with `"passes": false`:
 3. Remove items from todo.md as you add them
 4. Delete or empty todo.md when complete
 
-#### 6.5 Validate Feature Dependencies
+#### 6.3 Validate Feature Dependencies
 
 **CRITICAL: Before selecting a feature, ensure it has dependency tracking:**
 
@@ -360,7 +336,7 @@ For each feature with `"passes": false`:
     }
     ```
 
-#### 6.6 Select Feature from Feature List
+#### 6.4 Select Feature from Feature List
 
 Feature JSON must follow AutoMaker format exactly.
 
@@ -370,7 +346,7 @@ Feature JSON must follow AutoMaker format exactly.
 - Group by priority (critical > high > medium > low)
 - Prefer `"status": "in_progress"` over `"status": "backlog"`
 - **CRITICAL: Check dependencies are satisfied**
-- Select one feature that fits time budget
+- Prefer audit-related findings over other types
 
 **Dependency validation:**
 
@@ -525,7 +501,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 "status": "backlog" →  "status": "in_progress" →  "status": "completed"
 ```
 
-**NEVER in Session 2+:**
+**NEVER**
 
 - Remove tests
 - Edit test descriptions

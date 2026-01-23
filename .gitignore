@@ -23,7 +23,7 @@ coverage/
 *.test.log
 
 # Local configuration
-scaffolding
+scaffolding/
 copydirs.txt
 copyfiles.txt
 

@@ -10,21 +10,21 @@ You are in TODO mode and ready to complete existing work items in project.
 - **Architecture map:** `/.automaker/project_structure.md`
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
-### COMMON GUIDELINES
+### COMMON GUIDELINES (/\_common/)
 
-**See shared documentation in `/_common/` for:**
+Consult these as needed throughout the session:
 
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
-- **project-overrides.md** - How to handle project.txt overrides (Step 1)
-- **tool-selection-guide.md** - When to use MCP tools vs execute_command vs browser_action
-- **testing-requirements.md** - Comprehensive UI testing requirements
-- **file-integrity.md** - Safe file editing and verification protocols
-- **error-handling-patterns.md** - Common errors and recovery strategies
+| Document                     | Purpose                                      |
+| ---------------------------- | -------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints                   |
+| `assistant-rules-loading.md` | How to load and apply project rules          |
+| `project-overrides.md`       | How to handle project.txt overrides          |
+| `tool-selection-guide.md`    | When to use MCP tools vs execute_command     |
+| `testing-requirements.md`    | Comprehensive UI testing requirements        |
+| `file-integrity.md`          | Safe file editing and verification protocols |
+| `error-handling-patterns.md` | Common errors and recovery strategies        |
 
 ### HARD CONSTRAINTS
-
-**See `/_common/hard-constraints.md` for details.**
 
 1. **Do not run** `scripts/setup.ts` or any other setup scripts.
 2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.automaker/CHANGELOG.md`.
@@ -38,10 +38,6 @@ You are in TODO mode and ready to complete existing work items in project.
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-See `/_common/assistant-rules-loading.md` for complete instructions.
-
-**Quick summary:**
-
 1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
@@ -49,11 +45,22 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 ---
 
-### STEP 1: LOAD TODO LIST
+### STEP 1: CHECK PROJECT OVERRIDES
+
+**CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
+
+1. Read `/.automaker/project.txt` if it exists
+2. Apply all overrides throughout the session
+3. Project overrides have HIGHEST priority
+4. Document overrides in your initial assessment
+
+---
+
+### STEP 2: LOAD TODO LIST
 
 **CRITICAL: The todo.md file contains work items that need completion.**
 
-#### 1.1 Read Todo List
+#### 2.1 Read Todo List
 
 **Check for `/.automaker/todo.md`:**
 
@@ -63,61 +70,45 @@ mcp_filesystem_read_text_file .automaker/todo.md
 
 **If todo.md exists and has incomplete items:**
 
-- Continue to Step 2 (assess TODOs)
+- Continue to Step 3 (assess TODOs)
 - Parse each item to understand what needs to be done
 - Note priorities if indicated (CRITICAL, HIGH, MEDIUM, LOW)
 - Consider dependencies between items
 
-**If todo.md doesn't exist or is empty:**
+**If todo.md doesn't exist or is empty:** Proceed to Step 2.2 (search for TODOs)
 
-- Proceed to Step 1.2 (search for TODOs)
-
-#### 1.2 Search for TODO List Alternatives
+#### 2.2 Search for TODO List Alternatives
 
 **Search for common TODO list file names:**
 
 ```bash
 # Use mcp_filesystem_search_files for these patterns:
-- todo.md
-- todos.md
-- TODO.md
-- TODOs.md
-- TODO-list.md
-- todo-list.md
-- tasks.md
-- TASKS.md
+- todo.md, todos.md, TODO.md, TODOs.md
+- TODO-list.md, todo-list.md, tasks.md, TASKS.md
 ```
 
-**If found:**
+**If found:** Read the first matching file and proceed to Step 3.
 
-- Read the first matching file as the TODO list
-- Proceed to Step 2
+**If not found:** Search for TODO tags in code (Step 2.3).
 
-**If not found:**
-
-- Search for TODO tags in code (Step 1.3)
-
-#### 1.3 Search for TODO Tags in Code
+#### 2.3 Search for TODO Tags in Code
 
 **Search source code for TODO comments:**
 
 ```bash
-# Use mcp_filesystem_search_files with these patterns:
 # Search patterns: "TODO:", "TODO(", "// TODO:", "/* TODO:", "# TODO:"
-# Search extensions: .ts, .tsx, .js, .jsx, .py, .java, .go, .rs, .c, .cpp, .h, .cs, .php
+# Search extensions: .ts, .tsx, .js, .jsx, .py, .java, .go, .rs, .c, .cpp, .h, .cs, .php, .ps1, .psd1
 ```
 
 **If TODOs found in code:**
 
 - Collect them into a temporary assessment
 - These can be completed even without explicit todo.md
-- Proceed to Step 2
+- Proceed to Step 3
 
-**If no TODOs found anywhere:**
+**If no TODOs found anywhere:** Proceed to Step 2.4 (transition to feature coding).
 
-- Proceed to Step 1.4 (transition to feature coding)
-
-#### 1.4 Transition to Feature Coding
+#### 2.4 Transition to Feature Coding
 
 **If neither todo.md nor code TODOs exist:**
 
@@ -139,20 +130,20 @@ mcp_filesystem_read_text_file .automaker/todo.md
 
 ---
 
-### STEP 2: ASSESS AND SELECT TODO ITEM
+### STEP 3: ASSESS AND SELECT TODO ITEM
 
-**Only execute this step if TODO items exist. Otherwise, transition per Step 1.4.**
+**Only execute this step if TODO items exist. Otherwise, transition per Step 2.4.**
 
-#### 2.1 Review All Todo Items
+#### 3.1 Review All Todo Items
 
 **Read and understand each item:**
 
 - Review context and requirements
-- Check if any items are code TODOs from Step 1.3
+- Check if any items are code TODOs from Step 2.3
 - Identify specific files/line numbers mentioned
 - Note any dependencies between items
 
-#### 2.2 Prioritize Selection
+#### 3.2 Prioritize Selection
 
 **Priority order:**
 
@@ -162,18 +153,7 @@ mcp_filesystem_read_text_file .automaker/todo.md
 4. Dependencies (complete required items first)
 5. Items completable in this session
 
-#### 2.3 Before Selecting Item
-
-**Verify codebase context:**
-
-```bash
-# Use mcp_filesystem_search_files to locate relevant files
-# Read those files with mcp_filesystem_read_text_file
-# Identify what needs to be modified or created
-# For code TODOs, note exact file and line number
-```
-
-#### 2.4 Select One Item
+#### 3.3 Select One Item
 
 - Choose highest priority item that can be reasonably completed
 - Record selection in your initial assessment
@@ -181,14 +161,11 @@ mcp_filesystem_read_text_file .automaker/todo.md
 
 ---
 
-### STEP 3: IMPLEMENT THE TODO ITEM
+### STEP 4: IMPLEMENT THE TODO ITEM
 
 **Only execute if TODO items exist.**
 
-**See `/_common/file-integrity.md` for safe editing.**
-**See `/_common/tool-selection-guide.md` for tool selection.**
-
-#### 3.1 Write Code
+#### 4.1 Write Code
 
 **Use MCP tools for file operations:**
 
@@ -203,9 +180,7 @@ mcp_filesystem_read_text_file .automaker/todo.md
 - Follow assistant rule conventions
 - Modify or create files as needed
 
-#### 3.2 Test Implementation
-
-**See `/_common/testing-requirements.md` for complete guidelines.**
+#### 4.2 Test Implementation
 
 **Use browser automation:**
 
@@ -215,74 +190,59 @@ mcp_filesystem_read_text_file .automaker/todo.md
 - Verify no regressions introduced
 - Check for console errors
 
-#### 3.3 Remove TODO Comments
+#### 4.3 Remove TODO Comments
 
 **If todo item was a TODO comment in code:**
 
 - Remove or convert it to proper comment
 - Replace `// TODO: description` with implementation
-- For code TODOs from Step 1.3, remove or mark complete
+- For code TODOs from Step 2.3, remove or mark complete
 
-#### 3.4 Run Quality Control
+#### 4.4 Run Quality Checks
 
 **BEFORE proceeding, ensure all quality gates pass:**
 
-- Run `bun run smoke:qc` (if exists)
-- Otherwise: lint, type-check, format
-- Fix any failures immediately (see `/_common/error-handling-patterns.md`)
+- Run `bun run smoke:qc` (if exists) or lint, type-check, format
+- Fix any failures immediately
 - Verify only expected files modified (`git status`)
 - For schema changes, check no duplicates
 
 ---
 
-### STEP 4: VERIFY WITH BROWSER AUTOMATION
+### STEP 5: VERIFY WITH BROWSER AUTOMATION
 
 **Only execute if TODO items exist.**
 
 **CRITICAL: You MUST verify changes through actual UI.**
 
-**See `/_common/testing-requirements.md` for complete requirements.**
-
-#### 4.1 Launch and Navigate
+#### 5.1 Launch and Navigate
 
 ```
 browser_action.launch http://localhost:{frontendPort}
 # Navigate to relevant area of application
 ```
 
-#### 4.2 Test Completed Item
+#### 5.2 Test Completed Item
 
 - Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`
 - Verify specific behavior from todo item works correctly
 - Test edge cases and error conditions
 
-#### 4.3 Verify Visuals and Logs
+#### 5.3 Verify Visuals and Logs
 
 - Take screenshots to verify visual appearance
 - Check browser console for errors
 - Verify complete user workflows end-to-end
 
-**DO:**
-✅ Test through UI with clicks and keyboard
-✅ Take screenshots
-✅ Check console errors
-✅ Verify complete workflows
-
-**DON'T:**
-❌ Only test with curl
-❌ Skip UI testing
-❌ Skip visual verification
-❌ Mark complete without thorough verification
-
 ---
 
-### STEP 5: UPDATE TODO LIST
+### STEP 6: UPDATE TODO LIST
 
 **Only execute if TODO items exist.**
 
 **CRITICAL: Update both .automaker/todo.md AND remove completed TODO comments from code.**
 
-#### 5.1 Remove or Mark Completed Item
+#### 6.1 Remove or Mark Completed Item
 
 **For items from .automaker/todo.md:**
 
@@ -305,7 +265,7 @@ browser_action.launch http://localhost:{frontendPort}
 
 # After
 
-- [x] Fix login form validation [✅ DONE 2026-01-09]
+- [x] Fix login form validation [DONE 2026-01-09]
 ```
 
 **For TODO comments from code files:**
@@ -336,7 +296,7 @@ async function fetchData() {
 - Ensure all TODO comments have been removed from code
 - Document completion in CHANGELOG.md
 
-#### 5.2 Keep Lists Organized
+#### 6.2 Keep Lists Organized
 
 - Maintain proper formatting and structure
 - Add any new TODOs discovered during implementation
@@ -344,7 +304,7 @@ async function fetchData() {
 
 ---
 
-### STEP 6: COMMIT PROGRESS
+### STEP 7: COMMIT PROGRESS
 
 **Only execute if TODO items exist.**
 
@@ -355,18 +315,12 @@ git add .
 git commit -m "Complete todo item: [description]" \
   -m "- Implemented [specific changes]" \
   -m "- Tested via UI (browser_action)" \
-  -m "- Updated /.automaker/todo.md: removed completed item" \
-  -m "- Screenshots (if captured) saved under verification/"
+  -m "- Updated /.automaker/todo.md: removed completed item"
 ```
-
-**If shell doesn't support line continuations:**
-
-- Run as single line, OR
-- Use multiple `-m` flags separately
 
 ---
 
-### STEP 7: UPDATE PROGRESS NOTES
+### STEP 8: UPDATE PROGRESS NOTES
 
 **Only execute if TODO items exist.**
 
@@ -388,9 +342,9 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 
 ---
 
-### STEP 8: END SESSION CLEANLY
+### STEP 9: END SESSION CLEANLY
 
-**Only execute if TODO items exist. Otherwise, follow Step 1.4 transition.**
+**Only execute if TODO items exist. Otherwise, follow Step 2.4 transition.**
 
 **Before context fills up:**
 
@@ -426,8 +380,6 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 
 ### File Integrity
 
-See `/_common/file-integrity.md`:
-
 - **NEVER** skip post-edit verification
 - **ALWAYS** use `git checkout` if corruption detected
 - **IMMEDIATELY** retry with different approach if edit fails
@@ -441,20 +393,6 @@ See `/_common/file-integrity.md`:
 - Exit with code 0
 - Next session will use coding.md prompt
 - Feature implementation will continue
-
----
-
-## APPENDICES
-
-**See `/_common/` directory for detailed references:**
-
-- **error-handling-patterns.md** - Common errors and recovery
-- **testing-requirements.md** - Complete UI testing guidelines
-- **tool-selection-guide.md** - Tool selection decision tree
-- **file-integrity.md** - Safe file editing protocols
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load project rules
-- **project-overrides.md** - How to handle project.txt
 
 ---
 

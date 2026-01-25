@@ -11,20 +11,20 @@ You are in Code mode and ready to begin integrating with an existing codebase to
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
-### COMMON GUIDELINES
+### COMMON GUIDELINES (/\_common/)
 
-**See shared documentation in `/_common/` for:**
+Consult these as needed throughout the session:
 
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
-- **project-overrides.md** - How to handle project.txt overrides (Step 1)
-- **tool-selection-guide.md** - When to use MCP tools vs execute_command
-- **file-integrity.md** - Safe file editing and verification protocols
-- **error-handling-patterns.md** - Common errors and recovery strategies
+| Document                     | Purpose                                      |
+| ---------------------------- | -------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints                   |
+| `assistant-rules-loading.md` | How to load and apply project rules          |
+| `project-overrides.md`       | How to handle project.txt overrides          |
+| `tool-selection-guide.md`    | When to use MCP tools vs execute_command     |
+| `file-integrity.md`          | Safe file editing and verification protocols |
+| `error-handling-patterns.md` | Common errors and recovery strategies        |
 
 ### HARD CONSTRAINTS
-
-**See `/_common/hard-constraints.md` for details.**
 
 1. **Stop after onboarding.** Do not implement product features.
 2. Do not write application business logic. Only create tracking/scaffolding files.
@@ -38,10 +38,6 @@ You are in Code mode and ready to begin integrating with an existing codebase to
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-See `/_common/assistant-rules-loading.md` for complete instructions.
-
-**Quick summary:**
-
 1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
@@ -52,10 +48,6 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 ### STEP 1: CHECK PROJECT OVERRIDES
 
 **CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
-
-See `/_common/project-overrides.md` for complete instructions.
-
-**Quick summary:**
 
 1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
@@ -68,7 +60,7 @@ See `/_common/project-overrides.md` for complete instructions.
 
 Start by orienting yourself with the existing codebase.
 
-**Use MCP tools (see `/_common/tool-selection-guide.md`):**
+**Use MCP tools:**
 
 - `mcp_filesystem_read_text_file` - Read existing files
 - `mcp_filesystem_list_directory` - Explore directory structure
@@ -157,8 +149,6 @@ mcp_filesystem_list_directory .
       feature.json
 ```
 
-**See `/_common/file-integrity.md` for safe JSON editing.**
-
 #### 3.1 Inventory Existing Features
 
 **Systematically analyze what exists:**
@@ -193,10 +183,10 @@ mcp_filesystem_list_directory .
 
 Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
-1. ✅ Found the code
-2. ✅ Read and understood it
-3. ✅ Verified it works via test/inspection
-4. ✅ Confirmed it matches spec requirements
+1. Found the code
+2. Read and understood it
+3. Verified it works via test/inspection
+4. Confirmed it matches spec requirements
 
 **If existing features/{feature-id}/feature.json present:**
 
@@ -205,12 +195,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - Add features found in codebase but not in spec
 - Ensure minimum 10 features with `"passes": false` remain
 
-**Format (same as initializer):**
-
-**Timestamp format:**
-
-- `createdAt` and `updatedAt` MUST use ISO 8601 format: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
-- Always use current UTC timestamp: `date -u +"%Y-%m-%dT%H:%M:%S.000Z"`
+**Feature JSON format:**
 
 **ID format:** `feature-{timestamp}-{random}` where:
 
@@ -219,22 +204,22 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - Example: `feature-20260109142345-abc123def` ✓
 - Invalid: `feature-20260109142345-my-feature` ✗ (hyphens in random part)
 
+**Timestamp format:** `createdAt` and `updatedAt` MUST use ISO 8601: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
+
 ```json
 {
-	"id": "feature-{timestamp}-{random}",
-	"description": "Short name of feature/capability being validated",
 	"category": "Core|UI|Security|Performance|Testing|DevEx|Documentation",
-	"priority": 1,  // 1=critical, 2=high, 3=medium, 4=low
-	"status": "backlog",  // backlog, inProgress, completed, blocked
 	"createdAt": "2026-01-09T14:23:45.000Z",
-	"updatedAt": "2026-01-09T14:23:45.000Z",
-	"justFinishedAt": null,  // Set when status changes to completed
-	"dependencies": [],  // Array of feature IDs this feature depends on
-	"spec": "1. Step description
-2. Another step
-3. Verify outcome",
+	"dependencies": [],
+	"description": "Short name of feature/capability being validated",
+	"id": "feature-{timestamp}-{random}",
+	"justFinishedAt": null,
 	"passes": false,
-	"title": "Short descriptive title"
+	"priority": 1,
+	"spec": "1. Step description\n2. Another step\n3. Verify outcome",
+	"status": "backlog",
+	"title": "Short descriptive title",
+	"updatedAt": "2026-01-09T14:23:45.000Z"
 }
 ```
 
@@ -243,32 +228,8 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 **CRITICAL: Track feature dependencies in `dependencies` field:**
 
 - For each feature, identify which other features MUST be implemented first
-- Reference dependencies by their exact `id` field value (format: `feature-{timestamp}-{random}`)
+- Reference dependencies by their exact `id` field value
 - Use empty array `[]` if feature has no dependencies
-- Dependencies create implementation order constraints
-
-**Examples:**
-
-```json
-{
-	"id": "feature-20260109142345-abc123def",
-	"description": "User login form",
-	"dependencies": [], // No dependencies - foundational feature
-	...
-}
-{
-	"id": "feature-20260109142346-xyz789ghi",
-	"description": "Password reset functionality",
-	"dependencies": ["feature-20260109142345-abc123def"], // Depends on login existing (references exact ID)
-	...
-}
-{
-	"id": "feature-20260109142347-lmn456opq",
-	"description": "Social media OAuth login",
-	"dependencies": ["feature-20260109142345-abc123def", "feature-20260109142348-rst012uvw"], // Multiple dependencies
-	...
-}
-```
 
 **Dependency guidelines:**
 
@@ -290,7 +251,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 - Conservative marking: default to `"passes": false`
 - Cover spec AND existing codebase exhaustively
 - ALL features must have `dependencies` field (even if empty array)
-- ALL features must have `id` field (format: `feature-{timestamp}-{random}`)
+- ALL features must have `id` field
 
 #### 3.5 Document Codebase State
 
@@ -412,11 +373,7 @@ git add .
 git commit -m "onboard"
 ```
 
-**Handle git failures:**
-
-- See `/_common/error-handling-patterns.md`
-- Document issues in CHANGELOG.md
-- Git is optional if not in spec
+**Handle git failures:** Document issues in CHANGELOG.md. Git is optional if not in spec.
 
 ---
 
@@ -440,19 +397,16 @@ git commit -m "onboard"
 
 - [ ] Add input validation to contact form
 - [ ] Fix TypeScript errors in utils/helpers.ts
-- [ ] Improve error handling in API routes
 
 ## Low Priority
 
 - [ ] Add loading spinners to async operations
 - [ ] Refactor duplicate code in components/
-- [ ] Update outdated dependencies
 
 ## Technical Debt
 
 - [ ] Add unit tests for backend services
 - [ ] Document API endpoints
-- [ ] Add error boundaries to React components
 ```
 
 #### 7.2 Prioritize Issues
@@ -500,7 +454,6 @@ git commit -m "onboard"
 
 - Session 2 should start with TODO mode to fix broken features
 - Then continue with implementing missing features
-- Follow spec requirements for new features
 ```
 
 ---
@@ -534,12 +487,6 @@ ls -la .automaker/features/
 
 # Count features (each feature should have its own directory)
 find .automaker/features/ -name "feature.json" | wc -l
-
-# Verify each feature file is valid JSON
-for f in .automaker/features/*/feature.json; do
-  echo "Checking $f..."
-  cat "$f" | head -5
-done
 
 # Check git status
 git status
@@ -612,19 +559,6 @@ git diff
 - Documentation must match reality (not generic boilerplate)
 - Git repository must be properly configured
 - All work must be committed
-
----
-
-## APPENDICES
-
-**See `/_common/` directory for detailed references:**
-
-- **error-handling-patterns.md** - Common errors and recovery
-- **tool-selection-guide.md** - Tool selection guidance
-- **file-integrity.md** - Safe file editing protocols
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load project rules
-- **project-overrides.md** - How to handle project.txt
 
 ---
 

@@ -11,17 +11,19 @@ You are in In-Progress mode, focusing EXCLUSIVELY on features with `"status": "i
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
-### COMMON GUIDELINES **MUST READ**
+### COMMON GUIDELINES (/\_common/)
 
-**See shared documentation in `/_common/` for:**
+Consult these as needed throughout the session:
 
-- **hard-constraints.md** - Non-negotiable constraints (blocking processes, setup scripts, etc.)
-- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
-- **project-overrides.md** - How to handle project.txt overrides (Step 1)
-- **tool-selection-guide.md** - When to use MCP tools vs execute_command vs browser_action
-- **testing-requirements.md** - Comprehensive UI testing requirements
-- **file-integrity.md** - Safe file editing and verification protocols
-- **error-handling-patterns.md** - Common errors and recovery strategies (Appendix)
+| Document                     | Purpose                                              |
+| ---------------------------- | ---------------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
+| `assistant-rules-loading.md` | How to load and apply project rules                  |
+| `project-overrides.md`       | How to handle project.txt overrides                  |
+| `tool-selection-guide.md`    | When to use MCP tools vs execute_command             |
+| `testing-requirements.md`    | Comprehensive UI testing requirements                |
+| `file-integrity.md`          | Safe file editing and verification protocols         |
+| `error-handling-patterns.md` | Common errors and recovery strategies                |
 
 ---
 
@@ -30,10 +32,6 @@ You are in In-Progress mode, focusing EXCLUSIVELY on features with `"status": "i
 ### STEP 0: INGEST ASSISTANT RULES
 
 **CRITICAL: Execute FIRST, before any other steps.**
-
-See `/_common/assistant-rules-loading.md` for complete instructions.
-
-**Quick summary:**
 
 1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
 2. Apply these rules throughout the session
@@ -46,10 +44,6 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 **CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
 
-See `/_common/project-overrides.md` for complete instructions.
-
-**Quick summary:**
-
 1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
 3. Project overrides have HIGHEST priority
@@ -61,23 +55,22 @@ See `/_common/project-overrides.md` for complete instructions.
 
 Start by orienting yourself with the project state.
 
-**Use MCP tools for reliability (see `/_common/tool-selection-guide.md`):**
+**Use MCP tools:**
 
 - `mcp_filesystem_read_text_file` - Read spec, progress, feature list
 - `mcp_filesystem_list_directory` - Explore project structure
 - `mcp_filesystem_search_files` - Find specific files or content
-- `list_code_definition_names` - Map codebase structure (top-level only, call on each subdirectory)
+- `list_code_definition_names` - Map codebase structure (call per subdirectory)
 
 **Record the project root:**
 
 - Locate `/.automaker/app_spec.txt`
 - Use that directory as `cwd` for all `execute_command` calls
-- Verify with `mcp_filesystem_list_directory` (should show `/.automaker/`, `backend/`, `frontend/`, etc.)
+- Verify with `mcp_filesystem_list_directory`
 
 **Review key files:**
 
 ```bash
-# Example using execute_command (if needed for git operations)
 pwd
 git log --oneline -20
 ```
@@ -88,36 +81,24 @@ git log --oneline -20
 - Note application type and core requirements
 - Identify main features described
 
-**Note:** Prefer MCP tools over shell commands. See `/_common/tool-selection-guide.md`.
-
 ---
 
-### STEP 3: RUN VERIFICATION TESTS
+### STEP 3: RUN QUALITY CHECKS
 
 **CRITICAL: Test existing functionality before implementing new features.**
 
 The previous session may have introduced bugs. Always verify before adding new code.
 
-**See `/_common/testing-requirements.md` for comprehensive testing guidelines.**
-
 #### 3.1 Quality Control Gates
 
-**If `bun run smoke:qc` exists, run it. Otherwise, run:**
+**Run `bun run smoke:qc` if it exists. Otherwise, run:**
 
 - Linting: `npm run lint` or equivalent
 - Type checking: `npm run type-check` or `tsc --noEmit`
 - Tests: `npm test` (if applicable)
 - Formatting: `npm run format:check` or equivalent
 
-**If ANY tooling fails:**
-
-- Fix immediately before proceeding
-- Missing configs are blocking issues
-- Never ignore tooling failures
-
-#### 3.2 Fix Tooling Failures Immediately
-
-**See `/_common/error-handling-patterns.md` for detailed recovery strategies.**
+**If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
 
 ---
 
@@ -144,7 +125,7 @@ jq -r 'select(.status == "in_progress" and .passes == false) | .id' .automaker/f
 3. Follow standard feature selection from coding mode (Step 6 in coding.md)
 4. Select the next available feature from backlog based on priority and dependencies
 
-**IMPORTANT:** This mode automatically falls back to regular coding behavior when no in-progress features exist. This ensures productive work continues without requiring manual intervention.
+**IMPORTANT:** This mode automatically falls back to regular coding behavior when no in-progress features exist.
 
 ---
 
@@ -183,9 +164,6 @@ Document which in-progress feature you're working on and why.
 
 ### STEP 6: IMPLEMENT THE FEATURE
 
-**See `/_common/file-integrity.md` for safe editing practices.**
-**See `/_common/tool-selection-guide.md` for tool selection.**
-
 #### 6.1 Write Code
 
 **Use MCP tools for file operations:**
@@ -204,19 +182,18 @@ Document which in-progress feature you're working on and why.
 
 #### 6.2 Test Implementation
 
-**Use browser automation (see `/_common/testing-requirements.md`):**
+**Use browser automation:**
 
 - Navigate to feature in UI
 - Complete full user workflow
 - Verify visual appearance
 - Check console for errors
 
-#### 6.3 Run Quality Control
+#### 6.3 Run Quality Checks
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
-- Run `bun run smoke:qc` (if exists)
-- Otherwise: lint, type-check, format
+- Run `bun run smoke:qc` (if exists) or lint, type-check, format
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 
@@ -225,8 +202,6 @@ Document which in-progress feature you're working on and why.
 ### STEP 7: VERIFY WITH BROWSER AUTOMATION
 
 **CRITICAL: You MUST verify features through actual UI.**
-
-**See `/_common/testing-requirements.md` for complete requirements.**
 
 #### 7.1 Launch Browser
 
@@ -267,7 +242,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 
 #### 8.2 Update Feature
 
-**Only after complete verification, change:**
+**Only after complete verification:**
 
 ```json
 {
@@ -276,8 +251,6 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 	"status": "completed"
 }
 ```
-
-**See `/_common/file-integrity.md` for safe JSON editing.**
 
 ---
 
@@ -343,25 +316,9 @@ jq -r 'select(.status == "in_progress" and .passes == false) | .id' .automaker/f
 
 ### File Integrity
 
-See `/_common/file-integrity.md`:
-
 - **NEVER** skip post-edit verification
 - **ALWAYS** use `git checkout` if corruption detected
 - **PREFER** safe editing approaches
-
----
-
-## APPENDICES
-
-**See `/_common/` directory for detailed references:**
-
-- **error-handling-patterns.md** - Comprehensive error catalog and recovery
-- **testing-requirements.md** - Complete UI testing guidelines
-- **tool-selection-guide.md** - Tool selection decision tree
-- **file-integrity.md** - Safe file editing protocols
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load project rules
-- **project-overrides.md** - How to handle project.txt
 
 ---
 

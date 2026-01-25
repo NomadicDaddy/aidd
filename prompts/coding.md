@@ -11,17 +11,19 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
-### COMMON GUIDELINES **MUST READ**
+### COMMON GUIDELINES (/\_common/)
 
-**See shared documentation in `/_common/` for:**
+Consult these as needed throughout the session:
 
-- **hard-constraints.md** - Non-negotiable constraints (blocking processes, setup scripts, etc.)
-- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
-- **project-overrides.md** - How to handle project.txt overrides (Step 1)
-- **tool-selection-guide.md** - When to use MCP tools vs execute_command vs browser_action
-- **testing-requirements.md** - Comprehensive UI testing requirements
-- **file-integrity.md** - Safe file editing and verification protocols
-- **error-handling-patterns.md** - Common errors and recovery strategies (Appendix)
+| Document                     | Purpose                                              |
+| ---------------------------- | ---------------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
+| `assistant-rules-loading.md` | How to load and apply project rules                  |
+| `project-overrides.md`       | How to handle project.txt overrides                  |
+| `tool-selection-guide.md`    | When to use MCP tools vs execute_command             |
+| `testing-requirements.md`    | Comprehensive UI testing requirements                |
+| `file-integrity.md`          | Safe file editing and verification protocols         |
+| `error-handling-patterns.md` | Common errors and recovery strategies                |
 
 ---
 
@@ -30,10 +32,6 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 ### STEP 0: INGEST ASSISTANT RULES
 
 **CRITICAL: Execute FIRST, before any other steps.**
-
-See `/_common/assistant-rules-loading.md` for complete instructions.
-
-**Quick summary:**
 
 1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
 2. Apply these rules throughout the session
@@ -46,10 +44,6 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 
 **CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
 
-See `/_common/project-overrides.md` for complete instructions.
-
-**Quick summary:**
-
 1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
 3. Project overrides have HIGHEST priority
@@ -61,7 +55,7 @@ See `/_common/project-overrides.md` for complete instructions.
 
 Start by orienting yourself with the project state.
 
-**Use MCP tools for reliability (see `/_common/tool-selection-guide.md`):**
+**Use MCP tools for reliability:**
 
 - `mcp_filesystem_read_text_file` - Read spec, progress, feature list
 - `mcp_filesystem_list_directory` - Explore project structure
@@ -77,11 +71,8 @@ Start by orienting yourself with the project state.
 **Review key files:**
 
 ```bash
-# Example using execute_command (if needed for git operations)
 pwd
 git log --oneline -20
-
-
 ```
 
 **Understand the spec:**
@@ -89,8 +80,6 @@ git log --oneline -20
 - Read `/.automaker/app_spec.txt` carefully - it's your source of truth
 - Note application type and core requirements
 - Identify main features described
-
-**Note:** Prefer MCP tools over shell commands. See `/_common/tool-selection-guide.md`.
 
 ---
 
@@ -124,16 +113,16 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 
 #### 3.2 Route Structure Verification
 
-1. **Identify required API endpoints from spec**
-2. **Use `list_code_definition_names` on backend/src/routes/** (call each subdirectory individually)
-3. **Verify route files exist and match spec requirements**
-4. **Check for missing core functionality**
+1. Identify required API endpoints from spec
+2. Use `list_code_definition_names` on backend/src/routes/ (call each subdirectory individually)
+3. Verify route files exist and match spec requirements
+4. Check for missing core functionality
 
 #### 3.3 Feature List Alignment
 
-1. **Cross-reference `/.automaker/features/*/feature.json` with spec**
-2. **Ensure ALL major spec features have corresponding tests**
-3. **Flag features marked `"passes": true` that aren't actually implemented**
+1. Cross-reference `/.automaker/features/*/feature.json` with spec
+2. Ensure ALL major spec features have corresponding tests
+3. Flag features marked `"passes": true` that aren't actually implemented
 
 #### 3.4 Critical Failure Handling
 
@@ -146,17 +135,15 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 
 ---
 
-### STEP 4: RUN VERIFICATION TESTS
+### STEP 4: RUN QUALITY CHECKS
 
 **CRITICAL: Test existing functionality before implementing new features.**
 
 The previous session may have introduced bugs. Always verify before adding new code.
 
-**See `/_common/testing-requirements.md` for comprehensive testing guidelines.**
-
 #### 4.1 Quality Control Gates
 
-**If `bun run smoke:qc` exists, run it. Otherwise, run:**
+**Run `bun run smoke:qc` if it exists. Otherwise, run:**
 
 - Linting: `npm run lint` or equivalent
 - Type checking: `npm run type-check` or `tsc --noEmit`
@@ -165,15 +152,9 @@ The previous session may have introduced bugs. Always verify before adding new c
 
 **IMPORTANT:** Do not install or create test suites or testing frameworks. Use only browser automation for testing.
 
-**If ANY tooling fails:**
-
-- Fix immediately before proceeding (see Step 4.2)
-- Missing configs are blocking issues
-- Never ignore tooling failures
+**If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
 
 #### 4.2 Fix Tooling Failures Immediately
-
-**See `/_common/error-handling-patterns.md` for detailed recovery strategies.**
 
 **Quick recovery process:**
 
@@ -183,18 +164,7 @@ The previous session may have introduced bugs. Always verify before adding new c
 4. Re-run and verify pass
 5. Commit the fix
 
-**Example:**
-
-```bash
-# If ESLint config missing
-# 1. Create .eslintrc.js with project rules
-# 2. Re-run: npm run lint
-# 3. Commit: git commit -m "Add ESLint configuration"
-```
-
-#### 4.3 Error Recovery Strategy
-
-**Three-strike rule (see `/_common/error-handling-patterns.md`):**
+**Three-strike rule:**
 
 1. **First failure:** Fix specific error, retry
 2. **Second failure:** Change approach entirely, retry
@@ -207,7 +177,7 @@ The previous session may have introduced bugs. Always verify before adding new c
 - Proceed with broken builds
 - Mark features as passing with failures
 
-**Common error patterns and solutions:**
+**Common error patterns:**
 
 | Error Type                      | Solution                               |
 | ------------------------------- | -------------------------------------- |
@@ -217,9 +187,7 @@ The previous session may have introduced bugs. Always verify before adding new c
 | Type mismatches                 | Remove annotation or add explicit cast |
 | ESLint errors                   | Follow existing patterns in codebase   |
 
-See `/_common/error-handling-patterns.md` for comprehensive error catalog.
-
-#### 4.4 Feature Integration Testing
+#### 4.3 Feature Integration Testing
 
 **Run 1-2 feature tests marked `"passes": true` that are core to the app.**
 
@@ -245,50 +213,37 @@ For example:
 #### 5.1 Count Remaining Work
 
 ```bash
-# Count ALL features with "passes": false (no filtering, no interpretation)
+# Count ALL features with "passes": false
 grep -c '"passes": false' .automaker/features/*/feature.json
 
 # Check todo.md for incomplete items
 cat .automaker/todo.md
 ```
 
-**CRITICAL:** The count above is the LITERAL count of all features marked `"passes": false` in the JSON file. Do NOT interpret this count or apply filters. Do NOT categorize features as "MVP" vs "post-MVP" or "required" vs "optional". The number you see is the number of features remaining to implement.
+**CRITICAL:** This count is LITERAL. Do NOT interpret, filter, or categorize features as "MVP" vs "post-MVP" or "required" vs "optional".
 
 #### 5.2 Early Termination Conditions
 
 **If BOTH conditions are true, TERMINATE IMMEDIATELY:**
 
-- **Zero features in `features/*/feature.json` with `"passes": false`** (count ALL features, no filtering allowed)
+- Zero features with `"passes": false`
 - No incomplete todo items in `todo.md`
 
-**CRITICAL RULES:**
-
-- Count **ALL** features in `features/*/feature.json` - do NOT filter by priority, category, or any other field
-- Do NOT invent distinctions like "MVP-required" vs "post-MVP" - if a feature is in the list with `"passes": false`, it counts
-- Do NOT interpret app_spec.txt phases or categories as filters - the termination condition is purely about `features/*/feature.json`
-- If the count from Step 5.1 is greater than zero, you MUST continue working on features
-
-**Exit cleanly (ONLY if both conditions met):**
+**Exit cleanly:**
 
 1. Document completion in `/.automaker/CHANGELOG.md`
-2. **Complete the session successfully** - Do NOT throw errors or use error exit codes
-    - Simply finish your response normally after documenting completion
-    - The CLI will handle the exit code based on whether you completed without errors
+2. Complete the session successfully (no errors or error exit codes)
 3. Do NOT continue to feature implementation
-
-**CRITICAL:** When terminating due to completion, ensure you exit cleanly without errors so the wrapper script can generate the final status report. Do not use error-indicating completion methods.
 
 ---
 
 ### STEP 6: SELECT FEATURE
 
-**Before selecting a feature, check for audit-based findings and prioritize those. Resolve multiple audit findings in the same session if possible.**
+**Before selecting a feature, check for audit-based findings and prioritize those.**
 
 > **CRITICAL DEPENDENCY RULE:** NEVER select a feature whose dependencies are not satisfied.
 > Before implementing ANY feature, verify that ALL features listed in its `dependencies` array
-> have `"passes": true`. If ANY dependency is not passing, SKIP that feature
-> and select a different one. Implementing features with unmet dependencies wastes time
-> and creates broken functionality.
+> have `"passes": true`. If ANY dependency is not passing, SKIP that feature and select a different one.
 
 #### 6.1 Estimate Feature Complexity
 
@@ -308,83 +263,46 @@ For each feature with `"passes": false`:
 3. Remove items from todo.md as you add them
 4. Delete or empty todo.md when complete
 
-#### 6.3 Validate Feature Dependencies
+#### 6.3 Validate and Select Feature
 
-**CRITICAL: Before selecting a feature, ensure it has dependency tracking:**
+**Ensure all features have dependency tracking:**
 
-1. **Check for `dependencies` field:**
+```bash
+# Count features without dependencies field
+jq 'if has("dependencies") | not then 1 else 0 end' .automaker/features/*/feature.json
+```
 
-    ```bash
-    # Count features without dependencies field
-    jq 'if has("dependencies") | not then 1 else 0 end' .automaker/features/*/feature.json
-    ```
+If ANY features lack `dependencies` field, add it (empty array `[]` if no dependencies) before proceeding.
 
-2. **If ANY features lack `dependencies` field:**
-    - STOP feature selection
-    - Review each feature and add `dependencies` field
-    - Set to empty array `[]` if no dependencies
-    - Identify actual dependencies and list them by exact `description`
-    - Commit the updated features/\*/feature.json
-    - Then resume feature selection
+**Dependency reference format:**
 
-3. **Dependency reference format:**
-    ```json
-    {
-      "description": "Advanced feature",
-      "dependencies": ["Basic feature", "Another prerequisite"],
-      ...
-    }
-    ```
+```json
+{
+	"dependencies": ["Basic feature", "Another prerequisite"],
+	"description": "Advanced feature"
+}
+```
 
-#### 6.4 Select Feature from Feature List
-
-Feature JSON must follow AutoMaker format exactly.
-
-**Review `/.automaker/features/*/feature.json`:**
+**Select from `/.automaker/features/*/feature.json`:**
 
 - Filter to `"passes": false`
 - Group by priority (critical > high > medium > low)
 - Prefer `"status": "in_progress"` over `"status": "backlog"`
-- **CRITICAL: Check dependencies are satisfied**
+- Verify ALL dependencies have `"passes": true`
 - Prefer audit-related findings over other types
 
-**Dependency validation:**
+**Before implementing, update status:**
 
-1. **For each candidate feature, check `dependencies` array:**
-
-    ```bash
-    # Example: Check if dependencies are satisfied
-    # Feature has: "dependencies": ["User authentication API", "Database schema"]
-    # Verify both features have "passes": true
-    jq 'select(.description == "User authentication API") | .passes' .automaker/features/*/feature.json
-    jq 'select(.description == "Database schema") | .passes' .automaker/features/*/feature.json
-    ```
-
-2. **Skip features with unsatisfied dependencies:**
-    - If ANY dependency has `"passes": false`, skip this feature
-    - Only select features where ALL dependencies have `"passes": true`
-    - This ensures proper implementation order
-
-3. **Include dependency context in coding prompt:**
-    - When implementing a feature, review its dependencies
-    - Read the code for dependent features to understand patterns
-    - Ensure consistency with existing implementations
-
-**CRITICAL: Update feature status BEFORE implementing:**
-
-1. Mark status as `"in_progress"` (edit `"status": "backlog"` → `"status": "in_progress"`)
+1. Mark status as `"in_progress"`
 2. Read feature's `description`, `steps`, and `dependencies` fields
 3. For each dependency, review implementation to understand patterns
-4. Record selection and dependency check in initial assessment
+4. Record selection in initial assessment
 
 **Focus on completing ONE feature perfectly before moving to others.**
 
 ---
 
 ### STEP 7: IMPLEMENT THE FEATURE
-
-**See `/_common/file-integrity.md` for safe editing practices.**
-**See `/_common/tool-selection-guide.md` for tool selection.**
 
 #### 7.1 Write Code
 
@@ -404,19 +322,18 @@ Feature JSON must follow AutoMaker format exactly.
 
 #### 7.2 Test Implementation
 
-**Use browser automation (see `/_common/testing-requirements.md`):**
+**Use browser automation:**
 
 - Navigate to feature in UI
 - Complete full user workflow
 - Verify visual appearance
 - Check console for errors
 
-#### 7.3 Run Quality Control
+#### 7.3 Run Quality Checks
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
-- Run `bun run smoke:qc` (if exists)
-- Otherwise: lint, type-check, format
+- Run `bun run smoke:qc` (if exists) or lint, type-check, format
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 
@@ -439,8 +356,6 @@ mcp_filesystem_list_directory backend/src
 ### STEP 8: VERIFY WITH BROWSER AUTOMATION
 
 **CRITICAL: You MUST verify features through actual UI.**
-
-**See `/_common/testing-requirements.md` for complete requirements.**
 
 #### 8.1 Launch Browser
 
@@ -465,16 +380,18 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 4. Confirm end-to-end functionality
 
 **DO:**
-✅ Test through UI with clicks and keyboard
-✅ Take screenshots to verify appearance
-✅ Check for console errors
-✅ Verify complete workflows
+
+- Test through UI with clicks and keyboard
+- Take screenshots to verify appearance
+- Check for console errors
+- Verify complete workflows
 
 **DON'T:**
-❌ Only test with curl (insufficient)
-❌ Skip UI testing
-❌ Skip visual verification
-❌ Mark passing without thorough testing
+
+- Only test with curl (insufficient)
+- Skip UI testing
+- Skip visual verification
+- Mark passing without thorough testing
 
 ---
 
@@ -501,7 +418,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 "status": "backlog" →  "status": "in_progress" →  "status": "completed"
 ```
 
-**NEVER**
+**NEVER:**
 
 - Remove tests
 - Edit test descriptions
@@ -513,18 +430,15 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 
 #### 9.3 Update Passes Field
 
-**Only after complete verification, change:**
+**Only after complete verification:**
 
 ```json
 {
 	"description": "Feature name",
-	"passes": true, // ← Change this after verification
-	"status": "completed" // ← Update status to completed
-	// ... other fields unchanged
+	"passes": true,
+	"status": "completed"
 }
 ```
-
-**See `/_common/file-integrity.md` for safe JSON editing.**
 
 ---
 
@@ -537,20 +451,12 @@ git add .
 git commit -m "Implement [feature name] - verified end-to-end" \
   -m "- Added [specific changes]" \
   -m "- Tested via UI (browser_action)" \
-  -m "- Updated /.automaker/features/*/feature.json: marked test #X as passing" \
-  -m "- Screenshots (if captured) saved under verification/"
+  -m "- Updated /.automaker/features/*/feature.json: marked test #X as passing"
 ```
 
-**If shell doesn't support line continuations:**
+**If shell doesn't support line continuations:** Run as single line or use multiple `-m` flags separately.
 
-- Run as single line, OR
-- Use multiple `-m` flags separately
-
-**If git reports "not a git repository":**
-
-- Don't force commits
-- Document state in CHANGELOG.md
-- Initialize git only if spec expects it
+**If git reports "not a git repository":** Don't force commits. Document state in CHANGELOG.md.
 
 ---
 
@@ -558,33 +464,26 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 
 **Before ending session:**
 
-#### 12.1 Commit All Work
-
-```bash
-git add .
-git commit -m "Session work: [summary]"
-```
-
-#### 12.2 Update Documentation
+#### 11.1 Update Documentation
 
 - `/.automaker/features/*/feature.json` updated if tests verified
 - `/.automaker/app_spec.txt` updated if changed/needed
 
-#### 12.3 Final Feature Status Audit
+#### 11.2 Final Feature Status Audit
 
 - Perform final audit of `/.automaker/features/*/feature.json`
 - Verify all `"passes": true` features actually work
 - Confirm no false positives
 - Document any discrepancies
 
-#### 12.4 Ensure Clean State
+#### 11.3 Ensure Clean State
 
-- No uncommitted changes
+- No uncommitted changes (run `git add . && git commit` if needed)
 - No broken features
 - All quality checks passing
 - App in working state
 
-#### 12.5 Use attempt_completion
+#### 11.4 Use attempt_completion
 
 - Present final results to user
 - Summarize accomplishments
@@ -615,40 +514,21 @@ git commit -m "Session work: [summary]"
 
 ### File Integrity
 
-See `/_common/file-integrity.md`:
-
 - **NEVER** skip post-edit verification
 - **ALWAYS** use `git checkout` if corruption detected
-- **PREFER** safe editing approaches
 - **IMMEDIATELY** retry with different approach if edit fails
 - **DOCUMENT** corruption incidents in CHANGELOG.md
 
 ### Iteration Management
 
-- **TIME AWARENESS:** Check remaining time before starting features
 - **COMPLEXITY ESTIMATION:** Assess feature complexity first
 - **ABORT CRITERIA:** After 3 failed attempts, skip to next feature
 - **QUALITY OVER QUANTITY:** One complete feature > multiple half-done
 - **NO RUSHING:** Take time to write clean, testable code
-- **AVOID TIMEOUTS:** Don't start large features late in iteration
 
 ### You Have Unlimited Time
 
-Take as long as needed to get it right. The most important thing is leaving the codebase in a clean state before terminating the session (Step 10).
-
----
-
-## APPENDICES
-
-**See `/_common/` directory for detailed references:**
-
-- **error-handling-patterns.md** - Comprehensive error catalog and recovery
-- **testing-requirements.md** - Complete UI testing guidelines
-- **tool-selection-guide.md** - Tool selection decision tree
-- **file-integrity.md** - Safe file editing protocols
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load project rules
-- **project-overrides.md** - How to handle project.txt
+Take as long as needed to get it right. The most important thing is leaving the codebase in a clean state before terminating the session.
 
 ---
 

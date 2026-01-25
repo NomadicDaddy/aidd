@@ -11,20 +11,20 @@ You are in Code mode and ready to begin setting up the foundation for all future
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
-### COMMON GUIDELINES
+### COMMON GUIDELINES (/\_common/)
 
-**See shared documentation in `/_common/` for:**
+Consult these as needed throughout the session:
 
-- **hard-constraints.md** - Non-negotiable constraints (DO NOT run setup after initialization!)
-- **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
-- **project-overrides.md** - How to handle project.txt overrides (Step 1)
-- **tool-selection-guide.md** - When to use MCP tools vs execute_command
-- **file-integrity.md** - Safe file editing and verification protocols
-- **error-handling-patterns.md** - Common errors and recovery strategies
+| Document                     | Purpose                                                   |
+| ---------------------------- | --------------------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints (DO NOT run setup after init!) |
+| `assistant-rules-loading.md` | How to load and apply project rules                       |
+| `project-overrides.md`       | How to handle project.txt overrides                       |
+| `tool-selection-guide.md`    | When to use MCP tools vs execute_command                  |
+| `file-integrity.md`          | Safe file editing and verification protocols              |
+| `error-handling-patterns.md` | Common errors and recovery strategies                     |
 
 ### HARD CONSTRAINTS
-
-**See `/_common/hard-constraints.md` for details.**
 
 1. **Stop after initialization.** Do not implement product features.
 2. Do not write application business logic. Only create setup/tracking/scaffolding files.
@@ -38,10 +38,6 @@ You are in Code mode and ready to begin setting up the foundation for all future
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-See `/_common/assistant-rules-loading.md` for complete instructions.
-
-**Quick summary:**
-
 1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
@@ -52,10 +48,6 @@ See `/_common/assistant-rules-loading.md` for complete instructions.
 ### STEP 1: CHECK PROJECT OVERRIDES
 
 **CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
-
-See `/_common/project-overrides.md` for complete instructions.
-
-**Quick summary:**
 
 1. Read `/.automaker/project.txt` if it exists
 2. Apply all overrides throughout the session
@@ -68,7 +60,7 @@ See `/_common/project-overrides.md` for complete instructions.
 
 Start by orienting yourself with the project.
 
-**Use MCP tools (see `/_common/tool-selection-guide.md`):**
+**Use MCP tools:**
 
 - `mcp_filesystem_read_text_file` - Read spec and existing files
 - `mcp_filesystem_list_directory` - Explore project structure
@@ -88,19 +80,11 @@ Start by orienting yourself with the project.
 - Should see directories like `backend/`, `frontend/`, `scripts/`, etc.
 - If `mcp_filesystem_list_directory` shows `0 items`, re-check the path
 
-**Understand the project:**
-
-- Review existing project structure
-- Note any existing directories or files
-- Identify the technology stack
-
 ---
 
 ### STEP 3: CREATE FEATURE LIST
 
 **Based on `/.automaker/app_spec.txt`, create `/.automaker/features/{feature-id}/feature.json` with 20+ detailed tests.**
-
-**See `/_common/file-integrity.md` for safe JSON editing.**
 
 #### 3.1 Read and Understand Spec
 
@@ -162,29 +146,6 @@ Feature JSON must follow AutoMaker format exactly:
 - Use empty array `[]` if feature has no dependencies
 - Dependencies create implementation order constraints
 
-**Examples:**
-
-```json
-{
-	"description": "Database schema setup",
-	"id": "feature-20260109142345-abc123def",
-	"dependencies": [], // Foundation feature - no dependencies
-	...
-}
-{
-	"description": "User CRUD API endpoints",
-	"id": "feature-20260109142346-xyz789ghi",
-	"dependencies": ["feature-20260109142345-abc123def"], // Needs database first (references exact ID)
-	...
-}
-{
-	"description": "User profile page",
-	"id": "feature-20260109142347-lmn456opq",
-	"dependencies": ["feature-20260109142346-xyz789ghi"], // Needs API before UI (references exact ID)
-	...
-}
-```
-
 **Dependency guidelines:**
 
 - Only list direct dependencies (not transitive)
@@ -221,11 +182,7 @@ mcp_filesystem_read_text_file .automaker/features/{id}/feature.json
 # Confirm at least 20 features exist
 ```
 
-**If file is corrupted:**
-
-- See `/_common/file-integrity.md` for recovery
-- Use `git checkout -- .automaker/features/{id}/feature.json` to rollback
-- Retry with different approach
+**If file is corrupted:** Use `git checkout -- .automaker/features/{id}/feature.json` to rollback and retry.
 
 ---
 
@@ -290,10 +247,7 @@ ls -l scripts/setup.ts
 - Frontend port (default to 3000 if not specified)
 - Backend port (default to 3001 if not specified)
 
-**Calculate slug:**
-
-- Use project directory basename
-- Example: Directory "myapp/" → slug "myapp"
+**Calculate slug:** Use project directory basename (e.g., Directory "myapp/" → slug "myapp")
 
 #### 5.2 Run Setup
 
@@ -328,8 +282,6 @@ bun scripts/setup.ts \
 - Missing environment variables
 - Network issues during dependency installation
 
-**See `/_common/error-handling-patterns.md` for recovery strategies.**
-
 ---
 
 ### STEP 6: CREATE PROJECT STRUCTURE
@@ -356,8 +308,6 @@ mkdir -p frontend/src
 mkdir -p backend/src
 mkdir -p scripts
 mkdir -p docs
-
-# Create other directories as needed per spec
 ```
 
 #### 6.3 Verify Structure
@@ -380,63 +330,21 @@ mcp_filesystem_list_directory .
 
 Include the following sections:
 
-**1. Project Overview:**
+1. **Project Overview:** Application name, description, purpose, key features
+2. **Prerequisites:** Required system dependencies, versions, database requirements
+3. **Setup Instructions:** Clone, install, configure environment, run setup, database init
+4. **Running the Application:** Start frontend, start backend, run tests, dev workflow
+5. **Project Structure:** Directory overview, key files, architecture notes
+6. **Additional Information:** Testing approach, deployment notes, contributing, license
 
-- Application name (from spec)
-- Description (from spec)
-- Purpose and goals
-- Key features
-
-**2. Prerequisites:**
-
-- Required system dependencies
-- Node.js/Python/etc. versions
-- Database requirements
-- Environment setup
-
-**3. Setup Instructions:**
-
-- Clone repository
-- Install dependencies
-- Configure environment variables
-- Run setup script
-- Database initialization
-
-**4. Running the Application:**
-
-- How to start frontend
-- How to start backend
-- How to run tests
-- Development workflow
-
-**5. Project Structure:**
-
-- Overview of directory structure
-- Key files and their purposes
-- Architecture notes
-
-**6. Additional Information:**
-
-- Testing approach
-- Deployment notes (if applicable)
-- Contributing guidelines (if applicable)
-- License (if applicable)
-
-#### 7.2 Create README
+#### 7.2 Create and Verify README
 
 ```bash
 # Create README.md with comprehensive content
 # Use mcp_filesystem_edit_file or execute_command with heredoc
-```
 
-#### 7.3 Verify README
-
-```bash
 # Read README to confirm content
 mcp_filesystem_read_text_file README.md
-
-# Verify all sections present
-# Check for accuracy and completeness
 ```
 
 ---
@@ -623,19 +531,6 @@ git commit -m "Complete initialization - ready for development"
 - README must be comprehensive
 - Git repository must be initialized
 - All work must be committed
-
----
-
-## APPENDICES
-
-**See `/_common/` directory for detailed references:**
-
-- **error-handling-patterns.md** - Common errors and recovery
-- **tool-selection-guide.md** - Tool selection guidance
-- **file-integrity.md** - Safe file editing protocols
-- **hard-constraints.md** - Non-negotiable constraints
-- **assistant-rules-loading.md** - How to load project rules
-- **project-overrides.md** - How to handle project.txt
 
 ---
 

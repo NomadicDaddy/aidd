@@ -717,6 +717,17 @@ validate_features() {
     local invalid_files=0
     local error_details=""
 
+    # Status counters
+    local status_backlog=0
+    local status_pending=0
+    local status_running=0
+    local status_completed=0
+    local status_failed=0
+    local status_verified=0
+    local status_waiting_approval=0
+    local status_in_progress=0
+    local status_none=0
+
     # Valid enum values
     local valid_statuses="backlog pending running completed failed verified waiting_approval in_progress"
     local valid_thinking_levels="none low medium high ultrathink"
@@ -835,8 +846,8 @@ validate_features() {
             # Required field: id
             if [[ -z "$id_val" ]]; then
                 file_errors+="  ✗ Missing required field: id\n"
-            elif [[ ! "$id_val" =~ ^(feature|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+$ ]]; then
-                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{random} or audit-{type}-{timestamp}-{description})\n"
+            elif [[ ! "$id_val" =~ ^((feature|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$ ]]; then
+                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{random}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})\n"
             fi
 
             # Required field: category
@@ -906,6 +917,18 @@ validate_features() {
             error_details+="$file_errors\n"
         else
             ((valid_files++))
+            # Count by status
+            case "$status_val" in
+                backlog) ((status_backlog++)) ;;
+                pending) ((status_pending++)) ;;
+                running) ((status_running++)) ;;
+                completed) ((status_completed++)) ;;
+                failed) ((status_failed++)) ;;
+                verified) ((status_verified++)) ;;
+                waiting_approval) ((status_waiting_approval++)) ;;
+                in_progress) ((status_in_progress++)) ;;
+                *) ((status_none++)) ;;
+            esac
         fi
 
     done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
@@ -914,6 +937,17 @@ validate_features() {
     printf "%-20s %s\n" "Total files:" "$total_files"
     printf "%-20s %s\n" "Valid:" "$valid_files"
     printf "%-20s %s\n" "Invalid:" "$invalid_files"
+    echo ""
+    echo "Status breakdown:"
+    [[ $status_backlog -gt 0 ]] && printf "  %-20s %s\n" "backlog:" "$status_backlog"
+    [[ $status_pending -gt 0 ]] && printf "  %-20s %s\n" "pending:" "$status_pending"
+    [[ $status_running -gt 0 ]] && printf "  %-20s %s\n" "running:" "$status_running"
+    [[ $status_completed -gt 0 ]] && printf "  %-20s %s\n" "completed:" "$status_completed"
+    [[ $status_failed -gt 0 ]] && printf "  %-20s %s\n" "failed:" "$status_failed"
+    [[ $status_verified -gt 0 ]] && printf "  %-20s %s\n" "verified:" "$status_verified"
+    [[ $status_waiting_approval -gt 0 ]] && printf "  %-20s %s\n" "waiting_approval:" "$status_waiting_approval"
+    [[ $status_in_progress -gt 0 ]] && printf "  %-20s %s\n" "in_progress:" "$status_in_progress"
+    [[ $status_none -gt 0 ]] && printf "  %-20s %s\n" "(no status):" "$status_none"
     echo ""
 
     if [[ $invalid_files -gt 0 ]]; then

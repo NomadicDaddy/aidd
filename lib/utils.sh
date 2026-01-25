@@ -114,6 +114,158 @@ log_header() {
     echo "" >&2
 }
 
+# Print comprehensive iteration header with run configuration
+# Usage: log_iteration_header <iteration_num> [max_iterations] [log_file]
+# Requires global variables from args.sh to be set
+log_iteration_header() {
+    local iteration="$1"
+    local max_iter="${2:-unlimited}"
+    local log_file="$3"
+    local width=70
+
+    # Build iteration title
+    local title
+    if [[ "$max_iter" == "unlimited" || -z "$max_iter" ]]; then
+        title="AIDD Iteration $iteration"
+    else
+        title="AIDD Iteration $iteration of $max_iter"
+    fi
+
+    local padding=$(( (width - ${#title} - 2) / 2 ))
+
+    echo "" >&2
+    printf '=%.0s' $(seq 1 $width) >&2
+    echo "" >&2
+    printf ' %.0s' $(seq 1 $padding) >&2
+    if supports_color; then
+        echo -e "${COLOR_BLUE}${title}${COLOR_RESET}" >&2
+    else
+        echo "$title" >&2
+    fi
+    printf ' %.0s' $(seq 1 $padding) >&2
+    echo "" >&2
+    printf '=%.0s' $(seq 1 $width) >&2
+    echo "" >&2
+
+    # Print run configuration
+    echo "" >&2
+    if supports_color; then
+        echo -e "${COLOR_CYAN}Run Configuration:${COLOR_RESET}" >&2
+    else
+        echo "Run Configuration:" >&2
+    fi
+
+    # CLI info
+    local cli_display="${CLI_NAME:-${CLI_TYPE:-unknown}}"
+    if [[ -n "$CLI_VERSION" && "$CLI_VERSION" != "unknown" && "$CLI_VERSION" != "not installed" ]]; then
+        cli_display="$cli_display (v$CLI_VERSION)"
+    fi
+    printf "  %-18s %s\n" "CLI:" "$cli_display" >&2
+    printf "  %-18s %s\n" "Project:" "${PROJECT_DIR:-.}" >&2
+
+    # Mode detection
+    local mode="coding"
+    if [[ "$AUDIT_MODE" == "true" ]]; then
+        mode="audit"
+        [[ -n "$AUDIT_NAME" ]] && mode="audit ($AUDIT_NAME)"
+    elif [[ "$TODO_MODE" == "true" ]]; then
+        mode="todo"
+    elif [[ "$VALIDATE_MODE" == "true" ]]; then
+        mode="validate"
+    elif [[ "$IN_PROGRESS_MODE" == "true" ]]; then
+        mode="in-progress"
+    elif [[ -n "$CUSTOM_PROMPT" ]]; then
+        mode="directive"
+    fi
+    printf "  %-18s %s\n" "Mode:" "$mode" >&2
+
+    # Prompt info (if determined)
+    if [[ -n "$PROMPT_PATH" ]]; then
+        local prompt_name=$(basename "$PROMPT_PATH" .md)
+        printf "  %-18s %s\n" "Prompt:" "$prompt_name" >&2
+    fi
+
+    # Model info
+    if [[ -n "$MODEL" || -n "$INIT_MODEL_EFFECTIVE" || -n "$CODE_MODEL_EFFECTIVE" ]]; then
+        echo "" >&2
+        if supports_color; then
+            echo -e "${COLOR_CYAN}Model Settings:${COLOR_RESET}" >&2
+        else
+            echo "Model Settings:" >&2
+        fi
+        [[ -n "$MODEL" ]] && printf "  %-18s %s\n" "Base Model:" "$MODEL" >&2
+        [[ -n "$INIT_MODEL_EFFECTIVE" ]] && printf "  %-18s %s\n" "Init Model:" "$INIT_MODEL_EFFECTIVE" >&2
+        [[ -n "$CODE_MODEL_EFFECTIVE" ]] && printf "  %-18s %s\n" "Code Model:" "$CODE_MODEL_EFFECTIVE" >&2
+    fi
+
+    # Iteration settings
+    echo "" >&2
+    if supports_color; then
+        echo -e "${COLOR_CYAN}Iteration Settings:${COLOR_RESET}" >&2
+    else
+        echo "Iteration Settings:" >&2
+    fi
+    if [[ "$max_iter" == "unlimited" || -z "$max_iter" ]]; then
+        printf "  %-18s %s\n" "Max Iterations:" "unlimited" >&2
+    else
+        printf "  %-18s %s\n" "Max Iterations:" "$max_iter" >&2
+    fi
+    printf "  %-18s %ss\n" "Timeout:" "${TIMEOUT:-$DEFAULT_TIMEOUT}" >&2
+    printf "  %-18s %ss\n" "Idle Timeout:" "${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}" >&2
+    printf "  %-18s %ss\n" "Nudge Timeout:" "${IDLE_NUDGE_TIMEOUT:-$DEFAULT_IDLE_NUDGE_TIMEOUT}" >&2
+
+    # Flags section
+    echo "" >&2
+    if supports_color; then
+        echo -e "${COLOR_CYAN}Flags:${COLOR_RESET}" >&2
+    else
+        echo "Flags:" >&2
+    fi
+    printf "  %-18s %s\n" "Continue on TO:" "${CONTINUE_ON_TIMEOUT:-false}" >&2
+    printf "  %-18s %s\n" "Quit on Abort:" "${QUIT_ON_ABORT:-0}" >&2
+    printf "  %-18s %s\n" "No Clean:" "${NO_CLEAN:-false}" >&2
+    printf "  %-18s %s\n" "Stop When Done:" "${STOP_WHEN_DONE:-false}" >&2
+    printf "  %-18s %s\n" "Extract JSON:" "${EXTRACT_STRUCTURED:-false}" >&2
+
+    # Audit info (if applicable)
+    if [[ "$AUDIT_MODE" == "true" && ${#AUDIT_NAMES[@]} -gt 1 ]]; then
+        echo "" >&2
+        if supports_color; then
+            echo -e "${COLOR_CYAN}Audit Queue:${COLOR_RESET}" >&2
+        else
+            echo "Audit Queue:" >&2
+        fi
+        printf "  %-18s %s\n" "Current Audit:" "${AUDIT_NAME:-N/A}" >&2
+        printf "  %-18s %s\n" "Audit Index:" "$((${AUDIT_INDEX:-0} + 1)) of ${#AUDIT_NAMES[@]}" >&2
+        printf "  %-18s %s\n" "All Audits:" "${AUDIT_NAMES[*]}" >&2
+    fi
+
+    # Custom prompt (if applicable)
+    if [[ -n "$CUSTOM_PROMPT" ]]; then
+        echo "" >&2
+        if supports_color; then
+            echo -e "${COLOR_CYAN}Custom Directive:${COLOR_RESET}" >&2
+        else
+            echo "Custom Directive:" >&2
+        fi
+        # Truncate long prompts
+        local prompt_display="$CUSTOM_PROMPT"
+        if [[ ${#prompt_display} -gt 60 ]]; then
+            prompt_display="${prompt_display:0:57}..."
+        fi
+        printf "  %s\n" "$prompt_display" >&2
+    fi
+
+    echo "" >&2
+    printf -- '-%.0s' $(seq 1 $width) >&2
+    echo "" >&2
+
+    # Transcript and start time
+    [[ -n "$log_file" ]] && log_info "Transcript: $log_file"
+    log_info "Started: $(date -Is 2>/dev/null || date)"
+    echo "" >&2
+}
+
 # -----------------------------------------------------------------------------
 # File Operations
 # -----------------------------------------------------------------------------

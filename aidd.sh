@@ -235,10 +235,17 @@ run_single_audit_or_all() {
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
         {
-            log_header "Iteration $i"
-            log_info "Transcript: $LOG_FILE"
-            log_info "Started: $(date -Is 2>/dev/null || date)"
-            echo
+            # Determine which prompt to use based on project state (needed for header)
+            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
+            if [[ $? -ne 0 ]]; then
+                log_error "Failed to determine prompt"
+                exit $EXIT_GENERAL_ERROR
+            fi
+            PROMPT_PATH="${PROMPT_INFO%|*}"
+            PROMPT_TYPE="${PROMPT_INFO#*|}"
+
+            # Print comprehensive iteration header
+            log_iteration_header "$i" "" "$LOG_FILE"
 
             # Copy shared directories from copydirs.txt
             copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
@@ -246,15 +253,7 @@ run_single_audit_or_all() {
             # Copy shared files from copyfiles.txt
             copy_shared_files "$PROJECT_DIR" "$SCRIPT_DIR"
 
-            # Determine which prompt to use based on project state
-            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
-            if [[ $? -ne 0 ]]; then
-                log_error "Failed to determine prompt"
-                exit $EXIT_GENERAL_ERROR
-            fi
             # Validate that the prompt file exists
-            PROMPT_PATH="${PROMPT_INFO%|*}"
-            PROMPT_TYPE="${PROMPT_INFO#*|}"
             if [[ ! -f "$PROMPT_PATH" ]]; then
                 log_error "Prompt file does not exist: $PROMPT_PATH"
                 exit $EXIT_GENERAL_ERROR
@@ -383,10 +382,17 @@ else
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
         {
-            log_header "Iteration $i of $MAX_ITERATIONS"
-            log_info "Transcript: $LOG_FILE"
-            log_info "Started: $(date -Is 2>/dev/null || date)"
-            echo
+            # Determine which prompt to use based on project state (needed for header)
+            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
+            if [[ $? -ne 0 ]]; then
+                log_error "Failed to determine prompt"
+                exit $EXIT_GENERAL_ERROR
+            fi
+            PROMPT_PATH="${PROMPT_INFO%|*}"
+            PROMPT_TYPE="${PROMPT_INFO#*|}"
+
+            # Print comprehensive iteration header
+            log_iteration_header "$i" "$MAX_ITERATIONS" "$LOG_FILE"
 
             # Copy shared directories from copydirs.txt
             copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
@@ -394,15 +400,7 @@ else
             # Copy shared files from copyfiles.txt
             copy_shared_files "$PROJECT_DIR" "$SCRIPT_DIR"
 
-            # Determine which prompt to use based on project state
-            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
-            if [[ $? -ne 0 ]]; then
-                log_error "Failed to determine prompt"
-                exit $EXIT_GENERAL_ERROR
-            fi
             # Validate that the prompt file exists
-            PROMPT_PATH="${PROMPT_INFO%|*}"
-            PROMPT_TYPE="${PROMPT_INFO#*|}"
             if [[ ! -f "$PROMPT_PATH" ]]; then
                 log_error "Prompt file does not exist: $PROMPT_PATH"
                 exit $EXIT_GENERAL_ERROR

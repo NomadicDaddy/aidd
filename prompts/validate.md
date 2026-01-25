@@ -2,6 +2,8 @@
 
 You are in VALIDATE mode and ready to verify incomplete features and pending todos are truly incomplete.
 
+**IMPORTANT:** Refer to the CLI-specific instructions prepended to this prompt for tool names and capabilities.
+
 ### QUICK REFERENCES
 
 - **Todo list:** `/.automaker/todo.md`
@@ -19,7 +21,6 @@ Consult these as needed throughout the session:
 | `hard-constraints.md`        | Non-negotiable constraints                   |
 | `assistant-rules-loading.md` | How to load and apply project rules          |
 | `project-overrides.md`       | How to handle project.txt overrides          |
-| `tool-selection-guide.md`    | When to use MCP tools vs execute_command     |
 | `testing-requirements.md`    | Comprehensive UI testing requirements        |
 | `file-integrity.md`          | Safe file editing and verification protocols |
 | `error-handling-patterns.md` | Common errors and recovery strategies        |

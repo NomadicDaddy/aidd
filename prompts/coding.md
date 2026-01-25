@@ -2,6 +2,8 @@
 
 You are in Code mode and ready to continue work on a long-running autonomous development task. You have no time limit for this session.
 
+**IMPORTANT:** Refer to the CLI-specific instructions prepended to this prompt for tool names and capabilities.
+
 ### QUICK REFERENCES
 
 - **Spec (source of truth):** `/.automaker/app_spec.txt`
@@ -20,7 +22,6 @@ Consult these as needed throughout the session:
 | `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
 | `assistant-rules-loading.md` | How to load and apply project rules                  |
 | `project-overrides.md`       | How to handle project.txt overrides                  |
-| `tool-selection-guide.md`    | When to use MCP tools vs execute_command             |
 | `testing-requirements.md`    | Comprehensive UI testing requirements                |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |
@@ -55,18 +56,18 @@ Consult these as needed throughout the session:
 
 Start by orienting yourself with the project state.
 
-**Use MCP tools for reliability:**
+**Use appropriate tools (see CLI reference) to:**
 
-- `mcp_filesystem_read_text_file` - Read spec, progress, feature list
-- `mcp_filesystem_list_directory` - Explore project structure
-- `mcp_filesystem_search_files` - Find specific files or content
-- `list_code_definition_names` - Map codebase structure (top-level only, call on each subdirectory)
+- Read files: spec, progress notes, feature list
+- Explore project structure: list directories
+- Find specific files or content: search by pattern or content
+- Map codebase structure: identify key components
 
 **Record the project root:**
 
 - Locate `/.automaker/app_spec.txt`
-- Use that directory as `cwd` for all `execute_command` calls
-- Verify with `mcp_filesystem_list_directory` (should show `/.automaker/`, `backend/`, `frontend/`, etc.)
+- Use that directory as working directory for all commands
+- Verify by listing directory (should show `/.automaker/`, `backend/`, `frontend/`, etc.)
 
 **Review key files:**
 
@@ -96,7 +97,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
     - List core entities the application manages
 
 2. **Verify models exist in codebase:**
-    - Use `list_code_definition_names` on backend directories (call individually per subdirectory)
+    - Search for model definitions in backend directories
     - Check `schema.prisma` or equivalent for model definitions
     - Ensure NO duplicate models or commented-out code blocks
     - Verify schema compiles without errors
@@ -114,7 +115,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 #### 3.2 Route Structure Verification
 
 1. Identify required API endpoints from spec
-2. Use `list_code_definition_names` on backend/src/routes/ (call each subdirectory individually)
+2. Search for route definitions in backend/src/routes/
 3. Verify route files exist and match spec requirements
 4. Check for missing core functionality
 
@@ -150,7 +151,7 @@ The previous session may have introduced bugs. Always verify before adding new c
 - Tests: `npm test` (if applicable) - **NOTE: Only if pre-existing, do not create test suites**
 - Formatting: `npm run format:check` or equivalent
 
-**IMPORTANT:** Do not install or create test suites or testing frameworks. Use only browser automation for testing.
+**IMPORTANT:** Do not install or create test suites or testing frameworks.
 
 **If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
 
@@ -306,10 +307,10 @@ If ANY features lack `dependencies` field, add it (empty array `[]` if no depend
 
 #### 7.1 Write Code
 
-**Use MCP tools for file operations:**
+**Use appropriate tools (see CLI reference) for file operations:**
 
-1. `mcp_filesystem_read_text_file` - Read existing code
-2. `mcp_filesystem_edit_file` - Make targeted changes
+1. Read existing code before modifying
+2. Make targeted edits (prefer edit over full rewrite)
 3. **CRITICAL:** Immediately read file after editing to verify
 4. If corruption detected → `git checkout -- <file>` and retry
 
@@ -322,12 +323,10 @@ If ANY features lack `dependencies` field, add it (empty array `[]` if no depend
 
 #### 7.2 Test Implementation
 
-**Use browser automation:**
+**Testing approach depends on CLI capabilities (see CLI reference):**
 
-- Navigate to feature in UI
-- Complete full user workflow
-- Verify visual appearance
-- Check console for errors
+- If browser automation available: Navigate to feature in UI, complete workflow, verify visuals
+- If no browser automation: Use terminal-based verification, curl for APIs, build output checks
 
 #### 7.3 Run Quality Checks
 
@@ -346,52 +345,43 @@ git diff
 
 # For schema changes, check no duplicates
 sort schema.prisma | uniq -d
-
-# Ensure file structure intact
-mcp_filesystem_list_directory backend/src
 ```
 
 ---
 
-### STEP 8: VERIFY WITH BROWSER AUTOMATION
+### STEP 8: VERIFY IMPLEMENTATION
 
-**CRITICAL: You MUST verify features through actual UI.**
+**CRITICAL: Verify features before marking as passing.**
 
-#### 8.1 Launch Browser
+**If browser automation is available (see CLI reference):**
 
-```
-browser_action.launch http://localhost:{frontendPort}
-```
+1. Launch browser to frontend URL
+2. Navigate to feature area
+3. Complete full user journey with clicks and input
+4. Test edge cases and error states
+5. Take screenshots at key states
+6. Check browser console for errors
+7. Verify UI appearance (no white-on-white, broken layouts, etc.)
 
-#### 8.2 Test Complete Workflow
+**If browser automation is NOT available:**
 
-Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
-
-1. Navigate to feature area
-2. Complete full user journey
-3. Test edge cases
-4. Verify success and error states
-
-#### 8.3 Verify Visuals and Console
-
-1. Take screenshots at key states
-2. Check browser console for errors
-3. Verify UI appearance (no white-on-white, broken layouts, etc.)
-4. Confirm end-to-end functionality
+1. Run the application and check console/terminal output
+2. Use curl/wget for API endpoint testing
+3. Verify build completes without errors
+4. Check for TypeScript/lint errors (they often catch UI issues)
+5. Document what should be manually tested by human
 
 **DO:**
 
-- Test through UI with clicks and keyboard
-- Take screenshots to verify appearance
-- Check for console errors
+- Test through UI if possible
 - Verify complete workflows
+- Check for console errors
 
 **DON'T:**
 
-- Only test with curl (insufficient)
-- Skip UI testing
-- Skip visual verification
-- Mark passing without thorough testing
+- Only test with curl when UI testing is available
+- Skip verification entirely
+- Mark passing without testing
 
 ---
 
@@ -405,7 +395,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 
 1. **Code exists:** All required files, models, routes, components
 2. **Functional testing:** Complete workflow from feature's steps
-3. **UI testing:** Tested in actual browser, not just API
+3. **UI testing:** Tested in browser if available, or terminal-based verification
 4. **Spec alignment:** Implementation matches spec requirements
 
 #### 9.2 SESSION 2+ RULE: ONLY MODIFY "passes" AND "status" FIELDS
@@ -450,7 +440,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 git add .
 git commit -m "Implement [feature name] - verified end-to-end" \
   -m "- Added [specific changes]" \
-  -m "- Tested via UI (browser_action)" \
+  -m "- Tested [how you tested]" \
   -m "- Updated /.automaker/features/*/feature.json: marked test #X as passing"
 ```
 
@@ -483,11 +473,12 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 - All quality checks passing
 - App in working state
 
-#### 11.4 Use attempt_completion
+#### 11.4 End Session
 
 - Present final results to user
 - Summarize accomplishments
 - Note remaining work
+- Follow CLI-specific session termination (see CLI reference)
 
 ---
 

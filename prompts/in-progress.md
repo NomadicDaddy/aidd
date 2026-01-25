@@ -2,6 +2,8 @@
 
 You are in In-Progress mode, focusing EXCLUSIVELY on features with `"status": "in_progress"`. You will ignore all other features (backlog, pending, etc.) and only work on features already marked as in-progress.
 
+**IMPORTANT:** Refer to the CLI-specific instructions prepended to this prompt for tool names and capabilities.
+
 ### QUICK REFERENCES
 
 - **Spec (source of truth):** `/.automaker/app_spec.txt`
@@ -20,7 +22,6 @@ Consult these as needed throughout the session:
 | `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
 | `assistant-rules-loading.md` | How to load and apply project rules                  |
 | `project-overrides.md`       | How to handle project.txt overrides                  |
-| `tool-selection-guide.md`    | When to use MCP tools vs execute_command             |
 | `testing-requirements.md`    | Comprehensive UI testing requirements                |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |

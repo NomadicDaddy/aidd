@@ -2,6 +2,8 @@
 
 You are in Code mode and ready to begin integrating with an existing codebase to set up the foundation for all future development sessions.
 
+**IMPORTANT:** Refer to the CLI-specific instructions prepended to this prompt for tool names and capabilities.
+
 ### QUICK REFERENCES
 
 - **Spec (source of truth):** `/.automaker/app_spec.txt`
@@ -20,7 +22,6 @@ Consult these as needed throughout the session:
 | `hard-constraints.md`        | Non-negotiable constraints                   |
 | `assistant-rules-loading.md` | How to load and apply project rules          |
 | `project-overrides.md`       | How to handle project.txt overrides          |
-| `tool-selection-guide.md`    | When to use MCP tools vs execute_command     |
 | `file-integrity.md`          | Safe file editing and verification protocols |
 | `error-handling-patterns.md` | Common errors and recovery strategies        |
 

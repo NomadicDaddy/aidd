@@ -6,6 +6,18 @@
 # Supports both OpenCode and KiloCode CLIs
 
 # -----------------------------------------------------------------------------
+# AIDD Version
+# -----------------------------------------------------------------------------
+_AIDD_VERSION_FILE="$(dirname "${BASH_SOURCE[0]}")/../VERSION"
+if [[ -f "$_AIDD_VERSION_FILE" ]]; then
+    AIDD_VERSION=$(cat "$_AIDD_VERSION_FILE" | tr -d '[:space:]')
+else
+    AIDD_VERSION="unknown"
+fi
+export AIDD_VERSION
+unset _AIDD_VERSION_FILE
+
+# -----------------------------------------------------------------------------
 # Exit Codes (Standard)
 # -----------------------------------------------------------------------------
 : "${EXIT_SUCCESS:=0}"              # Successful execution

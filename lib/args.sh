@@ -5,7 +5,7 @@
 # Command-line argument parsing, validation, and default application
 # Supports OpenCode, KiloCode, and Claude Code CLIs
 
-# Source configuration for defaults
+# Source configuration for defaults (includes AIDD_VERSION)
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
 # -----------------------------------------------------------------------------
@@ -48,10 +48,10 @@ export CODE_MODEL_ARGS=()
 # -----------------------------------------------------------------------------
 print_help() {
     cat << EOF
-Usage: $0 [OPTIONS]
-
-AIDD - AI Development Driver
+AIDD - AI Development Driver v${AIDD_VERSION}
 Supports OpenCode, KiloCode, and Claude Code CLIs
+
+Usage: $0 [OPTIONS]
 
 OPTIONS:
     --cli CLI               CLI to use: opencode, kilocode, or claude-code (optional, default: $DEFAULT_CLI)
@@ -77,6 +77,7 @@ OPTIONS:
     --check-features        Validate all feature.json files against schema and exit
     --stop-when-done      Stop early when TODO/in-progress mode has no remaining items (optional)
     --audit AUDIT[,...]   Run audit mode with one or more audits (e.g., SECURITY or DEAD_CODE,PERFORMANCE)
+    --version               Show version information
     --help                  Show this help message
 
 EXAMPLES:
@@ -231,6 +232,10 @@ parse_args() {
                 ;;
             -h|--help)
                 print_help
+                exit 0
+                ;;
+            -v|--version)
+                echo "AIDD v${AIDD_VERSION}"
                 exit 0
                 ;;
             *)

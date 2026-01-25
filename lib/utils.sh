@@ -123,12 +123,14 @@ log_iteration_header() {
     local log_file="$3"
     local width=70
 
-    # Build iteration title
+    # Build iteration title with version
     local title
+    local version_suffix=""
+    [[ -n "$AIDD_VERSION" && "$AIDD_VERSION" != "unknown" ]] && version_suffix=" (v${AIDD_VERSION})"
     if [[ "$max_iter" == "unlimited" || -z "$max_iter" ]]; then
-        title="AIDD Iteration $iteration"
+        title="AIDD${version_suffix} - Iteration $iteration"
     else
-        title="AIDD Iteration $iteration of $max_iter"
+        title="AIDD${version_suffix} - Iteration $iteration of $max_iter"
     fi
 
     local padding=$(( (width - ${#title} - 2) / 2 ))

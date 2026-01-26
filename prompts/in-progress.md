@@ -34,7 +34,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -56,18 +56,18 @@ Consult these as needed throughout the session:
 
 Start by orienting yourself with the project state.
 
-**Use MCP tools:**
+**Use appropriate tools (see environment-specific reference):**
 
-- `mcp_filesystem_read_text_file` - Read spec, progress, feature list
-- `mcp_filesystem_list_directory` - Explore project structure
-- `mcp_filesystem_search_files` - Find specific files or content
-- `list_code_definition_names` - Map codebase structure (call per subdirectory)
+- Read files: spec, progress, feature list
+- Explore project structure: list directories
+- Find specific files or content: search by pattern or content
+- Map codebase structure: identify key components
 
 **Record the project root:**
 
 - Locate `/.automaker/app_spec.txt`
-- Use that directory as `cwd` for all `execute_command` calls
-- Verify with `mcp_filesystem_list_directory`
+- Use that directory as working directory for all commands
+- Verify by listing directory contents
 
 **Review key files:**
 
@@ -92,12 +92,12 @@ The previous session may have introduced bugs. Always verify before adding new c
 
 #### 3.1 Quality Control Gates
 
-**Run `bun run smoke:qc` if it exists. Otherwise, run:**
+**Run quality checks using your environment's tools:**
 
-- Linting: `npm run lint` or equivalent
-- Type checking: `npm run type-check` or `tsc --noEmit`
-- Tests: `npm test` (if applicable)
-- Formatting: `npm run format:check` or equivalent
+- Linting: check code formatting and syntax
+- Type checking: verify type consistency
+- Tests: run automated tests (if applicable)
+- Formatting: check code formatting
 
 **If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
 
@@ -167,10 +167,10 @@ Document which in-progress feature you're working on and why.
 
 #### 6.1 Write Code
 
-**Use MCP tools for file operations:**
+**Use appropriate tools (see environment-specific reference) for file operations:**
 
-1. `mcp_filesystem_read_text_file` - Read existing code
-2. `mcp_filesystem_edit_file` - Make targeted changes
+1. Read existing code
+2. Make targeted changes
 3. **CRITICAL:** Immediately read file after editing to verify
 4. If corruption detected → `git checkout -- <file>` and retry
 
@@ -194,7 +194,7 @@ Document which in-progress feature you're working on and why.
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
-- Run `bun run smoke:qc` (if exists) or lint, type-check, format
+- Run quality checks using your environment's tools
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 
@@ -207,12 +207,12 @@ Document which in-progress feature you're working on and why.
 #### 7.1 Launch Browser
 
 ```
-browser_action.launch http://localhost:{frontendPort}
+[Browser automation tool] launch http://localhost:{frontendPort}
 ```
 
 #### 7.2 Test Complete Workflow
 
-Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
+Use your browser automation tool to click, type, and scroll:
 
 1. Navigate to feature area
 2. Complete full user journey
@@ -263,7 +263,7 @@ Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`:
 git add .
 git commit -m "Complete in-progress feature: [feature name]" \
   -m "- [specific changes]" \
-  -m "- Tested via UI (browser_action)" \
+  -m "- Tested via UI (browser automation)" \
   -m "- Updated feature.json: marked as passing"
 ```
 

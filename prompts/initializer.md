@@ -39,7 +39,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -61,25 +61,25 @@ Consult these as needed throughout the session:
 
 Start by orienting yourself with the project.
 
-**Use MCP tools:**
+**Use appropriate tools (see environment-specific reference):**
 
-- `mcp_filesystem_read_text_file` - Read spec and existing files
-- `mcp_filesystem_list_directory` - Explore project structure
-- `mcp_filesystem_search_files` - Find specific files
-- `list_code_definition_names` - Map existing code (call per subdirectory)
+- Read files: spec and existing files
+- Explore project structure: list directories
+- Find specific files: search by pattern
+- Map existing code: identify key components
 
 **Locate and read the spec:**
 
-- Use `mcp_filesystem_search_files` to find `/.automaker/app_spec.txt`
-- Read it with `mcp_filesystem_read_text_file`
+- Find `/.automaker/app_spec.txt` using file/content search
+- Read it using your file read tool
 - Record the directory containing it as your **project root**
-- Use that project root as `cwd` for all `execute_command` calls
+- Use that project root as working directory for all commands
 
 **Sanity check:**
 
-- After selecting project root, `mcp_filesystem_list_directory` should show expected entries
+- After selecting project root, listing the directory should show expected entries
 - Should see directories like `backend/`, `frontend/`, `scripts/`, etc.
-- If `mcp_filesystem_list_directory` shows `0 items`, re-check the path
+- If directory listing shows `0 items`, re-check the path
 
 ---
 
@@ -119,8 +119,8 @@ Feature JSON must follow AutoMaker format exactly:
 
 - `{timestamp}` = Unix timestamp or YYYYMMDDHHMMSS (digits only)
 - `{random}` = 4-12 alphanumeric characters (a-z, A-Z, 0-9 only, NO hyphens or special chars)
-- Example: `feature-20260109142345-abc123def` ✓
-- Invalid: `feature-20260109142345-my-feature` ✗ (hyphens in random part)
+- Example: `feature-20260109142345-abc123def`
+- Invalid: `feature-20260109142345-my-feature` (hyphens in random part)
 
 ```json
 {
@@ -176,7 +176,7 @@ Feature JSON must follow AutoMaker format exactly:
 
 ```bash
 # Read file to confirm valid JSON
-mcp_filesystem_read_text_file .automaker/features/{id}/feature.json
+ # Use your file read tool to read .automaker/features/{id}/feature.json
 
 # Check structure is correct
 # Verify all features have "passes": false
@@ -227,7 +227,7 @@ After creating `scripts/setup.ts`:
 
 ```bash
 # Read script to confirm content
-mcp_filesystem_read_text_file scripts/setup.ts
+ # Use your file read tool to read scripts/setup.ts
 
 # Verify script is executable
 ls -l scripts/setup.ts
@@ -258,12 +258,7 @@ ls -l scripts/setup.ts
 # Otherwise use npm
 
 # Run setup with parameters
-bun scripts/setup.ts \
-  --slug myapp \
-  --name "My Application" \
-  --description "Application description from spec" \
-  --frontend-port 3000 \
-  --backend-port 3001
+ # Use your environment-specific command to run setup with parameters
 ```
 
 #### 5.3 Handle Setup Failures
@@ -315,7 +310,7 @@ mkdir -p docs
 
 ```bash
 # List root directory to verify structure
-mcp_filesystem_list_directory .
+ # Use your directory list tool to list the project root
 
 # Should see expected directories
 # Verify structure matches spec requirements
@@ -342,10 +337,10 @@ Include the following sections:
 
 ```bash
 # Create README.md with comprehensive content
-# Use mcp_filesystem_edit_file or execute_command with heredoc
+ # Use your file edit tool (or shell execution with verification)
 
 # Read README to confirm content
-mcp_filesystem_read_text_file README.md
+ # Use your file read tool to read README.md
 ```
 
 ---
@@ -414,13 +409,13 @@ git log -1
 
 ```bash
 # Verify feature list
-mcp_filesystem_read_text_file .automaker/features/{id}/feature.json | head -50
+ # Use your file read tool to inspect .automaker/features/{id}/feature.json
 
 # Count features
 grep -c '"passes"' .automaker/features/{id}/feature.json
 
 # Verify project structure
-mcp_filesystem_list_directory .
+ # Use your directory list tool to list the project root
 
 # Check git status
 git status

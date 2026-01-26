@@ -34,7 +34,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -56,7 +56,7 @@ Consult these as needed throughout the session:
 
 Start by orienting yourself with the project state.
 
-**Use appropriate tools (see CLI reference) to:**
+**Use appropriate tools (see environment-specific reference) to:**
 
 - Read files: spec, progress notes, feature list
 - Explore project structure: list directories
@@ -307,7 +307,7 @@ If ANY features lack `dependencies` field, add it (empty array `[]` if no depend
 
 #### 7.1 Write Code
 
-**Use appropriate tools (see CLI reference) for file operations:**
+**Use appropriate tools (see environment-specific reference) for file operations:**
 
 1. Read existing code before modifying
 2. Make targeted edits (prefer edit over full rewrite)
@@ -323,7 +323,7 @@ If ANY features lack `dependencies` field, add it (empty array `[]` if no depend
 
 #### 7.2 Test Implementation
 
-**Testing approach depends on CLI capabilities (see CLI reference):**
+**Testing approach depends on environment-specific capabilities (see environment-specific reference):**
 
 - If browser automation available: Navigate to feature in UI, complete workflow, verify visuals
 - If no browser automation: Use terminal-based verification, curl for APIs, build output checks
@@ -353,7 +353,7 @@ sort schema.prisma | uniq -d
 
 **CRITICAL: Verify features before marking as passing.**
 
-**If browser automation is available (see CLI reference):**
+**If browser automation is available (see environment-specific reference):**
 
 1. Launch browser to frontend URL
 2. Navigate to feature area
@@ -478,7 +478,7 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 - Present final results to user
 - Summarize accomplishments
 - Note remaining work
-- Follow CLI-specific session termination (see CLI reference)
+- Follow environment-specific session termination (see environment-specific reference)
 
 ---
 

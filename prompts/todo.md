@@ -39,7 +39,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -66,7 +66,7 @@ Consult these as needed throughout the session:
 **Check for `/.automaker/todo.md`:**
 
 ```bash
-mcp_filesystem_read_text_file .automaker/todo.md
+# Use your file read tool to read .automaker/todo.md
 ```
 
 **If todo.md exists and has incomplete items:**
@@ -83,7 +83,7 @@ mcp_filesystem_read_text_file .automaker/todo.md
 **Search for common TODO list file names:**
 
 ```bash
-# Use mcp_filesystem_search_files for these patterns:
+# Use your file/content search tool for these patterns:
 - todo.md, todos.md, TODO.md, TODOs.md
 - TODO-list.md, todo-list.md, tasks.md, TASKS.md
 ```
@@ -168,10 +168,10 @@ mcp_filesystem_read_text_file .automaker/todo.md
 
 #### 4.1 Write Code
 
-**Use MCP tools for file operations:**
+**Use appropriate tools (see environment-specific reference) for file operations:**
 
-1. `mcp_filesystem_read_text_file` - Read existing code
-2. `mcp_filesystem_edit_file` - Modify or create files
+1. Read existing code
+2. Modify or create files
 3. **CRITICAL:** Immediately read file after editing to verify
 4. If corruption detected → `git checkout -- <file>` and retry
 
@@ -185,7 +185,7 @@ mcp_filesystem_read_text_file .automaker/todo.md
 
 **Use browser automation:**
 
-- Launch frontend with `browser_action.launch`
+- Launch frontend with your browser automation tool
 - Navigate to relevant area
 - Test specific behavior from todo item
 - Verify no regressions introduced
@@ -203,7 +203,7 @@ mcp_filesystem_read_text_file .automaker/todo.md
 
 **BEFORE proceeding, ensure all quality gates pass:**
 
-- Run `bun run smoke:qc` (if exists) or lint, type-check, format
+- Run quality checks (if exists) or lint, type-check, format
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 - For schema changes, check no duplicates
@@ -219,13 +219,13 @@ mcp_filesystem_read_text_file .automaker/todo.md
 #### 5.1 Launch and Navigate
 
 ```
-browser_action.launch http://localhost:{frontendPort}
+[browser automation tool] launch http://localhost:{frontendPort}
 # Navigate to relevant area of application
 ```
 
 #### 5.2 Test Completed Item
 
-- Use `browser_action.click`, `browser_action.type`, `browser_action.scroll_*`
+- Use your browser automation tool to click, type, and scroll
 - Verify specific behavior from todo item works correctly
 - Test edge cases and error conditions
 
@@ -315,7 +315,7 @@ async function fetchData() {
 git add .
 git commit -m "Complete todo item: [description]" \
   -m "- Implemented [specific changes]" \
-  -m "- Tested via UI (browser_action)" \
+  -m "- Tested via UI (browser automation)" \
   -m "- Updated /.automaker/todo.md: removed completed item"
 ```
 
@@ -349,7 +349,7 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 
 **Before context fills up:**
 
-1. Commit all working code using `execute_command`
+1. Commit all working code using your environment's shell execution tool
 2. Update `/.automaker/todo.md` (if it exists)
 3. Update `/.automaker/CHANGELOG.md`
 4. Ensure no uncommitted changes

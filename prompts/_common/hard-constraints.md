@@ -59,7 +59,7 @@
 
 5. **To verify dev server accessibility:**
     - Use curl checks: `curl -s http://localhost:3000`
-    - Use browser automation: `browser_action.launch http://localhost:3000`
+    - Use browser automation (see CLI reference for exact tool name and syntax)
     - **DO NOT** start the command and wait for it
 
 **Remember:** Starting new servers wastes time; reusing existing servers is faster and preferred.

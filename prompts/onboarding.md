@@ -39,7 +39,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -61,18 +61,18 @@ Consult these as needed throughout the session:
 
 Start by orienting yourself with the existing codebase.
 
-**Use MCP tools:**
+**Use appropriate tools (see environment-specific reference):**
 
-- `mcp_filesystem_read_text_file` - Read existing files
-- `mcp_filesystem_list_directory` - Explore directory structure
-- `mcp_filesystem_search_files` - Find specific files or patterns
-- `list_code_definition_names` - Map code structure (call per subdirectory)
+- Read existing files
+- Explore directory structure
+- Find specific files or patterns
+- Map code structure
 
 #### 2.1 Locate or Create Spec
 
 **If `/.automaker/app_spec.txt` exists:**
 
-- Read it with `mcp_filesystem_read_text_file`
+- Read it with your file read tool
 - Use its directory as your **project root**
 - Verify it accurately describes the existing codebase
 
@@ -92,10 +92,10 @@ Start by orienting yourself with the existing codebase.
 
 ```bash
 # Check for .automaker directory
-mcp_filesystem_list_directory .automaker
+# Use your directory list tool to check .automaker
 
 # Check for legacy .auto* directories
-mcp_filesystem_list_directory .
+# Use your directory list tool to check project root
 
 # Look for existing features/{feature-id}/feature.json, CHANGELOG.md, etc.
 ```
@@ -155,14 +155,14 @@ mcp_filesystem_list_directory .
 **Systematically analyze what exists:**
 
 1. **Backend analysis:**
-    - Use `list_code_definition_names` on backend directories (per subdirectory)
+    - Use your code analysis tool on backend directories (per subdirectory)
     - Identify API routes and endpoints
     - Check database models (schema.prisma, models/, etc.)
     - Note authentication/authorization
     - Document data validation
 
 2. **Frontend analysis:**
-    - Use `list_code_definition_names` on frontend directories (per subdirectory)
+    - Use your code analysis tool on frontend directories (per subdirectory)
     - List components and pages
     - Identify routing structure
     - Check for state management
@@ -202,8 +202,8 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 
 - `{timestamp}` = Unix timestamp or YYYYMMDDHHMMSS (digits only)
 - `{random}` = 4-12 alphanumeric characters (a-z, A-Z, 0-9 only, NO hyphens or special chars)
-- Example: `feature-20260109142345-abc123def` ✓
-- Invalid: `feature-20260109142345-my-feature` ✗ (hyphens in random part)
+- Example: `feature-20260109142345-abc123def`
+- Invalid: `feature-20260109142345-my-feature` (hyphens in random part)
 
 **Timestamp format:** `createdAt` and `updatedAt` MUST use ISO 8601: `"YYYY-MM-DDTHH:MM:SS.sssZ"`
 
@@ -336,7 +336,7 @@ Better to retest later than claim something works when it doesn't.
 
 ```bash
 # Read README to confirm accuracy
-mcp_filesystem_read_text_file README.md
+# Use your file read tool to read README.md
 
 # Ensure it reflects actual codebase state
 # Not just generic boilerplate
@@ -480,8 +480,8 @@ git commit -m "onboard"
 
 ```bash
 # Verify critical files exist
-mcp_filesystem_read_text_file .automaker/app_spec.txt | head -20
-mcp_filesystem_read_text_file .automaker/CHANGELOG.md
+# Use your file read tool to read .automaker/app_spec.txt (and optionally preview)
+# Use your file read tool to read .automaker/CHANGELOG.md
 
 # List all feature directories to verify structure
 ls -la .automaker/features/

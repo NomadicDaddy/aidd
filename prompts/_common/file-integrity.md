@@ -6,8 +6,8 @@
 
 **ALWAYS verify after editing files:**
 
-1. **Immediately after `mcp_filesystem_edit_file`:**
-    - Use `mcp_filesystem_read_text_file` to read the edited file
+1. **Immediately after using your file edit tool (see CLI reference for exact tool name and syntax):**
+    - Use your file read tool to read the edited file
     - Verify the final content matches your intent
     - **ESPECIALLY CRITICAL** for JSON files (check valid JSON structure)
 
@@ -50,10 +50,10 @@
 **Strategy 1: Verify-First (Preferred for JSON)**
 
 ```
-1. Read entire file: mcp_filesystem_read_text_file
+1. Read entire file with your file read tool
 2. Plan exact changes
-3. Make single targeted edit: mcp_filesystem_edit_file
-4. Read entire file again: mcp_filesystem_read_text_file
+3. Make single targeted edit with your file edit tool
+4. Read entire file again with your file read tool
 5. Verify changes are correct
 6. If corrupted → git checkout and retry
 ```
@@ -62,9 +62,9 @@
 
 ```
 1. Prepare complete new content
-2. Use execute_command with shell redirection
+2. Use your shell execution tool with shell redirection
 3. Example: echo '...' > file.json
-4. Read file to verify: mcp_filesystem_read_text_file
+4. Read file to verify with your file read tool
 5. If corrupted → git checkout and retry
 ```
 

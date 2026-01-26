@@ -55,7 +55,7 @@ Project.txt may include:
 **Priority order (highest to lowest):**
 
 1. `/.automaker/project.txt` - Highest priority, overrides everything
-2. Assistant rule files (`.windsurf/rules/`, `CLAUDE.md`, etc.)
+2. Assistant rule files (`.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files, etc.)
 3. Generic prompt instructions
 4. Default behaviors
 

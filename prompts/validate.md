@@ -39,7 +39,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -131,7 +131,7 @@ grep -c '"passes": false' .automaker/features/*/feature.json
 **Check for `/.automaker/todo.md`:**
 
 ```bash
-mcp_filesystem_read_text_file .automaker/todo.md
+# Use your file read tool to read .automaker/todo.md
 ```
 
 **If todo.md exists:** Parse each line, identify incomplete items (`- [ ]`), proceed to validation.

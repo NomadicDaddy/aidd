@@ -115,7 +115,7 @@ error TS2307: Cannot find module './config' or its corresponding type declaratio
 
 **Recovery:**
 
-1. **Check if module exists:** `mcp_filesystem_read_text_file` the target file
+1. **Check if module exists:** Use your file read tool to read the target file
 2. **Verify export exists:** Look for `export` keyword
 3. **Fix import path:** Ensure path is correct (relative vs absolute)
 4. **Add missing export:** If function exists but not exported
@@ -323,7 +323,7 @@ Module not found: Error: Can't resolve './component'
 1. **Verify file exists:**
 
     ```bash
-    mcp_filesystem_read_text_file src/component.tsx
+    # Use your file read tool to inspect the target file
     ```
 
 2. **Fix import path:**
@@ -423,7 +423,7 @@ fatal: not a git repository (or any of the parent directories): .git
 
     ```bash
     pwd
-    mcp_filesystem_list_directory .
+    # Use your directory listing tool to confirm contents
     ```
 
 2. **Initialize git if needed:**
@@ -513,13 +513,13 @@ Error: Model "User" is defined multiple times
 1. **Read schema file:**
 
     ```bash
-    mcp_filesystem_read_text_file prisma/schema.prisma
+    # Use your file read tool to inspect the schema
     ```
 
 2. **Search for duplicates:**
 
     ```bash
-    mcp_filesystem_search_files pattern="model User" path="prisma/"
+    # Use your file/content search tool to locate duplicates
     ```
 
 3. **Rollback if corrupted:**
@@ -620,15 +620,15 @@ Error: API_KEY is required but not provided
 1. **Check for .env file:**
 
     ```bash
-    mcp_filesystem_list_directory .
-    mcp_filesystem_read_text_file .env
+    # Use your directory list tool, then your file read tool
+    # to check whether a .env file exists and what it contains
     ```
 
 2. **Create .env if missing:**
 
     ```bash
     # Based on .env.example
-    mcp_filesystem_read_text_file .env.example
+    # Use your file read tool to inspect .env.example
     # Create .env with required values
     ```
 
@@ -679,7 +679,7 @@ Error: Navigation timeout exceeded
 3. **Take screenshot to see actual state:**
 
     ```
-    browser_action.screenshot "debug"
+    [browser automation tool] screenshot "debug"
     ```
 
 4. **Add wait/retry logic:**
@@ -714,16 +714,16 @@ Error: Could not find element matching "Submit Button"
 1. **Take screenshot first:**
 
     ```
-    browser_action.screenshot "before-click"
+    [browser automation tool] screenshot "before-click"
     ```
 
 2. **Try alternative selectors:**
 
     ```
     # Try different strategies
-    browser_action.click "#submit-btn"
-    browser_action.click "button[type='submit']"
-    browser_action.click "Submit"
+    [browser automation tool] click "#submit-btn"
+    [browser automation tool] click "button[type='submit']"
+    [browser automation tool] click "Submit"
     ```
 
 3. **Wait for element to appear:**
@@ -809,9 +809,9 @@ Error: Could not find element matching "Submit Button"
     - Test incrementally
 
 3. **Use proper tools**
-    - MCP for file operations
-    - execute_command for shell ops
-    - browser_action for UI testing
+    - File tools for file operations (read/list/search/edit)
+    - Shell execution for shell ops
+    - Browser automation for UI testing
 
 4. **Test incrementally**
     - Small changes, test often

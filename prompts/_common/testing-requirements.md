@@ -14,12 +14,12 @@
 
 **ONLY TWO TESTING METHODS ALLOWED:**
 
-1. **Direct browser control/automation** using `browser_action`
+1. **Direct browser control/automation** using your environment's browser automation tool (see CLI reference for exact tool name and syntax)
 2. **Puppeteer scripted testing** (when explicitly required)
 
 ### Available Testing Tools
 
-**browser_action** - UI verification and interaction
+**Browser automation tool** - UI verification and interaction
 
 - Drive and verify the UI in a browser
 - Simulate real user interactions (clicks, typing, scrolling)
@@ -27,20 +27,20 @@
 - Check console logs for errors
 - **PRIMARY TOOL** for feature verification
 
-**execute_command** - Test runners and automation
+**Shell execution tool** - Test runners and automation
 
 - Run test suites (jest, pytest, etc.)
 - Execute automation scripts
 - Run quality control commands
 - Build and compile code
 
-**mcp_filesystem_read_text_file** - Test analysis
+**File read tool** - Test analysis
 
 - Analyze test results and logs
 - Review test output files
 - Verify test coverage reports
 
-**mcp_filesystem_search_files** - Test discovery
+**File/content search tool** - Test discovery
 
 - Find relevant test files
 - Locate test documentation
@@ -54,9 +54,9 @@
 
 ✅ **Test through the UI** with clicks and keyboard input
 
-- Navigate using browser_action.click
-- Enter data using browser_action.type
-- Scroll using browser*action.scroll*\*
+- Navigate using browser automation clicks
+- Enter data using browser automation typing
+- Scroll using browser automation scrolling
 - Verify visual appearance
 
 ✅ **Take screenshots** to verify visual appearance
@@ -126,7 +126,7 @@
 
 **Standard testing sequence:**
 
-1. **Launch browser** → `browser_action.launch` the frontend URL
+1. **Launch browser** → Use your browser automation tool to open the frontend URL
 2. **Navigate to feature** → Use clicks/typing to reach the feature area
 3. **Execute feature workflow** → Complete the full user journey
 4. **Verify success** → Check UI, data, and console
@@ -162,7 +162,7 @@
 
 ### When to Skip Browser Testing
 
-**Only skip browser_action if:**
+**Only skip browser automation if:**
 
 - Feature is pure backend (no UI component)
 - UI verification is blocked by external dependency

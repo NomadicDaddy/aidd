@@ -6,11 +6,11 @@
 
 **ALWAYS PREFER (in order):**
 
-### 1. MCP Filesystem Tools (HIGHEST PRIORITY)
+### 1. File Tools (HIGHEST PRIORITY)
 
-**Use MCP tools for ALL file operations:**
+**Use your environment's file tools for ALL file operations (see CLI reference for exact tool names and syntax):**
 
-**mcp_filesystem_read_text_file** - Reading file contents
+**File read tool** - Reading file contents
 
 - ✅ Reading source code files
 - ✅ Reading configuration files
@@ -18,29 +18,29 @@
 - ✅ Inspecting test results
 - ❌ NOT for: Binary files (use appropriate tool)
 
-**mcp_filesystem_list_directory** - Listing directory contents
+**Directory list tool** - Listing directory contents
 
 - ✅ Exploring project structure
 - ✅ Finding files in a directory
 - ✅ Checking if files exist
 - ❌ NOT for: Recursive searches (use search instead)
 
-**mcp_filesystem_search_files** - Searching for files and content
+**File/content search tool** - Searching for files and content
 
 - ✅ Finding files by name pattern
 - ✅ Searching code for specific strings
 - ✅ Locating configuration files
 - ✅ Counting occurrences (e.g., `"passes": false`)
-- ❌ NOT for: Complex regex (use list_code_definition_names)
+- ❌ NOT for: Deep code-structure analysis (use a code-structure/index tool if available)
 
-**mcp_filesystem_edit_file** - Editing files
+**File edit tool** - Editing files
 
 - ✅ Making targeted code changes
 - ✅ Updating configuration files
 - ✅ Modifying JSON (with verification)
 - ⚠️ ALWAYS verify after editing (see file-integrity.md)
 
-**list_code_definition_names** - Analyzing code structure
+**Code structure/index tool** - Analyzing code structure
 
 - ✅ Mapping codebase architecture
 - ✅ Finding classes, functions, interfaces
@@ -48,7 +48,7 @@
 - ⚠️ **IMPORTANT:** Only processes files at the top level of specified directory
 - ⚠️ To explore subdirectories, call on each subdirectory path individually
 
-**Why prefer MCP tools:**
+**Why prefer file tools:**
 
 - Cross-platform compatibility (Windows, Mac, Linux)
 - No shell syntax differences
@@ -56,9 +56,9 @@
 - Better error handling
 - Consistent behavior
 
-### 2. execute_command (USE ONLY FOR SHELL OPERATIONS)
+### 2. Shell Execution Tool (USE ONLY FOR SHELL OPERATIONS)
 
-**Use execute_command for operations requiring shell execution:**
+**Use your environment's shell execution tool for operations requiring shell execution (see CLI reference for exact tool name and syntax):**
 
 **Git operations:**
 
@@ -110,60 +110,60 @@ lsof -ti:3000
 netstat -ano | findstr :3000
 ```
 
-**Why use execute_command:**
+**Why use shell execution:**
 
 - Operations that require shell features (pipes, redirection)
-- Tools that don't have MCP equivalents
+- Tools that don't have file tool equivalents
 - Git and package manager operations
 - Process management
 
-### 3. browser_action (FOR UI VERIFICATION)
+### 3. Browser Automation Tool (FOR UI VERIFICATION)
 
-**Use browser_action for all UI testing:**
+**Use your environment's browser automation tool for all UI testing (see CLI reference for exact tool name and syntax):**
 
-**browser_action.launch** - Open browser
-
-```
-browser_action.launch http://localhost:3000
-```
-
-**browser_action.click** - Click elements
+**Launch** - Open browser
 
 ```
-browser_action.click "Login Button"
-browser_action.click "#submit-btn"
+[browser tool] launch http://localhost:3000
 ```
 
-**browser_action.type** - Type text
+**Click** - Click elements
 
 ```
-browser_action.type "email" "test@example.com"
-browser_action.type "password" "secret123"
+[browser tool] click "Login Button"
+[browser tool] click "#submit-btn"
 ```
 
-**browser_action.screenshot** - Capture screen
+**Type** - Type text
 
 ```
-browser_action.screenshot "login-page"
+[browser tool] type "email" "test@example.com"
+[browser tool] type "password" "secret123"
 ```
 
-**Why use browser_action:**
+**Screenshot** - Capture screen
+
+```
+[browser tool] screenshot "login-page"
+```
+
+**Why use browser automation:**
 
 - Only way to verify actual UI
 - Tests real user experience
 - Catches visual bugs
 - Validates end-to-end flows
 
-### NEVER Use These Commands
+### NEVER Use Shell Commands for File Operations
 
-**DON'T use execute_command for these operations:**
+**DON'T use your shell execution tool for these operations:**
 
-❌ `cat`, `type`, `more`, `less` → Use `mcp_filesystem_read_text_file`
-❌ `ls`, `dir` → Use `mcp_filesystem_list_directory`
-❌ `find`, `grep`, `rg` → Use `mcp_filesystem_search_files`
-❌ `echo ... > file` → Use `mcp_filesystem_edit_file` or `execute_command` with verification
-❌ `sed`, `awk` → Use `mcp_filesystem_edit_file`
-❌ `head`, `tail` → Use `mcp_filesystem_read_text_file` with limit/offset
+❌ `cat`, `type`, `more`, `less` → Use your file read tool
+❌ `ls`, `dir` → Use your directory list tool
+❌ `find`, `grep`, `rg` → Use your file/content search tool
+❌ `echo ... > file` → Use your file edit tool (or shell execution only with strict verification)
+❌ `sed`, `awk` → Use your file edit tool
+❌ `head`, `tail` → Use your file read tool (with limit/offset if supported)
 
 **Why avoid these:**
 
@@ -175,83 +175,83 @@ browser_action.screenshot "login-page"
 ### Decision Tree
 
 ```
-Need to operate on files?
+Need to operate on files? (See CLI reference for exact tool names)
 ├─ Reading file contents?
-│  └─ Use: mcp_filesystem_read_text_file
+│  └─ Use: File read tool
 ├─ Listing directory?
-│  └─ Use: mcp_filesystem_list_directory
+│  └─ Use: Directory list tool
 ├─ Searching for files/content?
-│  └─ Use: mcp_filesystem_search_files
+│  └─ Use: File/content search tool
 ├─ Editing file?
-│  └─ Use: mcp_filesystem_edit_file (+ verify after!)
+│  └─ Use: File edit tool (+ verify after!)
 └─ Analyzing code structure?
-   └─ Use: list_code_definition_names
+   └─ Use: Code structure/index tool
 
 Need to run shell operations?
 ├─ Git operation?
-│  └─ Use: execute_command (git ...)
+│  └─ Use: Shell execution tool (git ...)
 ├─ Package manager?
-│  └─ Use: execute_command (npm/bun/pip ...)
+│  └─ Use: Shell execution tool (npm/bun/pip ...)
 ├─ Test runner?
-│  └─ Use: execute_command (npm test/pytest ...)
+│  └─ Use: Shell execution tool (npm test/pytest ...)
 └─ Build tool?
-   └─ Use: execute_command (npm run build ...)
+   └─ Use: Shell execution tool (npm run build ...)
 
 Need to verify UI?
 ├─ Launch browser?
-│  └─ Use: browser_action.launch
+│  └─ Use: Browser automation tool (launch)
 ├─ Interact with UI?
-│  └─ Use: browser_action.click / .type / .scroll_*
+│  └─ Use: Browser automation tool (click/type/scroll)
 └─ Capture screenshot?
-   └─ Use: browser_action.screenshot
+   └─ Use: Browser automation tool (screenshot)
 ```
 
 ### Common Tool Selection Mistakes
 
-**MISTAKE 1: Using cat instead of MCP**
+**MISTAKE 1: Using cat instead of file tools**
 
 ```bash
 # ❌ WRONG
-execute_command: cat src/App.tsx
+[shell execution tool]: cat src/App.tsx
 
 # ✅ CORRECT
-mcp_filesystem_read_text_file: src/App.tsx
+[file read tool]: src/App.tsx
 ```
 
-**MISTAKE 2: Using grep instead of MCP**
+**MISTAKE 2: Using grep instead of file tools**
 
 ```bash
 # ❌ WRONG
-execute_command: grep -r "TODO" src/
+[shell execution tool]: grep -r "TODO" src/
 
 # ✅ CORRECT
-mcp_filesystem_search_files: pattern="TODO", path="src/"
+[file/content search tool]: pattern="TODO", path="src/"
 ```
 
-**MISTAKE 3: Using curl instead of browser_action**
+**MISTAKE 3: Using curl instead of browser automation**
 
 ```bash
 # ❌ WRONG (for UI testing)
-execute_command: curl http://localhost:3000
+[shell execution tool]: curl http://localhost:3000
 
 # ✅ CORRECT
-browser_action.launch http://localhost:3000
+[browser automation tool] launch http://localhost:3000
 ```
 
 **MISTAKE 4: Using echo for file editing**
 
 ```bash
 # ❌ WRONG
-execute_command: echo '{"key": "value"}' > config.json
+[shell execution tool]: echo '{"key": "value"}' > config.json
 
 # ✅ CORRECT
-mcp_filesystem_edit_file: old_string="...", new_string='{"key": "value"}'
-# Then: mcp_filesystem_read_text_file to verify
+[file edit tool]: old_string="...", new_string='{"key": "value"}'
+# Then: [file read tool] to verify
 ```
 
 ### Shell Adaptation Guidelines
 
-**If you must use execute_command for file operations:**
+**If you must use shell execution for file operations:**
 
 **Know your shell:**
 
@@ -273,36 +273,36 @@ find .automaker/features -name 'feature.json' -exec grep -l '"passes": false' {}
 
 ```bash
 # Instead of complex shell pipelines
-# Use MCP tools with specific queries
+# Use file tools with specific queries
 ```
 
 ### Tool Selection Checklist
 
-Before using execute_command, ask:
+Before using shell execution, ask:
 
-- [ ] Can this be done with mcp*filesystem*\*? (If yes, use MCP)
-- [ ] Is this a git/npm/build operation? (If yes, execute_command is OK)
-- [ ] Am I testing UI? (If yes, use browser_action)
+- [ ] Can this be done with file tools? (If yes, use file tools)
+- [ ] Is this a git/npm/build operation? (If yes, shell execution is OK)
+- [ ] Am I testing UI? (If yes, use browser automation)
 - [ ] Will this work cross-platform? (Consider shell differences)
-- [ ] Is there a simpler MCP alternative? (Prefer simpler)
+- [ ] Is there a simpler file tool alternative? (Prefer simpler)
 
 ### Performance Considerations
 
 **Fast operations (prefer):**
 
-- mcp_filesystem_read_text_file (< 100ms)
-- mcp_filesystem_list_directory (< 50ms)
-- mcp_filesystem_search_files (< 500ms for small projects)
+- File read tool (< 100ms)
+- Directory list tool (< 50ms)
+- File/content search tool (< 500ms for small projects)
 
 **Slower operations (use when necessary):**
 
-- execute_command with complex pipelines (variable)
-- list_code_definition_names on large codebases (1-5 seconds)
-- browser_action operations (1-3 seconds per action)
+- Shell execution with complex pipelines (variable)
+- Code structure/index on large codebases (1-5 seconds)
+- Browser automation operations (1-3 seconds per action)
 
 **Optimization tips:**
 
-- Batch MCP operations when possible
+- Batch file tool operations when possible
 - Avoid redundant file reads
 - Cache directory listings mentally
-- Minimize browser_action roundtrips
+- Minimize browser automation roundtrips

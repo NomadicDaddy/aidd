@@ -12,7 +12,7 @@ Look for and read the following files in order of priority:
 - `.windsurf/rules/style.md` - Coding style and formatting guidelines
 - `.windsurf/rules/user.md` - User-specific preferences
 - `AGENTS.md` - Agent-specific instructions
-- `CLAUDE.md` - Claude-specific project rules
+- Tool/assistant-specific rule files (if present) - Project rules for the current environment
 
 These files contain important project rules, guidelines, and conventions that MUST be followed throughout the session.
 

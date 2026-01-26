@@ -256,7 +256,9 @@ git status
 **If changes exist:**
 
 ```bash
-git add .
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "chore(validation): validate features and todos [aidd-validate]" \
   -m "- Validated X features (Y updated to passes: true)" \
   -m "- Validated Z TODOs (A completed/removed, B stale)" \

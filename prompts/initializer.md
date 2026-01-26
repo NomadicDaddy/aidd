@@ -371,8 +371,10 @@ git status
 #### 8.3 Make Initial Commit
 
 ```bash
-# Stage all files
-git add .
+# Stage only the files you created/modified
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 
 # Create initial commit
 git commit -m "init"
@@ -473,7 +475,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ```bash
 # Ensure all changes committed
-git add .
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "Complete initialization - ready for development"
 ```
 

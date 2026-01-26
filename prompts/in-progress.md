@@ -260,7 +260,9 @@ Use your browser automation tool to click, type, and scroll:
 **Make descriptive git commit with context.**
 
 ```bash
-git add .
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "Complete in-progress feature: [feature name]" \
   -m "- [specific changes]" \
   -m "- Tested via UI (browser automation)" \

@@ -437,7 +437,9 @@ sort schema.prisma | uniq -d
 **Make descriptive git commit with context.**
 
 ```bash
-git add .
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "Implement [feature name] - verified end-to-end" \
   -m "- Added [specific changes]" \
   -m "- Tested [how you tested]" \
@@ -468,7 +470,7 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 
 #### 11.3 Ensure Clean State
 
-- No uncommitted changes (run `git add . && git commit` if needed)
+- No uncommitted changes (stage only touched files, then commit)
 - No broken features
 - All quality checks passing
 - App in working state

@@ -312,7 +312,9 @@ async function fetchData() {
 **Make descriptive git commit:**
 
 ```bash
-git add .
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "Complete todo item: [description]" \
   -m "- Implemented [specific changes]" \
   -m "- Tested via UI (browser automation)" \

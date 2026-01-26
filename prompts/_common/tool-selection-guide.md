@@ -66,7 +66,8 @@
 git status
 git diff
 git log --oneline -20
-git add .
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "message"
 git checkout -- file
 ```

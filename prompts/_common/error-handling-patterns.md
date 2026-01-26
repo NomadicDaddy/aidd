@@ -379,7 +379,9 @@ error: Your local changes to the following files would be overwritten by merge:
 2. **Commit current work:**
 
     ```bash
-    git add .
+    git status
+    git add <path/to/file1> <path/to/file2>
+    git diff --staged
     git commit -m "WIP: Save before merge"
     ```
 
@@ -397,7 +399,9 @@ error: Your local changes to the following files would be overwritten by merge:
 
 5. **Complete merge:**
     ```bash
-    git add .
+    git status
+    git add <path/to/file1> <path/to/file2>
+    git diff --staged
     git rebase --continue
     ```
 
@@ -430,7 +434,7 @@ fatal: not a git repository (or any of the parent directories): .git
 
     ```bash
     git init
-    git add .
+    git add <path/to/file1> <path/to/file2>
     git commit -m "Initial commit"
     ```
 

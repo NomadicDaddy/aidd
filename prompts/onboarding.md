@@ -360,7 +360,9 @@ git log --oneline -5
 **Commit onboarding changes:**
 
 ```bash
-git add .
+git status
+git add <path/to/file1> <path/to/file2>
+git diff --staged
 git commit -m "onboard: Add AIDD tracking files and documentation"
 ```
 
@@ -370,7 +372,7 @@ git commit -m "onboard: Add AIDD tracking files and documentation"
 
 ```bash
 git init
-git add .
+git add <path/to/file1> <path/to/file2>
 git commit -m "onboard"
 ```
 

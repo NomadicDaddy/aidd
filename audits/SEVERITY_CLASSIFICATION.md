@@ -1,11 +1,11 @@
 ---
 title: 'Unified Severity Classification System'
-last_updated: '2025-01-13'
-version: '1.0'
+last_updated: '2026-01-27'
+version: '2.0'
 category: 'Reference'
 priority: 'Medium'
 type: 'reference'
-description: 'Standard severity classification system used by all audits'
+description: 'Standard severity classification system for AIDD audit findings'
 ---
 
 # Unified Severity Classification System
@@ -15,16 +15,16 @@ description: 'Standard severity classification system used by all audits'
 1. [Overview](#overview)
 2. [Severity Levels](#severity-levels)
 3. [Classification Guidelines](#classification-guidelines)
-4. [Usage in Audit Reports](#usage-in-audit-reports)
-5. [Detailed Findings](#detailed-findings)
-6. [Severity Distribution Guidelines](#severity-distribution-guidelines)
-7. [Integration with Development Workflow](#integration-with-development-workflow)
-8. [Audit Framework Compliance](#audit-framework-compliance)
-9. [Validation and Quality Assurance](#validation-and-quality-assurance)
+4. [Feature.json Output](#featurejson-output)
+5. [Severity Distribution Guidelines](#severity-distribution-guidelines)
+6. [Audit Framework Compliance](#audit-framework-compliance)
+7. [Self-Assessment](#self-assessment)
 
 ## Overview
 
-This document defines the standardized 4-level severity classification system used across all audit frameworks in this project. All audits must use this classification to ensure consistency in prioritization and remediation planning.
+This document defines the standardized 4-level severity classification system used by all AIDD audits. When an audit discovers issues, it creates **feature.json files** in `/.automaker/features/` with severity mapped to priority.
+
+> **Note**: This severity system applies to **audit findings** (issues discovered during audits), not to feature priority in regular `feature.json` files. See `docs/feature-fields.md` for the complete feature.json schema.
 
 ## Severity Levels
 
@@ -40,8 +40,6 @@ This document defines the standardized 4-level severity classification system us
 - Authentication/authorization bypasses
 - Performance issues causing system unavailability
 - Build failures preventing deployments
-
-**Response Time**: **Immediate** (0-24 hours)
 
 **Examples**:
 
@@ -68,8 +66,6 @@ This document defines the standardized 4-level severity classification system us
 - Significant technical debt accumulation
 - Missing error handling for critical paths
 - Scalability limitations
-
-**Response Time**: **1-2 weeks**
 
 **Examples**:
 
@@ -98,8 +94,6 @@ This document defines the standardized 4-level severity classification system us
 - Non-critical accessibility improvements
 - Technical debt that may cause future issues
 
-**Response Time**: **1-4 weeks**
-
 **Examples**:
 
 - Inconsistent naming conventions
@@ -126,8 +120,6 @@ This document defines the standardized 4-level severity classification system us
 - Developer experience improvements
 - Cosmetic UI/UX refinements
 - Future-proofing improvements
-
-**Response Time**: **1-3 months** (or next major refactoring cycle)
 
 **Examples**:
 
@@ -178,7 +170,7 @@ This document defines the standardized 4-level severity classification system us
 #### **When Multiple Factors Apply**
 
 - Use the **highest applicable severity level**
-- Document all contributing factors in the issue description
+- Document all contributing factors in the feature description
 - Consider cumulative impact of multiple medium issues
 
 #### **Framework-Specific Considerations**
@@ -195,43 +187,58 @@ This document defines the standardized 4-level severity classification system us
 - Frequency of code path execution
 - Number of users affected
 
-## Usage in Audit Reports
+## Feature.json Output
 
-### **Report Section Structure**
+### **Severity to Priority Mapping**
 
-```markdown
-## Detailed Findings
+When creating feature.json files for audit findings, map severity to priority:
 
-### Critical Issues (Severity Level 1) 🚨
+| Severity | `priority` | `auditSeverity` |
+| -------- | ---------- | --------------- |
+| Critical | 1          | "Critical"      |
+| High     | 2          | "High"          |
+| Medium   | 3          | "Medium"        |
+| Low      | 4          | "Low"           |
 
-> Issues requiring immediate attention
+### **Required Fields for Audit Features**
 
-### High Priority Issues (Severity Level 2) ⚠️
+Each audit finding produces a feature.json file with these fields:
 
-> Issues for next sprint/iteration
-
-### Medium Priority Issues (Severity Level 3) 📋
-
-> Issues for upcoming releases
-
-### Low Priority Issues (Severity Level 4) 💡
-
-> Improvement opportunities
+```json
+{
+	"affectedFiles": ["path/to/file1.ts", "path/to/file2.ts"],
+	"auditSeverity": "High",
+	"auditSource": "{AUDIT_NAME}",
+	"category": "{audit_category}",
+	"createdAt": "{ISO_timestamp}",
+	"description": "Detailed description of the issue found",
+	"id": "feature-{timestamp}-{random}",
+	"passes": false,
+	"priority": 2,
+	"spec": "Detailed remediation steps:\n1. Step one\n2. Step two",
+	"status": "backlog",
+	"title": "Brief title of the issue",
+	"updatedAt": "{ISO_timestamp}"
+}
 ```
 
-### **Issue Documentation Template**
+### **Field Descriptions**
 
-```markdown
-#### Issue #{Number}: {Title}
+| Field           | Description                                           |
+| --------------- | ----------------------------------------------------- |
+| `priority`      | Numeric priority (1-4) mapped from severity           |
+| `auditSource`   | Name of the audit that found this issue               |
+| `auditSeverity` | String severity level ("Critical", "High", etc.)      |
+| `affectedFiles` | Array of file paths affected by this issue            |
+| `spec`          | Remediation steps - what needs to be done to fix this |
+| `passes`        | Always `false` for new audit findings                 |
 
-- **Severity**: {Critical/High/Medium/Low} (Level {1-4})
-- **File(s)**: `path/to/file.ts:line`
-- **Category**: {Security/Performance/Maintainability/etc.}
-- **Impact**: {Description of business/technical impact}
-- **Evidence**: {Code snippet or detailed description}
-- **Recommendation**: {Specific action to resolve}
-- **Effort Estimate**: {Hours/Days/Weeks}
-- **Dependencies**: {Any blocking factors}
+### **Feature Directory Naming**
+
+Audit features are created in directories following this pattern:
+
+```
+/.automaker/features/audit-{audit_name_lower}-{unix_timestamp}-{descriptive-slug}/feature.json
 ```
 
 ## Severity Distribution Guidelines
@@ -240,102 +247,43 @@ This document defines the standardized 4-level severity classification system us
 
 A well-maintained codebase typically shows:
 
-- **Critical**: 0-2% of total issues
-- **High**: 5-15% of total issues
-- **Medium**: 30-50% of total issues
-- **Low**: 35-60% of total issues
+- **Critical**: 0-2% of total findings
+- **High**: 5-15% of total findings
+- **Medium**: 30-50% of total findings
+- **Low**: 35-60% of total findings
 
 ### **Red Flags in Distribution**
 
-- **>5% Critical issues**: Indicates systemic problems
-- **>30% High issues**: Technical debt accumulation
-- **<20% Medium/Low issues**: May indicate incomplete audit
-- **All issues same severity**: Poor classification or limited scope
-
-## Integration with Development Workflow
-
-### **Sprint Planning Integration**
-
-- **Critical**: Address immediately, may require hotfix
-- **High**: Include in current or next sprint
-- **Medium**: Plan for upcoming sprints (2-3 iterations)
-- **Low**: Backlog for future iterations or tech debt sprints
-
-### **Code Review Guidelines**
-
-- Block merges for Critical issues
-- Require plan for High issues before merge
-- Document Medium issues for future addressing
-- Optional addressing of Low issues
-
-### **Monitoring and Escalation**
-
-- **Critical**: Immediate notification, incident response
-- **High**: Daily standup discussion, sprint adjustment
-- **Medium**: Sprint retrospective item
-- **Low**: Quarterly tech debt review
+- **>5% Critical findings**: Indicates systemic problems
+- **>30% High findings**: Technical debt accumulation
+- **<20% Medium/Low findings**: May indicate incomplete audit
+- **All findings same severity**: Poor classification or limited scope
 
 ## Audit Framework Compliance
 
 ### **Required Usage**
 
-- All audit frameworks MUST use this 4-level system
-- Issue severity MUST be documented with rationale
-- Recommendations MUST align with severity level urgency
-- Action plans MUST prioritize by severity level
+- All audits MUST use this 4-level severity system
+- Severity MUST be documented in `auditSeverity` field
+- `priority` MUST match the severity mapping (Critical=1, High=2, etc.)
+- `spec` field MUST contain actionable remediation steps
 
-### **Consistency Checks**
+### **Consistency Requirements**
 
 - Similar issues across audits should have consistent severity
-- Severity should align with recommended response timeframes
-- Documentation should justify severity assignment
+- Use the highest applicable severity when multiple factors apply
+- Each finding should be independently actionable
 
-### **Framework-Specific Mappings**
+## Self-Assessment
 
-#### **Performance Audits**
+When classifying severity, ask these questions:
 
-- Page load >5s = Critical
-- Core Web Vitals failures = High
-- Bundle size optimization = Medium
-- Minor optimizations = Low
-
-#### **Security Audits**
-
-- Authentication bypass = Critical
-- XSS/CSRF vulnerabilities = High
-- Missing security headers = Medium
-- Security hardening = Low
-
-#### **Code Quality Audits**
-
-- Build failures = Critical
-- Major anti-patterns = High
-- Style inconsistencies = Medium
-- Documentation gaps = Low
-
-## Validation and Quality Assurance
-
-### **Self-Assessment Questions**
-
-1. Would this issue cause immediate production problems? → Critical
-2. Would this issue significantly impact users or development? → High
-3. Would this issue affect maintainability or best practices? → Medium
-4. Is this primarily a minor improvement or cleanup? → Low
-
-### **Peer Review Process**
-
-- Critical and High severity assignments should be peer-reviewed
-- Justification should be provided for severity decisions
-- Consistency should be checked across similar issue types
-
-### **Appeals Process**
-
-- Severity levels can be appealed with technical justification
-- Appeals should be documented in audit reports
-- Final severity decisions should be consensus-based when possible
+1. Would this issue cause immediate production problems? → **Critical**
+2. Would this issue significantly impact users or development? → **High**
+3. Would this issue affect maintainability or best practices? → **Medium**
+4. Is this primarily a minor improvement or cleanup? → **Low**
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2025-01-02
-**Next Review**: Quarterly or when audit frameworks are updated
+**Version**: 2.0
+**Last Updated**: 2026-01-27

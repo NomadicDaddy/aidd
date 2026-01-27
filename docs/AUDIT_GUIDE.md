@@ -78,6 +78,8 @@ aidd --project-dir ./app --audit SECURITY,CODE_QUALITY,ARCHITECTURE
 | ------------------------- | ----------------------------------------------------- |
 | `SEVERITY_CLASSIFICATION` | Severity level definitions (Critical/High/Medium/Low) |
 
+> Note: Reference documents have `type: 'reference'` in frontmatter and are excluded from `--audit-all`.
+
 ---
 
 ## Stack Recommendations

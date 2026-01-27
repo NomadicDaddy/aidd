@@ -77,6 +77,7 @@ OPTIONS:
     --check-features        Validate all feature.json files against schema and exit
     --stop-when-done      Stop early when TODO/in-progress mode has no remaining items (optional)
     --audit AUDIT[,...]   Run audit mode with one or more audits (e.g., SECURITY or DEAD_CODE,PERFORMANCE)
+    --audit-all             Run all available audits sequentially
     --version               Show version information
     --help                  Show this help message
 
@@ -111,6 +112,10 @@ EXAMPLES:
     # Audit mode (multiple audits - run sequentially)
     $0 --project-dir ./myproject --audit DEAD_CODE,PERFORMANCE
     $0 --project-dir ./myproject --audit SECURITY,CODE_QUALITY,TECHDEBT --max-iterations 2
+
+    # Audit mode (all audits)
+    $0 --project-dir ./myproject --audit-all
+    $0 --project-dir ./myproject --audit-all --max-iterations 1
 
 For more information, visit: https://github.com/NomadicDaddy/aidd
 EOF
@@ -229,6 +234,27 @@ parse_args() {
                     AUDIT_NAME="${AUDIT_NAMES[0]}"
                 fi
                 shift 2
+                ;;
+            --audit-all)
+                AUDIT_MODE=true
+                # Find all audit files and add them to AUDIT_NAMES
+                # Skip reference documents (type: 'reference' in frontmatter)
+                local audits_dir="$SCRIPT_DIR/$DEFAULT_AUDITS_DIR"
+                if [[ -d "$audits_dir" ]]; then
+                    while IFS= read -r audit_file; do
+                        # Skip reference documents
+                        if grep -q "^type: 'reference'" "$audit_file" 2>/dev/null; then
+                            continue
+                        fi
+                        local audit_name
+                        audit_name=$(basename "$audit_file" .md)
+                        AUDIT_NAMES+=("$audit_name")
+                    done < <(find "$audits_dir" -maxdepth 1 -name "*.md" -type f | sort)
+                fi
+                if [[ ${#AUDIT_NAMES[@]} -gt 0 ]]; then
+                    AUDIT_NAME="${AUDIT_NAMES[0]}"
+                fi
+                shift
                 ;;
             -h|--help)
                 print_help

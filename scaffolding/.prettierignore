@@ -1,4 +1,42 @@
-node_modules
+# tooling/caches
+.turbo/
+.worktrees/
 bun.lock
 bun.lockb
+node_modules/
 package-lock.json
+ps_modules/
+
+# generated
+.claude/
+.windsurf/
+**/test-html-report/
+**/test-results/
+artifacts/
+backend/prisma/generated/
+CLAUDE.md
+coverage/
+devdocs/
+screenshots/
+
+# logs/temp
+*.log
+/backups/
+/data/
+/tmp/
+logs/
+
+# local config
+
+# database
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+
+# backend
+backend/exports/
+backend/uploads/
+public/uploads/
+
+# mock/test data

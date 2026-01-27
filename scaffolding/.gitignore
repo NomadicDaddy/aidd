@@ -1,17 +1,50 @@
-.DS_Store
-.env
-.env.local
-.next
-.windsurf
-*.log
-*.tmp
-build
+# tooling/caches
+.turbo/
+.worktrees/
 bun.lock
-bun.lockb
+node_modules/
+package-lock.json
+ps_modules/
+
+# generated
+.claude/
+.windsurf/
+**/test-html-report/
+**/test-results/
+artifacts/
+backend/prisma/generated/
+CLAUDE.md
+coverage/
+crawl-report.json
+devdocs/
+dist/
+screenshots/
+testResults.xml
+
+# logs/temp
+*.log
+/backups/
+/data/
+/tmp/
+logs/
+
+# local config
+/config/*.json
+
+# database
 data/*.db
 data/*.db-journal
-dist
-logs
-node_modules
-package-lock.json
-tmp
+data/*.db-shm
+data/*.db-wal
+
+# backend
+backend/exports/
+backend/uploads/
+public/uploads/
+
+# mock/test data
+api/**/delete.json
+api/**/get.json
+api/**/post.json
+api/**/put.json
+*.tsbuildinfo

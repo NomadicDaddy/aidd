@@ -8,9 +8,6 @@ This step MUST be executed FIRST, before reading specs, analyzing code, or plann
 
 Look for and read the following files in order of priority:
 
-- `.windsurf/rules/best-practices.md` - Development best practices and conventions
-- `.windsurf/rules/style.md` - Coding style and formatting guidelines
-- `.windsurf/rules/user.md` - User-specific preferences
 - `AGENTS.md` - Agent-specific instructions
 - Tool/assistant-specific rule files (if present) - Project rules for the current environment
 
@@ -37,7 +34,7 @@ Assistant rule files may include:
 
 ### 4. Example
 
-If `.windsurf/rules/best-practices.md` specifies:
+If `AGENTS.md` specifies:
 
 - "All database migrations must be applied immediately alongside code changes"
 - "No feature flags before public release"

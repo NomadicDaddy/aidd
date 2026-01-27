@@ -19,6 +19,8 @@
 #
 # /d/applications/shared/.prettierrc
 # /d/applications/shared/.editorconfig
+# /d/applications/CLAUDE.md
+# /d/applications/AGENTS.md
 # /d/applications/shared/LICENSE -> LICENSE
 # /d/applications/configs/tsconfig.base.json -> configs/tsconfig.base.json
 # /home/user/templates/eslintrc.json -> .eslintrc.json

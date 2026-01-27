@@ -1,0 +1,14 @@
+{
+	"category": "Backend",
+	"createdAt": "{{TIMESTAMP}}",
+	"dependencies": ["{{MODEL_DEPENDENCY}}"],
+	"description": "{{ENTITY}} CRUD API with routes, controller, and service",
+	"id": "{{FEATURE_ID}}",
+	"justFinishedAt": null,
+	"passes": false,
+	"priority": 2,
+	"spec": "1. Verify {{ENTITY_LOWER}}Routes.ts exists at backend/src/routes/\n2. Verify {{ENTITY_LOWER}}Controller.ts exists at backend/src/controllers/\n3. Verify {{ENTITY_LOWER}}Service.ts exists at backend/src/services/\n4. Verify GET /api/{{ENTITY_PLURAL_LOWER}} returns paginated list\n5. Verify GET /api/{{ENTITY_PLURAL_LOWER}}/:id returns single record with relations\n6. Verify POST /api/{{ENTITY_PLURAL_LOWER}} creates record (requires OPERATOR+ role)\n7. Verify PUT /api/{{ENTITY_PLURAL_LOWER}}/:id updates record (requires OPERATOR+ role)\n8. Verify DELETE /api/{{ENTITY_PLURAL_LOWER}}/:id soft-deletes record (requires ADMIN+ role)\n9. Verify routes are registered in config/routes.ts\n10. Verify proper error handling and validation\n11. Verify role-based access control is enforced",
+	"status": "backlog",
+	"title": "{{ENTITY}} CRUD API",
+	"updatedAt": "{{TIMESTAMP}}"
+}

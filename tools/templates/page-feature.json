@@ -1,0 +1,14 @@
+{
+	"category": "Frontend",
+	"createdAt": "{{TIMESTAMP}}",
+	"dependencies": ["{{CRUD_DEPENDENCY}}"],
+	"description": "{{ENTITY}} management page with list, create, edit, delete functionality",
+	"id": "{{FEATURE_ID}}",
+	"justFinishedAt": null,
+	"passes": false,
+	"priority": 3,
+	"spec": "1. Verify {{ENTITY}}.tsx page exists at frontend/src/pages/\n2. Verify /{{ENTITY_PLURAL_LOWER}} route is registered in routes.tsx\n3. Verify {{ENTITY}}List component displays records with pagination\n4. Verify {{ENTITY}}Card or {{ENTITY}}Row shows record summary\n5. Verify {{ENTITY}}Form component handles create/edit operations\n6. Verify filter/search functionality works\n7. Verify create action opens modal or navigates to form\n8. Verify edit action opens modal or navigates to form\n9. Verify delete action shows confirmation and soft-deletes\n10. Verify page is protected by authentication\n11. Verify responsive design\n12. Verify loading and error states are handled",
+	"status": "backlog",
+	"title": "{{ENTITY}} Page",
+	"updatedAt": "{{TIMESTAMP}}"
+}

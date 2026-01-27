@@ -1,0 +1,14 @@
+{
+	"category": "Database",
+	"createdAt": "{{TIMESTAMP}}",
+	"dependencies": [],
+	"description": "{{ENTITY}} model for {{DESCRIPTION}}",
+	"id": "{{FEATURE_ID}}",
+	"justFinishedAt": null,
+	"passes": false,
+	"priority": 1,
+	"spec": "1. Verify {{ENTITY}} model exists in schema.prisma\n2. Verify {{ENTITY}} has required fields: id (uuid/int), [domain fields]\n3. Verify createdAt, updatedAt audit fields exist\n4. Verify soft delete fields exist: isDeleted (Boolean default false), deletedAt (DateTime?), deletedBy (String?)\n5. Verify appropriate relations are defined\n6. Verify indexes exist on frequently queried fields\n7. Verify migration applies without errors",
+	"status": "backlog",
+	"title": "{{ENTITY}} Model",
+	"updatedAt": "{{TIMESTAMP}}"
+}

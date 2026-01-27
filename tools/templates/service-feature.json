@@ -1,0 +1,14 @@
+{
+	"category": "Backend",
+	"createdAt": "{{TIMESTAMP}}",
+	"dependencies": [],
+	"description": "{{SERVICE}} service for {{DESCRIPTION}}",
+	"id": "{{FEATURE_ID}}",
+	"justFinishedAt": null,
+	"passes": false,
+	"priority": 2,
+	"spec": "1. Verify {{SERVICE_LOWER}}Service.ts exists at backend/src/services/\n2. Verify service exports required functions\n3. Verify proper error handling\n4. Verify audit logging for significant operations\n5. Verify TypeScript types are properly defined\n6. Verify integration with related services",
+	"status": "backlog",
+	"title": "{{SERVICE}} Service",
+	"updatedAt": "{{TIMESTAMP}}"
+}

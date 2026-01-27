@@ -1,0 +1,14 @@
+{
+	"category": "UI",
+	"createdAt": "{{TIMESTAMP}}",
+	"dependencies": [],
+	"description": "{{WIDGET}} dashboard widget for {{DESCRIPTION}}",
+	"id": "{{FEATURE_ID}}",
+	"justFinishedAt": null,
+	"passes": false,
+	"priority": 2,
+	"spec": "1. Verify {{WIDGET}} component exists in frontend/src/components/dashboard/\n2. Verify widget integrates with Dashboard page\n3. Verify data fetching via TanStack Query\n4. Verify loading skeleton state\n5. Verify error handling and fallback UI\n6. Verify responsive design (mobile-friendly)\n7. Verify proper TypeScript types",
+	"status": "backlog",
+	"title": "{{WIDGET}} Widget",
+	"updatedAt": "{{TIMESTAMP}}"
+}

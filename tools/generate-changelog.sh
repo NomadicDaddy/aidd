@@ -788,7 +788,7 @@ generate_changelog() {
     echo "$current_version"
 }
 
-# Update version in package.json files
+# Update version in package.json files and spernakit registry
 update_package_version() {
     local new_version="$1"
 
@@ -813,6 +813,73 @@ update_package_version() {
             fi
         fi
     done
+
+    # Update spernakit registry (spernakit.psd1)
+    update_spernakit_registry "$new_version"
+}
+
+# Update version in spernakit.psd1 registry
+update_spernakit_registry() {
+    local new_version="$1"
+    local registry_file="d:/applications/spernakit.psd1"
+
+    if [[ ! -f "$registry_file" ]]; then
+        log_warn "Spernakit registry not found: $registry_file"
+        return
+    fi
+
+    # Get app slug from project directory name
+    local app_slug
+    app_slug=$(basename "$PROJECT_DIR")
+
+    # Check if app exists in registry
+    if ! grep -q "'$app_slug'" "$registry_file" 2>/dev/null; then
+        log_warn "App '$app_slug' not found in spernakit registry"
+        return
+    fi
+
+    # Update version within the app's block
+    # The registry format is:
+    #   'appslug' = @{
+    #       ...
+    #       version = '1.0.0'
+    #   }
+    # We need to find the version line after the app slug line
+
+    local tmp_file="${registry_file}.tmp"
+    local in_app_block=false
+    local app_found=false
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Check if we're entering the target app's block
+        if [[ "$line" =~ ^[[:space:]]*\'$app_slug\'[[:space:]]*= ]]; then
+            in_app_block=true
+            app_found=true
+        fi
+
+        # If in the app block and this is the version line, update it
+        if [[ "$in_app_block" == true && "$line" =~ ^[[:space:]]*version[[:space:]]*=[[:space:]]*\' ]]; then
+            # Preserve leading whitespace
+            local leading_ws="${line%%[^[:space:]]*}"
+            echo "${leading_ws}version      = '$new_version'"
+            in_app_block=false  # Done with this block
+        else
+            echo "$line"
+        fi
+
+        # Check if we're leaving a block (next app entry starts)
+        if [[ "$in_app_block" == true && "$line" =~ ^[[:space:]]*\}[[:space:]]*$ ]]; then
+            in_app_block=false
+        fi
+    done < "$registry_file" > "$tmp_file"
+
+    if [[ "$app_found" == true ]]; then
+        mv "$tmp_file" "$registry_file"
+        log_info "Updated version in: $registry_file ($app_slug -> $new_version)"
+    else
+        rm -f "$tmp_file"
+        log_warn "Could not update version for '$app_slug' in registry"
+    fi
 }
 
 # -----------------------------------------------------------------------------

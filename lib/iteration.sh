@@ -129,6 +129,9 @@ reset_failure_counter() {
 check_onboarding_status() {
     local metadata_dir="$1"
 
+    # Debug: Log input and current state (using log_info temporarily for diagnosis)
+    log_info "Onboarding check: metadata_dir='$metadata_dir' pwd='$(pwd)'"
+
     # Check if critical onboarding artifacts exist
     # These files/directories are ALWAYS created during onboarding
     local features_dir="$metadata_dir/$DEFAULT_FEATURES_DIR"
@@ -137,7 +140,7 @@ check_onboarding_status() {
 
     # Features directory must exist with at least one feature
     if [[ ! -d "$features_dir" ]]; then
-        log_debug "Onboarding incomplete: features directory not found"
+        log_warn "Onboarding incomplete: features directory not found at '$features_dir'"
         return 1
     fi
 
@@ -145,19 +148,19 @@ check_onboarding_status() {
     local feature_count
     feature_count=$(find "$features_dir" -type f -name "feature.json" 2>/dev/null | wc -l)
     if [[ "$feature_count" -eq 0 ]]; then
-        log_debug "Onboarding incomplete: no features found"
+        log_warn "Onboarding incomplete: no features found in '$features_dir'"
         return 1
     fi
 
     # Spec file must exist
     if [[ ! -f "$spec_path" ]]; then
-        log_debug "Onboarding incomplete: spec file not found at $spec_path"
+        log_warn "Onboarding incomplete: spec file not found at '$spec_path'"
         return 1
     fi
 
     # Changelog must exist
     if [[ ! -f "$changelog_path" ]]; then
-        log_debug "Onboarding incomplete: CHANGELOG.md not found"
+        log_warn "Onboarding incomplete: CHANGELOG.md not found at '$changelog_path'"
         return 1
     fi
 

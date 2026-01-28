@@ -844,11 +844,15 @@ check_project_completion() {
         failing_count=$(grep -r '"passes"[[:space:]]*:[[:space:]]*false' "$features_dir" 2>/dev/null | wc -l || echo "0")
     fi
 
-    # Check if todo.md exists and has content (beyond just whitespace/headers)
+    # Check if todo.md has INCOMPLETE items (not just any content)
+    # Must detect: unchecked checkboxes, TODO comments - NOT completed items with ✓
     local has_todos=false
     if [[ -f "$todo_path" ]]; then
-        # Check if file has any non-empty, non-comment content
-        if grep -q -E '^[^#[:space:]]' "$todo_path" 2>/dev/null; then
+        # Pattern 1: Unchecked markdown checkbox: - [ ] or - [   ]
+        if grep -q -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null; then
+            has_todos=true
+        # Pattern 2: TODO comments with content: # TODO: or // TODO: (not headers like "# TODO List")
+        elif grep -q -E '^\s*#\s*TODO:|^\s*//\s*TODO:' "$todo_path" 2>/dev/null; then
             has_todos=true
         fi
     fi
@@ -896,14 +900,12 @@ should_stop_todo_mode() {
     fi
 
     # Check for various incomplete TODO patterns
-    # Pattern 1: Standard markdown checkbox: - [ ]
-    # Pattern 2: With spaces: - [   ]
-    # Pattern 3: Alternative format: - [ ]
-    # Pattern 4: TODO comments: # TODO or // TODO
+    # Pattern 1: Standard markdown checkbox: - [ ] or - [   ]
+    # Pattern 2: TODO comments with content: # TODO: or // TODO: (not headers like "# TODO List")
     if grep -q -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null; then
         log_debug "Found incomplete markdown checkbox TODOs, continuing"
         return 1
-    elif grep -q -E '^\s*#\s*TODO\b|^\s*//\s*TODO\b' "$todo_path" 2>/dev/null; then
+    elif grep -q -E '^\s*#\s*TODO:|^\s*//\s*TODO:' "$todo_path" 2>/dev/null; then
         log_debug "Found TODO comments, continuing"
         return 1
     else

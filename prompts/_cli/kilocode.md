@@ -78,6 +78,7 @@ You are Kilo Code, an AI-assisted coding assistant.
 - New task creation
 - Instruction fetching
 - Interactive questioning
+- Browser automation via `agent-browser` CLI (through execute_command)
 
 ### Modes
 
@@ -93,7 +94,57 @@ Use `switch_mode` to change modes when needed.
 
 ### Testing Strategy
 
-1. **API testing:**
+**Browser automation IS available via agent-browser CLI (preferred method).**
+
+All agent-browser commands are executed through `execute_command`:
+
+1. **Launch and navigate:**
+
+    ```xml
+    <execute_command>
+    <command>agent-browser open http://localhost:3000</command>
+    </execute_command>
+    ```
+
+2. **Snapshot interactive elements (AI-optimized):**
+
+    ```xml
+    <execute_command>
+    <command>agent-browser snapshot -i -c</command>
+    </execute_command>
+    ```
+
+    Returns accessibility tree with refs (`@e1`, `@e2`, ...) for deterministic interaction.
+
+3. **Interact via refs:**
+
+    ```xml
+    <execute_command>
+    <command>agent-browser click @e2</command>
+    </execute_command>
+    <execute_command>
+    <command>agent-browser fill @e3 "test@example.com"</command>
+    </execute_command>
+    ```
+
+4. **Verify and capture evidence:**
+
+    ```xml
+    <execute_command>
+    <command>agent-browser screenshot ./evidence.png</command>
+    </execute_command>
+    <execute_command>
+    <command>agent-browser errors</command>
+    </execute_command>
+    ```
+
+5. **Workflow pattern:** `snapshot → identify refs → act → re-snapshot → verify`
+
+6. **Quality gates (also required):**
+    - Lint, type checking, build verification
+    - Run `bun run smoke:qc` or equivalent
+
+7. **Fallback (only if agent-browser unavailable):**
     ```xml
     <execute_command>
     <command>curl -X GET http://localhost:3001/api/health</command>

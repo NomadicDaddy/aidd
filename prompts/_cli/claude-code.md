@@ -58,30 +58,54 @@ Use Bash for: git status, npm install, bun run build, etc.
 - Bash command execution - full shell access
 - Web search and fetch - documentation lookup
 - Parallel tool calls - multiple operations at once
-
-**NOT Available:**
-
-- Browser automation (no browser_action tools)
-- Screenshot capture
-- Direct UI interaction
+- Browser automation via `agent-browser` CLI (through Bash)
 
 ### Testing Strategy
 
-Since browser automation is not available:
+**Browser automation IS available via agent-browser CLI (preferred method).**
 
-1. **Use terminal-based verification:**
-    - Run the application and check console output
-    - Use curl/wget for API endpoint testing
-    - Check build output for errors
+All agent-browser commands are executed through `Bash`:
 
-2. **Rely on quality gates:**
-    - Lint checks catch UI issues
-    - Type checking validates component props
-    - Build process catches import/export errors
+1. **Launch and navigate:**
 
-3. **Manual verification notes:**
+    ```bash
+    agent-browser open http://localhost:3000
+    ```
+
+2. **Snapshot interactive elements (AI-optimized):**
+
+    ```bash
+    agent-browser snapshot -i -c
+    ```
+
+    Returns accessibility tree with refs (`@e1`, `@e2`, ...) for deterministic interaction.
+
+3. **Interact via refs:**
+
+    ```bash
+    agent-browser click @e2
+    agent-browser fill @e3 "test@example.com"
+    agent-browser select @e5 "Option A"
+    ```
+
+4. **Verify and capture evidence:**
+
+    ```bash
+    agent-browser screenshot ./evidence.png
+    agent-browser errors                        # console errors (expect empty)
+    agent-browser eval "document.title"          # JS evaluation
+    ```
+
+5. **Workflow pattern:** `snapshot → identify refs → act → re-snapshot → verify`
+
+6. **Quality gates (also required):**
+    - Lint, type checking, build verification
+    - Run `bun run smoke:qc` or equivalent
+
+7. **Fallback (only if agent-browser unavailable):**
+    - curl/wget for API endpoint testing
+    - Terminal-based verification
     - Document what should be manually tested
-    - Provide specific URLs and steps for human verification
 
 ### Session Management
 

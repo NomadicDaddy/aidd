@@ -54,6 +54,7 @@ declare -a MISSING_ROUTES=()
 declare -a MISSING_PAGES=()
 declare -a MISSING_SERVICES=()
 declare -a ORPHANED_ELEMENTS=()
+declare -a IGNORE_PATTERNS=()
 
 # -----------------------------------------------------------------------------
 # Help
@@ -81,6 +82,18 @@ AUDIT CHECKS:
     4. Frontend Pages   - All page components present
     5. UI Components    - All components present
     6. Route Coverage   - API endpoint comparison
+
+IGNORE FILE:
+    Place a .parity-ignore file in the rebuilt directory's .automaker folder
+    to exclude known false positives (files intentionally restructured or renamed).
+
+    Format: one filename per line, supports wildcards, # for comments
+    Example .automaker/.parity-ignore:
+        # Pages restructured into settings/ folder
+        Profile.tsx
+        Settings.tsx
+        # Legacy services removed intentionally
+        *Legacy*.ts
 
 EXIT CODES:
     0 - Full parity achieved
@@ -149,6 +162,50 @@ parse_args() {
         log_error "Rebuilt directory does not exist: $REBUILT_DIR"
         exit 2
     fi
+}
+
+# -----------------------------------------------------------------------------
+# Ignore File Support
+# -----------------------------------------------------------------------------
+
+# Load ignore patterns from .automaker/.parity-ignore file
+load_ignore_patterns() {
+    local ignore_file="$REBUILT_DIR/.automaker/.parity-ignore"
+
+    if [[ ! -f "$ignore_file" ]]; then
+        return
+    fi
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip empty lines and comments
+        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+        # Trim whitespace
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        [[ -n "$line" ]] && IGNORE_PATTERNS+=("$line")
+    done < "$ignore_file"
+
+    if [[ ${#IGNORE_PATTERNS[@]} -gt 0 && "$VERBOSE" == true ]]; then
+        print_check "INFO" "Loaded ${#IGNORE_PATTERNS[@]} ignore patterns from .parity-ignore"
+    fi
+}
+
+# Check if a filename should be ignored
+should_ignore() {
+    local filename="$1"
+
+    for pattern in "${IGNORE_PATTERNS[@]}"; do
+        # Support exact match and glob patterns
+        if [[ "$filename" == "$pattern" ]]; then
+            return 0
+        fi
+        # Support wildcard patterns (e.g., *Service.ts)
+        # shellcheck disable=SC2053
+        if [[ "$filename" == $pattern ]]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 # -----------------------------------------------------------------------------
@@ -258,8 +315,15 @@ audit_models() {
     print_check "INFO" "Original: $orig_count models, Rebuilt: $rebuilt_count models"
 
     # Check each original model exists in rebuilt
+    local ignored_count=0
     while IFS= read -r model; do
         [[ -z "$model" ]] && continue
+
+        if should_ignore "$model"; then
+            [[ "$VERBOSE" == true ]] && print_check "INFO" "Ignored: $model"
+            ((++ignored_count))
+            continue
+        fi
 
         if echo "$rebuilt_models" | grep -q "^${model}$"; then
             [[ "$VERBOSE" == true ]] && print_check "PASS" "Model: $model"
@@ -268,6 +332,8 @@ audit_models() {
             MISSING_MODELS+=("$model")
         fi
     done <<< "$orig_models"
+
+    [[ $ignored_count -gt 0 ]] && print_check "INFO" "Ignored $ignored_count models via .parity-ignore"
 
     if [[ ${#MISSING_MODELS[@]} -eq 0 ]]; then
         print_check "PASS" "All models present"
@@ -302,8 +368,15 @@ audit_routes() {
     print_check "INFO" "Original: $orig_count route files, Rebuilt: $rebuilt_count route files"
 
     # Check each original route exists in rebuilt
+    local ignored_count=0
     while IFS= read -r route; do
         [[ -z "$route" ]] && continue
+
+        if should_ignore "$route"; then
+            [[ "$VERBOSE" == true ]] && print_check "INFO" "Ignored: $route"
+            ((++ignored_count))
+            continue
+        fi
 
         if echo "$rebuilt_files" | grep -q "^${route}$"; then
             [[ "$VERBOSE" == true ]] && print_check "PASS" "Route: $route"
@@ -312,6 +385,8 @@ audit_routes() {
             MISSING_ROUTES+=("$route")
         fi
     done <<< "$orig_files"
+
+    [[ $ignored_count -gt 0 ]] && print_check "INFO" "Ignored $ignored_count files via .parity-ignore"
 
     if [[ ${#MISSING_ROUTES[@]} -eq 0 ]]; then
         print_check "PASS" "All route files present"
@@ -346,8 +421,15 @@ audit_services() {
     print_check "INFO" "Original: $orig_count service files, Rebuilt: $rebuilt_count service files"
 
     # Check each original service exists in rebuilt
+    local ignored_count=0
     while IFS= read -r service; do
         [[ -z "$service" ]] && continue
+
+        if should_ignore "$service"; then
+            [[ "$VERBOSE" == true ]] && print_check "INFO" "Ignored: $service"
+            ((++ignored_count))
+            continue
+        fi
 
         if echo "$rebuilt_files" | grep -q "^${service}$"; then
             [[ "$VERBOSE" == true ]] && print_check "PASS" "Service: $service"
@@ -356,6 +438,8 @@ audit_services() {
             MISSING_SERVICES+=("$service")
         fi
     done <<< "$orig_files"
+
+    [[ $ignored_count -gt 0 ]] && print_check "INFO" "Ignored $ignored_count files via .parity-ignore"
 
     if [[ ${#MISSING_SERVICES[@]} -eq 0 ]]; then
         print_check "PASS" "All service files present"
@@ -390,8 +474,15 @@ audit_pages() {
     print_check "INFO" "Original: $orig_count page files, Rebuilt: $rebuilt_count page files"
 
     # Check each original page exists in rebuilt
+    local ignored_count=0
     while IFS= read -r page; do
         [[ -z "$page" ]] && continue
+
+        if should_ignore "$page"; then
+            [[ "$VERBOSE" == true ]] && print_check "INFO" "Ignored: $page"
+            ((++ignored_count))
+            continue
+        fi
 
         if echo "$rebuilt_files" | grep -q "^${page}$"; then
             [[ "$VERBOSE" == true ]] && print_check "PASS" "Page: $page"
@@ -400,6 +491,8 @@ audit_pages() {
             MISSING_PAGES+=("$page")
         fi
     done <<< "$orig_files"
+
+    [[ $ignored_count -gt 0 ]] && print_check "INFO" "Ignored $ignored_count files via .parity-ignore"
 
     if [[ ${#MISSING_PAGES[@]} -eq 0 ]]; then
         print_check "PASS" "All page files present"
@@ -578,6 +671,9 @@ main() {
     echo ""
     echo "Original: $ORIGINAL_DIR"
     echo "Rebuilt:  $REBUILT_DIR"
+
+    # Load ignore patterns if present
+    load_ignore_patterns
 
     # Run all audits
     audit_models

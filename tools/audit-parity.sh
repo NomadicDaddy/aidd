@@ -159,20 +159,20 @@ print_check() {
     local status="$1"
     local message="$2"
 
-    ((TOTAL_CHECKS++))
+    ((++TOTAL_CHECKS))
 
     case "$status" in
         PASS)
             echo -e "  ${GREEN}✓${NC} $message"
-            ((PASS_COUNT++))
+            ((++PASS_COUNT))
             ;;
         FAIL)
             echo -e "  ${RED}✗${NC} $message"
-            ((FAIL_COUNT++))
+            ((++FAIL_COUNT))
             ;;
         WARN)
             echo -e "  ${YELLOW}⚠${NC} $message"
-            ((WARN_COUNT++))
+            ((++WARN_COUNT))
             ;;
         INFO)
             echo -e "  ${CYAN}ℹ${NC} $message"
@@ -423,7 +423,7 @@ audit_feature_completion() {
 
     for feature_file in "$features_dir"/*/feature.json; do
         [[ ! -f "$feature_file" ]] && continue
-        ((total++))
+        ((++total))
 
         local status passes
         if command -v jq &> /dev/null; then
@@ -436,9 +436,9 @@ audit_feature_completion() {
         fi
 
         if [[ "$status" == "completed" && "$passes" == "true" ]]; then
-            ((completed++))
+            ((++completed))
         elif [[ "$status" == "failed" ]]; then
-            ((failed++))
+            ((++failed))
         fi
     done
 

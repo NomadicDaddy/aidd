@@ -231,9 +231,11 @@ If `--spec` provided, copied to `.automaker/app_spec.txt` during initializer flo
 - **0**: Success
 - **1**: General error
 - **2**: Invalid arguments
+- **6**: Aborted (user requested stop via `.stop` file)
 - **70**: No assistant messages detected
 - **71**: Idle timeout
 - **72**: Provider error
+- **73**: Project complete (all features pass, no TODOs)
 - **124**: Signal terminated
 
 ### Early Abort Conditions
@@ -243,6 +245,28 @@ If `--spec` provided, copied to `.automaker/app_spec.txt` during initializer flo
 - No assistant messages → exit code 70
 - Provider errors → exit code 72
 - Idle timeout → exit code 71 (after nudge attempt)
+- Project already completed (`.project_completed` exists) → exit code 73
+- User stop signal (`.stop` file exists) → exit code 6
+
+### Project Completion Detection
+
+Two-phase detection prevents false positives:
+
+1. **Phase 1**: All features pass + no incomplete TODOs → creates `.project_completion_pending`, runs TODO review
+2. **Phase 2**: Still complete after review → creates `.project_completed` marker, exits with code 73
+
+The `.project_completed` marker prevents restart loops. Delete it to restart a completed project.
+
+### Graceful Shutdown
+
+Create `.automaker/.stop` to signal AIDD to stop after current iteration:
+
+```bash
+./aidd.sh --project-dir ./myproject --stop
+# Or: touch ./myproject/.automaker/.stop
+```
+
+Stale `.stop` files are automatically cleaned up on startup.
 
 ### Cleanup
 

@@ -98,6 +98,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--extract-batch`: Batch extract structured JSON from all existing iteration logs and exit
 - `--check-features`: Validate all feature.json files against schema and exit
 - `--stop-when-done`: Stop early when TODO/in-progress mode has no remaining items
+- `--stop`: Signal a running AIDD instance to stop gracefully after current iteration
 - `--audit AUDIT[,...]`: Run audit mode with one or more audits (e.g., `SECURITY` or `SECURITY,CODE_QUALITY`)
 - `--help`: Show help message
 
@@ -174,6 +175,18 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 # Extract structured logs from all iterations
 ./aidd.sh --project-dir ./myproject --extract-batch
 ```
+
+### Graceful Shutdown
+
+```bash
+# Signal a running AIDD instance to stop after current iteration
+./aidd.sh --project-dir ./myproject --stop
+
+# Or manually create the stop file
+touch ./myproject/.automaker/.stop
+```
+
+The running AIDD instance will complete its current iteration and exit cleanly.
 
 ## Workflows
 
@@ -325,6 +338,10 @@ Project Metadata (.automaker/):
 ├── audits/                # Referenced audit guidelines (runtime copy)
 ├── todo.md                # TODO items
 ├── project_structure.md   # Architecture documentation
+├── status.md              # Current project status (auto-generated)
+├── .project_completed     # Marker: project finished (delete to restart)
+├── .project_completion_pending  # Temp: completion confirmation pending
+├── .stop                  # Signal: stop after current iteration
 └── iterations/            # Iteration logs
     ├── 001.log
     ├── 002.log
@@ -391,27 +408,36 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
-- **v2.3.0** (2026-01-15):
+- **v0.7.1** (2026-01-28):
+    - Fixed infinite iteration loop when project is complete (multiple root causes addressed)
+    - Fixed TODO detection to only match incomplete items (not completed items with checkmarks)
+    - Fixed completion check ordering (must run before prompt determination)
+    - Fixed exit inside subshell not terminating main script
+    - Added persistent `.project_completed` marker to prevent restart loops
+    - Added `--stop` flag for graceful shutdown of running instances
+    - Added `.stop` file support - create to signal AIDD to stop after current iteration
+    - Stale `.stop` files are automatically cleaned up on startup
+- **v0.7.0** (2026-01-15):
     - Added audit mode with 20+ specialized audits (SECURITY, PERFORMANCE, etc.)
     - Multi-audit support: run multiple audits sequentially with comma-separated names
     - Audit cross-reference support: referenced audit files copied to target project
     - Automatic issue deduplication during audits
     - Added `--stop-when-done` flag for TODO/in-progress modes
     - Added comprehensive AUDIT_GUIDE.md documentation
-- **v2.2.0** (2026-01-09):
+- **v0.6.0** (2026-01-09):
     - Added Claude Code CLI support with stream-json parsing
     - Implemented JSON parser for readable console output
     - Added token usage tracking for Claude Code
     - Updated all documentation to reflect triple CLI support
-- **v2.1.0** (2026-01-09):
+- **v0.5.0** (2026-01-09):
     - Added two-stage idle timeout with agent nudging feature
     - Added shared directory synchronization (copydirs.txt)
     - Refactored prompts to modular architecture (see prompts/PROMPT_CHANGELOG.md)
     - Fixed CLI name display bug in error messages
     - Fixed coprocess file descriptor handling in nudge feature
-- **v2.0.0** (2026-01-08): Unified AIDD supporting both OpenCode and KiloCode
-- **v1.1.0**: aidd-o (OpenCode) and aidd-k (KiloCode) as separate projects
-- **v1.0.0**: Initial aidd-o release
+- **v0.4.0** (2026-01-08): Unified AIDD supporting both OpenCode and KiloCode
+- **v0.3.0**: aidd-o (OpenCode) and aidd-k (KiloCode) as separate projects
+- **v0.1.0**: Initial aidd-o release
 
 ## Architecture
 

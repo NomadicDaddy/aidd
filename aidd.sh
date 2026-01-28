@@ -41,6 +41,22 @@ fi
 init_args "$@"
 
 # ---------------------------------------------------------------------------
+# HANDLE --stop FLAG (early exit, no CLI needed)
+# ---------------------------------------------------------------------------
+if [[ "$STOP_SIGNAL" == true ]]; then
+    if [[ -z "$PROJECT_DIR" ]]; then
+        echo "Error: --stop requires --project-dir" >&2
+        exit $EXIT_INVALID_ARGS
+    fi
+    stop_file="$PROJECT_DIR/.automaker/.stop"
+    mkdir -p "$(dirname "$stop_file")" 2>/dev/null
+    echo "$(date -Is 2>/dev/null || date)" > "$stop_file"
+    echo "Stop signal created: $stop_file"
+    echo "Running AIDD instance will stop after current iteration completes."
+    exit $EXIT_SUCCESS
+fi
+
+# ---------------------------------------------------------------------------
 # CLI INITIALIZATION
 # ---------------------------------------------------------------------------
 # Initialize CLI based on the --cli parameter
@@ -209,6 +225,12 @@ trap cleanup_logs EXIT
 
 log_info "Starting AI development driver with $CLI_NAME"
 
+# Clean up stale stop file from previous run (prevents accidental immediate exit)
+if [[ -f "$METADATA_DIR/.stop" ]]; then
+    log_warn "Removing stale .stop file from previous run"
+    rm -f "$METADATA_DIR/.stop" 2>/dev/null
+fi
+
 # ---------------------------------------------------------------------------
 # Multi-Audit Loop (runs once if not in audit mode or single audit)
 # ---------------------------------------------------------------------------
@@ -234,8 +256,23 @@ run_single_audit_or_all() {
         printf -v LOG_FILE "%s/%03d.log" "$ITERATIONS_DIR_FULL" "$NEXT_LOG_INDEX"
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
+        # Check project completion BEFORE entering subshell (exit inside subshell doesn't work)
+        # Phase 1: Creates .project_completion_pending, returns 1 (continue to TODO review)
+        # Phase 2: Pending file exists + still complete, returns 0 (confirmed complete)
+        # Skip for audit mode - audits should always run regardless of completion
+        if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
+            log_info "Project completion CONFIRMED. All features pass, thorough review complete."
+            # Extract structured log for this empty iteration
+            if [[ "$EXTRACT_STRUCTURED" == true ]]; then
+                echo "[INFO] Project completion CONFIRMED. All features pass, thorough review complete." > "$LOG_FILE"
+                extract_single_log "$LOG_FILE" "$METADATA_DIR"
+            fi
+            exit $EXIT_PROJECT_COMPLETE
+        fi
+
         {
             # Determine which prompt to use based on project state (needed for header)
+            # Will see .project_completion_pending if Phase 1 was triggered above
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
             if [[ $? -ne 0 ]]; then
                 log_error "Failed to determine prompt"
@@ -278,14 +315,6 @@ run_single_audit_or_all() {
                 show_status "$PROJECT_DIR"
             } > "$STATUS_FILE" 2>&1
             log_info "Project status saved to: $STATUS_FILE"
-
-            # Check if project is complete BEFORE sending prompt
-            # This prevents unnecessary agent invocations when already done
-            # Skip this check for audit mode - audits should always run regardless of completion
-            if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
-                log_info "Project completion CONFIRMED. All features pass, thorough review complete."
-                exit $EXIT_PROJECT_COMPLETE
-            fi
 
             # Check if current mode should stop early (TODO/in-progress with no items)
             # This prevents unnecessary agent invocations when mode-specific work is done
@@ -363,6 +392,14 @@ run_single_audit_or_all() {
             return 0
         fi
 
+        # Check for user-requested stop file (graceful stop after current iteration)
+        local stop_file="$METADATA_DIR/.stop"
+        if [[ -f "$stop_file" ]]; then
+            log_info "Stop requested via .stop file. Exiting gracefully after iteration $i."
+            rm -f "$stop_file" 2>/dev/null
+            exit $EXIT_ABORTED
+        fi
+
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
             if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
@@ -381,8 +418,23 @@ else
         printf -v LOG_FILE "%s/%03d.log" "$ITERATIONS_DIR_FULL" "$NEXT_LOG_INDEX"
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
+        # Check project completion BEFORE entering subshell (exit inside subshell doesn't work)
+        # Phase 1: Creates .project_completion_pending, returns 1 (continue to TODO review)
+        # Phase 2: Pending file exists + still complete, returns 0 (confirmed complete)
+        # Skip for audit mode - audits should always run regardless of completion
+        if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
+            log_info "Project completion CONFIRMED. All features pass, thorough review complete."
+            # Extract structured log for this empty iteration
+            if [[ "$EXTRACT_STRUCTURED" == true ]]; then
+                echo "[INFO] Project completion CONFIRMED. All features pass, thorough review complete." > "$LOG_FILE"
+                extract_single_log "$LOG_FILE" "$METADATA_DIR"
+            fi
+            exit $EXIT_PROJECT_COMPLETE
+        fi
+
         {
             # Determine which prompt to use based on project state (needed for header)
+            # Will see .project_completion_pending if Phase 1 was triggered above
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
             if [[ $? -ne 0 ]]; then
                 log_error "Failed to determine prompt"
@@ -425,14 +477,6 @@ else
                 show_status "$PROJECT_DIR"
             } > "$STATUS_FILE" 2>&1
             log_info "Project status saved to: $STATUS_FILE"
-
-            # Check if project is complete BEFORE sending prompt
-            # This prevents unnecessary agent invocations when already done
-            # Skip this check for audit mode - audits should always run regardless of completion
-            if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
-                log_info "Project completion CONFIRMED. All features pass, thorough review complete."
-                exit $EXIT_PROJECT_COMPLETE
-            fi
 
             # Check if current mode should stop early (TODO/in-progress with no items)
             # This prevents unnecessary agent invocations when mode-specific work is done
@@ -514,6 +558,15 @@ else
             log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
             return 0
         fi
+
+        # Check for user-requested stop file (graceful stop after current iteration)
+        local stop_file="$METADATA_DIR/.stop"
+        if [[ -f "$stop_file" ]]; then
+            log_info "Stop requested via .stop file. Exiting gracefully after iteration $i."
+            rm -f "$stop_file" 2>/dev/null
+            exit $EXIT_ABORTED
+        fi
+
         # Don't abort on timeout (exit 124) if continue-on-timeout is set
         if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
             if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then

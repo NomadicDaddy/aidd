@@ -807,6 +807,7 @@ check_project_completion() {
     local features_dir="$metadata_dir/${DEFAULT_FEATURES_DIR}"
     local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
     local completion_state_file="$metadata_dir/.project_completion_pending"
+    local completed_marker="$metadata_dir/.project_completed"
 
     # Check if features directory exists
     if [[ ! -d "$features_dir" ]]; then
@@ -862,11 +863,18 @@ check_project_completion() {
 
     # Project is complete if no failing features and no todos
     if [[ "$failing_count" -eq 0 && "$has_todos" == false ]]; then
+        # Check for permanent completion marker first (prevents restart loops)
+        if [[ -f "$completed_marker" ]]; then
+            log_info "Project already completed (marker exists). Delete .project_completed to restart."
+            return 0
+        fi
         # Check if this is first or second detection
         if [[ -f "$completion_state_file" ]]; then
             # Phase 2: State file exists, this is second detection - confirmed complete
             log_info "Project completion CONFIRMED: All features pass after thorough TODO review"
             rm -f "$completion_state_file" 2>/dev/null
+            # Create permanent completion marker to prevent restart loops
+            echo "$(date -Is 2>/dev/null || date)" > "$completed_marker"
             return 0
         else
             # Phase 1: First detection - create state file, allow TODO pass to run
@@ -877,8 +885,9 @@ check_project_completion() {
         fi
     fi
 
-    # Not complete - clear any pending state
+    # Not complete - clear any pending/completed state (project regressed)
     rm -f "$completion_state_file" 2>/dev/null
+    rm -f "$completed_marker" 2>/dev/null
     return 1
 }
 

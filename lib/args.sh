@@ -36,6 +36,7 @@ export AUDIT_MODE=false
 export AUDIT_NAME=""
 export AUDIT_NAMES=()
 export AUDIT_INDEX=0
+export STOP_SIGNAL=false
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -76,6 +77,7 @@ OPTIONS:
     --extract-batch         Batch extract structured JSON from all existing iteration logs and exit
     --check-features        Validate all feature.json files against schema and exit
     --stop-when-done      Stop early when TODO/in-progress mode has no remaining items (optional)
+    --stop                  Signal a running AIDD instance to stop after current iteration (creates .stop file)
     --audit AUDIT[,...]   Run audit mode with one or more audits (e.g., SECURITY or DEAD_CODE,PERFORMANCE)
     --audit-all             Run all available audits sequentially
     --version               Show version information
@@ -209,6 +211,10 @@ parse_args() {
                 ;;
             --stop-when-done)
                 STOP_WHEN_DONE=true
+                shift
+                ;;
+            --stop)
+                STOP_SIGNAL=true
                 shift
                 ;;
             --prompt)

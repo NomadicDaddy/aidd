@@ -18,7 +18,32 @@ Run the following tools against the codebase and capture their complete output:
 
 ### 1. Dead Code Detection
 
-- [ ] **Run undead.md analysis**: Execute the dead code detection process defined in `undead.md`
+- [ ] **Manual dead-code analysis**: Perform a comprehensive dead-code audit of `frontend/src/` and `backend/src/`:
+
+    **Frontend** — For each file, determine:
+    - Is it imported/referenced by any other file?
+    - Is it exposed through routing (e.g., `App.tsx`, route definitions, lazy-loaded routes)?
+    - Is it a known entry point (e.g., `main.tsx`) or type definition imported elsewhere?
+
+    **Backend** — For each file, determine:
+    - Is it imported/referenced by any other file?
+    - Is it exposed through the API router (e.g., `app.ts`, `routes.ts`, controller decorators)?
+    - Is it a known entry point (e.g., `index.ts`, `server.ts`) or a DB entity loaded dynamically via ORM config?
+
+    **Verification** — For each potentially unused file:
+    - Search for import statements across the entire source tree
+    - Check for dynamic imports (`lazy(() => import(...))`)
+    - Check for DI tokens, decorators, or string-based references
+
+    **Classify as:**
+    - **Orphaned**: Not imported or referenced anywhere
+    - **Unexposed**: Components/controllers that exist but are not wired into routing or the app instance
+    - **Dead code**: Utilities, hooks, services, or middleware defined but never consumed
+
+    **Exclusions** — Do NOT flag:
+    - Test files (`*.test.ts(x)`, `*.spec.ts(x)`, `__tests__/`, `test/`)
+    - Migration/seed files, configuration files, known example files
+
 - [ ] **Run Knip**: `bunx knip` - Detects unused files, dependencies, exports, and types
     - Capture: unused exports, unused dependencies, unused files, unreachable code
 

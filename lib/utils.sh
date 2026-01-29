@@ -187,18 +187,17 @@ log_iteration_header() {
         printf "  %-18s %s\n" "Prompt:" "$prompt_name" >&2
     fi
 
-    # Model info
-    if [[ -n "$MODEL" || -n "$INIT_MODEL_EFFECTIVE" || -n "$CODE_MODEL_EFFECTIVE" ]]; then
-        echo "" >&2
-        if supports_color; then
-            echo -e "${COLOR_CYAN}Model Settings:${COLOR_RESET}" >&2
-        else
-            echo "Model Settings:" >&2
-        fi
-        [[ -n "$MODEL" ]] && printf "  %-18s %s\n" "Base Model:" "$MODEL" >&2
-        [[ -n "$INIT_MODEL_EFFECTIVE" ]] && printf "  %-18s %s\n" "Init Model:" "$INIT_MODEL_EFFECTIVE" >&2
-        [[ -n "$CODE_MODEL_EFFECTIVE" ]] && printf "  %-18s %s\n" "Code Model:" "$CODE_MODEL_EFFECTIVE" >&2
+    # Model info (always show — display "CLI default" when no explicit model)
+    echo "" >&2
+    if supports_color; then
+        echo -e "${COLOR_CYAN}Model Settings:${COLOR_RESET}" >&2
+    else
+        echo "Model Settings:" >&2
     fi
+    local cli_default="CLI default"
+    printf "  %-18s %s\n" "Base Model:" "${MODEL:-$cli_default}" >&2
+    printf "  %-18s %s\n" "Init Model:" "${INIT_MODEL_EFFECTIVE:-$cli_default}" >&2
+    printf "  %-18s %s\n" "Code Model:" "${CODE_MODEL_EFFECTIVE:-$cli_default}" >&2
 
     # Iteration settings
     echo "" >&2

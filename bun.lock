@@ -5,10 +5,10 @@
     "": {
       "name": "aidd",
       "devDependencies": {
-        "prettier": "3.8.1",
-        "prettier-plugin-organize-attributes": "1.0.0",
-        "prettier-plugin-sort-json": "4.2.0",
-        "prettier-plugin-tailwindcss": "0.7.2",
+        "prettier": "latest",
+        "prettier-plugin-organize-attributes": "latest",
+        "prettier-plugin-sort-json": "latest",
+        "prettier-plugin-tailwindcss": "latest",
       },
     },
   },

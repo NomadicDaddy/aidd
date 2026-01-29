@@ -28,8 +28,8 @@
 	},
 	"scripts": {
 		"start": "bash ./aidd.sh",
-		"format": "bunx prettier --write .",
-		"format:check": "bunx prettier --check .",
+		"format": "bun update --latest && bunx prettier --write .",
+		"format:check": "bun update --latest && bunx prettier --check .",
 		"lint": "bash ./lint.sh",
 		"smoke:qc": "bun run lint && bun run format"
 	},

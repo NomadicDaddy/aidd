@@ -68,6 +68,17 @@ validate_feature_file() {
         return 1
     fi
 
+    # Validate status enum if present
+    local status_val
+    status_val=$(jq -r '.status // empty' "$feature_file" 2>/dev/null)
+    if [[ -n "$status_val" ]]; then
+        local valid_statuses="backlog pending running completed failed verified waiting_approval in_progress"
+        if [[ ! " $valid_statuses " =~ " $status_val " ]]; then
+            log_error "Invalid status '$status_val' in feature file: $feature_file (valid: $valid_statuses)"
+            return 1
+        fi
+    fi
+
     return 0
 }
 
@@ -819,12 +830,13 @@ check_project_completion() {
 
     # Count features with "passes": false in individual feature files
     local failing_count=0
+    local waiting_approval_count=0
     if command -v jq >/dev/null 2>&1; then
         # Use jq if available for accurate JSON parsing
         # Check each individual feature file
         for feature_file in "$features_dir"/*/feature.json; do
             if [[ -f "$feature_file" ]]; then
-                # Validate feature file structure first
+                # Validate feature file structure first (includes status enum check)
                 if ! validate_feature_file "$feature_file"; then
                     log_error "Invalid feature file structure: $feature_file"
                     ((failing_count++))
@@ -832,8 +844,21 @@ check_project_completion() {
                 fi
 
                 local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "error")
-                if [[ "$passes" == "error" ]]; then
+                local status=$(jq -r '.status // "backlog"' "$feature_file" 2>/dev/null || echo "error")
+
+                if [[ "$passes" == "error" || "$status" == "error" ]]; then
                     log_error "Failed to parse metadata in $feature_file"
+                    ((failing_count++))
+                elif [[ "$status" == "waiting_approval" ]]; then
+                    # waiting_approval features don't block completion but must NOT have passes=true
+                    ((waiting_approval_count++))
+                    if [[ "$passes" == "true" ]]; then
+                        log_error "waiting_approval feature cannot have passes=true: $feature_file"
+                        ((failing_count++))
+                    fi
+                elif [[ "$passes" == "true" && "$status" == "backlog" ]]; then
+                    # Feature marked passing but never worked on - invalid state
+                    log_error "Feature has passes=true but status is still backlog: $feature_file"
                     ((failing_count++))
                 elif [[ "$passes" == "false" ]]; then
                     ((failing_count++))
@@ -843,6 +868,10 @@ check_project_completion() {
     else
         # Fallback to grep - search for "passes": false in all feature files
         failing_count=$(grep -r '"passes"[[:space:]]*:[[:space:]]*false' "$features_dir" 2>/dev/null | wc -l || echo "0")
+    fi
+
+    if [[ "$waiting_approval_count" -gt 0 ]]; then
+        log_info "Features waiting approval (excluded from completion): $waiting_approval_count"
     fi
 
     # Check if todo.md has INCOMPLETE items (not just any content)

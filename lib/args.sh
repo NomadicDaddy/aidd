@@ -774,16 +774,13 @@ validate_features() {
     local valid_desc_sources="initial enhance edit"
     local valid_enhancement_modes="improve technical simplify acceptance ux-reviewer"
 
-    # Collect all valid feature IDs for dependency validation
-    local all_feature_ids=""
-    while IFS= read -r f; do
-        [[ -z "$f" || ! -f "$f" ]] && continue
-        local fid=$(jq -r '.id // empty' "$f" 2>/dev/null)
-        [[ -n "$fid" ]] && all_feature_ids+="$fid "
-    done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
+    # Collect all valid feature IDs for dependency validation (single jq call)
+    declare -A feature_id_map
+    while IFS= read -r fid; do
+        [[ -n "$fid" ]] && feature_id_map["$fid"]=1
+    done < <(jq -r '.id // empty' "$features_dir"/*/feature.json 2>/dev/null)
 
-    # Use ls with while loop (most reliable on Windows/Git Bash)
-    # Single jq call per file for performance (instead of 30+ calls)
+    # Process all feature files
     while IFS= read -r feature_file; do
         [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
         ((total_files++))
@@ -791,32 +788,31 @@ validate_features() {
         local feature_id=$(basename "$feature_dir")
         local file_errors=""
 
-        # Single jq call to extract all needed values and validate types
+        # Single jq call to validate and extract all values as bash variables directly
         local validation_result
         validation_result=$(jq -r '
-            def check_enum($val; $valid): if $val == null then null elif ($valid | index($val)) then null else $val end;
             {
-                id: .id,
+                id_val: .id,
                 id_type: (.id | type),
-                category: .category,
+                category_val: .category,
                 category_type: (.category | type),
-                description: .description,
+                desc_val: .description,
                 description_type: (.description | type),
                 title_type: (if has("title") then (.title | type) else "absent" end),
                 titleGenerating_type: (if has("titleGenerating") then (.titleGenerating | type) else "absent" end),
                 passes_type: (if has("passes") then (.passes | type) else "absent" end),
                 priority_type: (if has("priority") then (.priority | type) else "absent" end),
-                status: .status,
+                status_val: .status,
                 dependencies_type: (if has("dependencies") then (.dependencies | type) else "absent" end),
                 dependencies_invalid: (if (.dependencies | type) == "array" then ([.dependencies[] | select(type != "string")] | length > 0) else false end),
                 dependencies_list: (if (.dependencies | type) == "array" then (.dependencies | join(",")) else "" end),
                 skipTests_type: (if has("skipTests") then (.skipTests | type) else "absent" end),
-                thinkingLevel: .thinkingLevel,
-                reasoningEffort: .reasoningEffort,
-                planningMode: .planningMode,
+                thinkingLevel_val: (.thinkingLevel // ""),
+                reasoningEffort_val: (.reasoningEffort // ""),
+                planningMode_val: (.planningMode // ""),
                 requirePlanApproval_type: (if has("requirePlanApproval") then (.requirePlanApproval | type) else "absent" end),
                 planSpec_type: (if has("planSpec") then (.planSpec | type) else "absent" end),
-                planSpec_status: .planSpec.status,
+                planSpec_status_val: (.planSpec.status // ""),
                 planSpec_version_type: (if .planSpec != null and (.planSpec | has("version")) then (.planSpec.version | type) else "absent" end),
                 planSpec_reviewedByUser_type: (if .planSpec != null and (.planSpec | has("reviewedByUser")) then (.planSpec.reviewedByUser | type) else "absent" end),
                 planSpec_tasksCompleted_type: (if .planSpec != null and (.planSpec | has("tasksCompleted")) then (.planSpec.tasksCompleted | type) else "absent" end),
@@ -832,53 +828,16 @@ validate_features() {
                 startedAt_type: (if has("startedAt") then (.startedAt | type) else "absent" end),
                 createdAt_type: (if has("createdAt") then (.createdAt | type) else "absent" end),
                 updatedAt_type: (if has("updatedAt") then (.updatedAt | type) else "absent" end)
-            } | @json
+            } | to_entries | .[] | "\(.key)=\(.value | @sh)"
         ' "$feature_file" 2>/dev/null)
 
-        if [[ -z "$validation_result" || "$validation_result" == "null" ]]; then
+        if [[ -z "$validation_result" ]]; then
             file_errors+="  ✗ Invalid JSON syntax\n"
         else
-            # Parse validation result (single jq call to extract all values)
             local id_val id_type category_val desc_val status_val
             local thinkingLevel_val reasoningEffort_val planningMode_val planSpec_status_val
 
-            # Extract values using parameter expansion where possible, jq for complex parsing
-            eval "$(echo "$validation_result" | jq -r '
-                "id_val=" + (.id // "" | @sh) + "\n" +
-                "id_type=" + (.id_type // "" | @sh) + "\n" +
-                "category_val=" + (.category // "" | @sh) + "\n" +
-                "desc_val=" + (.description // "" | @sh) + "\n" +
-                "status_val=" + (.status // "" | @sh) + "\n" +
-                "thinkingLevel_val=" + (.thinkingLevel // "" | @sh) + "\n" +
-                "reasoningEffort_val=" + (.reasoningEffort // "" | @sh) + "\n" +
-                "planningMode_val=" + (.planningMode // "" | @sh) + "\n" +
-                "planSpec_status_val=" + (.planSpec_status // "" | @sh) + "\n" +
-                "title_type=" + (.title_type // "" | @sh) + "\n" +
-                "titleGenerating_type=" + (.titleGenerating_type // "" | @sh) + "\n" +
-                "passes_type=" + (.passes_type // "" | @sh) + "\n" +
-                "priority_type=" + (.priority_type // "" | @sh) + "\n" +
-                "dependencies_type=" + (.dependencies_type // "" | @sh) + "\n" +
-                "dependencies_invalid=" + (.dependencies_invalid | tostring | @sh) + "\n" +
-                "dependencies_list=" + (.dependencies_list // "" | @sh) + "\n" +
-                "skipTests_type=" + (.skipTests_type // "" | @sh) + "\n" +
-                "requirePlanApproval_type=" + (.requirePlanApproval_type // "" | @sh) + "\n" +
-                "planSpec_type=" + (.planSpec_type // "" | @sh) + "\n" +
-                "planSpec_version_type=" + (.planSpec_version_type // "" | @sh) + "\n" +
-                "planSpec_reviewedByUser_type=" + (.planSpec_reviewedByUser_type // "" | @sh) + "\n" +
-                "planSpec_tasksCompleted_type=" + (.planSpec_tasksCompleted_type // "" | @sh) + "\n" +
-                "planSpec_tasksTotal_type=" + (.planSpec_tasksTotal_type // "" | @sh) + "\n" +
-                "imagePaths_type=" + (.imagePaths_type // "" | @sh) + "\n" +
-                "textFilePaths_type=" + (.textFilePaths_type // "" | @sh) + "\n" +
-                "descriptionHistory_type=" + (.descriptionHistory_type // "" | @sh) + "\n" +
-                "spec_type=" + (.spec_type // "" | @sh) + "\n" +
-                "model_type=" + (.model_type // "" | @sh) + "\n" +
-                "error_type=" + (.error_type // "" | @sh) + "\n" +
-                "summary_type=" + (.summary_type // "" | @sh) + "\n" +
-                "branchName_type=" + (.branchName_type // "" | @sh) + "\n" +
-                "startedAt_type=" + (.startedAt_type // "" | @sh) + "\n" +
-                "createdAt_type=" + (.createdAt_type // "" | @sh) + "\n" +
-                "updatedAt_type=" + (.updatedAt_type // "" | @sh)
-            ')"
+            eval "$validation_result"
 
             # Required field: id
             if [[ -z "$id_val" ]]; then
@@ -908,11 +867,11 @@ validate_features() {
             [[ "$dependencies_type" != "absent" && "$dependencies_type" != "array" && "$dependencies_type" != "null" ]] && file_errors+="  ✗ Field 'dependencies' must be an array (got: $dependencies_type)\n"
             [[ "$dependencies_invalid" == "true" ]] && file_errors+="  ✗ Field 'dependencies' must contain only strings\n"
 
-            # Check that each dependency references an existing feature
+            # Check that each dependency references an existing feature (O(1) lookup)
             if [[ -n "$dependencies_list" && "$dependencies_invalid" != "true" ]]; then
                 IFS=',' read -ra dep_array <<< "$dependencies_list"
                 for dep in "${dep_array[@]}"; do
-                    if [[ ! " $all_feature_ids " =~ " $dep " ]]; then
+                    if [[ -z "${feature_id_map[$dep]+isset}" ]]; then
                         file_errors+="  ✗ Dependency '$dep' does not exist in project\n"
                     fi
                 done

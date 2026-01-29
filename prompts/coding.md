@@ -406,6 +406,7 @@ sort schema.prisma | uniq -d
 "passes": false  →  "passes": true   (after full verification)
 "passes": true   →  "passes": false  (if discovered broken)
 "status": "backlog" →  "status": "in_progress" →  "status": "completed"
+"status": "backlog" →  "status": "waiting_approval"    (blocker requires user intervention)
 ```
 
 **NEVER:**
@@ -417,6 +418,16 @@ sort schema.prisma | uniq -d
 - Combine or consolidate tests
 - Reorder tests
 - Change any other fields
+- Invent new status values (only use: `backlog`, `in_progress`, `completed`, `waiting_approval`)
+- Set `"passes": true` on features you cannot or choose not to implement
+- Skip, cancel, or declare features "out of scope" — all features must be implemented or set to `waiting_approval`
+- Set `"passes": true` without moving status to `"completed"`
+
+**If a feature cannot be implemented** (missing models, architectural conflicts, invalid spec):
+
+1. Set `"status": "waiting_approval"` and leave `"passes": false`
+2. Document the blocker in `CHANGELOG.md` with the feature name and specific reason
+3. Move on to the next feature — the user will resolve blockers between runs
 
 #### 9.3 Update Passes Field
 

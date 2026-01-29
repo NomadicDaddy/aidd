@@ -252,9 +252,19 @@ run_single_audit_or_all() {
     if [[ -z "$MAX_ITERATIONS" ]]; then
     log_info "Running unlimited iterations (use Ctrl+C to stop)"
     i=1
+    local consecutive_no_change=0
+    local MAX_NO_CHANGE_ITERATIONS=3
     while true; do
         printf -v LOG_FILE "%s/%03d.log" "$ITERATIONS_DIR_FULL" "$NEXT_LOG_INDEX"
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
+
+        # Capture git state before iteration for stuck detection
+        local pre_iteration_head=""
+        local pre_iteration_dirty=""
+        if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+            pre_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
+            pre_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null || echo "")
+        fi
 
         # Check project completion BEFORE entering subshell (exit inside subshell doesn't work)
         # Phase 1: Creates .project_completion_pending, returns 1 (continue to TODO review)
@@ -408,6 +418,25 @@ run_single_audit_or_all() {
                 # Only exit if handle_failure didn't want us to continue
                 exit "$ITERATION_EXIT_CODE"
             fi
+        fi
+
+        # Stuck detection: check if agent made any changes this iteration
+        local post_iteration_head=""
+        local post_iteration_dirty=""
+        if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+            post_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
+            post_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null || echo "")
+        fi
+
+        if [[ "$pre_iteration_head" == "$post_iteration_head" && "$pre_iteration_dirty" == "$post_iteration_dirty" ]]; then
+            ((consecutive_no_change++))
+            log_warn "No changes detected in iteration $i ($consecutive_no_change/$MAX_NO_CHANGE_ITERATIONS consecutive)"
+            if [[ $consecutive_no_change -ge $MAX_NO_CHANGE_ITERATIONS ]]; then
+                log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no changes. Check feature status and resolve any blockers."
+                exit $EXIT_ABORTED
+            fi
+        else
+            consecutive_no_change=0
         fi
 
         ((i++))

@@ -65,6 +65,14 @@ aidd --project-dir ./app --audit SECURITY,CODE_QUALITY,ARCHITECTURE
 | `TESTING`       | High     | 2-3h | Test coverage, testing strategy    |
 | `DOCUMENTATION` | Medium   | 1-2h | Documentation quality and coverage |
 
+### Comparison & Migration
+
+| Audit       | Priority | Time | Best For                                                |
+| ----------- | -------- | ---- | ------------------------------------------------------- |
+| `UI_PARITY` | High     | 2-3h | Compare UI surfaces between two app versions, find gaps |
+
+> **Prerequisite:** `UI_PARITY` requires a `ui_parity_reference:` directive in the target project's `/.automaker/project.txt` pointing to the reference codebase path.
+
 ### Stack-Specific
 
 | Audit       | Priority | Time | Best For                             |
@@ -174,6 +182,13 @@ aidd --project-dir ./app --audit TECHDEBT,DEAD_CODE,COMPLICATION
 ```bash
 # Deep dive into performance
 aidd --project-dir ./app --audit PERFORMANCE,LIGHTHOUSE,FRONTEND
+```
+
+### Post-Rebuild / Migration Parity Check
+
+```bash
+# Compare rebuilt app against old version (requires ui_parity_reference in project.txt)
+aidd --project-dir ./app --audit UI_PARITY
 ```
 
 ---

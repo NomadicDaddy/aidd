@@ -209,8 +209,6 @@ error  Missing return type on function  @typescript-eslint/explicit-function-ret
 | Type mismatches                 | Remove annotation or add explicit cast |
 | ESLint errors                   | Follow existing patterns in codebase   |
 
-**IMPORTANT:** Do not install or create test suites or testing frameworks. Use only browser automation for testing.
-
 2. **Follow existing patterns in codebase:**
     - Read similar files
     - Match their style
@@ -443,7 +441,7 @@ fatal: not a git repository (or any of the parent directories): .git
     - Check for `/.automaker/` marker
 
 4. **Document issue:**
-    - Note in progress.md
+    - Note in CHANGELOG.md
     - Continue with feature work if git is optional
 
 ---
@@ -644,7 +642,7 @@ Error: API_KEY is required but not provided
 4. **Load environment:**
     ```bash
     # Some frameworks require restart after .env changes
-    npm run dev
+    npm run dev > dev.log 2>&1 &
     ```
 
 ---
@@ -678,7 +676,7 @@ Error: Navigation timeout exceeded
 2. **Check correct port:**
     - Review dev.log
     - Check package.json scripts
-    - Try common ports (3000, 3000)
+    - Try common ports (3000, 3001, 5173)
 
 3. **Take screenshot to see actual state:**
 
@@ -769,7 +767,7 @@ Error: Could not find element matching "Submit Button"
     - Test affected functionality
 
 5. **Document if necessary**
-    - Note unusual errors in progress.md
+    - Note unusual errors in CHANGELOG.md
     - Record recovery strategy used
     - Help future debugging
 
@@ -783,7 +781,7 @@ Error: Could not find element matching "Submit Button"
 - Fix requires architectural changes
 - Dependency/environment issue
 
-**Record in progress.md:**
+**Record in CHANGELOG.md:**
 
 ```markdown
 ## Blocker: [Error Type]

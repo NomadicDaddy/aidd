@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-31
+
+### Added
+
+- Stuck detection: abort after 3 consecutive iterations with no git changes (4d3c968)
+- `waiting_approval` status for features that can't be runtime-verified, held for human review (4d3c968)
+- Graceful shutdown via `--stop` flag or `.automaker/.stop` file (6887521)
+- Two-phase project completion detection with `.project_completed` marker (6887521)
+- Changelog generator script for automated Keep a Changelog output from features (4f04282)
+- Spernakit registry version update in changelog generator (11892b2)
+- Automated rebuild and parity audit tooling: `audit-parity.sh`, `diff-template.sh`, `generate-features.sh`, `pre-rebuild-check.sh` (b1b7d0f)
+- Parity audit `.parity-ignore` file support for excluding known false positives (944ae99)
+- UI_PARITY audit specification for post-rebuild/migration gap detection (894ef1c)
+- `agent-browser` CLI as preferred browser automation method across all prompts (50c51c9)
+- Comprehensive code audit guides: hygiene, reorganization, UI separation, dead code (dbd28e0)
+- Auto-rebuild guide for spernakit applications (0b5ab32)
+- Prompt selection logic documentation (`docs/prompt-selection-logic.md`)
+
+### Fixed
+
+- Infinite loop on project completion caused by exit inside subshell (6887521)
+- Incomplete TODO detection counting headers and completed items as incomplete (9913a16)
+
+### Changed
+
+- Prompts made fully environment-agnostic, replacing hardcoded tool names with generic descriptions (033fe6f)
+- Git workflows updated to use selective file staging instead of `git add .` (f9747a6)
+- Prompt system alignment pass: `in-progress.md`, `todo.md`, `validate.md` rewritten to match `coding.md` baseline — added three-strike rule, code review step, browser fallback paths, iteration management, `waiting_approval` guidance
+- Common modules consistency pass: fixed `progress.md` → `CHANGELOG.md` references, `backlog` → `waiting_approval` for blocked features, test runner policy clarified, echo file strategy replaced with tool-based writes, port list corrected, dev server backgrounding fixed
+- `validate.md` upgraded from code-inspection-only to tiered verification model with runtime verification, `waiting_approval` for unverifiable features, and verification hierarchy
+- `onboarding.md` and `initializer.md` Common Guidelines tables normalized
+- `flow.md` updated with full prompt selection cascade and complete mermaid diagram
+- Severity classification updated to v2.0 with feature.json output format (0b5ab32)
+- Scaffolding configs: expanded gitignore/prettierignore, removed `@trivago/prettier-plugin-sort-imports` dependency (dbd28e0)
+- Feature validation performance improved with batched jq calls and cached feature states (6490de5, 0c4805b)
+- Onboarding status check logging improved with diagnostic warnings (4872929)
+
 ## [0.7.0] - 2026-01-25
 
 ### Added
@@ -134,6 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.8.0]: https://github.com/NomadicDaddy/aidd/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/NomadicDaddy/aidd/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/NomadicDaddy/aidd/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/NomadicDaddy/aidd/compare/v0.4.0...v0.5.0

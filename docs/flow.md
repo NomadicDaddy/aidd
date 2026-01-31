@@ -54,9 +54,17 @@ graph TD
     AG --> AH[Compute ONBOARDING_COMPLETE]
     AH --> AI{Have spec+feature_list AND onboarding complete?}
 
-    AI -->|Yes| AI2{Audit Mode?}
-    AI2 -->|Yes| AI3[Send Audit Prompt]
-    AI2 -->|No| AJ[Send Coding Prompt]
+    AI -->|Yes| AI2{Custom Prompt?}
+    AI2 -->|Yes| AI2a[Send Custom Prompt]
+    AI2 -->|No| AI3{Audit Mode?}
+    AI3 -->|Yes| AI3a[Send Audit Prompt]
+    AI3 -->|No| AI4{Completion Pending OR --todo?}
+    AI4 -->|Yes| AI4a[Send TODO Prompt]
+    AI4 -->|No| AI5{--validate?}
+    AI5 -->|Yes| AI5a[Send Validate Prompt]
+    AI5 -->|No| AI6{--in-progress?}
+    AI6 -->|Yes| AI6a[Send In-Progress Prompt]
+    AI6 -->|No| AJ[Send Coding Prompt]
     AI -->|No| AK{Existing Codebase AND not NEW_PROJECT_CREATED?}
 
     AK -->|Yes| AL[Copy Artifacts no overwrite]
@@ -66,8 +74,12 @@ graph TD
     AN --> AO[If Spec Provided, Copy to .automaker/app_spec.txt]
     AO --> AP[Send Initializer Prompt]
 
-    AJ --> AQ[run_cli_prompt via coprocess]
-    AI3 --> AQ
+    AI2a --> AQ[run_cli_prompt via coprocess]
+    AI3a --> AQ
+    AI4a --> AQ
+    AI5a --> AQ
+    AI6a --> AQ
+    AJ --> AQ
     AM --> AQ
     AP --> AQ
 
@@ -102,7 +114,10 @@ graph TD
     style AE1 fill:#e3f2fd
     style AE2 fill:#e3f2fd
     style H3 fill:#f3e5f5
-    style AI3 fill:#f3e5f5
+    style AI3a fill:#f3e5f5
+    style AI4a fill:#e8eaf6
+    style AI5a fill:#e8eaf6
+    style AI6a fill:#e8eaf6
 ```
 
 ## Key Decision Points
@@ -160,13 +175,16 @@ Onboarding is complete when ALL of these exist in `.automaker/`:
 
 ### 8. Prompt Selection
 
-Based on project state:
+Based on project state (priority cascade):
 
+- **Custom**: When `--prompt` flag provides a user-supplied prompt
+- **Audit**: When `--audit AUDIT_NAME` is used (specialized code audits)
+- **TODO**: When completion is pending OR `--todo` flag is used (work on todo items)
+- **Validate**: When `--validate` flag is used (verify incomplete features/todos)
+- **In-Progress**: When `--in-progress` flag is used (continue in-progress features)
+- **Coding**: When spec and feature_list exist and onboarding complete
 - **Onboarding**: Existing codebases when `.automaker` files missing/incomplete
 - **Initializer**: New/empty projects where spec is copied
-- **Coding**: When spec and feature_list exist and onboarding complete
-- **TODO**: When `--todo` flag is used (work on todo items)
-- **Audit**: When `--audit AUDIT_NAME` is used (specialized code audits)
 
 ### 9. Audit Mode (v2.3.0+)
 
@@ -194,7 +212,7 @@ Only for new projects - copies template structure.
 Copies metadata templates into `.automaker/` without overwriting existing files:
 
 - `features/` directory structure
-- `progress.md` template
+- `CHANGELOG.md` template
 - `project_structure.md` template
 - `todo.md` template
 

@@ -328,15 +328,20 @@ If ANY features lack `dependencies` field, add it (empty array `[]` if no depend
 - If browser automation available: Navigate to feature in UI, complete workflow, verify visuals
 - If no browser automation: Use terminal-based verification, curl for APIs, build output checks
 
-#### 7.3 Run Quality Checks
+#### 7.3 Code Review
+
+Execute skill /review to perform a thorough code review or, if skill is not available, perform a comprehensive code review using multiple deep dive agents to analyze git diff for correctness, security, code quality, and tech stack compliance, followed by automated fixes (using deepcode agents if present).
+
+#### 7.4 Run Quality Checks
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
 - Run `bun run smoke:qc` (if exists) or lint, type-check, format
+- Ensure dev server is running in the background and run `bun run smoke:dev` (if exists — performs a login test then crawls every reachable URL in the app; common in spernakit apps) or check all affected pages using curl
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 
-#### 7.4 Additional Verification
+#### 7.5 Additional Verification
 
 ```bash
 # Verify expected changes

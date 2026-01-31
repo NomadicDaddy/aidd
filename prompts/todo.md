@@ -6,30 +6,25 @@ You are in TODO mode and ready to complete existing work items in project.
 
 ### QUICK REFERENCES
 
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
 - **Todo list:** `/.automaker/todo.md`
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
-- **Feature tests checklist:** `/.automaker/features/*/feature.json`
-- **Architecture map:** `/.automaker/project_structure.md`
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES (/\_common/)
 
 Consult these as needed throughout the session:
 
-| Document                     | Purpose                                      |
-| ---------------------------- | -------------------------------------------- |
-| `hard-constraints.md`        | Non-negotiable constraints                   |
-| `assistant-rules-loading.md` | How to load and apply project rules          |
-| `project-overrides.md`       | How to handle project.txt overrides          |
-| `testing-requirements.md`    | Comprehensive UI testing requirements        |
-| `file-integrity.md`          | Safe file editing and verification protocols |
-| `error-handling-patterns.md` | Common errors and recovery strategies        |
-
-### HARD CONSTRAINTS
-
-1. **Do not run** `scripts/setup.ts` or any other setup scripts.
-2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.automaker/CHANGELOG.md`.
-3. Do not run any blocking processes (no dev servers inline).
+| Document                     | Purpose                                              |
+| ---------------------------- | ---------------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
+| `assistant-rules-loading.md` | How to load and apply project rules                  |
+| `project-overrides.md`       | How to handle project.txt overrides                  |
+| `testing-requirements.md`    | Comprehensive UI testing requirements                |
+| `file-integrity.md`          | Safe file editing and verification protocols         |
+| `error-handling-patterns.md` | Common errors and recovery strategies                |
 
 ---
 
@@ -71,7 +66,7 @@ Consult these as needed throughout the session:
 
 **If todo.md exists and has incomplete items:**
 
-- Continue to Step 3 (assess TODOs)
+- Continue to Step 4 (assess TODOs)
 - Parse each item to understand what needs to be done
 - Note priorities if indicated (CRITICAL, HIGH, MEDIUM, LOW)
 - Consider dependencies between items
@@ -88,7 +83,7 @@ Consult these as needed throughout the session:
 - TODO-list.md, todo-list.md, tasks.md, TASKS.md
 ```
 
-**If found:** Read the first matching file and proceed to Step 3.
+**If found:** Read the first matching file and proceed to Step 4.
 
 **If not found:** Search for TODO tags in code (Step 2.3).
 
@@ -105,7 +100,7 @@ Consult these as needed throughout the session:
 
 - Collect them into a temporary assessment
 - These can be completed even without explicit todo.md
-- Proceed to Step 3
+- Proceed to Step 4
 
 **If no TODOs found anywhere:** Proceed to Step 2.4 (transition to feature coding).
 
@@ -131,11 +126,64 @@ Consult these as needed throughout the session:
 
 ---
 
-### STEP 3: ASSESS AND SELECT TODO ITEM
+### STEP 3: RUN QUALITY CHECKS
+
+**CRITICAL: Test existing functionality before making changes.**
+
+The previous session may have introduced bugs. Always verify before modifying code.
+
+#### 3.1 Quality Control Gates
+
+**Run `bun run smoke:qc` if it exists. Otherwise, run:**
+
+- Linting: `npm run lint` or equivalent
+- Type checking: `npm run type-check` or `tsc --noEmit`
+- Tests: `npm test` (if applicable) - **NOTE: Only if pre-existing, do not create test suites**
+- Formatting: `npm run format:check` or equivalent
+
+**IMPORTANT:** Do not install or create test suites or testing frameworks.
+
+**If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
+
+#### 3.2 Fix Tooling Failures Immediately
+
+**Quick recovery process:**
+
+1. Read error message carefully
+2. Identify what's missing or misconfigured
+3. Fix the issue (add config, install deps, correct settings)
+4. Re-run and verify pass
+5. Commit the fix
+
+**Three-strike rule:**
+
+1. **First failure:** Fix specific error, retry
+2. **Second failure:** Change approach entirely, retry
+3. **Third failure:** Abort item, document in CHANGELOG.md, move to next item
+
+**Never:**
+
+- Get stuck in infinite error loops
+- Ignore errors hoping they resolve
+- Proceed with broken builds
+
+**Common error patterns:**
+
+| Error Type                      | Solution                               |
+| ------------------------------- | -------------------------------------- |
+| TypeScript syntax errors (100+) | Revert file, rewrite completely        |
+| Unterminated regex literal      | Write regex in separate variable       |
+| Missing imports/exports         | Add import or check package.json       |
+| Type mismatches                 | Remove annotation or add explicit cast |
+| ESLint errors                   | Follow existing patterns in codebase   |
+
+---
+
+### STEP 4: ASSESS AND SELECT TODO ITEM
 
 **Only execute this step if TODO items exist. Otherwise, transition per Step 2.4.**
 
-#### 3.1 Review All Todo Items
+#### 4.1 Review All Todo Items
 
 **Read and understand each item:**
 
@@ -144,7 +192,7 @@ Consult these as needed throughout the session:
 - Identify specific files/line numbers mentioned
 - Note any dependencies between items
 
-#### 3.2 Prioritize Selection
+#### 4.2 Prioritize Selection
 
 **Priority order:**
 
@@ -154,7 +202,7 @@ Consult these as needed throughout the session:
 4. Dependencies (complete required items first)
 5. Items completable in this session
 
-#### 3.3 Select One Item
+#### 4.3 Select One Item
 
 - Choose highest priority item that can be reasonably completed
 - Record selection in your initial assessment
@@ -162,16 +210,16 @@ Consult these as needed throughout the session:
 
 ---
 
-### STEP 4: IMPLEMENT THE TODO ITEM
+### STEP 5: IMPLEMENT THE TODO ITEM
 
 **Only execute if TODO items exist.**
 
-#### 4.1 Write Code
+#### 5.1 Write Code
 
 **Use appropriate tools (see environment-specific reference) for file operations:**
 
-1. Read existing code
-2. Modify or create files
+1. Read existing code before modifying
+2. Make targeted edits (prefer edit over full rewrite)
 3. **CRITICAL:** Immediately read file after editing to verify
 4. If corruption detected → `git checkout -- <file>` and retry
 
@@ -181,17 +229,14 @@ Consult these as needed throughout the session:
 - Follow assistant rule conventions
 - Modify or create files as needed
 
-#### 4.2 Test Implementation
+#### 5.2 Test Implementation
 
-**Use browser automation:**
+**Testing approach depends on environment-specific capabilities (see environment-specific reference):**
 
-- Launch frontend with your browser automation tool
-- Navigate to relevant area
-- Test specific behavior from todo item
-- Verify no regressions introduced
-- Check for console errors
+- If browser automation available: Navigate to relevant area, test specific behavior, verify no regressions, check for console errors
+- If no browser automation: Use terminal-based verification, curl for APIs, build output checks
 
-#### 4.3 Remove TODO Comments
+#### 5.3 Remove TODO Comments
 
 **If todo item was a TODO comment in code:**
 
@@ -199,51 +244,66 @@ Consult these as needed throughout the session:
 - Replace `// TODO: description` with implementation
 - For code TODOs from Step 2.3, remove or mark complete
 
-#### 4.4 Run Quality Checks
+#### 5.4 Code Review
 
-**BEFORE proceeding, ensure all quality gates pass:**
+Execute skill /review to perform a thorough code review or, if skill is not available, perform a comprehensive code review using multiple deep dive agents to analyze git diff for correctness, security, code quality, and tech stack compliance, followed by automated fixes (using deepcode agents if present).
 
-- Run quality checks (if exists) or lint, type-check, format
+#### 5.5 Run Quality Checks
+
+**BEFORE proceeding, ensure ALL quality gates pass:**
+
+- Run `bun run smoke:qc` (if exists) or lint, type-check, format
+- Ensure dev server is running in the background and run `bun run smoke:dev` (if exists — performs a login test then crawls every reachable URL in the app; common in spernakit apps) or check all affected pages using curl
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 - For schema changes, check no duplicates
 
 ---
 
-### STEP 5: VERIFY WITH BROWSER AUTOMATION
+### STEP 6: VERIFY IMPLEMENTATION
 
 **Only execute if TODO items exist.**
 
-**CRITICAL: You MUST verify changes through actual UI.**
+**CRITICAL: Verify changes before marking complete.**
 
-#### 5.1 Launch and Navigate
+**If browser automation is available (see environment-specific reference):**
 
-```
-[browser automation tool] launch http://localhost:{frontendPort}
-# Navigate to relevant area of application
-```
+1. Launch browser to frontend URL
+2. Navigate to relevant area of application
+3. Verify specific behavior from todo item works correctly
+4. Test edge cases and error conditions
+5. Take screenshots to verify visual appearance
+6. Check browser console for errors
 
-#### 5.2 Test Completed Item
+**If browser automation is NOT available:**
 
-- Use your browser automation tool to click, type, and scroll
-- Verify specific behavior from todo item works correctly
-- Test edge cases and error conditions
+1. Run the application and check console/terminal output
+2. Use curl/wget for API endpoint testing
+3. Verify build completes without errors
+4. Check for TypeScript/lint errors (they often catch UI issues)
+5. Document what should be manually tested by human
 
-#### 5.3 Verify Visuals and Logs
+**DO:**
 
-- Take screenshots to verify visual appearance
-- Check browser console for errors
-- Verify complete user workflows end-to-end
+- Test through UI if possible
+- Verify complete workflows
+- Check for console errors
+
+**DON'T:**
+
+- Only test with curl when UI testing is available
+- Skip verification entirely
+- Mark complete without testing
 
 ---
 
-### STEP 6: UPDATE TODO LIST
+### STEP 7: UPDATE TODO LIST
 
 **Only execute if TODO items exist.**
 
 **CRITICAL: Update both .automaker/todo.md AND remove completed TODO comments from code.**
 
-#### 6.1 Remove or Mark Completed Item
+#### 7.1 Remove or Mark Completed Item
 
 **For items from .automaker/todo.md:**
 
@@ -297,7 +357,7 @@ async function fetchData() {
 - Ensure all TODO comments have been removed from code
 - Document completion in CHANGELOG.md
 
-#### 6.2 Keep Lists Organized
+#### 7.2 Keep Lists Organized
 
 - Maintain proper formatting and structure
 - Add any new TODOs discovered during implementation
@@ -305,7 +365,7 @@ async function fetchData() {
 
 ---
 
-### STEP 7: COMMIT PROGRESS
+### STEP 8: COMMIT PROGRESS
 
 **Only execute if TODO items exist.**
 
@@ -317,13 +377,17 @@ git add <path/to/file1> <path/to/file2>
 git diff --staged
 git commit -m "Complete todo item: [description]" \
   -m "- Implemented [specific changes]" \
-  -m "- Tested via UI (browser automation)" \
+  -m "- Tested [how you tested]" \
   -m "- Updated /.automaker/todo.md: removed completed item"
 ```
 
+**If shell doesn't support line continuations:** Run as single line or use multiple `-m` flags separately.
+
+**If git reports "not a git repository":** Don't force commits. Document state in CHANGELOG.md.
+
 ---
 
-### STEP 8: UPDATE PROGRESS NOTES
+### STEP 9: UPDATE PROGRESS NOTES
 
 **Only execute if TODO items exist.**
 
@@ -345,7 +409,7 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 
 ---
 
-### STEP 9: END SESSION CLEANLY
+### STEP 10: END SESSION CLEANLY
 
 **Only execute if TODO items exist. Otherwise, follow Step 2.4 transition.**
 
@@ -356,7 +420,7 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 3. Update `/.automaker/CHANGELOG.md`
 4. Ensure no uncommitted changes
 5. Leave codebase in working state
-6. Use attempt_completion to present results
+6. Follow environment-specific session termination (see environment-specific reference)
 
 ---
 
@@ -377,8 +441,8 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 ### Quality Bar
 
 - Zero console errors
+- Polished UI matching spec design
 - All completed items tested and verified
-- Todo list updated accurately
 - Fast, responsive, professional
 
 ### File Integrity
@@ -388,6 +452,13 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 - **IMMEDIATELY** retry with different approach if edit fails
 - **DOCUMENT** corruption incidents in CHANGELOG.md
 
+### Iteration Management
+
+- **COMPLEXITY ESTIMATION:** Assess item complexity first
+- **ABORT CRITERIA:** After 3 failed attempts, skip to next item
+- **QUALITY OVER QUANTITY:** One complete item > multiple half-done
+- **NO RUSHING:** Take time to write clean, testable code
+
 ### Transition Logic
 
 **If no TODO items exist:**
@@ -396,6 +467,10 @@ SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
 - Exit with code 0
 - Next session will use coding.md prompt
 - Feature implementation will continue
+
+### You Have Unlimited Time
+
+Take as long as needed to get it right. The most important thing is leaving the codebase in a clean state before terminating the session.
 
 ---
 

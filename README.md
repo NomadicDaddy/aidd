@@ -408,16 +408,23 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
-- **v0.7.1** (2026-01-28):
-    - Fixed infinite iteration loop when project is complete (multiple root causes addressed)
-    - Fixed TODO detection to only match incomplete items (not completed items with checkmarks)
-    - Fixed completion check ordering (must run before prompt determination)
-    - Fixed exit inside subshell not terminating main script
-    - Added persistent `.project_completed` marker to prevent restart loops
-    - Added `--stop` flag for graceful shutdown of running instances
-    - Added `.stop` file support - create to signal AIDD to stop after current iteration
-    - Stale `.stop` files are automatically cleaned up on startup
-- **v0.7.0** (2026-01-15):
+- **v0.8.0** (2026-01-31):
+    - Stuck detection: abort after 3 consecutive iterations with no git changes
+    - `waiting_approval` status for features that can't be runtime-verified
+    - Graceful shutdown via `--stop` flag or `.automaker/.stop` file
+    - Two-phase project completion detection with `.project_completed` marker
+    - Changelog generator script and spernakit registry version updater
+    - Automated rebuild and parity audit tooling (`audit-parity.sh`, `diff-template.sh`, etc.)
+    - UI_PARITY audit specification for post-rebuild gap detection
+    - `agent-browser` CLI as preferred browser automation method across all prompts
+    - Comprehensive code audit guides: hygiene, reorganization, UI separation, dead code
+    - Prompt system alignment pass: all prompts rewritten to match `coding.md` baseline
+    - Common modules consistency pass across `_common/` shared files
+    - `validate.md` upgraded to tiered verification model with runtime verification
+    - Feature validation performance improved with batched jq and cached feature states
+    - Fixed infinite iteration loop on project completion
+    - Fixed TODO detection false positives
+- **v0.7.0** (2026-01-25):
     - Added audit mode with 20+ specialized audits (SECURITY, PERFORMANCE, etc.)
     - Multi-audit support: run multiple audits sequentially with comma-separated names
     - Audit cross-reference support: referenced audit files copied to target project

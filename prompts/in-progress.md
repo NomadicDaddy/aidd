@@ -56,9 +56,9 @@ Consult these as needed throughout the session:
 
 Start by orienting yourself with the project state.
 
-**Use appropriate tools (see environment-specific reference):**
+**Use appropriate tools (see environment-specific reference) to:**
 
-- Read files: spec, progress, feature list
+- Read files: spec, progress notes, feature list
 - Explore project structure: list directories
 - Find specific files or content: search by pattern or content
 - Map codebase structure: identify key components
@@ -67,7 +67,7 @@ Start by orienting yourself with the project state.
 
 - Locate `/.automaker/app_spec.txt`
 - Use that directory as working directory for all commands
-- Verify by listing directory contents
+- Verify by listing directory (should show `/.automaker/`, `backend/`, `frontend/`, etc.)
 
 **Review key files:**
 
@@ -92,14 +92,49 @@ The previous session may have introduced bugs. Always verify before adding new c
 
 #### 3.1 Quality Control Gates
 
-**Run quality checks using your environment's tools:**
+**Run `bun run smoke:qc` if it exists. Otherwise, run:**
 
-- Linting: check code formatting and syntax
-- Type checking: verify type consistency
-- Tests: run automated tests (if applicable)
-- Formatting: check code formatting
+- Linting: `npm run lint` or equivalent
+- Type checking: `npm run type-check` or `tsc --noEmit`
+- Tests: `npm test` (if applicable) - **NOTE: Only if pre-existing, do not create test suites**
+- Formatting: `npm run format:check` or equivalent
+
+**IMPORTANT:** Do not install or create test suites or testing frameworks.
 
 **If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
+
+#### 3.2 Fix Tooling Failures Immediately
+
+**Quick recovery process:**
+
+1. Read error message carefully
+2. Identify what's missing or misconfigured
+3. Fix the issue (add config, install deps, correct settings)
+4. Re-run and verify pass
+5. Commit the fix
+
+**Three-strike rule:**
+
+1. **First failure:** Fix specific error, retry
+2. **Second failure:** Change approach entirely, retry
+3. **Third failure:** Abort feature, document in CHANGELOG.md, move to next feature
+
+**Never:**
+
+- Get stuck in infinite error loops
+- Ignore errors hoping they resolve
+- Proceed with broken builds
+- Mark features as passing with failures
+
+**Common error patterns:**
+
+| Error Type                      | Solution                               |
+| ------------------------------- | -------------------------------------- |
+| TypeScript syntax errors (100+) | Revert file, rewrite completely        |
+| Unterminated regex literal      | Write regex in separate variable       |
+| Missing imports/exports         | Add import or check package.json       |
+| Type mismatches                 | Remove annotation or add explicit cast |
+| ESLint errors                   | Follow existing patterns in codebase   |
 
 ---
 
@@ -169,8 +204,8 @@ Document which in-progress feature you're working on and why.
 
 **Use appropriate tools (see environment-specific reference) for file operations:**
 
-1. Read existing code
-2. Make targeted changes
+1. Read existing code before modifying
+2. Make targeted edits (prefer edit over full rewrite)
 3. **CRITICAL:** Immediately read file after editing to verify
 4. If corruption detected → `git checkout -- <file>` and retry
 
@@ -183,48 +218,59 @@ Document which in-progress feature you're working on and why.
 
 #### 6.2 Test Implementation
 
-**Use browser automation:**
+**Testing approach depends on environment-specific capabilities (see environment-specific reference):**
 
-- Navigate to feature in UI
-- Complete full user workflow
-- Verify visual appearance
-- Check console for errors
+- If browser automation available: Navigate to feature in UI, complete workflow, verify visuals
+- If no browser automation: Use terminal-based verification, curl for APIs, build output checks
 
-#### 6.3 Run Quality Checks
+#### 6.3 Code Review
+
+Execute skill /review to perform a thorough code review or, if skill is not available, perform a comprehensive code review using multiple deep dive agents to analyze git diff for correctness, security, code quality, and tech stack compliance, followed by automated fixes (using deepcode agents if present).
+
+#### 6.4 Run Quality Checks
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
-- Run quality checks using your environment's tools
+- Run `bun run smoke:qc` (if exists) or lint, type-check, format
+- Ensure dev server is running in the background and run `bun run smoke:dev` (if exists — performs a login test then crawls every reachable URL in the app; common in spernakit apps) or check all affected pages using curl
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 
 ---
 
-### STEP 7: VERIFY WITH BROWSER AUTOMATION
+### STEP 7: VERIFY IMPLEMENTATION
 
-**CRITICAL: You MUST verify features through actual UI.**
+**CRITICAL: Verify features before marking as passing.**
 
-#### 7.1 Launch Browser
+**If browser automation is available (see environment-specific reference):**
 
-```
-[Browser automation tool] launch http://localhost:{frontendPort}
-```
+1. Launch browser to frontend URL
+2. Navigate to feature area
+3. Complete full user journey with clicks and input
+4. Test edge cases and error states
+5. Take screenshots at key states
+6. Check browser console for errors
+7. Verify UI appearance (no white-on-white, broken layouts, etc.)
 
-#### 7.2 Test Complete Workflow
+**If browser automation is NOT available:**
 
-Use your browser automation tool to click, type, and scroll:
+1. Run the application and check console/terminal output
+2. Use curl/wget for API endpoint testing
+3. Verify build completes without errors
+4. Check for TypeScript/lint errors (they often catch UI issues)
+5. Document what should be manually tested by human
 
-1. Navigate to feature area
-2. Complete full user journey
-3. Test edge cases
-4. Verify success and error states
+**DO:**
 
-#### 7.3 Verify Visuals and Console
+- Test through UI if possible
+- Verify complete workflows
+- Check for console errors
 
-1. Take screenshots at key states
-2. Check browser console for errors
-3. Verify UI appearance (no white-on-white, broken layouts, etc.)
-4. Confirm end-to-end functionality
+**DON'T:**
+
+- Only test with curl when UI testing is available
+- Skip verification entirely
+- Mark passing without testing
 
 ---
 
@@ -238,10 +284,41 @@ Use your browser automation tool to click, type, and scroll:
 
 1. **Code exists:** All required files, models, routes, components
 2. **Functional testing:** Complete workflow from feature's steps
-3. **UI testing:** Tested in actual browser, not just API
+3. **UI testing:** Tested in browser if available, or terminal-based verification
 4. **Spec alignment:** Implementation matches spec requirements
 
-#### 8.2 Update Feature
+#### 8.2 ONLY MODIFY "passes" AND "status" FIELDS
+
+**You may change:**
+
+```json
+"passes": false  →  "passes": true   (after full verification)
+"passes": true   →  "passes": false  (if discovered broken)
+"status": "backlog" →  "status": "in_progress" →  "status": "completed"
+"status": "backlog" →  "status": "waiting_approval"    (blocker requires user intervention)
+```
+
+**NEVER:**
+
+- Remove tests
+- Edit test descriptions
+- Modify test steps
+- Modify `dependencies` field
+- Combine or consolidate tests
+- Reorder tests
+- Change any other fields
+- Invent new status values (only use: `backlog`, `in_progress`, `completed`, `waiting_approval`)
+- Set `"passes": true` on features you cannot or choose not to implement
+- Skip, cancel, or declare features "out of scope" — all features must be implemented or set to `waiting_approval`
+- Set `"passes": true` without moving status to `"completed"`
+
+**If a feature cannot be implemented** (missing models, architectural conflicts, invalid spec):
+
+1. Set `"status": "waiting_approval"` and leave `"passes": false`
+2. Document the blocker in `CHANGELOG.md` with the feature name and specific reason
+3. Move on to the next feature — the user will resolve blockers between runs
+
+#### 8.3 Update Passes Field
 
 **Only after complete verification:**
 
@@ -265,9 +342,13 @@ git add <path/to/file1> <path/to/file2>
 git diff --staged
 git commit -m "Complete in-progress feature: [feature name]" \
   -m "- [specific changes]" \
-  -m "- Tested via UI (browser automation)" \
+  -m "- Tested [how you tested]" \
   -m "- Updated feature.json: marked as passing"
 ```
+
+**If shell doesn't support line continuations:** Run as single line or use multiple `-m` flags separately.
+
+**If git reports "not a git repository":** Don't force commits. Document state in CHANGELOG.md.
 
 ---
 
@@ -290,6 +371,7 @@ jq -r 'select(.status == "in_progress" and .passes == false) | .id' .automaker/f
 1. Document completion in `/.automaker/CHANGELOG.md`
 2. Report: "All in-progress features completed"
 3. Exit cleanly
+4. Follow environment-specific session termination (see environment-specific reference)
 
 ---
 
@@ -321,7 +403,19 @@ jq -r 'select(.status == "in_progress" and .passes == false) | .id' .automaker/f
 
 - **NEVER** skip post-edit verification
 - **ALWAYS** use `git checkout` if corruption detected
-- **PREFER** safe editing approaches
+- **IMMEDIATELY** retry with different approach if edit fails
+- **DOCUMENT** corruption incidents in CHANGELOG.md
+
+### Iteration Management
+
+- **COMPLEXITY ESTIMATION:** Assess feature complexity first
+- **ABORT CRITERIA:** After 3 failed attempts, skip to next feature
+- **QUALITY OVER QUANTITY:** One complete feature > multiple half-done
+- **NO RUSHING:** Take time to write clean, testable code
+
+### You Have Unlimited Time
+
+Take as long as needed to get it right. The most important thing is leaving the codebase in a clean state before terminating the session.
 
 ---
 

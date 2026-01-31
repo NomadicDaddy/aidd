@@ -8,6 +8,7 @@ This step MUST be executed FIRST, before reading specs, analyzing code, or plann
 
 Look for and read the following files in order of priority:
 
+- `.windsurf/rules/` - Project-level rule files (if directory exists)
 - `AGENTS.md` - Agent-specific instructions
 - Tool/assistant-specific rule files (if present) - Project rules for the current environment
 

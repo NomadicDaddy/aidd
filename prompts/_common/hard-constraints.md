@@ -115,9 +115,9 @@
 **What to do:**
 
 1. Stop implementation immediately
-2. Document the specific question in `/.automaker/progress.md`
+2. Document the specific question in `/.automaker/CHANGELOG.md`
 3. Include context and options considered
-4. Mark current feature as "status": "backlog" (not "in_progress")
+4. Mark current feature as `"status": "waiting_approval"` and leave `"passes": false`
 5. Move to next feature or end session cleanly
 
 **What NOT to do:**

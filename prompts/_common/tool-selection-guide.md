@@ -82,17 +82,24 @@ bun run dev
 pip install -r requirements.txt
 ```
 
-**IMPORTANT: No Test Runners or Testing Frameworks**
+**IMPORTANT: No Test Suite Installation**
 
-DO NOT install or use:
+DO NOT install or create test suites, test harnesses, or testing frameworks.
 
-- npm test
-- pytest
-- jest
-- cargo test
-- Any other test runners or frameworks
+**Pre-existing test suites may be run if they already exist in the project:**
 
-**Only use browser automation for testing.**
+```bash
+npm test          # Only if tests already exist
+bun run test      # Only if tests already exist
+```
+
+**DO NOT install or create:**
+
+- Jest, Vitest, Mocha, or any test framework
+- Testing libraries or utilities
+- Test runner setups or fixture files
+
+**Prefer browser automation for UI verification (see testing-requirements.md).**
 
 **Build tools:**
 
@@ -193,8 +200,8 @@ Need to run shell operations?
 │  └─ Use: Shell execution tool (git ...)
 ├─ Package manager?
 │  └─ Use: Shell execution tool (npm/bun/pip ...)
-├─ Test runner?
-│  └─ Use: Shell execution tool (npm test/pytest ...)
+├─ Pre-existing test runner?
+│  └─ Use: Shell execution tool (only if tests already exist)
 └─ Build tool?
    └─ Use: Shell execution tool (npm run build ...)
 

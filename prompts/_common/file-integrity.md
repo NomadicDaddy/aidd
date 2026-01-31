@@ -15,7 +15,7 @@
     - Run `git checkout -- <file>` IMMEDIATELY
     - Analyze what went wrong
     - Retry with a different approach
-    - Document the incident in `/.automaker/progress.md`
+    - Document the incident in `/.automaker/CHANGELOG.md`
 
 3. **Never proceed without verification:**
     - Don't assume edits succeeded
@@ -58,14 +58,13 @@
 6. If corrupted → git checkout and retry
 ```
 
-**Strategy 2: Shell Redirection (Alternative for large files)**
+**Strategy 2: Full File Write (Alternative for large files)**
 
 ```
 1. Prepare complete new content
-2. Use your shell execution tool with shell redirection
-3. Example: echo '...' > file.json
-4. Read file to verify with your file read tool
-5. If corrupted → git checkout and retry
+2. Use your file write/create tool to write the entire file
+3. Read file to verify with your file read tool
+4. If corrupted → git checkout and retry
 ```
 
 **Strategy 3: Multiple Small Edits (For complex changes)**

@@ -17,13 +17,13 @@ You are in Code mode and ready to begin setting up the foundation for all future
 
 Consult these as needed throughout the session:
 
-| Document                     | Purpose                                                   |
-| ---------------------------- | --------------------------------------------------------- |
-| `hard-constraints.md`        | Non-negotiable constraints (DO NOT run setup after init!) |
-| `assistant-rules-loading.md` | How to load and apply project rules                       |
-| `project-overrides.md`       | How to handle project.txt overrides                       |
-| `file-integrity.md`          | Safe file editing and verification protocols              |
-| `error-handling-patterns.md` | Common errors and recovery strategies                     |
+| Document                     | Purpose                                              |
+| ---------------------------- | ---------------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
+| `assistant-rules-loading.md` | How to load and apply project rules                  |
+| `project-overrides.md`       | How to handle project.txt overrides                  |
+| `file-integrity.md`          | Safe file editing and verification protocols         |
+| `error-handling-patterns.md` | Common errors and recovery strategies                |
 
 ### HARD CONSTRAINTS
 

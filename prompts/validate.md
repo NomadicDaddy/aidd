@@ -6,30 +6,25 @@ You are in VALIDATE mode and ready to verify incomplete features and pending tod
 
 ### QUICK REFERENCES
 
+- **Spec (source of truth):** `/.automaker/app_spec.txt`
+- **Architecture map:** `/.automaker/project_structure.md`
+- **Feature tests checklist:** `/.automaker/features/*/feature.json`
 - **Todo list:** `/.automaker/todo.md`
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
-- **Feature tests checklist:** `/.automaker/features/*/feature.json`
-- **Architecture map:** `/.automaker/project_structure.md`
 - **Project overrides (highest priority):** `/.automaker/project.txt`
 
 ### COMMON GUIDELINES (/\_common/)
 
 Consult these as needed throughout the session:
 
-| Document                     | Purpose                                      |
-| ---------------------------- | -------------------------------------------- |
-| `hard-constraints.md`        | Non-negotiable constraints                   |
-| `assistant-rules-loading.md` | How to load and apply project rules          |
-| `project-overrides.md`       | How to handle project.txt overrides          |
-| `testing-requirements.md`    | Comprehensive UI testing requirements        |
-| `file-integrity.md`          | Safe file editing and verification protocols |
-| `error-handling-patterns.md` | Common errors and recovery strategies        |
-
-### HARD CONSTRAINTS
-
-1. **Do not run** `scripts/setup.ts` or any other setup scripts.
-2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in `/.automaker/CHANGELOG.md`.
-3. Do not run any blocking processes (no dev servers inline).
+| Document                     | Purpose                                              |
+| ---------------------------- | ---------------------------------------------------- |
+| `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
+| `assistant-rules-loading.md` | How to load and apply project rules                  |
+| `project-overrides.md`       | How to handle project.txt overrides                  |
+| `testing-requirements.md`    | Comprehensive UI testing requirements                |
+| `file-integrity.md`          | Safe file editing and verification protocols         |
+| `error-handling-patterns.md` | Common errors and recovery strategies                |
 
 ---
 
@@ -84,21 +79,28 @@ grep -c '"passes": false' .automaker/features/*/feature.json
     - Search for file names, component names, function names mentioned in spec
     - Look for related code patterns
 
-4. **Verify feature implementation:**
+4. **Verify feature implementation (code inspection):**
     - Read relevant files found in searches
     - Check if spec items are implemented
     - Look for related tests
     - Check UI files if it's a frontend feature
     - Check API endpoints if it's a backend feature
 
-5. **Make determination:**
-    - **Feature IS complete:** All spec items are implemented and verifiable
-    - **Feature IS incomplete:** One or more spec items are missing or broken
-    - **Ambiguous:** Cannot determine status without running code
+5. **Attempt runtime verification (if code evidence found):**
+    - Run `bun run smoke:qc` (if exists) or lint, type-check, format — ensure no build errors
+    - If browser automation available: test the feature through UI using agent-browser or native browser automation (see testing-requirements.md)
+    - If no browser automation: use curl/wget for API endpoints, check build output
+    - Run `bun run smoke:dev` (if exists — performs a login test then crawls every reachable URL in the app; common in spernakit apps) or check affected pages using curl
+
+6. **Make determination:**
+    - **Feature IS complete (verified):** Code exists AND runtime verification passed → `passes: true`, `status: completed`
+    - **Feature IS complete (unverifiable):** Code exists but runtime verification not possible (no browser, no server, blocked dependency) → `passes: true`, `status: waiting_approval` (held for human review)
+    - **Feature IS incomplete:** One or more spec items are missing or broken → leave unchanged
+    - **Ambiguous:** Cannot determine from code inspection alone AND cannot run verification → `passes: true`, `status: waiting_approval` (held for human review)
 
 #### 2.3 Update Feature Metadata
 
-**If feature IS complete but marked as incomplete:**
+**If feature IS complete and verified at runtime:**
 
 1. Update the feature.json file:
     - Set `passes` to `true`
@@ -110,15 +112,36 @@ grep -c '"passes": false' .automaker/features/*/feature.json
 ```markdown
 ### [YYYY-MM-DD] - Validation Update
 
-#### Validated Complete (passes: false → true)
+#### Validated Complete (passes: false → true, status: completed)
 
 - Feature: [feature description] - Found implemented in [file paths]
-    - Reason: [brief explanation]
+    - Evidence: [code inspection + runtime verification results]
+```
+
+**If feature IS complete but runtime verification not possible:**
+
+1. Update the feature.json file:
+    - Set `passes` to `true`
+    - Set `status` to `"waiting_approval"`
+    - Update `updatedAt` timestamp
+
+2. Document in CHANGELOG.md:
+
+```markdown
+#### Awaiting Human Validation (passes: true, status: waiting_approval)
+
+- Feature: [feature description] - Code found in [file paths]
+    - Reason: [why runtime verification was not possible]
+    - Suggested manual test: [what a human should verify]
 ```
 
 **If feature is legitimately incomplete:** Leave unchanged, note in validation summary.
 
-**If feature status is ambiguous:** Leave as `false`, add note to CHANGELOG.md under "Validation Ambiguities".
+**If feature status is ambiguous (code evidence unclear):**
+
+1. Set `passes` to `true`, `status` to `"waiting_approval"`
+2. Document in CHANGELOG.md under "Awaiting Human Validation" with specific reason
+3. Include guidance on what a human should check to confirm or reject
 
 ---
 
@@ -201,9 +224,9 @@ todos_stale_removed=[count removed as stale]
 **Features Validated:**
 
 - Total incomplete at start: X
-- Validated as complete: Y
-- Remaining incomplete: Z
-- Ambiguous status: A
+- Validated complete (verified): Y
+- Awaiting human validation: Z
+- Remaining incomplete: A
 
 **TODOs Validated:**
 
@@ -215,9 +238,14 @@ todos_stale_removed=[count removed as stale]
 
 ### Validation Details
 
-#### Features Updated (passes: false → true)
+#### Features Validated Complete (passes: true, status: completed)
 
-- Feature: [description] - Evidence: [files/code]
+- Feature: [description] - Evidence: [code + runtime verification]
+
+#### Features Awaiting Human Validation (passes: true, status: waiting_approval)
+
+- Feature: [description] - Code found in [files], runtime verification not possible
+    - Suggested manual test: [what to check]
 
 #### TODOs Completed/Removed
 
@@ -226,10 +254,6 @@ todos_stale_removed=[count removed as stale]
 #### TODOs Removed (Stale)
 
 - TODO: [description] - Reason: [why stale]
-
-#### Validation Ambiguities
-
-- Feature/TODO: [description] - Issue: [what's unclear]
 ```
 
 ---
@@ -260,8 +284,8 @@ git status
 git add <path/to/file1> <path/to/file2>
 git diff --staged
 git commit -m "chore(validation): validate features and todos [aidd-validate]" \
-  -m "- Validated X features (Y updated to passes: true)" \
-  -m "- Validated Z TODOs (A completed/removed, B stale)" \
+  -m "- Validated X features (Y completed, Z awaiting human review)" \
+  -m "- Validated A TODOs (B completed/removed, C stale)" \
   -m "- See CHANGELOG.md for full validation report"
 ```
 
@@ -281,8 +305,9 @@ Validation Complete
 **Features:**
 
 - X features validated
-- Y updated to complete
-- Z remain incomplete
+- Y verified complete
+- Z awaiting human review
+- A remain incomplete
 
 **TODOs:**
 
@@ -308,6 +333,7 @@ See .automaker/CHANGELOG.md for detailed report.
 - Check multiple sources: code, tests, UI components, API endpoints
 - Verify completeness - ALL spec items should be addressed
 - Consider quality - implementation should work, not just exist
+- Attempt runtime verification whenever possible (quality gates, browser automation, curl)
 
 **When validating TODOs:**
 
@@ -316,23 +342,28 @@ See .automaker/CHANGELOG.md for detailed report.
 - Cross-check features - if feature is complete, related TODOs might be too
 - Check for stale items - requirements may have changed
 
-### Ambiguity Handling
+### Ambiguity and Unverifiable Features
 
-**If you cannot determine status:**
+**If code evidence exists but runtime verification is not possible:**
 
-1. Document clearly what you found and what's missing
-2. Don't guess - leave as incomplete rather than incorrectly mark complete
-3. Provide guidance - suggest how to resolve (manual test, code review)
-4. Move forward - don't block on ambiguous items
+1. Set `passes: true`, `status: "waiting_approval"` — the human will confirm or reject
+2. Document what was found and why verification wasn't possible
+3. Provide specific guidance on what a human should test to confirm
+4. Move forward - don't block on unverifiable items
 
-### Conservative Approach
+**If no code evidence exists:**
 
-**When in doubt:**
+- Leave as `passes: false` — the feature is genuinely incomplete
+- Note in validation summary
 
-- Leave items as incomplete rather than incorrectly marking complete
-- Document ambiguity in CHANGELOG.md
-- Suggest manual review for complex cases
-- Continue validation - don't block on edge cases
+### Verification Hierarchy
+
+**Prefer (in order):**
+
+1. Runtime verification (quality gates + browser automation) — strongest evidence, mark as `completed`
+2. Code inspection with clear evidence — if runtime not possible, mark as `waiting_approval`
+3. Ambiguous code evidence — mark as `waiting_approval` with detailed notes for human review
+4. No evidence found — leave as incomplete
 
 ---
 

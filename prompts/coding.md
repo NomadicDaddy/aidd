@@ -165,18 +165,24 @@ The previous session may have introduced bugs. Always verify before adding new c
 4. Re-run and verify pass
 5. Commit the fix
 
-**Three-strike rule:**
+**Three-strike rule (applies PER ERROR, not per session):**
 
-1. **First failure:** Fix specific error, retry
-2. **Second failure:** Change approach entirely, retry
-3. **Third failure:** Abort feature, document in CHANGELOG.md, move to next feature
+1. **First attempt:** Fix the specific error, retry
+2. **Second attempt:** Change approach entirely (not a variation of the same fix), retry
+3. **Third attempt:** Abort feature, document in CHANGELOG.md, move to next feature
+
+**CRITICAL: "Change approach entirely" means a fundamentally different strategy.**
+Adding more null checks after null checks failed is NOT a different approach. If filters didn't work, investigate WHY the data is null — don't add more filters. If the same symptom persists after two fixes, the root cause is elsewhere. Look at build tooling, compilation, data flow, or framework behavior — not just the symptom location.
+
+**Cross-iteration awareness:** Read `CHANGELOG.md` and recent `git log` at the start of each session. If the previous session documented a blocker or repeated failure on the same error, do NOT retry the same approach. Either investigate the root cause from a completely different angle or mark the feature as `waiting_approval` and move on.
 
 **Never:**
 
-- Get stuck in infinite error loops
+- Get stuck in infinite error loops (same fix, same result, repeated)
 - Ignore errors hoping they resolve
 - Proceed with broken builds
 - Mark features as passing with failures
+- Commit code that you know has TypeScript errors, lint warnings, or test failures
 
 **Common error patterns:**
 
@@ -358,35 +364,46 @@ sort schema.prisma | uniq -d
 
 **CRITICAL: Verify features before marking as passing.**
 
-**If browser automation is available (see environment-specific reference):**
+**For any feature with a UI component, browser testing is MANDATORY — not optional, not "nice to have".**
 
-1. Launch browser to frontend URL
-2. Navigate to feature area
-3. Complete full user journey with clicks and input
-4. Test edge cases and error states
-5. Take screenshots at key states
-6. Check browser console for errors
-7. Verify UI appearance (no white-on-white, broken layouts, etc.)
+#### 8.1 UI Features — Browser Verification Required
 
-**If browser automation is NOT available:**
+**Use agent-browser (preferred) or native browser automation (see testing-requirements.md):**
 
-1. Run the application and check console/terminal output
-2. Use curl/wget for API endpoint testing
-3. Verify build completes without errors
-4. Check for TypeScript/lint errors (they often catch UI issues)
-5. Document what should be manually tested by human
+1. Launch browser to frontend URL: `agent-browser open http://localhost:3000`
+2. Snapshot and navigate to feature area: `agent-browser snapshot -i -c` then `agent-browser click @ref`
+3. Complete full user journey with fills, clicks, and selects
+4. Re-snapshot to verify resulting state
+5. Test edge cases and error states
+6. Check browser console: `agent-browser errors` (must return empty)
+7. Take screenshots at key states: `agent-browser screenshot ./evidence.png`
+8. Verify UI appearance (no white-on-white, broken layouts, etc.)
+
+**If agent-browser is not installed**, attempt native browser automation. If neither is available, document what should be manually tested and mark the feature `"status": "waiting_approval"` instead of `"completed"`.
+
+#### 8.2 Backend-Only Features — API Verification
+
+For features with no UI component:
+
+1. Use curl/wget to test API endpoints
+2. Verify response codes and payloads
+3. Check error handling paths
+4. Verify build completes without errors
+
+#### 8.3 Verification Rules
 
 **DO:**
 
-- Test through UI if possible
-- Verify complete workflows
-- Check for console errors
+- Test through the browser for every UI feature
+- Verify complete workflows end-to-end
+- Check for console errors after every action
 
 **DON'T:**
 
-- Only test with curl when UI testing is available
-- Skip verification entirely
-- Mark passing without testing
+- Only test with curl when the feature has a UI component
+- Skip browser verification because "the API works"
+- Mark features as passing without testing
+- Assume UI works because TypeScript compiles
 
 ---
 
@@ -450,7 +467,19 @@ sort schema.prisma | uniq -d
 
 ### STEP 10: COMMIT PROGRESS
 
-**Make descriptive git commit with context.**
+**MANDATORY: Quality checks MUST pass before every commit.**
+
+#### 10.1 Pre-Commit Quality Gate
+
+```bash
+bun run smoke:qc    # or: lint + typecheck + format individually
+```
+
+**If smoke:qc fails → DO NOT COMMIT.** Fix the issues first, then re-run smoke:qc until it passes. This applies to every commit — feature commits, CHANGELOG commits, fix commits. No exceptions.
+
+If you know the code has TypeScript errors, lint warnings, or formatting issues, the feature is not finished. Go back to Step 7 and fix it.
+
+#### 10.2 Make Commit
 
 ```bash
 git status
@@ -493,10 +522,15 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 
 #### 11.4 End Session
 
-- Present final results to user
-- Summarize accomplishments
-- Note remaining work
-- Follow environment-specific session termination (see environment-specific reference)
+**CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.**
+
+After committing all work and verifying clean state:
+
+1. Present final results to user (summary of what was accomplished)
+2. Note remaining work (features still incomplete)
+3. Follow environment-specific session termination (see environment-specific reference)
+
+**The session framework will terminate you after ~5 minutes of inactivity.** This is a waste of compute time. When your work is done, end the session immediately — do not sit idle.
 
 ---
 

@@ -757,9 +757,10 @@ Error: Could not find element matching "Submit Button"
     - What went wrong?
 
 3. **Choose appropriate recovery strategy**
-    - First attempt: Fix specific issue
-    - Second attempt: Different approach
-    - Third attempt: Abort and document
+    - First attempt: Fix the specific issue
+    - Second attempt: Fundamentally different approach (not a variation of the same fix)
+    - Third attempt: Abort and document in CHANGELOG.md
+    - **"Different approach" means investigating the root cause from a new angle** — not adding more of the same fix (e.g., more null checks, more filters, more type casts). If the same symptom persists after two fixes, the root cause is elsewhere.
 
 4. **Verify the fix**
     - Re-run failing command

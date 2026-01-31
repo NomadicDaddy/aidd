@@ -356,43 +356,35 @@ run_single_audit_or_all() {
                 log_debug "Removed audit-prompt.md"
             fi
 
-            if [[ $CLI_EXIT_CODE -ne 0 ]]; then
-                # Handle failure
-                handle_failure "$CLI_EXIT_CODE"
-            else
-                # Reset failure counter on successful iteration
-                reset_failure_counter
-            fi
+            # Save CLI exit code to file so parent shell can read it
+            # (variables set inside { ... } | tee subshell don't propagate)
+            echo "$CLI_EXIT_CODE" > "$LOG_FILE.exitcode"
 
             log_info "--- End of iteration $i ---"
             log_info "Finished: $(date -Is 2>/dev/null || date)"
             echo
         } 2>&1 | tee "$LOG_FILE"
 
-        # After iteration block, check if we should continue to next iteration
-        # Track handle_failure return status
+        # Read CLI exit code from file (subshell variables don't propagate through pipe)
+        CLI_EXIT_CODE=$(cat "$LOG_FILE.exitcode" 2>/dev/null || echo "0")
+        rm -f "$LOG_FILE.exitcode" 2>/dev/null
+
+        # Handle failure or reset counter based on CLI exit code
         HANDLE_FAILURE_RETURN=0
         if [[ $CLI_EXIT_CODE -ne 0 ]]; then
             handle_failure "$CLI_EXIT_CODE"
             HANDLE_FAILURE_RETURN=$?
-            # Check if handle_failure wants us to continue
             if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
                 # Continue to next iteration - skip rest of this iteration
                 continue
             fi
+        else
+            reset_failure_counter
         fi
 
         # Extract structured log if enabled
         if [[ "$EXTRACT_STRUCTURED" == true ]]; then
             extract_single_log "$LOG_FILE" "$METADATA_DIR"
-        fi
-
-        ITERATION_EXIT_CODE=${PIPESTATUS[0]}
-
-        # Handle project completion (return to allow multi-audit to continue)
-        if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
-            log_info "AI development driver completed: project finished"
-            return 0
         fi
 
         # Check if current mode should stop early (TODO/in-progress with no items)
@@ -410,13 +402,12 @@ run_single_audit_or_all() {
             exit $EXIT_ABORTED
         fi
 
-        # Don't abort on timeout (exit 124) if continue-on-timeout is set
-        if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
-            if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
+        # Handle non-zero CLI exit that handle_failure didn't absorb
+        if [[ $CLI_EXIT_CODE -ne 0 && $HANDLE_FAILURE_RETURN -ne 0 ]]; then
+            if [[ $CLI_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
                 log_warn "Timeout detected on iteration $i, continuing to next iteration..."
-            elif [[ $HANDLE_FAILURE_RETURN -ne 0 ]]; then
-                # Only exit if handle_failure didn't want us to continue
-                exit "$ITERATION_EXIT_CODE"
+            else
+                exit "$CLI_EXIT_CODE"
             fi
         fi
 
@@ -537,48 +528,35 @@ else
                 log_debug "Removed audit-prompt.md"
             fi
 
-            if [[ $CLI_EXIT_CODE -ne 0 ]]; then
-                # Handle failure
-                handle_failure "$CLI_EXIT_CODE"
-            else
-                # Reset failure counter on successful iteration
-                reset_failure_counter
-            fi
+            # Save CLI exit code to file so parent shell can read it
+            # (variables set inside { ... } | tee subshell don't propagate)
+            echo "$CLI_EXIT_CODE" > "$LOG_FILE.exitcode"
 
-            # If this is not the last iteration, add a separator
-            if [[ $i -lt $MAX_ITERATIONS ]]; then
-                log_info "--- End of iteration $i ---"
-                log_info "Finished: $(date -Is 2>/dev/null || date)"
-                echo
-            else
-                log_info "Finished: $(date -Is 2>/dev/null || date)"
-                echo
-            fi
+            log_info "--- End of iteration $i ---"
+            log_info "Finished: $(date -Is 2>/dev/null || date)"
+            echo
         } 2>&1 | tee "$LOG_FILE"
 
-        # After iteration block, check if we should continue to next iteration
-        # Track handle_failure return status
+        # Read CLI exit code from file (subshell variables don't propagate through pipe)
+        CLI_EXIT_CODE=$(cat "$LOG_FILE.exitcode" 2>/dev/null || echo "0")
+        rm -f "$LOG_FILE.exitcode" 2>/dev/null
+
+        # Handle failure or reset counter based on CLI exit code
         HANDLE_FAILURE_RETURN=0
         if [[ $CLI_EXIT_CODE -ne 0 ]]; then
             handle_failure "$CLI_EXIT_CODE"
             HANDLE_FAILURE_RETURN=$?
-            # Check if handle_failure wants us to continue
             if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
                 # Continue to next iteration
                 continue
             fi
+        else
+            reset_failure_counter
         fi
 
         # Extract structured log if enabled
         if [[ "$EXTRACT_STRUCTURED" == true ]]; then
             extract_single_log "$LOG_FILE" "$METADATA_DIR"
-        fi
-
-        ITERATION_EXIT_CODE=${PIPESTATUS[0]}
-        # Handle project completion (return to allow multi-audit to continue)
-        if [[ $ITERATION_EXIT_CODE -eq $EXIT_PROJECT_COMPLETE ]]; then
-            log_info "AI development driver completed: project finished"
-            return 0
         fi
 
         # Check if current mode should stop early (TODO/in-progress with no items)
@@ -596,13 +574,12 @@ else
             exit $EXIT_ABORTED
         fi
 
-        # Don't abort on timeout (exit 124) if continue-on-timeout is set
-        if [[ $ITERATION_EXIT_CODE -ne 0 ]]; then
-            if [[ $ITERATION_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
+        # Handle non-zero CLI exit that handle_failure didn't absorb
+        if [[ $CLI_EXIT_CODE -ne 0 && $HANDLE_FAILURE_RETURN -ne 0 ]]; then
+            if [[ $CLI_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
                 log_warn "Timeout detected on iteration $i, continuing to next iteration..."
-            elif [[ $HANDLE_FAILURE_RETURN -ne 0 ]]; then
-                # Only exit if handle_failure didn't want us to continue
-                exit "$ITERATION_EXIT_CODE"
+            else
+                exit "$CLI_EXIT_CODE"
             fi
         fi
     done

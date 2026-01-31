@@ -465,11 +465,19 @@ For features with no UI component:
 
 ---
 
-### STEP 10: COMMIT PROGRESS
+### STEP 10: UPDATE CHANGELOG AND COMMIT
 
-**MANDATORY: Quality checks MUST pass before every commit.**
+**MANDATORY: All file updates MUST happen before the commit. Quality checks MUST pass before every commit.**
 
-#### 10.1 Pre-Commit Quality Gate
+#### 10.1 Update Progress Notes
+
+**Update `/.automaker/CHANGELOG.md` with what you accomplished:**
+
+- Feature(s) implemented and verified
+- Issues discovered or fixed
+- Remaining work
+
+#### 10.2 Pre-Commit Quality Gate
 
 ```bash
 bun run smoke:qc    # or: lint + typecheck + format individually
@@ -479,7 +487,9 @@ bun run smoke:qc    # or: lint + typecheck + format individually
 
 If you know the code has TypeScript errors, lint warnings, or formatting issues, the feature is not finished. Go back to Step 7 and fix it.
 
-#### 10.2 Make Commit
+#### 10.3 Make Commit
+
+**Include ALL changes in the commit: code, feature.json updates, CHANGELOG entries, formatting fixes.**
 
 ```bash
 git status
@@ -501,30 +511,27 @@ git commit -m "Implement [feature name] - verified end-to-end" \
 
 **Before ending session:**
 
-#### 11.1 Update Documentation
-
-- `/.automaker/features/*/feature.json` updated if tests verified
-- `/.automaker/app_spec.txt` updated if changed/needed
-
-#### 11.2 Final Feature Status Audit
+#### 11.1 Final Feature Status Audit
 
 - Perform final audit of `/.automaker/features/*/feature.json`
 - Verify all `"passes": true` features actually work
 - Confirm no false positives
 - Document any discrepancies
 
-#### 11.3 Ensure Clean State
+#### 11.2 Ensure Clean State
 
-- No uncommitted changes (stage only touched files, then commit)
+- No uncommitted changes (`git status` should be clean)
 - No broken features
 - All quality checks passing
 - App in working state
 
-#### 11.4 End Session
+**If uncommitted changes exist:** Stage, run smoke:qc, and commit before exiting.
+
+#### 11.3 End Session
 
 **CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.**
 
-After committing all work and verifying clean state:
+After verifying clean state:
 
 1. Present final results to user (summary of what was accomplished)
 2. Note remaining work (features still incomplete)

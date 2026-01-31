@@ -381,13 +381,23 @@ async function fetchData() {
 
 ---
 
-### STEP 8: COMMIT PROGRESS
+### STEP 8: UPDATE CHANGELOG AND COMMIT
 
 **Only execute if TODO items exist.**
 
-**MANDATORY: Quality checks MUST pass before every commit.**
+**MANDATORY: All file updates MUST happen before the commit. Quality checks MUST pass before every commit.**
 
-#### 8.1 Pre-Commit Quality Gate
+#### 8.1 Update Progress Notes
+
+**Update `/.automaker/CHANGELOG.md`:**
+
+- What you accomplished
+- Which todo item(s) you completed
+- Any issues discovered or fixed
+- What should be worked on next
+- Remaining todo items count
+
+#### 8.2 Pre-Commit Quality Gate
 
 ```bash
 bun run smoke:qc    # or: lint + typecheck + format individually
@@ -397,7 +407,9 @@ bun run smoke:qc    # or: lint + typecheck + format individually
 
 If you know the code has TypeScript errors, lint warnings, or formatting issues, the work is not finished. Go back to Step 5 and fix it.
 
-#### 8.2 Make Commit
+#### 8.3 Make Commit
+
+**Include ALL changes in the commit: code, todo.md updates, CHANGELOG entries, formatting fixes.**
 
 ```bash
 git status
@@ -415,40 +427,16 @@ git commit -m "Complete todo item: [description]" \
 
 ---
 
-### STEP 9: UPDATE PROGRESS NOTES
-
-**Only execute if TODO items exist.**
-
-**Update `/.automaker/CHANGELOG.md`:**
-
-```txt
------------------------------------------------------------------------------------------------------------------------
-SESSION SUMMARY: {start_date} {start_time} - {end_time} ({elapsed_time})
------------------------------------------------------------------------------------------------------------------------
-```
-
-**Include:**
-
-- What you accomplished this session
-- Which todo item(s) you completed
-- Any issues discovered or fixed
-- What should be worked on next
-- Remaining todo items count
-
----
-
-### STEP 10: END SESSION CLEANLY
+### STEP 9: END SESSION CLEANLY
 
 **Only execute if TODO items exist. Otherwise, follow Step 2.4 transition.**
 
 **CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.**
 
-1. Commit all working code using your environment's shell execution tool
-2. Update `/.automaker/todo.md` (if it exists)
-3. Update `/.automaker/CHANGELOG.md`
-4. Ensure no uncommitted changes
-5. Leave codebase in working state
-6. **End the session immediately** — follow environment-specific session termination (see environment-specific reference)
+1. Ensure no uncommitted changes (`git status` should be clean)
+2. If uncommitted changes exist: stage, run smoke:qc, and commit
+3. Verify codebase is in working state
+4. **End the session immediately** — follow environment-specific session termination (see environment-specific reference)
 
 **The session framework will terminate you after ~5 minutes of inactivity.** This is a waste of compute time. When your work is done, end the session immediately — do not sit idle.
 

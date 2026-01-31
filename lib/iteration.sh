@@ -72,7 +72,7 @@ validate_feature_file() {
     local status_val
     status_val=$(jq -r '.status // empty' "$feature_file" 2>/dev/null)
     if [[ -n "$status_val" ]]; then
-        local valid_statuses="backlog pending running completed failed verified waiting_approval in_progress"
+        local valid_statuses="backlog in_progress completed waiting_approval"
         if [[ ! " $valid_statuses " =~ " $status_val " ]]; then
             log_error "Invalid status '$status_val' in feature file: $feature_file (valid: $valid_statuses)"
             return 1
@@ -815,6 +815,14 @@ get_next_log_index() {
 # Phase 2: Second detection (state file exists) returns 0 (confirmed complete)
 check_project_completion() {
     local metadata_dir="$1"
+
+    # Normalize metadata_dir to absolute path to ensure consistent cache keys
+    # Without this, cache entries from different invocations use different path formats
+    # (e.g., "groundtruth/.automaker" vs "/d/applications/groundtruth/.automaker")
+    if [[ ! "$metadata_dir" = /* ]]; then
+        metadata_dir="$(cd "$metadata_dir" 2>/dev/null && pwd)" || metadata_dir="$1"
+    fi
+
     local features_dir="$metadata_dir/${DEFAULT_FEATURES_DIR}"
     local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
     local completion_state_file="$metadata_dir/.project_completion_pending"
@@ -849,7 +857,8 @@ check_project_completion() {
             all_feature_files+=("$fpath")
         done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
         
-        local git_root="$metadata_dir/.."
+        local git_root
+        git_root="$(cd "$metadata_dir/.." 2>/dev/null && pwd)" || git_root="$metadata_dir/.."
         for fpath in "${all_feature_files[@]}"; do
             local rel_path="${fpath#$git_root/}"
             
@@ -896,10 +905,9 @@ check_project_completion() {
         
         if [[ "$status" == "waiting_approval" ]]; then
             ((waiting_approval_count++))
-            if [[ "$passes" == "true" ]]; then
-                log_error "waiting_approval feature cannot have passes=true: $feature_file"
-                return 1
-            fi
+            # waiting_approval features don't block completion regardless of passes value
+            # passes=true means code exists but needs human verification
+            # passes=false means ambiguous/unclear implementation
             return 0
         elif [[ "$passes" == "true" && "$status" == "backlog" ]]; then
             log_error "Feature has passes=true but status is still backlog: $feature_file"
@@ -930,9 +938,7 @@ check_project_completion() {
             else
                 if [[ "$cached_status_val" == "waiting_approval" ]]; then
                     ((waiting_approval_count++))
-                    if [[ "$cached_passes_val" == "true" ]]; then
-                        ((failing_count++))
-                    fi
+                    # waiting_approval never blocks completion
                 elif [[ "$cached_passes_val" == "false" ]]; then
                     ((failing_count++))
                 fi

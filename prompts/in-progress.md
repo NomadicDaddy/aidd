@@ -349,11 +349,19 @@ For features with no UI component:
 
 ---
 
-### STEP 9: COMMIT PROGRESS
+### STEP 9: UPDATE CHANGELOG AND COMMIT
 
-**MANDATORY: Quality checks MUST pass before every commit.**
+**MANDATORY: All file updates MUST happen before the commit. Quality checks MUST pass before every commit.**
 
-#### 9.1 Pre-Commit Quality Gate
+#### 9.1 Update Progress Notes
+
+**Update `/.automaker/CHANGELOG.md`:**
+
+- Feature completed and how it was verified
+- Issues discovered or fixed
+- Remaining in-progress features
+
+#### 9.2 Pre-Commit Quality Gate
 
 ```bash
 bun run smoke:qc    # or: lint + typecheck + format individually
@@ -363,7 +371,9 @@ bun run smoke:qc    # or: lint + typecheck + format individually
 
 If you know the code has TypeScript errors, lint warnings, or formatting issues, the feature is not finished. Go back to Step 6 and fix it.
 
-#### 9.2 Make Commit
+#### 9.3 Make Commit
+
+**Include ALL changes in the commit: code, feature.json updates, CHANGELOG entries, formatting fixes.**
 
 ```bash
 git status
@@ -397,9 +407,10 @@ jq -r 'select(.status == "in_progress" and .passes == false) | .id' .automaker/f
 
 #### 10.3 If No More In-Progress Features
 
-1. Document completion in `/.automaker/CHANGELOG.md`
-2. Report: "All in-progress features completed"
-3. **End the session immediately** — follow environment-specific session termination (see environment-specific reference)
+1. Ensure no uncommitted changes (`git status` should be clean)
+2. If uncommitted changes exist: stage, run smoke:qc, and commit
+3. Report: "All in-progress features completed"
+4. **End the session immediately** — follow environment-specific session termination (see environment-specific reference)
 
 **CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.** The session framework will terminate you after ~5 minutes of inactivity. This is a waste of compute time. When your work is done, end the session immediately.
 

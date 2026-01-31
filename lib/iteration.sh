@@ -819,108 +819,175 @@ check_project_completion() {
     local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
     local completion_state_file="$metadata_dir/.project_completion_pending"
     local completed_marker="$metadata_dir/.project_completed"
+    local state_cache_file="$metadata_dir/.completion_state_cache"
 
-    # Check if features directory exists
     if [[ ! -d "$features_dir" ]]; then
         log_debug "Features directory not found, project not complete"
-        # Clear pending state if project regressed
-        rm -f "$completion_state_file" 2>/dev/null
+        rm -f "$completion_state_file" "$state_cache_file" 2>/dev/null
         return 1
     fi
 
-    # Count features with "passes": false in individual feature files
+    declare -A cached_passes
+    declare -A cached_status
+    local cache_valid=false
+
+    if [[ -f "$state_cache_file" ]]; then
+        cache_valid=true
+        while IFS='|' read -r fpath fstatus fpasses; do
+            cached_status["$fpath"]="$fstatus"
+            cached_passes["$fpath"]="$fpasses"
+        done < <(grep -E '^[^|]+\|[^|]+\|[^|]+$' "$state_cache_file" 2>/dev/null)
+        log_debug "Loaded cache with ${#cached_status[@]} feature states"
+    fi
+
+    local modified_files=()
+    local unmodified_files=()
+    local all_feature_files=()
+
+    if git -C "$metadata_dir/.." rev-parse --git-dir >/dev/null 2>&1; then
+        while IFS= read -r fpath; do
+            all_feature_files+=("$fpath")
+        done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
+        
+        local git_root="$metadata_dir/.."
+        for fpath in "${all_feature_files[@]}"; do
+            local rel_path="${fpath#$git_root/}"
+            
+            if git -C "$git_root" diff --quiet -- "$rel_path" 2>/dev/null && \
+               git -C "$git_root" diff --cached --quiet -- "$rel_path" 2>/dev/null; then
+                unmodified_files+=("$fpath")
+            else
+                modified_files+=("$fpath")
+            fi
+        done
+        
+        log_debug "Found ${#modified_files[@]} modified, ${#unmodified_files[@]} unmodified features"
+    else
+        while IFS= read -r fpath; do
+            modified_files+=("$fpath")
+        done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
+        log_debug "Not a git repo, checking all ${#modified_files[@]} features"
+    fi
+
     local failing_count=0
     local waiting_approval_count=0
-    if command -v jq >/dev/null 2>&1; then
-        # Use jq if available for accurate JSON parsing
-        # Check each individual feature file
-        for feature_file in "$features_dir"/*/feature.json; do
-            if [[ -f "$feature_file" ]]; then
-                # Validate feature file structure first (includes status enum check)
-                if ! validate_feature_file "$feature_file"; then
-                    log_error "Invalid feature file structure: $feature_file"
+
+    check_feature_file() {
+        local feature_file="$1"
+        if [[ ! -f "$feature_file" ]]; then
+            return 1
+        fi
+        
+        if ! validate_feature_file "$feature_file"; then
+            log_error "Invalid feature file structure: $feature_file"
+            return 2
+        fi
+
+        local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "error")
+        local status=$(jq -r '.status // "backlog"' "$feature_file" 2>/dev/null || echo "error")
+
+        if [[ "$passes" == "error" || "$status" == "error" ]]; then
+            log_error "Failed to parse metadata in $feature_file"
+            return 3
+        fi
+        
+        cached_status["$feature_file"]="$status"
+        cached_passes["$feature_file"]="$passes"
+        
+        if [[ "$status" == "waiting_approval" ]]; then
+            ((waiting_approval_count++))
+            if [[ "$passes" == "true" ]]; then
+                log_error "waiting_approval feature cannot have passes=true: $feature_file"
+                return 1
+            fi
+            return 0
+        elif [[ "$passes" == "true" && "$status" == "backlog" ]]; then
+            log_error "Feature has passes=true but status is still backlog: $feature_file"
+            return 1
+        elif [[ "$passes" == "false" ]]; then
+            return 1
+        fi
+        
+        return 0
+    }
+
+    for feature_file in "${modified_files[@]}"; do
+        if ! check_feature_file "$feature_file"; then
+            ((failing_count++))
+        fi
+    done
+
+    if [[ $cache_valid == true ]]; then
+        for feature_file in "${unmodified_files[@]}"; do
+            local cached_status_val="${cached_status[$feature_file]:-}"
+            local cached_passes_val="${cached_passes[$feature_file]:-}"
+            
+            if [[ -z "$cached_status_val" || -z "$cached_passes_val" ]]; then
+                log_debug "Feature not in cache, checking: $feature_file"
+                if ! check_feature_file "$feature_file"; then
                     ((failing_count++))
-                    continue
                 fi
-
-                local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "error")
-                local status=$(jq -r '.status // "backlog"' "$feature_file" 2>/dev/null || echo "error")
-
-                if [[ "$passes" == "error" || "$status" == "error" ]]; then
-                    log_error "Failed to parse metadata in $feature_file"
-                    ((failing_count++))
-                elif [[ "$status" == "waiting_approval" ]]; then
-                    # waiting_approval features don't block completion but must NOT have passes=true
+            else
+                if [[ "$cached_status_val" == "waiting_approval" ]]; then
                     ((waiting_approval_count++))
-                    if [[ "$passes" == "true" ]]; then
-                        log_error "waiting_approval feature cannot have passes=true: $feature_file"
+                    if [[ "$cached_passes_val" == "true" ]]; then
                         ((failing_count++))
                     fi
-                elif [[ "$passes" == "true" && "$status" == "backlog" ]]; then
-                    # Feature marked passing but never worked on - invalid state
-                    log_error "Feature has passes=true but status is still backlog: $feature_file"
-                    ((failing_count++))
-                elif [[ "$passes" == "false" ]]; then
+                elif [[ "$cached_passes_val" == "false" ]]; then
                     ((failing_count++))
                 fi
             fi
         done
     else
-        # Fallback to grep - search for "passes": false in all feature files
-        failing_count=$(grep -r '"passes"[[:space:]]*:[[:space:]]*false' "$features_dir" 2>/dev/null | wc -l || echo "0")
+        for feature_file in "${unmodified_files[@]}"; do
+            if ! check_feature_file "$feature_file"; then
+                ((failing_count++))
+            fi
+        done
     fi
 
     if [[ "$waiting_approval_count" -gt 0 ]]; then
         log_info "Features waiting approval (excluded from completion): $waiting_approval_count"
     fi
 
-    # Check if todo.md has INCOMPLETE items (not just any content)
-    # Must detect: unchecked checkboxes, TODO comments - NOT completed items with ✓
+    {
+        for feature_file in "${!cached_status[@]}"; do
+            echo "${feature_file}|${cached_status[$feature_file]}|${cached_passes[$feature_file]}"
+        done
+    } > "$state_cache_file"
+    log_debug "Updated cache with ${#cached_status[@]} feature states"
+
     local has_todos=false
     if [[ -f "$todo_path" ]]; then
-        # Pattern 1: Unchecked markdown checkbox: - [ ] or - [   ]
         if grep -q -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null; then
             has_todos=true
-        # Pattern 2: TODO comments with content: # TODO: or // TODO: (not headers like "# TODO List")
         elif grep -q -E '^\s*#\s*TODO:|^\s*//\s*TODO:' "$todo_path" 2>/dev/null; then
             has_todos=true
         fi
     fi
 
-    # Log status
     log_debug "Completion check: failing_count=$failing_count, has_todos=$has_todos"
 
-    # Project is complete if no failing features and no todos
     if [[ "$failing_count" -eq 0 && "$has_todos" == false ]]; then
-        # Check for permanent completion marker first (prevents restart loops)
         if [[ -f "$completed_marker" ]]; then
             log_info "Project already completed (marker exists). Delete .project_completed to restart."
             return 0
         fi
-        # Check if this is first or second detection
         if [[ -f "$completion_state_file" ]]; then
-            # Phase 2: State file exists, this is second detection - confirmed complete
             log_info "Project completion CONFIRMED: All features pass after thorough TODO review"
             rm -f "$completion_state_file" 2>/dev/null
-            # Create permanent completion marker to prevent restart loops
             echo "$(date -Is 2>/dev/null || date)" > "$completed_marker"
             return 0
         else
-            # Phase 1: First detection - create state file, allow TODO pass to run
             log_info "Project completion PENDING: All features pass, running thorough TODO review..."
             echo "$(date -Is 2>/dev/null || date)" > "$completion_state_file"
-            # Return 1 to allow the iteration to proceed with TODO prompt
             return 1
         fi
     fi
 
-    # Not complete - clear any pending/completed state (project regressed)
-    rm -f "$completion_state_file" 2>/dev/null
-    rm -f "$completed_marker" 2>/dev/null
+    rm -f "$completion_state_file" "$completed_marker" 2>/dev/null
     return 1
 }
-
-# -----------------------------------------------------------------------------
 # Mode Completion Detection
 # -----------------------------------------------------------------------------
 

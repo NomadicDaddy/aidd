@@ -93,6 +93,24 @@ log_info() { log $LOG_INFO "$@"; }
 log_warn() { log $LOG_WARN "$@"; }
 log_error() { log $LOG_ERROR "$@"; }
 
+# Format elapsed seconds as human-readable duration
+# Usage: format_elapsed <seconds>
+# Returns: "Xm Ys" or "Xs" for durations under 60s, "Xh Ym Zs" for 1h+
+format_elapsed() {
+    local total_seconds="$1"
+    local hours=$((total_seconds / 3600))
+    local minutes=$(( (total_seconds % 3600) / 60 ))
+    local seconds=$((total_seconds % 60))
+
+    if [[ $hours -gt 0 ]]; then
+        echo "${hours}h ${minutes}m ${seconds}s"
+    elif [[ $minutes -gt 0 ]]; then
+        echo "${minutes}m ${seconds}s"
+    else
+        echo "${seconds}s"
+    fi
+}
+
 # Print a section header using log system
 log_header() {
     local title="$1"

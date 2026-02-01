@@ -335,7 +335,8 @@ run_single_audit_or_all() {
 
             # Run the appropriate prompt
             prompt_name=$(basename "$PROMPT_PATH" .md)
-            log_info "Sending $prompt_name prompt to $CLI_NAME..."
+            local cli_start_time=$SECONDS
+            log_info "Sending $prompt_name prompt to $CLI_NAME... [$(date '+%H:%M:%S')]"
             if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" || "$PROMPT_TYPE" == "audit" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
@@ -343,6 +344,8 @@ run_single_audit_or_all() {
             fi
 
             CLI_EXIT_CODE=$?
+            local cli_elapsed=$((SECONDS - cli_start_time))
+            log_info "$CLI_NAME finished (exit=$CLI_EXIT_CODE) after $(format_elapsed $cli_elapsed) [$(date '+%H:%M:%S')]"
 
             # Clean up directive.md after directive mode completes
             if [[ "$PROMPT_TYPE" == "directive" ]]; then
@@ -507,7 +510,8 @@ else
 
             # Run the appropriate prompt
             prompt_name=$(basename "$PROMPT_PATH" .md)
-            log_info "Sending $prompt_name prompt to $CLI_NAME..."
+            local cli_start_time=$SECONDS
+            log_info "Sending $prompt_name prompt to $CLI_NAME... [$(date '+%H:%M:%S')]"
             if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" || "$PROMPT_TYPE" == "audit" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
@@ -515,6 +519,8 @@ else
             fi
 
             CLI_EXIT_CODE=$?
+            local cli_elapsed=$((SECONDS - cli_start_time))
+            log_info "$CLI_NAME finished (exit=$CLI_EXIT_CODE) after $(format_elapsed $cli_elapsed) [$(date '+%H:%M:%S')]"
 
             # Clean up directive.md after directive mode completes
             if [[ "$PROMPT_TYPE" == "directive" ]]; then

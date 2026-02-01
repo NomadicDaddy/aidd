@@ -72,7 +72,7 @@ validate_feature_file() {
     local status_val
     status_val=$(jq -r '.status // empty' "$feature_file" 2>/dev/null)
     if [[ -n "$status_val" ]]; then
-        local valid_statuses="backlog in_progress completed waiting_approval"
+        local valid_statuses="backlog pending running completed failed verified waiting_approval in_progress"
         if [[ ! " $valid_statuses " =~ " $status_val " ]]; then
             log_error "Invalid status '$status_val' in feature file: $feature_file (valid: $valid_statuses)"
             return 1

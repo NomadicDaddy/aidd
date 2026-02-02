@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-02-02
+
+### Added
+
+- Audit lifecycle phases: `development`, `pre-release`, `post-release`, `migration`, `specialized`, `reference` — each audit's frontmatter now includes a `lifecycle:` field
+- Lifecycle-organized section in `docs/audit_guide.md` with phase descriptions, tables, and copy-paste CLI commands
+- Audit feedback loop: audit finding `spec` fields now instruct the resolving agent to trace back and update the original feature.json(s) that produced the problematic code, preventing regression during feature-based rebuilds
+
 ## [0.8.1] - 2026-02-02
 
 ### Added

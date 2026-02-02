@@ -408,6 +408,10 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v0.8.2** (2026-02-02):
+    - Audit lifecycle phases: each audit now has a `lifecycle:` field (`development`, `pre-release`, `post-release`, `migration`, `specialized`)
+    - Lifecycle-organized section in audit guide with phase tables and CLI commands
+    - Audit feedback loop: finding specs instruct agents to update originating feature.json(s) to prevent rebuild regression
 - **v0.8.1** (2026-02-02):
     - Deferred TODO syntax `- [~]` and `- [!]` — don't block project completion
     - Fixed: unresolvable TODOs preventing completion marker from being written

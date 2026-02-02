@@ -6,6 +6,7 @@ category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
 frequency: 'Quarterly'
+lifecycle: 'development'
 source: 'commands/undead.md'
 ---
 

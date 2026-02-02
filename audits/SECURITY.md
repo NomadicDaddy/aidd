@@ -6,6 +6,7 @@ category: 'Security'
 priority: 'Critical'
 estimated_time: '2-4 hours'
 frequency: 'Quarterly'
+lifecycle: 'pre-release'
 ---
 
 # Security Audit Framework

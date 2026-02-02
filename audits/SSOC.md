@@ -6,6 +6,7 @@ category: 'Frontend'
 priority: 'Medium'
 estimated_time: '1-2 hours'
 frequency: 'Quarterly'
+lifecycle: 'specialized'
 ---
 
 # Shared vs Page UI Separation Audit

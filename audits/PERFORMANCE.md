@@ -6,6 +6,7 @@ category: 'Core Technology'
 priority: 'High'
 estimated_time: '1-2 hours'
 prerequisites: 'Performance concepts, Core Web Vitals, Lighthouse knowledge'
+lifecycle: 'pre-release'
 ---
 
 # Unified Performance Audit Framework

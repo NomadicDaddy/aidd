@@ -379,7 +379,7 @@ HEREDOC_HEADER
   "category": "${audit_category}",
   "priority": {severity_based_priority},
   "passes": false,
-  "spec": "Detailed remediation steps:\\n1. Step one\\n2. Step two\\n...",
+  "spec": "Detailed remediation steps:\\n1. Step one\\n2. Step two\\n...\\n\\nIMPORTANT: After resolving this finding, locate the feature.json file(s) in .automaker/features/ whose spec originally produced the code or pattern that caused this audit finding. Update those feature.json spec(s) to prevent this issue from being reintroduced during a feature-based rebuild.",
   "createdAt": "{ISO_timestamp}",
   "updatedAt": "{ISO_timestamp}",
   "auditSource": "${audit_name}",
@@ -396,6 +396,14 @@ HEREDOC_HEADER
 | High           | 2                |
 | Medium         | 3                |
 | Low            | 4                |
+
+**CRITICAL — Feedback Loop Requirement:**
+
+Every audit finding's \`spec\` field MUST end with the following instruction (after the remediation steps):
+
+> IMPORTANT: After resolving this finding, locate the feature.json file(s) in .automaker/features/ whose spec originally produced the code or pattern that caused this audit finding. Update those feature.json spec(s) to prevent this issue from being reintroduced during a feature-based rebuild.
+
+This ensures audit fixes propagate back to the original feature specs, preventing regression during feature-based rebuilds.
 
 **File Location:** \`/.automaker/features/audit-${audit_name_lower}-{unix_timestamp}-{descriptive-slug}/feature.json\`
 

@@ -6,6 +6,7 @@ category: 'Infrastructure'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 ---
 
 # Monitoring and Observability Audit Framework

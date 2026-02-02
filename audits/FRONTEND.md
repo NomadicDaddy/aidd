@@ -6,6 +6,7 @@ category: 'Frontend'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'Monthly'
+lifecycle: 'pre-release'
 ---
 
 # Frontend Audit Framework

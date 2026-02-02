@@ -6,6 +6,7 @@ category: 'Core Technology'
 priority: 'Critical'
 estimated_time: '1-2 hours'
 prerequisites: 'Convex knowledge, TypeScript familiarity, database concepts'
+lifecycle: 'specialized'
 ---
 
 # Convex Best Practices Guide

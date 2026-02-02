@@ -6,6 +6,7 @@ category: 'Infrastructure'
 priority: 'High'
 estimated_time: '1-2 hours'
 prerequisites: 'API design principles, backend framework knowledge, documentation standards'
+lifecycle: 'pre-release'
 ---
 
 # API Design and Documentation Audit Framework

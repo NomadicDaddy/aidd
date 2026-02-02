@@ -6,6 +6,7 @@ category: 'Frontend'
 priority: 'High'
 estimated_time: '3-4 hours'
 frequency: 'Monthly'
+lifecycle: 'pre-release'
 ---
 
 # React Best Practices Audit

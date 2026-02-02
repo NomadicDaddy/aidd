@@ -6,6 +6,7 @@ category: 'Core Architecture'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'Quarterly'
+lifecycle: 'pre-release'
 ---
 
 # Database Design and Migration Audit Framework

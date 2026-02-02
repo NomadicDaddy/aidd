@@ -6,6 +6,7 @@ category: 'Code Quality'
 priority: 'Medium'
 estimated_time: '2-4 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 ---
 
 # Comprehensive Code Hygiene Audit

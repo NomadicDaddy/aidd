@@ -6,6 +6,7 @@ category: 'Core Quality'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'Quarterly'
+lifecycle: 'development'
 ---
 
 # Code Complexity and Optimization Audit

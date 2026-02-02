@@ -6,6 +6,7 @@ category: 'Infrastructure'
 priority: 'Medium'
 estimated_time: '1-2 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 consolidates: 'DEPLOYMENT.md, MONITORING.md'
 ---
 

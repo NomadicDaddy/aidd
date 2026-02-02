@@ -6,6 +6,7 @@ category: 'Core Quality'
 priority: 'High'
 estimated_time: '2-4 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 ---
 
 # Technical Debt Audit Specification

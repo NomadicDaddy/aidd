@@ -6,6 +6,7 @@ category: 'Performance'
 priority: 'Medium'
 estimated_time: '1-2 hours'
 frequency: 'Monthly'
+lifecycle: 'post-release'
 ---
 
 # Lighthouse Report Processing with Business Context

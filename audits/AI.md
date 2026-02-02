@@ -6,6 +6,7 @@ category: 'Architecture'
 priority: 'High'
 estimated_time: '4-8 hours'
 frequency: 'Quarterly'
+lifecycle: 'specialized'
 ---
 
 # AI Provider Integration Audit

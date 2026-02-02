@@ -6,6 +6,7 @@ category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
 frequency: 'Monthly'
+lifecycle: 'development'
 consolidates: 'ORDER.md, COMPARISON.md, LINT.md, COMMENT.md, FILE.md'
 ---
 

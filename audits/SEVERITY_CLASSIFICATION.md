@@ -5,6 +5,7 @@ version: '2.0'
 category: 'Reference'
 priority: 'Medium'
 type: 'reference'
+lifecycle: 'reference'
 description: 'Standard severity classification system for AIDD audit findings'
 ---
 

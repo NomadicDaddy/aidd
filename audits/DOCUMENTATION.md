@@ -6,6 +6,7 @@ category: 'Quality'
 priority: 'Medium'
 estimated_time: '1-2 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 ---
 
 # Documentation Quality and Coverage Audit Framework

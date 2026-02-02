@@ -6,6 +6,7 @@ category: 'Infrastructure'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 ---
 
 # DevOps, CI/CD, and Operational Readiness Audit Framework

@@ -8,6 +8,105 @@ Quick reference for selecting and running audits with `aidd --audit {AUDIT_NAME}
 aidd --project-dir ./app --audit SECURITY,CODE_QUALITY,ARCHITECTURE
 ```
 
+## Lifecycle Phases
+
+Each audit is assigned a lifecycle phase indicating when it should run relative to the development workflow. This is tracked in each audit's frontmatter as `lifecycle:`.
+
+| Phase          | When                     | Purpose                                            |
+| -------------- | ------------------------ | -------------------------------------------------- |
+| `development`  | During active coding     | Catch issues early while code is being written     |
+| `pre-release`  | Before tagging a release | Gate quality before version bump                   |
+| `post-release` | After release / periodic | Maintenance, debt, cleanup                         |
+| `migration`    | During rebuild/migration | Comparison and compliance checks                   |
+| `specialized`  | As needed per stack      | Stack-specific audits (not universally applicable) |
+| `reference`    | N/A                      | Not an executable audit                            |
+
+### Development
+
+Run these during active coding to catch issues early.
+
+```bash
+aidd --project-dir ./app --audit CODE_QUALITY,LOGIC,COMPLICATION,DEAD_CODE
+```
+
+| Audit          | Priority | Time | Focus                                 |
+| -------------- | -------- | ---- | ------------------------------------- |
+| `CODE_QUALITY` | High     | 1-2h | Linting, formatting, ordering         |
+| `LOGIC`        | High     | 2-3h | Control flow, branching, state issues |
+| `COMPLICATION` | High     | 2-3h | Complexity creep, function length     |
+| `DEAD_CODE`    | High     | 1-2h | Orphaned code before it accumulates   |
+
+### Pre-Release
+
+Run these before tagging a release to gate quality.
+
+```bash
+aidd --project-dir ./app --audit SECURITY,ARCHITECTURE,DATABASE,DATA_ARCHITECTURE,TESTING,API_DESIGN,FRONTEND,PERFORMANCE,REACT_BEST_PRACTICES
+```
+
+| Audit                  | Priority | Time | Focus                                 |
+| ---------------------- | -------- | ---- | ------------------------------------- |
+| `SECURITY`             | Critical | 2-4h | Auth, OWASP, encryption               |
+| `ARCHITECTURE`         | High     | 2-3h | API design, modularity, design flaws  |
+| `DATABASE`             | High     | 2-3h | Schema safety, migrations, rollback   |
+| `DATA_ARCHITECTURE`    | Critical | 2-3h | Single source of truth, authority     |
+| `TESTING`              | High     | 2-3h | Coverage gaps, test stability         |
+| `API_DESIGN`           | High     | 1-2h | Endpoint consistency, docs            |
+| `FRONTEND`             | High     | 2-3h | React patterns, accessibility         |
+| `PERFORMANCE`          | High     | 1-2h | Core Web Vitals, bundle size, backend |
+| `REACT_BEST_PRACTICES` | High     | 3-4h | Vercel React performance patterns     |
+
+### Post-Release
+
+Run these periodically for maintenance, debt tracking, and infrastructure review.
+
+```bash
+aidd --project-dir ./app --audit TECHDEBT,HYGIENE,LIGHTHOUSE,DEVOPS,DEPLOYMENT,MONITORING,TECH_STACK,DOCUMENTATION
+```
+
+| Audit           | Priority | Time | Focus                             |
+| --------------- | -------- | ---- | --------------------------------- |
+| `TECHDEBT`      | High     | 2-4h | Accumulated debt inventory        |
+| `HYGIENE`       | Medium   | 2-4h | Dead code, deps, imports, secrets |
+| `LIGHTHOUSE`    | Medium   | 1-2h | Real-world web vitals             |
+| `DEVOPS`        | High     | 2-3h | CI/CD, environments, IaC          |
+| `DEPLOYMENT`    | Medium   | 1-2h | Deployment strategies, rollback   |
+| `MONITORING`    | High     | 2-3h | Logging, alerting, observability  |
+| `TECH_STACK`    | High     | 1-2h | Dependency versions, upgrades     |
+| `DOCUMENTATION` | Medium   | 1-2h | Docs quality and coverage         |
+
+### Migration
+
+Run these during rebuilds, rewrites, or major version migrations.
+
+| Audit       | Priority | Time | Focus                                    |
+| ----------- | -------- | ---- | ---------------------------------------- |
+| `UI_PARITY` | High     | 2-3h | Compare UI surfaces post-rebuild         |
+| `REORG`     | Medium   | 1-2h | File structure, naming, directory layout |
+
+> **Prerequisite:** `UI_PARITY` requires a `ui_parity_reference:` directive in the target project's `/.automaker/project.txt` pointing to the reference codebase path.
+
+### Specialized
+
+Stack-specific audits — run only on applicable projects.
+
+| Audit       | Priority | Time | Applies To                     |
+| ----------- | -------- | ---- | ------------------------------ |
+| `CONVEX`    | Critical | 1-2h | Convex backend projects        |
+| `SPERNAKIT` | High     | 3-5h | Spernakit-derived applications |
+| `SSOC`      | Medium   | 1-2h | Component-heavy frontends      |
+| `AI`        | High     | 4-8h | AI-enabled projects            |
+
+### Reference
+
+| Document                  | Purpose                                               |
+| ------------------------- | ----------------------------------------------------- |
+| `SEVERITY_CLASSIFICATION` | Severity level definitions (Critical/High/Medium/Low) |
+
+> Note: Reference documents have `type: 'reference'` in frontmatter and are excluded from `--audit-all`.
+
+---
+
 ## Audit Categories
 
 ### Core Quality (Code Health)

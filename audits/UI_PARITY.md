@@ -6,6 +6,7 @@ category: 'Architecture'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'As needed (post-rebuild, migration, rewrite)'
+lifecycle: 'migration'
 ---
 
 # UI Parity Comparison Audit

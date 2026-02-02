@@ -6,6 +6,7 @@ category: 'Core Architecture'
 priority: 'Critical'
 estimated_time: '2-3 hours'
 frequency: 'Quarterly'
+lifecycle: 'pre-release'
 consolidates: 'TRUTH.md, SCHEDULED_TASKS.md'
 ---
 

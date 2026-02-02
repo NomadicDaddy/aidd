@@ -6,6 +6,7 @@ category: 'Architecture'
 priority: 'Medium'
 estimated_time: '1-2 hours'
 frequency: 'Quarterly'
+lifecycle: 'migration'
 ---
 
 # Codebase Reorganization Audit

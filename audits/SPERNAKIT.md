@@ -8,6 +8,7 @@ estimated_time: '3-5 hours'
 frequency: 'Quarterly'
 trigger: model_decision
 description: 'Comprehensive audit framework for Spernakit-derived applications covering structure alignment and feature utilization'
+lifecycle: 'specialized'
 ---
 
 # Spernakit Derived Application Audit Framework

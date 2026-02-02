@@ -6,6 +6,7 @@ category: 'Architecture'
 priority: 'High'
 estimated_time: '1-2 hours'
 frequency: 'Quarterly'
+lifecycle: 'post-release'
 source: 'commands/procedures/stack.md'
 ---
 

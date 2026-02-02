@@ -6,6 +6,7 @@ category: 'Quality'
 priority: 'High'
 estimated_time: '2-3 hours'
 frequency: 'Quarterly'
+lifecycle: 'pre-release'
 ---
 
 # Testing Strategy, Coverage, and Quality Audit Framework

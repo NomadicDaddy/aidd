@@ -270,10 +270,25 @@ If `--spec` provided, copied to `.automaker/app_spec.txt` during initializer flo
 
 Two-phase detection prevents false positives:
 
-1. **Phase 1**: All features pass + no incomplete TODOs → creates `.project_completion_pending`, runs TODO review
+1. **Phase 1**: All features pass + no actionable TODOs → creates `.project_completion_pending`, runs TODO review
 2. **Phase 2**: Still complete after review → creates `.project_completed` marker, exits with code 73
 
 The `.project_completed` marker prevents restart loops. Delete it to restart a completed project.
+
+**TODO syntax for completion detection:**
+
+| Syntax  | Meaning                                            | Blocks completion? |
+| ------- | -------------------------------------------------- | ------------------ |
+| `- [ ]` | Incomplete (actionable)                            | Yes                |
+| `- [x]` | Completed                                          | No                 |
+| `- [~]` | Deferred (requires manual/external action)         | No                 |
+| `- [!]` | Deferred (acknowledged blocker, not AI-resolvable) | No                 |
+
+Use `- [~]` or `- [!]` for TODOs the AI agent cannot resolve (e.g., "requires manual update", "needs human review"). These are displayed in status output but do not prevent project completion.
+
+**Marker preservation:** Completion markers are only deleted when features are actually failing. If all features pass but actionable TODOs remain, markers are preserved so completion triggers immediately when TODOs are resolved or deferred.
+
+**Stuck detection:** Git change detection excludes `.automaker/` metadata files. Formatting drift on auto-generated files (e.g., `status.md`) does not count as meaningful change and will not reset the stuck counter.
 
 ### Graceful Shutdown
 

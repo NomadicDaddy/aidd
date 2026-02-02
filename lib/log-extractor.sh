@@ -3,14 +3,14 @@
 # lib/log-extractor.sh - Structured Log Extraction for AIDD
 # =============================================================================
 # Extracts structured JSON from iteration logs
-# Creates ###-structured.json files with comprehensive iteration data
+# Creates ###.json files with comprehensive iteration data
 
 # Source utilities for logging
 source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
 # Structured log output suffix
-: "${STRUCTURED_LOG_SUFFIX:="-structured.json"}"
+: "${STRUCTURED_LOG_SUFFIX:=".json"}"
 
 # -----------------------------------------------------------------------------
 # Extract iteration number from log file
@@ -486,7 +486,7 @@ extract_structured_log() {
 # -----------------------------------------------------------------------------
 # Extract structured logs from a single log file (convenience wrapper)
 # Usage: extract_single_log <log_file> <metadata_dir>
-# Creates: ###-structured.json alongside the log file
+# Creates: ###.json alongside the log file
 # -----------------------------------------------------------------------------
 extract_single_log() {
     local log_file="$1"
@@ -499,7 +499,7 @@ extract_single_log() {
 # -----------------------------------------------------------------------------
 # Batch process all log files in a directory
 # Usage: extract_all_logs <iterations_dir> <metadata_dir> [output_dir]
-# Creates: ###-structured.json for each ###.log file
+# Creates: ###.json for each ###.log file
 # -----------------------------------------------------------------------------
 extract_all_logs() {
     local iterations_dir="$1"

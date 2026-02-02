@@ -886,36 +886,41 @@ check_project_completion() {
         if [[ ! -f "$feature_file" ]]; then
             return 1
         fi
-        
+
+        # Check waiting_approval BEFORE structural validation so that
+        # features explicitly held for human review don't block completion
+        # even if they have structural issues (e.g., missing id/category)
+        local status=$(jq -r '.status // "backlog"' "$feature_file" 2>/dev/null || echo "error")
+        if [[ "$status" == "waiting_approval" ]]; then
+            ((waiting_approval_count++))
+            local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "false")
+            cached_status["$feature_file"]="$status"
+            cached_passes["$feature_file"]="$passes"
+            return 0
+        fi
+
         if ! validate_feature_file "$feature_file"; then
             log_error "Invalid feature file structure: $feature_file"
             return 2
         fi
 
         local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "error")
-        local status=$(jq -r '.status // "backlog"' "$feature_file" 2>/dev/null || echo "error")
 
         if [[ "$passes" == "error" || "$status" == "error" ]]; then
             log_error "Failed to parse metadata in $feature_file"
             return 3
         fi
-        
+
         cached_status["$feature_file"]="$status"
         cached_passes["$feature_file"]="$passes"
-        
-        if [[ "$status" == "waiting_approval" ]]; then
-            ((waiting_approval_count++))
-            # waiting_approval features don't block completion regardless of passes value
-            # passes=true means code exists but needs human verification
-            # passes=false means ambiguous/unclear implementation
-            return 0
-        elif [[ "$passes" == "true" && "$status" == "backlog" ]]; then
+
+        if [[ "$passes" == "true" && "$status" == "backlog" ]]; then
             log_error "Feature has passes=true but status is still backlog: $feature_file"
             return 1
         elif [[ "$passes" == "false" ]]; then
             return 1
         fi
-        
+
         return 0
     }
 
@@ -964,15 +969,23 @@ check_project_completion() {
     log_debug "Updated cache with ${#cached_status[@]} feature states"
 
     local has_todos=false
+    local deferred_todo_count=0
     if [[ -f "$todo_path" ]]; then
-        if grep -q -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null; then
+        # Count actionable incomplete TODOs: - [ ] but NOT deferred - [~] or - [!]
+        local incomplete_count=0
+        incomplete_count=$(grep -c -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null || echo "0")
+        deferred_todo_count=$(grep -c -E '^\s*-\s*\[[~!]\]' "$todo_path" 2>/dev/null || echo "0")
+        if [[ "$incomplete_count" -gt 0 ]]; then
             has_todos=true
         elif grep -q -E '^\s*#\s*TODO:|^\s*//\s*TODO:' "$todo_path" 2>/dev/null; then
             has_todos=true
         fi
     fi
 
-    log_debug "Completion check: failing_count=$failing_count, has_todos=$has_todos"
+    if [[ "$deferred_todo_count" -gt 0 ]]; then
+        log_info "Deferred TODOs (not blocking completion): $deferred_todo_count"
+    fi
+    log_debug "Completion check: failing_count=$failing_count, has_todos=$has_todos, deferred_todos=$deferred_todo_count"
 
     if [[ "$failing_count" -eq 0 && "$has_todos" == false ]]; then
         if [[ -f "$completed_marker" ]]; then
@@ -991,7 +1004,12 @@ check_project_completion() {
         fi
     fi
 
-    rm -f "$completion_state_file" "$completed_marker" 2>/dev/null
+    # Only delete markers when features are actually failing.
+    # If features all pass but only actionable TODOs block, preserve markers
+    # so completion can trigger as soon as TODOs are resolved or deferred.
+    if [[ "$failing_count" -gt 0 ]]; then
+        rm -f "$completion_state_file" "$completed_marker" 2>/dev/null
+    fi
     return 1
 }
 # Mode Completion Detection
@@ -1011,7 +1029,7 @@ should_stop_todo_mode() {
     fi
 
     # Check for various incomplete TODO patterns
-    # Pattern 1: Standard markdown checkbox: - [ ] or - [   ]
+    # Pattern 1: Standard markdown checkbox: - [ ] but NOT deferred - [~] or - [!]
     # Pattern 2: TODO comments with content: # TODO: or // TODO: (not headers like "# TODO List")
     if grep -q -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null; then
         log_debug "Found incomplete markdown checkbox TODOs, continuing"

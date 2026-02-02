@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-02-02
+
+### Added
+
+- Deferred TODO syntax `- [~]` and `- [!]` — items requiring manual/external action that don't block project completion
+- Deferred TODO display in `show_status` output with count and listing
+
+### Fixed
+
+- Project completion blocked forever by unresolvable TODOs: `has_todos` now ignores deferred `[~]`/`[!]` items
+- Stuck detection reset by `.automaker/` metadata formatting drift (e.g. Prettier on status.md): git porcelain diff now excludes `.automaker/` paths
+- `waiting_approval` features with invalid structure (missing `id`/`category`) counted as failing and blocked completion: status check now runs before structural validation
+- Completion markers (`.project_completed`, `.project_completion_pending`) deleted when only TODOs block but all features pass: markers now preserved unless features are actually failing
+
 ## [0.8.0] - 2026-01-31
 
 ### Added

@@ -259,11 +259,12 @@ run_single_audit_or_all() {
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
         # Capture git state before iteration for stuck detection
+        # Exclude .automaker/ metadata — formatting drift shouldn't reset stuck counter
         local pre_iteration_head=""
         local pre_iteration_dirty=""
         if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
             pre_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
-            pre_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null || echo "")
+            pre_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
         fi
 
         # Check project completion BEFORE entering subshell (exit inside subshell doesn't work)
@@ -414,19 +415,21 @@ run_single_audit_or_all() {
             fi
         fi
 
-        # Stuck detection: check if agent made any changes this iteration
+        # Stuck detection: check if agent made meaningful changes this iteration
+        # Exclude .automaker/ metadata files — formatting drift on status.md etc.
+        # should not count as "real" changes that reset the stuck counter
         local post_iteration_head=""
         local post_iteration_dirty=""
         if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
             post_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
-            post_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null || echo "")
+            post_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
         fi
 
         if [[ "$pre_iteration_head" == "$post_iteration_head" && "$pre_iteration_dirty" == "$post_iteration_dirty" ]]; then
             ((consecutive_no_change++))
-            log_warn "No changes detected in iteration $i ($consecutive_no_change/$MAX_NO_CHANGE_ITERATIONS consecutive)"
+            log_warn "No meaningful changes detected in iteration $i ($consecutive_no_change/$MAX_NO_CHANGE_ITERATIONS consecutive)"
             if [[ $consecutive_no_change -ge $MAX_NO_CHANGE_ITERATIONS ]]; then
-                log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no changes. Check feature status and resolve any blockers."
+                log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no meaningful changes. Check feature status and resolve any blockers."
                 exit $EXIT_ABORTED
             fi
         else

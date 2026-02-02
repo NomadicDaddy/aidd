@@ -639,10 +639,11 @@ show_status() {
         echo "=============================================================================="
         echo ""
 
-        # Count total, completed, and incomplete todo items
+        # Count total, completed, incomplete, and deferred todo items
         local todo_total=0
         local todo_completed=0
         local todo_incomplete=0
+        local todo_deferred=0
 
         while IFS= read -r line; do
             # Skip empty lines and lines that don't start with -
@@ -650,10 +651,12 @@ show_status() {
 
             ((todo_total++))
 
-            # Check if line contains [x] for completed or [ ] for incomplete
+            # Check if line contains [x] for completed, [~] or [!] for deferred, [ ] for incomplete
             # Using grep for pattern matching to avoid bash regex issues
             if echo "$line" | grep -q '\[x\]'; then
                 ((todo_completed++))
+            elif echo "$line" | grep -q '\[[~!]\]'; then
+                ((todo_deferred++))
             elif echo "$line" | grep -q '\[ \]'; then
                 ((todo_incomplete++))
             fi
@@ -662,6 +665,9 @@ show_status() {
         printf "%-20s %s\n" "Total TODOs:" "$todo_total"
         printf "%-20s %s\n" "Completed:" "$todo_completed"
         printf "%-20s %s\n" "Incomplete:" "$todo_incomplete"
+        if [[ $todo_deferred -gt 0 ]]; then
+            printf "%-20s %s\n" "Deferred:" "$todo_deferred"
+        fi
         if [[ $todo_total -gt 0 ]]; then
             printf "%-20s %s\n" "Complete:" "$((todo_completed * 100 / todo_total))%"
         else
@@ -681,6 +687,21 @@ show_status() {
                 if echo "$line" | grep -q '\[ \]'; then
                     # Extract the todo text (remove the -[ ] prefix)
                     local todo_text="${line#- [ ]}"
+                    echo "  •$todo_text"
+                fi
+            done < "$todo_file"
+            echo ""
+        fi
+
+        # Display deferred TODOs (manual/external action required, don't block completion)
+        if [[ $todo_deferred -gt 0 ]]; then
+            echo "⏸️  DEFERRED TODOs ($todo_deferred items):"
+            echo ""
+            while IFS= read -r line; do
+                [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
+                if echo "$line" | grep -q '\[[~!]\]'; then
+                    local todo_text="${line#- [~]}"
+                    todo_text="${todo_text#- [!]}"
                     echo "  •$todo_text"
                 fi
             done < "$todo_file"

@@ -89,7 +89,7 @@ readonly DEFAULT_QUIT_ON_ABORT
 : "${DEFAULT_TODO_FILE:="todo.md"}"                     # Todo file name
 : "${DEFAULT_PROJECT_STRUCTURE_FILE:="project_structure.md"}"  # Project structure file name
 : "${DEFAULT_PIPELINE_FILE:="pipeline.json"}"           # Pipeline file name
-: "${DEFAULT_STRUCTURED_LOG_SUFFIX:="-structured.json"}" # Structured log file suffix
+: "${DEFAULT_STRUCTURED_LOG_SUFFIX:=".json"}" # Structured log file suffix
 
 readonly DEFAULT_METADATA_DIR
 readonly DEFAULT_PROMPTS_DIR

@@ -336,7 +336,7 @@ Project Metadata (.automaker/):
 │   └── audit-*/           # Audit-generated issues
 ├── audit-reports/         # Audit summary reports
 ├── audits/                # Referenced audit guidelines (runtime copy)
-├── todo.md                # TODO items
+├── todo.md                # TODO items (supports - [ ], - [x], - [~] deferred, - [!] deferred)
 ├── project_structure.md   # Architecture documentation
 ├── status.md              # Current project status (auto-generated)
 ├── .project_completed     # Marker: project finished (delete to restart)
@@ -408,6 +408,12 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v0.8.1** (2026-02-02):
+    - Deferred TODO syntax `- [~]` and `- [!]` — don't block project completion
+    - Fixed: unresolvable TODOs preventing completion marker from being written
+    - Fixed: `.automaker/` metadata formatting drift resetting stuck detection counter
+    - Fixed: `waiting_approval` features with missing fields blocking completion
+    - Fixed: completion markers deleted when only TODOs block (features all pass)
 - **v0.8.0** (2026-01-31):
     - Stuck detection: abort after 3 consecutive iterations with no git changes
     - `waiting_approval` status for features that can't be runtime-verified

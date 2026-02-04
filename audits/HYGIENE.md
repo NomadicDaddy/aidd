@@ -48,6 +48,8 @@ Run the following tools against the codebase and capture their complete output:
 - [ ] **Run Knip**: `bunx knip` - Detects unused files, dependencies, exports, and types
     - Capture: unused exports, unused dependencies, unused files, unreachable code
 
+- [ ] **Feature Integration Verification**: Run the [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md) checklist to detect features that are internally coherent but not wired into user-facing paths (Cathedrals). This catches "Unexposed" items (above) that pass import analysis because their internal modules reference each other.
+
 ### 2. Dependency Analysis
 
 - [ ] **Run Depcheck**: `bunx depcheck` - Identifies unused and missing dependencies

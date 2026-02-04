@@ -186,3 +186,5 @@ Create report: `docs/audits/UNDEAD_AUDIT_REPORT_YYYY-MM-DD.md`.
 ## Usage Notes
 
 This audit document is the source of truth for how to interpret results, classify files, and structure the final report.
+
+> **Companion audit**: For detection of internally coherent features that are fully built but not wired into user-facing application paths (the "Cathedral of Dead Code" problem), see [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md). That audit uses entrypoint reachability traversal rather than import reference analysis, catching feature islands that pass this audit's checks because their internal modules reference each other.

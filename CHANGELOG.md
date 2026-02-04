@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-02-03
+
+### Added
+
+- `--audit-model MODEL` flag: specify a separate model for audit prompts (falls back to `--code-model`, then `--model`)
+- `--audit-on-completion AUDIT[,...]` flag: automatically run specified audits when a project reaches confirmed completion
+- `--code-after-audit` flag: after audits complete, run coding iterations to remediate findings, then re-audit — loops until no unfixed findings remain (max 10 cycles)
+- `count_unfixed_audit_findings()` helper in `lib/iteration.sh` for detecting unremediated audit findings
+- `run_audit_set()` helper in `aidd.sh` to reduce duplication in multi-audit execution
+- Audit Model displayed in iteration header Model Settings section
+
+### Changed
+
+- Audit prompts now use `AUDIT_MODEL_ARGS` instead of `CODE_MODEL_ARGS`, enabling independent model selection for audits
+- Refactored audit execution section into `run_audit_set()` helper for reuse by post-completion and remediation flows
+
 ## [0.8.2] - 2026-02-02
 
 ### Added

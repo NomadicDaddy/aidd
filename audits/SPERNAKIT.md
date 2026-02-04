@@ -19,8 +19,8 @@ This document provides a structured audit framework for evaluating derived appli
 
 | Document          | Path                                    | Purpose                                      |
 | ----------------- | --------------------------------------- | -------------------------------------------- |
-| Stack Reference   | `spernakit/docs/template/STACK.md`     | Core architecture and commands               |
-| Project Overrides | `spernakit/.automaker/project.txt`     | Technology-specific constraints              |
+| Stack Reference   | `spernakit/docs/template/STACK.md`      | Core architecture and commands               |
+| Project Overrides | `spernakit/.automaker/project.txt`      | Technology-specific constraints              |
 | Template Refactor | `.claude/commands/template-refactor.md` | Bidirectional enhancement detection workflow |
 | Enhancement Log   | `.claude/logs/template-enhancements.md` | Historical record of template improvements   |
 
@@ -84,7 +84,7 @@ Legitimate application-specific differences:
 
 | Application   | Location                        | Stack     | Frontend | Backend | Description          |
 | ------------- | ------------------------------- | --------- | -------- | ------- | -------------------- |
-| spernakit    | `d:/applications/spernakit`    | spernakit | 3330     | 3331    | Core template v2     |
+| spernakit     | `d:/applications/spernakit`     | spernakit | 3330     | 3331    | Core template v2     |
 | deeper        | `d:/applications/deeper`        | spernakit | 8573     | 8572    | Deep dive tool       |
 | groundtruth   | `d:/applications/groundtruth`   | spernakit | 3380     | 3381    | Homelab survival kit |
 | openplanner   | `d:/applications/openplanner`   | spernakit | 3410     | 3411    | Project manager      |
@@ -110,13 +110,13 @@ Legitimate application-specific differences:
 
 ## 1.1 Project Structure
 
-| Check | Criteria                                                       | Remediation                                        |
-| ----- | -------------------------------------------------------------- | -------------------------------------------------- |
-| `[ ]` | Monorepo workspace with `frontend/` and `backend/` directories | Restructure to match template layout               |
+| Check | Criteria                                                       | Remediation                                       |
+| ----- | -------------------------------------------------------------- | ------------------------------------------------- |
+| `[ ]` | Monorepo workspace with `frontend/` and `backend/` directories | Restructure to match template layout              |
 | `[ ]` | Root `package.json` with workspace scripts                     | Copy from spernakit, preserve app-specific values |
 | `[ ]` | `bunfig.toml` with `env = false` setting                       | Copy from spernakit                               |
-| `[ ]` | `config/{appname}.json` configuration file present             | Create from template, set app-specific values      |
-| `[ ]` | Database in `data/` at project root (NEVER backend/data/)      | Move database files to correct location            |
+| `[ ]` | `config/{appname}.json` configuration file present             | Create from template, set app-specific values     |
+| `[ ]` | Database in `data/` at project root (NEVER backend/data/)      | Move database files to correct location           |
 
 ## 1.2 Backend Structure
 

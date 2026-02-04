@@ -171,6 +171,11 @@ check_onboarding_status "$METADATA_DIR"
 # Initialize failure counter
 CONSECUTIVE_FAILURES=0
 
+# Track whether post-completion audits have been triggered (prevents re-triggering)
+AUDIT_ON_COMPLETION_TRIGGERED=false
+# Track whether remediation coding is active (break instead of exit on completion)
+REMEDIATION_ACTIVE=false
+
 log_info "Project directory: $PROJECT_DIR"
 log_info "CLI: $CLI_NAME"
 
@@ -278,6 +283,17 @@ run_single_audit_or_all() {
                 echo "[INFO] Project completion CONFIRMED. All features pass, thorough review complete." > "$LOG_FILE"
                 extract_single_log "$LOG_FILE" "$METADATA_DIR"
             fi
+            # If post-completion audits are configured, break to run them instead of exiting
+            if [[ ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 && "$AUDIT_ON_COMPLETION_TRIGGERED" != "true" ]]; then
+                AUDIT_ON_COMPLETION_TRIGGERED=true
+                log_info "Post-completion audits configured. Transitioning to audit phase..."
+                break
+            fi
+            # During remediation, break to let the remediation loop handle exit
+            if [[ "$REMEDIATION_ACTIVE" == "true" ]]; then
+                log_info "All features pass. Returning to remediation loop."
+                break
+            fi
             exit $EXIT_PROJECT_COMPLETE
         fi
 
@@ -338,7 +354,9 @@ run_single_audit_or_all() {
             prompt_name=$(basename "$PROMPT_PATH" .md)
             local cli_start_time=$SECONDS
             log_info "Sending $prompt_name prompt to $CLI_NAME... [$(date '+%H:%M:%S')]"
-            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" || "$PROMPT_TYPE" == "audit" ]]; then
+            if [[ "$PROMPT_TYPE" == "audit" ]]; then
+                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${AUDIT_MODEL_ARGS[@]}"
+            elif [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
@@ -455,6 +473,17 @@ else
                 echo "[INFO] Project completion CONFIRMED. All features pass, thorough review complete." > "$LOG_FILE"
                 extract_single_log "$LOG_FILE" "$METADATA_DIR"
             fi
+            # If post-completion audits are configured, break to run them instead of exiting
+            if [[ ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 && "$AUDIT_ON_COMPLETION_TRIGGERED" != "true" ]]; then
+                AUDIT_ON_COMPLETION_TRIGGERED=true
+                log_info "Post-completion audits configured. Transitioning to audit phase..."
+                break
+            fi
+            # During remediation, break to let the remediation loop handle exit
+            if [[ "$REMEDIATION_ACTIVE" == "true" ]]; then
+                log_info "All features pass. Returning to remediation loop."
+                break
+            fi
             exit $EXIT_PROJECT_COMPLETE
         fi
 
@@ -515,7 +544,9 @@ else
             prompt_name=$(basename "$PROMPT_PATH" .md)
             local cli_start_time=$SECONDS
             log_info "Sending $prompt_name prompt to $CLI_NAME... [$(date '+%H:%M:%S')]"
-            if [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" || "$PROMPT_TYPE" == "audit" ]]; then
+            if [[ "$PROMPT_TYPE" == "audit" ]]; then
+                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${AUDIT_MODEL_ARGS[@]}"
+            elif [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
             else
                 run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
@@ -598,35 +629,98 @@ log_info "Audit iterations completed for: $AUDIT_NAME"
 }
 
 # ---------------------------------------------------------------------------
-# Execute Audit(s)
+# Helper: Run a set of audits sequentially
 # ---------------------------------------------------------------------------
-if [[ "$AUDIT_MODE" == "true" && ${#AUDIT_NAMES[@]} -gt 1 ]]; then
-    # Multiple audits - run each sequentially
-    total_audits=${#AUDIT_NAMES[@]}
-    log_info "Running $total_audits audits sequentially: ${AUDIT_NAMES[*]}"
+run_audit_set() {
+    local -a audit_set=("$@")
+    local total=${#audit_set[@]}
 
-    for ((audit_idx=0; audit_idx<total_audits; audit_idx++)); do
-        current_audit="${AUDIT_NAMES[$audit_idx]}"
-        AUDIT_INDEX=$audit_idx
-        export AUDIT_INDEX
+    if [[ $total -gt 1 ]]; then
+        log_info "Running $total audits sequentially: ${audit_set[*]}"
+        for ((idx=0; idx<total; idx++)); do
+            AUDIT_NAME="${audit_set[$idx]}"
+            AUDIT_INDEX=$idx
+            export AUDIT_NAME AUDIT_INDEX
+            run_single_audit_or_all "$AUDIT_NAME" "$((idx + 1))" "$total"
+            rm -f "$METADATA_DIR/audit-prompt.md" 2>/dev/null
+            if [[ $idx -lt $((total - 1)) ]]; then
+                log_info ""
+                log_info "Proceeding to next audit..."
+                log_info ""
+            fi
+        done
+        log_info "All $total audits completed"
+    else
+        AUDIT_NAME="${audit_set[0]}"
+        export AUDIT_NAME
+        run_single_audit_or_all "$AUDIT_NAME" "1" "1"
+    fi
+}
 
-        run_single_audit_or_all "$current_audit" "$((audit_idx + 1))" "$total_audits"
-
-        # Clean up audit-specific files between audits
-        rm -f "$METADATA_DIR/audit-prompt.md" 2>/dev/null
-
-        if [[ $audit_idx -lt $((total_audits - 1)) ]]; then
-            log_info ""
-            log_info "Proceeding to next audit..."
-            log_info ""
-        fi
-    done
-
-    log_info "All $total_audits audits completed successfully"
+# ---------------------------------------------------------------------------
+# Execute Main Run
+# ---------------------------------------------------------------------------
+if [[ "$AUDIT_MODE" == "true" ]]; then
+    run_audit_set "${AUDIT_NAMES[@]}"
 else
-    # Single audit or non-audit mode - run once
+    # Non-audit mode (coding, todo, validate, etc.)
     run_single_audit_or_all "$AUDIT_NAME" "1" "1"
     log_info "AI development driver completed successfully"
+fi
+
+# ---------------------------------------------------------------------------
+# Post-Completion Audits (--audit-on-completion)
+# ---------------------------------------------------------------------------
+if [[ "$AUDIT_ON_COMPLETION_TRIGGERED" == "true" ]]; then
+    log_header "POST-COMPLETION AUDITS: ${AUDIT_ON_COMPLETION_NAMES[*]}"
+    AUDIT_MODE=true
+    export AUDIT_MODE
+    run_audit_set "${AUDIT_ON_COMPLETION_NAMES[@]}"
+    log_info "Post-completion audits finished"
+fi
+
+# ---------------------------------------------------------------------------
+# Audit Remediation Loop (--code-after-audit)
+# ---------------------------------------------------------------------------
+if [[ "$CODE_AFTER_AUDIT" == "true" ]]; then
+    MAX_REMEDIATION_CYCLES=10
+    remediation_cycle=0
+
+    while true; do
+        unfixed=$(count_unfixed_audit_findings "$METADATA_DIR")
+        if [[ "$unfixed" -eq 0 ]]; then
+            log_info "No unfixed audit findings. Audit remediation complete."
+            break
+        fi
+
+        ((remediation_cycle++))
+        if [[ $remediation_cycle -gt $MAX_REMEDIATION_CYCLES ]]; then
+            log_warn "Maximum remediation cycles ($MAX_REMEDIATION_CYCLES) reached. $unfixed findings remain."
+            break
+        fi
+
+        log_header "REMEDIATION CYCLE $remediation_cycle ($unfixed findings)"
+
+        # Run coding iterations to fix audit findings
+        AUDIT_MODE=false
+        AUDIT_NAME=""
+        REMEDIATION_ACTIVE=true
+        export AUDIT_MODE AUDIT_NAME
+        run_single_audit_or_all "" "1" "1"
+        REMEDIATION_ACTIVE=false
+
+        # Re-run audits to check for remaining/new findings
+        log_header "RE-AUDIT (cycle $remediation_cycle)"
+        AUDIT_MODE=true
+        export AUDIT_MODE
+
+        # Re-run whichever audit set was originally configured
+        if [[ ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 ]]; then
+            run_audit_set "${AUDIT_ON_COMPLETION_NAMES[@]}"
+        else
+            run_audit_set "${AUDIT_NAMES[@]}"
+        fi
+    done
 fi
 
 exit $EXIT_SUCCESS

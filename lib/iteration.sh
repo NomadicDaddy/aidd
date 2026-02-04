@@ -131,6 +131,108 @@ reset_failure_counter() {
 }
 
 # -----------------------------------------------------------------------------
+# Rate Limit Handling Functions
+# -----------------------------------------------------------------------------
+
+# Parse the reset time from a rate limit message
+# Usage: parse_rate_limit_reset <message_string>
+# Outputs: Unix timestamp of reset time (stdout), or empty if unparseable
+# Supports formats: "resets 2am (America/Chicago)", "resets 7am (America/Chicago)",
+#                   "resets 12pm (America/Chicago)", "resets 2:30am (America/Chicago)"
+# Note: The reset time is treated as local time since the API reports it in
+#       the user's configured timezone, matching the local system clock.
+parse_rate_limit_reset() {
+    local msg="$1"
+
+    # Extract reset time using bash regex (portable, no grep -P needed)
+    # Match: "resets <time><am/pm>" with optional timezone in parens
+    # Store regex in variable to avoid shell parsing issues with parentheses
+    local re='resets[[:space:]]+([0-9]{1,2})(:[0-9]{2})?[[:space:]]*([ap]m)'
+    if [[ ! "$msg" =~ $re ]]; then
+        return 1
+    fi
+
+    local hour="${BASH_REMATCH[1]}"
+    local minute="${BASH_REMATCH[2]#:}"  # Strip leading colon
+    local ampm="${BASH_REMATCH[3]^^}"    # Uppercase AM/PM
+
+    minute="${minute:-00}"
+
+    if [[ -z "$hour" ]]; then
+        return 1
+    fi
+
+    # Convert to 24-hour for date calculation
+    local hour24="$hour"
+    if [[ "$ampm" == "PM" && "$hour" -ne 12 ]]; then
+        hour24=$((hour + 12))
+    elif [[ "$ampm" == "AM" && "$hour" -eq 12 ]]; then
+        hour24=0
+    fi
+
+    # Build target datetime using local time (the API reports reset in user's timezone)
+    local today
+    today=$(date '+%Y-%m-%d' 2>/dev/null) || return 1
+    local target_str="${today} ${hour24}:${minute}:00"
+
+    # Convert to unix timestamp in local timezone
+    local target_ts
+    target_ts=$(date -d "$target_str" '+%s' 2>/dev/null) || return 1
+
+    # If the target time is in the past, it means the reset is tomorrow
+    local now_ts
+    now_ts=$(date '+%s' 2>/dev/null) || return 1
+    if [[ "$target_ts" -le "$now_ts" ]]; then
+        target_ts=$((target_ts + 86400))
+    fi
+
+    echo "$target_ts"
+    return 0
+}
+
+# Handle a rate-limited iteration by sleeping until the reset time
+# Usage: handle_rate_limit <log_file>
+# Returns: 0 after sleeping (ready to retry)
+handle_rate_limit() {
+    local log_file="$1"
+    local buffer="${DEFAULT_RATE_LIMIT_BUFFER:-60}"
+    local fallback="${DEFAULT_RATE_LIMIT_BACKOFF:-300}"
+
+    # Try to parse reset time from the global RATE_LIMIT_RESET_MSG
+    # (set by monitor_coprocess_output), falling back to scanning the log file
+    local reset_msg="${RATE_LIMIT_RESET_MSG:-}"
+    if [[ -z "$reset_msg" && -f "$log_file" ]]; then
+        reset_msg=$(grep -m1 "$PATTERN_RATE_LIMIT" "$log_file" 2>/dev/null || true)
+    fi
+
+    local reset_ts=""
+    if [[ -n "$reset_msg" ]]; then
+        reset_ts=$(parse_rate_limit_reset "$reset_msg") || true
+    fi
+
+    if [[ -n "$reset_ts" && "$reset_ts" =~ ^[0-9]+$ ]]; then
+        local now_ts
+        now_ts=$(date '+%s')
+        local sleep_secs=$(( reset_ts - now_ts + buffer ))
+
+        if [[ $sleep_secs -gt 0 ]]; then
+            local reset_human
+            reset_human=$(date -d "@$reset_ts" '+%H:%M %Z' 2>/dev/null || echo "unknown")
+            local sleep_min=$(( sleep_secs / 60 ))
+            log_info "Rate limited. Sleeping ${sleep_secs}s (~${sleep_min}m) until ${reset_human} + ${buffer}s buffer..."
+            sleep "$sleep_secs"
+        else
+            log_info "Rate limit reset time already passed. Retrying immediately."
+        fi
+    else
+        log_warn "Could not parse rate limit reset time. Sleeping ${fallback}s as fallback..."
+        sleep "$fallback"
+    fi
+
+    return 0
+}
+
+# -----------------------------------------------------------------------------
 # Onboarding Status Functions
 # -----------------------------------------------------------------------------
 

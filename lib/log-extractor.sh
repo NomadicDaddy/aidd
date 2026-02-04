@@ -217,6 +217,7 @@ determine_outcome() {
             70) status="no_assistant" ;;
             71) status="idle_timeout" ;;
             72) status="provider_error" ;;
+            74) status="rate_limited" ;;
             *) status="failure" ;;
         esac
     fi

@@ -427,7 +427,7 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
-- **v0.9.0** (2026-02-03):
+- **v0.9.1** (2026-02-03):
     - `--audit-model MODEL`: separate model for audit prompts (falls back to `--code-model`, then `--model`)
     - `--audit-on-completion AUDIT[,...]`: run specified audits automatically when project reaches completion
     - `--code-after-audit`: after audits, run coding to fix findings, then re-audit until clean (max 10 cycles)

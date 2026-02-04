@@ -126,8 +126,16 @@ parse_result_event() {
     local is_error=$(echo "$json" | jq -r '.is_error // false')
 
     if [[ "$is_error" == "true" ]]; then
-        local error=$(echo "$json" | jq -r '.error // "Unknown error"')
-        echo "[ERROR] $error"
+        local error=$(echo "$json" | jq -r '.error // empty')
+        local result_text=$(echo "$json" | jq -r '.result // empty')
+
+        # Check for rate limit (result text contains the reset message)
+        if [[ "$result_text" == *"$PATTERN_RATE_LIMIT"* ]] || [[ "$error" == *"rate_limit"* ]]; then
+            echo "[RATE_LIMITED] $result_text"
+            return
+        fi
+
+        echo "[ERROR] ${error:-${result_text:-Unknown error}}"
         return
     fi
 

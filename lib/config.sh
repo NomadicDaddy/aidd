@@ -47,12 +47,14 @@ readonly EXIT_CLI_ERROR
 : "${EXIT_IDLE_TIMEOUT:=71}"        # Idle timeout
 : "${EXIT_PROVIDER_ERROR:=72}"      # Provider error
 : "${EXIT_PROJECT_COMPLETE:=73}"    # Project completion confirmed (stop iterations)
+: "${EXIT_RATE_LIMITED:=74}"        # API rate limit hit (pause and retry)
 : "${EXIT_SIGNAL_TERMINATED:=124}"  # Terminated by signal (SIGINT/SIGTERM)
 
 readonly EXIT_NO_ASSISTANT
 readonly EXIT_IDLE_TIMEOUT
 readonly EXIT_PROVIDER_ERROR
 readonly EXIT_PROJECT_COMPLETE
+readonly EXIT_RATE_LIMITED
 readonly EXIT_SIGNAL_TERMINATED
 
 # -----------------------------------------------------------------------------
@@ -65,6 +67,8 @@ readonly EXIT_SIGNAL_TERMINATED
 : "${DEFAULT_IDLE_NUDGE_TIMEOUT:=300}"   # Default idle nudge timeout in seconds (5 minutes)
 : "${DEFAULT_NO_CLEAN:=false}"           # Default: clean up artifacts
 : "${DEFAULT_QUIT_ON_ABORT:=0}"          # Default: continue on abort indefinitely
+: "${DEFAULT_RATE_LIMIT_BUFFER:=60}"     # Seconds to wait after rate limit reset time
+: "${DEFAULT_RATE_LIMIT_BACKOFF:=300}"   # Fallback sleep (seconds) when reset time unparseable
 
 readonly DEFAULT_CLI
 readonly DEFAULT_MAX_ITERATIONS
@@ -73,6 +77,8 @@ readonly DEFAULT_IDLE_TIMEOUT
 readonly DEFAULT_IDLE_NUDGE_TIMEOUT
 readonly DEFAULT_NO_CLEAN
 readonly DEFAULT_QUIT_ON_ABORT
+readonly DEFAULT_RATE_LIMIT_BUFFER
+readonly DEFAULT_RATE_LIMIT_BACKOFF
 
 # -----------------------------------------------------------------------------
 # Directory and File Names
@@ -110,9 +116,11 @@ readonly DEFAULT_STRUCTURED_LOG_SUFFIX
 # -----------------------------------------------------------------------------
 : "${PATTERN_NO_ASSISTANT:="The model returned no assistant messages"}"
 : "${PATTERN_PROVIDER_ERROR:="Provider returned error"}"
+: "${PATTERN_RATE_LIMIT:="hit your limit"}"
 
 readonly PATTERN_NO_ASSISTANT
 readonly PATTERN_PROVIDER_ERROR
+readonly PATTERN_RATE_LIMIT
 
 # General error patterns
 : "${PATTERN_GENERAL_ERROR:="ERROR|error:|Error"}"

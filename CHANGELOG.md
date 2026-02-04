@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-02-04
+
+### Added
+
+- Rate limit detection: monitors CLI output for `"hit your limit"` and `"rate_limit"` JSON error patterns
+- Intelligent pause on rate limit: parses API reset time from rate limit messages (e.g., "resets 2am") and sleeps until reset + configurable buffer
+- New exit code `EXIT_RATE_LIMITED` (74) for explicit rate limit signaling
+- New config constants: `DEFAULT_RATE_LIMIT_BUFFER` (60s post-reset buffer), `DEFAULT_RATE_LIMIT_BACKOFF` (300s fallback when reset time unparseable)
+- `parse_rate_limit_reset()` in `lib/iteration.sh` — extracts and converts reset timestamps from rate limit messages
+- `handle_rate_limit()` in `lib/iteration.sh` — orchestrates sleep-until-reset with buffer and fallback logic
+- `[RATE_LIMITED]` output tag in `lib/json-parser.sh` for rate-limited result events
+- `rate_limited` status mapping for exit code 74 in `lib/log-extractor.sh`
+
+### Changed
+
+- Rate-limited iterations no longer consume log file numbers — log file is removed and index decremented before retry
+- `monitor_coprocess_output()` in `lib/utils.sh` now detects rate limit patterns and terminates the CLI process early
+- `handle_script_exit()` in `aidd.sh` treats `EXIT_RATE_LIMITED` as a resumable condition (no failure counter increment)
+
 ## [0.9.0] - 2026-02-03
 
 ### Added
@@ -209,6 +228,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.1]: https://github.com/NomadicDaddy/aidd/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/NomadicDaddy/aidd/compare/v0.8.2...v0.9.0
+[0.8.2]: https://github.com/NomadicDaddy/aidd/compare/v0.8.1...v0.8.2
+[0.8.1]: https://github.com/NomadicDaddy/aidd/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/NomadicDaddy/aidd/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/NomadicDaddy/aidd/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/NomadicDaddy/aidd/compare/v0.5.0...v0.6.0

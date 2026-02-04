@@ -604,7 +604,11 @@ monitor_coprocess_output() {
     local saw_no_assistant=false
     local saw_idle_timeout=false
     local saw_provider_error=false
+    local saw_rate_limit=false
     local nudge_sent=false
+
+    # Reset global rate limit message (populated when rate limit detected)
+    RATE_LIMIT_RESET_MSG=""
 
     local nudge_timeout="${IDLE_NUDGE_TIMEOUT:-$DEFAULT_IDLE_NUDGE_TIMEOUT}"
     local final_timeout=$((${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT} - nudge_timeout))
@@ -652,6 +656,15 @@ monitor_coprocess_output() {
                 else
                     log_warn "Detected 'provider error' from model"
                 fi
+                kill -TERM "$COPROC_PID" 2>/dev/null || true
+                break
+            fi
+
+            # Check for rate limit pattern (e.g., "You've hit your limit · resets 2am")
+            if [[ "$line" == *"$PATTERN_RATE_LIMIT"* ]] || [[ "$line" == *'"error":"rate_limit"'* ]]; then
+                saw_rate_limit=true
+                RATE_LIMIT_RESET_MSG="$line"
+                log_warn "Rate limit detected"
                 kill -TERM "$COPROC_PID" 2>/dev/null || true
                 break
             fi
@@ -725,6 +738,11 @@ EOF
     if [[ "$saw_provider_error" == true ]]; then
         [[ "$error_log_level" != "error" ]] && log_debug "Exiting with PROVIDER_ERROR code: $EXIT_PROVIDER_ERROR"
         return "$EXIT_PROVIDER_ERROR"
+    fi
+
+    if [[ "$saw_rate_limit" == true ]]; then
+        [[ "$error_log_level" != "error" ]] && log_debug "Exiting with RATE_LIMITED code: $EXIT_RATE_LIMITED"
+        return "$EXIT_RATE_LIMITED"
     fi
 
     [[ "$error_log_level" != "error" ]] && log_debug "Exiting with exit code: $exit_code"

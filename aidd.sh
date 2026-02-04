@@ -203,6 +203,7 @@ handle_script_exit() {
         $EXIT_NO_ASSISTANT) return ;;  # No assistant messages
         $EXIT_IDLE_TIMEOUT) return ;;  # Idle timeout
         $EXIT_PROVIDER_ERROR) return ;;  # Provider error
+        $EXIT_RATE_LIMITED) return ;;  # Rate limited (handled by retry loop)
         $EXIT_SIGNAL_TERMINATED)
             # Don't log error here - handle_failure() already logged whether we're aborting or continuing
             # This trap only runs on final script exit, not on per-iteration timeout
@@ -390,6 +391,17 @@ run_single_audit_or_all() {
         # Read CLI exit code from file (subshell variables don't propagate through pipe)
         CLI_EXIT_CODE=$(cat "$LOG_FILE.exitcode" 2>/dev/null || echo "0")
         rm -f "$LOG_FILE.exitcode" 2>/dev/null
+
+        # Handle rate limiting: sleep until reset, rewind iteration counter and log index
+        if [[ $CLI_EXIT_CODE -eq $EXIT_RATE_LIMITED ]]; then
+            handle_rate_limit "$LOG_FILE"
+            # Remove the wasted log file and rewind counters so next retry reuses this slot
+            rm -f "$LOG_FILE" 2>/dev/null
+            ((NEXT_LOG_INDEX--))
+            # Don't increment iteration counter (the while loop variable i stays the same)
+            # Don't count as failure
+            continue
+        fi
 
         # Handle failure or reset counter based on CLI exit code
         HANDLE_FAILURE_RETURN=0
@@ -580,6 +592,17 @@ else
         # Read CLI exit code from file (subshell variables don't propagate through pipe)
         CLI_EXIT_CODE=$(cat "$LOG_FILE.exitcode" 2>/dev/null || echo "0")
         rm -f "$LOG_FILE.exitcode" 2>/dev/null
+
+        # Handle rate limiting: sleep until reset, rewind iteration counter and log index
+        if [[ $CLI_EXIT_CODE -eq $EXIT_RATE_LIMITED ]]; then
+            handle_rate_limit "$LOG_FILE"
+            # Remove the wasted log file and rewind counters so next retry reuses this slot
+            rm -f "$LOG_FILE" 2>/dev/null
+            ((NEXT_LOG_INDEX--))
+            # Decrement i so the for-loop's i++ doesn't consume an iteration slot
+            ((i--))
+            continue
+        fi
 
         # Handle failure or reset counter based on CLI exit code
         HANDLE_FAILURE_RETURN=0

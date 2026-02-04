@@ -86,6 +86,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--model MODEL`: Model to use (optional)
 - `--init-model MODEL`: Model for initializer/onboarding prompts
 - `--code-model MODEL`: Model for coding prompts
+- `--audit-model MODEL`: Model for audit prompts (falls back to `--code-model`, then `--model`)
 - `--no-clean`: Skip log cleaning on exit
 - `--quit-on-abort N`: Quit after N consecutive failures (default: 0=continue indefinitely)
 - `--continue-on-timeout`: Continue to next iteration on timeout
@@ -100,6 +101,8 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--stop-when-done`: Stop early when TODO/in-progress mode has no remaining items
 - `--stop`: Signal a running AIDD instance to stop gracefully after current iteration
 - `--audit AUDIT[,...]`: Run audit mode with one or more audits (e.g., `SECURITY` or `SECURITY,CODE_QUALITY`)
+- `--audit-on-completion AUDIT[,...]`: Run specified audits automatically when project reaches completion
+- `--code-after-audit`: After audits, run coding to fix findings, then re-audit until clean (max 10 cycles)
 - `--help`: Show help message
 
 ## Examples
@@ -155,9 +158,25 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 # Audit with limited iterations per audit
 ./aidd.sh --project-dir ./myproject --audit DEAD_CODE,PERFORMANCE --max-iterations 2
 
+# Use a different model for audits than for coding
+./aidd.sh --project-dir ./myproject --code-model opus --audit-model sonnet --audit SECURITY
+
 # Available audits: SECURITY, CODE_QUALITY, ARCHITECTURE, PERFORMANCE,
 #                   FRONTEND, DATABASE, TESTING, TECHDEBT, DEAD_CODE, and more
 # See docs/AUDIT_GUIDE.md for full list
+```
+
+### Post-Completion Audits & Remediation
+
+```bash
+# Run audits automatically when project completes
+./aidd.sh --project-dir ./myproject --audit-on-completion SECURITY,CODE_QUALITY
+
+# Audit, fix findings, re-audit until clean
+./aidd.sh --project-dir ./myproject --audit SECURITY --code-after-audit
+
+# Full pipeline: build features → audit on completion → fix findings → re-audit
+./aidd.sh --project-dir ./myproject --audit-on-completion SECURITY,DEAD_CODE --code-after-audit
 ```
 
 ### Other Operations

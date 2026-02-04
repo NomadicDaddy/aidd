@@ -15,6 +15,7 @@ export CLI_TYPE=""
 export MODEL=""
 export INIT_MODEL_OVERRIDE=""
 export CODE_MODEL_OVERRIDE=""
+export AUDIT_MODEL_OVERRIDE=""
 export SPEC_FILE=""
 export MAX_ITERATIONS=""
 export PROJECT_DIR=""
@@ -36,13 +37,17 @@ export AUDIT_MODE=false
 export AUDIT_NAME=""
 export AUDIT_NAMES=()
 export AUDIT_INDEX=0
+export AUDIT_ON_COMPLETION_NAMES=()
+export CODE_AFTER_AUDIT=false
 export STOP_SIGNAL=false
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
 export CODE_MODEL_EFFECTIVE=""
+export AUDIT_MODEL_EFFECTIVE=""
 export INIT_MODEL_ARGS=()
 export CODE_MODEL_ARGS=()
+export AUDIT_MODEL_ARGS=()
 
 # -----------------------------------------------------------------------------
 # Print Help/Usage Information
@@ -65,6 +70,7 @@ OPTIONS:
     --model MODEL           Model to use (optional)
     --init-model MODEL      Model for initializer/onboarding prompts (optional, overrides --model)
     --code-model MODEL      Model for coding prompts (optional, overrides --model)
+    --audit-model MODEL     Model for audit prompts (optional, overrides --model)
     --no-clean              Skip log cleaning on exit (optional)
     --quit-on-abort N       Quit after N consecutive failures (optional, default: 0=continue indefinitely)
     --continue-on-timeout   Continue to next iteration if CLI times out (exit 124) instead of aborting (optional)
@@ -80,6 +86,8 @@ OPTIONS:
     --stop                  Signal a running AIDD instance to stop after current iteration (creates .stop file)
     --audit AUDIT[,...]   Run audit mode with one or more audits (e.g., SECURITY or DEAD_CODE,PERFORMANCE)
     --audit-all             Run all available audits sequentially
+    --audit-on-completion AUDIT[,...]  Run specified audits when project reaches completion
+    --code-after-audit      After audits, run coding to fix findings, then re-audit until clean
     --version               Show version information
     --help                  Show this help message
 
@@ -119,6 +127,15 @@ EXAMPLES:
     $0 --project-dir ./myproject --audit-all
     $0 --project-dir ./myproject --audit-all --max-iterations 1
 
+    # Post-completion audits (run audits when project completes)
+    $0 --project-dir ./myproject --audit-on-completion SECURITY,CODE_QUALITY
+
+    # Audit with auto-remediation (audit → fix → re-audit until clean)
+    $0 --project-dir ./myproject --audit SECURITY --code-after-audit
+
+    # Full pipeline: build → audit on completion → remediate → re-audit
+    $0 --project-dir ./myproject --audit-on-completion SECURITY,DEAD_CODE --code-after-audit
+
 For more information, visit: https://github.com/NomadicDaddy/aidd
 EOF
 }
@@ -143,6 +160,10 @@ parse_args() {
                 ;;
             --code-model)
                 CODE_MODEL_OVERRIDE="$2"
+                shift 2
+                ;;
+            --audit-model)
+                AUDIT_MODEL_OVERRIDE="$2"
                 shift 2
                 ;;
             --spec)
@@ -262,6 +283,24 @@ parse_args() {
                 fi
                 shift
                 ;;
+            --audit-on-completion)
+                # Parse comma-separated audit names for post-completion audits
+                local aoc_input="$2"
+                IFS=',' read -ra aoc_array <<< "$aoc_input"
+                for audit in "${aoc_array[@]}"; do
+                    # Trim whitespace
+                    audit="${audit#"${audit%%[![:space:]]*}"}"
+                    audit="${audit%"${audit##*[![:space:]]}"}"
+                    if [[ -n "$audit" ]]; then
+                        AUDIT_ON_COMPLETION_NAMES+=("$audit")
+                    fi
+                done
+                shift 2
+                ;;
+            --code-after-audit)
+                CODE_AFTER_AUDIT=true
+                shift
+                ;;
             -h|--help)
                 print_help
                 exit 0
@@ -342,6 +381,13 @@ get_effective_models() {
         CODE_MODEL_EFFECTIVE="$MODEL"
     fi
 
+    # Determine effective audit model (falls back to code model, then base model)
+    if [[ -n "$AUDIT_MODEL_OVERRIDE" ]]; then
+        AUDIT_MODEL_EFFECTIVE="$AUDIT_MODEL_OVERRIDE"
+    else
+        AUDIT_MODEL_EFFECTIVE="$CODE_MODEL_EFFECTIVE"
+    fi
+
     # Build model args arrays
     INIT_MODEL_ARGS=()
     if [[ -n "$INIT_MODEL_EFFECTIVE" ]]; then
@@ -351,6 +397,11 @@ get_effective_models() {
     CODE_MODEL_ARGS=()
     if [[ -n "$CODE_MODEL_EFFECTIVE" ]]; then
         CODE_MODEL_ARGS=(--model "$CODE_MODEL_EFFECTIVE")
+    fi
+
+    AUDIT_MODEL_ARGS=()
+    if [[ -n "$AUDIT_MODEL_EFFECTIVE" ]]; then
+        AUDIT_MODEL_ARGS=(--model "$AUDIT_MODEL_EFFECTIVE")
     fi
 }
 
@@ -1129,6 +1180,25 @@ init_args() {
             log_info "Multiple audits specified: ${AUDIT_NAMES[*]}"
             log_info "Each audit will run sequentially with its own iterations"
         fi
+    fi
+
+    # Validate --audit-on-completion audits exist
+    if [[ ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 ]]; then
+        for aoc_name in "${AUDIT_ON_COMPLETION_NAMES[@]}"; do
+            if ! validate_audit "$aoc_name" "$SCRIPT_DIR" >/dev/null; then
+                return $EXIT_NOT_FOUND
+            fi
+        done
+        log_info "Post-completion audits configured: ${AUDIT_ON_COMPLETION_NAMES[*]}"
+    fi
+
+    # Validate --code-after-audit requires audit context
+    if [[ "$CODE_AFTER_AUDIT" == true ]]; then
+        if [[ "$AUDIT_MODE" != true && ${#AUDIT_ON_COMPLETION_NAMES[@]} -eq 0 ]]; then
+            log_error "--code-after-audit requires --audit or --audit-on-completion"
+            return $EXIT_INVALID_ARGS
+        fi
+        log_info "Code-after-audit enabled: will remediate findings and re-audit until clean"
     fi
 
     return 0

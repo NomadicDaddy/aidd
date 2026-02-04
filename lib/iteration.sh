@@ -1020,6 +1020,44 @@ check_project_completion() {
     fi
     return 1
 }
+
+# -----------------------------------------------------------------------------
+# Count Unfixed Audit Findings
+# -----------------------------------------------------------------------------
+# Usage: count_unfixed_audit_findings <metadata_dir>
+# Outputs: count of audit-sourced features where passes != true (stdout)
+# Returns: 0 if findings exist, 1 if none
+count_unfixed_audit_findings() {
+    local metadata_dir="$1"
+    local features_dir="$metadata_dir/${DEFAULT_FEATURES_DIR}"
+
+    if [[ ! -d "$features_dir" ]]; then
+        echo "0"
+        return 1
+    fi
+
+    local count=0
+    while IFS= read -r feature_file; do
+        [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
+        local dir_name
+        dir_name=$(basename "$(dirname "$feature_file")")
+        # Audit findings have directory names starting with "audit-"
+        if [[ "$dir_name" == audit-* ]]; then
+            local passes
+            passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "false")
+            if [[ "$passes" != "true" ]]; then
+                ((count++))
+            fi
+        fi
+    done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
+
+    echo "$count"
+    if [[ $count -gt 0 ]]; then
+        return 0
+    fi
+    return 1
+}
+
 # Mode Completion Detection
 # -----------------------------------------------------------------------------
 

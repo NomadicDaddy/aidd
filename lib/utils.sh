@@ -216,6 +216,7 @@ log_iteration_header() {
     printf "  %-18s %s\n" "Base Model:" "${MODEL:-$cli_default}" >&2
     printf "  %-18s %s\n" "Init Model:" "${INIT_MODEL_EFFECTIVE:-$cli_default}" >&2
     printf "  %-18s %s\n" "Code Model:" "${CODE_MODEL_EFFECTIVE:-$cli_default}" >&2
+    printf "  %-18s %s\n" "Audit Model:" "${AUDIT_MODEL_EFFECTIVE:-$cli_default}" >&2
 
     # Iteration settings
     echo "" >&2

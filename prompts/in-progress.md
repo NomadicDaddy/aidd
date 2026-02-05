@@ -237,8 +237,8 @@ Execute skill /review to perform a thorough code review or, if skill is not avai
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
-- Run `bun run smoke:qc` (if exists) or lint, type-check, format
-- Ensure dev server is running in the background and run `bun run smoke:dev` (if exists — performs a login test then crawls every reachable URL in the app; common in spernakit apps) or check all affected pages using curl
+- Run `bun run smoke:qc` (if it does not exist, run the project equivalent of linting, type-checking, and formatting)
+- Run `bun run smoke:dev` (if it does not exist, check all affected pages using curl to ensure no browser/console errors)
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
 

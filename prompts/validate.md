@@ -87,10 +87,10 @@ grep -c '"passes": false' .automaker/features/*/feature.json
     - Check API endpoints if it's a backend feature
 
 5. **Attempt runtime verification (if code evidence found):**
-    - Run `bun run smoke:qc` (if exists) or lint, type-check, format — ensure no build errors
+    - Run `bun run smoke:qc` (if it does not exist, run the project equivalent of linting, type-checking, and formatting)
+    - Run `bun run smoke:dev` (if it does not exist, check all affected pages using curl to ensure no browser/console errors)
     - If browser automation available: test the feature through UI using agent-browser or native browser automation (see testing-requirements.md)
     - If no browser automation: use curl/wget for API endpoints, check build output
-    - Run `bun run smoke:dev` (if exists — performs a login test then crawls every reachable URL in the app; common in spernakit apps) or check affected pages using curl
 
 6. **Make determination:**
     - **Feature IS complete (verified):** Code exists AND runtime verification passed → `passes: true`, `status: completed`

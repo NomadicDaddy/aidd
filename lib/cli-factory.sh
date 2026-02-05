@@ -28,7 +28,7 @@ init_cli() {
         kilocode)
             export CLI_TYPE="kilocode"
             export CLI_NAME="KiloCode"
-            export CLI_COMMAND="kilocode"
+            export CLI_COMMAND="kilo"
             source "$(dirname "${BASH_SOURCE[0]}")/cli-kilocode.sh"
             ;;
         claude-code)

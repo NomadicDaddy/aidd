@@ -13,15 +13,11 @@ fi
 # -----------------------------------------------------------------------------
 # KiloCode CLI Configuration
 # -----------------------------------------------------------------------------
-: "${KILOCODE_CLI:="kilocode"}"
-: "${KILOCODE_MODE:="code"}"
-: "${KILOCODE_AUTO_FLAG:="--auto"}"
-: "${KILOCODE_NOSPLASH_FLAG:="--nosplash"}"
+: "${KILOCODE_CLI:="kilo"}"
+: "${KILOCODE_MODE:="run"}"
 
 readonly KILOCODE_CLI
 readonly KILOCODE_MODE
-readonly KILOCODE_AUTO_FLAG
-readonly KILOCODE_NOSPLASH_FLAG
 
 # -----------------------------------------------------------------------------
 # KiloCode CLI Interaction Functions
@@ -42,12 +38,15 @@ run_kilocode_prompt() {
     log_debug "Model args: ${model_args[*]}"
     log_debug "Timeout: ${TIMEOUT:-$DEFAULT_TIMEOUT}s, Idle: ${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s"
 
+    # Build KiloCode command with model args
+    local kilo_cmd="kilo $KILOCODE_MODE"
+    if [[ ${#model_args[@]} -gt 0 ]]; then
+        kilo_cmd="$kilo_cmd ${model_args[*]}"
+    fi
+
     # Execute KiloCode in a coprocess to monitor output
     coproc {
-        (cd "$project_dir" && cat "$prompt_path" | \
-         kilocode --mode "$KILOCODE_MODE" "$KILOCODE_AUTO_FLAG" \
-                   --timeout "${TIMEOUT:-$DEFAULT_TIMEOUT}" "$KILOCODE_NOSPLASH_FLAG" \
-                   "${model_args[@]}") 2>&1;
+        (cd "$project_dir" && cat "$prompt_path" | $kilo_cmd 2>&1);
     }
 
     # Use shared monitoring function (with "error" log level for errors)
@@ -73,7 +72,7 @@ check_kilocode_available() {
 # Returns: Version string or empty string if not available
 get_kilocode_version() {
     if check_kilocode_available; then
-        kilocode --version 2>/dev/null | head -n1
+        kilo --version 2>/dev/null | head -n1
     else
         echo ""
     fi

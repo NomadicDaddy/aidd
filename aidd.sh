@@ -171,13 +171,12 @@ check_onboarding_status "$METADATA_DIR"
 # Initialize failure counter
 CONSECUTIVE_FAILURES=0
 
-# Track whether post-completion audits have been triggered (prevents re-triggering)
-AUDIT_ON_COMPLETION_TRIGGERED=false
 # Track whether remediation coding is active (break instead of exit on completion)
 REMEDIATION_ACTIVE=false
 
 log_info "Project directory: $PROJECT_DIR"
 log_info "CLI: $CLI_NAME"
+log_info "Post-completion audits configured: ${AUDIT_ON_COMPLETION_NAMES[*]} (${#AUDIT_ON_COMPLETION_NAMES[@]} audits)"
 
 # ---------------------------------------------------------------------------
 # EXIT HANDLERS
@@ -273,34 +272,8 @@ run_single_audit_or_all() {
             pre_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
         fi
 
-        # Check project completion BEFORE entering subshell (exit inside subshell doesn't work)
-        # Phase 1: Creates .project_completion_pending, returns 1 (continue to TODO review)
-        # Phase 2: Pending file exists + still complete, returns 0 (confirmed complete)
-        # Skip for audit mode - audits should always run regardless of completion
-        if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
-            log_info "Project completion CONFIRMED. All features pass, thorough review complete."
-            # Extract structured log for this empty iteration
-            if [[ "$EXTRACT_STRUCTURED" == true ]]; then
-                echo "[INFO] Project completion CONFIRMED. All features pass, thorough review complete." > "$LOG_FILE"
-                extract_single_log "$LOG_FILE" "$METADATA_DIR"
-            fi
-            # If post-completion audits are configured, break to run them instead of exiting
-            if [[ ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 && "$AUDIT_ON_COMPLETION_TRIGGERED" != "true" ]]; then
-                AUDIT_ON_COMPLETION_TRIGGERED=true
-                log_info "Post-completion audits configured. Transitioning to audit phase..."
-                break
-            fi
-            # During remediation, break to let the remediation loop handle exit
-            if [[ "$REMEDIATION_ACTIVE" == "true" ]]; then
-                log_info "All features pass. Returning to remediation loop."
-                break
-            fi
-            exit $EXIT_PROJECT_COMPLETE
-        fi
-
         {
-            # Determine which prompt to use based on project state (needed for header)
-            # Will see .project_completion_pending if Phase 1 was triggered above
+            # Determine which prompt to use based on project state
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
             if [[ $? -ne 0 ]]; then
                 log_error "Failed to determine prompt"
@@ -406,11 +379,18 @@ run_single_audit_or_all() {
         # Handle failure or reset counter based on CLI exit code
         HANDLE_FAILURE_RETURN=0
         if [[ $CLI_EXIT_CODE -ne 0 ]]; then
-            handle_failure "$CLI_EXIT_CODE"
-            HANDLE_FAILURE_RETURN=$?
-            if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
-                # Continue to next iteration - skip rest of this iteration
-                continue
+            # Special handling for exit code 1 (no more work) - don't rewind iteration
+            if [[ $CLI_EXIT_CODE -eq 1 && ("$CLI_TYPE" == "kilocode" || "$CLI_TYPE" == "opencode") ]]; then
+                log_info "$CLI_NAME completed with exit=1 (no more work) - checking for completion..."
+                reset_failure_counter
+                # Fall through to complete the iteration (don't continue)
+            else
+                handle_failure "$CLI_EXIT_CODE"
+                HANDLE_FAILURE_RETURN=$?
+                if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
+                    # Continue to next iteration - skip rest of this iteration
+                    continue
+                fi
             fi
         else
             reset_failure_counter
@@ -474,34 +454,8 @@ else
         printf -v LOG_FILE "%s/%03d.log" "$ITERATIONS_DIR_FULL" "$NEXT_LOG_INDEX"
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
-        # Check project completion BEFORE entering subshell (exit inside subshell doesn't work)
-        # Phase 1: Creates .project_completion_pending, returns 1 (continue to TODO review)
-        # Phase 2: Pending file exists + still complete, returns 0 (confirmed complete)
-        # Skip for audit mode - audits should always run regardless of completion
-        if [[ "$AUDIT_MODE" != "true" ]] && check_project_completion "$METADATA_DIR"; then
-            log_info "Project completion CONFIRMED. All features pass, thorough review complete."
-            # Extract structured log for this empty iteration
-            if [[ "$EXTRACT_STRUCTURED" == true ]]; then
-                echo "[INFO] Project completion CONFIRMED. All features pass, thorough review complete." > "$LOG_FILE"
-                extract_single_log "$LOG_FILE" "$METADATA_DIR"
-            fi
-            # If post-completion audits are configured, break to run them instead of exiting
-            if [[ ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 && "$AUDIT_ON_COMPLETION_TRIGGERED" != "true" ]]; then
-                AUDIT_ON_COMPLETION_TRIGGERED=true
-                log_info "Post-completion audits configured. Transitioning to audit phase..."
-                break
-            fi
-            # During remediation, break to let the remediation loop handle exit
-            if [[ "$REMEDIATION_ACTIVE" == "true" ]]; then
-                log_info "All features pass. Returning to remediation loop."
-                break
-            fi
-            exit $EXIT_PROJECT_COMPLETE
-        fi
-
         {
-            # Determine which prompt to use based on project state (needed for header)
-            # Will see .project_completion_pending if Phase 1 was triggered above
+            # Determine which prompt to use based on project state
             PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
             if [[ $? -ne 0 ]]; then
                 log_error "Failed to determine prompt"
@@ -694,12 +648,18 @@ fi
 # ---------------------------------------------------------------------------
 # Post-Completion Audits (--audit-on-completion)
 # ---------------------------------------------------------------------------
-if [[ "$AUDIT_ON_COMPLETION_TRIGGERED" == "true" ]]; then
-    log_header "POST-COMPLETION AUDITS: ${AUDIT_ON_COMPLETION_NAMES[*]}"
-    AUDIT_MODE=true
-    export AUDIT_MODE
-    run_audit_set "${AUDIT_ON_COMPLETION_NAMES[@]}"
-    log_info "Post-completion audits finished"
+# Run post-completion audits if configured and project is complete
+if [[ "$AUDIT_MODE" != "true" && ${#AUDIT_ON_COMPLETION_NAMES[@]} -gt 0 ]]; then
+    log_info "Checking project completion for post-completion audits..."
+    if check_project_completion "$METADATA_DIR"; then
+        log_header "POST-COMPLETION AUDITS: ${AUDIT_ON_COMPLETION_NAMES[*]}"
+        AUDIT_MODE=true
+        export AUDIT_MODE
+        run_audit_set "${AUDIT_ON_COMPLETION_NAMES[@]}"
+        log_info "Post-completion audits finished"
+    else
+        log_info "Project not complete, skipping post-completion audits"
+    fi
 fi
 
 # ---------------------------------------------------------------------------

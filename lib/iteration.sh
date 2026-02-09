@@ -91,7 +91,14 @@ validate_feature_file() {
 # Returns: 0 if should continue, exits if should quit
 handle_failure() {
     local exit_code="$1"
-
+    
+    # KiloCode and OpenCode exit code 1 means "no more work" - treat as success for completion detection
+    if [[ $exit_code -eq 1 && ("$CLI_TYPE" == "kilocode" || "$CLI_TYPE" == "opencode") ]]; then
+        log_info "$CLI_NAME completed with exit=1 (no more work) - treating as success for completion detection"
+        reset_failure_counter
+        return 0
+    fi
+    
     # Don't count timeout (exit 124) as a failure if CONTINUE_ON_TIMEOUT is set
     if [[ $exit_code -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
         log_warn "Timeout detected (exit=$exit_code), continuing to next iteration..."
@@ -105,11 +112,11 @@ handle_failure() {
         fi
         return 0
     fi
-
+    
     # Increment failure counter
     ((CONSECUTIVE_FAILURES++))
     log_warn "$CLI_NAME failed (exit=$exit_code); this is failure #$CONSECUTIVE_FAILURES"
-
+    
     # Check if we should quit or continue
     if [[ $QUIT_ON_ABORT -gt 0 && $CONSECUTIVE_FAILURES -ge $QUIT_ON_ABORT ]]; then
         log_error "Reached failure threshold ($QUIT_ON_ABORT); quitting."
@@ -117,7 +124,7 @@ handle_failure() {
     else
         log_info "Continuing to next iteration (threshold: $QUIT_ON_ABORT)"
     fi
-
+    
     return 0
 }
 
@@ -823,17 +830,6 @@ HEREDOC_END
         return 0
     fi
 
-    # Check for project completion pending state (two-phase completion)
-    # If pending, force TODO mode for thorough review
-    local completion_state_file="$metadata_dir/.project_completion_pending"
-    if [[ -f "$completion_state_file" ]]; then
-        log_info "Project completion pending - running thorough TODO review"
-        prompt_path="$script_dir/prompts/todo.md"
-        phase="$PHASE_TODO"
-        echo "$prompt_path|$phase"
-        return 0
-    fi
-
     # Check for TODO mode first
     if [[ "$TODO_MODE" == true ]]; then
         log_info "Using TODO mode - will search for TODO items in codebase"
@@ -918,11 +914,9 @@ get_next_log_index() {
 # Project Completion Detection
 # -----------------------------------------------------------------------------
 
-# Check if project is complete (two-phase detection)
+# Check if project is complete
 # Usage: check_project_completion <metadata_dir>
-# Returns: 0 if confirmed complete (second detection), 1 if not complete or needs todo pass
-# Phase 1: First detection creates state file and returns 1 (allows TODO pass to run)
-# Phase 2: Second detection (state file exists) returns 0 (confirmed complete)
+# Returns: 0 if complete (no failing features, no incomplete TODOs), 1 otherwise
 check_project_completion() {
     local metadata_dir="$1"
 
@@ -935,38 +929,39 @@ check_project_completion() {
 
     local features_dir="$metadata_dir/${DEFAULT_FEATURES_DIR}"
     local todo_path="$metadata_dir/${DEFAULT_TODO_FILE}"
-    local completion_state_file="$metadata_dir/.project_completion_pending"
     local completed_marker="$metadata_dir/.project_completed"
     local state_cache_file="$metadata_dir/.completion_state_cache"
 
     if [[ ! -d "$features_dir" ]]; then
         log_debug "Features directory not found, project not complete"
-        rm -f "$completion_state_file" "$state_cache_file" 2>/dev/null
+        rm -f "$state_cache_file" 2>/dev/null
         return 1
     fi
 
     declare -A cached_passes
     declare -A cached_status
-    local cache_valid=false
 
-    if [[ -f "$state_cache_file" ]]; then
-        cache_valid=true
-        while IFS='|' read -r fpath fstatus fpasses; do
-            cached_status["$fpath"]="$fstatus"
-            cached_passes["$fpath"]="$fpasses"
-        done < <(grep -E '^[^|]+\|[^|]+\|[^|]+$' "$state_cache_file" 2>/dev/null)
-        log_debug "Loaded cache with ${#cached_status[@]} feature states"
-    fi
+    # Cache is never loaded from disk — check_project_completion runs once per
+    # invocation so cross-run caching only introduces staleness (committed
+    # feature updates are invisible to git diff).  The associative arrays are
+    # still populated during this call and written out for diagnostics.
+    local cache_valid=false
 
     local modified_files=()
     local unmodified_files=()
     local all_feature_files=()
 
     if git -C "$metadata_dir/.." rev-parse --git-dir >/dev/null 2>&1; then
+        # Collect coding features only — audit findings (audit-*) are tracked
+        # separately via count_unfixed_audit_findings() and must not block
+        # detection of coding completion for --audit-on-completion.
         while IFS= read -r fpath; do
+            local dir_name
+            dir_name=$(basename "$(dirname "$fpath")")
+            [[ "$dir_name" == audit-* ]] && continue
             all_feature_files+=("$fpath")
         done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
-        
+
         local git_root
         git_root="$(cd "$metadata_dir/.." 2>/dev/null && pwd)" || git_root="$metadata_dir/.."
         for fpath in "${all_feature_files[@]}"; do
@@ -983,10 +978,16 @@ check_project_completion() {
         log_debug "Found ${#modified_files[@]} modified, ${#unmodified_files[@]} unmodified features"
     else
         while IFS= read -r fpath; do
+            local dir_name
+            dir_name=$(basename "$(dirname "$fpath")")
+            [[ "$dir_name" == audit-* ]] && continue
             modified_files+=("$fpath")
         done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
-        log_debug "Not a git repo, checking all ${#modified_files[@]} features"
+        log_debug "Not a git repo, checking all ${#modified_files[@]} coding features"
     fi
+
+    local total_coding_features=$(( ${#modified_files[@]} + ${#unmodified_files[@]} ))
+    log_info "Completion check: $total_coding_features coding features (audit findings excluded)"
 
     local failing_count=0
     local waiting_approval_count=0
@@ -1083,8 +1084,8 @@ check_project_completion() {
     if [[ -f "$todo_path" ]]; then
         # Count actionable incomplete TODOs: - [ ] but NOT deferred - [~] or - [!]
         local incomplete_count=0
-        incomplete_count=$(grep -c -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null || echo "0")
-        deferred_todo_count=$(grep -c -E '^\s*-\s*\[[~!]\]' "$todo_path" 2>/dev/null || echo "0")
+        incomplete_count=$(grep -c -E '^\s*-\s*\[\s*\]' "$todo_path" 2>/dev/null | tr -d '\r\n' | xargs || echo "0")
+        deferred_todo_count=$(grep -c -E '^\s*-\s*\[[~!]\]' "$todo_path" 2>/dev/null | tr -d '\r\n' | xargs || echo "0")
         if [[ "$incomplete_count" -gt 0 ]]; then
             has_todos=true
         elif grep -q -E '^\s*#\s*TODO:|^\s*//\s*TODO:' "$todo_path" 2>/dev/null; then
@@ -1098,28 +1099,13 @@ check_project_completion() {
     log_debug "Completion check: failing_count=$failing_count, has_todos=$has_todos, deferred_todos=$deferred_todo_count"
 
     if [[ "$failing_count" -eq 0 && "$has_todos" == false ]]; then
-        if [[ -f "$completed_marker" ]]; then
-            log_info "Project already completed (marker exists). Delete .project_completed to restart."
-            return 0
-        fi
-        if [[ -f "$completion_state_file" ]]; then
-            log_info "Project completion CONFIRMED: All features pass after thorough TODO review"
-            rm -f "$completion_state_file" 2>/dev/null
-            echo "$(date -Is 2>/dev/null || date)" > "$completed_marker"
-            return 0
-        else
-            log_info "Project completion PENDING: All features pass, running thorough TODO review..."
-            echo "$(date -Is 2>/dev/null || date)" > "$completion_state_file"
-            return 1
-        fi
+        log_info "Completion condition MET: failing_count=0 AND has_todos=false"
+        return 0
     fi
 
-    # Only delete markers when features are actually failing.
-    # If features all pass but only actionable TODOs block, preserve markers
-    # so completion can trigger as soon as TODOs are resolved or deferred.
-    if [[ "$failing_count" -gt 0 ]]; then
-        rm -f "$completion_state_file" "$completed_marker" 2>/dev/null
-    fi
+    # Clean up stale completion markers when not complete
+    log_debug "Project not complete: failing_count=$failing_count, has_todos=$has_todos"
+    rm -f "$completed_marker" 2>/dev/null
     return 1
 }
 

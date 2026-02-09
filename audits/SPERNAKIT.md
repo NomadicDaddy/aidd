@@ -409,15 +409,48 @@ export const resourceRoutes = new Elysia({ prefix: '/resources' })
 
 ## 5.4 Service Layer
 
-| Check | Criteria                                              | Remediation                 |
-| ----- | ----------------------------------------------------- | --------------------------- |
-| `[ ]` | Services in `backend/src/services/` (flat, NO facade) | Organize services by domain |
-| `[ ]` | One file per service domain                           | Split large services        |
-| `[ ]` | Business logic in services (NOT routes)               | Move logic from routes      |
-| `[ ]` | Drizzle ORM for database operations                   | Use Drizzle queries         |
-| `[ ]` | Proper error handling and logging                     | Add error handling          |
+| Check | Criteria                                                                        | Remediation                              |
+| ----- | ------------------------------------------------------------------------------- | ---------------------------------------- |
+| `[ ]` | Simple services as flat files in `backend/src/services/`                        | One file per simple service domain       |
+| `[ ]` | Complex services use subdirectory + facade file                                 | Split into `services/{domain}/` + facade |
+| `[ ]` | Facade file at `services/` root re-exports public API from subdirectory modules | Create facade, move internals to subdir  |
+| `[ ]` | Consumers import from facade only (never from subdirectory modules directly)    | Fix imports to use facade                |
+| `[ ]` | Business logic in services (NOT routes)                                         | Move logic from routes                   |
+| `[ ]` | Drizzle ORM for database operations                                             | Use Drizzle queries                      |
+| `[ ]` | Proper error handling and logging                                               | Add error handling                       |
 
-**Expected service pattern:**
+**Service organization pattern** (hybrid flat + subdirectory):
+
+```
+services/
+├── authService.ts              # Facade: re-exports public API from auth/
+├── auth/                       # Internal modules
+│   ├── tokenService.ts
+│   ├── emailService.ts
+│   └── passwordResetService.ts
+├── userService.ts              # Facade: re-exports public API from user/
+├── user/                       # Internal modules
+│   ├── userQueries.ts
+│   ├── userMutationService.ts
+│   └── passwordService.ts
+├── settingsService.ts          # Simple service (no subdirectory needed)
+└── ...
+```
+
+**When to create a subdirectory**: When a service exceeds ~200 lines or handles multiple distinct responsibilities.
+
+**Expected facade pattern:**
+
+```typescript
+// services/userService.ts (facade)
+import { passwordService } from './user/passwordService';
+import { userMutationService } from './user/userMutationService';
+import { userQueries } from './user/userQueries';
+
+export { passwordService, userMutationService, userQueries };
+```
+
+**Expected simple service pattern:**
 
 ```typescript
 import { db } from '../db';
@@ -732,13 +765,13 @@ grep "env =" bunfig.toml
 
 ## 9.10 File Organization
 
-| Check | Criteria                                    | Anti-Patterns to Detect                      |
-| ----- | ------------------------------------------- | -------------------------------------------- |
-| `[ ]` | Named exports only (no export default)      | Default exports                              |
-| `[ ]` | ES Modules only (no require/module.exports) | CommonJS patterns                            |
-| `[ ]` | Barrel files (index.ts) for re-exports      | Direct imports from domain files             |
-| `[ ]` | Services flat (NO sub-directories)          | Service facade pattern, sub-directories      |
-| `[ ]` | Pages in `pages/{domain}/` directories      | Pages scattered, missing domain organization |
+| Check | Criteria                                             | Anti-Patterns to Detect                                      |
+| ----- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| `[ ]` | Named exports only (no export default)               | Default exports                                              |
+| `[ ]` | ES Modules only (no require/module.exports)          | CommonJS patterns                                            |
+| `[ ]` | Barrel files (index.ts) for re-exports               | Direct imports from domain files                             |
+| `[ ]` | Services use hybrid flat + subdirectory with facades | All flat (missing structure) or all nested (over-structured) |
+| `[ ]` | Pages in `pages/{domain}/` directories               | Pages scattered, missing domain organization                 |
 
 **Validation Commands:**
 
@@ -901,7 +934,7 @@ Copy this section for each application audit:
 | Missing soft delete        | `.delete()` operations on records           | Implement soft delete with audit fields        |
 | Hard deletes               | Database records permanently deleted        | Implement soft delete with audit fields        |
 | JSX router                 | `<BrowserRouter>`, `<Routes>` in App.tsx    | Use createBrowserRouter with RouterProvider    |
-| Service sub-directories    | `services/user/`, `services/auth/` folders  | Flatten services to one file per domain        |
+| All-flat services          | 40+ service files with no subdirectories    | Use subdirectory + facade for complex services |
 | Export default             | `export default ComponentName`              | Use named exports only                         |
 | CommonJS patterns          | `require()`, `module.exports`               | Use ES modules (`import`, `export`)            |
 
@@ -926,15 +959,15 @@ Copy this section for each application audit:
 
 ## Common Drift Locations
 
-| Location                      | Common Issue                                  |
-| ----------------------------- | --------------------------------------------- |
-| `backend/src/plugins/`        | Express/Fastify middleware instead of plugins |
-| `backend/src/services/`       | Prisma calls, service sub-directories         |
-| `frontend/src/stores/`        | React Context instead of Zustand              |
-| `frontend/src/components/ui/` | DaisyUI classes instead of shadcn/ui          |
-| `backend/package.json`        | Winston, Express, Prisma dependencies         |
-| `frontend/package.json`       | Axios, react-hot-toast, react-context         |
-| `config/`                     | Missing .env files, .env usage                |
+| Location                      | Common Issue                                       |
+| ----------------------------- | -------------------------------------------------- |
+| `backend/src/plugins/`        | Express/Fastify middleware instead of plugins      |
+| `backend/src/services/`       | Prisma calls, missing facades for complex services |
+| `frontend/src/stores/`        | React Context instead of Zustand                   |
+| `frontend/src/components/ui/` | DaisyUI classes instead of shadcn/ui               |
+| `backend/package.json`        | Winston, Express, Prisma dependencies              |
+| `frontend/package.json`       | Axios, react-hot-toast, react-context              |
+| `config/`                     | Missing .env files, .env usage                     |
 
 ---
 

@@ -40,6 +40,8 @@ export AUDIT_INDEX=0
 export AUDIT_ON_COMPLETION_NAMES=()
 export CODE_AFTER_AUDIT=false
 export STOP_SIGNAL=false
+export FILTER_BY=""
+export FILTER_VALUE=""
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -88,6 +90,8 @@ OPTIONS:
     --audit-all             Run all available audits sequentially
     --audit-on-completion AUDIT[,...]  Run specified audits when project reaches completion
     --code-after-audit      After audits, run coding to fix findings, then re-audit until clean
+    --filter-by FIELD       Filter features by a JSON field (e.g., category, priority, status)
+    --filter VALUE          Value to match for --filter-by (e.g., Backend, 1, backlog)
     --version               Show version information
     --help                  Show this help message
 
@@ -135,6 +139,12 @@ EXAMPLES:
 
     # Full pipeline: build → audit on completion → remediate → re-audit
     $0 --project-dir ./myproject --audit-on-completion SECURITY,DEAD_CODE --code-after-audit
+
+    # Filter features by field value
+    $0 --project-dir ./myproject --filter-by category --filter Backend
+    $0 --project-dir ./myproject --filter-by priority --filter 1
+    $0 --project-dir ./myproject --filter-by status --filter in_progress
+    $0 --project-dir ./myproject --status --filter-by category --filter Database
 
 For more information, visit: https://github.com/NomadicDaddy/aidd
 EOF
@@ -301,6 +311,14 @@ parse_args() {
                 CODE_AFTER_AUDIT=true
                 shift
                 ;;
+            --filter-by)
+                FILTER_BY="$2"
+                shift 2
+                ;;
+            --filter)
+                FILTER_VALUE="$2"
+                shift 2
+                ;;
             -h|--help)
                 print_help
                 exit 0
@@ -339,6 +357,26 @@ validate_args() {
     esac
 
     # Check required --project-dir argument (unless --status or --todo is specified)
+
+    # Validate --filter-by and --filter are used together
+    if [[ -n "$FILTER_BY" && -z "$FILTER_VALUE" ]]; then
+        log_error "--filter-by requires --filter <value>"
+        return $EXIT_INVALID_ARGS
+    fi
+    if [[ -z "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
+        log_error "--filter requires --filter-by <field>"
+        return $EXIT_INVALID_ARGS
+    fi
+
+    # Validate --filter-by field name against known feature.json fields
+    if [[ -n "$FILTER_BY" ]]; then
+        local valid_filter_fields="id category description title status priority passes dependencies spec model error summary branchName startedAt createdAt updatedAt skipTests thinkingLevel reasoningEffort planningMode requirePlanApproval"
+        if [[ ! " $valid_filter_fields " =~ " $FILTER_BY " ]]; then
+            log_error "Invalid --filter-by field: '$FILTER_BY'"
+            log_info "Valid fields: $valid_filter_fields"
+            return $EXIT_INVALID_ARGS
+        fi
+    fi
 
     return 0
 }
@@ -468,6 +506,19 @@ show_status() {
     done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
     features_json+="]"
 
+    # Apply --filter-by / --filter if active
+    if [[ -n "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
+        local jq_filter
+        if [[ "$FILTER_VALUE" =~ ^[0-9]+$ ]]; then
+            jq_filter="[.[] | select(.$FILTER_BY == $FILTER_VALUE)]"
+        elif [[ "$FILTER_VALUE" == "true" || "$FILTER_VALUE" == "false" ]]; then
+            jq_filter="[.[] | select(.$FILTER_BY == $FILTER_VALUE)]"
+        else
+            jq_filter="[.[] | select(.$FILTER_BY == \"$FILTER_VALUE\")]"
+        fi
+        features_json=$(echo "$features_json" | jq -c "$jq_filter")
+    fi
+
     # Report invalid files if any
     if [[ $invalid_count -gt 0 ]]; then
         log_warn "$invalid_count feature.json file(s) have invalid JSON and were skipped:"
@@ -521,6 +572,9 @@ show_status() {
     echo ""
     echo "=============================================================================="
     echo "Project Feature List Status: $(basename "$project_dir")"
+    if [[ -n "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
+        echo "Filter: $FILTER_BY = $FILTER_VALUE"
+    fi
     echo "=============================================================================="
     echo ""
     printf "%-15s %s\n" "Total Features:" "$total"
@@ -1199,6 +1253,11 @@ init_args() {
             return $EXIT_INVALID_ARGS
         fi
         log_info "Code-after-audit enabled: will remediate findings and re-audit until clean"
+    fi
+
+    # Log active filter (validation already done in validate_args)
+    if [[ -n "$FILTER_BY" ]]; then
+        log_info "Feature filter active: $FILTER_BY = $FILTER_VALUE"
     fi
 
     return 0

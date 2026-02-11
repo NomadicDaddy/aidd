@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-02-11
+
+### Added
+
+- `--filter-by FIELD --filter VALUE` CLI flags to scope feature selection by any feature.json field (e.g., category, priority, status)
+- Filter validation against known feature.json fields with clear error on invalid field names
+- Filter injection into AI agent prompts so agents only work on matching features
+- Filter-aware completion checks in `should_stop_in_progress_mode()` and `check_project_completion()`
+- Filter-aware `--status` display with filtered counts and filter label in header
+- `feature_matches_filter()` helper in `lib/iteration.sh` (jq primary, grep fallback)
+- `apply_prompt_filter()` in `lib/iteration.sh` to prepend filter directives to prompts
+
+### Changed
+
+- KiloCode CLI command updated: `kilocode` → `kilo`, `code` → `run`, removed `--auto`/`--nosplash` flags (c4dad6b)
+- Simplified project completion detection: removed two-phase completion, treat exit code 1 as success, exclude audit findings from coding completion check (d4c0877)
+- Clarified smoke test fallback instructions in prompt files (de850ad)
+
 ## [0.9.1] - 2026-02-04
 
 ### Added
@@ -228,6 +246,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.2]: https://github.com/NomadicDaddy/aidd/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/NomadicDaddy/aidd/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/NomadicDaddy/aidd/compare/v0.8.2...v0.9.0
 [0.8.2]: https://github.com/NomadicDaddy/aidd/compare/v0.8.1...v0.8.2

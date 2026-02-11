@@ -30,6 +30,62 @@ readonly PHASE_CODING
 readonly PHASE_IN_PROGRESS
 
 # -----------------------------------------------------------------------------
+# Feature Filter Functions
+# -----------------------------------------------------------------------------
+
+# Check if a feature.json file matches the active --filter-by / --filter criteria.
+# Usage: feature_matches_filter <feature_file>
+# Returns: 0 if matches (or no filter active), 1 if excluded
+feature_matches_filter() {
+    local feature_file="$1"
+
+    # No filter active — everything matches
+    if [[ -z "$FILTER_BY" || -z "$FILTER_VALUE" ]]; then
+        return 0
+    fi
+
+    if ! command -v jq >/dev/null 2>&1; then
+        # Without jq, fall back to grep-based matching
+        if grep -q "\"$FILTER_BY\"" "$feature_file" 2>/dev/null; then
+            # For numeric fields (priority), match the raw number
+            # For string fields, match the quoted value
+            if grep -qE "\"$FILTER_BY\"[[:space:]]*:[[:space:]]*$FILTER_VALUE([^0-9]|$)" "$feature_file" 2>/dev/null || \
+               grep -qE "\"$FILTER_BY\"[[:space:]]*:[[:space:]]*\"$FILTER_VALUE\"" "$feature_file" 2>/dev/null; then
+                return 0
+            fi
+        fi
+        return 1
+    fi
+
+    # Use jq for reliable matching — handles both string and numeric values
+    local actual
+    actual=$(jq -r --arg field "$FILTER_BY" '.[$field] // empty' "$feature_file" 2>/dev/null)
+    if [[ "$actual" == "$FILTER_VALUE" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# Build a jq select expression for the active filter.
+# Usage: get_jq_filter_expr
+# Returns: jq expression string (e.g., 'select(.category == "Backend")') or empty
+get_jq_filter_expr() {
+    if [[ -z "$FILTER_BY" || -z "$FILTER_VALUE" ]]; then
+        echo ""
+        return
+    fi
+
+    # Detect if the filter value is numeric
+    if [[ "$FILTER_VALUE" =~ ^[0-9]+$ ]]; then
+        echo "select(.$FILTER_BY == $FILTER_VALUE)"
+    elif [[ "$FILTER_VALUE" == "true" || "$FILTER_VALUE" == "false" ]]; then
+        echo "select(.$FILTER_BY == $FILTER_VALUE)"
+    else
+        echo "select(.$FILTER_BY == \"$FILTER_VALUE\")"
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # Feature File Validation Functions
 # -----------------------------------------------------------------------------
 
@@ -690,6 +746,45 @@ HEREDOC_FOOTER
 }
 
 # -----------------------------------------------------------------------------
+# Prompt Filter Injection
+# -----------------------------------------------------------------------------
+
+# If --filter-by / --filter are active, create a wrapped prompt that prepends
+# filter instructions. Returns the (possibly new) prompt path.
+# Usage: apply_prompt_filter <prompt_path> <metadata_dir>
+# Returns: Prompt path to use (original or filtered copy)
+apply_prompt_filter() {
+    local prompt_path="$1"
+    local metadata_dir="$2"
+
+    # No filter active — return original
+    if [[ -z "$FILTER_BY" || -z "$FILTER_VALUE" ]]; then
+        echo "$prompt_path"
+        return
+    fi
+
+    local filtered_file="$metadata_dir/filtered-prompt.md"
+
+    cat > "$filtered_file" << FILTER_EOF
+## FEATURE FILTER (applied via --filter-by $FILTER_BY --filter $FILTER_VALUE)
+
+**CRITICAL: You MUST only work on features where \`$FILTER_BY\` equals \`$FILTER_VALUE\`.**
+
+When selecting features from \`/.automaker/features/*/feature.json\`:
+- Read each feature.json and check its \`$FILTER_BY\` field
+- **SKIP** any feature where \`$FILTER_BY\` is NOT \`$FILTER_VALUE\`
+- Only consider features matching this filter for implementation, validation, and status reporting
+- This filter applies to ALL feature selection throughout this session
+
+---
+
+FILTER_EOF
+    cat "$prompt_path" >> "$filtered_file"
+    sync "$filtered_file" 2>/dev/null || true
+    echo "$filtered_file"
+}
+
+# -----------------------------------------------------------------------------
 # Prompt Determination Functions
 # -----------------------------------------------------------------------------
 
@@ -799,7 +894,7 @@ HEREDOC_END
         fi
         # Ensure file is written to disk
         sync "$directive_file" 2>/dev/null || true
-        prompt_path="$directive_file"
+        prompt_path=$(apply_prompt_filter "$directive_file" "$metadata_dir")
         phase="$PHASE_DIRECTIVE"
         echo "$prompt_path|$phase"
         return 0
@@ -842,7 +937,7 @@ HEREDOC_END
     # Check for VALIDATE mode
     if [[ "$VALIDATE_MODE" == true ]]; then
         log_info "Using VALIDATE mode - will validate incomplete features and todos"
-        prompt_path="$script_dir/prompts/validate.md"
+        prompt_path=$(apply_prompt_filter "$script_dir/prompts/validate.md" "$metadata_dir")
         phase="$PHASE_VALIDATE"
         echo "$prompt_path|$phase"
         return 0
@@ -851,7 +946,7 @@ HEREDOC_END
     # Check for IN_PROGRESS mode
     if [[ "$IN_PROGRESS_MODE" == true ]]; then
         log_info "Using IN_PROGRESS mode - focusing on in-progress features only"
-        prompt_path="$script_dir/prompts/in-progress.md"
+        prompt_path=$(apply_prompt_filter "$script_dir/prompts/in-progress.md" "$metadata_dir")
         phase="$PHASE_IN_PROGRESS"
         echo "$prompt_path|$phase"
         return 0
@@ -861,7 +956,7 @@ HEREDOC_END
     # (app_spec.txt, features directory with data, and CHANGELOG.md)
     if check_onboarding_status "$metadata_dir"; then
         log_info "Onboarding complete (all required files found) - proceeding to development"
-        prompt_path="$script_dir/prompts/coding.md"
+        prompt_path=$(apply_prompt_filter "$script_dir/prompts/coding.md" "$metadata_dir")
         phase="$PHASE_CODING"
         echo "$prompt_path|$phase"
         return 0
@@ -959,6 +1054,8 @@ check_project_completion() {
             local dir_name
             dir_name=$(basename "$(dirname "$fpath")")
             [[ "$dir_name" == audit-* ]] && continue
+            # Apply --filter-by / --filter if active
+            feature_matches_filter "$fpath" || continue
             all_feature_files+=("$fpath")
         done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
 
@@ -981,6 +1078,8 @@ check_project_completion() {
             local dir_name
             dir_name=$(basename "$(dirname "$fpath")")
             [[ "$dir_name" == audit-* ]] && continue
+            # Apply --filter-by / --filter if active
+            feature_matches_filter "$fpath" || continue
             modified_files+=("$fpath")
         done < <(find "$features_dir" -name "feature.json" -type f 2>/dev/null)
         log_debug "Not a git repo, checking all ${#modified_files[@]} coding features"
@@ -1200,6 +1299,8 @@ should_stop_in_progress_mode() {
         local in_progress_count=0
         for feature_file in "$features_dir"/*/feature.json; do
             if [[ -f "$feature_file" ]]; then
+                # Skip features excluded by --filter-by / --filter
+                feature_matches_filter "$feature_file" || continue
                 local status=$(jq -r '.status // ""' "$feature_file" 2>/dev/null)
                 if [[ "$status" == "in_progress" ]]; then
                     ((in_progress_count++))
@@ -1215,7 +1316,7 @@ should_stop_in_progress_mode() {
             return 0
         fi
     else
-        # Fallback to grep
+        # Fallback to grep (filter not applied — jq required for filtering)
         if grep -r '"status"[[:space:]]*:[[:space:]]*"in_progress"' "$features_dir" >/dev/null 2>&1; then
             log_debug "Found in-progress features (grep), continuing"
             return 1

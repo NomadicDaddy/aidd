@@ -427,6 +427,9 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v0.9.2** (2026-02-11):
+    - `--filter-by FIELD --filter VALUE`: scope feature selection by any feature.json field (category, priority, status, etc.)
+    - Filter-aware `--status`, completion checks, and AI agent prompts
 - **v0.9.1** (2026-02-03):
     - `--audit-model MODEL`: separate model for audit prompts (falls back to `--code-model`, then `--model`)
     - `--audit-on-completion AUDIT[,...]`: run specified audits automatically when project reaches completion

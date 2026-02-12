@@ -965,8 +965,8 @@ validate_features() {
             # Required field: id
             if [[ -z "$id_val" ]]; then
                 file_errors+="  ✗ Missing required field: id\n"
-            elif [[ ! "$id_val" =~ ^((feature|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$ ]]; then
-                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{random}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})\n"
+            elif [[ ! "$id_val" =~ ^((feature|spernakit|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$ ]]; then
+                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{slug}, spernakit-{timestamp}-{slug}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})\n"
             fi
 
             # Required field: category

@@ -32,7 +32,7 @@ export CUSTOM_PROMPT=""
 export EXTRACT_STRUCTURED=false
 export EXTRACT_BATCH=false
 export CHECK_FEATURES=false
-export STOP_WHEN_DONE=false
+export STOP_WHEN_DONE=true
 export AUDIT_MODE=false
 export AUDIT_NAME=""
 export AUDIT_NAMES=()
@@ -84,7 +84,8 @@ OPTIONS:
     --extract-structured    Extract structured JSON from iteration logs after each iteration (optional)
     --extract-batch         Batch extract structured JSON from all existing iteration logs and exit
     --check-features        Validate all feature.json files against schema and exit
-    --stop-when-done      Stop early when TODO/in-progress mode has no remaining items (optional)
+    --stop-when-done      Stop when mode-specific work is complete (default: true)
+    --no-stop-when-done   Keep iterating even after mode-specific work is complete
     --stop                  Signal a running AIDD instance to stop after current iteration (creates .stop file)
     --audit AUDIT[,...]   Run audit mode with one or more audits (e.g., SECURITY or DEAD_CODE,PERFORMANCE)
     --audit-all             Run all available audits sequentially
@@ -111,8 +112,8 @@ EXAMPLES:
     # Other operations
     $0 --project-dir ./myproject --status
     $0 --project-dir ./myproject --todo
-    $0 --project-dir ./myproject --todo --stop-when-done
-    $0 --project-dir ./myproject --in-progress --stop-when-done
+    $0 --project-dir ./myproject --todo
+    $0 --project-dir ./myproject --in-progress --no-stop-when-done
 
     # Custom directive mode
     $0 --project-dir ./myproject --prompt "perform a full quality control check against the project"
@@ -242,6 +243,10 @@ parse_args() {
                 ;;
             --stop-when-done)
                 STOP_WHEN_DONE=true
+                shift
+                ;;
+            --no-stop-when-done)
+                STOP_WHEN_DONE=false
                 shift
                 ;;
             --stop)

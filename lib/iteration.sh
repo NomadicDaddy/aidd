@@ -147,14 +147,7 @@ validate_feature_file() {
 # Returns: 0 if should continue, exits if should quit
 handle_failure() {
     local exit_code="$1"
-    
-    # KiloCode and OpenCode exit code 1 means "no more work" - treat as success for completion detection
-    if [[ $exit_code -eq 1 && ("$CLI_TYPE" == "kilocode" || "$CLI_TYPE" == "opencode") ]]; then
-        log_info "$CLI_NAME completed with exit=1 (no more work) - treating as success for completion detection"
-        reset_failure_counter
-        return 0
-    fi
-    
+
     # Don't count timeout (exit 124) as a failure if CONTINUE_ON_TIMEOUT is set
     if [[ $exit_code -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
         log_warn "Timeout detected (exit=$exit_code), continuing to next iteration..."
@@ -1336,12 +1329,15 @@ should_stop_audit_mode() {
 
     # Check if an audit report was generated in this session
     # The audit prompt instructs the agent to create a report
-    # If a report exists with today's date and matches AUDIT_NAME, audit is complete
+    # Check both local and UTC dates — LLMs may use either depending on
+    # their system clock, and they can differ when running after UTC midnight
     if [[ -d "$audit_reports_dir" ]]; then
-        local today
-        today=$(date +%Y-%m-%d)
-        if ls "$audit_reports_dir"/${AUDIT_NAME}*${today}*.md >/dev/null 2>&1; then
-            log_debug "Audit report found for $AUDIT_NAME on $today"
+        local local_date utc_date
+        local_date=$(date +%Y-%m-%d)
+        utc_date=$(date -u +%Y-%m-%d)
+        if ls "$audit_reports_dir"/${AUDIT_NAME}*${local_date}*.md >/dev/null 2>&1 || \
+           ls "$audit_reports_dir"/${AUDIT_NAME}*${utc_date}*.md >/dev/null 2>&1; then
+            log_debug "Audit report found for $AUDIT_NAME"
             return 0
         fi
     fi

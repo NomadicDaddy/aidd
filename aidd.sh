@@ -439,8 +439,8 @@ run_single_audit_or_all() {
             ((consecutive_no_change++))
             log_warn "No meaningful changes detected in iteration $i ($consecutive_no_change/$MAX_NO_CHANGE_ITERATIONS consecutive)"
             if [[ $consecutive_no_change -ge $MAX_NO_CHANGE_ITERATIONS ]]; then
-                log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no meaningful changes. Check feature status and resolve any blockers."
-                exit $EXIT_ABORTED
+                log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no meaningful changes."
+                break
             fi
         else
             consecutive_no_change=0
@@ -561,11 +561,18 @@ else
         # Handle failure or reset counter based on CLI exit code
         HANDLE_FAILURE_RETURN=0
         if [[ $CLI_EXIT_CODE -ne 0 ]]; then
-            handle_failure "$CLI_EXIT_CODE"
-            HANDLE_FAILURE_RETURN=$?
-            if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
-                # Continue to next iteration
-                continue
+            # Special handling for exit code 1 (no more work) - don't rewind iteration
+            if [[ $CLI_EXIT_CODE -eq 1 && ("$CLI_TYPE" == "kilocode" || "$CLI_TYPE" == "opencode") ]]; then
+                log_info "$CLI_NAME completed with exit=1 (no more work) - checking for completion..."
+                reset_failure_counter
+                # Fall through to complete the iteration (don't continue)
+            else
+                handle_failure "$CLI_EXIT_CODE"
+                HANDLE_FAILURE_RETURN=$?
+                if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
+                    # Continue to next iteration
+                    continue
+                fi
             fi
         else
             reset_failure_counter

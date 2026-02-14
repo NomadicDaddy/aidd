@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # =============================================================================
 # aidd.sh - AI Development Driver
@@ -130,8 +131,8 @@ if [[ ! -d "$PROJECT_DIR" ]]; then
     # Copy artifacts contents to project's metadata folder
     log_info "Copying templates to '$METADATA_DIR'..."
     mkdir -p "$METADATA_DIR" && chmod 755 "$METADATA_DIR"
-    if [[ -d "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR" ]]; then
-        for item in "$SCRIPT_DIR/$DEFAULT_ARTIFACTS_DIR"/*; do
+    if [[ -d "$SCRIPT_DIR/$DEFAULT_TEMPLATES_DIR" ]]; then
+        for item in "$SCRIPT_DIR/$DEFAULT_TEMPLATES_DIR"/*; do
             if [[ -e "$item" ]]; then
                 local basename=$(basename "$item")
                 if safe_copy "$item" "$METADATA_DIR/$basename" "$PROJECT_DIR"; then
@@ -197,6 +198,9 @@ cleanup_logs() {
 handle_script_exit() {
     local exit_code=$?
 
+    # Clean logs first (unless --no-clean)
+    cleanup_logs
+
     case $exit_code in
         $EXIT_SUCCESS) return ;;  # Success, no message needed
         $EXIT_NO_ASSISTANT) return ;;  # No assistant messages
@@ -219,10 +223,8 @@ handle_script_exit() {
     esac
 }
 
-# Set trap to handle script exit with proper exit codes
+# Set trap to handle exit codes and clean logs on script exit
 trap handle_script_exit EXIT
-# Set trap to clean logs on script exit (both normal and interrupted)
-trap cleanup_logs EXIT
 
 # ---------------------------------------------------------------------------
 # MAIN EXECUTION LOOP
@@ -253,37 +255,48 @@ run_single_audit_or_all() {
         fi
     fi
 
-    # Check for unlimited iterations or fixed count
-    if [[ -z "$MAX_ITERATIONS" ]]; then
-    log_info "Running unlimited iterations (use Ctrl+C to stop)"
+    # Unified iteration loop — handles both unlimited and fixed modes
     i=1
     local consecutive_no_change=0
     local MAX_NO_CHANGE_ITERATIONS=3
+
+    if [[ -z "$MAX_ITERATIONS" ]]; then
+        log_info "Running unlimited iterations (use Ctrl+C to stop)"
+    else
+        log_info "Running $MAX_ITERATIONS iterations"
+    fi
+
     while true; do
+        # Break when fixed iteration limit is reached
+        if [[ -n "$MAX_ITERATIONS" ]] && (( i > MAX_ITERATIONS )); then
+            break
+        fi
+
         printf -v LOG_FILE "%s/%03d.log" "$ITERATIONS_DIR_FULL" "$NEXT_LOG_INDEX"
         NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
 
-        # Capture git state before iteration for stuck detection
+        # Stuck detection: capture git state before iteration (unlimited only)
         # Exclude .automaker/ metadata — formatting drift shouldn't reset stuck counter
         local pre_iteration_head=""
         local pre_iteration_dirty=""
-        if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
-            pre_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
-            pre_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
+        if [[ -z "$MAX_ITERATIONS" ]]; then
+            if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+                pre_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
+                pre_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
+            fi
         fi
 
         {
             # Determine which prompt to use based on project state
-            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
-            if [[ $? -ne 0 ]]; then
+            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR") || {
                 log_error "Failed to determine prompt"
                 exit $EXIT_GENERAL_ERROR
-            fi
+            }
             PROMPT_PATH="${PROMPT_INFO%|*}"
             PROMPT_TYPE="${PROMPT_INFO#*|}"
 
             # Print comprehensive iteration header
-            log_iteration_header "$i" "" "$LOG_FILE"
+            log_iteration_header "$i" "${MAX_ITERATIONS:-}" "$LOG_FILE"
 
             # Copy shared directories from copydirs.txt
             copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
@@ -307,14 +320,14 @@ run_single_audit_or_all() {
                 cp "$SPEC_FILE" "$SPEC_CHECK_PATH"
             fi
 
-            # Generate status report BEFORE sending prompt
+            # Generate status report BEFORE sending prompt (best-effort, non-fatal)
             # This ensures we always have up-to-date status regardless of agent exit code
             log_info "Generating project status before iteration..."
             STATUS_FILE="$METADATA_DIR/status.md"
             mkdir -p "$(dirname "$STATUS_FILE")" 2>/dev/null
             {
                 show_status "$PROJECT_DIR"
-            } > "$STATUS_FILE" 2>&1
+            } > "$STATUS_FILE" 2>&1 || true
             log_info "Project status saved to: $STATUS_FILE"
 
             # Check if current mode should stop early (TODO/in-progress with no items)
@@ -328,15 +341,15 @@ run_single_audit_or_all() {
             prompt_name=$(basename "$PROMPT_PATH" .md)
             local cli_start_time=$SECONDS
             log_info "Sending $prompt_name prompt to $CLI_NAME... [$(date '+%H:%M:%S')]"
+            CLI_EXIT_CODE=0
             if [[ "$PROMPT_TYPE" == "audit" ]]; then
-                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${AUDIT_MODEL_ARGS[@]}"
+                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${AUDIT_MODEL_ARGS[@]}" || CLI_EXIT_CODE=$?
             elif [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
-                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
+                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}" || CLI_EXIT_CODE=$?
             else
-                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
+                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}" || CLI_EXIT_CODE=$?
             fi
 
-            CLI_EXIT_CODE=$?
             local cli_elapsed=$((SECONDS - cli_start_time))
             log_info "$CLI_NAME finished (exit=$CLI_EXIT_CODE) after $(format_elapsed $cli_elapsed) [$(date '+%H:%M:%S')]"
 
@@ -365,19 +378,15 @@ run_single_audit_or_all() {
         CLI_EXIT_CODE=$(cat "$LOG_FILE.exitcode" 2>/dev/null || echo "0")
         rm -f "$LOG_FILE.exitcode" 2>/dev/null
 
-        # Handle rate limiting: sleep until reset, rewind iteration counter and log index
+        # Handle rate limiting: sleep until reset, rewind log index and retry same iteration
         if [[ $CLI_EXIT_CODE -eq $EXIT_RATE_LIMITED ]]; then
             handle_rate_limit "$LOG_FILE"
-            # Remove the wasted log file and rewind counters so next retry reuses this slot
             rm -f "$LOG_FILE" 2>/dev/null
-            ((NEXT_LOG_INDEX--))
-            # Don't increment iteration counter (the while loop variable i stays the same)
-            # Don't count as failure
+            NEXT_LOG_INDEX=$((NEXT_LOG_INDEX - 1))
             continue
         fi
 
         # Handle failure or reset counter based on CLI exit code
-        HANDLE_FAILURE_RETURN=0
         if [[ $CLI_EXIT_CODE -ne 0 ]]; then
             # Special handling for exit code 1 (no more work) - don't rewind iteration
             if [[ $CLI_EXIT_CODE -eq 1 && ("$CLI_TYPE" == "kilocode" || "$CLI_TYPE" == "opencode") ]]; then
@@ -385,12 +394,9 @@ run_single_audit_or_all() {
                 reset_failure_counter
                 # Fall through to complete the iteration (don't continue)
             else
+                # handle_failure either absorbs the error (returns 0) or exits the script
                 handle_failure "$CLI_EXIT_CODE"
-                HANDLE_FAILURE_RETURN=$?
-                if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
-                    # Continue to next iteration - skip rest of this iteration
-                    continue
-                fi
+                continue
             fi
         else
             reset_failure_counter
@@ -416,198 +422,31 @@ run_single_audit_or_all() {
             exit $EXIT_ABORTED
         fi
 
-        # Handle non-zero CLI exit that handle_failure didn't absorb
-        if [[ $CLI_EXIT_CODE -ne 0 && $HANDLE_FAILURE_RETURN -ne 0 ]]; then
-            if [[ $CLI_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
-                log_warn "Timeout detected on iteration $i, continuing to next iteration..."
-            else
-                exit "$CLI_EXIT_CODE"
-            fi
-        fi
-
-        # Stuck detection: check if agent made meaningful changes this iteration
+        # Stuck detection: check if agent made meaningful changes (unlimited only)
         # Exclude .automaker/ metadata files — formatting drift on status.md etc.
         # should not count as "real" changes that reset the stuck counter
-        local post_iteration_head=""
-        local post_iteration_dirty=""
-        if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
-            post_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
-            post_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
-        fi
-
-        if [[ "$pre_iteration_head" == "$post_iteration_head" && "$pre_iteration_dirty" == "$post_iteration_dirty" ]]; then
-            ((consecutive_no_change++))
-            log_warn "No meaningful changes detected in iteration $i ($consecutive_no_change/$MAX_NO_CHANGE_ITERATIONS consecutive)"
-            if [[ $consecutive_no_change -ge $MAX_NO_CHANGE_ITERATIONS ]]; then
-                log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no meaningful changes."
-                break
-            fi
-        else
-            consecutive_no_change=0
-        fi
-
-        ((i++))
-    done
-else
-    log_info "Running $MAX_ITERATIONS iterations"
-    for ((i=1; i<=MAX_ITERATIONS; i++)); do
-        printf -v LOG_FILE "%s/%03d.log" "$ITERATIONS_DIR_FULL" "$NEXT_LOG_INDEX"
-        NEXT_LOG_INDEX=$((NEXT_LOG_INDEX + 1))
-
-        {
-            # Determine which prompt to use based on project state
-            PROMPT_INFO=$(determine_prompt "$PROJECT_DIR" "$SCRIPT_DIR" "$METADATA_DIR")
-            if [[ $? -ne 0 ]]; then
-                log_error "Failed to determine prompt"
-                exit $EXIT_GENERAL_ERROR
-            fi
-            PROMPT_PATH="${PROMPT_INFO%|*}"
-            PROMPT_TYPE="${PROMPT_INFO#*|}"
-
-            # Print comprehensive iteration header
-            log_iteration_header "$i" "$MAX_ITERATIONS" "$LOG_FILE"
-
-            # Copy shared directories from copydirs.txt
-            copy_shared_directories "$PROJECT_DIR" "$SCRIPT_DIR"
-
-            # Copy shared files from copyfiles.txt
-            copy_shared_files "$PROJECT_DIR" "$SCRIPT_DIR"
-
-            # Validate that the prompt file exists
-            if [[ ! -f "$PROMPT_PATH" ]]; then
-                log_error "Prompt file does not exist: $PROMPT_PATH"
-                exit $EXIT_GENERAL_ERROR
+        if [[ -z "$MAX_ITERATIONS" ]]; then
+            local post_iteration_head=""
+            local post_iteration_dirty=""
+            if command -v git >/dev/null 2>&1 && git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+                post_iteration_head=$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "")
+                post_iteration_dirty=$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null | grep -v ' .automaker/' || echo "")
             fi
 
-            # Copy artifacts if needed (for onboarding/initializer prompts)
-            if [[ "$PROMPT_TYPE" != "coding" && "$PROMPT_TYPE" != "directive" && "$PROMPT_TYPE" != "audit" ]]; then
-                copy_templates "$PROJECT_DIR" "$SCRIPT_DIR"
-            fi
-
-            # Copy spec file if this is a new project with spec
-            if [[ "$PROMPT_TYPE" == "initializer" && -n "$SPEC_FILE" ]]; then
-                cp "$SPEC_FILE" "$SPEC_CHECK_PATH"
-            fi
-
-            # Generate status report BEFORE sending prompt
-            # This ensures we always have up-to-date status regardless of agent exit code
-            log_info "Generating project status before iteration..."
-            STATUS_FILE="$METADATA_DIR/status.md"
-            mkdir -p "$(dirname "$STATUS_FILE")" 2>/dev/null
-            {
-                show_status "$PROJECT_DIR"
-            } > "$STATUS_FILE" 2>&1
-            log_info "Project status saved to: $STATUS_FILE"
-
-            # Check if current mode should stop early (TODO/in-progress with no items)
-            # This prevents unnecessary agent invocations when mode-specific work is done
-            if should_stop_current_mode "$METADATA_DIR"; then
-                log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
-                exit $EXIT_SUCCESS
-            fi
-
-            # Run the appropriate prompt
-            prompt_name=$(basename "$PROMPT_PATH" .md)
-            local cli_start_time=$SECONDS
-            log_info "Sending $prompt_name prompt to $CLI_NAME... [$(date '+%H:%M:%S')]"
-            if [[ "$PROMPT_TYPE" == "audit" ]]; then
-                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${AUDIT_MODEL_ARGS[@]}"
-            elif [[ "$PROMPT_TYPE" == "coding" || "$PROMPT_TYPE" == "directive" ]]; then
-                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${CODE_MODEL_ARGS[@]}"
-            else
-                run_cli_prompt "$PROJECT_DIR" "$PROMPT_PATH" "${INIT_MODEL_ARGS[@]}"
-            fi
-
-            CLI_EXIT_CODE=$?
-            local cli_elapsed=$((SECONDS - cli_start_time))
-            log_info "$CLI_NAME finished (exit=$CLI_EXIT_CODE) after $(format_elapsed $cli_elapsed) [$(date '+%H:%M:%S')]"
-
-            # Clean up directive.md after directive mode completes
-            if [[ "$PROMPT_TYPE" == "directive" ]]; then
-                rm -f "$METADATA_DIR/directive.md" 2>/dev/null
-                log_debug "Removed directive.md"
-            fi
-
-            # Clean up audit-prompt.md after audit mode completes
-            if [[ "$PROMPT_TYPE" == "audit" ]]; then
-                rm -f "$METADATA_DIR/audit-prompt.md" 2>/dev/null
-                log_debug "Removed audit-prompt.md"
-            fi
-
-            # Save CLI exit code to file so parent shell can read it
-            # (variables set inside { ... } | tee subshell don't propagate)
-            echo "$CLI_EXIT_CODE" > "$LOG_FILE.exitcode"
-
-            log_info "--- End of iteration $i ---"
-            log_info "Finished: $(date -Is 2>/dev/null || date)"
-            echo
-        } 2>&1 | tee "$LOG_FILE"
-
-        # Read CLI exit code from file (subshell variables don't propagate through pipe)
-        CLI_EXIT_CODE=$(cat "$LOG_FILE.exitcode" 2>/dev/null || echo "0")
-        rm -f "$LOG_FILE.exitcode" 2>/dev/null
-
-        # Handle rate limiting: sleep until reset, rewind iteration counter and log index
-        if [[ $CLI_EXIT_CODE -eq $EXIT_RATE_LIMITED ]]; then
-            handle_rate_limit "$LOG_FILE"
-            # Remove the wasted log file and rewind counters so next retry reuses this slot
-            rm -f "$LOG_FILE" 2>/dev/null
-            ((NEXT_LOG_INDEX--))
-            # Decrement i so the for-loop's i++ doesn't consume an iteration slot
-            ((i--))
-            continue
-        fi
-
-        # Handle failure or reset counter based on CLI exit code
-        HANDLE_FAILURE_RETURN=0
-        if [[ $CLI_EXIT_CODE -ne 0 ]]; then
-            # Special handling for exit code 1 (no more work) - don't rewind iteration
-            if [[ $CLI_EXIT_CODE -eq 1 && ("$CLI_TYPE" == "kilocode" || "$CLI_TYPE" == "opencode") ]]; then
-                log_info "$CLI_NAME completed with exit=1 (no more work) - checking for completion..."
-                reset_failure_counter
-                # Fall through to complete the iteration (don't continue)
-            else
-                handle_failure "$CLI_EXIT_CODE"
-                HANDLE_FAILURE_RETURN=$?
-                if [[ $HANDLE_FAILURE_RETURN -eq 0 ]]; then
-                    # Continue to next iteration
-                    continue
+            if [[ "$pre_iteration_head" == "$post_iteration_head" && "$pre_iteration_dirty" == "$post_iteration_dirty" ]]; then
+                consecutive_no_change=$((consecutive_no_change + 1))
+                log_warn "No meaningful changes detected in iteration $i ($consecutive_no_change/$MAX_NO_CHANGE_ITERATIONS consecutive)"
+                if [[ $consecutive_no_change -ge $MAX_NO_CHANGE_ITERATIONS ]]; then
+                    log_error "Stopped: $MAX_NO_CHANGE_ITERATIONS consecutive iterations with no meaningful changes."
+                    break
                 fi
-            fi
-        else
-            reset_failure_counter
-        fi
-
-        # Extract structured log if enabled
-        if [[ "$EXTRACT_STRUCTURED" == true ]]; then
-            extract_single_log "$LOG_FILE" "$METADATA_DIR"
-        fi
-
-        # Check if current mode should stop early (TODO/in-progress with no items)
-        # This prevents unnecessary next iterations when mode-specific work is done
-        if should_stop_current_mode "$METADATA_DIR"; then
-            log_info "Mode-specific work complete. Stopping early due to --stop-when-done flag."
-            return 0
-        fi
-
-        # Check for user-requested stop file (graceful stop after current iteration)
-        local stop_file="$METADATA_DIR/.stop"
-        if [[ -f "$stop_file" ]]; then
-            log_info "Stop requested via .stop file. Exiting gracefully after iteration $i."
-            rm -f "$stop_file" 2>/dev/null
-            exit $EXIT_ABORTED
-        fi
-
-        # Handle non-zero CLI exit that handle_failure didn't absorb
-        if [[ $CLI_EXIT_CODE -ne 0 && $HANDLE_FAILURE_RETURN -ne 0 ]]; then
-            if [[ $CLI_EXIT_CODE -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
-                log_warn "Timeout detected on iteration $i, continuing to next iteration..."
             else
-                exit "$CLI_EXIT_CODE"
+                consecutive_no_change=0
             fi
         fi
+
+        i=$((i + 1))
     done
-fi
 
 log_info "Audit iterations completed for: $AUDIT_NAME"
 }
@@ -683,7 +522,7 @@ if [[ "$CODE_AFTER_AUDIT" == "true" ]]; then
             break
         fi
 
-        ((remediation_cycle++))
+        remediation_cycle=$((remediation_cycle + 1))
         if [[ $remediation_cycle -gt $MAX_REMEDIATION_CYCLES ]]; then
             log_warn "Maximum remediation cycles ($MAX_REMEDIATION_CYCLES) reached. $unfixed findings remain."
             break

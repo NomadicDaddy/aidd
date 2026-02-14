@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/json-parser.sh - JSON Parsing Functions for Claude Code Stream-JSON Output
 # =============================================================================

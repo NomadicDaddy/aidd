@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/log-extractor.sh - Structured Log Extraction for AIDD
 # =============================================================================
@@ -131,7 +132,7 @@ parse_tool_calls() {
     local line_num=0
 
     while IFS= read -r line; do
-        ((line_num++))
+        line_num=$((line_num + 1))
 
         # Match pattern: |  ToolName     args
         if [[ "$line" =~ ^\|[[:space:]]+([A-Za-z]+)[[:space:]]+(.*)$ ]]; then
@@ -307,7 +308,7 @@ extract_errors() {
     local line_num=0
 
     while IFS= read -r line; do
-        ((line_num++))
+        line_num=$((line_num + 1))
 
         # Check for various error patterns
         if [[ "$line" =~ \[ERROR\] ]] || [[ "$line" =~ \[WARN\].*failed ]] || [[ "$line" =~ error: ]] || [[ "$line" =~ Error: ]]; then
@@ -534,9 +535,9 @@ extract_all_logs() {
         local output_file="$output_dir/${basename}${STRUCTURED_LOG_SUFFIX}"
 
         if extract_structured_log "$log_file" "$metadata_dir" "$output_file"; then
-            ((success_count++))
+            success_count=$((success_count + 1))
         else
-            ((fail_count++))
+            fail_count=$((fail_count + 1))
             log_warn "Failed to extract: $log_file"
         fi
     done

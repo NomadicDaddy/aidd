@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/iteration.sh - Iteration Handling Module for AIDD
 # =============================================================================
@@ -46,11 +47,14 @@ feature_matches_filter() {
 
     if ! command -v jq >/dev/null 2>&1; then
         # Without jq, fall back to grep-based matching
+        # Escape regex metacharacters in FILTER_VALUE to prevent regex injection
+        local safe_val
+        safe_val=$(printf '%s' "$FILTER_VALUE" | sed 's/[][\\.^$*+?{}()|]/\\&/g')
         if grep -q "\"$FILTER_BY\"" "$feature_file" 2>/dev/null; then
             # For numeric fields (priority), match the raw number
             # For string fields, match the quoted value
-            if grep -qE "\"$FILTER_BY\"[[:space:]]*:[[:space:]]*$FILTER_VALUE([^0-9]|$)" "$feature_file" 2>/dev/null || \
-               grep -qE "\"$FILTER_BY\"[[:space:]]*:[[:space:]]*\"$FILTER_VALUE\"" "$feature_file" 2>/dev/null; then
+            if grep -qE "\"$FILTER_BY\"[[:space:]]*:[[:space:]]*$safe_val([^0-9]|$)" "$feature_file" 2>/dev/null || \
+               grep -qE "\"$FILTER_BY\"[[:space:]]*:[[:space:]]*\"$safe_val\"" "$feature_file" 2>/dev/null; then
                 return 0
             fi
         fi
@@ -64,25 +68,6 @@ feature_matches_filter() {
         return 0
     fi
     return 1
-}
-
-# Build a jq select expression for the active filter.
-# Usage: get_jq_filter_expr
-# Returns: jq expression string (e.g., 'select(.category == "Backend")') or empty
-get_jq_filter_expr() {
-    if [[ -z "$FILTER_BY" || -z "$FILTER_VALUE" ]]; then
-        echo ""
-        return
-    fi
-
-    # Detect if the filter value is numeric
-    if [[ "$FILTER_VALUE" =~ ^[0-9]+$ ]]; then
-        echo "select(.$FILTER_BY == $FILTER_VALUE)"
-    elif [[ "$FILTER_VALUE" == "true" || "$FILTER_VALUE" == "false" ]]; then
-        echo "select(.$FILTER_BY == $FILTER_VALUE)"
-    else
-        echo "select(.$FILTER_BY == \"$FILTER_VALUE\")"
-    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -152,7 +137,7 @@ handle_failure() {
     if [[ $exit_code -eq $EXIT_SIGNAL_TERMINATED && $CONTINUE_ON_TIMEOUT == true ]]; then
         log_warn "Timeout detected (exit=$exit_code), continuing to next iteration..."
         # Increment failure counter to track repeated timeouts
-        ((CONSECUTIVE_FAILURES++))
+        CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
         log_error "Timeout #$CONSECUTIVE_FAILURES (exit=$exit_code)"
         # Check if we should quit due to repeated timeouts
         if [[ $QUIT_ON_ABORT -gt 0 && $CONSECUTIVE_FAILURES -ge $QUIT_ON_ABORT ]]; then
@@ -163,7 +148,7 @@ handle_failure() {
     fi
     
     # Increment failure counter
-    ((CONSECUTIVE_FAILURES++))
+    CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
     log_warn "$CLI_NAME failed (exit=$exit_code); this is failure #$CONSECUTIVE_FAILURES"
     
     # Check if we should quit or continue
@@ -361,7 +346,7 @@ copy_referenced_audits() {
     refs=$(grep -oE '\[.*?\]\(\./[A-Z_]+\.md\)' "$audit_file" 2>/dev/null | \
            grep -oE '\./[A-Z_]+\.md' | \
            sed 's|^\./||' | \
-           sort -u)
+           sort -u) || true
 
     # Copy each referenced file
     local copied=0
@@ -369,7 +354,7 @@ copy_referenced_audits() {
         local source_path="$source_dir/$ref_file"
         if [[ -f "$source_path" ]]; then
             cp "$source_path" "$target_dir/"
-            ((copied++))
+            copied=$((copied + 1))
             log_debug "Copied referenced audit: $ref_file"
         fi
     done
@@ -899,11 +884,10 @@ HEREDOC_END
 
         # Validate audit file exists and get path
         local audit_file
-        audit_file=$(validate_audit "$AUDIT_NAME" "$script_dir")
-        if [[ $? -ne 0 ]]; then
+        audit_file=$(validate_audit "$AUDIT_NAME" "$script_dir") || {
             log_error "Audit validation failed"
             return 1
-        fi
+        }
 
         # Generate audit prompt file
         local audit_prompt_file="$metadata_dir/audit-prompt.md"
@@ -1095,7 +1079,7 @@ check_project_completion() {
         # even if they have structural issues (e.g., missing id/category)
         local status=$(jq -r '.status // "backlog"' "$feature_file" 2>/dev/null || echo "error")
         if [[ "$status" == "waiting_approval" ]]; then
-            ((waiting_approval_count++))
+            waiting_approval_count=$((waiting_approval_count + 1))
             local passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "false")
             cached_status["$feature_file"]="$status"
             cached_passes["$feature_file"]="$passes"
@@ -1129,7 +1113,7 @@ check_project_completion() {
 
     for feature_file in "${modified_files[@]}"; do
         if ! check_feature_file "$feature_file"; then
-            ((failing_count++))
+            failing_count=$((failing_count + 1))
         fi
     done
 
@@ -1141,21 +1125,21 @@ check_project_completion() {
             if [[ -z "$cached_status_val" || -z "$cached_passes_val" ]]; then
                 log_debug "Feature not in cache, checking: $feature_file"
                 if ! check_feature_file "$feature_file"; then
-                    ((failing_count++))
+                    failing_count=$((failing_count + 1))
                 fi
             else
                 if [[ "$cached_status_val" == "waiting_approval" ]]; then
-                    ((waiting_approval_count++))
+                    waiting_approval_count=$((waiting_approval_count + 1))
                     # waiting_approval never blocks completion
                 elif [[ "$cached_passes_val" == "false" ]]; then
-                    ((failing_count++))
+                    failing_count=$((failing_count + 1))
                 fi
             fi
         done
     else
         for feature_file in "${unmodified_files[@]}"; do
             if ! check_feature_file "$feature_file"; then
-                ((failing_count++))
+                failing_count=$((failing_count + 1))
             fi
         done
     fi
@@ -1226,7 +1210,7 @@ count_unfixed_audit_findings() {
             local passes
             passes=$(jq -r '.passes // false' "$feature_file" 2>/dev/null || echo "false")
             if [[ "$passes" != "true" ]]; then
-                ((count++))
+                count=$((count + 1))
             fi
         fi
     done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
@@ -1296,7 +1280,7 @@ should_stop_in_progress_mode() {
                 feature_matches_filter "$feature_file" || continue
                 local status=$(jq -r '.status // ""' "$feature_file" 2>/dev/null)
                 if [[ "$status" == "in_progress" ]]; then
-                    ((in_progress_count++))
+                    in_progress_count=$((in_progress_count + 1))
                 fi
             fi
         done

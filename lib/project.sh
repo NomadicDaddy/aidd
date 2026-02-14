@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/project.sh - Project Management Module for AIDD
 # =============================================================================
@@ -79,11 +80,11 @@ copy_templates() {
 
     # Copy all templates contents, but don't overwrite existing files
     for template in "$script_dir/templates"/*; do
-        if [[ -e "$artifact" ]]; then
+        if [[ -e "$template" ]]; then
             local basename
-            basename=$(basename "$artifact")
+            basename=$(basename "$template")
             if [[ ! -e "$project_metadata_dir/$basename" ]]; then
-                if safe_copy "$artifact" "$project_metadata_dir/$basename" "$project_dir"; then
+                if safe_copy "$template" "$project_metadata_dir/$basename" "$project_dir"; then
                     log_debug "Copied template: $basename"
                 else
                     log_warn "Failed to copy template: $basename"
@@ -137,7 +138,7 @@ copy_shared_directories() {
         # Check if source directory exists
         if [[ ! -d "$source_dir" ]]; then
             log_warn "Shared directory not found, skipping: $source_dir"
-            ((skipped_count++))
+            skipped_count=$((skipped_count + 1))
             continue
         fi
 
@@ -163,10 +164,10 @@ copy_shared_directories() {
                 --exclude='pnpm-lock.yaml' \
                 "$source_dir/" "$target_path/" 2>/dev/null; then
                 log_debug "Synchronized shared directory: $dir_name"
-                ((copied_count++))
+                copied_count=$((copied_count + 1))
             else
                 log_warn "Failed to copy shared directory: $source_dir"
-                ((failed_count++))
+                failed_count=$((failed_count + 1))
             fi
         else
             # Fallback to manual copy with exclusions
@@ -186,10 +187,10 @@ copy_shared_directories() {
                 ! -name 'pnpm-lock.yaml' \
                 -exec sh -c 'mkdir -p "'"$target_path"'/$(dirname "$1")" && cp "$1" "'"$target_path"'/$1"' _ {} \; 2>/dev/null); then
                 log_debug "Copied shared directory (with exclusions): $dir_name"
-                ((copied_count++))
+                copied_count=$((copied_count + 1))
             else
                 log_warn "Failed to copy shared directory: $source_dir"
-                ((failed_count++))
+                failed_count=$((failed_count + 1))
             fi
         fi
     done < "$copydirs_file"
@@ -265,7 +266,7 @@ copy_shared_files() {
         # Check if source file exists
         if [[ ! -f "$source_file" ]]; then
             log_warn "Shared file not found, skipping: $source_file"
-            ((skipped_count++))
+            skipped_count=$((skipped_count + 1))
             continue
         fi
 
@@ -278,7 +279,7 @@ copy_shared_files() {
         if [[ ! -d "$target_dir" ]]; then
             mkdir -p "$target_dir" 2>/dev/null || {
                 log_warn "Failed to create directory: $target_dir"
-                ((failed_count++))
+                failed_count=$((failed_count + 1))
                 continue
             }
         fi
@@ -286,10 +287,10 @@ copy_shared_files() {
         # Copy file
         if cp -f "$source_file" "$target_path" 2>/dev/null; then
             log_debug "Copied shared file: $target_rel"
-            ((copied_count++))
+            copied_count=$((copied_count + 1))
         else
             log_warn "Failed to copy shared file: $source_file"
-            ((failed_count++))
+            failed_count=$((failed_count + 1))
         fi
     done < "$copyfiles_file"
 

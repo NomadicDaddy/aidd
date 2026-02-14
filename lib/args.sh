@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/args.sh - Argument Parsing Module for AIDD
 # =============================================================================
@@ -497,7 +498,7 @@ show_status() {
         local file_content
         file_content=$(cat "$feature_file")
         if ! echo "$file_content" | jq -e . >/dev/null 2>&1; then
-            ((invalid_count++))
+            invalid_count=$((invalid_count + 1))
             invalid_files+="  - $feature_file
 "
             continue
@@ -511,17 +512,13 @@ show_status() {
     done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
     features_json+="]"
 
-    # Apply --filter-by / --filter if active
+    # Apply --filter-by / --filter if active (uses --arg/--argjson to prevent jq injection)
     if [[ -n "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
-        local jq_filter
-        if [[ "$FILTER_VALUE" =~ ^[0-9]+$ ]]; then
-            jq_filter="[.[] | select(.$FILTER_BY == $FILTER_VALUE)]"
-        elif [[ "$FILTER_VALUE" == "true" || "$FILTER_VALUE" == "false" ]]; then
-            jq_filter="[.[] | select(.$FILTER_BY == $FILTER_VALUE)]"
+        if [[ "$FILTER_VALUE" =~ ^[0-9]+$ || "$FILTER_VALUE" == "true" || "$FILTER_VALUE" == "false" ]]; then
+            features_json=$(echo "$features_json" | jq -c --arg field "$FILTER_BY" --argjson val "$FILTER_VALUE" '[.[] | select(.[$field] == $val)]')
         else
-            jq_filter="[.[] | select(.$FILTER_BY == \"$FILTER_VALUE\")]"
+            features_json=$(echo "$features_json" | jq -c --arg field "$FILTER_BY" --arg val "$FILTER_VALUE" '[.[] | select(.[$field] == $val)]')
         fi
-        features_json=$(echo "$features_json" | jq -c "$jq_filter")
     fi
 
     # Report invalid files if any
@@ -572,7 +569,8 @@ show_status() {
 
     # Print summary header
     # Write output to temp file, then display and save
-    local temp_status="/tmp/aidd_status_$$.md"
+    local temp_status
+    temp_status=$(mktemp /tmp/aidd_status_XXXXXXXXXX.md)
     {
     echo ""
     echo "=============================================================================="
@@ -759,16 +757,16 @@ show_status() {
             # Skip empty lines and lines that don't start with -
             [[ -z "$line" || "${line:0:1}" != "-" ]] && continue
 
-            ((todo_total++))
+            todo_total=$((todo_total + 1))
 
             # Check if line contains [x] for completed, [~] or [!] for deferred, [ ] for incomplete
             # Using grep for pattern matching to avoid bash regex issues
             if echo "$line" | grep -q '\[x\]'; then
-                ((todo_completed++))
+                todo_completed=$((todo_completed + 1))
             elif echo "$line" | grep -q '\[[~!]\]'; then
-                ((todo_deferred++))
+                todo_deferred=$((todo_deferred + 1))
             elif echo "$line" | grep -q '\[ \]'; then
-                ((todo_incomplete++))
+                todo_incomplete=$((todo_incomplete + 1))
             fi
         done < "$todo_file"
 
@@ -925,7 +923,7 @@ validate_features() {
         [[ -n "$fid" ]] && feature_id_map["$fid"]=1
     done < <(jq -r '.id // empty' "${feature_files[@]}" 2>/dev/null | tr -d '\r')
 
-    # Declare variables used by eval
+    # Declare variables for feature validation
     local _file id_val id_type category_val desc_val status_val
     local title_type titleGenerating_type passes_val passes_type
     local priority_type dependencies_type dependencies_invalid dependencies_list
@@ -936,26 +934,15 @@ validate_features() {
     local imagePaths_type textFilePaths_type descriptionHistory_type
     local spec_type model_type error_type summary_type branchName_type
     local startedAt_type createdAt_type updatedAt_type
-    local record="" file_errors=""
+    local has_record=false file_errors=""
     declare -A parsed_files
 
     # Single jq call to extract validation data from ALL feature files
-    # Output: key=value lines per file, separated by ___REC___ markers
+    # Output: key=BASE64VALUE lines per file, separated by ___REC___ markers
     while IFS= read -r line; do
         if [[ "$line" == "___REC___" ]]; then
-            [[ -z "$record" ]] && continue
-            _file="" id_val="" id_type="" category_val="" desc_val="" status_val=""
-            title_type="" titleGenerating_type="" passes_val="" passes_type=""
-            priority_type="" dependencies_type="" dependencies_invalid="" dependencies_list=""
-            skipTests_type="" thinkingLevel_val="" reasoningEffort_val="" planningMode_val=""
-            requirePlanApproval_type="" planSpec_type="" planSpec_status_val=""
-            planSpec_version_type="" planSpec_reviewedByUser_type=""
-            planSpec_tasksCompleted_type="" planSpec_tasksTotal_type=""
-            imagePaths_type="" textFilePaths_type="" descriptionHistory_type=""
-            spec_type="" model_type="" error_type="" summary_type="" branchName_type=""
-            startedAt_type="" createdAt_type="" updatedAt_type=""
-            eval "$record"
-            record=""
+            [[ "$has_record" == false ]] && continue
+            has_record=false
             [[ -z "$_file" ]] && continue
             local feature_dir=$(dirname "$_file")
             local feature_id=$(basename "$feature_dir")
@@ -1029,13 +1016,13 @@ validate_features() {
             [[ -n "$planSpec_status_val" && ! " $valid_plan_spec_statuses " =~ " $planSpec_status_val " ]] && file_errors+="  ✗ Invalid 'planSpec.status' value: '$planSpec_status_val' (valid: $valid_plan_spec_statuses)\n"
 
             if [[ -n "$file_errors" ]]; then
-                ((invalid_files++))
+                invalid_files=$((invalid_files + 1))
                 echo "  ❌ $feature_id (invalid)"
                 error_details+="❌ $feature_id\n"
                 error_details+="   File: $_file\n"
                 error_details+="$file_errors\n"
             else
-                ((valid_files++))
+                valid_files=$((valid_files + 1))
                 if [[ "$passes_val" == "true" ]]; then
                     echo "  ✅ $feature_id (valid, complete)"
                 else
@@ -1043,19 +1030,47 @@ validate_features() {
                 fi
                 # Count by status
                 case "$status_val" in
-                    backlog) ((status_backlog++)) ;;
-                    pending) ((status_pending++)) ;;
-                    running) ((status_running++)) ;;
-                    completed) ((status_completed++)) ;;
-                    failed) ((status_failed++)) ;;
-                    verified) ((status_verified++)) ;;
-                    waiting_approval) ((status_waiting_approval++)) ;;
-                    in_progress) ((status_in_progress++)) ;;
-                    *) ((status_none++)) ;;
+                    backlog) status_backlog=$((status_backlog + 1)) ;;
+                    pending) status_pending=$((status_pending + 1)) ;;
+                    running) status_running=$((status_running + 1)) ;;
+                    completed) status_completed=$((status_completed + 1)) ;;
+                    failed) status_failed=$((status_failed + 1)) ;;
+                    verified) status_verified=$((status_verified + 1)) ;;
+                    waiting_approval) status_waiting_approval=$((status_waiting_approval + 1)) ;;
+                    in_progress) status_in_progress=$((status_in_progress + 1)) ;;
+                    *) status_none=$((status_none + 1)) ;;
                 esac
             fi
-        else
-            record+="$line"$'\n'
+            # Reset variables for next record
+            _file="" id_val="" id_type="" category_val="" desc_val="" status_val=""
+            title_type="" titleGenerating_type="" passes_val="" passes_type=""
+            priority_type="" dependencies_type="" dependencies_invalid="" dependencies_list=""
+            skipTests_type="" thinkingLevel_val="" reasoningEffort_val="" planningMode_val=""
+            requirePlanApproval_type="" planSpec_type="" planSpec_status_val=""
+            planSpec_version_type="" planSpec_reviewedByUser_type=""
+            planSpec_tasksCompleted_type="" planSpec_tasksTotal_type=""
+            imagePaths_type="" textFilePaths_type="" descriptionHistory_type=""
+            spec_type="" model_type="" error_type="" summary_type="" branchName_type=""
+            startedAt_type="" createdAt_type="" updatedAt_type=""
+        elif [[ "$line" == *=* ]]; then
+            # Decode base64-encoded field value and safely assign via printf -v (no eval)
+            local key="${line%%=*}"
+            local b64_val="${line#*=}"
+            case "$key" in
+                _file|id_val|id_type|category_val|desc_val|status_val|\
+                title_type|titleGenerating_type|passes_val|passes_type|\
+                priority_type|dependencies_type|dependencies_invalid|dependencies_list|\
+                skipTests_type|thinkingLevel_val|reasoningEffort_val|planningMode_val|\
+                requirePlanApproval_type|planSpec_type|planSpec_status_val|\
+                planSpec_version_type|planSpec_reviewedByUser_type|\
+                planSpec_tasksCompleted_type|planSpec_tasksTotal_type|\
+                imagePaths_type|textFilePaths_type|descriptionHistory_type|\
+                spec_type|model_type|error_type|summary_type|branchName_type|\
+                startedAt_type|createdAt_type|updatedAt_type)
+                    printf -v "$key" '%s' "$(printf '%s' "$b64_val" | base64 -d 2>/dev/null)"
+                    has_record=true
+                    ;;
+            esac
         fi
     done < <(jq -r '
         ({
@@ -1095,7 +1110,7 @@ validate_features() {
             startedAt_type: (if has("startedAt") then (.startedAt | type) else "absent" end),
             createdAt_type: (if has("createdAt") then (.createdAt | type) else "absent" end),
             updatedAt_type: (if has("updatedAt") then (.updatedAt | type) else "absent" end)
-        } | to_entries | .[] | "\(.key)=\(.value | @sh)"),
+        } | to_entries | .[] | "\(.key)=\(.value | tostring | @base64)"),
         "___REC___"
     ' "${feature_files[@]}" 2>/dev/null | tr -d '\r')
 
@@ -1104,7 +1119,7 @@ validate_features() {
         local fdir=$(dirname "$ff")
         local fid=$(basename "$fdir")
         if [[ -z "${parsed_files[$fid]+isset}" ]]; then
-            ((invalid_files++))
+            invalid_files=$((invalid_files + 1))
             echo "  ❌ $fid (invalid)"
             error_details+="❌ $fid\n   File: $ff\n  ✗ Invalid JSON syntax\n\n"
         fi
@@ -1178,8 +1193,8 @@ validate_audit() {
 init_args() {
     parse_args "$@"
     apply_defaults
-    validate_args
-    local result=$?
+    local result=0
+    validate_args || result=$?
     if [[ $result -ne 0 ]]; then
         return $result
     fi

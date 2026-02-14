@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/config.sh - Configuration Constants and Defaults for AIDD
 # =============================================================================
@@ -87,7 +88,7 @@ readonly DEFAULT_RATE_LIMIT_BACKOFF
 : "${DEFAULT_PROMPTS_DIR:="prompts"}"                   # Prompts directory name
 : "${DEFAULT_ITERATIONS_DIR:="iterations"}"             # Iterations directory name
 : "${DEFAULT_SCAFFOLDING_DIR:="scaffolding"}"           # Scaffolding directory name
-: "${DEFAULT_TEMPLATES_DIR:="templates"}"               # Artifacts directory name
+: "${DEFAULT_TEMPLATES_DIR:="templates"}"               # Templates directory name
 : "${DEFAULT_STATE_FILE:=".iteration_state"}"           # Iteration state file name
 : "${DEFAULT_FEATURES_DIR:="features"}"                      # Features subdirectory name
 : "${FEATURE_FILE_NAME:="feature.json"}"                      # Individual feature file name
@@ -101,7 +102,7 @@ readonly DEFAULT_METADATA_DIR
 readonly DEFAULT_PROMPTS_DIR
 readonly DEFAULT_ITERATIONS_DIR
 readonly DEFAULT_SCAFFOLDING_DIR
-readonly DEFAULT_ARTIFACTS_DIR
+readonly DEFAULT_TEMPLATES_DIR
 readonly DEFAULT_STATE_FILE
 readonly DEFAULT_FEATURES_DIR
 readonly FEATURE_FILE_NAME

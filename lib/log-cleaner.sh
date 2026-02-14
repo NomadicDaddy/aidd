@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # =============================================================================
 # lib/log-cleaner.sh - Log Cleaning Functionality for AIDD
 # =============================================================================
@@ -20,7 +21,7 @@ cleanup_iteration_logs() {
     local no_backup_flag=""
 
     # Check for --no-backup flag
-    if [[ "$2" == "--no-backup" ]]; then
+    if [[ "${2:-}" == "--no-backup" ]]; then
         no_backup_flag="--no-backup"
     fi
 
@@ -96,7 +97,7 @@ cleanup_iteration_logs() {
         # Write cleaned content
         echo "$cleaned_content" > "$file"
 
-        ((success_count++))
+        success_count=$((success_count + 1))
         log_debug "  Cleaned: $file"
     done
 

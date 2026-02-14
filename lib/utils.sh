@@ -608,6 +608,13 @@ monitor_coprocess_output() {
     local saw_rate_limit=false
     local nudge_sent=false
 
+    # Capture coprocess PID and file descriptors into locals before they get
+    # unset by bash when the coprocess terminates (causes "unbound variable"
+    # errors under set -u if referenced after coprocess exit)
+    local coproc_pid="${COPROC_PID:?Coprocess not started}"
+    local coproc_fd_in="${COPROC[0]:?Coprocess stdin fd not set}"
+    local coproc_fd_out="${COPROC[1]:?Coprocess stdout fd not set}"
+
     # Reset global rate limit message (populated when rate limit detected)
     RATE_LIMIT_RESET_MSG=""
 
@@ -620,18 +627,13 @@ monitor_coprocess_output() {
         local timeout_value="$nudge_timeout"
         [[ "$nudge_sent" == true ]] && timeout_value="$final_timeout"
 
-        # Check if coprocess is still alive and file descriptors are valid
-        if ! kill -0 "$COPROC_PID" 2>/dev/null; then
+        # Check if coprocess is still alive
+        if ! kill -0 "$coproc_pid" 2>/dev/null; then
             # Process has terminated
             break
         fi
 
-        if [[ -z "${COPROC[0]}" ]] || [[ -z "${COPROC[1]}" ]]; then
-            # File descriptors not set, coprocess not properly initialized
-            break
-        fi
-
-        if IFS= read -r -t "$timeout_value" line <&"${COPROC[0]}" 2>/dev/null; then
+        if IFS= read -r -t "$timeout_value" line <&"$coproc_fd_in" 2>/dev/null; then
             echo "$line"
 
             # Reset nudge state if we got output
@@ -645,7 +647,7 @@ monitor_coprocess_output() {
                 else
                     log_warn "Detected 'no assistant messages' from model"
                 fi
-                kill -TERM "$COPROC_PID" 2>/dev/null || true
+                kill -TERM "$coproc_pid" 2>/dev/null || true
                 break
             fi
 
@@ -657,7 +659,7 @@ monitor_coprocess_output() {
                 else
                     log_warn "Detected 'provider error' from model"
                 fi
-                kill -TERM "$COPROC_PID" 2>/dev/null || true
+                kill -TERM "$coproc_pid" 2>/dev/null || true
                 break
             fi
 
@@ -666,7 +668,7 @@ monitor_coprocess_output() {
                 saw_rate_limit=true
                 RATE_LIMIT_RESET_MSG="$line"
                 log_warn "Rate limit detected"
-                kill -TERM "$COPROC_PID" 2>/dev/null || true
+                kill -TERM "$coproc_pid" 2>/dev/null || true
                 break
             fi
 
@@ -674,14 +676,14 @@ monitor_coprocess_output() {
         fi
 
         # Check if process is still running
-        if kill -0 "$COPROC_PID" 2>/dev/null; then
+        if kill -0 "$coproc_pid" 2>/dev/null; then
             # First timeout: Send nudge message
             if [[ "$nudge_sent" == false ]]; then
                 nudge_sent=true
                 log_warn "No output for ${nudge_timeout}s. Sending nudge to agent..."
 
                 # Send nudge message via stdin (if coprocess supports it)
-                cat << 'EOF' >&"${COPROC[1]}" 2>/dev/null || true
+                cat << 'EOF' >&"$coproc_fd_out" 2>/dev/null || true
 
 ---
 
@@ -713,7 +715,7 @@ EOF
             else
                 log_warn "Idle timeout (${IDLE_TIMEOUT:-$DEFAULT_IDLE_TIMEOUT}s total) waiting for output"
             fi
-            kill -TERM "$COPROC_PID" 2>/dev/null || true
+            kill -TERM "$coproc_pid" 2>/dev/null || true
             break
         fi
 
@@ -722,7 +724,7 @@ EOF
     done
 
     # Wait for process to finish and get exit code
-    wait "$COPROC_PID" 2>/dev/null
+    wait "$coproc_pid" 2>/dev/null
     local exit_code=$?
 
     # Return custom exit codes based on detected conditions

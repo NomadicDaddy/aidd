@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-02-14
+
+### Added
+
+- `spernakit` as valid feature ID prefix alongside `feature` and `audit`
+- `--no-stop-when-done` flag to restore previous continue-after-completion behavior
+
+### Changed
+
+- Default `STOP_WHEN_DONE` from `false` to `true` — iterations now stop when mode-specific work is complete by default
+- Exit code 1 handling moved inline in main loop for better control flow (kilocode/opencode)
+- No-change iteration limit changed from exit to break for cleaner shutdown
+- Audit report date detection checks both local and UTC dates for timezone robustness
+
+### Fixed
+
+- `set -euo pipefail` enabled across all shell scripts for strict error handling
+- jq injection vulnerability: switched to `--arg`/`--argjson` parameters
+- Removed `eval` usage in `validate_features` in favor of base64 decoding
+- Regex injection risk: added escaping to grep patterns
+- Predictable temp file names replaced with `mktemp`
+- Variable name bug: `DEFAULT_ARTIFACTS_DIR` → `DEFAULT_TEMPLATES_DIR`
+- Arithmetic operations fixed for `set -e` compatibility (`((i++))` → `i=$((i + 1))`)
+
 ## [0.9.2] - 2026-02-11
 
 ### Added
@@ -246,6 +270,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.3]: https://github.com/NomadicDaddy/aidd/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/NomadicDaddy/aidd/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/NomadicDaddy/aidd/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/NomadicDaddy/aidd/compare/v0.8.2...v0.9.0

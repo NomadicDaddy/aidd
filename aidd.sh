@@ -166,8 +166,8 @@ mkdir -p "$ITERATIONS_DIR_FULL"
 # Initialize log index
 NEXT_LOG_INDEX="$(get_next_log_index "$ITERATIONS_DIR_FULL")"
 
-# Check onboarding status
-check_onboarding_status "$METADATA_DIR"
+# Check onboarding status (diagnostic - don't exit on incomplete)
+check_onboarding_status "$METADATA_DIR" || true
 
 # Initialize failure counter
 CONSECUTIVE_FAILURES=0

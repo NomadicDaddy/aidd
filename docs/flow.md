@@ -141,7 +141,7 @@ Determines if we're working with an existing codebase or creating a new project.
 
 Can run unlimited iterations or a specific number via `--max-iterations`.
 
-### 5. Shared Resource Sync (v2.1.0+)
+### 5. Shared Resource Sync
 
 At the start of each iteration, syncs resources from config files:
 
@@ -157,13 +157,13 @@ At the start of each iteration, syncs resources from config files:
 - License files
 - Supports custom target paths via `source -> target` syntax
 
-### 6. Two-Stage Idle Timeout (v2.1.0+)
+### 6. Two-Stage Idle Timeout
 
 When agent becomes unresponsive:
 
-- **Stage 1** (default 180s): Send nudge message asking if agent is stuck
+- **Stage 1** (default 300s): Send nudge message asking if agent is stuck
 - **Stage 2** (remaining time): Hard kill if still no response
-- Total timeout controlled by `--idle-timeout` (default 360s)
+- Total timeout controlled by `--idle-timeout` (default 900s)
 
 ### 7. Onboarding Completion
 
@@ -249,11 +249,17 @@ If `--spec` provided, copied to `.automaker/app_spec.txt` during initializer flo
 - **0**: Success
 - **1**: General error
 - **2**: Invalid arguments
+- **3**: File or resource not found
+- **4**: Permission denied
+- **5**: Timeout occurred
 - **6**: Aborted (user requested stop via `.stop` file)
+- **7**: Validation failed
+- **8**: CLI error
 - **70**: No assistant messages detected
 - **71**: Idle timeout
 - **72**: Provider error
 - **73**: Project complete (all features pass, no TODOs)
+- **74**: Rate limited (API rate limit hit, pause and retry)
 - **124**: Signal terminated
 
 ### Early Abort Conditions

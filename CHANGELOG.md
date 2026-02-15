@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-02-15
+
+### Changed
+
+- Documentation sync: README.md updated to reflect actual implementation
+  - Fixed KiloCode command: `kilocode --mode code --auto` → `kilo run`
+  - Updated default timeout values: timeout 3600s, idle-timeout 900s, idle-nudge-timeout 300s
+  - Added missing CLI flags: `--no-stop-when-done`, `--audit-all`, `--filter-by`, `--filter`
+  - Expanded error handling section with complete exit codes including rate limiting (74)
+  - Added v0.9.3 to version history
+- Documentation sync: docs/flow.md updated
+  - Fixed two-stage idle timeout defaults to match implementation
+  - Added missing exit codes (3-8, 74 for rate limiting)
+  - Removed obsolete version annotations
+- Documentation sync: docs/cli-comparison.md updated
+  - Fixed KiloCode command from old syntax to `kilo run`
+- Documentation sync: TODO.md updated
+  - Fixed KiloCode command references from `kilocode` to `kilo`
+
 ## [0.9.3] - 2026-02-14
 
 ### Added
@@ -270,6 +289,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.4]: https://github.com/NomadicDaddy/aidd/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/NomadicDaddy/aidd/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/NomadicDaddy/aidd/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/NomadicDaddy/aidd/compare/v0.9.0...v0.9.1

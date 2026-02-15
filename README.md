@@ -36,7 +36,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 
 ### KiloCode
 
-- Command: `kilocode --mode code --auto`
+- Command: `kilo run`
 - Specify with `--cli kilocode`
 
 ### Claude Code
@@ -80,9 +80,9 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--cli CLI`: CLI to use (`opencode`, `kilocode`, or `claude-code`, default: `opencode`)
 - `--spec FILE`: Specification file (required for new projects)
 - `--max-iterations N`: Number of iterations (unlimited if not specified)
-- `--timeout N`: Timeout in seconds (default: 600)
-- `--idle-timeout N`: Idle timeout in seconds (default: 360)
-- `--idle-nudge-timeout N`: Idle nudge timeout in seconds - sends "are you stuck?" message (default: 180)
+- `--timeout N`: Timeout in seconds (default: 3600)
+- `--idle-timeout N`: Idle timeout in seconds (default: 900)
+- `--idle-nudge-timeout N`: Idle nudge timeout in seconds - sends "are you stuck?" message (default: 300)
 - `--model MODEL`: Model to use (optional)
 - `--init-model MODEL`: Model for initializer/onboarding prompts
 - `--code-model MODEL`: Model for coding prompts
@@ -98,11 +98,15 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--extract-structured`: Extract structured JSON from iteration logs after each iteration
 - `--extract-batch`: Batch extract structured JSON from all existing iteration logs and exit
 - `--check-features`: Validate all feature.json files against schema and exit
-- `--stop-when-done`: Stop early when TODO/in-progress mode has no remaining items
+- `--stop-when-done`: Stop early when TODO/in-progress mode has no remaining items (default: true)
+- `--no-stop-when-done`: Continue iterating even after mode-specific work is complete
 - `--stop`: Signal a running AIDD instance to stop gracefully after current iteration
 - `--audit AUDIT[,...]`: Run audit mode with one or more audits (e.g., `SECURITY` or `SECURITY,CODE_QUALITY`)
+- `--audit-all`: Run all available audits sequentially
 - `--audit-on-completion AUDIT[,...]`: Run specified audits automatically when project reaches completion
 - `--code-after-audit`: After audits, run coding to fix findings, then re-audit until clean (max 10 cycles)
+- `--filter-by FIELD`: Filter features by a JSON field (e.g., category, priority, status)
+- `--filter VALUE`: Value to match for --filter-by (e.g., Backend, 1, backlog)
 - `--help`: Show help message
 
 ## Examples
@@ -406,14 +410,30 @@ This allows the same codebase to support all CLIs with minimal differences.
 
 AIDD includes comprehensive error handling:
 
-- **Exit Codes**: 0 (success), 1 (general error), 2 (invalid args), 70 (no assistant), 71 (idle timeout), 72 (provider error), 124 (signal terminated)
+- **Exit Codes**:
+    - 0 (success)
+    - 1 (general error)
+    - 2 (invalid args)
+    - 3 (not found)
+    - 4 (permission denied)
+    - 5 (timeout)
+    - 6 (aborted)
+    - 7 (validation error)
+    - 8 (CLI error)
+    - 70 (no assistant)
+    - 71 (idle timeout)
+    - 72 (provider error)
+    - 73 (project complete)
+    - 74 (rate limited)
+    - 124 (signal terminated)
 - **Retry Logic**: Configurable with `--quit-on-abort`
 - **Two-Stage Idle Timeout**: When an agent becomes unresponsive:
-    - Stage 1: After idle-nudge-timeout (default 180s), sends "are you stuck?" message to the agent
+    - Stage 1: After idle-nudge-timeout (default 300s), sends "are you stuck?" message to the agent
     - Stage 2: If still no response after remaining time, terminates the session
-    - Total timeout is still controlled by `--idle-timeout` (default 360s)
+    - Total timeout is still controlled by `--idle-timeout` (default 900s)
 - **Timeout Detection**: Monitors both overall timeout and idle timeout
 - **Provider Error Detection**: Detects and handles API errors gracefully
+- **Rate Limit Handling**: Detects API rate limits, sleeps until reset, then retries
 
 ## Requirements
 
@@ -427,6 +447,16 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v0.9.4** (2026-02-15):
+    - Documentation sync: README.md, docs/flow.md, docs/cli-comparison.md, TODO.md updated to reflect actual implementation
+    - Fixed KiloCode command references from old syntax to `kilo run`
+    - Updated default timeout values in documentation to match implementation
+- **v0.9.3** (2026-02-14):
+    - `spernakit` as valid feature ID prefix alongside `feature` and `audit`
+    - `--no-stop-when-done` flag to restore previous continue-after-completion behavior
+    - Default `STOP_WHEN_DONE` changed from `false` to `true`
+    - Security fixes: jq injection prevention, predictable temp files, removed eval usage
+    - Fixed arithmetic operations for `set -e` compatibility
 - **v0.9.2** (2026-02-11):
     - `--filter-by FIELD --filter VALUE`: scope feature selection by any feature.json field (category, priority, status, etc.)
     - Filter-aware `--status`, completion checks, and AI agent prompts

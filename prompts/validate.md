@@ -91,6 +91,7 @@ grep -c '"passes": false' .automaker/features/*/feature.json
     - Run `bun run smoke:dev` (if it does not exist, check all affected pages using curl to ensure no browser/console errors)
     - If browser automation available: test the feature through UI using agent-browser or native browser automation (see testing-requirements.md)
     - If no browser automation: use curl/wget for API endpoints, check build output
+    - Fix any failures immediately
 
 6. **Make determination:**
     - **Feature IS complete (verified):** Code exists AND runtime verification passed → `passes: true`, `status: completed`

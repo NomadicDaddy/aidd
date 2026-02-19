@@ -24,6 +24,7 @@ Consult these as needed throughout the session:
 | `project-overrides.md`       | How to handle project.txt overrides                  |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |
+| `spernakit-standards.md`     | Required technologies for Spernakit projects         |
 
 ### HARD CONSTRAINTS
 

@@ -25,6 +25,7 @@ Consult these as needed throughout the session:
 | `testing-requirements.md`    | Comprehensive UI testing requirements                |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |
+| `spernakit-standards.md`     | Required technologies for Spernakit projects         |
 
 ---
 

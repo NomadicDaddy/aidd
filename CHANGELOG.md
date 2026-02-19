@@ -10,19 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Documentation sync: README.md updated to reflect actual implementation
-  - Fixed KiloCode command: `kilocode --mode code --auto` → `kilo run`
-  - Updated default timeout values: timeout 3600s, idle-timeout 900s, idle-nudge-timeout 300s
-  - Added missing CLI flags: `--no-stop-when-done`, `--audit-all`, `--filter-by`, `--filter`
-  - Expanded error handling section with complete exit codes including rate limiting (74)
-  - Added v0.9.3 to version history
+    - Fixed KiloCode command: `kilocode --mode code --auto` → `kilo run`
+    - Updated default timeout values: timeout 3600s, idle-timeout 900s, idle-nudge-timeout 300s
+    - Added missing CLI flags: `--no-stop-when-done`, `--audit-all`, `--filter-by`, `--filter`
+    - Expanded error handling section with complete exit codes including rate limiting (74)
+    - Added v0.9.3 to version history
 - Documentation sync: docs/flow.md updated
-  - Fixed two-stage idle timeout defaults to match implementation
-  - Added missing exit codes (3-8, 74 for rate limiting)
-  - Removed obsolete version annotations
+    - Fixed two-stage idle timeout defaults to match implementation
+    - Added missing exit codes (3-8, 74 for rate limiting)
+    - Removed obsolete version annotations
 - Documentation sync: docs/cli-comparison.md updated
-  - Fixed KiloCode command from old syntax to `kilo run`
+    - Fixed KiloCode command from old syntax to `kilo run`
 - Documentation sync: TODO.md updated
-  - Fixed KiloCode command references from `kilocode` to `kilo`
+    - Fixed KiloCode command references from `kilocode` to `kilo`
 
 ## [0.9.3] - 2026-02-14
 

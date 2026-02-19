@@ -25,6 +25,7 @@ Consult these as needed throughout the session:
 | `testing-requirements.md`    | Comprehensive UI testing requirements                |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |
+| `spernakit-standards.md`     | Required technologies for Spernakit projects         |
 
 ---
 
@@ -98,7 +99,7 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 
 2. **Verify models exist in codebase:**
     - Search for model definitions in backend directories
-    - Check `schema.prisma` or equivalent for model definitions
+    - Check `backend/src/db/schema/` for Drizzle table definitions
     - Ensure NO duplicate models or commented-out code blocks
     - Verify schema compiles without errors
 
@@ -106,10 +107,10 @@ This prevents catastrophic drift (e.g., building user management when spec requi
 
     ```bash
     # Check schema for required models (example for todo app)
-    grep -E "model (Todo|Task|Item)" schema.prisma
+    grep -r "sqliteTable\('todos\|tasks\|items'" backend/src/db/schema/
 
-    # Verify no duplicates
-    sort schema.prisma | uniq -d
+    # Verify schema files exist
+    ls backend/src/db/schema/
     ```
 
 #### 3.2 Route Structure Verification
@@ -152,6 +153,8 @@ The previous session may have introduced bugs. Always verify before adding new c
 - Formatting: `npm run format:check` or equivalent
 
 **IMPORTANT:** Do not install or create test suites or testing frameworks.
+
+**Run `bun run smoke:dev` if it exists.**
 
 **If ANY tooling fails:** Fix immediately before proceeding. Never ignore tooling failures.
 
@@ -354,8 +357,8 @@ Execute skill /review to perform a thorough code review or, if skill is not avai
 git status
 git diff
 
-# For schema changes, check no duplicates
-sort schema.prisma | uniq -d
+# For schema changes, verify files exist
+ls backend/src/db/schema/
 ```
 
 ---

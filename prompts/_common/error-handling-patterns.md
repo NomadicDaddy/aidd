@@ -469,29 +469,29 @@ Error: Cannot add column 'email': column already exists
 1. **Check migration status:**
 
     ```bash
-    npx prisma migrate status
+    bun run db:migrate --status
     ```
 
-2. **Roll back failed migration:**
-
-    ```bash
-    npx prisma migrate resolve --rolled-back [migration-name]
-    ```
-
-3. **Fix migration code:**
-    - Review migration file
+2. **Fix migration code:**
+    - Review migration file in `backend/drizzle/`
     - Remove duplicate operations
     - Test changes
 
-4. **Re-apply migration:**
+3. **Apply pending migrations:**
 
     ```bash
-    npx prisma migrate dev
+    bun run db:migrate
     ```
 
-5. **Verify schema:**
+4. **For development - push schema directly:**
+
     ```bash
-    npx prisma db push --accept-data-loss
+    bun run --cwd backend db:push
+    ```
+
+5. **Reset database (development only):**
+    ```bash
+    bun run --cwd backend db:reset
     ```
 
 ---
@@ -527,7 +527,7 @@ Error: Model "User" is defined multiple times
 3. **Rollback if corrupted:**
 
     ```bash
-    git checkout -- prisma/schema.prisma
+    git checkout -- backend/src/db/schema/
     ```
 
 4. **Reapply changes carefully:**

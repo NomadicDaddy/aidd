@@ -25,6 +25,7 @@ Consult these as needed throughout the session:
 | `testing-requirements.md`    | Comprehensive UI testing requirements                |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |
+| `spernakit-standards.md`     | Required technologies for Spernakit projects         |
 
 ### HARD CONSTRAINTS
 
@@ -158,7 +159,7 @@ Start by orienting yourself with the existing codebase.
 1. **Backend analysis:**
     - Use your code analysis tool on backend directories (per subdirectory)
     - Identify API routes and endpoints
-    - Check database models (schema.prisma, models/, etc.)
+    - Check database models (backend/src/db/schema/ for Drizzle, models/ for others)
     - Note authentication/authorization
     - Document data validation
 

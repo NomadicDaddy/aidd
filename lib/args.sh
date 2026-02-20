@@ -878,37 +878,12 @@ validate_features() {
     echo "=============================================================================="
     echo ""
 
-    local total_files=0
-    local valid_files=0
-    local invalid_files=0
-    local error_details=""
-
-    # Status counters
-    local status_backlog=0
-    local status_pending=0
-    local status_running=0
-    local status_completed=0
-    local status_failed=0
-    local status_verified=0
-    local status_waiting_approval=0
-    local status_in_progress=0
-    local status_none=0
-
-    # Valid enum values
-    local valid_statuses="backlog pending running completed failed verified waiting_approval in_progress"
-    local valid_thinking_levels="none low medium high ultrathink"
-    local valid_reasoning_efforts="none minimal low medium high xhigh"
-    local valid_planning_modes="skip lite spec full"
-    local valid_plan_spec_statuses="pending generating generated approved rejected"
-    local valid_desc_sources="initial enhance edit"
-    local valid_enhancement_modes="improve technical simplify acceptance ux-reviewer"
-
     # Collect all feature file paths
     local -a feature_files=()
     while IFS= read -r ff; do
         [[ -f "$ff" ]] && feature_files+=("$ff")
     done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
-    total_files=${#feature_files[@]}
+    local total_files=${#feature_files[@]}
 
     if [[ $total_files -eq 0 ]]; then
         echo "No feature files found."
@@ -917,119 +892,130 @@ validate_features() {
         return 0
     fi
 
-    # Collect all valid feature IDs for dependency validation (single jq call)
-    declare -A feature_id_map
-    while IFS= read -r fid; do
-        [[ -n "$fid" ]] && feature_id_map["$fid"]=1
-    done < <(jq -r '.id // empty' "${feature_files[@]}" 2>/dev/null | tr -d '\r')
-
-    # Declare variables for feature validation
-    local _file id_val id_type category_val desc_val status_val
-    local title_type titleGenerating_type passes_val passes_type
-    local priority_type dependencies_type dependencies_invalid dependencies_list
-    local skipTests_type thinkingLevel_val reasoningEffort_val planningMode_val
-    local requirePlanApproval_type planSpec_type planSpec_status_val
-    local planSpec_version_type planSpec_reviewedByUser_type
-    local planSpec_tasksCompleted_type planSpec_tasksTotal_type
-    local imagePaths_type textFilePaths_type descriptionHistory_type
-    local spec_type model_type error_type summary_type branchName_type
-    local startedAt_type createdAt_type updatedAt_type
-    local has_record=false file_errors=""
+    # Counters
+    local valid_files=0
+    local invalid_files=0
+    local error_details=""
+    local status_backlog=0 status_pending=0 status_running=0 status_completed=0
+    local status_failed=0 status_verified=0 status_waiting_approval=0 status_in_progress=0
+    local status_none=0
     declare -A parsed_files
 
-    # Single jq call to extract validation data from ALL feature files
-    # Output: key=BASE64VALUE lines per file, separated by ___REC___ markers
-    while IFS= read -r line; do
-        if [[ "$line" == "___REC___" ]]; then
-            [[ "$has_record" == false ]] && continue
-            has_record=false
-            [[ -z "$_file" ]] && continue
-            local feature_dir=$(dirname "$_file")
-            local feature_id=$(basename "$feature_dir")
-            parsed_files["$feature_id"]=1
-            file_errors=""
+    # Pass 1: Collect all valid feature IDs for dependency validation (single jq call)
+    local all_ids_file
+    all_ids_file=$(mktemp)
+    jq -s '[.[].id // empty]' "${feature_files[@]}" 2>/dev/null > "$all_ids_file"
 
-            # Required field: id
-            if [[ -z "$id_val" ]]; then
-                file_errors+="  ✗ Missing required field: id\n"
-            elif [[ ! "$id_val" =~ ^((feature|spernakit|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$ ]]; then
-                file_errors+="  ✗ Invalid 'id' format: '$id_val' (expected: feature-{timestamp}-{slug}, spernakit-{timestamp}-{slug}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})\n"
-            fi
+    # Write jq validation program to temp file (avoids bash escaping issues with != on Git Bash/Windows)
+    local jq_filter
+    jq_filter=$(mktemp)
+    trap "rm -f '$jq_filter' '$all_ids_file'" RETURN
+    cat > "$jq_filter" << 'JQEOF'
+# Valid enum sets
+def valid_statuses: ["backlog","pending","running","completed","failed","verified","waiting_approval","in_progress"];
+def valid_thinking: ["none","low","medium","high","ultrathink"];
+def valid_reasoning: ["none","minimal","low","medium","high","xhigh"];
+def valid_planning: ["skip","lite","spec","full"];
+def valid_plan_spec: ["pending","generating","generated","approved","rejected"];
 
-            # Required field: category
-            [[ -z "$category_val" ]] && file_errors+="  ✗ Missing required field: category\n"
+# Helper: check optional field type (absent/null OK, wrong type is error)
+def check_opt(field; expected):
+    if has(field) then
+        if .[field] == null then null
+        elif (.[field] | type) == expected then null
+        else "Field '\(field)' must be a \(expected) (got: \(.[field] | type))"
+        end
+    else null end;
 
-            # Required field: description
-            [[ -z "$desc_val" ]] && file_errors+="  ✗ Missing required field: description\n"
+# Extract dir_id from input_filename
+(input_filename | split("/") | .[-2]) as $dir_id |
 
-            # Required field: title
-            [[ "$title_type" == "absent" ]] && file_errors+="  ✗ Missing required field: title\n"
+# Collect all errors
+([
+    # Required: id
+    (if (.id | type) != "string" or .id == "" then "Missing required field: id"
+     elif (.id | test("^((feature|spernakit|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$") | not)
+     then "Invalid 'id' format: '\(.id)' (expected: feature-{timestamp}-{slug}, spernakit-{timestamp}-{slug}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})"
+     else null end),
+    # Required: category, description, title
+    (if (.category | type) != "string" or (.category // "") == "" then "Missing required field: category" else null end),
+    (if (.description | type) != "string" or (.description // "") == "" then "Missing required field: description" else null end),
+    (if has("title") | not then "Missing required field: title"
+     elif .title != null and (.title | type) != "string" then "Field 'title' must be a string (got: \(.title | type))"
+     else null end),
+    # Boolean field checks
+    check_opt("titleGenerating"; "boolean"),
+    check_opt("passes"; "boolean"),
+    check_opt("skipTests"; "boolean"),
+    check_opt("requirePlanApproval"; "boolean"),
+    # Number field checks
+    check_opt("priority"; "number"),
+    # Array field checks
+    (if has("dependencies") and .dependencies != null then
+        if (.dependencies | type) != "array" then "Field 'dependencies' must be an array (got: \(.dependencies | type))"
+        elif ([.dependencies[] | select(type != "string")] | length > 0) then "Field 'dependencies' must contain only strings"
+        else null end
+     else null end),
+    # Dependency existence check
+    (if (.dependencies | type) == "array" then
+        (.dependencies[] | select(. as $d | $all_ids[0] | map(select(. == $d)) | length == 0) | "Dependency '\(.)' does not exist in project")
+     else null end),
+    (if has("imagePaths") and .imagePaths != null and (.imagePaths | type) != "array" then "Field 'imagePaths' must be an array (got: \(.imagePaths | type))" else null end),
+    (if has("textFilePaths") and .textFilePaths != null and (.textFilePaths | type) != "array" then "Field 'textFilePaths' must be an array (got: \(.textFilePaths | type))" else null end),
+    (if has("descriptionHistory") and .descriptionHistory != null and (.descriptionHistory | type) != "array" then "Field 'descriptionHistory' must be an array (got: \(.descriptionHistory | type))" else null end),
+    # planSpec checks
+    (if has("planSpec") and .planSpec != null then
+        if (.planSpec | type) != "object" then "Field 'planSpec' must be an object (got: \(.planSpec | type))"
+        else null end
+     else null end),
+    (if .planSpec != null and (.planSpec | type) == "object" then
+        (if (.planSpec | has("version")) and (.planSpec.version | type) != "number" then "Field 'planSpec.version' must be a number (got: \(.planSpec.version | type))" else null end),
+        (if (.planSpec | has("reviewedByUser")) and (.planSpec.reviewedByUser | type) != "boolean" then "Field 'planSpec.reviewedByUser' must be a boolean (got: \(.planSpec.reviewedByUser | type))" else null end),
+        (if (.planSpec | has("tasksCompleted")) and (.planSpec.tasksCompleted | type) != "number" then "Field 'planSpec.tasksCompleted' must be a number (got: \(.planSpec.tasksCompleted | type))" else null end),
+        (if (.planSpec | has("tasksTotal")) and (.planSpec.tasksTotal | type) != "number" then "Field 'planSpec.tasksTotal' must be a number (got: \(.planSpec.tasksTotal | type))" else null end)
+     else null end),
+    # String field checks
+    check_opt("spec"; "string"),
+    check_opt("model"; "string"),
+    check_opt("error"; "string"),
+    check_opt("summary"; "string"),
+    check_opt("branchName"; "string"),
+    check_opt("startedAt"; "string"),
+    check_opt("createdAt"; "string"),
+    check_opt("updatedAt"; "string"),
+    # Enum validations
+    (if (.status // "") != "" and (.status | type) == "string" and ([.status] - valid_statuses | length > 0) then "Invalid 'status' value: '\(.status)' (valid: \(valid_statuses | join(" ")))" else null end),
+    (if (.thinkingLevel // "") != "" and ([.thinkingLevel] - valid_thinking | length > 0) then "Invalid 'thinkingLevel' value: '\(.thinkingLevel)' (valid: \(valid_thinking | join(" ")))" else null end),
+    (if (.reasoningEffort // "") != "" and ([.reasoningEffort] - valid_reasoning | length > 0) then "Invalid 'reasoningEffort' value: '\(.reasoningEffort)' (valid: \(valid_reasoning | join(" ")))" else null end),
+    (if (.planningMode // "") != "" and ([.planningMode] - valid_planning | length > 0) then "Invalid 'planningMode' value: '\(.planningMode)' (valid: \(valid_planning | join(" ")))" else null end),
+    (if (.planSpec.status // "") != "" and ([.planSpec.status] - valid_plan_spec | length > 0) then "Invalid 'planSpec.status' value: '\(.planSpec.status)' (valid: \(valid_plan_spec | join(" ")))" else null end)
+] | map(select(. != null))) as $errors |
 
-            # Type checks for optional fields
-            [[ "$title_type" != "absent" && "$title_type" != "string" && "$title_type" != "null" ]] && file_errors+="  ✗ Field 'title' must be a string (got: $title_type)\n"
-            [[ "$titleGenerating_type" != "absent" && "$titleGenerating_type" != "boolean" ]] && file_errors+="  ✗ Field 'titleGenerating' must be a boolean (got: $titleGenerating_type)\n"
-            [[ "$passes_type" != "absent" && "$passes_type" != "boolean" ]] && file_errors+="  ✗ Field 'passes' must be a boolean (got: $passes_type)\n"
-            [[ "$priority_type" != "absent" && "$priority_type" != "number" ]] && file_errors+="  ✗ Field 'priority' must be a number (got: $priority_type)\n"
-            [[ "$skipTests_type" != "absent" && "$skipTests_type" != "boolean" ]] && file_errors+="  ✗ Field 'skipTests' must be a boolean (got: $skipTests_type)\n"
-            [[ "$requirePlanApproval_type" != "absent" && "$requirePlanApproval_type" != "boolean" ]] && file_errors+="  ✗ Field 'requirePlanApproval' must be a boolean (got: $requirePlanApproval_type)\n"
+if ($errors | length) == 0 then
+    "OK\t\($dir_id)\t\(.passes // false)\t\(.status // "")"
+else
+    "ERR\t\($dir_id)\t\(input_filename)",
+    ($errors[] | "ERRMSG\t\(.)"),
+    "END\t\($dir_id)"
+end
+JQEOF
 
-            # Array type checks
-            [[ "$dependencies_type" != "absent" && "$dependencies_type" != "array" && "$dependencies_type" != "null" ]] && file_errors+="  ✗ Field 'dependencies' must be an array (got: $dependencies_type)\n"
-            [[ "$dependencies_invalid" == "true" ]] && file_errors+="  ✗ Field 'dependencies' must contain only strings\n"
-
-            # Check that each dependency references an existing feature (O(1) lookup)
-            if [[ -n "$dependencies_list" && "$dependencies_invalid" != "true" ]]; then
-                IFS=',' read -ra dep_array <<< "$dependencies_list"
-                for dep in "${dep_array[@]}"; do
-                    if [[ -z "${feature_id_map[$dep]+isset}" ]]; then
-                        file_errors+="  ✗ Dependency '$dep' does not exist in project\n"
-                    fi
-                done
-            fi
-
-            [[ "$imagePaths_type" != "absent" && "$imagePaths_type" != "array" && "$imagePaths_type" != "null" ]] && file_errors+="  ✗ Field 'imagePaths' must be an array (got: $imagePaths_type)\n"
-            [[ "$textFilePaths_type" != "absent" && "$textFilePaths_type" != "array" && "$textFilePaths_type" != "null" ]] && file_errors+="  ✗ Field 'textFilePaths' must be an array (got: $textFilePaths_type)\n"
-            [[ "$descriptionHistory_type" != "absent" && "$descriptionHistory_type" != "array" && "$descriptionHistory_type" != "null" ]] && file_errors+="  ✗ Field 'descriptionHistory' must be an array (got: $descriptionHistory_type)\n"
-
-            # planSpec object checks
-            [[ "$planSpec_type" != "absent" && "$planSpec_type" != "object" && "$planSpec_type" != "null" ]] && file_errors+="  ✗ Field 'planSpec' must be an object (got: $planSpec_type)\n"
-            [[ "$planSpec_version_type" != "absent" && "$planSpec_version_type" != "number" ]] && file_errors+="  ✗ Field 'planSpec.version' must be a number (got: $planSpec_version_type)\n"
-            [[ "$planSpec_reviewedByUser_type" != "absent" && "$planSpec_reviewedByUser_type" != "boolean" ]] && file_errors+="  ✗ Field 'planSpec.reviewedByUser' must be a boolean (got: $planSpec_reviewedByUser_type)\n"
-            [[ "$planSpec_tasksCompleted_type" != "absent" && "$planSpec_tasksCompleted_type" != "number" ]] && file_errors+="  ✗ Field 'planSpec.tasksCompleted' must be a number (got: $planSpec_tasksCompleted_type)\n"
-            [[ "$planSpec_tasksTotal_type" != "absent" && "$planSpec_tasksTotal_type" != "number" ]] && file_errors+="  ✗ Field 'planSpec.tasksTotal' must be a number (got: $planSpec_tasksTotal_type)\n"
-
-            # String field type checks
-            [[ "$spec_type" != "absent" && "$spec_type" != "string" && "$spec_type" != "null" ]] && file_errors+="  ✗ Field 'spec' must be a string (got: $spec_type)\n"
-            [[ "$model_type" != "absent" && "$model_type" != "string" && "$model_type" != "null" ]] && file_errors+="  ✗ Field 'model' must be a string (got: $model_type)\n"
-            [[ "$error_type" != "absent" && "$error_type" != "string" && "$error_type" != "null" ]] && file_errors+="  ✗ Field 'error' must be a string (got: $error_type)\n"
-            [[ "$summary_type" != "absent" && "$summary_type" != "string" && "$summary_type" != "null" ]] && file_errors+="  ✗ Field 'summary' must be a string (got: $summary_type)\n"
-            [[ "$branchName_type" != "absent" && "$branchName_type" != "string" && "$branchName_type" != "null" ]] && file_errors+="  ✗ Field 'branchName' must be a string (got: $branchName_type)\n"
-            [[ "$startedAt_type" != "absent" && "$startedAt_type" != "string" && "$startedAt_type" != "null" ]] && file_errors+="  ✗ Field 'startedAt' must be a string (got: $startedAt_type)\n"
-            [[ "$createdAt_type" != "absent" && "$createdAt_type" != "string" && "$createdAt_type" != "null" ]] && file_errors+="  ✗ Field 'createdAt' must be a string (got: $createdAt_type)\n"
-            [[ "$updatedAt_type" != "absent" && "$updatedAt_type" != "string" && "$updatedAt_type" != "null" ]] && file_errors+="  ✗ Field 'updatedAt' must be a string (got: $updatedAt_type)\n"
-
-            # Enum validations
-            [[ -n "$status_val" && ! " $valid_statuses " =~ " $status_val " ]] && file_errors+="  ✗ Invalid 'status' value: '$status_val' (valid: $valid_statuses)\n"
-            [[ -n "$thinkingLevel_val" && ! " $valid_thinking_levels " =~ " $thinkingLevel_val " ]] && file_errors+="  ✗ Invalid 'thinkingLevel' value: '$thinkingLevel_val' (valid: $valid_thinking_levels)\n"
-            [[ -n "$reasoningEffort_val" && ! " $valid_reasoning_efforts " =~ " $reasoningEffort_val " ]] && file_errors+="  ✗ Invalid 'reasoningEffort' value: '$reasoningEffort_val' (valid: $valid_reasoning_efforts)\n"
-            [[ -n "$planningMode_val" && ! " $valid_planning_modes " =~ " $planningMode_val " ]] && file_errors+="  ✗ Invalid 'planningMode' value: '$planningMode_val' (valid: $valid_planning_modes)\n"
-            [[ -n "$planSpec_status_val" && ! " $valid_plan_spec_statuses " =~ " $planSpec_status_val " ]] && file_errors+="  ✗ Invalid 'planSpec.status' value: '$planSpec_status_val' (valid: $valid_plan_spec_statuses)\n"
-
-            if [[ -n "$file_errors" ]]; then
-                invalid_files=$((invalid_files + 1))
-                echo "  ❌ $feature_id (invalid)"
-                error_details+="❌ $feature_id\n"
-                error_details+="   File: $_file\n"
-                error_details+="$file_errors\n"
-            else
+    # Pass 2: Run ALL validation in jq — outputs one line per file:
+    #   OK\tdir_id\tpasses\tstatus         (valid file)
+    #   ERR\tdir_id\tfile_path\terror_msg   (invalid file, one line per error)
+    #   END\tdir_id                         (marks end of a file's errors)
+    while IFS=$'\t' read -r tag arg1 arg2 arg3; do
+        case "$tag" in
+            OK)
+                local dir_id="$arg1" passes="$arg2" status="$arg3"
+                parsed_files["$dir_id"]=1
                 valid_files=$((valid_files + 1))
-                if [[ "$passes_val" == "true" ]]; then
-                    echo "  ✅ $feature_id (valid, complete)"
+                if [[ "$passes" == "true" ]]; then
+                    echo "  ✅ $dir_id (valid, complete)"
                 else
-                    echo "  ⬜ $feature_id (valid, not complete)"
+                    echo "  ⬜ $dir_id (valid, not complete)"
                 fi
-                # Count by status
-                case "$status_val" in
+                case "$status" in
                     backlog) status_backlog=$((status_backlog + 1)) ;;
                     pending) status_pending=$((status_pending + 1)) ;;
                     running) status_running=$((status_running + 1)) ;;
@@ -1040,79 +1026,22 @@ validate_features() {
                     in_progress) status_in_progress=$((status_in_progress + 1)) ;;
                     *) status_none=$((status_none + 1)) ;;
                 esac
-            fi
-            # Reset variables for next record
-            _file="" id_val="" id_type="" category_val="" desc_val="" status_val=""
-            title_type="" titleGenerating_type="" passes_val="" passes_type=""
-            priority_type="" dependencies_type="" dependencies_invalid="" dependencies_list=""
-            skipTests_type="" thinkingLevel_val="" reasoningEffort_val="" planningMode_val=""
-            requirePlanApproval_type="" planSpec_type="" planSpec_status_val=""
-            planSpec_version_type="" planSpec_reviewedByUser_type=""
-            planSpec_tasksCompleted_type="" planSpec_tasksTotal_type=""
-            imagePaths_type="" textFilePaths_type="" descriptionHistory_type=""
-            spec_type="" model_type="" error_type="" summary_type="" branchName_type=""
-            startedAt_type="" createdAt_type="" updatedAt_type=""
-        elif [[ "$line" == *=* ]]; then
-            # Decode base64-encoded field value and safely assign via printf -v (no eval)
-            local key="${line%%=*}"
-            local b64_val="${line#*=}"
-            case "$key" in
-                _file|id_val|id_type|category_val|desc_val|status_val|\
-                title_type|titleGenerating_type|passes_val|passes_type|\
-                priority_type|dependencies_type|dependencies_invalid|dependencies_list|\
-                skipTests_type|thinkingLevel_val|reasoningEffort_val|planningMode_val|\
-                requirePlanApproval_type|planSpec_type|planSpec_status_val|\
-                planSpec_version_type|planSpec_reviewedByUser_type|\
-                planSpec_tasksCompleted_type|planSpec_tasksTotal_type|\
-                imagePaths_type|textFilePaths_type|descriptionHistory_type|\
-                spec_type|model_type|error_type|summary_type|branchName_type|\
-                startedAt_type|createdAt_type|updatedAt_type)
-                    printf -v "$key" '%s' "$(printf '%s' "$b64_val" | base64 -d 2>/dev/null)"
-                    has_record=true
-                    ;;
-            esac
-        fi
-    done < <(jq -r '
-        ({
-            _file: input_filename,
-            id_val: .id,
-            id_type: (.id | type),
-            category_val: .category,
-            desc_val: .description,
-            title_type: (if has("title") then (.title | type) else "absent" end),
-            titleGenerating_type: (if has("titleGenerating") then (.titleGenerating | type) else "absent" end),
-            passes_val: (.passes // false),
-            passes_type: (if has("passes") then (.passes | type) else "absent" end),
-            priority_type: (if has("priority") then (.priority | type) else "absent" end),
-            status_val: .status,
-            dependencies_type: (if has("dependencies") then (.dependencies | type) else "absent" end),
-            dependencies_invalid: (if (.dependencies | type) == "array" then ([.dependencies[] | select(type != "string")] | length > 0) else false end),
-            dependencies_list: (if (.dependencies | type) == "array" then (.dependencies | join(",")) else "" end),
-            skipTests_type: (if has("skipTests") then (.skipTests | type) else "absent" end),
-            thinkingLevel_val: (.thinkingLevel // ""),
-            reasoningEffort_val: (.reasoningEffort // ""),
-            planningMode_val: (.planningMode // ""),
-            requirePlanApproval_type: (if has("requirePlanApproval") then (.requirePlanApproval | type) else "absent" end),
-            planSpec_type: (if has("planSpec") then (.planSpec | type) else "absent" end),
-            planSpec_status_val: (.planSpec.status // ""),
-            planSpec_version_type: (if .planSpec != null and (.planSpec | has("version")) then (.planSpec.version | type) else "absent" end),
-            planSpec_reviewedByUser_type: (if .planSpec != null and (.planSpec | has("reviewedByUser")) then (.planSpec.reviewedByUser | type) else "absent" end),
-            planSpec_tasksCompleted_type: (if .planSpec != null and (.planSpec | has("tasksCompleted")) then (.planSpec.tasksCompleted | type) else "absent" end),
-            planSpec_tasksTotal_type: (if .planSpec != null and (.planSpec | has("tasksTotal")) then (.planSpec.tasksTotal | type) else "absent" end),
-            imagePaths_type: (if has("imagePaths") then (.imagePaths | type) else "absent" end),
-            textFilePaths_type: (if has("textFilePaths") then (.textFilePaths | type) else "absent" end),
-            descriptionHistory_type: (if has("descriptionHistory") then (.descriptionHistory | type) else "absent" end),
-            spec_type: (if has("spec") then (.spec | type) else "absent" end),
-            model_type: (if has("model") then (.model | type) else "absent" end),
-            error_type: (if has("error") then (.error | type) else "absent" end),
-            summary_type: (if has("summary") then (.summary | type) else "absent" end),
-            branchName_type: (if has("branchName") then (.branchName | type) else "absent" end),
-            startedAt_type: (if has("startedAt") then (.startedAt | type) else "absent" end),
-            createdAt_type: (if has("createdAt") then (.createdAt | type) else "absent" end),
-            updatedAt_type: (if has("updatedAt") then (.updatedAt | type) else "absent" end)
-        } | to_entries | .[] | "\(.key)=\(.value | tostring | @base64)"),
-        "___REC___"
-    ' "${feature_files[@]}" 2>/dev/null | tr -d '\r')
+                ;;
+            ERR)
+                echo "  ❌ $arg1 (invalid)"
+                error_details+="❌ $arg1\n"
+                error_details+="   File: $arg2\n"
+                ;;
+            ERRMSG)
+                error_details+="  ✗ $arg1\n"
+                ;;
+            END)
+                parsed_files["$arg1"]=1
+                invalid_files=$((invalid_files + 1))
+                error_details+="\n"
+                ;;
+        esac
+    done < <(jq -r -f "$jq_filter" --slurpfile all_ids "$all_ids_file" "${feature_files[@]}" 2>/dev/null | tr -d '\r')
 
     # Detect files with invalid JSON (not processed by jq)
     for ff in "${feature_files[@]}"; do

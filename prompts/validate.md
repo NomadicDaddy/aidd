@@ -294,7 +294,34 @@ git commit -m "chore(validation): validate features and todos [aidd-validate]" \
 
 ---
 
-### STEP 6: EXIT CLEANLY
+### STEP 6: POST-VALIDATION INTEGRITY CHECK
+
+**CRITICAL: Verify all feature.json files are structurally valid after modifications.**
+
+After committing changes, run the aidd integrity checks to ensure no feature.json files were corrupted or left in an invalid state during validation:
+
+```bash
+# Validate all feature.json files pass structural checks (valid JSON, required fields, valid IDs, etc.)
+aidd --check-features --project-dir .
+
+# Verify feature status summary is consistent
+aidd --status --project-dir .
+```
+
+**If `--check-features` reports invalid files:**
+
+1. Read the error output to identify which files are invalid and why
+2. Fix each invalid feature.json (common issues: malformed JSON, missing required fields, invalid ID format, bad timestamps)
+3. Re-run `--check-features` until all files pass
+4. Amend or create a new commit with the fixes
+
+**If `--status` fails:** Investigate and fix the underlying issue before proceeding.
+
+**Both commands must exit cleanly before proceeding to Step 7.**
+
+---
+
+### STEP 7: EXIT CLEANLY
 
 **Complete the validation session successfully.**
 

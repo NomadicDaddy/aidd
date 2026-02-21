@@ -146,11 +146,11 @@ handle_failure() {
         fi
         return 0
     fi
-    
+
     # Increment failure counter
     CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
     log_warn "$CLI_NAME failed (exit=$exit_code); this is failure #$CONSECUTIVE_FAILURES"
-    
+
     # Check if we should quit or continue
     if [[ $QUIT_ON_ABORT -gt 0 && $CONSECUTIVE_FAILURES -ge $QUIT_ON_ABORT ]]; then
         log_error "Reached failure threshold ($QUIT_ON_ABORT); quitting."
@@ -158,7 +158,7 @@ handle_failure() {
     else
         log_info "Continuing to next iteration (threshold: $QUIT_ON_ABORT)"
     fi
-    
+
     return 0
 }
 
@@ -844,7 +844,7 @@ HEREDOC_END
 
 **STEP 0: Load project rules (if they exist):**
 
-- Read `.windsurf/rules/`, `CLAUDE.md`, `AGENTS.md`
+- Read `CLAUDE.md`, `AGENTS.md`, `.windsurf/rules/`
 - Apply these rules throughout your work
 - Assistant rules override generic instructions
 
@@ -1040,7 +1040,7 @@ check_project_completion() {
         git_root="$(cd "$metadata_dir/.." 2>/dev/null && pwd)" || git_root="$metadata_dir/.."
         for fpath in "${all_feature_files[@]}"; do
             local rel_path="${fpath#$git_root/}"
-            
+
             if git -C "$git_root" diff --quiet -- "$rel_path" 2>/dev/null && \
                git -C "$git_root" diff --cached --quiet -- "$rel_path" 2>/dev/null; then
                 unmodified_files+=("$fpath")
@@ -1048,7 +1048,7 @@ check_project_completion() {
                 modified_files+=("$fpath")
             fi
         done
-        
+
         log_debug "Found ${#modified_files[@]} modified, ${#unmodified_files[@]} unmodified features"
     else
         while IFS= read -r fpath; do
@@ -1121,7 +1121,7 @@ check_project_completion() {
         for feature_file in "${unmodified_files[@]}"; do
             local cached_status_val="${cached_status[$feature_file]:-}"
             local cached_passes_val="${cached_passes[$feature_file]:-}"
-            
+
             if [[ -z "$cached_status_val" || -z "$cached_passes_val" ]]; then
                 log_debug "Feature not in cache, checking: $feature_file"
                 if ! check_feature_file "$feature_file"; then

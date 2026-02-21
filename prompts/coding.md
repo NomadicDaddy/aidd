@@ -35,7 +35,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
+1. Look for and read: `CLAUDE.md`, `AGENTS.md`, `.windsurf/rules/`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -268,10 +268,11 @@ For each feature with `"passes": false`:
 
 **Check `/.automaker/todo.md` for priority work:**
 
-1. If todo.md exists and has items, intelligently convert each to `features/*/feature.json` entry
-2. This is the ONLY time you may ADD to features/\*/feature.json
-3. Remove items from todo.md as you add them
-4. Delete or empty todo.md when complete
+1. If todo.md exists and has items, intelligently convert each to its own `features/{feature-id}/feature.json` file
+2. Each feature MUST be in its own directory — one JSON object per file, NOT an array
+3. This is the ONLY time you may ADD to features/
+4. Remove items from todo.md as you add them
+5. Delete or empty todo.md when complete
 
 #### 6.3 Validate and Select Feature
 

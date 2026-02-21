@@ -40,7 +40,7 @@ Consult these as needed throughout the session:
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-1. Look for and read: `.windsurf/rules/`, `AGENTS.md`, and any tool/assistant-specific rule files (if present)
+1. Look for and read: `CLAUDE.md`, `AGENTS.md`, `.windsurf/rules/`, and any tool/assistant-specific rule files (if present)
 2. Apply these rules throughout the session
 3. Assistant rules OVERRIDE generic instructions
 4. Document key rules in your initial assessment
@@ -86,7 +86,27 @@ Start by orienting yourself with the project.
 
 ### STEP 3: CREATE FEATURE LIST
 
-**Based on `/.automaker/app_spec.txt`, create `/.automaker/features/{feature-id}/feature.json` with 20+ detailed tests.**
+**Based on `/.automaker/app_spec.txt`, create individual feature files at `/.automaker/features/{feature-id}/feature.json` — minimum 20 features.**
+
+**CRITICAL: Each feature MUST be in its own directory and file!**
+
+- Create a directory for each feature: `/.automaker/features/{feature-id}/`
+- Place a single `feature.json` file in each directory (a single JSON **object**, NOT an array)
+- The directory name should match the `id` field value in the JSON
+- Do NOT put multiple features in one file or one directory
+
+**Required structure:**
+
+```
+.automaker/
+  features/
+    feature-20260109142345-abc123/
+      feature.json          ← single JSON object { "id": "feature-20260109142345-abc123", ... }
+    feature-20260109142346-def456/
+      feature.json          ← single JSON object { "id": "feature-20260109142346-def456", ... }
+    feature-20260109142347-ghi789/
+      feature.json          ← single JSON object { "id": "feature-20260109142347-ghi789", ... }
+```
 
 #### 3.1 Read and Understand Spec
 
@@ -176,15 +196,18 @@ Feature JSON must follow AutoMaker format exactly:
 **After writing, immediately verify:**
 
 ```bash
-# Read file to confirm valid JSON
- # Use your file read tool to read .automaker/features/{id}/feature.json
+# Count feature directories (must be >= 20)
+ls .automaker/features/ | wc -l
 
-# Check structure is correct
+# Verify each feature.json is valid JSON (not an array)
+find .automaker/features -name 'feature.json' -exec sh -c 'jq type "$1" | grep -q object || echo "INVALID: $1"' _ {} \;
+
 # Verify all features have "passes": false
-# Confirm at least 20 features exist
+grep -l '"passes": true' .automaker/features/*/feature.json
+# ^ Should return no results
 ```
 
-**If file is corrupted:** Use `git checkout -- .automaker/features/{id}/feature.json` to rollback and retry.
+**If a file is corrupted:** Use `git checkout -- .automaker/features/{id}/feature.json` to rollback and retry.
 
 ---
 
@@ -398,8 +421,9 @@ git log -1
 
 #### 9.1 Verification Checklist
 
-- [ ] `/.automaker/features/{feature-id}/feature.json` exists and is valid JSON
-- [ ] Feature list has minimum 20 features, all with `"passes": false`
+- [ ] `/.automaker/features/` contains one directory per feature, each with its own `feature.json`
+- [ ] Each `feature.json` is a single JSON object (not an array)
+- [ ] Minimum 20 feature directories exist, all with `"passes": false`
 - [ ] `scripts/setup.ts` exists or was skipped (if already present)
 - [ ] Setup script executed successfully (if it exists)
 - [ ] Project structure created (frontend/, backend/, etc.)
@@ -411,11 +435,11 @@ git log -1
 #### 9.2 Run Verification Commands
 
 ```bash
-# Verify feature list
- # Use your file read tool to inspect .automaker/features/{id}/feature.json
+# Count feature directories (must be >= 20)
+ls .automaker/features/ | wc -l
 
-# Count features
-grep -c '"passes"' .automaker/features/{id}/feature.json
+# Verify each is a JSON object, not an array
+find .automaker/features -name 'feature.json' -exec sh -c 'jq type "$1" | grep -q object || echo "INVALID: $1"' _ {} \;
 
 # Verify project structure
  # Use your directory list tool to list the project root
@@ -512,7 +536,7 @@ git commit -m "Complete initialization - ready for development"
 
 ### What to Create
 
-- Feature list (/.automaker/features/{id}/feature.json)
+- Feature directories (/.automaker/features/{id}/feature.json — one per feature, NOT arrays)
 - Setup script (scripts/setup.ts, if needed)
 - Project structure (directories)
 - README.md

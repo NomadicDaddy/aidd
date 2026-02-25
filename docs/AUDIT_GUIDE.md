@@ -90,12 +90,13 @@ Run these during rebuilds, rewrites, or major version migrations.
 
 Stack-specific audits — run only on applicable projects.
 
-| Audit       | Priority | Time | Applies To                     |
-| ----------- | -------- | ---- | ------------------------------ |
-| `CONVEX`    | Critical | 1-2h | Convex backend projects        |
-| `SPERNAKIT` | High     | 3-5h | Spernakit-derived applications |
-| `SSOC`      | Medium   | 1-2h | Component-heavy frontends      |
-| `AI`        | High     | 4-8h | AI-enabled projects            |
+| Audit         | Priority | Time | Applies To                        |
+| ------------- | -------- | ---- | --------------------------------- |
+| `CONVEX`      | Critical | 1-2h | Convex backend projects           |
+| `SPERNAKIT`   | High     | 3-5h | Spernakit v2-derived applications |
+| `SPERNAKITV1` | High     | 3-5h | Spernakit v1-derived applications |
+| `SSOC`        | Medium   | 1-2h | Component-heavy frontends         |
+| `AI`          | High     | 4-8h | AI-enabled projects               |
 
 ### Reference
 

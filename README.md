@@ -373,7 +373,7 @@ Project Metadata (.automaker/):
 
 ## How It Works
 
-1. **CLI Initialization**: Determines which CLI to use (OpenCode or KiloCode)
+1. **CLI Initialization**: Determines which CLI to use (OpenCode, KiloCode, or Claude Code)
 2. **Project Detection**: Detects if the target directory is an existing codebase
 3. **Metadata Setup**: Creates or migrates `.automaker` directory
 4. **Iteration Loop**: Runs in a loop based on `--max-iterations`:

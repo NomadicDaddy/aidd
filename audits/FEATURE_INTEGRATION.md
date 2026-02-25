@@ -372,4 +372,4 @@ This audit document is the source of truth for detecting and classifying feature
 - **DEAD_CODE.md**: Finds code with zero import references (orphaned files, unused exports)
 - **FEATURE_INTEGRATION.md**: Finds code with import references that form self-contained islands unreachable from user paths
 
-Prevention rules derived from this audit are enforced as architectural constraints in the project's `project.txt` specification. Workflow integration is documented in `DEVELOPMENT.md` (Creating New Endpoints, Creating New Pages, Task Completion sections).
+Prevention rules derived from this audit are enforced as architectural constraints in the project's `project.md` specification. Workflow integration is documented in `DEVELOPMENT.md` (Creating New Endpoints, Creating New Pages, Task Completion sections).

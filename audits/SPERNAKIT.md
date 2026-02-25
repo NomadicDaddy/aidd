@@ -20,7 +20,7 @@ This document provides a structured audit framework for evaluating derived appli
 | Document          | Path                                    | Purpose                                      |
 | ----------------- | --------------------------------------- | -------------------------------------------- |
 | Stack Reference   | `spernakit/docs/template/STACK.md`      | Core architecture and commands               |
-| Project Overrides | `spernakit/.automaker/project.txt`      | Technology-specific constraints              |
+| Project Overrides | `spernakit/.automaker/project.md`       | Technology-specific constraints              |
 | Template Refactor | `.claude/commands/template-refactor.md` | Bidirectional enhancement detection workflow |
 | Enhancement Log   | `.claude/logs/template-enhancements.md` | Historical record of template improvements   |
 

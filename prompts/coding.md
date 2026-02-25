@@ -11,7 +11,7 @@ You are in Code mode and ready to continue work on a long-running autonomous dev
 - **Feature tests checklist:** `/.automaker/features/*/feature.json`
 - **Todo list:** `/.automaker/todo.md`
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
-- **Project overrides (highest priority):** `/.automaker/project.txt`
+- **Project overrides (highest priority):** `/.automaker/project.md`
 
 ### COMMON GUIDELINES (/\_common/)
 
@@ -21,7 +21,7 @@ Consult these as needed throughout the session:
 | ---------------------------- | ---------------------------------------------------- |
 | `hard-constraints.md`        | Non-negotiable constraints (blocking processes, etc) |
 | `assistant-rules-loading.md` | How to load and apply project rules                  |
-| `project-overrides.md`       | How to handle project.txt overrides                  |
+| `project-overrides.md`       | How to handle project.md overrides                   |
 | `testing-requirements.md`    | Comprehensive UI testing requirements                |
 | `file-integrity.md`          | Safe file editing and verification protocols         |
 | `error-handling-patterns.md` | Common errors and recovery strategies                |
@@ -44,9 +44,9 @@ Consult these as needed throughout the session:
 
 ### STEP 1: CHECK PROJECT OVERRIDES
 
-**CRITICAL: Check for `/.automaker/project.txt` before proceeding.**
+**CRITICAL: Check for `/.automaker/project.md` before proceeding.**
 
-1. Read `/.automaker/project.txt` if it exists
+1. Read `/.automaker/project.md` if it exists
 2. Apply all overrides throughout the session
 3. Project overrides have HIGHEST priority
 4. Document overrides in your initial assessment

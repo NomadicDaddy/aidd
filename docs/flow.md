@@ -318,7 +318,7 @@ All prompts follow modular structure with shared `_common/` modules:
 ### Common Modules
 
 - `assistant-rules-loading.md` - Load project-specific rules
-- `project-overrides.md` - Handle project.txt overrides
+- `project-overrides.md` - Handle project.md overrides
 - `testing-requirements.md` - UI testing guidelines
 - `file-integrity.md` - Safe file editing protocols
 - `hard-constraints.md` - Non-negotiable constraints

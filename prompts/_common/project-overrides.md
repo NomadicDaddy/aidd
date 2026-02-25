@@ -2,25 +2,25 @@
 
 **CRITICAL: Check for project-specific overrides that supersede generic instructions.**
 
-### 1. Check for project.txt
+### 1. Check for project.md
 
-Look for `/.automaker/project.txt` in the project directory. This file contains project-specific instructions that **OVERRIDE** generic instructions in this prompt.
+Look for `/.automaker/project.md` in the project directory. This file contains project-specific instructions that **OVERRIDE** generic instructions in this prompt.
 
-**If project.txt exists:**
+**If project.md exists:**
 
 - Read it immediately before proceeding
 - Treat it as the highest-priority instruction source
 - Apply all overrides throughout the session
 - Document the overrides in your initial assessment
 
-**If project.txt doesn't exist:**
+**If project.md doesn't exist:**
 
 - Proceed with generic instructions
 - Note its absence in your assessment
 
 ### 2. Common Override Categories
 
-Project.txt may include:
+project.md may include:
 
 **Testing Procedures:**
 
@@ -54,20 +54,20 @@ Project.txt may include:
 
 **Priority order (highest to lowest):**
 
-1. `/.automaker/project.txt` - Highest priority, overrides everything
+1. `/.automaker/project.md` - Highest priority, overrides everything
 2. Assistant rule files (`CLAUDE.md`, `AGENTS.md`, `.windsurf/rules/`, and any tool/assistant-specific rule files, etc.)
 3. Generic prompt instructions
 4. Default behaviors
 
 **Resolution strategy:**
 
-- If project.txt conflicts with this prompt → Follow project.txt
-- If project.txt is silent on a topic → Follow assistant rules
+- If project.md conflicts with this prompt → Follow project.md
+- If project.md is silent on a topic → Follow assistant rules
 - If both are silent → Follow generic prompt instructions
 
 ### 4. Example Overrides
 
-**Example project.txt content:**
+**Example project.md content:**
 
 ```txt
 ## Testing Override
@@ -90,7 +90,7 @@ Use: import { isFeatureEnabled } from '@/lib/features'
 
 Before proceeding to the next step, confirm:
 
-- [ ] Searched for `/.automaker/project.txt`
+- [ ] Searched for `/.automaker/project.md`
 - [ ] If found, read and understood all overrides
 - [ ] Documented overrides in initial assessment
 - [ ] Understand which instructions take precedence

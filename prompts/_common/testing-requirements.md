@@ -18,7 +18,7 @@
 2. **Direct browser control/automation** using your environment's native browser automation tool (see CLI reference for exact tool name and syntax)
 3. **Puppeteer scripted testing** (when explicitly required)
 
-**Always prefer agent-browser** unless it is unavailable or the project explicitly overrides this in `project.txt`.
+**Always prefer agent-browser** unless it is unavailable or the project explicitly overrides this in `project.md`.
 
 ### Available Testing Tools
 
@@ -215,6 +215,6 @@ agent-browser screenshot ./login-error.png
 - Feature is pure backend (no UI component)
 - UI verification is blocked by external dependency
 - agent-browser is not installed and no native browser automation is available
-- Project.txt explicitly overrides testing requirements
+- project.md explicitly overrides testing requirements
 
 **In all other cases, browser verification is MANDATORY.**

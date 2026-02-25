@@ -282,7 +282,7 @@ Error: Cannot find module 'eslint-config-next'
     - Find working config from template
     - Adapt to current project
 
-4. **Check project.txt for overrides:**
+4. **Check project.md for overrides:**
     - May specify custom config location
     - May disable certain tools
 

@@ -419,7 +419,7 @@ You are in AUDIT mode performing a comprehensive codebase audit.
 - **Feature tests checklist:** `/.automaker/features/*/feature.json`
 - **Changelog:** `/.automaker/CHANGELOG.md`
 - **Audit reference materials:** `/.automaker/audits/` (if audit guidelines reference other audits)
-- **Project overrides (highest priority):** `/.automaker/project.txt`
+- **Project overrides (highest priority):** `/.automaker/project.md`
 
 ### COMMON GUIDELINES
 
@@ -427,7 +427,7 @@ You are in AUDIT mode performing a comprehensive codebase audit.
 
 - **hard-constraints.md** - Non-negotiable constraints
 - **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
-- **project-overrides.md** - How to handle project.txt overrides
+- **project-overrides.md** - How to handle project.md overrides
 
 ### HARD CONSTRAINTS
 

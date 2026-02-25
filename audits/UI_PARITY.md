@@ -17,7 +17,7 @@ This audit compares the current application's UI against a reference codebase (p
 
 ## Prerequisites
 
-The target project's `/.automaker/project.txt` **must** include a `ui_parity_reference` directive specifying the absolute path to the reference codebase:
+The target project's `/.automaker/project.md` **must** include a `ui_parity_reference` directive specifying the absolute path to the reference codebase:
 
 ```
 ## UI Parity Reference
@@ -59,7 +59,7 @@ If this directive is missing, document the issue in CHANGELOG.md and exit cleanl
 
 ### Step 1: Extract Reference Path
 
-1. Read `/.automaker/project.txt`
+1. Read `/.automaker/project.md`
 2. Extract the line matching `ui_parity_reference:` (case-insensitive)
 3. Validate the path exists and contains a frontend directory
 4. If missing or invalid, abort with clear documentation

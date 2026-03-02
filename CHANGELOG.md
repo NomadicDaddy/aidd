@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `copy_common_modules()` in `lib/project.sh` — copies AIDD internal `prompts/_common/` to target project's `.automaker/_common/` during audit runs
+- `copy_common_modules()` in `lib/project.sh` — copies AIDD internal `prompts/_common/` to target project's `.automaker/_common/` each iteration (all modes)
 - Custom target path support in `copy_shared_directories()` via `source -> target` syntax in `copydirs.txt`
 - Audit finding ID validation: `audit-` prefix required, ID must exactly match directory name (`lib/args.sh`)
 

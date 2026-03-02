@@ -1097,6 +1097,12 @@ def check_opt(field; expected):
      elif (.id | test("^((feature|spernakit|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$") | not)
      then "Invalid 'id' format: '\(.id)' (expected: feature-{timestamp}-{slug}, spernakit-{timestamp}-{slug}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})"
      else null end),
+    # Audit findings must have audit- prefix in id
+    (if has("auditSource") and (.auditSource | type) == "string" and .auditSource != "" then
+         if (.id | startswith("audit-") | not) then "Audit finding id must start with 'audit-' (got: '\(.id)')"
+         elif (.id != $dir_id) then "Audit finding id must match directory name (id='\(.id)', dir='\($dir_id)')"
+         else null end
+     else null end),
     # Required: category, description, title
     (if (.category | type) != "string" or (.category // "") == "" then "Missing required field: category" else null end),
     (if (.description | type) != "string" or (.description // "") == "" then "Missing required field: description" else null end),

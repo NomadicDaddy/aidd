@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.6] - 2026-03-02
+
+### Added
+
+- `copy_common_modules()` in `lib/project.sh` — copies AIDD internal `prompts/_common/` to target project's `.automaker/_common/` during audit runs
+- Custom target path support in `copy_shared_directories()` via `source -> target` syntax in `copydirs.txt`
+- Audit finding ID validation: `audit-` prefix required, ID must exactly match directory name (`lib/args.sh`)
+
+### Changed
+
+- Common guidelines path relocated from `/_common/` to `/.automaker/_common/` across all prompt templates and audit iteration prompts
+- Audit finding ID format changed from `feature-{timestamp}-{random}` to `audit-{type}-{timestamp}-{slug}` in iteration prompts and audit specifications
+- Audit documentation updated with explicit ID-directory matching rules (`SCHEMA_CONSTRAINTS.md`, `SEVERITY_CLASSIFICATION.md`, `UI_PARITY.md`)
+
 ## [0.9.5] - 2026-03-02
 
 ### Added
@@ -306,6 +320,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.6]: https://github.com/NomadicDaddy/aidd/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/NomadicDaddy/aidd/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/NomadicDaddy/aidd/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/NomadicDaddy/aidd/compare/v0.9.2...v0.9.3

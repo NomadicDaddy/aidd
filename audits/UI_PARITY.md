@@ -144,7 +144,7 @@ For each MISSING or DEGRADED item, create a feature.json in `/.automaker/feature
 	"createdAt": "{ISO_TIMESTAMP}",
 	"dependencies": ["{existing_feature_ids}"],
 	"description": "{detailed description referencing what the old version had and what's missing}",
-	"id": "feature-{YYYYMMDD}-{descriptive-slug}",
+	"id": "audit-ui-parity-{unix_timestamp}-{descriptive-slug}",
 	"passes": false,
 	"priority": 1,
 	"spec": "1. Verify ...\n2. Verify ...\n...",
@@ -153,6 +153,8 @@ For each MISSING or DEGRADED item, create a feature.json in `/.automaker/feature
 	"updatedAt": "{ISO_TIMESTAMP}"
 }
 ```
+
+**NOTE: The `id` field MUST start with `audit-` and match the directory name.**
 
 **Priority mapping**:
 

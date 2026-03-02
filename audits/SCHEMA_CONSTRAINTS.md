@@ -415,7 +415,7 @@ For each finding, generate a feature.json in `.automaker/features/audit-database
 	"category": "Backend",
 	"createdAt": "2026-03-01T00:00:00.000Z",
 	"description": "AUDIT FINDING [Critical]: The `apiKeyNonces` table is missing a unique constraint on the `nonce` column...",
-	"id": "feature-{timestamp}-{slug}",
+	"id": "audit-database-{timestamp}-{slug}",
 	"priority": 1,
 	"spec": "1. Modify backend/src/db/schema/apiKeyNonces.ts to add .unique() to the nonce column\n2. Create database migration...",
 	"status": "backlog",
@@ -423,6 +423,8 @@ For each finding, generate a feature.json in `.automaker/features/audit-database
 	"updatedAt": "2026-03-01T00:00:00.000Z"
 }
 ```
+
+**NOTE: The `id` field MUST start with `audit-` and match the directory name.**
 
 ### Severity Mapping
 

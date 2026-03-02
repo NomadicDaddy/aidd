@@ -13,7 +13,7 @@ You are in VALIDATE mode and ready to verify incomplete features and pending tod
 - **Changelog:** `/.automaker/CHANGELOG.md` (Keep a Changelog format)
 - **Project overrides (highest priority):** `/.automaker/project.md`
 
-### COMMON GUIDELINES (/\_common/)
+### COMMON GUIDELINES (/.automaker/\_common/)
 
 Consult these as needed throughout the session:
 

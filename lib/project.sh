@@ -132,8 +132,25 @@ copy_shared_directories() {
         [[ -z "${line// }" ]] && continue
 
         # Trim leading and trailing whitespace
-        local source_dir="${line#"${line%%[![:space:]]*}"}"
-        source_dir="${source_dir%"${source_dir##*[![:space:]]}"}"
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+
+        # Parse source and optional target (format: source -> target)
+        local source_dir=""
+        local target_rel=""
+
+        if [[ "$line" == *" -> "* ]]; then
+            # Custom target path specified
+            source_dir="${line%% -> *}"
+            target_rel="${line##* -> }"
+            # Trim whitespace from both
+            source_dir="${source_dir%"${source_dir##*[![:space:]]}"}"
+            target_rel="${target_rel#"${target_rel%%[![:space:]]*}"}"
+        else
+            # No target specified, use basename in project root
+            source_dir="$line"
+            target_rel="$(basename "$source_dir")"
+        fi
 
         # Check if source directory exists
         if [[ ! -d "$source_dir" ]]; then
@@ -142,9 +159,8 @@ copy_shared_directories() {
             continue
         fi
 
-        # Get directory basename
-        local dir_name=$(basename "$source_dir")
-        local target_path="$project_dir/$dir_name"
+        local target_path="$project_dir/$target_rel"
+        local dir_name="$(basename "$target_rel")"
 
         log_debug "Syncing: $source_dir -> $target_path"
 
@@ -304,4 +320,30 @@ copy_shared_files() {
     fi
 
     return 0
+}
+
+# Copy AIDD internal common modules to project's .automaker
+# Usage: copy_common_modules <project_dir> <script_dir>
+# Returns: 0 on success
+# This is internal to AIDD - copies prompts/_common/ to <project>/.automaker/_common/
+copy_common_modules() {
+    local project_dir="$1"
+    local script_dir="$2"
+    local source_dir="$script_dir/prompts/_common"
+    local target_dir="$project_dir/.automaker/_common"
+
+    if [[ ! -d "$source_dir" ]]; then
+        log_debug "No _common directory found, skipping"
+        return 0
+    fi
+
+    mkdir -p "$target_dir"
+
+    if cp -r "$source_dir"/* "$target_dir/" 2>/dev/null; then
+        log_debug "Copied _common modules to .automaker/_common/"
+        return 0
+    else
+        log_warn "Failed to copy _common modules"
+        return 1
+    fi
 }

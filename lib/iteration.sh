@@ -441,7 +441,7 @@ You are in AUDIT mode performing a comprehensive codebase audit.
 
 ### COMMON GUIDELINES
 
-**See shared documentation in `/_common/` for:**
+**See shared documentation in `/.automaker/_common/` for:**
 
 - **hard-constraints.md** - Non-negotiable constraints
 - **assistant-rules-loading.md** - How to load and apply project rules (Step 0)
@@ -462,7 +462,7 @@ You are in AUDIT mode performing a comprehensive codebase audit.
 
 **CRITICAL: Execute FIRST, before any other steps.**
 
-See `/_common/assistant-rules-loading.md` for complete instructions.
+See `/.automaker/_common/assistant-rules-loading.md` for complete instructions.
 
 ---
 
@@ -527,13 +527,18 @@ HEREDOC_HEADER
 
     # Add dynamic content with audit-specific values
     cat >> "$output_file" << HEREDOC_DYNAMIC
-**Issue ID Format:** \`feature-{timestamp}-{random}\` (standard automaker format)
+**Issue ID Format:** \`audit-${audit_name_lower}-{timestamp}-{slug}\` (MUST match directory name)
+
+**CRITICAL: The \`id\` field MUST:**
+1. Start with \`audit-\` prefix
+2. Match the directory name exactly (without the trailing slash)
+3. Follow format: \`audit-{audit_type}-{unix_timestamp}-{descriptive-slug}\`
 
 **Feature JSON Structure:**
 
 \`\`\`json
 {
-  "id": "feature-{timestamp}-{random}",
+  "id": "audit-${audit_name_lower}-{unix_timestamp}-{descriptive-slug}",
   "title": "Brief title of the issue",
   "description": "Detailed description of the issue found",
   "status": "backlog",
@@ -571,7 +576,10 @@ This ensures audit fixes propagate back to the original feature specs, preventin
 **Directory Naming Convention:**
 - \`{unix_timestamp}\` = Unix epoch timestamp (e.g., 1736985600)
 - \`{descriptive-slug}\` = kebab-case description of the specific issue (e.g., kdf-sha256, cors-null-origin, validation-missing)
-- Example: \`audit-security-1736985600-jwt-contains-email\`
+- Example directory: \`audit-security-1736985600-jwt-contains-email\`
+- Example ID: \`"id": "audit-security-1736985600-jwt-contains-email"\`
+
+**IMPORTANT: The \`id\` field MUST exactly match the directory name.**
 
 ---
 

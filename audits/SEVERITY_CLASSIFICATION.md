@@ -213,7 +213,7 @@ Each audit finding produces a feature.json file with these fields:
 	"category": "{audit_category}",
 	"createdAt": "{ISO_timestamp}",
 	"description": "Detailed description of the issue found",
-	"id": "feature-{timestamp}-{random}",
+	"id": "audit-{audit_name_lower}-{unix_timestamp}-{descriptive-slug}",
 	"passes": false,
 	"priority": 2,
 	"spec": "Detailed remediation steps:\n1. Step one\n2. Step two",
@@ -222,6 +222,12 @@ Each audit finding produces a feature.json file with these fields:
 	"updatedAt": "{ISO_timestamp}"
 }
 ```
+
+**CRITICAL: The `id` field MUST:**
+
+1. Start with `audit-` prefix
+2. Match the directory name exactly (without the trailing slash)
+3. Example: If directory is `audit-security-1736985600-jwt-contains-email/`, then `id` must be `"audit-security-1736985600-jwt-contains-email"`
 
 ### **Field Descriptions**
 

@@ -304,6 +304,9 @@ run_single_audit_or_all() {
             # Copy shared files from copyfiles.txt
             copy_shared_files "$PROJECT_DIR" "$SCRIPT_DIR"
 
+            # Copy AIDD internal _common modules to .automaker/_common/
+            copy_common_modules "$PROJECT_DIR" "$SCRIPT_DIR"
+
             # Validate that the prompt file exists
             if [[ ! -f "$PROMPT_PATH" ]]; then
                 log_error "Prompt file does not exist: $PROMPT_PATH"

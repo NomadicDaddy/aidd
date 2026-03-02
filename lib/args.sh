@@ -1061,15 +1061,18 @@ validate_features() {
     local status_none=0
     declare -A parsed_files
 
-    # Pass 1: Collect all valid feature IDs for dependency validation (single jq call)
-    local all_ids_file
+    # Pass 1: Collect all valid feature IDs for dependency validation
+    # Uses xargs to avoid "Argument list too long" on Windows/Git Bash with large projects
+    local all_ids_file files_list
     all_ids_file=$(mktemp)
-    jq -s '[.[].id // empty]' "${feature_files[@]}" 2>/dev/null > "$all_ids_file"
+    files_list=$(mktemp)
+    printf '%s\n' "${feature_files[@]}" > "$files_list"
+    < "$files_list" xargs jq '.id // empty' 2>/dev/null | jq -s '.' > "$all_ids_file"
 
     # Write jq validation program to temp file (avoids bash escaping issues with != on Git Bash/Windows)
     local jq_filter
     jq_filter=$(mktemp)
-    trap "rm -f '$jq_filter' '$all_ids_file'" RETURN
+    trap "rm -f '$jq_filter' '$all_ids_file' '$files_list'" RETURN
     cat > "$jq_filter" << 'JQEOF'
 # Valid enum sets
 def valid_statuses: ["backlog","pending","running","completed","failed","verified","waiting_approval","in_progress"];
@@ -1094,7 +1097,7 @@ def check_opt(field; expected):
 ([
     # Required: id
     (if (.id | type) != "string" or .id == "" then "Missing required field: id"
-     elif (.id | test("^((feature|spernakit|audit-[a-z]+)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$") | not)
+     elif (.id | test("^((feature|spernakit|audit-[a-z]+(-[a-z]+)*)-[0-9]+-[a-zA-Z0-9-]+|remediation(-[0-9]+)?-[a-zA-Z0-9-]+)$") | not)
      then "Invalid 'id' format: '\(.id)' (expected: feature-{timestamp}-{slug}, spernakit-{timestamp}-{slug}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})"
      else null end),
     # Audit findings must have audit- prefix in id
@@ -1207,7 +1210,7 @@ JQEOF
                 error_details+="\n"
                 ;;
         esac
-    done < <(jq -r -f "$jq_filter" --slurpfile all_ids "$all_ids_file" "${feature_files[@]}" 2>/dev/null | tr -d '\r')
+    done < <(< "$files_list" xargs jq -r -f "$jq_filter" --slurpfile all_ids "$all_ids_file" 2>/dev/null | tr -d '\r')
 
     # Detect files with invalid JSON (not processed by jq)
     for ff in "${feature_files[@]}"; do

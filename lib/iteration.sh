@@ -413,8 +413,9 @@ generate_audit_prompt() {
     local target_audits_dir="$output_dir/$DEFAULT_TARGET_AUDITS_DIR"
     copy_referenced_audits "$audit_file" "$target_audits_dir" "$(dirname "$audit_file")"
 
-    # Convert audit name to lowercase for IDs
+    # Convert audit name to lowercase kebab-case for IDs (e.g., DEAD_CODE -> dead-code)
     local audit_name_lower="${audit_name,,}"
+    audit_name_lower="${audit_name_lower//_/-}"
 
     # Generate the audit prompt header
     cat > "$output_file" << 'HEREDOC_HEADER'

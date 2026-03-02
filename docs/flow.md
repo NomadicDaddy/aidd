@@ -186,7 +186,31 @@ Based on project state (priority cascade):
 - **Onboarding**: Existing codebases when `.automaker` files missing/incomplete
 - **Initializer**: New/empty projects where spec is copied
 
-### 9. Audit Mode (v2.3.0+)
+### 9. Feature Scoping & Filtering
+
+Three independent filters can be combined to narrow which features AIDD operates on. A feature must pass **all** active filters to be included.
+
+| Flag                               | Scope                  | Resolution                                                              |
+| ---------------------------------- | ---------------------- | ----------------------------------------------------------------------- |
+| `--filter-by FIELD --filter VALUE` | Any feature.json field | Exact match on JSON field value                                         |
+| `--milestone VALUE`                | Roadmap milestone      | Reads `.automaker/roadmap.json`, resolves to feature directory list     |
+| `--feature VALUE`                  | Single feature         | Exact dir name → exact feature id → partial dir name (case-insensitive) |
+
+**Integration points** (all three filters are applied at each):
+
+- `show_status()` collection loop — features excluded before counting
+- `feature_matches_filter()` in `lib/iteration.sh` — gates `check_project_completion()` and `should_stop_in_progress_mode()`
+- `apply_prompt_filter()` in `lib/iteration.sh` — injects filter instructions into AI agent prompts
+
+**`--feature` resolution priority:**
+
+1. Exact directory name match (`features/$VALUE/feature.json` exists)
+2. Exact feature id match (jq reads `.id` from each feature.json)
+3. Partial directory name substring match (case-insensitive, must be unique)
+
+If partial match yields multiple results, all candidates are listed and the command exits with an error.
+
+### 10. Audit Mode (v2.3.0+)
 
 Run specialized code audits that generate actionable issue backlogs:
 
@@ -197,7 +221,7 @@ Run specialized code audits that generate actionable issue backlogs:
 - **Audit Reports**: Generates reports in `.automaker/audit-reports/`
 - **Cross-References**: Referenced audit files copied to `.automaker/audits/`
 
-### 10. Abort/Failure Policy
+### 11. Abort/Failure Policy
 
 `--quit-on-abort N` stops after N consecutive failures.
 

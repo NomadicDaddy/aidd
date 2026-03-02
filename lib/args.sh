@@ -43,6 +43,10 @@ export CODE_AFTER_AUDIT=false
 export STOP_SIGNAL=false
 export FILTER_BY=""
 export FILTER_VALUE=""
+export MILESTONE_VALUE=""
+export MILESTONE_FEATURES=""
+export FEATURE_VALUE=""
+export FEATURE_DIR=""
 
 # Effective model values (computed after parsing)
 export INIT_MODEL_EFFECTIVE=""
@@ -94,6 +98,8 @@ OPTIONS:
     --code-after-audit      After audits, run coding to fix findings, then re-audit until clean
     --filter-by FIELD       Filter features by a JSON field (e.g., category, priority, status)
     --filter VALUE          Value to match for --filter-by (e.g., Backend, 1, backlog)
+    --milestone VALUE       Restrict to features in a roadmap milestone (e.g., MVP, v1.0)
+    --feature VALUE         Focus on a specific feature (exact/partial dir name or feature id)
     --version               Show version information
     --help                  Show this help message
 
@@ -147,6 +153,15 @@ EXAMPLES:
     $0 --project-dir ./myproject --filter-by priority --filter 1
     $0 --project-dir ./myproject --filter-by status --filter in_progress
     $0 --project-dir ./myproject --status --filter-by category --filter Database
+
+    # Filter by roadmap milestone (reads .automaker/roadmap.json)
+    $0 --project-dir ./myproject --milestone MVP
+    $0 --project-dir ./myproject --milestone v1.0 --filter-by category --filter Database
+
+    # Focus on a single feature
+    $0 --project-dir ./myproject --feature account-lockout
+    $0 --project-dir ./myproject --feature lockout
+    $0 --project-dir ./myproject --feature spernakit-20260201000021-lockout
 
 For more information, visit: https://github.com/NomadicDaddy/aidd
 EOF
@@ -325,6 +340,14 @@ parse_args() {
                 FILTER_VALUE="$2"
                 shift 2
                 ;;
+            --milestone)
+                MILESTONE_VALUE="$2"
+                shift 2
+                ;;
+            --feature)
+                FEATURE_VALUE="$2"
+                shift 2
+                ;;
             -h|--help)
                 print_help
                 exit 0
@@ -384,7 +407,126 @@ validate_args() {
         fi
     fi
 
+    # Validate --milestone (full resolution deferred to init_args when PROJECT_DIR is finalized)
+    if [[ -n "$MILESTONE_VALUE" && -z "$PROJECT_DIR" ]]; then
+        log_error "--milestone requires --project-dir"
+        return $EXIT_INVALID_ARGS
+    fi
+
+    # Validate --feature requires --project-dir
+    if [[ -n "$FEATURE_VALUE" && -z "$PROJECT_DIR" ]]; then
+        log_error "--feature requires --project-dir"
+        return $EXIT_INVALID_ARGS
+    fi
+
     return 0
+}
+
+# -----------------------------------------------------------------------------
+# Resolve Milestone Features from Roadmap
+# -----------------------------------------------------------------------------
+resolve_milestone() {
+    local project_dir="$1"
+    local roadmap_file="$project_dir/.automaker/roadmap.json"
+
+    if [[ ! -f "$roadmap_file" ]]; then
+        log_error "--milestone requires .automaker/roadmap.json (not found: $roadmap_file)"
+        return $EXIT_NOT_FOUND
+    fi
+
+    if ! command -v jq >/dev/null 2>&1; then
+        log_error "--milestone requires jq"
+        return $EXIT_MISSING_DEPENDENCY
+    fi
+
+    # Validate milestone name exists in roadmap
+    local valid_milestones
+    valid_milestones=$(jq -r '.milestones | keys[]' "$roadmap_file" 2>/dev/null)
+    if ! echo "$valid_milestones" | grep -qxF "$MILESTONE_VALUE"; then
+        log_error "Unknown milestone: '$MILESTONE_VALUE'"
+        log_info "Available milestones in roadmap.json:"
+        echo "$valid_milestones" | while read -r ms; do
+            local desc
+            desc=$(jq -r --arg ms "$ms" '.milestones[$ms].description // ""' "$roadmap_file")
+            log_info "  - $ms ($desc)"
+        done
+        return $EXIT_INVALID_ARGS
+    fi
+
+    # Build newline-delimited list of feature directory names for this milestone
+    MILESTONE_FEATURES=$(jq -r --arg ms "$MILESTONE_VALUE" \
+        '.features | to_entries[] | select(.value.milestone == $ms) | .key' \
+        "$roadmap_file" 2>/dev/null)
+
+    local count
+    count=$(echo "$MILESTONE_FEATURES" | grep -c . || true)
+    log_info "Milestone '$MILESTONE_VALUE': $count features from roadmap.json"
+}
+
+# -----------------------------------------------------------------------------
+# Resolve Feature Focus from Directory/ID
+# -----------------------------------------------------------------------------
+resolve_feature() {
+    local project_dir="$1"
+    local features_dir="$project_dir/.automaker/features"
+
+    if [[ ! -d "$features_dir" ]]; then
+        log_error "--feature requires .automaker/features/ directory (not found: $features_dir)"
+        return $EXIT_NOT_FOUND
+    fi
+
+    # Phase 1: Exact directory name match
+    if [[ -d "$features_dir/$FEATURE_VALUE" && -f "$features_dir/$FEATURE_VALUE/feature.json" ]]; then
+        FEATURE_DIR="$FEATURE_VALUE"
+        log_info "Feature focus: $FEATURE_DIR (exact directory match)"
+        return 0
+    fi
+
+    # Phase 2: Exact feature id match (requires jq)
+    if command -v jq >/dev/null 2>&1; then
+        local id_match=""
+        while IFS= read -r feature_file; do
+            [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
+            local fid
+            fid=$(jq -r '.id // empty' "$feature_file" 2>/dev/null)
+            if [[ "$fid" == "$FEATURE_VALUE" ]]; then
+                id_match=$(basename "$(dirname "$feature_file")")
+                break
+            fi
+        done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
+
+        if [[ -n "$id_match" ]]; then
+            FEATURE_DIR="$id_match"
+            log_info "Feature focus: $FEATURE_DIR (matched by id '$FEATURE_VALUE')"
+            return 0
+        fi
+    fi
+
+    # Phase 3: Partial directory name match (substring, case-insensitive)
+    local matches=()
+    while IFS= read -r feature_file; do
+        [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
+        local dir_name
+        dir_name=$(basename "$(dirname "$feature_file")")
+        if [[ "${dir_name,,}" == *"${FEATURE_VALUE,,}"* ]]; then
+            matches+=("$dir_name")
+        fi
+    done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
+
+    if [[ ${#matches[@]} -eq 1 ]]; then
+        FEATURE_DIR="${matches[0]}"
+        log_info "Feature focus: $FEATURE_DIR (partial match for '$FEATURE_VALUE')"
+        return 0
+    elif [[ ${#matches[@]} -gt 1 ]]; then
+        log_error "Ambiguous feature: '$FEATURE_VALUE' matches ${#matches[@]} features:"
+        for m in "${matches[@]}"; do
+            log_info "  - $m"
+        done
+        return $EXIT_INVALID_ARGS
+    fi
+
+    log_error "No feature matching '$FEATURE_VALUE'"
+    return $EXIT_NOT_FOUND
 }
 
 # -----------------------------------------------------------------------------
@@ -494,6 +636,18 @@ show_status() {
     # Use ls with while loop (most reliable on Windows/Git Bash)
     while IFS= read -r feature_file; do
         [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
+        # Apply milestone filter during collection (by directory name)
+        if [[ -n "$MILESTONE_FEATURES" ]]; then
+            local dir_name
+            dir_name=$(basename "$(dirname "$feature_file")")
+            echo "$MILESTONE_FEATURES" | grep -qxF "$dir_name" || continue
+        fi
+        # Apply feature focus filter during collection (by directory name)
+        if [[ -n "$FEATURE_DIR" ]]; then
+            local dir_name_feat
+            dir_name_feat=$(basename "$(dirname "$feature_file")")
+            [[ "$dir_name_feat" == "$FEATURE_DIR" ]] || continue
+        fi
         # Validate JSON before adding
         local file_content
         file_content=$(cat "$feature_file")
@@ -577,6 +731,12 @@ show_status() {
     echo "Project Feature List Status: $(basename "$project_dir")"
     if [[ -n "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
         echo "Filter: $FILTER_BY = $FILTER_VALUE"
+    fi
+    if [[ -n "$MILESTONE_VALUE" ]]; then
+        echo "Milestone: $MILESTONE_VALUE"
+    fi
+    if [[ -n "$FEATURE_DIR" ]]; then
+        echo "Feature: $FEATURE_DIR"
     fi
     echo "=============================================================================="
     echo ""
@@ -1129,6 +1289,16 @@ init_args() {
     fi
     get_effective_models
 
+    # Resolve --milestone (needs PROJECT_DIR to be finalized)
+    if [[ -n "$MILESTONE_VALUE" ]]; then
+        resolve_milestone "$PROJECT_DIR" || return $?
+    fi
+
+    # Resolve --feature (needs PROJECT_DIR to be finalized)
+    if [[ -n "$FEATURE_VALUE" ]]; then
+        resolve_feature "$PROJECT_DIR" || return $?
+    fi
+
     # Handle --status option (display and exit)
 
     # Handle --extract-batch option (batch extract and exit)
@@ -1207,6 +1377,14 @@ init_args() {
     # Log active filter (validation already done in validate_args)
     if [[ -n "$FILTER_BY" ]]; then
         log_info "Feature filter active: $FILTER_BY = $FILTER_VALUE"
+    fi
+
+    if [[ -n "$MILESTONE_VALUE" ]]; then
+        log_info "Milestone filter active: $MILESTONE_VALUE"
+    fi
+
+    if [[ -n "$FEATURE_VALUE" ]]; then
+        log_info "Feature focus active: $FEATURE_DIR (matched from '$FEATURE_VALUE')"
     fi
 
     return 0

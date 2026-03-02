@@ -107,6 +107,8 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--code-after-audit`: After audits, run coding to fix findings, then re-audit until clean (max 10 cycles)
 - `--filter-by FIELD`: Filter features by a JSON field (e.g., category, priority, status)
 - `--filter VALUE`: Value to match for --filter-by (e.g., Backend, 1, backlog)
+- `--milestone VALUE`: Restrict to features in a roadmap milestone (e.g., MVP, v1.0) — reads `.automaker/roadmap.json`
+- `--feature VALUE`: Focus on a specific feature — accepts exact directory name, partial directory name, or exact feature id
 - `--help`: Show help message
 
 ## Examples
@@ -197,6 +199,26 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 
 # Extract structured logs from all iterations
 ./aidd.sh --project-dir ./myproject --extract-batch
+```
+
+### Feature Filtering & Scoping
+
+```bash
+# Filter by JSON field value
+./aidd.sh --project-dir ./myproject --filter-by category --filter Backend
+./aidd.sh --project-dir ./myproject --filter-by priority --filter 1
+
+# Restrict to a roadmap milestone (reads .automaker/roadmap.json)
+./aidd.sh --project-dir ./myproject --milestone MVP
+./aidd.sh --project-dir ./myproject --milestone v1.0 --status
+
+# Focus on a single feature (exact dir name, partial match, or feature id)
+./aidd.sh --project-dir ./myproject --feature account-lockout
+./aidd.sh --project-dir ./myproject --feature lockout
+./aidd.sh --project-dir ./myproject --feature spernakit-20260201000021-lockout
+
+# Stack filters (feature must pass all active filters)
+./aidd.sh --project-dir ./myproject --milestone MVP --filter-by category --filter Database
 ```
 
 ### Graceful Shutdown
@@ -447,6 +469,11 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v0.9.5** (2026-03-02):
+    - `--milestone VALUE` flag: restrict feature scope to a roadmap milestone (reads `.automaker/roadmap.json`)
+    - `--feature VALUE` flag: focus on a single feature by exact/partial directory name or exact feature id
+    - Milestone and feature filters stack with existing `--filter-by`/`--filter` (all filters must pass)
+    - Filter-aware `--status`, completion checks, and AI agent prompts for both new flags
 - **v0.9.4** (2026-02-15):
     - Documentation sync: README.md, docs/flow.md, docs/cli-comparison.md, TODO.md updated to reflect actual implementation
     - Fixed KiloCode command references from old syntax to `kilo run`

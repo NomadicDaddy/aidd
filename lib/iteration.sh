@@ -40,6 +40,24 @@ readonly PHASE_IN_PROGRESS
 feature_matches_filter() {
     local feature_file="$1"
 
+    # Check milestone filter (by directory name against roadmap.json feature list)
+    if [[ -n "$MILESTONE_FEATURES" ]]; then
+        local dir_name
+        dir_name=$(basename "$(dirname "$feature_file")")
+        if ! echo "$MILESTONE_FEATURES" | grep -qxF "$dir_name"; then
+            return 1
+        fi
+    fi
+
+    # Check feature focus filter (by directory name)
+    if [[ -n "$FEATURE_DIR" ]]; then
+        local dir_name
+        dir_name=$(basename "$(dirname "$feature_file")")
+        if [[ "$dir_name" != "$FEATURE_DIR" ]]; then
+            return 1
+        fi
+    fi
+
     # No filter active — everything matches
     if [[ -z "$FILTER_BY" || -z "$FILTER_VALUE" ]]; then
         return 0
@@ -736,14 +754,58 @@ apply_prompt_filter() {
     local metadata_dir="$2"
 
     # No filter active — return original
-    if [[ -z "$FILTER_BY" || -z "$FILTER_VALUE" ]]; then
+    if [[ -z "$FILTER_BY" && -z "$MILESTONE_VALUE" && -z "$FEATURE_DIR" ]]; then
         echo "$prompt_path"
         return
     fi
 
     local filtered_file="$metadata_dir/filtered-prompt.md"
 
-    cat > "$filtered_file" << FILTER_EOF
+    # Start with empty file
+    : > "$filtered_file"
+
+    # Add milestone instructions if active
+    if [[ -n "$MILESTONE_VALUE" && -n "$MILESTONE_FEATURES" ]]; then
+        local feature_list
+        feature_list=$(echo "$MILESTONE_FEATURES" | sed 's/^/- /')
+        cat >> "$filtered_file" << MILESTONE_EOF
+## MILESTONE FILTER (applied via --milestone $MILESTONE_VALUE)
+
+**CRITICAL: You MUST only work on features belonging to the \`$MILESTONE_VALUE\` milestone.**
+
+The following feature directories are in scope for this milestone:
+$feature_list
+
+When selecting features from \`/.automaker/features/*/feature.json\`:
+- **ONLY** work on features whose directory name appears in the list above
+- **SKIP** all other features entirely
+- This milestone filter applies to ALL feature selection throughout this session
+
+---
+
+MILESTONE_EOF
+    fi
+
+    # Add feature focus instructions if active
+    if [[ -n "$FEATURE_DIR" ]]; then
+        cat >> "$filtered_file" << FEATURE_EOF
+## FEATURE FOCUS (applied via --feature $FEATURE_VALUE)
+
+**CRITICAL: You MUST focus exclusively on the feature in directory \`$FEATURE_DIR\`.**
+
+When working with features from \`/.automaker/features/*/feature.json\`:
+- **ONLY** work on the feature in \`/.automaker/features/$FEATURE_DIR/feature.json\`
+- **SKIP** all other features entirely
+- This feature focus applies to ALL feature selection throughout this session
+
+---
+
+FEATURE_EOF
+    fi
+
+    # Add filter-by instructions if active
+    if [[ -n "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
+        cat >> "$filtered_file" << FILTER_EOF
 ## FEATURE FILTER (applied via --filter-by $FILTER_BY --filter $FILTER_VALUE)
 
 **CRITICAL: You MUST only work on features where \`$FILTER_BY\` equals \`$FILTER_VALUE\`.**
@@ -757,6 +819,9 @@ When selecting features from \`/.automaker/features/*/feature.json\`:
 ---
 
 FILTER_EOF
+    fi
+
+    # Append the original prompt
     cat "$prompt_path" >> "$filtered_file"
     sync "$filtered_file" 2>/dev/null || true
     echo "$filtered_file"

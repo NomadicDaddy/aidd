@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-03-02
+
+### Added
+
+- `--milestone VALUE` CLI flag to restrict feature scope to a roadmap milestone (reads `.automaker/roadmap.json`)
+    - Validates milestone name against roadmap, lists available milestones on error
+    - `resolve_milestone()` in `lib/args.sh` builds feature directory list from roadmap
+    - Milestone filter applied in `show_status()` collection, `feature_matches_filter()`, and `apply_prompt_filter()`
+- `--feature VALUE` CLI flag to focus on a single feature by exact directory name, partial directory name, or exact feature id
+    - Resolution priority: exact dir → exact id (via jq) → partial substring (case-insensitive)
+    - Ambiguous partial matches listed with error; zero matches return not-found
+    - `resolve_feature()` in `lib/args.sh` resolves user input to a single feature directory
+    - Feature focus filter applied in `show_status()` collection, `feature_matches_filter()`, and `apply_prompt_filter()`
+- Both filters stack independently with existing `--filter-by`/`--filter` (a feature must pass all active filters)
+- Filter-aware `--status` display with milestone/feature labels in header
+- AI agent prompt injection for both filters via `apply_prompt_filter()` in `lib/iteration.sh`
+
 ## [0.9.4] - 2026-02-15
 
 ### Changed
@@ -289,6 +306,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.5]: https://github.com/NomadicDaddy/aidd/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/NomadicDaddy/aidd/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/NomadicDaddy/aidd/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/NomadicDaddy/aidd/compare/v0.9.1...v0.9.2

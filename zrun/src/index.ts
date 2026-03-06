@@ -2,6 +2,7 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadConfig, parseModelArg } from './config';
 import { initClient } from './client';
+import { c } from './colors';
 import { buildSystemPrompt } from './system-prompt';
 import { runAgentLoop } from './agent-loop';
 import type { ChatMessage } from './types';
@@ -37,9 +38,9 @@ if (!prompt.trim()) {
 	process.exit(1);
 }
 
-process.stdout.write(`[zrun] Using model: ${config.model}\n`);
-process.stdout.write(`[zrun] Working directory: ${cwd}\n`);
-process.stdout.write(`[zrun] Max turns: ${config.maxTurns}\n\n`);
+process.stdout.write(`${c.zrun} ${c.label('Using model:')} ${c.value(config.model)}\n`);
+process.stdout.write(`${c.zrun} ${c.label('Working directory:')} ${c.value(cwd)}\n`);
+process.stdout.write(`${c.zrun} ${c.label('Max turns:')} ${c.value(String(config.maxTurns))}\n\n`);
 
 // Build conversation
 const messages: ChatMessage[] = [
@@ -51,11 +52,15 @@ const messages: ChatMessage[] = [
 const stats = await runAgentLoop(messages, cwd, config.maxTurns);
 
 process.stdout.write(
-	`\n[zrun] Session complete: ${stats.turns} turns, ` +
-		`${stats.totalTokens.toLocaleString()} total tokens ` +
-		`(prompt: ${stats.totalPromptTokens.toLocaleString()}, ` +
-		`completion: ${stats.totalCompletionTokens.toLocaleString()}, ` +
-		`cached: ${stats.totalCachedTokens.toLocaleString()})\n`
+	'\n' +
+		c.success(
+			`[zrun] Session complete: ${stats.turns} turns, ` +
+				`${stats.totalTokens.toLocaleString()} total tokens ` +
+				`(prompt: ${stats.totalPromptTokens.toLocaleString()}, ` +
+				`completion: ${stats.totalCompletionTokens.toLocaleString()}, ` +
+				`cached: ${stats.totalCachedTokens.toLocaleString()})`
+		) +
+		'\n'
 );
 
 process.exit(0);

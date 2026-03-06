@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { ZRunConfig, ChatMessage, TokenUsage } from './types';
+import { c } from './colors';
 import { toolDefinitions } from './tools/index';
 
 let client: OpenAI;
@@ -13,7 +14,10 @@ export function initClient(config: ZRunConfig): void {
 	modelName = config.model;
 }
 
-export async function streamChatCompletion(messages: ChatMessage[]): Promise<{
+export async function streamChatCompletion(
+	messages: ChatMessage[],
+	onFirstChunk?: () => void
+): Promise<{
 	content: string;
 	toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[];
 	usage: TokenUsage;
@@ -53,6 +57,12 @@ export async function streamChatCompletion(messages: ChatMessage[]): Promise<{
 		const delta = chunk.choices[0]?.delta;
 		if (!delta) continue;
 
+		// Signal first meaningful chunk to caller
+		if (onFirstChunk && (delta.content || delta.tool_calls)) {
+			onFirstChunk();
+			onFirstChunk = undefined;
+		}
+
 		// Accumulate text content and flush line-by-line
 		if (delta.content) {
 			content += delta.content;
@@ -61,7 +71,7 @@ export async function streamChatCompletion(messages: ChatMessage[]): Promise<{
 			// Flush complete lines to stdout for AIDD idle detection
 			const lines = lineBuffer.split('\n');
 			for (let i = 0; i < lines.length - 1; i++) {
-				process.stdout.write(lines[i] + '\n');
+				process.stdout.write(c.dim(lines[i]) + '\n');
 			}
 			lineBuffer = lines[lines.length - 1];
 		}
@@ -87,7 +97,7 @@ export async function streamChatCompletion(messages: ChatMessage[]): Promise<{
 
 	// Flush remaining line buffer
 	if (lineBuffer) {
-		process.stdout.write(lineBuffer + '\n');
+		process.stdout.write(c.dim(lineBuffer) + '\n');
 	}
 
 	const toolCalls = Array.from(toolCallAccumulator.values()).map((tc) => ({

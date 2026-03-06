@@ -1,6 +1,6 @@
 ---
 title: 'Spernakit v2 Derived Application Audit Framework'
-last_updated: '2025-02-03'
+last_updated: '2026-03-04'
 version: '3.0'
 category: 'Architecture'
 priority: 'High'

@@ -1,0 +1,6 @@
+{
+	"apiKey": "your-z-ai-api-key",
+	"baseUrl": "https://api.z.ai/api/coding/paas/v4",
+	"maxTurns": 200,
+	"model": "glm-5"
+}

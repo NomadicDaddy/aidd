@@ -4,7 +4,7 @@
 
 AIDD is a headless orchestrator for autonomous AI development sessions. Point it at a project, walk away, and let AI agents implement features while you sleep, eat, or touch grass. It handles iteration loops, failure recovery, idle detection, and progress tracking—so you don't have to babysit the terminal.
 
-Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
+Works with **OpenCode**, **KiloCode**, **Claude Code**, or **ZRun** CLIs. Your choice.
 
 ## Why AIDD?
 
@@ -12,13 +12,13 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - **AutoMaker Compatible**: Uses the same `.automaker/` metadata format as [AutoMaker](https://github.com/AutoMaker-Org/automaker). Start features in the GUI, finish them headless—or vice versa. Seamless handoff between interactive and batch workflows.
 - **Structured Progress Tracking**: JSON-based feature files, changelogs, and iteration transcripts. Always know what got done and what's left.
 - **Agent Babysitting Built-In**: Two-stage idle timeout nudges stuck agents ("Are you stuck?") before killing them. Consecutive failure limits prevent runaway loops.
-- **CLI Agnostic**: Same workflow whether you're on OpenCode, KiloCode, or Claude Code. Switch providers without changing your process.
+- **CLI Agnostic**: Same workflow whether you're on OpenCode, KiloCode, Claude Code, or ZRun. Switch providers without changing your process.
 - **Onboarding for Existing Codebases**: Drop AIDD into any project. It analyzes the codebase, generates a spec, and creates a feature backlog automatically.
 - **Automated Audits**: Run comprehensive code audits (security, performance, architecture, etc.) that generate actionable issue backlogs.
 
 ## Features
 
-- **Multiple CLI Support**: OpenCode, KiloCode, and Claude Code with unified interface
+- **Multiple CLI Support**: OpenCode, KiloCode, Claude Code, and ZRun with unified interface
 - **AutoMaker Integration**: Shared `.automaker/` metadata enables GUI↔CLI workflow handoff
 - **Intelligent Iteration**: Automatic retry logic, configurable failure thresholds, idle detection with agent nudging
 - **Feature-Driven Development**: JSON feature files with status tracking, dependencies, and pipeline steps
@@ -51,6 +51,19 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
     - Full JSON preserved in transcript files for debugging
     - Token usage tracking including cache hits
 
+### ZRun (Zhipu AI / GLM-5)
+
+- Command: `bun run zrun/src/index.ts`
+- Specify with `--cli zrun`
+- Uses Zhipu AI's GLM-5 model via OpenAI-compatible API (`https://api.z.ai/api/coding/paas/v4`)
+- No instance throttling (bypasses 2-per-CLI limits of other providers)
+- **Features**:
+    - TypeScript-based mini coding agent with 7 built-in tools
+    - Function calling and streaming support
+    - Continuation nudge mechanism for early-stop recovery
+    - Token usage tracking including cached tokens
+    - Configurable via `zrun/config.json` (JSON-only, no .env)
+
 ## Installation
 
 1. Ensure you have one of the supported CLIs installed:
@@ -68,7 +81,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 ### Basic Syntax
 
 ```bash
-./aidd.sh [--cli {opencode|kilocode|claude-code}] --project-dir <dir> [OPTIONS]
+./aidd.sh [--cli {opencode|kilocode|claude-code|zrun}] --project-dir <dir> [OPTIONS]
 ```
 
 ### Required Arguments
@@ -77,7 +90,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 
 ### Optional Arguments
 
-- `--cli CLI`: CLI to use (`opencode`, `kilocode`, or `claude-code`, default: `opencode`)
+- `--cli CLI`: CLI to use (`opencode`, `kilocode`, `claude-code`, or `zrun`, default: `opencode`)
 - `--spec FILE`: Specification file (required for new projects)
 - `--max-iterations N`: Number of iterations (unlimited if not specified)
 - `--timeout N`: Timeout in seconds (default: 3600)
@@ -102,7 +115,7 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 - `--no-stop-when-done`: Continue iterating even after mode-specific work is complete
 - `--stop`: Signal a running AIDD instance to stop gracefully after current iteration
 - `--audit AUDIT[,...]`: Run audit mode with one or more audits (e.g., `SECURITY` or `SECURITY,CODE_QUALITY`)
-- `--audit-all`: Run all available audits sequentially
+- `--audit-all`: Run all available audits sequentially (excludes reference documents)
 - `--audit-on-completion AUDIT[,...]`: Run specified audits automatically when project reaches completion
 - `--code-after-audit`: After audits, run coding to fix findings, then re-audit until clean (max 10 cycles)
 - `--filter-by FIELD`: Filter features by a JSON field (e.g., category, priority, status)
@@ -150,6 +163,16 @@ Works with **OpenCode**, **KiloCode**, or **Claude Code** CLIs. Your choice.
 
 # Using different models for init and coding
 ./aidd.sh --cli claude-code --project-dir ./myproject --init-model opus --code-model sonnet
+```
+
+### Using ZRun (Zhipu AI)
+
+```bash
+# New project with ZRun
+./aidd.sh --cli zrun --project-dir ./myproject --spec ./specs/myapp.md
+
+# Existing project
+./aidd.sh --cli zrun --project-dir ./myproject --max-iterations 10
 ```
 
 ### Audit Mode
@@ -334,43 +357,74 @@ Create a `copyfiles.txt` file in the AIDD directory for individual files:
 ```
 aidd/
 ├── aidd.sh                 # Main script
-├── copydirs.txt           # List of shared directories to sync to projects
-├── copyfiles.txt          # List of shared files to sync to projects
+├── copydirs.txt            # List of shared directories to sync to projects
+├── copyfiles.txt           # List of shared files to sync to projects
 ├── lib/
-│   ├── args.sh            # Argument parsing
-│   ├── cli-claude-code.sh # Claude Code CLI implementation
-│   ├── cli-factory.sh     # CLI abstraction layer
-│   ├── cli-kilocode.sh    # KiloCode CLI implementation
-│   ├── cli-opencode.sh    # OpenCode CLI implementation
-│   ├── config.sh          # Configuration constants
-│   ├── iteration.sh       # Iteration handling
-│   ├── json-parser.sh     # JSON stream parser for Claude Code
-│   ├── log-cleaner.sh     # Native bash log cleaning
-│   ├── project.sh         # Project management
-│   └── utils.sh           # Utility functions
+│   ├── args.sh             # Argument parsing
+│   ├── cli-claude-code.sh  # Claude Code CLI implementation
+│   ├── cli-factory.sh      # CLI abstraction layer
+│   ├── cli-kilocode.sh     # KiloCode CLI implementation
+│   ├── cli-opencode.sh     # OpenCode CLI implementation
+│   ├── cli-zrun.sh         # ZRun (Zhipu AI) CLI implementation
+│   ├── config.sh           # Configuration constants
+│   ├── iteration.sh        # Iteration handling
+│   ├── json-parser.sh      # JSON stream parser for Claude Code
+│   ├── log-cleaner.sh      # Native bash log cleaning
+│   ├── log-extractor.sh    # Structured JSON extraction from iteration logs
+│   ├── project.sh          # Project management
+│   └── utils.sh            # Utility functions
 ├── prompts/
-│   ├── _common/           # Shared prompt modules (refactored v2.0)
+│   ├── _common/            # Shared prompt modules (refactored v2.0)
 │   │   ├── assistant-rules-loading.md
-│   │   ├── project-overrides.md
-│   │   ├── testing-requirements.md
+│   │   ├── error-handling-patterns.md
 │   │   ├── file-integrity.md
 │   │   ├── hard-constraints.md
-│   │   ├── tool-selection-guide.md
-│   │   └── error-handling-patterns.md
-│   ├── onboarding.md      # Onboarding prompt (existing codebases)
-│   ├── initializer.md     # Initializer prompt (new projects)
-│   ├── coding.md          # Coding prompt (development iterations)
-│   └── todo.md            # TODO mode prompt
-├── audits/                # Audit definition files
-│   ├── SECURITY.md        # Security audit guidelines
-│   ├── PERFORMANCE.md     # Performance audit guidelines
-│   ├── CODE_QUALITY.md    # Code quality audit
-│   └── ...                # 20+ specialized audits
-├── docs/
-│   └── AUDIT_GUIDE.md     # Audit selection guide
-├── scaffolding/           # Template files for new projects
-├── templates/             # Project metadata templates
-└── specs/                 # Specification examples
+│   │   ├── project-overrides.md
+│   │   ├── spernakit-standards.md
+│   │   ├── testing-requirements.md
+│   │   └── tool-selection-guide.md
+│   ├── _cli/               # CLI-specific prompt variants
+│   │   ├── opencode.md
+│   │   ├── kilocode.md
+│   │   ├── claude-code.md
+│   │   └── zrun.md
+│   ├── coding.md           # Coding prompt (development iterations)
+│   ├── in-progress.md      # In-progress features prompt
+│   ├── initializer.md      # Initializer prompt (new projects)
+│   ├── onboarding.md       # Onboarding prompt (existing codebases)
+│   ├── todo.md             # TODO mode prompt
+│   └── validate.md         # Feature validation prompt
+├── audits/                 # Audit definition files (31 audits)
+│   ├── SECURITY.md         # Security audit
+│   ├── CODE_QUALITY.md     # Code quality audit
+│   ├── ARCHITECTURE.md     # Architecture review
+│   ├── PERFORMANCE.md      # Performance optimization
+│   └── ...                 # 27 more specialized audits
+├── tools/                  # Build/rebuild automation scripts
+│   ├── audit-parity.sh     # Post-rebuild feature parity verification
+│   ├── diff-template.sh    # Compare app vs template, generate DIFFERENTIATION.md
+│   ├── generate-changelog.sh # Keep a Changelog automation
+│   ├── generate-features.sh  # Create feature.json files from DIFFERENTIATION.md
+│   ├── pre-rebuild-check.sh  # Pre-flight validation checklist
+│   └── templates/           # Feature template files
+├── zrun/                   # ZRun agent (TypeScript + Bun)
+│   ├── config.json         # API configuration (apiKey, model, baseUrl, maxTurns)
+│   └── src/
+│       ├── index.ts        # Entry point
+│       ├── agent-loop.ts   # Main agent iteration loop
+│       ├── client.ts       # OpenAI-compatible API client
+│       └── tools/          # 7 tool implementations (read, write, edit, bash, glob, grep, ls)
+├── docs/                   # Documentation
+│   ├── audit_guide.md      # Audit selection guide with lifecycle phases
+│   ├── auto-rebuild-guide.md  # Spernakit rebuild automation workflow
+│   ├── cli-comparison.md   # CLI implementation comparison
+│   ├── claude-code-integration.md # Claude Code setup and JSON parsing
+│   ├── feature-fields.md   # feature.json schema reference
+│   ├── flow.md             # Execution flow diagram (Mermaid)
+│   └── prompt-selection-logic.md # Prompt selection cascade
+├── scaffolding/            # Template files for new projects
+├── templates/              # Project metadata templates
+└── specs/                  # Specification examples
 
 Project Metadata (.automaker/):
 .automaker/
@@ -395,7 +449,7 @@ Project Metadata (.automaker/):
 
 ## How It Works
 
-1. **CLI Initialization**: Determines which CLI to use (OpenCode, KiloCode, or Claude Code)
+1. **CLI Initialization**: Determines which CLI to use (OpenCode, KiloCode, Claude Code, or ZRun)
 2. **Project Detection**: Detects if the target directory is an existing codebase
 3. **Metadata Setup**: Creates or migrates `.automaker` directory
 4. **Iteration Loop**: Runs in a loop based on `--max-iterations`:
@@ -424,9 +478,10 @@ AIDD uses a factory pattern to abstract CLI differences:
 - **cli-factory.sh**: Provides unified interface (`run_cli_prompt`, `check_cli_available`, etc.)
 - **cli-opencode.sh**: OpenCode-specific implementation
 - **cli-kilocode.sh**: KiloCode-specific implementation
-- **cli-claude-code.sh**: Claude Code-specific implementation
+- **cli-claude-code.sh**: Claude Code-specific implementation with JSON stream parsing
+- **cli-zrun.sh**: ZRun (Zhipu AI / GLM-5) implementation via TypeScript agent
 
-This allows the same codebase to support all CLIs with minimal differences.
+This allows the same codebase to support all four CLIs with minimal differences.
 
 ## Error Handling
 
@@ -464,11 +519,24 @@ AIDD includes comprehensive error handling:
     - OpenCode (`opencode`)
     - KiloCode (`kilocode`)
     - Claude Code (`claude`)
+    - ZRun (requires Bun runtime; uses built-in TypeScript agent at `zrun/`)
 - jq (required for Claude Code JSON parsing; also required for `--status` and `--check-features`)
 - rsync (optional, for shared directory synchronization - falls back to `cp` if unavailable)
+- Bun (required only for ZRun CLI)
 
 ## Version History
 
+- **v0.9.7** (2026-03-06):
+    - ZRun CLI backend (`--cli zrun`): 4th CLI using Zhipu AI GLM-5 via TypeScript agent with 7 built-in tools, function calling, streaming, and no instance throttling
+    - `--feature` resolution reordered: fast partial directory match before slow jq-based id match
+    - `show_status()` and `validate_features()` rewritten to use `xargs jq --slurp` — fixes "Argument list too long" on Windows/Git Bash with 500+ features
+    - Audit IDs now use kebab-case (`DEAD_CODE` → `dead-code`) with multi-segment support
+    - Documentation updated across all docs to cover ZRun, missing modules, tools, and 6 previously undocumented audits
+- **v0.9.6** (2026-03-02):
+    - Common modules copying: AIDD internal `prompts/_common/` copied to target project's `.automaker/_common/` each iteration
+    - Custom target path support in `copydirs.txt` via `source -> target` syntax
+    - Audit finding ID validation: `audit-` prefix required, ID must exactly match directory name
+    - Common guidelines path relocated from `/_common/` to `/.automaker/_common/` across all prompts
 - **v0.9.5** (2026-03-02):
     - `--milestone VALUE` flag: restrict feature scope to a roadmap milestone (reads `.automaker/roadmap.json`)
     - `--feature VALUE` flag: focus on a single feature by exact/partial directory name or exact feature id
@@ -546,7 +614,7 @@ AIDD follows a modular architecture with clear separation of concerns:
 
 1. **Configuration Layer** (`config.sh`): Defines all constants and defaults
 2. **Utility Layer** (`utils.sh`): Provides logging, file operations, and helpers
-3. **CLI Abstraction Layer** (`cli-factory.sh`, `*-cli.sh`): Abstracts CLI differences
+3. **CLI Abstraction Layer** (`cli-factory.sh`, `cli-*.sh`): Abstracts CLI differences (4 backends)
 4. **Business Logic Layer** (`args.sh`, `project.sh`, `iteration.sh`): Core functionality
 5. **Main Script** (`aidd.sh`): Orchestrates everything
 

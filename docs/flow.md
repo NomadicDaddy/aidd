@@ -10,7 +10,7 @@ graph TD
 
     F --> G[Resolve Effective Models]
     G --> H[Build Model Args]
-    H --> H1[Determine CLI: OpenCode or KiloCode]
+    H --> H1[Determine CLI: OpenCode, KiloCode, Claude Code, or ZRun]
 
     H1 --> H2{Audit Mode?}
     H2 -->|Yes| H3[Multi-Audit Loop]
@@ -127,6 +127,7 @@ graph TD
 - **OpenCode** (default): `opencode run`
 - **KiloCode**: Specify with `--cli kilocode`
 - **Claude Code**: Specify with `--cli claude-code`
+- **ZRun**: Specify with `--cli zrun` (Zhipu AI / GLM-5 via TypeScript agent)
 
 ### 2. Project Directory Check
 
@@ -370,5 +371,6 @@ Uses factory pattern to support multiple CLIs:
 - `cli-opencode.sh` - OpenCode implementation
 - `cli-kilocode.sh` - KiloCode implementation
 - `cli-claude-code.sh` - Claude Code implementation
+- `cli-zrun.sh` - ZRun (Zhipu AI / GLM-5) implementation
 
-Same codebase supports all three CLIs with minimal differences.
+Same codebase supports all four CLIs with minimal differences.

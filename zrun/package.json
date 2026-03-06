@@ -1,0 +1,17 @@
+{
+	"name": "zrun",
+	"version": "0.1.0",
+	"description": "Minimal coding agent CLI for AIDD using z.ai API",
+	"type": "module",
+	"main": "src/index.ts",
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"openai": "^4.86.0"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.2.0",
+		"typescript": "^5.7.0"
+	}
+}

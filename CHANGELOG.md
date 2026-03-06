@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.7] - 2026-03-06
+
+### Added
+
+- **ZRun CLI backend** (`--cli zrun`): 4th CLI using Zhipu AI's GLM-5 model via OpenAI-compatible API
+    - `zrun/` TypeScript agent with 7 built-in tools (read_file, write_file, edit_file, bash, glob, grep, list_directory)
+    - Function calling with streaming, continuation nudge mechanism, token tracking with cache hits
+    - No instance throttling (bypasses 2-per-CLI limits of other providers)
+    - `zrun/config.json` for configuration (apiKey, model, baseUrl, maxTurns)
+    - `lib/cli-zrun.sh` shell integration with AIDD iteration loop
+    - `prompts/_cli/zrun.md` CLI-specific prompt variant
+    - ZRun added to `lib/cli-factory.sh` (init, run, check, version)
+    - ZRun recognized in `lib/log-extractor.sh` for structured log extraction
+
+### Changed
+
+- `lib/args.sh`: `--feature` resolution reordered — partial directory match (fast, no jq) now runs before exact feature id match (slow, reads every feature.json)
+- `lib/args.sh`: `show_status()` rewritten to use single `jq --slurp` invocation with `xargs cat` instead of per-feature jq calls; removed verbose per-feature status/priority listing in favor of summary-only output
+- `lib/args.sh`: `validate_features()` uses `xargs jq` via temp file list to avoid "Argument list too long" on Windows/Git Bash with 500+ features; removed per-file status breakdown and OK/fail emoji output
+- `lib/args.sh`: `validate_features()` replaced `trap RETURN` with explicit `rm` cleanup (avoids leaking traps in bash)
+- `lib/args.sh`: `--check-features` exit handling fixed to capture exit code without triggering `set -e` abort
+- `lib/args.sh`: Audit finding ID regex updated to support multi-segment kebab-case audit types (e.g., `audit-dead-code-*`)
+- `lib/args.sh`: Audit finding `auditSource` validation now guards against non-string `.id` values
+- `lib/iteration.sh`: Audit name conversion now produces kebab-case IDs (`DEAD_CODE` → `dead-code` instead of `dead_code`)
+- `audits/SPERNAKIT.md`: Updated to version 3.0 (last_updated: 2026-03-04)
+- Documentation updated across all docs to cover ZRun CLI, missing lib modules, prompt modules, tools directory, and 6 previously undocumented audits (`FEATURE_INTEGRATION`, `SCHEMA_CONSTRAINTS`, `HYGIENE`, `REORG`, `SPERNAKITV1`, `SSOC`)
+
 ## [0.9.6] - 2026-03-02
 
 ### Added

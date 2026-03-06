@@ -26,35 +26,37 @@ Each audit is assigned a lifecycle phase indicating when it should run relative 
 Run these during active coding to catch issues early.
 
 ```bash
-aidd --project-dir ./app --audit CODE_QUALITY,LOGIC,COMPLICATION,DEAD_CODE
+aidd --project-dir ./app --audit CODE_QUALITY,LOGIC,COMPLICATION,DEAD_CODE,FEATURE_INTEGRATION
 ```
 
-| Audit          | Priority | Time | Focus                                 |
-| -------------- | -------- | ---- | ------------------------------------- |
-| `CODE_QUALITY` | High     | 1-2h | Linting, formatting, ordering         |
-| `LOGIC`        | High     | 2-3h | Control flow, branching, state issues |
-| `COMPLICATION` | High     | 2-3h | Complexity creep, function length     |
-| `DEAD_CODE`    | High     | 1-2h | Orphaned code before it accumulates   |
+| Audit                 | Priority | Time | Focus                                    |
+| --------------------- | -------- | ---- | ---------------------------------------- |
+| `CODE_QUALITY`        | High     | 1-2h | Linting, formatting, ordering            |
+| `LOGIC`               | High     | 2-3h | Control flow, branching, state issues    |
+| `COMPLICATION`        | High     | 2-3h | Complexity creep, function length        |
+| `DEAD_CODE`           | High     | 1-2h | Orphaned code before it accumulates      |
+| `FEATURE_INTEGRATION` | High     | 1-2h | Unreachable features, unwired code paths |
 
 ### Pre-Release
 
 Run these before tagging a release to gate quality.
 
 ```bash
-aidd --project-dir ./app --audit SECURITY,ARCHITECTURE,DATABASE,DATA_ARCHITECTURE,TESTING,API_DESIGN,FRONTEND,PERFORMANCE,REACT_BEST_PRACTICES
+aidd --project-dir ./app --audit SECURITY,ARCHITECTURE,DATABASE,DATA_ARCHITECTURE,SCHEMA_CONSTRAINTS,TESTING,API_DESIGN,FRONTEND,PERFORMANCE,REACT_BEST_PRACTICES
 ```
 
-| Audit                  | Priority | Time | Focus                                 |
-| ---------------------- | -------- | ---- | ------------------------------------- |
-| `SECURITY`             | Critical | 2-4h | Auth, OWASP, encryption               |
-| `ARCHITECTURE`         | High     | 2-3h | API design, modularity, design flaws  |
-| `DATABASE`             | High     | 2-3h | Schema safety, migrations, rollback   |
-| `DATA_ARCHITECTURE`    | Critical | 2-3h | Single source of truth, authority     |
-| `TESTING`              | High     | 2-3h | Coverage gaps, test stability         |
-| `API_DESIGN`           | High     | 1-2h | Endpoint consistency, docs            |
-| `FRONTEND`             | High     | 2-3h | React patterns, accessibility         |
-| `PERFORMANCE`          | High     | 1-2h | Core Web Vitals, bundle size, backend |
-| `REACT_BEST_PRACTICES` | High     | 3-4h | Vercel React performance patterns     |
+| Audit                  | Priority | Time | Focus                                     |
+| ---------------------- | -------- | ---- | ----------------------------------------- |
+| `SECURITY`             | Critical | 2-4h | Auth, OWASP, encryption                   |
+| `ARCHITECTURE`         | High     | 2-3h | API design, modularity, design flaws      |
+| `DATABASE`             | High     | 2-3h | Schema safety, migrations, rollback       |
+| `DATA_ARCHITECTURE`    | Critical | 2-3h | Single source of truth, authority         |
+| `SCHEMA_CONSTRAINTS`   | Critical | 1-2h | Schema constraints, data integrity checks |
+| `TESTING`              | High     | 2-3h | Coverage gaps, test stability             |
+| `API_DESIGN`           | High     | 1-2h | Endpoint consistency, docs                |
+| `FRONTEND`             | High     | 2-3h | React patterns, accessibility             |
+| `PERFORMANCE`          | High     | 1-2h | Core Web Vitals, bundle size, backend     |
+| `REACT_BEST_PRACTICES` | High     | 3-4h | Vercel React performance patterns         |
 
 ### Post-Release
 
@@ -112,23 +114,26 @@ Stack-specific audits — run only on applicable projects.
 
 ### Core Quality (Code Health)
 
-| Audit          | Priority | Time | Best For                                         |
-| -------------- | -------- | ---- | ------------------------------------------------ |
-| `CODE_QUALITY` | High     | 1-2h | General code quality, linting, formatting        |
-| `COMPLICATION` | High     | 2-3h | Code complexity, optimization opportunities      |
-| `LOGIC`        | High     | 2-3h | Control flow, state management, logic issues     |
-| `TECHDEBT`     | High     | 2-4h | Technical debt identification and prioritization |
-| `DEAD_CODE`    | High     | 1-2h | Unused code, orphaned files                      |
+| Audit                 | Priority | Time | Best For                                           |
+| --------------------- | -------- | ---- | -------------------------------------------------- |
+| `CODE_QUALITY`        | High     | 1-2h | General code quality, linting, formatting          |
+| `COMPLICATION`        | High     | 2-3h | Code complexity, optimization opportunities        |
+| `LOGIC`               | High     | 2-3h | Control flow, state management, logic issues       |
+| `TECHDEBT`            | High     | 2-4h | Technical debt identification and prioritization   |
+| `DEAD_CODE`           | High     | 1-2h | Unused code, orphaned files                        |
+| `HYGIENE`             | Medium   | 2-4h | Dead code, deps, imports, secrets, static analysis |
+| `FEATURE_INTEGRATION` | High     | 1-2h | Unreachable features, unwired code paths           |
 
 ### Architecture & Design
 
-| Audit               | Priority | Time | Best For                                             |
-| ------------------- | -------- | ---- | ---------------------------------------------------- |
-| `ARCHITECTURE`      | High     | 2-3h | Overall architecture, API design, complexity         |
-| `DATA_ARCHITECTURE` | Critical | 2-3h | Data flow, single source of truth, database patterns |
-| `DATABASE`          | High     | 2-3h | Database design, migrations, schema evolution        |
-| `API_DESIGN`        | High     | 1-2h | REST/GraphQL API design, documentation               |
-| `AI`                | High     | 4-8h | AI provider integration consistency                  |
+| Audit                | Priority | Time | Best For                                             |
+| -------------------- | -------- | ---- | ---------------------------------------------------- |
+| `ARCHITECTURE`       | High     | 2-3h | Overall architecture, API design, complexity         |
+| `DATA_ARCHITECTURE`  | Critical | 2-3h | Data flow, single source of truth, database patterns |
+| `DATABASE`           | High     | 2-3h | Database design, migrations, schema evolution        |
+| `SCHEMA_CONSTRAINTS` | Critical | 1-2h | Schema constraints, data integrity, validation       |
+| `API_DESIGN`         | High     | 1-2h | REST/GraphQL API design, documentation               |
+| `AI`                 | High     | 4-8h | AI provider integration consistency                  |
 
 ### Security
 
@@ -170,15 +175,18 @@ Stack-specific audits — run only on applicable projects.
 | Audit       | Priority | Time | Best For                                                |
 | ----------- | -------- | ---- | ------------------------------------------------------- |
 | `UI_PARITY` | High     | 2-3h | Compare UI surfaces between two app versions, find gaps |
+| `REORG`     | Medium   | 1-2h | File structure, naming, directory layout                |
 
 > **Prerequisite:** `UI_PARITY` requires a `ui_parity_reference:` directive in the target project's `/.automaker/project.md` pointing to the reference codebase path.
 
 ### Stack-Specific
 
-| Audit       | Priority | Time | Best For                             |
-| ----------- | -------- | ---- | ------------------------------------ |
-| `CONVEX`    | Critical | 1-2h | Convex database patterns, validators |
-| `SPERNAKIT` | High     | 2-3h | Spernakit template compliance        |
+| Audit         | Priority | Time | Best For                               |
+| ------------- | -------- | ---- | -------------------------------------- |
+| `CONVEX`      | Critical | 1-2h | Convex database patterns, validators   |
+| `SPERNAKIT`   | High     | 3-5h | Spernakit v2 template compliance       |
+| `SPERNAKITV1` | High     | 3-5h | Spernakit v1-derived application audit |
+| `SSOC`        | Medium   | 1-2h | Shared vs page UI component separation |
 
 ### Reference
 

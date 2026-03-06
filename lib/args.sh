@@ -67,7 +67,7 @@ Supports OpenCode, KiloCode, and Claude Code CLIs
 Usage: $0 [OPTIONS]
 
 OPTIONS:
-    --cli CLI               CLI to use: opencode, kilocode, or claude-code (optional, default: $DEFAULT_CLI)
+    --cli CLI               CLI to use: opencode, kilocode, claude-code, or zrun (optional, default: $DEFAULT_CLI)
     --project-dir DIR       Project directory (required unless --status or --todo is specified)
     --spec FILE             Specification file (optional for existing codebases, required for new projects)
     --max-iterations N      Maximum iterations (optional, unlimited if not specified)
@@ -115,6 +115,10 @@ EXAMPLES:
     # Using Claude Code
     $0 --cli claude-code --project-dir ./myproject --spec ./app_spec.txt
     $0 --cli claude-code --project-dir ./myproject --model sonnet --max-iterations 10
+
+    # Using ZRun (z.ai / GLM-5 - no instance limits)
+    $0 --cli zrun --project-dir ./myproject --spec ./app_spec.txt
+    $0 --cli zrun --project-dir ./myproject --model glm-4.6v --max-iterations 10
 
     # Other operations
     $0 --project-dir ./myproject --status
@@ -375,12 +379,12 @@ validate_args() {
     fi
 
     case "$CLI_TYPE" in
-        opencode|kilocode|claude-code)
+        opencode|kilocode|claude-code|zrun)
             # Valid CLI type
             ;;
         *)
             log_error "Invalid CLI type: $CLI_TYPE"
-            log_info "Valid options: opencode, kilocode, claude-code"
+            log_info "Valid options: opencode, kilocode, claude-code, zrun"
             return $EXIT_INVALID_ARGS
             ;;
     esac
@@ -482,36 +486,18 @@ resolve_feature() {
         return 0
     fi
 
-    # Phase 2: Exact feature id match (requires jq)
-    if command -v jq >/dev/null 2>&1; then
-        local id_match=""
-        while IFS= read -r feature_file; do
-            [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
-            local fid
-            fid=$(jq -r '.id // empty' "$feature_file" 2>/dev/null)
-            if [[ "$fid" == "$FEATURE_VALUE" ]]; then
-                id_match=$(basename "$(dirname "$feature_file")")
-                break
-            fi
-        done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
-
-        if [[ -n "$id_match" ]]; then
-            FEATURE_DIR="$id_match"
-            log_info "Feature focus: $FEATURE_DIR (matched by id '$FEATURE_VALUE')"
-            return 0
-        fi
-    fi
-
-    # Phase 3: Partial directory name match (substring, case-insensitive)
+    # Phase 2: Partial directory name match (substring, case-insensitive) — fast, no jq
     local matches=()
-    while IFS= read -r feature_file; do
-        [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
-        local dir_name
-        dir_name=$(basename "$(dirname "$feature_file")")
-        if [[ "${dir_name,,}" == *"${FEATURE_VALUE,,}"* ]]; then
+    local search_lower="${FEATURE_VALUE,,}"
+    for feature_file in "$features_dir"/*/feature.json; do
+        [[ -f "$feature_file" ]] || continue
+        # Extract dir name using parameter expansion (no subshells)
+        local dir_path="${feature_file%/feature.json}"
+        local dir_name="${dir_path##*/}"
+        if [[ "${dir_name,,}" == *"$search_lower"* ]]; then
             matches+=("$dir_name")
         fi
-    done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
+    done
 
     if [[ ${#matches[@]} -eq 1 ]]; then
         FEATURE_DIR="${matches[0]}"
@@ -523,6 +509,27 @@ resolve_feature() {
             log_info "  - $m"
         done
         return $EXIT_INVALID_ARGS
+    fi
+
+    # Phase 3: Exact feature id match (requires jq) — slow, iterates all feature.json files
+    if command -v jq >/dev/null 2>&1; then
+        local id_match=""
+        for feature_file in "$features_dir"/*/feature.json; do
+            [[ -f "$feature_file" ]] || continue
+            local fid
+            fid=$(jq -r '.id // empty' "$feature_file" 2>/dev/null)
+            if [[ "$fid" == "$FEATURE_VALUE" ]]; then
+                local id_path="${feature_file%/feature.json}"
+                id_match="${id_path##*/}"
+                break
+            fi
+        done
+
+        if [[ -n "$id_match" ]]; then
+            FEATURE_DIR="$id_match"
+            log_info "Feature focus: $FEATURE_DIR (matched by id '$FEATURE_VALUE')"
+            return 0
+        fi
     fi
 
     log_error "No feature matching '$FEATURE_VALUE'"
@@ -628,98 +635,70 @@ show_status() {
         return $EXIT_GENERAL_ERROR
     fi
 
-    # Collect all features into a JSON array (with validation)
-    local features_json="["
-    local first=true
-    local invalid_count=0
-    local invalid_files=""
-    # Use ls with while loop (most reliable on Windows/Git Bash)
-    while IFS= read -r feature_file; do
-        [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
-        # Apply milestone filter during collection (by directory name)
-        if [[ -n "$MILESTONE_FEATURES" ]]; then
+    # Collect feature file list, applying filters
+    local files_list
+    files_list=$(mktemp /tmp/aidd_status_files_XXXXXXXXXX.txt)
+    if [[ -n "$MILESTONE_FEATURES" || -n "$FEATURE_DIR" ]]; then
+        # Filter by directory name
+        while IFS= read -r feature_file; do
+            [[ -z "$feature_file" || ! -f "$feature_file" ]] && continue
             local dir_name
             dir_name=$(basename "$(dirname "$feature_file")")
-            echo "$MILESTONE_FEATURES" | grep -qxF "$dir_name" || continue
-        fi
-        # Apply feature focus filter during collection (by directory name)
-        if [[ -n "$FEATURE_DIR" ]]; then
-            local dir_name_feat
-            dir_name_feat=$(basename "$(dirname "$feature_file")")
-            [[ "$dir_name_feat" == "$FEATURE_DIR" ]] || continue
-        fi
-        # Validate JSON before adding
-        local file_content
-        file_content=$(cat "$feature_file")
-        if ! echo "$file_content" | jq -e . >/dev/null 2>&1; then
-            invalid_count=$((invalid_count + 1))
-            invalid_files+="  - $feature_file
-"
-            continue
-        fi
-        if [[ "$first" == true ]]; then
-            first=false
-        else
-            features_json+=","
-        fi
-        features_json+="$file_content"
-    done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null)
-    features_json+="]"
+            if [[ -n "$MILESTONE_FEATURES" ]]; then
+                echo "$MILESTONE_FEATURES" | grep -qxF "$dir_name" || continue
+            fi
+            if [[ -n "$FEATURE_DIR" ]]; then
+                [[ "$dir_name" == "$FEATURE_DIR" ]] || continue
+            fi
+            echo "$feature_file"
+        done < <(ls -1 "$features_dir"/*/feature.json 2>/dev/null) > "$files_list"
+    else
+        ls -1 "$features_dir"/*/feature.json 2>/dev/null > "$files_list"
+    fi
 
-    # Apply --filter-by / --filter if active (uses --arg/--argjson to prevent jq injection)
+    # Build jq filter for stats — single invocation over all files
+    local jq_filter=""
     if [[ -n "$FILTER_BY" && -n "$FILTER_VALUE" ]]; then
         if [[ "$FILTER_VALUE" =~ ^[0-9]+$ || "$FILTER_VALUE" == "true" || "$FILTER_VALUE" == "false" ]]; then
-            features_json=$(echo "$features_json" | jq -c --arg field "$FILTER_BY" --argjson val "$FILTER_VALUE" '[.[] | select(.[$field] == $val)]')
+            jq_filter="map(select(.\"$FILTER_BY\" == $FILTER_VALUE)) | "
         else
-            features_json=$(echo "$features_json" | jq -c --arg field "$FILTER_BY" --arg val "$FILTER_VALUE" '[.[] | select(.[$field] == $val)]')
+            jq_filter="map(select(.\"$FILTER_BY\" == \"$FILTER_VALUE\")) | "
         fi
     fi
 
-    # Report invalid files if any
-    if [[ $invalid_count -gt 0 ]]; then
-        log_warn "$invalid_count feature.json file(s) have invalid JSON and were skipped:"
-        echo -e "$invalid_files" >&2
+    # Concatenate all files via xargs cat, pipe into single jq --slurp
+    local stats_json
+    stats_json=$(< "$files_list" xargs cat 2>/dev/null | jq -s "${jq_filter}"'{
+        total: length,
+        passing: [.[] | select(.passes == true)] | length,
+        failing: [.[] | select(.passes == false and .status == "backlog")] | length,
+        closed: [.[] | select(.status == "completed")] | length,
+        open: [.[] | select(.status == "backlog")] | length,
+        cat_pri: (
+            ["Core","UI","Security","Performance","DevEx"] as $cats |
+            [.[] | {cat: .category, pri: .priority}] as $items |
+            [$cats[] as $c | {
+                cat: $c,
+                total: [$items[] | select(.cat == $c)] | length,
+                p1: [$items[] | select(.cat == $c and .pri == 1)] | length,
+                p2: [$items[] | select(.cat == $c and .pri == 2)] | length,
+                p3: [$items[] | select(.cat == $c and .pri == 3)] | length,
+                p4: [$items[] | select(.cat == $c and .pri == 4)] | length
+            } | select(.total > 0)]
+        )
+    }' | tr -d '\r')
+    rm -f "$files_list"
+
+    if [[ -z "$stats_json" || "$stats_json" == "null" ]]; then
+        stats_json='{"total":0,"passing":0,"failing":0,"closed":0,"open":0,"cat_pri":[]}'
     fi
 
-    # Get overall statistics
-    local total
-    local passing
-    local failing
-    local open
-    local closed
-
-    total=$(echo "$features_json" | jq '. | length // 0')
-    passing=$(echo "$features_json" | jq '[.[] | select(.passes == true)] | length // 0')
-    failing=$(echo "$features_json" | jq '[.[] | select(.passes == false and .status == "backlog")] | length // 0')
-    closed=$(echo "$features_json" | jq '[.[] | select(.status == "completed")] | length // 0')
-    open=$(echo "$features_json" | jq '[.[] | select(.status == "backlog")] | length // 0')
-
-    # Ensure variables are numeric integers
-    if [[ -n "$total" && "$total" =~ ^[0-9]+$ ]]; then
-        total=$((total))
-    else
-        total=0
-    fi
-    if [[ -n "$passing" && "$passing" =~ ^[0-9]+$ ]]; then
-        passing=$((passing))
-    else
-        passing=0
-    fi
-    if [[ -n "$failing" && "$failing" =~ ^[0-9]+$ ]]; then
-        failing=$((failing))
-    else
-        failing=0
-    fi
-    if [[ -n "$closed" && "$closed" =~ ^[0-9]+$ ]]; then
-        closed=$((closed))
-    else
-        closed=0
-    fi
-    if [[ -n "$open" && "$open" =~ ^[0-9]+$ ]]; then
-        open=$((open))
-    else
-        open=0
-    fi
+    local total passing failing open closed
+    total=$(echo "$stats_json" | jq -r '.total' | tr -d '\r')
+    passing=$(echo "$stats_json" | jq -r '.passing' | tr -d '\r')
+    failing=$(echo "$stats_json" | jq -r '.failing' | tr -d '\r')
+    closed=$(echo "$stats_json" | jq -r '.closed' | tr -d '\r')
+    open=$(echo "$stats_json" | jq -r '.open' | tr -d '\r')
 
     # Print summary header
     # Write output to temp file, then display and save
@@ -754,105 +733,6 @@ show_status() {
     echo ""
     echo "---"
     echo ""
-
-    # Group by status
-    echo "## Features by Status/Priority:"
-    echo ""
-    echo ""
-
-    # Passing features - grouped by priority
-    echo "✅ PASSING ($passing features):"
-    echo ""
-
-    for priority_num in 1 2 3 4; do
-        local priority_name
-        case $priority_num in
-            1) priority_name="critical" ;;
-            2) priority_name="high" ;;
-            3) priority_name="medium" ;;
-            4) priority_name="low" ;;
-        esac
-
-        # Get features for this priority
-        local priority_features
-        priority_features=$(echo "$features_json" | jq -r "
-            .[] |
-            select(.passes == true and .priority == $priority_num) |
-            {
-                description: .description,
-                deps: ((.dependencies | length // 0) | tostring)
-            } |
-            \"\(.description)|\(.deps)\"
-        ")
-
-        if [[ -n "$priority_features" ]]; then
-            echo "[$priority_name]"
-            echo "$priority_features" | while IFS='|' read -r description deps; do
-                # Ensure deps is numeric
-                if [[ -n "$deps" && "$deps" =~ ^[0-9]+$ ]]; then
-                    deps=$((deps))
-                else
-                    deps=0
-                fi
-                if [[ "$deps" -gt 0 ]]; then
-                    echo "• $description ($deps deps)"
-                else
-                    echo "• $description"
-                fi
-            done
-            echo ""
-        fi
-    done
-
-    # Open/failing features - grouped by priority
-    echo "⚠️ OPEN ($failing features):"
-    echo ""
-
-    for priority_num in 1 2 3 4; do
-        local priority_name
-        case $priority_num in
-            1) priority_name="critical" ;;
-            2) priority_name="high" ;;
-            3) priority_name="medium" ;;
-            4) priority_name="low" ;;
-        esac
-
-        # Get features for this priority
-        local priority_features
-        priority_features=$(echo "$features_json" | jq -r "
-            .[] |
-            select(.passes == false and .status == \"backlog\" and .priority == $priority_num) |
-            {
-                description: .description,
-                deps: ((.dependencies | length // 0) | tostring)
-            } |
-            \"\(.description)|\(.deps)\"
-        ")
-
-        if [[ -n "$priority_features" ]]; then
-            echo "[$priority_name]"
-            echo "$priority_features" | while IFS='|' read -r description deps; do
-                # Ensure deps is numeric
-                if [[ -n "$deps" && "$deps" =~ ^[0-9]+$ ]]; then
-                    deps=$((deps))
-                else
-                    deps=0
-                fi
-                if [[ "$deps" -gt 0 ]]; then
-                    echo "• $description ($deps deps)"
-                else
-                    echo "• $description"
-                fi
-            done
-            echo ""
-        fi
-    done
-
-    echo ""
-    echo ""
-
-    echo "---"
-    echo ""
     echo "## Features by Category/Priority:"
     echo ""
     echo ""
@@ -861,41 +741,17 @@ show_status() {
     printf "%-20s\t%s\t%s\t%s\t %s\n" "" "critical" "high" "medium" "low"
     echo ""
 
-    # Print counts for each category by priority
-    for category in Core UI Security Performance DevEx; do
-        local counts=()
-        local has_features=false
-
-        for priority_num in 1 2 3 4; do
-            local count
-            count=$(echo "$features_json" | jq --arg cat "$category" --argjson pri "$priority_num" '[.[] | select(.category == $cat and .priority == $pri)] | length // 0')
-            # Ensure count is numeric integer
-            if [[ -n "$count" && "$count" =~ ^[0-9]+$ ]]; then
-                count=$((count))
+    # Print counts from pre-computed stats (no extra jq calls)
+    echo "$stats_json" | jq -r '.cat_pri[] | "\(.cat)\t\(.total)\t\(.p1)\t\(.p2)\t\(.p3)\t\(.p4)"' | tr -d '\r' | while IFS=$'\t' read -r cat cat_total p1 p2 p3 p4; do
+        printf "%-20s\t" "$cat ($cat_total)"
+        for count in $p1 $p2 $p3 $p4; do
+            if [[ "$count" -gt 0 ]]; then
+                printf "%s\t" "$count"
             else
-                count=0
-            fi
-            counts+=("$count")
-            if [[ $count -gt 0 ]]; then
-                has_features=true
+                printf "\t"
             fi
         done
-
-        if [[ "$has_features" == true ]]; then
-            local total_count=0
-            for count in "${counts[@]}"; do
-                total_count=$((total_count + count))
-            done
-            printf "%-20s\t" "$category ($total_count)"
-            for count in "${counts[@]}"; do
-                if [[ $count -gt 0 ]]; then
-                    printf "%s\t" "$count"
-                else
-                    printf "\t"
-                fi
-            done
-            echo ""
-        fi
+        echo ""
     done
     echo ""
 
@@ -1056,9 +912,6 @@ validate_features() {
     local valid_files=0
     local invalid_files=0
     local error_details=""
-    local status_backlog=0 status_pending=0 status_running=0 status_completed=0
-    local status_failed=0 status_verified=0 status_waiting_approval=0 status_in_progress=0
-    local status_none=0
     declare -A parsed_files
 
     # Pass 1: Collect all valid feature IDs for dependency validation
@@ -1072,7 +925,8 @@ validate_features() {
     # Write jq validation program to temp file (avoids bash escaping issues with != on Git Bash/Windows)
     local jq_filter
     jq_filter=$(mktemp)
-    trap "rm -f '$jq_filter' '$all_ids_file' '$files_list'" RETURN
+    # Clean up temp files on function exit (avoid trap RETURN which leaks in bash)
+    local _cleanup_files="$jq_filter $all_ids_file $files_list"
     cat > "$jq_filter" << 'JQEOF'
 # Valid enum sets
 def valid_statuses: ["backlog","pending","running","completed","failed","verified","waiting_approval","in_progress"];
@@ -1101,7 +955,7 @@ def check_opt(field; expected):
      then "Invalid 'id' format: '\(.id)' (expected: feature-{timestamp}-{slug}, spernakit-{timestamp}-{slug}, audit-{type}-{timestamp}-{description}, or remediation-({timestamp}-)?{slug})"
      else null end),
     # Audit findings must have audit- prefix in id
-    (if has("auditSource") and (.auditSource | type) == "string" and .auditSource != "" then
+    (if has("auditSource") and (.auditSource | type) == "string" and .auditSource != "" and (.id | type) == "string" then
          if (.id | startswith("audit-") | not) then "Audit finding id must start with 'audit-' (got: '\(.id)')"
          elif (.id != $dir_id) then "Audit finding id must match directory name (id='\(.id)', dir='\($dir_id)')"
          else null end
@@ -1176,25 +1030,9 @@ JQEOF
     while IFS=$'\t' read -r tag arg1 arg2 arg3; do
         case "$tag" in
             OK)
-                local dir_id="$arg1" passes="$arg2" status="$arg3"
+                local dir_id="$arg1"
                 parsed_files["$dir_id"]=1
                 valid_files=$((valid_files + 1))
-                if [[ "$passes" == "true" ]]; then
-                    echo "  ✅ $dir_id (valid, complete)"
-                else
-                    echo "  ⬜ $dir_id (valid, not complete)"
-                fi
-                case "$status" in
-                    backlog) status_backlog=$((status_backlog + 1)) ;;
-                    pending) status_pending=$((status_pending + 1)) ;;
-                    running) status_running=$((status_running + 1)) ;;
-                    completed) status_completed=$((status_completed + 1)) ;;
-                    failed) status_failed=$((status_failed + 1)) ;;
-                    verified) status_verified=$((status_verified + 1)) ;;
-                    waiting_approval) status_waiting_approval=$((status_waiting_approval + 1)) ;;
-                    in_progress) status_in_progress=$((status_in_progress + 1)) ;;
-                    *) status_none=$((status_none + 1)) ;;
-                esac
                 ;;
             ERR)
                 echo "  ❌ $arg1 (invalid)"
@@ -1228,17 +1066,9 @@ JQEOF
     printf "%-20s %s\n" "Valid:" "$valid_files"
     printf "%-20s %s\n" "Invalid:" "$invalid_files"
     echo ""
-    echo "Status breakdown:"
-    [[ $status_backlog -gt 0 ]] && printf "  %-20s %s\n" "backlog:" "$status_backlog"
-    [[ $status_pending -gt 0 ]] && printf "  %-20s %s\n" "pending:" "$status_pending"
-    [[ $status_running -gt 0 ]] && printf "  %-20s %s\n" "running:" "$status_running"
-    [[ $status_completed -gt 0 ]] && printf "  %-20s %s\n" "completed:" "$status_completed"
-    [[ $status_failed -gt 0 ]] && printf "  %-20s %s\n" "failed:" "$status_failed"
-    [[ $status_verified -gt 0 ]] && printf "  %-20s %s\n" "verified:" "$status_verified"
-    [[ $status_waiting_approval -gt 0 ]] && printf "  %-20s %s\n" "waiting_approval:" "$status_waiting_approval"
-    [[ $status_in_progress -gt 0 ]] && printf "  %-20s %s\n" "in_progress:" "$status_in_progress"
-    [[ $status_none -gt 0 ]] && printf "  %-20s %s\n" "(no status):" "$status_none"
-    echo ""
+
+    # Clean up temp files
+    rm -f $_cleanup_files 2>/dev/null
 
     if [[ $invalid_files -gt 0 ]]; then
         echo "------------------------------------------------------------------------------"
@@ -1336,8 +1166,8 @@ init_args() {
 
     # Handle --check-features option (validate and exit)
     if [[ "$CHECK_FEATURES" == true ]]; then
-        validate_features "$PROJECT_DIR"
-        local validate_result=$?
+        local validate_result=0
+        validate_features "$PROJECT_DIR" || validate_result=$?
         exit $validate_result
     fi
 

@@ -111,6 +111,7 @@ extract_cli_info() {
         OpenCode) cli_type="opencode" ;;
         KiloCode) cli_type="kilocode" ;;
         Claude|ClaudeCode) cli_type="claude-code" ;;
+        ZRun) cli_type="zrun" ;;
         *) cli_type="unknown" ;;
     esac
 

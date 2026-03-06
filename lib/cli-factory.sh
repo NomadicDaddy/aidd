@@ -4,7 +4,7 @@ set -euo pipefail
 # lib/cli-factory.sh - CLI Abstraction Factory for AIDD
 # =============================================================================
 # Provides a common interface for interacting with different CLI tools
-# (OpenCode, KiloCode, Claude Code) through a factory pattern
+# (OpenCode, KiloCode, Claude Code, ZRun) through a factory pattern
 
 # Source configuration
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
@@ -43,9 +43,15 @@ init_cli() {
             export CLI_COMMAND="claude"
             source "$(dirname "${BASH_SOURCE[0]}")/cli-claude-code.sh"
             ;;
+        zrun)
+            export CLI_TYPE="zrun"
+            export CLI_NAME="ZRun"
+            export CLI_COMMAND="bun run zrun/src/index.ts"
+            source "$(dirname "${BASH_SOURCE[0]}")/cli-zrun.sh"
+            ;;
         *)
             echo "Error: Unknown CLI type '$cli_type'" >&2
-            echo "Supported CLIs: opencode, kilocode, claude-code" >&2
+            echo "Supported CLIs: opencode, kilocode, claude-code, zrun" >&2
             return "$EXIT_INVALID_ARGS"
             ;;
     esac
@@ -90,6 +96,9 @@ run_cli_prompt() {
         claude-code)
             run_claude_code_prompt "$project_dir" "$prompt_path" "${model_args[@]}"
             ;;
+        zrun)
+            run_zrun_prompt "$project_dir" "$prompt_path" "${model_args[@]}"
+            ;;
         *)
             echo "Error: CLI not initialized. Call init_cli() first." >&2
             return "$EXIT_CLI_ERROR"
@@ -111,6 +120,9 @@ check_cli_available() {
         claude-code)
             check_claude_code_available
             ;;
+        zrun)
+            check_zrun_available
+            ;;
         *)
             echo "Error: CLI not initialized. Call init_cli() first." >&2
             return 1
@@ -131,6 +143,9 @@ get_cli_version() {
             ;;
         claude-code)
             get_claude_code_version
+            ;;
+        zrun)
+            get_zrun_version
             ;;
         *)
             echo "unknown"

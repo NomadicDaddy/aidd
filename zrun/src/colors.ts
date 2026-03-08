@@ -44,5 +44,5 @@ export const c = {
 	zrun: `${BOLD}${CYAN}[zrun]${RESET}`,
 	toolPrefix: `${BOLD}${YELLOW}[tool]${RESET}`,
 	resultPrefix: `${GREEN}[result]${RESET}`,
-	usagePrefix: `${DIM}[usage]${RESET}`,
+	usagePrefix: `${BLUE}[usage]${RESET}`,
 };

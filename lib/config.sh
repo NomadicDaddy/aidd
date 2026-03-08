@@ -65,7 +65,7 @@ readonly EXIT_SIGNAL_TERMINATED
 : "${DEFAULT_MAX_ITERATIONS:=10}"        # Default max iterations (0 = unlimited)
 : "${DEFAULT_TIMEOUT:=3600}"             # Default timeout in seconds (60 minutes)
 : "${DEFAULT_IDLE_TIMEOUT:=900}"         # Default idle timeout in seconds (15 minutes)
-: "${DEFAULT_IDLE_NUDGE_TIMEOUT:=300}"   # Default idle nudge timeout in seconds (5 minutes)
+: "${DEFAULT_IDLE_NUDGE_TIMEOUT:=600}"   # Default idle nudge timeout in seconds (10 minutes)
 : "${DEFAULT_NO_CLEAN:=false}"           # Default: clean up artifacts
 : "${DEFAULT_QUIT_ON_ABORT:=0}"          # Default: continue on abort indefinitely
 : "${DEFAULT_RATE_LIMIT_BUFFER:=60}"     # Seconds to wait after rate limit reset time

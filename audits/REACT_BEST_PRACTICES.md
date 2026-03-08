@@ -1,7 +1,7 @@
 ---
 title: 'React Best Practices Audit (Vercel)'
-last_updated: '2026-01-20'
-version: '1.0'
+last_updated: '2026-03-06'
+version: '2.0'
 category: 'Frontend'
 priority: 'High'
 estimated_time: '3-4 hours'
@@ -13,7 +13,7 @@ lifecycle: 'pre-release'
 
 Based on [Vercel's React Best Practices](https://vercel.com/blog/introducing-react-best-practices)
 
-Comprehensive performance optimization guide containing 40+ rules across 8 categories, prioritized by impact from critical (eliminating waterfalls, reducing bundle size) to incremental (advanced patterns).
+Comprehensive performance optimization guide containing 58 rules across 8 categories, prioritized by impact from critical (eliminating waterfalls, reducing bundle size) to incremental (advanced patterns). Based on the [Vercel React Best Practices skill](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices).
 
 ## Executive Summary
 
@@ -28,8 +28,8 @@ Comprehensive performance optimization guide containing 40+ rules across 8 categ
 
 - **Waterfall elimination**: Parallelize independent async operations
 - **Bundle optimization**: Direct imports, code splitting, lazy loading
-- **Server-side patterns**: React.cache(), after(), proper authentication
-- **Client-side efficiency**: SWR, deduplication, event listener optimization
+- **Server-side patterns**: LRU caching, proper authentication on every endpoint
+- **Client-side efficiency**: TanStack Query, deduplication, event listener optimization
 
 **⚡ Performance Impact Levels**
 
@@ -39,6 +39,41 @@ Comprehensive performance optimization guide containing 40+ rules across 8 categ
 - **LOW**: Advanced patterns, minor optimizations
 
 > **Severity Reference**: See [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md) for issue prioritization.
+
+## Spernakit Applicability
+
+This audit is adapted from Vercel's React Best Practices skill, which targets **Next.js** with React Server Components (RSC), Server Actions, and SSR streaming. Spernakit applications use **React 19 + Vite** (client-only SPA) with an **Elysia** backend — no RSC, no SSR, no Server Actions.
+
+### Rules That Do NOT Apply to Spernakit
+
+These rules reference Next.js/RSC-only features and should be **skipped** during audits of spernakit apps:
+
+| Skill Rule ID                          | Rule                                   | Why N/A                                                 |
+| -------------------------------------- | -------------------------------------- | ------------------------------------------------------- |
+| `async-suspense-boundaries`            | Suspense for RSC streaming             | No SSR/streaming; Suspense only applies with React.lazy |
+| `server-auth-actions`                  | Authenticate Server Actions            | No Server Actions; use Elysia guards instead            |
+| `server-cache-react`                   | React.cache() deduplication            | RSC-only API; not available in client-side React        |
+| `server-dedup-props`                   | Avoid duplicate RSC serialization      | No RSC prop serialization boundary                      |
+| `server-serialization`                 | Minimize RSC→client data               | No RSC→client boundary                                  |
+| `server-parallel-fetching`             | Parallel RSC component composition     | No async server components                              |
+| `server-after-nonblocking`             | next/server after()                    | Next.js-only API                                        |
+| `server-hoist-static-io`               | Hoist static I/O to module level       | RSC pattern; N/A for client SPA                         |
+| `rendering-hydration-suppress-warning` | Suppress expected hydration mismatches | SSR-only; no hydration in client SPA                    |
+
+### Spernakit Equivalents
+
+| Vercel Pattern                   | Spernakit Equivalent                                             |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `next/dynamic` with `ssr: false` | `React.lazy()` with `.then(m => ({ default: m.Name }))`          |
+| SWR for data fetching            | TanStack Query (`useQuery`, `useMutation`)                       |
+| Server Actions with auth         | Elysia route guards (`authenticated`, `role`, `workspaceAccess`) |
+| `React.cache()` per-request      | LRU cache in backend services (cross-request)                    |
+| `optimizePackageImports`         | Direct imports from source paths                                 |
+| `after()` for non-blocking work  | Fire-and-forget promises or `queueMicrotask` in Elysia handlers  |
+
+### Rules That Fully Apply
+
+All rules in sections 1 (Waterfalls), 2 (Bundle Size — adapted), 4 (Client-Side — adapted), 5 (Re-renders), 6 (Rendering), 7 (JS Performance), and 8 (Advanced) apply to spernakit apps with the noted adaptations above.
 
 ## Table of Contents
 
@@ -170,46 +205,47 @@ const [user, posts, comments] = await Promise.all([fetchUser(), fetchPosts(), fe
 
 **Impact: HIGH** (faster initial paint)
 
-Instead of awaiting data in async components before returning JSX, use Suspense boundaries to show the wrapper UI faster while data loads.
+> **Skill rule**: `async-suspense-boundaries`
 
-❌ **Incorrect** (wrapper blocked by data fetching):
+Use Suspense boundaries with `React.lazy()` to show the wrapper UI immediately while heavy components load.
+
+> **Spernakit note**: In RSC apps, Suspense streams server-rendered HTML. In spernakit (client SPA), Suspense works with `React.lazy()` for code-split components and with TanStack Query's suspense mode.
+
+❌ **Incorrect** (entire page blocked by heavy component):
 
 ```tsx
-async function Page() {
-	const data = await fetchData(); // Blocks entire page
+import { HeavyChart } from './HeavyChart';
 
+function Dashboard() {
 	return (
 		<div>
-			<div>Sidebar</div>
-			<div>Header</div>
-			<div>
-				<DataDisplay data={data} />
-			</div>
-			<div>Footer</div>
+			<Sidebar />
+			<Header />
+			<HeavyChart /> {/* Blocks entire page render */}
+			<Footer />
 		</div>
 	);
 }
 ```
 
-✅ **Correct** (wrapper shows immediately, data streams in):
+✅ **Correct** (wrapper shows immediately, chart loads async):
 
 ```tsx
-function Page() {
+import { lazy, Suspense } from 'react';
+
+const HeavyChart = lazy(() => import('./HeavyChart').then((m) => ({ default: m.HeavyChart })));
+
+function Dashboard() {
 	return (
 		<div>
-			<div>Sidebar</div>
-			<div>Header</div>
+			<Sidebar />
+			<Header />
 			<Suspense fallback={<Skeleton />}>
-				<DataDisplay /> // Only this component waits
+				<HeavyChart /> {/* Loads independently */}
 			</Suspense>
-			<div>Footer</div>
+			<Footer />
 		</div>
 	);
-}
-
-async function DataDisplay() {
-	const data = await fetchData();
-	return <div>{data.content}</div>;
 }
 ```
 
@@ -245,17 +281,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 ```
 
-**Alternative: Next.js 13.5+ optimizePackageImports**
-
-```javascript
-// next.config.js
-module.exports = {
-	experimental: {
-		optimizePackageImports: ['lucide-react', '@mui/material'],
-	},
-};
-// Then you can use barrel imports - automatically transformed at build time
-```
+> **Note**: Next.js has `optimizePackageImports` to auto-transform barrel imports. Spernakit (Vite) does not — always use direct imports.
 
 ### 2.2 Conditional Module Loading
 
@@ -311,23 +337,23 @@ export default function RootLayout({ children }) {
 }
 ```
 
-✅ **Correct** (loads after hydration):
+✅ **Correct** (loads after initial render):
 
 ```tsx
-import dynamic from 'next/dynamic';
+import { lazy, Suspense } from 'react';
 
-const Analytics = dynamic(() => import('@vercel/analytics/react').then((m) => m.Analytics), {
-	ssr: false,
-});
+const Analytics = lazy(() =>
+	import('@vercel/analytics/react').then((m) => ({ default: m.Analytics }))
+);
 
-export default function RootLayout({ children }) {
+function App() {
 	return (
-		<html>
-			<body>
-				{children}
-				<Analytics /> {/* Loads after hydration */}
-			</body>
-		</html>
+		<>
+			{children}
+			<Suspense fallback={null}>
+				<Analytics /> {/* Loads after initial render */}
+			</Suspense>
+		</>
 	);
 }
 ```
@@ -336,7 +362,7 @@ export default function RootLayout({ children }) {
 
 **Impact: CRITICAL** (directly affects TTI and LCP)
 
-Use `next/dynamic` to lazy-load large components not needed on initial render.
+Use `React.lazy()` to lazy-load large components not needed on initial render.
 
 ❌ **Incorrect** (Monaco bundles with main chunk ~300KB):
 
@@ -351,16 +377,22 @@ function CodePanel({ code }: { code: string }) {
 ✅ **Correct** (Monaco loads on demand):
 
 ```tsx
-import dynamic from 'next/dynamic';
+import { lazy, Suspense } from 'react';
 
-const MonacoEditor = dynamic(() => import('./monaco-editor').then((m) => m.MonacoEditor), {
-	ssr: false,
-});
+const MonacoEditor = lazy(() =>
+	import('./monaco-editor').then((m) => ({ default: m.MonacoEditor }))
+);
 
 function CodePanel({ code }: { code: string }) {
-	return <MonacoEditor value={code} />;
+	return (
+		<Suspense fallback={<Skeleton />}>
+			<MonacoEditor value={code} />
+		</Suspense>
+	);
 }
 ```
+
+> **Spernakit note**: Use `React.lazy()` with named export adaptation (`.then(m => ({ default: m.Name }))`), not `next/dynamic`.
 
 ### 2.5 Preload Based on User Intent
 
@@ -392,77 +424,48 @@ function EditorButton({ onClick }: { onClick: () => void }) {
 
 **Impact: HIGH**
 
-Optimizing server-side rendering and data fetching eliminates server-side waterfalls and reduces response times.
+Optimizing server-side data fetching and caching eliminates waterfalls and reduces response times.
 
-### 3.1 Authenticate Server Actions Like API Routes
+> **Spernakit note**: Most rules in this section originate from Next.js RSC/Server Actions patterns. Only **3.1 (Endpoint Auth)** and **3.2 (LRU Caching)** directly apply to spernakit's Elysia backend. The RSC-specific rules (3.3–3.7) are retained for reference when auditing Next.js codebases but are marked as N/A for spernakit.
 
-**Impact: CRITICAL** (prevents unauthorized access to server mutations)
+### 3.1 Authenticate Every Backend Endpoint
 
-Server Actions (functions with `"use server"`) are exposed as public endpoints. Always verify authentication and authorization **inside** each Server Action.
+**Impact: CRITICAL** (prevents unauthorized access to mutations)
 
-❌ **Incorrect** (no authentication check):
+Every API endpoint must verify authentication and authorization. In spernakit, this is handled by Elysia guards — never rely solely on frontend route guards.
 
-```typescript
-'use server';
+> **Skill rule**: `server-auth-actions` — adapted from Server Actions to Elysia guards.
 
-export async function deleteUser(userId: string) {
-	await db.user.delete({ where: { id: userId } }); // Anyone can call this!
-	return { success: true };
-}
-```
-
-✅ **Correct** (authentication inside the action):
+❌ **Incorrect** (no guard):
 
 ```typescript
-'use server';
-
-import { verifySession } from '@/lib/auth';
-
-export async function deleteUser(userId: string) {
-	const session = await verifySession();
-
-	if (!session) {
-		throw new Error('Unauthorized');
-	}
-
-	if (session.user.role !== 'admin' && session.user.id !== userId) {
-		throw new Error('Cannot delete other users');
-	}
-
-	await db.user.delete({ where: { id: userId } });
+app.delete('/api/users/:id', async ({ params }) => {
+	await db.delete(users).where(eq(users.id, params.id)); // Anyone can call this!
 	return { success: true };
-}
+});
 ```
 
-### 3.2 Avoid Duplicate Serialization in RSC Props
+✅ **Correct** (Elysia guard):
 
-**Impact: LOW** (reduces network payload by avoiding duplicate serialization)
-
-RSC→client serialization deduplicates by object reference, not value. Do transformations in client, not server.
-
-❌ **Incorrect** (duplicates array):
-
-```tsx
-<ClientList
-  usernames={usernames}
-  usernamesOrdered={usernames.toSorted()} />  {/* Sends 6 strings (2 arrays × 3 items) */}
+```typescript
+app.group('/api/users', (app) =>
+	app
+		.use(authenticated)
+		.use(role('admin'))
+		.delete('/:id', async ({ params }) => {
+			await db.delete(users).where(eq(users.id, params.id));
+			return { success: true };
+		})
+);
 ```
 
-✅ **Correct** (sends 3 strings):
-
-```tsx
-<ClientList usernames={usernames} />  {/* Send once */}
-
-// Client: transform there
-'use client'
-const sorted = useMemo(() => [...usernames].sort(), [usernames])
-```
-
-### 3.3 Cross-Request LRU Caching
+### 3.2 Cross-Request LRU Caching
 
 **Impact: HIGH** (caches across requests)
 
-`React.cache()` only works within one request. For data shared across sequential requests, use an LRU cache.
+> **Skill rule**: `server-cache-lru`
+
+For frequently accessed data shared across requests, use an LRU cache in backend services.
 
 ✅ **Correct** (LRU cache implementation):
 
@@ -484,153 +487,18 @@ export async function getUser(id: string) {
 }
 ```
 
-### 3.4 Minimize Serialization at RSC Boundaries
+### 3.3–3.7 RSC-Only Rules (Next.js Reference)
 
-**Impact: HIGH** (reduces data transfer size)
+> **N/A for spernakit** — these rules apply only to Next.js with React Server Components. Retained for reference when auditing Next.js codebases.
 
-Only pass fields that the client actually uses. Serialized data directly impacts page weight.
-
-❌ **Incorrect** (serializes all 50 fields):
-
-```tsx
-async function Page() {
-	const user = await fetchUser(); // 50 fields
-	return <Profile user={user} />; // Only uses 1 field
-}
-
-('use client');
-function Profile({ user }: { user: User }) {
-	return <div>{user.name}</div>;
-}
-```
-
-✅ **Correct** (serializes only 1 field):
-
-```tsx
-async function Page() {
-	const user = await fetchUser();
-	return <Profile name={user.name} />;
-}
-
-('use client');
-function Profile({ name }: { name: string }) {
-	return <div>{name}</div>;
-}
-```
-
-### 3.5 Parallel Data Fetching with Component Composition
-
-**Impact: CRITICAL** (eliminates server-side waterfalls)
-
-React Server Components execute sequentially within a tree. Restructure with composition to parallelize data fetching.
-
-❌ **Incorrect** (Sidebar waits for Page's fetch to complete):
-
-```tsx
-export default async function Page() {
-	const header = await fetchHeader();
-	return (
-		<div>
-			<div>{header}</div>
-			<Sidebar /> {/* Sidebar's fetch waits for header */}
-		</div>
-	);
-}
-
-async function Sidebar() {
-	const items = await fetchSidebarItems();
-	return <nav>{items.map(renderItem)}</nav>;
-}
-```
-
-✅ **Correct** (both fetch simultaneously):
-
-```tsx
-async function Header() {
-	const data = await fetchHeader();
-	return <div>{data}</div>;
-}
-
-async function Sidebar() {
-	const items = await fetchSidebarItems();
-	return <nav>{items.map(renderItem)}</nav>;
-}
-
-export default function Page() {
-	return (
-		<div>
-			<Header /> {/* Runs in parallel */}
-			<Sidebar /> {/* Runs in parallel */}
-		</div>
-	);
-}
-```
-
-### 3.6 Per-Request Deduplication with React.cache()
-
-**Impact: MEDIUM** (deduplicates within request)
-
-Use `React.cache()` for server-side request deduplication. Authentication and database queries benefit most.
-
-✅ **Correct** (React.cache usage):
-
-```typescript
-import { cache } from 'react';
-
-export const getCurrentUser = cache(async () => {
-	const session = await auth();
-	if (!session?.user?.id) return null;
-	return await db.user.findUnique({
-		where: { id: session.user.id },
-	});
-});
-```
-
-⚠️ **Important**: `React.cache()` uses shallow equality. Avoid inline objects as arguments:
-
-```typescript
-// ❌ Incorrect - always cache miss (new object each call)
-getUser({ uid: 1 });
-getUser({ uid: 1 });
-
-// ✅ Correct - cache hit (same reference)
-const params = { uid: 1 };
-getUser(params);
-getUser(params);
-```
-
-### 3.7 Use after() for Non-Blocking Operations
-
-**Impact: MEDIUM** (faster response times)
-
-Use Next.js's `after()` to schedule work that should execute after a response is sent.
-
-❌ **Incorrect** (blocks response):
-
-```tsx
-export async function POST(request: Request) {
-  await updateDatabase(request)
-  await logUserAction(request)  {/* Blocks response */}
-  return Response.json({ status: 'success' })
-}
-```
-
-✅ **Correct** (non-blocking):
-
-```tsx
-import { after } from 'next/server';
-
-export async function POST(request: Request) {
-	await updateDatabase(request);
-
-	// Log after response is sent
-	after(async () => {
-		await logUserAction(request);
-	});
-
-	return Response.json({ status: 'success' });
-}
-```
+| #   | Skill Rule ID              | Rule                              | Summary                                                    |
+| --- | -------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| 3.3 | `server-dedup-props`       | Avoid duplicate RSC serialization | RSC deduplicates by reference; transform in client         |
+| 3.4 | `server-serialization`     | Minimize RSC→client data          | Only pass fields the client component uses                 |
+| 3.5 | `server-parallel-fetching` | Parallel RSC fetching             | Restructure async server components for parallel execution |
+| 3.6 | `server-cache-react`       | React.cache() deduplication       | Per-request dedup for auth/DB queries in RSC               |
+| 3.7 | `server-after-nonblocking` | after() for non-blocking work     | Schedule work after response (Next.js `after()` API)       |
+| —   | `server-hoist-static-io`   | Hoist static I/O                  | Load fonts/logos at module level in RSC                    |
 
 ---
 
@@ -697,11 +565,13 @@ useEffect(() => {
 }, [])
 ```
 
-### 4.3 Use SWR for Automatic Deduplication
+### 4.3 Use TanStack Query for Automatic Deduplication
 
 **Impact: MEDIUM-HIGH** (automatic deduplication)
 
-SWR enables request deduplication, caching, and revalidation across component instances.
+> **Skill rule**: `client-swr-dedup` — adapted from SWR to TanStack Query for spernakit.
+
+TanStack Query enables request deduplication, caching, and revalidation across component instances.
 
 ❌ **Incorrect** (no deduplication):
 
@@ -719,12 +589,18 @@ function UserList() {
 ✅ **Correct** (automatic deduplication):
 
 ```tsx
-import useSWR from 'swr'
+import { useQuery } from '@tanstack/react-query';
+import { getUsers } from '../api/users';
 
 function UserList() {
-  const { data: users } = useSWR('/api/users', fetcher)  {/* Multiple instances share request */}
+	const { data: users } = useQuery({
+		queryKey: ['users'],
+		queryFn: getUsers, // Multiple instances share the same request
+	});
 }
 ```
+
+> **Note**: The Vercel skill recommends SWR. Spernakit uses TanStack Query exclusively — the deduplication principle is identical.
 
 ### 4.4 Version and Minimize localStorage Data
 
@@ -991,6 +867,191 @@ function ScrollTracker() {
 }
 ```
 
+### 5.8 Hoist Default Non-Primitive Props
+
+**Impact: MEDIUM** (restores memoization by using a constant for default value)
+
+> **Skill rule**: `rerender-memo-with-default-value`
+
+When a memoized component has a default value for a non-primitive optional parameter, calling without that prop breaks memoization (new instance every render).
+
+❌ **Incorrect** (onClick has different value on every render):
+
+```tsx
+const UserAvatar = memo(function UserAvatar({ onClick = () => {} }: { onClick?: () => void }) {
+	// ...
+});
+
+<UserAvatar />; // Memoization broken - new function each render
+```
+
+✅ **Correct** (stable default value):
+
+```tsx
+const NOOP = () => {};
+
+const UserAvatar = memo(function UserAvatar({ onClick = NOOP }: { onClick?: () => void }) {
+	// ...
+});
+
+<UserAvatar />; // Memoization works
+```
+
+> **Note**: If React Compiler is enabled, this is handled automatically.
+
+### 5.9 Derive State During Render, Not in Effects
+
+**Impact: MEDIUM** (avoids redundant renders and state drift)
+
+> **Skill rule**: `rerender-derived-state-no-effect`
+
+If a value can be computed from current props/state, derive it during render. Do not store it in state or update it via useEffect.
+
+❌ **Incorrect** (redundant state and effect):
+
+```tsx
+function Form() {
+	const [firstName, setFirstName] = useState('First');
+	const [lastName, setLastName] = useState('Last');
+	const [fullName, setFullName] = useState('');
+
+	useEffect(() => {
+		setFullName(firstName + ' ' + lastName);
+	}, [firstName, lastName]); // Extra render cycle for derived value
+
+	return <p>{fullName}</p>;
+}
+```
+
+✅ **Correct** (derive during render):
+
+```tsx
+function Form() {
+	const [firstName, setFirstName] = useState('First');
+	const [lastName, setLastName] = useState('Last');
+	const fullName = firstName + ' ' + lastName; // Computed inline
+
+	return <p>{fullName}</p>;
+}
+```
+
+### 5.10 Avoid useMemo for Simple Primitive Expressions
+
+**Impact: LOW-MEDIUM** (removes overhead of useMemo itself)
+
+> **Skill rule**: `rerender-simple-expression-in-memo`
+
+When an expression is simple and returns a primitive (boolean, number, string), `useMemo` overhead exceeds the computation cost.
+
+❌ **Incorrect** (useMemo overhead > expression cost):
+
+```tsx
+function Header({ user, notifications }: Props) {
+	const isLoading = useMemo(() => {
+		return user.isLoading || notifications.isLoading;
+	}, [user.isLoading, notifications.isLoading]);
+
+	if (isLoading) return <Skeleton />;
+}
+```
+
+✅ **Correct** (direct computation):
+
+```tsx
+function Header({ user, notifications }: Props) {
+	const isLoading = user.isLoading || notifications.isLoading;
+
+	if (isLoading) return <Skeleton />;
+}
+```
+
+### 5.11 Put Interaction Logic in Event Handlers
+
+**Impact: MEDIUM** (avoids effect re-runs and duplicate side effects)
+
+> **Skill rule**: `rerender-move-effect-to-event`
+
+If a side effect is triggered by a specific user action, run it in the event handler. Don't model actions as state + effect.
+
+❌ **Incorrect** (event modeled as state + effect):
+
+```tsx
+function Form() {
+	const [submitted, setSubmitted] = useState(false);
+	const theme = useContext(ThemeContext);
+
+	useEffect(() => {
+		if (submitted) {
+			post('/api/register');
+			showToast('Registered', theme);
+		}
+	}, [submitted, theme]); // Re-runs when theme changes too!
+
+	return <button onClick={() => setSubmitted(true)}>Submit</button>;
+}
+```
+
+✅ **Correct** (do it in the handler):
+
+```tsx
+function Form() {
+	const theme = useContext(ThemeContext);
+
+	function handleSubmit() {
+		post('/api/register');
+		showToast('Registered', theme);
+	}
+
+	return <button onClick={handleSubmit}>Submit</button>;
+}
+```
+
+### 5.12 Use Refs for Transient Frequent Values
+
+**Impact: MEDIUM** (avoids unnecessary re-renders on frequent updates)
+
+> **Skill rule**: `rerender-use-ref-transient-values`
+
+When a value changes frequently and you don't need re-renders on every update (mouse position, intervals, transient flags), use `useRef` instead of `useState`.
+
+❌ **Incorrect** (re-renders on every mouse move):
+
+```tsx
+function Tracker() {
+	const [lastX, setLastX] = useState(0);
+
+	useEffect(() => {
+		const onMove = (e: MouseEvent) => setLastX(e.clientX);
+		window.addEventListener('mousemove', onMove);
+		return () => window.removeEventListener('mousemove', onMove);
+	}, []);
+
+	return <div style={{ left: lastX }} />;
+}
+```
+
+✅ **Correct** (no re-render, direct DOM update):
+
+```tsx
+function Tracker() {
+	const lastXRef = useRef(0);
+	const dotRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const onMove = (e: MouseEvent) => {
+			lastXRef.current = e.clientX;
+			if (dotRef.current) {
+				dotRef.current.style.transform = `translateX(${e.clientX}px)`;
+			}
+		};
+		window.addEventListener('mousemove', onMove);
+		return () => window.removeEventListener('mousemove', onMove);
+	}, []);
+
+	return <div ref={dotRef} style={{ transform: 'translateX(0px)' }} />;
+}
+```
+
 ---
 
 ## 6. Rendering Performance
@@ -1199,6 +1260,64 @@ function Page({ data }) {
 		<div>
 			<ComplexComponent data={data} />
 		</div>
+	);
+}
+```
+
+### 6.8 Prefer useTransition Over Manual Loading States
+
+**Impact: LOW** (reduces re-renders, improves code clarity)
+
+> **Skill rule**: `rendering-usetransition-loading`
+
+Use `useTransition` instead of manual `useState` for loading states. Provides built-in `isPending` and automatic transition management.
+
+❌ **Incorrect** (manual loading state):
+
+```tsx
+function SearchResults() {
+	const [results, setResults] = useState([]);
+	const [isLoading, setIsLoading] = useState(false);
+
+	const handleSearch = async (value: string) => {
+		setIsLoading(true);
+		const data = await fetchResults(value);
+		setResults(data);
+		setIsLoading(false); // Must remember to reset; not resilient to errors
+	};
+
+	return (
+		<>
+			<input onChange={(e) => handleSearch(e.target.value)} />
+			{isLoading && <Spinner />}
+			<ResultsList results={results} />
+		</>
+	);
+}
+```
+
+✅ **Correct** (useTransition with built-in pending):
+
+```tsx
+import { useTransition, useState } from 'react';
+
+function SearchResults() {
+	const [results, setResults] = useState([]);
+	const [isPending, startTransition] = useTransition();
+
+	const handleSearch = (value: string) => {
+		startTransition(async () => {
+			const data = await fetchResults(value);
+			setResults(data);
+		});
+	};
+
+	return (
+		<>
+			<input onChange={(e) => handleSearch(e.target.value)} />
+			{isPending && <Spinner />}
+			<ResultsList results={results} />
+		</>
 	);
 }
 ```
@@ -1578,6 +1697,40 @@ function Component({ data, onProcess }) {
 }
 ```
 
+### 8.3 Initialize App Once, Not Per Mount
+
+**Impact: LOW-MEDIUM** (avoids duplicate init in development)
+
+> **Skill rule**: `advanced-init-once`
+
+Don't put app-wide initialization inside `useEffect([])` — components remount and effects re-run (especially in StrictMode). Use a module-level guard.
+
+❌ **Incorrect** (runs twice in dev, re-runs on remount):
+
+```tsx
+function App() {
+	useEffect(() => {
+		loadFromStorage();
+		checkAuthToken();
+	}, []);
+}
+```
+
+✅ **Correct** (once per app load):
+
+```tsx
+let didInit = false;
+
+function App() {
+	useEffect(() => {
+		if (didInit) return;
+		didInit = true;
+		loadFromStorage();
+		checkAuthToken();
+	}, []);
+}
+```
+
 ---
 
 ## Audit Checklist
@@ -1586,43 +1739,38 @@ function Component({ data, onProcess }) {
 
 **Eliminating Waterfalls**
 
-- [ ] **Critical**: No sequential async operations that could be parallel (Promise.all, better-all)
+- [ ] **Critical**: No sequential async operations that could be parallel (`Promise.all`, `better-all`)
 - [ ] **Critical**: Async operations deferred until actually needed (avoid blocking unused code paths)
-- [ ] **Critical**: API routes and Server Actions start independent operations immediately
-- [ ] **Critical**: No waterfall chains in server-side data fetching
-- [ ] **Critical**: Suspense boundaries used strategically for faster initial paint
+- [ ] **Critical**: API routes start independent operations immediately (start early, await late)
+- [ ] **Critical**: No waterfall chains in data fetching
 
 **Bundle Size Optimization**
 
 - [ ] **Critical**: Direct imports used instead of barrel files (lucide-react, @mui/material, etc.)
-- [ ] **Critical**: Heavy components use dynamic imports with next/dynamic
+- [ ] **Critical**: Heavy components use `React.lazy()` with Suspense fallbacks
 - [ ] **Critical**: Large modules conditionally loaded based on feature activation
-- [ ] **Critical**: Next.js optimizePackageImports configured for affected libraries
+- [ ] **Critical**: Non-critical third-party libs deferred (analytics, logging)
 - [ ] **Critical**: Bundle size analysis performed regularly
 
-**Server-Side Security**
+**Endpoint Security**
 
-- [ ] **Critical**: All Server Actions authenticate and authorize inside the function
-- [ ] **Critical**: No reliance solely on middleware or layout guards for Server Actions
+- [ ] **Critical**: All backend endpoints authenticate and authorize (Elysia guards)
+- [ ] **Critical**: No reliance solely on frontend route guards for security
 
 ### High Priority Issues ⚠️
 
 **Server-Side Performance**
 
-- [ ] **High**: React.cache() used for request deduplication (auth, DB queries)
-- [ ] **High**: Parallel data fetching with component composition (eliminate RSC waterfalls)
-- [ ] **High**: RSC props minimized to only fields client uses
-- [ ] **High**: LRU cache used for cross-request deduplication
-- [ ] **High**: after() used for non-blocking operations (analytics, logging)
+- [ ] **High**: LRU cache used for cross-request deduplication in backend services
 
 **Client-Side Data Fetching**
 
-- [ ] **High**: SWR used for automatic request deduplication
+- [ ] **High**: TanStack Query used for automatic request deduplication
 - [ ] **High**: localStorage reads wrapped in try-catch
 - [ ] **High**: localStorage keys versioned to prevent schema conflicts
 - [ ] **High**: Only necessary fields stored in localStorage
 - [ ] **High**: Passive event listeners used for scroll/touch events
-- [ ] **High**: Global event listeners deduplicated (useSWRSubscription or module-level)
+- [ ] **High**: Global event listeners deduplicated (module-level pattern)
 
 **Re-render Optimization**
 
@@ -1635,7 +1783,6 @@ function Component({ data, onProcess }) {
 **Rendering Performance**
 
 - [ ] **High**: CSS content-visibility applied to long lists
-- [ ] **High**: Hydration mismatches prevented with inline scripts for localStorage
 - [ ] **High**: Explicit conditional rendering instead of inline ternaries
 
 ### Medium Priority Issues 📋
@@ -1644,6 +1791,10 @@ function Component({ data, onProcess }) {
 
 - [ ] **Medium**: Narrow effect dependencies (primitive values instead of objects)
 - [ ] **Medium**: Expensive work extracted to memoized components (if no React Compiler)
+- [ ] **Medium**: Default non-primitive props hoisted to constants (for memo'd components)
+- [ ] **Medium**: Derived state computed during render, not in effects
+- [ ] **Medium**: Interaction logic in event handlers, not state + effect
+- [ ] **Medium**: Refs used for transient frequent values (mouse position, intervals)
 - [ ] **Medium**: Static JSX elements hoisted outside components
 
 **Rendering Performance**
@@ -1651,6 +1802,7 @@ function Component({ data, onProcess }) {
 - [ ] **Medium**: SVG animations applied to wrapper div for hardware acceleration
 - [ ] **Medium**: SVG precision optimized with SVGO
 - [ ] **Medium**: Activity component used for show/hide patterns
+- [ ] **Medium**: useTransition preferred over manual loading state
 
 **JavaScript Performance**
 
@@ -1662,6 +1814,10 @@ function Component({ data, onProcess }) {
 - [ ] **Medium**: Set/Map used for O(1) lookups
 
 ### Low Priority Issues 💡
+
+**Re-render Optimization**
+
+- [ ] **Low**: Avoid useMemo for simple primitive expressions
 
 **JavaScript Performance**
 
@@ -1676,6 +1832,7 @@ function Component({ data, onProcess }) {
 
 - [ ] **Low**: Event handlers stored in refs for stability
 - [ ] **Low**: useLatest pattern used for stable callback refs
+- [ ] **Low**: App-wide initialization guarded against remount (module-level flag)
 
 ---
 
@@ -1821,8 +1978,8 @@ function Component({ data, onProcess }) {
 
 - **Waterfall Elimination**: [Percentage]% of async operations parallelized
 - **Bundle Size**: [Current]KB → [Target]KB (improvement: [Percentage]%)
-- **React.cache() Usage**: [Count] functions cached
-- **SWR Integration**: [Percentage]% of data fetching using SWR
+- **LRU Cache Usage**: [Count] backend services using LRU caching
+- **TanStack Query Integration**: [Percentage]% of data fetching using useQuery
 - **Re-render Reduction**: [Percentage]% reduction in unnecessary re-renders
 
 ## Next Audit Date
@@ -1840,15 +1997,15 @@ Recommended: [Date] (Monthly for active development)
 
 ## References
 
-- [Vercel React Best Practices](https://vercel.com/blog/introducing-react-best-practices)
-- [Vercel React Best Practices AGENTS.md](https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/react-best-practices/AGENTS.md)
+- [Vercel React Best Practices Skill](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices) — 58 rules, source material
+- [Vercel Blog Post](https://vercel.com/blog/introducing-react-best-practices)
 - [React Documentation](https://react.dev)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [SWR Documentation](https://swr.vercel.app)
+- [TanStack Query Documentation](https://tanstack.com/query/latest)
+- [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2026-01-20
-**Next Review**: 2026-02-20
+**Version**: 2.0
+**Last Updated**: 2026-03-06
+**Next Review**: 2026-04-06
 ```

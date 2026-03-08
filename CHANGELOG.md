@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8] - 2026-03-08
+
+### Added
+
+- **React Composition Patterns audit** (`audits/COMPOSITION_PATTERNS.md`): New audit based on Vercel's React Composition Patterns skill — 8 rules across 4 categories (component architecture, state management, implementation patterns, React 19 APIs)
+- `TODO.md`: Development planning and tracking for JSON output parsing, CLI enhancements, and future improvements
+- `docs/claude-code-integration.md`: Claude Code CLI integration approach documentation
+- `docs/cli-comparison.md`: CLI implementation comparison across all 4 backends (OpenCode, KiloCode, Claude Code, ZRun)
+- `docs/implementation-plan-claude-json-parsing.md`: Implementation plan for Claude Code JSON stream parsing
+
+### Changed
+
+- `audits/REACT_BEST_PRACTICES.md`: Major v2.0 rewrite — 40→58 rules, added Spernakit applicability section mapping Next.js/RSC-specific rules to SPA equivalents, replaced SWR→TanStack Query, next/dynamic→React.lazy, Server Actions→Elysia guards; added new rules (init-once, useTransition, derived state, refs for transient values); updated audit checklist
+- `lib/config.sh`: Idle nudge timeout default increased from 300s (5min) to 600s (10min) — reduces premature "are you stuck?" interruptions
+- `README.md`: Updated idle-nudge-timeout default to match config change (300→600)
+- `zrun/src/colors.ts`: Usage prefix color changed from DIM to BLUE for better readability
+- `zrun/src/agent-loop.ts`: Formatting fix (line wrap)
+- `.gitignore`: Added `nul/` exclusion for Windows /dev/null build artifacts
+
 ## [0.9.7] - 2026-03-06
 
 ### Added
@@ -347,6 +366,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified library structure and removed unused code (2565249)
 - Consolidated CLI monitoring and enhanced system security (b0d30e4)
 
+[0.9.8]: https://github.com/NomadicDaddy/aidd/compare/v0.9.7...v0.9.8
+[0.9.7]: https://github.com/NomadicDaddy/aidd/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/NomadicDaddy/aidd/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/NomadicDaddy/aidd/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/NomadicDaddy/aidd/compare/v0.9.3...v0.9.4

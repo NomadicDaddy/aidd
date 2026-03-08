@@ -95,7 +95,7 @@ Works with **OpenCode**, **KiloCode**, **Claude Code**, or **ZRun** CLIs. Your c
 - `--max-iterations N`: Number of iterations (unlimited if not specified)
 - `--timeout N`: Timeout in seconds (default: 3600)
 - `--idle-timeout N`: Idle timeout in seconds (default: 900)
-- `--idle-nudge-timeout N`: Idle nudge timeout in seconds - sends "are you stuck?" message (default: 300)
+- `--idle-nudge-timeout N`: Idle nudge timeout in seconds - sends "are you stuck?" message (default: 600)
 - `--model MODEL`: Model to use (optional)
 - `--init-model MODEL`: Model for initializer/onboarding prompts
 - `--code-model MODEL`: Model for coding prompts
@@ -526,6 +526,11 @@ AIDD includes comprehensive error handling:
 
 ## Version History
 
+- **v0.9.8** (2026-03-08):
+    - React Composition Patterns audit (Vercel skill-based, 8 rules across 4 categories)
+    - React Best Practices audit v2.0: 58 rules, Spernakit applicability section, SPA-focused rewrites
+    - Idle nudge timeout increased from 5min to 10min to reduce premature interruptions
+    - ZRun usage prefix color improved from DIM to BLUE
 - **v0.9.7** (2026-03-06):
     - ZRun CLI backend (`--cli zrun`): 4th CLI using Zhipu AI GLM-5 via TypeScript agent with 7 built-in tools, function calling, streaming, and no instance throttling
     - `--feature` resolution reordered: fast partial directory match before slow jq-based id match

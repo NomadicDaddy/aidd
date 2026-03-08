@@ -319,7 +319,9 @@ export async function runAgentLoop(
 				continue;
 			}
 
-			process.stdout.write('\n' + c.success(`[zrun] Agent completed (no more tool calls)`) + '\n');
+			process.stdout.write(
+				'\n' + c.success(`[zrun] Agent completed (no more tool calls)`) + '\n'
+			);
 			return session;
 		}
 

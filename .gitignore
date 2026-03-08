@@ -32,5 +32,8 @@ copyfiles.txt
 *.bak
 .tmp/
 
+# Windows /dev/null build artifacts
+nul/
+
 # Do not ignore scaffolding - it's part of the distribution
 # scaffolding/

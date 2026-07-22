@@ -1,0 +1,43 @@
+{
+	"description": "Run coding, review the result, remediate confirmed review findings, then document and release the changes.",
+	"name": "coding review remediate and document changes",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {},
+			"name": "Run coding",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "deepreview"
+			},
+			"name": "Deep review",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review the current working tree and the immediately preceding review findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues from the review. Do not broaden scope beyond review findings. Run the project's required validation gates and leave the tree ready for document-changes."
+			},
+			"name": "Remediate review findings",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document changes",
+			"stepType": "skill"
+		}
+	]
+}

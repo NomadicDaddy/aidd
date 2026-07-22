@@ -1,0 +1,13 @@
+{
+	"category": "Benchmark",
+	"createdAt": "2026-04-09T00:00:00.000Z",
+	"dependencies": [],
+	"description": "Expose the implemented benchmark helper.",
+	"id": "feature-202604090001-existing-helper",
+	"passes": true,
+	"priority": 1,
+	"spec": "1. src/existing.js exports existingFeature()\n2. existingFeature() returns 'implemented'",
+	"status": "completed",
+	"title": "Existing benchmark helper",
+	"updatedAt": "2026-04-09T00:00:00.000Z"
+}

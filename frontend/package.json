@@ -1,0 +1,53 @@
+{
+	"name": "aidd-frontend",
+	"private": true,
+	"packageManager": "bun@1.3.14",
+	"engines": {
+		"bun": ">=1.3.14"
+	},
+	"dependencies": {
+		"@dnd-kit/core": "^6.3.1",
+		"@dnd-kit/sortable": "^10.0.0",
+		"@dnd-kit/utilities": "^3.2.2",
+		"@fontsource-variable/geist": "5.3.0",
+		"@fontsource-variable/geist-mono": "5.3.0",
+		"@fontsource-variable/space-grotesk": "^5.3.0",
+		"@tanstack/react-query": "5.101.4",
+		"@xterm/addon-fit": "0.11.0",
+		"@xterm/addon-search": "0.16.0",
+		"@xterm/addon-web-links": "0.12.0",
+		"@xterm/addon-webgl": "0.19.0",
+		"@xterm/xterm": "6.0.0",
+		"aidd-shared": "workspace:*",
+		"cmdk": "^1.1.1",
+		"lucide-react": "^1.25.0",
+		"react": "19.2.8",
+		"react-dom": "19.2.8",
+		"react-markdown": "^10.1.0",
+		"react-router-dom": "7.18.1",
+		"remark-gfm": "^4.0.1",
+		"sonner": "^2.0.7",
+		"web-vitals": "6.0.0",
+		"zustand": "5.0.14"
+	},
+	"devDependencies": {
+		"@rolldown/plugin-babel": "0.2.3",
+		"@tailwindcss/vite": "4.3.3",
+		"@types/node": "26.1.1",
+		"@types/react": "19.2.17",
+		"@types/react-dom": "19.2.3",
+		"@vitejs/plugin-react": "6.0.4",
+		"babel-plugin-react-compiler": "^1.0.0",
+		"tailwindcss": "4.3.3",
+		"typescript": "6.0.3",
+		"vite": "8.1.5"
+	},
+	"scripts": {
+		"build": "bunx tsc -p tsconfig.json && bunx vite build",
+		"dev": "bunx vite --host",
+		"lint": "bunx eslint . --cache --cache-location ../node_modules/.cache/eslint-frontend/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint . --cache --cache-location ../node_modules/.cache/eslint-frontend/ --report-unused-disable-directives --max-warnings 0 --fix",
+		"typecheck": "bunx tsc -p tsconfig.json --noEmit"
+	},
+	"type": "module"
+}

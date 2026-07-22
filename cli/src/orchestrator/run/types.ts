@@ -1,0 +1,205 @@
+import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
+import type { CliActiveRunSource } from 'aidd-shared/metadata/active-runs';
+import type { AiddStore } from 'aidd-shared/metadata/store';
+import type { ModeResult, SelectedWork } from 'aidd-shared/modes/types';
+import type { AgentRunResult, IterationMetrics, StopReason } from 'aidd-shared/orchestrator/result';
+import type { RunPlan } from 'aidd-shared/plan/types';
+import type { AiddRunProvenance } from 'aidd-shared/run-provenance';
+
+import { aiddExecutionModes } from 'aidd-shared/execution-mode';
+
+import type { createModeHandler } from '../../modes/factory.ts';
+import type { CompiledPrompt } from '../../prompts/types.ts';
+import type { IterationDetails } from '../details.ts';
+import type { OrchestratorProgressReporter } from '../progress.ts';
+import type { OrchestratorState } from '../state.ts';
+import type { BackendFactory } from '../triumvirate.ts';
+import type { extractTriumviratePlanningRecovery } from '../triumvirate/planning-recovery.ts';
+import type { RunAiSummarizer } from './ai-summary.ts';
+import type { DoctorProber } from './doctor.ts';
+
+export interface OrchestratorDeps {
+	aiddProvenance?: AiddRunProvenance;
+	aiSummarizer?: RunAiSummarizer;
+	backend: CLIBackend;
+	backendFactory?: BackendFactory;
+	completionMarkerGraceMs?: number;
+	/** Test seam for the preflight doctor's spawn probes. */
+	doctorProber?: DoctorProber;
+	observer?: RunObserver;
+	onState?: (state: OrchestratorState) => void;
+	/** Worktree finalization hook, injected by the CLI entrypoint. Called once at run end with
+	 * the orchestrator's exit code; merges/discards the worktree and returns an exit-code override
+	 * (mergeConflictParked when a successful run's merge is parked) or undefined to keep the code.
+	 * Threaded through writeRunSummary so the parked outcome lands in the terminal heartbeat/ledger
+	 * BEFORE the web row terminalizes. */
+	reconcileWorktree?: (exitCode: number) => Promise<number | undefined>;
+	rootDir: string;
+	runId?: string;
+	scoringRoots?: readonly string[];
+	source?: CliActiveRunSource;
+	store: AiddStore;
+}
+
+export interface RunIterationArtifact {
+	log: string;
+	structured: Record<string, unknown>;
+}
+
+export interface RunFinalSummary {
+	aiSummary: null | string;
+	/** Raw exit code of the last backend iteration; null when no iteration ran. */
+	backendExitCode: null | number;
+	commitsCreated: GitCommitSummary[];
+	completedFeatures: string[];
+	/** Git numstat over the attributed commits; null when the run produced no commits or the
+	 * stat could not be derived. */
+	diffStat: CommitDiffStat | null;
+	exitCode: number;
+	fileChangePathsTruncated: boolean;
+	filesCreated: string[];
+	filesEdited: string[];
+	runId: string;
+	runLedgerDirty: boolean;
+	scopeOverrun: boolean;
+	selectedFeatures: string[];
+	stopReason: StopReason;
+	summary: string;
+	totals: typeof initialRunTotals;
+}
+
+export interface RunObserver {
+	onAgentEvent?: (event: AgentEvent) => Promise<void> | void;
+	onFinalSummary?: (summary: RunFinalSummary) => Promise<void> | void;
+	onIteration?: (artifact: RunIterationArtifact) => Promise<void> | void;
+	onModeResult?: (result: ModeResult) => Promise<void> | void;
+	onState?: (state: OrchestratorState) => void;
+}
+
+export interface GitCommitSummary {
+	hash: string;
+	subject: string;
+}
+
+export interface CommitDiffStat {
+	deletions: number;
+	filesChanged: number;
+	insertions: number;
+}
+
+export type FeatureCompletionSnapshot = Map<string, boolean>;
+
+export const initialRunTotals = {
+	cachedTokens: 0,
+	commitsCreated: 0,
+	costUsd: 0,
+	errors: 0,
+	filesCreated: 0,
+	filesEdited: 0,
+	idleWarnings: 0,
+	inputTokens: 0,
+	iterations: 0,
+	outputTokens: 0,
+	rateLimits: 0,
+	reasoningTokens: 0,
+	toolCalls: 0,
+};
+
+export interface RunAccumulator {
+	commitsCreated: GitCommitSummary[];
+	completedFeatures: Set<string>;
+	/** Dirty non-.aidd paths present when the run started. writeRunSummary diffs run-end status
+	 * against this baseline so only dirt the run itself introduced is flagged — pre-existing
+	 * operator dirt under the dirty-tree threshold must not taint the run outcome. Undefined
+	 * when the baseline could not be captured (not a git repository); the run-end check is then
+	 * skipped rather than misattributing all existing dirt to the run. */
+	dirtySourcePathsAtStart?: ReadonlySet<string>;
+	filesCreated: Set<string>;
+	filesEdited: Set<string>;
+	forcedAttributionCommits: Set<string>;
+	/** Raw exit code of the last backend iteration, before orchestrator classification.
+	 * Persisted to the ledger as backendExitCode so log/summary/ledger stay reconcilable. */
+	lastBackendExitCode?: number;
+	runId: string;
+	runStartedAt: string;
+	runStartedAtMs: number;
+	runTotals: typeof initialRunTotals;
+	scopeOverrun: boolean;
+	selectedFeatures: Set<string>;
+	toolBreakdownTotals: Record<string, number>;
+}
+
+export type MoveFn = (state: OrchestratorState) => void;
+
+export interface FeatureScopeAudit {
+	allowedFeatureIds: string[];
+	completedFeatures: string[];
+	completionMarkerIssue: 'completion_marker_missing_or_unaccepted' | undefined;
+	extraCompletedFeatures: string[];
+	scopeOverrun: boolean;
+	selectedFeatures: string[];
+	unacceptedCompletedFeatures: string[];
+}
+
+export function runRuntimeFields(plan: RunPlan): Record<string, unknown> {
+	return {
+		backend: plan.backend,
+		executionMode: plan.triumvirate
+			? aiddExecutionModes.triumvirate
+			: aiddExecutionModes.singleAgent,
+		mode: plan.mode,
+		model: plan.model ?? null,
+		phase: plan.prompt.phase,
+		provider: plan.provider ?? null,
+		reasoningEffort: plan.reasoningEffort,
+		...(plan.triumvirate ? { triumvirateRoles: plan.triumvirate } : {}),
+		...(plan.thinking !== undefined ? { thinking: plan.thinking } : {}),
+		...(plan.thinkingLevel !== undefined ? { thinkingLevel: plan.thinkingLevel } : {}),
+	};
+}
+
+export interface FinalizeIterationInput {
+	acc: RunAccumulator;
+	activeProgress: OrchestratorProgressReporter | undefined;
+	compiled: CompiledPrompt;
+	completionCommittedDuringGrace: boolean;
+	completionFinalizedBeforeBackendExit: boolean;
+	context: {
+		projectDir: string;
+		rootDir: string;
+		scoringRoots?: readonly string[];
+		store: AiddStore;
+	};
+	deps: OrchestratorDeps;
+	events: AgentEvent[];
+	exitCode: number;
+	featureSnapshotBefore: FeatureCompletionSnapshot;
+	gitHeadBefore: string | undefined;
+	idleWarningTimestamps: { afterMs: number; atMs: number }[];
+	iteration: number;
+	iterationArtifactIndex: number;
+	metrics: IterationMetrics;
+	mode: ReturnType<typeof createModeHandler>;
+	move: MoveFn;
+	plan: RunPlan;
+	result: AgentRunResult;
+	runStartedAtMs: number;
+	startedAt: string;
+	startedAtMs: number;
+	stopRequestedAfterRun: boolean;
+	timeToFirstEventMs: number | undefined;
+	triumvirateArtifacts: Record<string, unknown>;
+	work: SelectedWork;
+}
+
+export interface FinalizeIterationResult {
+	completedAfterBackendInterruption: boolean;
+	completedResultFeature: string | undefined;
+	details: IterationDetails;
+	displayedSummary: string;
+	featureScope: FeatureScopeAudit;
+	modeResult: ModeResult;
+	planningRecovery: ReturnType<typeof extractTriumviratePlanningRecovery>;
+	recordedExitCode: number;
+	recoveredActiveVerification: boolean;
+}

@@ -1,0 +1,30 @@
+{
+	"description": "Run testing scenarios from testing-scenarios.md, then convert bugs to features.",
+	"name": "test application (scenarios)",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Read {application}/.aidd/testing-scenarios.md and find the test scenarios. First check whether the app is already reachable on its configured port. If it is NOT running, start it with `cd {application} && bun run start` and remember that you started it. If it is already running, use that instance and do NOT start or stop it (the user owns it). Execute each scenario against the running application, then perform the Post-Test Procedure described in the document. Finally, only if you started the server yourself this run, stop it with `cd {application} && bun run stop`; if it was already running when you arrived, leave it untouched."
+			},
+			"name": "Run testing scenarios",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "bug2feature"
+			},
+			"name": "Bug to feature",
+			"stepType": "recipe-ref"
+		}
+	]
+}

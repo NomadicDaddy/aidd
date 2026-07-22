@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+	--font-sans:
+		'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+		sans-serif;
+	--font-mono:
+		'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+		monospace;
+	--font-display:
+		'Space Grotesk Variable', 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+		Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root {
+	color: #172033;
+	background: #eef2f6;
+	color-scheme: light;
+	font-family: var(--font-sans);
+
+	/* Semantic theme tokens (light). Light/dark is data-driven: components reference the
+	   token-backed utilities (bg-card, border-border, text-muted-foreground, ...) and inherit
+	   correct theming automatically without per-utility .dark override rules. */
+	--background: #eef2f6;
+	--foreground: #171717;
+	--card: #ffffff;
+	--card-foreground: #171717;
+	--muted: #f5f5f5;
+	--muted-foreground: #525252;
+	--border: #e5e5e5;
+	--accent: #0891b2;
+	--accent-foreground: #ffffff;
+	--accent-muted: #ecfeff;
+	--accent-muted-foreground: #083344;
+}
+
+.dark {
+	color: #e5e7eb;
+	background: #080b12;
+	color-scheme: dark;
+
+	/* Semantic theme tokens (dark). Same token names, dark values — flipping .dark on the root
+	   retheme every token-driven surface. */
+	--background: #080b12;
+	--foreground: #fafafa;
+	--card: #18181b;
+	--card-foreground: #fafafa;
+	--muted: #27272a;
+	--muted-foreground: #a1a1aa;
+	--border: #27272a;
+	--accent: #22d3ee;
+	--accent-foreground: #082f3a;
+	--accent-muted: rgb(8 51 68 / 0.45);
+	--accent-muted-foreground: #ecfeff;
+}
+
+/* Expose the semantic tokens as Tailwind color utilities (bg-card, border-border,
+   text-foreground, text-muted-foreground, bg-muted, bg-accent, ...). `inline` resolves the
+   var() at use sites so the .dark overrides above take effect. */
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-border: var(--border);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent-muted: var(--accent-muted);
+	--color-accent-muted-foreground: var(--accent-muted-foreground);
+}
+
+body {
+	margin: 0;
+	min-width: 320px;
+	min-height: 100vh;
+	overflow-x: hidden;
+	-webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	touch-action: manipulation;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	outline: 2px solid #06b6d4;
+	outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
+}
+
+.tabular-nums {
+	font-variant-numeric: tabular-nums;
+}
+
+.app-shell {
+	background:
+		linear-gradient(135deg, rgba(8, 145, 178, 0.12), transparent 32rem),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0)), #eef2f6;
+}
+
+.dark .app-shell {
+	background:
+		linear-gradient(135deg, rgba(8, 145, 178, 0.18), transparent 34rem),
+		linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(8, 11, 18, 0.96)), #080b12;
+}
+
+.command-surface {
+	background-image:
+		linear-gradient(rgba(8, 145, 178, 0.06) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(8, 145, 178, 0.06) 1px, transparent 1px);
+	background-size: 28px 28px;
+}
+
+.dark .command-surface {
+	background-image:
+		linear-gradient(rgba(34, 211, 238, 0.07) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(34, 211, 238, 0.07) 1px, transparent 1px);
+}
+
+.status-pulse {
+	animation: status-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+	0%,
+	100% {
+		opacity: 0.55;
+		transform: scale(0.96);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.08);
+	}
+}
+
+/* Orchestrated page-load reveal: one staggered entrance per route. Applied to a page's root
+   container; direct children fade/rise in sequence (header first, then metrics, then panels)
+   purely via animation-delay. Because the animation runs on mount of the route's element, it
+   plays on route change and not on TanStack Query refetches or in-page state updates (the
+   container persists, so the already-finished animation is not replayed). `both` fill-mode
+   holds opacity:1/translateY(0) after completion, and only opacity + transform are animated —
+   neither reflows layout, so there is no cumulative layout shift. The global reduced-motion
+   rule below collapses the animation to ~0ms, so content appears immediately. */
+.page-reveal > * {
+	animation: page-reveal-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-reveal > *:nth-child(1) {
+	animation-delay: 0ms;
+}
+
+.page-reveal > *:nth-child(2) {
+	animation-delay: 60ms;
+}
+
+.page-reveal > *:nth-child(3) {
+	animation-delay: 120ms;
+}
+
+.page-reveal > *:nth-child(4) {
+	animation-delay: 180ms;
+}
+
+.page-reveal > *:nth-child(n + 5) {
+	animation-delay: 220ms;
+}
+
+@keyframes page-reveal-in {
+	from {
+		opacity: 0;
+		transform: translateY(0.5rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::before,
+	::after {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+	}
+}

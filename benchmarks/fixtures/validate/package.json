@@ -1,0 +1,10 @@
+{
+	"name": "aidd-benchmark-validate",
+	"private": true,
+	"scripts": {
+		"format:check": "node ./scripts/smoke-qc.mjs",
+		"lint": "node ./scripts/smoke-qc.mjs",
+		"smoke:qc": "node ./scripts/smoke-qc.mjs"
+	},
+	"type": "module"
+}

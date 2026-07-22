@@ -1,0 +1,57 @@
+{
+	"stacks": [
+		{
+			"label": "native-glm51-zhipu"
+		},
+		{
+			"label": "ollama-llama32"
+		},
+		{
+			"label": "ollama-qwen35-9b"
+		},
+		{
+			"label": "ollama-gpt-oss-20b"
+		},
+		{
+			"label": "ollama-qwen25-cline"
+		},
+		{
+			"label": "claude-code-opus48"
+		},
+		{
+			"label": "codex-gpt5"
+		},
+		{
+			"label": "opencode-glm51"
+		},
+		{
+			"label": "kilocode-glm51"
+		}
+	],
+	"tasks": [
+		{
+			"id": "version"
+		},
+		{
+			"id": "check-features"
+		},
+		{
+			"id": "check-artifacts"
+		},
+		{
+			"id": "interview"
+		},
+		{
+			"id": "audit-primary"
+		},
+		{
+			"id": "remediation"
+		},
+		{
+			"id": "validate"
+		},
+		{
+			"id": "quiz"
+		}
+	]
+}

@@ -1,0 +1,95 @@
+.env
+
+# docker deployment state (examples are committed; live copies are not)
+.docker/
+compose.env
+compose.vars
+
+# tooling/caches
+.worktrees/
+node_modules/
+ps_modules/
+
+# aidd / agent-generated artifacts
+.agents/
+/.aidd/
+.claude/
+.codex/
+.windsurf/
+AGENTS.md
+CLAUDE.md
+opencode.json
+
+# aidd-adjacent run/test outputs
+*.pre-crawl-bak
+*.tsbuildinfo
+artifacts/
+crawltest.json
+devdocs/
+dogfood-output/
+screenshots/
+scripts/*-error.png
+scripts/smoke-cache.json
+test-html-report/
+test-results/
+testResults.xml
+upgrade-review/
+
+# generated
+backend/drizzle/meta/
+backups/
+data/.seeded
+data/*.bak
+data/*.bak-shm
+data/*.bak-wal
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+data/*.db.lock
+data/director/
+data/exports/
+data/migration-history.json
+data/run-logs/
+data/Trace-*.json.gz
+data/uploads/
+data/worktrees/
+dist/
+frontend/dist/
+
+# logs/temp
+*.bak
+*.log
+*.tmp
+.tmp*/
+/tmp/
+logs/
+nul/
+
+# local config
+/config.json
+/config/*.json
+/config/*.json.backup.*
+/config/testing.local.json
+!/config/config-schema.json
+!/config/example.json
+
+# mock/test data
+.lighthouseci/
+*.test.log
+benchmarks/manifest.*-20*.json
+benchmarks/results/
+benchmarks/workspaces/
+coverage/
+
+# os/ide
+.DS_Store
+.idea/
+.vscode/
+*.swo
+*.swp
+*~
+Thumbs.db
+
+# personal voice
+skills/humanize-docs/personal-voice.md

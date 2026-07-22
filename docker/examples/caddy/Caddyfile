@@ -1,0 +1,24 @@
+# Edge TLS for an aidd container published loopback-only (docker-compose.production.yml).
+#
+# The container does NOT ship CSP / rate limiting / security headers (unlike the
+# spernakit template's in-container nginx) — apply them here at the edge.
+#
+# Auth note: requests forwarded by Caddy carry X-Forwarded-* headers, so the
+# loopback token exemption does not apply — every proxied /api request must
+# present `Authorization: Bearer <web.authToken>`. The browser UI does this
+# automatically; an edge health probe must send the token explicitly.
+aidd.example.com {
+	# Public deployments: remove `tls internal` to use Let's Encrypt.
+	tls internal
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# AIDD_PORT from compose.vars (default 3210).
+	reverse_proxy 127.0.0.1:3210
+}

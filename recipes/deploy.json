@@ -1,0 +1,71 @@
+{
+	"description": "Deploy the application with its own deploy script, gated by build and test validation, verified by a health check, tagged, and audited. aidd orchestrates; the project owns the deploy command and credentials.",
+	"name": "deploy",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "bun run deploy",
+			"description": "Command that performs the deployment (runs in the project directory)",
+			"name": "deployCommand"
+		},
+		{
+			"defaultValue": "",
+			"description": "URL to poll after deploying (e.g. https://example.com/api/v1/health); empty skips the check",
+			"name": "healthUrl"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "validate-build"
+			},
+			"name": "Validate build",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "validate-tests"
+			},
+			"name": "Validate tests",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"command": "{deployCommand}"
+			},
+			"name": "Deploy",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"command": "if [ -n \"{healthUrl}\" ]; then curl --fail --silent --show-error --retry 5 --retry-delay 3 --retry-all-errors \"{healthUrl}\" > /dev/null && echo \"healthy: {healthUrl}\"; else echo \"No healthUrl provided; skipping health check\"; fi"
+			},
+			"name": "Post-deploy health check",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"command": "git tag \"deploy-$(date +%Y%m%d-%H%M%S)\" && echo \"tagged $(git describe --tags --abbrev=0)\""
+			},
+			"name": "Tag release",
+			"onFailure": "continue",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"auditNames": "DEPLOYMENT",
+				"maxIterations": 1
+			},
+			"name": "Deployment audit",
+			"onFailure": "continue",
+			"stepType": "aidd-cli"
+		}
+	]
+}

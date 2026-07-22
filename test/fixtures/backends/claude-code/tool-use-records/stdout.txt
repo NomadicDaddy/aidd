@@ -1,0 +1,14 @@
+{"type":"system","subtype":"init","model":"claude-opus-4-7"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Inspecting the module before editing."}],"usage":{"input_tokens":1500,"output_tokens":30}}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_01","name":"Read","input":{"file_path":"src/a.ts"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_01","content":"1\texport function a() {\n2\t\treturn 1;\n3\t}"}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_02","name":"Grep","input":{"pattern":"export function","path":"src"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_02","content":"src/a.ts:1:export function a() {"}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_03","name":"Edit","input":{"file_path":"src/a.ts","old_string":"return 1;","new_string":"return 2;"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_03","content":"The file src/a.ts has been updated."}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_04","name":"Write","input":{"file_path":"src/b.ts","content":"export const b = 2;\n"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_04","content":"File created successfully at src/b.ts"}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_05","name":"Bash","input":{"command":"ls src"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_05","content":"a.ts\nb.ts\nExit code: 0","is_error":false}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Edited src/a.ts and created src/b.ts."}],"usage":{"input_tokens":1700,"output_tokens":60}}}
+{"type":"result","subtype":"success","total_cost_usd":0.031,"usage":{"input_tokens":1760,"output_tokens":90},"result":"Updated module a and added module b."}

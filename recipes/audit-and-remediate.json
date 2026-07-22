@@ -1,0 +1,56 @@
+{
+	"description": "Review audit findings, remediate, and produce session report.",
+	"name": "audit and remediate",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "audit-finding-review"
+			},
+			"name": "Review audit findings",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "feature-review"
+			},
+			"name": "Review features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "remediate audit findings"
+			},
+			"name": "Remediate audit findings",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Delete resolved audit feature directories from {application}/.aidd/features/ that have been fully remediated. Only remove directories whose feature.json indicates completion."
+			},
+			"name": "Delete resolved audit features",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Create a session report at {application}/.aidd/reports/ with a timestamp filename. Include: time taken for each step, summary of audit findings, features created, remediations applied, and any issues encountered."
+			},
+			"name": "Create session report",
+			"stepType": "aidd-cli"
+		}
+	]
+}

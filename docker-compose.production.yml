@@ -1,0 +1,66 @@
+# Production compose for aidd. Mirrors the spernakit template's hardening
+# (pinned image tag with no :latest fallback, loopback-only publish, read-only
+# rootfs, cap_drop, resource and log caps) with two deliberate divergences,
+# both because aidd-web is a single compiled binary serving SPA+API+WS itself:
+#   - no separate BACKUPS_ROOT volume: backups live under the data volume at
+#     data/backups (aidd has no server-side backup job; the entrypoint's
+#     AIDD_BACKUP_ON_START copy is the rollback artifact for downgrades)
+#   - no /app/config mount: the binary reads $HOME/.aidd/config.json, and the
+#     home volume also persists agent-CLI credentials and caches
+#
+# Usage:
+#   docker compose -f docker-compose.production.yml --env-file compose.vars up -d
+services:
+    aidd:
+        image: ghcr.io/nomadicdaddy/${APP_SLUG:?set APP_SLUG in compose.vars}:${APP_VERSION:?set APP_VERSION in compose.vars (no :latest fallback)}
+        container_name: ${APP_SLUG}
+        ports:
+            # Loopback-only: TLS and remote exposure belong to an edge proxy (see
+            # docker/examples/). Proxied health probes must send web.authToken —
+            # only direct loopback callers are token-exempt.
+            - '127.0.0.1:${AIDD_PORT:-3210}:3210'
+        volumes:
+            - ${APPDATA_ROOT:?set APPDATA_ROOT in compose.vars}/${APP_SLUG}/home:/home/aidd
+            - ${APPDATA_ROOT}/${APP_SLUG}/data:/app/data
+            - ${APPDATA_ROOT}/${APP_SLUG}/logs:/app/logs
+            # Project working trees aidd manages. Must stay path-stable: absolute
+            # /projects/... paths are persisted in the web database.
+            - ${PROJECTS_ROOT:?set PROJECTS_ROOT in compose.vars}:/projects
+        env_file:
+            - path: compose.env
+              required: false
+        environment:
+            - AIDD_BACKUP_ON_START=${AIDD_BACKUP_ON_START:-1}
+        restart: unless-stopped
+        stop_grace_period: 30s
+        security_opt:
+            - no-new-privileges:true
+        cap_drop:
+            - ALL
+        read_only: true
+        tmpfs:
+            - /tmp:uid=1000,gid=1000
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "fetch('http://127.0.0.1:3210/api/v1/health').then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 20s
+        deploy:
+            resources:
+                limits:
+                    # Each concurrent run spawns a full agent CLI; size together with
+                    # web.maxConcurrentRuns (default 2) in the mounted config.
+                    memory: ${AIDD_MEM_LIMIT:-4g}
+                    cpus: '${AIDD_CPU_LIMIT:-2.0}'
+        logging:
+            driver: json-file
+            options:
+                max-file: '5'
+                max-size: 10m

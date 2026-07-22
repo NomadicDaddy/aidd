@@ -1,0 +1,139 @@
+import type { AiddStore } from 'aidd-shared/metadata/store';
+import type { SelectedWork } from 'aidd-shared/modes/types';
+import type { RunPlan } from 'aidd-shared/plan/types';
+
+import {
+	orchestratorExitCodes,
+	type AgentRunResult,
+	type StopReason,
+} from 'aidd-shared/orchestrator/result';
+import { runRepoDir } from 'aidd-shared/plan/types';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+import { type createModeHandler } from '../../modes/factory.ts';
+import { writeRunSummary } from './artifacts.ts';
+import { gitDirtyFileCount } from './git.ts';
+import {
+	runRuntimeFields,
+	type MoveFn,
+	type OrchestratorDeps,
+	type RunAccumulator,
+} from './types.ts';
+
+export async function handleDirtyTreeSkip(
+	deps: OrchestratorDeps,
+	plan: RunPlan,
+	acc: RunAccumulator,
+	iteration: number,
+	move: MoveFn
+): Promise<number | undefined> {
+	// Exclude aidd-owned .aidd/ metadata from the gate: it is write-allowlisted separately
+	// and intake's own metadata writes must not block the audit steps intake runs next.
+	const dirtyFileCount = await gitDirtyFileCount(runRepoDir(plan), { excludeAiddMetadata: true });
+	if (dirtyFileCount <= plan.dirtyTreeThreshold) return undefined;
+	const blockedAt = new Date().toISOString();
+	const summaryText = `Dirty working tree (${dirtyFileCount} files) exceeds threshold (${plan.dirtyTreeThreshold}); skipping run.`;
+	console.warn(`[orchestrator] ${summaryText}`);
+	const structured = {
+		durationMs: 0,
+		endedAt: blockedAt,
+		iteration,
+		runId: acc.runId,
+		selectedWork: { kind: 'none' as const, reason: 'dirty_tree_too_high' as const },
+		startedAt: blockedAt,
+		summary: summaryText,
+		...runRuntimeFields(plan),
+		blockReason: 'dirty_tree_too_high' as const,
+		dirtyFileCount,
+		dirtyTreeThreshold: plan.dirtyTreeThreshold,
+	};
+	await deps.store.writeIteration({ log: '', structured });
+	await deps.observer?.onIteration?.({ log: '', structured });
+	move({ summary: summaryText, type: 'complete' });
+	await writeRunSummary(deps, plan, acc, 'blocked', orchestratorExitCodes.success, summaryText);
+	return orchestratorExitCodes.success;
+}
+
+export async function handleNoWorkIteration(input: {
+	acc: RunAccumulator;
+	context: {
+		projectDir: string;
+		rootDir: string;
+		scoringRoots?: readonly string[];
+		store: AiddStore;
+	};
+	deps: OrchestratorDeps;
+	iteration: number;
+	mode: ReturnType<typeof createModeHandler>;
+	move: MoveFn;
+	plan: RunPlan;
+	work: SelectedWork;
+}): Promise<number> {
+	const { acc, context, deps, iteration, mode, move, plan, work } = input;
+	const result: AgentRunResult = {
+		events: [],
+		exitCode: orchestratorExitCodes.success,
+		filesModified: [],
+		selectedWork: work,
+		skipped: true,
+		transcript: '',
+	};
+	move({ result, type: 'process_result' });
+	const modeResult = await mode.processResult(context, result);
+	await deps.observer?.onModeResult?.(modeResult);
+	move({ result, type: 'write_artifacts' });
+	const noWorkAt = new Date().toISOString();
+	const structured = {
+		durationMs: 0,
+		endedAt: noWorkAt,
+		iteration,
+		runId: acc.runId,
+		selectedWork: work,
+		startedAt: noWorkAt,
+		summary: modeResult.summary,
+		...runRuntimeFields(plan),
+		...modeResult.artifacts,
+	};
+	await deps.store.writeIteration({
+		log: '',
+		structured,
+	});
+	await deps.observer?.onIteration?.({ log: '', structured });
+	const summary = await mode.summarize(context, modeResult);
+	console.log(summary.text);
+	move({ summary: summary.text, type: 'complete' });
+	await writeRunSummary(
+		deps,
+		plan,
+		acc,
+		noWorkStopReason(work),
+		orchestratorExitCodes.success,
+		summary.text
+	);
+	if (plan.noWorkBackoffMs > 0) {
+		await sleep(plan.noWorkBackoffMs);
+	}
+	return orchestratorExitCodes.success;
+}
+
+// A roadmap-gate block is a configuration problem the operator must fix, not an empty
+// backlog; reporting it as no_work rendered it as a neutral grey "No work" badge and the
+// block went unnoticed. 'blocked' maps to the existing red "Blocked: gate" treatment.
+// Exit code stays success: nothing crashed, and launchers must not retry-storm it.
+function noWorkStopReason(work: SelectedWork): StopReason {
+	const data = work.data as
+		| { requestedFeature?: unknown; requestedMilestone?: unknown; roadmapGate?: unknown }
+		| undefined;
+	if (data === undefined) return 'no_work';
+	const gate = data.roadmapGate as { blocked?: unknown } | undefined;
+	if (gate?.blocked === true) return 'blocked';
+	// Feature/milestone targets outside the active milestone carry a non-blocked gate plus the
+	// rejected target — those are gate refusals too, not an empty backlog.
+	if (
+		gate !== undefined &&
+		(data.requestedFeature !== undefined || data.requestedMilestone !== undefined)
+	) {
+		return 'blocked';
+	}
+	return 'no_work';
+}

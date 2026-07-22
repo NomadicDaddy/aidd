@@ -1,0 +1,97 @@
+{
+	"description": "Upgrade template, test, fix, validate, commit, and update dev diary.",
+	"name": "spernakit propagate",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"description": "Version label (e.g. sv3.1.16)",
+			"name": "version"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "template-upgrade"
+			},
+			"name": "Template upgrade",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "template-refactor"
+			},
+			"name": "Template refactor",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "spernakit-tester"
+			},
+			"name": "Test application",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "bug2feature"
+			},
+			"name": "Bug to feature",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "remediate bugs"
+			},
+			"name": "Remediate bugs",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"command": "bun run supertest"
+			},
+			"name": "Run supertest",
+			"onFailure": "auto-fix",
+			"retryCount": 3,
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"name": "Consolidate features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"command": "git add -A && git commit -m '{version}: template upgrade for {application}'"
+			},
+			"name": "Commit changes",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"executionIntent": "apply-changes",
+				"skillId": "devdiary-update"
+			},
+			"name": "Update dev diary",
+			"onFailure": "continue",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,31 @@
+{
+	"devDependencies": {
+		"@eslint/js": "10.0.1",
+		"eslint": "10.7.0",
+		"eslint-plugin-perfectionist": "5.10.0",
+		"eslint-plugin-react-hooks": "7.1.1",
+		"eslint-plugin-react-refresh": "0.5.3",
+		"eslint-plugin-unused-imports": "4.4.1",
+		"globals": "17.7.0",
+		"prettier": "^3.9.5",
+		"prettier-plugin-organize-attributes": "1.0.0",
+		"prettier-plugin-sort-json": "4.2.0",
+		"prettier-plugin-tailwindcss": "0.8.1",
+		"typescript-eslint": "8.64.0"
+	},
+	"engines": {
+		"bun": ">=1.3.14"
+	},
+	"packageManager": "bun@1.3.14",
+	"scripts": {
+		"dev": "echo 'No dev script configured yet. Set the dev script in package.json to your app start command (e.g. vite or bun run server) so aidd can launch this project.' && exit 1",
+		"format": "bunx prettier --write .",
+		"format:check": "bunx prettier --check .",
+		"lint": "eslint . --max-warnings 0",
+		"lint:fix": "eslint . --fix --max-warnings 0",
+		"preinstall": "bun scripts/require-bun.ts",
+		"smoke:qc": "bun run smoke:qc:fast",
+		"smoke:qc:fast": "bunx prettier --check . && bun run lint"
+	},
+	"type": "module"
+}

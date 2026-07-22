@@ -1,0 +1,6 @@
+{
+	"completedFeatureId": "feature-202604090001-existing-helper",
+	"incompleteFeatureId": "feature-202604090002-future-helper",
+	"structuredLogsRequired": true,
+	"type": "validate"
+}

@@ -1,0 +1,5 @@
+{
+	"checkCommand": ["bun", "./scripts/check-remediation.mjs"],
+	"featureId": "remediation-benchmark-greeting",
+	"type": "remediation"
+}

@@ -1,0 +1,5 @@
+{"type":"assistant","message":{"content":[{"type":"text","text":"Running the type check."}],"usage":{"input_tokens":1100,"output_tokens":20}}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_02","name":"Bash","input":{"command":"bun run typecheck"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_02","content":"src/app.ts(42,7): error TS2322: Type 'string' is not assignable to type 'number'.\nExit code: 2","is_error":true}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Typecheck failed; I will fix the type mismatch before proceeding."}],"usage":{"input_tokens":60,"output_tokens":25}}}
+{"type":"result","subtype":"success","total_cost_usd":0.02,"usage":{"input_tokens":1160,"output_tokens":45},"result":"Investigating the type error."}

@@ -1,0 +1,26 @@
+# Build context for the aidd image. The builder stage runs the standalone
+# build inside the container, so workspace sources, scripts/, and the
+# sibling-asset catalogs (audits/, skills/, prompts/, recipes/,
+# scaffolding/) must stay included, along with VERSION, config.json.example,
+# LICENSE, and THIRD-PARTY-LICENSES.md (required distribution assets).
+.git/
+.aidd/
+.claude/
+.worktrees/
+node_modules/
+**/node_modules/
+dist/
+data/
+logs/
+screenshots/
+docs/
+test/
+benchmarks/
+**/*.tsbuildinfo
+Caddyfile
+Dockerfile
+docker-compose*.yml
+compose.vars*
+compose.env*
+.dockerignore
+frontend/dist/

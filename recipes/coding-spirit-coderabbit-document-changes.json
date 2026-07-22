@@ -1,0 +1,66 @@
+{
+	"description": "Run coding, review the result with spirit, remediate confirmed findings, re-review with CodeRabbit, remediate confirmed findings, then document and release the changes.",
+	"name": "coding spirit coderabbit and document changes",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {},
+			"id": "coding-spirit-coderabbit-document-changes_step_1",
+			"name": "Run coding",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "spirit"
+			},
+			"id": "coding-spirit-coderabbit-document-changes_step_2",
+			"name": "Spirit review",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review the current working tree and the immediately preceding spirit findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues from the review. Do not broaden scope beyond review findings. Run the project's required validation gates and leave the tree ready for document-changes."
+			},
+			"id": "coding-spirit-coderabbit-document-changes_step_3",
+			"name": "Remediate spirit findings",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "coderabbit"
+			},
+			"id": "coding-spirit-coderabbit-document-changes_step_4",
+			"name": "CodeRabbit review",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues from the review. Do not broaden scope beyond review findings. Run the project's required validation gates and leave the tree ready for document-changes."
+			},
+			"id": "coding-spirit-coderabbit-document-changes_step_5",
+			"name": "Remediate CodeRabbit findings",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"id": "coding-spirit-coderabbit-document-changes_step_6",
+			"name": "Document changes",
+			"stepType": "skill"
+		}
+	]
+}

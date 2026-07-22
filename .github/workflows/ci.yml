@@ -1,0 +1,100 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+        tags: ['v*.*.*']
+    pull_request:
+        branches: [main]
+
+# Workflow-level least-privilege token. Anything that does not declare its own
+# `permissions:` block inherits `contents: read`.
+permissions:
+    contents: read
+
+concurrency:
+    cancel-in-progress: true
+    group: ci-${{ github.ref }}
+
+jobs:
+    quality:
+        name: Quality Checks
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+              with:
+                  bun-version-file: package.json
+
+            - name: Cache Bun dependencies
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-dl-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: |
+                      bun-dl-${{ runner.os }}-
+
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            # The canonical smoke runner owns static quality checks. Stateful browser
+            # verification remains in the separately scoped Windows job below.
+            #
+            # This subsumes the former separate `Build` job, which was redundant in every
+            # step: `build:shared`, `build:backend` and `build:cli` are all `tsc -p` against
+            # configs with `noEmit: true`, so they emit nothing and assert exactly what the
+            # `typecheck` step here already asserts; `build:frontend` and `check-deps` are
+            # smoke:qc steps outright. Nothing declared `needs: build`, and `browser-smoke`
+            # builds its own frontend, so the job only bought a second install and a second
+            # frontend build.
+            - name: Canonical quality gate
+              run: bun run smoke:qc
+
+    browser-smoke:
+        name: Browser Smoke
+        runs-on: windows-latest
+        timeout-minutes: 15
+        needs: quality
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+              with:
+                  bun-version-file: package.json
+
+            - name: Cache Bun dependencies and browser
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      ~/.bun/install/cache
+                      ~/.cache/puppeteer
+                  key: browser-smoke-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: |
+                      browser-smoke-${{ runner.os }}-
+
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Install pinned browser
+              run: bunx puppeteer browsers install
+
+            - name: Build frontend
+              run: bun run build:frontend
+
+            - name: Start web control panel
+              run: bun run start:web
+
+            - name: Crawl web control panel
+              run: bun run smoke:web
+
+            - name: Stop web control panel
+              if: always()
+              run: bun run stop:web

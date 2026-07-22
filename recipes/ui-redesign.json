@@ -1,0 +1,40 @@
+{
+	"description": "Review an application's frontend UX, write a redesign plan, generate remediation feature metadata, review it, and validate the feature set.",
+	"metadataOnly": true,
+	"name": "ui redesign",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "ui-redesign-planner"
+			},
+			"name": "Plan UI redesign",
+			"retryCount": 1,
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "feature-review"
+			},
+			"name": "Review generated features",
+			"retryCount": 1,
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"name": "Validate feature metadata",
+			"stepType": "aidd-cli"
+		}
+	]
+}

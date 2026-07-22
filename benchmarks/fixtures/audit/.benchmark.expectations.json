@@ -1,0 +1,17 @@
+{
+	"expectedFindingAliases": {
+		"composition": [
+			"boolean prop",
+			"combinatorial prop",
+			"component overload",
+			"composition",
+			"prop explosion"
+		],
+		"react": ["boolean prop", "component anti-pattern", "react", "tsx"],
+		"security": ["access control", "admin check", "auth", "authorization", "security", "xss"]
+	},
+	"expectedFindingIds": ["security", "composition", "react"],
+	"minimumMatches": 2,
+	"reportGlob": ".aidd/audit-reports/*.md",
+	"type": "audit"
+}

@@ -1,0 +1,20 @@
+# Local development/dogfooding compose: builds the image from this checkout
+# and keeps all state under ./.docker/ (gitignored). Production deploys use
+# docker-compose.production.yml with a published image and compose.vars.
+services:
+    aidd:
+        build: .
+        image: aidd:dev
+        container_name: aidd-dev
+        ports:
+            - '127.0.0.1:${AIDD_PORT:-3210}:3210'
+        volumes:
+            - ./.docker/home:/home/aidd
+            - ./.docker/data:/app/data
+            - ./.docker/logs:/app/logs
+            - ${PROJECTS_ROOT:-./.docker/projects}:/projects
+        env_file:
+            - path: compose.env
+              required: false
+        restart: unless-stopped
+        stop_grace_period: 30s

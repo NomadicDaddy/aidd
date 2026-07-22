@@ -1,0 +1,30 @@
+{
+	"name": "aidd-shared",
+	"private": true,
+	"engines": {
+		"bun": ">=1.3.14"
+	},
+	"dependencies": {
+		"zod": "4.4.3"
+	},
+	"exports": {
+		".": "./src/index.ts",
+		"./contracts": "./src/contracts/index.ts",
+		"./contracts/director": "./src/contracts/director.ts",
+		"./contracts/frontend-routes": "./src/contracts/frontend-routes.ts",
+		"./contracts/project-profile": "./src/contracts/project-profile.ts",
+		"./contracts/terminal": "./src/contracts/terminal.ts",
+		"./contracts/websocket": "./src/contracts/websocket.ts",
+		"./execution-mode": "./src/execution-mode.ts",
+		"./orchestrator/exit-codes": "./src/orchestrator/exit-codes.ts",
+		"./runtime": "./src/runtime/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"build": "bunx tsc -p tsconfig.json",
+		"lint": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-shared/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-shared/ --report-unused-disable-directives --max-warnings 0 --fix",
+		"typecheck": "bunx tsc -p tsconfig.json --noEmit"
+	},
+	"type": "module"
+}

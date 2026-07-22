@@ -1,0 +1,49 @@
+{
+	"description": "Run aidd to remediate audit-sourced feature files, validate, and consolidate.",
+	"name": "remediate audit findings",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "id",
+			"description": "Feature field used to select audit findings",
+			"name": "filterBy"
+		},
+		{
+			"defaultValue": "audit-*",
+			"description": "Feature value or glob used to select audit findings",
+			"name": "filterValue"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"filterBy": "{filterBy}",
+				"filterValue": "{filterValue}"
+			},
+			"id": "remediate-audit-findings_step_1",
+			"name": "Remediate audit findings",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"id": "remediate-audit-findings_step_2",
+			"name": "Validate completions",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"id": "remediate-audit-findings_step_3",
+			"name": "Consolidate features",
+			"stepType": "skill"
+		}
+	]
+}

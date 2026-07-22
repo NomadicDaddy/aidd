@@ -1,0 +1,47 @@
+{
+	"description": "Full spernakit release: bump version, propagate to an application, write changelog.",
+	"name": "spernakit release",
+	"parameters": [
+		{
+			"description": "Version number (e.g. 3.1.16)",
+			"name": "version"
+		},
+		{
+			"description": "Target application to propagate to",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"params": {
+					"version": "{version}"
+				},
+				"recipeName": "spernakit bump"
+			},
+			"name": "Bump spernakit",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}",
+					"version": "sv{version}"
+				},
+				"recipeName": "spernakit propagate"
+			},
+			"name": "Propagate to application",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "changelog-rewrite"
+			},
+			"name": "Write changelog",
+			"onFailure": "continue",
+			"stepType": "skill"
+		}
+	]
+}

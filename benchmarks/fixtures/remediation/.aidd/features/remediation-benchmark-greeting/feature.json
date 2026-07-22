@@ -1,0 +1,13 @@
+{
+	"category": "Benchmark",
+	"createdAt": "2026-04-09T00:00:00.000Z",
+	"dependencies": [],
+	"description": "Fix the benchmark greeting so it returns a personalized message for the supplied name.",
+	"id": "remediation-benchmark-greeting",
+	"passes": false,
+	"priority": 1,
+	"spec": "1. Update src/greeting.js so greeting('Ada') returns exactly 'Hello, Ada!'\n2. Keep the function synchronous and exported\n3. Run bun ./scripts/check-remediation.mjs and ensure it exits successfully\n4. Add resolution notes before marking the remediation completed\n5. Mark this feature completed only after the check passes",
+	"status": "backlog",
+	"title": "Repair benchmark greeting",
+	"updatedAt": "2026-04-09T00:00:00.000Z"
+}

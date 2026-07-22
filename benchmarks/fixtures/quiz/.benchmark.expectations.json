@@ -1,0 +1,54 @@
+{
+	"iterationLogsFallback": true,
+	"questions": [
+		{
+			"expected": [
+				"read_file",
+				"write_file",
+				"edit_file",
+				"bash",
+				"glob",
+				"grep",
+				"list_directory"
+			],
+			"id": "Q1",
+			"weight": 0.25
+		},
+		{
+			"expected": ["--cli", "NATIVE_PROVIDER", "--model", "defaultProvider", "zhipu"],
+			"id": "Q2",
+			"weight": 0.25
+		},
+		{
+			"expected": [
+				"native-glm51-zhipu",
+				"ollama-llama32",
+				"ollama-qwen35-9b",
+				"ollama-gpt-oss-20b",
+				"ollama-qwen25-cline",
+				"claude-code-opus48",
+				"codex-gpt5",
+				"opencode-glm51",
+				"kilocode-glm51"
+			],
+			"id": "Q3",
+			"weight": 0.25
+		},
+		{
+			"expected": [
+				"version",
+				"check-features",
+				"check-artifacts",
+				"interview",
+				"audit-primary",
+				"remediation",
+				"validate",
+				"quiz"
+			],
+			"id": "Q4",
+			"weight": 0.25
+		}
+	],
+	"responseFiles": [".aidd/responses/response1.md"],
+	"type": "quiz"
+}

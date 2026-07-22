@@ -801,8 +801,9 @@
 			<section class="proofbar" aria-label="release proof">
 				<div class="section-inner">
 					<p>
-						The release was tested through four creation lanes, four stacks, real gates,
-						public fixes, and a run ledger you can inspect.
+						The release was tested through seven creation lanes across three languages,
+						real gates, published failures as well as passes, and run ledgers you can
+						inspect.
 					</p>
 					<div class="proof-links">
 						<a href="#receipts">See receipts</a>
@@ -1008,17 +1009,16 @@
 						<div class="receipt-copy">
 							<p>
 								Before release, aidd built and repaired real applications through
-								four different creation lanes. The runs were there to find rough
+								seven different creation lanes. The runs were there to find rough
 								edges, file the failures, fix them, and leave a public trail.
 							</p>
 							<p>
-								The
-								<a
-									href="https://github.com/NomadicDaddy/aidd/blob/main/docs/CHANGELOG.md"
-									>public changelog</a
-								>
-								records the fixes. The recorded walkthrough is still pending; its
-								instrumented write-up will be added with the video.
+								All seven are published in full - app snapshots, run ledgers,
+								iteration evidence, and scrubbed transcripts - in the
+								<a href="https://github.com/NomadicDaddy/aidd-build-proofs"
+									>build-proofs repository</a
+								>, including the lane that failed. The recorded walkthrough is still
+								pending; its instrumented write-up will be added with the video.
 							</p>
 						</div>
 						<div class="tablewrap">
@@ -1051,7 +1051,10 @@
 										<td>Full-stack template init</td>
 										<td>SMB infrastructure dashboard</td>
 										<td>Bun + Elysia + React + Drizzle</td>
-										<td>26/26 features, 30/30 gate steps green</td>
+										<td>
+											26 features passing plus one retained remediation
+											record, 30-step gate green
+										</td>
 									</tr>
 									<tr>
 										<td>Existing-codebase ingest</td>
@@ -1062,6 +1065,31 @@
 											audit, then fixed findings with pytest as the gate. Zero
 											writes outside
 											<code class="inline">.aidd/</code>.
+										</td>
+									</tr>
+									<tr>
+										<td>GitHub-template clone</td>
+										<td>Pantry tracker</td>
+										<td>PowerShell + Pode + htmx</td>
+										<td>26/26 features, Pester 88/88, analyzer clean</td>
+									</tr>
+									<tr>
+										<td>Local model only</td>
+										<td>Markdown TOC tool</td>
+										<td>Bun + TS, LM Studio, no cloud calls</td>
+										<td>
+											0/14 features. Five coding runs finished nothing, and
+											the completion contract refused to record success.
+											Published exactly as it ran.
+										</td>
+									</tr>
+									<tr>
+										<td>Agent-driven build</td>
+										<td>Margin calculator</td>
+										<td>Bun + Elysia + React + Drizzle</td>
+										<td>
+											29/29 features across 48 supervised iterations, gate
+											green at the release candidate
 										</td>
 									</tr>
 								</tbody>

@@ -165,10 +165,12 @@ bun run smoke:backends
 ## Build proofs
 
 The public [aidd build-proofs campaign](https://github.com/NomadicDaddy/aidd-build-proofs)
-preserves four instrumented July 2026 dogfood runs across the fresh, third-party-template,
-Spernakit, and existing-app ingest lanes. It includes committed app snapshots, structured run
-evidence, replay results, and scrubbed transcripts. This is historical first-party evidence, not a
-current benchmark or an independent audit.
+preserves seven instrumented dogfood runs across the fresh-scaffold, third-party-template,
+Spernakit, existing-app ingest, GitHub-template, local-model, and agent-driven lanes. Six produced
+passing applications; the local-model-only run failed its gate and is published as it ran. It
+includes committed app snapshots, structured run evidence, replay results, and scrubbed
+transcripts. This is historical first-party evidence, not a current benchmark or an independent
+audit.
 
 ## Documentation
 

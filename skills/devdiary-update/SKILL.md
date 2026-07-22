@@ -80,8 +80,16 @@ These are the highest-risk subset of the humanize-docs rules; the full style con
 - Punch fragments ("Filed, fixed.")
 - Numbered "what this taught me" lists - a single plain "possible lesson:" bullet is the maximum
 - Paragraphs engineered to land a point or button
+- Em dashes and en dashes (`—` and `–`) anywhere in prose - use a plain hyphen or restructure the sentence. This includes bullet lead-ins (`**project 1.2.3 — summary.**`), which is where they concentrate; write `**project 1.2.3: summary.**` or split into two sentences. Leave dashes inside code spans, paths, and fenced blocks alone.
 
-If a reflection seems genuinely worth keeping, state it as one flat bullet ("possible lesson: the smoke check passes on a stale cache"), not as crafted prose.
+**Reflections: required shape.**
+
+A `Reflections:` bullet records an observation and the specific thing it was observed in. It is not the place to say what the observation means in general. Every bullet must name its anchor - a file, a project, a version, a run, a number. A sentence that would still parse and still sound true with every specific detail deleted is a maxim; either put the specifics back or drop the bullet.
+
+- Good: `possible lesson: smoke:qc reported a pass in aidd on a cached run that had skipped the test suite entirely`
+- Bad: `possible lesson: a passing gate is only evidence if you have seen it fail on the defect it is supposed to catch`
+
+Zero reflection bullets is a valid outcome for a day. Do not manufacture one, and do not order the bullets so the broadest sits last - the final bullet gets read as the entry's conclusion, which is how these turn into aphorisms.
 
 ## Instructions
 
@@ -151,7 +159,7 @@ For each repository that had commits since the cutoff, read the relevant data so
     - Which projects were active and what happened in each
     - The dominant **Phase** label: Architecture | Frontend | Backend | Collector | DevOps | Bugfix | Research | Tooling | Template
     - Key decisions made and their rationale
-    - Reflections: insights, lessons, notable patterns
+    - Reflections: observations worth recording, each anchored to the file, project, version, or run it came from (see "Reflections: required shape" above). None is an acceptable answer.
 
 13. **Cross-project synthesis**: When multiple projects advanced together on the same day (e.g., Spernakit release + derived app upgrades), synthesize them into a single coherent entry for that day.
 
@@ -176,7 +184,7 @@ For each repository that had commits since the cutoff, read the relevant data so
 
     **Reflections:**
 
-    - {insights and lessons}
+    - {observations, each naming the file, project, version, or run it came from; omit the section entirely if the day produced none}
     ```
 
 **Non-technical entry format (DDhl.md):**

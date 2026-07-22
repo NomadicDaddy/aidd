@@ -1,0 +1,48 @@
+{
+	"cohorts": [
+		{
+			"members": ["native-simulation"],
+			"name": "simulation",
+			"targetModelFamily": "simulation"
+		}
+	],
+	"scoring": {
+		"correctnessWeight": 0.45,
+		"costPolicy": "unknown-cost-redistribute-to-correctness-and-reliability",
+		"costWeight": 0.1,
+		"reliabilityWeight": 0.25,
+		"timeWeight": 0.2
+	},
+	"settings": {
+		"controlTasksExcludedFromComposite": true,
+		"fixedEnv": {
+			"AIDD_BENCHMARK": "1",
+			"AIDD_NATIVE_SIMULATION": "1"
+		},
+		"preflight": {
+			"timeoutSeconds": 60
+		},
+		"scoredRepetitions": 1,
+		"warmupRepetitions": 0
+	},
+	"stacks": [
+		{
+			"cli": "native",
+			"label": "native-simulation",
+			"model": "simulation",
+			"simulation": true,
+			"view": "native-best"
+		}
+	],
+	"tasks": [
+		{
+			"category": "agentic",
+			"command": "--interview .aidd/questions.md --max-iterations 1",
+			"evaluation": "interview",
+			"fixture": "interview",
+			"id": "interview",
+			"timeoutSeconds": 120
+		}
+	],
+	"version": 1
+}

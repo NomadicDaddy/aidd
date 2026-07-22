@@ -1,0 +1,36 @@
+# Traefik v3 edge for the aidd container. Run alongside (or merged into) the
+# aidd production compose. TLS terminates here; the aidd container itself stays
+# HTTP-only. Forwarded /api requests must present `Authorization: Bearer
+# <web.authToken>` — only direct loopback callers are token-exempt.
+services:
+    traefik:
+        image: traefik:v3.4
+        command:
+            - --providers.docker=true
+            - --providers.docker.exposedbydefault=false
+            - --entrypoints.websecure.address=:443
+            - --certificatesresolvers.le.acme.email=you@example.com
+            - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+            - --certificatesresolvers.le.acme.tlschallenge=true
+        ports:
+            - '443:443'
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - letsencrypt:/letsencrypt
+        restart: unless-stopped
+
+    aidd:
+        image: ghcr.io/nomadicdaddy/${APP_SLUG:?}:${APP_VERSION:?}
+        # ... volumes/env/hardening as in docker-compose.production.yml, minus
+        # the loopback `ports:` mapping (Traefik reaches it on the compose
+        # network instead).
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.aidd.rule=Host(`aidd.example.com`)
+            - traefik.http.routers.aidd.entrypoints=websecure
+            - traefik.http.routers.aidd.tls.certresolver=le
+            - traefik.http.services.aidd.loadbalancer.server.port=3210
+        restart: unless-stopped
+
+volumes:
+    letsencrypt:

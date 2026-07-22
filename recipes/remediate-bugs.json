@@ -1,0 +1,49 @@
+{
+	"description": "Run aidd to remediate bug-sourced feature files, validate, and consolidate.",
+	"name": "remediate bugs",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "id",
+			"description": "Feature field used to select remediation items",
+			"name": "filterBy"
+		},
+		{
+			"defaultValue": "remediation-*",
+			"description": "Feature value or glob used to select remediation items",
+			"name": "filterValue"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"filterBy": "{filterBy}",
+				"filterValue": "{filterValue}"
+			},
+			"id": "remediate-bugs_step_1",
+			"name": "Remediate bugs",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"id": "remediate-bugs_step_2",
+			"name": "Validate completions",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"id": "remediate-bugs_step_3",
+			"name": "Consolidate features",
+			"stepType": "skill"
+		}
+	]
+}

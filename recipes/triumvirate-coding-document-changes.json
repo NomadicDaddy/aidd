@@ -1,0 +1,28 @@
+{
+	"description": "Run Triumvirate coding on an application, then document and release the resulting changes.",
+	"name": "triumvirate coding and document changes",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"triumvirate": true
+			},
+			"name": "Run Triumvirate coding",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document changes",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,2 @@
+{bad json not parseable
+half a line without newline terminator

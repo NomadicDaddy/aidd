@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Fast pre-commit gate: leak-guard + `bun run smoke:qc:fast`.
+#
+# leak-guard scans the staged index diff, so it is uncacheable-by-design and runs
+# first as a security gate. The rest (check:max-lines, typecheck, format:check, lint)
+# is delegated to the canonical smoke runner, which uses the same content-hashed
+# cache as smoke:qc and runs in ascending cost/failure-rate order —
+# so a working tree smoke:qc already validated is skipped, and a doomed commit fails
+# on the cheapest failing check first. The full smoke:qc (tests, builds, and the other
+# static checks) still runs in CI.
+#
+# Bypass with `git commit --no-verify` only for WIP/experimental commits
+# or confirmed false positives.
+
+set -euo pipefail
+
+echo "pre-commit: leak-guard"
+bash .githooks/leak-guard.sh
+
+echo "pre-commit: qc (cached subset of smoke:qc)"
+bun run smoke:qc:fast
+
+# The third-party license inventory is generated FROM bun.lock, so a dependency change that
+# does not regenerate it commits artifacts that disagree with the lockfile. check:licenses is
+# not in the fast subset, so nothing local catches that; it has reached main more than once and
+# surfaced only in a later full smoke:qc. Gate it here, but only when a dependency manifest is
+# actually staged, so ordinary commits pay nothing for it.
+#
+# Read into a variable rather than piping into grep: under `set -o pipefail` a matching `grep -q`
+# can still fail the pipeline when it closes the pipe early and git takes SIGPIPE, which would
+# silently skip the check on exactly the commits that need it.
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR)
+if grep -qE '(^|/)(bun\.lock|package\.json)$' <<<"$staged_files"; then
+	echo "pre-commit: check:licenses (dependency manifest staged)"
+	bun run check:licenses
+fi
+
+echo "pre-commit: passed"

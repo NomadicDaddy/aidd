@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<title>What is aidd? A one-page explainer</title>
+		<meta
+			content="A plain-language, one-page explanation of aidd: a control room on your own computer that turns AI coding assistants into a managed, verified workforce."
+			name="description" />
+		<meta content="What is aidd? A one-page explainer" property="og:title" />
+		<meta
+			content="AI coding assistants are powerful but chaotic. aidd hands out the work, checks the results, and keeps the records - all on your own machine."
+			property="og:description" />
+		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="website" property="og:type" />
+		<meta content="https://nomadicdaddy.github.io/aidd/explainer.html" property="og:url" />
+		<meta content="summary_large_image" name="twitter:card" />
+		<link href="favicon.svg" rel="icon" type="image/svg+xml" />
+		<link href="favicon.ico" rel="shortcut icon" />
+		<style>
+			:root {
+				--ink: #08111f;
+				--muted: #536070;
+				--panel: #ffffff;
+				--wash: #f6f8fb;
+				--line: #d7dee8;
+				--cyan: #0891b2;
+				--cyan-soft: #d9f7fb;
+				--green: #10b981;
+				--amber: #f59e0b;
+				--night: #07111f;
+				--night-line: rgba(168, 209, 229, 0.24);
+				--night-text: #e9f6ff;
+				--night-muted: #9cb5c8;
+				--radius: 8px;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: var(--wash);
+				color: var(--ink);
+				font:
+					17px/1.65 Inter,
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					'Segoe UI',
+					sans-serif;
+			}
+			a {
+				color: inherit;
+			}
+			a:focus-visible {
+				outline: 3px solid var(--amber);
+				outline-offset: 4px;
+			}
+			.site-header {
+				background: var(--night);
+				color: var(--night-text);
+				border-bottom: 1px solid var(--night-line);
+			}
+			.site-header-inner {
+				display: flex;
+				width: min(760px, calc(100% - 40px));
+				margin: 0 auto;
+				align-items: center;
+				justify-content: space-between;
+				gap: 20px;
+				min-height: 64px;
+			}
+			.brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 12px;
+				color: var(--night-text);
+				text-decoration: none;
+			}
+			.brand-mark {
+				display: block;
+				width: 30px;
+				height: 30px;
+			}
+			.brand-name {
+				font-size: 16px;
+				font-weight: 800;
+				letter-spacing: 0.18em;
+				text-transform: lowercase;
+			}
+			nav {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex-wrap: wrap;
+				justify-content: flex-end;
+			}
+			nav a {
+				border: 1px solid transparent;
+				border-radius: 999px;
+				color: rgba(233, 246, 255, 0.78);
+				font-size: 14px;
+				font-weight: 700;
+				padding: 7px 11px;
+				text-decoration: none;
+			}
+			nav a:hover {
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.08);
+				color: #ffffff;
+			}
+			.page {
+				width: min(760px, calc(100% - 40px));
+				margin: 0 auto;
+				padding: 56px 0 72px;
+			}
+			.kicker {
+				margin: 0 0 10px;
+				color: var(--cyan);
+				font-size: 13px;
+				font-weight: 900;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+			}
+			h1 {
+				margin: 0 0 16px;
+				font-size: clamp(32px, 6vw, 44px);
+				font-weight: 900;
+				line-height: 1.06;
+				text-wrap: balance;
+			}
+			.lede {
+				margin: 0 0 40px;
+				color: var(--muted);
+				font-size: 20px;
+				line-height: 1.5;
+				text-wrap: balance;
+			}
+			.lede strong {
+				color: var(--ink);
+			}
+			h2 {
+				margin: 44px 0 12px;
+				font-size: 24px;
+				font-weight: 850;
+				line-height: 1.15;
+				text-wrap: balance;
+			}
+			p {
+				margin: 0 0 16px;
+			}
+			.loop {
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 10px;
+				margin: 24px 0 12px;
+			}
+			.loop-step {
+				position: relative;
+				overflow: hidden;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+				padding: 16px;
+			}
+			.loop-step::before {
+				position: absolute;
+				inset: 0 0 auto;
+				height: 4px;
+				background: var(--accent, var(--cyan));
+				content: '';
+			}
+			.loop-step:nth-child(1) {
+				--accent: var(--cyan);
+			}
+			.loop-step:nth-child(2) {
+				--accent: var(--green);
+			}
+			.loop-step:nth-child(3) {
+				--accent: var(--amber);
+			}
+			.loop-step:nth-child(4) {
+				--accent: #7c3aed;
+			}
+			.loop-step h3 {
+				margin: 0 0 6px;
+				font-size: 13px;
+				font-weight: 900;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+			}
+			.loop-step p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+				line-height: 1.5;
+			}
+			.loop-caption {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 18px 26px;
+				margin-top: 20px;
+			}
+			.grid h3 {
+				margin: 0 0 5px;
+				font-size: 17px;
+				font-weight: 800;
+			}
+			.grid p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 15px;
+			}
+			.callout {
+				border: 1px solid var(--line);
+				border-left: 4px solid var(--cyan);
+				border-radius: 0 var(--radius) var(--radius) 0;
+				background: var(--cyan-soft);
+				margin: 44px 0 0;
+				padding: 18px 22px;
+			}
+			.callout p {
+				margin: 0;
+				font-size: 16px;
+			}
+			.pick {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 10px;
+				margin: 20px 0 8px;
+			}
+			.pick a {
+				display: block;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+				padding: 16px;
+				text-decoration: none;
+			}
+			.pick a:hover {
+				border-color: var(--cyan);
+			}
+			.pick h3 {
+				margin: 0 0 5px;
+				color: var(--cyan);
+				font-size: 13px;
+				font-weight: 900;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+			}
+			.pick p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 15px;
+			}
+			.pick b {
+				color: var(--ink);
+			}
+			.facts {
+				display: flex;
+				border-top: 1px solid var(--line);
+				margin-top: 48px;
+				padding-top: 20px;
+				gap: 8px 32px;
+				flex-wrap: wrap;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.facts b {
+				color: var(--ink);
+				font-weight: 800;
+			}
+			.facts a {
+				color: #0369a1;
+				font-weight: 700;
+			}
+			.site-footer {
+				background: var(--night);
+				color: var(--night-muted);
+			}
+			.footer-inner {
+				display: flex;
+				width: min(760px, calc(100% - 40px));
+				margin: 0 auto;
+				align-items: center;
+				justify-content: space-between;
+				gap: 20px;
+				padding: 26px 0;
+				flex-wrap: wrap;
+				font-size: 14px;
+			}
+			.footer-links {
+				display: flex;
+				gap: 14px;
+				flex-wrap: wrap;
+			}
+			.footer-links a {
+				color: var(--night-muted);
+				text-decoration: none;
+			}
+			.footer-links a:hover {
+				color: #ffffff;
+			}
+			@media (max-width: 620px) {
+				.loop,
+				.grid,
+				.pick {
+					grid-template-columns: 1fr;
+				}
+				.site-header-inner {
+					align-items: flex-start;
+					flex-direction: column;
+					justify-content: center;
+					padding: 12px 0;
+				}
+				nav {
+					justify-content: flex-start;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="site-header-inner">
+				<a class="brand" aria-label="aidd home" href="index.html">
+					<img class="brand-mark" alt="" src="favicon.svg" />
+					<span class="brand-name">aidd</span>
+				</a>
+				<nav aria-label="Primary navigation">
+					<a href="index.html">Home</a>
+					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
+					<a href="https://github.com/NomadicDaddy/aidd/tree/main/docs">Docs</a>
+					<a href="https://github.com/NomadicDaddy/aidd/releases/latest">Download</a>
+				</nav>
+			</div>
+		</header>
+
+		<main class="page">
+			<p class="kicker">One-page explainer</p>
+			<h1>A control room for AI that writes code.</h1>
+			<p class="lede">
+				AI coding assistants are powerful but chaotic - you chat with one in one window,
+				lose track of what it did, and start over tomorrow. <strong>aidd</strong> turns them
+				into a managed workforce: it hands out the work, checks the results, and keeps the
+				records.
+			</p>
+
+			<section>
+				<h2>Pick your background</h2>
+				<p>
+					This page is the general tour. If you're coming from a specific kind of tool,
+					there's a version written for you:
+				</p>
+				<div class="pick">
+					<a href="explainer-app-builders.html">
+						<h3>From app builders</h3>
+						<p>
+							<b>Bolt.new, Lovable, v0.</b> You've prompted an app into existence and
+							wonder what happens when it becomes a real project.
+						</p>
+					</a>
+					<a href="explainer-cli-users.html">
+						<h3>From CLI agents</h3>
+						<p>
+							<b>claude-code, codex, opencode.</b> You know what an agent does in one
+							session and want the management layer above it.
+						</p>
+					</a>
+				</div>
+			</section>
+
+			<section>
+				<h2>The problem it solves</h2>
+				<p>
+					Using an AI assistant to build software today feels like supervising a brilliant
+					intern with no memory. Every session starts from scratch. Nothing forces the AI
+					to plan before it types, nobody reviews its work, and if you have several
+					projects, you're juggling several separate conversations with no overview of any
+					of them.
+				</p>
+				<p>
+					aidd adds the missing management layer. It's a small app that runs entirely on
+					your own computer and acts as mission control: one dashboard where you launch AI
+					work, watch it happen, and review what came out - across every project you own.
+				</p>
+			</section>
+
+			<section>
+				<h2>How it works</h2>
+				<p>
+					Instead of one long freeform chat, aidd pushes every piece of work through a
+					disciplined loop - the same one a good engineering team uses:
+				</p>
+				<div class="loop">
+					<div class="loop-step">
+						<h3>Plan</h3>
+						<p>The AI writes down what it intends to do before touching anything.</p>
+					</div>
+					<div class="loop-step">
+						<h3>Build</h3>
+						<p>It does the work in small, tracked steps you can watch live.</p>
+					</div>
+					<div class="loop-step">
+						<h3>Verify</h3>
+						<p>
+							Work only counts as done after tests and automated checks actually pass.
+						</p>
+					</div>
+					<div class="loop-step">
+						<h3>Record</h3>
+						<p>Every run keeps its receipts - what changed, what it cost, and why.</p>
+					</div>
+				</div>
+				<p class="loop-caption">
+					Every run is recorded, so you can always answer "what changed, and why?"
+				</p>
+			</section>
+
+			<section>
+				<h2>What's inside</h2>
+				<div class="grid">
+					<div>
+						<h3>One dashboard, all your projects</h3>
+						<p>
+							Projects, running jobs, results, and history live in a single local web
+							page - no more tab archaeology.
+						</p>
+					</div>
+					<div>
+						<h3>A director for the whole fleet</h3>
+						<p>
+							A built-in "Director" looks across everything you're building and
+							suggests what's worth doing next. You can chat with it, and it can kick
+							off work for you.
+						</p>
+					</div>
+					<div>
+						<h3>Repeatable playbooks</h3>
+						<p>
+							Save multi-step workflows as recipes - "review, fix, verify" - and rerun
+							them on any project with one click, instead of re-explaining every time.
+						</p>
+					</div>
+					<div>
+						<h3>Built-in quality inspections</h3>
+						<p>
+							Ready-made audits scan for security holes, performance issues, and messy
+							architecture, and file what they find as tasks.
+						</p>
+					</div>
+					<div>
+						<h3>Bring your own AI</h3>
+						<p>
+							It works with the assistants and models you already use - Claude Code,
+							Codex, OpenAI-style services, or models running privately on your own
+							machine.
+						</p>
+					</div>
+					<div>
+						<h3>Steer it from your phone</h3>
+						<p>
+							An optional Telegram connection lets you message the Director from
+							anywhere and have it start supervised work while you're away from the
+							desk.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<div class="callout">
+				<p>
+					<strong>Private by design.</strong> aidd has no accounts, no cloud service, and
+					no telemetry. Everything - your projects, run history, and settings - stays on
+					your computer. The only outside traffic is your AI provider, which you choose.
+				</p>
+			</div>
+
+			<section>
+				<h2>Who it's for</h2>
+				<p>
+					Anyone using AI to build or maintain software who wants more than a chat window:
+					solo developers running several projects, tinkerers who want their AI work to be
+					repeatable and reviewable, and teams experimenting with agent-driven development
+					who need visibility into what the machines actually did.
+				</p>
+			</section>
+
+			<div class="facts">
+				<span><b>Runs on</b> your own machine</span>
+				<span><b>Platform</b> Windows-first, macOS/Linux from source</span>
+				<span><b>Cost</b> free to use; you pay only your AI provider</span>
+				<span>
+					<b>Source</b>
+					<a href="https://github.com/NomadicDaddy/aidd">github.com/NomadicDaddy/aidd</a>
+				</span>
+			</div>
+		</main>
+
+		<footer class="site-footer">
+			<div class="footer-inner">
+				<strong>aidd - local runs, local receipts.</strong>
+				<div class="footer-links">
+					<a href="index.html">Home</a>
+					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
+					<a href="https://github.com/NomadicDaddy/aidd/tree/main/docs">Docs</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/SUPPORT.md">Support</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/PRIVACY.md">Privacy</a>
+				</div>
+			</div>
+		</footer>
+	</body>
+</html>

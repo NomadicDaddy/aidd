@@ -1,0 +1,21 @@
+{
+	"description": "Run codebase analysis on an application.",
+	"name": "codebase-analysis",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "codebase-analysis"
+			},
+			"name": "Analyze codebase",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,82 @@
+## PROJECT-SPECIFIC INSTRUCTIONS
+
+**CRITICAL: Check for project-specific overrides that supersede generic instructions.**
+
+### 1. Check for project.md
+
+Look for `/.aidd/project.md` in the project directory. This file contains project-specific instructions that **OVERRIDE** generic instructions in this prompt.
+
+**If project.md exists:**
+
+- Read it immediately before proceeding
+- Treat it as the highest-priority instruction source
+- Apply all overrides throughout the session
+- Document the overrides in your initial assessment
+
+**If project.md doesn't exist:**
+
+- Proceed with generic instructions
+- Note its absence in your assessment
+
+### 2. Common Override Categories
+
+project.md may include:
+
+**Testing Procedures:**
+
+- Custom test commands (e.g., `bun run smoke:qc` instead of standard linting)
+- Special test requirements or exclusions
+- Browser automation specifics
+- Performance testing thresholds
+
+**Workflow Modifications:**
+
+- Custom initialization steps
+- Modified feature implementation workflow
+- Special verification requirements
+- Deployment procedures
+
+**Technical Constraints:**
+
+- Required directory structures
+- Specific technology versions
+- Port assignments
+- Environment variable requirements
+
+**Quality Standards:**
+
+- Project-specific linting rules
+- Code formatting requirements
+- Documentation standards
+- Security requirements
+
+### 3. Precedence Rules
+
+Precedence follows the instruction-source order in assistant-rules-loading.md; `/.aidd/project.md` sits above assistant rule files and overrides everything else.
+
+**Resolution strategy:**
+
+- If project.md conflicts with this prompt → Follow project.md
+- If project.md is silent on a topic → Follow assistant rules
+- If both are silent → Follow generic prompt instructions
+
+### 4. Example Overrides
+
+**Example project.md content:**
+
+```txt
+## Testing Override
+Do NOT run verification tests in Step 5.
+This project has a custom CI/CD pipeline that handles testing.
+Only run: bun run smoke:qc
+
+## Server Management Override
+Dev servers are managed externally by Docker Compose.
+Do NOT attempt to start or stop servers.
+Frontend: http://localhost:3000 (always running)
+Backend: http://localhost:3001 (always running)
+
+## Feature Implementation Override
+All features must be implemented behind feature flags.
+Use: import { isFeatureEnabled } from '@/lib/features'
+```

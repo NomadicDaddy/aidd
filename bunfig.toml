@@ -1,0 +1,10 @@
+# Disable automatic .env file loading - we use JSON config exclusively.
+# Note: This does NOT prevent explicit process.env reads in configLoader.ts
+# for production secret injection (the only approved use of env vars).
+env = false
+
+[test]
+# Refuses to start a second concurrent `bun test` for this repo - see the preload.
+preload = ["./test/test-run-lock.preload.ts"]
+# Coverage reports describe production behavior; counting the assertions themselves inflates it.
+coverageSkipTestFiles = true

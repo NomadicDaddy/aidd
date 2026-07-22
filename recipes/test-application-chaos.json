@@ -1,0 +1,31 @@
+{
+	"description": "Run chaos testing via spernakit-tester, then convert bugs to features.",
+	"name": "test application (chaos)",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "spernakit-tester"
+			},
+			"name": "Run spernakit-tester",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "bug2feature"
+			},
+			"name": "Bug to feature",
+			"stepType": "recipe-ref"
+		}
+	]
+}

@@ -1,0 +1,30 @@
+{
+	"description": "Review and update application documentation to match current implementation.",
+	"name": "update application documentation",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review {application}'s current codebase state and update all documentation in the docs/ directory to accurately reflect the current implementation. Update API references, architecture docs, and any feature documentation. Do not create new documentation files that don't already exist — only update existing ones."
+			},
+			"name": "Update docs",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "review-doc"
+			},
+			"name": "Review docs",
+			"onFailure": "continue",
+			"stepType": "skill"
+		}
+	]
+}

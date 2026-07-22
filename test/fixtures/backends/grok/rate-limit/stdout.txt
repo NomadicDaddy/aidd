@@ -1,0 +1,2 @@
+{"type":"thought","data":"Attempting the request."}
+{"type":"error","message":"HTTP 429: rate limit exceeded, too many requests"}

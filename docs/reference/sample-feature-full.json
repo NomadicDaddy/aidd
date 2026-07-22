@@ -1,0 +1,52 @@
+{
+	"affectedFiles": ["backend/src/routes/runs.ts", "frontend/src/pages/runs/RunsPage.tsx"],
+	"assignedTo": "local-operator",
+	"branchName": "feature/run-launch-validation",
+	"category": "Web Control Panel",
+	"complexity": "medium",
+	"createdAt": "2026-05-13T00:00:00.000Z",
+	"dependencies": ["managed-run-launcher", "projects-runs-ui"],
+	"description": "Add visible validation and accessible error handling to the run launch form when required project data is missing.",
+	"id": "run-launch-validation",
+	"imagePaths": [
+		"C:\\path\\to\\project\\.aidd\\screenshots\\runs-launch-validation.png",
+		{
+			"description": "Expected project selector validation state",
+			"filename": "runs-launch-validation.png",
+			"id": "image-runs-validation",
+			"mimeType": "image/png",
+			"path": "C:\\path\\to\\project\\.aidd\\screenshots\\runs-launch-validation.png"
+		}
+	],
+	"model": "glm-5.1",
+	"passes": false,
+	"planSpec": {
+		"content": "Add inline validation to the project selector, keep the existing launch API unchanged, and verify the Runs page through browser checks.",
+		"generatedAt": "2026-05-13T00:00:00.000Z",
+		"reviewedByUser": true,
+		"status": "approved",
+		"tasksCompleted": 0,
+		"tasksTotal": 3,
+		"version": 1
+	},
+	"priority": 1,
+	"reasoningEffort": "high",
+	"requirePlanApproval": true,
+	"skipTests": false,
+	"spec": "1. Show an inline validation state when Launch is attempted without a selected project.\n2. Preserve the existing run launch endpoint and request shape.\n3. Verify keyboard, dark mode, and mobile behavior on the Runs page.",
+	"status": "backlog",
+	"summary": "Run launch form validation",
+	"tags": ["runs", "validation", "accessibility"],
+	"textFilePaths": [
+		{
+			"content": "# Manual Verification\n\n1. Open /runs.\n2. Try to launch without a project.\n3. Confirm inline validation appears.",
+			"filename": "manual-check.md",
+			"id": "doc-manual-check",
+			"mimeType": "text/markdown",
+			"path": "C:\\path\\to\\project\\.aidd\\manual-check.md"
+		}
+	],
+	"thinkingLevel": "high",
+	"title": "Run Launch Validation",
+	"updatedAt": "2026-05-13T00:00:00.000Z"
+}

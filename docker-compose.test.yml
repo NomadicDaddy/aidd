@@ -1,0 +1,35 @@
+# Smoke-test overlay (compose merges volumes by container target path, so
+# these binds replace the dev defaults). scripts/smoke-docker.ts prepares the
+# throwaway directories: a home with a known-token config and a seeded
+# projects tree. Healthcheck is shortened for faster feedback.
+#
+# Usage (via bun run smoke:docker, not by hand):
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+services:
+    aidd:
+        container_name: aidd-smoke
+        volumes:
+            - ${AIDD_SMOKE_HOME:?run via bun run smoke:docker}:/home/aidd
+            - ${AIDD_SMOKE_DATA:?run via bun run smoke:docker}:/app/data
+            - ${AIDD_SMOKE_LOGS:?run via bun run smoke:docker}:/app/logs
+            - ${AIDD_SMOKE_PROJECTS:?run via bun run smoke:docker}:/projects
+        environment:
+            # Entrypoint git bootstrap (run commits inside the seeded smoke repo).
+            GIT_USER_NAME: aidd-smoke
+            GIT_USER_EMAIL: aidd-smoke@localhost
+            # Only set for the --with-claude leg; empty is harmless for the
+            # simulation leg (the native simulation client never reads it).
+            ANTHROPIC_API_KEY: ${AIDD_SMOKE_ANTHROPIC_KEY:-}
+        restart: 'no'
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "fetch('http://127.0.0.1:3210/api/v1/health').then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))",
+                ]
+            interval: 2s
+            timeout: 3s
+            retries: 30
+            start_period: 5s

@@ -1,0 +1,21 @@
+{
+	"description": "Analyze the codebase and generate testing scenarios for the application.",
+	"name": "generate testing scenarios",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "testing-scenarios"
+			},
+			"name": "Generate scenarios",
+			"stepType": "skill"
+		}
+	]
+}

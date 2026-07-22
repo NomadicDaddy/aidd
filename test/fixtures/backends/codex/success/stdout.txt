@@ -1,0 +1,4 @@
+{"type":"item.started","item":{"id":"item_0","type":"command_execution","command":"bash -lc \"echo ok\""}}
+{"type":"item.completed","item":{"id":"item_0","type":"command_execution","command":"bash -lc \"echo ok\"","aggregated_output":"ok","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"implemented"}}
+{"type":"turn.completed","usage":{"input_tokens":10,"output_tokens":4}}

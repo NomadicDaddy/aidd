@@ -1,0 +1,24 @@
+version: 2
+
+# The `bun` ecosystem is deliberately absent. This repo's third-party licence inventory is
+# generated from bun.lock and gated by `check:licenses` in smoke:qc, and dependabot cannot
+# regenerate it — so every bun PR it opened was red by construction and needed a manual
+# `bun run licenses:generate` before it could merge. Dependency bumps are done as deliberate
+# passes instead: bump, regenerate the inventory, run the gate, commit them together.
+#
+# Do not re-add it without first giving dependabot branches a way to regenerate that
+# inventory; otherwise it only produces PRs nobody can merge.
+#
+# The ecosystems below are kept because they carry the security value and can actually go
+# green: neither touches bun.lock, so neither trips the licence gate.
+#
+# Keep this file byte-identical with the other repo's copy — `cmp` is the drift check.
+updates:
+    - package-ecosystem: 'docker'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+    - package-ecosystem: 'github-actions'
+      directory: '/'
+      schedule:
+          interval: 'weekly'

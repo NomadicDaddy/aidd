@@ -1,0 +1,68 @@
+{
+	"description": "Test, bug-fix, validate, and bump spernakit template version.",
+	"name": "spernakit bump",
+	"parameters": [
+		{
+			"description": "Version number (e.g. 3.1.16)",
+			"name": "version"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "spernakit",
+				"executionIntent": "review-only",
+				"skillId": "spernakit-tester"
+			},
+			"name": "Test spernakit",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "spernakit"
+				},
+				"recipeName": "bug2feature"
+			},
+			"name": "Bug to feature",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "spernakit"
+				},
+				"recipeName": "remediate bugs"
+			},
+			"name": "Remediate bugs",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"command": "bun run supertest"
+			},
+			"name": "Run supertest",
+			"onFailure": "auto-fix",
+			"retryCount": 3,
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"args": "spernakit",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"name": "Consolidate features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{version}",
+				"executionIntent": "apply-changes",
+				"skillId": "spernakit-bump"
+			},
+			"name": "Bump version",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,73 @@
+{
+	"description": "Test application, convert bugs to features, remediate, and produce session report.",
+	"name": "test and remediate",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "spernakit-tester"
+			},
+			"name": "Test application",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "bug2feature"
+			},
+			"name": "Convert bugs to features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Delete ingested bug entries from {application}/data/bugs.json. Only remove entries that have been successfully converted to feature.json files. If the file contains only placeholder or test entries after removal, delete the entire bugs.json file."
+			},
+			"name": "Clean up ingested bugs",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "feature-review"
+			},
+			"name": "Review features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "remediate bugs"
+			},
+			"name": "Remediate bugs",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Delete resolved remediation feature directories from {application}/.aidd/features/ that have been fully remediated. Only remove directories whose feature.json indicates completion."
+			},
+			"name": "Delete resolved remediation features",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Create a session report at {application}/.aidd/reports/ with a timestamp filename. Include: time taken for each step, summary of bugs found, features created, remediations applied, and any issues encountered."
+			},
+			"name": "Create session report",
+			"stepType": "aidd-cli"
+		}
+	]
+}

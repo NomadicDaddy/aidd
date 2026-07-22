@@ -1,0 +1,84 @@
+{
+	"description": "Take a freshly created project from idea to a validated blueprint by default; feature implementation and build validation require an explicit opt-in.",
+	"name": "new-app-from-idea",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "true",
+			"description": "Stop after the validated blueprint; set to false to implement features",
+			"name": "stopBeforeImplementation"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "generate application features"
+			},
+			"name": "Generate features from spec",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "feature-review"
+			},
+			"name": "Review features",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "update-roadmap"
+			},
+			"name": "Create roadmap",
+			"retryCount": 1,
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Validate the blueprint only. Confirm roadmap.json includes an MVP milestone; every MVP feature is backlog; every post-MVP feature is waiting_approval; all features have passes:false; and the aidd metadata gates pass. Run bun run smoke:qc. Fix blueprint/scaffold defects only and implement no product features. Commit every non-ignored scaffold or blueprint path with a clear initialization commit; when .aidd artifacts are ignored, keep them as validated local state and never force-add them. If every deliverable is ignored metadata, do not create an empty commit. Optionally record the first dependency-ready MVP feature and its future `bun run start --feature <id>` command in .aidd/next-implementation.md, but do not run it."
+			},
+			"name": "Validate and persist blueprint",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "coding"
+			},
+			"name": "Implement feature backlog",
+			"retryCount": 1,
+			"stepType": "recipe-ref",
+			"when": { "equals": "false", "parameter": "stopBeforeImplementation" }
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "validate-build"
+			},
+			"name": "Validate build",
+			"onFailure": "continue",
+			"stepType": "skill",
+			"when": { "equals": "false", "parameter": "stopBeforeImplementation" }
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Write a first-session report to .aidd/reports/first-session.md (overwrite if present; record the current date inside it). Read the per-step timing and outcome data from the .aidd/reports/session-*.json files written by the pipeline (the most recent one describes this very session) and summarize: manual interventions that were needed, assumptions that turned out wrong, per-step elapsed time, and the final build/validation gate result. Then list the generated feature backlog counts (implemented vs backlog) and the recommended next actions to reach a shippable v1. Write nothing outside .aidd/."
+			},
+			"name": "First-session report",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		}
+	]
+}

@@ -1,0 +1,148 @@
+import type { SystemMetricSnapshot, WebVitalSummary } from '../../api/metrics.ts';
+
+import { Card } from '../../components/ui/card.tsx';
+import { useSystemMetrics, useWebVitalsSummary } from '../../hooks/useMetrics.ts';
+import { formatBytes } from '../../lib/formatters.ts';
+
+function formatMetricBytes(bytes: null | number): string {
+	if (bytes === null || !Number.isFinite(bytes)) return '—';
+	return formatBytes(bytes);
+}
+
+function formatPercent(value: null | number): string {
+	return value === null || !Number.isFinite(value) ? '—' : `${value.toFixed(1)}%`;
+}
+
+function formatMs(value: null | number): string {
+	return value === null || !Number.isFinite(value) ? '—' : `${value.toFixed(2)} ms`;
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+	return (
+		<div className="rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+			<div className="text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
+			<div className="mt-0.5 text-sm font-medium text-neutral-800 tabular-nums dark:text-neutral-100">
+				{value}
+			</div>
+		</div>
+	);
+}
+
+function ratingClass(rating: null | string): string {
+	if (rating === 'good') return 'text-green-600 dark:text-green-400';
+	if (rating === 'needs-improvement') return 'text-amber-600 dark:text-amber-400';
+	if (rating === 'poor') return 'text-red-600 dark:text-red-400';
+	return 'text-neutral-500 dark:text-neutral-400';
+}
+
+function ResourcePanel({ current }: { current: SystemMetricSnapshot }) {
+	return (
+		<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+			<Stat label="CPU" value={formatPercent(current.cpuUsage)} />
+			<Stat label="Memory" value={formatPercent(current.memoryUsage)} />
+			<Stat label="Disk" value={formatPercent(current.diskUsage)} />
+			<Stat label="Event loop" value={formatMs(current.eventLoopLatency)} />
+			<Stat label="Heap used" value={formatMetricBytes(current.heapUsed)} />
+			<Stat label="Heap total" value={formatMetricBytes(current.heapTotal)} />
+			<Stat label="RSS" value={formatMetricBytes(current.rss)} />
+			<Stat label="Connections" value={String(current.activeConnections)} />
+			<Stat label="Requests served" value={current.requestCount.toLocaleString()} />
+		</div>
+	);
+}
+
+function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
+	const hasSamples = vitals.some((vital) => vital.sampleCount > 0);
+	if (!hasSamples) {
+		return (
+			<p className="text-xs text-neutral-500 dark:text-neutral-400">
+				No Core Web Vitals recorded yet. Vitals are reported by the browser as you navigate
+				the panel.
+			</p>
+		);
+	}
+	return (
+		<table className="w-full text-sm">
+			<thead>
+				<tr className="text-left text-xs text-neutral-500 dark:text-neutral-400">
+					<th className="py-1 font-medium">Metric</th>
+					<th className="py-1 text-right font-medium">Latest</th>
+					<th className="py-1 text-right font-medium">Average</th>
+					<th className="py-1 text-right font-medium">Threshold</th>
+					<th className="py-1 text-right font-medium">Samples</th>
+				</tr>
+			</thead>
+			<tbody>
+				{vitals.map((vital) => (
+					<tr
+						className="border-t border-neutral-100 dark:border-neutral-800"
+						key={vital.name}>
+						<td className={`py-1 font-medium ${ratingClass(vital.latestRating)}`}>
+							{vital.name}
+						</td>
+						<td className="py-1 text-right tabular-nums">
+							{vital.latest === null ? '—' : vital.latest.toLocaleString()}
+						</td>
+						<td className="py-1 text-right tabular-nums">
+							{vital.sampleCount > 0 ? vital.average.toLocaleString() : '—'}
+						</td>
+						<td className="py-1 text-right text-neutral-500 tabular-nums dark:text-neutral-400">
+							{vital.threshold.toLocaleString()}
+						</td>
+						<td className="py-1 text-right text-neutral-500 tabular-nums dark:text-neutral-400">
+							{vital.sampleCount}
+						</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	);
+}
+
+export function SystemMetricsSection() {
+	const metrics = useSystemMetrics();
+	const vitals = useWebVitalsSummary();
+
+	return (
+		<Card className="space-y-4 p-3">
+			<div>
+				<h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
+					System metrics
+				</h3>
+				<p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+					Live process and host resource usage, sampled every minute. Updates every few
+					seconds.
+				</p>
+			</div>
+			{metrics.isError ? (
+				<p className="text-xs text-red-600 dark:text-red-400">
+					Could not load system metrics.
+				</p>
+			) : metrics.data ? (
+				<ResourcePanel current={metrics.data.current} />
+			) : (
+				<p className="text-xs text-neutral-500 dark:text-neutral-400">Loading metrics…</p>
+			)}
+
+			<div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
+				<h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
+					Core Web Vitals
+				</h3>
+				<p className="mt-0.5 mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+					Frontend performance over the last 6 hours, rated against Google's thresholds.
+				</p>
+				{vitals.isError ? (
+					<p className="text-xs text-red-600 dark:text-red-400">
+						Could not load web vitals.
+					</p>
+				) : vitals.data ? (
+					<WebVitalsPanel vitals={vitals.data} />
+				) : (
+					<p className="text-xs text-neutral-500 dark:text-neutral-400">
+						Loading vitals…
+					</p>
+				)}
+			</div>
+		</Card>
+	);
+}

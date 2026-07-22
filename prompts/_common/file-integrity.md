@@ -1,0 +1,138 @@
+## FILE INTEGRITY AND SAFE EDITING
+
+**CRITICAL: File corruption can destroy project progress. Follow these rules strictly.**
+
+### Post-Edit Verification Protocol
+
+**ALWAYS verify after editing files:**
+
+1. **Immediately after using your file edit tool (see CLI reference for exact tool name and syntax):**
+    - Use your file read tool to read the edited file
+    - Verify the final content matches your intent
+    - **ESPECIALLY CRITICAL** for JSON files (check valid JSON structure)
+
+2. **If corruption detected:**
+    - Run `git checkout -- <file>` IMMEDIATELY
+    - Analyze what went wrong
+    - Retry with a different approach
+    - Document the incident in `/.aidd/CHANGELOG.md`
+
+3. **Never proceed without verification:**
+    - Don't assume edits succeeded
+    - Don't batch multiple edits without checking each one
+    - Don't continue if corruption is detected
+
+### High-Risk File Categories
+
+**Extra caution required for:**
+
+**JSON files:**
+
+- `/.aidd/features/*/feature.json` - Feature tracking (mission-critical)
+- `package.json` - Dependencies and scripts
+- `tsconfig.json` - TypeScript configuration
+- Any `.json` configuration files
+
+**Schema files:**
+
+- `schema.prisma` - Database schema
+- Migration files - Database changes
+- GraphQL schemas - API contracts
+
+**Large files:**
+
+- Files over 500 lines
+- Files with complex nested structures
+- Files with special formatting requirements
+
+### Safe Editing Strategies
+
+**Strategy 1: Verify-First (Preferred for JSON)**
+
+```
+1. Read entire file with your file read tool
+2. Plan exact changes
+3. Make single targeted edit with your file edit tool
+4. Read entire file again with your file read tool
+5. Verify changes are correct
+6. If corrupted → git checkout and retry
+```
+
+**Strategy 2: Full File Write (Alternative for large files)**
+
+```
+1. Prepare complete new content
+2. Use your file write/create tool to write the entire file
+3. Read file to verify with your file read tool
+4. If corrupted → git checkout and retry
+```
+
+**Strategy 3: Multiple Small Edits (For complex changes)**
+
+```
+1. Break large change into small edits
+2. Verify after EACH edit (not at the end)
+3. If any edit fails → rollback immediately
+4. Continue only after verification passes
+```
+
+### Recovery Procedures
+
+**Immediate Recovery (Same Session):**
+
+```bash
+# Rollback single file
+git checkout -- path/to/corrupted/file
+
+# Verify rollback succeeded
+git status
+cat path/to/corrupted/file
+```
+
+**Post-Mortem Analysis:**
+
+1. Document what was being attempted
+2. Identify the specific edit that failed
+3. Understand why the edit failed
+4. Choose alternative approach
+5. Retry with more caution
+
+### Verification Checklist
+
+Before considering a file edit successful:
+
+- [ ] File read back after edit
+- [ ] Content matches intended changes
+- [ ] No corruption artifacts (trailing commas, missing quotes, etc.)
+- [ ] JSON files parse correctly (if applicable)
+- [ ] Syntax is valid (if code file)
+- [ ] Git status shows expected changes
+- [ ] No duplicate entries (if schema/config)
+
+### Additional Git Safety
+
+**Always check before committing:**
+
+```bash
+# See what files changed
+git status
+
+# Review actual changes
+git diff
+
+# Verify only expected files modified
+git diff --name-only
+```
+
+**Red flags to investigate:**
+
+- Unexpected files modified
+- Unusually large diffs
+- Binary files changed
+- Configuration files altered unintentionally
+
+### File Integrity Reminders
+
+Read every file back after editing; on any corruption, run `git checkout -- <file>` and retry with
+a safer strategy. For complete file replacements, use your file write/create tool (Strategy 2), not
+shell redirection.

@@ -1,0 +1,187 @@
+{
+	"applicationsRoot": "C:\\path\\to\\workspace",
+	"auditModel": "glm-5.2",
+	"auditsEnabled": true,
+	"backends": {
+		"claude-code": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "claude-opus-4-8"
+		},
+		"codex": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "gpt-5.6"
+		},
+		"kilocode": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "zai-coding-plan/glm-5.2"
+		},
+		"lmstudio": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "openai/gpt-oss-20b"
+		},
+		"native": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "glm-5.2"
+		},
+		"ollama": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "gpt-oss:20b"
+		},
+		"opencode": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "zai-coding-plan/glm-5.2"
+		}
+	},
+	"channels": {
+		"telegram": {
+			"allowedChatIds": [123456789],
+			"botToken": "YOUR_TELEGRAM_BOT_TOKEN"
+		}
+	},
+	"cli": "native",
+	"codeModel": "glm-5.2",
+	"complexityTieredPlanning": true,
+	"consistencyGateEnabled": true,
+	"defaultProvider": "zhipu",
+	"directAi": {
+		"baseUrl": "https://api.z.ai/api/coding/paas/v4",
+		"enabled": false,
+		"model": "glm-5.2",
+		"provider": "zhipu",
+		"reasoningEffort": "high",
+		"surfaces": {
+			"directorChat": true,
+			"directorCycle": true,
+			"projectAdvisor": true,
+			"runSummaries": true
+		},
+		"timeoutSeconds": 180
+	},
+	"director": {
+		"chat": {
+			"allowFileEdits": false
+		},
+		"schedule": {
+			"enabled": false,
+			"intervalHours": 12
+		},
+		"suggestions": {
+			"granularity": "targeted",
+			"maxPerBucket": 3
+		}
+	},
+	"dirtyTreeThreshold": 50,
+	"idleNudgeTimeoutSeconds": 600,
+	"idleTimeoutSeconds": 900,
+	"initModel": "glm-5.2",
+	"maxConsecutiveTimeoutRetries": 2,
+	"maxCostUsd": 25,
+	"maxIterations": 30,
+	"maxTokens": 1000000,
+	"maxTurns": 500,
+	"model": "glm-5.2",
+	"noClean": false,
+	"noWorkBackoffMs": 30000,
+	"providers": {
+		"lmstudio": {
+			"baseUrl": "http://localhost:1234/v1",
+			"model": "openai/gpt-oss-20b"
+		},
+		"ollama": {
+			"baseUrl": "http://localhost:11434/v1",
+			"model": "gpt-oss:20b"
+		},
+		"openai": {
+			"apiKey": "YOUR_OPENAI_API_KEY",
+			"baseUrl": "https://api.openai.com/v1",
+			"model": "gpt-5.6"
+		},
+		"xai": {
+			"apiKey": "YOUR_XAI_API_KEY",
+			"baseUrl": "https://api.x.ai/v1",
+			"model": "grok-4.5"
+		},
+		"zhipu": {
+			"apiKey": "YOUR_ZHIPU_API_KEY",
+			"baseUrl": "https://api.z.ai/api/coding/paas/v4",
+			"model": "glm-5.2",
+			"reasoningEffort": "high"
+		}
+	},
+	"quitOnAbort": 0,
+	"rateLimitBackoffSeconds": 300,
+	"rateLimitBufferSeconds": 60,
+	"reasoningEffort": "high",
+	"sharedDirs": ["C:\\path\\to\\workspace\\ai\\commands"],
+	"sharedFiles": [
+		"C:\\path\\to\\workspace\\AGENTS.md",
+		{
+			"source": "C:\\path\\to\\workspace\\ai\\shared\\workspace-notes.md",
+			"target": ".aidd\\workspace-notes.md"
+		}
+	],
+	"timeoutSeconds": 10800,
+	"triumvirate": {
+		"execCli": "native",
+		"execModel": "glm-5.2",
+		"overseerCli": "claude-code",
+		"overseerModel": "claude-fable-5",
+		"secondaryCli": "codex",
+		"secondaryModel": "gpt-5.6"
+	},
+	"web": {
+		"allowRemote": false,
+		"allowedOrigins": [],
+		"allowedRoots": ["C:\\path\\to\\workspace"],
+		"authToken": "set-a-long-random-secret-required-when-allowRemote-is-true",
+		"autoChainLimit": 3,
+		"autoChainRuns": false,
+		"dataDir": "data",
+		"hostname": "127.0.0.1",
+		"ignoredFolders": [
+			"*.old",
+			".agents",
+			".claude",
+			".git",
+			".kilo",
+			".tmp-aidd-*",
+			".vscode",
+			"data",
+			"dist",
+			"frontend",
+			"logs",
+			"node_modules",
+			"scaffolding",
+			"screenshots"
+		],
+		"maxConcurrentRuns": 8,
+		"maxConcurrentRunsPerProject": 2,
+		"port": 3210,
+		"showSpernakitProject": false,
+		"spernakitFleetManifest": "C:\\path\\to\\workspace\\spernakit\\spernakit.psd1",
+		"spernakitInitScript": "C:\\path\\to\\workspace\\spernakit\\init.ps1",
+		"spernakitTemplateRef": "v3.24.1",
+		"spernakitTemplateRepo": "NomadicDaddy/spernakit",
+		"templates": [
+			{
+				"cwd": "targetPath",
+				"description": "Third-party scaffold imported into aidd after creation.",
+				"initCommand": ["bun", "create", "vite", ".", "--template", "react-ts"],
+				"name": "vite-react",
+				"postCreate": "ingest",
+				"requiresDescription": false,
+				"rootMustBeInitDir": false,
+				"validationCommand": "bun install"
+			}
+		],
+		"traceDataMovement": false,
+		"useWorktrees": false
+	}
+}

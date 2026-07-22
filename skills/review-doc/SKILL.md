@@ -1,0 +1,31 @@
+---
+name: review-doc
+description: 'Review a document for accuracy against the current application state. Use when docs are modified, referenced for accuracy, or during documentation audits.'
+metadata:
+    aidd-category: metadata
+---
+
+# Document Review
+
+Review a specified document for accuracy and alignment with the current state of the application.
+
+## Process
+
+1. **Resolve the target**: Identify the document and the application state it describes.
+2. **Review the document**: Read the complete document and follow its internal references.
+3. **Compare against reality**: Check each claim, description, path, command, version, and link
+   against current code and configuration.
+4. **Report discrepancies**: Identify inaccurate, stale, missing, or misleading content with
+   specific evidence.
+5. **Preserve the boundary**: Keep the review read-only unless the user explicitly requests an
+   update.
+
+## Validation
+
+Recheck every reported discrepancy against its source and distinguish confirmed defects from
+uncertain or environment-dependent claims.
+
+## Output
+
+Report findings in severity order with document locations, current evidence, and recommended
+corrections. State explicitly when no discrepancies are found.

@@ -1,0 +1,152 @@
+{
+	"$id": "https://github.com/NomadicDaddy/aidd/schemas/run-result.schema.json",
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"additionalProperties": true,
+	"properties": {
+		"artifactPaths": {
+			"additionalProperties": true,
+			"properties": {
+				"auditReports": {
+					"items": {
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"responses": {
+					"items": {
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"structuredLogs": {
+					"items": {
+						"type": "string"
+					},
+					"type": "array"
+				},
+				"workspace": {
+					"type": "string"
+				}
+			},
+			"type": "object"
+		},
+		"correctnessScore": {
+			"maximum": 1,
+			"minimum": 0,
+			"type": "number"
+		},
+		"costUsd": {
+			"type": ["number", "null"]
+		},
+		"durationSeconds": {
+			"minimum": 0,
+			"type": "number"
+		},
+		"iterations": {
+			"minimum": 0,
+			"type": "integer"
+		},
+		"notes": {
+			"items": {
+				"type": "string"
+			},
+			"type": "array"
+		},
+		"replicate": {
+			"minimum": 0,
+			"type": "integer"
+		},
+		"stack": {
+			"additionalProperties": true,
+			"properties": {
+				"cli": {
+					"enum": [
+						"native",
+						"ollama",
+						"lmstudio",
+						"claude-code",
+						"opencode",
+						"kilocode",
+						"codex"
+					],
+					"type": "string"
+				},
+				"label": {
+					"type": "string"
+				},
+				"model": {
+					"type": "string"
+				},
+				"provider": {
+					"type": "string"
+				},
+				"reasoningEffort": {
+					"type": "string"
+				},
+				"simulation": {
+					"type": "boolean"
+				},
+				"thinking": {
+					"type": "boolean"
+				},
+				"thinkingLevel": {
+					"enum": ["low", "medium", "high"],
+					"type": "string"
+				},
+				"view": {
+					"type": "string"
+				}
+			},
+			"required": ["label", "cli", "model", "view"],
+			"type": "object"
+		},
+		"status": {
+			"enum": ["success", "failure", "timeout", "preflight_failed", "skipped"],
+			"type": "string"
+		},
+		"taskId": {
+			"type": "string"
+		},
+		"tokenUsage": {
+			"additionalProperties": false,
+			"properties": {
+				"cachedTokens": {
+					"minimum": 0,
+					"type": "number"
+				},
+				"inputTokens": {
+					"minimum": 0,
+					"type": "number"
+				},
+				"known": {
+					"type": "boolean"
+				},
+				"outputTokens": {
+					"minimum": 0,
+					"type": "number"
+				},
+				"reasoningTokens": {
+					"minimum": 0,
+					"type": "number"
+				}
+			},
+			"required": ["inputTokens", "outputTokens", "reasoningTokens", "cachedTokens", "known"],
+			"type": "object"
+		}
+	},
+	"required": [
+		"stack",
+		"taskId",
+		"replicate",
+		"status",
+		"durationSeconds",
+		"iterations",
+		"correctnessScore",
+		"tokenUsage",
+		"costUsd",
+		"artifactPaths",
+		"notes"
+	],
+	"title": "aidd Benchmark Run Result",
+	"type": "object"
+}

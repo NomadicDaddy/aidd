@@ -1,0 +1,112 @@
+{
+	"description": "Metadata-only intake for an existing codebase: analyze, interview, infer profile, check artifacts, generate feature coverage and testing scenarios, audit, park open generated features for approval, and produce an intake report. Understands the project; never mutates app code outside .aidd/.",
+	"metadataOnly": true,
+	"name": "project-intake",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "codebase-analysis"
+			},
+			"name": "Analyze codebase",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "interview"
+			},
+			"name": "Onboarding interview",
+			"onFailure": "continue",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Read the codebase analysis output and source tree for this project. Infer and write .aidd/project-profile.json describing the project's assurance profile: stack, deployment, auth mode, data sensitivity, criticality, external integrations, and the project's own validation command if one exists (package.json scripts, Makefile, etc). If .aidd/project-profile.json already exists, refresh only fields that are clearly wrong. Do not modify any file outside .aidd/."
+			},
+			"name": "Infer project profile",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "check-artifacts"
+			},
+			"name": "Check artifacts",
+			"onFailure": "continue",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "generate application features"
+			},
+			"name": "Generate feature coverage",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "feature-review"
+			},
+			"name": "Review features",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "generate testing scenarios"
+			},
+			"name": "Generate testing scenarios",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "audit (all)"
+			},
+			"name": "Run audits",
+			"onFailure": "continue",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "audit-finding-review"
+			},
+			"name": "Review audit findings",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Park all open generated features for approval. Walk every .aidd/features/*/feature.json in this project: for each feature whose status is 'backlog' or 'in_progress', set status to 'waiting_approval' and leave every other field (including 'passes') untouched. Do not modify features whose status is already 'waiting_approval' or 'completed'. Intake must never leave actionable open work behind — generated features require explicit human approval before any agent may pick them up. After editing, re-normalize every touched feature.json with prettier (`bunx prettier --write .aidd/features/*/feature.json` or the project's prettier), then run the aidd feature check (`bun run start -- --project-dir . --check-features` from the aidd root, if available) and fix anything it reports. State the number of features parked in your final summary. Write nothing outside .aidd/."
+			},
+			"name": "Park features for approval",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Write an intake report to .aidd/reports/intake.md (overwrite if present, and record the current date inside it). Summarize: detected stack and inferred project profile; which .aidd artifacts were created or refreshed during intake; feature inventory counts split into implemented, waiting approval (open work parked for human sign-off), and remediation, including how many features were parked to waiting_approval during intake; audit findings summary; open questions from .aidd/questions.md if present; and recommended next actions for this project. Write nothing outside .aidd/."
+			},
+			"name": "Intake report",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		}
+	]
+}

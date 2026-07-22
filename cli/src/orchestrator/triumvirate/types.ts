@@ -1,0 +1,145 @@
+import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
+import type { SelectedWork } from 'aidd-shared/modes/types';
+import type { AgentRunResult, IterationMetrics } from 'aidd-shared/orchestrator/result';
+import type { BackendName, RunPlan, TriumvirateRolePlan } from 'aidd-shared/plan/types';
+
+export type BackendFactory = (name: BackendName) => CLIBackend;
+
+export type TriumvirateStageName = 'execution' | 'overseer' | 'primary' | 'secondary';
+export type TriumvirateCwdKind = 'planning_mirror' | 'project';
+
+export interface TriumvirateStageArtifact {
+	assistantText: string;
+	backend: BackendName;
+	cwdKind: TriumvirateCwdKind;
+	durationMs: number;
+	endedAt: string;
+	exitCode: number;
+	metrics: IterationMetrics;
+	model?: string;
+	planningMirrorMutation?: PlanningMirrorMutation;
+	planningMirrorRetry?: PlanningMirrorRetry;
+	promptChars: number;
+	role: TriumvirateStageName;
+	selectedWork: Record<string, unknown>;
+	stage: TriumvirateStageName;
+	startedAt: string;
+	structuredResult?: Record<string, unknown>;
+	transcript: string;
+}
+
+export type TriumvirateRunResult =
+	| {
+			artifact: Record<string, unknown>;
+			metrics: IterationMetrics;
+			result: AgentRunResult;
+			status: 'executed';
+	  }
+	| {
+			artifact: Record<string, unknown>;
+			metrics: IterationMetrics;
+			result?: AgentRunResult;
+			status: 'invalid';
+			summary: string;
+	  }
+	| {
+			artifact: Record<string, unknown>;
+			metrics: IterationMetrics;
+			status: 'aborted';
+			summary: string;
+	  };
+
+export interface TriumvirateRunOptions {
+	backendFactory: BackendFactory;
+	compiledPrompt: string;
+	iteration?: number;
+	onAgentEvent?: ((event: AgentEvent) => Promise<void> | void) | undefined;
+	plan: RunPlan;
+	runStartedAtMs?: number;
+	work: SelectedWork;
+}
+
+export interface StageRunResult {
+	artifact: TriumvirateStageArtifact;
+	metrics: IterationMetrics;
+	result: AgentRunResult;
+}
+
+export interface PlanningStageRunResult {
+	metrics: IterationMetrics;
+	result: StageRunResult;
+	violation?: PlanningMirrorMutation;
+}
+
+export interface WorktreeSnapshot {
+	available: boolean;
+	status: string;
+}
+
+export interface PlanningMirrorSnapshot {
+	files: Map<string, string>;
+}
+
+export interface PlanningMirrorMutation {
+	changedPaths: string[];
+	filesModifiedCount: number;
+	role: TriumvirateStageName;
+	stage: TriumvirateStageName;
+	structuredResultEmitted: boolean;
+}
+
+export interface PlanningMirrorRetry {
+	attempts: number;
+	previousMutations: PlanningMirrorMutation[];
+	reason: 'planning_mirror_mutation';
+}
+
+export type OverseerDecision =
+	| { consistencyIssues?: string[]; finalActions: string; status: 'execute' }
+	| { reason: string; status: 'abort' }
+	| { reason: string; status: 'invalid' };
+
+export interface StageRunInput {
+	backend: CLIBackend;
+	cwd: string;
+	cwdKind: TriumvirateCwdKind;
+	iteration?: number;
+	onAgentEvent?: (event: AgentEvent) => Promise<void> | void;
+	plan: RunPlan;
+	prompt: string;
+	role: TriumvirateRolePlan;
+	runStartedAtMs?: number;
+	stage: TriumvirateStageName;
+	work: SelectedWork;
+}
+
+export const mirrorExclusions = new Set([
+	'.cache',
+	'.git',
+	'.next',
+	'.turbo',
+	'.vite',
+	'build',
+	'coverage',
+	'data',
+	'dist',
+	'node_modules',
+]);
+export const retryPromptChangedPathLimit = 100;
+export const originalWorktreeGuardIgnoredPaths = new Set(['.aidd/runs.jsonl']);
+
+export const emptyMetrics: IterationMetrics = {
+	cachedTokens: 0,
+	costUsd: 0,
+	errorCount: 0,
+	errorReasons: [],
+	filesCreatedCount: 0,
+	filesEditedCount: 0,
+	idleWarningCount: 0,
+	inputTokens: 0,
+	outputTokens: 0,
+	rateLimitCount: 0,
+	reasoningTokens: 0,
+	toolBreakdown: {},
+	toolCallCount: 0,
+};

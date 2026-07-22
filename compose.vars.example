@@ -1,0 +1,24 @@
+# Copy to compose.vars (gitignored) and edit. Used as:
+#   docker compose -f docker-compose.production.yml --env-file compose.vars up -d
+# Upgrade = bump APP_VERSION, then `pull` and `up -d`. Rollback = previous tag.
+APP_SLUG=aidd
+APP_VERSION=2.78.0
+
+# Host directory holding the ${APP_SLUG}/{home,data,logs} volume tree.
+#   Linux: /opt/appdata        Windows (Docker Desktop): D:/appdata/production
+# On Linux hosts the tree must be owned by uid 1000 (the container user).
+APPDATA_ROOT=/opt/appdata
+
+# Host directory with the project working trees aidd manages. Must stay
+# path-stable: absolute /projects/... paths are persisted in the web DB.
+PROJECTS_ROOT=/srv/projects
+
+# Host loopback port the control panel is published on.
+AIDD_PORT=3210
+
+# Copy data/aidd-panel.db to data/backups/ on every container start (keeps 5).
+AIDD_BACKUP_ON_START=1
+
+# Resource caps; size memory together with web.maxConcurrentRuns.
+AIDD_MEM_LIMIT=4g
+AIDD_CPU_LIMIT=2.0

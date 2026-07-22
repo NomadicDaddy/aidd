@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","model":"claude-opus-4-7"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"The roadmap gate is blocking coding: 2 feature(s) are missing roadmap milestone assignments. No code changes will be made until the roadmap is reconciled."}],"usage":{"input_tokens":1400,"output_tokens":45}}}
+{"type":"result","subtype":"success","total_cost_usd":0.009,"usage":{"input_tokens":1445,"output_tokens":45},"result":"Roadmap gate blocked the iteration; no coding performed."}

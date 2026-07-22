@@ -1,0 +1,24 @@
+{
+	"description": "Plain coding run using the selected launch CLI. No workflow flags; aidd selects the coding prompt for onboarded projects.",
+	"name": "coding",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "",
+			"description": "Optional feature directory or id to complete",
+			"name": "feature"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"feature": "{feature}"
+			},
+			"name": "Run coding",
+			"stepType": "aidd-cli"
+		}
+	]
+}

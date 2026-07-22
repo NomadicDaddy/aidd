@@ -11,7 +11,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "codebase-analysis"
 			},
 			"name": "Analyze codebase",

@@ -1,0 +1,61 @@
+{
+	"description": "Apply an externally provided UI to an application, compare the result against a pre-apply snapshot to catch dropped behavior, then review and validate the resulting feature metadata.",
+	"name": "apply ui",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"description": "Path to the source UI: a screenshot directory, HTML/JSX file, template repo root, or written redesign spec",
+			"name": "source"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"refusing to run apply-ui: working tree has uncommitted changes, and HEAD is the parity reference\" >&2; exit 1; fi; if [ -e .worktrees/ui-reference ]; then echo \"refusing to run apply-ui: .worktrees/ui-reference already exists (leftover from an aborted run?); inspect it, then 'git worktree remove .worktrees/ui-reference' before rerunning\" >&2; exit 1; fi; git worktree prune; git worktree add --detach .worktrees/ui-reference HEAD"
+			},
+			"name": "Snapshot pre-apply UI",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"args": "{source}",
+				"executionIntent": "apply-changes",
+				"skillId": "spernakit-apply-ui"
+			},
+			"name": "Apply source UI",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": ".worktrees/ui-reference .",
+				"executionIntent": "apply-changes",
+				"skillId": "ui-parity"
+			},
+			"name": "Check UI parity",
+			"postHookJson": {
+				"command": "git worktree remove --force .worktrees/ui-reference; git worktree prune"
+			},
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-review"
+			},
+			"name": "Review parity features",
+			"retryCount": 1,
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"name": "Validate feature metadata",
+			"stepType": "aidd-cli"
+		}
+	]
+}

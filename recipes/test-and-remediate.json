@@ -11,7 +11,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "spernakit-tester"
 			},
 			"name": "Test application",
@@ -28,16 +28,8 @@
 		},
 		{
 			"configJson": {
-				"maxIterations": 1,
-				"prompt": "Delete ingested bug entries from {application}/data/bugs.json. Only remove entries that have been successfully converted to feature.json files. If the file contains only placeholder or test entries after removal, delete the entire bugs.json file."
-			},
-			"name": "Clean up ingested bugs",
-			"stepType": "aidd-cli"
-		},
-		{
-			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "feature-review"
 			},
 			"name": "Review features",
@@ -52,14 +44,6 @@
 			},
 			"name": "Remediate bugs",
 			"stepType": "recipe-ref"
-		},
-		{
-			"configJson": {
-				"maxIterations": 1,
-				"prompt": "Delete resolved remediation feature directories from {application}/.aidd/features/ that have been fully remediated. Only remove directories whose feature.json indicates completion."
-			},
-			"name": "Delete resolved remediation features",
-			"stepType": "aidd-cli"
 		},
 		{
 			"configJson": {

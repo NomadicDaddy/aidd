@@ -1,5 +1,5 @@
 {
-	"description": "Review audit findings, remediate, and produce session report.",
+	"description": "Run all audits, review the findings, remediate them, and produce a session report.",
 	"name": "audit and remediate",
 	"parameters": [
 		{
@@ -10,21 +10,13 @@
 	"steps": [
 		{
 			"configJson": {
-				"args": "{application}",
-				"executionIntent": "review-only",
-				"skillId": "audit-finding-review"
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "audit (all)"
 			},
-			"name": "Review audit findings",
-			"stepType": "skill"
-		},
-		{
-			"configJson": {
-				"args": "{application}",
-				"executionIntent": "review-only",
-				"skillId": "feature-review"
-			},
-			"name": "Review features",
-			"stepType": "skill"
+			"name": "Run audits and review findings",
+			"stepType": "recipe-ref"
 		},
 		{
 			"configJson": {
@@ -35,14 +27,6 @@
 			},
 			"name": "Remediate audit findings",
 			"stepType": "recipe-ref"
-		},
-		{
-			"configJson": {
-				"maxIterations": 1,
-				"prompt": "Delete resolved audit feature directories from {application}/.aidd/features/ that have been fully remediated. Only remove directories whose feature.json indicates completion."
-			},
-			"name": "Delete resolved audit features",
-			"stepType": "aidd-cli"
 		},
 		{
 			"configJson": {

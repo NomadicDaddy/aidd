@@ -10,11 +10,12 @@
 	"steps": [
 		{
 			"configJson": {
-				"maxIterations": 1,
-				"prompt": "Read {application}/.aidd/testing-scenarios.md and find the test scenarios. First check whether the app is already reachable on its configured port. If it is NOT running, start it with `cd {application} && bun run start` and remember that you started it. If it is already running, use that instance and do NOT start or stop it (the user owns it). Execute each scenario against the running application, then perform the Post-Test Procedure described in the document. Finally, only if you started the server yourself this run, stop it with `cd {application} && bun run stop`; if it was already running when you arrived, leave it untouched."
+				"args": "{application} run the scripted scenarios recorded in .aidd/testing-scenarios.md",
+				"executionIntent": "apply-changes",
+				"skillId": "spernakit-tester"
 			},
 			"name": "Run testing scenarios",
-			"stepType": "aidd-cli"
+			"stepType": "skill"
 		},
 		{
 			"configJson": {

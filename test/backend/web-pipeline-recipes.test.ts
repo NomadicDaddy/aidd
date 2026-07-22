@@ -254,11 +254,13 @@ describe('file-backed pipeline recipes', () => {
 		);
 		const recipeIds = new Set(recipes.map((recipe) => recipe.id));
 		const retiredWrapperIds = [
+			'audit-finding-review',
 			'coderabbit',
 			'coderabbit-pr',
 			'dance',
 			'deepreview',
 			'doc2feature',
+			'feature-review',
 			'grill-with-docs-init-existing',
 			'hygiene',
 			'knip',
@@ -267,7 +269,7 @@ describe('file-backed pipeline recipes', () => {
 			'validate-tests',
 		];
 
-		expect(recipes).toHaveLength(32);
+		expect(recipes).toHaveLength(34);
 		expect(recipeIds.has('reconcile-project-artifacts')).toBe(true);
 		expect(retiredWrapperIds.filter((id) => recipeIds.has(id))).toEqual([]);
 		expect(stepTypes).toEqual(new Set(['aidd-cli', 'skill', 'recipe-ref', 'shell']));
@@ -304,6 +306,130 @@ describe('file-backed pipeline recipes', () => {
 			'renew its filesystem modification time without changing its text'
 		);
 		expect(recipe.steps[1]?.configJson.recipeName).toBe('check-artifacts');
+	});
+
+	test('apply-ui refuses to clobber an existing reference worktree and cleans up in a post-hook', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const recipe = await recipeService.readRecipe('apply-ui');
+
+		expect(recipe.metadataOnly ?? false).toBe(false);
+		expect(recipe.steps.map((step) => step.stepType)).toEqual([
+			'shell',
+			'skill',
+			'skill',
+			'skill',
+			'aidd-cli',
+		]);
+		expect(recipe.steps.map((step) => step.configJson.skillId ?? null)).toEqual([
+			null,
+			'spernakit-apply-ui',
+			'ui-parity',
+			'feature-review',
+			null,
+		]);
+
+		// The snapshot step must refuse on conflict, never repair by deleting: the
+		// existing path may be an unrelated worktree the operator still needs.
+		const snapshot = String(recipe.steps[0]?.configJson.command ?? '');
+		expect(snapshot).toContain(
+			'refusing to run apply-ui: working tree has uncommitted changes'
+		);
+		expect(snapshot).toContain('.worktrees/ui-reference already exists');
+		expect(snapshot).toContain('git worktree add --detach .worktrees/ui-reference HEAD');
+		expect(snapshot).not.toContain('rm -rf');
+
+		// stepExecutor skips every later step once one fails, so cleanup cannot be a
+		// trailing step; postHookJson is the only hook that runs unconditionally.
+		const parity = recipe.steps[2];
+		expect(String(parity?.configJson.args ?? '')).toBe('.worktrees/ui-reference .');
+		expect(String(parity?.postHookJson?.command ?? '')).toContain(
+			'git worktree remove --force .worktrees/ui-reference'
+		);
+		expect(
+			recipe.steps
+				.slice(3)
+				.some((step) =>
+					String(step.configJson.command ?? '').includes('git worktree remove')
+				)
+		).toBe(false);
+	});
+
+	test('audit-maintenance stays writable outside .aidd so audit-review can emit its report', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const recipe = await recipeService.readRecipe('audit-maintenance');
+
+		// audit-review writes <aidd-root>/audits/<name>.md, which the metadata-only
+		// write guard ('.aidd' allowlist) would revert and then fail the step on.
+		expect(recipe.metadataOnly ?? false).toBe(false);
+		expect(recipe.steps.map((step) => step.configJson.skillId)).toEqual([
+			'update-audits',
+			'audit-review',
+		]);
+		expect(
+			recipe.steps.every((step) => step.configJson.executionIntent === 'apply-changes')
+		).toBe(true);
+	});
+
+	test('ship-changes validates before it commits and never continues past a failure', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const recipe = await recipeService.readRecipe('ship-changes');
+		const skillIds = recipe.steps.map((step) => step.configJson.skillId);
+
+		expect(skillIds).toEqual([
+			'validate-build',
+			'validate-tests',
+			'document-changes',
+			'ship-pr',
+		]);
+		expect(recipe.steps.every((step) => step.onFailure === undefined)).toBe(true);
+	});
+
+	test('spernakit-dance stops when doc alignment fails, before The Dance pushes', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const recipe = await recipeService.readRecipe('spernakit-dance');
+		const [align, dance] = recipe.steps;
+
+		expect(recipe.steps).toHaveLength(2);
+		expect(align?.configJson.skillId).toBe('update-spernakit-docs');
+		expect(dance?.configJson.skillId).toBe('dance');
+		// The dance skill commits, tags, and pushes the template and derived apps, so a
+		// failed prerequisite must abort rather than release.
+		expect(align?.onFailure).toBeUndefined();
+	});
+
+	test('deploy re-checks the working tree after validation so the deployed tree matches a tag', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const recipe = await recipeService.readRecipe('deploy');
+		const names = recipe.steps.map((step) => step.name);
+		const recheckIndex = names.indexOf('Re-check the working tree');
+
+		expect(recheckIndex).toBeGreaterThan(names.indexOf('Validate tests'));
+		expect(recheckIndex).toBeLessThan(names.indexOf('Deploy'));
+		const recheck = recipe.steps[recheckIndex];
+		expect(recheck?.stepType).toBe('shell');
+		expect(recheck?.onFailure).toBeUndefined();
+		expect(String(recheck?.configJson.command ?? '')).toContain('refusing to deploy');
+	});
+
+	test('documentation and implementation recipes stop on the failures that would poison a commit', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const docs = await recipeService.readRecipe('update-application-documentation');
+		const review = docs.steps.find((step) => step.configJson.skillId === 'review-doc');
+		const humanize = docs.steps.find((step) => step.configJson.skillId === 'humanize-docs');
+
+		// review-doc only corrects when the caller explicitly asks, and humanize-docs
+		// returns rewritten prose unless told to save it back over the source file.
+		expect(review?.configJson.executionIntent).toBe('apply-changes');
+		expect(String(review?.configJson.args ?? '')).toContain('correct every inaccuracy');
+		expect(review?.onFailure).toBeUndefined();
+		expect(String(humanize?.configJson.args ?? '')).toContain('in place');
+
+		const newApp = await recipeService.readRecipe('new-app-from-idea');
+		const validators = newApp.steps.filter((step) =>
+			['validate-build', 'validate-tests'].includes(String(step.configJson.skillId ?? ''))
+		);
+		expect(validators).toHaveLength(2);
+		expect(validators.every((step) => step.onFailure === undefined)).toBe(true);
 	});
 
 	test('runs a successful shell step with parameter substitution in the project directory', async () => {

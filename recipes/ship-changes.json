@@ -1,6 +1,6 @@
 {
-	"description": "Consolidate completed feature findings, review feature metadata, then document and release the changes.",
-	"name": "feature consolidation and document changes",
+	"description": "Validate the working tree, document and commit the work, then publish it as a GitHub pull request.",
+	"name": "ship changes",
 	"parameters": [
 		{
 			"description": "Target application name",
@@ -12,18 +12,18 @@
 			"configJson": {
 				"args": "{application}",
 				"executionIntent": "apply-changes",
-				"skillId": "consolidate-features"
+				"skillId": "validate-build"
 			},
-			"name": "Consolidate features",
+			"name": "Validate build",
 			"stepType": "skill"
 		},
 		{
 			"configJson": {
 				"args": "{application}",
 				"executionIntent": "apply-changes",
-				"skillId": "feature-review"
+				"skillId": "validate-tests"
 			},
-			"name": "Review features",
+			"name": "Validate tests",
 			"stepType": "skill"
 		},
 		{
@@ -32,7 +32,16 @@
 				"executionIntent": "apply-changes",
 				"skillId": "document-changes"
 			},
-			"name": "Document changes",
+			"name": "Document and commit changes",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "ship-pr"
+			},
+			"name": "Open pull request",
 			"stepType": "skill"
 		}
 	]

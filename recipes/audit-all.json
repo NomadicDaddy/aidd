@@ -19,7 +19,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "audit-finding-review"
 			},
 			"name": "Review audit findings",
@@ -28,7 +28,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "feature-review"
 			},
 			"name": "Review features",

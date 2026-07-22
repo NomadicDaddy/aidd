@@ -1,0 +1,30 @@
+{
+	"description": "Align the core Spernakit template documentation, then run The Dance across the template and every derived application.",
+	"name": "spernakit dance",
+	"parameters": [
+		{
+			"defaultValue": "",
+			"description": "Optional bump hint for the template release (e.g. +0.0.1 or +0.1.0); blank lets the skill decide",
+			"name": "bumpHint"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"executionIntent": "apply-changes",
+				"skillId": "update-spernakit-docs"
+			},
+			"name": "Align template docs",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{bumpHint}",
+				"executionIntent": "apply-changes",
+				"skillId": "dance"
+			},
+			"name": "Run The Dance",
+			"stepType": "skill"
+		}
+	]
+}

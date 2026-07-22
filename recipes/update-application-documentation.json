@@ -18,12 +18,29 @@
 		},
 		{
 			"configJson": {
-				"args": "{application}",
-				"executionIntent": "review-only",
+				"args": "{application} docs/ — rewrite every Markdown file under docs/ in place, saving each humanized version back over its own file; do not return the rewrites as chat output",
+				"executionIntent": "apply-changes",
+				"skillId": "humanize-docs"
+			},
+			"name": "Humanize doc prose",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application} docs/ — correct every inaccuracy you confirm; this is the explicit update request the skill requires",
+				"executionIntent": "apply-changes",
 				"skillId": "review-doc"
 			},
-			"name": "Review docs",
-			"onFailure": "continue",
+			"name": "Review and correct docs",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document changes",
 			"stepType": "skill"
 		}
 	]

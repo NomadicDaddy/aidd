@@ -24,15 +24,6 @@
 		},
 		{
 			"configJson": {
-				"params": { "application": "{application}" },
-				"recipeName": "feature-review"
-			},
-			"name": "Review features",
-			"retryCount": 1,
-			"stepType": "recipe-ref"
-		},
-		{
-			"configJson": {
 				"args": "{application}",
 				"executionIntent": "apply-changes",
 				"skillId": "update-roadmap"
@@ -63,11 +54,30 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "validate-build"
 			},
 			"name": "Validate build",
-			"onFailure": "continue",
+			"stepType": "skill",
+			"when": { "equals": "false", "parameter": "stopBeforeImplementation" }
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "validate-tests"
+			},
+			"name": "Validate tests",
+			"stepType": "skill",
+			"when": { "equals": "false", "parameter": "stopBeforeImplementation" }
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document changes",
 			"stepType": "skill",
 			"when": { "equals": "false", "parameter": "stopBeforeImplementation" }
 		},

@@ -20,8 +20,15 @@
 	"steps": [
 		{
 			"configJson": {
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"refusing to deploy: working tree has uncommitted changes\" >&2; exit 1; fi; echo \"working tree clean\""
+			},
+			"name": "Require a clean working tree",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "validate-build"
 			},
 			"name": "Validate build",
@@ -30,11 +37,27 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "validate-tests"
 			},
 			"name": "Validate tests",
 			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"auditNames": "DEPLOYMENT",
+				"maxIterations": 1
+			},
+			"name": "Deployment audit",
+			"onFailure": "continue",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"refusing to deploy: validation or the audit left uncommitted changes; commit them so the deployed tree matches a commit and can be tagged\" >&2; exit 1; fi; echo \"working tree still clean after validation\""
+			},
+			"name": "Re-check the working tree",
+			"stepType": "shell"
 		},
 		{
 			"configJson": {
@@ -52,20 +75,11 @@
 		},
 		{
 			"configJson": {
-				"command": "git tag \"deploy-$(date +%Y%m%d-%H%M%S)\" && echo \"tagged $(git describe --tags --abbrev=0)\""
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"skipping tag: validation left uncommitted changes, so the tag would not match what was deployed\" >&2; exit 1; fi; git tag \"deploy-$(date +%Y%m%d-%H%M%S)\" && echo \"tagged $(git describe --tags --abbrev=0)\""
 			},
 			"name": "Tag release",
 			"onFailure": "continue",
 			"stepType": "shell"
-		},
-		{
-			"configJson": {
-				"auditNames": "DEPLOYMENT",
-				"maxIterations": 1
-			},
-			"name": "Deployment audit",
-			"onFailure": "continue",
-			"stepType": "aidd-cli"
 		}
 	]
 }

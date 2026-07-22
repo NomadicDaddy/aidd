@@ -11,7 +11,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "spernakit-tester"
 			},
 			"name": "Run spernakit-tester",

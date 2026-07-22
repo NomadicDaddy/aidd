@@ -7,18 +7,27 @@
 			"name": "application"
 		},
 		{
-			"description": "Version label (e.g. sv3.1.16)",
+			"description": "Target template version, unprefixed (e.g. 3.1.16)",
 			"name": "version"
 		}
 	],
 	"steps": [
 		{
 			"configJson": {
-				"args": "{application}",
+				"args": "{application} --to {version}",
 				"executionIntent": "apply-changes",
 				"skillId": "template-upgrade"
 			},
 			"name": "Template upgrade",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "review-only",
+				"skillId": "justify-diffs"
+			},
+			"name": "Classify template drift",
 			"stepType": "skill"
 		},
 		{
@@ -33,7 +42,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "spernakit-tester"
 			},
 			"name": "Test application",
@@ -70,6 +79,15 @@
 		},
 		{
 			"configJson": {
+				"command": "bun run smoke:qc"
+			},
+			"name": "Quality gate",
+			"onFailure": "auto-fix",
+			"retryCount": 2,
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
 				"args": "{application}",
 				"executionIntent": "apply-changes",
 				"skillId": "consolidate-features"
@@ -79,7 +97,7 @@
 		},
 		{
 			"configJson": {
-				"command": "git add -A && git commit -m '{version}: template upgrade for {application}'"
+				"command": "git add -A && git commit -m 'sv{version}: template upgrade for {application}'"
 			},
 			"name": "Commit changes",
 			"stepType": "shell"

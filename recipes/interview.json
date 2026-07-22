@@ -52,7 +52,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "feature-review"
 			},
 			"name": "Review features",

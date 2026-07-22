@@ -12,7 +12,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "ui-redesign-planner"
 			},
 			"name": "Plan UI redesign",
@@ -22,7 +22,7 @@
 		{
 			"configJson": {
 				"args": "{application}",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "feature-review"
 			},
 			"name": "Review generated features",

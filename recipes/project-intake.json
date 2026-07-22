@@ -57,15 +57,6 @@
 		{
 			"configJson": {
 				"params": { "application": "{application}" },
-				"recipeName": "feature-review"
-			},
-			"name": "Review features",
-			"retryCount": 1,
-			"stepType": "recipe-ref"
-		},
-		{
-			"configJson": {
-				"params": { "application": "{application}" },
 				"recipeName": "generate testing scenarios"
 			},
 			"name": "Generate testing scenarios",
@@ -79,15 +70,6 @@
 			},
 			"name": "Run audits",
 			"onFailure": "continue",
-			"stepType": "recipe-ref"
-		},
-		{
-			"configJson": {
-				"params": { "application": "{application}" },
-				"recipeName": "audit-finding-review"
-			},
-			"name": "Review audit findings",
-			"retryCount": 1,
 			"stepType": "recipe-ref"
 		},
 		{

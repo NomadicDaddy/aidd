@@ -11,7 +11,7 @@
 		{
 			"configJson": {
 				"args": "spernakit",
-				"executionIntent": "review-only",
+				"executionIntent": "apply-changes",
 				"skillId": "spernakit-tester"
 			},
 			"name": "Test spernakit",
@@ -36,24 +36,6 @@
 			},
 			"name": "Remediate bugs",
 			"stepType": "recipe-ref"
-		},
-		{
-			"configJson": {
-				"command": "bun run supertest"
-			},
-			"name": "Run supertest",
-			"onFailure": "auto-fix",
-			"retryCount": 3,
-			"stepType": "shell"
-		},
-		{
-			"configJson": {
-				"args": "spernakit",
-				"executionIntent": "apply-changes",
-				"skillId": "consolidate-features"
-			},
-			"name": "Consolidate features",
-			"stepType": "skill"
 		},
 		{
 			"configJson": {

@@ -109,7 +109,27 @@ export async function writeRunSummary(
 	const runLedgerDirty = !(await gitWorktreeClean(runRepoDir(plan), {
 		excludeAiddMetadata: true,
 	}));
-	await deps.store.appendRunSummary({
+	// Worktree finalization happens HERE — after the run-end git accounting above (which must
+	// read the worktree before it can be removed) and BEFORE the ledger append + terminal
+	// heartbeat below — so BOTH record the run's effective outcome (e.g. a parked merge), never
+	// the pre-merge success. The hook also persists the worktree's iteration evidence into the
+	// canonical `.aidd` for every outcome, so the ledger's canonical home always has the run's
+	// evidence beside it.
+	let effectiveExitCode = finalExitCode;
+	let effectiveStopReason: StopReason = stopReason;
+	let effectiveSummary = summaryWithRunEndChecks;
+	if (deps.finalizeWorktree) {
+		const finalization = await deps.finalizeWorktree(finalExitCode);
+		if (finalization.overrideExitCode !== undefined) {
+			effectiveExitCode = finalization.overrideExitCode;
+			effectiveStopReason = 'merge_conflict_parked';
+			effectiveSummary = `${summaryWithRunEndChecks}; worktree merge parked — resolve the run branch manually (exit ${finalization.overrideExitCode}).`;
+		}
+	}
+	// The ledger line goes to the CANONICAL store: for worktree runs `deps.store` is rooted in
+	// the (by now possibly removed) throwaway checkout, whose gitignored `.aidd` never survives
+	// the run. Exactly one canonical entry per run, carrying the effective outcome.
+	await (deps.ledgerStore ?? deps.store).appendRunSummary({
 		...(deps.aiddProvenance ?? {
 			aiddDirty: null,
 			aiddRevision: null,
@@ -125,7 +145,7 @@ export async function writeRunSummary(
 		commitsCreated: attributedCommits,
 		completedFeatures: [...acc.completedFeatures],
 		diffStat,
-		exitCode: finalExitCode,
+		exitCode: effectiveExitCode,
 		fileChangePathsTruncated,
 		filesCreated,
 		filesEdited,
@@ -133,8 +153,8 @@ export async function writeRunSummary(
 		scopeOverrun: acc.scopeOverrun,
 		selectedFeatures: [...acc.selectedFeatures],
 		source: deps.source ?? 'cli',
-		stopReason,
-		summary: summaryWithRunEndChecks,
+		stopReason: effectiveStopReason,
+		summary: effectiveSummary,
 		...(artifactWarnings.length > 0 ? { artifactWarnings } : {}),
 		...(residualUntrackedFeatureDirs.length > 0 ? { residualUntrackedFeatureDirs } : {}),
 		...(residualDirtySourceFiles.length > 0 ? { residualDirtySourceFiles } : {}),
@@ -144,22 +164,10 @@ export async function writeRunSummary(
 	// aidd deliberately does not commit .aidd/runs.jsonl. The ledger holds unreviewed run metadata
 	// (AI-written summaries, commit subjects, file paths, cost totals) and is ignored in every
 	// profile, so there is nothing to commit. The follow-up ledger-commit flow was removed.
+	// Cleaning targets the canonical iterations dir — for worktree runs the evidence now lives
+	// there, and the worktree's own copy is gone with the worktree.
 	if (!plan.outputPolicy.noClean) {
-		await cleanIterationLogs(metadataPath(runRepoDir(plan), 'iterations')).catch(() => {});
-	}
-	// Worktree finalization happens HERE — after the run summary is written and BEFORE the
-	// terminal heartbeat below — so a parked merge surfaces as a non-success exit
-	// code + stopReason in the heartbeat/web row instead of the pre-merge success.
-	let effectiveExitCode = finalExitCode;
-	let effectiveStopReason: StopReason = stopReason;
-	let effectiveSummary = summaryWithRunEndChecks;
-	if (deps.reconcileWorktree) {
-		const override = await deps.reconcileWorktree(finalExitCode);
-		if (override !== undefined) {
-			effectiveExitCode = override;
-			effectiveStopReason = 'merge_conflict_parked';
-			effectiveSummary = `${summaryWithRunEndChecks}; worktree merge parked — resolve the run branch manually (exit ${override}).`;
-		}
+		await cleanIterationLogs(metadataPath(plan.projectDir, 'iterations')).catch(() => {});
 	}
 	await deps.observer?.onFinalSummary?.({
 		aiSummary,

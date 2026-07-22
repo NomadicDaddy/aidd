@@ -5,10 +5,11 @@ import { describe, expect, test } from 'bun:test';
 import {
 	createRunWorktree,
 	mergeRunBack,
-	reconcileRunWorktree,
 	recordIterationCheckpoint,
 	removeRunWorktree,
 } from '../../cli/src/orchestrator/run/worktree-manager.ts';
+import { finalizeRunWorktree } from '../../cli/src/orchestrator/run/worktree-evidence.ts';
+import type { WorktreeMetadataSession } from '../../cli/src/orchestrator/run/worktree-metadata-session.ts';
 import { orchestratorExitCodes } from '../../shared/src/orchestrator/result.ts';
 import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
@@ -208,7 +209,12 @@ describe('worktree-manager', () => {
 		}
 	});
 
-	test('reconcileRunWorktree: clean success merges, removes the worktree, returns no override', async () => {
+	// Finalization-flow coverage here sticks to merge/park/discard outcomes with an empty
+	// metadata session; seeding, evidence persistence, and metadata write-back live in
+	// worktree-metadata-session.test.ts.
+	const emptySession = (): WorktreeMetadataSession => ({ baseline: new Map(), seededFiles: 0 });
+
+	test('finalizeRunWorktree: clean success merges, removes the worktree, returns no override', async () => {
 		const root = await testTempDir('aidd-wt-test-');
 		try {
 			const projectDir = join(root, 'project');
@@ -218,12 +224,14 @@ describe('worktree-manager', () => {
 			}))!;
 			await commitInWorktree(wt.dir, 'new.txt', 'from worktree\n');
 
-			const override = await reconcileRunWorktree(
+			const finalization = await finalizeRunWorktree({
+				exitCode: orchestratorExitCodes.success,
 				projectDir,
-				wt,
-				orchestratorExitCodes.success
-			);
-			expect(override).toBeUndefined();
+				session: emptySession(),
+				worktree: wt,
+			});
+			expect(finalization.overrideExitCode).toBeUndefined();
+			expect(finalization.mergeStatus).toBe('merged');
 			expect(existsSync(join(projectDir, 'new.txt'))).toBe(true);
 			expect(existsSync(wt.dir)).toBe(false);
 		} finally {
@@ -231,7 +239,7 @@ describe('worktree-manager', () => {
 		}
 	});
 
-	test('reconcileRunWorktree: a parked merge returns exit 77 and preserves the worktree', async () => {
+	test('finalizeRunWorktree: a parked merge returns exit 77 and preserves the worktree', async () => {
 		const root = await testTempDir('aidd-wt-test-');
 		try {
 			const projectDir = join(root, 'project');
@@ -243,12 +251,14 @@ describe('worktree-manager', () => {
 			// Dirty live tree → merge blocked even though the run itself succeeded.
 			await writeFile(join(projectDir, 'file.txt'), 'operator edit\n');
 
-			const override = await reconcileRunWorktree(
+			const finalization = await finalizeRunWorktree({
+				exitCode: orchestratorExitCodes.success,
 				projectDir,
-				wt,
-				orchestratorExitCodes.success
-			);
-			expect(override).toBe(orchestratorExitCodes.mergeConflictParked);
+				session: emptySession(),
+				worktree: wt,
+			});
+			expect(finalization.overrideExitCode).toBe(orchestratorExitCodes.mergeConflictParked);
+			expect(finalization.mergeStatus).toBe('blocked');
 			expect(existsSync(wt.dir)).toBe(true); // preserved for manual resolution
 			expect(await runGit(projectDir, ['branch', '--list', wt.branch])).toContain(wt.branch);
 
@@ -258,7 +268,7 @@ describe('worktree-manager', () => {
 		}
 	});
 
-	test('reconcileRunWorktree: a failed run discards the worktree and returns no override', async () => {
+	test('finalizeRunWorktree: a failed run discards the worktree and returns no override', async () => {
 		const root = await testTempDir('aidd-wt-test-');
 		try {
 			const projectDir = join(root, 'project');
@@ -268,12 +278,14 @@ describe('worktree-manager', () => {
 			}))!;
 			await commitInWorktree(wt.dir, 'new.txt', 'from worktree\n');
 
-			const override = await reconcileRunWorktree(
+			const finalization = await finalizeRunWorktree({
+				exitCode: orchestratorExitCodes.generalError,
 				projectDir,
-				wt,
-				orchestratorExitCodes.generalError
-			);
-			expect(override).toBeUndefined();
+				session: emptySession(),
+				worktree: wt,
+			});
+			expect(finalization.overrideExitCode).toBeUndefined();
+			expect(finalization.mergeStatus).toBe('discarded');
 			expect(existsSync(wt.dir)).toBe(false); // discarded (rollback)
 			expect(existsSync(join(projectDir, 'new.txt'))).toBe(false); // never merged
 		} finally {

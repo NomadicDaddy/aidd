@@ -237,7 +237,11 @@ describe('orchestrator transitions and exit mapping', () => {
 			rootDir,
 			store,
 			backend,
-			reconcileWorktree: async () => orchestratorExitCodes.mergeConflictParked,
+			finalizeWorktree: async () => ({
+				evidenceFiles: 0,
+				mergeStatus: 'blocked' as const,
+				overrideExitCode: orchestratorExitCodes.mergeConflictParked,
+			}),
 			observer: {
 				onFinalSummary: (summary) => {
 					finalSummary = { exitCode: summary.exitCode, stopReason: summary.stopReason };

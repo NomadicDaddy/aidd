@@ -17,6 +17,7 @@ import type { BackendFactory } from '../triumvirate.ts';
 import type { extractTriumviratePlanningRecovery } from '../triumvirate/planning-recovery.ts';
 import type { RunAiSummarizer } from './ai-summary.ts';
 import type { DoctorProber } from './doctor.ts';
+import type { WorktreeFinalization } from './worktree-evidence.ts';
 
 export interface OrchestratorDeps {
 	aiddProvenance?: AiddRunProvenance;
@@ -26,14 +27,19 @@ export interface OrchestratorDeps {
 	completionMarkerGraceMs?: number;
 	/** Test seam for the preflight doctor's spawn probes. */
 	doctorProber?: DoctorProber;
+	/** Worktree finalization hook, injected by the CLI entrypoint. Called once at run end with
+	 * the orchestrator's exit code; persists run evidence canonically, merges/discards the
+	 * worktree, applies the metadata delta on a landed merge, and reports the outcome (including
+	 * an exit-code override when a successful run's merge is parked). Threaded through
+	 * writeRunSummary so the parked outcome lands in the ledger AND terminal heartbeat — never
+	 * the pre-merge success. */
+	finalizeWorktree?: (exitCode: number) => Promise<WorktreeFinalization>;
+	/** Canonical (live-tree) store that receives the run ledger entry when `store` is rooted in
+	 * a throwaway worktree — a line appended to the worktree's gitignored `.aidd` would be
+	 * destroyed with it. Absent for non-worktree runs (`store` is already canonical). */
+	ledgerStore?: AiddStore;
 	observer?: RunObserver;
 	onState?: (state: OrchestratorState) => void;
-	/** Worktree finalization hook, injected by the CLI entrypoint. Called once at run end with
-	 * the orchestrator's exit code; merges/discards the worktree and returns an exit-code override
-	 * (mergeConflictParked when a successful run's merge is parked) or undefined to keep the code.
-	 * Threaded through writeRunSummary so the parked outcome lands in the terminal heartbeat/ledger
-	 * BEFORE the web row terminalizes. */
-	reconcileWorktree?: (exitCode: number) => Promise<number | undefined>;
 	rootDir: string;
 	runId?: string;
 	scoringRoots?: readonly string[];

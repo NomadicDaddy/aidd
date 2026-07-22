@@ -31,10 +31,10 @@ import { runOrchestrator } from './orchestrator/orchestrator.ts';
 import { createRunAiSummarizer } from './orchestrator/run/ai-summary.ts';
 import { createMergeResolver } from './orchestrator/run/merge-resolver.ts';
 import {
-	createRunWorktree,
-	reconcileRunWorktree,
-	removeRunWorktree,
-} from './orchestrator/run/worktree-manager.ts';
+	prepareWorktreeRun,
+	rollbackWorktreeRun,
+	worktreeOrchestratorDeps,
+} from './orchestrator/run/worktree-run-setup.ts';
 import { resolveRunPlan } from './plan/resolve.ts';
 import {
 	checkExplicitCompletedFeature,
@@ -212,34 +212,30 @@ export async function run(argv: string[]): Promise<number> {
 		// because Bun exits without unwinding suspended async frames; without this the run's
 		// records freeze mid-flight and the web reaps it as heartbeat_stale with no ledger
 		// entry, even when the backend finished its work.
+		// Worktree runs: a hard death ALSO skips worktree finalization AND the catch-path
+		// rollback below — the checkout's iteration evidence is lost with it (accepted; the
+		// crash finalizer still lands a canonical failed ledger line via the heartbeat
+		// fallback), and the web orphan sweeper reaps the leftover worktree + branch. Any
+		// crash-scoped resource with cross-run effects (e.g. feature leases) must therefore be
+		// released by that sweep, never by in-process cleanup alone.
 		if (heartbeat) installCrashFinalizer(heartbeat);
-		// Worktree isolation: when requested (and the project has a committed HEAD), the run
-		// executes in a throwaway git worktree on branch aidd/run-<id>. The agent's edits,
-		// commits, and .aidd/ metadata writes land there — never the live tree — so the
-		// completion gate must read the worktree, hence a worktree-rooted store. Initializer
-		// runs (no HEAD) fall back to the live tree (createRunWorktree returns null).
-		const worktree =
-			args.worktree && plan.mode === 'coding'
-				? await createRunWorktree(plan.projectDir, heartbeat?.id ?? `cli-${Date.now()}`, {
-						...(webDataDir ? { baseDir: join(webDataDir, 'worktrees') } : {}),
-					})
-				: null;
-		if (args.worktree && worktree === null) {
-			console.warn(
-				'[worktree] --worktree requested but the project has no committed HEAD; running against the live tree.'
-			);
-		}
-		if (worktree) {
-			plan.worktree = worktree;
-			console.log(`[worktree] run isolated in ${worktree.dir} on branch ${worktree.branch}`);
-		}
-		const runStore = worktree ? new FileAiddStore(worktree.dir) : store;
 		try {
+			// Worktree isolation: when requested (and the project has a committed HEAD), the run
+			// executes in a throwaway git worktree on branch aidd/run-<id>, seeded with the
+			// canonical `.aidd` metadata so the run store sees the real project; the completion
+			// gate reads the worktree, hence a worktree-rooted store. Runs INSIDE this try:
+			// prepareWorktreeRun records plan.worktree before seeding, so a seeding failure hits
+			// the catch below (rolling the registered worktree back) and the finally (disposing
+			// the heartbeat) instead of leaking both. See worktree-run-setup.ts.
+			const worktreeRun = await prepareWorktreeRun({
+				plan,
+				requested: args.worktree === true,
+				runId: heartbeat?.id ?? `cli-${Date.now()}`,
+				...(webDataDir ? { webDataDir } : {}),
+			});
+			const runStore = plan.worktree ? new FileAiddStore(plan.worktree.dir) : store;
 			const scoringRoots = resolveScoringRoots(config);
 			const aiSummarizer = createRunAiSummarizer(config, rootDir);
-			// Worktree merge-back/park runs INSIDE the orchestrator's terminal writeRunSummary (via
-			// this hook) — before the run's heartbeat is finalized — so a parked merge surfaces as a
-			// non-success exit code in the active-run/web metadata instead of the pre-merge success.
 			const resolveConflict = createMergeResolver({
 				backend,
 				reasoningEffort: plan.reasoningEffort,
@@ -249,16 +245,8 @@ export async function run(argv: string[]): Promise<number> {
 				aiddProvenance,
 				...(aiSummarizer ? { aiSummarizer } : {}),
 				backend,
-				...(worktree
-					? {
-							reconcileWorktree: (exitCode: number) =>
-								reconcileRunWorktree(
-									plan.projectDir,
-									worktree,
-									exitCode,
-									resolveConflict
-								),
-						}
+				...(worktreeRun
+					? worktreeOrchestratorDeps(plan, worktreeRun, store, resolveConflict)
 					: {}),
 				rootDir,
 				source: externalSource ?? 'cli',
@@ -268,10 +256,9 @@ export async function run(argv: string[]): Promise<number> {
 			});
 			return code;
 		} catch (err) {
-			// A thrown failure (config/backend/fs error) never reached merge-back: discard the
-			// worktree so the run rolls back instead of leaking a branch + checkout. Then rethrow
-			// to the outer handler for the standard error exit.
-			if (worktree) await removeRunWorktree(plan.projectDir, worktree).catch(() => {});
+			// A thrown failure (config/backend/fs error) never reached merge-back: preserve
+			// evidence, discard the worktree, rethrow to the outer handler.
+			await rollbackWorktreeRun(plan);
 			throw err;
 		} finally {
 			await heartbeat?.dispose();

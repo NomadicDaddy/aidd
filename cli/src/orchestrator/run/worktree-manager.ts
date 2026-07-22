@@ -9,7 +9,6 @@
 import type { WorktreePlan } from 'aidd-shared/plan/types';
 
 import { removeTempTree } from 'aidd-shared/lib/remove-temp-tree';
-import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -148,38 +147,4 @@ export async function mergeRunBack(
 	}
 	await gitSuccess(projectDir, ['merge', '--abort']);
 	return { status: 'conflict' };
-}
-
-/** Decide a finished run's worktree fate and return an exit-code OVERRIDE for the caller:
- *
- * - `undefined` — keep the orchestrator's own exit code. A failed run discards the worktree
- *   (free rollback, live tree untouched); a successful run that merges/noops removes it.
- * - `mergeConflictParked` (77) — a successful run whose merge-back was blocked (dirty live tree)
- *   or conflicted: the branch + worktree are PRESERVED for manual resolution, and the caller must
- *   surface a non-success code so nothing reports "done" when nothing reached the live tree.
- */
-export async function reconcileRunWorktree(
-	projectDir: string,
-	worktree: WorktreePlan,
-	exitCode: number,
-	resolveConflict?: MergeConflictResolver
-): Promise<number | undefined> {
-	if (exitCode !== orchestratorExitCodes.success) {
-		await removeRunWorktree(projectDir, worktree);
-		console.log(
-			`[worktree] run failed (exit ${exitCode}); discarded worktree ${worktree.branch} (live tree untouched).`
-		);
-		return undefined;
-	}
-	const merge = await mergeRunBack(projectDir, worktree, resolveConflict);
-	if (merge.status === 'merged' || merge.status === 'noop') {
-		await removeRunWorktree(projectDir, worktree);
-		console.log(`[worktree] merge-back ${merge.status}; removed worktree ${worktree.branch}.`);
-		return undefined;
-	}
-	console.warn(
-		`[worktree] merge-back ${merge.status}; preserved branch ${worktree.branch} at ${worktree.dir} ` +
-			`for manual resolution (exit ${orchestratorExitCodes.mergeConflictParked}).`
-	);
-	return orchestratorExitCodes.mergeConflictParked;
 }

@@ -28,7 +28,7 @@ COPY . .
 RUN bun scripts/build-standalone.ts --target bun-linux-x64-modern \
 	&& bun scripts/check-standalone.ts --target bun-linux-x64-modern --probe-binaries
 
-FROM node:24-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203
+FROM node:26-bookworm-slim@sha256:2d49d876e96237d76de412761cf05dbfe5aee325cc4406a4d41d5824c5bb8beb
 
 # Defaults mirror AGENT_CLI_VERSIONS in scripts/docker-image.ts (the source
 # of truth — `bun run docker:build` passes them as --build-arg).

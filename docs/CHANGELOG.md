@@ -2,7 +2,7 @@
 
 All notable public aidd releases are documented here.
 
-## [2.131.0] - 2026-07-22
+## [2.132.0] - 2026-07-22
 
 ### Baseline capabilities
 

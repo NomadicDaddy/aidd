@@ -229,11 +229,16 @@ export async function captureDirtySourceBaseline(
 	if (baseline !== undefined) acc.dirtySourcePathsAtStart = new Set(baseline);
 }
 
-// Paths of dirty files (modified, staged, or untracked) outside aidd-owned .aidd/ metadata,
-// with forward slashes. Gitignored paths never appear in porcelain output, so they cannot trip
-// dirty-source accounting. Returns undefined when git status fails (not a repository), letting
-// callers distinguish "clean" from "unknown" instead of treating a failure as an empty tree.
-export async function gitDirtySourcePaths(projectDir: string): Promise<string[] | undefined> {
+// Paths of dirty files (modified, staged, or untracked), with forward slashes; aidd-owned
+// .aidd/ metadata is excluded unless includeAiddMetadata is set (completion recovery stages
+// tracked metadata alongside the work it belongs to). Gitignored paths never appear in
+// porcelain output, so they cannot trip dirty-source accounting. Returns undefined when git
+// status fails (not a repository), letting callers distinguish "clean" from "unknown" instead
+// of treating a failure as an empty tree.
+export async function gitDirtySourcePaths(
+	projectDir: string,
+	options: { includeAiddMetadata?: boolean } = {}
+): Promise<string[] | undefined> {
 	const status = await gitOutput(projectDir, [
 		'status',
 		'--porcelain=v1',
@@ -246,7 +251,8 @@ export async function gitDirtySourcePaths(projectDir: string): Promise<string[] 
 	for (const line of status.split(/\r?\n/)) {
 		if (line.trim() === '') continue;
 		const path = porcelainEntryPath(line);
-		if (path === undefined || isAiddMetadataPath(path)) continue;
+		if (path === undefined) continue;
+		if (!options.includeAiddMetadata && isAiddMetadataPath(path)) continue;
 		paths.push(path);
 	}
 	return paths;

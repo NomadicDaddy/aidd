@@ -4,12 +4,14 @@ import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
+import { runRepoDir } from 'aidd-shared/plan/types';
 
 import type { FinalizeIterationResult, MoveFn, OrchestratorDeps, RunAccumulator } from './types.ts';
 
 import { type createModeHandler } from '../../modes/factory.ts';
 import { writeRunSummary } from './artifacts.ts';
 import { buildFeatureBlockingContext } from './blocking-context.ts';
+import { attemptCompletionMarkerRecovery } from './completion-recovery.ts';
 import { determineRunContinuation } from './continuation.ts';
 import { featureRecoveryTarget } from './feature-scope.ts';
 import { buildWallClockTimeoutSummary } from './run-ending.ts';
@@ -103,6 +105,36 @@ export async function handlePostIteration(input: {
 		return { exitCode: orchestratorExitCodes.validationError, kind: 'return' };
 	}
 	if (finalize.featureScope.completionMarkerIssue !== undefined) {
+		// A backend that dies between finishing the work and committing it (observed: claude-code
+		// exited mid-smoke:qc twice in one run) strands a completed feature as unaccepted. When the
+		// on-disk feature already says completed+passes and the project's own gate passes right
+		// now, auto-commit the work and record the completion instead of failing the run.
+		const recovery = plan.simulation
+			? undefined
+			: await attemptCompletionMarkerRecovery({
+					dirtySourcePathsAtStart: acc.dirtySourcePathsAtStart,
+					featureScope: finalize.featureScope,
+					projectDir: runRepoDir(plan),
+					runRecordedPaths: new Set([...acc.filesCreated, ...acc.filesEdited]),
+					store: deps.store,
+					work,
+				});
+		if (recovery !== undefined && work.kind === 'feature') {
+			acc.completedFeatures.add(work.id);
+			acc.commitsCreated.push(recovery.commit);
+			acc.runTotals.commitsCreated += 1;
+			const recoverySummary = `${finalize.displayedSummary}; completion_marker_recovered: feature ${work.id} completed on disk, recovery gate passed (${recovery.gateCommand}); work auto-committed (${recovery.commit.hash.slice(0, 10)})`;
+			move({ summary: recoverySummary, type: 'complete' });
+			const recoveredExit = await writeRunSummary(
+				deps,
+				plan,
+				acc,
+				'completed',
+				orchestratorExitCodes.success,
+				recoverySummary
+			);
+			return { exitCode: recoveredExit, kind: 'return' };
+		}
 		// Point the run summary at the same gate evidence the feature record carries, so an
 		// unaccepted completion reads as "these gate(s) blocked it" instead of only the opaque
 		// completion_marker_missing_or_unaccepted code.

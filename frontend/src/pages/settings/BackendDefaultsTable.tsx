@@ -79,6 +79,7 @@ function BackendFields({
 	backend,
 	defaults,
 	setBackendDefault,
+	shadowedSharedModel,
 	showLabels = false,
 }: {
 	backend: BackendName;
@@ -88,6 +89,8 @@ function BackendFields({
 		key: keyof BackendDefaultSettings,
 		value: null | number | string
 	) => void;
+	/** The shared Default Model this row's model shadows for default-CLI launches, when set. */
+	shadowedSharedModel?: null | string;
 	showLabels?: boolean;
 }) {
 	return (
@@ -104,6 +107,12 @@ function BackendFields({
 					placeholder={modelPlaceholders[backend]}
 					value={textValue(defaults.model)}
 				/>
+				{shadowedSharedModel ? (
+					<p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+						Outranks the shared Default Model (“{shadowedSharedModel}”) for {backend}{' '}
+						launches — clear this to use the shared default.
+					</p>
+				) : null}
 			</label>
 			<label className="min-w-0">
 				<span className={showLabels ? 'mb-1 block text-xs text-neutral-500' : 'sr-only'}>
@@ -147,17 +156,30 @@ function BackendFields({
 
 export function BackendDefaultsTable({
 	backends,
+	defaultCli,
 	setBackendDefault,
+	sharedModel,
 }: {
 	backends: WebConfigSettings['backends'];
+	/** The normalized default CLI, used to flag the row whose model shadows the shared default. */
+	defaultCli?: BackendName | null | undefined;
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
 		value: null | number | string
 	) => void;
+	/** The shared Default Model (AI & Director tab), for the shadowing hint. */
+	sharedModel?: null | string;
 }) {
 	const statusQuery = useCliStatus();
 	const statuses = new Map(statusQuery.data?.map((status) => [status.backend, status]) ?? []);
+	// The shadowing that bites override-free launches: the default CLI's row model wins over the
+	// shared Default Model. Only that row gets the amber note — other rows' models are ordinary
+	// per-backend defaults.
+	const shadowNote = (backend: BackendName, model: null | string): null | string =>
+		backend === defaultCli && model && sharedModel && model !== sharedModel
+			? sharedModel
+			: null;
 
 	return (
 		<section aria-labelledby="backend-matrix-heading" className="space-y-3">
@@ -228,6 +250,10 @@ export function BackendDefaultsTable({
 												backend={backend}
 												defaults={defaults}
 												setBackendDefault={setBackendDefault}
+												shadowedSharedModel={shadowNote(
+													backend,
+													defaults.model
+												)}
 											/>
 										</div>
 									</td>
@@ -253,6 +279,7 @@ export function BackendDefaultsTable({
 									backend={backend}
 									defaults={defaults}
 									setBackendDefault={setBackendDefault}
+									shadowedSharedModel={shadowNote(backend, defaults.model)}
 									showLabels
 								/>
 							</div>

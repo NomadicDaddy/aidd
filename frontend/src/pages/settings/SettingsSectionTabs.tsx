@@ -1,3 +1,5 @@
+import { normalizeBackendName } from 'aidd-shared/plan/types';
+
 import type {
 	BackendDefaultSettings,
 	BackendName,
@@ -102,7 +104,9 @@ export function SettingsSectionTabs({
 					<RunLimitsSection form={form} setField={setField} />
 					<BackendDefaultsTable
 						backends={form.backends}
+						defaultCli={normalizeBackendName(form.cli)}
 						setBackendDefault={setBackendDefault}
+						sharedModel={form.model}
 					/>
 				</div>
 			</TabPanel>

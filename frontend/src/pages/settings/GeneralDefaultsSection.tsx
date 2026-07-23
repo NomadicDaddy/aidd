@@ -4,7 +4,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
-import { nullableText, textValue } from './settingsUtils.ts';
+import { nullableText, shadowingBackendModel, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 
@@ -15,6 +15,7 @@ export function GeneralDefaultsSection({
 	form: WebConfigSettings;
 	setField: <K extends keyof WebConfigSettings>(key: K, value: WebConfigSettings[K]) => void;
 }) {
+	const shadowedBy = shadowingBackendModel(form);
 	return (
 		<Card className="space-y-3 p-3">
 			<div>
@@ -51,6 +52,13 @@ export function GeneralDefaultsSection({
 						onChange={(event) => setField('model', nullableText(event.target.value))}
 						value={textValue(form.model)}
 					/>
+					{shadowedBy ? (
+						<p className="text-xs text-amber-600 dark:text-amber-500">
+							Shadowed for {form.cli} launches: the Backend Matrix (Run Engine tab)
+							sets “{shadowedBy}” for {form.cli}, and backend models outrank this
+							shared default. Clear that row to use this value.
+						</p>
+					) : null}
 				</label>
 				<label className="space-y-1">
 					<span className="text-xs font-medium text-neutral-500 uppercase">

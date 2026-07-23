@@ -1,3 +1,5 @@
+import { normalizeBackendName } from 'aidd-shared/plan/types';
+
 import type {
 	BackendDefaultSettings,
 	DirectAiSettings,
@@ -131,6 +133,18 @@ export function nullableNumber(value: string): null | number {
 	if (!trimmed) return null;
 	const parsed = Number(trimmed);
 	return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** The Backend Matrix model that shadows the shared Default Model for default-CLI launches.
+ * Launch-target precedence is override → mode model → backend model → shared model, so when the
+ * default CLI's Backend Matrix row sets a model, an override-free launch uses it and the shared
+ * Default Model field is silently dead. Returns that shadowing model, or null when nothing is
+ * shadowed (shared model unset, or the default CLI's row has no model of its own). */
+export function shadowingBackendModel(form: WebConfigSettings): null | string {
+	if (!form.model) return null;
+	const backend = normalizeBackendName(form.cli);
+	if (!backend) return null;
+	return form.backends[backend]?.model ?? null;
 }
 
 export function describeListEntry(label: string, item: string, index: number): string {

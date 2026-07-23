@@ -3,6 +3,10 @@ import { projectPackageManifestPaths } from 'aidd-shared/metadata/project-stack'
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 
+import {
+	ITERATION_SCAN_LIMIT,
+	iterationEntryNumber,
+} from '../projectMetadata/iterationParseHelpers.ts';
 import { runtimePortDeclarationPaths } from '../projectMetadata/runtimePortDiscovery.ts';
 
 export interface ProjectFingerprintOptions {
@@ -45,6 +49,33 @@ async function fingerprintDirShallow(dir: string): Promise<string> {
 		entries.map(async (name) => `${name}:${await fingerprintTarget(join(dir, name))}`)
 	);
 	return parts.join(',');
+}
+
+// iterations/ is append-only run history that grows by two files per iteration and is
+// never pruned, so a shallow fingerprint of the whole directory made cache validation
+// scale with a project's lifetime run count (~1,700 stats on a mature project) — far more
+// work than the compute it guards. gatherLocalIterations only ever reads the newest
+// ITERATION_SCAN_LIMIT `NNN.json` artifacts and ignores their .log siblings entirely, so
+// the summary cannot reflect anything outside that window. Stat exactly that window, plus
+// the raw entry count so additions and deletions still invalidate. An in-place edit to an
+// artifact older than the window goes unnoticed, which is sound precisely because the
+// listing cannot surface it.
+async function fingerprintIterationsDir(dir: string): Promise<string> {
+	let entries: string[];
+	try {
+		entries = await readdir(dir);
+	} catch {
+		return '-';
+	}
+	const newest = entries
+		.map((entry) => ({ entry, number: iterationEntryNumber(entry) }))
+		.filter((item): item is { entry: string; number: number } => item.number !== null)
+		.sort((left, right) => right.number - left.number)
+		.slice(0, ITERATION_SCAN_LIMIT);
+	const parts = await Promise.all(
+		newest.map(async ({ entry }) => `${entry}:${await fingerprintTarget(join(dir, entry))}`)
+	);
+	return `${entries.length}:${parts.join(',')}`;
 }
 
 async function resolveGitDir(projectDir: string): Promise<null | string> {
@@ -134,7 +165,7 @@ export async function computeProjectFingerprint(
 		await Promise.all([
 			Promise.all(flatTargets.map(fingerprintTarget)),
 			fingerprintFeaturesDir(join(metadataDir, 'features')),
-			fingerprintDirShallow(join(metadataDir, 'iterations')),
+			fingerprintIterationsDir(join(metadataDir, 'iterations')),
 			fingerprintDirShallow(join(metadataDir, 'responses')),
 			fingerprintDirShallow(join(metadataDir, 'audit-reports')),
 			fingerprintGitHead(projectDir),

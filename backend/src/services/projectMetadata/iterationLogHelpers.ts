@@ -10,6 +10,7 @@ import type {
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { readJsonOrNull, readTextOrNull } from '../fsHelpers.ts';
 import {
+	ITERATION_SCAN_LIMIT,
 	iterationEntryNumber,
 	localIterationFromArtifact,
 	localRunFromLedgerEntry,
@@ -22,7 +23,7 @@ export { projectUsageFromLedgerEntries } from './projectUsage.ts';
 export { syncStateFromLocalData } from './syncStateHelpers.ts';
 
 const localIterationResultLimit = 20;
-const localIterationScanLimit = 50;
+const localIterationScanLimit = ITERATION_SCAN_LIMIT;
 const localRunResultLimit = 20;
 
 export interface ProjectRunLedgerMetadata {

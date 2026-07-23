@@ -22,7 +22,8 @@ interface FingerprintMemo {
 	value: string;
 }
 
-// computeProjectFingerprint stats ~20-30 files/dirs per project and runs on every
+// computeProjectFingerprint stats on the order of a hundred files/dirs per project —
+// bounded per directory, but scaling with feature count — and runs on every
 // getOrCompute call (even cache hits). A short memo collapses the fingerprint I/O for
 // rapid bursts — concurrent /projects + /director/fleet, plus active-run polls — to
 // a single stat sweep. Tradeoff: a filesystem change is observed within at most this

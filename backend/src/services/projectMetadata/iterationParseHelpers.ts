@@ -67,6 +67,11 @@ export interface RawRunLedgerEntry {
 	triumvirateRoles?: unknown;
 }
 
+// How many of the newest NNN.json artifacts the project listing may observe. Shared by
+// the reader (gatherLocalIterations) and the listing cache's fingerprint so cache
+// validation never watches more of the directory than the summary can actually reflect.
+export const ITERATION_SCAN_LIMIT = 50;
+
 export function iterationEntryNumber(entry: string): null | number {
 	const match = entry.match(/^(\d+)\.json$/);
 	if (!match?.[1]) return null;

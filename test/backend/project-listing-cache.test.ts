@@ -198,6 +198,47 @@ describe('project listing stack fingerprints', () => {
 		}
 	});
 
+	test('bounds the iterations fingerprint to the window the listing can observe', async () => {
+		const projectDir = await testTempDir('aidd-project-iterations-fingerprint-');
+		const iterationsDir = join(projectDir, '.aidd', 'iterations');
+		const artifact = (n: number) => join(iterationsDir, `${String(n).padStart(3, '0')}.json`);
+		try {
+			await mkdir(iterationsDir, { recursive: true });
+			// 120 iterations: 001 sits well outside the newest-50 window, 120 inside it.
+			for (let n = 1; n <= 120; n += 1) {
+				await writeFile(artifact(n), JSON.stringify({ iteration: n }));
+				await writeFile(join(iterationsDir, `${String(n).padStart(3, '0')}.log`), 'log\n');
+			}
+
+			const initial = await computeProjectFingerprint(projectDir);
+
+			// Outside the window: the listing cannot surface it, so it must not invalidate —
+			// this is what keeps the stat sweep from scaling with lifetime run history.
+			await writeFile(artifact(1), JSON.stringify({ iteration: 1, mutated: true }));
+			expect(await computeProjectFingerprint(projectDir)).toBe(initial);
+
+			// .log siblings are never read by gatherLocalIterations, at any depth.
+			await writeFile(join(iterationsDir, '120.log'), 'log with more content\n');
+			expect(await computeProjectFingerprint(projectDir)).toBe(initial);
+
+			// Newest artifact changing (a run finalizing) must invalidate.
+			await writeFile(artifact(120), JSON.stringify({ iteration: 120, mutated: true }));
+			const newestChanged = await computeProjectFingerprint(projectDir);
+			expect(newestChanged).not.toBe(initial);
+
+			// A brand-new iteration must invalidate.
+			await writeFile(artifact(121), JSON.stringify({ iteration: 121 }));
+			const added = await computeProjectFingerprint(projectDir);
+			expect(added).not.toBe(newestChanged);
+
+			// Deleting an artifact outside the window still moves the entry count.
+			await rm(artifact(1));
+			expect(await computeProjectFingerprint(projectDir)).not.toBe(added);
+		} finally {
+			await rm(projectDir, { force: true, recursive: true });
+		}
+	});
+
 	test('tracks environment files used by runtime port discovery', async () => {
 		const projectDir = await testTempDir('aidd-project-port-fingerprint-');
 		try {

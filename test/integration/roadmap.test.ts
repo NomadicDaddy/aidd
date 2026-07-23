@@ -379,6 +379,27 @@ describe('buildRoadmapFromFeatures', () => {
 		});
 	});
 
+	test('translates dependency ids to directory names when id differs from directory', () => {
+		// Spernakit-derived projects reference deps by a timestamped id distinct from the short
+		// directory; roadmap deps must be keyed by directory so roadmap:apply can resolve them.
+		const roadmap = buildRoadmapFromFeatures([
+			{ id: 'spernakit-20260201000014-login', directory: 'login', passes: true },
+			{
+				id: 'spernakit-20260201000020-lockout',
+				directory: 'account-lockout',
+				dependencies: ['spernakit-20260201000014-login', 'unknown-dangling-id'],
+			},
+		]);
+
+		expect(roadmap.features).toEqual({
+			login: { milestone: 'v1.0' },
+			'account-lockout': {
+				milestone: 'v1.0',
+				dependencies: ['login', 'unknown-dangling-id'],
+			},
+		});
+	});
+
 	test('produces a schema-valid, gate-ready roadmap covering all incomplete features', () => {
 		const features = [
 			{ id: 'feature-a', passes: false, priority: 5 },

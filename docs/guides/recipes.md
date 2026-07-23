@@ -335,7 +335,7 @@ Review missing or stale canonical aidd artifacts against the live project, recon
 - **Parameters:** application
 - **Steps:** 2
 
-1. `aidd-cli` - Reconcile canonical artifacts (maxIterations: 1; writeAllowlist: [.aidd, CONTEXT.md]; prompt: review the artifact-check status against the live project, update inaccurate content, and timestamp-renew still-accurate stale artifacts); retryCount: 1
+1. `aidd-cli` - Reconcile canonical artifacts (maxIterations: 1; writeAllowlist: [.aidd, CONTEXT.md]; prompt: Reconcile {application}'s canonical aidd artifacts against the live project. Begin with .aidd/.artifacts-check.json as status evidence only; do not treat age alone as proof that content is wrong. ...); retryCount: 1
 2. `recipe-ref` - Recalculate artifact status (params: {"application":"{application}"}; recipeName: check-artifacts)
 
 ### remediate-audit-findings

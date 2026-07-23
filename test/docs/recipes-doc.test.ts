@@ -5,21 +5,28 @@ import { describe, expect, test } from 'bun:test';
 
 // Drift check for docs/guides/recipes.md. The doc is hand-curated (it carries prose
 // that isn't derivable from the recipe JSON: the deploy note, parameter-default
-// explanations, paraphrased prompt summaries). We therefore don't regenerate it — we
-// assert the machine-derivable facts that silently go stale: which recipes exist, each
-// recipe's name, step count, parameter names, metadata-only flag, and — the field that
-// actually drifted — the exact description text. Prose is left untouched.
+// explanations, the commentary under each step list). We therefore don't regenerate it —
+// we assert the machine-derivable facts that silently go stale: which recipes exist, each
+// recipe's name, step count, parameter names, metadata-only flag, the exact description
+// text, and each step's type plus the prompt excerpt it quotes. Step-list entries quote
+// prompts verbatim (truncated with "..."), never paraphrased, so the excerpt is checked
+// as a literal prefix of the recipe's prompt. Surrounding prose is left untouched.
 
 const repoRoot = join(import.meta.dir, '..', '..');
 const recipesDir = join(repoRoot, 'recipes');
 const docPath = join(repoRoot, 'docs', 'guides', 'recipes.md');
+
+interface RecipeStep {
+	configJson?: { prompt?: string };
+	stepType: string;
+}
 
 interface RecipeJson {
 	description?: string;
 	metadataOnly?: boolean;
 	name: string;
 	parameters: { name: string }[];
-	steps: unknown[];
+	steps: RecipeStep[];
 }
 
 async function loadRecipes(): Promise<Map<string, RecipeJson>> {
@@ -47,9 +54,27 @@ function parseIndexTable(doc: string): Map<string, IndexRow> {
 	return rows;
 }
 
+interface DocStep {
+	// Everything after "N. `stepType` - ", i.e. the step name plus its parenthetical.
+	detail: string;
+	stepType: string;
+}
+
 interface RecipeSection {
 	description: string;
 	metadataOnly: boolean;
+	steps: DocStep[];
+}
+
+const STEP_LINE = /^\d+\. `([^`]+)` - (.+)$/;
+
+function parseSectionSteps(block: string): DocStep[] {
+	const steps: DocStep[] = [];
+	for (const line of block.split('\n')) {
+		const match = STEP_LINE.exec(line);
+		if (match) steps.push({ detail: match[2]!, stepType: match[1]! });
+	}
+	return steps;
 }
 
 function parseRecipeSections(doc: string): Map<string, RecipeSection> {
@@ -67,9 +92,27 @@ function parseRecipeSections(doc: string): Map<string, RecipeSection> {
 		sections.set(id, {
 			description,
 			metadataOnly: rest.includes('- **Metadata-only:** yes'),
+			steps: parseSectionSteps(rest),
 		});
 	}
 	return sections;
+}
+
+// The doc renders a step's prompt as a truncated excerpt inside the parenthetical:
+// "(maxIterations: 1; prompt: <excerpt> ...)", optionally trailed by "; retryCount: 1".
+// Prompts themselves contain "(" and ")", so the parenthetical is closed by the last
+// ")" on the line — anything after it is hand-written prose, never part of the excerpt.
+function extractPromptExcerpt(detail: string): string | undefined {
+	const marker = detail.indexOf('prompt: ');
+	if (marker === -1) return undefined;
+	const close = detail.lastIndexOf(')');
+	if (close === -1 || close < marker) return undefined;
+	const excerpt = detail.slice(marker + 'prompt: '.length, close);
+	// Markdown-escaped punctuation (e.g. "\*") is literal in the recipe JSON.
+	return excerpt
+		.replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1')
+		.replace(/\s*\.\.\.$/, '')
+		.trimEnd();
 }
 
 function expectedParameters(recipe: RecipeJson): string {
@@ -112,5 +155,31 @@ describe('docs/guides/recipes.md stays in sync with recipes/*.json', () => {
 				recipe.metadataOnly === true
 			);
 		}
+	});
+
+	test('each step-list entry matches its step type and quoted prompt excerpt', async () => {
+		const recipes = await loadRecipes();
+		const sections = parseRecipeSections(await readFile(docPath, 'utf8'));
+		let checkedExcerpts = 0;
+		for (const [id, recipe] of recipes) {
+			const docSteps = sections.get(id)?.steps ?? [];
+			expect(docSteps.length, `step-list length for ${id}`).toBe(recipe.steps.length);
+			for (const [index, step] of recipe.steps.entries()) {
+				const docStep = docSteps[index]!;
+				expect(docStep.stepType, `step ${index + 1} type for ${id}`).toBe(step.stepType);
+				const prompt = step.configJson?.prompt;
+				if (prompt === undefined) continue;
+				const excerpt = extractPromptExcerpt(docStep.detail);
+				expect(excerpt, `step ${index + 1} of ${id} should quote its prompt`).toBeDefined();
+				// Prefix match: the doc truncates long prompts, so it must be a leading slice.
+				expect(
+					prompt.startsWith(excerpt!),
+					`step ${index + 1} of ${id} quotes a stale prompt excerpt.\n  doc:    ${excerpt}\n  recipe: ${prompt.slice(0, excerpt!.length)}`
+				).toBe(true);
+				checkedExcerpts += 1;
+			}
+		}
+		// Guard the guard: a parser that silently stopped matching would vacuously pass.
+		expect(checkedExcerpts).toBeGreaterThan(20);
 	});
 });

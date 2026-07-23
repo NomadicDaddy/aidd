@@ -19,7 +19,7 @@ Launching a recipe creates a pipeline session. A session that completes some ste
 | `bug2feature`                               | bug2feature                                                                  | 2     | application                           |
 | `check-artifacts`                           | check-artifacts                                                              | 1     | none                                  |
 | `codebase-analysis`                         | codebase-analysis                                                            | 1     | application                           |
-| `coding`                                    | coding                                                                       | 1     | application, feature                  |
+| `coding`                                    | coding                                                                       | 4     | application, feature                  |
 | `coding-review-remediate-document-changes`  | coding, deep review, remediation, and change documentation                   | 4     | application, feature                  |
 | `coding-spirit-coderabbit-document-changes` | coding, spirit and CodeRabbit reviews, remediation, and change documentation | 6     | application, feature                  |
 | `coding-spirit-document-changes`            | coding, spirit review, remediation, and change documentation                 | 4     | application, feature                  |
@@ -151,9 +151,12 @@ Plain coding run using the selected launch CLI. No workflow flags; aidd selects 
 
 - **Name:** coding
 - **Parameters:** application, feature (default empty — selects normal backlog work)
-- **Steps:** 1
+- **Steps:** 4
 
 1. `aidd-cli` - Run coding (feature: {feature})
+2. `skill` - Spirit review (args: {application}; skillId: spirit)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-review-remediate-document-changes
 

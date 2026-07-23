@@ -6,6 +6,8 @@ import {
 	copyTrackedFiles,
 	expectedPackagedTrackedSurfaces,
 } from '../../scripts/lib/third-party-licenses/distributed-paths.ts';
+import { copyAssets } from '../../scripts/lib/standalone/distribution.ts';
+import { CORE_CATALOG_DIRS, REQUIRED_FILE_ASSETS } from '../../scripts/lib/standalone/constants.ts';
 import {
 	renderRegistryNotices,
 	renderRegistrySummary,
@@ -26,7 +28,6 @@ const PATHS = [
 	'audits/example.md',
 	'licenses/distributed-materials.json',
 ];
-
 async function runGit(root: string, ...args: string[]): Promise<void> {
 	const proc = Bun.spawn(['git', '-C', root, ...args], {
 		stderr: 'pipe',
@@ -74,6 +75,36 @@ function registry(): DistributedMaterialsRegistry {
 		},
 		verifiedDate: '2026-07-21',
 	};
+}
+
+async function writeStandaloneFixture(
+	root: string
+): Promise<{ catalogPaths: string[]; value: DistributedMaterialsRegistry }> {
+	const catalogPaths = CORE_CATALOG_DIRS.map((directory) =>
+		directory === 'audits' ? 'audits/example.md' : `${directory}/example.txt`
+	);
+	const value = registry();
+	value.classifications.firstParty = [
+		...catalogPaths.filter((path) => path !== 'audits/example.md'),
+		...REQUIRED_FILE_ASSETS.filter((path) => path !== 'THIRD-PARTY-LICENSES.md'),
+		'licenses/distributed-materials.json',
+	];
+	const sourcePaths = [
+		...catalogPaths,
+		...REQUIRED_FILE_ASSETS,
+		'THIRD-PARTY-NOTICES.md',
+		'frontend/dist/index.html',
+	];
+	for (const path of sourcePaths) {
+		await mkdir(join(root, path, '..'), { recursive: true });
+		await writeFile(join(root, path), `${path}\n`);
+	}
+	await mkdir(join(root, 'licenses'), { recursive: true });
+	await writeFile(
+		join(root, 'licenses', 'distributed-materials.json'),
+		`${JSON.stringify(value, null, '\t')}\n`
+	);
+	return { catalogPaths, value };
 }
 
 async function issuesFor(
@@ -202,6 +233,46 @@ describe('distributed materials registry', () => {
 			expect(await Bun.file(join(out, 'audits', 'tracked.md')).exists()).toBe(true);
 			expect(await Bun.file(join(out, 'audits', 'deleted.md')).exists()).toBe(false);
 			expect(await Bun.file(join(out, 'audits', 'untracked.md')).exists()).toBe(false);
+		} finally {
+			await rm(root, { force: true, recursive: true });
+		}
+	});
+
+	test('standalone copying uses the registry without a Git worktree', async () => {
+		const root = await testTempDir('aidd-registered-distribution-');
+		try {
+			const { catalogPaths } = await writeStandaloneFixture(root);
+			const out = join(root, 'out');
+			await copyAssets(root, out);
+			for (const path of [
+				...catalogPaths,
+				...REQUIRED_FILE_ASSETS,
+				'frontend/dist/index.html',
+			]) {
+				expect(await Bun.file(join(out, path)).exists()).toBe(true);
+			}
+			expect(await Bun.file(join(root, '.git')).exists()).toBe(false);
+		} finally {
+			await rm(root, { force: true, recursive: true });
+		}
+	});
+
+	test('standalone copying rejects missing and unsafe registered paths', async () => {
+		const root = await testTempDir('aidd-registered-distribution-invalid-');
+		try {
+			const { value } = await writeStandaloneFixture(root);
+			await rm(join(root, 'skills', 'example.txt'));
+			await expect(copyAssets(root, join(root, 'missing-out'))).rejects.toThrow(
+				'Registered distribution file is missing or not a file: skills/example.txt'
+			);
+			value.classifications.firstParty.push('../outside.txt');
+			await writeFile(
+				join(root, 'licenses', 'distributed-materials.json'),
+				`${JSON.stringify(value, null, '\t')}\n`
+			);
+			await expect(copyAssets(root, join(root, 'unsafe-out'))).rejects.toThrow(
+				'Distributed surface path is not repository-relative: ../outside.txt'
+			);
 		} finally {
 			await rm(root, { force: true, recursive: true });
 		}

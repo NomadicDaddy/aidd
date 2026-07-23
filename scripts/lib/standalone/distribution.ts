@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { cp, mkdir, stat } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
-import { copyTrackedFiles } from '../third-party-licenses/distributed-paths.ts';
+import { copyRegisteredDistributionFiles } from '../third-party-licenses/distributed-paths.ts';
 import {
 	CORE_CATALOG_DIRS,
 	REQUIRED_FILE_ASSETS,
@@ -11,7 +11,10 @@ import {
 } from './constants.ts';
 
 export async function copyAssets(rootDir: string, outDir: string): Promise<void> {
-	await copyTrackedFiles(rootDir, outDir, [...CORE_CATALOG_DIRS, ...REQUIRED_FILE_ASSETS]);
+	await copyRegisteredDistributionFiles(rootDir, outDir, [
+		...CORE_CATALOG_DIRS,
+		...REQUIRED_FILE_ASSETS,
+	]);
 	const relative = 'frontend/dist';
 	const source = join(rootDir, relative);
 	const destination = join(outDir, relative);

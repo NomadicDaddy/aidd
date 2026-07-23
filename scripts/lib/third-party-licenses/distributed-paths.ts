@@ -1,9 +1,12 @@
-import { cp, mkdir, stat } from 'node:fs/promises';
+import { cp, mkdir, readFile, stat } from 'node:fs/promises';
 import { dirname, isAbsolute, join, normalize } from 'node:path';
 
 import { PUBLIC_DOCUMENT_FILE_ASSETS, PUBLIC_DOCUMENT_ROOT_ASSETS } from '../release/common.ts';
 import { CORE_CATALOG_DIRS, REQUIRED_FILE_ASSETS } from '../standalone/constants.ts';
+import { parseDistributedMaterialsRegistry } from './registry-schema.ts';
 import { type TrackedSurfaces } from './registry-types.ts';
+import { DISTRIBUTED_MATERIALS_REGISTRY } from './registry-types.ts';
+import { allClassifiedPaths } from './registry-validation.ts';
 
 export interface PackagedTrackedSurfaces {
 	catalogRoots: string[];
@@ -41,6 +44,24 @@ function safeRelativePath(configuredPath: string): string {
 	return normalizedPath;
 }
 
+const EXACT_PATH_FORBIDDEN = /[*?[\]{}]/;
+
+function safeRegisteredPath(configuredPath: string): string {
+	const safePath = safeRelativePath(configuredPath);
+	if (
+		configuredPath !== safePath ||
+		safePath.endsWith('/') ||
+		EXACT_PATH_FORBIDDEN.test(safePath)
+	) {
+		throw new Error(`Distributed registry path is not exact: ${configuredPath}`);
+	}
+	return safePath;
+}
+
+function belongsToTargets(path: string, targets: readonly string[]): boolean {
+	return targets.some((target) => path === target || path.startsWith(`${target}/`));
+}
+
 export async function listTrackedFiles(
 	root: string,
 	targets: readonly string[]
@@ -72,6 +93,29 @@ export async function listTrackedFiles(
 		})
 	);
 	return existingPaths.filter((path): path is string => path !== null);
+}
+
+export async function listRegisteredDistributionFiles(
+	root: string,
+	targets: readonly string[]
+): Promise<string[]> {
+	const registryPath = join(root, DISTRIBUTED_MATERIALS_REGISTRY);
+	const registryValue: unknown = JSON.parse(await readFile(registryPath, 'utf8'));
+	const registry = parseDistributedMaterialsRegistry(registryValue);
+	const safeTargets = targets.map(safeRelativePath);
+	const selectedPaths = uniqueSorted(
+		allClassifiedPaths(registry)
+			.map(safeRegisteredPath)
+			.filter((path) => belongsToTargets(path, safeTargets))
+	);
+
+	for (const path of selectedPaths) {
+		const info = await stat(join(root, path)).catch(() => null);
+		if (info?.isFile() !== true) {
+			throw new Error(`Registered distribution file is missing or not a file: ${path}`);
+		}
+	}
+	return selectedPaths;
 }
 
 function belongsToSurfaces(path: string, surfaces: TrackedSurfaces): boolean {
@@ -108,6 +152,18 @@ export async function copyTrackedFiles(
 	targets: readonly string[]
 ): Promise<void> {
 	for (const relativePath of await listTrackedFiles(root, targets)) {
+		const destination = join(destinationRoot, relativePath);
+		await mkdir(dirname(destination), { recursive: true });
+		await cp(join(root, relativePath), destination, { force: true });
+	}
+}
+
+export async function copyRegisteredDistributionFiles(
+	root: string,
+	destinationRoot: string,
+	targets: readonly string[]
+): Promise<void> {
+	for (const relativePath of await listRegisteredDistributionFiles(root, targets)) {
 		const destination = join(destinationRoot, relativePath);
 		await mkdir(dirname(destination), { recursive: true });
 		await cp(join(root, relativePath), destination, { force: true });

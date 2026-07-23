@@ -23,6 +23,7 @@ describe('CI workflow', () => {
 		).replaceAll('\r\n', '\n');
 		const quality = workflowJob(workflow, 'quality');
 		const browserSmoke = workflowJob(workflow, 'browser-smoke');
+		const releaseImage = workflowJob(workflow, 'release-image');
 
 		expect(workflow).toContain('pull_request:\n        branches: [main]');
 		expect([...quality.matchAll(/^\s+run: (.+)$/gm)].map((match) => match[1])).toEqual([
@@ -30,6 +31,13 @@ describe('CI workflow', () => {
 			'bun run smoke:qc',
 		]);
 		expect(SMOKE_QC_STEPS.map((step) => step.name)).toContain('check:dead-code');
+		expect(releaseImage).toContain('runs-on: ubuntu-latest');
+		expect(releaseImage).toContain('needs: quality');
+		expect(releaseImage).toContain('bun run docker:build');
+		expect(releaseImage).toContain('bun run check:image-licenses');
+		expect(releaseImage.indexOf('bun run check:image-licenses')).toBeGreaterThan(
+			releaseImage.indexOf('bun run docker:build')
+		);
 		expect(browserSmoke).toContain('runs-on: windows-latest');
 		expect(browserSmoke).toContain('needs: quality');
 		expect(browserSmoke).toContain('bun install --frozen-lockfile');

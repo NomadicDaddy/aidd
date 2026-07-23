@@ -39,23 +39,8 @@ async function makeRoot(): Promise<string> {
 	return root;
 }
 
-async function initGitRepo(root: string): Promise<void> {
-	const run = async (...args: string[]): Promise<void> => {
-		const proc = Bun.spawn(['git', '-C', root, ...args], {
-			stderr: 'ignore',
-			stdout: 'ignore',
-			windowsHide: true,
-		});
-		if ((await proc.exited) !== 0) throw new Error(`git ${args.join(' ')} failed in ${root}`);
-	};
-	await run('init', '--quiet');
-	await run('config', 'user.email', 'test@example.invalid');
-	await run('config', 'user.name', 'Test');
-	await run('add', '.');
-	await run('commit', '--quiet', '-m', 'fixture');
-}
-
 async function seedRequiredSourceAssets(root: string): Promise<void> {
+	const catalogPaths = CORE_CATALOG_DIRS.map((dir) => `${dir}/.keep`);
 	for (const dir of CORE_CATALOG_DIRS) {
 		await mkdir(join(root, dir), { recursive: true });
 		await writeFile(join(root, dir, '.keep'), '');
@@ -65,6 +50,46 @@ async function seedRequiredSourceAssets(root: string): Promise<void> {
 	for (const file of REQUIRED_FILE_ASSETS) {
 		await writeFile(join(root, file), file);
 	}
+	const registry = {
+		classifications: {
+			firstParty: [
+				...catalogPaths.filter((path) => path !== 'audits/.keep'),
+				...REQUIRED_FILE_ASSETS.filter((path) => path !== 'THIRD-PARTY-LICENSES.md'),
+				'licenses/distributed-materials.json',
+			],
+			generated: ['THIRD-PARTY-LICENSES.md'],
+			thirdParty: [
+				{
+					authorOrRightsholder: 'Fixture Authors',
+					coveredPaths: ['audits/.keep'],
+					distributionSurfaces: ['standalone-archive'],
+					id: 'fixture-audit',
+					licenseEvidenceUrl: 'https://example.invalid/license',
+					licenseExpression: 'MIT',
+					modificationStatus: 'unmodified',
+					noticeText: 'Fixture notice.',
+					provenanceVerified: '2026-07-23',
+					requiredNoticeFiles: ['THIRD-PARTY-LICENSES.md'],
+					sourceUrl: 'https://example.invalid/source',
+					sourceVersion: '1.0.0',
+				},
+			],
+		},
+		pathContract: 'Exact paths only.',
+		schemaVersion: 1,
+		trackedSurfaces: {
+			catalogRoots: CORE_CATALOG_DIRS,
+			publicDocumentPaths: REQUIRED_FILE_ASSETS,
+			publicDocumentRoots: ['licenses'],
+			publicStaticAssetRoots: ['frontend/public'],
+		},
+		verifiedDate: '2026-07-23',
+	};
+	await mkdir(join(root, 'licenses'), { recursive: true });
+	await writeFile(
+		join(root, 'licenses', 'distributed-materials.json'),
+		`${JSON.stringify(registry, null, '\t')}\n`
+	);
 }
 
 async function seedDistributionLayout(root: string): Promise<string> {
@@ -195,7 +220,6 @@ describe('standalone build script helpers', () => {
 	test('buildStandalone aggregates target failures and keeps successful output', async () => {
 		const root = await makeRoot();
 		await seedRequiredSourceAssets(root);
-		await initGitRepo(root);
 		const commandRunner: CommandRunner = async (command) => {
 			if (command.some((part) => part.includes('bun-linux-x64-modern'))) {
 				throw new Error('simulated Linux compile failure');

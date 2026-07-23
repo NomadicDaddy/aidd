@@ -32,6 +32,7 @@ describe('system recipe protection', () => {
 		expect(read.metadataOnly).toBe(true);
 		expect(raw).not.toHaveProperty('system');
 		expect(raw.metadataOnly).toBe(true);
+		expect(raw.steps[0]).not.toHaveProperty('id');
 	});
 
 	test('rejects renaming or deleting a system recipe', async () => {
@@ -51,15 +52,29 @@ describe('system recipe protection', () => {
 	test('keeps custom recipes editable and deletable', async () => {
 		const rootDir = await testTempDir('aidd-custom-recipe-mutations-');
 		const service = new RecipeService(rootDir);
-		await service.writeRecipe({ ...codingRecipe, id: 'custom', name: 'Custom' });
-
-		const updated = await service.writeRecipe({
+		const customRecipe = {
 			...codingRecipe,
 			id: 'custom',
+			name: 'Custom',
+			steps: [
+				{
+					configJson: {},
+					id: 'step_custom',
+					name: 'Run custom step',
+					stepType: 'aidd-cli' as const,
+				},
+			],
+		};
+		await service.writeRecipe(customRecipe);
+
+		const updated = await service.writeRecipe({
+			...customRecipe,
 			name: 'Renamed custom',
 		});
+		const raw = await Bun.file(`${rootDir}/recipes/custom.json`).json();
 		expect(updated.system).toBeUndefined();
 		expect(updated.name).toBe('Renamed custom');
+		expect(raw.steps[0].id).toBe('step_custom');
 
 		await service.deleteRecipe('custom');
 		await expect(service.readRecipe('custom')).rejects.toMatchObject({ status: 404 });

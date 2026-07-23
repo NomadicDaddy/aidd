@@ -1,6 +1,6 @@
 {
-	"description": "Run coding, review the result, remediate confirmed review findings, then document and release the changes.",
-	"name": "coding review remediate and document changes",
+	"description": "Run coding, perform a deep review, remediate every confirmed and applicable finding, then document and commit the changes.",
+	"name": "coding, deep review, remediation, and change documentation",
 	"parameters": [
 		{
 			"description": "Target application name",
@@ -25,9 +25,9 @@
 		{
 			"configJson": {
 				"maxIterations": 1,
-				"prompt": "Review the current working tree and the immediately preceding review findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues from the review. Do not broaden scope beyond review findings. Run the project's required validation gates and leave the tree ready for document-changes."
+				"prompt": "Review the current working tree and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope. Consider the review's full substance, including completeness and intent, correctness, security, type safety, lint, maintainability, architecture, accessibility, performance, documentation, testing, and stack compliance; do not restrict remediation to a fixed category list. Do not act on false positives, speculative preferences, or findings unrelated to the reviewed change. If a valid finding cannot be addressed safely within scope or requires user input, report it explicitly instead of masking it. Run the project's required validation gates and leave the tree ready for document-changes."
 			},
-			"name": "Remediate review findings",
+			"name": "Remediate deep review findings",
 			"stepType": "aidd-cli"
 		},
 		{

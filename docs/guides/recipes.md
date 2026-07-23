@@ -10,42 +10,42 @@ Launching a recipe creates a pipeline session. A session that completes some ste
 
 ## Recipe Index
 
-| Recipe ID                                   | Name                                          | Steps | Parameters                            |
-| ------------------------------------------- | --------------------------------------------- | ----- | ------------------------------------- |
-| `apply-ui`                                  | apply ui                                      | 5     | application, source                   |
-| `audit-all`                                 | audit (all)                                   | 3     | application                           |
-| `audit-and-remediate`                       | audit and remediate                           | 3     | application                           |
-| `audit-maintenance`                         | audit maintenance                             | 2     | none                                  |
-| `bug2feature`                               | bug2feature                                   | 2     | application                           |
-| `check-artifacts`                           | check-artifacts                               | 1     | none                                  |
-| `codebase-analysis`                         | codebase-analysis                             | 1     | application                           |
-| `coding`                                    | coding                                        | 1     | application, feature                  |
-| `coding-review-remediate-document-changes`  | coding review remediate and document changes  | 4     | application                           |
-| `coding-spirit-coderabbit-document-changes` | coding spirit coderabbit and document changes | 6     | application                           |
-| `coding-spirit-document-changes`            | coding spirit and document changes            | 4     | application                           |
-| `deploy`                                    | deploy                                        | 8     | application, deployCommand, healthUrl |
-| `feature-consolidation-document-changes`    | feature consolidation and document changes    | 3     | application                           |
-| `generate-application-features`             | generate application features                 | 2     | application                           |
-| `generate-testing-scenarios`                | generate testing scenarios                    | 1     | application                           |
-| `interview`                                 | interview                                     | 9     | application                           |
-| `new-app-from-idea`                         | new-app-from-idea                             | 8     | application, stopBeforeImplementation |
-| `project-intake`                            | project-intake                                | 9     | application                           |
-| `project-reintake`                          | project-reintake                              | 2     | application                           |
-| `reconcile-project-artifacts`               | reconcile project artifacts                   | 2     | application                           |
-| `remediate-audit-findings`                  | remediate audit findings                      | 3     | application, filterBy, filterValue    |
-| `remediate-bugs`                            | remediate bugs                                | 3     | application, filterBy, filterValue    |
-| `ship-changes`                              | ship changes                                  | 4     | application                           |
-| `spernakit-bump`                            | spernakit bump                                | 4     | version                               |
-| `spernakit-dance`                           | spernakit dance                               | 2     | bumpHint                              |
-| `spernakit-propagate`                       | spernakit propagate                           | 11    | application, version                  |
-| `spernakit-release`                         | spernakit release                             | 3     | version, application                  |
-| `spernakit-replatform-assessment`           | spernakit-replatform-assessment               | 7     | application                           |
-| `test-and-remediate`                        | test and remediate                            | 5     | application                           |
-| `test-application-chaos`                    | test application (chaos)                      | 2     | application                           |
-| `test-application-scenarios`                | test application (scenarios)                  | 2     | application                           |
-| `triumvirate-coding-document-changes`       | triumvirate coding and document changes       | 2     | application                           |
-| `ui-redesign`                               | ui redesign                                   | 3     | application                           |
-| `update-application-documentation`          | update application documentation              | 4     | application                           |
+| Recipe ID                                   | Name                                                                         | Steps | Parameters                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------- | ----- | ------------------------------------- |
+| `apply-ui`                                  | apply ui                                                                     | 5     | application, source                   |
+| `audit-all`                                 | audit (all)                                                                  | 3     | application                           |
+| `audit-and-remediate`                       | audit and remediate                                                          | 3     | application                           |
+| `audit-maintenance`                         | audit maintenance                                                            | 2     | none                                  |
+| `bug2feature`                               | bug2feature                                                                  | 2     | application                           |
+| `check-artifacts`                           | check-artifacts                                                              | 1     | none                                  |
+| `codebase-analysis`                         | codebase-analysis                                                            | 1     | application                           |
+| `coding`                                    | coding                                                                       | 1     | application, feature                  |
+| `coding-review-remediate-document-changes`  | coding, deep review, remediation, and change documentation                   | 4     | application                           |
+| `coding-spirit-coderabbit-document-changes` | coding, spirit and CodeRabbit reviews, remediation, and change documentation | 6     | application                           |
+| `coding-spirit-document-changes`            | coding, spirit review, remediation, and change documentation                 | 4     | application                           |
+| `deploy`                                    | deploy                                                                       | 8     | application, deployCommand, healthUrl |
+| `feature-consolidation-document-changes`    | feature consolidation and document changes                                   | 3     | application                           |
+| `generate-application-features`             | generate application features                                                | 2     | application                           |
+| `generate-testing-scenarios`                | generate testing scenarios                                                   | 1     | application                           |
+| `interview`                                 | interview                                                                    | 9     | application                           |
+| `new-app-from-idea`                         | new-app-from-idea                                                            | 8     | application, stopBeforeImplementation |
+| `project-intake`                            | project-intake                                                               | 9     | application                           |
+| `project-reintake`                          | project-reintake                                                             | 2     | application                           |
+| `reconcile-project-artifacts`               | reconcile project artifacts                                                  | 2     | application                           |
+| `remediate-audit-findings`                  | remediate audit findings                                                     | 3     | application, filterBy, filterValue    |
+| `remediate-bugs`                            | remediate bugs                                                               | 3     | application, filterBy, filterValue    |
+| `ship-changes`                              | ship changes                                                                 | 4     | application                           |
+| `spernakit-bump`                            | spernakit bump                                                               | 4     | version                               |
+| `spernakit-dance`                           | spernakit dance                                                              | 2     | bumpHint                              |
+| `spernakit-propagate`                       | spernakit propagate                                                          | 11    | application, version                  |
+| `spernakit-release`                         | spernakit release                                                            | 3     | version, application                  |
+| `spernakit-replatform-assessment`           | spernakit-replatform-assessment                                              | 7     | application                           |
+| `test-and-remediate`                        | test and remediate                                                           | 5     | application                           |
+| `test-application-chaos`                    | test application (chaos)                                                     | 2     | application                           |
+| `test-application-scenarios`                | test application (scenarios)                                                 | 2     | application                           |
+| `triumvirate-coding-document-changes`       | triumvirate coding and document changes                                      | 2     | application                           |
+| `ui-redesign`                               | ui redesign                                                                  | 3     | application                           |
+| `update-application-documentation`          | update application documentation                                             | 4     | application                           |
 
 ## Recipes
 
@@ -157,43 +157,43 @@ Plain coding run using the selected launch CLI. No workflow flags; aidd selects 
 
 ### coding-review-remediate-document-changes
 
-Run coding, review the result, remediate confirmed review findings, then document and release the changes.
+Run coding, perform a deep review, remediate every confirmed and applicable finding, then document and commit the changes.
 
-- **Name:** coding review remediate and document changes
+- **Name:** coding, deep review, remediation, and change documentation
 - **Parameters:** application
 - **Steps:** 4
 
 1. `aidd-cli` - Run coding
 2. `skill` - Deep review (args: {application}; skillId: deepreview)
-3. `aidd-cli` - Remediate review findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding review findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues ...)
+3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-spirit-coderabbit-document-changes
 
-Run coding, review the result with spirit, remediate confirmed findings, re-review with CodeRabbit, remediate confirmed findings, then document and release the changes.
+Run coding, review the result for spirit and intent, remediate every confirmed and applicable finding, run an independent CodeRabbit review, remediate its confirmed and applicable findings, then document and commit the changes.
 
-- **Name:** coding spirit coderabbit and document changes
+- **Name:** coding, spirit and CodeRabbit reviews, remediation, and change documentation
 - **Parameters:** application
 - **Steps:** 6
 
 1. `aidd-cli` - Run coding
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 4. `skill` - CodeRabbit review (args: {application}; skillId: coderabbit)
-5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues ...)
+5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 6. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-spirit-document-changes
 
-Run coding, review the result with spirit, remediate confirmed findings, then document and release the changes.
+Run coding, review the result for spirit and intent, remediate every confirmed and applicable finding, then document and commit the changes.
 
-- **Name:** coding spirit and document changes
+- **Name:** coding, spirit review, remediation, and change documentation
 - **Parameters:** application
 - **Steps:** 4
 
 1. `aidd-cli` - Run coding
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### deploy

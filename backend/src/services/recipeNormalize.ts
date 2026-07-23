@@ -155,14 +155,20 @@ export function normalizeRecipe(value: unknown, fallbackId: string): RecipeDefin
 	} satisfies RecipeDefinition;
 }
 
-export function recipeFilePayload(
-	recipe: RecipeDefinition
-): Omit<RecipeDefinition, 'id' | 'system'> {
+export function recipeFilePayload(recipe: RecipeDefinition): Omit<
+	RecipeDefinition,
+	'id' | 'steps' | 'system'
+> & {
+	steps: (Omit<RecipeStepDefinition, 'id'> & { id?: string })[];
+} {
 	return {
 		...(recipe.description !== undefined ? { description: recipe.description } : {}),
 		...(recipe.metadataOnly === true ? { metadataOnly: true } : {}),
 		name: recipe.name,
 		parameters: recipe.parameters,
-		steps: recipe.steps,
+		steps: recipe.steps.map((step, index) => {
+			const { id, ...payload } = step;
+			return id === `${recipe.id}_step_${index + 1}` ? payload : { ...payload, id };
+		}),
 	};
 }

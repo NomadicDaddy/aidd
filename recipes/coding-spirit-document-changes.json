@@ -1,6 +1,6 @@
 {
-	"description": "Run coding, review the result with spirit, remediate confirmed findings, then document and release the changes.",
-	"name": "coding spirit and document changes",
+	"description": "Run coding, review the result for spirit and intent, remediate every confirmed and applicable finding, then document and commit the changes.",
+	"name": "coding, spirit review, remediation, and change documentation",
 	"parameters": [
 		{
 			"description": "Target application name",
@@ -10,7 +10,6 @@
 	"steps": [
 		{
 			"configJson": {},
-			"id": "coding-spirit-document-changes_step_1",
 			"name": "Run coding",
 			"stepType": "aidd-cli"
 		},
@@ -20,16 +19,14 @@
 				"executionIntent": "review-only",
 				"skillId": "spirit"
 			},
-			"id": "coding-spirit-document-changes_step_2",
 			"name": "Spirit review",
 			"stepType": "skill"
 		},
 		{
 			"configJson": {
 				"maxIterations": 1,
-				"prompt": "Review the current working tree and the immediately preceding spirit findings for {application}. Remediate confirmed correctness, security, type, lint, or stack-compliance issues from the review. Do not broaden scope beyond review findings. Run the project's required validation gates and leave the tree ready for document-changes."
+				"prompt": "Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope. Consider the review's full substance, including completeness and intent, correctness, security, type safety, lint, maintainability, architecture, accessibility, performance, documentation, testing, and stack compliance; do not restrict remediation to a fixed category list. Do not act on false positives, speculative preferences, or findings unrelated to the reviewed change. If a valid finding cannot be addressed safely within scope or requires user input, report it explicitly instead of masking it. Run the project's required validation gates and leave the tree ready for document-changes."
 			},
-			"id": "coding-spirit-document-changes_step_3",
 			"name": "Remediate spirit findings",
 			"stepType": "aidd-cli"
 		},
@@ -39,7 +36,6 @@
 				"executionIntent": "apply-changes",
 				"skillId": "document-changes"
 			},
-			"id": "coding-spirit-document-changes_step_4",
 			"name": "Document changes",
 			"stepType": "skill"
 		}

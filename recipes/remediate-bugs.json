@@ -23,7 +23,6 @@
 				"filterBy": "{filterBy}",
 				"filterValue": "{filterValue}"
 			},
-			"id": "remediate-bugs_step_1",
 			"name": "Remediate bugs",
 			"stepType": "aidd-cli"
 		},
@@ -31,7 +30,6 @@
 			"configJson": {
 				"validate": true
 			},
-			"id": "remediate-bugs_step_2",
 			"name": "Validate completions",
 			"stepType": "aidd-cli"
 		},
@@ -41,7 +39,6 @@
 				"executionIntent": "apply-changes",
 				"skillId": "consolidate-features"
 			},
-			"id": "remediate-bugs_step_3",
 			"name": "Consolidate features",
 			"stepType": "skill"
 		}

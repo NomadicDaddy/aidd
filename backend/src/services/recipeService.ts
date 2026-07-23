@@ -1,4 +1,5 @@
 import { readSkillDefinition, type SkillDefinition } from 'aidd-shared/skills/catalog';
+import { isSystemRecipeId, systemRecipeName } from 'aidd-shared/system-recipes';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
@@ -41,6 +42,9 @@ export class RecipeService {
 	}
 
 	async deleteRecipe(id: string): Promise<void> {
+		if (isSystemRecipeId(id)) {
+			throw new HttpError(`System recipe cannot be deleted: ${id}`, 409);
+		}
 		await rm(recipePath(this.rootDir, id), { force: true });
 		recordDataMovement({
 			category: 'file',
@@ -148,6 +152,13 @@ export class RecipeService {
 
 	async writeRecipe(recipe: RecipeDefinition): Promise<RecipeDefinition> {
 		const normalized = normalizeRecipe(recipe, recipe.id);
+		const reservedName = systemRecipeName(normalized.id);
+		if (reservedName !== undefined && normalized.name !== reservedName) {
+			throw new HttpError(
+				`System recipe ${normalized.id} must keep its reserved name: ${reservedName}`,
+				409
+			);
+		}
 		await mkdir(join(this.rootDir, 'recipes'), { recursive: true });
 		await writeFile(
 			recipePath(this.rootDir, normalized.id),

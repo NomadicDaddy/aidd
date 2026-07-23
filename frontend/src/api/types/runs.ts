@@ -145,9 +145,11 @@ export interface RecipeStepDefinition {
 export interface RecipeDefinition {
 	description?: string;
 	id: string;
+	metadataOnly?: boolean;
 	name: string;
 	parameters: RecipeParameterDefinition[];
 	steps: RecipeStepDefinition[];
+	system?: boolean;
 }
 
 export interface PipelineSessionRecord {

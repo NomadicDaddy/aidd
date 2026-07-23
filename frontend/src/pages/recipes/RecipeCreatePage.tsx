@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
+import { isSystemRecipeId } from 'aidd-shared/system-recipes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -26,6 +27,7 @@ function slugifyName(name: string): string {
 function validateRecipeId(id: string, existingIds: Set<string>): null | string {
 	if (!id) return null;
 	if (id === 'new') return 'The id "new" is reserved';
+	if (isSystemRecipeId(id)) return 'This id is reserved for a system recipe';
 	if (!recipeIdPattern.test(id)) return 'Use only letters, numbers, hyphens, and underscores';
 	if (existingIds.has(id)) return 'A recipe with this id already exists';
 	return null;

@@ -65,7 +65,7 @@ export function RecipeDetailPage() {
 			return;
 		}
 		try {
-			const recipe: RecipeDefinition = {
+			const updatedRecipe: RecipeDefinition = {
 				id,
 				name: name.trim(),
 				parameters: parameters
@@ -76,8 +76,9 @@ export function RecipeDetailPage() {
 					),
 				steps: steps.map(toStep),
 			};
-			if (description.trim()) recipe.description = description.trim();
-			recipes.saveRecipe.mutate(recipe, {
+			if (description.trim()) updatedRecipe.description = description.trim();
+			if (recipeQuery.data?.metadataOnly === true) updatedRecipe.metadataOnly = true;
+			recipes.saveRecipe.mutate(updatedRecipe, {
 				onSuccess: () => {
 					toast.success('Recipe saved');
 					setMode('overview');
@@ -180,6 +181,7 @@ export function RecipeDetailPage() {
 				hasJsonErrors={hasJsonErrors}
 				id={id}
 				name={name}
+				nameReadOnly={recipe?.system === true}
 				onCancel={() => setMode('overview')}
 				onReload={reload}
 				onSave={save}

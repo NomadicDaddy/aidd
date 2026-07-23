@@ -1,4 +1,5 @@
 import { isSkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
+import { isSystemRecipeId } from 'aidd-shared/system-recipes';
 import { join } from 'node:path';
 
 import type {
@@ -150,10 +151,13 @@ export function normalizeRecipe(value: unknown, fallbackId: string): RecipeDefin
 		steps,
 		...(typeof value.description === 'string' ? { description: value.description } : {}),
 		...(value.metadataOnly === true ? { metadataOnly: true } : {}),
+		...(isSystemRecipeId(id) ? { system: true } : {}),
 	} satisfies RecipeDefinition;
 }
 
-export function recipeFilePayload(recipe: RecipeDefinition): Omit<RecipeDefinition, 'id'> {
+export function recipeFilePayload(
+	recipe: RecipeDefinition
+): Omit<RecipeDefinition, 'id' | 'system'> {
 	return {
 		...(recipe.description !== undefined ? { description: recipe.description } : {}),
 		...(recipe.metadataOnly === true ? { metadataOnly: true } : {}),

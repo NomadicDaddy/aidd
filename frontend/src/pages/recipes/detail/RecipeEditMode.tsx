@@ -26,6 +26,7 @@ interface Props {
 	id: string;
 	idError?: null | string;
 	name: string;
+	nameReadOnly?: boolean;
 	onCancel: () => void;
 	onReload?: () => void;
 	onSave: () => void;
@@ -46,6 +47,7 @@ export function RecipeEditMode({
 	id,
 	idError,
 	name,
+	nameReadOnly = false,
 	onCancel,
 	onReload,
 	onSave,
@@ -120,7 +122,16 @@ export function RecipeEditMode({
 				)}
 				<label className="space-y-1">
 					<span className="text-xs font-medium text-neutral-500 uppercase">Name</span>
-					<Input onChange={(event) => setName(event.target.value)} value={name} />
+					<Input
+						disabled={nameReadOnly}
+						onChange={(event) => setName(event.target.value)}
+						value={name}
+					/>
+					{nameReadOnly && (
+						<p className="text-xs text-neutral-500">
+							System recipe names are reserved and cannot be changed.
+						</p>
+					)}
 				</label>
 				<label className="space-y-1">
 					<span className="text-xs font-medium text-neutral-500 uppercase">

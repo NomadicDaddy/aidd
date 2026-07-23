@@ -8,6 +8,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatUsageBadge } from '../../lib/usageBadge.ts';
+import { RecipeContractBadges, RecipePolicyBadges } from './RecipeMetadataBadges.tsx';
 
 export function RecipeCard({
 	launchDisabled,
@@ -35,9 +36,12 @@ export function RecipeCard({
 					</Link>
 					<p className="truncate text-xs text-neutral-500">{recipe.id}</p>
 				</div>
-				<Badge tone={isPipeline ? 'cyan' : 'neutral'}>
-					{isPipeline ? 'pipeline' : 'single-step'}
-				</Badge>
+				<div className="flex flex-wrap justify-end gap-1.5">
+					<RecipeContractBadges recipe={recipe} />
+					<Badge tone={isPipeline ? 'cyan' : 'neutral'}>
+						{isPipeline ? 'pipeline' : 'single-step'}
+					</Badge>
+				</div>
 			</div>
 			<p className="mb-4 min-h-10 text-sm text-neutral-600 dark:text-neutral-300">
 				{recipe.description ?? 'No description'}
@@ -55,6 +59,9 @@ export function RecipeCard({
 				{[...new Set(recipe.steps.map((step) => step.stepType))].map((stepType) => (
 					<Badge key={stepType}>{stepType}</Badge>
 				))}
+			</div>
+			<div className="mb-4">
+				<RecipePolicyBadges recipe={recipe} />
 			</div>
 			{usageLine ? (
 				<p className="mb-3 text-xs text-neutral-400 dark:text-neutral-500">{usageLine}</p>
@@ -104,6 +111,9 @@ export function RecipeTable({
 							Steps
 						</th>
 						<th className="px-3 py-3" scope="col">
+							Policies
+						</th>
+						<th className="px-3 py-3" scope="col">
 							Parameters
 						</th>
 						<th className="px-3 py-3" scope="col">
@@ -133,11 +143,17 @@ export function RecipeTable({
 									</div>
 								</td>
 								<td className="px-3 py-3">
-									<Badge tone={isPipeline ? 'cyan' : 'neutral'}>
-										{isPipeline ? 'pipeline' : 'single-step'}
-									</Badge>
+									<div className="flex flex-wrap gap-1.5">
+										<Badge tone={isPipeline ? 'cyan' : 'neutral'}>
+											{isPipeline ? 'pipeline' : 'single-step'}
+										</Badge>
+										<RecipeContractBadges recipe={recipe} />
+									</div>
 								</td>
 								<td className="px-3 py-3">{recipe.steps.length}</td>
+								<td className="min-w-56 px-3 py-3">
+									<RecipePolicyBadges recipe={recipe} />
+								</td>
 								<td className="px-3 py-3">{recipe.parameters.length}</td>
 								<td className="px-3 py-3 text-xs text-neutral-500 dark:text-neutral-400">
 									{usageLine ?? '—'}

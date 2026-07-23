@@ -39,6 +39,7 @@ export interface RecipeDefinition {
 	name: string;
 	parameters: RecipeParameterDefinition[];
 	steps: RecipeStepDefinition[];
+	system?: boolean;
 }
 
 export interface PipelineSessionRecord {

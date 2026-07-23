@@ -13,6 +13,7 @@ import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { DropdownMenu } from '../../../components/ui/dropdown-menu.tsx';
 import { RecipeLaunchPanel } from '../RecipeLaunchPanel.tsx';
+import { RecipeContractBadges, RecipePolicyBadges } from '../RecipeMetadataBadges.tsx';
 import { RecipePipelineView } from '../RecipePipelineView.tsx';
 import { RecipeParamsOverview } from './RecipeParamsOverview.tsx';
 
@@ -48,8 +49,12 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 								},
 								{
 									'data-tone': 'danger',
+									disabled: recipe.system === true,
 									icon: <Trash2 className="h-4 w-4" />,
-									label: 'Delete',
+									label:
+										recipe.system === true
+											? 'Delete (system protected)'
+											: 'Delete',
 									onSelect: onDelete,
 								},
 							]}
@@ -74,6 +79,11 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 				helpSlug="recipes"
 				title={recipe.name}
 			/>
+
+			<div className="flex flex-wrap items-center gap-2">
+				<RecipeContractBadges recipe={recipe} />
+				<RecipePolicyBadges recipe={recipe} />
+			</div>
 
 			{showLaunch && (
 				<RecipeLaunchPanel onClose={() => setShowLaunch(false)} recipe={recipe} />

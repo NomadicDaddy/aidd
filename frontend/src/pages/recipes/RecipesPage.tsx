@@ -225,7 +225,7 @@ export function RecipesPage() {
 
 			{recipes.recipes.isLoading && allRecipes.length === 0 ? (
 				recipesView === 'table' ? (
-					<SkeletonRows columns={6} count={6} label="Loading recipes…" />
+					<SkeletonRows columns={7} count={6} label="Loading recipes…" />
 				) : (
 					<SkeletonCards count={6} label="Loading recipes…" />
 				)

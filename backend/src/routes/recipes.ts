@@ -29,6 +29,7 @@ const recipeStepBody = t.Object({
 const recipeBody = t.Object({
 	description: t.Optional(t.String()),
 	id: t.Optional(t.String()),
+	metadataOnly: t.Optional(t.Boolean()),
 	name: t.String(),
 	parameters: t.Optional(
 		t.Array(

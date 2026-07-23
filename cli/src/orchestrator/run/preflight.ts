@@ -120,11 +120,24 @@ export async function handleNoWorkIteration(input: {
 // backlog; reporting it as no_work rendered it as a neutral grey "No work" badge and the
 // block went unnoticed. 'blocked' maps to the existing red "Blocked: gate" treatment.
 // Exit code stays success: nothing crashed, and launchers must not retry-storm it.
-function noWorkStopReason(work: SelectedWork): StopReason {
+// Exported for unit tests.
+export function noWorkStopReason(work: SelectedWork): StopReason {
 	const data = work.data as
-		| { requestedFeature?: unknown; requestedMilestone?: unknown; roadmapGate?: unknown }
+		| {
+				leaseHolderRunId?: unknown;
+				requestedFeature?: unknown;
+				requestedMilestone?: unknown;
+				roadmapGate?: unknown;
+		  }
 		| undefined;
 	if (data === undefined) return 'no_work';
+	// An explicit feature launch refused because another live run holds the feature's lease is
+	// a per-feature refusal the operator should see, not an empty backlog. Untargeted selection
+	// that merely found every candidate leased stays plain no_work — the loser of a lease race
+	// exhausting the queue is normal concurrent operation.
+	if (data.leaseHolderRunId !== undefined && data.requestedFeature !== undefined) {
+		return 'blocked';
+	}
 	const gate = data.roadmapGate as { blocked?: unknown } | undefined;
 	if (gate?.blocked === true) return 'blocked';
 	// Feature/milestone targets outside the active milestone carry a non-blocked gate plus the

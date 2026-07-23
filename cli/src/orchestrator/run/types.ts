@@ -1,5 +1,6 @@
 import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
 import type { CliActiveRunSource } from 'aidd-shared/metadata/active-runs';
+import type { FeatureLeaseService } from 'aidd-shared/metadata/feature-leases';
 import type { AiddStore } from 'aidd-shared/metadata/store';
 import type { ModeResult, SelectedWork } from 'aidd-shared/modes/types';
 import type { AgentRunResult, IterationMetrics, StopReason } from 'aidd-shared/orchestrator/result';
@@ -27,6 +28,12 @@ export interface OrchestratorDeps {
 	completionMarkerGraceMs?: number;
 	/** Test seam for the preflight doctor's spawn probes. */
 	doctorProber?: DoctorProber;
+	/** Cross-run feature lease coordinator, injected by the CLI entrypoint for coding runs.
+	 * Selection acquires leases (skipping features held by concurrent live runs) and the
+	 * terminal writeRunSummary releases everything this run holds — completion, failure, and
+	 * parking all funnel through it. Hard deaths skip release; the web orphan reap deletes a
+	 * dead run's leases alongside its worktree. */
+	featureLeases?: FeatureLeaseService;
 	/** Worktree finalization hook, injected by the CLI entrypoint. Called once at run end with
 	 * the orchestrator's exit code; persists run evidence canonically, merges/discards the
 	 * worktree, applies the metadata delta on a landed merge, and reports the outcome (including

@@ -9,6 +9,7 @@ import {
 	EXT_RUN_SOURCE_ENV,
 	type CliActiveRunSource,
 } from 'aidd-shared/metadata/active-runs';
+import { createFeatureLeaseService } from 'aidd-shared/metadata/feature-leases';
 import { UnknownMilestoneError, resolveMilestone } from 'aidd-shared/metadata/roadmap';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { readAiddVersion, resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
@@ -219,6 +220,20 @@ export async function run(argv: string[]): Promise<number> {
 		// crash-scoped resource with cross-run effects (e.g. feature leases) must therefore be
 		// released by that sweep, never by in-process cleanup alone.
 		if (heartbeat) installCrashFinalizer(heartbeat);
+		const runId = heartbeat?.id ?? `cli-${Date.now()}`;
+		// Cross-run feature leases (coding runs, worktree AND live-tree): concurrent runs against
+		// one project coordinate selection through exclusive lease files under git's common dir,
+		// so two runs can never claim the same feature. Rooted at the CANONICAL projectDir — the
+		// common dir is shared by every linked worktree either way. In-process release happens in
+		// writeRunSummary (all terminal outcomes) and in the catch below; hard deaths reap via web.
+		const featureLeases =
+			plan.mode === 'coding'
+				? createFeatureLeaseService({
+						pid: process.pid,
+						projectDir: plan.projectDir,
+						runId,
+					})
+				: undefined;
 		try {
 			// Worktree isolation: when requested (and the project has a committed HEAD), the run
 			// executes in a throwaway git worktree on branch aidd/run-<id>, seeded with the
@@ -230,7 +245,7 @@ export async function run(argv: string[]): Promise<number> {
 			const worktreeRun = await prepareWorktreeRun({
 				plan,
 				requested: args.worktree === true,
-				runId: heartbeat?.id ?? `cli-${Date.now()}`,
+				runId,
 				...(webDataDir ? { webDataDir } : {}),
 			});
 			const runStore = plan.worktree ? new FileAiddStore(plan.worktree.dir) : store;
@@ -245,6 +260,7 @@ export async function run(argv: string[]): Promise<number> {
 				aiddProvenance,
 				...(aiSummarizer ? { aiSummarizer } : {}),
 				backend,
+				...(featureLeases ? { featureLeases } : {}),
 				...(worktreeRun
 					? worktreeOrchestratorDeps(plan, worktreeRun, store, resolveConflict)
 					: {}),
@@ -257,8 +273,10 @@ export async function run(argv: string[]): Promise<number> {
 			return code;
 		} catch (err) {
 			// A thrown failure (config/backend/fs error) never reached merge-back: preserve
-			// evidence, discard the worktree, rethrow to the outer handler.
+			// evidence, discard the worktree, release the run's feature leases (writeRunSummary
+			// never ran), rethrow to the outer handler.
 			await rollbackWorktreeRun(plan);
+			await featureLeases?.releaseAll();
 			throw err;
 		} finally {
 			await heartbeat?.dispose();

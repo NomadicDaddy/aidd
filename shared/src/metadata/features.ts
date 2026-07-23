@@ -4,6 +4,7 @@ export {
 	featureMatchesQuery,
 	isAuditFinding,
 	isRemediationFeature,
+	selectFeatureCandidates,
 	selectNextFeature,
 	summarizeFeatures,
 } from './features/query.ts';

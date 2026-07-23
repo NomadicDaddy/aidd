@@ -1,4 +1,5 @@
 import { CLI_ACTIVE_RUN_STALE_MS } from 'aidd-shared/metadata/active-runs';
+import { reapRunFeatureLeases } from 'aidd-shared/metadata/feature-leases';
 import { inArray } from 'drizzle-orm';
 
 import type { HeartbeatWriteOutcome } from '../../db/commands.ts';
@@ -64,6 +65,16 @@ export async function sweepOrphanedRuns(ctx: QueriesContext): Promise<SweptRunIn
 		// terminal heartbeat), so this never touches a deliberately-preserved worktree.
 		if (run.worktreePath) {
 			await reapRunWorktree(run.projectPath, run.worktreePath, run.worktreeBranch);
+		}
+		// The dead process never released its cross-run feature leases (a hard death skips
+		// in-process release); this reap is the release of record. Keyed by the dead run's id,
+		// so it applies to live-tree runs too and never touches a live run's lease.
+		const reapedLeases = await reapRunFeatureLeases(run.projectPath, run.id);
+		if (reapedLeases > 0) {
+			webLogger.warn(
+				{ count: reapedLeases, runId: run.id },
+				'Reaped feature leases held by dead run'
+			);
 		}
 		if (run.mode === 'audit') ctx.onProjectChanged?.(run.projectPath);
 		ctx.hub.broadcast({

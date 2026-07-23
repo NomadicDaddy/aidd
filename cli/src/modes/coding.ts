@@ -2,10 +2,10 @@ import type { ModeContext, ModeHandler, ModeResult, SelectedWork } from 'aidd-sh
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { readPersistedBlueprintReadiness } from 'aidd-shared/metadata/blueprint';
-import { selectNextFeature } from 'aidd-shared/metadata/features';
 
 import { createPlanBackedMode } from './base.ts';
 import { evaluateFeatureCompletion } from './coding/completion.ts';
+import { selectLeasableFeature } from './coding/lease-selection.ts';
 import {
 	type RoadmapScopedQuery,
 	featureQuery,
@@ -222,10 +222,20 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				allFeatures,
 				scoped.query.includeAudit === true
 			);
-			const selected = selectNextFeature(
+			// Lease-aware selection: concurrent runs against this project (worktree or live-tree)
+			// race on exclusive per-feature leases, so the ranked winner here is the first
+			// candidate this run actually holds — never a feature another live run is working.
+			const selection = await selectLeasableFeature({
+				context,
+				explicitTarget: explicitFeatureTarget(plan),
 				features,
-				scoped.query.includeAudit ? { allFeatures, includeAudit: true } : { allFeatures }
-			);
+				options: scoped.query.includeAudit
+					? { allFeatures, includeAudit: true }
+					: { allFeatures },
+				totalCandidates: features.length,
+			});
+			if (selection.leaseBlocked) return selection.leaseBlocked;
+			const selected = selection.selected;
 			if (!selected) {
 				return {
 					data: {

@@ -169,6 +169,11 @@ export async function writeRunSummary(
 	if (!plan.outputPolicy.noClean) {
 		await cleanIterationLogs(metadataPath(plan.projectDir, 'iterations')).catch(() => {});
 	}
+	// Release the run's cross-run feature leases last: every terminal outcome (completion,
+	// failure, no-work, parked merge — finalizeWorktree already ran above) funnels through this
+	// function, so leases are dropped exactly when the run stops being live. A hard process
+	// death never reaches here; the web orphan reap deletes those leases by dead run id.
+	await deps.featureLeases?.releaseAll();
 	await deps.observer?.onFinalSummary?.({
 		aiSummary,
 		backendExitCode: acc.lastBackendExitCode ?? null,

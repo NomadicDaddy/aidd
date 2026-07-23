@@ -85,12 +85,15 @@ export function summarizeFeatures(features: Feature[]): FeatureStats {
 	return stats;
 }
 
-export function selectNextFeature(
+/** Full selection ranking (in_progress first, then priority, then id) with every ineligible
+ * feature filtered out. Exposed so lease-aware selection can walk past candidates leased by a
+ * concurrent run instead of only ever seeing the single top pick. */
+export function selectFeatureCandidates(
 	features: Feature[],
 	options: FeatureSelectionOptions = {}
-): Feature | undefined {
+): Feature[] {
 	const allFeatures = options.allFeatures ?? features;
-	const candidates = features
+	return features
 		.filter((feature) => feature.passes !== true)
 		.filter((feature) => feature.status !== 'waiting_approval')
 		.filter((feature) => options.includeAudit || !isAuditFinding(feature))
@@ -104,7 +107,13 @@ export function selectNextFeature(
 				(a.directory ?? a.id).localeCompare(b.directory ?? b.id)
 			);
 		});
-	return candidates[0];
+}
+
+export function selectNextFeature(
+	features: Feature[],
+	options: FeatureSelectionOptions = {}
+): Feature | undefined {
+	return selectFeatureCandidates(features, options)[0];
 }
 
 export function dependenciesAreSatisfied(feature: Feature, allFeatures: Feature[]): boolean {

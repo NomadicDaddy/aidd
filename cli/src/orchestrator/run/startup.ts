@@ -59,6 +59,7 @@ export async function initializeOrchestratorRun(
 			projectDir: runRepoDir(plan),
 			rootDir: deps.rootDir,
 			store: deps.store,
+			...(deps.featureLeases ? { featureLeases: deps.featureLeases } : {}),
 			...(deps.scoringRoots ? { scoringRoots: deps.scoringRoots } : {}),
 		},
 		kind: 'ready',

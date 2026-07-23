@@ -29,6 +29,7 @@ import {
 	writeCliActiveRunRecord,
 	type CliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
+import { createFeatureLeaseService } from 'aidd-shared/metadata/feature-leases';
 import {
 	heartbeatTerminator,
 	logWriter,
@@ -52,6 +53,24 @@ async function waitFor<T>(
 		if (Date.now() - startedAt > 5000) throw new Error('Timed out waiting for run state');
 		await wait(25);
 	}
+}
+
+// The reap paths resolve leases through git's common dir, so the fixture project must be a
+// real repository for lease assertions to exercise anything.
+async function gitInitRepo(dir: string): Promise<void> {
+	await mkdir(dir, { recursive: true });
+	const proc = Bun.spawn(['git', 'init', dir], {
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if ((await proc.exited) !== 0) {
+		throw new Error(`git init failed: ${await new Response(proc.stderr).text()}`);
+	}
+}
+
+function leaseServiceFor(projectDir: string, runId: string) {
+	return createFeatureLeaseService({ pid: process.pid, projectDir, runId });
 }
 
 async function makeProject(root: string): Promise<string> {
@@ -2018,6 +2037,18 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 					startedAt,
 					status: 'completed',
 				});
+				// A dead run's cross-run feature leases must be reaped alongside the reconcile
+				// (the hard-dead process never released them in-process); another run's lease
+				// must survive untouched. Lease pids are this live test process, so a successful
+				// probe below can only mean the reconcile deleted the file — not a pid-dead steal.
+				const demoDir = join(workspace, 'demo');
+				await gitInitRepo(demoDir);
+				expect(
+					await leaseServiceFor(demoDir, 'run_orphan_1').acquire('feat-orphaned')
+				).toEqual({ acquired: true });
+				expect(
+					await leaseServiceFor(demoDir, 'run_live_other').acquire('feat-live')
+				).toEqual({ acquired: true });
 
 				await service.reconcileStaleRuns();
 
@@ -2041,6 +2072,13 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 						message.includes('"exitCode":-1')
 				);
 				expect(reconciledBroadcast).toBeDefined();
+
+				// The dead run's lease is gone (a fresh run can claim the feature); the other
+				// run's lease was never touched.
+				const probe = leaseServiceFor(demoDir, 'run_probe');
+				expect(await probe.acquire('feat-orphaned')).toEqual({ acquired: true });
+				const stillHeld = await probe.acquire('feat-live');
+				expect(stillHeld.acquired).toBe(false);
 			} finally {
 				service.markDisposed();
 				sqlite.close();
@@ -2130,6 +2168,17 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 						tailStopped = true;
 					},
 				});
+				// The dead run's cross-run feature lease must be reaped with it; the spared
+				// startup run's lease must survive. Lease pids are this live test process, so a
+				// successful probe below can only mean the sweep deleted the file.
+				const demoDir = join(workspace, 'demo');
+				await gitInitRepo(demoDir);
+				expect(
+					await leaseServiceFor(demoDir, 'run_sweep_dead').acquire('feat-swept')
+				).toEqual({ acquired: true });
+				expect(
+					await leaseServiceFor(demoDir, 'run_sweep_starting').acquire('feat-starting')
+				).toEqual({ acquired: true });
 
 				const swept = await service.sweepOrphanedRuns();
 				expect(swept).toBe(1);
@@ -2143,6 +2192,12 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				// A run still in startup (live pid) must survive the sweep.
 				const starting = await service.getRun('run_sweep_starting');
 				expect(starting?.status).toBe('running');
+
+				// The dead run's lease is free again; the live startup run's lease is untouched.
+				const leaseProbe = leaseServiceFor(demoDir, 'run_sweep_probe');
+				expect(await leaseProbe.acquire('feat-swept')).toEqual({ acquired: true });
+				const stillLeased = await leaseProbe.acquire('feat-starting');
+				expect(stillLeased.acquired).toBe(false);
 
 				// A detached pidless startup (real pid not yet recorded) must also survive.
 				const pidless = await service.getRun('run_sweep_pidless');

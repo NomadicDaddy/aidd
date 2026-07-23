@@ -1,5 +1,6 @@
 import { isProcessAlive } from 'aidd-shared/lib/processTree';
 import { activeRunFilePath, CLI_ACTIVE_RUN_STALE_MS } from 'aidd-shared/metadata/active-runs';
+import { reapRunFeatureLeases } from 'aidd-shared/metadata/feature-leases';
 import { eq, inArray } from 'drizzle-orm';
 import { rm } from 'node:fs/promises';
 
@@ -18,6 +19,16 @@ import { reapRunWorktree } from './worktreeReap.ts';
 
 function commandArgsJson(commandArgs: null | string[] | undefined): null | string {
 	return commandArgs && commandArgs.length > 0 ? JSON.stringify(commandArgs) : null;
+}
+
+// A run reconciled dead never released its cross-run feature leases in-process (a hard death
+// skips finalization); deleting them here — alongside the worktree reap — is the release of
+// record. Keyed by the dead run's id, so it covers live-tree runs and never touches a live run.
+async function reapDeadRunLeases(projectPath: string, runId: string): Promise<void> {
+	const reaped = await reapRunFeatureLeases(projectPath, runId);
+	if (reaped > 0) {
+		webLogger.warn({ count: reaped, runId }, 'Reaped feature leases held by dead run');
+	}
 }
 
 // Invoked once at web startup before serving. Reads each non-terminal `runs` row's on-disk
@@ -69,6 +80,7 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 			if (run.worktreePath) {
 				await reapRunWorktree(run.projectPath, run.worktreePath, run.worktreeBranch);
 			}
+			await reapDeadRunLeases(run.projectPath, run.id);
 			failedCount++;
 			continue;
 		}
@@ -158,6 +170,7 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 			if (run.worktreePath) {
 				await reapRunWorktree(run.projectPath, run.worktreePath, run.worktreeBranch);
 			}
+			await reapDeadRunLeases(run.projectPath, run.id);
 			failedCount++;
 			continue;
 		}

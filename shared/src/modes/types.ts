@@ -1,8 +1,13 @@
+import type { FeatureLeaseService } from '../metadata/feature-leases.ts';
 import type { AiddStore } from '../metadata/store.ts';
 import type { AgentRunResult, StopReason } from '../orchestrator/result.ts';
 import type { PromptPlan, AiddMode } from '../plan/types.ts';
 
 export interface ModeContext {
+	/** Cross-run feature lease coordinator, present on coding runs. Selection acquires a lease
+	 * before claiming a feature and skips features leased by a concurrent live run against the
+	 * same project (worktree or live-tree). */
+	featureLeases?: FeatureLeaseService;
 	projectDir: string;
 	rootDir?: string;
 	scoringRoots?: readonly string[];

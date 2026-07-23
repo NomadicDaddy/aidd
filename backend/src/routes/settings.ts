@@ -3,12 +3,13 @@ import { Elysia, t } from 'elysia';
 import type { WebContext } from '../context.ts';
 
 import { HttpError } from '../services/errors.ts';
-import {
-	getCliStatus,
-	getSourceControlStatus,
-	type StatusCommandRunner,
-} from '../services/settings/status.ts';
+import { type StatusCommandRunner } from '../services/settings/status.ts';
+import { SettingsStatusCache } from '../services/settings/statusCache.ts';
 import { backendNameBody } from './schemas/backend.ts';
+
+// Panels send ?refresh=true only from their explicit Refresh control; ordinary page
+// loads reuse the cached probe.
+const statusRefreshQuery = t.Object({ refresh: t.Optional(t.String()) });
 
 const nullableString = t.Union([t.String(), t.Null()]);
 const nullableNumber = t.Union([t.Number(), t.Null()]);
@@ -131,18 +132,26 @@ export const settingsConfigBody = t.Object({
 
 export function createSettingsRoutes(
 	context: WebContext,
-	options: { statusCommandRunner?: StatusCommandRunner } = {}
+	options: { statusCommandRunner?: StatusCommandRunner; warmStatusCache?: boolean } = {}
 ) {
+	const statusCache = new SettingsStatusCache(options.statusCommandRunner);
+	if (options.warmStatusCache) statusCache.warm();
 	return new Elysia({ prefix: '/api/v1/settings' })
 		.get('/config', async () => ({ config: await context.settingsService.getConfig() }))
-		.get('/cli-status', async () => ({
-			backends: await getCliStatus(options.statusCommandRunner),
-		}))
-		.get('/source-control-status', async () => ({
-			providers: await getSourceControlStatus(
-				options.statusCommandRunner ? { runner: options.statusCommandRunner } : {}
-			),
-		}))
+		.get(
+			'/cli-status',
+			async ({ query }) => ({
+				backends: await statusCache.cliStatus(query.refresh === 'true'),
+			}),
+			{ query: statusRefreshQuery }
+		)
+		.get(
+			'/source-control-status',
+			async ({ query }) => ({
+				providers: await statusCache.sourceControlStatus(query.refresh === 'true'),
+			}),
+			{ query: statusRefreshQuery }
+		)
 		.put(
 			'/config',
 			async ({ body }) => {

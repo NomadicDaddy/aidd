@@ -942,6 +942,162 @@ describe('web settings config', () => {
 		await rm(workspace, { force: true, recursive: true });
 	});
 
+	test('settings status routes cache probes until a refresh is requested', async () => {
+		const workspace = await testTempDir('aidd-web-settings-status-cache-');
+		const configPath = join(workspace, 'config.json');
+		const web = {
+			allowRemote: false,
+			allowedOrigins: [],
+			allowedRoots: [workspace],
+			dataDir: join(workspace, 'data'),
+			hostname: '127.0.0.1',
+			ignoredFolders: ['.git', 'node_modules'],
+			maxConcurrentRuns: 2,
+			maxConcurrentRunsPerProject: 2,
+			autoChainLimit: 3,
+			autoChainRuns: false,
+			useWorktrees: false,
+			port: 3210,
+			spernakitFleetManifest: null,
+			spernakitInitScript: null,
+			spernakitTemplateRef: null,
+			showSpernakitProject: false,
+			spernakitTemplateRepo: 'NomadicDaddy/spernakit',
+			templates: [],
+			traceDataMovement: true,
+		};
+		let probes = 0;
+		const runner: StatusCommandRunner = async (command, args) => {
+			probes += 1;
+			return { exitCode: 0, stderr: '', stdout: `${command} ${args.join(' ')} 1.2.3` };
+		};
+		const config = makeConfig(web);
+		const app = createSettingsRoutes(
+			{
+				config,
+				directorService: { updateConfig() {} },
+				directAiService: { updateConfig() {} },
+				projectService: { updateConfig() {} },
+				runService: { updateConfig() {} },
+				settingsService: new SettingsService(config, configPath),
+			} as unknown as WebContext,
+			{ statusCommandRunner: runner }
+		);
+
+		const first = await app.handle(new Request('http://localhost/api/v1/settings/cli-status'));
+		expect(first.status).toBe(200);
+		const afterFirst = probes;
+		expect(afterFirst).toBeGreaterThan(0);
+
+		// A plain reload — the case that used to spawn the whole subprocess fleet again.
+		const second = await app.handle(new Request('http://localhost/api/v1/settings/cli-status'));
+		expect(second.status).toBe(200);
+		expect(probes).toBe(afterFirst);
+		expect(await second.json()).toEqual(await first.json());
+
+		// The panel's Refresh control is the only thing that pays for a re-probe.
+		const refreshed = await app.handle(
+			new Request('http://localhost/api/v1/settings/cli-status?refresh=true')
+		);
+		expect(refreshed.status).toBe(200);
+		expect(probes).toBe(afterFirst * 2);
+
+		// Source control is cached independently, so refreshing one panel does not
+		// silently re-probe the other.
+		const beforeSourceControl = probes;
+		await app.handle(new Request('http://localhost/api/v1/settings/source-control-status'));
+		const afterSourceControl = probes;
+		expect(afterSourceControl).toBeGreaterThan(beforeSourceControl);
+		await app.handle(new Request('http://localhost/api/v1/settings/source-control-status'));
+		expect(probes).toBe(afterSourceControl);
+
+		await rm(workspace, { force: true, recursive: true });
+	});
+
+	test('settings status routes probe at construction only when warm-start is enabled', async () => {
+		const workspace = await testTempDir('aidd-web-settings-status-warm-');
+		const configPath = join(workspace, 'config.json');
+		const web = {
+			allowRemote: false,
+			allowedOrigins: [],
+			allowedRoots: [workspace],
+			dataDir: join(workspace, 'data'),
+			hostname: '127.0.0.1',
+			ignoredFolders: ['.git', 'node_modules'],
+			maxConcurrentRuns: 2,
+			maxConcurrentRunsPerProject: 2,
+			autoChainLimit: 3,
+			autoChainRuns: false,
+			useWorktrees: false,
+			port: 3210,
+			spernakitFleetManifest: null,
+			spernakitInitScript: null,
+			spernakitTemplateRef: null,
+			showSpernakitProject: false,
+			spernakitTemplateRepo: 'NomadicDaddy/spernakit',
+			templates: [],
+			traceDataMovement: true,
+		};
+		const config = makeConfig(web);
+		const buildApp = (warm: boolean, counts: Map<string, number>) =>
+			createSettingsRoutes(
+				{
+					config,
+					directorService: { updateConfig() {} },
+					directAiService: { updateConfig() {} },
+					projectService: { updateConfig() {} },
+					runService: { updateConfig() {} },
+					settingsService: new SettingsService(config, configPath),
+				} as unknown as WebContext,
+				{
+					statusCommandRunner: async (command, args) => {
+						counts.set(command, (counts.get(command) ?? 0) + 1);
+						return {
+							exitCode: 0,
+							stderr: '',
+							stdout: `${command} ${args.join(' ')} 1.2.3`,
+						};
+					},
+					warmStatusCache: warm,
+				}
+			);
+
+		// Control: without the flag nothing is spawned until a request arrives, so the option
+		// is what moves the subprocess fleet off the request path rather than something the
+		// route did anyway.
+		const coldCounts = new Map<string, number>();
+		buildApp(false, coldCounts);
+		await Bun.sleep(0);
+		expect(coldCounts.get('codex') ?? 0).toBe(0);
+
+		const warmCounts = new Map<string, number>();
+		const warmApp = buildApp(true, warmCounts);
+		await Bun.sleep(0);
+		expect(warmCounts.get('codex')).toBe(1);
+
+		// The first Settings visit reads the boot probe instead of paying for its own.
+		const first = await warmApp.handle(
+			new Request('http://localhost/api/v1/settings/cli-status')
+		);
+		expect(first.status).toBe(200);
+		expect(warmCounts.get('codex')).toBe(1);
+
+		const refreshed = await warmApp.handle(
+			new Request('http://localhost/api/v1/settings/cli-status?refresh=true')
+		);
+		expect(refreshed.status).toBe(200);
+		expect(warmCounts.get('codex')).toBe(2);
+
+		// The option only warms anything if the server actually passes it; there is no cheap
+		// way to boot the real listener here, so assert the wiring at its single call site.
+		const serverSource = await Bun.file(
+			resolve(import.meta.dir, '..', '..', 'backend', 'src', 'server.ts')
+		).text();
+		expect(serverSource).toContain('createSettingsRoutes(context, { warmStatusCache: true })');
+
+		await rm(workspace, { force: true, recursive: true });
+	});
+
 	test('normalizes persisted ignoredFolders containing blank and duplicate values on read', async () => {
 		const workspace = await testTempDir('aidd-web-settings-blanks-');
 		const configPath = join(workspace, 'config.json');

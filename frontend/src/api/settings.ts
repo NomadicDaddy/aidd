@@ -114,14 +114,22 @@ function buildProvidersBody(providers: Record<string, ProviderSettings>): Record
 	return result;
 }
 
-export async function getCliStatus(): Promise<SettingsCliStatus[]> {
-	const response = await apiGet<{ backends: SettingsCliStatus[] }>('/api/v1/settings/cli-status');
+// The backend probes installed CLIs once and caches the result; `refresh` forces a
+// re-probe and is sent only from the panels' Refresh controls.
+const refreshSuffix = (refresh: boolean) => (refresh ? '?refresh=true' : '');
+
+export async function getCliStatus(refresh = false): Promise<SettingsCliStatus[]> {
+	const response = await apiGet<{ backends: SettingsCliStatus[] }>(
+		`/api/v1/settings/cli-status${refreshSuffix(refresh)}`
+	);
 	return response.backends;
 }
 
-export async function getSourceControlStatus(): Promise<SettingsSourceControlStatus[]> {
+export async function getSourceControlStatus(
+	refresh = false
+): Promise<SettingsSourceControlStatus[]> {
 	const response = await apiGet<{ providers: SettingsSourceControlStatus[] }>(
-		'/api/v1/settings/source-control-status'
+		`/api/v1/settings/source-control-status${refreshSuffix(refresh)}`
 	);
 	return response.providers;
 }

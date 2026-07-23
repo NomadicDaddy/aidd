@@ -157,7 +157,9 @@ export function createWebServer(context: WebContext) {
 			.use(createLaunchDefaultsRoutes(context))
 			.use(createRecipesRoutes(context))
 			.use(createPipelineSessionsRoutes(context))
-			.use(createSettingsRoutes(context))
+			// warmStatusCache probes the installed CLIs once at boot, off the request path,
+			// so the first Settings visit does not wait on the subprocess fleet.
+			.use(createSettingsRoutes(context, { warmStatusCache: true }))
 			.use(createTelemetryRoutes(context))
 			.use(createSystemRoutes(context))
 			.use(createTerminalRoutes(context))

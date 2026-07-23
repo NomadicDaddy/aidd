@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import type { WebConfigSettings } from '../api/types.ts';
 
@@ -8,6 +9,7 @@ import {
 	getSourceControlStatus,
 	updateSettingsConfig,
 } from '../api/settings.ts';
+import { createToolStatusGate } from './toolStatusRefresh.ts';
 
 export function useSettingsConfig() {
 	return useQuery({
@@ -30,20 +32,50 @@ export function useUpdateSettingsConfig() {
 	});
 }
 
-export function useCliStatus() {
-	return useQuery({
+/**
+ * Tool status changes only when a CLI is installed, removed, or upgraded, and probing it
+ * spawns a subprocess per tool. The backend therefore caches its probe, and these hooks
+ * hold the result indefinitely: a plain load (or tab revisit) reuses it, while `refetch`
+ * asks the backend for a genuine re-probe. Without the flag the two are indistinguishable
+ * over HTTP and Refresh would silently return the cached answer.
+ */
+function useToolStatus<T>(
+	queryKey: string,
+	fetcher: (refresh?: boolean) => Promise<T>
+): {
+	data: T | undefined;
+	isError: boolean;
+	isFetching: boolean;
+	isLoading: boolean;
+	refetch: () => void;
+} {
+	// Lazy initial state, not a ref: the gate must be created exactly once per hook instance
+	// (a fresh one would drop a pending refresh), and reading a ref during render is banned.
+	const [gate] = useState(() => createToolStatusGate(fetcher));
+	const query = useQuery({
 		placeholderData: keepPreviousData,
-		queryFn: getCliStatus,
-		queryKey: ['settings-cli-status'],
+		queryFn: gate.run,
+		queryKey: [queryKey],
+		staleTime: Infinity,
 	});
+	return {
+		data: query.data,
+		isError: query.isError,
+		isFetching: query.isFetching,
+		isLoading: query.isLoading,
+		refetch: () => {
+			gate.requestRefresh();
+			void query.refetch();
+		},
+	};
+}
+
+export function useCliStatus() {
+	return useToolStatus('settings-cli-status', getCliStatus);
 }
 
 export function useSourceControlStatus() {
-	return useQuery({
-		placeholderData: keepPreviousData,
-		queryFn: getSourceControlStatus,
-		queryKey: ['settings-source-control-status'],
-	});
+	return useToolStatus('settings-source-control-status', getSourceControlStatus);
 }
 
 /**
@@ -53,9 +85,16 @@ export function useSourceControlStatus() {
  */
 export function usePrefetchStatusPanels() {
 	const queryClient = useQueryClient();
-	void queryClient.prefetchQuery({ queryFn: getCliStatus, queryKey: ['settings-cli-status'] });
+	// Arrow wrappers matter: react-query calls queryFn with a context object, which as a
+	// positional `refresh` argument would be truthy and force a re-probe on every prefetch.
 	void queryClient.prefetchQuery({
-		queryFn: getSourceControlStatus,
+		queryFn: () => getCliStatus(),
+		queryKey: ['settings-cli-status'],
+		staleTime: Infinity,
+	});
+	void queryClient.prefetchQuery({
+		queryFn: () => getSourceControlStatus(),
 		queryKey: ['settings-source-control-status'],
+		staleTime: Infinity,
 	});
 }

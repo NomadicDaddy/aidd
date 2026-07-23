@@ -9,6 +9,7 @@ const recipesDir = join(import.meta.dir, '..', '..', 'recipes');
 
 interface RecipeFile {
 	name: string;
+	parameters: { defaultValue?: string; description: string; name: string }[];
 	steps: { configJson: Record<string, unknown>; id?: string; name: string; stepType: string }[];
 }
 
@@ -62,6 +63,26 @@ describe('bundled recipe consistency', () => {
 				expect(prompt).toContain('Do not act on false positives');
 				expect(prompt).toContain('requires user input');
 			}
+		}
+	});
+
+	test('forwards the optional feature target through every coding workflow', async () => {
+		const recipes = await readRecipes();
+		for (const id of [
+			'coding',
+			'coding-review-remediate-document-changes',
+			'coding-spirit-document-changes',
+			'coding-spirit-coderabbit-document-changes',
+		]) {
+			const recipe = recipes.get(id);
+			const feature = recipe?.parameters.find((parameter) => parameter.name === 'feature');
+			expect(feature?.defaultValue, `${id} feature default`).toBe('');
+			expect(feature?.description, `${id} feature description`).toBe(
+				'Optional feature directory or id to complete'
+			);
+			expect(recipe?.steps[0]?.configJson.feature, `${id} coding feature target`).toBe(
+				'{feature}'
+			);
 		}
 	});
 });

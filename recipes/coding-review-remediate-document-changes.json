@@ -5,11 +5,18 @@
 		{
 			"description": "Target application name",
 			"name": "application"
+		},
+		{
+			"defaultValue": "",
+			"description": "Optional feature directory or id to complete",
+			"name": "feature"
 		}
 	],
 	"steps": [
 		{
-			"configJson": {},
+			"configJson": {
+				"feature": "{feature}"
+			},
 			"name": "Run coding",
 			"stepType": "aidd-cli"
 		},

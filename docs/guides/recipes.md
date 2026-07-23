@@ -20,9 +20,9 @@ Launching a recipe creates a pipeline session. A session that completes some ste
 | `check-artifacts`                           | check-artifacts                                                              | 1     | none                                  |
 | `codebase-analysis`                         | codebase-analysis                                                            | 1     | application                           |
 | `coding`                                    | coding                                                                       | 1     | application, feature                  |
-| `coding-review-remediate-document-changes`  | coding, deep review, remediation, and change documentation                   | 4     | application                           |
-| `coding-spirit-coderabbit-document-changes` | coding, spirit and CodeRabbit reviews, remediation, and change documentation | 6     | application                           |
-| `coding-spirit-document-changes`            | coding, spirit review, remediation, and change documentation                 | 4     | application                           |
+| `coding-review-remediate-document-changes`  | coding, deep review, remediation, and change documentation                   | 4     | application, feature                  |
+| `coding-spirit-coderabbit-document-changes` | coding, spirit and CodeRabbit reviews, remediation, and change documentation | 6     | application, feature                  |
+| `coding-spirit-document-changes`            | coding, spirit review, remediation, and change documentation                 | 4     | application, feature                  |
 | `deploy`                                    | deploy                                                                       | 8     | application, deployCommand, healthUrl |
 | `feature-consolidation-document-changes`    | feature consolidation and document changes                                   | 3     | application                           |
 | `generate-application-features`             | generate application features                                                | 2     | application                           |
@@ -160,10 +160,10 @@ Plain coding run using the selected launch CLI. No workflow flags; aidd selects 
 Run coding, perform a deep review, remediate every confirmed and applicable finding, then document and commit the changes.
 
 - **Name:** coding, deep review, remediation, and change documentation
-- **Parameters:** application
+- **Parameters:** application, feature (default empty — selects normal backlog work)
 - **Steps:** 4
 
-1. `aidd-cli` - Run coding
+1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Deep review (args: {application}; skillId: deepreview)
 3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
@@ -173,10 +173,10 @@ Run coding, perform a deep review, remediate every confirmed and applicable find
 Run coding, review the result for spirit and intent, remediate every confirmed and applicable finding, run an independent CodeRabbit review, remediate its confirmed and applicable findings, then document and commit the changes.
 
 - **Name:** coding, spirit and CodeRabbit reviews, remediation, and change documentation
-- **Parameters:** application
+- **Parameters:** application, feature (default empty — selects normal backlog work)
 - **Steps:** 6
 
-1. `aidd-cli` - Run coding
+1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
 3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 4. `skill` - CodeRabbit review (args: {application}; skillId: coderabbit)
@@ -188,10 +188,10 @@ Run coding, review the result for spirit and intent, remediate every confirmed a
 Run coding, review the result for spirit and intent, remediate every confirmed and applicable finding, then document and commit the changes.
 
 - **Name:** coding, spirit review, remediation, and change documentation
-- **Parameters:** application
+- **Parameters:** application, feature (default empty — selects normal backlog work)
 - **Steps:** 4
 
-1. `aidd-cli` - Run coding
+1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
 3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)

@@ -9,10 +9,16 @@
 // Write-back is baseline-hash conflict-aware: for every file the run changed or deleted, it
 // compares the file's CURRENT canonical hash against the seed-time baseline. A mismatch means
 // another actor (operator or a concurrent run) edited that file while this run was in flight, so
-// applying the run's version would silently clobber their edit. On ANY conflict the whole delta is
+// applying the run's version would silently clobber their edit — UNLESS the canonical file
+// already matches the run's desired end state (identical concurrent edit, or both sides deleted
+// it), in which case applying is a no-op, not a clobber. On ANY real conflict the whole delta is
 // withheld — the run parks (exit 77, worktree preserved, canonical metadata untouched) instead of
 // overwriting, mirroring the git merge-conflict park semantics. Files the run never touched are
 // never checked, so concurrent canonical edits to untouched files never block write-back.
+//
+// Finalization runs the same detection BEFORE the source merge (detectWorktreeMetadataConflicts)
+// so a conflict parks the run with nothing — code or metadata — reaching the live tree; the
+// re-check inside writeBackWorktreeMetadata is a last-resort guard for edits racing in between.
 
 import { metadataPath, STOP_FILE } from 'aidd-shared/metadata/paths';
 import { createHash } from 'node:crypto';
@@ -120,15 +126,80 @@ async function pruneEmptyParents(targetRoot: string, rel: string): Promise<void>
 	}
 }
 
+/** The run's metadata delta relative to the seed baseline: files whose worktree content differs
+ * (rel → hash of the run's new content) and baseline files the run removed. */
+interface WorktreeRunChanges {
+	changed: Map<string, string>;
+	deleted: string[];
+}
+
+// Only files the run changed or deleted are subject to conflict detection; untouched files are
+// never checked and never block write-back.
+async function collectRunChanges(
+	sourceRoot: string,
+	session: WorktreeMetadataSession
+): Promise<WorktreeRunChanges> {
+	const files = await walkMetadataFiles(sourceRoot);
+	const present = new Set(files);
+	const changed = new Map<string, string>();
+	for (const rel of files) {
+		const hash = hashContent(await readFile(join(sourceRoot, rel)));
+		if (session.baseline.get(rel) === hash) continue;
+		changed.set(rel, hash);
+	}
+	const deleted = [...session.baseline.keys()].filter((rel) => !present.has(rel));
+	return { changed, deleted };
+}
+
+// Conflict check: for each file the run changed or deleted, compare the CURRENT canonical hash
+// against the seed baseline. A baseline mismatch means another actor edited the file mid-run —
+// EXCEPT when the canonical file already matches the run's desired end state (identical
+// concurrent edit, or a file both sides deleted): applying would be a no-op, so parking over it
+// would force a pointless manual reconciliation.
+async function findConflicts(
+	targetRoot: string,
+	changes: WorktreeRunChanges,
+	session: WorktreeMetadataSession
+): Promise<string[]> {
+	const desired = new Map<string, string | undefined>(changes.changed);
+	for (const rel of changes.deleted) desired.set(rel, undefined);
+	const conflicted: string[] = [];
+	for (const [rel, desiredHash] of desired) {
+		let currentCanonicalHash: string | undefined;
+		try {
+			currentCanonicalHash = hashContent(await readFile(join(targetRoot, rel)));
+		} catch {
+			currentCanonicalHash = undefined;
+		}
+		if (currentCanonicalHash === session.baseline.get(rel)) continue;
+		if (currentCanonicalHash === desiredHash) continue;
+		conflicted.push(rel);
+	}
+	return conflicted.sort();
+}
+
+/** Detect (without applying anything) the `.aidd` files the run changed or deleted that ALSO
+ * changed canonically mid-run. Finalization calls this BEFORE the source merge so a conflict
+ * parks the run while nothing — code or metadata — has reached the live tree. */
+export async function detectWorktreeMetadataConflicts(
+	projectDir: string,
+	worktreeDir: string,
+	session: WorktreeMetadataSession
+): Promise<string[]> {
+	const changes = await collectRunChanges(metadataPath(worktreeDir), session);
+	return findConflicts(metadataPath(projectDir), changes, session);
+}
+
 /** Apply the run's metadata delta to the canonical `.aidd`: copy back files created or changed
  * since seeding, delete files the run removed. Files the run never touched are left alone, so
  * canonical edits made while the run was in flight survive.
  *
- * Conflict detection: before touching any file the run changed or deleted, compare the file's
- * CURRENT canonical content hash against the seed-time baseline. When ANY to-be-applied/deleted
- * file's canonical hash no longer matches the baseline (another actor edited it mid-run), the
- * whole delta is withheld and the conflicts are returned — the caller parks the run instead of
- * overwriting. Canonical metadata is left completely untouched when conflicts exist. */
+ * Conflict detection here is a LAST-RESORT re-check: the caller already ran
+ * `detectWorktreeMetadataConflicts` before merging, but a canonical edit can still land in the
+ * window between that check and this write. When any to-be-applied/deleted file's canonical hash
+ * matches neither the seed baseline nor the run's own end state, the whole delta is withheld and
+ * the conflicts are returned — the caller parks the run instead of overwriting. Canonical
+ * metadata is left completely untouched when conflicts exist. */
 export async function writeBackWorktreeMetadata(
 	projectDir: string,
 	worktreeDir: string,
@@ -136,44 +207,13 @@ export async function writeBackWorktreeMetadata(
 ): Promise<WorktreeMetadataConflict | WorktreeMetadataDelta> {
 	const sourceRoot = metadataPath(worktreeDir);
 	const targetRoot = metadataPath(projectDir);
-	const files = await walkMetadataFiles(sourceRoot);
-	const present = new Set(files);
-
-	// Determine which files the run changed (worktree content != baseline) or deleted (baseline
-	// key missing from the worktree). Only THESE are subject to conflict detection; untouched
-	// files are never checked and never block write-back.
-	const changed: string[] = [];
-	for (const rel of files) {
-		const content = await readFile(join(sourceRoot, rel));
-		if (session.baseline.get(rel) === hashContent(content)) continue;
-		changed.push(rel);
-	}
-	const deletedCandidates: string[] = [];
-	for (const rel of session.baseline.keys()) {
-		if (present.has(rel)) continue;
-		deletedCandidates.push(rel);
-	}
-
-	// Conflict check: for each file the run changed or deleted, compare the CURRENT canonical
-	// hash against the seed baseline. A file absent canonically now hashes to undefined; if the
-	// baseline had it, someone else deleted it — still a conflict.
-	const conflicted: string[] = [];
-	for (const rel of [...changed, ...deletedCandidates]) {
-		const baselineHash = session.baseline.get(rel);
-		let currentCanonicalHash: string | undefined;
-		try {
-			const canonical = await readFile(join(targetRoot, rel));
-			currentCanonicalHash = hashContent(canonical);
-		} catch {
-			currentCanonicalHash = undefined;
-		}
-		if (currentCanonicalHash !== baselineHash) conflicted.push(rel);
-	}
-	if (conflicted.length > 0) return { conflicted: conflicted.sort() };
+	const changes = await collectRunChanges(sourceRoot, session);
+	const conflicted = await findConflicts(targetRoot, changes, session);
+	if (conflicted.length > 0) return { conflicted };
 
 	// No conflicts: apply the delta normally.
 	const applied: string[] = [];
-	for (const rel of changed) {
+	for (const rel of changes.changed.keys()) {
 		const content = await readFile(join(sourceRoot, rel));
 		const target = join(targetRoot, rel);
 		await mkdir(dirname(target), { recursive: true });
@@ -181,7 +221,7 @@ export async function writeBackWorktreeMetadata(
 		applied.push(rel);
 	}
 	const deleted: string[] = [];
-	for (const rel of deletedCandidates) {
+	for (const rel of changes.deleted) {
 		await rm(join(targetRoot, rel), { force: true });
 		await pruneEmptyParents(targetRoot, rel);
 		deleted.push(rel);

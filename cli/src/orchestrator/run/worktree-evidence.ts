@@ -14,13 +14,13 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { MergeConflictResolver } from './merge-resolver.ts';
-import type {
-	WorktreeMetadataDelta,
-	WorktreeMetadataSession,
-} from './worktree-metadata-session.ts';
+import type { WorktreeMetadataSession } from './worktree-metadata-session.ts';
 
 import { mergeRunBack, removeRunWorktree, type MergeBackStatus } from './worktree-manager.ts';
-import { writeBackWorktreeMetadata } from './worktree-metadata-session.ts';
+import {
+	detectWorktreeMetadataConflicts,
+	writeBackWorktreeMetadata,
+} from './worktree-metadata-session.ts';
 
 export interface WorktreeFinalization {
 	/** Iteration files copied into the canonical `.aidd/iterations`. */
@@ -29,8 +29,10 @@ export interface WorktreeFinalization {
 	 * the only copy of the run's iteration logs) is preserved instead of removed, whatever the
 	 * merge outcome, so the logs can be recovered manually. */
 	evidencePersistFailed?: true;
-	/** How the run branch resolved; 'discarded' = non-success run rolled back unmerged. */
-	mergeStatus: 'discarded' | MergeBackStatus;
+	/** How the run branch resolved; 'discarded' = non-success run rolled back unmerged,
+	 * 'withheld' = success run whose merge was never attempted because a metadata conflict
+	 * parked it first (run branch intact in the preserved worktree). */
+	mergeStatus: 'discarded' | 'withheld' | MergeBackStatus;
 	/** Metadata files applied to the canonical store (merged/noop runs only). */
 	metadataApplied?: number;
 	/** `.aidd` paths the run changed or deleted that ALSO changed canonically mid-run, forcing
@@ -128,15 +130,18 @@ export async function persistRunEvidence(projectDir: string, worktreeDir: string
  * 1. Persist run evidence canonically — before any removal, for every outcome. If persistence
  *    itself fails, every branch below preserves the worktree instead of removing it.
  * 2. Non-success exit: discard the worktree (free rollback; canonical metadata untouched).
- * 3. Success: merge the source branch back; on merged/noop apply the metadata delta to the
- *    canonical store, then remove the worktree.
- * 4. Blocked/conflicted merge: preserve the worktree AND withhold the metadata delta — nothing
+ * 3. Metadata conflict (checked BEFORE the merge): a `.aidd` file the run changed/deleted also
+ *    changed canonically mid-run. Applying would silently clobber a concurrent edit, so the
+ *    merge is never attempted, the whole delta is withheld, the worktree is preserved, and the
+ *    run parks (exit 77) with the conflicting paths surfaced. Nothing — code or metadata —
+ *    reaches the live tree, so the parked feature cannot end up merged-but-not-completed.
+ * 4. Success: merge the source branch back; on merged/noop apply the metadata delta to the
+ *    canonical store, then remove the worktree. (Write-back re-checks for conflicts as a
+ *    last-resort guard against edits racing in after step 3; that late park leaves the merged
+ *    code in place but never clobbers canonical metadata.)
+ * 5. Blocked/conflicted merge: preserve the worktree AND withhold the metadata delta — nothing
  *    reached the live tree, so canonical metadata must not claim otherwise — and surface
  *    `mergeConflictParked` (77) for the ledger/heartbeat.
- * 5. Metadata conflict: the merge landed, but a `.aidd` file the run changed/deleted also changed
- *    canonically mid-run. Applying would silently clobber a concurrent edit, so the whole delta
- *    is withheld, the worktree is preserved, and the run parks (exit 77) with the conflicting
- *    paths surfaced — same semantics as a blocked/conflicted merge.
  */
 export async function finalizeRunWorktree(input: {
 	exitCode: number;
@@ -170,19 +175,41 @@ export async function finalizeRunWorktree(input: {
 		);
 		return { ...evidenceFlag, evidenceFiles, mergeStatus: 'discarded' };
 	}
+	// Metadata-conflict check BEFORE the merge: a park must mean nothing reached the live tree.
+	// Checking after mergeRunBack would land the run's code and THEN report a park — leaving the
+	// feature's code merged while its canonical status stays stale, so the next selection cycle
+	// could re-pick already-landed work.
+	const conflicted = await detectWorktreeMetadataConflicts(projectDir, worktree.dir, session);
+	if (conflicted.length > 0) {
+		console.warn(
+			`[worktree] metadata conflict — ${conflicted.length} .aidd file(s) changed ` +
+				`canonically mid-run (run also changed them): ${conflicted.join(', ')}; ` +
+				`merge not attempted, preserved worktree ${worktree.branch} at ${worktree.dir} ` +
+				`for manual reconciliation (exit ${orchestratorExitCodes.mergeConflictParked}); ` +
+				`live tree and canonical metadata left unchanged.`
+		);
+		return {
+			...evidenceFlag,
+			evidenceFiles,
+			mergeStatus: 'withheld',
+			metadataConflict: conflicted,
+			overrideExitCode: orchestratorExitCodes.mergeConflictParked,
+		};
+	}
 	const merge = await mergeRunBack(projectDir, worktree, resolveConflict);
 	if (merge.status === 'merged' || merge.status === 'noop') {
 		const result = await writeBackWorktreeMetadata(projectDir, worktree.dir, session);
-		// Metadata conflict: a `.aidd` file the run changed/deleted also changed canonically
-		// mid-run. Withhold the entire delta, preserve the worktree, and park — same semantics
-		// as a blocked/conflicted merge. Canonical metadata is left completely untouched.
+		// Last-resort race guard: a canonical edit landed in the window between the pre-merge
+		// conflict check and this write. The code merge already landed and stays, but canonical
+		// metadata is never clobbered — the delta is withheld and the run parks with the paths
+		// surfaced for manual reconciliation.
 		if ('conflicted' in result) {
 			console.warn(
-				`[worktree] metadata conflict — ${result.conflicted.length} .aidd file(s) changed ` +
-					`canonically mid-run (run also changed them): ${result.conflicted.join(', ')}; ` +
-					`withholding metadata delta, preserved worktree ${worktree.branch} at ${worktree.dir} ` +
-					`for manual reconciliation (exit ${orchestratorExitCodes.mergeConflictParked}); ` +
-					`canonical metadata left unchanged.`
+				`[worktree] metadata conflict raced in after the merge — ${result.conflicted.length} ` +
+					`.aidd file(s) changed canonically between the pre-merge check and write-back: ` +
+					`${result.conflicted.join(', ')}; source merge kept, metadata delta withheld, ` +
+					`preserved worktree ${worktree.branch} at ${worktree.dir} for manual reconciliation ` +
+					`(exit ${orchestratorExitCodes.mergeConflictParked}); canonical metadata left unchanged.`
 			);
 			return {
 				...evidenceFlag,
@@ -192,16 +219,15 @@ export async function finalizeRunWorktree(input: {
 				overrideExitCode: orchestratorExitCodes.mergeConflictParked,
 			};
 		}
-		const delta = result as WorktreeMetadataDelta;
 		await removeOrPreserve();
 		console.log(
-			`[worktree] merge-back ${merge.status}; applied ${delta.applied.length} metadata file(s) (${delta.deleted.length} deleted), ${evidencePersisted ? 'removed' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch}.`
+			`[worktree] merge-back ${merge.status}; applied ${result.applied.length} metadata file(s) (${result.deleted.length} deleted), ${evidencePersisted ? 'removed' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch}.`
 		);
 		return {
 			...evidenceFlag,
 			evidenceFiles,
 			mergeStatus: merge.status,
-			metadataApplied: delta.applied.length,
+			metadataApplied: result.applied.length,
 		};
 	}
 	console.warn(

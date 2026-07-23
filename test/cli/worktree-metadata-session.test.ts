@@ -505,6 +505,69 @@ describe('worktree-metadata-session', () => {
 		}
 	});
 
+	test('write-back does not park when both sides made the identical edit', async () => {
+		const root = await testTempDir('aidd-wtm-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initProjectWithIgnoredMetadata(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			const session = await seedWorktreeMetadata(projectDir, wt.dir);
+
+			// The run and an operator write byte-identical content to the same file: the
+			// canonical file already IS the run's desired end state, so applying is a no-op,
+			// not a clobber — parking here would force a pointless manual reconciliation.
+			await writeFile(
+				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'completed')
+			);
+			await writeFile(
+				join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'completed')
+			);
+
+			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			expect('applied' in result).toBe(true);
+			const delta = result as WorktreeMetadataDelta;
+			expect(delta.applied).toEqual(['features/feat-a/feature.json']);
+			const featA = JSON.parse(
+				await readFile(
+					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+					'utf8'
+				)
+			) as { status: string };
+			expect(featA.status).toBe('completed');
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('write-back does not park when both sides deleted the same file', async () => {
+		const root = await testTempDir('aidd-wtm-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initProjectWithIgnoredMetadata(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			const session = await seedWorktreeMetadata(projectDir, wt.dir);
+
+			// Both the run and an operator delete feat-b: the desired end state (absent) is
+			// already the canonical state, so there is nothing to clobber.
+			await rm(join(wt.dir, '.aidd', 'features', 'feat-b', 'feature.json'));
+			await rm(join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json'));
+
+			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			expect('applied' in result).toBe(true);
+			const delta = result as WorktreeMetadataDelta;
+			expect(delta.deleted).toEqual(['features/feat-b/feature.json']);
+			expect(existsSync(join(projectDir, '.aidd', 'features', 'feat-b'))).toBe(false);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
 	test('finalize parks (exit 77) on a metadata conflict and preserves the worktree', async () => {
 		const root = await testTempDir('aidd-wtm-test-');
 		try {
@@ -537,10 +600,13 @@ describe('worktree-metadata-session', () => {
 				session,
 				worktree: wt,
 			});
-			// Parked: exit 77, conflicting paths surfaced, worktree preserved.
+			// Parked: exit 77, conflicting paths surfaced, worktree preserved. The conflict is
+			// detected BEFORE the merge, so the run's source commit must NOT reach the live tree
+			// — a code-merged-but-status-stale split would let selection re-pick landed work.
 			expect(finalization.overrideExitCode).toBe(orchestratorExitCodes.mergeConflictParked);
 			expect(finalization.metadataConflict).toEqual(['features/feat-a/feature.json']);
-			expect(finalization.mergeStatus).toBe('merged');
+			expect(finalization.mergeStatus).toBe('withheld');
+			expect(existsSync(join(projectDir, 'new.txt'))).toBe(false);
 			// Canonical metadata is untouched — the operator's edit survives.
 			const featA = JSON.parse(
 				await readFile(

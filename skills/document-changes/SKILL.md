@@ -125,10 +125,12 @@ common optional `priority`, `spec`, `affectedFiles`, `summary`, `notes`, `create
     `.aidd/features/<clean-slug>/feature.json`:
     - `id` is a clean descriptive kebab slug (e.g. `run-console-page`), NOT `feature-YYYYMMDD-…`.
       The directory name must equal `id`. Honor the accepted ID shapes in `feature-fields.md`.
-    - **If `.aidd/roadmap.json` exists, add the feature to it in the same edit.** The validator
-      rejects a feature with no milestone while a roadmap is present, so a new record that only
-      exists under `.aidd/features/` fails `--check-features`. Give it the milestone its nearest
-      sibling uses (the feature it depends on, or the one it extends) rather than inventing one.
+    - **Add the feature to `.aidd/roadmap.json` in the same edit** (create the roadmap — a single
+      `v1.0` milestone at priority 1 mapping every feature — if it is somehow absent; roadmap and
+      milestones apply to every project). The validator rejects a feature with no milestone, so a new
+      record that only exists under `.aidd/features/` fails `--check-features`. Give it the milestone
+      its nearest sibling uses (the feature it depends on, or the one it extends) rather than
+      inventing one.
     - `title` / `description`: clear human prose describing the behavior delivered.
     - `spec`: acceptance criteria, phrased as verifiable statements ("1. Verify …\n2. Verify …"),
       matching the style of existing aidd feature files in the project.
@@ -301,7 +303,7 @@ user rather than praising the change.
 | Jumping to `1.0.0` / a new major unprompted    | Stay within the current major                                         |
 | `git stash` to "clean" the tree                | The dirty tree is the input; never stash, reset, or discard           |
 | Generic "updated" revision notes               | Specific: what behavior/area changed in this revision                 |
-| New `feature.json` with no roadmap entry       | Add it to `.aidd/roadmap.json` too when that file exists              |
+| New `feature.json` with no roadmap entry       | Add it to `.aidd/roadmap.json` too (create the roadmap if absent)     |
 | `git commit <paths>` for a staged bundle       | Stage the bundle, then `git commit` with no paths                     |
 | Tagging or pushing from this skill             | Commit bundles only; tagging and pushing remain the user's call       |
 | Inventing a new changelog format               | Match the detected file's existing format exactly                     |

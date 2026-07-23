@@ -300,7 +300,7 @@ requirements. When running from a staged skill, load it from
 
 Feature persistence is **not complete** until every newly written `remediation-*` feature.json is assigned in `.aidd/roadmap.json`. After writing the files in Phase 8 and before the Phase 9 verification:
 
-1. Read `<applications-root>/{app-name}/.aidd/roadmap.json`. If it does not exist (lite apps have no roadmap), skip this phase and note `no roadmap.json; assignment skipped` in the Phase 9 summary.
+1. Read `<applications-root>/{app-name}/.aidd/roadmap.json`. If it does not exist, **create it first**: a single `v1.0` milestone (priority 1) mapping every existing feature directory, preserving each feature's dependencies (keyed by directory). This is the shape the coding runtime auto-creates on first run — roadmap and milestones apply to every project, so a missing file is created, never skipped — then continue with the assignment below.
 2. For each remediation feature created in Phase 8, set `roadmap.features["{feature-id}"] = { "milestone": "{target}" }` (merge; preserve any existing `dependencies` on that key). The target is the current milestone: the existing milestone with the highest numeric `priority`. Do not create a new milestone. The owner may re-target any feature afterward.
 3. Run `bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app-name}` from `<aidd-root>` to propagate milestone priority + resolved dependency IDs into the new feature.json files. Report the command's updated / unchanged / errors summary so any roadmap↔feature drift is visible.
 

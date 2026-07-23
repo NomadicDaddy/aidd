@@ -125,7 +125,7 @@ If a cross-reference was inside the remediation being promoted itself (e.g., the
 
 A promotion renames the feature's directory, so its `.aidd/roadmap.json` key is now stale. The roadmap entry must **move**, not be recreated; milestone targeting is preserved across the rename. For each promoted feature, in its app:
 
-1. Read `<applications-root>/{app}/.aidd/roadmap.json`. If it does not exist, skip for that app and note `no roadmap.json; assignment skipped` in the Phase 7 report.
+1. Read `<applications-root>/{app}/.aidd/roadmap.json`. If it does not exist, **create it first**: a single `v1.0` milestone (priority 1) mapping every existing feature directory, preserving dependencies (keyed by directory). The promoted directory already carries its new id after Phase 5, so it maps directly. Roadmap and milestones apply to every project, so a missing file is created, never skipped — then apply the key move below.
 2. If `roadmap.features["{old-id}"]` exists, move it to `roadmap.features["{new-id}"]` **verbatim** (preserve its `milestone` and any `dependencies`), then delete the old key. If no old entry exists, assign the new id to the current milestone: the existing milestone with the highest numeric `priority`. Do not create a new milestone during promotion.
 3. Also update any `roadmap.features[*].dependencies` arrays that referenced `{old-id}` to `{new-id}` (mirror of the Phase 5 feature.json cross-reference update).
 4. Run `bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app}` from `<aidd-root>` once per affected app (in sweep mode, once per app touched). Report the updated / unchanged / errors summary in Phase 7.

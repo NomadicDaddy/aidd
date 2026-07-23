@@ -624,8 +624,11 @@ Where `{feature-id}` is the full ID (e.g., `remediation-20260220-dashboard-empty
 
 Feature persistence is **not complete** until every newly written feature.json (both `remediation-*` bug-kind and clean-slug feature-kind) is assigned in `.aidd/roadmap.json`. Phase 2d already reads the roadmap for dedupe; this step makes assignment mandatory, not just a read. After writing the files in Phase 5 and before the Phase 6 verification:
 
-1. Read `<applications-root>/{app-name}/.aidd/roadmap.json`. If it does not exist (lite apps have no
-   roadmap), skip this phase and note `no roadmap.json: assignment skipped` in the Phase 6 summary.
+1. Read `<applications-root>/{app-name}/.aidd/roadmap.json`. If it does not exist, **create it first**:
+   a single `v1.0` milestone (priority 1) mapping every existing feature directory, preserving
+   dependencies (keyed by directory). This is the shape the coding runtime auto-creates on first run —
+   roadmap and milestones apply to every project, so a missing file is created, never skipped — then
+   continue with the assignment below.
 2. For each feature created in Phase 5, set `roadmap.features["{feature-id}"] = { "milestone": "{target}" }` (merge; preserve any existing `dependencies` on that key). The target milestone depends on the feature kind:
     - **Remediation features** (`remediation-*`, bug-kind): assign to the **current milestone**: the highest-priority released or active milestone in `roadmap.milestones` (e.g., if milestones are `MVP`/`v1.0`/`v2.0`, use `v2.0`). Remediations fix existing bugs and must ship in the current version, not be deferred to a future release. Never auto-create a new milestone for a remediation.
     - **Feature requests** (clean slug, feature-kind): assign to the **current milestone** by default. Only assign to a future milestone if the feature request is explicitly scoped to a future release by the reporter or project owner. Never auto-create a new milestone; if no suitable milestone exists, use the current one.

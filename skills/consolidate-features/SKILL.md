@@ -163,7 +163,7 @@ Beyond remediation folding, look for consolidation opportunities among base feat
 
 Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.json`. This phase makes the **positive** assignment of every surviving and renamed feature an explicit, required check: a feature that exists on disk but has no `roadmap.features` entry is a consolidation defect, not an acceptable end state.
 
-1. Read `<applications-root>/{app}/.aidd/roadmap.json`. If it does not exist, skip this phase and note `no roadmap.json; assignment skipped` in the Phase 6 report.
+1. Read `<applications-root>/{app}/.aidd/roadmap.json`. If it does not exist, **create it first**: a single `v1.0` milestone (priority 1) mapping every existing feature directory, preserving dependencies (keyed by directory). This is the shape the coding runtime auto-creates on first run — roadmap and milestones apply to every project, so a missing file is created, never skipped — then continue with the assignment below.
 2. **Renamed base features** (`feature-*` → clean slug, Phase 4a): the `roadmap.features` key must have **moved** old→new verbatim (preserving `milestone` and `dependencies`). Verify the new id is present and the old id is gone.
 3. **Folded-away remediation/audit features** (Phase 4): their `roadmap.features` entries must be deleted (stale-entry cleanup). Verify none remain.
 4. **Every surviving feature directory** must have a `roadmap.features["{id}"]` entry whose `milestone` exists in `roadmap.milestones`. For any surviving feature still unmapped, assign its milestone based on its kind:
@@ -201,7 +201,7 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
     - Every feature directory name should match its `feature.json` `id`
     - Every `dependencies` entry should point to an existing feature ID
     - No current roadmap or screen-map entry should point to a deleted folded finding or renamed old ID
-    - Every surviving feature directory has a `roadmap.features["{id}"]` entry whose `milestone` exists in `roadmap.milestones` (Phase 5b invariant), unless the app has no `roadmap.json`
+    - Every surviving feature directory has a `roadmap.features["{id}"]` entry whose `milestone` exists in `roadmap.milestones` (Phase 5b invariant; roadmap.json is always present — Phase 5b creates it when missing)
     - `git diff --check -- .aidd` should pass
 
 6. **Report final state**:

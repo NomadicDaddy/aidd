@@ -282,7 +282,7 @@ After executing changes:
 
 Every feature.json create, delete, or rename in Phase 6 must be mirrored in `.aidd/roadmap.json` before the Phase 7 verification. For each app whose features changed (the derived app for KEEP/CONSOLIDATE/REMOVE/DOWNGRADE; `<spernakit-root>` for ESCALATE):
 
-1. Read that app's `.aidd/roadmap.json`. If it does not exist, skip reconciliation for that app and note `no roadmap.json; assignment skipped` in the report.
+1. Read that app's `.aidd/roadmap.json`. If it does not exist, **create it first**: a single `v1.0` milestone (priority 1) mapping every existing feature directory, preserving dependencies (keyed by directory). This is the shape the coding runtime auto-creates on first run — roadmap and milestones apply to every project, so a missing file is created, never skipped — then continue with the reconciliation below.
 2. **REMOVE / folded-away findings**: delete the corresponding `roadmap.features["{finding-id}"]` entry (stale-entry cleanup).
 3. **CONSOLIDATE**: delete the merged-away finding entries; assign the surviving/new consolidated feature.
 4. **ESCALATE**: assign the newly created `spernakit-{YYYYMMDD}-{slug}` feature in Spernakit's roadmap.json.

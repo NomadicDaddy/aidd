@@ -772,9 +772,10 @@ Perform a focused code review of the current diff for correctness, security, cod
   formatting and import-order issues in one pass, then iterate with the fast checks —
   `bun run smoke:qc:fast` if the project defines it (the cache-backed fast subset: line-limit,
   types, lint, format — no build, no tests), otherwise `bun run typecheck` and `bun run lint` —
-  fixing all reported errors in a batch before re-running. Run the full foreground `bun run smoke:qc`
-  **once** to confirm; do not re-run the whole slow gate after every single fix (see Step 10.2).
-- Run `bun run smoke:qc` (if it does not exist, run the project equivalent of linting, type-checking, and formatting)
+  fixing all reported errors in a batch before re-running. Do not re-run the whole slow gate
+  after every single fix; the full `bun run smoke:qc` confirmation runs AFTER the checkpoint
+  commit (see Steps 10.2–10.4).
+- Ensure the fast checks pass (if the project defines none, run its equivalent of linting, type-checking, and formatting)
 - Run `bun run smoke:dev` (if it does not exist, check all affected pages using curl to ensure no browser/console errors); but first apply the **Concurrently UI-managed instance rule** (Step 4.1): if a separate UI/app-launcher-managed instance of this project is already running, do not run server-owning smoke/`stop`/`start` against it; reuse that instance for verification instead
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
@@ -1024,7 +1025,7 @@ blockers park.
 
 ### STEP 10: UPDATE CHANGELOG AND COMMIT TRACKED WORK
 
-**MANDATORY: All file updates MUST happen before the final commit decision. Quality checks MUST pass before every commit.**
+**MANDATORY: All file updates MUST happen before the final commit decision. The fast checks MUST pass before every commit; the full gate confirms after the checkpoint commit (Step 10.4).**
 
 #### 10.1 Update Progress Notes
 
@@ -1039,37 +1040,36 @@ For a completed feature, update `/.aidd/features/<selected-feature-id>/feature.j
 `"passes": true` and `"status": "completed"` before the final changelog/gate/commit decision.
 aidd will not mark the feature complete after your commit.
 
-#### 10.2 Pre-Commit Quality Gate
+#### 10.2 Pre-Commit Quality Gate (fast checks)
 
 ```bash
-bun run format      # auto-fix formatting BEFORE commit (smoke:qc only checks, it does not fix)
-bun run lint:fix    # auto-fix lint issues too (import order, unused directives, etc.)
-bun run smoke:qc    # final gate: lint + typecheck + build + test + format:check
+bun run format         # auto-fix formatting BEFORE commit (gates only check, they do not fix)
+bun run lint:fix       # auto-fix lint issues too (import order, unused directives, etc.)
+bun run smoke:qc:fast  # fast gate: line-limit + typecheck + lint + format:check (no build, no tests)
 ```
 
 **Autofix before you hand-edit.** Formatting and most lint issues — including import ordering —
 are mechanically fixable. Run `bun run format && bun run lint:fix` FIRST, in one pass, before
 manually touching anything. Never hand-correct import order or formatting one file at a time;
-`lint:fix` does the whole tree in seconds. `smoke:qc` only **checks**; it never fixes.
+`lint:fix` does the whole tree in seconds. The gates only **check**; they never fix.
 
-**Iterate on the fast gate — not the whole thing.** `smoke:qc` runs the full
-build + lint + test suite; it is slow, and on an external-CLI backend a cold run can exceed the
-per-command foreground timeout and be killed, forcing a cold restart. So do NOT re-run the whole
-`smoke:qc` after every one-line fix. While resolving errors, run the fast checks only —
-`bun run smoke:qc:fast` if the project defines it (the cache-backed fast subset: line-limit, types,
-lint, format; no build, no tests), otherwise `bun run typecheck` and `bun run lint` directly — fix
-**all** errors they report in a single batch, and reserve a full foreground `bun run smoke:qc` as
-one final confirmation before commit. (Gates still run in the foreground — see the
-foreground-blocking rule; the change is how _often_ you run the slow one, not whether it blocks.)
+**Iterate on the fast gate — not the whole thing.** If the project does not define
+`smoke:qc:fast`, run `bun run typecheck` and `bun run lint` directly. Fix **all** errors the fast
+checks report in a single batch before re-running them. Do NOT run the full `smoke:qc` here —
+the full gate runs AFTER the commit (Step 10.4); the fast checks are what must be green before
+committing. (Gates still run in the foreground — see the foreground-blocking rule.)
 
-**If smoke:qc fails → DO NOT COMMIT.** Fix every issue it surfaced — in one batch, using the fast
-checks above — then run `smoke:qc` once more to confirm it passes. This gate must pass before every
-commit (feature, CHANGELOG, and fix commits alike); looping the full gate one error at a time is
-what this rule forbids, not the pass requirement itself.
+**If the fast checks fail → DO NOT COMMIT.** If you know the code has TypeScript errors, lint
+warnings, or formatting issues, the feature is not finished. Go back to Step 7 and fix it.
 
-If you know the code has TypeScript errors, lint warnings, or formatting issues, the feature is not finished. Go back to Step 7 and fix it.
+#### 10.3 Make Commit — BEFORE the full gate
 
-#### 10.3 Make Commit
+**Commit as soon as the fast checks and feature metadata are green — do not wait for the full
+`smoke:qc`.** The full gate can run for many minutes, and a session that dies mid-gate with
+everything uncommitted strands the entire iteration's finished work and fails the run (this has
+happened: a backend death during a final pre-commit `smoke:qc` stranded 16 finished files —
+twice in one run). A committed tree survives any interruption; the full gate then confirms the
+commit, and any fixes it demands are folded in with `--amend` (Step 10.4).
 
 **Commit every non-ignored change: code, configuration, formatting fixes, and any tracked aidd
 metadata. Never force-add ignored `.aidd/` files.**
@@ -1123,7 +1123,27 @@ git commit -m "feat(<scope>): implement <feature name>" \
   -m "- Updated feature completion metadata where tracked"
 ```
 
-#### 10.4 Post-Commit Metadata Check
+#### 10.4 Full Gate Confirmation — AFTER the commit
+
+```bash
+bun run smoke:qc    # full gate: lint + typecheck + build + test + format:check
+```
+
+Run the full foreground `bun run smoke:qc` **once** as the final confirmation, now that the work
+is safely committed. (If the project has no `smoke:qc`, run its equivalent of build + tests.)
+
+- **If it passes:** the commit stands as-is. Proceed to Step 10.5.
+- **If it fails:** the committed tree is not final yet. Fix every issue it surfaced — in one
+  batch, iterating on the fast checks from Step 10.2 — then re-run `smoke:qc` once to confirm,
+  and fold the fixes into the feature commit: `git add <files> && git commit --amend --no-edit`.
+  Amending is safe here because the commit was created THIS session and never pushed; never amend
+  a commit you did not create in this run.
+
+**Never emit `AIDD_RESULT` while the full gate is failing.** The pass requirement is unchanged —
+what moved is the commit: checkpoint first, confirm after, amend if needed. Do not re-run the
+whole slow gate after every one-line fix; batch fixes on the fast checks, then confirm once.
+
+#### 10.5 Post-Commit Metadata Check
 
 After the commit, run:
 
@@ -1160,7 +1180,8 @@ remain uncommitted.
 - All quality checks passing
 - App in working state
 
-**If uncommitted changes exist:** Stage, run smoke:qc, and commit before exiting.
+**If uncommitted changes exist:** Run the fast checks, stage, and commit them first; then confirm
+with the full `smoke:qc` and amend in any fixes (Step 10.4) before exiting.
 
 #### 11.3 End Session
 

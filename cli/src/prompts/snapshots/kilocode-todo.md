@@ -667,7 +667,9 @@ Perform a focused code review of the current diff for correctness, security, cod
 
 **BEFORE proceeding, ensure ALL quality gates pass:**
 
-- Run `bun run smoke:qc` (if it does not exist, run the project equivalent of linting, type-checking, and formatting)
+- Run the fast checks — `bun run smoke:qc:fast` if the project defines it, otherwise
+  `bun run typecheck` and `bun run lint` (the full `bun run smoke:qc` confirmation runs AFTER
+  the checkpoint commit — see Steps 8.2–8.4)
 - Run `bun run smoke:dev` (if it does not exist, check all affected pages using curl to ensure no browser/console errors)
 - Fix any failures immediately
 - Verify only expected files modified (`git status`)
@@ -794,7 +796,7 @@ async function fetchData() {
 
 **Only execute if TODO items exist.**
 
-**MANDATORY: All file updates MUST happen before the final commit decision. Quality checks MUST pass before every commit.**
+**MANDATORY: All file updates MUST happen before the final commit decision. The fast checks MUST pass before every commit; the full gate confirms after the checkpoint commit (Step 8.4).**
 
 #### 8.1 Update Progress Notes
 
@@ -806,29 +808,32 @@ async function fetchData() {
 - What should be worked on next
 - Remaining todo items count
 
-#### 8.2 Pre-Commit Quality Gate
+#### 8.2 Pre-Commit Quality Gate (fast checks)
 
 ```bash
-bun run format      # auto-fix formatting BEFORE commit (smoke:qc only checks, it does not fix)
-bun run lint:fix    # auto-fix lint issues too (import order, unused directives, etc.)
-bun run smoke:qc    # final gate: lint + typecheck + build + test + format:check
+bun run format         # auto-fix formatting BEFORE commit (gates only check, they do not fix)
+bun run lint:fix       # auto-fix lint issues too (import order, unused directives, etc.)
+bun run smoke:qc:fast  # fast gate: line-limit + typecheck + lint + format:check (no build, no tests)
 ```
 
 **Autofix before you hand-edit.** Run `bun run format && bun run lint:fix` FIRST, in one pass —
-never hand-correct import order or formatting one file at a time. `smoke:qc` only **checks**; it
-never fixes.
+never hand-correct import order or formatting one file at a time. The gates only **check**; they
+never fix.
 
-**Iterate on the fast gate — not the whole thing.** While resolving errors, run
-`bun run smoke:qc:fast` if the project defines it (line-limit, types, lint, format — no build, no
-tests), otherwise `bun run typecheck` and `bun run lint` directly; fix **all** reported errors in a
-batch, then run the full `bun run smoke:qc` **once** as final confirmation before commit.
+**Iterate on the fast gate — not the whole thing.** If the project does not define
+`smoke:qc:fast`, run `bun run typecheck` and `bun run lint` directly; fix **all** reported errors
+in a batch before re-running. Do NOT run the full `smoke:qc` here — it runs AFTER the commit
+(Step 8.4).
 
-**If smoke:qc fails → DO NOT COMMIT.** Fix every issue it surfaced — in one batch, using the fast
-checks above — then re-run smoke:qc once to confirm. This applies to every commit: feature commits, CHANGELOG commits, fix commits. No exceptions.
+**If the fast checks fail → DO NOT COMMIT.** If you know the code has TypeScript errors, lint
+warnings, or formatting issues, the work is not finished. Go back to Step 5 and fix it.
 
-If you know the code has TypeScript errors, lint warnings, or formatting issues, the work is not finished. Go back to Step 5 and fix it.
+#### 8.3 Make Commit — BEFORE the full gate
 
-#### 8.3 Make Commit
+**Commit as soon as the fast checks and metadata updates are green — do not wait for the full
+`smoke:qc`.** The full gate can run for many minutes, and a session that dies mid-gate with
+everything uncommitted strands the work and fails the run. A committed tree survives any
+interruption; the full gate then confirms the commit, and fixes are amended in (Step 8.4).
 
 **Commit every non-ignored change. Update `.aidd/todo.md` and `.aidd/CHANGELOG.md` on disk, but
 include them only when Git already tracks them. Never force-add ignored aidd metadata.**
@@ -847,6 +852,24 @@ git commit -m "feat|fix|chore(<scope>): <description>" \
 
 **If git reports "not a git repository":** Don't force commits. Document state in CHANGELOG.md.
 
+#### 8.4 Full Gate Confirmation — AFTER the commit
+
+```bash
+bun run smoke:qc    # full gate: lint + typecheck + build + test + format:check
+```
+
+Run the full foreground `bun run smoke:qc` **once**, now that the work is safely committed. (If
+the project has no `smoke:qc`, run its equivalent of build + tests.)
+
+- **If it passes:** the commit stands as-is.
+- **If it fails:** fix every issue it surfaced — in one batch, iterating on the fast checks from
+  Step 8.2 — re-run `smoke:qc` once to confirm, then fold the fixes in:
+  `git add <files> && git commit --amend --no-edit`. Amending is safe here because the commit was
+  created THIS session and never pushed; never amend a commit you did not create in this run.
+
+**Never end the session with the full gate failing.** The pass requirement is unchanged — what
+moved is the commit: checkpoint first, confirm after, amend if needed.
+
 ---
 
 ### STEP 9: END SESSION CLEANLY
@@ -856,7 +879,8 @@ git commit -m "feat|fix|chore(<scope>): <description>" \
 **CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.**
 
 1. Ensure no uncommitted changes (`git status` should be clean)
-2. If uncommitted changes exist: stage, run smoke:qc, and commit
+2. If uncommitted changes exist: run the fast checks, stage, and commit; then confirm with the
+   full `smoke:qc` and amend in any fixes (Step 8.4)
 3. Verify codebase is in working state
 4. **End the session immediately**; follow environment-specific session termination (see environment-specific reference)
 

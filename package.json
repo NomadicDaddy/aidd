@@ -97,6 +97,7 @@
 		"crawltest:analyze": "bun scripts/crawltest-analyze.ts",
 		"crawltest:bug": "bun scripts/crawltest.ts --bug",
 		"crawltest:page": "bun scripts/crawltest.ts --page",
+		"deploy": "echo 'No deploy command is configured for this local target. See .aidd/deployment.md.' && exit 1",
 		"deploy:docker": "bun scripts/deploy-docker.ts",
 		"dev:backend": "bun run --cwd backend dev",
 		"dev:frontend": "bun run --cwd frontend dev",

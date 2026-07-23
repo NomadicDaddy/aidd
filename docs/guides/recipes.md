@@ -147,7 +147,7 @@ Run codebase analysis on an application.
 
 ### coding
 
-Plain coding run using the selected launch CLI. No workflow flags; aidd selects the coding prompt for onboarded projects.
+Default coding run using the selected launch CLI: code the selected work, review the result for spirit and intent, remediate every confirmed and applicable finding, then document and commit the changes.
 
 - **Name:** coding
 - **Parameters:** application, feature (default empty — selects normal backlog work)
@@ -168,7 +168,7 @@ Run coding, perform a deep review, remediate every confirmed and applicable find
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Deep review (args: {application}; skillId: deepreview)
-3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
+3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-spirit-coderabbit-document-changes
@@ -181,9 +181,9 @@ Run coding, review the result for spirit and intent, remediate every confirmed a
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - CodeRabbit review (args: {application}; skillId: coderabbit)
-5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
+5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 6. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-spirit-document-changes
@@ -196,7 +196,7 @@ Run coding, review the result for spirit and intent, remediate every confirmed a
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and in scope across the review's full substance ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### deploy

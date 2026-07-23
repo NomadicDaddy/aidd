@@ -1,5 +1,5 @@
 {
-	"description": "Plain coding run using the selected launch CLI. No workflow flags; aidd selects the coding prompt for onboarded projects.",
+	"description": "Default coding run using the selected launch CLI: code the selected work, review the result for spirit and intent, remediate every confirmed and applicable finding, then document and commit the changes.",
 	"name": "coding",
 	"parameters": [
 		{

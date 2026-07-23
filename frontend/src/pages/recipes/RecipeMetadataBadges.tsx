@@ -6,7 +6,7 @@ import { getRecipePolicySummary } from './recipe-policy.ts';
 export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
 	return (
 		<>
-			{recipe.system === true && <Badge tone="cyan">system</Badge>}
+			{recipe.system === true && <Badge tone="violet">system</Badge>}
 			{recipe.metadataOnly === true && <Badge tone="amber">metadata-only</Badge>}
 		</>
 	);

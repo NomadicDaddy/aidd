@@ -14,7 +14,10 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { MergeConflictResolver } from './merge-resolver.ts';
-import type { WorktreeMetadataSession } from './worktree-metadata-session.ts';
+import type {
+	WorktreeMetadataDelta,
+	WorktreeMetadataSession,
+} from './worktree-metadata-session.ts';
 
 import { mergeRunBack, removeRunWorktree, type MergeBackStatus } from './worktree-manager.ts';
 import { writeBackWorktreeMetadata } from './worktree-metadata-session.ts';
@@ -30,6 +33,9 @@ export interface WorktreeFinalization {
 	mergeStatus: 'discarded' | MergeBackStatus;
 	/** Metadata files applied to the canonical store (merged/noop runs only). */
 	metadataApplied?: number;
+	/** `.aidd` paths the run changed or deleted that ALSO changed canonically mid-run, forcing
+	 * a park. Present only on a metadata-conflict park (canonical metadata left untouched). */
+	metadataConflict?: string[];
 	/** Present when the run must surface a non-success code (parked merge, exit 77). */
 	overrideExitCode?: number;
 }
@@ -127,6 +133,10 @@ export async function persistRunEvidence(projectDir: string, worktreeDir: string
  * 4. Blocked/conflicted merge: preserve the worktree AND withhold the metadata delta — nothing
  *    reached the live tree, so canonical metadata must not claim otherwise — and surface
  *    `mergeConflictParked` (77) for the ledger/heartbeat.
+ * 5. Metadata conflict: the merge landed, but a `.aidd` file the run changed/deleted also changed
+ *    canonically mid-run. Applying would silently clobber a concurrent edit, so the whole delta
+ *    is withheld, the worktree is preserved, and the run parks (exit 77) with the conflicting
+ *    paths surfaced — same semantics as a blocked/conflicted merge.
  */
 export async function finalizeRunWorktree(input: {
 	exitCode: number;
@@ -162,7 +172,27 @@ export async function finalizeRunWorktree(input: {
 	}
 	const merge = await mergeRunBack(projectDir, worktree, resolveConflict);
 	if (merge.status === 'merged' || merge.status === 'noop') {
-		const delta = await writeBackWorktreeMetadata(projectDir, worktree.dir, session);
+		const result = await writeBackWorktreeMetadata(projectDir, worktree.dir, session);
+		// Metadata conflict: a `.aidd` file the run changed/deleted also changed canonically
+		// mid-run. Withhold the entire delta, preserve the worktree, and park — same semantics
+		// as a blocked/conflicted merge. Canonical metadata is left completely untouched.
+		if ('conflicted' in result) {
+			console.warn(
+				`[worktree] metadata conflict — ${result.conflicted.length} .aidd file(s) changed ` +
+					`canonically mid-run (run also changed them): ${result.conflicted.join(', ')}; ` +
+					`withholding metadata delta, preserved worktree ${worktree.branch} at ${worktree.dir} ` +
+					`for manual reconciliation (exit ${orchestratorExitCodes.mergeConflictParked}); ` +
+					`canonical metadata left unchanged.`
+			);
+			return {
+				...evidenceFlag,
+				evidenceFiles,
+				mergeStatus: merge.status,
+				metadataConflict: result.conflicted,
+				overrideExitCode: orchestratorExitCodes.mergeConflictParked,
+			};
+		}
+		const delta = result as WorktreeMetadataDelta;
 		await removeOrPreserve();
 		console.log(
 			`[worktree] merge-back ${merge.status}; applied ${delta.applied.length} metadata file(s) (${delta.deleted.length} deleted), ${evidencePersisted ? 'removed' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch}.`

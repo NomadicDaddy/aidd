@@ -123,7 +123,14 @@ export async function writeRunSummary(
 		if (finalization.overrideExitCode !== undefined) {
 			effectiveExitCode = finalization.overrideExitCode;
 			effectiveStopReason = 'merge_conflict_parked';
-			effectiveSummary = `${summaryWithRunEndChecks}; worktree merge parked — resolve the run branch manually (exit ${finalization.overrideExitCode}).`;
+			if (finalization.metadataConflict !== undefined) {
+				// A `.aidd` metadata conflict parked the run (not a git merge conflict): surface
+				// the conflicting paths so the operator knows which metadata diverged.
+				const paths = finalization.metadataConflict.join(', ');
+				effectiveSummary = `${summaryWithRunEndChecks}; worktree metadata conflict — concurrent canonical change to: ${paths} (exit ${finalization.overrideExitCode}).`;
+			} else {
+				effectiveSummary = `${summaryWithRunEndChecks}; worktree merge parked — resolve the run branch manually (exit ${finalization.overrideExitCode}).`;
+			}
 		}
 	}
 	// The ledger line goes to the CANONICAL store: for worktree runs `deps.store` is rooted in

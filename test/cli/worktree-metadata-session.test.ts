@@ -12,6 +12,7 @@ import { createRunWorktree } from '../../cli/src/orchestrator/run/worktree-manag
 import {
 	seedWorktreeMetadata,
 	writeBackWorktreeMetadata,
+	type WorktreeMetadataDelta,
 } from '../../cli/src/orchestrator/run/worktree-metadata-session.ts';
 import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
@@ -114,7 +115,9 @@ describe('worktree-metadata-session', () => {
 			// Meanwhile an operator edits an untouched canonical file mid-run.
 			await writeFile(join(projectDir, '.aidd', 'spec.md'), 'operator edit mid-run\n');
 
-			const delta = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			expect('applied' in result).toBe(true);
+			const delta = result as WorktreeMetadataDelta;
 			expect(delta.applied.sort()).toEqual(['CHANGELOG.md', 'features/feat-a/feature.json']);
 			expect(delta.deleted).toEqual(['features/feat-b/feature.json']);
 			const featA = JSON.parse(
@@ -150,7 +153,9 @@ describe('worktree-metadata-session', () => {
 			const session = await seedWorktreeMetadata(projectDir, wt1.dir);
 			await rm(join(wt1.dir, '.aidd', 'features', 'feat-b', 'feature.json'));
 
-			const delta = await writeBackWorktreeMetadata(projectDir, wt1.dir, session);
+			const result = await writeBackWorktreeMetadata(projectDir, wt1.dir, session);
+			expect('applied' in result).toBe(true);
+			const delta = result as WorktreeMetadataDelta;
 			expect(delta.deleted).toEqual(['features/feat-b/feature.json']);
 			// The emptied directory must not linger — a stale dir would desync every later
 			// parity check (the original repro: "metadata seeding incomplete: 1/2").
@@ -379,6 +384,176 @@ describe('worktree-metadata-session', () => {
 			expect(await readFile(join(projectDir, '.aidd', 'iterations', '002.log'), 'utf8')).toBe(
 				'parked run\n'
 			);
+			expect(existsSync(wt.dir)).toBe(true);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('write-back parks when a changed file also changed canonically mid-run', async () => {
+		const root = await testTempDir('aidd-wtm-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initProjectWithIgnoredMetadata(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			const session = await seedWorktreeMetadata(projectDir, wt.dir);
+
+			// The run changes feat-a's feature.json...
+			await writeFile(
+				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'completed')
+			);
+			// ...and meanwhile an operator ALSO edits the same canonical file mid-run.
+			await writeFile(
+				join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'in_progress')
+			);
+
+			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			expect('conflicted' in result).toBe(true);
+			if ('conflicted' in result) {
+				expect(result.conflicted).toEqual(['features/feat-a/feature.json']);
+			}
+			// Canonical metadata is left completely untouched — the operator's edit survives.
+			const featA = JSON.parse(
+				await readFile(
+					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+					'utf8'
+				)
+			) as { status: string };
+			expect(featA.status).toBe('in_progress');
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('write-back parks when a deleted file also changed canonically mid-run', async () => {
+		const root = await testTempDir('aidd-wtm-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initProjectWithIgnoredMetadata(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			const session = await seedWorktreeMetadata(projectDir, wt.dir);
+
+			// The run deletes feat-b's feature.json...
+			await rm(join(wt.dir, '.aidd', 'features', 'feat-b', 'feature.json'));
+			// ...and meanwhile an operator edits the same canonical file mid-run.
+			await writeFile(
+				join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json'),
+				featureJson('feat-b', 'in_progress')
+			);
+
+			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			expect('conflicted' in result).toBe(true);
+			if ('conflicted' in result) {
+				expect(result.conflicted).toEqual(['features/feat-b/feature.json']);
+			}
+			// Canonical metadata is left untouched — the operator's edit survives, the file is
+			// NOT deleted.
+			const featB = JSON.parse(
+				await readFile(
+					join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json'),
+					'utf8'
+				)
+			) as { status: string };
+			expect(featB.status).toBe('in_progress');
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('write-back applies normally when only an untouched file changed canonically', async () => {
+		const root = await testTempDir('aidd-wtm-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initProjectWithIgnoredMetadata(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			const session = await seedWorktreeMetadata(projectDir, wt.dir);
+
+			// The run changes feat-a (a file it owns)...
+			await writeFile(
+				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'completed')
+			);
+			// ...and meanwhile an operator edits spec.md, which the run never touches.
+			await writeFile(join(projectDir, '.aidd', 'spec.md'), 'operator edit mid-run\n');
+
+			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
+			expect('applied' in result).toBe(true);
+			const delta = result as WorktreeMetadataDelta;
+			expect(delta.applied).toEqual(['features/feat-a/feature.json']);
+			expect(delta.deleted).toEqual([]);
+			// The run's change landed; the untouched file keeps the operator's edit.
+			const featA = JSON.parse(
+				await readFile(
+					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+					'utf8'
+				)
+			) as { status: string };
+			expect(featA.status).toBe('completed');
+			expect(await readFile(join(projectDir, '.aidd', 'spec.md'), 'utf8')).toBe(
+				'operator edit mid-run\n'
+			);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('finalize parks (exit 77) on a metadata conflict and preserves the worktree', async () => {
+		const root = await testTempDir('aidd-wtm-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initProjectWithIgnoredMetadata(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			const session = await seedWorktreeMetadata(projectDir, wt.dir);
+
+			// The run commits a source change and completes feat-a.
+			await writeFile(join(wt.dir, 'new.txt'), 'from run\n');
+			await runGit(wt.dir, ['add', '.']);
+			await runGit(wt.dir, ['commit', '-m', 'feat-a work']);
+			await writeFile(
+				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'completed')
+			);
+			await mkdir(join(wt.dir, '.aidd', 'iterations'), { recursive: true });
+			await writeFile(join(wt.dir, '.aidd', 'iterations', '001.log'), 'conflicted run\n');
+			// Meanwhile an operator edits the SAME canonical metadata file mid-run.
+			await writeFile(
+				join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+				featureJson('feat-a', 'in_progress')
+			);
+
+			const finalization = await finalizeRunWorktree({
+				exitCode: orchestratorExitCodes.success,
+				projectDir,
+				session,
+				worktree: wt,
+			});
+			// Parked: exit 77, conflicting paths surfaced, worktree preserved.
+			expect(finalization.overrideExitCode).toBe(orchestratorExitCodes.mergeConflictParked);
+			expect(finalization.metadataConflict).toEqual(['features/feat-a/feature.json']);
+			expect(finalization.mergeStatus).toBe('merged');
+			// Canonical metadata is untouched — the operator's edit survives.
+			const featA = JSON.parse(
+				await readFile(
+					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
+					'utf8'
+				)
+			) as { status: string };
+			expect(featA.status).toBe('in_progress');
+			// Evidence is still persisted canonically.
+			expect(await readFile(join(projectDir, '.aidd', 'iterations', '002.log'), 'utf8')).toBe(
+				'conflicted run\n'
+			);
+			// The worktree is preserved for manual reconciliation.
 			expect(existsSync(wt.dir)).toBe(true);
 		} finally {
 			await removeTempTree(root);

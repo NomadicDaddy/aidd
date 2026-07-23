@@ -1,18 +1,18 @@
 ---
 name: testing-scenarios
-description: "Generate or augment `.aidd/testing-scenarios.md` from a Spernakit app's blueprint, routes, and features. Use to seed, expand, or brainstorm tester scenarios and test cases."
+description: 'Generate or augment `.aidd/testing-scenarios.md` for any aidd-managed project from its blueprint, executable surfaces, and features. Use to seed, expand, refresh, or brainstorm browser, CLI, API, service, library, and integration test scenarios.'
 metadata:
     aidd-category: recipe-maturity
 ---
 
 # Generate Testing Scenarios
 
-Review a target Spernakit application's reconstruction blueprint and codebase, then write curated
-`spernakit-tester` scenarios into `{APP_DIR}/.aidd/testing-scenarios.md`. This skill is the authoring
-counterpart to the aidd-local `spernakit-tester` skill, which executes scenarios; this skill only
-creates and edits the scenario catalog.
+Review a target project's blueprint and codebase, then write curated scenarios into
+`{APP_DIR}/.aidd/testing-scenarios.md`. Testing scenarios apply to every project. Derive them from
+the project's real user and integration surfaces instead of assuming a browser, framework, or
+test client.
 
-Do not execute tests through this skill. Use the aidd-local `spernakit-tester` skill for execution.
+This skill only creates and edits the scenario catalog. Do not execute the scenarios.
 
 ## Setup
 
@@ -25,7 +25,9 @@ Do not execute tests through this skill. Use the aidd-local `spernakit-tester` s
 
 ### Modes
 
-- **`seed`**: The app has no `.aidd/testing-scenarios.md` yet (or the user is starting over). Create the file from scratch with the full template header, description paragraph, numbered scenarios, and Post-Test Procedure footer.
+- **`seed`**: Select automatically when `.aidd/testing-scenarios.md` is missing, or use explicitly
+  when the user is starting over. Create the file from scratch with the full template header,
+  description paragraph, numbered scenarios, and Post-Test Procedure footer.
 - **`augment`** _(default)_: The file exists. Read it, identify coverage gaps, generate new scenarios that do not duplicate existing ones, and append them to the numbered list preserving numbering continuity. Do not touch existing scenarios or the footer.
 - **`refresh`**: Rewrite the entire scenario list from scratch. Selecting this mode authorizes the
   rewrite. Preserve the header, description, app-specific notes, and Post-Test Procedure footer
@@ -38,8 +40,7 @@ Do not execute tests through this skill. Use the aidd-local `spernakit-tester` s
 2. Read blueprint  .aidd/spec.md, project.md, project-structure.md,
                    roadmap.json (if present), scan features/
 3. Read existing   .aidd/testing-scenarios.md if present
-4. Survey code     Light read of frontend routes, navigation, stores, RBAC
-                   tiers, and distinctive UI elements
+4. Survey surfaces Light read of the project's user-facing and integration entry points
 5. Plan coverage   Map existing scenarios to feature areas; identify gaps
 6. Generate        Write N new scenarios matching the house style
 7. Merge           Append to existing file OR create new file from template
@@ -48,8 +49,9 @@ Do not execute tests through this skill. Use the aidd-local `spernakit-tester` s
 
 ### Step 1: Resolve APP_DIR
 
-Resolve current Spernakit apps under `<applications-root>/{app-name}/`. If the argument and current
-repository do not resolve one app, return a usage error listing current candidates.
+Resolve the project under `<applications-root>/{app-name}/` or from an explicit path. If the
+argument and current repository do not resolve one project, return a usage error listing current
+candidates.
 
 Confirm `{APP_DIR}/.aidd/` exists. If it does not, abort with an error; this skill will not create new `.aidd/` directories (that's a reconstruction job, not a testing job).
 
@@ -74,36 +76,37 @@ Read {APP_DIR}/.aidd/testing-scenarios.md (if present)
 
 Parse the numbered scenario list. For each existing scenario, classify it by feature area (e.g., "dashboard", "RBAC-OPERATOR", "export", "notifications"). This coverage map drives gap detection in step 5.
 
-### Step 4: Survey the frontend
+### Step 4: Survey executable surfaces
 
-Read-only exploration: no running code. Look at:
+Read-only exploration: do not start or run the project. Determine its actual interfaces from source,
+scripts, configuration, and documentation:
 
-- `{APP_DIR}/frontend/src/routes.tsx`: full route inventory
-- `{APP_DIR}/frontend/src/pages/` directory structure: feature areas
-- `{APP_DIR}/frontend/src/stores/`: stateful client features worth exercising
-- `{APP_DIR}/backend/src/routes/`: backend domains and auth guards
+- **Browser or desktop UI:** routes, pages, navigation, state, forms, rendered artifacts, and roles
+- **CLI:** commands, flags, configuration, stdin/stdout, exit codes, filesystem effects, and safety gates
+- **API or service:** routes, clients, authentication, lifecycle, persistence, events, and integrations
+- **Library or automation:** public entry points, consumers, fixtures, serialization, and failure contracts
 
-Identify distinctive UI elements: multi-step flows, drag-and-drop, real-time WebSocket surfaces, file uploads, complex filters, visualization pages, export/import features, and any app-specific mechanics.
-
-Check `backend/src/plugins/auth/` or equivalent for RBAC tiers. Standard Spernakit apps have
-SYSOP/ADMIN/MANAGER/OPERATOR/VIEWER. Spernakit-lite apps have no RBAC; detect this from the absence
-of an auth plugin rather than from the app's name.
+Projects may expose more than one surface. Cover the real combination rather than forcing the
+project into one category. Identify distinctive workflows, state transitions, imports/exports,
+authorization boundaries, recovery behavior, and externally observable side effects.
 
 ### Step 5: Plan coverage
 
-Build a target coverage matrix. For a standard app, required coverage is:
+Build a target coverage matrix. Required coverage is:
 
-1. **One scenario per major feature area** (entity CRUD flows, distinctive mechanics, integrations)
-2. **At least one cross-cutting flow** that touches multiple pages/entities
-3. **Full RBAC coverage** (5 scenarios: SYSOP, ADMIN, MANAGER, OPERATOR, VIEWER), only for apps with RBAC
-4. **Edge cases only when distinctive** (e.g., websocket disconnect, auth expiry, failed imports); avoid generic edge cases
-5. **Every rendered or served artifact loaded through its real serve path**: a feature that ships a
+1. **One scenario per major user or integration capability**
+2. **At least one cross-cutting flow** spanning multiple commands, pages, entities, phases, or systems
+3. **Role and authorization coverage** for every role the project actually implements
+4. **Contract boundaries** such as invalid input, refusal paths, exit status, rollback, retry, or recovery
+5. **Persistent and external effects** verified through their public interface
+6. **Every rendered or served artifact loaded through its real serve path**: a feature that ships a
    template-rendered view, SSR/JSX page, string-built export/report, or serialized download needs at
    least one scenario that actually opens that page or triggers that output in the running app.
    Unit-level coverage of the helpers behind it does not substitute. A mangled template can 500 a
    page while helper tests stay green, and scenarios are often the only check that drives the real
    render/serve boundary. Pure-logic features with no rendered or served artifact need no such
    scenario.
+7. **Distinctive edge cases only**; avoid generic cases unsupported by the project's actual behavior
 
 Diff the target matrix against existing coverage. The gap list is what you generate.
 
@@ -111,24 +114,22 @@ If the user provided a **focus**, filter the gap list to the focus area and gene
 
 ### Step 6: Generate scenarios
 
-Each generated scenario is a single numbered markdown list item in this exact format:
+Preserve the established style when a catalog exists. For a new catalog:
 
-```markdown
-N. `spernakit-tester {app}: I want to {one-sentence end-user intent describing a cross-cutting flow}`
-```
+- Use ``N. `spernakit-tester {app}: I want to ...` `` for a Spernakit or derived app.
+- Use a plain numbered scenario for every other project. Name the real command, route, API,
+  client, or workflow and the observable outcome; do not invent a skill or client prefix.
 
 **Generation rules:**
 
-- **One sentence per scenario.** Commas and semicolons are fine for chaining; no em-dashes. No multi-sentence scenarios.
-- **Begin with "I want to"** (or "I want to verify", "I want to test"); matches the house style of every existing file.
-- **Prefer cross-cutting flows** (multi-page, multi-entity, stateful) over isolated CRUD operations.
-- **Prefer distinctive app mechanics** over generic features shared by all Spernakit apps. Write
-  about the mechanics that make this app unlike its siblings - a bespoke multi-step interview, a
-  fleet-wide query editor, a task dependency chain - rather than login forms.
+- **One coherent scenario per numbered item.** It may wrap across Markdown lines.
+- **Prefer cross-cutting flows** over isolated operations.
+- **Prefer distinctive project mechanics** over generic behavior shared by its stack.
 - **Name concrete features** that exist in the app. Reference real page names, real buttons, real flows discovered in step 4. Generic scenarios like "test the user settings" are not useful.
-- **RBAC scenarios** (when generating them): one per tier, must name a concrete action the tier _can_ do and at least one the tier _cannot_ do. Match the tone of existing SYSOP/ADMIN/MANAGER/OPERATOR/VIEWER scenarios in other apps.
+- **Role scenarios** must name a concrete action the role _can_ do and at least one it _cannot_ do.
 - **Do not duplicate existing coverage.** If the existing file already has a dashboard drag-and-drop scenario, do not generate another.
-- **No verification-method detail.** Write what the user wants to do, not how to automate it. The `spernakit-tester` skill decides the mechanics.
+- **Name public interfaces when they define behavior.** Commands, flags, routes, response shapes,
+  exit codes, and visible side effects are valid scenario detail. Omit internal automation mechanics.
 
 ### Step 7: Merge into the catalog
 
@@ -145,20 +146,19 @@ Create the file from this template, filling in `{AppName}`, `{description}`, any
 
 ## Scenarios
 
-1. `spernakit-tester {app}: I want to ...`
-2. `spernakit-tester {app}: I want to ...`
+1. {scenario in the target project's established style}
+2. {scenario in the target project's established style}
    ...
 
 ---
 
 ## Post-Test Procedure
 
-- Run the aidd-local `bug2feature` skill for the report IDs created during the test session
-- Leave database-backed reports intact; the current API has no status or deletion mutation
-- Run the aidd-local `feature-review` skill for {scope}
-- Implement actionable remediation features and apply reusable fixes to Spernakit when appropriate
-- Validate completed remediation features and update their status and pass state; do not delete them
-- Create a session report that includes the time spent on each step
+- Record results and preserve reproducible evidence through the project's established test workflow
+- Convert confirmed defects into reviewed remediation features or authenticated reports
+- Run the aidd-local `feature-review` skill for newly created remediation features
+- Implement and validate actionable remediation without changing completed feature history
+- Run the project's quality gate after source changes
 ```
 
 **Augment mode** (file exists):
@@ -191,19 +191,20 @@ Coverage rationale:
 - Filled gap: {feature area}
 ...
 
-Next: invoke the aidd-local `spernakit-tester` skill for {app}: run scenario {N} to execute any of the new entries.
+Next: execute scenario {N} through the project's established test client or lifecycle. Use the
+aidd-local `spernakit-tester` skill only when the target is Spernakit or derived.
 ```
 
 ## Guardrails
 
 - **Only modify `.aidd/testing-scenarios.md`** in the target app. Never touch any other file. Never edit another app's scenarios.
 - **Never delete existing scenarios** except when the invocation selects refresh mode.
-- **Never invoke the aidd-local `spernakit-tester` skill** or any other skill from within this skill. Scenario generation is a pure authoring task.
+- **Never invoke another skill from within this skill.** Scenario generation is a pure authoring task.
 - **Do not create `.aidd/` directories.** If the target app has no `.aidd/`, abort with an error.
-- **Non-Spernakit apps** do not use the `spernakit-tester` prefix, because they are evaluated
-  through their own client rather than browser automation. Never assume a prefix for these: read
-  the app's existing `.aidd/testing-scenarios.md` and reuse whatever prefix it already uses. If the
-  file does not exist yet, return a scope error; this skill only seeds Spernakit scenario catalogs.
+- **Never treat project type as a reason to skip the catalog.** Missing catalogs are seeded for
+  browser, CLI, API, service, library, automation, and mixed-surface projects.
+- **Never invent an execution prefix.** Preserve an existing prefix; use `spernakit-tester` only
+  for Spernakit or derived apps; otherwise seed plain numbered scenarios.
 
 ## Examples
 
@@ -223,7 +224,7 @@ testing-scenarios <app-name> seed 15
 ```
 
 Creates `.aidd/testing-scenarios.md` from scratch with 15 scenarios covering major features and all
-five RBAC tiers.
+applicable interfaces, roles, contract boundaries, and persistent effects.
 
 **Focused generation:**
 

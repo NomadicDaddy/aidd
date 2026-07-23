@@ -105,6 +105,7 @@ export type StopReason =
 	| 'flailing'
 	| 'max_iterations'
 	| 'merge_conflict_parked'
+	| 'metadata_conflict_parked'
 	| 'no_work'
 	| 'partial_success_blocked'
 	| 'stop_requested';

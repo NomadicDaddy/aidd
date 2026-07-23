@@ -183,6 +183,20 @@ export function classifyRun(run: ProjectLocalRun): OutcomeClassification {
 			tone: 'amber',
 		};
 	}
+	if (reason === 'merge_conflict_parked') {
+		return {
+			label: 'Awaiting merge',
+			title: 'Work landed in an isolated worktree but the merge-back is parked for manual resolution.',
+			tone: 'amber',
+		};
+	}
+	if (reason === 'metadata_conflict_parked') {
+		return {
+			label: 'Parked: metadata conflict',
+			title: 'A .aidd metadata file the run changed also changed canonically mid-run; the metadata delta was withheld and the worktree preserved for manual reconciliation.',
+			tone: 'amber',
+		};
+	}
 	if (reason === 'exit_error') {
 		const decoded = decodeExitCode(run.exitCode);
 		if (decoded) return decoded;

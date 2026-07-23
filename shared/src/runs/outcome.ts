@@ -150,6 +150,16 @@ export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
 	if (run.stopReason === 'merge_conflict_parked') {
 		return statusOutcomes.waiting_approval;
 	}
+	// A `.aidd` metadata conflict parked the run before (or, in the rare post-merge race, after)
+	// the source merge: canonical metadata was left untouched and the worktree preserved. Distinct
+	// from a git merge park — there is no run branch to merge by hand, only metadata to reconcile.
+	if (run.stopReason === 'metadata_conflict_parked') {
+		return {
+			label: 'Parked: metadata conflict',
+			title: 'A .aidd metadata file the run changed also changed canonically mid-run; the metadata delta was withheld and the worktree preserved for manual reconciliation.',
+			tone: 'amber',
+		};
+	}
 	if (run.stopReason === 'blocked_dirty_worktree') {
 		return {
 			label: 'Blocked: dirty tree',

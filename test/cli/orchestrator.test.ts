@@ -256,6 +256,46 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(finalSummary?.stopReason).toBe('merge_conflict_parked');
 	});
 
+	test('a metadata-conflict park surfaces its own stop reason, not merge_conflict_parked', async () => {
+		const store = await makeStore('parked-metadata');
+		const backend = new FakeBackend(
+			[
+				{
+					type: 'assistant_text',
+					chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+				},
+				{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+			],
+			() => completeFeature(store, 'feature-core')
+		);
+		let finalSummary: { exitCode: number; stopReason: string; summary: string } | undefined;
+		// Simulate a run parked by a concurrent canonical .aidd edit (merge withheld).
+		const exitCode = await runOrchestrator(plan(store.projectDir), {
+			rootDir,
+			store,
+			backend,
+			finalizeWorktree: async () => ({
+				evidenceFiles: 0,
+				mergeStatus: 'withheld' as const,
+				metadataConflict: ['features/feature-core/feature.json'],
+				overrideExitCode: orchestratorExitCodes.mergeConflictParked,
+			}),
+			observer: {
+				onFinalSummary: (summary) => {
+					finalSummary = {
+						exitCode: summary.exitCode,
+						stopReason: summary.stopReason,
+						summary: summary.summary,
+					};
+				},
+			},
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.mergeConflictParked);
+		expect(finalSummary?.stopReason).toBe('metadata_conflict_parked');
+		expect(finalSummary?.summary).toContain('features/feature-core/feature.json');
+	});
+
 	test('claims selected feature and writes started artifact before backend launch', async () => {
 		const store = await makeStore('started-claim');
 		let observedStatus: unknown;

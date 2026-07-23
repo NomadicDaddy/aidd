@@ -56,7 +56,9 @@ export function nonNativeRunLogIntro(plan: RunPlan): string {
 export function terminalStateFromStopReason(stopReason: string): string {
 	if (stopReason === 'completed' || stopReason === 'no_work') return 'completed';
 	if (stopReason === 'stop_requested') return 'stopped';
-	if (stopReason === 'merge_conflict_parked') return 'waiting_approval';
+	if (stopReason === 'merge_conflict_parked' || stopReason === 'metadata_conflict_parked') {
+		return 'waiting_approval';
+	}
 	return 'failed';
 }
 

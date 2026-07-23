@@ -122,13 +122,15 @@ export async function writeRunSummary(
 		const finalization = await deps.finalizeWorktree(finalExitCode);
 		if (finalization.overrideExitCode !== undefined) {
 			effectiveExitCode = finalization.overrideExitCode;
-			effectiveStopReason = 'merge_conflict_parked';
 			if (finalization.metadataConflict !== undefined) {
-				// A `.aidd` metadata conflict parked the run (not a git merge conflict): surface
-				// the conflicting paths so the operator knows which metadata diverged.
+				// A `.aidd` metadata conflict parked the run (not a git merge conflict): a
+				// dedicated stop reason keeps the two machine-distinguishable, and the summary
+				// surfaces the conflicting paths so the operator knows which metadata diverged.
 				const paths = finalization.metadataConflict.join(', ');
+				effectiveStopReason = 'metadata_conflict_parked';
 				effectiveSummary = `${summaryWithRunEndChecks}; worktree metadata conflict — concurrent canonical change to: ${paths} (exit ${finalization.overrideExitCode}).`;
 			} else {
+				effectiveStopReason = 'merge_conflict_parked';
 				effectiveSummary = `${summaryWithRunEndChecks}; worktree merge parked — resolve the run branch manually (exit ${finalization.overrideExitCode}).`;
 			}
 		}

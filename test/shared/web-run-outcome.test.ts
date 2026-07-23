@@ -92,6 +92,23 @@ describe('classifyWebRun', () => {
 			})
 		).toBe('warnings');
 	});
+
+	test('classifies a metadata-conflict park distinctly from a git merge park', () => {
+		const outcome = classifyWebRun({
+			status: 'waiting_approval',
+			stopReason: 'metadata_conflict_parked',
+			exitCode: 77,
+		});
+		expect(outcome.label).toBe('Parked: metadata conflict');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 77,
+				status: 'waiting_approval',
+				stopReason: 'metadata_conflict_parked',
+			})
+		).toBe('warnings');
+	});
 });
 
 describe('classifyWebRunTelemetryBucket', () => {

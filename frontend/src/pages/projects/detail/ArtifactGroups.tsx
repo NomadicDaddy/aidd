@@ -1,13 +1,13 @@
 import type { MaturityDetail, ProjectArtifactRecord } from '../../../api/types.ts';
 
 import { ArtifactRow } from './ArtifactRow.tsx';
-import { buildArtifactInventory } from './artifactsUtils.ts';
+import { buildArtifactInventory, type ArtifactViewerTarget } from './artifactsUtils.ts';
 import { MaturityArtifactRow } from './MaturityArtifactRow.tsx';
 
 interface ArtifactGroupsProps {
 	disabled: boolean;
 	maturity: MaturityDetail | null;
-	onOpen?: ((record: ProjectArtifactRecord) => void) | undefined;
+	onOpen?: ((target: ArtifactViewerTarget) => void) | undefined;
 	onToggleSkip?: ((slug: string, skip: boolean) => void) | undefined;
 	records: ProjectArtifactRecord[];
 	skipSet: Set<string>;
@@ -60,6 +60,7 @@ export function ArtifactGroups({
 									artifact={artifact}
 									disabled={disabled}
 									key={artifact.slug}
+									onOpen={onOpen}
 									onToggleSkip={onToggleSkip}
 								/>
 							)

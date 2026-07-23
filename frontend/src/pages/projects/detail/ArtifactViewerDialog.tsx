@@ -3,15 +3,13 @@ import { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import type { ProjectArtifactRecord } from '../../../api/types.ts';
-
 import { JsonTree } from '../../../components/shared/JsonTree.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { useProjectFile } from '../../../hooks/useProjectFile.ts';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
-import { artifactViewablePath, formatBytes } from './artifactsUtils.ts';
+import { formatBytes, type ArtifactViewerTarget } from './artifactsUtils.ts';
 
 // Element styling for rendered markdown; the app does not ship a typography plugin, so the
 // few elements artifacts actually use are styled here.
@@ -80,13 +78,13 @@ function parsedJsonOrNull(content: string): unknown {
 export function ArtifactViewerDialog({
 	onClose,
 	projectId,
-	record,
+	target,
 }: {
 	onClose: () => void;
 	projectId: string;
-	record: ProjectArtifactRecord;
+	target: ArtifactViewerTarget;
 }) {
-	const query = useProjectFile(projectId, artifactViewablePath(record));
+	const query = useProjectFile(projectId, target.path);
 	const [jsonView, setJsonView] = useState<'raw' | 'tree'>('tree');
 	const data = query.data;
 	// A truncated JSON head is unparseable by construction; the raw fallback still shows it.
@@ -97,6 +95,7 @@ export function ArtifactViewerDialog({
 				: null,
 		[data]
 	);
+	const displaySize = data?.state === 'ok' ? data.totalBytes : target.sizeBytes;
 
 	const body = (() => {
 		if (query.isLoading) {
@@ -171,17 +170,19 @@ export function ArtifactViewerDialog({
 						<h2
 							className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
 							id="artifact-viewer-title">
-							{record.label}
+							{target.label}
 						</h2>
 						<p className="mt-0.5 font-mono text-xs break-all text-neutral-500">
-							{record.path}
+							{target.path}
 						</p>
-						<p className="mt-0.5 text-xs text-neutral-500">
-							{record.exists ? formatBytes(record.sizeBytes) : '—'}
-							{record.mtime
-								? ` · ${formatDate(record.mtime)} (${formatRelativeAge(record.mtime)})`
-								: ''}
-						</p>
+						{displaySize !== null || target.mtime ? (
+							<p className="mt-0.5 text-xs text-neutral-500">
+								{displaySize === null ? '—' : formatBytes(displaySize)}
+								{target.mtime
+									? ` · ${formatDate(target.mtime)} (${formatRelativeAge(target.mtime)})`
+									: ''}
+							</p>
+						) : null}
 					</div>
 					<IconButton ariaLabel="Close artifact viewer" onClick={onClose} variant="ghost">
 						<X className="h-4 w-4" />

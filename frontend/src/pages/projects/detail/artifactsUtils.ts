@@ -6,6 +6,13 @@ import type {
 
 export type Tone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
 
+export interface ArtifactViewerTarget {
+	label: string;
+	mtime: null | string;
+	path: string;
+	sizeBytes: null | number;
+}
+
 interface ArtifactInventoryEntry {
 	artifact: MaturityArtifact;
 	record: null | ProjectArtifactRecord;
@@ -22,6 +29,12 @@ interface ArtifactInventory {
 	total: number;
 	ungrouped: ProjectArtifactRecord[];
 }
+
+const maturityArtifactPaths = new Map<string, string>([
+	['CONTEXT.md', 'CONTEXT.md'],
+	['deployment.md', '.aidd/deployment.md'],
+	['project.md', '.aidd/project.md'],
+]);
 
 export function formatBytes(bytes: number): string {
 	if (bytes <= 0) return '0 B';
@@ -49,6 +62,36 @@ export function artifactViewablePath(record: ProjectArtifactRecord): null | stri
 	const normalized = record.path.split('\\').join('/');
 	if (normalized.startsWith('.aidd/') || normalized === 'CONTEXT.md') return normalized;
 	return null;
+}
+
+export function artifactViewerTarget(record: ProjectArtifactRecord): ArtifactViewerTarget | null {
+	const path = artifactViewablePath(record);
+	if (path === null) return null;
+	return {
+		label: record.label,
+		mtime: record.mtime,
+		path,
+		sizeBytes: record.sizeBytes,
+	};
+}
+
+export function maturityArtifactViewerTarget(
+	artifact: MaturityArtifact
+): ArtifactViewerTarget | null {
+	if (
+		artifact.kind !== 'fs-file' ||
+		(artifact.status !== 'fresh' && artifact.status !== 'stale')
+	) {
+		return null;
+	}
+	const path = maturityArtifactPaths.get(artifact.slug);
+	if (!path) return null;
+	return {
+		label: artifact.label,
+		mtime: artifact.mtime,
+		path,
+		sizeBytes: null,
+	};
 }
 
 export function artifactStatus(record: ProjectArtifactRecord): { label: string; tone: Tone } {

@@ -9,14 +9,15 @@ import { Button } from '../../../components/ui/button.tsx';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import {
 	artifactStatus,
-	artifactViewablePath,
+	artifactViewerTarget,
 	formatBytes,
 	severityTone,
+	type ArtifactViewerTarget,
 } from './artifactsUtils.ts';
 
 interface ArtifactRowProps {
 	disabled: boolean;
-	onOpen?: ((record: ProjectArtifactRecord) => void) | undefined;
+	onOpen?: ((target: ArtifactViewerTarget) => void) | undefined;
 	onToggleSkip?: ((slug: string, skip: boolean) => void) | undefined;
 	record: ProjectArtifactRecord;
 	skipped: boolean;
@@ -24,7 +25,8 @@ interface ArtifactRowProps {
 
 export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }: ArtifactRowProps) {
 	const status = artifactStatus(record);
-	const viewable = onOpen !== undefined && artifactViewablePath(record) !== null;
+	const viewerTarget = artifactViewerTarget(record);
+	const viewable = onOpen !== undefined && viewerTarget !== null;
 	const labelBlock = (
 		<>
 			<div className="flex items-center gap-1.5 truncate text-sm font-medium text-neutral-950 dark:text-neutral-50">
@@ -43,7 +45,7 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 					<button
 						aria-label={`View ${record.label}`}
 						className="min-w-0 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-						onClick={() => onOpen(record)}
+						onClick={() => onOpen(viewerTarget)}
 						type="button">
 						{labelBlock}
 					</button>

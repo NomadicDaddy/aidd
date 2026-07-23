@@ -2,7 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 
 import type { MaturityDetail, ProjectArtifactRecord } from '../../frontend/src/api/types.ts';
-import { buildArtifactInventory } from '../../frontend/src/pages/projects/detail/artifactsUtils.ts';
+import {
+	buildArtifactInventory,
+	maturityArtifactViewerTarget,
+} from '../../frontend/src/pages/projects/detail/artifactsUtils.ts';
 
 const specRecord: ProjectArtifactRecord = {
 	ageDays: 1,
@@ -105,7 +108,7 @@ function renderArtifactGroups(): string {
 		"import { ArtifactGroups } from './src/pages/projects/detail/ArtifactGroups.tsx';",
 		`const maturity = ${JSON.stringify(maturity)};`,
 		`const records = ${JSON.stringify([specRecord, responsesRecord])};`,
-		'const view = createElement(ArtifactGroups, { disabled: false, maturity, onToggleSkip: () => undefined, records, skipSet: new Set() });',
+		'const view = createElement(ArtifactGroups, { disabled: false, maturity, onOpen: () => undefined, onToggleSkip: () => undefined, records, skipSet: new Set() });',
 		'console.log(renderToStaticMarkup(view));',
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {
@@ -130,6 +133,14 @@ describe('artifact inventory', () => {
 			'release.tag',
 		]);
 		expect(inventory.ungrouped).toEqual([responsesRecord]);
+		const deploymentArtifact = inventory.groups[1]?.entries[0]?.artifact;
+		if (!deploymentArtifact) throw new Error('deployment artifact missing from inventory');
+		expect(maturityArtifactViewerTarget(deploymentArtifact)).toEqual({
+			label: 'deployment.md',
+			mtime: '2026-07-22T00:00:00Z',
+			path: '.aidd/deployment.md',
+			sizeBytes: null,
+		});
 	});
 
 	test('renders deployment evidence through the real React component', () => {
@@ -137,6 +148,7 @@ describe('artifact inventory', () => {
 
 		expect(html).toContain('Shipped (3)');
 		expect(html).toContain('deployment.md');
+		expect(html).toContain('aria-label="View deployment.md"');
 		expect(html).toContain('aria-label="Mark deployment.md as N/A"');
 		expect(html).toContain('Deploy config');
 		expect(html).toContain('Release tag');

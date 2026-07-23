@@ -1,12 +1,8 @@
 import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
-import type {
-	MaturityDetail,
-	ProjectArtifactCheckSummary,
-	ProjectArtifactRecord,
-} from '../../../api/types.ts';
-import type { Tone } from './artifactsUtils.ts';
+import type { MaturityDetail, ProjectArtifactCheckSummary } from '../../../api/types.ts';
+import type { ArtifactViewerTarget, Tone } from './artifactsUtils.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
@@ -35,7 +31,7 @@ export function ArtifactsTab({
 }) {
 	const skipMutation = useUpdateMaturitySkip(projectId);
 	const skipSet = new Set(maturity?.skip ?? []);
-	const [openedRecord, setOpenedRecord] = useState<null | ProjectArtifactRecord>(null);
+	const [openedArtifact, setOpenedArtifact] = useState<ArtifactViewerTarget | null>(null);
 	function toggleSkip(slug: string, skip: boolean): void {
 		const current = maturity?.skip ?? [];
 		const next = skip
@@ -128,19 +124,19 @@ export function ArtifactsTab({
 					<ArtifactGroups
 						disabled={skipMutation.isPending}
 						maturity={maturity}
-						onOpen={setOpenedRecord}
+						onOpen={setOpenedArtifact}
 						onToggleSkip={maturity ? toggleSkip : undefined}
 						records={artifacts}
 						skipSet={skipSet}
 					/>
 				)}
 			</div>
-			{openedRecord ? (
+			{openedArtifact ? (
 				<Suspense fallback={null}>
 					<ArtifactViewerDialog
-						onClose={() => setOpenedRecord(null)}
+						onClose={() => setOpenedArtifact(null)}
 						projectId={projectId}
-						record={openedRecord}
+						target={openedArtifact}
 					/>
 				</Suspense>
 			) : null}

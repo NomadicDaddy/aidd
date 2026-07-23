@@ -13,6 +13,7 @@ import { Card } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
+import { artifactInventoryCount } from './artifactsUtils.ts';
 import { artifactTone, type ArtifactHealth } from './shared.ts';
 
 // Pulls in react-markdown + remark-gfm (~250KB); lazy so the tab does not pay for it
@@ -66,6 +67,7 @@ export function ArtifactsTab({
 		);
 	}
 	const { artifacts, summary } = artifactCheck;
+	const inventoryCount = artifactInventoryCount(artifacts, maturity);
 	const tiles: { label: string; tone: Tone; value: number }[] = [
 		{ label: 'Fresh', tone: 'emerald', value: summary.fresh },
 		{ label: 'Stale', tone: 'amber', value: summary.stale },
@@ -110,12 +112,17 @@ export function ArtifactsTab({
 				</div>
 			</div>
 			<div className="mt-4">
+				<p className="mb-2 text-xs text-neutral-500">
+					The health summary covers the assertion catalog checked by{' '}
+					<code>--check-artifacts</code>. The inventory also includes broader maturity
+					evidence such as feature metadata, audit reports, and deployment artifacts.
+				</p>
 				<h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-					Artifacts ({artifacts.length})
+					Artifact inventory ({inventoryCount})
 				</h3>
-				{artifacts.length === 0 ? (
+				{inventoryCount === 0 ? (
 					<p className="text-sm text-neutral-500">
-						No individual artifact records were reported in this check.
+						No individual artifact records or maturity evidence were reported.
 					</p>
 				) : (
 					<ArtifactGroups

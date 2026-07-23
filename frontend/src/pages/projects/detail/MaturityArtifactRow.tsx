@@ -11,7 +11,7 @@ import { artifactStatusLabel, artifactTone } from './maturityOverviewUtils.ts';
 interface MaturityArtifactRowProps {
 	artifact: MaturityArtifact;
 	disabled: boolean;
-	onToggleSkip: (slug: string, skip: boolean) => void;
+	onToggleSkip?: ((slug: string, skip: boolean) => void) | undefined;
 }
 
 export function MaturityArtifactRow({
@@ -36,24 +36,29 @@ export function MaturityArtifactRow({
 						{formatRelativeAge(artifact.mtime)}
 					</span>
 				) : null}
-				<Button
-					disabled={disabled}
-					onClick={() => onToggleSkip(artifact.slug, !skipped)}
-					size="compact"
-					title={skipped ? 'Restore artifact' : 'Mark artifact as not applicable'}
-					variant={skipped ? 'ghost' : 'secondary'}>
-					{skipped ? (
-						<>
-							<RotateCcw className="h-3.5 w-3.5" />
-							Restore
-						</>
-					) : (
-						<>
-							<Ban className="h-3.5 w-3.5" />
-							Mark N/A
-						</>
-					)}
-				</Button>
+				{onToggleSkip ? (
+					<Button
+						aria-label={
+							skipped ? `Restore ${artifact.label}` : `Mark ${artifact.label} as N/A`
+						}
+						disabled={disabled}
+						onClick={() => onToggleSkip(artifact.slug, !skipped)}
+						size="compact"
+						title={skipped ? 'Restore artifact' : 'Mark artifact as not applicable'}
+						variant={skipped ? 'ghost' : 'secondary'}>
+						{skipped ? (
+							<>
+								<RotateCcw className="h-3.5 w-3.5" />
+								Restore
+							</>
+						) : (
+							<>
+								<Ban className="h-3.5 w-3.5" />
+								Mark N/A
+							</>
+						)}
+					</Button>
+				) : null}
 			</div>
 		</div>
 	);

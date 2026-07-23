@@ -1,7 +1,8 @@
 import type { MaturityDetail, ProjectArtifactRecord } from '../../../api/types.ts';
 
 import { ArtifactRow } from './ArtifactRow.tsx';
-import { groupRecordsByStage } from './artifactsUtils.ts';
+import { buildArtifactInventory } from './artifactsUtils.ts';
+import { MaturityArtifactRow } from './MaturityArtifactRow.tsx';
 
 interface ArtifactGroupsProps {
 	disabled: boolean;
@@ -35,38 +36,44 @@ export function ArtifactGroups({
 			</div>
 		);
 	}
-	const { groups, order, ungrouped } = groupRecordsByStage(records, maturity);
-	const stageBlocks: { label: string; records: ProjectArtifactRecord[] }[] = order
-		.map((label) => ({ label, records: groups.get(label) ?? [] }))
-		.filter((block) => block.records.length > 0);
+	const inventory = buildArtifactInventory(records, maturity);
 	return (
 		<div className="space-y-4">
-			{stageBlocks.map((block) => (
-				<div key={block.label}>
+			{inventory.groups.map((group) => (
+				<div key={group.id}>
 					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-						{block.label}
+						{group.label} ({group.entries.length})
 					</h4>
 					<div className="flex flex-col gap-2">
-						{block.records.map((record) => (
-							<ArtifactRow
-								disabled={disabled}
-								key={record.label}
-								onOpen={onOpen}
-								onToggleSkip={onToggleSkip}
-								record={record}
-								skipped={skipSet.has(record.label)}
-							/>
-						))}
+						{group.entries.map(({ artifact, record }) =>
+							record ? (
+								<ArtifactRow
+									disabled={disabled}
+									key={artifact.slug}
+									onOpen={onOpen}
+									onToggleSkip={onToggleSkip}
+									record={record}
+									skipped={skipSet.has(artifact.slug)}
+								/>
+							) : (
+								<MaturityArtifactRow
+									artifact={artifact}
+									disabled={disabled}
+									key={artifact.slug}
+									onToggleSkip={onToggleSkip}
+								/>
+							)
+						)}
 					</div>
 				</div>
 			))}
-			{ungrouped.length > 0 ? (
+			{inventory.ungrouped.length > 0 ? (
 				<div>
 					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-						Other artifacts
+						Other artifacts ({inventory.ungrouped.length})
 					</h4>
 					<div className="flex flex-col gap-2">
-						{ungrouped.map((record) => (
+						{inventory.ungrouped.map((record) => (
 							<ArtifactRow
 								disabled={disabled}
 								key={record.label}

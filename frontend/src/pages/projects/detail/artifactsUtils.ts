@@ -1,6 +1,27 @@
-import type { MaturityDetail, ProjectArtifactRecord } from '../../../api/types.ts';
+import type {
+	MaturityArtifact,
+	MaturityDetail,
+	ProjectArtifactRecord,
+} from '../../../api/types.ts';
 
 export type Tone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+
+interface ArtifactInventoryEntry {
+	artifact: MaturityArtifact;
+	record: null | ProjectArtifactRecord;
+}
+
+interface ArtifactInventoryGroup {
+	entries: ArtifactInventoryEntry[];
+	id: string;
+	label: string;
+}
+
+interface ArtifactInventory {
+	groups: ArtifactInventoryGroup[];
+	total: number;
+	ungrouped: ProjectArtifactRecord[];
+}
 
 export function formatBytes(bytes: number): string {
 	if (bytes <= 0) return '0 B';
@@ -40,38 +61,31 @@ export function artifactStatus(record: ProjectArtifactRecord): { label: string; 
 	return { label: 'fresh', tone: 'emerald' };
 }
 
-function buildSlugToStageLabel(maturity: MaturityDetail | null): Map<string, string> {
-	const map = new Map<string, string>();
-	if (!maturity) return map;
-	for (const stage of maturity.stages) {
-		for (const artifact of stage.artifacts) {
-			map.set(artifact.slug, stage.label);
-		}
-	}
-	return map;
+export function buildArtifactInventory(
+	records: ProjectArtifactRecord[],
+	maturity: MaturityDetail
+): ArtifactInventory {
+	const recordsByLabel = new Map(records.map((record) => [record.label, record]));
+	const groupedLabels = new Set<string>();
+	const groups = maturity.stages
+		.map((stage) => ({
+			entries: stage.artifacts.map((artifact) => {
+				const record = recordsByLabel.get(artifact.slug) ?? null;
+				if (record) groupedLabels.add(record.label);
+				return { artifact, record };
+			}),
+			id: stage.id,
+			label: stage.label,
+		}))
+		.filter((group) => group.entries.length > 0);
+	const ungrouped = records.filter((record) => !groupedLabels.has(record.label));
+	const groupedTotal = groups.reduce((total, group) => total + group.entries.length, 0);
+	return { groups, total: groupedTotal + ungrouped.length, ungrouped };
 }
 
-export function groupRecordsByStage(
+export function artifactInventoryCount(
 	records: ProjectArtifactRecord[],
 	maturity: MaturityDetail | null
-): {
-	groups: Map<string, ProjectArtifactRecord[]>;
-	order: string[];
-	ungrouped: ProjectArtifactRecord[];
-} {
-	const slugMap = buildSlugToStageLabel(maturity);
-	const stageOrder = maturity ? maturity.stages.map((stage) => stage.label) : [];
-	const groups = new Map<string, ProjectArtifactRecord[]>();
-	const ungrouped: ProjectArtifactRecord[] = [];
-	for (const record of records) {
-		const stageLabel = slugMap.get(record.label);
-		if (stageLabel) {
-			const list = groups.get(stageLabel) ?? [];
-			list.push(record);
-			groups.set(stageLabel, list);
-		} else {
-			ungrouped.push(record);
-		}
-	}
-	return { groups, order: stageOrder, ungrouped };
+): number {
+	return maturity ? buildArtifactInventory(records, maturity).total : records.length;
 }

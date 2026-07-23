@@ -382,3 +382,16 @@ When you've completed the directive:
 ---
 
 Begin by understanding the directive and executing it now.
+
+---
+
+## aidd V2 RESULT CONTRACT
+
+When you have fully carried out the directive, include exactly one final result marker in your assistant response:
+
+```text
+AIDD_RESULT: {"directiveCompleted":true}
+```
+
+Emit this marker exactly once, at the very end, and only after the directive is genuinely complete — a delivered review, a delivered answer, or a completed set of changes all count. A clean "nothing to change / already correct / nothing to review" conclusion is itself a complete result: emit the marker. Do NOT emit it for partial work, or when you are blocked and reporting the blocker back for a human decision. This is a read-only directive: the findings or answer in your response ARE the deliverable, so deliver them in full and then emit the marker. Do not commit, write files, or otherwise alter the repository — the marker alone signals completion.
+Anti-placeholder rule: the AIDD_RESULT value must be the COMPLETE, valid JSON object with the real contents for this run. Never substitute a placeholder, shorthand, or abbreviation where the JSON belongs — not `{ ... }`, `{ … }`, an ellipsis, or a prose summary. The marker is parsed as brace-balanced JSON, so a placeholder body fails to parse and discards the entire run's work. If the payload is large, emit it in full anyway; if you cannot emit valid JSON, omit the marker entirely rather than emit a malformed one.

@@ -126,5 +126,26 @@ AIDD_RESULT: {"directorOutputWritten":true}
 Do NOT restate the suggestions or fleet summary in this marker; put the complete output in the file only. Emit the marker exactly once, after the file is written.
 `;
 	}
+	if (plan.mode === 'directive') {
+		// A directive run's deliverable is its response (a review/answer) or its committed changes,
+		// not a feature marker — so directive mode had no result contract at all. Read-only
+		// directives are then structurally unable to signal success: forbidden to commit or write
+		// .aidd artifacts, and never told to emit a marker, they land on missing_aidd_result / exit
+		// 73 even when the review completed correctly. This lightweight marker is that missing
+		// completion signal; aidd only checks it was emitted, so the body is a fixed flag.
+		const readonly = plan.customDirectiveReadonly === true;
+		const closing = readonly
+			? 'This is a read-only directive: the findings or answer in your response ARE the deliverable, so deliver them in full and then emit the marker. Do not commit, write files, or otherwise alter the repository — the marker alone signals completion.'
+			: 'Before emitting the marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above.';
+		return `## aidd V2 RESULT CONTRACT
+
+When you have fully carried out the directive, include exactly one final result marker in your assistant response:
+
+\`\`\`text
+AIDD_RESULT: {"directiveCompleted":true}
+\`\`\`
+
+Emit this marker exactly once, at the very end, and only after the directive is genuinely complete — a delivered review, a delivered answer, or a completed set of changes all count. A clean "nothing to change / already correct / nothing to review" conclusion is itself a complete result: emit the marker. Do NOT emit it for partial work, or when you are blocked and reporting the blocker back for a human decision. ${closing}`;
+	}
 	return '';
 }

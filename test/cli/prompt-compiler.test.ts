@@ -308,6 +308,10 @@ describe('prompt compiler', () => {
 		expect(compiled.text).toContain('Commit non-ignored changes with descriptive messages');
 		expect(compiled.text).not.toContain('Do NOT write to .aidd/CHANGELOG.md');
 		expect(compiled.text).not.toContain('Do NOT create commits');
+		// Directive mode carries a completion marker so a run that emits it is not classified as
+		// missing_aidd_result; the mutation variant ties it to committing.
+		expect(compiled.text).toContain('AIDD_RESULT: {"directiveCompleted":true}');
+		expect(compiled.text).toContain('commit every non-ignored change');
 	});
 
 	test('read-only directive prompt strips changelog and commit instructions', async () => {
@@ -332,6 +336,10 @@ describe('prompt compiler', () => {
 		expect(compiled.text).toContain('Do NOT create commits, amend history');
 		expect(compiled.text).not.toContain('Document your work in .aidd/CHANGELOG.md');
 		expect(compiled.text).not.toContain('Commit your changes with descriptive messages');
+		// A read-only directive can now signal completion without committing: emit the marker after
+		// delivering the review. This is what lets a clean/no-op review avoid missing_aidd_result.
+		expect(compiled.text).toContain('AIDD_RESULT: {"directiveCompleted":true}');
+		expect(compiled.text).toContain('the marker alone signals completion');
 	});
 
 	test('generates audit prompt with audit id convention and audit body', async () => {

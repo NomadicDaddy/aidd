@@ -7,6 +7,7 @@ import {
 	roadmapSchema,
 	selectAssignmentMilestone,
 } from 'aidd-shared/metadata/roadmap';
+import { buildRoadmapFromFeatures } from 'aidd-shared/metadata/roadmap-build';
 
 describe('roadmapSchema', () => {
 	test('accepts milestone roadmap shape', () => {
@@ -349,5 +350,53 @@ describe('selectAssignmentMilestone', () => {
 
 		expect(selection.milestone).toBe('MVP');
 		expect(selection.createdMilestone).toBeUndefined();
+	});
+});
+
+describe('buildRoadmapFromFeatures', () => {
+	test('maps every feature to a single v1.0 milestone and preserves dependencies', () => {
+		const roadmap = buildRoadmapFromFeatures([
+			{ id: 'feature-a', passes: true, priority: 7 },
+			{ id: 'feature-b', passes: false, dependencies: ['feature-a'] },
+		]);
+
+		expect(roadmap.milestones).toEqual({
+			'v1.0': { description: expect.any(String), priority: 1 },
+		});
+		expect(roadmap.features).toEqual({
+			'feature-a': { milestone: 'v1.0' },
+			'feature-b': { milestone: 'v1.0', dependencies: ['feature-a'] },
+		});
+	});
+
+	test('keys features by directory over id and drops empty dependency entries', () => {
+		const roadmap = buildRoadmapFromFeatures([
+			{ id: 'feature-x', directory: 'dir-x', dependencies: ['', 'feature-y'] },
+		]);
+
+		expect(roadmap.features).toEqual({
+			'dir-x': { milestone: 'v1.0', dependencies: ['feature-y'] },
+		});
+	});
+
+	test('produces a schema-valid, gate-ready roadmap covering all incomplete features', () => {
+		const features = [
+			{ id: 'feature-a', passes: false, priority: 5 },
+			{ id: 'feature-b', passes: false },
+		];
+		const roadmap = buildRoadmapFromFeatures(features);
+
+		expect(() => roadmapSchema.parse(roadmap)).not.toThrow();
+		const gate = evaluateRoadmapCodingGate(roadmap, features);
+		expect(gate.blocked).toBe(false);
+		expect(gate.activeMilestone).toBe('v1.0');
+		expect(gate.allowedFeatureDirectories.sort()).toEqual(['feature-a', 'feature-b']);
+	});
+
+	test('an empty feature list still yields the milestone with no features', () => {
+		const roadmap = buildRoadmapFromFeatures([]);
+
+		expect(roadmap.features).toEqual({});
+		expect(Object.keys(roadmap.milestones)).toEqual(['v1.0']);
 	});
 });

@@ -12,6 +12,7 @@ import {
 	type Roadmap,
 	type RoadmapCodingGate,
 } from 'aidd-shared/metadata/roadmap';
+import { buildRoadmapFromFeatures } from 'aidd-shared/metadata/roadmap-build';
 import { InvalidRoadmapError } from 'aidd-shared/metadata/store';
 
 export interface RoadmapScopedQuery {
@@ -66,12 +67,19 @@ export function explicitFeatureTarget(plan: RunPlan): string | undefined {
 	return filter.value;
 }
 
-async function readRoadmapIfPresent(context: ModeContext): Promise<null | Roadmap> {
+// A project without roadmap.json is no longer treated as "roadmap not applicable" — the coding
+// milestone/dependency gate must apply to every project. On first encounter we synthesize a
+// single-milestone roadmap from the existing feature inventory (all features → v1.0, dependencies
+// preserved) and persist it, so from here on the gate runs exactly as it would for a hand-authored
+// roadmap. An invalid (non-ENOENT) roadmap still propagates so the caller can surface it.
+async function readOrCreateRoadmap(context: ModeContext, allFeatures: Feature[]): Promise<Roadmap> {
 	try {
 		return await context.store.readRoadmap();
 	} catch (err) {
-		if (isMissingRoadmapError(err)) return null;
-		throw err;
+		if (!isMissingRoadmapError(err)) throw err;
+		const roadmap = buildRoadmapFromFeatures(allFeatures);
+		await context.store.writeRoadmap(roadmap);
+		return roadmap;
 	}
 }
 
@@ -89,8 +97,7 @@ export async function roadmapScopedQuery(
 	query: FeatureQuery,
 	allFeatures: Feature[]
 ): Promise<RoadmapScopedQuery> {
-	const roadmap = await readRoadmapIfPresent(context);
-	if (!roadmap) return { gate: null, query };
+	const roadmap = await readOrCreateRoadmap(context, allFeatures);
 	const gate = evaluateRoadmapCodingGate(roadmap, allFeatures);
 	if (gate.blocked || gate.activeMilestone === null) return { gate, query };
 	return {

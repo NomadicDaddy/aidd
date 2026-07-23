@@ -179,6 +179,37 @@ describe('mode handlers', () => {
 		expect(work.description).toBe('Current');
 	});
 
+	test('coding mode auto-creates a single-milestone roadmap when none exists', async () => {
+		const { projectDir, store } = await makeProject('coding-roadmap-autocreate');
+		await store.writeFeature({
+			id: 'feature-base',
+			status: 'backlog',
+			passes: false,
+			priority: 2,
+		});
+		await store.writeFeature({
+			id: 'feature-dependent',
+			status: 'backlog',
+			passes: false,
+			priority: 1,
+			dependencies: ['feature-base'],
+		});
+
+		const work = await createModeHandler(plan(projectDir)).selectWork({ projectDir, store });
+		// A previously roadmap-less project is now gated rather than skipped: only the
+		// dependency-satisfied feature is eligible...
+		expect(work.kind).toBe('feature');
+		expect(work.id).toBe('feature-base');
+		// ...and a roadmap.json was synthesized so every later run reads a real gate.
+		const roadmap = await store.readRoadmap();
+		expect(Object.keys(roadmap.milestones)).toEqual(['v1.0']);
+		expect(roadmap.features['feature-base']?.milestone).toBe('v1.0');
+		expect(roadmap.features['feature-dependent']).toEqual({
+			milestone: 'v1.0',
+			dependencies: ['feature-base'],
+		});
+	});
+
 	test('directive mode runs its prompt without claiming a backlog feature', async () => {
 		const { projectDir, store } = await makeProject('directive-no-claim');
 		await store.writeFeature({

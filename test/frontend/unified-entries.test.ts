@@ -8,6 +8,8 @@ import {
 	historyDisplayFloor,
 	initialSelection,
 	isEntryActive,
+	isMultiStepSession,
+	isSkillSession,
 	needsRunRecordFallback,
 	oldestStartedAt,
 	splitEntriesByLiveness,
@@ -103,6 +105,32 @@ describe('unified execution entries', () => {
 		const { active, history } = splitEntriesByLiveness(entries);
 		expect(active.map(entryKey)).toEqual(['pipeline:s_queued', 'run:r_running']);
 		expect(history.map(entryKey)).toEqual(['run:r_done', 'pipeline:s_done']);
+	});
+
+	test('only multi-step sessions nest', () => {
+		expect(isMultiStepSession(makeSession({ totalSteps: 1 }))).toBe(false);
+		expect(isMultiStepSession(makeSession({ totalSteps: 2 }))).toBe(true);
+	});
+
+	test('skill sessions are marked by the reserved recipe-id prefix', () => {
+		expect(isSkillSession(makeSession({ recipeId: 'skill:feature-coverage-audit' }))).toBe(
+			true
+		);
+		expect(isSkillSession(makeSession({ recipeId: 'full-build' }))).toBe(false);
+	});
+
+	test('text search matches "skill" for a skill session, "pipeline" for a recipe', () => {
+		const skill = {
+			kind: 'pipeline',
+			session: makeSession({ recipeId: 'skill:feature-coverage-audit' }),
+		} as const;
+		const recipe = {
+			kind: 'pipeline',
+			session: makeSession({ recipeId: 'full-build' }),
+		} as const;
+		expect(entryMatchesFilters(skill, baseFilters({ query: 'skill' }))).toBe(true);
+		expect(entryMatchesFilters(skill, baseFilters({ query: 'pipeline' }))).toBe(false);
+		expect(entryMatchesFilters(recipe, baseFilters({ query: 'pipeline' }))).toBe(true);
 	});
 
 	test('queued and running sessions are active; terminal statuses are not', () => {

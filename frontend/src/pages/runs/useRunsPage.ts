@@ -158,7 +158,11 @@ export function useRunsPage() {
 	if (!seededExpansion && sessionList.length > 0) {
 		setSeededExpansion(true);
 		const ids = sessionList
-			.filter((session) => session.status === 'queued' || session.status === 'running')
+			.filter(
+				(session) =>
+					session.totalSteps > 1 &&
+					(session.status === 'queued' || session.status === 'running')
+			)
 			.slice(0, MAX_AUTO_EXPANDED_SESSIONS)
 			.map((session) => session.id);
 		if (pipelineContextId !== undefined) ids.push(pipelineContextId);

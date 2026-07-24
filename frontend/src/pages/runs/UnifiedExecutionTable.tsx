@@ -8,6 +8,7 @@ import { PipelineStepSubRows } from './PipelineStepSubRows.tsx';
 import {
 	entryKey,
 	isEntryActive,
+	isMultiStepSession,
 	type UnifiedEntry,
 	type UnifiedSelection,
 } from './unifiedEntries.ts';
@@ -102,21 +103,22 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 										selected={isSelected(entry)}
 										session={entry.session}
 									/>
-									{expandedSessions.has(entry.session.id) && (
-										<tr className="border-b bg-neutral-50/60 last:border-0 dark:bg-neutral-900/40">
-											<td className="p-0" colSpan={4}>
-												<PipelineStepSubRows
-													onSelectRun={(runId) =>
-														props.onSelectStepRun(
-															entry.session.id,
-															runId
-														)
-													}
-													sessionId={entry.session.id}
-												/>
-											</td>
-										</tr>
-									)}
+									{isMultiStepSession(entry.session) &&
+										expandedSessions.has(entry.session.id) && (
+											<tr className="border-b bg-neutral-50/60 last:border-0 dark:bg-neutral-900/40">
+												<td className="p-0" colSpan={4}>
+													<PipelineStepSubRows
+														onSelectRun={(runId) =>
+															props.onSelectStepRun(
+																entry.session.id,
+																runId
+															)
+														}
+														sessionId={entry.session.id}
+													/>
+												</td>
+											</tr>
+										)}
 								</Fragment>
 							)
 						)}
@@ -155,16 +157,17 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 								selected={isSelected(entry)}
 								session={entry.session}
 							/>
-							{expandedSessions.has(entry.session.id) && (
-								<div className="bg-neutral-50/60 dark:bg-neutral-900/40">
-									<PipelineStepSubRows
-										onSelectRun={(runId) =>
-											props.onSelectStepRun(entry.session.id, runId)
-										}
-										sessionId={entry.session.id}
-									/>
-								</div>
-							)}
+							{isMultiStepSession(entry.session) &&
+								expandedSessions.has(entry.session.id) && (
+									<div className="bg-neutral-50/60 dark:bg-neutral-900/40">
+										<PipelineStepSubRows
+											onSelectRun={(runId) =>
+												props.onSelectStepRun(entry.session.id, runId)
+											}
+											sessionId={entry.session.id}
+										/>
+									</div>
+								)}
 						</Fragment>
 					)
 				)}

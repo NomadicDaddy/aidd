@@ -14,6 +14,7 @@ import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
 
 export function sessionStatusTone(status: PipelineSessionRecord['status']) {
 	if (status === 'completed') return 'emerald';
@@ -97,23 +98,27 @@ function SessionTitle({
 	selected,
 	session,
 }: Omit<PipelineSessionRowProps, 'now' | 'onStop'>) {
+	// Single-step pipelines don't nest: no chevron, no step chip — the row stands alone.
+	const multiStep = isMultiStepSession(session);
 	return (
 		// flex-wrap keeps the recipe name on one line: with a long name the Console button
 		// wraps below rather than squeezing the link into a tall word-per-line column.
 		<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-			<Button
-				aria-expanded={expanded}
-				aria-label={`${expanded ? 'Collapse' : 'Expand'} steps for ${session.recipeName}`}
-				className="px-1"
-				onClick={() => onToggle(session.id)}
-				size="compact"
-				variant="ghost">
-				{expanded ? (
-					<ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
-				) : (
-					<ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
-				)}
-			</Button>
+			{multiStep && (
+				<Button
+					aria-expanded={expanded}
+					aria-label={`${expanded ? 'Collapse' : 'Expand'} steps for ${session.recipeName}`}
+					className="px-1"
+					onClick={() => onToggle(session.id)}
+					size="compact"
+					variant="ghost">
+					{expanded ? (
+						<ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
+					) : (
+						<ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
+					)}
+				</Button>
+			)}
 			<Workflow
 				aria-hidden="true"
 				className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400"
@@ -123,11 +128,13 @@ function SessionTitle({
 				to={`/pipeline-sessions/${session.id}`}>
 				{session.recipeName}
 			</Link>
-			<span
-				className="font-mono text-xs text-neutral-500"
-				title={`Step ${session.currentStepIndex} of ${session.totalSteps}`}>
-				{session.currentStepIndex}/{session.totalSteps}
-			</span>
+			{multiStep && (
+				<span
+					className="font-mono text-xs text-neutral-500"
+					title={`Step ${session.currentStepIndex} of ${session.totalSteps}`}>
+					{session.currentStepIndex}/{session.totalSteps}
+				</span>
+			)}
 			<Button
 				aria-label={
 					selected
@@ -158,7 +165,7 @@ function SessionTitle({
 function SessionMeta({ session }: { session: PipelineSessionRecord }) {
 	return (
 		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
-			<Badge tone="cyan">Pipeline</Badge>
+			<Badge tone="cyan">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			<span>{session.projectName}</span>
 			<span>{formatDate(session.startedAt)}</span>
 		</div>

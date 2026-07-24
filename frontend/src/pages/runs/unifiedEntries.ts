@@ -34,6 +34,19 @@ export function isEntryActive(entry: UnifiedEntry): boolean {
 	return entry.session.status === 'queued' || entry.session.status === 'running';
 }
 
+// Only multi-step pipelines nest: a single-step session's step row would just restate the
+// session row, so it gets no chevron and no sub-rows — its Console button reaches the run.
+export function isMultiStepSession(session: PipelineSessionRecord): boolean {
+	return session.totalSteps > 1;
+}
+
+// A skill run is launched through the pipeline executor as a synthetic one-step recipe
+// whose id carries the reserved `skill:` prefix. It's a real session, but it should read
+// as a "Skill", not a "Pipeline". The id prefix is the backend's authoritative marker.
+export function isSkillSession(session: PipelineSessionRecord): boolean {
+	return session.recipeId.startsWith('skill:');
+}
+
 // Interleave both collections newest-first. Active/History is a partition concern
 // (splitEntriesByLiveness), not a sort concern, so a finished entry settles into
 // its chronological slot without a jarring re-sort.
@@ -86,7 +99,7 @@ export function entryMatchesFilters(entry: UnifiedEntry, filters: UnifiedEntryFi
 	const haystack =
 		entry.kind === 'run'
 			? `${entry.run.id} ${entry.run.projectName} ${entry.run.projectPath} ${entry.run.mode} ${entry.run.status} ${entry.run.source}`
-			: `${entry.session.id} ${entry.session.projectName} ${entry.session.projectPath} ${entry.session.recipeName} ${entry.session.status} pipeline`;
+			: `${entry.session.id} ${entry.session.projectName} ${entry.session.projectPath} ${entry.session.recipeName} ${entry.session.status} ${isSkillSession(entry.session) ? 'skill' : 'pipeline'}`;
 	return haystack.toLowerCase().includes(filters.query.toLowerCase());
 }
 

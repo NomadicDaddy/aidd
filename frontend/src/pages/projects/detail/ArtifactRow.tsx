@@ -29,7 +29,7 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 	const viewable = onOpen !== undefined && viewerTarget !== null;
 	const labelBlock = (
 		<>
-			<div className="flex items-center gap-1.5 truncate text-sm font-medium text-neutral-950 dark:text-neutral-50">
+			<div className="text-foreground flex items-center gap-1.5 truncate text-sm font-medium">
 				{record.label}
 				{viewable ? (
 					<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
@@ -44,7 +44,7 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 				{viewable ? (
 					<button
 						aria-label={`View ${record.label}`}
-						className="min-w-0 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+						className="min-w-0 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 						onClick={() => onOpen(viewerTarget)}
 						type="button">
 						{labelBlock}

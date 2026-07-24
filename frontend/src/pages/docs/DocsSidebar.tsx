@@ -23,7 +23,7 @@ export function DocsSidebar() {
 											cn(
 												'block rounded-md px-2 py-1.5 text-sm transition-colors',
 												isActive
-													? 'bg-cyan-50 font-medium text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200'
+													? 'bg-teal-50 font-medium text-teal-800 dark:bg-teal-950/40 dark:text-teal-200'
 													: 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-slate-800/60'
 											)
 										}

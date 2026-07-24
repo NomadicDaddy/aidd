@@ -98,7 +98,7 @@ export function ActiveRunMobileCard({
 			className={cn(
 				'flex cursor-pointer flex-col gap-2 px-4 py-3 transition-colors',
 				selected
-					? 'bg-cyan-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-cyan-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]'
+					? 'bg-teal-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-teal-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]'
 					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
 			)}
 			onClick={selectFromCard}
@@ -114,7 +114,7 @@ export function ActiveRunMobileCard({
 			<div className="flex min-w-0 items-center gap-2">
 				<Link
 					aria-label={projectLabel}
-					className="-my-1.5 inline-block min-w-0 shrink truncate rounded py-1.5 font-medium text-cyan-700 underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none dark:text-cyan-300"
+					className="-my-1.5 inline-block min-w-0 shrink truncate rounded py-1.5 font-medium text-teal-700 underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none dark:text-teal-300"
 					to={projectHref}>
 					{run.projectName}
 				</Link>

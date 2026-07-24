@@ -68,13 +68,11 @@ export function AuthTokenDialog() {
 				{/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
 				<form className="space-y-5 p-5" onSubmit={submit}>
 					<div className="flex items-start gap-3">
-						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-900 dark:bg-cyan-950/50 dark:text-cyan-300">
+						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-300">
 							<KeyRound className="h-5 w-5" />
 						</div>
 						<div className="min-w-0">
-							<h2
-								className="text-base font-semibold text-neutral-950 dark:text-neutral-50"
-								id={TITLE_ID}>
+							<h2 className="text-foreground text-base font-semibold" id={TITLE_ID}>
 								Control panel access
 							</h2>
 							<p

@@ -47,7 +47,7 @@ export function ShortcutsOverlay({ onClose, open }: { onClose: () => void; open:
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2
-							className="text-base font-semibold text-neutral-950 dark:text-neutral-50"
+							className="text-foreground text-base font-semibold"
 							id="shortcuts-overlay-title">
 							Keyboard shortcuts
 						</h2>
@@ -72,7 +72,7 @@ export function ShortcutsOverlay({ onClose, open }: { onClose: () => void; open:
 							<ul className="space-y-1.5">
 								{group.shortcuts.map((shortcut) => (
 									<li
-										className="flex min-h-9 items-center justify-between gap-4 rounded-md border border-transparent px-2 py-1.5 hover:border-cyan-100 hover:bg-cyan-50/50 dark:hover:border-cyan-950/70 dark:hover:bg-cyan-950/20"
+										className="flex min-h-9 items-center justify-between gap-4 rounded-md border border-transparent px-2 py-1.5 hover:border-teal-100 hover:bg-teal-50/50 dark:hover:border-teal-950/70 dark:hover:bg-teal-950/20"
 										key={shortcut.label}>
 										<span className="text-sm text-neutral-700 dark:text-neutral-300">
 											{shortcut.label}

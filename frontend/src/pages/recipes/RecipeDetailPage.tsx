@@ -161,7 +161,7 @@ export function RecipeDetailPage() {
 
 	if (mode === 'overview' && recipe) {
 		return (
-			<>
+			<div className="page-reveal">
 				<RecipeOverviewMode
 					onDelete={requestDelete}
 					onEdit={() => setMode('edit')}
@@ -170,12 +170,12 @@ export function RecipeDetailPage() {
 				/>
 				{deleteConfirm}
 				{unsavedConfirm}
-			</>
+			</div>
 		);
 	}
 
 	return (
-		<>
+		<div className="page-reveal">
 			<RecipeEditMode
 				description={description}
 				hasJsonErrors={hasJsonErrors}
@@ -196,6 +196,6 @@ export function RecipeDetailPage() {
 			/>
 			{deleteConfirm}
 			{unsavedConfirm}
-		</>
+		</div>
 	);
 }

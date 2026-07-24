@@ -39,7 +39,7 @@ export function templateVersionColor(
 				? app[1] - latest[1]
 				: app[2] - latest[2];
 	if (cmp < 0) return 'text-amber-700 dark:text-amber-400';
-	if (cmp > 0) return 'text-cyan-700 dark:text-cyan-400';
+	if (cmp > 0) return 'text-teal-700 dark:text-teal-400';
 	return 'text-emerald-700 dark:text-emerald-400';
 }
 

@@ -147,7 +147,7 @@ export function DirectorPage() {
 	}
 
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				description="Run a fleet analysis cycle, then act on the suggestions it produces."
 				helpSlug="director"
@@ -220,9 +220,9 @@ export function DirectorPage() {
 						{activeCycle ? (
 							<ActiveCyclePanel cycle={activeCycle} now={now} />
 						) : director.triggerCycle.isPending ? (
-							<div className="mt-4 rounded-md border border-cyan-200 bg-cyan-50 p-3 text-sm text-neutral-700 dark:border-cyan-900 dark:bg-cyan-950/30 dark:text-neutral-300">
-								<div className="flex items-center gap-2 font-medium text-neutral-950 dark:text-neutral-50">
-									<Activity className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+							<div className="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 text-sm text-neutral-700 dark:border-teal-900 dark:bg-teal-950/30 dark:text-neutral-300">
+								<div className="text-foreground flex items-center gap-2 font-medium">
+									<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 									Starting director cycle
 								</div>
 								<p className="mt-1">

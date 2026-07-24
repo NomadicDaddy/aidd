@@ -17,7 +17,7 @@ function PrimitiveValue({ value }: { value: boolean | null | number | string }) 
 		);
 	}
 	if (typeof value === 'number') {
-		return <span className="text-cyan-700 dark:text-cyan-400">{String(value)}</span>;
+		return <span className="text-teal-700 dark:text-teal-400">{String(value)}</span>;
 	}
 	return <span className="text-amber-700 dark:text-amber-400">{String(value)}</span>;
 }
@@ -68,7 +68,7 @@ function JsonNode({
 	return (
 		<div className={depth === 0 ? '' : 'pl-4'}>
 			<button
-				className="inline-flex items-center gap-1 rounded text-left hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:hover:bg-neutral-800/70"
+				className="inline-flex items-center gap-1 rounded text-left hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:bg-neutral-800/70"
 				onClick={() => setExpanded((previous) => !previous)}
 				type="button">
 				<Chevron aria-hidden="true" className="h-3 w-3 shrink-0 text-neutral-500" />

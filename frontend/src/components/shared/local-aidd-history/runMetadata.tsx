@@ -60,7 +60,7 @@ function triumvirateRolesTooltip(roles: AiddTriumvirateRoles | null): ReactNode 
 export function TriModeBadge({ roles }: { roles: AiddTriumvirateRoles | null }) {
 	return (
 		<Tooltip className="max-w-sm" content={triumvirateRolesTooltip(roles)}>
-			<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+			<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 				<Badge tone="cyan">Tri-mode</Badge>
 			</span>
 		</Tooltip>

@@ -25,7 +25,7 @@ export function AuditsPage() {
 	};
 
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				description="Audit definitions, applicability matrix, and per-project overrides."
 				helpSlug="audits"

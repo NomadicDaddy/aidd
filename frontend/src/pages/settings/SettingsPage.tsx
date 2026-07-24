@@ -214,7 +214,7 @@ export function SettingsPage() {
 	}
 
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
 					<Link

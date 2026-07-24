@@ -51,7 +51,7 @@ export function TerminalPaneHeader({
 	const indicator = activeTab ? statusStyles[activeTab.status] : statusStyles.connecting;
 
 	return (
-		<header className="flex h-9 shrink-0 items-center gap-2 border-b border-neutral-200 px-2 dark:border-cyan-950/50">
+		<header className="flex h-9 shrink-0 items-center gap-2 border-b border-neutral-200 px-2 dark:border-teal-950/50">
 			<span
 				className="ml-1 text-[0.65rem] font-semibold tracking-wider text-neutral-500 uppercase dark:text-neutral-400"
 				title={`Toggle with ${shortcutText(terminalShortcut.keys)}`}>
@@ -71,8 +71,8 @@ export function TerminalPaneHeader({
 							className={cn(
 								'flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-xs',
 								isActive
-									? 'border-cyan-400/60 bg-cyan-50 text-neutral-800 dark:bg-cyan-950/40 dark:text-neutral-100'
-									: 'border-neutral-200 text-neutral-500 hover:text-neutral-700 dark:border-cyan-950/50 dark:hover:text-neutral-300',
+									? 'border-teal-400/60 bg-teal-50 text-neutral-800 dark:bg-teal-950/40 dark:text-neutral-100'
+									: 'border-neutral-200 text-neutral-500 hover:text-neutral-700 dark:border-teal-950/50 dark:hover:text-neutral-300',
 								tab.status === 'exited' && 'opacity-60'
 							)}
 							key={tab.info.sessionId}>
@@ -104,7 +104,7 @@ export function TerminalPaneHeader({
 			{shells.length > 0 && (
 				<select
 					aria-label="Shell for new tabs"
-					className="h-6 rounded border border-neutral-200 bg-white px-1 text-xs text-neutral-700 focus-visible:ring-2 focus-visible:ring-cyan-400 dark:border-cyan-950/50 dark:bg-slate-900 dark:text-neutral-300"
+					className="h-6 rounded border border-neutral-200 bg-white px-1 text-xs text-neutral-700 focus-visible:ring-2 focus-visible:ring-teal-400 dark:border-teal-950/50 dark:bg-slate-900 dark:text-neutral-300"
 					onChange={(event) => setShellId(event.target.value)}
 					title="Shell used for new tabs"
 					value={shellId ?? shells[0]?.id ?? ''}>

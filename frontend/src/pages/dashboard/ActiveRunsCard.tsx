@@ -25,7 +25,7 @@ export function ActiveRunsCard({
 	return (
 		<Card className="overflow-hidden" variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+				<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
 					<Activity className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Active Runs
 					<Badge showDot tone={activeRuns.length > 0 ? 'amber' : 'emerald'}>
@@ -33,7 +33,7 @@ export function ActiveRunsCard({
 					</Badge>
 				</div>
 				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-cyan-700 transition-colors outline-none hover:text-cyan-950 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-cyan-300 dark:hover:text-cyan-100 dark:focus-visible:ring-offset-slate-950"
+					className="focus-visible:ring-ring/50 focus-visible:ring-offset-background inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-900 focus-visible:ring-2 focus-visible:ring-offset-2 dark:text-teal-300 dark:hover:text-teal-100"
 					to="/runs">
 					Runs
 					<ArrowRight className="h-3.5 w-3.5" />
@@ -56,16 +56,16 @@ export function ActiveRunsCard({
 				)}
 				{activeRuns.slice(0, 4).map((run) => (
 					<div
-						className="grid grid-cols-[1fr_auto] gap-3 rounded-md border border-amber-200/80 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/20"
+						className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-amber-200/80 bg-amber-50/70 p-3 transition-colors hover:border-amber-300/80 dark:border-amber-900/60 dark:bg-amber-950/20 dark:hover:border-amber-800/70"
 						key={run.id}>
 						<div className="min-w-0">
 							<div className="flex min-w-0 items-center gap-1.5">
-								<div className="truncate text-sm font-medium text-neutral-950 dark:text-neutral-50">
+								<div className="text-foreground truncate text-sm font-medium">
 									{run.projectName}
 								</div>
 								<RunCommandInfo command={run.launchCommand} runId={run.id} />
 							</div>
-							<div className="truncate text-xs text-neutral-600 dark:text-neutral-400">
+							<div className="text-muted-foreground truncate text-xs">
 								{run.source === 'cli'
 									? 'CLI'
 									: run.source === 'director'

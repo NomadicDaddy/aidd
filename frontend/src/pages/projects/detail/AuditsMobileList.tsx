@@ -81,7 +81,7 @@ export function AuditsMobileList({
 									type="checkbox"
 								/>
 								<span className="min-w-0">
-									<span className="block font-medium text-neutral-950 dark:text-neutral-50">
+									<span className="text-foreground block font-medium">
 										{entry.name}
 									</span>
 									<span className="block text-xs break-all text-neutral-500">

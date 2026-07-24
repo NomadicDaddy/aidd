@@ -52,7 +52,7 @@ export function RunLaunchCard({
 						projectError
 							? 'border-red-500 bg-white focus:border-red-500 focus-visible:ring-red-200 dark:border-red-400 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:border-red-400 dark:focus-visible:ring-red-900/40'
 							: projectDir
-								? 'border-cyan-500 bg-cyan-50 text-cyan-950 focus-visible:ring-cyan-200 dark:border-cyan-500 dark:bg-cyan-950/30 dark:text-cyan-100 dark:focus-visible:ring-cyan-900/40'
+								? 'border-teal-500 bg-teal-50 text-teal-950 focus-visible:ring-teal-200 dark:border-teal-500 dark:bg-teal-950/30 dark:text-teal-100 dark:focus-visible:ring-teal-900/40'
 								: 'border-neutral-200 bg-white focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:ring-neutral-800'
 					)}
 					onChange={(event) => {
@@ -123,9 +123,9 @@ export function RunLaunchCard({
 				</p>
 			)}
 			{selectedLaunchProject && (
-				<p aria-live="polite" className="text-xs text-cyan-800 dark:text-cyan-200">
+				<p aria-live="polite" className="text-xs text-teal-800 dark:text-teal-200">
 					Selected: {selectedLaunchProject.name}
-					<span className="block truncate text-cyan-700/80 dark:text-cyan-300/80">
+					<span className="block truncate text-teal-700/80 dark:text-teal-300/80">
 						{selectedLaunchProject.path}
 					</span>
 				</p>

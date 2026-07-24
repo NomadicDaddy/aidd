@@ -65,7 +65,7 @@ function BackendIdentity({
 	return (
 		<div className="min-w-0 space-y-1">
 			<div className="flex flex-wrap items-center gap-2">
-				<span className="font-medium text-neutral-950 dark:text-neutral-50">{backend}</span>
+				<span className="text-foreground font-medium">{backend}</span>
 				{status ? <SettingsToolStatusBadge status={status.status} /> : null}
 			</div>
 			<p className="truncate text-xs text-neutral-500">
@@ -186,7 +186,7 @@ export function BackendDefaultsTable({
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<h2
-						className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+						className="text-foreground text-sm font-semibold"
 						id="backend-matrix-heading">
 						Backend Matrix
 					</h2>

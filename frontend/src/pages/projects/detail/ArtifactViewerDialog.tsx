@@ -17,7 +17,7 @@ const markdownComponents = {
 	a: (props: React.ComponentProps<'a'>) => (
 		<a
 			{...props}
-			className="text-cyan-700 underline dark:text-cyan-400"
+			className="text-teal-700 underline dark:text-teal-400"
 			rel="noreferrer"
 			target="_blank"
 		/>
@@ -168,7 +168,7 @@ export function ArtifactViewerDialog({
 				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
 					<div className="min-w-0">
 						<h2
-							className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+							className="text-foreground text-sm font-semibold"
 							id="artifact-viewer-title">
 							{target.label}
 						</h2>

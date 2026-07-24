@@ -49,7 +49,7 @@ function SuggestionRow({ suggestion }: { suggestion: SuggestionRecord }) {
 		<li className={ROW_CLASS}>
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<p className="line-clamp-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+					<p className="text-foreground line-clamp-2 text-sm font-semibold">
 						{suggestion.title}
 					</p>
 					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -119,9 +119,7 @@ function WaitingFeatureRow({
 		<li className={ROW_CLASS}>
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<p className="line-clamp-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						{title}
-					</p>
+					<p className="text-foreground line-clamp-2 text-sm font-semibold">{title}</p>
 					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
 						{projectName} · {formatRelativeAge(feature.updatedAt)}
 					</p>
@@ -164,7 +162,7 @@ function BlockedRunRow({ run }: { run: RunRecord }) {
 		<li className={ROW_CLASS}>
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<p className="line-clamp-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+					<p className="text-foreground line-clamp-2 text-sm font-semibold">
 						{run.projectName} run blocked
 					</p>
 					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -187,7 +185,7 @@ function BlockedRunRow({ run }: { run: RunRecord }) {
 				reasoningEffort={run.reasoningEffort}
 			/>
 			<Link
-				className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:text-cyan-950 dark:text-cyan-300 dark:hover:text-cyan-100"
+				className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-950 dark:text-teal-300 dark:hover:text-teal-100"
 				to={`/runs?run=${encodeURIComponent(run.id)}`}>
 				View run
 				<ArrowRight className="h-3.5 w-3.5" />
@@ -235,7 +233,7 @@ export function WaitingApprovalCard({
 		<Card aria-labelledby="waiting-approval-heading" variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
 				<div
-					className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+					className="text-foreground flex items-center gap-2 text-sm font-semibold"
 					id="waiting-approval-heading">
 					<ShieldQuestion className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Waiting Approval
@@ -244,7 +242,7 @@ export function WaitingApprovalCard({
 					</Badge>
 				</div>
 				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-cyan-700 transition-colors outline-none hover:text-cyan-950 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-cyan-300 dark:hover:text-cyan-100 dark:focus-visible:ring-offset-slate-950"
+					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
 					to="/director">
 					Queue
 					<ArrowRight className="h-3.5 w-3.5" />

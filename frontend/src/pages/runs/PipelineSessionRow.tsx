@@ -116,10 +116,10 @@ function SessionTitle({
 			)}
 			<Workflow
 				aria-hidden="true"
-				className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400"
+				className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400"
 			/>
 			<Link
-				className="font-medium whitespace-nowrap text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+				className="font-medium whitespace-nowrap text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
 				to={`/pipeline-sessions/${session.id}`}>
 				{session.recipeName}
 			</Link>
@@ -170,7 +170,7 @@ function SessionMeta({ session }: { session: PipelineSessionRecord }) {
 }
 
 const selectedRowClass =
-	'bg-cyan-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-cyan-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]';
+	'bg-teal-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-teal-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]';
 
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
 	const { now, selected, session } = props;

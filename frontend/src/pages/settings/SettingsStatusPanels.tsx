@@ -11,9 +11,7 @@ function StatusRows({ items, title }: { items: SettingsSourceControlStatus[]; ti
 	return (
 		<Card className="overflow-hidden p-0">
 			<div className="border-b px-4 py-3 dark:border-neutral-800">
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					{title}
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">{title}</h2>
 			</div>
 			<div className="divide-y dark:divide-neutral-800">
 				{items.map((item) => (
@@ -22,9 +20,7 @@ function StatusRows({ items, title }: { items: SettingsSourceControlStatus[]; ti
 						key={item.id}>
 						<div className="min-w-0">
 							<div className="flex flex-wrap items-center gap-2">
-								<span className="font-medium text-neutral-950 dark:text-neutral-50">
-									{item.label}
-								</span>
+								<span className="text-foreground font-medium">{item.label}</span>
 								{item.version ? (
 									<span className="text-xs text-neutral-500">{item.version}</span>
 								) : null}

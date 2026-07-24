@@ -34,7 +34,7 @@ export function TerminalPaneBody() {
 				<div className="flex flex-1 flex-col items-center justify-center gap-2 text-sm text-neutral-500">
 					<p>Terminal is unavailable on this host (PTY backend failed to load).</p>
 					<button
-						className="text-cyan-600 underline-offset-2 hover:underline dark:text-cyan-400"
+						className="text-teal-600 underline-offset-2 hover:underline dark:text-teal-400"
 						onClick={retryTerminal}
 						type="button">
 						Try again

@@ -27,7 +27,7 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 		<details className="group min-w-24">
 			<summary
 				aria-label={`Inspect telemetry for ${invocation.resourceName}`}
-				className="cursor-pointer text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-300">
+				className="cursor-pointer text-xs font-medium text-teal-700 hover:underline dark:text-teal-300">
 				Inspect
 			</summary>
 			<div className="mt-2 w-[min(42rem,75vw)] rounded-md border border-neutral-200 bg-neutral-50 p-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">

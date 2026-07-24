@@ -16,9 +16,9 @@ const variants: Record<ButtonVariant, string> = {
 	danger: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/70',
 	ghost: 'border-transparent bg-transparent text-foreground hover:bg-muted',
 	primary:
-		'border-cyan-700 bg-cyan-700 text-white shadow-sm shadow-cyan-950/10 hover:border-cyan-600 hover:bg-cyan-600 dark:border-cyan-400 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300',
+		'border-teal-700 bg-teal-700 text-white shadow-sm shadow-teal-950/10 hover:border-teal-600 hover:bg-teal-600 dark:border-teal-400 dark:bg-teal-400 dark:text-slate-950 dark:shadow-teal-950/20 dark:hover:bg-teal-300',
 	secondary:
-		'border-border bg-card text-foreground hover:border-cyan-200 hover:bg-cyan-50/70 dark:hover:border-cyan-900 dark:hover:bg-cyan-950/30',
+		'border-border bg-card text-foreground hover:border-accent/50 hover:bg-accent-muted dark:hover:border-accent/40 dark:hover:bg-accent-muted',
 };
 
 const sizes: Record<ButtonSize, string> = {
@@ -34,9 +34,9 @@ export function buttonClassName(
 	size: ButtonSize = 'default'
 ): string {
 	return cn(
-		'inline-flex items-center justify-center rounded-md border font-medium',
-		'transition-[background-color,border-color,color,box-shadow] duration-150',
-		'focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-cyan-300 dark:focus-visible:ring-offset-slate-950',
+		'inline-flex items-center justify-center rounded-lg border font-medium',
+		'transition-all duration-150',
+		'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 		'disabled:pointer-events-none disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:opacity-60 disabled:shadow-none dark:disabled:border-neutral-800 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600',
 		variants[variant],
 		sizes[size],

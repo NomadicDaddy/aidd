@@ -48,7 +48,7 @@ export function FeatureMobileCard({
 		<div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<div className="font-medium text-neutral-950 dark:text-neutral-50">{title}</div>
+					<div className="text-foreground font-medium">{title}</div>
 					<div className="text-xs break-all text-neutral-500">{id}</div>
 				</div>
 				<Badge tone={statusTone(status)}>{status}</Badge>

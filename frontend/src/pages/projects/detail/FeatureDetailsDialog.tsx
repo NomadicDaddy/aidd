@@ -108,7 +108,7 @@ export function FeatureDetailsDialog({
 				<div className="flex items-start justify-between gap-3">
 					<div className="min-w-0">
 						<h2
-							className="text-lg font-semibold text-neutral-950 dark:text-neutral-50"
+							className="text-foreground text-lg font-semibold"
 							id="feature-details-title">
 							{title}
 						</h2>

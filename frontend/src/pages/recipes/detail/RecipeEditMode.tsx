@@ -146,9 +146,7 @@ export function RecipeEditMode({
 
 			<Card className="space-y-3">
 				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
-						Parameters
-					</h2>
+					<h2 className="text-foreground text-lg font-semibold">Parameters</h2>
 					<Button
 						onClick={() =>
 							setParameters((current) => [...current, { description: '', name: '' }])
@@ -216,9 +214,7 @@ export function RecipeEditMode({
 
 			<Card className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
-						Ordered Steps
-					</h2>
+					<h2 className="text-foreground text-lg font-semibold">Ordered Steps</h2>
 					<Button onClick={() => setSteps((current) => [...current, newStepDraft()])}>
 						<Plus className="h-4 w-4" />
 						Add Step

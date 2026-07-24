@@ -19,7 +19,7 @@ function ConfigChips({ entries }: { entries: ConfigSummaryEntry[] }) {
 				<span
 					className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
 						entry.primary
-							? 'bg-cyan-50 font-medium text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300'
+							? 'bg-teal-50 font-medium text-teal-800 dark:bg-teal-950/40 dark:text-teal-300'
 							: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
 					}`}
 					key={entry.key}>
@@ -46,7 +46,7 @@ export function StepOverviewCard({
 	return (
 		<div className="flex gap-3">
 			<div className="flex flex-col items-center">
-				<div className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-700 text-xs font-bold text-white dark:bg-cyan-400 dark:text-slate-950">
+				<div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-700 text-xs font-bold text-white dark:bg-teal-400 dark:text-slate-950">
 					{stepNumber}
 				</div>
 				{!isLast && <div className="w-px flex-1 bg-neutral-200 dark:bg-neutral-700" />}
@@ -54,9 +54,7 @@ export function StepOverviewCard({
 			<div className={`flex-1 pb-6 ${isLast ? '' : ''}`}>
 				<div className="rounded-md border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
 					<div className="mb-2 flex flex-wrap items-center gap-2">
-						<h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-							{step.name}
-						</h3>
+						<h3 className="text-foreground text-sm font-semibold">{step.name}</h3>
 						<Badge tone={stepTypeTones[step.stepType]}>{step.stepType}</Badge>
 						{hasOnFailure && <Badge tone="amber">on failure: {step.onFailure}</Badge>}
 						{hasRetry && <Badge tone="neutral">retry: {step.retryCount}</Badge>}

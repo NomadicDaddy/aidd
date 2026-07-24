@@ -27,9 +27,7 @@ export function DirectorRecentCycles({ cycles, now }: { cycles: DirectorCycle[];
 	return (
 		<section aria-labelledby="director-cycles-heading">
 			<Card>
-				<h2
-					className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
-					id="director-cycles-heading">
+				<h2 className="text-foreground text-sm font-semibold" id="director-cycles-heading">
 					Recent Cycles
 				</h2>
 				<p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
@@ -41,7 +39,7 @@ export function DirectorRecentCycles({ cycles, now }: { cycles: DirectorCycle[];
 							className="rounded-md bg-neutral-50 p-3 dark:bg-neutral-900"
 							key={cycle.id}>
 							<div className="flex items-center justify-between gap-2">
-								<div className="truncate text-sm font-medium text-neutral-950 dark:text-neutral-50">
+								<div className="text-foreground truncate text-sm font-medium">
 									{cycle.id}
 								</div>
 								<Badge>{cycle.status}</Badge>
@@ -112,13 +110,13 @@ function SuggestionLaunchPreviewDialog({
 				<div className="flex items-start justify-between gap-3">
 					<div className="min-w-0">
 						<h2
-							className="text-lg font-semibold text-neutral-950 dark:text-neutral-50"
+							className="text-foreground text-lg font-semibold"
 							id="suggestion-launch-preview-title">
 							Launch preview
 						</h2>
 						<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 							Launch starts {launchesRecipe ? 'a recipe pipeline' : 'a coding run'} in{' '}
-							<span className="font-medium text-neutral-950 dark:text-neutral-50">
+							<span className="text-foreground font-medium">
 								{suggestion.projectId}
 							</span>{' '}
 							{launchesRecipe
@@ -159,7 +157,7 @@ export function DirectorSuggestionsList({
 		<section aria-labelledby="director-suggestions-heading" className="space-y-3">
 			<div>
 				<h2
-					className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+					className="text-foreground text-sm font-semibold"
 					id="director-suggestions-heading">
 					Suggestions
 				</h2>
@@ -181,7 +179,7 @@ export function DirectorSuggestionsList({
 					<Card key={suggestion.id}>
 						<div className="mb-3 flex flex-wrap items-start justify-between gap-3">
 							<div>
-								<h3 className="text-base font-semibold text-neutral-950 dark:text-neutral-50">
+								<h3 className="text-foreground text-base font-semibold">
 									{suggestion.title}
 								</h3>
 								<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">

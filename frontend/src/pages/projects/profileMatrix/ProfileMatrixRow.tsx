@@ -39,7 +39,7 @@ function ProfileFacetSelect({
 	return (
 		<select
 			aria-label={`${projectName} ${facet.title}`}
-			className="border-border bg-background text-foreground h-8 w-full min-w-36 rounded-md border px-2 text-xs outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+			className="border-border bg-background text-foreground h-8 w-full min-w-36 rounded-md border px-2 text-xs outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 			onChange={(event) =>
 				onChange(
 					row.project.id,

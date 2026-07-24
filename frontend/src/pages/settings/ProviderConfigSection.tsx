@@ -81,7 +81,7 @@ function ProviderCard({
 			<button
 				aria-controls={panelId}
 				aria-expanded={open}
-				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center dark:hover:bg-neutral-900"
+				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center dark:hover:bg-neutral-900"
 				onClick={() => setOpen((current) => !current)}
 				type="button">
 				<span className="flex min-w-0 items-center gap-2">
@@ -186,7 +186,7 @@ export function ProviderConfigSection({
 			<Card className="grid gap-3 p-3 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:items-center">
 				<div>
 					<h2
-						className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+						className="text-foreground text-sm font-semibold"
 						id="provider-settings-heading">
 						Providers
 					</h2>

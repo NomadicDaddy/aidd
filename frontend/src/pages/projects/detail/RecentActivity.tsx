@@ -23,9 +23,7 @@ export function RecentActivity({
 	return (
 		<Card className="p-2.5">
 			<div className="mb-1.5 flex items-center justify-between">
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Recent activity
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">Recent activity</h2>
 				<Link
 					className="text-xs text-neutral-600 hover:underline dark:text-neutral-400"
 					to={`/runs?project=${encodeURIComponent(projectPath)}`}>

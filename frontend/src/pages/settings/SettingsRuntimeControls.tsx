@@ -61,10 +61,10 @@ export function SettingsRuntimeControls({
 
 	return (
 		<>
-			<Card className="flex flex-col gap-4 border-cyan-200/80 bg-cyan-50/60 dark:border-cyan-950/70 dark:bg-cyan-950/20">
+			<Card className="flex flex-col gap-4 border-teal-200/80 bg-teal-50/60 dark:border-teal-950/70 dark:bg-teal-950/20">
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 					<div>
-						<h2 className="text-sm font-semibold text-cyan-700 dark:text-cyan-300">
+						<h2 className="text-sm font-semibold text-teal-700 dark:text-teal-300">
 							Control Panel Runtime
 						</h2>
 						<p className="mt-1 max-w-2xl text-sm text-neutral-600 dark:text-neutral-400">

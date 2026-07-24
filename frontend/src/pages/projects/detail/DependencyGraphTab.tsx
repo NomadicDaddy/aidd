@@ -179,7 +179,7 @@ export function DependencyGraphTab({
 					<Card className="space-y-4">
 						<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 							<div>
-								<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+								<h2 className="text-foreground text-sm font-semibold">
 									Feature Dependencies
 								</h2>
 								<GraphDiagnostics

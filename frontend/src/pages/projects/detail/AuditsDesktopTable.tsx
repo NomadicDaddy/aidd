@@ -115,9 +115,7 @@ export function AuditsDesktopTable({
 									/>
 								</td>
 								<td className="px-3 py-3">
-									<div className="font-medium text-neutral-950 dark:text-neutral-50">
-										{entry.name}
-									</div>
+									<div className="text-foreground font-medium">{entry.name}</div>
 									<div className="text-xs break-all text-neutral-500">
 										{entry.path}
 									</div>

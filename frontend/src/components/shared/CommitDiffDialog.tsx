@@ -22,7 +22,7 @@ const lineClasses: Record<DiffLineKind, string> = {
 	add: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
 	context: 'text-neutral-700 dark:text-neutral-300',
 	del: 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400',
-	hunk: 'text-cyan-700 dark:text-cyan-400',
+	hunk: 'text-teal-700 dark:text-teal-400',
 	meta: 'text-neutral-400 dark:text-neutral-500',
 };
 
@@ -53,7 +53,7 @@ function DiffFileSection({
 			className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800"
 			ref={sectionRef}>
 			<button
-				className="flex w-full items-center gap-2 bg-neutral-50 px-3 py-2 text-left hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:bg-neutral-900 dark:hover:bg-neutral-800/80"
+				className="flex w-full items-center gap-2 bg-neutral-50 px-3 py-2 text-left hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:bg-neutral-900 dark:hover:bg-neutral-800/80"
 				onClick={onToggle}
 				type="button">
 				<Chevron aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-neutral-500" />
@@ -154,7 +154,7 @@ export function CommitDiffDialog({
 				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
 					<div className="min-w-0">
 						<h2
-							className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+							className="text-foreground flex items-center gap-2 text-sm font-semibold"
 							id="commit-diff-title">
 							<span className="font-mono text-neutral-500 dark:text-neutral-400">
 								{shortCommitHash(commit.hash)}
@@ -205,7 +205,7 @@ export function CommitDiffDialog({
 						<div className="flex flex-wrap gap-1.5">
 							{parsed.files.map((file, index) => (
 								<button
-									className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-0.5 text-left font-mono text-[0.7rem] text-neutral-600 hover:border-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400 dark:hover:border-cyan-500"
+									className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 py-0.5 text-left font-mono text-[0.7rem] text-neutral-600 hover:border-teal-400 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400 dark:hover:border-teal-500"
 									key={`${file.displayPath}-${index}`}
 									onClick={() => jumpToFile(index)}
 									type="button">

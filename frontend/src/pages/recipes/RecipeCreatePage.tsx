@@ -132,7 +132,7 @@ export function RecipeCreatePage() {
 	const blocker = useUnsavedGuard(dirty);
 
 	return (
-		<>
+		<div className="page-reveal">
 			<RecipeEditMode
 				description={description}
 				hasJsonErrors={hasJsonErrors}
@@ -162,6 +162,6 @@ export function RecipeCreatePage() {
 				open={blocker.state === 'blocked'}
 				title="Discard unsaved changes?"
 			/>
-		</>
+		</div>
 	);
 }

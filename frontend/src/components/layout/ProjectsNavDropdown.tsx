@@ -8,7 +8,7 @@ import { cn } from '../../lib/cn.ts';
 import { projectDetailTarget } from './project-nav-target.ts';
 
 const projectsPath = '/projects';
-const projectOptionClass = 'bg-white text-neutral-950 dark:bg-slate-950 dark:text-neutral-50';
+const projectOptionClass = 'bg-background text-foreground';
 
 interface ProjectsNavDropdownProps {
 	collapsed: boolean;
@@ -42,17 +42,17 @@ export function ProjectsNavDropdown({ collapsed }: ProjectsNavDropdownProps): Re
 	return (
 		<div
 			className={cn(
-				'group relative flex h-10 w-10 shrink-0 items-center justify-center gap-3 rounded-md px-0 text-sm font-medium sm:w-auto sm:justify-start sm:px-3',
-				'transition-[background-color,color,box-shadow] duration-150 focus-within:ring-2 focus-within:ring-cyan-400 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-cyan-300 dark:focus-within:ring-offset-slate-950',
+				'group relative flex h-11 w-11 shrink-0 items-center justify-center gap-2.5 rounded-lg px-0 text-sm font-medium sm:h-9 sm:w-auto sm:justify-start sm:px-3',
+				'focus-within:ring-ring/50 focus-within:ring-offset-background transition-all duration-150 focus-within:ring-2 focus-within:ring-offset-2',
 				active
-					? 'bg-slate-950 text-white shadow-sm shadow-cyan-950/10 dark:bg-cyan-400 dark:text-slate-950'
-					: 'text-neutral-700 hover:bg-cyan-50 hover:text-cyan-950 dark:text-neutral-300 dark:hover:bg-cyan-950/30 dark:hover:text-cyan-100'
+					? 'bg-accent-muted text-accent-muted-foreground shadow-sm'
+					: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 			)}
 			title={label}>
 			<span
 				aria-hidden="true"
 				className={cn(
-					'absolute top-2 left-0 hidden h-6 w-0.5 rounded-full bg-cyan-400 transition-opacity sm:block',
+					'bg-accent absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full transition-opacity sm:block',
 					active ? 'opacity-100' : 'opacity-0'
 				)}
 			/>
@@ -70,7 +70,7 @@ export function ProjectsNavDropdown({ collapsed }: ProjectsNavDropdownProps): Re
 			/>
 			<select
 				aria-label="Projects navigation"
-				className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-white text-neutral-950 opacity-0 dark:bg-slate-950 dark:text-neutral-50 dark:[color-scheme:dark]"
+				className="bg-background text-foreground absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0 dark:[color-scheme:dark]"
 				onChange={(event) => {
 					void navigate(event.target.value);
 				}}

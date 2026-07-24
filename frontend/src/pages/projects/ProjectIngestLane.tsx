@@ -169,7 +169,7 @@ export function ProjectIngestLane() {
 										/>
 										<div className="min-w-0 flex-1 space-y-1">
 											<div className="flex flex-wrap items-center gap-2">
-												<span className="font-medium text-neutral-950 dark:text-neutral-50">
+												<span className="text-foreground font-medium">
 													{candidate.name}
 												</span>
 												<span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
@@ -190,7 +190,7 @@ export function ProjectIngestLane() {
 												</p>
 											) : null}
 											<button
-												className="text-xs text-cyan-700 underline dark:text-cyan-300"
+												className="text-xs text-teal-700 underline dark:text-teal-300"
 												onClick={(event) => {
 													event.preventDefault();
 													setPreviewIds((current) => {
@@ -234,7 +234,7 @@ export function ProjectIngestLane() {
 									<>
 										{', '}
 										<Link
-											className="text-cyan-700 underline dark:text-cyan-300"
+											className="text-teal-700 underline dark:text-teal-300"
 											to={`/pipeline-sessions/${result.intakeSessionId}`}>
 											intake session
 										</Link>

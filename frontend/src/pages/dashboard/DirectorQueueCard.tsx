@@ -26,12 +26,12 @@ export function DirectorQueueCard({
 	return (
 		<Card variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+				<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
 					<AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Director Queue
 				</div>
 				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-cyan-700 transition-colors outline-none hover:text-cyan-950 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-cyan-300 dark:hover:text-cyan-100 dark:focus-visible:ring-offset-slate-950"
+					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
 					to="/director">
 					Director
 					<ArrowRight className="h-3.5 w-3.5" />
@@ -57,11 +57,11 @@ export function DirectorQueueCard({
 				)}
 				{suggestions.slice(0, 4).map((suggestion) => (
 					<div
-						className="rounded-md border border-neutral-200 bg-white/75 p-3 transition-[border-color,background-color] duration-150 hover:border-cyan-300 hover:bg-cyan-50/50 dark:border-neutral-800 dark:bg-slate-950/60 dark:hover:border-cyan-800 dark:hover:bg-cyan-950/20"
+						className="rounded-md border border-neutral-200 bg-white/75 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:border-neutral-800 dark:bg-slate-950/60 dark:hover:border-teal-800 dark:hover:bg-teal-950/20"
 						key={suggestion.id}>
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div className="min-w-0">
-								<h3 className="line-clamp-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+								<h3 className="text-foreground line-clamp-2 text-sm font-semibold">
 									{suggestion.title}
 								</h3>
 								<p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">

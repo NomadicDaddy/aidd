@@ -39,7 +39,7 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 	return (
 		<section aria-label="Invocation summary" className="space-y-3">
 			<div className="grid gap-3 sm:grid-cols-3">
-				<CountCard className="bg-cyan-500" label="Total invocations" value={totals.total} />
+				<CountCard className="bg-teal-500" label="Total invocations" value={totals.total} />
 				<CountCard
 					className="bg-blue-500"
 					label="Top-level actions"
@@ -54,7 +54,7 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 				<CountCard className="bg-neutral-400" label="Stopped" value={totals.stopped} />
 				<CountCard className="bg-orange-700" label="Killed" value={totals.killed} />
 				<CountCard className="bg-slate-500" label="No work" value={totals.noWork} />
-				<CountCard className="bg-cyan-500" label="Running" value={totals.running} />
+				<CountCard className="bg-teal-500" label="Running" value={totals.running} />
 			</div>
 			<p className="text-xs text-neutral-500">
 				Every top-level launch and every nested recipe or skill step is one invocation. Each

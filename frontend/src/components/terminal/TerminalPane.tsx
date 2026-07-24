@@ -48,7 +48,7 @@ function ResizeHandle() {
 			className="group absolute inset-x-0 -top-1 z-10 h-2 cursor-row-resize touch-none"
 			onPointerDown={onPointerDown}
 			role="separator">
-			<div className="mx-auto mt-1 h-0.5 w-full bg-transparent transition-colors group-hover:bg-cyan-400/70" />
+			<div className="mx-auto mt-1 h-0.5 w-full bg-transparent transition-colors group-hover:bg-teal-400/70" />
 		</div>
 	);
 }
@@ -78,7 +78,7 @@ export function TerminalPane() {
 		<section
 			aria-label="Terminal"
 			className={cn(
-				'fixed right-0 bottom-0 z-30 flex flex-col border-t border-neutral-200 bg-white shadow-[0_-8px_24px_-12px_rgba(2,6,23,0.35)] dark:border-cyan-950/50 dark:bg-slate-950',
+				'fixed right-0 bottom-0 z-30 flex flex-col border-t border-neutral-200 bg-white shadow-[0_-8px_24px_-12px_rgba(2,6,23,0.35)] dark:border-teal-950/50 dark:bg-slate-950',
 				'left-0 transition-[left] duration-200',
 				collapsed ? 'sm:left-16' : 'sm:left-60',
 				!open && 'hidden'

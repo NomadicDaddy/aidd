@@ -40,11 +40,11 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 	const artifacts: DirectorCycleArtifacts = cycle.artifacts;
 	const isDirectAi = cycle.stage === 'running_direct_ai';
 	return (
-		<div className="mt-4 rounded-md border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-900 dark:bg-cyan-950/30">
+		<div className="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/30">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="min-w-0">
-					<div className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						<Activity className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+						<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						<span className="truncate">{cycleStageLabels[cycle.stage]}</span>
 					</div>
 					<p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
@@ -57,8 +57,8 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 				</div>
 			</div>
 			{isDirectAi && cycle.directAiMeta && (
-				<div className="mt-3 flex items-center gap-3 rounded-md border border-cyan-300 bg-cyan-100/60 px-3 py-2 dark:border-cyan-800 dark:bg-cyan-950/50">
-					<Cpu className="h-4 w-4 shrink-0 text-cyan-700 dark:text-cyan-300" />
+				<div className="mt-3 flex items-center gap-3 rounded-md border border-teal-300 bg-teal-100/60 px-3 py-2 dark:border-teal-800 dark:bg-teal-950/50">
+					<Cpu className="h-4 w-4 shrink-0 text-teal-700 dark:text-teal-300" />
 					<div className="min-w-0 text-sm text-neutral-700 dark:text-neutral-300">
 						<ExecutionIdentityBadges
 							backend="direct"

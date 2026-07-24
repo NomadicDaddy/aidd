@@ -17,7 +17,7 @@ export function DocsPage() {
 	useDocumentTitle(section ? `Docs · ${section.title}` : 'Docs');
 
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				description="Guides, how-tos, and reference for operating the aidd control panel."
 				title="Docs"
@@ -33,7 +33,7 @@ export function DocsPage() {
 						<EmptyState
 							action={
 								<Link
-									className="font-medium text-cyan-700 underline underline-offset-2 dark:text-cyan-300"
+									className="font-medium text-teal-700 underline underline-offset-2 dark:text-teal-300"
 									to={`/docs/${DEFAULT_DOC_SLUG}`}>
 									Back to Getting started
 								</Link>

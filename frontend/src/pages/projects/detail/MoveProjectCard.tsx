@@ -55,11 +55,9 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 	return (
 		<Card>
 			<div className="flex items-start gap-3">
-				<FolderInput className="mt-0.5 h-5 w-5 text-cyan-700 dark:text-cyan-300" />
+				<FolderInput className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
 				<div>
-					<h2 className="text-base font-semibold text-neutral-950 dark:text-neutral-50">
-						Move project
-					</h2>
+					<h2 className="text-foreground text-base font-semibold">Move project</h2>
 					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 						Move the project directory to another configured application root.
 					</p>

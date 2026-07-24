@@ -47,7 +47,7 @@ export function SettingsToolbar({
 	savePending: boolean;
 }) {
 	return (
-		<Card className="sticky top-0 z-20 space-y-2 border-cyan-950/20 bg-white/95 p-2.5 shadow-md backdrop-blur dark:border-cyan-950/70 dark:bg-slate-950/95">
+		<Card className="sticky top-0 z-20 space-y-2 border-teal-950/20 bg-white/95 p-2.5 shadow-md backdrop-blur dark:border-teal-950/70 dark:bg-slate-950/95">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 				<div className="hidden min-w-0 xl:block">
 					<TabList

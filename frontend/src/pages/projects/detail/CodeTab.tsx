@@ -79,10 +79,8 @@ export function CodeTab({ projectId }: { projectId: string }) {
 		<Card className="overflow-hidden p-0">
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
 				<div className="flex min-w-0 items-center gap-2">
-					<Code2 className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
-					<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						Code
-					</h2>
+					<Code2 className="h-4 w-4 text-teal-700 dark:text-teal-300" />
+					<h2 className="text-foreground text-sm font-semibold">Code</h2>
 					<Badge tone="neutral">{files.length.toLocaleString()} files</Badge>
 					{tree.data?.truncated ? <Badge tone="amber">capped</Badge> : null}
 				</div>

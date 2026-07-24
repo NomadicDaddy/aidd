@@ -83,7 +83,7 @@ export function ExecutedStepRow({ step }: { step: PipelineStepResultRecord }) {
 						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
 						<Badge tone="cyan">{step.stepType}</Badge>
 					</div>
-					<h3 className="mt-2 text-base font-semibold text-neutral-950 dark:text-neutral-50">
+					<h3 className="text-foreground mt-2 text-base font-semibold">
 						{step.stepName}
 					</h3>
 					<p className="text-xs text-neutral-500">

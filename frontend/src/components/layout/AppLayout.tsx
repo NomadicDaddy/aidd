@@ -59,13 +59,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
 		<>
 			<div className="app-shell min-h-screen" id="app-shell">
 				<a
-					className="sr-only z-50 rounded-md bg-cyan-600 px-3 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+					className="bg-accent text-accent-foreground sr-only z-50 rounded-lg px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
 					href="#main-content">
 					Skip to Content
 				</a>
 				<aside
 					className={cn(
-						'border-neutral-200 bg-white/88 p-3 shadow-sm backdrop-blur-xl dark:border-cyan-950/50 dark:bg-slate-950/88',
+						'border-border/60 bg-card/70 p-3 backdrop-blur-xl',
 						'sticky top-0 z-20 border-b sm:fixed sm:inset-y-0 sm:left-0 sm:flex sm:flex-col sm:border-r sm:border-b-0',
 						'transition-[width] duration-200',
 						collapsed ? 'sm:w-16' : 'sm:w-60'
@@ -74,12 +74,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 						<div className="flex min-w-0 shrink-0 items-center gap-2">
 							<img
 								alt=""
-								className="h-10 w-10 shrink-0 rounded"
+								className="ring-border/40 h-10 w-10 shrink-0 rounded-lg ring-1"
 								src="/favicon-96x96.png"
 							/>
 							{!collapsed && (
 								<div
-									className="text-base font-semibold tracking-[0.18em] text-neutral-950 dark:text-neutral-50"
+									className="font-display text-foreground text-base font-semibold tracking-[0.18em]"
 									translate="no">
 									aidd
 								</div>
@@ -96,7 +96,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}
 							aria-label="Open command palette"
 							className={cn(
-								'bg-white/60 text-neutral-600 hover:text-cyan-900 dark:border-cyan-950/50 dark:bg-slate-950/40 dark:text-neutral-400 dark:hover:text-cyan-100',
 								collapsed
 									? 'sm:w-10 sm:justify-center sm:px-0'
 									: 'sm:mb-3 sm:w-full sm:justify-start sm:px-3'
@@ -109,7 +108,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							<Search className="h-4 w-4 shrink-0" />
 							{!collapsed && (
 								<>
-									<span className="hidden sm:inline">Search…</span>
+									<span className="text-muted-foreground hidden sm:inline">
+										Search…
+									</span>
 									<ShortcutChord
 										className="ml-auto hidden sm:inline-flex"
 										keyClassName="h-5 min-w-5 rounded px-1 text-[0.62rem]"
@@ -121,18 +122,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
 					</div>
 					<nav
 						aria-label="Primary"
-						className="-mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:mt-0 sm:block sm:min-h-0 sm:flex-1 sm:space-y-1 sm:overflow-x-visible sm:overflow-y-auto sm:px-0 sm:pr-1 sm:pb-0">
+						className="-mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:mt-0 sm:block sm:min-h-0 sm:flex-1 sm:space-y-0.5 sm:overflow-x-visible sm:overflow-y-auto sm:px-0 sm:pr-1 sm:pb-0">
 						{navGroups.map((group, groupIndex) => (
 							<div className="contents sm:block" key={group.label}>
 								{!collapsed && (
 									<div
 										className={cn(
-											'hidden px-3 text-[0.65rem] font-semibold tracking-wider text-neutral-500 uppercase sm:block dark:text-neutral-500',
-											groupIndex === 0 ? 'mt-0' : 'mt-4',
-											'mb-1'
+											'text-muted-foreground hidden px-3 text-[0.65rem] font-semibold tracking-wider uppercase sm:block',
+											groupIndex === 0 ? 'mt-0' : 'mt-5',
+											'mb-1.5'
 										)}>
 										{group.label}
 									</div>
+								)}
+								{collapsed && groupIndex > 0 && (
+									<div className="bg-border/60 mx-auto my-2 hidden h-px w-6 rounded-full sm:block" />
 								)}
 								{group.items.map((item) =>
 									item.to === '/projects' ? (
@@ -142,11 +146,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
 											aria-label={item.label}
 											className={({ isActive }) =>
 												cn(
-													'group relative flex h-10 w-10 shrink-0 items-center justify-center gap-3 rounded-md px-0 text-sm font-medium sm:w-auto sm:justify-start sm:px-3',
-													'transition-[background-color,color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-cyan-300 dark:focus-visible:ring-offset-slate-950',
+													'group relative flex h-11 w-11 shrink-0 items-center justify-center gap-2.5 rounded-lg px-0 text-sm font-medium sm:h-9 sm:w-auto sm:justify-start sm:px-3',
+													'focus-visible:ring-ring/50 focus-visible:ring-offset-background transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2',
 													isActive
-														? 'bg-slate-950 text-white shadow-sm shadow-cyan-950/10 dark:bg-cyan-400 dark:text-slate-950'
-														: 'text-neutral-700 hover:bg-cyan-50 hover:text-cyan-950 dark:text-neutral-300 dark:hover:bg-cyan-950/30 dark:hover:text-cyan-100'
+														? 'bg-accent-muted text-accent-muted-foreground dark:bg-accent-muted dark:text-accent-muted-foreground shadow-sm'
+														: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 												)
 											}
 											key={item.to}
@@ -157,7 +161,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 													<span
 														aria-hidden="true"
 														className={cn(
-															'absolute top-2 left-0 hidden h-6 w-0.5 rounded-full bg-cyan-400 transition-opacity sm:block',
+															'bg-accent absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full transition-opacity sm:block',
 															isActive ? 'opacity-100' : 'opacity-0'
 														)}
 													/>
@@ -175,7 +179,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 															<span
 																aria-label={`${activeExecutionCount} active ${activeExecutionCount === 1 ? 'execution' : 'executions'}`}
 																className={cn(
-																	'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-cyan-100 px-1 text-[0.62rem] font-bold text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200',
+																	'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-100 px-1 text-[0.62rem] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
 																	collapsed
 																		? 'hidden'
 																		: 'ml-auto hidden sm:inline-flex'
@@ -191,7 +195,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							</div>
 						))}
 					</nav>
-					<div className="absolute top-3 right-3 flex gap-2 sm:static sm:mt-3 sm:shrink-0 sm:flex-col sm:gap-2 sm:border-t sm:border-neutral-200 sm:pt-3 sm:dark:border-cyan-950/50">
+					<div className="sm:border-border/60 absolute top-3 right-3 flex gap-2 sm:static sm:mt-3 sm:shrink-0 sm:flex-col sm:gap-1.5 sm:border-t sm:pt-3">
 						<div className="sm:hidden">
 							<IconButton
 								aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}
@@ -244,7 +248,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 				    :focus-visible ring still appears for genuine keyboard focus. */}
 				<main
 					className={cn(
-						'command-surface min-w-0 px-4 py-5 transition-[padding] duration-200 focus:outline-none sm:min-h-screen sm:p-6',
+						'command-surface min-w-0 px-4 py-5 pb-[env(safe-area-inset-bottom,1.25rem)] transition-[padding] duration-200 focus:outline-none sm:min-h-screen sm:p-6 sm:pb-6',
 						collapsed ? 'sm:pl-[5.5rem]' : 'sm:pl-[16.5rem]'
 					)}
 					id="main-content"

@@ -89,7 +89,7 @@ export function DependencyGraphCanvas({
 											isDimmedEdge &&
 												'text-neutral-200 opacity-20 dark:text-neutral-800',
 											isSelectedEdge &&
-												'text-cyan-500 opacity-100 dark:text-cyan-300'
+												'text-teal-500 opacity-100 dark:text-teal-300'
 										)}
 										d={edgePath(source, target)}
 										fill="none"
@@ -129,9 +129,7 @@ export function GraphDiagnosticsCard({
 	if (graph.cycles.length === 0 && graph.unresolvedDependencies.length === 0) return null;
 	return (
 		<Card className="space-y-4">
-			<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-				Graph Diagnostics
-			</h2>
+			<h2 className="text-foreground text-sm font-semibold">Graph Diagnostics</h2>
 			{graph.cycles.length > 0 ? (
 				<section>
 					<h3 className="text-xs font-semibold text-red-600 uppercase dark:text-red-300">
@@ -189,9 +187,7 @@ export function SelectedFeaturePanel({
 	if (!node) {
 		return (
 			<Card className="space-y-3">
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Selection
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">Selection</h2>
 				<p className="text-sm text-neutral-500">Select a feature node to inspect links.</p>
 			</Card>
 		);
@@ -204,21 +200,19 @@ export function SelectedFeaturePanel({
 					<Badge tone={sourceBadgeTone(node.source)}>{sourceLabels[node.source]}</Badge>
 					{node.milestone ? <Badge tone="neutral">{node.milestone}</Badge> : null}
 				</div>
-				<h2 className="text-base font-semibold text-neutral-950 dark:text-neutral-50">
-					{node.title}
-				</h2>
+				<h2 className="text-foreground text-base font-semibold">{node.title}</h2>
 				<p className="font-mono text-xs break-all text-neutral-500">{node.directory}</p>
 			</div>
 			<div className="grid grid-cols-2 gap-2 text-sm">
 				<div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
 					<p className="text-xs font-medium text-neutral-500 uppercase">Depends on</p>
-					<p className="mt-1 text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+					<p className="text-foreground mt-1 text-lg font-semibold">
 						{node.resolvedDependencies.length}
 					</p>
 				</div>
 				<div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
 					<p className="text-xs font-medium text-neutral-500 uppercase">Dependents</p>
-					<p className="mt-1 text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+					<p className="text-foreground mt-1 text-lg font-semibold">
 						{node.dependents.length}
 					</p>
 				</div>

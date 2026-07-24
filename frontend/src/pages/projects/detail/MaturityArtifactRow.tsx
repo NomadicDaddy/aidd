@@ -42,7 +42,7 @@ export function MaturityArtifactRow({
 			{viewable ? (
 				<button
 					aria-label={`View ${artifact.label}`}
-					className="min-w-0 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+					className="min-w-0 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 					onClick={() => onOpen(viewerTarget)}
 					type="button">
 					{labelBlock}

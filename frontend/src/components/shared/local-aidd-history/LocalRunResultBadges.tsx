@@ -20,7 +20,7 @@ export function LocalRunResultBadges({
 	return (
 		<span className="inline-flex flex-wrap items-center gap-1.5">
 			<Tooltip content={outcome.title}>
-				<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+				<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 					<Badge showDot tone={outcome.tone}>
 						{outcome.label}
 					</Badge>
@@ -28,7 +28,7 @@ export function LocalRunResultBadges({
 			</Tooltip>
 			{run.runLedgerDirty ? (
 				<Tooltip content="Run summary could not be reconciled into the latest commit; recorded metrics may be incomplete.">
-					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 						<Badge tone="cyan">Ledger out of sync</Badge>
 					</span>
 				</Tooltip>
@@ -36,7 +36,7 @@ export function LocalRunResultBadges({
 			{run.residualDirtySourceFiles.length > 0 ? (
 				<Tooltip
 					content={`Source files left uncommitted at run end (not dirty at run start):\n${run.residualDirtySourceFiles.join('\n')}`}>
-					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 						<Badge tone="amber">Uncommitted source</Badge>
 					</span>
 				</Tooltip>
@@ -44,7 +44,7 @@ export function LocalRunResultBadges({
 			{run.residualUntrackedFeatureDirs.length > 0 ? (
 				<Tooltip
 					content={`Residual untracked feature directories left after the run:\n${run.residualUntrackedFeatureDirs.join('\n')}`}>
-					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 						<Badge tone="amber">Untracked artifacts</Badge>
 					</span>
 				</Tooltip>
@@ -56,7 +56,7 @@ export function LocalRunResultBadges({
 				return (
 					<Tooltip
 						content={`A recorded final acceptance check failed during this run: ${names}. The exit code and stop reason above are preserved; treat the success as unverified.`}>
-						<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+						<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 							<Badge tone="amber">Final check failed: {names}</Badge>
 						</span>
 					</Tooltip>
@@ -64,7 +64,7 @@ export function LocalRunResultBadges({
 			})()}
 			{(outcome.tone === 'red' || outcome.tone === 'amber') && isNoOpRun(run) ? (
 				<Tooltip content="Run produced no edits, no new files, no commits, and completed no features — a no-op self-abort.">
-					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 						<Badge tone="neutral">No changes</Badge>
 					</span>
 				</Tooltip>

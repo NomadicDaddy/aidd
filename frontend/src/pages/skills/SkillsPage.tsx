@@ -101,7 +101,7 @@ export function SkillsPage() {
 	);
 
 	return (
-		<div className="space-y-4">
+		<div className="page-reveal space-y-4">
 			<PageHeader
 				description="Run aidd-local skill definitions directly or compose them in recipes."
 				helpSlug="skills"
@@ -147,14 +147,14 @@ export function SkillsPage() {
 								<button
 									className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
 										skill.id === selected?.id
-											? 'border-cyan-300 bg-cyan-50 dark:border-cyan-900 dark:bg-cyan-950/30'
+											? 'border-teal-300 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/30'
 											: 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'
 									}`}
 									key={skill.id}
 									onClick={() => setSelectedId(skill.id)}
 									type="button">
 									<div className="flex flex-wrap items-center gap-2">
-										<span className="font-mono text-sm text-neutral-950 dark:text-neutral-50">
+										<span className="text-foreground font-mono text-sm">
 											{skill.id}
 										</span>
 										{RECIPE_SKILL_IDS.has(skill.id) ? (
@@ -217,9 +217,7 @@ export function SkillsPage() {
 							setProjectDir={setProjectDir}
 						/>
 						<Card className="space-y-2">
-							<h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-								Definition
-							</h3>
+							<h3 className="text-foreground text-sm font-semibold">Definition</h3>
 							<pre className="max-h-[28rem] overflow-auto rounded-md bg-neutral-100 p-3 font-mono text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
 								{selected.body}
 							</pre>

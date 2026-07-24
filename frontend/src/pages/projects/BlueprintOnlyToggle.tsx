@@ -9,7 +9,7 @@ export function BlueprintOnlyToggle({
 		<label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
 			<input
 				checked={checked}
-				className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-cyan-600 focus:ring-cyan-500"
+				className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-teal-600 focus:ring-teal-500"
 				onChange={(event) => onChange(event.target.checked)}
 				type="checkbox"
 			/>

@@ -3,8 +3,8 @@ import type { DirectorCycle, DirectorProfileInput, DirectorRiskLevel } from '../
 import { textareaClass as sharedTextareaClass } from '../../lib/formStyles.ts';
 
 export const textareaClass = sharedTextareaClass;
-export const sectionTitleClass = 'text-base font-semibold text-neutral-950 dark:text-neutral-50';
-export const sectionDescClass = 'mt-0.5 text-sm text-neutral-600 dark:text-neutral-400';
+export const sectionTitleClass = 'font-display text-base font-semibold text-foreground';
+export const sectionDescClass = 'mt-0.5 text-sm text-muted-foreground';
 
 export function riskTone(risk: DirectorRiskLevel): 'amber' | 'emerald' | 'red' {
 	if (risk === 'HIGH') return 'red';
@@ -43,5 +43,5 @@ export function contextArtifactLabel(cycle: DirectorCycle): string {
 export function artifactTone(label: string): string {
 	if (label === 'Ready') return 'text-emerald-700 dark:text-emerald-300';
 	if (label === 'Pending' || label === 'Writing') return 'text-amber-700 dark:text-amber-300';
-	return 'text-neutral-500 dark:text-neutral-400';
+	return 'text-muted-foreground';
 }

@@ -55,7 +55,7 @@ function IterationFeaturesCell({ iteration }: { iteration: ProjectLocalIteration
 		<td className="max-w-[22rem] px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
 			<Tooltip content={tooltipContent}>
 				<span
-					className="inline-flex max-w-full flex-wrap items-baseline gap-x-1 rounded-md break-words focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300"
+					className="inline-flex max-w-full flex-wrap items-baseline gap-x-1 rounded-md break-words focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300"
 					tabIndex={0}>
 					<span className="break-words">{first}</span>
 					<span className="text-neutral-500 dark:text-neutral-400">
@@ -119,7 +119,7 @@ export function LocalIterationsTable({
 								</td>
 								<td className="px-4 py-3">
 									<Tooltip content={outcome.title}>
-										<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+										<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 											<Badge showDot tone={outcome.tone}>
 												{outcome.label}
 											</Badge>

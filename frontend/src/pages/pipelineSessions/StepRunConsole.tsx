@@ -85,7 +85,7 @@ export function StepRunConsole({
 				<span className="flex items-center gap-2">
 					Console
 					{streaming && (
-						<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
+						<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-teal-400" />
 					)}
 				</span>
 			</Button>

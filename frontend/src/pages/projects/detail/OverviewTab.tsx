@@ -28,7 +28,7 @@ import { artifactTone } from './shared.ts';
 function LinkedValue({ children, to }: { children: ReactNode; to: string }) {
 	return (
 		<Link
-			className="rounded-sm text-cyan-700 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:text-cyan-300"
+			className="rounded-sm text-teal-700 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:text-teal-300"
 			to={to}>
 			{children}
 		</Link>
@@ -44,9 +44,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 		<div className="grid gap-4 md:grid-cols-3">
 			<Card>
 				<div className="text-xs text-neutral-500 uppercase">Feature Progress</div>
-				<div className="mt-2 text-2xl font-semibold text-neutral-950 dark:text-neutral-50">
-					{pct}%
-				</div>
+				<div className="text-foreground mt-2 text-2xl font-semibold">{pct}%</div>
 				<div className="mt-1 text-xs text-neutral-500">
 					{passing}/{total} passing · {project.featureStats.failing} failing ·{' '}
 					{project.featureStats.waitingApproval} waiting
@@ -74,7 +72,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 			<Card className="group transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
 				<Link
 					aria-label={`Artifact health: ${project.artifactHealth}. View artifact details.`}
-					className="block rounded-lg focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+					className="block rounded-lg focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 					to={projectDetailTabSearch('artifacts')}>
 					<div className="text-xs text-neutral-500 uppercase">Artifact Health</div>
 					<div className="mt-2">
@@ -93,7 +91,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 							No artifact check available.
 						</div>
 					)}
-					<div className="mt-2 text-xs text-cyan-700 group-hover:underline dark:text-cyan-300">
+					<div className="mt-2 text-xs text-teal-700 group-hover:underline dark:text-teal-300">
 						View artifacts →
 					</div>
 				</Link>
@@ -118,14 +116,14 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 				const isCurrent = roadmap.currentMilestone === name;
 				return (
 					<Link
-						className="group flex items-center justify-between gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+						className="group flex items-center justify-between gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 						key={name}
 						to={projectDetailTabSearch('features', { featureMilestone: name })}>
 						<div
 							className={
 								isCurrent
-									? 'flex items-center text-sm font-medium text-neutral-900 group-hover:text-cyan-700 dark:text-neutral-100 dark:group-hover:text-cyan-300'
-									: 'flex items-center text-sm text-neutral-600 group-hover:text-cyan-700 dark:text-neutral-400 dark:group-hover:text-cyan-300'
+									? 'flex items-center text-sm font-medium text-neutral-900 group-hover:text-teal-700 dark:text-neutral-100 dark:group-hover:text-teal-300'
+									: 'flex items-center text-sm text-neutral-600 group-hover:text-teal-700 dark:text-neutral-400 dark:group-hover:text-teal-300'
 							}>
 							<span>{name}</span>
 							{isCurrent ? (
@@ -157,9 +155,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 		<div className="grid gap-4 md:grid-cols-2">
 			<Card>
 				<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						Project metadata
-					</h2>
+					<h2 className="text-foreground text-sm font-semibold">Project metadata</h2>
 					<Link
 						className="flex min-w-0 flex-wrap items-center gap-1.5"
 						title={coverage.title}
@@ -232,19 +228,15 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 			</Card>
 			<Card>
 				<div className="mb-2 flex items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						Roadmap
-					</h2>
+					<h2 className="text-foreground text-sm font-semibold">Roadmap</h2>
 					<Link
-						className="text-xs text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+						className="text-xs text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
 						to={projectDetailTabSearch('features')}>
 						View features
 					</Link>
 				</div>
 				<RoadmapMilestones roadmap={metadata.roadmap} />
-				<h2 className="mt-4 mb-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					aidd activity
-				</h2>
+				<h2 className="text-foreground mt-4 mb-2 text-sm font-semibold">aidd activity</h2>
 				<div className="divide-y divide-neutral-100 dark:divide-neutral-900">
 					<MetadataRow
 						label="aidd state"

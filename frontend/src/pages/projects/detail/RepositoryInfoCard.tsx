@@ -34,7 +34,7 @@ function LanguageBar({ language, total }: { language: RepositoryLanguage; total:
 			</div>
 			<div className="h-1.5 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
 				<div
-					className="h-full rounded-full bg-cyan-500/80 dark:bg-cyan-400/80"
+					className="h-full rounded-full bg-teal-500/80 dark:bg-teal-400/80"
 					style={{ width: `${pct}%` }}
 				/>
 			</div>
@@ -136,7 +136,7 @@ export function RepositoryInfoCard({ info }: { info: RepositoryInfo }) {
 					{logo.art}
 				</pre>
 				<div className="text-center">
-					<p className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+					<p className="text-foreground text-sm font-semibold">
 						{info.dominantLanguage ?? 'Repository'}
 					</p>
 					<p className="text-xs text-neutral-500 dark:text-neutral-400">

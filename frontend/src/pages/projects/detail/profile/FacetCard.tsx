@@ -25,13 +25,13 @@ export function FacetCard({
 								className={cn(
 									'flex cursor-pointer items-start gap-3 rounded-md border p-2.5 transition-colors',
 									selected
-										? 'border-cyan-400 bg-cyan-50/70 dark:border-cyan-700 dark:bg-cyan-950/30'
+										? 'border-teal-400 bg-teal-50/70 dark:border-teal-700 dark:bg-teal-950/30'
 										: 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700'
 								)}
 								key={opt.value}>
 								<input
 									checked={selected}
-									className="mt-1 accent-cyan-600"
+									className="mt-1 accent-teal-600"
 									name={facet.field}
 									onChange={() => onChange(facet.field, opt.value)}
 									type="radio"

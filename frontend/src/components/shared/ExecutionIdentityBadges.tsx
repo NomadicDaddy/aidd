@@ -85,7 +85,7 @@ export function ExecutionIdentityBadges({
 		<span
 			aria-label={ariaLabel}
 			className={cn(
-				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] text-[11px] leading-5 font-semibold shadow-sm ring-1 ring-black/10 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:ring-white/15 dark:focus-visible:ring-cyan-300',
+				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] text-[11px] leading-5 font-semibold shadow-sm ring-1 ring-black/10 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:ring-white/15 dark:focus-visible:ring-teal-300',
 				className
 			)}
 			role="group">

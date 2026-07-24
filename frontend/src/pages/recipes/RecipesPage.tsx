@@ -89,7 +89,7 @@ export function RecipesPage() {
 	}
 
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
 					<div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export function RecipesPage() {
 				<Card className="space-y-4">
 					<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 						<div>
-							<h2 className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+							<h2 className="text-foreground text-lg font-semibold">
 								Launch {selectedRecipe.name}
 							</h2>
 							<p className="text-sm text-neutral-600 dark:text-neutral-300">

@@ -74,7 +74,7 @@ export function CatalogTable({
 					<tbody>
 						{definitions.map((item) => (
 							<tr
-								className={`cursor-pointer border-b last:border-0 dark:border-neutral-800 ${selectedAudit === item.name ? 'bg-cyan-50 dark:bg-cyan-950/30' : ''}`}
+								className={`cursor-pointer border-b last:border-0 dark:border-neutral-800 ${selectedAudit === item.name ? 'bg-teal-50 dark:bg-teal-950/30' : ''}`}
 								key={item.name}
 								onClick={() => onSelect(item.name)}>
 								<td className="px-4 py-3">
@@ -88,9 +88,7 @@ export function CatalogTable({
 									/>
 								</td>
 								<td className="px-4 py-3">
-									<div className="font-medium text-neutral-950 dark:text-neutral-50">
-										{item.name}
-									</div>
+									<div className="text-foreground font-medium">{item.name}</div>
 									<div className="text-xs break-all text-neutral-500">
 										{item.path}
 									</div>
@@ -130,7 +128,7 @@ export function CatalogTable({
 								</td>
 								<td className="px-4 py-3 text-xs">
 									<button
-										className="text-cyan-700 hover:underline dark:text-cyan-300"
+										className="text-teal-700 hover:underline dark:text-teal-300"
 										onClick={(event) => {
 											event.stopPropagation();
 											onJumpToMatrix();
@@ -162,7 +160,7 @@ export function CatalogTable({
 					return (
 						<div
 							aria-label={item.name}
-							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-cyan-300 bg-cyan-50 dark:border-cyan-700 dark:bg-cyan-950/30' : 'border-neutral-200 hover:bg-cyan-50/60 dark:border-neutral-800 dark:hover:bg-cyan-950/20'}`}
+							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-950/30' : 'border-neutral-200 hover:bg-teal-50/60 dark:border-neutral-800 dark:hover:bg-teal-950/20'}`}
 							key={item.name}
 							role="group">
 							<div className="flex items-start justify-between gap-2">
@@ -177,10 +175,10 @@ export function CatalogTable({
 									/>
 									<button
 										aria-pressed={active}
-										className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+										className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 										onClick={() => onSelect(item.name)}
 										type="button">
-										<span className="block font-medium text-neutral-950 dark:text-neutral-50">
+										<span className="text-foreground block font-medium">
 											{item.name}
 										</span>
 										<span className="block text-xs break-all text-neutral-500">
@@ -245,7 +243,7 @@ export function CatalogTable({
 									</dt>
 									<dd>
 										<button
-											className="text-xs text-cyan-700 hover:underline dark:text-cyan-300"
+											className="text-xs text-teal-700 hover:underline dark:text-teal-300"
 											onClick={(event) => {
 												event.stopPropagation();
 												onJumpToMatrix();

@@ -153,14 +153,14 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 						<tr
 							className="border-b border-neutral-100 last:border-b-0 dark:border-neutral-900"
 							key={`${row.projectName}:${row.directory}`}>
-							<td className="max-w-44 truncate px-3 py-2 font-medium text-neutral-950 dark:text-neutral-50">
+							<td className="text-foreground max-w-44 truncate px-3 py-2 font-medium">
 								{row.projectName}
 							</td>
 							<td className="px-3 py-2">
 								<Link
-									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
+									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
 									to={rowLink(row)}>
-									<span className="block truncate font-medium text-cyan-700 group-hover:text-cyan-950 dark:text-cyan-300 dark:group-hover:text-cyan-100">
+									<span className="block truncate font-medium text-teal-700 group-hover:text-teal-950 dark:text-teal-300 dark:group-hover:text-teal-100">
 										{row.directory}
 									</span>
 									<span className="mt-0.5 block truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -207,8 +207,8 @@ export function FeatureStatusCard({
 		<Card className="overflow-hidden" variant="panel">
 			<div className="mb-4 flex flex-wrap items-start justify-between gap-3">
 				<div>
-					<div className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						<ListFilter className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+						<ListFilter className="h-4 w-4 text-teal-600 dark:text-teal-300" />
 						Feature Status
 						<Badge showDot tone={visibleRows.length > 0 ? 'amber' : 'emerald'}>
 							{visibleRows.length} {stateFilter}
@@ -219,7 +219,7 @@ export function FeatureStatusCard({
 					</p>
 				</div>
 				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-cyan-700 transition-colors outline-none hover:text-cyan-950 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-cyan-300 dark:hover:text-cyan-100 dark:focus-visible:ring-offset-slate-950"
+					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
 					to="/projects">
 					Projects
 					<ArrowRight className="h-3.5 w-3.5" />

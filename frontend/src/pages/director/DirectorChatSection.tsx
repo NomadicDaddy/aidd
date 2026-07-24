@@ -47,7 +47,7 @@ function ChatActionTrail({ actions }: { actions: ChatAgentAction[] }) {
 						<span className="min-w-0 truncate">{action.summary}</span>
 						{runHref && (
 							<Link
-								className="inline-flex shrink-0 items-center gap-1 font-medium text-cyan-700 hover:underline dark:text-cyan-300"
+								className="inline-flex shrink-0 items-center gap-1 font-medium text-teal-700 hover:underline dark:text-teal-300"
 								to={runHref}>
 								<ExternalLink className="h-3 w-3" />
 								run
@@ -123,9 +123,7 @@ export function DirectorChatSection({
 				<div className="grid min-h-[420px] gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
 					<div className="min-w-0 space-y-2">
 						<div className="flex items-center justify-between gap-2">
-							<h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-								Chats
-							</h3>
+							<h3 className="text-foreground text-sm font-semibold">Chats</h3>
 							<IconButton
 								ariaLabel="New Director chat"
 								disabled={createPending}
@@ -150,7 +148,7 @@ export function DirectorChatSection({
 										key={session.id}>
 										<button
 											aria-current={isActive ? 'true' : undefined}
-											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-cyan-300 dark:focus-visible:ring-offset-slate-950"
+											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-teal-300 dark:focus-visible:ring-offset-slate-950"
 											onClick={() => onSelectSession(session.id)}
 											type="button">
 											<div className="truncate font-medium">

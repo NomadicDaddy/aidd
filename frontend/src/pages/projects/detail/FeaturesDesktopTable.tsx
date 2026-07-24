@@ -87,13 +87,11 @@ export function FeaturesDesktopTable({
 						const decision = decisions[directory] ?? '';
 						return (
 							<tr
-								className="border-b transition-colors last:border-0 hover:bg-cyan-50/60 dark:border-neutral-800 dark:hover:bg-cyan-950/20"
+								className="border-b transition-colors last:border-0 hover:bg-teal-50/60 dark:border-neutral-800 dark:hover:bg-teal-950/20"
 								key={id}>
 								<td className="px-4 py-3">
 									<div className="min-w-0">
-										<div className="font-medium text-neutral-950 dark:text-neutral-50">
-											{title}
-										</div>
+										<div className="text-foreground font-medium">{title}</div>
 										<div className="text-xs break-all text-neutral-500">
 											{id}
 										</div>

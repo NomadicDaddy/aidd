@@ -136,7 +136,7 @@ export function ProjectReportButton({ collapsed }: { collapsed: boolean }) {
 						<div className="flex items-start justify-between gap-3">
 							<div>
 								<h2
-									className="text-base font-semibold text-neutral-950 dark:text-neutral-50"
+									className="text-foreground text-base font-semibold"
 									id="project-report-title">
 									File a report
 								</h2>

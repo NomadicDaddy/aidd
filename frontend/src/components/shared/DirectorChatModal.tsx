@@ -75,17 +75,17 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 			<DialogPanel className="flex max-h-[80vh] w-full max-w-lg flex-col">
 				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
 					<div className="flex items-center gap-2">
-						<Bot className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+						<Bot className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						<div>
 							<h2
-								className="text-sm font-semibold text-neutral-950 dark:text-neutral-50"
+								className="text-foreground text-sm font-semibold"
 								id="director-chat-modal-title">
 								Director Chat
 							</h2>
 							<p className="text-xs text-neutral-500 dark:text-neutral-400">
 								Sent messages are saved — review or continue on the{' '}
 								<Link
-									className="font-medium text-cyan-700 hover:underline dark:text-cyan-300"
+									className="font-medium text-teal-700 hover:underline dark:text-teal-300"
 									onClick={onClose}
 									to="/director">
 									Director page

@@ -24,7 +24,7 @@ export function DiaryEntryCard({
 					<div className="mb-1 flex flex-wrap items-center gap-2">
 						{showProject ? (
 							<Link
-								className="text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-300"
+								className="text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
 								to={`/projects/${encodeURIComponent(entry.projectId)}`}>
 								{entry.projectName}
 							</Link>
@@ -36,9 +36,7 @@ export function DiaryEntryCard({
 							{entry.date}
 						</span>
 					</div>
-					<h3 className="text-base font-semibold text-neutral-950 dark:text-neutral-50">
-						{entry.title}
-					</h3>
+					<h3 className="text-foreground text-base font-semibold">{entry.title}</h3>
 					{entry.summary ? (
 						<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 							{entry.summary}

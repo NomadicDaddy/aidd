@@ -25,7 +25,7 @@ export function DirectorProfileSection({
 }) {
 	return (
 		<section aria-labelledby="director-profile-heading">
-			<Card className="border-cyan-200/80 dark:border-cyan-950/70">
+			<Card className="border-teal-200/80 dark:border-teal-950/70">
 				<div className="flex flex-wrap items-start justify-between gap-3">
 					<div>
 						<h2 className={sectionTitleClass} id="director-profile-heading">

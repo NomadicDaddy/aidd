@@ -107,7 +107,7 @@ function FileTreeNode({
 		return (
 			<>
 				<button
-					className="flex w-full items-center gap-1.5 border-b border-neutral-100 py-1.5 pr-3 text-left text-neutral-700 transition-colors last:border-b-0 hover:bg-cyan-50/60 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:border-neutral-900 dark:text-neutral-300 dark:hover:bg-cyan-950/20"
+					className="flex w-full items-center gap-1.5 border-b border-neutral-100 py-1.5 pr-3 text-left text-neutral-700 transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-900 dark:text-neutral-300 dark:hover:bg-teal-950/20"
 					onClick={() => onToggleDir(node.path)}
 					style={indent}
 					type="button">
@@ -118,9 +118,9 @@ function FileTreeNode({
 						)}
 					/>
 					{isOpen ? (
-						<FolderOpen className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
+						<FolderOpen className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
 					) : (
-						<Folder className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
+						<Folder className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
 					)}
 					<span className="truncate font-mono text-xs">{node.name}</span>
 				</button>
@@ -144,9 +144,9 @@ function FileTreeNode({
 	return (
 		<button
 			className={cn(
-				'flex w-full items-center gap-2 border-b border-neutral-100 py-1.5 pr-3 text-left transition-colors last:border-b-0 hover:bg-cyan-50/60 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:border-neutral-900 dark:hover:bg-cyan-950/20',
+				'flex w-full items-center gap-2 border-b border-neutral-100 py-1.5 pr-3 text-left transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-900 dark:hover:bg-teal-950/20',
 				selected
-					? 'bg-cyan-50 text-cyan-950 dark:bg-cyan-950/30 dark:text-cyan-100'
+					? 'bg-teal-50 text-teal-950 dark:bg-teal-950/30 dark:text-teal-100'
 					: 'text-neutral-700 dark:text-neutral-300'
 			)}
 			onClick={() => onSelect(node.path)}

@@ -22,9 +22,7 @@ function WorkingTreePanel({ status }: { status: null | ProjectGitStatusSummary |
 	return (
 		<Card className="flex flex-wrap items-center justify-between gap-3">
 			<div>
-				<h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Working tree
-				</h3>
+				<h3 className="text-foreground text-sm font-semibold">Working tree</h3>
 				<p className="text-xs text-neutral-500">
 					Porcelain status for staged, unstaged, untracked, and conflicted files.
 				</p>
@@ -55,9 +53,7 @@ export function RepositoryTab({
 	return (
 		<div className="space-y-4">
 			<div>
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Repository
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">Repository</h2>
 				<p className="text-xs text-neutral-500">
 					A git snapshot of this project — dominant language, branches, tags,
 					contributors, and lines of code, derived from git-tracked files only.

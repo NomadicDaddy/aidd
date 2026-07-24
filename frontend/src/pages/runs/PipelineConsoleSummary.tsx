@@ -26,9 +26,7 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 		<div className="space-y-3">
 			<Card className="space-y-2">
 				<div className="flex flex-wrap items-center gap-2">
-					<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						{session.recipeName}
-					</h2>
+					<h2 className="text-foreground text-sm font-semibold">{session.recipeName}</h2>
 					<Badge tone={sessionStatusTone(session.status)}>
 						{sessionStatusLabel(session.status)}
 					</Badge>

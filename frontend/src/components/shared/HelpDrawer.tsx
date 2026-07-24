@@ -33,16 +33,14 @@ export function HelpDrawer({
 	return (
 		<Dialog aria-labelledby={TITLE_ID} onClose={onClose} open={open}>
 			<div
-				className="fixed inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-neutral-200 bg-white shadow-2xl dark:border-cyan-900/70 dark:bg-slate-950"
+				className="fixed inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-neutral-200 bg-white shadow-2xl dark:border-teal-900/70 dark:bg-slate-950"
 				onMouseDown={(event) => event.stopPropagation()}>
 				<div className="flex items-start justify-between gap-4 border-b border-neutral-200 px-5 py-4 dark:border-slate-800">
 					<div>
-						<div className="text-[0.65rem] font-semibold tracking-wide text-cyan-700 uppercase dark:text-cyan-300">
+						<div className="text-[0.65rem] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-300">
 							Help
 						</div>
-						<h2
-							className="text-base font-semibold text-neutral-950 dark:text-neutral-50"
-							id={TITLE_ID}>
+						<h2 className="text-foreground text-base font-semibold" id={TITLE_ID}>
 							{section?.title ?? 'Documentation'}
 						</h2>
 					</div>
@@ -66,7 +64,7 @@ export function HelpDrawer({
 				</div>
 				<div className="border-t border-neutral-200 px-5 py-3 dark:border-slate-800">
 					<Link
-						className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-700 hover:text-cyan-600 dark:text-cyan-300"
+						className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-600 dark:text-teal-300"
 						onClick={onClose}
 						to={`/docs/${slug}`}>
 						<ExternalLink className="h-3.5 w-3.5" />

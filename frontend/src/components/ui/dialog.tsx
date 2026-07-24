@@ -148,7 +148,7 @@ export function Dialog({
 }
 
 const PANEL_BASE =
-	'rounded-lg border border-neutral-200 bg-white shadow-2xl ring-1 shadow-cyan-950/20 ring-cyan-400/10 dark:border-cyan-900/70 dark:bg-slate-950';
+	'rounded-lg border border-neutral-200 bg-white shadow-2xl ring-1 shadow-teal-950/20 ring-teal-400/10 dark:border-teal-900/70 dark:bg-slate-950';
 
 /**
  * Styled dialog panel surface. Stops `mousedown` propagation so clicks inside

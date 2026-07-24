@@ -67,7 +67,7 @@ export function LeaderboardCard({ rows }: { rows: ResourceUsageRow[] }) {
 						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
 							<div
 								aria-hidden="true"
-								className="h-full rounded-full bg-cyan-500"
+								className="h-full rounded-full bg-teal-500"
 								style={{ width: `${width}%` }}
 							/>
 						</div>
@@ -165,7 +165,7 @@ export function TimeseriesChart({
 								)}
 								{point.running > 0 && (
 									<div
-										className="min-h-0 w-full bg-cyan-500 group-hover:bg-cyan-400 dark:bg-cyan-600 dark:group-hover:bg-cyan-500"
+										className="min-h-0 w-full bg-teal-500 group-hover:bg-teal-400 dark:bg-teal-600 dark:group-hover:bg-teal-500"
 										style={{ flexBasis: 0, flexGrow: point.running }}
 									/>
 								)}
@@ -181,7 +181,7 @@ export function TimeseriesChart({
 				<LegendDot className="bg-neutral-400" label="Stopped" />
 				<LegendDot className="bg-orange-700" label="Killed" />
 				<LegendDot className="bg-slate-500" label="No work" />
-				<LegendDot className="bg-cyan-500" label="Running" />
+				<LegendDot className="bg-teal-500" label="Running" />
 			</div>
 		</div>
 	);
@@ -214,7 +214,7 @@ export function BackendBreakdownCard({ rows }: { rows: TelemetryBackendUsageRow[
 						<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
 							<div
 								aria-hidden="true"
-								className="h-full rounded-full bg-cyan-500"
+								className="h-full rounded-full bg-teal-500"
 								style={{ width: `${Math.round((row.count / max) * 100)}%` }}
 							/>
 						</div>

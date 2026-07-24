@@ -21,7 +21,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 		].join('\n'),
 	},
 	Go: {
-		accent: 'text-cyan-600 dark:text-cyan-400',
+		accent: 'text-teal-600 dark:text-teal-400',
 		art: [' ████   ███ ', '█      █   █', '█  ██  █   █', '█   █  █   █', ' ████   ███ '].join(
 			'\n'
 		),

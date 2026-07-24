@@ -17,9 +17,7 @@ export function DiaryTab({ projectPath }: { projectName: string; projectPath: st
 		<div className="space-y-4">
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div>
-					<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						Dev diary
-					</h2>
+					<h2 className="text-foreground text-sm font-semibold">Dev diary</h2>
 					<p className="text-xs text-neutral-500">
 						One narrative entry per day, written from this project&apos;s runs, commits,
 						and feature activity and interleaved with the day&apos;s timeline.

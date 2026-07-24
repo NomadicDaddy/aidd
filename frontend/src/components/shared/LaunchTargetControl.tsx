@@ -135,7 +135,7 @@ export function LaunchTargetControl({
 				className={cn(
 					'inline-flex min-h-7 max-w-full flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1 text-xs transition-colors',
 					custom
-						? 'border-cyan-500 bg-cyan-50 text-cyan-900 dark:border-cyan-500 dark:bg-cyan-950/30 dark:text-cyan-100'
+						? 'border-teal-500 bg-teal-50 text-teal-900 dark:border-teal-500 dark:bg-teal-950/30 dark:text-teal-100'
 						: 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:border-neutral-700',
 					disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
 				)}
@@ -257,12 +257,12 @@ export function LaunchTargetControl({
 				<DialogPanel className="w-full max-w-md">
 					<div className="space-y-5 p-5" id={panelId}>
 						<div className="flex items-start gap-3">
-							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-900 dark:bg-cyan-950/50 dark:text-cyan-300">
+							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-300">
 								<Settings2 className="h-5 w-5" />
 							</div>
 							<div className="min-w-0">
 								<h2
-									className="text-base font-semibold text-neutral-950 dark:text-neutral-50"
+									className="text-foreground text-base font-semibold"
 									id={titleId}>
 									{role ? `${roleLabels[role]} launch target` : 'Launch target'}
 								</h2>

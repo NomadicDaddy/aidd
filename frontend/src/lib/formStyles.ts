@@ -1,10 +1,9 @@
 export const formControlClass =
-	'h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-800 outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:border-neutral-500 dark:focus-visible:ring-neutral-800';
+	'h-9 rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20';
 
 export const selectClass = formControlClass;
 
 export const textareaClass =
-	'min-h-28 w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-6 text-neutral-800 outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:border-neutral-500 dark:focus-visible:ring-neutral-800';
+	'min-h-28 w-full resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm leading-6 text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20';
 
-export const fieldLabelClass =
-	'text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400';
+export const fieldLabelClass = 'text-xs font-medium uppercase tracking-wide text-muted-foreground';

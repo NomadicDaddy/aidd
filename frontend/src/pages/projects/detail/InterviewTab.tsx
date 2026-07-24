@@ -58,7 +58,7 @@ export function InterviewTab({
 			<div className="grid gap-4 md:grid-cols-3">
 				<Card>
 					<div className="text-xs text-neutral-500 uppercase">Questions</div>
-					<div className="mt-2 text-2xl font-semibold text-neutral-950 dark:text-neutral-50">
+					<div className="text-foreground mt-2 text-2xl font-semibold">
 						{interview.total}
 					</div>
 				</Card>
@@ -76,9 +76,7 @@ export function InterviewTab({
 				</Card>
 			</div>
 			<Card>
-				<h2 className="mb-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Unanswered questions
-				</h2>
+				<h2 className="text-foreground mb-2 text-sm font-semibold">Unanswered questions</h2>
 				{interview.unanswered.length === 0 ? (
 					<p className="text-sm text-neutral-500">
 						All interview questions have responses.
@@ -108,7 +106,7 @@ export function InterviewTab({
 											<div className="space-y-2">
 												<textarea
 													aria-label={`Answer for question: ${question.prompt}`}
-													className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+													className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
 													disabled={submitAnswer.isPending}
 													onChange={(event) =>
 														setDraftAnswers((prev) => ({
@@ -221,7 +219,7 @@ export function InterviewTab({
 			</Card>
 			{interview.answeredQuestions.length > 0 ? (
 				<Card>
-					<h2 className="mb-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+					<h2 className="text-foreground mb-2 text-sm font-semibold">
 						Answered questions
 					</h2>
 					<ul className="space-y-3">

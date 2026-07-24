@@ -32,17 +32,17 @@ export function BlueprintImplementationCard({ project }: { project: ProjectDetai
 			className={
 				implementation.state === 'blocked'
 					? 'border-amber-300 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20'
-					: 'border-cyan-200 bg-cyan-50/60 dark:border-cyan-900 dark:bg-cyan-950/20'
+					: 'border-teal-200 bg-teal-50/60 dark:border-teal-900 dark:bg-teal-950/20'
 			}>
 			<div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2">
 						{implementation.state === 'preparing' ? (
-							<LoaderCircle className="h-4 w-4 animate-spin text-cyan-700 dark:text-cyan-300" />
+							<LoaderCircle className="h-4 w-4 animate-spin text-teal-700 dark:text-teal-300" />
 						) : (
-							<Hammer className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+							<Hammer className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						)}
-						<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+						<h2 className="text-foreground text-sm font-semibold">
 							{implementation.state === 'blueprint_ready'
 								? 'Blueprint ready for review'
 								: implementation.state === 'preparing'

@@ -91,7 +91,7 @@ function FileChangeChip({
 					truncated={truncated}
 				/>
 			}>
-			<span className="inline-flex items-center gap-1 rounded-sm focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+			<span className="inline-flex items-center gap-1 rounded-sm focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 				{children}
 			</span>
 		</Tooltip>
@@ -149,7 +149,7 @@ function RunCommitsSection({ run }: { run: RunRecord }) {
 							truncated={data.fileChanges.truncated}>
 							<FileEdit
 								aria-hidden="true"
-								className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400"
+								className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400"
 							/>
 							{data.filesEdited} {data.filesEdited === 1 ? 'file' : 'files'} edited
 						</FileChangeChip>
@@ -206,7 +206,7 @@ export function RunDetailPanel({
 		<div className="mb-3 min-w-0 space-y-3 rounded-md border border-neutral-200 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-900/40">
 			<div className="flex flex-wrap items-center gap-2">
 				<Tooltip content={outcome.title}>
-					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:focus-visible:ring-cyan-300">
+					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 						<Badge showDot tone={outcome.tone}>
 							{outcome.label}
 						</Badge>

@@ -51,9 +51,7 @@ export function ProjectInitFailures({ failures }: { failures: ProjectInitFailure
 						key={failure.id}>
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div className="min-w-0">
-								<span className="font-medium text-neutral-950 dark:text-neutral-50">
-									{failure.name}
-								</span>
+								<span className="text-foreground font-medium">{failure.name}</span>
 								<span className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
 									{failure.template}
 								</span>
@@ -61,7 +59,7 @@ export function ProjectInitFailures({ failures }: { failures: ProjectInitFailure
 							<div className="flex flex-wrap items-center gap-2">
 								{failure.hasLog ? (
 									<a
-										className="text-xs text-cyan-700 underline dark:text-cyan-300"
+										className="text-xs text-teal-700 underline dark:text-teal-300"
 										href={projectInitFailureLogUrl(failure.id)}
 										rel="noreferrer"
 										target="_blank">

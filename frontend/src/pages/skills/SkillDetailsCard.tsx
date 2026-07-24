@@ -15,10 +15,10 @@ export function SkillDetailsCard({
 		<Card className="space-y-3">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="min-w-0 flex-1">
-					<div className="font-mono text-sm text-cyan-700 dark:text-cyan-300">
+					<div className="font-mono text-sm text-teal-700 dark:text-teal-300">
 						{skill.id}
 					</div>
-					<h2 className="text-xl font-semibold break-words text-neutral-950 dark:text-neutral-50">
+					<h2 className="text-foreground text-xl font-semibold break-words">
 						{skill.title}
 					</h2>
 					<p className="mt-1 text-sm break-words text-neutral-600 dark:text-neutral-400">

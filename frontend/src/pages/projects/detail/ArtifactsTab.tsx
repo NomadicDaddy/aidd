@@ -50,9 +50,7 @@ export function ArtifactsTab({
 		return (
 			<Card>
 				<div className="mb-3 flex items-center justify-between">
-					<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						Artifact health
-					</h2>
+					<h2 className="text-foreground text-sm font-semibold">Artifact health</h2>
 					<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
 				</div>
 				<p className="text-sm text-neutral-500">
@@ -75,9 +73,7 @@ export function ArtifactsTab({
 	return (
 		<Card>
 			<div className="mb-3 flex items-center justify-between">
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Artifact health
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">Artifact health</h2>
 				<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
 			</div>
 			<div className="grid gap-3 sm:grid-cols-3 md:grid-cols-6">
@@ -86,7 +82,7 @@ export function ArtifactsTab({
 						className="rounded-md border border-neutral-200 p-3 text-center dark:border-neutral-800"
 						key={tile.label}>
 						<div className="text-xs text-neutral-500 uppercase">{tile.label}</div>
-						<div className="mt-1 text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+						<div className="text-foreground mt-1 text-lg font-semibold">
 							{tile.value}
 						</div>
 						<div className="mt-1">

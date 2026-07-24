@@ -17,11 +17,9 @@ function DisclosureItem({ children, title }: { children: string; title: string }
 
 export function TelemetryDisclosure() {
 	return (
-		<Card className="space-y-4 border-cyan-200 bg-cyan-50/40 dark:border-cyan-900 dark:bg-cyan-950/10">
+		<Card className="space-y-4 border-teal-200 bg-teal-50/40 dark:border-teal-900 dark:bg-teal-950/10">
 			<div>
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					What aidd records
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">What aidd records</h2>
 				<p className="mt-1 text-xs leading-5 text-neutral-600 dark:text-neutral-400">
 					All telemetry stays in this local aidd installation. aidd does not send usage
 					data to its maintainers or third-party tracking services.
@@ -53,7 +51,7 @@ export function TelemetryDisclosure() {
 			</div>
 			<div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
 				<Link
-					className="font-medium text-cyan-700 hover:underline dark:text-cyan-300"
+					className="font-medium text-teal-700 hover:underline dark:text-teal-300"
 					to="/settings?tab=control-panel">
 					View system and browser metrics
 				</Link>

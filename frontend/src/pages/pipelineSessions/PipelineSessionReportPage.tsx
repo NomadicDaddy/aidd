@@ -82,10 +82,10 @@ export function PipelineSessionReportPage() {
 
 	if (notFound) {
 		return (
-			<div className="space-y-5">
+			<div className="page-reveal space-y-5">
 				{backLink}
 				<Card>
-					<h1 className="text-xl font-semibold text-neutral-950 dark:text-neutral-50">
+					<h1 className="text-foreground text-xl font-semibold">
 						Pipeline session not found
 					</h1>
 					<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -103,7 +103,7 @@ export function PipelineSessionReportPage() {
 	}
 
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
 					report !== undefined && canStop ? (
@@ -254,7 +254,7 @@ function stepSummary(report: PipelineSessionReport): string {
 function StepsCard({ report }: { report: PipelineSessionReport }) {
 	return (
 		<Card className="space-y-3">
-			<h2 className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">Steps</h2>
+			<h2 className="text-foreground text-lg font-semibold">Steps</h2>
 			<p className="text-sm text-neutral-600 dark:text-neutral-300">{stepSummary(report)}</p>
 			<div className="space-y-3">
 				{buildStepRows(report).map((row) =>

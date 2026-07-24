@@ -14,10 +14,10 @@ export function TerminalFindBar({
 		inputRef.current?.focus();
 	}, []);
 	return (
-		<div className="absolute top-1.5 right-4 z-10 flex items-center gap-1 rounded border border-neutral-200 bg-white p-1 shadow-md dark:border-cyan-950/50 dark:bg-slate-900">
+		<div className="absolute top-1.5 right-4 z-10 flex items-center gap-1 rounded border border-neutral-200 bg-white p-1 shadow-md dark:border-teal-950/50 dark:bg-slate-900">
 			<input
 				aria-label="Find in terminal"
-				className="h-6 w-44 rounded border border-neutral-200 bg-transparent px-1.5 text-xs text-neutral-800 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:border-cyan-950/50 dark:text-neutral-200"
+				className="h-6 w-44 rounded border border-neutral-200 bg-transparent px-1.5 text-xs text-neutral-800 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-teal-950/50 dark:text-neutral-200"
 				onChange={(event) => {
 					setQuery(event.target.value);
 					onFind(event.target.value, 'incremental');

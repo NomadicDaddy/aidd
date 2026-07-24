@@ -38,7 +38,7 @@ function renderInline(text: string): ReactNode[] {
 }
 
 const HEADING_CLASS: Record<1 | 2 | 3, string> = {
-	1: 'mt-4 mb-2 text-lg font-semibold text-neutral-950 dark:text-neutral-50',
+	1: 'mt-4 mb-2 text-lg font-semibold text-foreground',
 	2: 'mt-4 mb-1.5 text-sm font-semibold tracking-wide text-neutral-700 uppercase dark:text-neutral-300',
 	3: 'mt-3 mb-1 text-sm font-semibold text-neutral-800 dark:text-neutral-200',
 };

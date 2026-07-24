@@ -80,7 +80,7 @@ export function OutputTimeseriesChart({
 								<div className="flex flex-1 items-end">
 									{up > 0 && (
 										<div
-											className="w-full rounded-t-sm bg-cyan-600 group-hover:bg-cyan-500"
+											className="w-full rounded-t-sm bg-teal-600 group-hover:bg-teal-500"
 											style={{
 												height: `${Math.max(2, Math.round((up / max) * 100))}%`,
 											}}
@@ -105,7 +105,7 @@ export function OutputTimeseriesChart({
 			<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600 dark:text-neutral-400">
 				<div className="flex items-center gap-4">
 					<span className="flex items-center gap-1.5">
-						<span aria-hidden="true" className="h-2 w-2 rounded-full bg-cyan-600" />
+						<span aria-hidden="true" className="h-2 w-2 rounded-full bg-teal-600" />
 						{upLabel}{' '}
 						<span className="font-medium text-neutral-950 tabular-nums dark:text-neutral-50">
 							{formatCompactNumber(totalUp)}

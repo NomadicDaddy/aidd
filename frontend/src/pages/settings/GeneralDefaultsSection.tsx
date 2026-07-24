@@ -19,9 +19,7 @@ export function GeneralDefaultsSection({
 	return (
 		<Card className="space-y-3 p-3">
 			<div>
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Model Routing
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">Model Routing</h2>
 				<p className="mt-0.5 text-xs text-neutral-500">
 					Set the default backend, models, reasoning, and project initialization path.
 				</p>

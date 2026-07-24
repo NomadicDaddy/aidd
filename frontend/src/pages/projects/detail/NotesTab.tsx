@@ -55,11 +55,9 @@ export function NotesTab({ projectId }: { projectId: string }) {
 		<Card className="space-y-3">
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-2">
-					<NotebookPen className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+					<NotebookPen className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 					<div>
-						<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-							Notes
-						</h2>
+						<h2 className="text-foreground text-sm font-semibold">Notes</h2>
 						<p className="text-xs text-neutral-500">
 							A free-form, persistent markdown scratch pad saved to{' '}
 							<code>.aidd/notes.md</code>.

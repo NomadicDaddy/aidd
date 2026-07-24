@@ -171,19 +171,15 @@ export function LiveConsole({
 	return (
 		<section className="space-y-2">
 			<div className="flex items-center justify-between">
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					Live Console
-				</h2>
+				<h2 className="font-display text-foreground text-sm font-semibold">Live Console</h2>
 				{badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null}
 			</div>
-			<Card>
+			<Card variant="panel">
 				{showPanel && selectedRun ? (
 					<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
 				) : selectedRun?.summary ? (
-					<p className="mb-3 text-xs break-words text-neutral-600 dark:text-neutral-400">
-						<span className="font-medium text-neutral-700 dark:text-neutral-300">
-							Summary:
-						</span>{' '}
+					<p className="text-muted-foreground mb-3 text-xs break-words">
+						<span className="text-foreground font-medium">Summary:</span>{' '}
 						{selectedRun.summary}
 					</p>
 				) : null}
@@ -258,7 +254,7 @@ export function LiveConsole({
 						<pre
 							aria-label="Run console output"
 							className={cn(
-								'h-[520px] w-full max-w-full overflow-auto rounded-md bg-neutral-950 p-4 text-xs leading-relaxed text-neutral-100',
+								'h-[520px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner',
 								wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre'
 							)}
 							onScroll={handleScroll}
@@ -282,7 +278,7 @@ export function LiveConsole({
 						{showControls && !pinnedToBottom ? (
 							<Button
 								aria-label="Jump to latest output"
-								className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-neutral-900/90 px-2.5 py-1.5 text-xs font-medium text-cyan-200 shadow-lg backdrop-blur hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+								className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-teal-400/40 bg-neutral-900/90 px-2.5 py-1.5 text-xs font-medium text-teal-200 shadow-lg backdrop-blur hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 								onClick={jumpToLatest}
 								size="compact"
 								variant="primary">

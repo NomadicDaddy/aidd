@@ -5,7 +5,7 @@ import { DiaryFeed } from './DiaryFeed.tsx';
 export function DiaryPage() {
 	useDocumentTitle('Diary');
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				description="Cross-project narrative entries and a unified activity timeline — runs, skills, recipes, director cycles, and releases."
 				title="Diary"

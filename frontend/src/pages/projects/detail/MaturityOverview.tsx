@@ -137,7 +137,7 @@ export function MaturityOverview({
 						stages={maturity.stageStatuses}
 					/>
 					<div className="text-center">
-						<div className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+						<div className="text-foreground text-sm font-semibold">
 							{maturity.currentStageLabel ?? 'All maturity stages complete'}
 						</div>
 						{maturity.nextArtifactLabel ? (
@@ -170,9 +170,7 @@ export function MaturityOverview({
 				</div>
 				<div className="min-w-0 space-y-2 max-md:w-full md:flex-1">
 					<div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-						<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-							Project maturity
-						</h2>
+						<h2 className="text-foreground text-sm font-semibold">Project maturity</h2>
 						<div className="flex items-center gap-3">
 							<LaunchTargetControl
 								onChange={setLaunchTarget}

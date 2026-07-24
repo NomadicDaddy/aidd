@@ -4,23 +4,23 @@ import { useSyncExternalStore } from 'react';
 
 import { useThemeStore } from '../../stores/themeStore.ts';
 
-// Palettes tuned to the app's cyan-on-slate identity (sidebar slate-950, cyan-400 accents).
+// Palettes tuned to the app's teal-on-slate identity (sidebar slate-950, teal-400 accents).
 const darkTheme: ITheme = {
 	background: '#020617',
 	brightBlack: '#475569',
-	cursor: '#22d3ee',
+	cursor: '#2dd4bf',
 	cursorAccent: '#020617',
 	foreground: '#e5e5e5',
-	selectionBackground: '#164e63',
+	selectionBackground: '#134e4a',
 };
 
 const lightTheme: ITheme = {
 	background: '#ffffff',
 	brightWhite: '#e5e5e5',
-	cursor: '#0e7490',
+	cursor: '#0f766e',
 	cursorAccent: '#ffffff',
 	foreground: '#171717',
-	selectionBackground: '#cffafe',
+	selectionBackground: '#ccfbf1',
 };
 
 const media =

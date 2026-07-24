@@ -106,9 +106,7 @@ export function ProjectDetailPage() {
 					Projects
 				</Link>
 				<Card>
-					<h1 className="text-xl font-semibold text-neutral-950 dark:text-neutral-50">
-						Project not found
-					</h1>
+					<h1 className="text-foreground text-xl font-semibold">Project not found</h1>
 					<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
 						No project matches this URL. The project may have been removed or the link
 						may be incorrect.
@@ -128,7 +126,7 @@ export function ProjectDetailPage() {
 	}
 	const artifactCheckSummary = detail.metadata.artifactCheck;
 	return (
-		<div className="space-y-5">
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
 					<div className="flex flex-wrap items-center gap-1.5">

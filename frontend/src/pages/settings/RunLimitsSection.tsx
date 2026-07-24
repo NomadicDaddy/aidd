@@ -70,9 +70,7 @@ function SettingsBlock({
 	return (
 		<section className="grid gap-4 border-t border-neutral-200 p-3 first:border-t-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] dark:border-neutral-800">
 			<div>
-				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-					{title}
-				</h2>
+				<h2 className="text-foreground text-sm font-semibold">{title}</h2>
 				<p className="mt-1 text-xs leading-5 text-neutral-500 dark:text-neutral-400">
 					{description}
 				</p>

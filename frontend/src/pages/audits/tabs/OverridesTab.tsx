@@ -126,7 +126,7 @@ export function OverridesTab() {
 									<tr
 										className="border-b last:border-0 dark:border-neutral-800"
 										key={definition.name}>
-										<td className="px-3 py-2 font-medium text-neutral-950 dark:text-neutral-50">
+										<td className="text-foreground px-3 py-2 font-medium">
 											{definition.name}
 										</td>
 										<td className="px-3 py-2">

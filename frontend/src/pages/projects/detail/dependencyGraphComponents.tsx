@@ -36,7 +36,7 @@ function zoomLabel(zoom: number): string {
 function nodeSourceClass(source: FeatureDependencyNode['source']): string {
 	if (source === 'audit') return 'border-l-amber-500';
 	if (source === 'remediation') return 'border-l-red-500';
-	return 'border-l-cyan-500';
+	return 'border-l-teal-500';
 }
 
 export function sourceBadgeTone(
@@ -76,13 +76,13 @@ export function GraphNodeButton({
 			aria-label={`Select ${node.directory}`}
 			className={cn(
 				'absolute overflow-hidden rounded-md border border-l-4 border-neutral-200 bg-white p-3 text-left shadow-sm transition-[border-color,background-color,box-shadow,opacity,filter] duration-150 dark:border-neutral-800 dark:bg-neutral-950',
-				'hover:border-cyan-300 hover:shadow-md focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:hover:border-cyan-700',
+				'hover:border-teal-300 hover:shadow-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:border-teal-700',
 				nodeSourceClass(node.source),
 				isDimmed && 'opacity-25 saturate-50 hover:opacity-60',
 				isRelated &&
-					'border-cyan-300 bg-cyan-50/70 opacity-100 saturate-100 dark:border-cyan-700 dark:bg-cyan-950/30',
+					'border-teal-300 bg-teal-50/70 opacity-100 saturate-100 dark:border-teal-700 dark:bg-teal-950/30',
 				isSelected &&
-					'z-10 border-cyan-500 bg-cyan-50 opacity-100 shadow-md ring-2 ring-cyan-400/40 saturate-100 dark:border-cyan-400 dark:bg-cyan-950/50'
+					'z-10 border-teal-500 bg-teal-50 opacity-100 shadow-md ring-2 ring-teal-400/40 saturate-100 dark:border-teal-400 dark:bg-teal-950/50'
 			)}
 			onClick={() => onSelect(node.directory)}
 			style={{
@@ -98,9 +98,7 @@ export function GraphNodeButton({
 				</Badge>
 				<span className="font-mono text-[11px] text-neutral-500">L{node.layer}</span>
 			</div>
-			<p className="mt-2 truncate text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-				{node.title}
-			</p>
+			<p className="text-foreground mt-2 truncate text-sm font-semibold">{node.title}</p>
 			<p className="mt-1 truncate font-mono text-[11px] text-neutral-500">{node.directory}</p>
 		</button>
 	);
@@ -129,7 +127,7 @@ export function DependencyList({
 						return (
 							<li key={directory}>
 								<button
-									className="w-full rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-left text-sm text-neutral-800 hover:border-cyan-300 hover:bg-cyan-50 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-200 dark:hover:border-cyan-700 dark:hover:bg-cyan-950/30"
+									className="w-full rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-left text-sm text-neutral-800 hover:border-teal-300 hover:bg-teal-50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-200 dark:hover:border-teal-700 dark:hover:bg-teal-950/30"
 									onClick={() => onSelect(directory)}
 									type="button">
 									<span className="block truncate font-medium">

@@ -27,14 +27,14 @@ export function FleetHealthCard({
 	projectCount: number;
 }) {
 	return (
-		<Card className="overflow-hidden" variant="panel">
+		<Card variant="panel">
 			<div className="flex items-start justify-between gap-4">
 				<div>
-					<div className="flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-						<Gauge className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+						<Gauge className="h-4 w-4 text-teal-600 dark:text-teal-300" />
 						Fleet Health
 					</div>
-					<p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="text-muted-foreground mt-1 text-xs">
 						{fleet?.fleetAggregations.priorityHealth.band
 							? healthBandLabel(fleet.fleetAggregations.priorityHealth.band)
 							: 'Priority health'}
@@ -45,13 +45,13 @@ export function FleetHealthCard({
 				</Badge>
 			</div>
 			<div className="mt-5">
-				<div className="mb-2 flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400">
+				<div className="text-muted-foreground mb-2 flex items-center justify-between text-xs font-medium">
 					<span>{fleetFeaturePassing} passing</span>
 					<span>
 						{fleet?.fleetAggregations.featurePassRate ?? featureHealthValue}% pass rate
 					</span>
 				</div>
-				<div className="h-3 overflow-hidden rounded-full bg-neutral-200 shadow-inner dark:bg-slate-800">
+				<div className="bg-muted h-2.5 overflow-hidden rounded-full shadow-inner">
 					<div
 						aria-hidden="true"
 						className={`h-full rounded-full ${toneSolid[featureHealthTone]} transition-[width] duration-500`}
@@ -59,35 +59,54 @@ export function FleetHealthCard({
 					/>
 				</div>
 			</div>
-			<div className="mt-5 text-xs font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+			<div className="text-muted-foreground mt-5 text-xs font-medium tracking-wide uppercase">
 				Projects
 			</div>
-			<div className="mt-2 grid gap-3 sm:grid-cols-3">
-				<div className="rounded-md bg-cyan-50 p-3 dark:bg-cyan-950/20">
-					<div className="text-xs font-medium tracking-wide text-cyan-700 uppercase dark:text-cyan-300">
-						Active
-					</div>
-					<div className="mt-1 text-lg font-semibold text-cyan-950 tabular-nums dark:text-cyan-100">
-						{projectCount}
-					</div>
-				</div>
-				<div className="rounded-md bg-emerald-50 p-3 dark:bg-emerald-950/20">
-					<div className="text-xs font-medium tracking-wide text-emerald-700 uppercase dark:text-emerald-300">
-						Healthy
-					</div>
-					<div className="mt-1 text-lg font-semibold text-emerald-950 tabular-nums dark:text-emerald-100">
-						{healthyProjects}
-					</div>
-				</div>
-				<div className="rounded-md bg-amber-50 p-3 dark:bg-amber-950/20">
-					<div className="text-xs font-medium tracking-wide text-amber-700 uppercase dark:text-amber-300">
-						Need Attention
-					</div>
-					<div className="mt-1 text-lg font-semibold text-amber-950 tabular-nums dark:text-amber-100">
-						{failingProjects}
-					</div>
-				</div>
+			<div className="mt-2 grid gap-2 sm:grid-cols-3">
+				<StatTile color="teal" label="Active" value={projectCount} />
+				<StatTile color="emerald" label="Healthy" value={healthyProjects} />
+				<StatTile color="amber" label="Need Attention" value={failingProjects} />
 			</div>
 		</Card>
+	);
+}
+
+function StatTile({
+	color,
+	label,
+	value,
+}: {
+	color: 'amber' | 'emerald' | 'teal';
+	label: string;
+	value: number;
+}) {
+	const styles: Record<string, string> = {
+		amber: 'border-amber-200/60 bg-amber-50/80 dark:border-amber-800/40 dark:bg-amber-950/20',
+		emerald:
+			'border-emerald-200/60 bg-emerald-50/80 dark:border-emerald-800/40 dark:bg-emerald-950/20',
+		teal: 'border-teal-200/60 bg-teal-50/80 dark:border-teal-800/40 dark:bg-teal-950/20',
+	};
+	const textStyles: Record<string, string> = {
+		amber: 'text-amber-700 dark:text-amber-300',
+		emerald: 'text-emerald-700 dark:text-emerald-300',
+		teal: 'text-teal-700 dark:text-teal-300',
+	};
+	const valueStyles: Record<string, string> = {
+		amber: 'text-amber-950 dark:text-amber-100',
+		emerald: 'text-emerald-950 dark:text-emerald-100',
+		teal: 'text-teal-950 dark:text-teal-100',
+	};
+
+	return (
+		<div className={`rounded-lg border p-3 ${styles[color]}`}>
+			<div
+				className={`text-[0.65rem] font-semibold tracking-wide uppercase ${textStyles[color]}`}>
+				{label}
+			</div>
+			<div
+				className={`font-display mt-1 text-lg font-semibold tabular-nums ${valueStyles[color]}`}>
+				{value}
+			</div>
+		</div>
 	);
 }

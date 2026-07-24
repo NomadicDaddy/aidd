@@ -197,7 +197,7 @@ aidd-local `spernakit-tester` skill only when the target is Spernakit or derived
 
 ## Guardrails
 
-- **Only modify `.aidd/testing-scenarios.md`** in the target app. Never touch any other file. Never edit another app's scenarios.
+- **Only author into `.aidd/testing-scenarios.md`** in the target app — it is the sole deliverable. Do not edit any other source or metadata file, and never edit another app's scenarios. The one exception is `.aidd/CHANGELOG.md`: every aidd run is required to record what it did there (the orchestrator treats it as run-owned bookkeeping, not a skill edit), so a CHANGELOG entry is expected, not a boundary violation.
 - **Never delete existing scenarios** except when the invocation selects refresh mode.
 - **Never invoke another skill from within this skill.** Scenario generation is a pure authoring task.
 - **Do not create `.aidd/` directories.** If the target app has no `.aidd/`, abort with an error.

@@ -54,24 +54,29 @@ export function RunsPage() {
 				helpSlug="runs"
 				title="Runs"
 			/>
-			<RunLaunchCard
-				disabled={form.launch.isPending || !form.projectDir}
-				extraArgs={form.extraArgs}
-				launchTarget={form.primaryTarget}
-				mode={form.mode}
-				onExtraArgsChange={form.setExtraArgs}
-				onLaunch={form.submitLaunch}
-				onLaunchTargetChange={form.setPrimaryTarget}
-				onModeChange={form.setMode}
-				onProjectDirChange={(value) => {
-					form.setProjectDir(value);
-					if (value) form.setProjectError(false);
-				}}
-				projectDir={form.projectDir}
-				projectError={form.projectError}
-				projects={page.projectList}
-				selectedLaunchProject={page.selectedLaunchProject}
-			/>
+			<section className="space-y-2">
+				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+					Launch Run
+				</h2>
+				<RunLaunchCard
+					disabled={form.launch.isPending || !form.projectDir}
+					extraArgs={form.extraArgs}
+					launchTarget={form.primaryTarget}
+					mode={form.mode}
+					onExtraArgsChange={form.setExtraArgs}
+					onLaunch={form.submitLaunch}
+					onLaunchTargetChange={form.setPrimaryTarget}
+					onModeChange={form.setMode}
+					onProjectDirChange={(value) => {
+						form.setProjectDir(value);
+						if (value) form.setProjectError(false);
+					}}
+					projectDir={form.projectDir}
+					projectError={form.projectError}
+					projects={page.projectList}
+					selectedLaunchProject={page.selectedLaunchProject}
+				/>
+			</section>
 			{form.mode === 'triumvirate' && (
 				<Card className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 					<LaunchTargetControl
@@ -125,8 +130,8 @@ export function RunsPage() {
 				query={page.query}
 				statusFilter={page.statusFilter}
 			/>
-			<div className="grid min-w-0 gap-4 xl:grid-cols-[1fr_1.2fr]">
-				<div className="space-y-3">
+			<div className="min-w-0 space-y-5">
+				<div className="min-w-0 space-y-3">
 					{page.isLoading && page.loadedEntryCount === 0 ? (
 						<SkeletonRows columns={4} count={6} label="Loading runs…" />
 					) : (

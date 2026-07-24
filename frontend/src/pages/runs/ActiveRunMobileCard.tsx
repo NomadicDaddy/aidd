@@ -1,8 +1,8 @@
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Square } from 'lucide-react/dist/esm/icons/square';
-import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
+import { type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { RunRecord } from '../../api/types.ts';
@@ -74,16 +74,43 @@ export function ActiveRunMobileCard({
 	const projectLabel = directorCycleProjection
 		? 'Open Director'
 		: `Open ${run.projectName} project details`;
+	// The whole card is the "show in Live Console" target (there is no Console button). Clicks on
+	// interactive children (links, buttons, the command-info popover) keep their own behavior.
+	function selectFromCard(event: KeyboardEvent | MouseEvent): void {
+		if ((event.target as HTMLElement).closest('a,button')) return;
+		traceDataMovement({
+			category: 'event',
+			layer: 'ui',
+			operation: 'runs.console.select',
+			source: 'RunsPage',
+			summary: { runId: run.id },
+		});
+		onSelect(run.id);
+	}
 	return (
 		<div
+			aria-label={
+				selected
+					? `${run.projectName} run selected in Live Console`
+					: `Show ${run.projectName} run in Live Console`
+			}
 			aria-selected={selected}
 			className={cn(
-				'flex flex-col gap-2 px-4 py-3 transition-colors',
+				'flex cursor-pointer flex-col gap-2 px-4 py-3 transition-colors',
 				selected
 					? 'bg-cyan-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-cyan-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]'
 					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
 			)}
-			role="listitem">
+			onClick={selectFromCard}
+			onKeyDown={(event) => {
+				if (event.target !== event.currentTarget) return;
+				if (event.key !== 'Enter' && event.key !== ' ') return;
+				event.preventDefault();
+				selectFromCard(event);
+			}}
+			role="listitem"
+			tabIndex={0}
+			title="Show in Live Console">
 			<div className="flex min-w-0 items-center gap-2">
 				<Link
 					aria-label={projectLabel}
@@ -92,29 +119,6 @@ export function ActiveRunMobileCard({
 					{run.projectName}
 				</Link>
 				<RunCommandInfo command={run.launchCommand} runId={run.id} />
-				<Button
-					aria-label={
-						selected
-							? `${run.projectName} run selected in Live Console`
-							: `Show ${run.projectName} run in Live Console`
-					}
-					aria-pressed={selected}
-					onClick={() => {
-						traceDataMovement({
-							category: 'event',
-							layer: 'ui',
-							operation: 'runs.console.select',
-							source: 'RunsPage',
-							summary: { runId: run.id },
-						});
-						onSelect(run.id);
-					}}
-					size="compact"
-					title="Show in Live Console"
-					variant={selected ? 'primary' : 'secondary'}>
-					<Terminal aria-hidden="true" className="h-3.5 w-3.5" />
-					Console
-				</Button>
 			</div>
 			<div className="flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
 				<Badge tone={outcome.tone}>{outcome.label}</Badge>

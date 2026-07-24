@@ -28,6 +28,11 @@ import { useRunLaunchForm } from './useRunLaunchForm.ts';
 // sessions don't each start a 3s report poll.
 const MAX_AUTO_EXPANDED_SESSIONS = 3;
 
+// History opens showing only the most recent entries; each "Show more" click widens the
+// visible window by a page worth while also fetching older server pages.
+const HISTORY_DEFAULT_VISIBLE = 5;
+const HISTORY_SHOW_MORE_STEP = 25;
+
 export function useRunsPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const queryClient = useQueryClient();
@@ -55,6 +60,7 @@ export function useRunsPage() {
 	const [statusFilter, setStatusFilter] = useState<UnifiedStatusFilter>('all');
 	const [modeFilter, setModeFilter] = useState<'all' | RunMode>('all');
 	const [query, setQuery] = useState('');
+	const [historyLimit, setHistoryLimit] = useState(HISTORY_DEFAULT_VISIBLE);
 
 	function scrollConsoleIntoView(): void {
 		const node = liveConsoleRef.current;
@@ -149,7 +155,8 @@ export function useRunsPage() {
 			oldestLoaded: oldestStartedAt(sessionList),
 		},
 	]);
-	const historyEntries = history.filter((entry) => entryStartedAt(entry) >= historyFloor);
+	const clampedHistory = history.filter((entry) => entryStartedAt(entry) >= historyFloor);
+	const historyEntries = clampedHistory.slice(0, historyLimit);
 
 	// Auto-expand active sessions once when they first load (bounded), plus a ?pipeline=
 	// deep link (whether it arrived as the selection or as a step-run's session context).
@@ -237,12 +244,17 @@ export function useRunsPage() {
 		]);
 	}
 
-	// One shared "Show more" advances both startedAt-descending lists together; the
-	// historyDisplayFloor clamp above then extends the visible window only as far as both
-	// sources have actually loaded, so each click reveals a complete slice of the timeline.
-	const hasMore = runs.hasNextPage === true || pipelineSessions.sessions.hasNextPage === true;
+	// One shared "Show more" widens the visible history window and advances both
+	// startedAt-descending lists together; the historyDisplayFloor clamp above then extends the
+	// visible window only as far as both sources have actually loaded, so each click reveals a
+	// complete slice of the timeline.
+	const hasMore =
+		clampedHistory.length > historyLimit ||
+		runs.hasNextPage === true ||
+		pipelineSessions.sessions.hasNextPage === true;
 	const isFetchingMore = runs.isFetchingNextPage || pipelineSessions.sessions.isFetchingNextPage;
 	function fetchMore(): void {
+		setHistoryLimit((limit) => limit + HISTORY_SHOW_MORE_STEP);
 		if (runs.hasNextPage) void runs.fetchNextPage();
 		if (pipelineSessions.sessions.hasNextPage) void pipelineSessions.sessions.fetchNextPage();
 	}

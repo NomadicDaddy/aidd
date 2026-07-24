@@ -3,14 +3,14 @@ import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { default as CircleStop } from 'lucide-react/dist/esm/icons/circle-stop';
 import { default as FileText } from 'lucide-react/dist/esm/icons/file-text';
-import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 import { default as Workflow } from 'lucide-react/dist/esm/icons/workflow';
+import { type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { PipelineSessionRecord } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
-import { Button, buttonClassName } from '../../components/ui/button.tsx';
+import { Button, buttonClassName, IconButton } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
@@ -59,7 +59,7 @@ function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onSt
 		<div className="flex flex-wrap gap-2">
 			<Link
 				aria-label={`View report for ${sessionContext}`}
-				className={buttonClassName('secondary', undefined, 'compact')}
+				className={buttonClassName('secondary', 'h-8 w-8', 'icon')}
 				onClick={() =>
 					traceDataMovement({
 						category: 'event',
@@ -69,40 +69,35 @@ function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onSt
 						summary: { sessionId: session.id },
 					})
 				}
+				title="Report"
 				to={`/pipeline-sessions/${session.id}`}>
 				<FileText aria-hidden="true" className="h-3.5 w-3.5" />
-				Report
 			</Link>
-			<Button
-				aria-label={
+			<IconButton
+				ariaLabel={
 					stopBlockedReason !== null
 						? `${stopBlockedReason} for ${sessionContext}`
 						: `Stop session: ${sessionContext}`
 				}
+				className="h-8 w-8"
 				disabled={!isSessionActive(session.status)}
 				onClick={() => onStop(session.id)}
-				size="compact"
-				title={stopBlockedReason ?? undefined}
+				title={stopBlockedReason ?? 'Stop session'}
 				variant="danger">
 				<CircleStop aria-hidden="true" className="h-3.5 w-3.5" />
-				Stop
-			</Button>
+			</IconButton>
 		</div>
 	);
 }
 
 function SessionTitle({
 	expanded,
-	onSelect,
 	onToggle,
-	selected,
 	session,
-}: Omit<PipelineSessionRowProps, 'now' | 'onStop'>) {
+}: Pick<PipelineSessionRowProps, 'expanded' | 'onToggle' | 'session'>) {
 	// Single-step pipelines don't nest: no chevron, no step chip — the row stands alone.
 	const multiStep = isMultiStepSession(session);
 	return (
-		// flex-wrap keeps the recipe name on one line: with a long name the Console button
-		// wraps below rather than squeezing the link into a tall word-per-line column.
 		<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 			{multiStep && (
 				<Button
@@ -135,31 +130,33 @@ function SessionTitle({
 					{session.currentStepIndex}/{session.totalSteps}
 				</span>
 			)}
-			<Button
-				aria-label={
-					selected
-						? `${session.recipeName} pipeline selected in Live Console`
-						: `Show ${session.recipeName} pipeline in Live Console`
-				}
-				aria-pressed={selected}
-				onClick={() => {
-					traceDataMovement({
-						category: 'event',
-						layer: 'ui',
-						operation: 'runs.console.select',
-						source: 'RunsPage',
-						summary: { sessionId: session.id },
-					});
-					onSelect(session.id);
-				}}
-				size="compact"
-				title="Show in Live Console"
-				variant={selected ? 'primary' : 'secondary'}>
-				<Terminal aria-hidden="true" className="h-3.5 w-3.5" />
-				Console
-			</Button>
 		</div>
 	);
+}
+
+// The whole row/card is the "show in Live Console" target (there is no Console button). Clicks
+// on interactive children (links, buttons) keep their own behavior.
+function sessionSelectHandler(
+	onSelect: (id: string) => void,
+	session: PipelineSessionRecord
+): (event: KeyboardEvent | MouseEvent) => void {
+	return (event) => {
+		if ((event.target as HTMLElement).closest('a,button')) return;
+		traceDataMovement({
+			category: 'event',
+			layer: 'ui',
+			operation: 'runs.console.select',
+			source: 'RunsPage',
+			summary: { sessionId: session.id },
+		});
+		onSelect(session.id);
+	};
+}
+
+function sessionRowAriaLabel(selected: boolean, session: PipelineSessionRecord): string {
+	return selected
+		? `${session.recipeName} pipeline selected in Live Console`
+		: `Show ${session.recipeName} pipeline in Live Console`;
 }
 
 function SessionMeta({ session }: { session: PipelineSessionRecord }) {
@@ -177,18 +174,34 @@ const selectedRowClass =
 
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
 	const { now, selected, session } = props;
+	const selectFromRow = sessionSelectHandler(props.onSelect, session);
 	return (
 		<tr
+			aria-label={sessionRowAriaLabel(selected, session)}
 			aria-selected={selected}
 			className={cn(
-				'border-b transition-colors last:border-0',
+				'cursor-pointer border-b transition-colors last:border-0',
 				selected ? selectedRowClass : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
-			)}>
-			<td className="px-4 py-3">
+			)}
+			onClick={selectFromRow}
+			onKeyDown={(event) => {
+				if (event.target !== event.currentTarget) return;
+				if (event.key !== 'Enter' && event.key !== ' ') return;
+				event.preventDefault();
+				selectFromRow(event);
+			}}
+			tabIndex={0}
+			title="Show in Live Console">
+			<td className="py-3 pr-3 pl-4">
 				<SessionTitle {...props} />
-				<SessionMeta session={session} />
+				<div className="mt-1 text-xs text-neutral-500">{formatDate(session.startedAt)}</div>
 			</td>
-			<td className="px-4 py-3">
+			<td className="px-3 py-3">{session.projectName}</td>
+			<td className="px-3 py-3">
+				<Badge tone="cyan">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
+			</td>
+			<td className="px-3 py-3 text-neutral-400 dark:text-neutral-600">—</td>
+			<td className="px-3 py-3">
 				<Badge tone={sessionStatusTone(session.status)}>
 					{sessionStatusLabel(session.status)}
 				</Badge>
@@ -198,10 +211,10 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 					</p>
 				)}
 			</td>
-			<td className="px-4 py-3">
+			<td className="px-3 py-3 whitespace-nowrap">
 				{formatActiveDuration(session.durationMs, session.startedAt, now)}
 			</td>
-			<td className="px-4 py-3">
+			<td className="py-3 pr-4 pl-3">
 				<SessionActions onStop={props.onStop} session={session} />
 			</td>
 		</tr>
@@ -210,11 +223,22 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 
 export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 	const { now, selected, session } = props;
+	const selectFromCard = sessionSelectHandler(props.onSelect, session);
 	return (
 		<div
+			aria-label={sessionRowAriaLabel(selected, session)}
 			aria-selected={selected}
-			className={cn('px-4 py-3', selected && selectedRowClass)}
-			role="listitem">
+			className={cn('cursor-pointer px-4 py-3', selected && selectedRowClass)}
+			onClick={selectFromCard}
+			onKeyDown={(event) => {
+				if (event.target !== event.currentTarget) return;
+				if (event.key !== 'Enter' && event.key !== ' ') return;
+				event.preventDefault();
+				selectFromCard(event);
+			}}
+			role="listitem"
+			tabIndex={0}
+			title="Show in Live Console">
 			<SessionTitle {...props} />
 			<SessionMeta session={session} />
 			<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">

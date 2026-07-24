@@ -2,8 +2,8 @@ import type { RunMode } from '../../api/types.ts';
 import type { UnifiedStatusFilter } from './unifiedEntries.ts';
 
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { selectClass } from '../../lib/formStyles.ts';
 
@@ -31,10 +31,10 @@ export function RunFilters({
 	statusFilter: UnifiedStatusFilter;
 }) {
 	return (
-		<Card className="grid gap-3 lg:grid-cols-[2fr_1fr_1fr_2fr_auto]">
+		<div className="flex flex-wrap items-center gap-3">
 			<select
 				aria-label="Filter activity by project"
-				className={selectClass}
+				className={cn(selectClass, 'min-w-44 flex-1')}
 				onChange={(event) => {
 					traceDataMovement({
 						category: 'event',
@@ -55,7 +55,7 @@ export function RunFilters({
 			</select>
 			<select
 				aria-label="Filter runs by status"
-				className={selectClass}
+				className={cn(selectClass, 'min-w-36')}
 				onChange={(event) => {
 					traceDataMovement({
 						category: 'event',
@@ -78,7 +78,7 @@ export function RunFilters({
 			</select>
 			<select
 				aria-label="Filter runs by mode"
-				className={selectClass}
+				className={cn(selectClass, 'min-w-36')}
 				onChange={(event) => {
 					traceDataMovement({
 						category: 'event',
@@ -102,6 +102,7 @@ export function RunFilters({
 			</select>
 			<Input
 				aria-label="Search runs"
+				className="min-w-56 flex-[2]"
 				data-shortcut-search=""
 				onChange={(event) => onQueryChange(event.target.value)}
 				placeholder="Filter runs and pipelines"
@@ -119,6 +120,6 @@ export function RunFilters({
 				}}>
 				Clear
 			</Button>
-		</Card>
+		</div>
 	);
 }

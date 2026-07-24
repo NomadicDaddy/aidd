@@ -169,128 +169,130 @@ export function LiveConsole({
 	const matchCount = matchingLines?.length ?? 0;
 
 	return (
-		<Card>
-			<div className="mb-3 flex items-center justify-between">
+		<section className="space-y-2">
+			<div className="flex items-center justify-between">
 				<h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
 					Live Console
 				</h2>
 				{badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null}
 			</div>
-			{showPanel && selectedRun ? (
-				<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
-			) : selectedRun?.summary ? (
-				<p className="mb-3 text-xs break-words text-neutral-600 dark:text-neutral-400">
-					<span className="font-medium text-neutral-700 dark:text-neutral-300">
-						Summary:
-					</span>{' '}
-					{selectedRun.summary}
-				</p>
-			) : null}
-			{showPanel ? (
-				<Button
-					aria-expanded={rawOpen}
-					className="mb-2"
-					onClick={() => setRawOpen((open) => !open)}
-					size="compact"
-					variant="ghost">
-					<ChevronRight
-						aria-hidden="true"
-						className={`h-4 w-4 transition-transform ${rawOpen ? 'rotate-90' : ''}`}
-					/>
-					{rawOpen ? 'Hide raw console' : 'Show raw console'}
-				</Button>
-			) : null}
-			{showControls ? (
-				<div className="mb-2 flex flex-wrap items-center gap-2">
-					<div className="relative w-full sm:w-56">
-						<Search
+			<Card>
+				{showPanel && selectedRun ? (
+					<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
+				) : selectedRun?.summary ? (
+					<p className="mb-3 text-xs break-words text-neutral-600 dark:text-neutral-400">
+						<span className="font-medium text-neutral-700 dark:text-neutral-300">
+							Summary:
+						</span>{' '}
+						{selectedRun.summary}
+					</p>
+				) : null}
+				{showPanel ? (
+					<Button
+						aria-expanded={rawOpen}
+						className="mb-2"
+						onClick={() => setRawOpen((open) => !open)}
+						size="compact"
+						variant="ghost">
+						<ChevronRight
 							aria-hidden="true"
-							className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
+							className={`h-4 w-4 transition-transform ${rawOpen ? 'rotate-90' : ''}`}
 						/>
-						<Input
-							aria-label="Find in console"
-							className="w-full pr-8 pl-8"
-							onChange={(event) => setFindQuery(event.target.value)}
-							placeholder="Find in console"
-							type="text"
-							value={findQuery}
-						/>
-						{findQuery ? (
-							<IconButton
-								ariaLabel="Clear find"
-								className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 border-0 bg-transparent text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-900 dark:hover:text-neutral-200"
-								onClick={() => setFindQuery('')}
+						{rawOpen ? 'Hide raw console' : 'Show raw console'}
+					</Button>
+				) : null}
+				{showControls ? (
+					<div className="mb-2 flex flex-wrap items-center gap-2">
+						<div className="relative w-full sm:w-56">
+							<Search
+								aria-hidden="true"
+								className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
+							/>
+							<Input
+								aria-label="Find in console"
+								className="w-full pr-8 pl-8"
+								onChange={(event) => setFindQuery(event.target.value)}
+								placeholder="Find in console"
+								type="text"
+								value={findQuery}
+							/>
+							{findQuery ? (
+								<IconButton
+									ariaLabel="Clear find"
+									className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 border-0 bg-transparent text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-900 dark:hover:text-neutral-200"
+									onClick={() => setFindQuery('')}
+									variant="ghost">
+									<X aria-hidden="true" className="h-3.5 w-3.5" />
+								</IconButton>
+							) : null}
+						</div>
+						{trimmedFind ? (
+							<span className="text-xs text-neutral-500 dark:text-neutral-400">
+								{matchCount} {matchCount === 1 ? 'match' : 'matches'}
+							</span>
+						) : null}
+						<div className="flex items-center gap-2 sm:ml-auto">
+							<Button
+								aria-pressed={wrap}
+								onClick={() => setWrap((value) => !value)}
 								variant="ghost">
-								<X aria-hidden="true" className="h-3.5 w-3.5" />
-							</IconButton>
+								<WrapText aria-hidden="true" className="h-3.5 w-3.5" />
+								{wrap ? 'No wrap' : 'Wrap'}
+							</Button>
+							<Button onClick={() => void copyAll()} variant="ghost">
+								<Copy aria-hidden="true" className="h-3.5 w-3.5" />
+								Copy all
+							</Button>
+						</div>
+					</div>
+				) : null}
+				{rawOpen ? (
+					<div className="relative">
+						{showControls && isWindowed && !trimmedFind ? (
+							<p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+								Showing the most recent {formatBytes(renderedMessage.length)} of{' '}
+								{formatBytes(totalBytes)}. Older output is hidden — use “Copy all”
+								for the full loaded transcript.
+							</p>
+						) : null}
+						<pre
+							aria-label="Run console output"
+							className={cn(
+								'h-[520px] w-full max-w-full overflow-auto rounded-md bg-neutral-950 p-4 text-xs leading-relaxed text-neutral-100',
+								wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre'
+							)}
+							onScroll={handleScroll}
+							ref={scrollRef}>
+							{matchingLines ? (
+								matchingLines.length === 0 ? (
+									<span className="text-neutral-500">
+										No lines match “{trimmedFind}”.
+									</span>
+								) : (
+									matchingLines.map((line, index) => (
+										<span className="block" key={`${index}-${line}`}>
+											{highlightLine(line, trimmedFind)}
+										</span>
+									))
+								)
+							) : (
+								renderedMessage
+							)}
+						</pre>
+						{showControls && !pinnedToBottom ? (
+							<Button
+								aria-label="Jump to latest output"
+								className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-neutral-900/90 px-2.5 py-1.5 text-xs font-medium text-cyan-200 shadow-lg backdrop-blur hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+								onClick={jumpToLatest}
+								size="compact"
+								variant="primary">
+								<ArrowDownToLine aria-hidden="true" className="h-3.5 w-3.5" />
+								Jump to latest
+							</Button>
 						) : null}
 					</div>
-					{trimmedFind ? (
-						<span className="text-xs text-neutral-500 dark:text-neutral-400">
-							{matchCount} {matchCount === 1 ? 'match' : 'matches'}
-						</span>
-					) : null}
-					<div className="flex items-center gap-2 sm:ml-auto">
-						<Button
-							aria-pressed={wrap}
-							onClick={() => setWrap((value) => !value)}
-							variant="ghost">
-							<WrapText aria-hidden="true" className="h-3.5 w-3.5" />
-							{wrap ? 'No wrap' : 'Wrap'}
-						</Button>
-						<Button onClick={() => void copyAll()} variant="ghost">
-							<Copy aria-hidden="true" className="h-3.5 w-3.5" />
-							Copy all
-						</Button>
-					</div>
-				</div>
-			) : null}
-			{rawOpen ? (
-				<div className="relative">
-					{showControls && isWindowed && !trimmedFind ? (
-						<p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-							Showing the most recent {formatBytes(renderedMessage.length)} of{' '}
-							{formatBytes(totalBytes)}. Older output is hidden — use “Copy all” for
-							the full loaded transcript.
-						</p>
-					) : null}
-					<pre
-						aria-label="Run console output"
-						className={cn(
-							'h-[520px] w-full max-w-full overflow-auto rounded-md bg-neutral-950 p-4 text-xs leading-relaxed text-neutral-100',
-							wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre'
-						)}
-						onScroll={handleScroll}
-						ref={scrollRef}>
-						{matchingLines ? (
-							matchingLines.length === 0 ? (
-								<span className="text-neutral-500">
-									No lines match “{trimmedFind}”.
-								</span>
-							) : (
-								matchingLines.map((line, index) => (
-									<span className="block" key={`${index}-${line}`}>
-										{highlightLine(line, trimmedFind)}
-									</span>
-								))
-							)
-						) : (
-							renderedMessage
-						)}
-					</pre>
-					{showControls && !pinnedToBottom ? (
-						<Button
-							aria-label="Jump to latest output"
-							className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-neutral-900/90 px-2.5 py-1.5 text-xs font-medium text-cyan-200 shadow-lg backdrop-blur hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
-							onClick={jumpToLatest}
-							size="compact"
-							variant="primary">
-							<ArrowDownToLine aria-hidden="true" className="h-3.5 w-3.5" />
-							Jump to latest
-						</Button>
-					) : null}
-				</div>
-			) : null}
-		</Card>
+				) : null}
+			</Card>
+		</section>
 	);
 }

@@ -33,8 +33,8 @@ export function useApproveProjectFeature(id: string | undefined) {
 			if (decision !== undefined) body.decision = decision;
 			return approveProjectFeature(id ?? '', featureId, body);
 		},
-		onMutate: async () => await cancelProjectQueries(queryClient, id),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -42,8 +42,8 @@ export function useDeleteProjectFeature(id: string | undefined) {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (featureId: string) => deleteProjectFeature(id ?? '', featureId),
-		onMutate: async () => await cancelProjectQueries(queryClient, id),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -52,15 +52,8 @@ export function useSubmitProjectReport() {
 	return useMutation({
 		mutationFn: ({ projectId, report }: { projectId: string; report: ProjectReportInput }) =>
 			submitProjectReport(projectId, report),
-		onMutate: async (variables) => await cancelProjectQueries(queryClient, variables.projectId),
-		onSuccess: (_report, variables) => {
-			void queryClient.invalidateQueries({
-				queryKey: ['project-reports', variables.projectId],
-			});
-			void queryClient.invalidateQueries({ queryKey: ['project', variables.projectId] });
-			void queryClient.invalidateQueries({ queryKey: ['projects'] });
-			void queryClient.invalidateQueries({ queryKey: ['director', 'fleet'] });
-		},
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -81,8 +74,8 @@ export function useUpdateProjectFeatureMetadata(id: string | undefined) {
 			if (spec !== undefined) body.spec = spec;
 			return updateProjectFeatureMetadata(id ?? '', featureId, body);
 		},
-		onMutate: async () => await cancelProjectQueries(queryClient, id),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -91,8 +84,8 @@ export function useUpdateProjectFeatureStatus(id: string | undefined) {
 	return useMutation({
 		mutationFn: ({ featureId, status }: { featureId: string; status: ProjectFeatureStatus }) =>
 			updateProjectFeatureStatus(id ?? '', featureId, status),
-		onMutate: async () => await cancelProjectQueries(queryClient, id),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -101,8 +94,8 @@ export function useUpdateProjectFeatureMilestone(id: string | undefined) {
 	return useMutation({
 		mutationFn: ({ featureId, milestone }: { featureId: string; milestone: string }) =>
 			updateProjectFeatureMilestone(id ?? '', featureId, milestone),
-		onMutate: async () => await cancelProjectQueries(queryClient, id),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -111,7 +104,7 @@ export function useUpdateProjectProfile(id: string | undefined) {
 	return useMutation({
 		mutationFn: (profile: ProjectAssuranceProfileInput) =>
 			updateProjectProfile(id ?? '', profile),
-		onMutate: async () => await cancelProjectQueries(queryClient, id),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onMutate: async () => await cancelProjectQueries(queryClient),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }

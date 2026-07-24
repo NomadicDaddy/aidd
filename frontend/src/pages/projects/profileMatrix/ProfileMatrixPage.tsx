@@ -150,7 +150,7 @@ export function ProfileMatrixPage() {
 		setSavingIds((current) => new Set(current).add(projectId));
 		try {
 			await updateProjectProfile(projectId, row.form);
-			invalidateProjectQueries(queryClient, projectId);
+			invalidateProjectQueries(queryClient);
 			if (!quiet) toast.success(`${row.project.name} profile saved`);
 			return true;
 		} catch (error) {

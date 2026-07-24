@@ -71,8 +71,10 @@ export function useSubmitProjectInterviewAnswer(id: string | undefined) {
 		mutationFn: (body: { answer: string; questionId: string }) =>
 			submitProjectInterviewAnswer(id ?? '', body),
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: ['project-interview', id] });
-			void queryClient.invalidateQueries({ queryKey: ['project', id] });
+			// Prefix-matched for the same reason as invalidateProjectQueries: the interview
+			// query is keyed on the route param while this mutation holds the opaque id.
+			void queryClient.invalidateQueries({ queryKey: ['project-interview'] });
+			void queryClient.invalidateQueries({ queryKey: ['project'] });
 			void queryClient.invalidateQueries({ queryKey: ['projects'] });
 		},
 	});
@@ -92,7 +94,7 @@ export function useDeleteProject(id: string | undefined) {
 	return useMutation({
 		mutationFn: (request: ProjectDeleteRequest) => deleteProject(id ?? '', request),
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: ['project', id] });
+			void queryClient.invalidateQueries({ queryKey: ['project'] });
 			void queryClient.invalidateQueries({ queryKey: ['projects'] });
 			void queryClient.invalidateQueries({ queryKey: ['runs'] });
 			void queryClient.invalidateQueries({ queryKey: ['director', 'fleet'] });
@@ -104,9 +106,11 @@ export function useMoveProject(id: string | undefined) {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (request: ProjectMoveRequest) => moveProject(id ?? '', request),
-		onSuccess: (project) => {
-			void queryClient.invalidateQueries({ queryKey: ['project', id] });
-			void queryClient.invalidateQueries({ queryKey: ['project', project.id] });
+		onSuccess: () => {
+			// A move changes the project's path, and therefore its opaque id and its route id.
+			// This used to invalidate the old and new ids explicitly; the family match covers
+			// both, including the entry keyed on whichever identity the URL carried.
+			void queryClient.invalidateQueries({ queryKey: ['project'] });
 			void queryClient.invalidateQueries({ queryKey: ['projects'] });
 			void queryClient.invalidateQueries({ queryKey: ['runs'] });
 			void queryClient.invalidateQueries({ queryKey: ['director', 'fleet'] });
@@ -183,7 +187,7 @@ export function useUpdateMaturitySkip(id: string | undefined) {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (skip: string[]) => updateMaturitySkip(id ?? '', skip),
-		onSuccess: () => invalidateProjectQueries(queryClient, id),
+		onSuccess: () => invalidateProjectQueries(queryClient),
 	});
 }
 
@@ -192,7 +196,7 @@ export function useRunMaturityNext(id: string | undefined) {
 	return useMutation({
 		mutationFn: (body: MaturityRunNextRequest) => runMaturityNext(id ?? '', body),
 		onSuccess: () => {
-			invalidateProjectQueries(queryClient, id);
+			invalidateProjectQueries(queryClient);
 			void queryClient.invalidateQueries({ queryKey: ['runs'] });
 		},
 	});
@@ -255,7 +259,7 @@ export function useStartProjectImplementation(id: string | undefined) {
 	return useMutation({
 		mutationFn: () => startProjectImplementation(id ?? ''),
 		onSuccess: () => {
-			invalidateProjectQueries(queryClient, id);
+			invalidateProjectQueries(queryClient);
 			void queryClient.invalidateQueries({ queryKey: ['runs'] });
 		},
 	});

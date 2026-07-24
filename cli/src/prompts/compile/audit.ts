@@ -10,8 +10,6 @@ import {
 import { renderAuditPromptBody } from './audit/template.ts';
 import { booleanVariable, stringArrayVariable, stringVariable } from './shared.ts';
 
-export type { AuditPromptDefinition } from './audit/definitions.ts';
-
 export async function compileAuditPrompt(
 	plan: PromptPlan,
 	rootDir: string,

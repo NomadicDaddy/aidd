@@ -15,7 +15,7 @@ import {
 import { topPriority } from './helpers.ts';
 import { sortPrioritizedWork } from './priorityHealth.ts';
 
-export { expandTargetedWork, type TargetedWorkOptions } from './targetedWork.ts';
+export { expandTargetedWork } from './targetedWork.ts';
 
 export function buildProjectWork(
 	project: ProjectSummaryDto,

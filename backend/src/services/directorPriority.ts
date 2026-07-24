@@ -12,11 +12,7 @@ import type {
 export {
 	type DirectorAuditHealth,
 	type DirectorBacklogBreakdown,
-	type DirectorBacklogItemSummary,
-	type DirectorHealthBand,
-	type DirectorPriorityBucket,
 	type DirectorPriorityHealth,
-	type DirectorPriorityTaskType,
 	type DirectorPrioritizedWork,
 	type DirectorProjectPrioritySummary,
 	directorPriorityOrder,
@@ -26,8 +22,6 @@ import { summarizeBacklog } from './director/priority/backlogSummary.ts';
 import { buildPriorityHealth, sortPrioritizedWork } from './director/priority/priorityHealth.ts';
 import { buildProjectWork, expandTargetedWork } from './director/priority/workBuilder.ts';
 export { expandTargetedWork, sortPrioritizedWork };
-export { type TargetedWorkOptions } from './director/priority/workBuilder.ts';
-
 export async function buildDirectorProjectPriority(
 	project: ProjectSummaryDto,
 	options: {

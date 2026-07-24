@@ -10,7 +10,7 @@
 	"workspaces": {
 		".": {
 			"entry": ["scripts/*.ts", "test/**/*.test.ts"],
-			"ignoreBinaries": ["taskkill", "netstat", "lsof", "pwsh"],
+			"ignoreBinaries": ["netstat"],
 			// Knip's binary scanner treats these Bun spawn arguments as unresolved imports.
 			// Both targets are real entry scripts and are also covered by the project glob.
 			"ignoreUnresolved": ["scripts/check-image-licenses.ts", "scripts/run-benchmark.ts"],
@@ -30,16 +30,12 @@
 			// Knip resolves JS import specifiers but not CSS url() targets. The Geist faces
 			// are referenced only from src/fonts.css, which declares @font-face by hand
 			// rather than importing the packages' own stylesheets.
-			"ignoreDependencies": [
-				"@fontsource-variable/geist",
-				"@fontsource-variable/geist-mono",
-				"tailwindcss",
-			],
+			"ignoreDependencies": ["@fontsource-variable/geist", "@fontsource-variable/geist-mono"],
 			"ignoreIssues": {
 				// Inputs and selects deliberately share the same base classes under semantic aliases.
 				"src/lib/formStyles.ts": ["duplicates"],
 			},
-			"project": ["src/**/*.{ts,tsx}"],
+			"project": ["src/**/*.{css,ts,tsx}"],
 		},
 		"shared": {},
 	},

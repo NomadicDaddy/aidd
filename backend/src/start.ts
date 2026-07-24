@@ -38,7 +38,7 @@ import {
 } from './startHelpers.ts';
 import { WebSocketHub } from './webSocketHub.ts';
 
-export { startMcpServer, type StartMcpServerOptions } from './mcp/start.ts';
+export { startMcpServer } from './mcp/start.ts';
 
 export interface StartWebServerOptions {
 	rootDir: string;

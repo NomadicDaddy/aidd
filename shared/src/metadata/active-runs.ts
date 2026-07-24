@@ -14,10 +14,7 @@ import {
 import { metadataPath } from './paths.ts';
 
 export {
-	ACTIVE_RUNS_DIR,
-	ACTIVE_RUN_TEMP_STALE_MS,
 	CLI_ACTIVE_RUN_STALE_MS,
-	COMPLETED_RUN_TTL_MS,
 	EXT_APP_URL_ENV,
 	EXT_LOG_PATH_ENV,
 	EXT_RUN_ID_ENV,
@@ -25,7 +22,6 @@ export {
 	SUPPRESS_CLI_ACTIVE_RUN_ENV,
 	activeRunFilePath,
 	activeRunsDir,
-	createCliActiveRunId,
 	createCliActiveRunRecord,
 	isCliActiveRunSuppressed,
 	isCliRunTerminal,

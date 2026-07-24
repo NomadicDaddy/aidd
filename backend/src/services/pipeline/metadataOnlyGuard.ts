@@ -6,13 +6,7 @@
 // backward-compatible callers (e.g. existing tests) but now delegates to the shared
 // implementation under the hood. New code should call the shared functions directly.
 
-import { captureWriteGuardSnapshot, isGitRepository } from 'aidd-shared/pipeline/writeAllowlist';
-
-export type { WriteGuardSnapshot, WriteViolation } from 'aidd-shared/pipeline/writeAllowlist';
-
-export { captureWriteGuardSnapshot } from 'aidd-shared/pipeline/writeAllowlist';
-export { diffWriteViolations } from 'aidd-shared/pipeline/writeAllowlist';
-export { revertWriteViolations } from 'aidd-shared/pipeline/writeAllowlist';
+import { captureWriteGuardSnapshot } from 'aidd-shared/pipeline/writeAllowlist';
 
 const METADATA_ALLOWLIST = ['.aidd'];
 
@@ -46,9 +40,5 @@ export function findMetadataViolations(
 	}
 	return violations.sort();
 }
-
-// Returns true when projectDir is inside a git repository. Used by launchService
-// to refuse metadata-only sessions that cannot be enforced.
-export { isGitRepository };
 
 export { METADATA_ALLOWLIST };

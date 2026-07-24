@@ -10,10 +10,7 @@ import {
 import { gatherProjectStackEvidence, readProjectPackage } from './project-stack-evidence.ts';
 import { familyFromEvidence } from './project-stack-family.ts';
 
-export {
-	extractProjectStackDeclaration,
-	manifestEntryVersion,
-} from './project-stack-declarations.ts';
+export { manifestEntryVersion } from './project-stack-declarations.ts';
 export { projectPackageManifestPaths } from './project-stack-evidence.ts';
 
 export type ProjectStackSource =

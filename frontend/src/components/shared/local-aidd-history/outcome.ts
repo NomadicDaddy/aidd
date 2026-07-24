@@ -6,11 +6,10 @@ import { classifyRun, iterationFinalCheckFailures } from './outcomeClassify.ts';
 export {
 	classifyIteration,
 	classifyRun,
-	decodeExitCode,
 	finalCheckLabel,
 	iterationFinalCheckFailures,
 } from './outcomeClassify.ts';
-export type { OutcomeClassification, OutcomeTone } from './outcomeClassify.ts';
+export type { OutcomeClassification } from './outcomeClassify.ts';
 
 export type OutcomeCategory = 'Blocked' | 'Failed' | 'Scope overrun' | 'Success' | 'Warnings';
 

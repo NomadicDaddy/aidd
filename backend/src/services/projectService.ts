@@ -64,7 +64,6 @@ import {
 	type FeatureApprovalInput,
 	type ProjectAdvisorDeps,
 	type ProjectDeleteInput,
-	type ProjectFeatureStatus,
 	type ProjectMoveInput,
 	type ProjectMoveResult,
 } from './project/types.ts';
@@ -75,7 +74,6 @@ export type {
 	FeatureMetadataInput,
 	ProjectAdvisorDeps,
 	ProjectDeleteInput,
-	ProjectFeatureStatus,
 	ProjectMoveInput,
 	ProjectMoveResult,
 };

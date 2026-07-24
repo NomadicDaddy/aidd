@@ -4,7 +4,6 @@ export type {
 	ProjectFeatureDto,
 	WebFeatureStats,
 	WebFeatureStatusEntryDto,
-	WebFeatureStatusType,
 	WebFeatureSummaryDto,
 } from './project/features.ts';
 export type {
@@ -13,13 +12,11 @@ export type {
 	ProjectImportActionDto,
 	ProjectImportCandidateDto,
 	ProjectImportCandidateResultDto,
-	ProjectImportCandidateSignalDto,
 	ProjectImportCandidatesResponseDto,
 	ProjectInitFailureDto,
 	ProjectImportResultDto,
 	ProjectIntakeGitSummaryDto,
 	ProjectIntakePreviewDto,
-	ProjectNameSummaryDto,
 	ProjectNamesResponseDto,
 	ProjectSummaryDto,
 	ProjectSummaryMetadataDto,
@@ -27,10 +24,8 @@ export type {
 } from './project/listing.ts';
 export type {
 	AnsweredInterviewQuestionDto,
-	FinalCheckStatus,
 	FinalCheckSummary,
 	GitCommitRefDto,
-	ProjectArtifactCheckCounts,
 	ProjectArtifactCheckSummary,
 	ProjectArtifactFreshness,
 	ProjectArtifactRecord,
@@ -41,10 +36,8 @@ export type {
 	ProjectLocalIterationDto,
 	ProjectLocalRunDto,
 	ProjectMetadataDto,
-	ProjectMilestoneSummary,
 	ProjectPorts,
 	ProjectRoadmapSummary,
-	ProjectSyncState,
 	ProjectSyncStateDto,
 	ProjectUsageExecutionTargetDto,
 	ProjectUsageModeDto,
@@ -53,7 +46,6 @@ export type {
 } from './project/metadata.ts';
 export type {
 	ProjectCreateInputDto,
-	ProjectCreateMode,
 	ProjectCreateResultDto,
 	ProjectCreateSpecInputDto,
 	ProjectDetailDto,

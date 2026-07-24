@@ -32,7 +32,6 @@ export type {
 	BackendFactory,
 	TriumvirateRunOptions,
 	TriumvirateRunResult,
-	TriumvirateStageArtifact,
 } from './triumvirate/types.ts';
 
 export async function runTriumvirateIteration(

@@ -8,7 +8,6 @@ export {
 	isIgnorableConsoleError,
 	isNotFoundPage,
 	isProjectDetailRoute,
-	NOT_FOUND_PAGE_SELECTOR,
 	pageTextScript,
 	shouldTestInteractions,
 } from './page-assertions/core.ts';

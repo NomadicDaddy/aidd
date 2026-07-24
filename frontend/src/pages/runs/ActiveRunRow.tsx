@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Square } from 'lucide-react/dist/esm/icons/square';
@@ -25,7 +24,6 @@ import {
 } from './runsUtils.ts';
 
 export { ActiveRunMobileCard } from './ActiveRunMobileCard.tsx';
-export { runRuntimeDetail } from './runRowUtils.ts';
 
 export function ActiveRunRow({
 	continued,

@@ -22,7 +22,6 @@ export type {
 	ImportedSkillRegistry,
 	SkillCategory,
 	SkillDefinition,
-	SkillOrigin,
 } from './definition.ts';
 
 export function bundledSkillsDir(rootDir: string): string {

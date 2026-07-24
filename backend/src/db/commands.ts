@@ -11,20 +11,8 @@ export type {
 	DbCommandMap,
 	DbCommandName,
 	DbCommands,
-	DiaryEntryUpsert,
 	HeartbeatWriteOutcome,
-	InsertRunIfUnderCeilingArgs,
-	InsertRunIfUnderCeilingResult,
 	LocalWebDatabase,
-	MarkRunStaleArgs,
-	PersistCycleResultArgs,
-	PurgeProjectRunsArgs,
-	ReconcileDeadRunArgs,
-	ReconcileDiaryEntriesArgs,
-	ReconcileDiaryEntriesResult,
-	ReconcileInvocationFromRunArgs,
-	TerminalizeRunArgs,
-	UpdateProjectPathArgs,
 } from './commands/types.ts';
 
 // Build the command facade over a local bun:sqlite drizzle. Used directly by tests/tooling and

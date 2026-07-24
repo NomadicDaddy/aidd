@@ -19,7 +19,7 @@ import {
 	type WorktreeSnapshot,
 } from './types.ts';
 
-export { createMirrorCopyFilter, shouldCopyToPlanningMirror } from './mirror-safety.ts';
+export { createMirrorCopyFilter } from './mirror-safety.ts';
 
 export async function createPlanningMirrors(
 	scratchRoot: string,

@@ -10,8 +10,6 @@ import { recordDataMovement } from '../dataMovementTrace.ts';
 import { isManagedStepType } from './helpers.ts';
 import { sweepStrandedStepRows, terminalizeDuplicateInFlightRows } from './stepRowSweeps.ts';
 
-export { sweepStrandedStepRows } from './stepRowSweeps.ts';
-
 export interface ResumableSession {
 	resolution: ResumeResolution;
 	session: PipelineSessionRow;

@@ -14,13 +14,7 @@ import { buildUpdatedConfig } from './settings/configUpdate.ts';
 import { buildSettingsDto } from './settings/dtoShaping.ts';
 
 export type {
-	BackendDefaultSettingsInput,
-	DirectAiSettingsInput,
-	DirectAiSurfaceSettingsInput,
-	ProviderSettingsInput,
 	SettingsUpdateResult,
-	TelegramChannelSettingsInput,
-	TriumvirateSettingsInput,
 	WebConfigSettingsInput,
 	WebRuntimeConfig,
 } from './settings/types.ts';

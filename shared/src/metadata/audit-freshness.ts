@@ -25,18 +25,11 @@ import {
 
 export { type AuditFreshnessContext, createAuditFreshnessContext } from './audit-freshness/git.ts';
 export {
-	AUDIT_CODE_CHANGE_THRESHOLDS,
-	AUDIT_FRESHNESS_METADATA_PREFIX,
-	AUDIT_STALE_THRESHOLD_DAYS,
 	type AuditChangeCounts,
-	type AuditFreshnessStatus,
-	type AuditFreshnessThresholds,
 	type AuditReportFreshness,
 	type AuditReportMetadata,
 	type AuditStaleReason,
 	auditReportPath,
-	buildAuditReportMetadata,
-	parseAuditReportMetadata,
 	prependAuditReportMetadata,
 } from './audit-freshness/metadata.ts';
 

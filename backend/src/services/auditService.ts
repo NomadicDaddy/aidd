@@ -32,7 +32,6 @@ import { HttpError } from './errors.ts';
 export type {
 	AuditDefinitionDto,
 	AuditManagerDto,
-	ProjectAuditEntryDto,
 	ProjectAuditsDto,
 	AuditLaunchInput,
 } from './audit/auditTypes.ts';

@@ -28,7 +28,7 @@ import {
 	type ReconcileResult,
 } from './sessionReconciler.ts';
 
-export type { ReconcileResult, ResumableSession } from './sessionReconciler.ts';
+export type { ReconcileResult } from './sessionReconciler.ts';
 
 export class SessionLifecycle {
 	private readonly db: WebDatabase;

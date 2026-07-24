@@ -32,9 +32,6 @@ export type {
 	RecordStartInput,
 	ResourceDetail,
 	ResourceUsageRow,
-	TelemetryInvocationSource,
-	TelemetryInvocationStatus,
-	TelemetryRunStatus,
 	TelemetryResourceType,
 	TimeseriesPoint,
 } from './telemetry/types.ts';

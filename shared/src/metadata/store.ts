@@ -34,11 +34,7 @@ import { serializeFeatureForWrite } from './store/serialize.ts';
 import { applyCreationStatusPolicy } from './store/status-policy.ts';
 import { evaluateFeatureValidation } from './store/validation.ts';
 
-export {
-	type ArtifactCheckResult,
-	type ArtifactSeverity,
-	type ArtifactStatus,
-} from './store/artifacts.ts';
+export { type ArtifactCheckResult, type ArtifactStatus } from './store/artifacts.ts';
 export { InvalidRoadmapError } from './store/errors.ts';
 
 export interface AiddStore {

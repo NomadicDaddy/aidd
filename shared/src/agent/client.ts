@@ -11,11 +11,8 @@ export {
 	type AgentLoopRequest,
 	type AgentLoopResponse,
 	type AgentMessage,
-	type AgentToolCall,
 	type NativeFileConfig,
 	type OpenAICompatibleClientConfig,
 	type ProviderName,
-	type ResolvedNativeClientConfig,
-	type StreamDelta,
 	type ToolDefinition,
 } from './client/types.ts';

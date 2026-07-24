@@ -188,7 +188,4 @@ export class DirectAiService implements DirectAiRunner {
 	}
 }
 
-export {
-	resolveDirectAiReasoningEffort,
-	type DirectAiReasoningEffortInputs,
-} from './directAiUtils.ts';
+export { resolveDirectAiReasoningEffort } from './directAiUtils.ts';

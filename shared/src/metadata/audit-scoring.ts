@@ -8,21 +8,13 @@
 
 export {
 	AUDIT_RUN_SUMMARY_PATTERN,
-	IGNORED_DIRS,
 	type ProjectAuditEvidence,
 	collectProjectEvidence,
 	enumerateProjectsUnderRoots,
 	loadAuditPriorities,
 } from './audit-scoring/collectors.ts';
 export {
-	ACTIONABLE_AUDITS,
-	type AuditPriority,
-	type AuditScoreInput,
-	type Band,
 	type ChangePotential,
-	type Confidence,
-	type ScoreEvidence,
-	type ScoringContext,
 	buildScoreInput,
 	compareAuditsByChangePotential,
 	extractPriorityFromFrontmatter,

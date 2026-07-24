@@ -21,12 +21,10 @@ import { getProjectInterviewProgress } from './interviewService.ts';
 import { computeMaturity, toMaturityBadge } from './maturityCompute.ts';
 
 // Re-export from extracted modules
-export { gatherArtifactCheckSummary } from './projectMetadata/artifactHelpers.ts';
 export {
 	gatherLocalIterations,
 	gatherLocalRuns,
 	gatherRunLedgerMetadata,
-	syncStateFromLocalData,
 } from './projectMetadata/iterationLogHelpers.ts';
 
 import {

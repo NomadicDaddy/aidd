@@ -12,12 +12,5 @@ export {
 	summarizeValue,
 } from './dataMovementTrace/summarize.ts';
 
-export type {
-	DataTraceCategory,
-	DataTraceLayer,
-	DataMovementTraceEvent,
-	DataTraceStatus,
-} from './dataMovementTrace/types.ts';
-
 import { installTraceApi } from './dataMovementTrace/console.ts';
 installTraceApi();

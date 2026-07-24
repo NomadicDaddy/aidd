@@ -5,9 +5,6 @@ export {
 	captureWriteGuardSnapshot,
 	diffWriteViolations,
 	formatViolationPaths,
-	isGitRepository,
-	isPathAllowlisted,
 	revertWriteViolations,
 	type WriteGuardSnapshot,
-	type WriteViolation,
 } from 'aidd-shared/pipeline/writeAllowlist';

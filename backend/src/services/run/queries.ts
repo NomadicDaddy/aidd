@@ -92,12 +92,7 @@ export async function annotatedWebRunRecord(run: WebRunRow): Promise<RunRecord |
 // Re-export from domain modules so runService.ts can import every query
 // function from this single module.
 export { annotateStopRequested };
-export {
-	reconcileStaleRuns,
-	sweepOrphanedRuns,
-	type ResumeRunInfo,
-	type SweptRunInfo,
-} from './activeRunQueries.ts';
+export { reconcileStaleRuns, sweepOrphanedRuns } from './activeRunQueries.ts';
 export {
 	hasActiveRunForProject,
 	latestProjectAuditRun,

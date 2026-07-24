@@ -30,7 +30,6 @@ export type {
 	MetricSnapshot,
 	StoreWebVitalsInput,
 	SystemMetricHistoryPoint,
-	WebVitalMetric,
 	WebVitalSummary,
 } from './metrics/types.ts';
 

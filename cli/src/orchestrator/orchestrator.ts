@@ -26,7 +26,6 @@ import { captureWriteGuardSnapshot } from './run/write-allowlist.ts';
 import { transition } from './transitions.ts';
 
 export type {
-	GitCommitSummary,
 	OrchestratorDeps,
 	RunFinalSummary,
 	RunIterationArtifact,

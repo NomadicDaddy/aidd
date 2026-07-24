@@ -11,24 +11,15 @@ import {
 } from './dependencyGraphTypes.ts';
 import { featureDirectory } from './featuresUtils.ts';
 
-export {
-	GRAPH_COLUMN_GAP,
-	GRAPH_NODE_HEIGHT,
-	GRAPH_NODE_WIDTH,
-	GRAPH_PADDING,
-	GRAPH_ROW_GAP,
-} from './dependencyGraphTypes.ts';
+export { GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './dependencyGraphTypes.ts';
 
 export function featureByDirectory(features: ProjectFeature[]): Map<string, ProjectFeature> {
 	return new Map(features.map((feature) => [featureDirectory(feature), feature]));
 }
 export type {
-	FeatureDependencyCycle,
 	FeatureDependencyEdge,
 	FeatureDependencyGraph,
 	FeatureDependencyNode,
-	FeatureDependencySource,
-	UnresolvedFeatureDependency,
 } from './dependencyGraphTypes.ts';
 
 function dependencyList(feature: ProjectFeature): string[] {

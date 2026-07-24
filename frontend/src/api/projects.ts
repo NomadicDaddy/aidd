@@ -33,12 +33,7 @@ export {
 	previewProjectProfiles,
 	updateProjectProfile,
 } from './projectProfiles.ts';
-export type {
-	ProfilePreview,
-	ProfilePreviewAudit,
-	ProjectProfilePreviewRequest,
-	ProjectProfilePreviews,
-} from './projectProfiles.ts';
+export type { ProfilePreview, ProjectProfilePreviewRequest } from './projectProfiles.ts';
 export {
 	getProjectCodeFile,
 	getProjectCodeTree,

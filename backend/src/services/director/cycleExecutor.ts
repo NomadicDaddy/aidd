@@ -29,12 +29,7 @@ import {
 import { type DirectorProfileService } from './profileService.ts';
 import { readRecentSuggestionHistory, type SuggestionHistoryEntry } from './suggestionHistory.ts';
 
-export type {
-	CycleContext,
-	CycleContextDocument,
-	CycleExecutorDeps,
-	DirectCycleResult,
-} from './cycleExecutorTypes.ts';
+export type { CycleContext, CycleExecutorDeps, DirectCycleResult } from './cycleExecutorTypes.ts';
 
 export async function writeCycleContext(
 	cycleDir: string,

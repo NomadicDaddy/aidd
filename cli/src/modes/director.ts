@@ -20,7 +20,6 @@ import {
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-export type { DirectorOutput, DirectorRiskLevel, DirectorSuggestion, DirectorTaskType };
 export { directorRiskLevels, directorTaskTypes };
 
 export function createDirectorMode(plan: RunPlan): ModeHandler {

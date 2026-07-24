@@ -47,7 +47,7 @@ the repository material distributed outside the npm graph.
 | [@xterm/addon-webgl](https://www.npmjs.com/package/@xterm/addon-webgl)                                 | 0.19.0  | MIT        |
 | [@xterm/xterm](https://www.npmjs.com/package/@xterm/xterm)                                             | 6.0.0   | MIT        |
 | [cmdk](https://www.npmjs.com/package/cmdk)                                                             | 1.1.1   | MIT        |
-| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.25.0  | ISC        |
+| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.26.0  | ISC        |
 | [react](https://www.npmjs.com/package/react)                                                           | 19.2.8  | MIT        |
 | [react-dom](https://www.npmjs.com/package/react-dom)                                                   | 19.2.8  | MIT        |
 | [react-markdown](https://www.npmjs.com/package/react-markdown)                                         | 10.1.0  | MIT        |

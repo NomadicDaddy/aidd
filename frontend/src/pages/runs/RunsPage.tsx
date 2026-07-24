@@ -33,6 +33,7 @@ export function RunsPage() {
 		onKill: (id) => page.controls.kill.mutate(id),
 		onSelectPipeline: page.handleSelectPipeline,
 		onSelectRun: page.handleSelectRun,
+		onSelectStepRun: page.handleSelectStepRun,
 		onStop: (id) => page.controls.stop.mutate(id),
 		onStopSession: page.stopSession,
 		onToggleSession: page.toggleSession,

@@ -41,6 +41,11 @@ export function useRunsPage() {
 		initialSelection(searchParams)
 	);
 	const [expandedSessions, setExpandedSessions] = useState<ReadonlySet<string>>(new Set());
+	// The session a step-selected run belongs to. Kept in the URL (?run=…&pipeline=…) so a
+	// refresh after clicking a step's console restores the expanded-session context.
+	const [pipelineContextId, setPipelineContextId] = useState<string | undefined>(
+		searchParams.get('pipeline') ?? undefined
+	);
 	const liveConsoleRef = useRef<HTMLDivElement>(null);
 	const initialSelectionIdRef = useRef(initialSelection(searchParams)?.id);
 	// State (not a ref) because it guards a render-phase adjustment below, where ref
@@ -69,11 +74,19 @@ export function useRunsPage() {
 	}
 	function handleSelectRun(id: string): void {
 		setSelection({ id, kind: 'run' });
+		setPipelineContextId(undefined);
 		scrollConsoleIntoView();
 	}
 	function handleSelectPipeline(id: string): void {
 		setSelection({ id, kind: 'pipeline' });
+		setPipelineContextId(id);
 		setExpandedSessions((previous) => new Set([...previous, id]));
+		scrollConsoleIntoView();
+	}
+	// A step's Console click selects the step's run while keeping its session as context.
+	function handleSelectStepRun(sessionId: string, runId: string): void {
+		setSelection({ id: runId, kind: 'run' });
+		setPipelineContextId(sessionId);
 		scrollConsoleIntoView();
 	}
 	function toggleSession(id: string): void {
@@ -139,16 +152,16 @@ export function useRunsPage() {
 	const historyEntries = history.filter((entry) => entryStartedAt(entry) >= historyFloor);
 
 	// Auto-expand active sessions once when they first load (bounded), plus a ?pipeline=
-	// deep link. Render-phase adjustment (react.dev's "adjusting state when props change"
-	// pattern) — an effect would trigger a cascading re-render.
+	// deep link (whether it arrived as the selection or as a step-run's session context).
+	// Render-phase adjustment (react.dev's "adjusting state when props change" pattern) —
+	// an effect would trigger a cascading re-render.
 	if (!seededExpansion && sessionList.length > 0) {
 		setSeededExpansion(true);
 		const ids = sessionList
 			.filter((session) => session.status === 'queued' || session.status === 'running')
 			.slice(0, MAX_AUTO_EXPANDED_SESSIONS)
 			.map((session) => session.id);
-		const deepLinked = initialSelection(searchParams);
-		if (deepLinked?.kind === 'pipeline') ids.push(deepLinked.id);
+		if (pipelineContextId !== undefined) ids.push(pipelineContextId);
 		if (ids.length > 0) setExpandedSessions(new Set(ids));
 	}
 
@@ -167,9 +180,9 @@ export function useRunsPage() {
 		const next = new URLSearchParams();
 		if (historyProject !== 'all') next.set('project', historyProject);
 		if (selection?.kind === 'run') next.set('run', selection.id);
-		if (selection?.kind === 'pipeline') next.set('pipeline', selection.id);
+		if (pipelineContextId !== undefined) next.set('pipeline', pipelineContextId);
 		setSearchParams(next, { replace: true });
-	}, [historyProject, selection, setSearchParams]);
+	}, [historyProject, pipelineContextId, selection, setSearchParams]);
 
 	function submitContinue(id: string): void {
 		traceDataMovement({
@@ -239,6 +252,7 @@ export function useRunsPage() {
 		fetchMore,
 		handleSelectPipeline,
 		handleSelectRun,
+		handleSelectStepRun,
 		hasMore,
 		historyEntries,
 		historyProject,

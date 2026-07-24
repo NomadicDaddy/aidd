@@ -98,10 +98,13 @@ function SessionTitle({
 	session,
 }: Omit<PipelineSessionRowProps, 'now' | 'onStop'>) {
 	return (
-		<div className="flex items-center gap-2">
+		// flex-wrap keeps the recipe name on one line: with a long name the Console button
+		// wraps below rather than squeezing the link into a tall word-per-line column.
+		<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 			<Button
 				aria-expanded={expanded}
 				aria-label={`${expanded ? 'Collapse' : 'Expand'} steps for ${session.recipeName}`}
+				className="px-1"
 				onClick={() => onToggle(session.id)}
 				size="compact"
 				variant="ghost">
@@ -116,10 +119,15 @@ function SessionTitle({
 				className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400"
 			/>
 			<Link
-				className="font-medium text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+				className="font-medium whitespace-nowrap text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
 				to={`/pipeline-sessions/${session.id}`}>
 				{session.recipeName}
 			</Link>
+			<span
+				className="font-mono text-xs text-neutral-500"
+				title={`Step ${session.currentStepIndex} of ${session.totalSteps}`}>
+				{session.currentStepIndex}/{session.totalSteps}
+			</span>
 			<Button
 				aria-label={
 					selected
@@ -153,9 +161,6 @@ function SessionMeta({ session }: { session: PipelineSessionRecord }) {
 			<Badge tone="cyan">Pipeline</Badge>
 			<span>{session.projectName}</span>
 			<span>{formatDate(session.startedAt)}</span>
-			<span>
-				{session.currentStepIndex}/{session.totalSteps} steps
-			</span>
 		</div>
 	);
 }

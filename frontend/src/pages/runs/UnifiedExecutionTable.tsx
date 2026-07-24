@@ -25,6 +25,8 @@ export interface UnifiedExecutionTableProps {
 	onKill: (id: string) => void;
 	onSelectPipeline: (id: string) => void;
 	onSelectRun: (id: string) => void;
+	/** A step's Console click: selects the step's run, keeping its session as context. */
+	onSelectStepRun: (sessionId: string, runId: string) => void;
 	onStop: (id: string) => void;
 	onStopSession: (id: string) => void;
 	onToggleSession: (id: string) => void;
@@ -104,7 +106,12 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 										<tr className="border-b bg-neutral-50/60 last:border-0 dark:bg-neutral-900/40">
 											<td className="p-0" colSpan={4}>
 												<PipelineStepSubRows
-													onSelectRun={props.onSelectRun}
+													onSelectRun={(runId) =>
+														props.onSelectStepRun(
+															entry.session.id,
+															runId
+														)
+													}
 													sessionId={entry.session.id}
 												/>
 											</td>
@@ -151,7 +158,9 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 							{expandedSessions.has(entry.session.id) && (
 								<div className="bg-neutral-50/60 dark:bg-neutral-900/40">
 									<PipelineStepSubRows
-										onSelectRun={props.onSelectRun}
+										onSelectRun={(runId) =>
+											props.onSelectStepRun(entry.session.id, runId)
+										}
 										sessionId={entry.session.id}
 									/>
 								</div>

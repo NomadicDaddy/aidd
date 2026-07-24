@@ -87,6 +87,8 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	thorough: 'runtime',
 	'ui-organize': 'spernakit-fleet',
 	'ui-parity': 'audit-remediation',
+	'ui-playground-apply': 'runtime',
+	'ui-playground-sync': 'runtime',
 	'ui-redesign-planner': 'audit-remediation',
 	'update-audits': 'metadata',
 	'update-roadmap': 'metadata',

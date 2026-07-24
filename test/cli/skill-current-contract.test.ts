@@ -73,6 +73,7 @@ const REQUIRED_UNATTENDED_MARKERS = {
 	'skills/testing-scenarios/SKILL.md': ['Selecting this mode authorizes the'],
 	'skills/ui-organize/SKILL.md': ['Continue directly to Phase 5'],
 	'skills/ui-parity/SKILL.md': ['all High and Medium priority gaps by default'],
+	'skills/ui-playground-apply/SKILL.md': ['An invocation containing `--apply` authorizes'],
 	'skills/validate-tests/SKILL.md': ['return non-success'],
 } as const;
 

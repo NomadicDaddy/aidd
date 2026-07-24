@@ -1,0 +1,4 @@
+interface:
+    display_name: 'UI Playground Apply'
+    short_description: 'Review and apply playground UI changes safely'
+    default_prompt: 'Use $ui-playground-apply to review, confirm, and apply UI changes from a playground back to its site.'

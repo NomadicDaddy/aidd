@@ -1,0 +1,4 @@
+interface:
+    display_name: 'UI Playground Sync'
+    short_description: 'Create or refresh fixture-backed UI playgrounds'
+    default_prompt: 'Use $ui-playground-sync to create or safely refresh a fixture-backed UI playground from a site.'

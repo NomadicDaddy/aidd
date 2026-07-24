@@ -17,6 +17,9 @@ export interface ListRunsParams {
 	cursor?: string;
 	limit?: number;
 	projectPath?: string;
+	/** Exclude pipeline-owned runs — the unified Runs feed shows those only inside
+	 * their session's expanded step rows. */
+	topLevel?: boolean;
 }
 
 type RawRunCommitsResponse = Omit<RunCommitsResponse, 'fileChanges'> & {
@@ -48,6 +51,13 @@ export async function getRunOutput(id: string, signal?: AbortSignal): Promise<Ru
 	return apiGet<RunOutputResponse>(`/api/v1/runs/${id}/output`, { signal });
 }
 
+// Single-record fetch for runs missing from the loaded list — e.g. a pipeline-owned run
+// deep-linked via ?run= while the unified feed lists topLevel runs only.
+export async function getRun(id: string, signal?: AbortSignal): Promise<null | RunRecord> {
+	const response = await apiGet<{ run: null | RunRecord }>(`/api/v1/runs/${id}`, { signal });
+	return response.run;
+}
+
 export async function continueRun(id: string): Promise<RunRecord> {
 	const response = await apiSend<{ run: RunRecord }>(`/api/v1/runs/${id}/continue`, 'POST');
 	return response.run;
@@ -70,6 +80,7 @@ export async function listRuns(
 	if (params.projectPath) search.set('projectPath', params.projectPath);
 	if (params.cursor) search.set('cursor', params.cursor);
 	if (params.limit !== undefined) search.set('limit', String(params.limit));
+	if (params.topLevel) search.set('topLevel', 'true');
 	const query = search.toString();
 	return apiGet<RunsPage>(`/api/v1/runs${query ? `?${query}` : ''}`, { signal });
 }

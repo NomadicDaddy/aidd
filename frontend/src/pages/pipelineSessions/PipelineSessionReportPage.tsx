@@ -74,9 +74,9 @@ export function PipelineSessionReportPage() {
 	const backLink = (
 		<Link
 			className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-950"
-			to="/pipeline-sessions">
+			to="/runs">
 			<ArrowLeft className="h-4 w-4" />
-			Pipeline Sessions
+			Runs
 		</Link>
 	);
 
@@ -93,8 +93,8 @@ export function PipelineSessionReportPage() {
 						the link may be incorrect.
 					</p>
 					<div className="mt-4">
-						<Link className={buttonClassName()} to="/pipeline-sessions">
-							Back to Pipeline Sessions
+						<Link className={buttonClassName()} to="/runs">
+							Back to Runs
 						</Link>
 					</div>
 				</Card>
@@ -117,8 +117,8 @@ export function PipelineSessionReportPage() {
 					) : undefined
 				}
 				breadcrumb={
-					<Link className="hover:underline" to="/pipeline-sessions">
-						Pipeline Sessions
+					<Link className="hover:underline" to="/runs">
+						Runs
 					</Link>
 				}
 				helpSlug="pipelines"

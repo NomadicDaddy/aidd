@@ -27,7 +27,9 @@ export const DOC_SECTIONS: DocSection[] = [
 	{ group: 'Pages', route: '/', slug: 'dashboard', title: 'Dashboard' },
 	{ group: 'Pages', route: '/projects', slug: 'projects', title: 'Projects' },
 	{ group: 'Pages', route: '/runs', slug: 'runs', title: 'Runs' },
-	{ group: 'Pages', route: '/pipeline-sessions', slug: 'pipelines', title: 'Pipeline sessions' },
+	// No `route`: the pipeline-sessions list page merged into /runs (which the runs
+	// section documents); this section backs the per-session report page's `?` help.
+	{ group: 'Pages', slug: 'pipelines', title: 'Pipeline sessions' },
 	{ group: 'Pages', route: '/director', slug: 'director', title: 'Director' },
 	{ group: 'Pages', route: '/audits', slug: 'audits', title: 'Audits' },
 	{ group: 'Pages', route: '/skills', slug: 'skills', title: 'Skills' },

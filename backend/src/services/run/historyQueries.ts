@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { basename } from 'node:path';
 
 import type { RunRecord, WebRunStatus } from '../../types.ts';
@@ -18,6 +18,13 @@ export interface ListRunsPageOptions {
 	cursor?: string;
 	limit?: number;
 	status?: WebRunStatus;
+	// Exclude pipeline-owned runs — the unified Runs feed shows those only inside their
+	// session's step rows. CLI/director rows never carry a session id, so SQL suffices.
+	topLevel?: boolean;
+}
+
+function topLevelFilter(topLevel: boolean | undefined): SQL | undefined {
+	return topLevel ? isNull(runs.pipelineSessionId) : undefined;
 }
 
 function statusOrRecentFilter(status: undefined | WebRunStatus): SQL | undefined {
@@ -136,7 +143,8 @@ export async function listRunsPage(
 	const isFirstPage = options.cursor === undefined || options.cursor === '';
 	const where = combineFilters(
 		statusOrRecentFilter(options.status),
-		cursorFilter(options.cursor)
+		cursorFilter(options.cursor),
+		topLevelFilter(options.topLevel)
 	);
 	const webRowsRaw = await ctx.db
 		.select()
@@ -180,7 +188,8 @@ export async function listRunsForProjectPage(
 	const where = combineFilters(
 		projectPathFilter(projectPath),
 		statusOrRecentFilter(options.status),
-		cursorFilter(options.cursor)
+		cursorFilter(options.cursor),
+		topLevelFilter(options.topLevel)
 	);
 	const webRowsRaw = await ctx.db
 		.select()

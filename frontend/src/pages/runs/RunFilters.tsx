@@ -1,4 +1,5 @@
-import type { RunMode, RunStatus } from '../../api/types.ts';
+import type { RunMode } from '../../api/types.ts';
+import type { UnifiedStatusFilter } from './unifiedEntries.ts';
 
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
@@ -24,10 +25,10 @@ export function RunFilters({
 	onHistoryProjectChange: (value: string) => void;
 	onModeFilterChange: (value: 'all' | RunMode) => void;
 	onQueryChange: (value: string) => void;
-	onStatusFilterChange: (value: 'all' | RunStatus) => void;
+	onStatusFilterChange: (value: UnifiedStatusFilter) => void;
 	projects: { id: string; name: string; path: string }[];
 	query: string;
-	statusFilter: 'all' | RunStatus;
+	statusFilter: UnifiedStatusFilter;
 }) {
 	return (
 		<Card className="grid gap-3 lg:grid-cols-[2fr_1fr_1fr_2fr_auto]">
@@ -63,12 +64,14 @@ export function RunFilters({
 						source: 'RunsPage',
 						summary: { status: event.target.value },
 					});
-					onStatusFilterChange(event.target.value as 'all' | RunStatus);
+					onStatusFilterChange(event.target.value as UnifiedStatusFilter);
 				}}
 				value={statusFilter}>
 				<option value="all">All statuses</option>
 				<option value="running">Running</option>
+				<option value="queued">Queued</option>
 				<option value="completed">Completed</option>
+				<option value="completed_with_failures">Completed w/ failures</option>
 				<option value="failed">Failed</option>
 				<option value="stopped">Stopped</option>
 				<option value="killed">Killed</option>
@@ -101,7 +104,7 @@ export function RunFilters({
 				aria-label="Search runs"
 				data-shortcut-search=""
 				onChange={(event) => onQueryChange(event.target.value)}
-				placeholder="Filter runs"
+				placeholder="Filter runs and pipelines"
 				value={query}
 			/>
 			<Button

@@ -51,11 +51,6 @@ const PipelineSessionReportPage = lazy(() =>
 		default: m.PipelineSessionReportPage,
 	}))
 );
-const PipelineSessionsPage = lazy(() =>
-	import('./pages/pipelineSessions/PipelineSessionsPage.tsx').then((m) => ({
-		default: m.PipelineSessionsPage,
-	}))
-);
 const ProjectDetailPage = lazy(() =>
 	import('./pages/projects/ProjectDetailPage.tsx').then((m) => ({ default: m.ProjectDetailPage }))
 );
@@ -157,7 +152,9 @@ const routeElements: Record<FrontendRouteId, ReactNode> = {
 	docsDetail: <DocsPage />,
 	notFound: <NotFoundPage />,
 	pipelineSessionDetail: <PipelineSessionReportPage />,
-	pipelineSessions: <PipelineSessionsPage />,
+	// Executions are consolidated on the Runs page; the old list path redirects so
+	// bookmarks and external links keep resolving. The per-session report survives.
+	pipelineSessions: <Navigate replace to="/runs" />,
 	projectDetail: <ProjectDetailPage />,
 	projectProfileMatrix: <ProjectProfileMatrixPage />,
 	projects: <ProjectsPage />,

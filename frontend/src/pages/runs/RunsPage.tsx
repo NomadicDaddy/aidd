@@ -8,15 +8,36 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
-import { ActiveRunsTable } from './ActiveRunsTable.tsx';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
+import { PipelineConsoleSummary } from './PipelineConsoleSummary.tsx';
 import { RunFilters } from './RunFilters.tsx';
 import { RunLaunchCard } from './RunLaunchCard.tsx';
+import {
+	UnifiedExecutionTable,
+	type UnifiedExecutionTableProps,
+} from './UnifiedExecutionTable.tsx';
 import { useRunsPage } from './useRunsPage.ts';
 
 export function RunsPage() {
 	useDocumentTitle('Runs');
 	const page = useRunsPage();
+	const form = page.launchForm;
+	const tableProps: Omit<
+		UnifiedExecutionTableProps,
+		'description' | 'emptyMessage' | 'entries' | 'title'
+	> = {
+		continuedRunIds: page.continuedRunIds,
+		continuePendingId: page.continueRun.isPending ? page.continueRun.variables : undefined,
+		expandedSessions: page.expandedSessions,
+		onContinue: page.submitContinue,
+		onKill: (id) => page.controls.kill.mutate(id),
+		onSelectPipeline: page.handleSelectPipeline,
+		onSelectRun: page.handleSelectRun,
+		onStop: (id) => page.controls.stop.mutate(id),
+		onStopSession: page.stopSession,
+		onToggleSession: page.toggleSession,
+		selection: page.selection,
+	};
 
 	return (
 		<div className="space-y-5">
@@ -25,63 +46,63 @@ export function RunsPage() {
 					<DataFreshness
 						label="Run data"
 						onRefresh={page.refresh}
-						queries={[page.runs, page.projects]}
+						queries={[page.runs, page.sessionsQuery, page.projects]}
 					/>
 				}
-				description="Launch aidd, monitor active processes, and inspect live run output."
+				description="Launch aidd, monitor runs and recipe pipelines, and inspect live output."
 				helpSlug="runs"
 				title="Runs"
 			/>
 			<RunLaunchCard
-				disabled={page.launch.isPending || !page.projectDir}
-				extraArgs={page.extraArgs}
-				launchTarget={page.primaryTarget}
-				mode={page.mode}
-				onExtraArgsChange={page.setExtraArgs}
-				onLaunch={page.submitLaunch}
-				onLaunchTargetChange={page.setPrimaryTarget}
-				onModeChange={page.setMode}
+				disabled={form.launch.isPending || !form.projectDir}
+				extraArgs={form.extraArgs}
+				launchTarget={form.primaryTarget}
+				mode={form.mode}
+				onExtraArgsChange={form.setExtraArgs}
+				onLaunch={form.submitLaunch}
+				onLaunchTargetChange={form.setPrimaryTarget}
+				onModeChange={form.setMode}
 				onProjectDirChange={(value) => {
-					page.setProjectDir(value);
-					if (value) page.setProjectError(false);
+					form.setProjectDir(value);
+					if (value) form.setProjectError(false);
 				}}
-				projectDir={page.projectDir}
-				projectError={page.projectError}
+				projectDir={form.projectDir}
+				projectError={form.projectError}
 				projects={page.projectList}
 				selectedLaunchProject={page.selectedLaunchProject}
 			/>
-			{page.mode === 'triumvirate' && (
+			{form.mode === 'triumvirate' && (
 				<Card className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 					<LaunchTargetControl
 						mode="triumvirate"
-						onChange={page.setPrimaryTarget}
-						projectDir={page.projectDir}
+						onChange={form.setPrimaryTarget}
+						projectDir={form.projectDir}
 						role="primary"
-						value={page.primaryTarget}
+						value={form.primaryTarget}
 						variant="inline"
 					/>
 					<LaunchTargetControl
 						mode="triumvirate"
-						onChange={page.setSecondaryTarget}
-						projectDir={page.projectDir}
+						onChange={form.setSecondaryTarget}
+						projectDir={form.projectDir}
 						role="secondary"
-						value={page.secondaryTarget}
+						value={form.secondaryTarget}
 						variant="inline"
 					/>
 					<LaunchTargetControl
 						mode="triumvirate"
-						onChange={page.setOverseerTarget}
-						projectDir={page.projectDir}
+						onChange={form.setOverseerTarget}
+						projectDir={form.projectDir}
 						role="overseer"
-						value={page.overseerTarget}
+						value={form.overseerTarget}
 						variant="inline"
 					/>
 					<LaunchTargetControl
 						mode="triumvirate"
-						onChange={page.setExecTarget}
-						projectDir={page.projectDir}
+						onChange={form.setExecTarget}
+						projectDir={form.projectDir}
 						role="exec"
-						value={page.execTarget}
+						value={form.execTarget}
 						variant="inline"
 					/>
 				</Card>
@@ -105,39 +126,49 @@ export function RunsPage() {
 			/>
 			<div className="grid min-w-0 gap-4 xl:grid-cols-[1fr_1.2fr]">
 				<div className="space-y-3">
-					{page.runs.isLoading && page.runListLength === 0 ? (
+					{page.isLoading && page.loadedEntryCount === 0 ? (
 						<SkeletonRows columns={4} count={6} label="Loading runs…" />
 					) : (
-						<ActiveRunsTable
-							continuedRunIds={page.continuedRunIds}
-							continuePendingId={
-								page.continueRun.isPending ? page.continueRun.variables : undefined
-							}
-							onContinue={page.submitContinue}
-							onKill={(id) => page.controls.kill.mutate(id)}
-							onSelect={page.handleSelectRun}
-							onStop={(id) => page.controls.stop.mutate(id)}
-							runs={page.sortedRuns}
-							selectedRunId={page.selectedRunId}
-						/>
+						<>
+							<UnifiedExecutionTable
+								description="Runs and recipe pipelines currently executing."
+								emptyMessage="Nothing is running right now."
+								entries={page.activeEntries}
+								title="Active"
+								{...tableProps}
+							/>
+							<UnifiedExecutionTable
+								description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
+								emptyMessage="No runs or pipelines match the current filters."
+								entries={page.historyEntries}
+								title="History"
+								{...tableProps}
+							/>
+						</>
 					)}
-					{page.runs.hasNextPage ? (
+					{page.hasMore ? (
 						<div className="flex justify-center">
 							<Button
-								disabled={page.runs.isFetchingNextPage}
-								onClick={() => void page.runs.fetchNextPage()}
+								disabled={page.isFetchingMore}
+								onClick={page.fetchMore}
 								variant="secondary">
 								<ChevronDown aria-hidden="true" className="h-4 w-4" />
-								{page.runs.isFetchingNextPage ? 'Loading…' : 'Show more'}
+								{page.isFetchingMore ? 'Loading…' : 'Show more'}
 							</Button>
 						</div>
 					) : null}
 				</div>
 				<div className="min-w-0 self-start" ref={page.liveConsoleRef}>
-					<LiveConsolePanel
-						selectedRun={page.selectedRun}
-						selectedRunId={page.selectedRunId}
-					/>
+					{page.selection?.kind === 'pipeline' && page.selectedSession ? (
+						<PipelineConsoleSummary session={page.selectedSession} />
+					) : (
+						<LiveConsolePanel
+							selectedRun={page.selectedRun}
+							selectedRunId={
+								page.selection?.kind === 'run' ? page.selection.id : undefined
+							}
+						/>
+					)}
 				</div>
 			</div>
 		</div>

@@ -2,7 +2,8 @@
 
 A **pipeline session** is one execution of a **recipe**: a file-backed,
 multi-step template. Every recipe launch creates exactly one session, even for
-single-step recipes. This page reviews those sessions.
+single-step recipes. Sessions appear in the unified **Runs** feed, and each has
+a report page reviewing its full step history.
 
 ## What a session records
 
@@ -16,13 +17,14 @@ single-step recipes. This page reviews those sessions.
 
 ## Working with sessions
 
-- Click a session to open its report, which shows step-by-step progress and
-  output summaries.
-- You can **stop** an active session from either the list or the report.
+- On **Runs**, expand a pipeline row to see its steps, or open its **Report**
+  for step-by-step progress and output summaries.
+- You can **stop** an active session from the Runs feed or the report.
 - Sessions persist after they finish, so you can review what a recipe did long
   after it ran.
 
 ## Starting a session
 
 Sessions are launched from **Recipes** (or by running an **Skill** as a
-one-shot). This page is for reviewing and stopping them, not starting them.
+one-shot). The Runs feed and this report are for reviewing and stopping them,
+not starting them.

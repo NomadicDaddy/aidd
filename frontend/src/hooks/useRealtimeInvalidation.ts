@@ -91,6 +91,9 @@ export function useRealtimeInvalidation(): void {
 				void queryClient.invalidateQueries({ queryKey: ['projects'] });
 				void queryClient.invalidateQueries({ queryKey: ['telemetry'] });
 				void queryClient.invalidateQueries({ queryKey: ['diary'] });
+				// A pipeline-owned run's status flip changes its session's step rows; refresh
+				// expanded reports on the unified Runs feed without waiting for the 3s poll.
+				void queryClient.invalidateQueries({ queryKey: ['pipeline-session-report'] });
 				return;
 			case 'suggestion_status':
 				void queryClient.invalidateQueries({ queryKey: ['suggestions'] });

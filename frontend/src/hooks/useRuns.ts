@@ -4,6 +4,7 @@ import type { RunLaunchRequest } from '../api/types.ts';
 
 import {
 	continueRun,
+	getRun,
 	getRunOutput,
 	killRun,
 	launchRun,
@@ -75,12 +76,13 @@ export function useRunOutput(id: string | undefined) {
 	});
 }
 
-export function useRuns(projectPath?: string) {
+export function useRuns(projectPath?: string, options?: { topLevel?: boolean }) {
+	const topLevel = options?.topLevel === true;
 	return useInfiniteQuery<
 		RunsPage,
 		Error,
 		{ pageParams: (string | undefined)[]; pages: RunsPage[] },
-		[string, string],
+		[string, string, string],
 		string | undefined
 	>({
 		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -90,10 +92,12 @@ export function useRuns(projectPath?: string) {
 				{
 					...(projectPath ? { projectPath } : {}),
 					...(pageParam ? { cursor: pageParam } : {}),
+					...(topLevel ? { topLevel } : {}),
 				},
 				signal
 			),
-		queryKey: ['runs', projectPath ?? 'all'],
+		// Stays under the ['runs'] prefix so run_status WebSocket invalidation covers it.
+		queryKey: ['runs', projectPath ?? 'all', topLevel ? 'top' : 'all'],
 		refetchInterval: (query) => {
 			const hasActiveRun = query.state.data?.pages.some((page) =>
 				page.runs.some((run) => run.status === 'running')
@@ -101,6 +105,18 @@ export function useRuns(projectPath?: string) {
 			return hasActiveRun ? ACTIVE_RUNS_POLL_MS : false;
 		},
 		refetchIntervalInBackground: false,
+	});
+}
+
+// Fallback single-record lookup for a selected run that is not in the loaded list —
+// e.g. a pipeline-owned run deep-linked via ?run= while the unified feed lists
+// topLevel runs only. Enabled flag keeps this dormant whenever the list already has
+// the record.
+export function useRunRecord(id: string | undefined, enabled: boolean) {
+	return useQuery({
+		enabled: Boolean(id) && enabled,
+		queryFn: ({ signal }) => getRun(id ?? '', signal),
+		queryKey: ['runs', 'record', id],
 	});
 }
 

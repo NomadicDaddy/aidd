@@ -3,7 +3,8 @@
 A **run** is one orchestrator invocation against a project. Inside a run, aidd
 loops over **iterations**: each iteration selects work, compiles a prompt,
 calls the chosen CLI once, and records the result. This page launches runs and
-tracks their history.
+tracks every execution — standalone runs and **pipeline sessions** (recipe
+launches) alike — split into an **Active** section and a **History** section.
 
 ## Launching a run
 
@@ -36,6 +37,14 @@ your configured defaults.
 While a run is active, the live console streams its output. Each run reports a
 liveness signal; a healthy long-running run keeps reporting progress. If a run
 appears stuck, you can **stop** it (graceful) or **kill** it (forced).
+
+## Pipelines in the feed
+
+Recipe launches appear as **pipeline** rows alongside runs. Expand a pipeline
+to see its steps; a step that spawned a run can stream into the live console,
+and the **Report** link opens the session's full step-by-step report. Runs that
+belong to a pipeline are shown inside their session rather than as separate
+top-level rows.
 
 ## Run history
 

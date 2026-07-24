@@ -80,7 +80,9 @@ export function RecipesPage() {
 			{
 				onSuccess: (session) => {
 					toast.success('Pipeline session started');
-					navigate(`/pipeline-sessions/${session.id}`);
+					// Land in the unified Runs feed with the new session selected and expanded;
+					// the per-session report stays a click away from there.
+					navigate(`/runs?pipeline=${encodeURIComponent(session.id)}`);
 				},
 			}
 		);

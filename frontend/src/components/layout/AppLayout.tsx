@@ -8,9 +8,8 @@ import { type ReactNode, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useActiveRunCount } from '../../hooks/useActiveRunCount.ts';
+import { useActiveExecutionCount } from '../../hooks/useActiveRunCount.ts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.ts';
-import { useActivePipelineSessionCount } from '../../hooks/usePipelineSessions.ts';
 import { cn } from '../../lib/cn.ts';
 import { commandPaletteShortcut, shortcutText } from '../../lib/keyboardShortcuts.ts';
 import { useAuthTokenStore } from '../../stores/authTokenStore.ts';
@@ -41,8 +40,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const openAuthPrompt = useAuthTokenStore((state) => state.openPrompt);
-	const activePipelineCount = useActivePipelineSessionCount();
-	const activeRunCount = useActiveRunCount();
+	// Standalone running runs + active pipeline sessions, each execution counted once.
+	const activeExecutionCount = useActiveExecutionCount();
 
 	useKeyboardShortcuts({
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -171,31 +170,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
 														}>
 														{item.label}
 													</span>
-													{item.to === '/pipeline-sessions' &&
-														activePipelineCount > 0 && (
+													{item.to === '/runs' &&
+														activeExecutionCount > 0 && (
 															<span
-																aria-label={`${activePipelineCount} active pipeline ${activePipelineCount === 1 ? 'session' : 'sessions'}`}
+																aria-label={`${activeExecutionCount} active ${activeExecutionCount === 1 ? 'execution' : 'executions'}`}
 																className={cn(
 																	'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-cyan-100 px-1 text-[0.62rem] font-bold text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200',
 																	collapsed
 																		? 'hidden'
 																		: 'ml-auto hidden sm:inline-flex'
 																)}>
-																{activePipelineCount}
+																{activeExecutionCount}
 															</span>
 														)}
-													{item.to === '/runs' && activeRunCount > 0 && (
-														<span
-															aria-label={`${activeRunCount} active ${activeRunCount === 1 ? 'run' : 'runs'}`}
-															className={cn(
-																'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-cyan-100 px-1 text-[0.62rem] font-bold text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200',
-																collapsed
-																	? 'hidden'
-																	: 'ml-auto hidden sm:inline-flex'
-															)}>
-															{activeRunCount}
-														</span>
-													)}
 												</>
 											)}
 										</NavLink>

@@ -13,7 +13,6 @@ const KNOWN_ROUTES = new Set([
 	'/',
 	'/projects',
 	'/runs',
-	'/pipeline-sessions',
 	'/director',
 	'/audits',
 	'/skills',

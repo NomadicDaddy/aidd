@@ -65,6 +65,9 @@ export function createRunsRoutes(context: WebContext) {
 					...(query.cursor !== undefined ? { cursor: query.cursor } : {}),
 					...(query.limit !== undefined ? { limit: query.limit } : {}),
 					...(query.status !== undefined ? { status: query.status } : {}),
+					...(query.topLevel !== undefined
+						? { topLevel: query.topLevel === 'true' }
+						: {}),
 				};
 				const page = query.projectPath
 					? await context.runService.listRunsForProjectPage(query.projectPath, options)
@@ -85,6 +88,9 @@ export function createRunsRoutes(context: WebContext) {
 							t.Literal('stopped'),
 						])
 					),
+					// Query strings arrive as text, so accept literal 'true'/'false' rather
+					// than relying on t.Boolean() coercion for query params.
+					topLevel: t.Optional(t.Union([t.Literal('true'), t.Literal('false')])),
 				}),
 			}
 		)

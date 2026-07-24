@@ -10,7 +10,6 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as ScrollText } from 'lucide-react/dist/esm/icons/scroll-text';
 import { default as Settings } from 'lucide-react/dist/esm/icons/settings';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
-import { default as Workflow } from 'lucide-react/dist/esm/icons/workflow';
 import { default as Wrench } from 'lucide-react/dist/esm/icons/wrench';
 
 export type NavItem = {
@@ -38,7 +37,6 @@ export const navGroups: NavGroup[] = [
 	{
 		items: [
 			{ icon: Bot, label: 'Director', to: '/director' },
-			{ icon: Workflow, label: 'Pipelines', to: '/pipeline-sessions' },
 			{ icon: Play, label: 'Runs', to: '/runs' },
 			{ icon: BookOpen, label: 'Diary', to: '/diary' },
 		],

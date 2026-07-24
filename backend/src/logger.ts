@@ -28,6 +28,16 @@ export const webLogger = pino({
 			'headers.Authorization',
 		],
 	},
+	// pino does not serialize native Error objects by default — Error.message and Error.stack are
+	// non-enumerable, so a raw `{ error }` payload logs as `{}` and failure diagnostics are lost.
+	// Register a serializer under both payload keys the codebase uses (`err` and `error`) so those
+	// logs carry type/message/stack again. Non-Error values pass through unchanged.
+	serializers: {
+		err: (value: unknown): unknown =>
+			value instanceof Error ? pino.stdSerializers.err(value) : value,
+		error: (value: unknown): unknown =>
+			value instanceof Error ? pino.stdSerializers.err(value) : value,
+	},
 });
 
 // Structured log categories. Tagging every performance/diagnostic log line with a stable

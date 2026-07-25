@@ -135,6 +135,7 @@
 			"recipes/generate-application-features.json",
 			"recipes/generate-testing-scenarios.json",
 			"recipes/interview.json",
+			"recipes/interview-postq.json",
 			"recipes/new-app-from-idea.json",
 			"recipes/project-intake.json",
 			"recipes/project-reintake.json",

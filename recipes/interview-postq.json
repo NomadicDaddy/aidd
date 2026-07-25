@@ -1,0 +1,77 @@
+{
+	"description": "Review the responses, convert them into remediations, and summarize the resulting assertions.",
+	"name": "interview",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"interview": true
+			},
+			"name": "Answer interview questions",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review and assess the interview responses for {application}. Create or update {application}/.aidd/response-review.md with a concise assessment covering response quality, gaps, contradictions, and follow-up concerns."
+			},
+			"name": "Review interview responses",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "doc2feature"
+			},
+			"name": "Convert responses to features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review and assess the remediation features created from the interview responses for {application}. Create or update {application}/.aidd/remediation-review.md with your findings, including strengths, weak spots, duplicates, and any follow-up recommendations."
+			},
+			"name": "Review remediation features",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-review"
+			},
+			"name": "Review features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims, assumptions, and conclusions supported by the interview and remediation review artifacts."
+			},
+			"name": "Generate assertions list",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"name": "Validate completions",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"name": "Consolidate features",
+			"stepType": "skill"
+		}
+	]
+}

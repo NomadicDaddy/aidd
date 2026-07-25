@@ -28,6 +28,7 @@ Launching a recipe creates a pipeline session. A session that completes some ste
 | `generate-application-features`             | generate application features                                                | 2     | application                           |
 | `generate-testing-scenarios`                | generate testing scenarios                                                   | 1     | application                           |
 | `interview`                                 | interview                                                                    | 9     | application                           |
+| `interview-postq`                           | interview                                                                    | 8     | application                           |
 | `new-app-from-idea`                         | new-app-from-idea                                                            | 8     | application, stopBeforeImplementation |
 | `project-intake`                            | project-intake                                                               | 9     | application                           |
 | `project-reintake`                          | project-reintake                                                             | 2     | application                           |
@@ -272,6 +273,23 @@ Run an interview workflow, review the responses, convert them into remediations,
 7. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims,...)
 8. `aidd-cli` - Validate completions (validate: true)
 9. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+
+### interview-postq
+
+Review the responses, convert them into remediations, and summarize the resulting assertions.
+
+- **Name:** interview
+- **Parameters:** application
+- **Steps:** 8
+
+1. `aidd-cli` - Answer interview questions (interview: true)
+2. `aidd-cli` - Review interview responses (maxIterations: 1; prompt: Review and assess the interview responses for {application}. Create or update {application}/.aidd/response-review.md with a concise assessment covering response quality, gaps, con...)
+3. `skill` - Convert responses to features (args: {application}; skillId: doc2feature)
+4. `aidd-cli` - Review remediation features (maxIterations: 1; prompt: Review and assess the remediation features created from the interview responses for {application}. Create or update {application}/.aidd/remediation-review.md with your findings, i...)
+5. `skill` - Review features (args: {application}; skillId: feature-review)
+6. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims,...)
+7. `aidd-cli` - Validate completions (validate: true)
+8. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
 
 ### new-app-from-idea
 

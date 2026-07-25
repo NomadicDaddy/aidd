@@ -269,7 +269,8 @@ describe('file-backed pipeline recipes', () => {
 			'validate-tests',
 		];
 
-		expect(recipes).toHaveLength(34);
+		expect(recipes).toHaveLength(35);
+		expect(recipeIds.has('interview-postq')).toBe(true);
 		expect(recipeIds.has('reconcile-project-artifacts')).toBe(true);
 		expect(retiredWrapperIds.filter((id) => recipeIds.has(id))).toEqual([]);
 		expect(stepTypes).toEqual(new Set(['aidd-cli', 'recipe-ref', 'shell', 'skill']));

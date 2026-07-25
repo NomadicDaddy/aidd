@@ -48,7 +48,7 @@ function collectTableMismatches(sqlite: Database): string[] {
 
 		const tableRows = sqlite
 			.query<{ name: string }, [string]>(
-				"SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
+				"SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
 			)
 			.all(tableName);
 		if (tableRows.length === 0) {
@@ -72,7 +72,7 @@ function collectTableMismatches(sqlite: Database): string[] {
 		allMismatches.push(...checkIndexParity(sqlite, tableName, drizzleIndexNames));
 		allMismatches.push(...checkForeignKeyParity(sqlite, tableName, fkFromColumns));
 		allMismatches.push(
-			...checkCheckConstraintParity(sqlite, tableName, getDrizzleCheckConstraints(table))
+			...checkCheckConstraintParity(sqlite, tableName, getDrizzleCheckConstraints(table)),
 		);
 	}
 
@@ -82,11 +82,11 @@ function collectTableMismatches(sqlite: Database): string[] {
 
 function collectExtraSqliteTableMismatches(
 	sqlite: Database,
-	drizzleTableNames: Set<string>
+	drizzleTableNames: Set<string>,
 ): string[] {
 	const sqliteTables = sqlite
 		.query<{ name: string }, []>(
-			"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+			"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
 		)
 		.all()
 		.map((row) => row.name)
@@ -95,7 +95,7 @@ function collectExtraSqliteTableMismatches(
 	return sqliteTables
 		.filter((tableName) => !drizzleTableNames.has(tableName))
 		.map(
-			(tableName) => `EXTRA TABLE: ${tableName} (in SQLite, not declared in Drizzle schema)`
+			(tableName) => `EXTRA TABLE: ${tableName} (in SQLite, not declared in Drizzle schema)`,
 		);
 }
 

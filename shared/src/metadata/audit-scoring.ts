@@ -8,14 +8,14 @@
 
 export {
 	AUDIT_RUN_SUMMARY_PATTERN,
-	type ProjectAuditEvidence,
 	collectProjectEvidence,
 	enumerateProjectsUnderRoots,
 	loadAuditPriorities,
+	type ProjectAuditEvidence,
 } from './audit-scoring/collectors.ts';
 export {
-	type ChangePotential,
 	buildScoreInput,
+	type ChangePotential,
 	compareAuditsByChangePotential,
 	extractPriorityFromFrontmatter,
 	scoreAudit,

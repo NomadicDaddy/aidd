@@ -57,7 +57,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 				<div className="flex min-w-0 items-center gap-2">
 					<NotebookPen className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 					<div>
-						<h2 className="text-foreground text-sm font-semibold">Notes</h2>
+						<h2 className="text-sm font-semibold text-foreground">Notes</h2>
 						<p className="text-xs text-neutral-500">
 							A free-form, persistent markdown scratch pad saved to{' '}
 							<code>.aidd/notes.md</code>.

@@ -36,7 +36,7 @@ describe('CI workflow', () => {
 		expect(releaseImage).toContain('bun run docker:build');
 		expect(releaseImage).toContain('bun run check:image-licenses');
 		expect(releaseImage.indexOf('bun run check:image-licenses')).toBeGreaterThan(
-			releaseImage.indexOf('bun run docker:build')
+			releaseImage.indexOf('bun run docker:build'),
 		);
 		expect(browserSmoke).toContain('runs-on: windows-latest');
 		expect(browserSmoke).toContain('needs: quality');
@@ -54,11 +54,11 @@ describe('CI workflow', () => {
 		expect(stopIndex).toBeGreaterThan(crawlIndex);
 
 		const cleanupStep = browserSmoke.slice(
-			browserSmoke.indexOf('- name: Stop web control panel')
+			browserSmoke.indexOf('- name: Stop web control panel'),
 		);
 		expect(cleanupStep.indexOf('if: always()')).toBeGreaterThan(-1);
 		expect(cleanupStep.indexOf('bun run stop:web')).toBeGreaterThan(
-			cleanupStep.indexOf('if: always()')
+			cleanupStep.indexOf('if: always()'),
 		);
 	});
 });

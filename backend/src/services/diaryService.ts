@@ -11,8 +11,8 @@ import { recordDataMovement } from './dataMovementTrace.ts';
 import { scanProjectDiary } from './diary/scan.ts';
 import {
 	type DiaryTimelineItem,
-	listTimelinePage,
 	type ListTimelineOptions,
+	listTimelinePage,
 } from './diary/timeline.ts';
 import { clampLimit, type CursorPage, decodeCursor, encodeCursor } from './pagination.ts';
 
@@ -87,7 +87,7 @@ export class DiaryService {
 	}
 
 	async listEntriesPage(
-		options: ListDiaryEntriesOptions = {}
+		options: ListDiaryEntriesOptions = {},
 	): Promise<CursorPage<DiaryEntryDto>> {
 		let filterPath: string | undefined;
 		if (options.projectPath) {
@@ -138,7 +138,7 @@ export class DiaryService {
 	}
 
 	async listTimelinePage(
-		options: ListTimelineOptions = {}
+		options: ListTimelineOptions = {},
 	): Promise<CursorPage<DiaryTimelineItem>> {
 		// The timeline is read-only SQL, but resolving the path keeps scoping correct (canonical
 		// match) and consistent with the entries endpoint: an unknown/disallowed path is empty.
@@ -147,7 +147,7 @@ export class DiaryService {
 			if (!resolved) return EMPTY_PAGE;
 			return listTimelinePage(
 				{ db: this.db, rootDir: this.rootDir },
-				{ ...options, projectPath: resolved }
+				{ ...options, projectPath: resolved },
 			);
 		}
 		return listTimelinePage({ db: this.db, rootDir: this.rootDir }, options);
@@ -166,7 +166,7 @@ export class DiaryService {
 
 	private entriesWhere(
 		cursor: string | undefined,
-		projectPath: string | undefined
+		projectPath: string | undefined,
 	): SQL | undefined {
 		const filters: SQL[] = [];
 		if (projectPath) filters.push(projectPathFilter(projectPath));
@@ -176,8 +176,8 @@ export class DiaryService {
 			filters.push(
 				or(
 					lt(diaryEntries.entryDate, cursorDate),
-					and(eq(diaryEntries.entryDate, cursorDate), lt(diaryEntries.id, decoded.id))
-				) as SQL
+					and(eq(diaryEntries.entryDate, cursorDate), lt(diaryEntries.id, decoded.id)),
+				) as SQL,
 			);
 		}
 		if (filters.length === 0) return undefined;

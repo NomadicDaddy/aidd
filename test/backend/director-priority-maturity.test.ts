@@ -84,7 +84,7 @@ function makeBacklog(
 		audit: DirectorBacklogBreakdown['audit'];
 		feature: DirectorBacklogBreakdown['feature'];
 		remediation: DirectorBacklogBreakdown['remediation'];
-	}> = {}
+	}> = {},
 ): DirectorBacklogBreakdown {
 	return {
 		audit: { bySeverity: {}, count: 0, top: [] },
@@ -138,7 +138,7 @@ describe('director onboarding intake suggestion', () => {
 			project,
 			makeBacklog({ audit: { bySeverity: { high: 1 }, count: 1, top: [] } }),
 			emptyAuditHealth,
-			true
+			true,
 		);
 		const types = work.map((item) => item.taskType);
 		expect(types).toContain('project_intake');
@@ -175,7 +175,7 @@ describe('director audit-work maturity deferral', () => {
 
 		expect(item?.riskLevel).toBe('MEDIUM');
 		expect(item?.evidence.profileAdjustment).toBe(
-			'escalated_full_hardening+deferred_premature_maturity'
+			'escalated_full_hardening+deferred_premature_maturity',
 		);
 		expect(item?.evidence.maturityDeferred).toBe(true);
 		expect(item?.evidence.maturityStage).toBe('specified');
@@ -205,11 +205,11 @@ describe('director audit-work maturity deferral', () => {
 	test("'planned' is below the gate but 'engaged' is not", () => {
 		const planned = auditBacklogItem(
 			makeProject({ profile: fullHardeningProfile, stage: 'planned' }),
-			{ high: 1 }
+			{ high: 1 },
 		);
 		const engaged = auditBacklogItem(
 			makeProject({ profile: fullHardeningProfile, stage: 'engaged' }),
-			{ high: 1 }
+			{ high: 1 },
 		);
 
 		expect(planned?.evidence.maturityDeferred).toBe(true);
@@ -225,7 +225,7 @@ describe('director audit-work maturity deferral', () => {
 
 		expect(item?.riskLevel).toBe('MEDIUM');
 		expect(item?.evidence.profileAdjustment).toBe(
-			'local_high_downgraded+deferred_premature_maturity'
+			'local_high_downgraded+deferred_premature_maturity',
 		);
 	});
 

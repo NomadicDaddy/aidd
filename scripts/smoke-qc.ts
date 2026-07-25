@@ -52,7 +52,7 @@ function formatDuration(durationMs: number): string {
 
 export function getConcurrentTestBlocker(
 	stepName: string,
-	activeRun: TestRunLockRecord | undefined
+	activeRun: TestRunLockRecord | undefined,
 ): { exitCode: 1; message: string } | null {
 	if (stepName !== 'test' || activeRun === undefined) return null;
 	return {
@@ -73,7 +73,7 @@ async function runCommand(step: SmokeQcStep): Promise<number> {
 async function printCacheStatus(projectRoot: string, steps: SmokeQcStep[]): Promise<void> {
 	const statuses = await getSmokeCacheStatus(
 		projectRoot,
-		steps.map((step) => step.name)
+		steps.map((step) => step.name),
 	);
 
 	for (const status of statuses) {
@@ -89,7 +89,7 @@ async function printCacheStatus(projectRoot: string, steps: SmokeQcStep[]): Prom
 		// cannot. spernakit's status has always carried it; this is the same information.
 		const since = status.recordedAt === null ? 'never run' : `recorded ${status.recordedAt}`;
 		console.log(
-			`${status.step}: ${state} (${status.dependencyCount} files, duration ${duration}, ${since})`
+			`${status.step}: ${state} (${status.dependencyCount} files, duration ${duration}, ${since})`,
 		);
 	}
 }

@@ -1,14 +1,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import {
+	type BackendUsageQuery,
+	type InvocationsQuery,
 	listBackendUsage,
 	listInvocations,
 	listOutputTimeseries,
 	listResourceUsage,
 	listTimeseries,
 	listTopUsed,
-	type InvocationsQuery,
-	type BackendUsageQuery,
 	type OutputTimeseriesQuery,
 	type ResourceUsageQuery,
 	type TimeseriesQuery,

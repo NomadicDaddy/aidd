@@ -28,7 +28,7 @@ export const defaultComplexityThresholds: ComplexityThresholds = {
  * misclassification only over- or under-plans, never breaks a run. */
 export function classifyComplexity(
 	signals: ComplexitySignals,
-	thresholds: ComplexityThresholds = defaultComplexityThresholds
+	thresholds: ComplexityThresholds = defaultComplexityThresholds,
 ): ComplexityTier {
 	let score = 0;
 	if (signals.dependencyCount >= thresholds.depsMedium * 3) score += 2;

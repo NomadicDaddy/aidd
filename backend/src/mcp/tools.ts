@@ -22,7 +22,7 @@ export interface ToolDefinition {
 	handler: (
 		client: AiddApiClient,
 		args: Record<string, unknown>,
-		state: ChatState
+		state: ChatState,
 	) => Promise<unknown>;
 	inputSchema: JsonSchema;
 	name: string;
@@ -172,7 +172,7 @@ export const TOOLS: ToolDefinition[] = [
 		description: 'Launch a Director suggestion using its exact recipe or run directive.',
 		handler: (client, args) =>
 			client.post(
-				`/api/v1/director/suggestions/${encodeURIComponent(requireString(args, 'suggestionId'))}/launch`
+				`/api/v1/director/suggestions/${encodeURIComponent(requireString(args, 'suggestionId'))}/launch`,
 			),
 		inputSchema: {
 			properties: { suggestionId: { description: 'Suggestion id.', type: 'string' } },
@@ -209,14 +209,14 @@ export const TOOLS: ToolDefinition[] = [
 			if (!sessionId) {
 				const created = await client.post<{ session: { id: string } }>(
 					'/api/v1/director/chat/sessions',
-					{ title: 'MCP chat' }
+					{ title: 'MCP chat' },
 				);
 				sessionId = created.session.id;
 				state.sessionId = sessionId;
 			}
 			const result = await client.post<{ messages: { assistant: { content: string } } }>(
 				`/api/v1/director/chat/sessions/${encodeURIComponent(sessionId)}/messages`,
-				{ content: message }
+				{ content: message },
 			);
 			return { reply: result.messages.assistant.content, sessionId };
 		},

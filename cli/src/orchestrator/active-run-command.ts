@@ -1,6 +1,6 @@
 import type { RunPlan } from 'aidd-shared/plan/types';
 
-const canonicalReplayFlags = new Set(['--project-dir', '--cli', '--model', '--reasoning-effort']);
+const canonicalReplayFlags = new Set(['--cli', '--model', '--project-dir', '--reasoning-effort']);
 
 function stripCanonicalReplayFlags(argv: readonly string[]): string[] {
 	const stripped: string[] = [];

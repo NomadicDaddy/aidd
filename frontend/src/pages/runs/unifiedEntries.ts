@@ -52,7 +52,7 @@ export function isSkillSession(session: PipelineSessionRecord): boolean {
 // its chronological slot without a jarring re-sort.
 export function buildUnifiedEntries(
 	runs: RunRecord[],
-	sessions: PipelineSessionRecord[]
+	sessions: PipelineSessionRecord[],
 ): UnifiedEntry[] {
 	const entries: UnifiedEntry[] = [
 		...runs.map((run): UnifiedEntry => ({ kind: 'run', run })),
@@ -117,7 +117,7 @@ export function initialSelection(searchParams: URLSearchParams): undefined | Uni
 // list; the console then needs a single-record fetch (useRunRecord) to open it.
 export function needsRunRecordFallback(
 	selection: undefined | UnifiedSelection,
-	runs: RunRecord[]
+	runs: RunRecord[],
 ): boolean {
 	return selection?.kind === 'run' && !runs.some((run) => run.id === selection.id);
 }
@@ -137,7 +137,7 @@ export function oldestStartedAt(items: { startedAt: number }[]): number | undefi
 // advances the lagging source (nothing is lost, only deferred). An exhausted source
 // (hasMore=false) imposes no floor.
 export function historyDisplayFloor(
-	sources: { hasMore: boolean; oldestLoaded: number | undefined }[]
+	sources: { hasMore: boolean; oldestLoaded: number | undefined }[],
 ): number {
 	let floor = Number.NEGATIVE_INFINITY;
 	for (const source of sources) {

@@ -1,7 +1,6 @@
 {
 	"compilerOptions": {
 		"allowImportingTsExtensions": true,
-		"allowSyntheticDefaultImports": true,
 		"erasableSyntaxOnly": true,
 		"esModuleInterop": true,
 		"exactOptionalPropertyTypes": true,

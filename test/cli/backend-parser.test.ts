@@ -9,7 +9,7 @@ describe('backend parser', () => {
 		const events = parsePlainBackendOutput('', 'hit your rate limit', 1);
 		expect(events.some((event) => event.type === 'rate_limit')).toBe(true);
 		expect(
-			events.some((event) => event.type === 'error' && event.reason === 'rate_limit')
+			events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
 		).toBe(true);
 	});
 
@@ -36,7 +36,7 @@ describe('backend parser', () => {
 		const events = parsePlainBackendOutput(
 			JSON.stringify({ type: 'error', message: 'you hit your rate limit' }),
 			'',
-			1
+			1,
 		);
 		expect(events.some((event) => event.type === 'rate_limit')).toBe(true);
 	});
@@ -49,7 +49,7 @@ describe('backend parser', () => {
 				message: 'HTTP 401 invalid API key',
 			}),
 			'',
-			0
+			0,
 		);
 
 		expect(exitCodeFromEvents(events)).toBe(orchestratorExitCodes.providerError);
@@ -69,7 +69,7 @@ describe('backend parser', () => {
 				}),
 			].join('\n'),
 			'',
-			0
+			0,
 		);
 
 		expect(events).toContainEqual({
@@ -98,7 +98,7 @@ describe('backend parser', () => {
 				},
 			}),
 			'',
-			0
+			0,
 		);
 		const usage = events.find((event) => event.type === 'usage');
 		expect(usage).toBeDefined();
@@ -120,7 +120,7 @@ describe('backend parser', () => {
 					aggregated_output: '[OK] lint and typecheck',
 					exit_code: 0,
 				},
-			})
+			}),
 		);
 
 		expect(events).toEqual([
@@ -187,7 +187,7 @@ describe('backend parser', () => {
 				}),
 			].join('\n'),
 			'',
-			0
+			0,
 		);
 		expect(events.some((event) => event.type === 'assistant_text')).toBe(true);
 		expect(events).toContainEqual({
@@ -232,7 +232,7 @@ describe('backend parser', () => {
 				},
 			}),
 			'',
-			0
+			0,
 		);
 		const usage = events.find((event) => event.type === 'usage');
 		expect(usage).toBeDefined();
@@ -260,10 +260,10 @@ describe('claude-code structured rate limits', () => {
 		expect(rateLimit.resetAt).toBe(new Date(1783550400 * 1000).toISOString());
 		// The trailing exit-fallback error must honor the structured event, not downgrade to provider.
 		expect(
-			events.some((event) => event.type === 'error' && event.reason === 'rate_limit')
+			events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
 		).toBe(true);
 		expect(events.some((event) => event.type === 'error' && event.reason === 'provider')).toBe(
-			false
+			false,
 		);
 	});
 
@@ -287,7 +287,7 @@ describe('claude-code structured rate limits', () => {
 		const events = parsePlainBackendOutput(line, '', 1);
 		expect(events.some((event) => event.type === 'rate_limit')).toBe(true);
 		expect(
-			events.some((event) => event.type === 'error' && event.reason === 'rate_limit')
+			events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
 		).toBe(true);
 	});
 });
@@ -387,7 +387,7 @@ describe('codex real error surfacing', () => {
 		const line = JSON.stringify({ type: 'error', message: nested });
 		const events = parseCodexBackendOutput(line, '', 1);
 		expect(
-			events.some((event) => event.type === 'error' && event.reason === 'rate_limit')
+			events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
 		).toBe(true);
 	});
 });

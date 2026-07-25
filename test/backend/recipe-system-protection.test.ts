@@ -41,7 +41,7 @@ describe('system recipe protection', () => {
 		await service.writeRecipe(codingRecipe);
 
 		await expect(
-			service.writeRecipe({ ...codingRecipe, name: 'renamed coding' })
+			service.writeRecipe({ ...codingRecipe, name: 'renamed coding' }),
 		).rejects.toMatchObject({
 			status: 409,
 		});

@@ -1,4 +1,4 @@
-import type { CLIBackend, AgentEvent } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 import type { BackendName } from 'aidd-shared/plan/types';
 
@@ -21,7 +21,7 @@ import { directoryExists, fileExists, hasAiddMetadata } from './discovery.ts';
 interface RecommendContext {
 	backendFactory: (name: BackendName) => CLIBackend;
 	directAiService: DirectAiRunner;
-	getConfig: () => ResolvedConfig & { web: ResolvedWebConfig };
+	getConfig: () => { web: ResolvedWebConfig } & ResolvedConfig;
 }
 
 const MAX_SPEC_BYTES = 4 * 1024;
@@ -44,7 +44,7 @@ function fallbackFor(targetNonEmpty: boolean): ProjectRecommendResultDto {
 // counts as non-empty.
 async function resolveTargetNonEmpty(
 	allowedRoots: string[],
-	input: ProjectRecommendInputDto
+	input: ProjectRecommendInputDto,
 ): Promise<boolean> {
 	const candidate = input.path?.trim()
 		? input.path.trim()
@@ -69,7 +69,7 @@ async function resolveTargetNonEmpty(
 
 async function loadSpecText(
 	allowedRoots: string[],
-	spec: ProjectRecommendInputDto['spec']
+	spec: ProjectRecommendInputDto['spec'],
 ): Promise<string> {
 	const trimmed = spec.value.trim();
 	if (trimmed.length === 0) {
@@ -102,7 +102,7 @@ function buildPrompt(name: string, specText: string, targetNonEmpty: boolean): s
 		options.push(
 			'  - "ingest"     The selected directory already contains a codebase. Bring it under',
 			'                 aidd management as-is (analyze, profile, audit) without scaffolding',
-			'                 over it. Strongly prefer this when existing code is present.'
+			'                 over it. Strongly prefer this when existing code is present.',
 		);
 	}
 	const choices = targetNonEmpty ? '"fresh"|"spernakit"|"ingest"' : '"fresh"|"spernakit"';
@@ -178,7 +178,7 @@ function parseRecommendation(reply: string, targetNonEmpty: boolean): ProjectRec
 
 export async function recommendProjectMode(
 	ctx: RecommendContext,
-	input: ProjectRecommendInputDto
+	input: ProjectRecommendInputDto,
 ): Promise<ProjectRecommendResultDto> {
 	const config = ctx.getConfig();
 	const name = input.name.trim();
@@ -219,7 +219,7 @@ export async function recommendProjectMode(
 		events.push(event);
 	}
 	const modifiedFiles = events.flatMap((event) =>
-		event.type === 'done' ? event.filesModified : []
+		event.type === 'done' ? event.filesModified : [],
 	);
 	if (modifiedFiles.length > 0) {
 		throw new HttpError('Advisor attempted to modify files; rejecting response', 500);

@@ -3,7 +3,7 @@ import { createConnection } from 'node:net';
 export function isPortListening(
 	port: number,
 	host = '127.0.0.1',
-	timeoutMs = 500
+	timeoutMs = 500,
 ): Promise<boolean> {
 	return new Promise((resolve) => {
 		const socket = createConnection({ host, port });

@@ -93,10 +93,10 @@ describe('claude-code stream regression fixtures', () => {
 
 		expect(metrics.toolBreakdown.bash).toBe(3);
 		expect(
-			details.commands.some((command) => command.includes('recover prior orphaned work'))
+			details.commands.some((command) => command.includes('recover prior orphaned work')),
 		).toBe(true);
 		expect(details.commands.some((command) => command.includes('implement feature-core'))).toBe(
-			true
+			true,
 		);
 		expect(extractStructuredResult(events)).toEqual({
 			featureId: 'feature-core',

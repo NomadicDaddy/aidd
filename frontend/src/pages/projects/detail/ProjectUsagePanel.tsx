@@ -17,9 +17,9 @@ function costLabel(usage: ProjectUsageTotals): string {
 
 function MetricSummary({ detail, label, value }: { detail: string; label: string; value: string }) {
 	return (
-		<div className="bg-card min-w-0 px-4 py-3">
+		<div className="min-w-0 bg-card px-4 py-3">
 			<div className="text-xs text-neutral-500 uppercase">{label}</div>
-			<div className="text-foreground mt-1 text-xl font-semibold">{value}</div>
+			<div className="mt-1 text-xl font-semibold text-foreground">{value}</div>
 			<div className="mt-1 text-xs text-neutral-500">{detail}</div>
 		</div>
 	);
@@ -61,7 +61,7 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 	return (
 		<div className="min-w-0">
 			<div className="border-b px-4 py-3 dark:border-neutral-800">
-				<h3 className="text-foreground text-sm font-semibold">By execution target</h3>
+				<h3 className="text-sm font-semibold text-foreground">By execution target</h3>
 				<p className="text-xs text-neutral-500">CLI and model combinations.</p>
 			</div>
 			<div className="overflow-x-auto">
@@ -110,7 +110,7 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 	return (
 		<div className="min-w-0 border-t lg:border-t-0 lg:border-l dark:border-neutral-800">
 			<div className="border-b px-4 py-3 dark:border-neutral-800">
-				<h3 className="text-foreground text-sm font-semibold">By run mode</h3>
+				<h3 className="text-sm font-semibold text-foreground">By run mode</h3>
 				<p className="text-xs text-neutral-500">
 					Recorded mode; skill runs commonly use directive.
 				</p>
@@ -163,7 +163,7 @@ export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
 			<Card className="overflow-hidden p-0">
 				<div className="border-b px-4 py-3 dark:border-neutral-800">
 					<h2
-						className="text-foreground text-sm font-semibold"
+						className="text-sm font-semibold text-foreground"
 						id="project-usage-heading">
 						AI usage
 					</h2>

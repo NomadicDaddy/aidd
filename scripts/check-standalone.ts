@@ -52,7 +52,7 @@ export function parseCheckStandaloneArgs(argv: string[]): CheckStandaloneArgs {
 			const target = ALL_TARGETS.find((candidate) => candidate.name === name);
 			if (!target) {
 				throw new Error(
-					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`
+					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
 				);
 			}
 			targets.push(target);
@@ -72,7 +72,7 @@ export function parseCheckStandaloneArgs(argv: string[]): CheckStandaloneArgs {
 export function canProbeTarget(
 	target: CompileTarget,
 	platform: NodeJS.Platform = process.platform,
-	arch = process.arch
+	arch = process.arch,
 ): boolean {
 	if (target.name.startsWith('bun-windows-')) return platform === 'win32';
 	if (target.name.startsWith('bun-linux-')) return platform === 'linux';
@@ -115,7 +115,7 @@ export function createProbeSpecs(outDir: string, target: CompileTarget): ProbeSp
 export async function runProbe(
 	spec: ProbeSpec,
 	cwd: string,
-	timeoutMs = DEFAULT_PROBE_TIMEOUT_MS
+	timeoutMs = DEFAULT_PROBE_TIMEOUT_MS,
 ): Promise<ProbeResult> {
 	if (!existsSync(spec.binaryPath)) {
 		return {
@@ -162,7 +162,7 @@ export async function runProbe(
 
 export async function checkStandaloneDistributions(
 	rootDir: string,
-	args: CheckStandaloneArgs
+	args: CheckStandaloneArgs,
 ): Promise<StandaloneCheckResult[]> {
 	const results: StandaloneCheckResult[] = [];
 
@@ -179,7 +179,7 @@ export async function checkStandaloneDistributions(
 				probeSkippedReason = `target is not executable on ${process.platform}/${process.arch}`;
 			} else {
 				probeResults = await Promise.all(
-					createProbeSpecs(outDir, target).map((spec) => runProbe(spec, outDir))
+					createProbeSpecs(outDir, target).map((spec) => runProbe(spec, outDir)),
 				);
 			}
 		}
@@ -200,7 +200,7 @@ export function hasStandaloneCheckFailure(results: StandaloneCheckResult[]): boo
 	return results.some(
 		(result) =>
 			result.layoutIssues.length > 0 ||
-			result.probeResults.some((probeResult) => !probeResult.passed)
+			result.probeResults.some((probeResult) => !probeResult.passed),
 	);
 }
 
@@ -222,7 +222,7 @@ export function formatStandaloneCheckResults(results: StandaloneCheckResult[]): 
 				lines.push(`[PASS] ${result.target.name} probe: ${probeResult.command}`);
 			} else {
 				lines.push(
-					`[FAIL] ${result.target.name} probe: ${probeResult.command}: ${probeResult.errorMessage}`
+					`[FAIL] ${result.target.name} probe: ${probeResult.command}: ${probeResult.errorMessage}`,
 				);
 			}
 		}
@@ -232,7 +232,7 @@ export function formatStandaloneCheckResults(results: StandaloneCheckResult[]): 
 
 export async function main(
 	argv: string[] = process.argv.slice(2),
-	rootDir = process.cwd()
+	rootDir = process.cwd(),
 ): Promise<number> {
 	let args: CheckStandaloneArgs;
 	try {
@@ -251,7 +251,7 @@ function probeFailureMessage(
 	expectedOutput: string,
 	exitCode: null | number,
 	timedOut: boolean,
-	output: string
+	output: string,
 ): string {
 	if (timedOut) return `timed out before printing ${expectedOutput}`;
 	if (exitCode !== 0) return `exited ${exitCode}; expected output containing ${expectedOutput}`;

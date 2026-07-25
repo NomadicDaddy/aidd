@@ -2,9 +2,9 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	ChildProcessReaper,
-	type ReapDiagnostic,
 	parsePidPpidTable,
 	type ProcessTableEntry,
+	type ReapDiagnostic,
 } from 'aidd-shared/lib/childProcessReaper';
 import { isProcessAlive, killProcessTree } from 'aidd-shared/lib/processTree';
 
@@ -27,7 +27,7 @@ describe('parsePidPpidTable', () => {
 
 	test('captures the start-time token when the table carries one', () => {
 		const output = ['  123   1 Thu Jul 10 09:15:02 2026', '456 123 20260710091502.123456'].join(
-			'\n'
+			'\n',
 		);
 		expect(parsePidPpidTable(output)).toEqual([
 			{ pid: 123, ppid: 1, startId: 'Thu Jul 10 09:15:02 2026' },
@@ -88,7 +88,7 @@ function fakeWorld(platform: NodeJS.Platform, table: ProcessTableEntry[]): FakeW
 					world.live.get(pid) ??
 						(world.alive.has(pid)
 							? (world.table.find((entry) => entry.pid === pid) ?? null)
-							: null)
+							: null),
 				),
 		}),
 		table,
@@ -198,7 +198,7 @@ describe('ChildProcessReaper (hermetic)', () => {
 						live.get(pid) ??
 							(alive.has(pid)
 								? (rows.find((entry) => entry.pid === pid) ?? null)
-								: null)
+								: null),
 					),
 			});
 			return { alive, diagnostics, killed, live, reaper };
@@ -433,7 +433,7 @@ describe('ChildProcessReaper (snapshot cadence)', () => {
 				reaper.stop();
 			}
 		},
-		{ timeout: 20_000 }
+		{ timeout: 20_000 },
 	);
 });
 
@@ -448,7 +448,7 @@ describe('ChildProcessReaper (real processes)', () => {
 			try {
 				const intermediate = Bun.spawn(
 					[process.execPath, 'run', intermediatePath, grandchildPath, infoPath],
-					{ stderr: 'inherit', stdin: 'ignore', stdout: 'ignore', windowsHide: true }
+					{ stderr: 'inherit', stdin: 'ignore', stdout: 'ignore', windowsHide: true },
 				);
 				reaper.attach(intermediate.pid);
 				const info = await pollFor(() => readLeakedServerInfo(infoPath), 20_000);
@@ -460,7 +460,7 @@ describe('ChildProcessReaper (real processes)', () => {
 				await pollFor(
 					() =>
 						Promise.resolve(reaper.trackedPids().includes(info.pid) ? true : undefined),
-					15_000
+					15_000,
 				);
 				await intermediate.exited;
 				// The backend (intermediate) is gone; the listener survived it — the leak.
@@ -469,7 +469,7 @@ describe('ChildProcessReaper (real processes)', () => {
 				expect(reaped).toContain(info.pid);
 				await pollFor(
 					() => Promise.resolve(isProcessAlive(info.pid) ? undefined : true),
-					5_000
+					5_000,
 				);
 				expect(isProcessAlive(info.pid)).toBe(false);
 			} finally {
@@ -478,6 +478,6 @@ describe('ChildProcessReaper (real processes)', () => {
 				await removeTempTree(dir);
 			}
 		},
-		{ timeout: 60_000 }
+		{ timeout: 60_000 },
 	);
 });

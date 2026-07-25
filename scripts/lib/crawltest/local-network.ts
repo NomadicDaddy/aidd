@@ -30,7 +30,7 @@ async function fetchJsonWith<T>(
 	fetcher: FetchLike,
 	baseUrl: string,
 	path: string,
-	init?: RequestInit
+	init?: RequestInit,
 ): Promise<T> {
 	const response = await fetcher(new URL(path, baseUrl), init);
 	if (!response.ok) {
@@ -77,7 +77,7 @@ function normalizeRequestedHost(value: string): string {
 export function selectLocalNetworkHost(
 	configuredHostname: string,
 	requestedHost: null | string,
-	interfaceAddresses: LocalNetworkInterfaceAddress[]
+	interfaceAddresses: LocalNetworkInterfaceAddress[],
 ): null | string {
 	if (requestedHost?.trim()) return normalizeRequestedHost(requestedHost);
 	if (!isWildcardHostname(configuredHostname)) return configuredHostname.trim();
@@ -93,7 +93,7 @@ async function fetchStatus(
 	fetcher: FetchLike,
 	baseUrl: string,
 	path: string,
-	init?: RequestInit
+	init?: RequestInit,
 ): Promise<null | number> {
 	try {
 		const response = await fetcher(new URL(path, baseUrl), init);
@@ -108,7 +108,7 @@ export async function assertLocalNetworkAccess(
 	dependencies: LocalNetworkProbeDependencies = {
 		fetch,
 		interfaceAddresses: systemInterfaceAddresses,
-	}
+	},
 ): Promise<string[]> {
 	const errors: string[] = [];
 	let settings: SettingsConfigResponse;
@@ -116,7 +116,7 @@ export async function assertLocalNetworkAccess(
 		settings = await fetchJsonWith<SettingsConfigResponse>(
 			dependencies.fetch,
 			args.baseUrl,
-			'/api/v1/settings/config'
+			'/api/v1/settings/config',
 		);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
@@ -129,7 +129,7 @@ export async function assertLocalNetworkAccess(
 	}
 	if (isLoopbackHostname(hostname)) {
 		errors.push(
-			`[local-network] web.hostname "${hostname}" is loopback-only; bind to 0.0.0.0, ::, or a LAN address`
+			`[local-network] web.hostname "${hostname}" is loopback-only; bind to 0.0.0.0, ::, or a LAN address`,
 		);
 	}
 	if (errors.length > 0) return errors;
@@ -137,7 +137,7 @@ export async function assertLocalNetworkAccess(
 	const lanHost = selectLocalNetworkHost(
 		hostname,
 		args.localNetworkHost,
-		dependencies.interfaceAddresses()
+		dependencies.interfaceAddresses(),
 	);
 	if (!lanHost) {
 		return [
@@ -182,7 +182,7 @@ export async function assertLocalNetworkAccess(
 		if (check.status === null || check.status < 200 || check.status >= 300) {
 			errors.push(
 				`[local-network] ${check.label} probe failed at ${lanBaseUrl}${check.path}` +
-					` (status=${check.status ?? 'unreachable'})`
+					` (status=${check.status ?? 'unreachable'})`,
 			);
 		}
 	}
@@ -191,12 +191,12 @@ export async function assertLocalNetworkAccess(
 		dependencies.fetch,
 		lanBaseUrl,
 		'/api/v1/settings/config',
-		{ headers: { Origin: INVALID_ORIGIN } }
+		{ headers: { Origin: INVALID_ORIGIN } },
 	);
 	if (invalidOriginStatus !== 403) {
 		errors.push(
 			`[local-network] invalid Origin was not rejected at ${lanBaseUrl}/api/v1/settings/config` +
-				` (expected 403, got ${invalidOriginStatus ?? 'unreachable'})`
+				` (expected 403, got ${invalidOriginStatus ?? 'unreachable'})`,
 		);
 	}
 

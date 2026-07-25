@@ -4,21 +4,21 @@ export function classifyErrorText(text: string): IterationErrorType | undefined 
 	if (commandOutputPassed(text)) return undefined;
 	if (
 		/\berror TS\d{3,5}\b|TypeScript (?:compilation )?(?:failed|error)|typecheck failed/i.test(
-			text
+			text,
 		)
 	) {
 		return 'typescript';
 	}
 	if (
 		/\b(?:eslint|biome|lint(?:ing)?) (?:failed|error|found \d+ problems?)\b|✖ \d+ problems? \(\d+ errors?/i.test(
-			text
+			text,
 		)
 	) {
 		return 'lint';
 	}
 	if (
 		/\bbuild (?:failed|error)|(?:webpack|rollup|vite|bun) build[^\n]*(?:failed|error)/i.test(
-			text
+			text,
 		)
 	) {
 		return 'build';

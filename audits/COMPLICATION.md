@@ -214,7 +214,7 @@ function updateUserProfile(
 	bio: string,
 	location: string,
 	website: string,
-	preferences: UserPreferences
+	preferences: UserPreferences,
 ) {
 	// Should use object parameter instead
 }
@@ -360,7 +360,7 @@ async function processLargeDataset(datasetId: string): Promise<ProcessedRecord[]
 				const enrichedData = await enrichRecord(record);
 				const validatedData = await validateBusinessRules(enrichedData);
 				return transformForOutput(validatedData);
-			})
+			}),
 		);
 
 		results.push(...processedBatch);

@@ -48,7 +48,7 @@ describe('groupDiaryByDay', () => {
 	test('buckets entries and items by local day, newest first', () => {
 		const groups = groupDiaryByDay(
 			[entry('2026-06-11', 'demo'), entry('2026-06-12', 'demo')],
-			[item('run_old', msFor('2026-06-11', 9)), item('run_new', msFor('2026-06-12', 9))]
+			[item('run_old', msFor('2026-06-11', 9)), item('run_new', msFor('2026-06-12', 9))],
 		);
 		expect(groups.map((group) => group.key)).toEqual(['2026-06-12', '2026-06-11']);
 		expect(groups[0]?.entries[0]?.date).toBe('2026-06-12');
@@ -58,7 +58,7 @@ describe('groupDiaryByDay', () => {
 	test('places an entry and the same day’s activity in one group', () => {
 		const groups = groupDiaryByDay(
 			[entry('2026-06-12', 'demo')],
-			[item('run_a', msFor('2026-06-12', 10))]
+			[item('run_a', msFor('2026-06-12', 10))],
 		);
 		expect(groups).toHaveLength(1);
 		expect(groups[0]?.entries).toHaveLength(1);
@@ -68,7 +68,7 @@ describe('groupDiaryByDay', () => {
 	test('sorts entries within a day by project name', () => {
 		const groups = groupDiaryByDay(
 			[entry('2026-06-12', 'zed'), entry('2026-06-12', 'alpha')],
-			[]
+			[],
 		);
 		expect(groups[0]?.entries.map((e) => e.projectName)).toEqual(['alpha', 'zed']);
 	});
@@ -87,7 +87,7 @@ describe('groupDiaryByDay', () => {
 
 	test('releases keep their kind tone; runs color by status', () => {
 		expect(timelineItemTone({ ...item('r', 1), kind: 'release', status: 'completed' })).toBe(
-			'emerald'
+			'emerald',
 		);
 		expect(timelineItemTone({ ...item('r', 1), status: 'failed' })).toBe('red');
 	});

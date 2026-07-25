@@ -40,7 +40,7 @@ describe('project runtime port discovery', () => {
 					backendPort: 4100,
 					frontendPort: 4101,
 				});
-			}
+			},
 		);
 	});
 
@@ -58,7 +58,7 @@ describe('project runtime port discovery', () => {
 					backendPort: null,
 					frontendPort: 5173,
 				});
-			}
+			},
 		);
 	});
 
@@ -74,7 +74,7 @@ describe('project runtime port discovery', () => {
 					backendPort: 4100,
 					frontendPort: null,
 				});
-			}
+			},
 		);
 	});
 
@@ -94,7 +94,7 @@ describe('project runtime port discovery', () => {
 					backendPort: 4100,
 					frontendPort: 5173,
 				});
-			}
+			},
 		);
 		await withProject(
 			{
@@ -108,7 +108,7 @@ describe('project runtime port discovery', () => {
 					backendPort: null,
 					frontendPort: 5174,
 				});
-			}
+			},
 		);
 	});
 
@@ -122,7 +122,7 @@ describe('project runtime port discovery', () => {
 			},
 			async (projectDir) => {
 				expect(await gatherPorts(projectDir)).toBeNull();
-			}
+			},
 		);
 	});
 
@@ -141,7 +141,7 @@ describe('project runtime port discovery', () => {
 					backendPort: 4100,
 					frontendPort: 5173,
 				});
-			}
+			},
 		);
 	});
 
@@ -156,7 +156,7 @@ describe('project runtime port discovery', () => {
 					backendPort: 4100,
 					frontendPort: null,
 				});
-			}
+			},
 		);
 	});
 
@@ -172,7 +172,7 @@ describe('project runtime port discovery', () => {
 			},
 			async (projectDir) => {
 				expect(await gatherPorts(projectDir)).toBeNull();
-			}
+			},
 		);
 		await withProject(
 			{
@@ -182,7 +182,7 @@ describe('project runtime port discovery', () => {
 			},
 			async (projectDir) => {
 				expect(await gatherPorts(projectDir)).toBeNull();
-			}
+			},
 		);
 		await withProject({ packageJson: { scripts: {} } }, async (projectDir) => {
 			expect(await gatherPorts(projectDir)).toBeNull();

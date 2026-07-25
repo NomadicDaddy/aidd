@@ -21,10 +21,10 @@ import {
 	scanRoot,
 } from './discovery.ts';
 import {
-	ProjectNotFoundError,
 	type ProjectDeleteInput,
 	type ProjectMoveInput,
 	type ProjectMoveResult,
+	ProjectNotFoundError,
 } from './types.ts';
 
 interface LifecycleContext {
@@ -88,7 +88,7 @@ async function renameWithRetry(sourcePath: string, destinationPath: string): Pro
 function projectMoveBlockedError(sourcePath: string, destinationPath: string): HttpError {
 	return new HttpError(
 		`Project directory could not be moved from ${sourcePath} to ${destinationPath} because the folder is in use or access was denied. Close terminals, editors, Explorer windows, dev servers, and other processes using the project folder, then try again.`,
-		409
+		409,
 	);
 }
 
@@ -113,7 +113,7 @@ export async function resolveProjectPath(ctx: LifecycleContext, path: string): P
 
 export async function resolveDiscoveredProject(
 	ctx: LifecycleContext,
-	projectId: string
+	projectId: string,
 ): Promise<string> {
 	// Primary path: try base64url-encoded absolute path first
 	let decoded: string;
@@ -137,10 +137,10 @@ export async function resolveDiscoveredProject(
 async function resolveByNameFallback(ctx: LifecycleContext, projectId: string): Promise<string> {
 	const isCaseInsensitive = process.platform === 'win32';
 	const isIgnoredDirectory = createIgnoredDirectoryMatcher(
-		ctx.config.ignoredFolders.length > 0 ? ctx.config.ignoredFolders : defaultIgnoredFolders
+		ctx.config.ignoredFolders.length > 0 ? ctx.config.ignoredFolders : defaultIgnoredFolders,
 	);
 	const scans = await Promise.all(
-		ctx.config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory))
+		ctx.config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory)),
 	);
 	const seenPaths = new Set<string>();
 	const candidates: string[] = [];
@@ -162,7 +162,7 @@ async function resolveByNameFallback(ctx: LifecycleContext, projectId: string): 
 			matches = candidates.filter(
 				(path) =>
 					nameMatches(basename(path), slug) &&
-					matchesProjectRouteDisambiguator(path, disambiguator.toLowerCase())
+					matchesProjectRouteDisambiguator(path, disambiguator.toLowerCase()),
 			);
 		}
 	}
@@ -175,7 +175,7 @@ async function resolveByNameFallback(ctx: LifecycleContext, projectId: string): 
 			.map((path) => routeIds.get(path) ?? encodeProjectId(path))
 			.join(', ');
 		throw new ProjectNotFoundError(
-			`Ambiguous project name "${projectId}" matches ${matches.length} projects. Use one of: ${choices}.`
+			`Ambiguous project name "${projectId}" matches ${matches.length} projects. Use one of: ${choices}.`,
 		);
 	}
 	throw new ProjectNotFoundError(`Project not found: ${projectId}`);
@@ -186,7 +186,7 @@ export async function deleteProject(
 	projectId: string,
 	input: ProjectDeleteInput,
 	hasActiveRuns: (projectPath: string) => Promise<boolean>,
-	purgeProjectRuns: (projectPath: string) => Promise<number>
+	purgeProjectRuns: (projectPath: string) => Promise<number>,
 ): Promise<{ id: string; mode: ProjectDeleteInput['mode']; path: string }> {
 	const projectDir = await resolveDiscoveredProject(ctx, projectId);
 	if (input.confirmation !== projectDir) {
@@ -217,7 +217,7 @@ export async function moveProject(
 	projectId: string,
 	input: ProjectMoveInput,
 	hasActiveRuns: (projectPath: string) => Promise<boolean>,
-	updateProjectPathReferences: (sourcePath: string, destinationPath: string) => Promise<void>
+	updateProjectPathReferences: (sourcePath: string, destinationPath: string) => Promise<void>,
 ): Promise<ProjectMoveResult> {
 	const sourcePath = await resolveDiscoveredProject(ctx, projectId);
 	if (await hasActiveRuns(sourcePath)) {
@@ -228,11 +228,11 @@ export async function moveProject(
 		throw new HttpError('Destination root does not exist', 400);
 	}
 	const destinationName = assertProjectDirectoryName(
-		input.destinationName?.trim() || basename(sourcePath)
+		input.destinationName?.trim() || basename(sourcePath),
 	);
 	const destinationPath = assertAllowedPath(
 		[destinationRoot],
-		join(destinationRoot, destinationName)
+		join(destinationRoot, destinationName),
 	);
 	if (resolve(sourcePath) === destinationPath) {
 		throw new HttpError('Project is already at that destination', 409);

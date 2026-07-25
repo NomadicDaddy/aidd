@@ -46,7 +46,7 @@ export async function getLatestMetrics(db: WebDatabase): Promise<null | SystemMe
 export async function getMetricsHistory(
 	db: WebDatabase,
 	hours: number,
-	limit: number
+	limit: number,
 ): Promise<SystemMetricHistoryPoint[]> {
 	const rows = await db
 		.select()
@@ -54,8 +54,8 @@ export async function getMetricsHistory(
 		.where(
 			and(
 				eq(systemMetrics.metricType, 'system'),
-				gte(systemMetrics.timestamp, windowCutoff(hours))
-			)
+				gte(systemMetrics.timestamp, windowCutoff(hours)),
+			),
 		)
 		.orderBy(desc(systemMetrics.timestamp))
 		.limit(limit);
@@ -91,7 +91,7 @@ function parseRating(metadata: null | string): null | string {
  */
 export async function getWebVitalsSummary(
 	db: WebDatabase,
-	hours: number
+	hours: number,
 ): Promise<WebVitalSummary[]> {
 	const rows = await db
 		.select()
@@ -99,8 +99,8 @@ export async function getWebVitalsSummary(
 		.where(
 			and(
 				like(systemMetrics.metricType, 'web-vital-%'),
-				gte(systemMetrics.timestamp, windowCutoff(hours))
-			)
+				gte(systemMetrics.timestamp, windowCutoff(hours)),
+			),
 		)
 		.orderBy(desc(systemMetrics.timestamp));
 

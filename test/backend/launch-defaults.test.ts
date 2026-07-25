@@ -40,7 +40,7 @@ const baseConfig: ResolvedConfig = {
 };
 
 async function makeProjectWithConfig(
-	config: object
+	config: object,
 ): Promise<{ projectDir: string; root: string }> {
 	const root = await testTempDir('aidd-launch-defaults-');
 	const projectDir = join(root, 'proj');
@@ -68,7 +68,7 @@ interface LaunchDefaultsBody {
 
 async function getDefaults(app: ReturnType<typeof makeApp>, query = '') {
 	const response = await app.handle(
-		new Request(`http://localhost/api/v1/launch-defaults${query}`)
+		new Request(`http://localhost/api/v1/launch-defaults${query}`),
 	);
 	return { body: (await response.json()) as LaunchDefaultsBody, status: response.status };
 }
@@ -162,7 +162,7 @@ describe('GET /api/v1/launch-defaults', () => {
 		try {
 			const { body } = await getDefaults(
 				makeApp(baseConfig),
-				`?projectDir=${encodeURIComponent(projectDir)}`
+				`?projectDir=${encodeURIComponent(projectDir)}`,
 			);
 			expect(body.projectConfigApplied).toBe(true);
 			expect(body.effective).toMatchObject({ backend: 'codex', model: 'project-model' });

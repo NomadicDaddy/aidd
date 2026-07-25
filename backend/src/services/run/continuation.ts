@@ -43,7 +43,7 @@ export interface ContinuationRunFacts {
 //   needs a launch (the gap this feature exists to close).
 export function evaluateContinuationValue(
 	facts: ContinuationRunFacts,
-	entry: LedgerTerminalEntry | undefined
+	entry: LedgerTerminalEntry | undefined,
 ): RunContinuationValue {
 	if (facts.mode !== 'coding') return 'none';
 	if (facts.pipelineSessionId !== null) return 'none';
@@ -70,10 +70,10 @@ function remainingSelectedFeatureCount(entry: LedgerTerminalEntry | undefined): 
 // Ledger line for one run; absence (or an unreadable ledger) resolves to undefined.
 export async function readContinuationLedgerEntry(
 	projectPath: string,
-	runId: string
+	runId: string,
 ): Promise<LedgerTerminalEntry | undefined> {
 	const entries = await readLedgerTerminalEntries(projectPath).catch(
-		() => new Map<string, LedgerTerminalEntry>()
+		() => new Map<string, LedgerTerminalEntry>(),
 	);
 	return entries.get(runId);
 }
@@ -92,7 +92,7 @@ export async function resolveHeartbeatContinuationValue(
 		stopReason: null | string;
 		summary: null | string;
 	},
-	finalStatus: WebRunStatus
+	finalStatus: WebRunStatus,
 ): Promise<RunContinuationValue> {
 	if (record.mode !== 'coding') return 'none';
 	const entry = await readContinuationLedgerEntry(record.projectPath, record.id);
@@ -104,14 +104,14 @@ export async function resolveHeartbeatContinuationValue(
 			stopReason: record.stopReason,
 			summary: record.summary,
 		},
-		entry
+		entry,
 	);
 }
 
 // Number of ancestors reachable through chained_from_run_id (the original run has depth 0).
 export async function chainDepth(
 	db: WebDatabase,
-	run: { chainedFromRunId: null | string }
+	run: { chainedFromRunId: null | string },
 ): Promise<number> {
 	let depth = 0;
 	const seen = new Set<string>();
@@ -142,7 +142,7 @@ async function findFollowUpRunId(db: WebDatabase, runId: string): Promise<null |
 // intentionally not repeated: normal selection resumes the in_progress leftover first anyway,
 // and reconstructing argv-only flags would be fragile.
 export function buildContinuationLaunchRequest(
-	run: Pick<WebRunRow, 'backend' | 'id' | 'model' | 'projectPath' | 'reasoningEffort'>
+	run: Pick<WebRunRow, 'backend' | 'id' | 'model' | 'projectPath' | 'reasoningEffort'>,
 ): RunLaunchRequest {
 	return {
 		backend: run.backend as BackendInputName,
@@ -168,7 +168,7 @@ export async function continueRun(deps: ContinuationLaunchDeps, runId: string): 
 	if (!TERMINAL_STATUSES.has(row.status as WebRunStatus)) {
 		throw new RunControlError(
 			'Run is still active; continuation applies to finished runs',
-			409
+			409,
 		);
 	}
 	const reason = await resolveRowContinuationReason(row);
@@ -200,8 +200,8 @@ async function resolveRowContinuationReason(row: WebRunRow): Promise<null | RunC
 				stopReason: row.stopReason,
 				summary: row.summary,
 			},
-			entry
-		)
+			entry,
+		),
 	);
 }
 
@@ -221,7 +221,7 @@ export interface AutoChainDeps extends ContinuationLaunchDeps {
 export async function maybeAutoChainRun(
 	deps: AutoChainDeps,
 	runId: string,
-	reason: RunContinuationReason
+	reason: RunContinuationReason,
 ): Promise<void> {
 	try {
 		if (!deps.autoChainRuns) return;
@@ -234,7 +234,7 @@ export async function maybeAutoChainRun(
 		if (depth >= deps.autoChainLimit) {
 			webLogger.info(
 				{ depth, limit: deps.autoChainLimit, reason, runId },
-				'Auto-chain skipped: chain limit reached'
+				'Auto-chain skipped: chain limit reached',
 			);
 			return;
 		}

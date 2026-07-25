@@ -11,7 +11,7 @@ async function writeSkill(root: string, id: string, description: string): Promis
 	await mkdir(path, { recursive: true });
 	await Bun.write(
 		join(path, 'SKILL.md'),
-		`---\nname: ${id}\ndescription: ${description}\n---\n\n# ${id}\n\nBody.\n`
+		`---\nname: ${id}\ndescription: ${description}\n---\n\n# ${id}\n\nBody.\n`,
 	);
 	await mkdir(join(path, 'references'), { recursive: true });
 	await Bun.write(join(path, 'references', 'notes.md'), 'notes');
@@ -50,10 +50,10 @@ describe('managed skill imports', () => {
 				sourceSha256: preview.sourceSha256,
 			});
 			expect(await readFile(join(dataDir, 'skills', 'demo', 'SKILL.md'), 'utf8')).toBe(
-				await readFile(join(sourcePath, 'SKILL.md'), 'utf8')
+				await readFile(join(sourcePath, 'SKILL.md'), 'utf8'),
 			);
 			const registry = JSON.parse(
-				await readFile(importedSkillRegistryPath(dataDir), 'utf8')
+				await readFile(importedSkillRegistryPath(dataDir), 'utf8'),
 			) as {
 				schemaVersion: number;
 				skills: Record<string, { sourceSha256: string }>;
@@ -61,7 +61,7 @@ describe('managed skill imports', () => {
 			expect(registry.schemaVersion).toBe(1);
 			expect(registry.skills.demo?.sourceSha256).toBe(preview.sourceSha256);
 			expect((await listSkillDefinitions(appRoot, dataDir)).map((skill) => skill.id)).toEqual(
-				['demo']
+				['demo'],
 			);
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -84,7 +84,7 @@ describe('managed skill imports', () => {
 			await service.importSkill({ sourcePath });
 			await Bun.write(
 				join(sourcePath, 'SKILL.md'),
-				'---\nname: demo\ndescription: Replacement.\n---\n\n# Demo replacement\n'
+				'---\nname: demo\ndescription: Replacement.\n---\n\n# Demo replacement\n',
 			);
 			await expect(service.importSkill({ sourcePath })).rejects.toMatchObject({
 				status: 409,
@@ -95,11 +95,11 @@ describe('managed skill imports', () => {
 			await mkdir(join(appRoot, 'skills', 'bundled'), { recursive: true });
 			await Bun.write(
 				join(appRoot, 'skills', 'bundled', 'SKILL.md'),
-				'---\nname: bundled\ndescription: Bundled.\nmetadata:\n  aidd-category: runtime\n---\n\n# Bundled\n'
+				'---\nname: bundled\ndescription: Bundled.\nmetadata:\n  aidd-category: runtime\n---\n\n# Bundled\n',
 			);
 			const bundledSource = await writeSkill(sourceRoot, 'bundled', 'Imported.');
 			await expect(
-				service.importSkill({ replace: true, sourcePath: bundledSource })
+				service.importSkill({ replace: true, sourcePath: bundledSource }),
 			).rejects.toMatchObject({ status: 409 });
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -132,7 +132,7 @@ describe('managed skill imports', () => {
 			const linkedRootTarget = await writeSkill(
 				join(sourceRoot, 'targets'),
 				'linked-root',
-				'Linked root.'
+				'Linked root.',
 			);
 			const linkedRoot = join(sourceRoot, 'linked-root');
 			await symlink(linkedRootTarget, linkedRoot, 'junction');
@@ -155,7 +155,7 @@ describe('managed skill imports', () => {
 			});
 			const recursive = await writeSkill(join(dataDir, 'skills'), 'recursive', 'Recursive.');
 			await expect(
-				recursiveService.previewImport({ sourcePath: recursive })
+				recursiveService.previewImport({ sourcePath: recursive }),
 			).rejects.toMatchObject({
 				status: 400,
 			});
@@ -216,17 +216,17 @@ describe('managed skill imports', () => {
 				service.importSkill({ sourcePath }),
 			]);
 			const rejected = results.filter(
-				(result): result is PromiseRejectedResult => result.status === 'rejected'
+				(result): result is PromiseRejectedResult => result.status === 'rejected',
 			);
 			expect(results.length - rejected.length).toBe(1);
 			expect(rejected).toHaveLength(1);
 			expect(rejected[0]?.reason).toMatchObject({ status: 409 });
 			expect((await service.readSkill('demo')).description).toBe('Concurrent.');
 			expect((await listSkillDefinitions(appRoot, dataDir)).map((skill) => skill.id)).toEqual(
-				['demo']
+				['demo'],
 			);
 			expect(
-				(await readdir(join(dataDir, 'skills'))).filter((name) => name.startsWith('.'))
+				(await readdir(join(dataDir, 'skills'))).filter((name) => name.startsWith('.')),
 			).toEqual([]);
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -249,18 +249,18 @@ describe('managed skill imports', () => {
 			await service.importSkill({ sourcePath });
 			await Bun.write(
 				join(sourcePath, 'SKILL.md'),
-				'---\nname: wrong\ndescription: Bad.\n---\n# Bad\n'
+				'---\nname: wrong\ndescription: Bad.\n---\n# Bad\n',
 			);
 			await expect(service.importSkill({ replace: true, sourcePath })).rejects.toMatchObject({
 				status: 400,
 			});
 			expect((await service.readSkill('demo')).description).toBe('Stable.');
 			expect(
-				(await readdir(join(dataDir, 'skills'))).filter((name) => name.startsWith('.'))
+				(await readdir(join(dataDir, 'skills'))).filter((name) => name.startsWith('.')),
 			).toEqual([]);
 
 			await expect(
-				service.deleteImportedSkill('demo', ['recipe:demo-recipe'])
+				service.deleteImportedSkill('demo', ['recipe:demo-recipe']),
 			).rejects.toMatchObject({
 				status: 409,
 			});

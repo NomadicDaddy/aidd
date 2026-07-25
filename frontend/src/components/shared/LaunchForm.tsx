@@ -81,7 +81,7 @@ export function LaunchForm({
 					</label>
 				</div>
 				<div className="rounded-md border border-teal-200 bg-teal-50/60 p-3 text-sm dark:border-teal-900 dark:bg-teal-950/30">
-					<p className="text-foreground font-medium">
+					<p className="font-medium text-foreground">
 						Skills run as autonomous directives, not aidd audits.
 					</p>
 					<label className="mt-3 grid gap-1">

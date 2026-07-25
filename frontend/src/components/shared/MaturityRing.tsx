@@ -27,7 +27,7 @@ function describeArc(
 	cy: number,
 	radius: number,
 	startDegrees: number,
-	endDegrees: number
+	endDegrees: number,
 ): string {
 	const start = polarToCartesian(cx, cy, radius, endDegrees);
 	const end = polarToCartesian(cx, cy, radius, startDegrees);

@@ -3,11 +3,11 @@ import { type ChildProcessReaperOptions, type ReapDiagnostic } from './childReap
 import { extendDescendants } from './childReaperTracking.ts';
 import {
 	listProcessTable,
-	readProcessAncestry,
-	readProcessEntry,
 	parsePidPpidTable,
 	type ProcessTableEntry,
 	type ProcessTableLister,
+	readProcessAncestry,
+	readProcessEntry,
 } from './processTable.ts';
 import { isProcessAlive, killProcessTree } from './processTree.ts';
 
@@ -267,7 +267,7 @@ export class ChildProcessReaper {
 		const state = { descendants, rootPid, rootRow, rootVerified };
 		({ rootRow: this.rootRow, rootVerified: this.rootVerified } = extendDescendants(
 			state,
-			table
+			table,
 		));
 	}
 

@@ -86,7 +86,7 @@ export async function handlePostIteration(input: {
 			acc,
 			'exit_error',
 			orchestratorExitCodes.aborted,
-			summary
+			summary,
 		);
 		return { exitCode: orchestratorExitCodes.aborted, kind: 'return' };
 	}
@@ -100,7 +100,7 @@ export async function handlePostIteration(input: {
 			acc,
 			'blocked',
 			orchestratorExitCodes.validationError,
-			overrunSummary
+			overrunSummary,
 		);
 		return { exitCode: orchestratorExitCodes.validationError, kind: 'return' };
 	}
@@ -131,7 +131,7 @@ export async function handlePostIteration(input: {
 				acc,
 				'completed',
 				orchestratorExitCodes.success,
-				recoverySummary
+				recoverySummary,
 			);
 			return { exitCode: recoveredExit, kind: 'return' };
 		}
@@ -141,7 +141,7 @@ export async function handlePostIteration(input: {
 		const markerEvidence = buildFeatureBlockingContext(
 			finalize.details,
 			finalize.featureScope.completionMarkerIssue,
-			new Date().toISOString()
+			new Date().toISOString(),
 		);
 		const gateNote =
 			markerEvidence.commands.length > 0
@@ -155,7 +155,7 @@ export async function handlePostIteration(input: {
 			acc,
 			'blocked',
 			orchestratorExitCodes.validationError,
-			markerSummary
+			markerSummary,
 		);
 		return { exitCode: orchestratorExitCodes.validationError, kind: 'return' };
 	}
@@ -167,7 +167,7 @@ export async function handlePostIteration(input: {
 			events,
 			controller,
 			iteration,
-			runStartedAtMs
+			runStartedAtMs,
 		);
 		if (rate.stopRequested) {
 			move({ reason: 'stop requested during rate-limit wait', type: 'stopped' });
@@ -177,7 +177,7 @@ export async function handlePostIteration(input: {
 				acc,
 				'stop_requested',
 				orchestratorExitCodes.success,
-				finalize.displayedSummary
+				finalize.displayedSummary,
 			);
 			return { exitCode: orchestratorExitCodes.success, kind: 'return' };
 		}
@@ -190,7 +190,7 @@ export async function handlePostIteration(input: {
 				acc,
 				'exit_error',
 				orchestratorExitCodes.rateLimited,
-				summary
+				summary,
 			);
 			return { exitCode: orchestratorExitCodes.rateLimited, kind: 'return' };
 		}
@@ -215,7 +215,7 @@ export async function handlePostIteration(input: {
 			acc,
 			fatal.stopReason ?? 'exit_error',
 			fatal.exitCode,
-			finalize.displayedSummary
+			finalize.displayedSummary,
 		);
 		return { exitCode: fatalExit, kind: 'return' };
 	}
@@ -272,7 +272,7 @@ export async function handlePostIteration(input: {
 					blockingContext: buildFeatureBlockingContext(
 						finalize.details,
 						'flailing',
-						parkedAt
+						parkedAt,
 					),
 					passes: false,
 					status: 'waiting_approval',
@@ -292,7 +292,7 @@ export async function handlePostIteration(input: {
 		acc,
 		continuation.stopReason,
 		continuation.exitCode,
-		continuation.summary
+		continuation.summary,
 	);
 	return { exitCode: finalExit, kind: 'return' };
 }

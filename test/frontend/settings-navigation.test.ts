@@ -37,7 +37,7 @@ describe('settings navigation', () => {
 	test('uses the clean settings URL for the default workspace group', () => {
 		const next = settingsTabSearchParams(
 			new URLSearchParams('tab=control-panel&traceData=0'),
-			'workspace'
+			'workspace',
 		);
 
 		expect(next.has('tab')).toBe(false);

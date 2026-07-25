@@ -27,7 +27,7 @@ import {
 
 export function shouldRunRecipeStep(
 	step: RecipeDefinition['steps'][number],
-	parameters: Record<string, string>
+	parameters: Record<string, string>,
 ): boolean {
 	return step.when === undefined || parameters[step.when.parameter] === step.when.equals;
 }
@@ -101,7 +101,7 @@ export class StepExecutor {
 		recipe: RecipeDefinition,
 		context: ExecutionContext,
 		parentStepResultId?: string,
-		startSequenceNumber = 1
+		startSequenceNumber = 1,
 	): Promise<StepExecutionResult> {
 		for (const [index, step] of recipe.steps.entries()) {
 			const sequenceNumber = index + 1;
@@ -155,7 +155,7 @@ export class StepExecutor {
 				step,
 				context,
 				sequenceNumber,
-				parentStepResultId
+				parentStepResultId,
 			);
 			// Advance currentStepIndex AFTER the step has completed. Combined with the
 			// no-pre-bump approach above, this eliminates the bump-before-row window
@@ -184,14 +184,14 @@ export class StepExecutor {
 	async resumeRecipeSteps(
 		recipe: RecipeDefinition,
 		context: ExecutionContext,
-		inFlightStep: ResumeInFlightStep
+		inFlightStep: ResumeInFlightStep,
 	): Promise<StepExecutionResult> {
 		if (inFlightStep.stepIndex >= recipe.steps.length) {
 			return await this.executeRecipeSteps(
 				recipe,
 				context,
 				undefined,
-				recipe.steps.length + 1
+				recipe.steps.length + 1,
 			);
 		}
 		const step = recipe.steps[inFlightStep.stepIndex];
@@ -200,7 +200,7 @@ export class StepExecutor {
 				recipe,
 				context,
 				undefined,
-				recipe.steps.length + 1
+				recipe.steps.length + 1,
 			);
 		}
 		if (context.depth === 0) {
@@ -213,7 +213,7 @@ export class StepExecutor {
 			{ lifecycle: this.lifecycle, runWaiter: this.runWaiter },
 			step,
 			inFlightStep,
-			context.sessionId
+			context.sessionId,
 		);
 		if (inFlightResult.stopped) return inFlightResult;
 		if (!inFlightResult.ok && (step.onFailure ?? 'stop') !== 'continue') return inFlightResult;
@@ -221,7 +221,7 @@ export class StepExecutor {
 			recipe,
 			context,
 			undefined,
-			inFlightStep.sequenceNumber + 1
+			inFlightStep.sequenceNumber + 1,
 		);
 	}
 }

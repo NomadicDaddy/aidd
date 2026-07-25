@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import { parseArgs } from 'aidd-shared/args/index';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
-import { runPreflightDoctor, type DoctorProber } from '../../cli/src/orchestrator/run/doctor.ts';
+import { type DoctorProber, runPreflightDoctor } from '../../cli/src/orchestrator/run/doctor.ts';
 
 const rootDir = join(import.meta.dir, '..', '..');
 const tmpRoot = join(rootDir, '.tmp-doctor-tests');

@@ -111,15 +111,15 @@ describe('score detection', () => {
 		expect(declaresNumericScore('### Overall Score: 84/100')).toBe(true);
 		expect(
 			declaresNumericScore(
-				'## Overall Score Comparison\n\n| Category | Mobile | Desktop |\n| --- | ---: | ---: |\n| Performance | 65 | 92 |'
-			)
+				'## Overall Score Comparison\n\n| Category | Mobile | Desktop |\n| --- | ---: | ---: |\n| Performance | 65 | 92 |',
+			),
 		).toBe(true);
 	});
 
 	test('ignores non-numeric scores and scores quoted inside prose', () => {
 		expect(declaresNumericScore('**Overall Score:** N/A')).toBe(false);
 		expect(declaresNumericScore('Summary: 2 verified findings. Overall Score: 86/100.')).toBe(
-			false
+			false,
 		);
 		expect(declaresNumericScore('**Critical/High/Medium/Low:** 0/0/0/0')).toBe(false);
 		expect(declaresNumericScore('| Findings | 2 | 4 |')).toBe(false);
@@ -133,7 +133,7 @@ describe('instrument-backed score enforcement', () => {
 		const enforced = enforceInstrumentBackedScore(
 			'PERFORMANCE',
 			{ instruments: [instrument()] },
-			markdown
+			markdown,
 		);
 
 		expect(enforced.withheld).toBe(false);
@@ -147,7 +147,7 @@ describe('instrument-backed score enforcement', () => {
 
 		expect(enforced.withheld).toBe(true);
 		expect(enforced.reportMarkdown).toContain(
-			`**Overall Performance Score:** ${withheldScoreValue}`
+			`**Overall Performance Score:** ${withheldScoreValue}`,
 		);
 		expect(enforced.reportMarkdown).not.toContain('84/100');
 		expect(enforced.reportMarkdown).toContain('## Score Withheld - No Validated Instrument');
@@ -164,7 +164,7 @@ describe('instrument-backed score enforcement', () => {
 		const enforced = enforceInstrumentBackedScore(
 			'LIGHTHOUSE',
 			{ instruments: [instrument({ verified: false }), { name: 'lighthouse' }] },
-			markdown
+			markdown,
 		);
 
 		expect(enforced.withheld).toBe(true);
@@ -172,7 +172,7 @@ describe('instrument-backed score enforcement', () => {
 		expect(enforced.reportMarkdown).toContain('Instruments declared but rejected:');
 		expect(enforced.reportMarkdown).toContain('- `check:critical-path`: verified is not true');
 		expect(enforced.reportMarkdown).toContain(
-			'- `lighthouse`: missing evidence; missing kind; missing measured; missing target; verified is not true'
+			'- `lighthouse`: missing evidence; missing kind; missing measured; missing target; verified is not true',
 		);
 		expect(enforced.rejected).toHaveLength(2);
 	});
@@ -215,7 +215,7 @@ describe('instrument-backed score enforcement', () => {
 		expect(enforced.reportMarkdown).toContain(`**Overall Score:** ${withheldScoreValue}`);
 		expect(enforced.reportMarkdown).toContain(`- **Score:** ${withheldScoreValue}`);
 		expect(enforced.reportMarkdown).toContain(
-			'Prose mentioning Overall Score: 84/100 mid-sentence stays put.'
+			'Prose mentioning Overall Score: 84/100 mid-sentence stays put.',
 		);
 	});
 
@@ -239,10 +239,10 @@ describe('instrument-backed score enforcement', () => {
 
 		expect(enforced.withheld).toBe(true);
 		expect(enforced.reportMarkdown).toContain(
-			`| Performance | ${withheldScoreValue} (Poor) | **${withheldScoreValue}** | Mobile needs work |`
+			`| Performance | ${withheldScoreValue} (Poor) | **${withheldScoreValue}** | Mobile needs work |`,
 		);
 		expect(enforced.reportMarkdown).toContain(
-			`| Accessibility | ${withheldScoreValue} | ${withheldScoreValue} | Good |`
+			`| Accessibility | ${withheldScoreValue} | ${withheldScoreValue} | Good |`,
 		);
 		expect(enforced.reportMarkdown).toContain('| LCP | 3.5 | 1.4 |');
 		expect(enforced.reportMarkdown).toContain('## Score Withheld - No Validated Instrument');

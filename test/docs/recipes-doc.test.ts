@@ -152,7 +152,7 @@ describe('docs/guides/recipes.md stays in sync with recipes/*.json', () => {
 			expect(section, `missing section for ${id}`).toBeDefined();
 			expect(section!.description, `description for ${id}`).toBe(recipe.description ?? '');
 			expect(section!.metadataOnly, `metadata-only flag for ${id}`).toBe(
-				recipe.metadataOnly === true
+				recipe.metadataOnly === true,
 			);
 		}
 	});
@@ -174,7 +174,7 @@ describe('docs/guides/recipes.md stays in sync with recipes/*.json', () => {
 				// Prefix match: the doc truncates long prompts, so it must be a leading slice.
 				expect(
 					prompt.startsWith(excerpt!),
-					`step ${index + 1} of ${id} quotes a stale prompt excerpt.\n  doc:    ${excerpt}\n  recipe: ${prompt.slice(0, excerpt!.length)}`
+					`step ${index + 1} of ${id} quotes a stale prompt excerpt.\n  doc:    ${excerpt}\n  recipe: ${prompt.slice(0, excerpt!.length)}`,
 				).toBe(true);
 				checkedExcerpts += 1;
 			}

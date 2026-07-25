@@ -26,7 +26,7 @@ export function DirectorAutoCycleSection({
 	return (
 		<Card className="p-3">
 			<div>
-				<h2 className="text-foreground text-base font-semibold">Director Auto-Cycle</h2>
+				<h2 className="text-base font-semibold text-foreground">Director Auto-Cycle</h2>
 				<p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
 					Automatically run a fleet analysis cycle on a fixed cadence. The web process
 					runs a catch-up cycle on startup if the fleet hasn&apos;t been analyzed within
@@ -61,7 +61,7 @@ export function DirectorAutoCycleSection({
 							const parsed = Number(event.target.value);
 							setField(
 								'directorAutoCycleIntervalHours',
-								Number.isFinite(parsed) ? parsed : 0
+								Number.isFinite(parsed) ? parsed : 0,
 							);
 						}}
 						placeholder="12"
@@ -75,7 +75,7 @@ export function DirectorAutoCycleSection({
 				</label>
 			</div>
 			<div className="mt-6 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-				<h3 className="text-foreground text-sm font-semibold">Suggestion granularity</h3>
+				<h3 className="text-sm font-semibold text-foreground">Suggestion granularity</h3>
 				<p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
 					<span className="font-medium">Targeted</span> surfaces one suggestion per
 					concrete artifact (the next finding, remediation item, or feature to work) plus
@@ -92,7 +92,7 @@ export function DirectorAutoCycleSection({
 							onChange={(event) =>
 								setField(
 									'directorSuggestionGranularity',
-									event.target.value === 'aggregate' ? 'aggregate' : 'targeted'
+									event.target.value === 'aggregate' ? 'aggregate' : 'targeted',
 								)
 							}
 							value={form.directorSuggestionGranularity}>
@@ -111,7 +111,7 @@ export function DirectorAutoCycleSection({
 								const parsed = Number(event.target.value);
 								setField(
 									'directorSuggestionMaxPerBucket',
-									Number.isFinite(parsed) ? parsed : 0
+									Number.isFinite(parsed) ? parsed : 0,
 								);
 							}}
 							placeholder="3"

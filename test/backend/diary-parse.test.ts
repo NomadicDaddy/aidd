@@ -20,7 +20,7 @@ describe('parseDiaryEntry', () => {
 			...base,
 			body: body(
 				"date: 2026-06-12\nproject: demo\ntitle: 'The Reconcile Refactor'\nphase: Backend\nsummary: 'Indexing landed.'",
-				'# Friday, June 12, 2026 — The Reconcile Refactor\n\nBody.'
+				'# Friday, June 12, 2026 — The Reconcile Refactor\n\nBody.',
 			),
 		});
 		expect('error' in parsed).toBe(false);
@@ -76,7 +76,7 @@ describe('parseDiaryEntry', () => {
 
 	test('id folds slash and case so path variants collapse to one id', () => {
 		expect(diaryEntryId('D:\\applications\\Demo', '2026-06-12')).toBe(
-			diaryEntryId('d:/applications/demo', '2026-06-12')
+			diaryEntryId('d:/applications/demo', '2026-06-12'),
 		);
 	});
 });

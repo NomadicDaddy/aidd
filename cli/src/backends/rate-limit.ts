@@ -61,7 +61,7 @@ export function computeRateLimitSleep(
 	now: Date,
 	bufferSeconds: number,
 	fallbackSeconds: number,
-	structuredResetAt?: Date
+	structuredResetAt?: Date,
 ): RateLimitSleepDecision {
 	const reset = structuredResetAt ?? (message ? parseRateLimitReset(message, now) : undefined);
 	if (!reset) {

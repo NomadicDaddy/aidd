@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { errorHandlerPlugin } from '../../backend/src/plugins/errorHandler.ts';
 import { HttpError } from '../../backend/src/services/errors.ts';
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import * as schema from '../../backend/src/db/schema.ts';
 import { buildLaunchCommand } from '../../backend/src/services/runLauncher.ts';
@@ -25,9 +25,9 @@ import type { WebContext } from '../../backend/src/context.ts';
 import type { RunLaunchRequest } from '../../backend/src/types.ts';
 import {
 	activeRunsDir,
+	type CliActiveRunRecord,
 	readCliActiveRunRecords,
 	writeCliActiveRunRecord,
-	type CliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
 import { createFeatureLeaseService } from 'aidd-shared/metadata/feature-leases';
 import {
@@ -44,7 +44,7 @@ function wait(ms: number): Promise<void> {
 
 async function waitFor<T>(
 	read: () => Promise<T | undefined>,
-	predicate: (value: T) => boolean
+	predicate: (value: T) => boolean,
 ): Promise<T> {
 	const startedAt = Date.now();
 	for (;;) {
@@ -125,7 +125,7 @@ async function makeLauncherRoot(script: string): Promise<string> {
 	return root;
 }
 
-function makeConfig(web: ResolvedWebConfig): ResolvedConfig & { web: ResolvedWebConfig } {
+function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
 		dirtyTreeThreshold: 50,
@@ -190,7 +190,7 @@ function makeService(input: {
 			hub,
 			new ProjectService(web),
 			input.rootDir,
-			new TelemetryService({ commands, db })
+			new TelemetryService({ commands, db }),
 		),
 		sqlite,
 		web,
@@ -338,8 +338,8 @@ describe('web run launcher', () => {
 
 		const scopedResponse = await app.handle(
 			new Request(
-				`http://localhost/api/v1/runs?projectPath=${encodeURIComponent('d:/applications/valley-app')}`
-			)
+				`http://localhost/api/v1/runs?projectPath=${encodeURIComponent('d:/applications/valley-app')}`,
+			),
 		);
 		expect(scopedResponse.status).toBe(200);
 		const scopedBody = (await scopedResponse.json()) as { runs: { id: string }[] };
@@ -423,7 +423,7 @@ describe('web run launcher', () => {
 				});
 
 				expect((await service.listRunsForProject(projectDir)).map((row) => row.id)).toEqual(
-					['run_failed_recent']
+					['run_failed_recent'],
 				);
 				expect(await service.hasActiveRunForProject(projectDir)).toBe(false);
 
@@ -640,7 +640,7 @@ describe('web run launcher', () => {
 							parsed.runId === 'run_stop_requested' &&
 							parsed.payload?.stopRequested === true
 						);
-					})
+					}),
 				).toBe(true);
 			} finally {
 				service.markDisposed();
@@ -897,7 +897,7 @@ describe('web run launcher', () => {
 					simulation: true,
 					stopBeforeImplementation: true,
 				},
-				'native'
+				'native',
 			);
 
 			expect(command.entrypoint).toBe(join(rootDir, 'cli', 'src', 'index.ts'));
@@ -932,13 +932,13 @@ describe('web run launcher', () => {
 			const withWt = await buildLaunchCommand(
 				rootDir,
 				{ mode: 'coding', projectDir, worktree: true },
-				'native'
+				'native',
 			);
 			expect(withWt.args).toContain('--worktree');
 			const withoutWt = await buildLaunchCommand(
 				rootDir,
 				{ mode: 'coding', projectDir },
-				'native'
+				'native',
 			);
 			expect(withoutWt.args).not.toContain('--worktree');
 		} finally {
@@ -953,7 +953,7 @@ describe('web run launcher', () => {
 			const sweepAll = await buildLaunchCommand(
 				rootDir,
 				{ auditFindings: true, mode: 'coding', projectDir },
-				'native'
+				'native',
 			);
 			expect(sweepAll.args).toContain('--audit-findings');
 			// No source → the flag stands alone (no stray positional after it).
@@ -968,7 +968,7 @@ describe('web run launcher', () => {
 					mode: 'coding',
 					projectDir,
 				},
-				'native'
+				'native',
 			);
 			const sourceIdx = sweepSource.args.indexOf('--audit-findings');
 			expect(sweepSource.args[sourceIdx + 1]).toBe('SECURITY');
@@ -976,7 +976,7 @@ describe('web run launcher', () => {
 			const noSweep = await buildLaunchCommand(
 				rootDir,
 				{ mode: 'coding', projectDir },
-				'native'
+				'native',
 			);
 			expect(noSweep.args).not.toContain('--audit-findings');
 		} finally {
@@ -996,7 +996,7 @@ describe('web run launcher', () => {
 					projectDir,
 					extraArgs: '--filter-by id --filter audit-* --prompt "do the thing"',
 				},
-				'native'
+				'native',
 			);
 
 			expect(command.args).toEqual([
@@ -1025,7 +1025,7 @@ describe('web run launcher', () => {
 			const error = await buildLaunchCommand(
 				rootDir,
 				{ backend: 'codex', mode: 'coding', projectDir, extraArgs: '--prompt "oops' },
-				'native'
+				'native',
 			).catch((caught: unknown) => caught);
 			expect(error).toBeInstanceOf(HttpError);
 			expect((error as HttpError).status).toBe(400);
@@ -1049,7 +1049,7 @@ describe('web run launcher', () => {
 				const error = await buildLaunchCommand(
 					rootDir,
 					{ backend: 'codex', mode: 'coding', projectDir, extraArgs },
-					'native'
+					'native',
 				).catch((caught: unknown) => caught);
 				expect(error).toBeInstanceOf(HttpError);
 				expect((error as HttpError).status).toBe(400);
@@ -1077,7 +1077,7 @@ describe('web run launcher', () => {
 					secondaryBackend: 'claude-code',
 					secondaryModel: 'secondary-model',
 				},
-				'native'
+				'native',
 			);
 
 			expect(command.args).toEqual([
@@ -1122,8 +1122,8 @@ describe('web run launcher', () => {
 						projectDir,
 						secondaryBackend: 'codex',
 					} as unknown as RunLaunchRequest,
-					'native'
-				)
+					'native',
+				),
 			).rejects.toThrow("Unknown backend 'internal'");
 		} finally {
 			await removeTempTree(rootDir);
@@ -1144,7 +1144,7 @@ describe('web run launcher', () => {
 					projectDir,
 					secondaryBackend: 'claude-code',
 				},
-				'native'
+				'native',
 			);
 
 			expect(command.args).toEqual([
@@ -1185,7 +1185,7 @@ describe('web run launcher', () => {
 						secondaryCli: 'codex',
 						secondaryModel: 'gpt-5.6',
 					},
-				}
+				},
 			);
 
 			expect(command.args).toEqual([
@@ -1218,7 +1218,7 @@ describe('web run launcher', () => {
 						secondaryCli: 'codex',
 						secondaryModel: 'gpt-5.6-sol',
 					},
-				}
+				},
 			);
 
 			expect(command.args).toEqual([
@@ -1282,7 +1282,7 @@ describe('web run launcher', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		const invalid = await app.handle(
 			new Request('http://localhost/api/v1/runs', {
@@ -1295,7 +1295,7 @@ describe('web run launcher', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		const internalAlias = await app.handle(
 			new Request('http://localhost/api/v1/runs', {
@@ -1308,7 +1308,7 @@ describe('web run launcher', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 
 		expect(valid.status).toBe(200);
@@ -1329,7 +1329,7 @@ describe('web run launcher', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(res.status).toBe(422);
 	});
@@ -1347,7 +1347,7 @@ describe('web run launcher', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(res.status).toBe(422);
 	});
@@ -1365,7 +1365,7 @@ describe('web run launcher', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(res.status).toBe(422);
 	});
@@ -1390,7 +1390,7 @@ describe('web run launcher', () => {
 					body: JSON.stringify({ model, projectDir: 'd:/applications/demo' }),
 					headers: { 'content-type': 'application/json' },
 					method: 'POST',
-				})
+				}),
 			);
 			expect(res.status).toBe(200);
 		}
@@ -1399,7 +1399,7 @@ describe('web run launcher', () => {
 	test('persists completed runs, logs output, and broadcasts run events', async () => {
 		const workspace = await testTempDir('aidd-web-run-');
 		const rootDir = await makeLauncherRoot(
-			`${logWriter('launcher output\n')}${heartbeatTerminator()}`
+			`${logWriter('launcher output\n')}${heartbeatTerminator()}`,
 		);
 		const dataDir = join(workspace, 'data');
 		const messages: string[] = [];
@@ -1420,7 +1420,7 @@ describe('web run launcher', () => {
 
 				const completed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 				const output = await service.readOutput(run.id);
 
@@ -1456,10 +1456,10 @@ describe('web run launcher', () => {
 					source: 'exact',
 				});
 				expect(messages.some((message) => message.includes('"type":"run_output"'))).toBe(
-					true
+					true,
 				);
 				expect(messages.some((message) => message.includes('"status":"completed"'))).toBe(
-					true
+					true,
 				);
 			} finally {
 				service.markDisposed();
@@ -1476,7 +1476,7 @@ describe('web run launcher', () => {
 		const rootDir = await makeLauncherRoot(
 			heartbeatTerminator({
 				summary: 'audit batch finished 32/32 audit(s) with 0 finding(s)',
-			})
+			}),
 		);
 		const dataDir = join(workspace, 'data');
 		try {
@@ -1490,14 +1490,14 @@ describe('web run launcher', () => {
 				});
 				const completed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 				expect(completed.summary).toBe(
-					'audit batch finished 32/32 audit(s) with 0 finding(s)'
+					'audit batch finished 32/32 audit(s) with 0 finding(s)',
 				);
 				const listed = await service.listRuns();
 				expect(listed[0]!.summary).toBe(
-					'audit batch finished 32/32 audit(s) with 0 finding(s)'
+					'audit batch finished 32/32 audit(s) with 0 finding(s)',
 				);
 			} finally {
 				service.markDisposed();
@@ -1529,7 +1529,7 @@ describe('web run launcher', () => {
 						body: JSON.stringify({ projectDir: ghostProject, simulation: true }),
 						headers: { 'content-type': 'application/json' },
 						method: 'POST',
-					})
+					}),
 				);
 
 				expect(res.status).toBe(404);
@@ -1553,7 +1553,7 @@ describe('web run launcher', () => {
 	const __logPath = process.env.AIDD_EXT_LOG_PATH;
 	if (__logPath) await writeFile(__logPath, JSON.stringify(Bun.argv));
 }
-${heartbeatTerminator()}`
+${heartbeatTerminator()}`,
 		);
 		try {
 			const projectDir = await makeProject(workspace);
@@ -1572,7 +1572,7 @@ ${heartbeatTerminator()}`
 				const run = await service.launchRun({ projectDir });
 				const completed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 				const output = await service.readOutput(run.id);
 
@@ -1615,7 +1615,7 @@ ${heartbeatTerminator()}`
 				const run = await service.launchRun({ projectDir });
 				const completed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 
 				expect(completed.backend).toBe('native');
@@ -1643,7 +1643,7 @@ ${heartbeatTerminator()}`
 					cli: 'claude-code',
 					model: 'project-model',
 					reasoningEffort: 'high',
-				})
+				}),
 			);
 			const { service, sqlite } = makeService({
 				allowedRoot: workspace,
@@ -1654,7 +1654,7 @@ ${heartbeatTerminator()}`
 				const run = await service.launchRun({ projectDir });
 				const completed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 
 				expect(completed.backend).toBe('claude-code');
@@ -1690,14 +1690,14 @@ ${heartbeatTerminator()}`
 				const auditRun = await service.launchRun({ mode: 'audit', projectDir });
 				const audited = await waitFor(
 					() => service.getRun(auditRun.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 				expect(audited.model).toBe('audit-model');
 
 				const codingRun = await service.launchRun({ projectDir });
 				const coded = await waitFor(
 					() => service.getRun(codingRun.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 				expect(coded.model).toBe('code-model');
 			} finally {
@@ -1728,7 +1728,7 @@ ${heartbeatTerminator()}`
 		}
 	}
 }
-${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
+${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 		);
 		try {
 			const projectDir = await makeProject(workspace);
@@ -1740,12 +1740,12 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 			try {
 				const run = await service.launchRun({ projectDir });
 				expect((await service.listRunsForProject(projectDir)).map((row) => row.id)).toEqual(
-					[run.id]
+					[run.id],
 				);
 				await service.stopRun(run.id);
 				const stopped = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'stopped' && value.completedAt !== null
+					(value) => value.status === 'stopped' && value.completedAt !== null,
 				);
 
 				expect(stopped.status).toBe('stopped');
@@ -1777,7 +1777,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				await service.killRun(run.id);
 				const killed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'killed' && value.completedAt !== null
+					(value) => value.status === 'killed' && value.completedAt !== null,
 				);
 
 				expect(killed.status).toBe('killed');
@@ -1806,7 +1806,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				const run = await service.launchRun({ projectDir, simulation: true });
 				const completed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'completed'
+					(value) => value.status === 'completed',
 				);
 
 				await expect(service.stopRun(run.id)).rejects.toBeInstanceOf(RunControlError);
@@ -1842,7 +1842,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				await service.killRun(run.id);
 				const killed = await waitFor(
 					() => service.getRun(run.id),
-					(value) => value.status === 'killed' && value.completedAt !== null
+					(value) => value.status === 'killed' && value.completedAt !== null,
 				);
 				expect(killed.status).toBe('killed');
 
@@ -1885,7 +1885,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				};
 
 				await expect(service.launchRun({ projectDir })).rejects.toThrow(
-					'forced insert failure'
+					'forced insert failure',
 				);
 
 				if (process.platform === 'win32') {
@@ -1916,8 +1916,8 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 					messages.some(
 						(message) =>
 							message.includes('"status":"failed"') &&
-							message.includes('forced insert failure')
-					)
+							message.includes('forced insert failure'),
+					),
 				).toBe(true);
 			} finally {
 				service.markDisposed();
@@ -1961,7 +1961,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 							stepType: 'shell',
 						},
 					],
-				})
+				}),
 			);
 			const filenameWins = await recipeService.readRecipe('filename_wins');
 			await Bun.write(
@@ -1975,14 +1975,14 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 							stepType: 'claude-code',
 						},
 					],
-				})
+				}),
 			);
 
 			expect(recipes.map((entry) => entry.id)).toEqual(['quick_check']);
 			expect(recipe.steps[0]?.stepType).toBe('aidd-cli');
 			expect(filenameWins.id).toBe('filename_wins');
 			await expect(recipeService.readRecipe('legacy_claude_step')).rejects.toThrow(
-				'Recipe has invalid steps: legacy_claude_step'
+				'Recipe has invalid steps: legacy_claude_step',
 			);
 			expect(
 				recipeService.writeRecipe({
@@ -1997,7 +1997,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 							stepType: 'shell',
 						},
 					],
-				})
+				}),
 			).rejects.toThrow('Invalid recipe id');
 		} finally {
 			await removeTempTree(workspace);
@@ -2044,10 +2044,10 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				const demoDir = join(workspace, 'demo');
 				await gitInitRepo(demoDir);
 				expect(
-					await leaseServiceFor(demoDir, 'run_orphan_1').acquire('feat-orphaned')
+					await leaseServiceFor(demoDir, 'run_orphan_1').acquire('feat-orphaned'),
 				).toEqual({ acquired: true });
 				expect(
-					await leaseServiceFor(demoDir, 'run_live_other').acquire('feat-live')
+					await leaseServiceFor(demoDir, 'run_live_other').acquire('feat-live'),
 				).toEqual({ acquired: true });
 
 				await service.reconcileStaleRuns();
@@ -2069,7 +2069,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 						message.includes('"type":"run_status"') &&
 						message.includes('run_orphan_1') &&
 						message.includes('"status":"failed"') &&
-						message.includes('"exitCode":-1')
+						message.includes('"exitCode":-1'),
 				);
 				expect(reconciledBroadcast).toBeDefined();
 
@@ -2174,10 +2174,10 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 				const demoDir = join(workspace, 'demo');
 				await gitInitRepo(demoDir);
 				expect(
-					await leaseServiceFor(demoDir, 'run_sweep_dead').acquire('feat-swept')
+					await leaseServiceFor(demoDir, 'run_sweep_dead').acquire('feat-swept'),
 				).toEqual({ acquired: true });
 				expect(
-					await leaseServiceFor(demoDir, 'run_sweep_starting').acquire('feat-starting')
+					await leaseServiceFor(demoDir, 'run_sweep_starting').acquire('feat-starting'),
 				).toEqual({ acquired: true });
 
 				const swept = await service.sweepOrphanedRuns();
@@ -2221,7 +2221,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`
 					(message) =>
 						message.includes('"type":"run_status"') &&
 						message.includes('run_sweep_dead') &&
-						message.includes('"status":"failed"')
+						message.includes('"status":"failed"'),
 				);
 				expect(sweptBroadcast).toBeDefined();
 			} finally {

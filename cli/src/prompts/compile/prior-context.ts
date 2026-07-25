@@ -15,7 +15,7 @@ export function renderAuditPriorContext(context: ProjectContextDigest): string {
 	parts.push('', renderContextFileSection(context.contextFile));
 	parts.push(
 		'',
-		'Use this prior context to anchor severity claims, dedupe against issues already on the backlog, and flag regressions. Do not assume current code matches prior reports — verify against the live codebase before forming findings.'
+		'Use this prior context to anchor severity claims, dedupe against issues already on the backlog, and flag regressions. Do not assume current code matches prior reports — verify against the live codebase before forming findings.',
 	);
 
 	return parts.join('\n');
@@ -29,7 +29,7 @@ export function renderCodingPriorContext(context: ProjectContextDigest): string 
 	parts.push('', renderContextFileSection(context.contextFile));
 	parts.push(
 		'',
-		'Skim this prior context before starting work. Use it to avoid reverting recent changes, duplicating remediation already in flight, or repeating questions answered in a recent session.'
+		'Skim this prior context before starting work. Use it to avoid reverting recent changes, duplicating remediation already in flight, or repeating questions answered in a recent session.',
 	);
 
 	return parts.join('\n');

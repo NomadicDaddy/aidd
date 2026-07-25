@@ -78,7 +78,7 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 						<Bot className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						<div>
 							<h2
-								className="text-foreground text-sm font-semibold"
+								className="text-sm font-semibold text-foreground"
 								id="director-chat-modal-title">
 								Director Chat
 							</h2>

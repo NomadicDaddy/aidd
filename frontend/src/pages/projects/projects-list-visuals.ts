@@ -26,7 +26,7 @@ function parseSemver(value: null | string | undefined): [number, number, number]
 // surrounding neutral styling.
 export function templateVersionColor(
 	templateVersion: null | string,
-	latestVersion: null | string | undefined
+	latestVersion: null | string | undefined,
 ): string {
 	const app = parseSemver(templateVersion);
 	const latest = parseSemver(latestVersion);

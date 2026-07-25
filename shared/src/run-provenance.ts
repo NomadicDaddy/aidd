@@ -21,7 +21,7 @@ export const unknownAiddRunProvenance: AiddRunProvenance = {
 };
 
 export function parseAiddRunProvenance(
-	value: Record<string, unknown>
+	value: Record<string, unknown>,
 ): AiddRunProvenance | undefined {
 	const { aiddDirty, aiddRevision, aiddVersion } = value;
 	if (!(aiddDirty === undefined || aiddDirty === null || typeof aiddDirty === 'boolean')) {
@@ -73,7 +73,7 @@ export async function readAiddVersion(rootDir: string): Promise<null | string> {
 
 export async function resolveAiddRunProvenance(
 	rootDir: string,
-	gitProbe: AiddGitProbe = defaultGitProbe
+	gitProbe: AiddGitProbe = defaultGitProbe,
 ): Promise<AiddRunProvenance> {
 	const aiddVersion = await readAiddVersion(rootDir);
 	const revision = await gitProbe(['rev-parse', '--verify', 'HEAD'], rootDir);

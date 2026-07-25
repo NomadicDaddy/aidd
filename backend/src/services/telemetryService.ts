@@ -15,11 +15,11 @@ import type {
 import { getResourceUsage, getTimeseries, getTopUsed } from './telemetry/aggregation.ts';
 import { getOutputTimeseries } from './telemetry/outputTimeseries.ts';
 import {
+	reconcileInvocationFromRun,
+	reconcileStaleInvocations,
 	recordCompletionByInvocationId,
 	recordCompletionBySessionId,
 	recordStart,
-	reconcileInvocationFromRun,
-	reconcileStaleInvocations,
 } from './telemetry/persistence.ts';
 import { listInvocations } from './telemetry/queries.ts';
 import { getBackendUsage, getResourceDetail } from './telemetry/resourceDetail.ts';
@@ -63,14 +63,14 @@ export class TelemetryService {
 
 	async recordCompletionByInvocationId(
 		invocationId: string,
-		input: RecordCompletionInput
+		input: RecordCompletionInput,
 	): Promise<void> {
 		await recordCompletionByInvocationId(this.db, invocationId, input);
 	}
 
 	async recordCompletionBySessionId(
 		sessionId: string,
-		input: RecordCompletionInput
+		input: RecordCompletionInput,
 	): Promise<void> {
 		await recordCompletionBySessionId(this.db, sessionId, input);
 	}
@@ -124,7 +124,7 @@ export class TelemetryService {
 
 	async getResourceDetail(
 		resourceType: TelemetryResourceType,
-		resourceId: string
+		resourceId: string,
 	): Promise<null | ResourceDetail> {
 		return getResourceDetail(this.db, resourceType, resourceId);
 	}

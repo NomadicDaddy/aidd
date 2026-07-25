@@ -5,7 +5,7 @@ import { apiGet } from './client.ts';
 
 export async function getLaunchDefaults(
 	projectDir?: string,
-	mode?: RunMode
+	mode?: RunMode,
 ): Promise<LaunchDefaults> {
 	const params = new URLSearchParams();
 	if (projectDir) params.set('projectDir', projectDir);

@@ -19,7 +19,7 @@ export interface CompletedFeatureResult {
  */
 export async function checkExplicitCompletedFeature(
 	plan: RunPlan,
-	store: AiddStore
+	store: AiddStore,
 ): Promise<CompletedFeatureResult | undefined> {
 	const target = explicitFeatureTarget(plan);
 	if (!target) return undefined;
@@ -48,7 +48,7 @@ export async function writeCompletedFeatureRunSummary(
 	store: AiddStore,
 	plan: RunPlan,
 	result: CompletedFeatureResult,
-	aiddProvenance: AiddRunProvenance
+	aiddProvenance: AiddRunProvenance,
 ): Promise<void> {
 	const now = Date.now();
 	await store.appendRunSummary({

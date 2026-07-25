@@ -88,7 +88,7 @@ function optionalString(
 	id: string,
 	key: string,
 	value: unknown,
-	maxLength?: number
+	maxLength?: number,
 ): string | undefined {
 	if (value === undefined) return undefined;
 	if (typeof value !== 'string' || value.trim().length === 0) {
@@ -143,14 +143,14 @@ function categoryFrom(
 	id: string,
 	origin: SkillOrigin,
 	metadata: Record<string, string>,
-	imported?: ImportedSkillRecord
+	imported?: ImportedSkillRecord,
 ): SkillCategory {
 	if (imported) return imported.category;
 	const category = metadata['aidd-category'];
 	if (origin === 'imported' && category === undefined) return 'general';
 	if (!isSkillCategory(category)) {
 		throw new Error(
-			`Skill ${id}: metadata.aidd-category must be one of: ${skillCategories.join(', ')}`
+			`Skill ${id}: metadata.aidd-category must be one of: ${skillCategories.join(', ')}`,
 		);
 	}
 	return category;
@@ -180,20 +180,20 @@ export function parseSkillDefinition(input: {
 		input.id,
 		'description',
 		frontmatter.values.description,
-		1536
+		1536,
 	);
 	if (!description) throw new Error(`Skill ${input.id}: description is required`);
 	const compatibility = optionalString(
 		input.id,
 		'compatibility',
 		frontmatter.values.compatibility,
-		500
+		500,
 	);
 	const license = optionalString(input.id, 'license', frontmatter.values.license);
 	const allowedTools = optionalString(
 		input.id,
 		'allowed-tools',
-		frontmatter.values['allowed-tools']
+		frontmatter.values['allowed-tools'],
 	);
 	const metadata = metadataFrom(input.id, frontmatter.values.metadata);
 	const contracts = contractsFrom(metadata['aidd-contracts']);
@@ -201,11 +201,11 @@ export function parseSkillDefinition(input: {
 	const spernakitReferences = referencesFrom(
 		input.id,
 		'spernakit-references',
-		metadata['spernakit-references']
+		metadata['spernakit-references'],
 	);
 	const content = input.body.slice(frontmatter.contentStart);
 	const extensions = Object.fromEntries(
-		Object.entries(frontmatter.values).filter(([key]) => !knownFrontmatterKeys.has(key))
+		Object.entries(frontmatter.values).filter(([key]) => !knownFrontmatterKeys.has(key)),
 	);
 	return {
 		...(allowedTools ? { allowedTools } : {}),

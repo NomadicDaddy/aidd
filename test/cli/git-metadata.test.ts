@@ -43,7 +43,7 @@ describe('ensureProjectGitRepo', () => {
 			expect(result).toBe('initialized');
 			expect(existsSync(join(projectDir, '.git'))).toBe(true);
 			expect(normalizePath(await runGit(projectDir, ['rev-parse', '--show-toplevel']))).toBe(
-				normalizePath(projectDir)
+				normalizePath(projectDir),
 			);
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -61,7 +61,7 @@ describe('ensureProjectGitRepo', () => {
 
 			expect(result).toBe('present');
 			expect(normalizePath(await runGit(projectDir, ['rev-parse', '--show-toplevel']))).toBe(
-				normalizePath(projectDir)
+				normalizePath(projectDir),
 			);
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -79,7 +79,7 @@ describe('ensureProjectGitRepo', () => {
 
 			expect(result).toBe('initialized');
 			expect(normalizePath(await runGit(projectDir, ['rev-parse', '--show-toplevel']))).toBe(
-				normalizePath(projectDir)
+				normalizePath(projectDir),
 			);
 		} finally {
 			await rm(root, { force: true, recursive: true });

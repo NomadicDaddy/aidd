@@ -1,14 +1,14 @@
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
-	FEATURE_STATUSES,
 	type Feature,
+	FEATURE_STATUSES,
+	featureMatchesQuery,
 	type FeatureQuery,
+	featureSchema,
 	type FeatureStats,
 	type FeatureValidationResult,
-	featureMatchesQuery,
-	featureSchema,
 	isValidFeatureStatus,
 	summarizeFeatures,
 } from './features.ts';
@@ -92,7 +92,7 @@ export class FileAiddStore implements AiddStore {
 
 	async getFeatureStats(query: FeatureQuery = {}): Promise<FeatureStats> {
 		return summarizeFeatures(
-			await this.listFeatures({ ...query, includeAudit: query.includeAudit ?? true })
+			await this.listFeatures({ ...query, includeAudit: query.includeAudit ?? true }),
 		);
 	}
 
@@ -115,7 +115,7 @@ export class FileAiddStore implements AiddStore {
 		// or 'verified' are invalid data that downstream readers must never have to alias.
 		if (feature.status !== undefined && !isValidFeatureStatus(feature.status)) {
 			throw new Error(
-				`Invalid feature status '${feature.status}' for '${feature.directory ?? feature.id}' — allowed: ${FEATURE_STATUSES.join(', ')}`
+				`Invalid feature status '${feature.status}' for '${feature.directory ?? feature.id}' — allowed: ${FEATURE_STATUSES.join(', ')}`,
 			);
 		}
 		// Brand-new roadmap-planned work mapped beyond MVP is born waiting_approval
@@ -124,7 +124,7 @@ export class FileAiddStore implements AiddStore {
 			featureExists: () =>
 				stat(this.featurePath(feature.id)).then(
 					() => true,
-					() => false
+					() => false,
 				),
 			listFeatures: () => this.listFeatures({ includeAudit: true }),
 			readRoadmap: () => this.readRoadmap(),
@@ -173,7 +173,7 @@ export class FileAiddStore implements AiddStore {
 	private async syncFeaturePriority(
 		feature: Feature,
 		roadmap: Roadmap,
-		milestone: string
+		milestone: string,
 	): Promise<void> {
 		const priority = roadmap.milestones[milestone]?.priority;
 		if (priority === undefined) return;
@@ -233,7 +233,7 @@ export class FileAiddStore implements AiddStore {
 	async writeAuditReport(
 		auditName: string,
 		content: string,
-		timestamp = new Date()
+		timestamp = new Date(),
 	): Promise<string> {
 		return await writeAuditReport(this.projectDir, auditName, content, timestamp);
 	}

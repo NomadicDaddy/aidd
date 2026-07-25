@@ -5,7 +5,7 @@ import type { RecipeService } from '../recipeService.ts';
 import type { TelemetryService } from '../telemetryService.ts';
 
 import { configString, configStringRecord, resolveParameters } from './helpers.ts';
-import { maxRecipeDepth, type ExecutionContext, type StepDispatchResult } from './types.ts';
+import { type ExecutionContext, maxRecipeDepth, type StepDispatchResult } from './types.ts';
 
 // Runs a nested recipe. The orchestrator injects its own recipe-steps runner so the
 // recursion stays one-directional (orchestrator -> handler -> orchestrator) without a
@@ -13,7 +13,7 @@ import { maxRecipeDepth, type ExecutionContext, type StepDispatchResult } from '
 export type RecipeStepsRunner = (
 	recipe: RecipeDefinition,
 	context: ExecutionContext,
-	parentStepResultId?: string
+	parentStepResultId?: string,
 ) => Promise<{ errorMessage?: string | undefined; ok: boolean; stopped: boolean }>;
 
 export class RecipeRefHandler {
@@ -34,7 +34,7 @@ export class RecipeRefHandler {
 	async handle(
 		config: Record<string, RecipeConfigValue>,
 		context: ExecutionContext,
-		parentStepResultId: string
+		parentStepResultId: string,
 	): Promise<StepDispatchResult> {
 		const recipeName = configString(config, 'recipeName');
 		if (recipeName === undefined)

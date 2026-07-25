@@ -24,7 +24,7 @@ export function isEnoent(error: unknown): boolean {
 }
 
 const recipeIdPattern = /^[a-zA-Z0-9_-]+$/;
-const stepTypes = new Set<RecipeStepType>(['aidd-cli', 'skill', 'recipe-ref', 'shell']);
+const stepTypes = new Set<RecipeStepType>(['aidd-cli', 'recipe-ref', 'shell', 'skill']);
 const onFailureValues = new Set<RecipeStepOnFailure>(['auto-fix', 'continue', 'stop']);
 
 export function isValidRecipeId(id: string): boolean {
@@ -83,7 +83,7 @@ function toParameters(value: unknown): RecipeParameterDefinition[] {
 function toStep(
 	entry: unknown,
 	recipeId: string,
-	sequenceNumber: number
+	sequenceNumber: number,
 ): RecipeStepDefinition | undefined {
 	if (!isRecord(entry) || typeof entry.name !== 'string' || entry.name.length === 0)
 		return undefined;
@@ -93,7 +93,7 @@ function toStep(
 	const configJson = toConfigRecord(entry.configJson);
 	if (entry.stepType === 'skill' && !isSkillExecutionIntent(configJson.executionIntent)) {
 		throw new Error(
-			`Skill step "${entry.name}" must declare executionIntent as "review-only" or "apply-changes"`
+			`Skill step "${entry.name}" must declare executionIntent as "review-only" or "apply-changes"`,
 		);
 	}
 	const step: RecipeStepDefinition = {
@@ -155,12 +155,9 @@ export function normalizeRecipe(value: unknown, fallbackId: string): RecipeDefin
 	} satisfies RecipeDefinition;
 }
 
-export function recipeFilePayload(recipe: RecipeDefinition): Omit<
-	RecipeDefinition,
-	'id' | 'steps' | 'system'
-> & {
-	steps: (Omit<RecipeStepDefinition, 'id'> & { id?: string })[];
-} {
+export function recipeFilePayload(recipe: RecipeDefinition): {
+	steps: ({ id?: string } & Omit<RecipeStepDefinition, 'id'>)[];
+} & Omit<RecipeDefinition, 'id' | 'steps' | 'system'> {
 	return {
 		...(recipe.description !== undefined ? { description: recipe.description } : {}),
 		...(recipe.metadataOnly === true ? { metadataOnly: true } : {}),

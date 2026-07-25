@@ -13,7 +13,7 @@ import {
 } from './registry-validation.ts';
 
 export async function loadDistributedMaterialsRegistry(
-	root: string
+	root: string,
 ): Promise<DistributedMaterialsRegistry> {
 	const path = join(root, DISTRIBUTED_MATERIALS_REGISTRY);
 	let value: unknown;
@@ -30,14 +30,14 @@ export async function loadDistributedMaterialsRegistry(
 		distributedPaths: await discoverDistributedPaths(
 			root,
 			registry.trackedSurfaces,
-			allClassifiedPaths(registry)
+			allClassifiedPaths(registry),
 		),
 		fileExists: rootFileExists(root),
 		packagedSurfaces: expectedPackagedTrackedSurfaces(),
 	});
 	if (issues.length > 0) {
 		throw new Error(
-			`Invalid ${DISTRIBUTED_MATERIALS_REGISTRY}:\n${issues.map((issue) => `- ${issue}`).join('\n')}`
+			`Invalid ${DISTRIBUTED_MATERIALS_REGISTRY}:\n${issues.map((issue) => `- ${issue}`).join('\n')}`,
 		);
 	}
 	return registry;

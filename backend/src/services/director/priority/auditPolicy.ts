@@ -47,7 +47,7 @@ function applyMaturityDeferral<
 
 export function auditBacklogPolicy(
 	project: ProjectSummaryDto,
-	bySeverity: Record<string, number>
+	bySeverity: Record<string, number>,
 ): {
 	adjustment: string;
 	include: boolean;
@@ -114,7 +114,7 @@ export function auditBacklogPolicy(
 
 export function auditMaintenancePolicyForProfile(
 	project: ProjectSummaryDto,
-	auditIssueCount: number
+	auditIssueCount: number,
 ): { adjustment: string; reason: string; riskLevel: DirectorRiskLevel } {
 	const profile = project.metadata.profile;
 	const base = ((): { adjustment: string; reason: string; riskLevel: DirectorRiskLevel } => {

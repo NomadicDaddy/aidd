@@ -5,14 +5,14 @@ import { dirname, join } from 'node:path';
 
 import {
 	ALL_TARGETS,
-	CORE_CATALOG_DIRS,
-	REQUIRED_FILE_ASSETS,
-	type CommandRunner,
 	buildStandalone,
+	type CommandRunner,
+	CORE_CATALOG_DIRS,
 	createCompileCommand,
 	generateReadmeText,
 	getRequiredDistributionEntries,
 	parseArgs,
+	REQUIRED_FILE_ASSETS,
 	resolveTargetOutDir,
 	validateDistributionLayout,
 	webCompileFlagsForTarget,
@@ -88,7 +88,7 @@ async function seedRequiredSourceAssets(root: string): Promise<void> {
 	await mkdir(join(root, 'licenses'), { recursive: true });
 	await writeFile(
 		join(root, 'licenses', 'distributed-materials.json'),
-		`${JSON.stringify(registry, null, '\t')}\n`
+		`${JSON.stringify(registry, null, '\t')}\n`,
 	);
 }
 
@@ -135,7 +135,7 @@ describe('standalone build script helpers', () => {
 		const args = parseArgs([]);
 		expect(args.skipFrontend).toBe(false);
 		expect(args.targets.map((target) => target.name)).toEqual(
-			ALL_TARGETS.map((target) => target.name)
+			ALL_TARGETS.map((target) => target.name),
 		);
 	});
 
@@ -154,7 +154,7 @@ describe('standalone build script helpers', () => {
 			windowsTarget(),
 			'cli/src/index.ts',
 			'dist/aidd.exe',
-			[]
+			[],
 		);
 		expect(command).toEqual([
 			'bun',
@@ -173,7 +173,7 @@ describe('standalone build script helpers', () => {
 			'backend/src/app.ts',
 			'dist/aidd-web.exe',
 			['--windows-hide-console'],
-			['backend/src/db/worker/dbWorker.ts']
+			['backend/src/db/worker/dbWorker.ts'],
 		);
 		expect(command.slice(-2)).toEqual([
 			'backend/src/app.ts',
@@ -185,7 +185,7 @@ describe('standalone build script helpers', () => {
 		expect(webCompileFlagsForTarget(windowsTarget())).toEqual(['--windows-hide-console']);
 		expect(webCompileFlagsForTarget(linuxTarget())).toEqual([]);
 		expect(createCompileCommand(windowsTarget(), 'cli.ts', 'aidd.exe', [])).not.toContain(
-			'--windows-hide-console'
+			'--windows-hide-console',
 		);
 	});
 
@@ -194,7 +194,7 @@ describe('standalone build script helpers', () => {
 		expect(text).toContain('./aidd-web.exe --help');
 		expect(text).toContain('./aidd.exe --help');
 		expect(text).toContain(
-			'bun run check:standalone -- --target bun-windows-x64-modern --probe-binaries'
+			'bun run check:standalone -- --target bun-windows-x64-modern --probe-binaries',
 		);
 	});
 
@@ -234,7 +234,7 @@ describe('standalone build script helpers', () => {
 		const results = await buildStandalone(
 			root,
 			{ skipFrontend: true, targets: [windowsTarget(), linuxTarget()] },
-			{ commandRunner }
+			{ commandRunner },
 		);
 
 		expect(results.map((result) => [result.target.name, result.status])).toEqual([

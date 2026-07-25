@@ -31,7 +31,7 @@ export function createSystemRoutes(context: WebContext) {
 					hours: t.Optional(t.Numeric({ maximum: MAX_METRICS_HOURS, minimum: 1 })),
 					limit: t.Optional(t.Numeric({ maximum: MAX_HISTORY_LIMIT, minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.post(
 			'/web-vitals',
@@ -52,12 +52,12 @@ export function createSystemRoutes(context: WebContext) {
 							rating: t.String({ maxLength: 20 }),
 							value: t.Number(),
 						}),
-						{ maxItems: 50 }
+						{ maxItems: 50 },
 					),
 					timestamp: t.Optional(t.String({ maxLength: 50 })),
 					url: t.String({ maxLength: 2048 }),
 				}),
-			}
+			},
 		)
 		.get(
 			'/web-vitals',
@@ -69,6 +69,6 @@ export function createSystemRoutes(context: WebContext) {
 				query: t.Object({
 					hours: t.Optional(t.Numeric({ maximum: MAX_METRICS_HOURS, minimum: 1 })),
 				}),
-			}
+			},
 		);
 }

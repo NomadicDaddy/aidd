@@ -164,7 +164,7 @@ function allowedSet(values: readonly string[]): ReadonlySet<string> {
 
 export function normalizeProjectAssuranceProfileInput(
 	value: unknown,
-	fallbackUpdatedAt = new Date().toISOString()
+	fallbackUpdatedAt = new Date().toISOString(),
 ): ProjectAssuranceProfile {
 	return normalizeProjectAssuranceProfile(value, {
 		fallbackUpdatedAt,
@@ -194,7 +194,7 @@ export function normalizeProjectAssuranceProfile(
 	options: {
 		fallbackUpdatedAt?: string;
 		source: ProjectProfileSource;
-	}
+	},
 ): ProjectAssuranceProfile {
 	if (!value || typeof value !== 'object' || Array.isArray(value)) {
 		throw new Error('Project profile must be an object.');
@@ -208,13 +208,13 @@ export function normalizeProjectAssuranceProfile(
 		dataSensitivity: enumField<ProjectDataSensitivity>(
 			raw.dataSensitivity,
 			dataSensitivitySet,
-			'dataSensitivity'
+			'dataSensitivity',
 		),
 		deployment: enumField<ProjectDeployment>(raw.deployment, deploymentSet, 'deployment'),
 		externalIntegrations: enumField<ProjectExternalIntegrations>(
 			raw.externalIntegrations,
 			externalIntegrationSet,
-			'externalIntegrations'
+			'externalIntegrations',
 		),
 		source: options.source,
 		updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : fallbackUpdatedAt,
@@ -227,7 +227,7 @@ export function normalizeProjectAssuranceProfile(
 function enumField<T extends string>(
 	value: unknown,
 	allowedValues: ReadonlySet<string>,
-	field: string
+	field: string,
 ): T {
 	if (typeof value !== 'string' || !allowedValues.has(value)) {
 		throw new Error(`Invalid project profile field: ${field}`);

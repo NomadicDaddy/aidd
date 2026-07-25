@@ -56,7 +56,7 @@ async function collectCacheDependencies(
 	projectRoot: string,
 	step: string,
 	entry: null | SmokeCacheEntry,
-	coveredFiles?: string[]
+	coveredFiles?: string[],
 ): Promise<string[]> {
 	const baseDependencies = await collectDependencies(projectRoot, step);
 	const testCoveredFiles =
@@ -68,7 +68,7 @@ async function hashCacheDependencies(
 	projectRoot: string,
 	step: string,
 	entry: null | SmokeCacheEntry,
-	coveredFiles?: string[]
+	coveredFiles?: string[],
 ): Promise<null | string> {
 	if (step === TEST_STEP_NAME && entry !== null && !hasTestCoverageEntry(entry)) {
 		return null;
@@ -81,7 +81,7 @@ async function hashCacheDependencies(
 	return await hashDependencies(
 		projectRoot,
 		await collectCacheDependencies(projectRoot, step, entry, coveredFiles),
-		isGeneratedOutputStep(step)
+		isGeneratedOutputStep(step),
 	);
 }
 
@@ -116,7 +116,7 @@ async function writeCache(projectRoot: string, cache: SmokeCacheFile): Promise<v
 export async function canSkipStep(
 	projectRoot: string,
 	step: string,
-	force = false
+	force = false,
 ): Promise<boolean> {
 	if (force) return false;
 	if (!isCacheableStep(step)) return false;
@@ -134,7 +134,7 @@ export async function canSkipStep(
 
 export async function getSmokeCacheStatus(
 	projectRoot: string,
-	steps = Object.keys(STEP_DEPENDENCIES)
+	steps = Object.keys(STEP_DEPENDENCIES),
 ): Promise<SmokeCacheStatusEntry[]> {
 	const cache = await readCache(projectRoot);
 	const entries: SmokeCacheStatusEntry[] = [];
@@ -168,7 +168,7 @@ export async function recordStepResult(
 	projectRoot: string,
 	step: string,
 	result: SmokeStepResult,
-	durationMs: number
+	durationMs: number,
 ): Promise<void> {
 	if (!isCacheableStep(step)) return;
 
@@ -198,7 +198,7 @@ export async function recordStepResult(
 export async function recordStepSuccess(
 	projectRoot: string,
 	step: string,
-	durationMs: number
+	durationMs: number,
 ): Promise<void> {
 	await recordStepResult(projectRoot, step, 'pass', durationMs);
 }

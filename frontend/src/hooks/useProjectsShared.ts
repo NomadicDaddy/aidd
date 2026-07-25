@@ -13,7 +13,7 @@ import type { useQueryClient } from '@tanstack/react-query';
  * queries refetch, so the cost is a staleness flag on cache entries nobody is watching.
  */
 export async function cancelProjectQueries(
-	queryClient: ReturnType<typeof useQueryClient>
+	queryClient: ReturnType<typeof useQueryClient>,
 ): Promise<void> {
 	await Promise.all([
 		queryClient.cancelQueries({ queryKey: ['project'] }),

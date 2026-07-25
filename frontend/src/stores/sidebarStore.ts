@@ -29,6 +29,6 @@ export const useSidebarStore = create<SidebarState>()(
 				});
 			},
 		}),
-		{ name: 'aidd-sidebar' }
-	)
+		{ name: 'aidd-sidebar' },
+	),
 );

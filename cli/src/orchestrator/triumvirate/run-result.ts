@@ -5,7 +5,7 @@ import type { PlanningStageRunResult, StageRunResult, TriumvirateRunResult } fro
 export function guardedResult(
 	summary: string,
 	metrics: IterationMetrics,
-	stageArtifacts: Record<string, unknown>
+	stageArtifacts: Record<string, unknown>,
 ): TriumvirateRunResult {
 	return {
 		artifact: { triumvirate: { ...stageArtifacts, guardFailure: summary } },
@@ -19,7 +19,7 @@ export function planningMirrorMutationResult(
 	stage: string,
 	result: PlanningStageRunResult,
 	metrics: IterationMetrics,
-	stageArtifacts: Record<string, unknown>
+	stageArtifacts: Record<string, unknown>,
 ): TriumvirateRunResult {
 	const summary = `triumvirate ${stage} planning stage modified its planning mirror after retry`;
 	return {
@@ -40,7 +40,7 @@ export function failedStageResult(
 	stage: string,
 	result: StageRunResult,
 	metrics: IterationMetrics,
-	stageArtifacts: Record<string, unknown>
+	stageArtifacts: Record<string, unknown>,
 ): TriumvirateRunResult {
 	const summary = `triumvirate ${stage} stage failed with exit code ${result.result.exitCode}`;
 	return {

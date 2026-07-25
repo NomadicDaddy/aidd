@@ -53,7 +53,7 @@ function formatValue(name: string, value: number): string {
 
 function printTopSlowest(
 	byPage: Map<string, Map<string, MetricSnapshot>>,
-	metricName: string
+	metricName: string,
 ): void {
 	const entries: { page: string; rating: string; value: number }[] = [];
 	for (const [page, metrics] of byPage) {
@@ -66,7 +66,7 @@ function printTopSlowest(
 	console.log(`\nSlowest pages by ${metricName}:`);
 	for (const entry of entries.slice(0, TOP_N)) {
 		console.log(
-			`  ${markerFor(entry.rating).padEnd(4)} ${formatValue(metricName, entry.value).padStart(8)} ${entry.page}`
+			`  ${markerFor(entry.rating).padEnd(4)} ${formatValue(metricName, entry.value).padStart(8)} ${entry.page}`,
 		);
 	}
 }
@@ -100,7 +100,7 @@ export function analyzeCrawlReport(report: CrawlReport): {
 			page,
 			worstScore: issues.reduce(
 				(score, entry) => Math.max(score, RATING_SCORE[entry.rating] ?? 0),
-				0
+				0,
 			),
 		});
 	}
@@ -139,11 +139,11 @@ export function printAnalysis(report: CrawlReport, reportPath: string): void {
 		for (const pageIssue of pagesWithIssues) {
 			console.log(`\n  ${pageIssue.page}`);
 			pageIssue.issues.sort(
-				(a, b) => (RATING_SCORE[b.rating] ?? 0) - (RATING_SCORE[a.rating] ?? 0)
+				(a, b) => (RATING_SCORE[b.rating] ?? 0) - (RATING_SCORE[a.rating] ?? 0),
 			);
 			for (const metric of pageIssue.issues) {
 				console.log(
-					`    ${markerFor(metric.rating).padEnd(4)} ${metric.name.padEnd(5)} ${formatValue(metric.name, metric.value)} (${metric.rating})`
+					`    ${markerFor(metric.rating).padEnd(4)} ${metric.name.padEnd(5)} ${formatValue(metric.name, metric.value)} (${metric.rating})`,
 				);
 			}
 		}

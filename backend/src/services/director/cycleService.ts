@@ -1,9 +1,9 @@
 import type {
+	DirectAiMeta,
 	DirectorCycleInput,
 	DirectorCycleRecord,
 	DirectorCycleStage,
 	DirectorOutput,
-	DirectAiMeta,
 } from 'aidd-shared';
 
 import { desc } from 'drizzle-orm';
@@ -20,19 +20,19 @@ import { directorCycles } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import { type RunService } from '../runService.ts';
 import { type DirectorChatService } from './chatService.ts';
-import { awaitAndPersistCycle, executeCycle, type CycleExecutorDeps } from './cycleExecutor.ts';
+import { awaitAndPersistCycle, type CycleExecutorDeps, executeCycle } from './cycleExecutor.ts';
 import {
 	broadcastCycle,
+	type CyclePersistenceDeps,
 	failCycle,
 	notifyChatSession,
 	notifyChatSessionFailure,
 	persistCycleResult,
 	readCycleOutput,
 	toCycleRecord,
-	type CyclePersistenceDeps,
 } from './cyclePersistence.ts';
 import { reconcileStaleCycles } from './cycleReconcile.ts';
-import { checkAndRunScheduledCycle, type ActiveCycleState } from './cycleScheduler.ts';
+import { type ActiveCycleState, checkAndRunScheduledCycle } from './cycleScheduler.ts';
 import { type DirectorFleetSummaryService } from './fleetSummaryService.ts';
 import { createCycleId } from './helpers.ts';
 import { type DirectorProfileService } from './profileService.ts';
@@ -149,7 +149,7 @@ export class DirectorCycleService {
 	}
 
 	async runCycle(
-		input: DirectorCycleInput = {}
+		input: DirectorCycleInput = {},
 	): Promise<{ cycleId: string; output: DirectorOutput | undefined }> {
 		const { cycleId, directorCwd } = await this.beginCycle();
 		const output = await this.runCycleBody(cycleId, directorCwd, input);
@@ -172,9 +172,9 @@ export class DirectorCycleService {
 				(notifyError: unknown) => {
 					webLogger.error(
 						{ cycleId, error: notifyError },
-						'Failed to notify chat of cycle failure'
+						'Failed to notify chat of cycle failure',
 					);
-				}
+				},
 			);
 		});
 		return { cycleId };
@@ -201,7 +201,7 @@ export class DirectorCycleService {
 	private async runCycleBody(
 		cycleId: string,
 		directorCwd: string,
-		input: DirectorCycleInput
+		input: DirectorCycleInput,
 	): Promise<DirectorOutput | undefined> {
 		try {
 			this.setCycleStage(cycleId, 'starting');
@@ -219,7 +219,7 @@ export class DirectorCycleService {
 				cycleDir,
 				fleetSummary,
 				input,
-				directorCwd
+				directorCwd,
 			);
 			await notifyChatSession(this.chatService, cycleId, cycleContext?.sessionId, output);
 			return output;
@@ -235,7 +235,7 @@ export class DirectorCycleService {
 		cycleId: string,
 		runId: string,
 		outputPath: string,
-		fleetSummary: FleetSummary
+		fleetSummary: FleetSummary,
 	): Promise<DirectorOutput | undefined> {
 		return awaitAndPersistCycle(this.executorDeps(), cycleId, runId, outputPath, fleetSummary);
 	}
@@ -254,7 +254,7 @@ export class DirectorCycleService {
 				output,
 				exitCode,
 				outputStatus: DirectorOutputStatus | undefined,
-				failureReason
+				failureReason,
 			) =>
 				persistCycleResult(
 					this.persistenceDeps(),
@@ -263,7 +263,7 @@ export class DirectorCycleService {
 					output,
 					exitCode,
 					outputStatus,
-					failureReason
+					failureReason,
 				),
 			profileService: this.profileService,
 			readCycleOutput: (path) => readCycleOutput(path),
@@ -289,7 +289,7 @@ export class DirectorCycleService {
 	private setCycleStage(
 		cycleId: string,
 		stage: DirectorCycleStage,
-		directAiMeta: DirectAiMeta | null = null
+		directAiMeta: DirectAiMeta | null = null,
 	): void {
 		this.activeStages.set(cycleId, { directAiMeta, stage });
 		broadcastCycle(this.hub, cycleId, 'running', stage, undefined, directAiMeta);

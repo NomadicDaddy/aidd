@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	cacheControlFor,
-	compressOnce,
 	compressed,
+	compressOnce,
 	contentTypeFor,
 	isCompressible,
 	negotiateEncoding,
@@ -34,7 +34,7 @@ describe('contentTypeFor', () => {
 describe('cacheControlFor', () => {
 	test('content-hashed assets are immutable for a year', () => {
 		expect(cacheControlFor('/assets/index-A1b2C3.js', 'text/javascript; charset=utf-8')).toBe(
-			'public, max-age=31536000, immutable'
+			'public, max-age=31536000, immutable',
 		);
 	});
 
@@ -119,7 +119,7 @@ describe('compression', () => {
 		const rebuilt = compressed(
 			'br',
 			new TextEncoder().encode('different'.repeat(300)),
-			'chunk.js:2:99'
+			'chunk.js:2:99',
 		);
 		expect(rebuilt).not.toBe(first);
 	});

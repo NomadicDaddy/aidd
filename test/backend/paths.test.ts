@@ -27,7 +27,7 @@ describe('project route IDs', () => {
 		expect(secondRouteId).toMatch(/^alpha~[a-f0-9]{8,}$/);
 		expect(firstRouteId).not.toBe(secondRouteId);
 		expect(matchesProjectRouteDisambiguator(first, firstRouteId!.split('~').at(-1)!)).toBe(
-			true
+			true,
 		);
 	});
 });
@@ -64,7 +64,7 @@ describe('pathIsInside', () => {
 	test.if(onWindows)('rejects a cross-drive candidate (Windows)', () => {
 		expect(pathIsInside('C:\\aidd-roots\\workspace', 'D:\\evil')).toBe(false);
 		expect(pathIsInside('C:\\aidd-roots\\workspace', 'D:\\aidd-roots\\workspace\\sub')).toBe(
-			false
+			false,
 		);
 	});
 });
@@ -85,7 +85,7 @@ describe('assertAllowedPath', () => {
 	// Regression for audit-security-1779339974-cross-drive-paths-bypass-allowed-root-containment.
 	test.if(onWindows)('rejects a cross-drive candidate (Windows)', () => {
 		expect(() => assertAllowedPath(['C:\\aidd-roots\\workspace'], 'D:\\evil')).toThrow(
-			'Path is outside allowed roots'
+			'Path is outside allowed roots',
 		);
 	});
 });

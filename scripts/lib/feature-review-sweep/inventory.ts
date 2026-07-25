@@ -57,7 +57,7 @@ function applyAnalysis(summary: InventorySummary, json: FeatureJson): void {
 
 export function buildInventorySummary(
 	features: FeatureRecord[],
-	orphanDirs: number
+	orphanDirs: number,
 ): InventorySummary {
 	const summary = emptySummary(orphanDirs);
 

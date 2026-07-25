@@ -40,7 +40,7 @@ const blockedVerificationPatterns = [
  * An admission with no tool work after it is the agent's final word on what never happened.
  */
 export function detectBlockedVerificationAdmission(
-	events: AgentEvent[]
+	events: AgentEvent[],
 ): BlockedVerificationAdmission | undefined {
 	let lastToolIndex = -1;
 	for (let i = events.length - 1; i >= 0; i--) {
@@ -76,7 +76,7 @@ export function detectBlockedVerificationAdmission(
 export async function parkBlockedVerificationFeature(
 	store: AiddStore,
 	featureId: string,
-	admission: BlockedVerificationAdmission
+	admission: BlockedVerificationAdmission,
 ): Promise<void> {
 	const feature = await store.readFeature(featureId);
 	const parkedAt = new Date().toISOString();
@@ -147,7 +147,7 @@ export async function recordVerificationSelfPark(
 	store: AiddStore,
 	featureId: string,
 	statusAtSelection: string | undefined,
-	explanation: string | undefined
+	explanation: string | undefined,
 ): Promise<boolean> {
 	// Unknown prior status means no provable transition, so fail closed to the old behavior.
 	if (statusAtSelection === undefined || statusAtSelection === 'waiting_approval') return false;

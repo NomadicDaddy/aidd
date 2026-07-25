@@ -45,7 +45,7 @@ function globToRegExp(pattern: string): RegExp {
 }
 
 export function createIgnoredDirectoryMatcher(
-	patterns: Iterable<string>
+	patterns: Iterable<string>,
 ): (name: string) => boolean {
 	const exact = new Set<string>();
 	const regexes: RegExp[] = [];
@@ -64,7 +64,7 @@ export function createIgnoredDirectoryMatcher(
 export async function scanRoot(
 	root: string,
 	maxDepth: number,
-	isIgnoredDirectory: (name: string) => boolean
+	isIgnoredDirectory: (name: string) => boolean,
 ): Promise<RootScanResult> {
 	const resolvedRoot = resolve(root);
 	if (!(await directoryExists(resolvedRoot))) {
@@ -116,7 +116,7 @@ export async function scanImportCandidates(
 	root: string,
 	maxDepth: number,
 	isIgnoredDirectory: (name: string) => boolean,
-	existingProjectPaths: ReadonlySet<string>
+	existingProjectPaths: ReadonlySet<string>,
 ): Promise<CandidateScanResult> {
 	const resolvedRoot = resolve(root);
 	if (!(await directoryExists(resolvedRoot))) {
@@ -201,14 +201,14 @@ export async function scanImportCandidates(
 	}
 	return {
 		candidates: [...candidates.values()].sort((left, right) =>
-			left.path.localeCompare(right.path)
+			left.path.localeCompare(right.path),
 		),
 		skipped: null,
 	};
 }
 
 export function dedupeSkippedRoots(
-	skippedRoots: ProjectDiscoverySkippedRootDto[]
+	skippedRoots: ProjectDiscoverySkippedRootDto[],
 ): ProjectDiscoverySkippedRootDto[] {
 	const seen = new Set<string>();
 	const deduped: ProjectDiscoverySkippedRootDto[] = [];
@@ -223,7 +223,7 @@ export function dedupeSkippedRoots(
 
 export function chooseProjectRoot(
 	existing: { path: string; root: string } | undefined,
-	candidate: { path: string; root: string }
+	candidate: { path: string; root: string },
 ): { path: string; root: string } {
 	if (!existing) return candidate;
 	if (candidate.root.length > existing.root.length) return candidate;

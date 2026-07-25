@@ -32,7 +32,7 @@ export class ReportBuilder {
 		options: {
 			cursor?: string;
 			limit?: number;
-		} = {}
+		} = {},
 	): Promise<CursorPage<PipelineSessionRecord>> {
 		const limit = clampLimit(options.limit);
 		const decoded = decodeCursor(options.cursor);
@@ -41,8 +41,8 @@ export class ReportBuilder {
 					lt(pipelineSessions.startedAt, decoded.startedAt),
 					and(
 						eq(pipelineSessions.startedAt, decoded.startedAt),
-						lt(pipelineSessions.id, decoded.id)
-					)
+						lt(pipelineSessions.id, decoded.id),
+					),
 				)
 			: undefined;
 		const rows = await this.db

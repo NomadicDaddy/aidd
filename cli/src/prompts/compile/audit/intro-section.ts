@@ -6,7 +6,7 @@ const escapedBacktick = '\\`';
 
 export function renderAuditIntroSection(
 	parallelGuidance: string,
-	priorContext?: ProjectContextDigest
+	priorContext?: ProjectContextDigest,
 ): string {
 	return `## YOUR ROLE - AUDIT AGENT
 

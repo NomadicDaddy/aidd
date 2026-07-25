@@ -79,12 +79,12 @@ export function assertVersionParity(info: VersionInfo): string[] {
 	const issues: string[] = [];
 	if (info.versionFile !== info.packageVersion) {
 		issues.push(
-			`VERSION (${info.versionFile}) does not match package.json (${info.packageVersion})`
+			`VERSION (${info.versionFile}) does not match package.json (${info.packageVersion})`,
 		);
 	}
 	if (info.changelogVersion !== info.packageVersion) {
 		issues.push(
-			`docs/CHANGELOG.md latest version (${info.changelogVersion}) does not match package.json (${info.packageVersion})`
+			`docs/CHANGELOG.md latest version (${info.changelogVersion}) does not match package.json (${info.packageVersion})`,
 		);
 	}
 	return issues;

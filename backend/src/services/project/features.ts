@@ -10,8 +10,8 @@ import type { ProjectFeatureDto } from '../../types.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { HttpError } from '../errors.ts';
 import {
-	PROJECT_FEATURE_STATUSES,
 	type FeatureApprovalInput,
+	PROJECT_FEATURE_STATUSES,
 	type ProjectFeatureStatus,
 } from './types.ts';
 
@@ -66,7 +66,7 @@ function assertRoadmapMilestone(roadmap: Roadmap, milestone: string): string {
 
 async function readFeatureForMutation(
 	store: FileAiddStore,
-	featureDirectory: string
+	featureDirectory: string,
 ): Promise<Feature> {
 	try {
 		return await store.readFeature(featureDirectory);
@@ -79,7 +79,7 @@ export async function approveFeature(
 	ctx: FeatureContext,
 	projectId: string,
 	featureDirectory: string,
-	input: FeatureApprovalInput
+	input: FeatureApprovalInput,
 ): Promise<Feature> {
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
@@ -115,7 +115,7 @@ export async function approveFeature(
 export async function deleteFeature(
 	ctx: FeatureContext,
 	projectId: string,
-	featureDirectory: string
+	featureDirectory: string,
 ): Promise<{ id: string }> {
 	const projectDir = await ctx.resolveDiscoveredProject(projectId);
 	const store = new FileAiddStore(projectDir);
@@ -149,7 +149,7 @@ export async function updateFeatureStatus(
 	ctx: FeatureContext,
 	projectId: string,
 	featureDirectory: string,
-	statusInput: string
+	statusInput: string,
 ): Promise<Feature> {
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
@@ -179,7 +179,7 @@ export async function updateFeatureMetadata(
 	ctx: FeatureContext,
 	projectId: string,
 	featureDirectory: string,
-	input: FeatureMetadataInput
+	input: FeatureMetadataInput,
 ): Promise<Feature> {
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
@@ -197,7 +197,7 @@ export async function updateFeatureMetadata(
 		summary: {
 			featureId: directory,
 			fields: (Object.keys(input) as (keyof FeatureMetadataInput)[]).filter(
-				(k) => input[k] !== undefined
+				(k) => input[k] !== undefined,
 			),
 		},
 		target: join(store.metadataDir, 'features', directory, 'feature.json'),
@@ -209,7 +209,7 @@ export async function updateFeatureMilestone(
 	ctx: FeatureContext,
 	projectId: string,
 	featureDirectory: string,
-	milestoneInput: string
+	milestoneInput: string,
 ): Promise<{ feature: ProjectFeatureDto; roadmap: Roadmap }> {
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);

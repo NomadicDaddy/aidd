@@ -56,7 +56,7 @@ export function createApiClient(web: Pick<ResolvedWebConfig, 'authToken' | 'port
 		if (!response.ok) {
 			throw new ApiClientError(
 				`${method} ${path} failed (${response.status}): ${parseErrorDetail(text, response.statusText)}`,
-				response.status
+				response.status,
 			);
 		}
 		return (text.length > 0 ? JSON.parse(text) : null) as T;

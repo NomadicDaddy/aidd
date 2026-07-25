@@ -1,10 +1,10 @@
 import type { PartialAiddConfig } from 'aidd-shared/config';
 
 import {
-	backendNames,
-	normalizeBackendName,
 	type BackendInputName,
 	type BackendName,
+	backendNames,
+	normalizeBackendName,
 } from 'aidd-shared/plan/types';
 
 import type {
@@ -39,7 +39,7 @@ export function cleanList(values: string[]): string[] {
 export function setOptionalString(
 	config: PartialAiddConfig,
 	key: 'auditModel' | 'codeModel' | 'initModel' | 'model',
-	value: null | string | undefined
+	value: null | string | undefined,
 ): void {
 	if (value === undefined) return;
 	const next = optionalString(value);
@@ -60,7 +60,7 @@ export function normalizeBackendInput(value: BackendInputName): BackendName {
  */
 export function mergeBackendDefaults(
 	input: Partial<Record<BackendName, BackendDefaultSettingsInput>> | undefined,
-	existing: PartialAiddConfig['backends']
+	existing: PartialAiddConfig['backends'],
 ): PartialAiddConfig['backends'] {
 	if (input === undefined) return existing;
 	type BackendEntry = {
@@ -94,7 +94,7 @@ export function mergeBackendDefaults(
  * @returns Normalized triumvirate config or undefined.
  */
 export function normalizeTriumvirateInput(
-	input: null | TriumvirateSettingsInput | undefined
+	input: null | TriumvirateSettingsInput | undefined,
 ): PartialAiddConfig['triumvirate'] {
 	if (!input) return undefined;
 	const normalized: NonNullable<PartialAiddConfig['triumvirate']> = {
@@ -126,7 +126,7 @@ export function normalizeTriumvirateInput(
  * @returns Normalized shared files or undefined.
  */
 export function normalizeSharedFiles(
-	entries: SharedFileEntryInput[]
+	entries: SharedFileEntryInput[],
 ): PartialAiddConfig['sharedFiles'] {
 	if (entries.length === 0) return undefined;
 	return entries.map((entry) => {
@@ -139,7 +139,7 @@ export function normalizeSharedFiles(
 export { mergeProviders } from './mergeProviders.ts';
 
 export function normalizeOptionalBackendInput(
-	value: BackendInputName | null | undefined
+	value: BackendInputName | null | undefined,
 ): BackendName | undefined {
 	if (value === null || value === undefined) return undefined;
 	return normalizeBackendInput(value);
@@ -156,7 +156,7 @@ export function defaultDirectAiSurfaces(enabled: boolean): Required<DirectAiSurf
 
 export function effectiveDirectAiProvider(
 	input: DirectAiSettingsInput | null | undefined,
-	existing: PartialAiddConfig
+	existing: PartialAiddConfig,
 ): string {
 	return (
 		optionalString(input?.provider) ??
@@ -169,7 +169,7 @@ export function effectiveDirectAiProvider(
 export function applyDirectAiApiKey(
 	next: PartialAiddConfig,
 	apiKey: null | string | undefined,
-	provider: string
+	provider: string,
 ): void {
 	if (apiKey === undefined) return;
 	const providers = { ...(next.providers ?? {}) };
@@ -192,7 +192,7 @@ export function applyDirectAiApiKey(
 
 export function normalizeDirectAiInput(
 	input: DirectAiSettingsInput | null | undefined,
-	keepWhenDisabled: boolean
+	keepWhenDisabled: boolean,
 ): PartialAiddConfig['directAi'] {
 	if (!input) return undefined;
 	const enabled = input.enabled ?? false;
@@ -229,7 +229,7 @@ export function normalizeDirectAiInput(
  */
 export function normalizeTelegramInput(
 	input: null | TelegramChannelSettingsInput | undefined,
-	existing: PartialAiddConfig
+	existing: PartialAiddConfig,
 ): PartialAiddConfig['channels'] {
 	if (input === null) return undefined;
 	if (input === undefined) return existing.channels;

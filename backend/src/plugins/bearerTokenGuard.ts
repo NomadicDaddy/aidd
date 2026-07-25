@@ -40,7 +40,7 @@ function tokensMatch(provided: null | string | undefined, expected: string): boo
 }
 
 /** The only `/api/` paths allowed to authenticate via a `?token=` query string (WS upgrades). */
-const WS_UPGRADE_PATHS = new Set(['/api/v1/ws', '/api/v1/terminal/ws']);
+const WS_UPGRADE_PATHS = new Set(['/api/v1/terminal/ws', '/api/v1/ws']);
 
 /**
  * Headers a reverse proxy adds when it forwards a request. Their presence is proof the
@@ -59,7 +59,7 @@ const FORWARDING_HEADER_NAMES = [
 /** Reads a header from either a Fetch `Headers` instance or a plain lowercased-key record. */
 function readHeader(
 	headers: Headers | Record<string, string | undefined> | undefined,
-	name: string
+	name: string,
 ): string | undefined {
 	if (!headers) return undefined;
 	if (typeof (headers as Headers).get === 'function') {
@@ -70,7 +70,7 @@ function readHeader(
 
 /** True when the request carries any reverse-proxy forwarding header. */
 export function isForwardedRequest(
-	headers: Headers | Record<string, string | undefined> | undefined
+	headers: Headers | Record<string, string | undefined> | undefined,
 ): boolean {
 	return FORWARDING_HEADER_NAMES.some((name) => {
 		const value = readHeader(headers, name);
@@ -97,7 +97,7 @@ export function isPeerAuthorized(
 	web: Pick<ResolvedWebConfig, 'authToken'>,
 	peerAddress: null | string | undefined,
 	providedToken: null | string | undefined,
-	requestIsForwarded: boolean
+	requestIsForwarded: boolean,
 ): boolean {
 	if (requestIsForwarded) {
 		return web.authToken ? tokensMatch(providedToken, web.authToken) : false;
@@ -124,13 +124,13 @@ export function createBearerTokenGuardPlugin(webConfig: Pick<ResolvedWebConfig, 
 					webConfig,
 					peerAddress,
 					providedToken,
-					isForwardedRequest(request.headers)
+					isForwardedRequest(request.headers),
 				)
 			) {
 				return;
 			}
 			set.status = 401;
 			return { error: 'Unauthorized' };
-		}
+		},
 	);
 }

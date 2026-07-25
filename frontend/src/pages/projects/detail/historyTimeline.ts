@@ -120,7 +120,7 @@ function featureEvents(features: ProjectFeature[]): HistoryEvent[] {
 
 function runEvents(
 	localRuns: ProjectLocalRun[],
-	localIterations: ProjectLocalIteration[]
+	localIterations: ProjectLocalIteration[],
 ): HistoryEvent[] {
 	return recentMetadataActivity(localRuns, localIterations).map((item) => ({
 		badge: item.status,
@@ -140,10 +140,10 @@ function runEvents(
 export function buildHistoryEvents(
 	features: ProjectFeature[],
 	localRuns: ProjectLocalRun[],
-	localIterations: ProjectLocalIteration[]
+	localIterations: ProjectLocalIteration[],
 ): HistoryEvent[] {
 	return [...featureEvents(features), ...runEvents(localRuns, localIterations)].sort(
-		(left, right) => right.timeValue - left.timeValue
+		(left, right) => right.timeValue - left.timeValue,
 	);
 }
 

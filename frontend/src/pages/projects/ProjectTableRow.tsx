@@ -54,7 +54,7 @@ export function ProjectTableRow({
 	const frontendCollision = fePeers.length > 1;
 	const backendCollision = bePeers.length > 1;
 	const collisionPeers = Array.from(
-		new Set([...fePeers, ...bePeers].filter((name) => name !== project.name))
+		new Set([...fePeers, ...bePeers].filter((name) => name !== project.name)),
 	);
 	const specDays = daysSince(metadata.specUpdatedAt);
 	const orphan = isOrphaned(project);
@@ -97,7 +97,7 @@ export function ProjectTableRow({
 						className={`text-[10px] ${
 							templateVersionColor(
 								metadata.templateVersion,
-								spernakitTemplateVersion
+								spernakitTemplateVersion,
 							) || 'text-neutral-500'
 						}`}>
 						spk {metadata.templateVersion}

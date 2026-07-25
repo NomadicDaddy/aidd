@@ -24,7 +24,7 @@ export function identityMatches(
 	recorded: ProcessTableEntry,
 	current: ProcessTableEntry | undefined,
 	platform: NodeJS.Platform,
-	isAlive: (pid: number) => boolean
+	isAlive: (pid: number) => boolean,
 ): boolean {
 	// No current row: we cannot confirm identity, so we do not kill.
 	if (current === undefined) return false;
@@ -53,7 +53,7 @@ export function identityMatches(
 export async function confirmLiveIdentity(
 	pid: number,
 	recorded: ProcessTableEntry,
-	readEntry: (pid: number) => Promise<null | ProcessTableEntry>
+	readEntry: (pid: number) => Promise<null | ProcessTableEntry>,
 ): Promise<boolean> {
 	if (recorded.startId === undefined) return false;
 	const live = await readEntry(pid);
@@ -71,7 +71,7 @@ export async function confirmLiveIdentity(
  */
 export function linkIsSound(
 	recorded: ProcessTableEntry | undefined,
-	current: ProcessTableEntry | undefined
+	current: ProcessTableEntry | undefined,
 ): boolean {
 	if (recorded?.startId === undefined || current?.startId === undefined) return true;
 	return recorded.startId === current.startId;

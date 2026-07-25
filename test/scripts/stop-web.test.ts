@@ -68,8 +68,8 @@ describe('stop-web script helpers', () => {
 			reportOrphanedSocket(
 				3210,
 				[38068],
-				[{ id: 'run_live', pid: process.pid, projectPath: 'd:/applications/aidd' }]
-			)
+				[{ id: 'run_live', pid: process.pid, projectPath: 'd:/applications/aidd' }],
+			),
 		);
 
 		expect(lines.join('\n')).toContain('run_live');

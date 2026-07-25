@@ -54,7 +54,7 @@ export interface LoadProjectContextOptions {
 
 export async function loadProjectContext(
 	projectDir: string,
-	options: LoadProjectContextOptions = {}
+	options: LoadProjectContextOptions = {},
 ): Promise<ProjectContextDigest> {
 	const changelogLineLimit = options.changelogLineLimit ?? DEFAULT_CHANGELOG_LINE_LIMIT;
 	const reportLimit = options.reportLimit ?? DEFAULT_REPORT_LIMIT;
@@ -110,21 +110,21 @@ async function probeContextFile(projectDir: string): Promise<ContextFilePresence
 async function loadAuditReportGroups(
 	projectDir: string,
 	auditNames: string[],
-	limit: number
+	limit: number,
 ): Promise<AuditReportGroup[]> {
 	if (auditNames.length === 0) return [];
 	const groups = await Promise.all(
 		auditNames.map(async (auditName) => {
 			const recent = await loadAuditReportSummaries(projectDir, auditName, limit);
 			return { auditName, recent } satisfies AuditReportGroup;
-		})
+		}),
 	);
 	return groups.filter((group) => group.recent.length > 0);
 }
 
 async function loadChangelogDigest(
 	projectDir: string,
-	lineLimit: number
+	lineLimit: number,
 ): Promise<ChangelogDigest> {
 	const changelogPath = metadataPath(projectDir, 'CHANGELOG.md');
 	let raw: string;
@@ -150,7 +150,7 @@ async function loadChangelogDigest(
 async function loadAuditReportSummaries(
 	projectDir: string,
 	auditName: string | undefined,
-	limit: number
+	limit: number,
 ): Promise<AuditReportSummary[]> {
 	const dir = metadataPath(projectDir, 'audit-reports');
 	const prefix = auditName ? `${auditName}-` : undefined;
@@ -163,7 +163,7 @@ async function loadAuditReportSummaries(
 
 async function loadSessionReportSummaries(
 	projectDir: string,
-	limit: number
+	limit: number,
 ): Promise<SessionReportSummary[]> {
 	const dir = metadataPath(projectDir, 'reports');
 	const files = await listMarkdownFiles(dir);
@@ -196,7 +196,7 @@ async function sortByMtimeDesc(dir: string, fileNames: string[]): Promise<string
 			} catch {
 				return { fileName, mtimeMs: 0 };
 			}
-		})
+		}),
 	);
 	return withStats.sort((a, b) => b.mtimeMs - a.mtimeMs).map((entry) => entry.fileName);
 }
@@ -215,7 +215,7 @@ async function buildAuditReportSummary(dir: string, fileName: string): Promise<A
 
 async function buildSessionReportSummary(
 	dir: string,
-	fileName: string
+	fileName: string,
 ): Promise<SessionReportSummary> {
 	const filePath = join(dir, fileName);
 	const date = extractDateFromFileName(fileName);

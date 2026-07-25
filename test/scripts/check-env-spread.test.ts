@@ -7,7 +7,7 @@ import { runCheckEnvSpread } from '../../scripts/check-env-spread.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 async function captureStderr(
-	fn: () => Promise<number>
+	fn: () => Promise<number>,
 ): Promise<{ exitCode: number; stderr: string }> {
 	const originalError = console.error;
 	const originalLog = console.log;

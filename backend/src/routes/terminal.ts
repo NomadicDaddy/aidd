@@ -92,9 +92,9 @@ export function createTerminalRoutes(context: WebContext) {
 			},
 			{
 				body: t.Optional(
-					t.Object({ cwd: t.Optional(t.String()), shellId: t.Optional(t.String()) })
+					t.Object({ cwd: t.Optional(t.String()), shellId: t.Optional(t.String()) }),
 				),
-			}
+			},
 		)
 		.delete('/terminal/sessions/:sessionId', ({ params, set }) => {
 			if (!manager.kill(params.sessionId)) {

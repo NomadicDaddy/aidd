@@ -1,4 +1,4 @@
-import { projectAssuranceBuckets, type AuditProfileMapping } from 'aidd-shared';
+import { type AuditProfileMapping, projectAssuranceBuckets } from 'aidd-shared';
 import {
 	auditProfileMappingPath,
 	loadAuditProfileMapping,
@@ -71,7 +71,7 @@ async function runFleetCheck(argv: string[]): Promise<number> {
 	for (const project of projects) {
 		for (const checkArgs of [['--check-features'], ['--check-artifacts']]) {
 			console.log(
-				`\n[${project.name}] bun ${aiddEntry} --project-dir ${project.projectDir} ${checkArgs[0]}`
+				`\n[${project.name}] bun ${aiddEntry} --project-dir ${project.projectDir} ${checkArgs[0]}`,
 			);
 			const exitCode = await runAidd(project.projectDir, checkArgs);
 			if (exitCode !== 0) failures++;
@@ -153,7 +153,7 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 		mapping = await loadAuditProfileMapping(rootDir);
 	} catch (err) {
 		console.error(
-			`audit:profile-mapping FAILED: ${err instanceof Error ? err.message : String(err)}`
+			`audit:profile-mapping FAILED: ${err instanceof Error ? err.message : String(err)}`,
 		);
 		console.error(`  file: ${mappingPath}`);
 		return 1;
@@ -211,7 +211,7 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 	for (const audit of knownAudits) {
 		if (!reachableAudits.has(audit)) {
 			errors.push(
-				`Audit ${audit} is unreachable: excluded by global rules for every assurance bucket`
+				`Audit ${audit} is unreachable: excluded by global rules for every assurance bucket`,
 			);
 		}
 	}
@@ -223,7 +223,7 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 	}
 
 	console.log(
-		`audit:profile-mapping OK (${mapping.rules.length} rule(s), ${knownAudits.size} runnable audit(s), ${referencedAudits.size} rule-referenced)`
+		`audit:profile-mapping OK (${mapping.rules.length} rule(s), ${knownAudits.size} runnable audit(s), ${referencedAudits.size} rule-referenced)`,
 	);
 	return 0;
 }

@@ -110,7 +110,7 @@ export interface AgentClient {
 	complete(
 		request: AgentLoopRequest,
 		signal: AbortSignal,
-		onDelta?: (delta: StreamDelta) => void
+		onDelta?: (delta: StreamDelta) => void,
 	): Promise<AgentLoopResponse>;
 }
 

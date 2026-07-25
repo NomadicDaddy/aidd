@@ -44,7 +44,7 @@ describe('web telemetry routes', () => {
 		} as unknown as WebContext);
 		for (const windowMs of [86_400_000, 604_800_000, 2_592_000_000]) {
 			const response = await app.handle(
-				new Request(`http://localhost/api/v1/telemetry/resources?windowMs=${windowMs}`)
+				new Request(`http://localhost/api/v1/telemetry/resources?windowMs=${windowMs}`),
 			);
 			expect(response.status).toBe(200);
 		}

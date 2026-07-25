@@ -59,7 +59,7 @@ export function summarizeFeatures(features: Feature[]): FeatureStats {
 		byCategoryPriority: [],
 		closed: features.filter((feature) => feature.status === 'completed').length,
 		failing: features.filter(
-			(feature) => feature.passes === false && feature.status === 'backlog'
+			(feature) => feature.passes === false && feature.status === 'backlog',
 		).length,
 		open: features.filter((feature) => feature.status === 'backlog').length,
 		passing: features.filter((feature) => feature.passes === true).length,
@@ -80,7 +80,7 @@ export function summarizeFeatures(features: Feature[]): FeatureStats {
 		buckets.set(category, bucket);
 	}
 	stats.byCategoryPriority = [...buckets.values()].sort((a, b) =>
-		a.category.localeCompare(b.category)
+		a.category.localeCompare(b.category),
 	);
 	return stats;
 }
@@ -90,7 +90,7 @@ export function summarizeFeatures(features: Feature[]): FeatureStats {
  * concurrent run instead of only ever seeing the single top pick. */
 export function selectFeatureCandidates(
 	features: Feature[],
-	options: FeatureSelectionOptions = {}
+	options: FeatureSelectionOptions = {},
 ): Feature[] {
 	const allFeatures = options.allFeatures ?? features;
 	return features
@@ -111,7 +111,7 @@ export function selectFeatureCandidates(
 
 export function selectNextFeature(
 	features: Feature[],
-	options: FeatureSelectionOptions = {}
+	options: FeatureSelectionOptions = {},
 ): Feature | undefined {
 	return selectFeatureCandidates(features, options)[0];
 }

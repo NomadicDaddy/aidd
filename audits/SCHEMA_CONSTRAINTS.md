@@ -160,7 +160,7 @@ export const apiKeyNonces = sqliteTable(
 		nonce: text('nonce').notNull().unique(), // SECURE: duplicates rejected
 		// ... other columns
 	},
-	(table) => [index('idx_api_key_nonces_expires_at').on(table.expiresAt)]
+	(table) => [index('idx_api_key_nonces_expires_at').on(table.expiresAt)],
 );
 ```
 
@@ -201,7 +201,7 @@ export const rateLimitEntries = sqliteTable(
 		key: text('key').notNull().unique(), // SAFE: duplicates rejected
 		// ... other columns
 	},
-	(table) => [index('idx_rate_limit_entries_reset_at').on(table.resetAt)]
+	(table) => [index('idx_rate_limit_entries_reset_at').on(table.resetAt)],
 );
 
 // ✅ OPTION 2: Documented upsert pattern in service
@@ -235,7 +235,7 @@ export const dashboards = sqliteTable(
 		// ... other columns
 		shareToken: text('share_token'),
 	},
-	(table) => [uniqueIndex('idx_dashboard_configs_share_token').on(table.shareToken)]
+	(table) => [uniqueIndex('idx_dashboard_configs_share_token').on(table.shareToken)],
 );
 ```
 
@@ -295,7 +295,7 @@ export const mfaSettings = sqliteTable(
 			foreignColumns: [users.id],
 			name: 'fk_mfa_settings_user_id_users',
 		}).onDelete('cascade'),
-	]
+	],
 );
 
 // ✅ CORRECT: One settings row per user enforced via inline .unique();
@@ -313,7 +313,7 @@ export const mfaSettings = sqliteTable(
 			foreignColumns: [users.id],
 			name: 'fk_mfa_settings_user_id_users',
 		}).onDelete('cascade'),
-	]
+	],
 );
 ```
 
@@ -359,7 +359,7 @@ const entityTags = sqliteTable(
 			foreignColumns: [tags.id],
 			name: 'fk_entity_tags_tag_id_tags',
 		}),
-	]
+	],
 );
 
 // ✅ CORRECT: Prevent duplicate tag assignments using uniqueIndex
@@ -380,7 +380,7 @@ const entityTags = sqliteTable(
 			name: 'fk_entity_tags_tag_id_tags',
 		}),
 		uniqueIndex('idx_entity_tags_entity_tag').on(table.entityType, table.entityId, table.tagId),
-	]
+	],
 );
 ```
 
@@ -415,10 +415,10 @@ const oauthAccounts = sqliteTable(
 		index('idx_oauth_accounts_user_id').on(table.userId),
 		uniqueIndex('idx_oauth_accounts_provider_account').on(
 			table.provider,
-			table.providerAccountId
+			table.providerAccountId,
 		),
 		uniqueIndex('idx_oauth_accounts_user_provider').on(table.userId, table.provider),
-	]
+	],
 );
 ```
 
@@ -484,7 +484,7 @@ const pipelineStepResults = sqliteTable(
 			foreignColumns: [pipelineSessions.id],
 			name: 'fk_pipeline_step_results_session_id_pipeline_sessions',
 		}).onDelete('cascade'),
-	]
+	],
 );
 
 // ✅ CORRECT: position is unique per parent scope
@@ -503,9 +503,9 @@ const pipelineStepResults = sqliteTable(
 		}).onDelete('cascade'),
 		uniqueIndex('idx_pipeline_step_results_session_order').on(
 			table.sessionId,
-			table.displayOrder
+			table.displayOrder,
 		),
-	]
+	],
 );
 ```
 
@@ -575,7 +575,7 @@ const dashboards = pgTable(
 		uniqueIndex('idx_dashboard_configs_user_default')
 			.on(table.userId)
 			.where(sql`${table.isDefault} = true`),
-	]
+	],
 );
 ```
 

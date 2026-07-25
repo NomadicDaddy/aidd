@@ -89,7 +89,7 @@ function initLongTaskLogging(): void {
 							duration,
 							name: entry.name,
 							startTime: Math.round(entry.startTime * 100) / 100,
-						})}`
+						})}`,
 					);
 				}
 			}

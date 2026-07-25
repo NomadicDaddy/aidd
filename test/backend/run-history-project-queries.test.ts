@@ -9,8 +9,8 @@ import { directorCycles, runs } from '../../backend/src/db/schema.ts';
 import {
 	latestProjectAuditRun,
 	listRuns,
-	listRunsPage,
 	listRunsForProjectPage,
+	listRunsPage,
 } from '../../backend/src/services/run/historyQueries.ts';
 import type { QueriesContext } from '../../backend/src/services/run/queries.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
@@ -70,7 +70,7 @@ describe('project-scoped run history queries', () => {
 				projectName: 'projA',
 				projectPath: projA,
 				startedAt: 1_000,
-			})
+			}),
 		);
 		for (let i = 0; i < 60; i++) {
 			await ctx.db.insert(runs).values(
@@ -80,7 +80,7 @@ describe('project-scoped run history queries', () => {
 					projectName: 'projB',
 					projectPath: projB,
 					startedAt: 2_000 + i,
-				})
+				}),
 			);
 		}
 
@@ -98,7 +98,7 @@ describe('project-scoped run history queries', () => {
 				projectName: 'projA',
 				projectPath: projA,
 				startedAt: 1_000,
-			})
+			}),
 		);
 		await ctx.db.insert(runs).values(
 			seedRun({
@@ -107,7 +107,7 @@ describe('project-scoped run history queries', () => {
 				projectName: 'projA',
 				projectPath: projA,
 				startedAt: 5_000,
-			})
+			}),
 		);
 		await ctx.db.insert(runs).values(
 			seedRun({
@@ -116,7 +116,7 @@ describe('project-scoped run history queries', () => {
 				projectName: 'projA',
 				projectPath: projA,
 				startedAt: 3_000,
-			})
+			}),
 		);
 
 		const latest = await latestProjectAuditRun(ctx, projA);
@@ -133,7 +133,7 @@ describe('project-scoped run history queries', () => {
 				projectName: 'projSep',
 				projectPath: 'd:\\applications\\projSep',
 				startedAt: 1_000,
-			})
+			}),
 		);
 
 		const latest = await latestProjectAuditRun(ctx, 'd:/applications/projSep');
@@ -155,7 +155,7 @@ describe('project-scoped run history queries', () => {
 					projectName: 'projA',
 					projectPath: projA,
 					startedAt: base - i,
-				})
+				}),
 			);
 			await ctx.db.insert(runs).values(
 				seedRun({
@@ -163,7 +163,7 @@ describe('project-scoped run history queries', () => {
 					projectName: 'projB',
 					projectPath: projB,
 					startedAt: base - i,
-				})
+				}),
 			);
 		}
 
@@ -245,7 +245,7 @@ describe('project-scoped run history queries', () => {
 			await mkdir(join(dataDir, 'director', '.aidd'), { recursive: true });
 			await Bun.write(
 				join(dataDir, 'director', '.aidd', 'runs.jsonl'),
-				`${JSON.stringify({ runId: 'run_cli_backed_director' })}\n`
+				`${JSON.stringify({ runId: 'run_cli_backed_director' })}\n`,
 			);
 			await ctx.db.insert(directorCycles).values({
 				completedAt: Date.now(),
@@ -280,7 +280,7 @@ describe('project-scoped run history queries', () => {
 				projectPath: 'd:/__aidd_test_history__/data/director',
 				startedAt,
 				status: 'running',
-			})
+			}),
 		);
 		await ctx.db
 			.update(runs)

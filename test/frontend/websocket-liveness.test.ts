@@ -11,7 +11,7 @@ describe('evaluateLiveness (WebSocket half-open watchdog)', () => {
 				lastMessageAt: 0,
 				now: 1_000_000,
 				timeoutMs: TIMEOUT_MS,
-			})
+			}),
 		).toBe('idle');
 	});
 
@@ -23,7 +23,7 @@ describe('evaluateLiveness (WebSocket half-open watchdog)', () => {
 				lastMessageAt: now - (TIMEOUT_MS - 1),
 				now,
 				timeoutMs: TIMEOUT_MS,
-			})
+			}),
 		).toBe('ping');
 	});
 
@@ -36,7 +36,7 @@ describe('evaluateLiveness (WebSocket half-open watchdog)', () => {
 				lastMessageAt: null,
 				now: 1_000_000,
 				timeoutMs: TIMEOUT_MS,
-			})
+			}),
 		).toBe('ping');
 	});
 
@@ -48,7 +48,7 @@ describe('evaluateLiveness (WebSocket half-open watchdog)', () => {
 				lastMessageAt: now - (TIMEOUT_MS + 1),
 				now,
 				timeoutMs: TIMEOUT_MS,
-			})
+			}),
 		).toBe('reconnect');
 	});
 
@@ -60,7 +60,7 @@ describe('evaluateLiveness (WebSocket half-open watchdog)', () => {
 				lastMessageAt: now - TIMEOUT_MS,
 				now,
 				timeoutMs: TIMEOUT_MS,
-			})
+			}),
 		).toBe('ping');
 	});
 });

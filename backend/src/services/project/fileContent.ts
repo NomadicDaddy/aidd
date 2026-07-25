@@ -57,7 +57,7 @@ function isWithinReadableScope(projectPath: string, candidate: string): boolean 
 
 export async function readProjectFile(
 	projectPath: string,
-	requestedPath: string
+	requestedPath: string,
 ): Promise<ProjectFileResult> {
 	// Reject anything that is not a plain relative path before resolving. `..` segments and
 	// absolute paths (in either separator style) never have a legitimate use here.

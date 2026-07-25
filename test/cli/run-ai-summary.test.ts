@@ -12,9 +12,9 @@ import { explainAbnormalTermination } from '../../cli/src/orchestrator/run/ai-su
 import { gitCommitsDiffStat } from '../../cli/src/orchestrator/run/git.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
-	runOrchestrator,
 	type RunFinalSummary,
 	type RunObserver,
+	runOrchestrator,
 } from '../../cli/src/orchestrator/orchestrator.ts';
 import { writeRunSummary } from '../../cli/src/orchestrator/run/artifacts.ts';
 import { initialRunTotals } from '../../cli/src/orchestrator/run/types.ts';
@@ -71,7 +71,7 @@ async function makeStore(name: string): Promise<FileAiddStore> {
 			priority: 1,
 			status: 'backlog',
 			title: 'Core feature',
-		})
+		}),
 	);
 	return new FileAiddStore(projectDir);
 }
@@ -183,7 +183,7 @@ describe('AI summarizer fail-soft contract', () => {
 			],
 			async () => {
 				await completeFeature(store);
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -251,7 +251,7 @@ describe('writeRunSummary with stub summarizer', () => {
 			acc,
 			'completed',
 			0,
-			'coding completed feature-core'
+			'coding completed feature-core',
 		);
 
 		// Check onFinalSummary received the aiSummary
@@ -312,7 +312,7 @@ describe('writeRunSummary with stub summarizer', () => {
 			acc,
 			'completed',
 			0,
-			'no work found'
+			'no work found',
 		);
 
 		expect(summarizerCalled).toBe(false);
@@ -361,7 +361,7 @@ describe('AI summarizer null result propagation', () => {
 			acc,
 			'completed',
 			0,
-			'completed'
+			'completed',
 		);
 
 		expect(capturedSummary).toBeDefined();
@@ -382,7 +382,7 @@ describe('gitCommitsDiffStat', () => {
 		});
 		if ((await proc.exited) !== 0) {
 			throw new Error(
-				`git ${args.join(' ')} failed: ${await new Response(proc.stderr).text()}`
+				`git ${args.join(' ')} failed: ${await new Response(proc.stderr).text()}`,
 			);
 		}
 	}
@@ -464,7 +464,7 @@ describe('explainAbnormalTermination', () => {
 	test('explains a provider error (exit code 72)', () => {
 		const explanation = explainAbnormalTermination(
 			orchestratorExitCodes.providerError,
-			'exit_error'
+			'exit_error',
 		);
 		expect(explanation).not.toBeNull();
 		expect(explanation).toContain('Provider error');
@@ -473,7 +473,7 @@ describe('explainAbnormalTermination', () => {
 	test('explains an idle timeout (exit code 71)', () => {
 		const explanation = explainAbnormalTermination(
 			orchestratorExitCodes.idleTimeout,
-			'exit_error'
+			'exit_error',
 		);
 		expect(explanation).not.toBeNull();
 		expect(explanation!.toLowerCase()).toContain('idle');
@@ -482,7 +482,7 @@ describe('explainAbnormalTermination', () => {
 	test('explains a rate limit (exit code 74)', () => {
 		const explanation = explainAbnormalTermination(
 			orchestratorExitCodes.rateLimited,
-			'exit_error'
+			'exit_error',
 		);
 		expect(explanation).not.toBeNull();
 		expect(explanation!.toLowerCase()).toContain('rate limit');

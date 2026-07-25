@@ -42,7 +42,7 @@ describe('release archive identity', () => {
 				{ isDirectory: false, isFile: true, name: archiveName('2.130.1', TARGET) },
 			],
 			'2.130.1',
-			[TARGET]
+			[TARGET],
 		);
 		expect(issues).toEqual([]);
 	});
@@ -58,7 +58,7 @@ describe('release archive identity', () => {
 				},
 			],
 			'2.130.1',
-			[TARGET]
+			[TARGET],
 		);
 		expect(issues).toHaveLength(2);
 	});

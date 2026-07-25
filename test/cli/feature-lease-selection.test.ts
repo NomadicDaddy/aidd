@@ -92,7 +92,7 @@ describe('lease-aware coding selection', () => {
 		expect(await competitor.acquire('feat-one')).toEqual({ acquired: true });
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--feature', 'feat-one'])
+			plan(projectDir, ['--feature', 'feat-one']),
 		).selectWork({
 			featureLeases: leaseService(projectDir, 'run-loser'),
 			projectDir,
@@ -136,7 +136,7 @@ describe('lease-aware coding selection', () => {
 			createRunAccumulator('run-terminal', Date.now()),
 			'exit_error',
 			1,
-			'run failed'
+			'run failed',
 		);
 		const probe = await leaseService(projectDir, 'run-next').acquire('feat-one');
 		expect(probe).toEqual({ acquired: true });

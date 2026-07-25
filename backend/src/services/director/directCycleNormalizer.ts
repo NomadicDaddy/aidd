@@ -6,7 +6,7 @@ import type {
 	DirectorTaskType,
 } from 'aidd-shared';
 
-import { directorRiskLevels, directorTaskTypes, dedupDirectorSuggestions } from 'aidd-shared';
+import { dedupDirectorSuggestions, directorRiskLevels, directorTaskTypes } from 'aidd-shared';
 
 import type { FleetSummary } from './types.ts';
 
@@ -30,7 +30,7 @@ export interface DirectCycleContextDocument {
 export function buildDirectCyclePrompt(
 	fleetSummary: FleetSummary,
 	profile: DirectorProfileRecord,
-	context: DirectCycleContextDocument | undefined
+	context: DirectCycleContextDocument | undefined,
 ): string {
 	const cycleContext: DirectCycleContextDocument = context ?? {
 		directive: null,
@@ -93,7 +93,7 @@ export function buildDirectCyclePrompt(
 
 export function normalizeDirectDirectorOutput(
 	value: unknown,
-	fleetSummary: FleetSummary
+	fleetSummary: FleetSummary,
 ): DirectorOutput {
 	if (!isRecord(value)) throw new Error('Direct AI director output must be an object.');
 	const rawFleetSummary = value.fleetSummary;
@@ -104,7 +104,7 @@ export function normalizeDirectDirectorOutput(
 		throw new Error('Direct AI director output requires a suggestions array.');
 	}
 	const suggestions = dedupDirectorSuggestions(
-		value.suggestions.map((suggestion, index) => normalizeDirectSuggestion(suggestion, index))
+		value.suggestions.map((suggestion, index) => normalizeDirectSuggestion(suggestion, index)),
 	);
 	return {
 		fleetSummary: {
@@ -208,7 +208,7 @@ function normalizeTaskType(value: unknown, index: number): DirectorTaskType {
 }
 
 function countSuggestionsByRisk(
-	suggestions: DirectorSuggestion[]
+	suggestions: DirectorSuggestion[],
 ): Record<DirectorRiskLevel, number> {
 	const counts: Record<DirectorRiskLevel, number> = { HIGH: 0, LOW: 0, MEDIUM: 0 };
 	for (const suggestion of suggestions) {
@@ -218,7 +218,7 @@ function countSuggestionsByRisk(
 }
 
 function countSuggestionsByType(
-	suggestions: DirectorSuggestion[]
+	suggestions: DirectorSuggestion[],
 ): Partial<Record<DirectorTaskType, number>> {
 	const counts: Partial<Record<DirectorTaskType, number>> = {};
 	for (const suggestion of suggestions) {

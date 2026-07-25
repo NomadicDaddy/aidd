@@ -13,15 +13,15 @@ import {
 	persistSpernakitInitLog,
 	quarantineFailedInit,
 	runTemplateInit,
-	substituteTemplateCommand,
 	type SpawnOutcome,
+	substituteTemplateCommand,
 } from './spernakitInit.ts';
 
 // Launches the metadata-only project-intake pipeline for templates whose postCreate is
 // 'ingest' (third-party scaffolds that arrive without an .aidd contract).
 export type LaunchIntakeForCreate = (
 	projectDir: string,
-	launchTarget?: LaunchTargetOverrides
+	launchTarget?: LaunchTargetOverrides,
 ) => Promise<{ id: string }>;
 
 // Records a failed scaffold so it stays visible in the fleet. Best-effort; never throws
@@ -56,13 +56,13 @@ export async function runTemplateScaffold(
 	dataDir: string,
 	template: ResolvedProjectTemplateConfig,
 	args: { description: string; name: string; root: string; targetPath: string },
-	recordInitFailure?: RecordInitFailure
+	recordInitFailure?: RecordInitFailure,
 ): Promise<void> {
 	const { name, root, targetPath } = args;
 	const recordFailure = async (
 		errorSummary: string,
 		logPath: null | string,
-		quarantinePath: null | string
+		quarantinePath: null | string,
 	): Promise<void> => {
 		if (recordInitFailure) {
 			await recordInitFailure({
@@ -85,7 +85,7 @@ export async function runTemplateScaffold(
 	if (template.cwd === 'root' && (await directoryExists(targetPath))) {
 		throw new HttpError(
 			`Destination must not exist for template "${template.name}" (target: ${targetPath})`,
-			409
+			409,
 		);
 	}
 	if (template.rootMustBeInitDir) {
@@ -103,7 +103,7 @@ export async function runTemplateScaffold(
 		if (workspaceDir && !samePath(resolve(root), workspaceDir)) {
 			throw new HttpError(
 				`Template "${template.name}" must run under ${workspaceDir} (the init script folder's parent; selected root is ${root})`,
-				400
+				400,
 			);
 		}
 	}
@@ -125,7 +125,7 @@ export async function runTemplateScaffold(
 		await recordFailure(summary, null, quarantinePath);
 		throw new HttpError(
 			`${summary}${quarantinePath ? ` (partial output quarantined at ${quarantinePath})` : ''}`,
-			500
+			500,
 		);
 	}
 	const logPath = await persistSpernakitInitLog(dataDir, outcome, timestamp);
@@ -134,13 +134,13 @@ export async function runTemplateScaffold(
 		await recordFailure(
 			`Template "${template.name}" init failed with exit code ${outcome.code}.\n${formatInitFailureDetail(outcome)}`,
 			logPath,
-			quarantinePath
+			quarantinePath,
 		);
 		throw new HttpError(
 			`Template "${template.name}" init failed with exit code ${outcome.code}. Full output: ${logPath}${
 				quarantinePath ? ` (partial output quarantined at ${quarantinePath})` : ''
 			}\n${formatInitFailureDetail(outcome)}`,
-			500
+			500,
 		);
 	}
 	recordDataMovement({
@@ -164,7 +164,7 @@ export async function runGithubTemplateClone(
 	source: GithubTemplateSource,
 	args: { description: string; name: string; root: string; targetPath: string },
 	recordInitFailure?: RecordInitFailure,
-	clone: typeof degitClone = degitClone
+	clone: typeof degitClone = degitClone,
 ): Promise<void> {
 	const { name, root, targetPath } = args;
 	const templateLabel = `github:${source.owner}/${source.repo}`;
@@ -174,7 +174,7 @@ export async function runGithubTemplateClone(
 	const recordFailure = async (
 		errorSummary: string,
 		logPath: null | string,
-		quarantinePath: null | string
+		quarantinePath: null | string,
 	): Promise<void> => {
 		if (recordInitFailure) {
 			await recordInitFailure({
@@ -207,7 +207,7 @@ export async function runGithubTemplateClone(
 		await recordFailure(summary, null, quarantinePath);
 		throw new HttpError(
 			`${summary}${quarantinePath ? ` (partial output quarantined at ${quarantinePath})` : ''}`,
-			500
+			500,
 		);
 	}
 	const logPath = await persistSpernakitInitLog(dataDir, outcome, timestamp);
@@ -216,13 +216,13 @@ export async function runGithubTemplateClone(
 		await recordFailure(
 			`Template clone ${templateLabel} failed with exit code ${outcome.code}.\n${formatInitFailureDetail(outcome)}`,
 			logPath,
-			quarantinePath
+			quarantinePath,
 		);
 		throw new HttpError(
 			`Template clone ${templateLabel} failed with exit code ${outcome.code}. Full output: ${logPath}${
 				quarantinePath ? ` (partial output quarantined at ${quarantinePath})` : ''
 			}\n${formatInitFailureDetail(outcome)}`,
-			500
+			500,
 		);
 	}
 	recordDataMovement({

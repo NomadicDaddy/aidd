@@ -116,7 +116,7 @@ export function safeTraceTarget(path: string): string {
 		const relative = normalized.slice(aiddIndex + 1);
 		return relative.replace(
 			/\.aidd\/features\/[^/]+\/feature\.json$/,
-			'.aidd/features/<feature>/feature.json'
+			'.aidd/features/<feature>/feature.json',
 		);
 	}
 	if (normalized.includes('://')) {

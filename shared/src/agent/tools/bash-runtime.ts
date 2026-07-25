@@ -61,7 +61,7 @@ export function resolveBashExecutable(deps: BashResolverDeps = defaultDeps): Bas
 	}
 	candidates.push(
 		'C:\\Program Files\\Git\\bin\\bash.exe',
-		'C:\\Program Files (x86)\\Git\\bin\\bash.exe'
+		'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
 	);
 	const found = candidates.find((path) => !isSystem32Path(path) && deps.existsSync(path));
 	if (found !== undefined) return { path: found };
@@ -106,7 +106,7 @@ export function gitBashPathDirs(bashPath: string, deps: GitBashEnvDeps = default
 export function augmentEnvPathForGitBash(
 	bashPath: string,
 	env: Record<string, string>,
-	deps: GitBashEnvDeps = defaultEnvDeps
+	deps: GitBashEnvDeps = defaultEnvDeps,
 ): Record<string, string> {
 	const dirs = gitBashPathDirs(bashPath, deps);
 	if (dirs.length === 0) return env;
@@ -122,7 +122,7 @@ export function augmentEnvPathForGitBash(
 			current
 				.split(';')
 				.map((segment) => segment.trim().toLowerCase())
-				.filter((segment) => segment !== '')
+				.filter((segment) => segment !== ''),
 		);
 		const missing = dirs.filter((dir) => !present.has(dir.toLowerCase()));
 		if (missing.length === 0) continue;

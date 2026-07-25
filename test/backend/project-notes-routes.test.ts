@@ -73,7 +73,7 @@ describe('project notes routes', () => {
 				body: JSON.stringify({ content: 'persisted note' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(put.status).toBe(200);
 		expect(((await put.json()) as { content: string }).content).toBe('persisted note');
@@ -90,7 +90,7 @@ describe('project notes routes', () => {
 				body: JSON.stringify({}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(response.status).toBe(422);
 	});

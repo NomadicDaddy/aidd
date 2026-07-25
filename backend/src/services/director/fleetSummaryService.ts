@@ -39,7 +39,7 @@ function sortTime(startedAt: null | string, endedAt: null | string): number {
 	return Math.max(timestampValue(startedAt), timestampValue(endedAt));
 }
 
-function resultFromLocalRun(run: ProjectLocalRunDto): FileBackedRunResult & { sortTime: number } {
+function resultFromLocalRun(run: ProjectLocalRunDto): { sortTime: number } & FileBackedRunResult {
 	let status = run.stopReason;
 	if (!status && run.exitCode === 0) status = 'completed';
 	if (!status && typeof run.exitCode === 'number') status = 'failed';
@@ -51,8 +51,8 @@ function resultFromLocalRun(run: ProjectLocalRunDto): FileBackedRunResult & { so
 }
 
 function resultFromLocalIteration(
-	iteration: ProjectLocalIterationDto
-): FileBackedRunResult & { sortTime: number } {
+	iteration: ProjectLocalIterationDto,
+): { sortTime: number } & FileBackedRunResult {
 	return {
 		completedAt: iteration.endedAt ?? iteration.startedAt,
 		sortTime: sortTime(iteration.startedAt, iteration.endedAt),
@@ -102,8 +102,8 @@ export class DirectorFleetSummaryService {
 				activeProjects.map((entry) =>
 					auditsEnabled
 						? entry.prioritySummary
-						: applyDirectorAuditPolicy(entry.summary, entry.prioritySummary, false)
-				)
+						: applyDirectorAuditPolicy(entry.summary, entry.prioritySummary, false),
+				),
 			),
 		]);
 		let completedFeatures = 0;
@@ -153,8 +153,8 @@ export class DirectorFleetSummaryService {
 		};
 		const prioritizedWork = sortPrioritizedWork(
 			prioritySummaries.flatMap((summary) =>
-				expandTargetedWork(summary.work, suggestionsConfig)
-			)
+				expandTargetedWork(summary.work, suggestionsConfig),
+			),
 		);
 		const pendingCount = pendingCountRows[0]?.value ?? 0;
 		return {

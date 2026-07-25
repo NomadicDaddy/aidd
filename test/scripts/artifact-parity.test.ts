@@ -16,7 +16,7 @@ describe('artifact parity checker', () => {
 		// committed in six applications. This is that exact drift, reproduced.
 		const problems = findParityProblems(
 			catalog('| `.aidd/runs.jsonl` | runtime | ledger |'),
-			'.aidd/iterations/\n'
+			'.aidd/iterations/\n',
 		);
 		expect(problems).toHaveLength(2); // the unmatched row + the now-orphaned iterations rule
 		expect(problems[0]).toContain('would be committed silently');
@@ -26,7 +26,7 @@ describe('artifact parity checker', () => {
 	test('committed row hidden by an ignore rule fails', () => {
 		const problems = findParityProblems(
 			catalog('| `.aidd/spec.md` | required | onboarding |'),
-			'.aidd/spec.md\n'
+			'.aidd/spec.md\n',
 		);
 		expect(problems).toHaveLength(1);
 		expect(problems[0]).toContain('would never be committed');
@@ -35,7 +35,7 @@ describe('artifact parity checker', () => {
 	test('ignore rule with no catalog row fails', () => {
 		const problems = findParityProblems(
 			catalog('| `.aidd/spec.md` | required | onboarding |'),
-			'.aidd/mystery-dir/\n'
+			'.aidd/mystery-dir/\n',
 		);
 		expect(problems).toHaveLength(1);
 		expect(problems[0]).toContain('has no row in the catalog');
@@ -46,7 +46,7 @@ describe('artifact parity checker', () => {
 		// earlier checker — a validator that ignores what it cannot read is worse than none.
 		const problems = findParityProblems(
 			catalog('| `.aidd/iterations/*.json`, `.log` | runtime | logs |'),
-			'.aidd/iterations/\n'
+			'.aidd/iterations/\n',
 		);
 		expect(problems.some((p) => p.includes('not exactly one backticked path'))).toBe(true);
 	});
@@ -54,7 +54,7 @@ describe('artifact parity checker', () => {
 	test('redundant overlapping rules fail the exactly-one invariant', () => {
 		const problems = findParityProblems(
 			catalog('| `.aidd/reports/` | generated | reports |'),
-			'.aidd/reports/\n.aidd/reports\n'
+			'.aidd/reports/\n.aidd/reports\n',
 		);
 		expect(problems.some((p) => p.includes('The invariant is exactly one'))).toBe(true);
 	});
@@ -71,7 +71,7 @@ describe('artifact parity checker', () => {
 		expect(parseScaffold('/.aidd/runs.jsonl\n')).toEqual(['.aidd/runs.jsonl']);
 		const problems = findParityProblems(
 			catalog('| `.aidd/runs.jsonl` | runtime | ledger |'),
-			'/.aidd/runs.jsonl\n'
+			'/.aidd/runs.jsonl\n',
 		);
 		expect(problems).toEqual([]);
 	});
@@ -89,7 +89,7 @@ describe('artifact parity checker', () => {
 		const root = resolve(import.meta.dir, '..', '..');
 		const problems = findParityProblems(
 			readFileSync(resolve(root, 'docs', 'reference', 'artifacts.md'), 'utf8'),
-			readFileSync(resolve(root, 'scaffolding', '.gitignore'), 'utf8')
+			readFileSync(resolve(root, 'scaffolding', '.gitignore'), 'utf8'),
 		);
 		expect(problems).toEqual([]);
 	});

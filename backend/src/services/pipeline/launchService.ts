@@ -82,7 +82,7 @@ export class LaunchService {
 		if (metadataOnly) {
 			if (!(await isGitRepository(projectDir))) {
 				throw new Error(
-					`Metadata-only pipeline sessions require a git repository for write-boundary enforcement; ${projectDir} is not a git repository.`
+					`Metadata-only pipeline sessions require a git repository for write-boundary enforcement; ${projectDir} is not a git repository.`,
 				);
 			}
 		}
@@ -169,7 +169,7 @@ export class LaunchService {
 		if (this.activeExecutions.has(input.session.id)) {
 			webLogger.warn(
 				{ sessionId: input.session.id },
-				'resumeSession skipped: session already has an active execution'
+				'resumeSession skipped: session already has an active execution',
 			);
 			return;
 		}

@@ -21,7 +21,7 @@ export function createPipelineSessionsRoutes(context: WebContext) {
 					cursor: t.Optional(t.String()),
 					limit: t.Optional(t.Numeric({ maximum: 200, minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/:id/report',
@@ -30,7 +30,7 @@ export function createPipelineSessionsRoutes(context: WebContext) {
 				if (!report) throw new HttpError(`Pipeline session not found: ${params.id}`, 404);
 				return { report };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/:id/stop',
@@ -38,6 +38,6 @@ export function createPipelineSessionsRoutes(context: WebContext) {
 				await context.pipelineService.stopSession(params.id);
 				return { ok: true };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		);
 }

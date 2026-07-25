@@ -12,14 +12,14 @@ import type {
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import {
 	MATURITY_FILTERS,
+	type MaturityFilter,
 	PHASES,
 	SYNC_STATES,
-	type MaturityFilter,
 } from './projects-list-shared.ts';
 import {
+	compareProjects,
 	DEFAULT_SORT,
 	DEFAULT_SORT_DIR,
-	compareProjects,
 	readSortDir,
 	readSortKey,
 	type SortKey,
@@ -36,7 +36,7 @@ function compactRootLabel(path: string, segmentCount = 1): string {
 export function useProjectsPageFilters(
 	allProjects: ProjectSummary[],
 	skippedRoots: ProjectDiscoverySkippedRoot[],
-	gitStatus?: Record<string, ProjectGitStatusMapEntry>
+	gitStatus?: Record<string, ProjectGitStatusMapEntry>,
 ) {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const projectsFilters = usePrefsStore((state) => state.projectsFilters);

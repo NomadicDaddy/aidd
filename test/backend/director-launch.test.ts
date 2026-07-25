@@ -8,7 +8,7 @@ import type { DirectorOutput, DirectorSuggestion } from 'aidd-shared';
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import type { WebContext } from '../../backend/src/context.ts';
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import {
 	directorChatMessages,
@@ -23,9 +23,9 @@ import type { DirectorChatService } from '../../backend/src/services/director/ch
 import { DirectorSuggestionService } from '../../backend/src/services/director/suggestionService.ts';
 import { DirectorService } from '../../backend/src/services/directorService.ts';
 import {
-	disabledDirectAiRunner,
 	type DirectAiCompleteRequest,
 	type DirectAiRunner,
+	disabledDirectAiRunner,
 } from '../../backend/src/services/directAiService.ts';
 import {
 	persistCycleResult,
@@ -44,7 +44,7 @@ import {
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
-function makeConfig(web: ResolvedWebConfig): ResolvedConfig & { web: ResolvedWebConfig } {
+function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
 		dirtyTreeThreshold: 50,
@@ -116,7 +116,7 @@ async function makeWorkspace(cliScript: string = 'console.log("launch");\n') {
 		hub,
 		projectService,
 		rootDir,
-		telemetryService
+		telemetryService,
 	);
 	runServicesToDispose.push(runService);
 	const service = new DirectorService(config, db, commands, hub, projectService, runService);
@@ -144,7 +144,7 @@ async function writeArtifactCheck(
 		requiredMissing: number;
 		stale: number;
 		total: number;
-	}> = {}
+	}> = {},
 ): Promise<void> {
 	const summary = {
 		fresh: 8,
@@ -161,7 +161,7 @@ async function writeArtifactCheck(
 			checkedAt: new Date().toISOString(),
 			staleThresholdDays: 30,
 			summary,
-		})}\n`
+		})}\n`,
 	);
 }
 
@@ -176,7 +176,7 @@ async function writeFeature(projectDir: string, id: string, extra: Record<string
 			passes: false,
 			priority: 2,
 			...extra,
-		})}\n`
+		})}\n`,
 	);
 }
 
@@ -194,7 +194,7 @@ async function writeProjectProfile(projectDir: string, extra: Record<string, unk
 			source: 'explicit',
 			updatedAt: new Date().toISOString(),
 			...extra,
-		})}\n`
+		})}\n`,
 	);
 }
 
@@ -228,7 +228,7 @@ async function runGit(projectDir: string, args: string[]): Promise<void> {
 function fakeBackend(
 	reply: string,
 	captured: PromptInput[] = [],
-	filesModified: string[] = []
+	filesModified: string[] = [],
 ): CLIBackend {
 	return {
 		idleDefaults: { killMs: 5000, nudgeMs: 4000 },
@@ -300,7 +300,7 @@ async function seedSuggestion(
 		projectId: string | null;
 		suggestedArgs?: null | string;
 		suggestedRecipe?: null | string;
-	}
+	},
 ): Promise<void> {
 	const now = Date.now();
 	await db.insert(directorCycles).values({
@@ -386,8 +386,8 @@ describe('DirectorService.persistCycleResult', () => {
 					{ fleetAggregations: { fleetHealthScore: 50 } } as FleetSummary,
 					output,
 					0,
-					'ok'
-				)
+					'ok',
+				),
 			).rejects.toThrow();
 
 			const rows = await db
@@ -492,7 +492,7 @@ describe('DirectorService.persistCycleResult', () => {
 				{ fleetAggregations: { fleetHealthScore: 75 } } as FleetSummary,
 				output,
 				0,
-				'ok'
+				'ok',
 			);
 
 			const allSuggestions = await db
@@ -559,7 +559,7 @@ describe('DirectorService.persistCycleResult', () => {
 				{ fleetAggregations: { fleetHealthScore: 50 } } as FleetSummary,
 				undefined,
 				1,
-				'missing'
+				'missing',
 			);
 
 			const pending = await db
@@ -625,7 +625,7 @@ describe('DirectorService.persistCycleResult', () => {
 				{ fleetAggregations: { fleetHealthScore: 80 } } as FleetSummary,
 				output,
 				0,
-				'ok'
+				'ok',
 			);
 
 			const pending = await db
@@ -699,7 +699,7 @@ describe('DirectorService.persistCycleResult', () => {
 							stage: 'running_direct_ai' as const,
 						},
 					],
-				])
+				]),
 			);
 
 			expect(record.stage).toBe('running_direct_ai');
@@ -824,11 +824,11 @@ describe('DirectorService.persistCycleResult', () => {
 				{ fleetAggregations: { fleetHealthScore: 75 } } as FleetSummary,
 				output,
 				0,
-				'ok'
+				'ok',
 			);
 
 			const pending = (await db.select().from(suggestions)).filter(
-				(row) => row.status === 'pending'
+				(row) => row.status === 'pending',
 			);
 			expect(pending.map((row) => row.projectId).sort()).toEqual(['routebook', 'starsync']);
 			// totalSuggestions reflects what actually landed, not the model's raw batch.
@@ -894,10 +894,10 @@ describe('DirectorService.persistCycleResult', () => {
 				{ fleetAggregations: { fleetHealthScore: 75 } } as FleetSummary,
 				output,
 				0,
-				'ok'
+				'ok',
 			);
 			const pending = (await db.select().from(suggestions)).filter(
-				(row) => row.status === 'pending'
+				(row) => row.status === 'pending',
 			);
 			expect(pending).toHaveLength(1);
 		} finally {
@@ -930,7 +930,7 @@ describe('DirectorService chat and profile', () => {
 				hub,
 				projectService,
 				runService,
-				() => fakeBackend('Use Codex for broad repo triage.', captured)
+				() => fakeBackend('Use Codex for broad repo triage.', captured),
 			);
 			const profile = await chatService.updateProfile({
 				backend: 'native',
@@ -989,7 +989,7 @@ describe('DirectorService chat and profile', () => {
 				() => {
 					throw new Error('backend should not launch');
 				},
-				direct.runner
+				direct.runner,
 			);
 			const session = await chatService.createChatSession();
 			const result = await chatService.sendChatMessage(session.id, {
@@ -1029,7 +1029,7 @@ describe('DirectorService chat and profile', () => {
 				hub,
 				projectService,
 				runService,
-				() => fakeBackend('reply')
+				() => fakeBackend('reply'),
 			);
 			const session = await chatService.createChatSession('Old chat');
 			await chatService.sendChatMessage(session.id, { content: 'Archive this context.' });
@@ -1073,11 +1073,11 @@ describe('DirectorService chat and profile', () => {
 				hub,
 				projectService,
 				runService,
-				() => fakeBackend('changed files', [], ['cli/src/index.ts'])
+				() => fakeBackend('changed files', [], ['cli/src/index.ts']),
 			);
 			const session = await chatService.createChatSession();
 			expect(
-				chatService.sendChatMessage(session.id, { content: 'Change the repo.' })
+				chatService.sendChatMessage(session.id, { content: 'Change the repo.' }),
 			).rejects.toThrow(/attempted to modify files/);
 			await Bun.sleep(10);
 			const messages = await chatService.listChatMessages(session.id);
@@ -1119,11 +1119,11 @@ describe('DirectorService chat and profile', () => {
 				() => {
 					throw new Error('No provider configured.');
 				},
-				disabledDirectAiRunner
+				disabledDirectAiRunner,
 			);
 			const session = await chatService.createChatSession();
 			await expect(
-				chatService.sendChatMessage(session.id, { content: 'Hello director.' })
+				chatService.sendChatMessage(session.id, { content: 'Hello director.' }),
 			).rejects.toThrow();
 
 			const messages = await chatService.listChatMessages(session.id);
@@ -1182,7 +1182,7 @@ describe('DirectorService priority health', () => {
 				'feature_completion',
 			]);
 			const artifactItem = summary.prioritizedWork.find(
-				(item) => item.taskType === 'artifact_maintenance'
+				(item) => item.taskType === 'artifact_maintenance',
 			);
 			expect(artifactItem?.suggestedRecipe).toBe('reconcile-project-artifacts');
 			expect(artifactItem?.suggestedArgs).toBeNull();
@@ -1210,7 +1210,7 @@ describe('DirectorService priority health', () => {
 			await mkdir(join(auditFreshnessProject, '.aidd', 'audits'), { recursive: true });
 			await Bun.write(
 				join(auditFreshnessProject, '.aidd', 'audits', 'SECURITY.md'),
-				'# Security\n'
+				'# Security\n',
 			);
 			await writeFeature(remediationProject, 'remediation-fix-runtime');
 
@@ -1218,7 +1218,7 @@ describe('DirectorService priority health', () => {
 			const taskTypes = summary.prioritizedWork.map((item) => item.taskType);
 
 			expect(taskTypes.indexOf('remediation_backlog')).toBeLessThan(
-				taskTypes.indexOf('audit_maintenance')
+				taskTypes.indexOf('audit_maintenance'),
 			);
 		} finally {
 			sqlite.close();
@@ -1236,7 +1236,7 @@ describe('DirectorService priority health', () => {
 			await writeProjectProfile(projectDir);
 			await Bun.write(
 				join(projectDir, '.aidd', 'audits', 'CODE_QUALITY.md'),
-				'# Code Quality\n'
+				'# Code Quality\n',
 			);
 			await initGitProject(projectDir);
 			const store = new FileAiddStore(projectDir);
@@ -1245,16 +1245,16 @@ describe('DirectorService priority health', () => {
 				await commitSourceFile(
 					projectDir,
 					`src/change-${index}.ts`,
-					`export const change${index} = ${index};\n`
+					`export const change${index} = ${index};\n`,
 				);
 			}
 
 			const summary = await service.getFleetSummary();
 			const project = summary.projects.find(
-				(candidate) => candidate.slug === 'code-stale-audit-project'
+				(candidate) => candidate.slug === 'code-stale-audit-project',
 			);
 			const work = summary.prioritizedWork.find(
-				(item) => item.projectId === 'code-stale-audit-project'
+				(item) => item.projectId === 'code-stale-audit-project',
 			);
 
 			expect(project?.auditHealth.stale[0]).toMatchObject({
@@ -1284,7 +1284,7 @@ describe('DirectorService priority health', () => {
 
 			const summary = await service.getFleetSummary();
 			const item = summary.prioritizedWork.find(
-				(work) => work.projectId === 'local-project' && work.taskType === 'audit_backlog'
+				(work) => work.projectId === 'local-project' && work.taskType === 'audit_backlog',
 			);
 
 			expect(item?.riskLevel).toBe('MEDIUM');
@@ -1325,7 +1325,7 @@ describe('DirectorService priority health', () => {
 
 			const summary = await service.getFleetSummary();
 			const item = summary.prioritizedWork.find(
-				(work) => work.projectId === 'public-project' && work.taskType === 'audit_backlog'
+				(work) => work.projectId === 'public-project' && work.taskType === 'audit_backlog',
 			);
 
 			// The profile escalates audit hardening, but this scaffold has not reached the
@@ -1369,7 +1369,7 @@ describe('DirectorService priority health', () => {
 						},
 					],
 					version: 1,
-				})}\n`
+				})}\n`,
 			);
 			await writeArtifactCheck(projectDir);
 			await writeArtifactCheck(localProject);
@@ -1379,7 +1379,7 @@ describe('DirectorService priority health', () => {
 
 			const summary = await service.getFleetSummary();
 			const project = summary.projects.find(
-				(candidate) => candidate.slug === 'local-audit-maintenance-project'
+				(candidate) => candidate.slug === 'local-audit-maintenance-project',
 			);
 
 			expect(project?.auditHealth.missing).toEqual(['CODE_QUALITY']);
@@ -1440,7 +1440,7 @@ describe('DirectorService.runCycle context', () => {
 							title: 'Review security audit backlog',
 						},
 					],
-				})
+				}),
 			);
 			const cycleService = new DirectorService(
 				config,
@@ -1452,7 +1452,7 @@ describe('DirectorService.runCycle context', () => {
 				() => {
 					throw new Error('backend should not launch');
 				},
-				direct.runner
+				direct.runner,
 			);
 			await cycleService.updateProfile({
 				backend: 'native',
@@ -1486,7 +1486,7 @@ describe('DirectorService.runCycle context', () => {
 			const outputPath = join(
 				config.web.dataDir,
 				'director',
-				`${result.cycleId}-output.json`
+				`${result.cycleId}-output.json`,
 			);
 			expect(await Bun.file(outputPath).exists()).toBe(true);
 			expect(direct.calls[0]).toContain('sample-project');
@@ -1525,7 +1525,7 @@ describe('DirectorService.runCycle context', () => {
 				hub,
 				projectService,
 				runService,
-				() => fakeBackend('chat reply', captured)
+				() => fakeBackend('chat reply', captured),
 			);
 			// projectDir is created on disk by makeWorkspace; the cycle picks the first
 			// project under allowed roots as its host project for the launched CLI.
@@ -1535,7 +1535,7 @@ describe('DirectorService.runCycle context', () => {
 			const context1Path = join(
 				config.web.dataDir,
 				'director',
-				`${result1.cycleId}-context.json`
+				`${result1.cycleId}-context.json`,
 			);
 			expect(await Bun.file(context1Path).exists()).toBe(false);
 			const run1 = (
@@ -1565,7 +1565,7 @@ describe('DirectorService.runCycle context', () => {
 			const context2Path = join(
 				config.web.dataDir,
 				'director',
-				`${result2.cycleId}-context.json`
+				`${result2.cycleId}-context.json`,
 			);
 			expect(await Bun.file(context2Path).exists()).toBe(true);
 			const context2Doc = JSON.parse(await Bun.file(context2Path).text()) as {
@@ -1586,7 +1586,7 @@ describe('DirectorService.runCycle context', () => {
 			expect(context2Doc.profile.reasoningEffort).toBe('medium');
 			expect(context2Doc.sessionId).toBe(session.id);
 			expect(context2Doc.recentMessages.some((message) => message.role === 'user')).toBe(
-				true
+				true,
 			);
 
 			const run2 = (
@@ -1681,7 +1681,7 @@ describe('normalizeDirectDirectorOutput dedup', () => {
 		const result = normalizeDirectDirectorOutput(raw, fleetSummary);
 		expect(result.suggestions).toHaveLength(4);
 		expect(result.suggestions.map((s) => s.title).sort()).toEqual(
-			['Different project', 'Different type', 'Fleet-wide first', 'First'].sort()
+			['Different project', 'Different type', 'Fleet-wide first', 'First'].sort(),
 		);
 		expect(result.fleetSummary.totalSuggestions).toBe(4);
 	});
@@ -1760,7 +1760,7 @@ describe('director API routes', () => {
 		} as unknown as WebContext);
 
 		const emptyCycle = await app.handle(
-			new Request('http://localhost/api/v1/director/cycles', { method: 'POST' })
+			new Request('http://localhost/api/v1/director/cycles', { method: 'POST' }),
 		);
 		expect(emptyCycle.status).toBe(200);
 		expect(cycleInputs[0]).toEqual({});
@@ -1770,7 +1770,7 @@ describe('director API routes', () => {
 				body: JSON.stringify({ directive: 'focus', sessionId: 'session_1' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(contextCycle.status).toBe(200);
 		expect(cycleInputs[1]).toEqual({ directive: 'focus', sessionId: 'session_1' });
@@ -1780,14 +1780,14 @@ describe('director API routes', () => {
 				body: JSON.stringify({ content: 'hello' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(chat.status).toBe(200);
 
 		const deletedChat = await app.handle(
 			new Request('http://localhost/api/v1/director/chat/sessions/session_1', {
 				method: 'DELETE',
-			})
+			}),
 		);
 		expect(deletedChat.status).toBe(200);
 	});
@@ -1800,7 +1800,7 @@ describe('DirectorService.launchSuggestion', () => {
 			await seedSuggestion(db, { id: 'sug_fleet', projectId: null });
 
 			expect(service.launchSuggestion('sug_fleet')).rejects.toThrow(
-				/Fleet-wide suggestions cannot be launched directly/
+				/Fleet-wide suggestions cannot be launched directly/,
 			);
 
 			const row = (
@@ -1911,7 +1911,7 @@ describe('DirectorService.launchSuggestion', () => {
 							totalSteps: 1,
 						};
 					},
-				}
+				},
 			);
 
 			const launch = await suggestionService.launchSuggestion('sug_recipe');
@@ -1951,11 +1951,11 @@ describe('DirectorService.launchSuggestion', () => {
 					launchRecipe: async () => {
 						throw new Error('launchRecipe must not run');
 					},
-				}
+				},
 			);
 
 			expect(suggestionService.launchSuggestion('sug_missing_recipe')).rejects.toThrow(
-				'Suggested recipe not found: invented-recipe'
+				'Suggested recipe not found: invented-recipe',
 			);
 			const row = (
 				await db.select().from(suggestions).where(eq(suggestions.id, 'sug_missing_recipe'))
@@ -1983,13 +1983,13 @@ describe('DirectorService.launchSuggestion', () => {
 			]);
 			const fulfilled = outcomes.filter(
 				(
-					outcome
+					outcome,
 				): outcome is PromiseFulfilledResult<
 					Awaited<ReturnType<typeof service.launchSuggestion>>
-				> => outcome.status === 'fulfilled'
+				> => outcome.status === 'fulfilled',
 			);
 			const rejected = outcomes.filter(
-				(outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected'
+				(outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected',
 			);
 
 			// The compare-and-set guard lets exactly one caller win; the other observes a

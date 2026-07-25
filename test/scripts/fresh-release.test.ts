@@ -15,7 +15,7 @@ async function seedRoot(extraFiles: Record<string, string> = {}): Promise<string
 	await writeFile(join(root, 'VERSION'), '2.130.1\n');
 	await writeFile(
 		join(root, 'docs', 'CHANGELOG.md'),
-		'# Changelog\n\n## [2.130.1] - 2026-07-21\n\n- Baseline.\n'
+		'# Changelog\n\n## [2.130.1] - 2026-07-21\n\n- Baseline.\n',
 	);
 	for (const [path, content] of Object.entries(extraFiles)) {
 		await mkdir(join(root, path, '..'), { recursive: true });
@@ -47,7 +47,7 @@ describe('fresh release baseline validation', () => {
 		});
 		await writeFile(
 			join(root, 'docs', 'CHANGELOG.md'),
-			'# Changelog\n\n## [2.130.1]\n\n## [2.129.0]\n'
+			'# Changelog\n\n## [2.130.1]\n\n## [2.129.0]\n',
 		);
 		const issues = await validateFreshRelease(root);
 		expect(issues.join('\n')).toContain('pre-baseline aidd release 2.129.0');
@@ -58,10 +58,10 @@ describe('fresh release baseline validation', () => {
 		const root = await seedRoot();
 		await writeFile(
 			join(root, 'docs', 'CHANGELOG.md'),
-			'# Changelog\n\n## [2.130.1]\n\n## [2.130.2]\n'
+			'# Changelog\n\n## [2.130.1]\n\n## [2.130.2]\n',
 		);
 		expect((await validateFreshRelease(root)).join('\n')).toContain(
-			'must contain exactly one 2.130.1 release entry'
+			'must contain exactly one 2.130.1 release entry',
 		);
 	});
 });

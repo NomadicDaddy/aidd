@@ -32,7 +32,7 @@ export function createTelemetryRoutes(context: WebContext) {
 					type: t.Optional(t.String()),
 					windowMs: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/top',
@@ -49,7 +49,7 @@ export function createTelemetryRoutes(context: WebContext) {
 					type: t.Optional(t.String()),
 					windowMs: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/backends',
@@ -64,7 +64,7 @@ export function createTelemetryRoutes(context: WebContext) {
 					type: t.Optional(t.String()),
 					windowMs: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/timeseries',
@@ -81,7 +81,7 @@ export function createTelemetryRoutes(context: WebContext) {
 					type: t.Optional(t.String()),
 					windowMs: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/output-timeseries',
@@ -96,7 +96,7 @@ export function createTelemetryRoutes(context: WebContext) {
 					bucket: bucketSchema,
 					windowMs: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/invocations',
@@ -115,7 +115,7 @@ export function createTelemetryRoutes(context: WebContext) {
 					type: t.Optional(t.String()),
 					windowMs: t.Optional(t.Numeric({ minimum: 1 })),
 				}),
-			}
+			},
 		)
 		.get(
 			'/resource/:type/:id',
@@ -126,7 +126,7 @@ export function createTelemetryRoutes(context: WebContext) {
 				}
 				const detail = await context.telemetryService.getResourceDetail(
 					resourceType,
-					params.id
+					params.id,
 				);
 				if (!detail)
 					throw new HttpError(`No telemetry for ${params.type}/${params.id}`, 404);
@@ -137,6 +137,6 @@ export function createTelemetryRoutes(context: WebContext) {
 					id: t.String({ maxLength: 120, minLength: 1 }),
 					type: resourceTypeSchema,
 				}),
-			}
+			},
 		);
 }

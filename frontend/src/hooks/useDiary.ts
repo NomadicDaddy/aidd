@@ -25,7 +25,7 @@ export function useDiaryEntries(projectPath?: string) {
 					...(projectPath ? { projectPath } : {}),
 					...(pageParam ? { cursor: pageParam } : {}),
 				},
-				signal
+				signal,
 			),
 		queryKey: ['diary', 'entries', projectPath ?? 'all'],
 	});
@@ -47,7 +47,7 @@ export function useDiaryTimeline(projectPath?: string) {
 					...(projectPath ? { projectPath } : {}),
 					...(pageParam ? { cursor: pageParam } : {}),
 				},
-				signal
+				signal,
 			),
 		queryKey: ['diary', 'timeline', projectPath ?? 'all'],
 	});

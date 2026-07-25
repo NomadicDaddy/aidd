@@ -73,7 +73,7 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 				value: 'Backend',
 			});
 			expect(
-				fragmentIds(['--project-dir', '.', '--filter-by', 'category', '--filter', 'B'])
+				fragmentIds(['--project-dir', '.', '--filter-by', 'category', '--filter', 'B']),
 			).toContain('feature-filter');
 		});
 		test('--filter-by without --filter is rejected', () => {
@@ -90,7 +90,7 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 			expect(plan.scope.milestone).toBe('MVP');
 			expect(plan.prompt.milestone?.value).toBe('MVP');
 			expect(fragmentIds(['--project-dir', '.', '--milestone', 'MVP'])).toContain(
-				'milestone-filter'
+				'milestone-filter',
 			);
 		});
 	});
@@ -104,7 +104,7 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 				directory: 'account-lockout',
 			});
 			expect(fragmentIds(['--project-dir', '.', '--feature', 'account-lockout'])).toContain(
-				'feature-focus'
+				'feature-focus',
 			);
 		});
 	});
@@ -149,7 +149,7 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 			expect(plan.prompt.customDirective).toBe('do a thing');
 			expect(plan.prompt.phase).toBe('directive');
 			expect(fragmentIds(['--project-dir', '.', '--prompt', 'X'])).toContain(
-				'custom-directive'
+				'custom-directive',
 			);
 		});
 		test('--prompt requires a value', () => {
@@ -221,16 +221,16 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 			expect(() =>
 				resolveRunPlan(
 					parseArgs(['--director', '--director-output', 'out.json']),
-					baseConfig
-				)
+					baseConfig,
+				),
 			).toThrow(/--director requires/);
 		});
 		test('director without director-output throws at plan resolution', () => {
 			expect(() =>
 				resolveRunPlan(
 					parseArgs(['--director', '--fleet-summary', 'fleet.json']),
-					baseConfig
-				)
+					baseConfig,
+				),
 			).toThrow(/--director requires/);
 		});
 	});
@@ -261,10 +261,10 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 		test('--extract-structured / --extract-batch toggle the output policy', () => {
 			expect(
 				planFor(['--project-dir', '.', '--extract-structured']).outputPolicy
-					.extractStructured
+					.extractStructured,
 			).toBe(true);
 			expect(
-				planFor(['--project-dir', '.', '--extract-batch']).outputPolicy.extractBatch
+				planFor(['--project-dir', '.', '--extract-batch']).outputPolicy.extractBatch,
 			).toBe(true);
 		});
 	});
@@ -291,15 +291,16 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 					'--interview',
 					'--todo',
 					'--validate',
-				]).mode
+				]).mode,
 			).toBe('director');
 			expect(
-				planFor(['--project-dir', '.', '--audit', 'SECURITY', '--interview', '--todo']).mode
+				planFor(['--project-dir', '.', '--audit', 'SECURITY', '--interview', '--todo'])
+					.mode,
 			).toBe('audit');
 			expect(planFor(['--project-dir', '.', '--interview', '--todo']).mode).toBe('interview');
 			expect(planFor(['--project-dir', '.', '--todo', '--validate']).mode).toBe('todo');
 			expect(planFor(['--project-dir', '.', '--validate', '--prompt', 'inspect']).mode).toBe(
-				'validate'
+				'validate',
 			);
 		});
 	});
@@ -316,15 +317,15 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 		});
 		test('audit picks audit-model', () => {
 			expect(planFor(['--project-dir', '.', '--audit', 'SECURITY'], modelConfig).model).toBe(
-				'audit-model'
+				'audit-model',
 			);
 		});
 		test('director falls back to base model', () => {
 			expect(
 				planFor(
 					['--director', '--fleet-summary', 'f', '--director-output', 'o'],
-					modelConfig
-				).model
+					modelConfig,
+				).model,
 			).toBe('default-model');
 		});
 	});
@@ -354,7 +355,7 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 			expect(parseArgs(['--project-dir', '.']).stopWhenDone).toBe(false);
 			expect(parseArgs(['--project-dir', '.', '--stop-when-done']).stopWhenDone).toBe(true);
 			expect(parseArgs(['--project-dir', '.', '--no-stop-when-done']).stopWhenDone).toBe(
-				false
+				false,
 			);
 		});
 	});

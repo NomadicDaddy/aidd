@@ -58,23 +58,23 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 
 	const filteredNames = useMemo(
 		() => new Set(filteredDefinitions.map((d) => d.name)),
-		[filteredDefinitions]
+		[filteredDefinitions],
 	);
 	const enabledDefinitionNames = useMemo(
 		() =>
 			new Set(
 				(manager.data?.definitions ?? [])
 					.filter((item) => item.enabled)
-					.map((item) => item.name)
+					.map((item) => item.name),
 			),
-		[manager.data?.definitions]
+		[manager.data?.definitions],
 	);
 	const visibleEnabledNames = useMemo(
 		() => filteredDefinitions.filter((item) => item.enabled).map((item) => item.name),
-		[filteredDefinitions]
+		[filteredDefinitions],
 	);
 	const selectedRunnableAuditNames = selectedAuditNames.filter((name) =>
-		enabledDefinitionNames.has(name)
+		enabledDefinitionNames.has(name),
 	);
 	const { allSelected: allVisibleAuditsSelected, someSelected: someVisibleAuditsSelected } =
 		deriveVisibleSelection(visibleEnabledNames, selectedAuditNames);
@@ -108,7 +108,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	// derived enabledDefinitionNames set rather than recomputing it inline.
 	useEffect(() => {
 		setSelectedAuditNames((current) =>
-			current.filter((name) => enabledDefinitionNames.has(name))
+			current.filter((name) => enabledDefinitionNames.has(name)),
 		);
 	}, [enabledDefinitionNames]);
 
@@ -137,13 +137,13 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 
 	function toggleProject(id: string) {
 		setSelectedProjectIds((current) =>
-			current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+			current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
 		);
 	}
 
 	function toggleAuditSelected(name: string) {
 		setSelectedAuditNames((current) =>
-			toggleAuditSelectedHelper(current, name, enabledDefinitionNames)
+			toggleAuditSelectedHelper(current, name, enabledDefinitionNames),
 		);
 	}
 
@@ -166,7 +166,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 					void manager.refetch();
 					toast.success(!auditsEnabled ? 'Audits enabled' : 'Audits disabled');
 				},
-			}
+			},
 		);
 	}
 
@@ -185,7 +185,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				onSuccess: (result) => {
 					if (result.runIds.length > 0) {
 						toast.success(
-							`Launched ${result.runIds.length} run${result.runIds.length === 1 ? '' : 's'}`
+							`Launched ${result.runIds.length} run${result.runIds.length === 1 ? '' : 's'}`,
 						);
 					}
 					if (result.failures.length > 0) {
@@ -194,7 +194,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 						});
 					}
 				},
-			}
+			},
 		);
 	}
 
@@ -206,7 +206,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				onError: (error) =>
 					toast.error(error instanceof Error ? error.message : 'Could not save audit'),
 				onSuccess: () => toast.success('Audit definition saved'),
-			}
+			},
 		);
 	}
 

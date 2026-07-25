@@ -39,14 +39,14 @@ export function createProjectsRoutes(context: WebContext) {
 			.get('/names', async () => await context.projectService.listProjectNames())
 			.get(
 				'/import-candidates',
-				async () => await context.projectService.listImportCandidates()
+				async () => await context.projectService.listImportCandidates(),
 			)
 			.get(
 				'/intake-preview',
 				async ({ query }) => ({
 					preview: await context.projectService.getIntakePreview(query.path),
 				}),
-				{ query: projectIntakePreviewQuery }
+				{ query: projectIntakePreviewQuery },
 			)
 			.get('/port-status', async () => await context.projectService.getPortStatus())
 			.get('/git-status', async () => {
@@ -57,13 +57,13 @@ export function createProjectsRoutes(context: WebContext) {
 				'/:id/git-status',
 				async ({ params }) => {
 					const projectDir = await context.projectService.resolveDiscoveredProject(
-						params.id
+						params.id,
 					);
 					return { status: await readProjectGitStatus(projectDir) };
 				},
 				{
 					params: projectIdParams,
-				}
+				},
 			)
 			.post(
 				'/',
@@ -89,11 +89,11 @@ export function createProjectsRoutes(context: WebContext) {
 								recipeId: 'project-intake',
 							});
 							return { id: session.id };
-						}
+						},
 					),
 				{
 					body: projectCreateBody,
-				}
+				},
 			)
 			.post(
 				'/:id/start-implementation',
@@ -106,19 +106,19 @@ export function createProjectsRoutes(context: WebContext) {
 							reasoningEffort: body.reasoningEffort,
 						},
 						(projectPath) => context.runService.hasActiveRunForProject(projectPath),
-						(input) => context.runService.launchRun(input)
+						(input) => context.runService.launchRun(input),
 					),
 				{
 					body: projectStartImplementationBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			.post(
 				'/recommend-mode',
 				async ({ body }) => await context.projectService.recommendProjectMode(body),
 				{
 					body: projectRecommendBody,
-				}
+				},
 			)
 			.post(
 				'/profile-previews',
@@ -127,7 +127,7 @@ export function createProjectsRoutes(context: WebContext) {
 				}),
 				{
 					body: projectProfilePreviewsBody,
-				}
+				},
 			)
 			.post(
 				'/import',
@@ -142,11 +142,11 @@ export function createProjectsRoutes(context: WebContext) {
 								recipeId: 'project-intake',
 							});
 							return { id: session.id };
-						}
+						},
 					),
 				{
 					body: projectImportBody,
-				}
+				},
 			)
 			.get(
 				'/:id',
@@ -155,20 +155,20 @@ export function createProjectsRoutes(context: WebContext) {
 				}),
 				{
 					params: projectIdParams,
-				}
+				},
 			)
 			.put(
 				'/:id/profile',
 				async ({ body, params }) => ({
 					profile: await context.projectService.updateProjectProfile(
 						params.id,
-						normalizeProjectAssuranceProfileInput(body)
+						normalizeProjectAssuranceProfileInput(body),
 					),
 				}),
 				{
 					body: projectProfileBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			// Recompute the profile's downstream posture and audit applicability for a *candidate*
 			// (unsaved) set of facets, so the Profile Lab can recalc in real time without persisting.
@@ -182,7 +182,7 @@ export function createProjectsRoutes(context: WebContext) {
 				{
 					body: projectProfileBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			.delete(
 				'/:id',
@@ -191,13 +191,13 @@ export function createProjectsRoutes(context: WebContext) {
 						params.id,
 						body,
 						(projectPath) => context.runService.hasActiveRunForProject(projectPath),
-						(projectPath) => context.runService.purgeProjectRuns(projectPath)
+						(projectPath) => context.runService.purgeProjectRuns(projectPath),
 					),
 				}),
 				{
 					body: projectDeleteBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			.post(
 				'/:id/move',
@@ -209,57 +209,57 @@ export function createProjectsRoutes(context: WebContext) {
 						(sourcePath, destinationPath) =>
 							context.runService.updateProjectPathReferences(
 								sourcePath,
-								destinationPath
-							)
+								destinationPath,
+							),
 					),
 				}),
 				{
 					body: projectMoveBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			.get(
 				'/:id/interview',
 				async ({ params }) => {
 					const projectDir = await context.projectService.resolveDiscoveredProject(
-						params.id
+						params.id,
 					);
 					return { interview: await getProjectInterviewDetail(projectDir) };
 				},
 				{
 					params: projectIdParams,
-				}
+				},
 			)
 			.get(
 				'/:id/reports',
 				async ({ params }) => {
 					const projectDir = await context.projectService.resolveDiscoveredProject(
-						params.id
+						params.id,
 					);
 					return await listProjectReports(projectDir);
 				},
 				{
 					params: projectIdParams,
-				}
+				},
 			)
 			.get(
 				'/:id/file',
 				async ({ params, query }) => {
 					const projectDir = await context.projectService.resolveDiscoveredProject(
-						params.id
+						params.id,
 					);
 					return await readProjectFile(projectDir, query.path);
 				},
 				{
 					params: projectIdParams,
 					query: projectFileQuery,
-				}
+				},
 			)
 			.post(
 				'/:id/reports',
 				async ({ body, params }) => {
 					const projectDir = await context.projectService.resolveDiscoveredProject(
-						params.id
+						params.id,
 					);
 					const report = await submitProjectReport(projectDir, body);
 					return { report };
@@ -267,13 +267,13 @@ export function createProjectsRoutes(context: WebContext) {
 				{
 					body: projectReportBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			.post(
 				'/:id/interview/responses',
 				async ({ body, params }) => {
 					const projectDir = await context.projectService.resolveDiscoveredProject(
-						params.id
+						params.id,
 					);
 					try {
 						const interview = await submitProjectInterviewAnswer(projectDir, body);
@@ -287,7 +287,7 @@ export function createProjectsRoutes(context: WebContext) {
 				{
 					body: interviewResponseBody,
 					params: projectIdParams,
-				}
+				},
 			)
 			.use(projectRepositoryRouteGroup(context, ''))
 	);

@@ -15,7 +15,7 @@ export async function createChatSession(title?: string): Promise<DirectorChatSes
 	const response = await apiSend<{ session: DirectorChatSession }>(
 		'/api/v1/director/chat/sessions',
 		'POST',
-		{ title }
+		{ title },
 	);
 	return response.session;
 }
@@ -31,7 +31,7 @@ export async function dismissSuggestion(id: string): Promise<void> {
 export async function launchSuggestion(id: string): Promise<DirectorSuggestionLaunch> {
 	const response = await apiSend<{ launch: DirectorSuggestionLaunch }>(
 		`/api/v1/director/suggestions/${id}/launch`,
-		'POST'
+		'POST',
 	);
 	return response.launch;
 }
@@ -48,14 +48,14 @@ export async function getProfile(): Promise<DirectorProfile> {
 
 export async function listChatMessages(sessionId: string): Promise<DirectorChatMessage[]> {
 	const response = await apiGet<{ messages: DirectorChatMessage[] }>(
-		`/api/v1/director/chat/sessions/${sessionId}/messages`
+		`/api/v1/director/chat/sessions/${sessionId}/messages`,
 	);
 	return response.messages;
 }
 
 export async function listChatSessions(): Promise<DirectorChatSession[]> {
 	const response = await apiGet<{ sessions: DirectorChatSession[] }>(
-		'/api/v1/director/chat/sessions'
+		'/api/v1/director/chat/sessions',
 	);
 	return response.sessions;
 }
@@ -67,14 +67,14 @@ export async function listDirectorCycles(): Promise<DirectorCycle[]> {
 
 export async function listSuggestions(): Promise<SuggestionRecord[]> {
 	const response = await apiGet<{ suggestions: SuggestionRecord[] }>(
-		'/api/v1/director/suggestions'
+		'/api/v1/director/suggestions',
 	);
 	return response.suggestions;
 }
 
 export async function sendChatMessage(
 	sessionId: string,
-	content: string
+	content: string,
 ): Promise<{ assistant: DirectorChatMessage; user: DirectorChatMessage }> {
 	const response = await apiSend<{
 		messages: { assistant: DirectorChatMessage; user: DirectorChatMessage };
@@ -89,7 +89,7 @@ export async function triggerDirectorCycle(input?: {
 	const response = await apiSend<{ cycle: { cycleId: string } }>(
 		'/api/v1/director/cycles',
 		'POST',
-		input
+		input,
 	);
 	return response.cycle.cycleId;
 }
@@ -98,7 +98,7 @@ export async function updateProfile(input: DirectorProfileInput): Promise<Direct
 	const response = await apiSend<{ profile: DirectorProfile }>(
 		'/api/v1/director/profile',
 		'PUT',
-		input
+		input,
 	);
 	return response.profile;
 }

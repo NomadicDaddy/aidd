@@ -30,11 +30,11 @@ export function FleetHealthCard({
 		<Card variant="panel">
 			<div className="flex items-start justify-between gap-4">
 				<div>
-					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 						<Gauge className="h-4 w-4 text-teal-600 dark:text-teal-300" />
 						Fleet Health
 					</div>
-					<p className="text-muted-foreground mt-1 text-xs">
+					<p className="mt-1 text-xs text-muted-foreground">
 						{fleet?.fleetAggregations.priorityHealth.band
 							? healthBandLabel(fleet.fleetAggregations.priorityHealth.band)
 							: 'Priority health'}
@@ -45,13 +45,13 @@ export function FleetHealthCard({
 				</Badge>
 			</div>
 			<div className="mt-5">
-				<div className="text-muted-foreground mb-2 flex items-center justify-between text-xs font-medium">
+				<div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
 					<span>{fleetFeaturePassing} passing</span>
 					<span>
 						{fleet?.fleetAggregations.featurePassRate ?? featureHealthValue}% pass rate
 					</span>
 				</div>
-				<div className="bg-muted h-2.5 overflow-hidden rounded-full shadow-inner">
+				<div className="h-2.5 overflow-hidden rounded-full bg-muted shadow-inner">
 					<div
 						aria-hidden="true"
 						className={`h-full rounded-full ${toneSolid[featureHealthTone]} transition-[width] duration-500`}
@@ -59,7 +59,7 @@ export function FleetHealthCard({
 					/>
 				</div>
 			</div>
-			<div className="text-muted-foreground mt-5 text-xs font-medium tracking-wide uppercase">
+			<div className="mt-5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
 				Projects
 			</div>
 			<div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -104,7 +104,7 @@ function StatTile({
 				{label}
 			</div>
 			<div
-				className={`font-display mt-1 text-lg font-semibold tabular-nums ${valueStyles[color]}`}>
+				className={`mt-1 font-display text-lg font-semibold tabular-nums ${valueStyles[color]}`}>
 				{value}
 			</div>
 		</div>

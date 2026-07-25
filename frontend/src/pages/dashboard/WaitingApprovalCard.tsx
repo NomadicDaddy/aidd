@@ -49,7 +49,7 @@ function SuggestionRow({ suggestion }: { suggestion: SuggestionRecord }) {
 		<li className={ROW_CLASS}>
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<p className="text-foreground line-clamp-2 text-sm font-semibold">
+					<p className="line-clamp-2 text-sm font-semibold text-foreground">
 						{suggestion.title}
 					</p>
 					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -119,7 +119,7 @@ function WaitingFeatureRow({
 		<li className={ROW_CLASS}>
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<p className="text-foreground line-clamp-2 text-sm font-semibold">{title}</p>
+					<p className="line-clamp-2 text-sm font-semibold text-foreground">{title}</p>
 					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
 						{projectName} · {formatRelativeAge(feature.updatedAt)}
 					</p>
@@ -162,7 +162,7 @@ function BlockedRunRow({ run }: { run: RunRecord }) {
 		<li className={ROW_CLASS}>
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
-					<p className="text-foreground line-clamp-2 text-sm font-semibold">
+					<p className="line-clamp-2 text-sm font-semibold text-foreground">
 						{run.projectName} run blocked
 					</p>
 					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -207,7 +207,7 @@ export function WaitingApprovalCard({
 }) {
 	const pendingSuggestions = suggestions.filter((s) => s.status === 'pending');
 	const blockedRuns = runList.filter(
-		(run) => run.status !== 'running' && run.stopReason === 'blocked_needs_user_input'
+		(run) => run.status !== 'running' && run.stopReason === 'blocked_needs_user_input',
 	);
 	const waitingFeatures: {
 		feature: ProjectDetail['features'][number];
@@ -233,7 +233,7 @@ export function WaitingApprovalCard({
 		<Card aria-labelledby="waiting-approval-heading" variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
 				<div
-					className="text-foreground flex items-center gap-2 text-sm font-semibold"
+					className="flex items-center gap-2 text-sm font-semibold text-foreground"
 					id="waiting-approval-heading">
 					<ShieldQuestion className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Waiting Approval

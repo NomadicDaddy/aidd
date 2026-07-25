@@ -54,7 +54,7 @@ export function SegmentedControl<T extends string>({
 			className={cn(
 				'flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto rounded-md border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-950',
 				responsiveWidthClass,
-				className
+				className,
 			)}
 			role="group">
 			{options.map((option) => {

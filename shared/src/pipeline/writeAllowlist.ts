@@ -39,7 +39,7 @@ export interface WriteViolation {
 }
 
 export async function captureWriteGuardSnapshot(
-	projectDir: string
+	projectDir: string,
 ): Promise<null | WriteGuardSnapshot> {
 	const entries = await gitStatusEntries(projectDir);
 	if (entries === null) return null;
@@ -72,7 +72,7 @@ export function isPathAllowlisted(path: string, allowlist: string[]): boolean {
 export async function diffWriteViolations(
 	projectDir: string,
 	allowlist: string[],
-	baseline: WriteGuardSnapshot
+	baseline: WriteGuardSnapshot,
 ): Promise<null | WriteViolation[]> {
 	const current = await gitStatusEntries(projectDir);
 	if (current === null) return null;
@@ -129,7 +129,7 @@ export async function diffWriteViolations(
 export async function revertWriteViolations(
 	projectDir: string,
 	baseline: WriteGuardSnapshot,
-	violations: WriteViolation[]
+	violations: WriteViolation[],
 ): Promise<string[]> {
 	const failed: string[] = [];
 	let working = violations;
@@ -167,7 +167,7 @@ export async function revertWriteViolations(
 						committed: false,
 						untracked: status?.get(violation.path) === '??',
 					}
-				: violation
+				: violation,
 		);
 	}
 	for (const violation of working) {
@@ -212,7 +212,7 @@ export function formatViolationPaths(violations: WriteViolation[], limit = 8): s
 export function buildWriteAllowlistRetryPrompt(
 	prompt: string,
 	allowlist: string[],
-	violations: WriteViolation[]
+	violations: WriteViolation[],
 ): string {
 	const lines = violations.slice(0, 25).map((violation) => `- ${violation.path}`);
 	if (violations.length > 25) lines.push(`- … and ${violations.length - 25} more`);

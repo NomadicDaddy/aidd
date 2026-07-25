@@ -3,7 +3,7 @@ import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 import type { RunCommitsResponse, RunRecord } from '../../api/types.ts';
 
 export function skillDirectiveExecutionIntent(
-	run: Pick<RunRecord, 'launchCommand' | 'mode'>
+	run: Pick<RunRecord, 'launchCommand' | 'mode'>,
 ): null | SkillExecutionIntent {
 	if (run.mode !== 'directive') return null;
 	const args = run.launchCommand?.args ?? [];
@@ -13,7 +13,7 @@ export function skillDirectiveExecutionIntent(
 
 export function isReadOnlySkillDirectiveViolation(
 	run: Pick<RunRecord, 'launchCommand' | 'mode'>,
-	evidence: Pick<RunCommitsResponse, 'commitsCreatedCount' | 'filesCreated' | 'filesEdited'>
+	evidence: Pick<RunCommitsResponse, 'commitsCreatedCount' | 'filesCreated' | 'filesEdited'>,
 ): boolean {
 	return (
 		skillDirectiveExecutionIntent(run) === 'review-only' &&

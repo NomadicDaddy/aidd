@@ -2,10 +2,10 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import {
-	normalizeAuditProfileMapping,
-	normalizeAuditProfileOverrides,
 	type AuditProfileMapping,
 	type AuditProfileOverrides,
+	normalizeAuditProfileMapping,
+	normalizeAuditProfileOverrides,
 } from '../index.ts';
 import { metadataPath } from './paths.ts';
 
@@ -47,7 +47,7 @@ export async function loadAuditProfileMapping(catalogDir: string): Promise<Audit
 
 export async function writeAuditProfileMapping(
 	catalogDir: string,
-	mapping: AuditProfileMapping
+	mapping: AuditProfileMapping,
 ): Promise<AuditProfileMapping> {
 	const normalized = normalizeAuditProfileMapping(mapping);
 	const filePath = auditProfileMappingPath(catalogDir);
@@ -58,7 +58,7 @@ export async function writeAuditProfileMapping(
 }
 
 export async function loadAuditProfileOverrides(
-	projectDir: string
+	projectDir: string,
 ): Promise<AuditProfileOverrides | null> {
 	const filePath = auditProfileOverridesPath(projectDir);
 	let text: string;
@@ -68,7 +68,7 @@ export async function loadAuditProfileOverrides(
 		if (isFileNotFound(error)) return null;
 		throw new Error(
 			`Failed to read ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
-			{ cause: error }
+			{ cause: error },
 		);
 	}
 	let raw: unknown;
@@ -77,7 +77,7 @@ export async function loadAuditProfileOverrides(
 	} catch (error) {
 		throw new Error(
 			`Failed to parse ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
-			{ cause: error }
+			{ cause: error },
 		);
 	}
 	try {
@@ -85,7 +85,7 @@ export async function loadAuditProfileOverrides(
 	} catch (error) {
 		throw new Error(
 			`Invalid ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
-			{ cause: error }
+			{ cause: error },
 		);
 	}
 }
@@ -101,7 +101,7 @@ function isFileNotFound(error: unknown): boolean {
 
 export async function writeAuditProfileOverrides(
 	projectDir: string,
-	overrides: AuditProfileOverrides
+	overrides: AuditProfileOverrides,
 ): Promise<AuditProfileOverrides> {
 	const normalized = normalizeAuditProfileOverrides({
 		...overrides,

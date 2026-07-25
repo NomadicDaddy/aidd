@@ -9,7 +9,7 @@ describe('shell workspace policy — destructive git commands', () => {
 		expect(checkBashWorkspacePolicy('git reset --hard', cwd)).toContain('destructive git');
 		expect(checkBashWorkspacePolicy('git reset --hard HEAD', cwd)).toContain('destructive git');
 		expect(checkBashWorkspacePolicy('git reset --hard HEAD~5', cwd)).toContain(
-			'destructive git'
+			'destructive git',
 		);
 	});
 
@@ -54,10 +54,10 @@ describe('shell workspace policy — destructive git commands', () => {
 
 	test('blocks destructive git in a compound command', () => {
 		expect(checkBashWorkspacePolicy('echo hello && git reset --hard', cwd)).toContain(
-			'destructive git'
+			'destructive git',
 		);
 		expect(checkBashWorkspacePolicy('git status; git clean -fdx', cwd)).toContain(
-			'destructive git'
+			'destructive git',
 		);
 	});
 });

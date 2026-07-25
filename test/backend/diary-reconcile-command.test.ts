@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import type { DbCommands } from '../../backend/src/db/commands.ts';
 import type { DiaryEntryUpsert } from '../../backend/src/db/commands/types.ts';
 
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { diaryEntries } from '../../backend/src/db/schema.ts';
 import { diaryEntryId } from '../../backend/src/services/diary/parse.ts';
@@ -25,7 +25,7 @@ beforeEach(() => {
 function entry(
 	date: string,
 	hash: string,
-	overrides: Partial<DiaryEntryUpsert> = {}
+	overrides: Partial<DiaryEntryUpsert> = {},
 ): DiaryEntryUpsert {
 	return {
 		bodyMd: `# ${date}`,

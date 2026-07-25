@@ -13,7 +13,7 @@ import { directorCycleArtifacts, directorCycleStage } from './directorCycleRuns.
 import { getRun } from './queries.ts';
 
 interface OutputContext {
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 	hub: WebSocketHub;
 }
@@ -110,7 +110,7 @@ function textOutput(output: string): RunOutputResult {
 
 async function readDirectorCycleOutput(
 	ctx: OutputContext,
-	id: string
+	id: string,
 ): Promise<RunOutputResult | undefined> {
 	const cycle = (
 		await ctx.db.select().from(directorCycles).where(eq(directorCycles.id, id)).limit(1)
@@ -122,12 +122,12 @@ async function readDirectorCycleOutput(
 	const stage = directorCycleStage(queryCtx, cycle).replaceAll('_', ' ');
 	if (cycle.status === 'running') {
 		return textOutput(
-			`Director cycle ${id} is ${stage}.\nOutput artifact has not been written yet.`
+			`Director cycle ${id} is ${stage}.\nOutput artifact has not been written yet.`,
 		);
 	}
 	if (cycle.status === 'failed') {
 		return textOutput(
-			cycle.failureReason ?? `Director cycle ${id} failed before writing output.`
+			cycle.failureReason ?? `Director cycle ${id} failed before writing output.`,
 		);
 	}
 	return {

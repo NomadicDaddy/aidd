@@ -54,7 +54,7 @@ async function runCommand(name: DbCommandName, args: unknown): Promise<unknown> 
 	switch (name) {
 		case 'insertRunIfUnderCeiling':
 			return commands.insertRunIfUnderCeiling(
-				args as DbCommandMap['insertRunIfUnderCeiling']['args']
+				args as DbCommandMap['insertRunIfUnderCeiling']['args'],
 			);
 		case 'markRunStale':
 			return commands.markRunStale(args as DbCommandMap['markRunStale']['args']);
@@ -66,21 +66,21 @@ async function runCommand(name: DbCommandName, args: unknown): Promise<unknown> 
 			return commands.reconcileDeadRun(args as DbCommandMap['reconcileDeadRun']['args']);
 		case 'reconcileDiaryEntries':
 			return commands.reconcileDiaryEntries(
-				args as DbCommandMap['reconcileDiaryEntries']['args']
+				args as DbCommandMap['reconcileDiaryEntries']['args'],
 			);
 		case 'reconcileInvocationFromRun':
 			return commands.reconcileInvocationFromRun(
-				args as DbCommandMap['reconcileInvocationFromRun']['args']
+				args as DbCommandMap['reconcileInvocationFromRun']['args'],
 			);
 		case 'reconcileStaleInvocations':
 			return commands.reconcileStaleInvocations(
-				args as DbCommandMap['reconcileStaleInvocations']['args']
+				args as DbCommandMap['reconcileStaleInvocations']['args'],
 			);
 		case 'terminalizeRun':
 			return commands.terminalizeRun(args as DbCommandMap['terminalizeRun']['args']);
 		case 'updateProjectPathReferences':
 			return commands.updateProjectPathReferences(
-				args as DbCommandMap['updateProjectPathReferences']['args']
+				args as DbCommandMap['updateProjectPathReferences']['args'],
 			);
 		default: {
 			const exhaustive: never = name;

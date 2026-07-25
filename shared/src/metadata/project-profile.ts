@@ -2,13 +2,13 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import {
-	isAuditApplicableToProfile as resolverIsAuditApplicableToProfile,
 	isLowExposureLocalProfile,
 	normalizeProjectAssuranceProfileFile,
 	normalizeProjectAssuranceProfileInput,
-	requiresFullHardening,
 	type ProjectAssuranceProfile,
 	type ProjectAssuranceProfileInput,
+	requiresFullHardening,
+	isAuditApplicableToProfile as resolverIsAuditApplicableToProfile,
 } from '../index.ts';
 import { loadAuditProfileMapping, loadAuditProfileOverrides } from './audit-profile-mapping.ts';
 import { metadataPath } from './paths.ts';
@@ -29,7 +29,7 @@ export function projectProfilePath(projectDir: string): string {
 }
 
 export async function readProjectAssuranceProfile(
-	projectDir: string
+	projectDir: string,
 ): Promise<ProjectAssuranceProfile> {
 	const explicit = await readExplicitProjectAssuranceProfile(projectDir);
 	if (explicit) return explicit;
@@ -38,7 +38,7 @@ export async function readProjectAssuranceProfile(
 
 export async function writeProjectAssuranceProfile(
 	projectDir: string,
-	input: ProjectAssuranceProfileInput
+	input: ProjectAssuranceProfileInput,
 ): Promise<ProjectAssuranceProfile> {
 	const profile = normalizeProjectAssuranceProfileInput(input, new Date().toISOString());
 	await mkdir(metadataPath(projectDir), { recursive: true });
@@ -49,18 +49,18 @@ export async function writeProjectAssuranceProfile(
 export async function filterApplicableAuditNames(
 	catalogDir: string,
 	projectDir: string,
-	auditNames: string[]
+	auditNames: string[],
 ): Promise<string[]> {
 	const profile = await readProjectAssuranceProfile(projectDir);
 	const mapping = await loadAuditProfileMapping(catalogDir);
 	const overrides = await loadAuditProfileOverrides(projectDir);
 	return auditNames.filter((auditName) =>
-		resolverIsAuditApplicableToProfile(profile, auditName, mapping, overrides)
+		resolverIsAuditApplicableToProfile(profile, auditName, mapping, overrides),
 	);
 }
 
 export async function readExplicitProjectAssuranceProfile(
-	projectDir: string
+	projectDir: string,
 ): Promise<null | ProjectAssuranceProfile> {
 	let raw: unknown;
 	try {
@@ -76,7 +76,7 @@ export async function readExplicitProjectAssuranceProfile(
 }
 
 export async function inferProjectAssuranceProfile(
-	projectDir: string
+	projectDir: string,
 ): Promise<ProjectAssuranceProfile> {
 	const signals = await gatherInferenceSignals(projectDir);
 	const updatedAt = new Date().toISOString();

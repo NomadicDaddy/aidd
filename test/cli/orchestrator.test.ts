@@ -5,22 +5,22 @@ import type { AgentEvent } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import { exitCodeFromEvents, orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { parseArgs } from 'aidd-shared/args/index';
-import { runOrchestrator, type RunFinalSummary } from '../../cli/src/orchestrator/orchestrator.ts';
+import { type RunFinalSummary, runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import type { OrchestratorState } from '../../cli/src/orchestrator/state.ts';
 import { InvalidTransitionError, transition } from '../../cli/src/orchestrator/transitions.ts';
 
 import {
-	FakeBackend,
-	HangingAfterMarkerBackend,
-	SequencedBackend,
 	addFeature,
 	captureStdout,
-	config,
 	completeFeature,
+	config,
 	createOrchestratorTestContext,
+	FakeBackend,
+	HangingAfterMarkerBackend,
 	plan,
 	rootDir,
+	SequencedBackend,
 	slowOrchestratorTestTimeoutMs,
 } from './_helpers/orchestrator-fixture.ts';
 
@@ -40,20 +40,20 @@ describe('orchestrator transitions and exit mapping', () => {
 					type: 'run_agent',
 					plan: plan('.'),
 					prompt: { text: '', fragments: [], snapshotKey: '' },
-				}
-			)
+				},
+			),
 		).toThrow(InvalidTransitionError);
 	});
 
 	test('maps normalized error events to stable exit codes', () => {
 		expect(exitCodeFromEvents([{ type: 'error', reason: 'idle' }])).toBe(
-			orchestratorExitCodes.idleTimeout
+			orchestratorExitCodes.idleTimeout,
 		);
 		expect(exitCodeFromEvents([{ type: 'rate_limit', raw: 'limit' }])).toBe(
-			orchestratorExitCodes.rateLimited
+			orchestratorExitCodes.rateLimited,
 		);
 		expect(exitCodeFromEvents([{ type: 'error', reason: 'provider' }])).toBe(
-			orchestratorExitCodes.providerError
+			orchestratorExitCodes.providerError,
 		);
 	});
 
@@ -62,7 +62,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			exitCodeFromEvents([
 				{ type: 'rate_limit', raw: 'transient provider page text' },
 				{ type: 'done', exitCode: 0, filesModified: [] },
-			])
+			]),
 		).toBe(orchestratorExitCodes.success);
 	});
 
@@ -71,14 +71,14 @@ describe('orchestrator transitions and exit mapping', () => {
 			exitCodeFromEvents([
 				{ fatal: false, reason: 'provider', type: 'error' },
 				{ type: 'done', exitCode: 0, filesModified: [] },
-			])
+			]),
 		).toBe(orchestratorExitCodes.success);
 		expect(
 			exitCodeFromEvents([
 				{ type: 'rate_limit', raw: 'advisory limit text' },
 				{ fatal: false, reason: 'rate_limit', type: 'error' },
 				{ type: 'done', exitCode: 0, filesModified: [] },
-			])
+			]),
 		).toBe(orchestratorExitCodes.success);
 	});
 
@@ -87,13 +87,13 @@ describe('orchestrator transitions and exit mapping', () => {
 			exitCodeFromEvents([
 				{ fatal: true, reason: 'provider', type: 'error' },
 				{ type: 'done', exitCode: 0, filesModified: [] },
-			])
+			]),
 		).toBe(orchestratorExitCodes.providerError);
 		expect(
 			exitCodeFromEvents([
 				{ reason: 'provider', type: 'error' },
 				{ type: 'done', exitCode: 0, filesModified: [] },
-			])
+			]),
 		).toBe(orchestratorExitCodes.providerError);
 	});
 
@@ -183,7 +183,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
 			rootDir,
@@ -202,13 +202,13 @@ describe('orchestrator transitions and exit mapping', () => {
 			'complete',
 		]);
 		expect(await readFile(join(store.metadataDir, 'iterations', '001.log'), 'utf8')).toContain(
-			'assistant_text'
+			'assistant_text',
 		);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { runId?: unknown };
 		const runSummary = JSON.parse(
-			(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+			(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 		) as { runId?: unknown };
 		expect(typeof iteration.runId).toBe('string');
 		expect(runSummary.runId).toBe(iteration.runId);
@@ -229,7 +229,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 		let finalSummary: { exitCode: number; stopReason: string } | undefined;
 		// Simulate a successful run whose merge-back parks (conflict / dirty live tree).
@@ -266,7 +266,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 		let finalSummary: { exitCode: number; stopReason: string; summary: string } | undefined;
 		// Simulate a run parked by a concurrent canonical .aidd edit (merge withheld).
@@ -317,10 +317,10 @@ describe('orchestrator transitions and exit mapping', () => {
 			async () => {
 				observedStatus = (await store.readFeature('feature-core')).status;
 				observedStartedArtifact = JSON.parse(
-					await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+					await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 				) as typeof observedStartedArtifact;
 				await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -354,7 +354,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -421,7 +421,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'error', reason: 'idle', meta: { killMs: 20 } },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -437,7 +437,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		});
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"exitCode": 0');
 		expect(iterationJson).toContain('"status": "success"');
@@ -462,7 +462,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.success);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"exitCode": 0');
 		expect(iterationJson).toContain('"status": "success"');
@@ -483,7 +483,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'error', reason: 'aborted', meta: 'stop requested' },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -495,7 +495,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.success);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"exitCode": 0');
 		expect(iterationJson).toContain('"status": "success"');
@@ -519,7 +519,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'done', exitCode: 0, filesModified: [] },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 
 		const output = await captureStdout(async () => {
@@ -539,7 +539,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(output).toContain('write artifacts');
 		expect(output).toContain('iteration complete');
 		expect(output).toContain(
-			'[thinking] still waiting after 1m; logged idle warning (telemetry only).'
+			'[thinking] still waiting after 1m; logged idle warning (telemetry only).',
 		);
 	});
 
@@ -553,7 +553,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				},
 				{ type: 'done', exitCode: 0, filesModified: [] },
 			],
-			() => completeFeature(store, 'feature-core')
+			() => completeFeature(store, 'feature-core'),
 		);
 		const runtimeConfig: ResolvedConfig = {
 			...config,
@@ -562,7 +562,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		};
 		const runtimePlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native', '--simulation']),
-			runtimeConfig
+			runtimeConfig,
 		);
 
 		await runOrchestrator(runtimePlan, { rootDir, store, backend });
@@ -583,7 +583,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		};
 		const runtimePlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			fastConfig
+			fastConfig,
 		);
 		const backend = new SequencedBackend(
 			[
@@ -598,7 +598,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const exitCode = await runOrchestrator(runtimePlan, { rootDir, store, backend });
 		expect(exitCode).toBe(orchestratorExitCodes.success);
@@ -614,7 +614,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				rateLimitBackoffSeconds: 300,
 				rateLimitBufferSeconds: 0,
 				timeoutSeconds: 1,
-			}
+			},
 		);
 		const backend = new FakeBackend([{ type: 'error', reason: 'rate_limit' }]);
 
@@ -648,7 +648,7 @@ describe('orchestrator transitions and exit mapping', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
-				() => completeFeature(store, 'feature-core')
+				() => completeFeature(store, 'feature-core'),
 			),
 			onState: (state) => {
 				if (state.type === 'run_agent' && !wroteStop) {
@@ -739,7 +739,7 @@ describe('orchestrator transitions and exit mapping', () => {
 				'--director-output',
 				outputPath,
 			]),
-			{ rootDir, store, backend }
+			{ rootDir, store, backend },
 		);
 
 		// Got past preflight: the backend was actually invoked and the run did not
@@ -766,7 +766,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, { rootDir, store, backend });
@@ -780,7 +780,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		const store = await makeStore('continue-timeout-max-one');
 		const limitedPlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			{ ...config, maxIterations: 1 }
+			{ ...config, maxIterations: 1 },
 		);
 		const backend = new SequencedBackend(
 			[
@@ -795,7 +795,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(limitedPlan, { rootDir, store, backend });
@@ -825,7 +825,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, { rootDir, store, backend });
@@ -834,7 +834,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(backend.calls).toBe(2);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"status": "provider_error"');
 		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
@@ -844,7 +844,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		const store = await makeStore('continue-provider-timeout-max-one');
 		const limitedPlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			{ ...config, maxIterations: 1 }
+			{ ...config, maxIterations: 1 },
 		);
 		const backend = new SequencedBackend(
 			[
@@ -859,7 +859,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(limitedPlan, { rootDir, store, backend });
@@ -895,7 +895,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, { rootDir, store, backend });
@@ -904,7 +904,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(backend.calls).toBe(2);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"status": "provider_error"');
 		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
@@ -914,7 +914,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		const store = await makeStore('continue-timeout-retry-limit');
 		const limitedPlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			{ ...config, maxIterations: 1 }
+			{ ...config, maxIterations: 1 },
 		);
 		const backend = new SequencedBackend([
 			[{ type: 'error', reason: 'idle' }],
@@ -994,17 +994,17 @@ describe('orchestrator transitions and exit mapping', () => {
 				rootDir,
 				store,
 				backend,
-			}
+			},
 		);
 
 		expect(exitCode).toBe(orchestratorExitCodes.idleTimeout);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"exitCode": 71');
 		expect(iterationJson).toContain(
-			'verification_lifecycle_conflict: bun run smoke:dev | bun scripts/crawltest.ts --page /'
+			'verification_lifecycle_conflict: bun run smoke:dev | bun scripts/crawltest.ts --page /',
 		);
 		expect(iterationJson).toContain('"status": "verification_lifecycle_conflict"');
 		expect(iterationJson).toContain('"failurePhase": "verification"');
@@ -1033,13 +1033,13 @@ describe('orchestrator transitions and exit mapping', () => {
 				rootDir,
 				store,
 				backend,
-			}
+			},
 		);
 
 		expect(exitCode).toBe(orchestratorExitCodes.idleTimeout);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"exitCode": 71');
 		expect(iterationJson).toContain('active_verification_timeout: bun run smoke:dev');
@@ -1079,7 +1079,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		});
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"exitCode": 71');
 		expect(iterationJson).toContain('"status": "active_verification_recovery"');
@@ -1106,13 +1106,13 @@ describe('orchestrator transitions and exit mapping', () => {
 				rootDir,
 				store,
 				backend,
-			}
+			},
 		);
 
 		expect(exitCode).toBe(orchestratorExitCodes.idleTimeout);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"status": "active_verification_timeout"');
 		const structured = JSON.parse(iterationJson) as {
@@ -1129,7 +1129,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		const store = await makeStore('quit-on-abort');
 		const runtimePlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			{ ...config, quitOnAbort: 2 }
+			{ ...config, quitOnAbort: 2 },
 		);
 		const backend = new SequencedBackend([
 			[{ type: 'error', reason: 'aborted', meta: 'first' }],
@@ -1165,7 +1165,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			(callIndex) => {
 				if (callIndex === 0) return completeFeature(store, 'feature-core');
 				return completeFeature(store, 'feature-second');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir, ['--stop-when-done']), {
@@ -1202,7 +1202,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			(callIndex) => {
 				if (callIndex === 0) return completeFeature(store, 'feature-core');
 				return completeFeature(store, 'feature-second');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -1216,7 +1216,7 @@ describe('orchestrator transitions and exit mapping', () => {
 		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
 		await expect(store.readFeature('feature-second')).resolves.toMatchObject({ passes: true });
 		await expect(
-			readFile(join(store.metadataDir, 'iterations', '002.json'), 'utf8')
+			readFile(join(store.metadataDir, 'iterations', '002.json'), 'utf8'),
 		).resolves.toContain('feature-second');
 	});
 
@@ -1228,7 +1228,7 @@ describe('orchestrator transitions and exit mapping', () => {
 			const limitedConfig = { ...config, maxIterations: 1 };
 			const limitedPlan = resolveRunPlan(
 				parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-				limitedConfig
+				limitedConfig,
 			);
 			const backend = new FakeBackend([
 				{
@@ -1250,11 +1250,11 @@ describe('orchestrator transitions and exit mapping', () => {
 			});
 			const structured = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(structured).toContain('"iteration": 0');
 			expect(structured).toContain('completionMarkerIgnored');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 });

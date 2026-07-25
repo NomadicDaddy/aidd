@@ -12,7 +12,7 @@ function redirectHostname(currentHostname: string, configuredHostname: string): 
 
 export function settingsRestartTargetChanged(
 	current: RestartAddressSettings,
-	next: RestartAddressSettings
+	next: RestartAddressSettings,
 ): boolean {
 	return current.port !== next.port;
 }

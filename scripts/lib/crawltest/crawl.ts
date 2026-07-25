@@ -8,10 +8,10 @@ import { printReport, writeCrawlReport } from '../../crawltest-reporting.ts';
 import { TestResults } from '../../crawltest-results.ts';
 import { getVersionedScreenshotDir } from '../../crawltest-screenshots.ts';
 import {
-	MOBILE_VIEWPORT_NAMES,
-	MOBILE_VIEWPORT_PRESETS,
 	type CrawlArgs,
 	type CrawlerOptions,
+	MOBILE_VIEWPORT_NAMES,
+	MOBILE_VIEWPORT_PRESETS,
 	type ViewportArg,
 } from '../../crawltest-types.ts';
 import {
@@ -39,7 +39,7 @@ async function crawl(
 	browser: Browser,
 	args: CrawlArgs,
 	viewportName: ViewportArg,
-	results: TestResults
+	results: TestResults,
 ): Promise<CrawlResult> {
 	const page = await browser.newPage();
 	await page.evaluateOnNewDocument(
@@ -47,7 +47,7 @@ async function crawl(
 			try {
 				window.localStorage.setItem('aidd:crawltest', '1');
 			} catch {}
-		})()`
+		})()`,
 	);
 	const preset = MOBILE_VIEWPORT_PRESETS[viewportName];
 	if (preset) {
@@ -64,7 +64,7 @@ async function crawl(
 	const pageErrors: string[] = [];
 	const consoleErrors: string[] = [];
 	page.on('pageerror', (error) =>
-		pageErrors.push(error instanceof Error ? error.message : String(error))
+		pageErrors.push(error instanceof Error ? error.message : String(error)),
 	);
 	page.on('console', (message) => {
 		const text = message.text();
@@ -123,7 +123,7 @@ async function crawl(
 			viewportName,
 			checkOverflow,
 			results,
-			options
+			options,
 		);
 		errors.push(...result.errors);
 		if (result.errors.length === 0) {
@@ -137,7 +137,7 @@ async function crawl(
 					results,
 					options,
 					await getInteractiveElements(page),
-					new URL(next, args.baseUrl).toString()
+					new URL(next, args.baseUrl).toString(),
 				);
 			}
 		}

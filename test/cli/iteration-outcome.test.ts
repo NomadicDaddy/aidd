@@ -58,7 +58,7 @@ describe('classifyIterationOutcome', () => {
 		// Write the file after startedAtMs to simulate the backend writing it during the run
 		await writeFile(
 			join(reportDir, 'CODEBASE_ANALYSIS-2026-06-10.md'),
-			'# Codebase Analysis\n\n293 lines of analysis.\n'
+			'# Codebase Analysis\n\n293 lines of analysis.\n',
 		);
 
 		const result = await classifyIterationOutcome({
@@ -86,7 +86,7 @@ describe('classifyIterationOutcome', () => {
 		// deliberately excluded from counting as evidence.
 		await writeFile(
 			join(projectDir, '.aidd', 'project-structure.md'),
-			'# Project Structure\n\n- backend/\n- frontend/\n'
+			'# Project Structure\n\n- backend/\n- frontend/\n',
 		);
 
 		const result = await classifyIterationOutcome({
@@ -161,7 +161,7 @@ describe('classifyIterationOutcome', () => {
 		const startedAtMs = Date.now();
 		await writeFile(
 			join(projectDir, '.aidd', 'CHANGELOG.md'),
-			'## [2026-07-20]\n\n### Blocked\n\n- Could not run: required files missing.\n'
+			'## [2026-07-20]\n\n### Blocked\n\n- Could not run: required files missing.\n',
 		);
 
 		const result = await classifyIterationOutcome({
@@ -219,7 +219,7 @@ describe('classifyIterationOutcome', () => {
 		await mkdir(join(projectDir, '.aidd', 'reports'), { recursive: true });
 		await writeFile(
 			join(projectDir, '.aidd', 'reports', 'session-pipe_123.json'),
-			'{"session":true}'
+			'{"session":true}',
 		);
 
 		const result = await classifyIterationOutcome({
@@ -246,11 +246,11 @@ describe('classifyIterationOutcome', () => {
 		await mkdir(join(projectDir, '.aidd', 'reports'), { recursive: true });
 		await writeFile(
 			join(projectDir, '.aidd', 'reports', 'session-pipe_123.json'),
-			'{"session":true}'
+			'{"session":true}',
 		);
 		await writeFile(
 			join(projectDir, '.aidd', 'reports', 'feature-coverage-audit-2026-07-20.md'),
-			'# Coverage\n\n- covered\n'
+			'# Coverage\n\n- covered\n',
 		);
 
 		const result = await classifyIterationOutcome({
@@ -275,11 +275,11 @@ describe('classifyIterationOutcome', () => {
 		const startedAtMs = Date.now();
 		await writeFile(
 			join(projectDir, '.aidd', 'CHANGELOG.md'),
-			'## [2026-07-20]\n\n- Did work.\n'
+			'## [2026-07-20]\n\n- Did work.\n',
 		);
 		await writeFile(
 			join(projectDir, '.aidd', 'screen-map.md'),
-			'# Screen Map\n\n- /dashboard\n'
+			'# Screen Map\n\n- /dashboard\n',
 		);
 
 		const result = await classifyIterationOutcome({
@@ -312,7 +312,7 @@ describe('classifyIterationOutcome', () => {
 		await utimes(
 			join(projectDir, '.aidd', 'old-file.md'),
 			new Date(staleTime),
-			new Date(staleTime)
+			new Date(staleTime),
 		);
 
 		const result = await classifyIterationOutcome({
@@ -365,7 +365,7 @@ describe('classifyIterationOutcome', () => {
 		const startedAtMs = Date.now();
 		await writeFile(
 			join(projectDir, '.aidd', 'CHANGELOG.md'),
-			'## [2026-06-10]\n\n### Changed\n\n- Some change.\n'
+			'## [2026-06-10]\n\n### Changed\n\n- Some change.\n',
 		);
 
 		const codingWork = {

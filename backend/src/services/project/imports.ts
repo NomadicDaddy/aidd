@@ -30,7 +30,7 @@ export type LaunchIntake = (projectDir: string) => Promise<{ id: string }>;
 function makeFailedImportResult(
 	candidateId: string,
 	path: string,
-	error: string
+	error: string,
 ): ProjectImportCandidateResultDto {
 	return {
 		candidateId,
@@ -45,7 +45,7 @@ function makeFailedImportResult(
 
 function validateImportCandidate(
 	candidateId: string,
-	byId: ReadonlyMap<string, ProjectImportCandidateDto>
+	byId: ReadonlyMap<string, ProjectImportCandidateDto>,
 ): { candidate: ProjectImportCandidateDto } | { failure: ProjectImportCandidateResultDto } {
 	const candidate = byId.get(candidateId);
 	if (!candidate) {
@@ -53,7 +53,7 @@ function validateImportCandidate(
 			failure: makeFailedImportResult(
 				candidateId,
 				'',
-				'Candidate is no longer available for import'
+				'Candidate is no longer available for import',
 			),
 		};
 	}
@@ -62,7 +62,7 @@ function validateImportCandidate(
 			failure: makeFailedImportResult(
 				candidateId,
 				candidate.path,
-				candidate.reason ?? 'Candidate cannot be imported'
+				candidate.reason ?? 'Candidate cannot be imported',
 			),
 		};
 	}
@@ -73,7 +73,7 @@ async function importValidatedCandidate(
 	ctx: ImportContext,
 	candidate: ProjectImportCandidateDto,
 	action: ProjectImportActionDto,
-	launchIntake: LaunchIntake
+	launchIntake: LaunchIntake,
 ): Promise<ProjectImportCandidateResultDto> {
 	const resolvedPath = assertAllowedPath(ctx.config.allowedRoots, candidate.path);
 	if (!(await directoryExists(resolvedPath))) {
@@ -125,7 +125,7 @@ export async function importProjects(
 	ctx: ImportContext,
 	candidateIds: string[],
 	action: ProjectImportActionDto,
-	launchIntake: LaunchIntake
+	launchIntake: LaunchIntake,
 ): Promise<ProjectImportResultDto> {
 	const uniqueIds = [...new Set(candidateIds)];
 	if (uniqueIds.length === 0) {
@@ -148,8 +148,8 @@ export async function importProjects(
 				makeFailedImportResult(
 					candidateId,
 					candidate.path,
-					err instanceof Error ? err.message : 'Import failed'
-				)
+					err instanceof Error ? err.message : 'Import failed',
+				),
 			);
 		}
 	}

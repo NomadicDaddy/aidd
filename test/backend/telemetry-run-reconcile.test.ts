@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import type { DbCommands } from '../../backend/src/db/commands.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { invocationEvents, runs } from '../../backend/src/db/schema.ts';
@@ -206,7 +206,7 @@ describe('telemetry aggregation buckets', () => {
 				failed: acc.failed + row.failed,
 				warnings: acc.warnings + row.warnings,
 			}),
-			{ completed: 0, failed: 0, warnings: 0 }
+			{ completed: 0, failed: 0, warnings: 0 },
 		);
 		expect(totals.completed).toBe(1);
 		expect(totals.warnings).toBe(1);
@@ -223,7 +223,7 @@ describe('telemetry aggregation buckets', () => {
 				failed: acc.failed + row.failed,
 				warnings: acc.warnings + row.warnings,
 			}),
-			{ completed: 0, failed: 0, warnings: 0 }
+			{ completed: 0, failed: 0, warnings: 0 },
 		);
 		expect(point.completed).toBe(1);
 		expect(point.warnings).toBe(1);

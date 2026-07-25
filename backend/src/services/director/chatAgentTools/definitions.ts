@@ -3,7 +3,7 @@ import type { ToolDefinition } from 'aidd-shared/agent/client';
 import { toolDefinitions as fileToolDefinitions } from 'aidd-shared/agent/tools/index';
 
 export const fileToolNames = new Set(fileToolDefinitions.map((tool) => tool.function.name));
-export const mutatingFileToolNames = new Set(['write_file', 'edit_file', 'bash']);
+export const mutatingFileToolNames = new Set(['bash', 'edit_file', 'write_file']);
 
 const runIdParams = {
 	properties: { runId: { description: 'Run identifier.', type: 'string' } },
@@ -39,7 +39,7 @@ const orchestrateToolDefinitions: ToolDefinition[] = [
 			},
 			required: ['recipeId'],
 			type: 'object',
-		}
+		},
 	),
 	fn(
 		'launch_run',
@@ -70,7 +70,7 @@ const orchestrateToolDefinitions: ToolDefinition[] = [
 			},
 			required: ['projectDir'],
 			type: 'object',
-		}
+		},
 	),
 	fn('get_run', 'Get a single run record by id.', runIdParams),
 	fn('run_output', 'Read the captured output for a run.', runIdParams),
@@ -87,7 +87,7 @@ const orchestrateToolDefinitions: ToolDefinition[] = [
 			properties: { suggestionId: { description: 'Suggestion id.', type: 'string' } },
 			required: ['suggestionId'],
 			type: 'object',
-		}
+		},
 	),
 	fn('dismiss_suggestion', 'Dismiss a Director suggestion.', {
 		properties: { suggestionId: { description: 'Suggestion id.', type: 'string' } },
@@ -105,7 +105,7 @@ const orchestrateToolDefinitions: ToolDefinition[] = [
 				},
 			},
 			type: 'object',
-		}
+		},
 	),
 ];
 

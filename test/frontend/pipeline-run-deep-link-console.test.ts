@@ -91,7 +91,7 @@ function makeApp(ctx: QueriesContext) {
 
 async function withAppFetch<T>(
 	app: ReturnType<typeof createRunsRoutes>,
-	run: () => Promise<T>
+	run: () => Promise<T>,
 ): Promise<T> {
 	const original = globalThis.fetch;
 	globalThis.fetch = ((input: Request | string | URL, init?: RequestInit) => {

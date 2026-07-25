@@ -25,13 +25,13 @@ import {
 import {
 	discoverProjects,
 	healthyPriorityHealth,
-	resolveContainingRoot,
 	type ListingsContext,
+	resolveContainingRoot,
 } from './shared.ts';
 
 export async function getProjectDetail(
 	ctx: ListingsContext,
-	projectId: string
+	projectId: string,
 ): Promise<ProjectDetailDto> {
 	const projectDir = await ctx.resolveDiscoveredProject(projectId);
 	const store = new FileAiddStore(projectDir);
@@ -42,7 +42,7 @@ export async function getProjectDetail(
 	]);
 	const routeId =
 		buildProjectRouteIds(discovery.projects.map((project) => project.path)).get(
-			resolve(projectDir)
+			resolve(projectDir),
 		) ?? basename(projectDir);
 	const featureSummary = toWebFeatureSummary(features);
 	const featureStatus = toWebFeatureStatusEntries(features);
@@ -100,7 +100,7 @@ export async function getProjectDetail(
 		projectDir,
 		phase,
 		features,
-		roadmap
+		roadmap,
 	);
 	const summary: ProjectDetailDto = {
 		activeRuns: { count: 0, latestRunId: null },

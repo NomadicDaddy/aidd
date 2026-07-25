@@ -7,7 +7,7 @@ describe('formatActiveDuration', () => {
 	test('uses persisted durationMs for terminal sessions, ignoring now', () => {
 		// 90s persisted duration is shown regardless of how far now has advanced.
 		expect(formatActiveDuration(90_000, startedAt, startedAt + 5_000)).toBe(
-			formatDuration(90_000)
+			formatDuration(90_000),
 		);
 		expect(formatActiveDuration(90_000, startedAt, startedAt + 5_000)).toBe('1m 30s');
 	});

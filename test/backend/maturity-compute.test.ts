@@ -32,7 +32,7 @@ describe('maturity compute audit freshness', () => {
 				await commitSourceFile(
 					projectDir,
 					`src/change-${index}.ts`,
-					`export const change${index} = ${index};\n`
+					`export const change${index} = ${index};\n`,
 				);
 			}
 			const auditFreshnessContext = createAuditFreshnessContext();
@@ -57,7 +57,7 @@ describe('maturity compute audit freshness', () => {
 			});
 			const auditedStage = maturity.stages.find((stage) => stage.id === 'audited');
 			const security = auditedStage?.artifacts.find(
-				(artifact) => artifact.label === 'SECURITY'
+				(artifact) => artifact.label === 'SECURITY',
 			);
 
 			expect(security?.audit?.freshness).toBe('stale');
@@ -84,7 +84,7 @@ async function initGitProject(projectDir: string): Promise<void> {
 async function commitSourceFile(
 	projectDir: string,
 	relativePath: string,
-	content: string
+	content: string,
 ): Promise<void> {
 	await writeFile(join(projectDir, relativePath), content);
 	await runGit(projectDir, ['add', relativePath]);

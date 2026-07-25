@@ -115,7 +115,7 @@ function buildFileChanges(input: {
 
 async function readIterationFileChanges(
 	projectPath: string,
-	runId: string
+	runId: string,
 ): Promise<{ created: string[]; edited: string[] }> {
 	const iterationsPath = metadataPath(projectPath, 'iterations');
 	let entries: string[];
@@ -135,7 +135,7 @@ async function readIterationFileChanges(
 		let parsed: IterationFileChangeArtifact;
 		try {
 			parsed = JSON.parse(
-				await readFile(join(iterationsPath, entry), 'utf8')
+				await readFile(join(iterationsPath, entry), 'utf8'),
 			) as IterationFileChangeArtifact;
 		} catch {
 			continue;
@@ -152,7 +152,7 @@ async function fileChangesForRun(
 	runId: string,
 	ledgerEntry: RawRunLedgerEntry,
 	filesCreated: number,
-	filesEdited: number
+	filesEdited: number,
 ): Promise<RunFileChangesDto> {
 	if (Array.isArray(ledgerEntry.filesCreated) || Array.isArray(ledgerEntry.filesEdited)) {
 		return buildFileChanges({
@@ -180,7 +180,7 @@ async function fileChangesForRun(
 // 'not-recorded' rather than guessing a match by time window.
 export async function readRunCommits(
 	run: null | RunRecord | undefined,
-	id: string
+	id: string,
 ): Promise<RunCommitsResult> {
 	if (!run) {
 		return {
@@ -237,7 +237,7 @@ export async function readRunCommits(
 			id,
 			parsed,
 			filesCreated,
-			filesEdited
+			filesEdited,
 		);
 		recordDataMovement({
 			category: 'metadata',

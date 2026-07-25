@@ -51,7 +51,7 @@ export function RecipesPage() {
 
 	const telemetry = useTelemetryResources({ type: 'recipe' });
 	const usageByResourceId = new Map<string, ResourceUsageRow>(
-		(telemetry.data ?? []).map((row) => [row.resourceId, row])
+		(telemetry.data ?? []).map((row) => [row.resourceId, row]),
 	);
 
 	const allRecipes = recipes.recipes.data ?? [];
@@ -84,7 +84,7 @@ export function RecipesPage() {
 					// the per-session report stays a click away from there.
 					navigate(`/runs?pipeline=${encodeURIComponent(session.id)}`);
 				},
-			}
+			},
 		);
 	}
 
@@ -177,7 +177,7 @@ export function RecipesPage() {
 				<Card className="space-y-4">
 					<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 						<div>
-							<h2 className="text-foreground text-lg font-semibold">
+							<h2 className="text-lg font-semibold text-foreground">
 								Launch {selectedRecipe.name}
 							</h2>
 							<p className="text-sm text-neutral-600 dark:text-neutral-300">
@@ -208,7 +208,7 @@ export function RecipesPage() {
 								</label>
 							))}
 						{selectedRecipe.parameters.every((parameter) =>
-							autoParameters.has(parameter.name)
+							autoParameters.has(parameter.name),
 						) && (
 							<div className="text-sm text-neutral-600 dark:text-neutral-300">
 								Project parameters are filled from the selected launch target.

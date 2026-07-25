@@ -42,7 +42,7 @@ export function BlueprintImplementationCard({ project }: { project: ProjectDetai
 						) : (
 							<Hammer className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						)}
-						<h2 className="text-foreground text-sm font-semibold">
+						<h2 className="text-sm font-semibold text-foreground">
 							{implementation.state === 'blueprint_ready'
 								? 'Blueprint ready for review'
 								: implementation.state === 'preparing'

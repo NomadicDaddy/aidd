@@ -51,7 +51,7 @@ describe('interviewService', () => {
 			expect(detail.answeredQuestions.length).toBe(1);
 			expect(detail.answeredQuestions[0]?.response).toBe('To build a great product.');
 			expect(detail.answeredQuestions[0]?.prompt).toBe(
-				'What is the primary goal of this project?'
+				'What is the primary goal of this project?',
 			);
 
 			const responsesPath = join(dir, '.aidd', 'responses.md');
@@ -129,7 +129,7 @@ describe('interviewService', () => {
 			expect(detail.total).toBe(2);
 			expect(detail.unanswered[0]?.priority).toBe('CRITICAL');
 			expect(detail.unanswered[0]?.prompt).toBe(
-				'What exact behavior must be true before release? Continuation text for the first question.'
+				'What exact behavior must be true before release? Continuation text for the first question.',
 			);
 			expect(detail.unanswered[1]?.priority).toBe('HIGH');
 			expect(detail.unanswered[1]?.prompt).toBe('Who has final say on contract changes?');
@@ -140,7 +140,7 @@ describe('interviewService', () => {
 			});
 			expect(answered.answered).toBe(1);
 			expect(answered.answeredQuestions[0]?.prompt).toBe(
-				'What exact behavior must be true before release? Continuation text for the first question.'
+				'What exact behavior must be true before release? Continuation text for the first question.',
 			);
 			const responsesPath = join(dir, '.aidd', 'responses.md');
 			const responsesContent = await readFile(responsesPath, 'utf8');

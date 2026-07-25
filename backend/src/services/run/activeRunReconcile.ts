@@ -11,10 +11,10 @@ import { runs } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import {
 	readHeartbeatRecord,
-	terminalStatusFromHeartbeat,
 	type ResumeRunInfo,
+	terminalStatusFromHeartbeat,
 } from './activeRunHeartbeatFile.ts';
-import { RECONCILED_EXIT_CODE, NON_TERMINAL_RUN_STATUSES } from './types.ts';
+import { NON_TERMINAL_RUN_STATUSES, RECONCILED_EXIT_CODE } from './types.ts';
 import { reapRunWorktree } from './worktreeReap.ts';
 
 function commandArgsJson(commandArgs: null | string[] | undefined): null | string {
@@ -63,7 +63,7 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 							stopReason: 'heartbeat_missing',
 						})
 						.where(eq(runs.id, run.id)),
-				{ label: 'run.reconcileStale.missingHeartbeat' }
+				{ label: 'run.reconcileStale.missingHeartbeat' },
 			);
 			if (isAuditMode) ctx.onProjectChanged?.(run.projectPath);
 			ctx.hub.broadcast({
@@ -111,7 +111,7 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 							summary: heartbeat.summary,
 						})
 						.where(eq(runs.id, run.id)),
-				{ label: 'run.reconcileStale.terminalHeartbeat' }
+				{ label: 'run.reconcileStale.terminalHeartbeat' },
 			);
 			if (isAuditMode) ctx.onProjectChanged?.(run.projectPath);
 			ctx.hub.broadcast({
@@ -152,7 +152,7 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 							stopReason: 'heartbeat_stale',
 						})
 						.where(eq(runs.id, run.id)),
-				{ label: 'run.reconcileStale.staleHeartbeat' }
+				{ label: 'run.reconcileStale.staleHeartbeat' },
 			);
 			if (isAuditMode) ctx.onProjectChanged?.(run.projectPath);
 			ctx.hub.broadcast({
@@ -180,13 +180,13 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 	if (failedCount > 0) {
 		webLogger.warn(
 			{ count: failedCount },
-			'Reconciled orphaned runs with missing or stale heartbeats to failed'
+			'Reconciled orphaned runs with missing or stale heartbeats to failed',
 		);
 	}
 	if (terminalizedCount > 0) {
 		webLogger.info(
 			{ count: terminalizedCount },
-			'Terminalized runs that completed while web was offline'
+			'Terminalized runs that completed while web was offline',
 		);
 	}
 	if (resumedCount > 0) {

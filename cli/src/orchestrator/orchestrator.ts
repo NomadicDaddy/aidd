@@ -100,7 +100,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 			writeGuardBaseline = await captureWriteGuardSnapshot(runRepoDir(plan));
 			if (writeGuardBaseline === null) {
 				console.warn(
-					'[orchestrator] --write-allowlist requested but the project is not a git repository; writes cannot be guarded this iteration.'
+					'[orchestrator] --write-allowlist requested but the project is not a git repository; writes cannot be guarded this iteration.',
 				);
 			}
 		}

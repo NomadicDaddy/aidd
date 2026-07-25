@@ -332,8 +332,8 @@ export const useAuthStore = create<AuthState>()(
 			login: (user) => set({ user, isAuthenticated: true }),
 			logout: () => set({ user: null, isAuthenticated: false }),
 		}),
-		{ name: 'auth-storage' }
-	)
+		{ name: 'auth-storage' },
+	),
 );
 ```
 
@@ -486,7 +486,7 @@ export const resourceRoutes = new Elysia({ prefix: '/resources' })
 				name: t.String(),
 				description: t.Optional(t.String()),
 			}),
-		}
+		},
 	);
 ```
 
@@ -608,7 +608,7 @@ export const auditLogs = sqliteTable(
 			foreignColumns: [users.id],
 			name: 'fk_audit_logs_created_by_users',
 		}).onDelete('set null'),
-	]
+	],
 );
 ```
 

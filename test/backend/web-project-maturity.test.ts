@@ -48,21 +48,21 @@ function createMaturityTestApp(projectDir: string): {
 					return { id: 'audit-run' };
 				},
 			},
-		} as unknown as WebContext)
+		} as unknown as WebContext),
 	);
 	return { app, auditRuns, skillLaunches };
 }
 
 async function postRunNext(
 	app: RequestHandler,
-	body: { auditName?: string; slug: string }
+	body: { auditName?: string; slug: string },
 ): Promise<Response> {
 	return await app.handle(
 		new Request('http://localhost/api/v1/projects/demo/maturity/run-next', {
 			body: JSON.stringify(body),
 			headers: { 'content-type': 'application/json' },
 			method: 'POST',
-		})
+		}),
 	);
 }
 
@@ -84,7 +84,7 @@ describe('project maturity routes', () => {
 			expect(skillLaunches).toEqual([]);
 
 			const profile = JSON.parse(
-				await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8')
+				await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8'),
 			) as Record<string, unknown>;
 			expect(profile).toMatchObject({
 				authMode: 'local_owner',

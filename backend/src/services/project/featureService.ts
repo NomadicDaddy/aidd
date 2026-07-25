@@ -9,11 +9,11 @@ import type { FeatureApprovalInput } from './types.ts';
 import {
 	approveFeature as approveFeatureInternal,
 	deleteFeature as deleteFeatureInternal,
+	type FeatureContext,
+	type FeatureMetadataInput,
 	updateFeatureMetadata as updateFeatureMetadataInternal,
 	updateFeatureMilestone as updateFeatureMilestoneInternal,
 	updateFeatureStatus as updateFeatureStatusInternal,
-	type FeatureContext,
-	type FeatureMetadataInput,
 } from './features.ts';
 
 // Feature CRUD delegators, split out of ProjectService so that facade stays within the
@@ -35,7 +35,7 @@ export class ProjectFeatureService {
 	async approveFeature(
 		projectId: string,
 		featureDirectory: string,
-		input: FeatureApprovalInput
+		input: FeatureApprovalInput,
 	): Promise<Feature> {
 		return approveFeatureInternal(this.context(), projectId, featureDirectory, input);
 	}
@@ -47,7 +47,7 @@ export class ProjectFeatureService {
 	async updateFeatureMetadata(
 		projectId: string,
 		featureDirectory: string,
-		input: FeatureMetadataInput
+		input: FeatureMetadataInput,
 	): Promise<Feature> {
 		return updateFeatureMetadataInternal(this.context(), projectId, featureDirectory, input);
 	}
@@ -55,26 +55,26 @@ export class ProjectFeatureService {
 	async updateFeatureStatus(
 		projectId: string,
 		featureDirectory: string,
-		statusInput: string
+		statusInput: string,
 	): Promise<Feature> {
 		return updateFeatureStatusInternal(
 			this.context(),
 			projectId,
 			featureDirectory,
-			statusInput
+			statusInput,
 		);
 	}
 
 	async updateFeatureMilestone(
 		projectId: string,
 		featureDirectory: string,
-		milestoneInput: string
+		milestoneInput: string,
 	): Promise<{ feature: ProjectFeatureDto; roadmap: Roadmap }> {
 		return updateFeatureMilestoneInternal(
 			this.context(),
 			projectId,
 			featureDirectory,
-			milestoneInput
+			milestoneInput,
 		);
 	}
 }

@@ -76,7 +76,7 @@ const topLevel = (p: string): string => p.replace(/^\.aidd\//, '').replace(/\/.*
 
 const catalog = new Map<string, string>();
 for (const row of parseCatalog(
-	readFileSync(join(AIDD_ROOT, 'docs', 'reference', 'artifacts.md'), 'utf8')
+	readFileSync(join(AIDD_ROOT, 'docs', 'reference', 'artifacts.md'), 'utf8'),
 ).rows) {
 	catalog.set(topLevel(row.path), row.class);
 }
@@ -115,7 +115,7 @@ for (const repo of repos) {
 		const known = cls !== undefined || entry in NON_AIDD || NON_AIDD_TRACKED.has(entry);
 		if (!known) {
 			problems.push(
-				`${name}: .aidd/${entry} is UNCLASSIFIED — the denylist tracks it by default. Add a row to docs/reference/artifacts.md, or classify it in this script's NON_AIDD list.`
+				`${name}: .aidd/${entry} is UNCLASSIFIED — the denylist tracks it by default. Add a row to docs/reference/artifacts.md, or classify it in this script's NON_AIDD list.`,
 			);
 			continue;
 		}
@@ -132,11 +132,11 @@ for (const repo of repos) {
 
 		if (shouldCommit && ignored) {
 			problems.push(
-				`${name}: ${path} is committed-class (${cls ?? 'curated'}) but an ignore rule hides it`
+				`${name}: ${path} is committed-class (${cls ?? 'curated'}) but an ignore rule hides it`,
 			);
 		} else if (!shouldCommit && !ignored) {
 			problems.push(
-				`${name}: ${path} is ${cls ?? 'non-aidd'} (not committed) but no ignore rule matches it — it will be tracked`
+				`${name}: ${path} is ${cls ?? 'non-aidd'} (not committed) but no ignore rule matches it — it will be tracked`,
 			);
 		}
 	}

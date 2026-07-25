@@ -1,5 +1,5 @@
 import { metadataPath } from 'aidd-shared/metadata/paths';
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
 
 export interface TextEncodingViolation {
@@ -12,7 +12,7 @@ const skippedAiddDirs = new Set(['audit-reports', 'iterations', 'responses']);
 const rootPromptArtifacts = ['AGENTS.md', 'CLAUDE.md'];
 
 export async function findPromptArtifactEncodingViolations(
-	projectDir: string
+	projectDir: string,
 ): Promise<TextEncodingViolation[]> {
 	const candidates = [
 		...rootPromptArtifacts.map((path) => join(projectDir, path)),
@@ -68,7 +68,7 @@ async function collectAiddPromptArtifacts(projectDir: string): Promise<string[]>
 async function collectPromptArtifacts(
 	dir: string,
 	results: string[],
-	metadataDir: string
+	metadataDir: string,
 ): Promise<void> {
 	const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
 	for (const entry of entries) {

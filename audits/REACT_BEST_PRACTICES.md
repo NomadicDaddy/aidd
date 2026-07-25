@@ -503,7 +503,7 @@ export default function RootLayout({ children }) {
 import { lazy, Suspense } from 'react';
 
 const Analytics = lazy(() =>
-	import('@vercel/analytics/react').then((m) => ({ default: m.Analytics }))
+	import('@vercel/analytics/react').then((m) => ({ default: m.Analytics })),
 );
 
 function App() {
@@ -540,7 +540,7 @@ function CodePanel({ code }: { code: string }) {
 import { lazy, Suspense } from 'react';
 
 const MonacoEditor = lazy(() =>
-	import('./monaco-editor').then((m) => ({ default: m.MonacoEditor }))
+	import('./monaco-editor').then((m) => ({ default: m.MonacoEditor })),
 );
 
 function CodePanel({ code }: { code: string }) {
@@ -651,7 +651,7 @@ app.group('/api/users', (app) =>
 		.delete('/:id', async ({ params }) => {
 			await db.delete(users).where(eq(users.id, params.id));
 			return { success: true };
-		})
+		}),
 );
 ```
 
@@ -703,7 +703,7 @@ const chatAuthors = await Promise.all(chats.map((chat) => getUser(chat.authorId)
 
 ```typescript
 const chatAuthors = await Promise.all(
-	chatIds.map((id) => getChat(id).then((chat) => getUser(chat.authorId)))
+	chatIds.map((id) => getChat(id).then((chat) => getUser(chat.authorId))),
 );
 ```
 
@@ -736,10 +736,10 @@ app.post('/api/orders', async ({ body, user }) => {
 
 	// Fire-and-forget: do not await
 	sendConfirmationEmail(order).catch((err) =>
-		logger.error({ err, orderId: order.id }, 'Failed to send confirmation email')
+		logger.error({ err, orderId: order.id }, 'Failed to send confirmation email'),
 	);
 	logAuditEvent({ action: 'ORDER_CREATED', orderId: order.id }).catch((err) =>
-		logger.error({ err }, 'Failed to log audit event')
+		logger.error({ err }, 'Failed to log audit event'),
 	);
 
 	return dataResponse(order);
@@ -1464,7 +1464,7 @@ When a hook contains multiple independent tasks with different dependencies, spl
 const sortedProducts = useMemo(() => {
 	const filtered = products.filter((p) => p.category === category);
 	const sorted = filtered.toSorted((a, b) =>
-		sortOrder === 'asc' ? a.price - b.price : b.price - a.price
+		sortOrder === 'asc' ? a.price - b.price : b.price - a.price,
 	);
 	return sorted;
 }, [products, category, sortOrder]);
@@ -1475,15 +1475,15 @@ const sortedProducts = useMemo(() => {
 ```tsx
 const filteredProducts = useMemo(
 	() => products.filter((p) => p.category === category),
-	[products, category]
+	[products, category],
 );
 
 const sortedProducts = useMemo(
 	() =>
 		filteredProducts.toSorted((a, b) =>
-			sortOrder === 'asc' ? a.price - b.price : b.price - a.price
+			sortOrder === 'asc' ? a.price - b.price : b.price - a.price,
 		),
-	[filteredProducts, sortOrder]
+	[filteredProducts, sortOrder],
 );
 ```
 
@@ -1534,7 +1534,7 @@ function Search({ items }: { items: Item[] }) {
 	const deferredQuery = useDeferredValue(query);
 	const filtered = useMemo(
 		() => items.filter((item) => fuzzyMatch(item, deferredQuery)),
-		[items, deferredQuery]
+		[items, deferredQuery],
 	);
 	const isStale = query !== deferredQuery;
 
@@ -2299,7 +2299,7 @@ function handleClick() {
 			flushTelemetry();
 			writeAnalytics();
 		},
-		{ timeout: 2000 }
+		{ timeout: 2000 },
 	);
 }
 ```

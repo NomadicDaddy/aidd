@@ -28,6 +28,6 @@ export function createRemoteOriginGuardPlugin(webConfig: ResolvedWebConfig) {
 			}
 
 			return undefined;
-		}
+		},
 	);
 }

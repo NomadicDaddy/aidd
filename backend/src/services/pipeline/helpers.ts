@@ -1,4 +1,4 @@
-import { normalizeBackendName, type BackendName } from 'aidd-shared/plan/types';
+import { type BackendName, normalizeBackendName } from 'aidd-shared/plan/types';
 import { basename } from 'node:path';
 
 import type {
@@ -121,7 +121,7 @@ export function toStepResultRecord(row: PipelineStepResultRow): PipelineStepResu
 
 export function configString(
 	config: Record<string, RecipeConfigValue>,
-	key: string
+	key: string,
 ): string | undefined {
 	const value = config[key];
 	return typeof value === 'string' && value.length > 0 ? value : undefined;
@@ -138,7 +138,7 @@ function configNumber(config: Record<string, RecipeConfigValue>, key: string): n
 
 export function configStringRecord(
 	config: Record<string, RecipeConfigValue>,
-	key: string
+	key: string,
 ): Record<string, string> {
 	const value = config[key];
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
@@ -151,7 +151,7 @@ export function configStringRecord(
 
 function configStringList(
 	config: Record<string, RecipeConfigValue>,
-	key: string
+	key: string,
 ): string[] | undefined {
 	const value = config[key];
 	if (typeof value === 'string') {
@@ -167,7 +167,7 @@ function configStringList(
 
 function configBackend(
 	config: Record<string, RecipeConfigValue>,
-	key: string
+	key: string,
 ): BackendName | undefined {
 	const value = config[key];
 	return typeof value === 'string' ? normalizeBackendName(value) : undefined;
@@ -175,7 +175,7 @@ function configBackend(
 
 function substituteValue(
 	value: RecipeConfigValue,
-	parameters: Record<string, string>
+	parameters: Record<string, string>,
 ): RecipeConfigValue {
 	if (typeof value === 'string') {
 		return value.replace(/\{([a-zA-Z0-9_-]+)\}/g, (match, key: string) => {
@@ -193,7 +193,7 @@ function substituteValue(
 
 export function substituteConfig(
 	config: Record<string, RecipeConfigValue>,
-	parameters: Record<string, string>
+	parameters: Record<string, string>,
 ): Record<string, RecipeConfigValue> {
 	const output: Record<string, RecipeConfigValue> = {};
 	for (const [key, value] of Object.entries(config)) {

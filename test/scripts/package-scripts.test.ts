@@ -47,14 +47,14 @@ describe('package script lifecycle contracts', () => {
 
 	test('includes the Bun test corpus in the root lint gate', () => {
 		expect(scripts['lint:test']).toBe(
-			'bunx eslint test --cache --cache-location node_modules/.cache/eslint-test/ --report-unused-disable-directives --max-warnings 0'
+			'bunx eslint test --cache --cache-location node_modules/.cache/eslint-test/ --report-unused-disable-directives --max-warnings 0',
 		);
 		expect(scripts.lint).toContain('bun run lint:test');
 	});
 
 	test('keeps unused exports and types blocking, including script entry points', async () => {
 		const config = Bun.JSONC.parse(
-			await Bun.file(new URL('../../knip.jsonc', import.meta.url)).text()
+			await Bun.file(new URL('../../knip.jsonc', import.meta.url)).text(),
 		) as {
 			includeEntryExports?: boolean;
 			rules?: Record<string, string>;

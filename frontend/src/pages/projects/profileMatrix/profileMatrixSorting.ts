@@ -14,7 +14,7 @@ function compareText(left: string, right: string): number {
 
 function profileFacetLabel(
 	field: FacetField,
-	value: ProjectAssuranceProfileInput[FacetField]
+	value: ProjectAssuranceProfileInput[FacetField],
 ): string {
 	const facet = profileFacets.find((candidate) => candidate.field === field);
 	const option = facet?.options.find((candidate) => candidate.value === value);
@@ -38,7 +38,7 @@ export function compareProfileMatrixRows(
 	left: ProfileMatrixRowModel,
 	right: ProfileMatrixRowModel,
 	key: ProfileMatrixSortKey,
-	dir: ProfileMatrixSortDir
+	dir: ProfileMatrixSortDir,
 ): number {
 	const primary = compareText(sortValue(left, key), sortValue(right, key));
 	const result = primary === 0 ? compareText(left.project.name, right.project.name) : primary;

@@ -20,13 +20,13 @@ export function createProjectFeatureRoutes(context: WebContext) {
 				feature: await context.projectService.updateFeatureStatus(
 					params.id,
 					params.featureId,
-					body.status
+					body.status,
 				),
 			}),
 			{
 				body: featureStatusBody,
 				params: projectFeatureParams,
-			}
+			},
 		)
 		.put(
 			'/:id/features/:featureId/milestone',
@@ -34,12 +34,12 @@ export function createProjectFeatureRoutes(context: WebContext) {
 				await context.projectService.updateFeatureMilestone(
 					params.id,
 					params.featureId,
-					body.milestone
+					body.milestone,
 				),
 			{
 				body: featureMilestoneBody,
 				params: projectFeatureParams,
-			}
+			},
 		)
 		.patch(
 			'/:id/features/:featureId/metadata',
@@ -47,13 +47,13 @@ export function createProjectFeatureRoutes(context: WebContext) {
 				feature: await context.projectService.updateFeatureMetadata(
 					params.id,
 					params.featureId,
-					body
+					body,
 				),
 			}),
 			{
 				body: featureMetadataBody,
 				params: projectFeatureParams,
-			}
+			},
 		)
 		.post(
 			'/:id/features/:featureId/approval',
@@ -66,7 +66,7 @@ export function createProjectFeatureRoutes(context: WebContext) {
 			{
 				body: featureApprovalBody,
 				params: projectFeatureParams,
-			}
+			},
 		)
 		.delete(
 			'/:id/features/:featureId',
@@ -75,6 +75,6 @@ export function createProjectFeatureRoutes(context: WebContext) {
 			}),
 			{
 				params: projectFeatureParams,
-			}
+			},
 		);
 }

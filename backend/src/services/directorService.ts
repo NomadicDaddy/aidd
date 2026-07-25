@@ -18,7 +18,7 @@ import type { ChatAgentToolContext } from './director/chatAgentTools.ts';
 import type { BackendFactory, DirectorConfig, FleetSummary } from './director/types.ts';
 
 import { type suggestions } from '../db/schema.ts';
-import { disabledDirectAiRunner, type DirectAiRunner } from './directAiService.ts';
+import { type DirectAiRunner, disabledDirectAiRunner } from './directAiService.ts';
 import { DirectorChatAgent } from './director/chatAgent.ts';
 import { DirectorChatService } from './director/chatService.ts';
 import { DirectorCycleService } from './director/cycleService.ts';
@@ -52,7 +52,7 @@ export class DirectorService {
 		runService: RunService,
 		backendFactory: BackendFactory = createBackend,
 		directAiService: DirectAiRunner = disabledDirectAiRunner,
-		recipeServices?: DirectorRecipeServices
+		recipeServices?: DirectorRecipeServices,
 	) {
 		this.config = config;
 		const getConfig = (): DirectorConfig => this.config;
@@ -110,7 +110,7 @@ export class DirectorService {
 						? {}
 						: { description: recipe.description }),
 				}));
-			}
+			},
 		);
 		this.suggestionService = new DirectorSuggestionService(
 			db,
@@ -123,7 +123,7 @@ export class DirectorService {
 							recipeServices.recipeService.findRecipeByName(name),
 						launchRecipe: (input) => recipeServices.pipelineService.launchRecipe(input),
 					}
-				: undefined
+				: undefined,
 		);
 		this.cycleService = new DirectorCycleService({
 			chatService: this.chatService,
@@ -179,7 +179,7 @@ export class DirectorService {
 
 	async sendChatMessage(
 		sessionId: string,
-		input: DirectorChatMessageInput
+		input: DirectorChatMessageInput,
 	): Promise<{
 		assistant: DirectorChatMessageRecord;
 		user: DirectorChatMessageRecord;
@@ -196,7 +196,7 @@ export class DirectorService {
 	}
 
 	async launchSuggestion(
-		id: string
+		id: string,
 	): Promise<Awaited<ReturnType<DirectorSuggestionService['launchSuggestion']>>> {
 		return this.suggestionService.launchSuggestion(id);
 	}
@@ -217,7 +217,7 @@ export class DirectorService {
 	}
 
 	async runCycle(
-		input: DirectorCycleInput = {}
+		input: DirectorCycleInput = {},
 	): Promise<{ cycleId: string; output: DirectorOutput | undefined }> {
 		return this.cycleService.runCycle(input);
 	}

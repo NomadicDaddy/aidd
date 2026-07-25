@@ -40,7 +40,7 @@ export function requireString(record: Record<string, unknown>, key: string, labe
 export function optionalString(
 	record: Record<string, unknown>,
 	key: string,
-	label: string
+	label: string,
 ): string | undefined {
 	const value = stringValue(record[key]);
 	if (record[key] !== undefined && !value) throw new Error(`${label}.${key} must be a string`);
@@ -56,7 +56,7 @@ export function requireNumber(record: Record<string, unknown>, key: string, labe
 export function optionalInteger(
 	record: Record<string, unknown>,
 	key: string,
-	label: string
+	label: string,
 ): number | undefined {
 	const value = record[key];
 	if (value === undefined) return undefined;

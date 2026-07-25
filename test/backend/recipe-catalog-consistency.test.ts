@@ -31,7 +31,7 @@ describe('bundled recipe consistency', () => {
 			}
 			const normalized = normalizeRecipe(recipe, id);
 			expect(normalized.steps.map((step) => step.id)).toEqual(
-				recipe.steps.map((_, index) => `${id}_step_${index + 1}`)
+				recipe.steps.map((_, index) => `${id}_step_${index + 1}`),
 			);
 		}
 	});
@@ -39,13 +39,13 @@ describe('bundled recipe consistency', () => {
 	test('names the review workflows accurately and keeps remediation category-complete', async () => {
 		const recipes = await readRecipes();
 		expect(recipes.get('coding-review-remediate-document-changes')?.name).toBe(
-			'coding, deep review, remediation, and change documentation'
+			'coding, deep review, remediation, and change documentation',
 		);
 		expect(recipes.get('coding-spirit-document-changes')?.name).toBe(
-			'coding, spirit review, remediation, and change documentation'
+			'coding, spirit review, remediation, and change documentation',
 		);
 		expect(recipes.get('coding-spirit-coderabbit-document-changes')?.name).toBe(
-			'coding, spirit and CodeRabbit reviews, remediation, and change documentation'
+			'coding, spirit and CodeRabbit reviews, remediation, and change documentation',
 		);
 
 		for (const id of [
@@ -78,10 +78,10 @@ describe('bundled recipe consistency', () => {
 			const feature = recipe?.parameters.find((parameter) => parameter.name === 'feature');
 			expect(feature?.defaultValue, `${id} feature default`).toBe('');
 			expect(feature?.description, `${id} feature description`).toBe(
-				'Optional feature directory or id to complete'
+				'Optional feature directory or id to complete',
 			);
 			expect(recipe?.steps[0]?.configJson.feature, `${id} coding feature target`).toBe(
-				'{feature}'
+				'{feature}',
 			);
 		}
 	});

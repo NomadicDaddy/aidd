@@ -37,7 +37,7 @@ function priorityTone(priority: null | number): 'amber' | 'neutral' | 'red' | 't
  */
 export function buildFeatureQueue(
 	fleet: FleetSummary | undefined,
-	projectIdByName: Map<string, string>
+	projectIdByName: Map<string, string>,
 ): FeatureQueueItem[] {
 	return (fleet?.projects ?? [])
 		.flatMap((project) =>
@@ -47,7 +47,7 @@ export function buildFeatureQueue(
 				projectId: projectIdByName.get(project.slug),
 				projectName: project.slug,
 				title: item.title,
-			}))
+			})),
 		)
 		.sort((left, right) => {
 			const leftPriority = left.priority ?? Number.MAX_SAFE_INTEGER;
@@ -62,7 +62,7 @@ function FeatureQueueRow({ item }: { item: FeatureQueueItem }) {
 	const body = (
 		<>
 			<div className="min-w-0">
-				<p className="text-foreground line-clamp-2 text-sm font-semibold">{item.title}</p>
+				<p className="line-clamp-2 text-sm font-semibold text-foreground">{item.title}</p>
 				<p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
 					{item.projectName}
 				</p>
@@ -102,7 +102,7 @@ export function FeatureQueueCard({
 	return (
 		<Card variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 					<ListTodo className="h-4 w-4 text-teal-600 dark:text-teal-300" />
 					Feature Queue
 				</div>

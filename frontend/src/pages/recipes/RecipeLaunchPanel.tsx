@@ -75,7 +75,7 @@ export function RecipeLaunchPanel({
 					// the per-session report stays a click away from there.
 					navigate(`/runs?pipeline=${encodeURIComponent(session.id)}`);
 				},
-			}
+			},
 		);
 	}
 
@@ -83,7 +83,7 @@ export function RecipeLaunchPanel({
 		<Card className="space-y-4" variant="panel">
 			<div className="flex items-start justify-between gap-3">
 				<div>
-					<h2 className="text-foreground text-lg font-semibold">Launch {recipe.name}</h2>
+					<h2 className="text-lg font-semibold text-foreground">Launch {recipe.name}</h2>
 					<p className="text-sm text-neutral-600 dark:text-neutral-300">
 						{recipe.steps.length} ordered step{recipe.steps.length !== 1 ? 's' : ''}{' '}
 						will run in the selected project.

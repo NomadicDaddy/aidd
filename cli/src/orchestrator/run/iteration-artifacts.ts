@@ -8,11 +8,11 @@ import type { extractTriumviratePlanningRecovery } from '../triumvirate/planning
 
 import { allowedFeatureIdsForWork } from './feature-scope.ts';
 import {
-	runRuntimeFields,
 	type FeatureScopeAudit,
 	type GitCommitSummary,
 	type OrchestratorDeps,
 	type RunAccumulator,
+	runRuntimeFields,
 } from './types.ts';
 
 export function buildIterationStructured(input: {

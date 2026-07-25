@@ -39,6 +39,6 @@ describe('ExecutionIdentityBadgeLabPage', () => {
 		expect(html).toContain(`${combinationCount} combinations`);
 		expect(html.match(/role="group"/g)).toHaveLength(combinationCount + cliCount);
 		expect(html).toContain('CLI direct, Model glm-5.2, Reasoning high');
-		expect(html).toContain('CLI codex, Model gpt-5.6, Reasoning xhigh');
+		expect(html).toContain('CLI codex, Model gpt-5.6-sol, Reasoning xhigh');
 	});
 });

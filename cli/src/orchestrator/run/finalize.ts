@@ -24,7 +24,7 @@ import {
 import { accumulateIterationFileChanges, accumulateIterationMetrics } from './run-accumulator.ts';
 
 export async function finalizeIteration(
-	input: FinalizeIterationInput
+	input: FinalizeIterationInput,
 ): Promise<FinalizeIterationResult> {
 	const {
 		acc,
@@ -64,7 +64,7 @@ export async function finalizeIteration(
 		runRepoDir(plan),
 		gitHeadBefore,
 		gitHeadAfter,
-		startedAtMs
+		startedAtMs,
 	);
 	const completionPendingCommit = await completionRequiresCommit({
 		completionCommittedDuringGrace,
@@ -108,7 +108,7 @@ export async function finalizeIteration(
 		deps.store,
 		work,
 		featureSnapshotBefore,
-		completedResultFeature
+		completedResultFeature,
 	);
 	// Classify the outcome and extract iteration details up front so the parking sites below can
 	// persist the failing-gate context onto the feature they demote (see buildFeatureBlockingContext).
@@ -145,7 +145,7 @@ export async function finalizeIteration(
 		const blockingContext = buildFeatureBlockingContext(
 			details,
 			'completion_pending_commit',
-			parkedAt
+			parkedAt,
 		);
 		for (const featureId of featureScope.completedFeatures) {
 			if (featureSnapshotBefore.get(featureId) === true) continue;
@@ -173,7 +173,7 @@ export async function finalizeIteration(
 			: [];
 	if (unexpectedAuditCommits.length > 0) {
 		console.warn(
-			`[audit-mode] ${unexpectedAuditCommits.length} unexpected commit(s) landed during audit iteration; not attributing to features: ${unexpectedAuditCommits.join(', ')}`
+			`[audit-mode] ${unexpectedAuditCommits.length} unexpected commit(s) landed during audit iteration; not attributing to features: ${unexpectedAuditCommits.join(', ')}`,
 		);
 	}
 	if (plan.mode !== 'audit') {
@@ -213,7 +213,7 @@ export async function finalizeIteration(
 				blockingContext: buildFeatureBlockingContext(
 					details,
 					'active_verification_recovery',
-					parkedAt
+					parkedAt,
 				),
 				passes: false,
 				status: 'waiting_approval',

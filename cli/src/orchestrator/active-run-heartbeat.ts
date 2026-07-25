@@ -4,22 +4,22 @@ import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { scrubSecrets, StreamingSecretScrubber } from 'aidd-shared/lib/secretScrubber';
 import {
+	type CliActiveRunRecord,
 	createCliActiveRunRecord,
 	isCliActiveRunSuppressed,
 	sweepStaleActiveRunTempFiles,
 	writeCliActiveRunRecord,
-	type CliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
 import { existsSync } from 'node:fs';
-import { open, type FileHandle } from 'node:fs/promises';
+import { type FileHandle, open } from 'node:fs/promises';
 
 import type { RunFinalSummary, RunIterationArtifact, RunObserver } from './orchestrator.ts';
 import type { OrchestratorState } from './state.ts';
 
 import {
-	HEARTBEAT_INTERVAL_MS,
-	type CliActiveRunHeartbeatOptions,
 	appendFallbackRunSummary,
+	type CliActiveRunHeartbeatOptions,
+	HEARTBEAT_INTERVAL_MS,
 	iterationSummary,
 	nonNativeRunLogIntro,
 	shouldTrackRun,
@@ -78,7 +78,7 @@ export class CliActiveRunHeartbeat {
 	static async start(
 		plan: RunPlan,
 		options: CliActiveRunHeartbeatOptions = {},
-		env: NodeJS.ProcessEnv = process.env
+		env: NodeJS.ProcessEnv = process.env,
 	): Promise<CliActiveRunHeartbeat | undefined> {
 		if (!shouldTrackRun(plan, options.externalSource)) return undefined;
 		if (!options.externalSource && isCliActiveRunSuppressed(env)) return undefined;
@@ -107,7 +107,7 @@ export class CliActiveRunHeartbeat {
 				reasoningEffort: plan.reasoningEffort,
 				...(options.externalSource ? { source: options.externalSource } : {}),
 			}),
-			logHandle
+			logHandle,
 		);
 		await heartbeat.safeUpdate((current) => current);
 		return heartbeat;
@@ -158,7 +158,7 @@ export class CliActiveRunHeartbeat {
 		if (!handle) return;
 		this.logWriteChain = this.logWriteChain.then(
 			() => handle.write(text).then(() => undefined),
-			() => undefined
+			() => undefined,
 		);
 	}
 
@@ -284,7 +284,7 @@ export class CliActiveRunHeartbeat {
 	}
 
 	private async safeUpdate(
-		update: (record: CliActiveRunRecord) => CliActiveRunRecord
+		update: (record: CliActiveRunRecord) => CliActiveRunRecord,
 	): Promise<void> {
 		if (this.finalSummaryWritten) return;
 		try {

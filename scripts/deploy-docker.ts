@@ -61,7 +61,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 const isWindows = process.platform === 'win32';
 const appdataRoot = composePath(
-	values['appdata-root'] ?? (isWindows ? 'D:/appdata/production' : '/opt/appdata')
+	values['appdata-root'] ?? (isWindows ? 'D:/appdata/production' : '/opt/appdata'),
 );
 const projectsRoot = values['projects-root'] ? composePath(values['projects-root']) : null;
 if (!projectsRoot) {
@@ -86,7 +86,7 @@ console.log(`Bootstrapping Docker deploy of ${APP_SLUG}@${pkg.version}`);
 console.log(`  appdata:  ${deployDir}`);
 console.log(`  projects: ${projectsRoot}`);
 console.log(
-	`  panel:    http://127.0.0.1:${port} (loopback; front with a TLS proxy for remote use)`
+	`  panel:    http://127.0.0.1:${port} (loopback; front with a TLS proxy for remote use)`,
 );
 
 if (!values['skip-image-check']) {
@@ -95,7 +95,7 @@ if (!values['skip-image-check']) {
 	if (inspect.status !== 0) {
 		fail(
 			`${image} not found in the registry. Push it first ` +
-				`(bun scripts/docker-image.ts push) or pass --skip-image-check.`
+				`(bun scripts/docker-image.ts push) or pass --skip-image-check.`,
 		);
 	}
 	console.log('  image:    present in registry');
@@ -121,7 +121,7 @@ writeFileSync(
 		`AIDD_PORT=${port}`,
 		'AIDD_BACKUP_ON_START=1',
 		'',
-	].join('\n')
+	].join('\n'),
 );
 console.log(`✓ Wrote ${composeVarsPath}`);
 
@@ -130,7 +130,7 @@ console.log(`✓ Wrote ${composeDest}`);
 
 if (existsSync(configPath) && !values['rotate-token']) {
 	console.log(
-		`✓ Config already exists at ${configPath} — leaving as-is (--rotate-token to regenerate)`
+		`✓ Config already exists at ${configPath} — leaving as-is (--rotate-token to regenerate)`,
 	);
 } else {
 	if (existsSync(configPath)) {
@@ -157,7 +157,7 @@ console.log(`  cd ${deployDir}`);
 console.log('  docker compose --env-file compose.vars pull');
 console.log('  docker compose --env-file compose.vars up -d');
 console.log(
-	'  # provider keys: create compose.env next to the compose file (see compose.env.example)'
+	'  # provider keys: create compose.env next to the compose file (see compose.env.example)',
 );
 
 if (values.up) {

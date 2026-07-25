@@ -14,7 +14,7 @@ import { diaryEntries } from '../schema.ts';
 // cannot hold a BEGIN…COMMIT across round-trips.
 export function reconcileDiaryEntries(
 	tx: LocalTransaction,
-	args: ReconcileDiaryEntriesArgs
+	args: ReconcileDiaryEntriesArgs,
 ): { deleted: number; unchanged: number; upserted: number } {
 	const { entries, projectPath } = args;
 	// Match the win32 '/'→'\' + lowercase fold used to build entry ids, so a project's rows are

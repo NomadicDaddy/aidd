@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { DirectorConfig } from '../../backend/src/services/director/types.ts';
 
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { directorProfiles } from '../../backend/src/db/schema.ts';
 import { DirectorProfileService } from '../../backend/src/services/director/profileService.ts';
@@ -32,7 +32,7 @@ describe('DirectorProfileService.ensureDefaultProfile', () => {
 		const service = new DirectorProfileService(db, config);
 
 		const results = await Promise.all(
-			Array.from({ length: 8 }, () => service.ensureDefaultProfile())
+			Array.from({ length: 8 }, () => service.ensureDefaultProfile()),
 		);
 
 		for (const row of results) {

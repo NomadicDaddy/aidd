@@ -33,7 +33,7 @@ async function loadPreviewBase(context: WebContext): Promise<ProfilePreviewBase>
 async function previewOneProjectProfile(
 	context: WebContext,
 	base: ProfilePreviewBase,
-	request: ProfilePreviewRequest
+	request: ProfilePreviewRequest,
 ) {
 	const profile = normalizeProjectAssuranceProfileInput(request.profile);
 	const projectDir = await context.projectService.resolveDiscoveredProject(request.projectId);
@@ -54,7 +54,7 @@ async function previewOneProjectProfile(
 export async function createProjectProfilePreview(
 	context: WebContext,
 	projectId: string,
-	profile: unknown
+	profile: unknown,
 ) {
 	const base = await loadPreviewBase(context);
 	return await previewOneProjectProfile(context, base, { profile, projectId });
@@ -62,14 +62,14 @@ export async function createProjectProfilePreview(
 
 export async function createProjectProfilePreviews(
 	context: WebContext,
-	requests: ProfilePreviewRequest[]
+	requests: ProfilePreviewRequest[],
 ) {
 	const base = await loadPreviewBase(context);
 	const entries = await Promise.all(
 		requests.map(async (request) => [
 			request.projectId,
 			await previewOneProjectProfile(context, base, request),
-		])
+		]),
 	);
 	return Object.fromEntries(entries);
 }

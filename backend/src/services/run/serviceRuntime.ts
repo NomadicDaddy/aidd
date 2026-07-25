@@ -24,7 +24,7 @@ export function disposeRunRuntime(resources: RunRuntimeResources): void {
 export async function ensureRunHeartbeatWatcher(
 	projectPath: string,
 	heartbeatWatchers: Map<string, HeartbeatWatcher>,
-	context: HeartbeatWatcherContext
+	context: HeartbeatWatcherContext,
 ): Promise<void> {
 	if (heartbeatWatchers.has(projectPath)) return;
 	const watcher = await HeartbeatWatcher.start(projectPath, context);

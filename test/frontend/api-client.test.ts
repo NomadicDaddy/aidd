@@ -2,10 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import { ApiError, apiGet, apiSend, parseResponseJson } from '../../frontend/src/api/client.ts';
 
 type FetchFn = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-type TestGlobal = typeof globalThis & {
+type TestGlobal = {
 	document?: unknown;
 	window?: unknown;
-};
+} & typeof globalThis;
 
 function withFetch<T>(fn: FetchFn, run: () => Promise<T>): Promise<T> {
 	const original = globalThis.fetch;
@@ -110,7 +110,7 @@ describe('readJson via apiGet', () => {
 					status: 400,
 					statusText: 'Bad Request',
 					headers: { 'content-type': 'application/json' },
-				}
+				},
 			);
 
 		await withFetch(fakeFetch, async () => {
@@ -123,7 +123,7 @@ describe('readJson via apiGet', () => {
 				expect(error).toBeInstanceOf(ApiError);
 				expect((error as ApiError).status).toBe(400);
 				expect((error as ApiError).message).toBe(
-					'executionIntent must be either "review-only" or "apply-changes"'
+					'executionIntent must be either "review-only" or "apply-changes"',
 				);
 			}
 		});
@@ -255,7 +255,7 @@ describe('readJson via apiGet', () => {
 					expect(traceEnabledHeader).toBe('1');
 					expect(labels).toContain('[aidd] POST /api/v1/things request');
 					expect(labels).toContain(
-						'[aidd] POST /api/v1/things backend 12ms events 1 file:1'
+						'[aidd] POST /api/v1/things backend 12ms events 1 file:1',
 					);
 				});
 			});

@@ -22,9 +22,9 @@ export interface ListRunsParams {
 	topLevel?: boolean;
 }
 
-type RawRunCommitsResponse = Omit<RunCommitsResponse, 'fileChanges'> & {
+type RawRunCommitsResponse = {
 	fileChanges?: RunFileChanges;
-};
+} & Omit<RunCommitsResponse, 'fileChanges'>;
 
 function unavailableRunFileChanges(): RunFileChanges {
 	return {
@@ -74,7 +74,7 @@ export async function launchRun(request: RunLaunchRequest): Promise<RunRecord> {
 
 export async function listRuns(
 	params: ListRunsParams = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<RunsPage> {
 	const search = new URLSearchParams();
 	if (params.projectPath) search.set('projectPath', params.projectPath);

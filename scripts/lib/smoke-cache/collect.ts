@@ -87,7 +87,7 @@ export async function collectDependencies(projectRoot: string, step: string): Pr
 export async function hashDependencies(
 	projectRoot: string,
 	dependencies: string[],
-	allowGeneratedOutput = false
+	allowGeneratedOutput = false,
 ): Promise<null | string> {
 	const hash = createHash('sha256');
 	const normalizedDependencies = [
@@ -110,11 +110,11 @@ export async function hashDependencies(
 
 export async function hashStepDependencies(
 	projectRoot: string,
-	step: string
+	step: string,
 ): Promise<null | string> {
 	return await hashDependencies(
 		projectRoot,
 		await collectDependencies(projectRoot, step),
-		isGeneratedOutputStep(step)
+		isGeneratedOutputStep(step),
 	);
 }

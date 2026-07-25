@@ -7,7 +7,7 @@ import { getSqliteCheckConstraints } from './constraints.ts';
 export function checkColumnParity(
 	sqlite: Database,
 	tableName: string,
-	drizzleColumnNames: Set<string>
+	drizzleColumnNames: Set<string>,
 ): string[] {
 	const mismatches: string[] = [];
 	const pragmaColumns = sqlite.query<ColumnRow, []>(`PRAGMA table_info(${tableName})`).all();
@@ -16,7 +16,7 @@ export function checkColumnParity(
 	for (const colName of drizzleColumnNames) {
 		if (!sqliteColumnNames.has(colName)) {
 			mismatches.push(
-				`  MISSING COLUMN: ${tableName}.${colName} (in Drizzle, not in SQLite)`
+				`  MISSING COLUMN: ${tableName}.${colName} (in Drizzle, not in SQLite)`,
 			);
 		}
 	}
@@ -33,7 +33,7 @@ export function checkColumnParity(
 export function checkIndexParity(
 	sqlite: Database,
 	tableName: string,
-	drizzleIndexNames: Set<string>
+	drizzleIndexNames: Set<string>,
 ): string[] {
 	const mismatches: string[] = [];
 	const indexRows = sqlite.query<IndexInfoRow, []>(`PRAGMA index_list(${tableName})`).all();
@@ -43,7 +43,7 @@ export function checkIndexParity(
 	for (const idxName of drizzleIndexNames) {
 		if (!sqliteIndexNames.has(idxName)) {
 			mismatches.push(
-				`  MISSING INDEX: ${idxName} on ${tableName} (in Drizzle, not in SQLite)`
+				`  MISSING INDEX: ${idxName} on ${tableName} (in Drizzle, not in SQLite)`,
 			);
 		}
 	}
@@ -51,7 +51,7 @@ export function checkIndexParity(
 	for (const idxName of sqliteIndexNames) {
 		if (!drizzleIndexNames.has(idxName)) {
 			mismatches.push(
-				`  EXTRA INDEX: ${idxName} on ${tableName} (in SQLite, not in Drizzle)`
+				`  EXTRA INDEX: ${idxName} on ${tableName} (in SQLite, not in Drizzle)`,
 			);
 		}
 	}
@@ -62,7 +62,7 @@ export function checkIndexParity(
 export function checkForeignKeyParity(
 	sqlite: Database,
 	tableName: string,
-	expectedFkFromColumns: Set<string>
+	expectedFkFromColumns: Set<string>,
 ): string[] {
 	const mismatches: string[] = [];
 	const fkRows = sqlite.query<ForeignKeyRow, []>(`PRAGMA foreign_key_list(${tableName})`).all();
@@ -71,7 +71,7 @@ export function checkForeignKeyParity(
 	for (const fromCol of expectedFkFromColumns) {
 		if (!actualFkFromColumns.has(fromCol)) {
 			mismatches.push(
-				`  MISSING FK: ${tableName}.${fromCol} (declared in Drizzle, not in SQLite)`
+				`  MISSING FK: ${tableName}.${fromCol} (declared in Drizzle, not in SQLite)`,
 			);
 		}
 	}
@@ -80,7 +80,7 @@ export function checkForeignKeyParity(
 		if (!expectedFkFromColumns.has(fromCol)) {
 			const matchingFk = fkRows.find((fk) => fk.from === fromCol);
 			mismatches.push(
-				`  EXTRA FK: ${tableName}.${fromCol} -> ${matchingFk?.table}.${matchingFk?.to} (in SQLite, not in Drizzle)`
+				`  EXTRA FK: ${tableName}.${fromCol} -> ${matchingFk?.table}.${matchingFk?.to} (in SQLite, not in Drizzle)`,
 			);
 		}
 	}
@@ -91,12 +91,12 @@ export function checkForeignKeyParity(
 export function checkCheckConstraintParity(
 	sqlite: Database,
 	tableName: string,
-	drizzleChecks: Map<string, string>
+	drizzleChecks: Map<string, string>,
 ): string[] {
 	const mismatches: string[] = [];
 	const tableSqlRow = sqlite
 		.query<TableSqlRow, [string]>(
-			"SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name = ?"
+			"SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name = ?",
 		)
 		.get(tableName);
 	if (!tableSqlRow?.sql) return mismatches;
@@ -106,13 +106,13 @@ export function checkCheckConstraintParity(
 		const sqliteBody = sqliteChecks.get(checkName);
 		if (sqliteBody === undefined) {
 			mismatches.push(
-				`  MISSING CHECK: ${tableName}.${checkName} (declared in Drizzle, not in SQLite migration SQL)`
+				`  MISSING CHECK: ${tableName}.${checkName} (declared in Drizzle, not in SQLite migration SQL)`,
 			);
 		} else if (sqliteBody !== drizzleBody) {
 			mismatches.push(
 				`  CHECK DRIFT: ${tableName}.${checkName}\n` +
 					`    Drizzle:  ${drizzleBody}\n` +
-					`    SQLite:   ${sqliteBody}`
+					`    SQLite:   ${sqliteBody}`,
 			);
 		}
 	}
@@ -120,7 +120,7 @@ export function checkCheckConstraintParity(
 	for (const checkName of sqliteChecks.keys()) {
 		if (!drizzleChecks.has(checkName)) {
 			mismatches.push(
-				`  EXTRA CHECK: ${tableName}.${checkName} (in SQLite migration SQL, not declared in Drizzle schema)`
+				`  EXTRA CHECK: ${tableName}.${checkName} (in SQLite migration SQL, not declared in Drizzle schema)`,
 			);
 		}
 	}

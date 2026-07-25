@@ -26,7 +26,7 @@ export function DirectorQueueCard({
 	return (
 		<Card variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 					<AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Director Queue
 				</div>
@@ -61,7 +61,7 @@ export function DirectorQueueCard({
 						key={suggestion.id}>
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div className="min-w-0">
-								<h3 className="text-foreground line-clamp-2 text-sm font-semibold">
+								<h3 className="line-clamp-2 text-sm font-semibold text-foreground">
 									{suggestion.title}
 								</h3>
 								<p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">

@@ -12,7 +12,7 @@ import type { PipelineSessionRow } from './types.ts';
  * @returns The trimmed override, or undefined when nothing is overridden.
  */
 export function normalizeLaunchTarget(
-	target: LaunchTargetOverrides | undefined
+	target: LaunchTargetOverrides | undefined,
 ): LaunchTargetOverrides | undefined {
 	if (!target) return undefined;
 	const normalized: LaunchTargetOverrides = {};
@@ -32,7 +32,7 @@ export function normalizeLaunchTarget(
  * @returns The override to place on the resumed ExecutionContext, or undefined.
  */
 export function launchTargetFromSessionRow(
-	session: PipelineSessionRow
+	session: PipelineSessionRow,
 ): LaunchTargetOverrides | undefined {
 	return normalizeLaunchTarget({
 		backend: normalizeBackendName(session.launchBackend ?? ''),

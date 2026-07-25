@@ -7,14 +7,14 @@ import {
 describe('normalizePosixDrivePath', () => {
 	test('rewrites WSL-style /mnt/<drive> paths on win32', () => {
 		expect(normalizePosixDrivePath('/mnt/d/applications/deeper', 'win32')).toBe(
-			'd:/applications/deeper'
+			'd:/applications/deeper',
 		);
 		expect(normalizePosixDrivePath('/mnt/c', 'win32')).toBe('c:/');
 	});
 
 	test('rewrites Git-Bash-style /<drive> paths on win32', () => {
 		expect(
-			normalizePosixDrivePath('/d/applications/deeper/node_modules/.bin/tsc', 'win32')
+			normalizePosixDrivePath('/d/applications/deeper/node_modules/.bin/tsc', 'win32'),
 		).toBe('d:/applications/deeper/node_modules/.bin/tsc');
 	});
 
@@ -26,7 +26,7 @@ describe('normalizePosixDrivePath', () => {
 
 	test('is a no-op off win32 (a real /d directory must not be rewritten)', () => {
 		expect(normalizePosixDrivePath('/d/applications/deeper', 'linux')).toBe(
-			'/d/applications/deeper'
+			'/d/applications/deeper',
 		);
 		expect(normalizePosixDrivePath('/mnt/d/x', 'linux')).toBe('/mnt/d/x');
 	});
@@ -40,17 +40,17 @@ describe('isPathWithinWorkspaceRoot win32 drive spellings', () => {
 			isPathWithinWorkspaceRoot(
 				'/d/workspace/sample-app/node_modules/.bin/tsc',
 				root,
-				'win32'
-			)
+				'win32',
+			),
 		).toBe(true);
 		expect(isPathWithinWorkspaceRoot('/mnt/d/workspace/sample-app/src', root, 'win32')).toBe(
-			true
+			true,
 		);
 	});
 
 	test('still rejects genuinely outside paths in either spelling', () => {
 		expect(isPathWithinWorkspaceRoot('/mnt/c/toolchains/bun/bin/bun.exe', root, 'win32')).toBe(
-			false
+			false,
 		);
 		expect(isPathWithinWorkspaceRoot('/c/other/project', root, 'win32')).toBe(false);
 		expect(isPathWithinWorkspaceRoot('/mnt/d/workspace/other', root, 'win32')).toBe(false);

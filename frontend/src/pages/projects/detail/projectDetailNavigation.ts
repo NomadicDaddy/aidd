@@ -27,7 +27,7 @@ export function readProjectDetailTab(value: null | string): DetailTab {
 
 export function projectDetailTabSearchParams(
 	current: URLSearchParams,
-	tab: DetailTab
+	tab: DetailTab,
 ): URLSearchParams {
 	const next = new URLSearchParams(current);
 	if (tab === 'overview') next.delete('tab');

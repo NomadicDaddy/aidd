@@ -29,7 +29,7 @@ describe('audits navigation', () => {
 	test('uses the clean audits URL for the default catalog tab', () => {
 		const next = auditsTabSearchParams(
 			new URLSearchParams('tab=applicability&source=project'),
-			'catalog'
+			'catalog',
 		);
 
 		expect(next.has('tab')).toBe(false);

@@ -86,7 +86,7 @@ export const settingsConfigBody = t.Object({
 			ollama: t.Optional(backendDefaultsBody),
 			openai: t.Optional(backendDefaultsBody),
 			opencode: t.Optional(backendDefaultsBody),
-		})
+		}),
 	),
 	cli: backendNameBody,
 	codeModel: t.Optional(nullableString),
@@ -96,7 +96,7 @@ export const settingsConfigBody = t.Object({
 	directorAutoCycleIntervalHours: t.Optional(t.Number({ minimum: 1 })),
 	directorChatAllowFileEdits: t.Optional(t.Boolean()),
 	directorSuggestionGranularity: t.Optional(
-		t.Union([t.Literal('targeted'), t.Literal('aggregate')])
+		t.Union([t.Literal('targeted'), t.Literal('aggregate')]),
 	),
 	directorSuggestionMaxPerBucket: t.Optional(t.Number({ minimum: 1 })),
 	dirtyTreeThreshold: t.Optional(t.Union([t.Number({ minimum: 0 }), t.Null()])),
@@ -132,7 +132,7 @@ export const settingsConfigBody = t.Object({
 
 export function createSettingsRoutes(
 	context: WebContext,
-	options: { statusCommandRunner?: StatusCommandRunner; warmStatusCache?: boolean } = {}
+	options: { statusCommandRunner?: StatusCommandRunner; warmStatusCache?: boolean } = {},
 ) {
 	const statusCache = new SettingsStatusCache(options.statusCommandRunner);
 	if (options.warmStatusCache) statusCache.warm();
@@ -143,14 +143,14 @@ export function createSettingsRoutes(
 			async ({ query }) => ({
 				backends: await statusCache.cliStatus(query.refresh === 'true'),
 			}),
-			{ query: statusRefreshQuery }
+			{ query: statusRefreshQuery },
 		)
 		.get(
 			'/source-control-status',
 			async ({ query }) => ({
 				providers: await statusCache.sourceControlStatus(query.refresh === 'true'),
 			}),
-			{ query: statusRefreshQuery }
+			{ query: statusRefreshQuery },
 		)
 		.put(
 			'/config',
@@ -171,6 +171,6 @@ export function createSettingsRoutes(
 					throw new HttpError(message, 400);
 				}
 			},
-			{ body: settingsConfigBody }
+			{ body: settingsConfigBody },
 		);
 }

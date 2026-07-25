@@ -3,12 +3,12 @@ import type { RunPlan, TriumvirateRolePlan } from 'aidd-shared/plan/types';
 
 import { monitorBackend } from 'aidd-shared/backends/monitor';
 import {
+	type AgentRunResult,
 	exitCodeFromEvents,
 	extractStructuredResult,
 	filesModifiedFromEvents,
-	metricsFromEvents,
-	type AgentRunResult,
 	type IterationMetrics,
+	metricsFromEvents,
 } from 'aidd-shared/orchestrator/result';
 
 import type {
@@ -37,7 +37,7 @@ export function runStageWithOptions(
 		prompt: string;
 		role: TriumvirateRolePlan;
 		stage: TriumvirateStageName;
-	}
+	},
 ): Promise<StageRunResult> {
 	return runStage({
 		backend: options.backendFactory(stageInput.role.backend),
@@ -77,7 +77,7 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 			{
 				idleNudgeTimeoutMs: input.plan.outputPolicy.idleNudgeTimeoutSeconds * 1000,
 				idleTimeoutMs: input.plan.outputPolicy.idleTimeoutSeconds * 1000,
-			}
+			},
 		)) {
 			// Live deltas duplicate the turn's final assistant_text — observer/progress only,
 			// never the persisted transcript (see backend-stream.ts for the same rule).
@@ -135,7 +135,7 @@ function buildPromptInput(
 	role: TriumvirateRolePlan,
 	cwd: string,
 	text: string,
-	cwdKind: TriumvirateCwdKind
+	cwdKind: TriumvirateCwdKind,
 ): PromptInput {
 	const input: PromptInput = {
 		cwd,

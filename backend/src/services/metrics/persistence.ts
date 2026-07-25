@@ -64,7 +64,7 @@ export async function persistRequestCount(db: WebDatabase): Promise<void> {
 						set: { updatedAt: Date.now(), value },
 						target: settings.key,
 					}),
-			{ label: 'metrics.persistRequestCount' }
+			{ label: 'metrics.persistRequestCount' },
 		);
 	} catch (err) {
 		webLogger.warn({ err }, 'metrics: failed to persist request count');
@@ -78,7 +78,7 @@ export async function persistRequestCount(db: WebDatabase): Promise<void> {
  */
 export async function storeSystemSnapshot(
 	db: WebDatabase,
-	snapshot: MetricSnapshot
+	snapshot: MetricSnapshot,
 ): Promise<void> {
 	try {
 		await withSqliteRetry(
@@ -95,7 +95,7 @@ export async function storeSystemSnapshot(
 					timestamp: snapshot.timestamp,
 					value: null,
 				}),
-			{ label: 'metrics.storeSystemSnapshot' }
+			{ label: 'metrics.storeSystemSnapshot' },
 		);
 	} catch (err) {
 		webLogger.warn({ err }, 'metrics: failed to store system snapshot');
@@ -135,7 +135,7 @@ export async function storeWebVitals(db: WebDatabase, input: StoreWebVitalsInput
 		if (metric.rating === 'poor') {
 			webLogger.warn(
 				{ metric: metric.name, rating: metric.rating, url: input.url, value: metric.value },
-				`web vital "${metric.name}" rated poor`
+				`web vital "${metric.name}" rated poor`,
 			);
 		}
 	}
@@ -154,7 +154,7 @@ export async function pruneOldMetrics(db: WebDatabase, retentionMs: number): Pro
 	try {
 		await withSqliteRetry(
 			() => db.delete(systemMetrics).where(lt(systemMetrics.timestamp, cutoff)),
-			{ label: 'metrics.pruneOldMetrics' }
+			{ label: 'metrics.pruneOldMetrics' },
 		);
 	} catch (err) {
 		webLogger.warn({ err }, 'metrics: failed to prune old metrics');

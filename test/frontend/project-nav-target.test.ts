@@ -9,19 +9,19 @@ describe('projectDetailTarget', () => {
 
 	test('preserves the selected project tab', () => {
 		expect(projectDetailTarget('next-project', '?tab=features')).toBe(
-			'/projects/next-project?tab=features'
+			'/projects/next-project?tab=features',
 		);
 	});
 
 	test('drops project-specific parameters while preserving the tab', () => {
 		expect(projectDetailTarget('next-project', '?tab=code&file=frontend%2Fsrc%2FApp.tsx')).toBe(
-			'/projects/next-project?tab=code'
+			'/projects/next-project?tab=code',
 		);
 	});
 
 	test('does not carry an empty tab value', () => {
 		expect(projectDetailTarget('next-project', '?tab=&featureStatus=backlog')).toBe(
-			'/projects/next-project'
+			'/projects/next-project',
 		);
 	});
 });

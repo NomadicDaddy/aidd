@@ -32,9 +32,9 @@ export const directorCycles = sqliteTable(
 		index('idx_director_cycles_started_at').on(table.startedAt),
 		check(
 			'ck_director_cycles_status',
-			sql`${table.status} IN ('completed','failed','running')`
+			sql`${table.status} IN ('completed','failed','running')`,
 		),
-	]
+	],
 );
 
 export const directorProfiles = sqliteTable(
@@ -52,13 +52,13 @@ export const directorProfiles = sqliteTable(
 	(table) => [
 		check(
 			'ck_director_profiles_backend',
-			sql`${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`
+			sql`${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check(
 			'ck_director_profiles_reasoning_effort',
-			sql`${table.reasoningEffort} IN ('none','minimal','low','medium','high','xhigh')`
+			sql`${table.reasoningEffort} IN ('none','minimal','low','medium','high','xhigh')`,
 		),
-	]
+	],
 );
 
 export const directorChatSessions = sqliteTable(
@@ -78,7 +78,7 @@ export const directorChatSessions = sqliteTable(
 			foreignColumns: [directorProfiles.id],
 			name: 'fk_director_chat_sessions_profile_id_director_profiles',
 		}).onDelete('cascade'),
-	]
+	],
 );
 
 export const directorChatMessages = sqliteTable(
@@ -96,7 +96,7 @@ export const directorChatMessages = sqliteTable(
 		index('idx_director_chat_messages_cycle_id').on(table.cycleId),
 		index('idx_director_chat_messages_session_id_created_at').on(
 			table.sessionId,
-			table.createdAt
+			table.createdAt,
 		),
 		foreignKey({
 			columns: [table.sessionId],
@@ -110,9 +110,9 @@ export const directorChatMessages = sqliteTable(
 		}).onDelete('set null'),
 		check(
 			'ck_director_chat_messages_role',
-			sql`${table.role} IN ('assistant','system','user')`
+			sql`${table.role} IN ('assistant','system','user')`,
 		),
-	]
+	],
 );
 
 export const suggestions = sqliteTable(
@@ -162,12 +162,12 @@ export const suggestions = sqliteTable(
 		}).onDelete('cascade'),
 		check(
 			'ck_suggestions_status',
-			sql`${table.status} IN ('dismissed','launched','launching','pending')`
+			sql`${table.status} IN ('dismissed','launched','launching','pending')`,
 		),
 		check('ck_suggestions_risk_level', sql`${table.riskLevel} IN ('HIGH','LOW','MEDIUM')`),
 		check(
 			'ck_suggestions_task_type',
-			sql`${table.taskType} IN ('artifact_maintenance','audit_backlog','audit_maintenance','audit_remediation','ci_failure','code_quality_trend','dependency_hygiene','drift_detection','feature_completion','pr_followup','project_intake','remediation_backlog','smoke_test_failure','stale_project','unused_code')`
+			sql`${table.taskType} IN ('artifact_maintenance','audit_backlog','audit_maintenance','audit_remediation','ci_failure','code_quality_trend','dependency_hygiene','drift_detection','feature_completion','pr_followup','project_intake','remediation_backlog','smoke_test_failure','stale_project','unused_code')`,
 		),
-	]
+	],
 );

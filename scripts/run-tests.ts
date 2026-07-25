@@ -33,7 +33,7 @@ if (lock === undefined) {
 	console.error(
 		`Another bun test for this repository is already running (pid ${active?.pid ?? 'unknown'}). ` +
 			'Concurrent runs corrupt shared fixtures and produce phantom failures - wait for it to ' +
-			'finish (or kill it), then re-run.'
+			'finish (or kill it), then re-run.',
 	);
 	exit(1);
 }
@@ -58,7 +58,7 @@ try {
 			stdin: 'inherit',
 			stdout: 'inherit',
 			windowsHide: true,
-		}
+		},
 	);
 	markTestRunChild(projectRoot, child.pid);
 	exitCode = await child.exited;

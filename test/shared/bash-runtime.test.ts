@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import {
 	augmentEnvPathForGitBash,
-	gitBashPathDirs,
-	resolveBashExecutable,
 	type BashResolverDeps,
 	type GitBashEnvDeps,
+	gitBashPathDirs,
+	resolveBashExecutable,
 } from '../../shared/src/agent/tools/bash-runtime.ts';
 
 function deps(overrides: Partial<BashResolverDeps>): BashResolverDeps {
@@ -28,7 +28,7 @@ describe('resolveBashExecutable', () => {
 			deps({
 				existsSync: (path) => path === gitBash,
 				which: (cmd) => (cmd === 'git' ? 'C:\\Tools\\Git\\cmd\\git.exe' : null),
-			})
+			}),
 		);
 		expect(result).toEqual({ path: gitBash });
 	});
@@ -39,7 +39,7 @@ describe('resolveBashExecutable', () => {
 			deps({
 				existsSync: (path) => path === usrBash,
 				which: (cmd) => (cmd === 'git' ? 'C:\\Tools\\Git\\cmd\\git.exe' : null),
-			})
+			}),
 		);
 		expect(result).toEqual({ path: usrBash });
 	});
@@ -53,7 +53,7 @@ describe('resolveBashExecutable', () => {
 	test('AIDD_BASH override wins when it exists', () => {
 		const custom = 'D:\\portable\\git\\bin\\bash.exe';
 		const result = resolveBashExecutable(
-			deps({ env: { AIDD_BASH: custom }, existsSync: (path) => path === custom })
+			deps({ env: { AIDD_BASH: custom }, existsSync: (path) => path === custom }),
 		);
 		expect(result).toEqual({ path: custom });
 	});
@@ -66,7 +66,7 @@ describe('resolveBashExecutable', () => {
 	test('rejects the System32 WSL shim even via AIDD_BASH', () => {
 		const shim = 'C:\\Windows\\System32\\bash.exe';
 		const result = resolveBashExecutable(
-			deps({ env: { AIDD_BASH: shim }, existsSync: (path) => path === shim })
+			deps({ env: { AIDD_BASH: shim }, existsSync: (path) => path === shim }),
 		);
 		expect(result).toMatchObject({ error: expect.stringContaining('WSL bash shim') });
 	});
@@ -123,7 +123,7 @@ describe('augmentEnvPathForGitBash', () => {
 		const env = augmentEnvPathForGitBash(
 			bash,
 			{ PATH: 'C:\\Windows\\System32', Path: 'C:\\Windows\\System32' },
-			envDeps({})
+			envDeps({}),
 		);
 		const expected =
 			'C:\\Tools\\Git\\mingw64\\bin;C:\\Tools\\Git\\usr\\bin;C:\\Tools\\Git\\bin;C:\\Windows\\System32';
@@ -140,7 +140,7 @@ describe('augmentEnvPathForGitBash', () => {
 	test('sets PATH outright when the env has none', () => {
 		const env = augmentEnvPathForGitBash(bash, {}, envDeps({}));
 		expect(env.PATH).toBe(
-			'C:\\Tools\\Git\\mingw64\\bin;C:\\Tools\\Git\\usr\\bin;C:\\Tools\\Git\\bin'
+			'C:\\Tools\\Git\\mingw64\\bin;C:\\Tools\\Git\\usr\\bin;C:\\Tools\\Git\\bin',
 		);
 	});
 

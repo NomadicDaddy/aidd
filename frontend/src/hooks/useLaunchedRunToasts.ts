@@ -3,12 +3,12 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import {
-	resolveLaunchedRunTerminal,
-	setLaunchedRunEmitter,
 	type LaunchedRunInfo,
 	type LaunchedRunTerminal,
+	resolveLaunchedRunTerminal,
+	setLaunchedRunEmitter,
 } from '../lib/launchedRuns.ts';
-import { useWebSocketSubscribe, type SocketMessage } from './useWebSocket.ts';
+import { type SocketMessage, useWebSocketSubscribe } from './useWebSocket.ts';
 
 // Statuses that warrant a completion toast. Stopped/killed runs were ended by the user on purpose,
 // so they need no toast (the action already gave feedback); a 'running' transition is not terminal.

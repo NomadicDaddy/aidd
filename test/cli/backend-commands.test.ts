@@ -96,7 +96,7 @@ describe('backend command builders', () => {
 				CODEX_DEBUG: 'verbose',
 				ZRUN_TRACE: '1',
 				SHELL: '/bin/sh',
-			}
+			},
 		);
 
 		expect(env.PATH).toBe('/bin');
@@ -122,13 +122,13 @@ describe('backend command builders', () => {
 	describe('command injection guard — buildBackendCommand rejects unsafe model values', () => {
 		test('claude-code rejects model with shell metacharacters: foo & calc.exe', () => {
 			expect(() =>
-				buildBackendCommand('claude-code', { ...input, model: 'foo & calc.exe' })
+				buildBackendCommand('claude-code', { ...input, model: 'foo & calc.exe' }),
 			).toThrow(/Unsafe model value/);
 		});
 
 		test('codex rejects model with pipe: foo|whoami', () => {
 			expect(() => buildBackendCommand('codex', { ...input, model: 'foo|whoami' })).toThrow(
-				/Unsafe model value/
+				/Unsafe model value/,
 			);
 		});
 
@@ -138,7 +138,7 @@ describe('backend command builders', () => {
 					...input,
 					model: 'gpt-4o',
 					reasoningEffort: 'low; rm -rf /',
-				})
+				}),
 			).toThrow(/Unsafe reasoningEffort value/);
 		});
 
@@ -169,7 +169,7 @@ describe('backend command builders', () => {
 					...input,
 					model: 'gpt-4o',
 					reasoningEffort: 'max',
-				})
+				}),
 			).toThrow(/Codex does not support max/);
 		});
 	});

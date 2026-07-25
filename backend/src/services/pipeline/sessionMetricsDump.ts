@@ -23,7 +23,7 @@ export async function dumpSessionMetrics(
 	report: ReportBuilder,
 	sessionId: string,
 	projectDir: string,
-	terminal?: SessionMetricsTerminal
+	terminal?: SessionMetricsTerminal,
 ): Promise<void> {
 	try {
 		const built = await report.getReport(sessionId);
@@ -62,7 +62,7 @@ export async function dumpSessionMetrics(
 		await writeFile(
 			join(reportsDir, `session-${sessionId}.json`),
 			JSON.stringify(payload, null, '\t'),
-			'utf8'
+			'utf8',
 		);
 	} catch {
 		// Best-effort instrumentation; never fail a session over its metrics dump.

@@ -90,7 +90,7 @@ export function ActiveRunRow({
 				'cursor-pointer border-b transition-colors last:border-0',
 				selected
 					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
-					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
+					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50',
 			)}
 			onClick={selectFromRow}
 			onKeyDown={(event) => {

@@ -164,6 +164,6 @@ console.log(
 			sourceStatus: sourceStatus ? sourceStatus.split(/\r?\n/) : [],
 		},
 		null,
-		'\t'
-	)
+		'\t',
+	),
 );

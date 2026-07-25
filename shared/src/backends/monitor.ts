@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import type { CLIBackend, AgentEvent, PromptInput } from './types.ts';
+import type { AgentEvent, CLIBackend, PromptInput } from './types.ts';
 
 export interface MonitorOptions {
 	cleanupTimeoutMs?: number;
@@ -12,7 +12,7 @@ export async function* monitorBackend(
 	backend: CLIBackend,
 	input: PromptInput,
 	signal: AbortSignal,
-	options: MonitorOptions = {}
+	options: MonitorOptions = {},
 ): AsyncIterable<AgentEvent> {
 	const controller = new AbortController();
 	const relayAbort = () => controller.abort(signal.reason);

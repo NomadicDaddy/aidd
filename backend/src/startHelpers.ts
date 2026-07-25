@@ -10,7 +10,7 @@ import { webLogger } from './logger.ts';
 // helper separate leaves start.ts focused and under the 300-line cap.
 export function resolveEffectiveWebConfig(
 	config: ResolvedConfig,
-	rootDir: string
+	rootDir: string,
 ): NonNullable<ResolvedConfig['web']> {
 	return (
 		config.web ??
@@ -43,11 +43,11 @@ export function resolveEffectiveWebConfig(
 export function warnRemoteAccess(hostname: string, port: number): void {
 	webLogger.warn(
 		{ hostname, port },
-		'WARNING: web.allowRemote is true — unauthenticated control plane is reachable from the network'
+		'WARNING: web.allowRemote is true — unauthenticated control plane is reachable from the network',
 	);
 	console.warn(
 		`⚠ WARNING: web.allowRemote is true — the unauthenticated aidd control plane at ` +
-			`http://${hostname}:${port} is reachable from the network.`
+			`http://${hostname}:${port} is reachable from the network.`,
 	);
 }
 
@@ -83,7 +83,7 @@ function openRestartLogFd(rootDir: string, filename: string): number {
 export function createRestartSupervisorSpawnOptions(
 	rootDir: string,
 	stdoutFd: number,
-	stderrFd: number
+	stderrFd: number,
 ) {
 	return {
 		cwd: rootDir,
@@ -113,7 +113,7 @@ export function startRestartSupervisor(rootDir: string, currentPort: number): bo
 				'--wait-for-release-port',
 				String(currentPort),
 			],
-			createRestartSupervisorSpawnOptions(rootDir, stdoutFd, stderrFd)
+			createRestartSupervisorSpawnOptions(rootDir, stdoutFd, stderrFd),
 		);
 		proc.unref();
 		if (!proc.pid) {
@@ -149,7 +149,7 @@ export function installProcessSafetyNet(): void {
 	process.on('unhandledRejection', (reason) => {
 		webLogger.error(
 			{ err: reason },
-			'Unhandled promise rejection (contained; panel kept alive)'
+			'Unhandled promise rejection (contained; panel kept alive)',
 		);
 	});
 	process.on('uncaughtException', (error) => {
@@ -161,7 +161,7 @@ export function installProcessSafetyNet(): void {
 export async function probePublicInterface(
 	hostname: string,
 	port: number,
-	timeoutMs: number
+	timeoutMs: number,
 ): Promise<null | string> {
 	const net = await import('node:net');
 	const interfaces = networkInterfaces();

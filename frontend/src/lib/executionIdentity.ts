@@ -48,9 +48,9 @@ const topReasoningClass = 'bg-fuchsia-700 text-white';
 const unknownReasoningClass = 'bg-neutral-600 text-white';
 
 const topReasoningAliases = new Set([
-	'extra high',
-	'extra-high',
 	'extra_high',
+	'extra-high',
+	'extra high',
 	'max',
 	'maximum',
 	'ultra',
@@ -118,7 +118,7 @@ export function executionIdentityItems(identity: ExecutionIdentity): ExecutionId
 
 export function identityBadgeStyle(
 	kind: Exclude<ExecutionIdentityKind, 'reasoning'>,
-	value: string
+	value: string,
 ): IdentityBadgeStyle {
 	const hue = identityHue(kind, value.trim().toLowerCase());
 	return {

@@ -67,8 +67,8 @@ export const useAuthTokenStore = create<AuthTokenState>()(
 		{
 			name: 'aidd-access-token',
 			partialize: (state) => ({ token: state.token }),
-		}
-	)
+		},
+	),
 );
 
 export function currentAuthToken(): string {

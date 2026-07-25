@@ -17,8 +17,8 @@ import {
 	FeatureTextSection,
 } from './FeatureDetailSections.tsx';
 import {
-	FEATURE_METADATA_KEYS,
 	displayValue,
+	FEATURE_METADATA_KEYS,
 	featureDirectory,
 	listValue,
 	textBlockValue,
@@ -85,13 +85,15 @@ export function FeatureDetailsDialog({
 			{
 				onError: (error) =>
 					toast.error(
-						error instanceof Error ? error.message : 'Failed to update feature metadata'
+						error instanceof Error
+							? error.message
+							: 'Failed to update feature metadata',
 					),
 				onSuccess: () => {
 					toast.success('Feature metadata saved');
 					onClose();
 				},
-			}
+			},
 		);
 	}
 
@@ -108,7 +110,7 @@ export function FeatureDetailsDialog({
 				<div className="flex items-start justify-between gap-3">
 					<div className="min-w-0">
 						<h2
-							className="text-foreground text-lg font-semibold"
+							className="text-lg font-semibold text-foreground"
 							id="feature-details-title">
 							{title}
 						</h2>

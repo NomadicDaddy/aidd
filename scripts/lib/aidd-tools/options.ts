@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 
 import {
-	featureStatusTypes,
 	type FeatureStatusState,
 	type FeatureStatusType,
+	featureStatusTypes,
 } from '../aidd-workspace.ts';
 import { applicationsRoot } from './paths.ts';
 

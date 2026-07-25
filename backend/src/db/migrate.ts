@@ -6,7 +6,7 @@ import { migrations } from './migrations/registry.ts';
 function tableExists(sqlite: Database, tableName: string): boolean {
 	const rows = sqlite
 		.query<{ name: string }, [string]>(
-			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
+			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
 		)
 		.all(tableName);
 	return rows.length > 0;

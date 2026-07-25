@@ -123,7 +123,7 @@ export function DirectorChatSection({
 				<div className="grid min-h-[420px] gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
 					<div className="min-w-0 space-y-2">
 						<div className="flex items-center justify-between gap-2">
-							<h3 className="text-foreground text-sm font-semibold">Chats</h3>
+							<h3 className="text-sm font-semibold text-foreground">Chats</h3>
 							<IconButton
 								ariaLabel="New Director chat"
 								disabled={createPending}
@@ -136,7 +136,7 @@ export function DirectorChatSection({
 							{sessions.map((session) => {
 								const isActive = session.id === activeSessionId;
 								const sessionContext = `${session.title} (${formatDate(
-									session.updatedAt
+									session.updatedAt,
 								)})`;
 								return (
 									<div

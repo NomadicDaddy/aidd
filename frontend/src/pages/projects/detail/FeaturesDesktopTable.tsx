@@ -91,7 +91,7 @@ export function FeaturesDesktopTable({
 								key={id}>
 								<td className="px-4 py-3">
 									<div className="min-w-0">
-										<div className="text-foreground font-medium">{title}</div>
+										<div className="font-medium text-foreground">{title}</div>
 										<div className="text-xs break-all text-neutral-500">
 											{id}
 										</div>

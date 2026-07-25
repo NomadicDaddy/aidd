@@ -58,7 +58,7 @@ function validateSource(material: ThirdPartyMaterial, issues: string[]): void {
 	} else if (material.sourceVersion) {
 		if (!VERSION.test(material.sourceVersion)) {
 			issues.push(
-				`${label} sourceVersion is not an immutable version: ${material.sourceVersion}`
+				`${label} sourceVersion is not an immutable version: ${material.sourceVersion}`,
 			);
 		}
 		for (const [field, url] of [
@@ -100,7 +100,7 @@ function validateSurfacePaths(
 	label: string,
 	declared: readonly string[],
 	expected: readonly string[],
-	issues: string[]
+	issues: string[],
 ): void {
 	const declaredSet = new Set(declared);
 	const expectedSet = new Set(expected);
@@ -121,25 +121,25 @@ function validateSurfacePaths(
 function validateTrackedSurfaces(
 	registry: DistributedMaterialsRegistry,
 	packaged: PackagedTrackedSurfaces,
-	issues: string[]
+	issues: string[],
 ): void {
 	validateSurfacePaths(
 		'trackedSurfaces.catalogRoots',
 		registry.trackedSurfaces.catalogRoots,
 		packaged.catalogRoots,
-		issues
+		issues,
 	);
 	validateSurfacePaths(
 		'trackedSurfaces.publicDocumentPaths',
 		registry.trackedSurfaces.publicDocumentPaths,
 		packaged.publicDocumentPaths,
-		issues
+		issues,
 	);
 	validateSurfacePaths(
 		'trackedSurfaces.publicDocumentRoots',
 		registry.trackedSurfaces.publicDocumentRoots,
 		packaged.publicDocumentRoots,
-		issues
+		issues,
 	);
 	for (const path of registry.trackedSurfaces.publicStaticAssetRoots) {
 		if (!isExactPath(path)) {
@@ -156,7 +156,7 @@ function validateTrackedSurfaces(
 
 export async function validateDistributedMaterialsRegistry(
 	registry: DistributedMaterialsRegistry,
-	options: RegistryValidationOptions
+	options: RegistryValidationOptions,
 ): Promise<string[]> {
 	const issues: string[] = [];
 	const classified = allClassifiedPaths(registry);

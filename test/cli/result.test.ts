@@ -118,16 +118,16 @@ describe('malformed result marker detection', () => {
 	test('does not flag a valid marker', () => {
 		expect(
 			extractMalformedResultMarker(
-				'AIDD_RESULT: {"auditFindings":[],"noFindingsJustification":"inspected x","reportMarkdown":"# LICENSING\\n"}'
-			)
+				'AIDD_RESULT: {"auditFindings":[],"noFindingsJustification":"inspected x","reportMarkdown":"# LICENSING\\n"}',
+			),
 		).toBe(false);
 	});
 
 	test('does not flag a truncated (unbalanced) marker', () => {
 		expect(
 			extractMalformedResultMarker(
-				'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","reportMarkdown":"# SECURITY'
-			)
+				'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","reportMarkdown":"# SECURITY',
+			),
 		).toBe(false);
 	});
 

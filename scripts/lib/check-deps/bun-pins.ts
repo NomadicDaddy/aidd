@@ -1,4 +1,4 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /**
@@ -33,7 +33,7 @@ export async function readPinnedBunVersion(projectRoot: string): Promise<null | 
  */
 export async function checkBunPinDrift(
 	projectRoot: string,
-	pinnedVersion: string
+	pinnedVersion: string,
 ): Promise<BunPinFinding[]> {
 	const findings: BunPinFinding[] = [];
 
@@ -45,7 +45,7 @@ export async function checkBunPinDrift(
 
 async function checkWorkflowPins(
 	projectRoot: string,
-	pinnedVersion: string
+	pinnedVersion: string,
 ): Promise<BunPinFinding[]> {
 	const findings: BunPinFinding[] = [];
 
@@ -91,7 +91,7 @@ async function checkWorkflowPins(
 
 async function checkDockerfilePin(
 	projectRoot: string,
-	pinnedVersion: string
+	pinnedVersion: string,
 ): Promise<BunPinFinding[]> {
 	const findings: BunPinFinding[] = [];
 

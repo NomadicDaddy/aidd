@@ -44,7 +44,7 @@ export function accumulateIterationMetrics(acc: RunAccumulator, metrics: Iterati
 
 export function accumulateIterationFileChanges(
 	acc: RunAccumulator,
-	input: { filesCreated: readonly string[]; filesEdited: readonly string[] }
+	input: { filesCreated: readonly string[]; filesEdited: readonly string[] },
 ): void {
 	for (const path of input.filesCreated) acc.filesCreated.add(path);
 	for (const path of input.filesEdited) acc.filesEdited.add(path);
@@ -55,7 +55,7 @@ export function accumulateIterationFileChanges(
 export function warnIfBudgetExceeded(
 	plan: RunPlan,
 	acc: RunAccumulator,
-	alreadyWarned: boolean
+	alreadyWarned: boolean,
 ): boolean {
 	if (!plan.budget || alreadyWarned) return alreadyWarned;
 	const verdict = evaluateRunBudget(acc.runTotals, plan.budget);

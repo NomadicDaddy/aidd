@@ -13,7 +13,7 @@ const recipeStepBody = t.Object({
 	id: t.Optional(t.String()),
 	name: t.String(),
 	onFailure: t.Optional(
-		t.Union([t.Literal('auto-fix'), t.Literal('continue'), t.Literal('stop')])
+		t.Union([t.Literal('auto-fix'), t.Literal('continue'), t.Literal('stop')]),
 	),
 	postHookJson: t.Optional(recipeConfigBody),
 	preHookJson: t.Optional(recipeConfigBody),
@@ -37,8 +37,8 @@ const recipeBody = t.Object({
 				defaultValue: t.Optional(t.String()),
 				description: t.Optional(t.String()),
 				name: t.String(),
-			})
-		)
+			}),
+		),
 	),
 	steps: t.Array(recipeStepBody),
 });
@@ -52,14 +52,14 @@ export function createRecipesRoutes(context: WebContext) {
 			async ({ params }) => ({
 				recipe: await context.recipeService.readRecipe(params.id),
 			}),
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.put(
 			'/:id',
 			async ({ body, params }) => ({
 				recipe: await context.recipeService.writeRecipePayload(params.id, body),
 			}),
-			{ body: recipeBody, params: t.Object({ id: t.String() }) }
+			{ body: recipeBody, params: t.Object({ id: t.String() }) },
 		)
 		.delete(
 			'/:id',
@@ -67,14 +67,14 @@ export function createRecipesRoutes(context: WebContext) {
 				await context.recipeService.deleteRecipe(params.id);
 				return { ok: true };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/:id/reload',
 			async ({ params }) => ({
 				recipe: await context.recipeService.reloadRecipe(params.id),
 			}),
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/:id/launch',
@@ -100,6 +100,6 @@ export function createRecipesRoutes(context: WebContext) {
 					reasoningEffort: t.Optional(safeModelArg),
 				}),
 				params: t.Object({ id: t.String() }),
-			}
+			},
 		);
 }

@@ -65,7 +65,7 @@ function BackendIdentity({
 	return (
 		<div className="min-w-0 space-y-1">
 			<div className="flex flex-wrap items-center gap-2">
-				<span className="text-foreground font-medium">{backend}</span>
+				<span className="font-medium text-foreground">{backend}</span>
 				{status ? <SettingsToolStatusBadge status={status.status} /> : null}
 			</div>
 			<p className="truncate text-xs text-neutral-500">
@@ -87,7 +87,7 @@ function BackendFields({
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
-		value: null | number | string
+		value: null | number | string,
 	) => void;
 	/** The shared Default Model this row's model shadows for default-CLI launches, when set. */
 	shadowedSharedModel?: null | string;
@@ -125,7 +125,7 @@ function BackendFields({
 						setBackendDefault(
 							backend,
 							'idleTimeoutSeconds',
-							nullableNumber(event.target.value)
+							nullableNumber(event.target.value),
 						)
 					}
 					placeholder={idleTimeoutPlaceholder}
@@ -143,7 +143,7 @@ function BackendFields({
 						setBackendDefault(
 							backend,
 							'idleNudgeTimeoutSeconds',
-							nullableNumber(event.target.value)
+							nullableNumber(event.target.value),
 						)
 					}
 					placeholder={idleNudgeTimeoutPlaceholder}
@@ -166,7 +166,7 @@ export function BackendDefaultsTable({
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
-		value: null | number | string
+		value: null | number | string,
 	) => void;
 	/** The shared Default Model (AI & Director tab), for the shadowing hint. */
 	sharedModel?: null | string;
@@ -186,7 +186,7 @@ export function BackendDefaultsTable({
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<h2
-						className="text-foreground text-sm font-semibold"
+						className="text-sm font-semibold text-foreground"
 						id="backend-matrix-heading">
 						Backend Matrix
 					</h2>
@@ -252,7 +252,7 @@ export function BackendDefaultsTable({
 												setBackendDefault={setBackendDefault}
 												shadowedSharedModel={shadowNote(
 													backend,
-													defaults.model
+													defaults.model,
 												)}
 											/>
 										</div>

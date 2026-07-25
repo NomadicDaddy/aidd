@@ -7,7 +7,7 @@ import { buildHello, HIGH_WATERMARK_CHARS, OUTPUT_FLUSH_MS } from './sessionStat
 export function sendSessionFrame(
 	session: TerminalSession,
 	attachment: TerminalAttachment,
-	frame: TerminalServerFrame
+	frame: TerminalServerFrame,
 ): void {
 	try {
 		attachment.send(frame);

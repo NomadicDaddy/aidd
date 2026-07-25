@@ -36,7 +36,7 @@ function isNeutralColor(value: string): boolean {
 
 async function disabledActionState(
 	page: Page,
-	textIncludes: string
+	textIncludes: string,
 ): Promise<{ background: string; disabled: boolean } | null> {
 	// Passing the needle as an argument keeps this out of code-construction territory. It also
 	// drops the `as` cast the string form needed: the callback's return type is inferred, so a
@@ -69,7 +69,7 @@ export async function assertDisabledActionAffordance(page: Page, route: string):
 			errors.push(`${route} Launch action was not disabled without a launch target`);
 		} else if (!isNeutralColor(launch.background)) {
 			errors.push(
-				`${route} disabled Launch action still reads as a primary action (${launch.background})`
+				`${route} disabled Launch action still reads as a primary action (${launch.background})`,
 			);
 		}
 		return errors;
@@ -81,7 +81,7 @@ export async function assertDisabledActionAffordance(page: Page, route: string):
 		try {
 			await page.waitForFunction(
 				"Array.from(document.querySelectorAll('button')).some((item) => (item.textContent || '').trim().includes('Move project'))",
-				{ timeout: 5_000 }
+				{ timeout: 5_000 },
 			);
 		} catch {
 			return errors;
@@ -92,7 +92,7 @@ export async function assertDisabledActionAffordance(page: Page, route: string):
 			errors.push(`${route} Move project action was not disabled without a destination root`);
 		} else if (!isNeutralColor(move.background)) {
 			errors.push(
-				`${route} disabled Move project action still reads as a primary action (${move.background})`
+				`${route} disabled Move project action still reads as a primary action (${move.background})`,
 			);
 		}
 		return errors;

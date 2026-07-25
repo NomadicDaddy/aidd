@@ -36,7 +36,7 @@ describe('project feature dependency graph', () => {
 			'consumer',
 		]);
 		expect(
-			graph.nodes.find((node) => node.directory === 'consumer')?.resolvedDependencies
+			graph.nodes.find((node) => node.directory === 'consumer')?.resolvedDependencies,
 		).toEqual(['foundation']);
 	});
 
@@ -53,7 +53,7 @@ describe('project feature dependency graph', () => {
 			{ dependencyId: 'missing-feature', featureDirectory: 'dependent' },
 		]);
 		expect(
-			graph.nodes.find((node) => node.directory === 'dependent')?.missingDependencies
+			graph.nodes.find((node) => node.directory === 'dependent')?.missingDependencies,
 		).toEqual(['missing-feature']);
 	});
 

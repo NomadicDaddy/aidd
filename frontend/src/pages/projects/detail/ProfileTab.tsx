@@ -10,7 +10,7 @@ import { useUpdateProjectProfile } from '../../../hooks/useProjects.ts';
 import { profileInput, sameProfileInput } from '../profile/profile-helpers.ts';
 import { ComputedProfilePanel } from './profile/ComputedProfilePanel.tsx';
 import { FacetCard } from './profile/FacetCard.tsx';
-import { profileFacets, type FacetField } from './profile/profile-facets.ts';
+import { type FacetField, profileFacets } from './profile/profile-facets.ts';
 
 export function ProfileTab({
 	profile,

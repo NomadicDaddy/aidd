@@ -71,9 +71,9 @@ describe('toggleDir', () => {
 describe('revealSelection', () => {
 	test('drops collapse overrides on the new selection ancestors so the file is revealed', () => {
 		const overrides: DirExpansionOverrides = new Map([
+			['docs', false],
 			['entries', false],
 			['entries/2007', false],
-			['docs', false],
 		]);
 		const revealed = revealSelection(overrides, 'entries/2007/03/19.md');
 		const selectedAncestors = new Set(ancestorDirs('entries/2007/03/19.md'));

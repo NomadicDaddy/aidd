@@ -124,7 +124,7 @@ export function FeaturesTab({
 											.slice(0, 3)
 											.map(
 												(entry) =>
-													`${entry.featureDirectory}→${entry.milestone}`
+													`${entry.featureDirectory}→${entry.milestone}`,
 											)
 											.join(', ')}
 										{gate.invalid.length > 3 ? ', …' : ''}

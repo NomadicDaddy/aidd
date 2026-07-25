@@ -9,11 +9,11 @@ import {
 	webCompileFlagsForTarget,
 } from './lib/standalone/compile.ts';
 import {
-	errorMessage,
 	type BuildTargetOptions,
 	type BuildTargetResult,
 	type CliArgs,
 	type CompileTarget,
+	errorMessage,
 } from './lib/standalone/constants.ts';
 import {
 	assertDistributionLayout,
@@ -56,7 +56,7 @@ export {
 export async function buildTarget(
 	rootDir: string,
 	target: CompileTarget,
-	options: BuildTargetOptions = {}
+	options: BuildTargetOptions = {},
 ): Promise<void> {
 	const commandRunner = options.commandRunner ?? runCommand;
 	const outDir = resolveTargetOutDir(rootDir, target);
@@ -85,7 +85,7 @@ export async function buildTarget(
 		webOut,
 		webFlags,
 		commandRunner,
-		webExtraEntrypoints
+		webExtraEntrypoints,
 	);
 
 	console.log(`[build-standalone] copying sibling assets`);
@@ -98,7 +98,7 @@ export async function buildTarget(
 export async function buildStandalone(
 	rootDir: string,
 	args: CliArgs,
-	options: BuildTargetOptions = {}
+	options: BuildTargetOptions = {},
 ): Promise<BuildTargetResult[]> {
 	const commandRunner = options.commandRunner ?? runCommand;
 
@@ -143,7 +143,7 @@ export function formatBuildSummary(results: BuildTargetResult[]): string {
 
 export async function main(
 	argv: string[] = process.argv.slice(2),
-	rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+	rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..'),
 ): Promise<number> {
 	let args: CliArgs;
 	try {

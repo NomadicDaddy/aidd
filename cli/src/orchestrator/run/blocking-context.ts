@@ -17,7 +17,7 @@ const gateCommandPattern =
 export function buildFeatureBlockingContext(
 	details: IterationDetails,
 	reason: string,
-	parkedAt: string
+	parkedAt: string,
 ): FeatureBlockingContext {
 	const recovery = details.outcome.activeVerificationRecovery;
 	const commands = recovery
@@ -54,7 +54,7 @@ function blockingExcerpt(details: IterationDetails): string {
 	const recovery = details.outcome.activeVerificationRecovery;
 	if (recovery && recovery.targetedEvidence.length > 0) {
 		return `Broad gate "${recovery.timedOutCommand}" timed out while targeted checks passed:\n${recovery.targetedEvidence.join(
-			'\n'
+			'\n',
 		)}`.slice(0, OUTPUT_EXCERPT_LIMIT);
 	}
 	return '';

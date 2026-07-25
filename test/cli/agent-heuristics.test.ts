@@ -9,7 +9,7 @@ describe('Native loop heuristics', () => {
 	test('nudges hallucinated tool results before aborting', () => {
 		const result = evaluateTextOnlyResponse(
 			'I created feature files.\n[result]\n[exit code: 0]',
-			initialHeuristicState()
+			initialHeuristicState(),
 		);
 
 		expect(result).toMatchObject({
@@ -21,7 +21,7 @@ describe('Native loop heuristics', () => {
 	test('nudges incomplete text-only responses', () => {
 		const result = evaluateTextOnlyResponse(
 			'I need to inspect the route next, and then I will now update the file.',
-			initialHeuristicState()
+			initialHeuristicState(),
 		);
 
 		expect(result).toMatchObject({
@@ -34,7 +34,7 @@ describe('Native loop heuristics', () => {
 		const result = evaluateTextOnlyResponse(
 			'I need to inspect the route next, and then I will now update the file.',
 			initialHeuristicState(),
-			{ mode: 'planning' }
+			{ mode: 'planning' },
 		);
 
 		expect(result).toMatchObject({
@@ -42,13 +42,13 @@ describe('Native loop heuristics', () => {
 			reason: 'incomplete_response',
 		});
 		expect(result.action === 'nudge' ? result.prompt : '').toContain(
-			'read-only Triumvirate planning stage'
+			'read-only Triumvirate planning stage',
 		);
 		expect(result.action === 'nudge' ? result.prompt : '').not.toContain(
-			'perform the next concrete action'
+			'perform the next concrete action',
 		);
 		expect(result.action === 'nudge' ? result.prompt : '').not.toContain(
-			'Use tools to complete the remaining work'
+			'Use tools to complete the remaining work',
 		);
 	});
 
@@ -56,7 +56,7 @@ describe('Native loop heuristics', () => {
 		const result = evaluateTextOnlyResponse(
 			'I created feature files.\n[result]\n[exit code: 0]',
 			initialHeuristicState(),
-			{ mode: 'planning' }
+			{ mode: 'planning' },
 		);
 
 		expect(result).toMatchObject({
@@ -64,7 +64,7 @@ describe('Native loop heuristics', () => {
 			reason: 'hallucinated_tool_results',
 		});
 		expect(result.action === 'nudge' ? result.prompt : '').toContain(
-			'read-only Triumvirate planning stage'
+			'read-only Triumvirate planning stage',
 		);
 		expect(result.action === 'nudge' ? result.prompt : '').not.toContain('write_file');
 		expect(result.action === 'nudge' ? result.prompt : '').not.toContain('edit_file');
@@ -107,7 +107,7 @@ describe('Native loop heuristics', () => {
 	test('nudges a brace-balanced placeholder result marker to re-emit valid JSON', () => {
 		const result = evaluateTextOnlyResponse(
 			'I have completed the audit. Here is my final assessment.\nAIDD_RESULT: { \u2026 }',
-			initialHeuristicState()
+			initialHeuristicState(),
 		);
 
 		expect(result).toMatchObject({
@@ -126,7 +126,7 @@ describe('Native loop heuristics', () => {
 	test('nudges repeated bash calls without file work', () => {
 		const result = afterToolCalls(
 			initialHeuristicState(),
-			Array.from({ length: 25 }, () => 'bash')
+			Array.from({ length: 25 }, () => 'bash'),
 		);
 
 		expect(result.nudge).toMatchObject({

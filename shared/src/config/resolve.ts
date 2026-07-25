@@ -5,25 +5,25 @@ import type {
 	DirectAiSurfaceConfig,
 	ResolvedChannelsConfig,
 	ResolvedConfig,
-	ResolvedDirectorConfig,
 	ResolvedDirectAiConfig,
+	ResolvedDirectorConfig,
 	ResolvedWebConfig,
 } from './types.ts';
 
 import { isLoopbackHostname } from '../index.ts';
 import {
+	defaultDirectAiTimeoutSeconds,
 	defaultDirectorIntervalHours,
 	defaultDirectorMaxPerBucket,
 	defaultDirectorSuggestionGranularity,
-	defaultDirectAiTimeoutSeconds,
-	defaultWebConfig,
 	defaults,
+	defaultWebConfig,
 } from './defaults.ts';
 import { resolveProjectTemplates } from './resolve-templates.ts';
 
 export function resolveProjectDirInput(
 	raw: string | undefined,
-	applicationsRoot: string | undefined
+	applicationsRoot: string | undefined,
 ): string | undefined {
 	if (!raw) return undefined;
 	if (isAbsolute(raw)) return resolve(raw);
@@ -42,7 +42,7 @@ export function resolveProjectDirInput(
 
 function directAiSurfaces(
 	enabled: boolean,
-	surfaces: PartialDirectAiConfig['surfaces']
+	surfaces: PartialDirectAiConfig['surfaces'],
 ): DirectAiSurfaceConfig {
 	return {
 		directorChat: surfaces?.directorChat ?? enabled,
@@ -53,7 +53,7 @@ function directAiSurfaces(
 }
 
 function resolveDirectAiConfig(
-	directAi: PartialAiddConfig['directAi']
+	directAi: PartialAiddConfig['directAi'],
 ): ResolvedDirectAiConfig | undefined {
 	if (!directAi) return undefined;
 	const enabled = directAi.enabled ?? false;
@@ -71,7 +71,7 @@ function resolveDirectAiConfig(
 }
 
 function resolveDirectorConfig(
-	director: PartialAiddConfig['director']
+	director: PartialAiddConfig['director'],
 ): ResolvedDirectorConfig | undefined {
 	if (!director) return undefined;
 	return {
@@ -109,7 +109,7 @@ export function normalizeAllowedOrigins(values: string[]): string[] {
 						cause: error,
 					});
 				}
-			})
+			}),
 		),
 	];
 }
@@ -120,7 +120,7 @@ interface ResolveWebConfigOptions {
 
 function resolveWebConfig(
 	merged: PartialAiddConfig,
-	options: ResolveWebConfigOptions = {}
+	options: ResolveWebConfigOptions = {},
 ): ResolvedWebConfig {
 	const baseDir = resolve(options.baseDir ?? process.cwd());
 	const fallbackRoot = merged.applicationsRoot ?? resolve(baseDir, '..');
@@ -132,7 +132,7 @@ function resolveWebConfig(
 	const repoRelation = relative(baseDir, configuredDataDir).replace(/\\/g, '/');
 	if (repoRelation === 'backend/data' || repoRelation.startsWith('backend/data/')) {
 		throw new Error(
-			'web.dataDir must use the repository root data directory, not backend/data'
+			'web.dataDir must use the repository root data directory, not backend/data',
 		);
 	}
 	const dataRelation = relative(dataRoot, configuredDataDir);
@@ -147,14 +147,14 @@ function resolveWebConfig(
 	if (!allowRemote && !isLoopbackHostname(hostname)) {
 		throw new Error(
 			`web.hostname "${hostname}" is not a loopback address. ` +
-				'Set web.allowRemote: true to bind to a public interface.'
+				'Set web.allowRemote: true to bind to a public interface.',
 		);
 	}
 	const authToken = merged.web?.authToken?.trim();
 	if (allowRemote && !authToken) {
 		throw new Error(
 			'web.allowRemote is true but web.authToken is missing or blank. ' +
-				'Remote-bound control panels must require an auth token.'
+				'Remote-bound control panels must require an auth token.',
 		);
 	}
 	return {
@@ -194,7 +194,7 @@ function resolveWebConfig(
 }
 
 function resolveChannelsConfig(
-	channels: PartialAiddConfig['channels']
+	channels: PartialAiddConfig['channels'],
 ): ResolvedChannelsConfig | undefined {
 	if (!channels?.telegram) return undefined;
 	return {
@@ -214,7 +214,7 @@ interface ResolveMergedConfigOptions {
 
 export function resolveMergedConfig(
 	merged: PartialAiddConfig,
-	options: ResolveMergedConfigOptions = {}
+	options: ResolveMergedConfigOptions = {},
 ): ResolvedConfig {
 	const cli = merged.cli ?? defaults.cli;
 	const backendOverrides = merged.backends?.[cli] ?? {};

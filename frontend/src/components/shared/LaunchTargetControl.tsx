@@ -137,7 +137,7 @@ export function LaunchTargetControl({
 					custom
 						? 'border-teal-500 bg-teal-50 text-teal-900 dark:border-teal-500 dark:bg-teal-950/30 dark:text-teal-100'
 						: 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:border-neutral-700',
-					disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+					disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
 				)}
 				disabled={disabled}
 				onClick={() => setOpen(true)}
@@ -262,7 +262,7 @@ export function LaunchTargetControl({
 							</div>
 							<div className="min-w-0">
 								<h2
-									className="text-foreground text-base font-semibold"
+									className="text-base font-semibold text-foreground"
 									id={titleId}>
 									{role ? `${roleLabels[role]} launch target` : 'Launch target'}
 								</h2>

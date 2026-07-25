@@ -2,10 +2,10 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, rm, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
+	type AuditReportMetadata,
 	createAuditFreshnessContext,
 	evaluateAuditReportFreshness,
 	prependAuditReportMetadata,
-	type AuditReportMetadata,
 } from 'aidd-shared/metadata/audit-freshness';
 
 import { testTempRoot } from '../_helpers/temp.ts';
@@ -52,7 +52,7 @@ describe('audit report freshness', () => {
 			'SECURITY',
 			null,
 			'# SECURITY\n',
-			'2026-04-01T00:00:00.000Z'
+			'2026-04-01T00:00:00.000Z',
 		);
 
 		const freshness = await evaluateAuditReportFreshness(projectDir, 'SECURITY', { now });
@@ -70,7 +70,7 @@ describe('audit report freshness', () => {
 			await commitSourceFile(
 				projectDir,
 				`src/file-${index}.ts`,
-				`export const value${index} = ${index};\n`
+				`export const value${index} = ${index};\n`,
 			);
 		}
 
@@ -88,7 +88,7 @@ describe('audit report freshness', () => {
 		for (let index = 0; index < 25; index++) {
 			await writeFile(
 				join(projectDir, 'src', `bulk-${index}.ts`),
-				`export const bulk${index} = ${index};\n`
+				`export const bulk${index} = ${index};\n`,
 			);
 		}
 		await runGit(projectDir, ['add', 'src']);
@@ -107,7 +107,7 @@ describe('audit report freshness', () => {
 		await writeAuditReport(projectDir, 'SECURITY', metadata(base.trim(), now));
 		const lines = Array.from(
 			{ length: 750 },
-			(_, index) => `export const line${index} = ${index};`
+			(_, index) => `export const line${index} = ${index};`,
 		);
 		await commitSourceFile(projectDir, 'src/big.ts', `${lines.join('\n')}\n`);
 
@@ -136,7 +136,7 @@ describe('audit report freshness', () => {
 			await commitSourceFile(
 				projectDir,
 				`src/pre-report-${index}.ts`,
-				`export const preReport${index} = ${index};\n`
+				`export const preReport${index} = ${index};\n`,
 			);
 		}
 		await writeAuditReport(projectDir, 'SECURITY', metadata(base.trim(), now));
@@ -202,7 +202,7 @@ async function initGitProject(name: string): Promise<string> {
 async function commitSourceFile(
 	projectDir: string,
 	relativePath: string,
-	content: string
+	content: string,
 ): Promise<void> {
 	const path = join(projectDir, relativePath);
 	await mkdir(join(path, '..'), { recursive: true });
@@ -216,7 +216,7 @@ async function writeAuditReport(
 	auditName: string,
 	reportMetadata: AuditReportMetadata | null,
 	content = '# SECURITY\n',
-	mtimeIso?: string
+	mtimeIso?: string,
 ): Promise<void> {
 	const reportsDir = join(projectDir, '.aidd', 'audit-reports');
 	await mkdir(reportsDir, { recursive: true });

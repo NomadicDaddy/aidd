@@ -74,7 +74,7 @@ function insertLaunchRow(
 		status: 'crashed' | 'running' | 'stopped';
 		stoppedAt: null | number;
 		updatedAt?: number;
-	}
+	},
 ): void {
 	sqlite
 		.query(
@@ -82,7 +82,7 @@ function insertLaunchRow(
 				'INSERT INTO app_launches',
 				'(project_path, status, pid, started_at, stopped_at, command, updated_at)',
 				'VALUES (?, ?, ?, ?, ?, ?, ?)',
-			].join(' ')
+			].join(' '),
 		)
 		.run(
 			input.projectDir,
@@ -91,7 +91,7 @@ function insertLaunchRow(
 			input.startedAt,
 			input.stoppedAt,
 			input.command ?? 'bun run start',
-			input.updatedAt ?? Date.now()
+			input.updatedAt ?? Date.now(),
 		);
 }
 
@@ -109,8 +109,8 @@ async function writeSpernakitProject(projectDir: string): Promise<void> {
 				spernakit_version: '3.8.0',
 			},
 			null,
-			'\t'
-		)
+			'\t',
+		),
 	);
 	await Bun.write(
 		join(projectDir, 'start-script.ts'),
@@ -121,7 +121,7 @@ async function writeSpernakitProject(projectDir: string): Promise<void> {
 			"await mkdir(join(root, 'logs'), { recursive: true });",
 			"await writeFile(join(root, 'logs', 'backend.pid'), String(process.pid), 'utf8');",
 			"await writeFile(join(root, 'start-marker.txt'), 'started', 'utf8');",
-		].join('\n')
+		].join('\n'),
 	);
 	await Bun.write(
 		join(projectDir, 'stop-script.ts'),
@@ -131,7 +131,7 @@ async function writeSpernakitProject(projectDir: string): Promise<void> {
 			'const root = process.cwd();',
 			"await writeFile(join(root, 'stop-marker.txt'), 'stopped', 'utf8');",
 			"await rm(join(root, 'logs', 'backend.pid'), { force: true });",
-		].join('\n')
+		].join('\n'),
 	);
 }
 
@@ -145,8 +145,8 @@ async function writeGenericProject(projectDir: string, includeDevScript = true):
 				scripts: includeDevScript ? { dev: 'bun dev-script.ts' } : {},
 			},
 			null,
-			'\t'
-		)
+			'\t',
+		),
 	);
 	await Bun.write(
 		join(projectDir, 'dev-script.ts'),
@@ -155,14 +155,14 @@ async function writeGenericProject(projectDir: string, includeDevScript = true):
 			"import { join } from 'node:path';",
 			'const root = process.cwd();',
 			"await writeFile(join(root, 'dev-marker.txt'), String(process.pid), 'utf8');",
-		].join('\n')
+		].join('\n'),
 	);
 }
 
 async function waitForStatus(
 	service: AppLauncherService,
 	projectId: string,
-	status: 'crashed' | 'running' | 'stopped'
+	status: 'crashed' | 'running' | 'stopped',
 ) {
 	for (let attempt = 0; attempt < 20; attempt += 1) {
 		const launch = await service.getStatus(projectId);
@@ -245,7 +245,7 @@ describe('app launcher service', () => {
 		expect(typeof (capturedOptions as { stderr?: unknown }).stderr).toBe('number');
 		expect(typeof (capturedOptions as { stdout?: unknown }).stdout).toBe('number');
 		expect((capturedOptions as { stderr?: unknown }).stderr).toBe(
-			(capturedOptions as { stdout?: unknown }).stdout
+			(capturedOptions as { stdout?: unknown }).stdout,
 		);
 	});
 
@@ -289,7 +289,7 @@ describe('app launcher service', () => {
 			expect(
 				typeof thrown === 'object' && thrown !== null && 'status' in thrown
 					? thrown.status
-					: null
+					: null,
 			).toBe(400);
 		} finally {
 			sqlite.close();
@@ -311,7 +311,7 @@ describe('app launcher service', () => {
 			expect(launch.status).toBe('running');
 			expect(typeof launch.pid).toBe('number');
 			expect(Number(await waitForFile(join(projectDir, 'dev-marker.txt')))).toBeGreaterThan(
-				0
+				0,
 			);
 
 			const stopped = await waitForStatus(service, projectId, 'stopped');
@@ -606,12 +606,12 @@ describe('app launcher service', () => {
 
 			expect(thrown).toBeInstanceOf(Error);
 			expect((thrown as Error).message).toBe(
-				`App is already running for project (pid ${process.pid})`
+				`App is already running for project (pid ${process.pid})`,
 			);
 			expect(
 				typeof thrown === 'object' && thrown !== null && 'status' in thrown
 					? thrown.status
-					: null
+					: null,
 			).toBe(409);
 		} finally {
 			sqlite.close();

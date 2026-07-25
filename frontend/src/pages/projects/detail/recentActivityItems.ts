@@ -120,7 +120,7 @@ function activityFromRun(run: ProjectLocalRun, index: number): null | RecentMeta
 	return {
 		commits: run.commitsCreated,
 		detailParts: [sourceLabel(run.source), duration, runWorkSummary(run)].filter(
-			(part): part is string => part !== null
+			(part): part is string => part !== null,
 		),
 		executionIdentity: executionIdentity(run),
 		id: `run:${run.runId ?? index + 1}`,
@@ -157,7 +157,7 @@ function iterationWorkSummary(iteration: ProjectLocalIteration): null | string {
 
 function activityFromIteration(
 	iteration: ProjectLocalIteration,
-	index: number
+	index: number,
 ): null | RecentMetadataActivityItem {
 	const timestamp = latestTimestamp(iteration.startedAt, iteration.endedAt);
 	if (!timestamp) return null;
@@ -165,7 +165,7 @@ function activityFromIteration(
 	return {
 		commits: [],
 		detailParts: [duration, iterationWorkSummary(iteration)].filter(
-			(part): part is string => part !== null
+			(part): part is string => part !== null,
 		),
 		executionIdentity: executionIdentity(iteration),
 		id: `iteration:${iteration.runId ?? iteration.iteration ?? index + 1}`,
@@ -181,12 +181,12 @@ function activityFromIteration(
 
 export function recentMetadataActivity(
 	localRuns: ProjectLocalRun[],
-	localIterations: ProjectLocalIteration[]
+	localIterations: ProjectLocalIteration[],
 ): RecentMetadataActivityItem[] {
 	const representedRunIds = new Set(
 		localRuns
 			.map((run) => run.runId)
-			.filter((runId): runId is string => runId !== null && runId.length > 0)
+			.filter((runId): runId is string => runId !== null && runId.length > 0),
 	);
 	return [
 		...localRuns.map((run, index) => activityFromRun(run, index)),

@@ -9,7 +9,7 @@
  * Scope: only .aidd/audit-reports/*.md files. Historical iteration logs and
  * feature.json files are not inspected because their dates record past events.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { exit } from 'node:process';
 
@@ -114,7 +114,7 @@ function main(): number {
 
 	if (violations.length === 0) {
 		console.log(
-			`[OK] Audit artifact hygiene: ${reports.length} report(s) at or before ${today}.`
+			`[OK] Audit artifact hygiene: ${reports.length} report(s) at or before ${today}.`,
 		);
 		return 0;
 	}

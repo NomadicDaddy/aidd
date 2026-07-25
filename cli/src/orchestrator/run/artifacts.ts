@@ -14,7 +14,7 @@ import {
 	gitUntrackedFeatureDirectories,
 	gitWorktreeClean,
 } from './git.ts';
-import { runRuntimeFields, type OrchestratorDeps, type RunAccumulator } from './types.ts';
+import { type OrchestratorDeps, type RunAccumulator, runRuntimeFields } from './types.ts';
 
 // Iteration-level artifact writers live in ./iteration-artifacts.ts; this module owns the
 // run-level summary (ledger line + terminal observer payload). Re-exported so existing
@@ -27,7 +27,7 @@ export async function writeRunSummary(
 	acc: RunAccumulator,
 	stopReason: StopReason,
 	finalExitCode: number,
-	finalSummary: string
+	finalSummary: string,
 ): Promise<number> {
 	const endedAtMs = Date.now();
 	// Run-end dirty-source accounting: files dirty now that were NOT dirty at run start
@@ -52,7 +52,7 @@ export async function writeRunSummary(
 			: finalSummary;
 	if (residualDirtySourceFiles.length > 0) {
 		console.warn(
-			`[orchestrator] run left ${residualDirtySourceFiles.length} uncommitted source file(s) at run end (not dirty at run start): ${residualDirtySourceFiles.join(', ')} — review and commit or discard them.`
+			`[orchestrator] run left ${residualDirtySourceFiles.length} uncommitted source file(s) at run end (not dirty at run start): ${residualDirtySourceFiles.join(', ')} — review and commit or discard them.`,
 		);
 	}
 	// Generate the AI summary once before appending to the ledger, so a single
@@ -81,7 +81,7 @@ export async function writeRunSummary(
 		runRepoDir(plan),
 		acc.commitsCreated,
 		attributedFeatures,
-		acc.forcedAttributionCommits
+		acc.forcedAttributionCommits,
 	);
 	const residualUntrackedFeatureDirs = await gitUntrackedFeatureDirectories(runRepoDir(plan));
 	const artifactWarnings = [
@@ -95,7 +95,7 @@ export async function writeRunSummary(
 		attributedCommits.length > 0
 			? await gitCommitsDiffStat(
 					runRepoDir(plan),
-					attributedCommits.map((commit) => commit.hash)
+					attributedCommits.map((commit) => commit.hash),
 				).catch(() => null)
 			: null;
 	const filesCreated = [...acc.filesCreated].slice(0, fileChangePathLimit);

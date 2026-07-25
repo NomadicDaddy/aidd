@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { readFile, rm, stat, utimes, writeFile, mkdir } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { scaffoldProjectAssets } from '../../cli/src/metadata/scaffold.ts';
@@ -16,7 +16,7 @@ async function makeRoot(): Promise<string> {
 
 function scaffoldPlan(
 	projectDir: string,
-	options: { audit?: RunPlan['audit']; specFile?: string; phase?: string } = {}
+	options: { audit?: RunPlan['audit']; specFile?: string; phase?: string } = {},
 ): RunPlan {
 	const plan = {
 		projectDir,
@@ -62,7 +62,7 @@ describe('scaffoldProjectAssets', () => {
 		await writeFile(join(aiddRoot, 'scaffolding', '.aidd', 'project.md'), '# Project\n');
 		await writeFile(
 			join(aiddRoot, 'scaffolding', '.aidd', 'project-structure.md'),
-			'# Structure\n'
+			'# Structure\n',
 		);
 		await writeFile(specFile, '# Spec\n');
 
@@ -115,7 +115,7 @@ describe('scaffoldProjectAssets', () => {
 		expect(existsSync(join(projectDir, 'AGENTS.md'))).toBe(false);
 		expect(existsSync(join(projectDir, '.aidd', 'CHANGELOG.md'))).toBe(true);
 		expect(await readFile(join(projectDir, '.aidd', 'workspace-notes.md'), 'utf8')).toBe(
-			'# Notes\n'
+			'# Notes\n',
 		);
 	});
 
@@ -156,7 +156,7 @@ describe('scaffoldProjectAssets', () => {
 		expect(await readFile(join(projectDir, 'AGENTS.md'), 'utf8')).toBe('# Agents\n');
 		expect(existsSync(join(projectDir, '.aidd', 'CHANGELOG.md'))).toBe(true);
 		expect(await readFile(join(projectDir, '.aidd', 'workspace-notes.md'), 'utf8')).toBe(
-			'# Notes\n'
+			'# Notes\n',
 		);
 	});
 
@@ -229,10 +229,10 @@ describe('scaffoldProjectAssets', () => {
 
 		expect(await readFile(join(projectDir, '.gitignore'), 'utf8')).toBe('custom-ignore\n');
 		expect(await readFile(join(projectDir, 'package.json'), 'utf8')).toBe(
-			'{"name":"custom"}\n'
+			'{"name":"custom"}\n',
 		);
 		expect(await readFile(join(projectDir, '.aidd', 'CHANGELOG.md'), 'utf8')).toBe(
-			'# Existing\n'
+			'# Existing\n',
 		);
 	});
 
@@ -245,7 +245,7 @@ describe('scaffoldProjectAssets', () => {
 		// The template default (fresh spernakit lane) prescribes a spernakit-like stack.
 		await writeFile(
 			join(aiddRoot, 'scaffolding', '.aidd', 'project.md'),
-			"This project's architecture defers to the codebase and `.aidd/project-profile.json`.\n"
+			"This project's architecture defers to the codebase and `.aidd/project-profile.json`.\n",
 		);
 
 		// An audit/coding run against a foreign-stack codebase (e.g. a Flask app) must not receive a
@@ -267,7 +267,7 @@ describe('scaffoldProjectAssets', () => {
 		await mkdir(join(aiddRoot, 'scaffolding', '.aidd'), { recursive: true });
 		await writeFile(
 			join(aiddRoot, 'scaffolding', '.aidd', 'project.md'),
-			'stack-neutral default\n'
+			'stack-neutral default\n',
 		);
 
 		await scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'initializer' }), aiddRoot);
@@ -289,7 +289,7 @@ describe('scaffoldProjectAssets', () => {
 		await scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'coding' }), aiddRoot);
 
 		expect(await readFile(join(projectDir, '.aidd', 'project.md'), 'utf8')).toBe(
-			'# Hand-authored overrides\n'
+			'# Hand-authored overrides\n',
 		);
 	});
 
@@ -301,13 +301,13 @@ describe('scaffoldProjectAssets', () => {
 		await mkdir(join(aiddRoot, 'prompts', '_common'), { recursive: true });
 		await writeFile(
 			join(aiddRoot, 'prompts', '_common', 'project-overrides.md'),
-			'# Overrides\n'
+			'# Overrides\n',
 		);
 
 		await scaffoldProjectAssets(scaffoldPlan(projectDir), aiddRoot);
 
 		expect(
-			await readFile(join(projectDir, '.aidd', '_common', 'project-overrides.md'), 'utf8')
+			await readFile(join(projectDir, '.aidd', '_common', 'project-overrides.md'), 'utf8'),
 		).toBe('# Overrides\n');
 	});
 
@@ -399,7 +399,7 @@ describe('scaffoldProjectAssets', () => {
 
 		await scaffoldProjectAssets(
 			scaffoldPlan(projectDir, { audit: auditPlan(['SECURITY']) }),
-			aiddRoot
+			aiddRoot,
 		);
 
 		expect(await readFile(targetFile, 'utf8')).toBe('# Security fresh\n');
@@ -428,17 +428,17 @@ describe('scaffoldProjectAssets', () => {
 		await writeFile(join(aiddRoot, 'audits', 'SECURITY.md'), '# Security\n');
 		await writeFile(
 			join(aiddRoot, 'audits', 'SEVERITY_CLASSIFICATION.md'),
-			'---\ntype: reference\n---\n# Severity\n'
+			'---\ntype: reference\n---\n# Severity\n',
 		);
 
 		await scaffoldProjectAssets(
 			scaffoldPlan(projectDir, { audit: auditPlan([], true) }),
-			aiddRoot
+			aiddRoot,
 		);
 
 		expect(await readFile(join(targetDir, 'SECURITY.md'), 'utf8')).toBe('# Security\n');
 		expect(await readFile(join(targetDir, 'SEVERITY_CLASSIFICATION.md'), 'utf8')).toBe(
-			'---\ntype: reference\n---\n# Severity\n'
+			'---\ntype: reference\n---\n# Severity\n',
 		);
 	});
 
@@ -451,16 +451,16 @@ describe('scaffoldProjectAssets', () => {
 		await mkdir(join(aiddRoot, 'audits'), { recursive: true });
 		await writeFile(
 			join(aiddRoot, 'skills', 'humanize-docs', 'SKILL.md'),
-			'# Humanize\nStyle contract.\n'
+			'# Humanize\nStyle contract.\n',
 		);
 		// A support-file sidecar must ride along with the staged skill.
 		await writeFile(
 			join(aiddRoot, 'skills', 'humanize-docs', 'personal-voice.md'),
-			'# Voice\n'
+			'# Voice\n',
 		);
 		await writeFile(
 			join(aiddRoot, 'audits', 'SEVERITY_CLASSIFICATION.md'),
-			'---\ntype: reference\n---\n# Severity\n'
+			'---\ntype: reference\n---\n# Severity\n',
 		);
 
 		// A skill run carries no plan.audit, so the audit-staging path never fires; the
@@ -476,19 +476,22 @@ describe('scaffoldProjectAssets', () => {
 		});
 
 		expect(
-			await readFile(join(projectDir, '.aidd', 'skills', 'humanize-docs', 'SKILL.md'), 'utf8')
+			await readFile(
+				join(projectDir, '.aidd', 'skills', 'humanize-docs', 'SKILL.md'),
+				'utf8',
+			),
 		).toBe('# Humanize\nStyle contract.\n');
 		expect(
 			await readFile(
 				join(projectDir, '.aidd', 'skills', 'humanize-docs', 'personal-voice.md'),
-				'utf8'
-			)
+				'utf8',
+			),
 		).toBe('# Voice\n');
 		expect(
 			await readFile(
 				join(projectDir, '.aidd', 'audits', 'SEVERITY_CLASSIFICATION.md'),
-				'utf8'
-			)
+				'utf8',
+			),
 		).toBe('---\ntype: reference\n---\n# Severity\n');
 	});
 
@@ -525,7 +528,7 @@ describe('scaffoldProjectAssets', () => {
 		await mkdir(join(dataDir, 'skills', 'imported-contract'), { recursive: true });
 		await writeFile(
 			join(dataDir, 'skills', 'imported-contract', 'SKILL.md'),
-			'# Imported\nContract body.\n'
+			'# Imported\nContract body.\n',
 		);
 
 		await scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'directive' }), aiddRoot, {
@@ -540,8 +543,8 @@ describe('scaffoldProjectAssets', () => {
 		expect(
 			await readFile(
 				join(projectDir, '.aidd', 'skills', 'imported-contract', 'SKILL.md'),
-				'utf8'
-			)
+				'utf8',
+			),
 		).toBe('# Imported\nContract body.\n');
 	});
 
@@ -573,7 +576,7 @@ describe('scaffoldProjectAssets', () => {
 			spernakitRoot,
 		});
 		expect(
-			await readFile(join(projectDir, '.aidd', 'docs', 'template', 'STACK.md'), 'utf8')
+			await readFile(join(projectDir, '.aidd', 'docs', 'template', 'STACK.md'), 'utf8'),
 		).toBe('# Stack rules\n');
 	});
 });

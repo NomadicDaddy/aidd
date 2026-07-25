@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 		return (
 			<div className="p-6">
 				<Card className="mx-auto max-w-lg" variant="panel">
-					<h1 className="text-foreground text-lg font-semibold">Something went wrong</h1>
+					<h1 className="text-lg font-semibold text-foreground">Something went wrong</h1>
 					<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
 						This page hit an unexpected error and could not be displayed. The rest of
 						the app is still usable — try another page from the sidebar, or reload.

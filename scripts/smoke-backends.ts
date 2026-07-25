@@ -61,7 +61,7 @@ function scaffoldProject(project: string, backend: Backend): void {
   "priority": 1,
   "spec": ${JSON.stringify(SPEC)}
 }
-`
+`,
 	);
 	writeFileSync(join(project, '.aidd', 'spec.md'), '# Spec');
 	writeFileSync(join(project, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
@@ -103,7 +103,7 @@ function runBackend(backend: Backend, project: string): number {
 function featureCompleted(project: string): boolean {
 	const text = readFileSync(
 		join(project, '.aidd', 'features', 'feature-core', 'feature.json'),
-		'utf8'
+		'utf8',
 	);
 	const feature = JSON.parse(text) as { passes?: unknown; status?: unknown };
 	return feature.passes === true && feature.status === 'completed';

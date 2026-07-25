@@ -25,7 +25,7 @@ describe('artifactViewablePath', () => {
 	test('allows files under .aidd/', () => {
 		expect(artifactViewablePath(record())).toBe('.aidd/spec.md');
 		expect(artifactViewablePath(record({ path: '.aidd/roadmap.json' }))).toBe(
-			'.aidd/roadmap.json'
+			'.aidd/roadmap.json',
 		);
 	});
 
@@ -61,13 +61,13 @@ describe('maturityArtifactViewerTarget', () => {
 		expect(maturityArtifactViewerTarget(maturityArtifact())?.path).toBe('.aidd/deployment.md');
 		expect(
 			maturityArtifactViewerTarget(
-				maturityArtifact({ label: 'project.md', slug: 'project.md' })
-			)?.path
+				maturityArtifact({ label: 'project.md', slug: 'project.md' }),
+			)?.path,
 		).toBe('.aidd/project.md');
 		expect(
 			maturityArtifactViewerTarget(
-				maturityArtifact({ label: 'CONTEXT.md', slug: 'CONTEXT.md' })
-			)?.path
+				maturityArtifact({ label: 'CONTEXT.md', slug: 'CONTEXT.md' }),
+			)?.path,
 		).toBe('CONTEXT.md');
 	});
 

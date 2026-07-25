@@ -40,7 +40,7 @@ export function parseReleaseNoticeArgs(argv: string[]): ReleaseNoticeArgs {
 			const target = ALL_TARGETS.find((candidate) => candidate.name === name);
 			if (target === undefined) {
 				throw new Error(
-					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`
+					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
 				);
 			}
 			targets.push(target);
@@ -56,7 +56,7 @@ export function parseReleaseNoticeArgs(argv: string[]): ReleaseNoticeArgs {
 
 export async function checkReleaseNotices(
 	rootDir: string,
-	args: ReleaseNoticeArgs
+	args: ReleaseNoticeArgs,
 ): Promise<string[]> {
 	const releaseDir = resolve(rootDir, args.dir);
 	const info = await readVersionInfo(rootDir);
@@ -75,8 +75,8 @@ export async function checkReleaseNotices(
 				name: entry.name,
 			})),
 			info.packageVersion,
-			args.targets
-		)
+			args.targets,
+		),
 	);
 	if (issues.length > 0) return issues;
 

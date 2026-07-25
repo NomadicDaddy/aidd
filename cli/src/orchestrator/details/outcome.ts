@@ -78,18 +78,18 @@ function outcomeStatusForExitCode(exitCode: number): IterationOutcomeStatus {
 export function detectVerificationLifecycleConflict(
 	commands: string[],
 	events: AgentEvent[],
-	exitCode: number
+	exitCode: number,
 ): undefined | VerificationLifecycleConflict {
 	if (exitCode !== orchestratorExitCodes.idleTimeout) return undefined;
 	const verificationCommands = commands.filter((command) =>
-		lifecycleCommandPattern.test(command)
+		lifecycleCommandPattern.test(command),
 	);
 	if (verificationCommands.length === 0) return undefined;
 	const hasLifecycleOwner = verificationCommands.some((command) =>
-		lifecycleOwnerPattern.test(command)
+		lifecycleOwnerPattern.test(command),
 	);
 	const hasBrowserVerification = verificationCommands.some((command) =>
-		browserVerificationPattern.test(command)
+		browserVerificationPattern.test(command),
 	);
 	const hasUnavailableEvidence = events.some((event) => {
 		const text = eventTextForClassification(event);
@@ -109,11 +109,11 @@ export function detectVerificationLifecycleConflict(
 export function detectActiveVerificationTimeout(
 	commands: string[],
 	events: AgentEvent[],
-	exitCode: number
+	exitCode: number,
 ): ActiveVerificationTimeout | undefined {
 	if (exitCode !== orchestratorExitCodes.idleTimeout) return undefined;
 	const verificationCommands = commands.filter((command) =>
-		lifecycleCommandPattern.test(command)
+		lifecycleCommandPattern.test(command),
 	);
 	if (verificationCommands.length > 0) {
 		const uniqueCommands = uniqueOrdered(verificationCommands);
@@ -157,12 +157,12 @@ function targetedVerificationEvidence(events: AgentEvent[]): string[] {
 			const text = eventTextForClassification(event);
 			if (text === undefined || !targetedVerificationPassedPattern.test(text)) return [];
 			return [text.replace(/\s+/g, ' ').slice(0, 500)];
-		})
+		}),
 	);
 }
 
 export function activeVerificationRecoveryFor(
-	timeout: ActiveVerificationTimeout | undefined
+	timeout: ActiveVerificationTimeout | undefined,
 ): ActiveVerificationRecovery | undefined {
 	if (timeout === undefined) return undefined;
 	const [timedOutCommand] = timeout.broadCommands;

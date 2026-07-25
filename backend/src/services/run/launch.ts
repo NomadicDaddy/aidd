@@ -28,7 +28,7 @@ import { canonicalRunProjectName } from './types.ts';
 
 interface LaunchContext {
 	commands: DbCommands;
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 	heartbeatWatchers: Map<string, HeartbeatWatcher>;
 	hub: WebSocketHub;
@@ -65,7 +65,7 @@ async function ensureHeartbeatWatcher(ctx: LaunchContext, projectPath: string): 
 export async function launchRun(
 	ctx: LaunchContext,
 	input: RunLaunchRequest,
-	options: LaunchRunOptions = {}
+	options: LaunchRunOptions = {},
 ): Promise<typeof runs.$inferSelect> {
 	// Director cycles are fleet-wide and do not operate on a single project. They
 	// run in a neutral, controlled cwd (data/director, supplied by beginCycle) that
@@ -104,7 +104,7 @@ export async function launchRun(
 			model: effectiveModel,
 			reasoningEffort: effectiveReasoningEffort,
 			triumvirate: launchConfig.triumvirate,
-		}
+		},
 	);
 	const aiddProvenance = await resolveAiddRunProvenance(ctx.rootDir);
 	const runId = createRunId();
@@ -200,13 +200,13 @@ export async function launchRun(
 						worktreePath,
 					},
 				}),
-			{ label: 'run.launch.insert' }
+			{ label: 'run.launch.insert' },
 		);
 		if (result.kind === 'rejected') {
 			const scopeLabel =
 				result.scope === 'project' ? 'for this project' : 'across all projects';
 			throw new Error(
-				`Maximum concurrent runs reached ${scopeLabel}: ${result.limit} (${result.activeCount} active)`
+				`Maximum concurrent runs reached ${scopeLabel}: ${result.limit} (${result.activeCount} active)`,
 			);
 		}
 		recordDataMovement({

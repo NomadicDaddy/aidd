@@ -42,7 +42,7 @@ const BASH = 'path' in bashResolution ? bashResolution.path : null;
 const runGuard = async (
 	cwd: string,
 	stdin: string,
-	remote = 'origin'
+	remote = 'origin',
 ): Promise<{ code: number; err: string }> => {
 	if (BASH === null) throw new Error(`no usable bash: ${JSON.stringify(bashResolution)}`);
 	const p = Bun.spawn([BASH, GUARD, remote], {
@@ -117,7 +117,7 @@ describe('aidd history guard', () => {
 		await commitAidd(repo, 'feat: tracked blueprint');
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`,
 		);
 		expect(r.code).toBe(0);
 	});
@@ -133,7 +133,7 @@ describe('aidd history guard', () => {
 		// Managed: no remote, .aidd tracked on purpose. Guard must be inert.
 		const before = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`,
 		);
 		expect(before.code).toBe(0);
 
@@ -141,7 +141,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['remote', 'add', 'origin', remote]);
 		const after = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`,
 		);
 		expect(after.code).toBe(1);
 		expect(after.err).toContain('tracked .aidd path');
@@ -163,7 +163,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['commit', '-qam', 'feat: source only']);
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${base}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${base}\n`,
 		);
 		expect(r.code).toBe(0);
 	});
@@ -180,7 +180,7 @@ describe('aidd history guard', () => {
 		// ...but history still carries it, and a push publishes history.
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${base}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${base}\n`,
 		);
 		expect(r.code).toBe(1);
 		expect(r.err).toContain('touch .aidd');
@@ -192,7 +192,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['push', '-q', 'origin', 'main']);
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${await head(repo)}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${await head(repo)}\n`,
 		);
 		expect(r.code).toBe(1);
 		expect(r.err).toContain('tracked .aidd path');
@@ -205,7 +205,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['push', '-q', 'origin', 'main']);
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${await head(repo)}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${await head(repo)}\n`,
 		);
 		expect(r.code).toBe(1);
 		expect(r.err).toContain('no ignore rule covers .aidd/');
@@ -219,7 +219,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['commit', '-qam', 'feat: work']);
 		const r = await runGuard(
 			repo,
-			`refs/heads/feature ${await head(repo)} refs/heads/feature ${ZERO}\n`
+			`refs/heads/feature ${await head(repo)} refs/heads/feature ${ZERO}\n`,
 		);
 		expect(r.code).toBe(0);
 	});
@@ -233,7 +233,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['commit', '-qm', 'chore: untrack']);
 		const r = await runGuard(
 			repo,
-			`refs/heads/feature ${await head(repo)} refs/heads/feature ${ZERO}\n`
+			`refs/heads/feature ${await head(repo)} refs/heads/feature ${ZERO}\n`,
 		);
 		expect(r.code).toBe(1);
 	});
@@ -251,7 +251,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['commit', '-qam', 'feat: source only']);
 		const r = await runGuard(
 			repo,
-			`refs/heads/feature ${await head(repo)} refs/heads/feature ${ZERO}\n`
+			`refs/heads/feature ${await head(repo)} refs/heads/feature ${ZERO}\n`,
 		);
 		expect(r.code).toBe(0);
 	});
@@ -264,7 +264,7 @@ describe('aidd history guard', () => {
 		await git(repo, ['remote', 'set-url', 'origin', join(tmpRoot, 'does-not-exist.git')]);
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${ZERO}\n`,
 		);
 		expect(r.code).toBe(1);
 	});
@@ -284,7 +284,7 @@ describe('aidd history guard', () => {
 		const r = await runGuard(
 			repo,
 			`refs/heads/main ${cleanSha} refs/heads/main ${base}\n` +
-				`refs/heads/dirty ${dirtySha} refs/heads/dirty ${base}\n`
+				`refs/heads/dirty ${dirtySha} refs/heads/dirty ${base}\n`,
 		);
 		expect(r.code).toBe(1);
 	});
@@ -300,7 +300,7 @@ describe('aidd history guard', () => {
 		const bogus = 'deadbeef'.repeat(5);
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${bogus}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${bogus}\n`,
 		);
 		expect(r.code).toBe(1);
 		expect(r.err).toContain('a failed query is not an empty result');
@@ -316,7 +316,7 @@ describe('aidd history guard', () => {
 		// remote_sha is the OLD tip; the range still exposes the .aidd commit.
 		const r = await runGuard(
 			repo,
-			`refs/heads/main ${await head(repo)} refs/heads/main ${base}\n`
+			`refs/heads/main ${await head(repo)} refs/heads/main ${base}\n`,
 		);
 		expect(r.code).toBe(1);
 	});

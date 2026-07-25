@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import type { MergeConflictResolver } from './merge-resolver.ts';
 import type { WorktreeMetadataSession } from './worktree-metadata-session.ts';
 
-import { mergeRunBack, removeRunWorktree, type MergeBackStatus } from './worktree-manager.ts';
+import { type MergeBackStatus, mergeRunBack, removeRunWorktree } from './worktree-manager.ts';
 import {
 	detectWorktreeMetadataConflicts,
 	writeBackWorktreeMetadata,
@@ -68,7 +68,7 @@ async function nextCanonicalIndex(iterationsDir: string): Promise<number> {
 async function allocateIterationSlot(
 	iterationsDir: string,
 	startIndex: number,
-	log: Uint8Array
+	log: Uint8Array,
 ): Promise<number> {
 	for (let index = startIndex; ; index++) {
 		try {
@@ -116,7 +116,7 @@ export async function persistRunEvidence(projectDir: string, worktreeDir: string
 		if (slot.json !== undefined) {
 			await writeFile(
 				join(targetDir, `${iterationStem(nextIndex)}.json`),
-				await readFile(join(sourceDir, slot.json))
+				await readFile(join(sourceDir, slot.json)),
 			);
 			copied++;
 		}
@@ -161,7 +161,7 @@ export async function finalizeRunWorktree(input: {
 		evidencePersisted = false;
 		console.warn(
 			`[worktree] evidence persistence FAILED (${err instanceof Error ? err.message : String(err)}); ` +
-				`preserving worktree ${worktree.dir} so the run's iteration logs are not destroyed — recover its .aidd/iterations manually.`
+				`preserving worktree ${worktree.dir} so the run's iteration logs are not destroyed — recover its .aidd/iterations manually.`,
 		);
 	}
 	const removeOrPreserve = async (): Promise<void> => {
@@ -171,7 +171,7 @@ export async function finalizeRunWorktree(input: {
 	if (exitCode !== orchestratorExitCodes.success) {
 		await removeOrPreserve();
 		console.log(
-			`[worktree] run failed (exit ${exitCode}); ${evidencePersisted ? 'discarded' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch} (live tree untouched, ${evidenceFiles} evidence file(s) preserved).`
+			`[worktree] run failed (exit ${exitCode}); ${evidencePersisted ? 'discarded' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch} (live tree untouched, ${evidenceFiles} evidence file(s) preserved).`,
 		);
 		return { ...evidenceFlag, evidenceFiles, mergeStatus: 'discarded' };
 	}
@@ -186,7 +186,7 @@ export async function finalizeRunWorktree(input: {
 				`canonically mid-run (run also changed them): ${conflicted.join(', ')}; ` +
 				`merge not attempted, preserved worktree ${worktree.branch} at ${worktree.dir} ` +
 				`for manual reconciliation (exit ${orchestratorExitCodes.mergeConflictParked}); ` +
-				`live tree and canonical metadata left unchanged.`
+				`live tree and canonical metadata left unchanged.`,
 		);
 		return {
 			...evidenceFlag,
@@ -209,7 +209,7 @@ export async function finalizeRunWorktree(input: {
 					`.aidd file(s) changed canonically between the pre-merge check and write-back: ` +
 					`${result.conflicted.join(', ')}; source merge kept, metadata delta withheld, ` +
 					`preserved worktree ${worktree.branch} at ${worktree.dir} for manual reconciliation ` +
-					`(exit ${orchestratorExitCodes.mergeConflictParked}); canonical metadata left unchanged.`
+					`(exit ${orchestratorExitCodes.mergeConflictParked}); canonical metadata left unchanged.`,
 			);
 			return {
 				...evidenceFlag,
@@ -221,7 +221,7 @@ export async function finalizeRunWorktree(input: {
 		}
 		await removeOrPreserve();
 		console.log(
-			`[worktree] merge-back ${merge.status}; applied ${result.applied.length} metadata file(s) (${result.deleted.length} deleted), ${evidencePersisted ? 'removed' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch}.`
+			`[worktree] merge-back ${merge.status}; applied ${result.applied.length} metadata file(s) (${result.deleted.length} deleted), ${evidencePersisted ? 'removed' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch}.`,
 		);
 		return {
 			...evidenceFlag,
@@ -232,7 +232,7 @@ export async function finalizeRunWorktree(input: {
 	}
 	console.warn(
 		`[worktree] merge-back ${merge.status}; preserved branch ${worktree.branch} at ${worktree.dir} ` +
-			`for manual resolution (exit ${orchestratorExitCodes.mergeConflictParked}); canonical metadata left unchanged.`
+			`for manual resolution (exit ${orchestratorExitCodes.mergeConflictParked}); canonical metadata left unchanged.`,
 	);
 	return {
 		...evidenceFlag,

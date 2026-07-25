@@ -43,7 +43,7 @@ export class ProjectListingCache {
 
 	private async fingerprintFor(
 		projectDir: string,
-		options: ProjectFingerprintOptions
+		options: ProjectFingerprintOptions,
 	): Promise<string> {
 		const memo = this.fingerprintMemo.get(projectDir);
 		if (memo && Date.now() < memo.expiresAt) return memo.value;
@@ -55,7 +55,7 @@ export class ProjectListingCache {
 	async getOrCompute(
 		projectDir: string,
 		compute: () => Promise<ProjectListingCacheValue>,
-		fingerprintOptions: ProjectFingerprintOptions = {}
+		fingerprintOptions: ProjectFingerprintOptions = {},
 	): Promise<ProjectListingCacheValue> {
 		const fingerprint = await this.fingerprintFor(projectDir, fingerprintOptions);
 		const existing = this.entries.get(projectDir);
@@ -111,7 +111,7 @@ export class ProjectListingCache {
 	private runCompute(
 		projectDir: string,
 		fingerprint: string,
-		compute: () => Promise<ProjectListingCacheValue>
+		compute: () => Promise<ProjectListingCacheValue>,
 	): Promise<ProjectListingCacheValue> {
 		const existing = this.pending.get(projectDir);
 		if (existing && existing.fingerprint === fingerprint) {

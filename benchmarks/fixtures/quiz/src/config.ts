@@ -62,7 +62,7 @@ function normalizeProviders(file: ZRunFileConfig): Record<string, ProviderSettin
 function resolveActiveProvider(
 	cliProvider: string | undefined,
 	cliModel: string | undefined,
-	file: ZRunFileConfig
+	file: ZRunFileConfig,
 ): string {
 	if (cliProvider) return cliProvider;
 	const env = process.env['ZRUN_PROVIDER'];
@@ -77,7 +77,7 @@ function resolveActiveProvider(
 
 export async function loadConfig(
 	scriptDir: string,
-	cliArgs: string[] = process.argv.slice(2)
+	cliArgs: string[] = process.argv.slice(2),
 ): Promise<ZRunConfig> {
 	/* Search order: local repo config → home directory config. First hit wins. */
 	const candidates = [
@@ -102,7 +102,7 @@ export async function loadConfig(
 	const providerConfig = getProvider(provider);
 	if (!providerConfig) {
 		console.error(
-			`ERROR: Unknown provider '${provider}'. Available providers: ${getProviderNames().join(', ')}`
+			`ERROR: Unknown provider '${provider}'. Available providers: ${getProviderNames().join(', ')}`,
 		);
 		process.exit(1);
 	}
@@ -116,7 +116,7 @@ export async function loadConfig(
 
 	if (providerConfig.apiKey === 'required' && !apiKey) {
 		console.error(
-			`ERROR: Provider '${provider}' requires an API key. Add it to providers.${provider}.apiKey in config.json.`
+			`ERROR: Provider '${provider}' requires an API key. Add it to providers.${provider}.apiKey in config.json.`,
 		);
 		process.exit(1);
 	}
@@ -138,7 +138,7 @@ export async function loadConfig(
 			const models = await ollama.getAvailableModels();
 			if (models.length === 0) {
 				console.error(
-					'ERROR: No models found in Ollama. Pull one with: ollama pull <model>'
+					'ERROR: No models found in Ollama. Pull one with: ollama pull <model>',
 				);
 				process.exit(1);
 			}
@@ -149,7 +149,7 @@ export async function loadConfig(
 				model = [...models].sort()[0];
 			}
 			console.warn(
-				`WARNING: No model specified, using '${model}'. Set providers.${provider}.model in config.json to lock it in.`
+				`WARNING: No model specified, using '${model}'. Set providers.${provider}.model in config.json to lock it in.`,
 			);
 		}
 
@@ -161,7 +161,7 @@ export async function loadConfig(
 		if (!baseUrl) baseUrl = providerConfig.baseUrl;
 		if (!model) {
 			console.error(
-				`ERROR: Provider '${provider}' has no default model and none was configured. Add providers.${provider}.model to config.json or pass --model.`
+				`ERROR: Provider '${provider}' has no default model and none was configured. Add providers.${provider}.model to config.json or pass --model.`,
 			);
 			process.exit(1);
 		}

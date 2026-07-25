@@ -58,10 +58,10 @@ describe('tooltip placement', () => {
 		const nearRight = { bottom: 416, left: 1250, top: 400, width: 24 };
 
 		expect(resolveTooltipPlacement(nearLeft, size, viewport, 'top').left).toBe(
-			TOOLTIP_VIEWPORT_MARGIN
+			TOOLTIP_VIEWPORT_MARGIN,
 		);
 		expect(resolveTooltipPlacement(nearRight, size, viewport, 'top').left).toBe(
-			viewport.width - TOOLTIP_VIEWPORT_MARGIN - size.width
+			viewport.width - TOOLTIP_VIEWPORT_MARGIN - size.width,
 		);
 	});
 });

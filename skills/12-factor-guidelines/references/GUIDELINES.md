@@ -295,7 +295,7 @@ app.use(
 		secret: config.sessionSecret,
 		resave: false,
 		saveUninitialized: false,
-	})
+	}),
 );
 ```
 
@@ -423,7 +423,7 @@ const worker = new Worker(
 		// Long-running work happens here
 		await processData(job.data);
 	},
-	{ connection: { host: config.redis.host } }
+	{ connection: { host: config.redis.host } },
 );
 ```
 

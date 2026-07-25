@@ -9,10 +9,10 @@ export {
 	summarizeFeatures,
 } from './features/query.ts';
 export {
-	featureSchema,
 	type Feature,
 	type FeatureBlockingContext,
 	type FeatureQuery,
+	featureSchema,
 	type FeatureSelectionOptions,
 	type FeatureStats,
 	type FeatureValidationResult,

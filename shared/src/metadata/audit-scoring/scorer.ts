@@ -29,25 +29,25 @@ const MEDIUM_CONFIDENCE_REPORT_APPS = 3;
 // or otherwise prompt edits). Reviewed when audits are added or change purpose. If this
 // list churns, promote to an `actionable` frontmatter field on audit definitions.
 export const ACTIONABLE_AUDITS: ReadonlySet<string> = new Set([
-	'SECURITY',
-	'LOGIC',
 	'ARCHITECTURE',
-	'PERFORMANCE',
 	'BUILD_OUTPUT',
 	'CODE_QUALITY',
-	'DATABASE',
-	'SCHEMA_CONSTRAINTS',
-	'WEB_DESIGN_GUIDELINES',
-	'REACT_BEST_PRACTICES',
 	'COMPOSITION_PATTERNS',
-	'HYGIENE',
-	'TECHDEBT',
-	'FEATURE_INTEGRATION',
+	'DATABASE',
 	'DEAD_CODE',
 	'DEVOPS',
+	'FEATURE_INTEGRATION',
 	'FRONTEND',
-	'UI_PARITY',
+	'HYGIENE',
+	'LOGIC',
+	'PERFORMANCE',
+	'REACT_BEST_PRACTICES',
+	'SCHEMA_CONSTRAINTS',
+	'SECURITY',
+	'TECHDEBT',
 	'TESTING',
+	'UI_PARITY',
+	'WEB_DESIGN_GUIDELINES',
 ]);
 
 export type AuditPriority = 'Critical' | 'High' | 'Medium';
@@ -89,15 +89,15 @@ export function scoreAudit(input: AuditScoreInput): ChangePotential {
 	const actionabilityPoints = actionable ? ACTIONABILITY_POINTS : 0;
 	const completedPoints = Math.min(
 		input.completedRunsWithFindings * COMPLETED_POINTS,
-		COMPLETED_CAP
+		COMPLETED_CAP,
 	);
 	const incompletePoints = Math.min(
 		input.incompleteAuditRuns * INCOMPLETE_POINTS,
-		INCOMPLETE_CAP
+		INCOMPLETE_CAP,
 	);
 	const activeFindingPoints = Math.min(
 		input.activeAuditFeatures * ACTIVE_FINDING_POINTS,
-		ACTIVE_FINDING_CAP
+		ACTIVE_FINDING_CAP,
 	);
 	const rawScore =
 		priorityPoints +
@@ -187,7 +187,7 @@ export function buildScoreInput(auditName: string, context: ScoringContext): Aud
 export function compareAuditsByChangePotential(
 	leftName: string,
 	rightName: string,
-	scores: Map<string, ChangePotential>
+	scores: Map<string, ChangePotential>,
 ): number {
 	const leftScore = scores.get(leftName.toUpperCase())?.score ?? -1;
 	const rightScore = scores.get(rightName.toUpperCase())?.score ?? -1;

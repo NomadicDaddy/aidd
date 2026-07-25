@@ -18,7 +18,7 @@ export function interviewQuestionsPath(projectDir: string, plan: RunPlan): strin
 	const configured = plan.prompt.variables.interviewFile;
 	return resolve(
 		projectDir,
-		typeof configured === 'string' ? configured : `${METADATA_DIR}/questions.md`
+		typeof configured === 'string' ? configured : `${METADATA_DIR}/questions.md`,
 	);
 }
 
@@ -63,7 +63,7 @@ function questionsFromLines(content: string): string[] {
 
 export async function firstUnansweredQuestion(
 	projectDir: string,
-	questions: InterviewQuestion[]
+	questions: InterviewQuestion[],
 ): Promise<InterviewQuestion | undefined> {
 	for (const question of questions) {
 		if (!(await exists(interviewResponsePath(projectDir, question.number)))) return question;
@@ -73,7 +73,7 @@ export async function firstUnansweredQuestion(
 
 export function responseFromStructuredResult(
 	result: AgentRunResult,
-	question: InterviewQuestion
+	question: InterviewQuestion,
 ): string {
 	const responseMarkdown =
 		stringValue(result.structuredResult?.responseMarkdown) ??
@@ -104,7 +104,7 @@ export async function writeInterviewResponse(responsePath: string, content: stri
 
 export async function writeInterviewIndex(
 	projectDir: string,
-	questions: InterviewQuestion[]
+	questions: InterviewQuestion[],
 ): Promise<void> {
 	const metadataDir = metadataPath(projectDir);
 	const responsesDir = join(metadataDir, 'responses');
@@ -117,7 +117,7 @@ export async function writeInterviewIndex(
 		rows.push(
 			`| ${question.number} | ${truncateQuestion(question.text)} | ${done ? 'Done' : 'Pending'} | ${
 				done ? `[${responseName}](responses/${responseName})` : '-'
-			} |`
+			} |`,
 		);
 	}
 	const index = [

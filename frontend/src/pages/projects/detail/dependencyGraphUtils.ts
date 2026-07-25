@@ -2,11 +2,11 @@ import type { ProjectFeature } from '../../../api/types.ts';
 
 import { detectCycles, graphSize, positionNodes } from './dependencyGraphLayout.ts';
 import {
-	GRAPH_PADDING,
 	type FeatureDependencyEdge,
 	type FeatureDependencyGraph,
 	type FeatureDependencyNode,
 	type FeatureDependencySource,
+	GRAPH_PADDING,
 	type UnresolvedFeatureDependency,
 } from './dependencyGraphTypes.ts';
 import { featureDirectory } from './featuresUtils.ts';

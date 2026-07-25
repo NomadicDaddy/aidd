@@ -30,6 +30,6 @@ export const useThemeStore = create<ThemeState>()(
 				});
 			},
 		}),
-		{ name: 'aidd-theme' }
-	)
+		{ name: 'aidd-theme' },
+	),
 );

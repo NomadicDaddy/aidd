@@ -21,7 +21,7 @@ export function buildProjectWork(
 	project: ProjectSummaryDto,
 	backlog: DirectorBacklogBreakdown,
 	auditHealth: DirectorAuditHealth,
-	auditsEnabled: boolean
+	auditsEnabled: boolean,
 ): DirectorPrioritizedWork[] {
 	const work: DirectorPrioritizedWork[] = [];
 	// An onboarding-phase project with no features yet has code but has not been analyzed:
@@ -159,7 +159,7 @@ export function buildProjectWork(
 
 function artifactIssueSummary(
 	artifactHealth: ProjectSummaryDto['artifactHealth'],
-	artifactCheck: null | ProjectArtifactCheckSummary
+	artifactCheck: null | ProjectArtifactCheckSummary,
 ): { count: number; reason: string; riskLevel: DirectorRiskLevel } | null {
 	if (artifactHealth === 'unknown' || artifactCheck === null) {
 		return {

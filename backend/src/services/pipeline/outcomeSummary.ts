@@ -26,7 +26,7 @@ export interface SessionOutcome {
 // run vs a run that stopped for another reason without a failed top-level step).
 export function summarizeSessionOutcome(
 	baseOk: boolean,
-	stepResults: PipelineStepResultRecord[]
+	stepResults: PipelineStepResultRecord[],
 ): SessionOutcome {
 	const topLevel = stepResults.filter((step) => step.depth === 0 && step.phase === 'step');
 	const failedStepNames = topLevel
@@ -62,7 +62,7 @@ export function summarizeFailedSteps(failedStepNames: string[]): string {
 export function resolveSessionTerminal(
 	baseOk: boolean,
 	baseErrorMessage: string | undefined,
-	stepResults: PipelineStepResultRecord[]
+	stepResults: PipelineStepResultRecord[],
 ): { errorMessage: string | undefined; status: PipelineSessionStatus } {
 	const outcome = summarizeSessionOutcome(baseOk, stepResults);
 	const errorMessage =

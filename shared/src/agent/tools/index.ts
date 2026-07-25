@@ -14,7 +14,7 @@ export async function executeTool(
 	name: string,
 	rawArgs: string,
 	cwd: string,
-	simulation = false
+	simulation = false,
 ): Promise<string> {
 	let args: Record<string, unknown>;
 	try {

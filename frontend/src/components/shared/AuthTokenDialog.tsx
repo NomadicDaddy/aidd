@@ -47,7 +47,7 @@ export function AuthTokenDialog() {
 		toast.success(
 			result === 'authorized'
 				? 'Access token saved'
-				: 'Access token saved — could not verify (server unreachable)'
+				: 'Access token saved — could not verify (server unreachable)',
 		);
 	}
 
@@ -72,7 +72,7 @@ export function AuthTokenDialog() {
 							<KeyRound className="h-5 w-5" />
 						</div>
 						<div className="min-w-0">
-							<h2 className="text-foreground text-base font-semibold" id={TITLE_ID}>
+							<h2 className="text-base font-semibold text-foreground" id={TITLE_ID}>
 								Control panel access
 							</h2>
 							<p

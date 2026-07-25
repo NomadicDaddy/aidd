@@ -86,7 +86,7 @@ describe('unified execution entries', () => {
 				makeRun({ id: 'r_old', startedAt: 1_000 }),
 				makeRun({ id: 'r_new', startedAt: 5_000 }),
 			],
-			[makeSession({ id: 's_mid', startedAt: 3_000 })]
+			[makeSession({ id: 's_mid', startedAt: 3_000 })],
 		);
 		expect(entries.map(entryKey)).toEqual(['run:r_new', 'pipeline:s_mid', 'run:r_old']);
 	});
@@ -100,7 +100,7 @@ describe('unified execution entries', () => {
 			[
 				makeSession({ id: 's_queued', startedAt: 2_000, status: 'queued' }),
 				makeSession({ id: 's_done', startedAt: 3_000, status: 'completed' }),
-			]
+			],
 		);
 		const { active, history } = splitEntriesByLiveness(entries);
 		expect(active.map(entryKey)).toEqual(['pipeline:s_queued', 'run:r_running']);
@@ -114,7 +114,7 @@ describe('unified execution entries', () => {
 
 	test('skill sessions are marked by the reserved recipe-id prefix', () => {
 		expect(isSkillSession(makeSession({ recipeId: 'skill:feature-coverage-audit' }))).toBe(
-			true
+			true,
 		);
 		expect(isSkillSession(makeSession({ recipeId: 'full-build' }))).toBe(false);
 	});
@@ -135,13 +135,13 @@ describe('unified execution entries', () => {
 
 	test('queued and running sessions are active; terminal statuses are not', () => {
 		expect(
-			isEntryActive({ kind: 'pipeline', session: makeSession({ status: 'queued' }) })
+			isEntryActive({ kind: 'pipeline', session: makeSession({ status: 'queued' }) }),
 		).toBe(true);
 		expect(
 			isEntryActive({
 				kind: 'pipeline',
 				session: makeSession({ status: 'completed_with_failures' }),
-			})
+			}),
 		).toBe(false);
 		expect(isEntryActive({ kind: 'run', run: makeRun({ status: 'running' }) })).toBe(true);
 		expect(isEntryActive({ kind: 'run', run: makeRun({ status: 'killed' }) })).toBe(false);
@@ -158,22 +158,22 @@ describe('unified execution entries', () => {
 		expect(entryMatchesStatus(session, 'completed')).toBe(true);
 		// Run-only value hides sessions.
 		expect(
-			entryMatchesStatus({ kind: 'run', run: makeRun({ status: 'killed' }) }, 'killed')
+			entryMatchesStatus({ kind: 'run', run: makeRun({ status: 'killed' }) }, 'killed'),
 		).toBe(true);
 		expect(entryMatchesStatus(session, 'killed')).toBe(false);
 		// Session-only values hide runs.
 		expect(
 			entryMatchesStatus(
 				{ kind: 'pipeline', session: makeSession({ status: 'queued' }) },
-				'queued'
-			)
+				'queued',
+			),
 		).toBe(true);
 		expect(entryMatchesStatus(run, 'queued')).toBe(false);
 		expect(
 			entryMatchesStatus(
 				{ kind: 'pipeline', session: makeSession({ status: 'completed_with_failures' }) },
-				'completed_with_failures'
-			)
+				'completed_with_failures',
+			),
 		).toBe(true);
 		expect(entryMatchesStatus(run, 'completed_with_failures')).toBe(false);
 	});
@@ -193,7 +193,7 @@ describe('unified execution entries', () => {
 			session: makeSession({ projectPath: 'd:\\applications\\aidd' }),
 		} as const;
 		expect(entryMatchesFilters(session, baseFilters({ project: 'd:/applications/aidd' }))).toBe(
-			true
+			true,
 		);
 		expect(entryMatchesFilters(session, baseFilters({ query: 'full build' }))).toBe(true);
 		expect(entryMatchesFilters(session, baseFilters({ query: 'pipeline' }))).toBe(true);
@@ -208,7 +208,7 @@ describe('unified execution entries', () => {
 			historyDisplayFloor([
 				{ hasMore: true, oldestLoaded: 100 },
 				{ hasMore: true, oldestLoaded: 10 },
-			])
+			]),
 		).toBe(100);
 	});
 
@@ -219,13 +219,13 @@ describe('unified execution entries', () => {
 			historyDisplayFloor([
 				{ hasMore: false, oldestLoaded: 100 },
 				{ hasMore: true, oldestLoaded: 10 },
-			])
+			]),
 		).toBe(10);
 		expect(
 			historyDisplayFloor([
 				{ hasMore: false, oldestLoaded: 100 },
 				{ hasMore: false, oldestLoaded: 10 },
-			])
+			]),
 		).toBe(Number.NEGATIVE_INFINITY);
 	});
 

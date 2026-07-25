@@ -20,16 +20,16 @@ import {
 	readRow,
 	reconcileOnBoot,
 	reconcileRow,
+	type ReconciliationDeps,
 	resolveLaunchCommands,
 	toRecord,
-	type ReconciliationDeps,
 } from './reconciliation.ts';
 import {
-	commandLabel,
-	isPidAlive,
-	type CommandArgs,
 	type AppLaunchRecord,
 	type AppLaunchStatus,
+	type CommandArgs,
+	commandLabel,
+	isPidAlive,
 } from './shared.ts';
 import { primarySpernakitPid, readSpernakitPids } from './spernakitPidFiles.ts';
 
@@ -143,7 +143,7 @@ export class AppLauncherService {
 		const { projects } = await this.projectService.listProjectNames();
 		const discoveredPaths = new Set(projects.map((project) => project.path));
 		const discovered = await Promise.all(
-			projects.map((project) => getStatusInternal(this.reconDeps, project.id, project.path))
+			projects.map((project) => getStatusInternal(this.reconDeps, project.id, project.path)),
 		);
 		// Preserve rows for projects launched in the past but no longer discovered, so a
 		// still-running app is never silently dropped just because its root moved out of
@@ -152,14 +152,14 @@ export class AppLauncherService {
 		const orphans = await Promise.all(
 			rows
 				.filter((row) => !discoveredPaths.has(row.projectPath))
-				.map(async (row) => toRecord(await reconcileRow(this.reconDeps, row)))
+				.map(async (row) => toRecord(await reconcileRow(this.reconDeps, row))),
 		);
 		return [...discovered, ...orphans];
 	}
 
 	private async startGeneric(
 		projectPath: string,
-		command: CommandArgs
+		command: CommandArgs,
 	): Promise<AppLaunchRecord> {
 		let child: ReturnType<typeof Bun.spawn>;
 		try {
@@ -193,7 +193,7 @@ export class AppLauncherService {
 
 	private async startSpernakit(
 		projectPath: string,
-		command: CommandArgs
+		command: CommandArgs,
 	): Promise<AppLaunchRecord> {
 		const result = await runProjectCommand(projectPath, command);
 		if (result.code !== 0) {
@@ -207,12 +207,12 @@ export class AppLauncherService {
 					projectPath,
 					signal: result.signal,
 				},
-				'app launcher start command failed'
+				'app launcher start command failed',
 			);
 			const detail = lastMeaningfulLines(result.output, FAILURE_TAIL_LINES);
 			throw new HttpError(
 				`App start command failed (${exit}).${detail ? `\n${detail}` : ' No output captured.'}`,
-				500
+				500,
 			);
 		}
 		const pid = await primarySpernakitPid(projectPath);
@@ -224,7 +224,7 @@ export class AppLauncherService {
 		projectPath: string,
 		command: string,
 		pid: null | number,
-		startedAt: number
+		startedAt: number,
 	): Promise<AppLaunchRecord> {
 		await this.db
 			.insert(appLaunches)
@@ -262,7 +262,7 @@ export class AppLauncherService {
 
 	private async markStopped(
 		current: typeof appLaunches.$inferSelect,
-		projectPath: string
+		projectPath: string,
 	): Promise<AppLaunchRecord> {
 		const stoppedAt = Date.now();
 		await this.db

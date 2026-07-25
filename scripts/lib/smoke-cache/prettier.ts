@@ -97,7 +97,7 @@ async function collectVisibleCandidates(projectRoot: string): Promise<string[]> 
 
 export async function collectPrettierDependencies(
 	projectRoot: string,
-	toolInputs: string[]
+	toolInputs: string[],
 ): Promise<string[]> {
 	const { getFileInfo } = await import('prettier');
 	const files = new Set<string>();

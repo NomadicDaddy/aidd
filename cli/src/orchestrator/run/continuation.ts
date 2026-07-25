@@ -48,13 +48,13 @@ export function formatContinuableBackendInterruptionLimitSummary(
 	exitCode: number,
 	details: IterationDetails,
 	retryLimit: number,
-	backendExitCode: number = exitCode
+	backendExitCode: number = exitCode,
 ): string {
 	return `${formatFailureSummary(
 		displayedSummary,
 		exitCode,
 		details,
-		backendExitCode
+		backendExitCode,
 	)}; continuable backend interruption retry limit reached (${retryLimit})`;
 }
 
@@ -119,7 +119,7 @@ export function determineRunContinuation(input: {
 					exitCode,
 					details,
 					retryLimit,
-					backendExitCode
+					backendExitCode,
 				),
 			};
 		}
@@ -244,7 +244,7 @@ export function determineRunContinuation(input: {
 
 export function isContinuableBackendInterruption(
 	exitCode: number,
-	details: IterationDetails
+	details: IterationDetails,
 ): boolean {
 	if (exitCode === orchestratorExitCodes.idleTimeout) return true;
 	if (exitCode !== orchestratorExitCodes.providerError) return false;
@@ -258,7 +258,7 @@ function isTransientProviderError(message: string): boolean {
 		/\b(?:timed?\s*out|timeout)\b/i.test(message) ||
 		/\bHTTP\s+(?:408|500|502|503|504)\b/i.test(message) ||
 		/\b(?:network error|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|temporarily unavailable|try again later|service unavailable|bad gateway|gateway timeout)\b/i.test(
-			message
+			message,
 		)
 	);
 }

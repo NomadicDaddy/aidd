@@ -25,8 +25,8 @@ describe('check:release-notices fails closed with no artifact to inspect', () =>
 	test('parses a selected target and rejects unknown arguments', () => {
 		expect(
 			parseReleaseNoticeArgs(['--target', 'bun-windows-x64-modern']).targets.map(
-				(target) => target.name
-			)
+				(target) => target.name,
+			),
 		).toEqual(['bun-windows-x64-modern']);
 		expect(() => parseReleaseNoticeArgs(['--unknown'])).toThrow('Unknown argument');
 	});

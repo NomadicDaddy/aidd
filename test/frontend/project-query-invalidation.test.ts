@@ -75,7 +75,7 @@ describe('project query invalidation', () => {
 		invalidateProjectQueries(client);
 
 		const narrowed = invalidated.filter(
-			(key) => PROJECT_SCOPED.has(String(key[0])) && key.length > 1
+			(key) => PROJECT_SCOPED.has(String(key[0])) && key.length > 1,
 		);
 		expect(narrowed).toEqual([]);
 	});
@@ -88,7 +88,7 @@ describe('project query invalidation', () => {
 		await cancelProjectQueries(client);
 
 		const narrowed = cancelled.filter(
-			(key) => PROJECT_SCOPED.has(String(key[0])) && key.length > 1
+			(key) => PROJECT_SCOPED.has(String(key[0])) && key.length > 1,
 		);
 		expect(narrowed).toEqual([]);
 		expect(cancelled).toContainEqual(['project']);

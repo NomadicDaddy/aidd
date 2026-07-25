@@ -65,18 +65,18 @@ type WriteAllowlistIterationOutcome =
 	| { kind: 'continue'; state: WriteAllowlistIterationState };
 
 export async function enforceWriteAllowlistForIteration(
-	input: WriteAllowlistIterationInput
+	input: WriteAllowlistIterationInput,
 ): Promise<WriteAllowlistIterationOutcome> {
 	const violations = await diffWriteViolations(
 		runRepoDir(input.plan),
 		input.plan.writeAllowlist ?? [],
-		input.writeGuardBaseline
+		input.writeGuardBaseline,
 	);
 	if (violations === null || violations.length === 0) {
 		return { kind: 'continue', state: toState(input) };
 	}
 	console.warn(
-		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); reverting and retrying once.`
+		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); reverting and retrying once.`,
 	);
 	await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, violations);
 	let state = toState(input);
@@ -90,14 +90,14 @@ export async function enforceWriteAllowlistForIteration(
 				text: buildWriteAllowlistRetryPrompt(
 					input.compiled.text,
 					input.plan.writeAllowlist ?? [],
-					violations
+					violations,
 				),
 			},
 			input.controller,
 			input.iteration,
 			input.startedAtMs,
 			input.runStartedAtMs,
-			input.gitHeadBefore
+			input.gitHeadBefore,
 		);
 		state = {
 			activeProgress: retry.progress,
@@ -116,7 +116,7 @@ export async function enforceWriteAllowlistForIteration(
 	const recheck = await diffWriteViolations(
 		runRepoDir(input.plan),
 		input.plan.writeAllowlist ?? [],
-		input.writeGuardBaseline
+		input.writeGuardBaseline,
 	);
 	if (recheck === null || recheck.length === 0) return { kind: 'continue', state };
 	await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, recheck);
@@ -129,7 +129,7 @@ export async function enforceWriteAllowlistForIteration(
 		input.acc,
 		'exit_error',
 		orchestratorExitCodes.writeAllowlistViolation,
-		summary
+		summary,
 	);
 	return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
 }

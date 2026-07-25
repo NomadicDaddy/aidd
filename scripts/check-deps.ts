@@ -60,7 +60,7 @@ const CONSISTENT_ENGINES: string[] = ['bun', 'node'];
 
 function collectDepVersions(
 	pkg: Record<string, unknown>,
-	pkgPath: string
+	pkgPath: string,
 ): Map<string, DepVersion[]> {
 	const versions = new Map<string, DepVersion[]>();
 
@@ -82,7 +82,7 @@ function collectDepVersions(
 
 function collectEngineVersions(
 	pkg: Record<string, unknown>,
-	pkgPath: string
+	pkgPath: string,
 ): Map<string, DepVersion[]> {
 	const versions = new Map<string, DepVersion[]>();
 	const engines = pkg.engines as Record<string, string> | undefined;

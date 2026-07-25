@@ -1,9 +1,9 @@
 import type {
 	CSSProperties,
+	ReactElement,
 	FocusEvent as ReactFocusEvent,
 	KeyboardEvent as ReactKeyboardEvent,
 	MouseEvent as ReactMouseEvent,
-	ReactElement,
 	ReactNode,
 } from 'react';
 
@@ -110,7 +110,7 @@ export function Tooltip({ children, className, content, side = 'top' }: TooltipP
 			anchor,
 			{ height, width },
 			{ height: window.innerHeight, width: window.innerWidth },
-			side
+			side,
 		);
 		setPlacement((current) =>
 			current &&
@@ -118,7 +118,7 @@ export function Tooltip({ children, className, content, side = 'top' }: TooltipP
 			current.side === next.side &&
 			current.top === next.top
 				? current
-				: next
+				: next,
 		);
 	}, [open, anchor, side, content]);
 
@@ -172,7 +172,7 @@ export function Tooltip({ children, className, content, side = 'top' }: TooltipP
 						<span
 							className={cn(
 								'pointer-events-none fixed z-[1000] w-max max-w-xs rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs whitespace-pre-line text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100',
-								className
+								className,
 							)}
 							id={tooltipId}
 							ref={tooltipRef}
@@ -180,7 +180,7 @@ export function Tooltip({ children, className, content, side = 'top' }: TooltipP
 							style={tooltipStyle}>
 							{content}
 						</span>,
-						document.body
+						document.body,
 					)
 				: null}
 		</span>

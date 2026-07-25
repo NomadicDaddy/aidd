@@ -200,7 +200,7 @@ async function main(argv: string[]): Promise<number> {
 			console.error(
 				`Existing backend did not release port ${releasePort} within ${
 					PORT_RELEASE_TIMEOUT_MS / 1000
-				}s`
+				}s`,
 			);
 			return 1;
 		}
@@ -230,7 +230,7 @@ async function main(argv: string[]): Promise<number> {
 	// for the full Windows rationale. Detached lifetime comes from unref().
 	const proc = Bun.spawn(
 		[process.execPath, 'src/app.ts'],
-		createBackendSpawnOptions(stdoutFd, stderrFd)
+		createBackendSpawnOptions(stdoutFd, stderrFd),
 	);
 
 	proc.unref();

@@ -38,7 +38,7 @@ export async function stopTail(ctx: HeartbeatWatcherContext, runId: string): Pro
 // DB-sourced Recent Runs table mislabels the run while the ledger-sourced detail view is correct.
 export async function persistRunLiveness(
 	ctx: HeartbeatWatcherContext,
-	record: CliActiveRunRecord
+	record: CliActiveRunRecord,
 ): Promise<void> {
 	const set: Partial<typeof runs.$inferInsert> = {
 		activityState: record.state,
@@ -58,7 +58,7 @@ export async function persistRunLiveness(
 					.update(runs)
 					.set(set)
 					.where(and(eq(runs.id, record.id), eq(runs.status, 'running'))),
-			{ label: 'heartbeat.persistLiveness' }
+			{ label: 'heartbeat.persistLiveness' },
 		);
 	} catch (err) {
 		webLogger.warn({ err, runId: record.id }, 'Failed to persist run liveness');
@@ -71,14 +71,14 @@ export async function persistRunLiveness(
 // without recomputing the outcome here.
 async function syncInvocationFromRun(
 	ctx: HeartbeatWatcherContext,
-	existing: WebRunRow
+	existing: WebRunRow,
 ): Promise<void> {
 	const source = existing.source as CliActiveRunSource;
 	if (!TELEMETRY_RUN_SOURCES.has(source)) return;
 	await ctx.telemetry.reconcileInvocationFromRun(existing.id).catch((error: unknown) => {
 		webLogger.warn(
 			{ err: error, runId: existing.id },
-			'Failed to sync run invocation telemetry'
+			'Failed to sync run invocation telemetry',
 		);
 	});
 }
@@ -87,7 +87,7 @@ function broadcastInsertedRun(
 	ctx: HeartbeatWatcherContext,
 	record: CliActiveRunRecord,
 	status: WebRunStatus,
-	errorMessage: null | string
+	errorMessage: null | string,
 ): void {
 	ctx.hub.broadcast({
 		payload: {
@@ -107,7 +107,7 @@ function broadcastInsertedRun(
 
 export async function terminalize(
 	ctx: HeartbeatWatcherContext,
-	record: CliActiveRunRecord
+	record: CliActiveRunRecord,
 ): Promise<void> {
 	const completedAt = record.completedAt ?? Date.now();
 	const durationMs = record.durationMs ?? completedAt - record.startedAt;
@@ -131,7 +131,7 @@ export async function terminalize(
 					finalStatus,
 					record,
 				}),
-			{ label: 'heartbeat.terminalize' }
+			{ label: 'heartbeat.terminalize' },
 		);
 	} catch (err) {
 		webLogger.warn({ err, runId: record.id }, 'Failed to terminalize run');
@@ -186,7 +186,7 @@ export async function terminalize(
 
 export async function markStale(
 	ctx: HeartbeatWatcherContext,
-	record: CliActiveRunRecord
+	record: CliActiveRunRecord,
 ): Promise<void> {
 	const completedAt = Date.now();
 	const errorMessage = 'Heartbeat stale; run process appears to be dead.';
@@ -195,7 +195,7 @@ export async function markStale(
 	try {
 		outcome = await withSqliteRetry(
 			() => ctx.commands.markRunStale({ completedAt, errorMessage, record }),
-			{ label: 'heartbeat.markStale' }
+			{ label: 'heartbeat.markStale' },
 		);
 	} catch (err) {
 		webLogger.warn({ err, runId: record.id }, 'Failed to mark run stale');
@@ -232,7 +232,7 @@ export async function markStale(
 
 export async function reconcileRemovedRow(
 	ctx: HeartbeatWatcherContext,
-	runId: string
+	runId: string,
 ): Promise<void> {
 	const completedAt = Date.now();
 	const errorMessage = 'Heartbeat file removed while run still active; reconciled to failed.';
@@ -247,7 +247,7 @@ export async function reconcileRemovedRow(
 					runId,
 					stopReason: 'heartbeat_removed',
 				}),
-			{ label: 'heartbeat.handleRemoved' }
+			{ label: 'heartbeat.handleRemoved' },
 		);
 	} catch (err) {
 		webLogger.warn({ err, runId }, 'Failed to reconcile removed-heartbeat run');

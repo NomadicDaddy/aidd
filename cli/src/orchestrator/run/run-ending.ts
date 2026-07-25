@@ -46,7 +46,7 @@ export async function endRunIfWallClockExpired(input: {
 		input.acc,
 		'exit_error',
 		orchestratorExitCodes.aborted,
-		summary
+		summary,
 	);
 }
 
@@ -66,6 +66,6 @@ export async function finalizeMaxIterationsRun(input: {
 		input.acc,
 		'max_iterations',
 		orchestratorExitCodes.success,
-		summary
+		summary,
 	);
 }

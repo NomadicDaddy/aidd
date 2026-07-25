@@ -5,12 +5,12 @@ import { join, resolve } from 'node:path';
 
 import { forceStopAllowed, parseStopWebArgs } from './lib/stop-web/args.ts';
 import {
+	type ActiveRunPortPin,
 	findOrphanedSocketPids,
 	findPidsOnPort,
 	isProcessAlive,
 	killProcessTree,
 	reportOrphanedSocket,
-	type ActiveRunPortPin,
 	stopPidFileProcess,
 	waitForPortReleased,
 } from './lib/stop-web/process-control.ts';
@@ -72,7 +72,7 @@ export function listLiveRunningRuns(dataDir = defaultDataDir): ActiveRunPortPin[
 				`select id, pid, project_path as projectPath
 				 from runs
 				 where status = 'running' and pid is not null
-				 order by started_at desc`
+				 order by started_at desc`,
 			)
 			.all() as { id: string; pid: number; projectPath: string }[];
 		return rows.filter((row) => Number.isInteger(row.pid) && isProcessAlive(row.pid));
@@ -162,7 +162,7 @@ export async function runStopWeb(argv: string[]): Promise<number> {
 		}
 		if (!forceStopAllowed(options)) {
 			console.log(
-				'   Graceful shutdown did not complete. Refusing to force-kill aidd on Windows by default.'
+				'   Graceful shutdown did not complete. Refusing to force-kill aidd on Windows by default.',
 			);
 			console.log('   Re-run with `bun run stop:web -- --force` to use taskkill /F /T.');
 			return 2;

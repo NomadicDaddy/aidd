@@ -31,7 +31,7 @@ export async function assertInsideRoot(root: string, target: string, label: stri
 	const rel = relative(resolvedRoot, resolvedTarget);
 	if (rel.startsWith('..') || resolve(join(resolvedRoot, rel)) !== resolvedTarget) {
 		throw new Error(
-			`scratch-workspace safety violation: ${label} "${target}" resolves to "${resolvedTarget}" which is outside scratch root "${resolvedRoot}"`
+			`scratch-workspace safety violation: ${label} "${target}" resolves to "${resolvedTarget}" which is outside scratch root "${resolvedRoot}"`,
 		);
 	}
 }

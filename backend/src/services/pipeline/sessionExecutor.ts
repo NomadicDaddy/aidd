@@ -45,7 +45,7 @@ export class PipelineSessionExecutor {
 	async resume(
 		recipe: RecipeDefinition,
 		context: ExecutionContext,
-		resolution: ResumeResolution
+		resolution: ResumeResolution,
 	): Promise<void> {
 		await this.markRunning(context.sessionId, 'pipeline.session.resume');
 		try {
@@ -53,13 +53,13 @@ export class PipelineSessionExecutor {
 				? await this.input.stepExecutor.resumeRecipeSteps(
 						recipe,
 						context,
-						resolution.inFlightStep
+						resolution.inFlightStep,
 					)
 				: await this.input.stepExecutor.executeRecipeSteps(
 						recipe,
 						context,
 						undefined,
-						resolution.startSequenceNumber
+						resolution.startSequenceNumber,
 					);
 			await this.finishResult(context, result);
 		} catch (err) {
@@ -74,7 +74,7 @@ export class PipelineSessionExecutor {
 	// 'completed_with_failures' with a failed-step summary rather than a bare 'failed'.
 	private async finishResult(
 		context: ExecutionContext,
-		result: { errorMessage?: string | undefined; ok: boolean; stopped?: boolean }
+		result: { errorMessage?: string | undefined; ok: boolean; stopped?: boolean },
 	): Promise<void> {
 		const completedAt = Date.now();
 		if (result.stopped || this.input.stopFlags.has(context.sessionId)) {
@@ -85,7 +85,7 @@ export class PipelineSessionExecutor {
 		const outcome = resolveSessionTerminal(
 			result.ok,
 			result.errorMessage,
-			report?.stepResults ?? []
+			report?.stepResults ?? [],
 		);
 		await this.finalize(context, outcome.status, completedAt, outcome.errorMessage);
 	}
@@ -109,7 +109,7 @@ export class PipelineSessionExecutor {
 		context: ExecutionContext,
 		status: PipelineSessionStatus,
 		completedAt: number,
-		errorMessage: string | undefined
+		errorMessage: string | undefined,
 	): Promise<void> {
 		// Write the session-metrics dump BEFORE persisting the terminal status, so a consumer
 		// that observes a completed session always finds its dump on disk (the dump is best-
@@ -122,7 +122,7 @@ export class PipelineSessionExecutor {
 			context.sessionId,
 			status,
 			completedAt,
-			errorMessage
+			errorMessage,
 		);
 	}
 }

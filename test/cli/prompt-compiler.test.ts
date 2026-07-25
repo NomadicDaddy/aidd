@@ -41,7 +41,7 @@ function onboardingPlan() {
 	promptPlan.fragments = promptPlan.fragments.map((fragment) =>
 		fragment.kind === 'phase'
 			? { ...fragment, id: 'onboarding', path: 'prompts/onboarding.md' }
-			: fragment
+			: fragment,
 	);
 	return promptPlan;
 }
@@ -148,7 +148,7 @@ describe('prompt compiler', () => {
 				'--filter',
 				'Backend',
 			]),
-			{ rootDir }
+			{ rootDir },
 		);
 		expectOrdered(compiled.text, [
 			'## HARD CONSTRAINTS',
@@ -156,7 +156,7 @@ describe('prompt compiler', () => {
 			await file('prompts/_cli/native.md'),
 		]);
 		expect(compiled.text).toContain(
-			'## FEATURE FILTER (applied via --filter-by category --filter Backend)'
+			'## FEATURE FILTER (applied via --filter-by category --filter Backend)',
 		);
 		const codingIndex = compiled.text.indexOf(await file('prompts/coding.md'));
 		const contractIndex = compiled.text.indexOf('## aidd V2 RESULT CONTRACT');
@@ -183,21 +183,21 @@ describe('prompt compiler', () => {
 		});
 		expect(compiled.text).toContain('## aidd V2 RESULT CONTRACT');
 		expect(compiled.text).toContain(
-			'AIDD_RESULT: {"featureId":"<selected-feature-id>","status":"completed","passes":true}'
+			'AIDD_RESULT: {"featureId":"<selected-feature-id>","status":"completed","passes":true}',
 		);
 		expect(compiled.text).toContain(
-			'feature.json must include a short non-empty notes resolution'
+			'feature.json must include a short non-empty notes resolution',
 		);
 		expect(compiled.text).toContain('commit every non-ignored code/configuration change');
 		expect(compiled.text).toContain('Never force-add ignored `.aidd/` metadata');
 		expect(compiled.text).toContain(
-			'ignored metadata may remain local and does not block AIDD_RESULT'
+			'ignored metadata may remain local and does not block AIDD_RESULT',
 		);
 		expect(compiled.text).toContain('### aidd METADATA GIT POLICY');
 		expect(compiled.text).toContain('Live-verification gate');
 		expect(compiled.text).toContain('"could not verify" means NOT done');
 		expect(compiled.text).toContain(
-			'do not satisfy a criterion that requires driving the runtime surface'
+			'do not satisfy a criterion that requires driving the runtime surface',
 		);
 		expect(compiled.text).toContain('parks the feature as waiting_approval');
 	});
@@ -234,7 +234,7 @@ describe('prompt compiler', () => {
 		expect(compiled.text).not.toContain('prioritizedWork');
 		expect(compiled.text).not.toContain('workId');
 		expect(compiled.text).toContain(
-			'AIDD_RESULT: {"featureId":"<selected-feature-id>","status":"completed","passes":true}'
+			'AIDD_RESULT: {"featureId":"<selected-feature-id>","status":"completed","passes":true}',
 		);
 	});
 
@@ -243,7 +243,7 @@ describe('prompt compiler', () => {
 			plan(['--project-dir', '.', '--cli', 'native', '--todo']),
 			{
 				rootDir,
-			}
+			},
 		);
 		expect(compiled.text).toContain('AIDD_RESULT: {"todoCompleted":true}');
 	});
@@ -300,7 +300,7 @@ describe('prompt compiler', () => {
 	test('mutation directive prompt keeps changelog and commit instructions', async () => {
 		const compiled = await compilePrompt(
 			plan(['--project-dir', '.', '--cli', 'native', '--prompt', 'Add a logger helper.']),
-			{ rootDir }
+			{ rootDir },
 		);
 		expect(compiled.text).toContain('## YOUR ROLE - CUSTOM DIRECTIVE MODE (MUTATION)');
 		expect(compiled.text).toContain('Add a logger helper.');
@@ -325,12 +325,12 @@ describe('prompt compiler', () => {
 				'Review the auth service for issues.',
 				'--directive-readonly',
 			]),
-			{ rootDir }
+			{ rootDir },
 		);
 		expect(compiled.text).toContain('## YOUR ROLE - CUSTOM DIRECTIVE MODE (READ-ONLY)');
 		expect(compiled.text).toContain('Review the auth service for issues.');
 		expect(compiled.text).toContain(
-			'Do NOT modify any code, configuration, or assets in the repository'
+			'Do NOT modify any code, configuration, or assets in the repository',
 		);
 		expect(compiled.text).toContain('Do NOT write to .aidd/CHANGELOG.md');
 		expect(compiled.text).toContain('Do NOT create commits, amend history');
@@ -350,10 +350,10 @@ describe('prompt compiler', () => {
 		expect(compiled.text).toContain('"auditSource": "SECURITY"');
 		expect(compiled.text).toContain('## AUDIT GUIDELINES');
 		expect(compiled.text).toContain(
-			'Do NOT create, edit, stage, or commit `feature.json` files directly'
+			'Do NOT create, edit, stage, or commit `feature.json` files directly',
 		);
 		expect(compiled.text).toContain(
-			'aidd converts each accepted structured finding into a `feature.json` file'
+			'aidd converts each accepted structured finding into a `feature.json` file',
 		);
 		expect(compiled.text).not.toContain('git commit -m "audit(');
 	});
@@ -413,7 +413,7 @@ describe('prompt compiler — feature.json write matrix', () => {
 		// feature whose notes lack a resolution. If the contract demands it, the write matrix must
 		// permit writing it on the selected feature — this is the pairing that previously broke.
 		const contractRequiresNotes = text.includes(
-			'feature.json must include a short non-empty notes resolution'
+			'feature.json must include a short non-empty notes resolution',
 		);
 		expect(contractRequiresNotes).toBe(true);
 		expect(text).toContain('`notes` is required, not optional');
@@ -433,7 +433,7 @@ describe('prompt compiler — feature.json write matrix', () => {
 		expect(text).toContain('Template-owned source features are the one exception');
 		expect(text).toContain('Upstream template alignment required');
 		expect(text).toContain(
-			'Write to any feature carrying `spernakit_version` — template-owned, escalate upstream instead'
+			'Write to any feature carrying `spernakit_version` — template-owned, escalate upstream instead',
 		);
 	});
 
@@ -447,7 +447,7 @@ describe('prompt compiler — feature.json write matrix', () => {
 	test('other features keep their id, passes, and status protected', async () => {
 		const text = await compileCoding();
 		expect(text).toContain(
-			'Change `id`, `passes`, or `status` on any feature other than the one you are implementing'
+			'Change `id`, `passes`, or `status` on any feature other than the one you are implementing',
 		);
 		expect(text).toContain('Remove or reorder existing `dependencies` entries');
 	});
@@ -463,22 +463,22 @@ describe('prompt compiler — project context injection', () => {
 		await writeFile(
 			join(projectDir, '.aidd', 'CHANGELOG.md'),
 			'## [2026-05-28] - Fixture changelog entry\n\n### Changed\n\n- Demo bullet point for fixture verification\n',
-			'utf8'
+			'utf8',
 		);
 		await writeFile(
 			join(projectDir, '.aidd', 'audit-reports', 'SECURITY-2026-05-28.md'),
 			'# SECURITY Audit Report - 2026-05-28\n\n## Executive Summary\n\n**Overall Score:** 92/100\n**Critical Issues:** 0\nSecurity fixture summary text for prior-context verification.\n',
-			'utf8'
+			'utf8',
 		);
 		await writeFile(
 			join(projectDir, '.aidd', 'audit-reports', 'HYGIENE-2026-05-28.md'),
 			'# HYGIENE Audit Report - 2026-05-28\n\n## Executive Summary\n\nHygiene fixture summary text for prior-context verification.\n',
-			'utf8'
+			'utf8',
 		);
 		await writeFile(
 			join(projectDir, '.aidd', 'reports', 'session-2026-05-28.md'),
 			'# Session report fixture title\n\nSession body for fixture verification.\n',
-			'utf8'
+			'utf8',
 		);
 	});
 
@@ -575,7 +575,7 @@ describe('prompt compiler — project context injection', () => {
 			await writeFile(
 				join(contextProject, 'CONTEXT.md'),
 				'# Domain context fixture\n\nGlossary body.\n',
-				'utf8'
+				'utf8',
 			);
 			const compiled = await compilePrompt(plan(['--project-dir', '.', '--cli', 'native']), {
 				rootDir,

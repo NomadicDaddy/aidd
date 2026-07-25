@@ -30,7 +30,7 @@ export interface DescendantTracking {
  */
 export function extendDescendants(
 	state: DescendantTracking,
-	table: ProcessTableEntry[]
+	table: ProcessTableEntry[],
 ): Pick<DescendantTracking, 'rootRow' | 'rootVerified'> {
 	const { descendants, rootPid } = state;
 	const tableRootRow = table.find((entry) => entry.pid === rootPid);

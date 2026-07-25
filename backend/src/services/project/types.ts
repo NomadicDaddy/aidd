@@ -9,7 +9,7 @@ import { HttpError } from '../errors.ts';
 export interface ProjectAdvisorDeps {
 	backendFactory: (name: BackendName) => CLIBackend;
 	directAiService: DirectAiRunner;
-	getFullConfig: () => ResolvedConfig & { web: ResolvedWebConfig };
+	getFullConfig: () => { web: ResolvedWebConfig } & ResolvedConfig;
 }
 
 export class ProjectNotFoundError extends HttpError {

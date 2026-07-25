@@ -72,7 +72,7 @@ export function ProjectCard({
 		<Card className="flex h-full flex-col" interactive>
 			<div className="mb-3 flex items-start justify-between gap-3">
 				<div className="min-w-0">
-					<h2 className="text-foreground flex items-center gap-1.5 truncate text-base font-semibold">
+					<h2 className="flex items-center gap-1.5 truncate text-base font-semibold text-foreground">
 						{orphan ? (
 							<FolderX
 								aria-label="Missing on disk"
@@ -131,7 +131,7 @@ export function ProjectCard({
 						<span
 							className={templateVersionColor(
 								metadata.templateVersion,
-								spernakitTemplateVersion
+								spernakitTemplateVersion,
 							)}>
 							spk {metadata.templateVersion}
 						</span>

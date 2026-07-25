@@ -16,7 +16,7 @@ export function readSettingsTab(value: null | string): SettingsTab {
 
 export function settingsTabSearchParams(
 	current: URLSearchParams,
-	tab: SettingsTab
+	tab: SettingsTab,
 ): URLSearchParams {
 	const next = new URLSearchParams(current);
 	if (tab === 'workspace') next.delete('tab');

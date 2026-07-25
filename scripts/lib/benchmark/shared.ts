@@ -18,7 +18,7 @@ export function commandSucceeded(commandResult: CommandResult, metrics: ParsedMe
  */
 export function controlCommandSucceeded(
 	commandResult: CommandResult,
-	metrics: ParsedMetrics
+	metrics: ParsedMetrics,
 ): boolean {
 	if (commandSucceeded(commandResult, metrics)) return true;
 	return (

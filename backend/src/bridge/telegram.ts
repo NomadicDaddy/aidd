@@ -29,7 +29,7 @@ export interface TelegramClient {
 	getUpdates(
 		offset: number,
 		timeoutSeconds: number,
-		signal?: AbortSignal
+		signal?: AbortSignal,
 	): Promise<TelegramUpdate[]>;
 	sendMessage(chatId: number, text: string): Promise<void>;
 }
@@ -54,7 +54,7 @@ export function createTelegramClient(botToken: string): TelegramClient {
 		const data = (await response.json()) as TelegramApiResponse<T>;
 		if (!data.ok) {
 			throw new Error(
-				`Telegram ${method} failed: ${data.description ?? response.statusText}`
+				`Telegram ${method} failed: ${data.description ?? response.statusText}`,
 			);
 		}
 		return data.result as T;
@@ -69,7 +69,7 @@ export function createTelegramClient(botToken: string): TelegramClient {
 			return await call<TelegramUpdate[]>(
 				'getUpdates',
 				{ allowed_updates: ['message'], offset, timeout: timeoutSeconds },
-				combined
+				combined,
 			);
 		},
 		async sendMessage(chatId, text) {
@@ -102,7 +102,7 @@ export function createBridgeHandler(deps: BridgeHandlerDeps): BridgeHandler {
 		if (existing) return existing;
 		const created = await deps.api.post<{ session: { id: string } }>(
 			'/api/v1/director/chat/sessions',
-			{ title: `Telegram ${chatId}` }
+			{ title: `Telegram ${chatId}` },
 		);
 		sessionByChat.set(chatId, created.session.id);
 		return created.session.id;
@@ -125,7 +125,7 @@ export function createBridgeHandler(deps: BridgeHandlerDeps): BridgeHandler {
 				});
 				await deps.telegram.sendMessage(
 					chatId,
-					result.messages.assistant.content || '(no reply)'
+					result.messages.assistant.content || '(no reply)',
 				);
 			} catch (err) {
 				const detail = err instanceof Error ? err.message : String(err);
@@ -169,7 +169,7 @@ export async function runBridgeLoop(deps: BridgeLoopDeps): Promise<void> {
 		} catch (err) {
 			if (deps.signal.aborted) break;
 			console.error(
-				`aidd Telegram bridge: getUpdates failed: ${err instanceof Error ? err.message : String(err)}`
+				`aidd Telegram bridge: getUpdates failed: ${err instanceof Error ? err.message : String(err)}`,
 			);
 			await delay(POLL_BACKOFF_MS, deps.signal);
 			continue;
@@ -180,7 +180,7 @@ export async function runBridgeLoop(deps: BridgeLoopDeps): Promise<void> {
 				await deps.handler.handleUpdate(update);
 			} catch (err) {
 				console.error(
-					`aidd Telegram bridge: handler err: ${err instanceof Error ? err.message : String(err)}`
+					`aidd Telegram bridge: handler err: ${err instanceof Error ? err.message : String(err)}`,
 				);
 			}
 		}

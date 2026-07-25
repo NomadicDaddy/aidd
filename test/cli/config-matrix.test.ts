@@ -42,13 +42,13 @@ describe('config matrix', () => {
 		expect(output).toContain('User config:    ');
 		expect(output).toContain('Project config: none');
 		expect(output).toContain(
-			'| Normal run / web Runs launch         | codex        | not configured | gpt-5.6'
+			'| Normal run / web Runs launch         | codex        | not configured | gpt-5.6',
 		);
 		expect(output).toContain(
-			'| Direct AI project advisor            | direct-ai    | zhipu          | glm-5.1'
+			'| Direct AI project advisor            | direct-ai    | zhipu          | glm-5.1',
 		);
 		expect(output).toContain(
-			'| Direct AI director chat              | direct-ai    | zhipu          | gpt-5.6'
+			'| Direct AI director chat              | direct-ai    | zhipu          | gpt-5.6',
 		);
 		expect(output).toContain('| Triumvirate                          | not runnable | n/a');
 		expect(output).toContain('Missing secondaryCli, overseerCli. No triumvirate config found.');

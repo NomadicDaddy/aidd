@@ -28,7 +28,7 @@ export async function dispatchChatTool(
 	name: string,
 	rawArguments: string,
 	ctx: ChatAgentToolContext,
-	dispatch: DispatchContext
+	dispatch: DispatchContext,
 ): Promise<DispatchResult> {
 	let args: Record<string, unknown>;
 	try {
@@ -52,7 +52,7 @@ async function dispatchOrchestrateTool(
 	name: string,
 	args: Record<string, unknown>,
 	ctx: ChatAgentToolContext,
-	dispatch: DispatchContext
+	dispatch: DispatchContext,
 ): Promise<DispatchResult> {
 	switch (name) {
 		case 'dismiss_suggestion': {
@@ -205,13 +205,13 @@ async function dispatchFileTool(
 	name: string,
 	args: Record<string, unknown>,
 	ctx: ChatAgentToolContext,
-	dispatch: DispatchContext
+	dispatch: DispatchContext,
 ): Promise<DispatchResult> {
 	if (!dispatch.allowFileEdits) {
 		return errorResult(
 			'file_edit',
 			name,
-			'ERROR: direct file editing is disabled for Director chat.'
+			'ERROR: direct file editing is disabled for Director chat.',
 		);
 	}
 	const projectId = requireString(args, 'projectId');
@@ -259,7 +259,7 @@ function ok(
 	kind: ChatAgentAction['kind'],
 	tool: string,
 	summary: string,
-	resultText: string
+	resultText: string,
 ): DispatchResult {
 	return { action: { kind, status: 'ok', summary, tool }, resultText };
 }
@@ -267,7 +267,7 @@ function ok(
 function errorResult(
 	kind: ChatAgentAction['kind'],
 	tool: string,
-	resultText: string
+	resultText: string,
 ): DispatchResult {
 	return {
 		action: { error: resultText, kind, status: 'error', summary: resultText, tool },

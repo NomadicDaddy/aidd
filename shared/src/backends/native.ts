@@ -1,13 +1,13 @@
 import type { AiCallSurface } from '../lib/aiCallLog.ts';
 import type { BackendName } from '../plan/types.ts';
-import type { CLIBackend, AgentEvent, PromptInput } from './types.ts';
+import type { AgentEvent, CLIBackend, PromptInput } from './types.ts';
 
 import {
+	type AgentClient,
 	createDefaultNativeClient,
 	loadNativeFileConfig,
-	SimulationAgentClient,
-	type AgentClient,
 	type ProviderName,
+	SimulationAgentClient,
 } from '../agent/client.ts';
 import { runAgentLoop } from '../agent/loop.ts';
 
@@ -39,7 +39,7 @@ export class NativeBackend implements CLIBackend {
 				process.env,
 				undefined,
 				this.options.providerOverride,
-				this.options.callSurface
+				this.options.callSurface,
 			));
 		const fileConfig = await loadNativeFileConfig();
 		const maxTurns = this.options.maxTurns ?? fileConfig.maxTurns;

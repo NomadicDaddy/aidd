@@ -32,7 +32,7 @@ export const RECONCILED_EXIT_CODE = -1;
 // Run sources whose lifecycle is mirrored into invocation telemetry. Direct-CLI runs never
 // recorded a telemetry start, so their completion must not be force-closed against a row that
 // does not exist. Shared by the heartbeat terminal paths and the in-session orphan sweep.
-export const TELEMETRY_RUN_SOURCES: ReadonlySet<CliActiveRunSource> = new Set(['web', 'director']);
+export const TELEMETRY_RUN_SOURCES: ReadonlySet<CliActiveRunSource> = new Set(['director', 'web']);
 
 export const DIRECTOR_PROJECT_NAME = 'Director';
 

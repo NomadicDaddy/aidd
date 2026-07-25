@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, test } from 'bun:test';
 
-import { TEST_COVERAGE_DIR, parseCoverageFiles } from '../../scripts/lib/smoke-cache/coverage.ts';
+import { parseCoverageFiles, TEST_COVERAGE_DIR } from '../../scripts/lib/smoke-cache/coverage.ts';
 import { CI_WORKFLOW_TEST_INPUT } from '../../scripts/lib/smoke-cache/dependencies.ts';
 import {
 	canSkipStep,
@@ -37,11 +37,11 @@ async function createSmokeProject(): Promise<string> {
 	await writeFile(join(root, 'frontend', 'vite.config.ts'), 'export default {};\n');
 	await writeFile(
 		join(root, 'frontend', 'src', 'App.tsx'),
-		'export function App() { return null; }\n'
+		'export function App() { return null; }\n',
 	);
 	await writeFile(
 		join(root, 'frontend', 'src', 'pages', 'runs', 'RunsPage.tsx'),
-		'export function RunsPage() { return null; }\n'
+		'export function RunsPage() { return null; }\n',
 	);
 	await writeFile(join(root, 'cli', 'src', 'index.ts'), 'export const value = 1;\n');
 	await writeFile(join(root, 'cli', 'src', 'covered.ts'), 'export const covered = 1;\n');
@@ -52,12 +52,12 @@ async function createSmokeProject(): Promise<string> {
 	await writeFile(join(root, 'scripts', 'lib', 'test-coverage', 'contracts.ts'), 'export {};\n');
 	await writeFile(
 		join(root, 'scripts', 'lib', 'third-party-licenses', 'registry-validation.ts'),
-		'export const valid = true;\n'
+		'export const valid = true;\n',
 	);
 	await writeFile(join(root, 'scripts', 'run-test-coverage.ts'), 'export {};\n');
 	await writeFile(
 		join(root, 'test', 'scripts', 'smoke-cache.test.ts'),
-		'import {} from "bun:test";\n'
+		'import {} from "bun:test";\n',
 	);
 	return root;
 }
@@ -67,7 +67,7 @@ async function writeCoverage(root: string, files: string[]): Promise<void> {
 	await writeFile(
 		join(root, TEST_COVERAGE_DIR, 'lcov.info'),
 		files.map((file) => `TN:\nSF:${file}\nend_of_record`).join('\n'),
-		'utf8'
+		'utf8',
 	);
 }
 
@@ -119,7 +119,7 @@ describe('smoke cache', () => {
 		await recordStepSuccess(root, 'test', 123);
 		await writeFile(
 			join(root, 'frontend', 'src', 'App.tsx'),
-			'export function App() { return "changed"; }\n'
+			'export function App() { return "changed"; }\n',
 		);
 
 		expect(await canSkipStep(root, 'test')).toBe(true);
@@ -140,7 +140,7 @@ describe('smoke cache', () => {
 		await recordStepSuccess(root, 'test', 123);
 		await writeFile(
 			join(root, 'frontend', 'src', 'pages', 'runs', 'RunsPage.tsx'),
-			'export function RunsPage() { return "changed"; }\n'
+			'export function RunsPage() { return "changed"; }\n',
 		);
 
 		expect(await canSkipStep(root, 'test')).toBe(false);
@@ -198,7 +198,7 @@ describe('smoke cache', () => {
 		await recordStepSuccess(root, 'test', 123);
 		await writeFile(
 			join(root, 'scripts', 'lib', 'test-coverage', 'contracts.ts'),
-			'export const threshold = 90;\n'
+			'export const threshold = 90;\n',
 		);
 
 		expect(await canSkipStep(root, 'test')).toBe(false);
@@ -210,7 +210,7 @@ describe('smoke cache', () => {
 		await recordStepSuccess(root, 'test', 123);
 		await writeFile(
 			join(root, 'scripts', 'lib', 'third-party-licenses', 'registry-validation.ts'),
-			'export const valid = false;\n'
+			'export const valid = false;\n',
 		);
 
 		expect(await canSkipStep(root, 'test')).toBe(false);
@@ -234,8 +234,8 @@ describe('smoke cache', () => {
 					version: 1,
 				},
 				null,
-				'\t'
-			)
+				'\t',
+			),
 		);
 
 		expect(await canSkipStep(root, 'test')).toBe(false);
@@ -245,7 +245,9 @@ describe('smoke cache', () => {
 		const root = await createSmokeProject();
 		const files = parseCoverageFiles(
 			root,
-			[`SF:${join(root, 'cli', 'src', 'covered.ts')}`, 'SF:frontend\\src\\App.tsx'].join('\n')
+			[`SF:${join(root, 'cli', 'src', 'covered.ts')}`, 'SF:frontend\\src\\App.tsx'].join(
+				'\n',
+			),
 		);
 
 		expect(files).toEqual(['cli/src/covered.ts', 'frontend/src/App.tsx']);
@@ -256,7 +258,7 @@ describe('smoke cache', () => {
 		const outside = join(tmpdir(), 'outside-coverage.ts');
 
 		expect(() => parseCoverageFiles(root, `SF:${outside}\n`)).toThrow(
-			'Coverage file is outside the project root'
+			'Coverage file is outside the project root',
 		);
 	});
 

@@ -11,7 +11,7 @@ import { DEFAULT_BASE_URL } from '../../../crawltest-types.ts';
 export async function assertAuditSidebarNavigation(
 	page: Page,
 	route: string,
-	baseUrl: string
+	baseUrl: string,
 ): Promise<string[]> {
 	const errors: string[] = [];
 	let pathname = route;
@@ -87,7 +87,7 @@ export async function assertAuditSidebarNavigation(
 	const afterSkills = new URL(page.url(), baseUrl).pathname;
 	if (afterSkills !== '/skills') {
 		errors.push(
-			`/audits sidebar navigation stuck on ${afterSkills} after selecting audit row (expected /skills)`
+			`/audits sidebar navigation stuck on ${afterSkills} after selecting audit row (expected /skills)`,
 		);
 	}
 
@@ -119,7 +119,7 @@ export async function assertAuditSidebarNavigation(
 	const afterSettings = new URL(page.url(), baseUrl).pathname;
 	if (afterSettings !== '/settings') {
 		errors.push(
-			`/audits sidebar navigation stuck on ${afterSettings} after selecting audit row (expected /settings)`
+			`/audits sidebar navigation stuck on ${afterSettings} after selecting audit row (expected /settings)`,
 		);
 	}
 

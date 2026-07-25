@@ -7,7 +7,7 @@ interface FileChanges {
 }
 
 export function modeFileChangesFromArtifacts(
-	artifacts: Record<string, unknown> | undefined
+	artifacts: Record<string, unknown> | undefined,
 ): FileChanges {
 	return {
 		filesCreated: stringArray(artifacts?.modeFilesCreated),
@@ -17,7 +17,7 @@ export function modeFileChangesFromArtifacts(
 
 export function accumulateAdditionalFileChanges(
 	acc: RunAccumulator,
-	fileChanges: FileChanges
+	fileChanges: FileChanges,
 ): void {
 	for (const path of fileChanges.filesCreated) {
 		if (acc.filesCreated.has(path)) continue;
@@ -33,7 +33,7 @@ export function accumulateAdditionalFileChanges(
 
 export function mergeModeFileChanges(
 	details: IterationDetails,
-	modeFileChanges: FileChanges
+	modeFileChanges: FileChanges,
 ): IterationDetails {
 	const filesCreated = uniqueOrdered([...details.filesCreated, ...modeFileChanges.filesCreated]);
 	const filesEdited = uniqueOrdered([...details.filesEdited, ...modeFileChanges.filesEdited]);

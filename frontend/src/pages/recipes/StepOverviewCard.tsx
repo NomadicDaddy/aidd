@@ -54,7 +54,7 @@ export function StepOverviewCard({
 			<div className={`flex-1 pb-6 ${isLast ? '' : ''}`}>
 				<div className="rounded-md border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
 					<div className="mb-2 flex flex-wrap items-center gap-2">
-						<h3 className="text-foreground text-sm font-semibold">{step.name}</h3>
+						<h3 className="text-sm font-semibold text-foreground">{step.name}</h3>
 						<Badge tone={stepTypeTones[step.stepType]}>{step.stepType}</Badge>
 						{hasOnFailure && <Badge tone="amber">on failure: {step.onFailure}</Badge>}
 						{hasRetry && <Badge tone="neutral">retry: {step.retryCount}</Badge>}

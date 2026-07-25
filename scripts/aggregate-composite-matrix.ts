@@ -76,12 +76,12 @@ const PRIMARY_AGENTIC_TASKS = ['interview', 'audit-primary', 'remediation', 'val
 // so they are excluded here to avoid misrepresenting them on the leaderboard. They are superseded
 // by the glm-5.2 opencode/kilocode stacks, which capture full token + cost data.
 const EXCLUDE_STACKS = new Set([
-	'opencode-glm51-low',
-	'opencode-glm51-medium',
-	'opencode-glm51-high',
+	'kilocode-glm51-high',
 	'kilocode-glm51-low',
 	'kilocode-glm51-medium',
-	'kilocode-glm51-high',
+	'opencode-glm51-high',
+	'opencode-glm51-low',
+	'opencode-glm51-medium',
 ]);
 
 type StackAgg = {
@@ -263,13 +263,13 @@ const fmtCost = (n: null | number) =>
 const fmtTokens = (n: number, known: boolean) => (known && n > 0 ? n.toLocaleString('en-US') : '—');
 
 console.log(
-	'| Stack | Effort | Composite | Correctness | Reliability | Time score | Avg dur (s) | Suite dur (s) | Suite cost | Input tokens | Output tokens | Reasoning tokens | Cached tokens |'
+	'| Stack | Effort | Composite | Correctness | Reliability | Time score | Avg dur (s) | Suite dur (s) | Suite cost | Input tokens | Output tokens | Reasoning tokens | Cached tokens |',
 );
 console.log(
-	'| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'
+	'| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
 );
 for (const r of rows) {
 	console.log(
-		`| ${r.stack} | ${r.effort} | ${fmtNum(r.composite)} | ${fmtNum(r.correctness)} | ${fmtNum(r.reliability)} | ${fmtNum(r.timeScore)} | ${fmtNum(r.avgDurationSec, 1)} | ${fmtNum(r.totalDurationSec, 1)} | ${fmtCost(r.totalCostUsd)} | ${fmtTokens(r.inputTokens, r.tokensKnown)} | ${fmtTokens(r.outputTokens, r.tokensKnown)} | ${fmtTokens(r.reasoningTokens, r.tokensKnown)} | ${fmtTokens(r.cachedTokens, r.tokensKnown)} |`
+		`| ${r.stack} | ${r.effort} | ${fmtNum(r.composite)} | ${fmtNum(r.correctness)} | ${fmtNum(r.reliability)} | ${fmtNum(r.timeScore)} | ${fmtNum(r.avgDurationSec, 1)} | ${fmtNum(r.totalDurationSec, 1)} | ${fmtCost(r.totalCostUsd)} | ${fmtTokens(r.inputTokens, r.tokensKnown)} | ${fmtTokens(r.outputTokens, r.tokensKnown)} | ${fmtTokens(r.reasoningTokens, r.tokensKnown)} | ${fmtTokens(r.cachedTokens, r.tokensKnown)} |`,
 	);
 }

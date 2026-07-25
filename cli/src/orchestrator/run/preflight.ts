@@ -3,8 +3,8 @@ import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import {
-	orchestratorExitCodes,
 	type AgentRunResult,
+	orchestratorExitCodes,
 	type StopReason,
 } from 'aidd-shared/orchestrator/result';
 import { runRepoDir } from 'aidd-shared/plan/types';
@@ -14,10 +14,10 @@ import { type createModeHandler } from '../../modes/factory.ts';
 import { writeRunSummary } from './artifacts.ts';
 import { gitDirtyFileCount } from './git.ts';
 import {
-	runRuntimeFields,
 	type MoveFn,
 	type OrchestratorDeps,
 	type RunAccumulator,
+	runRuntimeFields,
 } from './types.ts';
 
 export async function handleDirtyTreeSkip(
@@ -25,7 +25,7 @@ export async function handleDirtyTreeSkip(
 	plan: RunPlan,
 	acc: RunAccumulator,
 	iteration: number,
-	move: MoveFn
+	move: MoveFn,
 ): Promise<number | undefined> {
 	// Exclude aidd-owned .aidd/ metadata from the gate: it is write-allowlisted separately
 	// and intake's own metadata writes must not block the audit steps intake runs next.
@@ -108,7 +108,7 @@ export async function handleNoWorkIteration(input: {
 		acc,
 		noWorkStopReason(work),
 		orchestratorExitCodes.success,
-		summary.text
+		summary.text,
 	);
 	if (plan.noWorkBackoffMs > 0) {
 		await sleep(plan.noWorkBackoffMs);

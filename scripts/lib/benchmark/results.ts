@@ -27,7 +27,7 @@ export function loadRuns(runsPath: string): BenchmarkRun[] {
 export function writeRuns(runsPath: string, runs: BenchmarkRun[]): void {
 	writeFileSync(
 		runsPath,
-		runs.map((run) => JSON.stringify(run)).join('\n') + (runs.length ? '\n' : '')
+		runs.map((run) => JSON.stringify(run)).join('\n') + (runs.length ? '\n' : ''),
 	);
 }
 
@@ -39,7 +39,7 @@ export function writeOutputs(resultsDir: string, aggregateResult: BenchmarkAggre
 	mkdirSync(resultsDir, { recursive: true });
 	writeFileSync(
 		path.join(resultsDir, 'leaderboard.json'),
-		`${JSON.stringify(aggregateResult, null, 2)}\n`
+		`${JSON.stringify(aggregateResult, null, 2)}\n`,
 	);
 	const rows = [...aggregateResult.agenticRows, ...aggregateResult.controlRows];
 	writeFileSync(
@@ -58,9 +58,9 @@ export function writeOutputs(resultsDir: string, aggregateResult: BenchmarkAggre
 					row.timeScore,
 					row.costScore ?? '',
 					row.compositeScore,
-				].join(',')
+				].join(','),
 			),
-		].join('\n')}\n`
+		].join('\n')}\n`,
 	);
 	writeFileSync(path.join(resultsDir, 'report.md'), renderReport(aggregateResult));
 }
@@ -77,7 +77,7 @@ export function loadSession(resultsDir: string): Record<string, unknown> {
 }
 
 export function preflightFromSession(
-	session: Record<string, unknown>
+	session: Record<string, unknown>,
 ): Record<string, BenchmarkPreflight> {
 	const raw = isRecord(session.preflight) ? session.preflight : {};
 	const result: Record<string, BenchmarkPreflight> = {};
@@ -95,7 +95,7 @@ export function preflightFromSession(
 
 export function regradeRuns(
 	manifest: BenchmarkManifest,
-	runs: BenchmarkRun[]
+	runs: BenchmarkRun[],
 ): { changed: number; runs: BenchmarkRun[] } {
 	const taskById = new Map(manifest.tasks.map((task) => [task.id, task]));
 	let changed = 0;

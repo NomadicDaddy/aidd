@@ -47,7 +47,7 @@ describe('Telemetry transparency surfaces', () => {
 		expect(html).toContain('No work');
 		expect(html).toContain('exactly one outcome');
 		expect(html).toContain(
-			'1 completed · 1 warnings · 1 failed · 1 stopped · 1 killed · 1 no work · 1 running'
+			'1 completed · 1 warnings · 1 failed · 1 stopped · 1 killed · 1 no work · 1 running',
 		);
 	});
 

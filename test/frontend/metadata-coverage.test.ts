@@ -106,7 +106,7 @@ describe('project metadata coverage', () => {
 				artifactCheck: null,
 				roadmap: null,
 				testScenariosCount: null,
-			})
+			}),
 		);
 
 		expect(coverage.label).toBe('Partial');
@@ -131,7 +131,7 @@ describe('project metadata coverage', () => {
 						total: 6,
 					},
 				},
-			})
+			}),
 		);
 
 		expect(coverage.label).toBe('Partial');
@@ -155,7 +155,7 @@ describe('project metadata coverage', () => {
 						total: 6,
 					},
 				},
-			})
+			}),
 		);
 
 		expect(coverage.label).toBe('Partial');

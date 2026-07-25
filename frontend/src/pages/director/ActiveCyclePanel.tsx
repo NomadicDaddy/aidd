@@ -43,7 +43,7 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 		<div className="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/30">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="min-w-0">
-					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 						<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						<span className="truncate">{cycleStageLabels[cycle.stage]}</span>
 					</div>

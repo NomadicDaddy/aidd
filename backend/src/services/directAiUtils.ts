@@ -8,7 +8,7 @@ export interface DirectAiReasoningEffortInputs {
 }
 
 export function resolveDirectAiReasoningEffort(
-	inputs: DirectAiReasoningEffortInputs
+	inputs: DirectAiReasoningEffortInputs,
 ): PersistedReasoningEffortValue {
 	return (
 		inputs.requestEffort ??

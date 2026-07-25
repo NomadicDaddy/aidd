@@ -142,7 +142,7 @@ export function acquireWriterLock(dbPath: string): WriterLock {
 	if (heldLocks.has(lockPath)) {
 		throw new Error(
 			`This process already holds the database writer lock at ${lockPath}. Only one backend ` +
-				`writer may run per process against ${dbPath}.`
+				`writer may run per process against ${dbPath}.`,
 		);
 	}
 	let acquired = false;
@@ -160,7 +160,7 @@ export function acquireWriterLock(dbPath: string): WriterLock {
 			}
 			webLogger.warn(
 				{ ageMs: holder.ageMs, lockPath, reason: holder.reason },
-				'Reclaiming stale unreadable database writer lock'
+				'Reclaiming stale unreadable database writer lock',
 			);
 			rmSync(lockPath, { force: true });
 			continue;
@@ -183,20 +183,20 @@ export function acquireWriterLock(dbPath: string): WriterLock {
 			throw new Error(
 				`Another aidd backend (pid ${payload.pid} on ${payload.host}) already holds the database ` +
 					`writer lock at ${lockPath}. Only one backend may write to ${dbPath} at a time. Stop ` +
-					'the other instance (bun run stop:web) before starting a new one.'
+					'the other instance (bun run stop:web) before starting a new one.',
 			);
 		}
 		// Holder is dead or a reused-pid leftover: clear the stale lock and retry.
 		webLogger.warn(
 			{ holder: payload, lockPath },
-			'Reclaiming stale database writer lock from a dead holder'
+			'Reclaiming stale database writer lock from a dead holder',
 		);
 		rmSync(lockPath, { force: true });
 	}
 	if (!acquired) {
 		throw new Error(
 			`Failed to acquire database writer lock at ${lockPath} after ${LOCK_ACQUIRE_ATTEMPTS} attempts; ` +
-				'another backend may be starting concurrently.'
+				'another backend may be starting concurrently.',
 		);
 	}
 	heldLocks.add(lockPath);

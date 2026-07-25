@@ -10,7 +10,7 @@ import { uniqueOrdered } from '../triumvirate/planning-recovery.ts';
 
 export async function claimSelectedFeatureForIteration(
 	store: AiddStore,
-	work: SelectedWork
+	work: SelectedWork,
 ): Promise<string | undefined> {
 	if (work.kind !== 'feature') return undefined;
 	const feature = await store.readFeature(work.id);
@@ -31,14 +31,14 @@ export async function claimSelectedFeatureForIteration(
 }
 
 export async function captureFeatureCompletionSnapshot(
-	store: AiddStore
+	store: AiddStore,
 ): Promise<FeatureCompletionSnapshot> {
 	const snapshot: FeatureCompletionSnapshot = new Map();
 	const features = await store.listFeatures({ includeAudit: true });
 	for (const feature of features) {
 		snapshot.set(
 			feature.directory ?? feature.id,
-			feature.status === 'completed' && feature.passes === true
+			feature.status === 'completed' && feature.passes === true,
 		);
 	}
 	return snapshot;
@@ -48,7 +48,7 @@ export async function auditFeatureScope(
 	store: AiddStore,
 	work: SelectedWork,
 	before: FeatureCompletionSnapshot,
-	allowedCompletedFeature: string | undefined
+	allowedCompletedFeature: string | undefined,
 ): Promise<FeatureScopeAudit> {
 	const allowedFeatureIds = allowedFeatureIdsForWork(work);
 	const allowedFeatureIdSet = new Set(allowedFeatureIds);
@@ -60,7 +60,7 @@ export async function auditFeatureScope(
 		completed.push(allowedCompletedFeature);
 	}
 	const completedAllowedFeatures = completed.filter((featureId) =>
-		allowedFeatureIdSet.has(featureId)
+		allowedFeatureIdSet.has(featureId),
 	);
 	const selected =
 		work.kind === 'feature'
@@ -98,7 +98,7 @@ export function allowedFeatureIdsForWork(work: SelectedWork): string[] {
 export async function acceptedCompletedFeatureFromEvents(
 	store: AiddStore,
 	events: AgentEvent[],
-	work: SelectedWork
+	work: SelectedWork,
 ): Promise<string | undefined> {
 	const structuredResult = extractStructuredResult(events);
 	const featureId =

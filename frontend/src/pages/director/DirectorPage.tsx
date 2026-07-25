@@ -37,7 +37,7 @@ export function DirectorPage() {
 	// Cycles run on the persisted director profile (or the Direct-AI surface when enabled) —
 	// there is no per-cycle override, so the badge is read-only and points at the profile editor.
 	const directAiActive = Boolean(
-		settings.data?.directAi.enabled && settings.data.directAi.surfaces.directorCycle
+		settings.data?.directAi.enabled && settings.data.directAi.surfaces.directorCycle,
 	);
 	const directProvider =
 		settings.data?.directAi.provider ?? settings.data?.defaultProvider ?? undefined;
@@ -86,7 +86,7 @@ export function DirectorPage() {
 					setChatInput(content);
 					toast.error(error instanceof Error ? error.message : 'Director chat failed');
 				},
-			}
+			},
 		);
 	}
 
@@ -123,7 +123,7 @@ export function DirectorPage() {
 					setCycleDirective('');
 					toast.success('Director cycle completed');
 				},
-			}
+			},
 		);
 	}
 
@@ -221,7 +221,7 @@ export function DirectorPage() {
 							<ActiveCyclePanel cycle={activeCycle} now={now} />
 						) : director.triggerCycle.isPending ? (
 							<div className="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 text-sm text-neutral-700 dark:border-teal-900 dark:bg-teal-950/30 dark:text-neutral-300">
-								<div className="text-foreground flex items-center gap-2 font-medium">
+								<div className="flex items-center gap-2 font-medium text-foreground">
 									<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 									Starting director cycle
 								</div>

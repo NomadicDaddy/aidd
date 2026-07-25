@@ -53,7 +53,7 @@ export function extractIterationDetails(
 		missingAiddResult?: boolean;
 		missingAuditArtifacts?: boolean;
 		residualDirtyFilesCount?: number;
-	}
+	},
 ): IterationDetails {
 	const filesRead: string[] = [];
 	const filesEdited: string[] = [];
@@ -182,7 +182,7 @@ export function extractIterationDetails(
 	const verificationLifecycleConflict = detectVerificationLifecycleConflict(
 		commands,
 		events,
-		exitCode
+		exitCode,
 	);
 	const activeVerificationTimeout =
 		verificationLifecycleConflict === undefined

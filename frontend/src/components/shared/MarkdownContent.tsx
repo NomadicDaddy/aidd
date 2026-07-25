@@ -28,7 +28,7 @@ function renderInline(text: string): ReactNode[] {
 					className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[0.85em] dark:bg-neutral-800"
 					key={`c${key++}`}>
 					{match[4]}
-				</code>
+				</code>,
 			);
 		}
 		lastIndex = match.index + match[0].length;

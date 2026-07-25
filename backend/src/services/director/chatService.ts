@@ -51,7 +51,7 @@ export class DirectorChatService {
 		profileService: DirectorProfileService,
 		fleetSummaryService: DirectorFleetSummaryService,
 		chatAgent: DirectorChatAgent,
-		listRecipes: () => Promise<DirectorRecipeSummary[]> = async () => []
+		listRecipes: () => Promise<DirectorRecipeSummary[]> = async () => [],
 	) {
 		this.db = db;
 		this.getConfig = getConfig;
@@ -108,7 +108,7 @@ export class DirectorChatService {
 
 	async sendChatMessage(
 		sessionId: string,
-		input: DirectorChatMessageInput
+		input: DirectorChatMessageInput,
 	): Promise<{
 		assistant: DirectorChatMessageRecord;
 		user: DirectorChatMessageRecord;
@@ -144,7 +144,7 @@ export class DirectorChatService {
 				fleetSummary,
 				recentMessages,
 				session.id,
-				recipeCatalog
+				recipeCatalog,
 			);
 		} catch (err) {
 			// The user message is already persisted. Persist a system message so the
@@ -218,7 +218,7 @@ export class DirectorChatService {
 	}
 
 	private async requireChatSession(
-		sessionId: string
+		sessionId: string,
 	): Promise<typeof directorChatSessions.$inferSelect> {
 		const session = (
 			await this.db
@@ -235,7 +235,7 @@ export class DirectorChatService {
 		fleetSummary: FleetSummary,
 		messages: DirectorChatMessageRecord[],
 		sessionId: string,
-		recipeCatalog: DirectorRecipeSummary[]
+		recipeCatalog: DirectorRecipeSummary[],
 	): Promise<{ actions: ChatAgentAction[]; text: string }> {
 		if (this.directAiService.isSurfaceEnabled('directorChat')) {
 			try {
@@ -262,7 +262,7 @@ export class DirectorChatService {
 			profile,
 			fleetSummary,
 			messages,
-			recipeCatalog
+			recipeCatalog,
 		);
 		return { actions: [], text };
 	}

@@ -80,7 +80,7 @@ export function NetworkAccessSection({
 								onChange={(event) =>
 									setField(
 										'port',
-										event.target.value.trim() ? Number(event.target.value) : 0
+										event.target.value.trim() ? Number(event.target.value) : 0,
 									)
 								}
 								type="number"

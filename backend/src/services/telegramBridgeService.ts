@@ -85,7 +85,7 @@ export class TelegramBridgeService {
 	private start(
 		config: ResolvedConfig,
 		telegram: ResolvedTelegramBridgeConfig,
-		nextKey: string
+		nextKey: string,
 	): void {
 		const web = config.web;
 		if (!web) {
@@ -94,7 +94,7 @@ export class TelegramBridgeService {
 		}
 		if (telegram.allowedChatIds.length === 0) {
 			this.logger.warn(
-				'channels.telegram.allowedChatIds is empty; every Telegram message will be ignored'
+				'channels.telegram.allowedChatIds is empty; every Telegram message will be ignored',
 			);
 		}
 		const api = this.apiClientFactory(web);
@@ -109,7 +109,7 @@ export class TelegramBridgeService {
 		this.controller = controller;
 		this.logger.info(
 			{ allowedChatIds: telegram.allowedChatIds, baseUrl: api.baseUrl },
-			'aidd Telegram bridge started'
+			'aidd Telegram bridge started',
 		);
 		this.loop = this.runLoop({
 			handler,

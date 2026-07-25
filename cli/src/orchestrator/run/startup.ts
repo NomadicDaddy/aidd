@@ -37,7 +37,7 @@ type OrchestratorStartup = ReadyStartup | ReturnedStartup;
 export async function initializeOrchestratorRun(
 	plan: RunPlan,
 	deps: OrchestratorDeps,
-	move: MoveFn
+	move: MoveFn,
 ): Promise<OrchestratorStartup> {
 	const preCheckExit = await handlePreRunChecks(plan, deps, move);
 	if (preCheckExit !== undefined) {

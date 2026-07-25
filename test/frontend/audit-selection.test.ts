@@ -34,7 +34,7 @@ describe('clearVisibleAudits', () => {
 });
 
 describe('toggleAuditSelected', () => {
-	const enabled = new Set(['SECURITY', 'PERF']);
+	const enabled = new Set(['PERF', 'SECURITY']);
 
 	test('adds an enabled audit that is not yet selected', () => {
 		expect(toggleAuditSelected([], 'SECURITY', enabled)).toEqual(['SECURITY']);

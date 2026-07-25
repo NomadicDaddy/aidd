@@ -27,7 +27,7 @@ import {
 function normalizeBackendName(raw: string): BenchmarkBackendName {
 	if ((backendNames as readonly string[]).includes(raw)) return raw as BenchmarkBackendName;
 	throw new Error(
-		`Unsupported benchmark backend '${raw}'. Valid v2 backends: ${backendNames.join(', ')}`
+		`Unsupported benchmark backend '${raw}'. Valid v2 backends: ${backendNames.join(', ')}`,
 	);
 }
 
@@ -56,7 +56,7 @@ function readManifest(filePath: string): BenchmarkManifest {
 		const reasoningEffort = optionalString(
 			record,
 			'reasoningEffort',
-			`manifest.stacks[${index}]`
+			`manifest.stacks[${index}]`,
 		);
 		const thinkingLevel = optionalString(record, 'thinkingLevel', `manifest.stacks[${index}]`);
 		const simulation = booleanValue(record.simulation);
@@ -75,12 +75,12 @@ function readManifest(filePath: string): BenchmarkManifest {
 			const normalized = normalizeThinkingLevel(thinkingLevel);
 			if (normalized === undefined) {
 				throw new Error(
-					`manifest.stacks[${index}].thinkingLevel must be low, medium, or high`
+					`manifest.stacks[${index}].thinkingLevel must be low, medium, or high`,
 				);
 			}
 			if (thinking === false) {
 				throw new Error(
-					`manifest.stacks[${index}].thinkingLevel cannot be combined with thinking: false`
+					`manifest.stacks[${index}].thinkingLevel cannot be combined with thinking: false`,
 				);
 			}
 			stack.thinkingLevel = normalized;
@@ -111,12 +111,12 @@ function readManifest(filePath: string): BenchmarkManifest {
 		const scoredRepetitions = optionalInteger(
 			record,
 			'scoredRepetitions',
-			`manifest.tasks[${index}]`
+			`manifest.tasks[${index}]`,
 		);
 		const warmupRepetitions = optionalInteger(
 			record,
 			'warmupRepetitions',
-			`manifest.tasks[${index}]`
+			`manifest.tasks[${index}]`,
 		);
 		if (evaluation !== undefined) task.evaluation = evaluation;
 		if (scoredRepetitions !== undefined) task.scoredRepetitions = scoredRepetitions;
@@ -165,7 +165,7 @@ function readManifest(filePath: string): BenchmarkManifest {
 				targetModelFamily: requireString(
 					record,
 					'targetModelFamily',
-					`manifest.cohorts[${index}]`
+					`manifest.cohorts[${index}]`,
 				),
 			};
 		}),
@@ -174,14 +174,14 @@ function readManifest(filePath: string): BenchmarkManifest {
 			correctnessWeight: requireNumber(
 				scoringRecord,
 				'correctnessWeight',
-				'manifest.scoring'
+				'manifest.scoring',
 			),
 			costPolicy: requireString(scoringRecord, 'costPolicy', 'manifest.scoring'),
 			costWeight: requireNumber(scoringRecord, 'costWeight', 'manifest.scoring'),
 			reliabilityWeight: requireNumber(
 				scoringRecord,
 				'reliabilityWeight',
-				'manifest.scoring'
+				'manifest.scoring',
 			),
 			timeWeight: requireNumber(scoringRecord, 'timeWeight', 'manifest.scoring'),
 		},

@@ -45,7 +45,7 @@ export function LocalRunsTable({
 		runs.forEach((run, index) => {
 			const category = categorizeRun(
 				run,
-				iterationsByRunKey.get(runRowKey(run, index)) ?? []
+				iterationsByRunKey.get(runRowKey(run, index)) ?? [],
 			);
 			if (category) set.add(category);
 		});
@@ -60,7 +60,7 @@ export function LocalRunsTable({
 			if (activeCategories.size > 0) {
 				const category = categorizeRun(
 					run,
-					iterationsByRunKey.get(runRowKey(run, index)) ?? []
+					iterationsByRunKey.get(runRowKey(run, index)) ?? [],
 				);
 				if (!category || !activeCategories.has(category)) return false;
 			}

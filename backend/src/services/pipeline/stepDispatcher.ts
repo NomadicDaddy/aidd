@@ -27,7 +27,7 @@ export class StepDispatcher {
 		step: RecipeStepDefinition,
 		config: Record<string, RecipeConfigValue>,
 		context: ExecutionContext,
-		resultId: string
+		resultId: string,
 	): Promise<StepDispatchResult> {
 		if (step.stepType === 'shell') return await this.shellStepHandler.handle(config, context);
 		if (step.stepType === 'recipe-ref') {

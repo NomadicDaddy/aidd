@@ -1,6 +1,6 @@
 import type { ResolvedTriumvirateConfig } from 'aidd-shared/config';
 
-import { requireBackendName, type BackendName } from 'aidd-shared/plan/types';
+import { type BackendName, requireBackendName } from 'aidd-shared/plan/types';
 import { isCompiledBinary } from 'aidd-shared/runtime';
 import { access } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
@@ -17,39 +17,39 @@ import { HttpError } from './errors.ts';
 // launch route intentionally does not expose (director/role/directive) or an alternate entrypoint
 // (web/mcp). Mode is chosen via the request `mode` field, never here.
 const PROTECTED_EXTRA_ARG_FLAGS: ReadonlySet<string> = new Set([
-	// Scope / arbitrary-file-read flags.
-	'--project-dir',
-	'--spec',
-	'--stop-before-implementation',
-	'--fleet-summary',
-	'--director-output',
-	'--director-context',
-	'--suggestion-schema',
 	// Mode-defining flags (the request `mode` field is authoritative).
 	'--audit',
 	'--audit-all',
-	'--todo',
-	'--validate',
-	'--triumvirate',
-	'--interview',
-	'--director',
-	'--directive',
-	'--in-progress',
-	// Alternate entrypoints / server modes.
-	'--web',
-	'--port',
-	'--mcp',
 	'--config-matrix',
+	'--directive',
+	'--directive-readonly',
+	'--director',
+	'--director-context',
+	'--director-output',
+	'--fleet-summary',
+	'--in-progress',
+	'--interview',
+	'--mcp',
+	'--port',
+	// Scope / arbitrary-file-read flags.
+	'--project-dir',
 	// Directive injection handled by the skill pipeline path, not raw run args.
 	'--skill',
 	'--skill-args',
-	'--directive-readonly',
-	// Write-boundary enforcement is owned by the launch request, never extra args.
-	'--write-allowlist',
+	'--spec',
+	'--stop-before-implementation',
+	'--suggestion-schema',
+	'--todo',
+	'--triumvirate',
+	'--validate',
+	// Alternate entrypoints / server modes.
+	'--web',
 	// Worktree isolation is gated by web.useWorktrees and the launcher records the run's
 	// worktree path/branch on the row up front; letting extra args flip it on would create a
 	// worktree the row knows nothing about, breaking orphan cleanup and parked-run tracking.
 	'--worktree',
+	// Write-boundary enforcement is owned by the launch request, never extra args.
+	'--write-allowlist',
 ]);
 
 export interface LaunchCommand {
@@ -143,7 +143,7 @@ function addModeArgs(args: string[], input: RunLaunchRequest, mode: WebRunMode):
 	if (mode === 'director') {
 		if (!input.directorFleetSummaryPath || !input.directorOutputPath) {
 			throw new Error(
-				'director mode requires directorFleetSummaryPath and directorOutputPath'
+				'director mode requires directorFleetSummaryPath and directorOutputPath',
 			);
 		}
 		args.push(
@@ -151,7 +151,7 @@ function addModeArgs(args: string[], input: RunLaunchRequest, mode: WebRunMode):
 			'--fleet-summary',
 			input.directorFleetSummaryPath,
 			'--director-output',
-			input.directorOutputPath
+			input.directorOutputPath,
 		);
 		if (input.directorContextPath) {
 			args.push('--director-context', input.directorContextPath);
@@ -165,7 +165,7 @@ function addModeArgs(args: string[], input: RunLaunchRequest, mode: WebRunMode):
 		}
 		args.push(
 			'--audit',
-			(input.auditNames?.length ? input.auditNames : ['CODE_QUALITY']).join(',')
+			(input.auditNames?.length ? input.auditNames : ['CODE_QUALITY']).join(','),
 		);
 		return;
 	}
@@ -189,7 +189,7 @@ function addModeArgs(args: string[], input: RunLaunchRequest, mode: WebRunMode):
 export async function buildLaunchCommand(
 	rootDir: string,
 	input: RunLaunchRequest,
-	defaults: BackendName | LaunchDefaults
+	defaults: BackendName | LaunchDefaults,
 ): Promise<LaunchCommand> {
 	let entrypoint: string;
 	let args: string[];
@@ -220,32 +220,32 @@ export async function buildLaunchCommand(
 		addOptionalFlag(
 			args,
 			'--secondary-cli',
-			backendFlag(input.secondaryBackend) ?? launchDefaults.triumvirate?.secondaryCli
+			backendFlag(input.secondaryBackend) ?? launchDefaults.triumvirate?.secondaryCli,
 		);
 		addOptionalFlag(
 			args,
 			'--secondary-model',
-			input.secondaryModel ?? launchDefaults.triumvirate?.secondaryModel
+			input.secondaryModel ?? launchDefaults.triumvirate?.secondaryModel,
 		);
 		addOptionalFlag(
 			args,
 			'--overseer-cli',
-			backendFlag(input.overseerBackend) ?? launchDefaults.triumvirate?.overseerCli
+			backendFlag(input.overseerBackend) ?? launchDefaults.triumvirate?.overseerCli,
 		);
 		addOptionalFlag(
 			args,
 			'--overseer-model',
-			input.overseerModel ?? launchDefaults.triumvirate?.overseerModel
+			input.overseerModel ?? launchDefaults.triumvirate?.overseerModel,
 		);
 		addOptionalFlag(
 			args,
 			'--exec-cli',
-			backendFlag(input.execBackend) ?? launchDefaults.triumvirate?.execCli
+			backendFlag(input.execBackend) ?? launchDefaults.triumvirate?.execCli,
 		);
 		addOptionalFlag(
 			args,
 			'--exec-model',
-			input.execModel ?? launchDefaults.triumvirate?.execModel
+			input.execModel ?? launchDefaults.triumvirate?.execModel,
 		);
 	}
 	// Pinned explicitly (like --cli/--model) so the recorded command and the child agree
@@ -253,7 +253,7 @@ export async function buildLaunchCommand(
 	addOptionalFlag(
 		args,
 		'--reasoning-effort',
-		input.reasoningEffort ?? launchDefaults.reasoningEffort
+		input.reasoningEffort ?? launchDefaults.reasoningEffort,
 	);
 	addOptionalFlag(args, '--max-iterations', input.maxIterations);
 	addOptionalFlag(args, '--feature', input.feature);

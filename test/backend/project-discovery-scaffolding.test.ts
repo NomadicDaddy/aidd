@@ -39,7 +39,7 @@ describe('project discovery ignores bundled distribution assets', () => {
 		const result = await scanRoot(
 			base,
 			5,
-			createIgnoredDirectoryMatcher(defaultIgnoredFolders)
+			createIgnoredDirectoryMatcher(defaultIgnoredFolders),
 		);
 		const paths = result.projects.map((project) => project.path);
 

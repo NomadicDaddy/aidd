@@ -35,7 +35,7 @@ export type {
 } from './triumvirate/types.ts';
 
 export async function runTriumvirateIteration(
-	options: TriumvirateRunOptions
+	options: TriumvirateRunOptions,
 ): Promise<TriumvirateRunResult> {
 	if (!options.plan.triumvirate) {
 		return {
@@ -65,17 +65,17 @@ export async function runTriumvirateIteration(
 		const primaryPlanningPrompt = rewritePromptProjectPathForPlanningMirror(
 			options.compiledPrompt,
 			runRepoDir(options.plan),
-			planningProjectDirs.primary
+			planningProjectDirs.primary,
 		);
 		const secondaryPlanningPrompt = rewritePromptProjectPathForPlanningMirror(
 			options.compiledPrompt,
 			runRepoDir(options.plan),
-			planningProjectDirs.secondary
+			planningProjectDirs.secondary,
 		);
 		const overseerPlanningPrompt = rewritePromptProjectPathForPlanningMirror(
 			options.compiledPrompt,
 			runRepoDir(options.plan),
-			planningProjectDirs.overseer
+			planningProjectDirs.overseer,
 		);
 		const metadata = buildTriumvirateMetadata(options.plan, options.work, planningProjectDirs);
 		const metrics: IterationMetrics = { ...emptyMetrics, errorReasons: [], toolBreakdown: {} };
@@ -94,7 +94,7 @@ export async function runTriumvirateIteration(
 				'primary',
 				primaryPlanningPrompt,
 				options.work,
-				planningProjectDirs.primary
+				planningProjectDirs.primary,
 			),
 			scratchRoot,
 			sourceProjectDir: scratchSourceDir,
@@ -142,7 +142,7 @@ export async function runTriumvirateIteration(
 				'secondary',
 				secondaryPlanningPrompt,
 				options.work,
-				planningProjectDirs.secondary
+				planningProjectDirs.secondary,
 			),
 			scratchRoot,
 			sourceProjectDir: scratchSourceDir,
@@ -167,7 +167,7 @@ export async function runTriumvirateIteration(
 		const secondaryGuard = await assertUnchanged(
 			'secondary',
 			baseline,
-			runRepoDir(options.plan)
+			runRepoDir(options.plan),
 		);
 		if (secondaryGuard) {
 			return guardedResult(secondaryGuard, metrics, {
@@ -192,7 +192,7 @@ export async function runTriumvirateIteration(
 				primary,
 				secondary,
 				planningProjectDirs.overseer,
-				options.plan.consistencyGate ?? false
+				options.plan.consistencyGate ?? false,
 			),
 			scratchRoot,
 			sourceProjectDir: scratchSourceDir,

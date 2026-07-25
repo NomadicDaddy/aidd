@@ -35,8 +35,8 @@ import { createTerminalRoutes } from './routes/terminal.ts';
 import { createWebSocketRoutes } from './routes/ws.ts';
 import {
 	cacheControlFor,
-	compressOnce,
 	compressed,
+	compressOnce,
 	contentTypeFor,
 	isCompressible,
 	negotiateEncoding,
@@ -57,7 +57,7 @@ function encodedResponse(
 	contentType: string,
 	cacheControl: null | string,
 	acceptEncoding: null | string,
-	identity: string
+	identity: string,
 ): Response {
 	const headers = new Headers({ 'content-type': contentType });
 	if (cacheControl) headers.set('Cache-Control', cacheControl);
@@ -79,7 +79,7 @@ async function serveStaticFile(
 	path: string,
 	traceDefault: boolean,
 	acceptEncoding: null | string,
-	options: StaticFileOptions = {}
+	options: StaticFileOptions = {},
 ): Promise<Response> {
 	const relativePath = path.replace(/^\/+/, '') || 'index.html';
 	const candidate = resolve(distDir, relativePath);
@@ -138,7 +138,7 @@ export function createWebServer(context: WebContext) {
 			.use(
 				context.config.web?.allowRemote
 					? createRemoteOriginGuardPlugin(context.config.web)
-					: new Elysia()
+					: new Elysia(),
 			)
 			.use(createHealthRoutes())
 			.use(createAdminRoutes(context))
@@ -169,8 +169,8 @@ export function createWebServer(context: WebContext) {
 					distDir,
 					new URL(request.url).pathname,
 					traceDefault(),
-					request.headers.get('accept-encoding')
-				)
+					request.headers.get('accept-encoding'),
+				),
 			)
 			.get('/', ({ request }) =>
 				serveStaticFile(
@@ -178,8 +178,8 @@ export function createWebServer(context: WebContext) {
 					'index.html',
 					traceDefault(),
 					request.headers.get('accept-encoding'),
-					{ fallbackToIndex: true }
-				)
+					{ fallbackToIndex: true },
+				),
 			)
 			.get('/*', ({ request, set }) => {
 				const path = new URL(request.url).pathname;
@@ -192,7 +192,7 @@ export function createWebServer(context: WebContext) {
 					path,
 					traceDefault(),
 					request.headers.get('accept-encoding'),
-					{ fallbackToIndex: true }
+					{ fallbackToIndex: true },
 				);
 			})
 	);

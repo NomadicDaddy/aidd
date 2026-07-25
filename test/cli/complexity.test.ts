@@ -31,8 +31,8 @@ describe('classifyComplexity', () => {
 		expect(
 			classifyComplexity(
 				{ dependencyCount: 0, textLength: 100 },
-				{ depsMedium: 5, textMedium: 50 }
-			)
+				{ depsMedium: 5, textMedium: 50 },
+			),
 		).toBe('medium');
 	});
 });
@@ -45,7 +45,7 @@ describe('complexitySignalsForFeature', () => {
 				description: 'x'.repeat(100),
 				id: 'feature-1-thing',
 				title: 'y'.repeat(20),
-			})
+			}),
 		).toEqual({ dependencyCount: 2, textLength: 120 });
 	});
 

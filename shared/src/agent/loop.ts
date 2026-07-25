@@ -1,11 +1,11 @@
 import type { AgentEvent, PromptInput } from '../backends/types.ts';
 
 import {
-	SimulationAgentClient,
 	type AgentClient,
 	type AgentLoopRequest,
 	type AgentLoopResponse,
 	type AgentMessage,
+	SimulationAgentClient,
 } from './client.ts';
 import {
 	afterToolCalls,
@@ -39,7 +39,7 @@ function isAbortError(error: unknown): boolean {
 
 export async function* runAgentLoop(
 	input: PromptInput,
-	options: AgentLoopOptions = {}
+	options: AgentLoopOptions = {},
 ): AsyncIterable<AgentEvent> {
 	const signal = options.signal ?? new AbortController().signal;
 	const client = options.client ?? new SimulationAgentClient();
@@ -145,7 +145,7 @@ export async function* runAgentLoop(
 					toolCall.name,
 					toolCall.arguments,
 					input.cwd,
-					options.simulation
+					options.simulation,
 				);
 				trackModifiedFile(filesModified, toolCall.name, args);
 				yield { result, tool: toolCall.name, type: 'tool_result' };
@@ -158,7 +158,7 @@ export async function* runAgentLoop(
 
 			const afterTools = afterToolCalls(
 				heuristicState,
-				response.toolCalls.map((toolCall) => toolCall.name)
+				response.toolCalls.map((toolCall) => toolCall.name),
 			);
 			heuristicState = afterTools.state;
 			if (afterTools.nudge?.action === 'nudge') {

@@ -17,7 +17,7 @@ export async function handlePromptEncodingGuard(
 	plan: RunPlan,
 	deps: OrchestratorDeps,
 	acc: RunAccumulator,
-	move: MoveFn
+	move: MoveFn,
 ): Promise<number | undefined> {
 	if (plan.mode === 'director') return undefined;
 	const doctor = await runPreflightDoctor(plan, { prober: deps.doctorProber });
@@ -30,7 +30,7 @@ export async function handlePromptEncodingGuard(
 			acc,
 			'blocked',
 			orchestratorExitCodes.generalError,
-			doctor.summary
+			doctor.summary,
 		);
 	}
 	const encodingViolations = await findPromptArtifactEncodingViolations(runRepoDir(plan));
@@ -44,7 +44,7 @@ export async function handlePromptEncodingGuard(
 		acc,
 		'exit_error',
 		orchestratorExitCodes.validationError,
-		summary
+		summary,
 	);
 	return orchestratorExitCodes.validationError;
 }

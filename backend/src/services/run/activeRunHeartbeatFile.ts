@@ -21,7 +21,7 @@ export interface SweptRunInfo {
 
 export async function readHeartbeatRecord(
 	projectPath: string,
-	runId: string
+	runId: string,
 ): Promise<CliActiveRunRecord | undefined> {
 	try {
 		const raw = await readFile(activeRunFilePath(projectPath, runId), 'utf8');

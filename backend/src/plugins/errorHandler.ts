@@ -26,5 +26,5 @@ export const errorHandlerPlugin = new Elysia({ name: 'error-handler' }).onError(
 		set.status = 500;
 		const message = error instanceof Error ? error.message : String(error);
 		return { error: message };
-	}
+	},
 );

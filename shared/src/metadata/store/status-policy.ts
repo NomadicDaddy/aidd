@@ -17,7 +17,7 @@ export interface CreationStatusDeps {
 
 export async function applyCreationStatusPolicy(
 	feature: Feature,
-	deps: CreationStatusDeps
+	deps: CreationStatusDeps,
 ): Promise<Feature> {
 	if (feature.status !== 'backlog') return feature;
 	if (isAuditFinding(feature) || isRemediationFeature(feature)) return feature;

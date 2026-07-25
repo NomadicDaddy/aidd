@@ -33,7 +33,7 @@ const historyRowCap = 50_000;
 
 export async function readRecentSuggestionHistory(
 	db: WebDatabase,
-	options: { limit?: number; sinceMs: number }
+	options: { limit?: number; sinceMs: number },
 ): Promise<SuggestionHistoryEntry[]> {
 	const limit = options.limit ?? 100;
 	const collapsed = new Map<string, SuggestionHistoryEntry>();

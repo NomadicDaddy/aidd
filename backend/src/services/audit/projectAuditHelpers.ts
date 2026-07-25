@@ -1,18 +1,18 @@
 import {
+	type AuditProfileOverrides,
 	buildApplicabilityMatrix,
 	isAuditApplicableToProfile,
 	normalizeAuditProfileOverrides,
-	type AuditProfileOverrides,
 } from 'aidd-shared';
 import {
 	createAuditFreshnessContext,
 	evaluateAuditReportFreshness,
 } from 'aidd-shared/metadata/audit-freshness';
 import {
+	auditProfileOverridesPath,
 	loadAuditProfileMapping,
 	loadAuditProfileOverrides,
 	writeAuditProfileOverrides,
-	auditProfileOverridesPath,
 } from 'aidd-shared/metadata/audit-profile-mapping';
 import { readProjectAssuranceProfile } from 'aidd-shared/metadata/project-profile';
 import { discoverAuditNames } from 'aidd-shared/modes/audit-shared';
@@ -30,7 +30,7 @@ export async function saveProjectAuditOverridesImpl(
 	projectId: string,
 	input: unknown,
 	resolveProject: (id: string) => Promise<string>,
-	rootDir: string
+	rootDir: string,
 ): Promise<AuditProfileOverrides> {
 	const projectDir = await resolveProject(projectId);
 	const target = auditProfileOverridesPath(projectDir);
@@ -55,7 +55,7 @@ export async function saveProjectAuditOverridesImpl(
 			if (!knownAudits.has(audit.toUpperCase())) {
 				throw new HttpError(
 					`Override rule ${rule.id} references unknown audit: ${audit}`,
-					400
+					400,
 				);
 			}
 		}
@@ -81,7 +81,7 @@ export async function listProjectAuditsImpl(
 	rootDir: string,
 	auditsEnabled: boolean,
 	auditPathFn: (name: string) => string,
-	resolveScoringRoots: () => string[]
+	resolveScoringRoots: () => string[],
 ): Promise<ProjectAuditsDto> {
 	const projectDir = await resolveProject(projectId);
 	const [auditNames, mapping, profile, overrides] = await Promise.all([

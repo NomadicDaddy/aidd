@@ -28,7 +28,7 @@ const DEFAULT_FALLBACK_MS = 150;
 
 export function createFlushScheduler(
 	flush: () => void,
-	options: FlushSchedulerOptions = {}
+	options: FlushSchedulerOptions = {},
 ): FlushScheduler {
 	const fallbackMs = options.fallbackMs ?? DEFAULT_FALLBACK_MS;
 	const requestFrame = options.requestFrame ?? defaultRequestFrame;

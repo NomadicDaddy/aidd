@@ -8,7 +8,7 @@ import { IconButton } from '../ui/button.tsx';
 import { Dialog } from '../ui/dialog.tsx';
 
 const HelpDrawerBody = lazy(() =>
-	import('../../pages/docs/HelpDrawerBody.tsx').then((m) => ({ default: m.HelpDrawerBody }))
+	import('../../pages/docs/HelpDrawerBody.tsx').then((m) => ({ default: m.HelpDrawerBody })),
 );
 
 const TITLE_ID = 'help-drawer-title';
@@ -40,7 +40,7 @@ export function HelpDrawer({
 						<div className="text-[0.65rem] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-300">
 							Help
 						</div>
-						<h2 className="text-foreground text-base font-semibold" id={TITLE_ID}>
+						<h2 className="text-base font-semibold text-foreground" id={TITLE_ID}>
 							{section?.title ?? 'Documentation'}
 						</h2>
 					</div>

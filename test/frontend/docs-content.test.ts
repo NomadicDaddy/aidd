@@ -11,14 +11,14 @@ const DOCS_DIR = resolve(import.meta.dir, '../../frontend/content/docs');
 // help-enabled pages; keep in sync with the help-wired routes in App.tsx.
 const KNOWN_ROUTES = new Set([
 	'/',
-	'/projects',
-	'/runs',
-	'/director',
 	'/audits',
-	'/skills',
+	'/director',
+	'/projects',
 	'/recipes',
-	'/telemetry',
+	'/runs',
 	'/settings',
+	'/skills',
+	'/telemetry',
 ]);
 
 // Constructs the bundled MarkdownContent renderer cannot render. Authored docs

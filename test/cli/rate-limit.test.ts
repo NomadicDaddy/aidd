@@ -14,10 +14,10 @@ describe('parseRateLimitReset', () => {
 		const earlier = new Date('2026-05-05T01:00:00');
 		const reset = parseRateLimitReset(
 			'hit your rate limit, resets 2am (America/Chicago)',
-			earlier
+			earlier,
 		);
 		expect(reset?.toISOString().slice(0, 16)).toBe(
-			new Date('2026-05-05T02:00:00').toISOString().slice(0, 16)
+			new Date('2026-05-05T02:00:00').toISOString().slice(0, 16),
 		);
 	});
 

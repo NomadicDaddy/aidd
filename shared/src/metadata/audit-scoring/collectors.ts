@@ -4,7 +4,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { featureSchema, type Feature } from '../features.ts';
+import { type Feature, featureSchema } from '../features.ts';
 import { METADATA_DIR } from '../paths.ts';
 import { type AuditPriority, extractPriorityFromFrontmatter } from './scorer.ts';
 
@@ -17,13 +17,13 @@ export const AUDIT_RUN_SUMMARY_PATTERN = /^audit (\S+) finished with (\d+) findi
 // prefix filter handles dotted dirs (`.git`, `.aidd`, `.old`, `.next`, …) so this set
 // only needs to name non-dot entries we want to skip.
 export const IGNORED_DIRS: ReadonlySet<string> = new Set([
-	'node_modules',
-	'dist',
 	'build',
 	'coverage',
+	'dist',
+	'node_modules',
 	'out',
-	'tmp',
 	'temp',
+	'tmp',
 ]);
 
 // Tail-truncate the runs ledger so a long-lived project does not turn one scorer call
@@ -136,7 +136,7 @@ function auditNameFromFeature(feature: Feature, directoryName: string): string |
 
 async function collectAuditReports(
 	projectDir: string,
-	evidence: ProjectAuditEvidence
+	evidence: ProjectAuditEvidence,
 ): Promise<void> {
 	const reportsDir = join(projectDir, METADATA_DIR, 'audit-reports');
 	let entries: string[];
@@ -161,7 +161,7 @@ function incrementCounter(map: Map<string, number>, key: string): void {
 
 export async function loadAuditPriorities(
 	catalogDir: string,
-	auditNames: readonly string[]
+	auditNames: readonly string[],
 ): Promise<Map<string, AuditPriority | null>> {
 	const map = new Map<string, AuditPriority | null>();
 	await Promise.all(
@@ -174,7 +174,7 @@ export async function loadAuditPriorities(
 			} catch {
 				map.set(key, null);
 			}
-		})
+		}),
 	);
 	return map;
 }

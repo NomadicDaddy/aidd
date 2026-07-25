@@ -1,4 +1,4 @@
-import type { DirectorCycleStage, DirectAiMeta } from 'aidd-shared';
+import type { DirectAiMeta, DirectorCycleStage } from 'aidd-shared';
 
 import { eq } from 'drizzle-orm';
 
@@ -21,7 +21,7 @@ export interface ReconcileStaleCyclesContext {
 		cycleId: string,
 		runId: string,
 		outputPath: string,
-		fleetSummary: FleetSummary
+		fleetSummary: FleetSummary,
 	): Promise<unknown>;
 	db: WebDatabase;
 	executorDeps(): CycleExecutorDeps;
@@ -30,7 +30,7 @@ export interface ReconcileStaleCyclesContext {
 	setCycleStage(
 		cycleId: string,
 		stage: DirectorCycleStage,
-		directAiMeta?: DirectAiMeta | null
+		directAiMeta?: DirectAiMeta | null,
 	): void;
 }
 
@@ -49,7 +49,7 @@ export async function reconcileStaleCycles(ctx: ReconcileStaleCyclesContext): Pr
 				ctx.db,
 				ctx.hub,
 				cycle.id,
-				new Error('Director cycle has no associated run at web startup')
+				new Error('Director cycle has no associated run at web startup'),
 			);
 			orphaned++;
 			continue;
@@ -61,7 +61,7 @@ export async function reconcileStaleCycles(ctx: ReconcileStaleCyclesContext): Pr
 				ctx.db,
 				ctx.hub,
 				cycle.id,
-				new Error('Director cycle fleet-summary artifact missing at web startup')
+				new Error('Director cycle fleet-summary artifact missing at web startup'),
 			);
 			orphaned++;
 			continue;
@@ -81,7 +81,7 @@ export async function reconcileStaleCycles(ctx: ReconcileStaleCyclesContext): Pr
 				run.status as WebRunStatus,
 				artifacts.outputPath,
 				fleetSummary,
-				run.id
+				run.id,
 			);
 			advanced++;
 		}
@@ -92,13 +92,13 @@ export async function reconcileStaleCycles(ctx: ReconcileStaleCyclesContext): Pr
 	if (advanced > 0) {
 		webLogger.info(
 			{ count: advanced },
-			'Advanced terminal director cycle(s) discovered at web startup'
+			'Advanced terminal director cycle(s) discovered at web startup',
 		);
 	}
 	if (orphaned > 0) {
 		webLogger.warn(
 			{ count: orphaned },
-			'Failed orphaned director cycle(s) at web startup (no associated run or missing artifacts)'
+			'Failed orphaned director cycle(s) at web startup (no associated run or missing artifacts)',
 		);
 	}
 }

@@ -54,7 +54,7 @@ function maybeBackfillVerificationEvidence(
 	feature: FeatureJson,
 	context: NormalizeContext,
 	manualFollowUps: string[],
-	actions: string[]
+	actions: string[],
 ): void {
 	if (!feature['auditSource'] || feature['verificationEvidence']) {
 		return;
@@ -70,7 +70,7 @@ function maybeBackfillVerificationEvidence(
 	if (!evidenceMatch?.[1]) {
 		if (isCompleted) {
 			manualFollowUps.push(
-				`${context.id}: missing verificationEvidence on completed audit feature; reported only`
+				`${context.id}: missing verificationEvidence on completed audit feature; reported only`,
 			);
 		}
 		return;
@@ -78,7 +78,7 @@ function maybeBackfillVerificationEvidence(
 
 	if (isCompleted) {
 		manualFollowUps.push(
-			`${context.id}: concrete verification evidence exists in description but was not backfilled because the feature is historical/completed`
+			`${context.id}: concrete verification evidence exists in description but was not backfilled because the feature is historical/completed`,
 		);
 		return;
 	}
@@ -117,10 +117,10 @@ function normalizeDependencies(
 	next: FeatureJson,
 	context: NormalizeContext,
 	actions: string[],
-	manualFollowUps: string[]
+	manualFollowUps: string[],
 ): void {
 	const originalDependencies = canonicalizeDependencies(next['dependencies']).map(
-		normalizeDependency
+		normalizeDependency,
 	);
 	if (!hasOwn(next, 'dependencies') || next['dependencies'] === null) {
 		actions.push('added empty dependencies array');
@@ -154,7 +154,7 @@ function normalizeDependencies(
 
 	if (unresolvedDependencies.length > 0) {
 		manualFollowUps.push(
-			`${next['id'] || context.dir}: unresolved dependencies -> ${unresolvedDependencies.join(', ')}`
+			`${next['id'] || context.dir}: unresolved dependencies -> ${unresolvedDependencies.join(', ')}`,
 		);
 	}
 
@@ -212,7 +212,7 @@ function normalizeAffectedFilesAndSpec(next: FeatureJson, actions: string[]): vo
 				affectedFiles
 					.filter((entry): entry is string => typeof entry === 'string')
 					.map((entry) => entry.trim())
-					.filter(Boolean)
+					.filter(Boolean),
 			);
 		}
 	}

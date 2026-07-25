@@ -26,7 +26,7 @@ async function makeProject(name: string): Promise<string> {
 async function writeFeature(
 	projectDir: string,
 	directory: string,
-	feature: Record<string, unknown>
+	feature: Record<string, unknown>,
 ): Promise<void> {
 	const dir = join(projectDir, '.aidd', 'features', directory);
 	await mkdir(dir, { recursive: true });
@@ -160,7 +160,7 @@ describe('frontmatter priority extraction', () => {
 describe('run summary regex contract', () => {
 	test('matches the writer format and rejects unrelated summaries', () => {
 		const match = 'audit SECURITY finished with 3 finding(s) created'.match(
-			AUDIT_RUN_SUMMARY_PATTERN
+			AUDIT_RUN_SUMMARY_PATTERN,
 		);
 		expect(match?.[1]).toBe('SECURITY');
 		expect(match?.[2]).toBe('3');
@@ -187,7 +187,7 @@ describe('project evidence collection', () => {
 					stopReason: 'aborted',
 				}),
 				JSON.stringify({ summary: 'unrelated entry' }),
-			].join('\n')
+			].join('\n'),
 		);
 		await writeFeature(projectDir, 'audit-security-1700000000-broken-auth', {
 			id: 'audit-security-1700000000-broken-auth',

@@ -12,7 +12,7 @@ import type {
 	directorPriorityOrder,
 } from '../directorPriority.ts';
 
-export type DirectorConfig = ResolvedConfig & { web: ResolvedWebConfig };
+export type DirectorConfig = { web: ResolvedWebConfig } & ResolvedConfig;
 export type DirectorConfigProvider = () => DirectorConfig;
 export type BackendFactory = (name: BackendName) => CLIBackend;
 export type ProfileRow = typeof directorProfiles.$inferSelect;

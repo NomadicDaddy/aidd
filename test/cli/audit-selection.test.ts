@@ -33,7 +33,7 @@ afterEach(async () => {
 
 async function makeCatalog(
 	catalogDir: string,
-	audits: { name: string; priority: string }[]
+	audits: { name: string; priority: string }[],
 ): Promise<void> {
 	const auditsDir = join(catalogDir, 'audits');
 	await mkdir(auditsDir, { recursive: true });
@@ -50,7 +50,7 @@ async function makeCatalog(
 				`# ${audit.name}`,
 				'',
 				'Body.',
-			].join('\n')}\n`
+			].join('\n')}\n`,
 		);
 	}
 }
@@ -72,15 +72,15 @@ async function writeFullHardeningProfile(projectDir: string): Promise<void> {
 				updatedAt: '2026-05-16T00:00:00.000Z',
 			},
 			null,
-			2
-		)}\n`
+			2,
+		)}\n`,
 	);
 }
 
 function makeContext(
 	projectDir: string,
 	catalogDir: string,
-	scoringRoots?: readonly string[]
+	scoringRoots?: readonly string[],
 ): ModeContext {
 	return {
 		projectDir,
@@ -93,7 +93,7 @@ function makeContext(
 function makePlan(projectDir: string, extraArgs: string[]) {
 	return resolveRunPlan(
 		parseArgs(['--project-dir', projectDir, '--cli', 'native', ...extraArgs]),
-		config
+		config,
 	);
 }
 
@@ -158,7 +158,7 @@ describe('audit selection ranking', () => {
 					stopReason: 'completed',
 				}),
 				'',
-			].join('\n')
+			].join('\n'),
 		);
 
 		const plan = makePlan(projectDir, ['--audit-all']);
@@ -202,13 +202,13 @@ describe('audit selection ranking', () => {
 					stopReason: 'completed',
 				}),
 				'',
-			].join('\n')
+			].join('\n'),
 		);
 
 		const plan = makePlan(projectDir, ['--audit-all']);
 		const ordered = await auditNames(
 			plan,
-			makeContext(projectDir, catalogDir, [applicationsRoot])
+			makeContext(projectDir, catalogDir, [applicationsRoot]),
 		);
 		expect(ordered[0]).toBe('AAA_REORG');
 	});
@@ -225,7 +225,7 @@ describe('audit selection ranking', () => {
 			await commitSourceFile(
 				projectDir,
 				`src/change-${index}.ts`,
-				`export const change${index} = ${index};\n`
+				`export const change${index} = ${index};\n`,
 			);
 		}
 
@@ -249,7 +249,7 @@ async function initGitProject(projectDir: string): Promise<void> {
 async function commitSourceFile(
 	projectDir: string,
 	relativePath: string,
-	content: string
+	content: string,
 ): Promise<void> {
 	await writeFile(join(projectDir, relativePath), content);
 	await runGit(projectDir, ['add', relativePath]);

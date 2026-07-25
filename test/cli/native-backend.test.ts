@@ -26,8 +26,8 @@ describe('Native backend', () => {
 					text: 'Do the work.',
 					cwd: 'D:/applications/demo',
 				},
-				new AbortController().signal
-			)
+				new AbortController().signal,
+			),
 		);
 
 		expect(events).toEqual([

@@ -1,6 +1,6 @@
 import {
-	auditInstrumentKinds,
 	type AuditInstrument,
+	auditInstrumentKinds,
 	type RejectedAuditInstrument,
 	stringValue,
 } from 'aidd-shared/modes/audit-shared';
@@ -27,7 +27,7 @@ const labelPattern = String.raw`[A-Za-z ]*Score`;
 const markdownHeadingPattern = /^(?:#{1,6})[ \t]+(.+?)[ \t]*$/;
 const scoreSectionTitlePattern = /\bscores?\b/i;
 const scoreTableCellPattern = new RegExp(
-	String.raw`^([ \t]*(?:\*\*|__)?)${scoreValuePattern}((?:\*\*|__)?(?:[ \t]*\([^)]*\))?[ \t]*)$`
+	String.raw`^([ \t]*(?:\*\*|__)?)${scoreValuePattern}((?:\*\*|__)?(?:[ \t]*\([^)]*\))?[ \t]*)$`,
 );
 
 /**
@@ -46,10 +46,10 @@ const scoreTableCellPattern = new RegExp(
  */
 const scoreLinePatterns = [
 	new RegExp(
-		String.raw`^(${linePrefixPattern}(?:\*\*|__)${labelPattern}[ \t]*(?:\*\*|__)?[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*)${scoreValuePattern}`
+		String.raw`^(${linePrefixPattern}(?:\*\*|__)${labelPattern}[ \t]*(?:\*\*|__)?[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*)${scoreValuePattern}`,
 	),
 	new RegExp(
-		String.raw`^(${linePrefixPattern}${labelPattern}[ \t]*:[ \t]*)${scoreValuePattern}(?=[ \t]*\.?[ \t]*$)`
+		String.raw`^(${linePrefixPattern}${labelPattern}[ \t]*:[ \t]*)${scoreValuePattern}(?=[ \t]*\.?[ \t]*$)`,
 	),
 ];
 
@@ -177,7 +177,7 @@ export function declaresNumericScore(reportMarkdown: string): boolean {
 export function enforceInstrumentBackedScore(
 	auditName: string,
 	structured: Record<string, unknown> | undefined,
-	reportMarkdown: string
+	reportMarkdown: string,
 ): InstrumentEnforcement {
 	if (!measurementAudits.has(auditName)) {
 		return { rejected: [], reportMarkdown, withheld: false };

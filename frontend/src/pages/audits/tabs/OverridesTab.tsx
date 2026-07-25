@@ -72,10 +72,10 @@ export function OverridesTab() {
 			{
 				onError: (error) =>
 					toast.error(
-						error instanceof Error ? error.message : 'Could not save overrides'
+						error instanceof Error ? error.message : 'Could not save overrides',
 					),
 				onSuccess: () => toast.success('Project overrides saved'),
-			}
+			},
 		);
 	}
 
@@ -126,7 +126,7 @@ export function OverridesTab() {
 									<tr
 										className="border-b last:border-0 dark:border-neutral-800"
 										key={definition.name}>
-										<td className="text-foreground px-3 py-2 font-medium">
+										<td className="px-3 py-2 font-medium text-foreground">
 											{definition.name}
 										</td>
 										<td className="px-3 py-2">

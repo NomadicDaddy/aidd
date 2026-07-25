@@ -50,17 +50,17 @@ export const pipelineSessions = sqliteTable(
 		index('idx_pipeline_sessions_status').on(table.status),
 		check(
 			'ck_pipeline_sessions_status',
-			sql`${table.status} IN ('completed','completed_with_failures','failed','queued','running','stopped')`
+			sql`${table.status} IN ('completed','completed_with_failures','failed','queued','running','stopped')`,
 		),
 		check(
 			'ck_pipeline_sessions_launch_backend',
-			sql`${table.launchBackend} IS NULL OR ${table.launchBackend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`
+			sql`${table.launchBackend} IS NULL OR ${table.launchBackend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check(
 			'ck_pipeline_sessions_launch_reasoning_effort',
-			sql`${table.launchReasoningEffort} IS NULL OR ${table.launchReasoningEffort} IN ('none','minimal','low','medium','high','xhigh')`
+			sql`${table.launchReasoningEffort} IS NULL OR ${table.launchReasoningEffort} IN ('none','minimal','low','medium','high','xhigh')`,
 		),
-	]
+	],
 );
 
 // The import of directorCycles above is circular (directorTables.ts imports
@@ -141,24 +141,24 @@ export const runs = sqliteTable(
 		}).onDelete('set null'),
 		check(
 			'ck_runs_status',
-			sql`${table.status} IN ('completed','failed','killed','running','stopped','waiting_approval')`
+			sql`${table.status} IN ('completed','failed','killed','running','stopped','waiting_approval')`,
 		),
 		check(
 			'ck_runs_mode',
-			sql`${table.mode} IN ('audit','coding','director','directive','interview','todo','triumvirate','validate')`
+			sql`${table.mode} IN ('audit','coding','director','directive','interview','todo','triumvirate','validate')`,
 		),
 		check(
 			'ck_runs_backend',
-			sql`${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`
+			sql`${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check('ck_runs_source', sql`${table.source} IN ('cli','web','director')`),
 		// Mirrors ck_director_profiles_reasoning_effort, but reasoning_effort is
 		// nullable here so NULL is allowed explicitly.
 		check(
 			'ck_runs_reasoning_effort',
-			sql`${table.reasoningEffort} IS NULL OR ${table.reasoningEffort} IN ('none','minimal','low','medium','high','xhigh')`
+			sql`${table.reasoningEffort} IS NULL OR ${table.reasoningEffort} IN ('none','minimal','low','medium','high','xhigh')`,
 		),
-	]
+	],
 );
 
 export const pipelineStepResults = sqliteTable(
@@ -185,7 +185,7 @@ export const pipelineStepResults = sqliteTable(
 	(table) => [
 		uniqueIndex('idx_pipeline_step_results_display_order').on(
 			table.sessionId,
-			table.displayOrder
+			table.displayOrder,
 		),
 		index('idx_pipeline_step_results_parent_step_result_id').on(table.parentStepResultId),
 		index('idx_pipeline_step_results_run_id').on(table.runId),
@@ -207,17 +207,17 @@ export const pipelineStepResults = sqliteTable(
 		}).onDelete('cascade'),
 		check(
 			'ck_pipeline_step_results_status',
-			sql`${table.status} IN ('completed','failed','queued','running','skipped','stopped')`
+			sql`${table.status} IN ('completed','failed','queued','running','skipped','stopped')`,
 		),
 		check(
 			'ck_pipeline_step_results_phase',
-			sql`${table.phase} IN ('post-hook','pre-hook','step')`
+			sql`${table.phase} IN ('post-hook','pre-hook','step')`,
 		),
 		check(
 			'ck_pipeline_step_results_step_type',
-			sql`${table.stepType} IN ('aidd-cli','hook','skill','recipe-ref','shell')`
+			sql`${table.stepType} IN ('aidd-cli','hook','skill','recipe-ref','shell')`,
 		),
-	]
+	],
 );
 
 // Append-only event log capturing every skill/recipe invocation,
@@ -254,7 +254,7 @@ export const invocationEvents = sqliteTable(
 	(table) => [
 		index('idx_invocation_events_resource_type_resource_id').on(
 			table.resourceType,
-			table.resourceId
+			table.resourceId,
 		),
 		index('idx_invocation_events_started_at').on(table.startedAt),
 		index('idx_invocation_events_status').on(table.status),
@@ -279,21 +279,21 @@ export const invocationEvents = sqliteTable(
 		}).onDelete('set null'),
 		check(
 			'ck_invocation_events_resource_type',
-			sql`${table.resourceType} IN ('skill','recipe','run')`
+			sql`${table.resourceType} IN ('skill','recipe','run')`,
 		),
 		check('ck_invocation_events_source', sql`${table.source} IN ('cli','recipe-step','web')`),
 		// Mirrors ck_runs_backend, but backend is nullable here so NULL is allowed explicitly.
 		check(
 			'ck_invocation_events_backend',
-			sql`${table.backend} IS NULL OR ${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`
+			sql`${table.backend} IS NULL OR ${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check(
 			'ck_invocation_events_status',
-			sql`${table.status} IN ('completed','failed','killed','running','stopped')`
+			sql`${table.status} IN ('completed','failed','killed','running','stopped')`,
 		),
 		check(
 			'ck_invocation_events_parent_resource_type',
-			sql`${table.parentResourceType} IS NULL OR ${table.parentResourceType} IN ('skill','recipe','run')`
+			sql`${table.parentResourceType} IS NULL OR ${table.parentResourceType} IN ('skill','recipe','run')`,
 		),
-	]
+	],
 );

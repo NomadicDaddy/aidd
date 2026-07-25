@@ -42,7 +42,7 @@ export async function prepareWorktreeRun(input: {
 	});
 	if (worktree === null) {
 		console.warn(
-			'[worktree] --worktree requested but the project has no committed HEAD; running against the live tree.'
+			'[worktree] --worktree requested but the project has no committed HEAD; running against the live tree.',
 		);
 		return null;
 	}
@@ -50,7 +50,7 @@ export async function prepareWorktreeRun(input: {
 	console.log(`[worktree] run isolated in ${worktree.dir} on branch ${worktree.branch}`);
 	const session = await seedWorktreeMetadata(plan.projectDir, worktree.dir);
 	console.log(
-		`[worktree] seeded ${session.seededFiles} metadata file(s) into the worktree store`
+		`[worktree] seeded ${session.seededFiles} metadata file(s) into the worktree store`,
 	);
 	return { session };
 }
@@ -64,7 +64,7 @@ export function worktreeOrchestratorDeps(
 	plan: RunPlan,
 	context: WorktreeRunContext,
 	canonicalStore: AiddStore,
-	resolveConflict: MergeConflictResolver
+	resolveConflict: MergeConflictResolver,
 ): Pick<OrchestratorDeps, 'finalizeWorktree' | 'ledgerStore'> {
 	const worktree = plan.worktree;
 	if (!worktree) throw new Error('worktreeOrchestratorDeps requires plan.worktree');
@@ -99,7 +99,7 @@ export async function rollbackWorktreeRun(plan: RunPlan): Promise<void> {
 		// preserve the checkout instead of discarding it.
 		console.warn(
 			`[worktree] evidence persistence FAILED during rollback (${err instanceof Error ? err.message : String(err)}); ` +
-				`preserving worktree ${worktree.dir} — recover its .aidd/iterations manually.`
+				`preserving worktree ${worktree.dir} — recover its .aidd/iterations manually.`,
 		);
 		return;
 	}

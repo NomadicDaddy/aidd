@@ -19,7 +19,7 @@ import { cwd, exit } from 'node:process';
 
 const BACKEND_SRC = 'backend/src';
 const CLI_SRC_ABS = resolve(cwd(), 'cli/src');
-const skippedDirs = new Set(['node_modules', 'dist', 'build']);
+const skippedDirs = new Set(['build', 'dist', 'node_modules']);
 
 // Specifier on the `from` clause of a static import/export, or inside a dynamic import().
 const specifierPatterns: RegExp[] = [
@@ -94,7 +94,7 @@ async function main(): Promise<void> {
 	}
 	console.error('check-backend-cli-boundary: backend/src must not import cli/src.');
 	console.error(
-		'Move shared contracts/helpers into aidd-shared and import via the package name.\n'
+		'Move shared contracts/helpers into aidd-shared and import via the package name.\n',
 	);
 	for (const finding of findings) {
 		const rel = finding.file.split(sep).join('/');

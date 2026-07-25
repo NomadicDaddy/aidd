@@ -9,8 +9,8 @@ import type {
 	ProjectInterviewProgress,
 } from '../projects-profile.ts';
 import type {
-	FeatureStatusEntry,
 	FeatureStats,
+	FeatureStatusEntry,
 	FeatureSummary,
 	ProjectFeature,
 } from './features.ts';
@@ -193,9 +193,9 @@ export interface ProjectSummary {
 	id: string;
 	/** True when this project is a spernakit template checkout (hidden from the list by default). */
 	isSpernakitTemplate?: boolean;
-	metadata: Omit<ProjectMetadata, 'usage'> & {
+	metadata: {
 		usage: Pick<ProjectMetadata['usage'], 'totals'>;
-	};
+	} & Omit<ProjectMetadata, 'usage'>;
 	name: string;
 	path: string;
 	phase: ProjectPhase;

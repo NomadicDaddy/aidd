@@ -10,7 +10,7 @@ import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
-import { useRuns, useLaunchRun } from '../../../hooks/useRuns.ts';
+import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import {
 	FilterSelect,
@@ -53,7 +53,7 @@ export function DependencyGraphTab({
 	const featureMap = useMemo(() => featureByDirectory(features), [features]);
 	const nodeByDirectory = useMemo(
 		() => new Map(graph.nodes.map((node) => [node.directory, node])),
-		[graph.nodes]
+		[graph.nodes],
 	);
 	const [detailsFeature, setDetailsFeature] = useState<null | ProjectFeature>(null);
 	const [launchingFeature, setLaunchingFeature] = useState<null | string>(null);
@@ -74,7 +74,7 @@ export function DependencyGraphTab({
 	const sourceOptions = useMemo(() => sortedSourceOptions(features), [features]);
 	const milestoneOptions = useMemo(
 		() => milestoneFilterOptions(features, roadmap),
-		[features, roadmap]
+		[features, roadmap],
 	);
 	const visibleDirectories = useMemo(
 		() =>
@@ -86,15 +86,15 @@ export function DependencyGraphTab({
 							query,
 							sourceFilter,
 							statusFilter,
-						})
+						}),
 					)
-					.map(featureDirectory)
+					.map(featureDirectory),
 			),
-		[features, milestoneFilter, query, sourceFilter, statusFilter]
+		[features, milestoneFilter, query, sourceFilter, statusFilter],
 	);
 	const visibleNodes = graph.nodes.filter((node) => visibleDirectories.has(node.directory));
 	const visibleEdges = graph.edges.filter(
-		(edge) => visibleDirectories.has(edge.source) && visibleDirectories.has(edge.target)
+		(edge) => visibleDirectories.has(edge.source) && visibleDirectories.has(edge.target),
 	);
 	const selectedNode = selectedDirectory
 		? (nodeByDirectory.get(selectedDirectory) ?? null)
@@ -156,11 +156,11 @@ export function DependencyGraphTab({
 			{
 				onError: (error) =>
 					toast.error(
-						error instanceof Error ? error.message : 'Failed to launch coding run'
+						error instanceof Error ? error.message : 'Failed to launch coding run',
 					),
 				onSettled: () => setLaunchingFeature(null),
 				onSuccess: () => toast.success('Feature-specific coding run launched'),
-			}
+			},
 		);
 	}
 
@@ -179,7 +179,7 @@ export function DependencyGraphTab({
 					<Card className="space-y-4">
 						<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 							<div>
-								<h2 className="text-foreground text-sm font-semibold">
+								<h2 className="text-sm font-semibold text-foreground">
 									Feature Dependencies
 								</h2>
 								<GraphDiagnostics

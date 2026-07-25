@@ -1,4 +1,4 @@
-import { readConfig, resolveMergedConfig, type PartialAiddConfig } from 'aidd-shared/config';
+import { type PartialAiddConfig, readConfig, resolveMergedConfig } from 'aidd-shared/config';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 

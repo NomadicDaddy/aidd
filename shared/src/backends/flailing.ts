@@ -45,27 +45,27 @@ export type FlailingSignal =
 // is probing for / starting / killing a server rather than doing productive work.
 const diagnosticVerbs: ReadonlySet<string> = new Set([
 	'curl',
-	'wget',
+	'get-nettcpconnection',
+	'get-process',
+	'kill',
 	'lsof',
-	'netstat',
-	'ss',
-	'ps',
-	'which',
-	'where',
-	'whereis',
-	'telnet',
 	'nc',
 	'ncat',
+	'netstat',
 	'ping',
-	'kill',
 	'pkill',
+	'ps',
+	'sleep',
+	'ss',
+	'start-process',
 	'taskkill',
 	'tasklist',
-	'sleep',
+	'telnet',
 	'timeout',
-	'start-process',
-	'get-process',
-	'get-nettcpconnection',
+	'wget',
+	'where',
+	'whereis',
+	'which',
 ]);
 
 const lifecycleRunPattern =
@@ -184,7 +184,7 @@ export class FlailingDetector {
 const FLAILING_DISABLE_ENV = 'AIDD_DISABLE_FLAILING_GUARD';
 
 export function isFlailingGuardDisabled(
-	env: Record<string, string | undefined> = process.env
+	env: Record<string, string | undefined> = process.env,
 ): boolean {
 	const value = env[FLAILING_DISABLE_ENV];
 	return value === '1' || value?.toLowerCase() === 'true';

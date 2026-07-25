@@ -17,8 +17,8 @@ import type {
 	ProjectProfileUpdateDto,
 	ProjectRecommendInputDto,
 	ProjectRecommendResultDto,
-	ProjectStartImplementationResultDto,
 	ProjectsListResponseDto,
+	ProjectStartImplementationResultDto,
 	RunLaunchRequest,
 } from '../types.ts';
 import type { FeatureMetadataInput } from './project/features.ts';
@@ -26,8 +26,8 @@ import type { MaturityContext } from './projectMetadata.ts';
 
 import { HttpError } from './errors.ts';
 import {
-	applyActiveRunSummaries,
 	type ActiveRunSummaryProvider,
+	applyActiveRunSummaries,
 } from './project/activeRunSummaries.ts';
 import {
 	createProject as createProjectInternal,
@@ -46,11 +46,11 @@ import {
 } from './project/lifecycle.ts';
 import {
 	getProjectDetail as getProjectDetailInternal,
-	listProjectListings as listProjectListingsInternal,
 	listImportCandidates as listImportCandidatesInternal,
+	type ListingsContext,
+	listProjectListings as listProjectListingsInternal,
 	listProjectNames as listProjectNamesInternal,
 	listProjects as listProjectsInternal,
-	type ListingsContext,
 } from './project/listings.ts';
 import { ProjectListingCache } from './project/metadataCache.ts';
 import { getPortStatusMap, type PortStatusMap } from './project/portStatusService.ts';
@@ -60,12 +60,12 @@ import {
 } from './project/profile.ts';
 import { recommendProjectMode as recommendProjectModeInternal } from './project/recommend.ts';
 import {
-	ProjectNotFoundError,
 	type FeatureApprovalInput,
 	type ProjectAdvisorDeps,
 	type ProjectDeleteInput,
 	type ProjectMoveInput,
 	type ProjectMoveResult,
+	ProjectNotFoundError,
 } from './project/types.ts';
 
 export { ProjectNotFoundError };
@@ -87,7 +87,7 @@ export class ProjectService {
 	private initFailures: null | ProjectInitFailureService = null;
 	private activeRunSummaryProvider: ActiveRunSummaryProvider | null = null;
 	private readonly features = new ProjectFeatureService((id) =>
-		this.resolveDiscoveredProject(id)
+		this.resolveDiscoveredProject(id),
 	);
 
 	constructor(config: ResolvedWebConfig) {
@@ -111,14 +111,14 @@ export class ProjectService {
 	updateFeatureMetadata(
 		projectId: string,
 		dir: string,
-		input: FeatureMetadataInput
+		input: FeatureMetadataInput,
 	): Promise<Feature> {
 		return this.features.updateFeatureMetadata(projectId, dir, input);
 	}
 	updateFeatureMilestone(
 		projectId: string,
 		dir: string,
-		milestone: string
+		milestone: string,
 	): Promise<{ feature: ProjectFeatureDto; roadmap: Roadmap }> {
 		return this.features.updateFeatureMilestone(projectId, dir, milestone);
 	}
@@ -172,13 +172,13 @@ export class ProjectService {
 	async importProjects(
 		candidateIds: string[],
 		action: ProjectImportActionDto,
-		launchIntake: LaunchIntake
+		launchIntake: LaunchIntake,
 	): Promise<ProjectImportResultDto> {
 		return importProjectsInternal(
 			this.contextForListings(),
 			candidateIds,
 			action,
-			launchIntake
+			launchIntake,
 		);
 	}
 
@@ -187,7 +187,7 @@ export class ProjectService {
 		launchRun: (req: RunLaunchRequest) => Promise<{ id: string }>,
 		purgeProjectRuns: (projectPath: string) => Promise<number>,
 		launchIntake?: LaunchIntakeForCreate,
-		cloneTemplate?: typeof degitClone
+		cloneTemplate?: typeof degitClone,
 	): Promise<ProjectCreateResultDto> {
 		return createProjectInternal(
 			{ config: this.config },
@@ -196,7 +196,7 @@ export class ProjectService {
 			purgeProjectRuns,
 			launchIntake,
 			(record) => this.initFailures?.record(record) ?? Promise.resolve(),
-			cloneTemplate
+			cloneTemplate,
 		);
 	}
 
@@ -204,7 +204,7 @@ export class ProjectService {
 		projectId: string,
 		launchTarget: LaunchTargetOverrides,
 		hasActiveRun: (projectPath: string) => Promise<boolean>,
-		launchRun: (request: RunLaunchRequest) => Promise<{ id: string }>
+		launchRun: (request: RunLaunchRequest) => Promise<{ id: string }>,
 	): Promise<ProjectStartImplementationResultDto> {
 		const projectDir = await this.resolveDiscoveredProject(projectId);
 		if (await hasActiveRun(projectDir)) {
@@ -214,7 +214,7 @@ export class ProjectService {
 	}
 
 	async recommendProjectMode(
-		input: ProjectRecommendInputDto
+		input: ProjectRecommendInputDto,
 	): Promise<ProjectRecommendResultDto> {
 		const advisor = this.advisor;
 		if (!advisor) throw new Error('Project advisor is not initialized');
@@ -224,7 +224,7 @@ export class ProjectService {
 				directAiService: advisor.directAiService,
 				getConfig: advisor.getFullConfig,
 			},
-			input
+			input,
 		);
 	}
 
@@ -240,14 +240,14 @@ export class ProjectService {
 		projectId: string,
 		input: ProjectDeleteInput,
 		hasActiveRuns: (projectPath: string) => Promise<boolean>,
-		purgeProjectRuns: (projectPath: string) => Promise<number>
+		purgeProjectRuns: (projectPath: string) => Promise<number>,
 	): Promise<{ id: string; mode: ProjectDeleteInput['mode']; path: string }> {
 		return deleteProjectInternal(
 			{ config: this.config },
 			projectId,
 			input,
 			hasActiveRuns,
-			purgeProjectRuns
+			purgeProjectRuns,
 		);
 	}
 
@@ -255,14 +255,14 @@ export class ProjectService {
 		projectId: string,
 		input: ProjectMoveInput,
 		hasActiveRuns: (projectPath: string) => Promise<boolean>,
-		updateProjectPathReferences: (sourcePath: string, destinationPath: string) => Promise<void>
+		updateProjectPathReferences: (sourcePath: string, destinationPath: string) => Promise<void>,
 	): Promise<ProjectMoveResult> {
 		return moveProjectInternal(
 			{ config: this.config },
 			projectId,
 			input,
 			hasActiveRuns,
-			updateProjectPathReferences
+			updateProjectPathReferences,
 		);
 	}
 
@@ -270,18 +270,18 @@ export class ProjectService {
 		return updateMaturitySkipInternal(
 			{ resolveDiscoveredProject: (id) => this.resolveDiscoveredProject(id) },
 			projectId,
-			skip
+			skip,
 		);
 	}
 
 	async updateProjectProfile(
 		projectId: string,
-		input: ProjectProfileUpdateDto
+		input: ProjectProfileUpdateDto,
 	): Promise<ProjectDetailDto['metadata']['profile']> {
 		return updateProjectProfileInternal(
 			{ resolveDiscoveredProject: (id) => this.resolveDiscoveredProject(id) },
 			projectId,
-			input
+			input,
 		);
 	}
 

@@ -287,7 +287,7 @@ export async function waitForContent(page: Page, settleDelay: number): Promise<v
 					document.querySelector('[class*="skeleton"], [class*="Skeleton"], .animate-pulse') !== null;
 				return text.length > 10 && !hasBusy;
 			})()`,
-			{ timeout: 5000 }
+			{ timeout: 5000 },
 		);
 	} catch {
 		// Sparse pages are allowed; content assertions decide whether this is a failure.

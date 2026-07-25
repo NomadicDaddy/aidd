@@ -82,7 +82,7 @@ describe('readCommitDiff', () => {
 	test('reports project-missing when the directory does not exist', async () => {
 		const result = await readCommitDiff(
 			join(tmpdir(), 'aidd-commit-diff-does-not-exist'),
-			'a'.repeat(40)
+			'a'.repeat(40),
 		);
 		expect(result.state).toBe('project-missing');
 	});
@@ -102,7 +102,7 @@ describe('project commit diff route', () => {
 			},
 		} as unknown as WebContext);
 		const response = await app.handle(
-			new Request('http://localhost/api/v1/projects/some-id/commits/not-hex!')
+			new Request('http://localhost/api/v1/projects/some-id/commits/not-hex!'),
 		);
 		expect(response.status).toBe(422);
 	});
@@ -116,7 +116,7 @@ describe('project commit diff route', () => {
 				},
 			} as unknown as WebContext);
 			const response = await app.handle(
-				new Request(`http://localhost/api/v1/projects/some-id/commits/${sha}`)
+				new Request(`http://localhost/api/v1/projects/some-id/commits/${sha}`),
 			);
 			expect(response.status).toBe(200);
 			const body = (await response.json()) as { diff: string; state: string };

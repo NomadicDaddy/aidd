@@ -1,6 +1,6 @@
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 
-import { resolveAiddRunProvenance, type AiddRunProvenance } from 'aidd-shared/run-provenance';
+import { type AiddRunProvenance, resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
 
 import type { WebDatabase } from '../db/client.ts';
 import type { DbCommands } from '../db/commands.ts';
@@ -14,9 +14,9 @@ import { type ProjectService } from './projectService.ts';
 import { startRunServiceTimers } from './run/backgroundTimers.ts';
 import { createRunContinuationWiring } from './run/continuationWiring.ts';
 import {
+	type ControlContext,
 	killRun as killRunInternal,
 	stopRun as stopRunInternal,
-	type ControlContext,
 } from './run/control.ts';
 import { ingestCompletedCliRuns as ingestCompletedCliRunsInternal } from './run/ingest.ts';
 import { launchRun as launchRunInternal, type LaunchRunOptions } from './run/launch.ts';
@@ -57,16 +57,16 @@ export class RunService extends RunQueryService {
 	private disposed = false;
 
 	constructor(
-		config: ResolvedConfig & { web: ResolvedWebConfig },
+		config: { web: ResolvedWebConfig } & ResolvedConfig,
 		db: WebDatabase,
 		commands: DbCommands,
 		hub: WebSocketHub,
 		projectService: ProjectService,
 		rootDir: string,
-		telemetryService: TelemetryService
+		telemetryService: TelemetryService,
 	) {
 		super(config, db, commands, hub, (projectPath) =>
-			projectService.invalidateProjectListing(projectPath)
+			projectService.invalidateProjectListing(projectPath),
 		);
 		this.projectService = projectService;
 		this.rootDir = rootDir;
@@ -81,7 +81,7 @@ export class RunService extends RunQueryService {
 		this.orphanSweepTimer = timers.orphanSweepTimer;
 	}
 
-	updateConfig(config: ResolvedConfig & { web: ResolvedWebConfig }): void {
+	updateConfig(config: { web: ResolvedWebConfig } & ResolvedConfig): void {
 		this.config = config;
 	}
 
@@ -117,7 +117,7 @@ export class RunService extends RunQueryService {
 		for (const info of swept) {
 			await applySweptRunSideEffects(
 				{ tailWatchers: this.tailWatchers, telemetryService: this.telemetryService },
-				info
+				info,
 			);
 		}
 		return swept.length;
@@ -131,7 +131,7 @@ export class RunService extends RunQueryService {
 
 	async launchRun(
 		input: RunLaunchRequest,
-		options: LaunchRunOptions = {}
+		options: LaunchRunOptions = {},
 	): Promise<typeof runs.$inferSelect> {
 		return launchRunInternal(
 			{
@@ -148,7 +148,7 @@ export class RunService extends RunQueryService {
 				telemetry: this.telemetryService,
 			},
 			input,
-			options
+			options,
 		);
 	}
 
@@ -180,7 +180,7 @@ export class RunService extends RunQueryService {
 
 	async waitForTerminalStatus(
 		runId: string,
-		options: { pollIntervalMs?: number; timeoutMs?: number } = {}
+		options: { pollIntervalMs?: number; timeoutMs?: number } = {},
 	): Promise<WebRunStatus> {
 		return waitForTerminalStatus((id) => this.getRun(id), runId, options);
 	}

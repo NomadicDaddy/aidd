@@ -86,7 +86,7 @@ For each page identified in Phase 1, apply the following transform:
 	<div className="flex items-center justify-between ...">
 		<div>
 			<h1 className="text-2xl font-bold">Page Title</h1>
-			<p className="text-muted-foreground mt-1">Description text</p>
+			<p className="mt-1 text-muted-foreground">Description text</p>
 		</div>
 		<div className="flex items-center gap-2">
 			<Button>Action</Button>
@@ -128,7 +128,7 @@ For each page identified in Phase 1, apply the following transform:
 **Before:**
 
 ```tsx
-<p className="text-muted-foreground mt-1">All runs {total > 0 && `(${total} total)`}</p>
+<p className="mt-1 text-muted-foreground">All runs {total > 0 && `(${total} total)`}</p>
 ```
 
 **After:**

@@ -9,7 +9,7 @@ import {
 	resolveDirectAiCall,
 } from 'aidd-shared/agent/directAi';
 import { scrubSecrets } from 'aidd-shared/lib/secretScrubber';
-import { type StopReason, orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
+import { orchestratorExitCodes, type StopReason } from 'aidd-shared/orchestrator/result';
 import { runRepoDir } from 'aidd-shared/plan/types';
 import { decodeExitCode } from 'aidd-shared/runs/outcome';
 
@@ -38,7 +38,7 @@ const MAX_TIMEOUT_SECONDS = 30;
  */
 export function explainAbnormalTermination(
 	exitCode: number,
-	stopReason: StopReason
+	stopReason: StopReason,
 ): null | string {
 	if (exitCode === orchestratorExitCodes.success) return null;
 
@@ -82,11 +82,11 @@ async function buildSummaryPrompt(input: RunAiSummaryInput): Promise<string> {
 		// through bash (git mv/rm, scripted rewrites) that the Edit/Write tool counts miss.
 		const diffStat = await gitCommitsDiffStat(
 			runRepoDir(plan),
-			commits.map((c: GitCommitSummary) => c.hash)
+			commits.map((c: GitCommitSummary) => c.hash),
 		);
 		if (diffStat.filesChanged > 0) {
 			parts.push(
-				`Committed changes (git diffstat, source of truth for scope): ${diffStat.filesChanged} files changed, ${diffStat.insertions} insertions(+), ${diffStat.deletions} deletions(-)`
+				`Committed changes (git diffstat, source of truth for scope): ${diffStat.filesChanged} files changed, ${diffStat.insertions} insertions(+), ${diffStat.deletions} deletions(-)`,
 			);
 		}
 	}
@@ -100,7 +100,7 @@ async function buildSummaryPrompt(input: RunAiSummaryInput): Promise<string> {
 		// These count only Write/Edit tool calls and undercount bash-driven file changes;
 		// prefer the committed diffstat above when describing how much the run changed.
 		`Files edited via Edit tool: ${totals.filesEdited}`,
-		`Files created via Write tool: ${totals.filesCreated}`
+		`Files created via Write tool: ${totals.filesCreated}`,
 	);
 	if (acc.scopeOverrun) {
 		parts.push('Scope overrun: true');
@@ -124,7 +124,7 @@ async function buildSummaryPrompt(input: RunAiSummaryInput): Promise<string> {
  */
 export function createRunAiSummarizer(
 	config: ResolvedConfig,
-	rootDir: string
+	rootDir: string,
 ): RunAiSummarizer | undefined {
 	if (!isDirectAiSurfaceEnabled(config.directAi, 'runSummaries')) {
 		return undefined;
@@ -132,7 +132,7 @@ export function createRunAiSummarizer(
 
 	const effectiveTimeout = Math.min(
 		config.directAi?.timeoutSeconds ?? MAX_TIMEOUT_SECONDS,
-		MAX_TIMEOUT_SECONDS
+		MAX_TIMEOUT_SECONDS,
 	);
 
 	return async (input: RunAiSummaryInput): Promise<null | string> => {

@@ -64,7 +64,7 @@ export function PipelineSessionReportPage() {
 		});
 	};
 	useDocumentTitle(
-		report ? `${report.session.recipeName} · Pipeline Sessions` : 'Pipeline Session'
+		report ? `${report.session.recipeName} · Pipeline Sessions` : 'Pipeline Session',
 	);
 	const notFound = reportQuery.error instanceof ApiError && reportQuery.error.status === 404;
 	const hasOtherError = reportQuery.error !== null && !notFound;
@@ -85,7 +85,7 @@ export function PipelineSessionReportPage() {
 			<div className="page-reveal space-y-5">
 				{backLink}
 				<Card>
-					<h1 className="text-foreground text-xl font-semibold">
+					<h1 className="text-xl font-semibold text-foreground">
 						Pipeline session not found
 					</h1>
 					<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -254,7 +254,7 @@ function stepSummary(report: PipelineSessionReport): string {
 function StepsCard({ report }: { report: PipelineSessionReport }) {
 	return (
 		<Card className="space-y-3">
-			<h2 className="text-foreground text-lg font-semibold">Steps</h2>
+			<h2 className="text-lg font-semibold text-foreground">Steps</h2>
 			<p className="text-sm text-neutral-600 dark:text-neutral-300">{stepSummary(report)}</p>
 			<div className="space-y-3">
 				{buildStepRows(report).map((row) =>
@@ -267,7 +267,7 @@ function StepsCard({ report }: { report: PipelineSessionReport }) {
 							step={row.step}
 							totalSteps={report.session.totalSteps}
 						/>
-					)
+					),
 				)}
 			</div>
 		</Card>

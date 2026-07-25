@@ -13,7 +13,7 @@ export async function launchAuditsImpl(
 		auditsEnabled: boolean;
 		launchRun: RunService['launchRun'];
 		resolveProject: (id: string) => Promise<string>;
-	}
+	},
 ): Promise<{ failures: string[]; runIds: string[] }> {
 	if (deps.auditsEnabled === false) throw new HttpError('Audits are disabled.', 409);
 	const auditNames = input.auditAll ? [] : normalizeAuditNames(input.auditNames ?? []);

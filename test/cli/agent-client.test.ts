@@ -2,12 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-	type NativeFileConfig,
-	type OpenAICompatibleClientConfig,
-	OpenAICompatibleAgentClient,
-	SimulationAgentClient,
 	createDefaultNativeClient,
+	type NativeFileConfig,
+	OpenAICompatibleAgentClient,
+	type OpenAICompatibleClientConfig,
 	resolveDefaultNativeClientConfig,
+	SimulationAgentClient,
 } from 'aidd-shared/agent/client';
 import { readChatCompletionStream } from 'aidd-shared/agent/client/stream';
 import { disableAiCallLog } from 'aidd-shared/lib/aiCallLog';
@@ -72,7 +72,7 @@ describe('Native provider client', () => {
 					title: 'Core feature',
 					status: 'backlog',
 					passes: false,
-				})}\n`
+				})}\n`,
 			);
 			const client = new SimulationAgentClient();
 
@@ -81,11 +81,11 @@ describe('Native provider client', () => {
 					prompt: 'Finish with AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}',
 					cwd: projectDir,
 				},
-				new AbortController().signal
+				new AbortController().signal,
 			);
 
 			expect(response.text).toContain(
-				'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}'
+				'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}',
 			);
 			expect(response.filesModified).toEqual([featurePath]);
 			expect(JSON.parse(await readFile(featurePath, 'utf8'))).toMatchObject({
@@ -121,7 +121,7 @@ describe('Native provider client', () => {
 				cwd: 'D:/applications/demo',
 				model: 'override-model',
 			},
-			new AbortController().signal
+			new AbortController().signal,
 		);
 
 		expect(response).toEqual({ text: 'done', inputTokens: 11, outputTokens: 22 });
@@ -158,7 +158,7 @@ describe('Native provider client', () => {
 
 		const response = await client.complete(
 			{ prompt: 'hello', cwd: 'D:/applications/demo' },
-			new AbortController().signal
+			new AbortController().signal,
 		);
 
 		// cached ⊂ input, reasoning ⊂ output — captured so the cost estimate can apply the
@@ -226,7 +226,7 @@ describe('Native provider client', () => {
 					},
 				],
 			},
-			new AbortController().signal
+			new AbortController().signal,
 		);
 
 		expect(response).toEqual({
@@ -266,7 +266,7 @@ describe('Native provider client', () => {
 				cwd: 'D:/applications/demo',
 				reasoningEffort: 'high',
 			},
-			new AbortController().signal
+			new AbortController().signal,
 		);
 		expect(zhipuBodies[0]).toMatchObject({ reasoning_effort: 'high' });
 
@@ -286,7 +286,7 @@ describe('Native provider client', () => {
 				cwd: 'D:/applications/demo',
 				thinking: false,
 			},
-			new AbortController().signal
+			new AbortController().signal,
 		);
 		await ollama.complete(
 			{
@@ -295,7 +295,7 @@ describe('Native provider client', () => {
 				model: 'gpt-oss:20b',
 				thinkingLevel: 'low',
 			},
-			new AbortController().signal
+			new AbortController().signal,
 		);
 		expect(ollamaBodies[0]).toMatchObject({ think: false });
 		expect(ollamaBodies[1]).toMatchObject({ model: 'gpt-oss:20b', think: 'low' });
@@ -315,7 +315,7 @@ describe('Native provider client', () => {
 		});
 		await lmstudio.complete(
 			{ prompt: 'hello', cwd: 'D:/applications/demo', reasoningEffort: 'high' },
-			new AbortController().signal
+			new AbortController().signal,
 		);
 		expect(lmstudioBodies[0]).not.toHaveProperty('reasoning_effort');
 		expect(lmstudioBodies[0]).not.toHaveProperty('think');
@@ -332,17 +332,17 @@ describe('Native provider client', () => {
 		await expect(
 			client.complete(
 				{ prompt: 'hello', cwd: 'D:/applications/demo' },
-				new AbortController().signal
-			)
+				new AbortController().signal,
+			),
 		).rejects.toThrow('test request failed: HTTP 400 bad request');
 	});
 
 	test('uses simulation only when explicitly forced', async () => {
 		await expect(
-			createDefaultNativeClient({ AIDD_NATIVE_SIMULATION: '1' }, {})
+			createDefaultNativeClient({ AIDD_NATIVE_SIMULATION: '1' }, {}),
 		).resolves.toBeInstanceOf(SimulationAgentClient);
 		await expect(createDefaultNativeClient({ NATIVE_PROVIDER: 'zhipu' }, {})).rejects.toThrow(
-			/no API key configured/
+			/no API key configured/,
 		);
 	});
 
@@ -354,8 +354,8 @@ describe('Native provider client', () => {
 					NATIVE_BASE_URL: 'http://localhost:11434/v1',
 					NATIVE_MODEL: 'llama3.1',
 				},
-				{}
-			)
+				{},
+			),
 		).resolves.toBeInstanceOf(OpenAICompatibleAgentClient);
 	});
 
@@ -375,8 +375,8 @@ describe('Native provider client', () => {
 							model: 'config-model',
 						},
 					},
-				}
-			)
+				},
+			),
 		).resolves.toEqual({
 			kind: 'openai-compatible',
 			config: {
@@ -399,8 +399,8 @@ describe('Native provider client', () => {
 							model: 'provider-model',
 						},
 					},
-				}
-			)
+				},
+			),
 		).resolves.toEqual({
 			kind: 'openai-compatible',
 			config: {
@@ -416,17 +416,20 @@ describe('Native provider client', () => {
 				apiKey: 'flat-key',
 				baseUrl: 'https://flat.example/v1',
 				model: 'flat-model',
-			} as unknown as NativeFileConfig)
+			} as unknown as NativeFileConfig),
 		).rejects.toThrow(/no API key configured/);
 
 		await expect(
-			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'zhipu' }, {})
+			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'zhipu' }, {}),
 		).rejects.toThrow(/no API key configured/);
 	});
 
 	test('resolves xai provider defaults, XAI_API_KEY, and surfaces it in the missing-key error', async () => {
 		await expect(
-			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'xai', XAI_API_KEY: 'xai-key' }, {})
+			resolveDefaultNativeClientConfig(
+				{ NATIVE_PROVIDER: 'xai', XAI_API_KEY: 'xai-key' },
+				{},
+			),
 		).resolves.toEqual({
 			kind: 'openai-compatible',
 			config: {
@@ -438,7 +441,7 @@ describe('Native provider client', () => {
 		});
 
 		await expect(
-			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'xai' }, {})
+			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'xai' }, {}),
 		).rejects.toThrow(/Set NATIVE_API_KEY \(or XAI_API_KEY\)/);
 	});
 
@@ -446,8 +449,8 @@ describe('Native provider client', () => {
 		await expect(
 			resolveDefaultNativeClientConfig(
 				{ NATIVE_PROVIDER: 'openai', OPENAI_API_KEY: 'sk-key' },
-				{}
-			)
+				{},
+			),
 		).resolves.toEqual({
 			kind: 'openai-compatible',
 			config: {
@@ -459,7 +462,7 @@ describe('Native provider client', () => {
 		});
 
 		await expect(
-			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'openai' }, {})
+			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'openai' }, {}),
 		).rejects.toThrow(/Set NATIVE_API_KEY \(or OPENAI_API_KEY\)/);
 	});
 
@@ -469,14 +472,14 @@ describe('Native provider client', () => {
 		await expect(
 			resolveDefaultNativeClientConfig(
 				{ NATIVE_PROVIDER: 'zhipu', OPENAI_API_KEY: 'sk-key' },
-				{}
-			)
+				{},
+			),
 		).rejects.toThrow(/zhipu provider has no API key/);
 	});
 
 	test('resolves lmstudio provider defaults with a localhost base URL and no API key', async () => {
 		await expect(
-			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'lmstudio' }, {})
+			resolveDefaultNativeClientConfig({ NATIVE_PROVIDER: 'lmstudio' }, {}),
 		).resolves.toEqual({
 			kind: 'openai-compatible',
 			config: {
@@ -513,7 +516,7 @@ describe('Native provider client — streaming', () => {
 
 		const response = await client.complete(
 			{ prompt: 'hi', cwd: 'D:/applications/demo' },
-			new AbortController().signal
+			new AbortController().signal,
 		);
 
 		expect(response).toEqual({
@@ -533,14 +536,14 @@ describe('Native provider client — streaming', () => {
 				'data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n',
 				'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n',
 				'data: [DONE]\n\n',
-			])
+			]),
 		);
 
 		const deltas: { kind: string; text: string }[] = [];
 		const response = await client.complete(
 			{ prompt: 'hi', cwd: 'D:/applications/demo' },
 			new AbortController().signal,
-			(delta) => deltas.push(delta)
+			(delta) => deltas.push(delta),
 		);
 
 		// Reasoning fragments surface for live progress but stay out of the final message.
@@ -559,12 +562,12 @@ describe('Native provider client — streaming', () => {
 				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"read_file","arguments":"{\\"pa"}}]}}]}\n\n',
 				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"th\\":\\"README.md\\"}"}}]}}]}\n\n',
 				'data: [DONE]\n\n',
-			])
+			]),
 		);
 
 		const response = await client.complete(
 			{ prompt: 'hi', cwd: 'D:/applications/demo' },
-			new AbortController().signal
+			new AbortController().signal,
 		);
 
 		expect(response.toolCalls).toEqual([
@@ -577,12 +580,12 @@ describe('Native provider client — streaming', () => {
 			sseResponse([
 				'data: {"choices":[{"delta":{"con',
 				'tent":"split"}}]}\n\ndata: [DONE]\n\n',
-			])
+			]),
 		);
 
 		const response = await client.complete(
 			{ prompt: 'hi', cwd: 'D:/applications/demo' },
-			new AbortController().signal
+			new AbortController().signal,
 		);
 
 		expect(response.text).toBe('split');
@@ -590,14 +593,14 @@ describe('Native provider client — streaming', () => {
 
 	test('surfaces a mid-stream error event as a thrown error', async () => {
 		const client = streamingClient(async () =>
-			sseResponse(['data: {"error":{"message":"upstream exploded"}}\n\n'])
+			sseResponse(['data: {"error":{"message":"upstream exploded"}}\n\n']),
 		);
 
 		await expect(
 			client.complete(
 				{ prompt: 'hi', cwd: 'D:/applications/demo' },
-				new AbortController().signal
-			)
+				new AbortController().signal,
+			),
 		).rejects.toThrow(/upstream exploded/);
 	});
 });
@@ -610,7 +613,7 @@ describe('readChatCompletionStream — lifecycle and integrity', () => {
 		});
 
 		await expect(
-			readChatCompletionStream(response, 'zhipu', { idleTimeoutMs: 30 })
+			readChatCompletionStream(response, 'zhipu', { idleTimeoutMs: 30 }),
 		).rejects.toThrow(/timed out/);
 		expect(cancelled).toBe(true);
 	});
@@ -620,7 +623,7 @@ describe('readChatCompletionStream — lifecycle and integrity', () => {
 		const response = sseResponse(['data: {"choices":[{"delta":{"content":"partial"}}]}\n\n']);
 
 		await expect(readChatCompletionStream(response, 'zhipu')).rejects.toThrow(
-			/ended before completion|network error/
+			/ended before completion|network error/,
 		);
 	});
 
@@ -646,7 +649,7 @@ describe('readChatCompletionStream — lifecycle and integrity', () => {
 		]);
 
 		await expect(readChatCompletionStream(response, 'zhipu', { maxChars: 10 })).rejects.toThrow(
-			/exceeded the maximum/
+			/exceeded the maximum/,
 		);
 	});
 });

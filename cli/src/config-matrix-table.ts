@@ -38,10 +38,10 @@ function formatTableSeparator(widths: number[]): string {
 export function formatConfigMatrixTable(rows: ConfigMatrixRow[]): string {
 	const headers = tableColumns.map((column) => column.header);
 	const formattedRows = rows.map((row) =>
-		tableColumns.map((column) => tableCell(column.select(row)))
+		tableColumns.map((column) => tableCell(column.select(row))),
 	);
 	const widths = tableColumns.map((column, index) =>
-		Math.max(column.header.length, ...formattedRows.map((row) => row[index]?.length ?? 0))
+		Math.max(column.header.length, ...formattedRows.map((row) => row[index]?.length ?? 0)),
 	);
 
 	return [

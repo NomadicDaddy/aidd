@@ -1,32 +1,32 @@
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 
 import {
-	ACTIVE_RUNS_DIR,
 	ACTIVE_RUN_TEMP_STALE_MS,
-	CLI_ACTIVE_RUN_STALE_MS,
-	COMPLETED_RUN_TTL_MS,
+	ACTIVE_RUNS_DIR,
 	activeRunFilePath,
 	activeRunsDir,
+	CLI_ACTIVE_RUN_STALE_MS,
+	type CliActiveRunRecord,
+	COMPLETED_RUN_TTL_MS,
 	isCliRunTerminal,
 	parseCliActiveRunRecord,
-	type CliActiveRunRecord,
 } from './active-runs/record.ts';
 import { metadataPath } from './paths.ts';
 
 export {
+	activeRunFilePath,
+	activeRunsDir,
 	CLI_ACTIVE_RUN_STALE_MS,
+	type CliActiveRunRecord,
+	type CliActiveRunSource,
+	createCliActiveRunRecord,
 	EXT_APP_URL_ENV,
 	EXT_LOG_PATH_ENV,
 	EXT_RUN_ID_ENV,
 	EXT_RUN_SOURCE_ENV,
-	SUPPRESS_CLI_ACTIVE_RUN_ENV,
-	activeRunFilePath,
-	activeRunsDir,
-	createCliActiveRunRecord,
 	isCliActiveRunSuppressed,
 	isCliRunTerminal,
-	type CliActiveRunRecord,
-	type CliActiveRunSource,
+	SUPPRESS_CLI_ACTIVE_RUN_ENV,
 } from './active-runs/record.ts';
 
 function isMissingPathError(error: unknown): boolean {
@@ -62,7 +62,7 @@ export async function writeCliActiveRunRecord(record: CliActiveRunRecord): Promi
 // ensures a temp belonging to a live concurrent writer is never deleted.
 export async function sweepStaleActiveRunTempFiles(
 	projectDir: string,
-	options: { now?: number; olderThanMs?: number } = {}
+	options: { now?: number; olderThanMs?: number } = {},
 ): Promise<void> {
 	const now = options.now ?? Date.now();
 	const olderThanMs = options.olderThanMs ?? ACTIVE_RUN_TEMP_STALE_MS;
@@ -85,7 +85,7 @@ export async function sweepStaleActiveRunTempFiles(
 				} catch {
 					// Ignore races with a concurrent writer or a temp removed by another sweep.
 				}
-			})
+			}),
 	);
 }
 
@@ -108,7 +108,7 @@ function staleCliRunRecord(record: CliActiveRunRecord, now: number): CliActiveRu
 
 export async function readCliActiveRunRecords(
 	projectDir: string,
-	options: { includeCompleted?: boolean; now?: number; staleMs?: number } = {}
+	options: { includeCompleted?: boolean; now?: number; staleMs?: number } = {},
 ): Promise<CliActiveRunRecord[]> {
 	const now = options.now ?? Date.now();
 	const staleMs = options.staleMs ?? CLI_ACTIVE_RUN_STALE_MS;
@@ -126,7 +126,7 @@ export async function readCliActiveRunRecords(
 		if (!entry.endsWith('.json')) continue;
 		try {
 			const parsed = JSON.parse(
-				await readFile(metadataPath(projectDir, ACTIVE_RUNS_DIR, entry), 'utf8')
+				await readFile(metadataPath(projectDir, ACTIVE_RUNS_DIR, entry), 'utf8'),
 			) as unknown;
 			const record = parseCliActiveRunRecord(parsed);
 			if (!record) continue;

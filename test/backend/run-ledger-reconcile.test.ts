@@ -5,7 +5,7 @@ import { dropLedgerPhantomRuns } from '../../backend/src/services/run/ledgerReco
 import type { RunRecord } from '../../backend/src/types.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
-function makeRun(overrides: Partial<RunRecord> & { id: string; projectPath: string }): RunRecord {
+function makeRun(overrides: { id: string; projectPath: string } & Partial<RunRecord>): RunRecord {
 	return {
 		activityState: null,
 		aiddDirty: null,

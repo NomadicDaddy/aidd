@@ -94,7 +94,7 @@ export function findParityProblems(
 	catalogText: string,
 	scaffoldText: string,
 	catalogLabel = CATALOG,
-	scaffoldLabel = SCAFFOLD
+	scaffoldLabel = SCAFFOLD,
 ): string[] {
 	const { malformed, rows } = parseCatalog(catalogText);
 	const rules = parseScaffold(scaffoldText);
@@ -102,14 +102,14 @@ export function findParityProblems(
 
 	for (const line of malformed) {
 		problems.push(
-			`${catalogLabel}:${line} — row mentions a .aidd/ path but its Artifact cell is not exactly one backticked path. Split it into one row per path; a validator cannot read this form.`
+			`${catalogLabel}:${line} — row mentions a .aidd/ path but its Artifact cell is not exactly one backticked path. Split it into one row per path; a validator cannot read this form.`,
 		);
 	}
 
 	for (const row of rows) {
 		if (!COMMITTED.has(row.class) && !NOT_COMMITTED.has(row.class)) {
 			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` has unknown class \`${row.class}\`.`
+				`${catalogLabel}:${row.line} — \`${row.path}\` has unknown class \`${row.class}\`.`,
 			);
 			continue;
 		}
@@ -118,18 +118,18 @@ export function findParityProblems(
 		const ruleList = matching.map((r) => `\`${r}\``).join(', ');
 		if (committed && matching.length > 0) {
 			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` is \`${row.class}\` (committed) but ${scaffoldLabel} hides it via ${ruleList}. It would never be committed.`
+				`${catalogLabel}:${row.line} — \`${row.path}\` is \`${row.class}\` (committed) but ${scaffoldLabel} hides it via ${ruleList}. It would never be committed.`,
 			);
 		} else if (!committed && matching.length === 0) {
 			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` is \`${row.class}\` (not committed) but no ${scaffoldLabel} rule matches it. It would be committed silently.`
+				`${catalogLabel}:${row.line} — \`${row.path}\` is \`${row.class}\` (not committed) but no ${scaffoldLabel} rule matches it. It would be committed silently.`,
 			);
 		} else if (!committed && matching.length > 1) {
 			// The documented invariant is EXACTLY one rule. Overlapping rules are not a Git error, but
 			// they mean deleting one rule silently changes nothing — so the next author cannot tell
 			// which rule is load-bearing, and drift hides behind the redundancy.
 			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` is matched by ${matching.length} rules (${ruleList}). The invariant is exactly one; remove the redundant rule.`
+				`${catalogLabel}:${row.line} — \`${row.path}\` is matched by ${matching.length} rules (${ruleList}). The invariant is exactly one; remove the redundant rule.`,
 			);
 		}
 	}
@@ -137,7 +137,7 @@ export function findParityProblems(
 	for (const rule of rules) {
 		if (!rows.some((row) => matches(row.path, rule))) {
 			problems.push(
-				`${scaffoldLabel} — rule \`${rule}\` has no row in the catalog. Add one to docs/reference/artifacts.md, or drop the rule.`
+				`${scaffoldLabel} — rule \`${rule}\` has no row in the catalog. Add one to docs/reference/artifacts.md, or drop the rule.`,
 			);
 		}
 	}
@@ -160,6 +160,6 @@ if (import.meta.main) {
 	const rowCount = parseCatalog(catalogText).rows.length;
 	const ruleCount = parseScaffold(scaffoldText).length;
 	console.log(
-		`check:artifact-parity — ${rowCount} catalog rows, ${ruleCount} ignore rules, no drift.`
+		`check:artifact-parity — ${rowCount} catalog rows, ${ruleCount} ignore rules, no drift.`,
 	);
 }

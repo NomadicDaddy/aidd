@@ -90,7 +90,7 @@ function countFeatureManifests(files: string[]): number {
  * to prevent. */
 export async function seedWorktreeMetadata(
 	projectDir: string,
-	worktreeDir: string
+	worktreeDir: string,
 ): Promise<WorktreeMetadataSession> {
 	const sourceRoot = metadataPath(projectDir);
 	const targetRoot = metadataPath(worktreeDir);
@@ -107,7 +107,7 @@ export async function seedWorktreeMetadata(
 	const seededManifests = countFeatureManifests(await walkMetadataFiles(targetRoot));
 	if (seededManifests !== canonicalManifests) {
 		throw new Error(
-			`[worktree] metadata seeding incomplete: ${seededManifests}/${canonicalManifests} feature manifests reached the worktree store`
+			`[worktree] metadata seeding incomplete: ${seededManifests}/${canonicalManifests} feature manifests reached the worktree store`,
 		);
 	}
 	return { baseline, seededFiles: files.length };
@@ -137,7 +137,7 @@ interface WorktreeRunChanges {
 // never checked and never block write-back.
 async function collectRunChanges(
 	sourceRoot: string,
-	session: WorktreeMetadataSession
+	session: WorktreeMetadataSession,
 ): Promise<WorktreeRunChanges> {
 	const files = await walkMetadataFiles(sourceRoot);
 	const present = new Set(files);
@@ -159,7 +159,7 @@ async function collectRunChanges(
 async function findConflicts(
 	targetRoot: string,
 	changes: WorktreeRunChanges,
-	session: WorktreeMetadataSession
+	session: WorktreeMetadataSession,
 ): Promise<string[]> {
 	const desired = new Map<string, string | undefined>(changes.changed);
 	for (const rel of changes.deleted) desired.set(rel, undefined);
@@ -184,7 +184,7 @@ async function findConflicts(
 export async function detectWorktreeMetadataConflicts(
 	projectDir: string,
 	worktreeDir: string,
-	session: WorktreeMetadataSession
+	session: WorktreeMetadataSession,
 ): Promise<string[]> {
 	const changes = await collectRunChanges(metadataPath(worktreeDir), session);
 	return findConflicts(metadataPath(projectDir), changes, session);
@@ -203,7 +203,7 @@ export async function detectWorktreeMetadataConflicts(
 export async function writeBackWorktreeMetadata(
 	projectDir: string,
 	worktreeDir: string,
-	session: WorktreeMetadataSession
+	session: WorktreeMetadataSession,
 ): Promise<WorktreeMetadataConflict | WorktreeMetadataDelta> {
 	const sourceRoot = metadataPath(worktreeDir);
 	const targetRoot = metadataPath(projectDir);

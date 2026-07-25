@@ -111,7 +111,7 @@ export function buildNotes(report: ReportFeatureMetadata): string[] {
 	if (report.metadata?.url) notes.push(`URL: ${report.metadata.url}.`);
 	if (report.metadata?.viewport) {
 		notes.push(
-			`Viewport: ${report.metadata.viewport.width}x${report.metadata.viewport.height}.`
+			`Viewport: ${report.metadata.viewport.width}x${report.metadata.viewport.height}.`,
 		);
 	}
 	if (report.metadata?.userAgent) notes.push(`User agent: ${report.metadata.userAgent}.`);
@@ -120,7 +120,7 @@ export function buildNotes(report: ReportFeatureMetadata): string[] {
 
 export function buildSpec(
 	description: string,
-	metadata: ProjectReportMetadataDto | undefined
+	metadata: ProjectReportMetadataDto | undefined,
 ): string {
 	const route = metadata?.pathname;
 	const locationClause = route ? ` on ${route}` : '';

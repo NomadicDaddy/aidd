@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/refs */
-import type { KeyboardEvent as ReactKeyboardEvent, ReactElement, ReactNode } from 'react';
+import type { ReactElement, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 
 import { useEffect, useId, useRef, useState } from 'react';
 
@@ -150,7 +150,7 @@ export function DropdownMenu({ align = 'end', className, items, trigger }: Dropd
 					aria-labelledby={triggerId}
 					className={cn(
 						'absolute top-full z-20 mt-1 w-44 overflow-hidden rounded-md border border-neutral-200 bg-white py-1 shadow-lg outline-none dark:border-neutral-800 dark:bg-neutral-950',
-						align === 'end' ? 'right-0' : 'left-0'
+						align === 'end' ? 'right-0' : 'left-0',
 					)}
 					id={menuId}
 					onKeyDown={onMenuKeyDown}
@@ -166,7 +166,7 @@ export function DropdownMenu({ align = 'end', className, items, trigger }: Dropd
 									'focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-inset',
 									toneClass[tone],
 									isDisabled && 'cursor-not-allowed opacity-60',
-									item.className
+									item.className,
 								)}
 								disabled={isDisabled}
 								key={index}

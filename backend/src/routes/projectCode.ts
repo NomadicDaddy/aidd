@@ -15,7 +15,7 @@ export function createProjectCodeRoutes(context: WebContext) {
 			},
 			{
 				params: projectIdParams,
-			}
+			},
 		)
 		.get(
 			'/:id/code/file',
@@ -26,6 +26,6 @@ export function createProjectCodeRoutes(context: WebContext) {
 			{
 				params: projectIdParams,
 				query: projectCodeFileQuery,
-			}
+			},
 		);
 }

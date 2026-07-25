@@ -6,7 +6,7 @@ export function buildPlannerPrompt(
 	stage: string,
 	compiledPrompt: string,
 	work: SelectedWork,
-	planningProjectDir: string
+	planningProjectDir: string,
 ): string {
 	return `## aidd TRIUMVIRATE ${stage.toUpperCase()} PLANNING STAGE
 
@@ -50,7 +50,7 @@ export function buildOverseerPrompt(
 	primary: StageRunResult,
 	secondary: StageRunResult,
 	planningProjectDir: string,
-	consistencyGate = false
+	consistencyGate = false,
 ): string {
 	const consistencySection = consistencyGate
 		? `
@@ -122,7 +122,7 @@ ${compiledPrompt}`;
 export function buildExecutionPrompt(
 	compiledPrompt: string,
 	finalActions: string,
-	consistencyIssues: string[] = []
+	consistencyIssues: string[] = [],
 ): string {
 	const consistencyNotes =
 		consistencyIssues.length > 0

@@ -12,7 +12,7 @@ export function RecipeParamsOverview({ parameters }: { parameters: RecipeParamet
 					<span
 						className="inline-flex items-center gap-1.5 rounded-md bg-neutral-100 px-2.5 py-1 text-sm dark:bg-neutral-800"
 						key={param.name}>
-						<span className="text-foreground font-medium">{param.name}</span>
+						<span className="font-medium text-foreground">{param.name}</span>
 						{param.description && (
 							<span className="text-neutral-500">{param.description}</span>
 						)}

@@ -69,7 +69,7 @@ export function TriModeBadge({ roles }: { roles: AiddTriumvirateRoles | null }) 
 
 export function groupIterationsByRun(
 	runs: ProjectLocalRun[],
-	iterations: ProjectLocalIteration[]
+	iterations: ProjectLocalIteration[],
 ): {
 	byRunKey: Map<string, ProjectLocalIteration[]>;
 	orphans: ProjectLocalIteration[];
@@ -111,7 +111,7 @@ export function groupIterationsByRun(
 			(window) =>
 				!Number.isNaN(window.start) &&
 				iterationStart >= window.start &&
-				iterationStart <= window.end
+				iterationStart <= window.end,
 		);
 		if (match) {
 			byRunKey.get(match.key)?.push(iteration);

@@ -32,7 +32,7 @@ async function seedReleaseFiles(root: string, version = '1.2.3'): Promise<void> 
 	await writeFile(join(root, 'VERSION'), `${version}\n`);
 	await writeFile(
 		join(root, 'docs', 'CHANGELOG.md'),
-		`# Changelog\n\n## [${version}] - 2026-07-01\n\n### Added\n\n- Test entry.\n`
+		`# Changelog\n\n## [${version}] - 2026-07-01\n\n### Added\n\n- Test entry.\n`,
 	);
 	for (const file of [
 		'README.md',
@@ -94,7 +94,7 @@ describe('release check script', () => {
 	test('--all-targets widens to every standalone target', () => {
 		const args = parseReleaseCheckArgs(['--all-targets']);
 		expect(args.targets.map((target) => target.name)).toEqual(
-			ALL_TARGETS.map((target) => target.name)
+			ALL_TARGETS.map((target) => target.name),
 		);
 	});
 
@@ -142,7 +142,7 @@ describe('release check script', () => {
 			async ({ command }) => {
 				commands.push(command);
 				return 1;
-			}
+			},
 		);
 
 		expect(exitCode).toBe(1);

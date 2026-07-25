@@ -157,7 +157,7 @@ export async function readProjectCodeTree(projectPath: string): Promise<ProjectC
 			tracked.timedOut ? 'error' : 'not-a-repo',
 			tracked.timedOut
 				? 'git timed out while listing tracked files.'
-				: 'Tracked files could not be listed.'
+				: 'Tracked files could not be listed.',
 		);
 	}
 	const allPaths = tracked.stdout.split('\0').filter((entry) => entry.length > 0);
@@ -187,7 +187,7 @@ export async function readProjectCodeTree(projectPath: string): Promise<ProjectC
 
 export async function readProjectCodeFile(
 	projectPath: string,
-	requestedPath: string
+	requestedPath: string,
 ): Promise<ProjectCodeFileResult> {
 	const notRepo = await detectWorkTree(projectPath);
 	if (notRepo) return failureFile(notRepo.state, notRepo.reason ?? 'Repository unavailable.');

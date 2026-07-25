@@ -49,7 +49,7 @@ export function loadPtyProvider(): Promise<null | PtySpawn> {
 		} catch (err) {
 			webLogger.warn(
 				{ err },
-				'bun-pty failed to load; embedded terminal disabled on this host'
+				'bun-pty failed to load; embedded terminal disabled on this host',
 			);
 			return null;
 		}

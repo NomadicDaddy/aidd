@@ -15,9 +15,9 @@ export const thinkingLevelValues = ['low', 'medium', 'high'] as const;
 export type ThinkingLevelValue = (typeof thinkingLevelValues)[number];
 
 const reasoningEffortAliases = new Map<string, ReasoningEffortValue>([
+	['extra_high', 'xhigh'],
 	['extra-high', 'xhigh'],
 	['extra high', 'xhigh'],
-	['extra_high', 'xhigh'],
 	['x-high', 'xhigh'],
 ]);
 
@@ -35,7 +35,7 @@ export function normalizeReasoningEffort(raw: string): ReasoningEffortValue | un
 }
 
 export function isPersistedReasoningEffort(
-	value: ReasoningEffortValue
+	value: ReasoningEffortValue,
 ): value is PersistedReasoningEffortValue {
 	return (persistedReasoningEffortValues as readonly string[]).includes(value);
 }
@@ -48,36 +48,36 @@ export function normalizeThinkingLevel(raw: string): ThinkingLevelValue | undefi
 }
 
 export const validFilterFields = new Set([
-	'id',
-	'category',
-	'description',
-	'title',
-	'status',
-	'priority',
-	'passes',
-	'dependencies',
-	'spec',
-	'model',
-	'error',
-	'summary',
 	'branchName',
-	'startedAt',
+	'category',
 	'createdAt',
-	'updatedAt',
-	'skipTests',
-	'thinkingLevel',
-	'reasoningEffort',
+	'dependencies',
+	'description',
+	'error',
+	'id',
+	'model',
+	'passes',
 	'planningMode',
+	'priority',
+	'reasoningEffort',
 	'requirePlanApproval',
+	'skipTests',
+	'spec',
+	'startedAt',
+	'status',
+	'summary',
+	'thinkingLevel',
+	'title',
+	'updatedAt',
 ]);
 
 export const numberFlags = new Set([
-	'--max-iterations',
-	'--timeout',
-	'--idle-timeout',
-	'--idle-nudge-timeout',
 	'--dirty-tree-threshold',
+	'--idle-nudge-timeout',
+	'--idle-timeout',
+	'--max-iterations',
 	'--no-work-backoff-ms',
-	'--quit-on-abort',
 	'--port',
+	'--quit-on-abort',
+	'--timeout',
 ]);

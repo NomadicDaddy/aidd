@@ -58,7 +58,7 @@ export function assertRootDataDirectory(rootDir: string, dataDir: string): strin
 		const repoRelation = relative(resolve(rootDir), resolvedDataDir).replace(/\\/g, '/');
 		if (repoRelation === 'backend/data' || repoRelation.startsWith('backend/data/')) {
 			throw new Error(
-				'web.dataDir must use the repository root data directory, not backend/data'
+				'web.dataDir must use the repository root data directory, not backend/data',
 			);
 		}
 		throw new Error(`web.dataDir must be inside ${rootDataDir}`);
@@ -73,7 +73,7 @@ export function wrapWebDatabase(sqlite: Database): { commands: DbCommands; db: W
 	const callback = async (
 		sql: string,
 		params: unknown[],
-		method: SqlMethod
+		method: SqlMethod,
 	): Promise<StatementResult> => executeStatement(sqlite, sql, params, method);
 	// drizzle's published callback type promises `rows: any[]`, but its runtime contract for a
 	// 'get' miss is `rows: undefined`; the cast bridges that single intentional gap.
@@ -87,7 +87,7 @@ export function wrapWebDatabase(sqlite: Database): { commands: DbCommands; db: W
 export async function createWebDatabase(
 	config: ResolvedWebConfig,
 	rootDir?: string,
-	options?: CreateWebDatabaseOptions
+	options?: CreateWebDatabaseOptions,
 ): Promise<WebDatabaseHandle> {
 	const dataDir = rootDir ? assertRootDataDirectory(rootDir, config.dataDir) : config.dataDir;
 	await mkdir(dataDir, { recursive: true });
@@ -147,7 +147,7 @@ interface PendingRequest {
 // live backend holds the lock) rejects here, preserving the fail-fast startup behavior.
 export async function createWorkerWebDatabase(
 	config: ResolvedWebConfig,
-	rootDir: string
+	rootDir: string,
 ): Promise<WebDatabaseHandle> {
 	const dataDir = assertRootDataDirectory(rootDir, config.dataDir);
 	await mkdir(dataDir, { recursive: true });
@@ -211,14 +211,14 @@ export async function createWorkerWebDatabase(
 	const callback = (
 		sql: string,
 		params: unknown[],
-		method: SqlMethod
+		method: SqlMethod,
 	): Promise<StatementResult> =>
 		send((id) => ({ id, kind: 'stmt', method, params, sql })) as Promise<StatementResult>;
 	const db = drizzleProxy(callback as AsyncRemoteCallback, { schema });
 
 	const call = <K extends DbCommandName>(
 		name: K,
-		args: DbCommandMap[K]['args']
+		args: DbCommandMap[K]['args'],
 	): Promise<DbCommandMap[K]['result']> =>
 		send((id) => ({ args, id, kind: 'cmd', name })) as Promise<DbCommandMap[K]['result']>;
 

@@ -27,7 +27,7 @@ export async function launchRecipe(input: {
 			parameters: input.parameters ?? {},
 			projectDir: input.projectDir,
 			reasoningEffort: input.launchTarget?.reasoningEffort,
-		}
+		},
 	);
 	return response.session;
 }
@@ -40,7 +40,7 @@ export async function listRecipes(): Promise<RecipeDefinition[]> {
 export async function reloadRecipe(id: string): Promise<RecipeDefinition> {
 	const response = await apiSend<{ recipe: RecipeDefinition }>(
 		`/api/v1/recipes/${id}/reload`,
-		'POST'
+		'POST',
 	);
 	return response.recipe;
 }
@@ -48,7 +48,7 @@ export async function reloadRecipe(id: string): Promise<RecipeDefinition> {
 export async function reloadRecipes(): Promise<RecipeDefinition[]> {
 	const response = await apiSend<{ recipes: RecipeDefinition[] }>(
 		'/api/v1/recipes/reload',
-		'POST'
+		'POST',
 	);
 	return response.recipes;
 }
@@ -57,7 +57,7 @@ export async function saveRecipe(recipe: RecipeDefinition): Promise<RecipeDefini
 	const response = await apiSend<{ recipe: RecipeDefinition }>(
 		`/api/v1/recipes/${recipe.id}`,
 		'PUT',
-		recipe
+		recipe,
 	);
 	return response.recipe;
 }

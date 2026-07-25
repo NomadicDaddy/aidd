@@ -53,7 +53,7 @@ async function runGitStatus(projectPath: string): Promise<GitOutput> {
 				stdin: 'ignore',
 				stdout: 'pipe',
 				windowsHide: true,
-			}
+			},
 		);
 	} catch (err) {
 		const stderr = err instanceof Error ? err.message : String(err);
@@ -81,7 +81,7 @@ async function runGitStatus(projectPath: string): Promise<GitOutput> {
 }
 
 function parseBranchLine(
-	line: string
+	line: string,
 ): Pick<ProjectGitStatusSummary, 'ahead' | 'behind' | 'branch'> {
 	const raw = line.replace(/^##\s*/, '').trim();
 	const ahead = Number(/\bahead\s+(\d+)/.exec(raw)?.[1] ?? 0);
@@ -132,7 +132,7 @@ function parsePorcelain(stdout: string): ProjectGitStatusSummary {
 }
 
 function failure(
-	state: Exclude<ProjectGitStatusState, 'clean' | 'conflicted' | 'dirty'>
+	state: Exclude<ProjectGitStatusState, 'clean' | 'conflicted' | 'dirty'>,
 ): ProjectGitStatusSummary {
 	return { ...emptyStatus, state };
 }
@@ -147,7 +147,7 @@ export async function readProjectGitStatus(projectPath: string): Promise<Project
 }
 
 export async function readProjectGitStatusMap(
-	projects: { id: string; path: string }[]
+	projects: { id: string; path: string }[],
 ): Promise<Record<string, ProjectGitStatusMapEntry>> {
 	const entries: Record<string, ProjectGitStatusMapEntry> = {};
 	let nextIndex = 0;
@@ -164,7 +164,7 @@ export async function readProjectGitStatusMap(
 					status: await readProjectGitStatus(project.path),
 				};
 			}
-		}
+		},
 	);
 	await Promise.all(workers);
 	return entries;

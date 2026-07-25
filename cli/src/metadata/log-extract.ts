@@ -1,7 +1,7 @@
 import type { AiddExecutionMode, AiddTriumvirateRoles } from 'aidd-shared/execution-mode';
 
 import { metadataPath } from 'aidd-shared/metadata/paths';
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export interface ExtractedIteration {
@@ -108,7 +108,7 @@ async function readIterationJson(path: string): Promise<ExtractedIteration | und
 			return undefined;
 		}
 		console.warn(
-			`log-extract: failed to read iteration file ${path}: ${err instanceof Error ? err.message : String(err)}`
+			`log-extract: failed to read iteration file ${path}: ${err instanceof Error ? err.message : String(err)}`,
 		);
 		return undefined;
 	}
@@ -118,14 +118,14 @@ async function readIterationJson(path: string): Promise<ExtractedIteration | und
 		return reshape(parsed as Record<string, unknown>);
 	} catch (err) {
 		console.warn(
-			`log-extract: failed to parse iteration JSON ${path}: ${err instanceof Error ? err.message : String(err)}`
+			`log-extract: failed to parse iteration JSON ${path}: ${err instanceof Error ? err.message : String(err)}`,
 		);
 		return undefined;
 	}
 }
 
 export async function extractLatestIteration(
-	projectDir: string
+	projectDir: string,
 ): Promise<ExtractedIteration | undefined> {
 	const files = await listIterationJsonFiles(projectDir);
 	const last = files.at(-1);

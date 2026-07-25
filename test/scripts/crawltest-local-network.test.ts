@@ -3,10 +3,10 @@ import { describe, expect, test } from 'bun:test';
 import {
 	assertLocalNetworkAccess,
 	isIgnorableConsoleError,
-	parseCrawlArgs,
-	selectLocalNetworkHost,
 	type LocalNetworkInterfaceAddress,
 	type LocalNetworkProbeDependencies,
+	parseCrawlArgs,
+	selectLocalNetworkHost,
 } from '../../scripts/crawltest.ts';
 
 interface FetchRecord {
@@ -29,8 +29,8 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 function createDependencies(
 	settings: ProbeSettings,
-	interfaceAddresses: LocalNetworkInterfaceAddress[] = []
-): LocalNetworkProbeDependencies & { records: FetchRecord[] } {
+	interfaceAddresses: LocalNetworkInterfaceAddress[] = [],
+): { records: FetchRecord[] } & LocalNetworkProbeDependencies {
 	const records: FetchRecord[] = [];
 	return {
 		records,
@@ -74,11 +74,11 @@ describe('crawltest local network probe', () => {
 
 		const errors = await assertLocalNetworkAccess(
 			{ baseUrl: 'http://127.0.0.1:3210', localNetworkHost: null },
-			dependencies
+			dependencies,
 		);
 
 		expect(errors).toContain(
-			'[local-network] web.allowRemote is false; enable local network access first'
+			'[local-network] web.allowRemote is false; enable local network access first',
 		);
 	});
 
@@ -91,7 +91,7 @@ describe('crawltest local network probe', () => {
 
 		const errors = await assertLocalNetworkAccess(
 			{ baseUrl: 'http://127.0.0.1:3210', localNetworkHost: null },
-			dependencies
+			dependencies,
 		);
 
 		expect(errors[0]).toContain('loopback-only');
@@ -130,7 +130,7 @@ describe('crawltest local network probe', () => {
 
 		const errors = await assertLocalNetworkAccess(
 			{ baseUrl: 'http://127.0.0.1:3210', localNetworkHost: 'localhost' },
-			dependencies
+			dependencies,
 		);
 
 		expect(errors[0]).toContain('selected host "localhost" is loopback-only');
@@ -139,17 +139,17 @@ describe('crawltest local network probe', () => {
 	test('probes LAN reachability and origin rejection', async () => {
 		const dependencies = createDependencies(
 			{ allowRemote: true, hostname: '0.0.0.0', port: 3210 },
-			[{ address: '192.168.1.44', family: 'IPv4', internal: false }]
+			[{ address: '192.168.1.44', family: 'IPv4', internal: false }],
 		);
 
 		const errors = await assertLocalNetworkAccess(
 			{ baseUrl: 'http://127.0.0.1:3210', localNetworkHost: null },
-			dependencies
+			dependencies,
 		);
 
 		expect(errors).toEqual([]);
 		expect(dependencies.records.map((record) => record.url)).toContain(
-			'http://192.168.1.44:3210/api/v1/health'
+			'http://192.168.1.44:3210/api/v1/health',
 		);
 		expect(dependencies.records).toContainEqual({
 			origin: 'http://192.168.1.44:3210',
@@ -164,8 +164,8 @@ describe('crawltest local network probe', () => {
 	test('ignores Chromium COOP warning for HTTP LAN origins', () => {
 		expect(
 			isIgnorableConsoleError(
-				"The Cross-Origin-Opener-Policy header has been ignored, because the URL's origin was untrustworthy."
-			)
+				"The Cross-Origin-Opener-Policy header has been ignored, because the URL's origin was untrustworthy.",
+			),
 		).toBe(true);
 		expect(isIgnorableConsoleError('ReferenceError: missingValue is not defined')).toBe(false);
 	});

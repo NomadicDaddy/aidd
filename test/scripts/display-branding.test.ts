@@ -25,7 +25,7 @@ describe('display branding', () => {
 			trackedMatches(variant).filter((match) => {
 				const content = match.replace(/^.*?:\d+:/, '').replaceAll(protocolPrefix, '');
 				return new RegExp(`\\b${variant}\\b`).test(content);
-			})
+			}),
 		);
 
 		expect(unexpected).toEqual([]);

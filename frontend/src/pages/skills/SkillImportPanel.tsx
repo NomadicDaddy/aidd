@@ -38,7 +38,7 @@ export function SkillImportPanel() {
 					toast.error(error instanceof Error ? error.message : 'Import preview failed');
 				},
 				onSuccess: setPreview,
-			}
+			},
 		);
 	}
 
@@ -55,19 +55,19 @@ export function SkillImportPanel() {
 					toast.error(error instanceof Error ? error.message : 'Skill import failed'),
 				onSuccess: (skill) => {
 					toast.success(
-						`${skill.id} ${preview.conflict === 'imported' ? 'replaced' : 'imported'}`
+						`${skill.id} ${preview.conflict === 'imported' ? 'replaced' : 'imported'}`,
 					);
 					setPreview(null);
 					setSourcePath('');
 				},
-			}
+			},
 		);
 	}
 
 	return (
 		<Card className="space-y-3">
 			<div>
-				<h2 className="text-foreground text-base font-semibold">Import a local skill</h2>
+				<h2 className="text-base font-semibold text-foreground">Import a local skill</h2>
 				<p className="text-sm text-neutral-600 dark:text-neutral-400">
 					Copy a skill folder from an allowed root into persistent aidd data.
 				</p>

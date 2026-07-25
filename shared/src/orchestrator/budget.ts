@@ -20,7 +20,7 @@ export function evaluateRunBudget(totals: RunBudgetTotals, budget: RunBudget): R
 	const reasons: string[] = [];
 	if (budget.maxCostUsd !== undefined && totals.costUsd > budget.maxCostUsd) {
 		reasons.push(
-			`cost $${totals.costUsd.toFixed(2)} exceeded budget $${budget.maxCostUsd.toFixed(2)}`
+			`cost $${totals.costUsd.toFixed(2)} exceeded budget $${budget.maxCostUsd.toFixed(2)}`,
 		);
 	}
 	const tokens = totals.inputTokens + totals.outputTokens;

@@ -42,6 +42,6 @@ export type TraceWindow = {
 	location?: { href: string };
 };
 
-export type ImportMetaWithEnv = ImportMeta & { env?: { DEV?: boolean } };
+export type ImportMetaWithEnv = { env?: { DEV?: boolean } } & ImportMeta;
 
-export type TraceRecord = DataMovementTraceEvent & { timestamp: string };
+export type TraceRecord = { timestamp: string } & DataMovementTraceEvent;

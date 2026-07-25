@@ -20,6 +20,7 @@ import {
 import {
 	exists,
 	firstUnansweredQuestion,
+	type InterviewQuestion,
 	interviewQuestionsPath,
 	interviewResponsePath,
 	readInterviewQuestions,
@@ -27,7 +28,6 @@ import {
 	stringValue,
 	writeInterviewIndex,
 	writeInterviewResponse,
-	type InterviewQuestion,
 } from './interview-questions.ts';
 
 interface InterviewWorkData {
@@ -44,7 +44,7 @@ interface GenerateQuestionsWorkData {
 type InterviewData = GenerateQuestionsWorkData | InterviewWorkData;
 
 function isGenerateQuestionsData(
-	data: InterviewData | undefined
+	data: InterviewData | undefined,
 ): data is GenerateQuestionsWorkData {
 	return !!data && 'generateQuestions' in data && data.generateQuestions === true;
 }
@@ -63,7 +63,7 @@ export function createInterviewMode(plan: RunPlan): ModeHandler {
 			if (isGenerateQuestionsData(data)) {
 				const relativeQuestionsFile = relative(
 					context.projectDir,
-					data.questionsFile
+					data.questionsFile,
 				).replaceAll('\\', '/');
 				return {
 					...plan.prompt,
@@ -73,7 +73,7 @@ export function createInterviewMode(plan: RunPlan): ModeHandler {
 							: buildGenerateQuestionsRetryDirective(
 									data.questionsFile,
 									relativeQuestionsFile,
-									failedGenerateAttempts
+									failedGenerateAttempts,
 								),
 					variables: {
 						...plan.prompt.variables,

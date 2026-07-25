@@ -22,16 +22,16 @@ export function PageHeader({
 		<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 			<div className="min-w-0">
 				{breadcrumb !== undefined && (
-					<div className="text-muted-foreground mb-1 text-sm">{breadcrumb}</div>
+					<div className="mb-1 text-sm text-muted-foreground">{breadcrumb}</div>
 				)}
 				<div className="flex items-center gap-1.5">
-					<h1 className="text-foreground font-display text-2xl font-semibold tracking-tight">
+					<h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
 						{title}
 					</h1>
 					{helpSlug !== undefined && <HelpTrigger slug={helpSlug} />}
 				</div>
 				{description !== undefined && (
-					<p className={cn('text-muted-foreground text-sm', descriptionClassName)}>
+					<p className={cn('text-sm text-muted-foreground', descriptionClassName)}>
 						{description}
 					</p>
 				)}

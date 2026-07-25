@@ -60,7 +60,7 @@ export function parseReleaseCheckArgs(argv: string[]): ReleaseCheckArgs {
 			const target = ALL_TARGETS.find((item) => item.name === targetName);
 			if (!target) {
 				throw new Error(
-					`Unknown target: ${targetName}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`
+					`Unknown target: ${targetName}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
 				);
 			}
 			targets.push(target);
@@ -87,7 +87,7 @@ function windowsTarget(): CompileTarget {
 export async function runReleaseCheck(
 	rootDir: string,
 	args: ReleaseCheckArgs,
-	commandRunner: InteractiveRunner = runInteractiveCommand
+	commandRunner: InteractiveRunner = runInteractiveCommand,
 ): Promise<number> {
 	const issues: string[] = [];
 	issues.push(...(await checkGitStatus(rootDir, args.allowDirty)));
@@ -167,7 +167,7 @@ async function checkVersionAndFiles(rootDir: string): Promise<string[]> {
 
 function formatIssues(issues: string[]): string {
 	return ['[release-check] release checks failed:', ...issues.map((issue) => `- ${issue}`)].join(
-		'\n'
+		'\n',
 	);
 }
 

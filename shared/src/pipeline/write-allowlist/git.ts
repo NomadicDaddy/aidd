@@ -50,7 +50,7 @@ export async function gitStatusEntries(projectDir: string): Promise<Map<string, 
 
 export async function committedPathsSince(
 	projectDir: string,
-	baselineHead: string | undefined
+	baselineHead: string | undefined,
 ): Promise<string[]> {
 	const currentHead = await gitHead(projectDir);
 	if (currentHead === undefined || currentHead === baselineHead) return [];

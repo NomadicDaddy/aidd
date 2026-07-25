@@ -37,7 +37,7 @@ export function useXtermTheme(): ITheme {
 	const systemDark = useSyncExternalStore(
 		subscribeSystemTheme,
 		() => media?.matches ?? true,
-		() => true
+		() => true,
 	);
 	const isDark = mode === 'dark' || (mode === 'system' && systemDark);
 	return isDark ? darkTheme : lightTheme;

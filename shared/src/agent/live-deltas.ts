@@ -98,7 +98,7 @@ export class LiveDeltaPump {
 			() => {
 				settled = true;
 				this.notify?.();
-			}
+			},
 		);
 		while (!settled) {
 			if (this.queue.length === 0) {

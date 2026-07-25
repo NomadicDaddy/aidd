@@ -9,11 +9,11 @@ import type {
 } from '../../backend/src/services/terminal/ptyProvider.ts';
 
 import {
+	type TerminalAttachment,
 	TerminalLimitError,
 	TerminalSessionManager,
 	TerminalSpawnError,
 	TerminalUnavailableError,
-	type TerminalAttachment,
 } from '../../backend/src/services/terminal/sessionManager.ts';
 
 const SHELLS = [
@@ -138,7 +138,7 @@ describe('TerminalSessionManager', () => {
 		expect(info.cwd).toBe(ROOT_DIR);
 		expect(spawned[0]?.options.cwd).toBe(ROOT_DIR);
 		expect(() => manager.create({ cwd: 'D:\\definitely\\not\\a\\real\\dir' })).toThrow(
-			TerminalSpawnError
+			TerminalSpawnError,
 		);
 	});
 

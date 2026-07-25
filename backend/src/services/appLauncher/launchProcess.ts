@@ -6,7 +6,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import { webLogger } from '../../logger.ts';
 import { HttpError } from '../errors.ts';
-import { commandLabel, isPidAlive, type CommandArgs } from './shared.ts';
+import { type CommandArgs, commandLabel, isPidAlive } from './shared.ts';
 
 const SIGNAL_GRACE_MS = 5000;
 /** Bound on captured stdout/stderr kept in memory per launch command (tail only). */
@@ -107,7 +107,7 @@ function readOutputTail(path: string): string {
 
 export async function runProjectCommand(
 	projectPath: string,
-	command: CommandArgs
+	command: CommandArgs,
 ): Promise<CommandResult> {
 	let capture: CommandCapture | null = null;
 	try {
@@ -142,7 +142,7 @@ export async function runStopCommand(projectPath: string, command: CommandArgs):
 			projectPath,
 			signal: result.signal,
 		},
-		'app launcher stop command failed; falling back to process signals'
+		'app launcher stop command failed; falling back to process signals',
 	);
 	return false;
 }

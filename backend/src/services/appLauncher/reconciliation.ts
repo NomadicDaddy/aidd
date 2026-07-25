@@ -89,7 +89,7 @@ async function persistStatus(
 	deps: ReconciliationDeps,
 	row: AppLaunchRow,
 	status: AppLaunchStatus,
-	stoppedAt: null | number
+	stoppedAt: null | number,
 ): Promise<AppLaunchRow> {
 	const now = Date.now();
 	await deps.db
@@ -102,7 +102,7 @@ async function persistStatus(
 async function persistRunningStatus(
 	deps: ReconciliationDeps,
 	row: AppLaunchRow,
-	pidFile: SpernakitPidFile
+	pidFile: SpernakitPidFile,
 ): Promise<AppLaunchRow> {
 	const now = Date.now();
 	const startedAt = pidFile.modifiedAt;
@@ -124,7 +124,7 @@ async function persistDiscoveredRunningStatus(
 	deps: ReconciliationDeps,
 	projectPath: string,
 	command: string,
-	pidFile: SpernakitPidFile
+	pidFile: SpernakitPidFile,
 ): Promise<AppLaunchRow> {
 	const now = Date.now();
 	const row = {
@@ -142,7 +142,7 @@ async function persistDiscoveredRunningStatus(
 
 export async function reconcileRow(
 	deps: ReconciliationDeps,
-	row: AppLaunchRow
+	row: AppLaunchRow,
 ): Promise<AppLaunchRow> {
 	if (row.status === 'running') {
 		if (await isRowStillRunning(row)) return row;
@@ -162,7 +162,7 @@ export async function reconcileRow(
 	if (isSpernakitStartRow(row)) {
 		const livePidFile = await freshLiveSpernakitPidFile(
 			row.projectPath,
-			row.stoppedAt ?? row.updatedAt
+			row.stoppedAt ?? row.updatedAt,
 		);
 		if (livePidFile !== undefined) {
 			return persistRunningStatus(deps, row, livePidFile);
@@ -183,7 +183,7 @@ export async function reconcileOnBoot(deps: ReconciliationDeps): Promise<void> {
 					projectPath: row.projectPath,
 					to: reconciled.status,
 				},
-				'app launcher reconciled stale row'
+				'app launcher reconciled stale row',
 			);
 		}
 	}
@@ -217,7 +217,7 @@ export async function resolveLaunchCommands(projectPath: string): Promise<{
 
 export async function readRow(
 	deps: ReconciliationDeps,
-	projectPath: string
+	projectPath: string,
 ): Promise<AppLaunchRow | undefined> {
 	const rows = await deps.db
 		.select()
@@ -230,7 +230,7 @@ export async function readRow(
 export async function getStatus(
 	deps: ReconciliationDeps,
 	projectId: string,
-	projectPath: string
+	projectPath: string,
 ): Promise<AppLaunchRecord> {
 	const row = await readRow(deps, projectPath);
 	if (!row) {
@@ -247,7 +247,7 @@ export async function getStatus(
 			const livePidFile = await freshLiveSpernakitPidFile(projectPath, 0);
 			if (livePidFile !== undefined) {
 				return toRecord(
-					await persistDiscoveredRunningStatus(deps, projectPath, command, livePidFile)
+					await persistDiscoveredRunningStatus(deps, projectPath, command, livePidFile),
 				);
 			}
 		}

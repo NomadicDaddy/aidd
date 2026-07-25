@@ -42,7 +42,7 @@ interface Kernel32 {
 		creation: Uint8Array,
 		exit: Uint8Array,
 		kernel: Uint8Array,
-		user: Uint8Array
+		user: Uint8Array,
 	) => number;
 	OpenProcess: (access: number, inherit: number, pid: number) => bigint;
 	Process32FirstW: (snapshot: bigint, entry: Uint8Array) => number;
@@ -90,7 +90,7 @@ function readStartId(api: Kernel32, pid: number): string | undefined {
 			creation,
 			scratch,
 			new Uint8Array(8),
-			new Uint8Array(8)
+			new Uint8Array(8),
 		);
 		if (ok === 0) return undefined;
 		const view = new DataView(creation.buffer);

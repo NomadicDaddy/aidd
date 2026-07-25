@@ -42,7 +42,7 @@ describe('acquireWriterLock', () => {
 		const lock = acquireWriterLock(dbPath);
 		try {
 			expect(() => acquireWriterLock(dbPath)).toThrow(
-				/already holds the database writer lock/
+				/already holds the database writer lock/,
 			);
 		} finally {
 			lock.release();
@@ -54,7 +54,7 @@ describe('acquireWriterLock', () => {
 		const lockPath = `${dbPath}.lock`;
 		await writeFile(
 			lockPath,
-			JSON.stringify({ host: 'crashed-host', pid: DEAD_PID, startedAt: 1 })
+			JSON.stringify({ host: 'crashed-host', pid: DEAD_PID, startedAt: 1 }),
 		);
 		const lock = acquireWriterLock(dbPath); // must reclaim rather than throw
 		const payload = JSON.parse(await readFile(lock.path, 'utf8')) as { pid: number };
@@ -94,7 +94,7 @@ describe('acquireWriterLock', () => {
 				lockPath,
 				// Corroborated payload: matching hostname and a plausible startedAt so the
 				// corroboration check treats the live PID as a genuine holder.
-				JSON.stringify({ host: hostname(), pid: child.pid, startedAt: Date.now() })
+				JSON.stringify({ host: hostname(), pid: child.pid, startedAt: Date.now() }),
 			);
 			expect(() => acquireWriterLock(dbPath)).toThrow(/Another aidd backend/);
 		} finally {
@@ -118,7 +118,7 @@ describe('acquireWriterLock', () => {
 					host: 'a-completely-different-host',
 					pid: child.pid,
 					startedAt: Date.now(),
-				})
+				}),
 			);
 			const lock = acquireWriterLock(dbPath); // must reclaim rather than throw
 			const payload = JSON.parse(await readFile(lock.path, 'utf8')) as { pid: number };
@@ -145,7 +145,7 @@ describe('acquireWriterLock', () => {
 					host: hostname(),
 					pid: child.pid,
 					startedAt: Date.now() - 31 * 24 * 60 * 60 * 1000, // 31 days ago
-				})
+				}),
 			);
 			const lock = acquireWriterLock(dbPath);
 			const payload = JSON.parse(await readFile(lock.path, 'utf8')) as { pid: number };

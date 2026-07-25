@@ -57,7 +57,7 @@ export async function getResourceUsage(
 	input?: {
 		resourceType?: TelemetryResourceType | undefined;
 		windowMs?: number | undefined;
-	}
+	},
 ): Promise<ResourceUsageRow[]> {
 	const sinceFilter =
 		input?.windowMs !== undefined
@@ -68,7 +68,7 @@ export async function getResourceUsage(
 			? eq(invocationEvents.resourceType, input.resourceType)
 			: undefined;
 	const filters = [sinceFilter, typeFilter].filter(
-		(value): value is NonNullable<typeof value> => value !== undefined
+		(value): value is NonNullable<typeof value> => value !== undefined,
 	);
 	// Outcome bucketing needs the shared run classifier, which can't run in SQL
 	// without re-encoding it (and inviting drift), so fetch the joined rows and aggregate in JS. The
@@ -174,7 +174,7 @@ export async function getTopUsed(
 		limit: number;
 		resourceType?: TelemetryResourceType | undefined;
 		windowMs?: number | undefined;
-	}
+	},
 ): Promise<ResourceUsageRow[]> {
 	const rows = await getResourceUsage(db, {
 		resourceType: input.resourceType,
@@ -189,7 +189,7 @@ export async function getTimeseries(
 		bucket: 'day' | 'hour';
 		resourceType?: TelemetryResourceType | undefined;
 		windowMs?: number | undefined;
-	}
+	},
 ): Promise<TimeseriesPoint[]> {
 	const bucketMs = input.bucket === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
 	const filters = [];

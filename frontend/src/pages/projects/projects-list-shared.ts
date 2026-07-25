@@ -30,15 +30,15 @@ export type MaturityFilter = 'all' | 'complete' | 'incomplete' | MaturityStageId
 
 export const MATURITY_FILTERS: ReadonlySet<MaturityFilter> = new Set([
 	'all',
-	'incomplete',
+	'audited',
 	'complete',
-	'specified',
-	'structured',
+	'engaged',
+	'incomplete',
 	'mapped',
 	'planned',
-	'engaged',
-	'audited',
 	'shipped',
+	'specified',
+	'structured',
 ]);
 
 export const maturityFilterLabels: Record<MaturityFilter, string> = {

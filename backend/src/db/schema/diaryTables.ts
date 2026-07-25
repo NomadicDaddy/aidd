@@ -28,5 +28,5 @@ export const diaryEntries = sqliteTable(
 	(table) => [
 		uniqueIndex('idx_diary_entries_project_date').on(table.projectPath, table.entryDate),
 		index('idx_diary_entries_entry_date').on(table.entryDate),
-	]
+	],
 );

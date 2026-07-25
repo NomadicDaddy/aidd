@@ -144,7 +144,7 @@ export class OrchestratorProgressReporter {
 			fields.push(
 				this.iteration === undefined
 					? `-- | ${formatProgressDuration(nowMs - this.iterationStartedAtMs)}`
-					: `${(this.iteration + 1).toString().padStart(2, '0')} | ${formatProgressDuration(nowMs - this.iterationStartedAtMs)}`
+					: `${(this.iteration + 1).toString().padStart(2, '0')} | ${formatProgressDuration(nowMs - this.iterationStartedAtMs)}`,
 			);
 		} else if (this.iteration !== undefined) {
 			fields.push(`${(this.iteration + 1).toString().padStart(2, '0')} | --:--:--`);

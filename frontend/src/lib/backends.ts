@@ -17,7 +17,7 @@ const backendLabels: Record<BackendName, string> = {
 };
 
 export const backendOptions: { label: string; value: BackendName }[] = backendNames.map(
-	(value) => ({ label: backendLabels[value], value })
+	(value) => ({ label: backendLabels[value], value }),
 );
 
 export function backendLabel(value: null | string | undefined): string {

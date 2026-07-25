@@ -14,12 +14,12 @@ import { formatDate } from '../../../lib/formatters.ts';
 export function ActiveRunsBanner({ projectPath }: { projectPath: string }) {
 	const runs = useRuns(projectPath);
 	const running = (runs.data?.pages.flatMap((page) => page.runs) ?? []).filter(
-		(run) => run.status === 'running'
+		(run) => run.status === 'running',
 	);
 	if (running.length === 0) return null;
 	return (
 		<Card className="flex flex-wrap items-center gap-3 border-amber-200/80 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/20">
-			<div className="text-foreground flex shrink-0 items-center gap-2 text-sm font-semibold">
+			<div className="flex shrink-0 items-center gap-2 text-sm font-semibold text-foreground">
 				<Activity className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 				{running.length === 1 ? 'Run in progress' : `${running.length} runs in progress`}
 				<Badge pulse showDot tone="amber">

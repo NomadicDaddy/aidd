@@ -26,7 +26,7 @@ export function isDirExpanded(
 	dirPath: string,
 	overrides: DirExpansionOverrides,
 	selectedAncestors: ReadonlySet<string>,
-	searching: boolean
+	searching: boolean,
 ): boolean {
 	if (searching) return true;
 	return overrides.get(dirPath) ?? selectedAncestors.has(dirPath);
@@ -38,7 +38,7 @@ export function isDirExpanded(
 export function toggleDir(
 	dirPath: string,
 	overrides: DirExpansionOverrides,
-	selectedAncestors: ReadonlySet<string>
+	selectedAncestors: ReadonlySet<string>,
 ): DirExpansionOverrides {
 	const next = new Map(overrides);
 	next.set(dirPath, !isDirExpanded(dirPath, overrides, selectedAncestors, false));
@@ -50,7 +50,7 @@ export function toggleDir(
 // picked a file inside it from search results). Explicit opens are kept.
 export function revealSelection(
 	overrides: DirExpansionOverrides,
-	selectedPath: null | string
+	selectedPath: null | string,
 ): DirExpansionOverrides {
 	const dirs = ancestorDirs(selectedPath);
 	if (!dirs.some((dir) => overrides.get(dir) === false)) return overrides;

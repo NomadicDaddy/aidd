@@ -7,11 +7,10 @@ import { createPlanBackedMode } from './base.ts';
 import { evaluateFeatureCompletion } from './coding/completion.ts';
 import { selectLeasableFeature } from './coding/lease-selection.ts';
 import {
-	type RoadmapScopedQuery,
+	explicitFeatureTarget,
 	featureQuery,
 	featureTargetBlockedByRoadmap,
 	featureWorkBreakdown,
-	explicitFeatureTarget,
 	invalidRoadmapNoWork,
 	milestoneTargetBlockedByRoadmap,
 	noWorkDescription,
@@ -19,6 +18,7 @@ import {
 	roadmapGateDetail,
 	roadmapNoWork,
 	roadmapScopedQuery,
+	type RoadmapScopedQuery,
 } from './coding/selection.ts';
 
 // When an iteration is skipped because selectWork returned no actionable work, that call has
@@ -43,7 +43,7 @@ export function advanceBlueprintRunToCoding(plan: RunPlan): void {
 	plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
 		fragment.kind === 'phase'
 			? { id: 'coding', kind: 'phase', path: 'prompts/coding.md' }
-			: fragment
+			: fragment,
 	);
 }
 
@@ -141,7 +141,7 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 			const breakdown = featureWorkBreakdown(
 				features,
 				allFeatures,
-				scoped.query.includeAudit === true
+				scoped.query.includeAudit === true,
 			);
 			const resultArtifacts = {
 				completedFeature: shouldComplete ? selectedFeatureId : null,
@@ -213,14 +213,14 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 			const roadmapTargetBlock = featureTargetBlockedByRoadmap(
 				explicitFeatureTarget(plan),
 				allFeatures,
-				scoped.gate
+				scoped.gate,
 			);
 			if (roadmapTargetBlock) return roadmapTargetBlock;
 			const features = await context.store.listFeatures(scoped.query);
 			const breakdown = featureWorkBreakdown(
 				features,
 				allFeatures,
-				scoped.query.includeAudit === true
+				scoped.query.includeAudit === true,
 			);
 			// Lease-aware selection: concurrent runs against this project (worktree or live-tree)
 			// race on exclusive per-feature leases, so the ranked winner here is the first

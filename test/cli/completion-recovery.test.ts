@@ -36,7 +36,7 @@ async function gitOut(dir: string, args: string[]): Promise<string> {
 // run's own uncommitted work is src.ts, recorded as an absolute path the way tool events are.
 async function makeRecoveryFixture(
 	name: string,
-	gateScripts: Record<string, string>
+	gateScripts: Record<string, string>,
 ): Promise<{ projectDir: string; store: FileAiddStore }> {
 	const root = await testTempDir(`completion-recovery-${name}`);
 	const projectDir = join(root, 'project');
@@ -47,7 +47,7 @@ async function makeRecoveryFixture(
 	await git(projectDir, ['config', 'commit.gpgsign', 'false']);
 	await writeFile(
 		join(projectDir, 'package.json'),
-		JSON.stringify({ name: 'fixture', scripts: gateScripts })
+		JSON.stringify({ name: 'fixture', scripts: gateScripts }),
 	);
 	await writeFile(join(projectDir, 'base.ts'), 'export const base = 1;\n');
 	const store = new FileAiddStore(projectDir);
@@ -81,7 +81,7 @@ const work = { description: 'Stranded work', id: featureId, kind: 'feature' as c
 function inputFor(
 	projectDir: string,
 	store: FileAiddStore,
-	overrides: Partial<Parameters<typeof attemptCompletionMarkerRecovery>[0]> = {}
+	overrides: Partial<Parameters<typeof attemptCompletionMarkerRecovery>[0]> = {},
 ): Parameters<typeof attemptCompletionMarkerRecovery>[0] {
 	return {
 		dirtySourcePathsAtStart: new Set<string>(),
@@ -155,7 +155,7 @@ describe('attemptCompletionMarkerRecovery', () => {
 		});
 		await writeFile(join(projectDir, 'base.ts'), 'export const base = 99;\n');
 		const outcome = await attemptCompletionMarkerRecovery(
-			inputFor(projectDir, store, { dirtySourcePathsAtStart: new Set(['base.ts']) })
+			inputFor(projectDir, store, { dirtySourcePathsAtStart: new Set(['base.ts']) }),
 		);
 		expect(outcome).toBeUndefined();
 		expect(await gitOut(projectDir, ['status', '--porcelain'])).toContain('base.ts');
@@ -166,7 +166,7 @@ describe('attemptCompletionMarkerRecovery', () => {
 			'smoke:qc': 'exit 0',
 		});
 		const outcome = await attemptCompletionMarkerRecovery(
-			inputFor(projectDir, store, { dirtySourcePathsAtStart: undefined })
+			inputFor(projectDir, store, { dirtySourcePathsAtStart: undefined }),
 		);
 		expect(outcome).toBeUndefined();
 	});
@@ -194,13 +194,13 @@ describe('attemptCompletionMarkerRecovery', () => {
 			await attemptCompletionMarkerRecovery(
 				inputFor(projectDir, store, {
 					work: { description: 'todo work', id: 'todo-1', kind: 'todo' },
-				})
-			)
+				}),
+			),
 		).toBeUndefined();
 		expect(
 			await attemptCompletionMarkerRecovery(
-				inputFor(projectDir, store, { featureScope: scopeWith(['some-other-feature']) })
-			)
+				inputFor(projectDir, store, { featureScope: scopeWith(['some-other-feature']) }),
+			),
 		).toBeUndefined();
 	});
 });

@@ -42,7 +42,7 @@ export function reconstructedRunCommand(run: ReconstructableRunCommand): null | 
 
 export function storedOrReconstructedRunCommand(
 	commandArgsJson: null | string,
-	run: ReconstructableRunCommand
+	run: ReconstructableRunCommand,
 ): null | RunLaunchCommand {
 	const exactArgs = parseExactCommandArgs(commandArgsJson);
 	if (exactArgs) return buildRunLaunchCommand(exactArgs, 'exact');
@@ -51,7 +51,7 @@ export function storedOrReconstructedRunCommand(
 
 export function exactOrReconstructedRunCommand(
 	commandArgs: null | readonly string[],
-	run: ReconstructableRunCommand
+	run: ReconstructableRunCommand,
 ): null | RunLaunchCommand {
 	if (commandArgs && commandArgs.length > 0) return buildRunLaunchCommand(commandArgs, 'exact');
 	return reconstructedRunCommand(run);

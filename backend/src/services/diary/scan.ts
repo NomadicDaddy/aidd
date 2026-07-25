@@ -28,7 +28,7 @@ async function safeReaddir(dir: string): Promise<string[]> {
 
 export async function scanProjectDiary(
 	projectPath: string,
-	projectName: string
+	projectName: string,
 ): Promise<ScanProjectDiaryResult> {
 	const diaryRoot = join(projectPath, '.aidd', 'diary');
 	const entries: ParsedDiaryEntry[] = [];

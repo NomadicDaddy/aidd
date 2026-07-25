@@ -19,7 +19,7 @@ export class InvalidRoadmapError extends Error {
 
 function parseJsonErrorDetail(
 	cause: unknown,
-	raw: string
+	raw: string,
 ): {
 	position?: { column: number; line: number; offset: number };
 	snippet?: string;

@@ -94,14 +94,14 @@ function pickEnv(keys: string[], source: NodeJS.ProcessEnv): Record<string, stri
 }
 
 export function buildToolSubprocessEnv(
-	source: NodeJS.ProcessEnv = process.env
+	source: NodeJS.ProcessEnv = process.env,
 ): Record<string, string> {
 	return pickEnv(runtimeEnvKeys, source);
 }
 
 export function buildBackendSubprocessEnv(
 	overrideEnv: Record<string, string> = {},
-	source: NodeJS.ProcessEnv = process.env
+	source: NodeJS.ProcessEnv = process.env,
 ): Record<string, string> {
 	const env = pickEnv(backendEnvKeys, source);
 	return { ...env, ...overrideEnv };

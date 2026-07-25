@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import perfectionist from 'eslint-plugin-perfectionist';
 import unusedImports from 'eslint-plugin-unused-imports';
+import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -19,8 +20,7 @@ const noDefaultExportPlugin = {
 	},
 };
 
-// eslint-disable-next-line import/no-default-export
-export default tseslint.config([
+export default defineConfig([
 	{
 		ignores: [
 			'**/*.min.js',
@@ -35,7 +35,7 @@ export default tseslint.config([
 		extends: [js.configs.recommended, ...tseslint.configs.recommended],
 		files: ['**/*.{ts,tsx,js,jsx}'],
 		languageOptions: {
-			ecmaVersion: 2020,
+			ecmaVersion: 2022,
 			globals: { ...globals.browser, ...globals.node },
 			parserOptions: {
 				tsconfigRootDir: import.meta.dirname,
@@ -49,7 +49,7 @@ export default tseslint.config([
 		rules: {
 			'@typescript-eslint/array-type': ['error', { default: 'array' }],
 			'@typescript-eslint/consistent-type-imports': [
-				'warn',
+				'error',
 				{ fixStyle: 'inline-type-imports', prefer: 'type-imports' },
 			],
 			'@typescript-eslint/no-explicit-any': 'error',
@@ -58,11 +58,19 @@ export default tseslint.config([
 			'import/no-default-export': 'error',
 			'no-useless-rename': 'error',
 			'object-shorthand': ['error', 'always'],
+			'perfectionist/sort-array-includes': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
 			'perfectionist/sort-enums': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-exports': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-heritage-clauses': [
 				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
@@ -71,20 +79,44 @@ export default tseslint.config([
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-interfaces': [
-				'warn',
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-intersection-types': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-jsx-props': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-maps': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-named-exports': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-named-imports': [
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-object-types': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-objects': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
-			'perfectionist/sort-switch-case': ['warn', { order: 'asc', type: 'alphabetical' }],
+			'perfectionist/sort-sets': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-switch-case': ['error', { order: 'asc', type: 'alphabetical' }],
 			'perfectionist/sort-union-types': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'prefer-const': 'error',

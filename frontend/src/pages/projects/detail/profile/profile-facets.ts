@@ -53,7 +53,7 @@ function option<Value extends string>(
 	value: Value,
 	label: string,
 	blurb: string,
-	flags: { hardening?: boolean; lowExposure?: boolean } = {}
+	flags: { hardening?: boolean; lowExposure?: boolean } = {},
 ): FacetOption<Value> {
 	const built: FacetOption<Value> = { blurb, label, value };
 	if (flags.hardening) built.hardening = true;
@@ -71,8 +71,8 @@ const bucketBlurbs: Record<ProjectAssuranceBucket, string> = {
 	single_user_local: 'One person runs it on their own machine; no other users.',
 };
 const bucketHardening: ReadonlySet<ProjectAssuranceBucket> = new Set([
-	'public_multi_tenant',
 	'critical_regulated',
+	'public_multi_tenant',
 ]);
 
 const dataBlurbs: Record<ProjectDataSensitivity, string> = {
@@ -121,7 +121,7 @@ export const bucketFacet: FacetDef<ProjectAssuranceBucket> = {
 		option(value, bucketLabels[value], bucketBlurbs[value], {
 			hardening: bucketHardening.has(value),
 			lowExposure: value === 'single_user_local',
-		})
+		}),
 	),
 	title: 'Bucket',
 };
@@ -133,7 +133,7 @@ export const dataSensitivityFacet: FacetDef<ProjectDataSensitivity> = {
 		option(value, dataSensitivityLabels[value], dataBlurbs[value], {
 			hardening: value === 'regulated',
 			lowExposure: value === 'none' || value === 'low',
-		})
+		}),
 	),
 	title: 'Data sensitivity',
 };
@@ -145,7 +145,7 @@ export const deploymentFacet: FacetDef<ProjectDeployment> = {
 		option(value, deploymentLabels[value], deploymentBlurbs[value], {
 			hardening: value === 'public_server' || value === 'cloud',
 			lowExposure: value === 'local',
-		})
+		}),
 	),
 	title: 'Deployment',
 };
@@ -154,7 +154,7 @@ export const authModeFacet: FacetDef<ProjectAuthMode> = {
 	description: 'Ownership, login, and authorization boundary.',
 	field: 'authMode',
 	options: authModeOptions.map((value) =>
-		option(value, authModeLabels[value], authBlurbs[value])
+		option(value, authModeLabels[value], authBlurbs[value]),
 	),
 	title: 'Auth mode',
 };
@@ -166,7 +166,7 @@ export const criticalityFacet: FacetDef<ProjectCriticality> = {
 		option(value, criticalityLabels[value], criticalityBlurbs[value], {
 			hardening: value === 'business_critical',
 			lowExposure: value === 'toy' || value === 'utility',
-		})
+		}),
 	),
 	title: 'Criticality',
 };
@@ -178,7 +178,7 @@ export const externalIntegrationsFacet: FacetDef<ProjectExternalIntegrations> = 
 		option(value, externalIntegrationLabels[value], integrationsBlurbs[value], {
 			hardening: value === 'financial_or_security',
 			lowExposure: value === 'none' || value === 'read_only',
-		})
+		}),
 	),
 	title: 'External integrations',
 };

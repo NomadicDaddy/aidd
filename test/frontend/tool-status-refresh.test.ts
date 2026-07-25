@@ -70,7 +70,7 @@ describe('settings status API refresh flag', () => {
 			return await Promise.resolve(
 				new Response(JSON.stringify({ backends: [], providers: [] }), {
 					headers: { 'content-type': 'application/json' },
-				})
+				}),
 			);
 		};
 

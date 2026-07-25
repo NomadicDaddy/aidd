@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { withSqliteRetry } from '../../backend/src/db/retry.ts';
 
 function busyError(code = 'SQLITE_BUSY', message = 'database is locked'): Error {
-	const err = new Error(message) as Error & { code?: string };
+	const err = new Error(message) as { code?: string } & Error;
 	err.code = code;
 	return err;
 }
@@ -26,7 +26,7 @@ describe('withSqliteRetry', () => {
 				if (calls < 3) throw busyError();
 				return 'ok';
 			},
-			{ attempts: 5, baseDelayMs: 1, maxDelayMs: 2 }
+			{ attempts: 5, baseDelayMs: 1, maxDelayMs: 2 },
 		);
 		expect(result).toBe('ok');
 		expect(calls).toBe(3);
@@ -38,7 +38,7 @@ describe('withSqliteRetry', () => {
 			withSqliteRetry(() => {
 				calls++;
 				throw new Error('UNIQUE constraint failed');
-			})
+			}),
 		).rejects.toThrow(/UNIQUE constraint failed/);
 		expect(calls).toBe(1);
 	});
@@ -51,8 +51,8 @@ describe('withSqliteRetry', () => {
 					calls++;
 					throw busyError();
 				},
-				{ attempts: 3, baseDelayMs: 1, maxDelayMs: 2 }
-			)
+				{ attempts: 3, baseDelayMs: 1, maxDelayMs: 2 },
+			),
 		).rejects.toThrow(/database is locked/);
 		expect(calls).toBe(3);
 	});
@@ -65,7 +65,7 @@ describe('withSqliteRetry', () => {
 				if (calls < 2) throw new Error('SQLITE_BUSY_SNAPSHOT: database is locked');
 				return 1;
 			},
-			{ attempts: 3, baseDelayMs: 1, maxDelayMs: 2 }
+			{ attempts: 3, baseDelayMs: 1, maxDelayMs: 2 },
 		);
 		expect(result).toBe(1);
 		expect(calls).toBe(2);

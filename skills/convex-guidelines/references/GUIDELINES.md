@@ -215,8 +215,8 @@ export default defineSchema({
 			v.object({
 				kind: v.literal('success'),
 				value: v.number(),
-			})
-		)
+			}),
+		),
 	),
 });
 ```
@@ -546,7 +546,7 @@ export const getFileMetadata = query({
 			sha256: v.string(),
 			size: v.number(),
 		}),
-		v.null()
+		v.null(),
 	),
 	handler: async (ctx, args) => {
 		const metadata: FileMetadata | null = await ctx.db.system.get(args.fileId);
@@ -773,7 +773,7 @@ export const listMessages = query({
 			channelId: v.id('channels'),
 			authorId: v.optional(v.id('users')),
 			content: v.string(),
-		})
+		}),
 	),
 	handler: async (ctx, args) => {
 		const messages = await ctx.db
@@ -851,7 +851,7 @@ export const loadContext = internalQuery({
 		v.object({
 			role: v.union(v.literal('user'), v.literal('assistant')),
 			content: v.string(),
-		})
+		}),
 	),
 	handler: async (ctx, args) => {
 		const channel = await ctx.db.get(args.channelId);

@@ -7,14 +7,14 @@ import {
 } from 'aidd-shared/modes/audit-shared';
 
 export function structuredFindings(
-	structured: Record<string, unknown> | undefined
+	structured: Record<string, unknown> | undefined,
 ): AuditFindingInput[] {
 	const raw = structured?.auditFindings ?? structured?.findings;
 	return Array.isArray(raw) ? (raw as AuditFindingInput[]) : [];
 }
 
 export function hasMeaningfulNoFindingsJustification(
-	structured: Record<string, unknown> | undefined
+	structured: Record<string, unknown> | undefined,
 ): boolean {
 	const justification = stringValue(structured?.noFindingsJustification);
 	if (justification === undefined) return false;
@@ -40,7 +40,7 @@ export function hasMeaningfulNoFindingsJustification(
 
 export function hasStructuredAuditOutput(
 	structured: Record<string, unknown> | undefined,
-	auditBatchMode: boolean
+	auditBatchMode: boolean,
 ): boolean {
 	if (structured === undefined) return false;
 	if (Array.isArray(structured.auditReports)) return true;
@@ -49,7 +49,7 @@ export function hasStructuredAuditOutput(
 
 export function structuredAuditReports(
 	structured: Record<string, unknown> | undefined,
-	selectedAudits: string[]
+	selectedAudits: string[],
 ): { invalid: InvalidAuditReport[]; reports: AuditReportInput[] } {
 	if (!structured) return { invalid: [], reports: [] };
 	const rawReports = structured.auditReports;
@@ -97,11 +97,11 @@ export function structuredReport(
 	structured: Record<string, unknown> | undefined,
 	auditName: string,
 	findings: NormalizedAuditFinding[],
-	created: number
+	created: number,
 ): string {
 	if (typeof structured?.reportMarkdown === 'string') return structured.reportMarkdown;
 	const findingLines = findings.map(
-		(finding) => `- ${finding.feature.id}: ${finding.feature.title ?? 'Untitled'}`
+		(finding) => `- ${finding.feature.id}: ${finding.feature.title ?? 'Untitled'}`,
 	);
 	return [
 		`# ${auditName} Audit Report`,

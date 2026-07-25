@@ -25,7 +25,7 @@ export function ActiveRunsCard({
 	return (
 		<Card className="overflow-hidden" variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 					<Activity className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Active Runs
 					<Badge showDot tone={activeRuns.length > 0 ? 'amber' : 'emerald'}>
@@ -33,7 +33,7 @@ export function ActiveRunsCard({
 					</Badge>
 				</div>
 				<Link
-					className="focus-visible:ring-ring/50 focus-visible:ring-offset-background inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-900 focus-visible:ring-2 focus-visible:ring-offset-2 dark:text-teal-300 dark:hover:text-teal-100"
+					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-900 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-teal-300 dark:hover:text-teal-100"
 					to="/runs">
 					Runs
 					<ArrowRight className="h-3.5 w-3.5" />
@@ -60,12 +60,12 @@ export function ActiveRunsCard({
 						key={run.id}>
 						<div className="min-w-0">
 							<div className="flex min-w-0 items-center gap-1.5">
-								<div className="text-foreground truncate text-sm font-medium">
+								<div className="truncate text-sm font-medium text-foreground">
 									{run.projectName}
 								</div>
 								<RunCommandInfo command={run.launchCommand} runId={run.id} />
 							</div>
-							<div className="text-muted-foreground truncate text-xs">
+							<div className="truncate text-xs text-muted-foreground">
 								{run.source === 'cli'
 									? 'CLI'
 									: run.source === 'director'

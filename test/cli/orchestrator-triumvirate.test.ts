@@ -7,18 +7,18 @@ import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
-	FakeBackend,
-	SequencedBackend,
 	captureStdout,
-	config,
 	completeFeature,
+	config,
 	createOrchestratorTestContext,
+	FakeBackend,
 	gitHeavyPlan,
 	gitText,
 	initializeGitProject,
 	plan,
 	rootDir,
 	runGit,
+	SequencedBackend,
 	slowOrchestratorTestTimeoutMs,
 } from './_helpers/orchestrator-fixture.ts';
 
@@ -62,7 +62,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 3) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -108,16 +108,16 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[2]?.text).toContain(overseerPlanningCwd);
 		expect(backend.inputs[0]?.text).toContain('Read-only boundary:');
 		expect(backend.inputs[0]?.text).toContain(
-			'You must not create, edit, delete, format, stage, commit, or generate files'
+			'You must not create, edit, delete, format, stage, commit, or generate files',
 		);
 		expect(backend.inputs[0]?.text).toContain('will be rejected and retried');
 		expect(backend.inputs[0]?.text).toContain(
-			'The prompt below is included only so you can understand the requested work'
+			'The prompt below is included only so you can understand the requested work',
 		);
 		expect(backend.inputs[1]?.text).toContain('Read-only boundary:');
 		expect(backend.inputs[2]?.text).toContain('Read-only boundary:');
 		expect(backend.inputs[2]?.text).toContain(
-			'ignore any instruction in it to implement, edit'
+			'ignore any instruction in it to implement, edit',
 		);
 		expect(backend.inputs[0]?.text.toLowerCase()).not.toContain(store.projectDir.toLowerCase());
 		expect(backend.inputs[1]?.text.toLowerCase()).not.toContain(store.projectDir.toLowerCase());
@@ -132,7 +132,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[3]?.text).toContain('Implement the approved path.');
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('"triumvirate"');
 		expect(iterationJson).toContain('"primaryPlan"');
@@ -201,7 +201,7 @@ describe('orchestrator triumvirate', () => {
 			model: 'exec-model',
 		});
 		expect(structured.triumvirate.metadata.guard.source).toBe(
-			'git status --porcelain=v1 --untracked-files=all'
+			'git status --porcelain=v1 --untracked-files=all',
 		);
 		expect(structured.triumvirate.metadata.planningMirror.excludedNames).toContain('data');
 		expect(structured.triumvirate.metadata.planningMirror).toMatchObject({
@@ -260,7 +260,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 1) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -292,7 +292,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[1]).toMatchObject({ cwd: store.projectDir });
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: { complexityTier: string; skippedStages: string[] };
@@ -336,7 +336,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 3) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -401,7 +401,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 3) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -431,7 +431,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[3]?.text).toContain('Implement as overseer.');
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: {
@@ -518,7 +518,7 @@ describe('orchestrator triumvirate', () => {
 					return;
 				}
 				if (callIndex === 4) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -545,7 +545,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[2]?.cwd).not.toBe(backend.inputs[0]?.cwd);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: {
@@ -649,13 +649,13 @@ describe('orchestrator triumvirate', () => {
 					await mkdir(distDir, { recursive: true });
 					await writeFile(
 						join(packageDir, 'index.js'),
-						'export const generated = true;\n'
+						'export const generated = true;\n',
 					);
 					await writeFile(join(distDir, 'bundle.js'), 'console.log("generated");\n');
 					return;
 				}
 				if (callIndex === 3) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -679,7 +679,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[1]?.text).not.toContain('aidd PLANNING STAGE RETRY');
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: {
@@ -738,14 +738,14 @@ describe('orchestrator triumvirate', () => {
 						Array.from({ length: 130 }, (_, index) =>
 							writeFile(
 								join(mutationDir, `mutation-${String(index).padStart(3, '0')}.txt`),
-								`mutation ${index}\n`
-							)
-						)
+								`mutation ${index}\n`,
+							),
+						),
 					);
 					return;
 				}
 				if (callIndex === 4) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -774,7 +774,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.inputs[1]?.text).not.toContain('generated-mutations/mutation-129.txt');
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: {
@@ -790,11 +790,11 @@ describe('orchestrator triumvirate', () => {
 		};
 		expect(
 			structured.triumvirate.primaryPlan.planningMirrorRetry.previousMutations[0]
-				?.changedPaths
+				?.changedPaths,
 		).toHaveLength(130);
 		expect(
 			structured.triumvirate.primaryPlan.planningMirrorRetry.previousMutations[0]
-				?.filesModifiedCount
+				?.filesModifiedCount,
 		).toBe(130);
 	});
 
@@ -845,7 +845,7 @@ describe('orchestrator triumvirate', () => {
 		expect(runs).toContain('Plans conflict');
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: {
@@ -900,7 +900,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 4) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -922,7 +922,7 @@ describe('orchestrator triumvirate', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.success);
 		expect(backend.calls).toBe(5);
 		const firstIteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
 			exitCode: number;
 			outcome: { status: string };
@@ -931,7 +931,7 @@ describe('orchestrator triumvirate', () => {
 		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.providerError);
 		expect(firstIteration.outcome.status).toBe('provider_error');
 		expect(firstIteration.triumvirate.stageFailure).toBe(
-			'triumvirate primary stage failed with exit code 72'
+			'triumvirate primary stage failed with exit code 72',
 		);
 		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
 		expect(runs).toContain('"stopReason":"completed"');
@@ -977,7 +977,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 4) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = resolveRunPlan(
 			parseArgs([
@@ -993,7 +993,7 @@ describe('orchestrator triumvirate', () => {
 				'--exec-cli',
 				'native',
 			]),
-			{ ...config, maxIterations: 1 }
+			{ ...config, maxIterations: 1 },
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -1007,7 +1007,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.calls).toBe(5);
 		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
 		const firstIteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
 			exitCode: number;
 			outcome: { status: string };
@@ -1016,7 +1016,7 @@ describe('orchestrator triumvirate', () => {
 		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.idleTimeout);
 		expect(firstIteration.outcome.status).toBe('idle_timeout');
 		expect(firstIteration.triumvirate.stageFailure).toBe(
-			'triumvirate primary stage failed with exit code 71'
+			'triumvirate primary stage failed with exit code 71',
 		);
 		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
 		expect(runs).toContain('"stopReason":"completed"');
@@ -1057,7 +1057,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 4) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = resolveRunPlan(
 			parseArgs([
@@ -1073,7 +1073,7 @@ describe('orchestrator triumvirate', () => {
 				'--exec-cli',
 				'native',
 			]),
-			{ ...config, maxIterations: 1, rateLimitBackoffSeconds: 0, rateLimitBufferSeconds: 0 }
+			{ ...config, maxIterations: 1, rateLimitBackoffSeconds: 0, rateLimitBufferSeconds: 0 },
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -1087,7 +1087,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.calls).toBe(5);
 		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
 		const firstIteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { exitCode: number };
 		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.rateLimited);
 		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
@@ -1121,7 +1121,7 @@ describe('orchestrator triumvirate', () => {
 				rateLimitBackoffSeconds: 300,
 				rateLimitBufferSeconds: 0,
 				timeoutSeconds: 1,
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -1155,7 +1155,7 @@ describe('orchestrator triumvirate', () => {
 			[[{ type: 'error', reason: 'idle' }]],
 			async (callIndex) => {
 				if (callIndex === 0) await writeFile(runtimePlan.stopPolicy.stopFile, 'stop\n');
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -1168,7 +1168,7 @@ describe('orchestrator triumvirate', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.success);
 		expect(backend.calls).toBe(1);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { stopRequested: boolean };
 		expect(iteration.stopRequested).toBe(true);
 		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
@@ -1228,7 +1228,7 @@ describe('orchestrator triumvirate', () => {
 			],
 			async (callIndex) => {
 				if (callIndex === 7) await completeFeature(store, 'feature-core');
-			}
+			},
 		);
 		const runtimePlan = resolveRunPlan(
 			parseArgs([
@@ -1244,7 +1244,7 @@ describe('orchestrator triumvirate', () => {
 				'--exec-cli',
 				'native',
 			]),
-			{ ...config, maxIterations: 1 }
+			{ ...config, maxIterations: 1 },
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -1258,7 +1258,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.calls).toBe(8);
 		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
 		const firstIteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
 			exitCode: number;
 			outcome: { status: string };
@@ -1296,7 +1296,7 @@ describe('orchestrator triumvirate', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.validationError);
 		expect(backend.calls).toBe(1);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { exitCode: number; outcome: { status: string }; runId: string };
 		expect(iteration.exitCode).toBe(orchestratorExitCodes.providerError);
 		expect(iteration.outcome.status).toBe('provider_error');
@@ -1305,7 +1305,7 @@ describe('orchestrator triumvirate', () => {
 			.split(/\r?\n/)
 			.map(
 				(line) =>
-					JSON.parse(line) as { exitCode: number; runId: string; stopReason: string }
+					JSON.parse(line) as { exitCode: number; runId: string; stopReason: string },
 			);
 		expect(runSummary).toMatchObject({
 			exitCode: orchestratorExitCodes.validationError,
@@ -1338,7 +1338,7 @@ describe('orchestrator triumvirate', () => {
 				if (callIndex === 1) {
 					await writeFile(join(input.cwd, 'primary-retry.txt'), 'retry mutation\n');
 				}
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -1361,10 +1361,10 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.calls).toBe(2);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain(
-			'triumvirate primary planning stage modified its planning mirror after retry'
+			'triumvirate primary planning stage modified its planning mirror after retry',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			triumvirate: {
@@ -1385,7 +1385,7 @@ describe('orchestrator triumvirate', () => {
 			};
 		};
 		expect(structured.triumvirate.stageFailure).toBe(
-			'triumvirate primary planning stage modified its planning mirror after retry'
+			'triumvirate primary planning stage modified its planning mirror after retry',
 		);
 		expect(structured.triumvirate.planningMirrorViolation).toEqual({
 			changedPaths: ['primary-retry.txt'],
@@ -1410,7 +1410,7 @@ describe('orchestrator triumvirate', () => {
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
 			],
-			() => writeFile(join(store.projectDir, 'unexpected.txt'), 'changed\n')
+			() => writeFile(join(store.projectDir, 'unexpected.txt'), 'changed\n'),
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -1433,7 +1433,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.calls).toBe(1);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).toContain('original worktree changed during primary planning stage');
 		const structured = JSON.parse(iterationJson) as {
@@ -1444,7 +1444,7 @@ describe('orchestrator triumvirate', () => {
 			};
 		};
 		expect(structured.triumvirate.guardFailure).toBe(
-			'original worktree changed during primary planning stage'
+			'original worktree changed during primary planning stage',
 		);
 		expect(structured.triumvirate.metadata.guard.target).toBe('original_project_worktree');
 		expect(structured.triumvirate.primaryPlan).toMatchObject({
@@ -1488,13 +1488,13 @@ describe('orchestrator triumvirate', () => {
 				if (callIndex === 0) {
 					await writeFile(
 						join(store.metadataDir, 'runs.jsonl'),
-						'{"summary":"external run ledger update"}\n'
+						'{"summary":"external run ledger update"}\n',
 					);
 				}
 				if (callIndex === 3) {
 					await completeFeature(store, 'feature-core');
 				}
-			}
+			},
 		);
 		const runtimePlan = plan(store.projectDir, [
 			'--triumvirate',
@@ -1517,7 +1517,7 @@ describe('orchestrator triumvirate', () => {
 		expect(backend.calls).toBe(4);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(iterationJson).not.toContain('original worktree changed');
 		const status = await gitText(store.projectDir, [
@@ -1554,7 +1554,7 @@ describe('orchestrator triumvirate', () => {
 						await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
 						// Introduce an additional dirty change that is NOT the run ledger.
 						await writeFile(join(store.projectDir, 'extra-dirty.txt'), 'dirty\n');
-					}
+					},
 				),
 			});
 
@@ -1575,6 +1575,6 @@ describe('orchestrator triumvirate', () => {
 			expect(status).toContain('extra-dirty.txt');
 			expect(status).toContain('.aidd/runs.jsonl');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 });

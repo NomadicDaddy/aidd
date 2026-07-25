@@ -23,11 +23,11 @@
  * configuration.
  */
 export const BLOCKED_METADATA_HOSTS = new Set([
-	'169.254.169.254', // AWS / Azure / GCP IMDS
 	'100.100.100.200', // Alibaba Cloud metadata
+	'169.254.169.254', // AWS / Azure / GCP IMDS
 	'fd00:ec2::254', // AWS IMDSv6
-	'metadata.google.internal',
 	'metadata.goog',
+	'metadata.google.internal',
 ]);
 
 /**
@@ -83,13 +83,13 @@ export function assertSafeAgentBaseUrl(rawUrl: string, label: string): void {
 	}
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
 		throw new Error(
-			`${label} base URL must use http or https (got "${url.protocol.replace(/:$/, '')}").`
+			`${label} base URL must use http or https (got "${url.protocol.replace(/:$/, '')}").`,
 		);
 	}
 	const host = normalizeHostForBlocklist(url.hostname);
 	if (BLOCKED_METADATA_HOSTS.has(host) || host.endsWith('.metadata.google.internal')) {
 		throw new Error(
-			`${label} base URL points at a cloud metadata endpoint (${url.hostname}), which is not permitted.`
+			`${label} base URL points at a cloud metadata endpoint (${url.hostname}), which is not permitted.`,
 		);
 	}
 }

@@ -90,8 +90,8 @@ async function clickButton(page: Page, element: InteractiveElement): Promise<boo
 				if (!target) return false;
 				target.click();
 				return true;
-			})()`
-		)
+			})()`,
+		),
 	);
 }
 
@@ -100,13 +100,13 @@ async function testButton(
 	results: TestResults,
 	options: CrawlerOptions,
 	element: InteractiveElement,
-	pageUrl: string
+	pageUrl: string,
 ): Promise<void> {
 	const label = labelFor(element);
 	const dialogsBefore = Number(
 		await page.evaluate(
-			`document.querySelectorAll('[role="dialog"], [role="alertdialog"], [data-state="open"][role="dialog"], [data-state="open"][role="alertdialog"]').length`
-		)
+			`document.querySelectorAll('[role="dialog"], [role="alertdialog"], [data-state="open"][role="dialog"], [data-state="open"][role="alertdialog"]').length`,
+		),
 	);
 
 	const clicked = await clickButton(page, element);
@@ -115,8 +115,8 @@ async function testButton(
 	await Bun.sleep(500);
 	const dialogsAfter = Number(
 		await page.evaluate(
-			`document.querySelectorAll('[role="dialog"], [role="alertdialog"], [data-state="open"][role="dialog"], [data-state="open"][role="alertdialog"]').length`
-		)
+			`document.querySelectorAll('[role="dialog"], [role="alertdialog"], [data-state="open"][role="dialog"], [data-state="open"][role="alertdialog"]').length`,
+		),
 	);
 
 	if (dialogsAfter > dialogsBefore) {
@@ -138,7 +138,7 @@ async function testSelect(
 	page: Page,
 	results: TestResults,
 	element: InteractiveElement,
-	pageUrl: string
+	pageUrl: string,
 ): Promise<void> {
 	const label = labelFor(element);
 	await page.evaluate(
@@ -153,7 +153,7 @@ async function testSelect(
 			);
 			const target = exact || candidates[index];
 			if (target) target.click();
-		})()`
+		})()`,
 	);
 	await Bun.sleep(300);
 	await page.keyboard.press('Escape');
@@ -165,7 +165,7 @@ async function testSwitch(
 	page: Page,
 	results: TestResults,
 	element: InteractiveElement,
-	pageUrl: string
+	pageUrl: string,
 ): Promise<void> {
 	const label = labelFor(element);
 	const result = (await page.evaluate(
@@ -180,7 +180,7 @@ async function testSwitch(
 			const after = target.getAttribute('aria-checked');
 			if (before !== after) target.click();
 			return { found: true, toggled: before !== after };
-		})()`
+		})()`,
 	)) as { found: boolean; toggled: boolean };
 
 	if (!result.found) return;
@@ -190,7 +190,7 @@ async function testSwitch(
 		pageUrl,
 		result.toggled,
 		'switch-toggle',
-		result.toggled ? null : 'state did not change'
+		result.toggled ? null : 'state did not change',
 	);
 }
 
@@ -199,7 +199,7 @@ export async function testInteractiveElements(
 	results: TestResults,
 	options: CrawlerOptions,
 	elements: InteractiveElement[],
-	pageUrl: string
+	pageUrl: string,
 ): Promise<void> {
 	const tested = new Set<string>();
 	let interactionCount = 0;

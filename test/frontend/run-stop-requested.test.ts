@@ -66,7 +66,7 @@ describe('run stopping state', () => {
 
 	test('a terminal run is never stopping, even with stale flags', () => {
 		expect(isRunStopping(makeRun({ status: 'stopped', stopRequested: true }), true)).toBe(
-			false
+			false,
 		);
 	});
 
@@ -84,7 +84,7 @@ describe('run stopping state', () => {
 				status: 'stopped',
 				stopReason: 'stop_requested',
 			}),
-			true
+			true,
 		);
 		expect(outcome.label).toBe('Stopped');
 	});

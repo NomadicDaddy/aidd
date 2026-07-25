@@ -65,7 +65,7 @@ function stringArrayOrNull(value: unknown): null | string[] {
 // full ledger line after the web row terminalized). Last entry per runId wins: a
 // crash-fallback line can precede the real summary.
 export async function readLedgerTerminalEntries(
-	projectPath: string
+	projectPath: string,
 ): Promise<Map<string, LedgerTerminalEntry>> {
 	const entries = new Map<string, LedgerTerminalEntry>();
 	let content: string;
@@ -111,7 +111,7 @@ export async function readLedgerTerminalEntries(
 // a moment — so a run present here must never be treated as a ledger phantom.
 async function readActiveRunIds(projectPath: string): Promise<Set<string>> {
 	const records = await readCliActiveRunRecords(projectPath, { includeCompleted: true }).catch(
-		() => []
+		() => [],
 	);
 	return new Set(records.map((record) => record.id));
 }
@@ -152,7 +152,7 @@ export async function dropLedgerPhantomRuns(items: RunRecord[]): Promise<RunReco
 			for (const run of runsForProject) {
 				if (!ledgerIds.has(run.id) && !activeIds.has(run.id)) phantomIds.add(run.id);
 			}
-		})
+		}),
 	);
 	if (phantomIds.size === 0) return items;
 	return items.filter((run) => !phantomIds.has(run.id));

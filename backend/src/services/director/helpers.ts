@@ -6,7 +6,7 @@ import type {
 	DirectorReasoningEffort,
 } from 'aidd-shared';
 
-import { requireBackendName, type BackendName } from 'aidd-shared/plan/types';
+import { type BackendName, requireBackendName } from 'aidd-shared/plan/types';
 
 import type { directorChatMessages } from '../../db/schema.ts';
 import type { ProjectSummaryDto } from '../../types.ts';
@@ -19,11 +19,11 @@ export const maxChatMessageLength = 8000;
 export const maxProfileTextLength = 8000;
 
 const reasoningEfforts = new Set<DirectorReasoningEffort>([
-	'none',
-	'minimal',
+	'high',
 	'low',
 	'medium',
-	'high',
+	'minimal',
+	'none',
 	'xhigh',
 ]);
 
@@ -62,7 +62,7 @@ export function cleanText(value: null | string | undefined, maxLength: number): 
 
 export function cleanOptionalText(
 	value: null | string | undefined,
-	maxLength: number
+	maxLength: number,
 ): null | string {
 	const cleaned = cleanText(value, maxLength);
 	return cleaned ? cleaned : null;
@@ -96,7 +96,7 @@ export function serializeChatActions(actions: ChatAgentAction[] | undefined): nu
 }
 
 export function mapChatMessage(
-	message: typeof directorChatMessages.$inferSelect
+	message: typeof directorChatMessages.$inferSelect,
 ): DirectorChatMessageRecord {
 	const role = message.role;
 	if (role !== 'assistant' && role !== 'system' && role !== 'user') {
@@ -139,7 +139,7 @@ export function buildChatPrompt(
 	profile: ProfileRow,
 	fleetSummary: FleetSummary,
 	messages: DirectorChatMessageRecord[],
-	recipeCatalog: DirectorRecipeSummary[] = []
+	recipeCatalog: DirectorRecipeSummary[] = [],
 ): string {
 	const transcript = messages
 		.map((message) => `${message.role.toUpperCase()}: ${message.content}`)

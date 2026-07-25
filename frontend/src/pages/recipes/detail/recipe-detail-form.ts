@@ -1,7 +1,7 @@
 import type { RecipeParameterDefinition } from '../../../api/types.ts';
 
 export function cleanParameter(
-	parameter: RecipeParameterDefinition
+	parameter: RecipeParameterDefinition,
 ): RecipeParameterDefinition | undefined {
 	const name = parameter.name.trim();
 	if (!name) return undefined;

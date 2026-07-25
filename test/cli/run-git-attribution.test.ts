@@ -51,7 +51,7 @@ describe('run commit attribution', () => {
 			projectDir,
 			before,
 			after,
-			Date.parse('2026-07-20T12:00:05Z')
+			Date.parse('2026-07-20T12:00:05Z'),
 		);
 
 		expect(commits).toEqual([{ hash: after, subject: 'during-run' }]);

@@ -176,7 +176,7 @@ export async function readRepositoryRefs(projectPath: string): Promise<Repositor
 	const probe = await runGit(
 		projectPath,
 		['rev-parse', '--is-inside-work-tree'],
-		commandTimeoutMs
+		commandTimeoutMs,
 	);
 	if (probe.ok && probe.stdout.trim() === 'true') {
 		// continue
@@ -199,7 +199,7 @@ export async function readRepositoryRefs(projectPath: string): Promise<Repositor
 				'--sort=-committerdate',
 				'refs/heads/',
 			],
-			commandTimeoutMs
+			commandTimeoutMs,
 		),
 		runGit(projectPath, ['stash', 'list', '--format=%gd%x09%s%x09%h'], commandTimeoutMs),
 		runGit(projectPath, ['worktree', 'list', '--porcelain'], commandTimeoutMs),

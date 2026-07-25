@@ -36,7 +36,7 @@ export function DiaryEntryCard({
 							{entry.date}
 						</span>
 					</div>
-					<h3 className="text-foreground text-base font-semibold">{entry.title}</h3>
+					<h3 className="text-base font-semibold text-foreground">{entry.title}</h3>
 					{entry.summary ? (
 						<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 							{entry.summary}

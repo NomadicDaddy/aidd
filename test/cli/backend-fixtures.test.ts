@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent } from 'aidd-shared/backends/types';
 import { parsePlainBackendOutput } from 'aidd-shared/backends/parsers/plain';
@@ -52,7 +52,7 @@ describe('backend parser fixtures', () => {
 
 			expect(events.some((event) => event.type === 'rate_limit')).toBe(true);
 			expect(
-				events.some((event) => event.type === 'error' && event.reason === 'rate_limit')
+				events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
 			).toBe(true);
 		});
 
@@ -61,7 +61,7 @@ describe('backend parser fixtures', () => {
 
 			expect(events.some((event) => event.type === 'assistant_text')).toBe(true);
 			expect(
-				events.some((event) => event.type === 'error' && event.reason === 'provider')
+				events.some((event) => event.type === 'error' && event.reason === 'provider'),
 			).toBe(true);
 		});
 	}

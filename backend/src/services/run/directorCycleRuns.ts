@@ -17,7 +17,7 @@ type DirectorCycleRow = typeof directorCycles.$inferSelect;
 
 const DIRECTOR_BACKEND: BackendName = 'native';
 export interface DirectorCycleRunContext {
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 }
 
@@ -36,7 +36,7 @@ function directorProjectPath(ctx: DirectorCycleRunContext): string {
 
 export function directorCycleArtifacts(
 	ctx: DirectorCycleRunContext,
-	cycleId: string
+	cycleId: string,
 ): DirectorCycleArtifacts {
 	const cycleDir = directorProjectPath(ctx);
 	const contextPath = join(cycleDir, `${cycleId}-context.json`);
@@ -54,7 +54,7 @@ export function directorCycleArtifacts(
 
 export function directorCycleStage(
 	ctx: DirectorCycleRunContext,
-	row: Pick<DirectorCycleRow, 'id' | 'status'>
+	row: Pick<DirectorCycleRow, 'id' | 'status'>,
 ): DirectorCycleStage {
 	if (row.status === 'completed') return 'completed';
 	if (row.status === 'failed') return 'failed';
@@ -81,7 +81,7 @@ function directorCycleSummary(ctx: DirectorCycleRunContext, row: DirectorCycleRo
 
 export function toDirectorCycleRunRecord(
 	ctx: DirectorCycleRunContext,
-	row: DirectorCycleRow
+	row: DirectorCycleRow,
 ): RunRecord {
 	const status = runStatusFromCycle(row.status);
 	const terminal = status !== 'running';
@@ -135,7 +135,7 @@ function cycleStatusFilter(status: undefined | WebRunStatus): null | SQL {
 	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
 	const recentOrRunning = or(
 		eq(directorCycles.status, 'running'),
-		gt(directorCycles.startedAt, cutoff)
+		gt(directorCycles.startedAt, cutoff),
 	);
 	if (!recentOrRunning) throw new Error('Failed to build director cycle recency filter.');
 	return recentOrRunning;
@@ -143,7 +143,7 @@ function cycleStatusFilter(status: undefined | WebRunStatus): null | SQL {
 
 async function cycleIdsWithRunRows(
 	ctx: DirectorCycleRunContext,
-	cycleIds: string[]
+	cycleIds: string[],
 ): Promise<Set<string>> {
 	if (cycleIds.length === 0) return new Set();
 	const rows = await ctx.db
@@ -153,13 +153,13 @@ async function cycleIdsWithRunRows(
 	return new Set(
 		rows
 			.map((row) => row.directorCycleId)
-			.filter((cycleId): cycleId is string => cycleId !== null)
+			.filter((cycleId): cycleId is string => cycleId !== null),
 	);
 }
 
 export async function listDirectorCycleRunRecords(
 	ctx: DirectorCycleRunContext,
-	status?: WebRunStatus
+	status?: WebRunStatus,
 ): Promise<RunRecord[]> {
 	const where = cycleStatusFilter(status);
 	if (where === null) return [];
@@ -171,7 +171,7 @@ export async function listDirectorCycleRunRecords(
 		.limit(200);
 	const backedCycleIds = await cycleIdsWithRunRows(
 		ctx,
-		cycleRows.map((row) => row.id)
+		cycleRows.map((row) => row.id),
 	);
 	return cycleRows
 		.filter((row) => !backedCycleIds.has(row.id))
@@ -180,7 +180,7 @@ export async function listDirectorCycleRunRecords(
 
 export async function getDirectorCycleRunRecord(
 	ctx: DirectorCycleRunContext,
-	id: string
+	id: string,
 ): Promise<RunRecord | undefined> {
 	const row = (
 		await ctx.db.select().from(directorCycles).where(eq(directorCycles.id, id)).limit(1)

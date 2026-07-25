@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { invocationEvents, runs } from '../../backend/src/db/schema.ts';
 import {
@@ -141,7 +141,7 @@ describe('telemetry aggregation transparency', () => {
 				topLevel: 0,
 				total: 0,
 				warnings: 0,
-			}
+			},
 		);
 		expect(totals).toEqual({
 			completed: 1,
@@ -176,13 +176,13 @@ describe('telemetry aggregation transparency', () => {
 	test('handles every invocation status the CHECK constraint permits', () => {
 		const ddl = rawSqlite
 			.query<{ sql: string }, []>(
-				"SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'invocation_events'"
+				"SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'invocation_events'",
 			)
 			.get();
 		const checkClause = /ck_invocation_events_status[^(]*\(([^)]*)\)/.exec(ddl?.sql ?? '');
 		expect(checkClause).not.toBeNull();
 		const allowed = [...(checkClause?.[1] ?? '').matchAll(/'([^']+)'/g)].map(
-			(match) => match[1]!
+			(match) => match[1]!,
 		);
 
 		expect(allowed.length).toBeGreaterThan(0);
@@ -211,7 +211,7 @@ describe('telemetry aggregation transparency', () => {
 		const recent = await listInvocations(db, { limit: 50, windowMs: day });
 		expect(recent.map((row) => row.id)).toEqual(['recent']);
 		expect(
-			(await getTimeseries(db, { bucket: 'day' })).reduce((sum, row) => sum + row.total, 0)
+			(await getTimeseries(db, { bucket: 'day' })).reduce((sum, row) => sum + row.total, 0),
 		).toBe(2);
 	});
 });

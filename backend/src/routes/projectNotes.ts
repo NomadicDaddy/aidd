@@ -16,7 +16,7 @@ export function createProjectNotesRoutes(context: WebContext) {
 				const projectDir = await context.projectService.resolveDiscoveredProject(params.id);
 				return await readProjectNotes(projectDir);
 			},
-			{ params: projectIdParams }
+			{ params: projectIdParams },
 		)
 		.put(
 			'/:id/notes',
@@ -24,6 +24,6 @@ export function createProjectNotesRoutes(context: WebContext) {
 				const projectDir = await context.projectService.resolveDiscoveredProject(params.id);
 				return await writeProjectNotes(projectDir, body.content);
 			},
-			{ body: projectNotesBody, params: projectIdParams }
+			{ body: projectNotesBody, params: projectIdParams },
 		);
 }

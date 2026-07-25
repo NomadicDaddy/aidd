@@ -11,7 +11,7 @@ import type {
 
 export function selectManifest(
 	manifest: BenchmarkManifest,
-	args: BenchmarkArgs
+	args: BenchmarkArgs,
 ): { stacks: BenchmarkStack[]; tasks: BenchmarkTask[] } {
 	const selectedStackSet = new Set(args.selectedStacks);
 	const selectedTaskSet = new Set(args.selectedTasks);
@@ -53,7 +53,7 @@ export function buildRunMatrix(
 	manifest: BenchmarkManifest,
 	stacks: BenchmarkStack[],
 	tasks: BenchmarkTask[],
-	seed?: string
+	seed?: string,
 ): RunMatrixItem[] {
 	const matrix: RunMatrixItem[] = [];
 	for (const stack of stacks) {

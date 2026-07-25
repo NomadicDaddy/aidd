@@ -5,7 +5,7 @@ import { type runs } from '../../db/schema.ts';
 export async function waitForTerminalStatus(
 	getRun: (runId: string) => Promise<typeof runs.$inferSelect | undefined>,
 	runId: string,
-	options: { pollIntervalMs?: number; timeoutMs?: number } = {}
+	options: { pollIntervalMs?: number; timeoutMs?: number } = {},
 ): Promise<WebRunStatus> {
 	const pollIntervalMs = options.pollIntervalMs ?? 1000;
 	const deadline =

@@ -41,14 +41,14 @@ function commandPort(command: string): null | number {
 function isFrontendStack(stack: ProjectStack): boolean {
 	return stack.frameworks.some((framework) =>
 		['Angular', 'Astro', 'Next.js', 'React', 'Svelte', 'SvelteKit', 'Vite', 'Vue'].includes(
-			framework
-		)
+			framework,
+		),
 	);
 }
 
 function isBackendStack(stack: ProjectStack): boolean {
 	return stack.frameworks.some((framework) =>
-		['Elysia', 'Express', 'Fastify', 'Hono', 'NestJS', 'Pode'].includes(framework)
+		['Elysia', 'Express', 'Fastify', 'Hono', 'NestJS', 'Pode'].includes(framework),
 	);
 }
 
@@ -61,7 +61,7 @@ function genericPortRole(stack: ProjectStack): null | PortRole {
 
 function commandTokens(command: string): string[] {
 	return (command.match(/"[^"]*"|'[^']*'|\S+/g) ?? []).map((token) =>
-		token.replace(/^(?:"|')|(?:"|')$/g, '')
+		token.replace(/^(?:"|')|(?:"|')$/g, ''),
 	);
 }
 
@@ -164,7 +164,7 @@ function environmentPortRole(key: string, stack: ProjectStack): null | PortRole 
 
 function environmentPort(line: string): { key: string; port: number } | null {
 	const match = line.match(
-		/^\s*(?:export\s+)?(API_PORT|BACKEND_PORT|FRONTEND_PORT|PORT|SERVER_PORT|VITE_PORT|WEB_PORT)\s*=\s*["']?(\d+)["']?(?:\s*(?:#.*)?)$/
+		/^\s*(?:export\s+)?(API_PORT|BACKEND_PORT|FRONTEND_PORT|PORT|SERVER_PORT|VITE_PORT|WEB_PORT)\s*=\s*["']?(\d+)["']?(?:\s*(?:#.*)?)$/,
 	);
 	if (!match?.[1] || !match[2]) return null;
 	const port = portFromText(match[2]);
@@ -177,14 +177,14 @@ export async function runtimePortDeclarationPaths(projectDir: string): Promise<s
 	return [
 		...manifestPaths,
 		...[...directories].flatMap((directory) =>
-			ENVIRONMENT_FILES.map((name) => join(directory, name))
+			ENVIRONMENT_FILES.map((name) => join(directory, name)),
 		),
 	].sort();
 }
 
 export async function gatherRuntimePorts(
 	projectDir: string,
-	stack: ProjectStack
+	stack: ProjectStack,
 ): Promise<null | ProjectPorts> {
 	const ports = new Map<PortRole, Set<number>>();
 	const paths = await runtimePortDeclarationPaths(projectDir);

@@ -43,13 +43,13 @@ export function useRunsPage() {
 	const continueRun = useContinueRun();
 	const controls = useRunControls();
 	const [selection, setSelection] = useState<undefined | UnifiedSelection>(
-		initialSelection(searchParams)
+		initialSelection(searchParams),
 	);
 	const [expandedSessions, setExpandedSessions] = useState<ReadonlySet<string>>(new Set());
 	// The session a step-selected run belongs to. Kept in the URL (?run=…&pipeline=…) so a
 	// refresh after clicking a step's console restores the expanded-session context.
 	const [pipelineContextId, setPipelineContextId] = useState<string | undefined>(
-		searchParams.get('pipeline') ?? undefined
+		searchParams.get('pipeline') ?? undefined,
 	);
 	const liveConsoleRef = useRef<HTMLDivElement>(null);
 	const initialSelectionIdRef = useRef(initialSelection(searchParams)?.id);
@@ -129,7 +129,7 @@ export function useRunsPage() {
 	// topLevel list, but its console must still open.
 	const fallbackRun = useRunRecord(
 		selection?.kind === 'run' ? selection.id : undefined,
-		needsRunRecordFallback(selection, runList)
+		needsRunRecordFallback(selection, runList),
 	);
 	const selectedRun = listedRun ?? fallbackRun.data ?? undefined;
 	const selectedSession =
@@ -137,12 +137,12 @@ export function useRunsPage() {
 			? sessionList.find((session) => session.id === selection.id)
 			: undefined;
 	const selectedLaunchProject = projectList.find(
-		(project) => project.path === launchForm.projectDir
+		(project) => project.path === launchForm.projectDir,
 	);
 
 	const filters = { mode: modeFilter, project: historyProject, query, status: statusFilter };
 	const filteredEntries = buildUnifiedEntries(runList, sessionList).filter((entry) =>
-		entryMatchesFilters(entry, filters)
+		entryMatchesFilters(entry, filters),
 	);
 	const { active: activeEntries, history } = splitEntriesByLiveness(filteredEntries);
 	// Clamp History to the faithfully-merged window (see historyDisplayFloor): the denser
@@ -168,7 +168,7 @@ export function useRunsPage() {
 			.filter(
 				(session) =>
 					session.totalSteps > 1 &&
-					(session.status === 'queued' || session.status === 'running')
+					(session.status === 'queued' || session.status === 'running'),
 			)
 			.slice(0, MAX_AUTO_EXPANDED_SESSIONS)
 			.map((session) => session.id);

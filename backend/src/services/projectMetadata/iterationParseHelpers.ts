@@ -1,7 +1,7 @@
 import {
-	isAiddExecutionMode,
 	type AiddTriumvirateRoleMetadata,
 	type AiddTriumvirateRoles,
+	isAiddExecutionMode,
 } from 'aidd-shared/execution-mode';
 
 import type {

@@ -1,7 +1,7 @@
 import {
-	isAuditApplicableToProfile,
 	type AuditProfileMapping,
 	type AuditProfileOverrides,
+	isAuditApplicableToProfile,
 } from 'aidd-shared';
 import { createAuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
 import {
@@ -24,9 +24,9 @@ import type {
 import type { MaturityComputeInput } from './artifactClassification.ts';
 
 import {
-	loadMaturitySkip,
 	classifyArtifact,
 	classifyAuditEntry,
+	loadMaturitySkip,
 } from './artifactClassification.ts';
 
 function countsAsComplete(status: MaturityArtifactStatus): boolean {
@@ -44,7 +44,7 @@ function classifyStageStatus(artifacts: MaturityArtifactDto[]): MaturityStageSta
 
 function buildNextAction(
 	stage: MaturityStageDto,
-	auditEntries: MaturityAuditEntryDto[]
+	auditEntries: MaturityAuditEntryDto[],
 ): MaturityNextActionDto | null {
 	if (stage.id === 'audited') {
 		const target =
@@ -147,10 +147,10 @@ export async function computeMaturity(input: MaturityComputeInput): Promise<Matu
 	const stages: MaturityStageDto[] = [];
 	const auditEntries: MaturityAuditEntryDto[] = [];
 	const auditProfileMapping: AuditProfileMapping = await loadAuditProfileMapping(
-		input.auditCatalogDir
+		input.auditCatalogDir,
 	);
 	const auditProfileOverrides: AuditProfileOverrides | null = await loadAuditProfileOverrides(
-		input.projectDir
+		input.projectDir,
 	);
 	const auditFreshnessContext = input.auditFreshnessContext ?? createAuditFreshnessContext();
 	for (const stageDef of MATURITY_STAGES) {
@@ -161,8 +161,8 @@ export async function computeMaturity(input: MaturityComputeInput): Promise<Matu
 					input.profile,
 					name,
 					auditProfileMapping,
-					auditProfileOverrides
-				)
+					auditProfileOverrides,
+				),
 			);
 			for (const auditName of applicable) {
 				const classification = await classifyAuditEntry(
@@ -170,7 +170,7 @@ export async function computeMaturity(input: MaturityComputeInput): Promise<Matu
 					input.projectDir,
 					skip,
 					input.latestProjectAuditRun,
-					auditFreshnessContext
+					auditFreshnessContext,
 				);
 				artifacts.push(classification.artifact);
 				auditEntries.push(classification.entry);
@@ -179,7 +179,7 @@ export async function computeMaturity(input: MaturityComputeInput): Promise<Matu
 			const applicableArtifacts =
 				stageDef.id === 'shipped'
 					? stageDef.artifacts.filter((ref) =>
-							shippedArtifactApplies(ref.slug, input.profile)
+							shippedArtifactApplies(ref.slug, input.profile),
 						)
 					: stageDef.artifacts;
 			for (const artifactRef of applicableArtifacts) {

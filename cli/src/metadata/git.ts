@@ -20,11 +20,11 @@ export async function initGitAfterScaffold(projectDir: string): Promise<void> {
 		const status = await ensureProjectGitRepo(projectDir);
 		if (status === 'skipped') {
 			console.log(
-				`[setup] Git not found on PATH; skipped repository initialization: ${projectDir}`
+				`[setup] Git not found on PATH; skipped repository initialization: ${projectDir}`,
 			);
 		} else {
 			console.log(
-				`[setup] Git repository ${status === 'initialized' ? 'initialized' : 'already present'}: ${projectDir}`
+				`[setup] Git repository ${status === 'initialized' ? 'initialized' : 'already present'}: ${projectDir}`,
 			);
 		}
 	} catch (err) {
@@ -35,7 +35,7 @@ export async function initGitAfterScaffold(projectDir: string): Promise<void> {
 
 export async function ensureProjectGitRepo(
 	projectDir: string,
-	run: GitRunner = gitOutput
+	run: GitRunner = gitOutput,
 ): Promise<EnsureProjectGitRepoResult> {
 	const topLevel = await run(projectDir, ['rev-parse', '--show-toplevel']);
 	// Post-scaffold git init is a convenience, not a requirement: a clean machine may not have git

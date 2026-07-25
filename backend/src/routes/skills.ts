@@ -27,7 +27,9 @@ async function referencesForSkill(context: WebContext, id: string): Promise<stri
 	const recipes = await context.recipeService.listRecipes();
 	const recipeReferences = recipes
 		.filter((recipe) =>
-			recipe.steps.some((step) => step.stepType === 'skill' && step.configJson.skillId === id)
+			recipe.steps.some(
+				(step) => step.stepType === 'skill' && step.configJson.skillId === id,
+			),
 		)
 		.map((recipe) => `recipe:${recipe.id}`);
 	const maturityReferences = Object.entries(MATURITY_INVOCATIONS)
@@ -54,7 +56,7 @@ export function createSkillsRoutes(context: WebContext) {
 					sourcePath: body.sourcePath,
 				}),
 			}),
-			{ body: importBody }
+			{ body: importBody },
 		)
 		.post(
 			'/imports',
@@ -65,25 +67,25 @@ export function createSkillsRoutes(context: WebContext) {
 					sourcePath: body.sourcePath,
 				}),
 			}),
-			{ body: importBody }
+			{ body: importBody },
 		)
 		.delete(
 			'/imports/:id',
 			async ({ params }) => {
 				await context.skillService.deleteImportedSkill(
 					params.id,
-					await referencesForSkill(context, params.id)
+					await referencesForSkill(context, params.id),
 				);
 				return { deleted: true };
 			},
-			{ params: skillIdParams }
+			{ params: skillIdParams },
 		)
 		.get(
 			'/:id',
 			async ({ params }) => ({
 				skill: await context.skillService.readSkill(params.id),
 			}),
-			{ params: skillIdParams }
+			{ params: skillIdParams },
 		)
 		.post(
 			'/:id/run',
@@ -91,7 +93,7 @@ export function createSkillsRoutes(context: WebContext) {
 				if (!isSkillExecutionIntent(body.executionIntent)) {
 					throw new HttpError(
 						'executionIntent must be either "review-only" or "apply-changes"',
-						400
+						400,
 					);
 				}
 				const backend = parseBackend(body.backend);
@@ -127,6 +129,6 @@ export function createSkillsRoutes(context: WebContext) {
 					reasoningEffort: t.Optional(t.String()),
 				}),
 				params: skillIdParams,
-			}
+			},
 		);
 }

@@ -48,7 +48,7 @@ describe('recipe step condition editing', () => {
 		if (!draft) throw new Error('Expected recipe step draft');
 		draft.whenParameter = 'stopBeforeImplementation';
 		expect(collectStepErrors(draft).when).toBe(
-			'Condition parameter and expected value must both be set'
+			'Condition parameter and expected value must both be set',
 		);
 	});
 });

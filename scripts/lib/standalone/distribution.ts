@@ -4,9 +4,9 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import { copyRegisteredDistributionFiles } from '../third-party-licenses/distributed-paths.ts';
 import {
+	type CompileTarget,
 	CORE_CATALOG_DIRS,
 	REQUIRED_FILE_ASSETS,
-	type CompileTarget,
 	type RequiredDistributionEntry,
 } from './constants.ts';
 
@@ -50,7 +50,7 @@ export function getRequiredDistributionEntries(target: CompileTarget): RequiredD
 
 export async function validateDistributionLayout(
 	outDir: string,
-	target: CompileTarget
+	target: CompileTarget,
 ): Promise<string[]> {
 	const issues: string[] = [];
 	for (const entry of getRequiredDistributionEntries(target)) {
@@ -74,14 +74,14 @@ export async function validateDistributionLayout(
 
 export async function assertDistributionLayout(
 	outDir: string,
-	target: CompileTarget
+	target: CompileTarget,
 ): Promise<void> {
 	const issues = await validateDistributionLayout(outDir, target);
 	if (issues.length > 0) {
 		throw new Error(
 			`[build-standalone] invalid standalone distribution for ${target.name}:\n${issues
 				.map((issue) => `- ${issue}`)
-				.join('\n')}`
+				.join('\n')}`,
 		);
 	}
 }

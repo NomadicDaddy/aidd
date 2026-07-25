@@ -29,7 +29,7 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 		moveName.length === 0 ||
 		destinationPreview === project.path;
 	const availableRoots = roots.filter(
-		(root) => !project.path.toLowerCase().startsWith(root.toLowerCase())
+		(root) => !project.path.toLowerCase().startsWith(root.toLowerCase()),
 	);
 
 	async function handleMove(): Promise<void> {
@@ -57,7 +57,7 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 			<div className="flex items-start gap-3">
 				<FolderInput className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
 				<div>
-					<h2 className="text-foreground text-base font-semibold">Move project</h2>
+					<h2 className="text-base font-semibold text-foreground">Move project</h2>
 					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 						Move the project directory to another configured application root.
 					</p>

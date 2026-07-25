@@ -53,14 +53,14 @@ export async function getSystemMetrics(
 	query: {
 		hours?: number;
 		limit?: number;
-	} = {}
+	} = {},
 ): Promise<SystemMetricsResponse> {
 	return apiGet<SystemMetricsResponse>(`/api/v1/system/metrics${buildQuery({ ...query })}`);
 }
 
 export async function getWebVitalsSummary(hours?: number): Promise<WebVitalSummary[]> {
 	const response = await apiGet<{ vitals: WebVitalSummary[] }>(
-		`/api/v1/system/web-vitals${buildQuery({ hours })}`
+		`/api/v1/system/web-vitals${buildQuery({ hours })}`,
 	);
 	return response.vitals;
 }

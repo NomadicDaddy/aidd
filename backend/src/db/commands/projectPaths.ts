@@ -8,7 +8,7 @@ import { invocationEvents, pipelineSessions, runs } from '../schema.ts';
 
 export function updateProjectPathReferences(
 	tx: LocalTransaction,
-	args: UpdateProjectPathArgs
+	args: UpdateProjectPathArgs,
 ): void {
 	const { destinationPath, projectName, sourcePath } = args;
 	tx.update(runs)

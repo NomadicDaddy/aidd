@@ -58,7 +58,7 @@ describe('FileAiddStore feature compatibility', () => {
 			'feature-core',
 		]);
 		expect(
-			(await store.listFeatures({ includeAudit: true })).map((feature) => feature.id)
+			(await store.listFeatures({ includeAudit: true })).map((feature) => feature.id),
 		).toEqual(['audit-mode-processing', 'audit-security-100-existing', 'feature-core']);
 	});
 
@@ -182,7 +182,7 @@ describe('FileAiddStore feature compatibility', () => {
 		const first = await readFile(join(store.metadataDir, 'iterations', '001.log'), 'utf8');
 		const second = await readFile(join(store.metadataDir, 'iterations', '002.log'), 'utf8');
 		const structured = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { ok: boolean };
 		expect(first).toBe('first');
 		expect(second).toBe('second');
@@ -204,7 +204,7 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(validation.valid).toBe(true);
 		expect(artifacts.valid).toBe(true);
 		const artifactCheck = JSON.parse(
-			await readFile(join(store.metadataDir, '.artifacts-check.json'), 'utf8')
+			await readFile(join(store.metadataDir, '.artifacts-check.json'), 'utf8'),
 		) as {
 			summary?: { requiredMissing?: number };
 			artifacts?: {
@@ -237,7 +237,7 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(artifacts.summary.requiredMissing).toBeGreaterThan(0);
 		expect(artifacts.valid).toBe(true);
 		const artifactCheck = JSON.parse(
-			await readFile(join(store.metadataDir, '.artifacts-check.json'), 'utf8')
+			await readFile(join(store.metadataDir, '.artifacts-check.json'), 'utf8'),
 		) as { phase?: string; preOnboarding?: boolean };
 		expect(artifactCheck.phase).toBe('onboarding');
 		expect(artifactCheck.preOnboarding).toBe(true);
@@ -261,7 +261,7 @@ describe('FileAiddStore feature compatibility', () => {
 	test('writeFeature rejects statuses outside the canonical vocabulary', async () => {
 		const store = await makeStore('invalid-status-write');
 		await expect(
-			store.writeFeature({ id: 'feature-stray', status: 'done', passes: true })
+			store.writeFeature({ id: 'feature-stray', status: 'done', passes: true }),
 		).rejects.toThrow(/Invalid feature status 'done'.*backlog, in_progress, completed/);
 		const features = await store.listFeatures();
 		expect(features).toHaveLength(0);
@@ -278,7 +278,7 @@ describe('FileAiddStore feature compatibility', () => {
 			await mkdir(join(store.metadataDir, 'features', id), { recursive: true });
 			await writeFile(
 				join(store.metadataDir, 'features', id, 'feature.json'),
-				`${JSON.stringify({ id, passes: true, status }, null, 2)}\n`
+				`${JSON.stringify({ id, passes: true, status }, null, 2)}\n`,
 			);
 		}
 
@@ -296,7 +296,7 @@ describe('FileAiddStore feature compatibility', () => {
 		await mkdir(join(store.metadataDir, 'features', id), { recursive: true });
 		await writeFile(
 			join(store.metadataDir, 'features', id, 'feature.json'),
-			`${JSON.stringify({ id, passes: true, status: 'done' }, null, 2)}\n`
+			`${JSON.stringify({ id, passes: true, status: 'done' }, null, 2)}\n`,
 		);
 
 		const stats = await store.getFeatureStats();
@@ -313,7 +313,7 @@ describe('FileAiddStore feature compatibility', () => {
 		await mkdir(duplicateDir, { recursive: true });
 		await writeFile(
 			join(duplicateDir, 'feature.json'),
-			`${JSON.stringify({ id: 'feature-shared', status: 'backlog', passes: false })}\n`
+			`${JSON.stringify({ id: 'feature-shared', status: 'backlog', passes: false })}\n`,
 		);
 
 		const validation = await store.validateFeatures();
@@ -321,14 +321,14 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(validation.valid).toBe(false);
 		const messages = validation.issues.map((issue) => issue.message);
 		expect(
-			messages.some((message) => message.includes("Duplicate feature id 'feature-shared'"))
+			messages.some((message) => message.includes("Duplicate feature id 'feature-shared'")),
 		).toBe(true);
 		const flaggedDirectories = new Set(
 			validation.issues
 				.filter((issue) =>
-					issue.message.startsWith("Duplicate feature id 'feature-shared'")
+					issue.message.startsWith("Duplicate feature id 'feature-shared'"),
 				)
-				.map((issue) => issue.id)
+				.map((issue) => issue.id),
 		);
 		expect(flaggedDirectories).toEqual(new Set(['feature-shared', 'feature-shared-copy']));
 	});
@@ -341,14 +341,14 @@ describe('FileAiddStore feature compatibility', () => {
 		await mkdir(mismatchDir, { recursive: true });
 		await writeFile(
 			join(mismatchDir, 'feature.json'),
-			`${JSON.stringify({ id: 'feature-id', status: 'backlog', passes: false })}\n`
+			`${JSON.stringify({ id: 'feature-id', status: 'backlog', passes: false })}\n`,
 		);
 
 		const validation = await store.validateFeatures();
 
 		expect(validation.valid).toBe(false);
 		const mismatchIssue = validation.issues.find(
-			(issue) => issue.id === 'feature-directory' && issue.message.includes('does not match')
+			(issue) => issue.id === 'feature-directory' && issue.message.includes('does not match'),
 		);
 		expect(mismatchIssue?.message).toContain("Feature id 'feature-id'");
 		expect(mismatchIssue?.message).toContain("'feature-directory'");
@@ -389,8 +389,10 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(warningIds).toEqual(new Set(['feature-alpha', 'feature-beta']));
 		expect(
 			(validation.warnings ?? []).every((warning) =>
-				warning.message.includes('Open feature title likely duplicates other open features')
-			)
+				warning.message.includes(
+					'Open feature title likely duplicates other open features',
+				),
+			),
 		).toBe(true);
 	});
 
@@ -504,7 +506,7 @@ describe('FileAiddStore feature compatibility', () => {
 
 		expect(validation.valid).toBe(true);
 		const warning = (validation.warnings ?? []).find(
-			(entry) => entry.id === 'feature-no-affected'
+			(entry) => entry.id === 'feature-no-affected',
 		);
 		expect(warning?.message).toContain('missing affectedFiles');
 	});
@@ -553,7 +555,7 @@ describe('FileAiddStore feature compatibility', () => {
 					'feature-deleted': { milestone: 'MVP' },
 					'feature-invalid': { milestone: 'v9' },
 				},
-			})}\n`
+			})}\n`,
 		);
 
 		const validation = await store.validateFeatures();
@@ -580,7 +582,7 @@ describe('FileAiddStore feature compatibility', () => {
 		await store.writeFeature({ id: 'feature-new', status: 'backlog', passes: false });
 
 		const roadmap = JSON.parse(
-			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
 		) as {
 			milestones: Record<string, { priority?: number; description?: string }>;
 			features: Record<string, { milestone?: string }>;
@@ -608,13 +610,13 @@ describe('FileAiddStore feature compatibility', () => {
 		});
 
 		const roadmap = JSON.parse(
-			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
 		) as {
 			milestones: Record<string, unknown>;
 			features: Record<string, { milestone?: string }>;
 		};
 		expect(roadmap.features['audit-security-1779339974-current-milestone']?.milestone).toBe(
-			'v2.0'
+			'v2.0',
 		);
 		expect(roadmap.milestones['v3.0']).toBeUndefined();
 	});
@@ -645,7 +647,7 @@ describe('FileAiddStore feature compatibility', () => {
 		await store.writeFeature({ id: 'feature-late', status: 'backlog', passes: false });
 
 		const roadmap = JSON.parse(
-			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
 		) as {
 			milestones: Record<string, unknown>;
 			features: Record<string, { milestone?: string }>;
@@ -660,7 +662,7 @@ describe('FileAiddStore feature compatibility', () => {
 
 		const featureRaw = await readFile(
 			join(store.metadataDir, 'features', 'feature-solo', 'feature.json'),
-			'utf8'
+			'utf8',
 		);
 		expect(JSON.parse(featureRaw)).toMatchObject({ id: 'feature-solo' });
 		let roadmapMissing = false;
@@ -731,10 +733,10 @@ describe('FileAiddStore feature compatibility', () => {
 		// Both land in a post-MVP milestone but stay actionable: parking them would leave
 		// audit-and-remediate / bug2feature coding steps with nothing to pick up.
 		expect((await store.readFeature('audit-security-1779339974-park-exempt')).status).toBe(
-			'backlog'
+			'backlog',
 		);
 		expect((await store.readFeature('remediation-20260704-park-exempt')).status).toBe(
-			'backlog'
+			'backlog',
 		);
 	});
 

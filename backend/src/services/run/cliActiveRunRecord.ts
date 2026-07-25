@@ -1,6 +1,6 @@
 import type { BackendName } from 'aidd-shared/plan/types';
 
-import { isCliRunTerminal, type CliActiveRunRecord } from 'aidd-shared/metadata/active-runs';
+import { type CliActiveRunRecord, isCliRunTerminal } from 'aidd-shared/metadata/active-runs';
 
 import type { RunRecord, WebRunMode, WebRunStatus } from '../../types.ts';
 

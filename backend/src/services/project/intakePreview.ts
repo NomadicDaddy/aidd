@@ -2,7 +2,7 @@ import type { ResolvedWebConfig } from 'aidd-shared/config';
 
 import { detectInitialPhase } from 'aidd-shared/metadata/onboarding';
 import { detectProjectStack, manifestEntryVersion } from 'aidd-shared/metadata/project-stack';
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import type { ProjectIntakeGitSummaryDto, ProjectIntakePreviewDto } from '../../types.ts';
@@ -55,7 +55,7 @@ async function gitSummary(path: string): Promise<ProjectIntakePreviewDto['git']>
 async function spernakitDetection(
 	ctx: IntakePreviewContext,
 	path: string,
-	slug: string
+	slug: string,
 ): Promise<ProjectIntakePreviewDto['spernakit']> {
 	let inManifest = false;
 	let manifestVersion: null | string = null;
@@ -79,7 +79,7 @@ async function spernakitDetection(
 }
 
 async function workspaceRootDetection(
-	path: string
+	path: string,
 ): Promise<ProjectIntakePreviewDto['workspaceRoot']> {
 	let entries: { isDirectory(): boolean; isSymbolicLink(): boolean; name: string }[];
 	try {
@@ -102,7 +102,7 @@ async function workspaceRootDetection(
 
 export async function getIntakePreview(
 	ctx: IntakePreviewContext,
-	path: string
+	path: string,
 ): Promise<ProjectIntakePreviewDto> {
 	const resolved = assertAllowedPath(ctx.config.allowedRoots, path);
 	if (!(await directoryExists(resolved))) {

@@ -1,4 +1,4 @@
-import type { CLIBackend, AgentEvent, PromptInput } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
 
 import { parseArgs } from 'aidd-shared/args/index';
@@ -38,7 +38,7 @@ export class FakeBackend implements CLIBackend {
 
 	constructor(
 		events: AgentEvent[],
-		beforeRun?: (callIndex: number, input: PromptInput) => Promise<void> | void
+		beforeRun?: (callIndex: number, input: PromptInput) => Promise<void> | void,
 	) {
 		this.events = events;
 		this.beforeRun = beforeRun;
@@ -64,7 +64,7 @@ export class SequencedBackend implements CLIBackend {
 
 	constructor(
 		batches: AgentEvent[][],
-		beforeRun?: (callIndex: number, input: PromptInput) => Promise<void> | void
+		beforeRun?: (callIndex: number, input: PromptInput) => Promise<void> | void,
 	) {
 		this.batches = batches;
 		this.beforeRun = beforeRun;
@@ -122,7 +122,7 @@ async function makeStoreAt(tmpRoot: string, name: string): Promise<FileAiddStore
 			priority: 1,
 			status: 'backlog',
 			title: 'Core feature',
-		})
+		}),
 	);
 	return new FileAiddStore(projectDir);
 }
@@ -130,7 +130,7 @@ async function makeStoreAt(tmpRoot: string, name: string): Promise<FileAiddStore
 export async function addFeature(
 	store: FileAiddStore,
 	id: string,
-	priority: number
+	priority: number,
 ): Promise<void> {
 	await store.writeFeature({
 		id,
@@ -193,7 +193,7 @@ export async function initializeGitProject(projectDir: string): Promise<void> {
 	// only because `.git` here is always a fresh directory `git init` just created.
 	await appendFile(
 		join(projectDir, '.git', 'config'),
-		'[user]\n\temail = aidd-test@example.invalid\n\tname = aidd Test\n'
+		'[user]\n\temail = aidd-test@example.invalid\n\tname = aidd Test\n',
 	);
 	await runGit(projectDir, ['add', '.']);
 	await runGit(projectDir, ['commit', '-m', 'init']);
@@ -221,7 +221,7 @@ export async function captureStdout(run: () => Promise<void>): Promise<string> {
 export function plan(projectDir: string, extra: string[] = []) {
 	return resolveRunPlan(
 		parseArgs(['--project-dir', projectDir, '--cli', 'native', ...extra]),
-		config
+		config,
 	);
 }
 

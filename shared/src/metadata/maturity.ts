@@ -204,7 +204,7 @@ export const MATURITY_STAGE_ORDER: readonly MaturityStageId[] = MATURITY_STAGES.
 export function resolveInvocation(
 	slug: string,
 	appPath: string,
-	auditName?: string
+	auditName?: string,
 ): MaturityInvocation | null {
 	const base = MATURITY_INVOCATIONS[slug];
 	if (!base) return null;

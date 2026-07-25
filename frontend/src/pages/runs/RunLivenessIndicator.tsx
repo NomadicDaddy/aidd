@@ -53,7 +53,7 @@ export function RunLivenessIndicator({ now, run }: { now: number; run: RunRecord
 					className={cn(
 						'inline-block h-2 w-2 rounded-full',
 						toneSolid[LIVENESS_TONE[liveness]],
-						liveness === 'live' && 'animate-pulse'
+						liveness === 'live' && 'animate-pulse',
 					)}
 				/>
 				<span>{livenessLabel(liveness, ageMs)}</span>

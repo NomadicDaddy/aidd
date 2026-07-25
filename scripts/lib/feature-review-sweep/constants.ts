@@ -15,7 +15,7 @@ export const TODAY = new Date().toISOString().slice(0, 10);
 export const AGGREGATE_REPORT_PATH = path.join(
 	AIDD_ROOT,
 	'reports',
-	`feature-review-all-${TODAY}.md`
+	`feature-review-all-${TODAY}.md`,
 );
 
 export const SUPPORTED_DEPTH = 'full-backlog-light-completed';
@@ -23,15 +23,15 @@ export const SUPPORTED_FIX_MODE = 'aggressive';
 
 export const VALID_STATUSES = new Set([
 	'backlog',
-	'pending',
-	'running',
 	'completed',
 	'failed',
+	'in_progress',
+	'pending',
+	'running',
 	'verified',
 	'waiting_approval',
-	'in_progress',
 ]);
-export const BACKLOG_STATUSES = new Set(['backlog', 'pending', 'running', 'failed', 'in_progress']);
+export const BACKLOG_STATUSES = new Set(['backlog', 'failed', 'in_progress', 'pending', 'running']);
 export const COMPLETED_STATUSES = new Set(['completed', 'verified']);
 
 export const REQUIRED_FIELDS = [

@@ -43,7 +43,7 @@ if (!(await wrapperOwnsThisRun())) {
 			`Another bun test for this repository is already running (pid ${active?.pid ?? 'unknown'}). ` +
 				'Concurrent runs corrupt shared fixtures and produce phantom failures - wait for it to ' +
 				'finish (or kill it), then re-run. (For parallel runs, use `bun run test` - it owns ' +
-				'the lock for all of its workers.)'
+				'the lock for all of its workers.)',
 		);
 		process.exit(1);
 	}

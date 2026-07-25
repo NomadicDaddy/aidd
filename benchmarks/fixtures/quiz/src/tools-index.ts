@@ -177,7 +177,7 @@ export async function executeTool(name: string, rawArgs: string, cwd: string): P
 		case 'edit_file':
 			result = editFile(
 				args as { path: string; old_string: string; new_string: string },
-				cwd
+				cwd,
 			);
 			break;
 		case 'bash':

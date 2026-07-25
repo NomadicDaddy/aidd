@@ -7,7 +7,7 @@ import type { MaturityArtifact } from '../../../api/types.ts';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { formatRelativeAge } from '../../../lib/formatters.ts';
-import { maturityArtifactViewerTarget, type ArtifactViewerTarget } from './artifactsUtils.ts';
+import { type ArtifactViewerTarget, maturityArtifactViewerTarget } from './artifactsUtils.ts';
 import { artifactStatusLabel, artifactTone } from './maturityOverviewUtils.ts';
 
 interface MaturityArtifactRowProps {

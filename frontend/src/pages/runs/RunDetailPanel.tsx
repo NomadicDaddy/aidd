@@ -195,7 +195,7 @@ export function RunDetailPanel({
 	// "Stopping…" instead of a plain "Running".
 	const outcome = classifyRunRecord(
 		selectedRun,
-		isRunStopping(selectedRun, useStopRequested(selectedRun.id))
+		isRunStopping(selectedRun, useStopRequested(selectedRun.id)),
 	);
 	const exitLabel =
 		selectedRun.exitCode !== null

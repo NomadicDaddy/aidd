@@ -31,7 +31,7 @@ describe('project detail navigation', () => {
 	test('uses the clean project URL for the default overview tab', () => {
 		const next = projectDetailTabSearchParams(
 			new URLSearchParams('tab=runs&featureStatus=completed'),
-			'overview'
+			'overview',
 		);
 
 		expect(next.has('tab')).toBe(false);

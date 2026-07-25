@@ -7,13 +7,13 @@ import {
 } from 'aidd-shared/metadata/audit-freshness';
 import {
 	buildScoreInput,
+	type ChangePotential,
 	collectProjectEvidence,
 	compareAuditsByChangePotential,
 	enumerateProjectsUnderRoots,
 	loadAuditPriorities,
-	scoreAudit,
-	type ChangePotential,
 	type ProjectAuditEvidence,
+	scoreAudit,
 } from 'aidd-shared/metadata/audit-scoring';
 import { filterApplicableAuditNames } from 'aidd-shared/metadata/project-profile';
 import { discoverAuditNames, simulationMarker } from 'aidd-shared/modes/audit-shared';
@@ -50,7 +50,7 @@ export async function auditNames(plan: RunPlan, context: ModeContext): Promise<s
 			const applicable = await filterApplicableAuditNames(
 				catalogDir,
 				context.projectDir,
-				discovered
+				discovered,
 			);
 			return await rankAuditsByChangePotential(applicable, catalogDir, context);
 		}
@@ -65,7 +65,7 @@ export async function auditNames(plan: RunPlan, context: ModeContext): Promise<s
 async function rankAuditsByChangePotential(
 	audits: string[],
 	catalogDir: string,
-	context: ModeContext
+	context: ModeContext,
 ): Promise<string[]> {
 	if (audits.length <= 1) return audits;
 	const [priorities, projects] = await Promise.all([
@@ -89,7 +89,7 @@ async function collectAllProjectEvidence(context: ModeContext): Promise<ProjectA
 export async function auditNamesForSelection(
 	plan: RunPlan,
 	context: ModeContext,
-	explicitRetryAudits: string[] | undefined
+	explicitRetryAudits: string[] | undefined,
 ): Promise<string[]> {
 	const explicitNames = explicitAuditNames(plan);
 	if (explicitRetryAudits !== undefined) return explicitRetryAudits;
@@ -102,7 +102,7 @@ export async function remainingAfterResult(
 	context: ModeContext,
 	selectedAudits: string[],
 	completedAudits: string[],
-	batchIncomplete: boolean
+	batchIncomplete: boolean,
 ): Promise<string[]> {
 	const explicitNames = explicitAuditNames(plan);
 	if (explicitNames.length > 0) {
@@ -110,7 +110,7 @@ export async function remainingAfterResult(
 		return missingAudits.length > 0 || !batchIncomplete ? missingAudits : selectedAudits;
 	}
 	return (await remainingAuditNames(plan, context)).filter(
-		(name) => !completedAudits.includes(name)
+		(name) => !completedAudits.includes(name),
 	);
 }
 
@@ -124,7 +124,7 @@ async function remainingAuditNames(plan: RunPlan, context: ModeContext): Promise
 				excludedReportMarker: simulationMarker,
 			}),
 			name,
-		}))
+		})),
 	);
 	return results
 		.filter((result) => result.freshness.status !== 'fresh')

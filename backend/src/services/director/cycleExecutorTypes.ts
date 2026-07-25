@@ -1,8 +1,8 @@
 import type {
+	DirectAiMeta,
 	DirectorCycleStage,
 	DirectorOutput,
 	DirectorProfileRecord,
-	DirectAiMeta,
 } from 'aidd-shared';
 
 import type { WebDatabase } from '../../db/client.ts';
@@ -47,17 +47,17 @@ export interface CycleExecutorDeps {
 		output: DirectorOutput | undefined,
 		exitCode: number,
 		outputStatus: DirectorOutputStatus | undefined,
-		failureReason?: null | string
+		failureReason?: null | string,
 	) => Promise<void>;
 	profileService: DirectorProfileService;
 	readCycleOutput: (
-		outputPath: string
+		outputPath: string,
 	) => Promise<{ output: DirectorOutput | undefined; outputStatus: DirectorOutputStatus }>;
 	runService: RunService;
 	setCycleStage: (
 		cycleId: string,
 		stage: DirectorCycleStage,
-		directAiMeta?: DirectAiMeta | null
+		directAiMeta?: DirectAiMeta | null,
 	) => void;
 }
 

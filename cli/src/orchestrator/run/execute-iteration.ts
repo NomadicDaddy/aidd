@@ -53,7 +53,7 @@ interface ExecuteIterationState {
 }
 
 export async function executeIteration(
-	input: ExecuteIterationInput
+	input: ExecuteIterationInput,
 ): Promise<ExecuteIterationOutcome> {
 	if (!input.plan.triumvirate) {
 		const streamResult = await runBackendStreamLoop(
@@ -65,7 +65,7 @@ export async function executeIteration(
 			input.iteration,
 			input.startedAtMs,
 			input.runStartedAtMs,
-			input.gitHeadBefore
+			input.gitHeadBefore,
 		);
 		return {
 			kind: 'complete',

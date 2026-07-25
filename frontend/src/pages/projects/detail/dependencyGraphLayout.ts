@@ -1,11 +1,11 @@
 import {
+	type FeatureDependencyCycle,
+	type FeatureDependencyNode,
 	GRAPH_COLUMN_GAP,
 	GRAPH_NODE_HEIGHT,
 	GRAPH_NODE_WIDTH,
 	GRAPH_PADDING,
 	GRAPH_ROW_GAP,
-	type FeatureDependencyCycle,
-	type FeatureDependencyNode,
 } from './dependencyGraphTypes.ts';
 
 function canonicalCycleKey(cycle: string[]): string {
@@ -48,7 +48,7 @@ function closeCycle(cycle: string[]): FeatureDependencyCycle {
 
 export function detectCycles(
 	nodes: FeatureDependencyNode[],
-	outgoing: Map<string, string[]>
+	outgoing: Map<string, string[]>,
 ): FeatureDependencyCycle[] {
 	const visited = new Set<string>();
 	const stack: string[] = [];
@@ -79,7 +79,7 @@ export function detectCycles(
 		if (!visited.has(node.directory)) visit(node.directory);
 	}
 	return [...cycles.values()].sort((left, right) =>
-		left.directories.join('>').localeCompare(right.directories.join('>'))
+		left.directories.join('>').localeCompare(right.directories.join('>')),
 	);
 }
 
@@ -120,7 +120,7 @@ export function positionNodes(nodes: FeatureDependencyNode[]): FeatureDependency
 	}
 	const positioned: FeatureDependencyNode[] = [];
 	for (const [layer, rows] of [...rowsByLayer.entries()].sort(
-		(left, right) => left[0] - right[0]
+		(left, right) => left[0] - right[0],
 	)) {
 		rows.sort((left, right) => left.directory.localeCompare(right.directory));
 		for (let row = 0; row < rows.length; row++) {

@@ -24,7 +24,7 @@ export function isWebSocketUpgradeAuthorized(
 		headers: Record<string, string | undefined>;
 		query?: Record<string, string | undefined> | undefined;
 		remoteAddress?: null | string;
-	}
+	},
 ): boolean {
 	const queryToken = typeof upgrade.query?.token === 'string' ? upgrade.query.token : undefined;
 	const providedToken = bearerToken(upgrade.headers.authorization) ?? queryToken;
@@ -32,7 +32,7 @@ export function isWebSocketUpgradeAuthorized(
 		web,
 		upgrade.remoteAddress ?? null,
 		providedToken,
-		isForwardedRequest(upgrade.headers)
+		isForwardedRequest(upgrade.headers),
 	);
 }
 
@@ -78,7 +78,7 @@ export function createWebSocketRoutes(context: WebContext) {
 				JSON.stringify({
 					payload: { connected: true },
 					type: 'connected',
-				} satisfies WebSocketEvent)
+				} satisfies WebSocketEvent),
 			);
 		},
 	});

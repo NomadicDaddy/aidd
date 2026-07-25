@@ -41,7 +41,7 @@ function toDto(row: Row): ProjectInitFailureDto {
 // the create flow: a failure here must not mask the underlying init error being surfaced.
 export async function recordInitFailure(
 	db: WebDatabase,
-	input: RecordInitFailureInput
+	input: RecordInitFailureInput,
 ): Promise<void> {
 	try {
 		await db.insert(projectInitFailures).values({
@@ -81,7 +81,7 @@ export async function listOpenInitFailures(db: WebDatabase): Promise<ProjectInit
 
 export async function getOpenInitFailure(
 	db: WebDatabase,
-	id: string
+	id: string,
 ): Promise<ProjectInitFailureDto | undefined> {
 	const rows = await db
 		.select()

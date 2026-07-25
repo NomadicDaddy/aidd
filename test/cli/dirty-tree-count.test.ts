@@ -44,7 +44,7 @@ describe('gitDirtyFileCount dirty-tree gate exclusion', () => {
 		await writeFile(join(projectDir, '.aidd', 'iterations', '001.json'), '{}\n');
 		await writeFile(
 			join(projectDir, '.aidd', 'features', 'sample', 'feature.json'),
-			'{"id":"sample"}\n'
+			'{"id":"sample"}\n',
 		);
 
 		// The gate ignores aidd-owned metadata entirely.

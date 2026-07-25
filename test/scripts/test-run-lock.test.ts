@@ -41,7 +41,7 @@ describe('test run lock', () => {
 		try {
 			await writeFile(
 				testRunLockPath(root),
-				JSON.stringify({ pid: await deadPid(), rootDir: root, startedAt: Date.now() })
+				JSON.stringify({ pid: await deadPid(), rootDir: root, startedAt: Date.now() }),
 			);
 			expect(readActiveTestRun(root)).toBeUndefined();
 			const lock = acquireTestRunLock(root);

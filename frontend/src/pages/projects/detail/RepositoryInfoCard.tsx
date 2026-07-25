@@ -136,7 +136,7 @@ export function RepositoryInfoCard({ info }: { info: RepositoryInfo }) {
 					{logo.art}
 				</pre>
 				<div className="text-center">
-					<p className="text-foreground text-sm font-semibold">
+					<p className="text-sm font-semibold text-foreground">
 						{info.dominantLanguage ?? 'Repository'}
 					</p>
 					<p className="text-xs text-neutral-500 dark:text-neutral-400">

@@ -45,7 +45,7 @@ export function ProjectIngestLane() {
 	}, [candidates.data]);
 
 	const importableCount = (candidates.data?.candidates ?? []).filter(
-		(candidate) => candidate.canImport
+		(candidate) => candidate.canImport,
 	).length;
 
 	function toggleCandidate(id: string, checked: boolean): void {
@@ -169,7 +169,7 @@ export function ProjectIngestLane() {
 										/>
 										<div className="min-w-0 flex-1 space-y-1">
 											<div className="flex flex-wrap items-center gap-2">
-												<span className="text-foreground font-medium">
+												<span className="font-medium text-foreground">
 													{candidate.name}
 												</span>
 												<span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">

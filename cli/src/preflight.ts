@@ -49,14 +49,14 @@ export async function applyInitialPhaseDetection(plan: RunPlan): Promise<void> {
 	plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
 		fragment.kind === 'phase'
 			? { id: detected, kind: 'phase', path: `prompts/${detected}.md` }
-			: fragment
+			: fragment,
 	);
 }
 
 export async function handleStopSignal(
 	args: ParsedArgs,
 	resolvedProjectDir?: string,
-	resolvedStopFile?: string
+	resolvedStopFile?: string,
 ): Promise<boolean> {
 	if (!args.stopSignal) return false;
 	const projectDir = resolvedProjectDir ?? args.projectDir;

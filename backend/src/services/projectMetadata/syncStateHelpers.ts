@@ -54,7 +54,7 @@ function statusFromLocalRun(run: ProjectLocalRunDto): string {
 function errorMessageForStatus(
 	status: string,
 	exitCode: null | number,
-	summary: null | string
+	summary: null | string,
 ): null | string {
 	const normalized = status.toLowerCase();
 	if (
@@ -116,7 +116,7 @@ function localIterationActivity(iteration: ProjectLocalIterationDto): LatestRun 
 		errorMessage: errorMessageForStatus(
 			iteration.status,
 			iteration.exitCode,
-			iteration.summary
+			iteration.summary,
 		),
 		exitCode: iteration.exitCode,
 		model: null,
@@ -130,7 +130,7 @@ function localIterationActivity(iteration: ProjectLocalIterationDto): LatestRun 
 
 function latestFileBackedActivity(
 	localRuns: ProjectLocalRunDto[],
-	localIterations: ProjectLocalIterationDto[]
+	localIterations: ProjectLocalIterationDto[],
 ): LatestRun | undefined {
 	const activities = [
 		...localRuns.map((run) => localRunActivity(run)),
@@ -198,7 +198,7 @@ function syncStateFromLatestRun(latestRun: LatestRun | undefined): ProjectSyncSt
 
 export function syncStateFromLocalData(
 	localRuns: ProjectLocalRunDto[],
-	localIterations: ProjectLocalIterationDto[]
+	localIterations: ProjectLocalIterationDto[],
 ): ProjectSyncStateDto {
 	return syncStateFromLatestRun(latestFileBackedActivity(localRuns, localIterations));
 }

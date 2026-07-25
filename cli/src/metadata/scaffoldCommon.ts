@@ -1,11 +1,11 @@
-import { cp, mkdir, readFile, readdir } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { pathExists } from './scaffoldFs.ts';
 
 const COPY_RETRY_ATTEMPTS = 5;
 const COPY_RETRY_BASE_DELAY_MS = 25;
-const RETRYABLE_COPY_CODES = new Set(['EBUSY', 'EPERM', 'EACCES']);
+const RETRYABLE_COPY_CODES = new Set(['EACCES', 'EBUSY', 'EPERM']);
 
 export async function copyCommonModules(rootDir: string, aiddDir: string): Promise<void> {
 	const source = join(rootDir, 'prompts', '_common');

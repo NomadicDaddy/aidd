@@ -14,7 +14,7 @@ export function formatAiddRunProvenance(provenance: AiddRunProvenanceLike): stri
 			? 'working tree not captured'
 			: provenance.aiddDirty
 				? 'dirty'
-				: 'clean'
+				: 'clean',
 	);
 	return parts.join(' · ');
 }

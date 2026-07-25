@@ -36,7 +36,7 @@ describe('handleRateLimit — wall-clock deadline', () => {
 			[],
 			new AbortController(),
 			1,
-			runStartedAtMs
+			runStartedAtMs,
 		);
 		expect(result.backoffExceedsDeadline).toBe(true);
 		expect(result.stopRequested).toBe(false);
@@ -61,7 +61,7 @@ describe('handleRateLimit — wall-clock deadline', () => {
 			events,
 			new AbortController(),
 			1,
-			Date.now()
+			Date.now(),
 		);
 		expect(result.backoffExceedsDeadline).toBe(false);
 		expect(result.stopRequested).toBe(false);

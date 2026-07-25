@@ -13,7 +13,7 @@
  * pages route through `frontend/src/App.tsx`. The Spernakit baseline check in the
  * audit framework therefore cannot run here; this script is the aidd equivalent.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { cwd, exit } from 'node:process';
 
@@ -60,7 +60,7 @@ function listPageFiles(dir: string): string[] {
 function extractRouteFactoryExports(source: string): string[] {
 	const names: string[] = [];
 	for (const match of source.matchAll(
-		/export\s+function\s+(create[A-Z][A-Za-z0-9_]*Routes)\b/g
+		/export\s+function\s+(create[A-Z][A-Za-z0-9_]*Routes)\b/g,
 	)) {
 		names.push(match[1]!);
 	}
@@ -107,7 +107,7 @@ function checkBackendRoutes(): string[] {
 			if (!registered.has(factory)) {
 				errors.push(
 					`  Route factory "${factory}" exported from ${relFromRoot(routeFile)} ` +
-						`but not invoked via .use() in backend/src/server.ts`
+						`but not invoked via .use() in backend/src/server.ts`,
 				);
 			}
 		}
@@ -122,13 +122,13 @@ function extractAppPageImports(source: string): Set<string> {
 		components.add(match[1]!);
 	}
 	for (const match of source.matchAll(
-		/import\s*\{([^}]+)\}\s*from\s*['"][^'"]*\/\w+Page\.tsx?['"]/g
+		/import\s*\{([^}]+)\}\s*from\s*['"][^'"]*\/\w+Page\.tsx?['"]/g,
 	)) {
 		const names = match[1]!.split(',').map((s) =>
 			s
 				.trim()
 				.split(/\s+as\s+/)[0]!
-				.trim()
+				.trim(),
 		);
 		for (const name of names) {
 			if (name.endsWith('Page')) components.add(name);
@@ -168,7 +168,7 @@ function checkFrontendPages(): string[] {
 		if (!imported.has(baseName)) {
 			errors.push(
 				`  Page "${baseName}" exists at ${rel} ` +
-					`but is not imported in frontend/src/App.tsx`
+					`but is not imported in frontend/src/App.tsx`,
 			);
 		}
 	}

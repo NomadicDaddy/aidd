@@ -2,9 +2,9 @@ import type { ModeContext, SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import {
+	dependenciesAreSatisfied,
 	type Feature,
 	type FeatureQuery,
-	dependenciesAreSatisfied,
 	isAuditFinding,
 } from 'aidd-shared/metadata/features';
 import {
@@ -95,7 +95,7 @@ function isMissingRoadmapError(error: unknown): boolean {
 export async function roadmapScopedQuery(
 	context: ModeContext,
 	query: FeatureQuery,
-	allFeatures: Feature[]
+	allFeatures: Feature[],
 ): Promise<RoadmapScopedQuery> {
 	const roadmap = await readOrCreateRoadmap(context, allFeatures);
 	const gate = evaluateRoadmapCodingGate(roadmap, allFeatures);
@@ -180,11 +180,11 @@ export function roadmapErrorDetail(error: unknown): {
 export function featureTargetBlockedByRoadmap(
 	target: string | undefined,
 	allFeatures: Feature[],
-	gate: null | RoadmapCodingGate
+	gate: null | RoadmapCodingGate,
 ): SelectedWork | undefined {
 	if (!target || !gate || gate.blocked || gate.activeMilestone === null) return undefined;
 	const feature = allFeatures.find(
-		(candidate) => candidate.id === target || candidate.directory === target
+		(candidate) => candidate.id === target || candidate.directory === target,
 	);
 	if (!feature) return undefined;
 	const featureDirectory = feature.directory ?? feature.id;
@@ -203,7 +203,7 @@ export function featureTargetBlockedByRoadmap(
 
 export function milestoneTargetBlockedByRoadmap(
 	plan: RunPlan,
-	gate: null | RoadmapCodingGate
+	gate: null | RoadmapCodingGate,
 ): SelectedWork | undefined {
 	if (!plan.scope.milestone || !gate || gate.blocked || gate.activeMilestone === null) {
 		return undefined;
@@ -225,17 +225,17 @@ export function milestoneTargetBlockedByRoadmap(
 export function featureWorkBreakdown(
 	features: Feature[],
 	allFeatures: Feature[],
-	includeAudit: boolean
+	includeAudit: boolean,
 ): FeatureWorkBreakdown {
 	const remainingFeatures = features.filter((feature) => feature.passes !== true);
 	const pendingApproval = remainingFeatures.filter(
-		(feature) => feature.status === 'waiting_approval'
+		(feature) => feature.status === 'waiting_approval',
 	);
 	const otherwiseEligible = remainingFeatures
 		.filter((feature) => feature.status !== 'waiting_approval')
 		.filter((feature) => includeAudit || !isAuditFinding(feature));
 	const dependencyBlocked = otherwiseEligible.filter(
-		(feature) => !dependenciesAreSatisfied(feature, allFeatures)
+		(feature) => !dependenciesAreSatisfied(feature, allFeatures),
 	);
 	return {
 		dependencyBlocked: dependencyBlocked.length,

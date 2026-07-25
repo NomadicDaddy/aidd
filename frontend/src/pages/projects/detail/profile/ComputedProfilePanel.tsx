@@ -49,9 +49,9 @@ export function ComputedProfilePanel({
 		<div className="flex flex-col gap-4 lg:sticky lg:top-4">
 			<Card variant="panel">
 				<div className="mb-3 flex items-center justify-between gap-2">
-					<h2 className="text-foreground text-sm font-semibold">Computed posture</h2>
+					<h2 className="text-sm font-semibold text-foreground">Computed posture</h2>
 					{isPreviewing ? (
-						<span className="text-muted-foreground flex items-center gap-1 text-xs">
+						<span className="flex items-center gap-1 text-xs text-muted-foreground">
 							<Loader2 className="h-3 w-3 animate-spin" />
 							Recalculating…
 						</span>
@@ -67,12 +67,12 @@ export function ComputedProfilePanel({
 					<Badge tone={posture.tone}>{posture.label}</Badge>
 					<Badge tone={source === 'explicit' ? 'teal' : 'neutral'}>saved: {source}</Badge>
 				</div>
-				<p className="text-muted-foreground mt-2 text-xs">{posture.description}</p>
+				<p className="mt-2 text-xs text-muted-foreground">{posture.description}</p>
 				{posture.reasons.length > 0 && (
 					<ul className="mt-2 space-y-1">
 						{posture.reasons.map((reason) => (
 							<li
-								className="text-muted-foreground flex items-start gap-1.5 text-xs"
+								className="flex items-start gap-1.5 text-xs text-muted-foreground"
 								key={reason}>
 								<span className="text-red-500">⊕</span>
 								{reason}
@@ -84,9 +84,9 @@ export function ComputedProfilePanel({
 
 			<Card variant="panel">
 				<div className="mb-3 flex items-center justify-between gap-2">
-					<h2 className="text-foreground text-sm font-semibold">Applicable audits</h2>
+					<h2 className="text-sm font-semibold text-foreground">Applicable audits</h2>
 					{audits.length > 0 && (
-						<span className="text-muted-foreground text-xs tabular-nums">
+						<span className="text-xs text-muted-foreground tabular-nums">
 							{applicable.length}/{audits.length} apply · {required.length} required
 						</span>
 					)}
@@ -96,7 +96,7 @@ export function ComputedProfilePanel({
 						Could not compute audit applicability.
 					</p>
 				) : audits.length === 0 ? (
-					<p className="text-muted-foreground text-sm">
+					<p className="text-sm text-muted-foreground">
 						{isPreviewing ? 'Computing…' : 'No audits found for this project.'}
 					</p>
 				) : (
@@ -108,8 +108,8 @@ export function ComputedProfilePanel({
 								<span
 									className={
 										audit.applies
-											? 'text-foreground text-sm'
-											: 'text-muted-foreground text-sm line-through'
+											? 'text-sm text-foreground'
+											: 'text-sm text-muted-foreground line-through'
 									}>
 									{audit.name}
 								</span>
@@ -119,7 +119,7 @@ export function ComputedProfilePanel({
 					</div>
 				)}
 				{suppressed.length > 0 && !isPreviewError && (
-					<p className="text-muted-foreground mt-2 text-xs">
+					<p className="mt-2 text-xs text-muted-foreground">
 						{suppressed.length} audit{suppressed.length === 1 ? '' : 's'} excluded or
 						disabled under this profile.
 					</p>

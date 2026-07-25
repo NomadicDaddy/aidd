@@ -22,20 +22,20 @@ export function Metric({
 	return (
 		<Card className="flex items-center justify-between overflow-hidden" variant="panel">
 			<div className="min-w-0">
-				<div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+				<div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 					{label}
 				</div>
 				{loading ? (
 					<div
 						aria-busy="true"
 						aria-label={`Loading ${label}`}
-						className="bg-muted mt-1.5 h-8 w-16 animate-pulse rounded-lg"
+						className="mt-1.5 h-8 w-16 animate-pulse rounded-lg bg-muted"
 					/>
 				) : (
 					<div
 						className={cn(
-							'font-display mt-1.5 truncate text-2xl font-semibold tabular-nums',
-							toneText[tone]
+							'mt-1.5 truncate font-display text-2xl font-semibold tabular-nums',
+							toneText[tone],
 						)}>
 						{value}
 					</div>
@@ -43,18 +43,18 @@ export function Metric({
 				{loading ? (
 					<div
 						aria-hidden="true"
-						className="bg-muted/80 mt-1.5 h-3 w-24 animate-pulse rounded-lg"
+						className="mt-1.5 h-3 w-24 animate-pulse rounded-lg bg-muted/80"
 					/>
 				) : (
-					detail && <div className="text-muted-foreground mt-1.5 text-xs">{detail}</div>
+					detail && <div className="mt-1.5 text-xs text-muted-foreground">{detail}</div>
 				)}
 			</div>
 			{icon && (
 				<div
 					aria-hidden="true"
 					className={cn(
-						'border-border bg-muted/60 rounded-xl border p-2.5 transition-[border-color,background-color] duration-200',
-						toneText[tone]
+						'rounded-xl border border-border bg-muted/60 p-2.5 transition-[border-color,background-color] duration-200',
+						toneText[tone],
 					)}>
 					{icon}
 				</div>

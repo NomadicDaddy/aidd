@@ -70,7 +70,7 @@ function printRoadmapArray(array: unknown[], depth: number, column: number): str
 	const childIndent = '\t'.repeat(depth + 1);
 	const lines = array.map(
 		(item) =>
-			`${childIndent}${printRoadmapValue(item, depth + 1, (depth + 1) * ROADMAP_TAB_WIDTH)}`
+			`${childIndent}${printRoadmapValue(item, depth + 1, (depth + 1) * ROADMAP_TAB_WIDTH)}`,
 	);
 	return `[\n${lines.join(',\n')}\n${'\t'.repeat(depth)}]`;
 }
@@ -126,7 +126,7 @@ export function resolveMilestone(roadmap: Roadmap, milestone: string): Milestone
 
 export function evaluateRoadmapCodingGate(
 	roadmap: Roadmap,
-	features: Feature[]
+	features: Feature[],
 ): RoadmapCodingGate {
 	const milestones = orderedMilestoneNames(roadmap);
 	const milestoneSet = new Set(milestones);
@@ -147,7 +147,7 @@ export function evaluateRoadmapCodingGate(
 	}
 
 	const staleRoadmapFeatureDirectories = Object.keys(roadmap.features).filter(
-		(featureDirectory) => !featureDirectorySet.has(featureDirectory)
+		(featureDirectory) => !featureDirectorySet.has(featureDirectory),
 	);
 	const blockReason =
 		unmappedFeatureDirectories.length > 0
@@ -162,7 +162,7 @@ export function evaluateRoadmapCodingGate(
 			? []
 			: featureDirectories.filter(
 					(featureDirectory) =>
-						roadmap.features[featureDirectory]?.milestone === activeMilestone
+						roadmap.features[featureDirectory]?.milestone === activeMilestone,
 				);
 
 	return {
@@ -180,11 +180,11 @@ export function evaluateRoadmapCodingGate(
 function firstIncompleteMilestone(
 	roadmap: Roadmap,
 	milestones: string[],
-	features: Feature[]
+	features: Feature[],
 ): null | string {
 	for (const milestone of milestones) {
 		const milestoneFeatures = features.filter(
-			(feature) => roadmap.features[feature.directory ?? feature.id]?.milestone === milestone
+			(feature) => roadmap.features[feature.directory ?? feature.id]?.milestone === milestone,
 		);
 		if (milestoneFeatures.some((feature) => feature.passes !== true)) return milestone;
 	}
@@ -229,7 +229,7 @@ export function orderedMilestoneNames(roadmap: Roadmap): string[] {
 export function selectAssignmentMilestone(
 	roadmap: Roadmap,
 	features: Feature[],
-	featureDirectory?: string
+	featureDirectory?: string,
 ): AssignmentMilestoneSelection {
 	const ordered = orderedMilestoneNames(roadmap);
 	const lifecycle = roadmap.lifecycle ?? 'active';
@@ -251,7 +251,7 @@ export function selectAssignmentMilestone(
 	}
 
 	const lastIsEmpty = !features.some(
-		(feature) => roadmap.features[feature.directory ?? feature.id]?.milestone === lastName
+		(feature) => roadmap.features[feature.directory ?? feature.id]?.milestone === lastName,
 	);
 	const lastBeyondActive = active !== null && ordered.indexOf(lastName) > ordered.indexOf(active);
 	if (lastIsEmpty || lastBeyondActive) {
@@ -264,7 +264,7 @@ export function selectAssignmentMilestone(
 	}
 	const maxPriority = Math.max(
 		0,
-		...Object.values(roadmap.milestones).map((entry) => entry.priority ?? 0)
+		...Object.values(roadmap.milestones).map((entry) => entry.priority ?? 0),
 	);
 	return {
 		createdMilestone: { description: AUTO_MILESTONE_DESCRIPTION, priority: maxPriority + 1 },

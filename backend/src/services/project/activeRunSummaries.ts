@@ -1,12 +1,12 @@
 import type { ProjectActiveRunSummaryDto, ProjectsListResponseDto } from '../../types.ts';
 
 export type ActiveRunSummaryProvider = (
-	projectPaths: readonly string[]
+	projectPaths: readonly string[],
 ) => Promise<ReadonlyMap<string, ProjectActiveRunSummaryDto>>;
 
 export async function applyActiveRunSummaries(
 	response: ProjectsListResponseDto,
-	provider: ActiveRunSummaryProvider | null
+	provider: ActiveRunSummaryProvider | null,
 ): Promise<void> {
 	const activeRuns = provider
 		? await provider(response.projects.map((project) => project.path))

@@ -36,7 +36,7 @@ export function parseGithubSource(input: string): { name: string } | null {
 export function buildSpec(
 	kind: SpecKind,
 	text: string,
-	pathValue: string
+	pathValue: string,
 ): null | ProjectCreateSpecInput {
 	if (kind === 'text') {
 		const trimmed = text.trim();

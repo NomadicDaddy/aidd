@@ -31,10 +31,10 @@ async function probeOne(input: ProjectPortInput): Promise<[string, PortStatusEnt
 
 async function discoverProjectPorts(config: ResolvedWebConfig): Promise<ProjectPortInput[]> {
 	const isIgnoredDirectory = createIgnoredDirectoryMatcher(
-		config.ignoredFolders.length > 0 ? config.ignoredFolders : defaultIgnoredFolders
+		config.ignoredFolders.length > 0 ? config.ignoredFolders : defaultIgnoredFolders,
 	);
 	const scans = await Promise.all(
-		config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory))
+		config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory)),
 	);
 	const discovered = new Map<string, { path: string; root: string }>();
 	for (const scan of scans) {
@@ -58,7 +58,7 @@ async function discoverProjectPorts(config: ResolvedWebConfig): Promise<ProjectP
 				frontendPort: ports.frontendPort,
 				id: encodeProjectId(path),
 			};
-		})
+		}),
 	);
 	return inputs.filter((input): input is ProjectPortInput => input !== null);
 }

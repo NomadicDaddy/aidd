@@ -5,8 +5,8 @@ import { type AiCallSurface } from '../lib/aiCallLog.ts';
 import { assertSafeAgentBaseUrl } from '../security/ssrfGuard.ts';
 import {
 	OpenAICompatibleAgentClient,
-	providerDefaults,
 	type OpenAICompatibleClientConfig,
+	providerDefaults,
 } from './client.ts';
 
 // ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ export function directAiSurfaceToCallSurface(surface: DirectAiSurface): AiCallSu
  */
 export function isDirectAiSurfaceEnabled(
 	directAi: ResolvedConfig['directAi'],
-	surface: DirectAiSurface
+	surface: DirectAiSurface,
 ): boolean {
 	return directAi?.enabled === true && directAi.surfaces[surface] === true;
 }
@@ -87,7 +87,7 @@ function cleanString(value: string | undefined): string | undefined {
 }
 
 function knownProviderDefaults(
-	provider: string
+	provider: string,
 ): (typeof providerDefaults)[keyof typeof providerDefaults] | undefined {
 	if (provider === 'zhipu') return providerDefaults.zhipu;
 	if (provider === 'xai') return providerDefaults.xai;
@@ -105,7 +105,7 @@ function knownProviderDefaults(
  */
 export function resolveDirectAiCall(
 	config: ResolvedConfig,
-	request: DirectAiResolutionRequest
+	request: DirectAiResolutionRequest,
 ): DirectAiResolution {
 	const directAi = config.directAi;
 	if (!directAi?.enabled) {
@@ -123,7 +123,7 @@ export function resolveDirectAiCall(
 
 	if (!baseUrl) {
 		throw new DirectAiConfigError(
-			`Direct AI provider "${provider}" requires a baseUrl in directAi.baseUrl or providers.${provider}.baseUrl.`
+			`Direct AI provider "${provider}" requires a baseUrl in directAi.baseUrl or providers.${provider}.baseUrl.`,
 		);
 	}
 	// Call-time SSRF guard: validate the resolved baseUrl at resolution time so a baseUrl
@@ -132,17 +132,17 @@ export function resolveDirectAiCall(
 	assertSafeAgentBaseUrl(baseUrl, `Direct AI provider "${provider}"`);
 	if (!defaults && !configuredModel) {
 		throw new DirectAiConfigError(
-			`Direct AI provider "${provider}" requires a model in directAi.model or providers.${provider}.model.`
+			`Direct AI provider "${provider}" requires a model in directAi.model or providers.${provider}.model.`,
 		);
 	}
 	if (!model) {
 		throw new DirectAiConfigError(
-			`Direct AI provider "${provider}" requires a model in directAi.model or providers.${provider}.model.`
+			`Direct AI provider "${provider}" requires a model in directAi.model or providers.${provider}.model.`,
 		);
 	}
 	if (defaults?.apiKeyRequired === true && !apiKey) {
 		throw new DirectAiConfigError(
-			`Direct AI provider "${provider}" requires an API key in providers.${provider}.apiKey.`
+			`Direct AI provider "${provider}" requires an API key in providers.${provider}.apiKey.`,
 		);
 	}
 
@@ -177,7 +177,7 @@ export interface DirectAiReasoningEffortInputs {
 }
 
 export function resolveDirectAiReasoningEffort(
-	inputs: DirectAiReasoningEffortInputs
+	inputs: DirectAiReasoningEffortInputs,
 ): PersistedReasoningEffortValue {
 	return (
 		inputs.requestEffort ??
@@ -205,7 +205,7 @@ export interface DirectAiTextRequest {
  */
 export async function completeDirectAiText(
 	resolution: DirectAiResolution,
-	request: DirectAiTextRequest
+	request: DirectAiTextRequest,
 ): Promise<string> {
 	const client = new OpenAICompatibleAgentClient(resolution.config);
 	const controller = new AbortController();
@@ -217,13 +217,13 @@ export async function completeDirectAiText(
 				prompt: request.prompt,
 				reasoningEffort: resolution.reasoningEffort,
 			},
-			controller.signal
+			controller.signal,
 		);
 		return response.text.trim();
 	} catch (err) {
 		if (controller.signal.aborted) {
 			throw new DirectAiTimeoutError(
-				`Direct AI request timed out after ${resolution.timeoutSeconds} seconds`
+				`Direct AI request timed out after ${resolution.timeoutSeconds} seconds`,
 			);
 		}
 		throw err;

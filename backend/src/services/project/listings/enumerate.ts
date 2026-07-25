@@ -10,8 +10,8 @@ import type {
 	ProjectImportCandidateDto,
 	ProjectImportCandidatesResponseDto,
 	ProjectNamesResponseDto,
-	ProjectSummaryDto,
 	ProjectsListResponseDto,
+	ProjectSummaryDto,
 } from '../../../types.ts';
 import type { ProjectListingCacheValue } from '../metadataCache.ts';
 
@@ -33,9 +33,9 @@ import {
 import {
 	discoverProjects,
 	healthyPriorityHealth,
+	type ListingsContext,
 	mapSettledWithConcurrency,
 	PROJECT_LISTING_COMPUTE_CONCURRENCY,
-	type ListingsContext,
 	type ProjectListingWithPriority,
 } from './shared.ts';
 
@@ -48,7 +48,7 @@ export async function listProjectListings(ctx: ListingsContext): Promise<{
 	ctx.listingCache?.retainOnly(discoveredProjects.map((p) => p.path));
 	const computeSummary = async (
 		projectDir: string,
-		root: string
+		root: string,
 	): Promise<ProjectListingCacheValue> => {
 		const store = new FileAiddStore(projectDir);
 		const [features, phase, isSpernakitTemplate] = await Promise.all([
@@ -117,13 +117,13 @@ export async function listProjectListings(ctx: ListingsContext): Promise<{
 						{
 							containingRoot: root,
 							spernakitFleetManifest: ctx.config.spernakitFleetManifest,
-						}
+						},
 					)
-				: computeSummary(projectDir, root)
+				: computeSummary(projectDir, root),
 	);
 	const projects = results
 		.filter(
-			(r): r is PromiseFulfilledResult<ProjectListingCacheValue> => r.status === 'fulfilled'
+			(r): r is PromiseFulfilledResult<ProjectListingCacheValue> => r.status === 'fulfilled',
 		)
 		.map((r) => {
 			const value = r.value;
@@ -172,17 +172,17 @@ export async function listProjectNames(ctx: ListingsContext): Promise<ProjectNam
 }
 
 export async function listImportCandidates(
-	ctx: ListingsContext
+	ctx: ListingsContext,
 ): Promise<ProjectImportCandidatesResponseDto> {
 	const isIgnoredDirectory = createIgnoredDirectoryMatcher(
-		ctx.config.ignoredFolders.length > 0 ? ctx.config.ignoredFolders : defaultIgnoredFolders
+		ctx.config.ignoredFolders.length > 0 ? ctx.config.ignoredFolders : defaultIgnoredFolders,
 	);
 	const existingProjects = await listProjects(ctx);
 	const existingProjectPaths = new Set(existingProjects.projects.map((project) => project.path));
 	const scans = await Promise.all(
 		ctx.config.allowedRoots.map((root) =>
-			scanImportCandidates(root, 2, isIgnoredDirectory, existingProjectPaths)
-		)
+			scanImportCandidates(root, 2, isIgnoredDirectory, existingProjectPaths),
+		),
 	);
 	const skippedRoots: ProjectDiscoverySkippedRootDto[] = [...existingProjects.skippedRoots];
 	const candidates = new Map<string, ProjectImportCandidateDto>();
@@ -195,7 +195,7 @@ export async function listImportCandidates(
 	}
 	return {
 		candidates: [...candidates.values()].sort((left, right) =>
-			left.path.localeCompare(right.path)
+			left.path.localeCompare(right.path),
 		),
 		skippedRoots: dedupeSkippedRoots(skippedRoots),
 	};

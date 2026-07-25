@@ -36,7 +36,7 @@ export interface CompletionEvaluation {
  */
 export async function evaluateFeatureCompletion(
 	store: AiddStore,
-	result: AgentRunResult
+	result: AgentRunResult,
 ): Promise<CompletionEvaluation> {
 	const selectedFeatureId =
 		result.selectedWork?.kind === 'feature' ? result.selectedWork.id : undefined;
@@ -118,7 +118,7 @@ export async function evaluateFeatureCompletion(
 				store,
 				selectedFeatureId,
 				featureStatusAtSelection(result.selectedWork),
-				trailingAgentExplanation(result.events)
+				trailingAgentExplanation(result.events),
 			),
 		};
 	}

@@ -78,10 +78,10 @@ function registry(): DistributedMaterialsRegistry {
 }
 
 async function writeStandaloneFixture(
-	root: string
+	root: string,
 ): Promise<{ catalogPaths: string[]; value: DistributedMaterialsRegistry }> {
 	const catalogPaths = CORE_CATALOG_DIRS.map((directory) =>
-		directory === 'audits' ? 'audits/example.md' : `${directory}/example.txt`
+		directory === 'audits' ? 'audits/example.md' : `${directory}/example.txt`,
 	);
 	const value = registry();
 	value.classifications.firstParty = [
@@ -102,7 +102,7 @@ async function writeStandaloneFixture(
 	await mkdir(join(root, 'licenses'), { recursive: true });
 	await writeFile(
 		join(root, 'licenses', 'distributed-materials.json'),
-		`${JSON.stringify(value, null, '\t')}\n`
+		`${JSON.stringify(value, null, '\t')}\n`,
 	);
 	return { catalogPaths, value };
 }
@@ -110,7 +110,7 @@ async function writeStandaloneFixture(
 async function issuesFor(
 	value: DistributedMaterialsRegistry,
 	distributedPaths = PATHS,
-	existingPaths = PATHS
+	existingPaths = PATHS,
 ): Promise<string[]> {
 	const existing = new Set(existingPaths);
 	return await validateDistributedMaterialsRegistry(value, {
@@ -130,7 +130,7 @@ describe('distributed materials registry', () => {
 		const classifications = value.classifications as Record<string, unknown>;
 		classifications.thirdParty = [{ id: 'broken' }];
 		expect(() => parseDistributedMaterialsRegistry(value)).toThrow(
-			/classifications\.thirdParty\[0\]\.coveredPaths/
+			/classifications\.thirdParty\[0\]\.coveredPaths/,
 		);
 	});
 
@@ -147,7 +147,7 @@ describe('distributed materials registry', () => {
 		const value = registry();
 		delete value.classifications.thirdParty[0]?.sourceRevision;
 		expect(await issuesFor(value)).toContain(
-			'third-party record example-audit must declare sourceRevision or sourceVersion.'
+			'third-party record example-audit must declare sourceRevision or sourceVersion.',
 		);
 	});
 
@@ -180,38 +180,38 @@ describe('distributed materials registry', () => {
 		const value = registry();
 		value.classifications.firstParty.push('audits/example.md');
 		expect(await issuesFor(value)).toContain(
-			'Distributed path has duplicate ownership: audits/example.md'
+			'Distributed path has duplicate ownership: audits/example.md',
 		);
 	});
 
 	test('rejects tracked-surface drift from packaging', async () => {
 		const value = registry();
 		value.trackedSurfaces.catalogRoots = value.trackedSurfaces.catalogRoots.filter(
-			(path) => path !== 'audits'
+			(path) => path !== 'audits',
 		);
 		expect((await issuesFor(value)).join('\n')).toContain(
-			'trackedSurfaces.catalogRoots is missing packaged path: audits'
+			'trackedSurfaces.catalogRoots is missing packaged path: audits',
 		);
 	});
 
 	test('rejects missing required notice files', async () => {
 		const existing = PATHS.filter((path) => path !== 'THIRD-PARTY-NOTICES.md');
 		expect((await issuesFor(registry(), PATHS, existing)).join('\n')).toContain(
-			'Required notice file is missing for example-audit: THIRD-PARTY-NOTICES.md'
+			'Required notice file is missing for example-audit: THIRD-PARTY-NOTICES.md',
 		);
 	});
 
 	test('rejects removed registered paths', async () => {
 		const existing = PATHS.filter((path) => path !== 'audits/example.md');
 		expect(await issuesFor(registry(), PATHS, existing)).toContain(
-			'Registered path is missing: audits/example.md'
+			'Registered path is missing: audits/example.md',
 		);
 	});
 
 	test('rejects newly added unclassified paths', async () => {
 		const paths = [...PATHS, 'audits/new.md'];
 		expect(await issuesFor(registry(), paths, paths)).toContain(
-			'Distributed path is unclassified: audits/new.md'
+			'Distributed path is unclassified: audits/new.md',
 		);
 	});
 
@@ -263,15 +263,15 @@ describe('distributed materials registry', () => {
 			const { value } = await writeStandaloneFixture(root);
 			await rm(join(root, 'skills', 'example.txt'));
 			await expect(copyAssets(root, join(root, 'missing-out'))).rejects.toThrow(
-				'Registered distribution file is missing or not a file: skills/example.txt'
+				'Registered distribution file is missing or not a file: skills/example.txt',
 			);
 			value.classifications.firstParty.push('../outside.txt');
 			await writeFile(
 				join(root, 'licenses', 'distributed-materials.json'),
-				`${JSON.stringify(value, null, '\t')}\n`
+				`${JSON.stringify(value, null, '\t')}\n`,
 			);
 			await expect(copyAssets(root, join(root, 'unsafe-out'))).rejects.toThrow(
-				'Distributed surface path is not repository-relative: ../outside.txt'
+				'Distributed surface path is not repository-relative: ../outside.txt',
 			);
 		} finally {
 			await rm(root, { force: true, recursive: true });

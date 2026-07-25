@@ -12,7 +12,7 @@ import { evaluateRoadmapCodingGate, type Roadmap } from '../roadmap.ts';
 // because it is not part of the feature contract surface.
 export async function evaluateFeatureValidation(
 	features: Feature[],
-	readRoadmap: () => Promise<Roadmap>
+	readRoadmap: () => Promise<Roadmap>,
 ): Promise<FeatureValidationResult> {
 	const issues = features.flatMap((feature) => validateFeatureContract(feature));
 	const collectionResult = validateFeatureCollection(features);

@@ -2,9 +2,9 @@ import type { ChatAgentAction, DirectorChatMessageRecord } from 'aidd-shared';
 import type { AiCallSurface } from 'aidd-shared/lib/aiCallLog';
 
 import {
-	OpenAICompatibleAgentClient,
 	type AgentLoopResponse,
 	type AgentMessage,
+	OpenAICompatibleAgentClient,
 	type OpenAICompatibleClientConfig,
 } from 'aidd-shared/agent/client';
 
@@ -12,8 +12,8 @@ import type { DirectorRecipeSummary, FleetSummary, ProfileRow } from './types.ts
 
 import {
 	buildToolDefinitions,
-	dispatchChatTool,
 	type ChatAgentToolContext,
+	dispatchChatTool,
 } from './chatAgentTools.ts';
 import { maxChatMessageLength, normalizeReasoningEffort } from './helpers.ts';
 
@@ -101,7 +101,7 @@ export class DirectorChatAgent {
 					tools,
 					input.profile,
 					reasoningEffort,
-					turn
+					turn,
 				);
 			} catch (err) {
 				// A provider/abort err after at least one action would otherwise lose the trail of
@@ -157,7 +157,7 @@ export class DirectorChatAgent {
 					call.name,
 					call.arguments,
 					this.toolContext,
-					{ allowFileEdits: input.allowFileEdits, sessionId: input.sessionId }
+					{ allowFileEdits: input.allowFileEdits, sessionId: input.sessionId },
 				);
 				actions.push(action);
 				messages.push({ content: resultText, role: 'tool', toolCallId: call.id });
@@ -176,7 +176,7 @@ export class DirectorChatAgent {
 		tools: ReturnType<typeof buildToolDefinitions>,
 		profile: ProfileRow,
 		reasoningEffort: string,
-		turn: number
+		turn: number,
 	): Promise<AgentLoopResponse> {
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), this.perCallTimeoutMs);
@@ -191,7 +191,7 @@ export class DirectorChatAgent {
 					turn,
 					...(profile.model ? { model: profile.model } : {}),
 				},
-				controller.signal
+				controller.signal,
 			);
 		} finally {
 			clearTimeout(timeout);

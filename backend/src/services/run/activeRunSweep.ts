@@ -10,7 +10,7 @@ import { runs } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import { isPidAlive } from '../appLauncher/shared.ts';
 import { readHeartbeatRecord, type SweptRunInfo } from './activeRunHeartbeatFile.ts';
-import { RECONCILED_EXIT_CODE, NON_TERMINAL_RUN_STATUSES } from './types.ts';
+import { NON_TERMINAL_RUN_STATUSES, RECONCILED_EXIT_CODE } from './types.ts';
 import { reapRunWorktree } from './worktreeReap.ts';
 
 // Periodic in-session sweep that closes the one gap boot reconciliation and the file-driven
@@ -53,7 +53,7 @@ export async function sweepOrphanedRuns(ctx: QueriesContext): Promise<SweptRunIn
 						runId: run.id,
 						stopReason: 'process_exit',
 					}),
-				{ label: 'run.sweepOrphaned.deadPid' }
+				{ label: 'run.sweepOrphaned.deadPid' },
 			);
 		} catch (err) {
 			webLogger.warn({ err, runId: run.id }, 'Failed to reconcile orphaned run');
@@ -73,7 +73,7 @@ export async function sweepOrphanedRuns(ctx: QueriesContext): Promise<SweptRunIn
 		if (reapedLeases > 0) {
 			webLogger.warn(
 				{ count: reapedLeases, runId: run.id },
-				'Reaped feature leases held by dead run'
+				'Reaped feature leases held by dead run',
 			);
 		}
 		if (run.mode === 'audit') ctx.onProjectChanged?.(run.projectPath);
@@ -98,7 +98,7 @@ export async function sweepOrphanedRuns(ctx: QueriesContext): Promise<SweptRunIn
 	if (swept.length > 0) {
 		webLogger.warn(
 			{ count: swept.length },
-			'Swept orphaned runs whose process died before heartbeat to failed'
+			'Swept orphaned runs whose process died before heartbeat to failed',
 		);
 	}
 	return swept;

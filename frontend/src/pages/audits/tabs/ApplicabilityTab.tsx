@@ -47,7 +47,7 @@ export function ApplicabilityTab() {
 			update.mutate(parsed, {
 				onError: (error) =>
 					setEditorError(
-						error instanceof Error ? error.message : 'Failed to save mapping'
+						error instanceof Error ? error.message : 'Failed to save mapping',
 					),
 				onSuccess: () => {
 					toast.success('Audit profile mapping saved');

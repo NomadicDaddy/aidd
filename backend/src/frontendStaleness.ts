@@ -88,11 +88,11 @@ export async function warnIfFrontendStale(rootDir: string): Promise<FrontendStal
 	if (result.status === 'missing') {
 		webLogger.warn(
 			{ distDir: result.distDir },
-			'frontend/dist is missing — the web UI cannot be served until it is built'
+			'frontend/dist is missing — the web UI cannot be served until it is built',
 		);
 		console.warn(
 			'⚠ WARNING: frontend/dist is missing — the web UI cannot be served until you build it:\n' +
-				'    bun run build:frontend'
+				'    bun run build:frontend',
 		);
 	} else if (result.status === 'stale') {
 		webLogger.warn(
@@ -102,13 +102,13 @@ export async function warnIfFrontendStale(rootDir: string): Promise<FrontendStal
 				srcDir: result.srcDir,
 				srcModifiedAt: result.srcModifiedAt.toISOString(),
 			},
-			'served frontend/dist is stale (older than frontend/src) — rebuild with `bun run build:frontend`'
+			'served frontend/dist is stale (older than frontend/src) — rebuild with `bun run build:frontend`',
 		);
 		console.warn(
 			'⚠ WARNING: the served frontend (frontend/dist) is STALE — it is older than frontend/src.\n' +
 				'  The browser UI will NOT reflect recent frontend changes until you rebuild:\n' +
 				'    bun run build:frontend\n' +
-				`  (dist built ${result.distBuiltAt.toISOString()}, newest source change ${result.srcModifiedAt.toISOString()})`
+				`  (dist built ${result.distBuiltAt.toISOString()}, newest source change ${result.srcModifiedAt.toISOString()})`,
 		);
 	}
 	return result;

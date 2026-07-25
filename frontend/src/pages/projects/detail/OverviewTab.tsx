@@ -44,7 +44,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 		<div className="grid gap-4 md:grid-cols-3">
 			<Card>
 				<div className="text-xs text-neutral-500 uppercase">Feature Progress</div>
-				<div className="text-foreground mt-2 text-2xl font-semibold">{pct}%</div>
+				<div className="mt-2 text-2xl font-semibold text-foreground">{pct}%</div>
 				<div className="mt-1 text-xs text-neutral-500">
 					{passing}/{total} passing · {project.featureStats.failing} failing ·{' '}
 					{project.featureStats.waitingApproval} waiting
@@ -155,7 +155,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 		<div className="grid gap-4 md:grid-cols-2">
 			<Card>
 				<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-					<h2 className="text-foreground text-sm font-semibold">Project metadata</h2>
+					<h2 className="text-sm font-semibold text-foreground">Project metadata</h2>
 					<Link
 						className="flex min-w-0 flex-wrap items-center gap-1.5"
 						title={coverage.title}
@@ -228,7 +228,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 			</Card>
 			<Card>
 				<div className="mb-2 flex items-center justify-between gap-2">
-					<h2 className="text-foreground text-sm font-semibold">Roadmap</h2>
+					<h2 className="text-sm font-semibold text-foreground">Roadmap</h2>
 					<Link
 						className="text-xs text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
 						to={projectDetailTabSearch('features')}>
@@ -236,7 +236,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 					</Link>
 				</div>
 				<RoadmapMilestones roadmap={metadata.roadmap} />
-				<h2 className="text-foreground mt-4 mb-2 text-sm font-semibold">aidd activity</h2>
+				<h2 className="mt-4 mb-2 text-sm font-semibold text-foreground">aidd activity</h2>
 				<div className="divide-y divide-neutral-100 dark:divide-neutral-900">
 					<MetadataRow
 						label="aidd state"

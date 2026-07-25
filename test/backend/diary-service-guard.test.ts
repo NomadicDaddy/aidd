@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { ProjectService } from '../../backend/src/services/projectService.ts';
 
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import type { DbCommands } from '../../backend/src/db/commands.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { DiaryService } from '../../backend/src/services/diaryService.ts';

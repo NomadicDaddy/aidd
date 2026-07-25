@@ -23,7 +23,7 @@ interface FinalizeExecutionParams {
 // project worktree. Aborted/invalid decisions short-circuit into the matching TriumvirateRunResult;
 // keeping execution here leaves the orchestrator entrypoint focused on the planning panel.
 export async function finalizeTriumvirateExecution(
-	params: FinalizeExecutionParams
+	params: FinalizeExecutionParams,
 ): Promise<TriumvirateRunResult> {
 	const { executionRole, metadata, metrics, options, overseer, primary, secondary } = params;
 
@@ -58,7 +58,7 @@ export async function finalizeTriumvirateExecution(
 		prompt: buildExecutionPrompt(
 			options.compiledPrompt,
 			decision.finalActions,
-			decision.consistencyIssues ?? []
+			decision.consistencyIssues ?? [],
 		),
 		role: executionRole,
 		stage: 'execution',

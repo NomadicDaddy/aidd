@@ -77,7 +77,7 @@ export interface TerminalSession {
  * @returns The hello frame to send to one attachment.
  */
 export function buildHello(
-	session: TerminalSession
+	session: TerminalSession,
 ): Extract<TerminalServerFrame, { type: 'hello' }> {
 	return {
 		cols: session.cols,

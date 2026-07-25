@@ -38,7 +38,7 @@ function phaseForMode(mode: AiddMode, args: ParsedArgs): string {
 // resolve to `native.md`; a per-name path like `prompts/_cli/ollama.md` does not exist and
 // `readFragment` would swallow the ENOENT and silently contribute no backend prompt.
 function backendFragmentPath(backend: string): string {
-	const nativeBackends = new Set(['native', 'ollama', 'lmstudio']);
+	const nativeBackends = new Set(['lmstudio', 'native', 'ollama']);
 	const fragment = nativeBackends.has(backend) ? 'native' : backend;
 	return `prompts/_cli/${fragment}.md`;
 }
@@ -47,7 +47,7 @@ function promptFragments(
 	mode: AiddMode,
 	phase: string,
 	args: ParsedArgs,
-	backend: string
+	backend: string,
 ): PromptFragmentRef[] {
 	const fragments: PromptFragmentRef[] = [];
 	if (backend && mode !== 'interview')
@@ -69,7 +69,7 @@ function resolveTriumviratePlan(
 	args: ParsedArgs,
 	config: ResolvedConfig,
 	primaryBackend: BackendName,
-	primaryModel: string | undefined
+	primaryModel: string | undefined,
 ): TriumviratePlan | undefined {
 	if (!args.triumvirateMode) return undefined;
 	if (args.directorMode) throw new Error('--triumvirate cannot be combined with --director');
@@ -83,7 +83,7 @@ function resolveTriumviratePlan(
 	const overseerBackend = args.overseerCli ?? config.triumvirate?.overseerCli;
 	if (!secondaryBackend || !overseerBackend) {
 		throw new Error(
-			'--triumvirate requires --secondary-cli and --overseer-cli unless configured under triumvirate'
+			'--triumvirate requires --secondary-cli and --overseer-cli unless configured under triumvirate',
 		);
 	}
 	const executionBackend = args.execCli ?? config.triumvirate?.execCli ?? overseerBackend;

@@ -35,7 +35,7 @@ export function executeStatement(
 	sqlite: Database,
 	sql: string,
 	params: unknown[],
-	method: SqlMethod
+	method: SqlMethod,
 ): StatementResult {
 	const bindings = params as SQLQueryBindings[];
 	const start = performance.now();

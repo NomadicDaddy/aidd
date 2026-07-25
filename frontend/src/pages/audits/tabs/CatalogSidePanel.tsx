@@ -64,7 +64,7 @@ export function CatalogSidePanel({
 			<Card className="space-y-3">
 				<div className="flex items-center justify-between gap-3">
 					<div>
-						<div className="text-foreground font-medium">
+						<div className="font-medium text-foreground">
 							{selectedAudit ?? 'Select an audit'}
 						</div>
 						<div className="text-xs break-all text-neutral-500">{auditPath}</div>

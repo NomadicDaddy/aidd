@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import type { AgentEvent } from 'aidd-shared/backends/types';
 
 import {
-	FlailingDetector,
 	defaultFlailingConfig,
+	FlailingDetector,
 	isFlailingGuardDisabled,
 } from 'aidd-shared/backends/flailing';
 
@@ -53,8 +53,8 @@ describe('FlailingDetector', () => {
 		const signal = lastSignal(
 			detector,
 			Array.from({ length: defaultFlailingConfig.repeatTripThreshold }, () =>
-				bash('curl -s http://localhost:3210')
-			)
+				bash('curl -s http://localhost:3210'),
+			),
 		);
 		expect(signal.kind).toBe('trip');
 		if (signal.kind === 'trip') expect(signal.reason).toBe('repeated_action');
@@ -130,7 +130,7 @@ describe('FlailingDetector', () => {
 		const detector = new FlailingDetector();
 		const signals = Array.from(
 			{ length: defaultFlailingConfig.diagnosticTripThreshold },
-			(_, i) => detector.record(bash(`curl -s http://localhost:${3200 + i}`))
+			(_, i) => detector.record(bash(`curl -s http://localhost:${3200 + i}`)),
 		);
 		const warnIndex = signals.findIndex((s) => s.kind === 'warn');
 		const tripIndex = signals.findIndex((s) => s.kind === 'trip');

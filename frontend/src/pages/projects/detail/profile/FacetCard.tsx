@@ -15,8 +15,8 @@ export function FacetCard({
 	return (
 		<Card>
 			<fieldset>
-				<legend className="text-foreground text-sm font-semibold">{facet.title}</legend>
-				<p className="text-muted-foreground mt-0.5 mb-3 text-xs">{facet.description}</p>
+				<legend className="text-sm font-semibold text-foreground">{facet.title}</legend>
+				<p className="mt-0.5 mb-3 text-xs text-muted-foreground">{facet.description}</p>
 				<div className="grid gap-2">
 					{facet.options.map((opt) => {
 						const selected = opt.value === value;
@@ -26,7 +26,7 @@ export function FacetCard({
 									'flex cursor-pointer items-start gap-3 rounded-md border p-2.5 transition-colors',
 									selected
 										? 'border-teal-400 bg-teal-50/70 dark:border-teal-700 dark:bg-teal-950/30'
-										: 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700'
+										: 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700',
 								)}
 								key={opt.value}>
 								<input
@@ -39,7 +39,7 @@ export function FacetCard({
 								/>
 								<span className="min-w-0">
 									<span className="flex flex-wrap items-center gap-1.5">
-										<span className="text-foreground text-sm font-medium">
+										<span className="text-sm font-medium text-foreground">
 											{opt.label}
 										</span>
 										{opt.hardening && (
@@ -57,7 +57,7 @@ export function FacetCard({
 											</span>
 										)}
 									</span>
-									<span className="text-muted-foreground mt-0.5 block text-xs">
+									<span className="mt-0.5 block text-xs text-muted-foreground">
 										{opt.blurb}
 									</span>
 								</span>

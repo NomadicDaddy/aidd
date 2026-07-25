@@ -106,6 +106,6 @@ export const usePrefsStore = create<PrefsState>()(
 				});
 			},
 		}),
-		{ name: 'aidd-prefs' }
-	)
+		{ name: 'aidd-prefs' },
+	),
 );

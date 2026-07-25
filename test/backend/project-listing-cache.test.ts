@@ -2,8 +2,8 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import {
-	ProjectListingCache,
 	computeProjectFingerprint,
+	ProjectListingCache,
 	type ProjectListingCacheValue,
 } from '../../backend/src/services/project/metadataCache.ts';
 import {
@@ -174,14 +174,14 @@ describe('project listing stack fingerprints', () => {
 			await writeFile(fleetManifest, "'app' = @{ spernakit_version = 'latest' }");
 			await writeFile(
 				join(projectDir, 'package.json'),
-				JSON.stringify({ workspaces: ['frontend'] })
+				JSON.stringify({ workspaces: ['frontend'] }),
 			);
 			await writeFile(join(workspaceDir, 'package.json'), JSON.stringify({ version: 1 }));
 
 			const initial = await computeProjectFingerprint(projectDir, options);
 			await writeFile(
 				join(workspaceDir, 'package.json'),
-				JSON.stringify({ dependencies: { react: '19.0.0' }, version: 2 })
+				JSON.stringify({ dependencies: { react: '19.0.0' }, version: 2 }),
 			);
 			const workspaceChanged = await computeProjectFingerprint(projectDir, options);
 			expect(workspaceChanged).not.toBe(initial);
@@ -299,7 +299,7 @@ describe('ProjectListingCache stale-while-revalidate', () => {
 			// kicks off a background refresh.
 			await writeFile(
 				join(projectDir, 'package.json'),
-				JSON.stringify({ extra: 'xxxxxxxxxxxxxxxx', version: 2 })
+				JSON.stringify({ extra: 'xxxxxxxxxxxxxxxx', version: 2 }),
 			);
 			await Bun.sleep(FINGERPRINT_TTL_MS + 150);
 			state.version = 2;
@@ -335,7 +335,7 @@ describe('ProjectListingCache stale-while-revalidate', () => {
 
 			await writeFile(
 				join(projectDir, 'package.json'),
-				JSON.stringify({ extra: 'yyyyyyyyyyyyyyyy', version: 2 })
+				JSON.stringify({ extra: 'yyyyyyyyyyyyyyyy', version: 2 }),
 			);
 			await Bun.sleep(FINGERPRINT_TTL_MS + 150);
 
@@ -367,11 +367,11 @@ describe('mapSettledWithConcurrency', () => {
 				active -= 1;
 				if (value === 4) throw new Error('skip this project');
 				return `project-${value}`;
-			}
+			},
 		);
 		const fulfilled = settled
 			.filter(
-				(result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled'
+				(result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled',
 			)
 			.map((result) => result.value);
 

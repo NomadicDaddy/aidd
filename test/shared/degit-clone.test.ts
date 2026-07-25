@@ -33,7 +33,7 @@ describe('parseGithubTemplateSource', () => {
 			ref: 'main',
 		});
 		expect(
-			parseGithubTemplateSource('https://github.com/Gothsec/Astro-portfolio#v1.2.3')
+			parseGithubTemplateSource('https://github.com/Gothsec/Astro-portfolio#v1.2.3'),
 		).toEqual({ ...canonical, ref: 'v1.2.3' });
 		expect(parseGithubTemplateSource('Gothsec/Astro-portfolio#feature/nested')).toEqual({
 			...canonical,

@@ -15,11 +15,11 @@ export function normalizeFinding(
 	finding: AuditFindingInput,
 	auditName: string,
 	existing: Feature[],
-	index: number
+	index: number,
 ): NormalizedAuditFinding {
 	const title = stringValue(finding.title) ?? `Audit finding ${index + 1}`;
 	const severity = normalizeSeverity(
-		stringValue(finding.auditSeverity) ?? stringValue(finding.severity)
+		stringValue(finding.auditSeverity) ?? stringValue(finding.severity),
 	);
 	const auditSlug = auditName.toLowerCase().replaceAll('_', '-');
 	const id =
@@ -39,7 +39,7 @@ export function normalizeFinding(
 	const now = new Date().toISOString();
 	const spec = ensureFeedbackLoop(
 		stringValue(finding.spec) ??
-			`Remediate the verified audit finding: ${title}\n\nAffected files:\n${affectedFiles.map((file) => `- ${file}`).join('\n')}`
+			`Remediate the verified audit finding: ${title}\n\nAffected files:\n${affectedFiles.map((file) => `- ${file}`).join('\n')}`,
 	);
 
 	return {

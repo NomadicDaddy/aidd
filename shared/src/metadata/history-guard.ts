@@ -55,7 +55,7 @@ const normalize = (v: string): string => {
  */
 export async function ensureHistoryGuard(
 	projectDir: string,
-	rootDir: string = resolveRootDir(import.meta.url, 3)
+	rootDir: string = resolveRootDir(import.meta.url, 3),
 ): Promise<GuardOutcome> {
 	// Only guard a repository the project OWNS. Without this, a project nested inside an unrelated
 	// repo (a monorepo subdir, or anything under a checked-out parent) would have its parent's hooks

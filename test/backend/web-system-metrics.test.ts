@@ -56,7 +56,7 @@ describe('system metrics routes (stubbed)', () => {
 		} as unknown as WebContext);
 
 		const metricsRes = await app.handle(
-			new Request('http://localhost/api/v1/system/metrics?hours=6&limit=10')
+			new Request('http://localhost/api/v1/system/metrics?hours=6&limit=10'),
 		);
 		expect(metricsRes.status).toBe(200);
 		const metricsBody = (await metricsRes.json()) as { current: { requestCount: number } };
@@ -72,12 +72,12 @@ describe('system metrics routes (stubbed)', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(postRes.status).toBe(204);
 
 		const vitalsRes = await app.handle(
-			new Request('http://localhost/api/v1/system/web-vitals?hours=6')
+			new Request('http://localhost/api/v1/system/web-vitals?hours=6'),
 		);
 		expect(vitalsRes.status).toBe(200);
 	});

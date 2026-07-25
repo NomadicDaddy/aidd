@@ -44,7 +44,7 @@ describe('run file change tooltip model', () => {
 		});
 
 		expect(fileChangeSourceNote('iteration-artifacts')).toBe(
-			'Recovered from iteration artifacts.'
+			'Recovered from iteration artifacts.',
 		);
 		expect(model.truncatedNote).toBe('Showing first 50 paths.');
 	});

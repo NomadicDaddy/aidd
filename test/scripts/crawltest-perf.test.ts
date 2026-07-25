@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { analyzeCrawlReport } from '../../scripts/crawltest-analyze.ts';
 import { normalizeRoute } from '../../scripts/crawltest-config.ts';
-import { DEFAULT_ROUTES, SKIP_PATTERNS, type CrawlReport } from '../../scripts/crawltest-types.ts';
+import { type CrawlReport, DEFAULT_ROUTES, SKIP_PATTERNS } from '../../scripts/crawltest-types.ts';
 
 describe('crawltest spernakit-style coverage helpers', () => {
 	test('normalizes targeted routes', () => {

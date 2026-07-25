@@ -80,7 +80,7 @@ describe('skills routes', () => {
 				body: JSON.stringify({ category: 'general', sourcePath: 'D:/skills/demo' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(previewResponse.status).toBe(200);
 		expect(await previewResponse.json()).toMatchObject({ preview: { id: 'demo' } });
@@ -90,13 +90,13 @@ describe('skills routes', () => {
 				body: JSON.stringify({ replace: true, sourcePath: 'D:/skills/demo' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(importResponse.status).toBe(200);
 		expect(imports).toEqual([{ replace: true, sourcePath: 'D:/skills/demo' }]);
 
 		const deleteResponse = await app.handle(
-			new Request('http://localhost/api/v1/skills/imports/demo', { method: 'DELETE' })
+			new Request('http://localhost/api/v1/skills/imports/demo', { method: 'DELETE' }),
 		);
 		expect(deleteResponse.status).toBe(200);
 		expect(deletions).toEqual([{ id: 'demo', references: [] }]);
@@ -113,7 +113,7 @@ describe('skills routes', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(runResponse.status).toBe(200);
 		expect(await runResponse.json()).toEqual({ session: demoSession });
@@ -148,7 +148,7 @@ describe('skills routes', () => {
 						return demoSession;
 					},
 				},
-			} as unknown as WebContext)
+			} as unknown as WebContext),
 		);
 
 		const response = await app.handle(
@@ -160,7 +160,7 @@ describe('skills routes', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 
 		expect(response.status).toBe(400);
@@ -178,7 +178,7 @@ describe('skills routes', () => {
 						return demoSession;
 					},
 				},
-			} as unknown as WebContext)
+			} as unknown as WebContext),
 		);
 
 		for (const executionIntent of [undefined, 'audit', 'apply']) {
@@ -187,7 +187,7 @@ describe('skills routes', () => {
 					body: JSON.stringify({ executionIntent, projectDir: 'D:/applications/demo' }),
 					headers: { 'content-type': 'application/json' },
 					method: 'POST',
-				})
+				}),
 			);
 			expect(response.status).toBe(400);
 			expect(await response.text()).toContain('executionIntent must be either');
@@ -214,14 +214,14 @@ describe('skills routes', () => {
 						) {
 							throw new HttpError(
 								'Project directory is outside configured application roots',
-								400
+								400,
 							);
 						}
 						launches.push(input);
 						return demoSession;
 					},
 				},
-			} as unknown as WebContext)
+			} as unknown as WebContext),
 		);
 
 		const missingIntent = await app.handle(
@@ -229,7 +229,7 @@ describe('skills routes', () => {
 				body: JSON.stringify({ projectDir: 'D:/applications/aidd' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(missingIntent.status).toBe(400);
 		expect(await missingIntent.json()).toEqual({
@@ -241,7 +241,7 @@ describe('skills routes', () => {
 				body: '{',
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(malformedJson.status).toBe(400);
 		expect(await malformedJson.json()).toEqual({ error: 'Request body must be valid JSON' });
@@ -254,7 +254,7 @@ describe('skills routes', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(unknownSkill.status).toBe(404);
 		expect(await unknownSkill.json()).toEqual({ error: 'Skill not found: missing' });
@@ -267,7 +267,7 @@ describe('skills routes', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(rejectedProject.status).toBe(400);
 		expect(await rejectedProject.json()).toEqual({
@@ -279,7 +279,7 @@ describe('skills routes', () => {
 				body: JSON.stringify({ executionIntent: 1, projectDir: 'D:/applications/aidd' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(invalidIntentType.status).toBe(400);
 		expect(await invalidIntentType.json()).toEqual({ error: 'Request validation failed' });
@@ -300,7 +300,7 @@ describe('skills routes', () => {
 				.use(createSkillsRoutes({ skillService } as unknown as WebContext));
 
 			const missing = await app.handle(
-				new Request('http://localhost/api/v1/skills/missing-skill')
+				new Request('http://localhost/api/v1/skills/missing-skill'),
 			);
 			expect(missing.status).toBe(404);
 			expect(await missing.json()).toEqual({

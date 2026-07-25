@@ -73,12 +73,12 @@ function sortUsageRows<T extends ProjectUsageTotalsDto>(rows: T[]): T[] {
 		(left, right) =>
 			right.totalTokens - left.totalTokens ||
 			right.reportedCostUsd - left.reportedCostUsd ||
-			right.runCount - left.runCount
+			right.runCount - left.runCount,
 	);
 }
 
 export function projectUsageFromLedgerEntries(
-	entries: RawRunLedgerEntry[]
+	entries: RawRunLedgerEntry[],
 ): ProjectUsageSummaryDto {
 	// A crash-fallback line can precede a real final summary for the same modern run id. Last entry
 	// wins for usage accounting; legacy entries without run ids remain individually countable.

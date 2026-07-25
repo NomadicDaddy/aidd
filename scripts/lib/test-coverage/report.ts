@@ -44,7 +44,7 @@ export function coveragePercent(counts: CoverageCounts): number {
 
 function thresholdFailures(
 	metrics: Omit<AreaCoverageReport, 'failures' | 'id' | 'thresholds'>,
-	thresholds: CoverageThresholds
+	thresholds: CoverageThresholds,
 ): string[] {
 	return (['functions', 'lines', 'modules'] as const).flatMap((metric) => {
 		const counts = metrics[metric];
@@ -59,7 +59,7 @@ function thresholdFailures(
 function reportArea(
 	area: CoverageArea,
 	inventory: string[],
-	lcovFiles: Map<string, FileCoverageMetrics>
+	lcovFiles: Map<string, FileCoverageMetrics>,
 ): AreaCoverageReport {
 	const metrics = {
 		functions: { covered: 0, total: 0 },
@@ -86,14 +86,14 @@ function reportArea(
 
 export function buildCoverageReport(
 	inventory: string[],
-	lcovFiles: Map<string, FileCoverageMetrics>
+	lcovFiles: Map<string, FileCoverageMetrics>,
 ): CoverageReport {
 	const areas = COVERAGE_AREAS.map((area) =>
 		reportArea(
 			area,
 			inventory.filter((path) => path.startsWith(area.prefix)),
-			lcovFiles
-		)
+			lcovFiles,
+		),
 	);
 	return {
 		areas,
@@ -124,7 +124,7 @@ export async function createCoverageReport(projectRoot: string): Promise<Coverag
 	const lcov = await readFile(resolve(projectRoot, TEST_COVERAGE_LCOV_PATH), 'utf8');
 	return buildCoverageReport(
 		await collectProductionModules(projectRoot),
-		parseProductionLcov(projectRoot, lcov)
+		parseProductionLcov(projectRoot, lcov),
 	);
 }
 
@@ -137,7 +137,7 @@ export function printCoverageReport(report: CoverageReport): void {
 	console.log('Area       Modules          Lines            Functions');
 	for (const area of report.areas) {
 		console.log(
-			`${area.id.padEnd(10)} ${formatMetric(area.modules).padEnd(16)} ${formatMetric(area.lines).padEnd(16)} ${formatMetric(area.functions)}`
+			`${area.id.padEnd(10)} ${formatMetric(area.modules).padEnd(16)} ${formatMetric(area.lines).padEnd(16)} ${formatMetric(area.functions)}`,
 		);
 		for (const failure of area.failures) console.error(`  [FAIL] ${area.id}: ${failure}`);
 	}

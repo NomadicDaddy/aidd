@@ -5,7 +5,7 @@ import {
 	resolveDirectAiReasoningEffort,
 } from '../../backend/src/services/directAiService.ts';
 
-type WebRuntimeConfig = ResolvedConfig & { web: ResolvedWebConfig };
+type WebRuntimeConfig = { web: ResolvedWebConfig } & ResolvedConfig;
 
 function configWith(options: {
 	enabled: boolean;
@@ -31,7 +31,7 @@ function configWith(options: {
 describe('DirectAiService.resolveClientConfig', () => {
 	test('returns a client config when the surface is enabled and resolvable', () => {
 		const service = new DirectAiService(
-			configWith({ enabled: true, directorChat: true, apiKey: 'secret' })
+			configWith({ enabled: true, directorChat: true, apiKey: 'secret' }),
 		);
 		const config = service.resolveClientConfig('directorChat');
 		expect(config).not.toBeNull();
@@ -41,7 +41,7 @@ describe('DirectAiService.resolveClientConfig', () => {
 
 	test('returns null when the surface is disabled', () => {
 		const service = new DirectAiService(
-			configWith({ enabled: true, directorChat: false, apiKey: 'secret' })
+			configWith({ enabled: true, directorChat: false, apiKey: 'secret' }),
 		);
 		expect(service.resolveClientConfig('directorChat')).toBeNull();
 	});
@@ -55,7 +55,7 @@ describe('DirectAiService.resolveClientConfig', () => {
 describe('DirectAiService.resolveSurfaceMeta', () => {
 	test('returns the resolved provider, model, and reasoning effort', () => {
 		const service = new DirectAiService(
-			configWith({ enabled: true, directorChat: true, apiKey: 'secret' })
+			configWith({ enabled: true, directorChat: true, apiKey: 'secret' }),
 		);
 		expect(service.resolveSurfaceMeta('directorCycle', 'gpt-5.6', 'high')).toEqual({
 			model: 'gpt-5.6',

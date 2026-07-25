@@ -73,7 +73,7 @@ export function SettingsPage() {
 	function setBackendDefault(
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
-		value: null | number | string
+		value: null | number | string,
 	) {
 		setForm((current) => ({
 			...current,
@@ -89,7 +89,7 @@ export function SettingsPage() {
 
 	function setTriumvirateField<K extends keyof TriumvirateSettings>(
 		key: K,
-		value: TriumvirateSettings[K]
+		value: TriumvirateSettings[K],
 	) {
 		setForm((current) => ({
 			...current,
@@ -183,7 +183,7 @@ export function SettingsPage() {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: 'Settings saved, but the restart request failed'
+					: 'Settings saved, but the restart request failed',
 			);
 			setRuntimePending(null);
 		}

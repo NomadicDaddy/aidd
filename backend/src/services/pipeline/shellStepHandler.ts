@@ -14,7 +14,7 @@ export class ShellStepHandler {
 
 	async handle(
 		config: Record<string, RecipeConfigValue>,
-		context: ExecutionContext
+		context: ExecutionContext,
 	): Promise<StepDispatchResult> {
 		const command = configString(config, 'command');
 		if (command === undefined)
@@ -22,7 +22,7 @@ export class ShellStepHandler {
 		return await this.shell.run(
 			command,
 			configString(config, 'cwd') ?? context.projectDir,
-			context.sessionId
+			context.sessionId,
 		);
 	}
 }

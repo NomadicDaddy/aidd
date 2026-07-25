@@ -171,15 +171,15 @@ export function LiveConsole({
 	return (
 		<section className="space-y-2">
 			<div className="flex items-center justify-between">
-				<h2 className="text-foreground text-sm font-semibold">Live Console</h2>
+				<h2 className="text-sm font-semibold text-foreground">Live Console</h2>
 				{badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null}
 			</div>
 			<Card variant="panel">
 				{showPanel && selectedRun ? (
 					<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
 				) : selectedRun?.summary ? (
-					<p className="text-muted-foreground mb-3 text-xs break-words">
-						<span className="text-foreground font-medium">Summary:</span>{' '}
+					<p className="mb-3 text-xs break-words text-muted-foreground">
+						<span className="font-medium text-foreground">Summary:</span>{' '}
 						{selectedRun.summary}
 					</p>
 				) : null}
@@ -255,7 +255,7 @@ export function LiveConsole({
 							aria-label="Run console output"
 							className={cn(
 								'h-[520px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner',
-								wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre'
+								wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre',
 							)}
 							onScroll={handleScroll}
 							ref={scrollRef}>

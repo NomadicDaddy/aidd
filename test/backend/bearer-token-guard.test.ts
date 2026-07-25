@@ -143,7 +143,7 @@ describe('createBearerTokenGuardPlugin (remote requests via app.handle)', () => 
 		const response = await app.handle(
 			new Request('http://tailnet.example/api/v1/ping', {
 				headers: { authorization: `Bearer ${TOKEN}` },
-			})
+			}),
 		);
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ ok: true });
@@ -152,7 +152,7 @@ describe('createBearerTokenGuardPlugin (remote requests via app.handle)', () => 
 	test('rejects a ?token= query on a non-WebSocket /api request', async () => {
 		const app = guardedApp(webConfig({ authToken: TOKEN }));
 		const response = await app.handle(
-			new Request(`http://tailnet.example/api/v1/ping?token=${TOKEN}`)
+			new Request(`http://tailnet.example/api/v1/ping?token=${TOKEN}`),
 		);
 		expect(response.status).toBe(401);
 		expect(await response.json()).toEqual({ error: 'Unauthorized' });
@@ -161,7 +161,7 @@ describe('createBearerTokenGuardPlugin (remote requests via app.handle)', () => 
 	test('accepts a valid ?token= query only on the /api/v1/ws upgrade path', async () => {
 		const app = guardedApp(webConfig({ authToken: TOKEN }));
 		const response = await app.handle(
-			new Request(`http://tailnet.example/api/v1/ws?token=${TOKEN}`)
+			new Request(`http://tailnet.example/api/v1/ws?token=${TOKEN}`),
 		);
 		expect(response.status).toBe(200);
 	});
@@ -169,7 +169,7 @@ describe('createBearerTokenGuardPlugin (remote requests via app.handle)', () => 
 	test('rejects a wrong ?token= query on the /api/v1/ws upgrade path', async () => {
 		const app = guardedApp(webConfig({ authToken: TOKEN }));
 		const response = await app.handle(
-			new Request('http://tailnet.example/api/v1/ws?token=nope')
+			new Request('http://tailnet.example/api/v1/ws?token=nope'),
 		);
 		expect(response.status).toBe(401);
 	});
@@ -179,7 +179,7 @@ describe('createBearerTokenGuardPlugin (remote requests via app.handle)', () => 
 		const response = await app.handle(
 			new Request('http://tailnet.example/api/v1/ping', {
 				headers: { authorization: 'Bearer nope' },
-			})
+			}),
 		);
 		expect(response.status).toBe(401);
 	});
@@ -205,7 +205,7 @@ describe('createBearerTokenGuardPlugin (always mounted, no token configured)', (
 		const response = await app.handle(
 			new Request('http://aidd.local/api/v1/ping', {
 				headers: { 'x-forwarded-for': '100.64.1.2' },
-			})
+			}),
 		);
 		expect(response.status).toBe(401);
 	});
@@ -215,7 +215,7 @@ describe('createBearerTokenGuardPlugin (always mounted, no token configured)', (
 		const response = await app.handle(
 			new Request('http://aidd.local/api/v1/ping', {
 				headers: { 'x-forwarded-for': '100.64.1.2' },
-			})
+			}),
 		);
 		expect(response.status).toBe(401);
 	});
@@ -225,7 +225,7 @@ describe('createBearerTokenGuardPlugin (always mounted, no token configured)', (
 		const response = await app.handle(
 			new Request('http://aidd.local/api/v1/ping', {
 				headers: { 'x-forwarded-for': '100.64.1.2', authorization: `Bearer ${TOKEN}` },
-			})
+			}),
 		);
 		expect(response.status).toBe(200);
 	});

@@ -10,7 +10,7 @@ import { clampLimit, type CursorPage, decodeCursor, encodeCursor } from '../pagi
 import { listCliActiveRuns, listCliActiveRunsForProject } from './cliActiveRuns.ts';
 import { listDirectorCycleRunRecords } from './directorCycleRuns.ts';
 import { dropLedgerPhantomRuns } from './ledgerReconcile.ts';
-import { toWebRunRecord, type QueriesContext } from './queries.ts';
+import { type QueriesContext, toWebRunRecord } from './queries.ts';
 import { annotateStopRequested } from './stopRequestedAnnotation.ts';
 import { NON_TERMINAL_RUN_STATUSES, RECENT_RUN_LOOKBACK_MS } from './types.ts';
 
@@ -38,7 +38,7 @@ function cursorFilter(cursor: string | undefined): SQL | undefined {
 	if (!decoded) return undefined;
 	return or(
 		lt(runs.startedAt, decoded.startedAt),
-		and(eq(runs.startedAt, decoded.startedAt), lt(runs.id, decoded.id))
+		and(eq(runs.startedAt, decoded.startedAt), lt(runs.id, decoded.id)),
 	);
 }
 
@@ -73,7 +73,7 @@ function mergeWebAndCliRuns(webItems: RunRecord[], cliItems: RunRecord[]): RunRe
 export async function listRuns(
 	ctx: QueriesContext,
 	limit = 100,
-	status?: WebRunStatus
+	status?: WebRunStatus,
 ): Promise<RunRecord[]> {
 	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
 	const webRuns = await ctx.db
@@ -84,8 +84,8 @@ export async function listRuns(
 				? eq(runs.status, status)
 				: or(
 						inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
-						gt(runs.startedAt, cutoff)
-					)
+						gt(runs.startedAt, cutoff),
+					),
 		)
 		.orderBy(desc(runs.startedAt));
 	const webItems = webRuns.map((run) => toWebRunRecord(run));
@@ -94,7 +94,7 @@ export async function listRuns(
 	return annotateStopRequested(
 		mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorRuns), cliRuns)
 			.sort((left, right) => right.startedAt - left.startedAt)
-			.slice(0, limit)
+			.slice(0, limit),
 	);
 }
 
@@ -102,7 +102,7 @@ export async function listRunsForProject(
 	ctx: QueriesContext,
 	projectPath: string,
 	limit = 20,
-	status?: WebRunStatus
+	status?: WebRunStatus,
 ): Promise<RunRecord[]> {
 	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
 	const webRuns = await ctx.db
@@ -115,9 +115,9 @@ export async function listRunsForProject(
 					? eq(runs.status, status)
 					: or(
 							inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
-							gt(runs.startedAt, cutoff)
-						)
-			)
+							gt(runs.startedAt, cutoff),
+						),
+			),
 		)
 		.orderBy(desc(runs.startedAt));
 	if (status && status !== 'running') {
@@ -128,7 +128,7 @@ export async function listRunsForProject(
 	return annotateStopRequested(
 		mergeWebAndCliRuns(webItems, cliRuns)
 			.sort((left, right) => right.startedAt - left.startedAt)
-			.slice(0, limit)
+			.slice(0, limit),
 	);
 }
 
@@ -137,14 +137,14 @@ export async function listRunsForProject(
 // returned web row — that keeps the live CLI surface unchanged across "Show more" clicks.
 export async function listRunsPage(
 	ctx: QueriesContext,
-	options: ListRunsPageOptions = {}
+	options: ListRunsPageOptions = {},
 ): Promise<CursorPage<RunRecord>> {
 	const limit = clampLimit(options.limit);
 	const isFirstPage = options.cursor === undefined || options.cursor === '';
 	const where = combineFilters(
 		statusOrRecentFilter(options.status),
 		cursorFilter(options.cursor),
-		topLevelFilter(options.topLevel)
+		topLevelFilter(options.topLevel),
 	);
 	const webRowsRaw = await ctx.db
 		.select()
@@ -163,9 +163,9 @@ export async function listRunsPage(
 	const items = await annotateStopRequested(
 		await dropLedgerPhantomRuns(
 			mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorItems), cliItems).sort(
-				(left, right) => right.startedAt - left.startedAt
-			)
-		)
+				(left, right) => right.startedAt - left.startedAt,
+			),
+		),
 	);
 	const lastWebRow = webPage[webPage.length - 1];
 	const nextCursor =
@@ -178,7 +178,7 @@ export async function listRunsPage(
 export async function listRunsForProjectPage(
 	ctx: QueriesContext,
 	projectPath: string,
-	options: ListRunsPageOptions = {}
+	options: ListRunsPageOptions = {},
 ): Promise<CursorPage<RunRecord>> {
 	const limit = clampLimit(options.limit);
 	const isFirstPage = options.cursor === undefined || options.cursor === '';
@@ -189,7 +189,7 @@ export async function listRunsForProjectPage(
 		projectPathFilter(projectPath),
 		statusOrRecentFilter(options.status),
 		cursorFilter(options.cursor),
-		topLevelFilter(options.topLevel)
+		topLevelFilter(options.topLevel),
 	);
 	const webRowsRaw = await ctx.db
 		.select()
@@ -207,9 +207,9 @@ export async function listRunsForProjectPage(
 	const items = await annotateStopRequested(
 		await dropLedgerPhantomRuns(
 			mergeWebAndCliRuns(webItems, cliItems).sort(
-				(left, right) => right.startedAt - left.startedAt
-			)
-		)
+				(left, right) => right.startedAt - left.startedAt,
+			),
+		),
 	);
 	const lastWebRow = webPage[webPage.length - 1];
 	const nextCursor =
@@ -221,14 +221,14 @@ export async function listRunsForProjectPage(
 
 export async function hasActiveRunForProject(
 	ctx: QueriesContext,
-	projectPath: string
+	projectPath: string,
 ): Promise<boolean> {
 	return (await listRunsForProject(ctx, projectPath, 1, 'running')).length > 0;
 }
 
 export async function latestProjectAuditRun(
 	ctx: QueriesContext,
-	projectPath: string
+	projectPath: string,
 ): Promise<{
 	finishedAt: null | number;
 	runId: string;
@@ -260,14 +260,14 @@ export async function latestProjectAuditRun(
 export async function updateProjectPathReferences(
 	ctx: QueriesContext,
 	sourcePath: string,
-	destinationPath: string
+	destinationPath: string,
 ): Promise<void> {
 	const projectName = basename(destinationPath);
 	// Rename across both tables atomically so a reader never sees runs moved but sessions not.
 	await withSqliteRetry(
 		() =>
 			ctx.commands.updateProjectPathReferences({ destinationPath, projectName, sourcePath }),
-		{ label: 'project.path.update' }
+		{ label: 'project.path.update' },
 	);
 	recordDataMovement({
 		category: 'database',

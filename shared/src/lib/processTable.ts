@@ -109,7 +109,7 @@ const winProcessTableScript =
  */
 export async function readProcessAncestry(
 	pid: number,
-	maxHops: number
+	maxHops: number,
 ): Promise<ProcessTableEntry[]> {
 	const chain: ProcessTableEntry[] = [];
 

@@ -1,7 +1,7 @@
 import type { MaturityDetail, ProjectArtifactRecord } from '../../../api/types.ts';
 
 import { ArtifactRow } from './ArtifactRow.tsx';
-import { buildArtifactInventory, type ArtifactViewerTarget } from './artifactsUtils.ts';
+import { type ArtifactViewerTarget, buildArtifactInventory } from './artifactsUtils.ts';
 import { MaturityArtifactRow } from './MaturityArtifactRow.tsx';
 
 interface ArtifactGroupsProps {
@@ -63,7 +63,7 @@ export function ArtifactGroups({
 									onOpen={onOpen}
 									onToggleSkip={onToggleSkip}
 								/>
-							)
+							),
 						)}
 					</div>
 				</div>

@@ -10,20 +10,20 @@ describe('settings runtime restart redirect helpers', () => {
 		expect(
 			settingsRestartTargetChanged(
 				{ hostname: '127.0.0.1', port: 3210 },
-				{ hostname: '127.0.0.1', port: 4555 }
-			)
+				{ hostname: '127.0.0.1', port: 4555 },
+			),
 		).toBe(true);
 		expect(
 			settingsRestartTargetChanged(
 				{ hostname: '127.0.0.1', port: 3210 },
-				{ hostname: '127.0.0.1', port: 3210 }
-			)
+				{ hostname: '127.0.0.1', port: 3210 },
+			),
 		).toBe(false);
 		expect(
 			settingsRestartTargetChanged(
 				{ hostname: '127.0.0.1', port: 3210 },
-				{ hostname: 'localhost', port: 3210 }
-			)
+				{ hostname: 'localhost', port: 3210 },
+			),
 		).toBe(false);
 	});
 
@@ -32,7 +32,7 @@ describe('settings runtime restart redirect helpers', () => {
 			buildSettingsRestartUrl('http://127.0.0.1:3210/settings?tab=runtime#top', {
 				hostname: '127.0.0.1',
 				port: 4555,
-			})
+			}),
 		).toBe('http://127.0.0.1:4555/settings');
 	});
 
@@ -41,7 +41,7 @@ describe('settings runtime restart redirect helpers', () => {
 			buildSettingsRestartUrl('http://localhost:3210/settings', {
 				hostname: '0.0.0.0',
 				port: 4555,
-			})
+			}),
 		).toBe('http://localhost:4555/settings');
 	});
 });

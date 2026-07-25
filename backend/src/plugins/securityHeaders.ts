@@ -32,7 +32,7 @@ function applySecurityHeaders(headers: Headers, requestUrl: URL): void {
 			"frame-src 'none'",
 			"frame-ancestors 'none'",
 			"form-action 'self'",
-		].join('; ')
+		].join('; '),
 	);
 
 	if (!headers.has('Cache-Control')) {
@@ -52,7 +52,7 @@ function numericStatus(status: number | string | undefined): number {
 function withSecurityHeaders(
 	responseValue: unknown,
 	request: Request,
-	status: number | string | undefined
+	status: number | string | undefined,
 ): Response {
 	const requestUrl = new URL(request.url);
 	if (responseValue instanceof Response) {
@@ -77,5 +77,5 @@ function withSecurityHeaders(
 
 export const securityHeadersPlugin = new Elysia({ name: 'security-headers' }).mapResponse(
 	{ as: 'global' },
-	({ request, responseValue, set }) => withSecurityHeaders(responseValue, request, set.status)
+	({ request, responseValue, set }) => withSecurityHeaders(responseValue, request, set.status),
 );

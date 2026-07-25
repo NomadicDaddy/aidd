@@ -92,7 +92,7 @@ async function listTrackedPaths(rootDir: string): Promise<string[]> {
 function shouldInspect(path: string): boolean {
 	if (POLICY_FIXTURES.has(path)) return false;
 	return (
-		['README.md', 'CONTEXT.md'].includes(path) ||
+		['CONTEXT.md', 'README.md'].includes(path) ||
 		CONTENT_ROOTS.some((root) => path.startsWith(root))
 	);
 }

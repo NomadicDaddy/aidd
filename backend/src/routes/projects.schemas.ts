@@ -33,7 +33,7 @@ type LiteralSchema = ReturnType<typeof literal>;
 
 function literalUnion(values: readonly string[]) {
 	return t.Union(
-		values.map((value) => literal(value)) as [LiteralSchema, LiteralSchema, ...LiteralSchema[]]
+		values.map((value) => literal(value)) as [LiteralSchema, LiteralSchema, ...LiteralSchema[]],
 	);
 }
 
@@ -53,7 +53,7 @@ export const projectProfilePreviewsBody = t.Object({
 			profile: projectProfileBody,
 			projectId: t.String({ maxLength: 1000, minLength: 1 }),
 		}),
-		{ maxItems: 500 }
+		{ maxItems: 500 },
 	),
 });
 
@@ -142,7 +142,7 @@ const reportMetadataBody = t.Object({
 		t.Object({
 			height: t.Number(),
 			width: t.Number(),
-		})
+		}),
 	),
 });
 

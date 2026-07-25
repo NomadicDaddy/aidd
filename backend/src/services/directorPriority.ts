@@ -5,17 +5,17 @@ import { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import type { ProjectSummaryDto } from '../types.ts';
 import type {
-	DirectorPriorityHealth,
 	DirectorPrioritizedWork,
+	DirectorPriorityHealth,
 	DirectorProjectPrioritySummary,
 } from './director/priority/types.ts';
 export {
 	type DirectorAuditHealth,
 	type DirectorBacklogBreakdown,
-	type DirectorPriorityHealth,
 	type DirectorPrioritizedWork,
-	type DirectorProjectPrioritySummary,
+	type DirectorPriorityHealth,
 	directorPriorityOrder,
+	type DirectorProjectPrioritySummary,
 } from './director/priority/types.ts';
 import { checkAuditHealth } from './director/priority/auditHealth.ts';
 import { summarizeBacklog } from './director/priority/backlogSummary.ts';
@@ -29,7 +29,7 @@ export async function buildDirectorProjectPriority(
 		auditsEnabled?: boolean;
 		catalogDir: string;
 		features?: Feature[];
-	}
+	},
 ): Promise<DirectorProjectPrioritySummary> {
 	const [features, auditHealth] = await Promise.all([
 		options.features !== undefined
@@ -50,7 +50,7 @@ export async function buildDirectorProjectPriority(
 export function applyDirectorAuditPolicy(
 	project: ProjectSummaryDto,
 	summary: DirectorProjectPrioritySummary,
-	auditsEnabled: boolean
+	auditsEnabled: boolean,
 ): DirectorProjectPrioritySummary {
 	const work = buildProjectWork(project, summary.backlog, summary.auditHealth, auditsEnabled);
 	const priorityHealth = buildPriorityHealth(work);
@@ -58,7 +58,7 @@ export function applyDirectorAuditPolicy(
 }
 
 export function buildFleetPriorityHealth(
-	projects: { priorityHealth: DirectorPriorityHealth }[]
+	projects: { priorityHealth: DirectorPriorityHealth }[],
 ): DirectorPriorityHealth {
 	const workLike: DirectorPrioritizedWork[] = [];
 	for (const [index, project] of projects.entries()) {

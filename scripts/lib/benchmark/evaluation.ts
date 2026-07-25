@@ -70,7 +70,7 @@ function statusRunScore(runSucceeded: boolean): EvaluationResult {
 
 function evaluateInterview(
 	workspaceDir: string,
-	expectation: Record<string, unknown>
+	expectation: Record<string, unknown>,
 ): EvaluationResult {
 	const responseFiles = stringArray(expectation.responseFiles);
 	const present = responseFiles.filter((filePath) => hasNonEmptyFile(workspaceDir, filePath));
@@ -80,7 +80,7 @@ function evaluateInterview(
 
 function evaluateQuiz(
 	workspaceDir: string,
-	expectation: Record<string, unknown>
+	expectation: Record<string, unknown>,
 ): EvaluationResult {
 	const responseFiles = stringArray(expectation.responseFiles);
 	const corpus = responseFiles
@@ -108,7 +108,7 @@ function evaluateQuiz(
 
 function evaluateAudit(
 	workspaceDir: string,
-	expectation: Record<string, unknown>
+	expectation: Record<string, unknown>,
 ): EvaluationResult {
 	const aliases = isRecord(expectation.expectedFindingAliases)
 		? expectation.expectedFindingAliases
@@ -117,7 +117,7 @@ function evaluateAudit(
 	const reportGlob = stringValue(expectation.reportGlob) ?? '.aidd/audit-reports/*.md';
 	const reports = expandSimpleGlob(workspaceDir, reportGlob);
 	const featureFiles = listFiles(path.join(workspaceDir, '.aidd', 'features')).filter(
-		(filePath) => filePath.endsWith('feature.json')
+		(filePath) => filePath.endsWith('feature.json'),
 	);
 	const corpus = [...reports.map(readTextIfExists), ...featureFiles.map(readTextIfExists)]
 		.join('\n')
@@ -139,7 +139,7 @@ function evaluateAudit(
 
 function evaluateRemediation(
 	workspaceDir: string,
-	expectation: Record<string, unknown>
+	expectation: Record<string, unknown>,
 ): EvaluationResult {
 	const featureId = stringValue(expectation.featureId);
 	if (!featureId) return { notes: ['missing remediation expectation featureId'], score: 0 };
@@ -173,7 +173,7 @@ function evaluateRemediation(
 function evaluateValidate(
 	workspaceDir: string,
 	expectation: Record<string, unknown>,
-	artifacts: BenchmarkArtifacts
+	artifacts: BenchmarkArtifacts,
 ): EvaluationResult {
 	const completedFeatureId = stringValue(expectation.completedFeatureId);
 	const incompleteFeatureId = stringValue(expectation.incompleteFeatureId);
@@ -194,7 +194,7 @@ function evaluateValidate(
 	return {
 		notes,
 		score: clampScore(
-			(completedOk ? 0.4 : 0) + (incompleteOk ? 0.4 : 0) + (structuredOk ? 0.2 : 0)
+			(completedOk ? 0.4 : 0) + (incompleteOk ? 0.4 : 0) + (structuredOk ? 0.2 : 0),
 		),
 	};
 }

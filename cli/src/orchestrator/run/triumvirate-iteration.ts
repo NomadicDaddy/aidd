@@ -4,9 +4,9 @@ import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { createBackend } from 'aidd-shared/backends/factory';
 import {
-	orchestratorExitCodes,
 	type AgentRunResult,
 	type IterationMetrics,
+	orchestratorExitCodes,
 } from 'aidd-shared/orchestrator/result';
 import { runRepoDir } from 'aidd-shared/plan/types';
 
@@ -24,10 +24,10 @@ import { gitDirtyFileCount } from './git.ts';
 import { accumulateIterationFileChanges, accumulateIterationMetrics } from './run-accumulator.ts';
 import { buildRateLimitBudgetSummary, handleRateLimit } from './run-gates.ts';
 import {
-	runRuntimeFields,
 	type MoveFn,
 	type OrchestratorDeps,
 	type RunAccumulator,
+	runRuntimeFields,
 } from './types.ts';
 
 export type TriumvirateIterationOutcome =
@@ -125,7 +125,7 @@ export async function runTriumvirateIterationStep(input: {
 			: orchestratorExitCodes.validationError;
 	const recordedExitCode = stageResult?.exitCode ?? finalExitCode;
 	const stopRequestedAfterStageFailure = await deps.store.hasStopRequested(
-		plan.stopPolicy.stopFile
+		plan.stopPolicy.stopFile,
 	);
 	const structured = {
 		durationMs: endedAtMs - startedAtMs,
@@ -177,7 +177,7 @@ export async function runTriumvirateIterationStep(input: {
 			acc,
 			'stop_requested',
 			orchestratorExitCodes.success,
-			triumvirate.summary
+			triumvirate.summary,
 		);
 		return { exitCode: orchestratorExitCodes.success, kind: 'return' };
 	}
@@ -188,7 +188,7 @@ export async function runTriumvirateIterationStep(input: {
 			stageResult.events,
 			controller,
 			iteration,
-			runStartedAtMs
+			runStartedAtMs,
 		);
 		if (rate.stopRequested) {
 			move({
@@ -201,7 +201,7 @@ export async function runTriumvirateIterationStep(input: {
 				acc,
 				'stop_requested',
 				orchestratorExitCodes.success,
-				triumvirate.summary
+				triumvirate.summary,
 			);
 			return { exitCode: orchestratorExitCodes.success, kind: 'return' };
 		}
@@ -216,7 +216,7 @@ export async function runTriumvirateIterationStep(input: {
 				acc,
 				'exit_error',
 				orchestratorExitCodes.rateLimited,
-				summary
+				summary,
 			);
 			return { exitCode: orchestratorExitCodes.rateLimited, kind: 'return' };
 		}
@@ -237,7 +237,7 @@ export async function runTriumvirateIterationStep(input: {
 				triumvirate.summary,
 				recordedExitCode,
 				stageDetails,
-				retryLimit
+				retryLimit,
 			);
 			move({ summary, type: 'complete' });
 			await writeRunSummary(deps, plan, acc, 'exit_error', recordedExitCode, summary);
@@ -256,7 +256,7 @@ export async function runTriumvirateIterationStep(input: {
 		acc,
 		triumvirate.status === 'aborted' ? 'blocked' : 'exit_error',
 		finalExitCode,
-		triumvirate.summary
+		triumvirate.summary,
 	);
 	return { exitCode: finalExitCode, kind: 'return' };
 }

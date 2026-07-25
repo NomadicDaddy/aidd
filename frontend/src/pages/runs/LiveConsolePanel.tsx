@@ -18,7 +18,7 @@ export function LiveConsolePanel({
 }) {
 	const output = useRunLiveOutput(
 		selectedRun?.canReadOutput ? selectedRunId : undefined,
-		selectedRun?.status
+		selectedRun?.status,
 	);
 	// Drives whether the console's operator controls (find/copy/wrap/jump) render: they are only
 	// meaningful when there is real transcript text, not a placeholder/status message.
@@ -65,7 +65,7 @@ export function LiveConsolePanel({
 	// scrolling the JSONL. Only meaningful once the run is terminal.
 	const stopDetail = useMemo(
 		() => (selectedRunIsTerminal ? extractStopDetail(output.text) : null),
-		[selectedRunIsTerminal, output.text]
+		[selectedRunIsTerminal, output.text],
 	);
 
 	const liveConsoleBadge = ((): LiveConsoleBadge | null => {

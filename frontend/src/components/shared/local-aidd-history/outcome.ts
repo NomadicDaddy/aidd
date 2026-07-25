@@ -47,7 +47,7 @@ function runHasWarnings(run: ProjectLocalRun, iterations: ProjectLocalIteration[
 
 export function categorizeRun(
 	run: ProjectLocalRun,
-	iterations: ProjectLocalIteration[] = []
+	iterations: ProjectLocalIteration[] = [],
 ): null | OutcomeCategory {
 	const outcome = classifyRun(run);
 	if (outcome.label === 'Scope overrun') return 'Scope overrun';
@@ -83,7 +83,7 @@ export function isNoOpRun(run: ProjectLocalRun): boolean {
 // visible in the badge label (e.g. "Success · warnings").
 export function classifyRunWithWarnings(
 	run: ProjectLocalRun,
-	iterations: ProjectLocalIteration[] = []
+	iterations: ProjectLocalIteration[] = [],
 ): OutcomeClassification {
 	const base = classifyRun(run);
 	if (base.tone !== 'emerald') return base;

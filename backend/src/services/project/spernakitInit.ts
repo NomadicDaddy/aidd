@@ -17,7 +17,7 @@ export interface SpawnOutcome {
 // literally (not regex) so user values containing regex metacharacters are safe.
 export function substituteTemplateCommand(
 	command: string[],
-	values: { description: string; name: string; root: string; targetPath: string }
+	values: { description: string; name: string; root: string; targetPath: string },
 ): string[] {
 	const replacements: [string, string][] = [
 		['{name}', values.name],
@@ -26,7 +26,7 @@ export function substituteTemplateCommand(
 		['{root}', values.root],
 	];
 	return command.map((token) =>
-		replacements.reduce((acc, [needle, value]) => acc.split(needle).join(value), token)
+		replacements.reduce((acc, [needle, value]) => acc.split(needle).join(value), token),
 	);
 }
 
@@ -59,7 +59,7 @@ function tail(value: string, bytes: number): string {
 export async function persistSpernakitInitLog(
 	dataDir: string,
 	outcome: SpawnOutcome,
-	timestamp: number
+	timestamp: number,
 ): Promise<string> {
 	const logDir = join(dataDir, 'run-logs');
 	await mkdir(logDir, { recursive: true });
@@ -92,7 +92,7 @@ export async function persistSpernakitInitLog(
 // rename failure must not mask the underlying init failure surfaced to the caller.
 export async function quarantineFailedInit(
 	targetPath: string,
-	timestamp: number
+	timestamp: number,
 ): Promise<null | string> {
 	if (!(await directoryExists(targetPath))) return null;
 	const quarantinePath = `${targetPath}.failed-${timestamp}`;

@@ -18,12 +18,12 @@ export function RecentActivity({
 }) {
 	const projectRuns = recentMetadataActivity(metadata.localRuns, metadata.localIterations).slice(
 		0,
-		RECENT_ACTIVITY_LIMIT
+		RECENT_ACTIVITY_LIMIT,
 	);
 	return (
 		<Card className="p-2.5">
 			<div className="mb-1.5 flex items-center justify-between">
-				<h2 className="text-foreground text-sm font-semibold">Recent activity</h2>
+				<h2 className="text-sm font-semibold text-foreground">Recent activity</h2>
 				<Link
 					className="text-xs text-neutral-600 hover:underline dark:text-neutral-400"
 					to={`/runs?project=${encodeURIComponent(projectPath)}`}>

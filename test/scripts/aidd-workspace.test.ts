@@ -21,7 +21,7 @@ async function tempRoot(name: string): Promise<string> {
 
 afterEach(async () => {
 	await Promise.all(
-		tempRoots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+		tempRoots.splice(0).map((root) => rm(root, { force: true, recursive: true })),
 	);
 });
 
@@ -38,7 +38,7 @@ async function writeRaw(path: string, value: string): Promise<void> {
 async function writeFeature(
 	projectDir: string,
 	directory: string,
-	feature: Record<string, unknown> = {}
+	feature: Record<string, unknown> = {},
 ): Promise<void> {
 	await writeJson(join(projectDir, '.aidd', 'features', directory, 'feature.json'), {
 		id: directory,
@@ -50,17 +50,17 @@ async function writeFeature(
 
 async function readFeature(
 	projectDir: string,
-	directory: string
+	directory: string,
 ): Promise<Record<string, unknown>> {
 	const raw = await readFile(
 		join(projectDir, '.aidd', 'features', directory, 'feature.json'),
-		'utf8'
+		'utf8',
 	);
 	return JSON.parse(raw) as Record<string, unknown>;
 }
 
 async function runAiddTools(
-	args: string[]
+	args: string[],
 ): Promise<{ exitCode: number; stderr: string; stdout: string }> {
 	const proc = Bun.spawn(['bun', join(repositoryRoot, 'scripts', 'aidd-tools.ts'), ...args], {
 		cwd: repositoryRoot,
@@ -308,7 +308,7 @@ describe('roadmap apply', () => {
 		});
 
 		await expect(applyRoadmap(missingPriorityProject)).rejects.toThrow(
-			"Milestone 'MVP' is missing a priority value"
+			"Milestone 'MVP' is missing a priority value",
 		);
 	});
 });

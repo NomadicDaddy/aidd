@@ -36,7 +36,7 @@ interface ReconcilerDeps {
 // are marked failed inline here so resume callers only see actionable work.
 export async function reconcileStaleSessions(
 	deps: ReconcilerDeps,
-	classifier: (session: PipelineSessionRow) => Promise<{ fail: string } | ResumeResolution>
+	classifier: (session: PipelineSessionRow) => Promise<{ fail: string } | ResumeResolution>,
 ): Promise<ReconcileResult> {
 	await sweepStrandedStepRows(deps.db);
 	const staleSessions = await deps.db
@@ -74,7 +74,7 @@ export async function reconcileStaleSessions(
 async function failSessionInline(
 	deps: ReconcilerDeps,
 	session: PipelineSessionRow,
-	errorMessage: string
+	errorMessage: string,
 ): Promise<void> {
 	const completedAt = Date.now();
 	await deps.db
@@ -96,8 +96,8 @@ async function failSessionInline(
 		.where(
 			and(
 				eq(pipelineStepResults.sessionId, session.id),
-				inArray(pipelineStepResults.status, ['queued', 'running'])
-			)
+				inArray(pipelineStepResults.status, ['queued', 'running']),
+			),
 		);
 	await deps.telemetryService.recordCompletionBySessionId(session.id, {
 		completedAt,
@@ -121,7 +121,7 @@ async function failSessionInline(
 // trade-off for V1: recipes are operator-owned and rarely edited mid-flight.
 export async function deriveResumeResolution(
 	deps: ReconcilerDeps,
-	session: PipelineSessionRow
+	session: PipelineSessionRow,
 ): Promise<ResumeResolution> {
 	const stepRows = await deps.db
 		.select()
@@ -133,7 +133,7 @@ export async function deriveResumeResolution(
 		(row) =>
 			row.depth === 0 &&
 			row.phase === 'step' &&
-			(row.status === 'running' || row.status === 'queued')
+			(row.status === 'running' || row.status === 'queued'),
 	);
 	// More than one in-flight row means a duplicate execution. Resume the most recent (descending
 	// displayOrder puts it first) and terminalize every other row so none remain stuck 'running'.
@@ -141,7 +141,7 @@ export async function deriveResumeResolution(
 	await terminalizeDuplicateInFlightRows(
 		deps.db,
 		session.id,
-		inFlightRows.slice(1).map((row) => row.id)
+		inFlightRows.slice(1).map((row) => row.id),
 	);
 	if (!inFlightRow) {
 		return {
@@ -188,7 +188,7 @@ interface InFlightClassification {
 
 async function classifyInFlightStep(
 	deps: ReconcilerDeps,
-	row: typeof pipelineStepResults.$inferSelect
+	row: typeof pipelineStepResults.$inferSelect,
 ): Promise<InFlightClassification> {
 	// Shell steps and hooks ran as attached children of the web process: they died
 	// at SIGINT and cannot be revived. Managed steps (aidd-cli/skill) launch
@@ -238,7 +238,7 @@ async function classifyInFlightStep(
  */
 async function findOrphanedRunForStep(
 	deps: ReconcilerDeps,
-	sessionId: string
+	sessionId: string,
 ): Promise<{ id: string } | undefined> {
 	// Find non-terminal runs for this session.
 	const candidates = await deps.db

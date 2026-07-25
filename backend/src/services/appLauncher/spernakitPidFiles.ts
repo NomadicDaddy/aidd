@@ -37,7 +37,7 @@ export async function primarySpernakitPid(projectPath: string): Promise<null | n
 
 export async function freshLiveSpernakitPidFile(
 	projectPath: string,
-	freshAfter: number
+	freshAfter: number,
 ): Promise<SpernakitPidFile | undefined> {
 	const pidFiles = await readSpernakitPidFiles(projectPath);
 	return pidFiles.find((pidFile) => pidFile.modifiedAt > freshAfter && isPidAlive(pidFile.pid));

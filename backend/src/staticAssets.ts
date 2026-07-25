@@ -7,7 +7,7 @@
  * (spernakit `docker/nginx.conf`) so behaviour is consistent across the fleet:
  * `/assets/` immutable for a year, gzip level 6 / brotli level 5, `Vary: Accept-Encoding`.
  */
-import { constants as zlibConstants, brotliCompressSync } from 'node:zlib';
+import { brotliCompressSync, constants as zlibConstants } from 'node:zlib';
 
 const IMMUTABLE_MAX_AGE = 31_536_000;
 /** Root-level assets (favicon, og-image, manifest) carry no content hash, so they must revalidate. */
@@ -83,14 +83,14 @@ export function isCompressible(contentType: string, byteLength: number): boolean
 /** Compress without memoising. Use for bodies that are generated per request, not read from disk. */
 export function compressOnce(
 	encoding: Encoding,
-	bytes: Uint8Array<ArrayBuffer>
+	bytes: Uint8Array<ArrayBuffer>,
 ): Uint8Array<ArrayBuffer> {
 	if (encoding === 'gzip') return Bun.gzipSync(bytes, { level: 6 });
 	if (encoding === 'zstd') return new Uint8Array(Bun.zstdCompressSync(bytes, { level: 3 }));
 	return new Uint8Array(
 		brotliCompressSync(bytes, {
 			params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 },
-		})
+		}),
 	);
 }
 
@@ -111,7 +111,7 @@ let cachedBytes = 0;
 export function compressed(
 	encoding: Encoding,
 	bytes: Uint8Array<ArrayBuffer>,
-	identity: string
+	identity: string,
 ): null | Uint8Array<ArrayBuffer> {
 	const key = `${encoding}:${identity}`;
 	const hit = cache.get(key);

@@ -1,23 +1,23 @@
 import {
-	isAuditApplicableToProfile,
-	projectAssuranceBuckets,
 	type AuditApplicabilityRow,
 	type AuditProfileMapping,
+	isAuditApplicableToProfile,
 	type ProjectAssuranceBucket,
+	projectAssuranceBuckets,
 } from 'aidd-shared';
 import {
+	type AuditFreshnessContext,
 	createAuditFreshnessContext,
 	evaluateAuditReportFreshness,
-	type AuditFreshnessContext,
 } from 'aidd-shared/metadata/audit-freshness';
 import { loadAuditProfileOverrides } from 'aidd-shared/metadata/audit-profile-mapping';
 import {
 	buildScoreInput,
+	type ChangePotential,
 	collectProjectEvidence,
 	enumerateProjectsUnderRoots,
 	loadAuditPriorities,
 	scoreAudit,
-	type ChangePotential,
 } from 'aidd-shared/metadata/audit-scoring';
 import { readProjectAssuranceProfile } from 'aidd-shared/metadata/project-profile';
 import { stat } from 'node:fs/promises';
@@ -48,7 +48,7 @@ export type ProjectProfileCache = Map<string, ProjectProfileEntry>;
 
 async function resolveProfileEntry(
 	cache: ProjectProfileCache,
-	projectPath: string
+	projectPath: string,
 ): Promise<ProjectProfileEntry> {
 	const cached = cache.get(projectPath);
 	if (cached) return cached;
@@ -69,7 +69,7 @@ export async function definitionSummary(
 	freshnessContexts: Map<string, AuditFreshnessContext>,
 	profileCache: ProjectProfileCache,
 	auditsEnabled: boolean,
-	auditPathFn: (name: string) => string
+	auditPathFn: (name: string) => string,
 ): Promise<AuditDefinitionDto> {
 	const normalized = normalizeAuditName(name);
 	const path = auditPathFn(normalized);
@@ -79,14 +79,14 @@ export async function definitionSummary(
 		projects,
 		mapping,
 		matrixIndex,
-		profileCache
+		profileCache,
 	);
 	const reportHealth = await computeReportHealth(
 		normalized,
 		projects,
 		mapping,
 		freshnessContexts,
-		profileCache
+		profileCache,
 	);
 	return {
 		...applicability,
@@ -103,7 +103,7 @@ async function computeApplicability(
 	projects: { name: string; path: string }[],
 	mapping: AuditProfileMapping,
 	matrixIndex: Map<string, AuditApplicabilityRow>,
-	profileCache: ProjectProfileCache
+	profileCache: ProjectProfileCache,
 ): Promise<{
 	applicableBucketCount: number;
 	applicableProjectCount: number;
@@ -136,7 +136,7 @@ async function computeReportHealth(
 	projects: { path: string }[],
 	mapping: AuditProfileMapping,
 	freshnessContexts: Map<string, AuditFreshnessContext>,
-	profileCache: ProjectProfileCache
+	profileCache: ProjectProfileCache,
 ): Promise<{
 	freshReportCount: number;
 	missingReportCount: number;
@@ -171,7 +171,7 @@ async function computeReportHealth(
 export async function scoreAuditCatalog(
 	auditNames: readonly string[],
 	rootDir: string,
-	resolveScoringRoots: () => string[]
+	resolveScoringRoots: () => string[],
 ): Promise<Map<string, ChangePotential>> {
 	const result = new Map<string, ChangePotential>();
 	if (auditNames.length === 0) return result;

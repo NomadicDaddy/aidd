@@ -18,7 +18,7 @@ describe('recipe step conditions', () => {
 					},
 				],
 			},
-			'conditional-recipe'
+			'conditional-recipe',
 		);
 		const step = recipe.steps[0];
 		expect(step?.when).toEqual({

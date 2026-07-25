@@ -35,7 +35,7 @@ export function ExecutionIdentityBadgeLabPage() {
 				title="Execution Identity Badge Lab"
 			/>
 
-			<Card className="text-muted-foreground text-sm" variant="sunken">
+			<Card className="text-sm text-muted-foreground" variant="sunken">
 				Every built-in identity color is shown below. User-defined model names use the same
 				deterministic fallback color used by the production badge.
 			</Card>
@@ -44,22 +44,22 @@ export function ExecutionIdentityBadgeLabPage() {
 				{cliCatalog.map((cli) => (
 					<section
 						aria-labelledby={`badge-lab-${cli}`}
-						className="border-border bg-card overflow-hidden rounded-lg border shadow-sm"
+						className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"
 						key={cli}>
-						<header className="border-border flex flex-wrap items-center gap-3 border-b px-4 py-3">
-							<h2 className="text-foreground font-semibold" id={`badge-lab-${cli}`}>
+						<header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
+							<h2 className="font-semibold text-foreground" id={`badge-lab-${cli}`}>
 								{cliLabel(cli)}
 							</h2>
 							<ExecutionIdentityBadges backend={cli} withTooltip={false} />
 						</header>
 
-						<div className="divide-border divide-y">
+						<div className="divide-y divide-border">
 							{executionIdentityModelCatalog.map((model) => (
 								<div
 									className="grid gap-3 px-4 py-3 xl:grid-cols-[13rem_minmax(0,1fr)] xl:items-center"
 									key={model}>
 									<code
-										className="text-muted-foreground truncate text-xs"
+										className="truncate text-xs text-muted-foreground"
 										title={model}>
 										{model}
 									</code>
@@ -73,7 +73,7 @@ export function ExecutionIdentityBadgeLabPage() {
 													reasoningEffort={reasoningEffort}
 													withTooltip={false}
 												/>
-											)
+											),
 										)}
 									</div>
 								</div>

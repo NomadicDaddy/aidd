@@ -2,16 +2,16 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
-import type { CLIBackend, AgentEvent, PromptInput } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
-	FakeBackend,
-	config,
 	completeFeature,
+	config,
 	createOrchestratorTestContext,
+	FakeBackend,
 	gitHeavyPlan,
 	initializeGitProject,
 	plan,
@@ -55,7 +55,7 @@ describe('wall-clock timeout classification', () => {
 		async () => {
 			const store = await makeStore('wall-clock-timeout');
 			const backend = new CompleteThenHangBackend(() =>
-				completeFeature(store, 'feature-core')
+				completeFeature(store, 'feature-core'),
 			);
 			const runtimePlan = resolveRunPlan(
 				parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
@@ -64,7 +64,7 @@ describe('wall-clock timeout classification', () => {
 					idleTimeoutSeconds: 30,
 					idleNudgeTimeoutSeconds: 30,
 					timeoutSeconds: 1,
-				}
+				},
 			);
 
 			const exitCode = await runOrchestrator(runtimePlan, {
@@ -87,7 +87,7 @@ describe('wall-clock timeout classification', () => {
 			expect(entry.summary).not.toContain('completion_marker_missing_or_unaccepted');
 			expect(typeof entry.backendExitCode).toBe('number');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test('a clean backend exit reclassified as missing result carries the classification in summaries', async () => {
@@ -104,7 +104,7 @@ describe('wall-clock timeout classification', () => {
 
 		expect(exitCode).toBe(orchestratorExitCodes.missingResult);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { exitCode: number; summary: string };
 		expect(iteration.exitCode).toBe(orchestratorExitCodes.missingResult);
 		expect(iteration.summary).toContain('no AIDD_RESULT emitted [backend exit 0]');
@@ -158,7 +158,7 @@ describe('wall-clock timeout classification', () => {
 		// claimed or a backend spawned (the path a rate-limit backoff re-enters through).
 		const runtimePlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			{ ...config, timeoutSeconds: 0 }
+			{ ...config, timeoutSeconds: 0 },
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, { backend, rootDir, store });
@@ -184,7 +184,7 @@ describe('roadmap gate stop reason', () => {
 		// which hard-blocks coding work selection.
 		await writeFile(
 			join(store.metadataDir, 'roadmap.json'),
-			`${JSON.stringify({ milestones: { MVP: {} }, features: {} })}\n`
+			`${JSON.stringify({ milestones: { MVP: {} }, features: {} })}\n`,
 		);
 
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -233,7 +233,7 @@ describe('runLedgerDirty reflects only non-harness dirt', () => {
 						await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
 						// Harness-style residue: an uncommitted .aidd artifact (audit report, CHANGELOG…).
 						await writeFile(join(store.metadataDir, 'CHANGELOG.md'), '# changes\n');
-					}
+					},
 				),
 			});
 			expect(runA).toBe(orchestratorExitCodes.success);
@@ -241,10 +241,10 @@ describe('runLedgerDirty reflects only non-harness dirt', () => {
 				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
 					.trim()
 					.split('\n')
-					.at(-1) ?? '{}'
+					.at(-1) ?? '{}',
 			) as { runLedgerDirty: boolean };
 			expect(entryA.runLedgerDirty).toBe(false);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 });

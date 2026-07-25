@@ -52,46 +52,46 @@ export function createAuditsRoutes(context: WebContext) {
 			async ({ body }) => ({
 				...(await auditService().saveAuditProfileMapping(body)),
 			}),
-			{ body: profileMappingBody }
+			{ body: profileMappingBody },
 		)
 		.get(
 			'/project/:projectId',
 			async ({ params }) => await auditService().listProjectAudits(params.projectId),
-			{ params: projectParams }
+			{ params: projectParams },
 		)
 		.get(
 			'/project-overrides/:projectId',
 			async ({ params }) => ({
 				overrides: await auditService().getProjectAuditOverrides(params.projectId),
 			}),
-			{ params: projectParams }
+			{ params: projectParams },
 		)
 		.put(
 			'/project-overrides/:projectId',
 			async ({ body, params }) => ({
 				overrides: await auditService().saveProjectAuditOverrides(params.projectId, body),
 			}),
-			{ body: profileOverridesBody, params: projectParams }
+			{ body: profileOverridesBody, params: projectParams },
 		)
 		.get(
 			'/:name',
 			async ({ params }) => ({
 				definition: await auditService().readAuditDefinition(params.name),
 			}),
-			{ params: auditParams }
+			{ params: auditParams },
 		)
 		.put(
 			'/:name',
 			async ({ body, params }) => ({
 				definition: await auditService().saveAuditDefinition(params.name, body.content),
 			}),
-			{ body: auditSaveBody, params: auditParams }
+			{ body: auditSaveBody, params: auditParams },
 		)
 		.post(
 			'/launch',
 			async ({ body }) => ({
 				result: await auditService().launchAudits(body),
 			}),
-			{ body: auditLaunchBody }
+			{ body: auditLaunchBody },
 		);
 }

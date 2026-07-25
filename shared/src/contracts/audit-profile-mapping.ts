@@ -6,8 +6,8 @@ export {
 export {
 	buildApplicabilityMatrix,
 	isAuditApplicableToProfile,
-	requiresFullHardening,
 	isLowExposureLocalProfile,
+	requiresFullHardening,
 	resolveAuditEffect,
 } from './audit-profile-mapping-resolve.ts';
 

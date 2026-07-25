@@ -5,7 +5,7 @@ import {
 	type CliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
 import { type FSWatcher, watch } from 'node:fs';
-import { mkdir, readFile, readdir, rm, stat } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { webLogger } from '../../logger.ts';
@@ -67,7 +67,7 @@ export class HeartbeatWatcher {
 
 	static async start(
 		projectPath: string,
-		ctx: HeartbeatWatcherContext
+		ctx: HeartbeatWatcherContext,
 	): Promise<HeartbeatWatcher> {
 		const watcher = new HeartbeatWatcher(projectPath, ctx);
 		await mkdir(watcher.dir, { recursive: true }).catch(() => {});
@@ -91,14 +91,14 @@ export class HeartbeatWatcher {
 			this.watcher.on('error', (err: unknown) => {
 				webLogger.warn(
 					{ err, projectPath: this.projectPath },
-					'HeartbeatWatcher: fs.watch error; falling back to poll'
+					'HeartbeatWatcher: fs.watch error; falling back to poll',
 				);
 				this.fsWatchFailed = true;
 			});
 		} catch (err) {
 			webLogger.warn(
 				{ err, projectPath: this.projectPath },
-				'HeartbeatWatcher: fs.watch unavailable; using poll fallback'
+				'HeartbeatWatcher: fs.watch unavailable; using poll fallback',
 			);
 			this.fsWatchFailed = true;
 		}
@@ -123,7 +123,7 @@ export class HeartbeatWatcher {
 		} catch (err) {
 			webLogger.error(
 				{ err, projectPath: this.projectPath },
-				'HeartbeatWatcher: background scan failed'
+				'HeartbeatWatcher: background scan failed',
 			);
 		}
 	}

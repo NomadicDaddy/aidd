@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { CLIBackend, AgentEvent, PromptInput } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
@@ -73,7 +73,7 @@ async function makeStore(name: string): Promise<FileAiddStore> {
 			status: 'backlog',
 			passes: false,
 			priority: 1,
-		})
+		}),
 	);
 	return new FileAiddStore(projectDir);
 }
@@ -165,7 +165,7 @@ describe('run-end dirty-source check', () => {
 					// .aidd churn that must stay excluded.
 					await writeFile(
 						join(store.projectDir, 'src', 'app.ts'),
-						'export const a = 2;\n'
+						'export const a = 2;\n',
 					);
 					await writeFile(join(store.projectDir, 'new-module.ts'), 'export {};\n');
 					await writeFile(join(store.metadataDir, 'CHANGELOG.md'), '# churn\n');
@@ -191,7 +191,7 @@ describe('run-end dirty-source check', () => {
 			expect(outcome.tone).toBe('amber');
 			expect(outcome.label).toBe('Completed · dirty tree');
 		},
-		slowTestTimeoutMs
+		slowTestTimeoutMs,
 	);
 
 	test(
@@ -232,6 +232,6 @@ describe('run-end dirty-source check', () => {
 			expect(outcome.tone).toBe('emerald');
 			expect(outcome.label).toBe('Completed');
 		},
-		slowTestTimeoutMs
+		slowTestTimeoutMs,
 	);
 });

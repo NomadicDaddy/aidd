@@ -17,7 +17,7 @@ export function createProjectInitFailureRoutes(context: WebContext) {
 					throw new HttpError('Init failure not found or already dismissed', 404);
 				return { dismissed: true };
 			},
-			{ params: projectInitFailureParams }
+			{ params: projectInitFailureParams },
 		)
 		.post(
 			'/init-failures/:fid/retry',
@@ -47,13 +47,13 @@ export function createProjectInitFailureRoutes(context: WebContext) {
 							recipeId: 'project-intake',
 						});
 						return { id: session.id };
-					}
+					},
 				);
 				// Retry succeeded: clear the failure so it leaves the fleet.
 				await context.initFailureService.dismiss(params.fid);
 				return { result };
 			},
-			{ params: projectInitFailureParams }
+			{ params: projectInitFailureParams },
 		)
 		.get(
 			'/init-failures/:fid/log',
@@ -65,6 +65,6 @@ export function createProjectInitFailureRoutes(context: WebContext) {
 				set.headers['content-type'] = 'text/plain; charset=utf-8';
 				return await file.text();
 			},
-			{ params: projectInitFailureParams }
+			{ params: projectInitFailureParams },
 		);
 }

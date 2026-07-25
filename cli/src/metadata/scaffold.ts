@@ -2,7 +2,7 @@ import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { metadataPath } from 'aidd-shared/metadata/paths';
 import { isPathAllowlisted } from 'aidd-shared/pipeline/writeAllowlist';
-import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 
 import { copyCommonModules } from './scaffoldCommon.ts';
@@ -60,7 +60,7 @@ export interface ScaffoldOptions {
 export async function scaffoldProjectAssets(
 	plan: RunPlan,
 	rootDir: string,
-	options: ScaffoldOptions = {}
+	options: ScaffoldOptions = {},
 ): Promise<void> {
 	const projectDir = plan.projectDir;
 	const aiddDir = metadataPath(projectDir);
@@ -85,7 +85,7 @@ export async function scaffoldProjectAssets(
 		rootDir,
 		aiddDir,
 		options.spernakitRoot,
-		options.dataDir
+		options.dataDir,
 	);
 	await copySpecFile(plan, aiddDir);
 	await copySharedDirs(options.sharedDirs ?? [], projectDir, allowsTarget, isInitializer);
@@ -97,7 +97,7 @@ async function copyScaffoldFiles(
 	projectDir: string,
 	aiddDir: string,
 	allowsTarget: (relativeTarget: string) => boolean,
-	isInitializer: boolean
+	isInitializer: boolean,
 ): Promise<void> {
 	const source = join(rootDir, 'scaffolding');
 	if (!(await pathExists(source))) return;
@@ -125,7 +125,7 @@ async function copyScaffoldFiles(
 async function installProjectMd(
 	metadataScaffold: string,
 	aiddDir: string,
-	isInitializer: boolean
+	isInitializer: boolean,
 ): Promise<void> {
 	const target = join(aiddDir, PROJECT_MD);
 	if (await pathExists(target)) return;
@@ -141,7 +141,7 @@ async function installProjectMd(
 async function copyMissingEntries(
 	sourceDir: string,
 	targetDir: string,
-	entries: string[]
+	entries: string[],
 ): Promise<void> {
 	for (const entry of entries) {
 		const source = join(sourceDir, entry);
@@ -155,7 +155,7 @@ async function copyMissingEntries(
 async function copyMissingDirEntries(
 	sourceDir: string,
 	targetDir: string,
-	dirs: string[]
+	dirs: string[],
 ): Promise<void> {
 	for (const dir of dirs) {
 		const source = join(sourceDir, dir);
@@ -197,7 +197,7 @@ async function copyAuditFiles(plan: RunPlan, rootDir: string, aiddDir: string): 
 async function chooseAuditFiles(
 	plan: RunPlan,
 	auditsSource: string,
-	allAuditFiles: string[]
+	allAuditFiles: string[],
 ): Promise<string[]> {
 	const auditPlan = plan.audit;
 	if (!auditPlan) return [];
@@ -221,7 +221,7 @@ async function copySharedDirs(
 	sharedDirs: string[],
 	projectDir: string,
 	allowsTarget: (relativeTarget: string) => boolean,
-	isInitializer: boolean
+	isInitializer: boolean,
 ): Promise<void> {
 	// Shared dirs always land at the project root (join(projectDir, baseName)); they are part of
 	// the root contract and only the fresh lane installs them.
@@ -248,7 +248,7 @@ async function copySharedDirs(
 async function copySharedFiles(
 	entries: (SharedFileEntry | string)[],
 	projectDir: string,
-	allowsTarget: (relativeTarget: string) => boolean
+	allowsTarget: (relativeTarget: string) => boolean,
 ): Promise<void> {
 	for (const entry of entries) {
 		const source = isAbsolute(typeof entry === 'string' ? entry : entry.source)
@@ -267,7 +267,7 @@ async function copySharedFiles(
 		// overwrite files outside the project.
 		if (isAbsolute(targetRel) || !isStrictChildPath(projectDir, targetPath)) {
 			console.warn(
-				`Warning: skipped shared file target outside the project root: ${targetRel}`
+				`Warning: skipped shared file target outside the project root: ${targetRel}`,
 			);
 			continue;
 		}

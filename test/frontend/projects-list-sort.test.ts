@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import type { ProjectSummary } from '../../frontend/src/api/types.ts';
 import {
-	SORT_KEYS,
 	compareProjects,
+	SORT_KEYS,
 } from '../../frontend/src/pages/projects/projects-list-sort.ts';
 import {
 	formatProjectListReportedCost,
@@ -14,7 +14,7 @@ function makeProject(
 	name: string,
 	percent: number,
 	reportedCostUsd = 0,
-	totalTokens = 0
+	totalTokens = 0,
 ): ProjectSummary {
 	return {
 		artifactHealth: 'unknown',
@@ -154,7 +154,7 @@ describe('projects list maturity sort', () => {
 
 	test('formats only backend-reported project cost as dollars', () => {
 		expect(formatReportedCost({ reportedCostUsd: 12.5, runsWithReportedCost: 1 })).toBe(
-			'$12.50'
+			'$12.50',
 		);
 		expect(formatReportedCost({ reportedCostUsd: 0, runsWithReportedCost: 0 })).toBe('Unknown');
 	});
@@ -164,7 +164,7 @@ describe('projects list maturity sort', () => {
 			formatProjectListReportedCost({
 				reportedCostUsd: 0,
 				runsWithReportedCost: 0,
-			})
+			}),
 		).toBe('—');
 		expect(formatProjectTokenCount({ totalTokens: 3_228_203 })).toBe('3.2M tokens');
 		expect(formatProjectTokenCount({ totalTokens: 1_022_536_087 })).toBe('1B tokens');

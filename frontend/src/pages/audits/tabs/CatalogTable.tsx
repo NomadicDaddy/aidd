@@ -88,7 +88,7 @@ export function CatalogTable({
 									/>
 								</td>
 								<td className="px-4 py-3">
-									<div className="text-foreground font-medium">{item.name}</div>
+									<div className="font-medium text-foreground">{item.name}</div>
 									<div className="text-xs break-all text-neutral-500">
 										{item.path}
 									</div>
@@ -178,7 +178,7 @@ export function CatalogTable({
 										className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 										onClick={() => onSelect(item.name)}
 										type="button">
-										<span className="text-foreground block font-medium">
+										<span className="block font-medium text-foreground">
 											{item.name}
 										</span>
 										<span className="block text-xs break-all text-neutral-500">

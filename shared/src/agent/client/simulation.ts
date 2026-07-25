@@ -12,7 +12,7 @@ export class SimulationAgentClient implements AgentClient {
 		}
 
 		const resultMarker = request.prompt.match(
-			/AIDD_RESULT:\s*(\{"featureId":"[^"]+","status":"completed","passes":true\})/
+			/AIDD_RESULT:\s*(\{"featureId":"[^"]+","status":"completed","passes":true\})/,
 		);
 		const structuredResult = resultMarker?.[1] ?? simulationResultFromPrompt(request.prompt);
 		const filesModified = await completeSimulatedFeature(request.cwd, structuredResult);
@@ -32,7 +32,7 @@ export class SimulationAgentClient implements AgentClient {
 
 async function completeSimulatedFeature(
 	projectDir: string,
-	structuredResult: string | undefined
+	structuredResult: string | undefined,
 ): Promise<string[]> {
 	const result = parseSimulatedFeatureCompletion(structuredResult);
 	if (!result) return [];
@@ -40,7 +40,7 @@ async function completeSimulatedFeature(
 		metadataPath(projectDir),
 		'features',
 		result.featureId,
-		'feature.json'
+		'feature.json',
 	);
 	let parsed: unknown;
 	try {
@@ -51,13 +51,13 @@ async function completeSimulatedFeature(
 	if (!isRecord(parsed)) return [];
 	await writeFile(
 		featurePath,
-		`${JSON.stringify({ ...parsed, passes: true, status: 'completed' }, null, 2)}\n`
+		`${JSON.stringify({ ...parsed, passes: true, status: 'completed' }, null, 2)}\n`,
 	);
 	return [featurePath];
 }
 
 function parseSimulatedFeatureCompletion(
-	structuredResult: string | undefined
+	structuredResult: string | undefined,
 ): { featureId: string } | undefined {
 	if (!structuredResult) return undefined;
 	let parsed: unknown;

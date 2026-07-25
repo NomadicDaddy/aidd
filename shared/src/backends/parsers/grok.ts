@@ -1,4 +1,4 @@
-import type { AgentEvent, AgentErrorReason } from '../types.ts';
+import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
@@ -141,7 +141,7 @@ export function finalizeGrokBackend(input: FinalizePlainBackendInput): AgentEven
 	// we always emit the assistant_text above; that keeps finalizePlainBackend from re-emitting the
 	// raw JSON stream as a second assistant_text.
 	events.push(
-		...finalizePlainBackend({ exitCode, sawAssistantText: true, sawRateLimit, stderr, stdout })
+		...finalizePlainBackend({ exitCode, sawAssistantText: true, sawRateLimit, stderr, stdout }),
 	);
 	return events;
 }
@@ -149,7 +149,7 @@ export function finalizeGrokBackend(input: FinalizePlainBackendInput): AgentEven
 export function parseGrokBackendOutput(
 	stdout: string,
 	stderr: string,
-	exitCode: null | number
+	exitCode: null | number,
 ): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const combined = [stdout, stderr].filter(Boolean).join('\n');
@@ -158,7 +158,7 @@ export function parseGrokBackendOutput(
 	}
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
 	events.push(
-		...finalizeGrokBackend({ exitCode, sawAssistantText: true, sawRateLimit, stderr, stdout })
+		...finalizeGrokBackend({ exitCode, sawAssistantText: true, sawRateLimit, stderr, stdout }),
 	);
 	return events;
 }

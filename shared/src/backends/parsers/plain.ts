@@ -1,4 +1,4 @@
-import type { AgentEvent, AgentErrorReason } from '../types.ts';
+import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { isRateLimitText } from './rate-limit-text.ts';
 
@@ -254,7 +254,7 @@ export function finalizePlainBackend(input: FinalizePlainBackendInput): AgentEve
 export function parsePlainBackendOutput(
 	stdout: string,
 	stderr: string,
-	exitCode: null | number
+	exitCode: null | number,
 ): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const combined = [stdout, stderr].filter(Boolean).join('\n');
@@ -264,7 +264,7 @@ export function parsePlainBackendOutput(
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
 	events.push(
-		...finalizePlainBackend({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout })
+		...finalizePlainBackend({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout }),
 	);
 	return events;
 }

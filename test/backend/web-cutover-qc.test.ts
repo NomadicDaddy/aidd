@@ -22,7 +22,7 @@ import { TerminalSessionManager } from '../../backend/src/services/terminal/sess
 import { WebSocketHub } from '../../backend/src/webSocketHub.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
-function makeConfig(web: ResolvedWebConfig): ResolvedConfig & { web: ResolvedWebConfig } {
+function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
 		dirtyTreeThreshold: 50,
@@ -82,7 +82,7 @@ async function createTestServer(rootDir: string, workspace: string) {
 		webSocketHub,
 		projectService,
 		rootDir,
-		telemetryService
+		telemetryService,
 	);
 	const recipeService = new RecipeService(rootDir);
 	const skillService = new SkillService({ rootDir });
@@ -101,7 +101,7 @@ async function createTestServer(rootDir: string, workspace: string) {
 		database.commands,
 		webSocketHub,
 		projectService,
-		runService
+		runService,
 	);
 	const appLauncherService = new AppLauncherService({ db: database.db, projectService });
 	const diaryService = new DiaryService({
@@ -144,7 +144,7 @@ async function readFiles(dir: string): Promise<{ content: string; path: string }
 			const path = join(dir, entry.name);
 			if (entry.isDirectory()) return await readFiles(path);
 			return [{ content: await readFile(path, 'utf8'), path }];
-		})
+		}),
 	);
 	return files.flat();
 }
@@ -153,7 +153,7 @@ describe('web v2 cutover QC', () => {
 	test('rejects backend/data as web database storage', () => {
 		const rootDir = process.cwd();
 		expect(() => assertRootDataDirectory(rootDir, join(rootDir, 'backend', 'data'))).toThrow(
-			'web.dataDir must use the repository root data directory'
+			'web.dataDir must use the repository root data directory',
 		);
 	});
 
@@ -182,7 +182,7 @@ describe('web v2 cutover QC', () => {
 			}
 
 			const apiMiss = await app.handle(
-				new Request('http://localhost/api/not-a-real-endpoint')
+				new Request('http://localhost/api/not-a-real-endpoint'),
 			);
 			expect(apiMiss.status).toBe(404);
 			expect(apiMiss.headers.get('content-type') ?? '').toContain('application/json');
@@ -210,7 +210,7 @@ describe('web v2 cutover QC', () => {
 			expect(await asset.text()).toBe('export const loaded = true;\n');
 
 			const missing = await app.handle(
-				new Request('http://localhost/assets/PipelineSessionReportPage-stale.js')
+				new Request('http://localhost/assets/PipelineSessionReportPage-stale.js'),
 			);
 			const body = await missing.text();
 			expect(missing.status).toBe(404);
@@ -230,20 +230,20 @@ describe('web v2 cutover QC', () => {
 		await mkdir(join(rootDir, 'frontend', 'dist'), { recursive: true });
 		await writeFile(
 			join(rootDir, 'frontend', 'dist', 'index.html'),
-			'<html><head></head><body><div id="root"></div></body></html>'
+			'<html><head></head><body><div id="root"></div></body></html>',
 		);
 		const { app, config, database, runService } = await createTestServer(rootDir, workspace);
 		try {
 			config.web.traceDataMovement = false;
 			const disabled = await app.handle(new Request('http://localhost/director'));
 			expect(await disabled.text()).toContain(
-				'<meta name="aidd-trace-default" content="false" />'
+				'<meta name="aidd-trace-default" content="false" />',
 			);
 
 			config.web.traceDataMovement = true;
 			const enabled = await app.handle(new Request('http://localhost/director'));
 			expect(await enabled.text()).toContain(
-				'<meta name="aidd-trace-default" content="true" />'
+				'<meta name="aidd-trace-default" content="true" />',
 			);
 		} finally {
 			runService.markDisposed();
@@ -261,7 +261,7 @@ describe('web v2 cutover QC', () => {
 		try {
 			const pageResponse = await app.handle(new Request('http://localhost/'));
 			const errorResponse = await app.handle(
-				new Request('http://localhost/api/v1/projects/bad')
+				new Request('http://localhost/api/v1/projects/bad'),
 			);
 
 			for (const response of [pageResponse, errorResponse]) {
@@ -273,10 +273,10 @@ describe('web v2 cutover QC', () => {
 				expect(response.headers.get('cross-origin-opener-policy')).toBe('same-origin');
 				expect(response.headers.get('cross-origin-resource-policy')).toBe('same-origin');
 				expect(response.headers.get('content-security-policy')).toContain(
-					"default-src 'self'"
+					"default-src 'self'",
 				);
 				expect(response.headers.get('content-security-policy')).toContain(
-					"worker-src 'self' blob:"
+					"worker-src 'self' blob:",
 				);
 				expect(response.headers.get('cache-control')).toBe('no-store');
 			}
@@ -302,7 +302,7 @@ describe('web v2 cutover QC', () => {
 				expect(response.headers.get('cross-origin-opener-policy')).toBeNull();
 				expect(response.headers.get('cross-origin-resource-policy')).toBe('same-origin');
 				expect(response.headers.get('content-security-policy')).toContain(
-					"default-src 'self'"
+					"default-src 'self'",
 				);
 			}
 			expect(httpsResponse.headers.get('cross-origin-opener-policy')).toBe('same-origin');

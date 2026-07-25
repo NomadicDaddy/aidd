@@ -49,7 +49,7 @@ export function initialHeuristicState(): AgentHeuristicState {
 
 export function afterToolCalls(
 	state: AgentHeuristicState,
-	toolNames: string[]
+	toolNames: string[],
 ): { nudge?: AgentHeuristicResult; state: AgentHeuristicState } {
 	let consecutiveBashCalls = state.consecutiveBashCalls;
 	for (const toolName of toolNames) {
@@ -88,7 +88,7 @@ export function afterToolCalls(
 export function evaluateTextOnlyResponse(
 	content: string,
 	state: AgentHeuristicState,
-	options: AgentHeuristicOptions = {}
+	options: AgentHeuristicOptions = {},
 ): AgentHeuristicResult {
 	// A fully-formed AIDD_RESULT block is the protocol's explicit completion
 	// signal. Once it parses, the response is the deliverable — never nudge it

@@ -31,7 +31,7 @@ async function screenshot(
 	page: Page,
 	directory: string,
 	route: string,
-	viewport: ViewportArg
+	viewport: ViewportArg,
 ): Promise<boolean> {
 	await mkdir(directory, { recursive: true });
 	await page.screenshot({
@@ -57,7 +57,7 @@ export async function visitRoute(
 	viewport: ViewportArg,
 	checkOverflow: boolean,
 	results: TestResults,
-	options: CrawlerOptions
+	options: CrawlerOptions,
 ): Promise<{ errors: string[]; links: string[] }> {
 	const errors: string[] = [];
 	const url = new URL(route, baseUrl).toString();

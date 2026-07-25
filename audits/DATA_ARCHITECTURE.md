@@ -277,7 +277,7 @@ export const aiProviders = sqliteTable(
 			columns: [table.organizationId],
 			foreignColumns: [organizations.id],
 		}).onDelete('cascade'),
-	]
+	],
 );
 ```
 

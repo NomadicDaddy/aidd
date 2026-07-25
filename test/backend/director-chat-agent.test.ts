@@ -209,7 +209,7 @@ describe('DirectorChatAgent', () => {
 				messages: [userMessage('hi')],
 				profile,
 				sessionId: 's1',
-			})
+			}),
 		).rejects.toBeInstanceOf(NoToolCallingProviderError);
 	});
 });

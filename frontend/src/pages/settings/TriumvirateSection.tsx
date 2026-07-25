@@ -12,14 +12,14 @@ export function TriumvirateSection({
 }: {
 	setTriumvirateField: <K extends keyof TriumvirateSettings>(
 		key: K,
-		value: TriumvirateSettings[K]
+		value: TriumvirateSettings[K],
 	) => void;
 	triumvirate: null | TriumvirateSettings | undefined;
 }) {
 	return (
 		<Card className="space-y-3 p-3">
 			<div>
-				<h2 className="text-foreground text-sm font-semibold">Triumvirate Roles</h2>
+				<h2 className="text-sm font-semibold text-foreground">Triumvirate Roles</h2>
 				<p className="mt-0.5 text-xs text-neutral-500">
 					Override the secondary, overseer, and execution roles used by Triumvirate runs.
 				</p>
@@ -34,7 +34,9 @@ export function TriumvirateSection({
 						onChange={(event) =>
 							setTriumvirateField(
 								'secondaryCli',
-								event.target.value ? (event.target.value as BackendInputName) : null
+								event.target.value
+									? (event.target.value as BackendInputName)
+									: null,
 							)
 						}
 						value={triumvirate?.secondaryCli ?? ''}>
@@ -66,7 +68,9 @@ export function TriumvirateSection({
 						onChange={(event) =>
 							setTriumvirateField(
 								'overseerCli',
-								event.target.value ? (event.target.value as BackendInputName) : null
+								event.target.value
+									? (event.target.value as BackendInputName)
+									: null,
 							)
 						}
 						value={triumvirate?.overseerCli ?? ''}>
@@ -98,7 +102,9 @@ export function TriumvirateSection({
 						onChange={(event) =>
 							setTriumvirateField(
 								'execCli',
-								event.target.value ? (event.target.value as BackendInputName) : null
+								event.target.value
+									? (event.target.value as BackendInputName)
+									: null,
 							)
 						}
 						value={triumvirate?.execCli ?? ''}>

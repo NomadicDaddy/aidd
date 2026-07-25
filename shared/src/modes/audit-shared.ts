@@ -49,13 +49,13 @@ export async function discoverAuditNames(rootDir: string): Promise<string[]> {
  */
 export async function discoverProjectAuditNames(
 	projectDir: string,
-	options: { applyProfile?: boolean; catalogDir?: string } = {}
+	options: { applyProfile?: boolean; catalogDir?: string } = {},
 ): Promise<string[]> {
 	const names = await scanAuditDir(join(projectDir, '.aidd', 'audits'));
 	if (!options.applyProfile) return names;
 	if (!options.catalogDir) {
 		throw new Error(
-			'discoverProjectAuditNames: catalogDir is required when applyProfile is true'
+			'discoverProjectAuditNames: catalogDir is required when applyProfile is true',
 		);
 	}
 	return await filterApplicableAuditNames(options.catalogDir, projectDir, names);

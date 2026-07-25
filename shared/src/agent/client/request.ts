@@ -11,12 +11,12 @@ export function shouldStream(config: OpenAICompatibleClientConfig): boolean {
 export function buildChatCompletionBody(
 	config: OpenAICompatibleClientConfig,
 	request: AgentLoopRequest,
-	stream: boolean
+	stream: boolean,
 ): Record<string, unknown> {
 	const model = request.model ?? config.model;
 	const body: Record<string, unknown> = {
 		messages: (request.messages ?? [{ content: request.prompt, role: 'user' }]).map(
-			toOpenAIMessage
+			toOpenAIMessage,
 		),
 		model,
 		stream,

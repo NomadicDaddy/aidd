@@ -11,7 +11,7 @@ describe('project active-run summaries', () => {
 				{ id: 'alpha-newest', projectPath: 'C:/projects/alpha', startedAt: 20 },
 				{ id: 'bravo-run', projectPath: 'C:/projects/bravo', startedAt: 30 },
 				{ id: 'alpha-newest', projectPath: 'C:/projects/alpha', startedAt: 20 },
-			]
+			],
 		);
 
 		expect(summaries.get('C:/projects/alpha')).toEqual({

@@ -21,7 +21,7 @@ export function yamlFrontmatterFrom(body: string): YamlFrontmatter {
 			`Markdown content has invalid YAML frontmatter: ${
 				error instanceof Error ? error.message : String(error)
 			}`,
-			{ cause: error }
+			{ cause: error },
 		);
 	}
 	if (!isRecord(parsed)) throw new Error('Markdown frontmatter must be a YAML mapping');
@@ -34,8 +34,8 @@ export function optionalFrontmatterStrings(body: string): Record<string, string>
 		const { values } = yamlFrontmatterFrom(body);
 		return Object.fromEntries(
 			Object.entries(values).flatMap(([key, value]) =>
-				typeof value === 'string' ? [[key, value]] : []
-			)
+				typeof value === 'string' ? [[key, value]] : [],
+			),
 		);
 	} catch {
 		return {};

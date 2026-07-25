@@ -77,7 +77,7 @@ export function useFeaturesTab({
 	const sourceOptions = sortedSourceOptions(features);
 	const filterMilestoneOptions = milestoneFilterOptions(features, roadmap);
 	const filteredFeatures = features.filter((feature) =>
-		featureMatchesFilters(feature, { milestoneFilter, query, sourceFilter, statusFilter })
+		featureMatchesFilters(feature, { milestoneFilter, query, sourceFilter, statusFilter }),
 	);
 	const filteredTotal = filteredFeatures.length;
 	const hasFilters =
@@ -164,7 +164,7 @@ export function useFeaturesTab({
 				onError: (error) =>
 					toast.error(error instanceof Error ? error.message : 'Failed to update status'),
 				onSuccess: () => toast.success('Feature status updated'),
-			}
+			},
 		);
 	}
 
@@ -203,10 +203,10 @@ export function useFeaturesTab({
 					toast.error(
 						error instanceof Error
 							? error.message
-							: 'Failed to launch audit-findings run'
+							: 'Failed to launch audit-findings run',
 					),
 				onSuccess: () => toast.success('Audit-findings sweep launched'),
-			}
+			},
 		);
 	}
 
@@ -227,11 +227,11 @@ export function useFeaturesTab({
 			{
 				onError: (error) =>
 					toast.error(
-						error instanceof Error ? error.message : 'Failed to launch coding run'
+						error instanceof Error ? error.message : 'Failed to launch coding run',
 					),
 				onSettled: () => setLaunchingFeature(null),
 				onSuccess: () => toast.success('Feature-specific coding run launched'),
-			}
+			},
 		);
 	}
 
@@ -241,10 +241,10 @@ export function useFeaturesTab({
 			{
 				onError: (error) =>
 					toast.error(
-						error instanceof Error ? error.message : 'Failed to update milestone'
+						error instanceof Error ? error.message : 'Failed to update milestone',
 					),
 				onSuccess: () => toast.success('Feature milestone updated'),
-			}
+			},
 		);
 	}
 

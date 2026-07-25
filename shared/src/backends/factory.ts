@@ -17,7 +17,7 @@ export function createBackend(name: BackendName, callSurface?: AiCallSurface): C
 			return new NativeBackend(
 				callSurface
 					? { callSurface, name: 'lmstudio', providerOverride: 'lmstudio' }
-					: { name: 'lmstudio', providerOverride: 'lmstudio' }
+					: { name: 'lmstudio', providerOverride: 'lmstudio' },
 			);
 		case 'native':
 			return new NativeBackend(callSurface ? { callSurface } : {});
@@ -25,13 +25,13 @@ export function createBackend(name: BackendName, callSurface?: AiCallSurface): C
 			return new NativeBackend(
 				callSurface
 					? { callSurface, name: 'ollama', providerOverride: 'ollama' }
-					: { name: 'ollama', providerOverride: 'ollama' }
+					: { name: 'ollama', providerOverride: 'ollama' },
 			);
 		case 'openai':
 			return new NativeBackend(
 				callSurface
 					? { callSurface, name: 'openai', providerOverride: 'openai' }
-					: { name: 'openai', providerOverride: 'openai' }
+					: { name: 'openai', providerOverride: 'openai' },
 			);
 	}
 }

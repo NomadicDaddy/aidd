@@ -25,7 +25,7 @@ export function createDiaryRoutes(context: WebContext) {
 				const page = await context.diaryService.listEntriesPage(options);
 				return { entries: page.items, nextCursor: page.nextCursor };
 			},
-			{ query: listQuery }
+			{ query: listQuery },
 		)
 		.get(
 			'/timeline',
@@ -38,6 +38,6 @@ export function createDiaryRoutes(context: WebContext) {
 				const page = await context.diaryService.listTimelinePage(options);
 				return { items: page.items, nextCursor: page.nextCursor };
 			},
-			{ query: listQuery }
+			{ query: listQuery },
 		);
 }

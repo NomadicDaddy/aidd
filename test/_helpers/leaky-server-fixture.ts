@@ -59,7 +59,7 @@ export async function writeLeakFixture(dir: string): Promise<LeakFixturePaths> {
 }
 
 export async function readLeakedServerInfo(
-	infoPath: string
+	infoPath: string,
 ): Promise<LeakedServerInfo | undefined> {
 	const file = Bun.file(infoPath);
 	if (!(await file.exists())) return undefined;
@@ -72,7 +72,7 @@ export async function readLeakedServerInfo(
 
 export async function pollFor<T>(
 	read: () => Promise<T | undefined>,
-	timeoutMs: number
+	timeoutMs: number,
 ): Promise<T> {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {

@@ -14,13 +14,13 @@ export interface ListPipelineSessionsParams {
 
 export async function getPipelineSessionReport(id: string): Promise<PipelineSessionReport> {
 	const response = await apiGet<{ report: PipelineSessionReport }>(
-		`/api/v1/pipeline-sessions/${id}/report`
+		`/api/v1/pipeline-sessions/${id}/report`,
 	);
 	return response.report;
 }
 
 export async function listPipelineSessions(
-	params: ListPipelineSessionsParams = {}
+	params: ListPipelineSessionsParams = {},
 ): Promise<PipelineSessionsPage> {
 	const search = new URLSearchParams();
 	if (params.cursor) search.set('cursor', params.cursor);

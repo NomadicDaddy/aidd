@@ -4,13 +4,13 @@ import { createAdminRoutes } from '../../backend/src/routes/admin.ts';
 
 function postShutdown(app: ReturnType<typeof createAdminRoutes>): Promise<Response> {
 	return app.handle(
-		new Request('http://127.0.0.1:3210/api/v1/admin/shutdown', { method: 'POST' })
+		new Request('http://127.0.0.1:3210/api/v1/admin/shutdown', { method: 'POST' }),
 	);
 }
 
 function postRestart(app: ReturnType<typeof createAdminRoutes>): Promise<Response> {
 	return app.handle(
-		new Request('http://127.0.0.1:3210/api/v1/admin/restart', { method: 'POST' })
+		new Request('http://127.0.0.1:3210/api/v1/admin/restart', { method: 'POST' }),
 	);
 }
 

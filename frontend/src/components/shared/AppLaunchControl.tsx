@@ -144,7 +144,7 @@ export function AppLaunchControl({
 					<AlertTriangle className="h-4 w-4" />
 					<span>Unavailable</span>
 				</Button>
-				<span className="text-muted-foreground text-xs">
+				<span className="text-xs text-muted-foreground">
 					No dev/start script configured
 				</span>
 			</div>

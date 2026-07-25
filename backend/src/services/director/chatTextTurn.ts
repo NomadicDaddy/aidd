@@ -43,7 +43,7 @@ export async function runTextOnlyChatTurn(
 	profile: ProfileRow,
 	fleetSummary: FleetSummary,
 	messages: DirectorChatMessageRecord[],
-	recipeCatalog: DirectorRecipeSummary[] = []
+	recipeCatalog: DirectorRecipeSummary[] = [],
 ): Promise<string> {
 	const config = deps.getConfig();
 	const cwd = join(config.web.dataDir, 'director', 'chat-work');
@@ -84,7 +84,7 @@ export async function runTextOnlyChatTurn(
 		events.push(event);
 	}
 	const modifiedFiles = events.flatMap((event) =>
-		event.type === 'done' ? event.filesModified : []
+		event.type === 'done' ? event.filesModified : [],
 	);
 	if (modifiedFiles.length > 0) {
 		throw new Error('Director chat attempted to modify files; response rejected.');

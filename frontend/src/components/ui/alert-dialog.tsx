@@ -46,7 +46,7 @@ export function AlertDialog({
 			open={open}
 			role="alertdialog">
 			<DialogPanel className="w-full max-w-md p-5">
-				<h2 className="text-foreground text-base font-semibold" id={titleId}>
+				<h2 className="text-base font-semibold text-foreground" id={titleId}>
 					{title}
 				</h2>
 				{description && (

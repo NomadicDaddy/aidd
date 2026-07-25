@@ -14,7 +14,7 @@ import { cleanParameter } from './detail/recipe-detail-form.ts';
 import { RecipeEditMode } from './detail/RecipeEditMode.tsx';
 import { RecipeNotFound } from './detail/RecipeNotFound.tsx';
 import { RecipeOverviewMode } from './detail/RecipeOverviewMode.tsx';
-import { collectStepErrors, toDrafts, toStep, type StepDraft } from './recipe-steps.ts';
+import { collectStepErrors, type StepDraft, toDrafts, toStep } from './recipe-steps.ts';
 
 export function RecipeDetailPage() {
 	const { id } = useParams();
@@ -46,13 +46,13 @@ export function RecipeDetailPage() {
 
 	function updateStep(stepId: string, patch: Partial<StepDraft>): void {
 		setSteps((current) =>
-			current.map((step) => (step.id === stepId ? { ...step, ...patch } : step))
+			current.map((step) => (step.id === stepId ? { ...step, ...patch } : step)),
 		);
 	}
 
 	const stepErrors = steps.map((step) => ({ id: step.id, ...collectStepErrors(step) }));
 	const hasJsonErrors = stepErrors.some(
-		(entry) => entry.configJson || entry.preHookJson || entry.postHookJson || entry.when
+		(entry) => entry.configJson || entry.preHookJson || entry.postHookJson || entry.when,
 	);
 
 	function save(): void {
@@ -72,7 +72,7 @@ export function RecipeDetailPage() {
 					.map(cleanParameter)
 					.filter(
 						(parameter): parameter is RecipeParameterDefinition =>
-							parameter !== undefined
+							parameter !== undefined,
 					),
 				steps: steps.map(toStep),
 			};

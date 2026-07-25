@@ -38,7 +38,7 @@ export function formatDuration(ms: number): string {
 }
 
 export function formatEncodingViolationSummary(
-	violations: { path: string; reason: string }[]
+	violations: { path: string; reason: string }[],
 ): string {
 	const lines = [
 		'Prompt artifact encoding check failed. Convert these files to UTF-8 before running a backend:',
@@ -58,7 +58,7 @@ export function formatFailureSummary(
 	summary: string,
 	exitCode: number,
 	details: ReturnType<typeof extractIterationDetails>,
-	backendExitCode: number = exitCode
+	backendExitCode: number = exitCode,
 ): string {
 	if (details.outcome.status === 'active_verification_timeout') {
 		const commands = details.outcome.activeVerificationTimeout?.commands ?? [];
@@ -87,7 +87,7 @@ export function formatFailureSummary(
 
 export function formatRecoverySummary(
 	summary: string,
-	details: ReturnType<typeof extractIterationDetails>
+	details: ReturnType<typeof extractIterationDetails>,
 ): string {
 	const recovery = details.outcome.activeVerificationRecovery;
 	if (!recovery) return summary;
@@ -127,7 +127,7 @@ export function isAgentSignalEvent(type: string): boolean {
 
 export function formatFeatureValidation(
 	projectDir: string,
-	result: FeatureValidationResult
+	result: FeatureValidationResult,
 ): string {
 	const projectName = projectDir.split(/[/]/).filter(Boolean).pop() ?? projectDir;
 	const total = result.total;
@@ -177,17 +177,17 @@ export function formatArtifactCheck(projectDir: string, result: ArtifactCheckRes
 	lines.push('');
 	const { summary } = result;
 	lines.push(
-		`  Summary: ${summary.present}/${summary.total} present — ${summary.fresh} fresh, ${summary.stale} stale, ${summary.missing} missing`
+		`  Summary: ${summary.present}/${summary.total} present — ${summary.fresh} fresh, ${summary.stale} stale, ${summary.missing} missing`,
 	);
 	if (result.preOnboarding && summary.requiredMissing > 0) {
 		lines.push(
-			`  Note: ${summary.requiredMissing} required artifact(s) missing, but the project is pre-onboarding`
+			`  Note: ${summary.requiredMissing} required artifact(s) missing, but the project is pre-onboarding`,
 		);
 		lines.push(
-			`        (phase: ${result.phase}) — reported as informational, not a failure. Onboarding`
+			`        (phase: ${result.phase}) — reported as informational, not a failure. Onboarding`,
 		);
 		lines.push(
-			'        creates these; the check will enforce them once the project reaches coding.'
+			'        creates these; the check will enforce them once the project reaches coding.',
 		);
 	}
 	lines.push('==============================================================================');

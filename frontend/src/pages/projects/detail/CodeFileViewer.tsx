@@ -59,7 +59,7 @@ export function CodeFileViewer({
 			<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-3 dark:border-neutral-800">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
-						<h3 className="text-foreground font-mono text-sm font-semibold break-all">
+						<h3 className="font-mono text-sm font-semibold break-all text-foreground">
 							{data.path}
 						</h3>
 						{data.language ? <Badge tone="teal">{data.language}</Badge> : null}

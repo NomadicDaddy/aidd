@@ -91,7 +91,7 @@ export class PipelineService {
 	}
 
 	listSessions(
-		options: { cursor?: string; limit?: number } = {}
+		options: { cursor?: string; limit?: number } = {},
 	): Promise<CursorPage<PipelineSessionRecord>> {
 		return this.report.listSessions(options);
 	}
@@ -104,7 +104,7 @@ export class PipelineService {
 	// inline (the in-flight step is marked failed; the session terminates per onFailure).
 	async resumeStaleSessions(): Promise<void> {
 		const { failedCount, resumable } = await this.lifecycle.reconcileStaleSessions((session) =>
-			this.classifySessionForResume(session)
+			this.classifySessionForResume(session),
 		);
 		let resumedCount = 0;
 		for (const entry of resumable) {
@@ -119,20 +119,20 @@ export class PipelineService {
 			} catch (err) {
 				webLogger.warn(
 					{ err, sessionId: entry.session.id },
-					'pipelineService.resumeStaleSessions: failed to relaunch session'
+					'pipelineService.resumeStaleSessions: failed to relaunch session',
 				);
 			}
 		}
 		if (resumedCount > 0 || failedCount > 0) {
 			webLogger.info(
 				{ failedCount, resumedCount },
-				'pipelineService.resumeStaleSessions: reconciled in-flight pipeline sessions'
+				'pipelineService.resumeStaleSessions: reconciled in-flight pipeline sessions',
 			);
 		}
 	}
 
 	private async classifySessionForResume(
-		session: PipelineSessionRow
+		session: PipelineSessionRow,
 	): Promise<{ fail: string } | Awaited<ReturnType<SessionLifecycle['deriveResumeResolution']>>> {
 		try {
 			await this.recipeService.readRecipe(session.recipeId);

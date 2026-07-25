@@ -11,7 +11,7 @@ import { optionalString } from './normalization.ts';
 export { assertSafeAgentBaseUrl };
 
 export function knownDirectAiDefaults(
-	provider: string
+	provider: string,
 ): (typeof providerDefaults)[keyof typeof providerDefaults] | undefined {
 	if (provider === 'zhipu') return providerDefaults.zhipu;
 	if (provider === 'xai') return providerDefaults.xai;
@@ -32,7 +32,7 @@ export function assertDirectAiResolvable(next: PartialAiddConfig, provider: stri
 		defaults?.baseUrl;
 	if (!baseUrl) {
 		throw new Error(
-			`Direct AI provider "${provider}" requires a baseUrl. Set Direct AI base URL or configure providers.${provider}.baseUrl in config.json.`
+			`Direct AI provider "${provider}" requires a baseUrl. Set Direct AI base URL or configure providers.${provider}.baseUrl in config.json.`,
 		);
 	}
 	assertSafeAgentBaseUrl(baseUrl, `Direct AI provider "${provider}"`);
@@ -40,14 +40,14 @@ export function assertDirectAiResolvable(next: PartialAiddConfig, provider: stri
 		optionalString(directAi.model) ?? optionalString(providerConfig?.model) ?? defaults?.model;
 	if (!model) {
 		throw new Error(
-			`Direct AI provider "${provider}" requires a model. Set Direct AI model or configure providers.${provider}.model in config.json.`
+			`Direct AI provider "${provider}" requires a model. Set Direct AI model or configure providers.${provider}.model in config.json.`,
 		);
 	}
 	if (defaults?.apiKeyRequired === true) {
 		const apiKey = optionalString(providerConfig?.apiKey);
 		if (!apiKey) {
 			throw new Error(
-				`Direct AI provider "${provider}" requires an API key. Provide one in the Direct AI section before enabling.`
+				`Direct AI provider "${provider}" requires an API key. Provide one in the Direct AI section before enabling.`,
 			);
 		}
 	}

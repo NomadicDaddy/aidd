@@ -93,7 +93,7 @@ describe('web run commits route', () => {
 			await mkdir(join(projectDir, '.aidd'), { recursive: true });
 			await writeFile(
 				join(projectDir, '.aidd', 'runs.jsonl'),
-				`${JSON.stringify({ runId: 'run-2', startedAt: '2026-06-02T00:00:00.000Z' })}\n`
+				`${JSON.stringify({ runId: 'run-2', startedAt: '2026-06-02T00:00:00.000Z' })}\n`,
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-2'));
 			const body = await fetchCommits(app, 'run-2');
@@ -110,7 +110,7 @@ describe('web run commits route', () => {
 			await mkdir(join(projectDir, '.aidd'), { recursive: true });
 			await writeFile(
 				join(projectDir, '.aidd', 'runs.jsonl'),
-				`${JSON.stringify({ startedAt: '2026-06-02T00:00:00.000Z' })}\n`
+				`${JSON.stringify({ startedAt: '2026-06-02T00:00:00.000Z' })}\n`,
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-3'));
 			const body = await fetchCommits(app, 'run-3');
@@ -160,7 +160,7 @@ describe('web run commits route', () => {
 					runId: 'run-5',
 					startedAt: '2026-06-01T00:00:00.000Z',
 					totals: { commitsCreated: 1, filesCreated: 3, filesEdited: 2 },
-				})}\n`
+				})}\n`,
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-5'));
 			const body = await fetchCommits(app, 'run-5');
@@ -188,7 +188,7 @@ describe('web run commits route', () => {
 					runId: 'run-ledger-paths',
 					startedAt: '2026-06-01T00:00:00.000Z',
 					totals: { commitsCreated: 0, filesCreated: 1, filesEdited: 55 },
-				})}\n`
+				})}\n`,
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-ledger-paths'));
 			const body = await fetchCommits(app, 'run-ledger-paths');
@@ -215,7 +215,7 @@ describe('web run commits route', () => {
 					runId: 'run-artifact-paths',
 					startedAt: '2026-06-01T00:00:00.000Z',
 					totals: { commitsCreated: 0, filesCreated: 1, filesEdited: 3 },
-				})}\n`
+				})}\n`,
 			);
 			await writeFile(
 				join(projectDir, '.aidd', 'iterations', '001.json'),
@@ -223,7 +223,7 @@ describe('web run commits route', () => {
 					filesCreated: ['src/ignored.ts'],
 					filesEdited: ['src/ignored-edit.ts'],
 					runId: 'another-run',
-				})
+				}),
 			);
 			await writeFile(
 				join(projectDir, '.aidd', 'iterations', '002.json'),
@@ -236,7 +236,7 @@ describe('web run commits route', () => {
 						join(projectDir, '.aidd', 'CHANGELOG.md'),
 					],
 					runId: 'run-artifact-paths',
-				})
+				}),
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-artifact-paths'));
 			const body = await fetchCommits(app, 'run-artifact-paths');
@@ -265,7 +265,7 @@ describe('web run commits route', () => {
 					runId: 'run-6',
 					startedAt: '2026-06-01T00:00:00.000Z',
 					totals: { commitsCreated: 2, filesCreated: 1, filesEdited: 1 },
-				})}\n`
+				})}\n`,
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-6'));
 			const body = await fetchCommits(app, 'run-6');
@@ -295,7 +295,7 @@ describe('web run commits route', () => {
 					commitsCreated: [],
 					runId: 'run-7',
 					startedAt: '2026-06-01T00:00:00.000Z',
-				})}\n`
+				})}\n`,
 			);
 			const app = stubRunsApp(runRecordFor(projectDir, 'run-7'));
 			const body = await fetchCommits(app, 'run-7');

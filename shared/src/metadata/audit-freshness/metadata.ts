@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 
 import { METADATA_DIR } from '../paths.ts';
-import { currentGitHead, createAuditFreshnessContext } from './git.ts';
+import { createAuditFreshnessContext, currentGitHead } from './git.ts';
 
 export const AUDIT_FRESHNESS_METADATA_PREFIX = 'aidd:audit-report-meta';
 export const AUDIT_STALE_THRESHOLD_DAYS = 30;
@@ -54,7 +54,7 @@ export const thresholds: AuditFreshnessThresholds = {
 
 export async function buildAuditReportMetadata(
 	projectDir: string,
-	timestamp = new Date()
+	timestamp = new Date(),
 ): Promise<AuditReportMetadata> {
 	const context = createAuditFreshnessContext();
 	return {
@@ -96,7 +96,7 @@ export function parseAuditReportMetadata(content: string): AuditReportMetadata |
 function stripAuditReportMetadata(content: string): string {
 	const pattern = new RegExp(
 		`^<!--\\s*${AUDIT_FRESHNESS_METADATA_PREFIX}\\s+[^]*?\\s*-->\\r?\\n?`,
-		'm'
+		'm',
 	);
 	return content.replace(pattern, '');
 }

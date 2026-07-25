@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
@@ -30,7 +30,7 @@ async function writeFeature(
 	projectDir: string,
 	id: string,
 	passes: boolean,
-	status = passes ? 'completed' : 'backlog'
+	status = passes ? 'completed' : 'backlog',
 ): Promise<void> {
 	await mkdir(join(projectDir, '.aidd', 'features', id), { recursive: true });
 	await Bun.write(
@@ -43,7 +43,7 @@ async function writeFeature(
 			priority: 1,
 			status,
 			title: id,
-		})
+		}),
 	);
 }
 
@@ -52,7 +52,7 @@ async function writeRoadmap(
 	roadmap: {
 		features: Record<string, { milestone?: string }>;
 		milestones: Record<string, Record<string, unknown>>;
-	}
+	},
 ): Promise<void> {
 	await mkdir(join(projectDir, '.aidd'), { recursive: true });
 	await Bun.write(join(projectDir, '.aidd', 'roadmap.json'), JSON.stringify(roadmap));
@@ -92,7 +92,7 @@ describe('web database and project APIs', () => {
 
 			const tables = sqlite
 				.query<{ name: string }, []>(
-					"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+					"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
 				)
 				.all()
 				.map((row) => row.name)
@@ -170,7 +170,7 @@ describe('web database and project APIs', () => {
 
 			const versions = sqlite
 				.query<{ version: string }, []>(
-					'SELECT version FROM schema_migrations ORDER BY version'
+					'SELECT version FROM schema_migrations ORDER BY version',
 				)
 				.all()
 				.map((row) => row.version);
@@ -189,7 +189,7 @@ describe('web database and project APIs', () => {
 
 			const versions = sqlite
 				.query<{ version: string }, []>(
-					'SELECT version FROM schema_migrations ORDER BY version'
+					'SELECT version FROM schema_migrations ORDER BY version',
 				)
 				.all()
 				.map((row) => row.version);
@@ -202,7 +202,7 @@ describe('web database and project APIs', () => {
 				.all()
 				.map((row) => row.name);
 			const pipelineSessionIdCount = runColumns.filter(
-				(col) => col === 'pipeline_session_id'
+				(col) => col === 'pipeline_session_id',
 			).length;
 			expect(pipelineSessionIdCount).toBe(1);
 		} finally {
@@ -218,21 +218,21 @@ describe('web database and project APIs', () => {
 				`INSERT INTO pipeline_sessions (
 				id, project_path, project_name, recipe_id, recipe_name, parameters_json,
 				total_steps, started_at, launch_backend, launch_reasoning_effort
-			) VALUES ('session-constraints','/project','Project','recipe','Recipe','{}',1,1,NULL,NULL)`
+			) VALUES ('session-constraints','/project','Project','recipe','Recipe','{}',1,1,NULL,NULL)`,
 			);
 			sqlite.run(
-				"UPDATE pipeline_sessions SET launch_backend = 'openai', launch_reasoning_effort = 'xhigh' WHERE id = 'session-constraints'"
+				"UPDATE pipeline_sessions SET launch_backend = 'openai', launch_reasoning_effort = 'xhigh' WHERE id = 'session-constraints'",
 			);
 
 			expect(() =>
 				sqlite.run(
-					"UPDATE pipeline_sessions SET launch_backend = 'unsupported' WHERE id = 'session-constraints'"
-				)
+					"UPDATE pipeline_sessions SET launch_backend = 'unsupported' WHERE id = 'session-constraints'",
+				),
 			).toThrow(/ck_pipeline_sessions_launch_backend/);
 			expect(() =>
 				sqlite.run(
-					"UPDATE pipeline_sessions SET launch_reasoning_effort = 'unsupported' WHERE id = 'session-constraints'"
-				)
+					"UPDATE pipeline_sessions SET launch_reasoning_effort = 'unsupported' WHERE id = 'session-constraints'",
+				),
 			).toThrow(/ck_pipeline_sessions_launch_reasoning_effort/);
 		} finally {
 			sqlite.close();
@@ -249,16 +249,16 @@ describe('web database and project APIs', () => {
 					id, project_path, project_name, recipe_id, recipe_name, parameters_json,
 					total_steps, started_at, status, launch_backend, launch_model, launch_reasoning_effort
 				) VALUES ('session-upgrade','/project','Project','recipe','Recipe','{}',1,1,
-					'completed_with_failures','grok','provider-defined','minimal')`
+					'completed_with_failures','grok','provider-defined','minimal')`,
 			);
 			sqlite.run(
-				"INSERT INTO runs (id, project_path, project_name, backend, started_at, pipeline_session_id) VALUES ('run-upgrade','/project','Project','native',1,'session-upgrade')"
+				"INSERT INTO runs (id, project_path, project_name, backend, started_at, pipeline_session_id) VALUES ('run-upgrade','/project','Project','native',1,'session-upgrade')",
 			);
 			sqlite.run(
-				"INSERT INTO pipeline_step_results (id, session_id, sequence_number, display_order, step_name, step_type) VALUES ('step-upgrade','session-upgrade',1,1,'Step','shell')"
+				"INSERT INTO pipeline_step_results (id, session_id, sequence_number, display_order, step_name, step_type) VALUES ('step-upgrade','session-upgrade',1,1,'Step','shell')",
 			);
 			sqlite.run(
-				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, project_path, project_name, session_id, started_at) VALUES ('event-upgrade','recipe','recipe','Recipe','web','/project','Project','session-upgrade',1)"
+				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, project_path, project_name, session_id, started_at) VALUES ('event-upgrade','recipe','recipe','Recipe','web','/project','Project','session-upgrade',1)",
 			);
 
 			expect(
@@ -272,9 +272,9 @@ describe('web database and project APIs', () => {
 						},
 						[]
 					>(
-						"SELECT launch_backend, launch_model, launch_reasoning_effort, status FROM pipeline_sessions WHERE id = 'session-upgrade'"
+						"SELECT launch_backend, launch_model, launch_reasoning_effort, status FROM pipeline_sessions WHERE id = 'session-upgrade'",
 					)
-					.get()
+					.get(),
 			).toEqual({
 				launch_backend: 'grok',
 				launch_model: 'provider-defined',
@@ -284,7 +284,7 @@ describe('web database and project APIs', () => {
 			expect(sqlite.query('PRAGMA foreign_key_check').all()).toEqual([]);
 			const pipelineSessionIndexes = sqlite
 				.query<{ name: string }, []>(
-					"SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'idx_pipeline_sessions_%' ORDER BY name"
+					"SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'idx_pipeline_sessions_%' ORDER BY name",
 				)
 				.all()
 				.map((row) => row.name);
@@ -304,7 +304,7 @@ describe('web database and project APIs', () => {
 					.query<{ table: string }, []>(`PRAGMA foreign_key_list(${tableName})`)
 					.all();
 				expect(
-					foreignKeys.some((foreignKey) => foreignKey.table === 'pipeline_sessions')
+					foreignKeys.some((foreignKey) => foreignKey.table === 'pipeline_sessions'),
 				).toBe(true);
 			}
 		} finally {
@@ -318,60 +318,60 @@ describe('web database and project APIs', () => {
 			migrateWebDatabase(sqlite);
 
 			sqlite.run(
-				"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('r1','/p','p','ollama',1)"
+				"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('r1','/p','p','ollama',1)",
 			);
 			sqlite.run(
-				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, project_path, project_name, backend, started_at, run_id) VALUES ('e1','run','r1','r1','cli','/p','p','native',1,'r1')"
+				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, project_path, project_name, backend, started_at, run_id) VALUES ('e1','run','r1','r1','cli','/p','p','native',1,'r1')",
 			);
 			sqlite.run(
-				"INSERT INTO director_profiles (id, backend, created_at, updated_at) VALUES ('d1','native',1,1)"
+				"INSERT INTO director_profiles (id, backend, created_at, updated_at) VALUES ('d1','native',1,1)",
 			);
 
 			// Related rows and their cross-table reference remain intact.
 			expect(
 				sqlite
 					.query<{ backend: string }, []>("SELECT backend FROM runs WHERE id='r1'")
-					.get()
+					.get(),
 			).toEqual({ backend: 'ollama' });
 			expect(
 				sqlite
 					.query<{ run_id: string }, []>(
-						"SELECT run_id FROM invocation_events WHERE id='e1'"
+						"SELECT run_id FROM invocation_events WHERE id='e1'",
 					)
-					.get()
+					.get(),
 			).toEqual({ run_id: 'r1' });
 			expect(
 				sqlite
 					.query<{ c: number }, []>(
-						"SELECT COUNT(*) AS c FROM director_profiles WHERE id='d1'"
+						"SELECT COUNT(*) AS c FROM director_profiles WHERE id='d1'",
 					)
-					.get()
+					.get(),
 			).toEqual({ c: 1 });
 			expect(sqlite.query('PRAGMA foreign_key_check').all()).toEqual([]);
 
 			// The current backend domain accepts lmstudio on all three tables.
 			sqlite.run(
-				"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('r2','/p','p','lmstudio',2)"
+				"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('r2','/p','p','lmstudio',2)",
 			);
 			sqlite.run(
-				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, project_path, project_name, backend, started_at) VALUES ('e2','run','r2','r2','cli','/p','p','lmstudio',2)"
+				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, project_path, project_name, backend, started_at) VALUES ('e2','run','r2','r2','cli','/p','p','lmstudio',2)",
 			);
 			sqlite.run(
-				"INSERT INTO director_profiles (id, backend, created_at, updated_at) VALUES ('d2','lmstudio',2,2)"
+				"INSERT INTO director_profiles (id, backend, created_at, updated_at) VALUES ('d2','lmstudio',2,2)",
 			);
 			expect(
 				sqlite
 					.query<{ c: number }, []>(
-						"SELECT COUNT(*) AS c FROM runs WHERE backend='lmstudio'"
+						"SELECT COUNT(*) AS c FROM runs WHERE backend='lmstudio'",
 					)
-					.get()
+					.get(),
 			).toEqual({ c: 1 });
 
 			// An unknown backend is still rejected by the CHECK.
 			expect(() =>
 				sqlite.run(
-					"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('r3','/p','p','bogus',3)"
-				)
+					"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('r3','/p','p','bogus',3)",
+				),
 			).toThrow();
 		} finally {
 			sqlite.close();
@@ -387,51 +387,51 @@ describe('web database and project APIs', () => {
 			expect(
 				sqlite
 					.query<{ recipe_id: string }, []>(
-						"SELECT recipe_id FROM pipeline_sessions WHERE id = 'session-1'"
+						"SELECT recipe_id FROM pipeline_sessions WHERE id = 'session-1'",
 					)
-					.get()
+					.get(),
 			).toEqual({ recipe_id: 'skill:demo' });
 			expect(
 				sqlite
 					.query<{ step_type: string }, []>(
-						"SELECT step_type FROM pipeline_step_results WHERE id = 'step-parent'"
+						"SELECT step_type FROM pipeline_step_results WHERE id = 'step-parent'",
 					)
-					.get()
+					.get(),
 			).toEqual({ step_type: 'skill' });
 			expect(
 				sqlite
 					.query<{ parent_step_result_id: string }, []>(
-						"SELECT parent_step_result_id FROM pipeline_step_results WHERE id = 'step-child'"
+						"SELECT parent_step_result_id FROM pipeline_step_results WHERE id = 'step-child'",
 					)
-					.get()
+					.get(),
 			).toEqual({ parent_step_result_id: 'step-parent' });
 			expect(
 				sqlite
 					.query<{ resource_type: string }, []>(
-						"SELECT resource_type FROM invocation_events WHERE id = 'event-parent'"
+						"SELECT resource_type FROM invocation_events WHERE id = 'event-parent'",
 					)
-					.get()
+					.get(),
 			).toEqual({ resource_type: 'skill' });
 			expect(
 				sqlite
 					.query<{ parent_invocation_id: string; parent_resource_type: string }, []>(
-						"SELECT parent_invocation_id, parent_resource_type FROM invocation_events WHERE id = 'event-child'"
+						"SELECT parent_invocation_id, parent_resource_type FROM invocation_events WHERE id = 'event-child'",
 					)
-					.get()
+					.get(),
 			).toEqual({ parent_invocation_id: 'event-parent', parent_resource_type: 'skill' });
 			expect(
 				sqlite
 					.query<{ name: string }, []>(
-						"SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_pipeline_step_results_display_order'"
+						"SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_pipeline_step_results_display_order'",
 					)
-					.get()
+					.get(),
 			).toEqual({ name: 'idx_pipeline_step_results_display_order' });
 			expect(sqlite.query('PRAGMA foreign_key_check').all()).toEqual([]);
 			expect(() =>
 				sqlite.run(
 					`UPDATE invocation_events SET resource_type = ? WHERE id = 'event-parent'`,
-					[RETIRED_CATALOG_TYPE]
-				)
+					[RETIRED_CATALOG_TYPE],
+				),
 			).toThrow();
 		} finally {
 			sqlite.close();
@@ -460,7 +460,7 @@ describe('web database and project APIs', () => {
 				selectedFeatures: ['feature-two'],
 				startedAt: '2026-05-16T05:00:00.000Z',
 				summary: 'coding completed feature-two',
-			})
+			}),
 		);
 		await Bun.write(
 			join(projectDir, '.aidd', 'runs.jsonl'),
@@ -481,7 +481,7 @@ describe('web database and project APIs', () => {
 					inputTokens: 1_000,
 					outputTokens: 200,
 				},
-			})}\n`
+			})}\n`,
 		);
 		await writeFeature(projectDir, 'feature-one', true);
 		await writeFeature(projectDir, 'feature-two', false);
@@ -605,7 +605,7 @@ describe('web database and project APIs', () => {
 			syncState: 'idle',
 		});
 		expect(() => assertAllowedPath([allowedRoot], outsideProjectDir)).toThrow(
-			'Path is outside allowed roots'
+			'Path is outside allowed roots',
 		);
 	});
 
@@ -719,7 +719,7 @@ describe('web database and project APIs', () => {
 		});
 		expect(typeof profile.updatedAt).toBe('string');
 		const written = JSON.parse(
-			await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8')
+			await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8'),
 		) as { bucket?: string; source?: string };
 		expect(written).toMatchObject({ bucket: 'public_multi_tenant', source: 'explicit' });
 		for (const required of projectAssuranceProfileFileSchema.required) {
@@ -733,7 +733,7 @@ describe('web database and project APIs', () => {
 				dataSensitivity: 'low',
 				deployment: 'local',
 				externalIntegrations: 'none',
-			})
+			}),
 		).rejects.toThrow('Invalid project profile field: bucket');
 	});
 
@@ -1090,19 +1090,19 @@ describe('web database and project APIs', () => {
 
 		// 1. malformed base64url id rejected
 		await expect(service.getProjectDetail('not-a-real-project!!')).rejects.toBeInstanceOf(
-			ProjectNotFoundError
+			ProjectNotFoundError,
 		);
 
 		// 2. base64url-shaped but decodes to nonexistent path inside allowed root
 		const bogusId = 'not-a-real-project';
 		await expect(service.getProjectDetail(bogusId)).rejects.toBeInstanceOf(
-			ProjectNotFoundError
+			ProjectNotFoundError,
 		);
 
 		// 3. encoded path that points outside any allowed root
 		const outsideId = encodeProjectId(join(tmpDir, 'some-other-place'));
 		await expect(service.getProjectDetail(outsideId)).rejects.toBeInstanceOf(
-			ProjectNotFoundError
+			ProjectNotFoundError,
 		);
 
 		// 4. encoded path inside allowed root but with no .aidd metadata
@@ -1110,7 +1110,7 @@ describe('web database and project APIs', () => {
 		await mkdir(emptyDir, { recursive: true });
 		const emptyId = encodeProjectId(emptyDir);
 		await expect(service.getProjectDetail(emptyId)).rejects.toBeInstanceOf(
-			ProjectNotFoundError
+			ProjectNotFoundError,
 		);
 
 		// Verify NO artifact-check file or stray dir was created under the allowed root
@@ -1152,7 +1152,7 @@ describe('web database and project APIs', () => {
 		const updated = await service.updateFeatureStatus(
 			encodeProjectId(projectDir),
 			'feature-status',
-			'in_progress'
+			'in_progress',
 		);
 
 		expect(updated).toMatchObject({
@@ -1177,7 +1177,7 @@ describe('web database and project APIs', () => {
 			'.aidd',
 			'features',
 			'feature-roadmap',
-			'feature.json'
+			'feature.json',
 		);
 		const beforeFeature = await readFile(featurePath, 'utf8');
 		const service = new ProjectService({
@@ -1205,10 +1205,10 @@ describe('web database and project APIs', () => {
 		const updated = await service.updateFeatureMilestone(
 			encodeProjectId(projectDir),
 			'feature-roadmap',
-			'v1.0'
+			'v1.0',
 		);
 		const roadmap = JSON.parse(
-			await readFile(join(projectDir, '.aidd', 'roadmap.json'), 'utf8')
+			await readFile(join(projectDir, '.aidd', 'roadmap.json'), 'utf8'),
 		) as { features: Record<string, { milestone?: string }> };
 
 		expect(updated.feature).toMatchObject({ id: 'feature-roadmap', milestone: 'v1.0' });
@@ -1249,17 +1249,17 @@ describe('web database and project APIs', () => {
 		});
 
 		await expect(
-			service.updateFeatureMilestone(encodeProjectId(projectDir), 'feature-roadmap', 'v9')
+			service.updateFeatureMilestone(encodeProjectId(projectDir), 'feature-roadmap', 'v9'),
 		).rejects.toThrow('Unknown roadmap milestone');
 		await expect(
-			service.updateFeatureMilestone(encodeProjectId(projectDir), '../bad', 'MVP')
+			service.updateFeatureMilestone(encodeProjectId(projectDir), '../bad', 'MVP'),
 		).rejects.toThrow('Invalid feature id');
 
 		const noRoadmapDir = join(allowedRoot, 'no-roadmap-project');
 		await mkdir(join(noRoadmapDir, '.aidd'), { recursive: true });
 		await writeFeature(noRoadmapDir, 'feature-roadmap', false);
 		await expect(
-			service.updateFeatureMilestone(encodeProjectId(noRoadmapDir), 'feature-roadmap', 'MVP')
+			service.updateFeatureMilestone(encodeProjectId(noRoadmapDir), 'feature-roadmap', 'MVP'),
 		).rejects.toThrow('Project has no roadmap.json');
 	});
 
@@ -1334,7 +1334,7 @@ describe('web database and project APIs', () => {
 				priority: 1,
 				status: 'waiting_approval',
 				title: 'feature-parked',
-			})
+			}),
 		);
 		const service = new ProjectService({
 			allowRemote: false,
@@ -1403,7 +1403,7 @@ describe('web database and project APIs', () => {
 			{
 				decision: 'Use display_order only.',
 				decisionRequired: true,
-			}
+			},
 		);
 
 		expect(approved).toMatchObject({
@@ -1431,7 +1431,7 @@ describe('web database and project APIs', () => {
 			JSON.stringify({
 				features: { 'feature-parked': { milestone: 'v1.0' } },
 				milestones: { MVP: { priority: 1 }, 'v1.0': { priority: 2 } },
-			})
+			}),
 		);
 		await writeFeature(projectDir, 'feature-parked', false, 'waiting_approval');
 		const service = new ProjectService({
@@ -1462,7 +1462,7 @@ describe('web database and project APIs', () => {
 			{
 				decision: null,
 				decisionRequired: false,
-			}
+			},
 		);
 
 		expect(approved.status).toBe('backlog');
@@ -1470,8 +1470,8 @@ describe('web database and project APIs', () => {
 		const onDisk = JSON.parse(
 			await readFile(
 				join(projectDir, '.aidd', 'features', 'feature-parked', 'feature.json'),
-				'utf8'
-			)
+				'utf8',
+			),
 		) as { status?: string };
 		expect(onDisk.status).toBe('backlog');
 	});
@@ -1508,7 +1508,7 @@ describe('web database and project APIs', () => {
 			service.approveFeature(encodeProjectId(projectDir), 'feature-decision-required', {
 				decision: null,
 				decisionRequired: true,
-			})
+			}),
 		).rejects.toThrow('Approval decision is required');
 	});
 
@@ -1587,7 +1587,7 @@ describe('web database and project APIs', () => {
 		await service.deleteFeature(encodeProjectId(projectDir), 'feature-drop');
 
 		const roadmap = JSON.parse(
-			await readFile(join(projectDir, '.aidd', 'roadmap.json'), 'utf8')
+			await readFile(join(projectDir, '.aidd', 'roadmap.json'), 'utf8'),
 		) as { features: Record<string, { milestone?: string }> };
 		expect(roadmap.features['feature-drop']).toBeUndefined();
 		expect(roadmap.features['feature-keep']?.milestone).toBe('MVP');
@@ -1626,14 +1626,14 @@ describe('web database and project APIs', () => {
 				projectId,
 				{ confirmation: 'sample-project', mode: 'metadata' },
 				async () => false,
-				async () => 0
-			)
+				async () => 0,
+			),
 		).rejects.toThrow('Project path confirmation does not match');
 		await service.deleteProject(
 			projectId,
 			{ confirmation: resolve(projectDir), mode: 'metadata' },
 			async () => false,
-			async () => 0
+			async () => 0,
 		);
 
 		expect(await pathExists(projectDir)).toBe(true);
@@ -1671,8 +1671,8 @@ describe('web database and project APIs', () => {
 				encodeProjectId(projectDir),
 				{ confirmation: resolve(projectDir), mode: 'directory' },
 				async () => true,
-				async () => 0
-			)
+				async () => 0,
+			),
 		).rejects.toThrow('Project has active runs');
 		expect(await pathExists(projectDir)).toBe(true);
 	});
@@ -1713,7 +1713,7 @@ describe('web database and project APIs', () => {
 			async () => false,
 			async (sourcePath, destinationPath) => {
 				updates.push({ destinationPath, sourcePath });
-			}
+			},
 		);
 
 		expect(moved.path).toBe(resolve(join(destinationRoot, 'renamed-project')));
@@ -1759,7 +1759,7 @@ describe('web database and project APIs', () => {
 			encodeProjectId(sourceProject),
 			{ destinationName: 'renamed-project', destinationRoot: root },
 			async () => false,
-			async () => {}
+			async () => {},
 		);
 
 		expect(moved.path).toBe(resolve(join(root, 'renamed-project')));
@@ -1772,8 +1772,8 @@ describe('web database and project APIs', () => {
 				encodeProjectId(moved.path),
 				{ destinationName: 'renamed-project', destinationRoot: root },
 				async () => false,
-				async () => {}
-			)
+				async () => {},
+			),
 		).rejects.toThrow('Project is already at that destination');
 	});
 
@@ -1821,7 +1821,7 @@ describe('web database and project APIs', () => {
 					encodeProjectId(sourceProject),
 					{ destinationName: 'renamed-project', destinationRoot: root },
 					async () => false,
-					async () => {}
+					async () => {},
 				);
 			} catch (err) {
 				error = err;
@@ -1873,8 +1873,8 @@ describe('web database and project APIs', () => {
 				encodeProjectId(sourceProject),
 				{ destinationRoot },
 				async () => false,
-				async () => {}
-			)
+				async () => {},
+			),
 		).rejects.toThrow('Destination path already exists');
 		expect(await pathExists(sourceProject)).toBe(true);
 		expect(await pathExists(existingDestination)).toBe(true);
@@ -2004,7 +2004,7 @@ describe('pipeline_step_results ordering constraints', () => {
 				id, project_path, project_name, recipe_id, recipe_name, parameters_json,
 				total_steps, started_at
 			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			[id, '/test', 'test', 'recipe-1', 'Test Recipe', '{}', 2, Date.now()]
+			[id, '/test', 'test', 'recipe-1', 'Test Recipe', '{}', 2, Date.now()],
 		);
 	}
 
@@ -2015,14 +2015,14 @@ describe('pipeline_step_results ordering constraints', () => {
 			id: string;
 			sequenceNumber: number;
 			sessionId: string;
-		}
+		},
 	): void {
 		sqlite.run(
 			`INSERT INTO pipeline_step_results (
 				id, session_id, sequence_number, display_order, depth,
 				step_name, step_type, phase, status
 			) VALUES (?, ?, ?, ?, 0, 'Step', 'shell', 'step', 'queued')`,
-			[input.id, input.sessionId, input.sequenceNumber, input.displayOrder]
+			[input.id, input.sessionId, input.sequenceNumber, input.displayOrder],
 		);
 	}
 
@@ -2045,7 +2045,7 @@ describe('pipeline_step_results ordering constraints', () => {
 					id: 'step-display-duplicate',
 					sequenceNumber: 2,
 					sessionId: 'sess-display-order-unique',
-				})
+				}),
 			).toThrow(/UNIQUE constraint failed/);
 		} finally {
 			sqlite.close();
@@ -2077,7 +2077,7 @@ describe('pipeline_step_results ordering constraints', () => {
 					FROM pipeline_step_results
 					WHERE session_id = 'sess-sequence-reused'
 						AND sequence_number = 1
-					ORDER BY display_order`
+					ORDER BY display_order`,
 				)
 				.all()
 				.map((row) => row.id);
@@ -2095,14 +2095,14 @@ describe('pipeline_step_results self-referential FK', () => {
 			migrateWebDatabase(sqlite);
 			const fks = sqlite
 				.query<{ from: string; table: string; to: string; on_delete: string }, []>(
-					'PRAGMA foreign_key_list(pipeline_step_results)'
+					'PRAGMA foreign_key_list(pipeline_step_results)',
 				)
 				.all();
 			const selfFk = fks.find(
 				(fk) =>
 					fk.from === 'parent_step_result_id' &&
 					fk.table === 'pipeline_step_results' &&
-					fk.to === 'id'
+					fk.to === 'id',
 			);
 			expect(selfFk).toBeDefined();
 			expect(selfFk!.on_delete).toBe('CASCADE');
@@ -2161,7 +2161,7 @@ describe('pipeline_step_results self-referential FK', () => {
 		// Verify child exists before delete
 		const before = sqlite
 			.query<{ id: string }, []>(
-				"SELECT id FROM pipeline_step_results WHERE id = 'child-step-1'"
+				"SELECT id FROM pipeline_step_results WHERE id = 'child-step-1'",
 			)
 			.all();
 		expect(before).toHaveLength(1);
@@ -2174,7 +2174,7 @@ describe('pipeline_step_results self-referential FK', () => {
 		// Child should be gone via cascade
 		const after = sqlite
 			.query<{ id: string }, []>(
-				"SELECT id FROM pipeline_step_results WHERE id = 'child-step-1'"
+				"SELECT id FROM pipeline_step_results WHERE id = 'child-step-1'",
 			)
 			.all();
 		expect(after).toHaveLength(0);
@@ -2212,7 +2212,7 @@ describe('suggestions cycleId FK', () => {
 
 		const row = sqlite
 			.query<{ task_type: string }, []>(
-				"SELECT task_type FROM suggestions WHERE id = 'suggestion-priority-type'"
+				"SELECT task_type FROM suggestions WHERE id = 'suggestion-priority-type'",
 			)
 			.get();
 		expect(row?.task_type).toBe('artifact_maintenance');
@@ -2225,11 +2225,11 @@ describe('suggestions cycleId FK', () => {
 			migrateWebDatabase(sqlite);
 			const fks = sqlite
 				.query<{ from: string; table: string; to: string; on_delete: string }, []>(
-					'PRAGMA foreign_key_list(suggestions)'
+					'PRAGMA foreign_key_list(suggestions)',
 				)
 				.all();
 			const cycleFk = fks.find(
-				(fk) => fk.from === 'cycle_id' && fk.table === 'director_cycles' && fk.to === 'id'
+				(fk) => fk.from === 'cycle_id' && fk.table === 'director_cycles' && fk.to === 'id',
 			);
 			expect(cycleFk).toBeDefined();
 			expect(cycleFk!.on_delete).toBe('CASCADE');
@@ -2244,14 +2244,14 @@ describe('suggestions cycleId FK', () => {
 			migrateWebDatabase(sqlite);
 			const fks = sqlite
 				.query<{ from: string; on_delete: string; table: string; to: string }, []>(
-					'PRAGMA foreign_key_list(suggestions)'
+					'PRAGMA foreign_key_list(suggestions)',
 				)
 				.all();
 			const pipelineFk = fks.find(
 				(fk) =>
 					fk.from === 'launched_pipeline_session_id' &&
 					fk.table === 'pipeline_sessions' &&
-					fk.to === 'id'
+					fk.to === 'id',
 			);
 			expect(pipelineFk).toBeDefined();
 			expect(pipelineFk!.on_delete).toBe('SET NULL');
@@ -2364,7 +2364,7 @@ describe('sync state from aidd metadata', () => {
 				startedAt: '2026-05-17T14:00:00.000Z',
 				stopReason: 'completed',
 				summary: 'completed metadata-backed run',
-			})}\n`
+			})}\n`,
 		);
 
 		const sqlite = new Database(':memory:');
@@ -2411,7 +2411,7 @@ describe('sync state from aidd metadata', () => {
 				outcome: { status: 'failed' },
 				startedAt: '2026-05-17T15:00:00.000Z',
 				summary: 'validation failed',
-			})
+			}),
 		);
 		const service = new ProjectService(webConfig(tmpDir));
 

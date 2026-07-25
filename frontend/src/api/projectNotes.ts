@@ -5,7 +5,7 @@ import { projectApiPath } from './projectPath.ts';
 
 export async function getProjectNotes(
 	id: string,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<ProjectNotesResponse> {
 	return await apiGet<ProjectNotesResponse>(`${projectApiPath(id)}/notes`, { signal });
 }

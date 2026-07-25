@@ -14,9 +14,9 @@ import {
 	type AuditChangeCounts,
 	type AuditReportFreshness,
 	type AuditReportMetadata,
-	type AuditStaleReason,
 	auditReportPath,
 	auditReportsDir,
+	type AuditStaleReason,
 	buildAuditReportMetadata,
 	parseAuditReportMetadata,
 	prependAuditReportMetadata,
@@ -28,8 +28,8 @@ export {
 	type AuditChangeCounts,
 	type AuditReportFreshness,
 	type AuditReportMetadata,
-	type AuditStaleReason,
 	auditReportPath,
+	type AuditStaleReason,
 	prependAuditReportMetadata,
 } from './audit-freshness/metadata.ts';
 
@@ -48,7 +48,7 @@ interface AuditFreshnessOptions {
 export async function evaluateAuditReportFreshness(
 	projectDir: string,
 	auditName: string,
-	options: AuditFreshnessOptions = {}
+	options: AuditFreshnessOptions = {},
 ): Promise<AuditReportFreshness> {
 	const now = options.now ?? new Date();
 	const context = options.context ?? createAuditFreshnessContext();
@@ -101,7 +101,7 @@ export async function writeAuditReportWithMetadata(
 	projectDir: string,
 	auditName: string,
 	content: string,
-	timestamp = new Date()
+	timestamp = new Date(),
 ): Promise<string> {
 	const path = auditReportPath(projectDir, auditName, timestamp);
 	const metadata = await buildAuditReportMetadata(projectDir, timestamp);
@@ -114,7 +114,7 @@ export async function writeAuditReportWithMetadata(
 async function latestAuditReport(
 	projectDir: string,
 	auditName: string,
-	excludedReportMarker?: string
+	excludedReportMarker?: string,
 ): Promise<AuditReportSnapshot | null> {
 	const reportDir = auditReportsDir(projectDir);
 	let entries: string[];
@@ -124,7 +124,7 @@ async function latestAuditReport(
 		return null;
 	}
 	const matching = entries.filter(
-		(entry) => entry.startsWith(`${auditName}-`) && entry.endsWith('.md')
+		(entry) => entry.startsWith(`${auditName}-`) && entry.endsWith('.md'),
 	);
 	const snapshots = await Promise.all(
 		matching.map(async (entry) => {
@@ -143,7 +143,7 @@ async function latestAuditReport(
 			} catch {
 				return null;
 			}
-		})
+		}),
 	);
 	return (
 		snapshots
@@ -156,7 +156,7 @@ async function codeChangesSinceReport(
 	projectDir: string,
 	report: AuditReportSnapshot,
 	metadata: AuditReportMetadata | null,
-	context: AuditFreshnessContext
+	context: AuditFreshnessContext,
 ): Promise<AuditChangeCounts | null> {
 	if (!(await isGitWorktree(projectDir, context))) return null;
 	const args = metadata?.gitHead

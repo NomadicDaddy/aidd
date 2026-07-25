@@ -26,7 +26,7 @@ export function parseStopWebArgs(argv: string[]): StopWebOptions {
 
 export function forceStopAllowed(
 	options: Pick<StopWebOptions, 'force'>,
-	platform: NodeJS.Platform = process.platform
+	platform: NodeJS.Platform = process.platform,
 ): boolean {
 	return platform !== 'win32' || options.force;
 }

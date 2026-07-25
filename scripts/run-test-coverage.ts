@@ -30,7 +30,7 @@ async function runCoverageTests(projectRoot: string, testFilters: string[]): Pro
 			stderr: 'inherit',
 			stdout: 'inherit',
 			windowsHide: true,
-		}
+		},
 	);
 	return await coverageProcess.exited;
 }

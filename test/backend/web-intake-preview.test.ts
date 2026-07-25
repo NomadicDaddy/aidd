@@ -68,7 +68,7 @@ describe('intake preview', () => {
 				engines: { bun: '>=1.0.0' },
 				name: 'taskboard',
 			}),
-			'utf8'
+			'utf8',
 		);
 		await writeFile(join(project, 'tsconfig.json'), '{}', 'utf8');
 		const manifestPath = join(root, 'spernakit.psd1');

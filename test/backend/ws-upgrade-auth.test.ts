@@ -15,8 +15,8 @@ describe('isWebSocketUpgradeAuthorized', () => {
 					headers: { 'x-forwarded-for': '100.64.1.2' },
 					query: { token: TOKEN },
 					remoteAddress: '127.0.0.1',
-				}
-			)
+				},
+			),
 		).toBe(true);
 	});
 
@@ -27,8 +27,8 @@ describe('isWebSocketUpgradeAuthorized', () => {
 				{
 					headers: { authorization: `Bearer ${TOKEN}`, 'x-forwarded-for': '100.64.1.2' },
 					remoteAddress: '127.0.0.1',
-				}
-			)
+				},
+			),
 		).toBe(true);
 	});
 
@@ -36,14 +36,14 @@ describe('isWebSocketUpgradeAuthorized', () => {
 		expect(
 			isWebSocketUpgradeAuthorized(
 				{ authToken: TOKEN },
-				{ headers: { 'x-forwarded-for': '100.64.1.2' }, query: { token: 'nope' } }
-			)
+				{ headers: { 'x-forwarded-for': '100.64.1.2' }, query: { token: 'nope' } },
+			),
 		).toBe(false);
 		expect(
 			isWebSocketUpgradeAuthorized(
 				{ authToken: TOKEN },
-				{ headers: { 'x-forwarded-for': '100.64.1.2' } }
-			)
+				{ headers: { 'x-forwarded-for': '100.64.1.2' } },
+			),
 		).toBe(false);
 	});
 
@@ -51,20 +51,20 @@ describe('isWebSocketUpgradeAuthorized', () => {
 		expect(
 			isWebSocketUpgradeAuthorized(
 				{},
-				{ headers: { 'x-forwarded-for': '100.64.1.2' }, query: { token: TOKEN } }
-			)
+				{ headers: { 'x-forwarded-for': '100.64.1.2' }, query: { token: TOKEN } },
+			),
 		).toBe(false);
 	});
 
 	test('direct loopback upgrade keeps the zero-config local exemption', () => {
 		expect(isWebSocketUpgradeAuthorized({}, { headers: {}, remoteAddress: '127.0.0.1' })).toBe(
-			true
+			true,
 		);
 		expect(
 			isWebSocketUpgradeAuthorized(
 				{ authToken: TOKEN },
-				{ headers: {}, remoteAddress: '127.0.0.1' }
-			)
+				{ headers: {}, remoteAddress: '127.0.0.1' },
+			),
 		).toBe(true);
 	});
 
@@ -72,14 +72,14 @@ describe('isWebSocketUpgradeAuthorized', () => {
 		expect(
 			isWebSocketUpgradeAuthorized(
 				{ authToken: TOKEN },
-				{ headers: {}, remoteAddress: '100.64.1.2' }
-			)
+				{ headers: {}, remoteAddress: '100.64.1.2' },
+			),
 		).toBe(false);
 		expect(
 			isWebSocketUpgradeAuthorized(
 				{ authToken: TOKEN },
-				{ headers: {}, query: { token: TOKEN }, remoteAddress: '100.64.1.2' }
-			)
+				{ headers: {}, query: { token: TOKEN }, remoteAddress: '100.64.1.2' },
+			),
 		).toBe(true);
 	});
 });

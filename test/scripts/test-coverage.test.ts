@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 
 import {
-	isProductionSourcePath,
 	type FileCoverageMetrics,
+	isProductionSourcePath,
 } from '../../scripts/lib/test-coverage/contracts.ts';
 import { parseProductionLcov } from '../../scripts/lib/test-coverage/lcov.ts';
 import { buildCoverageReport, coveragePercent } from '../../scripts/lib/test-coverage/report.ts';
@@ -53,7 +53,7 @@ describe('production test coverage', () => {
 		};
 		const report = buildCoverageReport(
 			['backend/src/server.ts', 'backend/src/unloaded.ts'],
-			new Map([[backendFile.path, backendFile]])
+			new Map([[backendFile.path, backendFile]]),
 		);
 		const backend = report.areas.find((area) => area.id === 'backend');
 

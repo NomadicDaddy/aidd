@@ -10,7 +10,7 @@ import { useProjects, useProjectsGitStatus } from '../../hooks/useProjects.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { ProjectInitFailures } from './ProjectInitFailures.tsx';
-import { ProjectIntakePanel, type IntakeLane } from './ProjectIntakePanel.tsx';
+import { type IntakeLane, ProjectIntakePanel } from './ProjectIntakePanel.tsx';
 import { ProjectsPageActions } from './ProjectsPageActions.tsx';
 import { ProjectsResults } from './ProjectsResults.tsx';
 import { ProjectsToolbar } from './ProjectsToolbar.tsx';
@@ -72,7 +72,7 @@ export function ProjectsPage() {
 				toast.info('No projects discovered');
 			} else {
 				toast.success(
-					`Found ${discovered.length} project${discovered.length === 1 ? '' : 's'}`
+					`Found ${discovered.length} project${discovered.length === 1 ? '' : 's'}`,
 				);
 			}
 		} catch (error) {
@@ -110,7 +110,7 @@ export function ProjectsPage() {
 							}
 							onToggleNew={() =>
 								setIntakeLane((lane) =>
-									lane !== null && lane !== 'ingest' ? null : 'fresh'
+									lane !== null && lane !== 'ingest' ? null : 'fresh',
 								)
 							}
 							projectView={projectView}

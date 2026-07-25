@@ -51,15 +51,15 @@ const forbiddenReferenceGroups = [
 		patterns: [
 			new RegExp(
 				`${String.raw`D:\\applications\\${staleRuntimeName}(?:\\|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 			new RegExp(
 				`${String.raw`/d/applications/${staleRuntimeName}(?:/|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 			new RegExp(
 				`${String.raw`/mnt/d/applications/${staleRuntimeName}(?:/|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 			new RegExp(String.raw`\b${staleRuntimeName}\b`, 'i'),
 		],
@@ -69,19 +69,19 @@ const forbiddenReferenceGroups = [
 		patterns: [
 			new RegExp(
 				`${String.raw`D:\\applications\\${externalSourceRootName}(?:\\|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 			new RegExp(
 				`${String.raw`d:/applications/${externalSourceRootName}(?:/|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 			new RegExp(
 				`${String.raw`/d/applications/${externalSourceRootName}(?:/|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 			new RegExp(
 				`${String.raw`/mnt/d/applications/${externalSourceRootName}(?:/|`}\`${String.raw`|\s|$)`}`,
-				'i'
+				'i',
 			),
 		],
 	},

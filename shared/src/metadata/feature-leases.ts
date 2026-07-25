@@ -125,7 +125,7 @@ export function createFeatureLeaseService(input: {
 async function acquireLease(
 	leaseDir: string,
 	featureId: string,
-	owner: { pid: number; runId: string }
+	owner: { pid: number; runId: string },
 ): Promise<FeatureLeaseAttempt> {
 	const path = leasePath(leaseDir, featureId);
 	await mkdir(leaseDir, { recursive: true });
@@ -192,7 +192,7 @@ export type StaleLeaseReclaim =
 export async function reclaimStaleLease(
 	path: string,
 	classifiedRaw: string,
-	quarantinePath: string
+	quarantinePath: string,
 ): Promise<StaleLeaseReclaim> {
 	try {
 		await rename(path, quarantinePath);

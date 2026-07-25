@@ -23,10 +23,10 @@ export function ProjectsNavDropdown({ collapsed }: ProjectsNavDropdownProps): Re
 			(projectsQuery.data?.projects ?? [])
 				.filter((project) => !project.name.endsWith('.old'))
 				.sort((left, right) => left.name.localeCompare(right.name)),
-		[projectsQuery.data?.projects]
+		[projectsQuery.data?.projects],
 	);
 	const currentProject = projects.find(
-		(project) => projectDetailTarget(project.routeId, '') === location.pathname
+		(project) => projectDetailTarget(project.routeId, '') === location.pathname,
 	);
 	const onProjectsIndex =
 		location.pathname === projectsPath || location.pathname === `${projectsPath}/`;
@@ -43,24 +43,24 @@ export function ProjectsNavDropdown({ collapsed }: ProjectsNavDropdownProps): Re
 		<div
 			className={cn(
 				'group relative flex h-11 w-11 shrink-0 items-center justify-center gap-2.5 rounded-lg px-0 text-sm font-medium sm:h-9 sm:w-auto sm:justify-start sm:px-3',
-				'focus-within:ring-ring/50 focus-within:ring-offset-background transition-all duration-150 focus-within:ring-2 focus-within:ring-offset-2',
+				'transition-all duration-150 focus-within:ring-2 focus-within:ring-ring/50 focus-within:ring-offset-2 focus-within:ring-offset-background',
 				active
 					? 'bg-accent-muted text-accent-muted-foreground shadow-sm'
-					: 'text-muted-foreground hover:bg-muted hover:text-foreground'
+					: 'text-muted-foreground hover:bg-muted hover:text-foreground',
 			)}
 			title={label}>
 			<span
 				aria-hidden="true"
 				className={cn(
-					'bg-accent absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full transition-opacity sm:block',
-					active ? 'opacity-100' : 'opacity-0'
+					'absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full bg-accent transition-opacity sm:block',
+					active ? 'opacity-100' : 'opacity-0',
 				)}
 			/>
 			<FolderKanban aria-hidden="true" className="h-4 w-4 shrink-0" />
 			<span
 				className={cn(
 					'min-w-0 flex-1 truncate',
-					collapsed ? 'hidden' : 'hidden sm:inline'
+					collapsed ? 'hidden' : 'hidden sm:inline',
 				)}>
 				{label}
 			</span>
@@ -70,7 +70,7 @@ export function ProjectsNavDropdown({ collapsed }: ProjectsNavDropdownProps): Re
 			/>
 			<select
 				aria-label="Projects navigation"
-				className="bg-background text-foreground absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0 dark:[color-scheme:dark]"
+				className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-background text-foreground opacity-0 dark:[color-scheme:dark]"
 				onChange={(event) => {
 					void navigate(event.target.value);
 				}}

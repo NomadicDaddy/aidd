@@ -1,6 +1,6 @@
 import type { Static } from 'elysia';
 
-import { backendNames, type BackendName } from 'aidd-shared/plan/types';
+import { type BackendName, backendNames } from 'aidd-shared/plan/types';
 import { t } from 'elysia';
 
 export const backendNameBody = t.Union(backendNames.map((name) => t.Literal(name)));

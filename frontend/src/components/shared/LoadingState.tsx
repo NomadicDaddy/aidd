@@ -2,7 +2,7 @@ import { Card } from '../ui/card.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
 
 export function LoadingState({ message = 'Loading…' }: { message?: string }) {
-	return <Card className="text-muted-foreground py-10 text-center text-sm">{message}</Card>;
+	return <Card className="py-10 text-center text-sm text-muted-foreground">{message}</Card>;
 }
 
 export function SkeletonRows({
@@ -18,10 +18,10 @@ export function SkeletonRows({
 	return (
 		<Card aria-busy="true" aria-live="polite" className="overflow-hidden p-0">
 			<span className="sr-only">{label}</span>
-			<div className="border-border bg-muted border-b px-4 py-3">
+			<div className="border-b border-border bg-muted px-4 py-3">
 				<Skeleton className="h-3 w-24" />
 			</div>
-			<ul className="divide-border divide-y">
+			<ul className="divide-y divide-border">
 				{Array.from({ length: count }).map((_, rowIndex) => (
 					<li
 						className="grid gap-3 px-4 py-3"

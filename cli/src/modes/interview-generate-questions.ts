@@ -33,7 +33,7 @@ to create or update ${relativeQuestionsFile}.`;
 export function buildGenerateQuestionsRetryDirective(
 	questionsFile: string,
 	relativeQuestionsFile: string,
-	failedAttempts: number
+	failedAttempts: number,
 ): string {
 	return `## RETRY ${failedAttempts + 1}: the interview questions file was NOT created
 

@@ -53,7 +53,7 @@ export function ProjectsResults({
 	if (noRegistered) {
 		return (
 			<Card className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-				<p className="text-foreground text-sm font-medium">
+				<p className="text-sm font-medium text-foreground">
 					No registered project roots are reachable.
 				</p>
 				<p className="text-xs text-neutral-500">
@@ -71,7 +71,7 @@ export function ProjectsResults({
 	if (noDiscovered) {
 		return (
 			<Card className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-				<p className="text-foreground text-sm font-medium">
+				<p className="text-sm font-medium text-foreground">
 					No projects discovered under the configured roots.
 				</p>
 				<p className="text-xs text-neutral-500">
@@ -89,7 +89,7 @@ export function ProjectsResults({
 	if (noMatch) {
 		return (
 			<Card className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-				<p className="text-foreground text-sm font-medium">
+				<p className="text-sm font-medium text-foreground">
 					No projects match the active filters.
 				</p>
 				<p className="text-xs text-neutral-500">

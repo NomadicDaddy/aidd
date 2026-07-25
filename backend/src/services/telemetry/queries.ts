@@ -18,7 +18,7 @@ export async function listInvocations(
 		resourceId?: string | undefined;
 		resourceType?: TelemetryResourceType | undefined;
 		windowMs?: number | undefined;
-	}
+	},
 ): Promise<InvocationRecord[]> {
 	const filters = [];
 	if (input.resourceType !== undefined) {
@@ -48,8 +48,8 @@ export async function listInvocations(
 		.limit(input.limit);
 	const parentIds = Array.from(
 		new Set(
-			rows.map((row) => row.inv.parentInvocationId).filter((id): id is string => id !== null)
-		)
+			rows.map((row) => row.inv.parentInvocationId).filter((id): id is string => id !== null),
+		),
 	);
 	const parents = parentIds.length
 		? await db

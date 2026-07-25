@@ -1,7 +1,7 @@
 import type { BackendName } from 'aidd-shared/plan/types';
 
 import { providerDefaults } from 'aidd-shared/agent/client';
-import { getUserConfigPath, type DirectAiSurface, type ResolvedConfig } from 'aidd-shared/config';
+import { type DirectAiSurface, getUserConfigPath, type ResolvedConfig } from 'aidd-shared/config';
 import {
 	resolveBackendDefaultModel,
 	resolveBackendProvider,
@@ -64,7 +64,7 @@ function directAiConfiguredModel(config: ResolvedConfig, provider: string): stri
 function directAiReasoning(
 	config: ResolvedConfig,
 	provider: string,
-	requestReasoning: string | undefined
+	requestReasoning: string | undefined,
 ): string {
 	return (
 		requestReasoning ??
@@ -77,7 +77,7 @@ function directAiReasoning(
 function directAiModel(
 	config: ResolvedConfig,
 	provider: string,
-	requestModel: string | undefined
+	requestModel: string | undefined,
 ): string {
 	return display(requestModel ?? directAiConfiguredModel(config, provider));
 }

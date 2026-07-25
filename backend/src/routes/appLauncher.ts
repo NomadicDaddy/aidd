@@ -15,7 +15,7 @@ export function createAppLauncherRoutes(context: WebContext) {
 		.get(
 			'/status/:id',
 			async ({ params }) => ({ launch: await launcher.getStatus(params.id) }),
-			{ params: projectIdParams }
+			{ params: projectIdParams },
 		)
 		.post('/start', async ({ body }) => ({ launch: await launcher.start(body.projectId) }), {
 			body: projectIdBody,

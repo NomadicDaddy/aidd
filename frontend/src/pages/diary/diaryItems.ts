@@ -68,7 +68,7 @@ function labelForKey(key: string): string {
 // calendar date so an entry (dated YYYY-MM-DD) and the runs from that day land together.
 export function groupDiaryByDay(
 	entries: DiaryEntry[],
-	items: DiaryTimelineItem[]
+	items: DiaryTimelineItem[],
 ): DiaryDayGroup[] {
 	const groups = new Map<string, DiaryDayGroup>();
 

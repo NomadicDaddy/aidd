@@ -18,7 +18,7 @@ export type WebRunRow = typeof runs.$inferSelect;
 
 export interface QueriesContext {
 	commands: DbCommands;
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 	hub: WebSocketHub;
 	onProjectChanged?: (projectPath: string) => void;
@@ -78,7 +78,7 @@ export function toWebRunRecord(run: WebRunRow): RunRecord {
 
 export async function getRun(
 	db: WebDatabase,
-	id: string
+	id: string,
 ): Promise<typeof runs.$inferSelect | undefined> {
 	return (await db.select().from(runs).where(eq(runs.id, id)).limit(1))[0];
 }

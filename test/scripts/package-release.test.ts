@@ -5,9 +5,9 @@ import { basename, dirname, join } from 'node:path';
 
 import {
 	ALL_TARGETS,
+	type CommandRunner,
 	getRequiredDistributionEntries,
 	resolveTargetOutDir,
-	type CommandRunner,
 } from '../../scripts/build-standalone.ts';
 import { PUBLIC_DOC_ASSETS } from '../../scripts/lib/release/common.ts';
 import { packageRelease, parsePackageReleaseArgs } from '../../scripts/package-release.ts';
@@ -56,12 +56,12 @@ async function seedReleaseSource(root: string): Promise<void> {
 	await writeFile(join(root, 'licenses', 'distributed-materials.json'), '{}\n');
 	await writeFile(
 		join(root, 'package.json'),
-		`${JSON.stringify({ packageManager: 'bun@1.3.14', version: '4.5.6' })}\n`
+		`${JSON.stringify({ packageManager: 'bun@1.3.14', version: '4.5.6' })}\n`,
 	);
 	await writeFile(join(root, 'VERSION'), '4.5.6\n');
 	await writeFile(
 		join(root, 'docs', 'CHANGELOG.md'),
-		'# Changelog\n\n## [4.5.6] - 2026-07-01\n\n### Added\n\n- Release packaging.\n\n## [4.5.5] - 2026-06-30\n'
+		'# Changelog\n\n## [4.5.6] - 2026-07-01\n\n### Added\n\n- Release packaging.\n\n## [4.5.5] - 2026-06-30\n',
 	);
 	for (const file of [
 		'README.md',
@@ -146,7 +146,7 @@ describe('release packager', () => {
 			// State the retention choice rather than inheriting it from the ambient environment:
 			// this case asserts the maintainer-local behaviour, and reading process.env.CI here
 			// meant it passed on a laptop and failed on a runner.
-			{ commandRunner: zipRunner, retainRecord: true }
+			{ commandRunner: zipRunner, retainRecord: true },
 		);
 
 		const releaseDir = join(root, 'release-out');
@@ -156,11 +156,11 @@ describe('release packager', () => {
 
 		expect(await readFile(join(stageDir, 'README.md'), 'utf8')).toBe('README.md');
 		expect(await readFile(join(stageDir, 'docs', 'guides', 'quickstart.md'), 'utf8')).toBe(
-			'docs/guides/quickstart.md'
+			'docs/guides/quickstart.md',
 		);
 		expect(await Bun.file(join(stageDir, 'docs', 'untracked-private.md')).exists()).toBe(false);
 		expect(await Bun.file(join(releaseDir, 'stale-stage', 'sentinel.txt')).exists()).toBe(
-			false
+			false,
 		);
 		expect(await Bun.file(join(releaseDir, 'aidd-v4.5.5-stale.zip')).exists()).toBe(false);
 
@@ -168,16 +168,16 @@ describe('release packager', () => {
 		// license text have to reach whoever receives the archive.
 		expect(await readFile(join(stageDir, 'LICENSE'), 'utf8')).toBe('LICENSE');
 		expect(await readFile(join(stageDir, 'THIRD-PARTY-LICENSES.md'), 'utf8')).toBe(
-			'THIRD-PARTY-LICENSES.md'
+			'THIRD-PARTY-LICENSES.md',
 		);
 		expect(await readFile(join(stageDir, 'licenses', 'LGPL-2.1.txt'), 'utf8')).toContain(
-			'LESSER GENERAL PUBLIC LICENSE'
+			'LESSER GENERAL PUBLIC LICENSE',
 		);
 		expect(await readFile(join(stageDir, 'THIRD-PARTY-NOTICES.md'), 'utf8')).toBe(
-			'THIRD-PARTY-NOTICES.md'
+			'THIRD-PARTY-NOTICES.md',
 		);
 		expect(
-			await readFile(join(stageDir, 'licenses', 'distributed-materials.json'), 'utf8')
+			await readFile(join(stageDir, 'licenses', 'distributed-materials.json'), 'utf8'),
 		).toBe('{}\n');
 		expect(notes).toContain('# aidd v4.5.6');
 		expect(notes).toContain('Release packaging.');
@@ -225,12 +225,12 @@ describe('release packager', () => {
 				skipFrontend: true,
 				targets: [windowsTarget()],
 			},
-			{ commandRunner: zipRunner, retainRecord: false }
+			{ commandRunner: zipRunner, retainRecord: false },
 		);
 
 		expect(assets.map((asset) => basename(asset.path))).toContain('source-record-v4.5.6.md');
 		expect(await Bun.file(join(root, 'licenses', 'releases', 'v4.5.6.md')).exists()).toBe(
-			false
+			false,
 		);
 	});
 
@@ -255,8 +255,8 @@ describe('release packager', () => {
 					skipFrontend: true,
 					targets: [windowsTarget()],
 				},
-				{ standaloneBuilder: failIfBuilt }
-			)
+				{ standaloneBuilder: failIfBuilt },
+			),
 		).rejects.toThrow(/version metadata disagrees/);
 		expect(built).toBe(false);
 	});

@@ -165,7 +165,7 @@ describe('project repository-info route', () => {
 				},
 			} as unknown as WebContext);
 			const response = await app.handle(
-				new Request('http://localhost/api/v1/projects/some-id/repository-info')
+				new Request('http://localhost/api/v1/projects/some-id/repository-info'),
 			);
 			expect(response.status).toBe(200);
 			const body = (await response.json()) as {
@@ -193,14 +193,14 @@ describe('project repository-info route', () => {
 			} as unknown as WebContext);
 
 			const single = await app.handle(
-				new Request('http://localhost/api/v1/projects/some-id/git-status')
+				new Request('http://localhost/api/v1/projects/some-id/git-status'),
 			);
 			expect(single.status).toBe(200);
 			const singleBody = (await single.json()) as { status: { state: string } };
 			expect(singleBody.status.state).toBe('clean');
 
 			const bulk = await app.handle(
-				new Request('http://localhost/api/v1/projects/git-status')
+				new Request('http://localhost/api/v1/projects/git-status'),
 			);
 			expect(bulk.status).toBe(200);
 			const bulkBody = (await bulk.json()) as {
@@ -242,7 +242,7 @@ describe('readRepositoryRefs', () => {
 			// rewriting slashes into backslashes, which only ever matched on Windows and turned a
 			// perfectly good Linux path into `\tmp\...` in CI.
 			expect(result.refs.worktrees[0]?.path.replaceAll('\\', '/')).toBe(
-				repoDir.replaceAll('\\', '/')
+				repoDir.replaceAll('\\', '/'),
 			);
 		} finally {
 			await removeTempTree(repoDir);
@@ -290,7 +290,7 @@ describe('project repository-refs route', () => {
 				},
 			} as unknown as WebContext);
 			const response = await app.handle(
-				new Request('http://localhost/api/v1/projects/some-id/repository-refs')
+				new Request('http://localhost/api/v1/projects/some-id/repository-refs'),
 			);
 			expect(response.status).toBe(200);
 			const body = (await response.json()) as {

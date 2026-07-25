@@ -40,7 +40,7 @@ export class ManagedStepHandler {
 	async handle(
 		step: RecipeStepDefinition,
 		config: Record<string, RecipeConfigValue>,
-		context: ExecutionContext
+		context: ExecutionContext,
 	): Promise<StepDispatchResult> {
 		let request: RunLaunchRequest;
 		let nestedRecord: NestedRecord | undefined;

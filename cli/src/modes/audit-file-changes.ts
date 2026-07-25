@@ -14,7 +14,7 @@ export function createModeFileChanges(): ModeFileChanges {
 export function recordAuditFeatureCreated(
 	changes: ModeFileChanges,
 	projectDir: string,
-	featureId: string
+	featureId: string,
 ): void {
 	changes.modeFilesCreated.push(metadataPath(projectDir, 'features', featureId, 'feature.json'));
 }
@@ -23,11 +23,11 @@ export async function recordAuditReportWrite(
 	changes: ModeFileChanges,
 	projectDir: string,
 	auditName: string,
-	writeReport: (timestamp: Date) => Promise<string>
+	writeReport: (timestamp: Date) => Promise<string>,
 ): Promise<string> {
 	const reportTimestamp = new Date();
 	const reportExistsBefore = await pathExists(
-		auditReportPath(projectDir, auditName, reportTimestamp)
+		auditReportPath(projectDir, auditName, reportTimestamp),
 	);
 	const reportPath = await writeReport(reportTimestamp);
 	(reportExistsBefore ? changes.modeFilesEdited : changes.modeFilesCreated).push(reportPath);
@@ -44,7 +44,7 @@ export async function snapshotRoadmap(projectDir: string): Promise<null | string
 export async function recordRoadmapChangeSince(
 	changes: ModeFileChanges,
 	projectDir: string,
-	before: null | string
+	before: null | string,
 ): Promise<void> {
 	const roadmapPath = metadataPath(projectDir, 'roadmap.json');
 	const after = await readFileOrNull(roadmapPath);
@@ -55,7 +55,7 @@ export async function recordRoadmapChangeSince(
 async function pathExists(path: string): Promise<boolean> {
 	return stat(path).then(
 		() => true,
-		() => false
+		() => false,
 	);
 }
 

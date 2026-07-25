@@ -32,7 +32,7 @@ export function isSessionActive(status: PipelineSessionRecord['status']): boolea
 }
 
 export function sessionStopUnavailableReason(
-	status: PipelineSessionRecord['status']
+	status: PipelineSessionRecord['status'],
 ): null | string {
 	if (status === 'completed') return 'Stop unavailable: session completed';
 	if (status === 'failed') return 'Stop unavailable: session failed';
@@ -138,7 +138,7 @@ function SessionTitle({
 // on interactive children (links, buttons) keep their own behavior.
 function sessionSelectHandler(
 	onSelect: (id: string) => void,
-	session: PipelineSessionRecord
+	session: PipelineSessionRecord,
 ): (event: KeyboardEvent | MouseEvent) => void {
 	return (event) => {
 		if ((event.target as HTMLElement).closest('a,button')) return;
@@ -180,7 +180,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			aria-selected={selected}
 			className={cn(
 				'cursor-pointer border-b transition-colors last:border-0',
-				selected ? selectedRowClass : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
+				selected ? selectedRowClass : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50',
 			)}
 			onClick={selectFromRow}
 			onKeyDown={(event) => {

@@ -63,7 +63,7 @@ function verifyRealPathWithinRoot(lexicalPath: string, realRoot: string): null |
 
 export function resolveWorkspacePath(
 	userPath: unknown,
-	cwd: string
+	cwd: string,
 ): { error: string } | { path: string } {
 	if (typeof userPath !== 'string' || userPath.trim() === '') {
 		return { error: 'ERROR: path must be a non-empty string' };

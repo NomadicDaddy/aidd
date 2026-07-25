@@ -52,7 +52,7 @@ export function resolveContainingRoot(allowedRoots: string[], projectDir: string
 export async function mapSettledWithConcurrency<TInput, TOutput>(
 	items: TInput[],
 	concurrency: number,
-	mapper: (item: TInput, index: number) => Promise<TOutput>
+	mapper: (item: TInput, index: number) => Promise<TOutput>,
 ): Promise<PromiseSettledResult<TOutput>[]> {
 	if (items.length === 0) return [];
 	const limit = Math.max(1, Math.floor(concurrency));
@@ -86,10 +86,10 @@ export async function discoverProjects(ctx: ListingsContext): Promise<{
 	skippedRoots: ProjectDiscoverySkippedRootDto[];
 }> {
 	const isIgnoredDirectory = createIgnoredDirectoryMatcher(
-		ctx.config.ignoredFolders.length > 0 ? ctx.config.ignoredFolders : defaultIgnoredFolders
+		ctx.config.ignoredFolders.length > 0 ? ctx.config.ignoredFolders : defaultIgnoredFolders,
 	);
 	const scans = await Promise.all(
-		ctx.config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory))
+		ctx.config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory)),
 	);
 	const skippedRoots: ProjectDiscoverySkippedRootDto[] = [];
 	const discovered = new Map<string, { path: string; root: string }>();
@@ -104,7 +104,7 @@ export async function discoverProjects(ctx: ListingsContext): Promise<{
 		}
 	}
 	const projects = [...discovered.values()].sort((left, right) =>
-		left.path.localeCompare(right.path)
+		left.path.localeCompare(right.path),
 	);
 	return { projects, skippedRoots };
 }

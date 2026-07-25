@@ -1,7 +1,7 @@
 import { isAuditFinding, isRemediationFeature } from './query.ts';
 import {
-	FEATURE_ID_PATTERN,
 	type Feature,
+	FEATURE_ID_PATTERN,
 	type FeatureCollectionValidationResult,
 	type FeatureValidationIssue,
 } from './types.ts';

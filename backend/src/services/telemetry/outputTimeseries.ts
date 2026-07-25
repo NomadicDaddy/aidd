@@ -16,7 +16,7 @@ export async function getOutputTimeseries(
 	input: {
 		bucket: 'day' | 'hour';
 		windowMs?: number | undefined;
-	}
+	},
 ): Promise<OutputTimeseriesPoint[]> {
 	const bucketMs = input.bucket === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
 	const filters = [inArray(runs.status, [...TERMINAL_STATUSES])];

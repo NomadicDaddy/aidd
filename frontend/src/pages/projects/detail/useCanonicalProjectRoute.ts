@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 export function useCanonicalProjectRoute(
 	currentRouteId: string | undefined,
-	canonicalRouteId: string | undefined
+	canonicalRouteId: string | undefined,
 ): void {
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -14,7 +14,7 @@ export function useCanonicalProjectRoute(
 				pathname: `/projects/${encodeURIComponent(canonicalRouteId)}`,
 				search: location.search,
 			},
-			{ replace: true }
+			{ replace: true },
 		);
 	}, [canonicalRouteId, currentRouteId, location.search, navigate]);
 }

@@ -18,7 +18,7 @@ export function SkillDetailsCard({
 					<div className="font-mono text-sm text-teal-700 dark:text-teal-300">
 						{skill.id}
 					</div>
-					<h2 className="text-foreground text-xl font-semibold break-words">
+					<h2 className="text-xl font-semibold break-words text-foreground">
 						{skill.title}
 					</h2>
 					<p className="mt-1 text-sm break-words text-neutral-600 dark:text-neutral-400">

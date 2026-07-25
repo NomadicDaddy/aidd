@@ -25,7 +25,7 @@ export interface ResolvedLaunchConfig {
  * @returns The overlaid config and whether a project config contributed to it.
  */
 export async function resolveLaunchConfig(
-	input: ResolveLaunchConfigInput
+	input: ResolveLaunchConfigInput,
 ): Promise<ResolvedLaunchConfig> {
 	const { base, projectDir } = input;
 	if (!projectDir) return { config: base, projectConfigApplied: false };

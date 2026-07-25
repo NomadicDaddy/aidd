@@ -20,7 +20,7 @@ describe('project profile contract', () => {
 	test('exports input and file schemas', () => {
 		expect(projectAssuranceProfileInputSchema.required).toContain('bucket');
 		expect(projectAssuranceProfileInputSchema.properties.bucket.enum).toContain(
-			'public_multi_tenant'
+			'public_multi_tenant',
 		);
 		expect(projectAssuranceProfileFileSchema.required).toContain('source');
 		expect(projectAssuranceProfileFileSchema.properties.source?.enum).toEqual(['explicit']);
@@ -43,20 +43,20 @@ describe('project profile contract', () => {
 
 	test('rejects non-canonical file profiles', () => {
 		expect(() => normalizeProjectAssuranceProfileFile(validInput)).toThrow(
-			'Invalid project profile field: source'
+			'Invalid project profile field: source',
 		);
 		expect(() =>
 			normalizeProjectAssuranceProfileFile({
 				...validInput,
 				source: 'explicit',
-			})
+			}),
 		).toThrow('Invalid project profile field: updatedAt');
 	});
 
 	test('normalizes API input as an explicit profile', () => {
 		const profile = normalizeProjectAssuranceProfileInput(
 			validInput,
-			'2026-05-19T00:00:00.000Z'
+			'2026-05-19T00:00:00.000Z',
 		);
 
 		expect(profile).toMatchObject({
@@ -71,16 +71,16 @@ describe('project profile contract', () => {
 			normalizeProjectAssuranceProfileInput({
 				...validInput,
 				bucket: 'not-real',
-			})
+			}),
 		).toThrow('Invalid project profile field: bucket');
 	});
 
 	test('rejects non-object values', () => {
 		expect(() => normalizeProjectAssuranceProfileInput(null)).toThrow(
-			'Project profile must be an object.'
+			'Project profile must be an object.',
 		);
 		expect(() => normalizeProjectAssuranceProfileInput(['not', 'object'])).toThrow(
-			'Project profile must be an object.'
+			'Project profile must be an object.',
 		);
 	});
 

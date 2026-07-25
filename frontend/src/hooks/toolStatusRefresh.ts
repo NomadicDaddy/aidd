@@ -16,7 +16,7 @@ export interface ToolStatusGate<T> {
 }
 
 export function createToolStatusGate<T>(
-	fetcher: (refresh?: boolean) => Promise<T>
+	fetcher: (refresh?: boolean) => Promise<T>,
 ): ToolStatusGate<T> {
 	let pending = false;
 	return {

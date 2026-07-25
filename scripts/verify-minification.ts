@@ -131,7 +131,7 @@ function checkBudget(totalJs: number, totalCss: number, updateBudget: boolean): 
 		writeFileSync(BUDGET_PATH, `${JSON.stringify(budget, null, '\t')}\n`, 'utf-8');
 		log(
 			`\nBudget written to scripts/bundle-budget.json (${BUDGET_HEADROOM}x headroom)`,
-			'cyan'
+			'cyan',
 		);
 		return true;
 	}
@@ -162,7 +162,7 @@ function checkBudget(totalJs: number, totalCss: number, updateBudget: boolean): 
 	if (!ok) {
 		log(
 			'If the growth is intentional, regenerate: bun scripts/verify-minification.ts --update-budget',
-			'yellow'
+			'yellow',
 		);
 	}
 	return ok;
@@ -196,7 +196,7 @@ async function main(): Promise<void> {
 		if (suspicious) unminified.push(asset);
 		log(
 			`${asset.name.padEnd(45)} ${kb(asset.sizeBytes).padStart(12)}  (avg line ${Math.round(asset.avgLineLength)})`,
-			suspicious ? 'red' : 'reset'
+			suspicious ? 'red' : 'reset',
 		);
 	}
 
@@ -214,7 +214,7 @@ async function main(): Promise<void> {
 		for (const a of unminified) {
 			log(
 				`  ${a.name}: ${kb(a.sizeBytes)}, avg line length ${Math.round(a.avgLineLength)} < ${MIN_AVG_LINE_LENGTH}`,
-				'red'
+				'red',
 			);
 		}
 		log('Check frontend/vite.config.ts build.minify settings.', 'yellow');

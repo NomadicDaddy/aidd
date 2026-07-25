@@ -18,7 +18,7 @@ export interface WorktreeSnapshot {
 // Wraps the shared WriteGuardSnapshot in the legacy WorktreeSnapshot shape so
 // existing callers/tests continue to work. Returns null for non-git projects.
 export async function captureWorktreeSnapshot(
-	projectDir: string
+	projectDir: string,
 ): Promise<null | WorktreeSnapshot> {
 	const snapshot = await captureWriteGuardSnapshot(projectDir);
 	if (snapshot === null) return null;
@@ -29,7 +29,7 @@ export async function captureWorktreeSnapshot(
 // the violating paths.
 export function findMetadataViolations(
 	before: WorktreeSnapshot,
-	after: WorktreeSnapshot
+	after: WorktreeSnapshot,
 ): string[] {
 	const violations: string[] = [];
 	for (const path of after.dirtyPaths) {

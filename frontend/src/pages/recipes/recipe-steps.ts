@@ -164,7 +164,7 @@ function formatValue(value: unknown): string {
 
 export function getConfigSummary(
 	stepType: RecipeStepType,
-	configJson: Record<string, RecipeConfigValue>
+	configJson: Record<string, RecipeConfigValue>,
 ): ConfigSummaryEntry[] {
 	const primaries = primaryKeysByType[stepType] ?? [];
 	const entries: ConfigSummaryEntry[] = [];

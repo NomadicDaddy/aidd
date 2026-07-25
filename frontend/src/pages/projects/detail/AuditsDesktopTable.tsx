@@ -8,8 +8,8 @@ import { bandTone, describeChangePotential, overrideEffects } from '../../audits
 import {
 	describeFreshAge,
 	describeReportFreshness,
-	stateBadge,
 	type OverrideValue,
+	stateBadge,
 } from './auditsTabUtils.tsx';
 
 export function AuditsDesktopTable({
@@ -115,7 +115,7 @@ export function AuditsDesktopTable({
 									/>
 								</td>
 								<td className="px-3 py-3">
-									<div className="text-foreground font-medium">{entry.name}</div>
+									<div className="font-medium text-foreground">{entry.name}</div>
 									<div className="text-xs break-all text-neutral-500">
 										{entry.path}
 									</div>
@@ -165,7 +165,7 @@ export function AuditsDesktopTable({
 										onChange={(event) =>
 											changeOverride(
 												entry.name,
-												event.target.value as OverrideValue
+												event.target.value as OverrideValue,
 											)
 										}
 										value={overrideValue}>

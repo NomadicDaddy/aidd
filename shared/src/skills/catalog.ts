@@ -1,14 +1,14 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
 
 import {
-	isSkillCategory,
-	parseSkillDefinition,
-	validateSkillId,
 	type ImportedSkillRecord,
 	type ImportedSkillRegistry,
+	isSkillCategory,
+	parseSkillDefinition,
 	type SkillDefinition,
 	type SkillOrigin,
+	validateSkillId,
 } from './definition.ts';
 
 export {
@@ -59,7 +59,7 @@ async function readDefinitionAt(
 	catalogDir: string,
 	id: string,
 	origin: SkillOrigin,
-	imported?: ImportedSkillRecord
+	imported?: ImportedSkillRecord,
 ): Promise<SkillDefinition> {
 	validateSkillId(id);
 	const root = join(catalogDir, id);
@@ -96,7 +96,7 @@ async function directoryNames(path: string): Promise<string[]> {
 export async function readImportedSkillRegistry(dataDir: string): Promise<ImportedSkillRegistry> {
 	try {
 		const parsed: unknown = JSON.parse(
-			await readFile(importedSkillRegistryPath(dataDir), 'utf8')
+			await readFile(importedSkillRegistryPath(dataDir), 'utf8'),
 		);
 		if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
 			throw new Error('root must be an object');
@@ -143,14 +143,14 @@ export async function readImportedSkillRegistry(dataDir: string): Promise<Import
 			return { schemaVersion: 1, skills: {} };
 		throw new Error(
 			`Invalid imported skill registry: ${error instanceof Error ? error.message : String(error)}`,
-			{ cause: error }
+			{ cause: error },
 		);
 	}
 }
 
 export async function listSkillDefinitions(
 	rootDir: string,
-	dataDir?: string
+	dataDir?: string,
 ): Promise<SkillDefinition[]> {
 	const bundledDir = bundledSkillsDir(rootDir);
 	const bundledIds = await directoryNames(bundledDir);
@@ -174,7 +174,7 @@ export async function listSkillDefinitions(
 	const definitions = await Promise.all([
 		...bundledIds.map((id) => readDefinitionAt(bundledDir, id, 'bundled')),
 		...importedIds.map((id) =>
-			readDefinitionAt(importedDir, id, 'imported', registry.skills[id])
+			readDefinitionAt(importedDir, id, 'imported', registry.skills[id]),
 		),
 	]);
 	return definitions.sort((left, right) => left.id.localeCompare(right.id));
@@ -183,7 +183,7 @@ export async function listSkillDefinitions(
 export async function readSkillDefinition(
 	rootDir: string,
 	id: string,
-	dataDir?: string
+	dataDir?: string,
 ): Promise<SkillDefinition> {
 	validateSkillId(id);
 	const bundledIds = await directoryNames(bundledSkillsDir(rootDir));
@@ -197,7 +197,7 @@ export async function readSkillDefinition(
 				importedSkillsDir(dataDir),
 				id,
 				'imported',
-				registry.skills[id]
+				registry.skills[id],
 			);
 		}
 	}
@@ -230,18 +230,18 @@ export function compileSkillDirective(skill: SkillDefinition, args: string): str
 	const stagedSupportDir = `.aidd/skills/${skill.id}`;
 	if (skill.supportPaths.length > 0) {
 		lines.push(
-			`Load referenced scripts, templates, examples, assets, or other support files from \`${stagedSupportDir}/\` (staged into this project) — or the skill directory when running inside the aidd repo — only when needed.`
+			`Load referenced scripts, templates, examples, assets, or other support files from \`${stagedSupportDir}/\` (staged into this project) — or the skill directory when running inside the aidd repo — only when needed.`,
 		);
 	}
 	lines.push(
 		'',
 		`Invocation arguments: ${trimmedArgs || '(none)'}`,
-		`Skill definition: ${skill.sourcePath}`
+		`Skill definition: ${skill.sourcePath}`,
 	);
 	if (skill.supportPaths.length > 0) {
 		lines.push(
 			`Support files (staged under \`${stagedSupportDir}/\`):`,
-			skill.supportPaths.map((path) => `- ${stagedSupportDir}/${path}`).join('\n')
+			skill.supportPaths.map((path) => `- ${stagedSupportDir}/${path}`).join('\n'),
 		);
 	}
 	lines.push('', `# Skill: ${skill.id}`, '', skill.body.trim(), '');

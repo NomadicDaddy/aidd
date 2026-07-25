@@ -13,7 +13,7 @@ export function parseArgs(argv: string[]): CliArgs {
 			const match = ALL_TARGETS.find((t) => t.name === name);
 			if (!match) {
 				throw new Error(
-					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((t) => t.name).join(', ')}`
+					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((t) => t.name).join(', ')}`,
 				);
 			}
 			targets = [match];
@@ -46,7 +46,7 @@ export function createCompileCommand(
 	entrypoint: string,
 	outfile: string,
 	extraFlags: string[],
-	extraEntrypoints: string[] = []
+	extraEntrypoints: string[] = [],
 ): string[] {
 	// The main entrypoint must come first; extra entrypoints (e.g. worker
 	// modules referenced via `new Worker(...)` at runtime) are bundled into the
@@ -75,10 +75,10 @@ export async function compile(
 	outfile: string,
 	extraFlags: string[],
 	commandRunner: CommandRunner = runCommand,
-	extraEntrypoints: string[] = []
+	extraEntrypoints: string[] = [],
 ): Promise<void> {
 	await commandRunner(
 		createCompileCommand(target, entrypoint, outfile, extraFlags, extraEntrypoints),
-		rootDir
+		rootDir,
 	);
 }

@@ -32,7 +32,7 @@ export function LocalAiddHistoryPanel({
 	return (
 		<Card className="overflow-hidden p-0">
 			<div className="border-b px-4 py-3 dark:border-neutral-800">
-				<h2 className="text-foreground text-sm font-semibold">{title}</h2>
+				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
 				<p className="text-xs text-neutral-500">{description}</p>
 			</div>
 			{hasRuns ? (

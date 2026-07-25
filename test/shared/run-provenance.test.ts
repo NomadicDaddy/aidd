@@ -40,7 +40,7 @@ describe('aidd run provenance', () => {
 			await Bun.write(join(rootDir, 'VERSION'), '2.125.0\n');
 			const provenance = await resolveAiddRunProvenance(
 				rootDir,
-				gitProbe({ revision: '0123456789abcdef' })
+				gitProbe({ revision: '0123456789abcdef' }),
 			);
 			expect(provenance).toEqual({
 				aiddDirty: false,
@@ -59,8 +59,8 @@ describe('aidd run provenance', () => {
 			expect(
 				await resolveAiddRunProvenance(
 					rootDir,
-					gitProbe({ dirty: true, revision: 'fedcba9876543210' })
-				)
+					gitProbe({ dirty: true, revision: 'fedcba9876543210' }),
+				),
 			).toEqual({
 				aiddDirty: true,
 				aiddRevision: 'fedcba9876543210',

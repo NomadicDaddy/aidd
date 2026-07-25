@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { writeAuditReportWithMetadata } from '../audit-freshness.ts';
@@ -21,7 +21,7 @@ export async function writeChangelog(metadataDir: string, content?: string): Pro
 export async function listAuditReports(metadataDir: string): Promise<string[]> {
 	try {
 		return (await readdir(join(metadataDir, 'audit-reports'))).filter((entry) =>
-			entry.endsWith('.md')
+			entry.endsWith('.md'),
 		);
 	} catch {
 		return [];
@@ -36,7 +36,7 @@ export async function writeAuditReport(
 	projectDir: string,
 	auditName: string,
 	content: string,
-	timestamp: Date
+	timestamp: Date,
 ): Promise<string> {
 	return await writeAuditReportWithMetadata(projectDir, auditName, content, timestamp);
 }

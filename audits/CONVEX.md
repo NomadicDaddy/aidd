@@ -111,7 +111,7 @@ export const getPublishedPosts = query({
 			return await ctx.db
 				.query('posts')
 				.withIndex('by_category_published', (q) =>
-					q.eq('categoryId', args.categoryId).eq('isPublished', true)
+					q.eq('categoryId', args.categoryId).eq('isPublished', true),
 				)
 				.take(20);
 		}
@@ -386,7 +386,7 @@ function PostFeed() {
 	const { results, status, loadMore } = usePaginatedQuery(
 		api.posts.getRecentPosts,
 		{},
-		{ initialNumItems: 20 }
+		{ initialNumItems: 20 },
 	);
 	return (
 		<>
@@ -834,7 +834,7 @@ export const getPosts = query({
 
 		if (args.categoryId) {
 			query = query.withIndex('by_category_published', (q) =>
-				q.eq('categoryId', args.categoryId).eq('isPublished', true)
+				q.eq('categoryId', args.categoryId).eq('isPublished', true),
 			);
 		} else {
 			query = query.withIndex('by_published', (q) => q.eq('isPublished', true));
@@ -1044,7 +1044,7 @@ export default tseslint.config(
 			'@convex-dev/no-old-registered-function-syntax': 'error',
 			'@convex-dev/require-argument-validators': 'error',
 		},
-	}
+	},
 );
 ```
 
@@ -1150,7 +1150,7 @@ export const getPostsWithAuthor = query({
 			isPublished: v.boolean(),
 			_creationTime: v.number(),
 			author: v.optional(v.object({ _id: v.id('users') })),
-		})
+		}),
 	),
 	handler: async (ctx, args) => {
 		let posts;
@@ -1159,7 +1159,7 @@ export const getPostsWithAuthor = query({
 			posts = await ctx.db
 				.query('posts')
 				.withIndex('by_category_published', (q) =>
-					q.eq('categoryId', args.categoryId).eq('isPublished', true)
+					q.eq('categoryId', args.categoryId).eq('isPublished', true),
 				)
 				.take(20);
 		} else {
@@ -1247,7 +1247,7 @@ export const getPostsWithMetrics = query({
 				.query('posts')
 				.withIndex('by_published', (q) => q.eq('isPublished', true))
 				.order('desc')
-				.take(20)
+				.take(20),
 		),
 });
 ```
@@ -1606,7 +1606,7 @@ export const processWithRetry = internalAction({
 	returns: v.union(
 		v.object({ success: v.literal(true) }),
 		v.object({ retryScheduled: v.boolean(), nextAttempt: v.number() }),
-		v.object({ success: v.literal(false), error: v.string() })
+		v.object({ success: v.literal(false), error: v.string() }),
 	),
 	handler: async (ctx, args) => {
 		const attempt = args.attempt ?? 1;
@@ -1776,7 +1776,7 @@ describe('posts functions', () => {
 					title: 'A', // Too short
 					content: 'Test',
 					categoryId,
-				})
+				}),
 			).rejects.toThrow('Title must be between 3 and 100 characters');
 		});
 	});
@@ -1795,7 +1795,7 @@ describe('posts functions', () => {
 					title: 'Test Post',
 					content: 'This is a test post',
 					categoryId,
-				})
+				}),
 			).rejects.toThrow('Not authenticated');
 		});
 	});
@@ -1969,7 +1969,7 @@ export const runMigrations = internalAction({
 				completed = result.completed;
 
 				console.log(
-					`Migration ${migration.name}: processed ${result.processed}, total: ${totalProcessed}`
+					`Migration ${migration.name}: processed ${result.processed}, total: ${totalProcessed}`,
 				);
 
 				// Add delay between batches to avoid overwhelming the system
@@ -1979,7 +1979,7 @@ export const runMigrations = internalAction({
 			}
 
 			console.log(
-				`Migration ${migration.name} completed. Total processed: ${totalProcessed}`
+				`Migration ${migration.name} completed. Total processed: ${totalProcessed}`,
 			);
 		}
 
@@ -2111,7 +2111,7 @@ export const processLargeDataset = internalMutation({
 		const items = await ctx.db
 			.query('large_dataset')
 			.withIndex('by_batch_and_index', (q) =>
-				q.eq('batchId', args.batchId).gte('index', startIndex)
+				q.eq('batchId', args.batchId).gte('index', startIndex),
 			)
 			.take(1000);
 
@@ -2174,8 +2174,8 @@ export const generateReport = query({
 				.withIndex('by_timestamp', (q) =>
 					q.and(
 						q.gte(q.field('timestamp'), args.dateRange.start),
-						q.lte(q.field('timestamp'), args.dateRange.end)
-					)
+						q.lte(q.field('timestamp'), args.dateRange.end),
+					),
 				);
 
 			if (cursor) {
@@ -2233,7 +2233,7 @@ export const sendMessage = mutation({
 		const recentMessages = await ctx.db
 			.query('messages')
 			.withIndex('by_user_time', (q) =>
-				q.eq('userId', user._id).gte('createdAt', Date.now() - 60000)
+				q.eq('userId', user._id).gte('createdAt', Date.now() - 60000),
 			) // Last minute
 			.order('desc')
 			.take(10);
@@ -2319,7 +2319,7 @@ http.route({
 			streamId as StreamId,
 			async (ctx, _req, _id, append) => {
 				for await (const chunk of callYourLLM()) await append(chunk);
-			}
+			},
 		);
 	}),
 });
@@ -2337,7 +2337,7 @@ function StreamedMessage({ streamId }: { streamId: string }) {
 		api.chat.getStreamBody, // a query that returns the persisted body for `streamId`
 		new URL(`${import.meta.env.VITE_CONVEX_SITE_URL}/chat-stream`),
 		/* driven= */ true,
-		streamId
+		streamId,
 	);
 	return <div data-status={status}>{text}</div>;
 }
@@ -2369,14 +2369,14 @@ crons.interval(
 	'expire stale sessions',
 	{ minutes: 5 },
 	internal.sessionManager.expireStaleSessions,
-	{}
+	{},
 );
 
 crons.daily(
 	'aggregate daily stats',
 	{ hourUTC: 2, minuteUTC: 0 },
 	internal.analytics.aggregateDailyStats,
-	{}
+	{},
 );
 
 export default crons;

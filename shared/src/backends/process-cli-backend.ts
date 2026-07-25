@@ -34,7 +34,7 @@ export function createProcessCliBackend(name: ProcessCliBackendName): CLIBackend
 			return runProcessBackend(
 				{ backend: name, promptViaFile, ...command, ...parseOptions },
 				input,
-				signal
+				signal,
 			);
 		},
 	};

@@ -12,7 +12,7 @@ type PackageJson = {
 
 const frontendRoot = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(
-	readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+	readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 ) as PackageJson;
 const appVersion = typeof packageJson.version === 'string' ? packageJson.version : '0.0.0';
 

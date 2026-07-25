@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import {
 	directorCycles,
@@ -41,7 +41,7 @@ function seedRun(id: string, startedAt: number): Promise<unknown> {
 function seedSkillInvocation(
 	id: string,
 	startedAt: number,
-	runId: null | string
+	runId: null | string,
 ): Promise<unknown> {
 	return db.insert(invocationEvents).values({
 		id,
@@ -109,7 +109,7 @@ describe('listTimelinePage', () => {
 		expect(global.items.map((item) => item.id)).toContain('cyc');
 		const scoped = await listTimelinePage(
 			{ db, rootDir: NO_RELEASES },
-			{ projectPath: PROJECT }
+			{ projectPath: PROJECT },
 		);
 		expect(scoped.items.map((item) => item.id)).not.toContain('cyc');
 	});
@@ -133,7 +133,7 @@ describe('listTimelinePage', () => {
 			process.platform === 'win32' ? 'D:\\applications\\Demo' : 'd:\\applications\\demo';
 		const page = await listTimelinePage(
 			{ db, rootDir: NO_RELEASES },
-			{ projectPath: queryPath }
+			{ projectPath: queryPath },
 		);
 		const ids = page.items.map((item) => item.id);
 		expect(ids).toContain('run_a');
@@ -147,7 +147,7 @@ describe('listTimelinePage', () => {
 		expect(first.nextCursor).not.toBeNull();
 		const second = await listTimelinePage(
 			{ db, rootDir: NO_RELEASES },
-			{ ...(first.nextCursor ? { cursor: first.nextCursor } : {}), limit: 2 }
+			{ ...(first.nextCursor ? { cursor: first.nextCursor } : {}), limit: 2 },
 		);
 		const seen = new Set([...first.items, ...second.items].map((item) => item.id));
 		expect(seen.size).toBe(4);
@@ -158,7 +158,7 @@ describe('listTimelinePage', () => {
 		await mkdir(join(root, '.aidd'), { recursive: true });
 		await writeFile(
 			join(root, '.aidd', 'CHANGELOG.md'),
-			'## [2026-06-12] - First release\n\nnotes\n\n## [2026-06-11] - Second release\n'
+			'## [2026-06-12] - First release\n\nnotes\n\n## [2026-06-11] - Second release\n',
 		);
 		const page = await listTimelinePage({ db, rootDir: root });
 		const releases = page.items.filter((item) => item.kind === 'release');

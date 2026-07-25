@@ -68,7 +68,7 @@ function compose(args: string[], stdio: 'inherit' | 'pipe' = 'inherit'): number 
 	const result = spawnSync(
 		'docker',
 		['compose', '--env-file', smokeEnvFile, ...COMPOSE_FILES, ...args],
-		{ cwd: projectRoot, stdio }
+		{ cwd: projectRoot, stdio },
 	);
 	return result.status ?? 1;
 }
@@ -102,7 +102,7 @@ function seedSmokeDirs(): void {
 	writeFileSync(join(app, 'README.md'), '# smoke-app\n\nThrowaway repo for aidd docker smoke.\n');
 	writeFileSync(
 		join(app, 'package.json'),
-		`${JSON.stringify({ name: 'smoke-app', private: true, version: '0.0.1' }, null, '\t')}\n`
+		`${JSON.stringify({ name: 'smoke-app', private: true, version: '0.0.1' }, null, '\t')}\n`,
 	);
 	git(app, 'init');
 	git(app, 'config', 'user.name', 'aidd-smoke');
@@ -162,7 +162,7 @@ async function launchRunAndAwaitTerminal(body: Record<string, unknown>): Promise
 		await Bun.sleep(2_000);
 	}
 	throw new Error(
-		`run ${run.id} did not reach a terminal state within ${RUN_TERMINAL_TIMEOUT_MS}ms`
+		`run ${run.id} did not reach a terminal state within ${RUN_TERMINAL_TIMEOUT_MS}ms`,
 	);
 }
 
@@ -215,12 +215,12 @@ async function smokeChecks(): Promise<void> {
 		const tail = await runOutputTail(simulated.id, 40);
 		throw new Error(
 			`simulation run unhealthy (status=${simulated.status} exit=${String(simulated.exitCode)} ` +
-				`error=${String(simulated.errorMessage)}):\n${tail}`
+				`error=${String(simulated.errorMessage)}):\n${tail}`,
 		);
 	}
 	console.log(
 		`[smoke-docker] PASS simulation run executed (status=${simulated.status}, ` +
-			`stopReason=${String(simulated.stopReason)}, exit=0)`
+			`stopReason=${String(simulated.stopReason)}, exit=0)`,
 	);
 
 	if (values['with-claude']) {
@@ -260,7 +260,7 @@ async function main(): Promise<number> {
 	console.log('[smoke-docker] verifying image license material');
 	const licenseCheck = Bun.spawnSync(
 		['bun', 'scripts/check-image-licenses.ts', '--image', 'aidd:dev'],
-		{ stderr: 'inherit', stdout: 'inherit' }
+		{ stderr: 'inherit', stdout: 'inherit' },
 	);
 	if (licenseCheck.exitCode !== 0) return 1;
 

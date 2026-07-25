@@ -7,8 +7,8 @@ import type { EnabledFilter, OverrideValue } from './auditsTabUtils.tsx';
 
 import {
 	useLaunchAudits,
-	useProjectAudits,
 	useProjectAuditOverrides,
+	useProjectAudits,
 	useUpdateProjectAuditOverrides,
 } from '../../../hooks/useAudits.ts';
 
@@ -43,7 +43,7 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 	}, [filtered]);
 
 	const selectedRunnable = selected.filter((name) =>
-		(audits.data?.entries ?? []).find((entry) => entry.name === name && entry.enabled)
+		(audits.data?.entries ?? []).find((entry) => entry.name === name && entry.enabled),
 	);
 	const runDisabledReason = !auditsEnabled
 		? 'Audits are globally disabled. Re-enable from the Audits page.'
@@ -55,7 +55,7 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 
 	function toggleSelected(name: string) {
 		setSelected((current) =>
-			current.includes(name) ? current.filter((entry) => entry !== name) : [...current, name]
+			current.includes(name) ? current.filter((entry) => entry !== name) : [...current, name],
 		);
 	}
 
@@ -81,7 +81,7 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 				onSuccess: (result) => {
 					if (result.runIds.length > 0) {
 						toast.success(
-							`Launched ${result.runIds.length} run${result.runIds.length === 1 ? '' : 's'} on ${projectName}`
+							`Launched ${result.runIds.length} run${result.runIds.length === 1 ? '' : 's'} on ${projectName}`,
 						);
 					}
 					if (result.failures.length > 0) {
@@ -90,7 +90,7 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 						});
 					}
 				},
-			}
+			},
 		);
 	}
 
@@ -110,7 +110,7 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 						});
 					}
 				},
-			}
+			},
 		);
 	}
 
@@ -133,7 +133,7 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 				onError: (error) =>
 					toast.error(error instanceof Error ? error.message : 'Could not save override'),
 				onSuccess: () => toast.success(`Override for ${name} saved`),
-			}
+			},
 		);
 	}
 

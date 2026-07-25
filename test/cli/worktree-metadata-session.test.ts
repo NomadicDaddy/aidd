@@ -11,8 +11,8 @@ import {
 import { createRunWorktree } from '../../cli/src/orchestrator/run/worktree-manager.ts';
 import {
 	seedWorktreeMetadata,
-	writeBackWorktreeMetadata,
 	type WorktreeMetadataDelta,
+	writeBackWorktreeMetadata,
 } from '../../cli/src/orchestrator/run/worktree-metadata-session.ts';
 import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
@@ -44,7 +44,7 @@ async function initProjectWithIgnoredMetadata(projectDir: string): Promise<void>
 	await runGit(projectDir, ['init', '-b', 'main']);
 	await appendFile(
 		join(projectDir, '.git', 'config'),
-		'[user]\n\temail = test@aidd.local\n\tname = aidd test\n'
+		'[user]\n\temail = test@aidd.local\n\tname = aidd test\n',
 	);
 	await writeFile(join(projectDir, '.gitignore'), '/.aidd/\n');
 	await writeFile(join(projectDir, 'file.txt'), 'base\n');
@@ -108,7 +108,7 @@ describe('worktree-metadata-session', () => {
 			// The run: completes feat-a, creates a changelog, deletes feat-b, leaves spec.md alone.
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			await writeFile(join(wt.dir, '.aidd', 'CHANGELOG.md'), 'run change\n');
 			await rm(join(wt.dir, '.aidd', 'features', 'feat-b', 'feature.json'));
@@ -123,19 +123,19 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('completed');
 			expect(await readFile(join(projectDir, '.aidd', 'CHANGELOG.md'), 'utf8')).toBe(
-				'run change\n'
+				'run change\n',
 			);
 			expect(
-				existsSync(join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json'))
+				existsSync(join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json')),
 			).toBe(false);
 			// The file the run never touched keeps the operator's mid-run edit.
 			expect(await readFile(join(projectDir, '.aidd', 'spec.md'), 'utf8')).toBe(
-				'operator edit mid-run\n'
+				'operator edit mid-run\n',
 			);
 		} finally {
 			await removeTempTree(root);
@@ -234,7 +234,7 @@ describe('worktree-metadata-session', () => {
 			await writeFile(join(worktreeDir, '.aidd', 'iterations', '001.log'), 'run log one\n');
 			await writeFile(
 				join(worktreeDir, '.aidd', 'iterations', '001.json'),
-				'{"iteration":1}\n'
+				'{"iteration":1}\n',
 			);
 			await writeFile(join(worktreeDir, '.aidd', 'iterations', '002.log'), 'run log two\n');
 
@@ -243,11 +243,11 @@ describe('worktree-metadata-session', () => {
 			const iterationsDir = join(projectDir, '.aidd', 'iterations');
 			// Canonical 001.log pre-existed; the run's evidence lands at 002/003.
 			expect(await readFile(join(iterationsDir, '001.log'), 'utf8')).toBe(
-				'old canonical iteration\n'
+				'old canonical iteration\n',
 			);
 			expect(await readFile(join(iterationsDir, '002.log'), 'utf8')).toBe('run log one\n');
 			expect(await readFile(join(iterationsDir, '002.json'), 'utf8')).toBe(
-				'{"iteration":1}\n'
+				'{"iteration":1}\n',
 			);
 			expect(await readFile(join(iterationsDir, '003.log'), 'utf8')).toBe('run log two\n');
 		} finally {
@@ -271,7 +271,7 @@ describe('worktree-metadata-session', () => {
 			await runGit(wt.dir, ['commit', '-m', 'feat-a work']);
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			await mkdir(join(wt.dir, '.aidd', 'iterations'), { recursive: true });
 			await writeFile(join(wt.dir, '.aidd', 'iterations', '001.log'), 'iteration one\n');
@@ -290,12 +290,12 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('completed');
 			expect(await readFile(join(projectDir, '.aidd', 'iterations', '002.log'), 'utf8')).toBe(
-				'iteration one\n'
+				'iteration one\n',
 			);
 			expect(existsSync(wt.dir)).toBe(false);
 		} finally {
@@ -314,7 +314,7 @@ describe('worktree-metadata-session', () => {
 			const session = await seedWorktreeMetadata(projectDir, wt.dir);
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'in_progress')
+				featureJson('feat-a', 'in_progress'),
 			);
 			await mkdir(join(wt.dir, '.aidd', 'iterations'), { recursive: true });
 			await writeFile(join(wt.dir, '.aidd', 'iterations', '001.log'), 'failed attempt\n');
@@ -328,13 +328,13 @@ describe('worktree-metadata-session', () => {
 			expect(finalization.mergeStatus).toBe('discarded');
 			// Evidence survives the rollback; the half-done metadata does not.
 			expect(await readFile(join(projectDir, '.aidd', 'iterations', '002.log'), 'utf8')).toBe(
-				'failed attempt\n'
+				'failed attempt\n',
 			);
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('backlog');
 			expect(existsSync(wt.dir)).toBe(false);
@@ -357,7 +357,7 @@ describe('worktree-metadata-session', () => {
 			await runGit(wt.dir, ['commit', '-m', 'feat-a work']);
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			await mkdir(join(wt.dir, '.aidd', 'iterations'), { recursive: true });
 			await writeFile(join(wt.dir, '.aidd', 'iterations', '001.log'), 'parked run\n');
@@ -377,12 +377,12 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('backlog');
 			expect(await readFile(join(projectDir, '.aidd', 'iterations', '002.log'), 'utf8')).toBe(
-				'parked run\n'
+				'parked run\n',
 			);
 			expect(existsSync(wt.dir)).toBe(true);
 		} finally {
@@ -403,12 +403,12 @@ describe('worktree-metadata-session', () => {
 			// The run changes feat-a's feature.json...
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			// ...and meanwhile an operator ALSO edits the same canonical file mid-run.
 			await writeFile(
 				join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'in_progress')
+				featureJson('feat-a', 'in_progress'),
 			);
 
 			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
@@ -420,8 +420,8 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('in_progress');
 		} finally {
@@ -444,7 +444,7 @@ describe('worktree-metadata-session', () => {
 			// ...and meanwhile an operator edits the same canonical file mid-run.
 			await writeFile(
 				join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json'),
-				featureJson('feat-b', 'in_progress')
+				featureJson('feat-b', 'in_progress'),
 			);
 
 			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
@@ -457,8 +457,8 @@ describe('worktree-metadata-session', () => {
 			const featB = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-b', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featB.status).toBe('in_progress');
 		} finally {
@@ -479,7 +479,7 @@ describe('worktree-metadata-session', () => {
 			// The run changes feat-a (a file it owns)...
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			// ...and meanwhile an operator edits spec.md, which the run never touches.
 			await writeFile(join(projectDir, '.aidd', 'spec.md'), 'operator edit mid-run\n');
@@ -493,12 +493,12 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('completed');
 			expect(await readFile(join(projectDir, '.aidd', 'spec.md'), 'utf8')).toBe(
-				'operator edit mid-run\n'
+				'operator edit mid-run\n',
 			);
 		} finally {
 			await removeTempTree(root);
@@ -520,11 +520,11 @@ describe('worktree-metadata-session', () => {
 			// not a clobber — parking here would force a pointless manual reconciliation.
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			await writeFile(
 				join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 
 			const result = await writeBackWorktreeMetadata(projectDir, wt.dir, session);
@@ -534,8 +534,8 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('completed');
 		} finally {
@@ -584,14 +584,14 @@ describe('worktree-metadata-session', () => {
 			await runGit(wt.dir, ['commit', '-m', 'feat-a work']);
 			await writeFile(
 				join(wt.dir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'completed')
+				featureJson('feat-a', 'completed'),
 			);
 			await mkdir(join(wt.dir, '.aidd', 'iterations'), { recursive: true });
 			await writeFile(join(wt.dir, '.aidd', 'iterations', '001.log'), 'conflicted run\n');
 			// Meanwhile an operator edits the SAME canonical metadata file mid-run.
 			await writeFile(
 				join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-				featureJson('feat-a', 'in_progress')
+				featureJson('feat-a', 'in_progress'),
 			);
 
 			const finalization = await finalizeRunWorktree({
@@ -611,13 +611,13 @@ describe('worktree-metadata-session', () => {
 			const featA = JSON.parse(
 				await readFile(
 					join(projectDir, '.aidd', 'features', 'feat-a', 'feature.json'),
-					'utf8'
-				)
+					'utf8',
+				),
 			) as { status: string };
 			expect(featA.status).toBe('in_progress');
 			// Evidence is still persisted canonically.
 			expect(await readFile(join(projectDir, '.aidd', 'iterations', '002.log'), 'utf8')).toBe(
-				'conflicted run\n'
+				'conflicted run\n',
 			);
 			// The worktree is preserved for manual reconciliation.
 			expect(existsSync(wt.dir)).toBe(true);

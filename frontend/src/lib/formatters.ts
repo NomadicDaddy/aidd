@@ -25,7 +25,7 @@ export function formatDuration(ms: null | number | undefined): string {
 export function formatActiveDuration(
 	durationMs: null | number | undefined,
 	startedAt: null | number | undefined,
-	now: number
+	now: number,
 ): string {
 	if (durationMs !== null && durationMs !== undefined) return formatDuration(durationMs);
 	if (startedAt === null || startedAt === undefined) return formatDuration(durationMs);
@@ -103,7 +103,7 @@ export function formatCompactNumber(value: null | number | undefined): string {
 
 export function formatRatio(
 	value: null | number | undefined,
-	total: null | number | undefined
+	total: null | number | undefined,
 ): string {
 	if (value === null || value === undefined || total === null || total === undefined) return '—';
 	return `${value}/${total}`;

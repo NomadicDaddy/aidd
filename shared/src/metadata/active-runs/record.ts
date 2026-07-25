@@ -1,7 +1,7 @@
 import { basename } from 'node:path';
 
-import { backendNames, modeNames, type AiddMode, type BackendName } from '../../plan/types.ts';
-import { parseAiddRunProvenance, type AiddRunProvenance } from '../../run-provenance.ts';
+import { type AiddMode, type BackendName, backendNames, modeNames } from '../../plan/types.ts';
+import { type AiddRunProvenance, parseAiddRunProvenance } from '../../run-provenance.ts';
 import { metadataPath, stopFilePath } from '../paths.ts';
 
 export const ACTIVE_RUNS_DIR = 'active-runs';
@@ -30,7 +30,7 @@ export const TERMINAL_STATES: ReadonlySet<string> = new Set([
 
 export type CliActiveRunSource = 'cli' | 'director' | 'web';
 
-const SOURCE_VALUES: ReadonlySet<string> = new Set<CliActiveRunSource>(['cli', 'web', 'director']);
+const SOURCE_VALUES: ReadonlySet<string> = new Set<CliActiveRunSource>(['cli', 'director', 'web']);
 
 export interface CliActiveRunRecord extends AiddRunProvenance {
 	aiSummary: null | string;

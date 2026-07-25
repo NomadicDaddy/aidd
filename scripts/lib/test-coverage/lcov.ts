@@ -26,7 +26,7 @@ function parseCount(line: string, prefix: string): number | undefined {
 
 export function parseProductionLcov(
 	projectRoot: string,
-	lcov: string
+	lcov: string,
 ): Map<string, FileCoverageMetrics> {
 	const files = new Map<string, FileCoverageMetrics>();
 	let current: MutableLcovRecord | undefined;

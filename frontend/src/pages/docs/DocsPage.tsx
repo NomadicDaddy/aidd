@@ -26,7 +26,7 @@ export function DocsPage() {
 				<aside className="lg:sticky lg:top-4 lg:self-start">
 					<DocsSidebar />
 				</aside>
-				<article className="border-border bg-card min-w-0 rounded-lg border p-5 sm:p-7">
+				<article className="min-w-0 rounded-lg border border-border bg-card p-5 sm:p-7">
 					{body ? (
 						<MarkdownContent markdown={body} />
 					) : (

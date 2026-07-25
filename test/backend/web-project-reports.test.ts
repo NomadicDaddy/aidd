@@ -55,11 +55,11 @@ async function fileExists(path: string): Promise<boolean> {
 
 async function readFeature(
 	projectDir: string,
-	featureId: string
+	featureId: string,
 ): Promise<Record<string, unknown>> {
 	const raw = await readFile(
 		join(projectDir, '.aidd', 'features', featureId, 'feature.json'),
-		'utf8'
+		'utf8',
 	);
 	return JSON.parse(raw) as Record<string, unknown>;
 }
@@ -73,7 +73,7 @@ async function writeFeature(projectDir: string, featureId: string, passes: boole
 			id: featureId,
 			passes,
 			status: passes ? 'completed' : 'backlog',
-		})
+		}),
 	);
 }
 
@@ -82,13 +82,13 @@ async function writeRoadmap(
 	roadmap: {
 		features: Record<string, { milestone?: string }>;
 		milestones: Record<string, Record<string, unknown>>;
-	}
+	},
 ): Promise<void> {
 	await Bun.write(join(projectDir, '.aidd', 'roadmap.json'), JSON.stringify(roadmap));
 }
 
 async function readRoadmap(
-	projectDir: string
+	projectDir: string,
 ): Promise<{ features: Record<string, { milestone?: string }> }> {
 	const raw = await readFile(join(projectDir, '.aidd', 'roadmap.json'), 'utf8');
 	return JSON.parse(raw) as { features: Record<string, { milestone?: string }> };
@@ -209,7 +209,7 @@ describe('project reports', () => {
 		expect(second.featureId).toMatch(/^saved-dashboard-filters-[a-f0-9-]{8}$/);
 		expect(second.featureId).not.toBe(first.featureId);
 		expect(
-			await fileExists(join(projectDir, '.aidd', 'features', second.featureId ?? ''))
+			await fileExists(join(projectDir, '.aidd', 'features', second.featureId ?? '')),
 		).toBe(true);
 	});
 
@@ -277,12 +277,12 @@ describe('project reports', () => {
 			await runGit(projectDir, ['log', '-1', '--pretty=format:%s'])
 		).stdout.trim();
 		const files = committedFiles(
-			(await runGit(projectDir, ['log', '-1', '--name-only', '--pretty=format:'])).stdout
+			(await runGit(projectDir, ['log', '-1', '--name-only', '--pretty=format:'])).stdout,
 		);
 
 		expect(subject).toBe(`chore(aidd): add remediation ${report.featureId} from web report`);
 		expect(files).toEqual(
-			['.aidd/roadmap.json', `.aidd/features/${report.featureId}/feature.json`].sort()
+			['.aidd/roadmap.json', `.aidd/features/${report.featureId}/feature.json`].sort(),
 		);
 		// Nothing left dirty: the files were committed in their formatted form.
 		expect((await runGit(projectDir, ['status', '--porcelain'])).stdout.trim()).toBe('');
@@ -312,7 +312,7 @@ describe('project reports', () => {
 				id: 'feature-mvp-open',
 				passes: false,
 				status: 'in_progress',
-			})
+			}),
 		);
 
 		const report = await submitProjectReport(projectDir, {
@@ -320,11 +320,11 @@ describe('project reports', () => {
 			kind: 'bug',
 		});
 		const files = committedFiles(
-			(await runGit(projectDir, ['log', '-1', '--name-only', '--pretty=format:'])).stdout
+			(await runGit(projectDir, ['log', '-1', '--name-only', '--pretty=format:'])).stdout,
 		);
 
 		expect(files).toEqual(
-			['.aidd/roadmap.json', `.aidd/features/${report.featureId}/feature.json`].sort()
+			['.aidd/roadmap.json', `.aidd/features/${report.featureId}/feature.json`].sort(),
 		);
 		// The unrelated edit is left uncommitted, not folded into the report bundle.
 		const status = (
@@ -348,7 +348,7 @@ describe('project reports', () => {
 
 		expect(report.featureId).toMatch(/^remediation-\d{8}-/);
 		expect(
-			await fileExists(join(projectDir, '.aidd', 'features', report.featureDirectory ?? ''))
+			await fileExists(join(projectDir, '.aidd', 'features', report.featureDirectory ?? '')),
 		).toBe(true);
 	});
 
@@ -360,10 +360,10 @@ describe('project reports', () => {
 		const service = new ProjectService(webConfig(root));
 
 		await expect(service.resolveDiscoveredProject('not-valid-base64')).rejects.toThrow(
-			'Project not found'
+			'Project not found',
 		);
 		await expect(
-			service.resolveDiscoveredProject(encodeProjectId(outsideProject))
+			service.resolveDiscoveredProject(encodeProjectId(outsideProject)),
 		).rejects.toThrow('Project not found');
 	});
 });

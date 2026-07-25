@@ -1,7 +1,7 @@
 import {
+	type DistributedMaterialsRegistry,
 	DISTRIBUTION_SURFACES,
 	type DistributionSurface,
-	type DistributedMaterialsRegistry,
 	type ModificationStatus,
 	type ThirdPartyMaterial,
 	type TrackedSurfaces,
@@ -21,7 +21,7 @@ function stringAt(
 	object: Record<string, unknown>,
 	key: string,
 	path: string,
-	issues: string[]
+	issues: string[],
 ): string {
 	const value = object[key];
 	if (typeof value === 'string' && value.trim().length > 0) return value;
@@ -33,7 +33,7 @@ function optionalStringAt(
 	object: Record<string, unknown>,
 	key: string,
 	path: string,
-	issues: string[]
+	issues: string[],
 ): string | undefined {
 	const value = object[key];
 	if (value === undefined) return undefined;
@@ -46,7 +46,7 @@ function stringsAt(
 	object: Record<string, unknown>,
 	key: string,
 	path: string,
-	issues: string[]
+	issues: string[],
 ): string[] {
 	const value = object[key];
 	if (!Array.isArray(value) || value.length === 0) {
@@ -54,7 +54,7 @@ function stringsAt(
 		return [];
 	}
 	const strings = value.filter(
-		(entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
+		(entry): entry is string => typeof entry === 'string' && entry.trim().length > 0,
 	);
 	if (strings.length !== value.length) {
 		issues.push(`${path}.${key} must contain only non-empty strings.`);
@@ -65,7 +65,7 @@ function stringsAt(
 function distributionSurfacesAt(
 	object: Record<string, unknown>,
 	path: string,
-	issues: string[]
+	issues: string[],
 ): DistributionSurface[] {
 	const surfaces = stringsAt(object, 'distributionSurfaces', path, issues);
 	for (const surface of surfaces) {
@@ -77,7 +77,7 @@ function distributionSurfacesAt(
 		issues.push(`${path}.distributionSurfaces must not contain duplicates.`);
 	}
 	return surfaces.filter((surface): surface is DistributionSurface =>
-		DISTRIBUTION_SURFACE_SET.has(surface)
+		DISTRIBUTION_SURFACE_SET.has(surface),
 	);
 }
 
@@ -146,7 +146,7 @@ export function parseDistributedMaterialsRegistry(value: unknown): DistributedMa
 
 	if (issues.length > 0) {
 		throw new Error(
-			`Invalid distributed-materials registry:\n${issues.map((issue) => `- ${issue}`).join('\n')}`
+			`Invalid distributed-materials registry:\n${issues.map((issue) => `- ${issue}`).join('\n')}`,
 		);
 	}
 	return registry;

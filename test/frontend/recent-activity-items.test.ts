@@ -113,7 +113,7 @@ describe('recentMetadataActivity', () => {
 					finalChecks: { smokeQc: 'passed' },
 					runId: null,
 				}),
-			]
+			],
 		);
 
 		expect(items).toHaveLength(1);
@@ -131,7 +131,7 @@ describe('recentMetadataActivity', () => {
 	test('prefers aiSummary over mechanical count parts in run detail', () => {
 		const items = recentMetadataActivity(
 			[run({ aiSummary: 'Implemented the login flow with error handling.' })],
-			[]
+			[],
 		);
 
 		expect(items).toHaveLength(1);

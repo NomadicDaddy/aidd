@@ -27,7 +27,7 @@ describe('maturity skip round-trip', () => {
 		// Written exactly as services/project/profile.ts writes it, via the shared constant.
 		await writeFile(
 			join(metadataPath(projectDir), MATURITY_SKIP_FILE),
-			`${JSON.stringify({ skip: ['spec.md', 'screen-map.md'], updatedAt: new Date().toISOString() }, null, 2)}\n`
+			`${JSON.stringify({ skip: ['spec.md', 'screen-map.md'], updatedAt: new Date().toISOString() }, null, 2)}\n`,
 		);
 		expect(await loadMaturitySkip(projectDir)).toEqual(['spec.md', 'screen-map.md']);
 	});
@@ -37,7 +37,7 @@ describe('maturity skip round-trip', () => {
 		const projectDir = await makeProject('legacy-name');
 		await writeFile(
 			join(metadataPath(projectDir), 'maturity-skip.json'),
-			`${JSON.stringify({ skip: ['spec.md'] })}\n`
+			`${JSON.stringify({ skip: ['spec.md'] })}\n`,
 		);
 		expect(await loadMaturitySkip(projectDir)).toEqual([]);
 	});

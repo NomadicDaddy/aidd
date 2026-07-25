@@ -19,7 +19,7 @@ import { resolveHeartbeatContinuationValue } from './continuation.ts';
 
 interface IngestContext {
 	commands: DbCommands;
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 	onProjectChanged?: (projectPath: string) => void;
 }
@@ -30,11 +30,11 @@ export async function ingestCompletedCliRuns(ctx: IngestContext): Promise<number
 		ctx.config.web.allowedRoots.map(async (root) => {
 			for (const projectDir of await scanCliActiveRunProjectDirs(
 				root,
-				ctx.config.web.ignoredFolders
+				ctx.config.web.ignoredFolders,
 			)) {
 				projectDirs.add(resolve(projectDir));
 			}
-		})
+		}),
 	);
 	let ingested = 0;
 	for (const projectDir of projectDirs) {
@@ -74,7 +74,7 @@ export async function ingestCompletedCliRuns(ctx: IngestContext): Promise<number
 							finalStatus,
 							record,
 						}),
-					{ label: 'run.ingestCli.terminalize' }
+					{ label: 'run.ingestCli.terminalize' },
 				);
 			} catch (err) {
 				// Leave the heartbeat file in place so a later sweep retries rather than dropping

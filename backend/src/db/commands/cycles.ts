@@ -11,7 +11,7 @@ import { directorCycles, suggestions } from '../schema.ts';
 
 export function persistCycleResult(
 	tx: LocalTransaction,
-	args: PersistCycleResultArgs
+	args: PersistCycleResultArgs,
 ): PersistCycleResultOutcome {
 	const { createdAt, cycleId, cycleUpdate, dedupWindowMs, suggestions: batch } = args;
 	// Suggestions the operator explicitly dismissed within the window suppress identical
@@ -26,8 +26,8 @@ export function persistCycleResult(
 				and(
 					eq(suggestions.status, 'dismissed'),
 					eq(suggestions.dismissedBy, 'user'),
-					gte(suggestions.resolvedAt, createdAt - dedupWindowMs)
-				)
+					gte(suggestions.resolvedAt, createdAt - dedupWindowMs),
+				),
 			)
 			.all();
 		for (const row of recentlyDismissed) {

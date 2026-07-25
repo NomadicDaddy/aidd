@@ -10,13 +10,13 @@ import {
 import { monitorBackend } from 'aidd-shared/backends/monitor';
 import { ChildProcessReaper, type ReapDiagnostic } from 'aidd-shared/lib/childProcessReaper';
 import {
+	type AgentRunResult,
 	exitCodeFromEvents,
 	extractStructuredResult,
 	filesModifiedFromEvents,
+	type IterationMetrics,
 	metricsFromEvents,
 	orchestratorExitCodes,
-	type AgentRunResult,
-	type IterationMetrics,
 } from 'aidd-shared/orchestrator/result';
 import { runRepoDir } from 'aidd-shared/plan/types';
 
@@ -58,7 +58,7 @@ export async function runBackendStreamLoop(
 	iteration: number,
 	iterationStartedAtMs: number,
 	runStartedAtMs: number,
-	gitHeadBefore: string | undefined
+	gitHeadBefore: string | undefined,
 ): Promise<BackendStreamLoopResult> {
 	const events: AgentEvent[] = [];
 	const idleWarningTimestamps: { afterMs: number; atMs: number }[] = [];
@@ -104,7 +104,7 @@ export async function runBackendStreamLoop(
 		{
 			idleNudgeTimeoutMs: plan.outputPolicy.idleNudgeTimeoutSeconds * 1000,
 			idleTimeoutMs: plan.outputPolicy.idleTimeoutSeconds * 1000,
-		}
+		},
 	)[Symbol.asyncIterator]();
 
 	// Wall-clock abort: enforce the advertised --timeout ceiling. A continuously-emitting
@@ -136,7 +136,7 @@ export async function runBackendStreamLoop(
 							waitForCommitOrTimeout(
 								runRepoDir(plan),
 								gitHeadBefore,
-								completionMarkerGraceMs
+								completionMarkerGraceMs,
 							).then((outcome) => {
 								completionCommittedDuringGrace = outcome.committed;
 								return completionMarkerGrace;
@@ -162,7 +162,7 @@ export async function runBackendStreamLoop(
 					const lateFeature = await acceptedCompletedFeatureFromEvents(
 						deps.store,
 						events,
-						work
+						work,
 					);
 					if (lateFeature !== undefined) acceptedCompletionFeature = lateFeature;
 				}
@@ -170,7 +170,7 @@ export async function runBackendStreamLoop(
 					const outcome = await waitForCommitOrTimeout(
 						runRepoDir(plan),
 						gitHeadBefore,
-						completionMarkerGraceMs
+						completionMarkerGraceMs,
 					);
 					completionCommittedDuringGrace = outcome.committed;
 					completionFinalizedBeforeBackendExit = true;
@@ -189,12 +189,12 @@ export async function runBackendStreamLoop(
 				const signal = flailingDetector.record(event);
 				if (signal.kind === 'warn') {
 					process.stdout.write(
-						`⚠ possible flailing (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)}\n`
+						`⚠ possible flailing (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)}\n`,
 					);
 				} else if (signal.kind === 'trip') {
 					flailingDetected = true;
 					process.stdout.write(
-						`✋ flailing detected (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)} — aborting iteration\n`
+						`✋ flailing detected (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)} — aborting iteration\n`,
 					);
 					controller.abort('flailing');
 					break;
@@ -224,7 +224,7 @@ export async function runBackendStreamLoop(
 				const acceptedFeature = await acceptedCompletedFeatureFromEvents(
 					deps.store,
 					events,
-					work
+					work,
 				);
 				if (acceptedCompletionFeature === undefined && acceptedFeature !== undefined) {
 					acceptedCompletionFeature = acceptedFeature;
@@ -250,7 +250,7 @@ export async function runBackendStreamLoop(
 				? ` (from a ${Math.round(reapDiagnostic.tableAgeMs / 1000)}s-old snapshot: the teardown process-table probe timed out)`
 				: '';
 			process.stdout.write(
-				`♻ reaped ${reapedPids.length} leaked child process(es) at teardown${source}: ${reapedPids.join(', ')}\n`
+				`♻ reaped ${reapedPids.length} leaked child process(es) at teardown${source}: ${reapedPids.join(', ')}\n`,
 			);
 		}
 	}

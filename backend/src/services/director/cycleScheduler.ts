@@ -1,4 +1,4 @@
-import type { DirectorCycleStage, DirectAiMeta } from 'aidd-shared';
+import type { DirectAiMeta, DirectorCycleStage } from 'aidd-shared';
 
 import { desc, eq } from 'drizzle-orm';
 
@@ -54,7 +54,7 @@ export async function checkAndRunScheduledCycle(ctx: ScheduledCycleContext): Pro
 	if (lastAt !== null && Date.now() - lastAt < intervalMs) return;
 	webLogger.info(
 		{ intervalHours: schedule.intervalHours, lastCycleAt: lastAt },
-		'Starting scheduled director cycle'
+		'Starting scheduled director cycle',
 	);
 	await ctx.startCycle({});
 }

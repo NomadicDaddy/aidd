@@ -18,7 +18,7 @@ import { runs } from '../schema.ts';
  */
 export function insertRunIfUnderCeiling(
 	tx: LocalTransaction,
-	args: InsertRunIfUnderCeilingArgs
+	args: InsertRunIfUnderCeilingArgs,
 ): InsertRunIfUnderCeilingResult {
 	const globalRows = tx
 		.select({ value: count() })
@@ -42,8 +42,8 @@ export function insertRunIfUnderCeiling(
 		.where(
 			and(
 				inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
-				eq(runs.projectPath, args.values.projectPath)
-			)
+				eq(runs.projectPath, args.values.projectPath),
+			),
 		)
 		.all();
 	const projectCount = projectRows[0]?.value ?? 0;

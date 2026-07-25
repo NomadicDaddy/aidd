@@ -61,7 +61,7 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 							className="hover:underline"
 							to={resourceLink(
 								invocation.parentResourceType,
-								invocation.parentResourceId ?? ''
+								invocation.parentResourceId ?? '',
 							)}>
 							{invocation.parentResourceName}
 						</Link>{' '}

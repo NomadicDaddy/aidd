@@ -13,7 +13,7 @@ export async function getBackendUsage(
 		resourceId?: string | undefined;
 		resourceType?: TelemetryResourceType | undefined;
 		windowMs?: number | undefined;
-	}
+	},
 ): Promise<BackendUsageRow[]> {
 	const filters = [];
 	if (input?.resourceType !== undefined) {
@@ -41,7 +41,7 @@ export async function getBackendUsage(
 export async function getResourceDetail(
 	db: WebDatabase,
 	resourceType: TelemetryResourceType,
-	resourceId: string
+	resourceId: string,
 ): Promise<null | ResourceDetail> {
 	const usageRows = await getResourceUsage(db, { resourceType });
 	const usage = usageRows.find((row) => row.resourceId === resourceId);

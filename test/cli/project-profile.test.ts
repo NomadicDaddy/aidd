@@ -21,7 +21,7 @@ describe('project profile metadata', () => {
 				dataSensitivity: 'low',
 				deployment: 'local',
 				externalIntegrations: 'none',
-			})
+			}),
 		);
 
 		const profile = await readExplicitProjectAssuranceProfile(projectDir);
@@ -41,7 +41,7 @@ describe('project profile metadata', () => {
 			notes: '  Hosted customer-facing app.  ',
 		});
 		const written = JSON.parse(
-			await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8')
+			await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8'),
 		) as Record<string, unknown>;
 
 		expect(Object.keys(written).sort()).toEqual([

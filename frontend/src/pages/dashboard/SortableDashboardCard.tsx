@@ -1,4 +1,4 @@
-import type { KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode, PointerEvent as ReactPointerEvent } from 'react';
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -90,7 +90,7 @@ export function SortableDashboardCard({
 				isFull && 'xl:col-span-2',
 				!locked &&
 					'cursor-grab outline-2 outline-offset-2 outline-teal-400/60 outline-dashed active:cursor-grabbing',
-				isDragging && 'z-10 opacity-60'
+				isDragging && 'z-10 opacity-60',
 			)}
 			ref={(node) => {
 				setNodeRef(node);
@@ -133,7 +133,7 @@ export function SortableDashboardCard({
 			)}
 			<div
 				className={cn(
-					height !== undefined && 'h-full overflow-hidden *:h-full *:overflow-y-auto'
+					height !== undefined && 'h-full overflow-hidden *:h-full *:overflow-y-auto',
 				)}>
 				{card.node}
 			</div>
@@ -142,7 +142,7 @@ export function SortableDashboardCard({
 					aria-label={`Resize ${card.label} card height`}
 					className={cn(
 						pillClassName,
-						'absolute -bottom-2.5 left-1/2 z-10 -translate-x-1/2 cursor-ns-resize'
+						'absolute -bottom-2.5 left-1/2 z-10 -translate-x-1/2 cursor-ns-resize',
 					)}
 					onDoubleClick={() => {
 						setCardHeight(card.id, null);

@@ -10,12 +10,12 @@ import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
 import { artifactInventoryCount } from './artifactsUtils.ts';
-import { artifactTone, type ArtifactHealth } from './shared.ts';
+import { type ArtifactHealth, artifactTone } from './shared.ts';
 
 // Pulls in react-markdown + remark-gfm (~250KB); lazy so the tab does not pay for it
 // until a user actually opens an artifact.
 const ArtifactViewerDialog = lazy(() =>
-	import('./ArtifactViewerDialog.tsx').then((m) => ({ default: m.ArtifactViewerDialog }))
+	import('./ArtifactViewerDialog.tsx').then((m) => ({ default: m.ArtifactViewerDialog })),
 );
 
 export function ArtifactsTab({
@@ -50,7 +50,7 @@ export function ArtifactsTab({
 		return (
 			<Card>
 				<div className="mb-3 flex items-center justify-between">
-					<h2 className="text-foreground text-sm font-semibold">Artifact health</h2>
+					<h2 className="text-sm font-semibold text-foreground">Artifact health</h2>
 					<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
 				</div>
 				<p className="text-sm text-neutral-500">
@@ -73,7 +73,7 @@ export function ArtifactsTab({
 	return (
 		<Card>
 			<div className="mb-3 flex items-center justify-between">
-				<h2 className="text-foreground text-sm font-semibold">Artifact health</h2>
+				<h2 className="text-sm font-semibold text-foreground">Artifact health</h2>
 				<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
 			</div>
 			<div className="grid gap-3 sm:grid-cols-3 md:grid-cols-6">
@@ -82,7 +82,7 @@ export function ArtifactsTab({
 						className="rounded-md border border-neutral-200 p-3 text-center dark:border-neutral-800"
 						key={tile.label}>
 						<div className="text-xs text-neutral-500 uppercase">{tile.label}</div>
-						<div className="text-foreground mt-1 text-lg font-semibold">
+						<div className="mt-1 text-lg font-semibold text-foreground">
 							{tile.value}
 						</div>
 						<div className="mt-1">

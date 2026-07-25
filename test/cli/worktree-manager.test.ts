@@ -37,7 +37,7 @@ async function initRepoWithCommit(projectDir: string): Promise<void> {
 	// always a fresh directory `git init` just created.
 	await appendFile(
 		join(projectDir, '.git', 'config'),
-		'[user]\n\temail = test@aidd.local\n\tname = aidd test\n'
+		'[user]\n\temail = test@aidd.local\n\tname = aidd test\n',
 	);
 	await writeFile(join(projectDir, 'file.txt'), 'base\n');
 	await runGit(projectDir, ['add', '.']);
@@ -64,7 +64,7 @@ describe('worktree-manager', () => {
 			const notGit = join(root, 'not-git');
 			await mkdir(notGit, { recursive: true });
 			expect(
-				await createRunWorktree(notGit, 'run2', { baseDir: join(root, 'wt') })
+				await createRunWorktree(notGit, 'run2', { baseDir: join(root, 'wt') }),
 			).toBeNull();
 		} finally {
 			await removeTempTree(root);
@@ -181,7 +181,7 @@ describe('worktree-manager', () => {
 					'for-each-ref',
 					'--format=%(refname)',
 					'refs/aidd-checkpoints/run1',
-				])
+				]),
 			).toBe('');
 		} finally {
 			await removeTempTree(root);

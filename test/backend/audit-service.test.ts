@@ -11,7 +11,7 @@ import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { testTempDir } from '../_helpers/temp.ts';
 function makeConfig(
 	auditsEnabled: boolean,
-	overrides: Partial<ResolvedConfig> = {}
+	overrides: Partial<ResolvedConfig> = {},
 ): ResolvedConfig {
 	return {
 		auditsEnabled,
@@ -36,7 +36,7 @@ function makeConfig(
 function makeService(
 	rootDir: string,
 	auditsEnabled = true,
-	configOverrides: Partial<ResolvedConfig> = {}
+	configOverrides: Partial<ResolvedConfig> = {},
 ): AuditService {
 	return new AuditService(
 		makeConfig(auditsEnabled, configOverrides),
@@ -47,14 +47,14 @@ function makeService(
 		{
 			launchRun: async () => ({ id: 'run_1' }),
 		} as unknown as RunService,
-		rootDir
+		rootDir,
 	);
 }
 
 async function writeAuditDefinition(
 	rootDir: string,
 	name: string,
-	priority: 'Critical' | 'High' | 'Medium'
+	priority: 'Critical' | 'High' | 'Medium',
 ): Promise<void> {
 	await mkdir(join(rootDir, 'audits'), { recursive: true });
 	const body = `---\ntitle: '${name}'\npriority: '${priority}'\ncategory: 'Core'\n---\n\n# ${name}\n`;
@@ -64,7 +64,7 @@ async function writeAuditDefinition(
 async function writeFeature(
 	projectDir: string,
 	directory: string,
-	feature: Record<string, unknown>
+	feature: Record<string, unknown>,
 ): Promise<void> {
 	const dir = join(projectDir, '.aidd', 'features', directory);
 	await mkdir(dir, { recursive: true });
@@ -81,16 +81,16 @@ describe('audit service', () => {
 
 			const saved = await service.saveAuditDefinition(
 				'SECURITY',
-				'# Security\n\nUpdated checklist body.'
+				'# Security\n\nUpdated checklist body.',
 			);
 
 			expect(saved.name).toBe('SECURITY');
 			expect(saved.content).toContain('Updated checklist body.');
 			expect(await readFile(join(rootDir, 'audits', 'SECURITY.md'), 'utf8')).toContain(
-				'Updated checklist body.'
+				'Updated checklist body.',
 			);
 			await expect(
-				service.saveAuditDefinition('../SECURITY', '# Security\n\nBad path.')
+				service.saveAuditDefinition('../SECURITY', '# Security\n\nBad path.'),
 			).rejects.toThrow('Invalid audit name');
 		} finally {
 			await rm(rootDir, { force: true, recursive: true });
@@ -115,7 +115,7 @@ describe('audit service', () => {
 							stopReason: 'completed',
 						}),
 						'',
-					].join('\n')
+					].join('\n'),
 				);
 				await writeFeature(projectDir, 'audit-security-1700000000-csrf', {
 					id: 'audit-security-1700000000-csrf',
@@ -177,7 +177,7 @@ describe('audit service', () => {
 				await commitSourceFile(
 					projectDir,
 					`src/change-${index}.ts`,
-					`export const change${index} = ${index};\n`
+					`export const change${index} = ${index};\n`,
 				);
 			}
 			const service = new AuditService(
@@ -199,7 +199,7 @@ describe('audit service', () => {
 				{
 					launchRun: async () => ({ id: 'run_1' }),
 				} as unknown as RunService,
-				rootDir
+				rootDir,
 			);
 
 			const response = await service.listProjectAudits(projectDir);
@@ -233,7 +233,7 @@ describe('audit service', () => {
 				{
 					launchRun: async () => ({ id: 'run_1' }),
 				} as unknown as RunService,
-				rootDir
+				rootDir,
 			);
 
 			const response = await service.listProjectAudits(projectDir);
@@ -255,7 +255,7 @@ describe('audit service', () => {
 				service.launchAudits({
 					auditNames: ['SECURITY'],
 					projectIds: [join(rootDir, 'project')],
-				})
+				}),
 			).rejects.toThrow('Audits are disabled.');
 		} finally {
 			await rm(rootDir, { force: true, recursive: true });
@@ -279,7 +279,7 @@ describe('audit service', () => {
 					return { id: `run_${requests.length}` };
 				}) as unknown as Parameters<typeof launchAuditsImpl>[1]['launchRun'],
 				resolveProject: async (id: string) => `D:/applications/${id}`,
-			}
+			},
 		);
 
 		expect(result.runIds).toEqual(['run_1', 'run_2']);
@@ -310,7 +310,7 @@ describe('audit service', () => {
 					return { id: `run_${requests.length}` };
 				}) as unknown as Parameters<typeof launchAuditsImpl>[1]['launchRun'],
 				resolveProject: async (id: string) => `D:/applications/${id}`,
-			}
+			},
 		);
 
 		expect(result.runIds).toEqual(['run_1', 'run_2']);
@@ -337,7 +337,7 @@ describe('audit service', () => {
 					return { id: `run_${requests.length}` };
 				}) as unknown as Parameters<typeof launchAuditsImpl>[1]['launchRun'],
 				resolveProject: async (id: string) => `D:/applications/${id}`,
-			}
+			},
 		);
 
 		expect(result.runIds).toEqual(['run_1']);
@@ -360,7 +360,7 @@ describe('audit service', () => {
 					return { id: `run_${requests.length}` };
 				}) as unknown as Parameters<typeof launchAuditsImpl>[1]['launchRun'],
 				resolveProject: async (id: string) => `D:/applications/${id}`,
-			}
+			},
 		);
 
 		expect(result.runIds).toEqual(['run_1']);
@@ -398,7 +398,7 @@ describe('audit service', () => {
 					return { id: `run_${requests.length}` };
 				}) as unknown as Parameters<typeof launchAuditsImpl>[1]['launchRun'],
 				resolveProject: async (id: string) => `D:/applications/${id}`,
-			}
+			},
 		);
 
 		expect(result.runIds).toEqual(['run_1']);
@@ -420,8 +420,8 @@ describe('audit service', () => {
 						typeof launchAuditsImpl
 					>[1]['launchRun'],
 					resolveProject: async (id: string) => `D:/applications/${id}`,
-				}
-			)
+				},
+			),
 		).rejects.toThrow('Select at least one audit or choose audit-all.');
 	});
 });
@@ -439,7 +439,7 @@ async function initGitProject(projectDir: string): Promise<void> {
 async function commitSourceFile(
 	projectDir: string,
 	relativePath: string,
-	content: string
+	content: string,
 ): Promise<void> {
 	await writeFile(join(projectDir, relativePath), content);
 	await runGit(projectDir, ['add', relativePath]);

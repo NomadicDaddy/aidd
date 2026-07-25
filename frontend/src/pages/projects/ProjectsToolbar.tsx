@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
-import { maturityFilterLabels, type MaturityFilter } from './projects-list-shared.ts';
+import { type MaturityFilter, maturityFilterLabels } from './projects-list-shared.ts';
 
 export function ProjectsToolbar({
 	allProjectsCount,

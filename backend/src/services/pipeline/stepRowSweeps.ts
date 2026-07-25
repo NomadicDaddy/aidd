@@ -17,8 +17,8 @@ export async function sweepStrandedStepRows(db: WebDatabase): Promise<number> {
 		.where(
 			and(
 				inArray(pipelineStepResults.status, ['queued', 'running']),
-				notInArray(pipelineSessions.status, ['queued', 'running'])
-			)
+				notInArray(pipelineSessions.status, ['queued', 'running']),
+			),
 		);
 	if (stranded.length === 0) return 0;
 	await db
@@ -31,8 +31,8 @@ export async function sweepStrandedStepRows(db: WebDatabase): Promise<number> {
 		.where(
 			inArray(
 				pipelineStepResults.id,
-				stranded.map((row) => row.id)
-			)
+				stranded.map((row) => row.id),
+			),
 		);
 	recordDataMovement({
 		category: 'database',
@@ -49,7 +49,7 @@ export async function sweepStrandedStepRows(db: WebDatabase): Promise<number> {
 export async function terminalizeDuplicateInFlightRows(
 	db: WebDatabase,
 	sessionId: string,
-	duplicateIds: string[]
+	duplicateIds: string[],
 ): Promise<void> {
 	if (duplicateIds.length === 0) return;
 	await db

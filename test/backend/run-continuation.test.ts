@@ -10,11 +10,11 @@ import { runs } from '../../backend/src/db/schema.ts';
 import {
 	buildContinuationLaunchRequest,
 	chainDepth,
+	type ContinuationRunFacts,
 	continueRun,
 	evaluateContinuationValue,
 	maybeAutoChainRun,
 	readContinuationLedgerEntry,
-	type ContinuationRunFacts,
 } from '../../backend/src/services/run/continuation.ts';
 import { reconcileRunLedgerDrift } from '../../backend/src/services/run/ledgerBackfillSweep.ts';
 import { RunControlError } from '../../backend/src/services/run/types.ts';
@@ -116,7 +116,7 @@ describe('evaluateContinuationValue', () => {
 
 	test('merge-parked worktree runs are excluded despite the marker in the summary', () => {
 		expect(
-			evaluateContinuationValue(facts({ stopReason: 'merge_conflict_parked' }), undefined)
+			evaluateContinuationValue(facts({ stopReason: 'merge_conflict_parked' }), undefined),
 		).toBe('none');
 	});
 
@@ -133,8 +133,8 @@ describe('evaluateContinuationValue', () => {
 		expect(
 			evaluateContinuationValue(
 				facts({ status: 'completed', stopReason: 'completed', summary: null }),
-				entry
-			)
+				entry,
+			),
 		).toBe('initializer_handoff');
 	});
 
@@ -151,15 +151,15 @@ describe('evaluateContinuationValue', () => {
 		expect(
 			evaluateContinuationValue(
 				facts({ status: 'failed', stopReason: 'exit_error', summary: 'boom' }),
-				entry
-			)
+				entry,
+			),
 		).toBe('none');
 	});
 
 	test('non-coding modes and pipeline-owned runs are never eligible', () => {
 		expect(evaluateContinuationValue(facts({ mode: 'audit' }), undefined)).toBe('none');
 		expect(evaluateContinuationValue(facts({ pipelineSessionId: 'ps_1' }), undefined)).toBe(
-			'none'
+			'none',
 		);
 	});
 });
@@ -279,7 +279,7 @@ describe('continueRun', () => {
 						started.push(run.id);
 					},
 				},
-				'run_parent'
+				'run_parent',
 			);
 			expect(calls).toHaveLength(1);
 			expect(calls[0]?.chainedFromRunId).toBe('run_parent');
@@ -362,7 +362,7 @@ describe('continueRun', () => {
 			const results = await Promise.allSettled(attempts);
 			expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
 			const children = (await db.select().from(runs)).filter(
-				(row) => row.chainedFromRunId === 'run_race'
+				(row) => row.chainedFromRunId === 'run_race',
 			);
 			expect(children).toHaveLength(1);
 		} finally {
@@ -393,7 +393,7 @@ describe('continueRun', () => {
 			});
 			await continueRun(
 				{ db, launch: fakeLaunch(db, calls), recordStart: async () => {} },
-				'run_legacy'
+				'run_legacy',
 			);
 			expect(calls).toHaveLength(1);
 		} finally {
@@ -407,7 +407,7 @@ describe('maybeAutoChainRun', () => {
 	function autoDeps(
 		db: ReturnType<typeof makeDb>['db'],
 		calls: RunLaunchRequest[],
-		overrides: Partial<{ autoChainLimit: number; autoChainRuns: boolean }> = {}
+		overrides: Partial<{ autoChainLimit: number; autoChainRuns: boolean }> = {},
 	) {
 		return {
 			autoChainLimit: overrides.autoChainLimit ?? 3,
@@ -439,7 +439,7 @@ describe('maybeAutoChainRun', () => {
 			await maybeAutoChainRun(
 				autoDeps(db, calls, { autoChainRuns: false }),
 				'run_optout',
-				'wall_clock_timeout'
+				'wall_clock_timeout',
 			);
 
 			await seedRun(db, { id: 'run_cli', source: 'cli', status: 'failed' });
@@ -450,7 +450,7 @@ describe('maybeAutoChainRun', () => {
 			await maybeAutoChainRun(
 				autoDeps(db, calls, { autoChainLimit: 1 }),
 				'chain_1',
-				'wall_clock_timeout'
+				'wall_clock_timeout',
 			);
 			expect(calls).toHaveLength(0);
 		} finally {
@@ -485,7 +485,7 @@ describe('maybeAutoChainRun', () => {
 					recordStart: async () => {},
 				},
 				'run_fail',
-				'wall_clock_timeout'
+				'wall_clock_timeout',
 			);
 		} finally {
 			sqlite.close();

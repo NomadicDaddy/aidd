@@ -115,8 +115,8 @@ export async function backfillRunOutputMetrics(db: WebDatabase): Promise<number>
 			and(
 				isNull(runs.inputTokens),
 				isNull(runs.linesAdded),
-				inArray(runs.status, [...TERMINAL_STATUSES])
-			)
+				inArray(runs.status, [...TERMINAL_STATUSES]),
+			),
 		);
 
 	const byProject = new Map<string, string[]>();
@@ -177,7 +177,7 @@ export async function backfillRunOutputMetrics(db: WebDatabase): Promise<number>
 					set: { updatedAt: Date.now(), value },
 					target: settings.key,
 				}),
-		{ label: 'runs.outputMetricsBackfill.flag' }
+		{ label: 'runs.outputMetricsBackfill.flag' },
 	);
 	if (updated > 0) {
 		webLogger.info({ scanned: candidates.length, updated }, 'Backfilled run output metrics');

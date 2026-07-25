@@ -16,7 +16,7 @@ describe('project template registry resolution', () => {
 	test('always offers a spernakit template with the golden-path defaults', () => {
 		const config = resolveMergedConfig(
 			{ web: { allowedRoots: ['/base'], allowRemote: false } },
-			{ baseDir: BASE }
+			{ baseDir: BASE },
 		);
 		const spernakit = templatesOf(config).find((template) => template.name === 'spernakit');
 		expect(spernakit).toBeDefined();
@@ -29,7 +29,7 @@ describe('project template registry resolution', () => {
 	test('offers only the spernakit template when nothing else is configured', () => {
 		const config = resolveMergedConfig(
 			{ web: { allowedRoots: ['/base'], allowRemote: false } },
-			{ baseDir: BASE }
+			{ baseDir: BASE },
 		);
 		expect(templatesOf(config).map((template) => template.name)).toEqual(['spernakit']);
 	});
@@ -49,7 +49,7 @@ describe('project template registry resolution', () => {
 					],
 				},
 			},
-			{ baseDir: BASE }
+			{ baseDir: BASE },
 		);
 		const t3 = templatesOf(config).find((template) => template.name === 't3');
 		expect(t3).toEqual({
@@ -80,10 +80,10 @@ describe('project template registry resolution', () => {
 					],
 				},
 			},
-			{ baseDir: BASE }
+			{ baseDir: BASE },
 		);
 		const spernakitEntries = templatesOf(config).filter(
-			(template) => template.name === 'spernakit'
+			(template) => template.name === 'spernakit',
 		);
 		expect(spernakitEntries).toHaveLength(1);
 		expect(spernakitEntries[0]?.initCommand).toEqual(['custom-spernakit', '{name}']);

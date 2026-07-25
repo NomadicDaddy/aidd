@@ -18,7 +18,7 @@ function technologyLabels(stack: ProjectStack): string[] {
 		.split(/[+/]/)
 		.map((part) => part.trim());
 	return [...new Set([...stack.languages, ...stack.runtimes, ...stack.frameworks])].filter(
-		(label) => !primaryParts.includes(label.toLowerCase())
+		(label) => !primaryParts.includes(label.toLowerCase()),
 	);
 }
 

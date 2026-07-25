@@ -47,7 +47,7 @@ async function gitNumstatOutput(projectPath: string, hash: string): Promise<null
 // leave the columns NULL rather than writing zeros.
 export async function readCommitsNumstat(
 	projectPath: string,
-	hashes: readonly string[]
+	hashes: readonly string[],
 ): Promise<CommitsNumstat | null> {
 	const validHashes = hashes.filter((hash) => commitShaPattern.test(hash));
 	if (validHashes.length === 0) return null;

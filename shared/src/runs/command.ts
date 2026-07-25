@@ -19,7 +19,7 @@ export function formatRunCommandArgs(args: readonly string[]): string {
 
 export function buildRunLaunchCommand(
 	args: readonly string[],
-	source: RunCommandSource
+	source: RunCommandSource,
 ): null | RunLaunchCommand {
 	if (args.length === 0) return null;
 	const normalized = args.map((arg) => String(arg));

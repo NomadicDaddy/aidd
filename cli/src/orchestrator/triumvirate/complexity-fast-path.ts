@@ -31,7 +31,7 @@ export async function runComplexityFastPath(
 	options: TriumvirateRunOptions,
 	primary: StageRunResult,
 	metadata: Record<string, unknown>,
-	metrics: IterationMetrics
+	metrics: IterationMetrics,
 ): Promise<TriumvirateRunResult | undefined> {
 	const roles = options.plan.triumvirate;
 	if (!roles) return undefined;

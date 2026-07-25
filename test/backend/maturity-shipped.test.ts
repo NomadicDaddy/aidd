@@ -30,7 +30,7 @@ const localProfile: ProjectAssuranceProfile = {
 async function computeFor(
 	projectDir: string,
 	catalogDir: string,
-	profile: ProjectAssuranceProfile
+	profile: ProjectAssuranceProfile,
 ): Promise<MaturityDto> {
 	return await computeMaturity({
 		artifactCheck: null,
@@ -111,7 +111,7 @@ describe('maturity shipped stage', () => {
 			await mkdir(join(projectDir, '.git'), { recursive: true });
 			await writeFile(
 				join(projectDir, '.git', 'packed-refs'),
-				'# pack-refs with: peeled fully-peeled sorted\nabc123 refs/tags/v1.0.0\n'
+				'# pack-refs with: peeled fully-peeled sorted\nabc123 refs/tags/v1.0.0\n',
 			);
 
 			const maturity = await computeFor(projectDir, catalogDir, serverProfile);
@@ -132,7 +132,7 @@ describe('maturity shipped stage', () => {
 			await mkdir(join(projectDir, '.git'), { recursive: true });
 			await writeFile(
 				join(projectDir, '.git', 'packed-refs'),
-				'# pack-refs with: peeled fully-peeled sorted\nabc123 refs/heads/main\n'
+				'# pack-refs with: peeled fully-peeled sorted\nabc123 refs/heads/main\n',
 			);
 
 			const maturity = await computeFor(projectDir, catalogDir, serverProfile);
@@ -152,12 +152,12 @@ describe('maturity shipped stage', () => {
 			await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true });
 			await writeFile(
 				join(projectDir, '.github', 'workflows', 'deploy.yml'),
-				'name: deploy\n'
+				'name: deploy\n',
 			);
 
 			const maturity = await computeFor(projectDir, catalogDir, serverProfile);
 			const deployConfig = shippedStage(maturity).artifacts.find(
-				(a) => a.slug === 'deploy-config'
+				(a) => a.slug === 'deploy-config',
 			);
 
 			expect(deployConfig?.status).toBe('fresh');

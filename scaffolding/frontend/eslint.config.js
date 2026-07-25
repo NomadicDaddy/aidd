@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import perfectionist from 'eslint-plugin-perfectionist';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,8 +26,7 @@ const noDefaultExportPlugin = {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// eslint-disable-next-line import/no-default-export
-export default tseslint.config([
+export default defineConfig([
 	{
 		ignores: [
 			'dist',
@@ -41,7 +41,7 @@ export default tseslint.config([
 		extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
 		files: ['**/*.{ts,tsx}'],
 		languageOptions: {
-			ecmaVersion: 2020,
+			ecmaVersion: 2022,
 			globals: {
 				...globals.browser,
 				...globals.node,
@@ -58,12 +58,12 @@ export default tseslint.config([
 			perfectionist,
 		},
 		rules: {
-			...reactHooks.configs.recommended.rules,
+			...reactHooks.configs.flat.recommended.rules,
 
 			'@typescript-eslint/array-type': ['error', { default: 'array' }],
 			'@typescript-eslint/ban-ts-comment': 'error',
 			'@typescript-eslint/consistent-type-imports': [
-				'warn',
+				'error',
 				{ fixStyle: 'inline-type-imports', prefer: 'type-imports' },
 			],
 			'@typescript-eslint/no-explicit-any': 'error',
@@ -85,11 +85,19 @@ export default tseslint.config([
 			'react-hooks/rules-of-hooks': 'warn',
 			'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
+			'perfectionist/sort-array-includes': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
 			'perfectionist/sort-enums': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-exports': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-heritage-clauses': [
 				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
@@ -98,24 +106,44 @@ export default tseslint.config([
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-interfaces': [
-				'warn',
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-intersection-types': [
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-jsx-props': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
-			'perfectionist/sort-objects': [
-				'warn',
+			'perfectionist/sort-maps': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-named-exports': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-named-imports': [
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'perfectionist/sort-object-types': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
-			'perfectionist/sort-switch-case': ['warn', { order: 'asc', type: 'alphabetical' }],
+			'perfectionist/sort-objects': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-sets': [
+				'error',
+				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
+			],
+			'perfectionist/sort-switch-case': ['error', { order: 'asc', type: 'alphabetical' }],
 			'perfectionist/sort-union-types': [
-				'warn',
+				'error',
 				{ ignoreCase: false, order: 'asc', type: 'alphabetical' },
 			],
 			'sort-keys': 'off',

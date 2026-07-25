@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'bun:test';
@@ -80,8 +80,8 @@ function webProjectConfig(overrides: WebConfigOverrides) {
 
 function fullConfig(
 	web: ResolvedWebConfig,
-	overrides: Partial<ResolvedConfig> = {}
-): ResolvedConfig & { web: ResolvedWebConfig } {
+	overrides: Partial<ResolvedConfig> = {},
+): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
 		dirtyTreeThreshold: 50,
@@ -118,7 +118,7 @@ const noopPurge = async (): Promise<number> => 0;
 function fakeBackend(
 	reply: string,
 	captured: PromptInput[] = [],
-	filesModified: string[] = []
+	filesModified: string[] = [],
 ): CLIBackend {
 	return {
 		idleDefaults: { killMs: 5000, nudgeMs: 4000 },
@@ -249,7 +249,7 @@ describe('project create service', () => {
 				stopBeforeImplementation: false,
 			},
 			launch,
-			noopPurge
+			noopPurge,
 		);
 
 		const specContents = await readFile(join(result.path, '.aidd', 'spec.md'), 'utf8');
@@ -273,7 +273,7 @@ describe('project create service', () => {
 		const result = await service.createProject(
 			{ description: null, mode: 'fresh', name: 'bare-app', root, spec: null },
 			launch,
-			noopPurge
+			noopPurge,
 		);
 
 		await expect(readFile(join(result.path, '.aidd', 'spec.md'), 'utf8')).rejects.toThrow();
@@ -294,7 +294,7 @@ describe('project create service', () => {
 		const result = await service.createProject(
 			{ description: null, mode: 'fresh', name: 'launchable-app', root, spec: null },
 			launch,
-			noopPurge
+			noopPurge,
 		);
 
 		// The CLI scaffolds the root package.json from scaffolding/package.json during the
@@ -330,8 +330,8 @@ describe('project create service', () => {
 			service.createProject(
 				{ description: null, mode: 'fresh', name: 'existing', root, spec: null },
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/already exists and is not empty/);
 	});
 
@@ -355,8 +355,8 @@ describe('project create service', () => {
 					spec: null,
 				},
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/Project name must contain only/);
 	});
 
@@ -370,14 +370,14 @@ describe('project create service', () => {
 		const script = await stubSpernakitCheckout(checkout, STUB_INIT_OK);
 
 		const service = new ProjectService(
-			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script })
+			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script }),
 		);
 		const { calls, launch } = recordingLauncher();
 
 		const result = await service.createProject(
 			{ description: 'ports app', mode: 'spernakit', name: 'ports-app', root, spec: null },
 			launch,
-			noopPurge
+			noopPurge,
 		);
 
 		expect(result.mode).toBe('spernakit');
@@ -404,7 +404,7 @@ describe('project create service', () => {
 		const script = await stubSpernakitCheckout(checkout, STUB_INIT_OK);
 
 		const service = new ProjectService(
-			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script })
+			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script }),
 		);
 		const { calls, launch } = recordingLauncher();
 
@@ -412,7 +412,7 @@ describe('project create service', () => {
 		const result = await service.createProject(
 			{ description: '   ', mode: 'spernakit', name: 'spernakit-app', root, spec: null },
 			launch,
-			noopPurge
+			noopPurge,
 		);
 
 		expect(result.mode).toBe('spernakit');
@@ -428,7 +428,7 @@ describe('project create service', () => {
 		// A successful init persists its full output to a run-log and leaves no quarantine behind.
 		const logFiles = await readdir(join(dataDir, 'run-logs'));
 		expect(
-			logFiles.some((entry) => entry.startsWith('spernakit-init-') && entry.endsWith('.log'))
+			logFiles.some((entry) => entry.startsWith('spernakit-init-') && entry.endsWith('.log')),
 		).toBe(true);
 		expect((await readdir(root)).some((entry) => entry.includes('.failed-'))).toBe(false);
 	}, 15_000);
@@ -459,7 +459,7 @@ describe('project create service', () => {
 		};
 
 		const service = new ProjectService(
-			webProjectConfig({ allowedRoots: [root], dataDir, templates: [template] })
+			webProjectConfig({ allowedRoots: [root], dataDir, templates: [template] }),
 		);
 		const { calls, launch } = recordingLauncher();
 		const intakeCalls: string[] = [];
@@ -479,7 +479,7 @@ describe('project create service', () => {
 			},
 			launch,
 			noopPurge,
-			launchIntake
+			launchIntake,
 		);
 
 		const targetPath = resolve(join(root, 'templated-app'));
@@ -504,8 +504,8 @@ describe('project create service', () => {
 			service.createProject(
 				{ description: null, mode: 'fresh', name: 'x', root, spec: null, template: 'nope' },
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/Unknown project template: nope/);
 	});
 
@@ -522,7 +522,7 @@ describe('project create service', () => {
 		await writeFile(script, '# marker', 'utf8');
 
 		const service = new ProjectService(
-			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script })
+			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script }),
 		);
 		const { calls, launch } = recordingLauncher();
 
@@ -530,8 +530,8 @@ describe('project create service', () => {
 			service.createProject(
 				{ description: 'x', mode: 'spernakit', name: 'no-gen', root, spec: null },
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/no scripts\/init\.ts/);
 		expect(calls).toHaveLength(0);
 	});
@@ -548,7 +548,7 @@ describe('project create service', () => {
 		const script = await stubSpernakitCheckout(checkout, STUB_INIT_FAIL);
 
 		const service = new ProjectService(
-			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script })
+			webProjectConfig({ allowedRoots: [root], dataDir, spernakitInitScript: script }),
 		);
 		const { calls, launch } = recordingLauncher();
 
@@ -562,8 +562,8 @@ describe('project create service', () => {
 					spec: null,
 				},
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/STUB_INIT_FAILED_ON_STDOUT/);
 
 		// No run was launched for a failed init.
@@ -582,7 +582,7 @@ describe('project create service', () => {
 		// The full combined output was persisted to a run-log, with both streams captured.
 		const logFiles = await readdir(join(dataDir, 'run-logs'));
 		const initLog = logFiles.find(
-			(entry) => entry.startsWith('spernakit-init-') && entry.endsWith('.log')
+			(entry) => entry.startsWith('spernakit-init-') && entry.endsWith('.log'),
 		);
 		expect(initLog).toBeDefined();
 		const logContents = await readFile(join(dataDir, 'run-logs', initLog ?? ''), 'utf8');
@@ -612,8 +612,8 @@ describe('project create service', () => {
 					templateUrl: 'owner/repo',
 				},
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/either a template name or a template URL/);
 	});
 
@@ -637,8 +637,8 @@ describe('project create service', () => {
 					templateUrl: 'https://gitlab.com/owner/repo',
 				},
 				launch,
-				noopPurge
-			)
+				noopPurge,
+			),
 		).rejects.toThrow(/Template URL must be a GitHub repository/);
 
 		expect(calls).toHaveLength(0);
@@ -679,7 +679,7 @@ describe('project create service', () => {
 			launch,
 			noopPurge,
 			launchIntake,
-			fakeClone
+			fakeClone,
 		);
 
 		const targetPath = resolve(join(root, 'astro-portfolio'));
@@ -694,7 +694,7 @@ describe('project create service', () => {
 		expect(cloneCalls[0]?.targetPath).toBe(targetPath);
 		expect(cloneCalls[0]?.baselineLabel).toBe('Astro-portfolio');
 		expect(await readFile(join(targetPath, 'astro.config.mjs'), 'utf8')).toBe(
-			'export default {}'
+			'export default {}',
 		);
 	});
 
@@ -707,7 +707,7 @@ describe('project create service', () => {
 
 		const git = async (
 			cwd: string,
-			args: string[]
+			args: string[],
 		): Promise<{ code: number; stdout: string }> => {
 			const proc = Bun.spawn(['git', ...args], {
 				cwd,
@@ -758,7 +758,7 @@ describe('project create service', () => {
 			launch,
 			noopPurge,
 			launchIntake,
-			clone
+			clone,
 		);
 
 		const targetPath = resolve(join(root, 'portfolio'));
@@ -809,8 +809,8 @@ describe('project create service', () => {
 				async (record) => {
 					failureRecords.push(record);
 				},
-				failingClone
-			)
+				failingClone,
+			),
 		).rejects.toThrow(/repository not found/);
 
 		expect(calls).toHaveLength(0);
@@ -852,7 +852,7 @@ describe('project create service', () => {
 			service.recommendProjectMode({
 				name: 'whatever',
 				spec: { kind: 'text', value: 'a small CLI utility' },
-			})
+			}),
 		).rejects.toThrow(/Project advisor is not initialized/);
 	});
 
@@ -865,7 +865,7 @@ describe('project create service', () => {
 		const web = webProjectConfig({ allowedRoots: [root], dataDir });
 		const service = new ProjectService(web);
 		const direct = directAiRunner(
-			'{"mode":"spernakit","reasoning":"This is a web app with backend needs."}'
+			'{"mode":"spernakit","reasoning":"This is a web app with backend needs."}',
 		);
 		service.setAdvisor({
 			backendFactory: () => {
@@ -936,7 +936,7 @@ describe('project create service', () => {
 		const web = webProjectConfig({ allowedRoots: [root], dataDir });
 		const service = new ProjectService(web);
 		const direct = directAiRunner(
-			'{"mode":"ingest","reasoning":"Existing code is present; manage it as-is."}'
+			'{"mode":"ingest","reasoning":"Existing code is present; manage it as-is."}',
 		);
 		service.setAdvisor({
 			backendFactory: () => {

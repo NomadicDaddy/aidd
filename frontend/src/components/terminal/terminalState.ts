@@ -82,7 +82,7 @@ export function useTerminalTabs(): TerminalTab[] {
 	return useSyncExternalStore(
 		subscribe,
 		() => tabsSnapshot,
-		() => tabsSnapshot
+		() => tabsSnapshot,
 	);
 }
 
@@ -91,7 +91,7 @@ export function useTerminalUnavailable(): boolean {
 	return useSyncExternalStore(
 		subscribe,
 		() => unavailable,
-		() => unavailable
+		() => unavailable,
 	);
 }
 

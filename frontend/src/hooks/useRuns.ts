@@ -94,13 +94,13 @@ export function useRuns(projectPath?: string, options?: { topLevel?: boolean }) 
 					...(pageParam ? { cursor: pageParam } : {}),
 					...(topLevel ? { topLevel } : {}),
 				},
-				signal
+				signal,
 			),
 		// Stays under the ['runs'] prefix so run_status WebSocket invalidation covers it.
 		queryKey: ['runs', projectPath ?? 'all', topLevel ? 'top' : 'all'],
 		refetchInterval: (query) => {
 			const hasActiveRun = query.state.data?.pages.some((page) =>
-				page.runs.some((run) => run.status === 'running')
+				page.runs.some((run) => run.status === 'running'),
 			);
 			return hasActiveRun ? ACTIVE_RUNS_POLL_MS : false;
 		},

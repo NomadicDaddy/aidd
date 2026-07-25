@@ -280,7 +280,7 @@ app.get(
 		params: t.Object({
 			id: t.String(),
 		}),
-	}
+	},
 );
 ```
 
@@ -327,7 +327,7 @@ app.post(
 			content: t.String({ maxLength: 50000 }),
 			title: t.String({ minLength: 1, maxLength: 200 }),
 		}),
-	}
+	},
 );
 ```
 

@@ -95,7 +95,7 @@ describe('self-contained tool', () => {
 			await mkdir(join(tmp, 'cli', 'src'), { recursive: true });
 			await writeFile(
 				join(tmp, 'cli', 'src', 'stale.ts'),
-				'// path: D:\\applications\\aidd2\\src\\something.ts'
+				'// path: D:\\applications\\aidd2\\src\\something.ts',
 			);
 
 			const { exitCode, stdout } = await runSelfContained(tmp);
@@ -136,7 +136,7 @@ describe('self-contained tool', () => {
 			}
 			await writeFile(
 				join(tmp, 'skills', 'leak.md'),
-				'Use d:/applications/ai/skills/source.md here.'
+				'Use d:/applications/ai/skills/source.md here.',
 			);
 
 			const { exitCode, stdout } = await runSelfContained(tmp);
@@ -193,7 +193,7 @@ describe('self-contained package spec verification', () => {
 		const pkg = await Bun.file('package.json').json();
 		expect(pkg.scripts['smoke:qc']).toBe('bun scripts/smoke-qc.ts');
 		expect(SMOKE_QC_STEPS.map((step) => step.command.join(' '))).toContain(
-			'bun run self-contained'
+			'bun run self-contained',
 		);
 	});
 
@@ -217,7 +217,7 @@ describe('self-contained package spec verification', () => {
 		// scaffolding/ should NOT be in gitignore as an active ignore rule
 		const lines = raw.split('\n');
 		const scaffoldingIgnore = lines.find(
-			(line) => line.trim() === 'scaffolding/' || line.trim() === 'scaffolding'
+			(line) => line.trim() === 'scaffolding/' || line.trim() === 'scaffolding',
 		);
 		expect(scaffoldingIgnore).toBeUndefined();
 	});

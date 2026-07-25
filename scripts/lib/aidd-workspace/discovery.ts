@@ -3,12 +3,12 @@ import { join, resolve } from 'node:path';
 
 import { pathExists, pathIsDirectory, readJsonObject } from './fs-utils.ts';
 import {
-	featureStatusTypes,
 	type DiscoveredProject,
 	type FeatureStatusEntry,
 	type FeatureStatusOptions,
 	type FeatureStatusSummaryEntry,
 	type FeatureStatusType,
+	featureStatusTypes,
 	type ProjectDiscoveryOptions,
 } from './types.ts';
 
@@ -23,7 +23,7 @@ function normalizeNameList(names: string[] | undefined): string[] | undefined {
 }
 
 export async function discoverAiddProjects(
-	options: ProjectDiscoveryOptions
+	options: ProjectDiscoveryOptions,
 ): Promise<DiscoveredProject[]> {
 	const applicationsRoot = resolve(options.applicationsRoot);
 	const selectedApplications = normalizeNameList(options.applications);
@@ -55,7 +55,7 @@ export async function discoverAiddProjects(
 
 function classifyFeature(
 	featureDirectory: string,
-	featureJson: Record<string, unknown>
+	featureJson: Record<string, unknown>,
 ): FeatureStatusType {
 	if (/^audit-[^-]+-\d{10,}-.+/.test(featureDirectory) || 'auditSource' in featureJson) {
 		return 'audit';
@@ -66,7 +66,7 @@ function classifyFeature(
 
 function featureIsCompleted(
 	type: FeatureStatusType,
-	featureJson: Record<string, unknown>
+	featureJson: Record<string, unknown>,
 ): boolean {
 	if (type === 'audit') {
 		return featureJson.status === 'completed' && featureJson.passes === true;
@@ -75,7 +75,7 @@ function featureIsCompleted(
 }
 
 export async function collectFeatureStatus(
-	options: FeatureStatusOptions
+	options: FeatureStatusOptions,
 ): Promise<FeatureStatusEntry[]> {
 	const types = new Set(options.types ?? featureStatusTypes);
 	const projects = await discoverAiddProjects({
@@ -134,6 +134,6 @@ export function summarizeFeatureStatus(entries: FeatureStatusEntry[]): FeatureSt
 		byApplication.set(entry.application, summary);
 	}
 	return [...byApplication.values()].sort((left, right) =>
-		left.application.localeCompare(right.application)
+		left.application.localeCompare(right.application),
 	);
 }

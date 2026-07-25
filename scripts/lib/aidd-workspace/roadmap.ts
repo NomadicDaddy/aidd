@@ -46,13 +46,13 @@ async function buildFeatureIdLookup(featuresDir: string): Promise<Map<string, st
 
 function buildMilestoneSummaries(
 	milestones: Record<string, unknown>,
-	roadmapFeatures: Record<string, unknown>
+	roadmapFeatures: Record<string, unknown>,
 ): RoadmapMilestoneSummary[] {
 	return Object.entries(milestones).map(([milestone, rawEntry]) => {
 		const entry = isObject(rawEntry) ? rawEntry : {};
 		const priority = typeof entry.priority === 'number' ? entry.priority : 0;
 		const count = Object.values(roadmapFeatures).filter(
-			(featureEntry) => isObject(featureEntry) && featureEntry.milestone === milestone
+			(featureEntry) => isObject(featureEntry) && featureEntry.milestone === milestone,
 		).length;
 		return {
 			count,
@@ -74,7 +74,7 @@ function computeRoadmapChange(plan: RoadmapFeaturePlan): RoadmapChangePlan {
 
 export async function applyRoadmap(
 	projectDir: string,
-	options: RoadmapApplyOptions = {}
+	options: RoadmapApplyOptions = {},
 ): Promise<RoadmapApplySummary> {
 	const resolvedProjectDir = resolve(projectDir);
 	const roadmapFile = join(resolvedProjectDir, '.aidd', 'roadmap.json');
@@ -123,7 +123,7 @@ export async function applyRoadmap(
 			const dependencyId = lookup.get(dependencyName);
 			if (dependencyId === undefined) {
 				warnings.push(
-					`Dependency '${dependencyName}' has no matching feature directory; skipping`
+					`Dependency '${dependencyName}' has no matching feature directory; skipping`,
 				);
 				continue;
 			}

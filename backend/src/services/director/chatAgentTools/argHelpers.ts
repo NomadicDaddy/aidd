@@ -50,7 +50,7 @@ export function buildLaunchInput(args: Record<string, unknown>): RunLaunchReques
 	if (mode !== undefined) {
 		if (!ALLOWED_RUN_MODES.has(mode as WebRunMode)) {
 			throw new Error(
-				`Invalid run mode: ${mode}. Allowed modes: ${[...ALLOWED_RUN_MODES].join(', ')}`
+				`Invalid run mode: ${mode}. Allowed modes: ${[...ALLOWED_RUN_MODES].join(', ')}`,
 			);
 		}
 		input.mode = mode as WebRunMode;

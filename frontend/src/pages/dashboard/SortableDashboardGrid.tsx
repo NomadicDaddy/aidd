@@ -25,7 +25,7 @@ export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) 
 	const setCardOrder = useDashboardStore((state) => state.setCardOrder);
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
 	);
 	const byId = new Map(cards.map((card) => [card.id, card]));
 	const ordered = cardOrder.flatMap((id) => byId.get(id) ?? []);
@@ -36,8 +36,8 @@ export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) 
 			arrayMove(
 				cardOrder,
 				cardOrder.indexOf(active.id as DashboardCardId),
-				cardOrder.indexOf(over.id as DashboardCardId)
-			)
+				cardOrder.indexOf(over.id as DashboardCardId),
+			),
 		);
 	}
 

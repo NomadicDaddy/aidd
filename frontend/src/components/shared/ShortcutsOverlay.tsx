@@ -2,8 +2,8 @@ import { default as X } from 'lucide-react/dist/esm/icons/x';
 
 import {
 	commandPaletteShortcut,
-	terminalShortcut,
 	type ShortcutDefinition,
+	terminalShortcut,
 } from '../../lib/keyboardShortcuts.ts';
 import { IconButton } from '../ui/button.tsx';
 import { Dialog, DialogPanel } from '../ui/dialog.tsx';
@@ -47,7 +47,7 @@ export function ShortcutsOverlay({ onClose, open }: { onClose: () => void; open:
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2
-							className="text-foreground text-base font-semibold"
+							className="text-base font-semibold text-foreground"
 							id="shortcuts-overlay-title">
 							Keyboard shortcuts
 						</h2>

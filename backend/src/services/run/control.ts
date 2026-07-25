@@ -34,7 +34,7 @@ import {
 } from './types.ts';
 
 export interface ControlContext {
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 	heartbeatWatchers: Map<string, HeartbeatWatcher>;
 	hub: WebSocketHub;
@@ -49,7 +49,7 @@ export interface ControlContext {
 async function syncInvocationFromRun(
 	ctx: ControlContext,
 	runId: string,
-	source: string
+	source: string,
 ): Promise<void> {
 	if (!TELEMETRY_RUN_SOURCES.has(source as CliActiveRunSource)) return;
 	await ctx.telemetry.reconcileInvocationFromRun(runId).catch((error: unknown) => {
@@ -59,7 +59,7 @@ async function syncInvocationFromRun(
 
 async function readHeartbeat(
 	projectPath: string,
-	runId: string
+	runId: string,
 ): Promise<CliActiveRunRecord | undefined> {
 	try {
 		const raw = await readFile(activeRunFilePath(projectPath, runId), 'utf8');
@@ -84,7 +84,7 @@ async function stopTailWatcher(ctx: ControlContext, runId: string): Promise<void
 async function resolveRunProcess(
 	projectPath: string,
 	runId: string,
-	fallbackPid: null | number
+	fallbackPid: null | number,
 ): Promise<{ alive: boolean; pid: null | number }> {
 	const heartbeat = await readHeartbeat(projectPath, runId);
 	const pid = heartbeat?.pid ?? fallbackPid ?? null;
@@ -108,7 +108,7 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 	}
 	if (TERMINAL_STATUSES.has(run.status as WebRunStatus)) {
 		throw new RunControlError(
-			`Run is already in terminal status '${run.status}' and cannot be killed: ${id}`
+			`Run is already in terminal status '${run.status}' and cannot be killed: ${id}`,
 		);
 	}
 	const { alive, pid } = await resolveRunProcess(run.projectPath, id, run.pid);
@@ -135,7 +135,7 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 					stopReason: 'killed',
 				})
 				.where(eq(runs.id, id)),
-		{ label: 'run.kill' }
+		{ label: 'run.kill' },
 	);
 	recordDataMovement({
 		category: 'database',
@@ -166,7 +166,7 @@ export async function stopRun(ctx: ControlContext, id: string): Promise<void> {
 	}
 	if (TERMINAL_STATUSES.has(run.status as WebRunStatus)) {
 		throw new RunControlError(
-			`Run is already in terminal status '${run.status}' and cannot be stopped: ${id}`
+			`Run is already in terminal status '${run.status}' and cannot be stopped: ${id}`,
 		);
 	}
 	const stopFile = stopFilePath(run.projectPath);
@@ -201,7 +201,7 @@ export async function stopRun(ctx: ControlContext, id: string): Promise<void> {
 						stopReason,
 					})
 					.where(eq(runs.id, id)),
-			{ label: 'run.stop' }
+			{ label: 'run.stop' },
 		);
 		recordDataMovement({
 			category: 'database',

@@ -135,7 +135,7 @@ async function readJson<T>(response: Response, trace: ApiTraceContext): Promise<
 
 export async function apiGet<T>(
 	path: string,
-	options: { signal?: AbortSignal | undefined } = {}
+	options: { signal?: AbortSignal | undefined } = {},
 ): Promise<T> {
 	const traceId = createTraceId('api');
 	const startedAt = performance.now();
@@ -166,7 +166,7 @@ export async function apiGet<T>(
 export async function apiSend<T>(
 	path: string,
 	method: 'DELETE' | 'PATCH' | 'POST' | 'PUT',
-	body?: unknown
+	body?: unknown,
 ): Promise<T> {
 	const traceId = createTraceId('api');
 	const startedAt = performance.now();

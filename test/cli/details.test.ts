@@ -152,7 +152,7 @@ describe('extractIterationDetails', () => {
 		expect(details.summary.finalChecks).toEqual({ smokeQc: 'passed' });
 		expect(
 			buildFeatureBlockingContext(details, 'completion_marker_missing_or_unaccepted', 'now')
-				.commands
+				.commands,
 		).toEqual([]);
 	});
 
@@ -168,7 +168,7 @@ describe('extractIterationDetails', () => {
 		expect(details.summary.finalChecks).toEqual({ smokeQc: 'failed' });
 		expect(
 			buildFeatureBlockingContext(details, 'completion_marker_missing_or_unaccepted', 'now')
-				.commands
+				.commands,
 		).toEqual(['bun run smoke:qc']);
 	});
 
@@ -187,7 +187,7 @@ describe('extractIterationDetails', () => {
 		expect(details.failedCommands).toEqual([]);
 		expect(
 			buildFeatureBlockingContext(details, 'completion_marker_missing_or_unaccepted', 'now')
-				.commands
+				.commands,
 		).toEqual(['bun run smoke:qc']);
 	});
 
@@ -206,22 +206,22 @@ describe('extractIterationDetails', () => {
 		expect(details.commandStatusEvidence).toBe(true);
 		expect(
 			buildFeatureBlockingContext(details, 'completion_marker_missing_or_unaccepted', 'now')
-				.commands
+				.commands,
 		).toEqual([]);
 	});
 
 	test('maps exit codes to outcome status', () => {
 		expect(extractIterationDetails([], orchestratorExitCodes.success).outcome.status).toBe(
-			'success'
+			'success',
 		);
 		expect(extractIterationDetails([], orchestratorExitCodes.idleTimeout).outcome.status).toBe(
-			'idle_timeout'
+			'idle_timeout',
 		);
 		expect(extractIterationDetails([], orchestratorExitCodes.rateLimited).outcome.status).toBe(
-			'rate_limited'
+			'rate_limited',
 		);
 		expect(
-			extractIterationDetails([], orchestratorExitCodes.providerError).outcome.status
+			extractIterationDetails([], orchestratorExitCodes.providerError).outcome.status,
 		).toBe('provider_error');
 		expect(extractIterationDetails([], 99).outcome.status).toBe('failure');
 	});
@@ -396,7 +396,7 @@ describe('extractIterationDetails', () => {
 					type: 'error',
 				},
 			],
-			orchestratorExitCodes.success
+			orchestratorExitCodes.success,
 		);
 
 		expect(details.errors).toEqual([]);
@@ -420,7 +420,7 @@ describe('extractIterationDetails', () => {
 		const details = extractIterationDetails(events, orchestratorExitCodes.providerError);
 
 		expect(details.providerError?.message).toBe(
-			"The 'gpt-5.6-sol' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."
+			"The 'gpt-5.6-sol' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again.",
 		);
 	});
 
@@ -490,13 +490,13 @@ describe('blocked_needs_user_input from prose', () => {
 	function detailsFor(chunk: string, trailing: AgentEvent[] = []) {
 		return extractIterationDetails(
 			[{ chunk, type: 'assistant_text' }, ...trailing],
-			orchestratorExitCodes.success
+			orchestratorExitCodes.success,
 		);
 	}
 
 	test('classifies a closing request for a decision as blocked', () => {
 		const details = detailsFor(
-			'Blocked at Phase 1: the app lacks the skill-required routes.tsx.\n\nPlease choose:\n\n1. Approve using App.tsx.\n2. Provide a name.\n3. End as a no-op.'
+			'Blocked at Phase 1: the app lacks the skill-required routes.tsx.\n\nPlease choose:\n\n1. Approve using App.tsx.\n2. Provide a name.\n3. End as a no-op.',
 		);
 		expect(details.outcome.status).toBe('blocked_needs_user_input');
 	});
@@ -506,14 +506,14 @@ describe('blocked_needs_user_input from prose', () => {
 	// original patterns, and the run reported `completed` with nothing written.
 	test('classifies an approval-gated stop as blocked', () => {
 		const details = detailsFor(
-			'Summary: 5 new routes, 2 removals.\n\nNo files have been changed, documented, or committed because Phase 5 requires approval before writing. Reply `apply everything` to approve all proposed edits, or specify which removed route rows to retain.'
+			'Summary: 5 new routes, 2 removals.\n\nNo files have been changed, documented, or committed because Phase 5 requires approval before writing. Reply `apply everything` to approve all proposed edits, or specify which removed route rows to retain.',
 		);
 		expect(details.outcome.status).toBe('blocked_needs_user_input');
 	});
 
 	test('does not flag a park, which has its own outcome', () => {
 		const details = detailsFor(
-			'Parked the selected feature as waiting_approval, passes: false. Manual steps recorded in the changelog.'
+			'Parked the selected feature as waiting_approval, passes: false. Manual steps recorded in the changelog.',
 		);
 		expect(details.outcome.status).not.toBe('blocked_needs_user_input');
 	});
@@ -522,7 +522,7 @@ describe('blocked_needs_user_input from prose', () => {
 		// "let me know if you want…" is how an agent signs off having done the job; treating it as a
 		// question parks completed work as blocked.
 		const details = detailsFor(
-			'Implemented the feature and smoke:qc passed. Let me know if you want the other approach instead.'
+			'Implemented the feature and smoke:qc passed. Let me know if you want the other approach instead.',
 		);
 		expect(details.outcome.status).not.toBe('blocked_needs_user_input');
 	});
@@ -555,7 +555,7 @@ describe('codex stream end-to-end provider error', () => {
 		// Falling back to the (uninformative) stderr is honest; naming the advisory is not.
 		expect(details.providerError?.message).not.toContain('Model metadata');
 		expect(details.errors.some((error) => error.message.includes('Model metadata'))).toBe(
-			false
+			false,
 		);
 	});
 

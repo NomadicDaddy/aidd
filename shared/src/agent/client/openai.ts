@@ -25,7 +25,7 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 	async complete(
 		request: AgentLoopRequest,
 		signal: AbortSignal,
-		onDelta?: (delta: StreamDelta) => void
+		onDelta?: (delta: StreamDelta) => void,
 	): Promise<AgentLoopResponse> {
 		const startMs = Date.now();
 		const model = request.model ?? this.config.model;
@@ -59,7 +59,7 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 					method: 'POST',
 					redirect: 'error',
 					signal,
-				}
+				},
 			);
 
 			if (!response.ok) {
@@ -74,11 +74,11 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 					throw new Error(
 						`${this.config.provider} rejected the request (HTTP 400) — the prompt likely exceeds ` +
 							`the model's configured context window. Raise the model's context length ` +
-							`(aidd prompts can need 64k+) or reduce prompt size. Server said: ${body}`
+							`(aidd prompts can need 64k+) or reduce prompt size. Server said: ${body}`,
 					);
 				}
 				throw new Error(
-					`${this.config.provider} request failed: HTTP ${response.status}${body ? ` ${body}` : ''}`
+					`${this.config.provider} request failed: HTTP ${response.status}${body ? ` ${body}` : ''}`,
 				);
 			}
 
@@ -97,7 +97,7 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 			const content = message?.content;
 			if (typeof content !== 'string' && !message?.tool_calls?.length) {
 				throw new Error(
-					`${this.config.provider} response did not include assistant content`
+					`${this.config.provider} response did not include assistant content`,
 				);
 			}
 

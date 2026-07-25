@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import {
 	buildToolDefinitions,
-	dispatchChatTool,
 	type ChatAgentToolContext,
+	dispatchChatTool,
 } from '../../backend/src/services/director/chatAgentTools.ts';
 
 function stubContext(overrides: Partial<ChatAgentToolContext> = {}): ChatAgentToolContext {
@@ -49,7 +49,7 @@ describe('chat agent tool definitions', () => {
 					steps: [{ stepType: 'aidd-cli' }],
 				}),
 			}),
-			dispatch
+			dispatch,
 		);
 		expect(action).toMatchObject({ kind: 'query', status: 'ok', tool: 'get_recipe' });
 		expect(resultText).toContain('Checks status only.');
@@ -78,7 +78,7 @@ describe('chat agent tool dispatch', () => {
 			stubContext({
 				launchSuggestion: async (id) => ({ id, pipelineSessionId: 'pipe_1' }),
 			}),
-			dispatch
+			dispatch,
 		);
 		expect(action).toMatchObject({
 			kind: 'launch_suggestion',
@@ -93,7 +93,7 @@ describe('chat agent tool dispatch', () => {
 			'launch_suggestion',
 			JSON.stringify({ suggestionId: 'sug_1' }),
 			stubContext(),
-			dispatch
+			dispatch,
 		);
 		expect(action).toMatchObject({
 			kind: 'launch_suggestion',
@@ -108,7 +108,7 @@ describe('chat agent tool dispatch', () => {
 			'get_run',
 			'not json',
 			stubContext(),
-			dispatch
+			dispatch,
 		);
 		expect(action.status).toBe('error');
 		expect(resultText).toContain('not valid JSON');
@@ -119,7 +119,7 @@ describe('chat agent tool dispatch', () => {
 			'get_run',
 			'{}',
 			stubContext(),
-			dispatch
+			dispatch,
 		);
 		expect(action.status).toBe('error');
 		expect(resultText).toContain('Missing required string argument: runId');
@@ -130,7 +130,7 @@ describe('chat agent tool dispatch', () => {
 			'write_file',
 			JSON.stringify({ projectId: 'demo', path: 'a.txt', content: 'x' }),
 			stubContext(),
-			dispatch
+			dispatch,
 		);
 		expect(action.status).toBe('error');
 		expect(resultText).toContain('file editing is disabled');
@@ -141,7 +141,7 @@ describe('chat agent tool dispatch', () => {
 			'nope',
 			'{}',
 			stubContext(),
-			dispatch
+			dispatch,
 		);
 		expect(action.status).toBe('error');
 		expect(resultText).toContain('unknown tool');

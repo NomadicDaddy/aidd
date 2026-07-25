@@ -48,7 +48,7 @@ export class HookRunner {
 		const dispatch = await this.shell.run(
 			command,
 			input.context.projectDir,
-			input.context.sessionId
+			input.context.sessionId,
 		);
 		await this.lifecycle.completeStep({
 			completedAt: Date.now(),

@@ -59,11 +59,11 @@ export function DashboardPage() {
 	const totalFeatures = projectList.reduce((sum, project) => sum + project.featureStats.total, 0);
 	const passingFeatures = projectList.reduce(
 		(sum, project) => sum + project.featureStats.passing,
-		0
+		0,
 	);
 	const fleet = fleetQuery.data;
 	const projectIdByName = new Map(
-		(projects.data?.projects ?? []).map((project) => [project.name, project.routeId])
+		(projects.data?.projects ?? []).map((project) => [project.name, project.routeId]),
 	);
 	const featureQueue = buildFeatureQueue(fleet, projectIdByName);
 	const fleetProjectCount = fleet?.fleetAggregations.projectCount ?? 0;
@@ -82,13 +82,13 @@ export function DashboardPage() {
 			: (fleet?.fleetAggregations.featurePassRate ?? 0);
 	const featureHealthTone = getHealthTone(featureHealthValue);
 	const failingProjects = projectList.filter(
-		(project) => project.priorityHealth.band !== 'healthy'
+		(project) => project.priorityHealth.band !== 'healthy',
 	);
 	const pendingSuggestions =
 		suggestionsQuery.data?.filter((suggestion) => suggestion.status === 'pending') ?? [];
 	const healthyProjects = Math.max(projectCount - failingProjects.length, 0);
 	const featureStatusProjects = projectList.map<ProjectDetail | ProjectSummary>(
-		(project, index) => featureStatusDetails[index]?.data ?? project
+		(project, index) => featureStatusDetails[index]?.data ?? project,
 	);
 	const featureStatusLoading =
 		(projects.isLoading && !projects.data) ||

@@ -27,18 +27,18 @@ export async function annotateStopRequested(records: RunRecord[]): Promise<RunRe
 		...new Set(
 			records
 				.filter((record) => record.status === 'running')
-				.map((record) => record.projectPath)
+				.map((record) => record.projectPath),
 		),
 	];
 	if (runningPaths.length === 0) return records;
 	const stopRequestedByPath = new Map(
 		await Promise.all(
-			runningPaths.map(async (path) => [path, await stopFileExists(path)] as const)
-		)
+			runningPaths.map(async (path) => [path, await stopFileExists(path)] as const),
+		),
 	);
 	return records.map((record) =>
 		record.status === 'running' && stopRequestedByPath.get(record.projectPath)
 			? { ...record, stopRequested: true }
-			: record
+			: record,
 	);
 }

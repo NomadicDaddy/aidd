@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import type { ResolvedConfig, ResolvedTelegramBridgeConfig } from 'aidd-shared/config';
 import type { AiddApiClient } from '../../backend/src/channels/apiClient.ts';
 import {
-	createBridgeHandler,
 	type BridgeLoopDeps,
+	createBridgeHandler,
 	type TelegramClient,
 	type TelegramUpdate,
 } from '../../backend/src/bridge/telegram.ts';
@@ -108,7 +108,7 @@ describe('Telegram bridge handler', () => {
 		await handler.handleUpdate(update(100, 'two', 2));
 
 		const sessionCreates = posts.filter(
-			(call) => call.path === '/api/v1/director/chat/sessions'
+			(call) => call.path === '/api/v1/director/chat/sessions',
 		);
 		expect(sessionCreates).toHaveLength(1);
 		expect(telegram.sent).toHaveLength(2);
@@ -207,7 +207,7 @@ function makeServiceHarness() {
 						stoppedSignals.push(loopDeps.signal);
 						resolve();
 					},
-					{ once: true }
+					{ once: true },
 				);
 			});
 		},

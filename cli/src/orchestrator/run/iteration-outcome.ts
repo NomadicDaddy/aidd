@@ -125,28 +125,28 @@ export async function classifyIterationOutcome(input: {
 		structuredResult === undefined && hasMalformedResultMarker(events);
 	if (missingAuditArtifacts) {
 		console.warn(
-			`[orchestrator] Audit iteration exited normally but produced no report artifacts; recording missing_audit_artifacts.`
+			`[orchestrator] Audit iteration exited normally but produced no report artifacts; recording missing_audit_artifacts.`,
 		);
 	}
 	if (missingAiddResult && !askedUserQuestion) {
 		if (malformedResultMarker) {
 			console.warn(
-				`[orchestrator] Backend emitted an AIDD_RESULT marker whose body was not valid JSON — typically a placeholder such as \`AIDD_RESULT: { ... }\` instead of the real payload — so the result could not be parsed and the iteration's work was not recorded; recording missing_aidd_result.`
+				`[orchestrator] Backend emitted an AIDD_RESULT marker whose body was not valid JSON — typically a placeholder such as \`AIDD_RESULT: { ... }\` instead of the real payload — so the result could not be parsed and the iteration's work was not recorded; recording missing_aidd_result.`,
 			);
 		} else if (endedWithKilledBackgroundTasks) {
 			console.warn(
-				`[orchestrator] Backend exited normally without emitting AIDD_RESULT, and still-running background tasks were killed at session teardown — the agent likely ended its turn while waiting on a backgrounded command (e.g. a quality gate) that can never notify a headless session; recording missing_aidd_result.`
+				`[orchestrator] Backend exited normally without emitting AIDD_RESULT, and still-running background tasks were killed at session teardown — the agent likely ended its turn while waiting on a backgrounded command (e.g. a quality gate) that can never notify a headless session; recording missing_aidd_result.`,
 			);
 		} else if (aiddFallbackApplies) {
 			console.warn(
-				`[orchestrator] Backend exited normally without emitting AIDD_RESULT and no fallback completion was detected (no commits, no .aidd artifacts); recording missing_aidd_result.`
+				`[orchestrator] Backend exited normally without emitting AIDD_RESULT and no fallback completion was detected (no commits, no .aidd artifacts); recording missing_aidd_result.`,
 			);
 		} else {
 			// Only generic work consults the .aidd fallback, so claiming ".aidd artifacts" were
 			// absent here would assert a check that never ran — and .aidd/ is commonly gitignored,
 			// so an agent that parked feature state on disk trips this path with a dirty .aidd tree.
 			console.warn(
-				`[orchestrator] Backend exited normally without emitting AIDD_RESULT and made no commits; recording missing_aidd_result. Feature work must emit the marker — .aidd writes alone are not completion evidence.`
+				`[orchestrator] Backend exited normally without emitting AIDD_RESULT and made no commits; recording missing_aidd_result. Feature work must emit the marker — .aidd writes alone are not completion evidence.`,
 			);
 		}
 	}
@@ -194,7 +194,7 @@ function detectKilledBackgroundTasks(events: AgentEvent[]): boolean {
 		(event) =>
 			event.type === 'raw_log' &&
 			event.chunk.includes('"subtype":"task_updated"') &&
-			event.chunk.includes('"status":"killed"')
+			event.chunk.includes('"status":"killed"'),
 	);
 }
 
@@ -221,8 +221,8 @@ function detectKilledBackgroundTasks(events: AgentEvent[]): boolean {
 // only the session JSON is filtered.
 const ORCHESTRATOR_OWNED_ENTRIES = new Set([
 	'.stop',
-	'CHANGELOG.md',
 	'active-runs',
+	'CHANGELOG.md',
 	'iterations',
 	'runs.jsonl',
 ]);

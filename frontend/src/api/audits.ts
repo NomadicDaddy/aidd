@@ -17,7 +17,7 @@ export async function getAuditManager(): Promise<AuditManager> {
 
 export async function getAuditDefinition(name: string): Promise<AuditDefinition> {
 	const response = await apiGet<{ definition: AuditDefinition }>(
-		`/api/v1/audits/${encodeURIComponent(name)}`
+		`/api/v1/audits/${encodeURIComponent(name)}`,
 	);
 	return response.definition;
 }
@@ -26,7 +26,7 @@ export async function launchAudits(request: AuditLaunchRequest): Promise<AuditLa
 	const response = await apiSend<{ result: AuditLaunchResult }>(
 		'/api/v1/audits/launch',
 		'POST',
-		request
+		request,
 	);
 	return response.result;
 }
@@ -35,7 +35,7 @@ export async function saveAuditDefinition(name: string, content: string): Promis
 	const response = await apiSend<{ definition: AuditDefinition }>(
 		`/api/v1/audits/${encodeURIComponent(name)}`,
 		'PUT',
-		{ content }
+		{ content },
 	);
 	return response.definition;
 }
@@ -45,36 +45,36 @@ export async function getAuditProfileMapping(): Promise<AuditProfileMappingRespo
 }
 
 export async function saveAuditProfileMapping(
-	mapping: AuditProfileMapping
+	mapping: AuditProfileMapping,
 ): Promise<AuditProfileMappingResponse> {
 	return await apiSend<AuditProfileMappingResponse>(
 		'/api/v1/audits/profile-mapping',
 		'PUT',
-		mapping
+		mapping,
 	);
 }
 
 export async function getProjectAudits(projectId: string): Promise<ProjectAuditsResponse> {
 	return await apiGet<ProjectAuditsResponse>(
-		`/api/v1/audits/project/${encodeURIComponent(projectId)}`
+		`/api/v1/audits/project/${encodeURIComponent(projectId)}`,
 	);
 }
 
 export async function getProjectAuditOverrides(projectId: string): Promise<AuditProfileOverrides> {
 	const response = await apiGet<{ overrides: AuditProfileOverrides }>(
-		`/api/v1/audits/project-overrides/${encodeURIComponent(projectId)}`
+		`/api/v1/audits/project-overrides/${encodeURIComponent(projectId)}`,
 	);
 	return response.overrides;
 }
 
 export async function saveProjectAuditOverrides(
 	projectId: string,
-	overrides: AuditProfileOverrides
+	overrides: AuditProfileOverrides,
 ): Promise<AuditProfileOverrides> {
 	const response = await apiSend<{ overrides: AuditProfileOverrides }>(
 		`/api/v1/audits/project-overrides/${encodeURIComponent(projectId)}`,
 		'PUT',
-		overrides
+		overrides,
 	);
 	return response.overrides;
 }

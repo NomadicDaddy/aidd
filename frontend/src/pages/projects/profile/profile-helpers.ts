@@ -35,7 +35,7 @@ export function profileInput(profile: ProjectAssuranceProfile): ProjectAssurance
 
 export function sameProfileInput(
 	a: ProjectAssuranceProfileInput,
-	b: ProjectAssuranceProfileInput
+	b: ProjectAssuranceProfileInput,
 ): boolean {
 	return (
 		a.authMode === b.authMode &&

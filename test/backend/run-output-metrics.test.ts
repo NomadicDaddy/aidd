@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { wrapWebDatabase, type WebDatabase } from '../../backend/src/db/client.ts';
+import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { runs, settings } from '../../backend/src/db/schema.ts';
 import { getOutputTimeseries } from '../../backend/src/services/telemetry/outputTimeseries.ts';
@@ -155,7 +155,7 @@ describe('getOutputTimeseries', () => {
 function git(cwd: string, args: string[]): void {
 	const result = Bun.spawnSync(
 		['git', '-c', 'user.email=test@example.com', '-c', 'user.name=test', ...args],
-		{ cwd, stderr: 'pipe', stdout: 'pipe', windowsHide: true }
+		{ cwd, stderr: 'pipe', stdout: 'pipe', windowsHide: true },
 	);
 	if (result.exitCode !== 0) {
 		throw new Error(`git ${args.join(' ')} failed: ${result.stderr.toString()}`);

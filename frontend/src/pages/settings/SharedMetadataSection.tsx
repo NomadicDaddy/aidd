@@ -35,7 +35,7 @@ export function SharedMetadataSection({
 	function removeSharedFile(index: number): void {
 		setField(
 			'sharedFiles',
-			form.sharedFiles.filter((_, i) => i !== index)
+			form.sharedFiles.filter((_, i) => i !== index),
 		);
 	}
 

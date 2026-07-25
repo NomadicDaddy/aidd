@@ -104,7 +104,7 @@ export function CommitDiffDialog({
 	const query = useCommitDiff(projectId, commit.hash);
 	const parsed = useMemo(
 		() => (query.data?.state === 'ok' ? parseGitShow(query.data.diff) : null),
-		[query.data]
+		[query.data],
 	);
 	const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
 	const sectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -154,7 +154,7 @@ export function CommitDiffDialog({
 				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
 					<div className="min-w-0">
 						<h2
-							className="text-foreground flex items-center gap-2 text-sm font-semibold"
+							className="flex items-center gap-2 text-sm font-semibold text-foreground"
 							id="commit-diff-title">
 							<span className="font-mono text-neutral-500 dark:text-neutral-400">
 								{shortCommitHash(commit.hash)}

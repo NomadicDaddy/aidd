@@ -31,7 +31,7 @@ describe('catalog ownership guard', () => {
 		'skills/audit-review/%s is not distributed',
 		async (relative) => {
 			expect(await exists(join(SKILLS_DIR, 'audit-review', relative))).toBe(false);
-		}
+		},
 	);
 
 	test('audit-review ships no vendored source references', async () => {

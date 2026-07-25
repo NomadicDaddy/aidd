@@ -34,7 +34,7 @@ export interface ProjectInterviewQuestionDto {
 	response?: string;
 }
 
-export type AnsweredInterviewQuestionDto = ProjectInterviewQuestionDto & { response: string };
+export type AnsweredInterviewQuestionDto = { response: string } & ProjectInterviewQuestionDto;
 
 export interface ProjectInterviewDetailDto {
 	answered: number;

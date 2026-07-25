@@ -14,7 +14,7 @@ function findGitBash(): null | string {
 	if (git) candidates.push(join(dirname(dirname(git)), 'bin', 'bash.exe'));
 	candidates.push(
 		'C:\\Program Files\\Git\\bin\\bash.exe',
-		'C:\\Program Files (x86)\\Git\\bin\\bash.exe'
+		'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
 	);
 	return candidates.find((path) => existsSync(path)) ?? null;
 }

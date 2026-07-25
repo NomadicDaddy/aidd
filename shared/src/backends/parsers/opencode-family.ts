@@ -1,4 +1,4 @@
-import type { AgentEvent, AgentErrorReason } from '../types.ts';
+import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
@@ -129,7 +129,7 @@ export function finalizeOpencodeFamilyBackend(input: FinalizePlainBackendInput):
 export function parseOpencodeFamilyOutput(
 	stdout: string,
 	stderr: string,
-	exitCode: null | number
+	exitCode: null | number,
 ): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const combined = [stdout, stderr].filter(Boolean).join('\n');
@@ -145,7 +145,7 @@ export function parseOpencodeFamilyOutput(
 			sawRateLimit,
 			stderr,
 			stdout,
-		})
+		}),
 	);
 	return events;
 }

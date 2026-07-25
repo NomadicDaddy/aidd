@@ -17,7 +17,7 @@ export type DoctorProber = (
 	cmd: string[],
 	cwd: string,
 	timeoutMs: number,
-	env?: Record<string, string>
+	env?: Record<string, string>,
 ) => Promise<DoctorProbeResult>;
 
 export interface PreflightDoctorDeps {
@@ -38,7 +38,7 @@ async function spawnProbe(
 	cmd: string[],
 	cwd: string,
 	timeoutMs: number,
-	env?: Record<string, string>
+	env?: Record<string, string>,
 ): Promise<DoctorProbeResult> {
 	try {
 		const proc = Bun.spawn(cmd, {
@@ -71,7 +71,7 @@ async function spawnProbe(
  */
 export async function runPreflightDoctor(
 	plan: RunPlan,
-	deps: PreflightDoctorDeps = {}
+	deps: PreflightDoctorDeps = {},
 ): Promise<{ ok: false; summary: string } | { ok: true }> {
 	if (plan.outputPolicy.preflightDoctor === false) return { ok: true };
 	if (process.env.AIDD_SKIP_DOCTOR === '1') return { ok: true };
@@ -104,7 +104,7 @@ export async function runPreflightDoctor(
 		[bash.path, '-c', 'bun --version && command -v cat && command -v cp'],
 		cwd,
 		probeTimeoutMs,
-		augmentEnvPathForGitBash(bash.path, buildToolSubprocessEnv())
+		augmentEnvPathForGitBash(bash.path, buildToolSubprocessEnv()),
 	);
 	if (!probe.ok) {
 		return {

@@ -47,7 +47,7 @@ export function ProjectHealthRow({
 		<div className="rounded-md border border-neutral-200/80 bg-white/70 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:border-neutral-800/80 dark:bg-slate-950/60 dark:hover:border-teal-800 dark:hover:bg-teal-950/20">
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
-					<div className="text-foreground flex items-center gap-1.5 truncate text-sm font-medium">
+					<div className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
 						{orphan ? (
 							<FolderX
 								aria-label="Missing on disk"

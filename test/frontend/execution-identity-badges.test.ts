@@ -33,7 +33,7 @@ describe('execution identity badge data', () => {
 				backend: 'claude-code',
 				model: 'claude-fable-5',
 				reasoningEffort: 'high',
-			})
+			}),
 		).toEqual([
 			{ kind: 'backend', label: 'claude-code' },
 			{ kind: 'model', label: 'claude-fable-5' },
@@ -44,7 +44,7 @@ describe('execution identity badge data', () => {
 				backend: 'native',
 				model: 'glm-5.2',
 				reasoningEffort: 'medium',
-			})
+			}),
 		).toEqual([
 			{ kind: 'backend', label: 'native' },
 			{ kind: 'model', label: 'glm-5.2' },
@@ -54,7 +54,7 @@ describe('execution identity badge data', () => {
 
 	test('omits missing values and trims recorded identifiers', () => {
 		expect(
-			executionIdentityItems({ backend: ' native ', model: ' ', reasoningEffort: null })
+			executionIdentityItems({ backend: ' native ', model: ' ', reasoningEffort: null }),
 		).toEqual([{ kind: 'backend', label: 'native' }]);
 	});
 
@@ -103,7 +103,7 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html.indexOf('direct')).toBeLessThan(html.indexOf('gpt-5.6'));
 		expect(html.indexOf('gpt-5.6')).toBeLessThan(html.indexOf('high'));
 		expect(html).toContain(
-			'aria-label="CLI direct, Model gpt-5.6, Reasoning high, Provider openai, Resolved Director target"'
+			'aria-label="CLI direct, Model gpt-5.6, Reasoning high, Provider openai, Resolved Director target"',
 		);
 		expect(html).toContain('<svg');
 		expect(html).toContain('lucide-settings');

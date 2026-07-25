@@ -59,7 +59,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 		<>
 			<div className="app-shell min-h-screen" id="app-shell">
 				<a
-					className="bg-accent text-accent-foreground sr-only z-50 rounded-lg px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+					className="sr-only z-50 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
 					href="#main-content">
 					Skip to Content
 				</a>
@@ -68,18 +68,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
 						'border-border/60 bg-card/70 p-3 backdrop-blur-xl',
 						'sticky top-0 z-20 border-b sm:fixed sm:inset-y-0 sm:left-0 sm:flex sm:flex-col sm:border-r sm:border-b-0',
 						'transition-[width] duration-200',
-						collapsed ? 'sm:w-16' : 'sm:w-60'
+						collapsed ? 'sm:w-16' : 'sm:w-60',
 					)}>
 					<div className="flex min-h-10 items-center justify-between gap-3 sm:mb-5">
 						<div className="flex min-w-0 shrink-0 items-center gap-2">
 							<img
 								alt=""
-								className="ring-border/40 h-10 w-10 shrink-0 rounded-lg ring-1"
+								className="h-10 w-10 shrink-0 rounded-lg ring-1 ring-border/40"
 								src="/favicon-96x96.png"
 							/>
 							{!collapsed && (
 								<div
-									className="font-display text-foreground text-base font-semibold tracking-[0.18em]"
+									className="font-display text-base font-semibold tracking-[0.18em] text-foreground"
 									translate="no">
 									aidd
 								</div>
@@ -98,17 +98,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							className={cn(
 								collapsed
 									? 'sm:w-10 sm:justify-center sm:px-0'
-									: 'sm:mb-3 sm:w-full sm:justify-start sm:px-3'
+									: 'sm:mb-3 sm:w-full sm:justify-start sm:px-3',
 							)}
 							onClick={() => setPaletteOpen(true)}
 							title={`Search (command palette, ${shortcutText(
-								commandPaletteShortcut.keys
+								commandPaletteShortcut.keys,
 							)})`}
 							variant="secondary">
 							<Search className="h-4 w-4 shrink-0" />
 							{!collapsed && (
 								<>
-									<span className="text-muted-foreground hidden sm:inline">
+									<span className="hidden text-muted-foreground sm:inline">
 										Search…
 									</span>
 									<ShortcutChord
@@ -128,15 +128,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
 								{!collapsed && (
 									<div
 										className={cn(
-											'text-muted-foreground hidden px-3 text-[0.65rem] font-semibold tracking-wider uppercase sm:block',
+											'hidden px-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase sm:block',
 											groupIndex === 0 ? 'mt-0' : 'mt-5',
-											'mb-1.5'
+											'mb-1.5',
 										)}>
 										{group.label}
 									</div>
 								)}
 								{collapsed && groupIndex > 0 && (
-									<div className="bg-border/60 mx-auto my-2 hidden h-px w-6 rounded-full sm:block" />
+									<div className="mx-auto my-2 hidden h-px w-6 rounded-full bg-border/60 sm:block" />
 								)}
 								{group.items.map((item) =>
 									item.to === '/projects' ? (
@@ -147,10 +147,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
 											className={({ isActive }) =>
 												cn(
 													'group relative flex h-11 w-11 shrink-0 items-center justify-center gap-2.5 rounded-lg px-0 text-sm font-medium sm:h-9 sm:w-auto sm:justify-start sm:px-3',
-													'focus-visible:ring-ring/50 focus-visible:ring-offset-background transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2',
+													'transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 													isActive
-														? 'bg-accent-muted text-accent-muted-foreground dark:bg-accent-muted dark:text-accent-muted-foreground shadow-sm'
-														: 'text-muted-foreground hover:bg-muted hover:text-foreground'
+														? 'bg-accent-muted text-accent-muted-foreground shadow-sm dark:bg-accent-muted dark:text-accent-muted-foreground'
+														: 'text-muted-foreground hover:bg-muted hover:text-foreground',
 												)
 											}
 											key={item.to}
@@ -161,8 +161,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
 													<span
 														aria-hidden="true"
 														className={cn(
-															'bg-accent absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full transition-opacity sm:block',
-															isActive ? 'opacity-100' : 'opacity-0'
+															'absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full bg-accent transition-opacity sm:block',
+															isActive ? 'opacity-100' : 'opacity-0',
 														)}
 													/>
 													<item.icon className="h-4 w-4 shrink-0" />
@@ -182,7 +182,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 																	'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-100 px-1 text-[0.62rem] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
 																	collapsed
 																		? 'hidden'
-																		: 'ml-auto hidden sm:inline-flex'
+																		: 'ml-auto hidden sm:inline-flex',
 																)}>
 																{activeExecutionCount}
 															</span>
@@ -190,12 +190,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 												</>
 											)}
 										</NavLink>
-									)
+									),
 								)}
 							</div>
 						))}
 					</nav>
-					<div className="sm:border-border/60 absolute top-3 right-3 flex gap-2 sm:static sm:mt-3 sm:shrink-0 sm:flex-col sm:gap-1.5 sm:border-t sm:pt-3">
+					<div className="absolute top-3 right-3 flex gap-2 sm:static sm:mt-3 sm:shrink-0 sm:flex-col sm:gap-1.5 sm:border-t sm:border-border/60 sm:pt-3">
 						<div className="sm:hidden">
 							<IconButton
 								aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}
@@ -210,7 +210,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							aria-label="Set access token"
 							className={cn(
 								'px-0',
-								collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3'
+								collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
 							)}
 							onClick={openAuthPrompt}
 							variant="ghost">
@@ -229,7 +229,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							}
 							className={cn(
 								'px-0',
-								collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3'
+								collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
 							)}
 							onClick={toggleThemeMode}
 							variant="ghost">
@@ -249,7 +249,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 				<main
 					className={cn(
 						'command-surface min-w-0 px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] transition-[padding] duration-200 focus:outline-none sm:min-h-screen sm:p-6 sm:pb-6',
-						collapsed ? 'sm:pl-[5.5rem]' : 'sm:pl-[16.5rem]'
+						collapsed ? 'sm:pl-[5.5rem]' : 'sm:pl-[16.5rem]',
 					)}
 					id="main-content"
 					tabIndex={-1}>

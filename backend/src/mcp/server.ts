@@ -3,7 +3,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 
 import type { AiddApiClient } from '../channels/apiClient.ts';
 
-import { asArgs, TOOLS, type ChatState, type JsonSchema } from './tools.ts';
+import { asArgs, type ChatState, type JsonSchema, TOOLS } from './tools.ts';
 
 /**
  * aidd exposed as MCP tools over stdio.
@@ -62,7 +62,7 @@ export function createToolDispatcher(client: AiddApiClient): AiddToolDispatcher 
 export function createAiddMcpServer(client: AiddApiClient, serverVersion: string): Server {
 	const server = new Server(
 		{ name: 'aidd', version: serverVersion },
-		{ capabilities: { tools: {} } }
+		{ capabilities: { tools: {} } },
 	);
 	const dispatcher = createToolDispatcher(client);
 
@@ -71,7 +71,7 @@ export function createAiddMcpServer(client: AiddApiClient, serverVersion: string
 	server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		const { isError, text } = await dispatcher.call(
 			request.params.name,
-			asArgs(request.params.arguments)
+			asArgs(request.params.arguments),
 		);
 		return { content: [{ text, type: 'text' }], isError };
 	});

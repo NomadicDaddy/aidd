@@ -19,6 +19,7 @@ export type SortDir = 'asc' | 'desc';
 export const DEFAULT_SORT: SortKey = 'name';
 export const DEFAULT_SORT_DIR: SortDir = 'asc';
 
+/* eslint-disable perfectionist/sort-sets -- iteration order defines the UI sort-option/column order */
 export const SORT_KEYS: ReadonlySet<SortKey> = new Set([
 	'name',
 	'version',
@@ -34,6 +35,7 @@ export const SORT_KEYS: ReadonlySet<SortKey> = new Set([
 	'lastSync',
 	'addedAt',
 ]);
+/* eslint-enable perfectionist/sort-sets */
 const SORT_DIRS: ReadonlySet<SortDir> = new Set(['asc', 'desc']);
 
 function direction(value: number, dir: SortDir): number {
@@ -84,7 +86,7 @@ export function compareProjects(
 	right: ProjectSummary,
 	key: SortKey,
 	dir: SortDir = 'asc',
-	gitStatus?: Record<string, ProjectGitStatusMapEntry>
+	gitStatus?: Record<string, ProjectGitStatusMapEntry>,
 ): number {
 	let result: number;
 	switch (key) {
@@ -92,7 +94,7 @@ export function compareProjects(
 			result = compareNumber(
 				timestamp(left.metadata.addedAt),
 				timestamp(right.metadata.addedAt),
-				dir
+				dir,
 			);
 			break;
 		case 'artifacts':
@@ -102,21 +104,21 @@ export function compareProjects(
 			result = compareText(
 				gitSortValue(gitStatus?.[left.id]),
 				gitSortValue(gitStatus?.[right.id]),
-				dir
+				dir,
 			);
 			break;
 		case 'lastSync':
 			result = compareNumber(
 				timestamp(left.metadata.sync.lastSyncAt),
 				timestamp(right.metadata.sync.lastSyncAt),
-				dir
+				dir,
 			);
 			break;
 		case 'maturity':
 			result = compareNumber(
 				left.metadata.maturity.percent,
 				right.metadata.maturity.percent,
-				dir
+				dir,
 			);
 			break;
 		case 'passing':
@@ -126,7 +128,7 @@ export function compareProjects(
 			result = compareNumber(
 				left.metadata.ports?.frontendPort ?? left.metadata.ports?.backendPort ?? null,
 				right.metadata.ports?.frontendPort ?? right.metadata.ports?.backendPort ?? null,
-				dir
+				dir,
 			);
 			break;
 		case 'profile':
@@ -136,7 +138,7 @@ export function compareProjects(
 			result = compareNumber(
 				left.metadata.usage.totals.reportedCostUsd,
 				right.metadata.usage.totals.reportedCostUsd,
-				dir
+				dir,
 			);
 			break;
 		case 'stack':
@@ -146,7 +148,7 @@ export function compareProjects(
 			result = compareNumber(
 				left.metadata.usage.totals.totalTokens,
 				right.metadata.usage.totals.totalTokens,
-				dir
+				dir,
 			);
 			break;
 		case 'version':

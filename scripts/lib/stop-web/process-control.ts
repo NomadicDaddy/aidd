@@ -42,7 +42,7 @@ function findPidsOnPortUnix(port: number): string[] {
 			result.stdout
 				.split(/\r?\n/)
 				.map((line) => line.trim())
-				.filter((line) => /^\d+$/.test(line))
+				.filter((line) => /^\d+$/.test(line)),
 		),
 	];
 }
@@ -170,14 +170,14 @@ export interface ActiveRunPortPin {
 export function reportOrphanedSocket(
 	port: number,
 	orphanedPids: number[],
-	activeRuns: ActiveRunPortPin[] = []
+	activeRuns: ActiveRunPortPin[] = [],
 ): void {
 	const pidList = orphanedPids.join(', ');
 	console.log(
-		`Port ${port} is still held by an orphaned socket bound to PID(s) ${pidList} that no longer exist.`
+		`Port ${port} is still held by an orphaned socket bound to PID(s) ${pidList} that no longer exist.`,
 	);
 	console.log(
-		'   This is a stale TCP binding left by an ungracefully-terminated server; there is no process to kill.'
+		'   This is a stale TCP binding left by an ungracefully-terminated server; there is no process to kill.',
 	);
 	if (activeRuns.length > 0) {
 		console.log('   Active aidd run process(es) may still be pinning an inherited socket:');

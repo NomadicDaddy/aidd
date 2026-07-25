@@ -338,9 +338,9 @@ describe('DB worker round-trip', () => {
 
 describe('worker error serialization', () => {
 	test('preserves the retryable SQLite code across the structured-clone boundary', () => {
-		const original = new Error('database is locked') as Error & { code?: string };
+		const original = new Error('database is locked') as { code?: string } & Error;
 		original.code = 'SQLITE_BUSY';
-		const restored = deserializeError(serializeError(original)) as Error & { code?: string };
+		const restored = deserializeError(serializeError(original)) as { code?: string } & Error;
 		expect(restored.message).toBe('database is locked');
 		expect(restored.code).toBe('SQLITE_BUSY');
 	});

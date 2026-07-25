@@ -19,14 +19,14 @@ function buildQuery(params: ListDiaryParams): string {
 
 export async function listDiaryEntries(
 	params: ListDiaryParams = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<DiaryEntriesPage> {
 	return apiGet<DiaryEntriesPage>(`/api/v1/diary/entries${buildQuery(params)}`, { signal });
 }
 
 export async function listDiaryTimeline(
 	params: ListDiaryParams = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<DiaryTimelinePage> {
 	return apiGet<DiaryTimelinePage>(`/api/v1/diary/timeline${buildQuery(params)}`, { signal });
 }

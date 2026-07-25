@@ -16,7 +16,7 @@ export interface SweptRunSideEffectDeps {
 // tail watcher (whose fs.watch handle would otherwise leak) and sync the linked invocation row.
 export async function applySweptRunSideEffects(
 	deps: SweptRunSideEffectDeps,
-	info: SweptRunInfo
+	info: SweptRunInfo,
 ): Promise<void> {
 	const tail = deps.tailWatchers.get(info.runId);
 	if (tail) {
@@ -29,7 +29,7 @@ export async function applySweptRunSideEffects(
 	await deps.telemetryService.reconcileInvocationFromRun(info.runId).catch((error: unknown) => {
 		webLogger.warn(
 			{ err: error, runId: info.runId },
-			'Failed to sync swept run invocation telemetry'
+			'Failed to sync swept run invocation telemetry',
 		);
 	});
 }

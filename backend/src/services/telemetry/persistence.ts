@@ -15,7 +15,7 @@ function createInvocationId(): string {
 
 export async function recordStart(
 	db: WebDatabase,
-	input: RecordStartInput
+	input: RecordStartInput,
 ): Promise<string | undefined> {
 	const id = createInvocationId();
 	try {
@@ -40,7 +40,7 @@ export async function recordStart(
 					startedAt: input.startedAt,
 					status: 'running',
 				}),
-			{ label: 'telemetry.recordStart' }
+			{ label: 'telemetry.recordStart' },
 		);
 		recordDataMovement({
 			category: 'database',
@@ -64,7 +64,7 @@ export async function recordStart(
 				runId: input.runId,
 				sessionId: input.sessionId,
 			},
-			'telemetry.recordStart failed'
+			'telemetry.recordStart failed',
 		);
 		return undefined;
 	}
@@ -73,7 +73,7 @@ export async function recordStart(
 export async function recordCompletionByInvocationId(
 	db: WebDatabase,
 	invocationId: string,
-	input: RecordCompletionInput
+	input: RecordCompletionInput,
 ): Promise<void> {
 	if (input.status === 'running') return;
 	try {
@@ -91,10 +91,10 @@ export async function recordCompletionByInvocationId(
 					.where(
 						and(
 							eq(invocationEvents.id, invocationId),
-							eq(invocationEvents.status, 'running')
-						)
+							eq(invocationEvents.status, 'running'),
+						),
 					),
-			{ label: 'telemetry.recordCompletionByInvocationId' }
+			{ label: 'telemetry.recordCompletionByInvocationId' },
 		);
 		recordDataMovement({
 			category: 'database',
@@ -106,7 +106,7 @@ export async function recordCompletionByInvocationId(
 	} catch (err) {
 		webLogger.error(
 			{ err, invocationId, status: input.status },
-			'telemetry.recordCompletionByInvocationId failed'
+			'telemetry.recordCompletionByInvocationId failed',
 		);
 	}
 }
@@ -114,7 +114,7 @@ export async function recordCompletionByInvocationId(
 export async function recordCompletionBySessionId(
 	db: WebDatabase,
 	sessionId: string,
-	input: RecordCompletionInput
+	input: RecordCompletionInput,
 ): Promise<void> {
 	if (input.status === 'running') return;
 	try {
@@ -132,10 +132,10 @@ export async function recordCompletionBySessionId(
 					.where(
 						and(
 							eq(invocationEvents.sessionId, sessionId),
-							eq(invocationEvents.status, 'running')
-						)
+							eq(invocationEvents.status, 'running'),
+						),
 					),
-			{ label: 'telemetry.recordCompletionBySessionId' }
+			{ label: 'telemetry.recordCompletionBySessionId' },
 		);
 		recordDataMovement({
 			category: 'database',
@@ -147,7 +147,7 @@ export async function recordCompletionBySessionId(
 	} catch (err) {
 		webLogger.error(
 			{ err, sessionId, status: input.status },
-			'telemetry.recordCompletionBySessionId failed'
+			'telemetry.recordCompletionBySessionId failed',
 		);
 	}
 }
@@ -158,7 +158,7 @@ export async function recordCompletionBySessionId(
 // run is still running or has no telemetry row (e.g. direct-CLI runs).
 export async function reconcileInvocationFromRun(
 	commands: DbCommands,
-	runId: string
+	runId: string,
 ): Promise<void> {
 	try {
 		const synced = await withSqliteRetry(() => commands.reconcileInvocationFromRun({ runId }), {
@@ -184,7 +184,7 @@ export async function reconcileStaleInvocations(commands: DbCommands): Promise<n
 		// lock is taken up front so it cannot fail the deferred read->write upgrade under WAL.
 		const reconciled = await withSqliteRetry(
 			() => commands.reconcileStaleInvocations({ now: Date.now() }),
-			{ label: 'telemetry.reconcileStaleInvocations' }
+			{ label: 'telemetry.reconcileStaleInvocations' },
 		);
 		if (reconciled === 0) return 0;
 		recordDataMovement({

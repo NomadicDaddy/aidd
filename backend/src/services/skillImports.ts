@@ -1,10 +1,10 @@
 import {
+	type ImportedSkillRecord,
+	type ImportedSkillRegistry,
 	importedSkillRegistryPath,
 	importedSkillsDir,
 	parseSkillDefinition,
 	readImportedSkillRegistry,
-	type ImportedSkillRecord,
-	type ImportedSkillRegistry,
 } from 'aidd-shared/skills/catalog';
 import { randomUUID } from 'node:crypto';
 import { copyFile, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
@@ -17,8 +17,8 @@ import {
 	hashSkillFiles,
 	pathExists,
 	previewSkillImport,
-	scanSkill,
 	type ScannedSkill,
+	scanSkill,
 	type SkillImportOptions,
 	type SkillImportPreview,
 } from './skillImportScan.ts';
@@ -79,14 +79,14 @@ async function writeRegistry(dataDir: string, registry: ImportedSkillRegistry): 
 }
 
 export async function importSkill(
-	options: SkillImportOptions
-): Promise<ImportedSkillRecord & { id: string }> {
+	options: SkillImportOptions,
+): Promise<{ id: string } & ImportedSkillRecord> {
 	return withImportLock(options.dataDir, () => importSkillLocked(options));
 }
 
 async function importSkillLocked(
-	options: SkillImportOptions
-): Promise<ImportedSkillRecord & { id: string }> {
+	options: SkillImportOptions,
+): Promise<{ id: string } & ImportedSkillRecord> {
 	const scanned = await scanSkill(options);
 	const conflict = await conflictFor(options.rootDir, options.dataDir, scanned.id);
 	if (conflict === 'bundled') {
@@ -114,7 +114,7 @@ async function importSkillLocked(
 			scanned.files.map((file) => ({
 				...file,
 				absolutePath: join(staging, file.relativePath),
-			}))
+			})),
 		);
 		if (stagedHash !== scanned.sourceSha256) {
 			throw new HttpError('Skill package changed while it was being imported', 409);

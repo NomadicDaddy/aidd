@@ -31,7 +31,7 @@ export async function executeStep(
 	step: RecipeStepDefinition,
 	context: ExecutionContext,
 	sequenceNumber: number,
-	parentStepResultId?: string
+	parentStepResultId?: string,
 ): Promise<StepExecutionResult> {
 	const { autoFix, dispatcher, hooks, lifecycle, stopFlags } = deps;
 	const result = await lifecycle.createStepResult({
@@ -125,13 +125,13 @@ export async function executeStep(
 		const violations = await diffWriteViolations(
 			context.projectDir,
 			METADATA_ALLOWLIST,
-			guardBaseline
+			guardBaseline,
 		);
 		if (violations !== null && violations.length > 0) {
 			const revertFailed = await revertWriteViolations(
 				context.projectDir,
 				guardBaseline,
-				violations
+				violations,
 			);
 			const failedSummary =
 				revertFailed.length > 0 ? ` (revert failed for: ${revertFailed.join(', ')})` : '';

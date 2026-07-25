@@ -16,9 +16,9 @@ import { formatFiles } from './prettierFormat.ts';
 import {
 	classifyReport,
 	REPORT_SOURCE,
+	type ReportFeatureMetadata,
 	slugFromDescription,
 	titleFromDescription,
-	type ReportFeatureMetadata,
 } from './projectReports/classification.ts';
 import {
 	buildNotes,
@@ -51,7 +51,7 @@ function withProjectLock<T>(projectDir: string, task: () => Promise<T>): Promise
 	const result = previous.then(() => task());
 	const tail = result.then(
 		() => undefined,
-		() => undefined
+		() => undefined,
 	);
 	projectLocks.set(projectDir, tail);
 	void tail.then(() => {
@@ -62,7 +62,7 @@ function withProjectLock<T>(projectDir: string, task: () => Promise<T>): Promise
 
 export async function submitProjectReport(
 	projectDir: string,
-	report: ProjectReportSubmitDto
+	report: ProjectReportSubmitDto,
 ): Promise<ProjectReportEntryDto> {
 	const description = report.description.trim();
 
@@ -76,7 +76,7 @@ export async function submitProjectReport(
 async function createReportFeature(
 	projectDir: string,
 	report: ProjectReportSubmitDto,
-	description: string
+	description: string,
 ): Promise<ProjectReportEntryDto> {
 	const store = new FileAiddStore(projectDir);
 	const [roadmap, existingFeatures] = await Promise.all([

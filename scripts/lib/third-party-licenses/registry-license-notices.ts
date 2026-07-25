@@ -28,7 +28,7 @@ export const REGISTRY_LICENSE_NOTICES: Readonly<Record<string, RegistryLicenseNo
 		// 3(a)(2) allows any reasonable attribution method for the medium. Keep both the deed and
 		// legal-code links explicit instead of presenting this summary as the license itself.
 		render: (
-			authorOrRightsholder
+			authorOrRightsholder,
 		) => `Licensed material by ${authorOrRightsholder} is used under
 the Creative Commons Attribution 4.0 International license. Recipients may share and adapt the
 material for any purpose provided they give appropriate credit, link to the license, and indicate

@@ -55,6 +55,6 @@ export function createLaunchDefaultsRoutes(context: WebContext) {
 				mode: t.Optional(modeQuery),
 				projectDir: t.Optional(t.String()),
 			}),
-		}
+		},
 	);
 }

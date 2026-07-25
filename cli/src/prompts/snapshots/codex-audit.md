@@ -752,7 +752,7 @@ app.post(
 			name: t.String({ minLength: 1, maxLength: 255 }),
 			description: t.Optional(t.String({ maxLength: 1000 })),
 		}),
-	}
+	},
 );
 ```
 

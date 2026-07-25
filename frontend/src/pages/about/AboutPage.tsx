@@ -32,7 +32,7 @@ export function AboutPage() {
 				</div>
 				<div className="mt-8 grid gap-3">
 					<p
-						className="font-display text-foreground text-5xl font-semibold sm:text-7xl"
+						className="font-display text-5xl font-semibold text-foreground sm:text-7xl"
 						id="about-title"
 						translate="no">
 						aidd
@@ -40,7 +40,7 @@ export function AboutPage() {
 					<p className="text-base font-medium text-teal-800 sm:text-lg dark:text-teal-200">
 						AI Development Director
 					</p>
-					<p className="text-muted-foreground font-mono text-xs uppercase">
+					<p className="font-mono text-xs text-muted-foreground uppercase">
 						Version {__AIDD_VERSION__}
 					</p>
 				</div>

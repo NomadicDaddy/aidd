@@ -140,7 +140,7 @@ export async function ensureTerminalReady(): Promise<void> {
  * @returns The new session's info, or null when creation failed.
  */
 export function createTerminalTab(
-	options: { cwd?: string; shellId?: string } = {}
+	options: { cwd?: string; shellId?: string } = {},
 ): Promise<null | TerminalSessionInfo> {
 	const task = performCreate(options);
 	const guard = task

@@ -1,7 +1,7 @@
 import { type ProjectAssuranceProfile } from 'aidd-shared';
 import {
-	evaluateAuditReportFreshness,
 	type AuditFreshnessContext,
+	evaluateAuditReportFreshness,
 } from 'aidd-shared/metadata/audit-freshness';
 import {
 	MATURITY_SKIP_FILE,
@@ -64,11 +64,11 @@ function freshnessFromMtime(mtimeMs: null | number): MaturityArtifactStatus {
 
 function findCatalogArtifact(
 	check: null | ProjectArtifactCheckSummary,
-	slug: string
+	slug: string,
 ): { mtime: null | string; status: MaturityArtifactStatus } {
 	if (!check) return { mtime: null, status: 'missing' };
 	const record = check.artifacts.find(
-		(item) => item.label === slug || item.path.endsWith(`.aidd/${slug}`)
+		(item) => item.label === slug || item.path.endsWith(`.aidd/${slug}`),
 	);
 	if (!record || !record.exists) return { mtime: null, status: 'missing' };
 	return {
@@ -79,7 +79,7 @@ function findCatalogArtifact(
 
 async function classifyFsFile(
 	projectDir: string,
-	relativePath: string
+	relativePath: string,
 ): Promise<{ mtime: null | string; status: MaturityArtifactStatus }> {
 	const stats = await statOrNull(join(projectDir, relativePath));
 	if (!stats) return { mtime: null, status: 'missing' };
@@ -91,7 +91,7 @@ async function classifyFsFile(
 
 async function classifyFsDir(
 	projectDir: string,
-	relativePath: string
+	relativePath: string,
 ): Promise<{ mtime: null | string; status: MaturityArtifactStatus }> {
 	const dirPath = join(projectDir, relativePath);
 	const stats = await statOrNull(dirPath);
@@ -113,7 +113,7 @@ async function classifyFsDir(
 // the mtime staleness window.
 async function classifyFsAny(
 	projectDir: string,
-	relativePaths: readonly string[]
+	relativePaths: readonly string[],
 ): Promise<{ mtime: null | string; status: MaturityArtifactStatus }> {
 	for (const relativePath of relativePaths) {
 		const fullPath = join(projectDir, relativePath);
@@ -198,7 +198,7 @@ async function classifyChangelogSynthetic(projectDir: string): Promise<{
 
 function applyInterviewDowngrade(
 	status: MaturityArtifactStatus,
-	interview: null | ProjectInterviewProgress
+	interview: null | ProjectInterviewProgress,
 ): MaturityArtifactStatus {
 	if (status !== 'fresh' && status !== 'stale') return status;
 	if (!interview || interview.total === 0) return status;
@@ -209,7 +209,7 @@ function applyInterviewDowngrade(
 export async function classifyArtifact(
 	artifact: MaturityArtifactRef,
 	input: MaturityComputeInput,
-	skip: Set<string>
+	skip: Set<string>,
 ): Promise<{ mtime: null | string; status: MaturityArtifactStatus }> {
 	if (skip.has(artifact.slug)) return { mtime: null, status: 'skipped' };
 	switch (artifact.kind) {
@@ -250,7 +250,7 @@ export async function classifyAuditEntry(
 	projectDir: string,
 	skip: Set<string>,
 	latestRun: MaturityComputeInput['latestProjectAuditRun'],
-	freshnessContext: AuditFreshnessContext
+	freshnessContext: AuditFreshnessContext,
 ): Promise<AuditClassification> {
 	const slug = `audit:${auditName}`;
 	const skipped = skip.has(slug) || skip.has(auditName);

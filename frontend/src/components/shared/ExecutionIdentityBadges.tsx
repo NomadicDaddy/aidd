@@ -5,12 +5,12 @@ import { default as Settings } from 'lucide-react/dist/esm/icons/settings';
 import { cn } from '../../lib/cn.ts';
 import {
 	cleanIdentityValue,
-	executionIdentityItems,
-	identityBadgeStyle,
-	reasoningBadgeClass,
 	type ExecutionIdentity,
 	type ExecutionIdentityItem,
+	executionIdentityItems,
 	type ExecutionIdentityKind,
+	identityBadgeStyle,
+	reasoningBadgeClass,
 } from '../../lib/executionIdentity.ts';
 import { Tooltip } from '../ui/tooltip.tsx';
 
@@ -36,7 +36,7 @@ export function ExecutionIdentityDetails({
 	model,
 	provider,
 	reasoningEffort,
-}: ExecutionIdentity & { hint?: ReactNode }) {
+}: { hint?: ReactNode } & ExecutionIdentity) {
 	const items = executionIdentityItems({ backend, model, provider, reasoningEffort });
 	const cleanProvider = cleanIdentityValue(provider);
 	return (
@@ -68,11 +68,11 @@ export function ExecutionIdentityBadges({
 	provider,
 	reasoningEffort,
 	withTooltip = true,
-}: ExecutionIdentity & {
+}: {
 	className?: string;
 	hint?: ReactNode;
 	withTooltip?: boolean;
-}) {
+} & ExecutionIdentity) {
 	const items = executionIdentityItems({ backend, model, provider, reasoningEffort });
 	if (items.length === 0) return null;
 	const cleanProvider = cleanIdentityValue(provider);
@@ -86,7 +86,7 @@ export function ExecutionIdentityBadges({
 			aria-label={ariaLabel}
 			className={cn(
 				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] text-[11px] leading-5 font-semibold shadow-sm ring-1 ring-black/10 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:ring-white/15 dark:focus-visible:ring-teal-300',
-				className
+				className,
 			)}
 			role="group">
 			{items.map((item, index) => (
@@ -94,7 +94,7 @@ export function ExecutionIdentityBadges({
 					className={cn(
 						'inline-flex min-w-0 items-center gap-1 px-1.5 py-px',
 						index > 0 ? 'border-l border-white/30' : '',
-						itemClass(item)
+						itemClass(item),
 					)}
 					key={item.kind}
 					style={itemStyle(item)}>

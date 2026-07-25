@@ -3,9 +3,9 @@ import { resolveConfig } from 'aidd-shared/config';
 import { resolve } from 'node:path';
 
 import {
+	type CrawlArgs,
 	DEFAULT_BASE_URL,
 	VIEWPORT_ARG_VALUES,
-	type CrawlArgs,
 	type ViewportArg,
 } from './crawltest-types.ts';
 
@@ -32,7 +32,7 @@ function parseViewportArg(value: null | string): ViewportArg {
 		return value as ViewportArg;
 	}
 	throw new Error(
-		`Unknown --viewport "${value}". Valid values: ${VIEWPORT_ARG_VALUES.join(', ')}`
+		`Unknown --viewport "${value}". Valid values: ${VIEWPORT_ARG_VALUES.join(', ')}`,
 	);
 }
 
@@ -66,7 +66,7 @@ function resolveConnectHostname(hostname: string): string {
 }
 
 export async function resolveDefaultBaseUrl(
-	rootDir = resolve(import.meta.dirname, '..')
+	rootDir = resolve(import.meta.dirname, '..'),
 ): Promise<string> {
 	const config = await resolveConfig(parseAiddArgs(['--web']), { baseDir: rootDir });
 	if (!config.web) return DEFAULT_BASE_URL;

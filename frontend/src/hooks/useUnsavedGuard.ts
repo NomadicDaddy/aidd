@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useBlocker, type Blocker } from 'react-router-dom';
+import { type Blocker, useBlocker } from 'react-router-dom';
 
 // Blocks intra-app route changes (via react-router blocker) and shows the browser's native
 // beforeunload prompt for tab close / full reload while `dirty` is true. The returned Blocker
@@ -8,7 +8,7 @@ import { useBlocker, type Blocker } from 'react-router-dom';
 export function useUnsavedGuard(dirty: boolean): Blocker {
 	const blocker = useBlocker(
 		({ currentLocation, nextLocation }) =>
-			dirty && currentLocation.pathname !== nextLocation.pathname
+			dirty && currentLocation.pathname !== nextLocation.pathname,
 	);
 
 	useEffect(() => {

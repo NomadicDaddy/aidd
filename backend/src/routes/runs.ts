@@ -38,7 +38,7 @@ export const launchBody = t.Object({
 			t.Literal('todo'),
 			t.Literal('triumvirate'),
 			t.Literal('validate'),
-		])
+		]),
 	),
 	model: t.Optional(safeBackendArg),
 	overseerBackend: t.Optional(backendNameBody),
@@ -86,13 +86,13 @@ export function createRunsRoutes(context: WebContext) {
 							t.Literal('killed'),
 							t.Literal('running'),
 							t.Literal('stopped'),
-						])
+						]),
 					),
 					// Query strings arrive as text, so accept literal 'true'/'false' rather
 					// than relying on t.Boolean() coercion for query params.
 					topLevel: t.Optional(t.Union([t.Literal('true'), t.Literal('false')])),
 				}),
-			}
+			},
 		)
 		.get(
 			'/:id',
@@ -101,7 +101,7 @@ export function createRunsRoutes(context: WebContext) {
 				if (!run) return { run: null };
 				return { run };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.get('/:id/output', async ({ params }) => await context.runService.readOutput(params.id), {
 			params: t.Object({ id: t.String() }),
@@ -112,7 +112,7 @@ export function createRunsRoutes(context: WebContext) {
 				const run = await context.runService.getRunRecord(params.id);
 				return await readRunCommits(run, params.id);
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/',
@@ -137,7 +137,7 @@ export function createRunsRoutes(context: WebContext) {
 			},
 			{
 				body: launchBody,
-			}
+			},
 		)
 		.post(
 			'/:id/continue',
@@ -149,7 +149,7 @@ export function createRunsRoutes(context: WebContext) {
 				const run = await context.runService.continueRun(params.id);
 				return { run };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/:id/stop',
@@ -157,7 +157,7 @@ export function createRunsRoutes(context: WebContext) {
 				await context.runService.stopRun(params.id);
 				return { ok: true };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/:id/kill',
@@ -165,6 +165,6 @@ export function createRunsRoutes(context: WebContext) {
 				await context.runService.killRun(params.id);
 				return { ok: true };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		);
 }

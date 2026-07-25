@@ -22,7 +22,7 @@ export function normalizePosixDrivePath(target: string, platform: NodeJS.Platfor
 export function isPathWithinWorkspaceRoot(
 	target: string,
 	root: string,
-	platform: NodeJS.Platform = process.platform
+	platform: NodeJS.Platform = process.platform,
 ): boolean {
 	if (target === '') return true;
 	const normalized = normalizePosixDrivePath(target, platform);

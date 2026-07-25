@@ -4,9 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { clearStopRequested, markStopRequested } from '../lib/stopRequests.ts';
 import {
+	type SocketMessage,
 	useWebSocketReconnect,
 	useWebSocketSubscribe,
-	type SocketMessage,
 } from './useWebSocket.ts';
 
 // Compile-time exhaustiveness guard for the WebSocket event contract. Because the switch below scopes

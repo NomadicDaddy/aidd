@@ -47,7 +47,7 @@ export async function spawnDetachedRun(input: SpawnDetachedRunInput): Promise<Sp
 				args: input.command.args,
 				cwd: input.rootDir,
 				logPath: input.logPath,
-			} satisfies DetachedSpawnPayload)
+			} satisfies DetachedSpawnPayload),
 		);
 	}
 	// Tell the agent where the app under test lives, so it verifies against the real address instead

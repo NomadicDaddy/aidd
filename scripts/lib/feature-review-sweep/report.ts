@@ -23,7 +23,7 @@ function summarizeValidatorOutput(validator: ValidatorResult): string {
 				!line.startsWith('Feature JSON Validation:') &&
 				!line.startsWith('Total files:') &&
 				!line.startsWith('Valid:') &&
-				!line.startsWith('Invalid:')
+				!line.startsWith('Invalid:'),
 		);
 	return combined || 'no validator output captured';
 }
@@ -125,7 +125,7 @@ export function buildAggregateReport(runSummary: RunSummary): string {
 				? 'PASS'
 				: 'FAIL';
 		lines.push(
-			`- ${app.app.name}: total ${app.before.total}, repaired ${app.invalidJsonRepairs}, compliance fixes ${app.complianceFixes}, backlog semantic fixes ${app.backlogSemanticFixes}, manual follow-ups ${app.manualFollowUps.length}, validator ${validatorState}`
+			`- ${app.app.name}: total ${app.before.total}, repaired ${app.invalidJsonRepairs}, compliance fixes ${app.complianceFixes}, backlog semantic fixes ${app.backlogSemanticFixes}, manual follow-ups ${app.manualFollowUps.length}, validator ${validatorState}`,
 		);
 	}
 	lines.push('');

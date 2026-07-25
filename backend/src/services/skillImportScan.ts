@@ -7,7 +7,7 @@ import {
 	parseSkillDefinition,
 	type SkillCategory,
 } from 'aidd-shared/skills/catalog';
-import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
+import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
 
 import { assertAllowedPath, pathIsInside } from '../paths.ts';
@@ -81,7 +81,7 @@ async function scanFiles(root: string): Promise<ScannedFile[]> {
 			if (entry.isSymbolicLink()) {
 				throw new HttpError(
 					'Skill packages cannot contain symbolic links or junctions',
-					400
+					400,
 				);
 			}
 			if (entry.isDirectory()) {
@@ -127,7 +127,7 @@ export async function scanSkill(options: SkillImportOptions): Promise<ScannedSki
 	} catch (err) {
 		throw new HttpError(
 			err instanceof Error ? err.message : 'Skill path is outside allowed roots',
-			400
+			400,
 		);
 	}
 	let sourceEntry: Stats;
@@ -159,7 +159,7 @@ export async function scanSkill(options: SkillImportOptions): Promise<ScannedSki
 	} catch (err) {
 		throw new HttpError(
 			err instanceof Error ? err.message : 'Skill path is outside allowed roots',
-			400
+			400,
 		);
 	}
 	const importedRoot = importedSkillsDir(options.dataDir);
@@ -205,7 +205,7 @@ export async function scanSkill(options: SkillImportOptions): Promise<ScannedSki
 export async function conflictFor(
 	rootDir: string,
 	dataDir: string,
-	id: string
+	id: string,
 ): Promise<SkillImportPreview['conflict']> {
 	if (await pathExists(join(bundledSkillsDir(rootDir), id))) return 'bundled';
 	if (await pathExists(join(importedSkillsDir(dataDir), id))) return 'imported';

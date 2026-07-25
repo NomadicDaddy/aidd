@@ -77,7 +77,7 @@ export async function updateSettingsConfig(request: WebConfigSettings): Promise<
 	const response = await apiSend<{ config: WebConfigSettings }>(
 		'/api/v1/settings/config',
 		'PUT',
-		body
+		body,
 	);
 	return response.config;
 }
@@ -120,16 +120,16 @@ const refreshSuffix = (refresh: boolean) => (refresh ? '?refresh=true' : '');
 
 export async function getCliStatus(refresh = false): Promise<SettingsCliStatus[]> {
 	const response = await apiGet<{ backends: SettingsCliStatus[] }>(
-		`/api/v1/settings/cli-status${refreshSuffix(refresh)}`
+		`/api/v1/settings/cli-status${refreshSuffix(refresh)}`,
 	);
 	return response.backends;
 }
 
 export async function getSourceControlStatus(
-	refresh = false
+	refresh = false,
 ): Promise<SettingsSourceControlStatus[]> {
 	const response = await apiGet<{ providers: SettingsSourceControlStatus[] }>(
-		`/api/v1/settings/source-control-status${refreshSuffix(refresh)}`
+		`/api/v1/settings/source-control-status${refreshSuffix(refresh)}`,
 	);
 	return response.providers;
 }

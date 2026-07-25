@@ -103,7 +103,7 @@ export async function generate(root: string): Promise<GeneratedDocuments> {
 	const { closure, unresolved: unresolvedClosure } = await collectLicensedClosure(
 		root,
 		WORKSPACES,
-		await workspaceNames(root, WORKSPACES)
+		await workspaceNames(root, WORKSPACES),
 	);
 
 	// A package we ship but cannot locate is a package whose license we never read. That is a
@@ -134,7 +134,7 @@ export async function generate(root: string): Promise<GeneratedDocuments> {
 			console.error(`  - ${license} (${[...new Set(users)].join(', ')})`);
 		}
 		console.error(
-			'Add it to scripts/lib/third-party-licenses/notices.ts after reviewing its terms.'
+			'Add it to scripts/lib/third-party-licenses/notices.ts after reviewing its terms.',
 		);
 		exit(1);
 	}
@@ -189,7 +189,7 @@ async function main(): Promise<void> {
 
 		if (committed !== document.content) {
 			console.error(
-				`${document.name} is out of date with the dependency graph or distributed-materials registry.`
+				`${document.name} is out of date with the dependency graph or distributed-materials registry.`,
 			);
 			console.error('Run `bun run licenses:generate` and commit the result.');
 			exit(1);
@@ -197,7 +197,7 @@ async function main(): Promise<void> {
 	}
 
 	console.log(
-		`${OUTPUT} and ${NOTICES_OUTPUT} match the dependency graph and distributed-materials registry.`
+		`${OUTPUT} and ${NOTICES_OUTPUT} match the dependency graph and distributed-materials registry.`,
 	);
 }
 

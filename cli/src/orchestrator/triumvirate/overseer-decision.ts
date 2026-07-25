@@ -2,7 +2,7 @@ import type { OverseerDecision } from './types.ts';
 
 export function buildDecisionArtifact(
 	decision: OverseerDecision,
-	rawStructuredResult: Record<string, unknown> | undefined
+	rawStructuredResult: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
 	return {
 		...(decision.status === 'execute' ? { finalActions: decision.finalActions } : {}),
@@ -17,7 +17,7 @@ export function buildDecisionArtifact(
 }
 
 export function parseOverseerDecision(
-	structuredResult: Record<string, unknown> | undefined
+	structuredResult: Record<string, unknown> | undefined,
 ): OverseerDecision {
 	if (!structuredResult) return { reason: 'missing AIDD_RESULT decision', status: 'invalid' };
 	if (structuredResult.decision === 'abort') {
@@ -37,7 +37,7 @@ export function parseOverseerDecision(
 	const rawIssues = structuredResult.consistencyIssues;
 	const consistencyIssues = Array.isArray(rawIssues)
 		? rawIssues.filter(
-				(issue): issue is string => typeof issue === 'string' && issue.trim() !== ''
+				(issue): issue is string => typeof issue === 'string' && issue.trim() !== '',
 			)
 		: [];
 	return {

@@ -76,7 +76,7 @@ export interface ProcessBackendOptions {
 export async function* runProcessBackend(
 	options: ProcessBackendOptions,
 	input: PromptInput,
-	signal: AbortSignal
+	signal: AbortSignal,
 ): AsyncIterable<AgentEvent> {
 	const parseLine = options.parseLine ?? parsePlainBackendLine;
 	const finalize = options.finalize ?? finalizePlainBackend;
@@ -173,7 +173,7 @@ export async function* runProcessBackend(
 
 	const consumeStream = async (
 		stream: ReadableStream<Uint8Array>,
-		which: 'stderr' | 'stdout'
+		which: 'stderr' | 'stdout',
 	): Promise<void> => {
 		const decoder = new TextDecoder('utf-8');
 		const reader = stream.getReader();

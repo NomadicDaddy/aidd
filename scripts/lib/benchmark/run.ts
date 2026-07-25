@@ -48,13 +48,13 @@ import { commandSucceeded, controlCommandSucceeded, readTextIfExists } from './s
 function buildRun(
 	manifest: BenchmarkManifest,
 	args: BenchmarkArgs,
-	item: RunMatrixItem
+	item: RunMatrixItem,
 ): BenchmarkRun {
 	const sourceFixture = fixturePathForTask(args.manifest, item.task);
 	if (!existsSync(sourceFixture)) throw new Error(`Fixture not found: ${sourceFixture}`);
 	const workspaceDir = path.join(
 		args.workspacesDir,
-		workspaceName(item.stack, item.task, item.replicate, item.warmup)
+		workspaceName(item.stack, item.task, item.replicate, item.warmup),
 	);
 	createWorkspace(sourceFixture, workspaceDir);
 	const sourceHash = hashFixture(sourceFixture);
@@ -62,7 +62,7 @@ function buildRun(
 		item.stack,
 		item.task,
 		workspaceDir,
-		manifest.settings.fixedEnv
+		manifest.settings.fixedEnv,
 	);
 	const artifacts = detectArtifacts(workspaceDir);
 	const metrics = parseBenchmarkMetrics({
@@ -90,7 +90,7 @@ function buildRun(
 		costUsd: resolveCost(
 			metrics.costUsd,
 			metrics.tokenUsage,
-			pricingForStack(item.stack, manifest)
+			pricingForStack(item.stack, manifest),
 		),
 		durationSeconds: metrics.durationSeconds || result.durationSeconds,
 		fixtureHash: sourceHash,
@@ -127,7 +127,7 @@ export function preflightReady(result: CommandResult, corpus: string): boolean {
 function runPreflightForStack(
 	manifest: BenchmarkManifest,
 	args: BenchmarkArgs,
-	stack: BenchmarkStack
+	stack: BenchmarkStack,
 ): BenchmarkPreflight {
 	if (args.skipPreflight) {
 		return {
@@ -192,7 +192,7 @@ export function main(): void {
 		for (const item of matrix) {
 			const invocation = buildAiddInvocation(item.stack, item.task, '<workspace>');
 			console.log(
-				`${item.warmup ? 'warmup' : 'run'} ${item.stack.label} ${item.task.id} #${item.replicate}: ${[invocation.command, ...invocation.args].join(' ')}`
+				`${item.warmup ? 'warmup' : 'run'} ${item.stack.label} ${item.task.id} #${item.replicate}: ${[invocation.command, ...invocation.args].join(' ')}`,
 			);
 		}
 		return;
@@ -205,7 +205,7 @@ export function main(): void {
 		writeRuns(runsPath, regrade.runs);
 		writeOutputs(
 			args.resultsDir,
-			aggregate(manifest, regrade.runs, preflightFromSession(priorSession))
+			aggregate(manifest, regrade.runs, preflightFromSession(priorSession)),
 		);
 		logProgress(`Regraded ${regrade.runs.length} saved runs (${regrade.changed} updated)`);
 		return;
@@ -216,7 +216,7 @@ export function main(): void {
 		const runs = loadRuns(path.join(args.resultsDir, 'runs.jsonl'));
 		writeOutputs(
 			args.resultsDir,
-			aggregate(manifest, runs, preflightFromSession(priorSession))
+			aggregate(manifest, runs, preflightFromSession(priorSession)),
 		);
 		logProgress(`Report rebuilt from ${runs.length} runs`);
 		return;
@@ -244,7 +244,7 @@ export function main(): void {
 	const eligible = new Set(
 		Object.entries(preflight)
 			.filter(([, result]) => result.ok)
-			.map(([label]) => label)
+			.map(([label]) => label),
 	);
 	const runsPath = path.join(args.resultsDir, 'runs.jsonl');
 	const priorRuns = loadRuns(runsPath);
@@ -262,7 +262,7 @@ export function main(): void {
 			continue;
 		}
 		logProgress(
-			`${item.warmup ? 'Warmup' : 'Run'} ${item.stack.label} ${item.task.id} #${item.replicate}`
+			`${item.warmup ? 'Warmup' : 'Run'} ${item.stack.label} ${item.task.id} #${item.replicate}`,
 		);
 		const run = buildRun(manifest, args, item);
 		processed += 1;

@@ -19,7 +19,7 @@ interface ProfileContext {
 export async function updateProjectProfile(
 	ctx: ProfileContext,
 	projectId: string,
-	input: ProjectProfileUpdateDto
+	input: ProjectProfileUpdateDto,
 ): Promise<ProjectDetailDto['metadata']['profile']> {
 	const projectDir = await ctx.resolveDiscoveredProject(projectId);
 	try {
@@ -41,7 +41,7 @@ export async function updateProjectProfile(
 export async function updateMaturitySkip(
 	ctx: ProfileContext,
 	projectId: string,
-	skip: string[]
+	skip: string[],
 ): Promise<{ skip: string[] }> {
 	const projectDir = await ctx.resolveDiscoveredProject(projectId);
 	const normalized = [...new Set(skip.filter((s) => typeof s === 'string' && s.length > 0))];

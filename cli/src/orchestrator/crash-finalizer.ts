@@ -37,15 +37,15 @@ export function installCrashFinalizer(heartbeat: CliActiveRunHeartbeat): void {
 export async function finalizeCrashedRun(
 	kind: string,
 	cause: unknown,
-	exit: (code: number) => void = process.exit
+	exit: (code: number) => void = process.exit,
 ): Promise<void> {
 	const heartbeat = crashFinalizerTarget;
 	const detail = scrubSecrets(
-		cause instanceof Error ? (cause.stack ?? cause.message) : String(cause)
+		cause instanceof Error ? (cause.stack ?? cause.message) : String(cause),
 	);
 	console.error(`[aidd] fatal ${kind}; finalizing run metadata before exit:\n${detail}`);
 	heartbeat?.noteFatalError(
-		scrubSecrets(`${kind}: ${cause instanceof Error ? cause.message : String(cause)}`)
+		scrubSecrets(`${kind}: ${cause instanceof Error ? cause.message : String(cause)}`),
 	);
 	const timeout = new Promise<void>((resolveTimeout) => {
 		setTimeout(resolveTimeout, CRASH_FINALIZE_TIMEOUT_MS);

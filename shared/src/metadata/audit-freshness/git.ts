@@ -48,21 +48,21 @@ const excludedFileExtensions = new Set([
 
 export async function currentGitHead(
 	projectDir: string,
-	context: AuditFreshnessContext
+	context: AuditFreshnessContext,
 ): Promise<null | string> {
 	if (!(await isGitWorktree(projectDir, context))) return null;
 	context.currentHead ??= gitOutput(projectDir, ['rev-parse', 'HEAD']).then(
-		(output) => output?.trim() || null
+		(output) => output?.trim() || null,
 	);
 	return await context.currentHead;
 }
 
 export async function isGitWorktree(
 	projectDir: string,
-	context: AuditFreshnessContext
+	context: AuditFreshnessContext,
 ): Promise<boolean> {
 	context.isGitWorktree ??= gitOutput(projectDir, ['rev-parse', '--is-inside-work-tree']).then(
-		(output) => output?.trim() === 'true'
+		(output) => output?.trim() === 'true',
 	);
 	return await context.isGitWorktree;
 }
@@ -80,7 +80,7 @@ async function gitOutput(projectDir: string, args: string[]): Promise<null | str
 export async function cachedGitNumstatOutput(
 	projectDir: string,
 	args: string[],
-	context: AuditFreshnessContext
+	context: AuditFreshnessContext,
 ): Promise<null | string> {
 	const cache = (context.gitNumstatLogs ??= new Map());
 	const key = JSON.stringify([projectDir, ...args]);

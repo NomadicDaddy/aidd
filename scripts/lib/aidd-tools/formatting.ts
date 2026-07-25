@@ -61,7 +61,7 @@ function formatFeatureStatusSummaryTable(summaries: FeatureStatusSummaryEntry[])
 		...column,
 		width: Math.max(
 			column.header.length,
-			...summaries.map((summary) => column.value(summary).length)
+			...summaries.map((summary) => column.value(summary).length),
 		),
 	}));
 
@@ -71,7 +71,7 @@ function formatFeatureStatusSummaryTable(summaries: FeatureStatusSummaryEntry[])
 	const rows = summaries.map((summary) =>
 		columns
 			.map((column) => padTableCell(column.value(summary), column.width, column.align))
-			.join('  ')
+			.join('  '),
 	);
 
 	return [header, ...rows].join('\n');
@@ -85,7 +85,7 @@ function formatFeatureStatusEntries(entries: FeatureStatusEntry[]): string {
 			[
 				padTableCell(entry.application, applicationWidth, 'left'),
 				basename(dirname(entry.path)),
-			].join(' ')
+			].join(' '),
 		)
 		.join('\n');
 }
@@ -95,7 +95,7 @@ function printRoadmapApplySummary(summary: RoadmapApplySummary): void {
 	for (const error of summary.errors) console.error(`ERROR: ${error}`);
 	console.log('');
 	console.log(
-		summary.dryRun ? `Dry Run Summary (${summary.appName})` : `Summary (${summary.appName})`
+		summary.dryRun ? `Dry Run Summary (${summary.appName})` : `Summary (${summary.appName})`,
 	);
 	console.log(`  Updated:   ${summary.updated}`);
 	console.log(`  Unchanged: ${summary.skipped}`);
@@ -106,7 +106,7 @@ function printRoadmapApplySummary(summary: RoadmapApplySummary): void {
 		const description =
 			milestone.description === undefined ? '' : ` - ${milestone.description}`;
 		console.log(
-			`  Priority ${milestone.priority} (${milestone.milestone}${description}): ${milestone.count} features`
+			`  Priority ${milestone.priority} (${milestone.milestone}${description}): ${milestone.count} features`,
 		);
 	}
 	console.log(`  Total mapped: ${summary.total}`);

@@ -5,7 +5,7 @@ import type { RunContinuationReason, RunLaunchRequest } from '../../types.ts';
 import type { TelemetryService } from '../telemetryService.ts';
 import type { WebRunRow } from './queries.ts';
 
-import { continueRun, maybeAutoChainRun, type ContinuationLaunchDeps } from './continuation.ts';
+import { type ContinuationLaunchDeps, continueRun, maybeAutoChainRun } from './continuation.ts';
 
 // Bundles the two continuation consumers (manual Continue route, opt-in auto-chain hook) around
 // one shared deps builder, so RunService only wires thunks. Thunks — not captured values —
@@ -54,7 +54,7 @@ export function createRunContinuationWiring(input: {
 					autoChainRuns: web.autoChainRuns,
 				},
 				runId,
-				reason
+				reason,
 			);
 		},
 	};

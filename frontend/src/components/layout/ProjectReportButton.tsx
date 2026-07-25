@@ -88,7 +88,7 @@ export function ProjectReportButton({ collapsed }: { collapsed: boolean }) {
 			{
 				onError: (error) => {
 					toast.error(
-						error instanceof Error ? error.message : 'Report submission failed'
+						error instanceof Error ? error.message : 'Report submission failed',
 					);
 				},
 				onSuccess: (report) => {
@@ -98,7 +98,7 @@ export function ProjectReportButton({ collapsed }: { collapsed: boolean }) {
 					});
 					close();
 				},
-			}
+			},
 		);
 	};
 
@@ -108,7 +108,7 @@ export function ProjectReportButton({ collapsed }: { collapsed: boolean }) {
 				aria-label="Report a bug or request a feature"
 				className={cn(
 					'px-0',
-					collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3'
+					collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
 				)}
 				onClick={() => setOpen(true)}
 				onClickCapture={() =>
@@ -136,7 +136,7 @@ export function ProjectReportButton({ collapsed }: { collapsed: boolean }) {
 						<div className="flex items-start justify-between gap-3">
 							<div>
 								<h2
-									className="text-foreground text-base font-semibold"
+									className="text-base font-semibold text-foreground"
 									id="project-report-title">
 									File a report
 								</h2>

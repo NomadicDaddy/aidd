@@ -11,7 +11,7 @@ import { initialRunTotals, runRuntimeFields } from './types.ts';
 export async function finalizePreRunCheck(
 	deps: OrchestratorDeps,
 	plan: RunPlan,
-	result: PreRunCheckResult
+	result: PreRunCheckResult,
 ): Promise<void> {
 	const runId = deps.runId ?? randomUUID();
 	const endedAtMs = Date.now();

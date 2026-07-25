@@ -37,7 +37,7 @@ async function cloneSpernakit(config: ResolvedWebConfig, targetDir: string): Pro
 	if (!source) {
 		throw new HttpError(
 			`web.spernakitTemplateRepo is not a valid owner/repo: ${config.spernakitTemplateRepo}`,
-			500
+			500,
 		);
 	}
 	await mkdir(dirname(targetDir), { recursive: true });
@@ -60,13 +60,13 @@ async function cloneSpernakit(config: ResolvedWebConfig, targetDir: string): Pro
 			`Could not run git to clone the Spernakit template (is git installed?): ${
 				err instanceof Error ? err.message : String(err)
 			}`,
-			500
+			500,
 		);
 	}
 	if (code !== 0) {
 		throw new HttpError(
 			`Failed to clone Spernakit template ${config.spernakitTemplateRepo}${ref ? `#${ref}` : ''}: ${stderr.trim()}`,
-			500
+			500,
 		);
 	}
 	recordDataMovement({
@@ -82,7 +82,7 @@ async function cloneSpernakit(config: ResolvedWebConfig, targetDir: string): Pro
 // cached clone), read from its package.json without triggering a clone. Null when no checkout
 // exists yet or its package.json has no version.
 export async function readSpernakitTemplateVersion(
-	config: ResolvedWebConfig
+	config: ResolvedWebConfig,
 ): Promise<null | string> {
 	const candidates = config.spernakitInitScript
 		? [dirname(config.spernakitInitScript), dirname(dirname(config.spernakitInitScript))]
@@ -107,7 +107,7 @@ export async function readSpernakitTemplateVersion(
 // clone runner is injectable for tests.
 export async function ensureSpernakitCheckout(
 	config: ResolvedWebConfig,
-	clone: (config: ResolvedWebConfig, targetDir: string) => Promise<void> = cloneSpernakit
+	clone: (config: ResolvedWebConfig, targetDir: string) => Promise<void> = cloneSpernakit,
 ): Promise<string> {
 	if (config.spernakitInitScript) {
 		const root = dirname(config.spernakitInitScript);
@@ -117,7 +117,7 @@ export async function ensureSpernakitCheckout(
 		if (await hasGenerator(up)) return up;
 		throw new HttpError(
 			`Configured spernakitInitScript checkout has no scripts/init.ts (looked in ${root}); update web.spernakitInitScript or clear it to clone the template`,
-			500
+			500,
 		);
 	}
 	const cacheDir = join(config.dataDir, 'templates', 'spernakit');
@@ -132,7 +132,7 @@ export async function ensureSpernakitCheckout(
 	if (!(await hasGenerator(cacheDir))) {
 		throw new HttpError(
 			`Cloned Spernakit template at ${cacheDir} is missing scripts/init.ts (repo ${config.spernakitTemplateRepo} may predate the portable initializer)`,
-			500
+			500,
 		);
 	}
 	await writeFile(markerPath, wanted, 'utf8');

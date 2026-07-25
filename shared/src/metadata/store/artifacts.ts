@@ -39,7 +39,7 @@ export interface ArtifactCheckResult {
 
 export async function runArtifactCheck(
 	projectDir: string,
-	metadataDir: string
+	metadataDir: string,
 ): Promise<ArtifactCheckResult> {
 	const checkedAt = new Date();
 	const [artifacts, phase] = await Promise.all([
@@ -69,7 +69,7 @@ export async function runArtifactCheck(
 					severity: artifact.severity,
 					sizeBytes: artifact.sizeBytes,
 				},
-			])
+			]),
 		),
 		checkedAt: checkedAtIso,
 		phase,
@@ -103,7 +103,7 @@ export async function runArtifactCheck(
 
 export async function collectArtifactStatuses(
 	projectDir: string,
-	checkedAt: Date
+	checkedAt: Date,
 ): Promise<ArtifactStatus[]> {
 	const catalog: { label: string; path: string; severity: ArtifactSeverity }[] = [
 		{ label: 'CONTEXT.md', path: 'CONTEXT.md', severity: 'required' },
@@ -157,6 +157,6 @@ export async function collectArtifactStatuses(
 					sizeBytes: 0,
 				} satisfies ArtifactStatus;
 			}
-		})
+		}),
 	);
 }

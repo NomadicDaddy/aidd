@@ -24,7 +24,7 @@ async function gitOk(cwd: string, args: string[]): Promise<boolean> {
 export async function reapRunWorktree(
 	projectPath: string,
 	worktreePath: string,
-	worktreeBranch: null | string
+	worktreeBranch: null | string,
 ): Promise<void> {
 	try {
 		await gitOk(projectPath, ['worktree', 'remove', '--force', worktreePath]);

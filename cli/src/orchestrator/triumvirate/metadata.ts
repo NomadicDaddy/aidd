@@ -6,7 +6,7 @@ import { mirrorExclusions, type TriumvirateStageName } from './types.ts';
 export function buildTriumvirateMetadata(
 	plan: RunPlan,
 	work: SelectedWork,
-	planningProjectDirs: Record<Exclude<TriumvirateStageName, 'execution'>, string>
+	planningProjectDirs: Record<Exclude<TriumvirateStageName, 'execution'>, string>,
 ): Record<string, unknown> {
 	return {
 		guard: {

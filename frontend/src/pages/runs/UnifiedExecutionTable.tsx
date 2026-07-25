@@ -47,7 +47,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 	return (
 		<section className="space-y-2">
 			<div>
-				<h2 className="text-foreground text-sm font-semibold">{title}</h2>
+				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
 				<p className="text-xs text-neutral-500">{props.description}</p>
 			</div>
 			<Card className="overflow-hidden p-0">
@@ -119,7 +119,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 															onSelectRun={(runId) =>
 																props.onSelectStepRun(
 																	entry.session.id,
-																	runId
+																	runId,
 																)
 															}
 															sessionId={entry.session.id}
@@ -128,7 +128,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 												</tr>
 											)}
 									</Fragment>
-								)
+								),
 							)}
 						</tbody>
 					</table>
@@ -177,7 +177,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 										</div>
 									)}
 							</Fragment>
-						)
+						),
 					)}
 				</div>
 			</Card>

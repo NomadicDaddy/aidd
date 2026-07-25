@@ -30,7 +30,7 @@ async function makeFixture(opts: Fixture = {}): Promise<string> {
 	// Minimal package.json with a packageManager pin.
 	await writeFile(
 		join(root, 'package.json'),
-		`${JSON.stringify({ name: 'fixture', packageManager: `bun@${PINNED}` })}\n`
+		`${JSON.stringify({ name: 'fixture', packageManager: `bun@${PINNED}` })}\n`,
 	);
 	// An empty lockfile satisfies the lockfile-presence gate.
 	await writeFile(join(root, 'bun.lock'), '{}\n');
@@ -44,7 +44,7 @@ async function makeFixture(opts: Fixture = {}): Promise<string> {
 	await writeFile(
 		join(root, '.github', 'workflows', 'release.yml'),
 		`name: Release\njobs:\n  build:\n    steps:\n` +
-			`      - uses: oven-sh/setup-bun@v2\n        with:\n${bunVersionLine}`
+			`      - uses: oven-sh/setup-bun@v2\n        with:\n${bunVersionLine}`,
 	);
 
 	// Dockerfile: `FROM oven/bun:<version>` with optional digest suffix.
@@ -52,7 +52,7 @@ async function makeFixture(opts: Fixture = {}): Promise<string> {
 	const digest = opts.dockerDigest ?? '';
 	await writeFile(
 		join(root, 'Dockerfile'),
-		`FROM oven/bun:${tag}${digest} AS builder\nWORKDIR /src\n`
+		`FROM oven/bun:${tag}${digest} AS builder\nWORKDIR /src\n`,
 	);
 
 	return root;

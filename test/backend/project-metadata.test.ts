@@ -17,7 +17,7 @@ import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 function makeIteration(
-	overrides: Partial<ProjectLocalIterationDto> & { status: string }
+	overrides: { status: string } & Partial<ProjectLocalIterationDto>,
 ): ProjectLocalIterationDto {
 	return {
 		backend: null,
@@ -115,7 +115,7 @@ describe('project metadata', () => {
 			}));
 			await writeFile(
 				join(metadataDir, 'runs.jsonl'),
-				`${entries.map((entry) => JSON.stringify(entry)).join('\n')}\n`
+				`${entries.map((entry) => JSON.stringify(entry)).join('\n')}\n`,
 			);
 
 			const ledger = await gatherRunLedgerMetadata(metadataDir);
@@ -146,7 +146,7 @@ describe('project metadata', () => {
 						iteration: index,
 						outcome: { status: 'success' },
 						startedAt: new Date(Date.UTC(2026, 0, index)).toISOString(),
-					})}\n`
+					})}\n`,
 				);
 			}
 
@@ -182,7 +182,7 @@ describe('project metadata', () => {
 					exitCode: 0,
 					runId: 'cli_projA_run',
 					startedAt: '2026-07-02T10:00:00.000Z',
-				})}\n`
+				})}\n`,
 			);
 			await writeFile(
 				join(projectBMeta, 'runs.jsonl'),
@@ -190,7 +190,7 @@ describe('project metadata', () => {
 					exitCode: 0,
 					runId: 'cli_projB_run',
 					startedAt: '2026-07-02T11:00:00.000Z',
-				})}\n`
+				})}\n`,
 			);
 			await writeFile(
 				join(projectAMeta, 'iterations', '001.json'),
@@ -200,7 +200,7 @@ describe('project metadata', () => {
 					outcome: { status: 'success' },
 					runId: 'cli_projA_run',
 					startedAt: '2026-07-02T10:00:00.000Z',
-				})}\n`
+				})}\n`,
 			);
 			await writeFile(
 				join(projectBMeta, 'iterations', '001.json'),
@@ -210,7 +210,7 @@ describe('project metadata', () => {
 					outcome: { status: 'success' },
 					runId: 'cli_projB_run',
 					startedAt: '2026-07-02T11:00:00.000Z',
-				})}\n`
+				})}\n`,
 			);
 
 			const runs = await gatherLocalRuns(projectAMeta);
@@ -247,7 +247,7 @@ describe('project metadata', () => {
 					outcome: { exitCode: 0, status: 'success' },
 					runId: 'run_1780692239413_646f05b3',
 					startedAt: new Date(Date.UTC(2026, 5, 5)).toISOString(),
-				})}\n`
+				})}\n`,
 			);
 
 			const iterations = await gatherLocalIterations(metadataDir);
@@ -274,7 +274,7 @@ describe('project metadata', () => {
 					iteration: 1,
 					outcome: { status: 'success' },
 					startedAt: new Date(Date.UTC(2026, 5, 5)).toISOString(),
-				})}\n`
+				})}\n`,
 			);
 
 			const iterations = await gatherLocalIterations(metadataDir);
@@ -303,7 +303,7 @@ describe('project metadata', () => {
 					lifecycle: 'started',
 					runId: 'run-in-progress',
 					startedAt: new Date(Date.UTC(2026, 0, 1)).toISOString(),
-				})}\n`
+				})}\n`,
 			);
 
 			const iterations = await gatherLocalIterations(metadataDir);
@@ -351,7 +351,7 @@ describe('project metadata', () => {
 					join(metadataDir, 'runs.jsonl'),
 					`${JSON.stringify({ runId: 'run-a', startedAt: '2026-01-01T00:00:00.000Z' })}\n` +
 						'not-json\n' +
-						`${JSON.stringify({ runId: 'run-b', startedAt: '2026-01-02T00:00:00.000Z' })}\n`
+						`${JSON.stringify({ runId: 'run-b', startedAt: '2026-01-02T00:00:00.000Z' })}\n`,
 				);
 
 				const runIds = await gatherLedgerRunIds(metadataDir);

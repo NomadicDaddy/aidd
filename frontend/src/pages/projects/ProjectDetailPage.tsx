@@ -106,7 +106,7 @@ export function ProjectDetailPage() {
 					Projects
 				</Link>
 				<Card>
-					<h1 className="text-foreground text-xl font-semibold">Project not found</h1>
+					<h1 className="text-xl font-semibold text-foreground">Project not found</h1>
 					<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
 						No project matches this URL. The project may have been removed or the link
 						may be incorrect.

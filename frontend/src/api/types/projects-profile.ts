@@ -10,7 +10,7 @@ export interface ProjectInterviewQuestion {
 	response?: string;
 }
 
-export type AnsweredInterviewQuestion = ProjectInterviewQuestion & { response: string };
+export type AnsweredInterviewQuestion = { response: string } & ProjectInterviewQuestion;
 
 export interface ProjectInterviewDetail {
 	answered: number;

@@ -46,7 +46,7 @@ describe('start-web restart supervisor args', () => {
 
 	test('rejects invalid release ports', () => {
 		expect(() =>
-			parseStartWebArgs(['--wait-for-release', '--wait-for-release-port', '70000'])
+			parseStartWebArgs(['--wait-for-release', '--wait-for-release-port', '70000']),
 		).toThrow(/wait-for-release-port/);
 	});
 

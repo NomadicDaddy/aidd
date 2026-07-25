@@ -9,7 +9,7 @@ import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { useProjectFile } from '../../../hooks/useProjectFile.ts';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
-import { formatBytes, type ArtifactViewerTarget } from './artifactsUtils.ts';
+import { type ArtifactViewerTarget, formatBytes } from './artifactsUtils.ts';
 
 // Element styling for rendered markdown; the app does not ship a typography plugin, so the
 // few elements artifacts actually use are styled here.
@@ -93,7 +93,7 @@ export function ArtifactViewerDialog({
 			data?.state === 'ok' && data.kind === 'json' && !data.truncated
 				? parsedJsonOrNull(data.content)
 				: null,
-		[data]
+		[data],
 	);
 	const displaySize = data?.state === 'ok' ? data.totalBytes : target.sizeBytes;
 
@@ -168,7 +168,7 @@ export function ArtifactViewerDialog({
 				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
 					<div className="min-w-0">
 						<h2
-							className="text-foreground text-sm font-semibold"
+							className="text-sm font-semibold text-foreground"
 							id="artifact-viewer-title">
 							{target.label}
 						</h2>

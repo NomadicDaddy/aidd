@@ -20,7 +20,7 @@ function invocationStatusFromRunStatus(status: string): string {
 // (0 when the run is unknown or carries no telemetry row, e.g. direct-CLI runs).
 export function reconcileInvocationFromRun(
 	tx: LocalTransaction,
-	args: ReconcileInvocationFromRunArgs
+	args: ReconcileInvocationFromRunArgs,
 ): number {
 	const { runId } = args;
 	const run = tx

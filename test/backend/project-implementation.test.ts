@@ -71,9 +71,9 @@ describe('project implementation readiness', () => {
 		const state = evaluateProjectImplementationState(
 			'coding',
 			features.map((feature) =>
-				feature.id === 'later-feature' ? { ...feature, status: 'backlog' } : feature
+				feature.id === 'later-feature' ? { ...feature, status: 'backlog' } : feature,
 			),
-			roadmap
+			roadmap,
 		);
 
 		expect(state.state).toBe('blocked');

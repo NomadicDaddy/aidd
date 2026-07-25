@@ -44,7 +44,7 @@ function scaffoldProject(title: string, spec: string): void {
   "priority": 1,
   "spec": ${JSON.stringify(spec)}
 }
-`
+`,
 	);
 	writeFileSync(join(project, '.aidd', 'spec.md'), '# Spec');
 	writeFileSync(join(project, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
@@ -61,7 +61,7 @@ function runCli(...args: string[]): number {
 function featureCompleted(): boolean {
 	const text = readFileSync(
 		join(project, '.aidd', 'features', 'feature-core', 'feature.json'),
-		'utf8'
+		'utf8',
 	);
 	const feature = JSON.parse(text) as { passes?: unknown; status?: unknown };
 	return feature.passes === true && feature.status === 'completed';
@@ -80,7 +80,7 @@ async function main(): Promise<number> {
 		'--max-iterations',
 		'1',
 		'--feature',
-		'feature-core'
+		'feature-core',
 	);
 	if (runExit !== 0) {
 		console.error(`native simulation smoke failed with exit code ${runExit}`);

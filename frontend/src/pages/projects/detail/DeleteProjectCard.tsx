@@ -36,7 +36,7 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 				summary: { mode: deleteMode, projectId: project.id },
 			});
 			toast.success(
-				deleteMode === 'metadata' ? 'Project metadata removed' : 'Project deleted'
+				deleteMode === 'metadata' ? 'Project metadata removed' : 'Project deleted',
 			);
 			void navigate('/projects');
 		} catch (error) {
@@ -49,7 +49,7 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 			<div className="flex items-start gap-3">
 				<AlertTriangle className="mt-0.5 h-5 w-5 text-red-700 dark:text-red-300" />
 				<div>
-					<h2 className="text-foreground text-base font-semibold">Delete project</h2>
+					<h2 className="text-base font-semibold text-foreground">Delete project</h2>
 					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 						Remove only `.aidd` metadata or delete the entire project directory.
 					</p>

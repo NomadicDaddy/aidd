@@ -8,7 +8,7 @@ describe('crawltest report target', () => {
 			defaultBugProjectId([
 				{ id: 'valley-app', name: 'valley-app', path: 'D:\\applications\\valley-app' },
 				{ id: 'aidd', name: 'AI Development Director', path: 'D:\\applications\\aidd' },
-			])
+			]),
 		).toBe('aidd');
 	});
 
@@ -16,7 +16,7 @@ describe('crawltest report target', () => {
 		expect(() =>
 			defaultBugProjectId([
 				{ id: 'valley-app', name: 'valley-app', path: 'D:\\applications\\valley-app' },
-			])
+			]),
 		).toThrow('aidd project is not available for --bug');
 	});
 });

@@ -1,5 +1,5 @@
 import { captureWriteGuardSnapshot } from '../pipeline/writeAllowlist.ts';
-import { classifyFeatureStatusType, selectNextFeature, type Feature } from './features.ts';
+import { classifyFeatureStatusType, type Feature, selectNextFeature } from './features.ts';
 import { detectInitialPhase, type InitialPhase } from './onboarding.ts';
 import { evaluateRoadmapCodingGate, type Roadmap } from './roadmap.ts';
 import { FileAiddStore } from './store.ts';
@@ -20,7 +20,7 @@ function featureDirectory(feature: Feature): string {
 export function evaluateBlueprintReadiness(
 	phase: InitialPhase,
 	features: Feature[],
-	roadmap: Roadmap | undefined
+	roadmap: Roadmap | undefined,
 ): BlueprintReadiness {
 	if (phase !== 'coding') {
 		return {
@@ -32,7 +32,7 @@ export function evaluateBlueprintReadiness(
 	}
 
 	const productFeatures = features.filter(
-		(feature) => classifyFeatureStatusType(feature) === 'feature'
+		(feature) => classifyFeatureStatusType(feature) === 'feature',
 	);
 	if (productFeatures.length === 0) {
 		return {
@@ -47,7 +47,7 @@ export function evaluateBlueprintReadiness(
 	}
 	if (
 		productFeatures.some(
-			(feature) => feature.passes === true || feature.status === 'in_progress'
+			(feature) => feature.passes === true || feature.status === 'in_progress',
 		)
 	) {
 		return { firstFeature: null, ready: false, reason: null, state: 'building' };
@@ -87,7 +87,7 @@ export function evaluateBlueprintReadiness(
 	}
 
 	const allowed = productFeatures.filter((feature) =>
-		gate.allowedFeatureDirectories.includes(featureDirectory(feature))
+		gate.allowedFeatureDirectories.includes(featureDirectory(feature)),
 	);
 	const firstFeature = selectNextFeature(allowed, { allFeatures: productFeatures });
 	if (!firstFeature) {
@@ -104,7 +104,7 @@ export function evaluateBlueprintReadiness(
 
 export async function requirePersistedBlueprint(
 	projectDir: string,
-	readiness: BlueprintReadiness
+	readiness: BlueprintReadiness,
 ): Promise<BlueprintReadiness> {
 	if (!readiness.ready) return readiness;
 	const git = await captureWriteGuardSnapshot(projectDir);
@@ -120,7 +120,7 @@ export async function requirePersistedBlueprint(
 }
 
 export async function readPersistedBlueprintReadiness(
-	projectDir: string
+	projectDir: string,
 ): Promise<BlueprintReadiness> {
 	const store = new FileAiddStore(projectDir);
 	const [phase, features] = await Promise.all([
@@ -135,6 +135,6 @@ export async function readPersistedBlueprintReadiness(
 	}
 	return await requirePersistedBlueprint(
 		projectDir,
-		evaluateBlueprintReadiness(phase, features, roadmap)
+		evaluateBlueprintReadiness(phase, features, roadmap),
 	);
 }

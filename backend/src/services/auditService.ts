@@ -2,16 +2,16 @@ import type { ResolvedConfig } from 'aidd-shared/config';
 import type { AuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
 
 import {
-	buildApplicabilityMatrix,
-	normalizeAuditProfileMapping,
 	type AuditProfileMapping,
 	type AuditProfileOverrides,
+	buildApplicabilityMatrix,
+	normalizeAuditProfileMapping,
 } from 'aidd-shared';
 import {
-	loadAuditProfileMapping,
-	writeAuditProfileMapping,
 	auditProfileMappingPath,
+	loadAuditProfileMapping,
 	loadAuditProfileOverrides,
+	writeAuditProfileMapping,
 } from 'aidd-shared/metadata/audit-profile-mapping';
 import { discoverAuditNames } from 'aidd-shared/modes/audit-shared';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -19,9 +19,9 @@ import { resolve } from 'node:path';
 
 import type {
 	AuditDefinitionDto,
+	AuditLaunchInput,
 	AuditManagerDto,
 	ProjectAuditsDto,
-	AuditLaunchInput,
 } from './audit/auditTypes.ts';
 import type { ProjectService } from './projectService.ts';
 import type { RunService } from './runService.ts';
@@ -31,22 +31,22 @@ import { recordDataMovement } from './dataMovementTrace.ts';
 import { HttpError } from './errors.ts';
 export type {
 	AuditDefinitionDto,
+	AuditLaunchInput,
 	AuditManagerDto,
 	ProjectAuditsDto,
-	AuditLaunchInput,
 } from './audit/auditTypes.ts';
 import type { AuditApplicabilityRow } from 'aidd-shared';
 
 import {
-	normalizeAuditName,
 	definitionSummary,
-	scoreAuditCatalog,
+	normalizeAuditName,
 	type ProjectProfileCache,
+	scoreAuditCatalog,
 } from './audit/auditHelpers.ts';
 import { launchAuditsImpl } from './audit/launchAuditsImpl.ts';
 import {
-	saveProjectAuditOverridesImpl,
 	listProjectAuditsImpl,
+	saveProjectAuditOverridesImpl,
 } from './audit/projectAuditHelpers.ts';
 
 interface AuditProfileMappingDto {
@@ -65,7 +65,7 @@ export class AuditService {
 		config: ResolvedConfig,
 		projectService: ProjectService,
 		runService: RunService,
-		rootDir: string
+		rootDir: string,
 	) {
 		this.config = config;
 		this.projectService = projectService;
@@ -103,9 +103,9 @@ export class AuditService {
 						freshnessContexts,
 						profileCache,
 						this.config.auditsEnabled ?? true,
-						(n) => this.auditPath(n)
-					)
-				)
+						(n) => this.auditPath(n),
+					),
+				),
 			),
 			scoreAuditCatalog(auditNames, this.rootDir, () => this.resolveScoringRoots()),
 		]);
@@ -133,7 +133,7 @@ export class AuditService {
 			new Map<string, AuditFreshnessContext>(),
 			new Map(),
 			this.config.auditsEnabled ?? true,
-			(n) => this.auditPath(n)
+			(n) => this.auditPath(n),
 		);
 		return { ...definition, content: await readFile(definition.path, 'utf8') };
 	}
@@ -197,13 +197,13 @@ export class AuditService {
 
 	async saveProjectAuditOverrides(
 		projectId: string,
-		input: unknown
+		input: unknown,
 	): Promise<AuditProfileOverrides> {
 		return saveProjectAuditOverridesImpl(
 			projectId,
 			input,
 			(id) => this.projectService.resolveDiscoveredProject(id),
-			this.rootDir
+			this.rootDir,
 		);
 	}
 
@@ -214,7 +214,7 @@ export class AuditService {
 			this.rootDir,
 			this.config.auditsEnabled ?? true,
 			(n) => this.auditPath(n),
-			() => this.resolveScoringRoots()
+			() => this.resolveScoringRoots(),
 		);
 	}
 

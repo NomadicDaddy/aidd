@@ -44,10 +44,10 @@ describe('publishPlan wires the license gate ahead of every push', () => {
 		const plan = publishPlan(image, pkg.version, tags);
 
 		const gateIndex = plan.findIndex(
-			(step) => step.cmd === 'bun' && step.args[0] === 'scripts/check-image-licenses.ts'
+			(step) => step.cmd === 'bun' && step.args[0] === 'scripts/check-image-licenses.ts',
 		);
 		const firstPushIndex = plan.findIndex(
-			(step) => step.cmd === 'docker' && step.args[0] === 'push'
+			(step) => step.cmd === 'docker' && step.args[0] === 'push',
 		);
 
 		expect(gateIndex).toBe(0);

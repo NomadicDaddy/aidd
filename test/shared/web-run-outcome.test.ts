@@ -54,7 +54,7 @@ describe('classifyWebRun', () => {
 				status: 'completed',
 				stopReason: 'completed',
 				summary: 'uncommitted_source_files: 13 source file(s) left uncommitted at run end',
-			})
+			}),
 		).toBe('warnings');
 	});
 
@@ -89,7 +89,7 @@ describe('classifyWebRun', () => {
 				exitCode: 77,
 				status: 'waiting_approval',
 				stopReason: 'merge_conflict_parked',
-			})
+			}),
 		).toBe('warnings');
 	});
 
@@ -106,7 +106,7 @@ describe('classifyWebRun', () => {
 				exitCode: 77,
 				status: 'waiting_approval',
 				stopReason: 'metadata_conflict_parked',
-			})
+			}),
 		).toBe('warnings');
 	});
 });
@@ -114,21 +114,21 @@ describe('classifyWebRun', () => {
 describe('classifyWebRunTelemetryBucket', () => {
 	test('keeps every telemetry outcome distinct', () => {
 		expect(classifyWebRunTelemetryBucket({ status: 'completed', exitCode: 0 })).toBe(
-			'completed'
+			'completed',
 		);
 		expect(classifyWebRunTelemetryBucket({ status: 'failed', exitCode: 1 })).toBe('failed');
 		expect(classifyWebRunTelemetryBucket({ status: 'killed', stopReason: 'killed' })).toBe(
-			'killed'
+			'killed',
 		);
 		expect(classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'no_work' })).toBe(
-			'noWork'
+			'noWork',
 		);
 		expect(classifyWebRunTelemetryBucket({ status: 'running' })).toBe('running');
 		expect(
-			classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'stop_requested' })
+			classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'stop_requested' }),
 		).toBe('stopped');
 		expect(
-			classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'max_iterations' })
+			classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'max_iterations' }),
 		).toBe('warnings');
 	});
 });

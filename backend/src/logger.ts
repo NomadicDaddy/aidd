@@ -64,7 +64,7 @@ function logWithCategory(
 	level: LogLevel,
 	category: LogCategoryType,
 	message: string,
-	meta?: Record<string, unknown>
+	meta?: Record<string, unknown>,
 ): void {
 	webLogger[level]({ category, ...meta }, message);
 }
@@ -78,7 +78,7 @@ export function logApi(level: LogLevel, message: string, meta?: Record<string, u
 export function logDatabase(
 	level: LogLevel,
 	message: string,
-	meta?: Record<string, unknown>
+	meta?: Record<string, unknown>,
 ): void {
 	logWithCategory(level, LogCategory.DATABASE, message, meta);
 }

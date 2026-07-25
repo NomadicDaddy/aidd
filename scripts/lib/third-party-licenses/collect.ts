@@ -33,12 +33,12 @@ export interface GraphSummary {
 async function resolveInstalled(
 	root: string,
 	workspaces: string[],
-	name: string
+	name: string,
 ): Promise<null | Record<string, unknown>> {
 	const candidates = [
 		join(root, 'node_modules', name, 'package.json'),
 		...workspaces.map((workspace) =>
-			join(root, workspace, 'node_modules', name, 'package.json')
+			join(root, workspace, 'node_modules', name, 'package.json'),
 		),
 	];
 	for (const candidate of candidates) {
@@ -50,7 +50,7 @@ async function resolveInstalled(
 
 export async function collectDirectDependencies(
 	root: string,
-	workspaces: string[]
+	workspaces: string[],
 ): Promise<{ dependencies: DirectDependency[]; unresolved: string[] }> {
 	const internal = await workspaceNames(root, workspaces);
 	const dependencies: DirectDependency[] = [];

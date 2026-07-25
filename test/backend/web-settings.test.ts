@@ -9,7 +9,7 @@ import { buildSettingsDto } from '../../backend/src/services/settings/dtoShaping
 import type { StatusCommandRunner } from '../../backend/src/services/settings/status.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
-function makeConfig(web: ResolvedWebConfig): ResolvedConfig & { web: ResolvedWebConfig } {
+function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
 		dirtyTreeThreshold: 50,
@@ -70,7 +70,7 @@ describe('settings DTO templates', () => {
 					],
 				},
 			},
-			{ configBaseDir: '/x', configPath: '/x/config.json', current: makeConfig(runtimeWeb) }
+			{ configBaseDir: '/x', configPath: '/x/config.json', current: makeConfig(runtimeWeb) },
 		);
 		const summary = dto.templates.find((template) => template.name === 'vite-react');
 		expect(summary).toEqual({
@@ -113,7 +113,7 @@ describe('web settings config', () => {
 					useWorktrees: false,
 					port: 4567,
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -321,7 +321,7 @@ describe('web settings config', () => {
 						model: 'glm-5.1',
 						provider: 'zhipu',
 					},
-				})
+				}),
 			).rejects.toThrow(/cloud metadata endpoint/);
 		}
 
@@ -329,7 +329,7 @@ describe('web settings config', () => {
 			service.updateConfig({
 				...baseUpdate,
 				providers: { zhipu: { baseUrl: 'file:///etc/passwd', model: 'glm-5.1' } },
-			})
+			}),
 		).rejects.toThrow(/must use http or https/);
 
 		// A loopback base URL (self-hosted LLM, e.g. Ollama) must still be accepted.
@@ -397,7 +397,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		const invalid = await app.handle(
 			new Request('http://localhost/api/v1/settings/config', {
@@ -409,7 +409,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		const internalAlias = await app.handle(
 			new Request('http://localhost/api/v1/settings/config', {
@@ -421,13 +421,13 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 
 		expect(valid.status).toBe(200);
 		expect(
 			((await valid.json()) as { config: { traceDataMovement: boolean } }).config
-				.traceDataMovement
+				.traceDataMovement,
 		).toBe(true);
 		expect(invalid.status).toBe(422);
 		expect(internalAlias.status).toBe(422);
@@ -451,7 +451,7 @@ describe('web settings config', () => {
 					dataDir: join(workspace, 'data'),
 					spernakitInitScript: join(workspace, 'scripts', 'init.ps1'),
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -497,7 +497,7 @@ describe('web settings config', () => {
 				body: JSON.stringify(requiredBody),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(partial.status).toBe(200);
 		const afterPartial = JSON.parse(await readFile(configPath, 'utf8')) as {
@@ -534,13 +534,12 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(cleared.status).toBe(200);
-		const afterClear = JSON.parse(await readFile(configPath, 'utf8')) as Record<
-			string,
-			unknown
-		> & { web?: { spernakitInitScript?: string } };
+		const afterClear = JSON.parse(await readFile(configPath, 'utf8')) as {
+			web?: { spernakitInitScript?: string };
+		} & Record<string, unknown>;
 		expect(afterClear).not.toHaveProperty('applicationsRoot');
 		expect(afterClear).not.toHaveProperty('model');
 		expect(afterClear).not.toHaveProperty('initModel');
@@ -606,7 +605,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 
 		expect(response.status).toBe(200);
@@ -668,7 +667,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(response.status).toBe(200);
 		const body = (await response.json()) as {
@@ -831,7 +830,7 @@ describe('web settings config', () => {
 				hostname: '',
 				ignoredFolders: ['node_modules'],
 				reasoningEffort: 'low',
-			})
+			}),
 		).rejects.toThrow(/web\.hostname must be a non-empty string/);
 
 		const invalidPort = await app.handle(
@@ -845,7 +844,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 
 		expect(invalidPort.status).toBe(422);
@@ -904,14 +903,14 @@ describe('web settings config', () => {
 				runService: { updateConfig() {} },
 				settingsService: new SettingsService(config, configPath),
 			} as unknown as WebContext,
-			{ statusCommandRunner: runner }
+			{ statusCommandRunner: runner },
 		);
 
 		const cliResponse = await app.handle(
-			new Request('http://localhost/api/v1/settings/cli-status')
+			new Request('http://localhost/api/v1/settings/cli-status'),
 		);
 		const sourceControlResponse = await app.handle(
-			new Request('http://localhost/api/v1/settings/source-control-status')
+			new Request('http://localhost/api/v1/settings/source-control-status'),
 		);
 		const cliBody = (await cliResponse.json()) as {
 			backends: { backend: string; command: string; status: string }[];
@@ -981,7 +980,7 @@ describe('web settings config', () => {
 				runService: { updateConfig() {} },
 				settingsService: new SettingsService(config, configPath),
 			} as unknown as WebContext,
-			{ statusCommandRunner: runner }
+			{ statusCommandRunner: runner },
 		);
 
 		const first = await app.handle(new Request('http://localhost/api/v1/settings/cli-status'));
@@ -997,7 +996,7 @@ describe('web settings config', () => {
 
 		// The panel's Refresh control is the only thing that pays for a re-probe.
 		const refreshed = await app.handle(
-			new Request('http://localhost/api/v1/settings/cli-status?refresh=true')
+			new Request('http://localhost/api/v1/settings/cli-status?refresh=true'),
 		);
 		expect(refreshed.status).toBe(200);
 		expect(probes).toBe(afterFirst * 2);
@@ -1059,7 +1058,7 @@ describe('web settings config', () => {
 						};
 					},
 					warmStatusCache: warm,
-				}
+				},
 			);
 
 		// Control: without the flag nothing is spawned until a request arrives, so the option
@@ -1077,13 +1076,13 @@ describe('web settings config', () => {
 
 		// The first Settings visit reads the boot probe instead of paying for its own.
 		const first = await warmApp.handle(
-			new Request('http://localhost/api/v1/settings/cli-status')
+			new Request('http://localhost/api/v1/settings/cli-status'),
 		);
 		expect(first.status).toBe(200);
 		expect(warmCounts.get('codex')).toBe(1);
 
 		const refreshed = await warmApp.handle(
-			new Request('http://localhost/api/v1/settings/cli-status?refresh=true')
+			new Request('http://localhost/api/v1/settings/cli-status?refresh=true'),
 		);
 		expect(refreshed.status).toBe(200);
 		expect(warmCounts.get('codex')).toBe(2);
@@ -1091,7 +1090,7 @@ describe('web settings config', () => {
 		// The option only warms anything if the server actually passes it; there is no cheap
 		// way to boot the real listener here, so assert the wiring at its single call site.
 		const serverSource = await Bun.file(
-			resolve(import.meta.dir, '..', '..', 'backend', 'src', 'server.ts')
+			resolve(import.meta.dir, '..', '..', 'backend', 'src', 'server.ts'),
 		).text();
 		expect(serverSource).toContain('createSettingsRoutes(context, { warmStatusCache: true })');
 
@@ -1115,7 +1114,7 @@ describe('web settings config', () => {
 					port: 3210,
 					traceDataMovement: true,
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -1162,7 +1161,7 @@ describe('web settings config', () => {
 					useWorktrees: false,
 					port: 3210,
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -1202,7 +1201,7 @@ describe('web settings config', () => {
 				},
 				ignoredFolders: ['node_modules'],
 				reasoningEffort: 'low',
-			})
+			}),
 		).rejects.toThrow(/API key/);
 
 		const result = await service.updateConfig({
@@ -1225,7 +1224,7 @@ describe('web settings config', () => {
 		});
 		const written = JSON.parse(await readFile(configPath, 'utf8')) as Record<string, unknown>;
 		expect((written.providers as Record<string, { apiKey?: string }>).zhipu?.apiKey).toBe(
-			'new-secret'
+			'new-secret',
 		);
 		expect(result.config.directAi.apiKeyConfigured).toBe(true);
 		expect('apiKey' in result.config.directAi).toBe(false);
@@ -1252,7 +1251,7 @@ describe('web settings config', () => {
 			unknown
 		>;
 		expect((writtenAgain.providers as Record<string, { apiKey?: string }>).zhipu?.apiKey).toBe(
-			'new-secret'
+			'new-secret',
 		);
 		expect(preserved.config.directAi.apiKeyConfigured).toBe(true);
 
@@ -1313,7 +1312,7 @@ describe('web settings config', () => {
 		// Remote binding requires an auth token, so seed one in the persisted config.
 		await writeFile(
 			configPath,
-			`${JSON.stringify({ web: { authToken: 'secret-token' } }, null, '\t')}\n`
+			`${JSON.stringify({ web: { authToken: 'secret-token' } }, null, '\t')}\n`,
 		);
 		const service = new SettingsService(makeConfig(web), configPath);
 
@@ -1392,7 +1391,7 @@ describe('web settings config', () => {
 				cli: 'native',
 				ignoredFolders: ['node_modules'],
 				reasoningEffort: 'low',
-			})
+			}),
 		).rejects.toThrow(/web\.allowedOrigins entry "not a url" is invalid/);
 
 		await rm(workspace, { force: true, recursive: true });
@@ -1405,7 +1404,7 @@ describe('web settings config', () => {
 		// auto-cycle write merges into director rather than replacing it.
 		await Bun.write(
 			configPath,
-			JSON.stringify({ director: { chat: { allowFileEdits: true } } })
+			JSON.stringify({ director: { chat: { allowFileEdits: true } } }),
 		);
 		const web = {
 			allowRemote: false,
@@ -1484,7 +1483,7 @@ describe('web settings config', () => {
 			configPath,
 			JSON.stringify({
 				providers: { zhipu: { apiKey: 'test-key' } },
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -1538,7 +1537,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 
 		expect(response.status).toBe(200);
@@ -1646,7 +1645,7 @@ describe('web settings config', () => {
 						model: 'grok-4.5',
 					},
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -1708,13 +1707,13 @@ describe('web settings config', () => {
 
 		// API keys should be preserved since they weren't sent
 		expect((written.providers as Record<string, { apiKey?: string }>).zhipu?.apiKey).toBe(
-			'existing-secret'
+			'existing-secret',
 		);
 		expect((written.providers as Record<string, { apiKey?: string }>).xai?.apiKey).toBe(
-			'xai-secret'
+			'xai-secret',
 		);
 		expect((written.providers as Record<string, { model?: string }>).zhipu?.model).toBe(
-			'glm-5.2'
+			'glm-5.2',
 		);
 		expect(written.defaultProvider).toBe('xai');
 		expect(result.config.defaultProvider).toBe('xai');
@@ -1773,7 +1772,7 @@ describe('web settings config', () => {
 						model: 'custom-model',
 					},
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -1846,7 +1845,7 @@ describe('web settings config', () => {
 						model: 'glm-5.1',
 					},
 				},
-			})
+			}),
 		);
 		const web = {
 			allowRemote: false,
@@ -1888,7 +1887,7 @@ describe('web settings config', () => {
 		const written = JSON.parse(await readFile(configPath, 'utf8')) as Record<string, unknown>;
 
 		expect(
-			(written.providers as Record<string, { apiKey?: string }>).zhipu?.apiKey
+			(written.providers as Record<string, { apiKey?: string }>).zhipu?.apiKey,
 		).toBeUndefined();
 		expect(result.config.providers.zhipu!.apiKeyConfigured).toBe(false);
 
@@ -2107,7 +2106,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(valid.status).toBe(200);
 		const validBody = (await valid.json()) as {
@@ -2143,7 +2142,7 @@ describe('web settings config', () => {
 				}),
 				headers: { 'content-type': 'application/json' },
 				method: 'PUT',
-			})
+			}),
 		);
 		expect(invalid.status).toBe(422);
 

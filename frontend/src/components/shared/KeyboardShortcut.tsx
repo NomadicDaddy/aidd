@@ -17,7 +17,7 @@ export function Keycap({
 				'inline-flex h-6 min-w-6 items-center justify-center rounded-md border px-1.5',
 				'border-neutral-200 bg-white font-mono text-[0.68rem] text-neutral-600 shadow-sm shadow-neutral-950/5',
 				'dark:border-teal-900/60 dark:bg-slate-950 dark:text-teal-100 dark:shadow-teal-950/20',
-				className
+				className,
 			)}>
 			{children}
 		</kbd>

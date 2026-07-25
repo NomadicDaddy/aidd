@@ -1,5 +1,5 @@
 import { type FSWatcher, watch } from 'node:fs';
-import { open, type FileHandle } from 'node:fs/promises';
+import { type FileHandle, open } from 'node:fs/promises';
 
 import type { WebSocketHub } from '../../webSocketHub.ts';
 
@@ -46,7 +46,7 @@ export class RunTailWatcher {
 		runId: string,
 		logPath: string,
 		hub: WebSocketHub,
-		options: { pollMs?: number } = {}
+		options: { pollMs?: number } = {},
 	): Promise<RunTailWatcher> {
 		const tail = new RunTailWatcher(runId, hub);
 		try {
@@ -57,7 +57,7 @@ export class RunTailWatcher {
 		try {
 			tail.watcher = watch(logPath, { persistent: false }, () => tail.scheduleRead());
 			tail.watcher.on('error', (err: unknown) =>
-				webLogger.warn({ err, runId }, 'RunTailWatcher: fs.watch error')
+				webLogger.warn({ err, runId }, 'RunTailWatcher: fs.watch error'),
 			);
 		} catch (err) {
 			webLogger.warn({ err, logPath, runId }, 'RunTailWatcher: fs.watch unavailable');

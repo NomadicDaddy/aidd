@@ -25,7 +25,7 @@ function updateProvider(
 	form: WebConfigSettings,
 	setField: <K extends keyof WebConfigSettings>(key: K, value: WebConfigSettings[K]) => void,
 	name: string,
-	partial: Partial<ProviderSettings>
+	partial: Partial<ProviderSettings>,
 ) {
 	const existing = form.providers[name] ?? {
 		apiKeyConfigured: false,
@@ -89,7 +89,7 @@ function ProviderCard({
 						aria-hidden="true"
 						className={cn(
 							'h-4 w-4 shrink-0 transition-transform',
-							open && 'rotate-180'
+							open && 'rotate-180',
 						)}
 					/>
 					<span className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
@@ -186,7 +186,7 @@ export function ProviderConfigSection({
 			<Card className="grid gap-3 p-3 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:items-center">
 				<div>
 					<h2
-						className="text-foreground text-sm font-semibold"
+						className="text-sm font-semibold text-foreground"
 						id="provider-settings-heading">
 						Providers
 					</h2>

@@ -190,7 +190,7 @@ describe('write-allowlist guard', () => {
 					path: 'src/evil.ts',
 					untracked: true,
 				},
-			]
+			],
 		);
 		expect(prompt).toContain('WRITE ALLOWLIST RETRY');
 		expect(prompt).toContain('- .aidd/');

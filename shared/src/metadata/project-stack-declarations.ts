@@ -25,8 +25,8 @@ function titlePart(value: string): string {
 		['.net', '.NET'],
 		['convex', 'Convex'],
 		['javascript', 'JavaScript'],
-		['node', 'Node.js'],
 		['node.js', 'Node.js'],
+		['node', 'Node.js'],
 		['php', 'PHP'],
 		['pode', 'Pode'],
 		['powershell', 'PowerShell'],
@@ -92,7 +92,7 @@ function normalizedCell(cell: string): string {
 export function extractProjectStackDeclaration(
 	doc: string,
 	projectDir: string,
-	isProjectLocal: boolean
+	isProjectLocal: boolean,
 ): null | StackDeclaration {
 	const projectName = basename(projectDir).toLowerCase();
 	for (const line of doc.split('\n')) {
@@ -121,7 +121,7 @@ export function extractProjectStackDeclaration(
 export async function readProjectStackDeclaration(
 	directory: string,
 	projectDir: string,
-	isProjectLocal: boolean
+	isProjectLocal: boolean,
 ): Promise<null | StackDeclaration> {
 	for (const name of ['AGENTS.md', 'CLAUDE.md']) {
 		const text = await readText(join(directory, name));

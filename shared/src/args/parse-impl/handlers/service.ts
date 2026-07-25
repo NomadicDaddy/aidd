@@ -4,7 +4,7 @@ export function applyServiceFlags(
 	flag: string,
 	args: ParsedArgs,
 	i: number,
-	ctx: ParseContext
+	ctx: ParseContext,
 ): null | number {
 	switch (flag) {
 		case '--config-matrix':

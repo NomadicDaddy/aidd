@@ -131,7 +131,7 @@ function ProductList({ products }) {
 const ProductList = memo(({ products }) => {
 	return useMemo(
 		() => products.map((product) => <ProductCard key={product.id} product={product} />),
-		[products]
+		[products],
 	);
 });
 ```
@@ -221,8 +221,8 @@ const useThemeStore = create<ThemeStore>()(
 			mode: 'system',
 			setMode: (mode) => set({ mode }),
 		}),
-		{ name: 'theme-storage' }
-	)
+		{ name: 'theme-storage' },
+	),
 );
 ```
 

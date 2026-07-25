@@ -24,7 +24,7 @@ const managedProviderFields = new Set(['apiKey', 'baseUrl', 'model', 'reasoningE
  */
 export function mergeProviders(
 	input: Record<string, ProviderSettingsInput>,
-	existing: PartialAiddConfig['providers']
+	existing: PartialAiddConfig['providers'],
 ): NonNullable<PartialAiddConfig['providers']> {
 	// Start with a shallow copy of existing so providers absent from the input and
 	// provider-specific fields the frontend doesn't manage survive a settings save.

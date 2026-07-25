@@ -24,7 +24,7 @@ export function DocsSidebar() {
 												'block rounded-md px-2 py-1.5 text-sm transition-colors',
 												isActive
 													? 'bg-teal-50 font-medium text-teal-800 dark:bg-teal-950/40 dark:text-teal-200'
-													: 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-slate-800/60'
+													: 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-slate-800/60',
 											)
 										}
 										to={`/docs/${section.slug}`}>

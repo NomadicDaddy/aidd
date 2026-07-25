@@ -8,7 +8,7 @@ export interface TriumviratePlanningRecovery {
 }
 
 export function extractTriumviratePlanningRecovery(
-	artifacts: Record<string, unknown>
+	artifacts: Record<string, unknown>,
 ): TriumviratePlanningRecovery | undefined {
 	const triumvirate = objectValue(artifacts.triumvirate);
 	if (!triumvirate) return undefined;
@@ -25,7 +25,7 @@ export function extractTriumviratePlanningRecovery(
 
 function planningRecoveryStage(
 	stage: string,
-	stageArtifact: Record<string, unknown> | undefined
+	stageArtifact: Record<string, unknown> | undefined,
 ): TriumviratePlanningRecovery['stages'][number] | undefined {
 	const retry = objectValue(stageArtifact?.planningMirrorRetry);
 	if (!retry) return undefined;
@@ -41,7 +41,7 @@ function planningRecoveryStage(
 
 export function appendPlanningRecoverySummary(
 	summary: string,
-	recovery: TriumviratePlanningRecovery | undefined
+	recovery: TriumviratePlanningRecovery | undefined,
 ): string {
 	if (!recovery || summary.includes(recovery.status)) return summary;
 	const stageSummaries = recovery.stages.map((stage) => {

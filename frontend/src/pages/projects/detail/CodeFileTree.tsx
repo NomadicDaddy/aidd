@@ -114,7 +114,7 @@ function FileTreeNode({
 					<ChevronRight
 						className={cn(
 							'h-3.5 w-3.5 shrink-0 text-neutral-400 transition-transform',
-							isOpen && 'rotate-90'
+							isOpen && 'rotate-90',
 						)}
 					/>
 					{isOpen ? (
@@ -147,7 +147,7 @@ function FileTreeNode({
 				'flex w-full items-center gap-2 border-b border-neutral-100 py-1.5 pr-3 text-left transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-900 dark:hover:bg-teal-950/20',
 				selected
 					? 'bg-teal-50 text-teal-950 dark:bg-teal-950/30 dark:text-teal-100'
-					: 'text-neutral-700 dark:text-neutral-300'
+					: 'text-neutral-700 dark:text-neutral-300',
 			)}
 			onClick={() => onSelect(node.path)}
 			style={indent}
@@ -179,7 +179,7 @@ export function CodeFileTree({
 }) {
 	const filtered = useMemo(
 		() => files.filter((file) => matchesQuery(file, query)),
-		[files, query]
+		[files, query],
 	);
 	const visible = filtered.slice(0, maxVisibleFiles);
 	const tree = useMemo(() => buildTree(visible), [visible]);

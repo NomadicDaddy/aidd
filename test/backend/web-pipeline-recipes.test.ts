@@ -30,7 +30,7 @@ function wait(ms: number): Promise<void> {
 	return Bun.sleep(ms);
 }
 
-function makeConfig(web: ResolvedWebConfig): ResolvedConfig & { web: ResolvedWebConfig } {
+function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
 		dirtyTreeThreshold: 50,
@@ -101,7 +101,7 @@ function makeHarness(rootDir: string, workspace: string) {
 		hub,
 		projectService,
 		rootDir,
-		telemetryService
+		telemetryService,
 	);
 	const skillService = new SkillService({ rootDir });
 	const pipelineService = new PipelineService({
@@ -119,7 +119,7 @@ function makeHarness(rootDir: string, workspace: string) {
 async function disposeHarness(
 	pipelineService: PipelineService,
 	runService: RunService,
-	sqlite: Database
+	sqlite: Database,
 ): Promise<void> {
 	// Stop scheduled timers and signal in-flight async work to wind down. We do not await
 	// in-flight pipeline executions here — both PipelineService background executions and
@@ -182,7 +182,7 @@ function makeServerHarness(rootDir: string, workspace: string) {
 		hub,
 		projectService,
 		rootDir,
-		telemetryService
+		telemetryService,
 	);
 	const skillService = new SkillService({ rootDir });
 	const pipelineService = new PipelineService({
@@ -200,7 +200,7 @@ function makeServerHarness(rootDir: string, workspace: string) {
 		commands,
 		hub,
 		projectService,
-		runService
+		runService,
 	);
 	const appLauncherService = new AppLauncherService({ db, projectService });
 	const diaryService = new DiaryService({ commands, db, projectService, rootDir });
@@ -234,7 +234,7 @@ function makeServerHarness(rootDir: string, workspace: string) {
 async function waitForReport(
 	service: PipelineService,
 	id: string,
-	statuses = new Set(['completed', 'completed_with_failures', 'failed', 'stopped'])
+	statuses = new Set(['completed', 'completed_with_failures', 'failed', 'stopped']),
 ) {
 	const startedAt = Date.now();
 	for (;;) {
@@ -250,7 +250,7 @@ describe('file-backed pipeline recipes', () => {
 		const recipeService = new RecipeService(process.cwd());
 		const recipes = await recipeService.listRecipes();
 		const stepTypes = new Set(
-			recipes.flatMap((recipe) => recipe.steps.map((step) => step.stepType))
+			recipes.flatMap((recipe) => recipe.steps.map((step) => step.stepType)),
 		);
 		const recipeIds = new Set(recipes.map((recipe) => recipe.id));
 		const retiredWrapperIds = [
@@ -272,9 +272,9 @@ describe('file-backed pipeline recipes', () => {
 		expect(recipes).toHaveLength(34);
 		expect(recipeIds.has('reconcile-project-artifacts')).toBe(true);
 		expect(retiredWrapperIds.filter((id) => recipeIds.has(id))).toEqual([]);
-		expect(stepTypes).toEqual(new Set(['aidd-cli', 'skill', 'recipe-ref', 'shell']));
+		expect(stepTypes).toEqual(new Set(['aidd-cli', 'recipe-ref', 'shell', 'skill']));
 		expect(recipes.every((recipe) => recipe.id.length > 0 && recipe.steps.length > 0)).toBe(
-			true
+			true,
 		);
 	});
 
@@ -303,7 +303,7 @@ describe('file-backed pipeline recipes', () => {
 		expect(reconcileStep?.configJson.writeAllowlist).toEqual(['.aidd', 'CONTEXT.md']);
 		expect(prompt).toContain('do not treat age alone as proof that content is wrong');
 		expect(prompt).toContain(
-			'renew its filesystem modification time without changing its text'
+			'renew its filesystem modification time without changing its text',
 		);
 		expect(recipe.steps[1]?.configJson.recipeName).toBe('check-artifacts');
 	});
@@ -332,7 +332,7 @@ describe('file-backed pipeline recipes', () => {
 		// existing path may be an unrelated worktree the operator still needs.
 		const snapshot = String(recipe.steps[0]?.configJson.command ?? '');
 		expect(snapshot).toContain(
-			'refusing to run apply-ui: working tree has uncommitted changes'
+			'refusing to run apply-ui: working tree has uncommitted changes',
 		);
 		expect(snapshot).toContain('.worktrees/ui-reference already exists');
 		expect(snapshot).toContain('git worktree add --detach .worktrees/ui-reference HEAD');
@@ -343,14 +343,14 @@ describe('file-backed pipeline recipes', () => {
 		const parity = recipe.steps[2];
 		expect(String(parity?.configJson.args ?? '')).toBe('.worktrees/ui-reference .');
 		expect(String(parity?.postHookJson?.command ?? '')).toContain(
-			'git worktree remove --force .worktrees/ui-reference'
+			'git worktree remove --force .worktrees/ui-reference',
 		);
 		expect(
 			recipe.steps
 				.slice(3)
 				.some((step) =>
-					String(step.configJson.command ?? '').includes('git worktree remove')
-				)
+					String(step.configJson.command ?? '').includes('git worktree remove'),
+				),
 		).toBe(false);
 	});
 
@@ -366,7 +366,7 @@ describe('file-backed pipeline recipes', () => {
 			'audit-review',
 		]);
 		expect(
-			recipe.steps.every((step) => step.configJson.executionIntent === 'apply-changes')
+			recipe.steps.every((step) => step.configJson.executionIntent === 'apply-changes'),
 		).toBe(true);
 	});
 
@@ -426,7 +426,7 @@ describe('file-backed pipeline recipes', () => {
 
 		const newApp = await recipeService.readRecipe('new-app-from-idea');
 		const validators = newApp.steps.filter((step) =>
-			['validate-build', 'validate-tests'].includes(String(step.configJson.skillId ?? ''))
+			['validate-build', 'validate-tests'].includes(String(step.configJson.skillId ?? '')),
 		);
 		expect(validators).toHaveLength(2);
 		expect(validators.every((step) => step.onFailure === undefined)).toBe(true);
@@ -439,7 +439,7 @@ describe('file-backed pipeline recipes', () => {
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -468,15 +468,15 @@ describe('file-backed pipeline recipes', () => {
 				expect(report.session.status).toBe('completed');
 				expect(report.stepResults[0]?.outputSummary).toBe('');
 				expect(await readFile(join(projectDir, 'pipeline-output.txt'), 'utf8')).toBe(
-					'hello'
+					'hello',
 				);
 				// The session-metrics dump is written under .aidd/reports at session end so
 				// report steps can read per-step timings without DB access.
 				const dump = JSON.parse(
 					await readFile(
 						join(projectDir, '.aidd', 'reports', `session-${session.id}.json`),
-						'utf8'
-					)
+						'utf8',
+					),
 				) as { status: string; steps: { name: string }[] };
 				expect(dump.status).toBe('completed');
 				expect(dump.steps.some((step) => step.name === 'Write output')).toBe(true);
@@ -496,7 +496,7 @@ describe('file-backed pipeline recipes', () => {
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -534,7 +534,7 @@ describe('file-backed pipeline recipes', () => {
 				// captured.json is the dump as it stood while step 2 ran: step 1 present and
 				// still 'running' (the terminal dump comes only at session end).
 				const captured = JSON.parse(
-					await readFile(join(projectDir, 'captured.json'), 'utf8')
+					await readFile(join(projectDir, 'captured.json'), 'utf8'),
 				) as { status: string; steps: { name: string }[] };
 				expect(captured.status).toBe('running');
 				expect(captured.steps.some((step) => step.name === 'First step')).toBe(true);
@@ -570,13 +570,13 @@ ${heartbeatTerminator()}
 			});
 			await Bun.write(
 				join(rootDir, 'skills', 'demo-skill', 'SKILL.md'),
-				'---\nname: demo-skill\ndescription: Demo skill.\nmetadata:\n  aidd-category: runtime\n---\n\n# Demo Skill\n\nUse `$ARGUMENTS`.\n'
+				'---\nname: demo-skill\ndescription: Demo skill.\nmetadata:\n  aidd-category: runtime\n---\n\n# Demo Skill\n\nUse `$ARGUMENTS`.\n',
 			);
 			await Bun.write(join(rootDir, 'skills', 'demo-skill', 'templates', 'one.md'), 'one');
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -622,7 +622,7 @@ ${heartbeatTerminator()}
 						},
 						[]
 					>(
-						'SELECT resource_type, source, parent_invocation_id FROM invocation_events ORDER BY started_at'
+						'SELECT resource_type, source, parent_invocation_id FROM invocation_events ORDER BY started_at',
 					)
 					.all();
 				const nested = invocations.find((row) => row.resource_type === 'skill');
@@ -654,7 +654,7 @@ ${heartbeatTerminator()}
 							stepType: 'skill',
 						},
 					],
-				})
+				}),
 			).rejects.toThrow('must declare executionIntent');
 		} finally {
 			await removeTempTree(rootDir);
@@ -676,7 +676,7 @@ ${heartbeatTerminator()}
 			await mkdir(join(rootDir, 'skills', 'demo-oneshot'), { recursive: true });
 			await Bun.write(
 				join(rootDir, 'skills', 'demo-oneshot', 'SKILL.md'),
-				'---\nname: demo-oneshot\ndescription: Demo one-shot skill.\nmetadata:\n  aidd-category: runtime\n---\n\n# Demo Oneshot\n\nUse `$ARGUMENTS`.\n'
+				'---\nname: demo-oneshot\ndescription: Demo one-shot skill.\nmetadata:\n  aidd-category: runtime\n---\n\n# Demo Oneshot\n\nUse `$ARGUMENTS`.\n',
 			);
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, runService, sqlite } = makeHarness(rootDir, workspace);
@@ -700,7 +700,7 @@ ${heartbeatTerminator()}
 				expect(report.stepResults[0]?.stepType).toBe('skill');
 				const invocation = await readFile(
 					join(projectDir, 'oneshot-invocation.txt'),
-					'utf8'
+					'utf8',
 				);
 				expect(invocation).toContain('demo-oneshot');
 				expect(invocation).toContain('sample');
@@ -716,7 +716,7 @@ ${heartbeatTerminator()}
 						},
 						[]
 					>(
-						'SELECT resource_type, source, parent_invocation_id FROM invocation_events ORDER BY started_at'
+						'SELECT resource_type, source, parent_invocation_id FROM invocation_events ORDER BY started_at',
 					)
 					.all();
 				expect(invocations.filter((row) => row.resource_type === 'recipe')).toEqual([]);
@@ -741,7 +741,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -770,7 +770,7 @@ ${heartbeatTerminator()}
 				expect(report.session.status).toBe('failed');
 				expect(report.stepResults).toHaveLength(1);
 				expect(report.stepResults[0]?.errorMessage).toBe(
-					'Shell step cwd is outside allowed roots'
+					'Shell step cwd is outside allowed roots',
 				);
 				expect(await Bun.file(join(escapeDir, 'leaked.txt')).exists()).toBe(false);
 			} finally {
@@ -790,7 +790,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -838,7 +838,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -893,7 +893,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -936,8 +936,8 @@ ${heartbeatTerminator()}
 				const dump = JSON.parse(
 					await readFile(
 						join(projectDir, '.aidd', 'reports', `session-${session.id}.json`),
-						'utf8'
-					)
+						'utf8',
+					),
 				) as {
 					failedStepNames: string[];
 					producedArtifacts: { stepName: string }[];
@@ -971,7 +971,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -991,7 +991,7 @@ ${heartbeatTerminator()}
 					pipelineService.launchRecipe({
 						projectDir,
 						recipeId: 'needs_parameter',
-					})
+					}),
 				).rejects.toThrow('Missing required recipe parameter: requiredValue');
 
 				await recipeService.writeRecipe({
@@ -1046,7 +1046,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1136,7 +1136,7 @@ ${heartbeatTerminator()}
 				config: { backend: 'codex', cliType: 'claude-code' },
 				pipelineSessionId: 'pipe_test',
 				projectDir: 'D:/applications/sample',
-			}).backend
+			}).backend,
 		).toBe('codex');
 	});
 
@@ -1147,7 +1147,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1190,7 +1190,7 @@ ${heartbeatTerminator()}
 				const overriddenReport = await waitForReport(pipelineService, overridden.id);
 				expect(overriddenReport.session.status).toBe('completed');
 				const overriddenRun = await runService.getRun(
-					overriddenReport.stepResults[0]?.runId ?? ''
+					overriddenReport.stepResults[0]?.runId ?? '',
 				);
 				expect(overriddenRun?.backend).toBe('codex');
 				expect(overriddenRun?.model).toBe('override-model');
@@ -1219,7 +1219,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1298,7 +1298,7 @@ ${heartbeatTerminator()}
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1386,7 +1386,7 @@ INSERT INTO pipeline_sessions (
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1461,7 +1461,7 @@ INSERT INTO pipeline_step_results (
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1508,7 +1508,7 @@ INSERT INTO pipeline_step_results (
 				}
 				expect(report?.session.status).toBe('failed');
 				const stepResult = (report?.stepResults ?? []).find(
-					(step) => step.id === 'rir_result_1'
+					(step) => step.id === 'rir_result_1',
 				);
 				expect(stepResult?.status).toBe('failed');
 				expect(stepResult?.errorMessage).toContain('did not survive');
@@ -1528,7 +1528,7 @@ INSERT INTO pipeline_step_results (
 			const projectDir = await makeProject(workspace);
 			const { app, pipelineService, recipeService, runService, sqlite } = makeServerHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1546,13 +1546,13 @@ INSERT INTO pipeline_step_results (
 				});
 
 				const listResponse = await app.handle(
-					new Request('http://localhost/api/v1/recipes')
+					new Request('http://localhost/api/v1/recipes'),
 				);
 				const list = (await listResponse.json()) as { recipes: { id: string }[] };
 				expect(list.recipes.map((recipe) => recipe.id)).toContain('route_recipe');
 
 				const readResponse = await app.handle(
-					new Request('http://localhost/api/v1/recipes/route_recipe')
+					new Request('http://localhost/api/v1/recipes/route_recipe'),
 				);
 				const read = (await readResponse.json()) as { recipe: { name: string } };
 				expect(read.recipe.name).toBe('Route Recipe');
@@ -1562,15 +1562,15 @@ INSERT INTO pipeline_step_results (
 						body: JSON.stringify({ projectDir }),
 						headers: { 'content-type': 'application/json' },
 						method: 'POST',
-					})
+					}),
 				);
 				const launch = (await launchResponse.json()) as { session: { id: string } };
 				await waitForReport(pipelineService, launch.session.id);
 
 				const reportResponse = await app.handle(
 					new Request(
-						`http://localhost/api/v1/pipeline-sessions/${launch.session.id}/report`
-					)
+						`http://localhost/api/v1/pipeline-sessions/${launch.session.id}/report`,
+					),
 				);
 				const report = (await reportResponse.json()) as {
 					report: { stepResults: { status: string }[] };
@@ -1595,15 +1595,15 @@ INSERT INTO pipeline_step_results (
 						body: JSON.stringify({ projectDir }),
 						headers: { 'content-type': 'application/json' },
 						method: 'POST',
-					})
+					}),
 				);
 				const stopLaunch = (await stopLaunchResponse.json()) as { session: { id: string } };
 				await wait(100);
 				const stopResponse = await app.handle(
 					new Request(
 						`http://localhost/api/v1/pipeline-sessions/${stopLaunch.session.id}/stop`,
-						{ method: 'POST' }
-					)
+						{ method: 'POST' },
+					),
 				);
 				expect(stopResponse.status).toBe(200);
 				const stopped = await waitForReport(pipelineService, stopLaunch.session.id);
@@ -1624,7 +1624,7 @@ INSERT INTO pipeline_step_results (
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1705,7 +1705,7 @@ INSERT INTO pipeline_step_results (
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1752,7 +1752,7 @@ describe('pipeline step-row integrity', () => {
 				errorMessage: 'boom',
 				status: 'failed',
 				summary: 'sum',
-			})
+			}),
 		).toBe('boom');
 		expect(
 			runFailureNarrative({
@@ -1760,7 +1760,7 @@ describe('pipeline step-row integrity', () => {
 				errorMessage: null,
 				status: 'failed',
 				summary: 'coding blocked by roadmap gate: unmapped_features',
-			})
+			}),
 		).toBe('coding blocked by roadmap gate: unmapped_features');
 		expect(
 			runFailureNarrative({
@@ -1768,7 +1768,7 @@ describe('pipeline step-row integrity', () => {
 				errorMessage: null,
 				status: 'failed',
 				summary: null,
-			})
+			}),
 		).toBe('ai text');
 		expect(
 			runFailureNarrative({
@@ -1776,7 +1776,7 @@ describe('pipeline step-row integrity', () => {
 				errorMessage: null,
 				status: 'failed',
 				summary: null,
-			})
+			}),
 		).toHaveLength(501);
 		expect(
 			runFailureNarrative({
@@ -1784,7 +1784,7 @@ describe('pipeline step-row integrity', () => {
 				errorMessage: null,
 				status: 'stopped',
 				summary: null,
-			})
+			}),
 		).toBe('Run finished with status stopped');
 	});
 
@@ -1795,7 +1795,7 @@ describe('pipeline step-row integrity', () => {
 			const projectDir = await makeProject(workspace);
 			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
 				rootDir,
-				workspace
+				workspace,
 			);
 			try {
 				await recipeService.writeRecipe({
@@ -1835,7 +1835,7 @@ INSERT INTO pipeline_step_results (
 				while (
 					Date.now() < deadline &&
 					(report?.stepResults ?? []).some(
-						(step) => step.status === 'running' || step.status === 'queued'
+						(step) => step.status === 'running' || step.status === 'queued',
 					)
 				) {
 					await wait(50);
@@ -1847,7 +1847,7 @@ INSERT INTO pipeline_step_results (
 				expect(duplicate?.errorMessage).toContain('Duplicate in-flight step row');
 				// No row may remain in-flight, and no third row may have been created.
 				expect(
-					rows.every((row) => row.status !== 'running' && row.status !== 'queued')
+					rows.every((row) => row.status !== 'running' && row.status !== 'queued'),
 				).toBe(true);
 				expect(rows.filter((row) => row.sequenceNumber === 1)).toHaveLength(2);
 			} finally {

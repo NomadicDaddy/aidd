@@ -7,7 +7,7 @@ import { testTempDir } from '../_helpers/temp.ts';
 
 async function withTempProject(
 	files: Record<string, string>,
-	run: (dir: string) => Promise<void>
+	run: (dir: string) => Promise<void>,
 ): Promise<void> {
 	const dir = await testTempDir('aidd-stack-');
 	try {
@@ -38,7 +38,7 @@ describe('project stack detection', () => {
 				expect(stack.label).toBe('Custom Platform');
 				expect(stack.frameworks).toEqual(expect.arrayContaining(['React', 'Vite']));
 				expect(stack.source).toBe('package-declaration');
-			}
+			},
 		);
 	});
 
@@ -52,7 +52,7 @@ describe('project stack detection', () => {
 					label: 'Spernakit',
 					source: 'package-declaration',
 				});
-			}
+			},
 		);
 	});
 
@@ -69,7 +69,7 @@ describe('project stack detection', () => {
 					label: 'Unknown',
 					source: 'unknown',
 				});
-			}
+			},
 		);
 	});
 
@@ -81,12 +81,12 @@ describe('project stack detection', () => {
 			await writeFile(
 				join(root, 'AGENTS.md'),
 				'- vite-dashboard is registered [react+vite], not [spernakit]\n',
-				'utf8'
+				'utf8',
 			);
 			await writeFile(
 				join(project, 'package.json'),
 				JSON.stringify({ dependencies: { react: '19.0.0', vite: '8.0.0' } }),
-				'utf8'
+				'utf8',
 			);
 			const stack = await detectProjectStack(project, { containingRoot: root });
 			expect(stack).toMatchObject({
@@ -128,11 +128,11 @@ describe('project stack detection', () => {
 				const stack = await detectProjectStack(dir);
 				expect(stack.family).toBe('react-vite');
 				expect(stack.frameworks).toEqual(
-					expect.arrayContaining(['Elysia', 'React', 'Vite'])
+					expect.arrayContaining(['Elysia', 'React', 'Vite']),
 				);
 				expect(stack.languages).toContain('TypeScript');
 				expect(stack.runtimes).toContain('Bun');
-			}
+			},
 		);
 	});
 
@@ -159,7 +159,7 @@ describe('project stack detection', () => {
 					label: 'PowerShell/Pode',
 					source: 'detected',
 				});
-			}
+			},
 		);
 	});
 

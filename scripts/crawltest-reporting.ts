@@ -47,7 +47,7 @@ export function createSummaryMarkdown(report: CrawlReport): string {
 	} else {
 		for (const entry of vitals) {
 			lines.push(
-				`- ${entry.name}: ${formatVitalValue(entry)} (${entry.rating}) at ${entry.url}`
+				`- ${entry.name}: ${formatVitalValue(entry)} (${entry.rating}) at ${entry.url}`,
 			);
 		}
 	}
@@ -56,7 +56,7 @@ export function createSummaryMarkdown(report: CrawlReport): string {
 		...report.errors.map((entry) => `${entry.type}: ${entry.message}`),
 		...report.consoleErrors.map((entry) => `console: ${entry.message} at ${entry.url}`),
 		...report.networkErrors.map(
-			(entry) => `network: ${entry.status} ${entry.statusText} at ${entry.url}`
+			(entry) => `network: ${entry.status} ${entry.statusText} at ${entry.url}`,
 		),
 	];
 	lines.push('', '## Failures', '');
@@ -73,7 +73,7 @@ export function createSummaryMarkdown(report: CrawlReport): string {
 
 export async function writeCrawlReport(
 	report: CrawlReport,
-	rootDir: string
+	rootDir: string,
 ): Promise<WrittenCrawlReport> {
 	const logsDir = join(rootDir, 'logs');
 	await mkdir(logsDir, { recursive: true });
@@ -93,7 +93,7 @@ export function printReport(report: CrawlReport, written: WrittenCrawlReport): v
 	console.log(`  Routes discovered: ${report.summary.routesDiscovered}`);
 	console.log(`  URLs visited: ${report.summary.urlsVisited}`);
 	console.log(
-		`  Content assertions: ${report.summary.contentAssertions} (${report.summary.contentFailures} failed)`
+		`  Content assertions: ${report.summary.contentAssertions} (${report.summary.contentFailures} failed)`,
 	);
 	console.log(`  Elements clicked: ${report.summary.elementsClicked}`);
 	console.log(`  Failed clicks: ${report.summary.failedClicks}`);

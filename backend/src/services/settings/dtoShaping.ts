@@ -2,10 +2,10 @@ import {
 	defaultDirectorIntervalHours,
 	defaultDirectorMaxPerBucket,
 	defaultDirectorSuggestionGranularity,
-	resolveMergedConfig,
 	type PartialAiddConfig,
+	resolveMergedConfig,
 } from 'aidd-shared/config';
-import { backendNames, type BackendName } from 'aidd-shared/plan/types';
+import { type BackendName, backendNames } from 'aidd-shared/plan/types';
 
 import type {
 	BackendDefaultSettingsDto,
@@ -25,7 +25,7 @@ function backendDto(
 		? T extends Partial<Record<BackendName, infer V>>
 			? undefined | V
 			: never
-		: never
+		: never,
 ): BackendDefaultSettingsDto {
 	return {
 		idleNudgeTimeoutSeconds: value?.idleNudgeTimeoutSeconds ?? null,
@@ -71,7 +71,7 @@ function directAiDto(config: PartialAiddConfig): DirectAiSettingsDto {
 }
 
 function sharedFileDto(
-	entry: { source: string; target?: string | undefined } | string
+	entry: { source: string; target?: string | undefined } | string,
 ): SharedFileEntryDto {
 	if (typeof entry === 'string') return { source: entry, target: null };
 	return { source: entry.source, target: entry.target ?? null };
@@ -87,7 +87,7 @@ function telegramDto(config: PartialAiddConfig): TelegramChannelSettingsDto {
 
 export function buildSettingsDto(
 	config: PartialAiddConfig,
-	context: { configBaseDir: string; configPath: string; current: WebRuntimeConfig }
+	context: { configBaseDir: string; configPath: string; current: WebRuntimeConfig },
 ): WebConfigSettingsDto {
 	const resolved = resolveMergedConfig(config, {
 		applicationsRoot: config.applicationsRoot,

@@ -24,6 +24,6 @@ export function assertNoForeignKeyViolations(sqlite: Database): void {
 	const suffix =
 		violations.length > 10 ? `; ${violations.length - 10} additional violation(s)` : '';
 	throw new Error(
-		`Web database foreign key check failed with ${violations.length} violation(s): ${sample}${suffix}`
+		`Web database foreign key check failed with ${violations.length} violation(s): ${sample}${suffix}`,
 	);
 }

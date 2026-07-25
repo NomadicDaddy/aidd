@@ -63,8 +63,8 @@ describe('traced Zustand setters', () => {
 					typeof record === 'object' &&
 					record !== null &&
 					'layer' in record &&
-					record.layer === 'state'
-			)
+					record.layer === 'state',
+			),
 		);
 		expect(stateEncoded).not.toContain('localStorage');
 	});

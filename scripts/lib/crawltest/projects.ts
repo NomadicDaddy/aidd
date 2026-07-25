@@ -5,9 +5,9 @@ import { FRONTEND_ROUTE_PATHS } from 'aidd-shared/contracts/frontend-routes';
 import { normalizeRoute } from '../../crawltest-config.ts';
 import {
 	CRAWL_ROUTE_COVERAGE,
-	DEFAULT_ROUTES,
 	type CrawlArgs,
 	type CrawlRouteCoverage,
+	DEFAULT_ROUTES,
 } from '../../crawltest-types.ts';
 
 export interface ProjectSummary {
@@ -36,7 +36,7 @@ export async function fetchJson<T>(
 	baseUrl: string,
 	path: string,
 	init?: RequestInit,
-	fetcher: Fetcher = fetch
+	fetcher: Fetcher = fetch,
 ): Promise<T> {
 	const response = await fetcher(new URL(path, baseUrl), init);
 	if (!response.ok) {
@@ -57,7 +57,7 @@ export function defaultBugProjectId(projects: ProjectSummary[]): string {
 	const project = projects.find(isAiddBugProject);
 	if (!project) {
 		throw new Error(
-			'aidd project is not available for --bug; pass --bug-project to choose one.'
+			'aidd project is not available for --bug; pass --bug-project to choose one.',
 		);
 	}
 	return project.id;
@@ -65,7 +65,7 @@ export function defaultBugProjectId(projects: ProjectSummary[]): string {
 
 export async function resolveBugProject(
 	baseUrl: string,
-	requestedProject: null | string
+	requestedProject: null | string,
 ): Promise<string> {
 	const projects = await fetchJson<ProjectsResponse>(baseUrl, '/api/v1/projects');
 	if (!requestedProject) return defaultBugProjectId(projects.projects);
@@ -85,14 +85,14 @@ function detailRoute(pattern: string, id: string): string {
 
 async function representativePipelineSessionRoute(
 	baseUrl: string,
-	fetcher: Fetcher
+	fetcher: Fetcher,
 ): Promise<null | string> {
 	try {
 		const response = await fetchJson<PipelineSessionsResponse>(
 			baseUrl,
 			'/api/v1/pipeline-sessions?limit=1',
 			undefined,
-			fetcher
+			fetcher,
 		);
 		const session = response.sessions[0];
 		return session ? detailRoute(FRONTEND_ROUTE_PATHS.pipelineSessionDetail, session.id) : null;
@@ -103,14 +103,14 @@ async function representativePipelineSessionRoute(
 
 async function representativeProjectRoute(
 	baseUrl: string,
-	fetcher: Fetcher
+	fetcher: Fetcher,
 ): Promise<null | string> {
 	try {
 		const response = await fetchJson<ProjectsResponse>(
 			baseUrl,
 			'/api/v1/projects',
 			undefined,
-			fetcher
+			fetcher,
 		);
 		const project = response.projects.find(isAiddBugProject) ?? response.projects[0];
 		return project ? detailRoute(FRONTEND_ROUTE_PATHS.projectDetail, project.id) : null;
@@ -121,14 +121,14 @@ async function representativeProjectRoute(
 
 async function representativeRecipeRoute(
 	baseUrl: string,
-	fetcher: Fetcher
+	fetcher: Fetcher,
 ): Promise<null | string> {
 	try {
 		const response = await fetchJson<RecipesResponse>(
 			baseUrl,
 			'/api/v1/recipes',
 			undefined,
-			fetcher
+			fetcher,
 		);
 		const recipe = response.recipes[0];
 		return recipe ? detailRoute(FRONTEND_ROUTE_PATHS.recipeDetail, recipe.id) : null;
@@ -159,7 +159,7 @@ function dynamicCrawlRouteKinds(): DynamicCrawlRouteKind[] {
 export async function initialRoutes(
 	args: CrawlArgs,
 	fetcher: Fetcher = fetch,
-	log: CrawlRouteLogger = console.log
+	log: CrawlRouteLogger = console.log,
 ): Promise<string[]> {
 	if (args.page) return [normalizeRoute(args.page)];
 	if (args.startFrom) return [normalizeRoute(args.startFrom)];
@@ -167,7 +167,7 @@ export async function initialRoutes(
 	const routes = new Set<string>(DEFAULT_ROUTES);
 	const dynamicKinds = dynamicCrawlRouteKinds();
 	const dynamicRoutes = await Promise.all(
-		dynamicKinds.map(async (kind) => await dynamicRouteResolvers[kind](args.baseUrl, fetcher))
+		dynamicKinds.map(async (kind) => await dynamicRouteResolvers[kind](args.baseUrl, fetcher)),
 	);
 	for (const [index, kind] of dynamicKinds.entries()) {
 		const route = dynamicRoutes[index];
@@ -183,7 +183,7 @@ export async function initialRoutes(
 export async function fileBugThroughUi(
 	page: Page,
 	baseUrl: string,
-	projectId: string
+	projectId: string,
 ): Promise<void> {
 	await page.goto(new URL(`/projects/${encodeURIComponent(projectId)}`, baseUrl).toString(), {
 		waitUntil: 'networkidle2',
@@ -195,7 +195,7 @@ export async function fileBugThroughUi(
 	await page.waitForSelector('#project-report-description', { timeout: 10_000 });
 	await page.type(
 		'#project-report-description',
-		`crawltest bug submission ${new Date().toISOString()}`
+		`crawltest bug submission ${new Date().toISOString()}`,
 	);
 	await page.click('button[type="submit"]');
 	await page.waitForFunction("!document.querySelector('#project-report-description')", {

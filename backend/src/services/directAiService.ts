@@ -7,15 +7,15 @@ import {
 } from 'aidd-shared/agent/client';
 import {
 	DirectAiConfigError,
+	type DirectAiResolution,
 	isDirectAiSurfaceEnabled,
 	resolveDirectAiCall,
-	type DirectAiResolution,
 } from 'aidd-shared/agent/directAi';
 
 import { extractJsonObject } from './directAiUtils.ts';
 import { HttpError } from './errors.ts';
 
-type WebRuntimeConfig = ResolvedConfig & { web: ResolvedWebConfig };
+type WebRuntimeConfig = { web: ResolvedWebConfig } & ResolvedConfig;
 
 export interface DirectAiCompleteRequest {
 	cwd: string;
@@ -42,13 +42,13 @@ export interface DirectAiRunner {
 	 */
 	resolveClientConfig(
 		surface: DirectAiSurface,
-		model?: string
+		model?: string,
 	): null | OpenAICompatibleClientConfig;
 	/** Resolve the provider, model, and reasoning effort for a surface without making a call. */
 	resolveSurfaceMeta(
 		surface: DirectAiSurface,
 		model?: string,
-		reasoningEffort?: PersistedReasoningEffortValue
+		reasoningEffort?: PersistedReasoningEffortValue,
 	): DirectAiSurfaceMeta | null;
 	updateConfig(config: WebRuntimeConfig): void;
 }
@@ -89,7 +89,7 @@ export class DirectAiService implements DirectAiRunner {
 
 	resolveClientConfig(
 		surface: DirectAiSurface,
-		model?: string
+		model?: string,
 	): null | OpenAICompatibleClientConfig {
 		if (!this.isSurfaceEnabled(surface)) return null;
 		try {
@@ -110,7 +110,7 @@ export class DirectAiService implements DirectAiRunner {
 	resolveSurfaceMeta(
 		surface: DirectAiSurface,
 		model?: string,
-		requestedReasoningEffort?: PersistedReasoningEffortValue
+		requestedReasoningEffort?: PersistedReasoningEffortValue,
 	): DirectAiSurfaceMeta | null {
 		if (!this.isSurfaceEnabled(surface)) return null;
 		try {
@@ -145,14 +145,14 @@ export class DirectAiService implements DirectAiRunner {
 					...(request.model ? { model: request.model } : {}),
 					reasoningEffort: resolved.reasoningEffort,
 				},
-				controller.signal
+				controller.signal,
 			);
 			return response.text.trim();
 		} catch (err) {
 			if (controller.signal.aborted) {
 				throw new HttpError(
 					`Direct AI ${request.surface} request timed out after ${resolved.timeoutSeconds} seconds`,
-					504
+					504,
 				);
 			}
 			throw err;

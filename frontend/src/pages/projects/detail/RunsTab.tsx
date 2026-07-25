@@ -45,7 +45,7 @@ function ActiveRunsPanel({
 	return (
 		<Card className="overflow-hidden p-0">
 			<div className="border-b px-4 py-3 dark:border-neutral-800">
-				<h2 className="text-foreground text-sm font-semibold">Recent runs</h2>
+				<h2 className="text-sm font-semibold text-foreground">Recent runs</h2>
 				<p className="text-xs text-neutral-500">
 					Recent aidd runs for this project from UI launches and CLI sessions (last 24 h).
 				</p>

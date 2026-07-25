@@ -36,7 +36,7 @@ function parseSuggestedArgs(value: null | string): Record<string, string> {
 // reasoning for the agent's context.
 function buildSuggestionRunLaunchRequest(
 	suggestion: typeof suggestions.$inferSelect,
-	projectDir: string
+	projectDir: string,
 ): RunLaunchRequest {
 	const args = parseSuggestedArgs(suggestion.suggestedArgs);
 	const request: RunLaunchRequest = {
@@ -79,7 +79,7 @@ export class DirectorSuggestionService {
 		hub: WebSocketHub,
 		projectService: ProjectService,
 		runService: RunService,
-		recipeLauncher?: DirectorRecipeLauncher
+		recipeLauncher?: DirectorRecipeLauncher,
 	) {
 		this.db = db;
 		this.hub = hub;
@@ -98,7 +98,7 @@ export class DirectorSuggestionService {
 			.update(suggestions)
 			.set({ dismissedBy: 'user', resolvedAt: Date.now(), status: 'dismissed' })
 			.where(
-				and(eq(suggestions.id, id), inArray(suggestions.status, ['launching', 'pending']))
+				and(eq(suggestions.id, id), inArray(suggestions.status, ['launching', 'pending'])),
 			)
 			.returning({ id: suggestions.id });
 		if (updated.length === 0) return;
@@ -120,7 +120,7 @@ export class DirectorSuggestionService {
 		if (!suggestion) throw new Error(`Suggestion not found: ${id}`);
 		if (suggestion.projectId === null) {
 			throw new Error(
-				'Fleet-wide suggestions cannot be launched directly. Select a project-scoped suggestion or dismiss this one.'
+				'Fleet-wide suggestions cannot be launched directly. Select a project-scoped suggestion or dismiss this one.',
 			);
 		}
 		const { projects: candidates } = await this.projectService.listProjects();
@@ -138,7 +138,7 @@ export class DirectorSuggestionService {
 			.returning({ id: suggestions.id });
 		if (claimed.length === 0) {
 			throw new Error(
-				`Suggestion is no longer pending (already launching, launched, or dismissed): ${id}`
+				`Suggestion is no longer pending (already launching, launched, or dismissed): ${id}`,
 			);
 		}
 
@@ -178,17 +178,17 @@ export class DirectorSuggestionService {
 
 	private async launchRunSuggestion(
 		suggestion: typeof suggestions.$inferSelect,
-		projectDir: string
+		projectDir: string,
 	): Promise<DirectorSuggestionLaunch> {
 		const run = await this.runService.launchRun(
-			buildSuggestionRunLaunchRequest(suggestion, projectDir)
+			buildSuggestionRunLaunchRequest(suggestion, projectDir),
 		);
 		return { kind: 'run', runId: run.id };
 	}
 
 	private async launchRecipeSuggestion(
 		suggestion: typeof suggestions.$inferSelect,
-		projectDir: string
+		projectDir: string,
 	): Promise<DirectorSuggestionLaunch> {
 		if (!this.recipeLauncher) {
 			throw new Error('Recipe-backed Director suggestion launches are unavailable.');

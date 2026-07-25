@@ -6,8 +6,8 @@ import type { ResolvedConfig } from 'aidd-shared/config';
 import {
 	activeRunsDir,
 	readCliActiveRunRecords,
-	sweepStaleActiveRunTempFiles,
 	SUPPRESS_CLI_ACTIVE_RUN_ENV,
+	sweepStaleActiveRunTempFiles,
 } from 'aidd-shared/metadata/active-runs';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { parseArgs } from 'aidd-shared/args/index';
@@ -19,9 +19,9 @@ import {
 	installCrashFinalizer,
 } from '../../cli/src/orchestrator/crash-finalizer.ts';
 import {
-	runOrchestrator,
 	type RunFinalSummary,
 	type RunObserver,
+	runOrchestrator,
 } from '../../cli/src/orchestrator/orchestrator.ts';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { initialRunTotals } from '../../cli/src/orchestrator/run/types.ts';
@@ -76,7 +76,7 @@ async function makeStore(name: string): Promise<FileAiddStore> {
 			priority: 1,
 			status: 'backlog',
 			title: 'Core feature',
-		})
+		}),
 	);
 	return new FileAiddStore(projectDir);
 }
@@ -350,7 +350,7 @@ describe('CLI active-run heartbeat', () => {
 			{},
 			{
 				[SUPPRESS_CLI_ACTIVE_RUN_ENV]: '1',
-			}
+			},
 		);
 
 		expect(heartbeat).toBeUndefined();
@@ -369,7 +369,7 @@ describe('CLI active-run heartbeat', () => {
 			...heartbeatObserver,
 			onFinalSummary: async (summary: RunFinalSummary) => {
 				ledgerExistedBeforeMarkerFinalization = await Bun.file(
-					join(store.metadataDir, 'runs.jsonl')
+					join(store.metadataDir, 'runs.jsonl'),
 				).exists();
 				await heartbeatObserver.onFinalSummary?.(summary);
 			},
@@ -386,7 +386,7 @@ describe('CLI active-run heartbeat', () => {
 				markerWasVisibleDuringRun =
 					(await readCliActiveRunRecords(store.projectDir)).length === 1;
 				await completeFeature(store);
-			}
+			},
 		);
 
 		const exitCode = await runOrchestrator(runtimePlan, {
@@ -415,7 +415,7 @@ describe('CLI active-run heartbeat', () => {
 		expect(completedRecords[0]!.completedAt).toBeNumber();
 		expect(completedRecords[0]!.durationMs).toBeNumber();
 		expect(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).toContain(
-			'"stopReason":"completed"'
+			'"stopReason":"completed"',
 		);
 		const ledger = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
 		const [runSummary] = ledger
@@ -475,10 +475,10 @@ describe('CLI active-run heartbeat', () => {
 			summary: 'run ended before final summary',
 		});
 		expect(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).toContain(
-			'"fallbackSummary":true'
+			'"fallbackSummary":true',
 		);
 		const ledger = JSON.parse(
-			(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+			(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 		) as {
 			aiddDirty: boolean | null;
 			aiddRevision: null | string;
@@ -556,7 +556,7 @@ describe('CLI active-run heartbeat', () => {
 		});
 		// The fallback ledger entry still lands so the run is not invisible to the web layer.
 		expect(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).toContain(
-			'"fallbackSummary":true'
+			'"fallbackSummary":true',
 		);
 	});
 

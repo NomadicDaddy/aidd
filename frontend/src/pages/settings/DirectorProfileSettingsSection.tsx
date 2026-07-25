@@ -34,7 +34,7 @@ export function DirectorProfileSettingsSection() {
 		director.updateProfile.mutate(profileInput(profileForm), {
 			onError(error) {
 				toast.error(
-					error instanceof Error ? error.message : 'Director profile save failed'
+					error instanceof Error ? error.message : 'Director profile save failed',
 				);
 			},
 			onSuccess() {

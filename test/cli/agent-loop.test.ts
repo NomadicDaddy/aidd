@@ -160,14 +160,14 @@ describe('native agent loop', () => {
 						...input,
 						cwd,
 					},
-					{ client }
-				)
+					{ client },
+				),
 			);
 
 			expect(await readFile(join(cwd, 'result.txt'), 'utf8')).toBe('tool output');
 			expect(requests).toHaveLength(2);
 			expect(requests[0]?.tools?.some((tool) => tool.function.name === 'write_file')).toBe(
-				true
+				true,
 			);
 			expect(requests[1]?.messages?.at(-1)).toEqual({
 				role: 'tool',

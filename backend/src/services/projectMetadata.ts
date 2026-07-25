@@ -28,13 +28,13 @@ export {
 } from './projectMetadata/iterationLogHelpers.ts';
 
 import {
-	gatherVersionInfo,
-	gatherPorts,
-	gatherSpecUpdatedAt,
-	gatherAddedAt,
-	gatherRoadmap,
 	countNumberedListItems,
 	countScreenMapRoutes,
+	gatherAddedAt,
+	gatherPorts,
+	gatherRoadmap,
+	gatherSpecUpdatedAt,
+	gatherVersionInfo,
 } from './projectMetadata/versionHelpers.ts';
 export { gatherPorts };
 import { gatherArtifactCheckSummary } from './projectMetadata/artifactHelpers.ts';
@@ -50,7 +50,7 @@ export interface MaturityContext {
 	auditCatalogDir: string;
 	auditCatalogNames: readonly string[];
 	getLatestProjectAuditRun: (
-		projectPath: string
+		projectPath: string,
 	) => Promise<MaturityComputeInput['latestProjectAuditRun']>;
 }
 
@@ -77,8 +77,8 @@ export interface GatherProjectMetadataOptions {
 export async function gatherProjectMetadata(
 	projectDir: string,
 	store: FileAiddStore,
-	options: GatherProjectMetadataOptions = {}
-): Promise<ProjectMetadataDto & { maturityDetail: MaturityDto | null }> {
+	options: GatherProjectMetadataOptions = {},
+): Promise<{ maturityDetail: MaturityDto | null } & ProjectMetadataDto> {
 	const metadataDir = metadataPath(projectDir);
 	// If a caller already ran a fresh artifact check (e.g. the project detail endpoint),
 	// use that instead of the stale cached .artifacts-check.json so maturity and metadata
@@ -128,7 +128,7 @@ export async function gatherProjectMetadata(
 	const localIterations = excludeOrphanIterations(
 		reconciledIterations,
 		ledgerRunIds,
-		liveActiveRunIds
+		liveActiveRunIds,
 	);
 	let maturityDetail: MaturityDto | null = null;
 	let maturity: MaturityBadgeDto = emptyMaturityBadge();

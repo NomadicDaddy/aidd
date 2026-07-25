@@ -14,9 +14,9 @@ describe('run command formatting', () => {
 				'audit-*',
 				'--prompt',
 				"Bob's task",
-			])
+			]),
 		).toBe(
-			"bun d:\\applications\\aidd\\cli\\src\\index.ts --project-dir d:\\applications\\margin-planner --filter 'audit-*' --prompt 'Bob''s task'"
+			"bun d:\\applications\\aidd\\cli\\src\\index.ts --project-dir d:\\applications\\margin-planner --filter 'audit-*' --prompt 'Bob''s task'",
 		);
 	});
 });

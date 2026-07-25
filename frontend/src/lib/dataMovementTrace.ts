@@ -1,7 +1,7 @@
 export {
-	traceDataMovement,
-	enableDataTrace,
 	disableDataTrace,
+	enableDataTrace,
+	traceDataMovement,
 } from './dataMovementTrace/console.ts';
 
 export { createTraceId, getDataTraceStatus, isTraceEnabled } from './dataMovementTrace/status.ts';

@@ -46,7 +46,7 @@ async function fingerprintDirShallow(dir: string): Promise<string> {
 	}
 	entries.sort();
 	const parts = await Promise.all(
-		entries.map(async (name) => `${name}:${await fingerprintTarget(join(dir, name))}`)
+		entries.map(async (name) => `${name}:${await fingerprintTarget(join(dir, name))}`),
 	);
 	return parts.join(',');
 }
@@ -73,7 +73,7 @@ async function fingerprintIterationsDir(dir: string): Promise<string> {
 		.sort((left, right) => right.number - left.number)
 		.slice(0, ITERATION_SCAN_LIMIT);
 	const parts = await Promise.all(
-		newest.map(async ({ entry }) => `${entry}:${await fingerprintTarget(join(dir, entry))}`)
+		newest.map(async ({ entry }) => `${entry}:${await fingerprintTarget(join(dir, entry))}`),
 	);
 	return `${entries.length}:${parts.join(',')}`;
 }
@@ -127,15 +127,15 @@ async function fingerprintFeaturesDir(featuresDir: string): Promise<string> {
 	const parts = await Promise.all(
 		entries.map(
 			async (name) =>
-				`${name}:${await fingerprintTarget(join(featuresDir, name, 'feature.json'))}`
-		)
+				`${name}:${await fingerprintTarget(join(featuresDir, name, 'feature.json'))}`,
+		),
 	);
 	return parts.join(',');
 }
 
 export async function computeProjectFingerprint(
 	projectDir: string,
-	options: ProjectFingerprintOptions = {}
+	options: ProjectFingerprintOptions = {},
 ): Promise<string> {
 	const metadataDir = metadataPath(projectDir);
 	const slug = (projectDir.split(/[\\/]/).pop() ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-');

@@ -60,10 +60,10 @@ describe('smoke:qc --fast subset', () => {
 
 	test('refuses to run a step with no cache classification', () => {
 		expect(() => assertSmokeCacheCoverage(['check:brand-new'])).toThrow(
-			'need cache classifications'
+			'need cache classifications',
 		);
 		expect(() =>
-			assertSmokeCacheCoverage(SMOKE_QC_STEPS.map((step) => step.name))
+			assertSmokeCacheCoverage(SMOKE_QC_STEPS.map((step) => step.name)),
 		).not.toThrow();
 	});
 });

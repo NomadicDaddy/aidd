@@ -113,7 +113,7 @@ describe('readProjectFile', () => {
 				await writeFile(join(outsideDir, 'escape.md'), 'outside content\n');
 				await symlink(
 					join(outsideDir, 'escape.md'),
-					join(projectDir, '.aidd', 'escape.md')
+					join(projectDir, '.aidd', 'escape.md'),
 				);
 				const result = await readProjectFile(projectDir, '.aidd/escape.md');
 				expect(result.state).toBe('invalid-path');
@@ -121,7 +121,7 @@ describe('readProjectFile', () => {
 				await removeTempTree(projectDir);
 				await removeTempTree(outsideDir);
 			}
-		}
+		},
 	);
 });
 
@@ -136,8 +136,8 @@ describe('project file route', () => {
 			} as unknown as WebContext);
 			const response = await app.handle(
 				new Request(
-					`http://localhost/api/v1/projects/some-id/file?path=${encodeURIComponent('.aidd/spec.md')}`
-				)
+					`http://localhost/api/v1/projects/some-id/file?path=${encodeURIComponent('.aidd/spec.md')}`,
+				),
 			);
 			expect(response.status).toBe(200);
 			const body = (await response.json()) as {
@@ -160,7 +160,7 @@ describe('project file route', () => {
 			},
 		} as unknown as WebContext);
 		const response = await app.handle(
-			new Request('http://localhost/api/v1/projects/some-id/file?path=')
+			new Request('http://localhost/api/v1/projects/some-id/file?path='),
 		);
 		expect(response.status).toBe(422);
 	});

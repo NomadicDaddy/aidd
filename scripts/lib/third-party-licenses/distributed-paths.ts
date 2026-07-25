@@ -64,7 +64,7 @@ function belongsToTargets(path: string, targets: readonly string[]): boolean {
 
 export async function listTrackedFiles(
 	root: string,
-	targets: readonly string[]
+	targets: readonly string[],
 ): Promise<string[]> {
 	const safeTargets = targets.map(safeRelativePath);
 	const proc = Bun.spawn(['git', '-C', root, 'ls-files', '--', ...safeTargets], {
@@ -84,20 +84,20 @@ export async function listTrackedFiles(
 		stdout
 			.split(/\r?\n/)
 			.map((path) => path.trim().replaceAll('\\', '/'))
-			.filter(Boolean)
+			.filter(Boolean),
 	);
 	const existingPaths = await Promise.all(
 		trackedPaths.map(async (path) => {
 			const info = await stat(join(root, path)).catch(() => null);
 			return info?.isFile() === true ? path : null;
-		})
+		}),
 	);
 	return existingPaths.filter((path): path is string => path !== null);
 }
 
 export async function listRegisteredDistributionFiles(
 	root: string,
-	targets: readonly string[]
+	targets: readonly string[],
 ): Promise<string[]> {
 	const registryPath = join(root, DISTRIBUTED_MATERIALS_REGISTRY);
 	const registryValue: unknown = JSON.parse(await readFile(registryPath, 'utf8'));
@@ -106,7 +106,7 @@ export async function listRegisteredDistributionFiles(
 	const selectedPaths = uniqueSorted(
 		allClassifiedPaths(registry)
 			.map(safeRegisteredPath)
-			.filter((path) => belongsToTargets(path, safeTargets))
+			.filter((path) => belongsToTargets(path, safeTargets)),
 	);
 
 	for (const path of selectedPaths) {
@@ -130,7 +130,7 @@ function belongsToSurfaces(path: string, surfaces: TrackedSurfaces): boolean {
 export async function discoverDistributedPaths(
 	root: string,
 	surfaces: TrackedSurfaces,
-	registeredPaths: readonly string[]
+	registeredPaths: readonly string[],
 ): Promise<string[]> {
 	const targets = [
 		...surfaces.catalogRoots,
@@ -149,7 +149,7 @@ export async function discoverDistributedPaths(
 export async function copyTrackedFiles(
 	root: string,
 	destinationRoot: string,
-	targets: readonly string[]
+	targets: readonly string[],
 ): Promise<void> {
 	for (const relativePath of await listTrackedFiles(root, targets)) {
 		const destination = join(destinationRoot, relativePath);
@@ -161,7 +161,7 @@ export async function copyTrackedFiles(
 export async function copyRegisteredDistributionFiles(
 	root: string,
 	destinationRoot: string,
-	targets: readonly string[]
+	targets: readonly string[],
 ): Promise<void> {
 	for (const relativePath of await listRegisteredDistributionFiles(root, targets)) {
 		const destination = join(destinationRoot, relativePath);

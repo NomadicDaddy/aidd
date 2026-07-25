@@ -93,7 +93,7 @@ export async function runNewCommand(argv: string[], deps: NewCommandDeps = {}): 
 	if (parsed === null) {
 		console.error(
 			`Not a GitHub template source: ${source}\n` +
-				'Expected https://github.com/owner/repo, github.com/owner/repo, or owner/repo, with an optional #ref.'
+				'Expected https://github.com/owner/repo, github.com/owner/repo, or owner/repo, with an optional #ref.',
 		);
 		return 2;
 	}
@@ -101,7 +101,7 @@ export async function runNewCommand(argv: string[], deps: NewCommandDeps = {}): 
 	const projectName = name ?? parsed.repo;
 	if (!NAME_PATTERN.test(projectName) || projectName === '.' || projectName === '..') {
 		console.error(
-			`Project name must contain only letters, numbers, dashes, underscores, or periods: ${projectName}`
+			`Project name must contain only letters, numbers, dashes, underscores, or periods: ${projectName}`,
 		);
 		return 2;
 	}

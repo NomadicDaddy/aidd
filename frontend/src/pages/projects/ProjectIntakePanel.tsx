@@ -55,14 +55,14 @@ export function ProjectIntakePanel({
 			{ label: 'From GitHub', value: 'github' as const },
 			{ label: 'Ingest Existing', value: 'ingest' as const },
 		],
-		[templates.length]
+		[templates.length],
 	);
 
 	return (
 		<Card className="space-y-4 border-teal-200 bg-teal-50/70 dark:border-teal-900/60 dark:bg-teal-950/20">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div>
-					<h2 className="text-foreground text-base font-semibold">Project Intake</h2>
+					<h2 className="text-base font-semibold text-foreground">Project Intake</h2>
 					<p className="text-sm text-neutral-600 dark:text-neutral-400">
 						{LANE_COPY[lane].description}
 					</p>

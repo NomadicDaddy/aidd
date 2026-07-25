@@ -9,13 +9,13 @@ import type { AgentRunResult } from 'aidd-shared/orchestrator/result';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import {
-	directorRiskLevels,
-	directorTaskTypes,
 	dedupDirectorSuggestions,
 	type DirectorOutput,
 	type DirectorRiskLevel,
+	directorRiskLevels,
 	type DirectorSuggestion,
 	type DirectorTaskType,
+	directorTaskTypes,
 } from 'aidd-shared';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
@@ -111,7 +111,7 @@ type OutputResolution =
 // wins ties, and the marker is used only as a fallback when the file is missing or unparseable.
 async function resolveDirectorOutput(
 	result: AgentRunResult,
-	outputPath: string
+	outputPath: string,
 ): Promise<OutputResolution> {
 	const fileResolution = await readDirectorFile(outputPath);
 	const markerValue = markerCandidate(result.structuredResult);
@@ -167,12 +167,12 @@ function normalizeDirectorOutput(raw: unknown): DirectorOutput {
 	const suggestions = dedupDirectorSuggestions(
 		rawSuggestions
 			.map(normalizeSuggestion)
-			.filter((suggestion): suggestion is DirectorSuggestion => suggestion !== null)
+			.filter((suggestion): suggestion is DirectorSuggestion => suggestion !== null),
 	).slice(0, 20);
 	const rawFleetSummary = isRecord(raw.fleetSummary) ? raw.fleetSummary : {};
 	const crossProjectPatterns = Array.isArray(rawFleetSummary.crossProjectPatterns)
 		? rawFleetSummary.crossProjectPatterns.filter(
-				(item): item is string => typeof item === 'string'
+				(item): item is string => typeof item === 'string',
 			)
 		: [];
 	const fleetHealthScore =
@@ -253,8 +253,8 @@ function normalizeSuggestedArgs(value: unknown): null | Record<string, string> {
 	if (!isRecord(value)) return null;
 	return Object.fromEntries(
 		Object.entries(value).filter(
-			(entry): entry is [string, string] => typeof entry[1] === 'string'
-		)
+			(entry): entry is [string, string] => typeof entry[1] === 'string',
+		),
 	);
 }
 

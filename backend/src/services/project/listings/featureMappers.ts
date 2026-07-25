@@ -5,13 +5,13 @@ import { type FileAiddStore } from 'aidd-shared/metadata/store';
 
 import type {
 	ProjectFeatureDto,
+	WebFeatureStats,
 	WebFeatureStatusEntryDto,
 	WebFeatureSummaryDto,
-	WebFeatureStats,
 } from '../../../types.ts';
 
 export function toWebFeatureStats(
-	stats: Awaited<ReturnType<FileAiddStore['getFeatureStats']>>
+	stats: Awaited<ReturnType<FileAiddStore['getFeatureStats']>>,
 ): WebFeatureStats {
 	return {
 		closed: stats.closed,
@@ -72,7 +72,7 @@ export function toWebFeatureStatusEntries(features: Feature[]): WebFeatureStatus
 
 export function withRoadmapMilestones(
 	features: Feature[],
-	roadmap: Roadmap | undefined
+	roadmap: Roadmap | undefined,
 ): ProjectFeatureDto[] {
 	return features.map((feature) => {
 		const directory = feature.directory ?? feature.id;

@@ -2,7 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, test } from 'bun:test';
 
-import type { CLIBackend, AgentEvent, PromptInput } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 
@@ -14,10 +14,10 @@ import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { runBackendStreamLoop } from '../../cli/src/orchestrator/run/backend-stream.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
+	type LeakedServerInfo,
 	pollFor,
 	readLeakedServerInfo,
 	writeLeakFixture,
-	type LeakedServerInfo,
 } from '../_helpers/leaky-server-fixture.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
@@ -69,7 +69,7 @@ class LeakingChildBackend implements CLIBackend {
 			}
 			if (this.info !== undefined && !this.serverRespondedOk) {
 				const response = await fetch(`http://127.0.0.1:${this.info.port}/`).catch(
-					() => undefined
+					() => undefined,
 				);
 				this.serverRespondedOk = response !== undefined && (await response.text()) === 'ok';
 			}
@@ -97,12 +97,12 @@ describe('run teardown reaps leaked children (runBackendStreamLoop)', () => {
 			try {
 				const intermediate = Bun.spawn(
 					[process.execPath, 'run', intermediatePath, grandchildPath, infoPath],
-					{ stderr: 'inherit', stdin: 'ignore', stdout: 'ignore', windowsHide: true }
+					{ stderr: 'inherit', stdin: 'ignore', stdout: 'ignore', windowsHide: true },
 				);
 				backend = new LeakingChildBackend(intermediate.pid, infoPath);
 				const plan = resolveRunPlan(
 					parseArgs(['--project-dir', projectDir, '--cli', 'native']),
-					config
+					config,
 				);
 				const work: SelectedWork = {
 					description: 'leak regression',
@@ -118,7 +118,7 @@ describe('run teardown reaps leaked children (runBackendStreamLoop)', () => {
 					1,
 					Date.now(),
 					Date.now(),
-					undefined
+					undefined,
 				);
 				expect(result.exitCode).toBe(orchestratorExitCodes.success);
 				// The leak was real: the server answered while the run was live, and it was
@@ -133,7 +133,7 @@ describe('run teardown reaps leaked children (runBackendStreamLoop)', () => {
 				// 2-core CI runner running the suite in parallel is a lot slower at both than a laptop.
 				await pollFor(
 					() => Promise.resolve(isProcessAlive(leaked.pid) ? undefined : true),
-					45_000
+					45_000,
 				);
 				expect(isProcessAlive(leaked.pid)).toBe(false);
 				expect(fetch(`http://127.0.0.1:${leaked.port}/`)).rejects.toThrow();
@@ -142,6 +142,6 @@ describe('run teardown reaps leaked children (runBackendStreamLoop)', () => {
 				await removeTempTree(dir);
 			}
 		},
-		{ timeout: 150_000 }
+		{ timeout: 150_000 },
 	);
 });

@@ -34,7 +34,7 @@ export async function completionRequiresCommit(input: CompletionCommitGateInput)
 }
 
 async function ignoredMetadataCompletionSatisfiesCommitGate(
-	input: CompletionCommitGateInput
+	input: CompletionCommitGateInput,
 ): Promise<boolean> {
 	if (input.work.kind !== 'feature' || input.dirtySourcePathsAtStart === undefined) return false;
 	const feature = await input.store.readFeature(input.work.id).catch(() => undefined);
@@ -71,7 +71,7 @@ async function ignoredMetadataCompletionSatisfiesCommitGate(
 async function writtenDuringRun(
 	projectDir: string,
 	relativePath: string,
-	startedAtMs: number
+	startedAtMs: number,
 ): Promise<boolean> {
 	const pathStat = await stat(join(projectDir, relativePath)).catch(() => undefined);
 	if (pathStat === undefined) return true;

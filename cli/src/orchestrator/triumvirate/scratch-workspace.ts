@@ -10,10 +10,10 @@ import {
 	emptyMetrics,
 	mirrorExclusions,
 	originalWorktreeGuardIgnoredPaths,
-	retryPromptChangedPathLimit,
 	type PlanningMirrorMutation,
 	type PlanningMirrorSnapshot,
 	type PlanningStageRunResult,
+	retryPromptChangedPathLimit,
 	type StageRunResult,
 	type TriumvirateStageName,
 	type WorktreeSnapshot,
@@ -24,19 +24,19 @@ export { createMirrorCopyFilter } from './mirror-safety.ts';
 export async function createPlanningMirrors(
 	scratchRoot: string,
 	sourceProjectDir: string,
-	planningProjectDirs: Record<Exclude<TriumvirateStageName, 'execution'>, string>
+	planningProjectDirs: Record<Exclude<TriumvirateStageName, 'execution'>, string>,
 ): Promise<void> {
 	await Promise.all(
 		Object.values(planningProjectDirs).map((projectDir) =>
-			resetPlanningMirror(scratchRoot, sourceProjectDir, projectDir)
-		)
+			resetPlanningMirror(scratchRoot, sourceProjectDir, projectDir),
+		),
 	);
 }
 
 async function resetPlanningMirror(
 	scratchRoot: string,
 	sourceProjectDir: string,
-	projectDir: string
+	projectDir: string,
 ): Promise<void> {
 	// Containment assertion: verify the target path resolves UNDER the scratch root
 	// before performing the recursive rm. A future caller passing the live projectDir
@@ -67,7 +67,7 @@ export async function runPlanningStageWithMirrorGuard(input: {
 			input.stage,
 			baseline,
 			input.projectDir,
-			result
+			result,
 		);
 		if (!mutation) {
 			if (previousMutations.length > 0) {
@@ -97,7 +97,7 @@ async function snapshotPlanningMirror(projectDir: string): Promise<PlanningMirro
 async function addDirectoryToPlanningSnapshot(
 	rootDir: string,
 	currentDir: string,
-	files: Map<string, string>
+	files: Map<string, string>,
 ): Promise<void> {
 	const entries = await readdir(currentDir, { withFileTypes: true });
 	await Promise.all(
@@ -117,7 +117,7 @@ async function addDirectoryToPlanningSnapshot(
 				.update(String(details.mode))
 				.digest('hex');
 			files.set(relativePath, digest);
-		})
+		}),
 	);
 }
 
@@ -125,7 +125,7 @@ async function detectPlanningMirrorMutation(
 	stage: Exclude<TriumvirateStageName, 'execution'>,
 	baseline: PlanningMirrorSnapshot,
 	projectDir: string,
-	result: StageRunResult
+	result: StageRunResult,
 ): Promise<PlanningMirrorMutation | undefined> {
 	const current = await snapshotPlanningMirror(projectDir);
 	const changedPaths = changedPlanningMirrorPaths(baseline, current);
@@ -143,7 +143,7 @@ async function detectPlanningMirrorMutation(
 
 function changedPlanningMirrorPaths(
 	before: PlanningMirrorSnapshot,
-	after: PlanningMirrorSnapshot
+	after: PlanningMirrorSnapshot,
 ): string[] {
 	const paths = new Set([...before.files.keys(), ...after.files.keys()]);
 	return [...paths]
@@ -179,7 +179,7 @@ function formatChangedPathsForRetryPrompt(changedPaths: string[]): string {
 	lines.push('');
 	lines.push('Omitted changed-path groups:');
 	for (const [group, count] of summarizeOmittedChangedPathGroups(
-		changedPaths.slice(retryPromptChangedPathLimit)
+		changedPaths.slice(retryPromptChangedPathLimit),
 	)) {
 		lines.push(`- ${group}: ${count}`);
 	}
@@ -202,7 +202,7 @@ function summarizeOmittedChangedPathGroups(changedPaths: string[]): [string, num
 export function rewritePromptProjectPathForPlanningMirror(
 	text: string,
 	projectDir: string,
-	scratchProjectDir: string
+	scratchProjectDir: string,
 ): string {
 	const replacements = [
 		[projectDir, scratchProjectDir],
@@ -228,7 +228,7 @@ export async function snapshotWorktree(projectDir: string): Promise<WorktreeSnap
 			stderr: 'pipe',
 			stdout: 'pipe',
 			windowsHide: true,
-		}
+		},
 	);
 	const status = await new Response(proc.stdout).text();
 	const exitCode = await proc.exited;
@@ -257,7 +257,7 @@ function originalWorktreeStatusPath(line: string): string | undefined {
 export async function assertUnchanged(
 	stage: string,
 	baseline: WorktreeSnapshot,
-	projectDir: string
+	projectDir: string,
 ): Promise<string | undefined> {
 	if (!baseline.available) return undefined;
 	const current = await snapshotWorktree(projectDir);

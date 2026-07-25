@@ -17,7 +17,7 @@ export async function waitForCommitOrTimeout(
 	projectDir: string,
 	gitHeadBefore: string | undefined,
 	timeoutMs: number,
-	pollIntervalMs = 1000
+	pollIntervalMs = 1000,
 ): Promise<WaitForCommitOutcome> {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
@@ -37,7 +37,7 @@ export async function listGitCommits(
 	projectDir: string,
 	before: string | undefined,
 	after: string | undefined,
-	notBeforeMs?: number
+	notBeforeMs?: number,
 ): Promise<GitCommitSummary[]> {
 	if (after === undefined || before === after) return [];
 	// `before === undefined` means the project HEAD did not resolve at iteration start — a fresh
@@ -77,7 +77,7 @@ export type { CommitDiffStat };
 // touched by two commits counts once; insertions/deletions sum the per-commit numstat.
 export async function gitCommitsDiffStat(
 	projectDir: string,
-	hashes: readonly string[]
+	hashes: readonly string[],
 ): Promise<CommitDiffStat> {
 	const files = new Set<string>();
 	let insertions = 0;
@@ -137,7 +137,7 @@ export async function filterRunAttributedCommits(
 	projectDir: string,
 	commits: GitCommitSummary[],
 	attributedFeatures: ReadonlySet<string>,
-	forcedCommitHashes: ReadonlySet<string>
+	forcedCommitHashes: ReadonlySet<string>,
 ): Promise<GitCommitSummary[]> {
 	const kept: GitCommitSummary[] = [];
 	for (const commit of commits) {
@@ -157,7 +157,7 @@ export async function filterRunAttributedCommits(
 
 export async function gitWorktreeClean(
 	projectDir: string,
-	options: { excludeAiddMetadata?: boolean } = {}
+	options: { excludeAiddMetadata?: boolean } = {},
 ): Promise<boolean> {
 	const status = await gitOutput(projectDir, [
 		'status',
@@ -199,7 +199,7 @@ export function isAiddMetadataPath(path: string): boolean {
 
 export async function gitDirtyFileCount(
 	projectDir: string,
-	options: { excludeAiddMetadata?: boolean } = {}
+	options: { excludeAiddMetadata?: boolean } = {},
 ): Promise<number> {
 	const status = await gitOutput(projectDir, [
 		'status',
@@ -223,7 +223,7 @@ export async function gitDirtyFileCount(
  * rather than misattributing all existing dirt to the run. */
 export async function captureDirtySourceBaseline(
 	acc: RunAccumulator,
-	projectDir: string
+	projectDir: string,
 ): Promise<void> {
 	const baseline = await gitDirtySourcePaths(projectDir);
 	if (baseline !== undefined) acc.dirtySourcePathsAtStart = new Set(baseline);
@@ -237,7 +237,7 @@ export async function captureDirtySourceBaseline(
 // of treating a failure as an empty tree.
 export async function gitDirtySourcePaths(
 	projectDir: string,
-	options: { includeAiddMetadata?: boolean } = {}
+	options: { includeAiddMetadata?: boolean } = {},
 ): Promise<string[] | undefined> {
 	const status = await gitOutput(projectDir, [
 		'status',

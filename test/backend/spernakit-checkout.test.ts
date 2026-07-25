@@ -70,7 +70,7 @@ describe('ensureSpernakitCheckout', () => {
 		};
 
 		await expect(ensureSpernakitCheckout(config, async () => {})).rejects.toThrow(
-			/no scripts\/init\.ts/
+			/no scripts\/init\.ts/,
 		);
 	});
 });

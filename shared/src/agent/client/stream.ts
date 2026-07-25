@@ -72,7 +72,7 @@ interface StreamedToolCall {
 export async function readChatCompletionStream(
 	response: Response,
 	provider: string,
-	options: StreamReadOptions = {}
+	options: StreamReadOptions = {},
 ): Promise<ChatCompletionResponse> {
 	if (!response.body) {
 		throw new Error(`${provider} returned a streaming response with no body`);
@@ -116,12 +116,12 @@ export async function readChatCompletionStream(
 					// actionably rather than silently dropping model output.
 					throw new Error(
 						`${provider} sent a malformed streaming frame — this endpoint may not be ` +
-							`OpenAI SSE-compatible; set providers.${provider}.stream = false to disable streaming`
+							`OpenAI SSE-compatible; set providers.${provider}.stream = false to disable streaming`,
 					);
 				}
 				if (parsed.error !== undefined) {
 					throw new Error(
-						`${provider} stream error: ${scrubSecrets(JSON.stringify(parsed.error))}`
+						`${provider} stream error: ${scrubSecrets(JSON.stringify(parsed.error))}`,
 					);
 				}
 				if (parsed.usage) usage = parsed.usage;
@@ -154,7 +154,7 @@ export async function readChatCompletionStream(
 				if (accumulatedChars > maxChars) {
 					throw new Error(
 						`${provider} streaming response exceeded the maximum accumulated size ` +
-							`(${maxChars} chars) — aborting a runaway stream`
+							`(${maxChars} chars) — aborting a runaway stream`,
 					);
 				}
 			}
@@ -168,7 +168,7 @@ export async function readChatCompletionStream(
 	// keys on) so the turn retries instead of committing a truncated response as success.
 	if (!done && !finished) {
 		throw new Error(
-			`${provider} streaming response ended before completion (connection closed mid-stream) — network error`
+			`${provider} streaming response ended before completion (connection closed mid-stream) — network error`,
 		);
 	}
 
@@ -216,7 +216,7 @@ interface StreamChunk {
 // Returns the number of argument characters appended, so the caller can bound total accumulation.
 function accumulateToolCall(
 	toolCalls: Map<number, StreamedToolCall>,
-	delta: ToolCallDelta
+	delta: ToolCallDelta,
 ): number {
 	const index = typeof delta.index === 'number' ? delta.index : toolCalls.size;
 	const existing = toolCalls.get(index) ?? { arguments: '' };
@@ -234,7 +234,7 @@ function accumulateToolCall(
 async function readWithIdleTimeout(
 	reader: ByteStreamReader,
 	idleMs: number,
-	provider: string
+	provider: string,
 ): Promise<{ done?: boolean; value?: Uint8Array }> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const idleTimeout = new Promise<never>((_, reject) => {
@@ -243,8 +243,8 @@ async function readWithIdleTimeout(
 			reject(
 				new Error(
 					`${provider} streaming response stalled: no data received for ` +
-						`${Math.round(idleMs / 1000)}s — request timed out`
-				)
+						`${Math.round(idleMs / 1000)}s — request timed out`,
+				),
 			);
 		}, idleMs);
 	});

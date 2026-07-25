@@ -1,5 +1,5 @@
 import { isSynthesizedSpernakitTemplate, type ResolvedWebConfig } from 'aidd-shared/config';
-import { parseGithubTemplateSource, type degitClone } from 'aidd-shared/git/degit';
+import { type degitClone, parseGithubTemplateSource } from 'aidd-shared/git/degit';
 import { randomUUID } from 'node:crypto';
 import { copyFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -19,10 +19,10 @@ import { allocateSpernakitPorts } from './portAllocation.ts';
 import { ensureSpernakitCheckout } from './spernakitCheckout.ts';
 import { runSpernakitInit } from './spernakitScaffold.ts';
 import {
-	runGithubTemplateClone,
-	runTemplateScaffold,
 	type LaunchIntakeForCreate,
 	type RecordInitFailure,
+	runGithubTemplateClone,
+	runTemplateScaffold,
 } from './templateScaffold.ts';
 
 export type { LaunchIntakeForCreate, RecordInitFailure } from './templateScaffold.ts';
@@ -48,7 +48,7 @@ function validateProjectName(name: string): string {
 	) {
 		throw new HttpError(
 			'Project name must contain only letters, numbers, dashes, underscores, or periods',
-			400
+			400,
 		);
 	}
 	return trimmed;
@@ -68,7 +68,7 @@ async function assertEmptyOrMissing(targetPath: string): Promise<void> {
 
 async function resolveSpecFile(
 	ctx: CreateContext,
-	spec: null | ProjectCreateSpecInputDto
+	spec: null | ProjectCreateSpecInputDto,
 ): Promise<string | undefined> {
 	if (!spec) return undefined;
 	if (spec.kind === 'path') {
@@ -106,7 +106,7 @@ export async function createProject(
 	purgeProjectRuns: (projectPath: string) => Promise<number>,
 	launchIntake?: LaunchIntakeForCreate,
 	recordInitFailure?: RecordInitFailure,
-	cloneTemplate?: typeof degitClone
+	cloneTemplate?: typeof degitClone,
 ): Promise<ProjectCreateResultDto> {
 	const name = validateProjectName(input.name);
 	const root = assertAllowedPath(ctx.config.allowedRoots, input.root);
@@ -126,7 +126,7 @@ export async function createProject(
 	if (input.templateUrl && !githubSource) {
 		throw new HttpError(
 			'Template URL must be a GitHub repository: https://github.com/owner/repo, github.com/owner/repo, or owner/repo, with an optional #ref',
-			400
+			400,
 		);
 	}
 
@@ -158,7 +158,7 @@ export async function createProject(
 			githubSource,
 			{ description: (input.description ?? '').trim(), name, root, targetPath },
 			recordInitFailure,
-			cloneTemplate
+			cloneTemplate,
 		);
 	} else if (isSpernakit) {
 		const checkoutDir = await ensureSpernakitCheckout(ctx.config);
@@ -175,14 +175,14 @@ export async function createProject(
 				root,
 				targetPath,
 			},
-			recordInitFailure
+			recordInitFailure,
 		);
 	} else if (template) {
 		await runTemplateScaffold(
 			ctx.config.dataDir,
 			template,
 			{ description: (input.description ?? '').trim(), name, root, targetPath },
-			recordInitFailure
+			recordInitFailure,
 		);
 	} else {
 		await mkdir(targetPath, { recursive: true });

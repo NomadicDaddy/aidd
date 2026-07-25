@@ -125,7 +125,7 @@ export function splitCommandLine(command: string): string[] {
 export function buildAiddInvocation(
 	stack: BenchmarkStack,
 	task: BenchmarkTask,
-	workspaceDir: string
+	workspaceDir: string,
 ): { args: string[]; command: string } {
 	const args = [
 		cliEntryPath,

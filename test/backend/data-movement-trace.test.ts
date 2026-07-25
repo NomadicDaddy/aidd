@@ -26,7 +26,7 @@ describe('backend data movement trace', () => {
 					'X-AIDD-Trace-Enabled': '1',
 					'X-AIDD-Trace-ID': 'frontend-trace',
 				},
-			})
+			}),
 		);
 		const header = response.headers.get('X-AIDD-Data-Trace');
 		expect(response.status).toBe(200);
@@ -58,7 +58,7 @@ describe('backend data movement trace', () => {
 				id: 'feature-secret-token',
 				password: 'do-not-log',
 				status: 'backlog',
-			})
+			}),
 		);
 
 		beginDataMovementTrace('trace-test');
@@ -90,7 +90,7 @@ describe('backend data movement trace', () => {
 
 	test('does not expose absolute paths in trace targets', () => {
 		expect(safeTraceTarget('D:\\applications\\demo\\.aidd\\runs.jsonl')).toBe(
-			'.aidd/runs.jsonl'
+			'.aidd/runs.jsonl',
 		);
 		expect(safeTraceTarget('D:\\applications\\demo\\package.json')).toBe('package.json');
 		expect(safeTraceTarget('http://localhost/api/v1/projects')).toBe('/api/v1/projects');

@@ -1,9 +1,10 @@
 import type {
+	PortStatusResponse,
 	ProjectCreateInput,
 	ProjectCreateResult,
-	ProjectDetail,
 	ProjectDeleteRequest,
 	ProjectDeleteResult,
+	ProjectDetail,
 	ProjectFeature,
 	ProjectFeatureStatus,
 	ProjectImportAction,
@@ -16,13 +17,12 @@ import type {
 	ProjectNamesResponse,
 	ProjectRecommendInput,
 	ProjectRecommendResult,
-	ProjectStartImplementationResult,
 	ProjectReport,
 	ProjectReportInput,
 	ProjectReportsResponse,
-	ProjectsListResponse,
 	ProjectsGitStatusResponse,
-	PortStatusResponse,
+	ProjectsListResponse,
+	ProjectStartImplementationResult,
 } from './types.ts';
 
 import { apiGet, apiSend } from './client.ts';
@@ -52,61 +52,61 @@ export async function getProject(id: string, signal?: AbortSignal): Promise<Proj
 }
 
 export async function startProjectImplementation(
-	id: string
+	id: string,
 ): Promise<ProjectStartImplementationResult> {
 	return await apiSend<ProjectStartImplementationResult>(
 		`${projectApiPath(id)}/start-implementation`,
 		'POST',
-		{}
+		{},
 	);
 }
 
 export async function getProjectInterview(id: string): Promise<ProjectInterviewDetail> {
 	const response = await apiGet<{ interview: ProjectInterviewDetail }>(
-		`${projectApiPath(id)}/interview`
+		`${projectApiPath(id)}/interview`,
 	);
 	return response.interview;
 }
 
 export async function submitProjectInterviewAnswer(
 	id: string,
-	body: { answer: string; questionId: string }
+	body: { answer: string; questionId: string },
 ): Promise<ProjectInterviewDetail> {
 	const response = await apiSend<{ interview: ProjectInterviewDetail }>(
 		`${projectApiPath(id)}/interview/responses`,
 		'POST',
-		body
+		body,
 	);
 	return response.interview;
 }
 
 export async function getProjectReports(
 	id: string,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<ProjectReportsResponse> {
 	return await apiGet<ProjectReportsResponse>(`${projectApiPath(id)}/reports`, { signal });
 }
 
 export async function deleteProject(
 	id: string,
-	body: ProjectDeleteRequest
+	body: ProjectDeleteRequest,
 ): Promise<ProjectDeleteResult> {
 	const response = await apiSend<{ deleted: ProjectDeleteResult }>(
 		projectApiPath(id),
 		'DELETE',
-		body
+		body,
 	);
 	return response.deleted;
 }
 
 export async function moveProject(
 	id: string,
-	body: ProjectMoveRequest
+	body: ProjectMoveRequest,
 ): Promise<ProjectMoveResult> {
 	const response = await apiSend<{ project: ProjectMoveResult }>(
 		`${projectApiPath(id)}/move`,
 		'POST',
-		body
+		body,
 	);
 	return response.project;
 }
@@ -114,12 +114,12 @@ export async function moveProject(
 export async function approveProjectFeature(
 	id: string,
 	featureId: string,
-	body: { decision?: string; decisionRequired: boolean }
+	body: { decision?: string; decisionRequired: boolean },
 ): Promise<ProjectFeature> {
 	const response = await apiSend<{ feature: ProjectFeature }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}/approval`,
 		'POST',
-		body
+		body,
 	);
 	return response.feature;
 }
@@ -127,19 +127,19 @@ export async function approveProjectFeature(
 export async function deleteProjectFeature(id: string, featureId: string): Promise<{ id: string }> {
 	const response = await apiSend<{ deleted: { id: string } }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}`,
-		'DELETE'
+		'DELETE',
 	);
 	return response.deleted;
 }
 
 export async function submitProjectReport(
 	id: string,
-	body: ProjectReportInput
+	body: ProjectReportInput,
 ): Promise<ProjectReport> {
 	const response = await apiSend<{ report: ProjectReport }>(
 		`${projectApiPath(id)}/reports`,
 		'POST',
-		body
+		body,
 	);
 	return response.report;
 }
@@ -166,7 +166,7 @@ export async function listProjectImportCandidates(): Promise<ProjectImportCandid
 
 export async function getProjectIntakePreview(path: string): Promise<ProjectIntakePreview> {
 	const response = await apiGet<{ preview: ProjectIntakePreview }>(
-		`/api/v1/projects/intake-preview?path=${encodeURIComponent(path)}`
+		`/api/v1/projects/intake-preview?path=${encodeURIComponent(path)}`,
 	);
 	return response.preview;
 }
@@ -185,7 +185,7 @@ export function projectInitFailureLogUrl(id: string): string {
 
 export async function importProjects(
 	candidateIds: string[],
-	action: ProjectImportAction
+	action: ProjectImportAction,
 ): Promise<ProjectImportResult> {
 	return await apiSend<ProjectImportResult>('/api/v1/projects/import', 'POST', {
 		action,
@@ -198,7 +198,7 @@ export async function createProject(input: ProjectCreateInput): Promise<ProjectC
 }
 
 export async function recommendProjectMode(
-	input: ProjectRecommendInput
+	input: ProjectRecommendInput,
 ): Promise<ProjectRecommendResult> {
 	return await apiSend<ProjectRecommendResult>('/api/v1/projects/recommend-mode', 'POST', input);
 }
@@ -206,12 +206,12 @@ export async function recommendProjectMode(
 export async function updateProjectFeatureStatus(
 	id: string,
 	featureId: string,
-	status: ProjectFeatureStatus
+	status: ProjectFeatureStatus,
 ): Promise<ProjectFeature> {
 	const response = await apiSend<{ feature: ProjectFeature }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}/status`,
 		'PUT',
-		{ status }
+		{ status },
 	);
 	return response.feature;
 }
@@ -219,12 +219,12 @@ export async function updateProjectFeatureStatus(
 export async function updateProjectFeatureMetadata(
 	id: string,
 	featureId: string,
-	body: { notes?: string[]; spec?: string }
+	body: { notes?: string[]; spec?: string },
 ): Promise<ProjectFeature> {
 	const response = await apiSend<{ feature: ProjectFeature }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}/metadata`,
 		'PATCH',
-		body
+		body,
 	);
 	return response.feature;
 }
@@ -232,11 +232,11 @@ export async function updateProjectFeatureMetadata(
 export async function updateProjectFeatureMilestone(
 	id: string,
 	featureId: string,
-	milestone: string
+	milestone: string,
 ): Promise<{ feature: ProjectFeature; roadmap: unknown }> {
 	return await apiSend<{ feature: ProjectFeature; roadmap: unknown }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}/milestone`,
 		'PUT',
-		{ milestone }
+		{ milestone },
 	);
 }

@@ -27,7 +27,7 @@ interface SweepCandidate {
 // holding a value return null — nothing to fill.
 function continuationFillFor(
 	candidate: SweepCandidate,
-	entry: LedgerTerminalEntry | undefined
+	entry: LedgerTerminalEntry | undefined,
 ): null | RunContinuationValue {
 	if (candidate.continuationReason !== null) return null;
 	return evaluateContinuationValue(
@@ -38,7 +38,7 @@ function continuationFillFor(
 			stopReason: candidate.stopReason ?? entry?.stopReason ?? null,
 			summary: candidate.summary ?? entry?.summary ?? null,
 		},
-		entry
+		entry,
 	);
 }
 
@@ -85,11 +85,11 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 				or(
 					and(
 						gte(runs.startedAt, cutoff),
-						or(isNull(runs.exitCode), isNull(runs.stopReason))
+						or(isNull(runs.exitCode), isNull(runs.stopReason)),
 					),
-					isNull(runs.continuationReason)
-				)
-			)
+					isNull(runs.continuationReason),
+				),
+			),
 		);
 	if (candidates.length === 0) return 0;
 
@@ -146,10 +146,10 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 							.where(
 								and(
 									sql`${runs.id} = ${runId}`,
-									inArray(runs.status, [...TERMINAL_STATUSES])
-								)
+									inArray(runs.status, [...TERMINAL_STATUSES]),
+								),
 							),
-					{ label: 'runs.ledgerDriftBackfill' }
+					{ label: 'runs.ledgerDriftBackfill' },
 				);
 				updated++;
 			} catch (err) {
@@ -160,7 +160,7 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 	if (updated > 0) {
 		webLogger.info(
 			{ scanned: candidates.length, updated },
-			'Backfilled run terminal fields from ledger'
+			'Backfilled run terminal fields from ledger',
 		);
 	}
 	return updated;

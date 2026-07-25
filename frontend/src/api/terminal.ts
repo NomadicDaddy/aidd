@@ -13,7 +13,7 @@ export function fetchTerminalSessions(): Promise<{ sessions: TerminalSessionInfo
 
 /** Spawns a new session; omitted fields fall back to the server defaults (first shell, root cwd). */
 export function createTerminalSession(
-	options: { cwd?: string; shellId?: string } = {}
+	options: { cwd?: string; shellId?: string } = {},
 ): Promise<TerminalSessionInfo> {
 	const body: Record<string, string> = {};
 	if (options.cwd) body.cwd = options.cwd;
@@ -24,6 +24,6 @@ export function createTerminalSession(
 export function killTerminalSession(sessionId: string): Promise<{ ok: boolean }> {
 	return apiSend<{ ok: boolean }>(
 		`/api/v1/terminal/sessions/${encodeURIComponent(sessionId)}`,
-		'DELETE'
+		'DELETE',
 	);
 }

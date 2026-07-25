@@ -36,7 +36,7 @@ function sorted(values: Set<string>): string[] {
 
 export async function detectProjectStack(
 	projectDir: string,
-	options: DetectProjectStackOptions = {}
+	options: DetectProjectStackOptions = {},
 ): Promise<ProjectStack> {
 	const rootPackage = await readProjectPackage(join(projectDir, 'package.json'));
 	const evidencePromise = gatherProjectStackEvidence(projectDir);

@@ -34,7 +34,7 @@ function normalizeNativeProvider(provider: string | undefined): keyof typeof pro
 export function providerForBackend(
 	backend: BackendName,
 	config: ResolvedConfig,
-	env: NodeJS.ProcessEnv
+	env: NodeJS.ProcessEnv,
 ): keyof typeof providerDefaults | undefined {
 	if (backend === 'ollama') return 'ollama';
 	if (backend === 'lmstudio') return 'lmstudio';
@@ -48,7 +48,7 @@ export function providerForBackend(
 export function providerScopedReasoningEffort(
 	backend: BackendName,
 	config: ResolvedConfig,
-	env: NodeJS.ProcessEnv
+	env: NodeJS.ProcessEnv,
 ): string | undefined {
 	const effectiveProvider = providerForBackend(backend, config, env);
 	if (!effectiveProvider) return undefined;
@@ -74,7 +74,7 @@ export function resolveEffectiveLaunchTarget(
 	config: ResolvedConfig,
 	mode: AiddMode,
 	overrides: LaunchTargetOverrides = {},
-	env: NodeJS.ProcessEnv = process.env
+	env: NodeJS.ProcessEnv = process.env,
 ): EffectiveLaunchTarget {
 	const backend = overrides.backend ?? config.cli;
 	const backendSource: LaunchBackendSource =

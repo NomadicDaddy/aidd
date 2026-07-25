@@ -46,7 +46,7 @@ describe('resolveEffectiveLaunchTarget', () => {
 			config,
 			'audit',
 			{ backend: 'codex', model: 'override-model', reasoningEffort: 'high' },
-			emptyEnv
+			emptyEnv,
 		);
 		expect(target.backend).toBe('codex');
 		expect(target.backendSource).toBe('override');
@@ -90,11 +90,11 @@ describe('resolveEffectiveLaunchTarget', () => {
 			},
 		};
 		expect(
-			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'codex' }, emptyEnv)
+			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'codex' }, emptyEnv),
 		).toMatchObject({ model: 'codex-model', modelSource: 'backend-config' });
 		// An override backend without its own scoped model falls to the shared model.
 		expect(
-			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'opencode' }, emptyEnv)
+			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'opencode' }, emptyEnv),
 		).toMatchObject({ model: 'shared-model', modelSource: 'shared-config' });
 	});
 
@@ -112,14 +112,14 @@ describe('resolveEffectiveLaunchTarget', () => {
 		};
 		// Audit mode with a backend override and no explicit model: backend-scoped model wins.
 		expect(
-			resolveEffectiveLaunchTarget(config, 'audit', { backend: 'claude-code' }, emptyEnv)
+			resolveEffectiveLaunchTarget(config, 'audit', { backend: 'claude-code' }, emptyEnv),
 		).toMatchObject({
 			model: 'claude-opus-5',
 			modelSource: 'backend-config',
 		});
 		// Same for coding mode.
 		expect(
-			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'claude-code' }, emptyEnv)
+			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'claude-code' }, emptyEnv),
 		).toMatchObject({
 			model: 'claude-opus-5',
 			modelSource: 'backend-config',
@@ -130,8 +130,8 @@ describe('resolveEffectiveLaunchTarget', () => {
 				config,
 				'audit',
 				{ backend: 'claude-code', model: 'explicit-model' },
-				emptyEnv
-			)
+				emptyEnv,
+			),
 		).toMatchObject({ model: 'explicit-model', modelSource: 'override' });
 		// Default behavior unchanged: native-backend audit run resolves auditModel.
 		expect(resolveEffectiveLaunchTarget(config, 'audit', {}, emptyEnv)).toMatchObject({
@@ -149,8 +149,8 @@ describe('resolveEffectiveLaunchTarget', () => {
 				noBackendModel,
 				'audit',
 				{ backend: 'claude-code' },
-				emptyEnv
-			)
+				emptyEnv,
+			),
 		).toMatchObject({
 			backend: 'claude-code',
 			model: undefined,
@@ -171,7 +171,7 @@ describe('resolveEffectiveLaunchTarget', () => {
 			providers: { zhipu: { model: 'provider-model' } },
 		};
 		expect(
-			resolveEffectiveLaunchTarget(withProviderModel, 'coding', {}, emptyEnv)
+			resolveEffectiveLaunchTarget(withProviderModel, 'coding', {}, emptyEnv),
 		).toMatchObject({
 			model: 'provider-model',
 			modelSource: 'provider-default',
@@ -184,7 +184,7 @@ describe('resolveEffectiveLaunchTarget', () => {
 
 		expect(
 			resolveEffectiveLaunchTarget(baseConfig, 'coding', { backend: 'lmstudio' }, emptyEnv)
-				.provider
+				.provider,
 		).toBe('lmstudio');
 	});
 
@@ -195,12 +195,12 @@ describe('resolveEffectiveLaunchTarget', () => {
 			providers: { zhipu: { reasoningEffort: 'high' } },
 		};
 		expect(resolveEffectiveLaunchTarget(config, 'coding', {}, emptyEnv).reasoningEffort).toBe(
-			'high'
+			'high',
 		);
 		// Non-provider backends have no provider scope: top-level effort applies.
 		expect(
 			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'claude-code' }, emptyEnv)
-				.reasoningEffort
+				.reasoningEffort,
 		).toBe('medium');
 	});
 
@@ -224,7 +224,7 @@ describe('resolveEffectiveLaunchTarget', () => {
 			'flag-model',
 		]);
 		expect(resolveRunRuntimeMetadata(withFlag, config, 'audit', emptyEnv).model).toBe(
-			'flag-model'
+			'flag-model',
 		);
 	});
 });

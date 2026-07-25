@@ -10,9 +10,9 @@ import {
 	type AgentClient,
 	type NativeFileConfig,
 	type OpenAICompatibleClientConfig,
+	providerDefaults,
 	type ProviderName,
 	type ResolvedNativeClientConfig,
-	providerDefaults,
 } from './types.ts';
 
 export async function loadNativeFileConfig(): Promise<NativeFileConfig> {
@@ -36,7 +36,7 @@ export async function loadNativeFileConfig(): Promise<NativeFileConfig> {
 	} catch (error) {
 		throw new Error(
 			`Failed to parse native config at ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
-			{ cause: error }
+			{ cause: error },
 		);
 	}
 }
@@ -64,7 +64,7 @@ export async function createDefaultNativeClient(
 	env: NodeJS.ProcessEnv = process.env,
 	configOverride?: NativeFileConfig,
 	providerOverride?: ProviderName,
-	callSurface?: AiCallSurface
+	callSurface?: AiCallSurface,
 ): Promise<AgentClient> {
 	const resolved = await resolveDefaultNativeClientConfig(env, configOverride, providerOverride);
 	if (resolved.kind === 'simulation') {
@@ -80,7 +80,7 @@ export async function createDefaultNativeClient(
 export async function resolveDefaultNativeClientConfig(
 	env: NodeJS.ProcessEnv = process.env,
 	configOverride?: NativeFileConfig,
-	providerOverride?: ProviderName
+	providerOverride?: ProviderName,
 ): Promise<ResolvedNativeClientConfig> {
 	if (env.AIDD_NATIVE_SIMULATION === '1') {
 		return { kind: 'simulation' };
@@ -107,7 +107,7 @@ export async function resolveDefaultNativeClientConfig(
 		throw new Error(
 			`Native ${provider} provider has no API key configured. ` +
 				`Set NATIVE_API_KEY (or ${provider === 'zhipu' ? 'ZHIPU_API_KEY' : provider === 'xai' ? 'XAI_API_KEY' : provider === 'openai' ? 'OPENAI_API_KEY' : 'the provider env var'}), ` +
-				`add providers.${provider}.apiKey to ~/.aidd/config.json, or set AIDD_NATIVE_SIMULATION=1 to explicitly run the simulation stub.`
+				`add providers.${provider}.apiKey to ~/.aidd/config.json, or set AIDD_NATIVE_SIMULATION=1 to explicitly run the simulation stub.`,
 		);
 	}
 

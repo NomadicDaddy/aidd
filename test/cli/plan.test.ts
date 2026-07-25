@@ -35,7 +35,7 @@ describe('resolveRunPlan', () => {
 	test('carries the blueprint implementation boundary into the run plan', () => {
 		const plan = resolveRunPlan(
 			parseArgs(['--project-dir', 'd:/applications/demo', '--stop-before-implementation']),
-			config
+			config,
 		);
 
 		expect(plan.stopBeforeImplementation).toBe(true);
@@ -48,11 +48,11 @@ describe('resolveRunPlan', () => {
 				{
 					...config,
 					cli,
-				}
+				},
 			);
 			expect(plan.backend).toBe(cli);
 			const backendFragment = plan.prompt.fragments.find(
-				(fragment) => fragment.kind === 'backend'
+				(fragment) => fragment.kind === 'backend',
 			);
 			expect(backendFragment?.path).toBe('prompts/_cli/native.md');
 		}
@@ -61,7 +61,7 @@ describe('resolveRunPlan', () => {
 	test('carries internal fresh-project Git init flag into the run plan', () => {
 		const plan = resolveRunPlan(
 			parseArgs(['--project-dir', 'd:/applications/demo', '--init-git-after-scaffold']),
-			config
+			config,
 		);
 
 		expect(plan.initGitAfterScaffold).toBe(true);
@@ -75,7 +75,7 @@ describe('resolveRunPlan', () => {
 		};
 		const nativePlan = resolveRunPlan(
 			parseArgs(['--project-dir', 'd:/applications/demo']),
-			nativeWithProviderEffort
+			nativeWithProviderEffort,
 		);
 		expect(nativePlan.reasoningEffort).toBe('high');
 
@@ -87,7 +87,7 @@ describe('resolveRunPlan', () => {
 
 		const explicitArgsWin = resolveRunPlan(
 			parseArgs(['--project-dir', 'd:/applications/demo', '--reasoning-effort', 'minimal']),
-			nativeWithProviderEffort
+			nativeWithProviderEffort,
 		);
 		expect(explicitArgsWin.reasoningEffort).toBe('minimal');
 	});
@@ -106,7 +106,7 @@ describe('resolveRunPlan', () => {
 				},
 			},
 			'coding',
-			{}
+			{},
 		);
 
 		expect(runtime).toEqual({
@@ -126,7 +126,7 @@ describe('resolveRunPlan', () => {
 				'--thinking-level',
 				'high',
 			]),
-			config
+			config,
 		);
 
 		expect(plan.reasoningEffort).toBe('max');
@@ -142,7 +142,7 @@ describe('resolveRunPlan', () => {
 				'--director-output',
 				'out.json',
 			]),
-			config
+			config,
 		);
 		expect(plan.mode).toBe('director');
 		expect(plan.director?.fleetSummaryPath.endsWith('fleet.json')).toBe(true);
@@ -159,7 +159,7 @@ describe('resolveRunPlan', () => {
 				'--director-context',
 				'context.json',
 			]),
-			config
+			config,
 		);
 		expect(plan.director?.contextPath?.endsWith('context.json')).toBe(true);
 		expect(plan.prompt.variables.directorContextPath).toBe('context.json');
@@ -168,7 +168,7 @@ describe('resolveRunPlan', () => {
 	test('documents mode priority', () => {
 		const plan = resolveRunPlan(
 			parseArgs(['--project-dir', '.', '--audit', 'SECURITY', '--todo', '--validate']),
-			config
+			config,
 		);
 		expect(plan.mode).toBe('audit');
 	});
@@ -182,17 +182,17 @@ describe('resolveRunPlan', () => {
 		};
 
 		expect(
-			resolveRunPlan(parseArgs(['--project-dir', '.', '--cli', 'native']), modelConfig).model
+			resolveRunPlan(parseArgs(['--project-dir', '.', '--cli', 'native']), modelConfig).model,
 		).toBe('code-model');
 		expect(
 			resolveRunPlan(parseArgs(['--project-dir', '.', '--audit', 'SECURITY']), modelConfig)
-				.model
+				.model,
 		).toBe('audit-model');
 		expect(
 			resolveRunPlan(
 				parseArgs(['--director', '--fleet-summary', 'f', '--director-output', 'o']),
-				modelConfig
-			).model
+				modelConfig,
+			).model,
 		).toBe('default-model');
 	});
 
@@ -219,7 +219,7 @@ describe('resolveRunPlan', () => {
 				'--exec-model',
 				'exec-model',
 			]),
-			{ ...config, cli: 'codex' }
+			{ ...config, cli: 'codex' },
 		);
 
 		expect(plan.mode).toBe('coding');
@@ -233,19 +233,19 @@ describe('resolveRunPlan', () => {
 
 	test('resolves triumvirate defaults from config and requires planning role CLIs', () => {
 		expect(() =>
-			resolveRunPlan(parseArgs(['--project-dir', '.', '--triumvirate']), config)
+			resolveRunPlan(parseArgs(['--project-dir', '.', '--triumvirate']), config),
 		).toThrow(/requires --secondary-cli/);
 		expect(() =>
 			resolveRunPlan(
 				parseArgs(['--project-dir', '.', '--triumvirate', '--secondary-cli', 'codex']),
-				config
-			)
+				config,
+			),
 		).toThrow(/requires --secondary-cli/);
 		expect(() =>
 			resolveRunPlan(
 				parseArgs(['--project-dir', '.', '--triumvirate', '--overseer-cli', 'opencode']),
-				config
-			)
+				config,
+			),
 		).toThrow(/requires --secondary-cli/);
 
 		const plan = resolveRunPlan(parseArgs(['--project-dir', '.', '--triumvirate']), {

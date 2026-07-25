@@ -88,7 +88,7 @@ describe('crawltest route parity', () => {
 		};
 		const routes = await initialRoutes(
 			{ ...crawlArgs(), page: FRONTEND_ROUTE_PATHS.director },
-			failFetcher
+			failFetcher,
 		);
 
 		expect(routes).toEqual([FRONTEND_ROUTE_PATHS.director]);
@@ -125,7 +125,7 @@ describe('crawltest page classification', () => {
 
 	test('retains explicit runtime-error detection', () => {
 		expect(classifyPageContent('Something went wrong while rendering', false).isErrorPage).toBe(
-			true
+			true,
 		);
 	});
 

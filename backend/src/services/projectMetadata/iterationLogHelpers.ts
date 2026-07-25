@@ -33,7 +33,7 @@ export interface ProjectRunLedgerMetadata {
 }
 
 export async function gatherLocalIterations(
-	metadataDir: string
+	metadataDir: string,
 ): Promise<ProjectLocalIterationDto[]> {
 	let entries: string[];
 	try {
@@ -55,10 +55,10 @@ export async function gatherLocalIterations(
 	const records = await Promise.all(
 		jsonEntries.map(async ({ entry }) => {
 			const parsed = await readJsonOrNull<RawIterationArtifact>(
-				join(metadataDir, 'iterations', entry)
+				join(metadataDir, 'iterations', entry),
 			);
 			return parsed ? localIterationFromArtifact(parsed) : null;
-		})
+		}),
 	);
 	const result = records
 		.filter((record): record is ProjectLocalIterationDto => record !== null)
@@ -87,7 +87,7 @@ export async function gatherLocalIterations(
 // state stops reporting a perpetual 'syncing'.
 export function reconcileIterationLiveness(
 	iterations: ProjectLocalIterationDto[],
-	liveRunIds: ReadonlySet<string>
+	liveRunIds: ReadonlySet<string>,
 ): ProjectLocalIterationDto[] {
 	return iterations.map((iteration) => {
 		if (iteration.status !== 'running') return iteration;
@@ -99,7 +99,7 @@ export function reconcileIterationLiveness(
 // Read the ledger once for project detail: recent run rows, all run ids used for iteration
 // reconciliation, and all-history usage accounting share the same file-backed snapshot.
 export async function gatherRunLedgerMetadata(
-	metadataDir: string
+	metadataDir: string,
 ): Promise<ProjectRunLedgerMetadata> {
 	const content = await readTextOrNull(join(metadataDir, 'runs.jsonl'));
 	const empty = {
@@ -165,7 +165,7 @@ export async function gatherLedgerRunIds(metadataDir: string): Promise<Set<strin
 export function excludeOrphanIterations(
 	iterations: ProjectLocalIterationDto[],
 	ledgerRunIds: ReadonlySet<string>,
-	liveRunIds: ReadonlySet<string>
+	liveRunIds: ReadonlySet<string>,
 ): ProjectLocalIterationDto[] {
 	return iterations.filter((iteration) => {
 		if (iteration.runId === null) return true;

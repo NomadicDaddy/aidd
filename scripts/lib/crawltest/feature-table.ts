@@ -36,7 +36,7 @@ async function featureFilterOptions(page: Page): Promise<{ source: string[]; sta
 }
 
 async function actionableFeatureFilterTarget(
-	page: Page
+	page: Page,
 ): Promise<{ source: string; status: string } | null> {
 	const script = `(() => {
 		const rows = Array.from(document.querySelectorAll('tbody tr'));
@@ -68,16 +68,16 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 		await setInputValue(
 			page,
 			'input[placeholder="Filter by feature metadata"]',
-			'crawltest-no-feature-match'
+			'crawltest-no-feature-match',
 		);
 		await page.waitForFunction(
 			"document.body.innerText.includes('No features match the active filters.')",
-			{ timeout: 5_000 }
+			{ timeout: 5_000 },
 		);
 		await clickButtonByText(page, 'Reset filters');
 		await page.waitForFunction(
 			"!document.body.innerText.includes('No features match the active filters.')",
-			{ timeout: 5_000 }
+			{ timeout: 5_000 },
 		);
 
 		const target = await actionableFeatureFilterTarget(page);
@@ -90,7 +90,7 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 		await selectFeatureFilter(page, 2, source);
 		await page.waitForFunction(
 			"new URLSearchParams(location.search).has('featureStatus') && new URLSearchParams(location.search).has('featureSource')",
-			{ timeout: 5_000 }
+			{ timeout: 5_000 },
 		);
 		const controlsVisible = target
 			? Boolean(
@@ -100,7 +100,7 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 						'button[aria-label^="Approve "]',
 						'button[aria-label^="Delete "]',
 						].some((selector) => document.querySelector(selector) !== null);
-					})()`)
+					})()`),
 				)
 			: true;
 		if (!controlsVisible) {
@@ -111,7 +111,7 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 		errors.push(
 			`${route} project feature filter checks failed: ${
 				err instanceof Error ? err.message : String(err)
-			}`
+			}`,
 		);
 	}
 	return errors;
@@ -119,7 +119,7 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 
 export async function assertProjectFeaturesActionsAffordance(
 	page: Page,
-	route: string
+	route: string,
 ): Promise<string[]> {
 	if (!isProjectDetailRoute(route)) return [];
 	const errors: string[] = [];
@@ -182,7 +182,7 @@ export async function assertProjectFeaturesActionsAffordance(
 		errors.push(
 			`${route} project feature actions affordance check failed: ${
 				err instanceof Error ? err.message : String(err)
-			}`
+			}`,
 		);
 	}
 	return errors;

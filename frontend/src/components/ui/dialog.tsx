@@ -22,7 +22,7 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 			!node.hasAttribute('disabled') &&
 			node.getAttribute('aria-hidden') !== 'true' &&
 			node.tabIndex !== -1 &&
-			(node.offsetWidth > 0 || node.offsetHeight > 0 || node.getClientRects().length > 0)
+			(node.offsetWidth > 0 || node.offsetHeight > 0 || node.getClientRects().length > 0),
 	);
 }
 

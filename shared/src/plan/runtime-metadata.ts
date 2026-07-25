@@ -19,13 +19,13 @@ export function resolveRunRuntimeMetadata(
 	args: ParsedArgs,
 	config: ResolvedConfig,
 	mode: AiddMode,
-	env: NodeJS.ProcessEnv = process.env
+	env: NodeJS.ProcessEnv = process.env,
 ): RunRuntimeMetadata {
 	const target = resolveEffectiveLaunchTarget(
 		config,
 		mode,
 		{ model: args.model, reasoningEffort: args.reasoningEffort },
-		env
+		env,
 	);
 	return {
 		...(target.model !== undefined ? { model: target.model } : {}),
@@ -37,7 +37,7 @@ export function resolveRunRuntimeMetadata(
 export function resolveBackendDefaultModel(
 	config: ResolvedConfig,
 	backend: BackendName,
-	env: NodeJS.ProcessEnv = process.env
+	env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
 	const configuredModel = config.backends?.[backend]?.model ?? config.sharedModel;
 	if (configuredModel !== undefined) return configuredModel;
@@ -51,7 +51,7 @@ export function resolveBackendDefaultModel(
 export function resolveBackendProvider(
 	config: ResolvedConfig,
 	backend: BackendName,
-	env: NodeJS.ProcessEnv = process.env
+	env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
 	return providerForBackend(backend, config, env);
 }
@@ -59,7 +59,7 @@ export function resolveBackendProvider(
 export function resolveBackendReasoningEffort(
 	config: ResolvedConfig,
 	backend: BackendName,
-	env: NodeJS.ProcessEnv = process.env
+	env: NodeJS.ProcessEnv = process.env,
 ): string {
 	return providerScopedReasoningEffort(backend, config, env) ?? config.reasoningEffort;
 }

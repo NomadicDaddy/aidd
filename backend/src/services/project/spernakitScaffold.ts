@@ -38,7 +38,7 @@ export async function runSpernakitInit(
 		root: string;
 		targetPath: string;
 	},
-	recordInitFailure?: RecordInitFailure
+	recordInitFailure?: RecordInitFailure,
 ): Promise<void> {
 	const { name, root, targetPath } = args;
 	const slug = toSpernakitSlug(name);
@@ -70,7 +70,7 @@ export async function runSpernakitInit(
 	const recordFailure = async (
 		errorSummary: string,
 		logPath: null | string,
-		quarantinePath: null | string
+		quarantinePath: null | string,
 	): Promise<void> => {
 		if (recordInitFailure) {
 			await recordInitFailure({
@@ -98,7 +98,7 @@ export async function runSpernakitInit(
 		await recordFailure(summary, null, quarantinePath);
 		throw new HttpError(
 			`${summary}${quarantinePath ? ` (partial output quarantined at ${quarantinePath})` : ''}`,
-			500
+			500,
 		);
 	}
 	const logPath = await persistSpernakitInitLog(dataDir, outcome, timestamp);
@@ -107,13 +107,13 @@ export async function runSpernakitInit(
 		await recordFailure(
 			`Spernakit init failed with exit code ${outcome.code}.\n${formatInitFailureDetail(outcome)}`,
 			logPath,
-			quarantinePath
+			quarantinePath,
 		);
 		throw new HttpError(
 			`Spernakit init failed with exit code ${outcome.code}. Full output: ${logPath}${
 				quarantinePath ? ` (partial output quarantined at ${quarantinePath})` : ''
 			}\n${formatInitFailureDetail(outcome)}`,
-			500
+			500,
 		);
 	}
 	recordDataMovement({

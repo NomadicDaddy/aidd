@@ -20,10 +20,10 @@ import {
 	filterHistoryEvents,
 	groupHistoryEventsByDay,
 	HISTORY_FILTERS,
-	historyFilterCounts,
-	historyFilterLabels,
 	type HistoryEvent,
 	type HistoryFilter,
+	historyFilterCounts,
+	historyFilterLabels,
 } from './historyTimeline.ts';
 import { Pagination } from './Pagination.tsx';
 
@@ -111,7 +111,7 @@ export function HistoryTab({
 	return (
 		<Card className="overflow-hidden p-0">
 			<div className="border-b px-4 py-3 dark:border-neutral-800">
-				<h2 className="text-foreground text-sm font-semibold">Project history</h2>
+				<h2 className="text-sm font-semibold text-foreground">Project history</h2>
 				<p className="text-xs text-neutral-500">
 					Timeline of feature, remediation, and audit-finding lifecycle events merged with
 					recorded runs, newest first. Completion times fall back to the feature&apos;s

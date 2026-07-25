@@ -5,12 +5,12 @@ import {
 	FRONTEND_ROUTE_PATHS,
 	type FrontendRouteId,
 } from 'aidd-shared/contracts/frontend-routes';
-import { Suspense, lazy, useEffect, useRef, type ReactNode } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useRef } from 'react';
 import {
+	createBrowserRouter,
 	Navigate,
 	Outlet,
 	RouterProvider,
-	createBrowserRouter,
 	useLocation,
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -24,66 +24,68 @@ import { NotFoundPage } from './pages/notFound/NotFoundPage.tsx';
 import { useThemeStore } from './stores/themeStore.ts';
 
 const AboutPage = lazy(() =>
-	import('./pages/about/AboutPage.tsx').then((m) => ({ default: m.AboutPage }))
+	import('./pages/about/AboutPage.tsx').then((m) => ({ default: m.AboutPage })),
 );
 const DirectorPage = lazy(() =>
-	import('./pages/director/DirectorPage.tsx').then((m) => ({ default: m.DirectorPage }))
+	import('./pages/director/DirectorPage.tsx').then((m) => ({ default: m.DirectorPage })),
 );
 const DashboardPage = lazy(() =>
-	import('./pages/dashboard/DashboardPage.tsx').then((m) => ({ default: m.DashboardPage }))
+	import('./pages/dashboard/DashboardPage.tsx').then((m) => ({ default: m.DashboardPage })),
 );
 const DiaryPage = lazy(() =>
-	import('./pages/diary/DiaryPage.tsx').then((m) => ({ default: m.DiaryPage }))
+	import('./pages/diary/DiaryPage.tsx').then((m) => ({ default: m.DiaryPage })),
 );
 const DocsPage = lazy(() =>
-	import('./pages/docs/DocsPage.tsx').then((m) => ({ default: m.DocsPage }))
+	import('./pages/docs/DocsPage.tsx').then((m) => ({ default: m.DocsPage })),
 );
 const AuditsPage = lazy(() =>
-	import('./pages/audits/AuditsPage.tsx').then((m) => ({ default: m.AuditsPage }))
+	import('./pages/audits/AuditsPage.tsx').then((m) => ({ default: m.AuditsPage })),
 );
 const SkillsPage = lazy(() =>
 	import('./pages/skills/SkillsPage.tsx').then((m) => ({
 		default: m.SkillsPage,
-	}))
+	})),
 );
 const PipelineSessionReportPage = lazy(() =>
 	import('./pages/pipelineSessions/PipelineSessionReportPage.tsx').then((m) => ({
 		default: m.PipelineSessionReportPage,
-	}))
+	})),
 );
 const ProjectDetailPage = lazy(() =>
-	import('./pages/projects/ProjectDetailPage.tsx').then((m) => ({ default: m.ProjectDetailPage }))
+	import('./pages/projects/ProjectDetailPage.tsx').then((m) => ({
+		default: m.ProjectDetailPage,
+	})),
 );
 const ProjectProfileMatrixPage = lazy(() =>
 	import('./pages/projects/profileMatrix/ProfileMatrixPage.tsx').then((m) => ({
 		default: m.ProfileMatrixPage,
-	}))
+	})),
 );
 const ProjectsPage = lazy(() =>
-	import('./pages/projects/ProjectsPage.tsx').then((m) => ({ default: m.ProjectsPage }))
+	import('./pages/projects/ProjectsPage.tsx').then((m) => ({ default: m.ProjectsPage })),
 );
 const RecipeCreatePage = lazy(() =>
-	import('./pages/recipes/RecipeCreatePage.tsx').then((m) => ({ default: m.RecipeCreatePage }))
+	import('./pages/recipes/RecipeCreatePage.tsx').then((m) => ({ default: m.RecipeCreatePage })),
 );
 const RecipeDetailPage = lazy(() =>
-	import('./pages/recipes/RecipeDetailPage.tsx').then((m) => ({ default: m.RecipeDetailPage }))
+	import('./pages/recipes/RecipeDetailPage.tsx').then((m) => ({ default: m.RecipeDetailPage })),
 );
 const RecipesPage = lazy(() =>
-	import('./pages/recipes/RecipesPage.tsx').then((m) => ({ default: m.RecipesPage }))
+	import('./pages/recipes/RecipesPage.tsx').then((m) => ({ default: m.RecipesPage })),
 );
 const RunsPage = lazy(() =>
-	import('./pages/runs/RunsPage.tsx').then((m) => ({ default: m.RunsPage }))
+	import('./pages/runs/RunsPage.tsx').then((m) => ({ default: m.RunsPage })),
 );
 const SettingsPage = lazy(() =>
-	import('./pages/settings/SettingsPage.tsx').then((m) => ({ default: m.SettingsPage }))
+	import('./pages/settings/SettingsPage.tsx').then((m) => ({ default: m.SettingsPage })),
 );
 const ExecutionIdentityBadgeLabPage = lazy(() =>
 	import('./pages/settings/ExecutionIdentityBadgeLabPage.tsx').then((m) => ({
 		default: m.ExecutionIdentityBadgeLabPage,
-	}))
+	})),
 );
 const TelemetryPage = lazy(() =>
-	import('./pages/telemetry/TelemetryPage.tsx').then((m) => ({ default: m.TelemetryPage }))
+	import('./pages/telemetry/TelemetryPage.tsx').then((m) => ({ default: m.TelemetryPage })),
 );
 
 const queryClient = new QueryClient({

@@ -14,9 +14,9 @@ export function EmptyState({
 	return (
 		<div
 			className={cn(
-				'border-border bg-muted text-muted-foreground rounded-md border border-dashed p-4 text-sm',
+				'rounded-md border border-dashed border-border bg-muted p-4 text-sm text-muted-foreground',
 				action ? 'flex flex-col items-start gap-2' : undefined,
-				className
+				className,
 			)}>
 			<div>{children}</div>
 			{action ? <div className="flex flex-wrap gap-2">{action}</div> : null}

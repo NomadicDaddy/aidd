@@ -29,7 +29,7 @@ describe('skill directive intent', () => {
 					source: 'exact',
 				},
 				mode: 'directive',
-			})
+			}),
 		).toBe('review-only');
 	});
 
@@ -42,7 +42,7 @@ describe('skill directive intent', () => {
 					source: 'exact',
 				},
 				mode: 'directive',
-			})
+			}),
 		).toBe('apply-changes');
 	});
 
@@ -52,14 +52,14 @@ describe('skill directive intent', () => {
 				commitsCreatedCount: 0,
 				filesCreated: 1,
 				filesEdited: 0,
-			})
+			}),
 		).toBe(true);
 		expect(
 			isReadOnlySkillDirectiveViolation(readOnlySkillDirective, {
 				commitsCreatedCount: 1,
 				filesCreated: 0,
 				filesEdited: 0,
-			})
+			}),
 		).toBe(true);
 	});
 
@@ -69,7 +69,7 @@ describe('skill directive intent', () => {
 				commitsCreatedCount: 0,
 				filesCreated: 0,
 				filesEdited: 0,
-			})
+			}),
 		).toBe(false);
 		expect(
 			isReadOnlySkillDirectiveViolation(
@@ -85,8 +85,8 @@ describe('skill directive intent', () => {
 					commitsCreatedCount: 1,
 					filesCreated: 1,
 					filesEdited: 1,
-				}
-			)
+				},
+			),
 		).toBe(false);
 	});
 });

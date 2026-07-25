@@ -31,7 +31,7 @@ export function buildRateLimitBudgetSummary(baseSummary: string, plan: RunPlan):
 export async function handlePreRunChecks(
 	plan: RunPlan,
 	deps: OrchestratorDeps,
-	move: MoveFn
+	move: MoveFn,
 ): Promise<PreRunCheckResult | undefined> {
 	if (await deps.store.hasStopRequested(plan.stopPolicy.stopFile)) {
 		const summary = 'stop requested before run';
@@ -102,14 +102,14 @@ export async function handleRateLimit(
 	events: AgentEvent[],
 	controller: AbortController,
 	iteration: number,
-	runStartedAtMs: number
+	runStartedAtMs: number,
 ): Promise<{ backoffExceedsDeadline: boolean; stopRequested: boolean }> {
 	const decision = computeRateLimitSleep(
 		extractRateLimitMessage(events),
 		new Date(),
 		plan.outputPolicy.rateLimitBufferSeconds,
 		plan.outputPolicy.rateLimitBackoffSeconds,
-		extractRateLimitResetAt(events)
+		extractRateLimitResetAt(events),
 	);
 	// A backoff that would sleep across the run's wall-clock deadline can never lead to a
 	// productive iteration — the next iteration would be killed at spawn. Skip the sleep and
@@ -117,7 +117,7 @@ export async function handleRateLimit(
 	// (observed: a 31-minute rate-limit sleep past the 3h budget, then a doomed 39s iteration).
 	if (Date.now() + decision.sleepMs >= wallClockDeadlineMs(plan, runStartedAtMs)) {
 		console.log(
-			`\nRate limited, but the ${Math.round(decision.sleepMs / 1000)}s backoff crosses the wall-clock deadline; ending the run instead of waiting.`
+			`\nRate limited, but the ${Math.round(decision.sleepMs / 1000)}s backoff crosses the wall-clock deadline; ending the run instead of waiting.`,
 		);
 		const stopRequested = await deps.store.hasStopRequested(plan.stopPolicy.stopFile);
 		return { backoffExceedsDeadline: true, stopRequested };
@@ -129,7 +129,7 @@ export async function handleRateLimit(
 				? 'reset already passed; retrying immediately'
 				: `fallback ${plan.outputPolicy.rateLimitBackoffSeconds}s (could not parse reset)`;
 	console.log(
-		`\nRate limited. Sleeping ${Math.round(decision.sleepMs / 1000)}s (${reasonText}).`
+		`\nRate limited. Sleeping ${Math.round(decision.sleepMs / 1000)}s (${reasonText}).`,
 	);
 	if (decision.sleepMs > 0) {
 		const waitProgress = new OrchestratorProgressReporter({

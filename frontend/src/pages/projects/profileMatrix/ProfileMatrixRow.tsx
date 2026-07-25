@@ -29,7 +29,7 @@ function ProfileFacetSelect({
 	onChange: (
 		projectId: string,
 		field: FacetField,
-		value: ProjectAssuranceProfileInput[FacetField]
+		value: ProjectAssuranceProfileInput[FacetField],
 	) => void;
 	projectName: string;
 	row: ProfileMatrixRowModel;
@@ -39,12 +39,12 @@ function ProfileFacetSelect({
 	return (
 		<select
 			aria-label={`${projectName} ${facet.title}`}
-			className="border-border bg-background text-foreground h-8 w-full min-w-36 rounded-md border px-2 text-xs outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+			className="h-8 w-full min-w-36 rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 			onChange={(event) =>
 				onChange(
 					row.project.id,
 					field,
-					event.target.value as ProjectAssuranceProfileInput[FacetField]
+					event.target.value as ProjectAssuranceProfileInput[FacetField],
 				)
 			}
 			value={row.form[field]}>
@@ -66,7 +66,7 @@ export function ProfileMatrixRow({
 	onChange: (
 		projectId: string,
 		field: FacetField,
-		value: ProjectAssuranceProfileInput[FacetField]
+		value: ProjectAssuranceProfileInput[FacetField],
 	) => void;
 	onReset: (projectId: string) => void;
 	onSave: (projectId: string) => void;
@@ -78,14 +78,14 @@ export function ProfileMatrixRow({
 	const sourceTone = row.project.metadata.profile.source === 'explicit' ? 'teal' : 'neutral';
 
 	return (
-		<tr className="border-border hover:bg-muted/40 border-b align-top transition-colors">
-			<th className="bg-card sticky left-0 z-10 max-w-64 min-w-56 px-3 py-3 text-left">
+		<tr className="border-b border-border align-top transition-colors hover:bg-muted/40">
+			<th className="sticky left-0 z-10 max-w-64 min-w-56 bg-card px-3 py-3 text-left">
 				<Link
-					className="text-foreground block truncate text-sm font-semibold hover:underline"
+					className="block truncate text-sm font-semibold text-foreground hover:underline"
 					to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
 					{row.project.name}
 				</Link>
-				<div className="text-muted-foreground mt-1 truncate font-mono text-[11px]">
+				<div className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
 					{row.project.path}
 				</div>
 			</th>
@@ -109,7 +109,7 @@ export function ProfileMatrixRow({
 				<div className="flex min-w-40 flex-col gap-1">
 					<Badge tone={row.posture.tone}>{row.posture.label}</Badge>
 					{row.posture.reasons.length > 0 && (
-						<span className="text-muted-foreground text-xs">
+						<span className="text-xs text-muted-foreground">
 							{row.posture.reasons.length} hardening trigger
 							{row.posture.reasons.length === 1 ? '' : 's'}
 						</span>
@@ -117,12 +117,12 @@ export function ProfileMatrixRow({
 				</div>
 			</td>
 			<td className="px-3 py-3 text-xs tabular-nums">
-				<div className="text-foreground font-medium">
+				<div className="font-medium text-foreground">
 					{applicable}/{auditCount} apply
 				</div>
 				<div className="text-muted-foreground">{required} required</div>
 			</td>
-			<td className="text-muted-foreground px-3 py-3 text-xs whitespace-nowrap">
+			<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
 				{formatUpdatedAt(row.project.metadata.profile.updatedAt)}
 			</td>
 			<td className="px-3 py-3">

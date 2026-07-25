@@ -28,7 +28,7 @@ export function parseSweepArgs(argv: string[]): SweepOptions {
 				String(argv[index + 1] ?? '')
 					.split(',')
 					.map((value) => value.trim())
-					.filter(Boolean)
+					.filter(Boolean),
 			);
 			index += 1;
 			continue;
@@ -60,13 +60,13 @@ export function parseSweepArgs(argv: string[]): SweepOptions {
 
 	if (options.depth !== SUPPORTED_DEPTH) {
 		throw new Error(
-			`Unsupported --depth "${options.depth}". Supported value: ${SUPPORTED_DEPTH}`
+			`Unsupported --depth "${options.depth}". Supported value: ${SUPPORTED_DEPTH}`,
 		);
 	}
 
 	if (options.fixMode !== SUPPORTED_FIX_MODE) {
 		throw new Error(
-			`Unsupported --fix-mode "${options.fixMode}". Supported value: ${SUPPORTED_FIX_MODE}`
+			`Unsupported --fix-mode "${options.fixMode}". Supported value: ${SUPPORTED_FIX_MODE}`,
 		);
 	}
 

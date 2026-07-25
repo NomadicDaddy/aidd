@@ -17,7 +17,7 @@ export const appLaunches = sqliteTable(
 	(table) => [
 		index('idx_app_launches_status').on(table.status),
 		check('ck_app_launches_status', sql`${table.status} IN ('crashed','running','stopped')`),
-	]
+	],
 );
 
 // Failed project-template inits. A scaffold that errors is quarantined off the target
@@ -47,7 +47,7 @@ export const projectInitFailures = sqliteTable(
 		index('idx_project_init_failures_status').on(table.status),
 		index('idx_project_init_failures_created_at').on(table.createdAt),
 		check('ck_project_init_failures_status', sql`${table.status} IN ('dismissed','open')`),
-	]
+	],
 );
 
 // settings.value stores JSON blobs; the json_valid CHECK constraint prevents
@@ -63,7 +63,7 @@ export const settings = sqliteTable(
 			.default(sql`(unixepoch() * 1000)`),
 		value: text('value').notNull(),
 	},
-	(table) => [check('ck_settings_value_json', sql`json_valid(${table.value})`)]
+	(table) => [check('ck_settings_value_json', sql`json_valid(${table.value})`)],
 );
 
 // Time-series of runtime performance samples. Two row shapes share the table, distinguished by
@@ -91,5 +91,5 @@ export const systemMetrics = sqliteTable(
 			.default(sql`(unixepoch() * 1000)`),
 		value: real('value'),
 	},
-	(table) => [index('idx_system_metrics_type_ts').on(table.metricType, table.timestamp)]
+	(table) => [index('idx_system_metrics_type_ts').on(table.metricType, table.timestamp)],
 );

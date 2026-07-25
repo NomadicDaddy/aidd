@@ -22,7 +22,7 @@ export function isSynthesizedSpernakitTemplate(template: ResolvedProjectTemplate
 // synthesized one. Third-party templates default to postCreate 'ingest' (a scaffold with no .aidd
 // contract or known gates); the synthesized spernakit entry keeps its coding-run golden path.
 export function resolveProjectTemplates(
-	configured: NonNullable<PartialAiddConfig['web']>['templates']
+	configured: NonNullable<PartialAiddConfig['web']>['templates'],
 ): ResolvedProjectTemplateConfig[] {
 	const explicit: ResolvedProjectTemplateConfig[] = (configured ?? []).map((template) => ({
 		cwd: template.cwd ?? 'root',

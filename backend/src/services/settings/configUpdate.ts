@@ -89,7 +89,7 @@ function applyNetworkInput(next: PartialAiddConfig, input: WebConfigSettingsInpu
 function applyProviderInput(
 	next: PartialAiddConfig,
 	existing: PartialAiddConfig,
-	input: WebConfigSettingsInput
+	input: WebConfigSettingsInput,
 ): void {
 	const defaultProvider = optionalString(input.defaultProvider);
 	if (input.defaultProvider !== undefined) {
@@ -118,7 +118,7 @@ function applyProviderInput(
 function applyDirectorInput(
 	next: PartialAiddConfig,
 	existing: PartialAiddConfig,
-	input: WebConfigSettingsInput
+	input: WebConfigSettingsInput,
 ): void {
 	const allowFileEdits =
 		'directorChatAllowFileEdits' in input
@@ -160,7 +160,7 @@ function applyRuntimeInput(next: PartialAiddConfig, input: WebConfigSettingsInpu
 	for (const field of runtimeNumberFields) {
 		if (field in input) {
 			const value = optionalNumber(
-				(input as unknown as Record<string, unknown>)[field] as null | number | undefined
+				(input as unknown as Record<string, unknown>)[field] as null | number | undefined,
 			);
 			if (value === undefined) delete next[field];
 			else next[field] = value;
@@ -186,7 +186,7 @@ function applySharedInput(next: PartialAiddConfig, input: WebConfigSettingsInput
 
 function createBaseConfig(
 	existing: PartialAiddConfig,
-	input: WebConfigSettingsInput
+	input: WebConfigSettingsInput,
 ): PartialAiddConfig {
 	const applicationRoots = cleanList(input.applicationRoots);
 	if (applicationRoots.length === 0) {
@@ -222,7 +222,7 @@ function createBaseConfig(
 export function buildUpdatedConfig(
 	input: WebConfigSettingsInput,
 	existing: PartialAiddConfig,
-	currentConfig: WebRuntimeConfig
+	currentConfig: WebRuntimeConfig,
 ): PartialAiddConfig {
 	const next = createBaseConfig(existing, input);
 	if (input.applicationsRoot !== undefined) {
@@ -232,7 +232,7 @@ export function buildUpdatedConfig(
 	}
 
 	const existingAuthToken = optionalString(
-		existing.web?.authToken ?? currentConfig.web.authToken ?? null
+		existing.web?.authToken ?? currentConfig.web.authToken ?? null,
 	);
 	if (input.allowRemote === true && existingAuthToken === undefined) {
 		next.web = { ...(next.web ?? {}), authToken: generateRemoteAuthToken() };

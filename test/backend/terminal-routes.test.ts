@@ -63,7 +63,7 @@ describe('terminal routes', () => {
 					body: JSON.stringify(body),
 					headers: { 'content-type': 'application/json' },
 					method: 'POST',
-				})
+				}),
 			);
 		const first = (await (await create()).json()) as {
 			cwd: string;
@@ -84,7 +84,7 @@ describe('terminal routes', () => {
 					body: JSON.stringify(body),
 					headers: { 'content-type': 'application/json' },
 					method: 'POST',
-				})
+				}),
 			);
 		const bogus = await create({ cwd: 'D:\\definitely\\not\\a\\real\\dir' });
 		expect(bogus.status).toBe(400);
@@ -99,7 +99,7 @@ describe('terminal routes', () => {
 				body: JSON.stringify({}),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(responseA.status).toBe(503);
 		const available = createApp(fakeSpawn());
@@ -108,7 +108,7 @@ describe('terminal routes', () => {
 				body: JSON.stringify({ shellId: 'not-a-shell' }),
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
-			})
+			}),
 		);
 		expect(responseB.status).toBe(400);
 	});
@@ -130,12 +130,12 @@ describe('terminal routes', () => {
 		const { app, manager } = createApp(fakeSpawn());
 		const info = manager.create();
 		const ok = await app.handle(
-			new Request(`${BASE}/terminal/sessions/${info.sessionId}`, { method: 'DELETE' })
+			new Request(`${BASE}/terminal/sessions/${info.sessionId}`, { method: 'DELETE' }),
 		);
 		expect(ok.status).toBe(200);
 		expect(manager.listSessions()).toEqual([]);
 		const missing = await app.handle(
-			new Request(`${BASE}/terminal/sessions/${info.sessionId}`, { method: 'DELETE' })
+			new Request(`${BASE}/terminal/sessions/${info.sessionId}`, { method: 'DELETE' }),
 		);
 		expect(missing.status).toBe(404);
 	});

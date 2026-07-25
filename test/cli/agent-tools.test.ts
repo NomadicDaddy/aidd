@@ -55,10 +55,10 @@ describe('native tools', () => {
 	test('runs bash and supports simulation', async () => {
 		const cwd = process.cwd();
 		await expect(
-			executeTool('bash', JSON.stringify({ command: 'printf hello' }), cwd)
+			executeTool('bash', JSON.stringify({ command: 'printf hello' }), cwd),
 		).resolves.toContain('hello');
 		await expect(
-			executeTool('bash', JSON.stringify({ command: 'touch should-not-exist' }), cwd, true)
+			executeTool('bash', JSON.stringify({ command: 'touch should-not-exist' }), cwd, true),
 		).resolves.toContain('[SIMULATED] Command not executed');
 	});
 
@@ -72,7 +72,7 @@ describe('native tools', () => {
 					command:
 						'printf "secret=${AIDD_SECRET_SENTINEL-unset};path=${PATH:+set}${Path:+set}"',
 				}),
-				process.cwd()
+				process.cwd(),
 			);
 			expect(result).toContain('secret=unset');
 			expect(result).toContain('path=set');
@@ -87,7 +87,7 @@ describe('native tools', () => {
 		const result = await executeTool(
 			'bash',
 			JSON.stringify({ command: 'sleep 5', timeout_ms: 50 }),
-			process.cwd()
+			process.cwd(),
 		);
 
 		expect(Date.now() - startedAt).toBeLessThan(3000);
@@ -101,10 +101,10 @@ describe('native tools', () => {
 			await writeFile(join(cwd, 'beta.md'), 'target\n', 'utf8');
 
 			await expect(
-				executeTool('glob', JSON.stringify({ pattern: '*.ts' }), cwd)
+				executeTool('glob', JSON.stringify({ pattern: '*.ts' }), cwd),
 			).resolves.toBe('alpha.ts');
 			await expect(
-				executeTool('grep', JSON.stringify({ pattern: 'target', include: '*.ts' }), cwd)
+				executeTool('grep', JSON.stringify({ pattern: 'target', include: '*.ts' }), cwd),
 			).resolves.toContain('alpha.ts:1:const target = 1;');
 		});
 	});
@@ -112,7 +112,7 @@ describe('native tools', () => {
 	test('blocks search paths that escape the workspace', async () => {
 		await withTempWorkspace(async (cwd) => {
 			await expect(
-				executeTool('grep', JSON.stringify({ pattern: 'anything', path: '../' }), cwd)
+				executeTool('grep', JSON.stringify({ pattern: 'anything', path: '../' }), cwd),
 			).resolves.toContain('Path escapes working directory');
 		});
 	});
@@ -122,7 +122,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'cat /etc/passwd' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('ERROR: bash command references path outside workspace');
 			expect(result).not.toContain('[exit code:');
@@ -134,7 +134,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'cd .. && ls' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain("ERROR: bash command 'cd' would escape workspace");
 		});
@@ -145,7 +145,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'echo escaped > ../escape.txt' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('ERROR: bash command writes outside workspace');
 		});
@@ -208,7 +208,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'printenv PATH' }),
-				cwd
+				cwd,
 			);
 			expect(result).not.toContain('ERROR: bash command uses printenv');
 		});
@@ -219,7 +219,7 @@ describe('native tools', () => {
 			const insideResult = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'cd . && printf hello > inside.txt && cat inside.txt' }),
-				cwd
+				cwd,
 			);
 			expect(insideResult).toContain('hello');
 			expect(insideResult).toContain('[exit code: 0]');
@@ -236,7 +236,7 @@ describe('native tools', () => {
 				JSON.stringify({
 					command: 'i=1; printf hi > out_$i.txt && echo HEAD~1 && cat out_$i.txt',
 				}),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('hi');
 			expect(result).toContain('HEAD~1');
@@ -250,7 +250,7 @@ describe('native tools', () => {
 			await executeTool(
 				'edit_file',
 				JSON.stringify({ path: 'file.txt', old_string: 'before', new_string: 'after' }),
-				cwd
+				cwd,
 			);
 			await expect(readFile(join(cwd, 'file.txt'), 'utf8')).resolves.toBe('after');
 		});
@@ -273,7 +273,7 @@ describe('native tools', () => {
 			]) {
 				const result = await executeTool('bash', JSON.stringify({ command }), cwd);
 				expect(result).toMatch(
-					/disallowed shell construct|home directory|encoding utility with an eval/
+					/disallowed shell construct|home directory|encoding utility with an eval/,
 				);
 			}
 		});
@@ -298,7 +298,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'printf "hello world"' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('hello world');
 			expect(result).toContain('[exit code: 0]');
@@ -326,7 +326,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'echo data | tee ../outside.txt' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('ERROR: bash command writes outside workspace');
 		});
@@ -338,7 +338,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'bash',
 				JSON.stringify({ command: 'cp src.txt dst.txt && cat dst.txt' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('content');
 			expect(result).toContain('[exit code: 0]');
@@ -356,7 +356,7 @@ describe('native tools', () => {
 				const result = await executeTool(
 					'read_file',
 					JSON.stringify({ path: 'escape_link/secret.txt' }),
-					cwd
+					cwd,
 				);
 				expect(result).toContain('Path escapes working directory');
 				expect(result).not.toContain('secret-data');
@@ -375,7 +375,7 @@ describe('native tools', () => {
 				const result = await executeTool(
 					'write_file',
 					JSON.stringify({ path: 'write_escape/pwned.txt', content: 'escaped' }),
-					cwd
+					cwd,
 				);
 				expect(result).toContain('Path escapes working directory');
 			} finally {
@@ -390,7 +390,7 @@ describe('native tools', () => {
 			const result = await executeTool(
 				'read_file',
 				JSON.stringify({ path: 'normal.txt' }),
-				cwd
+				cwd,
 			);
 			expect(result).toContain('hello');
 		});

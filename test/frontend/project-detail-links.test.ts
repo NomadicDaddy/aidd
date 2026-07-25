@@ -10,7 +10,7 @@ describe('project detail overview links', () => {
 
 	test('builds feature milestone links for roadmap entries', () => {
 		expect(projectDetailTabSearch('features', { featureMilestone: 'v2.0' })).toBe(
-			'?tab=features&featureMilestone=v2.0'
+			'?tab=features&featureMilestone=v2.0',
 		);
 	});
 });

@@ -4,21 +4,21 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import {
 	aggregate,
+	type BenchmarkArtifacts,
+	type BenchmarkManifest,
+	type BenchmarkRun,
+	type BenchmarkTask,
 	buildAiddInvocation,
 	estimateCostFromTokens,
 	evaluateTask,
 	loadManifest,
 	parseBenchmarkMetrics,
-	pricingForStack,
 	preflightReady,
+	pricingForStack,
 	regradeRuns,
 	renderReport,
 	resolveCost,
 	splitCommandLine,
-	type BenchmarkArtifacts,
-	type BenchmarkManifest,
-	type BenchmarkRun,
-	type BenchmarkTask,
 } from '../../scripts/run-benchmark.ts';
 
 import { testTempDirSync } from '../_helpers/temp.ts';
@@ -56,7 +56,7 @@ describe('benchmark harness', () => {
 					},
 				],
 				version: 1,
-			})
+			}),
 		);
 
 		expect(() => loadManifest(manifestPath)).toThrow('Unsupported benchmark backend');
@@ -85,16 +85,16 @@ describe('benchmark harness', () => {
 	test('normalizes canonical benchmark stack controls', () => {
 		const manifest = loadManifest(path.join(repoRoot, 'benchmarks', 'manifest.json'));
 		const claudeMax = manifest.stacks.find(
-			(candidate) => candidate.label === 'claude-code-opus48-max'
+			(candidate) => candidate.label === 'claude-code-opus48-max',
 		);
 		const codexXhigh = manifest.stacks.find(
-			(candidate) => candidate.label === 'codex-gpt56-xhigh'
+			(candidate) => candidate.label === 'codex-gpt56-xhigh',
 		);
 		const qwenThinking = manifest.stacks.find(
-			(candidate) => candidate.label === 'ollama-qwen36-latest-thinking'
+			(candidate) => candidate.label === 'ollama-qwen36-latest-thinking',
 		);
 		const gptOssLow = manifest.stacks.find(
-			(candidate) => candidate.label === 'ollama-gpt-oss-20b-low'
+			(candidate) => candidate.label === 'ollama-gpt-oss-20b-low',
 		);
 		const task = manifest.tasks.find((candidate) => candidate.id === 'version');
 		expect(claudeMax?.reasoningEffort).toBe('max');
@@ -112,7 +112,7 @@ describe('benchmark harness', () => {
 
 	test('splits quoted benchmark command fragments', () => {
 		expect(
-			splitCommandLine('--audit "SECURITY,REACT_BEST_PRACTICES" --max-iterations 1')
+			splitCommandLine('--audit "SECURITY,REACT_BEST_PRACTICES" --max-iterations 1'),
 		).toEqual(['--audit', 'SECURITY,REACT_BEST_PRACTICES', '--max-iterations', '1']);
 	});
 
@@ -133,7 +133,7 @@ describe('benchmark harness', () => {
 	test('keeps quiz fixture parseable as one interview question', () => {
 		const questions = readFileSync(
 			path.join(repoRoot, 'benchmarks', 'fixtures', 'quiz', '.aidd', 'questions.md'),
-			'utf8'
+			'utf8',
 		);
 		const firstHeading = questions.match(/^## .*/m)?.[0] ?? '';
 		expect(firstHeading).toContain('?');
@@ -159,7 +159,7 @@ describe('benchmark harness', () => {
 					exitCode: 0,
 					status: 'success',
 				},
-			})
+			}),
 		);
 
 		const metrics = parseBenchmarkMetrics({ structuredLogs: [structuredPath] });
@@ -180,7 +180,7 @@ describe('benchmark harness', () => {
 		mkdirSync(path.join(workspace, '.aidd', 'iterations'), { recursive: true });
 		writeFileSync(
 			path.join(workspace, '.benchmark.expectations.json'),
-			JSON.stringify({ responseFiles: ['.aidd/responses/response1.md'], type: 'interview' })
+			JSON.stringify({ responseFiles: ['.aidd/responses/response1.md'], type: 'interview' }),
 		);
 		writeFileSync(path.join(workspace, '.aidd', 'responses', 'response1.md'), 'answer\n');
 		writeFileSync(
@@ -189,10 +189,10 @@ describe('benchmark harness', () => {
 				durationMs: 1000,
 				metrics: { inputTokens: 1, outputTokens: 2 },
 				outcome: { exitCode: 0, status: 'success' },
-			})
+			}),
 		);
 		const manifest = loadManifest(
-			path.join(repoRoot, 'test', 'fixtures', 'benchmark', 'manifest.simulation.json')
+			path.join(repoRoot, 'test', 'fixtures', 'benchmark', 'manifest.simulation.json'),
 		);
 		const stack = manifest.stacks[0]!;
 		const task = manifest.tasks[0]!;
@@ -239,7 +239,7 @@ describe('benchmark harness', () => {
 				}),
 				task,
 				workspaceDir: workspace,
-			}).score
+			}).score,
 		).toBe(1);
 	});
 
@@ -250,7 +250,7 @@ describe('benchmark harness', () => {
 		mkdirSync(featureDir, { recursive: true });
 		writeFileSync(
 			path.join(workspace, '.benchmark.expectations.json'),
-			JSON.stringify({ featureId: 'remediation-bad-json', type: 'remediation' })
+			JSON.stringify({ featureId: 'remediation-bad-json', type: 'remediation' }),
 		);
 		writeFileSync(path.join(featureDir, 'feature.json'), '{ not valid json');
 
@@ -312,7 +312,7 @@ describe('benchmark harness', () => {
 				metrics,
 				task,
 				workspaceDir: workspace,
-			}).score
+			}).score,
 		).toBe(1);
 		// exit 0 -> success.
 		expect(
@@ -322,7 +322,7 @@ describe('benchmark harness', () => {
 				metrics,
 				task,
 				workspaceDir: workspace,
-			}).score
+			}).score,
 		).toBe(1);
 		// a genuine crash/other failure exit is still scored as a failed run.
 		expect(
@@ -332,7 +332,7 @@ describe('benchmark harness', () => {
 				metrics,
 				task,
 				workspaceDir: workspace,
-			}).score
+			}).score,
 		).toBe(0);
 	});
 
@@ -345,7 +345,7 @@ describe('benchmark harness', () => {
 			'test',
 			'fixtures',
 			'benchmark',
-			'manifest.simulation.json'
+			'manifest.simulation.json',
 		);
 		const run = spawnSync(
 			'bun',
@@ -361,7 +361,7 @@ describe('benchmark harness', () => {
 				'--seed',
 				'test',
 			],
-			{ cwd: repoRoot, encoding: 'utf8', windowsHide: true }
+			{ cwd: repoRoot, encoding: 'utf8', windowsHide: true },
 		);
 		expect(run.status).toBe(0);
 		const runsJsonl = readFileSync(path.join(resultsDir, 'runs.jsonl'), 'utf8');
@@ -379,11 +379,11 @@ describe('benchmark harness', () => {
 				workspacesDir,
 				'--report-only',
 			],
-			{ cwd: repoRoot, encoding: 'utf8', windowsHide: true }
+			{ cwd: repoRoot, encoding: 'utf8', windowsHide: true },
 		);
 		expect(reportOnly.status).toBe(0);
 		expect(readFileSync(path.join(resultsDir, 'report.md'), 'utf8')).toContain(
-			'aidd Benchmark Report'
+			'aidd Benchmark Report',
 		);
 		// This launches nested Bun CLI processes, which can exceed Bun's default test timeout on
 		// Windows — and at 30s it flaked inside aidd completion gates (observed 30.26s), failing
@@ -393,7 +393,7 @@ describe('benchmark harness', () => {
 
 describe('benchmark cost resolution', () => {
 	const manifest = loadManifest(
-		path.join(repoRoot, 'benchmarks', 'manifest.json')
+		path.join(repoRoot, 'benchmarks', 'manifest.json'),
 	) as BenchmarkManifest;
 
 	function usage(input: number, output: number) {
@@ -428,9 +428,9 @@ describe('benchmark cost resolution', () => {
 				usage(38, 15231),
 				pricingForStack(
 					manifest.stacks.find((stack) => stack.label === 'claude-code-opus48-high')!,
-					manifest
-				)
-			)
+					manifest,
+				),
+			),
 		).toBe(1.75);
 		// even when pricing exists, a positive metered cost wins.
 		expect(resolveCost(2.5, usage(100_000, 50_000), pricing)).toBe(2.5);
@@ -523,7 +523,7 @@ describe('benchmark cost resolution', () => {
 					},
 				],
 				version: 1,
-			})
+			}),
 		);
 		const redistManifest = loadManifest(manifestPath);
 		const emptyUsage = {

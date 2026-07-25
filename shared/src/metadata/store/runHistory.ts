@@ -20,7 +20,7 @@ async function nextIterationIndex(iterationsDir: string): Promise<number> {
 
 export async function writeIteration(
 	metadataDir: string,
-	record: IterationRecord
+	record: IterationRecord,
 ): Promise<number> {
 	const iterationsDir = join(metadataDir, 'iterations');
 	await mkdir(iterationsDir, { recursive: true });
@@ -30,7 +30,7 @@ export async function writeIteration(
 	if (record.structured) {
 		await writeFile(
 			join(iterationsDir, `${stem}.json`),
-			`${JSON.stringify(record.structured, null, 2)}\n`
+			`${JSON.stringify(record.structured, null, 2)}\n`,
 		);
 	}
 	return index;
@@ -38,7 +38,7 @@ export async function writeIteration(
 
 export async function appendRunSummary(
 	metadataDir: string,
-	summary: Record<string, unknown>
+	summary: Record<string, unknown>,
 ): Promise<void> {
 	await mkdir(metadataDir, { recursive: true });
 	await appendFile(join(metadataDir, 'runs.jsonl'), `${JSON.stringify(summary)}\n`);

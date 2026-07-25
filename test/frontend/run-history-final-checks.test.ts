@@ -10,7 +10,7 @@ import {
 } from '../../frontend/src/components/shared/local-aidd-history/outcome.ts';
 
 function makeIteration(
-	overrides: Partial<ProjectLocalIteration> & { status: string }
+	overrides: { status: string } & Partial<ProjectLocalIteration>,
 ): ProjectLocalIteration {
 	return {
 		backend: 'codex',
@@ -207,7 +207,7 @@ describe('run-level warning downgrade (ISS-003)', () => {
 		}
 		// A plain empty-backlog no_work stays neutral.
 		const plain = classifyRun(
-			makeRun({ stopReason: 'no_work', summary: 'no incomplete feature work' })
+			makeRun({ stopReason: 'no_work', summary: 'no incomplete feature work' }),
 		);
 		expect(plain.label).toBe('No work');
 		expect(plain.tone).toBe('neutral');

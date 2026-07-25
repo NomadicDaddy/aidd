@@ -59,7 +59,7 @@ export function normalizeCardSizes(stored: unknown): DashboardCardSizes {
  */
 export function normalizeCardOrder(stored: readonly string[]): DashboardCardId[] {
 	const known = stored.filter((id): id is DashboardCardId =>
-		(DASHBOARD_CARD_IDS as readonly string[]).includes(id)
+		(DASHBOARD_CARD_IDS as readonly string[]).includes(id),
 	);
 	const result = [...new Set(known)];
 	for (const [index, id] of DASHBOARD_CARD_IDS.entries()) {
@@ -81,7 +81,7 @@ interface DashboardState {
 function updateCardSize(
 	sizes: DashboardCardSizes,
 	id: DashboardCardId,
-	patch: (size: DashboardCardSize) => DashboardCardSize
+	patch: (size: DashboardCardSize) => DashboardCardSize,
 ): DashboardCardSizes {
 	const next = { ...sizes };
 	const size = patch({ ...next[id] });
@@ -177,6 +177,6 @@ export const useDashboardStore = create<DashboardState>()(
 				};
 			},
 			name: 'aidd-dashboard',
-		}
-	)
+		},
+	),
 );

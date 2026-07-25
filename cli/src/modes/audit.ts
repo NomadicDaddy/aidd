@@ -70,7 +70,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 			const auditBatchMode = selectedAudits.length > 1;
 			const hasStructuredAuditResult = hasStructuredAuditOutput(
 				result.structuredResult,
-				auditBatchMode
+				auditBatchMode,
 			);
 			if (result.exitCode !== 0 || !hasStructuredAuditResult) {
 				const reason =
@@ -127,7 +127,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					unjustifiedEmptyReports++;
 				}
 				const normalized = findings.map((finding, index) =>
-					normalizeFinding(finding, report.auditName, existing, index)
+					normalizeFinding(finding, report.auditName, existing, index),
 				);
 				let created = 0;
 				for (const finding of normalized) {
@@ -138,7 +138,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					recordAuditFeatureCreated(
 						modeFileChanges,
 						context.projectDir,
-						finding.feature.id
+						finding.feature.id,
 					);
 					existing = [...existing, finding.feature];
 					findingIds.push(finding.feature.id);
@@ -149,12 +149,12 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					report.structured,
 					report.auditName,
 					normalized,
-					created
+					created,
 				);
 				const enforced = enforceInstrumentBackedScore(
 					report.auditName,
 					report.structured,
-					reportMarkdown
+					reportMarkdown,
 				);
 				if (enforced.withheld) unmeasuredScoresWithheld++;
 				const finalReport = simulated
@@ -165,7 +165,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					context.projectDir,
 					report.auditName,
 					(timestamp) =>
-						context.store.writeAuditReport(report.auditName, finalReport, timestamp)
+						context.store.writeAuditReport(report.auditName, finalReport, timestamp),
 				);
 
 				completedAudits.push(report.auditName);
@@ -184,7 +184,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 				context,
 				selectedAudits,
 				completedAudits,
-				batchIncomplete
+				batchIncomplete,
 			);
 			explicitRetryAudits = explicitAuditNames(plan).length > 0 ? remaining : undefined;
 			const complete =

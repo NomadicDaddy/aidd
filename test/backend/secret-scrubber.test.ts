@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { StreamingSecretScrubber } from 'aidd-shared/lib/secretScrubber';
-import { SECRET_REDACTED, scrubSecrets } from '../../backend/src/services/secretScrubber.ts';
+import { scrubSecrets, SECRET_REDACTED } from '../../backend/src/services/secretScrubber.ts';
 
 describe('scrubSecrets', () => {
 	it('masks provider-style API keys (sk-...)', () => {
@@ -44,10 +44,10 @@ describe('scrubSecrets', () => {
 
 	it('masks GitHub personal access token prefixes', () => {
 		expect(scrubSecrets('token ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')).toBe(
-			`token ${SECRET_REDACTED}`
+			`token ${SECRET_REDACTED}`,
 		);
 		expect(scrubSecrets('github_pat_11ABCDEFG0abcdefghijklmnop more')).toBe(
-			`${SECRET_REDACTED} more`
+			`${SECRET_REDACTED} more`,
 		);
 	});
 

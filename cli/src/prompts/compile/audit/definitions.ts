@@ -12,7 +12,7 @@ export interface AuditPromptDefinition {
 
 export async function loadAuditPromptDefinition(
 	rootDir: string,
-	auditName: string
+	auditName: string,
 ): Promise<AuditPromptDefinition> {
 	const auditFile = join(rootDir, 'audits', `${auditName}.md`);
 	let auditMarkdown: string;
@@ -42,7 +42,7 @@ export function compileBatchAuditGuidelines(definitions: AuditPromptDefinition[]
 				'',
 				definition.body.trim() || '_No audit definition body was found._',
 				'',
-			].join('\n')
+			].join('\n'),
 		)
 		.join('\n---\n\n');
 }

@@ -63,7 +63,7 @@ describe('preflight compatibility', () => {
 		await handleStopSignal(
 			parseArgs(['--project-dir', projectDir, '--stop']),
 			projectDir,
-			stopFile
+			stopFile,
 		);
 
 		await expect(readFile(stopFile, 'utf8')).resolves.toContain('T');
@@ -86,7 +86,7 @@ describe('explicit completed feature exit', () => {
 				status: 'completed',
 				passes: true,
 				priority: 1,
-			})
+			}),
 		);
 		// Intentionally do NOT create spec.md — this simulates the real
 		// scenario where detectInitialPhase would rewrite coding to onboarding.
@@ -104,7 +104,7 @@ describe('explicit completed feature exit', () => {
 				'--feature',
 				'feature-target',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -128,7 +128,7 @@ describe('explicit completed feature exit', () => {
 				'--filter',
 				'feature-target',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -141,7 +141,7 @@ describe('explicit completed feature exit', () => {
 		const store = await makeProjectStore('no-target');
 		const plan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -168,7 +168,7 @@ describe('explicit completed feature exit', () => {
 				'--feature',
 				'feature-target',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -195,7 +195,7 @@ describe('explicit completed feature exit', () => {
 				'--feature',
 				'feature-target',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -222,7 +222,7 @@ describe('explicit completed feature exit', () => {
 				'--feature',
 				'feature-target',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -242,7 +242,7 @@ describe('explicit completed feature exit', () => {
 				'--feature',
 				'feature-nonexistent',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -263,7 +263,7 @@ describe('explicit completed feature exit', () => {
 				'--filter',
 				'feature-*',
 			]),
-			config
+			config,
 		);
 
 		const result = await checkExplicitCompletedFeature(plan, store);
@@ -282,7 +282,7 @@ describe('explicit completed feature exit', () => {
 				'--feature',
 				'feature-target',
 			]),
-			config
+			config,
 		);
 		const result = await checkExplicitCompletedFeature(plan, store);
 		expect(result).not.toBeUndefined();
@@ -319,7 +319,7 @@ describe('automatic phase detection routing', () => {
 	function makePlan(projectDir: string, extraArgs: string[] = []) {
 		return resolveRunPlan(
 			parseArgs(['--project-dir', projectDir, '--cli', 'native', ...extraArgs]),
-			config
+			config,
 		);
 	}
 

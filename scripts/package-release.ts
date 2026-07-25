@@ -45,7 +45,7 @@ interface PackageReleaseOptions {
 	standaloneBuilder?: (
 		rootDir: string,
 		args: CliArgs,
-		options: { commandRunner?: CommandRunner }
+		options: { commandRunner?: CommandRunner },
 	) => Promise<BuildTargetResult[]>;
 }
 
@@ -76,7 +76,7 @@ export function parsePackageReleaseArgs(argv: string[]): PackageReleaseArgs {
 			const target = ALL_TARGETS.find((item) => item.name === targetName);
 			if (!target) {
 				throw new Error(
-					`Unknown target: ${targetName}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`
+					`Unknown target: ${targetName}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
 				);
 			}
 			targets.push(target);
@@ -95,7 +95,7 @@ export function parsePackageReleaseArgs(argv: string[]): PackageReleaseArgs {
 export async function packageRelease(
 	rootDir: string,
 	args: PackageReleaseArgs,
-	options: PackageReleaseOptions = {}
+	options: PackageReleaseOptions = {},
 ): Promise<ReleaseAsset[]> {
 	const builder = options.standaloneBuilder ?? buildStandalone;
 	const commandRunner = options.commandRunner ?? runCommand;
@@ -108,7 +108,7 @@ export async function packageRelease(
 		throw new Error(
 			`Cannot package release; version metadata disagrees:\n${parityIssues
 				.map((issue) => `- ${issue}`)
-				.join('\n')}`
+				.join('\n')}`,
 		);
 	}
 
@@ -116,14 +116,14 @@ export async function packageRelease(
 		const results = await builder(
 			rootDir,
 			{ skipFrontend: args.skipFrontend, targets: args.targets },
-			{ commandRunner }
+			{ commandRunner },
 		);
 		const failed = results.filter((result) => result.status === 'failed');
 		if (failed.length > 0) {
 			throw new Error(
 				`Standalone build failed:\n${failed
 					.map((result) => `- ${result.target.name}: ${result.errorMessage}`)
-					.join('\n')}`
+					.join('\n')}`,
 			);
 		}
 	}
@@ -140,7 +140,7 @@ export async function packageRelease(
 			throw new Error(
 				`Cannot package ${target.name}; standalone layout is incomplete:\n${issues
 					.map((issue) => `- ${issue}`)
-					.join('\n')}`
+					.join('\n')}`,
 			);
 		}
 		const stageName = `aidd-v${info.packageVersion}-${target.name}`;
@@ -151,7 +151,7 @@ export async function packageRelease(
 		// of what they were, inside the archive, or the promise points at nothing years from now.
 		await Bun.write(
 			join(stageDir, 'licenses', 'SOURCE-MANIFEST.md'),
-			renderSourceManifest(revisions)
+			renderSourceManifest(revisions),
 		);
 		const zipPath = join(releaseDir, `${stageName}.zip`);
 		await createZip(releaseDir, stageName, basename(zipPath), commandRunner);
@@ -172,13 +172,13 @@ export async function packageRelease(
 		revisions,
 		assets
 			.filter((asset) => asset.path.endsWith('.zip'))
-			.map((asset) => ({ name: basename(asset.path), sha256: asset.sha256 }))
+			.map((asset) => ({ name: basename(asset.path), sha256: asset.sha256 })),
 	);
 	const retainRecord = options.retainRecord ?? !process.env.CI;
 	if (retainRecord) {
 		await Bun.write(
 			join(rootDir, 'licenses', 'releases', `v${info.packageVersion}.md`),
-			record
+			record,
 		);
 	}
 
@@ -209,7 +209,7 @@ async function createZip(
 	releaseDir: string,
 	stageName: string,
 	zipName: string,
-	commandRunner: CommandRunner
+	commandRunner: CommandRunner,
 ): Promise<void> {
 	const command =
 		platform === 'win32'

@@ -1,7 +1,7 @@
 import { buildBackendSubprocessEnv, buildToolSubprocessEnv } from 'aidd-shared/subprocess-env';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 import type { BenchmarkArtifacts, BenchmarkStack, BenchmarkTask, CommandResult } from './types.ts';
@@ -13,7 +13,7 @@ export function runCommand(
 	command: string,
 	args: string[],
 	cwd: string,
-	options: { env?: NodeJS.ProcessEnv; timeoutSeconds?: number } = {}
+	options: { env?: NodeJS.ProcessEnv; timeoutSeconds?: number } = {},
 ): CommandResult {
 	const started = Date.now();
 	const result = spawnSync(command, args, {
@@ -42,7 +42,7 @@ export function executeAidd(
 	stack: BenchmarkStack,
 	task: BenchmarkTask,
 	workspaceDir: string,
-	fixedEnv: Record<string, string>
+	fixedEnv: Record<string, string>,
 ): { invocation: { args: string[]; command: string }; result: CommandResult } {
 	const invocation = buildAiddInvocation(stack, task, workspaceDir);
 	const overrideEnv: Record<string, string> = { ...fixedEnv };
@@ -130,7 +130,7 @@ export function workspaceName(
 	stack: BenchmarkStack,
 	task: BenchmarkTask,
 	replicate: number,
-	warmup: boolean
+	warmup: boolean,
 ): string {
 	return `${stack.label}-${task.id}-${warmup ? 'warmup' : `rep-${replicate}`}`;
 }
@@ -142,19 +142,19 @@ export function detectArtifacts(workspaceDir: string): BenchmarkArtifacts {
 		relativeFiles.filter(predicate).map((relative) => path.join(workspaceDir, relative));
 	return {
 		auditReports: matching(
-			(relative) => relative.startsWith('.aidd/audit-reports/') && relative.endsWith('.md')
+			(relative) => relative.startsWith('.aidd/audit-reports/') && relative.endsWith('.md'),
 		),
 		rawLogs: matching(
-			(relative) => relative.startsWith('.aidd/iterations/') && relative.endsWith('.log')
+			(relative) => relative.startsWith('.aidd/iterations/') && relative.endsWith('.log'),
 		),
 		responses: matching(
 			(relative) =>
 				relative === '.aidd/responses.md' ||
-				(relative.startsWith('.aidd/responses/') && relative.endsWith('.md'))
+				(relative.startsWith('.aidd/responses/') && relative.endsWith('.md')),
 		),
 		runsLedger: matching((relative) => relative === '.aidd/runs.jsonl'),
 		structuredLogs: matching(
-			(relative) => relative.startsWith('.aidd/iterations/') && relative.endsWith('.json')
+			(relative) => relative.startsWith('.aidd/iterations/') && relative.endsWith('.json'),
 		),
 		workspace: workspaceDir,
 	};

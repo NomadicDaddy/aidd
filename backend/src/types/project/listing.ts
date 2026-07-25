@@ -8,9 +8,9 @@ import type {
 } from './features.ts';
 import type { ProjectMetadataDto } from './metadata.ts';
 
-export type ProjectSummaryMetadataDto = Omit<ProjectMetadataDto, 'usage'> & {
+export type ProjectSummaryMetadataDto = {
 	usage: Pick<ProjectMetadataDto['usage'], 'totals'>;
-};
+} & Omit<ProjectMetadataDto, 'usage'>;
 
 export interface ProjectActiveRunSummaryDto {
 	count: number;

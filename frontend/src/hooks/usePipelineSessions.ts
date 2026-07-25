@@ -67,7 +67,7 @@ export function useActivePipelineSessionCount() {
 	});
 	const sessions = query.data?.sessions ?? [];
 	const activeCount = sessions.filter(
-		(s) => s.status === 'running' || s.status === 'queued'
+		(s) => s.status === 'running' || s.status === 'queued',
 	).length;
 	return activeCount;
 }

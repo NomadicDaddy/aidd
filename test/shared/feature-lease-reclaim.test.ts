@@ -14,7 +14,7 @@ function leaseRaw(runId: string, pid: number): string {
 	return `${JSON.stringify(
 		{ acquiredAt: '2026-07-22T00:00:00.000Z', featureId: 'feat-x', pid, runId },
 		null,
-		'\t'
+		'\t',
 	)}\n`;
 }
 

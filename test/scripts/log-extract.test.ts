@@ -15,7 +15,7 @@ async function setupProjectWithIterations(records: Record<string, unknown>[]): P
 		const stem = String(i + 1).padStart(3, '0');
 		await writeFile(
 			join(iterationsDir, `${stem}.json`),
-			`${JSON.stringify(records[i], null, 2)}\n`
+			`${JSON.stringify(records[i], null, 2)}\n`,
 		);
 	}
 	return projectDir;

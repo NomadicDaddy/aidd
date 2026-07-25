@@ -1,16 +1,16 @@
 import { startMcpServer, startWebServer } from 'aidd-backend';
-import { parseArgs, ArgsError } from 'aidd-shared/args/index';
+import { ArgsError, parseArgs } from 'aidd-shared/args/index';
 import { createBackend } from 'aidd-shared/backends/factory';
 import { resolveConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { modeToSurface, setAiCallLogDir } from 'aidd-shared/lib/aiCallLog';
 import {
+	type CliActiveRunSource,
 	EXT_LOG_PATH_ENV,
 	EXT_RUN_ID_ENV,
 	EXT_RUN_SOURCE_ENV,
-	type CliActiveRunSource,
 } from 'aidd-shared/metadata/active-runs';
 import { createFeatureLeaseService } from 'aidd-shared/metadata/feature-leases';
-import { UnknownMilestoneError, resolveMilestone } from 'aidd-shared/metadata/roadmap';
+import { resolveMilestone, UnknownMilestoneError } from 'aidd-shared/metadata/roadmap';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { readAiddVersion, resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
 import { resolveRootDir } from 'aidd-shared/runtime';
@@ -42,10 +42,10 @@ import {
 	writeCompletedFeatureRunSummary,
 } from './preflight-completed.ts';
 import {
-	handleStopSignal,
+	applyInitialPhaseDetection,
 	assertProjectForRun,
 	clearStaleStopFile,
-	applyInitialPhaseDetection,
+	handleStopSignal,
 } from './preflight.ts';
 
 const rootDir = resolveRootDir(import.meta.url, 2);
@@ -62,11 +62,11 @@ function installStopSignalHandler(stopFile: string): void {
 			mkdirSync(dirname(stopFile), { recursive: true });
 			writeFileSync(stopFile, new Date().toISOString());
 			console.error(
-				`\nReceived ${signal} — stop requested. aidd will exit after the active iteration stops or finishes. Press again to force-quit.`
+				`\nReceived ${signal} — stop requested. aidd will exit after the active iteration stops or finishes. Press again to force-quit.`,
 			);
 		} catch (err) {
 			console.error(
-				`\nReceived ${signal} — failed to write .stop file: ${err instanceof Error ? err.message : String(err)}`
+				`\nReceived ${signal} — failed to write .stop file: ${err instanceof Error ? err.message : String(err)}`,
 			);
 		}
 	};
@@ -141,7 +141,7 @@ export async function run(argv: string[]): Promise<number> {
 				const resolution = resolveMilestone(roadmap, plan.scope.milestone);
 				plan.prompt.milestone.featureDirectories = resolution.featureDirectories;
 				console.log(
-					`Milestone '${resolution.milestone}': ${resolution.featureDirectories.length} features from roadmap.json`
+					`Milestone '${resolution.milestone}': ${resolution.featureDirectories.length} features from roadmap.json`,
 				);
 			} catch (err) {
 				if (err instanceof UnknownMilestoneError) {
@@ -149,7 +149,7 @@ export async function run(argv: string[]): Promise<number> {
 					console.error('Available milestones in roadmap.json:');
 					for (const entry of err.available) {
 						console.error(
-							`  - ${entry.name}${entry.description ? ` (${entry.description})` : ''}`
+							`  - ${entry.name}${entry.description ? ` (${entry.description})` : ''}`,
 						);
 					}
 					return 2;

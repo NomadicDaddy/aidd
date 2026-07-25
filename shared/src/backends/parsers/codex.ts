@@ -1,4 +1,4 @@
-import type { AgentErrorEvent, AgentEvent, AgentErrorReason } from '../types.ts';
+import type { AgentErrorEvent, AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
@@ -174,7 +174,7 @@ export function finalizeCodexBackend(input: FinalizePlainBackendInput): AgentEve
 export function parseCodexBackendOutput(
 	stdout: string,
 	stderr: string,
-	exitCode: null | number
+	exitCode: null | number,
 ): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const combined = [stdout, stderr].filter(Boolean).join('\n');
@@ -184,7 +184,7 @@ export function parseCodexBackendOutput(
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
 	events.push(
-		...finalizeCodexBackend({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout })
+		...finalizeCodexBackend({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout }),
 	);
 	return events;
 }

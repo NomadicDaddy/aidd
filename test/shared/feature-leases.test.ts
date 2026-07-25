@@ -29,7 +29,7 @@ async function makeGitProject(prefix: string): Promise<string> {
 	await writeFile(
 		join(dir, '.git', 'config'),
 		'[user]\n\temail = aidd-test@example.invalid\n\tname = aidd Test\n',
-		{ flag: 'a' }
+		{ flag: 'a' },
 	);
 	return dir;
 }
@@ -83,7 +83,7 @@ describe('feature leases', () => {
 		});
 		// Both roots resolve to the SAME lease directory (git's common dir).
 		expect(await resolveFeatureLeaseDir(worktreeDir)).toBe(
-			await resolveFeatureLeaseDir(projectDir)
+			await resolveFeatureLeaseDir(projectDir),
 		);
 		expect(await mainRun.acquire('feat-shared')).toEqual({ acquired: true });
 		const denied = await worktreeRun.acquire('feat-shared');

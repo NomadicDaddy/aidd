@@ -37,7 +37,7 @@ export async function writeCycleContext(
 	input: { directive?: string; sessionId?: string },
 	profileService: DirectorProfileService,
 	chatService: DirectorChatService,
-	recentSuggestions: SuggestionHistoryEntry[] = []
+	recentSuggestions: SuggestionHistoryEntry[] = [],
 ): Promise<CycleContext> {
 	const directive = cleanText(input.directive, maxProfileTextLength);
 	// Suggestion history alone justifies a context document, even for scheduled cycles without a
@@ -70,7 +70,7 @@ export async function runDirectCycle(
 	cycleId: string,
 	outputPath: string,
 	fleetSummary: FleetSummary,
-	cycleContext: CycleContext
+	cycleContext: CycleContext,
 ): Promise<DirectCycleResult> {
 	if (!deps.directAiService.isSurfaceEnabled('directorCycle')) {
 		return { directAiError: null, output: null };
@@ -82,7 +82,7 @@ export async function runDirectCycle(
 	const meta = deps.directAiService.resolveSurfaceMeta(
 		'directorCycle',
 		modelOverride,
-		reasoningEffort
+		reasoningEffort,
 	);
 	deps.setCycleStage(cycleId, 'running_direct_ai', meta);
 	let output: DirectorOutput;
@@ -105,7 +105,7 @@ export async function runDirectCycle(
 		// intentionally left to propagate.
 		webLogger.warn(
 			{ cycleId, err },
-			'Direct AI director cycle failed; falling back to CLI backend'
+			'Direct AI director cycle failed; falling back to CLI backend',
 		);
 		return {
 			directAiError: err instanceof Error ? err.message : String(err),
@@ -125,7 +125,7 @@ export async function executeCycle(
 	cycleDir: string,
 	fleetSummary: FleetSummary,
 	input: { directive?: string; sessionId?: string },
-	directorCwd: string
+	directorCwd: string,
 ): Promise<{ cycleContext: CycleContext; output: DirectorOutput | undefined }> {
 	const fleetSummaryPath = join(cycleDir, `${cycleId}-fleet-summary.json`);
 	const outputPath = join(cycleDir, `${cycleId}-output.json`);
@@ -143,7 +143,7 @@ export async function executeCycle(
 		input,
 		deps.profileService,
 		deps.chatService,
-		recentSuggestions
+		recentSuggestions,
 	);
 
 	// Try direct AI path first
@@ -152,7 +152,7 @@ export async function executeCycle(
 		cycleId,
 		outputPath,
 		fleetSummary,
-		cycleContext
+		cycleContext,
 	);
 	if (directResult.output !== null) {
 		return { cycleContext, output: directResult.output };
@@ -180,7 +180,7 @@ export async function executeCycle(
 					}
 				: {}),
 		},
-		{ source: 'director' }
+		{ source: 'director' },
 	);
 	const output = await awaitAndPersistCycle(
 		deps,
@@ -188,7 +188,7 @@ export async function executeCycle(
 		runRecord.id,
 		outputPath,
 		fleetSummary,
-		directAiError
+		directAiError,
 	);
 	return { cycleContext, output };
 }
@@ -199,7 +199,7 @@ export async function awaitAndPersistCycle(
 	runId: string,
 	outputPath: string,
 	fleetSummary: FleetSummary,
-	directAiError?: null | string
+	directAiError?: null | string,
 ): Promise<DirectorOutput | undefined> {
 	const status = await waitForCycleRun(deps, runId);
 	if (deps.disposed()) return undefined;
@@ -213,7 +213,7 @@ export async function advanceCycle(
 	outputPath: string,
 	fleetSummary: FleetSummary,
 	runId?: string,
-	directAiError?: null | string
+	directAiError?: null | string,
 ): Promise<DirectorOutput | undefined> {
 	deps.setCycleStage(cycleId, 'persisting_results');
 	const exitCode = statusToExitCode(runStatus);
@@ -232,7 +232,7 @@ export async function advanceCycle(
 		output,
 		exitCode,
 		outputStatus,
-		failureReason
+		failureReason,
 	);
 	deps.deleteActiveStage(cycleId);
 	return output;
@@ -244,7 +244,7 @@ export async function advanceCycle(
 // exit_code 0 even though the run is marked failed.
 async function readRunFailureReason(
 	deps: CycleExecutorDeps,
-	runId: string
+	runId: string,
 ): Promise<null | string> {
 	try {
 		const run = await deps.runService.getRun(runId);
@@ -265,7 +265,7 @@ async function readRunFailureReason(
 // apply its own default.
 function combineFailureReasons(
 	directAiError: null | string | undefined,
-	runReason: null | string
+	runReason: null | string,
 ): null | string {
 	const parts: string[] = [];
 	if (directAiError) parts.push(`Direct AI fell back to CLI: ${directAiError}`);

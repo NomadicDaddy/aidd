@@ -1,4 +1,4 @@
-import { backendNames, type BackendName } from 'aidd-shared/plan/types';
+import { type BackendName, backendNames } from 'aidd-shared/plan/types';
 
 import type {
 	SettingsCliStatusDto,
@@ -16,7 +16,7 @@ export interface StatusCommandResult {
 export type StatusCommandRunner = (
 	command: string,
 	args: string[],
-	timeoutMs: number
+	timeoutMs: number,
 ) => Promise<StatusCommandResult>;
 
 const statusTimeoutMs = 2500;
@@ -38,7 +38,7 @@ const backendCommands: Record<BackendName, { args: string[]; command: string }> 
 export async function runStatusCommand(
 	command: string,
 	args: string[],
-	timeoutMs = statusTimeoutMs
+	timeoutMs = statusTimeoutMs,
 ): Promise<StatusCommandResult> {
 	try {
 		const subprocess = Bun.spawn([command, ...args], {
@@ -96,7 +96,7 @@ function statusFor(result: StatusCommandResult): SettingsToolStatus {
 }
 
 export async function getCliStatus(
-	runner: StatusCommandRunner = runStatusCommand
+	runner: StatusCommandRunner = runStatusCommand,
 ): Promise<SettingsCliStatusDto[]> {
 	return Promise.all(
 		backendNames.map(async (backend) => {
@@ -111,14 +111,14 @@ export async function getCliStatus(
 				status: statusFor(result),
 				version,
 			};
-		})
+		}),
 	);
 }
 
 async function authStatus(
 	runner: StatusCommandRunner,
 	command: string,
-	args: string[]
+	args: string[],
 ): Promise<null | string> {
 	const result = await runner(command, args, statusTimeoutMs);
 	if (result.exitCode === 0) return 'Authenticated';

@@ -37,7 +37,7 @@ export function ProjectCreateLane({
 
 	const roots = useMemo(
 		() => settings.data?.applicationRoots ?? [],
-		[settings.data?.applicationRoots]
+		[settings.data?.applicationRoots],
 	);
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
@@ -121,7 +121,7 @@ export function ProjectCreateLane({
 				result.stopBeforeImplementation
 					? 'Blueprint creation started'
 					: 'Project build started',
-				{ description: `${result.path}${outcome}` }
+				{ description: `${result.path}${outcome}` },
 			);
 			onClose();
 			void navigate(`/projects/${encodeURIComponent(result.projectId)}?tab=overview`);

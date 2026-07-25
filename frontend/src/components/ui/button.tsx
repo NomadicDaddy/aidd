@@ -31,7 +31,7 @@ const sizes: Record<ButtonSize, string> = {
 export function buttonClassName(
 	variant: ButtonVariant = 'secondary',
 	className?: string,
-	size: ButtonSize = 'default'
+	size: ButtonSize = 'default',
 ): string {
 	return cn(
 		'inline-flex items-center justify-center rounded-lg border font-medium',
@@ -40,7 +40,7 @@ export function buttonClassName(
 		'disabled:pointer-events-none disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:opacity-60 disabled:shadow-none dark:disabled:border-neutral-800 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600',
 		variants[variant],
 		sizes[size],
-		className
+		className,
 	);
 }
 

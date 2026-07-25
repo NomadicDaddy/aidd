@@ -183,10 +183,10 @@ describe('data movement tracing', () => {
 
 		expect(groupCollapsed).toHaveBeenCalledWith('[aidd] GET /api/v1/projects request');
 		expect(groupCollapsed).toHaveBeenCalledWith(
-			'[aidd] GET /api/v1/projects 200 38ms response 42.1 KB'
+			'[aidd] GET /api/v1/projects 200 38ms response 42.1 KB',
 		);
 		expect(groupCollapsed).toHaveBeenCalledWith(
-			'[aidd] GET /api/v1/projects backend 31ms events 8 file:3 metadata:4 request:1'
+			'[aidd] GET /api/v1/projects backend 31ms events 8 file:3 metadata:4 request:1',
 		);
 	});
 
@@ -223,7 +223,7 @@ describe('data movement tracing', () => {
 		});
 
 		expect(groupCollapsed).toHaveBeenCalledWith(
-			'[aidd] ui.project.tab.change projectId=demo tab=features'
+			'[aidd] ui.project.tab.change projectId=demo tab=features',
 		);
 		const labels = JSON.stringify(groupCollapsed.mock.calls);
 		const records = JSON.stringify(info.mock.calls);
@@ -276,10 +276,10 @@ describe('data movement tracing', () => {
 		});
 
 		expect(groupCollapsed).toHaveBeenCalledWith(
-			'[aidd] socket run_output runId=run_1 stream=stdout chunk=716 B'
+			'[aidd] socket run_output runId=run_1 stream=stdout chunk=716 B',
 		);
 		expect(groupCollapsed).toHaveBeenCalledWith(
-			'[aidd] socket run_status runId=run_1 status=running'
+			'[aidd] socket run_status runId=run_1 status=running',
 		);
 		expect(groupCollapsed).toHaveBeenCalledWith('[aidd] socket connected status=confirmed');
 		expect(JSON.stringify(info.mock.calls)).not.toContain('"chunk":"');

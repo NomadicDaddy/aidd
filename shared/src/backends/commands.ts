@@ -14,7 +14,7 @@ const SAFE_BACKEND_ARG = /^[A-Za-z0-9._:/@-]+$/;
 function assertSafeBackendArg(label: string, value: string): void {
 	if (!SAFE_BACKEND_ARG.test(value)) {
 		throw new Error(
-			`Unsafe ${label} value: "${value}" contains characters outside the allowed set [A-Za-z0-9._:/@-]`
+			`Unsafe ${label} value: "${value}" contains characters outside the allowed set [A-Za-z0-9._:/@-]`,
 		);
 	}
 }

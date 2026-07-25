@@ -63,7 +63,7 @@ describe('run command records', () => {
 					'--prompt',
 					'do the thing',
 				]),
-			})
+			}),
 		);
 
 		expect(run.launchCommand).toEqual({
@@ -88,7 +88,7 @@ describe('run command records', () => {
 				mode: 'audit',
 				model: 'glm-5.1',
 				reasoningEffort: 'high',
-			})
+			}),
 		);
 
 		expect(run.launchCommand).toEqual({

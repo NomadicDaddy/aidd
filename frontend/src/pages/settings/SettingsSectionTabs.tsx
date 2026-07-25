@@ -48,13 +48,13 @@ export function SettingsSectionTabs({
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
-		value: null | number | string
+		value: null | number | string,
 	) => void;
 	setField: <K extends keyof WebConfigSettings>(key: K, value: WebConfigSettings[K]) => void;
 	setRuntimePending: (action: null | RuntimeAction) => void;
 	setTriumvirateField: <K extends keyof TriumvirateSettings>(
 		key: K,
-		value: TriumvirateSettings[K]
+		value: TriumvirateSettings[K],
 	) => void;
 }) {
 	return (

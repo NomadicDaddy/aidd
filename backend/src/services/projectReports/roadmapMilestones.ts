@@ -36,7 +36,7 @@ function currentRoadmapMilestone(roadmap: Roadmap, features: Feature[]): null | 
 export function milestoneForReportFeature(
 	roadmap: Roadmap,
 	features: Feature[],
-	featureKind: ProjectReportKind
+	featureKind: ProjectReportKind,
 ): ReportMilestoneTarget {
 	const milestoneNames = Object.keys(roadmap.milestones);
 	const activeMilestone = currentRoadmapMilestone(roadmap, features);

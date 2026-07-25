@@ -1,4 +1,4 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { classifyFeatureStatusType } from './features/query.ts';
@@ -8,12 +8,12 @@ import { METADATA_DIR, metadataPath } from './paths.ts';
 export type InitialPhase = 'coding' | 'initializer' | 'onboarding';
 
 const codebaseIgnoreNames = new Set([
-	'.git',
-	METADATA_DIR,
 	'.DS_Store',
-	'node_modules',
-	'.vscode',
+	'.git',
 	'.idea',
+	'.vscode',
+	METADATA_DIR,
+	'node_modules',
 ]);
 
 async function pathExists(path: string): Promise<boolean> {

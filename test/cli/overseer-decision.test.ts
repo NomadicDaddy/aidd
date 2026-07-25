@@ -28,7 +28,7 @@ describe('parseOverseerDecision', () => {
 				consistencyIssues: [],
 				decision: 'execute',
 				finalActions: 'go',
-			})
+			}),
 		).toEqual({ finalActions: 'go', status: 'execute' });
 	});
 
@@ -55,7 +55,7 @@ describe('buildDecisionArtifact', () => {
 	test('records consistency issues on an execute decision', () => {
 		const artifact = buildDecisionArtifact(
 			{ consistencyIssues: ['gap X'], finalActions: 'go', status: 'execute' },
-			undefined
+			undefined,
 		);
 		expect(artifact).toMatchObject({
 			consistencyIssues: ['gap X'],

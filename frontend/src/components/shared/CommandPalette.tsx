@@ -36,7 +36,7 @@ export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
 	const setThemeMode = useThemeStore((state) => state.setMode);
 	const projectsQuery = useProjects();
 	const projects = (projectsQuery.data?.projects ?? []).filter(
-		(project) => !project.name.endsWith('.old')
+		(project) => !project.name.endsWith('.old'),
 	);
 
 	// Global Ctrl/Cmd+K toggle, available from anywhere in the app.
@@ -74,7 +74,7 @@ export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
 						<div className="mb-3 flex items-start justify-between gap-4">
 							<div className="min-w-0">
 								<div
-									className="text-foreground text-base font-semibold"
+									className="text-base font-semibold text-foreground"
 									id="command-palette-title">
 									Command palette
 								</div>
@@ -120,7 +120,7 @@ export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
 											</span>
 										</span>
 									</CommandItem>
-								))
+								)),
 							)}
 						</CommandGroup>
 						{projects.length > 0 ? (
@@ -134,8 +134,8 @@ export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
 										onSelect={() =>
 											runAction(() =>
 												navigate(
-													`/projects/${encodeURIComponent(project.routeId)}`
-												)
+													`/projects/${encodeURIComponent(project.routeId)}`,
+												),
 											)
 										}
 										value={`project ${project.name}`}>
@@ -180,7 +180,7 @@ export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
 								className="min-h-11 gap-3 px-2.5"
 								onSelect={() =>
 									runAction(() =>
-										setThemeMode(themeMode === 'dark' ? 'light' : 'dark')
+										setThemeMode(themeMode === 'dark' ? 'light' : 'dark'),
 									)
 								}
 								value="toggle theme dark light mode">

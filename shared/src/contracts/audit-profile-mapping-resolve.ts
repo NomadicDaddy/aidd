@@ -2,7 +2,6 @@ import type { ProjectAssuranceBucket, ProjectAssuranceProfile } from './project-
 
 import { matchFacetKeys } from './audit-profile-mapping-facets.ts';
 import {
-	auditWildcard,
 	type AuditApplicabilityCell,
 	type AuditApplicabilityRow,
 	type AuditApplicabilitySource,
@@ -12,6 +11,7 @@ import {
 	type AuditProfileMatch,
 	type AuditProfileOverrides,
 	type AuditProfileRule,
+	auditWildcard,
 } from './audit-profile-mapping-types.ts';
 import { projectAssuranceBuckets } from './project-profile.ts';
 
@@ -52,7 +52,7 @@ interface LayerOutcome {
 function resolveLayer(
 	profile: ProjectAssuranceProfile,
 	normalizedAuditName: string,
-	rules: AuditProfileRule[]
+	rules: AuditProfileRule[],
 ): LayerOutcome | null {
 	return pickLayerOutcome(rules, (rule) => {
 		if (!ruleTargetsAudit(rule, normalizedAuditName)) return null;
@@ -67,7 +67,7 @@ function resolveLayer(
 function resolveBucketLayer(
 	bucket: ProjectAssuranceBucket,
 	normalizedAuditName: string,
-	rules: AuditProfileRule[]
+	rules: AuditProfileRule[],
 ): LayerOutcome | null {
 	return pickLayerOutcome(rules, (rule) => {
 		if (!ruleTargetsAudit(rule, normalizedAuditName)) return null;
@@ -81,7 +81,7 @@ function resolveBucketLayer(
 
 function pickLayerOutcome(
 	rules: AuditProfileRule[],
-	classify: (rule: AuditProfileRule) => { conditional: boolean; explicit: boolean } | null
+	classify: (rule: AuditProfileRule) => { conditional: boolean; explicit: boolean } | null,
 ): LayerOutcome | null {
 	let excluded: LayerOutcome | null = null;
 	let required: LayerOutcome | null = null;
@@ -124,7 +124,7 @@ export function resolveAuditEffect(
 	profile: ProjectAssuranceProfile,
 	auditName: string,
 	mapping: AuditProfileMapping,
-	overrides?: AuditProfileOverrides | null
+	overrides?: AuditProfileOverrides | null,
 ): AuditApplicabilityCell {
 	const normalized = auditName.toUpperCase();
 	if (overrides) {
@@ -162,7 +162,7 @@ export function isAuditApplicableToProfile(
 	profile: ProjectAssuranceProfile,
 	auditName: string,
 	mapping: AuditProfileMapping,
-	overrides?: AuditProfileOverrides | null
+	overrides?: AuditProfileOverrides | null,
 ): boolean {
 	return resolveAuditEffect(profile, auditName, mapping, overrides).applies;
 }
@@ -171,7 +171,7 @@ export function resolveBucketAuditEffect(
 	bucket: ProjectAssuranceBucket,
 	auditName: string,
 	mapping: AuditProfileMapping,
-	overrides?: AuditProfileOverrides | null
+	overrides?: AuditProfileOverrides | null,
 ): AuditApplicabilityCell {
 	const normalized = auditName.toUpperCase();
 	if (overrides) {
@@ -193,7 +193,7 @@ export function resolveBucketAuditEffect(
 
 function layerToCell(
 	layer: LayerOutcome,
-	source: AuditApplicabilitySource
+	source: AuditApplicabilitySource,
 ): AuditApplicabilityCell {
 	const cell: AuditApplicabilityCell = {
 		applies: cellApplies(layer.effect, layer.conditional),
@@ -213,7 +213,7 @@ function cellApplies(effect: AuditEffect, conditional: boolean): boolean {
 export function buildApplicabilityMatrix(
 	auditNames: string[],
 	mapping: AuditProfileMapping,
-	overrides?: AuditProfileOverrides | null
+	overrides?: AuditProfileOverrides | null,
 ): AuditApplicabilityRow[] {
 	const rows: AuditApplicabilityRow[] = [];
 	for (const auditName of auditNames) {

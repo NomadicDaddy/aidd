@@ -8,9 +8,9 @@ import { cn } from '../../../lib/cn.ts';
 import { fieldLabelClass, selectClass } from '../../../lib/formStyles.ts';
 import {
 	type buildFeatureDependencyGraph,
+	type FeatureDependencyNode,
 	GRAPH_NODE_HEIGHT,
 	GRAPH_NODE_WIDTH,
-	type FeatureDependencyNode,
 } from './dependencyGraphUtils.ts';
 import { statusTone } from './shared.ts';
 
@@ -40,7 +40,7 @@ function nodeSourceClass(source: FeatureDependencyNode['source']): string {
 }
 
 export function sourceBadgeTone(
-	source: FeatureDependencyNode['source']
+	source: FeatureDependencyNode['source'],
 ): 'amber' | 'neutral' | 'red' | 'teal' {
 	if (source === 'audit') return 'amber';
 	if (source === 'remediation') return 'red';
@@ -82,7 +82,7 @@ export function GraphNodeButton({
 				isRelated &&
 					'border-teal-300 bg-teal-50/70 opacity-100 saturate-100 dark:border-teal-700 dark:bg-teal-950/30',
 				isSelected &&
-					'z-10 border-teal-500 bg-teal-50 opacity-100 shadow-md ring-2 ring-teal-400/40 saturate-100 dark:border-teal-400 dark:bg-teal-950/50'
+					'z-10 border-teal-500 bg-teal-50 opacity-100 shadow-md ring-2 ring-teal-400/40 saturate-100 dark:border-teal-400 dark:bg-teal-950/50',
 			)}
 			onClick={() => onSelect(node.directory)}
 			style={{
@@ -98,7 +98,7 @@ export function GraphNodeButton({
 				</Badge>
 				<span className="font-mono text-[11px] text-neutral-500">L{node.layer}</span>
 			</div>
-			<p className="text-foreground mt-2 truncate text-sm font-semibold">{node.title}</p>
+			<p className="mt-2 truncate text-sm font-semibold text-foreground">{node.title}</p>
 			<p className="mt-1 truncate font-mono text-[11px] text-neutral-500">{node.directory}</p>
 		</button>
 	);

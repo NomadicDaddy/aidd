@@ -14,7 +14,7 @@ export function armWindDownNoteIfNeeded(
 	promptContext: IterationPromptContext,
 	plan: RunPlan,
 	runStartedAtMs: number,
-	iteration: number
+	iteration: number,
 ): void {
 	if (iteration === 0 || plan.outputPolicy.timeoutSeconds <= 0) return;
 	const budgetMs = plan.outputPolicy.timeoutSeconds * 1000;
@@ -54,7 +54,7 @@ export class IterationPromptContext {
 
 	async compile(promptPlan: PromptPlan): Promise<CompiledPrompt> {
 		const notes = [this.carryoverNote, this.windDownNote].filter(
-			(note): note is string => typeof note === 'string' && note.length > 0
+			(note): note is string => typeof note === 'string' && note.length > 0,
 		);
 		this.carryoverNote = undefined;
 		this.windDownNote = undefined;

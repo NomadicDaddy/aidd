@@ -66,7 +66,7 @@ describe('standalone distribution checker', () => {
 	test('defaults to all targets when no target is supplied', () => {
 		const args = parseCheckStandaloneArgs([]);
 		expect(args.targets.map((target) => target.name)).toEqual(
-			ALL_TARGETS.map((target) => target.name)
+			ALL_TARGETS.map((target) => target.name),
 		);
 	});
 

@@ -24,8 +24,8 @@ import {
 } from './helpers.ts';
 import {
 	deriveResumeResolution as deriveResumeResolutionFn,
-	reconcileStaleSessions as reconcileStaleSessionsFn,
 	type ReconcileResult,
+	reconcileStaleSessions as reconcileStaleSessionsFn,
 } from './sessionReconciler.ts';
 
 export type { ReconcileResult } from './sessionReconciler.ts';
@@ -61,7 +61,7 @@ export class SessionLifecycle {
 	}
 
 	async reconcileStaleSessions(
-		classifier: (session: PipelineSessionRow) => Promise<{ fail: string } | ResumeResolution>
+		classifier: (session: PipelineSessionRow) => Promise<{ fail: string } | ResumeResolution>,
 	): Promise<ReconcileResult> {
 		return reconcileStaleSessionsFn(
 			{
@@ -70,7 +70,7 @@ export class SessionLifecycle {
 				runService: this.runService,
 				telemetryService: this.telemetryService,
 			},
-			classifier
+			classifier,
 		);
 	}
 
@@ -82,7 +82,7 @@ export class SessionLifecycle {
 				runService: this.runService,
 				telemetryService: this.telemetryService,
 			},
-			session
+			session,
 		);
 	}
 
@@ -91,7 +91,7 @@ export class SessionLifecycle {
 		if (!session) throw new RunControlError(`Pipeline session not found: ${id}`, 404);
 		if (!isActiveSessionStatus(session.status)) {
 			throw new RunControlError(
-				`Pipeline session is already in terminal status '${session.status}': ${id}`
+				`Pipeline session is already in terminal status '${session.status}': ${id}`,
 			);
 		}
 		this.stopFlags.add(id);
@@ -108,8 +108,8 @@ export class SessionLifecycle {
 			.where(
 				and(
 					eq(pipelineStepResults.sessionId, id),
-					inArray(pipelineStepResults.status, ['queued', 'running'])
-				)
+					inArray(pipelineStepResults.status, ['queued', 'running']),
+				),
 			);
 		for (const step of activeSteps) {
 			if (step.runId === null) continue;
@@ -130,8 +130,8 @@ export class SessionLifecycle {
 					Promise.race([
 						childProcess.exited,
 						Bun.sleep(STEP_CLEANUP_TIMEOUT_MS),
-					]) as Promise<number | void>
-			)
+					]) as Promise<number | void>,
+			),
 		);
 		const completedAt = Date.now();
 		await this.db
@@ -140,8 +140,8 @@ export class SessionLifecycle {
 			.where(
 				and(
 					eq(pipelineStepResults.sessionId, id),
-					inArray(pipelineStepResults.status, ['queued', 'running'])
-				)
+					inArray(pipelineStepResults.status, ['queued', 'running']),
+				),
 			);
 		await this.finishSession(id, 'stopped', completedAt, undefined);
 		const execution = this.activeExecutions.get(id);
@@ -154,7 +154,7 @@ export class SessionLifecycle {
 		sessionId: string,
 		status: PipelineSessionStatus,
 		completedAt: number,
-		errorMessage: string | undefined
+		errorMessage: string | undefined,
 	): Promise<void> {
 		const session = await this.report.getSession(sessionId);
 		if (!session) return;

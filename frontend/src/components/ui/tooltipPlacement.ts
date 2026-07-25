@@ -37,7 +37,7 @@ export function resolveTooltipPlacement(
 	anchor: TooltipAnchorRect,
 	size: TooltipSize,
 	viewport: TooltipViewportSize,
-	preferredSide: TooltipSide
+	preferredSide: TooltipSide,
 ): TooltipPlacement {
 	const fitsAbove = anchor.top - TOOLTIP_TRIGGER_GAP - size.height >= TOOLTIP_VIEWPORT_MARGIN;
 	const fitsBelow =
@@ -54,13 +54,13 @@ export function resolveTooltipPlacement(
 			: anchor.bottom + TOOLTIP_TRIGGER_GAP;
 	const top = Math.max(
 		TOOLTIP_VIEWPORT_MARGIN,
-		Math.min(unclampedTop, viewport.height - TOOLTIP_VIEWPORT_MARGIN - size.height)
+		Math.min(unclampedTop, viewport.height - TOOLTIP_VIEWPORT_MARGIN - size.height),
 	);
 
 	const centered = anchor.left + anchor.width / 2 - size.width / 2;
 	const left = Math.max(
 		TOOLTIP_VIEWPORT_MARGIN,
-		Math.min(centered, viewport.width - TOOLTIP_VIEWPORT_MARGIN - size.width)
+		Math.min(centered, viewport.width - TOOLTIP_VIEWPORT_MARGIN - size.width),
 	);
 
 	return { left, side, top };

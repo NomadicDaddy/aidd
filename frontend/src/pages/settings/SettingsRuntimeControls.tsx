@@ -52,7 +52,7 @@ export function SettingsRuntimeControls({
 			toast.error(
 				error instanceof Error
 					? error.message
-					: `Could not ${action === 'restart' ? 'restart' : 'shut down'} the control panel`
+					: `Could not ${action === 'restart' ? 'restart' : 'shut down'} the control panel`,
 			);
 		} finally {
 			setRuntimePending(null);

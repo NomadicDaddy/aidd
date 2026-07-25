@@ -314,7 +314,7 @@ const users = sqliteTable(
 		index('idx_users_email').on(table.email),
 		index('idx_users_migrated').on(table.migrated),
 		index('idx_users_migration_version').on(table.migrationVersion),
-	]
+	],
 );
 ```
 
@@ -371,7 +371,7 @@ async function validatePreMigration(): Promise<ValidationResult> {
 
 	// Check for duplicate emails using raw SQL
 	const duplicates = await db.all<{ cnt: number; email: string }>(
-		sql`SELECT email, COUNT(*) as cnt FROM users GROUP BY email HAVING cnt > 1`
+		sql`SELECT email, COUNT(*) as cnt FROM users GROUP BY email HAVING cnt > 1`,
 	);
 
 	if (duplicates.length > 0) {
@@ -474,7 +474,7 @@ const users = sqliteTable(
 		index('idx_users_email').on(table.email),
 		index('idx_users_created_at').on(table.createdAt),
 		index('idx_users_schema_version').on(table.schemaVersion),
-	]
+	],
 );
 
 // Separate table for complex relationships
@@ -498,7 +498,7 @@ const userProfiles = sqliteTable(
 			foreignColumns: [users.id],
 			name: 'fk_user_profiles_user_id_users',
 		}).onDelete('cascade'),
-	]
+	],
 );
 ```
 
@@ -579,9 +579,9 @@ const runs = sqliteTable(
 		check('ck_runs_status', sql`${table.status} IN ('pending','running','completed','failed')`),
 		check(
 			'ck_runs_settings_json',
-			sql`${table.settings} IS NULL OR json_valid(${table.settings})`
+			sql`${table.settings} IS NULL OR json_valid(${table.settings})`,
 		),
-	]
+	],
 );
 ```
 
@@ -652,7 +652,7 @@ interface EmergencyRollbackResult {
 async function emergencyRollback(
 	migrationId: string,
 	reason: string,
-	validateOnly = false
+	validateOnly = false,
 ): Promise<EmergencyRollbackResult> {
 	console.error(`Emergency rollback initiated: ${reason}`);
 
@@ -798,7 +798,7 @@ async function badBatchMigration(): Promise<void> {
 
 // ✅ GOOD: Small batch processing
 async function goodBatchMigration(
-	batchSize = 50
+	batchSize = 50,
 ): Promise<{ hasMore: boolean; processed: number }> {
 	const batch = await db.select().from(users).where(eq(users.migrated, false)).limit(batchSize);
 

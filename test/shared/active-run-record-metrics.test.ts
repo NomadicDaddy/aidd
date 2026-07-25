@@ -89,7 +89,7 @@ describe('active-run record output metrics', () => {
 
 	test('a non-numeric metric value rejects the record', () => {
 		expect(
-			parseCliActiveRunRecord({ ...baseRecordJson(), linesAdded: 'lots' })
+			parseCliActiveRunRecord({ ...baseRecordJson(), linesAdded: 'lots' }),
 		).toBeUndefined();
 		expect(parseCliActiveRunRecord({ ...baseRecordJson(), inputTokens: NaN })).toBeUndefined();
 	});

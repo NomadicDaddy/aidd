@@ -7,7 +7,7 @@ export {
 } from './listings/enumerate.ts';
 export { toWebFeatureSummary } from './listings/featureMappers.ts';
 export {
+	type ListingsContext,
 	mapSettledWithConcurrency,
 	PROJECT_LISTING_COMPUTE_CONCURRENCY,
-	type ListingsContext,
 } from './listings/shared.ts';

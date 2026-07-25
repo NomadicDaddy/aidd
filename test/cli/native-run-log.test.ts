@@ -58,10 +58,10 @@ describe('NativeRunLogRenderer', () => {
 	test('passes streamed text deltas through verbatim', () => {
 		const renderer = new NativeRunLogRenderer();
 		expect(
-			renderer.render({ chunk: 'Reviewing the ', kind: 'text', type: 'assistant_delta' })
+			renderer.render({ chunk: 'Reviewing the ', kind: 'text', type: 'assistant_delta' }),
 		).toBe('Reviewing the ');
 		expect(
-			renderer.render({ chunk: 'auth guard.\n', kind: 'text', type: 'assistant_delta' })
+			renderer.render({ chunk: 'auth guard.\n', kind: 'text', type: 'assistant_delta' }),
 		).toBe('auth guard.\n');
 	});
 
@@ -71,7 +71,7 @@ describe('NativeRunLogRenderer', () => {
 		expect(renderer.render({ chunk: 'Done.', type: 'assistant_text' })).toBeNull();
 		// Next turn without deltas renders normally again.
 		expect(renderer.render({ chunk: 'Second turn.', type: 'assistant_text' })).toBe(
-			'Second turn.\n'
+			'Second turn.\n',
 		);
 	});
 
@@ -96,18 +96,18 @@ describe('NativeRunLogRenderer', () => {
 		const renderer = new NativeRunLogRenderer();
 		renderer.render(
 			{ chunk: 'x'.repeat(500), kind: 'reasoning', type: 'assistant_delta' },
-			1_000
+			1_000,
 		);
 		renderer.render({ args: { path: 'a.ts' }, tool: 'read_file', type: 'tool_call' });
 		expect(
-			renderer.render({ chunk: 'y', kind: 'reasoning', type: 'assistant_delta' }, 2_000)
+			renderer.render({ chunk: 'y', kind: 'reasoning', type: 'assistant_delta' }, 2_000),
 		).toBe('[reasoning…]\n');
 	});
 
 	test('renders non-delta events through the turn-level renderer', () => {
 		const renderer = new NativeRunLogRenderer();
 		expect(
-			renderer.render({ args: { command: 'bun test' }, tool: 'bash', type: 'tool_call' })
+			renderer.render({ args: { command: 'bun test' }, tool: 'bash', type: 'tool_call' }),
 		).toBe('$ bun test\n');
 	});
 });

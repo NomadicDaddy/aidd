@@ -15,10 +15,10 @@ export interface AllocatedPorts {
 // consistent with the /ports probe.
 async function collectUsedPorts(config: ResolvedWebConfig): Promise<Set<number>> {
 	const isIgnoredDirectory = createIgnoredDirectoryMatcher(
-		config.ignoredFolders.length > 0 ? config.ignoredFolders : defaultIgnoredFolders
+		config.ignoredFolders.length > 0 ? config.ignoredFolders : defaultIgnoredFolders,
 	);
 	const scans = await Promise.all(
-		config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory))
+		config.allowedRoots.map((root) => scanRoot(root, 2, isIgnoredDirectory)),
 	);
 	const paths = new Set<string>();
 	for (const scan of scans) {
@@ -36,7 +36,7 @@ async function collectUsedPorts(config: ResolvedWebConfig): Promise<Set<number>>
 			if (ports?.backendPort !== null && ports?.backendPort !== undefined) {
 				used.add(ports.backendPort);
 			}
-		})
+		}),
 	);
 	return used;
 }

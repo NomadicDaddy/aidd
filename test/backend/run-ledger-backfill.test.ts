@@ -26,7 +26,7 @@ async function seedRun(
 		status: string;
 		stopReason?: null | string;
 		summary?: null | string;
-	}
+	},
 ): Promise<void> {
 	await db.insert(runs).values({
 		backend: 'native',
@@ -48,7 +48,7 @@ async function writeLedgerLine(projectDir: string, entries: Record<string, unkno
 	await mkdir(metadataDir, { recursive: true });
 	await writeFile(
 		join(metadataDir, 'runs.jsonl'),
-		`${entries.map((entry) => JSON.stringify(entry)).join('\n')}\n`
+		`${entries.map((entry) => JSON.stringify(entry)).join('\n')}\n`,
 	);
 }
 

@@ -8,8 +8,8 @@ import { bandTone, describeChangePotential, overrideEffects } from '../../audits
 import {
 	describeFreshAge,
 	describeReportFreshness,
-	stateBadge,
 	type OverrideValue,
+	stateBadge,
 } from './auditsTabUtils.tsx';
 
 export function AuditsMobileList({
@@ -81,7 +81,7 @@ export function AuditsMobileList({
 									type="checkbox"
 								/>
 								<span className="min-w-0">
-									<span className="text-foreground block font-medium">
+									<span className="block font-medium text-foreground">
 										{entry.name}
 									</span>
 									<span className="block text-xs break-all text-neutral-500">
@@ -146,7 +146,7 @@ export function AuditsMobileList({
 										onChange={(event) =>
 											changeOverride(
 												entry.name,
-												event.target.value as OverrideValue
+												event.target.value as OverrideValue,
 											)
 										}
 										value={overrideValue}>

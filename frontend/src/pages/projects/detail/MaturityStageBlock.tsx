@@ -62,7 +62,7 @@ export function MaturityStageBlock({
 							className="h-4 w-4 shrink-0 text-neutral-500"
 						/>
 						<Icon className={`h-4 w-4 shrink-0 ${STAGE_ICON_TONE[stage.status]}`} />
-						<span className="text-foreground truncate text-sm font-medium">
+						<span className="truncate text-sm font-medium text-foreground">
 							{stage.order}. {stage.label}
 						</span>
 					</div>

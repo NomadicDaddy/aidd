@@ -34,7 +34,7 @@ export async function importSkill(input: SkillImportRequest): Promise<SkillDefin
 	const response = await apiSend<{ skill: SkillDefinition }>(
 		'/api/v1/skills/imports',
 		'POST',
-		input
+		input,
 	);
 	return response.skill;
 }
@@ -43,7 +43,7 @@ export async function previewSkillImport(input: SkillImportRequest): Promise<Ski
 	const response = await apiSend<{ preview: SkillImportPreview }>(
 		'/api/v1/skills/imports/preview',
 		'POST',
-		input
+		input,
 	);
 	return response.preview;
 }
@@ -61,7 +61,7 @@ export async function runSkill(input: SkillRunRequest): Promise<PipelineSessionR
 			model: input.model,
 			projectDir: input.projectDir,
 			reasoningEffort: input.reasoningEffort,
-		}
+		},
 	);
 	return response.session;
 }

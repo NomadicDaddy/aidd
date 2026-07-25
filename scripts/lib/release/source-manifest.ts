@@ -49,7 +49,7 @@ async function gitCommit(rootDir: string): Promise<string> {
 	if (!/^[0-9a-f]{40}$/.test(commit)) {
 		throw new Error(
 			'Cannot read the aidd commit from git, so the source manifest could not name the ' +
-				'sources this release was built from. Package from a git checkout with git on PATH.'
+				'sources this release was built from. Package from a git checkout with git on PATH.',
 		);
 	}
 	return commit;
@@ -57,7 +57,7 @@ async function gitCommit(rootDir: string): Promise<string> {
 
 export async function collectSourceRevisions(
 	rootDir: string,
-	version: string
+	version: string,
 ): Promise<SourceRevisions> {
 	const manifest = JSON.parse(await readFile(join(rootDir, 'package.json'), 'utf8')) as {
 		packageManager?: string;
@@ -66,7 +66,7 @@ export async function collectSourceRevisions(
 	if (bunVersion === undefined) {
 		throw new Error(
 			'package.json has no `packageManager: "bun@<version>"`, so the source manifest cannot ' +
-				'name the Bun tag whose submodules pin the LGPL components the binaries link.'
+				'name the Bun tag whose submodules pin the LGPL components the binaries link.',
 		);
 	}
 	const lockfile = await readFile(join(rootDir, 'bun.lock')).catch(() => Buffer.from(''));
@@ -119,7 +119,7 @@ LGPL applies to the linked library, not to the program that links it.
 /** Retained in-repo, keyed by artifact hash: the record the offer is answered from. */
 export function renderReleaseRecord(
 	revisions: SourceRevisions,
-	artifacts: { name: string; sha256: string }[]
+	artifacts: { name: string; sha256: string }[],
 ): string {
 	return `# Release ${revisions.aiddVersion} — source record
 

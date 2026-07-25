@@ -8,9 +8,9 @@ export type {
 	ProjectFeatureStatus,
 } from './projects/features.ts';
 export type {
-	ProjectActiveRunSummary,
 	FinalCheckSummary,
 	GitCommitRef,
+	ProjectActiveRunSummary,
 	ProjectDetail,
 	ProjectLocalIteration,
 	ProjectLocalRun,
@@ -51,7 +51,7 @@ export type {
 	ProjectNamesResponse,
 	ProjectRecommendInput,
 	ProjectRecommendResult,
-	ProjectStartImplementationResult,
 	ProjectsGitStatusResponse,
 	ProjectsListResponse,
+	ProjectStartImplementationResult,
 } from './projects/operations.ts';

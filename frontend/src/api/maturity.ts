@@ -32,22 +32,22 @@ export interface MaturitySkipResponse {
 
 export async function updateMaturitySkip(
 	projectId: string,
-	skip: string[]
+	skip: string[],
 ): Promise<MaturitySkipResponse> {
 	return await apiSend<MaturitySkipResponse>(
 		`${projectApiPath(projectId)}/maturity/skip`,
 		'POST',
-		{ skip }
+		{ skip },
 	);
 }
 
 export async function runMaturityNext(
 	projectId: string,
-	body: MaturityRunNextRequest
+	body: MaturityRunNextRequest,
 ): Promise<MaturityRunNextResponse> {
 	return await apiSend<MaturityRunNextResponse>(
 		`${projectApiPath(projectId)}/maturity/run-next`,
 		'POST',
-		body
+		body,
 	);
 }

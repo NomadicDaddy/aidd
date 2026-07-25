@@ -50,66 +50,66 @@ export type BackendUsageQuery = ResourceUsageQuery;
 
 export async function listResourceUsage(
 	query: ResourceUsageQuery = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<ResourceUsageRow[]> {
 	const response = await apiGet<{ resources: ResourceUsageRow[] }>(
 		`/api/v1/telemetry/resources${buildQuery({ ...query })}`,
-		{ signal }
+		{ signal },
 	);
 	return response.resources;
 }
 
 export async function listTopUsed(
 	query: TopUsedQuery = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<ResourceUsageRow[]> {
 	const response = await apiGet<{ resources: ResourceUsageRow[] }>(
 		`/api/v1/telemetry/top${buildQuery({ ...query })}`,
-		{ signal }
+		{ signal },
 	);
 	return response.resources;
 }
 
 export async function listTimeseries(
 	query: TimeseriesQuery,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<TelemetryTimeseriesPoint[]> {
 	const response = await apiGet<{ points: TelemetryTimeseriesPoint[] }>(
 		`/api/v1/telemetry/timeseries${buildQuery({ ...query })}`,
-		{ signal }
+		{ signal },
 	);
 	return response.points;
 }
 
 export async function listOutputTimeseries(
 	query: OutputTimeseriesQuery,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<TelemetryOutputTimeseriesPoint[]> {
 	const response = await apiGet<{ points: TelemetryOutputTimeseriesPoint[] }>(
 		`/api/v1/telemetry/output-timeseries${buildQuery({ ...query })}`,
-		{ signal }
+		{ signal },
 	);
 	return response.points;
 }
 
 export async function listBackendUsage(
 	query: BackendUsageQuery = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<TelemetryBackendUsageRow[]> {
 	const response = await apiGet<{ backends: TelemetryBackendUsageRow[] }>(
 		`/api/v1/telemetry/backends${buildQuery({ ...query })}`,
-		{ signal }
+		{ signal },
 	);
 	return response.backends;
 }
 
 export async function listInvocations(
 	query: InvocationsQuery = {},
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<InvocationRecord[]> {
 	const response = await apiGet<{ invocations: InvocationRecord[] }>(
 		`/api/v1/telemetry/invocations${buildQuery({ ...query })}`,
-		{ signal }
+		{ signal },
 	);
 	return response.invocations;
 }

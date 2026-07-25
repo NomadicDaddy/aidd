@@ -42,7 +42,7 @@ function localInterfaceAddresses(): OriginInterfaceAddress[] {
 function addLocalInterfaceOrigins(
 	origins: Set<string>,
 	port: number,
-	interfaceAddresses: OriginInterfaceAddress[]
+	interfaceAddresses: OriginInterfaceAddress[],
 ): void {
 	for (const entry of interfaceAddresses) {
 		if (entry.internal) continue;
@@ -60,7 +60,7 @@ function addLoopbackAliases(origins: Set<string>, hostname: string, port: number
 
 export function buildAllowedOrigins(
 	webConfig: ResolvedWebConfig,
-	interfaceAddresses: OriginInterfaceAddress[] = localInterfaceAddresses()
+	interfaceAddresses: OriginInterfaceAddress[] = localInterfaceAddresses(),
 ): Set<string> {
 	const origins = new Set<string>();
 	const { hostname, port } = webConfig;

@@ -20,7 +20,7 @@ import { cwd, exit } from 'node:process';
  */
 
 const scannedRoots = ['cli/src', 'backend/src', 'shared/src', 'scripts'];
-const skippedDirs = new Set(['node_modules', 'dist', 'build', 'snapshots']);
+const skippedDirs = new Set(['build', 'dist', 'node_modules', 'snapshots']);
 const allowMarker = 'allow-env-spread-policy';
 
 interface Finding {
@@ -89,7 +89,7 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 	if (findings.length > 0) {
 		console.error('aidd env-spread check failed.');
 		console.error(
-			'Child processes must receive an allowlisted environment via buildBackendSubprocessEnv / buildToolSubprocessEnv.'
+			'Child processes must receive an allowlisted environment via buildBackendSubprocessEnv / buildToolSubprocessEnv.',
 		);
 		for (const finding of findings) {
 			console.error(`- ${finding.file}:${finding.line} [${finding.rule}] ${finding.text}`);

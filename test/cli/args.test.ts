@@ -76,11 +76,11 @@ describe('parseArgs', () => {
 
 	test('parses internal fresh-project Git init flag', () => {
 		expect(parseArgs(['--project-dir', 'd:/applications/demo']).initGitAfterScaffold).toBe(
-			false
+			false,
 		);
 		expect(
 			parseArgs(['--project-dir', 'd:/applications/demo', '--init-git-after-scaffold'])
-				.initGitAfterScaffold
+				.initGitAfterScaffold,
 		).toBe(true);
 	});
 
@@ -154,7 +154,7 @@ describe('parseArgs', () => {
 				'claude-code',
 				'--exec-cli',
 				'internal',
-			])
+			]),
 		).toThrow(ArgsError);
 	});
 

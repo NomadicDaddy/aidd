@@ -13,13 +13,13 @@ import { booleanVariable, stringArrayVariable, stringVariable } from './shared.t
 export async function compileAuditPrompt(
 	plan: PromptPlan,
 	rootDir: string,
-	priorContext?: ProjectContextDigest
+	priorContext?: ProjectContextDigest,
 ): Promise<string> {
 	const selectedAuditNames = stringArrayVariable(plan, 'auditNames');
 	const auditName = stringVariable(plan, 'auditName') ?? selectedAuditNames[0] ?? 'AUDIT';
 	const auditNames = selectedAuditNames.length > 0 ? selectedAuditNames : [auditName];
 	const auditDefinitions = await Promise.all(
-		auditNames.map((name) => loadAuditPromptDefinition(rootDir, name))
+		auditNames.map((name) => loadAuditPromptDefinition(rootDir, name)),
 	);
 	const primaryAudit: AuditPromptDefinition = auditDefinitions[0] ?? {
 		body: '',

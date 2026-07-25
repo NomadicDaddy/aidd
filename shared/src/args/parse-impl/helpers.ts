@@ -1,4 +1,4 @@
-import { normalizeBackendName, type BackendName } from '../../plan/types.ts';
+import { type BackendName, normalizeBackendName } from '../../plan/types.ts';
 import {
 	normalizeReasoningEffort,
 	normalizeThinkingLevel,
@@ -66,7 +66,7 @@ export function expandInlineValues(argv: string[]): ExpandedArgv {
 
 export function createRequireValue(
 	argv: string[],
-	inlineValueIndices: Set<number>
+	inlineValueIndices: Set<number>,
 ): (index: number, flag: string) => string {
 	return (index: number, flag: string): string => {
 		const value = argv[index + 1];
@@ -78,7 +78,7 @@ export function createRequireValue(
 }
 
 export function createParseNumber(
-	requireValue: (index: number, flag: string) => string
+	requireValue: (index: number, flag: string) => string,
 ): (index: number, flag: string) => number {
 	return (index: number, flag: string): number => {
 		const raw = requireValue(index, flag);
@@ -92,7 +92,7 @@ export function createParseNumber(
 
 // Like createParseNumber but allows fractional values (e.g. a USD cost budget such as 0.01).
 export function createParseDecimal(
-	requireValue: (index: number, flag: string) => string
+	requireValue: (index: number, flag: string) => string,
 ): (index: number, flag: string) => number {
 	return (index: number, flag: string): number => {
 		const raw = requireValue(index, flag);

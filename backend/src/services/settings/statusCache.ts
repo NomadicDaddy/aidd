@@ -41,7 +41,7 @@ export class SettingsStatusCache {
 	constructor(runner?: StatusCommandRunner) {
 		this.cli = new StatusProbe(async () => await getCliStatus(runner));
 		this.sourceControl = new StatusProbe(
-			async () => await getSourceControlStatus(runner ? { runner } : {})
+			async () => await getSourceControlStatus(runner ? { runner } : {}),
 		);
 	}
 

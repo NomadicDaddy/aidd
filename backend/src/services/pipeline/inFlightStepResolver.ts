@@ -12,7 +12,7 @@ export async function resolveInFlightStep(
 	deps: { lifecycle: SessionLifecycle; runWaiter: RunWaiter },
 	step: RecipeStepDefinition,
 	inFlightStep: ResumeInFlightStep,
-	sessionId: string
+	sessionId: string,
 ): Promise<StepExecutionResult> {
 	const { lifecycle, runWaiter } = deps;
 	const startedAt = inFlightStep.startedAt ?? Date.now();

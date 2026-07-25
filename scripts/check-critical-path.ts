@@ -175,7 +175,7 @@ function checkBudget(totalBrotli: number, updateBudget: boolean): boolean {
 		writeFileSync(BUDGET_PATH, `${JSON.stringify(budget, null, '\t')}\n`);
 		log(
 			`\nBudget written to scripts/critical-path-budget.json (${kb(budget.maxCriticalPathBrotliBytes)}, +${Math.round((BUDGET_HEADROOM - 1) * 100)}% headroom)`,
-			'cyan'
+			'cyan',
 		);
 		return true;
 	}
@@ -190,17 +190,17 @@ function checkBudget(totalBrotli: number, updateBudget: boolean): boolean {
 	if (totalBrotli > budget.maxCriticalPathBrotliBytes) {
 		log(
 			`✗ Critical path ${kb(totalBrotli)} exceeds budget ${kb(budget.maxCriticalPathBrotliBytes)}`,
-			'red'
+			'red',
 		);
 		log(
 			'If the growth is intentional, regenerate: bun scripts/check-critical-path.ts --update-budget',
-			'yellow'
+			'yellow',
 		);
 		return false;
 	}
 	log(
 		`✓ Critical path ${kb(totalBrotli)} within budget ${kb(budget.maxCriticalPathBrotliBytes)}`,
-		'green'
+		'green',
 	);
 	return true;
 }
@@ -232,7 +232,7 @@ function main(): void {
 	}
 	log(
 		`\n${String(assets.length).padStart(2)} blocking assets   ${kb(totalBrotli)} br  (${kb(totalRaw)} raw)\n`,
-		'cyan'
+		'cyan',
 	);
 
 	const budgetOk = checkBudget(totalBrotli, updateBudget);
@@ -251,7 +251,7 @@ function main(): void {
 	if (!reactChunk) {
 		log(
 			'✗ Could not locate the React runtime in any chunk — update REACT_RUNTIME_MARKERS.',
-			'red'
+			'red',
 		);
 		runtimeOk = false;
 	} else if (!criticalNames.includes(reactChunk)) {
@@ -259,11 +259,11 @@ function main(): void {
 		log('  It will be discovered only after the entry chunk is parsed, costing a', 'yellow');
 		log(
 			'  round trip on every page load. This build declares no manual chunking, so',
-			'yellow'
+			'yellow',
 		);
 		log(
 			'  the cause is whatever split react out of the entry — check for a new lazy',
-			'yellow'
+			'yellow',
 		);
 		log('  import boundary above the React import in frontend/src.', 'yellow');
 		runtimeOk = false;
@@ -280,7 +280,7 @@ function main(): void {
 			for (const dep of late) log(`    ${dep}`, 'red');
 			log(
 				'  A static import that is not preloaded is a serialized round trip: the',
-				'yellow'
+				'yellow',
 			);
 			log('  browser cannot request it until it has parsed the entry chunk.', 'yellow');
 			waterfallOk = false;

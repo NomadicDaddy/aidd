@@ -12,7 +12,7 @@ import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useUnsavedGuard } from '../../hooks/useUnsavedGuard.ts';
 import { cleanParameter } from './detail/recipe-detail-form.ts';
 import { RecipeEditMode } from './detail/RecipeEditMode.tsx';
-import { collectStepErrors, newStepDraft, toStep, type StepDraft } from './recipe-steps.ts';
+import { collectStepErrors, newStepDraft, type StepDraft, toStep } from './recipe-steps.ts';
 
 const recipeIdPattern = /^[a-zA-Z0-9_-]+$/;
 
@@ -54,7 +54,7 @@ export function RecipeCreatePage() {
 
 	function updateStep(stepId: string, patch: Partial<StepDraft>): void {
 		setSteps((current) =>
-			current.map((step) => (step.id === stepId ? { ...step, ...patch } : step))
+			current.map((step) => (step.id === stepId ? { ...step, ...patch } : step)),
 		);
 	}
 
@@ -72,7 +72,7 @@ export function RecipeCreatePage() {
 	const idError = validateRecipeId(id, existingIds);
 	const stepErrors = steps.map((step) => ({ id: step.id, ...collectStepErrors(step) }));
 	const hasJsonErrors = stepErrors.some(
-		(entry) => entry.configJson || entry.preHookJson || entry.postHookJson || entry.when
+		(entry) => entry.configJson || entry.preHookJson || entry.postHookJson || entry.when,
 	);
 
 	function save(): void {
@@ -108,7 +108,7 @@ export function RecipeCreatePage() {
 					.map(cleanParameter)
 					.filter(
 						(parameter): parameter is RecipeParameterDefinition =>
-							parameter !== undefined
+							parameter !== undefined,
 					),
 				steps: steps.map(toStep),
 			};

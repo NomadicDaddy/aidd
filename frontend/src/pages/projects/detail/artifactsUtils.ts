@@ -76,7 +76,7 @@ export function artifactViewerTarget(record: ProjectArtifactRecord): ArtifactVie
 }
 
 export function maturityArtifactViewerTarget(
-	artifact: MaturityArtifact
+	artifact: MaturityArtifact,
 ): ArtifactViewerTarget | null {
 	if (
 		artifact.kind !== 'fs-file' ||
@@ -106,7 +106,7 @@ export function artifactStatus(record: ProjectArtifactRecord): { label: string; 
 
 export function buildArtifactInventory(
 	records: ProjectArtifactRecord[],
-	maturity: MaturityDetail
+	maturity: MaturityDetail,
 ): ArtifactInventory {
 	const recordsByLabel = new Map(records.map((record) => [record.label, record]));
 	const groupedLabels = new Set<string>();
@@ -128,7 +128,7 @@ export function buildArtifactInventory(
 
 export function artifactInventoryCount(
 	records: ProjectArtifactRecord[],
-	maturity: MaturityDetail | null
+	maturity: MaturityDetail | null,
 ): number {
 	return maturity ? buildArtifactInventory(records, maturity).total : records.length;
 }

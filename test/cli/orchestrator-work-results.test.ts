@@ -2,24 +2,24 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
-import type { CLIBackend, AgentEvent } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
-	FakeBackend,
-	SequencedBackend,
 	addFeature,
-	config,
 	completeFeature,
+	config,
 	createOrchestratorTestContext,
+	FakeBackend,
 	gitHeavyPlan,
 	gitText,
 	initializeGitProject,
 	plan,
 	rootDir,
 	runGit,
+	SequencedBackend,
 	slowOrchestratorTestTimeoutMs,
 } from './_helpers/orchestrator-fixture.ts';
 
@@ -50,7 +50,7 @@ describe('orchestrator work results', () => {
 					'--audit',
 					'SECURITY,DEAD_CODE',
 				]),
-				config
+				config,
 			);
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
@@ -62,7 +62,7 @@ describe('orchestrator work results', () => {
 			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			const structured = JSON.parse(iterationJson) as {
 				auditBatchMode: boolean;
@@ -83,7 +83,7 @@ describe('orchestrator work results', () => {
 			expect(structured.perAuditFindingTotals).toEqual({ DEAD_CODE: 0, SECURITY: 0 });
 			expect(structured.selectedAuditBatch).toEqual(['SECURITY', 'DEAD_CODE']);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -108,7 +108,7 @@ describe('orchestrator work results', () => {
 					'--audit',
 					'SECURITY,DEAD_CODE',
 				]),
-				config
+				config,
 			);
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
@@ -121,12 +121,12 @@ describe('orchestrator work results', () => {
 			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
 			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
 			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as { findingsContractDropped?: boolean; outcome: { status: string } };
 			expect(structured.findingsContractDropped).toBe(true);
 			expect(structured.outcome.status).toBe('audit_findings_contract_dropped');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -151,19 +151,19 @@ describe('orchestrator work results', () => {
 					'--audit',
 					'SECURITY,DEAD_CODE',
 				]),
-				config
+				config,
 			);
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
 			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
 			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as { findingsContractDropped?: boolean; outcome: { status: string } };
 			expect(structured.findingsContractDropped).toBe(true);
 			expect(structured.outcome.status).toBe('audit_findings_contract_dropped');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test('does not mark omitted batched audits complete', async () => {
@@ -187,7 +187,7 @@ describe('orchestrator work results', () => {
 				'--audit',
 				'SECURITY,DEAD_CODE',
 			]),
-			config
+			config,
 		);
 
 		const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
@@ -199,7 +199,7 @@ describe('orchestrator work results', () => {
 		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
 		const iterationJson = await readFile(
 			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8'
+			'utf8',
 		);
 		const structured = JSON.parse(iterationJson) as {
 			completedAudits: string[];
@@ -231,7 +231,7 @@ describe('orchestrator work results', () => {
 				'--audit',
 				'SECURITY',
 			]),
-			config
+			config,
 		);
 
 		const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
@@ -239,7 +239,7 @@ describe('orchestrator work results', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.success);
 		expect(backend.calls).toBe(1);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
 			completedFeatures: string[];
 			exitCode: number;
@@ -253,10 +253,10 @@ describe('orchestrator work results', () => {
 		expect(iteration.extraCompletedFeatures).toEqual([]);
 		expect(iteration.scopeOverrun).toBe(false);
 
-		type ScopeOverrunRunSummary = typeof iteration & {
+		type ScopeOverrunRunSummary = {
 			exitCode: number;
 			stopReason: string;
-		};
+		} & typeof iteration;
 		const runSummaries = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
 			.trim()
 			.split(/\r?\n/)
@@ -281,7 +281,7 @@ describe('orchestrator work results', () => {
 		expect(exitCode).toBe(orchestratorExitCodes.success);
 		expect(backend.calls).toBe(0);
 		const structured = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as { summary: string; selectedWork: { kind: string } };
 		// A skipped no-work iteration now surfaces the specific selection reason (the
 		// SelectedWork description) rather than the terse breakdown summary.
@@ -309,21 +309,21 @@ describe('orchestrator work results', () => {
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			expect(backend.calls).toBe(0);
 			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
 				remainingPendingApproval: number;
 				summary: string;
 				selectedWork: { data: { pendingApproval: number }; kind: string };
 			};
 			expect(structured.summary).toContain(
-				'No approved incomplete coding features are available'
+				'No approved incomplete coding features are available',
 			);
 			expect(structured.summary).toContain('1 feature(s) are pending approval');
 			expect(structured.selectedWork.kind).toBe('none');
 			expect(structured.selectedWork.data.pendingApproval).toBe(1);
 			expect(structured.remainingPendingApproval).toBe(1);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -348,7 +348,7 @@ describe('orchestrator work results', () => {
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			expect(backend.calls).toBe(0);
 			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
 				remainingDependencyBlockedFeatures: number;
 				summary: string;
@@ -358,7 +358,7 @@ describe('orchestrator work results', () => {
 				};
 			};
 			expect(structured.summary).toContain(
-				'No eligible incomplete coding features are available'
+				'No eligible incomplete coding features are available',
 			);
 			expect(structured.summary).toContain('1 feature(s) are dependency-blocked');
 			expect(structured.selectedWork.kind).toBe('none');
@@ -367,7 +367,7 @@ describe('orchestrator work results', () => {
 			expect(structured.selectedWork.data.incomplete).toBe(1);
 			expect(structured.remainingDependencyBlockedFeatures).toBe(1);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -401,7 +401,7 @@ describe('orchestrator work results', () => {
 
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			const iteration = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as { exitCode: number; outcome: { status: string } };
 			expect(iteration.exitCode).toBe(orchestratorExitCodes.success);
 			expect(iteration.outcome.status).toBe('blocked_dirty_worktree');
@@ -413,7 +413,7 @@ describe('orchestrator work results', () => {
 			expect(runSummary?.stopReason).toBe('blocked_dirty_worktree');
 			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.success);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -448,7 +448,7 @@ describe('orchestrator work results', () => {
 				],
 				async (callIndex) => {
 					if (callIndex === 0) await completeFeature(store, 'feature-core');
-				}
+				},
 			);
 
 			const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -468,13 +468,13 @@ describe('orchestrator work results', () => {
 							completedFeatures: string[];
 							stopReason: string;
 							summary: string;
-						}
+						},
 				);
 			expect(runSummary?.stopReason).toBe('partial_success_blocked');
 			expect(runSummary?.completedFeatures).toEqual(['feature-core']);
 			expect(runSummary?.summary).toContain('partial success: 1 feature(s) completed');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -497,7 +497,7 @@ describe('orchestrator work results', () => {
 					status: 'completed',
 					passes: true,
 					priority: 2,
-				})
+				}),
 			);
 			await writeFile(join(store.metadataDir, 'features', 'stray.json'), '{}');
 
@@ -516,12 +516,12 @@ describe('orchestrator work results', () => {
 						JSON.parse(line) as {
 							artifactWarnings: string[];
 							residualUntrackedFeatureDirs: string[];
-						}
+						},
 				);
 			expect(runSummary?.artifactWarnings).toEqual(['untracked_feature_directories']);
 			expect(runSummary?.residualUntrackedFeatureDirs).toEqual(['feature-extra']);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -539,7 +539,7 @@ describe('orchestrator work results', () => {
 						},
 						{ type: 'done', exitCode: 0, filesModified: [] },
 					],
-					() => completeFeature(store, 'feature-core')
+					() => completeFeature(store, 'feature-core'),
 				),
 			});
 
@@ -548,7 +548,7 @@ describe('orchestrator work results', () => {
 			expect(feature.status).toBe('completed');
 			expect(feature.passes).toBe(true);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test('blocks when a backlog iteration completes an extra queued feature without a marker', async () => {
@@ -568,13 +568,13 @@ describe('orchestrator work results', () => {
 				async () => {
 					await completeFeature(store, 'feature-core');
 					await completeFeature(store, 'feature-extra');
-				}
+				},
 			),
 		});
 
 		expect(exitCode).toBe(orchestratorExitCodes.validationError);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
 			allowedFeatureIds: string[];
 			completionMarkerIssue: string;
@@ -592,10 +592,10 @@ describe('orchestrator work results', () => {
 		expect(iteration.completionMarkerIssue).toBeUndefined();
 		expect(iteration.scopeOverrun).toBe(true);
 
-		type ScopeOverrunRunSummary = typeof iteration & {
+		type ScopeOverrunRunSummary = {
 			exitCode: number;
 			stopReason: string;
-		};
+		} & typeof iteration;
 		const runSummaries = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
 			.trim()
 			.split(/\r?\n/)
@@ -619,13 +619,13 @@ describe('orchestrator work results', () => {
 				rootDir,
 				store,
 				backend: new FakeBackend([{ type: 'done', exitCode: 0, filesModified: [] }], () =>
-					completeFeature(store, 'feature-extra')
+					completeFeature(store, 'feature-extra'),
 				),
 			});
 
 			expect(exitCode).toBe(orchestratorExitCodes.validationError);
 			const iteration = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
 				allowedFeatureIds: string[];
 				completionMarkerIssue: string;
@@ -643,7 +643,7 @@ describe('orchestrator work results', () => {
 			expect(iteration.completionMarkerIssue).toBeUndefined();
 			expect(iteration.scopeOverrun).toBe(true);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test('fails when backend completes a feature outside prioritized work', async () => {
@@ -660,7 +660,7 @@ describe('orchestrator work results', () => {
 				'--filter',
 				'feature-core',
 			]),
-			config
+			config,
 		);
 		const exitCode = await runOrchestrator(runtimePlan, {
 			rootDir,
@@ -673,13 +673,13 @@ describe('orchestrator work results', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
-				() => completeFeature(store, 'feature-extra')
+				() => completeFeature(store, 'feature-extra'),
 			),
 		});
 
 		expect(exitCode).toBe(orchestratorExitCodes.validationError);
 		const iteration = JSON.parse(
-			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
 			completedFeature: string | null;
 			extraCompletedFeatures: string[];
@@ -714,13 +714,13 @@ describe('orchestrator work results', () => {
 							'.aidd/features/feature-core/feature.json',
 						]);
 						await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
-					}
+					},
 				),
 			});
 
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as {
 				commitsCreated: { hash: string; subject: string }[];
 				runLedgerDirty: boolean;
@@ -743,7 +743,7 @@ describe('orchestrator work results', () => {
 			const tracked = await gitText(store.projectDir, ['ls-files', '.aidd/runs.jsonl']);
 			expect(tracked.trim()).toBe('');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -767,7 +767,7 @@ describe('orchestrator work results', () => {
 			initPlan.prompt.fragments = initPlan.prompt.fragments.map((fragment) =>
 				fragment.kind === 'phase'
 					? { kind: 'phase', id: 'initializer', path: 'prompts/initializer.md' }
-					: fragment
+					: fragment,
 			);
 
 			// The initializer emits no AIDD_RESULT marker and completes no backlog feature; it
@@ -782,7 +782,7 @@ describe('orchestrator work results', () => {
 						// the worktree and aidd never has cause to commit it.
 						await writeFile(
 							join(store.projectDir, '.gitignore'),
-							'.aidd/iterations/\n.aidd/runs.jsonl\n'
+							'.aidd/iterations/\n.aidd/runs.jsonl\n',
 						);
 						await writeFile(join(store.metadataDir, 'spec.md'), '# Spec\n');
 						await writeFile(join(store.metadataDir, 'CHANGELOG.md'), '# Changelog\n');
@@ -796,7 +796,7 @@ describe('orchestrator work results', () => {
 							'-m',
 							'chore: complete initialization',
 						]);
-					}
+					},
 				),
 			});
 
@@ -808,7 +808,7 @@ describe('orchestrator work results', () => {
 			]);
 			expect(status.trim()).toBe('');
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as {
 				commitsCreated: { hash: string; subject: string }[];
 				mode: string;
@@ -838,10 +838,10 @@ describe('orchestrator work results', () => {
 			const headHash = (await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim();
 			expect(recordedHash).toBe(headHash);
 			expect((await gitText(store.projectDir, ['ls-files', '.aidd/runs.jsonl'])).trim()).toBe(
-				''
+				'',
 			);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -859,7 +859,7 @@ describe('orchestrator work results', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
-				() => completeFeature(store, 'feature-core')
+				() => completeFeature(store, 'feature-core'),
 			);
 
 			await runOrchestrator(plan(store.projectDir), {
@@ -884,17 +884,17 @@ describe('orchestrator work results', () => {
 			expect(typeof parked.blockingContext?.parkedAt).toBe('string');
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(iterationJson).toContain('"completionPendingCommit": true');
 			expect(iterationJson).toContain('"backendCompletionFinalizedEarly": true');
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as { completedFeatures: string[]; commitsCreated: { hash: string }[] };
 			expect(runSummary.completedFeatures).not.toContain('feature-core');
 			expect(runSummary.commitsCreated).toHaveLength(0);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -912,7 +912,7 @@ describe('orchestrator work results', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
-				() => completeFeature(store, 'feature-core')
+				() => completeFeature(store, 'feature-core'),
 			);
 
 			const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -929,17 +929,17 @@ describe('orchestrator work results', () => {
 			});
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(iterationJson).toContain('"completedFeature": "feature-core"');
 			expect(iterationJson).not.toContain('"completionPendingCommit": true');
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as { completedFeatures: string[]; commitsCreated: { hash: string }[] };
 			expect(runSummary.completedFeatures).toContain('feature-core');
 			expect(runSummary.commitsCreated).toHaveLength(0);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -963,10 +963,10 @@ describe('orchestrator work results', () => {
 				async () => {
 					await writeFile(
 						join(store.projectDir, 'src-change.ts'),
-						'export const x = 1;\n'
+						'export const x = 1;\n',
 					);
 					await completeFeature(store, 'feature-core');
-				}
+				},
 			);
 
 			await runOrchestrator(plan(store.projectDir), {
@@ -982,16 +982,16 @@ describe('orchestrator work results', () => {
 			});
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(iterationJson).toContain('"completionPendingCommit": true');
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as { completedFeatures: string[]; commitsCreated: { hash: string }[] };
 			expect(runSummary.completedFeatures).not.toContain('feature-core');
 			expect(runSummary.commitsCreated).toHaveLength(0);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -1016,10 +1016,10 @@ describe('orchestrator work results', () => {
 				async () => {
 					await writeFile(
 						join(store.projectDir, 'operator-wip.ts'),
-						'export const wip = 1;\n'
+						'export const wip = 1;\n',
 					);
 					await completeFeature(store, 'feature-core');
-				}
+				},
 			);
 
 			await runOrchestrator(plan(store.projectDir), {
@@ -1035,11 +1035,11 @@ describe('orchestrator work results', () => {
 			});
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(iterationJson).toContain('"completionPendingCommit": true');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -1080,16 +1080,16 @@ describe('orchestrator work results', () => {
 			});
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(iterationJson).toContain('"completionPendingCommit": true');
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as { completedFeatures: string[]; commitsCreated: { hash: string }[] };
 			expect(runSummary.completedFeatures).not.toContain('feature-core');
 			expect(runSummary.commitsCreated).toHaveLength(0);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -1133,12 +1133,12 @@ describe('orchestrator work results', () => {
 			});
 			const iterationJson = await readFile(
 				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8'
+				'utf8',
 			);
 			expect(iterationJson).toContain('"completedFeature": "feature-core"');
 			expect(iterationJson).not.toContain('"completionPendingCommit": true');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -1157,7 +1157,7 @@ describe('orchestrator work results', () => {
 					status: 'completed',
 					passes: true,
 					priority: 2,
-				})
+				}),
 			);
 			await initializeGitProject(store.projectDir);
 			// Leftover uncommitted work from an earlier orphaned/recovery iteration whose run
@@ -1171,7 +1171,7 @@ describe('orchestrator work results', () => {
 					passes: true,
 					priority: 2,
 					note: 'leftover edit',
-				})
+				}),
 			);
 
 			const exitCode = await runOrchestrator(gitHeavyPlan(store.projectDir), {
@@ -1209,13 +1209,13 @@ describe('orchestrator work results', () => {
 						await writeFile(join(store.projectDir, 'README.md'), '# readme\n');
 						await runGit(store.projectDir, ['add', 'README.md']);
 						await runGit(store.projectDir, ['commit', '-m', 'docs: add readme']);
-					}
+					},
 				),
 			});
 
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as {
 				commitsCreated: { hash: string; subject: string }[];
 				completedFeatures: string[];
@@ -1226,7 +1226,7 @@ describe('orchestrator work results', () => {
 			expect(subjects).not.toContain('chore: sweep leftover orphan work');
 			expect(runSummary.completedFeatures).not.toContain('orphan-feature');
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -1262,13 +1262,13 @@ describe('orchestrator work results', () => {
 							'feat: complete feature-core',
 						]);
 						await writeFile(join(store.projectDir, 'residual.txt'), 'uncommitted\n');
-					}
+					},
 				),
 			});
 
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as Record<string, unknown>;
 			expect(structured).toMatchObject({
 				commitsCreatedCount: 1,
@@ -1278,7 +1278,7 @@ describe('orchestrator work results', () => {
 			expect(structured).not.toHaveProperty('filesModified');
 			expect(structured.residualDirtyFilesCount as number).toBeGreaterThanOrEqual(1);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
@@ -1314,19 +1314,19 @@ describe('orchestrator work results', () => {
 						},
 						{ type: 'done', exitCode: 0, filesModified: [] },
 					]),
-				}
+				},
 			);
 
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			const runSummary = JSON.parse(
-				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim()
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim(),
 			) as {
 				filesCreated: string[];
 				filesEdited: string[];
 				totals: { filesCreated: number; filesEdited: number };
 			};
 			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8')
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
 				filesCreated: string[];
 				filesCreatedCount: number;
@@ -1334,12 +1334,12 @@ describe('orchestrator work results', () => {
 				filesEditedCount: number;
 			};
 			const createdFeaturePath = runSummary.filesCreated.find((path) =>
-				path.includes(join('.aidd', 'features', 'audit-security-'))
+				path.includes(join('.aidd', 'features', 'audit-security-')),
 			);
 
 			expect(createdFeaturePath).toBeDefined();
 			expect(runSummary.filesCreated).toContain(
-				join(store.metadataDir, 'audit-reports', `SECURITY-${reportDate}.md`)
+				join(store.metadataDir, 'audit-reports', `SECURITY-${reportDate}.md`),
 			);
 			expect(runSummary.totals.filesCreated).toBe(runSummary.filesCreated.length);
 			expect(runSummary.totals.filesEdited).toBe(runSummary.filesEdited.length);
@@ -1348,14 +1348,14 @@ describe('orchestrator work results', () => {
 			expect(structured.filesCreatedCount).toBe(runSummary.filesCreated.length);
 			expect(structured.filesEditedCount).toBe(runSummary.filesEdited.length);
 		},
-		slowOrchestratorTestTimeoutMs
+		slowOrchestratorTestTimeoutMs,
 	);
 
 	test('marks selected todo complete from explicit structured agent result', async () => {
 		const store = await makeStore('todo-result');
 		await writeFile(
 			join(store.metadataDir, 'todo.md'),
-			'- [ ] first task\n- [ ] second task\n'
+			'- [ ] first task\n- [ ] second task\n',
 		);
 		const exitCode = await runOrchestrator(plan(store.projectDir, ['--todo']), {
 			rootDir,

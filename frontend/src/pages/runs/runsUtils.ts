@@ -72,7 +72,7 @@ export function initialSelectedRunId(searchParams: URLSearchParams): string | un
 export function consumeInitialRunScroll(
 	initialRunId: { current: string | undefined },
 	selectedRunId: string | undefined,
-	scroll: () => void
+	scroll: () => void,
 ): void {
 	if (!initialRunId.current || initialRunId.current !== selectedRunId) return;
 	initialRunId.current = undefined;

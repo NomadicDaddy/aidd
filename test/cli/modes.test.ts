@@ -48,15 +48,15 @@ async function writeFullHardeningProfile(projectDir: string): Promise<void> {
 				updatedAt: '2026-05-16T00:00:00.000Z',
 			},
 			null,
-			2
-		)}\n`
+			2,
+		)}\n`,
 	);
 }
 
 function plan(projectDir: string, args: string[] = []) {
 	return resolveRunPlan(
 		parseArgs(['--project-dir', projectDir, '--cli', 'native', ...args]),
-		config
+		config,
 	);
 }
 
@@ -68,7 +68,7 @@ describe('mode handlers', () => {
 	test('initializer stops at the blueprint boundary unless implementation was requested', async () => {
 		for (const stopBeforeImplementation of [true, false]) {
 			const { projectDir, store } = await makeProject(
-				`initializer-boundary-${String(stopBeforeImplementation)}`
+				`initializer-boundary-${String(stopBeforeImplementation)}`,
 			);
 			await writeFile(join(projectDir, '.aidd', 'spec.md'), '# Spec\n');
 			await writeFile(join(projectDir, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
@@ -85,13 +85,13 @@ describe('mode handlers', () => {
 			await initializeGitProject(projectDir);
 			const runPlan = plan(
 				projectDir,
-				stopBeforeImplementation ? ['--stop-before-implementation'] : []
+				stopBeforeImplementation ? ['--stop-before-implementation'] : [],
 			);
 			runPlan.prompt.phase = 'initializer';
 			runPlan.prompt.fragments = runPlan.prompt.fragments.map((fragment) =>
 				fragment.kind === 'phase'
 					? { id: 'initializer', kind: 'phase', path: 'prompts/initializer.md' }
-					: fragment
+					: fragment,
 			);
 			const mode = createModeHandler(runPlan);
 			const result = await mode.processResult(
@@ -101,7 +101,7 @@ describe('mode handlers', () => {
 					exitCode: 0,
 					filesModified: [],
 					transcript: '',
-				}
+				},
 			);
 
 			expect(result.complete).toBe(stopBeforeImplementation);
@@ -124,7 +124,7 @@ describe('mode handlers', () => {
 		runPlan.prompt.phase = 'initializer';
 		const result = await createModeHandler(runPlan).processResult(
 			{ projectDir, store },
-			{ events: [], exitCode: 0, filesModified: [], transcript: '' }
+			{ events: [], exitCode: 0, filesModified: [], transcript: '' },
 		);
 
 		expect(result.complete).toBe(false);
@@ -149,7 +149,7 @@ describe('mode handlers', () => {
 		runPlan.prompt.phase = 'onboarding';
 		const result = await createModeHandler(runPlan).processResult(
 			{ projectDir, store },
-			{ events: [], exitCode: 0, filesModified: [], transcript: '' }
+			{ events: [], exitCode: 0, filesModified: [], transcript: '' },
 		);
 
 		expect(result.complete).toBe(true);
@@ -272,7 +272,7 @@ describe('mode handlers', () => {
 		});
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--feature', 'feature-current'])
+			plan(projectDir, ['--feature', 'feature-current']),
 		).selectWork({ projectDir, store });
 		expect(work.kind).toBe('feature');
 		expect(work.id).toBe('feature-current');
@@ -325,7 +325,7 @@ describe('mode handlers', () => {
 		expect(defaultWork.kind).toBe('none');
 
 		const sweepWork = await createModeHandler(
-			plan(projectDir, ['--audit-findings'])
+			plan(projectDir, ['--audit-findings']),
 		).selectWork({ projectDir, store });
 		expect(sweepWork.kind).toBe('feature');
 		expect(sweepWork.id).toBe('audit-security-1-missing-validation');
@@ -351,7 +351,7 @@ describe('mode handlers', () => {
 		});
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--audit-findings', 'SECURITY'])
+			plan(projectDir, ['--audit-findings', 'SECURITY']),
 		).selectWork({ projectDir, store });
 		expect(work.kind).toBe('feature');
 		expect(work.id).toBe('audit-security-1-open-redirect');
@@ -410,7 +410,7 @@ describe('mode handlers', () => {
 		// unmapped drift state so the coding-gate detection path is exercised.
 		await writeFile(
 			join(store.metadataDir, 'roadmap.json'),
-			`${JSON.stringify({ milestones: { MVP: {} }, features: {} })}\n`
+			`${JSON.stringify({ milestones: { MVP: {} }, features: {} })}\n`,
 		);
 
 		const work = await createModeHandler(plan(projectDir)).selectWork({ projectDir, store });
@@ -447,7 +447,7 @@ describe('mode handlers', () => {
 		});
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--feature', 'feature-v1'])
+			plan(projectDir, ['--feature', 'feature-v1']),
 		).selectWork({ projectDir, store });
 
 		expect(work.kind).toBe('none');
@@ -470,11 +470,11 @@ describe('mode handlers', () => {
 		// unmapped drift state so the explicit-feature gate rejection is exercised.
 		await writeFile(
 			join(store.metadataDir, 'roadmap.json'),
-			`${JSON.stringify({ milestones: { MVP: {} }, features: {} })}\n`
+			`${JSON.stringify({ milestones: { MVP: {} }, features: {} })}\n`,
 		);
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--feature', 'feature-new'])
+			plan(projectDir, ['--feature', 'feature-new']),
 		).selectWork({ projectDir, store });
 
 		expect(work.kind).toBe('none');
@@ -507,7 +507,7 @@ describe('mode handlers', () => {
 		expect(defaultWork.id).toBe('feature-core');
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--filter-by', 'id', '--filter', 'audit-*'])
+			plan(projectDir, ['--filter-by', 'id', '--filter', 'audit-*']),
 		).selectWork({ projectDir, store });
 
 		expect(work.kind).toBe('feature');
@@ -540,7 +540,7 @@ describe('mode handlers', () => {
 		});
 
 		const work = await createModeHandler(
-			plan(projectDir, ['--filter-by', 'id', '--filter', 'audit-*'])
+			plan(projectDir, ['--filter-by', 'id', '--filter', 'audit-*']),
 		).selectWork({ projectDir, store });
 
 		expect(work.kind).toBe('feature');
@@ -605,7 +605,7 @@ describe('mode handlers', () => {
 					status: 'completed',
 					passes: true,
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-core');
@@ -644,7 +644,7 @@ describe('mode handlers', () => {
 					status: 'completed',
 					passes: true,
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-core');
@@ -684,7 +684,7 @@ describe('mode handlers', () => {
 					status: 'completed',
 					passes: true,
 				},
-			}
+			},
 		);
 
 		expect(work.kind).toBe('feature');
@@ -707,7 +707,7 @@ describe('mode handlers', () => {
 			priority: 2,
 		});
 		const mode = createModeHandler(
-			plan(projectDir, ['--filter-by', 'id', '--filter', 'feature-core'])
+			plan(projectDir, ['--filter-by', 'id', '--filter', 'feature-core']),
 		);
 		const work = await mode.selectWork({ projectDir, store });
 
@@ -724,7 +724,7 @@ describe('mode handlers', () => {
 					status: 'completed',
 					passes: true,
 				},
-			}
+			},
 		);
 
 		expect(result.artifacts?.completedFeature).toBeNull();
@@ -769,7 +769,7 @@ describe('mode handlers', () => {
 					status: 'completed',
 					passes: true,
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-live');
@@ -822,7 +822,7 @@ describe('mode handlers', () => {
 					kind: 'feature',
 					description: 'Live feature',
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-live');
@@ -872,7 +872,7 @@ describe('mode handlers', () => {
 					kind: 'feature',
 					description: 'Live feature',
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-live');
@@ -916,7 +916,7 @@ describe('mode handlers', () => {
 					kind: 'feature',
 					description: 'Live feature',
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-live');
@@ -954,7 +954,7 @@ describe('mode handlers', () => {
 					kind: 'feature',
 					description: 'Live feature',
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-live');
@@ -995,7 +995,7 @@ describe('mode handlers', () => {
 					status: 'completed',
 					passes: true,
 				},
-			}
+			},
 		);
 
 		const feature = await store.readFeature('feature-live');
@@ -1030,7 +1030,7 @@ describe('mode handlers', () => {
 		];
 		for (const prose of genuine) {
 			expect(
-				detectBlockedVerificationAdmission([{ chunk: prose, type: 'assistant_text' }])
+				detectBlockedVerificationAdmission([{ chunk: prose, type: 'assistant_text' }]),
 			).toBeUndefined();
 		}
 
@@ -1041,7 +1041,7 @@ describe('mode handlers', () => {
 					stream: 'stdout',
 					type: 'raw_log',
 				},
-			])
+			]),
 		).toBeUndefined();
 	});
 
@@ -1072,7 +1072,7 @@ describe('mode handlers', () => {
 			},
 		] as const;
 		expect(detectBlockedVerificationAdmission([...finalAdmission])?.phrase).toBe(
-			'verification was blocked'
+			'verification was blocked',
 		);
 	});
 
@@ -1092,7 +1092,7 @@ describe('mode handlers', () => {
 		const { projectDir, store } = await makeProject('todo');
 		await writeFile(
 			join(projectDir, '.aidd', 'todo.md'),
-			'- [x] done\n- [ ] first\n- [ ] second\n'
+			'- [x] done\n- [ ] first\n- [ ] second\n',
 		);
 
 		const work = await createModeHandler(plan(projectDir, ['--todo'])).selectWork({
@@ -1107,7 +1107,7 @@ describe('mode handlers', () => {
 		const { projectDir, store } = await makeProject('interview-select');
 		await writeFile(
 			join(projectDir, '.aidd', 'questions.md'),
-			'## First question?\nDetails one.\n\n## Second question?\nDetails two.\n'
+			'## First question?\nDetails one.\n\n## Second question?\nDetails two.\n',
 		);
 		await mkdir(join(projectDir, '.aidd', 'responses'), { recursive: true });
 		await writeFile(join(projectDir, '.aidd', 'responses', 'response1.md'), 'done\n');
@@ -1141,7 +1141,7 @@ describe('mode handlers', () => {
 				'',
 				'1. What must be true before v1?',
 				'',
-			].join('\n')
+			].join('\n'),
 		);
 
 		const mode = createModeHandler(plan(projectDir, ['--interview']));
@@ -1173,11 +1173,11 @@ describe('mode handlers', () => {
 		const { projectDir, store } = await makeProject('interview-empty');
 		await writeFile(
 			join(projectDir, '.aidd', 'questions.md'),
-			'This is a note, not a question.\n'
+			'This is a note, not a question.\n',
 		);
 
 		await expect(
-			createModeHandler(plan(projectDir, ['--interview'])).selectWork({ projectDir, store })
+			createModeHandler(plan(projectDir, ['--interview'])).selectWork({ projectDir, store }),
 		).rejects.toThrow('Interview questions file has no parsed questions');
 	});
 
@@ -1204,14 +1204,14 @@ describe('mode handlers', () => {
 				structuredResult: {
 					responseMarkdown: '# Question 1: What is here?\n\n## Response\n\nIt is a test.',
 				},
-			}
+			},
 		);
 
 		const responsePath = (result.artifacts?.responsePath as string | undefined) ?? '';
 		await expect(readFile(responsePath, 'utf8')).resolves.toContain('It is a test.');
 		const index = await readFile(join(projectDir, '.aidd', 'responses.md'), 'utf8');
 		expect(index).toContain(
-			'| 1 | What is here? | Done | [response1.md](responses/response1.md) |'
+			'| 1 | What is here? | Done | [response1.md](responses/response1.md) |',
 		);
 		expect(index).toContain('| 2 | What next? | Pending | - |');
 		expect(index).toContain('**Progress:** 1 / 2 questions answered');
@@ -1236,7 +1236,7 @@ describe('mode handlers', () => {
 				filesModified: [responsePath],
 				transcript: '',
 				selectedWork: work,
-			}
+			},
 		);
 
 		await expect(readFile(responsePath, 'utf8')).resolves.toContain('Keep this content.');
@@ -1261,7 +1261,7 @@ describe('mode handlers', () => {
 					responseMarkdown:
 						'# Question 1: What is here?\n\n## Response\n\nIt is complete.',
 				},
-			}
+			},
 		);
 
 		expect(result.complete).toBe(true);
@@ -1349,7 +1349,7 @@ describe('mode handlers', () => {
 	test('interview generation directives name the configured questions file for --interview FILE', async () => {
 		const { projectDir, store } = await makeProject('interview-custom-file-directive');
 		const mode = createModeHandler(
-			plan(projectDir, ['--interview', 'docs/interview-questions.md'])
+			plan(projectDir, ['--interview', 'docs/interview-questions.md']),
 		);
 		const context = { projectDir, store };
 		const work = await mode.selectWork(context);
@@ -1395,7 +1395,7 @@ describe('mode handlers', () => {
 					],
 					reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
 				},
-			}
+			},
 		);
 
 		const features = await store.listFeatures({ includeAudit: true });
@@ -1415,7 +1415,7 @@ describe('mode handlers', () => {
 		});
 		expect(String(finding?.spec)).toContain('Update those feature.json spec(s)');
 		expect(modeFilesCreated).toContain(
-			join(projectDir, '.aidd', 'features', finding?.id ?? '', 'feature.json')
+			join(projectDir, '.aidd', 'features', finding?.id ?? '', 'feature.json'),
 		);
 		expect(modeFilesCreated).toContain(reportPath);
 		await expect(readFile(reportPath, 'utf8')).resolves.toContain('One finding.');
@@ -1450,7 +1450,7 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		const reportPath = (result.artifacts?.reportPath as string | undefined) ?? '';
@@ -1459,11 +1459,11 @@ describe('mode handlers', () => {
 		expect(persisted).not.toContain('84/100');
 		expect(persisted).toContain('## Score Withheld - No Validated Instrument');
 		expect(persisted).toContain(
-			'- `crawltest`: invalid kind (expected artifact, probe, or script)'
+			'- `crawltest`: invalid kind (expected artifact, probe, or script)',
 		);
 		expect(persisted).toContain('No logs/crawltest.json present');
 		expect(result.summary).toContain(
-			'WARNING: 1 measurement audit report(s) declared a numeric score'
+			'WARNING: 1 measurement audit report(s) declared a numeric score',
 		);
 		expect(result.artifacts?.instrumentContractWarning).toBeString();
 	});
@@ -1494,17 +1494,17 @@ describe('mode handlers', () => {
 						'| Performance | 65 | 92 |',
 					].join('\n'),
 				},
-			}
+			},
 		);
 
 		const reportPath = (result.artifacts?.reportPath as string | undefined) ?? '';
 		const persisted = await readFile(reportPath, 'utf8');
 		expect(persisted).toContain(
-			'| Performance | SKIPPED / data-unavailable | SKIPPED / data-unavailable |'
+			'| Performance | SKIPPED / data-unavailable | SKIPPED / data-unavailable |',
 		);
 		expect(persisted).toContain('## Score Withheld - No Validated Instrument');
 		expect(result.summary).toContain(
-			'WARNING: 1 measurement audit report(s) declared a numeric score'
+			'WARNING: 1 measurement audit report(s) declared a numeric score',
 		);
 	});
 
@@ -1537,12 +1537,12 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		const reportPath = (result.artifacts?.reportPath as string | undefined) ?? '';
 		await expect(readFile(reportPath, 'utf8')).resolves.toContain(
-			'**Overall Performance Score:** 84/100'
+			'**Overall Performance Score:** 84/100',
 		);
 		expect(result.summary).not.toContain('WARNING: 1 measurement audit report(s)');
 		expect(result.artifacts?.instrumentContractWarning).toBeUndefined();
@@ -1567,7 +1567,7 @@ describe('mode handlers', () => {
 						'Verified all routes in src/routes.ts declare TypeBox schemas; no unvalidated input paths remain.',
 					reportMarkdown: '# SECURITY Audit Report\n\nClean re-run.',
 				},
-			}
+			},
 		);
 
 		const reportPath = (result.artifacts?.reportPath as string | undefined) ?? '';
@@ -1601,7 +1601,7 @@ describe('mode handlers', () => {
 					],
 					reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
 				},
-			}
+			},
 		);
 
 		const roadmapPath = join(projectDir, '.aidd', 'roadmap.json');
@@ -1635,7 +1635,7 @@ describe('mode handlers', () => {
 					],
 					reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
 				},
-			}
+			},
 		);
 
 		const modeFilesCreated = result.artifacts?.modeFilesCreated as string[];
@@ -1673,11 +1673,11 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		const auditFeatures = (await store.listFeatures({ includeAudit: true })).filter((feature) =>
-			feature.id.startsWith('audit-security-')
+			feature.id.startsWith('audit-security-'),
 		);
 		expect(result.artifacts?.findingsCreated).toBe(0);
 		expect(auditFeatures).toHaveLength(1);
@@ -1711,7 +1711,7 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		const auditFeatures = (await store.listFeatures({ includeAudit: true }))
@@ -1784,12 +1784,12 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		const features = await store.listFeatures({ includeAudit: true });
 		const securityFinding = features.find((feature) =>
-			feature.id.startsWith('audit-security-')
+			feature.id.startsWith('audit-security-'),
 		);
 		const reports = await store.listAuditReports();
 
@@ -1809,7 +1809,7 @@ describe('mode handlers', () => {
 		expect(result.artifacts?.modeFilesCreated).toEqual(
 			expect.arrayContaining([
 				join(projectDir, '.aidd', 'features', securityFinding?.id ?? '', 'feature.json'),
-			])
+			]),
 		);
 		expect(securityFinding).toMatchObject({
 			auditSource: 'SECURITY',
@@ -1850,7 +1850,7 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		const features = await store.listFeatures({ includeAudit: true });
@@ -1864,7 +1864,7 @@ describe('mode handlers', () => {
 		expect(result.artifacts?.findingsTotal).toBe(0);
 		expect(result.summary).toContain('0 structured findings emitted across the batch');
 		expect(String(result.artifacts?.findingsContractWarning)).toContain(
-			'2 audit report(s) written but 0 structured findings'
+			'2 audit report(s) written but 0 structured findings',
 		);
 	});
 
@@ -1891,7 +1891,7 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		expect(result.complete).toBe(false);
@@ -1938,7 +1938,7 @@ describe('mode handlers', () => {
 						},
 					],
 				},
-			}
+			},
 		);
 
 		expect(result.complete).toBe(false);
@@ -1953,7 +1953,7 @@ describe('mode handlers', () => {
 		await store.writeAuditReport(
 			'SECURITY',
 			'# SECURITY done',
-			new Date('2026-05-04T00:00:00Z')
+			new Date('2026-05-04T00:00:00Z'),
 		);
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
@@ -1972,7 +1972,7 @@ describe('mode handlers', () => {
 		await store.writeAuditReport(
 			'DEAD_CODE',
 			'# DEAD_CODE done',
-			new Date('2026-05-04T00:00:00Z')
+			new Date('2026-05-04T00:00:00Z'),
 		);
 		const rerun = await mode.selectWork({ projectDir, store });
 		expect(rerun.id).toBe('audit-batch');
@@ -2028,7 +2028,7 @@ describe('mode handlers', () => {
 					},
 				],
 				version: 1,
-			})}\n`
+			})}\n`,
 		);
 
 		const mode = createModeHandler(plan(projectDir, ['--audit-all']));
@@ -2049,7 +2049,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		const result = await mode.processResult(
@@ -2097,7 +2097,7 @@ describe('mode handlers', () => {
 						],
 					},
 				},
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2138,7 +2138,7 @@ describe('mode handlers', () => {
 					crossProjectPatterns: [],
 				},
 				suggestions: [],
-			})
+			}),
 		);
 		const mode = createModeHandler(
 			plan(projectDir, [
@@ -2147,7 +2147,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		const result = await mode.processResult(
@@ -2158,7 +2158,7 @@ describe('mode handlers', () => {
 				filesModified: [outputPath],
 				transcript: '',
 				selectedWork: { id: 'director', description: 'coordinate' },
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2213,7 +2213,7 @@ describe('mode handlers', () => {
 						title: 'demo-app: resolve "rem-1"',
 					},
 				],
-			})
+			}),
 		);
 		const mode = createModeHandler(
 			plan(projectDir, [
@@ -2222,7 +2222,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		// ...but the AIDD_RESULT marker echoed an empty directorOutput (the regression that
@@ -2247,7 +2247,7 @@ describe('mode handlers', () => {
 						suggestions: [],
 					},
 				},
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2293,7 +2293,7 @@ describe('mode handlers', () => {
 						title: 'demo-app: reconcile aidd artifacts',
 					},
 				],
-			})
+			}),
 		);
 		const mode = createModeHandler(
 			plan(projectDir, [
@@ -2302,7 +2302,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		const result = await mode.processResult(
@@ -2314,7 +2314,7 @@ describe('mode handlers', () => {
 				transcript: '',
 				selectedWork: { id: 'director', description: 'coordinate' },
 				structuredResult: { directorOutputWritten: true },
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2337,7 +2337,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		const result = await mode.processResult(
@@ -2348,7 +2348,7 @@ describe('mode handlers', () => {
 				filesModified: [],
 				transcript: '',
 				selectedWork: { id: 'director', description: 'coordinate' },
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2374,7 +2374,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		const result = await mode.processResult(
@@ -2385,7 +2385,7 @@ describe('mode handlers', () => {
 				filesModified: [],
 				transcript: '',
 				selectedWork: { id: 'director', description: 'coordinate' },
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2410,7 +2410,7 @@ describe('mode handlers', () => {
 				fleetSummary,
 				'--director-output',
 				outputPath,
-			])
+			]),
 		);
 
 		const result = await mode.processResult(
@@ -2487,7 +2487,7 @@ describe('mode handlers', () => {
 						],
 					},
 				},
-			}
+			},
 		);
 
 		const output = JSON.parse(await readFile(outputPath, 'utf8')) as {
@@ -2498,7 +2498,7 @@ describe('mode handlers', () => {
 		expect(result.complete).toBe(true);
 		expect(output.suggestions).toHaveLength(4);
 		expect(output.suggestions.map((s) => s.title).sort()).toEqual(
-			['Different project', 'Different type', 'Fleet-wide first', 'First'].sort()
+			['Different project', 'Different type', 'Fleet-wide first', 'First'].sort(),
 		);
 		expect(output.fleetSummary.totalSuggestions).toBe(4);
 	});

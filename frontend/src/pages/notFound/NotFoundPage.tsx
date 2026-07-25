@@ -18,7 +18,7 @@ export function NotFoundPage() {
 				Dashboard
 			</Link>
 			<Card>
-				<h1 className="text-foreground text-xl font-semibold">Page not found</h1>
+				<h1 className="text-xl font-semibold text-foreground">Page not found</h1>
 				<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
 					No page matches <code className="font-mono">{location.pathname}</code>. The link
 					may be outdated or mistyped.

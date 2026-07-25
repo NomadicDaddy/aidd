@@ -58,7 +58,7 @@ function buildRunInsertValues(
 	completedAt: number,
 	durationMs: number,
 	errorMessage: null | string,
-	stopReason = record.stopReason
+	stopReason = record.stopReason,
 ): typeof runs.$inferInsert {
 	return {
 		...provenanceValues(record),
@@ -90,7 +90,7 @@ function buildRunInsertValues(
 
 export function terminalizeRun(
 	tx: LocalTransaction,
-	args: TerminalizeRunArgs
+	args: TerminalizeRunArgs,
 ): HeartbeatWriteOutcome {
 	const { completedAt, continuationValue, durationMs, finalStatus, record } = args;
 	const existing = tx.select().from(runs).where(eq(runs.id, record.id)).get();
@@ -140,8 +140,8 @@ export function markRunStale(tx: LocalTransaction, args: MarkRunStaleArgs): Hear
 					completedAt,
 					completedAt - record.startedAt,
 					errorMessage,
-					record.stopReason ?? 'heartbeat_stale'
-				)
+					record.stopReason ?? 'heartbeat_stale',
+				),
 			)
 			.run();
 		return { kind: 'inserted' };
@@ -176,7 +176,7 @@ export function markRunStale(tx: LocalTransaction, args: MarkRunStaleArgs): Hear
 // between read and write is never clobbered.
 export function reconcileDeadRun(
 	tx: LocalTransaction,
-	args: ReconcileDeadRunArgs
+	args: ReconcileDeadRunArgs,
 ): HeartbeatWriteOutcome {
 	const { completedAt, errorMessage, exitCode, runId, stopReason } = args;
 	const existing = tx.select().from(runs).where(eq(runs.id, runId)).get();

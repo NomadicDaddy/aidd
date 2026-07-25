@@ -28,7 +28,7 @@ export function ReintakeCard({ project }: { project: ProjectDetail }) {
 					toast.success('Re-intake started');
 					void navigate(`/pipeline-sessions/${session.id}`);
 				},
-			}
+			},
 		);
 	}
 
@@ -37,7 +37,7 @@ export function ReintakeCard({ project }: { project: ProjectDetail }) {
 			<div className="flex items-start gap-3">
 				<RefreshCw className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
 				<div>
-					<h2 className="text-foreground text-base font-semibold">Re-run intake</h2>
+					<h2 className="text-base font-semibold text-foreground">Re-run intake</h2>
 					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 						Reconcile or repair existing `.aidd` metadata and re-run the metadata-only
 						project-intake pipeline. Refreshes artifacts without touching app code.

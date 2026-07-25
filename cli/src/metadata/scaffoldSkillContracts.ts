@@ -51,14 +51,14 @@ export async function copySkillContracts(
 	rootDir: string,
 	aiddDir: string,
 	spernakitRoot: string | undefined,
-	dataDir: string | undefined
+	dataDir: string | undefined,
 ): Promise<void> {
 	if (!deps) return;
 	for (const id of deps.contracts) {
 		const source = await resolveSkillDir(rootDir, dataDir, id);
 		if (!source) {
 			console.warn(
-				`Warning: skill contract '${id}' not found; not staged into .aidd/skills/`
+				`Warning: skill contract '${id}' not found; not staged into .aidd/skills/`,
 			);
 			continue;
 		}
@@ -81,7 +81,7 @@ export async function copySkillContracts(
 async function resolveSkillDir(
 	rootDir: string,
 	dataDir: string | undefined,
-	id: string
+	id: string,
 ): Promise<string | undefined> {
 	const bundled = join(rootDir, 'skills', id);
 	if (await pathExists(bundled)) return bundled;
@@ -96,13 +96,13 @@ async function copyReferenceFiles(
 	kind: 'aidd' | 'spernakit',
 	sourceRoot: string,
 	aiddDir: string,
-	references: string[]
+	references: string[],
 ): Promise<void> {
 	for (const ref of references) {
 		const source = join(sourceRoot, ref);
 		if (!(await pathExists(source))) {
 			console.warn(
-				`Warning: skill ${kind}-reference '${ref}' not found; not staged into .aidd/`
+				`Warning: skill ${kind}-reference '${ref}' not found; not staged into .aidd/`,
 			);
 			continue;
 		}

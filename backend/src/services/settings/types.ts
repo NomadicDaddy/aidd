@@ -7,7 +7,7 @@ import type { BackendInputName, BackendName } from 'aidd-shared/plan/types';
 
 import type { ReasoningEffort, WebConfigSettingsDto } from '../../types.ts';
 
-export type WebRuntimeConfig = ResolvedConfig & { web: ResolvedWebConfig };
+export type WebRuntimeConfig = { web: ResolvedWebConfig } & ResolvedConfig;
 
 export interface BackendDefaultSettingsInput {
 	idleNudgeTimeoutSeconds?: null | number;

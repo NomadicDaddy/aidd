@@ -12,7 +12,7 @@ import { configSchema, type PartialAiddConfig } from './schema.ts';
 
 function mergeDirectAiConfig(
 	base: PartialAiddConfig,
-	next: PartialAiddConfig
+	next: PartialAiddConfig,
 ): PartialAiddConfig['directAi'] {
 	if (base.directAi === undefined && next.directAi === undefined) return undefined;
 	return {
@@ -40,7 +40,7 @@ export async function readConfig(path: string): Promise<PartialAiddConfig> {
 			throw new Error(
 				`Invalid JSON in aidd config ${path}: ${detail}. ` +
 					'Check for unescaped backslashes in Windows paths — use "\\\\" or "/".',
-				{ cause: error }
+				{ cause: error },
 			);
 		}
 		const result = configSchema.safeParse(parsed);
@@ -132,7 +132,7 @@ export interface ResolveConfigOptions {
 
 export async function resolveConfig(
 	args: ParsedArgs,
-	options: ResolveConfigOptions = {}
+	options: ResolveConfigOptions = {},
 ): Promise<ResolvedConfig> {
 	const userConfig = await readConfig(options.userConfigPath ?? getUserConfigPath());
 	const applicationsRoot = userConfig.applicationsRoot;
@@ -141,7 +141,7 @@ export async function resolveConfig(
 		? metadataPath(resolvedProjectDir, 'aidd.config.json')
 		: undefined;
 	const projectConfig = restrictProjectConfig(
-		projectConfigPath ? await readConfig(projectConfigPath) : {}
+		projectConfigPath ? await readConfig(projectConfigPath) : {},
 	);
 	const cliOverrides = options.applyCliOverrides === false ? {} : pickCliOverrides(args);
 	const merged = applyConfig(applyConfig(userConfig, projectConfig), cliOverrides);

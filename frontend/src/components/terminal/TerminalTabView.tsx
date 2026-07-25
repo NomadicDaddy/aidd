@@ -58,7 +58,7 @@ export function TerminalTabView({ active, sessionId }: { active: boolean; sessio
 				}
 			});
 		},
-		[sessionId]
+		[sessionId],
 	);
 
 	const fitAndReport = useCallback(() => {
@@ -171,7 +171,7 @@ export function TerminalTabView({ active, sessionId }: { active: boolean; sessio
 				writeAcked(frame.data);
 			} else if (frame.type === 'exit') {
 				term.write(
-					`\r\n\x1b[2m[session ended${frame.exitCode === null ? '' : ` with code ${frame.exitCode}`} — restart from the header]\x1b[0m\r\n`
+					`\r\n\x1b[2m[session ended${frame.exitCode === null ? '' : ` with code ${frame.exitCode}`} — restart from the header]\x1b[0m\r\n`,
 				);
 			} else if (frame.type === 'error') {
 				term.write(`\r\n\x1b[31m[${frame.message}]\x1b[0m\r\n`);

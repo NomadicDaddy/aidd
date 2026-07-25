@@ -47,8 +47,8 @@ async function makeRepo(): Promise<string> {
 		Buffer.from(
 			'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGA' +
 				'WjR9awAAAABJRU5ErkJggg==',
-			'base64'
-		)
+			'base64',
+		),
 	);
 	await git(repoDir, 'add', 'src', 'README.md', '.gitignore', 'binary.bin', 'images');
 	await git(repoDir, 'commit', '-m', 'feat: seed code view repo');
@@ -66,7 +66,7 @@ describe('project code view service', () => {
 			expect(result.files.map((file) => file.path)).not.toContain('ignored.ts');
 			expect(result.files.map((file) => file.path)).not.toContain('secret.txt');
 			expect(result.files.find((file) => file.path === 'src/index.ts')?.language).toBe(
-				'TypeScript'
+				'TypeScript',
 			);
 		} finally {
 			await removeTempTree(repoDir);
@@ -153,7 +153,7 @@ describe('project code view service', () => {
 				await removeTempTree(repoDir);
 				await removeTempTree(outsideDir);
 			}
-		}
+		},
 	);
 });
 
@@ -167,7 +167,7 @@ describe('project code view routes', () => {
 				},
 			} as unknown as WebContext);
 			const treeResponse = await app.handle(
-				new Request('http://localhost/api/v1/projects/some-id/code/tree')
+				new Request('http://localhost/api/v1/projects/some-id/code/tree'),
 			);
 			expect(treeResponse.status).toBe(200);
 			const tree = (await treeResponse.json()) as {
@@ -179,8 +179,8 @@ describe('project code view routes', () => {
 
 			const fileResponse = await app.handle(
 				new Request(
-					`http://localhost/api/v1/projects/some-id/code/file?path=${encodeURIComponent('src/index.ts')}`
-				)
+					`http://localhost/api/v1/projects/some-id/code/file?path=${encodeURIComponent('src/index.ts')}`,
+				),
 			);
 			expect(fileResponse.status).toBe(200);
 			const file = (await fileResponse.json()) as { content: string; state: string };

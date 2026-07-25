@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { monitorBackend } from 'aidd-shared/backends/monitor';
 import { runProcessBackend, shouldDetachProcessBackend } from 'aidd-shared/backends/process';
-import type { CLIBackend, PromptInput, AgentEvent } from 'aidd-shared/backends/types';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 
 class SilentBackend implements CLIBackend {
 	readonly name = 'native' as const;
@@ -32,7 +32,7 @@ async function collect(iterable: AsyncIterable<AgentEvent>): Promise<AgentEvent[
 
 function timeout(ms: number): Promise<never> {
 	return new Promise((_, reject) =>
-		setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+		setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms),
 	);
 }
 
@@ -48,13 +48,13 @@ describe('monitorBackend', () => {
 		for await (const event of monitorBackend(
 			new SilentBackend(),
 			{ text: 'prompt', cwd: '.' },
-			new AbortController().signal
+			new AbortController().signal,
 		)) {
 			events.push(event);
 		}
 		expect(events.some((event) => event.type === 'idle_warning')).toBe(true);
 		expect(events.some((event) => event.type === 'error' && event.reason === 'idle')).toBe(
-			true
+			true,
 		);
 	});
 
@@ -65,15 +65,15 @@ describe('monitorBackend', () => {
 					new AbortIgnoringBackend(),
 					{ text: 'prompt', cwd: '.' },
 					new AbortController().signal,
-					{ cleanupTimeoutMs: 5 }
-				)
+					{ cleanupTimeoutMs: 5 },
+				),
 			),
 			timeout(100),
 		]);
 
 		expect(events.some((event) => event.type === 'idle_warning')).toBe(true);
 		expect(events.some((event) => event.type === 'error' && event.reason === 'idle')).toBe(
-			true
+			true,
 		);
 	});
 
@@ -94,8 +94,8 @@ describe('monitorBackend', () => {
 					],
 				},
 				{ text: 'prompt', cwd: '.' },
-				new AbortController().signal
-			)
+				new AbortController().signal,
+			),
 		);
 
 		const stdoutChunks = events
@@ -116,18 +116,18 @@ describe('monitorBackend', () => {
 					args: ['-e', 'setInterval(function noop() { return undefined; }, 1000)'],
 				},
 				{ text: 'prompt', cwd: '.' },
-				controller.signal
-			)
+				controller.signal,
+			),
 		);
 
 		setTimeout(() => controller.abort('test abort'), 20);
 		const events = await Promise.race([eventsPromise, timeout(1000)]);
 
 		expect(events.some((event) => event.type === 'error' && event.reason === 'aborted')).toBe(
-			true
+			true,
 		);
 		expect(events.some((event) => event.type === 'error' && event.reason === 'provider')).toBe(
-			false
+			false,
 		);
 	});
 });

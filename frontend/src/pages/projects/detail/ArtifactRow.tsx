@@ -10,9 +10,9 @@ import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import {
 	artifactStatus,
 	artifactViewerTarget,
+	type ArtifactViewerTarget,
 	formatBytes,
 	severityTone,
-	type ArtifactViewerTarget,
 } from './artifactsUtils.ts';
 
 interface ArtifactRowProps {
@@ -29,7 +29,7 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 	const viewable = onOpen !== undefined && viewerTarget !== null;
 	const labelBlock = (
 		<>
-			<div className="text-foreground flex items-center gap-1.5 truncate text-sm font-medium">
+			<div className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
 				{record.label}
 				{viewable ? (
 					<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-neutral-400" />

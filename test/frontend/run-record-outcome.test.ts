@@ -54,7 +54,7 @@ describe('DB run outcome classification', () => {
 				stopReason: 'blocked',
 				summary:
 					'coding has no incomplete feature work; completion_marker_missing_or_unaccepted: completed allowed feature(s): demo-feature',
-			})
+			}),
 		);
 		expect(outcome.label).toBe('Completed (warnings)');
 		expect(outcome.tone).toBe('amber');
@@ -72,7 +72,7 @@ describe('DB run outcome classification', () => {
 				exitCode: 7,
 				status: 'failed',
 				stopReason: 'blocked_dirty_worktree',
-			})
+			}),
 		);
 		expect(outcome.label).toBe('Blocked: dirty tree');
 		expect(outcome.tone).toBe('red');
@@ -84,7 +84,7 @@ describe('DB run outcome classification', () => {
 				exitCode: 7,
 				status: 'failed',
 				stopReason: 'blocked_needs_user_input',
-			})
+			}),
 		);
 		expect(outcome.label).toBe('Blocked: user input');
 		expect(outcome.tone).toBe('amber');

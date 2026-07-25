@@ -98,7 +98,7 @@ async function checkRogueDataFolders(): Promise<void> {
 		console.error('Rogue data/ or backup/ folders detected:');
 		for (const folder of rogueFolders) console.error(`  ${folder}`);
 		throw new Error(
-			`data/ and backup/ folders are restricted to the repository root. Found: ${rogueFolders.join(', ')}`
+			`data/ and backup/ folders are restricted to the repository root. Found: ${rogueFolders.join(', ')}`,
 		);
 	}
 	console.log('   No rogue data/ or backup/ folders found.');

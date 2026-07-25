@@ -21,7 +21,7 @@ export function Badge({
 			className={cn(
 				'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
 				toneBadge[tone],
-				className
+				className,
 			)}>
 			{showDot && (
 				<span
@@ -29,7 +29,7 @@ export function Badge({
 					className={cn(
 						'h-1.5 w-1.5 rounded-full',
 						pulse && 'status-pulse',
-						toneSolid[tone]
+						toneSolid[tone],
 					)}
 				/>
 			)}

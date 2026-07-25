@@ -1,6 +1,6 @@
 import { readSkillDefinition, type SkillDefinition } from 'aidd-shared/skills/catalog';
 import { isSystemRecipeId, systemRecipeName } from 'aidd-shared/system-recipes';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import type { RecipeDefinition } from '../types.ts';
@@ -78,7 +78,7 @@ export class RecipeService {
 			} catch (err) {
 				webLogger.warn(
 					{ err, path: filePath },
-					'recipeService.listRecipes: skipping unreadable or invalid recipe file'
+					'recipeService.listRecipes: skipping unreadable or invalid recipe file',
 				);
 			}
 		}
@@ -156,13 +156,13 @@ export class RecipeService {
 		if (reservedName !== undefined && normalized.name !== reservedName) {
 			throw new HttpError(
 				`System recipe ${normalized.id} must keep its reserved name: ${reservedName}`,
-				409
+				409,
 			);
 		}
 		await mkdir(join(this.rootDir, 'recipes'), { recursive: true });
 		await writeFile(
 			recipePath(this.rootDir, normalized.id),
-			`${JSON.stringify(recipeFilePayload(normalized), null, 2)}\n`
+			`${JSON.stringify(recipeFilePayload(normalized), null, 2)}\n`,
 		);
 		recordDataMovement({
 			category: 'file',

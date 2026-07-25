@@ -62,7 +62,7 @@ function parseArtifactRecords(value: unknown): ProjectArtifactRecord[] {
 }
 
 export async function gatherArtifactCheckSummary(
-	metadataDir: string
+	metadataDir: string,
 ): Promise<null | ProjectArtifactCheckSummary> {
 	const cachePath = join(metadataDir, '.artifacts-check.json');
 	const parsed = await readJsonOrNull<{

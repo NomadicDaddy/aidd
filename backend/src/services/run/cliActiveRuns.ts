@@ -4,10 +4,10 @@ import { isProcessAlive, killProcessTree } from 'aidd-shared/lib/processTree';
 import {
 	activeRunsDir,
 	CLI_ACTIVE_RUN_STALE_MS,
+	type CliActiveRunRecord,
 	isCliRunTerminal,
 	readCliActiveRunRecords,
 	writeCliActiveRunRecord,
-	type CliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
 import { metadataPath } from 'aidd-shared/metadata/paths';
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
@@ -23,7 +23,7 @@ import { cliRunWebStatus, pathsMatch, toCliRunRecord } from './cliActiveRunRecor
 export { pathsMatch };
 
 interface CliActiveRunsContext {
-	config: ResolvedConfig & { web: ResolvedWebConfig };
+	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	hub: WebSocketHub;
 }
 
@@ -42,7 +42,7 @@ async function directoryExists(path: string): Promise<boolean> {
 export async function scanCliActiveRunProjectDirs(
 	root: string,
 	ignoredFolders: readonly string[],
-	maxDepth = 2
+	maxDepth = 2,
 ): Promise<string[]> {
 	const resolvedRoot = resolve(root);
 	if (!(await directoryExists(resolvedRoot))) return [];
@@ -76,11 +76,11 @@ export async function listCliActiveRuns(ctx: CliActiveRunsContext): Promise<RunR
 		ctx.config.web.allowedRoots.map(async (root) => {
 			for (const projectDir of await scanCliActiveRunProjectDirs(
 				root,
-				ctx.config.web.ignoredFolders
+				ctx.config.web.ignoredFolders,
 			)) {
 				projectDirs.add(resolve(projectDir));
 			}
-		})
+		}),
 	);
 	const rows = await Promise.all(
 		[...projectDirs].map((projectDir) =>
@@ -88,9 +88,9 @@ export async function listCliActiveRuns(ctx: CliActiveRunsContext): Promise<RunR
 				(error: unknown) => {
 					webLogger.warn({ error, projectDir }, 'Failed to read CLI active runs');
 					return [];
-				}
-			)
-		)
+				},
+			),
+		),
 	);
 	return rows.flat().map((run) => toCliRunRecord(run));
 }
@@ -109,7 +109,7 @@ export async function listCliActiveRunsForProject(projectPath: string): Promise<
 
 export async function findCliActiveRun(
 	ctx: CliActiveRunsContext,
-	id: string
+	id: string,
 ): Promise<CliActiveRunRecord | undefined> {
 	const allRuns = await listCliActiveRuns(ctx);
 	const match = allRuns.find((run) => run.id === id);
@@ -149,7 +149,7 @@ function broadcastTerminalCliRun(ctx: CliActiveRunsContext, run: CliActiveRunRec
 async function terminalizeCliRun(
 	ctx: CliActiveRunsContext,
 	run: CliActiveRunRecord,
-	options: { exitCode: number; status: WebRunStatus; stopReason: string; summary: string }
+	options: { exitCode: number; status: WebRunStatus; stopReason: string; summary: string },
 ): Promise<void> {
 	const now = Date.now();
 	await writeCliActiveRunRecord({
@@ -183,7 +183,7 @@ async function terminalizeCliRun(
 
 export async function requestCliRunStop(
 	ctx: CliActiveRunsContext,
-	run: CliActiveRunRecord
+	run: CliActiveRunRecord,
 ): Promise<void> {
 	if (isCliRunTerminal(run)) {
 		broadcastTerminalCliRun(ctx, run);
@@ -222,7 +222,7 @@ export async function requestCliRunStop(
 
 export async function killCliRun(
 	ctx: CliActiveRunsContext,
-	run: CliActiveRunRecord
+	run: CliActiveRunRecord,
 ): Promise<void> {
 	if (isCliRunTerminal(run)) {
 		broadcastTerminalCliRun(ctx, run);

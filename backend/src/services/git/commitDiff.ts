@@ -29,7 +29,7 @@ function classifyGitFailure(stderr: string): CommitDiffResult {
 	if (/unknown revision|bad object|bad revision|ambiguous argument/.test(text)) {
 		return failure(
 			'missing-commit',
-			'The commit is no longer reachable in the repository (rebased or garbage-collected).'
+			'The commit is no longer reachable in the repository (rebased or garbage-collected).',
 		);
 	}
 	if (text.includes('not a git repository')) {
@@ -44,7 +44,7 @@ function classifyGitFailure(stderr: string): CommitDiffResult {
 // a multi-byte UTF-8 sequence.
 async function collectCappedStdout(
 	subprocess: ReturnType<typeof Bun.spawn>,
-	stdout: ReadableStream<Uint8Array>
+	stdout: ReadableStream<Uint8Array>,
 ): Promise<{ received: number; text: string; timedOut: boolean; truncated: boolean }> {
 	const reader = stdout.getReader();
 	const deadline = Bun.sleep(diffTimeoutMs).then(() => 'timeout' as const);
@@ -117,7 +117,7 @@ export async function readCommitDiff(projectPath: string, sha: string): Promise<
 				stdin: 'ignore',
 				stdout: 'pipe',
 				windowsHide: true,
-			}
+			},
 		);
 	} catch (err) {
 		return failure('error', err instanceof Error ? err.message : String(err));
@@ -132,7 +132,7 @@ export async function readCommitDiff(projectPath: string, sha: string): Promise<
 
 	const { received, text, timedOut, truncated } = await collectCappedStdout(
 		subprocess,
-		stdoutStream
+		stdoutStream,
 	);
 	if (timedOut) {
 		recordDataMovement({

@@ -146,7 +146,7 @@ export function RecipeEditMode({
 
 			<Card className="space-y-3">
 				<div className="flex items-center justify-between">
-					<h2 className="text-foreground text-lg font-semibold">Parameters</h2>
+					<h2 className="text-lg font-semibold text-foreground">Parameters</h2>
 					<Button
 						onClick={() =>
 							setParameters((current) => [...current, { description: '', name: '' }])
@@ -164,8 +164,8 @@ export function RecipeEditMode({
 										current.map((entry, entryIndex) =>
 											entryIndex === index
 												? { ...entry, name: event.target.value }
-												: entry
-										)
+												: entry,
+										),
 									)
 								}
 								placeholder="name"
@@ -177,8 +177,8 @@ export function RecipeEditMode({
 										current.map((entry, entryIndex) =>
 											entryIndex === index
 												? { ...entry, description: event.target.value }
-												: entry
-										)
+												: entry,
+										),
 									)
 								}
 								placeholder="description"
@@ -190,8 +190,8 @@ export function RecipeEditMode({
 										current.map((entry, entryIndex) =>
 											entryIndex === index
 												? { ...entry, defaultValue: event.target.value }
-												: entry
-										)
+												: entry,
+										),
 									)
 								}
 								placeholder="default"
@@ -201,7 +201,7 @@ export function RecipeEditMode({
 								aria-label="Remove parameter"
 								onClick={() =>
 									setParameters((current) =>
-										current.filter((_, entryIndex) => entryIndex !== index)
+										current.filter((_, entryIndex) => entryIndex !== index),
 									)
 								}
 								variant="danger">
@@ -214,7 +214,7 @@ export function RecipeEditMode({
 
 			<Card className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h2 className="text-foreground text-lg font-semibold">Ordered Steps</h2>
+					<h2 className="text-lg font-semibold text-foreground">Ordered Steps</h2>
 					<Button onClick={() => setSteps((current) => [...current, newStepDraft()])}>
 						<Plus className="h-4 w-4" />
 						Add Step
@@ -237,7 +237,7 @@ export function RecipeEditMode({
 								onChange={(patch) => updateStep(step.id, patch)}
 								onDelete={() =>
 									setSteps((current) =>
-										current.filter((entry) => entry.id !== step.id)
+										current.filter((entry) => entry.id !== step.id),
 									)
 								}
 								step={step}

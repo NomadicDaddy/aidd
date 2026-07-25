@@ -20,7 +20,7 @@ function activeRunProjectPathKey(path: string): string {
 
 export function summarizeActiveRunsForProjects(
 	projectPaths: readonly string[],
-	activeRuns: readonly ActiveRunIdentity[]
+	activeRuns: readonly ActiveRunIdentity[],
 ): Map<string, ProjectActiveRunSummary> {
 	const summaries = new Map<string, ProjectActiveRunSummary>();
 	const projectsByPathKey = new Map<string, string>();
@@ -54,7 +54,7 @@ export function summarizeActiveRunsForProjects(
 
 export async function listActiveRunSummaries(
 	ctx: QueriesContext,
-	projectPaths: readonly string[]
+	projectPaths: readonly string[],
 ): Promise<Map<string, ProjectActiveRunSummary>> {
 	const [webRuns, cliRuns] = await Promise.all([
 		ctx.db

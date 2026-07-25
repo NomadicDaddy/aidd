@@ -66,7 +66,7 @@ export function ProfileMatrixTable({
 	onChange: (
 		projectId: string,
 		field: FacetField,
-		value: ProjectAssuranceProfileInput[FacetField]
+		value: ProjectAssuranceProfileInput[FacetField],
 	) => void;
 	onReset: (projectId: string) => void;
 	onSave: (projectId: string) => void;
@@ -76,12 +76,12 @@ export function ProfileMatrixTable({
 	return (
 		<Card className="overflow-x-auto p-0">
 			<table aria-label="Project profile matrix" className="w-full text-left text-sm">
-				<thead className="border-border bg-muted/70 text-muted-foreground border-b text-xs uppercase">
+				<thead className="border-b border-border bg-muted/70 text-xs text-muted-foreground uppercase">
 					<tr>
 						<SortHeader
 							activeDir={activeSortDir}
 							activeKey={activeSortKey}
-							className="bg-muted sticky left-0 z-20 px-3 py-3"
+							className="sticky left-0 z-20 bg-muted px-3 py-3"
 							label="Project"
 							onSort={onSort}
 							sortKey="project"
@@ -114,7 +114,7 @@ export function ProfileMatrixTable({
 						<th className="px-3 py-3" scope="col">
 							Audits
 							{isPreviewing && (
-								<span className="text-muted-foreground ml-1 font-normal lowercase">
+								<span className="ml-1 font-normal text-muted-foreground lowercase">
 									recalc
 								</span>
 							)}

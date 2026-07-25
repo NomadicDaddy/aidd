@@ -23,14 +23,14 @@ export async function guardPendingProjectStop(db: WebDatabase, projectDir: strin
 		.select({ id: runs.id })
 		.from(runs)
 		.where(
-			and(eq(runs.projectPath, projectDir), notInArray(runs.status, [...TERMINAL_STATUSES]))
+			and(eq(runs.projectPath, projectDir), notInArray(runs.status, [...TERMINAL_STATUSES])),
 		)
 		.limit(1);
 	const pendingFor = liveSiblings[0]?.id;
 	if (pendingFor !== undefined) {
 		throw new RunControlError(
 			`A stop is pending for run ${pendingFor} in this project; wait for it to stop before launching another run`,
-			409
+			409,
 		);
 	}
 	await rm(stopFilePath(projectDir), { force: true }).catch(() => {});

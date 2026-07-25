@@ -58,7 +58,7 @@ export function InterviewTab({
 			<div className="grid gap-4 md:grid-cols-3">
 				<Card>
 					<div className="text-xs text-neutral-500 uppercase">Questions</div>
-					<div className="text-foreground mt-2 text-2xl font-semibold">
+					<div className="mt-2 text-2xl font-semibold text-foreground">
 						{interview.total}
 					</div>
 				</Card>
@@ -76,7 +76,7 @@ export function InterviewTab({
 				</Card>
 			</div>
 			<Card>
-				<h2 className="text-foreground mb-2 text-sm font-semibold">Unanswered questions</h2>
+				<h2 className="mb-2 text-sm font-semibold text-foreground">Unanswered questions</h2>
 				{interview.unanswered.length === 0 ? (
 					<p className="text-sm text-neutral-500">
 						All interview questions have responses.
@@ -148,7 +148,7 @@ export function InterviewTab({
 																		setSubmitError(
 																			error instanceof Error
 																				? error.message
-																				: 'Failed to submit answer'
+																				: 'Failed to submit answer',
 																		);
 																	},
 																	onSuccess: () => {
@@ -177,7 +177,7 @@ export function InterviewTab({
 																			setSubmitError(null);
 																		}
 																	},
-																}
+																},
 															);
 														}}
 														variant="primary">
@@ -219,7 +219,7 @@ export function InterviewTab({
 			</Card>
 			{interview.answeredQuestions.length > 0 ? (
 				<Card>
-					<h2 className="text-foreground mb-2 text-sm font-semibold">
+					<h2 className="mb-2 text-sm font-semibold text-foreground">
 						Answered questions
 					</h2>
 					<ul className="space-y-3">

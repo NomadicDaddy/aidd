@@ -15,10 +15,10 @@ const RETRYABLE_NEEDLES: readonly string[] = [
 
 function isRetryableSqliteError(error: unknown): boolean {
 	if (!(error instanceof Error)) return false;
-	const rawCode = (error as Error & { code?: unknown }).code;
+	const rawCode = (error as { code?: unknown } & Error).code;
 	const code = typeof rawCode === 'string' ? rawCode : '';
 	return RETRYABLE_NEEDLES.some(
-		(needle) => code.includes(needle) || error.message.includes(needle)
+		(needle) => code.includes(needle) || error.message.includes(needle),
 	);
 }
 
@@ -40,7 +40,7 @@ export interface SqliteRetryOptions {
  */
 export async function withSqliteRetry<T>(
 	operation: () => Promise<T> | T,
-	options: SqliteRetryOptions = {}
+	options: SqliteRetryOptions = {},
 ): Promise<T> {
 	const attempts = options.attempts ?? 5;
 	const baseDelayMs = options.baseDelayMs ?? 25;
@@ -57,6 +57,6 @@ export async function withSqliteRetry<T>(
 	}
 	// Unreachable: the final attempt either returns or throws above.
 	throw new Error(
-		`withSqliteRetry exhausted without resolution${options.label ? ` (${options.label})` : ''}`
+		`withSqliteRetry exhausted without resolution${options.label ? ` (${options.label})` : ''}`,
 	);
 }

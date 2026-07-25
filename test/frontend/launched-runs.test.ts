@@ -3,11 +3,11 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import {
 	beginLaunch,
 	endLaunch,
+	type LaunchedRunInfo,
+	type LaunchedRunTerminal,
 	resolveLaunchedRunTerminal,
 	setLaunchedRunEmitter,
 	trackLaunchedRun,
-	type LaunchedRunInfo,
-	type LaunchedRunTerminal,
 } from '../../frontend/src/lib/launchedRuns.ts';
 
 const terminal: LaunchedRunTerminal = {

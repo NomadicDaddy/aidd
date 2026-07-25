@@ -39,7 +39,7 @@ describe('aidd new', () => {
 
 		const code = await runNewCommand(
 			['https://github.com/Gothsec/Astro-portfolio#main', '--root', workDir],
-			{ clone }
+			{ clone },
 		);
 
 		expect(code).toBe(0);
@@ -55,7 +55,7 @@ describe('aidd new', () => {
 
 		const code = await runNewCommand(
 			['Gothsec/Astro-portfolio', '--root', workDir, '--name', 'my-site'],
-			{ clone }
+			{ clone },
 		);
 
 		expect(code).toBe(0);

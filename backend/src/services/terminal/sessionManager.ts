@@ -124,7 +124,7 @@ export class TerminalSessionManager {
 		this.sessions.set(session.sessionId, session);
 		webLogger.info(
 			{ pid: session.pty.pid, sessionId: session.sessionId, shell: shell.id },
-			'terminal session started'
+			'terminal session started',
 		);
 		return toInfo(session);
 	}

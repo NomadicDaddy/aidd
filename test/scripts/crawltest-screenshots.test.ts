@@ -15,7 +15,7 @@ describe('crawltest screenshots', () => {
 		await writeFile(join(root, 'package.json'), '{"version":"2.132.0"}\n');
 
 		expect(getVersionedScreenshotDir(baseDir, root)).toBe(
-			join(root, 'screenshots', 'v2.132.0')
+			join(root, 'screenshots', 'v2.132.0'),
 		);
 	});
 
@@ -29,10 +29,10 @@ describe('crawltest screenshots', () => {
 	test('keeps desktop names simple and mobile screenshots distinct', () => {
 		expect(screenshotFilename('/', 'desktop')).toBe('root.png');
 		expect(screenshotFilename('/settings?section=runtime', 'desktop')).toBe(
-			'settings-section-runtime.png'
+			'settings-section-runtime.png',
 		);
 		expect(screenshotFilename('/settings?section=runtime', 'iphone-12')).toBe(
-			'iphone-12-settings-section-runtime.png'
+			'iphone-12-settings-section-runtime.png',
 		);
 	});
 });

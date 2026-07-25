@@ -34,7 +34,7 @@ const AUDIT_ACTION_SLUG_PREFIX = 'audit:';
 
 function normalizeRunNextInput(
 	slug: string,
-	auditName: string | undefined
+	auditName: string | undefined,
 ): { auditName?: string; invocationSlug: string; responseSlug: string } {
 	if (!slug.startsWith(AUDIT_ACTION_SLUG_PREFIX)) {
 		return {
@@ -56,7 +56,7 @@ async function dispatchRunNext(
 	projectId: string,
 	slug: string,
 	auditName?: string,
-	launchTarget: LaunchTargetOverrides = {}
+	launchTarget: LaunchTargetOverrides = {},
 ): Promise<{
 	args?: string;
 	auditName?: string;
@@ -77,7 +77,7 @@ async function dispatchRunNext(
 	const invocation = resolveInvocation(
 		normalized.invocationSlug,
 		projectDir,
-		normalized.auditName
+		normalized.auditName,
 	);
 	if (!invocation) throw new HttpError(`Unable to resolve invocation for ${slug}`, 400);
 	switch (invocation.kind) {
@@ -169,7 +169,7 @@ export function createProjectMaturityRoutes(context: WebContext) {
 			{
 				body: skipBody,
 				params: projectIdParams,
-			}
+			},
 		)
 		.post(
 			'/:id/maturity/run-next',
@@ -182,6 +182,6 @@ export function createProjectMaturityRoutes(context: WebContext) {
 			{
 				body: runNextBody,
 				params: projectIdParams,
-			}
+			},
 		);
 }

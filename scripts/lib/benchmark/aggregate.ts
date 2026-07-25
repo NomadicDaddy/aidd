@@ -31,21 +31,21 @@ function computeComposite(scoring: BenchmarkScoring, row: AggregateRow): number 
 			(row.averageCorrectness * scoring.correctnessWeight +
 				row.reliability * scoring.reliabilityWeight) *
 				scale +
-				row.timeScore * scoring.timeWeight
+				row.timeScore * scoring.timeWeight,
 		);
 	}
 	return clampScore(
 		row.averageCorrectness * scoring.correctnessWeight +
 			row.reliability * scoring.reliabilityWeight +
 			row.timeScore * scoring.timeWeight +
-			row.costScore * scoring.costWeight
+			row.costScore * scoring.costWeight,
 	);
 }
 
 export function aggregate(
 	manifest: BenchmarkManifest,
 	runs: BenchmarkRun[],
-	preflight: Record<string, BenchmarkPreflight>
+	preflight: Record<string, BenchmarkPreflight>,
 ): BenchmarkAggregate {
 	const groups = new Map<string, BenchmarkRun[]>();
 	const taskById = new Map(manifest.tasks.map((task) => [task.id, task]));
@@ -83,18 +83,18 @@ export function aggregate(
 		rows.push(row);
 	}
 	rows.sort(
-		(a, b) => b.compositeScore - a.compositeScore || a.stackLabel.localeCompare(b.stackLabel)
+		(a, b) => b.compositeScore - a.compositeScore || a.stackLabel.localeCompare(b.stackLabel),
 	);
 	const activePreflight = new Set(
 		Object.entries(preflight)
 			.filter(([, result]) => result.ok)
-			.map(([label]) => label)
+			.map(([label]) => label),
 	);
 	return {
 		agenticRows: rows.filter((row) => row.category === 'agentic'),
 		cohorts: manifest.cohorts.map((cohort) => ({
 			members: cohort.members.filter(
-				(member) => activePreflight.size === 0 || activePreflight.has(member)
+				(member) => activePreflight.size === 0 || activePreflight.has(member),
 			),
 			name: cohort.name,
 			rows: rows.filter((row) => cohort.members.includes(row.stackLabel)),
@@ -121,7 +121,7 @@ export function renderReport(aggregateResult: BenchmarkAggregate): string {
 		'| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |',
 		...aggregateResult.agenticRows.map(
 			(row) =>
-				`| ${row.stackLabel} | ${row.taskId} | ${row.runs} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} | ${row.averageCost === null ? 'unknown' : row.averageCost.toFixed(4)} | ${formatScore(row.compositeScore)} |`
+				`| ${row.stackLabel} | ${row.taskId} | ${row.runs} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} | ${row.averageCost === null ? 'unknown' : row.averageCost.toFixed(4)} | ${formatScore(row.compositeScore)} |`,
 		),
 		'',
 		'## Control Tasks',
@@ -130,7 +130,7 @@ export function renderReport(aggregateResult: BenchmarkAggregate): string {
 		'| --- | --- | ---: | ---: | ---: | ---: |',
 		...aggregateResult.controlRows.map(
 			(row) =>
-				`| ${row.stackLabel} | ${row.taskId} | ${row.runs} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} |`
+				`| ${row.stackLabel} | ${row.taskId} | ${row.runs} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} |`,
 		),
 		'',
 		'## Cohorts',

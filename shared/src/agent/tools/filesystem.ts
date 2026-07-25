@@ -1,5 +1,5 @@
 import { Glob } from 'bun';
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { resolveWorkspacePath } from './constants.ts';
@@ -53,7 +53,7 @@ export function editWorkspaceFile(args: Record<string, unknown>, cwd: string): s
 	writeFileSync(
 		resolved.path,
 		content.slice(0, index) + args.new_string + content.slice(index + args.old_string.length),
-		'utf8'
+		'utf8',
 	);
 	return `File edited successfully: ${resolved.path}`;
 }

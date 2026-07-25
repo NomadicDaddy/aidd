@@ -1,7 +1,7 @@
 import type {
 	DirectorBacklogItemSummary,
-	DirectorPriorityTaskType,
 	DirectorPrioritizedWork,
+	DirectorPriorityTaskType,
 } from './types.ts';
 
 export interface TargetedWorkOptions {
@@ -14,8 +14,8 @@ export interface TargetedWorkOptions {
 const expandableTaskTypes: ReadonlySet<DirectorPriorityTaskType> =
 	new Set<DirectorPriorityTaskType>([
 		'audit_backlog',
-		'remediation_backlog',
 		'feature_completion',
+		'remediation_backlog',
 	]);
 
 const targetedVerb: Record<string, string> = {
@@ -36,7 +36,7 @@ const rollupLabel: Record<string, string> = {
 // unexpanded `work` still feeds `buildPriorityHealth`, so health scoring is unchanged.
 export function expandTargetedWork(
 	work: DirectorPrioritizedWork[],
-	options: TargetedWorkOptions
+	options: TargetedWorkOptions,
 ): DirectorPrioritizedWork[] {
 	if (options.granularity !== 'targeted') return work;
 	const maxPerBucket = Math.max(1, Math.floor(options.maxPerBucket));
@@ -45,7 +45,7 @@ export function expandTargetedWork(
 
 function expandWorkItem(
 	item: DirectorPrioritizedWork,
-	maxPerBucket: number
+	maxPerBucket: number,
 ): DirectorPrioritizedWork[] {
 	if (!expandableTaskTypes.has(item.taskType)) return [item];
 	const top = Array.isArray(item.evidence.top)
@@ -67,7 +67,7 @@ function buildTargetedItem(
 	base: DirectorPrioritizedWork,
 	artifact: DirectorBacklogItemSummary,
 	projectName: string,
-	bucketCount: number
+	bucketCount: number,
 ): DirectorPrioritizedWork {
 	const verb = targetedVerb[base.taskType] ?? 'address';
 	const label = artifact.title ?? artifact.id;
@@ -105,7 +105,7 @@ function buildRollupItem(
 	base: DirectorPrioritizedWork,
 	projectName: string,
 	remaining: number,
-	shownCount: number
+	shownCount: number,
 ): DirectorPrioritizedWork {
 	const label = rollupLabel[base.taskType] ?? 'items';
 	return {

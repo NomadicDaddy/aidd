@@ -1,9 +1,9 @@
 import type {
+	DirectAiMeta,
 	DirectorCycleArtifacts,
 	DirectorCycleRecord,
 	DirectorCycleStage,
 	DirectorOutput,
-	DirectAiMeta,
 } from 'aidd-shared';
 
 import { and, desc, eq } from 'drizzle-orm';
@@ -38,7 +38,7 @@ export interface CyclePersistenceDeps {
 
 export function cycleArtifacts(
 	getConfig: DirectorConfigProvider,
-	cycleId: string
+	cycleId: string,
 ): DirectorCycleArtifacts {
 	const cycleDir = join(getConfig().web.dataDir, 'director');
 	const contextPath = join(cycleDir, `${cycleId}-context.json`);
@@ -65,7 +65,7 @@ export function toCycleRecord(
 		totalSuggestions: null | number;
 	},
 	getConfig: DirectorConfigProvider,
-	activeStages: Map<string, ActiveCycleState>
+	activeStages: Map<string, ActiveCycleState>,
 ): DirectorCycleRecord {
 	const status = cycleStatus(row.status);
 	const activeState = activeStages.get(row.id);
@@ -92,7 +92,7 @@ function cycleStage(
 	row: { id: string; status: string },
 	status: DirectorCycleRecord['status'],
 	activeStages: Map<string, ActiveCycleState>,
-	getConfig: DirectorConfigProvider
+	getConfig: DirectorConfigProvider,
 ): DirectorCycleStage {
 	if (status === 'completed') return 'completed';
 	if (status === 'failed') return 'failed';
@@ -115,7 +115,7 @@ export async function readFleetSummary(path: string): Promise<FleetSummary | und
 }
 
 export async function readCycleOutput(
-	outputPath: string
+	outputPath: string,
 ): Promise<{ output: DirectorOutput | undefined; outputStatus: DirectorOutputStatus }> {
 	let text: string;
 	try {
@@ -146,7 +146,7 @@ export async function readCycleOutput(
 
 export async function findCycleRun(
 	db: WebDatabase,
-	cycleId: string
+	cycleId: string,
 ): Promise<CycleRunRow | undefined> {
 	const rows = await db
 		.select()
@@ -164,7 +164,7 @@ export async function persistCycleResult(
 	output: DirectorOutput | undefined,
 	exitCode: number,
 	outputStatus: DirectorOutputStatus | undefined,
-	failureReason?: null | string
+	failureReason?: null | string,
 ): Promise<void> {
 	const createdAt = Date.now();
 	const cycleFailed = exitCode !== 0 || (outputStatus !== undefined && outputStatus !== 'ok');
@@ -190,12 +190,12 @@ export async function persistCycleResult(
 				dedupWindowMs: SUGGESTION_DEDUP_WINDOW_MS,
 				suggestions: cycleFailed ? [] : (output?.suggestions ?? []),
 			}),
-		{ label: 'director.persistCycleResult' }
+		{ label: 'director.persistCycleResult' },
 	);
 	if (outcome.suppressed > 0) {
 		webLogger.info(
 			{ cycleId, inserted: outcome.inserted, suppressed: outcome.suppressed },
-			'Director suggestions suppressed as recently user-dismissed duplicates'
+			'Director suggestions suppressed as recently user-dismissed duplicates',
 		);
 	}
 	broadcastCycle(deps.hub, cycleId, status, status, outcome.inserted);
@@ -206,7 +206,7 @@ export async function persistCycleResult(
 // still says something more useful than a bare "failed".
 function defaultFailureReason(
 	exitCode: number,
-	outputStatus: DirectorOutputStatus | undefined
+	outputStatus: DirectorOutputStatus | undefined,
 ): string {
 	if (outputStatus === 'missing') {
 		return 'Director produced no output (the backend run ended before writing results).';
@@ -221,7 +221,7 @@ export async function failCycle(
 	db: WebDatabase,
 	hub: WebSocketHub,
 	cycleId: string,
-	error: unknown
+	error: unknown,
 ): Promise<void> {
 	const completedAt = Date.now();
 	const failureReason = error instanceof Error ? error.message : String(error);
@@ -244,7 +244,7 @@ export function broadcastCycle(
 	status: DirectorCycleRecord['status'],
 	stage: DirectorCycleStage,
 	totalSuggestions?: number,
-	directAiMeta?: DirectAiMeta | null
+	directAiMeta?: DirectAiMeta | null,
 ): void {
 	hub.broadcast({
 		payload: {
@@ -262,7 +262,7 @@ export async function notifyChatSession(
 	chatService: DirectorChatService,
 	cycleId: string,
 	sessionId: string | undefined,
-	output: DirectorOutput | undefined
+	output: DirectorOutput | undefined,
 ): Promise<void> {
 	if (!sessionId) return;
 	await chatService.insertChatMessage({
@@ -279,7 +279,7 @@ export async function notifyChatSessionFailure(
 	chatService: DirectorChatService,
 	cycleId: string,
 	sessionId: string | undefined,
-	error: unknown
+	error: unknown,
 ): Promise<void> {
 	if (!sessionId) return;
 	const message = error instanceof Error ? error.message : String(error);

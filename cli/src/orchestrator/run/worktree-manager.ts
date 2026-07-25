@@ -40,7 +40,7 @@ export interface CreateRunWorktreeOptions {
 export async function createRunWorktree(
 	projectDir: string,
 	runId: string,
-	options: CreateRunWorktreeOptions = {}
+	options: CreateRunWorktreeOptions = {},
 ): Promise<null | WorktreePlan> {
 	const baseSha = await readGitHead(projectDir);
 	if (baseSha === undefined) return null;
@@ -69,7 +69,7 @@ export async function createRunWorktree(
  * (an O(1) ref update); the namespace is pruned at teardown. Best-effort. */
 export async function recordIterationCheckpoint(
 	worktree: WorktreePlan,
-	iteration: number
+	iteration: number,
 ): Promise<void> {
 	await gitSuccess(worktree.dir, [
 		'update-ref',
@@ -121,7 +121,7 @@ export interface MergeBackResult {
 export async function mergeRunBack(
 	projectDir: string,
 	worktree: WorktreePlan,
-	resolveConflict?: MergeConflictResolver
+	resolveConflict?: MergeConflictResolver,
 ): Promise<MergeBackResult> {
 	const tip = (await gitOutput(worktree.dir, ['rev-parse', '--verify', 'HEAD']))?.trim();
 	if (!tip || tip === worktree.baseSha) return { status: 'noop' };

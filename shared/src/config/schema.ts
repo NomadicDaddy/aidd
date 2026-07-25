@@ -20,7 +20,7 @@ export const defaultIgnoredFolders = [
 
 const backendSchema = z.preprocess(
 	(value) => (typeof value === 'string' ? (normalizeBackendName(value) ?? value) : value),
-	z.enum(backendNames)
+	z.enum(backendNames),
 );
 
 // A project-creation template: an operator-trusted init command that scaffolds a new
@@ -102,7 +102,7 @@ export const configSchema = z
 					idleTimeoutSeconds: z.number().int().nonnegative().optional(),
 					model: z.string().optional(),
 					timeoutSeconds: z.number().int().nonnegative().optional(),
-				})
+				}),
 			)
 			.optional(),
 		channels: z
@@ -150,7 +150,7 @@ export const configSchema = z
 					// no-bytes stall timeout. JSON-only — there is no env-var equivalent.
 					stream: z.boolean().optional(),
 					streamIdleTimeoutMs: z.number().int().positive().optional(),
-				})
+				}),
 			)
 			.optional(),
 		quitOnAbort: z.number().int().nonnegative().optional(),
@@ -163,7 +163,7 @@ export const configSchema = z
 				z.union([
 					z.string(),
 					z.object({ source: z.string(), target: z.string().optional() }).strict(),
-				])
+				]),
 			)
 			.optional(),
 		timeoutSeconds: z.number().int().nonnegative().optional(),

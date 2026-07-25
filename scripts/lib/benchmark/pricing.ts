@@ -31,7 +31,7 @@ function familyForStack(stack: BenchmarkStack, manifest: BenchmarkManifest): str
  * (e.g. local models, or families whose metered cost is trusted directly). */
 export function pricingForStack(
 	stack: BenchmarkStack,
-	manifest: BenchmarkManifest
+	manifest: BenchmarkManifest,
 ): ResolvedModelPricing | undefined {
 	const family = familyForStack(stack, manifest);
 	if (!family) return undefined;
@@ -71,7 +71,7 @@ export function estimateCostFromTokens(usage: TokenUsage, pricing: ResolvedModel
 export function resolveCost(
 	reportedCost: null | number,
 	usage: TokenUsage,
-	pricing: ResolvedModelPricing | undefined
+	pricing: ResolvedModelPricing | undefined,
 ): null | number {
 	if (!pricing) return reportedCost;
 	if (reportedCost !== null && reportedCost > 0) return reportedCost;

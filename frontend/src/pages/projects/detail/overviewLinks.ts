@@ -2,7 +2,7 @@ export type LinkedDetailTab = 'artifacts' | 'features' | 'interview' | 'profile'
 
 export function projectDetailTabSearch(
 	tab: LinkedDetailTab,
-	params: Record<string, string> = {}
+	params: Record<string, string> = {},
 ): string {
 	const searchParams = new URLSearchParams();
 	searchParams.set('tab', tab);

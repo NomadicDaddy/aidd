@@ -85,7 +85,7 @@ export function trackLaunchedRun(id: string, info: LaunchedRunInfo = {}, now = D
 export function resolveLaunchedRunTerminal(
 	id: string,
 	terminal: LaunchedRunTerminal,
-	now = Date.now()
+	now = Date.now(),
 ): LaunchedRunInfo | undefined {
 	pruneOrphans(now);
 	const info = launchedRuns.get(id);

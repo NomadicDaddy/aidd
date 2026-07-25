@@ -6,7 +6,7 @@ import { clampTerminalHeight, useTerminalStore } from '../../stores/terminalStor
 
 // The body pulls in @xterm/xterm (~300KB); lazy so users who never open the pane never load it.
 const TerminalPaneBody = lazy(() =>
-	import('./TerminalPaneBody.tsx').then((module) => ({ default: module.TerminalPaneBody }))
+	import('./TerminalPaneBody.tsx').then((module) => ({ default: module.TerminalPaneBody })),
 );
 
 /** Drag strip along the pane's top edge: pointer-capture vertical resize of the docked pane. */
@@ -39,7 +39,7 @@ function ResizeHandle() {
 			handle.addEventListener('pointerup', onUp);
 			handle.addEventListener('pointercancel', onUp);
 		},
-		[setHeightPx]
+		[setHeightPx],
 	);
 
 	return (
@@ -81,7 +81,7 @@ export function TerminalPane() {
 				'fixed right-0 bottom-0 z-30 flex flex-col border-t border-neutral-200 bg-white shadow-[0_-8px_24px_-12px_rgba(2,6,23,0.35)] dark:border-teal-950/50 dark:bg-slate-950',
 				'left-0 transition-[left] duration-200',
 				collapsed ? 'sm:left-16' : 'sm:left-60',
-				!open && 'hidden'
+				!open && 'hidden',
 			)}
 			style={{ height: maximized ? 'calc(100vh - 2.5rem)' : `${heightPx}px` }}>
 			{!maximized && <ResizeHandle />}

@@ -67,7 +67,7 @@ export interface SerializedError {
 
 export function serializeError(error: unknown): SerializedError {
 	if (error instanceof Error) {
-		const code = (error as Error & { code?: unknown }).code;
+		const code = (error as { code?: unknown } & Error).code;
 		return {
 			message: error.message,
 			...(typeof code === 'string' ? { code } : {}),
@@ -78,7 +78,7 @@ export function serializeError(error: unknown): SerializedError {
 }
 
 export function deserializeError(error: SerializedError): Error {
-	const reconstructed = new Error(error.message) as Error & { code?: string };
+	const reconstructed = new Error(error.message) as { code?: string } & Error;
 	if (error.code !== undefined) reconstructed.code = error.code;
 	if (error.stack !== undefined) reconstructed.stack = error.stack;
 	return reconstructed;

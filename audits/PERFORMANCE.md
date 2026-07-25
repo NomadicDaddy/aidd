@@ -275,7 +275,7 @@ export function OrderList({ items }: { items: Order[] }) {
 export const OrderList = React.memo(({ items }: { items: Order[] }) => {
 	const rendered = useMemo(
 		() => items.map((item) => <OrderRow key={item.id} order={item} />),
-		[items]
+		[items],
 	);
 	return <ul>{rendered}</ul>;
 });
@@ -291,7 +291,7 @@ export function FilteredTable({ query, rows }: Props) {
 	const deferredQuery = useDeferredValue(query);
 	const filtered = useMemo(
 		() => rows.filter((r) => r.name.includes(deferredQuery)),
-		[rows, deferredQuery]
+		[rows, deferredQuery],
 	);
 	return <Table rows={filtered} />;
 }
@@ -316,7 +316,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 // Good: route-level code split with named-export adapter (Spernakit pattern)
 const UsersPage = lazy(() =>
-	import('@/pages/users/UsersPage').then((m) => ({ default: m.UsersPage }))
+	import('@/pages/users/UsersPage').then((m) => ({ default: m.UsersPage })),
 );
 ```
 
@@ -362,7 +362,7 @@ export async function listRecentOrders(workspaceId: string, status?: OrderStatus
 		.where(
 			status
 				? and(eq(orders.workspaceId, workspaceId), eq(orders.status, status))
-				: eq(orders.workspaceId, workspaceId)
+				: eq(orders.workspaceId, workspaceId),
 		)
 		.orderBy(desc(orders.createdAt))
 		.limit(50);

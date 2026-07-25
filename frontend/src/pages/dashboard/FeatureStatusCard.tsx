@@ -96,7 +96,7 @@ function buildFeatureStatusRows(projects: FeatureStatusSourceProject[]): Feature
 				status: feature.status,
 				title: feature.title,
 				type: feature.type,
-			}))
+			})),
 		)
 		.sort((left, right) => {
 			const projectCompare = left.projectName.localeCompare(right.projectName);
@@ -127,7 +127,7 @@ function rowLink(row: FeatureStatusRow): string {
 function filteredRows(
 	rows: FeatureStatusRow[],
 	stateFilter: FeatureStatusState,
-	typeFilter: FeatureStatusType
+	typeFilter: FeatureStatusType,
 ): FeatureStatusRow[] {
 	return rows.filter((row) => {
 		if (row.type !== typeFilter) return false;
@@ -153,7 +153,7 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 						<tr
 							className="border-b border-neutral-100 last:border-b-0 dark:border-neutral-900"
 							key={`${row.projectName}:${row.directory}`}>
-							<td className="text-foreground max-w-44 truncate px-3 py-2 font-medium">
+							<td className="max-w-44 truncate px-3 py-2 font-medium text-foreground">
 								{row.projectName}
 							</td>
 							<td className="px-3 py-2">
@@ -207,7 +207,7 @@ export function FeatureStatusCard({
 		<Card className="overflow-hidden" variant="panel">
 			<div className="mb-4 flex flex-wrap items-start justify-between gap-3">
 				<div>
-					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 						<ListFilter className="h-4 w-4 text-teal-600 dark:text-teal-300" />
 						Feature Status
 						<Badge showDot tone={visibleRows.length > 0 ? 'amber' : 'emerald'}>

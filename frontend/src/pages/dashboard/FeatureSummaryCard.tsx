@@ -129,7 +129,7 @@ export function FeatureSummaryCard({
 		<Card className="overflow-hidden" variant="panel">
 			<div className="mb-4 flex flex-wrap items-start justify-between gap-3">
 				<div>
-					<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 						<ListChecks className="h-4 w-4 text-teal-600 dark:text-teal-300" />
 						Feature Summary
 						<Badge showDot tone={pendingTone}>
@@ -225,7 +225,7 @@ export function FeatureSummaryCard({
 											className={
 												column.align === 'right'
 													? 'px-3 py-2 text-right font-medium text-neutral-700 tabular-nums dark:text-neutral-200'
-													: 'text-foreground max-w-52 truncate px-3 py-2 font-medium'
+													: 'max-w-52 truncate px-3 py-2 font-medium text-foreground'
 											}
 											key={column.header}>
 											{column.value(row)}

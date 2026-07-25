@@ -194,7 +194,7 @@ async function detectWorkTree(projectPath: string): Promise<null | RepositoryInf
 	const probe = await runGit(
 		projectPath,
 		['rev-parse', '--is-inside-work-tree'],
-		commandTimeoutMs
+		commandTimeoutMs,
 	);
 	if (probe.ok && probe.stdout.trim() === 'true') return null;
 	if (probe.timedOut) return failure('error', 'git timed out while inspecting the repository.');

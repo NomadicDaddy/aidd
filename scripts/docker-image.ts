@@ -80,7 +80,7 @@ export function verifyImageLicenses(imageRef: string): number {
 export function publishPlan(
 	image: string,
 	version: string,
-	tags: string[]
+	tags: string[],
 ): { args: string[]; cmd: string }[] {
 	const steps: { args: string[]; cmd: string }[] = [
 		{ args: ['scripts/check-image-licenses.ts', '--image', `${image}:${version}`], cmd: 'bun' },

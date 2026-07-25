@@ -55,7 +55,7 @@ export function RunsPage() {
 				title="Runs"
 			/>
 			<section className="space-y-2">
-				<h2 className="text-foreground text-sm font-semibold">Launch Run</h2>
+				<h2 className="text-sm font-semibold text-foreground">Launch Run</h2>
 				<RunLaunchCard
 					disabled={form.launch.isPending || !form.projectDir}
 					extraArgs={form.extraArgs}

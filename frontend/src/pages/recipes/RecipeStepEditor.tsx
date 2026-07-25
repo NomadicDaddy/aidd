@@ -101,7 +101,7 @@ export function RecipeStepEditor({
 			<div className="flex items-center justify-between gap-3">
 				<div>
 					<Badge>Step {index + 1}</Badge>
-					<h3 className="text-foreground mt-2 text-base font-semibold">{step.name}</h3>
+					<h3 className="mt-2 text-base font-semibold text-foreground">{step.name}</h3>
 				</div>
 				<Button onClick={onDelete} variant="danger">
 					<Trash2 className="h-4 w-4" />

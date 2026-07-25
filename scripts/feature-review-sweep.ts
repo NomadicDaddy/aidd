@@ -38,7 +38,7 @@ function main(): void {
 		autoClosedRedundant: appSummaries.reduce((sum, item) => sum + item.autoClosedRedundant, 0),
 		backlogSemanticFixes: appSummaries.reduce(
 			(sum, item) => sum + item.backlogSemanticFixes,
-			0
+			0,
 		),
 		complianceFixes: appSummaries.reduce((sum, item) => sum + item.complianceFixes, 0),
 		invalidJsonRepairs: appSummaries.reduce((sum, item) => sum + item.invalidJsonRepairs, 0),
@@ -86,8 +86,8 @@ function main(): void {
 				totals,
 			},
 			null,
-			2
-		)
+			2,
+		),
 	);
 }
 

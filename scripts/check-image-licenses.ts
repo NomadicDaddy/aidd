@@ -96,7 +96,7 @@ async function assertNoticesPresent(image: string, updating: boolean): Promise<v
 		: REQUIRED_IN_IMAGE;
 	const output = await runInImage(
 		image,
-		required.map((path) => `[ -e ${path} ] || echo MISSING ${path}`).join('; ')
+		required.map((path) => `[ -e ${path} ] || echo MISSING ${path}`).join('; '),
 	);
 	const missing = output
 		.split('\n')
@@ -118,10 +118,10 @@ async function assertAgentClisAbsent(image: string): Promise<void> {
 	const output = await runInImage(
 		image,
 		FORBIDDEN_IN_IMAGE.map(
-			(binary) => `command -v ${binary} >/dev/null 2>&1 && echo FOUND ${binary}`
+			(binary) => `command -v ${binary} >/dev/null 2>&1 && echo FOUND ${binary}`,
 		)
 			.join('; ')
-			.concat('; true')
+			.concat('; true'),
 	);
 	const found = output
 		.split('\n')
@@ -135,7 +135,7 @@ async function assertAgentClisAbsent(image: string): Promise<void> {
 		console.error('Baking these in makes every published image a redistribution of them, and');
 		console.error('@anthropic-ai/claude-code carries no redistribution grant (SEE LICENSE IN');
 		console.error(
-			'README.md -> Anthropic commercial terms). The entrypoint installs them into'
+			'README.md -> Anthropic commercial terms). The entrypoint installs them into',
 		);
 		console.error('the home volume at run time instead; keep them out of the image.');
 		exit(1);

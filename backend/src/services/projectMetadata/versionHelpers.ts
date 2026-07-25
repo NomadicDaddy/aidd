@@ -31,7 +31,7 @@ interface DefaultsJson {
 
 export async function gatherVersionInfo(
 	projectDir: string,
-	stackOptions: DetectProjectStackOptions = {}
+	stackOptions: DetectProjectStackOptions = {},
 ): Promise<{
 	appVersion: null | string;
 	stack: ProjectStack;
@@ -103,7 +103,7 @@ async function scanConfigDirForPorts(configDir: string): Promise<null | ProjectP
  */
 async function resolveSpernakitSlug(projectDir: string): Promise<null | string> {
 	const defaults = await readJsonOrNull<DefaultsJson>(
-		join(projectDir, 'backend', 'src', 'config', 'defaults.json')
+		join(projectDir, 'backend', 'src', 'config', 'defaults.json'),
 	);
 	if (defaults?.app?.slug && typeof defaults.app.slug === 'string') {
 		return defaults.app.slug;
@@ -132,7 +132,7 @@ export async function gatherPorts(projectDir: string): Promise<null | ProjectPor
 	const spernakitSlug = await resolveSpernakitSlug(projectDir);
 	if (spernakitSlug && spernakitSlug !== dirSlug) {
 		const cfg = await readJsonOrNull<RawConfigShape>(
-			join(projectDir, 'config', `${spernakitSlug}.json`)
+			join(projectDir, 'config', `${spernakitSlug}.json`),
 		);
 		if (cfg) {
 			const ports = extractPorts(cfg);
@@ -167,12 +167,12 @@ export async function gatherAddedAt(projectDir: string): Promise<null | string> 
 
 export async function gatherRoadmap(
 	store: FileAiddStore,
-	features?: Feature[]
+	features?: Feature[],
 ): Promise<null | ProjectRoadmapSummary> {
 	const [roadmapResult, resolvedFeatures] = await Promise.all([
 		store.readRoadmap().then(
 			(value) => ({ ok: true as const, value }),
-			() => ({ ok: false as const })
+			() => ({ ok: false as const }),
 		),
 		features !== undefined
 			? Promise.resolve(features)

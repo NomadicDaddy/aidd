@@ -25,7 +25,7 @@
  *
  *   bun scripts/install-history-guard.ts [--dry-run] [--root <dir>]
  */
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { argv, exit } from 'node:process';
 
@@ -68,7 +68,7 @@ for (const repo of repos) {
 		if (!body.includes(MARKER)) {
 			console.error(
 				`  REFUSED ${name}: a pre-push hook already exists and is not ours. Chain the guard into it by hand:\n` +
-					`           bash "$(dirname "$0")/${GUARD}" "\${1:-origin}"`
+					`           bash "$(dirname "$0")/${GUARD}" "\${1:-origin}"`,
 			);
 			refused++;
 			continue;
@@ -83,7 +83,7 @@ for (const repo of repos) {
 	const configuredHooks = sh(repo, ['config', '--local', 'core.hooksPath']);
 	if (configuredHooks !== '' && configuredHooks !== '.githooks') {
 		console.error(
-			`  REFUSED ${name}: core.hooksPath is '${configuredHooks}'; not overriding it.`
+			`  REFUSED ${name}: core.hooksPath is '${configuredHooks}'; not overriding it.`,
 		);
 		refused++;
 		continue;
@@ -96,7 +96,7 @@ for (const repo of repos) {
 		if (live.length > 0) {
 			console.error(
 				`  REFUSED ${name}: .git/hooks holds live hooks (${live.join(', ')}) that core.hooksPath=.githooks would bypass.\n` +
-					`           This repo manages hooks itself (e.g. simple-git-hooks/husky). Add the guard to that tool's config instead.`
+					`           This repo manages hooks itself (e.g. simple-git-hooks/husky). Add the guard to that tool's config instead.`,
 			);
 			refused++;
 			continue;
@@ -131,7 +131,7 @@ for (const repo of repos) {
 
 	sh(repo, ['config', 'core.hooksPath', '.githooks']);
 	console.log(
-		`  installed: ${name}${hasPushRemote(repo) ? '  (armed — has a push remote)' : '  (dormant — no remote yet)'}`
+		`  installed: ${name}${hasPushRemote(repo) ? '  (armed — has a push remote)' : '  (dormant — no remote yet)'}`,
 	);
 	installed++;
 }
@@ -139,6 +139,6 @@ for (const repo of repos) {
 const armed = repos.filter(hasPushRemote).length;
 console.log(
 	`\nhistory guard — ${installed} installed, ${skipped} pending (dry run), ${refused} refused, across ${repos.length} repositories ` +
-		`(${armed} armed, ${repos.length - armed} dormant until a remote is added).`
+		`(${armed} armed, ${repos.length - armed} dormant until a remote is added).`,
 );
 exit(refused > 0 ? 1 : 0);

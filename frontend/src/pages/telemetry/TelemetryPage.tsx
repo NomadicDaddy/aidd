@@ -17,7 +17,7 @@ import {
 	useTelemetryTop,
 } from '../../hooks/useTelemetry.ts';
 import { InvocationsTable } from './InvocationsTable.tsx';
-import { OutputTimeseriesChart, type OutputMetric } from './OutputTimeseriesChart.tsx';
+import { type OutputMetric, OutputTimeseriesChart } from './OutputTimeseriesChart.tsx';
 import { BackendBreakdownCard, LeaderboardCard, TimeseriesChart } from './TelemetryComponents.tsx';
 import { TelemetryDisclosure } from './TelemetryDisclosure.tsx';
 import { TelemetrySummary } from './TelemetrySummary.tsx';
@@ -76,7 +76,7 @@ export function TelemetryPage() {
 			bucket,
 			...(windowMs ? { windowMs } : {}),
 		},
-		outputApplies
+		outputApplies,
 	);
 	const invocationsQuery = useTelemetryInvocations({
 		limit: 50,
@@ -122,7 +122,7 @@ export function TelemetryPage() {
 			topLevel: 0,
 			total: 0,
 			warnings: 0,
-		}
+		},
 	);
 
 	return (
@@ -153,7 +153,7 @@ export function TelemetryPage() {
 			<section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 				<Card className="space-y-3">
 					<div className="flex items-center justify-between">
-						<h2 className="text-foreground text-sm font-semibold">Most used</h2>
+						<h2 className="text-sm font-semibold text-foreground">Most used</h2>
 						<Badge tone="neutral">top {topRows.length}</Badge>
 					</div>
 					{topQuery.isLoading && topRows.length === 0 ? (
@@ -165,7 +165,7 @@ export function TelemetryPage() {
 				<div className="space-y-4">
 					<Card className="space-y-3">
 						<div className="flex items-center justify-between">
-							<h2 className="text-foreground text-sm font-semibold">
+							<h2 className="text-sm font-semibold text-foreground">
 								Invocations over time
 							</h2>
 							<Badge tone="neutral">
@@ -180,7 +180,7 @@ export function TelemetryPage() {
 					</Card>
 					<Card className="space-y-3">
 						<div>
-							<h2 className="text-foreground text-sm font-semibold">Backend mix</h2>
+							<h2 className="text-sm font-semibold text-foreground">Backend mix</h2>
 							<p className="text-xs text-neutral-500">
 								All invocations in the selected filters.
 							</p>
@@ -194,7 +194,7 @@ export function TelemetryPage() {
 					<Card className="space-y-3">
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div>
-								<h2 className="text-foreground text-sm font-semibold">
+								<h2 className="text-sm font-semibold text-foreground">
 									Agent output
 								</h2>
 								<p className="text-xs text-neutral-500">
@@ -230,7 +230,7 @@ export function TelemetryPage() {
 
 			<Card className="space-y-3">
 				<div className="flex items-center justify-between">
-					<h2 className="text-foreground text-sm font-semibold">Recent invocations</h2>
+					<h2 className="text-sm font-semibold text-foreground">Recent invocations</h2>
 					<Badge tone="neutral">latest {invocations.length} in window</Badge>
 				</div>
 				{invocationsQuery.isLoading && invocations.length === 0 ? (

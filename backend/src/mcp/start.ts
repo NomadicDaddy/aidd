@@ -26,7 +26,7 @@ async function readVersion(rootDir: string): Promise<string> {
  */
 export async function startMcpServer(
 	config: ResolvedConfig,
-	options: StartMcpServerOptions
+	options: StartMcpServerOptions,
 ): Promise<number> {
 	const port = config.web?.port ?? 3210;
 	const client = createApiClient({
@@ -44,7 +44,7 @@ export async function startMcpServer(
 	} else {
 		console.error(
 			`aidd MCP server ready (stdio), but the web backend at ${client.baseUrl} is not reachable. ` +
-				'Start it with `aidd --web`; tool calls will fail until it is running.'
+				'Start it with `aidd --web`; tool calls will fail until it is running.',
 		);
 	}
 	return await new Promise<number>((resolve) => {

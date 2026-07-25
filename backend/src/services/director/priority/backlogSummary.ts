@@ -14,13 +14,13 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 		(feature) =>
 			isOpenBacklog(feature) &&
 			!isAuditFinding(feature) &&
-			feature.id.startsWith('remediation-')
+			feature.id.startsWith('remediation-'),
 	);
 	const regular = features.filter(
 		(feature) =>
 			isOpenBacklog(feature) &&
 			!isAuditFinding(feature) &&
-			!feature.id.startsWith('remediation-')
+			!feature.id.startsWith('remediation-'),
 	);
 	const readyRegular = regular.filter((feature) => dependenciesAreSatisfied(feature, features));
 	return {

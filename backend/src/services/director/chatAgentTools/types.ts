@@ -22,7 +22,7 @@ export interface ChatAgentToolContext {
 	killRun(id: string): Promise<void>;
 	launchRun(input: RunLaunchRequest): Promise<ChatAgentLaunchedRun>;
 	launchSuggestion(
-		id: string
+		id: string,
 	): Promise<{ id: string; pipelineSessionId: string } | { id: string; runId: string }>;
 	listProjects(): Promise<unknown>;
 	listSuggestions(): Promise<unknown>;

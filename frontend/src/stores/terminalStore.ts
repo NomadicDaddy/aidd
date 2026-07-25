@@ -93,6 +93,6 @@ export const useTerminalStore = create<TerminalState>()(
 				open: state.open,
 				shellId: state.shellId,
 			}),
-		}
-	)
+		},
+	),
 );

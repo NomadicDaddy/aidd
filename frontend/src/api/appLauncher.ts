@@ -4,7 +4,7 @@ import { apiGet, apiSend } from './client.ts';
 
 export async function getAppLaunchStatus(projectId: string): Promise<AppLaunch> {
 	const response = await apiGet<{ launch: AppLaunch }>(
-		`/api/v1/app-launcher/status/${encodeURIComponent(projectId)}`
+		`/api/v1/app-launcher/status/${encodeURIComponent(projectId)}`,
 	);
 	return response.launch;
 }

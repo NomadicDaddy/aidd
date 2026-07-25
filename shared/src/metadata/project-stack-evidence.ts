@@ -1,4 +1,4 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 export interface PackageJsonShape {
@@ -112,7 +112,7 @@ async function expandWorkspacePattern(projectDir: string, pattern: string): Prom
 				} catch {
 					return [];
 				}
-			})
+			}),
 		);
 		paths = expanded.flat().slice(0, MAX_MANIFESTS);
 	}
@@ -157,7 +157,7 @@ async function directoryFileNames(path: string): Promise<string[]> {
 }
 
 async function sourceFileNames(projectDir: string, manifestPaths: string[]): Promise<string[]> {
-	const directories = new Set<string>([projectDir, join(projectDir, 'src')]);
+	const directories = new Set<string>([join(projectDir, 'src'), projectDir]);
 	for (const manifestPath of manifestPaths) {
 		const packageDir = dirname(manifestPath);
 		directories.add(packageDir);
@@ -168,7 +168,7 @@ async function sourceFileNames(projectDir: string, manifestPaths: string[]): Pro
 
 function hasExtension(names: string[], extensions: string[]): boolean {
 	return names.some((name) =>
-		extensions.some((extension) => name.toLowerCase().endsWith(extension))
+		extensions.some((extension) => name.toLowerCase().endsWith(extension)),
 	);
 }
 
@@ -178,7 +178,7 @@ function packageText(packages: PackageJsonShape[]): string {
 			typeof pkg.description === 'string' ? pkg.description : '',
 			typeof pkg.main === 'string' ? pkg.main : '',
 			...Object.values(stringRecord(pkg.scripts)).filter(
-				(value): value is string => typeof value === 'string'
+				(value): value is string => typeof value === 'string',
 			),
 		])
 		.join('\n')
@@ -254,10 +254,10 @@ export async function gatherProjectStackEvidence(projectDir: string): Promise<St
 	const hasTypeScriptSource = hasExtension(names, ['.ts', '.tsx']);
 	const hasJavaScript = hasExtension(names, ['.js', '.jsx', '.mjs', '.cjs']);
 	const hasJavaScriptFramework = [...DEPENDENCY_FRAMEWORKS.keys()].some((dependency) =>
-		dependencies.has(dependency)
+		dependencies.has(dependency),
 	);
 	const hasNonJavaScriptApplication = [...evidence.languages].some(
-		(language) => language !== 'JavaScript' && language !== 'TypeScript'
+		(language) => language !== 'JavaScript' && language !== 'TypeScript',
 	);
 	const hasJavaScriptApplication =
 		hasJavaScriptFramework ||

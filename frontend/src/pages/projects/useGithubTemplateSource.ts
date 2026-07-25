@@ -19,7 +19,7 @@ export interface GithubTemplateSourceState {
 // components (react-refresh) and ProjectCreateLane.tsx stays within the modularity budget.
 export function useGithubTemplateSource(
 	name: string,
-	setName: (value: string) => void
+	setName: (value: string) => void,
 ): GithubTemplateSourceState {
 	const [templateUrl, setTemplateUrl] = useState('');
 	const [nameWasAutoFilled, setNameWasAutoFilled] = useState(false);

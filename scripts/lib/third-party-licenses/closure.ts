@@ -44,7 +44,7 @@ export interface ClosurePackage {
 export async function collectLicensedClosure(
 	root: string,
 	workspaces: string[],
-	internal: Set<string>
+	internal: Set<string>,
 ): Promise<{ closure: ClosurePackage[]; unresolved: string[] }> {
 	const locked = await collectLockfileClosure(root, {
 		includePeerDependencies: true,

@@ -29,7 +29,7 @@ async function isInsideWorkTree(projectDir: string): Promise<boolean> {
 export async function commitFiles(
 	projectDir: string,
 	paths: string[],
-	message: string
+	message: string,
 ): Promise<CommitFilesResult> {
 	if (paths.length === 0) return { committed: false, reason: 'no-paths' };
 

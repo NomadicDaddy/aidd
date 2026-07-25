@@ -118,14 +118,14 @@ function parseResponses(content: string): ParsedResponseEntry[] {
  */
 function resolveResponsesById(
 	questions: ProjectInterviewQuestionDto[],
-	parsed: ParsedResponseEntry[]
+	parsed: ParsedResponseEntry[],
 ): Map<string, ParsedResponseEntry> {
 	const byId = new Map<string, ParsedResponseEntry>();
 	const consumed = new Set<string>();
 	for (const entry of parsed) {
 		const key = questionMatchKey(entry.priority, entry.prompt);
 		const question = questions.find(
-			(q) => !consumed.has(q.id) && questionMatchKey(q.priority, q.prompt) === key
+			(q) => !consumed.has(q.id) && questionMatchKey(q.priority, q.prompt) === key,
 		);
 		if (!question) continue;
 		consumed.add(question.id);
@@ -135,7 +135,7 @@ function resolveResponsesById(
 }
 
 export async function getProjectInterviewDetail(
-	projectDir: string
+	projectDir: string,
 ): Promise<ProjectInterviewDetailDto> {
 	const metadataDir = metadataPath(projectDir);
 	const questionsContent = await readTextOrNull(join(metadataDir, 'questions.md'));
@@ -153,7 +153,7 @@ export async function getProjectInterviewDetail(
 	const responsesContent = await readTextOrNull(join(metadataDir, 'responses.md'));
 	const responsesById = resolveResponsesById(
 		questions,
-		responsesContent ? parseResponses(responsesContent) : []
+		responsesContent ? parseResponses(responsesContent) : [],
 	);
 
 	const answeredQuestions: AnsweredInterviewQuestionDto[] = [];
@@ -184,7 +184,7 @@ export async function getProjectInterviewDetail(
 }
 
 export async function getProjectInterviewProgress(
-	projectDir: string
+	projectDir: string,
 ): Promise<null | ProjectInterviewProgress> {
 	const detail = await getProjectInterviewDetail(projectDir);
 	if (!detail.hasQuestionsFile) return null;
@@ -193,7 +193,7 @@ export async function getProjectInterviewProgress(
 
 export async function submitProjectInterviewAnswer(
 	projectDir: string,
-	body: { answer: string; questionId: string }
+	body: { answer: string; questionId: string },
 ): Promise<ProjectInterviewDetailDto> {
 	const metadataDir = metadataPath(projectDir);
 

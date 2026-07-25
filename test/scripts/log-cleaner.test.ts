@@ -71,7 +71,7 @@ describe('cleanIterationLogs', () => {
 		const firstPass = await readFile(join(iterationsDir, '001.log'), 'utf8');
 		await writeFile(
 			join(iterationsDir, '001.log'),
-			`${JSON.stringify({ chunk: '\x1b[32mgreen\x1b[0m' })}\n`
+			`${JSON.stringify({ chunk: '\x1b[32mgreen\x1b[0m' })}\n`,
 		);
 		const oldTime = new Date(Date.now() - 60_000);
 		const { utimes } = await import('node:fs/promises');

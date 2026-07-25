@@ -137,7 +137,7 @@ export interface FeatureVisibilityFilters {
 // graph so both surfaces filter identically.
 export function featureMatchesFilters(
 	feature: ProjectFeature,
-	filters: FeatureVisibilityFilters
+	filters: FeatureVisibilityFilters,
 ): boolean {
 	if (!featureMatchesSearch(feature, filters.query)) return false;
 	const status = stringValue(feature, 'status') || 'unknown';
@@ -164,7 +164,7 @@ export function featureMatchesFilters(
 }
 
 export function sortedSourceOptions(
-	features: ProjectFeature[]
+	features: ProjectFeature[],
 ): { label: string; value: string }[] {
 	const labels = new Set(features.map(featureSourceLabel));
 	const options: { label: string; value: string }[] = [];
@@ -185,14 +185,14 @@ export function sortedSourceOptions(
 	options.push(
 		...[...labels]
 			.sort((left, right) => left.localeCompare(right))
-			.map((label) => ({ label, value: label }))
+			.map((label) => ({ label, value: label })),
 	);
 	return options;
 }
 
 export function milestoneFilterOptions(
 	features: ProjectFeature[],
-	roadmap: null | ProjectRoadmapSummary
+	roadmap: null | ProjectRoadmapSummary,
 ): { label: string; value: string }[] {
 	const options: { label: string; value: string }[] = [];
 	const roadmapOrder = roadmap?.milestoneOrder ?? Object.keys(roadmap?.milestones ?? {});

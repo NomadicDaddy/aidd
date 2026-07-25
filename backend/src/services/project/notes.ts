@@ -27,7 +27,7 @@ export async function readProjectNotes(projectDir: string): Promise<ProjectNotes
 
 export async function writeProjectNotes(
 	projectDir: string,
-	content: string
+	content: string,
 ): Promise<ProjectNotesResult> {
 	const path = notesFilePath(projectDir);
 	await mkdir(join(projectDir, '.aidd'), { recursive: true });

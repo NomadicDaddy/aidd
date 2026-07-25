@@ -47,7 +47,7 @@ export interface CompletionRecoveryInput {
  * existing failure path.
  */
 export async function attemptCompletionMarkerRecovery(
-	input: CompletionRecoveryInput
+	input: CompletionRecoveryInput,
 ): Promise<CompletionRecoveryOutcome | undefined> {
 	if (input.work.kind !== 'feature') return undefined;
 	if (!input.featureScope.unacceptedCompletedFeatures.includes(input.work.id)) return undefined;
@@ -60,12 +60,12 @@ export async function attemptCompletionMarkerRecovery(
 	const gate = await resolveRecoveryGate(input.projectDir);
 	if (gate === undefined) return undefined;
 	console.log(
-		`[orchestrator] completion recovery: feature ${input.work.id} is completed on disk with uncommitted work; re-running the blocking gate (${gate.display}) before auto-committing.`
+		`[orchestrator] completion recovery: feature ${input.work.id} is completed on disk with uncommitted work; re-running the blocking gate (${gate.display}) before auto-committing.`,
 	);
 	const gatePassed = await runRecoveryGate(
 		input.projectDir,
 		gate.args,
-		input.gateTimeoutMs ?? defaultGateTimeoutMs
+		input.gateTimeoutMs ?? defaultGateTimeoutMs,
 	);
 	if (!gatePassed) {
 		console.log(`[orchestrator] completion recovery abandoned: ${gate.display} did not pass.`);
@@ -76,11 +76,11 @@ export async function attemptCompletionMarkerRecovery(
 		input.work.id,
 		feature.title,
 		gate,
-		stagePaths
+		stagePaths,
 	);
 	if (commit === undefined) return undefined;
 	console.log(
-		`[orchestrator] completion recovery committed ${commit.hash.slice(0, 10)}: ${commit.subject}`
+		`[orchestrator] completion recovery committed ${commit.hash.slice(0, 10)}: ${commit.subject}`,
 	);
 	return { commit, gateCommand: gate.display };
 }
@@ -89,7 +89,7 @@ export async function attemptCompletionMarkerRecovery(
  * attributed to the run. Non-.aidd paths must be absent from the run-start baseline AND present
  * in the run's recorded file changes; dirty .aidd metadata rides along (aidd-owned). */
 async function attributableDirtyPaths(
-	input: CompletionRecoveryInput
+	input: CompletionRecoveryInput,
 ): Promise<string[] | undefined> {
 	const dirtyPaths = await gitDirtySourcePaths(input.projectDir, { includeAiddMetadata: true });
 	if (dirtyPaths === undefined) return undefined;
@@ -149,7 +149,7 @@ async function resolveRecoveryGate(projectDir: string): Promise<RecoveryGate | u
 async function runRecoveryGate(
 	projectDir: string,
 	args: string[],
-	timeoutMs: number
+	timeoutMs: number,
 ): Promise<boolean> {
 	try {
 		const proc = Bun.spawn(args, {
@@ -172,7 +172,7 @@ async function commitRecoveredWork(
 	featureId: string,
 	featureTitle: unknown,
 	gate: RecoveryGate,
-	stagePaths: string[]
+	stagePaths: string[],
 ): Promise<GitCommitSummary | undefined> {
 	const headBefore = await readGitHead(projectDir);
 	// Explicit pathspecs only — the attributed dirty paths, never the whole tree. `-A` scoped to

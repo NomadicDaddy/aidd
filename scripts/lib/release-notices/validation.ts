@@ -41,7 +41,7 @@ export function stageName(version: string, target: CompileTarget): string {
 export function validateReleaseDirectory(
 	entries: ReleaseDirectoryEntry[],
 	version: string,
-	targets: CompileTarget[]
+	targets: CompileTarget[],
 ): string[] {
 	const expectedZips = targets.map((target) => archiveName(version, target)).sort();
 	const actualZips = entries

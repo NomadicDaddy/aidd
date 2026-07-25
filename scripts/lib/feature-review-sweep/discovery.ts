@@ -10,7 +10,7 @@ function resolveApplicationsIndexPath(): string {
 		if (fs.existsSync(candidate)) return candidate;
 	}
 	throw new Error(
-		`No applications index found in ${APPLICATIONS_ROOT} (looked for ${APPLICATIONS_INDEX_CANDIDATES.join(', ')})`
+		`No applications index found in ${APPLICATIONS_ROOT} (looked for ${APPLICATIONS_INDEX_CANDIDATES.join(', ')})`,
 	);
 }
 

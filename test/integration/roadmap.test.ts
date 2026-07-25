@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import {
-	UnknownMilestoneError,
 	computeNextMilestoneName,
 	evaluateRoadmapCodingGate,
 	resolveMilestone,
 	roadmapSchema,
 	selectAssignmentMilestone,
+	UnknownMilestoneError,
 } from 'aidd-shared/metadata/roadmap';
 import { buildRoadmapFromFeatures } from 'aidd-shared/metadata/roadmap-build';
 
@@ -253,7 +253,7 @@ describe('selectAssignmentMilestone', () => {
 				{ id: 'feature-a', passes: true },
 				{ id: 'feature-b', passes: true },
 			],
-			'remediation-bugfix'
+			'remediation-bugfix',
 		);
 
 		expect(selection.milestone).toBe('v2.0');
@@ -274,7 +274,7 @@ describe('selectAssignmentMilestone', () => {
 				{ id: 'feature-a', passes: true },
 				{ id: 'feature-b', passes: true },
 			],
-			'audit-security-1779339974-cross-drive-paths-bypass-allowed-root-containment'
+			'audit-security-1779339974-cross-drive-paths-bypass-allowed-root-containment',
 		);
 
 		expect(selection.milestone).toBe('v2.0');
@@ -300,7 +300,7 @@ describe('selectAssignmentMilestone', () => {
 		const selection = selectAssignmentMilestone(
 			roadmap,
 			[{ id: 'feature-a', passes: false }],
-			'remediation-bugfix'
+			'remediation-bugfix',
 		);
 
 		expect(selection.milestone).toBe('MVP');
@@ -315,7 +315,7 @@ describe('selectAssignmentMilestone', () => {
 		const selection = selectAssignmentMilestone(
 			roadmap,
 			[{ id: 'feature-a', passes: false }],
-			'audit-security-1779339974-cross-drive-paths-bypass-allowed-root-containment'
+			'audit-security-1779339974-cross-drive-paths-bypass-allowed-root-containment',
 		);
 
 		expect(selection.milestone).toBe('MVP');

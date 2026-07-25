@@ -1,7 +1,7 @@
 import {
+	type AuditFreshnessContext,
 	createAuditFreshnessContext,
 	evaluateAuditReportFreshness,
-	type AuditFreshnessContext,
 } from 'aidd-shared/metadata/audit-freshness';
 import { discoverProjectAuditNames } from 'aidd-shared/modes/audit-shared';
 
@@ -12,7 +12,7 @@ export async function checkAuditHealth(
 	catalogDir: string,
 	projectDir: string,
 	artifactCheck: null | ProjectArtifactCheckSummary,
-	options: { auditFreshnessContext?: AuditFreshnessContext } = {}
+	options: { auditFreshnessContext?: AuditFreshnessContext } = {},
 ): Promise<DirectorAuditHealth> {
 	const staleThresholdDays = artifactCheck?.staleThresholdDays ?? 30;
 	const auditNames = await discoverProjectAuditNames(projectDir, {

@@ -38,7 +38,7 @@ export function iterationSummary(artifact: RunIterationArtifact): null | string 
 
 export function shouldTrackRun(
 	plan: RunPlan,
-	externalSource: CliActiveRunSource | undefined
+	externalSource: CliActiveRunSource | undefined,
 ): boolean {
 	if (externalSource) return true;
 	return !(plan.checks.artifacts || plan.checks.features);
@@ -110,6 +110,6 @@ export async function appendFallbackRunSummary(record: CliActiveRunRecord): Prom
 				reasoningTokens: 0,
 				toolCalls: 0,
 			},
-		})}\n`
+		})}\n`,
 	);
 }

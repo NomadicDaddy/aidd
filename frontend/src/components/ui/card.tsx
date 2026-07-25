@@ -27,7 +27,7 @@ export function Card({
 				'rounded-xl border p-4 transition-[border-color,background-color,box-shadow] duration-200',
 				variants[variant],
 				interactive && 'card-hover hover:border-accent/40',
-				className
+				className,
 			)}>
 			{children}
 		</div>

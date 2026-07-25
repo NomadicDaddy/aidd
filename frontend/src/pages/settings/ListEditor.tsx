@@ -54,7 +54,7 @@ export function ListEditor({
 									disabled={items.length <= 1}
 									onClick={() =>
 										onChange(
-											items.filter((_, itemIndex) => itemIndex !== index)
+											items.filter((_, itemIndex) => itemIndex !== index),
 										)
 									}
 									variant="ghost">

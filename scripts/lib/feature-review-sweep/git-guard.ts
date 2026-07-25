@@ -59,7 +59,7 @@ function detectBashPathStyle(): 'gitbash' | 'wsl' {
 			'-lc',
 			'if [ -e /mnt/d ]; then echo wsl; elif [ -e /d ]; then echo gitbash; else echo unknown; fi',
 		],
-		{ encoding: 'utf8' }
+		{ encoding: 'utf8' },
 	);
 
 	if (result.error) {

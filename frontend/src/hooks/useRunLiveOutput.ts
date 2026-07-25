@@ -7,9 +7,9 @@ import { capLiveBuffer, readChunk, readStatus, suffixPrefixOverlap } from './liv
 import { createFlushScheduler, type FlushScheduler } from './liveOutputFlusher.ts';
 import { useRunOutput } from './useRuns.ts';
 import {
+	type SocketMessage,
 	useWebSocketReconnect,
 	useWebSocketSubscribe,
-	type SocketMessage,
 } from './useWebSocket.ts';
 
 const EMPTY_SELECTED_RUN_OUTPUT_POLL_MS = 2_000;
@@ -35,7 +35,7 @@ export interface RunLiveOutput {
 
 export function useRunLiveOutput(
 	id: string | undefined,
-	status: RunStatus | undefined
+	status: RunStatus | undefined,
 ): RunLiveOutput {
 	const query = useRunOutput(id);
 	const [text, setText] = useState('');
@@ -159,7 +159,7 @@ export function useRunLiveOutput(
 				if (overlap >= chunk.length) return; // entirely contained — skip
 				snapshotWatermarkRef.current = 0;
 				textRef.current = capLiveBuffer(
-					textRef.current + (overlap > 0 ? chunk.slice(overlap) : chunk)
+					textRef.current + (overlap > 0 ? chunk.slice(overlap) : chunk),
 				);
 				scheduleFlush();
 				return;

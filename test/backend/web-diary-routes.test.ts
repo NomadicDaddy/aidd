@@ -52,8 +52,8 @@ describe('diary routes', () => {
 		const app = appWith(calls);
 		const response = await app.handle(
 			new Request(
-				'http://localhost/api/v1/diary/entries?projectPath=d:/applications/demo&limit=10'
-			)
+				'http://localhost/api/v1/diary/entries?projectPath=d:/applications/demo&limit=10',
+			),
 		);
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ entries: [sampleEntry], nextCursor: 'cursor-1' });
@@ -73,7 +73,7 @@ describe('diary routes', () => {
 		const calls = { entries: [] as unknown[], timeline: [] as unknown[] };
 		const app = appWith(calls);
 		const response = await app.handle(
-			new Request('http://localhost/api/v1/diary/entries?limit=9999')
+			new Request('http://localhost/api/v1/diary/entries?limit=9999'),
 		);
 		expect(response.status).toBe(422);
 	});

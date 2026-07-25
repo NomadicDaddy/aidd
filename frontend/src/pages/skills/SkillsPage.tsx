@@ -53,7 +53,7 @@ export function SkillsPage() {
 
 	const skillList = skills.data ?? [];
 	const usageByResourceId = new Map<string, ResourceUsageRow>(
-		(telemetry.data ?? []).map((row) => [row.resourceId, row])
+		(telemetry.data ?? []).map((row) => [row.resourceId, row]),
 	);
 	const normalizedQuery = query.trim().toLowerCase();
 	const filtered = skillList.filter((skill) => {
@@ -154,7 +154,7 @@ export function SkillsPage() {
 									onClick={() => setSelectedId(skill.id)}
 									type="button">
 									<div className="flex flex-wrap items-center gap-2">
-										<span className="text-foreground font-mono text-sm">
+										<span className="font-mono text-sm text-foreground">
 											{skill.id}
 										</span>
 										{RECIPE_SKILL_IDS.has(skill.id) ? (
@@ -217,7 +217,7 @@ export function SkillsPage() {
 							setProjectDir={setProjectDir}
 						/>
 						<Card className="space-y-2">
-							<h3 className="text-foreground text-sm font-semibold">Definition</h3>
+							<h3 className="text-sm font-semibold text-foreground">Definition</h3>
 							<pre className="max-h-[28rem] overflow-auto rounded-md bg-neutral-100 p-3 font-mono text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
 								{selected.body}
 							</pre>
@@ -246,7 +246,7 @@ export function SkillsPage() {
 					deleteImport.mutate(deleteTarget, {
 						onError: (error) =>
 							toast.error(
-								error instanceof Error ? error.message : 'Skill deletion failed'
+								error instanceof Error ? error.message : 'Skill deletion failed',
 							),
 						onSuccess: () => {
 							toast.success(`${deleteTarget} deleted`);

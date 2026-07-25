@@ -23,7 +23,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 	Go: {
 		accent: 'text-teal-600 dark:text-teal-400',
 		art: [' ████   ███ ', '█      █   █', '█  ██  █   █', '█   █  █   █', ' ████   ███ '].join(
-			'\n'
+			'\n',
 		),
 	},
 	HTML: {
@@ -53,19 +53,19 @@ const LOGOS: Record<string, LanguageLogo> = {
 	Python: {
 		accent: 'text-sky-600 dark:text-sky-400',
 		art: ['█████  █   █', '█   █  █   █', '█████   ███ ', '█        █  ', '█        █  '].join(
-			'\n'
+			'\n',
 		),
 	},
 	Rust: {
 		accent: 'text-orange-600 dark:text-orange-400',
 		art: ['████   █████', '█   █  █    ', '████   █████', '█  █       █', '█   █  █████'].join(
-			'\n'
+			'\n',
 		),
 	},
 	Shell: {
 		accent: 'text-emerald-600 dark:text-emerald-400',
 		art: ['█████  █   █', '█      █   █', '█████  █████', '    █  █   █', '█████  █   █'].join(
-			'\n'
+			'\n',
 		),
 	},
 	SQL: {
@@ -81,7 +81,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 	TypeScript: {
 		accent: 'text-blue-600 dark:text-blue-400',
 		art: ['█████  █████', '  █    █    ', '  █    █████', '  █        █', '  █    █████'].join(
-			'\n'
+			'\n',
 		),
 	},
 };

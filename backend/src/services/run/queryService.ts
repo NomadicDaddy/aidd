@@ -12,32 +12,32 @@ import {
 	annotatedWebRunRecord,
 	getRun as getRunInternal,
 	hasActiveRunForProject as hasActiveRunForProjectInternal,
-	listActiveRunSummaries as listActiveRunSummariesInternal,
 	latestProjectAuditRun as latestProjectAuditRunInternal,
-	type ListRunsPageOptions,
-	type ProjectActiveRunSummary,
-	listRuns as listRunsInternal,
+	listActiveRunSummaries as listActiveRunSummariesInternal,
 	listRunsForProject as listRunsForProjectInternal,
 	listRunsForProjectPage as listRunsForProjectPageInternal,
+	listRuns as listRunsInternal,
 	listRunsPage as listRunsPageInternal,
+	type ListRunsPageOptions,
+	type ProjectActiveRunSummary,
 	purgeProjectRuns as purgeProjectRunsInternal,
 	type QueriesContext,
 	updateProjectPathReferences as updateProjectPathReferencesInternal,
 } from './queries.ts';
 
 export class RunQueryService {
-	protected config: ResolvedConfig & { web: ResolvedWebConfig };
+	protected config: { web: ResolvedWebConfig } & ResolvedConfig;
 	protected readonly commands: DbCommands;
 	protected readonly db: WebDatabase;
 	protected readonly hub: WebSocketHub;
 	protected readonly onProjectChanged: (projectPath: string) => void;
 
 	constructor(
-		config: ResolvedConfig & { web: ResolvedWebConfig },
+		config: { web: ResolvedWebConfig } & ResolvedConfig,
 		db: WebDatabase,
 		commands: DbCommands,
 		hub: WebSocketHub,
-		onProjectChanged: (projectPath: string) => void
+		onProjectChanged: (projectPath: string) => void,
 	) {
 		this.config = config;
 		this.commands = commands;
@@ -63,7 +63,7 @@ export class RunQueryService {
 	async listRunsForProject(
 		projectPath: string,
 		limit = 20,
-		status?: WebRunStatus
+		status?: WebRunStatus,
 	): Promise<RunRecord[]> {
 		return listRunsForProjectInternal(this.queriesContext(), projectPath, limit, status);
 	}
@@ -74,7 +74,7 @@ export class RunQueryService {
 
 	async listRunsForProjectPage(
 		projectPath: string,
-		options: ListRunsPageOptions = {}
+		options: ListRunsPageOptions = {},
 	): Promise<CursorPage<RunRecord>> {
 		return listRunsForProjectPageInternal(this.queriesContext(), projectPath, options);
 	}
@@ -84,7 +84,7 @@ export class RunQueryService {
 	}
 
 	async listActiveRunSummaries(
-		projectPaths: readonly string[]
+		projectPaths: readonly string[],
 	): Promise<ReadonlyMap<string, ProjectActiveRunSummary>> {
 		return listActiveRunSummariesInternal(this.queriesContext(), projectPaths);
 	}
@@ -101,7 +101,7 @@ export class RunQueryService {
 		return updateProjectPathReferencesInternal(
 			this.queriesContext(),
 			sourcePath,
-			destinationPath
+			destinationPath,
 		);
 	}
 

@@ -52,7 +52,7 @@ export function ProfileMatrixPage() {
 
 	const projectList = useMemo(
 		() => [...(projects.data?.projects ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
-		[projects.data?.projects]
+		[projects.data?.projects],
 	);
 
 	useEffect(() => {
@@ -99,12 +99,12 @@ export function ProfileMatrixPage() {
 					saving: savingIds.has(project.id),
 				};
 			}),
-		[forms, projectList, savingIds]
+		[forms, projectList, savingIds],
 	);
 
 	const previewRequests = useMemo(
 		() => rows.map((row) => ({ profile: row.form, projectId: row.project.id })),
-		[rows]
+		[rows],
 	);
 	const debouncedPreviewRequests = useDebouncedValue(previewRequests, 300);
 	const previews = useProfilePreviews(debouncedPreviewRequests);
@@ -114,19 +114,19 @@ export function ProfileMatrixPage() {
 				...row,
 				preview: previews.data?.[row.project.id],
 			})),
-		[previews.data, rows]
+		[previews.data, rows],
 	);
 	const sortedRows = useMemo(
 		() =>
 			[...rowsWithPreviews].sort((a, b) => compareProfileMatrixRows(a, b, sortKey, sortDir)),
-		[rowsWithPreviews, sortDir, sortKey]
+		[rowsWithPreviews, sortDir, sortKey],
 	);
 	const dirtyRows = rowsWithPreviews.filter((row) => row.dirty);
 
 	function updateFacet(
 		projectId: string,
 		field: FacetField,
-		value: ProjectAssuranceProfileInput[FacetField]
+		value: ProjectAssuranceProfileInput[FacetField],
 	): void {
 		const row = rowsWithPreviews.find((candidate) => candidate.project.id === projectId);
 		if (!row) return;

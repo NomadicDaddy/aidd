@@ -41,7 +41,7 @@ export function useUpdateSettingsConfig() {
  */
 function useToolStatus<T>(
 	queryKey: string,
-	fetcher: (refresh?: boolean) => Promise<T>
+	fetcher: (refresh?: boolean) => Promise<T>,
 ): {
 	data: T | undefined;
 	isError: boolean;

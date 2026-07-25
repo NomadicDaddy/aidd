@@ -101,7 +101,7 @@ interface NormalizeAllResult {
 function normalizeAll(
 	features: FeatureRecord[],
 	maps: ResolutionMaps,
-	options: SweepOptions
+	options: SweepOptions,
 ): NormalizeAllResult {
 	let invalidJsonRepairs = 0;
 	let complianceFixes = 0;
@@ -112,7 +112,7 @@ function normalizeAll(
 	for (const feature of features) {
 		if (!feature.json) {
 			manualFollowUps.push(
-				`${feature.dir}: invalid JSON could not be safely repaired (${feature.parseError})`
+				`${feature.dir}: invalid JSON could not be safely repaired (${feature.parseError})`,
 			);
 			feature.finalJson = null;
 			continue;
@@ -129,11 +129,11 @@ function normalizeAll(
 		manualFollowUps.push(...normalized.manualFollowUps);
 
 		const complianceActionCount = normalized.actions.filter(
-			(action) => !action.startsWith('backfilled verificationEvidence')
+			(action) => !action.startsWith('backfilled verificationEvidence'),
 		).length;
 		const semanticActionCount = BACKLOG_STATUSES.has(String(normalized.json['status']))
 			? normalized.actions.filter((action) =>
-					action.startsWith('backfilled verificationEvidence')
+					action.startsWith('backfilled verificationEvidence'),
 				).length
 			: 0;
 		complianceFixes += complianceActionCount;
@@ -183,7 +183,7 @@ export function scanApp(app: DiscoveredApp, options: SweepOptions): AppSummary {
 
 	const after = buildAfterSummary(
 		features,
-		!options.dryRun && !options.reportOnly ? orphanDirs - removedOrphanDirs : orphanDirs
+		!options.dryRun && !options.reportOnly ? orphanDirs - removedOrphanDirs : orphanDirs,
 	);
 	const validator: ValidatorResult = options.dryRun
 		? { ok: false, reason: 'dry-run', skipped: true }
@@ -220,7 +220,7 @@ export function scanApp(app: DiscoveredApp, options: SweepOptions): AppSummary {
 		unsafeDiffs.push(
 			...afterGit.paths
 				.filter((item) => !baselineGit.paths.includes(item))
-				.filter((item) => !isAllowedAppMutation(item))
+				.filter((item) => !isAllowedAppMutation(item)),
 		);
 	}
 

@@ -11,7 +11,7 @@ import { cwd, exit } from 'node:process';
 
 const MAX_LINES = 300;
 const scannedRoots = ['cli/src', 'backend/src', 'frontend/src', 'shared/src', 'scripts'];
-const skippedDirs = new Set(['node_modules', 'dist', 'build', 'snapshots']);
+const skippedDirs = new Set(['build', 'dist', 'node_modules', 'snapshots']);
 
 interface Finding {
 	file: string;
@@ -65,10 +65,10 @@ export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 	if (findings.length > 0) {
 		findings.sort((a, b) => b.lines - a.lines);
 		console.error(
-			`aidd max-lines check failed: ${findings.length} file(s) exceed ${MAX_LINES} lines.`
+			`aidd max-lines check failed: ${findings.length} file(s) exceed ${MAX_LINES} lines.`,
 		);
 		console.error(
-			'Split oversized files into cohesive modules (facade + submodules / extracted components).'
+			'Split oversized files into cohesive modules (facade + submodules / extracted components).',
 		);
 		for (const finding of findings) {
 			console.error(`- ${finding.file}:${finding.lines} (max ${MAX_LINES})`);

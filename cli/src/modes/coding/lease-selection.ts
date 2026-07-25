@@ -51,7 +51,7 @@ export async function selectLeasableFeature(input: {
 function leaseBlockedNoWork(
 	explicitTarget: string | undefined,
 	skipped: LeaseSkip[],
-	totalCandidates: number
+	totalCandidates: number,
 ): SelectedWork {
 	const target =
 		explicitTarget !== undefined

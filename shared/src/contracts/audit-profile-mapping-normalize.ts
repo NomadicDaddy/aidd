@@ -13,8 +13,8 @@ import {
 	matchFacetSets,
 } from './audit-profile-mapping-facets.ts';
 import {
-	auditOverrideEffectValues,
 	type AuditOverrideEffect,
+	auditOverrideEffectValues,
 	type AuditProfileMapping,
 	type AuditProfileMatch,
 	type AuditProfileOverrides,
@@ -66,7 +66,7 @@ function normalizeMatch(raw: unknown, ruleId: string): AuditProfileMatch {
 function setMatchFacet(
 	target: AuditProfileMatch,
 	facet: keyof AuditProfileMatch,
-	values: string[]
+	values: string[],
 ): void {
 	switch (facet) {
 		case 'authMode':
@@ -101,7 +101,7 @@ function normalizeRule(raw: unknown): AuditProfileRule {
 	}
 	if (!isAuditOverrideEffect(rule.effect)) {
 		throw new Error(
-			`Rule ${id} effect must be one of: ${auditOverrideEffectValues.join(', ')}`
+			`Rule ${id} effect must be one of: ${auditOverrideEffectValues.join(', ')}`,
 		);
 	}
 	const audits = ensureStringArray(rule.audits, `Rule ${id} audits`);
@@ -147,7 +147,7 @@ export function normalizeAuditProfileOverrides(value: unknown): AuditProfileOver
 	for (const [name, effect] of Object.entries(auditsRaw)) {
 		if (!isAuditOverrideEffect(effect)) {
 			throw new Error(
-				`Audit profile overrides.audits.${name} must be one of: ${auditOverrideEffectValues.join(', ')}`
+				`Audit profile overrides.audits.${name} must be one of: ${auditOverrideEffectValues.join(', ')}`,
 			);
 		}
 		audits[name] = effect;

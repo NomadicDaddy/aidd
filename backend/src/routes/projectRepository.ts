@@ -17,7 +17,7 @@ export function projectRepositoryRouteGroup(context: WebContext, prefix: string)
 				const projectDir = await context.projectService.resolveDiscoveredProject(params.id);
 				return await readCommitDiff(projectDir, params.sha);
 			},
-			{ params: projectCommitParams }
+			{ params: projectCommitParams },
 		)
 		.get(
 			'/:id/repository-info',
@@ -25,7 +25,7 @@ export function projectRepositoryRouteGroup(context: WebContext, prefix: string)
 				const projectDir = await context.projectService.resolveDiscoveredProject(params.id);
 				return await readRepositoryInfo(projectDir);
 			},
-			{ params: projectIdParams }
+			{ params: projectIdParams },
 		)
 		.get(
 			'/:id/repository-refs',
@@ -33,6 +33,6 @@ export function projectRepositoryRouteGroup(context: WebContext, prefix: string)
 				const projectDir = await context.projectService.resolveDiscoveredProject(params.id);
 				return await readRepositoryRefs(projectDir);
 			},
-			{ params: projectIdParams }
+			{ params: projectIdParams },
 		);
 }

@@ -9,7 +9,7 @@ import type { TerminalStatus, TerminalTab } from './terminalState.ts';
 
 import { fetchTerminalShells } from '../../api/terminal.ts';
 import { cn } from '../../lib/cn.ts';
-import { terminalShortcut, shortcutText } from '../../lib/keyboardShortcuts.ts';
+import { shortcutText, terminalShortcut } from '../../lib/keyboardShortcuts.ts';
 import { useTerminalStore } from '../../stores/terminalStore.ts';
 import { IconButton } from '../ui/button.tsx';
 import { closeTerminalTab, createTerminalTab, restartTerminalTab } from './terminalSessions.ts';
@@ -73,7 +73,7 @@ export function TerminalPaneHeader({
 								isActive
 									? 'border-teal-400/60 bg-teal-50 text-neutral-800 dark:bg-teal-950/40 dark:text-neutral-100'
 									: 'border-neutral-200 text-neutral-500 hover:text-neutral-700 dark:border-teal-950/50 dark:hover:text-neutral-300',
-								tab.status === 'exited' && 'opacity-60'
+								tab.status === 'exited' && 'opacity-60',
 							)}
 							key={tab.info.sessionId}>
 							<button

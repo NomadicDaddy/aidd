@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, not, like, or, sql, type Column, type SQL } from 'drizzle-orm';
+import { and, type Column, desc, eq, like, lt, not, or, sql, type SQL } from 'drizzle-orm';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -48,13 +48,13 @@ const RELEASE_HEADING = /^##\s+\[(\d{4}-\d{2}-\d{2})\]\s*-\s*(.+)$/;
 function cursorFilterFor(
 	startedAtCol: Column,
 	idCol: Column,
-	cursor: string | undefined
+	cursor: string | undefined,
 ): SQL | undefined {
 	const decoded = decodeCursor(cursor);
 	if (!decoded) return undefined;
 	return or(
 		lt(startedAtCol, decoded.startedAt),
-		and(eq(startedAtCol, decoded.startedAt), lt(idCol, decoded.id))
+		and(eq(startedAtCol, decoded.startedAt), lt(idCol, decoded.id)),
 	);
 }
 
@@ -79,13 +79,13 @@ function combine(...filters: (SQL | undefined)[]): SQL | undefined {
 async function queryRuns(
 	ctx: TimelineContext,
 	options: ListTimelineOptions,
-	limit: number
+	limit: number,
 ): Promise<DiaryTimelineItem[]> {
 	const where = combine(
 		options.projectPath
 			? projectPathFilterFor(runs.projectPath, options.projectPath)
 			: undefined,
-		cursorFilterFor(runs.startedAt, runs.id, options.cursor)
+		cursorFilterFor(runs.startedAt, runs.id, options.cursor),
 	);
 	const rows = await ctx.db
 		.select()
@@ -111,14 +111,14 @@ async function queryRuns(
 async function querySkills(
 	ctx: TimelineContext,
 	options: ListTimelineOptions,
-	limit: number
+	limit: number,
 ): Promise<{ items: DiaryTimelineItem[]; runIds: Set<string> }> {
 	const where = combine(
 		eq(invocationEvents.resourceType, 'skill'),
 		options.projectPath
 			? projectPathFilterFor(invocationEvents.projectPath, options.projectPath)
 			: undefined,
-		cursorFilterFor(invocationEvents.startedAt, invocationEvents.id, options.cursor)
+		cursorFilterFor(invocationEvents.startedAt, invocationEvents.id, options.cursor),
 	);
 	const rows = await ctx.db
 		.select()
@@ -149,7 +149,7 @@ async function querySkills(
 async function queryRecipeSessions(
 	ctx: TimelineContext,
 	options: ListTimelineOptions,
-	limit: number
+	limit: number,
 ): Promise<DiaryTimelineItem[]> {
 	const where = combine(
 		// `skill:%` sessions are the one-shot wrapper around a skill invocation, already
@@ -158,7 +158,7 @@ async function queryRecipeSessions(
 		options.projectPath
 			? projectPathFilterFor(pipelineSessions.projectPath, options.projectPath)
 			: undefined,
-		cursorFilterFor(pipelineSessions.startedAt, pipelineSessions.id, options.cursor)
+		cursorFilterFor(pipelineSessions.startedAt, pipelineSessions.id, options.cursor),
 	);
 	const rows = await ctx.db
 		.select()
@@ -184,7 +184,7 @@ async function queryRecipeSessions(
 async function queryDirectorCycles(
 	ctx: TimelineContext,
 	options: ListTimelineOptions,
-	limit: number
+	limit: number,
 ): Promise<DiaryTimelineItem[]> {
 	const where = cursorFilterFor(directorCycles.startedAt, directorCycles.id, options.cursor);
 	const rows = await ctx.db
@@ -250,7 +250,7 @@ function sortDescending(items: DiaryTimelineItem[]): DiaryTimelineItem[] {
 
 export async function listTimelinePage(
 	ctx: TimelineContext,
-	options: ListTimelineOptions = {}
+	options: ListTimelineOptions = {},
 ): Promise<CursorPage<DiaryTimelineItem>> {
 	const limit = clampLimit(options.limit);
 	const isFirstPage = options.cursor === undefined || options.cursor === '';

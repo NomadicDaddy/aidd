@@ -21,7 +21,7 @@ export function clearVisibleAudits(current: string[], visibleEnabledNames: strin
 export function toggleAuditSelected(
 	current: string[],
 	name: string,
-	enabledDefinitionNames: ReadonlySet<string>
+	enabledDefinitionNames: ReadonlySet<string>,
 ): string[] {
 	if (!enabledDefinitionNames.has(name)) return current;
 	return current.includes(name) ? current.filter((item) => item !== name) : [...current, name];
@@ -38,7 +38,7 @@ export interface VisibleSelectionState {
 // - someSelected: at least one visible enabled audit is selected
 export function deriveVisibleSelection(
 	visibleEnabledNames: string[],
-	selectedAuditNames: string[]
+	selectedAuditNames: string[],
 ): VisibleSelectionState {
 	const selectedSet = new Set(selectedAuditNames);
 	const visibleSelectedNames = visibleEnabledNames.filter((name) => selectedSet.has(name));

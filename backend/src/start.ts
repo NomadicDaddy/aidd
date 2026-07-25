@@ -58,7 +58,7 @@ const SHUTDOWN_RESPONSE_FLUSH_MS = 100;
 
 export async function startWebServer(
 	config: ResolvedConfig,
-	options: StartWebServerOptions
+	options: StartWebServerOptions,
 ): Promise<number> {
 	setAiCallLogDir(resolve(options.rootDir, 'logs'));
 	const webConfig = resolveEffectiveWebConfig(config, options.rootDir);
@@ -92,7 +92,7 @@ export async function startWebServer(
 		webSocketHub,
 		projectService,
 		options.rootDir,
-		telemetryService
+		telemetryService,
 	);
 	projectService.setActiveRunSummaryProvider((paths) => runService.listActiveRunSummaries(paths));
 	const recipeService = new RecipeService(options.rootDir, effectiveConfig.web.dataDir);
@@ -111,7 +111,7 @@ export async function startWebServer(
 		effectiveConfig,
 		projectService,
 		runService,
-		options.rootDir
+		options.rootDir,
 	);
 	const pipelineService = new PipelineService({
 		db: database.db,
@@ -132,9 +132,9 @@ export async function startWebServer(
 		backendFactory: createBackend,
 		directAiService,
 		getFullConfig: () =>
-			settingsService.getCurrentResolvedConfig() as ResolvedConfig & {
+			settingsService.getCurrentResolvedConfig() as {
 				web: ResolvedWebConfig;
-			},
+			} & ResolvedConfig,
 	});
 	const appLauncherService = new AppLauncherService({
 		db: database.db,
@@ -167,7 +167,7 @@ export async function startWebServer(
 		runService,
 		createBackend,
 		directAiService,
-		{ pipelineService, recipeService }
+		{ pipelineService, recipeService },
 	);
 	await directorService.reconcileStaleCycles();
 	const telegramBridgeService = new TelegramBridgeService();
@@ -255,7 +255,7 @@ export async function startWebServer(
 			throw new Error(
 				`Startup aborted: port ${webConfig.port} is already reachable on public interface ` +
 					`${publicHost}. A public listener already exists. Stop the conflicting service ` +
-					'or set web.allowRemote: true to acknowledge remote access.'
+					'or set web.allowRemote: true to acknowledge remote access.',
 			);
 		}
 	}
@@ -272,7 +272,7 @@ export async function startWebServer(
 			port: effectiveConfig.web.port,
 			url: `http://${effectiveConfig.web.hostname}:${effectiveConfig.web.port}`,
 		},
-		'aidd web control panel started'
+		'aidd web control panel started',
 	);
 	await telegramBridgeService.updateConfig(effectiveConfig);
 	// Pre-warm the in-memory project listing cache so the first dashboard load

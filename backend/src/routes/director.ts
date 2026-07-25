@@ -14,7 +14,7 @@ const profileBody = t.Object({
 			t.Literal('medium'),
 			t.Literal('high'),
 			t.Literal('xhigh'),
-		])
+		]),
 	),
 	role: t.Optional(t.String()),
 });
@@ -31,7 +31,7 @@ const cycleBody = t.Optional(
 	t.Object({
 		directive: t.Optional(t.String()),
 		sessionId: t.Optional(t.String()),
-	})
+	}),
 );
 
 export function createDirectorRoutes(context: WebContext) {
@@ -44,7 +44,7 @@ export function createDirectorRoutes(context: WebContext) {
 			async ({ body }) => ({
 				profile: await context.directorService.updateProfile(body),
 			}),
-			{ body: profileBody }
+			{ body: profileBody },
 		)
 		.get('/suggestions', async () => ({
 			suggestions: await context.directorService.listSuggestions(),
@@ -54,7 +54,7 @@ export function createDirectorRoutes(context: WebContext) {
 			async ({ body }) => ({
 				cycle: await context.directorService.runCycle(body ?? {}),
 			}),
-			{ body: cycleBody }
+			{ body: cycleBody },
 		)
 		.get('/chat/sessions', async () => ({
 			sessions: await context.directorService.listChatSessions(),
@@ -64,7 +64,7 @@ export function createDirectorRoutes(context: WebContext) {
 			async ({ body }) => ({
 				session: await context.directorService.createChatSession(body.title),
 			}),
-			{ body: createSessionBody }
+			{ body: createSessionBody },
 		)
 		.delete(
 			'/chat/sessions/:id',
@@ -72,21 +72,21 @@ export function createDirectorRoutes(context: WebContext) {
 				await context.directorService.deleteChatSession(params.id);
 				return { ok: true };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.get(
 			'/chat/sessions/:id/messages',
 			async ({ params }) => ({
 				messages: await context.directorService.listChatMessages(params.id),
 			}),
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/chat/sessions/:id/messages',
 			async ({ body, params }) => ({
 				messages: await context.directorService.sendChatMessage(params.id, body),
 			}),
-			{ body: messageBody, params: t.Object({ id: t.String() }) }
+			{ body: messageBody, params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/suggestions/:id/dismiss',
@@ -94,13 +94,13 @@ export function createDirectorRoutes(context: WebContext) {
 				await context.directorService.dismissSuggestion(params.id);
 				return { ok: true };
 			},
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		)
 		.post(
 			'/suggestions/:id/launch',
 			async ({ params }) => ({
 				launch: await context.directorService.launchSuggestion(params.id),
 			}),
-			{ params: t.Object({ id: t.String() }) }
+			{ params: t.Object({ id: t.String() }) },
 		);
 }

@@ -1,10 +1,10 @@
 import { DETACHED_SPAWN_FLAG } from 'aidd-shared/lib/detachedSpawn';
 import {
+	type CliActiveRunSource,
 	EXT_APP_URL_ENV,
 	EXT_LOG_PATH_ENV,
 	EXT_RUN_ID_ENV,
 	EXT_RUN_SOURCE_ENV,
-	type CliActiveRunSource,
 } from 'aidd-shared/metadata/active-runs';
 import { buildBackendSubprocessEnv } from 'aidd-shared/subprocess-env';
 
@@ -47,11 +47,11 @@ export function buildHiddenStartProcessCommand(input: {
 		"$ErrorActionPreference = 'Stop'",
 		'try {',
 		`  Start-Process -FilePath ${powerShellSingleQuoted(filePath)} -ArgumentList ${powerShellArrayLiteral(
-			args
+			args,
 		)} -WorkingDirectory ${powerShellSingleQuoted(input.cwd)} -WindowStyle Hidden`,
 		'} catch {',
 		`  Add-Content -LiteralPath ${powerShellSingleQuoted(
-			input.logPath
+			input.logPath,
 		)} -Value ('Failed to start detached relauncher: ' + $_.Exception.Message)`,
 		'  exit 1',
 		'}',

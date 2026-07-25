@@ -21,7 +21,7 @@ export interface NoticesOptions {
 function fence(text: string): string {
 	const longest = [...text.matchAll(/^`{3,}/gm)].reduce(
 		(max, match) => Math.max(max, match[0].length),
-		0
+		0,
 	);
 	const delimiter = '`'.repeat(Math.max(3, longest + 1));
 	return `${delimiter}text\n${text}\n${delimiter}`;
@@ -49,7 +49,7 @@ export function renderNotices(options: NoticesOptions): string {
 			'reproduced in the summary document; the copyright holder is the package author.',
 			'',
 			...missing.map((pkg) => `- \`${pkg.name}@${pkg.version}\` (${pkg.license})`),
-			''
+			'',
 		);
 	}
 

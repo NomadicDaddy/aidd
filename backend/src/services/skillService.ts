@@ -41,7 +41,7 @@ export class SkillService {
 		if (references.length > 0) {
 			throw new HttpError(
 				`Skill ${id} is still referenced by: ${references.join(', ')}`,
-				409
+				409,
 			);
 		}
 		await deleteImportedSkill(this.dataDir, id);

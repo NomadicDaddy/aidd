@@ -36,14 +36,14 @@ export interface OutcomeClassification {
 }
 
 const failingIterationStatuses = new Set([
+	'aborted',
+	'active_verification_timeout',
 	'failure',
+	'idle_timeout',
+	'no_assistant',
 	'provider_error',
 	'rate_limited',
-	'aborted',
 	'validation_error',
-	'idle_timeout',
-	'active_verification_timeout',
-	'no_assistant',
 ]);
 
 const iterationStatusLabels: Readonly<Record<string, string>> = {

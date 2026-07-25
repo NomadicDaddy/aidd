@@ -48,7 +48,7 @@ function renderLaunchContext(options: PromptCompilerOptions): string | undefined
 				`address does not respond, the app is not running, and no other port is a substitute. ` +
 				`If \`agent-browser\` is unavailable or you cannot reach the app after two honest attempts, ` +
 				`run the headless gates you can (typecheck, lint, tests, the project's QC script) and mark ` +
-				`the feature \`waiting_approval\` with the manual verification steps documented.`
+				`the feature \`waiting_approval\` with the manual verification steps documented.`,
 		);
 	}
 	if (options.carryoverNote) parts.push(options.carryoverNote.trim());
@@ -66,7 +66,7 @@ function backendPath(plan: PromptPlan): string | undefined {
 
 async function loadProjectContextIfEnabled(
 	plan: PromptPlan,
-	options: PromptCompilerOptions
+	options: PromptCompilerOptions,
 ): Promise<ProjectContextDigest | undefined> {
 	if (options.includeProjectContext === false) return undefined;
 	if (!options.projectDir) return undefined;
@@ -85,7 +85,7 @@ function resolveAuditNamesFromPlan(plan: PromptPlan): string[] {
 async function compileBasePrompt(
 	plan: PromptPlan,
 	options: PromptCompilerOptions,
-	priorContext: ProjectContextDigest | undefined
+	priorContext: ProjectContextDigest | undefined,
 ): Promise<string> {
 	if (plan.mode === 'interview') {
 		// The generate-questions step supplies its work as a customDirective; falling through
@@ -110,7 +110,7 @@ async function compileBasePrompt(
 
 async function compileSourcePrompt(
 	plan: PromptPlan,
-	options: PromptCompilerOptions
+	options: PromptCompilerOptions,
 ): Promise<string> {
 	if (plan.mode === 'director') {
 		return compileDirectorPrompt(await readFragment(options.rootDir, sourcePath(plan)), plan);
@@ -151,7 +151,7 @@ function applyAppUrl(text: string, appUrl: string | undefined): string {
 
 export async function compilePrompt(
 	plan: PromptPlan,
-	options: PromptCompilerOptions
+	options: PromptCompilerOptions,
 ): Promise<CompiledPrompt> {
 	const source = await compileSourcePrompt(plan, options);
 	const filtered = applyFilters(plan, source);
@@ -243,7 +243,7 @@ async function runSnapshotTest(check: boolean): Promise<number> {
 		for (const mode of modes) {
 			const plan = resolveRunPlan(
 				parseArgs(['--project-dir', '.', '--cli', backend, ...mode.args]),
-				{ ...config, cli: backend }
+				{ ...config, cli: backend },
 			);
 			const phase = mode.phase;
 			if (phase) {
@@ -251,7 +251,7 @@ async function runSnapshotTest(check: boolean): Promise<number> {
 				plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
 					fragment.kind === 'phase'
 						? { id: phase, kind: 'phase', path: `prompts/${phase}.md` }
-						: fragment
+						: fragment,
 				);
 			}
 			const compiled = await compilePrompt(plan.prompt, {
@@ -280,7 +280,7 @@ async function runSnapshotTest(check: boolean): Promise<number> {
 		return 0;
 	}
 	console.error(
-		`Prompt snapshots are stale (${stale.length}); a prompt source changed without regenerating them:`
+		`Prompt snapshots are stale (${stale.length}); a prompt source changed without regenerating them:`,
 	);
 	for (const path of stale) console.error(`  ${path}`);
 	console.error('\nRun `bun run prompt:snapshot` and commit the result.');

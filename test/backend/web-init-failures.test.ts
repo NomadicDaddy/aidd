@@ -130,7 +130,7 @@ describe('project init failures', () => {
 			const response = await app.handle(
 				new Request(`http://127.0.0.1:3210/api/v1/projects/init-failures/${id}/retry`, {
 					method: 'POST',
-				})
+				}),
 			);
 
 			expect(response.status).toBe(200);

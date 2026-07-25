@@ -33,7 +33,7 @@ function toImplementationFeature(feature: Feature): ProjectImplementationFeature
 export function evaluateProjectImplementationState(
 	phase: InitialPhase,
 	features: Feature[],
-	roadmap: Roadmap | undefined
+	roadmap: Roadmap | undefined,
 ): ProjectImplementationStateDto {
 	const readiness = evaluateBlueprintReadiness(phase, features, roadmap);
 	return {
@@ -50,11 +50,11 @@ export async function evaluatePersistedProjectImplementationState(
 	projectDir: string,
 	phase: InitialPhase,
 	features: Feature[],
-	roadmap: Roadmap | undefined
+	roadmap: Roadmap | undefined,
 ): Promise<ProjectImplementationStateDto> {
 	const persisted = await requirePersistedBlueprint(
 		projectDir,
-		evaluateBlueprintReadiness(phase, features, roadmap)
+		evaluateBlueprintReadiness(phase, features, roadmap),
 	);
 	return {
 		blueprintReady: persisted.ready,
@@ -67,7 +67,7 @@ export async function evaluatePersistedProjectImplementationState(
 }
 
 export async function readProjectImplementationState(
-	projectDir: string
+	projectDir: string,
 ): Promise<ProjectImplementationStateDto> {
 	const readiness = await readPersistedBlueprintReadiness(projectDir);
 	return {
@@ -83,13 +83,13 @@ export async function readProjectImplementationState(
 export async function startProjectImplementation(
 	projectDir: string,
 	launchTarget: LaunchTargetOverrides,
-	launchRun: (request: RunLaunchRequest) => Promise<{ id: string }>
+	launchRun: (request: RunLaunchRequest) => Promise<{ id: string }>,
 ): Promise<ProjectStartImplementationResultDto> {
 	const implementation = await readProjectImplementationState(projectDir);
 	if (!implementation.blueprintReady || !implementation.firstFeature) {
 		throw new HttpError(
 			implementation.reason ?? 'This project is not ready to start implementation.',
-			409
+			409,
 		);
 	}
 	const request: RunLaunchRequest = {

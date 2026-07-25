@@ -6,6 +6,7 @@ import { normalizeRoute, resolveCrawlArgs } from '../../crawltest-config.ts';
 import { getInteractiveElements, testInteractiveElements } from '../../crawltest-interactions.ts';
 import { printReport, writeCrawlReport } from '../../crawltest-reporting.ts';
 import { TestResults } from '../../crawltest-results.ts';
+import { getVersionedScreenshotDir } from '../../crawltest-screenshots.ts';
 import {
 	MOBILE_VIEWPORT_NAMES,
 	MOBILE_VIEWPORT_PRESETS,
@@ -91,16 +92,8 @@ async function crawl(
 		}
 	});
 
-	const screenshotBase =
-		viewportName === 'desktop'
-			? `aidd-crawl-${Date.now()}`
-			: `aidd-crawl-${viewportName}-${Date.now()}`;
-	const screenshotDirectory = join(
-		process.cwd(),
-		'logs',
-		'crawltest-screenshots',
-		screenshotBase
-	);
+	const rootDir = process.cwd();
+	const screenshotDirectory = getVersionedScreenshotDir(join(rootDir, 'screenshots'), rootDir);
 	const checkOverflow = preset !== undefined;
 	const options: CrawlerOptions = {
 		baseUrl: args.baseUrl,
@@ -127,6 +120,7 @@ async function crawl(
 			next,
 			screenshotDirectory,
 			args.screenshotPages,
+			viewportName,
 			checkOverflow,
 			results,
 			options

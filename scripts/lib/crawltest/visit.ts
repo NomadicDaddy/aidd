@@ -4,16 +4,12 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { type TestResults } from '../../crawltest-results.ts';
-import { type CrawlerOptions, waitForContent } from '../../crawltest-types.ts';
+import { screenshotFilename } from '../../crawltest-screenshots.ts';
+import { type CrawlerOptions, type ViewportArg, waitForContent } from '../../crawltest-types.ts';
 import { classifyPageContent, isNotFoundPage, pageTextScript } from './page-assertions.ts';
 
 function linksScript(): string {
 	return `(() => Array.from(document.querySelectorAll('a[href]')).map((link) => link.href))()`;
-}
-
-function safeFilename(route: string): string {
-	const name = route.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-	return name.length > 0 ? name.toLowerCase() : 'root';
 }
 
 function routeFromHref(baseUrl: string, href: string): null | string {
@@ -31,11 +27,16 @@ function routeFromHref(baseUrl: string, href: string): null | string {
 	}
 }
 
-async function screenshot(page: Page, directory: string, route: string): Promise<boolean> {
+async function screenshot(
+	page: Page,
+	directory: string,
+	route: string,
+	viewport: ViewportArg
+): Promise<boolean> {
 	await mkdir(directory, { recursive: true });
 	await page.screenshot({
 		fullPage: true,
-		path: join(directory, `${safeFilename(route)}.png`),
+		path: join(directory, screenshotFilename(route, viewport)),
 	});
 	return true;
 }
@@ -53,6 +54,7 @@ export async function visitRoute(
 	route: string,
 	screenshotDirectory: string,
 	shouldScreenshot: boolean,
+	viewport: ViewportArg,
 	checkOverflow: boolean,
 	results: TestResults,
 	options: CrawlerOptions
@@ -73,7 +75,7 @@ export async function visitRoute(
 		errors.push(message);
 		results.addError('VISIT_ERROR', message, { route, url });
 		try {
-			if (await screenshot(page, screenshotDirectory, route)) {
+			if (await screenshot(page, screenshotDirectory, route, viewport)) {
 				results.screenshotsTaken++;
 			}
 		} catch {
@@ -150,7 +152,7 @@ export async function visitRoute(
 		.filter((href): href is string => href !== null);
 
 	if (shouldScreenshot || errors.length > 0) {
-		if (await screenshot(page, screenshotDirectory, route)) {
+		if (await screenshot(page, screenshotDirectory, route, viewport)) {
 			results.screenshotsTaken++;
 		}
 	}

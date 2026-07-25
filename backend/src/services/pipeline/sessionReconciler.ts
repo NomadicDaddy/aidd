@@ -152,7 +152,7 @@ export async function deriveResumeResolution(
 	const stepIndex = inFlightRow.sequenceNumber - 1;
 	const classification = await classifyInFlightStep(deps, inFlightRow);
 	// If classification reconciled an orphaned run (the step row had no runId but a
-	// matching non-terminal run exists for this session), persist the linkage so
+	// matching run exists for this session), persist the linkage so
 	// resolveInFlightStep can re-attach instead of failing with "no run id".
 	const effectiveRunId = classification.runId ?? inFlightRow.runId;
 	if (effectiveRunId !== inFlightRow.runId && effectiveRunId !== null) {
@@ -204,9 +204,9 @@ async function classifyInFlightStep(
 		// Orphan reconciliation: a managed run may have been launched by the step
 		// but not yet linked to the step-result row when the web process crashed
 		// (the linkage happens after dispatch returns, but dispatch waits for the
-		// run to complete). Search for a non-terminal run that belongs to this
-		// session — if found, reconnect it so resume can re-attach instead of
-		// orphaning the live process.
+		// run to complete). Search for an unlinked run that belongs to this session,
+		// including a run that finished during the restart, so resume can re-attach
+		// without losing its terminal result and output.
 		const orphanedRun = await findOrphanedRunForStep(deps, row.sessionId);
 		if (orphanedRun) {
 			return { action: 're-attach', runId: orphanedRun.id };
@@ -227,24 +227,25 @@ async function classifyInFlightStep(
 }
 
 /**
- * Searches for a non-terminal `runs` row that belongs to the given pipeline session
+ * Searches for a `runs` row that belongs to the given pipeline session
  * but is not linked to any step-result row. This handles the launched-but-not-yet-linked
- * window where a managed run was started but the web process crashed before
- * `setStepRunId` persisted the linkage.
+ * window for both active runs and runs that finished while the web process was down.
  *
  * @param deps - Reconciler dependencies (db, runService, telemetryService).
  * @param sessionId - The pipeline session id to search for orphaned runs under.
- * @returns The orphaned run's id, or undefined if no unlinked non-terminal run exists.
+ * @returns The newest orphaned run's id, or undefined if no unlinked run exists.
  */
 async function findOrphanedRunForStep(
 	deps: ReconcilerDeps,
 	sessionId: string,
 ): Promise<{ id: string } | undefined> {
-	// Find non-terminal runs for this session.
+	// The current in-flight step owns the newest unlinked run. Earlier steps remain
+	// linked, but deterministic ordering also protects recovery from stale orphan rows.
 	const candidates = await deps.db
 		.select({ id: runs.id })
 		.from(runs)
-		.where(and(eq(runs.pipelineSessionId, sessionId), inArray(runs.status, ['running'])));
+		.where(eq(runs.pipelineSessionId, sessionId))
+		.orderBy(desc(runs.startedAt));
 	if (candidates.length === 0) return undefined;
 	// Exclude runs that are already linked to a step-result row.
 	for (const candidate of candidates) {

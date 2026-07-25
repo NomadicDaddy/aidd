@@ -37,7 +37,6 @@ export interface StepDispatchResult {
 	exitCode?: number | undefined;
 	ok: boolean;
 	outputSummary?: string | undefined;
-	runId?: string | undefined;
 }
 
 export interface StepExecutionResult {

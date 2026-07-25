@@ -28,13 +28,14 @@ export class StepDispatcher {
 		config: Record<string, RecipeConfigValue>,
 		context: ExecutionContext,
 		resultId: string,
+		linkRun: (runId: string) => Promise<void>,
 	): Promise<StepDispatchResult> {
 		if (step.stepType === 'shell') return await this.shellStepHandler.handle(config, context);
 		if (step.stepType === 'recipe-ref') {
 			return await this.recipeRefHandler.handle(config, context, resultId);
 		}
 		if (isManagedStepType(step.stepType)) {
-			return await this.managedStepHandler.handle(step, config, context);
+			return await this.managedStepHandler.handle(step, config, context, linkRun);
 		}
 		return {
 			errorMessage: `Unsupported pipeline step type: ${step.stepType}`,

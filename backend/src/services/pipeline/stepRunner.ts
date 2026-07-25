@@ -89,12 +89,15 @@ export async function executeStep(
 			return { ok: false, stopped: true };
 		}
 		try {
-			lastDispatch = await dispatcher.dispatch(step, config, context, result.id);
+			lastDispatch = await dispatcher.dispatch(
+				step,
+				config,
+				context,
+				result.id,
+				async (runId) => lifecycle.setStepRunId(result.id, runId),
+			);
 		} catch (err) {
 			lastDispatch = { errorMessage: stringifyError(err), ok: false };
-		}
-		if (lastDispatch.runId !== undefined) {
-			await lifecycle.setStepRunId(result.id, lastDispatch.runId);
 		}
 		if (stopFlags.has(context.sessionId)) {
 			await lifecycle.completeStep({

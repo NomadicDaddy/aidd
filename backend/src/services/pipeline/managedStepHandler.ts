@@ -41,6 +41,7 @@ export class ManagedStepHandler {
 		step: RecipeStepDefinition,
 		config: Record<string, RecipeConfigValue>,
 		context: ExecutionContext,
+		linkRun: (runId: string) => Promise<void>,
 	): Promise<StepDispatchResult> {
 		let request: RunLaunchRequest;
 		let nestedRecord: NestedRecord | undefined;
@@ -114,6 +115,10 @@ export class ManagedStepHandler {
 			request.writeAllowlist = ['.aidd'];
 		}
 		const run = await this.runService.launchRun(request);
+		// Persist the step-to-run relationship before waiting. Detached managed runs can
+		// survive a web restart, so delaying this write until the run finishes leaves a
+		// restart window where the pipeline cannot find its live or completed child.
+		await linkRun(run.id);
 		if (nestedRecord !== undefined) {
 			// A synthetic `skill:<id>` session is a direct one-shot launch: the
 			// wrapper recipe records no telemetry of its own, so the skill
@@ -149,7 +154,6 @@ export class ManagedStepHandler {
 			exitCode: completed.exitCode ?? undefined,
 			ok: completed.status === 'completed',
 			outputSummary: await this.runWaiter.outputForRun(run.id),
-			runId: run.id,
 		};
 	}
 }

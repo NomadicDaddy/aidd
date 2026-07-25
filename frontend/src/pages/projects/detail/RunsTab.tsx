@@ -118,7 +118,7 @@ function ActiveRunsPanel({
 										<Badge
 											tone={
 												run.source === 'cli'
-													? 'cyan'
+													? 'teal'
 													: run.source === 'director'
 														? 'amber'
 														: 'neutral'

@@ -5,7 +5,7 @@ import { statusTone } from '../../frontend/src/pages/projects/detail/shared.ts';
 describe('statusTone', () => {
 	test('maps each canonical feature status to its tone', () => {
 		expect(statusTone('completed')).toBe('emerald');
-		expect(statusTone('in_progress')).toBe('cyan');
+		expect(statusTone('in_progress')).toBe('teal');
 		expect(statusTone('waiting_approval')).toBe('amber');
 		expect(statusTone('backlog')).toBe('neutral');
 	});

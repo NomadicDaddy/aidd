@@ -23,11 +23,11 @@ export function RecipePolicyBadges({ recipe }: { recipe: RecipeDefinition }) {
 				<Badge tone="amber">failure: continue ({policy.continueSteps})</Badge>
 			)}
 			{policy.autoFixSteps > 0 && (
-				<Badge tone="cyan">failure: auto-fix ({policy.autoFixSteps})</Badge>
+				<Badge tone="teal">failure: auto-fix ({policy.autoFixSteps})</Badge>
 			)}
 			{policy.retries > 0 && <Badge tone="neutral">retries: {policy.retries}</Badge>}
 			{policy.reviewSkillSteps > 0 && (
-				<Badge tone="cyan">skills: review ({policy.reviewSkillSteps})</Badge>
+				<Badge tone="teal">skills: review ({policy.reviewSkillSteps})</Badge>
 			)}
 			{policy.applySkillSteps > 0 && (
 				<Badge tone="emerald">skills: apply ({policy.applySkillSteps})</Badge>

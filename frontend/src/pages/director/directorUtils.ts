@@ -3,7 +3,7 @@ import type { DirectorCycle, DirectorProfileInput, DirectorRiskLevel } from '../
 import { textareaClass as sharedTextareaClass } from '../../lib/formStyles.ts';
 
 export const textareaClass = sharedTextareaClass;
-export const sectionTitleClass = 'font-display text-base font-semibold text-foreground';
+export const sectionTitleClass = 'text-base font-semibold text-foreground';
 export const sectionDescClass = 'mt-0.5 text-sm text-muted-foreground';
 
 export function riskTone(risk: DirectorRiskLevel): 'amber' | 'emerald' | 'red' {

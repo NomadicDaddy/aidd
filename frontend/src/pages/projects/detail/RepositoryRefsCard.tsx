@@ -12,7 +12,7 @@ function BranchRow({ branch }: BranchRowProps) {
 		<li className="flex items-center justify-between gap-3 py-1">
 			<div className="flex min-w-0 items-center gap-2">
 				{branch.current ? (
-					<Badge tone="cyan">current</Badge>
+					<Badge tone="teal">current</Badge>
 				) : (
 					<span
 						aria-hidden="true"

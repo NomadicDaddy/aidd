@@ -9,7 +9,7 @@ import type {
 	MaturityStageStatus,
 } from '../../../api/types.ts';
 
-export type Tone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+export type Tone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 export const STAGE_ICON_BY_STATUS: Record<MaturityStageStatus, typeof CircleCheck> = {
 	complete: CircleCheck,

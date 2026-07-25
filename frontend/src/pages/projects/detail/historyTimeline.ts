@@ -32,7 +32,7 @@ export const historyFilterLabels: Record<HistoryFilter, string> = {
 
 export interface HistoryEvent {
 	badge: string;
-	badgeTone: 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+	badgeTone: 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 	commits: GitCommitRef[];
 	detailParts: string[];
 	executionIdentity: ExecutionIdentity | null;
@@ -72,7 +72,7 @@ function createdEvent(feature: ProjectFeature, kind: Exclude<HistoryEventKind, '
 	if (!created) return null;
 	return {
 		badge: `${eventNouns[kind].toLowerCase()} created`,
-		badgeTone: 'cyan' as const,
+		badgeTone: 'teal' as const,
 		commits: [],
 		detailParts: [featureSourceLabel(feature)],
 		executionIdentity: null,

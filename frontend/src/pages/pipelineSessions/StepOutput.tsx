@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/button.tsx';
 export function stepTone(status: PipelineStepResultRecord['status']) {
 	if (status === 'completed') return 'emerald';
 	if (status === 'failed') return 'red';
-	if (status === 'running' || status === 'queued') return 'cyan';
+	if (status === 'running' || status === 'queued') return 'teal';
 	return 'amber';
 }
 

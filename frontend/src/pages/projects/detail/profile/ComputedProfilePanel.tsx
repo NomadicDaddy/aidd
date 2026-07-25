@@ -14,7 +14,7 @@ const effectTone = {
 	default: 'emerald',
 	disabled: 'neutral',
 	excluded: 'red',
-	required: 'cyan',
+	required: 'teal',
 } as const;
 
 export function ComputedProfilePanel({
@@ -65,7 +65,7 @@ export function ComputedProfilePanel({
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					<Badge tone={posture.tone}>{posture.label}</Badge>
-					<Badge tone={source === 'explicit' ? 'cyan' : 'neutral'}>saved: {source}</Badge>
+					<Badge tone={source === 'explicit' ? 'teal' : 'neutral'}>saved: {source}</Badge>
 				</div>
 				<p className="text-muted-foreground mt-2 text-xs">{posture.description}</p>
 				{posture.reasons.length > 0 && (

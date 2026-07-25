@@ -107,12 +107,12 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 
 const statusTones: Record<
 	TelemetryInvocationStatus,
-	'amber' | 'cyan' | 'emerald' | 'neutral' | 'red'
+	'amber' | 'emerald' | 'neutral' | 'red' | 'teal'
 > = {
 	completed: 'emerald',
 	failed: 'red',
 	killed: 'red',
-	running: 'cyan',
+	running: 'teal',
 	stopped: 'amber',
 };
 

@@ -71,12 +71,12 @@ export function LiveConsolePanel({
 	const liveConsoleBadge = ((): LiveConsoleBadge | null => {
 		if (!selectedRun) return null;
 		if (!selectedRun.canReadOutput) return { label: 'unavailable', tone: 'neutral' };
-		if (output.isStreaming) return { label: 'streaming', tone: 'cyan' };
+		if (output.isStreaming) return { label: 'streaming', tone: 'teal' };
 		if (output.state === 'unavailable' || output.state === 'cli-only') {
 			return { label: 'unavailable', tone: 'neutral' };
 		}
 		if (output.state === 'empty') {
-			if (!selectedRunIsTerminal) return { label: 'waiting', tone: 'cyan' };
+			if (!selectedRunIsTerminal) return { label: 'waiting', tone: 'teal' };
 			return { label: 'empty', tone: 'neutral' };
 		}
 		return null;

@@ -30,7 +30,7 @@ export function SkillDetailsCard({
 						{skill.origin}
 					</Badge>
 					{skill.supportPaths.length > 0 ? (
-						<Badge tone="cyan">{skill.supportPaths.length} files</Badge>
+						<Badge tone="teal">{skill.supportPaths.length} files</Badge>
 					) : null}
 				</div>
 			</div>

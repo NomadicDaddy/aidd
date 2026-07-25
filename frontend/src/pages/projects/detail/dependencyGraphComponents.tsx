@@ -41,10 +41,10 @@ function nodeSourceClass(source: FeatureDependencyNode['source']): string {
 
 export function sourceBadgeTone(
 	source: FeatureDependencyNode['source']
-): 'amber' | 'cyan' | 'neutral' | 'red' {
+): 'amber' | 'neutral' | 'red' | 'teal' {
 	if (source === 'audit') return 'amber';
 	if (source === 'remediation') return 'red';
-	return 'cyan';
+	return 'teal';
 }
 
 export function edgePath(source: FeatureDependencyNode, target: FeatureDependencyNode): string {
@@ -184,7 +184,7 @@ export function GraphDiagnostics({
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			<Badge tone="neutral">{graph.nodes.length} features</Badge>
-			<Badge tone="cyan">{graph.edges.length} links</Badge>
+			<Badge tone="teal">{graph.edges.length} links</Badge>
 			<Badge tone={visibleCount === graph.nodes.length ? 'neutral' : 'amber'}>
 				{visibleCount} visible
 			</Badge>

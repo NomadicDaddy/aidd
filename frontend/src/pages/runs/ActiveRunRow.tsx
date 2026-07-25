@@ -89,7 +89,7 @@ export function ActiveRunRow({
 			className={cn(
 				'cursor-pointer border-b transition-colors last:border-0',
 				selected
-					? 'bg-teal-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-teal-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]'
+					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
 					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
 			)}
 			onClick={selectFromRow}
@@ -125,7 +125,7 @@ export function ActiveRunRow({
 				<Badge
 					tone={
 						run.source === 'cli'
-							? 'cyan'
+							? 'teal'
 							: run.source === 'director'
 								? 'amber'
 								: 'neutral'

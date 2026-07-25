@@ -19,7 +19,7 @@ import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
 export function sessionStatusTone(status: PipelineSessionRecord['status']) {
 	if (status === 'completed') return 'emerald';
 	if (status === 'failed') return 'red';
-	if (status === 'running' || status === 'queued') return 'cyan';
+	if (status === 'running' || status === 'queued') return 'teal';
 	return 'amber';
 }
 
@@ -162,15 +162,14 @@ function sessionRowAriaLabel(selected: boolean, session: PipelineSessionRecord):
 function SessionMeta({ session }: { session: PipelineSessionRecord }) {
 	return (
 		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
-			<Badge tone="cyan">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
+			<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			<span>{session.projectName}</span>
 			<span>{formatDate(session.startedAt)}</span>
 		</div>
 	);
 }
 
-const selectedRowClass =
-	'bg-teal-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-teal-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]';
+const selectedRowClass = 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40';
 
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
 	const { now, selected, session } = props;
@@ -198,7 +197,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			</td>
 			<td className="px-3 py-3">{session.projectName}</td>
 			<td className="px-3 py-3">
-				<Badge tone="cyan">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
+				<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			</td>
 			<td className="px-3 py-3 text-neutral-400 dark:text-neutral-600">—</td>
 			<td className="px-3 py-3">

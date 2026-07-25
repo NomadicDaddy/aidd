@@ -248,7 +248,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 				    :focus-visible ring still appears for genuine keyboard focus. */}
 				<main
 					className={cn(
-						'command-surface min-w-0 px-4 py-5 pb-[env(safe-area-inset-bottom,1.25rem)] transition-[padding] duration-200 focus:outline-none sm:min-h-screen sm:p-6 sm:pb-6',
+						'command-surface min-w-0 px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] transition-[padding] duration-200 focus:outline-none sm:min-h-screen sm:p-6 sm:pb-6',
 						collapsed ? 'sm:pl-[5.5rem]' : 'sm:pl-[16.5rem]'
 					)}
 					id="main-content"

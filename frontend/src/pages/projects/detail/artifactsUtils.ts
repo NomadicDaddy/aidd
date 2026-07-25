@@ -4,7 +4,7 @@ import type {
 	ProjectArtifactRecord,
 } from '../../../api/types.ts';
 
-export type Tone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+export type Tone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 export interface ArtifactViewerTarget {
 	label: string;
@@ -50,7 +50,7 @@ export function formatBytes(bytes: number): string {
 }
 
 export function severityTone(severity: ProjectArtifactRecord['severity']): Tone {
-	if (severity === 'required') return 'cyan';
+	if (severity === 'required') return 'teal';
 	return 'neutral';
 }
 

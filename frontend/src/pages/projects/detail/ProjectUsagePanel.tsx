@@ -141,7 +141,7 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 								<td className="px-3 py-2">
 									<Badge
 										className="capitalize"
-										tone={row.mode ? 'cyan' : 'neutral'}>
+										tone={row.mode ? 'teal' : 'neutral'}>
 										{modeLabel(row.mode)}
 									</Badge>
 								</td>

@@ -37,7 +37,7 @@ export function ReportsTab({
 					<Card key={report.id}>
 						<div className="flex flex-wrap items-start justify-between gap-3">
 							<div className="flex flex-wrap items-center gap-2">
-								<Badge tone={report.kind === 'bug' ? 'red' : 'cyan'}>
+								<Badge tone={report.kind === 'bug' ? 'red' : 'teal'}>
 									{report.kind === 'bug' ? 'remediation' : 'feature'}
 								</Badge>
 								<Badge tone="neutral">{report.status}</Badge>

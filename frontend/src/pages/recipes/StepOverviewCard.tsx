@@ -3,10 +3,10 @@ import type { RecipeStepDefinition, RecipeStepType } from '../../api/types.ts';
 import { Badge } from '../../components/ui/badge.tsx';
 import { type ConfigSummaryEntry, getConfigSummary } from './recipe-steps.ts';
 
-type BadgeTone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+type BadgeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 const stepTypeTones: Record<RecipeStepType, BadgeTone> = {
-	'aidd-cli': 'cyan',
+	'aidd-cli': 'teal',
 	'recipe-ref': 'red',
 	shell: 'amber',
 	skill: 'emerald',

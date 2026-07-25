@@ -24,7 +24,7 @@ export function ActiveCycleBanner({ cycle, now }: { cycle: DirectorCycle; now: n
 						<div className="text-foreground flex items-center gap-2 text-sm font-semibold">
 							<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 							Director cycle running
-							<Badge pulse showDot tone="cyan">
+							<Badge pulse showDot tone="teal">
 								{cycleStageLabels[cycle.stage]}
 							</Badge>
 						</div>

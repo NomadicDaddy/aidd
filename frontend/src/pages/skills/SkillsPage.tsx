@@ -158,7 +158,7 @@ export function SkillsPage() {
 											{skill.id}
 										</span>
 										{RECIPE_SKILL_IDS.has(skill.id) ? (
-											<Badge tone="cyan">Recipe</Badge>
+											<Badge tone="teal">Recipe</Badge>
 										) : null}
 										{MATURITY_SKILL_IDS.has(skill.id) ? (
 											<Badge tone="emerald">Maturity</Badge>

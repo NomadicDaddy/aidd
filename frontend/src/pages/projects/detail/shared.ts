@@ -22,18 +22,18 @@ export function stringValue(record: Record<string, unknown>, key: string): strin
 // UI placeholder for a missing status field (semantically backlog) and stays neutral.
 // Anything else — 'done', 'verified', hyphenated variants — is invalid metadata and
 // renders red so bad data is self-evident instead of looking like a styling bug.
-export function statusTone(status: string): 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red' {
+export function statusTone(status: string): 'amber' | 'emerald' | 'neutral' | 'red' | 'teal' {
 	const normalized = status.toLowerCase();
 	if (normalized === 'completed') return 'emerald';
-	if (normalized === 'in_progress') return 'cyan';
+	if (normalized === 'in_progress') return 'teal';
 	if (normalized === 'waiting_approval') return 'amber';
 	if (normalized === 'backlog' || normalized === 'unknown') return 'neutral';
 	return 'red';
 }
 
-export function runStatusTone(status: string): 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red' {
+export function runStatusTone(status: string): 'amber' | 'emerald' | 'neutral' | 'red' | 'teal' {
 	if (status === 'completed' || status === 'success') return 'emerald';
-	if (status === 'running') return 'cyan';
+	if (status === 'running') return 'teal';
 	if (status === 'blocked' || status === 'error' || status === 'failed' || status === 'killed') {
 		return 'red';
 	}

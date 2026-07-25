@@ -52,7 +52,7 @@ export function featureProgressColor(pct: number): string {
 export function milestoneBadgeTone(ms: ProjectMilestoneSummary): BadgeTone {
 	if (ms.total === 0) return 'neutral';
 	if (ms.completed === ms.total) return 'emerald';
-	if (ms.completed > 0) return 'cyan';
+	if (ms.completed > 0) return 'teal';
 	return 'neutral';
 }
 

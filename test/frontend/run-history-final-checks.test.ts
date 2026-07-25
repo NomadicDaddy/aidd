@@ -141,7 +141,7 @@ describe('run-level warning downgrade (ISS-003)', () => {
 	});
 
 	test('classifyRunWithWarnings does NOT downgrade for runLedgerDirty alone', () => {
-		// Ledger dirt is informational (the cyan "Ledger out of sync" badge): it usually
+		// Ledger dirt is informational (the teal "Ledger out of sync" badge): it usually
 		// reflects pre-existing operator dirt, and pre-fix ledger entries had it
 		// unconditionally true — downgrading made the amber badge meaningless.
 		const run = makeRun({ runLedgerDirty: true });

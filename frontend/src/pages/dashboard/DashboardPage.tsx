@@ -251,7 +251,7 @@ export function DashboardPage() {
 					icon={<FolderKanban className="h-5 w-5" />}
 					label="Projects"
 					loading={projects.isLoading && !projects.data}
-					tone="cyan"
+					tone="teal"
 					value={projectCount}
 				/>
 				<Metric

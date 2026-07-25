@@ -27,7 +27,7 @@ import { buildStepRows, ExecutedStepRow, PendingStepRow } from './StepRows.tsx';
 function sessionTone(status: PipelineSessionReport['session']['status']) {
 	if (status === 'completed') return 'emerald';
 	if (status === 'failed') return 'red';
-	if (status === 'running' || status === 'queued') return 'cyan';
+	if (status === 'running' || status === 'queued') return 'teal';
 	return 'amber';
 }
 
@@ -199,7 +199,7 @@ function SessionSummaryCard({ now, report }: { now: number; report: PipelineSess
 					</p>
 					<div className="mt-2 flex flex-wrap gap-1.5">
 						{[...new Set(skillIntents)].map((intent) => (
-							<Badge key={intent} tone={intent === 'review-only' ? 'cyan' : 'amber'}>
+							<Badge key={intent} tone={intent === 'review-only' ? 'teal' : 'amber'}>
 								{skillExecutionIntentLabel(intent)}
 							</Badge>
 						))}

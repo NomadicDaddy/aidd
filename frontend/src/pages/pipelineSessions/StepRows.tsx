@@ -81,7 +81,7 @@ export function ExecutedStepRow({ step }: { step: PipelineStepResultRecord }) {
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge>{step.phase}</Badge>
 						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
-						<Badge tone="cyan">{step.stepType}</Badge>
+						<Badge tone="teal">{step.stepType}</Badge>
 					</div>
 					<h3 className="text-foreground mt-2 text-base font-semibold">
 						{step.stepName}
@@ -126,7 +126,7 @@ export function PendingStepRow({
 							<CircleDashed className="h-3 w-3" />
 							pending
 						</Badge>
-						<Badge tone="cyan">{step.stepType}</Badge>
+						<Badge tone="teal">{step.stepType}</Badge>
 						<span className="text-xs font-medium text-neutral-500">
 							Step {sequenceNumber} of {totalSteps}
 						</span>

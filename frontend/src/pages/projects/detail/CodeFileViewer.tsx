@@ -62,7 +62,7 @@ export function CodeFileViewer({
 						<h3 className="text-foreground font-mono text-sm font-semibold break-all">
 							{data.path}
 						</h3>
-						{data.language ? <Badge tone="cyan">{data.language}</Badge> : null}
+						{data.language ? <Badge tone="teal">{data.language}</Badge> : null}
 						<Badge tone="neutral">{formatBytes(data.sizeBytes)}</Badge>
 					</div>
 				</div>

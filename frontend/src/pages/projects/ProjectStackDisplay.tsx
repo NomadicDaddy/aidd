@@ -47,7 +47,7 @@ function primaryBadge(stack: ProjectStack) {
 	return (
 		<Tooltip className="max-w-sm" content={tooltipContent(stack)}>
 			<span className="inline-flex">
-				<Badge tone={stack.family === 'unknown' ? 'neutral' : 'cyan'}>{stack.label}</Badge>
+				<Badge tone={stack.family === 'unknown' ? 'neutral' : 'teal'}>{stack.label}</Badge>
 			</span>
 		</Tooltip>
 	);

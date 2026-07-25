@@ -137,7 +137,7 @@ export function ProjectDetailPage() {
 						</Badge>
 						<Badge tone="neutral">{detail.phase}</Badge>
 						{detail.metadata.roadmap?.currentMilestone ? (
-							<Badge tone="cyan">{detail.metadata.roadmap.currentMilestone}</Badge>
+							<Badge tone="teal">{detail.metadata.roadmap.currentMilestone}</Badge>
 						) : null}
 						<Badge tone={profileBucketTone(detail.metadata.profile.bucket)}>
 							{bucketLabels[detail.metadata.profile.bucket]}
@@ -145,7 +145,7 @@ export function ProjectDetailPage() {
 						<GitStatusBadge className="max-w-[14rem]" status={gitStatus.data?.status} />
 						<Badge
 							tone={
-								detail.metadata.profile.source === 'explicit' ? 'cyan' : 'neutral'
+								detail.metadata.profile.source === 'explicit' ? 'teal' : 'neutral'
 							}>
 							{detail.metadata.profile.source}
 						</Badge>

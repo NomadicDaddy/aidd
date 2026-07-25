@@ -30,11 +30,11 @@ export const bucketShortLabels: Record<AuditAssuranceBucket, string> = {
 	single_user_local: 'Single',
 };
 
-export const effectTone: Record<AuditEffect, 'cyan' | 'emerald' | 'neutral' | 'red'> = {
+export const effectTone: Record<AuditEffect, 'emerald' | 'neutral' | 'red' | 'teal'> = {
 	default: 'emerald',
 	disabled: 'neutral',
 	excluded: 'red',
-	required: 'cyan',
+	required: 'teal',
 };
 
 export const overrideEffects: { label: string; value: 'default' | AuditOverrideEffect }[] = [

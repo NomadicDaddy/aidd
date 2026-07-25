@@ -16,7 +16,7 @@ import type {
 import { formatCompactNumber } from '../../lib/formatters.ts';
 
 export type ArtifactHealth = ProjectSummary['artifactHealth'];
-export type BadgeTone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+export type BadgeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 export const SYNC_STATES: ReadonlySet<ProjectSyncState> = new Set([
 	'error',
@@ -157,12 +157,12 @@ export function profileBucketTone(bucket: ProjectAssuranceBucket): BadgeTone {
 	if (bucket === 'internet_single_org') return 'amber';
 	if (bucket === 'prototype_archive') return 'neutral';
 	if (bucket === 'single_user_local') return 'emerald';
-	return 'cyan';
+	return 'teal';
 }
 
 export function syncTone(state: ProjectSyncState): BadgeTone {
 	if (state === 'error') return 'red';
-	if (state === 'syncing') return 'cyan';
+	if (state === 'syncing') return 'teal';
 	if (state === 'idle') return 'emerald';
 	return 'neutral';
 }

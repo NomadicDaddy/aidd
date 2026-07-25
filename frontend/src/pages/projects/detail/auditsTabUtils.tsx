@@ -7,7 +7,7 @@ export type OverrideValue = 'default' | AuditOverrideEffect;
 
 export function stateBadge(entry: ProjectAuditEntry) {
 	if (entry.overrideEffect === 'required') {
-		return <Badge tone="cyan">Enabled (override)</Badge>;
+		return <Badge tone="teal">Enabled (override)</Badge>;
 	}
 	if (entry.overrideEffect === 'disabled' || entry.overrideEffect === 'excluded') {
 		return <Badge tone="red">Disabled (override)</Badge>;

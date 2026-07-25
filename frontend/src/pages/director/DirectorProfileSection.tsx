@@ -37,7 +37,7 @@ export function DirectorProfileSection({
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
-						<Badge tone="cyan">Separate save</Badge>
+						<Badge tone="teal">Separate save</Badge>
 						<Button disabled={pending} onClick={onSave} variant="secondary">
 							<Save aria-hidden="true" className="h-4 w-4" />
 							{pending ? 'Saving…' : 'Save Profile'}

@@ -141,7 +141,7 @@ export function ProjectCard({
 				<Badge tone={profileBucketTone(metadata.profile.bucket)}>
 					{bucketLabels[metadata.profile.bucket]}
 				</Badge>
-				<Badge tone={metadata.profile.source === 'explicit' ? 'cyan' : 'neutral'}>
+				<Badge tone={metadata.profile.source === 'explicit' ? 'teal' : 'neutral'}>
 					{metadata.profile.source}
 				</Badge>
 				<Badge tone="neutral">{project.phase}</Badge>

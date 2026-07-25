@@ -20,10 +20,10 @@ const KIND_LABELS: Record<DiaryTimelineKind, string> = {
 
 const KIND_TONES: Record<DiaryTimelineKind, Tone> = {
 	'director-cycle': 'amber',
-	'recipe-session': 'cyan',
+	'recipe-session': 'teal',
 	release: 'emerald',
 	run: 'neutral',
-	skill: 'cyan',
+	skill: 'teal',
 };
 
 export function timelineKindLabel(kind: DiaryTimelineKind): string {

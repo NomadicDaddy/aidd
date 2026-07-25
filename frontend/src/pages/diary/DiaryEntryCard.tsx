@@ -29,7 +29,7 @@ export function DiaryEntryCard({
 								{entry.projectName}
 							</Link>
 						) : null}
-						{entry.phase ? <Badge tone="cyan">{entry.phase}</Badge> : null}
+						{entry.phase ? <Badge tone="teal">{entry.phase}</Badge> : null}
 						<span
 							className="text-xs text-neutral-500"
 							title={formatDate(`${entry.date}T00:00:00`)}>

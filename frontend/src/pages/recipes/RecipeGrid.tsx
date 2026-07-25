@@ -38,7 +38,7 @@ export function RecipeCard({
 				</div>
 				<div className="flex flex-wrap justify-end gap-1.5">
 					<RecipeContractBadges recipe={recipe} />
-					<Badge tone={isPipeline ? 'cyan' : 'neutral'}>
+					<Badge tone={isPipeline ? 'teal' : 'neutral'}>
 						{isPipeline ? 'pipeline' : 'single-step'}
 					</Badge>
 				</div>
@@ -144,7 +144,7 @@ export function RecipeTable({
 								</td>
 								<td className="px-3 py-3">
 									<div className="flex flex-wrap gap-1.5">
-										<Badge tone={isPipeline ? 'cyan' : 'neutral'}>
+										<Badge tone={isPipeline ? 'teal' : 'neutral'}>
 											{isPipeline ? 'pipeline' : 'single-step'}
 										</Badge>
 										<RecipeContractBadges recipe={recipe} />

@@ -169,7 +169,7 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 								</Link>
 							</td>
 							<td className="px-3 py-2">
-								<Badge tone={row.type === 'audit' ? 'amber' : 'cyan'}>
+								<Badge tone={row.type === 'audit' ? 'amber' : 'teal'}>
 									{row.type}
 								</Badge>
 							</td>

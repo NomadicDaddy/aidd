@@ -10,10 +10,10 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 
-function getSuggestionTone(suggestion: SuggestionRecord): 'amber' | 'cyan' | 'red' {
+function getSuggestionTone(suggestion: SuggestionRecord): 'amber' | 'red' | 'teal' {
 	if (suggestion.riskLevel === 'HIGH') return 'red';
 	if (suggestion.riskLevel === 'MEDIUM') return 'amber';
-	return 'cyan';
+	return 'teal';
 }
 
 export function DirectorQueueCard({

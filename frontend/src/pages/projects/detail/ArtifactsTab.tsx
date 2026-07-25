@@ -66,7 +66,7 @@ export function ArtifactsTab({
 		{ label: 'Fresh', tone: 'emerald', value: summary.fresh },
 		{ label: 'Stale', tone: 'amber', value: summary.stale },
 		{ label: 'Missing', tone: 'red', value: summary.missing },
-		{ label: 'Present', tone: 'cyan', value: summary.present },
+		{ label: 'Present', tone: 'teal', value: summary.present },
 		{ label: 'Required missing', tone: 'red', value: summary.requiredMissing },
 		{ label: 'Total', tone: 'neutral', value: summary.total },
 	];

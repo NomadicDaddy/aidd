@@ -75,7 +75,7 @@ export function ProfileMatrixRow({
 	const auditCount = row.preview?.audits.length ?? 0;
 	const applicable = row.preview?.audits.filter((audit) => audit.applies).length ?? 0;
 	const required = row.preview?.audits.filter((audit) => audit.effect === 'required').length ?? 0;
-	const sourceTone = row.project.metadata.profile.source === 'explicit' ? 'cyan' : 'neutral';
+	const sourceTone = row.project.metadata.profile.source === 'explicit' ? 'teal' : 'neutral';
 
 	return (
 		<tr className="border-border hover:bg-muted/40 border-b align-top transition-colors">

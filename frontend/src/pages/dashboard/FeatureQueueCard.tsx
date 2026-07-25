@@ -21,11 +21,11 @@ export interface FeatureQueueItem {
 	title: string;
 }
 
-function priorityTone(priority: null | number): 'amber' | 'cyan' | 'neutral' | 'red' {
+function priorityTone(priority: null | number): 'amber' | 'neutral' | 'red' | 'teal' {
 	if (priority === null) return 'neutral';
 	if (priority <= 1) return 'red';
 	if (priority <= 2) return 'amber';
-	if (priority <= 3) return 'cyan';
+	if (priority <= 3) return 'teal';
 	return 'neutral';
 }
 

@@ -8,7 +8,7 @@ import { orchestratorExitCodes } from '../orchestrator/exit-codes.ts';
 export type WebRunOutcomeStatus =
 	'completed' | 'failed' | 'killed' | 'running' | 'stopped' | 'waiting_approval';
 
-export type WebRunOutcomeTone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+export type WebRunOutcomeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 export interface WebRunOutcome {
 	label: string;
@@ -27,7 +27,7 @@ const statusOutcomes: Readonly<Record<WebRunOutcomeStatus, WebRunOutcome>> = {
 	completed: { label: 'Completed', title: 'Run completed successfully.', tone: 'emerald' },
 	failed: { label: 'Failed', title: 'Run ended in failure.', tone: 'red' },
 	killed: { label: 'Killed', title: 'Run was killed.', tone: 'neutral' },
-	running: { label: 'Running', title: 'Run is in progress.', tone: 'cyan' },
+	running: { label: 'Running', title: 'Run is in progress.', tone: 'teal' },
 	stopped: { label: 'Stopped', title: 'Run was stopped on request.', tone: 'neutral' },
 	waiting_approval: {
 		label: 'Awaiting merge',
@@ -214,8 +214,6 @@ export function classifyWebRunTelemetryBucket(run: WebRunOutcomeInput): Telemetr
 	switch (outcome.tone) {
 		case 'amber':
 			return 'warnings';
-		case 'cyan':
-			return 'running';
 		case 'emerald':
 			return 'completed';
 		case 'neutral':
@@ -223,5 +221,7 @@ export function classifyWebRunTelemetryBucket(run: WebRunOutcomeInput): Telemetr
 			return run.status === 'killed' ? 'killed' : 'stopped';
 		case 'red':
 			return 'failed';
+		case 'teal':
+			return 'running';
 	}
 }

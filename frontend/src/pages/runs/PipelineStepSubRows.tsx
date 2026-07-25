@@ -46,7 +46,7 @@ export function PipelineStepSubRows({
 								<CircleDashed aria-hidden="true" className="h-3 w-3" />
 								pending
 							</Badge>
-							<Badge tone="cyan">{row.step.stepType}</Badge>
+							<Badge tone="teal">{row.step.stepType}</Badge>
 							<span className="text-neutral-500 dark:text-neutral-400">
 								{row.step.name}
 							</span>
@@ -64,7 +64,7 @@ export function PipelineStepSubRows({
 							{anchor ? `${step.sequenceNumber}.` : '·'}
 						</span>
 						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
-						<Badge tone="cyan">{step.stepType}</Badge>
+						<Badge tone="teal">{step.stepType}</Badge>
 						<span className="text-neutral-700 dark:text-neutral-200">
 							{step.stepName}
 						</span>

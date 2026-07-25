@@ -104,6 +104,6 @@ export function getProfilePosture(form: ProjectAssuranceProfileInput): ProfilePo
 		label: 'Standard',
 		lowExposure,
 		reasons: [],
-		tone: 'cyan',
+		tone: 'teal',
 	};
 }

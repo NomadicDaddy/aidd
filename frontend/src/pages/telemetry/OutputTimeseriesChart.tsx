@@ -14,7 +14,7 @@ function bucketLabel(bucket: 'day' | 'hour', timestamp: number): string {
 
 // Diverging bars from a shared center baseline: production (lines added / tokens in) grows up,
 // the counterpart (lines removed / tokens out) grows down. Both arms share one symmetric scale
-// so their magnitudes stay comparable — position carries the sign, color the identity (cyan up,
+// so their magnitudes stay comparable — position carries the sign, color the identity (teal up,
 // orange down: a warm/cool pair that stays distinct under CVD and never impersonates the
 // emerald/red outcome colors used by the invocations chart).
 export function OutputTimeseriesChart({

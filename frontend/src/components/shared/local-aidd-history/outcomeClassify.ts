@@ -27,7 +27,7 @@ export function iterationFinalCheckFailures(finalChecks: FinalCheckSummary | nul
 		.map(([name]) => name);
 }
 
-export type OutcomeTone = 'amber' | 'cyan' | 'emerald' | 'neutral' | 'red';
+export type OutcomeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 export interface OutcomeClassification {
 	label: string;
@@ -223,7 +223,7 @@ export function classifyIteration(iteration: ProjectLocalIteration): OutcomeClas
 	const status = iteration.status;
 	const label = humanizeStatus(status);
 	if (status === 'running') {
-		return { label, title: 'Iteration is in progress.', tone: 'cyan' };
+		return { label, title: 'Iteration is in progress.', tone: 'teal' };
 	}
 	if (status === 'success') {
 		const failedChecks = iterationFinalCheckFailures(iteration.finalChecks);

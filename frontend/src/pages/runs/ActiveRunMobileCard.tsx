@@ -98,7 +98,7 @@ export function ActiveRunMobileCard({
 			className={cn(
 				'flex cursor-pointer flex-col gap-2 px-4 py-3 transition-colors',
 				selected
-					? 'bg-teal-100/80 shadow-[inset_4px_0_0_rgb(8,145,178)] dark:bg-teal-900/40 dark:shadow-[inset_4px_0_0_rgb(34,211,238)]'
+					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
 					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
 			)}
 			onClick={selectFromCard}
@@ -125,7 +125,7 @@ export function ActiveRunMobileCard({
 				<Badge
 					tone={
 						run.source === 'cli'
-							? 'cyan'
+							? 'teal'
 							: run.source === 'director'
 								? 'amber'
 								: 'neutral'

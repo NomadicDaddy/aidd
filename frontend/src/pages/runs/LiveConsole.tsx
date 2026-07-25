@@ -21,7 +21,7 @@ import { RunDetailPanel } from './RunDetailPanel.tsx';
 
 export interface LiveConsoleBadge {
 	label: string;
-	tone: 'cyan' | 'neutral';
+	tone: 'neutral' | 'teal';
 }
 
 // Session-scoped so the wrap preference survives switching between runs (and reloads) within the
@@ -171,7 +171,7 @@ export function LiveConsole({
 	return (
 		<section className="space-y-2">
 			<div className="flex items-center justify-between">
-				<h2 className="font-display text-foreground text-sm font-semibold">Live Console</h2>
+				<h2 className="text-foreground text-sm font-semibold">Live Console</h2>
 				{badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null}
 			</div>
 			<Card variant="panel">

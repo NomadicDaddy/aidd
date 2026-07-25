@@ -29,7 +29,7 @@ export function LocalRunResultBadges({
 			{run.runLedgerDirty ? (
 				<Tooltip content="Run summary could not be reconciled into the latest commit; recorded metrics may be incomplete.">
 					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
-						<Badge tone="cyan">Ledger out of sync</Badge>
+						<Badge tone="teal">Ledger out of sync</Badge>
 					</span>
 				</Tooltip>
 			) : null}

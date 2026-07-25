@@ -63,7 +63,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 				<div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
 					<span>Current milestone</span>
 					{currentMilestone ? (
-						<Badge tone="cyan">{currentMilestone}</Badge>
+						<Badge tone="teal">{currentMilestone}</Badge>
 					) : (
 						<span>No active milestone</span>
 					)}
@@ -127,7 +127,7 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 							}>
 							<span>{name}</span>
 							{isCurrent ? (
-								<Badge className="ml-1.5" tone="cyan">
+								<Badge className="ml-1.5" tone="teal">
 									current
 								</Badge>
 							) : null}

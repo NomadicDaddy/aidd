@@ -108,20 +108,20 @@ describe('resolveEffectiveLaunchTarget', () => {
 			cli: 'native',
 			auditModel: 'glm-5.2',
 			codeModel: 'glm-5.2',
-			backends: { 'claude-code': { model: 'claude-opus-4-8' } },
+			backends: { 'claude-code': { model: 'claude-opus-5' } },
 		};
 		// Audit mode with a backend override and no explicit model: backend-scoped model wins.
 		expect(
 			resolveEffectiveLaunchTarget(config, 'audit', { backend: 'claude-code' }, emptyEnv)
 		).toMatchObject({
-			model: 'claude-opus-4-8',
+			model: 'claude-opus-5',
 			modelSource: 'backend-config',
 		});
 		// Same for coding mode.
 		expect(
 			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'claude-code' }, emptyEnv)
 		).toMatchObject({
-			model: 'claude-opus-4-8',
+			model: 'claude-opus-5',
 			modelSource: 'backend-config',
 		});
 		// An explicit --model override still wins over every config layer.

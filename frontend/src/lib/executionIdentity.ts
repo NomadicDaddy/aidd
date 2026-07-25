@@ -19,9 +19,8 @@ export interface IdentityBadgeStyle {
 
 export const executionIdentityModelCatalog = [
 	'claude-fable-5',
-	'claude-opus-4-8',
+	'claude-opus-5',
 	'glm-5.2',
-	'gpt-5.6',
 	'gpt-5.6-sol',
 	'gpt-oss:20b',
 	'openai/gpt-oss-20b',
@@ -81,9 +80,8 @@ const knownIdentityHue: Readonly<
 	},
 	model: {
 		'claude-fable-5': 335,
-		'claude-opus-4-8': 315,
+		'claude-opus-5': 315,
 		'glm-5.2': 220,
-		'gpt-5.6': 278,
 		'gpt-5.6-sol': 290,
 		'gpt-oss:20b': 45,
 		'openai/gpt-oss-20b': 165,

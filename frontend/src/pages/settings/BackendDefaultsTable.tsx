@@ -33,15 +33,15 @@ const backendDefaultOptions: BackendName[] = [
 ];
 
 const modelPlaceholders: Record<BackendName, string> = {
-	'claude-code': 'e.g., claude-opus-4-8',
-	codex: 'e.g., gpt-5.6',
+	'claude-code': 'e.g., claude-opus-5',
+	codex: 'e.g., gpt-5.6-sol',
 	grok: 'e.g., grok-4.5',
-	kilocode: 'e.g., claude-opus-4-8',
+	kilocode: 'e.g., claude-opus-5',
 	lmstudio: 'e.g., openai/gpt-oss-20b',
-	native: 'e.g., claude-opus-4-8',
+	native: 'e.g., claude-opus-5',
 	ollama: 'e.g., llama3.1',
-	openai: 'e.g., gpt-5.6',
-	opencode: 'e.g., gpt-5.6',
+	openai: 'e.g., gpt-5.6-sol',
+	opencode: 'e.g., gpt-5.6-sol',
 };
 
 const idleTimeoutPlaceholder = 'e.g., 300';

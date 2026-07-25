@@ -1173,15 +1173,15 @@ describe('web run launcher', () => {
 			const projectDir = resolve('demo-project');
 			const command = await buildLaunchCommand(
 				rootDir,
-				{ backend: 'native', mode: 'coding', model: 'glm-5.1', projectDir },
+				{ backend: 'native', mode: 'coding', model: 'glm-5.2', projectDir },
 				{
 					backend: 'native',
-					model: 'glm-5.1',
+					model: 'glm-5.2',
 					triumvirate: {
 						execCli: 'native',
-						execModel: 'glm-5.1',
+						execModel: 'glm-5.2',
 						overseerCli: 'claude-code',
-						overseerModel: 'claude-opus-4-8',
+						overseerModel: 'claude-opus-5',
 						secondaryCli: 'codex',
 						secondaryModel: 'gpt-5.6',
 					},
@@ -1196,7 +1196,7 @@ describe('web run launcher', () => {
 				'--cli',
 				'native',
 				'--model',
-				'glm-5.1',
+				'glm-5.2',
 			]);
 		} finally {
 			await removeTempTree(rootDir);
@@ -1214,9 +1214,9 @@ describe('web run launcher', () => {
 					backend: 'native',
 					triumvirate: {
 						overseerCli: 'claude-code',
-						overseerModel: 'claude-opus-4-8',
+						overseerModel: 'claude-opus-5',
 						secondaryCli: 'codex',
-						secondaryModel: 'gpt-5.6',
+						secondaryModel: 'gpt-5.6-sol',
 					},
 				}
 			);
@@ -1232,11 +1232,11 @@ describe('web run launcher', () => {
 				'--secondary-cli',
 				'codex',
 				'--secondary-model',
-				'gpt-5.6',
+				'gpt-5.6-sol',
 				'--overseer-cli',
 				'claude-code',
 				'--overseer-model',
-				'claude-opus-4-8',
+				'claude-opus-5',
 			]);
 		} finally {
 			await removeTempTree(rootDir);

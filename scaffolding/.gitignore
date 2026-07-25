@@ -21,6 +21,7 @@ ps_modules/
 .aidd/remediation-review.md
 .aidd/reports/
 .aidd/response-review.md
+.aidd/skills/
 
 # runtime — meaningful only for the run that wrote it
 .aidd/active-runs/

@@ -15,6 +15,8 @@ Copy this into the release PR or tracking issue and tick as you go:
 - [ ] Local gates green: format:check, lint, typecheck, check:max-lines, check:feature-integration,
       and `bun test`
 - [ ] Artifact integrity: `bun run release:check -- --target bun-windows-x64-modern --skip-command-gates`
+- [ ] Screenshot artifact captured **after** the bump: `bun run smoke:screenshots` wrote
+      `screenshots/vX.Y.Z/` (the pre-push guard blocks the tag without it)
 - [ ] Version-bump commit landed on main
 - [ ] main pushed; CI green on main
 - [ ] Annotated tag `vX.Y.Z` created and pushed
@@ -38,6 +40,19 @@ bun run check:max-lines; bun run check:feature-integration; bun test
 bun run release:check -- --target bun-windows-x64-modern --skip-command-gates
 ```
 
+Capture the release's screenshot artifact **after** the version bump, so the crawl lands in the
+directory named for the version being shipped:
+
+```powershell
+bun run smoke:screenshots        # writes screenshots/vX.Y.Z/ from package.json's version
+```
+
+`screenshots/` is gitignored, so this directory is the only visual record of the release — it
+cannot be reconstructed later. Capturing before the bump would file the new UI under the previous
+version and overwrite that release's archive. The pre-push screenshot guard
+(`.githooks/screenshot-guard.sh`) refuses to push a `vX.Y.Z` tag when `screenshots/vX.Y.Z/` is
+missing or nearly empty.
+
 ### 2. Cut the tag
 
 ```powershell
@@ -47,6 +62,10 @@ git push origin main
 git tag -a vX.Y.Z -m "aidd vX.Y.Z — <summary>"
 git push origin vX.Y.Z
 ```
+
+The tag push runs the pre-push guards: the history guard (no `.aidd/` in the pushed range) and the
+screenshot guard (`screenshots/vX.Y.Z/` exists with the page captures). If the screenshot guard
+fires, run `bun run smoke:screenshots` and push the tag again — do not bypass it.
 
 Pushing the tag triggers CI on the tag. On success, `.github/workflows/release.yml` (on
 `windows-latest`) runs `release:package` + `release:check`, then `gh release create` uploads the zip,

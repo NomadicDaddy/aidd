@@ -16,6 +16,13 @@
 			"match": { "bucket": ["prototype_archive"] }
 		},
 		{
+			"audits": ["UI_PARITY"],
+			"description": "UI parity requires an explicit per-project opt-in.",
+			"effect": "disabled",
+			"id": "ui-parity-default-disabled",
+			"match": {}
+		},
+		{
 			"audits": [
 				"BUILD_OUTPUT",
 				"CONVEX",
@@ -25,10 +32,9 @@
 				"LICENSING",
 				"LIGHTHOUSE",
 				"PERFORMANCE",
-				"SCHEMA_CONSTRAINTS",
-				"UI_PARITY"
+				"SCHEMA_CONSTRAINTS"
 			],
-			"description": "Low-exposure single-user local projects skip infra/perf/parity audits.",
+			"description": "Low-exposure single-user local projects skip infra and performance audits.",
 			"effect": "disabled",
 			"id": "low-exposure-local-skip-infra",
 			"match": {

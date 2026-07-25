@@ -160,6 +160,7 @@
 			"scaffolding/.gitattributes",
 			"scaffolding/.githooks/aidd-history-guard.sh",
 			"scaffolding/.githooks/pre-push",
+			"scaffolding/.githooks/screenshot-guard.sh",
 			"scaffolding/.gitignore",
 			"scaffolding/.prettierignore",
 			"scaffolding/.prettierrc",

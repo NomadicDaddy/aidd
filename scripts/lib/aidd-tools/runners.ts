@@ -181,10 +181,15 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 
 	const reachableAudits = new Set<string>();
 	const referencedAudits = new Set<string>();
+	const intentionallyDefaultDisabledAudits = new Set<string>();
 	for (const rule of mapping.rules) {
 		for (const audit of rule.audits) {
 			if (audit === '*') continue;
-			referencedAudits.add(audit.toUpperCase());
+			const normalizedAudit = audit.toUpperCase();
+			referencedAudits.add(normalizedAudit);
+			if (rule.effect === 'disabled' && Object.keys(rule.match).length === 0) {
+				intentionallyDefaultDisabledAudits.add(normalizedAudit);
+			}
 		}
 	}
 
@@ -209,7 +214,7 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 		}
 	}
 	for (const audit of knownAudits) {
-		if (!reachableAudits.has(audit)) {
+		if (!reachableAudits.has(audit) && !intentionallyDefaultDisabledAudits.has(audit)) {
 			errors.push(
 				`Audit ${audit} is unreachable: excluded by global rules for every assurance bucket`,
 			);

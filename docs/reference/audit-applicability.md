@@ -185,8 +185,9 @@ operator is forced to fix the file rather than silently inherit "no overrides."
 - Every `rule.match` facet key is a valid `ProjectAssuranceProfile` field.
 - Every facet value array contains only valid enum members.
 - No duplicate rule IDs.
-- Every runnable, non-reference audit is reachable in at least one bucket (catches accidental
-  sweep rules).
+- Every runnable, non-reference audit is reachable in at least one bucket, unless an explicit
+  unconditional `disabled` rule makes it opt-in by default (catches accidental sweep rules while
+  permitting intentional opt-in audits).
 
 Reference documents such as `AUDIT_METHODOLOGY.md` and `SEVERITY_CLASSIFICATION.md` can be copied
 alongside selected audits for prompt context, but they are not selectable audit definitions and are
@@ -195,15 +196,16 @@ not counted as runnable audits by the validator.
 The validator is hosted under `scripts/aidd-tools.ts` as the `audit:profile-mapping` subcommand,
 not a free-standing script, to match the existing aidd-tools dispatch pattern.
 
-## Migration parity
+## Seeded policy
 
-The seeded global mapping (`audits/audit-profile-mapping.json`) reproduces the previous hardcoded
-behavior exactly:
+The seeded global mapping (`audits/audit-profile-mapping.json`) carries these baseline rules:
 
 - `archive-prototype-sweep` excludes every audit when `bucket == prototype_archive`.
 - `archive-prototype-keep` then requires `ASSERTIONS`, `DOCUMENTATION`, `HYGIENE` (positive
   intent vs the wildcard sweep; see the precedence exception above).
-- `low-exposure-local-skip-infra` disables 9 infra/perf/parity audits when the profile is
+- `ui-parity-default-disabled` disables `UI_PARITY` for every profile until a project explicitly
+  marks it `required`.
+- `low-exposure-local-skip-infra` disables 8 infra/performance audits when the profile is
   `single_user_local` AND `deployment=local` AND `dataSensitivity ∈ {none,low}` AND
   `externalIntegrations ∈ {none,read_only}` AND `criticality ∈ {toy,utility}`.
 

@@ -22,6 +22,7 @@ export function RunsPage() {
 	useDocumentTitle('Runs');
 	const page = useRunsPage();
 	const form = page.launchForm;
+	const showingInitialSkeleton = page.isLoading && page.loadedEntryCount === 0;
 	const tableProps: Omit<
 		UnifiedExecutionTableProps,
 		'description' | 'emptyMessage' | 'entries' | 'title'
@@ -129,39 +130,17 @@ export function RunsPage() {
 				statusFilter={page.statusFilter}
 			/>
 			<div className="min-w-0 space-y-5">
-				<div className="min-w-0 space-y-3">
-					{page.isLoading && page.loadedEntryCount === 0 ? (
-						<SkeletonRows columns={4} count={6} label="Loading runs…" />
-					) : (
-						<>
-							<UnifiedExecutionTable
-								description="Runs and recipe pipelines currently executing."
-								emptyMessage="Nothing is running right now."
-								entries={page.activeEntries}
-								title="Active"
-								{...tableProps}
-							/>
-							<UnifiedExecutionTable
-								description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
-								emptyMessage="No runs or pipelines match the current filters."
-								entries={page.historyEntries}
-								title="History"
-								{...tableProps}
-							/>
-						</>
-					)}
-					{page.hasMore ? (
-						<div className="flex justify-center">
-							<Button
-								disabled={page.isFetchingMore}
-								onClick={page.fetchMore}
-								variant="secondary">
-								<ChevronDown aria-hidden="true" className="h-4 w-4" />
-								{page.isFetchingMore ? 'Loading…' : 'Show more'}
-							</Button>
-						</div>
-					) : null}
-				</div>
+				{showingInitialSkeleton ? (
+					<SkeletonRows columns={4} count={6} label="Loading runs…" />
+				) : (
+					<UnifiedExecutionTable
+						description="Runs and recipe pipelines currently executing."
+						emptyMessage="Nothing is running right now."
+						entries={page.activeEntries}
+						title="Active"
+						{...tableProps}
+					/>
+				)}
 				<div className="min-w-0 self-start" ref={page.liveConsoleRef}>
 					{page.selection?.kind === 'pipeline' && page.selectedSession ? (
 						<PipelineConsoleSummary session={page.selectedSession} />
@@ -174,6 +153,28 @@ export function RunsPage() {
 						/>
 					)}
 				</div>
+				{showingInitialSkeleton ? null : (
+					<div className="min-w-0 space-y-3">
+						<UnifiedExecutionTable
+							description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
+							emptyMessage="No runs or pipelines match the current filters."
+							entries={page.historyEntries}
+							title="History"
+							{...tableProps}
+						/>
+						{page.hasMore ? (
+							<div className="flex justify-center">
+								<Button
+									disabled={page.isFetchingMore}
+									onClick={page.fetchMore}
+									variant="secondary">
+									<ChevronDown aria-hidden="true" className="h-4 w-4" />
+									{page.isFetchingMore ? 'Loading…' : 'Show more'}
+								</Button>
+							</div>
+						) : null}
+					</div>
+				)}
 			</div>
 		</div>
 	);

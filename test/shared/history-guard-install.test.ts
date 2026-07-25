@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -70,12 +70,26 @@ describe('ensureHistoryGuard', () => {
 		expect(existsSync(join(parent, '.githooks'))).toBe(false);
 	});
 
-	test('stages BOTH files — a lone wrapper would reference a script that is not in the repo', async () => {
+	test('stages the wrapper AND every guard it sources — a lone wrapper references scripts not in the repo', async () => {
 		const dir = await makeRepo('both-staged');
 		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
 		const staged = git(dir, ['diff', '--cached', '--name-only']).split('\n');
 		expect(staged).toContain('.githooks/pre-push');
-		expect(staged).toContain('.githooks/aidd-history-guard.sh');
+
+		// Derive the invariant from the wrapper itself: whatever guard scripts pre-push invokes
+		// (`bash "$hooks_dir/<name>"`) MUST have been copied in and staged. This fails the moment a
+		// guard is added to scaffolding/.githooks/pre-push without teaching ensureHistoryGuard to
+		// ship it — the exact break that let a pre-push reference a missing screenshot-guard.sh.
+		const wrapper = readFileSync(join(dir, '.githooks', 'pre-push'), 'utf8');
+		const sourced = [...wrapper.matchAll(/\$hooks_dir\/([\w.-]+)/g)]
+			.map((m) => m[1])
+			.filter((n): n is string => n !== undefined);
+		expect(sourced).toContain('aidd-history-guard.sh');
+		expect(sourced).toContain('screenshot-guard.sh');
+		for (const guard of sourced) {
+			expect(existsSync(join(dir, '.githooks', guard))).toBe(true);
+			expect(staged).toContain(`.githooks/${guard}`);
+		}
 	});
 
 	test('refuses to hijack Husky — an existing core.hooksPath is never redirected', async () => {

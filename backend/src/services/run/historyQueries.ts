@@ -8,6 +8,7 @@ import { runs } from '../../db/schema.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { clampLimit, type CursorPage, decodeCursor, encodeCursor } from '../pagination.ts';
 import { listCliActiveRuns, listCliActiveRunsForProject } from './cliActiveRuns.ts';
+import { reconcileCliPipelineSessions } from './cliPipelineSessionReconcile.ts';
 import { listDirectorCycleRunRecords } from './directorCycleRuns.ts';
 import { dropLedgerPhantomRuns } from './ledgerReconcile.ts';
 import { type QueriesContext, toWebRunRecord } from './queries.ts';
@@ -159,10 +160,11 @@ export async function listRunsPage(
 		isFirstPage && (!options.status || options.status === 'running')
 			? await listCliActiveRuns(ctx)
 			: [];
+	const listedCliItems = await reconcileCliPipelineSessions(ctx, cliItems, options.topLevel);
 	const directorItems = isFirstPage ? await listDirectorCycleRunRecords(ctx, options.status) : [];
 	const items = await annotateStopRequested(
 		await dropLedgerPhantomRuns(
-			mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorItems), cliItems).sort(
+			mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorItems), listedCliItems).sort(
 				(left, right) => right.startedAt - left.startedAt,
 			),
 		),
@@ -174,7 +176,6 @@ export async function listRunsPage(
 			: null;
 	return { items, nextCursor };
 }
-
 export async function listRunsForProjectPage(
 	ctx: QueriesContext,
 	projectPath: string,
@@ -204,9 +205,10 @@ export async function listRunsForProjectPage(
 		isFirstPage && (!options.status || options.status === 'running')
 			? await listCliActiveRunsForProject(projectPath)
 			: [];
+	const listedCliItems = await reconcileCliPipelineSessions(ctx, cliItems, options.topLevel);
 	const items = await annotateStopRequested(
 		await dropLedgerPhantomRuns(
-			mergeWebAndCliRuns(webItems, cliItems).sort(
+			mergeWebAndCliRuns(webItems, listedCliItems).sort(
 				(left, right) => right.startedAt - left.startedAt,
 			),
 		),
@@ -218,7 +220,6 @@ export async function listRunsForProjectPage(
 			: null;
 	return { items, nextCursor };
 }
-
 export async function hasActiveRunForProject(
 	ctx: QueriesContext,
 	projectPath: string,

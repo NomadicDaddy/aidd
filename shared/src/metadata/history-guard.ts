@@ -23,7 +23,11 @@ import { resolveRootDir } from '../runtime/rootDir.ts';
  */
 
 const HOOK = 'pre-push';
-const GUARD = 'aidd-history-guard.sh';
+// Every guard body the wrapper sources. The wrapper and the scripts it invokes are one unit: adding
+// a `bash "$hooks_dir/<guard>.sh"` line to scaffolding/.githooks/pre-push WITHOUT listing the guard
+// here ships a hook that immediately fails on a missing script in every derived project. A guard
+// absent from an older scaffolding tag is simply skipped (see the existence check below).
+const GUARDS = ['aidd-history-guard.sh', 'screenshot-guard.sh'];
 const MARKER = 'aidd history guard';
 
 export type GuardOutcome =
@@ -107,7 +111,14 @@ export async function ensureHistoryGuard(
 
 	try {
 		await mkdir(hooksDir, { recursive: true });
-		await copyFile(join(source, GUARD), join(hooksDir, GUARD));
+		for (const guard of GUARDS) {
+			const guardSource = join(source, guard);
+			// A guard the current scaffolding does not ship is not an error: only guards the wrapper
+			// actually sources are present, and copying a missing one would fail the whole install.
+			if (await Bun.file(guardSource).exists()) {
+				await copyFile(guardSource, join(hooksDir, guard));
+			}
+		}
 		await copyFile(hookSource, hookPath);
 	} catch {
 		return 'skipped';
@@ -123,14 +134,20 @@ export async function ensureHistoryGuard(
 		'--chmod=+x',
 		`.githooks/${HOOK}`,
 	]);
-	// Stage the guard body too. Staging only the wrapper lets a routine `git commit` publish a hook
+	// Stage every guard body too. Staging only the wrapper lets a routine `git commit` publish a hook
 	// that sources a file which is not in the repository — so a fresh clone runs a pre-push that
-	// immediately fails on a missing script. The two files are one unit.
-	const stagedGuard = await git(projectDir, ['add', `.githooks/${GUARD}`]);
+	// immediately fails on a missing script. The wrapper and the guards it sources are one unit.
+	let stagedGuards = true;
+	for (const guard of GUARDS) {
+		// Only guards that were actually copied above exist to stage; skip the rest silently.
+		if (!(await Bun.file(join(hooksDir, guard)).exists())) continue;
+		const staged = await git(projectDir, ['add', `.githooks/${guard}`]);
+		stagedGuards &&= staged.ok;
+	}
 
 	// Report what actually happened. Returning 'installed' unconditionally would let a read-only
 	// checkout, a locked index, or a git too old for --chmod look identical to success — and the
 	// entire point of this guard is that a silent no-op is the worst outcome.
-	if (!configured2.ok || !stagedHook.ok || !stagedGuard.ok) return 'skipped';
+	if (!configured2.ok || !stagedHook.ok || !stagedGuards) return 'skipped';
 	return 'installed';
 }

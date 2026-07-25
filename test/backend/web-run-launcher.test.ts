@@ -499,6 +499,59 @@ describe('web run launcher', () => {
 		}
 	});
 
+	test('keeps a pipeline-owned heartbeat out of the top-level runs page', async () => {
+		const workspace = await testTempDir('aidd-web-top-level-heartbeat-');
+		const rootDir = await makeLauncherRoot('console.log("ok");\n');
+		try {
+			const projectDir = await makeProject(workspace);
+			const { service, sqlite } = makeService({
+				allowedRoot: workspace,
+				dataDir: join(workspace, 'data'),
+				rootDir,
+			});
+			try {
+				const serviceInternals = service as unknown as { db: WebDatabase };
+				await serviceInternals.db.insert(schema.pipelineSessions).values({
+					id: 'pipe_1',
+					parametersJson: '{}',
+					projectName: 'sample-project',
+					projectPath: projectDir,
+					recipeId: 'skill:onboarding-interview',
+					recipeName: 'Onboarding Interview',
+					startedAt: Date.now() - 2000,
+					status: 'running',
+					totalSteps: 1,
+				});
+				await serviceInternals.db.insert(schema.runs).values({
+					backend: 'native',
+					id: 'run_pipeline_1',
+					mode: 'directive',
+					pipelineSessionId: 'pipe_1',
+					projectName: 'sample-project',
+					projectPath: projectDir,
+					source: 'web',
+					startedAt: Date.now() - 1000,
+					status: 'running',
+				});
+				await writeCliActiveRunRecord({
+					...makeCliActiveRun(projectDir, 'run_pipeline_1'),
+					mode: 'directive',
+					source: 'web',
+				});
+
+				const page = await service.listRunsPage({ topLevel: true });
+
+				expect(page.items).toEqual([]);
+			} finally {
+				service.markDisposed();
+				sqlite.close();
+			}
+		} finally {
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
+
 	test('surfaces stale CLI active-run files as failed and ignores malformed files', async () => {
 		const workspace = await testTempDir('aidd-web-stale-cli-runs-');
 		const rootDir = await makeLauncherRoot('console.log("ok");\n');

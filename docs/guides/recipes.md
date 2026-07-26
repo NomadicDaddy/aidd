@@ -267,7 +267,7 @@ Run an interview workflow, review the responses, convert them into remediations,
 1. `skill` - Generate interview questions (args: {application}; skillId: onboarding-interview)
 2. `aidd-cli` - Answer interview questions (interview: true)
 3. `aidd-cli` - Review interview responses (maxIterations: 1; prompt: Review and assess the interview responses for {application}. Create or update {application}/.aidd/response-review.md with a concise assessment covering response quality, gaps, con...)
-4. `skill` - Convert responses to features (args: {application}; skillId: doc2feature)
+4. `skill` - Convert responses to features (args: .aidd/responses {application}; skillId: doc2feature)
 5. `aidd-cli` - Review remediation features (maxIterations: 1; prompt: Review and assess the remediation features created from the interview responses for {application}. Create or update {application}/.aidd/remediation-review.md with your findings, i...)
 6. `skill` - Review features (args: {application}; skillId: feature-review)
 7. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims,...)
@@ -284,7 +284,7 @@ Review the responses, convert them into remediations, and summarize the resultin
 
 1. `aidd-cli` - Answer interview questions (interview: true)
 2. `aidd-cli` - Review interview responses (maxIterations: 1; prompt: Review and assess the interview responses for {application}. Create or update {application}/.aidd/response-review.md with a concise assessment covering response quality, gaps, con...)
-3. `skill` - Convert responses to features (args: {application}; skillId: doc2feature)
+3. `skill` - Convert responses to features (args: .aidd/responses {application}; skillId: doc2feature)
 4. `aidd-cli` - Review remediation features (maxIterations: 1; prompt: Review and assess the remediation features created from the interview responses for {application}. Create or update {application}/.aidd/remediation-review.md with your findings, i...)
 5. `skill` - Review features (args: {application}; skillId: feature-review)
 6. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims,...)

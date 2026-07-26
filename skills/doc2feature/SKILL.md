@@ -13,11 +13,16 @@ Convert prose documents (interview responses, audit narratives, analysis reports
 ## Usage
 
 ```
-doc2feature <document-path> [app-name]
+doc2feature <document-path | directory> [app-name]
 ```
 
-- `<document-path>`: Path to the prose document to process (markdown, text, or similar)
-- `[app-name]`: Optional. If omitted, infer it from a document path under
+- `<document-path | directory>`: Path to the prose document to process (markdown, text, or
+  similar), **or** a directory of prose documents. When a directory is given (e.g. an interview's
+  `.aidd/responses/`), process every `*.md` inside it as one combined claim corpus — read them all,
+  extract claims across the whole set, and deduplicate claims that recur between files. A pure index
+  file (a table of links with no prose answers, such as `.aidd/responses.md`) is not a source
+  document; skip it and read the files it links instead.
+- `[app-name]`: Optional. If omitted, infer it from a document/directory path under
   `<applications-root>/<app-name>/.aidd/responses/`. If inference fails, return a usage error with
   the discovered candidate paths.
 
@@ -30,20 +35,28 @@ doc2feature <document-path> [app-name]
 
 ## Instructions
 
-### Phase 1: Ingest & Parse Document
+### Phase 1: Ingest & Parse Document(s)
 
-1. **Validate the document** exists and is readable; if not, stop and report
+1. **Resolve the input path** and confirm it is readable; if not, stop and report:
+    - **File**: process that single document.
+    - **Directory**: enumerate every `*.md` inside it and process them as one combined corpus.
+      Skip pure index files (a table of links with no prose answers, e.g. `.aidd/responses.md`) and
+      read the linked response files instead. If the directory contains no readable prose document,
+      stop and report.
 2. **Determine the target application**:
     - If `app-name` argument is provided, use it
-    - If the document lives under `<applications-root>/{app-name}/`, infer from the path
+    - If the input lives under `<applications-root>/{app-name}/`, infer from the path
     - If neither works, return a usage error with discovered candidates
 3. **Locate the application** at `<applications-root>/{app-name}/`; confirm it exists
-4. **Read the full document** into context
+4. **Read the full document(s)** into context
 5. **Report**:
-    - Document filename and path
+    - Each document filename and path (for a directory, the full list processed and any skipped)
     - Target application
     - Document structure (headings, sections, estimated length)
     - Any date indicators (creation date, referenced timeframe)
+
+When multiple documents are processed together, treat claims that recur across files as a single
+claim (deduplicate in Phase 3) rather than emitting one feature per file.
 
 ### Phase 2: Learn the Codebase (Lightweight)
 

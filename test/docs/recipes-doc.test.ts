@@ -17,7 +17,7 @@ const recipesDir = join(repoRoot, 'recipes');
 const docPath = join(repoRoot, 'docs', 'guides', 'recipes.md');
 
 interface RecipeStep {
-	configJson?: { prompt?: string };
+	configJson?: { args?: string; prompt?: string; skillId?: string };
 	stepType: string;
 }
 
@@ -115,6 +115,31 @@ function extractPromptExcerpt(detail: string): string | undefined {
 		.trimEnd();
 }
 
+// A skill step renders as "(args: <args>; skillId: <id>)", or "(skillId: <id>)" when the step
+// has no args. The args value may contain spaces and "{param}" placeholders, so key off the
+// "; skillId: " separator rather than whitespace. Trailing hand-written prose (e.g.
+// "; retryCount: 1", "; post-hook removes ...") lives after the closing ")" and is excluded by
+// keying off the last ")" on the line.
+function extractSkillFields(detail: string): { args: string; skillId: string } | undefined {
+	const open = detail.indexOf('(');
+	const close = detail.lastIndexOf(')');
+	if (open === -1 || close === -1 || close < open) return undefined;
+	const inner = detail.slice(open + '('.length, close);
+	const skillMarker = 'skillId: ';
+	const skillIndex = inner.indexOf(skillMarker);
+	if (skillIndex === -1) return undefined;
+	const argsMatch = /^args: (.*); $/.exec(inner.slice(0, skillIndex));
+	// Long args are truncated with "..." exactly like prompts, so normalize the same way and
+	// treat the quoted value as a prefix of the recipe's args.
+	const args = argsMatch
+		? argsMatch[1]!
+				.replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1')
+				.replace(/\s*\.\.\.$/, '')
+				.trimEnd()
+		: '';
+	return { args, skillId: inner.slice(skillIndex + skillMarker.length) };
+}
+
 function expectedParameters(recipe: RecipeJson): string {
 	return recipe.parameters.length === 0
 		? 'none'
@@ -181,5 +206,41 @@ describe('docs/guides/recipes.md stays in sync with recipes/*.json', () => {
 		}
 		// Guard the guard: a parser that silently stopped matching would vacuously pass.
 		expect(checkedExcerpts).toBeGreaterThan(20);
+	});
+
+	test('each skill step-list entry matches its quoted args and skillId', async () => {
+		const recipes = await loadRecipes();
+		const sections = parseRecipeSections(await readFile(docPath, 'utf8'));
+		let checkedSkills = 0;
+		for (const [id, recipe] of recipes) {
+			const docSteps = sections.get(id)?.steps ?? [];
+			for (const [index, step] of recipe.steps.entries()) {
+				if (step.stepType !== 'skill') continue;
+				const fields = extractSkillFields(docSteps[index]!.detail);
+				expect(
+					fields,
+					`step ${index + 1} of ${id} should quote args and skillId`,
+				).toBeDefined();
+				expect(fields!.skillId, `step ${index + 1} skillId for ${id}`).toBe(
+					step.configJson?.skillId ?? '',
+				);
+				const recipeArgs = step.configJson?.args ?? '';
+				// Prefix match: the doc truncates long args, so the quote must be a leading slice.
+				expect(
+					recipeArgs.startsWith(fields!.args),
+					`step ${index + 1} of ${id} quotes stale args.\n  doc:    ${fields!.args}\n  recipe: ${recipeArgs.slice(0, fields!.args.length)}`,
+				).toBe(true);
+				// A step with args must actually quote them, so dropping them doesn't pass vacuously.
+				if (recipeArgs !== '') {
+					expect(
+						fields!.args.length,
+						`step ${index + 1} of ${id} must quote its args`,
+					).toBeGreaterThan(0);
+				}
+				checkedSkills += 1;
+			}
+		}
+		// Guard the guard: a parser that silently matched nothing would vacuously pass.
+		expect(checkedSkills).toBeGreaterThan(15);
 	});
 });

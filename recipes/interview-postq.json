@@ -25,7 +25,7 @@
 		},
 		{
 			"configJson": {
-				"args": "{application}",
+				"args": ".aidd/responses {application}",
 				"executionIntent": "apply-changes",
 				"skillId": "doc2feature"
 			},

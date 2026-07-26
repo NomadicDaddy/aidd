@@ -149,7 +149,7 @@ export function PipelineSessionReportPage() {
 				<>
 					<SessionSummaryCard now={now} report={report} />
 
-					<StepsCard report={report} />
+					<StepsCard now={now} report={report} />
 				</>
 			)}
 
@@ -251,7 +251,7 @@ function stepSummary(report: PipelineSessionReport): string {
 	return `${executed} of ${rows.length} steps${suffix}`;
 }
 
-function StepsCard({ report }: { report: PipelineSessionReport }) {
+function StepsCard({ now, report }: { now: number; report: PipelineSessionReport }) {
 	return (
 		<Card className="space-y-3">
 			<h2 className="text-lg font-semibold text-foreground">Steps</h2>
@@ -259,7 +259,11 @@ function StepsCard({ report }: { report: PipelineSessionReport }) {
 			<div className="space-y-3">
 				{buildStepRows(report).map((row) =>
 					row.kind === 'executed' ? (
-						<ExecutedStepRow key={`exec-${row.result.id}`} step={row.result} />
+						<ExecutedStepRow
+							key={`exec-${row.result.id}`}
+							now={now}
+							step={row.result}
+						/>
 					) : (
 						<PendingStepRow
 							key={`pending-${row.sequenceNumber}`}

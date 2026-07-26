@@ -116,6 +116,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 												<tr className="border-b bg-neutral-50/60 last:border-0 dark:bg-neutral-900/40">
 													<td className="p-0" colSpan={7}>
 														<PipelineStepSubRows
+															now={now}
 															onSelectRun={(runId) =>
 																props.onSelectStepRun(
 																	entry.session.id,
@@ -169,6 +170,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 									expandedSessions.has(entry.session.id) && (
 										<div className="bg-neutral-50/60 dark:bg-neutral-900/40">
 											<PipelineStepSubRows
+												now={now}
 												onSelectRun={(runId) =>
 													props.onSelectStepRun(entry.session.id, runId)
 												}

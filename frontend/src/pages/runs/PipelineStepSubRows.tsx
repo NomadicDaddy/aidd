@@ -4,7 +4,7 @@ import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
-import { formatDuration } from '../../lib/formatters.ts';
+import { formatActiveDuration } from '../../lib/formatters.ts';
 import { stepTone } from '../pipelineSessions/StepOutput.tsx';
 import { buildStepRows } from '../pipelineSessions/StepRows.tsx';
 
@@ -14,9 +14,11 @@ import { buildStepRows } from '../pipelineSessions/StepRows.tsx';
 // a run instead selects that run in the page's shared Live Console. The report link
 // on the session row remains the full-detail surface.
 export function PipelineStepSubRows({
+	now,
 	onSelectRun,
 	sessionId,
 }: {
+	now: number;
 	onSelectRun: (runId: string) => void;
 	sessionId: string;
 }) {
@@ -68,7 +70,9 @@ export function PipelineStepSubRows({
 						<span className="text-neutral-700 dark:text-neutral-200">
 							{step.stepName}
 						</span>
-						<span className="text-neutral-500">{formatDuration(step.durationMs)}</span>
+						<span className="text-neutral-500">
+							{formatActiveDuration(step.durationMs, step.startedAt, now)}
+						</span>
 						{step.errorMessage && (
 							<span className="max-w-[24rem] truncate text-red-700 dark:text-red-300">
 								{step.errorMessage}

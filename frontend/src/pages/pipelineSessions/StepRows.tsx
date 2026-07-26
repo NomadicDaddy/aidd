@@ -11,7 +11,7 @@ import type {
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
-import { formatDate, formatDuration } from '../../lib/formatters.ts';
+import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { pipelineStepLiveConsoleHref } from './pipelineSessionLinks.ts';
 import { StepOutput, stepTone } from './StepOutput.tsx';
 import { StepRunConsole } from './StepRunConsole.tsx';
@@ -71,7 +71,7 @@ export function buildStepRows(report: PipelineSessionReport): StepRow[] {
 	return rows;
 }
 
-export function ExecutedStepRow({ step }: { step: PipelineStepResultRecord }) {
+export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStepResultRecord }) {
 	return (
 		<div
 			className="rounded-md border border-neutral-200 p-4 dark:border-neutral-800"
@@ -87,7 +87,8 @@ export function ExecutedStepRow({ step }: { step: PipelineStepResultRecord }) {
 						{step.stepName}
 					</h3>
 					<p className="text-xs text-neutral-500">
-						{formatDate(step.startedAt)} · {formatDuration(step.durationMs)}
+						{formatDate(step.startedAt)} ·{' '}
+						{formatActiveDuration(step.durationMs, step.startedAt, now)}
 					</p>
 				</div>
 				{step.runId && (

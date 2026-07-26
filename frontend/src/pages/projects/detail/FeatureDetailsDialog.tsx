@@ -19,6 +19,7 @@ import {
 import {
 	displayValue,
 	FEATURE_METADATA_KEYS,
+	featureDependents,
 	featureDirectory,
 	listValue,
 	textBlockValue,
@@ -34,10 +35,12 @@ function featureNotesForEdit(feature: ProjectFeature): string {
 
 export function FeatureDetailsDialog({
 	feature,
+	features,
 	onClose,
 	projectId,
 }: {
 	feature: ProjectFeature;
+	features: ProjectFeature[];
 	onClose: () => void;
 	projectId: string;
 }) {
@@ -52,6 +55,7 @@ export function FeatureDetailsDialog({
 	const spec = textBlockValue(feature.spec);
 	const steps = textBlockValue(feature.steps);
 	const dependencies = listValue(feature.dependencies);
+	const requiredBy = featureDependents(feature, features);
 	const affectedFiles = listValue(feature.affectedFiles);
 	const notes = listValue(feature.notes);
 	const metadataRows = FEATURE_METADATA_KEYS.map((key) => ({
@@ -220,6 +224,11 @@ export function FeatureDetailsDialog({
 						<FeatureBlockingContextSection blockingContext={feature.blockingContext} />
 						<FeatureApprovalSection approval={feature.approval} />
 						<FeatureListSection items={dependencies} title="Dependencies" />
+						<FeatureListSection
+							hint="Features declaring a dependency on this one — changing its surface affects them."
+							items={requiredBy}
+							title="Required by"
+						/>
 						<FeatureListSection items={affectedFiles} title="Affected files" />
 					</div>
 				</div>

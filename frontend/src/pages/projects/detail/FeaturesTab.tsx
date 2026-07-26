@@ -236,6 +236,7 @@ export function FeaturesTab({
 			{selectedFeature ? (
 				<FeatureDetailsDialog
 					feature={selectedFeature}
+					features={features}
 					onClose={() => setSelectedFeature(null)}
 					projectId={projectId}
 				/>

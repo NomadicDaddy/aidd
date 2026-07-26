@@ -52,6 +52,26 @@ export function featureDirectory(feature: ProjectFeature): string {
 	return feature.directory || feature.id;
 }
 
+// Reverse dependency edges: which features declare a dependency ON this one. Deps are written by
+// either id or directory (and derived projects have id !== directory), so both names must match —
+// the same dual-key rule the CLI's dependency resolver uses. Returned as canonical directory names
+// so the values line up with what the dependency graph and the Features table display.
+export function featureDependents(feature: ProjectFeature, features: ProjectFeature[]): string[] {
+	const names = new Set([feature.id, featureDirectory(feature)].filter(Boolean));
+	const self = featureDirectory(feature);
+	const dependents = new Set<string>();
+	for (const candidate of features) {
+		const candidateDirectory = featureDirectory(candidate);
+		if (candidateDirectory === self) continue;
+		if (!Array.isArray(candidate.dependencies)) continue;
+		const matches = candidate.dependencies.some(
+			(dependency) => typeof dependency === 'string' && names.has(dependency.trim()),
+		);
+		if (matches) dependents.add(candidateDirectory);
+	}
+	return [...dependents].sort((left, right) => left.localeCompare(right));
+}
+
 export function displayValue(value: unknown): string {
 	if (value === null || value === undefined || value === '') return '—';
 	if (typeof value === 'boolean') return value ? 'yes' : 'no';

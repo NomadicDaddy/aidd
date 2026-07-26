@@ -18,11 +18,22 @@ export function FeatureTextSection({ children, title }: { children: string; titl
 	);
 }
 
-export function FeatureListSection({ items, title }: { items: string[]; title: string }) {
+export function FeatureListSection({
+	hint,
+	items,
+	title,
+}: {
+	hint?: string;
+	items: string[];
+	title: string;
+}) {
 	if (items.length === 0) return null;
 	return (
 		<section>
 			<h3 className="text-xs font-semibold text-neutral-500 uppercase">{title}</h3>
+			{hint ? (
+				<p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{hint}</p>
+			) : null}
 			<ul className="mt-2 space-y-1.5">
 				{items.map((item) => (
 					<li

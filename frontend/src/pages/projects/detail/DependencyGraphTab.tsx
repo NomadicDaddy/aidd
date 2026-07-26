@@ -286,6 +286,7 @@ export function DependencyGraphTab({
 			{detailsFeature ? (
 				<FeatureDetailsDialog
 					feature={detailsFeature}
+					features={features}
 					onClose={() => setDetailsFeature(null)}
 					projectId={projectId}
 				/>

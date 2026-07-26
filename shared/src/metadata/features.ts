@@ -1,4 +1,13 @@
 export {
+	buildFeatureNeighborhood,
+	type FeatureGraphNode,
+	type FeatureNeighborhood,
+	featureNeighborhoodSchema,
+	featureNodeId,
+	findDanglingDependencies,
+	findDependencyCycles,
+} from './features/graph.ts';
+export {
 	classifyFeatureStatusType,
 	dependenciesAreSatisfied,
 	featureMatchesQuery,
@@ -8,6 +17,11 @@ export {
 	selectNextFeature,
 	summarizeFeatures,
 } from './features/query.ts';
+export {
+	buildDependencyTopology,
+	type FeatureDependencyTopology,
+	featureDependencyTopologySchema,
+} from './features/topology.ts';
 export {
 	type Feature,
 	type FeatureBlockingContext,

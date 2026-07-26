@@ -1,3 +1,4 @@
+import { classifyDependencyCycles, findDanglingDependencies, indexFeaturesByRef } from './graph.ts';
 import { isAuditFinding, isRemediationFeature } from './query.ts';
 import {
 	type Feature,
@@ -158,6 +159,55 @@ export function validateFeatureCollection(features: Feature[]): FeatureCollectio
 			message:
 				'Completed feature with passes=true is missing affectedFiles (expected from the diff)',
 		});
+	}
+
+	const edges = validateDependencyEdges(features);
+	issues.push(...edges.issues);
+	warnings.push(...edges.warnings);
+
+	return { issues, warnings };
+}
+
+// Edge-level integrity for the dependency DAG. Both defects here are invisible at runtime: the
+// selection gate only asks "are all my dependencies passing?", so an unsatisfiable edge is
+// indistinguishable from work that simply is not done yet. The run reports every candidate as
+// dependency-blocked and stops without naming a cause. Severity follows blast radius — an edge that
+// can still stall selection is an issue; one that only stalls already-finished work is a warning.
+function validateDependencyEdges(features: Feature[]): FeatureCollectionValidationResult {
+	const issues: FeatureValidationIssue[] = [];
+	const warnings: FeatureValidationIssue[] = [];
+	const byRef = indexFeaturesByRef(features);
+	const isSettled = (nodeName: string): boolean => byRef.get(nodeName)?.passes === true;
+
+	for (const { id, ref } of findDanglingDependencies(features)) {
+		const message = `Dependency '${ref}' matches no known feature`;
+		if (isSettled(id)) {
+			warnings.push({ id, message: `${message} (feature already passes; stale reference)` });
+		} else {
+			issues.push({ id, message: `${message}, so this feature can never be selected` });
+		}
+	}
+
+	for (const { deadlocked, path } of classifyDependencyCycles(features)) {
+		const rendered = path.join(' -> ');
+		// A closed walk, so drop the repeated terminal node before reporting per member.
+		const members = path.slice(0, -1);
+		if (!deadlocked) {
+			// A member already passes, so the loop drains and the runtime gate agrees the rest is
+			// reachable. Reporting it as unselectable here would fail the gate on a backlog that is
+			// making progress.
+			warnings.push({
+				id: members[0] ?? 'unknown',
+				message: `Dependency cycle does not block selection because a member already passes, but the declared edges are contradictory: ${rendered}`,
+			});
+			continue;
+		}
+		for (const nodeName of members) {
+			issues.push({
+				id: nodeName,
+				message: `Dependency cycle blocks this feature from ever being selected: ${rendered}`,
+			});
+		}
 	}
 
 	return { issues, warnings };

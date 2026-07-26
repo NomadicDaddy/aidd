@@ -1,30 +1,48 @@
 ---
 name: htmx-guidelines
-description: 'htmx (2.0.10+) development guidelines for attributes, triggers, targets, swap modes, forms, real-time updates, htmx-ext extension packages, security, and response headers. Use when writing or reviewing hypermedia-driven UI built with htmx.'
+description: 'htmx 4.0 development guidelines for attributes, explicit inheritance, triggers, targets, swap modes (incl. morph), hx-status error handling, forms, SSE/WebSocket streaming, extensions, security/CSP, response headers, and 2.x migration. Use when writing or reviewing hypermedia-driven UI built with htmx.'
 metadata:
     aidd-category: general
 ---
 
 # htmx Guidelines
 
-> **Version Requirements**: htmx 2.0.10 or higher (IE11 support removed in 2.0+)
-> **CDN (recommended)**: `https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js`
-> **CDN (alternative)**: `https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js`
-> **bun**: `bun install htmx.org@^2.0.10`
+> **Version Requirements**: htmx **4.0.0-beta6** or higher (the fetch()-based v4 line is the adopted
+> target; the 2.x line is legacy/maintenance)
+> **CDN (minified, default)**: `https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6`
+> **CDN (unminified)**: `https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6/dist/htmx.js`
+> **bun**: `bun install htmx.org@4.0.0-beta6`
 >
-> _Target htmx **2.0.10**. The official docs recommend **jsDelivr** as the primary CDN; unpkg uses
-> the same URL format. The 2.x line is feature-complete but actively maintained. Do not adopt the
-> beta htmx 4.0 rewrite for production work._
+> _Target htmx **4** and pin the **exact** version (no `^` ranges) — v4 is in beta and betas have
+> renamed events between releases. Prefer vendoring the file (self-hosted) over CDN so CSP can stay
+> `script-src 'self'` and upgrades are deliberate. For existing 2.x codebases, see
+> [Migrating from htmx 2.x](#migrating-from-htmx-2x)._
 
 ## Core Principles
 
 1. Keep markup minimal and semantic
-2. Use built-in HTTP methods (GET, POST, PUT, DELETE) appropriately
+2. Use built-in HTTP methods (GET, POST, PUT, PATCH, DELETE) appropriately
 3. Prefer server-side state management over client-side state
 4. Target specific elements for updates instead of full page refreshes
 5. Follow progressive enhancement patterns
 6. Implement proper security measures
-7. Use HATEOS and hypermedia-driven application paradigm
+7. Use HATEOAS and the hypermedia-driven application paradigm
+8. Be explicit: put `hx-target`/`hx-swap` on the triggering element; opt into inheritance
+   deliberately with `:inherited`
+
+## What Changed in 4.0
+
+| Area        | htmx 4 behavior                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| Engine      | `fetch()` replaces `XMLHttpRequest`; responses can stream into the DOM as they arrive                  |
+| Inheritance | **Explicit** — attributes only cascade when marked `:inherited` (2.x cascaded implicitly)              |
+| Errors      | **All responses swap except 204/304** — 4xx/5xx bodies are rendered; control with `hx-status:XXX`      |
+| Events      | Renamed to `htmx:phase:action` (`htmx:before:request`, `htmx:after:swap`, `htmx:response:error`, …)    |
+| Timeout     | Default request timeout is 60 s (was none)                                                             |
+| History     | No localStorage page cache — back/forward refetch by default (`hx-history-cache` ext restores caching) |
+| Extensions  | Loaded by including their script file — the `hx-ext` attribute is gone                                 |
+| Swaps       | New styles: `innerMorph`, `outerMorph`, `textContent`, `delete`; `<hx-partial>` for multi-target swaps |
+| New attrs   | `hx-status:*`, `hx-config`, `hx-action`, `hx-method`, `hx-validate`, `hx-ignore`, `hx-optimistic`      |
 
 ## Structure & Attributes
 
@@ -66,6 +84,27 @@ metadata:
 <button hx-post="/update" hx-target="closest div"></button>
 ```
 
+### Attribute Inheritance (explicit in 4.0)
+
+Attributes no longer cascade to descendants by default. Add `:inherited` on the parent to share a
+value down the DOM tree, and `:append` on a child to extend an inherited value:
+
+```html
+<!-- Both buttons inherit the confirm prompt and target -->
+<div hx-confirm:inherited="Are you sure?" hx-target:inherited="#results">
+	<button hx-get="/search">Search</button>
+	<button hx-get="/filter">Filter</button>
+</div>
+
+<!-- Append to an inherited value -->
+<div hx-include:inherited="#global-fields">
+	<form hx-include:inherited:append=".extra">...</form>
+</div>
+```
+
+`hx-disinherit` / `hx-inherit` are gone — they are unnecessary under the explicit model. Prefer
+repeating the attribute on each element over inheritance unless a subtree genuinely shares behavior.
+
 ## Common Patterns
 
 ### Forms
@@ -79,8 +118,8 @@ metadata:
 ### Dynamic Loading
 
 ```html
-<div hx-get="/data" hx-trigger="revealed">
-	<!-- content loads when visible -->
+<div hx-get="/data" hx-trigger="intersect">
+	<!-- content loads when scrolled into view -->
 </div>
 ```
 
@@ -101,42 +140,60 @@ metadata:
 <div hx-get="/content" hx-swap="outerHTML"></div>
 <!-- Update inner content only -->
 <div hx-get="/content" hx-swap="innerHTML"></div>
-<!-- Update text content only (htmx 2.0+) -->
+<!-- Morph in place: preserves focus, selection, and unchanged nodes -->
+<div hx-get="/content" hx-swap="innerMorph"></div>
+<!-- Update text content only -->
 <div hx-get="/content" hx-swap="textContent"></div>
 <!-- Append new content -->
 <div hx-get="/content" hx-swap="beforeend"></div>
+<!-- Remove the target -->
+<button hx-delete="/item/1" hx-swap="delete" hx-target="closest li">Remove</button>
 ```
+
+Prefer the morph swaps (`innerMorph`/`outerMorph`) for refreshed lists, tables, and anything
+containing form inputs — they avoid clobbering focus and scroll position on periodic or
+event-driven refreshes.
 
 ### 2. Error Handling
 
-```html
-<!-- Simple loading indicator + placeholder for error message -->
-<div hx-indicator=".spinner" hx-post="/action">
-	<span class="htmx-indicator">Loading...</span>
-	<div id="error-message"></div>
-</div>
+htmx 4 swaps **every** response except 204/304 — including 4xx/5xx. Design error responses as
+renderable fragments (this makes server-side form validation trivial), and use `hx-status` for
+per-code routing:
 
-<!-- Custom error handling via events -->
-<div hx-on::error="handleError(event)" hx-post="/action"></div>
+```html
+<form
+	hx-post="/submit"
+	hx-status:422="target:#validation-errors"
+	hx-status:5xx="none"
+	hx-target="#result">
+	<div id="validation-errors"></div>
+	<input name="email" />
+	<button type="submit">Submit</button>
+</form>
 ```
 
-_Note: Error styling or displaying error messages based on response status is often achieved via CSS targeting elements, or by swapping in error content to a dedicated element (e.g., using `hx-target-4xx` from the `response-targets` extension)._
+- `hx-status:XXX` accepts exact codes (`404`) and wildcards (`50x`, `5xx`), matched by specificity
+- `hx-status:...="none"` suppresses the swap for that code
+- Global fallback for unstyled failures: listen for `htmx:response:error` (HTTP errors) and
+  `htmx:error` (everything else) in one external script and show a generic notice
+- To restore 2.x behavior globally (rarely wanted): `htmx.config.noSwap = [204, 304, '4xx', '5xx']`
 
 ### 3. Loading States
 
 ```html
-<!-- Simple loading indicator (htmx 2.0.7+ improved accessibility) -->
+<!-- Inline indicator -->
 <button hx-get="/data">
 	Load Data
-	<span class="htmx-indicator" style="visibility:hidden">Loading...</span>
+	<span class="htmx-indicator">Loading...</span>
 </button>
 
 <!-- External indicator -->
 <div hx-get="/data" hx-indicator="#spinner">Content</div>
-<div class="htmx-indicator" id="spinner" style="visibility:hidden">Loading...</div>
+<div class="htmx-indicator" id="spinner">Loading...</div>
 ```
 
-_Note: In htmx 2.0.7+, indicators use `visibility:hidden` instead of `display:none` for better screen reader accessibility._
+_The `hx-browser-indicator` extension can show the browser tab spinner instead; the default
+indicator CSS is injected via constructable stylesheets (see `htmx.config.includeIndicatorCSS`)._
 
 ### 4. Form Handling
 
@@ -147,59 +204,59 @@ _Note: In htmx 2.0.7+, indicators use `visibility:hidden` instead of `display:no
 	<button type="submit">Submit</button>
 </form>
 
-<!-- Htmx respects standard HTML validation attributes (e.g., `required`) -->
+<!-- htmx respects standard HTML validation attributes; hx-validate controls validation behavior -->
 <form hx-post="/submit-validated">
 	<input name="email" required type="email" />
 	<button type="submit">Submit</button>
 </form>
-
-<!-- Enhanced form validation error reporting with reportValidity() (htmx 2.0.7+, enabled via config) -->
-<meta content='{"reportValidityOfForms":true}' name="htmx-config" />
-<form hx-post="/submit">
-	<input name="email" required type="email" />
-	<input minlength="8" name="password" required type="password" />
-	<button type="submit">Submit</button>
-</form>
 ```
 
-_Note: Htmx prevents the request if standard HTML validation fails client-side. In htmx 2.0.7+, `reportValidity()` provides enhanced form validation error reporting when enabled via configuration._
+Server-side validation pattern: respond `422` with the re-rendered form fragment (fields, values,
+and error messages) — because error responses swap by default, the corrected form appears with no
+client-side code.
+
+### 5. Multi-Element Updates
+
+```html
+<!-- Out-of-band swaps still work -->
+<div id="toast" hx-swap-oob="true">Saved.</div>
+
+<!-- Preferred in 4.0: explicit multi-target partials in one response -->
+<hx-partial hx-target="#row-42">...updated row...</hx-partial>
+<hx-partial hx-swap="beforeend" hx-target="#toasts">...toast...</hx-partial>
+```
 
 ## Advanced Patterns
 
-### 1. Content Updates
+### 1. Streaming & Real-time Updates
 
-```html
-<!-- Update multiple elements -->
-<div hx-get="/data" hx-target="#result1, #result2" hx-trigger="load"></div>
-<!-- Conditional updates based on status code (requires the response-targets extension) -->
-<div
-	hx-ext="response-targets"
-	hx-get="/data"
-	hx-target-200="#success-message"
-	hx-target-4xx="#error-message"
-	hx-trigger="load"></div>
-```
-
-### 2. Real-time Updates
+htmx 4's fetch engine processes streamed responses as they arrive — long-running endpoints can
+flush HTML progressively with no extra markup.
 
 ```html
 <!-- Polling -->
 <div hx-get="/status" hx-trigger="every 2s"></div>
-<!-- WebSocket (htmx 2.x: requires the ws extension; hx-ws was removed in 2.0) -->
-<div hx-ext="ws" ws-connect="wss:/chat">
-	<div id="chat_room">
-		<form ws-send>
-			<input name="message" />
-		</form>
-	</div>
+
+<!-- Server-Sent Events (hx-sse extension; fetch-based, any HTTP method) -->
+<div hx-sse:connect="/events"></div>
+<!-- unnamed SSE messages swap into the connecting element automatically -->
+<!-- named events retrigger other elements: -->
+<div hx-get="/notifications/badge" hx-trigger="notification-created from:body"></div>
+
+<!-- WebSocket (hx-ws extension) -->
+<div hx-ws:connect="wss://example.com/chat">
+	<div id="chat_room"></div>
 </div>
 ```
 
-### 3. Progressive Enhancement
+SSE reconnect behavior is configurable:
+`<meta name="htmx-config" content="sse.reconnectDelay:1s sse.reconnectMaxAttempts:5" />`
+
+### 2. Progressive Enhancement
 
 ```html
 <!-- Fallback for non-JS environments -->
-<a href="/data" hx-get="/data" hx-push-url="true"> Load Data </a>
+<a href="/data" hx-get="/data" hx-push-url="true">Load Data</a>
 ```
 
 ## Security Considerations
@@ -219,6 +276,17 @@ _Note: Htmx prevents the request if standard HTML validation fails client-side. 
 </form>
 ```
 
+### CSP
+
+- `hx-on*`, `hx-vals='js:...'`, `hx-confirm='js:...'`, and JS trigger filters evaluate JavaScript
+  and require `unsafe-eval`. Under a strict CSP, **avoid them** — use external scripts with
+  `addEventListener` (the 2.x `allowEval`/`allowScriptTags` config switches were removed).
+- For strict deployments, the **`hx-csp` extension** provides nonce gating (`hx-nonce` on
+  htmx-active elements, fail-closed), a Trusted Types policy, and `safeEval:true` (nonce-based
+  script injection instead of `new Function()`), enabling
+  `script-src 'self' 'nonce-...'` + `trusted-types htmx`.
+- Allowlist which extensions may activate: `<meta name="htmx-config" content='extensions:"hx-sse"' />`
+
 ## Performance Optimization
 
 ### 1. Request Management
@@ -229,72 +297,103 @@ _Note: Htmx prevents the request if standard HTML validation fails client-side. 
 
 <!-- Request cancellation -->
 <div hx-get="/data" hx-sync="closest form:abort"></div>
+
+<!-- Per-element timeout override (default is 60s in 4.0) -->
+<button hx-config="timeout:30000" hx-get="/slow">Run</button>
 ```
 
 ### 2. Content Loading
 
 ```html
 <!-- Lazy loading -->
-<div hx-get="/content" hx-trigger="revealed"></div>
-<!-- Preloading (requires the preload extension; the preload attribute defaults to mousedown) -->
-<div hx-ext="preload">
-	<a href="/data" preload>Load Data</a>
-</div>
+<div hx-get="/content" hx-trigger="intersect"></div>
+<!-- Preloading (hx-preload extension) -->
+<a href="/data" hx-preload="mouseover">Load Data</a>
 ```
+
+Other performance extensions: `hx-ptag` (skip unchanged polls via `HX-PTag` header),
+`hx-history-cache` (restore back/forward pages from sessionStorage — off by default in 4.0),
+`hx-optimistic` (optimistic UI while a request is in flight).
 
 ## Extension Usage
 
-> **htmx 2.0+ Note**: Extensions were moved **out of the core repo** into a dedicated project ([github.com/bigskysoftware/htmx-extensions](https://github.com/bigskysoftware/htmx-extensions), docs at [extensions.htmx.org](https://extensions.htmx.org)) and are now **versioned and published individually** as `htmx-ext-*` npm packages. Examples include `htmx-ext-ws`, `htmx-ext-sse`, `htmx-ext-response-targets`, `htmx-ext-preload`, `htmx-ext-class-tools`, `htmx-ext-json-enc`, and `htmx-ext-head-support`. The legacy `/dist/ext/` files still ship on the CDN so old URLs keep working, but prefer the per-package install/URL going forward. The `hx-ext="..."` attribute usage below is unchanged.
+> **htmx 4 note**: the `hx-ext` attribute is **gone**. Load an extension by including its script
+> after htmx core — its attributes then activate wherever used. First-party extensions ship under
+> `dist/ext/` in the `htmx.org` package (also on the CDN).
 
 ```html
-<!-- Loading extensions (attribute usage unchanged) -->
-<body hx-ext="class-tools, json-enc">
-	<!-- Extension-specific attributes (example for class-tools) -->
-	<div classes="add foo, remove bar:2s">Content</div>
-</body>
-
-<!-- Shadow DOM support (htmx 2.0+) -->
-<my-web-component>
-	<template shadowrootmode="open">
-		<button hx-get="/data" hx-target="#result">Load Data</button>
-		<div id="result"></div>
-	</template>
-</my-web-component>
+<script src="/vendor/htmx.min.js"></script>
+<script src="/vendor/hx-sse.min.js"></script>
 ```
 
-## Response Headers
+First-party extensions: `hx-sse`, `hx-ws`, `hx-multipart` (networking); `hx-live`, `hx-optimistic`,
+`hx-browser-indicator`, `hx-prompt` (UX); `hx-preload`, `hx-ptag`, `hx-history-cache`
+(performance); `hx-head`, `hx-upsert`, `hx-targets`, `hx-download` (swaps); `htmx-2-compat`,
+`hx-alpine-compat`, `hx-csp` (compatibility/security).
 
-Important response headers to consider:
+## Configuration
+
+Global config via a `<meta>` tag in `<head>` — HCON (`key:value` pairs) or JSON:
+
+```html
+<meta content="defaultSwap:outerHTML transitions:true" name="htmx-config" />
+<meta content='{"defaultSwap":"outerHTML","transitions":true}' name="htmx-config" />
+```
+
+Per-element overrides via `hx-config`: `<button hx-config='credentials:"include"' hx-get="/api">`.
+
+Renamed since 2.x: `defaultSwapStyle`→`defaultSwap`, `globalViewTransitions`→`transitions`,
+`historyEnabled`→`history`, `timeout`→`defaultTimeout`.
+
+## Request & Response Headers
 
 ```plaintext
-HX-Trigger: eventName
-HX-Redirect: /new/location
-HX-Refresh: true
-HX-Reswap: innerHTML
-HX-Retarget: #new-target
-HX-Push-Url: /new/url
+Request:  HX-Request, HX-Request-Type, HX-Current-URL, HX-Source, HX-Target, HX-Boosted,
+          HX-History-Restore-Request
+Response: HX-Trigger (fires after swap), HX-Location, HX-Redirect, HX-Refresh, HX-Retarget,
+          HX-Reswap, HX-Reselect, HX-Push-Url, HX-Replace-Url
 ```
+
+Use `HX-Request` server-side to decide between a full page and a fragment for the same URL.
+
+## Migrating from htmx 2.x
+
+Run the official checker first — it scans templates and JS for 2.x-isms (requires Python 3):
+
+```bash
+npx htmx.org@4.0.0-beta6 upgrade-check -- ./path/to/project/root
+```
+
+| htmx 2.x                       | htmx 4                                                      |
+| ------------------------------ | ----------------------------------------------------------- |
+| Implicit attribute inheritance | Add `:inherited` on the parent (or set per element)         |
+| 4xx/5xx never swapped          | All but 204/304 swap; use `hx-status:XXX` / `noSwap` config |
+| `hx-vars`                      | `hx-vals` with `js:` prefix                                 |
+| `hx-params`                    | Filter in an `htmx:config:request` listener                 |
+| `hx-disable`                   | `hx-ignore` (and old `hx-disabled-elt` is now `hx-disable`) |
+| `hx-ext="..."`                 | Include the extension script; no attribute                  |
+| `sse-connect` / `sse-swap`     | `hx-sse:connect`; unnamed messages swap automatically       |
+| `hx-trigger="sse:event"`       | `hx-trigger="event from:body"`                              |
+| `htmx:afterSwap` etc.          | `htmx:after:swap` etc. (`htmx:phase:action` naming)         |
+| `revealed` trigger             | `intersect` trigger                                         |
+
+The `htmx-2-compat` extension restores implicit inheritance, old event names, and 2.x error
+handling for gradual migrations — use it as a bridge, not a destination.
 
 ## Debugging
 
 1. Use browser developer tools
 2. Monitor network requests
-3. Check htmx events in console (use `htmx.logAll()`)
-4. Utilize htmx debug mode
-5. Implement proper error logging on the server
-
-```html
-<!-- Enable debug logging (place in <head>) -->
-<meta content='{"debug":true}' name="htmx-config" />
-```
+3. Log all htmx events: `<meta name="htmx-config" content="logAll:true" />` (or
+   `htmx.config.logAll = true` in the console)
+4. Implement proper error logging on the server
 
 ## Environmental Considerations
 
-### Browser Compatibility (htmx 2.0+)
+### Browser Compatibility
 
-- **IE Support Removed**: htmx 2.0+ no longer supports Internet Explorer
-- **Modern Browsers**: Chrome 60+, Firefox 55+, Safari 12+, Edge 79+
-- **Shadow DOM**: Full support for Web Components and Shadow DOM in 2.0+
+- htmx 4 requires `fetch()`, `ReadableStream`, and modern DOM APIs — evergreen browsers only; no IE
+- Shadow DOM / Web Components supported
 
 ### PowerShell Integration
 
@@ -320,9 +419,10 @@ Some Pode/Podex applications may surface these documents via a `/devdocs` folder
 
 Official sources behind this guide:
 
-- htmx documentation: <https://htmx.org/docs/>
-- htmx changelog: <https://github.com/bigskysoftware/htmx/blob/master/CHANGELOG.md>
-- htmx 2.0 release (extensions moved out; `hx-ws`/`hx-sse` removed): <https://htmx.org/posts/2024-06-17-htmx-2-0-0-is-released/>
-- htmx extensions (separate `htmx-ext-*` packages): <https://extensions.htmx.org/> · <https://github.com/bigskysoftware/htmx-extensions>
+- htmx 4 documentation: <https://four.htmx.org/docs>
+- htmx 4 reference (attributes, events, config): <https://four.htmx.org/reference>
+- htmx 4 extensions: <https://four.htmx.org/extensions>
+- htmx 2→4 migration: <https://four.htmx.org/docs#migration> · compat: <https://four.htmx.org/extensions/htmx-2-compat>
+- htmx releases/changelog: <https://github.com/bigskysoftware/htmx/releases>
 - `htmx.org` npm package: <https://www.npmjs.com/package/htmx.org>
 - Related skills: `hyperscript-guidelines`, `mustache-guidelines`, `powershell-guidelines`

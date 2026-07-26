@@ -990,10 +990,19 @@ Amendments are additive: state the new contract, never delete or weaken existing
 applies to completed source features too — recording shipped behavior on a completed feature is the
 whole point of the loop.
 
-**Template-owned source features are the one exception.** A source feature carrying a
-`spernakit_version` field is owned by the upstream template, not by this app, and must NOT be
-amended here — a local edit is overwritten on the next template sync. When the source feature is
-template-owned:
+**Template-owned source features are the one exception — unless this repo _is_ the template.** A
+source feature carrying a `spernakit_version` field is owned by the upstream spernakit template, not
+by this app, and must NOT be amended here — a local edit is overwritten on the next template sync.
+
+**First establish which side of that you are on.** This repo is the template itself when its root
+directory is named `spernakit` **and** `scripts/init.ts` exists at that root. In the template repo,
+`spernakit_version` marks features this repo owns and publishes: there is no upstream to escalate
+to, and no sync that could overwrite your edit. Amend those source specs normally, exactly as above
+— the rest of this exception does not apply, and parking a finding because "every source feature is
+template-owned" is wrong there. Nearly every feature in that repo carries `spernakit_version`, so
+reading the exception the other way parks the entire audit queue.
+
+Otherwise this is a derived app. When the source feature is template-owned:
 
 - Amend every non-template source feature normally.
 - For the template-owned one, do not write to its `feature.json`. Record the exact amendment the
@@ -1003,7 +1012,8 @@ template-owned:
   locally: park per the rule below so the amendment can be escalated upstream.
 
 **If you cannot close the loop** (no source feature identifiable, the required contract language
-cannot be derived from what you shipped, or every source feature is template-owned): set
+cannot be derived from what you shipped, or — in a derived app — every source feature is
+template-owned): set
 `"status": "waiting_approval"` on the feature you are implementing, leave `"passes": false`, and
 document the unclosed loop in `CHANGELOG.md`. Do NOT complete a finding while silently skipping the
 loop, and do NOT bury the omission in a notes section — an unclosed feedback loop is a blocker, and
@@ -1019,6 +1029,7 @@ blockers park.
 - Change `id`, `passes`, or `status` on any feature other than the one you are implementing
 - Delete or weaken existing spec lines on a source feature — amendments are additive only
 - Write to any feature carrying `spernakit_version` — template-owned, escalate upstream instead
+  (does not apply inside the spernakit template repo itself, where those features are locally owned)
 - Combine or consolidate tests
 - Reorder tests
 - Invent new status values (only use: `backlog`, `in_progress`, `completed`, `waiting_approval`)

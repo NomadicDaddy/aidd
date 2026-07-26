@@ -437,10 +437,31 @@ describe('prompt compiler — feature.json write matrix', () => {
 		);
 	});
 
+	// The escalate-upstream carve-out deadlocks in the one repo where it has no meaning: spernakit
+	// itself, where 110 of 119 features carry `spernakit_version` and there is no upstream to
+	// escalate to. Three audit findings parked `verification_blocked_self_parked` on 2026-07-26 for
+	// exactly this reason before the prompt named the self case. The carve-out must state its own
+	// precondition, and the detection rule must be concrete enough for the agent to evaluate.
+	test('the template repo itself is excluded from the template-owned carve-out', async () => {
+		const text = await compileCoding();
+		expect(text).toContain('unless this repo _is_ the template');
+		expect(text).toContain(
+			'root directory is named `spernakit` **and** `scripts/init.ts` exists at that root',
+		);
+		expect(text).toContain('there is no upstream to escalate to');
+		expect(text).toContain(
+			'parking a finding because "every source feature is template-owned" is wrong there',
+		);
+		expect(text).toContain(
+			'does not apply inside the spernakit template repo itself, where those features are locally owned',
+		);
+	});
+
 	test('an unclosed feedback loop parks rather than completing silently', async () => {
 		const text = await compileCoding();
 		expect(text).toContain('an unclosed feedback loop is a blocker, and blockers park');
-		expect(text).toContain('every source feature is template-owned');
+		// Scoped to derived apps — in the template repo this branch must never fire.
+		expect(text).toContain('in a derived app — every source feature is template-owned');
 		expect(text).toContain('do NOT bury the omission in a notes');
 	});
 

@@ -1,7 +1,9 @@
+import type { FeatureNeighborhood } from 'aidd-shared/metadata/features';
 import type { ModeContext, ModeHandler, ModeResult, SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { readPersistedBlueprintReadiness } from 'aidd-shared/metadata/blueprint';
+import { buildFeatureNeighborhood, featureNodeId } from 'aidd-shared/metadata/features';
 
 import { createPlanBackedMode } from './base.ts';
 import { evaluateFeatureCompletion } from './coding/completion.ts';
@@ -38,6 +40,21 @@ function skippedNoWorkReason(result: {
 	return description.length > 0 ? description : undefined;
 }
 
+// Reverse edges are the half the metadata never stored: `dependencies` only records what must land
+// first, so nothing told an agent which features are waiting on the surface it is about to build.
+// Both directions are derived from the same inventory selection just read. Returns undefined for
+// non-feature work (phase prompts, no-work iterations) so the prompt section is simply absent.
+async function resolveFeatureGraph(
+	context: ModeContext,
+	work: SelectedWork,
+): Promise<FeatureNeighborhood | undefined> {
+	if (work.kind !== 'feature') return undefined;
+	const allFeatures = await context.store.listFeatures({ includeAudit: true });
+	const selected = allFeatures.find((feature) => featureNodeId(feature) === work.id);
+	if (!selected) return undefined;
+	return buildFeatureNeighborhood(selected, allFeatures);
+}
+
 export function advanceBlueprintRunToCoding(plan: RunPlan): void {
 	plan.prompt.phase = 'coding';
 	plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
@@ -51,11 +68,15 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 	const base = createPlanBackedMode(plan);
 	return {
 		...base,
-		async buildPromptPlan(_context: ModeContext, work: SelectedWork) {
+		async buildPromptPlan(context: ModeContext, work: SelectedWork) {
 			return {
 				...plan.prompt,
 				variables: {
 					...plan.prompt.variables,
+					// Resolved here rather than in the prompt: selection already walked the whole
+					// feature inventory to reach this target, so the agent is handed the topology
+					// instead of re-deriving it with jq over every feature.json.
+					featureGraph: await resolveFeatureGraph(context, work),
 					selectedFeatureId: work.kind === 'feature' ? work.id : undefined,
 				},
 			};

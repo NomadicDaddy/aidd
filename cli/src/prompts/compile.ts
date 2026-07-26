@@ -12,6 +12,8 @@ import {
 	type ProjectContextDigest,
 } from '../metadata/projectContext.ts';
 import { compileAuditPrompt } from './compile/audit.ts';
+import { compileDependencyGraph } from './compile/dependency-graph.ts';
+import { compileDependencyTopology } from './compile/dependency-topology.ts';
 import { compileDirective } from './compile/directive.ts';
 import { compileDirectorPrompt } from './compile/director.ts';
 import { applyFilters } from './compile/filters.ts';
@@ -159,6 +161,12 @@ export async function compilePrompt(
 	let text = applyAppUrl(await applyGuardrails(options.rootDir, withBackend), options.appUrl);
 	const launchContext = renderLaunchContext(options);
 	if (launchContext) text += `\n\n---\n\n${launchContext}`;
+	// Immediately before the result contract, whose scope guard reads against `required_by`. Coding
+	// modes attach the selected feature's neighborhood; audits attach whole-project topology. Each
+	// renders empty without its data, so both are safe to try on every mode.
+	for (const section of [compileDependencyGraph(plan), compileDependencyTopology(plan)]) {
+		if (section) text += `\n\n---\n\n${section}`;
+	}
 	const resultContract = compileResultContract(plan);
 	if (resultContract) text += `\n\n---\n\n${resultContract}`;
 

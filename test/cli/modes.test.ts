@@ -3,6 +3,10 @@ import { mkdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
 import type { ResolvedConfig } from 'aidd-shared/config';
+import {
+	featureDependencyTopologySchema,
+	featureNeighborhoodSchema,
+} from 'aidd-shared/metadata/features';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { createModeHandler } from '../../cli/src/modes/factory.ts';
 import { detectBlockedVerificationAdmission } from '../../cli/src/modes/coding/verification.ts';
@@ -2501,5 +2505,85 @@ describe('mode handlers', () => {
 			['Different project', 'Different type', 'Fleet-wide first', 'First'].sort(),
 		);
 		expect(output.fleetSummary.totalSuggestions).toBe(4);
+	});
+
+	// The compiler renders whatever graph the mode attaches, so the mode is the layer that decides
+	// whether the agent gets a real neighborhood or nothing. Assert the attachment, not just the
+	// rendering — including the reverse edges, which the on-disk metadata never stores.
+	test('coding mode attaches the selected feature dependency graph to the prompt plan', async () => {
+		const { projectDir, store } = await makeProject('coding-dependency-graph');
+		await store.writeFeature({ id: 'db-schema', passes: true, status: 'completed' });
+		await store.writeFeature({
+			dependencies: ['db-schema'],
+			id: 'api-routes',
+			passes: false,
+			status: 'in_progress',
+		});
+		await store.writeFeature({
+			dependencies: ['api-routes'],
+			id: 'admin-ui',
+			passes: false,
+			status: 'backlog',
+		});
+
+		const promptPlan = await createModeHandler(plan(projectDir)).buildPromptPlan(
+			{ projectDir, store },
+			{ description: 'API routes', id: 'api-routes', kind: 'feature' },
+		);
+		const graph = featureNeighborhoodSchema.parse(promptPlan.variables.featureGraph);
+
+		expect(promptPlan.variables.selectedFeatureId).toBe('api-routes');
+		expect(graph.requires.map((node) => [node.id, node.passes])).toEqual([['db-schema', true]]);
+		expect(graph.requiredBy.map((node) => node.id)).toEqual(['admin-ui']);
+		expect(graph.blockedBy).toEqual([]);
+	});
+
+	test('coding mode attaches no graph for non-feature work', async () => {
+		const { projectDir, store } = await makeProject('coding-graph-non-feature');
+		const promptPlan = await createModeHandler(plan(projectDir)).buildPromptPlan(
+			{ projectDir, store },
+			{ description: 'nothing to do', id: 'no-work', kind: 'none' },
+		);
+
+		expect(promptPlan.variables.featureGraph).toBeUndefined();
+	});
+
+	// An audit has no selected feature, so it gets whole-project fan-in instead — the blast-radius
+	// evidence it needs to justify a severity. Audit findings are features too and must be counted.
+	test('audit mode attaches whole-project dependency topology to the prompt plan', async () => {
+		const { projectDir, store } = await makeProject('audit-dependency-topology');
+		await store.writeFeature({
+			affectedFiles: ['src/db/schema.ts'],
+			id: 'db-schema',
+			passes: true,
+			status: 'completed',
+		});
+		await store.writeFeature({ dependencies: ['db-schema'], id: 'api-routes' });
+		await store.writeFeature({
+			auditSource: 'SECURITY',
+			dependencies: ['db-schema'],
+			id: 'audit-security-1700000000-injection',
+		});
+
+		const promptPlan = await createModeHandler(
+			plan(projectDir, ['--audit', 'SECURITY']),
+		).buildPromptPlan(
+			{ projectDir, store },
+			{ description: 'Run SECURITY audit', id: 'SECURITY', kind: 'generic' },
+		);
+		const topology = featureDependencyTopologySchema.parse(
+			promptPlan.variables.featureTopology,
+		);
+
+		expect(topology.featureCount).toBe(3);
+		expect(topology.hubs).toHaveLength(1);
+		expect(topology.hubs[0]?.id).toBe('db-schema');
+		expect(topology.hubs[0]?.dependents).toEqual([
+			'api-routes',
+			'audit-security-1700000000-injection',
+		]);
+		expect(topology.hubs[0]?.affectedFiles).toEqual(['src/db/schema.ts']);
+		expect(topology.cycles).toEqual([]);
+		expect(topology.dangling).toEqual([]);
 	});
 });

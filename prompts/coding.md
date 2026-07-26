@@ -338,10 +338,13 @@ Use the aidd V2 result contract as the source of truth for this iteration's work
 - If the contract provides a feature-backed backlog queue, choose exactly one feature from that queue and work only that feature.
 - If neither is present, stop and report that the coding target is ambiguous.
 
-> **CRITICAL DEPENDENCY RULE:** NEVER select a feature whose dependencies are not satisfied.
-> Before implementing ANY feature, verify that ALL features listed in its `dependencies` array
-> have `"passes": true`. If ANY dependency is not passing, skip that feature only when choosing
-> from a queue; for a selected feature, report the dependency blocker instead of choosing another feature.
+> **CRITICAL DEPENDENCY RULE:** NEVER work a feature whose dependencies are not satisfied.
+> aidd resolves the dependency graph before this prompt is built and states the result in the
+> `SELECTED FEATURE DEPENDENCY GRAPH` section below: every `requires` entry carries its real
+> `passes` value, and `blocked_by` lists any that are unsatisfied. Read that section instead of
+> re-deriving it. When choosing from a queue, skip a dependency-blocked item; for a selected
+> feature, a non-empty `blocked_by` is a metadata defect (the gate should have caught it) — report
+> the blocker rather than picking a different feature.
 
 #### 6.1 Ingest Todo List First (queue mode only)
 
@@ -359,25 +362,26 @@ convert todo items or add anything to `features/`.
 
 #### 6.2 Validate and Select Work
 
-**Ensure all features have dependency tracking (queue mode only):**
+**Dependency state is supplied, not discovered.** The `SELECTED FEATURE DEPENDENCY GRAPH` section
+below is aidd's own resolved graph for this iteration's target: `requires` (what must already pass),
+`required_by` (what depends on the target), and `blocked_by` (unsatisfied prerequisites). Do NOT
+shell out over `.aidd/features/*/feature.json` to recount, re-resolve, or re-verify any of it. Each
+`id` in that section is exactly the feature directory under `/.aidd/features/`, so read a specific
+feature's file directly by name when you need its `steps` or spec text.
 
-```bash
-# Count features without dependencies field
-jq 'if has("dependencies") | not then 1 else 0 end' .aidd/features/*/feature.json
-```
-
-If ANY features lack `dependencies` field, add it (empty array `[]` if no dependencies) before
-proceeding. In selected-feature mode, do not edit other features' files; if the selected feature
-itself lacks the field, add `[]` to that file only.
-
-**Dependency reference format:**
+**Dependency reference format** — refs are feature id slugs (matching the directory name), never
+prose titles:
 
 ```json
 {
-	"dependencies": ["Basic feature", "Another prerequisite"],
+	"dependencies": ["user-model", "session-store"],
 	"description": "Advanced feature"
 }
 ```
+
+A missing `dependencies` field means the same thing as `[]`. In selected-feature mode, do not edit
+other features' files to add it; if the selected feature itself lacks the field, add `[]` to that
+file only.
 
 **Apply the roadmap milestone scope gate:**
 
@@ -398,16 +402,19 @@ itself lacks the field, add `[]` to that file only.
 - Only select features with `"status": "in_progress"` or `"status": "backlog"` (both are approved for agent work)
 - Prefer `"status": "in_progress"` over `"status": "backlog"` (resume unfinished work first)
 - Respect the queue order for otherwise equivalent items
-- Verify ALL dependencies have `"passes": true`
+- Skip any item whose dependencies are not all passing
 
 Do not select synthetic maintenance work such as `artifact_maintenance` or `audit_maintenance` in coding mode. Audit findings are valid coding targets only when they appear in the explicit feature-backed queue or when the run explicitly selected that audit feature.
 
 **Before implementing, update status:**
 
 1. Mark status as `"in_progress"`
-2. Read feature's `description`, `steps`, and `dependencies` fields
-3. For each dependency, review implementation to understand patterns
-4. Record selection in initial assessment
+2. Read the feature's `description` and `steps` fields
+3. For each `requires` entry in the dependency graph section, read that feature's implementation to
+   pick up its established patterns and the interfaces it already exposes
+4. For each `required_by` entry, check what surface it expects from this feature before you design
+   that surface — those are the features your work will be built against
+5. Record selection in initial assessment
 
 **Focus on completing ONE feature perfectly before moving to others.**
 

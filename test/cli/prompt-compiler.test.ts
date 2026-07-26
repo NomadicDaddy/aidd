@@ -474,6 +474,251 @@ describe('prompt compiler — feature.json write matrix', () => {
 	});
 });
 
+// The dependency graph replaced a prompt section that told the agent to jq over every feature.json
+// to re-derive dependency state. The block is only worth that trade if it is actually authoritative,
+// so these assert the rendered contents rather than merely that a heading appeared.
+describe('prompt compiler — dependency graph', () => {
+	const codingPlan = (graph: unknown) => {
+		const promptPlan = plan(['--project-dir', '.', '--cli', 'native']);
+		promptPlan.variables.featureGraph = graph;
+		promptPlan.variables.selectedFeatureId = 'api-routes';
+		return promptPlan;
+	};
+
+	test('renders forward and reverse edges as YAML with pass state', async () => {
+		const { text } = await compilePrompt(
+			codingPlan({
+				blockedBy: [],
+				id: 'api-routes',
+				requiredBy: [
+					{
+						id: 'admin-ui',
+						passes: false,
+						ref: 'api-routes',
+						resolved: true,
+						status: 'backlog',
+						title: 'Admin dashboard',
+					},
+				],
+				requires: [{ id: 'db-schema', passes: true, ref: 'db-schema', resolved: true }],
+				status: 'in_progress',
+				title: 'API routes',
+			}),
+			{ rootDir },
+		);
+		expect(text).toContain('## SELECTED FEATURE DEPENDENCY GRAPH');
+		expect(text).toContain('selected: "api-routes"');
+		expect(text).toContain('- id: "db-schema"');
+		expect(text).toContain('passes: true');
+		expect(text).toContain('- id: "admin-ui"');
+		expect(text).toContain('title: "Admin dashboard"');
+		expect(text).toContain('1 feature depend');
+		expect(text).toContain('`admin-ui`');
+		expect(text).not.toContain('blocked_by:');
+	});
+
+	test('states explicitly when nothing depends on the selected feature', async () => {
+		const { text } = await compilePrompt(
+			codingPlan({ blockedBy: [], id: 'api-routes', requiredBy: [], requires: [] }),
+			{ rootDir },
+		);
+		expect(text).toContain('requires: []');
+		expect(text).toContain('required_by: []');
+		expect(text).toContain('Nothing in the backlog declares a dependency on this feature');
+	});
+
+	test('calls a non-empty blocked_by a metadata defect rather than normal work', async () => {
+		const { text } = await compilePrompt(
+			codingPlan({
+				blockedBy: ['db-schema'],
+				id: 'api-routes',
+				requiredBy: [],
+				requires: [{ id: 'db-schema', passes: false, ref: 'db-schema', resolved: true }],
+			}),
+			{ rootDir },
+		);
+		expect(text).toContain('blocked_by: ["db-schema"]');
+		expect(text).toContain('Treat this as a metadata defect');
+	});
+
+	test('marks a dangling ref unresolved and tells the agent not to invent it', async () => {
+		const { text } = await compilePrompt(
+			codingPlan({
+				blockedBy: ['ghost'],
+				id: 'api-routes',
+				requiredBy: [],
+				requires: [{ id: 'ghost', passes: false, ref: 'ghost', resolved: false }],
+			}),
+			{ rootDir },
+		);
+		expect(text).toContain('unresolved: true');
+		expect(text).toContain('do not invent the missing feature');
+		// An unresolved node's id is the declared ref, not a directory. The block says every id is a
+		// directory, so it has to name this exception or it sends the agent looking for a path that
+		// does not exist.
+		expect(text).toContain('except a node marked');
+		expect(text).toContain('no such directory exists');
+	});
+
+	// Titles are free text and routinely contain colons, which would break a bare YAML scalar and
+	// hand the agent a block it cannot parse.
+	test('quotes titles containing YAML metacharacters', async () => {
+		const { text } = await compilePrompt(
+			codingPlan({
+				blockedBy: [],
+				id: 'api-routes',
+				requiredBy: [],
+				requires: [],
+				title: 'Routes: add "v2" support',
+			}),
+			{ rootDir },
+		);
+		expect(text).toContain('title: "Routes: add \\"v2\\" support"');
+	});
+
+	test('omits the section entirely when no graph was resolved', async () => {
+		const { text } = await compilePrompt(plan(['--project-dir', '.', '--cli', 'native']), {
+			rootDir,
+		});
+		expect(text).not.toContain('## SELECTED FEATURE DEPENDENCY GRAPH');
+	});
+
+	// A malformed variable must degrade to "no section", never to a half-rendered block or a throw
+	// that takes the whole run down before the agent starts.
+	test('ignores a malformed graph variable', async () => {
+		const { text } = await compilePrompt(codingPlan({ id: 42, requires: 'nope' }), { rootDir });
+		expect(text).not.toContain('## SELECTED FEATURE DEPENDENCY GRAPH');
+	});
+
+	// The prompt now asserts the graph is authoritative, so the instruction to re-derive it by
+	// shelling out over the feature files must be gone from the source prompt, not just superseded.
+	test('the coding prompt no longer tells the agent to jq over feature.json for dependencies', async () => {
+		const coding = await file('prompts/coding.md');
+		expect(coding).not.toContain('jq \'if has("dependencies")');
+		expect(coding.replace(/\s+/g, ' ')).toContain(
+			'Dependency state is supplied, not discovered.',
+		);
+	});
+});
+
+// Audits assign severity, and fan-in is the only blast-radius evidence they have. These assert the
+// rendered contents because the block is only worth its tokens if the auditor can act on it.
+describe('prompt compiler — dependency topology', () => {
+	const auditPlan = (topology: unknown) => {
+		const promptPlan = plan(['--project-dir', '.', '--cli', 'native', '--audit', 'SECURITY']);
+		promptPlan.variables.featureTopology = topology;
+		return promptPlan;
+	};
+
+	const topology = (overrides: Record<string, unknown> = {}) => ({
+		cycles: [],
+		dangling: [],
+		edgeCount: 3,
+		featureCount: 6,
+		hubs: [
+			{
+				affectedFiles: ['src/db/schema.ts'],
+				dependentCount: 2,
+				dependents: ['api-routes', 'admin-ui'],
+				id: 'db-schema',
+				omittedFileCount: 0,
+				passes: true,
+				title: 'DB schema',
+			},
+		],
+		omittedHubCount: 0,
+		...overrides,
+	});
+
+	test('renders hubs with fan-in, dependents, and files, and ties them to severity', async () => {
+		const { text } = await compilePrompt(auditPlan(topology()), { rootDir });
+		expect(text).toContain('## FEATURE DEPENDENCY TOPOLOGY');
+		expect(text).toContain('feature_count: 6');
+		expect(text).toContain('dependency_edges: 3');
+		expect(text).toContain('- id: "db-schema"');
+		expect(text).toContain('dependents: 2');
+		expect(text).toContain('required_by: ["api-routes", "admin-ui"]');
+		expect(text).toContain('- "src/db/schema.ts"');
+		expect(text).toContain('Use fan-in as blast-radius evidence when you assign severity');
+		// Fan-in must never become a severity on its own, or every hub file turns into a finding.
+		expect(text).toContain('Fan-in alone never justifies a severity');
+	});
+
+	test('discloses a truncated hub list instead of presenting it as complete', async () => {
+		const { text } = await compilePrompt(auditPlan(topology({ omittedHubCount: 4 })), {
+			rootDir,
+		});
+		expect(text).toContain('4 lower-fan-in feature(s) omitted');
+	});
+
+	test('discloses a truncated file list', async () => {
+		const withOmitted = topology();
+		withOmitted.hubs[0]!.omittedFileCount = 3;
+		const { text } = await compilePrompt(auditPlan(withOmitted), { rootDir });
+		expect(text).toContain('+3 more');
+	});
+
+	test('tells the auditor to raise dangling refs and deadlocked cycles as findings', async () => {
+		const { text } = await compilePrompt(
+			auditPlan(
+				topology({
+					cycles: [{ deadlocked: true, path: ['a', 'b', 'a'] }],
+					dangling: [{ id: 'api-routes', ref: 'ghost' }],
+				}),
+			),
+			{ rootDir },
+		);
+		expect(text).toContain('missing_ref: "ghost"');
+		expect(text).toContain('- path: "a -> b -> a"');
+		expect(text).toContain('deadlocked: true');
+		expect(text).toContain('Raise this as a finding against the backlog metadata');
+		expect(text).toContain('permanently unselectable');
+	});
+
+	test('does not call a drainable cycle blocking', async () => {
+		// A loop with a passing member is contradictory metadata, not stalled work. Telling the auditor
+		// otherwise produces a HIGH finding against a backlog the runtime is happily selecting from.
+		const { text } = await compilePrompt(
+			auditPlan(topology({ cycles: [{ deadlocked: false, path: ['a', 'b', 'a'] }] })),
+			{ rootDir },
+		);
+		expect(text).toContain('deadlocked: false');
+		expect(text).toContain('a member already passes, so the loop can still drain');
+		expect(text).toContain('do not report them as blocking work');
+		expect(text).not.toContain('permanently unselectable');
+	});
+
+	test('says so plainly when no feature has a dependent', async () => {
+		const { text } = await compilePrompt(auditPlan(topology({ edgeCount: 0, hubs: [] })), {
+			rootDir,
+		});
+		expect(text).toContain('hubs: []');
+	});
+
+	test('omits the section for a project with no features at all', async () => {
+		const { text } = await compilePrompt(
+			auditPlan(topology({ edgeCount: 0, featureCount: 0, hubs: [] })),
+			{ rootDir },
+		);
+		expect(text).not.toContain('## FEATURE DEPENDENCY TOPOLOGY');
+	});
+
+	test('omits the section entirely when no topology was attached', async () => {
+		const { text } = await compilePrompt(
+			plan(['--project-dir', '.', '--cli', 'native', '--audit', 'SECURITY']),
+			{ rootDir },
+		);
+		expect(text).not.toContain('## FEATURE DEPENDENCY TOPOLOGY');
+	});
+
+	// Same contract as the per-feature graph: a malformed variable degrades to no section rather
+	// than a half-rendered block or a throw that kills the run before the agent starts.
+	test('ignores a malformed topology variable', async () => {
+		const { text } = await compilePrompt(auditPlan({ hubs: 'nope' }), { rootDir });
+		expect(text).not.toContain('## FEATURE DEPENDENCY TOPOLOGY');
+	});
+});
+
 describe('prompt compiler — project context injection', () => {
 	let projectDir: string;
 

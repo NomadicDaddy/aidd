@@ -8,6 +8,7 @@ import type {
 import type { AgentRunResult } from 'aidd-shared/orchestrator/result';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
+import { buildDependencyTopology } from 'aidd-shared/metadata/features';
 import { simulationMarker, simulationSignaturePhrase } from 'aidd-shared/modes/audit-shared';
 
 import {
@@ -39,9 +40,13 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 	let explicitRetryAudits: string[] | undefined;
 
 	return {
-		async buildPromptPlan(_context: ModeContext, work: SelectedWork) {
+		async buildPromptPlan(context: ModeContext, work: SelectedWork) {
 			const selectedAudits = selectedAuditNames(plan, work);
 			const auditName = selectedAudits[0] ?? currentAuditName(plan);
+			// Audit findings are themselves features and can carry dependencies, so the topology is
+			// built over the full inventory — excluding them would understate the fan-in of anything a
+			// prior audit already flagged.
+			const features = await context.store.listFeatures({ includeAudit: true });
 			return {
 				...plan.prompt,
 				variables: {
@@ -49,6 +54,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					auditBatchMode: selectedAudits.length > 1,
 					auditName,
 					auditNames: selectedAudits,
+					featureTopology: buildDependencyTopology(features),
 				},
 			};
 		},

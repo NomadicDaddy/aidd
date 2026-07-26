@@ -9,6 +9,7 @@ import type {
 	RecipeStepDefinition,
 } from '../../api/types.ts';
 
+import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
@@ -82,6 +83,9 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 						<Badge>{step.phase}</Badge>
 						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
 						<Badge tone="teal">{step.stepType}</Badge>
+						{step.executionIdentity ? (
+							<ExecutionIdentityBadges {...step.executionIdentity} />
+						) : null}
 					</div>
 					<h3 className="mt-2 text-base font-semibold text-foreground">
 						{step.stepName}

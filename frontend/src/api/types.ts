@@ -145,6 +145,7 @@ export type {
 	RepositoryWorktree,
 } from './types/repository.ts';
 export type {
+	PipelineExecutionIdentity,
 	PipelineSessionRecord,
 	PipelineSessionReport,
 	PipelineSessionStatus,

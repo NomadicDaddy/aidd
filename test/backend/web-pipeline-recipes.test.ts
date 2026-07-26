@@ -1182,6 +1182,14 @@ ${heartbeatTerminator()}
 				const plainRun = await runService.getRun(plainReport.stepResults[0]?.runId ?? '');
 				expect(plainRun?.backend).toBe('claude-code');
 				expect(plainRun?.model).toBe('step-model');
+				const plainIdentity = {
+					backend: 'claude-code',
+					model: 'step-model',
+					provider: null,
+					reasoningEffort: 'low',
+				};
+				expect(plainReport.session.executionIdentities).toEqual([plainIdentity]);
+				expect(plainReport.stepResults[0]?.executionIdentity).toEqual(plainIdentity);
 
 				// The launch-time override wins over the step's pinned backend/model.
 				const overridden = await pipelineService.launchRecipe({
@@ -1189,6 +1197,14 @@ ${heartbeatTerminator()}
 					projectDir,
 					recipeId: 'pinned_step',
 				});
+				expect(overridden.executionIdentities).toEqual([
+					{
+						backend: 'codex',
+						model: 'override-model',
+						provider: null,
+						reasoningEffort: null,
+					},
+				]);
 				const overriddenReport = await waitForReport(pipelineService, overridden.id);
 				expect(overriddenReport.session.status).toBe('completed');
 				const overriddenRun = await runService.getRun(
@@ -1196,6 +1212,21 @@ ${heartbeatTerminator()}
 				);
 				expect(overriddenRun?.backend).toBe('codex');
 				expect(overriddenRun?.model).toBe('override-model');
+				const overriddenIdentity = {
+					backend: 'codex',
+					model: 'override-model',
+					provider: null,
+					reasoningEffort: 'low',
+				};
+				expect(overriddenReport.session.executionIdentities).toEqual([overriddenIdentity]);
+				expect(overriddenReport.stepResults[0]?.executionIdentity).toEqual(
+					overriddenIdentity,
+				);
+				const listed = await pipelineService.listSessions({ limit: 100 });
+				expect(
+					listed.items.find((session) => session.id === overridden.id)
+						?.executionIdentities,
+				).toEqual([overriddenIdentity]);
 
 				// Persisted on the session row so resumed sessions rehydrate the override.
 				const row = sqlite
@@ -1205,6 +1236,74 @@ ${heartbeatTerminator()}
 					>('SELECT launch_backend, launch_model FROM pipeline_sessions WHERE id = ?')
 					.get(overridden.id);
 				expect(row).toEqual({ launch_backend: 'codex', launch_model: 'override-model' });
+
+				await recipeService.writeRecipe({
+					id: 'mixed_targets',
+					name: 'Mixed Targets',
+					parameters: [],
+					steps: [
+						{
+							configJson: {
+								backend: 'codex',
+								maxIterations: 1,
+								model: 'gpt-5.6-sol',
+								prompt: 'first',
+								reasoningEffort: 'high',
+							},
+							id: 'mixed_targets_1',
+							name: 'Codex step',
+							stepType: 'aidd-cli',
+						},
+						{
+							configJson: {
+								backend: 'claude-code',
+								maxIterations: 1,
+								model: 'claude-fable-5',
+								prompt: 'second',
+								reasoningEffort: 'xhigh',
+							},
+							id: 'mixed_targets_2',
+							name: 'Claude step',
+							stepType: 'aidd-cli',
+						},
+						{
+							configJson: {
+								backend: 'codex',
+								maxIterations: 1,
+								model: 'gpt-5.6-sol',
+								prompt: 'third',
+								reasoningEffort: 'high',
+							},
+							id: 'mixed_targets_3',
+							name: 'Second Codex step',
+							stepType: 'aidd-cli',
+						},
+					],
+				});
+				const mixed = await pipelineService.launchRecipe({
+					projectDir,
+					recipeId: 'mixed_targets',
+				});
+				const mixedReport = await waitForReport(pipelineService, mixed.id);
+				const firstMixedIdentity = {
+					backend: 'codex',
+					model: 'gpt-5.6-sol',
+					provider: null,
+					reasoningEffort: 'high',
+				};
+				const secondMixedIdentity = {
+					backend: 'claude-code',
+					model: 'claude-fable-5',
+					provider: null,
+					reasoningEffort: 'xhigh',
+				};
+				const mixedIdentities = [firstMixedIdentity, secondMixedIdentity];
+				expect(mixedReport.session.executionIdentities).toEqual(mixedIdentities);
+				expect(mixedReport.stepResults.map((step) => step.executionIdentity)).toEqual([
+					firstMixedIdentity,
+					secondMixedIdentity,
+					firstMixedIdentity,
+				]);
 			} finally {
 				await disposeHarness(pipelineService, runService, sqlite);
 			}

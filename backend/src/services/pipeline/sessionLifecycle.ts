@@ -17,11 +17,8 @@ import { pipelineSessions, pipelineStepResults } from '../../db/schema.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { RunControlError, type RunService } from '../runService.ts';
 import { PROCESS_CLEANUP_TIMEOUT_MS, STEP_CLEANUP_TIMEOUT_MS } from './constants.ts';
-import {
-	createPipelineStepResultId,
-	isActiveSessionStatus,
-	toStepResultRecord,
-} from './helpers.ts';
+import { createPipelineStepResultId, isActiveSessionStatus } from './helpers.ts';
+import { toStepResultRecord } from './recordMappers.ts';
 import {
 	deriveResumeResolution as deriveResumeResolutionFn,
 	type ReconcileResult,

@@ -34,6 +34,13 @@ export type PipelineStepPhase = 'post-hook' | 'pre-hook' | 'step';
 export type PipelineStepStatus =
 	'completed' | 'failed' | 'queued' | 'running' | 'skipped' | 'stopped';
 
+export interface PipelineExecutionIdentity {
+	backend: null | string;
+	model: null | string;
+	provider: null | string;
+	reasoningEffort: null | string;
+}
+
 export type RecipeStepOnFailure = 'auto-fix' | 'continue' | 'stop';
 
 export type RecipeStepType = 'aidd-cli' | 'recipe-ref' | 'shell' | 'skill';
@@ -157,6 +164,7 @@ export interface PipelineSessionRecord {
 	currentStepIndex: number;
 	durationMs: null | number;
 	errorMessage: null | string;
+	executionIdentities: PipelineExecutionIdentity[];
 	id: string;
 	parametersJson: string;
 	projectName: string;
@@ -174,6 +182,7 @@ export interface PipelineStepResultRecord {
 	displayOrder: number;
 	durationMs: null | number;
 	errorMessage: null | string;
+	executionIdentity: null | PipelineExecutionIdentity;
 	exitCode: null | number;
 	id: string;
 	outputSummary: null | string;

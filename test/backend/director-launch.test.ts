@@ -1900,6 +1900,7 @@ describe('DirectorService.launchSuggestion', () => {
 							currentStepIndex: 0,
 							durationMs: null,
 							errorMessage: null,
+							executionIdentities: [],
 							id: 'pipe_recipe',
 							parametersJson: JSON.stringify(input.parameters),
 							projectName: projectSlug,

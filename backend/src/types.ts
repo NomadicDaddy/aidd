@@ -10,6 +10,7 @@ export type {
 	MaturityStageStatus,
 } from './types/maturity.ts';
 export type {
+	PipelineExecutionIdentity,
 	PipelineSessionRecord,
 	PipelineSessionReport,
 	PipelineSessionStatus,

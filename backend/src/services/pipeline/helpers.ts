@@ -1,18 +1,9 @@
 import { type BackendName, normalizeBackendName } from 'aidd-shared/plan/types';
 import { basename } from 'node:path';
 
-import type {
-	PipelineSessionRecord,
-	PipelineSessionStatus,
-	PipelineStepPhase,
-	PipelineStepResultRecord,
-	PipelineStepStatus,
-	RecipeConfigValue,
-	RecipeDefinition,
-	RunLaunchRequest,
-} from '../../types.ts';
+import type { RecipeConfigValue, RecipeDefinition, RunLaunchRequest } from '../../types.ts';
 
-import { managedStepTypes, type PipelineSessionRow, type PipelineStepResultRow } from './types.ts';
+import { managedStepTypes } from './types.ts';
 
 export function createPipelineSessionId(): string {
 	return `pipe_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
@@ -77,46 +68,6 @@ export function parseSessionParameters(parametersJson: string): Record<string, s
 	} catch {
 		return {};
 	}
-}
-
-export function toSessionRecord(row: PipelineSessionRow): PipelineSessionRecord {
-	return {
-		completedAt: row.completedAt,
-		currentStepIndex: row.currentStepIndex,
-		durationMs: row.durationMs,
-		errorMessage: row.errorMessage,
-		id: row.id,
-		parametersJson: row.parametersJson,
-		projectName: row.projectName,
-		projectPath: row.projectPath,
-		recipeId: row.recipeId,
-		recipeName: row.recipeName,
-		startedAt: row.startedAt,
-		status: row.status as PipelineSessionStatus,
-		totalSteps: row.totalSteps,
-	};
-}
-
-export function toStepResultRecord(row: PipelineStepResultRow): PipelineStepResultRecord {
-	return {
-		completedAt: row.completedAt,
-		depth: row.depth,
-		displayOrder: row.displayOrder,
-		durationMs: row.durationMs,
-		errorMessage: row.errorMessage,
-		exitCode: row.exitCode,
-		id: row.id,
-		outputSummary: row.outputSummary,
-		parentStepResultId: row.parentStepResultId,
-		phase: row.phase as PipelineStepPhase,
-		runId: row.runId,
-		sequenceNumber: row.sequenceNumber,
-		sessionId: row.sessionId,
-		startedAt: row.startedAt,
-		status: row.status as PipelineStepStatus,
-		stepName: row.stepName,
-		stepType: row.stepType as PipelineStepResultRecord['stepType'],
-	};
 }
 
 export function configString(

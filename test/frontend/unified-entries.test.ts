@@ -62,6 +62,7 @@ function makeSession(overrides: Partial<PipelineSessionRecord> = {}): PipelineSe
 		currentStepIndex: 1,
 		durationMs: null,
 		errorMessage: null,
+		executionIdentities: [],
 		id: 'sess_1',
 		parametersJson: '{}',
 		projectName: 'aidd',

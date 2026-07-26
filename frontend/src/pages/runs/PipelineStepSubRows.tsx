@@ -1,6 +1,7 @@
 import { default as CircleDashed } from 'lucide-react/dist/esm/icons/circle-dashed';
 import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 
+import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
@@ -67,6 +68,9 @@ export function PipelineStepSubRows({
 						</span>
 						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
 						<Badge tone="teal">{step.stepType}</Badge>
+						{step.executionIdentity ? (
+							<ExecutionIdentityBadges {...step.executionIdentity} />
+						) : null}
 						<span className="text-neutral-700 dark:text-neutral-200">
 							{step.stepName}
 						</span>

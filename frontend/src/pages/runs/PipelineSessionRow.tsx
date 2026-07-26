@@ -7,8 +7,9 @@ import { default as Workflow } from 'lucide-react/dist/esm/icons/workflow';
 import { type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 
-import type { PipelineSessionRecord } from '../../api/types.ts';
+import type { PipelineExecutionIdentity, PipelineSessionRecord } from '../../api/types.ts';
 
+import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName, IconButton } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
@@ -50,6 +51,40 @@ interface PipelineSessionRowProps {
 	onToggle: (id: string) => void;
 	selected: boolean;
 	session: PipelineSessionRecord;
+}
+
+function identityKey(identity: PipelineExecutionIdentity): string {
+	return [
+		identity.backend ?? '',
+		identity.model ?? '',
+		identity.provider ?? '',
+		identity.reasoningEffort ?? '',
+	].join('\u001f');
+}
+
+export function PipelineSessionIdentityBadges({
+	identities,
+}: {
+	identities: PipelineExecutionIdentity[];
+}) {
+	if (identities.length === 0) {
+		return <span className="text-neutral-400 dark:text-neutral-600">—</span>;
+	}
+	return (
+		<span className="inline-flex max-w-full flex-wrap gap-1">
+			{identities.map((identity, index) => (
+				<ExecutionIdentityBadges
+					{...identity}
+					hint={
+						identities.length > 1
+							? `Pipeline runtime ${index + 1} of ${identities.length}`
+							: undefined
+					}
+					key={identityKey(identity)}
+				/>
+			))}
+		</span>
+	);
 }
 
 function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onStop' | 'session'>) {
@@ -163,6 +198,7 @@ function SessionMeta({ session }: { session: PipelineSessionRecord }) {
 	return (
 		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
 			<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
+			<PipelineSessionIdentityBadges identities={session.executionIdentities} />
 			<span>{session.projectName}</span>
 			<span>{formatDate(session.startedAt)}</span>
 		</div>
@@ -199,7 +235,9 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			<td className="px-3 py-3">
 				<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			</td>
-			<td className="px-3 py-3 text-neutral-400 dark:text-neutral-600">—</td>
+			<td className="px-3 py-3">
+				<PipelineSessionIdentityBadges identities={session.executionIdentities} />
+			</td>
 			<td className="px-3 py-3">
 				<Badge tone={sessionStatusTone(session.status)}>
 					{sessionStatusLabel(session.status)}

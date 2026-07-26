@@ -1,12 +1,62 @@
-import { and, desc, eq, lt, or } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, lt, or } from 'drizzle-orm';
 
 import type { WebDatabase } from '../../db/client.ts';
-import type { PipelineSessionRecord, PipelineSessionReport } from '../../types.ts';
+import type {
+	PipelineExecutionIdentity,
+	PipelineSessionRecord,
+	PipelineSessionReport,
+} from '../../types.ts';
 import type { RecipeService } from '../recipeService.ts';
+import type { PipelineSessionRow } from './types.ts';
 
-import { pipelineSessions, pipelineStepResults } from '../../db/schema.ts';
+import { pipelineSessions, pipelineStepResults, runs } from '../../db/schema.ts';
 import { clampLimit, type CursorPage, decodeCursor, encodeCursor } from '../pagination.ts';
-import { toSessionRecord, toStepResultRecord } from './helpers.ts';
+import { toSessionRecord, toStepResultRecord } from './recordMappers.ts';
+
+interface PipelineRunIdentityRow extends PipelineExecutionIdentity {
+	id: string;
+	pipelineSessionId: null | string;
+}
+
+interface PipelineIdentityIndexes {
+	byRunId: Map<string, PipelineExecutionIdentity>;
+	bySessionId: Map<string, PipelineExecutionIdentity[]>;
+}
+
+function executionIdentityKey(identity: PipelineExecutionIdentity): string {
+	return [
+		identity.backend ?? '',
+		identity.model ?? '',
+		identity.provider ?? '',
+		identity.reasoningEffort ?? '',
+	].join('\u001f');
+}
+
+function indexExecutionIdentities(rows: PipelineRunIdentityRow[]): PipelineIdentityIndexes {
+	const byRunId = new Map<string, PipelineExecutionIdentity>();
+	const bySessionId = new Map<string, PipelineExecutionIdentity[]>();
+	const keysBySessionId = new Map<string, Set<string>>();
+	for (const row of rows) {
+		const identity: PipelineExecutionIdentity = {
+			backend: row.backend,
+			model: row.model,
+			provider: row.provider,
+			reasoningEffort: row.reasoningEffort,
+		};
+		byRunId.set(row.id, identity);
+		const sessionId = row.pipelineSessionId;
+		if (sessionId === null) continue;
+		const key = executionIdentityKey(identity);
+		const keys = keysBySessionId.get(sessionId) ?? new Set<string>();
+		if (keys.has(key)) continue;
+		keys.add(key);
+		keysBySessionId.set(sessionId, keys);
+		const identities = bySessionId.get(sessionId) ?? [];
+		identities.push(identity);
+		bySessionId.set(sessionId, identities);
+	}
+	return { byRunId, bySessionId };
+}
 
 export class ReportBuilder {
 	private readonly db: WebDatabase;
@@ -18,14 +68,10 @@ export class ReportBuilder {
 	}
 
 	async getSession(id: string): Promise<PipelineSessionRecord | undefined> {
-		const row = (
-			await this.db
-				.select()
-				.from(pipelineSessions)
-				.where(eq(pipelineSessions.id, id))
-				.limit(1)
-		)[0];
-		return row ? toSessionRecord(row) : undefined;
+		const row = await this.findSessionRow(id);
+		if (!row) return undefined;
+		const identities = await this.loadIdentityIndexes([id]);
+		return toSessionRecord(row, identities.bySessionId.get(id));
 	}
 
 	async listSessions(
@@ -54,37 +100,73 @@ export class ReportBuilder {
 		const hasNext = rows.length > limit;
 		const page = rows.slice(0, limit);
 		const last = page[page.length - 1];
+		const identities = await this.loadIdentityIndexes(page.map((row) => row.id));
 		return {
-			items: page.map(toSessionRecord),
+			items: page.map((row) => toSessionRecord(row, identities.bySessionId.get(row.id))),
 			nextCursor:
 				hasNext && last ? encodeCursor({ id: last.id, startedAt: last.startedAt }) : null,
 		};
 	}
 
 	async getReport(id: string): Promise<PipelineSessionReport | undefined> {
-		const session = await this.getSession(id);
-		if (!session) return undefined;
-		const stepRows = await this.db
-			.select()
-			.from(pipelineStepResults)
-			.where(eq(pipelineStepResults.sessionId, id))
-			.orderBy(pipelineStepResults.displayOrder);
-		// The recipe definition provides the FULL step plan so the report page can show
-		// all upcoming steps (not just the ones that have executed so far). Best-effort:
-		// a deleted recipe falls back to an empty plan rather than failing the report.
-		let recipeSteps: PipelineSessionReport['recipeSteps'] = [];
-		if (this.recipeService) {
-			try {
-				const recipe = await this.recipeService.readRecipe(session.recipeId);
-				recipeSteps = recipe.steps;
-			} catch {
-				recipeSteps = [];
-			}
-		}
+		const row = await this.findSessionRow(id);
+		if (!row) return undefined;
+		const [stepRows, identities, recipeSteps] = await Promise.all([
+			this.db
+				.select()
+				.from(pipelineStepResults)
+				.where(eq(pipelineStepResults.sessionId, id))
+				.orderBy(pipelineStepResults.displayOrder),
+			this.loadIdentityIndexes([id]),
+			this.readRecipeSteps(row.recipeId),
+		]);
 		return {
 			recipeSteps,
-			session,
-			stepResults: stepRows.map(toStepResultRecord),
+			session: toSessionRecord(row, identities.bySessionId.get(id)),
+			stepResults: stepRows.map((step) =>
+				toStepResultRecord(
+					step,
+					step.runId === null ? null : (identities.byRunId.get(step.runId) ?? null),
+				),
+			),
 		};
+	}
+
+	private async findSessionRow(id: string): Promise<PipelineSessionRow | undefined> {
+		return (
+			await this.db
+				.select()
+				.from(pipelineSessions)
+				.where(eq(pipelineSessions.id, id))
+				.limit(1)
+		)[0];
+	}
+
+	private async loadIdentityIndexes(sessionIds: string[]): Promise<PipelineIdentityIndexes> {
+		if (sessionIds.length === 0) return indexExecutionIdentities([]);
+		const rows = await this.db
+			.select({
+				backend: runs.backend,
+				id: runs.id,
+				model: runs.model,
+				pipelineSessionId: runs.pipelineSessionId,
+				provider: runs.provider,
+				reasoningEffort: runs.reasoningEffort,
+			})
+			.from(runs)
+			.where(inArray(runs.pipelineSessionId, sessionIds))
+			.orderBy(asc(runs.startedAt), asc(runs.id));
+		return indexExecutionIdentities(rows);
+	}
+
+	private async readRecipeSteps(recipeId: string): Promise<PipelineSessionReport['recipeSteps']> {
+		if (!this.recipeService) return [];
+		try {
+			const recipe = await this.recipeService.readRecipe(recipeId);
+			return recipe.steps;
+		} catch {
+			// A deleted recipe must not make a persisted session report unreadable.
+			return [];
+		}
 	}
 }

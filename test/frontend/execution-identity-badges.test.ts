@@ -26,6 +26,25 @@ function renderExecutionIdentity(props: Record<string, null | string>): string {
 	return new TextDecoder().decode(result.stdout).trim();
 }
 
+function renderPipelineIdentities(identities: Record<string, null | string>[]): string {
+	const script = [
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { PipelineSessionIdentityBadges } from './src/pages/runs/PipelineSessionRow.tsx';",
+		`console.log(renderToStaticMarkup(createElement(PipelineSessionIdentityBadges, { identities: ${JSON.stringify(identities)} })));`,
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) {
+		throw new Error(new TextDecoder().decode(result.stderr));
+	}
+	return new TextDecoder().decode(result.stdout).trim();
+}
+
 describe('execution identity badge data', () => {
 	test('orders raw CLI, model, and reasoning identifiers', () => {
 		expect(
@@ -118,5 +137,35 @@ describe('ExecutionIdentityBadges', () => {
 	test('renders nothing when no identity metadata exists', () => {
 		const html = renderExecutionIdentity({});
 		expect(html).toBe('');
+	});
+});
+
+describe('PipelineSessionIdentityBadges', () => {
+	test('renders an em dash when no child run has an execution identity', () => {
+		expect(renderPipelineIdentities([])).toContain('>—</span>');
+	});
+
+	test('renders each distinct pipeline runtime with mixed-runtime context', () => {
+		const html = renderPipelineIdentities([
+			{
+				backend: 'codex',
+				model: 'gpt-5.6-sol',
+				provider: null,
+				reasoningEffort: 'high',
+			},
+			{
+				backend: 'claude-code',
+				model: 'claude-fable-5',
+				provider: null,
+				reasoningEffort: 'xhigh',
+			},
+		]);
+
+		expect(html).toContain('Pipeline runtime 1 of 2');
+		expect(html).toContain('Pipeline runtime 2 of 2');
+		expect(html).toContain('codex');
+		expect(html).toContain('gpt-5.6-sol');
+		expect(html).toContain('claude-code');
+		expect(html).toContain('claude-fable-5');
 	});
 });

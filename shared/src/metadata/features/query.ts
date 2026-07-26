@@ -1,3 +1,4 @@
+import { indexFeaturesByRef } from './graph.ts';
 import {
 	type Feature,
 	type FeatureQuery,
@@ -58,6 +59,15 @@ export function summarizeFeatures(features: Feature[]): FeatureStats {
 	const stats: FeatureStats = {
 		byCategoryPriority: [],
 		closed: features.filter((feature) => feature.status === 'completed').length,
+		// Resolved within the array handed in, which every caller populates with the whole inventory.
+		// Mirrors the eligibility test in selectFeatureCandidates so the count matches what selection
+		// would actually skip.
+		dependencyBlocked: features.filter(
+			(feature) =>
+				feature.passes !== true &&
+				feature.status !== 'waiting_approval' &&
+				!dependenciesAreSatisfied(feature, features),
+		).length,
 		failing: features.filter(
 			(feature) => feature.passes === false && feature.status === 'backlog',
 		).length,
@@ -119,10 +129,6 @@ export function selectNextFeature(
 export function dependenciesAreSatisfied(feature: Feature, allFeatures: Feature[]): boolean {
 	const dependencies = feature.dependencies ?? [];
 	if (dependencies.length === 0) return true;
-	const byId = new Map<string, Feature>();
-	for (const candidate of allFeatures) {
-		byId.set(candidate.id, candidate);
-		if (candidate.directory) byId.set(candidate.directory, candidate);
-	}
-	return dependencies.every((dependencyId) => byId.get(dependencyId)?.passes === true);
+	const byRef = indexFeaturesByRef(allFeatures);
+	return dependencies.every((dependencyId) => byRef.get(dependencyId)?.passes === true);
 }

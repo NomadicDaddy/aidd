@@ -129,6 +129,7 @@ export class DirectorFleetSummaryService {
 				auditHealth: prioritySummary.auditHealth,
 				backlog: prioritySummary.backlog,
 				completedCount: project.featureStats.passing,
+				dependencyBlockedCount: project.featureStats.dependencyBlocked,
 				featureCompletion: completion,
 				featureCount: project.featureStats.total,
 				lastRunResult: lastRun,

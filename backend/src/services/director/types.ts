@@ -34,6 +34,11 @@ export interface FleetSummaryProject {
 	auditHealth: DirectorAuditHealth;
 	backlog: DirectorBacklogBreakdown;
 	completedCount: number;
+	/** Otherwise-eligible unfinished features whose dependencies are not all passing; excludes work
+	 * awaiting approval. High relative to the open backlog
+	 * means the project is topologically stalled: more feature work will not move it, the prerequisite
+	 * chain has to be worked first. */
+	dependencyBlockedCount: number;
 	featureCompletion: number;
 	featureCount: number;
 	lastRunResult: {

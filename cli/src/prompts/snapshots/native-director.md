@@ -464,6 +464,7 @@ The fleet summary is a JSON object with this shape:
 				"remediation": { "count": 0, "top": [] }
 			},
 			"completedCount": 80,
+			"dependencyBlockedCount": 1,
 			"featureCompletion": 0.9756,
 			"featureCount": 82,
 			"lastRunResult": {
@@ -511,29 +512,30 @@ The fleet summary is a JSON object with this shape:
 
 **Field reference:**
 
-| Field                                      | Meaning                                                                                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `fleetAggregations.featurePassRate`        | 0-100. Fleet-wide feature pass percentage (passing/total). Drives the Dashboard "Priority Health" headline.                    |
-| `fleetAggregations.fleetHealthScore`       | 0-100. Worst-project priority score (bucket ceiling minus penalty). Diagnostic only; not the dashboard headline.               |
-| `fleetAggregations.priorityHealth`         | Gate-based fleet health. Its highest active bucket drives the primary fleet score.                                             |
-| `fleetAggregations.approvalCounts.pending` | Director suggestions still waiting on human decision.                                                                          |
-| `fleetAggregations.projectCount`           | Total registered projects in this fleet.                                                                                       |
-| `priorityOrder`                            | Absolute bucket order. Never override this order with severity or project count.                                               |
-| `prioritizedWork[]`                        | Pre-ranked work queue from aidd-web. Prefer emitting suggestions from this list in ascending `rank`.                           |
-| `projects[].slug`                          | **The project identifier you use in suggestions.**                                                                             |
-| `projects[].projectId`                     | DB integer id. **Do NOT use this in suggestions.** Use `slug`.                                                                 |
-| `projects[].priorityHealth`                | Gate-based project health from the same priority model as `prioritizedWork`.                                                   |
-| `projects[].backlog`                       | Open backlog breakdown split into audit, remediation, and regular feature buckets.                                             |
-| `projects[].auditHealth`                   | Audit report existence/freshness against configured audit definitions.                                                         |
-| `projects[].featureCompletion`             | 0.0-1.0 fraction (multiply by 100 for percentage).                                                                             |
-| `projects[].phase`                         | Current project lifecycle phase (e.g. "MVP", "v1.0").                                                                          |
-| `projects[].profile`                       | Project assurance profile. Use it to judge whether hardening, audits, and release gates are applicable to this project.        |
-| `projects[].lastRunResult.status`          | `completed`, `failed`, `aborted`, or null.                                                                                     |
-| `projects[].lastRunResult.completedAt`     | ISO timestamp of the last project run, or null.                                                                                |
-| `projects[].auditFindings.total`           | Count of OPEN findings.                                                                                                        |
-| `projects[].auditFindings.bySeverity`      | Counts keyed by `critical \| high \| medium \| low \| info`.                                                                   |
-| `signals[]`                                | External signal provider output (npm/github/webhook). Each has a typed `type` matching the task types enum.                    |
-| `aggregateErrors`                          | Per-source error messages if aggregation partially failed. Do NOT fail the cycle on these; note them in reasoning if relevant. |
+| Field                                      | Meaning                                                                                                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fleetAggregations.featurePassRate`        | 0-100. Fleet-wide feature pass percentage (passing/total). Drives the Dashboard "Priority Health" headline.                                      |
+| `fleetAggregations.fleetHealthScore`       | 0-100. Worst-project priority score (bucket ceiling minus penalty). Diagnostic only; not the dashboard headline.                                 |
+| `fleetAggregations.priorityHealth`         | Gate-based fleet health. Its highest active bucket drives the primary fleet score.                                                               |
+| `fleetAggregations.approvalCounts.pending` | Director suggestions still waiting on human decision.                                                                                            |
+| `fleetAggregations.projectCount`           | Total registered projects in this fleet.                                                                                                         |
+| `priorityOrder`                            | Absolute bucket order. Never override this order with severity or project count.                                                                 |
+| `prioritizedWork[]`                        | Pre-ranked work queue from aidd-web. Prefer emitting suggestions from this list in ascending `rank`.                                             |
+| `projects[].slug`                          | **The project identifier you use in suggestions.**                                                                                               |
+| `projects[].projectId`                     | DB integer id. **Do NOT use this in suggestions.** Use `slug`.                                                                                   |
+| `projects[].priorityHealth`                | Gate-based project health from the same priority model as `prioritizedWork`.                                                                     |
+| `projects[].backlog`                       | Open backlog breakdown split into audit, remediation, and regular feature buckets.                                                               |
+| `projects[].auditHealth`                   | Audit report existence/freshness against configured audit definitions.                                                                           |
+| `projects[].featureCompletion`             | 0.0-1.0 fraction (multiply by 100 for percentage).                                                                                               |
+| `projects[].dependencyBlockedCount`        | Otherwise-eligible unfinished work blocked solely by unsatisfied dependencies; excludes items awaiting approval — see the dependency rule below. |
+| `projects[].phase`                         | Current project lifecycle phase (e.g. "MVP", "v1.0").                                                                                            |
+| `projects[].profile`                       | Project assurance profile. Use it to judge whether hardening, audits, and release gates are applicable to this project.                          |
+| `projects[].lastRunResult.status`          | `completed`, `failed`, `aborted`, or null.                                                                                                       |
+| `projects[].lastRunResult.completedAt`     | ISO timestamp of the last project run, or null.                                                                                                  |
+| `projects[].auditFindings.total`           | Count of OPEN findings.                                                                                                                          |
+| `projects[].auditFindings.bySeverity`      | Counts keyed by `critical \| high \| medium \| low \| info`.                                                                                     |
+| `signals[]`                                | External signal provider output (npm/github/webhook). Each has a typed `type` matching the task types enum.                                      |
+| `aggregateErrors`                          | Per-source error messages if aggregation partially failed. Do NOT fail the cycle on these; note them in reasoning if relevant.                   |
 
 **Freshness check**: If `generatedAt` is older than (now − 30 minutes) OR `ttlSeconds` has expired, mention this in the reasoning of any fleet-wide suggestion you emit, and prefer suggestions backed by direct HIGH or MEDIUM evidence. Do not create speculative stale-data suggestions solely because the summary is old.
 
@@ -559,6 +561,12 @@ Project profiles are applicability context:
 - `internet_single_org`, `public_multi_tenant`, `critical_regulated`, `dataSensitivity=regulated`, `deployment=public_server|cloud`, `criticality=business_critical`, or `externalIntegrations=financial_or_security` justify stronger security, CI/CD, audit freshness, and release-gate suggestions.
 - `prototype_archive` should produce no normal backlog push unless the prioritized work already exposes a concrete high-risk operational issue.
 - When `prioritizedWork[].evidence.profileAdjustment` is present, mention it in `reasoning` and keep the emitted risk aligned with `prioritizedWork[].riskLevel`.
+
+`projects[].dependencyBlockedCount` is topology, not a task type. It counts otherwise-eligible unfinished work — features, audit findings, and remediations alike — that a coding run cannot select because its declared dependencies are not all passing. Items awaiting approval are excluded, because approval rather than topology is what holds those back. Read it as follows, and never emit a suggestion whose only evidence is this number:
+
+- `dependencyBlockedCount` at or near the project's total open work means the project is stalled on its own prerequisite chain. A "push the backlog" suggestion will do nothing there. Say so in `reasoning` and keep the emitted risk aligned with whatever `prioritizedWork[]` already ranked.
+- A low `featureCompletion` next to a high `dependencyBlockedCount` is an ordering problem, not neglect. Do not escalate `feature_completion` risk on staleness alone when the work is dependency-blocked.
+- `dependencyBlockedCount` far above zero while `prioritizedWork[]` is empty is a metadata smell worth naming in reasoning: either the prerequisites genuinely are not done, or the dependency lists are stale.
 
 For legacy and external signals not represented in `prioritizedWork[]`, use the selection matrix below.
 

@@ -44,6 +44,7 @@ describe('maturity compute audit freshness', () => {
 				auditFreshnessContext,
 				featureStats: {
 					closed: 0,
+					dependencyBlocked: 0,
 					failing: 0,
 					open: 0,
 					passing: 0,

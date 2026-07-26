@@ -1,5 +1,6 @@
 export interface FeatureStats {
 	closed: number;
+	dependencyBlocked: number;
 	failing: number;
 	open: number;
 	passing: number;

@@ -58,6 +58,13 @@ export interface FeatureStats {
 		total: number;
 	}[];
 	closed: number;
+	/** Unfinished features that selection would otherwise be free to pick but cannot, because their own
+	 * dependencies are not all passing. Excludes `waiting_approval`, matching the eligibility test in
+	 * `selectFeatureCandidates`: those are held by approval rather than topology, and counting them
+	 * here would overstate how much work is unblockable by finishing prerequisites. Counted separately
+	 * from `open` (which includes them) because a backlog that is large but mostly dependency-blocked
+	 * needs unblocking work, not more features — a distinction invisible from the other counts. */
+	dependencyBlocked: number;
 	failing: number;
 	open: number;
 	passing: number;

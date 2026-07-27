@@ -33,16 +33,32 @@ function errorTextIsRateLimit(message: string | undefined): boolean {
 	return decoded !== undefined && isRateLimitText(JSON.stringify(decoded));
 }
 
-const nonfatalItemDiagnosticPatterns = [
-	/^Skill descriptions were shortened to fit the \d+% skills context budget\./i,
-	/^Model metadata for .+ not found\. Defaulting to fallback metadata\b/i,
+// Codex reports several benign configuration notices through the same item-error channel it uses
+// for provider failures. They are not failures and must never explain a run's outcome, but some of
+// them are worth an operator's attention, so each carries the action that resolves it. `advice`
+// travels on the event's meta and is surfaced as an advisory, not an error.
+const nonfatalItemDiagnostics: { advice?: string; pattern: RegExp }[] = [
+	{
+		advice:
+			'Codex truncated its skill descriptions to fit its skills context budget, so the agent ' +
+			'may not have seen every installed skill. If a skill it needed went unused, trim the ' +
+			'installed skill set or raise the skills context budget in the Codex config.',
+		pattern: /^Skill descriptions were shortened to fit the \d+% skills context budget\./i,
+	},
+	{
+		advice:
+			'Codex has no metadata for the requested model and fell back to defaults, so token ' +
+			'accounting and context limits for this run are estimates. Check the model name against ' +
+			'the installed Codex version.',
+		pattern: /^Model metadata for .+ not found\. Defaulting to fallback metadata\b/i,
+	},
 ];
 
-function itemErrorIsNonfatalDiagnostic(message: string | undefined): boolean {
-	return (
-		message !== undefined &&
-		nonfatalItemDiagnosticPatterns.some((pattern) => pattern.test(message))
-	);
+function nonfatalItemDiagnostic(
+	message: string | undefined,
+): (typeof nonfatalItemDiagnostics)[number] | undefined {
+	if (message === undefined) return undefined;
+	return nonfatalItemDiagnostics.find((diagnostic) => diagnostic.pattern.test(message));
 }
 
 function parseUsage(usage: Record<string, unknown>): AgentEvent | undefined {
@@ -106,12 +122,17 @@ function parseItemEvent(envelopeType: string, item: Record<string, unknown>): Ag
 		const message = readString(item.message);
 		const reason: AgentErrorReason = errorTextIsRateLimit(message) ? 'rate_limit' : 'provider';
 		if (reason === 'rate_limit') events.push({ raw: item, type: 'rate_limit' });
+		const diagnostic = nonfatalItemDiagnostic(message);
 		const errorEvent: AgentErrorEvent = {
-			meta: { message, raw: item },
+			meta: {
+				...(diagnostic?.advice === undefined ? {} : { advisory: diagnostic.advice }),
+				message,
+				raw: item,
+			},
 			reason,
 			type: 'error',
 		};
-		if (itemErrorIsNonfatalDiagnostic(message)) errorEvent.fatal = false;
+		if (diagnostic !== undefined) errorEvent.fatal = false;
 		events.push(errorEvent);
 		return events;
 	}

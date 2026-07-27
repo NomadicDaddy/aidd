@@ -263,4 +263,23 @@ describe('exitCodeFromEvents rate-limit classification', () => {
 		const events = parsePlainBackendOutput(stdout, '', 1);
 		expect(exitCodeFromEvents(events)).toBe(orchestratorExitCodes.rateLimited);
 	});
+
+	test('a trailing nonfatal advisory never outranks the real error behind it', async () => {
+		const { exitCodeFromEvents, orchestratorExitCodes } =
+			await import('aidd-shared/orchestrator/result');
+		// A recognized-benign notice arriving after the genuine failure must not become the
+		// classification just because it is the last error in the stream.
+		const events: AgentEvent[] = [
+			{ raw: 'limit', type: 'rate_limit' },
+			{ meta: { message: 'throttled' }, reason: 'rate_limit', type: 'error' },
+			{
+				fatal: false,
+				meta: { message: 'skills truncated' },
+				reason: 'provider',
+				type: 'error',
+			},
+			{ exitCode: 1, filesModified: [], type: 'done' },
+		];
+		expect(exitCodeFromEvents(events)).toBe(orchestratorExitCodes.rateLimited);
+	});
 });

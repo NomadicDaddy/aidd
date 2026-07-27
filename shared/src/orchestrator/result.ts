@@ -47,9 +47,13 @@ function assistantText(events: AgentEvent[]): string {
 export function exitCodeFromEvents(events: AgentEvent[]): number {
 	const done = [...events].reverse().find((event) => event.type === 'done');
 	const successfulDone = done?.type === 'done' && done.exitCode === orchestratorExitCodes.success;
+	// A nonfatal event is one a parser explicitly recognized as a known-benign advisory (e.g.
+	// codex's skills-context-budget notice). It never explains an outcome, so it must never pick
+	// the exit code — not even when the backend also exited nonzero for an unrelated reason, which
+	// used to classify a benign notice as `providerError` and bury the backend's real exit.
 	const error = [...events]
 		.reverse()
-		.find((event) => event.type === 'error' && !(successfulDone && !isFatalAgentError(event)));
+		.find((event) => event.type === 'error' && isFatalAgentError(event));
 	if (error?.type === 'error') {
 		switch (error.reason) {
 			case 'aborted':

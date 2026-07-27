@@ -48,6 +48,11 @@ export interface FinalCheckSummary {
 export type FinalCheckStatus = 'failed' | 'passed';
 
 export interface IterationDetails {
+	/** Operator-actionable notices a backend reported through its error channel but which are not
+	 * failures (e.g. codex truncating skill descriptions to fit its context budget). Kept apart
+	 * from `errors` so they never explain an outcome, and surfaced so a real configuration problem
+	 * is not silently discarded along with the noise. */
+	advisories?: string[];
 	commands: string[];
 	/** True when at least one command result carried a definitive pass/fail verdict (an exit code or
 	 * a [PASS]/[FAIL] marker). False means this backend gave us no way to tell gates apart, so an

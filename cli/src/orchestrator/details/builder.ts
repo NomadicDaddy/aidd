@@ -59,6 +59,7 @@ export function extractIterationDetails(
 	const filesEdited: string[] = [];
 	const filesCreated: string[] = [];
 	const commands: string[] = [];
+	const advisories: string[] = [];
 	const errors: IterationError[] = [];
 	const failedCommands: string[] = [];
 	const finalChecks: FinalCheckSummary = {};
@@ -137,7 +138,11 @@ export function extractIterationDetails(
 			// masquerade as the cause of any non-success run that emitted nothing else — a run
 			// that failed on missing_aidd_result read as "provider error: Skill descriptions were
 			// shortened…". No provider error at all is the honest answer in that case.
-			if (fatality === 'nonfatal') continue;
+			if (fatality === 'nonfatal') {
+				const advisory = advisoryFromMeta(event.meta);
+				if (advisory !== undefined) advisories.push(advisory);
+				continue;
+			}
 			const text = eventTextForClassification(event) ?? event.reason;
 			const classified = classifyErrorText(text);
 			if (event.reason === 'provider') {
@@ -226,6 +231,7 @@ export function extractIterationDetails(
 		summary,
 	};
 	if (providerError) details.providerError = providerError;
+	if (advisories.length > 0) details.advisories = uniqueOrdered(advisories);
 
 	if (work?.kind === 'feature') {
 		details.featureSlug = work.id;
@@ -233,6 +239,14 @@ export function extractIterationDetails(
 	}
 
 	return details;
+}
+
+// Parsers attach the resolving action to a recognized advisory as `meta.advisory`; an advisory
+// without one is pure noise and is dropped rather than reported as something to act on.
+function advisoryFromMeta(meta: unknown): string | undefined {
+	if (typeof meta !== 'object' || meta === null) return undefined;
+	const advisory = (meta as Record<string, unknown>).advisory;
+	return typeof advisory === 'string' && advisory.length > 0 ? advisory : undefined;
 }
 
 function asksForUserInput(events: AgentEvent[]): boolean {

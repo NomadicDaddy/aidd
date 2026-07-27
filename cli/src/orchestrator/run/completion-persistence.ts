@@ -64,6 +64,36 @@ async function ignoredMetadataCompletionSatisfiesCommitGate(
 	return true;
 }
 
+/** Simulation runs have no real agent to write the feature back, so the orchestrator applies the
+ * completion the simulated result claims. Guarded the same way a real one is: the claim must name
+ * the feature this iteration selected, and something must actually have been committed — otherwise
+ * a simulation would flip features to completed on no evidence at all. */
+export async function applySimulatedFeatureCompletion(input: {
+	iterationCommitCount: number;
+	store: AiddStore;
+	structuredResult: { featureId?: string; passes?: boolean; status?: string } | undefined;
+	work: SelectedWork;
+}): Promise<void> {
+	const { iterationCommitCount, store, structuredResult, work } = input;
+	if (
+		work.kind !== 'feature' ||
+		structuredResult?.featureId !== work.id ||
+		structuredResult.status !== 'completed' ||
+		structuredResult.passes !== true
+	) {
+		return;
+	}
+	const feature = await store.readFeature(work.id);
+	if (feature.status === 'completed' && feature.passes === true) return;
+	if (iterationCommitCount === 0) return;
+	await store.writeFeature({
+		...feature,
+		passes: true,
+		status: 'completed',
+		updatedAt: new Date().toISOString(),
+	});
+}
+
 /** A path already dirty at run start is operator state the run must not claim — but only while the
  * run leaves it alone. Once this iteration writes to it, the edit is the run's own uncommitted
  * source work, and the ignored-metadata allowance must not excuse it just because the path was

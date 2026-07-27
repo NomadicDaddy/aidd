@@ -12,7 +12,10 @@ import {
 } from '../triumvirate/planning-recovery.ts';
 import { buildIterationStructured } from './artifacts.ts';
 import { buildFeatureBlockingContext } from './blocking-context.ts';
-import { completionRequiresCommit } from './completion-persistence.ts';
+import {
+	applySimulatedFeatureCompletion,
+	completionRequiresCommit,
+} from './completion-persistence.ts';
 import { auditFeatureScope, featureRecoveryTarget } from './feature-scope.ts';
 import { listGitCommits, readGitHead } from './git.ts';
 import { classifyIterationOutcome } from './iteration-outcome.ts';
@@ -77,24 +80,13 @@ export async function finalizeIteration(
 		store: deps.store,
 		work,
 	});
-	if (
-		plan.simulation &&
-		work.kind === 'feature' &&
-		structuredResult?.featureId === work.id &&
-		structuredResult.status === 'completed' &&
-		structuredResult.passes === true
-	) {
-		const feature = await deps.store.readFeature(work.id);
-		const alreadyCompleted = feature.status === 'completed' && feature.passes === true;
-		const canFlip = iterationCommits.length > 0 || alreadyCompleted;
-		if (canFlip && !alreadyCompleted) {
-			await deps.store.writeFeature({
-				...feature,
-				passes: true,
-				status: 'completed',
-				updatedAt: new Date().toISOString(),
-			});
-		}
+	if (plan.simulation) {
+		await applySimulatedFeatureCompletion({
+			iterationCommitCount: iterationCommits.length,
+			store: deps.store,
+			structuredResult,
+			work,
+		});
 	}
 	move({ result, type: 'process_result' });
 	const modeResult = await mode.processResult(context, result);
@@ -280,6 +272,12 @@ export async function finalizeIteration(
 		structured,
 	});
 	await deps.observer?.onIteration?.({ log: `${result.transcript}\n`, structured });
+	// Recognized-benign backend notices are excluded from the error accounting so they cannot
+	// masquerade as a failure — but a truncated skill catalogue or a missing model profile is a
+	// real configuration problem, so print the resolving action instead of discarding it silently.
+	for (const advisory of detailsWithModeFileChanges.advisories ?? []) {
+		console.warn(`[advisory] ${advisory}`);
+	}
 	const summary = await mode.summarize(context, modeResult);
 	const displayedSummary = appendPlanningRecoverySummary(summary.text, planningRecovery);
 	console.log(`\n${displayedSummary}`);

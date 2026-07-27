@@ -580,6 +580,26 @@ describe('codex stream end-to-end provider error', () => {
 		expect(details.errors).toEqual([]);
 	});
 
+	// Excluding an advisory from the error accounting must not mean discarding it: a truncated
+	// skill catalogue is a real configuration problem, so the resolving action is surfaced
+	// separately for the orchestrator to print.
+	test('collects the resolving action of a recognized advisory, deduplicated', async () => {
+		const { parseCodexBackendOutput } = await import('aidd-shared/backends/parsers/codex');
+		const advisoryLine = JSON.stringify({
+			type: 'item.completed',
+			item: {
+				id: 'item_0',
+				type: 'error',
+				message: 'Skill descriptions were shortened to fit the 2% skills context budget.',
+			},
+		});
+		const events = parseCodexBackendOutput([advisoryLine, advisoryLine].join('\n'), '', 0);
+		const details = extractIterationDetails(events, orchestratorExitCodes.success);
+
+		expect(details.advisories?.length).toBe(1);
+		expect(details.advisories?.[0]).toContain('skills context budget');
+	});
+
 	test('turn.failed displaces an earlier unspecified item error', async () => {
 		const { parseCodexBackendOutput } = await import('aidd-shared/backends/parsers/codex');
 		const stdout = [

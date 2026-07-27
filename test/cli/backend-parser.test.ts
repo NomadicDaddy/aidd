@@ -311,6 +311,33 @@ describe('codex real error surfacing', () => {
 		expect(JSON.stringify(error.meta)).toContain('gpt-5.6-sol');
 	});
 
+	test('recognized nonfatal diagnostics carry the resolving action as an advisory', () => {
+		const cases = [
+			{
+				expected: 'skills context budget',
+				message: 'Skill descriptions were shortened to fit the 2% skills context budget.',
+			},
+			{
+				expected: 'token accounting',
+				message:
+					'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata.',
+			},
+		];
+
+		for (const { expected, message } of cases) {
+			const stdout = JSON.stringify({
+				type: 'item.completed',
+				item: { id: 'item_0', type: 'error', message },
+			});
+			const error = parseCodexBackendOutput(stdout, '', 0).find(
+				(event) => event.type === 'error',
+			);
+			if (error?.type !== 'error') throw new Error('expected error event');
+			const advisory = (error.meta as { advisory?: string } | undefined)?.advisory;
+			expect(advisory).toContain(expected);
+		}
+	});
+
 	test('nonfatal skill-description diagnostics do not override a successful Codex turn', () => {
 		const stdout = [
 			JSON.stringify({

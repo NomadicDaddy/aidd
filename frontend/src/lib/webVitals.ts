@@ -9,8 +9,13 @@ interface VitalMetric {
 	value: number;
 }
 
-function shouldLogToConsole(): boolean {
-	return import.meta.env.DEV || window.localStorage.getItem('aidd:crawltest') === '1';
+export function shouldLogToConsole(isDevelopment?: boolean): boolean {
+	if (isDevelopment ?? import.meta.env.DEV) return true;
+	try {
+		return window.localStorage.getItem('aidd:crawltest') === '1';
+	} catch {
+		return false;
+	}
 }
 
 let buffer: VitalMetric[] = [];

@@ -44,7 +44,7 @@ interface DialogProps {
 }
 
 const OVERLAY_BASE =
-	'fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm';
+	'fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-slate-950/70 px-4 py-6 backdrop-blur-sm';
 
 /**
  * Canonical modal dialog primitive.

@@ -8,6 +8,7 @@ export const PROJECT_DETAIL_TAB_IDS = [
 	'history',
 	'interview',
 	'management',
+	'milestones',
 	'notes',
 	'overview',
 	'profile',

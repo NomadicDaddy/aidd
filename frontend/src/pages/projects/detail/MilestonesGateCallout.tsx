@@ -1,0 +1,63 @@
+import { default as ShieldAlert } from 'lucide-react/dist/esm/icons/shield-alert';
+
+import type { ProjectMilestonesView } from '../../../api/types.ts';
+
+import { Card } from '../../../components/ui/card.tsx';
+
+/**
+ * The two ways a roadmap can be wrong, rendered with the same red treatment the features tab uses
+ * for unmapped directories:
+ *
+ * - unmapped features set `blockReason: 'unmapped_features'` and stop every coding run project-wide;
+ * - cross-milestone dependency violations do not block the gate at all. It reports `blocked: false`,
+ *   the run ends "all candidates dependency-blocked", and nothing names the cause. This callout is
+ *   the only place that names it.
+ */
+export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView }) {
+	const unmapped = view.unmappedFeatureDirectories;
+	if (unmapped.length === 0 && view.violations.length === 0) return null;
+	return (
+		<Card className="space-y-2 border-red-300 dark:border-red-900">
+			<div className="flex items-center gap-2">
+				<ShieldAlert className="h-4 w-4 text-red-500" />
+				<h3 className="text-sm font-semibold text-foreground">Roadmap problems</h3>
+			</div>
+			{unmapped.length > 0 ? (
+				<p className="text-sm text-neutral-600 dark:text-neutral-300">
+					{unmapped.length} feature director{unmapped.length === 1 ? 'y has' : 'ies have'}{' '}
+					no milestone and block{unmapped.length === 1 ? 's' : ''} coding selection:{' '}
+					<span className="font-mono text-xs" title={unmapped.join(', ')}>
+						{unmapped.slice(0, 5).join(', ')}
+						{unmapped.length > 5 ? ', …' : ''}
+					</span>
+					. Auto-place features resolves them.
+				</p>
+			) : null}
+			{view.violations.length > 0 ? (
+				<div className="space-y-1">
+					<p className="text-sm text-neutral-600 dark:text-neutral-300">
+						{view.violations.length} feature
+						{view.violations.length === 1 ? '' : 's'} depend on work scheduled in a
+						later milestone. The gate does not report this — those features are simply
+						never selectable while their own milestone is active.
+					</p>
+					<ul className="space-y-0.5 text-xs text-red-600 dark:text-red-400">
+						{view.violations.slice(0, 8).map((violation) => (
+							<li key={`${violation.featureDirectory}:${violation.dependency}`}>
+								<span className="font-mono">{violation.featureDirectory}</span> (
+								{violation.milestone}) →{' '}
+								<span className="font-mono">{violation.dependency}</span> (
+								{violation.dependencyMilestone})
+							</li>
+						))}
+					</ul>
+					{view.violations.length > 8 ? (
+						<p className="text-xs text-muted-foreground">
+							…and {view.violations.length - 8} more.
+						</p>
+					) : null}
+				</div>
+			) : null}
+		</Card>
+	);
+}

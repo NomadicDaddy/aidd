@@ -1,14 +1,11 @@
 import type { ResolvedWebConfig } from 'aidd-shared/config';
 import type { degitClone } from 'aidd-shared/git/degit';
-import type { Feature } from 'aidd-shared/metadata/features';
-import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 import type { LaunchTargetOverrides } from 'aidd-shared/plan/launch-target';
 
 import type {
 	ProjectCreateInputDto,
 	ProjectCreateResultDto,
 	ProjectDetailDto,
-	ProjectFeatureDto,
 	ProjectImportActionDto,
 	ProjectImportCandidatesResponseDto,
 	ProjectImportResultDto,
@@ -21,7 +18,6 @@ import type {
 	ProjectStartImplementationResultDto,
 	RunLaunchRequest,
 } from '../types.ts';
-import type { FeatureMetadataInput } from './project/features.ts';
 import type { MaturityContext } from './projectMetadata.ts';
 
 import { HttpError } from './errors.ts';
@@ -53,6 +49,7 @@ import {
 	listProjects as listProjectsInternal,
 } from './project/listings.ts';
 import { ProjectListingCache } from './project/metadataCache.ts';
+import { ProjectMilestoneService } from './project/milestoneService.ts';
 import { getPortStatusMap, type PortStatusMap } from './project/portStatusService.ts';
 import {
 	updateMaturitySkip as updateMaturitySkipInternal,
@@ -60,7 +57,6 @@ import {
 } from './project/profile.ts';
 import { recommendProjectMode as recommendProjectModeInternal } from './project/recommend.ts';
 import {
-	type FeatureApprovalInput,
 	type ProjectAdvisorDeps,
 	type ProjectDeleteInput,
 	type ProjectMoveInput,
@@ -69,14 +65,7 @@ import {
 } from './project/types.ts';
 
 export { ProjectNotFoundError };
-export type {
-	FeatureApprovalInput,
-	FeatureMetadataInput,
-	ProjectAdvisorDeps,
-	ProjectDeleteInput,
-	ProjectMoveInput,
-	ProjectMoveResult,
-};
+export type { ProjectAdvisorDeps, ProjectDeleteInput, ProjectMoveInput, ProjectMoveResult };
 
 export class ProjectService {
 	private catalogDir: null | string = null;
@@ -86,9 +75,11 @@ export class ProjectService {
 	private listingCache = new ProjectListingCache();
 	private initFailures: null | ProjectInitFailureService = null;
 	private activeRunSummaryProvider: ActiveRunSummaryProvider | null = null;
-	private readonly features = new ProjectFeatureService((id) =>
-		this.resolveDiscoveredProject(id),
-	);
+	// Public sub-services rather than pass-through methods for each of their operations: routes reach
+	// them as `projectService.features.*` / `.milestones.*`, and this facade keeps only what it owns —
+	// project discovery, the listing cache, and the id resolution both sub-services are built on.
+	readonly features = new ProjectFeatureService((id) => this.resolveDiscoveredProject(id));
+	readonly milestones = new ProjectMilestoneService((id) => this.resolveDiscoveredProject(id));
 
 	constructor(config: ResolvedWebConfig) {
 		this.config = config;
@@ -98,29 +89,6 @@ export class ProjectService {
 	}
 	setActiveRunSummaryProvider(provider: ActiveRunSummaryProvider): void {
 		this.activeRunSummaryProvider = provider;
-	}
-	approveFeature(projectId: string, dir: string, input: FeatureApprovalInput): Promise<Feature> {
-		return this.features.approveFeature(projectId, dir, input);
-	}
-	deleteFeature(projectId: string, dir: string): Promise<{ id: string }> {
-		return this.features.deleteFeature(projectId, dir);
-	}
-	updateFeatureStatus(projectId: string, dir: string, status: string): Promise<Feature> {
-		return this.features.updateFeatureStatus(projectId, dir, status);
-	}
-	updateFeatureMetadata(
-		projectId: string,
-		dir: string,
-		input: FeatureMetadataInput,
-	): Promise<Feature> {
-		return this.features.updateFeatureMetadata(projectId, dir, input);
-	}
-	updateFeatureMilestone(
-		projectId: string,
-		dir: string,
-		milestone: string,
-	): Promise<{ feature: ProjectFeatureDto; roadmap: Roadmap }> {
-		return this.features.updateFeatureMilestone(projectId, dir, milestone);
 	}
 	invalidateProjectListing(projectPath: string): void {
 		this.listingCache.invalidate(projectPath);

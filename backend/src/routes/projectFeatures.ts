@@ -17,7 +17,7 @@ export function createProjectFeatureRoutes(context: WebContext) {
 		.put(
 			'/:id/features/:featureId/status',
 			async ({ body, params }) => ({
-				feature: await context.projectService.updateFeatureStatus(
+				feature: await context.projectService.features.updateFeatureStatus(
 					params.id,
 					params.featureId,
 					body.status,
@@ -31,7 +31,7 @@ export function createProjectFeatureRoutes(context: WebContext) {
 		.put(
 			'/:id/features/:featureId/milestone',
 			async ({ body, params }) =>
-				await context.projectService.updateFeatureMilestone(
+				await context.projectService.features.updateFeatureMilestone(
 					params.id,
 					params.featureId,
 					body.milestone,
@@ -44,7 +44,7 @@ export function createProjectFeatureRoutes(context: WebContext) {
 		.patch(
 			'/:id/features/:featureId/metadata',
 			async ({ body, params }) => ({
-				feature: await context.projectService.updateFeatureMetadata(
+				feature: await context.projectService.features.updateFeatureMetadata(
 					params.id,
 					params.featureId,
 					body,
@@ -58,10 +58,14 @@ export function createProjectFeatureRoutes(context: WebContext) {
 		.post(
 			'/:id/features/:featureId/approval',
 			async ({ body, params }) => ({
-				feature: await context.projectService.approveFeature(params.id, params.featureId, {
-					decision: body.decision?.trim() || null,
-					decisionRequired: body.decisionRequired,
-				}),
+				feature: await context.projectService.features.approveFeature(
+					params.id,
+					params.featureId,
+					{
+						decision: body.decision?.trim() || null,
+						decisionRequired: body.decisionRequired,
+					},
+				),
 			}),
 			{
 				body: featureApprovalBody,
@@ -71,7 +75,10 @@ export function createProjectFeatureRoutes(context: WebContext) {
 		.delete(
 			'/:id/features/:featureId',
 			async ({ params }) => ({
-				deleted: await context.projectService.deleteFeature(params.id, params.featureId),
+				deleted: await context.projectService.features.deleteFeature(
+					params.id,
+					params.featureId,
+				),
 			}),
 			{
 				params: projectFeatureParams,

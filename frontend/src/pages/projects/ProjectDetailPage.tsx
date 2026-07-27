@@ -4,6 +4,7 @@ import { default as BookOpen } from 'lucide-react/dist/esm/icons/book-open';
 import { default as Bug } from 'lucide-react/dist/esm/icons/bug';
 import { default as Code2 } from 'lucide-react/dist/esm/icons/code-2';
 import { default as FileJson } from 'lucide-react/dist/esm/icons/file-json';
+import { default as Flag } from 'lucide-react/dist/esm/icons/flag';
 import { default as GitBranch } from 'lucide-react/dist/esm/icons/git-branch';
 import { default as History } from 'lucide-react/dist/esm/icons/history';
 import { default as LayoutDashboard } from 'lucide-react/dist/esm/icons/layout-dashboard';
@@ -44,6 +45,7 @@ import { HistoryTab } from './detail/HistoryTab.tsx';
 import { InterviewTab } from './detail/InterviewTab.tsx';
 import { ManagementTab } from './detail/ManagementTab.tsx';
 import { MaturityOverview } from './detail/MaturityOverview.tsx';
+import { MilestonesTab } from './detail/MilestonesTab.tsx';
 import { NotesTab } from './detail/NotesTab.tsx';
 import { OverviewMetadata, OverviewSummary } from './detail/OverviewTab.tsx';
 import { ProfileTab } from './detail/ProfileTab.tsx';
@@ -65,6 +67,7 @@ import { bucketLabels, profileBucketTone } from './projects-list-shared.ts';
 const PROJECT_TABS = [
 	{ icon: LayoutDashboard, id: 'overview', label: 'Overview' },
 	{ icon: ListChecks, id: 'features', label: 'Features' },
+	{ icon: Flag, id: 'milestones', label: 'Milestones' },
 	{ icon: Network, id: 'dependencies', label: 'Dependencies' },
 	{ icon: Activity, id: 'runs', label: 'Runs' },
 	{ icon: History, id: 'history', label: 'History' },
@@ -204,6 +207,9 @@ export function ProjectDetailPage() {
 					projectPath={detail.path}
 					roadmap={detail.metadata.roadmap}
 				/>
+			</TabPanel>
+			<TabPanel activeTab={tab} id="milestones" idPrefix="project-detail">
+				<MilestonesTab projectId={detail.id} />
 			</TabPanel>
 			<TabPanel activeTab={tab} id="dependencies" idPrefix="project-detail">
 				<DependencyGraphTab

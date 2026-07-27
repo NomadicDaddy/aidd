@@ -75,6 +75,36 @@ export const featureMilestoneBody = t.Object({
 	milestone: t.String({ maxLength: 200, minLength: 1 }),
 });
 
+export const projectMilestoneParams = t.Object({ id: t.String(), name: t.String() });
+
+const milestoneNameField = t.String({ maxLength: 200, minLength: 1 });
+const milestoneDescriptionField = t.String({ maxLength: 2000 });
+// 1-based slot in the ordered milestone list; priorities are renormalized to 1..N on every write.
+const milestonePositionField = t.Integer({ minimum: 1 });
+// In the body rather than the query: Elysia query booleans have to be string-literal unions.
+const milestoneDryRunField = t.Optional(t.Boolean());
+
+export const milestoneCreateBody = t.Object({
+	description: t.Optional(milestoneDescriptionField),
+	dryRun: milestoneDryRunField,
+	name: milestoneNameField,
+	position: t.Optional(milestonePositionField),
+});
+
+export const milestoneUpdateBody = t.Object({
+	description: t.Optional(milestoneDescriptionField),
+	dryRun: milestoneDryRunField,
+	name: t.Optional(milestoneNameField),
+	position: t.Optional(milestonePositionField),
+});
+
+export const milestoneDeleteBody = t.Object({
+	dryRun: milestoneDryRunField,
+	targetMilestone: t.Optional(milestoneNameField),
+});
+
+export const milestoneReassignBody = t.Object({ dryRun: milestoneDryRunField });
+
 export const featureMetadataBody = t.Object({
 	notes: t.Optional(t.Array(t.String({ maxLength: 5000 }), { maxItems: 100 })),
 	spec: t.Optional(t.String({ maxLength: 65536 })),

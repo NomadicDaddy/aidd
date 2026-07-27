@@ -27,6 +27,17 @@ export type {
 	ProjectUsageTotals,
 } from './projects/metadata.ts';
 export type {
+	MilestoneCreateInput,
+	MilestoneDeleteInput,
+	MilestoneMove,
+	MilestoneMoveReason,
+	MilestoneUpdateInput,
+	MilestoneWarningCode,
+	ProjectMilestone,
+	ProjectMilestonePlan,
+	ProjectMilestonesView,
+} from './projects/milestones.ts';
+export type {
 	PortStatusEntry,
 	PortStatusResponse,
 	ProjectCreateInput,

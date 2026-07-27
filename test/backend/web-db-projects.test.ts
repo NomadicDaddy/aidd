@@ -1151,7 +1151,7 @@ describe('web database and project APIs', () => {
 			traceDataMovement: true,
 		});
 
-		const updated = await service.updateFeatureStatus(
+		const updated = await service.features.updateFeatureStatus(
 			encodeProjectId(projectDir),
 			'feature-status',
 			'in_progress',
@@ -1204,7 +1204,7 @@ describe('web database and project APIs', () => {
 			traceDataMovement: true,
 		});
 
-		const updated = await service.updateFeatureMilestone(
+		const updated = await service.features.updateFeatureMilestone(
 			encodeProjectId(projectDir),
 			'feature-roadmap',
 			'v1.0',
@@ -1251,17 +1251,25 @@ describe('web database and project APIs', () => {
 		});
 
 		await expect(
-			service.updateFeatureMilestone(encodeProjectId(projectDir), 'feature-roadmap', 'v9'),
+			service.features.updateFeatureMilestone(
+				encodeProjectId(projectDir),
+				'feature-roadmap',
+				'v9',
+			),
 		).rejects.toThrow('Unknown roadmap milestone');
 		await expect(
-			service.updateFeatureMilestone(encodeProjectId(projectDir), '../bad', 'MVP'),
+			service.features.updateFeatureMilestone(encodeProjectId(projectDir), '../bad', 'MVP'),
 		).rejects.toThrow('Invalid feature id');
 
 		const noRoadmapDir = join(allowedRoot, 'no-roadmap-project');
 		await mkdir(join(noRoadmapDir, '.aidd'), { recursive: true });
 		await writeFeature(noRoadmapDir, 'feature-roadmap', false);
 		await expect(
-			service.updateFeatureMilestone(encodeProjectId(noRoadmapDir), 'feature-roadmap', 'MVP'),
+			service.features.updateFeatureMilestone(
+				encodeProjectId(noRoadmapDir),
+				'feature-roadmap',
+				'MVP',
+			),
 		).rejects.toThrow('Project has no roadmap.json');
 	});
 
@@ -1399,7 +1407,7 @@ describe('web database and project APIs', () => {
 			traceDataMovement: true,
 		});
 
-		const approved = await service.approveFeature(
+		const approved = await service.features.approveFeature(
 			encodeProjectId(projectDir),
 			'feature-decision',
 			{
@@ -1458,7 +1466,7 @@ describe('web database and project APIs', () => {
 			traceDataMovement: true,
 		});
 
-		const approved = await service.approveFeature(
+		const approved = await service.features.approveFeature(
 			encodeProjectId(projectDir),
 			'feature-parked',
 			{
@@ -1507,10 +1515,14 @@ describe('web database and project APIs', () => {
 		});
 
 		await expect(
-			service.approveFeature(encodeProjectId(projectDir), 'feature-decision-required', {
-				decision: null,
-				decisionRequired: true,
-			}),
+			service.features.approveFeature(
+				encodeProjectId(projectDir),
+				'feature-decision-required',
+				{
+					decision: null,
+					decisionRequired: true,
+				},
+			),
 		).rejects.toThrow('Approval decision is required');
 	});
 
@@ -1543,8 +1555,8 @@ describe('web database and project APIs', () => {
 			traceDataMovement: true,
 		});
 
-		await service.deleteFeature(encodeProjectId(projectDir), 'feature-delete-backlog');
-		await service.deleteFeature(encodeProjectId(projectDir), 'feature-delete-waiting');
+		await service.features.deleteFeature(encodeProjectId(projectDir), 'feature-delete-backlog');
+		await service.features.deleteFeature(encodeProjectId(projectDir), 'feature-delete-waiting');
 
 		const remaining = await readdir(join(projectDir, '.aidd', 'features'));
 		expect(remaining).toEqual([]);
@@ -1586,7 +1598,7 @@ describe('web database and project APIs', () => {
 			traceDataMovement: true,
 		});
 
-		await service.deleteFeature(encodeProjectId(projectDir), 'feature-drop');
+		await service.features.deleteFeature(encodeProjectId(projectDir), 'feature-drop');
 
 		const roadmap = JSON.parse(
 			await readFile(join(projectDir, '.aidd', 'roadmap.json'), 'utf8'),

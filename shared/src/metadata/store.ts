@@ -113,7 +113,10 @@ export class FileAiddStore implements AiddStore {
 	}
 
 	private async persistFeatureFile(feature: Feature): Promise<void> {
-		const id = feature.id;
+		// Write back to the directory the feature was read from. `featureNodeId` treats
+		// `directory ?? id` as the on-disk name everywhere else; keying this off `id` alone would
+		// fork a second directory for every derived feature whose id and directory disagree.
+		const id = feature.directory ?? feature.id;
 		const persistedFeature = serializeFeatureForWrite(feature);
 		await mkdir(join(this.metadataDir, 'features', id), { recursive: true });
 		await writeFile(this.featurePath(id), `${JSON.stringify(persistedFeature, null, 2)}\n`);
@@ -131,7 +134,7 @@ export class FileAiddStore implements AiddStore {
 		// (see store/status-policy.ts); updates to existing features never restatus.
 		const resolved = await applyCreationStatusPolicy(feature, {
 			featureExists: () =>
-				stat(this.featurePath(feature.id)).then(
+				stat(this.featurePath(feature.directory ?? feature.id)).then(
 					() => true,
 					() => false,
 				),

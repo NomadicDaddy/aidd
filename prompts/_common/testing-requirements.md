@@ -109,6 +109,19 @@ reuse that instance and never start your own server to test against.
 - Check for failed network requests
 - Monitor performance warnings
 
+⚠️ **`eval` quoting is shell-dependent — do not fight it inline.** Only a short expression with no
+nested quotes survives being passed as an argument. Anything longer (a multi-line function, an
+object literal, `JSON.stringify`, `=>` arrows, `$`) gets mangled differently by every shell, and
+retrying with more escaping is the single most common way to burn an iteration on nothing. The
+`--stdin <<'EOF'` heredoc the agent-browser skill shows is **bash-only** and does not work in
+PowerShell. Write the JS to a file once and pipe it in — this works everywhere:
+
+- POSIX: `agent-browser eval --stdin < probe.js`
+- PowerShell: `Get-Content probe.js -Raw | agent-browser eval --stdin`
+
+Better still, prefer a command that needs no JS at all: `agent-browser snapshot -i`,
+`agent-browser get text @ref`, and `agent-browser errors` answer most questions `eval` gets used for.
+
 ✅ **Verify complete user workflows** end-to-end
 
 - Test entire feature flows, not just individual actions

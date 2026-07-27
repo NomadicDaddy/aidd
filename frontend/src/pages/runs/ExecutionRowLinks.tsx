@@ -12,16 +12,23 @@ export function ConsoleSelectionButton({
 	className,
 	label,
 	onSelect,
+	selected,
 }: {
 	children: ReactNode;
 	className?: string;
 	label: string;
 	onSelect: () => void;
+	selected: boolean;
 }) {
 	return (
 		<button
 			aria-label={label}
-			className={cn(interactiveTextClass, 'text-left', className)}
+			aria-pressed={selected}
+			className={cn(
+				interactiveTextClass,
+				'text-left focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 dark:focus-visible:ring-teal-300 dark:focus-visible:ring-offset-neutral-950',
+				className,
+			)}
 			onClick={onSelect}
 			title="Show in Live Console"
 			type="button">

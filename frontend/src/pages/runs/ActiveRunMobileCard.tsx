@@ -2,7 +2,6 @@ import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Square } from 'lucide-react/dist/esm/icons/square';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { type KeyboardEvent, type MouseEvent } from 'react';
 
 import type { RunRecord } from '../../api/types.ts';
 
@@ -84,41 +83,21 @@ export function ActiveRunMobileCard({
 		});
 		onSelect(run.id);
 	}
-	// The whole card and its Name button show the execution in Live Console. Project and action
-	// links keep their own explicit destinations.
-	function selectFromCard(event: KeyboardEvent | MouseEvent): void {
-		if ((event.target as HTMLElement).closest('a,button')) return;
-		selectRun();
-	}
 	return (
 		<div
-			aria-label={
-				selected
-					? `${run.projectName} run selected in Live Console`
-					: `Show ${run.projectName} run in Live Console`
-			}
 			aria-selected={selected}
 			className={cn(
-				'flex cursor-pointer flex-col gap-2 px-4 py-3 transition-colors',
-				selected
-					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
-					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50',
+				'flex flex-col gap-2 px-4 py-3 transition-colors',
+				selected &&
+					'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
 			)}
-			onClick={selectFromCard}
-			onKeyDown={(event) => {
-				if (event.target !== event.currentTarget) return;
-				if (event.key !== 'Enter' && event.key !== ' ') return;
-				event.preventDefault();
-				selectFromCard(event);
-			}}
-			role="listitem"
-			tabIndex={0}
-			title="Show in Live Console">
+			role="listitem">
 			<div className="flex min-w-0 items-center gap-2">
 				<ConsoleSelectionButton
 					className="min-w-0 shrink truncate capitalize"
 					label={`Show ${run.projectName} run in Live Console`}
-					onSelect={selectRun}>
+					onSelect={selectRun}
+					selected={selected}>
 					{run.mode ?? 'Run'}
 				</ConsoleSelectionButton>
 				<RunCommandInfo command={run.launchCommand} runId={run.id} />

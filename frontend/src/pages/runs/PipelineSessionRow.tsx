@@ -3,7 +3,6 @@ import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-rig
 import { default as CircleStop } from 'lucide-react/dist/esm/icons/circle-stop';
 import { default as FileText } from 'lucide-react/dist/esm/icons/file-text';
 import { default as Workflow } from 'lucide-react/dist/esm/icons/workflow';
-import { type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router';
 
 import type { PipelineSessionRecord } from '../../api/types.ts';
@@ -76,8 +75,9 @@ function SessionTitle({
 	expanded,
 	onSelect,
 	onToggle,
+	selected,
 	session,
-}: Pick<PipelineSessionRowProps, 'expanded' | 'onSelect' | 'onToggle' | 'session'>) {
+}: Pick<PipelineSessionRowProps, 'expanded' | 'onSelect' | 'onToggle' | 'selected' | 'session'>) {
 	// Single-step pipelines don't nest: no chevron, no step chip — the row stands alone.
 	const multiStep = isMultiStepSession(session);
 	return (
@@ -104,7 +104,8 @@ function SessionTitle({
 			<ConsoleSelectionButton
 				className="whitespace-nowrap"
 				label={`Show ${session.recipeName} pipeline in Live Console`}
-				onSelect={() => selectSession(onSelect, session)}>
+				onSelect={() => selectSession(onSelect, session)}
+				selected={selected}>
 				{session.recipeName}
 			</ConsoleSelectionButton>
 			{multiStep && (
@@ -127,24 +128,6 @@ function selectSession(onSelect: (id: string) => void, session: PipelineSessionR
 		summary: { sessionId: session.id },
 	});
 	onSelect(session.id);
-}
-
-// The whole row/card and its Name button show the execution in Live Console. Project and action
-// links keep their own explicit destinations.
-function sessionSelectHandler(
-	onSelect: (id: string) => void,
-	session: PipelineSessionRecord,
-): (event: KeyboardEvent | MouseEvent) => void {
-	return (event) => {
-		if ((event.target as HTMLElement).closest('a,button')) return;
-		selectSession(onSelect, session);
-	};
-}
-
-function sessionRowAriaLabel(selected: boolean, session: PipelineSessionRecord): string {
-	return selected
-		? `${session.recipeName} pipeline selected in Live Console`
-		: `Show ${session.recipeName} pipeline in Live Console`;
 }
 
 function SessionProjectLink({
@@ -181,24 +164,13 @@ const selectedRowClass = 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] da
 
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
 	const { now, selected, session } = props;
-	const selectFromRow = sessionSelectHandler(props.onSelect, session);
 	return (
 		<tr
-			aria-label={sessionRowAriaLabel(selected, session)}
 			aria-selected={selected}
 			className={cn(
-				'cursor-pointer border-b transition-colors last:border-0',
-				selected ? selectedRowClass : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50',
-			)}
-			onClick={selectFromRow}
-			onKeyDown={(event) => {
-				if (event.target !== event.currentTarget) return;
-				if (event.key !== 'Enter' && event.key !== ' ') return;
-				event.preventDefault();
-				selectFromRow(event);
-			}}
-			tabIndex={0}
-			title="Show in Live Console">
+				'border-b transition-colors last:border-0',
+				selected && selectedRowClass,
+			)}>
 			<td className="py-3 pr-3 pl-4">
 				<SessionTitle {...props} />
 				<div className="mt-1 text-xs text-neutral-500">{formatDate(session.startedAt)}</div>
@@ -234,22 +206,11 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 
 export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 	const { now, selected, session } = props;
-	const selectFromCard = sessionSelectHandler(props.onSelect, session);
 	return (
 		<div
-			aria-label={sessionRowAriaLabel(selected, session)}
 			aria-selected={selected}
-			className={cn('cursor-pointer px-4 py-3', selected && selectedRowClass)}
-			onClick={selectFromCard}
-			onKeyDown={(event) => {
-				if (event.target !== event.currentTarget) return;
-				if (event.key !== 'Enter' && event.key !== ' ') return;
-				event.preventDefault();
-				selectFromCard(event);
-			}}
-			role="listitem"
-			tabIndex={0}
-			title="Show in Live Console">
+			className={cn('px-4 py-3', selected && selectedRowClass)}
+			role="listitem">
 			<SessionTitle {...props} />
 			<SessionMeta projectRouteId={props.projectRouteId} session={session} />
 			<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">

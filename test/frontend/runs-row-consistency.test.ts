@@ -53,7 +53,9 @@ describe('Runs row consistency', () => {
 	test('pipeline Name selects Console while Project and Report keep explicit destinations', () => {
 		const html = renderPipelineRow();
 
-		expect(html).toContain('aria-label="Show Review Features pipeline in Live Console"');
+		expect(html).toMatch(
+			/<button[^>]+aria-label="Show Review Features pipeline in Live Console"[^>]+aria-pressed="false"/,
+		);
 		expect(html).toContain('href="/projects/project-route"');
 		expect(html).toContain('href="/pipeline-sessions/session-1"');
 		expect(html.match(/href="\/pipeline-sessions\/session-1"/g)).toHaveLength(1);
@@ -65,9 +67,25 @@ describe('Runs row consistency', () => {
 		for (const file of ['ActiveRunRow.tsx', 'ActiveRunMobileCard.tsx']) {
 			const source = await readRunSource(file);
 			expect(source).toContain('<ConsoleSelectionButton');
+			expect(source).toContain('label={`Show ${run.projectName} run in Live Console`}');
+			expect(source).toContain('selected={selected}');
 			expect(source).toContain('<ProjectDetailLink');
 			expect(source).toContain('<Badge tone="neutral">Run</Badge>');
+			expect(source).not.toContain('tabIndex={0}');
+			expect(source).not.toContain('onKeyDown=');
 		}
+	});
+
+	test('execution selection uses a pressed native button with visible keyboard focus', async () => {
+		const links = await readRunSource('ExecutionRowLinks.tsx');
+		const pipelines = await readRunSource('PipelineSessionRow.tsx');
+
+		expect(links).toContain('<button');
+		expect(links).toContain('aria-pressed={selected}');
+		expect(links).toContain('focus-visible:ring-2');
+		expect(pipelines).toContain('selected={selected}');
+		expect(pipelines).not.toContain('tabIndex={0}');
+		expect(pipelines).not.toContain('onKeyDown=');
 	});
 
 	test('Active and History share fixed columns and selected pipeline steps stay visible', async () => {

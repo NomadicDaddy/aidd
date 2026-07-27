@@ -2,7 +2,6 @@ import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Square } from 'lucide-react/dist/esm/icons/square';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { type KeyboardEvent, type MouseEvent } from 'react';
 
 import type { RunRecord } from '../../api/types.ts';
 
@@ -76,41 +75,21 @@ export function ActiveRunRow({
 		});
 		onSelect(run.id);
 	}
-	// The whole row and its Name button show the execution in Live Console. Project and action
-	// links keep their own explicit destinations.
-	function selectFromRow(event: KeyboardEvent | MouseEvent): void {
-		if ((event.target as HTMLElement).closest('a,button')) return;
-		selectRun();
-	}
 	return (
 		<tr
-			aria-label={
-				selected
-					? `${run.projectName} run selected in Live Console`
-					: `Show ${run.projectName} run in Live Console`
-			}
 			aria-selected={selected}
 			className={cn(
-				'cursor-pointer border-b transition-colors last:border-0',
-				selected
-					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
-					: 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50',
-			)}
-			onClick={selectFromRow}
-			onKeyDown={(event) => {
-				if (event.target !== event.currentTarget) return;
-				if (event.key !== 'Enter' && event.key !== ' ') return;
-				event.preventDefault();
-				selectFromRow(event);
-			}}
-			tabIndex={0}
-			title="Show in Live Console">
+				'border-b transition-colors last:border-0',
+				selected &&
+					'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
+			)}>
 			<td className="py-3 pr-3 pl-4">
 				<div className="flex flex-wrap items-center gap-2">
 					<ConsoleSelectionButton
 						className="capitalize"
 						label={`Show ${run.projectName} run in Live Console`}
-						onSelect={selectRun}>
+						onSelect={selectRun}
+						selected={selected}>
 						{run.mode ?? 'Run'}
 					</ConsoleSelectionButton>
 					<RunCommandInfo command={run.launchCommand} runId={run.id} />

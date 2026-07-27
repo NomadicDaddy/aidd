@@ -3,6 +3,10 @@ import { useEffect } from 'react';
 import { type ThemeMode, useThemeStore } from '../stores/themeStore.ts';
 
 const mediaQuery = '(prefers-color-scheme: dark)';
+const themeColors = {
+	dark: '#0c0f14',
+	light: '#f4f6f9',
+} as const;
 
 export function useTheme() {
 	const mode = useThemeStore((state) => state.mode);
@@ -15,6 +19,11 @@ export function useTheme() {
 			const isDark = themeMode === 'dark' || (themeMode === 'system' && media.matches);
 			document.documentElement.classList.toggle('dark', isDark);
 			document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+			document
+				.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+				.forEach((element) => {
+					element.content = isDark ? themeColors.dark : themeColors.light;
+				});
 		}
 
 		apply(mode);

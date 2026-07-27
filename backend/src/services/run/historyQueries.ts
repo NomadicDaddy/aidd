@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, or } from 'drizzle-orm';
 import { basename } from 'node:path';
 
 import type { RunRecord, WebRunStatus } from '../../types.ts';
@@ -6,10 +6,19 @@ import type { RunRecord, WebRunStatus } from '../../types.ts';
 import { withSqliteRetry } from '../../db/retry.ts';
 import { runs } from '../../db/schema.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
-import { clampLimit, type CursorPage, decodeCursor, encodeCursor } from '../pagination.ts';
+import { clampLimit, type CursorPage, encodeCursor } from '../pagination.ts';
 import { listCliActiveRuns, listCliActiveRunsForProject } from './cliActiveRuns.ts';
 import { reconcileCliPipelineSessions } from './cliPipelineSessionReconcile.ts';
 import { listDirectorCycleRunRecords } from './directorCycleRuns.ts';
+import {
+	combineFilters,
+	cursorFilter,
+	mergeWebAndCliRuns,
+	projectPathFilter,
+	statusOrRecentFilter,
+	topLevelFilter,
+} from './historyQueryHelpers.ts';
+import { readRunHistorySources } from './historySourceReads.ts';
 import { dropLedgerPhantomRuns } from './ledgerReconcile.ts';
 import { type QueriesContext, toWebRunRecord } from './queries.ts';
 import { annotateStopRequested } from './stopRequestedAnnotation.ts';
@@ -24,76 +33,36 @@ export interface ListRunsPageOptions {
 	topLevel?: boolean;
 }
 
-function topLevelFilter(topLevel: boolean | undefined): SQL | undefined {
-	return topLevel ? isNull(runs.pipelineSessionId) : undefined;
-}
-
-function statusOrRecentFilter(status: undefined | WebRunStatus): SQL | undefined {
-	if (status) return eq(runs.status, status);
-	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
-	return or(inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]), gt(runs.startedAt, cutoff));
-}
-
-function cursorFilter(cursor: string | undefined): SQL | undefined {
-	const decoded = decodeCursor(cursor);
-	if (!decoded) return undefined;
-	return or(
-		lt(runs.startedAt, decoded.startedAt),
-		and(eq(runs.startedAt, decoded.startedAt), lt(runs.id, decoded.id)),
-	);
-}
-
-function combineFilters(...filters: (SQL | undefined)[]): SQL | undefined {
-	const present = filters.filter((value): value is SQL => value !== undefined);
-	if (present.length === 0) return undefined;
-	if (present.length === 1) return present[0];
-	return and(...present);
-}
-
-// SQL mirror of normalizeComparablePath()/pathsMatch(): every platform folds '/' to '\', and
-// win32 compares case-insensitively. Pushing that normalization into the WHERE clause lets the
-// database filter to the requested project and stop early (the started_at-ordered scan returns
-// only the matching rows) instead of reading every recent run into memory for a pathsMatch() pass
-// — and lets latestProjectAuditRun select the project's newest audit directly rather than scanning
-// a global window. The binary idx_runs_project_path index cannot serve the win32 case-fold, so
-// this is an intentional filtered scan; the gain is bounding the result set in SQL rather than in
-// memory (and fixing the correctness bug where latestProjectAuditRun missed a project's newest run).
-function projectPathFilter(projectPath: string): SQL {
-	const normalizedColumn = sql`replace(${runs.projectPath}, '/', '\\')`;
-	const target = projectPath.replaceAll('/', '\\');
-	return process.platform === 'win32'
-		? sql`lower(${normalizedColumn}) = ${target.toLowerCase()}`
-		: sql`${normalizedColumn} = ${target}`;
-}
-
-function mergeWebAndCliRuns(webItems: RunRecord[], cliItems: RunRecord[]): RunRecord[] {
-	const webRunIds = new Set(webItems.map((run) => run.id));
-	return [...webItems, ...cliItems.filter((run) => !webRunIds.has(run.id))];
-}
-
 export async function listRuns(
 	ctx: QueriesContext,
 	limit = 100,
 	status?: WebRunStatus,
 ): Promise<RunRecord[]> {
 	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
-	const webRuns = await ctx.db
-		.select()
-		.from(runs)
-		.where(
-			status
-				? eq(runs.status, status)
-				: or(
-						inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
-						gt(runs.startedAt, cutoff),
-					),
-		)
-		.orderBy(desc(runs.startedAt));
-	const webItems = webRuns.map((run) => toWebRunRecord(run));
-	const cliRuns = !status || status === 'running' ? await listCliActiveRuns(ctx) : [];
-	const directorRuns = await listDirectorCycleRunRecords(ctx, status);
+	const { cliItems, directorItems, webItems } = await readRunHistorySources({
+		cli: () =>
+			!status || status === 'running'
+				? listCliActiveRuns(ctx)
+				: Promise.resolve<RunRecord[]>([]),
+		director: () => listDirectorCycleRunRecords(ctx, status),
+		web: async () =>
+			(
+				await ctx.db
+					.select()
+					.from(runs)
+					.where(
+						status
+							? eq(runs.status, status)
+							: or(
+									inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
+									gt(runs.startedAt, cutoff),
+								),
+					)
+					.orderBy(desc(runs.startedAt))
+			).map((run) => toWebRunRecord(run)),
+	});
 	return annotateStopRequested(
-		mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorRuns), cliRuns)
+		mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorItems), cliItems)
 			.sort((left, right) => right.startedAt - left.startedAt)
 			.slice(0, limit),
 	);
@@ -106,28 +75,36 @@ export async function listRunsForProject(
 	status?: WebRunStatus,
 ): Promise<RunRecord[]> {
 	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
-	const webRuns = await ctx.db
-		.select()
-		.from(runs)
-		.where(
-			and(
-				projectPathFilter(projectPath),
-				status
-					? eq(runs.status, status)
-					: or(
-							inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
-							gt(runs.startedAt, cutoff),
+	const { cliItems, webItems } = await readRunHistorySources({
+		cli: () =>
+			!status || status === 'running'
+				? listCliActiveRunsForProject(projectPath)
+				: Promise.resolve<RunRecord[]>([]),
+		director: () => Promise.resolve<RunRecord[]>([]),
+		web: async () =>
+			(
+				await ctx.db
+					.select()
+					.from(runs)
+					.where(
+						and(
+							projectPathFilter(projectPath),
+							status
+								? eq(runs.status, status)
+								: or(
+										inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
+										gt(runs.startedAt, cutoff),
+									),
 						),
-			),
-		)
-		.orderBy(desc(runs.startedAt));
+					)
+					.orderBy(desc(runs.startedAt))
+			).map((run) => toWebRunRecord(run)),
+	});
 	if (status && status !== 'running') {
-		return webRuns.map((run) => toWebRunRecord(run)).slice(0, limit);
+		return webItems.slice(0, limit);
 	}
-	const webItems = webRuns.map((run) => toWebRunRecord(run));
-	const cliRuns = await listCliActiveRunsForProject(projectPath);
 	return annotateStopRequested(
-		mergeWebAndCliRuns(webItems, cliRuns)
+		mergeWebAndCliRuns(webItems, cliItems)
 			.sort((left, right) => right.startedAt - left.startedAt)
 			.slice(0, limit),
 	);
@@ -147,21 +124,31 @@ export async function listRunsPage(
 		cursorFilter(options.cursor),
 		topLevelFilter(options.topLevel),
 	);
-	const webRowsRaw = await ctx.db
-		.select()
-		.from(runs)
-		.where(where)
-		.orderBy(desc(runs.startedAt), desc(runs.id))
-		.limit(limit + 1);
+	const {
+		cliItems,
+		directorItems,
+		webItems: webRowsRaw,
+	} = await readRunHistorySources({
+		cli: () =>
+			isFirstPage && (!options.status || options.status === 'running')
+				? listCliActiveRuns(ctx)
+				: Promise.resolve<RunRecord[]>([]),
+		director: () =>
+			isFirstPage
+				? listDirectorCycleRunRecords(ctx, options.status)
+				: Promise.resolve<RunRecord[]>([]),
+		web: async () =>
+			ctx.db
+				.select()
+				.from(runs)
+				.where(where)
+				.orderBy(desc(runs.startedAt), desc(runs.id))
+				.limit(limit + 1),
+	});
 	const hasNext = webRowsRaw.length > limit;
 	const webPage = webRowsRaw.slice(0, limit);
 	const webItems = webPage.map((row) => toWebRunRecord(row));
-	const cliItems =
-		isFirstPage && (!options.status || options.status === 'running')
-			? await listCliActiveRuns(ctx)
-			: [];
 	const listedCliItems = await reconcileCliPipelineSessions(ctx, cliItems, options.topLevel);
-	const directorItems = isFirstPage ? await listDirectorCycleRunRecords(ctx, options.status) : [];
 	const items = await annotateStopRequested(
 		await dropLedgerPhantomRuns(
 			mergeWebAndCliRuns(mergeWebAndCliRuns(webItems, directorItems), listedCliItems).sort(
@@ -192,19 +179,23 @@ export async function listRunsForProjectPage(
 		cursorFilter(options.cursor),
 		topLevelFilter(options.topLevel),
 	);
-	const webRowsRaw = await ctx.db
-		.select()
-		.from(runs)
-		.where(where)
-		.orderBy(desc(runs.startedAt), desc(runs.id))
-		.limit(limit + 1);
+	const { cliItems, webItems: webRowsRaw } = await readRunHistorySources({
+		cli: () =>
+			isFirstPage && (!options.status || options.status === 'running')
+				? listCliActiveRunsForProject(projectPath)
+				: Promise.resolve<RunRecord[]>([]),
+		director: () => Promise.resolve<RunRecord[]>([]),
+		web: async () =>
+			ctx.db
+				.select()
+				.from(runs)
+				.where(where)
+				.orderBy(desc(runs.startedAt), desc(runs.id))
+				.limit(limit + 1),
+	});
 	const hasNext = webRowsRaw.length > limit;
 	const webPage = webRowsRaw.slice(0, limit);
 	const webItems = webPage.map((row) => toWebRunRecord(row));
-	const cliItems =
-		isFirstPage && (!options.status || options.status === 'running')
-			? await listCliActiveRunsForProject(projectPath)
-			: [];
 	const listedCliItems = await reconcileCliPipelineSessions(ctx, cliItems, options.topLevel);
 	const items = await annotateStopRequested(
 		await dropLedgerPhantomRuns(

@@ -55,6 +55,8 @@
 **Never:**
 
 - Spend more than 2 turns probing `pwsh`, `cmd`, `bash` PATH or PATHEXT
+- Switch shells to dodge the problem — wrapping a command in `bash -lc` on Windows usually
+  lands in WSL, a separate filesystem and PATH where the project's toolchain is not installed
 - Modify template-managed scripts to fix local environment quirks
 - Treat this as a feature blocker (it isn't)
 

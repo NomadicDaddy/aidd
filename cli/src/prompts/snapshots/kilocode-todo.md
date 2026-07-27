@@ -542,7 +542,9 @@ The previous session may have introduced bugs. Always verify before modifying co
 
 #### 3.1 Quality Control Gates
 
-**Run `bun run smoke:qc` if it exists. Otherwise, run:**
+**Skip this gate entirely if the run launch context carries a "Baseline already verified" note.** That note means the previous iteration of this run finished the full gate clean and nothing has changed on disk since; re-running it here only re-proves a known-green tree. Confirm with a quick `git status` / `git log -1`, then go straight to the next step. The post-change gate before you commit is unaffected.
+
+**Otherwise, run `bun run smoke:qc` if it exists. Failing that, run:**
 
 - Linting: `npm run lint` or equivalent
 - Type checking: `npm run type-check` or `tsc --noEmit`
@@ -690,7 +692,7 @@ Perform a focused code review of the current diff for correctness, security, cod
 **Use agent-browser (preferred) or native browser automation (see testing-requirements.md):**
 
 1. Launch browser to the frontend URL: `agent-browser open <app-url>`
-2. Snapshot and navigate to relevant area: `agent-browser snapshot -i -c` then `agent-browser click @ref`
+2. Snapshot and navigate to relevant area: `agent-browser snapshot -i -c` then `agent-browser click '@ref'` — **always single-quote the ref**; in PowerShell an unquoted `@ref` is the splat operator and reaches the CLI as an empty string, so the click silently targets nothing (single quotes are harmless in POSIX shells)
 3. Verify specific behavior from todo item works correctly
 4. Test edge cases and error conditions
 5. Check browser console: `agent-browser errors` (must return empty)

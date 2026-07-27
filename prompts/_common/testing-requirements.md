@@ -48,6 +48,21 @@ reuse that instance and never start your own server to test against.
 - Use only when agent-browser is unavailable
 - Capabilities vary by CLI environment (see CLI reference)
 
+**Lighthouse / performance measurement** - measure against a browser that is already running
+
+- **Do not let Lighthouse launch its own Chrome.** On Windows, chrome-launcher creates a
+  throwaway user-data directory under the user temp folder and the run aborts with
+  `EPERM: operation not permitted` before a single audit executes. Retrying, clearing `%TEMP%`,
+  passing extra `--chrome-flags`, or reinstalling Chrome does not fix it — it is not a code defect
+  and not something to spend diagnostic turns on.
+- **Default path: attach to the running browser over CDP.** `agent-browser` already drives Chrome
+  through CDP, so reuse that instance: get its endpoint with `agent-browser get cdp-url` (or use
+  the known remote-debugging port, conventionally 9222), then run Lighthouse against it with
+  `--port <cdp-port>` and write the report to an **absolute path inside this project**.
+- If no CDP endpoint is reachable, stop after one honest attempt. Report the metric as
+  unavailable (`SKIPPED / data-unavailable`) and say which instrument was unavailable and why.
+  An unmeasured score must never be asserted as a number.
+
 **Shell execution tool** - Test runners and automation
 
 - Run quality control commands

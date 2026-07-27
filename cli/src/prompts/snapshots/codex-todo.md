@@ -264,25 +264,41 @@ You are running in **Codex CLI**, OpenAI's terminal coding agent.
 
 ### Shell Environment (CRITICAL - READ THIS FIRST)
 
-**You are running on Windows, but your shell is Bash.** Codex shell commands are executed in a bash environment (e.g., Git Bash/MSYS2) because we have set `SHELL=/usr/bin/bash`.
+**Codex picks its own shell; do not assume which one you got.** On Windows hosts that is
+almost always PowerShell (`pwsh`) — a `SHELL` environment variable naming a POSIX shell does
+**not** change this. On macOS/Linux hosts it is a POSIX shell (`bash`/`sh`).
 
-**Use standard Bash commands for shell operations.**
+**Detect the shell once, at the start of the session, before writing any non-trivial command:**
 
-Prefer direct commands over shell wrappers, for example:
-
-```bash
-ls -la
-git status
-bun test
+```
+echo $PSVersionTable.PSVersion.Major
 ```
 
-**Rules:**
+PowerShell prints a version number; a POSIX shell prints the literal text or an empty line.
+Write every later command for whichever shell answered.
 
-- Prefer direct bash-compatible commands when shell access is necessary.
-- Do **not** use `pwsh` or `powershell` unless specifically interacting with a Windows-only component that requires it.
+**If you are in PowerShell, these break silently — they are not hypothetical:**
+
+- `@` starts the splat operator. An unquoted `@ref` argument (for example
+  `agent-browser click @e10`) is parsed as a variable reference and reaches the program as an
+  empty string. Quote it: `agent-browser click '@e10'`.
+- Globs are **not** expanded for external programs. `rg pattern src/**/*.ts` passes the literal
+  pattern through. Let the tool do its own matching (`rg pattern src`) or pass explicit paths.
+- `&&` / `||` work in PowerShell 7 but not 5.1; `;` sequences unconditionally in both. Prefer
+  one command per invocation over chained one-liners.
+- Single quotes are literal and double quotes interpolate `$`. Prefer single quotes for
+  anything containing `$`, `@`, or backticks.
+- `bash -lc '...'` is **not** a safe escape hatch: on Windows it commonly resolves to WSL,
+  a different filesystem and PATH where project tooling such as `bun` does not exist. Do not
+  wrap commands in `bash -lc` to avoid PowerShell quoting — fix the quoting instead.
+
+**Rules (both shells):**
+
 - Avoid long quoted one-liners, shell-generated loops, and deeply escaped pipelines.
 - Prefer multiple simple commands over one complex command.
 - If a task would require complex quoting, prefer Codex's native file/search/edit tools instead.
+- When a command fails with an argument-parsing or "not recognized" error, suspect the shell
+  first: re-check quoting and re-run the detection line above rather than retrying variants.
 
 ### Tooling Guidance
 
@@ -463,7 +479,9 @@ The previous session may have introduced bugs. Always verify before modifying co
 
 #### 3.1 Quality Control Gates
 
-**Run `bun run smoke:qc` if it exists. Otherwise, run:**
+**Skip this gate entirely if the run launch context carries a "Baseline already verified" note.** That note means the previous iteration of this run finished the full gate clean and nothing has changed on disk since; re-running it here only re-proves a known-green tree. Confirm with a quick `git status` / `git log -1`, then go straight to the next step. The post-change gate before you commit is unaffected.
+
+**Otherwise, run `bun run smoke:qc` if it exists. Failing that, run:**
 
 - Linting: `npm run lint` or equivalent
 - Type checking: `npm run type-check` or `tsc --noEmit`
@@ -611,7 +629,7 @@ Perform a focused code review of the current diff for correctness, security, cod
 **Use agent-browser (preferred) or native browser automation (see testing-requirements.md):**
 
 1. Launch browser to the frontend URL: `agent-browser open <app-url>`
-2. Snapshot and navigate to relevant area: `agent-browser snapshot -i -c` then `agent-browser click @ref`
+2. Snapshot and navigate to relevant area: `agent-browser snapshot -i -c` then `agent-browser click '@ref'` — **always single-quote the ref**; in PowerShell an unquoted `@ref` is the splat operator and reaches the CLI as an empty string, so the click silently targets nothing (single quotes are harmless in POSIX shells)
 3. Verify specific behavior from todo item works correctly
 4. Test edge cases and error conditions
 5. Check browser console: `agent-browser errors` (must return empty)

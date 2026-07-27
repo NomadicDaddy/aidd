@@ -66,7 +66,9 @@ describe('backend command builders', () => {
 		expect(command.args).toContain('--dangerously-bypass-approvals-and-sandbox');
 		expect(command.args).toContain('--cd');
 		expect(command.args).toContain('model_reasoning_effort=low');
-		expect(command.env?.SHELL).toBe('/usr/bin/bash');
+		// Codex ignores SHELL on Windows and runs PowerShell anyway; pinning it there would
+		// contradict the shell guidance in prompts/_cli/codex.md.
+		expect(command.env?.SHELL).toBe(process.platform === 'win32' ? undefined : '/usr/bin/bash');
 	});
 
 	test('preserves Native shorter idle defaults', () => {

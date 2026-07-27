@@ -523,7 +523,9 @@ The previous session may have introduced bugs. Always verify before adding new c
 
 #### 4.1 Quality Control Gates
 
-**Run `bun run smoke:qc` if it exists. Otherwise, run:**
+**Skip this gate entirely if the run launch context carries a "Baseline already verified" note.** That note means the previous iteration of this run finished the full gate clean and nothing has changed on disk since; re-running it here only re-proves a known-green tree. Confirm with a quick `git status` / `git log -1`, then go straight to the next step. The post-change gate before you commit is unaffected.
+
+**Otherwise, run `bun run smoke:qc` if it exists. Failing that, run:**
 
 - Linting: `npm run lint` or equivalent
 - Type checking: `npm run type-check` or `tsc --noEmit`
@@ -615,7 +617,7 @@ selected feature bundle, and emit `AIDD_RESULT`. Do not wait for the idle killer
 2. **Second attempt:** Change approach entirely (not a variation of the same fix), retry
 3. **Third attempt:** Abort feature, document in CHANGELOG.md, move to next feature
 
-**Environment vs code defect - exit ramp:** If a tooling failure is a shell/PATH resolution issue (e.g., `bun: not recognized` in pwsh while it works in bash, or a `bun run X` step fails inside `smoke:qc` but works standalone), this is an **environment** issue, not a code defect. After 2 diagnostic turns, fall back to running the equivalent individual checks (typecheck, lint, build, format) in your working shell, note the limitation as one line in CHANGELOG.md, and continue. Do not modify `scripts/smoke.ts` or other template-managed scripts to work around local environment quirks. See `error-handling-patterns.md` → "Shell / PATH Resolution Failures".
+**Environment vs code defect - exit ramp:** If a tooling failure is a shell/PATH resolution issue (e.g., `bun: not recognized` even though `where.exe bun` finds it, or a `bun run X` step fails inside `smoke:qc` but works standalone), this is an **environment** issue, not a code defect. After 2 diagnostic turns, fall back to running the equivalent individual checks (typecheck, lint, build, format) in your working shell, note the limitation as one line in CHANGELOG.md, and continue. Do not modify `scripts/smoke.ts` or other template-managed scripts to work around local environment quirks. See `error-handling-patterns.md` → "Shell / PATH Resolution Failures".
 
 **CRITICAL: "Change approach entirely" means a fundamentally different strategy.**
 Adding more null checks after null checks failed is NOT a different approach. If filters didn't work, investigate WHY the data is null; don't add more filters. If the same symptom persists after two fixes, the root cause is elsewhere. Look at build tooling, compilation, data flow, or framework behavior, not just the symptom location.
@@ -860,7 +862,7 @@ stand up your own server to verify**; see the "Concurrently UI-managed instance 
 **Use agent-browser (preferred) or native browser automation (see testing-requirements.md):**
 
 1. Launch browser to the frontend URL: `agent-browser open <app-url>`
-2. Snapshot and navigate to feature area: `agent-browser snapshot -i -c` then `agent-browser click @ref`
+2. Snapshot and navigate to feature area: `agent-browser snapshot -i -c` then `agent-browser click '@ref'` — **always single-quote the ref**; in PowerShell an unquoted `@ref` is the splat operator and reaches the CLI as an empty string, so the click silently targets nothing (single quotes are harmless in POSIX shells)
 3. Complete full user journey with fills, clicks, and selects
 4. Re-snapshot to verify resulting state
 5. Test edge cases and error states

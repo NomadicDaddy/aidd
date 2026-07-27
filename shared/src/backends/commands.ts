@@ -96,6 +96,11 @@ export function buildBackendCommand(backend: BackendName, input: PromptInput): B
 			if (effort !== undefined) {
 				args.push('-c', `model_reasoning_effort=${effort}`);
 			}
+			// Codex resolves its own shell. On POSIX hosts it honours SHELL, so pin bash for a
+			// predictable, POSIX-quoting environment. On Windows it ignores SHELL entirely and
+			// runs PowerShell regardless — setting it there only made the prompt's shell
+			// guidance a lie, so don't. See prompts/_cli/codex.md.
+			if (process.platform === 'win32') return { args, command: 'codex' };
 			return { args, command: 'codex', env: { SHELL: '/usr/bin/bash' } };
 		}
 		case 'grok':

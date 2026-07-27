@@ -133,6 +133,24 @@ describe('classifyWebRun', () => {
 			}),
 		).toBe('warnings');
 	});
+	// Exit 0, but the run stopped short of its own deadline rather than finishing its scope — a
+	// green "Completed" badge would hide that there is work left over.
+	test('classifies a deliberate thin-budget stop as an amber "Time budget"', () => {
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'wall_clock_budget',
+			exitCode: 0,
+		});
+		expect(outcome.label).toBe('Time budget');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 0,
+				status: 'completed',
+				stopReason: 'wall_clock_budget',
+			}),
+		).toBe('warnings');
+	});
 });
 
 describe('classifyWebRunTelemetryBucket', () => {

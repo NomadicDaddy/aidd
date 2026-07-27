@@ -195,6 +195,13 @@ export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
 			tone: 'amber',
 		};
 	}
+	if (run.stopReason === 'wall_clock_budget') {
+		return {
+			label: 'Time budget',
+			title: 'Run stopped short of its deadline: too little wall-clock budget remained to finish another iteration.',
+			tone: 'amber',
+		};
+	}
 	if (run.stopReason === 'exit_error') {
 		const decoded = decodeExitCode(run.exitCode);
 		if (decoded) return decoded;

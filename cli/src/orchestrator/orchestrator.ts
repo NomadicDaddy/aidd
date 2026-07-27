@@ -17,7 +17,11 @@ import { handlePostIteration } from './run/post-iteration.ts';
 import { handleDirtyTreeSkip, handleNoWorkIteration } from './run/preflight.ts';
 import { armWindDownNoteIfNeeded } from './run/prompt-context.ts';
 import { warnIfBudgetExceeded } from './run/run-accumulator.ts';
-import { endRunIfWallClockExpired, finalizeMaxIterationsRun } from './run/run-ending.ts';
+import {
+	endRunIfBudgetTooThinForIteration,
+	endRunIfWallClockExpired,
+	finalizeMaxIterationsRun,
+} from './run/run-ending.ts';
 import { initializeOrchestratorRun } from './run/startup.ts';
 import { type MoveFn, type OrchestratorDeps } from './run/types.ts';
 import { recordIterationCheckpoint } from './run/worktree-manager.ts';
@@ -62,6 +66,17 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 			runStartedAtMs,
 		});
 		if (wallClockExit !== undefined) return wallClockExit;
+		// The deadline has not passed, but it may be too close to fit another iteration. Stopping
+		// here ends the run deliberately instead of letting the watchdog kill an agent mid-edit.
+		const thinBudgetExit = await endRunIfBudgetTooThinForIteration({
+			acc,
+			deps,
+			lastSummary,
+			move,
+			plan,
+			runStartedAtMs,
+		});
+		if (thinBudgetExit !== undefined) return thinBudgetExit;
 		// The dirty-tree guard exists to stop coding-style modes from stacking new
 		// edits onto an already-messy working tree. Director mode is fleet-wide
 		// and read-only with respect to the project tree — it only reads the fleet

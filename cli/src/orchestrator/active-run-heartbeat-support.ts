@@ -54,7 +54,15 @@ export function nonNativeRunLogIntro(plan: RunPlan): string {
 }
 
 export function terminalStateFromStopReason(stopReason: string): string {
-	if (stopReason === 'completed' || stopReason === 'no_work') return 'completed';
+	// wall_clock_budget is a deliberate exit-0 stop taken *before* the deadline, not a failure —
+	// the run declined an iteration it could not finish. Falling through to 'failed' would have
+	// marked a clean stop as a failed run and (via the continuation rule) denied it a follow-up.
+	if (
+		stopReason === 'completed' ||
+		stopReason === 'no_work' ||
+		stopReason === 'wall_clock_budget'
+	)
+		return 'completed';
 	if (stopReason === 'stop_requested') return 'stopped';
 	if (stopReason === 'merge_conflict_parked' || stopReason === 'metadata_conflict_parked') {
 		return 'waiting_approval';

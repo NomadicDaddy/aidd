@@ -231,6 +231,7 @@ export async function finalizeIteration(
 	// Must be the raw exitCode, not recordedExitCode — a clean exit reclassified to 73 would
 	// otherwise ledger backendExitCode: 73 while the summary reads "[backend exit 0]".
 	acc.lastBackendExitCode = exitCode;
+	acc.iterationDurationsMs.push(durationMs);
 	accumulateIterationMetrics(acc, metrics);
 	accumulateIterationEvidence(acc, details);
 	const modeFileChanges = modeFileChangesFromArtifacts(modeResult.artifacts);

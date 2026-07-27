@@ -39,6 +39,10 @@ export interface ContinuationRunFacts {
 // - wall_clock_timeout: the orchestrator's summary marker (written only when the budget expired
 //   with the selected feature incomplete) plus stopReason 'exit_error' — the stopReason gate
 //   excludes merge-parked worktree runs, whose branch needs manual resolution before more work.
+//   stopReason 'wall_clock_budget' is the graceful form of the same condition: the orchestrator
+//   declined an iteration it could not finish before the deadline. It needs no marker (the stop
+//   reason alone is unambiguous) and reports the same reason, because to the operator it is the
+//   same situation — budget gone, work left.
 // - initializer_handoff: an initializer-phase run completed cleanly; the first coding run still
 //   needs a launch (the gap this feature exists to close).
 export function evaluateContinuationValue(
@@ -49,10 +53,14 @@ export function evaluateContinuationValue(
 	if (facts.pipelineSessionId !== null) return 'none';
 	const summary = facts.summary ?? entry?.summary;
 	const stopReason = facts.stopReason ?? entry?.stopReason;
-	if (hasWallClockTimeoutMarker(summary) && stopReason === 'exit_error') {
+	const outOfBudget =
+		stopReason === 'wall_clock_budget' ||
+		(hasWallClockTimeoutMarker(summary) && stopReason === 'exit_error');
+	if (outOfBudget) {
 		const remaining = remainingSelectedFeatureCount(entry);
-		// Unknown remaining work (no ledger line / pre-field line) defers to the marker, which
-		// by construction only appears when the selected feature did not complete.
+		// Unknown remaining work (no ledger line / pre-field line) still offers the follow-up: the
+		// marker only appears when the selected feature did not complete, and a thin-budget stop
+		// with nothing left simply chains into a run that ends as no_work.
 		return remaining === null || remaining > 0 ? 'wall_clock_timeout' : 'none';
 	}
 	if (entry?.phase === 'initializer' && facts.status === 'completed') {

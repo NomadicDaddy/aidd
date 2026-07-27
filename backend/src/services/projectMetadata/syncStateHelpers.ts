@@ -162,6 +162,7 @@ function syncStateFromLatestRun(latestRun: LatestRun | undefined): ProjectSyncSt
 		case 'stop_requested':
 		case 'stopped':
 		case 'success':
+		case 'wall_clock_budget':
 			syncState = 'idle';
 			break;
 		case 'running':

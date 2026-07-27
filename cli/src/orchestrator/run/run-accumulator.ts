@@ -14,6 +14,7 @@ export function createRunAccumulator(runId: string, runStartedAtMs: number): Run
 		filesCreated: new Set<string>(),
 		filesEdited: new Set<string>(),
 		forcedAttributionCommits: new Set<string>(),
+		iterationDurationsMs: [],
 		runId,
 		runStartedAt: new Date(runStartedAtMs).toISOString(),
 		runStartedAtMs,

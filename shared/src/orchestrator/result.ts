@@ -112,7 +112,8 @@ export type StopReason =
 	| 'metadata_conflict_parked'
 	| 'no_work'
 	| 'partial_success_blocked'
-	| 'stop_requested';
+	| 'stop_requested'
+	| 'wall_clock_budget';
 
 export function metricsFromEvents(events: AgentEvent[]): IterationMetrics {
 	let toolCallCount = 0;

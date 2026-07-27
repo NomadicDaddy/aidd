@@ -183,6 +183,13 @@ export function classifyRun(run: ProjectLocalRun): OutcomeClassification {
 			tone: 'amber',
 		};
 	}
+	if (reason === 'wall_clock_budget') {
+		return {
+			label: 'Time budget',
+			title: 'Run stopped short of its deadline: too little wall-clock budget remained to finish another iteration.',
+			tone: 'amber',
+		};
+	}
 	if (reason === 'merge_conflict_parked') {
 		return {
 			label: 'Awaiting merge',

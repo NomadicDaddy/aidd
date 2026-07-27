@@ -114,6 +114,48 @@ describe('evaluateContinuationValue', () => {
 		expect(evaluateContinuationValue(facts(), undefined)).toBe('wall_clock_timeout');
 	});
 
+	// The graceful form of the same condition: the orchestrator declined an iteration it could not
+	// finish before the deadline. Exit 0, no marker — the stop reason alone must make it eligible,
+	// or the deliberate stop is worse for the operator than being killed by the watchdog.
+	test('a thin-budget stop with remaining selected features is eligible', () => {
+		const entry = {
+			completedFeatures: ['a'],
+			durationMs: null,
+			exitCode: 0,
+			phase: 'coding',
+			selectedFeatures: ['a', 'b'],
+			stopReason: 'wall_clock_budget',
+			summary: 'stopped before iteration 3: 5m of the 60m wall-clock budget remained',
+		};
+		const value = evaluateContinuationValue(
+			facts({
+				status: 'completed',
+				stopReason: 'wall_clock_budget',
+				summary: entry.summary,
+			}),
+			entry,
+		);
+		expect(value).toBe('wall_clock_timeout');
+	});
+
+	test('a thin-budget stop with every selected feature completed is not eligible', () => {
+		const entry = {
+			completedFeatures: ['a', 'b'],
+			durationMs: null,
+			exitCode: 0,
+			phase: 'coding',
+			selectedFeatures: ['a', 'b'],
+			stopReason: 'wall_clock_budget',
+			summary: 'stopped before iteration 3',
+		};
+		expect(
+			evaluateContinuationValue(
+				facts({ status: 'completed', stopReason: 'wall_clock_budget', summary: null }),
+				entry,
+			),
+		).toBe('none');
+	});
+
 	test('merge-parked worktree runs are excluded despite the marker in the summary', () => {
 		expect(
 			evaluateContinuationValue(facts({ stopReason: 'merge_conflict_parked' }), undefined),

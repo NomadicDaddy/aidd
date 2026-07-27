@@ -133,6 +133,10 @@ export interface RunAccumulator {
 	filesCreated: Set<string>;
 	filesEdited: Set<string>;
 	forcedAttributionCommits: Set<string>;
+	/** Wall-clock duration of each completed iteration, in start order. The loop-top budget guard
+	 * takes their median as its estimate of what the next iteration will cost, so it can decline to
+	 * dispatch one that cannot finish before the deadline. */
+	iterationDurationsMs: number[];
 	/** Raw exit code of the last backend iteration, before orchestrator classification.
 	 * Persisted to the ledger as backendExitCode so log/summary/ledger stay reconcilable. */
 	lastBackendExitCode?: number;

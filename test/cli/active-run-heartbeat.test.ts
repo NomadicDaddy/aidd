@@ -14,6 +14,7 @@ import { parseArgs } from 'aidd-shared/args/index';
 import { buildActiveRunCommandArgs } from '../../cli/src/orchestrator/active-run-command.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { CliActiveRunHeartbeat } from '../../cli/src/orchestrator/active-run-heartbeat.ts';
+import { terminalStateFromStopReason } from '../../cli/src/orchestrator/active-run-heartbeat-support.ts';
 import {
 	finalizeCrashedRun,
 	installCrashFinalizer,
@@ -97,6 +98,19 @@ function plan(projectDir: string) {
 
 afterEach(async () => {
 	await rm(tmpRoot, { force: true, recursive: true });
+});
+
+describe('terminalStateFromStopReason', () => {
+	// A thin-budget stop is exit 0 and deliberate: the orchestrator declined an iteration it could
+	// not finish. Recording it as 'failed' both misreported a clean run and (through the web's
+	// continuation rule) denied the operator the follow-up the stop exists to make room for.
+	test('treats a deliberate thin-budget stop as completed, not failed', () => {
+		expect(terminalStateFromStopReason('wall_clock_budget')).toBe('completed');
+	});
+
+	test('still fails an expired wall-clock deadline', () => {
+		expect(terminalStateFromStopReason('exit_error')).toBe('failed');
+	});
 });
 
 describe('CLI active-run heartbeat', () => {

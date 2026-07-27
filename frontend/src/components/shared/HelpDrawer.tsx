@@ -1,7 +1,7 @@
 import { default as ExternalLink } from 'lucide-react/dist/esm/icons/external-link';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { docSectionBySlug } from '../../pages/docs/docs-manifest.ts';
 import { IconButton } from '../ui/button.tsx';

@@ -2,7 +2,7 @@ import { default as Grid2X2 } from 'lucide-react/dist/esm/icons/grid-2-x-2';
 import { default as List } from 'lucide-react/dist/esm/icons/list';
 import { default as PackagePlus } from 'lucide-react/dist/esm/icons/package-plus';
 import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 

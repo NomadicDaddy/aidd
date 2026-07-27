@@ -1,5 +1,5 @@
 import { FRONTEND_ROUTE_PATHS } from 'aidd-shared/contracts/frontend-routes';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';

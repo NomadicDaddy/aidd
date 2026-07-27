@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router';
 
 import { cn } from '../../lib/cn.ts';
 import { DOC_GROUP_ORDER, DOC_SECTIONS } from './docs-manifest.ts';

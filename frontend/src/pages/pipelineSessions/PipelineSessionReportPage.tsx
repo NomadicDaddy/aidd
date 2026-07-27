@@ -5,7 +5,7 @@ import {
 import { default as ArrowLeft } from 'lucide-react/dist/esm/icons/arrow-left';
 import { default as CircleStop } from 'lucide-react/dist/esm/icons/circle-stop';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 
 import type { PipelineSessionReport } from '../../api/types.ts';

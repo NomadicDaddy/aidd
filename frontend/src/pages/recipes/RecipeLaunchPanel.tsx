@@ -2,7 +2,7 @@
 import { default as Send } from 'lucide-react/dist/esm/icons/send';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { RecipeDefinition } from '../../api/types.ts';

@@ -4,7 +4,7 @@ import { default as CircleStop } from 'lucide-react/dist/esm/icons/circle-stop';
 import { default as FileText } from 'lucide-react/dist/esm/icons/file-text';
 import { default as Workflow } from 'lucide-react/dist/esm/icons/workflow';
 import { type KeyboardEvent, type MouseEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { PipelineSessionRecord } from '../../api/types.ts';
 

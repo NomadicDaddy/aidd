@@ -5,7 +5,7 @@ function renderActiveRunLink(activeRuns: { count: number; latestRunId: null | st
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { MemoryRouter } from 'react-router-dom';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { ProjectActiveRunLink } from './src/pages/projects/ProjectActiveRunLink.tsx';",
 		`const link = createElement(ProjectActiveRunLink, { activeRuns: ${JSON.stringify(activeRuns)} });`,
 		'console.log(renderToStaticMarkup(createElement(MemoryRouter, null, link)));',

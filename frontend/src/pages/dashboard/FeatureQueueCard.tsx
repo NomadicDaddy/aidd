@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { default as ListTodo } from 'lucide-react/dist/esm/icons/list-todo';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { FleetSummary } from '../../api/types.ts';
 

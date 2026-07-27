@@ -1,7 +1,7 @@
 import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { ProjectDeleteMode, ProjectDetail } from '../../../api/types.ts';

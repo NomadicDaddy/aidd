@@ -1,7 +1,7 @@
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { default as ListChecks } from 'lucide-react/dist/esm/icons/list-checks';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { FeatureSummary, ProjectSummary } from '../../api/types.ts';
 

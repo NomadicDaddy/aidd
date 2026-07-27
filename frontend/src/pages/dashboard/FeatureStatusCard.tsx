@@ -2,7 +2,7 @@ import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { default as ListFilter } from 'lucide-react/dist/esm/icons/list-filter';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type {
 	FeatureStatusEntry,

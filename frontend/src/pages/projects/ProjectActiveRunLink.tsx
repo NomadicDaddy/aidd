@@ -1,5 +1,5 @@
 import { default as LoaderCircle } from 'lucide-react/dist/esm/icons/loader-circle';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { ProjectActiveRunSummary } from '../../api/types.ts';
 

@@ -1,6 +1,6 @@
 import { NOT_FOUND_PAGE_MARKER } from 'aidd-shared/contracts/frontend-routes';
 import { default as ArrowLeft } from 'lucide-react/dist/esm/icons/arrow-left';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';

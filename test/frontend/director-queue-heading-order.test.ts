@@ -13,7 +13,7 @@ function renderDirectorQueueCard(): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { MemoryRouter } from 'react-router-dom';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { DirectorQueueCard } from './src/pages/dashboard/DirectorQueueCard.tsx';",
 		`const suggestions = [${JSON.stringify(suggestion)}];`,
 		'const card = createElement(DirectorQueueCard, { isLoading: false, suggestions });',

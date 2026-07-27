@@ -6,7 +6,7 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as Send } from 'lucide-react/dist/esm/icons/send';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';

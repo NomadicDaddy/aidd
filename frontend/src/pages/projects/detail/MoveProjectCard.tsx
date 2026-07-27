@@ -1,6 +1,6 @@
 import { default as FolderInput } from 'lucide-react/dist/esm/icons/folder-input';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { ProjectDetail } from '../../../api/types.ts';

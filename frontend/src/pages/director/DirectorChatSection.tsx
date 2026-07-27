@@ -4,7 +4,7 @@ import { default as MessageSquarePlus } from 'lucide-react/dist/esm/icons/messag
 import { default as Send } from 'lucide-react/dist/esm/icons/send';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { default as Zap } from 'lucide-react/dist/esm/icons/zap';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { ChatAgentAction } from '../../api/types.ts';
 

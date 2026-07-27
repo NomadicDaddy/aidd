@@ -3,7 +3,7 @@ import { default as Bot } from 'lucide-react/dist/esm/icons/bot';
 import { default as Send } from 'lucide-react/dist/esm/icons/send';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 import { useDirector } from '../../hooks/useDirector.ts';

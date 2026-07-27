@@ -1,6 +1,6 @@
 import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
 import { default as Send } from 'lucide-react/dist/esm/icons/send';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';
 

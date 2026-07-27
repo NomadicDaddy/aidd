@@ -11,7 +11,7 @@ function renderTransparencyComponents(): string {
 	const script = [
 		"import { createElement, Fragment } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { MemoryRouter } from 'react-router-dom';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { TelemetryDisclosure } from './src/pages/telemetry/TelemetryDisclosure.tsx';",
 		"import { TelemetrySummary } from './src/pages/telemetry/TelemetrySummary.tsx';",
 		"import { LeaderboardCard } from './src/pages/telemetry/TelemetryComponents.tsx';",

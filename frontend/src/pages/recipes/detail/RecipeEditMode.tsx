@@ -5,7 +5,7 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as Save } from 'lucide-react/dist/esm/icons/save';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { RecipeParameterDefinition } from '../../../api/types.ts';
 

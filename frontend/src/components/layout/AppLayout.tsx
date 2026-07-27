@@ -5,7 +5,7 @@ import { default as Moon } from 'lucide-react/dist/esm/icons/moon';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as Sun } from 'lucide-react/dist/esm/icons/sun';
 import { type ReactNode, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import { useActiveExecutionCount } from '../../hooks/useActiveRunCount.ts';

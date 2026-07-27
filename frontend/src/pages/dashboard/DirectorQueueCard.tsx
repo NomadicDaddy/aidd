@@ -1,6 +1,6 @@
 import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { SuggestionRecord } from '../../api/types.ts';
 

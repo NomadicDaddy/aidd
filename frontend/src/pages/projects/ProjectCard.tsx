@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { default as FolderX } from 'lucide-react/dist/esm/icons/folder-x';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '../../api/types.ts';
 

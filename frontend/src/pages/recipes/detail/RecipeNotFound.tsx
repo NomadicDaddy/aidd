@@ -1,5 +1,5 @@
 import { default as ArrowLeft } from 'lucide-react/dist/esm/icons/arrow-left';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { buttonClassName } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';

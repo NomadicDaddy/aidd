@@ -1,6 +1,6 @@
 import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { RunRecord } from '../../api/types.ts';
 

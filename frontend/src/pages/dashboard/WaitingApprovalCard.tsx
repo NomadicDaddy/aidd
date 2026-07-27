@@ -2,7 +2,7 @@ import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { default as Check } from 'lucide-react/dist/esm/icons/check';
 import { default as ShieldQuestion } from 'lucide-react/dist/esm/icons/shield-question';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type {
 	ProjectDetail,

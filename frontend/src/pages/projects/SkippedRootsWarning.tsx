@@ -1,6 +1,6 @@
 import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { ProjectDiscoverySkippedRoot } from '../../api/types.ts';
 

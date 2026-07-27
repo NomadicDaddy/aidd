@@ -1,7 +1,7 @@
 import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
 import { default as FolderKanban } from 'lucide-react/dist/esm/icons/folder-kanban';
 import { type ReactElement, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 
 import { useProjectNames } from '../../hooks/useProjects.ts';
 import { cn } from '../../lib/cn.ts';

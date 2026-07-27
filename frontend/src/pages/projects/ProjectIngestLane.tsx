@@ -4,7 +4,7 @@ import { default as CheckCircle2 } from 'lucide-react/dist/esm/icons/check-circl
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as PackagePlus } from 'lucide-react/dist/esm/icons/package-plus';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 import type { ProjectImportAction, ProjectImportCandidateResult } from '../../api/types.ts';

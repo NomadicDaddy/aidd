@@ -33,7 +33,7 @@ function renderInvocationsTable(): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { MemoryRouter } from 'react-router-dom';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { InvocationsTable } from './src/pages/telemetry/InvocationsTable.tsx';",
 		`const invocation = ${JSON.stringify(invocation)};`,
 		'const table = createElement(InvocationsTable, { invocations: [invocation] });',

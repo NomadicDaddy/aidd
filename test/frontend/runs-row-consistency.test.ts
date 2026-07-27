@@ -30,7 +30,7 @@ function renderPipelineRow(): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { MemoryRouter } from 'react-router-dom';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { PipelineSessionRow } from './src/pages/runs/PipelineSessionRow.tsx';",
 		`const session = ${JSON.stringify(session)};`,
 		"const row = createElement(PipelineSessionRow, { expanded: false, now: 1000, onSelect: () => {}, onStop: () => {}, onToggle: () => {}, projectRouteId: 'project-route', selected: false, session });",

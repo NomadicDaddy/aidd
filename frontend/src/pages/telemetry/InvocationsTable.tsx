@@ -1,5 +1,5 @@
 import { classifyWebRun } from 'aidd-shared/runs/outcome';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type {
 	InvocationRecord,

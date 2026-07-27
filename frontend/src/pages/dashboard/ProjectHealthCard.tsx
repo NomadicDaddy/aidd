@@ -1,7 +1,7 @@
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 

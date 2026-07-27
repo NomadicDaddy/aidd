@@ -686,25 +686,25 @@ grep -rn "^\[test\]" bunfig.toml backend/bunfig.toml 2>/dev/null
 
 ## 8.2 Technology Verification
 
-| Technology         | Status | Check Command                                                                                            |
-| ------------------ | ------ | -------------------------------------------------------------------------------------------------------- |
-| Bun 1.3.14+        | `[ ]`  | `bun --version` (matches `packageManager`/`engines` in package.json)                                     |
-| Elysia             | `[ ]`  | Check backend/package.json                                                                               |
-| Drizzle ORM        | `[ ]`  | Check backend/package.json                                                                               |
-| pino logging       | `[ ]`  | Check backend/package.json                                                                               |
-| React 19           | `[ ]`  | Check frontend/package.json                                                                              |
-| Zustand            | `[ ]`  | Check frontend/package.json                                                                              |
-| TanStack Query     | `[ ]`  | Check frontend/package.json                                                                              |
-| shadcn/ui          | `[ ]`  | Check components/ui/ directory                                                                           |
-| sonner toasts      | `[ ]`  | Check frontend/package.json                                                                              |
-| native fetch       | `[ ]`  | `grep -r "axios" frontend/src/` (should be empty)                                                        |
-| TypeBox            | `[ ]`  | Check backend/package.json                                                                               |
-| Tailwind CSS 4     | `[ ]`  | Check frontend/package.json                                                                              |
-| TypeScript 6       | `[ ]`  | Check root/frontend/backend package.json                                                                 |
-| react-router-dom 7 | `[ ]`  | Check frontend/package.json                                                                              |
-| Vite 8             | `[ ]`  | Check frontend/package.json                                                                              |
-| React Compiler     | `[ ]`  | Check `babel-plugin-react-compiler` in frontend                                                          |
-| No unit test deps  | `[ ]`  | `grep -E "vitest\|@testing-library\|jsdom" frontend/package.json backend/package.json` (should be empty) |
+| Technology        | Status | Check Command                                                                                            |
+| ----------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| Bun 1.3.14+       | `[ ]`  | `bun --version` (matches `packageManager`/`engines` in package.json)                                     |
+| Elysia            | `[ ]`  | Check backend/package.json                                                                               |
+| Drizzle ORM       | `[ ]`  | Check backend/package.json                                                                               |
+| pino logging      | `[ ]`  | Check backend/package.json                                                                               |
+| React 19          | `[ ]`  | Check frontend/package.json                                                                              |
+| Zustand           | `[ ]`  | Check frontend/package.json                                                                              |
+| TanStack Query    | `[ ]`  | Check frontend/package.json                                                                              |
+| shadcn/ui         | `[ ]`  | Check components/ui/ directory                                                                           |
+| sonner toasts     | `[ ]`  | Check frontend/package.json                                                                              |
+| native fetch      | `[ ]`  | `grep -r "axios" frontend/src/` (should be empty)                                                        |
+| TypeBox           | `[ ]`  | Check backend/package.json                                                                               |
+| Tailwind CSS 4    | `[ ]`  | Check frontend/package.json                                                                              |
+| TypeScript 6      | `[ ]`  | Check root/frontend/backend package.json                                                                 |
+| react-router 8    | `[ ]`  | Check frontend/package.json (v8 removed `react-router-dom`)                                              |
+| Vite 8            | `[ ]`  | Check frontend/package.json                                                                              |
+| React Compiler    | `[ ]`  | Check `babel-plugin-react-compiler` in frontend                                                          |
+| No unit test deps | `[ ]`  | `grep -E "vitest\|@testing-library\|jsdom" frontend/package.json backend/package.json` (should be empty) |
 
 **Version pinning:** Every Spernakit dependency is pinned exactly without caret or tilde ranges.
 Treat the major-version rows above as the compatibility floor and verify every exact pin against

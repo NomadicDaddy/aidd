@@ -1,7 +1,7 @@
 import { default as Code2 } from 'lucide-react/dist/esm/icons/code-2';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 
 import type { ProjectCodeFileEntry, ProjectCodeTreeState } from '../../../api/types.ts';
 

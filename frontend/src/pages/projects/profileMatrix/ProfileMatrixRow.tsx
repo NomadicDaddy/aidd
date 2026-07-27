@@ -1,7 +1,7 @@
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
 import { default as Save } from 'lucide-react/dist/esm/icons/save';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { ProjectAssuranceProfileInput } from '../../../api/types.ts';
 import type { FacetField } from '../detail/profile/profile-facets.ts';

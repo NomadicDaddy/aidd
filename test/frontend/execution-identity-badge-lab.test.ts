@@ -11,7 +11,7 @@ function renderBadgeLab(): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { MemoryRouter } from 'react-router-dom';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { ExecutionIdentityBadgeLabPage } from './src/pages/settings/ExecutionIdentityBadgeLabPage.tsx';",
 		'const page = createElement(MemoryRouter, null, createElement(ExecutionIdentityBadgeLabPage));',
 		'console.log(renderToStaticMarkup(page));',

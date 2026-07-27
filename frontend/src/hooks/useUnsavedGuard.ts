@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { type Blocker, useBlocker } from 'react-router-dom';
+import { type Blocker, useBlocker } from 'react-router';
 
 // Blocks intra-app route changes (via react-router blocker) and shows the browser's native
 // beforeunload prompt for tab close / full reload while `dirty` is true. The returned Blocker

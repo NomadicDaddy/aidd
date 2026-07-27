@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { default as CircleDashed } from 'lucide-react/dist/esm/icons/circle-dashed';
 import { default as ExternalLink } from 'lucide-react/dist/esm/icons/external-link';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type {
 	PipelineSessionReport,

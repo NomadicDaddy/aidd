@@ -6,7 +6,7 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as Sun } from 'lucide-react/dist/esm/icons/sun';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import { useProjects } from '../../hooks/useProjects.ts';

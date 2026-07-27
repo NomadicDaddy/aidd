@@ -1,5 +1,5 @@
 import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { RunCommandInfo } from '../../../components/shared/RunCommandInfo.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';

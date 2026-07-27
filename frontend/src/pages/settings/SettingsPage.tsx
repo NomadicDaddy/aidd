@@ -1,7 +1,7 @@
 import { FRONTEND_ROUTE_PATHS } from 'aidd-shared/contracts/frontend-routes';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
 import type {

@@ -6,13 +6,8 @@ import {
 	type FrontendRouteId,
 } from 'aidd-shared/contracts/frontend-routes';
 import { lazy, type ReactNode, Suspense, useEffect, useRef } from 'react';
-import {
-	createBrowserRouter,
-	Navigate,
-	Outlet,
-	RouterProvider,
-	useLocation,
-} from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router';
+import { RouterProvider } from 'react-router/dom';
 import { Toaster } from 'sonner';
 
 import { AppLayout } from './components/layout/AppLayout.tsx';

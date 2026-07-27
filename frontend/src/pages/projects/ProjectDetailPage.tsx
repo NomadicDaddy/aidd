@@ -14,7 +14,7 @@ import { default as NotebookPen } from 'lucide-react/dist/esm/icons/notebook-pen
 import { default as Settings2 } from 'lucide-react/dist/esm/icons/settings-2';
 import { default as ShieldAlert } from 'lucide-react/dist/esm/icons/shield-alert';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ApiError } from '../../api/client.ts';
 import { AppLaunchControl } from '../../components/shared/AppLaunchControl.tsx';

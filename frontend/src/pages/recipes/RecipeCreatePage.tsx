@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { isSystemRecipeId } from 'aidd-shared/system-recipes';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import type { RecipeDefinition, RecipeParameterDefinition } from '../../api/types.ts';

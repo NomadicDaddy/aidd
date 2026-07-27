@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as Save } from 'lucide-react/dist/esm/icons/save';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 import type { ProjectAssuranceProfileInput } from '../../../api/types.ts';

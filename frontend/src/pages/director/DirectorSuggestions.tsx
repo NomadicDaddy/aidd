@@ -10,7 +10,7 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { DirectorCycle, DirectorSuggestionRecord } from '../../api/types.ts';
 

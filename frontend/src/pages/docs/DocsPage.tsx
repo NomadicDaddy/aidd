@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';

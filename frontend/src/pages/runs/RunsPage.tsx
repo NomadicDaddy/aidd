@@ -130,19 +130,23 @@ export function RunsPage() {
 				query={page.query}
 				statusFilter={page.statusFilter}
 			/>
-			<div className="min-w-0 space-y-5">
-				{showingInitialSkeleton ? (
-					<SkeletonRows columns={4} count={6} label="Loading runs…" />
-				) : (
-					<UnifiedExecutionTable
-						description="Runs and recipe pipelines currently executing."
-						emptyMessage="Nothing is running right now."
-						entries={page.activeEntries}
-						title="Active"
-						{...tableProps}
-					/>
-				)}
-				<div className="min-w-0 self-start" ref={page.liveConsoleRef}>
+			<div className="grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] 2xl:items-start">
+				<div className="min-w-0 2xl:col-start-1 2xl:row-start-1">
+					{showingInitialSkeleton ? (
+						<SkeletonRows columns={4} count={6} label="Loading runs…" />
+					) : (
+						<UnifiedExecutionTable
+							description="Runs and recipe pipelines currently executing."
+							emptyMessage="Nothing is running right now."
+							entries={page.activeEntries}
+							title="Active"
+							{...tableProps}
+						/>
+					)}
+				</div>
+				<div
+					className="min-w-0 self-start 2xl:sticky 2xl:top-6 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1"
+					ref={page.liveConsoleRef}>
 					{page.selection?.kind === 'pipeline' && page.selectedSession ? (
 						<PipelineConsoleSummary session={page.selectedSession} />
 					) : (
@@ -155,7 +159,7 @@ export function RunsPage() {
 					)}
 				</div>
 				{showingInitialSkeleton ? null : (
-					<div className="min-w-0 space-y-3">
+					<div className="min-w-0 space-y-3 2xl:col-start-1 2xl:row-start-2">
 						<UnifiedExecutionTable
 							description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
 							emptyMessage="No runs or pipelines match the current filters."

@@ -3,11 +3,15 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 describe('runs page section order', () => {
-	test('renders Live Console between Active and History', async () => {
-		const source = await readFile(
+	async function readRunsPage(): Promise<string> {
+		return readFile(
 			join(import.meta.dir, '..', '..', 'frontend', 'src', 'pages', 'runs', 'RunsPage.tsx'),
 			'utf8',
 		);
+	}
+
+	test('keeps Live Console between Active and History in narrow source order', async () => {
+		const source = await readRunsPage();
 		const activeIndex = source.indexOf('title="Active"');
 		const consoleIndex = source.indexOf('ref={page.liveConsoleRef}');
 		const historyIndex = source.indexOf('title="History"');
@@ -17,5 +21,16 @@ describe('runs page section order', () => {
 		expect(consoleIndex).toBeGreaterThan(activeIndex);
 		expect(historyIndex).toBeGreaterThan(consoleIndex);
 		expect(showMoreIndex).toBeGreaterThan(historyIndex);
+	});
+
+	test('places run lists left and a sticky console right at 2xl', async () => {
+		const source = await readRunsPage();
+
+		expect(source).toContain('2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] 2xl:items-start');
+		expect(source).toContain('2xl:col-start-1 2xl:row-start-1');
+		expect(source).toContain(
+			'2xl:sticky 2xl:top-6 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1',
+		);
+		expect(source).toContain('space-y-3 2xl:col-start-1 2xl:row-start-2');
 	});
 });

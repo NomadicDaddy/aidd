@@ -7,6 +7,7 @@ import type { CompiledPrompt } from '../../prompts/types.ts';
 import type { IterationDetails } from '../details/types.ts';
 
 import { compilePrompt } from '../../prompts/compile.ts';
+import { probeAppUrl } from './app-url-probe.ts';
 import { baselineVerifiedNote, windDownNote } from './carryover-notes.ts';
 import { gitWorktreeClean, readGitHead } from './git.ts';
 
@@ -109,10 +110,13 @@ export class IterationPromptContext {
 		this.carryoverNote = undefined;
 		this.windDownNote = undefined;
 		const carryoverNote = notes.length > 0 ? notes.join('\n\n') : undefined;
+		// Probed per iteration, not once per run: an app that was up at launch can be gone by
+		// iteration 5, and the whole point is that the prompt states the current truth.
+		const appUrlStatus = await probeAppUrl(this.appUrl);
 		return compilePrompt(promptPlan, {
 			projectDir: this.projectDir,
 			rootDir: this.rootDir,
-			...(this.appUrl ? { appUrl: this.appUrl } : {}),
+			...(this.appUrl ? { appUrl: this.appUrl, appUrlStatus } : {}),
 			...(carryoverNote ? { carryoverNote } : {}),
 		});
 	}

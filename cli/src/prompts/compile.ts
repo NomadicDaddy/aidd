@@ -18,6 +18,7 @@ import { compileDirective } from './compile/directive.ts';
 import { compileDirectorPrompt } from './compile/director.ts';
 import { applyFilters } from './compile/filters.ts';
 import { compileInterviewPrompt } from './compile/interview.ts';
+import { type AppUrlStatus, renderLaunchContext } from './compile/launch-context.ts';
 import { renderCodingPriorContext } from './compile/prior-context.ts';
 import { compileResultContract } from './compile/result-contract.ts';
 import { readFragment, stringArrayVariable, stringVariable } from './compile/shared.ts';
@@ -27,6 +28,9 @@ export interface PromptCompilerOptions {
 	 * launched a dogfood run). Appended to the prompt so the agent reuses it instead of starting
 	 * its own server. */
 	appUrl?: string;
+	/** Result of probing `appUrl` just before this iteration compiled. When it is unreachable the
+	 * launch context says so outright, so the agent parks instead of rediscovering it the hard way. */
+	appUrlStatus?: AppUrlStatus;
 	/** One-shot corrective note carried over from the previous iteration (e.g. a flailing nudge).
 	 * Appended verbatim so the agent sees feedback at the start of its next attempt. */
 	carryoverNote?: string;
@@ -34,28 +38,6 @@ export interface PromptCompilerOptions {
 	includeRuntimeContext?: boolean;
 	projectDir?: string;
 	rootDir: string;
-}
-
-function renderLaunchContext(options: PromptCompilerOptions): string | undefined {
-	const parts: string[] = [];
-	if (options.appUrl) {
-		// Deliberately project-agnostic: this block is now sent for any project whose app address is
-		// known, not just the aidd panel, so it must not name aidd's own scripts. The address itself
-		// is the point — without it agents fall back to framework defaults (localhost:3000, :5173)
-		// and burn the run probing ports the app was never on.
-		parts.push(
-			`The application under test for this project is at ${options.appUrl}. Use that address for ` +
-				`live verification (curl / agent-browser). Do **not** probe other ports, hunt for a ` +
-				`listening process, or start another server (\`start\` / \`dev\` / \`start:web\`) — if this ` +
-				`address does not respond, the app is not running, and no other port is a substitute. ` +
-				`If \`agent-browser\` is unavailable or you cannot reach the app after two honest attempts, ` +
-				`run the headless gates you can (typecheck, lint, tests, the project's QC script) and mark ` +
-				`the feature \`waiting_approval\` with the manual verification steps documented.`,
-		);
-	}
-	if (options.carryoverNote) parts.push(options.carryoverNote.trim());
-	if (parts.length === 0) return undefined;
-	return `## Run launch context\n\n${parts.join('\n\n')}`;
 }
 
 function sourcePath(plan: PromptPlan): string | undefined {

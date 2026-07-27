@@ -78,6 +78,21 @@ describe('prompt compiler', () => {
 		expect(compiled.text).toContain('Do **not** probe other ports');
 	});
 
+	// Inheriting a dead address used to cost most of an iteration in rediscovery (probe, rebuild,
+	// restart) before the agent finally parked. The probe result is stated instead.
+	test('states the failure outright when the app URL was probed and did not answer', async () => {
+		const compiled = await compilePrompt(plan(['--project-dir', '.', '--cli', 'native']), {
+			rootDir,
+			appUrl: 'http://127.0.0.1:3210',
+			appUrlStatus: 'unreachable',
+		});
+		const launchContext = compiled.text.slice(compiled.text.indexOf('## Run launch context'));
+		expect(launchContext).toContain('did **not** respond');
+		expect(launchContext).toContain('One confirming `curl` is the entire budget');
+		expect(launchContext).toContain('waiting_approval');
+		expect(launchContext).not.toContain('Do **not** probe other ports');
+	});
+
 	// The block is sent to any project whose address is known, not just the aidd panel, so it must
 	// not instruct a foreign project to run aidd's own scripts.
 	test('launch context names no aidd-specific commands', async () => {

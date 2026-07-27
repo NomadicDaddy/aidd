@@ -26,10 +26,11 @@ import { Keycap, ShortcutChord } from './KeyboardShortcut.tsx';
 
 interface CommandPaletteProps {
 	onOpenChange: (open: boolean) => void;
+	onOpenDirective: () => void;
 	open: boolean;
 }
 
-export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
+export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandPaletteProps) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const themeMode = useThemeStore((state) => state.mode);
@@ -155,6 +156,22 @@ export function CommandPalette({ onOpenChange, open }: CommandPaletteProps) {
 							</CommandGroup>
 						) : null}
 						<CommandGroup className="[&_[cmdk-group-heading]]:px-2.5" heading="Actions">
+							<CommandItem
+								className="min-h-11 gap-3 px-2.5"
+								onSelect={() => runAction(onOpenDirective)}
+								value="launch directive prompt project">
+								<span className={iconFrameClass}>
+									<Play aria-hidden="true" />
+								</span>
+								<span className="min-w-0">
+									<span className="block truncate font-medium">
+										Launch directive
+									</span>
+									<span className="block truncate text-xs text-neutral-500 dark:text-neutral-400">
+										Send a free-text instruction to one project
+									</span>
+								</span>
+							</CommandItem>
 							<CommandItem
 								className="min-h-11 gap-3 px-2.5"
 								onSelect={() =>

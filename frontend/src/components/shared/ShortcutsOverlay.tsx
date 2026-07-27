@@ -30,6 +30,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 			terminalShortcut,
 			{ keys: ['/'], label: 'Focus search on this page' },
 			{ keys: ['r'], label: 'Refresh current data' },
+			{ keys: ['d'], label: 'Open directive launcher' },
 			{ keys: ['c'], label: 'Open Director chat' },
 			{ keys: ['?'], label: 'Show this shortcuts overlay' },
 		],

@@ -1071,6 +1071,44 @@ describe('web run launcher', () => {
 		}
 	});
 
+	test('builds mutating and review-only directive commands with the supplied prompt', async () => {
+		const rootDir = await makeLauncherRoot('console.log("ok");\n');
+		try {
+			const projectDir = resolve('demo-project');
+			const apply = await buildLaunchCommand(
+				rootDir,
+				{
+					directiveReadonly: false,
+					mode: 'directive',
+					projectDir,
+					prompt: 'Apply the focused change.',
+				},
+				'native',
+			);
+			const review = await buildLaunchCommand(
+				rootDir,
+				{
+					directiveReadonly: true,
+					mode: 'directive',
+					projectDir,
+					prompt: 'Review the focused change.',
+				},
+				'native',
+			);
+
+			expect(apply.args).toContain('--directive');
+			expect(apply.args).toContain('--prompt');
+			expect(apply.args).toContain('Apply the focused change.');
+			expect(apply.args).not.toContain('--directive-readonly');
+			expect(review.args).toContain('--directive');
+			expect(review.args).toContain('--prompt');
+			expect(review.args).toContain('Review the focused change.');
+			expect(review.args).toContain('--directive-readonly');
+		} finally {
+			await removeTempTree(rootDir);
+		}
+	});
+
 	test('rejects extraArgs with an unterminated quote as a 400', async () => {
 		const rootDir = await makeLauncherRoot('console.log("ok");\n');
 		try {
@@ -1367,6 +1405,157 @@ describe('web run launcher', () => {
 		expect(valid.status).toBe(200);
 		expect(invalid.status).toBe(422);
 		expect(internalAlias.status).toBe(422);
+	});
+
+	test('directive route maps intent, trims prompts, and records direct-run telemetry', async () => {
+		const requests: RunLaunchRequest[] = [];
+		const telemetryStarts: { resourceName: string; runId: string }[] = [];
+		const runRecord = {
+			backend: 'codex',
+			id: 'run_directive_1',
+			mode: 'directive',
+			model: 'gpt-5.6-sol',
+			projectName: 'demo',
+			projectPath: 'd:/applications/demo',
+			startedAt: 123,
+		};
+		const app = new Elysia().use(errorHandlerPlugin).use(
+			createRunsRoutes({
+				runService: {
+					launchRun: async (request: RunLaunchRequest) => {
+						requests.push(request);
+						return runRecord;
+					},
+				},
+				telemetryService: {
+					recordStart: async (input: { resourceName: string; runId: string }) => {
+						telemetryStarts.push(input);
+						return 'inv_directive';
+					},
+				} as unknown as TelemetryService,
+			} as unknown as WebContext),
+		);
+		const post = (executionIntent: 'apply-changes' | 'review-only', prompt: string) =>
+			app.handle(
+				new Request('http://localhost/api/v1/runs/directive', {
+					body: JSON.stringify({
+						executionIntent,
+						projectDir: 'd:/applications/demo',
+						prompt,
+					}),
+					headers: { 'content-type': 'application/json' },
+					method: 'POST',
+				}),
+			);
+
+		const reviewResponse = await post('review-only', '  Inspect the current state.  ');
+		const applyResponse = await post('apply-changes', 'Fix the current issue.');
+
+		expect(reviewResponse.status).toBe(200);
+		expect(applyResponse.status).toBe(200);
+		expect(requests).toEqual([
+			{
+				directiveReadonly: true,
+				maxIterations: 1,
+				mode: 'directive',
+				projectDir: 'd:/applications/demo',
+				prompt: 'Inspect the current state.',
+			},
+			{
+				directiveReadonly: false,
+				maxIterations: 1,
+				mode: 'directive',
+				projectDir: 'd:/applications/demo',
+				prompt: 'Fix the current issue.',
+			},
+		]);
+		expect(telemetryStarts).toEqual([
+			expect.objectContaining({
+				resourceName: 'directive · demo',
+				runId: 'run_directive_1',
+			}),
+			expect.objectContaining({
+				resourceName: 'directive · demo',
+				runId: 'run_directive_1',
+			}),
+		]);
+	});
+
+	test('directive route rejects invalid bodies before launching', async () => {
+		const requests: RunLaunchRequest[] = [];
+		const app = new Elysia().use(errorHandlerPlugin).use(
+			createRunsRoutes({
+				runService: {
+					launchRun: async (request: RunLaunchRequest) => {
+						requests.push(request);
+						return { id: 'unexpected' };
+					},
+				},
+			} as unknown as WebContext),
+		);
+		const post = (body: Record<string, unknown>) =>
+			app.handle(
+				new Request('http://localhost/api/v1/runs/directive', {
+					body: JSON.stringify(body),
+					headers: { 'content-type': 'application/json' },
+					method: 'POST',
+				}),
+			);
+
+		const blank = await post({
+			executionIntent: 'review-only',
+			projectDir: 'd:/applications/demo',
+			prompt: '   ',
+		});
+		const invalidIntent = await post({
+			executionIntent: 'sometimes',
+			projectDir: 'd:/applications/demo',
+			prompt: 'Inspect',
+		});
+		const missingProject = await post({
+			executionIntent: 'review-only',
+			prompt: 'Inspect',
+		});
+
+		expect(blank.status).toBe(400);
+		expect(await blank.text()).toContain('Directive prompt is required');
+		expect(invalidIntent.status).toBe(400);
+		expect(missingProject.status).toBe(400);
+		expect(requests).toEqual([]);
+	});
+
+	test('directive route surfaces rejected project paths without recording telemetry', async () => {
+		let telemetryStarted = false;
+		const app = new Elysia().use(errorHandlerPlugin).use(
+			createRunsRoutes({
+				runService: {
+					launchRun: async () => {
+						throw new HttpError('Project path is outside allowed roots', 403);
+					},
+				},
+				telemetryService: {
+					recordStart: async () => {
+						telemetryStarted = true;
+					},
+				} as unknown as TelemetryService,
+			} as unknown as WebContext),
+		);
+
+		const response = await app.handle(
+			new Request('http://localhost/api/v1/runs/directive', {
+				body: JSON.stringify({
+					executionIntent: 'review-only',
+					projectDir: 'd:/outside/demo',
+					prompt: 'Inspect',
+				}),
+				headers: { 'content-type': 'application/json' },
+				method: 'POST',
+			}),
+		);
+
+		expect(response.status).toBe(403);
+		expect(await response.text()).toContain('outside allowed roots');
+		expect(telemetryStarted).toBe(false);
 	});
 
 	test('runs route rejects model with shell metacharacters (command injection)', async () => {

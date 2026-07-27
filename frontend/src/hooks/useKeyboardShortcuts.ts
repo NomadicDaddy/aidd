@@ -14,6 +14,8 @@ const GO_CHORD_TIMEOUT_MS = 1200;
 export interface KeyboardShortcutHandlers {
 	/** Navigate to an in-app route (the `g d` / `g p` / `g r` chords). */
 	onNavigate: (to: string) => void;
+	/** Open the global project directive launcher (the `d` shortcut). */
+	onOpenDirective: () => void;
 	/** Open the global Director chat capture modal (the `c` shortcut). */
 	onOpenDirectorChat: () => void;
 	/** Refresh the current page's data (the `r` shortcut). */
@@ -48,6 +50,10 @@ function isModalOpen(): boolean {
 	return document.getElementById('app-shell')?.hasAttribute('inert') ?? false;
 }
 
+export function shouldSuppressGlobalShortcut(editableTarget: boolean, modalOpen: boolean): boolean {
+	return editableTarget || modalOpen;
+}
+
 function focusPrimarySearch(): boolean {
 	if (typeof document === 'undefined') return false;
 	const inputs = document.querySelectorAll<HTMLElement>(`[${SHORTCUT_SEARCH_ATTR}]`);
@@ -72,6 +78,7 @@ function focusPrimarySearch(): boolean {
  * - `g d` / `g p` / `g r` — go to Dashboard / Projects / Runs
  * - `/` — focus the current page's primary search/filter (when present)
  * - `r` — refresh the current page's data
+ * - `d` — open the global project directive launcher
  * - `c` — open the global Director chat capture modal
  * - `?` — open the shortcuts overlay
  * - Ctrl+` — toggle the terminal pane (works even while typing or with a modal open)
@@ -109,7 +116,7 @@ export function useKeyboardShortcuts(handlers: KeyboardShortcutHandlers): void {
 				clearGo();
 				return;
 			}
-			if (isEditableTarget(event.target) || isModalOpen()) {
+			if (shouldSuppressGlobalShortcut(isEditableTarget(event.target), isModalOpen())) {
 				clearGo();
 				return;
 			}
@@ -154,6 +161,12 @@ export function useKeyboardShortcuts(handlers: KeyboardShortcutHandlers): void {
 			if (key === 'c') {
 				event.preventDefault();
 				handlersRef.current.onOpenDirectorChat();
+				return;
+			}
+
+			if (key === 'd') {
+				event.preventDefault();
+				handlersRef.current.onOpenDirective();
 			}
 		};
 

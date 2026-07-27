@@ -1,7 +1,9 @@
 import { Elysia, t } from 'elysia';
 
 import type { WebContext } from '../context.ts';
+import type { RunLaunchRequest, WebRunMode } from '../types.ts';
 
+import { HttpError } from '../services/errors.ts';
 import { readRunCommits } from '../services/run/commits.ts';
 import { backendNameBody } from './schemas/backend.ts';
 
@@ -25,11 +27,8 @@ export const launchBody = t.Object({
 	filterValue: t.Optional(t.String()),
 	interview: t.Optional(t.Boolean()),
 	maxIterations: t.Optional(t.Number()),
-	// User-launchable modes only. WebRunMode also includes service-internal modes
-	// (director, directive) that are launched by their own routes/services
-	// — director via the director cycle, directive via recipe steps and
-	// the skill launch path — and are intentionally not accepted on this generic
-	// launch route.
+	// Modes accepted by the generic launch route. Director and directive use dedicated entry
+	// points instead: director cycles, and directive recipe/skill/operator launchers.
 	mode: t.Optional(
 		t.Union([
 			t.Literal('audit'),
@@ -52,6 +51,31 @@ export const launchBody = t.Object({
 	simulation: t.Optional(t.Boolean()),
 	validate: t.Optional(t.Boolean()),
 });
+
+const directiveLaunchBody = t.Object({
+	executionIntent: t.Union([t.Literal('apply-changes'), t.Literal('review-only')]),
+	projectDir: t.String({ minLength: 1 }),
+	prompt: t.String(),
+});
+
+async function launchTrackedRun(context: WebContext, input: RunLaunchRequest, mode: WebRunMode) {
+	const run = await context.runService.launchRun(input);
+	// Direct operator launches record telemetry with resourceType='run' so they
+	// appear on the telemetry dashboard alongside launches from the Runs page.
+	await context.telemetryService.recordStart({
+		backend: run.backend,
+		model: run.model,
+		projectName: run.projectName,
+		projectPath: run.projectPath,
+		resourceId: run.id,
+		resourceName: `${mode} · ${run.projectName}`,
+		resourceType: 'run',
+		runId: run.id,
+		source: 'web',
+		startedAt: run.startedAt,
+	});
+	return run;
+}
 
 // Run routes expose one active-run surface: web-supervised subprocess rows plus CLI heartbeat
 // files. Durable completed history is still read from project `.aidd` metadata by project
@@ -94,6 +118,28 @@ export function createRunsRoutes(context: WebContext) {
 				}),
 			},
 		)
+		.post(
+			'/directive',
+			async ({ body }) => {
+				const prompt = body.prompt.trim();
+				if (!prompt) {
+					throw new HttpError('Directive prompt is required', 400);
+				}
+				const run = await launchTrackedRun(
+					context,
+					{
+						directiveReadonly: body.executionIntent === 'review-only',
+						maxIterations: 1,
+						mode: 'directive',
+						projectDir: body.projectDir,
+						prompt,
+					},
+					'directive',
+				);
+				return { run };
+			},
+			{ body: directiveLaunchBody },
+		)
 		.get(
 			'/:id',
 			async ({ params }) => {
@@ -117,22 +163,8 @@ export function createRunsRoutes(context: WebContext) {
 		.post(
 			'/',
 			async ({ body }) => {
-				const run = await context.runService.launchRun(body);
-				// Direct runs (not launched via skill/recipe) record telemetry
-				// with resourceType='run' so they appear on the telemetry dashboard.
 				const mode = body.mode ?? 'coding';
-				await context.telemetryService.recordStart({
-					backend: run.backend,
-					model: run.model,
-					projectName: run.projectName,
-					projectPath: run.projectPath,
-					resourceId: run.id,
-					resourceName: `${mode} · ${run.projectName}`,
-					resourceType: 'run',
-					runId: run.id,
-					source: 'web',
-					startedAt: run.startedAt,
-				});
+				const run = await launchTrackedRun(context, body, mode);
 				return { run };
 			},
 			{

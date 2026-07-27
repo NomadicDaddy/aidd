@@ -1,8 +1,10 @@
+import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
+
 import type { BackendInputName, BackendName } from './skills.ts';
 
 // Mirrors backend WebRunMode (backend/src/types/run.ts) and the ck_runs_mode CHECK constraint.
-// 'directive' is set internally by pipeline step handlers — filterable, but never user-launchable
-// (keep it out of the RunLaunchCard mode selector).
+// 'directive' is filterable and user-launchable through its dedicated operator route, but stays
+// out of the generic RunLaunchCard mode selector.
 export type RunMode =
 	| 'audit'
 	| 'coding'
@@ -126,6 +128,12 @@ export interface RunLaunchRequest {
 	secondaryModel?: string;
 	simulation?: boolean;
 	validate?: boolean;
+}
+
+export interface DirectiveRunLaunchRequest {
+	executionIntent: SkillExecutionIntent;
+	projectDir: string;
+	prompt: string;
 }
 
 export interface RecipeParameterDefinition {

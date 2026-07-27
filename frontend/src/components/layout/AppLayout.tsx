@@ -18,6 +18,7 @@ import { useTerminalStore } from '../../stores/terminalStore.ts';
 import { useThemeStore } from '../../stores/themeStore.ts';
 import { AuthTokenDialog } from '../shared/AuthTokenDialog.tsx';
 import { CommandPalette } from '../shared/CommandPalette.tsx';
+import { DirectiveLaunchModal } from '../shared/DirectiveLaunchModal.tsx';
 import { DirectorChatModal } from '../shared/DirectorChatModal.tsx';
 import { ShortcutChord } from '../shared/KeyboardShortcut.tsx';
 import { ShortcutsOverlay } from '../shared/ShortcutsOverlay.tsx';
@@ -27,6 +28,7 @@ import {
 	activeExecutionCountAccessibleName,
 	searchControlAccessibleName,
 } from './appLayoutAccessibility.ts';
+import { DirectiveLaunchButton } from './DirectiveLaunchButton.tsx';
 import { navGroups } from './nav-items.ts';
 import { ProjectReportButton } from './ProjectReportButton.tsx';
 import { ProjectsNavDropdown } from './ProjectsNavDropdown.tsx';
@@ -41,6 +43,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	const [paletteOpen, setPaletteOpen] = useState(false);
 	const [shortcutsOpen, setShortcutsOpen] = useState(false);
 	const [directorChatOpen, setDirectorChatOpen] = useState(false);
+	const [directiveLaunchOpen, setDirectiveLaunchOpen] = useState(false);
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const openAuthPrompt = useAuthTokenStore((state) => state.openPrompt);
@@ -50,6 +53,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	useKeyboardShortcuts({
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		onNavigate: (to) => navigate(to),
+		onOpenDirective: () => setDirectiveLaunchOpen(true),
 		onOpenDirectorChat: () => setDirectorChatOpen(true),
 		onRefresh: () => {
 			void queryClient.invalidateQueries();
@@ -210,6 +214,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
 								<Search className="h-4 w-4" />
 							</IconButton>
 						</div>
+						<DirectiveLaunchButton
+							collapsed={collapsed}
+							onClick={() => setDirectiveLaunchOpen(true)}
+						/>
 						<ProjectReportButton collapsed={collapsed} />
 						<Button
 							aria-label="Set access token"
@@ -262,7 +270,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
 				</main>
 			</div>
 			<AuthTokenDialog />
-			<CommandPalette onOpenChange={setPaletteOpen} open={paletteOpen} />
+			<CommandPalette
+				onOpenChange={setPaletteOpen}
+				onOpenDirective={() => setDirectiveLaunchOpen(true)}
+				open={paletteOpen}
+			/>
+			<DirectiveLaunchModal
+				onClose={() => setDirectiveLaunchOpen(false)}
+				open={directiveLaunchOpen}
+			/>
 			<DirectorChatModal onClose={() => setDirectorChatOpen(false)} open={directorChatOpen} />
 			<ShortcutsOverlay onClose={() => setShortcutsOpen(false)} open={shortcutsOpen} />
 			<TerminalPane />

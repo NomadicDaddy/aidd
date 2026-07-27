@@ -49,6 +49,7 @@ export type {
 	ProjectMoveRequest,
 	ProjectMoveResult,
 	ProjectNamesResponse,
+	ProjectNameSummary,
 	ProjectRecommendInput,
 	ProjectRecommendResult,
 	ProjectsGitStatusResponse,

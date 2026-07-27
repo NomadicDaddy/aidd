@@ -119,6 +119,7 @@ export type {
 	ProjectMoveRequest,
 	ProjectMoveResult,
 	ProjectNamesResponse,
+	ProjectNameSummary,
 	ProjectPhase,
 	ProjectPorts,
 	ProjectRecommendInput,
@@ -145,6 +146,7 @@ export type {
 	RepositoryWorktree,
 } from './types/repository.ts';
 export type {
+	DirectiveRunLaunchRequest,
 	PipelineExecutionIdentity,
 	PipelineSessionRecord,
 	PipelineSessionReport,

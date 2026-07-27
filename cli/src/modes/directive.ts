@@ -3,8 +3,8 @@ import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { createPlanBackedMode } from './base.ts';
 
-// Directive runs (skill pipeline steps) execute their supplied prompt
-// verbatim. They deliberately do not select or claim a backlog feature: the
+// Directive runs execute their supplied prompt verbatim, whether launched by a pipeline step,
+// skill, or operator. They deliberately do not select or claim a backlog feature: the
 // agent's directive is the unit of work, and completion is judged solely by the
 // backend exit code. Returning `generic` work keeps the backend running (unlike
 // `none`, which the orchestrator skips) while leaving every feature untouched.

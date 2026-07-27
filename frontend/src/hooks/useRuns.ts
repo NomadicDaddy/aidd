@@ -1,12 +1,13 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { RunLaunchRequest } from '../api/types.ts';
+import type { DirectiveRunLaunchRequest, RunLaunchRequest } from '../api/types.ts';
 
 import {
 	continueRun,
 	getRun,
 	getRunOutput,
 	killRun,
+	launchDirectiveRun,
 	launchRun,
 	listRuns,
 	type RunsPage,
@@ -36,6 +37,21 @@ export function useLaunchRun() {
 				...(request.feature ? { feature: request.feature } : {}),
 				...(request.mode ? { mode: request.mode } : {}),
 			});
+			void queryClient.invalidateQueries({ queryKey: ['runs'] });
+			void queryClient.invalidateQueries({ queryKey: ['project'] });
+			void queryClient.invalidateQueries({ queryKey: ['projects'] });
+		},
+	});
+}
+
+export function useLaunchDirectiveRun() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (request: DirectiveRunLaunchRequest) => launchDirectiveRun(request),
+		onMutate: beginLaunch,
+		onSettled: endLaunch,
+		onSuccess: (run) => {
+			trackLaunchedRun(run.id, { mode: 'directive' });
 			void queryClient.invalidateQueries({ queryKey: ['runs'] });
 			void queryClient.invalidateQueries({ queryKey: ['project'] });
 			void queryClient.invalidateQueries({ queryKey: ['projects'] });

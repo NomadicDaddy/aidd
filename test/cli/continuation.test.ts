@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { maxFlailIterations } from 'aidd-shared/backends/flailing';
+import { maxFlailIterations, maxFlailNudgeGrants } from 'aidd-shared/backends/flailing';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import type { IterationDetails } from '../../cli/src/orchestrator/details.ts';
@@ -41,6 +41,7 @@ function baseInput(overrides: Partial<ContinuationInput>): ContinuationInput {
 		details,
 		displayedSummary: 'summary',
 		exitCode: orchestratorExitCodes.flailing,
+		flailNudgeGrants: 0,
 		plan,
 		recoveredActiveVerification: false,
 		stopRequestedAfterRun: false,
@@ -69,6 +70,26 @@ describe('determineRunContinuation — flailing', () => {
 			expect(result.move).toBe('complete');
 			expect(result.exitCode).toBe(orchestratorExitCodes.success);
 		}
+	});
+
+	// The nudge iteration isn't charged against --max-iterations (see post-iteration.ts), so this
+	// grant cap — not the iteration budget — is what stops a run from nudging forever.
+	test('stops once the run has spent its nudge grants', () => {
+		const result = determineRunContinuation(
+			baseInput({ consecutiveFlails: 0, flailNudgeGrants: maxFlailNudgeGrants }),
+		);
+		expect(result.kind).toBe('final');
+		if (result.kind === 'final') {
+			expect(result.stopReason).toBe('flailing');
+			expect(result.summary).toContain(`${maxFlailNudgeGrants} corrective nudge(s)`);
+		}
+	});
+
+	test('a first flail still nudges with grants remaining', () => {
+		const result = determineRunContinuation(
+			baseInput({ consecutiveFlails: 0, flailNudgeGrants: maxFlailNudgeGrants - 1 }),
+		);
+		expect(result.kind).toBe('continue');
 	});
 
 	test('a non-flailing continue resets the flail counter', () => {

@@ -1,6 +1,6 @@
 import type { RunPlan } from 'aidd-shared/plan/types';
 
-import { maxFlailIterations } from 'aidd-shared/backends/flailing';
+import { maxFlailIterations, maxFlailNudgeGrants } from 'aidd-shared/backends/flailing';
 import { orchestratorExitCodes, type StopReason } from 'aidd-shared/orchestrator/result';
 
 import type { IterationDetails } from '../details.ts';
@@ -70,6 +70,7 @@ export function determineRunContinuation(input: {
 	details: IterationDetails;
 	displayedSummary: string;
 	exitCode: number;
+	flailNudgeGrants: number;
 	plan: RunPlan;
 	recoveredActiveVerification: boolean;
 	stopRequestedAfterRun: boolean;
@@ -85,6 +86,7 @@ export function determineRunContinuation(input: {
 		details,
 		displayedSummary,
 		exitCode,
+		flailNudgeGrants,
 		plan,
 		recoveredActiveVerification,
 		stopRequestedAfterRun,
@@ -133,9 +135,12 @@ export function determineRunContinuation(input: {
 	// Flailing guardrail: the first trip nudges (recompile the next iteration with a corrective
 	// note); a second consecutive trip stops the run and parks the feature as waiting_approval, so a
 	// stuck agent ends in minutes with a useful status instead of looping the nudge forever.
+	// The nudge iteration is not charged against maxIterations (see post-iteration.ts), so the run's
+	// total nudge budget is bounded here by maxFlailNudgeGrants instead.
 	if (exitCode === orchestratorExitCodes.flailing) {
 		const nextFlails = consecutiveFlails + 1;
-		if (nextFlails < maxFlailIterations) {
+		const grantsExhausted = flailNudgeGrants >= maxFlailNudgeGrants;
+		if (nextFlails < maxFlailIterations && !grantsExhausted) {
 			return {
 				carryoverNote: flailingNudgeNote(),
 				consecutiveAborts: 0,
@@ -144,12 +149,15 @@ export function determineRunContinuation(input: {
 				reason: 'flailing_nudge',
 			};
 		}
+		const exhaustion = grantsExhausted
+			? `after ${flailNudgeGrants} corrective nudge(s)`
+			: `after ${nextFlails} consecutive flailing iteration(s)`;
 		return {
 			exitCode: orchestratorExitCodes.success,
 			kind: 'final',
 			move: 'complete',
 			stopReason: 'flailing',
-			summary: `${displayedSummary}; stopped after ${nextFlails} consecutive flailing iteration(s): the agent repeated non-productive actions (e.g. hunting for or starting a server) without progress — feature parked as waiting_approval`,
+			summary: `${displayedSummary}; stopped ${exhaustion}: the agent repeated non-productive actions (e.g. hunting for or starting a server) without progress — feature parked as waiting_approval`,
 		};
 	}
 	let nextConsecutiveAborts: number;

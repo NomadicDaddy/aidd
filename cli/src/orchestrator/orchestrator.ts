@@ -49,6 +49,8 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 	let consecutiveAborts = 0;
 	let consecutiveContinuableInterruptions = 0;
 	let consecutiveFlails = 0;
+	// Nudge iterations don't advance `iteration`, so this — not maxIterations — is what bounds them.
+	let flailNudgeGrants = 0;
 	let budgetWarned = false;
 	while (plan.scope.maxIterations === null || iteration < plan.scope.maxIterations) {
 		const wallClockExit = await endRunIfWallClockExpired({
@@ -244,6 +246,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 			events,
 			exitCode,
 			finalize,
+			flailNudgeGrants,
 			iteration,
 			mode,
 			move,
@@ -258,6 +261,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 		consecutiveAborts = postOutcome.consecutiveAborts;
 		consecutiveContinuableInterruptions = postOutcome.consecutiveContinuableInterruptions;
 		consecutiveFlails = postOutcome.consecutiveFlails;
+		flailNudgeGrants = postOutcome.flailNudgeGrants;
 		promptContext.setCarryoverNote(postOutcome.carryoverNote);
 	}
 

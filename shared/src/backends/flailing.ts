@@ -1,11 +1,7 @@
 import type { AgentEvent } from './types.ts';
 
-import {
-	bashToolPattern,
-	commandFromArgs,
-	editToolPattern,
-	writeToolPattern,
-} from '../orchestrator/details/tool-args.ts';
+import { editToolPattern, writeToolPattern } from '../orchestrator/details/tool-args.ts';
+import { digestResult, entryForToolCall, type WindowEntry } from './flailing-classify.ts';
 
 // Detects an agent stuck in a non-productive loop — consecutively repeating the same tool call, or
 // thrashing on server-diagnostic/lifecycle shell commands (curl/ps/lsof/start:web ...) — without
@@ -20,6 +16,11 @@ export interface FlailingDetectorConfig {
 	diagnosticTripThreshold: number;
 	/** Trip when one normalized tool-call signature repeats consecutively this many times. */
 	repeatTripThreshold: number;
+	/**
+	 * Trip a repeating signature whose results keep changing only after this many consecutive
+	 * repeats — the backstop on the changing-output exemption below.
+	 */
+	variedRepeatTripThreshold: number;
 	/** How many recent tool calls to keep for diagnostic-thrash detection. */
 	windowSize: number;
 }
@@ -27,6 +28,7 @@ export interface FlailingDetectorConfig {
 export const defaultFlailingConfig: FlailingDetectorConfig = {
 	diagnosticTripThreshold: 10,
 	repeatTripThreshold: 5,
+	variedRepeatTripThreshold: 25,
 	windowSize: 14,
 };
 
@@ -35,79 +37,23 @@ export const defaultFlailingConfig: FlailingDetectorConfig = {
 // the feature as waiting_approval and ends the run, rather than looping the nudge forever.
 export const maxFlailIterations = 2;
 
+// How many nudges a single run may spend. The nudge iteration is deliberately not charged against
+// `--max-iterations` (a corrective retry is not productive work), so this cap — not the iteration
+// budget — is what bounds it. Without the exemption a single-iteration run (every pipeline skill
+// step launches with `--max-iterations 1`) dies on its first trip, never seeing the note the
+// guardrail exists to deliver.
+export const maxFlailNudgeGrants = 2;
+
 export type FlailingReason = 'diagnostic_thrash' | 'repeated_action';
 
 export type FlailingSignal =
 	| { count: number; kind: 'trip' | 'warn'; reason: FlailingReason; signature: string }
 	| { kind: 'none' };
 
-// Program tokens that, when a shell command leads with them and changes no files, indicate the agent
-// is probing for / starting / killing a server rather than doing productive work.
-const diagnosticVerbs: ReadonlySet<string> = new Set([
-	'curl',
-	'get-nettcpconnection',
-	'get-process',
-	'kill',
-	'lsof',
-	'nc',
-	'ncat',
-	'netstat',
-	'ping',
-	'pkill',
-	'ps',
-	'sleep',
-	'ss',
-	'start-process',
-	'taskkill',
-	'tasklist',
-	'telnet',
-	'timeout',
-	'wget',
-	'where',
-	'whereis',
-	'which',
-]);
-
-const lifecycleRunPattern =
-	/\b(?:bun|bunx|npm|pnpm|yarn)(?:\.exe)?\s+run\s+(?:start|start:web|stop|dev|smoke:dev|smoke:preview)\b/i;
-
-function leadingProgram(command: string): string {
-	const trimmed = command.trim();
-	if (lifecycleRunPattern.test(trimmed)) return 'lifecycle';
-	// Drop leading `sudo` and `FOO=bar` env assignments, then take the first token's basename.
-	const tokens = trimmed.split(/\s+/).filter((token) => token !== 'sudo' && !token.includes('='));
-	const first = tokens[0] ?? '';
-	const base = first.split(/[\\/]/).pop() ?? first;
-	return base.replace(/\.(?:exe|cmd|bat|ps1)$/i, '').toLowerCase();
-}
-
-interface WindowEntry {
-	isDiagnostic: boolean;
-	signature: string;
-}
-
-function entryForToolCall(event: Extract<AgentEvent, { type: 'tool_call' }>): WindowEntry {
-	if (bashToolPattern.test(event.tool)) {
-		const command = commandFromArgs(event.args) ?? '';
-		const normalized = command.trim().replace(/\s+/g, ' ').toLowerCase();
-		const program = leadingProgram(command);
-		return {
-			isDiagnostic: program === 'lifecycle' || diagnosticVerbs.has(program),
-			signature: `bash:${normalized}`,
-		};
-	}
-	let argsKey: string;
-	try {
-		argsKey = JSON.stringify(event.args)?.slice(0, 200) ?? '';
-	} catch {
-		argsKey = '';
-	}
-	return { isDiagnostic: false, signature: `${event.tool.toLowerCase()}:${argsKey}` };
-}
-
 export class FlailingDetector {
 	private readonly config: FlailingDetectorConfig;
 	private repeatCount = 0;
+	private repeatResultDigests = new Set<string>();
 	private repeatSignature: string | undefined;
 	private warned = false;
 	private window: WindowEntry[] = [];
@@ -118,11 +64,18 @@ export class FlailingDetector {
 
 	/** Feed each agent event in order; returns whether this event pushes the run into flailing. */
 	record(event: AgentEvent): FlailingSignal {
+		// Results never trip anything themselves; they record what the current streak is producing
+		// so a repeat with changing output can be told apart from one replaying a dead action.
+		if (event.type === 'tool_result') {
+			if (this.repeatSignature !== undefined) {
+				this.repeatResultDigests.add(digestResult(event));
+			}
+			return { kind: 'none' };
+		}
 		if (event.type !== 'tool_call') return { kind: 'none' };
 		// A file change is real progress — clear the window so prior churn is forgiven.
 		if (editToolPattern.test(event.tool) || writeToolPattern.test(event.tool)) {
-			this.repeatCount = 0;
-			this.repeatSignature = undefined;
+			this.resetStreak();
 			this.window = [];
 			this.warned = false;
 			return { kind: 'none' };
@@ -131,6 +84,7 @@ export class FlailingDetector {
 		if (entry.signature === this.repeatSignature) {
 			this.repeatCount++;
 		} else {
+			this.resetStreak();
 			this.repeatCount = 1;
 			this.repeatSignature = entry.signature;
 		}
@@ -139,7 +93,12 @@ export class FlailingDetector {
 
 		const diagnosticCount = this.window.filter((e) => e.isDiagnostic).length;
 
-		if (this.repeatCount >= this.config.repeatTripThreshold) {
+		// A repeated call whose results keep changing is an agent observing a system in flux —
+		// polling CI checks, tailing a build, watching a queue drain — not one replaying the same
+		// dead action. Let it continue, bounded by variedRepeatTripThreshold so a poll that never
+		// resolves still ends. Deliberately scoped to repeated_action: diagnostic thrash is judged
+		// on a window of varied commands, and its output varies by nature (pids, timestamps).
+		if (this.repeatCount >= this.config.repeatTripThreshold && !this.resultsAreVarying()) {
 			return {
 				count: this.repeatCount,
 				kind: 'trip',
@@ -178,6 +137,21 @@ export class FlailingDetector {
 			}
 		}
 		return { kind: 'none' };
+	}
+
+	private resetStreak(): void {
+		this.repeatCount = 0;
+		this.repeatResultDigests.clear();
+		this.repeatSignature = undefined;
+	}
+
+	// True while the streak has produced more than one distinct result and has not yet exhausted
+	// the varied-repeat allowance.
+	private resultsAreVarying(): boolean {
+		return (
+			this.repeatResultDigests.size > 1 &&
+			this.repeatCount < this.config.variedRepeatTripThreshold
+		);
 	}
 }
 

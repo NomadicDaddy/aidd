@@ -4,17 +4,15 @@ import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
-import { runRepoDir } from 'aidd-shared/plan/types';
 
 import type { FinalizeIterationResult, MoveFn, OrchestratorDeps, RunAccumulator } from './types.ts';
 
 import { type createModeHandler } from '../../modes/factory.ts';
 import { writeRunSummary } from './artifacts.ts';
 import { buildFeatureBlockingContext } from './blocking-context.ts';
-import { attemptCompletionMarkerRecovery } from './completion-recovery.ts';
 import { determineRunContinuation } from './continuation.ts';
 import { featureRecoveryTarget } from './feature-scope.ts';
-import { buildWallClockTimeoutSummary } from './run-ending.ts';
+import { endRunIfIterationGuardTripped } from './post-iteration-guards.ts';
 import { buildRateLimitBudgetSummary, handleRateLimit } from './run-gates.ts';
 
 export type PostIterationOutcome =
@@ -23,6 +21,7 @@ export type PostIterationOutcome =
 			consecutiveAborts: number;
 			consecutiveContinuableInterruptions: number;
 			consecutiveFlails: number;
+			flailNudgeGrants: number;
 			iteration: number;
 			kind: 'continue';
 	  }
@@ -44,6 +43,7 @@ export async function handlePostIteration(input: {
 	events: AgentEvent[];
 	exitCode: number;
 	finalize: FinalizeIterationResult;
+	flailNudgeGrants: number;
 	iteration: number;
 	mode: ReturnType<typeof createModeHandler>;
 	move: MoveFn;
@@ -70,95 +70,23 @@ export async function handlePostIteration(input: {
 		wallClockTimedOut,
 		work,
 	} = input;
-	let { consecutiveAborts, consecutiveContinuableInterruptions, consecutiveFlails } = input;
+	let {
+		consecutiveAborts,
+		consecutiveContinuableInterruptions,
+		consecutiveFlails,
+		flailNudgeGrants,
+	} = input;
 
-	// The wall-clock budget is exhausted: end the run as an explicit timeout. This must win
-	// over the scope-overrun and completion-marker checks below — a run killed mid-completion
-	// otherwise gets ledgered as "blocked by gates" (exit 7), masking the real cause. The one
-	// exception is an accepted completion that landed before the abort; let the normal
-	// continuation path record that success.
-	if (wallClockTimedOut && finalize.completedResultFeature === undefined) {
-		const summary = buildWallClockTimeoutSummary(finalize.displayedSummary, plan);
-		move({ summary, type: 'complete' });
-		await writeRunSummary(
-			deps,
-			plan,
-			acc,
-			'exit_error',
-			orchestratorExitCodes.aborted,
-			summary,
-		);
-		return { exitCode: orchestratorExitCodes.aborted, kind: 'return' };
-	}
-
-	if (finalize.featureScope.scopeOverrun) {
-		const overrunSummary = `${finalize.displayedSummary}; scope_overrun: completed non-selected feature(s): ${finalize.featureScope.extraCompletedFeatures.join(', ')}`;
-		move({ summary: overrunSummary, type: 'complete' });
-		await writeRunSummary(
-			deps,
-			plan,
-			acc,
-			'blocked',
-			orchestratorExitCodes.validationError,
-			overrunSummary,
-		);
-		return { exitCode: orchestratorExitCodes.validationError, kind: 'return' };
-	}
-	if (finalize.featureScope.completionMarkerIssue !== undefined) {
-		// A backend that dies between finishing the work and committing it (observed: claude-code
-		// exited mid-smoke:qc twice in one run) strands a completed feature as unaccepted. When the
-		// on-disk feature already says completed+passes and the project's own gate passes right
-		// now, auto-commit the work and record the completion instead of failing the run.
-		const recovery = plan.simulation
-			? undefined
-			: await attemptCompletionMarkerRecovery({
-					dirtySourcePathsAtStart: acc.dirtySourcePathsAtStart,
-					featureScope: finalize.featureScope,
-					projectDir: runRepoDir(plan),
-					runRecordedPaths: new Set([...acc.filesCreated, ...acc.filesEdited]),
-					store: deps.store,
-					work,
-				});
-		if (recovery !== undefined && work.kind === 'feature') {
-			acc.completedFeatures.add(work.id);
-			acc.commitsCreated.push(recovery.commit);
-			acc.runTotals.commitsCreated += 1;
-			const recoverySummary = `${finalize.displayedSummary}; completion_marker_recovered: feature ${work.id} completed on disk, recovery gate passed (${recovery.gateCommand}); work auto-committed (${recovery.commit.hash.slice(0, 10)})`;
-			move({ summary: recoverySummary, type: 'complete' });
-			const recoveredExit = await writeRunSummary(
-				deps,
-				plan,
-				acc,
-				'completed',
-				orchestratorExitCodes.success,
-				recoverySummary,
-			);
-			return { exitCode: recoveredExit, kind: 'return' };
-		}
-		// Point the run summary at the same gate evidence the feature record carries, so an
-		// unaccepted completion reads as "these gate(s) blocked it" instead of only the opaque
-		// completion_marker_missing_or_unaccepted code.
-		const markerEvidence = buildFeatureBlockingContext(
-			finalize.details,
-			finalize.featureScope.completionMarkerIssue,
-			new Date().toISOString(),
-		);
-		const gateNote =
-			markerEvidence.commands.length > 0
-				? `; blocking gate(s): ${markerEvidence.commands.join(', ')}`
-				: '';
-		const markerSummary = `${finalize.displayedSummary}; ${finalize.featureScope.completionMarkerIssue}: completed allowed feature(s): ${finalize.featureScope.unacceptedCompletedFeatures.join(', ')}${gateNote}`;
-		move({ summary: markerSummary, type: 'complete' });
-		await writeRunSummary(
-			deps,
-			plan,
-			acc,
-			'blocked',
-			orchestratorExitCodes.validationError,
-			markerSummary,
-		);
-		return { exitCode: orchestratorExitCodes.validationError, kind: 'return' };
-	}
+	const guardExit = await endRunIfIterationGuardTripped({
+		acc,
+		deps,
+		finalize,
+		move,
+		plan,
+		wallClockTimedOut,
+		work,
+	});
+	if (guardExit !== undefined) return { exitCode: guardExit, kind: 'return' };
 
 	if (exitCode === orchestratorExitCodes.rateLimited) {
 		const rate = await handleRateLimit(
@@ -198,6 +126,7 @@ export async function handlePostIteration(input: {
 			consecutiveAborts,
 			consecutiveContinuableInterruptions: 0,
 			consecutiveFlails,
+			flailNudgeGrants,
 			iteration,
 			kind: 'continue',
 		};
@@ -233,6 +162,7 @@ export async function handlePostIteration(input: {
 		details: finalize.details,
 		displayedSummary: finalize.displayedSummary,
 		exitCode: finalize.recordedExitCode,
+		flailNudgeGrants,
 		plan,
 		recoveredActiveVerification: finalize.recoveredActiveVerification,
 		stopRequestedAfterRun,
@@ -243,6 +173,14 @@ export async function handlePostIteration(input: {
 		let nextIteration = iteration;
 		if (continuation.reason === 'continuable_backend_interruption') {
 			consecutiveContinuableInterruptions++;
+		} else if (continuation.reason === 'flailing_nudge') {
+			// A corrective retry is not productive work, so the nudge iteration is not charged
+			// against --max-iterations. Otherwise the "warn first, kill second" design collapses to
+			// "first trip kills" for every single-iteration run — which is every pipeline skill step
+			// (managedStepHandler launches them with maxIterations 1) — and the agent never sees the
+			// note the guardrail exists to deliver. maxFlailNudgeGrants bounds it instead.
+			consecutiveContinuableInterruptions = 0;
+			flailNudgeGrants++;
 		} else {
 			consecutiveContinuableInterruptions = 0;
 			nextIteration++;
@@ -251,6 +189,7 @@ export async function handlePostIteration(input: {
 			consecutiveAborts,
 			consecutiveContinuableInterruptions,
 			consecutiveFlails,
+			flailNudgeGrants,
 			iteration: nextIteration,
 			kind: 'continue',
 			...(continuation.reason === 'flailing_nudge' && continuation.carryoverNote

@@ -19,6 +19,10 @@ function read(path: string): AgentEvent {
 	return { args: { file_path: path }, tool: 'read_file', type: 'tool_call' };
 }
 
+function result(text: string): AgentEvent {
+	return { result: text, tool: 'bash', type: 'tool_result' };
+}
+
 function lastSignal(detector: FlailingDetector, events: AgentEvent[]) {
 	let result = detector.record(events[0]!);
 	for (const event of events.slice(1)) result = detector.record(event);
@@ -136,6 +140,57 @@ describe('FlailingDetector', () => {
 		const tripIndex = signals.findIndex((s) => s.kind === 'trip');
 		expect(warnIndex).toBeGreaterThanOrEqual(0);
 		expect(tripIndex).toBeGreaterThan(warnIndex);
+	});
+
+	// The real incident: a release pipeline polling `gh pr checks` while CI ran was killed as
+	// flailing on the fifth identical poll. A repeat whose output keeps changing is an agent
+	// watching a system in flux, not one replaying a dead action.
+	test('does NOT trip on a repeated poll whose output keeps changing', () => {
+		const detector = new FlailingDetector();
+		const poll = bash("pwsh -Command 'Start-Sleep -Seconds 30; gh pr checks 2 --json state'");
+		let tripped = false;
+		for (let i = 0; i < defaultFlailingConfig.variedRepeatTripThreshold - 1; i++) {
+			if (detector.record(poll).kind === 'trip') tripped = true;
+			detector.record(result(`{"state":"pending","elapsed":${i}}`));
+		}
+		expect(tripped).toBe(false);
+	});
+
+	test('still trips on a repeated call whose output never changes', () => {
+		const detector = new FlailingDetector();
+		const poll = bash('gh pr checks 2 --json state');
+		let signal = detector.record(poll);
+		for (let i = 1; i < defaultFlailingConfig.repeatTripThreshold; i++) {
+			detector.record(result('no checks reported'));
+			signal = detector.record(poll);
+		}
+		expect(signal.kind).toBe('trip');
+	});
+
+	test('a poll that never resolves still trips at the varied-repeat backstop', () => {
+		const detector = new FlailingDetector();
+		const poll = bash('gh pr checks 2 --json state');
+		let tripped = false;
+		for (let i = 0; i < defaultFlailingConfig.variedRepeatTripThreshold; i++) {
+			if (detector.record(poll).kind === 'trip') tripped = true;
+			detector.record(result(`{"state":"pending","elapsed":${i}}`));
+		}
+		expect(tripped).toBe(true);
+	});
+
+	// Windows backends wrap every command as `"C:\Program Files\PowerShell\7\pwsh.exe" -Command
+	// '<real command>'`. Classifying on the outer token resolved that to "program" (the space in
+	// "Program Files" split the path), hiding every diagnostic verb behind the wrapper.
+	test('classifies a quoted Windows shell wrapper on its inner program', () => {
+		const detector = new FlailingDetector();
+		let tripped = false;
+		for (let i = 0; i < defaultFlailingConfig.diagnosticTripThreshold; i++) {
+			const event = bash(
+				`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'curl -s http://localhost:${3200 + i}'`,
+			);
+			if (detector.record(event).kind === 'trip') tripped = true;
+		}
+		expect(tripped).toBe(true);
 	});
 
 	test('non-tool-call events are ignored', () => {

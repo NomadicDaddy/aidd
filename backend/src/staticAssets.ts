@@ -37,6 +37,24 @@ const MIN_COMPRESS_BYTES = 1024;
 
 export type Encoding = 'br' | 'gzip' | 'zstd';
 
+/** Weak validator for a file whose served representation may vary by content encoding. */
+export function fileEtag(mtimeMs: number, size: number): string {
+	return `W/"${mtimeMs}-${size}"`;
+}
+
+/**
+ * `If-None-Match` uses weak comparison for GET requests. Accept a matching tag from a list and
+ * the wildcard form, while treating strong and weak forms of the same opaque tag as equivalent.
+ */
+export function ifNoneMatchMatches(ifNoneMatch: null | string, etag: string): boolean {
+	if (!ifNoneMatch) return false;
+	const opaqueTag = etag.replace(/^W\//, '');
+	return ifNoneMatch.split(',').some((candidate) => {
+		const trimmed = candidate.trim();
+		return trimmed === '*' || trimmed.replace(/^W\//, '') === opaqueTag;
+	});
+}
+
 export function contentTypeFor(path: string): string {
 	const dot = path.lastIndexOf('.');
 	if (dot === -1) return 'application/octet-stream';

@@ -38,6 +38,8 @@ import {
 	compressed,
 	compressOnce,
 	contentTypeFor,
+	fileEtag,
+	ifNoneMatchMatches,
 	isCompressible,
 	negotiateEncoding,
 } from './staticAssets.ts';
@@ -58,9 +60,11 @@ function encodedResponse(
 	cacheControl: null | string,
 	acceptEncoding: null | string,
 	identity: string,
+	etag: null | string,
 ): Response {
 	const headers = new Headers({ 'content-type': contentType });
 	if (cacheControl) headers.set('Cache-Control', cacheControl);
+	if (etag) headers.set('ETag', etag);
 	if (!isCompressible(contentType, bytes.byteLength)) {
 		return new Response(bytes, { headers });
 	}
@@ -79,6 +83,7 @@ async function serveStaticFile(
 	path: string,
 	traceDefault: boolean,
 	acceptEncoding: null | string,
+	ifNoneMatch: null | string,
 	options: StaticFileOptions = {},
 ): Promise<Response> {
 	const relativePath = path.replace(/^\/+/, '') || 'index.html';
@@ -116,8 +121,15 @@ async function serveStaticFile(
 	}
 	const stats = statSync(target);
 	const identity = `${target}:${stats.mtimeMs}:${stats.size}`;
+	const etag = servedPath.startsWith('/assets/') ? null : fileEtag(stats.mtimeMs, stats.size);
+	if (etag && ifNoneMatchMatches(ifNoneMatch, etag)) {
+		const headers = new Headers({ ETag: etag });
+		if (cacheControl) headers.set('Cache-Control', cacheControl);
+		if (isCompressible(contentType, stats.size)) headers.set('Vary', 'Accept-Encoding');
+		return new Response(null, { headers, status: 304 });
+	}
 	const bytes = new Uint8Array(await file.arrayBuffer());
-	return encodedResponse(bytes, contentType, cacheControl, acceptEncoding, identity);
+	return encodedResponse(bytes, contentType, cacheControl, acceptEncoding, identity, etag);
 }
 
 export function createWebServer(context: WebContext) {
@@ -170,6 +182,7 @@ export function createWebServer(context: WebContext) {
 					new URL(request.url).pathname,
 					traceDefault(),
 					request.headers.get('accept-encoding'),
+					request.headers.get('if-none-match'),
 				),
 			)
 			.get('/', ({ request }) =>
@@ -178,6 +191,7 @@ export function createWebServer(context: WebContext) {
 					'index.html',
 					traceDefault(),
 					request.headers.get('accept-encoding'),
+					request.headers.get('if-none-match'),
 					{ fallbackToIndex: true },
 				),
 			)
@@ -192,6 +206,7 @@ export function createWebServer(context: WebContext) {
 					path,
 					traceDefault(),
 					request.headers.get('accept-encoding'),
+					request.headers.get('if-none-match'),
 					{ fallbackToIndex: true },
 				);
 			})

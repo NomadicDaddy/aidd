@@ -199,15 +199,38 @@ describe('web v2 cutover QC', () => {
 		const rootDir = join(workspace, 'aidd-root');
 		const distDir = join(rootDir, 'frontend', 'dist');
 		const assetsDir = join(distDir, 'assets');
+		const manifestBody = `{"name":"${'a'.repeat(1_200)}"}\n`;
 		await mkdir(assetsDir, { recursive: true });
 		await writeFile(join(distDir, 'index.html'), '<div id="root"></div>');
 		await writeFile(join(assetsDir, 'bundle.js'), 'export const loaded = true;\n');
+		await writeFile(join(distDir, 'site.webmanifest'), manifestBody);
 		const { app, database, runService } = await createTestServer(rootDir, workspace);
 		try {
 			const asset = await app.handle(new Request('http://localhost/assets/bundle.js'));
 			expect(asset.status).toBe(200);
 			expect(asset.headers.get('content-type')).toContain('text/javascript');
+			expect(asset.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+			expect(asset.headers.get('etag')).toBeNull();
 			expect(await asset.text()).toBe('export const loaded = true;\n');
+
+			const unhashed = await app.handle(new Request('http://localhost/site.webmanifest'));
+			const etag = unhashed.headers.get('etag');
+			expect(unhashed.status).toBe(200);
+			expect(unhashed.headers.get('cache-control')).toBe('public, max-age=3600');
+			expect(etag).toMatch(/^W\/"[^"]+"$/);
+			expect(unhashed.headers.get('vary')).toBe('Accept-Encoding');
+			expect(await unhashed.text()).toBe(manifestBody);
+
+			const revalidated = await app.handle(
+				new Request('http://localhost/site.webmanifest', {
+					headers: { 'If-None-Match': `"unrelated", ${etag ?? ''}` },
+				}),
+			);
+			expect(revalidated.status).toBe(304);
+			expect(revalidated.headers.get('cache-control')).toBe('public, max-age=3600');
+			expect(revalidated.headers.get('etag')).toBe(etag);
+			expect(revalidated.headers.get('vary')).toBe('Accept-Encoding');
+			expect(await revalidated.text()).toBe('');
 
 			const missing = await app.handle(
 				new Request('http://localhost/assets/PipelineSessionReportPage-stale.js'),

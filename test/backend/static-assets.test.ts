@@ -5,6 +5,8 @@ import {
 	compressed,
 	compressOnce,
 	contentTypeFor,
+	fileEtag,
+	ifNoneMatchMatches,
 	isCompressible,
 	negotiateEncoding,
 	resetCompressionCache,
@@ -47,6 +49,21 @@ describe('cacheControlFor', () => {
 	test('html opts out so the no-store default applies', () => {
 		expect(cacheControlFor('/index.html', 'text/html; charset=utf-8')).toBeNull();
 		expect(cacheControlFor('/', 'text/html; charset=utf-8')).toBeNull();
+	});
+});
+
+describe('file validators', () => {
+	test('derives a weak ETag from modification time and size', () => {
+		expect(fileEtag(1_234.5, 678)).toBe('W/"1234.5-678"');
+	});
+
+	test('matches weak or strong tags in an If-None-Match list', () => {
+		const etag = fileEtag(1_234.5, 678);
+		expect(ifNoneMatchMatches(`"other", ${etag}`, etag)).toBe(true);
+		expect(ifNoneMatchMatches('"1234.5-678"', etag)).toBe(true);
+		expect(ifNoneMatchMatches('*', etag)).toBe(true);
+		expect(ifNoneMatchMatches('"other"', etag)).toBe(false);
+		expect(ifNoneMatchMatches(null, etag)).toBe(false);
 	});
 });
 

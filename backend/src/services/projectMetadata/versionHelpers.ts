@@ -3,7 +3,7 @@ import type { DetectProjectStackOptions, ProjectStack } from 'aidd-shared/metada
 import type { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import { detectProjectStack } from 'aidd-shared/metadata/project-stack';
-import { evaluateRoadmapCodingGate } from 'aidd-shared/metadata/roadmap';
+import { evaluateRoadmapCodingGate, orderedMilestoneNames } from 'aidd-shared/metadata/roadmap';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -184,7 +184,11 @@ export async function gatherRoadmap(
 	for (const feature of resolvedFeatures) {
 		passesById.set(feature.id, Boolean(feature.passes));
 	}
-	const milestoneNames = Object.keys(roadmap.milestones);
+	// Priority order, not key order: the coding gate walks milestones by ascending priority, and a
+	// summary that disagrees with it names the wrong current milestone. The two orders coincide today
+	// only because serializeRoadmap sorts keys and the usual names happen to sort correctly — 'v10.0'
+	// alongside 'v9.0' is enough to break that coincidence.
+	const milestoneNames = orderedMilestoneNames(roadmap);
 	const milestones: ProjectRoadmapSummary['milestones'] = {};
 	let currentMilestone: null | string = null;
 	for (const name of milestoneNames) {

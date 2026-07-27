@@ -2,6 +2,8 @@ import type { Feature } from 'aidd-shared/metadata/features';
 import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 import type { FileAiddStore } from 'aidd-shared/metadata/store';
 
+import { orderedMilestoneNames } from 'aidd-shared/metadata/roadmap';
+
 import type { ProjectReportKind } from '../../types.ts';
 
 export type ReportMilestoneTarget = null | string;
@@ -15,8 +17,10 @@ export async function readRoadmapIfUsable(store: FileAiddStore): Promise<null | 
 	}
 }
 
+// Milestone order is priority order, matching evaluateRoadmapCodingGate. Walking key order would
+// file reports against a milestone the gate is not admitting work from.
 function currentRoadmapMilestone(roadmap: Roadmap, features: Feature[]): null | string {
-	const milestoneNames = Object.keys(roadmap.milestones);
+	const milestoneNames = orderedMilestoneNames(roadmap);
 	if (milestoneNames.length === 0) return null;
 	for (const milestone of milestoneNames) {
 		const milestoneFeatures = features.filter((feature) => {
@@ -38,7 +42,7 @@ export function milestoneForReportFeature(
 	features: Feature[],
 	featureKind: ProjectReportKind,
 ): ReportMilestoneTarget {
-	const milestoneNames = Object.keys(roadmap.milestones);
+	const milestoneNames = orderedMilestoneNames(roadmap);
 	const activeMilestone = currentRoadmapMilestone(roadmap, features);
 	if (!activeMilestone) return null;
 	if (featureKind === 'bug') return activeMilestone;

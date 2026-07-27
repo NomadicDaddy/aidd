@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { default as SquareTerminal } from 'lucide-react/dist/esm/icons/square-terminal';
+import { useCallback, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import {
@@ -24,6 +25,42 @@ function itemFieldLabel(kind: ExecutionIdentityKind): string {
 	if (kind === 'backend') return 'CLI';
 	if (kind === 'model') return 'Model';
 	return 'Reasoning';
+}
+
+function OverflowIdentityValue({
+	className,
+	label,
+	withTooltip,
+}: {
+	className?: string | undefined;
+	label: string;
+	withTooltip: boolean;
+}) {
+	const observerRef = useRef<null | ResizeObserver>(null);
+	const [overflowing, setOverflowing] = useState(false);
+
+	const setElement = useCallback(
+		(element: HTMLSpanElement | null) => {
+			observerRef.current?.disconnect();
+			observerRef.current = null;
+			if (!element || !withTooltip || label.length === 0) return;
+			const measure = () => {
+				setOverflowing(element.scrollWidth > element.clientWidth);
+			};
+			measure();
+			const observer = new ResizeObserver(measure);
+			observer.observe(element);
+			observerRef.current = observer;
+		},
+		[label, withTooltip],
+	);
+
+	const value = (
+		<span className={className} ref={setElement}>
+			{label}
+		</span>
+	);
+	return withTooltip && overflowing ? <Tooltip content={label}>{value}</Tooltip> : value;
 }
 
 export function ExecutionIdentityDetails({
@@ -72,6 +109,7 @@ export function ExecutionIdentityBadges({
 	const items = executionIdentityItems({ backend, model, provider, reasoningEffort });
 	if (items.length === 0) return null;
 	const cleanProvider = cleanIdentityValue(provider);
+	const hasHiddenDetails = Boolean(cleanProvider || hint);
 	const ariaLabel = items
 		.map((item) => `${itemFieldLabel(item.kind)} ${item.label}`)
 		.concat(cleanProvider ? [`Provider ${cleanProvider}`] : [])
@@ -100,16 +138,18 @@ export function ExecutionIdentityBadges({
 							strokeWidth={2.25}
 						/>
 					) : null}
-					<span
-						className={item.kind === 'model' ? 'max-w-48 truncate' : undefined}
-						title={item.label}>
-						{item.label}
-					</span>
+					<OverflowIdentityValue
+						className={
+							item.kind === 'model' ? 'inline-block max-w-48 truncate' : undefined
+						}
+						label={item.label}
+						withTooltip={withTooltip && !hasHiddenDetails && item.kind === 'model'}
+					/>
 				</span>
 			))}
 		</span>
 	);
-	return withTooltip ? (
+	return withTooltip && hasHiddenDetails ? (
 		<Tooltip
 			content={
 				<ExecutionIdentityDetails

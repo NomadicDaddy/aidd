@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { executionIdentityItems } from '../../frontend/src/lib/executionIdentity.ts';
 
-function renderExecutionIdentity(props: Record<string, null | string>): string {
+function renderExecutionIdentity(props: Record<string, boolean | null | string>): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
@@ -99,10 +99,46 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html).toContain('font-medium text-muted-foreground');
 		expect(html).toContain('font-semibold text-foreground');
 		expect(html).toContain('max-w-48 truncate');
+		expect(html).not.toContain('title=');
 		expect(html).not.toContain('style=');
 		expect(html).not.toContain('hsl(');
 		expect(html).not.toMatch(/bg-(?:blue|fuchsia|sky|violet)-700/);
 		expect(html).not.toContain('>openai<');
+	});
+
+	test('does not make a fully visible identity an interactive tooltip trigger', () => {
+		const html = renderExecutionIdentity({
+			backend: 'codex',
+			model: 'gpt-5.6-sol',
+			reasoningEffort: 'high',
+		});
+
+		expect(html).not.toContain('title=');
+		expect(html).not.toContain('tabindex=');
+	});
+
+	test('keeps hidden provider and hint details available in a tooltip', () => {
+		const html = renderExecutionIdentity({
+			backend: 'native',
+			hint: 'Resolved project target',
+			model: 'glm-5.2',
+			provider: 'zhipu',
+			reasoningEffort: 'medium',
+		});
+
+		expect(html).toContain('tabindex="0"');
+		expect(html).not.toContain('title=');
+	});
+
+	test('respects the explicit no-tooltip variant', () => {
+		const html = renderExecutionIdentity({
+			backend: 'codex',
+			model: 'gpt-5.6-sol',
+			withTooltip: false,
+		});
+
+		expect(html).not.toContain('title=');
+		expect(html).not.toContain('tabindex=');
 	});
 
 	test('renders nothing when no identity metadata exists', () => {

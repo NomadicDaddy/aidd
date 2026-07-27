@@ -15,8 +15,13 @@ import { buildFeatureBlockingContext } from './blocking-context.ts';
 import {
 	applySimulatedFeatureCompletion,
 	completionRequiresCommit,
+	parkCompletionsPendingCommit,
 } from './completion-persistence.ts';
-import { auditFeatureScope, featureRecoveryTarget } from './feature-scope.ts';
+import {
+	appendInvalidFeatureMetadata,
+	auditFeatureScope,
+	featureRecoveryTarget,
+} from './feature-scope.ts';
 import { listGitCommits, readGitHead } from './git.ts';
 import { classifyIterationOutcome } from './iteration-outcome.ts';
 import {
@@ -24,7 +29,11 @@ import {
 	mergeModeFileChanges,
 	modeFileChangesFromArtifacts,
 } from './mode-file-changes.ts';
-import { accumulateIterationEvidence, accumulateIterationMetrics } from './run-accumulator.ts';
+import {
+	accumulateIterationCommits,
+	accumulateIterationEvidence,
+	accumulateIterationMetrics,
+} from './run-accumulator.ts';
 
 export async function finalizeIteration(
 	input: FinalizeIterationInput,
@@ -134,24 +143,17 @@ export async function finalizeIteration(
 	});
 	if (completionPendingCommit) {
 		const parkedAt = new Date().toISOString();
-		const blockingContext = buildFeatureBlockingContext(
-			details,
-			'completion_pending_commit',
+		await parkCompletionsPendingCommit({
+			blockingContext: buildFeatureBlockingContext(
+				details,
+				'completion_pending_commit',
+				parkedAt,
+			),
+			completedFeatures: featureScope.completedFeatures,
 			parkedAt,
-		);
-		for (const featureId of featureScope.completedFeatures) {
-			if (featureSnapshotBefore.get(featureId) === true) continue;
-			const feature = await deps.store.readFeature(featureId);
-			if (feature.status === 'completed' || feature.passes === true) {
-				await deps.store.writeFeature({
-					...feature,
-					blockingContext,
-					passes: false,
-					status: 'waiting_approval',
-					updatedAt: parkedAt,
-				});
-			}
-		}
+			snapshotBefore: featureSnapshotBefore,
+			store: deps.store,
+		});
 	}
 	for (const featureId of featureScope.selectedFeatures) acc.selectedFeatures.add(featureId);
 	if (!completionPendingCommit) {
@@ -159,27 +161,12 @@ export async function finalizeIteration(
 			acc.completedFeatures.add(featureId);
 	}
 	acc.scopeOverrun = acc.scopeOverrun || featureScope.scopeOverrun;
-	const unexpectedAuditCommits =
-		plan.mode === 'audit' && iterationCommits.length > 0
-			? iterationCommits.map((commit) => commit.hash)
-			: [];
-	if (unexpectedAuditCommits.length > 0) {
-		console.warn(
-			`[audit-mode] ${unexpectedAuditCommits.length} unexpected commit(s) landed during audit iteration; not attributing to features: ${unexpectedAuditCommits.join(', ')}`,
-		);
-	}
-	if (plan.mode !== 'audit') {
-		acc.commitsCreated.push(...iterationCommits);
-		acc.runTotals.commitsCreated += iterationCommits.length;
-		// A phase (initializer/onboarding) iteration selects no feature, so its scaffold commit —
-		// which legitimately creates every feature directory at once — would be discarded by the
-		// feature-directory orphan guard in filterRunAttributedCommits (none of those directories
-		// are in the run's attributed feature set). Mark these commits as genuine run work so they
-		// are always attributed in the run ledger.
-		if (work.kind === 'phase') {
-			for (const commit of iterationCommits) acc.forcedAttributionCommits.add(commit.hash);
-		}
-	}
+	const unexpectedAuditCommits = accumulateIterationCommits({
+		acc,
+		commits: iterationCommits,
+		mode: plan.mode,
+		work,
+	});
 	const iterationProgress =
 		activeProgress ??
 		new OrchestratorProgressReporter({
@@ -280,7 +267,10 @@ export async function finalizeIteration(
 		console.warn(`[advisory] ${advisory}`);
 	}
 	const summary = await mode.summarize(context, modeResult);
-	const displayedSummary = appendPlanningRecoverySummary(summary.text, planningRecovery);
+	const displayedSummary = appendInvalidFeatureMetadata(
+		appendPlanningRecoverySummary(summary.text, planningRecovery),
+		featureScope.invalidFeatureMetadata,
+	);
 	console.log(`\n${displayedSummary}`);
 	iterationProgress.setStage('iteration_complete', { last: displayedSummary });
 	activeProgress?.stop();

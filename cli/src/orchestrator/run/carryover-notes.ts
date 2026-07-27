@@ -45,6 +45,47 @@ export function baselineVerifiedNote(headSha: string): string {
 	);
 }
 
+// Raised after an iteration marked a feature outside its allowed set complete. The first overrun
+// ends the iteration, not the run (see post-iteration-guards), so the agent has to be told what it
+// did — otherwise the next iteration repeats it and the second one does end the run.
+export function scopeOverrunNote(extraCompletedFeatures: readonly string[]): string {
+	return (
+		'**Heads-up: your previous iteration completed a feature it was not assigned.** These ' +
+		`feature records became \`completed\`/\`passes: true\` outside the selected scope: ` +
+		`${extraCompletedFeatures.map((id) => `\`${id}\``).join(', ')}.\n\n` +
+		'- Only the feature named in your work assignment may have its `id`, `status`, or `passes` ' +
+		"changed. Amending another feature's `spec`, `notes`, or `dependencies` is expected and " +
+		'encouraged; flipping its completion state is not.\n' +
+		'- If you did not intend to complete it, set it back to its true status now.\n' +
+		'- A second scope overrun in this run ends the run.'
+	);
+}
+
+// Raised when a feature.json will not parse at the end of an iteration. aidd's own listings drop
+// unreadable records silently, so the feature is invisible — to selection, to stats, and to the
+// next agent — until someone repairs the file. Repair comes before new work.
+export function invalidFeatureMetadataNote(
+	failures: readonly { directory: string; message: string }[],
+): string {
+	const lines = failures.map(
+		(failure) =>
+			`  - \`.aidd/features/${failure.directory}/feature.json\` — ${failure.message}`,
+	);
+	return (
+		'**Repair the invalid feature metadata before doing anything else.** These records exist on ' +
+		'disk but do not parse as JSON, so aidd cannot see the features at all — they are missing ' +
+		'from selection, from the queue, and from every count:\n\n' +
+		`${lines.join('\n')}\n\n` +
+		'- Fix the JSON, then confirm each file with `bun -e "JSON.parse(await Bun.file(PATH).text())"` ' +
+		"(or the project's `--check-features`) before moving on.\n" +
+		'- The usual cause is a text edit that put a raw newline, tab, or unescaped backslash inside ' +
+		'a JSON string value. When you amend `spec` or `notes`, write `\\n` (two characters), never a ' +
+		'literal line break, and re-parse the file immediately after every edit.\n' +
+		'- Do not recreate a record from scratch to make it parse: preserve the existing `id`, ' +
+		'`status`, `passes`, and history, and repair only the malformed text.'
+	);
+}
+
 // Deadline warning injected when the run's wall-clock budget is nearly exhausted, so the agent lands
 // its in-flight work instead of being hard-killed mid-commit (a timeout abort leaves a dirty worktree
 // that poisons the next run's gates). A deadline does not lower the bar for the marker.

@@ -1,7 +1,7 @@
 import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
 import type { CliActiveRunSource } from 'aidd-shared/metadata/active-runs';
 import type { FeatureLeaseService } from 'aidd-shared/metadata/feature-leases';
-import type { AiddStore } from 'aidd-shared/metadata/store';
+import type { AiddStore, FeatureReadFailure } from 'aidd-shared/metadata/store';
 import type { ModeResult, SelectedWork } from 'aidd-shared/modes/types';
 import type { AgentRunResult, IterationMetrics, StopReason } from 'aidd-shared/orchestrator/result';
 import type { RunPlan } from 'aidd-shared/plan/types';
@@ -100,7 +100,15 @@ export interface CommitDiffStat {
 	insertions: number;
 }
 
-export type FeatureCompletionSnapshot = Map<string, boolean>;
+export interface FeatureCompletionSnapshot {
+	/** Feature directory (or id) → whether it read as completed+passing at capture time. */
+	completed: Map<string, boolean>;
+	/** Records that exist on disk but would not parse, so they are absent from `completed`
+	 * entirely. Tracked separately because "unreadable" must never be scored as "not completed":
+	 * repairing such a file makes the feature reappear, which the scope audit would otherwise read
+	 * as the agent completing something it was never assigned. */
+	unreadable: FeatureReadFailure[];
+}
 
 export const initialRunTotals = {
 	cachedTokens: 0,
@@ -140,11 +148,18 @@ export interface RunAccumulator {
 	/** Raw exit code of the last backend iteration, before orchestrator classification.
 	 * Persisted to the ledger as backendExitCode so log/summary/ledger stay reconcilable. */
 	lastBackendExitCode?: number;
+	/** Corrective notes raised by the post-iteration guards, drained into the next iteration's
+	 * prompt alongside the flailing nudge. A guard that ends the iteration instead of the run
+	 * still has to tell the agent what went wrong, or the next iteration repeats it. */
+	pendingCarryoverNotes: string[];
 	runId: string;
 	runStartedAt: string;
 	runStartedAtMs: number;
 	runTotals: typeof initialRunTotals;
 	scopeOverrun: boolean;
+	/** How many iterations completed a feature outside their allowed set. The first is corrected
+	 * in-flight; a repeat means the boundary is not being respected and ends the run. */
+	scopeOverrunIterations: number;
 	selectedFeatures: Set<string>;
 	toolBreakdownTotals: Record<string, number>;
 }
@@ -156,6 +171,9 @@ export interface FeatureScopeAudit {
 	completedFeatures: string[];
 	completionMarkerIssue: 'completion_marker_missing_or_unaccepted' | undefined;
 	extraCompletedFeatures: string[];
+	/** Feature records that would not parse when the iteration ended. Corruption here is silent
+	 * data loss — the feature vanishes from every listing — so it is reported, not tolerated. */
+	invalidFeatureMetadata: FeatureReadFailure[];
 	scopeOverrun: boolean;
 	selectedFeatures: string[];
 	unacceptedCompletedFeatures: string[];

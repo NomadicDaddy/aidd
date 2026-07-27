@@ -70,6 +70,7 @@ function scopeWith(unaccepted: string[]): FeatureScopeAudit {
 		completionMarkerIssue:
 			unaccepted.length > 0 ? 'completion_marker_missing_or_unaccepted' : undefined,
 		extraCompletedFeatures: [],
+		invalidFeatureMetadata: [],
 		scopeOverrun: false,
 		selectedFeatures: [],
 		unacceptedCompletedFeatures: unaccepted,

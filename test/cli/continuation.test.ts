@@ -237,3 +237,33 @@ describe('flailingNudgeNote', () => {
 		expect(note).not.toMatch(/and emit `AIDD_RESULT`/);
 	});
 });
+
+// The first overrun now ends the iteration rather than the run, which only helps if the agent is
+// told what it did — and the note must not over-correct into "never touch another feature", since
+// the audit feedback loop requires coding runs to amend the source feature's spec and notes.
+describe('scopeOverrunNote', () => {
+	test('names the offending features and scopes the prohibition to completion state', async () => {
+		const { scopeOverrunNote } =
+			await import('../../cli/src/orchestrator/run/carryover-notes.ts');
+		const note = scopeOverrunNote(['feature-other']);
+		expect(note).toContain('`feature-other`');
+		expect(note).toContain('`id`, `status`, or `passes`');
+		expect(note).toContain('is expected and');
+		expect(note).toContain('A second scope overrun in this run ends the run.');
+	});
+});
+
+describe('invalidFeatureMetadataNote', () => {
+	test('names each unreadable file and how to avoid re-corrupting it', async () => {
+		const { invalidFeatureMetadataNote } =
+			await import('../../cli/src/orchestrator/run/carryover-notes.ts');
+		const note = invalidFeatureMetadataNote([
+			{ directory: 'feature-broken', message: 'Bad control character at 1612' },
+		]);
+		expect(note).toContain('.aidd/features/feature-broken/feature.json');
+		expect(note).toContain('Bad control character at 1612');
+		expect(note).toContain('JSON.parse');
+		expect(note).toContain('never a ');
+		expect(note).toContain('preserve the existing `id`');
+	});
+});

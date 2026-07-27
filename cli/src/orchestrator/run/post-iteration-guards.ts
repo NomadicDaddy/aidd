@@ -8,12 +8,14 @@ import type { FinalizeIterationResult, MoveFn, OrchestratorDeps, RunAccumulator 
 
 import { writeRunSummary } from './artifacts.ts';
 import { buildFeatureBlockingContext } from './blocking-context.ts';
+import { invalidFeatureMetadataNote, scopeOverrunNote } from './carryover-notes.ts';
 import { attemptCompletionMarkerRecovery } from './completion-recovery.ts';
 import { buildWallClockTimeoutSummary } from './run-ending.ts';
 
-// The three post-iteration checks that end a run outright, before the continuation state machine
-// gets a say: wall-clock exhaustion, scope overrun, and an unaccepted completion marker. Each
-// writes its own run summary; returning `undefined` means the iteration survived all of them.
+// The post-iteration checks that run before the continuation state machine gets a say: wall-clock
+// exhaustion, invalid feature metadata, scope overrun, and an unaccepted completion marker. The
+// ones that end the run write their own run summary; the ones that only end the iteration raise a
+// corrective note for the next prompt. Returning `undefined` means the run continues.
 export async function endRunIfIterationGuardTripped(input: {
 	acc: RunAccumulator;
 	deps: OrchestratorDeps;
@@ -44,18 +46,45 @@ export async function endRunIfIterationGuardTripped(input: {
 		return orchestratorExitCodes.aborted;
 	}
 
-	if (finalize.featureScope.scopeOverrun) {
-		const overrunSummary = `${finalize.displayedSummary}; scope_overrun: completed non-selected feature(s): ${finalize.featureScope.extraCompletedFeatures.join(', ')}`;
-		move({ summary: overrunSummary, type: 'complete' });
-		await writeRunSummary(
-			deps,
-			plan,
-			acc,
-			'blocked',
-			orchestratorExitCodes.validationError,
-			overrunSummary,
+	// A feature record that will not parse is silent data loss: aidd's listings skip it, so the
+	// feature disappears from selection and counts until someone repairs the file. Say so on the
+	// console and hand the next iteration a repair instruction; it does not end the run, because
+	// the agent is the one who can fix it.
+	if (finalize.featureScope.invalidFeatureMetadata.length > 0) {
+		for (const failure of finalize.featureScope.invalidFeatureMetadata) {
+			console.error(
+				`[feature-metadata] .aidd/features/${failure.directory}/feature.json will not parse and is invisible to aidd: ${failure.message}`,
+			);
+		}
+		acc.pendingCarryoverNotes.push(
+			invalidFeatureMetadataNote(finalize.featureScope.invalidFeatureMetadata),
 		);
-		return orchestratorExitCodes.validationError;
+	}
+
+	if (finalize.featureScope.scopeOverrun) {
+		acc.scopeOverrunIterations += 1;
+		const overrunSummary = `${finalize.displayedSummary}; scope_overrun: completed non-selected feature(s): ${finalize.featureScope.extraCompletedFeatures.join(', ')}`;
+		// One overrun is a scoping mistake by one iteration, not grounds for discarding a run that
+		// is otherwise committing clean work (observed: a 9-iteration, 7-commit run ended `blocked`
+		// with three features still eligible). Correct the agent and keep going; a second overrun
+		// means the boundary is not being respected, and that does end the run.
+		if (acc.scopeOverrunIterations < 2) {
+			console.warn(`[scope] ${overrunSummary}`);
+			acc.pendingCarryoverNotes.push(
+				scopeOverrunNote(finalize.featureScope.extraCompletedFeatures),
+			);
+		} else {
+			move({ summary: overrunSummary, type: 'complete' });
+			await writeRunSummary(
+				deps,
+				plan,
+				acc,
+				'blocked',
+				orchestratorExitCodes.validationError,
+				overrunSummary,
+			);
+			return orchestratorExitCodes.validationError;
+		}
 	}
 
 	if (finalize.featureScope.completionMarkerIssue === undefined) return undefined;

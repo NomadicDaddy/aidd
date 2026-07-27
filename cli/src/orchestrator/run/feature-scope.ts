@@ -1,5 +1,5 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
-import type { AiddStore } from 'aidd-shared/metadata/store';
+import type { AiddStore, FeatureReadFailure } from 'aidd-shared/metadata/store';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 
 import { extractStructuredResult } from 'aidd-shared/orchestrator/result';
@@ -33,15 +33,15 @@ export async function claimSelectedFeatureForIteration(
 export async function captureFeatureCompletionSnapshot(
 	store: AiddStore,
 ): Promise<FeatureCompletionSnapshot> {
-	const snapshot: FeatureCompletionSnapshot = new Map();
+	const completed = new Map<string, boolean>();
 	const features = await store.listFeatures({ includeAudit: true });
 	for (const feature of features) {
-		snapshot.set(
+		completed.set(
 			feature.directory ?? feature.id,
 			feature.status === 'completed' && feature.passes === true,
 		);
 	}
-	return snapshot;
+	return { completed, unreadable: await store.listFeatureReadFailures() };
 }
 
 export async function auditFeatureScope(
@@ -53,8 +53,18 @@ export async function auditFeatureScope(
 	const allowedFeatureIds = allowedFeatureIdsForWork(work);
 	const allowedFeatureIdSet = new Set(allowedFeatureIds);
 	const after = await captureFeatureCompletionSnapshot(store);
-	const completed = [...after.entries()]
-		.filter(([featureId, isComplete]) => isComplete && before.get(featureId) !== true)
+	// A record that was unreadable when the iteration started is not evidence of anything: it was
+	// missing from `before` because it would not parse, not because the feature was incomplete.
+	// Repairing it therefore looks identical to completing it, and a run was once killed for
+	// "completing" a feature that had been finished four days earlier and corrupted since.
+	const unreadableBefore = new Set(before.unreadable.map((failure) => failure.directory));
+	const completed = [...after.completed.entries()]
+		.filter(
+			([featureId, isComplete]) =>
+				isComplete &&
+				before.completed.get(featureId) !== true &&
+				!unreadableBefore.has(featureId),
+		)
 		.map(([featureId]) => featureId);
 	if (allowedCompletedFeature !== undefined && !completed.includes(allowedCompletedFeature)) {
 		completed.push(allowedCompletedFeature);
@@ -85,10 +95,22 @@ export async function auditFeatureScope(
 				? 'completion_marker_missing_or_unaccepted'
 				: undefined,
 		extraCompletedFeatures: uniqueOrdered(extraCompletedFeatures),
+		invalidFeatureMetadata: after.unreadable,
 		scopeOverrun: extraCompletedFeatures.length > 0,
 		selectedFeatures: selected,
 		unacceptedCompletedFeatures: uniqueOrdered(unacceptedCompletedFeatures),
 	};
+}
+
+/** Name the unreadable records in the iteration summary. Without this the only trace of a
+ * corrupted feature.json is its absence from a count, which reads as "nothing to do here". */
+export function appendInvalidFeatureMetadata(
+	summary: string,
+	failures: readonly FeatureReadFailure[],
+): string {
+	if (failures.length === 0) return summary;
+	const directories = failures.map((failure) => failure.directory).join(', ');
+	return `${summary}; invalid_feature_metadata: unreadable feature.json for ${directories} (invisible to aidd until repaired)`;
 }
 
 export function allowedFeatureIdsForWork(work: SelectedWork): string[] {

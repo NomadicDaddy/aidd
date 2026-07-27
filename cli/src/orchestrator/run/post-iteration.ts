@@ -77,6 +77,16 @@ export async function handlePostIteration(input: {
 		flailNudgeGrants,
 	} = input;
 
+	// Guards that end only the iteration leave their correction here; it rides into the next
+	// prompt alongside the flailing nudge rather than competing with it for the single slot.
+	const drainCarryoverNotes = (flailNote?: string): { carryoverNote?: string } => {
+		const notes = [flailNote, ...acc.pendingCarryoverNotes].filter(
+			(note): note is string => typeof note === 'string' && note.length > 0,
+		);
+		acc.pendingCarryoverNotes.length = 0;
+		return notes.length > 0 ? { carryoverNote: notes.join('\n\n') } : {};
+	};
+
 	const guardExit = await endRunIfIterationGuardTripped({
 		acc,
 		deps,
@@ -129,6 +139,7 @@ export async function handlePostIteration(input: {
 			flailNudgeGrants,
 			iteration,
 			kind: 'continue',
+			...drainCarryoverNotes(),
 		};
 	}
 
@@ -192,9 +203,9 @@ export async function handlePostIteration(input: {
 			flailNudgeGrants,
 			iteration: nextIteration,
 			kind: 'continue',
-			...(continuation.reason === 'flailing_nudge' && continuation.carryoverNote
-				? { carryoverNote: continuation.carryoverNote }
-				: {}),
+			...drainCarryoverNotes(
+				continuation.reason === 'flailing_nudge' ? continuation.carryoverNote : undefined,
+			),
 		};
 	}
 	// Flailing stop: the run gave up after repeated non-productive iterations. Park the selected

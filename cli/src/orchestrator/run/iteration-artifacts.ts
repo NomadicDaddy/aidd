@@ -102,6 +102,9 @@ export function buildIterationStructured(input: {
 		metrics,
 		outcome: details.outcome,
 		scopeOverrun: featureScope.scopeOverrun,
+		...(featureScope.invalidFeatureMetadata.length > 0
+			? { invalidFeatureMetadata: featureScope.invalidFeatureMetadata }
+			: {}),
 		selectedFeatures: featureScope.selectedFeatures,
 		unacceptedCompletedFeatures: featureScope.unacceptedCompletedFeatures,
 		...(unexpectedAuditCommits.length > 0 ? { unexpectedAuditCommits } : {}),

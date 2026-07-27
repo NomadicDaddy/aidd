@@ -29,6 +29,7 @@ import {
 	writeChangelog,
 } from './store/documents.ts';
 import { InvalidRoadmapError } from './store/errors.ts';
+import { collectFeatureReadFailures, type FeatureReadFailure } from './store/read-failures.ts';
 import { appendRunSummary, writeIteration } from './store/runHistory.ts';
 import { serializeFeatureForWrite } from './store/serialize.ts';
 import { applyCreationStatusPolicy } from './store/status-policy.ts';
@@ -36,6 +37,7 @@ import { evaluateFeatureValidation } from './store/validation.ts';
 
 export { type ArtifactCheckResult, type ArtifactStatus } from './store/artifacts.ts';
 export { InvalidRoadmapError } from './store/errors.ts';
+export { type FeatureReadFailure } from './store/read-failures.ts';
 
 export interface AiddStore {
 	appendRunSummary(summary: Record<string, unknown>): Promise<void>;
@@ -45,6 +47,7 @@ export interface AiddStore {
 	getFeatureStats(query?: FeatureQuery): Promise<FeatureStats>;
 	hasStopRequested(stopFile?: string): Promise<boolean>;
 	listAuditReports(): Promise<string[]>;
+	listFeatureReadFailures(): Promise<FeatureReadFailure[]>;
 	listFeatures(query?: FeatureQuery): Promise<Feature[]>;
 	readAuditReport(filename: string): Promise<string>;
 	readFeature(id: string): Promise<Feature>;
@@ -88,6 +91,12 @@ export class FileAiddStore implements AiddStore {
 			}
 		}
 		return features.sort((a, b) => (a.directory ?? a.id).localeCompare(b.directory ?? b.id));
+	}
+
+	async listFeatureReadFailures(): Promise<FeatureReadFailure[]> {
+		return collectFeatureReadFailures(this.metadataDir, (directory) =>
+			this.readFeature(directory),
+		);
 	}
 
 	async getFeatureStats(query: FeatureQuery = {}): Promise<FeatureStats> {

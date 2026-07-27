@@ -4,6 +4,9 @@ import type { SelectedWork } from 'aidd-shared/modes/types';
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { buildFeatureBlockingContext } from './blocking-context.ts';
+import type { FeatureCompletionSnapshot } from './types.ts';
+
 import { gitSuccess } from './git-exec.ts';
 import { gitDirtySourcePaths } from './git.ts';
 
@@ -62,6 +65,31 @@ async function ignoredMetadataCompletionSatisfiesCommitGate(
 		if (await writtenDuringRun(input.projectDir, path, input.startedAtMs)) return false;
 	}
 	return true;
+}
+
+/** An iteration that finished a feature but never committed it has not completed anything aidd can
+ * stand behind, so every completion it recorded is demoted to `waiting_approval` carrying the
+ * failing-gate context. Only features this iteration actually flipped are touched — one that was
+ * already completed+passing when the iteration started keeps its status. */
+export async function parkCompletionsPendingCommit(input: {
+	blockingContext: ReturnType<typeof buildFeatureBlockingContext>;
+	completedFeatures: readonly string[];
+	parkedAt: string;
+	snapshotBefore: FeatureCompletionSnapshot;
+	store: AiddStore;
+}): Promise<void> {
+	for (const featureId of input.completedFeatures) {
+		if (input.snapshotBefore.completed.get(featureId) === true) continue;
+		const feature = await input.store.readFeature(featureId);
+		if (feature.status !== 'completed' && feature.passes !== true) continue;
+		await input.store.writeFeature({
+			...feature,
+			blockingContext: input.blockingContext,
+			passes: false,
+			status: 'waiting_approval',
+			updatedAt: input.parkedAt,
+		});
+	}
 }
 
 /** Simulation runs have no real agent to write the feature back, so the orchestrator applies the

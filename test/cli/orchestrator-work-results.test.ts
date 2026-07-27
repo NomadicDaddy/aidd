@@ -551,7 +551,10 @@ describe('orchestrator work results', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
-	test('blocks when a backlog iteration completes an extra queued feature without a marker', async () => {
+	// One overrun is a scoping mistake by one iteration, not grounds for discarding a run that is
+	// otherwise committing clean work. It is recorded on the iteration and the run summary, and the
+	// next iteration is handed a corrective note — but the run keeps going.
+	test('records a first scope overrun without ending the run', async () => {
 		const store = await makeStore('queued-feature-marker-issue');
 		await addFeature(store, 'feature-extra', 2);
 		const exitCode = await runOrchestrator(plan(store.projectDir), {
@@ -572,7 +575,7 @@ describe('orchestrator work results', () => {
 			),
 		});
 
-		expect(exitCode).toBe(orchestratorExitCodes.validationError);
+		expect(exitCode).toBe(orchestratorExitCodes.success);
 		const iteration = JSON.parse(
 			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {
@@ -606,12 +609,12 @@ describe('orchestrator work results', () => {
 		expect(runSummary.selectedFeatures).toEqual(['feature-core']);
 		expect(runSummary.completedFeatures).toEqual(['feature-core', 'feature-extra']);
 		expect(runSummary.scopeOverrun).toBe(true);
-		expect(runSummary.stopReason).toBe('blocked');
-		expect(runSummary.exitCode).toBe(orchestratorExitCodes.validationError);
+		expect(runSummary.stopReason).toBe('completed');
+		expect(runSummary.exitCode).toBe(orchestratorExitCodes.success);
 	});
 
 	test(
-		'blocks clearly when a queued feature completes without a structured marker',
+		'attributes a markerless queued-feature completion to the overrun, not the marker check',
 		async () => {
 			const store = await makeStore('queued-feature-no-marker');
 			await addFeature(store, 'feature-extra', 2);
@@ -623,7 +626,9 @@ describe('orchestrator work results', () => {
 				),
 			});
 
-			expect(exitCode).toBe(orchestratorExitCodes.validationError);
+			// The marker check no longer decides this run's fate: the iteration is recorded as an
+			// overrun and the run ends on the missing marker, which is what actually went wrong.
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
 			const iteration = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
@@ -646,7 +651,58 @@ describe('orchestrator work results', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
-	test('fails when backend completes a feature outside prioritized work', async () => {
+	// The corrective note buys the agent exactly one mistake. A second iteration that completes a
+	// *different* out-of-scope feature means the boundary is not being respected, and that ends the
+	// run — otherwise a run could redefine its own scope indefinitely.
+	test(
+		'a second scope overrun ends the run',
+		async () => {
+			const store = await makeStore('second-scope-overrun');
+			await addFeature(store, 'feature-second', 2);
+			await addFeature(store, 'feature-extra', 3);
+			await addFeature(store, 'feature-extra-two', 4);
+			const marker = (id: string): AgentEvent => ({
+				chunk: `AIDD_RESULT: {"featureId":"${id}","status":"completed","passes":true}\n`,
+				type: 'assistant_text',
+			});
+			const done: AgentEvent = { exitCode: 0, filesModified: [], type: 'done' };
+			const exitCode = await runOrchestrator(plan(store.projectDir), {
+				rootDir,
+				store,
+				backend: new SequencedBackend(
+					[
+						[marker('feature-core'), done],
+						[marker('feature-second'), done],
+					],
+					async (callIndex) => {
+						// Each iteration completes its own assigned feature plus a different one it was
+						// never given — two distinct overruns, not the same one seen twice.
+						await completeFeature(
+							store,
+							callIndex === 0 ? 'feature-core' : 'feature-second',
+						);
+						await completeFeature(
+							store,
+							callIndex === 0 ? 'feature-extra' : 'feature-extra-two',
+						);
+					},
+				),
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.validationError);
+			const runSummary = JSON.parse(
+				(await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+					.trim()
+					.split(/\r?\n/)[0] ?? '{}',
+			) as { stopReason: string; summary: string };
+			expect(runSummary.stopReason).toBe('blocked');
+			expect(runSummary.summary).toContain('scope_overrun');
+			expect(runSummary.summary).toContain('feature-extra-two');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test('records a feature completed outside prioritized work as an overrun', async () => {
 		const store = await makeStore('outside-prioritized-work');
 		await addFeature(store, 'feature-extra', 2);
 		const runtimePlan = resolveRunPlan(
@@ -677,7 +733,7 @@ describe('orchestrator work results', () => {
 			),
 		});
 
-		expect(exitCode).toBe(orchestratorExitCodes.validationError);
+		expect(exitCode).toBe(orchestratorExitCodes.success);
 		const iteration = JSON.parse(
 			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 		) as {

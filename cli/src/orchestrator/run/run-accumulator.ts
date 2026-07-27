@@ -1,7 +1,10 @@
+import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { IterationMetrics } from 'aidd-shared/orchestrator/result';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { evaluateRunBudget } from 'aidd-shared/orchestrator/budget';
+
+import type { GitCommitSummary } from './types.ts';
 
 import { initialRunTotals, type RunAccumulator } from './types.ts';
 
@@ -15,11 +18,13 @@ export function createRunAccumulator(runId: string, runStartedAtMs: number): Run
 		filesEdited: new Set<string>(),
 		forcedAttributionCommits: new Set<string>(),
 		iterationDurationsMs: [],
+		pendingCarryoverNotes: [],
 		runId,
 		runStartedAt: new Date(runStartedAtMs).toISOString(),
 		runStartedAtMs,
 		runTotals: { ...initialRunTotals },
 		scopeOverrun: false,
+		scopeOverrunIterations: 0,
 		selectedFeatures: new Set<string>(),
 		toolBreakdownTotals: {},
 	};
@@ -55,6 +60,36 @@ export function accumulateIterationEvidence(
 	for (const command of input.commands ?? []) acc.commandsRun.add(command);
 	for (const path of input.filesCreated) acc.filesCreated.add(path);
 	for (const path of input.filesEdited) acc.filesEdited.add(path);
+}
+
+/** Fold the iteration's commits into the run ledger, and return the commits an audit iteration was
+ * never supposed to produce (audits are read-only, so theirs are reported and left unattributed). */
+export function accumulateIterationCommits(input: {
+	acc: RunAccumulator;
+	commits: readonly GitCommitSummary[];
+	mode: RunPlan['mode'];
+	work: SelectedWork;
+}): string[] {
+	const { acc, commits, mode, work } = input;
+	if (mode === 'audit') {
+		if (commits.length === 0) return [];
+		const hashes = commits.map((commit) => commit.hash);
+		console.warn(
+			`[audit-mode] ${hashes.length} unexpected commit(s) landed during audit iteration; not attributing to features: ${hashes.join(', ')}`,
+		);
+		return hashes;
+	}
+	acc.commitsCreated.push(...commits);
+	acc.runTotals.commitsCreated += commits.length;
+	// A phase (initializer/onboarding) iteration selects no feature, so its scaffold commit — which
+	// legitimately creates every feature directory at once — would be discarded by the
+	// feature-directory orphan guard in filterRunAttributedCommits (none of those directories are in
+	// the run's attributed feature set). Mark these commits as genuine run work so they are always
+	// attributed in the run ledger.
+	if (work.kind === 'phase') {
+		for (const commit of commits) acc.forcedAttributionCommits.add(commit.hash);
+	}
+	return [];
 }
 
 /** Warn-only token/cost budget: surface the first overrun in the run log and never alter control

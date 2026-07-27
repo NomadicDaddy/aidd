@@ -1,5 +1,6 @@
 import type { RunPlan } from 'aidd-shared/plan/types';
 
+import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { runRepoDir } from 'aidd-shared/plan/types';
 
 import type { OrchestratorState } from './state.ts';
@@ -15,7 +16,11 @@ import { finalizeIteration } from './run/finalize.ts';
 import { readGitHead } from './run/git.ts';
 import { handlePostIteration } from './run/post-iteration.ts';
 import { handleDirtyTreeSkip, handleNoWorkIteration } from './run/preflight.ts';
-import { armWindDownNoteIfNeeded } from './run/prompt-context.ts';
+import {
+	armBaselineNoteIfNeeded,
+	armWindDownNoteIfNeeded,
+	iterationProvedCleanBaseline,
+} from './run/prompt-context.ts';
 import { warnIfBudgetExceeded } from './run/run-accumulator.ts';
 import {
 	endRunIfBudgetTooThinForIteration,
@@ -56,6 +61,10 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 	// Nudge iterations don't advance `iteration`, so this — not maxIterations — is what bounds them.
 	let flailNudgeGrants = 0;
 	let budgetWarned = false;
+	// Set when an iteration ends clean with an accepted completion AND recorded a passing quality
+	// gate, so the next iteration can skip re-establishing the same baseline. All three are
+	// required — see iterationProvedCleanBaseline. Consumed (and cleared) at the next compile.
+	let previousIterationVerifiedBaseline = false;
 	while (plan.scope.maxIterations === null || iteration < plan.scope.maxIterations) {
 		const wallClockExit = await endRunIfWallClockExpired({
 			acc,
@@ -106,6 +115,8 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 		}
 		const promptPlan = await mode.buildPromptPlan(context, work);
 		armWindDownNoteIfNeeded(promptContext, plan, runStartedAtMs, iteration);
+		await armBaselineNoteIfNeeded(promptContext, plan, previousIterationVerifiedBaseline);
+		previousIterationVerifiedBaseline = false;
 		const compiled = await promptContext.compile(promptPlan);
 		move({ plan, prompt: compiled, type: 'run_agent' });
 		const startedAtMs = Date.now();
@@ -241,6 +252,10 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 			work,
 		});
 		lastSummary = finalize.displayedSummary;
+		previousIterationVerifiedBaseline =
+			finalize.recordedExitCode === orchestratorExitCodes.success &&
+			finalize.completedResultFeature !== undefined &&
+			iterationProvedCleanBaseline(finalize.details);
 
 		// Token/cost budget is warn-only: surface the first overrun in the run log (which the web
 		// panel renders) and never alter control flow. Checked after each iteration's metrics.

@@ -24,6 +24,27 @@ export function flailingNudgeNote(): string {
 	);
 }
 
+// Baseline-gate skip injected when the previous iteration of this run already proved the tree
+// green: it exited clean with an accepted completion, and nothing has changed on disk since. The
+// mode prompts open with a full pre-implementation quality gate (STEP 4), which on a large project
+// costs minutes of every iteration to re-establish a fact aidd already holds. Only the *pre*-work
+// gate is waived — the post-change gate before committing is untouched, and the note names the sha
+// so the agent can self-invalidate if it finds the tree somewhere else.
+export function baselineVerifiedNote(headSha: string): string {
+	return (
+		'**Baseline already verified — skip the pre-implementation quality gate.** The previous ' +
+		`iteration of this run finished clean at commit \`${headSha}\`, and the working tree has not ` +
+		'changed since. Treat STEP 4 (RUN QUALITY CHECKS) as satisfied for this baseline:\n\n' +
+		'- Do **not** run `smoke:qc`, `smoke:dev`, or a standalone lint/typecheck/test sweep before ' +
+		'you start work. Go straight to selecting and implementing the feature.\n' +
+		"- The gate you still owe is the **post-change** one: run the project's full quality gate " +
+		'after your edits and before you commit, exactly as the prompt requires. Nothing about the ' +
+		'completion bar has been relaxed.\n' +
+		`- This note is void if reality disagrees: if \`git status\` is dirty or \`HEAD\` is not ` +
+		`\`${headSha}\`, ignore it and run the baseline gate normally.`
+	);
+}
+
 // Deadline warning injected when the run's wall-clock budget is nearly exhausted, so the agent lands
 // its in-flight work instead of being hard-killed mid-commit (a timeout abort leaves a dirty worktree
 // that poisons the next run's gates). A deadline does not lower the bar for the marker.
@@ -32,7 +53,9 @@ export function windDownNote(remainingMs: number): string {
 	return (
 		`**Heads-up: about ${remainingMinutes} minute(s) of wall-clock budget remain before this run is force-stopped.** ` +
 		'Wind down now:\n\n' +
-		'- Do **not** start new features or open new lines of investigation.\n' +
+		'- Do **not** expand scope or open new lines of investigation. If this iteration just handed ' +
+		"you a feature to start, aidd checked the remaining budget against how long this run's " +
+		'iterations have been taking before dispatching it — do that one thing and nothing more.\n' +
 		'- Finish or safely checkpoint the change you are in the middle of, run the required gates, and ' +
 		'`git commit` completed work immediately.\n' +
 		'- Update the feature `feature.json` to its true status (completed+passing only if the gates ran ' +

@@ -11,11 +11,18 @@
 # Only refs/tags/v* pushes are checked. The template names the directory v<version>; derived apps
 # name it v<version>-sv<template-version>, so any directory starting with the tag version passes.
 #
+# A full-looking directory is not proof of a good crawl: a run that fails on the last page still
+# leaves 40 PNGs behind. The crawl stamps its own verdict into crawl-result.json (`started` before
+# the first page loads, `passed`/`failed` when the report lands), and this guard refuses anything
+# that does not say success. A capture with no such file predates the stamp — or comes from a repo
+# whose crawler does not write one — so it falls back to the PNG count alone.
+#
 # Keep this file byte-identical between the aidd and spernakit repos.
 set -euo pipefail
 
 ZERO=0000000000000000000000000000000000000000
 MIN_PNGS=5
+RESULT_FILE=crawl-result.json
 problems=0
 
 note() { echo "  $*" >&2; }
@@ -50,12 +57,20 @@ while read -r local_ref local_sha _remote_ref _remote_sha; do
 		note "tag $version: $dir has only $count PNG(s); a full capture produces at least $MIN_PNGS"
 		problems=1
 	fi
+
+	result="$dir/$RESULT_FILE"
+	if [ -f "$result" ] && ! grep -Eq '"success"[[:space:]]*:[[:space:]]*true' "$result"; then
+		status=$(grep -Eo '"status"[[:space:]]*:[[:space:]]*"[^"]*"' "$result" | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
+		note "tag $version: $dir/$RESULT_FILE records crawl status '${status:-unknown}', not a passing run"
+		problems=1
+	fi
 done
 
 if [ "$problems" -ne 0 ]; then
 	echo "" >&2
-	echo "PUSH BLOCKED: version tag(s) above have no screenshot artifact." >&2
+	echo "PUSH BLOCKED: version tag(s) above have no usable screenshot artifact." >&2
 	echo "With the bumped version in package.json, run: bun run smoke:screenshots" >&2
+	echo "and fix any crawl failures it reports — a failed crawl is not a release capture." >&2
 	echo "(single-instance rule: never start a second smoke run while one is active)." >&2
 	echo "Override with --no-verify ONLY for historical tags that predate this guard." >&2
 	exit 1

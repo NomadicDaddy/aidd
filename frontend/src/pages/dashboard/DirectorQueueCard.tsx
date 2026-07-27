@@ -26,10 +26,10 @@ export function DirectorQueueCard({
 	return (
 		<Card variant="panel">
 			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+				<h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
 					<AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-300" />
 					Director Queue
-				</div>
+				</h2>
 				<Link
 					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
 					to="/director">

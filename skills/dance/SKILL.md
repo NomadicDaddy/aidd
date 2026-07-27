@@ -21,7 +21,11 @@ App metadata, ports, URLs, and current versions live in:
 - `<spernakit-root>/spernakit.psd1`
 - `<applications-root>/AGENTS.md` (canonical app list)
 
-**Default scope**: all active derived apps in `<spernakit-root>/spernakit.psd1` with a pinned version (not `'latest'`, which is a placeholder for apps pending rebuild). `spernakit/spernakit.psd1` is authoritative; do not hardcode app counts, lists, or individual app slugs elsewhere. `spernakit-lite` apps are out of default scope; include only when explicitly passed via `--scope`.
+**Default scope**: all registered derived apps in `<spernakit-root>/spernakit.psd1`. Every
+derived-app entry must have a concrete semantic `spernakit_version`; abort preflight when the
+manifest is missing one or contains a non-semver value. `spernakit/spernakit.psd1` is authoritative;
+do not hardcode app counts, lists, or individual app slugs elsewhere. `spernakit-lite` apps are out
+of default scope; include only when explicitly passed via `--scope`.
 
 ## Arguments
 

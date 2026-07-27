@@ -11,7 +11,7 @@ metadata:
 > target; the 2.x line is legacy/maintenance)
 > **CDN (minified, default)**: `https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6`
 > **CDN (unminified)**: `https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6/dist/htmx.js`
-> **bun**: `bun install htmx.org@4.0.0-beta6`
+> **bun**: `bun add htmx.org@4.0.0-beta6`
 >
 > _Target htmx **4** and pin the **exact** version (no `^` ranges) — v4 is in beta and betas have
 > renamed events between releases. Prefer vendoring the file (self-hosted) over CDN so CSP can stay
@@ -285,7 +285,9 @@ SSE reconnect behavior is configurable:
   htmx-active elements, fail-closed), a Trusted Types policy, and `safeEval:true` (nonce-based
   script injection instead of `new Function()`), enabling
   `script-src 'self' 'nonce-...'` + `trusted-types htmx`.
-- Allowlist which extensions may activate: `<meta name="htmx-config" content='extensions:"hx-sse"' />`
+- Allowlist registered extension names, not script filenames:
+  `<meta name="htmx-config" content='extensions:"sse,preload"' />`. The corresponding bundled
+  files are still named `hx-sse.min.js` and `hx-preload.min.js`.
 
 ## Performance Optimization
 
@@ -331,6 +333,10 @@ First-party extensions: `hx-sse`, `hx-ws`, `hx-multipart` (networking); `hx-live
 (performance); `hx-head`, `hx-upsert`, `hx-targets`, `hx-download` (swaps); `htmx-2-compat`,
 `hx-alpine-compat`, `hx-csp` (compatibility/security).
 
+The registered allowlist names omit the filename prefix: `sse`, `ws`, `multipart`, `preload`,
+`head-support`, and so on. Confirm the registered name in the extension's official reference
+before adding it to `htmx.config.extensions`.
+
 ## Configuration
 
 Global config via a `<meta>` tag in `<head>` — HCON (`key:value` pairs) or JSON:
@@ -354,14 +360,22 @@ Response: HX-Trigger (fires after swap), HX-Location, HX-Redirect, HX-Refresh, H
           HX-Reswap, HX-Reselect, HX-Push-Url, HX-Replace-Url
 ```
 
-Use `HX-Request` server-side to decide between a full page and a fragment for the same URL.
+Use all relevant navigation headers when choosing a full page or fragment:
+
+- Return a full document for ordinary requests, `HX-Request-Type: full`, and
+  `HX-History-Restore-Request: true`.
+- Return a fragment only for a genuine partial request.
+- Mark the restorable region with `hx-history-elt` and vary cacheable responses on the headers
+  that shape the response.
+- Return a `2xx` fragment or htmx response headers after successful htmx mutations. Response
+  headers are not processed on `3xx`; reserve `303` redirects for ordinary HTML form submissions.
 
 ## Migrating from htmx 2.x
 
 Run the official checker first — it scans templates and JS for 2.x-isms (requires Python 3):
 
 ```bash
-npx htmx.org@4.0.0-beta6 upgrade-check -- ./path/to/project/root
+bunx htmx.org@4.0.0-beta6 upgrade-check -- ./path/to/project/root
 ```
 
 | htmx 2.x                       | htmx 4                                                      |

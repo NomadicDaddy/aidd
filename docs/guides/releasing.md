@@ -51,7 +51,8 @@ bun run smoke:screenshots        # writes screenshots/vX.Y.Z/ from package.json'
 cannot be reconstructed later. Capturing before the bump would file the new UI under the previous
 version and overwrite that release's archive. The pre-push screenshot guard
 (`.githooks/screenshot-guard.sh`) refuses to push a `vX.Y.Z` tag when `screenshots/vX.Y.Z/` is
-missing or nearly empty.
+missing, nearly empty, or holds a `crawl-result.json` that does not record a passing crawl — the
+crawl must exit 0, not merely produce files.
 
 ### 2. Cut the tag
 
@@ -64,8 +65,9 @@ git push origin vX.Y.Z
 ```
 
 The tag push runs the pre-push guards: the history guard (no `.aidd/` in the pushed range) and the
-screenshot guard (`screenshots/vX.Y.Z/` exists with the page captures). If the screenshot guard
-fires, run `bun run smoke:screenshots` and push the tag again — do not bypass it.
+screenshot guard (`screenshots/vX.Y.Z/` exists with the page captures and a passing crawl result).
+If the screenshot guard fires, run `bun run smoke:screenshots`, fix whatever the crawl reports, and
+push the tag again — do not bypass it.
 
 Pushing the tag triggers CI on the tag. On success, `.github/workflows/release.yml` (on
 `windows-latest`) runs `release:package` + `release:check`, then `gh release create` uploads the zip,

@@ -40,6 +40,16 @@ export function isIgnorableConsoleError(text: string): boolean {
 	);
 }
 
+// A request the page itself cancelled reaches `requestfailed` without a server ever refusing it:
+// a query aborted on unmount, a poll superseded by navigation, an extension blocking a fetch.
+// Counting those as network errors made the release capture flake — /runs refetches every second,
+// so navigating away from it while a poll was in flight failed the whole crawl with nothing wrong.
+const CLIENT_CANCELLED_FAILURES = new Set(['net::ERR_ABORTED', 'net::ERR_BLOCKED_BY_CLIENT']);
+
+export function isIgnorableRequestFailure(errorText: string): boolean {
+	return CLIENT_CANCELLED_FAILURES.has(errorText);
+}
+
 export function isProjectDetailRoute(route: string): boolean {
 	try {
 		const pathname = new URL(route, DEFAULT_BASE_URL).pathname;

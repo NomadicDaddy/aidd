@@ -46,6 +46,8 @@ process and monitor it through the active backend's process capability.
   This directory is gitignored and cannot be reconstructed after the release, and the pre-push
   screenshot guard (`.githooks/screenshot-guard.sh`) blocks the tag push without it. If it is
   missing, run `bun run smoke:screenshots` (respecting the single-instance rule) before moving on.
+  The guard also reads `crawl-result.json` in that directory when the crawler writes one, and
+  refuses a capture whose crawl did not pass — files on disk are not the same as a clean crawl.
 - update docs/template/CHANGELOG.md with all changes appropriately grouped/formatted; changelog and doc prose follows the humanize-docs style contract (`.aidd/skills/humanize-docs/SKILL.md`, staged into this workspace; or `<aidd-root>/skills/humanize-docs/SKILL.md` in the aidd repo): plain natural language, no em-dashes, no AI filler, describe what changed rather than praising it
 - update .aidd/project-structure.md (as needed)
 - update .aidd/spec.md (as needed)

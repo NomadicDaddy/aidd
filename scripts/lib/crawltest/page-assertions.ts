@@ -6,6 +6,7 @@ export {
 	classifyPageContent,
 	clickButtonByText,
 	isIgnorableConsoleError,
+	isIgnorableRequestFailure,
 	isNotFoundPage,
 	isProjectDetailRoute,
 	pageTextScript,

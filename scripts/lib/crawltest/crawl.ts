@@ -6,7 +6,7 @@ import { normalizeRoute, resolveCrawlArgs } from '../../crawltest-config.ts';
 import { getInteractiveElements, testInteractiveElements } from '../../crawltest-interactions.ts';
 import { printReport, writeCrawlReport } from '../../crawltest-reporting.ts';
 import { TestResults } from '../../crawltest-results.ts';
-import { getVersionedScreenshotDir } from '../../crawltest-screenshots.ts';
+import { getVersionedScreenshotDir, writeCrawlResult } from '../../crawltest-screenshots.ts';
 import {
 	type CrawlArgs,
 	type CrawlerOptions,
@@ -24,6 +24,7 @@ import {
 	assertAuditSidebarNavigation,
 	assertDisabledActionAffordance,
 	isIgnorableConsoleError,
+	isIgnorableRequestFailure,
 	parseWebVitalMessage,
 	shouldTestInteractions,
 } from './page-assertions.ts';
@@ -83,6 +84,7 @@ async function crawl(
 	page.on('requestfailed', (request) => {
 		const failure = request.failure();
 		const errorText = failure?.errorText ?? 'request failed';
+		if (isIgnorableRequestFailure(errorText)) return;
 		results.addNetworkError(request.url(), 'requestfailed', errorText);
 	});
 	page.on('response', (response) => {
@@ -183,6 +185,15 @@ export async function runCrawltest(args: CrawlArgs): Promise<number> {
 			? (MOBILE_VIEWPORT_NAMES as ViewportArg[])
 			: [resolvedArgs.viewport];
 
+	// The versioned directory is the release artifact, so its verdict is stamped before the first
+	// page loads: a crawl that throws leaves `started` behind and the pre-push guard refuses it.
+	const resultDirectory = resolvedArgs.screenshotPages
+		? getVersionedScreenshotDir(join(process.cwd(), 'screenshots'), process.cwd())
+		: null;
+	if (resultDirectory) {
+		await writeCrawlResult(resultDirectory, { status: 'started', success: false });
+	}
+
 	try {
 		let exitCode = 0;
 		if (resolvedArgs.localNetwork) {
@@ -218,6 +229,13 @@ export async function runCrawltest(args: CrawlArgs): Promise<number> {
 		printReport(report, written);
 		if (!report.summary.success) {
 			exitCode = 1;
+		}
+		if (resultDirectory) {
+			await writeCrawlResult(resultDirectory, {
+				screenshots: report.summary.screenshotsTaken,
+				status: exitCode === 0 ? 'passed' : 'failed',
+				success: exitCode === 0,
+			});
 		}
 		return exitCode;
 	} finally {

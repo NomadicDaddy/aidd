@@ -50,6 +50,18 @@ const addScreenshots = async (root: string, dir: string, count: number): Promise
 const tagLine = (tag: string, localSha = SHA): string =>
 	`refs/tags/${tag} ${localSha} refs/tags/${tag} ${ZERO}\n`;
 
+/** Mirrors what the crawl stamps into the versioned directory (scripts/crawltest-screenshots.ts). */
+const addCrawlResult = async (
+	root: string,
+	dir: string,
+	stamp: { status: string; success: boolean },
+): Promise<void> => {
+	await writeFile(
+		join(root, 'screenshots', dir, 'crawl-result.json'),
+		`${JSON.stringify({ ...stamp, timestamp: '2026-07-27T00:00:00.000Z' }, null, '\t')}\n`,
+	);
+};
+
 describe('screenshot guard', () => {
 	test('branch pushes are not checked', async () => {
 		const root = await makeRoot();
@@ -78,9 +90,35 @@ describe('screenshot guard', () => {
 		expect(r.err).toContain('only 2 PNG(s)');
 	});
 
-	test('a full capture passes', async () => {
+	test('a full capture with no crawl result passes — captures predating the stamp still work', async () => {
 		const root = await makeRoot();
 		await addScreenshots(root, 'v3.29.0', 5);
+		const r = await runGuard(root, tagLine('v3.29.0'));
+		expect(r.code).toBe(0);
+	});
+
+	test('a full capture whose crawl failed blocks — PNG count alone is not a verdict', async () => {
+		const root = await makeRoot();
+		await addScreenshots(root, 'v3.29.0', 40);
+		await addCrawlResult(root, 'v3.29.0', { status: 'failed', success: false });
+		const r = await runGuard(root, tagLine('v3.29.0'));
+		expect(r.code).toBe(1);
+		expect(r.err).toContain("crawl status 'failed'");
+	});
+
+	test('a crawl that died mid-run leaves the started stamp and blocks', async () => {
+		const root = await makeRoot();
+		await addScreenshots(root, 'v3.29.0', 40);
+		await addCrawlResult(root, 'v3.29.0', { status: 'started', success: false });
+		const r = await runGuard(root, tagLine('v3.29.0'));
+		expect(r.code).toBe(1);
+		expect(r.err).toContain("crawl status 'started'");
+	});
+
+	test('a full capture with a passing crawl result passes', async () => {
+		const root = await makeRoot();
+		await addScreenshots(root, 'v3.29.0', 40);
+		await addCrawlResult(root, 'v3.29.0', { status: 'passed', success: true });
 		const r = await runGuard(root, tagLine('v3.29.0'));
 		expect(r.code).toBe(0);
 	});

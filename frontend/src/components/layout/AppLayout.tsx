@@ -23,6 +23,10 @@ import { ShortcutChord } from '../shared/KeyboardShortcut.tsx';
 import { ShortcutsOverlay } from '../shared/ShortcutsOverlay.tsx';
 import { TerminalPane } from '../terminal/TerminalPane.tsx';
 import { Button, IconButton } from '../ui/button.tsx';
+import {
+	activeExecutionCountAccessibleName,
+	searchControlAccessibleName,
+} from './appLayoutAccessibility.ts';
 import { navGroups } from './nav-items.ts';
 import { ProjectReportButton } from './ProjectReportButton.tsx';
 import { ProjectsNavDropdown } from './ProjectsNavDropdown.tsx';
@@ -94,7 +98,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 					<div className="hidden sm:block">
 						<Button
 							aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}
-							aria-label="Open command palette"
+							aria-label={searchControlAccessibleName(collapsed)}
 							className={cn(
 								collapsed
 									? 'sm:w-10 sm:justify-center sm:px-0'
@@ -143,7 +147,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 										<ProjectsNavDropdown collapsed={collapsed} key={item.to} />
 									) : (
 										<NavLink
-											aria-label={item.label}
 											className={({ isActive }) =>
 												cn(
 													'group relative flex h-11 w-11 shrink-0 items-center justify-center gap-2.5 rounded-lg px-0 text-sm font-medium sm:h-9 sm:w-auto sm:justify-start sm:px-3',
@@ -169,15 +172,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
 													<span
 														className={
 															collapsed
-																? 'hidden'
-																: 'hidden sm:inline'
+																? 'sr-only'
+																: 'sr-only sm:not-sr-only sm:inline'
 														}>
 														{item.label}
 													</span>
 													{item.to === '/runs' &&
 														activeExecutionCount > 0 && (
 															<span
-																aria-label={`${activeExecutionCount} active ${activeExecutionCount === 1 ? 'execution' : 'executions'}`}
+																aria-label={activeExecutionCountAccessibleName(
+																	activeExecutionCount,
+																)}
 																className={cn(
 																	'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-100 px-1 text-[0.62rem] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
 																	collapsed

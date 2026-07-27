@@ -1,10 +1,8 @@
 import type { IterationDetails } from '../details.ts';
-import type { RunAccumulator } from './types.ts';
+import type { FileChanges } from './git-file-changes.ts';
+import type { GitCommitSummary, RunAccumulator } from './types.ts';
 
-interface FileChanges {
-	filesCreated: string[];
-	filesEdited: string[];
-}
+import { gitCommitsFileChanges } from './git-file-changes.ts';
 
 export function modeFileChangesFromArtifacts(
 	artifacts: Record<string, unknown> | undefined,
@@ -13,6 +11,29 @@ export function modeFileChangesFromArtifacts(
 		filesCreated: stringArray(artifacts?.modeFilesCreated),
 		filesEdited: stringArray(artifacts?.modeFilesEdited),
 	};
+}
+
+/** The file changes to record on top of what the backend's tool events reported. Normally that is
+ * just whatever the mode contributed; when nothing at all was reported — a shell-only backend, so
+ * no Write/Edit events exist to parse — the iteration's commits stand in, so the run's file
+ * evidence reflects what landed instead of claiming the run touched nothing. */
+export async function resolveIterationFileChanges(input: {
+	commits: readonly GitCommitSummary[];
+	details: IterationDetails;
+	modeArtifacts: Record<string, unknown> | undefined;
+	projectDir: string;
+}): Promise<FileChanges> {
+	const modeChanges = modeFileChangesFromArtifacts(input.modeArtifacts);
+	const reportedAnything =
+		input.details.filesCreated.length > 0 ||
+		input.details.filesEdited.length > 0 ||
+		modeChanges.filesCreated.length > 0 ||
+		modeChanges.filesEdited.length > 0;
+	if (reportedAnything || input.commits.length === 0) return modeChanges;
+	return await gitCommitsFileChanges(
+		input.projectDir,
+		input.commits.map((commit) => commit.hash),
+	);
 }
 
 export function accumulateAdditionalFileChanges(

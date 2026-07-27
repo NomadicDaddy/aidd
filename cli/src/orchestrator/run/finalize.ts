@@ -27,7 +27,7 @@ import { classifyIterationOutcome } from './iteration-outcome.ts';
 import {
 	accumulateAdditionalFileChanges,
 	mergeModeFileChanges,
-	modeFileChangesFromArtifacts,
+	resolveIterationFileChanges,
 } from './mode-file-changes.ts';
 import {
 	accumulateIterationCommits,
@@ -221,7 +221,12 @@ export async function finalizeIteration(
 	acc.iterationDurationsMs.push(durationMs);
 	accumulateIterationMetrics(acc, metrics);
 	accumulateIterationEvidence(acc, details);
-	const modeFileChanges = modeFileChangesFromArtifacts(modeResult.artifacts);
+	const modeFileChanges = await resolveIterationFileChanges({
+		commits: iterationCommits,
+		details,
+		modeArtifacts: modeResult.artifacts,
+		projectDir: runRepoDir(plan),
+	});
 	accumulateAdditionalFileChanges(acc, modeFileChanges);
 	const detailsWithModeFileChanges = mergeModeFileChanges(details, modeFileChanges);
 	const structured = buildIterationStructured({

@@ -8,7 +8,12 @@ import type {
 } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
-import { formatDuration, formatRelativeAge } from '../../lib/formatters.ts';
+import {
+	formatDuration,
+	formatRelativeAge,
+	formatTelemetryBucketLabel,
+} from '../../lib/formatters.ts';
+import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
 	if (type === 'recipe') return `/recipes/${id}`;
@@ -102,19 +107,29 @@ export function TimeseriesChart({
 }) {
 	if (points.length === 0) return <EmptyState>No data in this window yet.</EmptyState>;
 	const max = Math.max(...points.map((point) => point.total), 1);
+	const chartHeadingId = 'telemetry-invocations-chart-heading';
+	const tableRows = points.map((point) => ({
+		bucket: formatTelemetryBucketLabel(bucket, point.bucket),
+		values: [
+			point.total,
+			point.completed,
+			point.warnings,
+			point.failed,
+			point.stopped,
+			point.killed,
+			point.noWork,
+			point.running,
+		],
+	}));
 	return (
-		<div className="space-y-2">
-			<div className="flex h-40 items-end gap-1">
+		<div aria-labelledby={chartHeadingId} className="space-y-2" role="group">
+			<h3 className="sr-only" id={chartHeadingId}>
+				Invocations by time bucket
+			</h3>
+			<div aria-hidden="true" className="flex h-40 items-end gap-1">
 				{points.map((point) => {
 					const totalPct = Math.max(2, Math.round((point.total / max) * 100));
-					const label = new Date(point.bucket);
-					const labelText =
-						bucket === 'hour'
-							? `${label.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${label.getHours()}:00`
-							: label.toLocaleDateString(undefined, {
-									day: 'numeric',
-									month: 'short',
-								});
+					const labelText = formatTelemetryBucketLabel(bucket, point.bucket);
 					return (
 						<div
 							className="group flex h-full flex-1 flex-col items-center justify-end"
@@ -183,6 +198,20 @@ export function TimeseriesChart({
 				<LegendDot className="bg-slate-500" label="No work" />
 				<LegendDot className="bg-teal-500" label="Running" />
 			</div>
+			<TelemetryChartTable
+				caption="Invocation totals and outcomes for each time bucket"
+				columns={[
+					'Total',
+					'Completed',
+					'Warnings',
+					'Failed',
+					'Stopped',
+					'Killed',
+					'No work',
+					'Running',
+				]}
+				rows={tableRows}
+			/>
 		</div>
 	);
 }

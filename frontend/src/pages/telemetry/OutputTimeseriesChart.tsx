@@ -1,16 +1,10 @@
 import type { TelemetryOutputTimeseriesPoint } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
-import { formatCompactNumber } from '../../lib/formatters.ts';
+import { formatCompactNumber, formatTelemetryBucketLabel } from '../../lib/formatters.ts';
+import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 export type OutputMetric = 'lines' | 'tokens';
-
-function bucketLabel(bucket: 'day' | 'hour', timestamp: number): string {
-	const label = new Date(timestamp);
-	return bucket === 'hour'
-		? `${label.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${label.getHours()}:00`
-		: label.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-}
 
 // Diverging bars from a shared center baseline: production (lines added / tokens in) grows up,
 // the counterpart (lines removed / tokens out) grows down. Both arms share one symmetric scale
@@ -53,20 +47,52 @@ export function OutputTimeseriesChart({
 	const runsWithFileData = points.reduce((sum, point) => sum + point.runsWithFileData, 0);
 	const upLabel = metric === 'lines' ? 'Added' : 'Tokens in';
 	const downLabel = metric === 'lines' ? 'Removed' : 'Tokens out';
+	const chartHeadingId = `telemetry-output-${metric}-chart-heading`;
+	const tableColumns =
+		metric === 'lines'
+			? ['Lines added', 'Lines removed', 'Files changed', 'Runs captured', 'Total runs']
+			: [
+					'Tokens in',
+					'Tokens out',
+					'Cached tokens',
+					'Reasoning tokens',
+					'Runs captured',
+					'Total runs',
+				];
+	const tableRows = points.map((point) => ({
+		bucket: formatTelemetryBucketLabel(bucket, point.bucket),
+		values:
+			metric === 'lines'
+				? [
+						point.linesAdded,
+						point.linesRemoved,
+						point.filesChanged,
+						point.runsWithLineData,
+						point.runs,
+					]
+				: [
+						point.inputTokens,
+						point.outputTokens,
+						point.cachedTokens,
+						point.reasoningTokens,
+						point.runsWithTokenData,
+						point.runs,
+					],
+	}));
 	return (
-		<div className="space-y-2">
-			<div className="relative">
-				<div
-					aria-hidden="true"
-					className="absolute inset-x-0 top-1/2 h-px bg-neutral-200 dark:bg-neutral-800"
-				/>
+		<div aria-labelledby={chartHeadingId} className="space-y-2" role="group">
+			<h3 className="sr-only" id={chartHeadingId}>
+				{metric === 'lines' ? 'Line changes' : 'Token usage'} by time bucket
+			</h3>
+			<div aria-hidden="true" className="relative">
+				<div className="absolute inset-x-0 top-1/2 h-px bg-neutral-200 dark:bg-neutral-800" />
 				<div className="flex h-40 gap-1">
 					{points.map((point) => {
 						const up = upValue(point);
 						const down = downValue(point);
 						const captured = capturedRuns(point);
 						const tooltip = [
-							bucketLabel(bucket, point.bucket),
+							formatTelemetryBucketLabel(bucket, point.bucket),
 							metric === 'lines'
 								? `+${up.toLocaleString()} / −${down.toLocaleString()} lines · ${point.filesChanged.toLocaleString()} files changed`
 								: `${up.toLocaleString()} in / ${down.toLocaleString()} out · ${point.cachedTokens.toLocaleString()} cached · ${point.reasoningTokens.toLocaleString()} reasoning`,
@@ -148,6 +174,11 @@ export function OutputTimeseriesChart({
 					{metric === 'lines' && ` · ${runsWithFileData}/${totalRuns} with file counts`}
 				</div>
 			</div>
+			<TelemetryChartTable
+				caption={`${metric === 'lines' ? 'Line changes' : 'Token usage'} for each time bucket`}
+				columns={tableColumns}
+				rows={tableRows}
+			/>
 		</div>
 	);
 }

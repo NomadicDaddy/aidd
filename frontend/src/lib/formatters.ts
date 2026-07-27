@@ -91,6 +91,23 @@ export function formatCount(value: null | number | undefined): string {
 	return String(value);
 }
 
+const telemetryDayFormatter = new Intl.DateTimeFormat(undefined, {
+	day: 'numeric',
+	month: 'short',
+});
+
+const telemetryHourFormatter = new Intl.DateTimeFormat(undefined, {
+	day: 'numeric',
+	hour: 'numeric',
+	minute: '2-digit',
+	month: 'short',
+});
+
+export function formatTelemetryBucketLabel(bucket: 'day' | 'hour', timestamp: number): string {
+	const formatter = bucket === 'hour' ? telemetryHourFormatter : telemetryDayFormatter;
+	return formatter.format(new Date(timestamp));
+}
+
 const compactFormatter = new Intl.NumberFormat(undefined, {
 	maximumFractionDigits: 1,
 	notation: 'compact',

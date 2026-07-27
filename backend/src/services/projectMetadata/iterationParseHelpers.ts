@@ -65,6 +65,7 @@ export interface RawRunLedgerEntry {
 	summary?: unknown;
 	totals?: unknown;
 	triumvirateRoles?: unknown;
+	unattributedDirtySourceFiles?: unknown;
 }
 
 // How many of the newest NNN.json artifacts the project listing may observe. Shared by
@@ -213,5 +214,6 @@ export function localRunFromLedgerEntry(raw: RawRunLedgerEntry): ProjectLocalRun
 		stopReason: typeof raw.stopReason === 'string' ? raw.stopReason : null,
 		summary: typeof raw.summary === 'string' ? raw.summary : null,
 		triumvirateRoles: triumvirateRolesFromUnknown(raw.triumvirateRoles),
+		unattributedDirtySourceFiles: stringArray(raw.unattributedDirtySourceFiles),
 	};
 }

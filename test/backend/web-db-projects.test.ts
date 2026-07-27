@@ -476,6 +476,7 @@ describe('web database and project APIs', () => {
 				startedAt: '2026-05-16T05:00:00.000Z',
 				stopReason: 'completed',
 				summary: 'coding run completed feature-two',
+				unattributedDirtySourceFiles: ['src/operator.ts'],
 				totals: {
 					costUsd: 12.5,
 					inputTokens: 1_000,
@@ -593,6 +594,7 @@ describe('web database and project APIs', () => {
 				stopReason: 'completed',
 				summary: 'coding run completed feature-two',
 				triumvirateRoles: null,
+				unattributedDirtySourceFiles: ['src/operator.ts'],
 			},
 		]);
 		expect(detail.metadata.sync).toEqual({

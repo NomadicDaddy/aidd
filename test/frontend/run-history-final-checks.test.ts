@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { ProjectLocalIteration, ProjectLocalRun } from '../../frontend/src/api/types.ts';
+import { resolve } from 'node:path';
 import {
 	categorizeRun,
 	classifyIteration,
@@ -65,8 +66,27 @@ function makeRun(overrides: Partial<ProjectLocalRun> = {}): ProjectLocalRun {
 		stopReason: 'completed',
 		summary: 'directive run finished with exit code 0',
 		triumvirateRoles: null,
+		unattributedDirtySourceFiles: [],
 		...overrides,
 	};
+}
+
+function renderRunBadges(run: ProjectLocalRun): string {
+	const script = [
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { LocalRunResultBadges } from './src/components/shared/local-aidd-history/LocalRunResultBadges.tsx';",
+		`const run = ${JSON.stringify(run)};`,
+		'console.log(renderToStaticMarkup(createElement(LocalRunResultBadges, { run, runIterations: [] })));',
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
+	return new TextDecoder().decode(result.stdout).trim();
 }
 
 describe('final-check failure surfacing (ISS-001)', () => {
@@ -161,6 +181,25 @@ describe('run-level warning downgrade (ISS-003)', () => {
 		expect(outcome.tone).toBe('amber');
 		expect(outcome.label).toBe('Success · warnings');
 		expect(categorizeRun(run, [])).toBe('Warnings');
+	});
+
+	test('unattributed concurrent dirt stays successful and renders its own informational badge', () => {
+		const run = makeRun({ unattributedDirtySourceFiles: ['src/operator.ts'] });
+		const outcome = classifyRunWithWarnings(run, []);
+		expect(outcome.tone).toBe('emerald');
+		expect(outcome.label).toBe('Success');
+		expect(categorizeRun(run, [])).toBe('Success');
+		const markup = renderRunBadges(run);
+		expect(markup).toContain('Concurrent source changes');
+		expect(markup).not.toContain('Uncommitted source');
+	});
+
+	test('a stale backend response without the new field still renders run badges', () => {
+		const run = makeRun();
+		delete (run as { unattributedDirtySourceFiles?: string[] }).unattributedDirtySourceFiles;
+		const markup = renderRunBadges(run);
+		expect(markup).toContain('Success');
+		expect(markup).not.toContain('Concurrent source changes');
 	});
 
 	test('classifyRunWithWarnings downgrades to amber when residualUntrackedFeatureDirs exist', () => {

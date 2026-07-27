@@ -21,7 +21,7 @@ import {
 	mergeModeFileChanges,
 	modeFileChangesFromArtifacts,
 } from './mode-file-changes.ts';
-import { accumulateIterationFileChanges, accumulateIterationMetrics } from './run-accumulator.ts';
+import { accumulateIterationEvidence, accumulateIterationMetrics } from './run-accumulator.ts';
 
 export async function finalizeIteration(
 	input: FinalizeIterationInput,
@@ -240,7 +240,7 @@ export async function finalizeIteration(
 	// otherwise ledger backendExitCode: 73 while the summary reads "[backend exit 0]".
 	acc.lastBackendExitCode = exitCode;
 	accumulateIterationMetrics(acc, metrics);
-	accumulateIterationFileChanges(acc, details);
+	accumulateIterationEvidence(acc, details);
 	const modeFileChanges = modeFileChangesFromArtifacts(modeResult.artifacts);
 	accumulateAdditionalFileChanges(acc, modeFileChanges);
 	const detailsWithModeFileChanges = mergeModeFileChanges(details, modeFileChanges);

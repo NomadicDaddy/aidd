@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { classifyWebRun, classifyWebRunTelemetryBucket } from '../../shared/src/runs/outcome.ts';
+import {
+	classifyWebRun,
+	classifyWebRunTelemetryBucket,
+	unattributedSourceMarker,
+} from '../../shared/src/runs/outcome.ts';
 
 describe('classifyWebRun', () => {
 	test('classifies a clean completion as emerald success', () => {
@@ -74,6 +78,26 @@ describe('classifyWebRun', () => {
 		});
 		expect(dirty.tone).toBe('amber');
 		expect(dirty.label).toBe('Completed · dirty tree');
+	});
+
+	test('keeps an unattributed-source observation as clean completed', () => {
+		const summary = `done; ${unattributedSourceMarker} 2 source file(s) changed in the worktree during this run but were not attributable to it`;
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'completed',
+			exitCode: 0,
+			summary,
+		});
+		expect(outcome.label).toBe('Completed');
+		expect(outcome.tone).toBe('emerald');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 0,
+				status: 'completed',
+				stopReason: 'completed',
+				summary,
+			}),
+		).toBe('completed');
 	});
 
 	test('classifies a parked worktree merge as an amber "Awaiting merge" (warnings, not failure)', () => {

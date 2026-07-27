@@ -17,6 +17,7 @@ export function LocalRunResultBadges({
 	runIterations: ProjectLocalIteration[];
 }) {
 	const outcome = classifyRunWithWarnings(run, runIterations);
+	const unattributedDirtySourceFiles = run.unattributedDirtySourceFiles ?? [];
 	return (
 		<span className="inline-flex flex-wrap items-center gap-1.5">
 			<Tooltip content={outcome.title}>
@@ -38,6 +39,14 @@ export function LocalRunResultBadges({
 					content={`Source files left uncommitted at run end (not dirty at run start):\n${run.residualDirtySourceFiles.join('\n')}`}>
 					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
 						<Badge tone="amber">Uncommitted source</Badge>
+					</span>
+				</Tooltip>
+			) : null}
+			{unattributedDirtySourceFiles.length > 0 ? (
+				<Tooltip
+					content={`Source files changed in the worktree during this run but were not attributable to it:\n${unattributedDirtySourceFiles.join('\n')}`}>
+					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
+						<Badge tone="teal">Concurrent source changes</Badge>
 					</span>
 				</Tooltip>
 			) : null}

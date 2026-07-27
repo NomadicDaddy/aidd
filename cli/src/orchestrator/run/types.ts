@@ -119,13 +119,16 @@ export const initialRunTotals = {
 };
 
 export interface RunAccumulator {
+	/** Shell commands recorded from this run's tool events. Run-end dirty-source accounting uses
+	 * exact path mentions in these commands as attribution evidence without widening completion
+	 * recovery's stricter auto-commit rules. */
+	commandsRun: Set<string>;
 	commitsCreated: GitCommitSummary[];
 	completedFeatures: Set<string>;
 	/** Dirty non-.aidd paths present when the run started. writeRunSummary diffs run-end status
-	 * against this baseline so only dirt the run itself introduced is flagged — pre-existing
-	 * operator dirt under the dirty-tree threshold must not taint the run outcome. Undefined
-	 * when the baseline could not be captured (not a git repository); the run-end check is then
-	 * skipped rather than misattributing all existing dirt to the run. */
+	 * against this baseline before classifying newly dirty paths by run evidence. Undefined when
+	 * the baseline could not be captured (not a git repository); the run-end check is then skipped
+	 * rather than misattributing existing dirt to the run. */
 	dirtySourcePathsAtStart?: ReadonlySet<string>;
 	filesCreated: Set<string>;
 	filesEdited: Set<string>;

@@ -32,8 +32,8 @@ export const OUTCOME_CATEGORIES: readonly OutcomeCategory[] = [
 ];
 
 // Whether a run carries warnings that should downgrade an emerald "Success" badge to amber.
-// Covers: failed iteration final-check gates, residual untracked artifacts, and source files the
-// run itself left uncommitted at run end (residualDirtySourceFiles — dirty at end, not at start).
+// Covers: failed iteration final-check gates, residual untracked artifacts, and source files
+// attributed to the run at run end. Unattributed concurrent source changes are informational.
 // runLedgerDirty is deliberately NOT a warning here — it usually reflects pre-existing operator
 // dirt (and on all pre-fix ledger entries it was unconditionally true), so it stays an
 // informational badge (LocalRunResultBadges' "Ledger out of sync") rather than tainting the

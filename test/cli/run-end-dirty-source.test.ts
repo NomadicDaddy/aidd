@@ -62,6 +62,15 @@ const completionEvents: AgentEvent[] = [
 	{ type: 'done', exitCode: 0, filesModified: [] },
 ];
 
+const bashCompletionEvents: AgentEvent[] = [
+	{
+		type: 'tool_call',
+		tool: 'bash',
+		args: { command: "printf 'export const a = 2;\\n' > src/app.ts" },
+	},
+	...completionEvents,
+];
+
 async function makeStore(name: string): Promise<FileAiddStore> {
 	const projectDir = join(tmpRoot, name);
 	await mkdir(join(projectDir, '.aidd', 'features', 'feature-core'), { recursive: true });
@@ -86,6 +95,12 @@ async function completeFeature(store: FileAiddStore, id: string): Promise<void> 
 		passes: true,
 		updatedAt: '2026-07-10T00:00:00.000Z',
 	});
+}
+
+async function commitCompletedFeature(store: FileAiddStore): Promise<void> {
+	await completeFeature(store, 'feature-core');
+	await runGit(store.projectDir, ['add', '.aidd/features/feature-core/feature.json']);
+	await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
 }
 
 async function runGit(projectDir: string, args: string[]): Promise<void> {
@@ -127,6 +142,7 @@ interface LedgerEntry {
 	residualDirtySourceFiles?: string[];
 	stopReason: string;
 	summary: string;
+	unattributedDirtySourceFiles?: string[];
 }
 
 async function lastLedgerEntry(store: FileAiddStore): Promise<LedgerEntry> {
@@ -140,7 +156,7 @@ afterEach(async () => {
 
 describe('run-end dirty-source check', () => {
 	test(
-		'a run that dirties tracked source after its last feature commit does not end as a silent completed',
+		'a run that dirties tracked source through a recorded bash command remains attributed',
 		async () => {
 			const store = await makeStore('post-commit-dirt');
 			await mkdir(join(store.projectDir, 'src'), { recursive: true });
@@ -153,21 +169,12 @@ describe('run-end dirty-source check', () => {
 			const exitCode = await runOrchestrator(plan(store.projectDir), {
 				rootDir,
 				store,
-				backend: new FakeBackend(completionEvents, async () => {
-					await completeFeature(store, 'feature-core');
-					await runGit(store.projectDir, [
-						'add',
-						'.aidd/features/feature-core/feature.json',
-					]);
-					await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
-					// The incident shape: a formatter-style rewrite of tracked source AFTER the
-					// run's last commit, plus a brand-new untracked source file, plus harness
-					// .aidd churn that must stay excluded.
+				backend: new FakeBackend(bashCompletionEvents, async () => {
+					await commitCompletedFeature(store);
 					await writeFile(
 						join(store.projectDir, 'src', 'app.ts'),
 						'export const a = 2;\n',
 					);
-					await writeFile(join(store.projectDir, 'new-module.ts'), 'export {};\n');
 					await writeFile(join(store.metadataDir, 'CHANGELOG.md'), '# churn\n');
 				}),
 			});
@@ -177,7 +184,8 @@ describe('run-end dirty-source check', () => {
 			expect(entry.stopReason).toBe('completed');
 			expect(entry.exitCode).toBe(orchestratorExitCodes.success);
 			// The run-caused dirt is recorded, pre-existing and .aidd dirt excluded.
-			expect(entry.residualDirtySourceFiles).toEqual(['new-module.ts', 'src/app.ts']);
+			expect(entry.residualDirtySourceFiles).toEqual(['src/app.ts']);
+			expect(entry.unattributedDirtySourceFiles).toBeUndefined();
 			expect(entry.artifactWarnings).toContain('residual_dirty_source_files');
 			expect(entry.summary).toContain('uncommitted_source_files:');
 			// The shared classifier every run surface uses must downgrade the real recorded
@@ -195,6 +203,46 @@ describe('run-end dirty-source check', () => {
 	);
 
 	test(
+		'an external writer mid-run is observed without downgrading the run outcome',
+		async () => {
+			const store = await makeStore('concurrent-operator-dirt');
+			await mkdir(join(store.projectDir, 'src'), { recursive: true });
+			await writeFile(join(store.projectDir, 'src', 'operator.ts'), 'export const a = 1;\n');
+			await initializeGitProject(store.projectDir);
+
+			const exitCode = await runOrchestrator(plan(store.projectDir), {
+				rootDir,
+				store,
+				backend: new FakeBackend(completionEvents, async () => {
+					await commitCompletedFeature(store);
+					await writeFile(
+						join(store.projectDir, 'src', 'operator.ts'),
+						'export const a = 2;\n',
+					);
+				}),
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			const entry = await lastLedgerEntry(store);
+			expect(entry.residualDirtySourceFiles).toBeUndefined();
+			expect(entry.unattributedDirtySourceFiles).toEqual(['src/operator.ts']);
+			expect(entry.artifactWarnings).toContain('unattributed_dirty_source_files');
+			expect(entry.artifactWarnings ?? []).not.toContain('residual_dirty_source_files');
+			expect(entry.summary).toContain('unattributed_source_files:');
+			expect(entry.summary).not.toContain('uncommitted_source_files:');
+			const outcome = classifyWebRun({
+				exitCode: entry.exitCode,
+				status: 'completed',
+				stopReason: entry.stopReason,
+				summary: entry.summary,
+			});
+			expect(outcome.tone).toBe('emerald');
+			expect(outcome.label).toBe('Completed');
+		},
+		slowTestTimeoutMs,
+	);
+
+	test(
 		'pre-existing operator dirt and .aidd metadata churn alone leave a clean completed untouched',
 		async () => {
 			const store = await makeStore('clean-completion');
@@ -206,12 +254,7 @@ describe('run-end dirty-source check', () => {
 				rootDir,
 				store,
 				backend: new FakeBackend(completionEvents, async () => {
-					await completeFeature(store, 'feature-core');
-					await runGit(store.projectDir, [
-						'add',
-						'.aidd/features/feature-core/feature.json',
-					]);
-					await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
+					await commitCompletedFeature(store);
 					// Harness-style residue only; no new source dirt.
 					await writeFile(join(store.metadataDir, 'CHANGELOG.md'), '# churn\n');
 				}),
@@ -221,6 +264,7 @@ describe('run-end dirty-source check', () => {
 			const entry = await lastLedgerEntry(store);
 			expect(entry.stopReason).toBe('completed');
 			expect(entry.residualDirtySourceFiles).toBeUndefined();
+			expect(entry.unattributedDirtySourceFiles).toBeUndefined();
 			expect(entry.artifactWarnings ?? []).not.toContain('residual_dirty_source_files');
 			expect(entry.summary).not.toContain('uncommitted_source_files:');
 			const outcome = classifyWebRun({

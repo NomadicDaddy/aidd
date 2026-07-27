@@ -8,6 +8,7 @@ import { initialRunTotals, type RunAccumulator } from './types.ts';
 /** Build the per-run accumulator (run id, timestamps, zeroed totals). */
 export function createRunAccumulator(runId: string, runStartedAtMs: number): RunAccumulator {
 	return {
+		commandsRun: new Set<string>(),
 		commitsCreated: [],
 		completedFeatures: new Set<string>(),
 		filesCreated: new Set<string>(),
@@ -42,10 +43,15 @@ export function accumulateIterationMetrics(acc: RunAccumulator, metrics: Iterati
 	}
 }
 
-export function accumulateIterationFileChanges(
+export function accumulateIterationEvidence(
 	acc: RunAccumulator,
-	input: { filesCreated: readonly string[]; filesEdited: readonly string[] },
+	input: {
+		commands?: readonly string[];
+		filesCreated: readonly string[];
+		filesEdited: readonly string[];
+	},
 ): void {
+	for (const command of input.commands ?? []) acc.commandsRun.add(command);
 	for (const path of input.filesCreated) acc.filesCreated.add(path);
 	for (const path of input.filesEdited) acc.filesEdited.add(path);
 }

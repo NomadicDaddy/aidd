@@ -60,6 +60,11 @@ export function hasUncommittedSourceMarker(summary: null | string | undefined): 
 	return (summary ?? '').includes(uncommittedSourceMarker);
 }
 
+// Observational marker for source paths that became dirty during a run without any matching
+// run-recorded file event or shell-command path. It remains distinct from uncommittedSourceMarker:
+// concurrent operator work must stay visible without downgrading a clean run.
+export const unattributedSourceMarker = 'unattributed_source_files:';
+
 const completedWithUncommittedSource: WebRunOutcome = {
 	label: 'Completed · dirty tree',
 	title: 'Run completed but left uncommitted source changes in the working tree at run end; review and commit or discard them.',

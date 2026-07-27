@@ -167,6 +167,8 @@ export interface ProjectLocalRunDto {
 	stopReason: null | string;
 	summary: null | string;
 	triumvirateRoles: AiddTriumvirateRoles | null;
+	/** Source paths that became dirty during the run without matching run-recorded evidence. */
+	unattributedDirtySourceFiles: string[];
 }
 
 export interface ProjectUsageTotalsDto {

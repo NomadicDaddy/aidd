@@ -4,9 +4,10 @@ import type { RunPlan } from 'aidd-shared/plan/types';
 import { metadataPath } from 'aidd-shared/metadata/paths';
 import { runRepoDir } from 'aidd-shared/plan/types';
 import { fileChangePathLimit } from 'aidd-shared/runs/file-changes';
-import { uncommittedSourceMarker } from 'aidd-shared/runs/outcome';
+import { unattributedSourceMarker, uncommittedSourceMarker } from 'aidd-shared/runs/outcome';
 
 import { cleanIterationLogs } from '../../metadata/log-cleaner.ts';
+import { classifyResidualDirtySourcePaths } from './dirty-source-attribution.ts';
 import {
 	filterRunAttributedCommits,
 	gitCommitsDiffStat,
@@ -30,29 +31,44 @@ export async function writeRunSummary(
 	finalSummary: string,
 ): Promise<number> {
 	const endedAtMs = Date.now();
-	// Run-end dirty-source accounting: files dirty now that were NOT dirty at run start
-	// (excluding .aidd metadata; gitignored paths never appear in git status) are dirt the run
-	// itself left behind — e.g. a formatter or codegen pass that wrote after the last feature
-	// commit. Surfacing (rather than auto-committing) is deliberate: the orchestrator cannot
-	// safely tell its own leftovers from operator work-in-progress, and committing user work
-	// unasked is forbidden. The summary marker downgrades a completed run's outcome everywhere
-	// the run is displayed.
+	// Run-end dirty-source accounting first excludes paths dirty at run start, then attributes
+	// new residue only when the run recorded the path in a file-change event or shell command.
+	// Concurrent operator edits remain observable without being claimed by or downgrading the run.
 	let residualDirtySourceFiles: string[] = [];
+	let unattributedDirtySourceFiles: string[] = [];
 	const dirtyBaseline = acc.dirtySourcePathsAtStart;
 	if (dirtyBaseline !== undefined) {
 		const dirtyNow = await gitDirtySourcePaths(runRepoDir(plan));
-		residualDirtySourceFiles = (dirtyNow ?? [])
-			.filter((path) => !dirtyBaseline.has(path))
-			.sort((left, right) => left.localeCompare(right))
-			.slice(0, fileChangePathLimit);
+		const classification = classifyResidualDirtySourcePaths({
+			commandsRun: acc.commandsRun,
+			dirtyNow: dirtyNow ?? [],
+			dirtySourcePathsAtStart: dirtyBaseline,
+			projectDir: runRepoDir(plan),
+			runRecordedPaths: new Set([...acc.filesCreated, ...acc.filesEdited]),
+		});
+		residualDirtySourceFiles = classification.attributed;
+		unattributedDirtySourceFiles = classification.unattributed;
 	}
-	const summaryWithRunEndChecks =
-		residualDirtySourceFiles.length > 0
-			? `${finalSummary}; ${uncommittedSourceMarker} ${residualDirtySourceFiles.length} source file(s) left uncommitted at run end`
-			: finalSummary;
+	const runEndSummaryParts = [finalSummary];
+	if (residualDirtySourceFiles.length > 0) {
+		runEndSummaryParts.push(
+			`${uncommittedSourceMarker} this run left ${residualDirtySourceFiles.length} source file(s) uncommitted at run end`,
+		);
+	}
+	if (unattributedDirtySourceFiles.length > 0) {
+		runEndSummaryParts.push(
+			`${unattributedSourceMarker} ${unattributedDirtySourceFiles.length} source file(s) changed in the worktree during this run but were not attributable to it`,
+		);
+	}
+	const summaryWithRunEndChecks = runEndSummaryParts.join('; ');
 	if (residualDirtySourceFiles.length > 0) {
 		console.warn(
-			`[orchestrator] run left ${residualDirtySourceFiles.length} uncommitted source file(s) at run end (not dirty at run start): ${residualDirtySourceFiles.join(', ')} — review and commit or discard them.`,
+			`[orchestrator] this run left ${residualDirtySourceFiles.length} source file(s) uncommitted at run end: ${residualDirtySourceFiles.join(', ')} — review and commit or discard them.`,
+		);
+	}
+	if (unattributedDirtySourceFiles.length > 0) {
+		console.warn(
+			`[orchestrator] ${unattributedDirtySourceFiles.length} source file(s) changed in the worktree during this run but were not attributable to it: ${unattributedDirtySourceFiles.join(', ')}.`,
 		);
 	}
 	// Generate the AI summary once before appending to the ledger, so a single
@@ -87,6 +103,7 @@ export async function writeRunSummary(
 	const artifactWarnings = [
 		...(residualUntrackedFeatureDirs.length > 0 ? ['untracked_feature_directories'] : []),
 		...(residualDirtySourceFiles.length > 0 ? ['residual_dirty_source_files'] : []),
+		...(unattributedDirtySourceFiles.length > 0 ? ['unattributed_dirty_source_files'] : []),
 	];
 	// Line-level ground truth for what the run changed, persisted so the web layer can chart
 	// output over time without re-walking git. Null (not zeros) when there are no attributed
@@ -167,6 +184,7 @@ export async function writeRunSummary(
 		...(artifactWarnings.length > 0 ? { artifactWarnings } : {}),
 		...(residualUntrackedFeatureDirs.length > 0 ? { residualUntrackedFeatureDirs } : {}),
 		...(residualDirtySourceFiles.length > 0 ? { residualDirtySourceFiles } : {}),
+		...(unattributedDirtySourceFiles.length > 0 ? { unattributedDirtySourceFiles } : {}),
 		toolBreakdown: acc.toolBreakdownTotals,
 		totals: acc.runTotals,
 	});

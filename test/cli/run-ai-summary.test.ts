@@ -215,6 +215,7 @@ describe('writeRunSummary with stub summarizer', () => {
 		const acc = {
 			commitsCreated: [],
 			completedFeatures: new Set<string>(['feature-core']),
+			commandsRun: new Set<string>(),
 			filesCreated: new Set<string>(),
 			filesEdited: new Set<string>(),
 			forcedAttributionCommits: new Set<string>(),
@@ -283,6 +284,7 @@ describe('writeRunSummary with stub summarizer', () => {
 		const acc = {
 			commitsCreated: [],
 			completedFeatures: new Set<string>(),
+			commandsRun: new Set<string>(),
 			filesCreated: new Set<string>(),
 			filesEdited: new Set<string>(),
 			forcedAttributionCommits: new Set<string>(),
@@ -330,6 +332,7 @@ describe('AI summarizer null result propagation', () => {
 		const acc = {
 			commitsCreated: [],
 			completedFeatures: new Set<string>(),
+			commandsRun: new Set<string>(),
 			filesCreated: new Set<string>(),
 			filesEdited: new Set<string>(),
 			forcedAttributionCommits: new Set<string>(),

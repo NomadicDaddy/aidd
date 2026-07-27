@@ -39,6 +39,7 @@ function run(overrides: Partial<ProjectLocalRun> = {}): ProjectLocalRun {
 		stopReason: 'completed',
 		summary: 'directive run finished with exit code 0',
 		triumvirateRoles: null,
+		unattributedDirtySourceFiles: [],
 		...overrides,
 	};
 }

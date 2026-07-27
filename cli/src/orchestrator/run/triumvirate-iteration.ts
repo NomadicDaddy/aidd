@@ -21,7 +21,7 @@ import {
 	isContinuableBackendInterruption,
 } from './continuation.ts';
 import { gitDirtyFileCount } from './git.ts';
-import { accumulateIterationFileChanges, accumulateIterationMetrics } from './run-accumulator.ts';
+import { accumulateIterationEvidence, accumulateIterationMetrics } from './run-accumulator.ts';
 import { buildRateLimitBudgetSummary, handleRateLimit } from './run-gates.ts';
 import {
 	type MoveFn,
@@ -113,7 +113,9 @@ export async function runTriumvirateIterationStep(input: {
 			: undefined;
 	// Failed-stage file counts flow into run totals via the metrics above, so the path lists must
 	// accumulate too — otherwise the ledger shows nonzero counts with an empty path array.
-	if (stageDetails !== undefined) accumulateIterationFileChanges(acc, stageDetails);
+	if (stageDetails !== undefined) {
+		accumulateIterationEvidence(acc, stageDetails);
+	}
 	const shouldContinueAfterStageFailure =
 		stageResult !== undefined &&
 		stageDetails !== undefined &&

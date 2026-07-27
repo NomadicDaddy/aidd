@@ -6,6 +6,8 @@ Supported step types are `aidd-cli`, `skill`, `shell`, and `recipe-ref`. Steps m
 
 Recipe launches use the selected launch target for CLI, model, and reasoning effort unless a custom step explicitly sets a legacy execution override.
 
+A step whose config sets `includePriorStepOutput: true` receives the immediately preceding step's output summary appended to its prompt under a labelled heading. Steps are otherwise independent processes with no memory of each other, so the review → remediate recipes use this flag to hand review findings to the remediation step instead of making it rediscover them.
+
 Launching a recipe creates a pipeline session. A session that completes some steps but fails others resolves to a `completed_with_failures` partial-success status (with a failed-step summary) rather than a bare `failed`. Telemetry records partial successes as `failed`, since invocation events have no partial-success status.
 
 ## Recipe Index
@@ -157,7 +159,7 @@ Default coding run using the selected launch CLI: code the selected work, review
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-review-remediate-document-changes
@@ -170,7 +172,7 @@ Run coding, perform a deep review, remediate every confirmed and applicable find
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Deep review (args: {application}; skillId: deepreview)
-3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the change set the deep review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-spirit-coderabbit-document-changes
@@ -183,9 +185,9 @@ Run coding, review the result for spirit and intent, remediate every confirmed a
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - CodeRabbit review (args: {application}; skillId: coderabbit)
-5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the change set the CodeRabbit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 6. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### coding-spirit-document-changes
@@ -198,7 +200,7 @@ Run coding, review the result for spirit and intent, remediate every confirmed a
 
 1. `aidd-cli` - Run coding (feature: {feature})
 2. `skill` - Spirit review (args: {application}; skillId: spirit)
-3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
 ### deploy

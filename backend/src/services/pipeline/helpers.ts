@@ -176,9 +176,35 @@ export function resolveParameters(input: {
 	return resolved;
 }
 
+// Prepends the preceding step's output to a step's prompt when the step opts in with
+// `includePriorStepOutput`. Recipes chain review -> remediate and instruct the remediation run to
+// act on "the immediately preceding findings" — but a managed step is a fresh CLI process whose
+// prompt is built from recipe config alone, so without this the findings never arrive and
+// remediation has to rediscover them. Opt-in, because most steps do not want the noise. The
+// forwarded text is already capped at 4000 chars by formatOutputSummary, keeping the composed
+// prompt well inside the platform's argv limit.
+export function composeStepPrompt(
+	prompt: string,
+	priorStepOutput: { stepName: string; text: string } | undefined,
+): string {
+	if (priorStepOutput === undefined) return prompt;
+	return [
+		prompt,
+		'',
+		`## Findings from the preceding pipeline step ("${priorStepOutput.stepName}")`,
+		'',
+		'This is the report you are being asked to act on. Treat it as the primary input; verify each',
+		'finding against the code rather than trusting it blindly, and do not widen the change set',
+		'beyond what it covers.',
+		'',
+		priorStepOutput.text,
+	].join('\n');
+}
+
 export function requestFromAiddCliStep(input: {
 	config: Record<string, RecipeConfigValue>;
 	pipelineSessionId: string;
+	priorStepOutput?: { stepName: string; text: string } | undefined;
 	projectDir: string;
 }): RunLaunchRequest {
 	const request: RunLaunchRequest = {
@@ -212,7 +238,11 @@ export function requestFromAiddCliStep(input: {
 	if (filterBy !== undefined) request.filterBy = filterBy;
 	if (filterValue !== undefined) request.filterValue = filterValue;
 	if (feature !== undefined) request.feature = feature;
-	if (prompt !== undefined) request.prompt = prompt;
+	if (prompt !== undefined) {
+		request.prompt = configBoolean(input.config, 'includePriorStepOutput')
+			? composeStepPrompt(prompt, input.priorStepOutput)
+			: prompt;
+	}
 	if (request.validate) {
 		request.mode = 'validate';
 	} else if (request.interview) {

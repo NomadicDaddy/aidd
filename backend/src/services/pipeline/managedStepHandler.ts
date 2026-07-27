@@ -50,6 +50,7 @@ export class ManagedStepHandler {
 			request = requestFromAiddCliStep({
 				config,
 				pipelineSessionId: context.sessionId,
+				priorStepOutput: context.priorStepOutput,
 				projectDir: context.projectDir,
 			});
 		} else if (step.stepType === 'skill') {

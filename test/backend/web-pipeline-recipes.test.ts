@@ -1994,4 +1994,80 @@ INSERT INTO pipeline_step_results (
 			await removeTempTree(rootDir);
 		}
 	});
+
+	// Recipes chain review -> remediate and tell the remediation run to act on "the immediately
+	// preceding findings", but a managed step is a fresh CLI process whose prompt is built from
+	// recipe config alone. Without forwarding, the findings never arrived. Proven end-to-end here
+	// on the launched argv, since that is what the child agent actually receives.
+	test('forwards the preceding step output into an opted-in step launch argv', async () => {
+		const workspace = await testTempDir('aidd-pipeline-carryover-');
+		const rootDir = await makeRoot(heartbeatTerminator());
+		try {
+			const projectDir = await makeProject(workspace);
+			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
+				rootDir,
+				workspace,
+			);
+			try {
+				await recipeService.writeRecipe({
+					id: 'carryover',
+					name: 'Carryover',
+					parameters: [],
+					steps: [
+						{
+							configJson: { command: 'printf "FINDING: the guard is unreachable"' },
+							id: 'carryover_step_1',
+							name: 'Review',
+							stepType: 'shell',
+						},
+						{
+							configJson: {
+								includePriorStepOutput: true,
+								maxIterations: 1,
+								prompt: 'Remediate the findings.',
+							},
+							id: 'carryover_step_2',
+							name: 'Remediate',
+							stepType: 'aidd-cli',
+						},
+						{
+							// No opt-in: this one must keep its prompt verbatim, and must not
+							// inherit step 2's output either.
+							configJson: { maxIterations: 1, prompt: 'Document the changes.' },
+							id: 'carryover_step_3',
+							name: 'Document',
+							stepType: 'aidd-cli',
+						},
+					],
+				});
+
+				const session = await pipelineService.launchRecipe({
+					parameters: {},
+					projectDir,
+					recipeId: 'carryover',
+				});
+				await waitForReport(pipelineService, session.id);
+
+				const argvRows = sqlite
+					.query('SELECT command_args_json FROM runs ORDER BY started_at, id')
+					.all() as { command_args_json: null | string }[];
+				const prompts = argvRows.map((row) => {
+					const argv = JSON.parse(row.command_args_json ?? '[]') as string[];
+					return argv[argv.indexOf('--prompt') + 1] ?? '';
+				});
+				expect(prompts).toHaveLength(2);
+				expect(prompts[0]).toContain('Remediate the findings.');
+				expect(prompts[0]).toContain('FINDING: the guard is unreachable');
+				expect(prompts[0]).toContain(
+					'Findings from the preceding pipeline step ("Review")',
+				);
+				expect(prompts[1]).toBe('Document the changes.');
+			} finally {
+				await disposeHarness(pipelineService, runService, sqlite);
+			}
+		} finally {
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
 });

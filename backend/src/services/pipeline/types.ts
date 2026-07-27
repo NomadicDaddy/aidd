@@ -28,6 +28,11 @@ export interface ExecutionContext {
 	lineage: string[];
 	metadataOnly?: boolean | undefined;
 	parameters: Record<string, string>;
+	// Output summary of the step that ran immediately before this one, at the same recipe level.
+	// Recipes chain review -> remediate: the remediation step is a fresh CLI run with no memory of
+	// the review, so without this it has to rediscover findings it was told to act on. Forwarded
+	// only into steps that opt in with `includePriorStepOutput`.
+	priorStepOutput?: { stepName: string; text: string } | undefined;
 	projectDir: string;
 	sessionId: string;
 }
@@ -42,6 +47,7 @@ export interface StepDispatchResult {
 export interface StepExecutionResult {
 	errorMessage?: string | undefined;
 	ok: boolean;
+	outputSummary?: string | undefined;
 	stopped: boolean;
 }
 

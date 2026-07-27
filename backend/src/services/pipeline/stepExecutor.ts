@@ -103,6 +103,15 @@ export class StepExecutor {
 		parentStepResultId?: string,
 		startSequenceNumber = 1,
 	): Promise<StepExecutionResult> {
+		// Carried on `context` itself so a review -> remediate chain can hand its findings forward
+		// instead of making the remediation run rediscover them. It must be the same object, not a
+		// per-step copy: createStepResult increments context.displayOrder in place, so cloning the
+		// context per step would strand that counter and collide on the session's display order.
+		// Cleared at entry because a nested recipe inherits a spread copy of its parent's context
+		// and its first step is not downstream of the parent's last one. Skipped steps do not
+		// overwrite it; a resumed session starts with none, since the prior run's output is not
+		// re-read from the step-result row.
+		context.priorStepOutput = undefined;
 		for (const [index, step] of recipe.steps.entries()) {
 			const sequenceNumber = index + 1;
 			if (sequenceNumber < startSequenceNumber) continue;
@@ -157,6 +166,10 @@ export class StepExecutor {
 				sequenceNumber,
 				parentStepResultId,
 			);
+			const producedOutput = result.outputSummary?.trim();
+			context.priorStepOutput = producedOutput
+				? { stepName: step.name, text: producedOutput }
+				: undefined;
 			// Advance currentStepIndex AFTER the step has completed. Combined with the
 			// no-pre-bump approach above, this eliminates the bump-before-row window
 			// where a crash could silently skip a step on resume.

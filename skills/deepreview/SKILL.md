@@ -16,6 +16,16 @@ apply confirmed in-scope fixes directly. Prefer `review` for a routine focused p
 Accept an optional base ref, commit range, path, or focus area. When none is supplied, review all
 tracked and untracked changes in the current repository.
 
+A clean working tree does not mean there is nothing to review. When no uncommitted work exists,
+review the commits that produced the change under review: the ones belonging to the unit of work
+this session was launched for, identified from the newest `.aidd/CHANGELOG.md` entry, the most
+recently touched `.aidd/features/*/feature.json`, and recent commit times. Fall back to the
+branch's upstream or default-base range only when that fails to identify them, and only for the
+part of it that is plausibly the same unit of work — a long-lived branch routinely sits many
+commits ahead of its upstream, and unrelated accumulated history is out of scope. State the
+resolved boundary in the report, and report "nothing to review" only when both the working tree
+and those commits are empty.
+
 ## Workflow
 
 ### 1. Establish scope and rules

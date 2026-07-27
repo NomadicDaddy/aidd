@@ -31,8 +31,9 @@
 		},
 		{
 			"configJson": {
+				"includePriorStepOutput": true,
 				"maxIterations": 1,
-				"prompt": "Review the current working tree and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope. Consider the review's full substance, including completeness and intent, correctness, security, type safety, lint, maintainability, architecture, accessibility, performance, documentation, testing, and stack compliance; do not restrict remediation to a fixed category list. Do not act on false positives, speculative preferences, or findings unrelated to the reviewed change. If a valid finding cannot be addressed safely within scope or requires user input, report it explicitly instead of masking it. Run the project's required validation gates and leave the tree ready for document-changes."
+				"prompt": "Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope. Consider the review's full substance, including completeness and intent, correctness, security, type safety, lint, maintainability, architecture, accessibility, performance, documentation, testing, and stack compliance; do not restrict remediation to a fixed category list. Do not act on false positives, speculative preferences, or findings unrelated to the reviewed change. If a valid finding cannot be addressed safely within scope or requires user input, report it explicitly instead of masking it. Run the project's required validation gates and leave the tree ready for document-changes."
 			},
 			"name": "Remediate spirit findings",
 			"stepType": "aidd-cli"
@@ -48,8 +49,9 @@
 		},
 		{
 			"configJson": {
+				"includePriorStepOutput": true,
 				"maxIterations": 1,
-				"prompt": "Review the current working tree and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope. Consider the review's full substance, including completeness and intent, correctness, security, type safety, lint, maintainability, architecture, accessibility, performance, documentation, testing, and stack compliance; do not restrict remediation to a fixed category list. Do not act on false positives, speculative preferences, or findings unrelated to the reviewed change. If a valid finding cannot be addressed safely within scope or requires user input, report it explicitly instead of masking it. Run the project's required validation gates and leave the tree ready for document-changes."
+				"prompt": "Review the change set the CodeRabbit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope. Consider the review's full substance, including completeness and intent, correctness, security, type safety, lint, maintainability, architecture, accessibility, performance, documentation, testing, and stack compliance; do not restrict remediation to a fixed category list. Do not act on false positives, speculative preferences, or findings unrelated to the reviewed change. If a valid finding cannot be addressed safely within scope or requires user input, report it explicitly instead of masking it. Run the project's required validation gates and leave the tree ready for document-changes."
 			},
 			"name": "Remediate CodeRabbit findings",
 			"stepType": "aidd-cli"

@@ -173,6 +173,7 @@ export async function executeStep(
 	return {
 		errorMessage: lastDispatch.errorMessage,
 		ok: lastDispatch.ok || (step.onFailure ?? 'stop') === 'continue',
+		outputSummary: lastDispatch.outputSummary,
 		stopped: false,
 	};
 }

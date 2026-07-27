@@ -1,6 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { default as Settings } from 'lucide-react/dist/esm/icons/settings';
+import { default as SquareTerminal } from 'lucide-react/dist/esm/icons/square-terminal';
 
 import { cn } from '../../lib/cn.ts';
 import {
@@ -9,19 +9,15 @@ import {
 	type ExecutionIdentityItem,
 	executionIdentityItems,
 	type ExecutionIdentityKind,
-	identityBadgeStyle,
-	reasoningBadgeClass,
 } from '../../lib/executionIdentity.ts';
 import { Tooltip } from '../ui/tooltip.tsx';
 
 export type { ExecutionIdentity } from '../../lib/executionIdentity.ts';
 
 function itemClass(item: ExecutionIdentityItem): string {
-	return item.kind === 'reasoning' ? reasoningBadgeClass(item.label) : '';
-}
-
-function itemStyle(item: ExecutionIdentityItem): CSSProperties | undefined {
-	return item.kind === 'reasoning' ? undefined : identityBadgeStyle(item.kind, item.label);
+	return item.kind === 'model'
+		? 'font-semibold text-foreground'
+		: 'font-medium text-muted-foreground';
 }
 
 function itemFieldLabel(kind: ExecutionIdentityKind): string {
@@ -85,7 +81,7 @@ export function ExecutionIdentityBadges({
 		<span
 			aria-label={ariaLabel}
 			className={cn(
-				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] text-[11px] leading-5 font-semibold shadow-sm ring-1 ring-black/10 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:ring-white/15 dark:focus-visible:ring-teal-300',
+				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] bg-muted text-[11px] leading-5 ring-1 ring-border ring-inset focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300',
 				className,
 			)}
 			role="group">
@@ -93,13 +89,12 @@ export function ExecutionIdentityBadges({
 				<span
 					className={cn(
 						'inline-flex min-w-0 items-center gap-1 px-1.5 py-px',
-						index > 0 ? 'border-l border-white/30' : '',
+						index > 0 ? 'border-l border-border' : '',
 						itemClass(item),
 					)}
-					key={item.kind}
-					style={itemStyle(item)}>
+					key={item.kind}>
 					{item.kind === 'backend' ? (
-						<Settings
+						<SquareTerminal
 							aria-hidden="true"
 							className="size-3 shrink-0"
 							strokeWidth={2.25}

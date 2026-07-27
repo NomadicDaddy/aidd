@@ -27,18 +27,36 @@ function renderBadgeLab(): string {
 }
 
 describe('ExecutionIdentityBadgeLabPage', () => {
-	test('renders every built-in CLI, model, and reasoning combination', () => {
+	test('renders representative identities and every catalog value once', () => {
 		const html = renderBadgeLab();
+		const cliCatalog = [...backendOptions.map(({ value }) => value), 'direct'];
 		const cliCount = backendOptions.length + 1;
-		const combinationCount =
-			cliCount *
-			executionIdentityModelCatalog.length *
+		const catalogCount =
+			cliCount +
+			executionIdentityModelCatalog.length +
 			executionIdentityReasoningCatalog.length;
 
 		expect(html).toContain('Execution Identity Badge Lab');
-		expect(html).toContain(`${combinationCount} combinations`);
-		expect(html.match(/role="group"/g)).toHaveLength(combinationCount + cliCount);
-		expect(html).toContain('CLI direct, Model glm-5.2, Reasoning high');
-		expect(html).toContain('CLI codex, Model gpt-5.6-sol, Reasoning xhigh');
+		expect(html).toContain(
+			`${cliCount} CLIs · ${executionIdentityModelCatalog.length} models · ${executionIdentityReasoningCatalog.length} reasoning levels`,
+		);
+		expect(html).not.toContain('combinations');
+		expect(html.match(/role="group"/g)).toHaveLength(catalogCount + 4);
+		for (const cli of cliCatalog) {
+			expect(html).toContain(`aria-label="CLI ${cli}"`);
+		}
+		for (const model of executionIdentityModelCatalog) {
+			expect(html).toContain(`aria-label="Model ${model}"`);
+		}
+		for (const reasoningEffort of executionIdentityReasoningCatalog) {
+			expect(html).toContain(`aria-label="Reasoning ${reasoningEffort}"`);
+		}
+		expect(html).toContain('CLI codex, Model gpt-5.6-sol, Reasoning high');
+		expect(html).toContain('CLI native, Model glm-5.2, Reasoning medium, Provider zhipu');
+		expect(html).toContain(
+			'organization/research-preview-model-with-an-intentionally-long-name',
+		);
+		expect(html).toContain('aria-label="CLI ollama"');
+		expect(html).not.toContain('style=');
 	});
 });

@@ -1,11 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 
-import {
-	executionIdentityItems,
-	identityBadgeStyle,
-	reasoningBadgeClass,
-} from '../../frontend/src/lib/executionIdentity.ts';
+import { executionIdentityItems } from '../../frontend/src/lib/executionIdentity.ts';
 
 function renderExecutionIdentity(props: Record<string, null | string>): string {
 	const script = [
@@ -76,37 +72,6 @@ describe('execution identity badge data', () => {
 			executionIdentityItems({ backend: ' native ', model: ' ', reasoningEffort: null }),
 		).toEqual([{ kind: 'backend', label: 'native' }]);
 	});
-
-	test('maps top-effort aliases to fuchsia and unknown values to neutral', () => {
-		const scale = {
-			none: 'bg-neutral-600',
-			minimal: 'bg-slate-600',
-			low: 'bg-sky-700',
-			medium: 'bg-blue-700',
-			high: 'bg-violet-700',
-		};
-		for (const [value, className] of Object.entries(scale)) {
-			expect(reasoningBadgeClass(value)).toContain(className);
-		}
-		for (const value of ['xhigh', 'ultra', 'max', 'maximum', 'extra-high', 'extra high']) {
-			expect(reasoningBadgeClass(value)).toContain('bg-fuchsia-700');
-		}
-		expect(reasoningBadgeClass('provider-specific')).toContain('bg-neutral-600');
-	});
-
-	test('assigns stable value-specific colors to CLIs and models', () => {
-		const native = identityBadgeStyle('backend', 'native');
-		const codex = identityBadgeStyle('backend', 'codex');
-		const glm = identityBadgeStyle('model', 'glm-5.2');
-		const gpt = identityBadgeStyle('model', 'gpt-5.6');
-
-		expect(identityBadgeStyle('backend', ' native ')).toEqual(native);
-		expect(native.backgroundColor).toBe('hsl(190 68% 42%)');
-		expect(glm.backgroundColor).toBe('hsl(220 68% 42%)');
-		expect(native.backgroundColor).not.toBe(codex.backgroundColor);
-		expect(glm.backgroundColor).not.toBe(gpt.backgroundColor);
-		expect(native.backgroundColor).toMatch(/^hsl\(\d{1,3} 68% 42%\)$/);
-	});
 });
 
 describe('ExecutionIdentityBadges', () => {
@@ -125,12 +90,18 @@ describe('ExecutionIdentityBadges', () => {
 			'aria-label="CLI direct, Model gpt-5.6, Reasoning high, Provider openai, Resolved Director target"',
 		);
 		expect(html).toContain('<svg');
-		expect(html).toContain('lucide-settings');
+		expect(html).toContain('lucide-square-terminal');
+		expect(html).not.toContain('lucide-settings');
 		expect(html).toContain('overflow-hidden rounded-[3px]');
-		expect(html).toContain('border-l border-white/30');
-		expect(html).toMatch(/style="background-color:hsl\(\d{1,3} 68% 42%\);color:#[a-f0-9]+"/);
-		expect(html).toContain('bg-violet-700');
+		expect(html).toContain('bg-muted');
+		expect(html).toContain('ring-border');
+		expect(html).toContain('border-l border-border');
+		expect(html).toContain('font-medium text-muted-foreground');
+		expect(html).toContain('font-semibold text-foreground');
 		expect(html).toContain('max-w-48 truncate');
+		expect(html).not.toContain('style=');
+		expect(html).not.toContain('hsl(');
+		expect(html).not.toMatch(/bg-(?:blue|fuchsia|sky|violet)-700/);
 		expect(html).not.toContain('>openai<');
 	});
 

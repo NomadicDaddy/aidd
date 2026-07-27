@@ -38,6 +38,7 @@ export function RunsPage() {
 		onStop: (id) => page.controls.stop.mutate(id),
 		onStopSession: page.stopSession,
 		onToggleSession: page.toggleSession,
+		projectRouteIdByPath: page.projectRouteIdByPath,
 		selection: page.selection,
 	};
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { PipelineSessionRecord, RunRecord } from '../../frontend/src/api/types.ts';
 import {
+	buildProjectRouteIdByPath,
 	buildUnifiedEntries,
 	entryKey,
 	entryMatchesFilters,
@@ -199,6 +200,13 @@ describe('unified execution entries', () => {
 		expect(entryMatchesFilters(session, baseFilters({ query: 'full build' }))).toBe(true);
 		expect(entryMatchesFilters(session, baseFilters({ query: 'pipeline' }))).toBe(true);
 		expect(entryMatchesFilters(session, baseFilters({ query: 'no-such-thing' }))).toBe(false);
+	});
+
+	test('project route ids are keyed by normalized paths', () => {
+		const routeIds = buildProjectRouteIdByPath([
+			{ path: 'D:\\applications\\aidd', routeId: 'aidd' },
+		]);
+		expect(routeIds.get('d:\\applications\\aidd')).toBe('aidd');
 	});
 
 	test('history floor hides the sparser source below the denser source watermark', () => {

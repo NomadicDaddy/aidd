@@ -61,6 +61,14 @@ export function buildUnifiedEntries(
 	return entries.sort((a, b) => entryStartedAt(b) - entryStartedAt(a));
 }
 
+export function buildProjectRouteIdByPath(
+	projects: readonly { path: string; routeId: string }[],
+): ReadonlyMap<string, string> {
+	return new Map(
+		projects.map((project) => [normalizePathForFilter(project.path), project.routeId]),
+	);
+}
+
 export function splitEntriesByLiveness(entries: UnifiedEntry[]): {
 	active: UnifiedEntry[];
 	history: UnifiedEntry[];

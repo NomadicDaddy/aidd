@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { default as CircleStop } from 'lucide-react/dist/esm/icons/circle-stop';
@@ -7,41 +6,22 @@ import { default as Workflow } from 'lucide-react/dist/esm/icons/workflow';
 import { type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 
-import type { PipelineExecutionIdentity, PipelineSessionRecord } from '../../api/types.ts';
+import type { PipelineSessionRecord } from '../../api/types.ts';
 
-import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName, IconButton } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
+import { PipelineSessionIdentityBadges } from './PipelineSessionIdentityBadges.tsx';
+import {
+	isSessionActive,
+	sessionStatusLabel,
+	sessionStatusTone,
+	sessionStopUnavailableReason,
+} from './pipelineSessionStatus.ts';
 import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
-
-export function sessionStatusTone(status: PipelineSessionRecord['status']) {
-	if (status === 'completed') return 'emerald';
-	if (status === 'failed') return 'red';
-	if (status === 'running' || status === 'queued') return 'teal';
-	return 'amber';
-}
-
-export function sessionStatusLabel(status: PipelineSessionRecord['status']): string {
-	return status === 'completed_with_failures' ? 'completed with failures' : status;
-}
-
-export function isSessionActive(status: PipelineSessionRecord['status']): boolean {
-	return status === 'queued' || status === 'running';
-}
-
-export function sessionStopUnavailableReason(
-	status: PipelineSessionRecord['status'],
-): null | string {
-	if (status === 'completed') return 'Stop unavailable: session completed';
-	if (status === 'failed') return 'Stop unavailable: session failed';
-	if (status === 'stopped') return 'Stop unavailable: session already stopped';
-	if (status === 'completed_with_failures')
-		return 'Stop unavailable: session completed with failures';
-	return null;
-}
 
 interface PipelineSessionRowProps {
 	expanded: boolean;
@@ -49,42 +29,9 @@ interface PipelineSessionRowProps {
 	onSelect: (id: string) => void;
 	onStop: (id: string) => void;
 	onToggle: (id: string) => void;
+	projectRouteId: string | undefined;
 	selected: boolean;
 	session: PipelineSessionRecord;
-}
-
-function identityKey(identity: PipelineExecutionIdentity): string {
-	return [
-		identity.backend ?? '',
-		identity.model ?? '',
-		identity.provider ?? '',
-		identity.reasoningEffort ?? '',
-	].join('\u001f');
-}
-
-export function PipelineSessionIdentityBadges({
-	identities,
-}: {
-	identities: PipelineExecutionIdentity[];
-}) {
-	if (identities.length === 0) {
-		return <span className="text-neutral-400 dark:text-neutral-600">—</span>;
-	}
-	return (
-		<span className="inline-flex max-w-full flex-wrap gap-1">
-			{identities.map((identity, index) => (
-				<ExecutionIdentityBadges
-					{...identity}
-					hint={
-						identities.length > 1
-							? `Pipeline runtime ${index + 1} of ${identities.length}`
-							: undefined
-					}
-					key={identityKey(identity)}
-				/>
-			))}
-		</span>
-	);
 }
 
 function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onStop' | 'session'>) {
@@ -127,9 +74,10 @@ function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onSt
 
 function SessionTitle({
 	expanded,
+	onSelect,
 	onToggle,
 	session,
-}: Pick<PipelineSessionRowProps, 'expanded' | 'onToggle' | 'session'>) {
+}: Pick<PipelineSessionRowProps, 'expanded' | 'onSelect' | 'onToggle' | 'session'>) {
 	// Single-step pipelines don't nest: no chevron, no step chip — the row stands alone.
 	const multiStep = isMultiStepSession(session);
 	return (
@@ -153,11 +101,12 @@ function SessionTitle({
 				aria-hidden="true"
 				className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400"
 			/>
-			<Link
-				className="font-medium whitespace-nowrap text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
-				to={`/pipeline-sessions/${session.id}`}>
+			<ConsoleSelectionButton
+				className="whitespace-nowrap"
+				label={`Show ${session.recipeName} pipeline in Live Console`}
+				onSelect={() => selectSession(onSelect, session)}>
 				{session.recipeName}
-			</Link>
+			</ConsoleSelectionButton>
 			{multiStep && (
 				<span
 					className="font-mono text-xs text-neutral-500"
@@ -169,22 +118,26 @@ function SessionTitle({
 	);
 }
 
-// The whole row/card is the "show in Live Console" target (there is no Console button). Clicks
-// on interactive children (links, buttons) keep their own behavior.
+function selectSession(onSelect: (id: string) => void, session: PipelineSessionRecord): void {
+	traceDataMovement({
+		category: 'event',
+		layer: 'ui',
+		operation: 'runs.console.select',
+		source: 'RunsPage',
+		summary: { sessionId: session.id },
+	});
+	onSelect(session.id);
+}
+
+// The whole row/card and its Name button show the execution in Live Console. Project and action
+// links keep their own explicit destinations.
 function sessionSelectHandler(
 	onSelect: (id: string) => void,
 	session: PipelineSessionRecord,
 ): (event: KeyboardEvent | MouseEvent) => void {
 	return (event) => {
 		if ((event.target as HTMLElement).closest('a,button')) return;
-		traceDataMovement({
-			category: 'event',
-			layer: 'ui',
-			operation: 'runs.console.select',
-			source: 'RunsPage',
-			summary: { sessionId: session.id },
-		});
-		onSelect(session.id);
+		selectSession(onSelect, session);
 	};
 }
 
@@ -194,12 +147,31 @@ function sessionRowAriaLabel(selected: boolean, session: PipelineSessionRecord):
 		: `Show ${session.recipeName} pipeline in Live Console`;
 }
 
-function SessionMeta({ session }: { session: PipelineSessionRecord }) {
+function SessionProjectLink({
+	projectRouteId,
+	session,
+}: Pick<PipelineSessionRowProps, 'projectRouteId' | 'session'>) {
+	if (projectRouteId === undefined) {
+		return <span className="text-neutral-500">{session.projectName}</span>;
+	}
+	return (
+		<ProjectDetailLink
+			href={`/projects/${encodeURIComponent(projectRouteId)}`}
+			label={`Open ${session.projectName} project details`}
+			name={session.projectName}
+		/>
+	);
+}
+
+function SessionMeta({
+	projectRouteId,
+	session,
+}: Pick<PipelineSessionRowProps, 'projectRouteId' | 'session'>) {
 	return (
 		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
 			<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			<PipelineSessionIdentityBadges identities={session.executionIdentities} />
-			<span>{session.projectName}</span>
+			<SessionProjectLink projectRouteId={projectRouteId} session={session} />
 			<span>{formatDate(session.startedAt)}</span>
 		</div>
 	);
@@ -231,7 +203,9 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 				<SessionTitle {...props} />
 				<div className="mt-1 text-xs text-neutral-500">{formatDate(session.startedAt)}</div>
 			</td>
-			<td className="px-3 py-3">{session.projectName}</td>
+			<td className="px-3 py-3">
+				<SessionProjectLink {...props} />
+			</td>
 			<td className="px-3 py-3">
 				<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			</td>
@@ -277,7 +251,7 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 			tabIndex={0}
 			title="Show in Live Console">
 			<SessionTitle {...props} />
-			<SessionMeta session={session} />
+			<SessionMeta projectRouteId={props.projectRouteId} session={session} />
 			<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
 				<Badge tone={sessionStatusTone(session.status)}>
 					{sessionStatusLabel(session.status)}

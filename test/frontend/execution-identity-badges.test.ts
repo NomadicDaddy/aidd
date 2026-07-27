@@ -30,7 +30,7 @@ function renderPipelineIdentities(identities: Record<string, null | string>[]): 
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { PipelineSessionIdentityBadges } from './src/pages/runs/PipelineSessionRow.tsx';",
+		"import { PipelineSessionIdentityBadges } from './src/pages/runs/PipelineSessionIdentityBadges.tsx';",
 		`console.log(renderToStaticMarkup(createElement(PipelineSessionIdentityBadges, { identities: ${JSON.stringify(identities)} })));`,
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {

@@ -3,7 +3,6 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Square } from 'lucide-react/dist/esm/icons/square';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { type KeyboardEvent, type MouseEvent } from 'react';
-import { Link } from 'react-router-dom';
 
 import type { RunRecord } from '../../api/types.ts';
 
@@ -15,8 +14,9 @@ import { useStopRequested } from '../../hooks/useStopRequested.ts';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
 import { RunLivenessIndicator } from './RunLivenessIndicator.tsx';
-import { runRuntimeDetail } from './runRowUtils.ts';
+import { runRuntimeDetail, runSourceLabel } from './runRowUtils.ts';
 import {
 	classifyRunRecord,
 	continuationTitle,
@@ -74,10 +74,7 @@ export function ActiveRunMobileCard({
 	const projectLabel = directorCycleProjection
 		? 'Open Director'
 		: `Open ${run.projectName} project details`;
-	// The whole card is the "show in Live Console" target (there is no Console button). Clicks on
-	// interactive children (links, buttons, the command-info popover) keep their own behavior.
-	function selectFromCard(event: KeyboardEvent | MouseEvent): void {
-		if ((event.target as HTMLElement).closest('a,button')) return;
+	function selectRun(): void {
 		traceDataMovement({
 			category: 'event',
 			layer: 'ui',
@@ -86,6 +83,12 @@ export function ActiveRunMobileCard({
 			summary: { runId: run.id },
 		});
 		onSelect(run.id);
+	}
+	// The whole card and its Name button show the execution in Live Console. Project and action
+	// links keep their own explicit destinations.
+	function selectFromCard(event: KeyboardEvent | MouseEvent): void {
+		if ((event.target as HTMLElement).closest('a,button')) return;
+		selectRun();
 	}
 	return (
 		<div
@@ -112,26 +115,19 @@ export function ActiveRunMobileCard({
 			tabIndex={0}
 			title="Show in Live Console">
 			<div className="flex min-w-0 items-center gap-2">
-				<Link
-					aria-label={projectLabel}
-					className="-my-1.5 inline-block min-w-0 shrink truncate rounded py-1.5 font-medium text-teal-700 underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none dark:text-teal-300"
-					to={projectHref}>
-					{run.projectName}
-				</Link>
+				<ConsoleSelectionButton
+					className="min-w-0 shrink truncate capitalize"
+					label={`Show ${run.projectName} run in Live Console`}
+					onSelect={selectRun}>
+					{run.mode ?? 'Run'}
+				</ConsoleSelectionButton>
 				<RunCommandInfo command={run.launchCommand} runId={run.id} />
 			</div>
 			<div className="flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
 				<Badge tone={outcome.tone}>{outcome.label}</Badge>
-				<Badge
-					tone={
-						run.source === 'cli'
-							? 'teal'
-							: run.source === 'director'
-								? 'amber'
-								: 'neutral'
-					}>
-					{run.source === 'cli' ? 'CLI' : run.source === 'director' ? 'Coord' : 'Web'}
-				</Badge>
+				<Badge tone="neutral">Run</Badge>
+				<ProjectDetailLink href={projectHref} label={projectLabel} name={run.projectName} />
+				<span>{runSourceLabel(run)}</span>
 				<span>{formatDate(run.startedAt)}</span>
 				<span aria-hidden="true">·</span>
 				<span>{formatActiveDuration(run.durationMs, run.startedAt, now)}</span>

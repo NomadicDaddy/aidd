@@ -11,6 +11,7 @@ import { useContinueRun, useRunControls, useRunRecord, useRuns } from '../../hoo
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { consumeInitialRunScroll, filtersForLaunchedRun } from './runsUtils.ts';
 import {
+	buildProjectRouteIdByPath,
 	buildUnifiedEntries,
 	entryMatchesFilters,
 	entryStartedAt,
@@ -112,13 +113,12 @@ export function useRunsPage() {
 		setSelection({ id: run.id, kind: 'run' });
 	}
 	const launchForm = useRunLaunchForm(onLaunched);
-
 	const projectList = projects.data?.projects ?? [];
+	const projectRouteIdByPath = buildProjectRouteIdByPath(projectList);
 	const runList = runs.data?.pages.flatMap((page) => page.runs) ?? [];
 	const sessionList =
 		pipelineSessions.sessions.data?.pages.flatMap((page) => page.sessions) ?? [];
-	// Runs that already have a follow-up (any loaded run pointing back at them) hide their
-	// Continue button; the server independently rejects a duplicate continue with a 409.
+	// Hide Continue when a loaded follow-up already points back to this run.
 	const continuedRunIds = new Set<string>();
 	for (const run of runList) {
 		if (run.chainedFromRunId) continuedRunIds.add(run.chainedFromRunId);
@@ -139,7 +139,6 @@ export function useRunsPage() {
 	const selectedLaunchProject = projectList.find(
 		(project) => project.path === launchForm.projectDir,
 	);
-
 	const filters = { mode: modeFilter, project: historyProject, query, status: statusFilter };
 	const filteredEntries = buildUnifiedEntries(runList, sessionList).filter((entry) =>
 		entryMatchesFilters(entry, filters),
@@ -279,6 +278,7 @@ export function useRunsPage() {
 		loadedEntryCount: runList.length + sessionList.length,
 		modeFilter,
 		projectList,
+		projectRouteIdByPath,
 		projects,
 		query,
 		refresh,

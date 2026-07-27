@@ -8,7 +8,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
 import { useRunRecord } from '../../hooks/useRuns.ts';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
-import { sessionStatusLabel, sessionStatusTone } from './PipelineSessionRow.tsx';
+import { sessionStatusLabel, sessionStatusTone } from './pipelineSessionStatus.ts';
 
 // Console pane for a selected pipeline session: a compact session summary above a live
 // console streaming the most recent step that has spawned a run. Step-level selection

@@ -5,6 +5,7 @@ import { useNow } from '../../hooks/useNow.ts';
 import { ActiveRunMobileCard, ActiveRunRow } from './ActiveRunRow.tsx';
 import { PipelineSessionMobileCard, PipelineSessionRow } from './PipelineSessionRow.tsx';
 import { PipelineStepSubRows } from './PipelineStepSubRows.tsx';
+import { normalizePathForFilter } from './runsUtils.ts';
 import {
 	entryKey,
 	isEntryActive,
@@ -31,6 +32,7 @@ export interface UnifiedExecutionTableProps {
 	onStop: (id: string) => void;
 	onStopSession: (id: string) => void;
 	onToggleSession: (id: string) => void;
+	projectRouteIdByPath: ReadonlyMap<string, string>;
 	selection: undefined | UnifiedSelection;
 	title: string;
 }
@@ -52,7 +54,18 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 			</div>
 			<Card className="overflow-hidden p-0">
 				<div className="hidden overflow-x-auto md:block">
-					<table aria-label={title} className="w-full text-left text-sm">
+					<table
+						aria-label={title}
+						className="w-full min-w-[56rem] table-fixed text-left text-sm">
+						<colgroup>
+							<col className="w-[22%]" />
+							<col className="w-[11%]" />
+							<col className="w-[9%]" />
+							<col className="w-[20%]" />
+							<col className="w-[17%]" />
+							<col className="w-[9%]" />
+							<col className="w-[12%]" />
+						</colgroup>
 						<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:bg-neutral-900">
 							<tr>
 								<th className="py-3 pr-3 pl-4" scope="col">
@@ -62,7 +75,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 									Project
 								</th>
 								<th className="px-3 py-3" scope="col">
-									Type
+									Kind
 								</th>
 								<th className="px-3 py-3" scope="col">
 									Model
@@ -108,6 +121,9 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 											onSelect={props.onSelectPipeline}
 											onStop={props.onStopSession}
 											onToggle={props.onToggleSession}
+											projectRouteId={props.projectRouteIdByPath.get(
+												normalizePathForFilter(entry.session.projectPath),
+											)}
 											selected={isSelected(entry)}
 											session={entry.session}
 										/>
@@ -122,6 +138,11 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 																	entry.session.id,
 																	runId,
 																)
+															}
+															selectedRunId={
+																selection?.kind === 'run'
+																	? selection.id
+																	: undefined
 															}
 															sessionId={entry.session.id}
 														/>
@@ -163,6 +184,9 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 									onSelect={props.onSelectPipeline}
 									onStop={props.onStopSession}
 									onToggle={props.onToggleSession}
+									projectRouteId={props.projectRouteIdByPath.get(
+										normalizePathForFilter(entry.session.projectPath),
+									)}
 									selected={isSelected(entry)}
 									session={entry.session}
 								/>
@@ -173,6 +197,11 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 												now={now}
 												onSelectRun={(runId) =>
 													props.onSelectStepRun(entry.session.id, runId)
+												}
+												selectedRunId={
+													selection?.kind === 'run'
+														? selection.id
+														: undefined
 												}
 												sessionId={entry.session.id}
 											/>

@@ -5,6 +5,7 @@ import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdenti
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
+import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
 import { stepTone } from '../pipelineSessions/StepOutput.tsx';
 import { buildStepRows } from '../pipelineSessions/StepRows.tsx';
@@ -17,10 +18,12 @@ import { buildStepRows } from '../pipelineSessions/StepRows.tsx';
 export function PipelineStepSubRows({
 	now,
 	onSelectRun,
+	selectedRunId,
 	sessionId,
 }: {
 	now: number;
 	onSelectRun: (runId: string) => void;
+	selectedRunId: string | undefined;
 	sessionId: string;
 }) {
 	// Per-session report; polls every 3s while the session is active (same load profile
@@ -42,57 +45,92 @@ export function PipelineStepSubRows({
 				if (row.kind === 'pending') {
 					return (
 						<li
-							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-neutral-500"
+							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-neutral-500 md:grid md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] md:gap-0 md:px-0 md:py-0"
 							key={`pending-${row.sequenceNumber}`}>
-							<span className="w-6 text-right font-mono">{row.sequenceNumber}.</span>
-							<Badge tone="neutral">
-								<CircleDashed aria-hidden="true" className="h-3 w-3" />
-								pending
-							</Badge>
-							<Badge tone="teal">{row.step.stepType}</Badge>
-							<span className="text-neutral-500 dark:text-neutral-400">
-								{row.step.name}
-							</span>
+							<div className="flex min-w-0 basis-full items-center gap-2 md:px-4 md:py-2">
+								<span className="w-6 text-right font-mono">
+									{row.sequenceNumber}.
+								</span>
+								<span className="truncate text-neutral-500 dark:text-neutral-400">
+									{row.step.name}
+								</span>
+							</div>
+							<span aria-hidden="true" className="hidden md:block" />
+							<div className="md:px-3 md:py-2">
+								<Badge tone="teal">{row.step.stepType}</Badge>
+							</div>
+							<span className="hidden md:block md:px-3 md:py-2">—</span>
+							<div className="md:px-3 md:py-2">
+								<Badge tone="neutral">
+									<CircleDashed aria-hidden="true" className="h-3 w-3" />
+									Pending
+								</Badge>
+							</div>
+							<span className="hidden md:block md:px-3 md:py-2">—</span>
+							<span className="hidden md:block md:px-3 md:py-2">—</span>
 						</li>
 					);
 				}
 				const step = row.result;
 				const anchor = step.depth === 0 && step.phase === 'step';
+				const selected = step.runId !== null && step.runId === selectedRunId;
 				return (
 					<li
-						className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs"
-						key={step.id}
-						style={{ paddingLeft: `${16 + Math.min(step.depth, 4) * 16}px` }}>
-						<span className="w-6 text-right font-mono text-neutral-500">
-							{anchor ? `${step.sequenceNumber}.` : '·'}
-						</span>
-						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
-						<Badge tone="teal">{step.stepType}</Badge>
-						{step.executionIdentity ? (
-							<ExecutionIdentityBadges {...step.executionIdentity} />
-						) : null}
-						<span className="text-neutral-700 dark:text-neutral-200">
-							{step.stepName}
-						</span>
-						<span className="text-neutral-500">
+						aria-current={selected ? 'true' : undefined}
+						className={cn(
+							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs md:grid md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] md:gap-0 md:px-0 md:py-0',
+							selected &&
+								'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
+						)}
+						key={step.id}>
+						<div
+							className="flex min-w-0 basis-full items-center gap-2 py-2 pr-3"
+							style={{ paddingLeft: `${16 + Math.min(step.depth, 4) * 16}px` }}>
+							<span className="w-6 shrink-0 text-right font-mono text-neutral-500">
+								{anchor ? `${step.sequenceNumber}.` : '·'}
+							</span>
+							<span className="truncate text-neutral-700 dark:text-neutral-200">
+								{step.stepName}
+							</span>
+						</div>
+						<span aria-hidden="true" className="hidden md:block" />
+						<div className="md:px-3 md:py-2">
+							<Badge tone="teal">{step.stepType}</Badge>
+						</div>
+						<div className="md:px-3 md:py-2">
+							{step.executionIdentity ? (
+								<ExecutionIdentityBadges {...step.executionIdentity} />
+							) : (
+								<span className="text-neutral-500">—</span>
+							)}
+						</div>
+						<div className="min-w-0 md:px-3 md:py-2">
+							<Badge tone={stepTone(step.status)}>{step.status}</Badge>
+							{step.errorMessage && (
+								<p className="mt-1 truncate text-red-700 dark:text-red-300">
+									{step.errorMessage}
+								</p>
+							)}
+						</div>
+						<span className="whitespace-nowrap text-neutral-500 md:px-3 md:py-2">
 							{formatActiveDuration(step.durationMs, step.startedAt, now)}
 						</span>
-						{step.errorMessage && (
-							<span className="max-w-[24rem] truncate text-red-700 dark:text-red-300">
-								{step.errorMessage}
-							</span>
-						)}
-						{step.runId && (
-							<Button
-								aria-label={`Show step ${step.stepName} run in Live Console`}
-								onClick={() => onSelectRun(step.runId ?? '')}
-								size="compact"
-								title="Show in Live Console"
-								variant="secondary">
-								<Terminal aria-hidden="true" className="h-3 w-3" />
-								Console
-							</Button>
-						)}
+						<div className="md:px-3 md:py-2">
+							{step.runId ? (
+								<Button
+									aria-label={`Show step ${step.stepName} run in Live Console`}
+									aria-pressed={selected}
+									onClick={() => onSelectRun(step.runId ?? '')}
+									size="compact"
+									title="Show in Live Console"
+									variant={selected ? 'primary' : 'secondary'}>
+									<Terminal aria-hidden="true" className="h-3 w-3" />
+									Console
+								</Button>
+							) : (
+								<span className="text-neutral-500">—</span>
+							)}
+						</div>
 					</li>
 				);
 			})}

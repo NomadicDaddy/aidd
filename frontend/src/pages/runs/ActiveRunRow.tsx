@@ -3,7 +3,6 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Square } from 'lucide-react/dist/esm/icons/square';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { type KeyboardEvent, type MouseEvent } from 'react';
-import { Link } from 'react-router-dom';
 
 import type { RunRecord } from '../../api/types.ts';
 
@@ -15,7 +14,9 @@ import { useStopRequested } from '../../hooks/useStopRequested.ts';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
 import { RunLivenessIndicator } from './RunLivenessIndicator.tsx';
+import { runSourceLabel } from './runRowUtils.ts';
 import {
 	classifyRunRecord,
 	continuationTitle,
@@ -65,10 +66,7 @@ export function ActiveRunRow({
 	const projectLabel = directorCycleProjection
 		? 'Open Director'
 		: `Open ${run.projectName} project details`;
-	// The whole row is the "show in Live Console" target (there is no Console button). Clicks on
-	// interactive children (links, buttons, the command-info popover) keep their own behavior.
-	function selectFromRow(event: KeyboardEvent | MouseEvent): void {
-		if ((event.target as HTMLElement).closest('a,button')) return;
+	function selectRun(): void {
 		traceDataMovement({
 			category: 'event',
 			layer: 'ui',
@@ -77,6 +75,12 @@ export function ActiveRunRow({
 			summary: { runId: run.id },
 		});
 		onSelect(run.id);
+	}
+	// The whole row and its Name button show the execution in Live Console. Project and action
+	// links keep their own explicit destinations.
+	function selectFromRow(event: KeyboardEvent | MouseEvent): void {
+		if ((event.target as HTMLElement).closest('a,button')) return;
+		selectRun();
 	}
 	return (
 		<tr
@@ -103,7 +107,12 @@ export function ActiveRunRow({
 			title="Show in Live Console">
 			<td className="py-3 pr-3 pl-4">
 				<div className="flex flex-wrap items-center gap-2">
-					<span className="font-medium capitalize">{run.mode ?? 'Run'}</span>
+					<ConsoleSelectionButton
+						className="capitalize"
+						label={`Show ${run.projectName} run in Live Console`}
+						onSelect={selectRun}>
+						{run.mode ?? 'Run'}
+					</ConsoleSelectionButton>
 					<RunCommandInfo command={run.launchCommand} runId={run.id} />
 				</div>
 				<div className="mt-1 text-xs text-neutral-500">{formatDate(run.startedAt)}</div>
@@ -114,24 +123,11 @@ export function ActiveRunRow({
 				) : null}
 			</td>
 			<td className="px-3 py-3">
-				<Link
-					aria-label={projectLabel}
-					className="-my-1.5 inline-block rounded py-1.5 font-medium text-teal-700 underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none dark:text-teal-300"
-					to={projectHref}>
-					{run.projectName}
-				</Link>
+				<ProjectDetailLink href={projectHref} label={projectLabel} name={run.projectName} />
 			</td>
 			<td className="px-3 py-3">
-				<Badge
-					tone={
-						run.source === 'cli'
-							? 'teal'
-							: run.source === 'director'
-								? 'amber'
-								: 'neutral'
-					}>
-					{run.source === 'cli' ? 'CLI' : run.source === 'director' ? 'Coord' : 'Web'}
-				</Badge>
+				<Badge tone="neutral">Run</Badge>
+				<div className="mt-1 text-xs text-neutral-500">{runSourceLabel(run)}</div>
 			</td>
 			<td className="px-3 py-3">
 				<div className="flex max-w-[14rem] flex-wrap items-center gap-1.5">

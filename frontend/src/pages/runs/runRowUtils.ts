@@ -38,3 +38,9 @@ export function formatHeartbeatAge(ms: number): string {
 export function runRuntimeDetail(run: RunRecord): string {
 	return run.mode ? `mode ${run.mode}` : '—';
 }
+
+export function runSourceLabel(run: Pick<RunRecord, 'source'>): string {
+	if (run.source === 'cli') return 'CLI';
+	if (run.source === 'director') return 'Coordinator';
+	return 'Web';
+}

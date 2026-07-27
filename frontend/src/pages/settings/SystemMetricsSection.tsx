@@ -1,4 +1,8 @@
-import type { SystemMetricSnapshot, WebVitalSummary } from '../../api/metrics.ts';
+import type {
+	SystemMetricSnapshot,
+	SystemMetricsResponse,
+	WebVitalSummary,
+} from '../../api/metrics.ts';
 
 import { Card } from '../../components/ui/card.tsx';
 import { useSystemMetrics, useWebVitalsSummary } from '../../hooks/useMetrics.ts';
@@ -99,10 +103,17 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 	);
 }
 
-export function SystemMetricsSection() {
-	const metrics = useSystemMetrics();
-	const vitals = useWebVitalsSummary();
+interface MetricsPanelState<T> {
+	data: T | undefined;
+	isError: boolean;
+}
 
+interface SystemMetricsContentProps {
+	metrics: MetricsPanelState<SystemMetricsResponse>;
+	vitals: MetricsPanelState<WebVitalSummary[]>;
+}
+
+export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentProps) {
 	return (
 		<Card className="space-y-4 p-3">
 			<div>
@@ -115,13 +126,18 @@ export function SystemMetricsSection() {
 				</p>
 			</div>
 			{metrics.isError ? (
-				<p className="text-xs text-red-600 dark:text-red-400">
+				<p className="text-xs text-red-600 dark:text-red-400" role="alert">
 					Could not load system metrics.
 				</p>
 			) : metrics.data ? (
 				<ResourcePanel current={metrics.data.current} />
 			) : (
-				<p className="text-xs text-neutral-500 dark:text-neutral-400">Loading metrics…</p>
+				<p
+					aria-live="polite"
+					className="text-xs text-neutral-500 dark:text-neutral-400"
+					role="status">
+					Loading metrics…
+				</p>
 			)}
 
 			<div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
@@ -132,17 +148,27 @@ export function SystemMetricsSection() {
 					Frontend performance over the last 6 hours, rated against Google's thresholds.
 				</p>
 				{vitals.isError ? (
-					<p className="text-xs text-red-600 dark:text-red-400">
+					<p className="text-xs text-red-600 dark:text-red-400" role="alert">
 						Could not load web vitals.
 					</p>
 				) : vitals.data ? (
 					<WebVitalsPanel vitals={vitals.data} />
 				) : (
-					<p className="text-xs text-neutral-500 dark:text-neutral-400">
+					<p
+						aria-live="polite"
+						className="text-xs text-neutral-500 dark:text-neutral-400"
+						role="status">
 						Loading vitals…
 					</p>
 				)}
 			</div>
 		</Card>
 	);
+}
+
+export function SystemMetricsSection() {
+	const metrics = useSystemMetrics();
+	const vitals = useWebVitalsSummary();
+
+	return <SystemMetricsContent metrics={metrics} vitals={vitals} />;
 }

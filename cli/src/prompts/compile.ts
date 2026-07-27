@@ -24,6 +24,9 @@ import { compileResultContract } from './compile/result-contract.ts';
 import { readFragment, stringArrayVariable, stringVariable } from './compile/shared.ts';
 
 export interface PromptCompilerOptions {
+	/** Set when this project gitignores `.aidd/`, so the launch context can say the metadata is
+	 * untracked instead of every iteration rediscovering it with throwaway git commands. */
+	aiddMetadataUntracked?: boolean;
 	/** Live URL of the launcher-managed app this run verifies against (e.g. the web panel that
 	 * launched a dogfood run). Appended to the prompt so the agent reuses it instead of starting
 	 * its own server. */

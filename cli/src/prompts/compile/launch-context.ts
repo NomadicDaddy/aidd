@@ -4,9 +4,24 @@
 export type AppUrlStatus = 'live' | 'unknown' | 'unreachable';
 
 export interface LaunchContextOptions {
+	aiddMetadataUntracked?: boolean;
 	appUrl?: string;
 	appUrlStatus?: AppUrlStatus;
 	carryoverNote?: string;
+}
+
+// Stated up front because it is not discoverable cheaply: `git log`/`git show HEAD:` on a
+// gitignored path returns nothing, which reads as "this file has no history" rather than "this
+// file is not tracked here", so agents re-derive it with two or three commands every iteration.
+function renderUntrackedMetadata(): string {
+	return (
+		`This project's \`.aidd/\` metadata is **not tracked by git** here — \`feature.json\`, ` +
+		`\`CHANGELOG.md\`, and the run artifacts are gitignored. The files on disk are the only ` +
+		`record of feature state, and they are authoritative. Do not run \`git log\`, ` +
+		`\`git show HEAD:\`, \`git ls-files\`, or \`git check-ignore\` against \`.aidd/\` paths to ` +
+		`recover history or confirm this — there is none to recover. Read and write the files ` +
+		`directly, and commit only source and tests.`
+	);
 }
 
 // Deliberately project-agnostic: this block is sent for any project whose app address is known, not
@@ -56,6 +71,7 @@ export function renderLaunchContext(options: LaunchContextOptions): string | und
 				: renderLiveApp(options.appUrl),
 		);
 	}
+	if (options.aiddMetadataUntracked) parts.push(renderUntrackedMetadata());
 	if (options.carryoverNote) parts.push(options.carryoverNote.trim());
 	if (parts.length === 0) return undefined;
 	return `## Run launch context\n\n${parts.join('\n\n')}`;

@@ -10,6 +10,7 @@ import { compilePrompt } from '../../prompts/compile.ts';
 import { probeAppUrl } from './app-url-probe.ts';
 import { baselineVerifiedNote, windDownNote } from './carryover-notes.ts';
 import { gitWorktreeClean, readGitHead } from './git.ts';
+import { aiddMetadataTracked } from './metadata-tracking.ts';
 
 // Wind-down: when the remaining wall-clock budget is thin, warn the agent up front so it lands
 // in-flight work instead of being hard-aborted mid-commit. Skipped on the first iteration — a
@@ -77,6 +78,7 @@ export async function armBaselineNoteIfNeeded(
 // the next compile, then clears itself. They are separate fields because they are set at different
 // points in the loop; sharing a slot would let one silently clobber another.
 export class IterationPromptContext {
+	private aiddMetadataUntracked: boolean | undefined;
 	private readonly appUrl: string | undefined;
 	private baselineNote: string | undefined;
 	private carryoverNote: string | undefined;
@@ -113,9 +115,12 @@ export class IterationPromptContext {
 		// Probed per iteration, not once per run: an app that was up at launch can be gone by
 		// iteration 5, and the whole point is that the prompt states the current truth.
 		const appUrlStatus = await probeAppUrl(this.appUrl);
+		// Whether .aidd is tracked cannot change mid-run, so probe once and reuse.
+		this.aiddMetadataUntracked ??= (await aiddMetadataTracked(this.projectDir)) === false;
 		return compilePrompt(promptPlan, {
 			projectDir: this.projectDir,
 			rootDir: this.rootDir,
+			...(this.aiddMetadataUntracked ? { aiddMetadataUntracked: true } : {}),
 			...(this.appUrl ? { appUrl: this.appUrl, appUrlStatus } : {}),
 			...(carryoverNote ? { carryoverNote } : {}),
 		});

@@ -16,10 +16,19 @@ During development, it is completely normal to perform the dance often.
 
 ## Spernakit Registry
 
-App metadata, ports, URLs, and current versions live in:
+Fleet membership lives in:
 
 - `<spernakit-root>/spernakit.psd1`
 - `<applications-root>/AGENTS.md` (canonical app list)
+
+**The manifest declares membership; the app declares its own ports and versions.** `spernakit.psd1`
+is a mirror, and `scripts/lib/fleet/manifest.ts` treats it as one: `validateFleetManifest` compares
+every entry against the app's tracked `package.json` (`version`, `spernakit_version`) and its runtime
+`config/<slug>.json` (`server.backendPort`, `server.frontendPort`). Read those files, not the
+manifest, whenever a concrete port or version matters — the manifest is gitignored, hand-maintained,
+and goes stale the moment an app bumps (see D3). There is no `dev.*` key in any app's config; the
+ports live under `server`. Do not infer a port from `.env` or a Vite default either; an app that
+moved its ports leaves both of those behind.
 
 **Default scope**: all registered derived apps in `<spernakit-root>/spernakit.psd1`. Every
 derived-app entry must have a concrete semantic `spernakit_version`; abort preflight when the
@@ -109,6 +118,26 @@ cross-cutting contract change, inspect the template delta for every SKIPped cons
 safe-copy step, typecheck and hand-port each affected config schema, security guard, service, and
 app-owned barrel while preserving the app's domain additions.
 
+**Read every override from the target side, not only the app side.** An override suppresses the
+drift finding for its path outright, so the template's later changes to that same file are invisible
+for as long as the entry stands — including changes that have nothing to do with the reason the
+override was taken. For each `.templateoverrides` entry, diff the app's file against
+`git show v{target}:{path}` and account for every hunk, then rewrite the reason text to describe
+what the override withholds _now_. A `branded` classification suppresses the same way an override
+does; treat it the same. Delete any entry whose target-side delta has become empty.
+
+**A green gate is not evidence that app-owned work survived the copy.** Drift detection answers
+"does this file differ from the template", never "did the copy delete something the app wrote".
+One app lost an app-added `memberRole` field from `frontend/src/api/types/workspaces.ts` this way, and only the typechecker caught it, and only
+because a page happened to consume the field. After the copy step and before the app's release
+commit, audit the removed lines: for every line the upgrade deleted from a template-managed path,
+check whether any commit in the template repository ever contained it. A removed line the template
+once had is stale content the upgrade is meant to replace; a removed line the template never had was
+written by the app. Normalize trailing commas before comparing, or the `trailingComma: all` reflow
+from v3.31.0 buries the signal. Restrict the report to paths whose app history carries a commit
+after `init` — a file untouched since the app was seeded holds pre-3.28.2 template content that no
+surviving tag can match.
+
 **Treat security behavior changes explicitly.** When a copied file changes authorization,
 mutability, validation, or another security boundary, run the app's targeted security gate and
 commit the change as a distinct, described security fix.
@@ -119,10 +148,17 @@ Per-app sequence:
    automation helper. For an app several releases behind, use the three-way comparison above.
 2. `Skill: template-refactor {app}`: apply structural refactors flagged by the new template version.
 3. `Skill: spernakit-diff-sync {app}`: file-by-file drift check across `lib/`, `hooks/`, `utils/`, `components/shared/`. **This step is non-optional**; `template-upgrade` alone misses per-file drift in these directories (Norm 16).
-4. **Drizzle journal repair** (Norm A.11): if any `.sql` files exist in `backend/src/db/migrations/` that aren't referenced in `_journal.json`, merge them in via `jq` so the migration runner picks them up.
-5. `pwsh ./reset.ps1` to apply migrations and reset dev data.
-6. **Rate-limiter flip**: ensure `config/{app}.json` has `rateLimit.enabled: false` for dev. Edit if not.
-7. **3-guard verification**:
+4. **Lost-lines audit**: report every line the copy removed from a template-managed path that no
+   commit in the template repository ever contained, restricted to files whose app history carries a
+   commit after `init`. Any hit is app-authored work the upgrade dropped; restore it before
+   continuing. Do not accept a clean `smoke:qc` in place of this.
+5. **Override target-side read**: for each `.templateoverrides` entry, diff the app's file against
+   `git show v{target}:{path}`, account for every hunk, and rewrite the reason text to describe what
+   the entry withholds at this version. Delete entries whose delta is now empty.
+6. **Drizzle journal repair** (Norm A.11): if any `.sql` files exist in `backend/src/db/migrations/` that aren't referenced in `_journal.json`, merge them in via `jq` so the migration runner picks them up.
+7. `pwsh ./reset.ps1` to apply migrations and reset dev data.
+8. **Rate-limiter flip**: ensure `config/{app}.json` has `rateLimit.enabled: false` for dev. Edit if not.
+9. **3-guard verification**:
     - `bun run smoke:qc` passes
     - App starts cleanly: `bun run start` then `curl` the health endpoint
     - No ERROR-level entries in `logs/*.error.log` after startup
@@ -181,6 +217,15 @@ Each unblocked worker then:
   do not silently attribute them to the tester.
 - Returns `{ app, pagesVisited, baselineReportIds, submittedReportIds, sessionReports, blockers }`,
   where `sessionReports` contains the complete API rows for post-baseline IDs.
+
+**Prove the tool before filing a keyboard finding.** `agent-browser key` can report success while
+the page receives no event, which turns every keyboard-accessibility check into a false positive:
+Escape "does not close" the dialog, Enter "does not submit" the form, Tab "does not move" focus.
+Before recording any keyboard finding, run a self-test on a control whose keyboard behaviour is
+already known to work in that app, and confirm the page observed the key. If the self-test fails,
+the tool is not delivering keystrokes — fall back to an in-page `dispatchEvent` with the equivalent
+`KeyboardEvent`, or mark keyboard coverage as not-tested for that app. Never file a keyboard finding
+on a run whose self-test did not pass; a retracted report costs more than an untested surface.
 
 ### B2. Cluster bugs across the fleet
 
@@ -260,6 +305,16 @@ For each app that passed D1+D2:
 1. Bump the app's `spernakit_version` field in `package.json` to match the new template version.
 2. Decide app's own version bump (same auto-decide logic as spernakit, scoped to the app's git history).
 3. Commit, tag `v{X.Y.Z}`, push.
+4. Update the app's `spernakit.psd1` entry to the values just committed (`version`,
+   `spernakit_version`, and the ports from `config/<slug>.json`). The manifest is gitignored, so
+   nothing else will ever record the change.
+
+After every scoped app has been bumped, run `bun run check:fleet-manifest` in `<spernakit-root>` and
+require exit 0 before writing the D-complete checkpoint. The manifest is a mirror of the fleet, so a
+successful dance is exactly what makes it stale: bumping seven apps and syncing four leaves twelve
+mismatches, and the template's own `smoke:qc` goes red on a phase that already reported success. A
+dance that closes without this check hands the next dance a Phase 0 abort that has nothing to do
+with the template.
 
 ### D4. Dev diary update
 
@@ -332,6 +387,14 @@ path, initialize a fresh checkpoint, and restart from Phase 0.
 - Use the real base tag for multi-version catch-up and hand-port skipped files across contract
   migrations.
 - Merge new gates into a customized `smoke.json`; never preserve a stale gate set.
+- Audit removed lines against the template's own history before every release commit; a green gate
+  does not prove app-owned work survived the copy.
+- Read every override and every `branded` file from the target side, not only the app side.
+- Refresh `spernakit.psd1` from each app after D3 and require `check:fleet-manifest` to exit 0.
+- Take ports and versions from `config/<slug>.json` and `package.json`, never from the manifest,
+  `.env`, or a framework default.
+- Format-check `.aidd` metadata with an explicit `--ignore-path` override; `/.aidd/` sits in
+  `.prettierignore`, so an unqualified `prettier --check` on those paths passes having read nothing.
 - Preserve required license-material copy steps in branded Dockerfiles.
 - Remove the Spernakit leak guard from derived apps and record a `DELETED` override.
 - When a template fix requires retagging, resync apps already upgraded and restore the prior release

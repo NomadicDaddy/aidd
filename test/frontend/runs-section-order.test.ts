@@ -26,11 +26,22 @@ describe('runs page section order', () => {
 	test('places run lists left and a sticky console right at 2xl', async () => {
 		const source = await readRunsPage();
 
-		expect(source).toContain('2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] 2xl:items-start');
+		expect(source).toContain('2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)]');
+		expect(source).toContain('2xl:items-start');
 		expect(source).toContain('2xl:col-start-1 2xl:row-start-1');
 		expect(source).toContain(
 			'2xl:sticky 2xl:top-6 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1',
 		);
 		expect(source).toContain('space-y-3 2xl:col-start-1 2xl:row-start-2');
+	});
+
+	test('absorbs console overflow in the second row so the left column cannot shift', async () => {
+		const source = await readRunsPage();
+
+		// The console spans both rows. With implicit `auto auto` rows, a console taller than
+		// Active+gap+History has its excess split evenly between them, so switching between a
+		// pipeline summary and a taller run console moved History down by half the overflow.
+		// The flexible second row takes the whole excess instead.
+		expect(source).toContain('2xl:grid-rows-[auto_1fr]');
 	});
 });

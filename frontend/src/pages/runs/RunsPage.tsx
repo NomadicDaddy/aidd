@@ -130,7 +130,12 @@ export function RunsPage() {
 				query={page.query}
 				statusFilter={page.statusFilter}
 			/>
-			<div className="grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] 2xl:items-start">
+			{/* The console column spans both rows, so without an explicit flexible second row a
+			    console taller than Active+gap+History has its excess split evenly across both rows —
+			    shifting Active's bottom edge and the History card down by half the overflow every
+			    time the selection (or a streaming run's output) changes height. `auto 1fr` sends the
+			    whole excess to row 2 instead, so the left column never moves. */}
+			<div className="grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] 2xl:grid-rows-[auto_1fr] 2xl:items-start">
 				<div className="min-w-0 2xl:col-start-1 2xl:row-start-1">
 					{showingInitialSkeleton ? (
 						<SkeletonRows columns={4} count={6} label="Loading runs…" />

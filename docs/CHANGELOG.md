@@ -2,49 +2,56 @@
 
 All notable public aidd releases are documented here.
 
-## [2.134.0] - 2026-07-27
+## [2.135.0] - 2026-07-28
 
 ### Added
 
-- Added a global directive launcher that starts a supervised review or apply-changes run for any
-  discovered project from the sidebar, command palette, or keyboard.
-- Added shared feature-dependency graph validation and ordering, dependency-blocked fleet counts,
-  dependency context in coding prompts, and reverse dependents in Project feature details.
-- Added a post-question interview recipe that resumes at response conversion after the interview
-  and response review are already complete.
-- Split the Runs workspace into Activity and Live Console panes while keeping direct runs and
-  pipeline sessions in one filterable execution feed.
+- Added a Milestones tab to project detail for creating, renaming, reordering, describing, and
+  deleting a project's roadmap milestones, plus an auto-place action for features that have no
+  milestone. Each operation shows what it will do before it runs, and anything that moves features
+  is refused while the project has an active run.
+- Agent launch prompts now state whether `.aidd` is tracked by git in the target repository, so an
+  agent stops re-deriving that from history commands which cannot answer there.
 
 ### Changed
 
-- Pipeline sessions now show the backend, model, provider, and reasoning effort used by their steps,
-  keep active step durations moving, and pass review findings into the remediation step that
-  follows.
-- Run orchestration now avoids starting an iteration that cannot fit the remaining wall-clock
-  budget, carries forward verified baseline evidence, gives a corrective flailing retry without
-  spending an iteration, and reports actionable backend advisories without treating them as
-  failures.
-- Agent launch prompts now describe the actual host shell, quote browser element references
-  correctly on PowerShell, and report whether the supplied application URL was reachable before
-  the run started.
-- Updated the bundled review, spirit, Dance, and htmx guidance for committed-change review,
-  complete remediation handoff, strict Spernakit version pins, and the adopted htmx 4 contract.
+- Milestone auto-placement pushes dependents later instead of pulling a dependency forward into the
+  milestone the coding gate is currently working from, leaves dependency cycles in place and
+  reports them, and names cross-milestone dependency violations that previously ended a run with
+  "all candidates dependency-blocked" and no cause.
+- Execution-identity badges use one quiet neutral capsule instead of per-value colors, carry a CLI
+  icon on the backend segment, and the Settings badge lab now previews representative identities
+  rather than every combination.
+- Roadmap application distinguishes a roadmap entry that omits dependencies from one that replaces
+  them: an omitted key preserves the feature's existing dependencies, an explicit empty array
+  clears them, and the summary reports how many lists were written and how many were preserved.
+- The bundled Dance skill explains that the Spernakit manifest mirrors ports and versions rather
+  than owning them, and the Spernakit bump and template-upgrade workflows sync the fleet manifest
+  during a release.
+- Agent testing guidance now carries a browser-eval recipe that works on both bash and PowerShell.
 
 ### Fixed
 
-- Corrected execution-row navigation, alignment, and selection semantics so Live Console selection
-  stays on labeled buttons with visible keyboard focus and no redundant focusable row target.
-- Corrected run-history latency and outcome reporting by reading independent sources concurrently,
-  distinguishing concurrent operator edits from run-attributed residue, and keeping benign backend
-  notices out of failure classification.
-- Added conditional revalidation for unhashed static assets and kept browser theme metadata aligned
-  with the effective light, dark, or system theme.
-- Improved control-panel accessibility for shell names, dialog scrolling, dashboard heading order,
-  telemetry chart data, and System Metrics loading and failure announcements.
-- Prevented denied browser storage from breaking Web Vitals collection and kept the exact crawltest
-  diagnostic opt-in intact.
-- Kept the Spernakit template repository subject to whole-tree change accounting while preserving
-  the template-owned carve-out for derived applications.
+- Fixed the Runs page crashing when an execution identity was clipped; the truncation measurement
+  fed back on itself through the tooltip wrapper until the render-depth limit was reached.
+- Restored pointer selection on execution rows and cards, with keyboard selection still on the
+  labeled console button.
+- Stopped the Runs left column shifting when the Live Console grew, so the run history card no
+  longer drifts down while a live run streams output.
+- Project reports and roadmap summaries now name the same current milestone the coding gate admits
+  work from, instead of depending on milestone names happening to sort into priority order.
+- Feature writes go back to the directory the record was read from, so a project whose feature IDs
+  and directory names differ no longer grows a duplicate feature directory on every write.
+- An iteration that lands commits but whose backend reports no file changes now derives its file
+  evidence from those commits, so run history no longer shows nothing for work that plainly touched
+  the tree.
+- An unreadable feature record is reported and carried into the next iteration with repair
+  instructions, instead of silently vanishing from the feature listing and then scoring the repair
+  as out-of-scope work.
+- A first out-of-scope completion steers the next iteration with a corrective note; only a second,
+  distinct overrun ends the run.
+- Release screenshot capture is judged by the crawl's own recorded verdict rather than by counting
+  image files, and a request the page itself cancels no longer counts as a network failure.
 
 ### Baseline capabilities
 
@@ -59,6 +66,8 @@ All notable public aidd releases are documented here.
   feature, roadmap, assertion, screen-map, and testing-scenario contracts.
 - Creates a usable roadmap when a project has features but no roadmap, while preserving dependency
   order and milestone assignments.
+- Manages a project's milestones directly, including dependency-aware placement of unassigned
+  features and a preview of every change before it is applied.
 - Presents direct runs and recipe pipelines in one execution feed with nested step status, deep
   links, filters, and live output.
 - Shows project maturity and deployment evidence in the artifact inventory and opens readable

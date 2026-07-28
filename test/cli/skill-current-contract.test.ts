@@ -52,8 +52,14 @@ const REQUIRED_COMPATIBILITY_MARKERS = {
 	'skills/consolidate-features/SKILL.md': ['feature-{8 digits}-{rest}'],
 	'skills/execute-audit/SKILL.md': ['docs/audits/<AUDIT_NAME>_AUDIT_REPORT_*.md'],
 	'skills/feature-review-all/SKILL.md': ['`acceptance_criteria`', '`file_locations`'],
+	'skills/spernakit-bump/SKILL.md': [
+		'`bun run fleet-manifest:sync`',
+		'before the release commit',
+	],
 	'skills/template-upgrade/references/UPGRADE-WORKFLOW.md': [
 		'If `scaffolding/` does not exist at the target tag',
+		'`bun run fleet-manifest:sync` from `<spernakit-root>`',
+		'before the upgrade commit',
 	],
 } as const;
 

@@ -454,7 +454,11 @@ Synchronize template-owned feature files from Spernakit to the derived app. Feat
 ### Phase 10: Version Stamp and Verification
 
 1. **Update `spernakit_version`** in `{app}/package.json` to the target version
-2. **Update `spernakit_version`** in `<spernakit-root>/spernakit.psd1` for the app's entry to the target version
+2. **Run `bun run fleet-manifest:sync` from `<spernakit-root>`**, before the upgrade commit. It
+   restates the app's `spernakit.psd1` entry from `{app}/package.json` and
+   `{app}/config/<slug>.json` rather than leaving the manifest to be edited by hand. Run it for
+   every app the dance touches. A refusal means an app cannot be read or verified; fix that app
+   instead of skipping the step or editing the ignored manifest directly.
 3. **Run `bun run smoke:qc`** from the application root
 4. **Fix any failures**; iterate until the quality gate passes
 5. **Run a targeted crawl test** if UI-facing changes were made:

@@ -435,21 +435,40 @@ If the template delta includes changes to `backend/src/db/seed/` or `backend/src
 
 ### Phase 9a: Template Feature Sync
 
-Synchronize template-owned feature files from Spernakit to the derived app. Features with `spernakit_version` in their feature.json are template-managed and can be safely overwritten in derived apps.
+Copy Spernakit's feature records (`.aidd/features/<dir>/feature.json` plus `.aidd/roadmap.json`) into the derived app. This phase is now a script, not a judgment call — do not hand-copy directories, and do not decide ownership by reading `spernakit_version`. Run it from the **Spernakit checkout**, in push mode: the app has not been re-stamped yet (that is Phase 10), and the pull form deliberately skips on version mismatch.
 
-1. **List all feature directories** in `<spernakit-root>/.aidd/features/`
-2. **For each Spernakit feature** (every feature in the Spernakit repository has `spernakit_version`):
-    - **If the directory exists in the derived app**: Compare the feature.json files. If the Spernakit version is newer (by `updatedAt` or `spernakit_version` comparison), **overwrite** the derived app's copy with the Spernakit version. This is safe because `spernakit_version` marks it as template-owned.
-    - **If the directory does NOT exist in the derived app**: **Copy** the entire feature directory from Spernakit to the derived app. New template features added since the last upgrade are automatically picked up.
-3. **Check for orphaned template features**: List features in the derived app that have `spernakit_version` but whose directory no longer exists in Spernakit. These were removed from the template; **delete** them from the derived app.
-4. **Never touch app-specific features**: Features in the derived app that do NOT have `spernakit_version` are app-owned and must not be modified, overwritten, or deleted during this phase.
+```bash
+# from <spernakit-root>
+bun run template:sync-features -- --app ../{app} --check   # plan first, always
+bun run template:sync-features -- --app ../{app}           # write
+```
 
-**Report**:
+Then, from `<aidd-root>`:
 
-- Template features synced (updated): {count}
-- Template features added (new): {count}
-- Template features removed (orphaned): {count}
-- App-specific features: {count} (untouched)
+```bash
+bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app}
+```
+
+Report its updated / unchanged / errors summary. `roadmap:apply` is what rebuilds the dependency graph from the roadmap the sync just wrote; the sync never shells into aidd. Afterwards, **`bun run check:aidd-format` in the app must report zero changed files** — records are serialized through Prettier's API against the app's own config precisely so that holds. A non-zero count is a bug in the sync, not something to fix by reformatting.
+
+**Three classes are blockers.** The write run refuses all three on its own — it applies the rest of the plan and exits 1 — so a non-zero exit here is not a failed sync. Record each as an unresolved blocker in the phase report, with the entries that were applied:
+
+- **`adopted-with-loss`** — an app copy of a template record carries authored text the template never received. Overwriting destroys the only record it existed. Either backport the text to Spernakit first (then re-run the sync), or record the difference as an app-owned feature whose `notes` begin `DEVIATES: <template-dir> — …` and which lists that directory in its roadmap dependencies. `--adopt` forces the overwrite and is a deliberate discard.
+- **`prune-blocked`** — a stale record whose directory holds more than `feature.json`. Deleting it would take those files with it, so the sync refuses. Report the directory and what it holds; it keeps failing `check:template-features` until the contents are dealt with.
+- **`updated` entries whose changed fields include `spec`, `notes`, `description` or `summary`** — same question as `adopted-with-loss`, on a marked record. `--check` prints them under `APP TEXT AT RISK` and the write run lists them under `NOT OVERWRITTEN`, having left them exactly as the app had them. `--overwrite-app-text` discards the app's text and is a deliberate discard; do not reach for it to make a run go green.
+
+Everything else (`added`, `adopted`, `pruned`, `unchanged`, and `updated` on machine fields) is applied directly.
+
+Do not restate the sync's rules from memory — the script is the definition, and `docs/template/DEVELOPMENT.md` § Template Feature Sync is the prose. Two properties are worth knowing because they contradict the old hand-run instructions this phase used to carry:
+
+- **Process records never sync.** `remediation-<date>-…` and `audit-<slug>-<digits>-…` are findings from the template's own development. Their content reaches apps by being folded into a durable feature upstream; the finding itself is deleted once folded. A copy of one found in an app is pruned. The pattern is narrower than a bare `audit-` prefix on purpose — `audit-logs` is a durable capability record.
+- **Ownership is decided by the template corpus, not by the app copy's marker.** A directory present upstream is template-owned whether or not the app's copy carries `spernakit_version`; the marker only separates `updated` from `adopted`. App-owned records are the ones absent from the template corpus, and the sync never touches them.
+
+**Report** (the script prints it; carry the counts into the phase summary):
+
+- durable template records considered, and the per-action counts (`added` / `updated` / `adopted` / `adopted-with-loss` / `pruned` / `prune-blocked` / `unchanged`)
+- whether `roadmap.json` changed, and the milestone rung used for any newly created roadmap entry
+- `roadmap:apply` result — a dry run reporting `updated: 0` immediately after a sync is the sharpest evidence the merge was correct
 
 ### Phase 10: Version Stamp and Verification
 

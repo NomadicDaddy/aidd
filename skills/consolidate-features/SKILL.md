@@ -31,16 +31,20 @@ The goal is to ensure every fix, audit finding, and remediation spec is represen
 
 2. **Classify features** into four buckets:
 
-    | Type                     | Pattern                              | Description                                                                  |
-    | ------------------------ | ------------------------------------ | ---------------------------------------------------------------------------- |
-    | **Template features**    | Has `spernakit_version` field        | Template-owned features copied from Spernakit; **READ-ONLY in derived apps** |
-    | **Base features**        | Everything else (clean slugs)        | App-specific features that describe functionality to build                   |
-    | **Remediation features** | `remediation-*`                      | Drift fixes and template alignment corrections                               |
-    | **Audit findings**       | `audit-*` (with `auditSource` field) | Issues discovered during code audits                                         |
+    | Type                     | Pattern                       | Description                                                                  |
+    | ------------------------ | ----------------------------- | ---------------------------------------------------------------------------- |
+    | **Template features**    | Has `spernakit_version` field | Template-owned features copied from Spernakit; **READ-ONLY in derived apps** |
+    | **Base features**        | Everything else (clean slugs) | App-specific features that describe functionality to build                   |
+    | **Remediation features** | `remediation-*`               | Drift fixes and template alignment corrections                               |
+    | **Audit findings**       | `audit-<slug>-<digits>-…`     | Issues discovered during code audits                                         |
+
+    A bare `audit-*` prefix is **not** the test: `audit-logs` is a durable capability feature, and apps carry app-owned records such as `audit-change-history`. A finding directory carries a run-id digit group — `audit-performance-1784357475-slow-queries` — and matches `/^audit-[a-z0-9]+(?:-[a-z0-9]+)*?-\d{6,}-/`, the same predicate `sync-template-features.ts` uses. (`auditSource` is documented as a marker but no record in any corpus actually carries it; naming is the only signal.)
 
     **Template features** are identified by the presence of a `spernakit_version` field in their feature.json. These features originate from the Spernakit template and are synced to derived apps during template upgrades. In derived apps, they must NEVER be modified, renamed, deleted, or have remediations folded into them. Any fix that belongs in a template feature must be upstreamed to the Spernakit repository and applied there via the aidd-local `consolidate-features` skill.
 
-    **In the Spernakit repository itself**, template features ARE modifiable; remediations can be folded into them, specs can be updated, and `spernakit_version` should be bumped when the spec changes.
+    **In the Spernakit repository itself**, template features ARE modifiable; remediations can be folded into them and specs can be updated. **Do not bump `spernakit_version` when the spec changes.** It records the template version that _introduced_ the record — an origin marker, not a revision stamp — and every record in the corpus is maintained that way. Bumping it would make the record read as hand-edited to Spernakit's own gates and to the app-side feature-drift check, both of which compare the field exactly. Record the change in the feature's revision notes instead.
+
+    **In Spernakit, folding is a precondition of sync, not optional housekeeping.** `bun run template:sync-features` never copies a `remediation-<date>-…` or `audit-<slug>-<digits>-…` record to a derived app — process records from the template's own development stay in the template, permanently and by design. Content reaches apps only by being folded into a durable feature, which then syncs. A completed finding left standing in Spernakit's corpus is therefore a fix that will never reach a single app, however carefully it was written. Fold it, delete the finding record, and remove its `roadmap.json` entry in the same pass (an orphan roadmap entry is a hard error in `roadmap:apply`).
 
     Base features use clean descriptive slugs (e.g., `run-console-page`, `approval-model`, `director-api-client`). They do NOT use a `feature-` prefix or date stamp. Any base-feature directory starting with `feature-` is a **poorly named** base feature that should be renamed during consolidation (see Phase 4a). This includes both dated names like `feature-20260414-director-api-client` and older generic names like `feature-web-v2-run-launcher`.
 

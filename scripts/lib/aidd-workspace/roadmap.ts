@@ -31,6 +31,19 @@ function dependenciesMatch(current: unknown, expected: string[]): boolean {
 	return expected.every((dependency) => current.includes(dependency));
 }
 
+/**
+ * Detect the Spernakit template repository itself.
+ *
+ * Inside the template, feature records ARE the source of truth and the roadmap is free to rewrite
+ * their dependencies. In a derived app the same records are copies that a template sync overwrites,
+ * so rewriting them here just churns them until the next sync reverts the change. The directory
+ * name plus scripts/init.ts is the convention the coding prompts already use for this test.
+ */
+async function isTemplateRepo(projectDir: string): Promise<boolean> {
+	if (basename(projectDir) !== 'spernakit') return false;
+	return await pathExists(join(projectDir, 'scripts', 'init.ts'));
+}
+
 async function buildFeatureIdLookup(featuresDir: string): Promise<Map<string, string>> {
 	const lookup = new Map<string, string>();
 	const entries = await readdir(featuresDir, { withFileTypes: true });
@@ -100,6 +113,7 @@ export async function applyRoadmap(
 	}
 
 	const lookup = await buildFeatureIdLookup(featuresDir);
+	const templateRepo = await isTemplateRepo(resolvedProjectDir);
 	const errors: string[] = [];
 	const warnings: string[] = [];
 	const plans: RoadmapFeaturePlan[] = [];
@@ -120,8 +134,9 @@ export async function applyRoadmap(
 		}
 
 		const feature = await readJsonObject(filePath);
+		const templateOwned = !templateRepo && typeof feature['spernakit_version'] === 'string';
 		const dependencyPlan: Pick<RoadmapFeaturePlan, 'dependencies'> = {};
-		if (Object.hasOwn(config, 'dependencies')) {
+		if (!templateOwned && Object.hasOwn(config, 'dependencies')) {
 			const dependencies: string[] = [];
 			for (const dependencyName of readDependencyNames(config.dependencies)) {
 				const dependencyId = lookup.get(dependencyName);
@@ -141,6 +156,7 @@ export async function applyRoadmap(
 			feature,
 			filePath,
 			priority: milestoneConfig.priority as number,
+			templateOwned,
 		});
 	}
 
@@ -148,6 +164,7 @@ export async function applyRoadmap(
 		return {
 			appName: basename(resolvedProjectDir),
 			dependenciesPreserved: 0,
+			dependenciesTemplateOwned: 0,
 			dependenciesWritten: 0,
 			dryRun: options.dryRun === true,
 			errors,
@@ -171,7 +188,10 @@ export async function applyRoadmap(
 				...plan.feature,
 				...(plan.dependencies === undefined ? {} : { dependencies: plan.dependencies }),
 				priority: plan.priority,
-				updatedAt,
+				// A template record's updatedAt describes the upstream edit, not this apply. Only
+				// priority is app-local on such a record, so stamping it here would make every
+				// resynced app look drifted against the template for no content change.
+				...(plan.templateOwned ? {} : { updatedAt }),
 			};
 			await mkdir(join(featuresDir, plan.dirName), { recursive: true });
 			await writeFile(plan.filePath, `${JSON.stringify(nextFeature, null, '\t')}\n`);
@@ -180,7 +200,10 @@ export async function applyRoadmap(
 
 	return {
 		appName: basename(resolvedProjectDir),
-		dependenciesPreserved: plans.filter((plan) => plan.dependencies === undefined).length,
+		dependenciesPreserved: plans.filter(
+			(plan) => plan.dependencies === undefined && !plan.templateOwned,
+		).length,
+		dependenciesTemplateOwned: plans.filter((plan) => plan.templateOwned).length,
 		dependenciesWritten: plans.filter((plan) => plan.dependencies !== undefined).length,
 		dryRun,
 		errors,

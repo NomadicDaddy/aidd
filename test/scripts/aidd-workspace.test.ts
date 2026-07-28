@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 import {
 	applyRoadmap,
@@ -104,6 +104,29 @@ describe('aidd workspace discovery', () => {
 });
 
 describe('feature status collection', () => {
+	test('uses the template-sync audit finding boundary', async () => {
+		const root = await tempRoot('status-audit-boundary');
+		const projectDir = join(root, 'demo');
+		await writeFeature(projectDir, 'audit-performance-123456-slow-query');
+		await writeFeature(projectDir, 'audit-react-best-practices-1234567-hook-order');
+		await writeFeature(projectDir, 'audit-logs');
+		await writeFeature(projectDir, 'audit-change-history', {
+			auditSource: 'LEGACY',
+		});
+
+		const entries = await collectFeatureStatus({ applicationsRoot: root });
+		const types = Object.fromEntries(
+			entries.map((entry) => [basename(dirname(entry.path)), entry.type]),
+		);
+
+		expect(types).toEqual({
+			'audit-change-history': 'feature',
+			'audit-logs': 'feature',
+			'audit-performance-123456-slow-query': 'audit',
+			'audit-react-best-practices-1234567-hook-order': 'audit',
+		});
+	});
+
 	test('classifies feature types and summarizes pending/completed counts', async () => {
 		const root = await tempRoot('status');
 		const projectDir = join(root, 'demo');
@@ -322,6 +345,99 @@ describe('roadmap apply', () => {
 		expect(cliResult.exitCode).toBe(0);
 		expect(cliResult.stdout).toContain('Dependencies written:   2');
 		expect(cliResult.stdout).toContain('Dependencies preserved: 1');
+	});
+
+	test('leaves template-owned dependencies and updatedAt alone in a derived app', async () => {
+		const root = await tempRoot('roadmap-template-owned');
+		const projectDir = join(root, 'demo');
+		await writeFeature(projectDir, 'feature-base');
+		await writeFeature(projectDir, 'feature-template', {
+			dependencies: ['feature-base'],
+			priority: 9,
+			spernakit_version: '3.30.0',
+			updatedAt: '2026-05-01T00:00:00.000Z',
+		});
+		await writeFeature(projectDir, 'feature-app', {
+			dependencies: [],
+			priority: 9,
+			updatedAt: '2026-05-01T00:00:00.000Z',
+		});
+		await writeJson(join(projectDir, '.aidd', 'roadmap.json'), {
+			features: {
+				// Both roadmap entries ask for an empty dependency list. Only the app-owned record
+				// may have that applied; clearing the template record's edge would silently drop an
+				// upstream-authored dependency until the next template sync restored it.
+				'feature-app': { dependencies: [], milestone: 'MVP' },
+				'feature-template': { dependencies: [], milestone: 'MVP' },
+			},
+			milestones: { MVP: { priority: 1 } },
+		});
+
+		const applied = await applyRoadmap(projectDir, {
+			now: new Date('2026-05-22T12:34:56.789Z'),
+		});
+		const templateFeature = await readFeature(projectDir, 'feature-template');
+		const appFeature = await readFeature(projectDir, 'feature-app');
+		const cliResult = await runAiddTools([
+			'roadmap:apply',
+			'--project-dir',
+			projectDir,
+			'--dry-run',
+		]);
+
+		expect(applied).toMatchObject({
+			dependenciesPreserved: 0,
+			dependenciesTemplateOwned: 1,
+			dependenciesWritten: 1,
+			updated: 2,
+		});
+		expect(templateFeature).toMatchObject({
+			dependencies: ['feature-base'],
+			priority: 1,
+			updatedAt: '2026-05-01T00:00:00.000Z',
+		});
+		expect(appFeature).toMatchObject({
+			dependencies: [],
+			priority: 1,
+			updatedAt: '2026-05-22T12:34:56.000Z',
+		});
+		expect(cliResult.exitCode).toBe(0);
+		expect(cliResult.stdout).toContain('Dependencies template-owned: 1');
+	});
+
+	test('applies dependencies to template features inside the template repository', async () => {
+		const root = await tempRoot('roadmap-template-repo');
+		const projectDir = join(root, 'spernakit');
+		await writeRaw(join(projectDir, 'scripts', 'init.ts'), '// template initializer\n');
+		await writeFeature(projectDir, 'feature-base');
+		await writeFeature(projectDir, 'feature-template', {
+			dependencies: ['feature-base'],
+			priority: 9,
+			spernakit_version: '3.30.0',
+			updatedAt: '2026-05-01T00:00:00.000Z',
+		});
+		await writeJson(join(projectDir, '.aidd', 'roadmap.json'), {
+			features: {
+				'feature-template': { dependencies: [], milestone: 'MVP' },
+			},
+			milestones: { MVP: { priority: 1 } },
+		});
+
+		const applied = await applyRoadmap(projectDir, {
+			now: new Date('2026-05-22T12:34:56.789Z'),
+		});
+		const templateFeature = await readFeature(projectDir, 'feature-template');
+
+		expect(applied).toMatchObject({
+			dependenciesTemplateOwned: 0,
+			dependenciesWritten: 1,
+			updated: 1,
+		});
+		expect(templateFeature).toMatchObject({
+			dependencies: [],
+			priority: 1,
+			updatedAt: '2026-05-22T12:34:56.000Z',
+		});
 	});
 
 	test('warns and skips missing dependency targets', async () => {

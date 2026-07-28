@@ -186,6 +186,22 @@ After locating the affected area in 3a, decide whether the submission describes:
 - **(B) Missing capability (code that doesn't exist yet)**: implicitly a feature request, even though the user filed it as `kind: 'bug'`. **Reclassify** the submission to `kind: 'feature'`, route it through the feature-request flow (`3a-feature` → `3f-feature`), and emit a `{slug}` directory (clean descriptive slug) instead of a `remediation-*` one. Skip 3b-3h entirely for this entry.
 - **(C) Bug in template-owned code**: the affected file or subsystem is covered by a feature with `spernakit_version` (checked against the Template index from 2d). If the root cause is in template code that all derived apps share, flag the submission as **UPSTREAM** in the triage report with a note: "Root cause is in template-managed code (`{template-feature-id}`). Fix should be applied to `<spernakit-root>` and synced via the aidd-local template-upgrade skill." Still create a `remediation-*` feature.json for the derived app (the app needs the fix now), but add `"notes": "UPSTREAM: root cause is in template feature {id}. Fold fix into spernakit via the aidd-local consolidate-features skill after verification."` so the upstream debt is tracked.
 
+**(C-bis) The app must deliberately differ from the template.** Sometimes the answer is not "fix it upstream" — the app genuinely needs behavior the template should not have (an app-only shell, a domain-specific policy, a deliberate downgrade). Do **not** edit the template-owned feature to record it: `bun run template:sync-features` overwrites template-owned records on every upgrade, so an edit there is an unrecorded fork that the next sync silently deletes. Instead create an **app-owned** feature (a clean descriptive slug, no `spernakit_version` — the sync never touches records absent from the template corpus) whose notes begin with the sibling of the `UPSTREAM:` prefix:
+
+```
+"notes": "DEVIATES: {template-feature-dir} — this app's {behavior} intentionally differs from the template baseline because {reason}."
+```
+
+and which lists the template feature's **directory name** in its `roadmap.json` dependencies:
+
+```json
+"features": {
+    "{app-owned-slug}": { "milestone": "{target}", "dependencies": ["{template-feature-dir}"] }
+}
+```
+
+The dependency edge is the machine-readable half: `roadmap:apply` resolves it, aidd renders it, and the divergence stays visible next to the record it diverges from instead of living in a comment. Directory name, not feature title — `id === <dir>` is an enforced invariant (`check:feature-id-directory`), and the resolver reads directories.
+
 A submission qualifies as (B), missing capability, when **any one** of these signals holds:
 
 1. The reported route does not exist in `frontend/src/routes.tsx` (or `App.tsx` if the project still uses it)

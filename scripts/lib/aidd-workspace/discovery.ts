@@ -53,11 +53,8 @@ export async function discoverAiddProjects(
 	return projects.sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function classifyFeature(
-	featureDirectory: string,
-	featureJson: Record<string, unknown>,
-): FeatureStatusType {
-	if (/^audit-[^-]+-\d{10,}-.+/.test(featureDirectory) || 'auditSource' in featureJson) {
+function classifyFeature(featureDirectory: string): FeatureStatusType {
+	if (/^audit-[a-z0-9]+(?:-[a-z0-9]+)*?-\d{6,}-/.test(featureDirectory)) {
 		return 'audit';
 	}
 	if (/^remediation(-\d{8,14})?-.+/.test(featureDirectory)) return 'remediation';
@@ -98,7 +95,7 @@ export async function collectFeatureStatus(
 			} catch {
 				continue;
 			}
-			const type = classifyFeature(featureDir.name, featureJson);
+			const type = classifyFeature(featureDir.name);
 			if (!types.has(type)) continue;
 			const completed = featureIsCompleted(type, featureJson);
 			if (options.state === 'completed' && !completed) continue;

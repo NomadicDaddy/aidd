@@ -46,6 +46,8 @@ export interface RoadmapApplyOptions {
 export interface RoadmapApplySummary {
 	appName: string;
 	dependenciesPreserved: number;
+	/** Features whose dependencies were left alone because the template owns that record. */
+	dependenciesTemplateOwned: number;
 	dependenciesWritten: number;
 	dryRun: boolean;
 	errors: string[];
@@ -71,6 +73,12 @@ export interface RoadmapFeaturePlan {
 	feature: Record<string, unknown>;
 	filePath: string;
 	priority: number;
+	/**
+	 * True when this record is a Spernakit template feature living in a derived app. Such records
+	 * are authored upstream and resynced wholesale, so their dependencies and updatedAt belong to
+	 * the template, not to this project's roadmap.
+	 */
+	templateOwned: boolean;
 }
 
 export interface RoadmapChangePlan extends RoadmapFeaturePlan {

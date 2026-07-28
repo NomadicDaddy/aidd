@@ -103,6 +103,7 @@ function printRoadmapApplySummary(summary: RoadmapApplySummary): void {
 	console.log(`  Total:     ${summary.total}`);
 	console.log(`  Dependencies written:   ${summary.dependenciesWritten}`);
 	console.log(`  Dependencies preserved: ${summary.dependenciesPreserved}`);
+	console.log(`  Dependencies template-owned: ${summary.dependenciesTemplateOwned}`);
 	console.log('');
 	for (const milestone of summary.milestones) {
 		const description =

@@ -117,6 +117,18 @@ describe('classifyWebRun', () => {
 		).toBe('warnings');
 	});
 
+	// A guard-stopped run used to record exit 0, so the panel showed a bare "Failed" with nothing
+	// naming the guard. It now records 75, and the decode turns that into a badge that says why.
+	// Deliberately red: the bucket is unchanged from the status fallback it replaces, so this does
+	// not silently reclassify historical flailing runs out of the telemetry failure count.
+	test('names the flailing guard rather than falling back to a bare "Failed"', () => {
+		const run = { exitCode: 75, status: 'failed', stopReason: 'flailing' } as const;
+		const outcome = classifyWebRun(run);
+		expect(outcome.label).toBe('Flailing guard');
+		expect(outcome.tone).toBe('red');
+		expect(classifyWebRunTelemetryBucket(run)).toBe('failed');
+	});
+
 	test('classifies a metadata-conflict park distinctly from a git merge park', () => {
 		const outcome = classifyWebRun({
 			status: 'waiting_approval',

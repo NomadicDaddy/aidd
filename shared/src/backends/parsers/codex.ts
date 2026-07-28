@@ -93,7 +93,14 @@ function parseItemEvent(envelopeType: string, item: Record<string, unknown>): Ag
 		const command = readString(item.command) ?? readString(item.cmd);
 		if (command === undefined) return events;
 		if (envelopeType === 'item.started') {
-			events.push({ args: { command }, tool: 'bash', type: 'tool_call' });
+			// Carried through when present so a fan-out of one command across several checkouts is
+			// not mistaken for the same command repeated. Codex omits it for same-directory calls.
+			const cwd = readString(item.cwd) ?? readString(item.workdir);
+			events.push({
+				args: { command, ...(cwd === undefined ? {} : { cwd }) },
+				tool: 'bash',
+				type: 'tool_call',
+			});
 		} else if (envelopeType === 'item.completed') {
 			const output = readString(item.aggregated_output);
 			const exitCode = readNumber(item.exit_code) ?? readNumber(item.exitCode);

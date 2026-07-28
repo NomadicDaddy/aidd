@@ -33,6 +33,7 @@ import {
 import { OrchestratorProgressReporter } from '../progress.ts';
 import { acceptedCompletedFeatureFromEvents } from './feature-scope.ts';
 import { buildPromptInput, waitForCommitOrTimeout } from './git.ts';
+import { emitRunLogLine } from './run-log.ts';
 
 export interface BackendStreamLoopResult {
 	acceptedCompletionFeature?: string;
@@ -188,13 +189,15 @@ export async function runBackendStreamLoop(
 			if (flailingDetector) {
 				const signal = flailingDetector.record(event);
 				if (signal.kind === 'warn') {
-					process.stdout.write(
-						`⚠ possible flailing (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)}\n`,
+					await emitRunLogLine(
+						deps,
+						`⚠ possible flailing (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)}`,
 					);
 				} else if (signal.kind === 'trip') {
 					flailingDetected = true;
-					process.stdout.write(
-						`✋ flailing detected (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)} — aborting iteration\n`,
+					await emitRunLogLine(
+						deps,
+						`✋ flailing detected (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)} — aborting iteration`,
 					);
 					controller.abort('flailing');
 					break;

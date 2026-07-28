@@ -1,6 +1,10 @@
 import type { AgentEvent } from './types.ts';
 
-import { bashToolPattern, commandFromArgs } from '../orchestrator/details/tool-args.ts';
+import {
+	bashToolPattern,
+	commandFromArgs,
+	cwdFromArgs,
+} from '../orchestrator/details/tool-args.ts';
 
 // Classifies a tool call into the normalized signature the flailing detector streaks on, plus
 // whether it is a server-diagnostic/lifecycle shell command. Split out of flailing.ts to keep
@@ -107,6 +111,18 @@ function leadingProgram(command: string): string {
 	return tokens.length > 0 ? programName(tokens[0]!) : '';
 }
 
+// Compare working directories the way the filesystem these backends run on does: separator- and
+// case-insensitive, with any trailing separator dropped.
+function normalizeCwd(cwd: string | undefined): string | undefined {
+	if (cwd === undefined) return undefined;
+	const normalized = cwd
+		.trim()
+		.replace(/[\\/]+/g, '/')
+		.replace(/\/+$/, '')
+		.toLowerCase();
+	return normalized.length > 0 ? normalized : undefined;
+}
+
 export interface WindowEntry {
 	isDiagnostic: boolean;
 	signature: string;
@@ -117,9 +133,14 @@ export function entryForToolCall(event: Extract<AgentEvent, { type: 'tool_call' 
 		const command = commandFromArgs(event.args) ?? '';
 		const normalized = command.trim().replace(/\s+/g, ' ').toLowerCase();
 		const program = leadingProgram(command);
+		// The same command run against a different repository is not a repeat — a fleet sweep
+		// issues one identical `git status` per checkout and read as 11 replays of one dead action.
+		// Only backends that report a per-call working directory can be told apart;
+		// the rest keep the bare command signature they have always had.
+		const cwd = normalizeCwd(cwdFromArgs(event.args));
 		return {
 			isDiagnostic: program === 'lifecycle' || diagnosticVerbs.has(program),
-			signature: `bash:${normalized}`,
+			signature: cwd === undefined ? `bash:${normalized}` : `bash:${cwd}|${normalized}`,
 		};
 	}
 	let argsKey: string;

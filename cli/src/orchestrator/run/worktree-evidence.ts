@@ -143,6 +143,16 @@ export async function persistRunEvidence(projectDir: string, worktreeDir: string
  *    reached the live tree, so canonical metadata must not claim otherwise — and surface
  *    `mergeConflictParked` (77) for the ledger/heartbeat.
  */
+// Which run outcomes keep what the run built. Success obviously; flailing too — the guard stops a
+// run whose LAST iterations went in circles, and earlier ones may have landed real commits. Those
+// are merged back and the feature parks as waiting_approval for a human, exactly as when flailing
+// reported exit 0. Every other non-zero code means the run failed and its checkout is discarded.
+function keepsRunWork(exitCode: number): boolean {
+	return (
+		exitCode === orchestratorExitCodes.success || exitCode === orchestratorExitCodes.flailing
+	);
+}
+
 export async function finalizeRunWorktree(input: {
 	exitCode: number;
 	projectDir: string;
@@ -168,7 +178,7 @@ export async function finalizeRunWorktree(input: {
 		if (evidencePersisted) await removeRunWorktree(projectDir, worktree);
 	};
 	const evidenceFlag = evidencePersisted ? {} : ({ evidencePersistFailed: true } as const);
-	if (exitCode !== orchestratorExitCodes.success) {
+	if (!keepsRunWork(exitCode)) {
 		await removeOrPreserve();
 		console.log(
 			`[worktree] run failed (exit ${exitCode}); ${evidencePersisted ? 'discarded' : 'preserved (evidence unrecovered)'} worktree ${worktree.branch} (live tree untouched, ${evidenceFiles} evidence file(s) preserved).`,

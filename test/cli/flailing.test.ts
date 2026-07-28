@@ -11,6 +11,10 @@ function bash(command: string): AgentEvent {
 	return { args: { command }, tool: 'bash', type: 'tool_call' };
 }
 
+function bashIn(command: string, cwd: string): AgentEvent {
+	return { args: { command, cwd }, tool: 'bash', type: 'tool_call' };
+}
+
 function edit(path: string): AgentEvent {
 	return { args: { file_path: path }, tool: 'edit_file', type: 'tool_call' };
 }
@@ -191,6 +195,84 @@ describe('FlailingDetector', () => {
 			if (detector.record(event).kind === 'trip') tripped = true;
 		}
 		expect(tripped).toBe(true);
+	});
+
+	// The real incident: the `dance` fleet release checked the clean-tree precondition across 11
+	// scoped checkouts with one identical `git status` each, and was killed on the fifth.
+	test('does NOT trip on the same command run against different working directories', () => {
+		const detector = new FlailingDetector();
+		let tripped = false;
+		for (let i = 0; i < 11; i++) {
+			const event = bashIn('git status --porcelain', `D:\\applications\\app-${i}`);
+			if (detector.record(event).kind === 'trip') tripped = true;
+			detector.record(result(''));
+		}
+		expect(tripped).toBe(false);
+	});
+
+	test('still trips when the repeated command shares one working directory', () => {
+		const detector = new FlailingDetector();
+		const events: AgentEvent[] = [];
+		// Same directory spelled three ways — separators, case, and a trailing slash must not
+		// manufacture distinct signatures out of one location.
+		for (const cwd of [
+			'D:\\applications\\app',
+			'd:/applications/app',
+			'D:/Applications/App/',
+		]) {
+			events.push(bashIn('git status --porcelain', cwd));
+		}
+		events.push(bashIn('git status --porcelain', 'D:\\applications\\app'));
+		events.push(bashIn('git status --porcelain', 'd:\\applications\\app'));
+		expect(lastSignal(detector, events).kind).toBe('trip');
+	});
+
+	// Parallel dispatch: every call goes out before any result comes back, so none of them can be a
+	// reaction to another and the streak must not treat them as consecutive replays.
+	test('does NOT trip on identical calls dispatched in one parallel batch', () => {
+		const detector = new FlailingDetector();
+		detector.record(bash('git rev-parse --show-toplevel'));
+		detector.record(result('D:/applications/spernakit'));
+		let tripped = false;
+		for (let i = 0; i < 11; i++) {
+			if (detector.record(bash('git status --porcelain')).kind === 'trip') tripped = true;
+		}
+		expect(tripped).toBe(false);
+	});
+
+	test('a batch does not disable detection for the sequential calls after it', () => {
+		const detector = new FlailingDetector();
+		detector.record(bash('git rev-parse --show-toplevel'));
+		detector.record(result('D:/applications/spernakit'));
+		for (let i = 0; i < 11; i++) detector.record(bash('git status --porcelain'));
+		for (let i = 0; i < 11; i++) detector.record(result('unchanged'));
+
+		const poll = bash('curl -s http://localhost:3210');
+		let signal = detector.record(poll);
+		for (let i = 1; i < defaultFlailingConfig.repeatTripThreshold; i++) {
+			detector.record(result('connection refused'));
+			signal = detector.record(poll);
+		}
+		expect(signal.kind).toBe('trip');
+	});
+
+	// Codex reports a file change as a tool call with no matching result. Counted as permanently
+	// in flight, those would make every later call look batched and blind the guard. (The batch
+	// exemption also requires a result to have been seen at all, so a backend that reports none
+	// keeps the stricter old behavior — covered by 'trips on the same command repeated' above.)
+	test('edits that report no result do not leave later calls looking batched', () => {
+		const detector = new FlailingDetector();
+		detector.record(bash('git status --porcelain'));
+		detector.record(result('M src/feature.ts'));
+		for (let i = 0; i < 3; i++) detector.record(edit(`src/feature-${i}.ts`));
+
+		const poll = bash('curl -s http://localhost:3210');
+		let signal = detector.record(poll);
+		for (let i = 1; i < defaultFlailingConfig.repeatTripThreshold; i++) {
+			detector.record(result('connection refused'));
+			signal = detector.record(poll);
+		}
+		expect(signal.kind).toBe('trip');
 	});
 
 	test('non-tool-call events are ignored', () => {

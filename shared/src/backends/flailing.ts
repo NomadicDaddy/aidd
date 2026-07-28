@@ -7,9 +7,10 @@ import { digestResult, entryForToolCall, type WindowEntry } from './flailing-cla
 // thrashing on server-diagnostic/lifecycle shell commands (curl/ps/lsof/start:web ...) — without
 // making any file changes. This is the "confused model burns 20 minutes hunting for a server"
 // failure mode: the agent emits events continuously, so the idle timeout never fires, yet no real
-// progress happens. A different tool call breaks the repeated-action streak, while a file
-// edit/write resets all detection state. This allows legitimate observe-act-observe workflows
-// (such as browser snapshots around clicks) without weakening diagnostic-thrash detection.
+// progress happens. A different tool call breaks the repeated-action streak, calls dispatched in the
+// same parallel batch are exempt from it, and a file edit/write resets all detection state. This
+// allows legitimate observe-act-observe workflows (such as browser snapshots around clicks) and
+// fan-outs across many checkouts without weakening diagnostic-thrash detection.
 
 export interface FlailingDetectorConfig {
 	/** Trip when at least this many diagnostic/lifecycle shell commands occur in the window. */
@@ -52,9 +53,11 @@ export type FlailingSignal =
 
 export class FlailingDetector {
 	private readonly config: FlailingDetectorConfig;
+	private pendingCalls = 0;
 	private repeatCount = 0;
 	private repeatResultDigests = new Set<string>();
 	private repeatSignature: string | undefined;
+	private sawToolResult = false;
 	private warned = false;
 	private window: WindowEntry[] = [];
 
@@ -67,26 +70,45 @@ export class FlailingDetector {
 		// Results never trip anything themselves; they record what the current streak is producing
 		// so a repeat with changing output can be told apart from one replaying a dead action.
 		if (event.type === 'tool_result') {
+			this.sawToolResult = true;
+			// Any result puts the stream back into react-to-what-you-saw mode. Zeroing rather than
+			// decrementing is deliberate: a call whose result never arrives — aborted mid-flight, or
+			// dropped by a lossy parser — must not latch the batch exemption on for the rest of the run.
+			this.pendingCalls = 0;
 			if (this.repeatSignature !== undefined) {
 				this.repeatResultDigests.add(digestResult(event));
 			}
 			return { kind: 'none' };
 		}
 		if (event.type !== 'tool_call') return { kind: 'none' };
+		// Dispatched before the previous call reported back, so the two went out together. Requires
+		// having seen at least one result, so a backend that never reports them keeps the stricter
+		// pre-batch behavior instead of silently losing repeated-action detection entirely.
+		const batched = this.sawToolResult && this.pendingCalls > 0;
+		this.pendingCalls++;
 		// A file change is real progress — clear the window so prior churn is forgiven.
 		if (editToolPattern.test(event.tool) || writeToolPattern.test(event.tool)) {
 			this.resetStreak();
 			this.window = [];
 			this.warned = false;
+			// Some backends report edits as a tool call with no matching result. Left counted, those
+			// would accumulate as permanently-pending calls and make everything after them look batched.
+			this.pendingCalls = 0;
 			return { kind: 'none' };
 		}
 		const entry = entryForToolCall(event);
-		if (entry.signature === this.repeatSignature) {
-			this.repeatCount++;
-		} else {
-			this.resetStreak();
-			this.repeatCount = 1;
-			this.repeatSignature = entry.signature;
+		// Calls from one batch cannot be reactions to each other, so they are no evidence either way
+		// about an agent replaying a dead action: they neither extend nor break the streak. They do
+		// still enter the diagnostic window — ten port probes at once is still ten port probes with
+		// nothing to show for them.
+		if (!batched) {
+			if (entry.signature === this.repeatSignature) {
+				this.repeatCount++;
+			} else {
+				this.resetStreak();
+				this.repeatCount = 1;
+				this.repeatSignature = entry.signature;
+			}
 		}
 		this.window.push(entry);
 		if (this.window.length > this.config.windowSize) this.window.shift();
@@ -98,7 +120,11 @@ export class FlailingDetector {
 		// dead action. Let it continue, bounded by variedRepeatTripThreshold so a poll that never
 		// resolves still ends. Deliberately scoped to repeated_action: diagnostic thrash is judged
 		// on a window of varied commands, and its output varies by nature (pids, timestamps).
-		if (this.repeatCount >= this.config.repeatTripThreshold && !this.resultsAreVarying()) {
+		if (
+			!batched &&
+			this.repeatCount >= this.config.repeatTripThreshold &&
+			!this.resultsAreVarying()
+		) {
 			return {
 				count: this.repeatCount,
 				kind: 'trip',
@@ -117,7 +143,7 @@ export class FlailingDetector {
 		if (!this.warned) {
 			const repeatWarn = Math.max(2, this.config.repeatTripThreshold - 2);
 			const diagnosticWarn = Math.max(3, this.config.diagnosticTripThreshold - 3);
-			if (this.repeatCount >= repeatWarn) {
+			if (!batched && this.repeatCount >= repeatWarn) {
 				this.warned = true;
 				return {
 					count: this.repeatCount,

@@ -83,6 +83,12 @@ export function decodeExitCode(exitCode: null | number | undefined): null | WebR
 				title: 'Run was aborted (kill/stop or hard timeout).',
 				tone: 'neutral',
 			};
+		case orchestratorExitCodes.flailing:
+			return {
+				label: 'Flailing guard',
+				title: 'The agent repeated non-productive actions without progress; the run was stopped and its feature parked for review.',
+				tone: 'red',
+			};
 		case orchestratorExitCodes.generalError:
 			return {
 				label: 'Error',

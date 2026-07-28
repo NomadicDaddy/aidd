@@ -74,16 +74,30 @@ describe('flailing nudge at the orchestration level', () => {
 	test('a run that keeps flailing stops after the nudge instead of looping', async () => {
 		const store = await makeStore('nudge-bounded');
 		const backend = new FakeBackend(flailingBatch());
+		// The guard's banners are orchestrator-authored, so nothing but this observer hook carries
+		// them into the run log the web panel renders. Without it the log just stopped mid-stream
+		// and gave the operator nothing to distinguish a flailing abort from a crash.
+		const runLog: string[] = [];
 
 		const exitCode = await runOrchestrator(plan(store.projectDir, ['--max-iterations', '1']), {
 			backend,
+			observer: {
+				onAgentEvent: (event) => {
+					if (event.type === 'raw_log') runLog.push(event.chunk);
+				},
+			},
 			rootDir,
 			store,
 		});
 
+		expect(runLog.join('')).toContain('✋ flailing detected (repeated_action');
+
 		expect(backend.calls).toBe(2);
-		expect(exitCode).toBe(orchestratorExitCodes.success);
+		// The run reports the flailing code rather than success, so the ledger entry the web panel
+		// reads does not describe a guard-stopped run with an exit code that says it went fine.
+		expect(exitCode).toBe(orchestratorExitCodes.flailing);
 		const entry = await lastLedgerEntry(store.metadataDir);
+		expect(entry.exitCode).toBe(orchestratorExitCodes.flailing);
 		expect(entry.stopReason).toBe('flailing');
 		const feature = JSON.parse(
 			await readFile(

@@ -152,8 +152,12 @@ export function determineRunContinuation(input: {
 		const exhaustion = grantsExhausted
 			? `after ${flailNudgeGrants} corrective nudge(s)`
 			: `after ${nextFlails} consecutive flailing iteration(s)`;
+		// Records the flailing code, not success: the ledger/heartbeat copy this into the run's
+		// `exitCode`, and reporting 0 for a run the guard stopped left the web panel showing a
+		// failed run whose exit code said it succeeded. Worktree runs still merge their work back
+		// — finalizeRunWorktree treats flailing as a park, not a failure (see worktree-evidence).
 		return {
-			exitCode: orchestratorExitCodes.success,
+			exitCode: orchestratorExitCodes.flailing,
 			kind: 'final',
 			move: 'complete',
 			stopReason: 'flailing',

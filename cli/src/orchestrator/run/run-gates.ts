@@ -14,6 +14,7 @@ import {
 import { formatArtifactCheck, formatFeatureValidation } from '../formatters.ts';
 import { OrchestratorProgressReporter } from '../progress.ts';
 import { wallClockDeadlineMs } from './run-ending.ts';
+import { emitRunLogLine } from './run-log.ts';
 
 export interface PreRunCheckResult {
 	exitCode: number;
@@ -47,8 +48,7 @@ export async function handlePreRunChecks(
 	if (plan.checks.features) {
 		const result = await deps.store.validateFeatures();
 		const formatted = formatFeatureValidation(plan.projectDir, result);
-		console.log(formatted);
-		await emitPreRunCheckLog(deps, formatted);
+		await emitRunLogLine(deps, formatted);
 		const exitCode = result.valid
 			? orchestratorExitCodes.success
 			: orchestratorExitCodes.validationError;
@@ -62,8 +62,7 @@ export async function handlePreRunChecks(
 	if (plan.checks.artifacts) {
 		const result = await deps.store.checkArtifacts();
 		const formatted = `${formatArtifactCheck(plan.projectDir, result)}\n[INFO] Artifact check JSON: ${result.path}`;
-		console.log(formatted);
-		await emitPreRunCheckLog(deps, formatted);
+		await emitRunLogLine(deps, formatted);
 		const exitCode = result.valid
 			? orchestratorExitCodes.success
 			: orchestratorExitCodes.validationError;
@@ -74,17 +73,6 @@ export async function handlePreRunChecks(
 	}
 
 	return undefined;
-}
-
-// Pre-run checks finish before any backend streams, so without this the web run log stays
-// 0 bytes and a failed check gives the operator nothing to act on (observed as blind
-// re-runs of --check-artifacts). The heartbeat's raw_log writer persists the chunk.
-async function emitPreRunCheckLog(deps: OrchestratorDeps, formatted: string): Promise<void> {
-	await deps.observer?.onAgentEvent?.({
-		chunk: `${formatted}\n`,
-		stream: 'stdout',
-		type: 'raw_log',
-	});
 }
 
 function completePreRunCheck(move: MoveFn, exitCode: number, summary: string): PreRunCheckResult {

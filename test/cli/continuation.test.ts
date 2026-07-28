@@ -68,7 +68,10 @@ describe('determineRunContinuation — flailing', () => {
 		if (result.kind === 'final') {
 			expect(result.stopReason).toBe('flailing');
 			expect(result.move).toBe('complete');
-			expect(result.exitCode).toBe(orchestratorExitCodes.success);
+			// Not success: this code is what the ledger, the heartbeat and the web panel's
+			// `exit_code` column record, and reporting 0 described a guard-stopped run as a
+			// clean one. Worktree runs still merge their work back (see worktree-evidence).
+			expect(result.exitCode).toBe(orchestratorExitCodes.flailing);
 		}
 	});
 

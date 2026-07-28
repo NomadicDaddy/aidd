@@ -293,6 +293,33 @@ describe('worktree-manager', () => {
 		}
 	});
 
+	// The flailing guard fires on the run's LAST iterations; earlier ones may have landed real
+	// commits. Those must survive, exactly as they did when a flailing stop reported exit 0 — the
+	// run now reports 75 so the ledger is honest, and this pins that the honesty stayed free.
+	test('finalizeRunWorktree: a flailing run keeps its work and merges back', async () => {
+		const root = await testTempDir('aidd-wt-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initRepoWithCommit(projectDir);
+			const wt = (await createRunWorktree(projectDir, 'run1', {
+				baseDir: join(root, 'wt'),
+			}))!;
+			await commitInWorktree(wt.dir, 'new.txt', 'from worktree\n');
+
+			const finalization = await finalizeRunWorktree({
+				exitCode: orchestratorExitCodes.flailing,
+				projectDir,
+				session: emptySession(),
+				worktree: wt,
+			});
+			expect(finalization.overrideExitCode).toBeUndefined();
+			expect(finalization.mergeStatus).toBe('merged');
+			expect(existsSync(join(projectDir, 'new.txt'))).toBe(true);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
 	// Build a project + worktree whose branches both modify file.txt, so merge-back conflicts.
 	async function makeConflict(root: string) {
 		const projectDir = join(root, 'project');

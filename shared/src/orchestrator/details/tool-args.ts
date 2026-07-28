@@ -34,3 +34,15 @@ export function commandFromArgs(args: unknown): string | undefined {
 	}
 	return undefined;
 }
+
+// The per-call working directory, for the shell tools that accept one. Backends that confine every
+// command to the run's own cwd report nothing here, so callers must treat it as optional.
+export function cwdFromArgs(args: unknown): string | undefined {
+	if (typeof args !== 'object' || args === null) return undefined;
+	const record = args as Record<string, unknown>;
+	for (const key of ['cwd', 'workdir', 'working_directory', 'workingDirectory', 'directory']) {
+		const value = record[key];
+		if (typeof value === 'string' && value.length > 0) return value;
+	}
+	return undefined;
+}

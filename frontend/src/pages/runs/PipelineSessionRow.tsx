@@ -20,6 +20,11 @@ import {
 	sessionStatusTone,
 	sessionStopUnavailableReason,
 } from './pipelineSessionStatus.ts';
+import {
+	containerHoverClass,
+	containerSelectableClass,
+	containerSelectionHandler,
+} from './runRowUtils.ts';
 import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
 
 interface PipelineSessionRowProps {
@@ -163,14 +168,16 @@ function SessionMeta({
 const selectedRowClass = 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40';
 
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
-	const { now, selected, session } = props;
+	const { now, onSelect, selected, session } = props;
 	return (
 		<tr
 			aria-selected={selected}
 			className={cn(
 				'border-b transition-colors last:border-0',
-				selected && selectedRowClass,
-			)}>
+				containerSelectableClass,
+				selected ? selectedRowClass : containerHoverClass,
+			)}
+			onClick={containerSelectionHandler(() => selectSession(onSelect, session))}>
 			<td className="py-3 pr-3 pl-4">
 				<SessionTitle {...props} />
 				<div className="mt-1 text-xs text-neutral-500">{formatDate(session.startedAt)}</div>
@@ -205,11 +212,16 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 }
 
 export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
-	const { now, selected, session } = props;
+	const { now, onSelect, selected, session } = props;
 	return (
 		<div
 			aria-selected={selected}
-			className={cn('px-4 py-3', selected && selectedRowClass)}
+			className={cn(
+				'px-4 py-3 transition-colors',
+				containerSelectableClass,
+				selected ? selectedRowClass : containerHoverClass,
+			)}
+			onClick={containerSelectionHandler(() => selectSession(onSelect, session))}
 			role="listitem">
 			<SessionTitle {...props} />
 			<SessionMeta projectRouteId={props.projectRouteId} session={session} />

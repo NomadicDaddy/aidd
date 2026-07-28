@@ -15,7 +15,14 @@ import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
 import { RunLivenessIndicator } from './RunLivenessIndicator.tsx';
-import { runRuntimeDetail, runSourceLabel } from './runRowUtils.ts';
+import {
+	consoleSelectionLabel,
+	containerHoverClass,
+	containerSelectableClass,
+	containerSelectionHandler,
+	runRuntimeDetail,
+	runSourceLabel,
+} from './runRowUtils.ts';
 import {
 	classifyRunRecord,
 	continuationTitle,
@@ -88,14 +95,17 @@ export function ActiveRunMobileCard({
 			aria-selected={selected}
 			className={cn(
 				'flex flex-col gap-2 px-4 py-3 transition-colors',
-				selected &&
-					'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
+				containerSelectableClass,
+				selected
+					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
+					: containerHoverClass,
 			)}
+			onClick={containerSelectionHandler(selectRun)}
 			role="listitem">
 			<div className="flex min-w-0 items-center gap-2">
 				<ConsoleSelectionButton
 					className="min-w-0 shrink truncate capitalize"
-					label={`Show ${run.projectName} run in Live Console`}
+					label={consoleSelectionLabel(run)}
 					onSelect={selectRun}
 					selected={selected}>
 					{run.mode ?? 'Run'}

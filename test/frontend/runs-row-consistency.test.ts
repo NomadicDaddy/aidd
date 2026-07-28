@@ -3,6 +3,13 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { sessionStatusLabel } from '../../frontend/src/pages/runs/pipelineSessionStatus.ts';
+import { consoleSelectionLabel } from '../../frontend/src/pages/runs/runRowUtils.ts';
+
+const EXECUTION_CONTAINERS = [
+	'ActiveRunRow.tsx',
+	'ActiveRunMobileCard.tsx',
+	'PipelineSessionRow.tsx',
+];
 
 const FRONTEND_SRC = join(import.meta.dir, '..', '..', 'frontend', 'src');
 
@@ -67,13 +74,42 @@ describe('Runs row consistency', () => {
 		for (const file of ['ActiveRunRow.tsx', 'ActiveRunMobileCard.tsx']) {
 			const source = await readRunSource(file);
 			expect(source).toContain('<ConsoleSelectionButton');
-			expect(source).toContain('label={`Show ${run.projectName} run in Live Console`}');
+			expect(source).toContain('label={consoleSelectionLabel(run)}');
 			expect(source).toContain('selected={selected}');
 			expect(source).toContain('<ProjectDetailLink');
 			expect(source).toContain('<Badge tone="neutral">Run</Badge>');
 			expect(source).not.toContain('tabIndex={0}');
 			expect(source).not.toContain('onKeyDown=');
 		}
+	});
+
+	test('execution containers select on pointer click without becoming keyboard controls', async () => {
+		const utils = await readRunSource('runRowUtils.ts');
+
+		// The guard is what keeps the row a convenience target rather than a rival control:
+		// clicks on a nested link or button belong to that control.
+		expect(utils).toContain("closest('a,button')");
+		expect(utils).toContain('export function containerSelectionHandler');
+
+		for (const file of EXECUTION_CONTAINERS) {
+			const source = await readRunSource(file);
+			expect(source).toContain('onClick={containerSelectionHandler(');
+			expect(source).toContain('containerSelectableClass');
+			// Pointer-only: no second tab stop, no synthesised Enter/Space on the container.
+			expect(source).not.toContain('tabIndex={0}');
+			expect(source).not.toContain('onKeyDown=');
+		}
+	});
+
+	test('console selection label contains the visible button text', () => {
+		// WCAG 2.5.3 Label in Name: the button renders the run mode, so the accessible name has
+		// to carry that same word for speech input to reach it.
+		expect(consoleSelectionLabel({ mode: 'coding', projectName: 'Project One' })).toBe(
+			'Show coding for Project One in Live Console',
+		);
+		expect(consoleSelectionLabel({ mode: null, projectName: 'Project One' })).toBe(
+			'Show Run for Project One in Live Console',
+		);
 	});
 
 	test('execution selection uses a pressed native button with visible keyboard focus', async () => {

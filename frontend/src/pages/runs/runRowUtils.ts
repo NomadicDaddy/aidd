@@ -1,6 +1,25 @@
+import type { MouseEvent } from 'react';
+
 import type { RunRecord } from '../../api/types.ts';
 
 export type RunLiveness = 'idle' | 'live' | 'stalled' | 'unknown';
+
+// Split so a selected container keeps the pointer affordance without a hover tint fighting its
+// selected background.
+export const containerSelectableClass = 'cursor-pointer';
+export const containerHoverClass = 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50';
+
+// Pointer-only convenience target. The row/card is not focusable and emulates no keys, so it adds
+// neither a tab stop nor a second accessible control — ConsoleSelectionButton stays the semantic
+// selection control. Clicks landing on a nested link or button belong to that control instead.
+export function containerSelectionHandler(
+	onSelect: () => void,
+): (event: MouseEvent<HTMLElement>) => void {
+	return (event) => {
+		if ((event.target as HTMLElement).closest('a,button')) return;
+		onSelect();
+	};
+}
 
 // Thresholds tuned to the 15s active-runs poll (ACTIVE_RUNS_POLL_MS): a healthy run's heartbeat
 // age never exceeds roughly one poll interval plus jitter between refreshes, so 'live' must sit
@@ -37,6 +56,18 @@ export function formatHeartbeatAge(ms: number): string {
 
 export function runRuntimeDetail(run: RunRecord): string {
 	return run.mode ? `mode ${run.mode}` : '—';
+}
+
+// The selection button shows the run mode, so WCAG 2.5.3 (Label in Name) requires that same text
+// inside the accessible name — a name built only from the project name would not match what a
+// speech-input user reads on screen. Shared so desktop rows and mobile cards cannot drift.
+// `mode` is widened past RunRecord's non-nullable field to match the `?? 'Run'` fallback the rows
+// already carry for payloads from a backend that predates the field.
+export function consoleSelectionLabel(run: {
+	mode: null | RunRecord['mode'];
+	projectName: string;
+}): string {
+	return `Show ${run.mode ?? 'Run'} for ${run.projectName} in Live Console`;
 }
 
 export function runSourceLabel(run: Pick<RunRecord, 'source'>): string {

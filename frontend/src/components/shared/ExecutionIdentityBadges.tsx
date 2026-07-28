@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { default as SquareTerminal } from 'lucide-react/dist/esm/icons/square-terminal';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import {
@@ -27,6 +27,12 @@ function itemFieldLabel(kind: ExecutionIdentityKind): string {
 	return 'Reasoning';
 }
 
+// Truncation is measured, but the result MUST NOT re-render this span. Wrapping the measured
+// element in <Tooltip> reparents it into a `relative inline-flex` span, which changes its
+// clientWidth, which flips the measurement back, which unwraps it again — an unbounded update
+// loop (React error #185, "Maximum update depth exceeded") that took the whole Runs page down.
+// Setting the native title imperatively keeps the measured box independent of the outcome, so the
+// "reveal the full value only when it is actually clipped" behaviour cannot feed back on itself.
 function OverflowIdentityValue({
 	className,
 	label,
@@ -37,15 +43,19 @@ function OverflowIdentityValue({
 	withTooltip: boolean;
 }) {
 	const observerRef = useRef<null | ResizeObserver>(null);
-	const [overflowing, setOverflowing] = useState(false);
 
 	const setElement = useCallback(
 		(element: HTMLSpanElement | null) => {
 			observerRef.current?.disconnect();
 			observerRef.current = null;
-			if (!element || !withTooltip || label.length === 0) return;
+			if (!element) return;
+			if (!withTooltip || label.length === 0) {
+				element.removeAttribute('title');
+				return;
+			}
 			const measure = () => {
-				setOverflowing(element.scrollWidth > element.clientWidth);
+				if (element.scrollWidth > element.clientWidth) element.title = label;
+				else element.removeAttribute('title');
 			};
 			measure();
 			const observer = new ResizeObserver(measure);
@@ -55,12 +65,11 @@ function OverflowIdentityValue({
 		[label, withTooltip],
 	);
 
-	const value = (
+	return (
 		<span className={className} ref={setElement}>
 			{label}
 		</span>
 	);
-	return withTooltip && overflowing ? <Tooltip content={label}>{value}</Tooltip> : value;
 }
 
 export function ExecutionIdentityDetails({

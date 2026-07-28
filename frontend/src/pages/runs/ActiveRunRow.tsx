@@ -15,7 +15,13 @@ import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
 import { RunLivenessIndicator } from './RunLivenessIndicator.tsx';
-import { runSourceLabel } from './runRowUtils.ts';
+import {
+	consoleSelectionLabel,
+	containerHoverClass,
+	containerSelectableClass,
+	containerSelectionHandler,
+	runSourceLabel,
+} from './runRowUtils.ts';
 import {
 	classifyRunRecord,
 	continuationTitle,
@@ -80,14 +86,17 @@ export function ActiveRunRow({
 			aria-selected={selected}
 			className={cn(
 				'border-b transition-colors last:border-0',
-				selected &&
-					'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
-			)}>
+				containerSelectableClass,
+				selected
+					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
+					: containerHoverClass,
+			)}
+			onClick={containerSelectionHandler(selectRun)}>
 			<td className="py-3 pr-3 pl-4">
 				<div className="flex flex-wrap items-center gap-2">
 					<ConsoleSelectionButton
 						className="capitalize"
-						label={`Show ${run.projectName} run in Live Console`}
+						label={consoleSelectionLabel(run)}
 						onSelect={selectRun}
 						selected={selected}>
 						{run.mode ?? 'Run'}

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { executionIdentityItems } from '../../frontend/src/lib/executionIdentity.ts';
@@ -75,6 +76,26 @@ describe('execution identity badge data', () => {
 });
 
 describe('ExecutionIdentityBadges', () => {
+	test('truncation measurement never re-renders the measured span', () => {
+		const source = readFileSync(
+			resolve(
+				import.meta.dir,
+				'../../frontend/src/components/shared/ExecutionIdentityBadges.tsx',
+			),
+			'utf8',
+		);
+		const start = source.indexOf('function OverflowIdentityValue');
+		const end = source.indexOf('export function ExecutionIdentityDetails');
+		expect(start).toBeGreaterThan(-1);
+		const overflowValue = source.slice(start, end);
+
+		expect(overflowValue).toContain('element.scrollWidth > element.clientWidth');
+		// Re-rendering on the measurement reparents the span into Tooltip's `relative inline-flex`
+		// wrapper, which changes clientWidth, which flips the measurement back — React #185.
+		expect(overflowValue).not.toContain('useState');
+		expect(overflowValue).not.toContain('<Tooltip');
+	});
+
 	test('renders the requested direct identity at the component boundary', () => {
 		const html = renderExecutionIdentity({
 			backend: 'direct',

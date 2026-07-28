@@ -161,11 +161,54 @@ export function validateFeatureCollection(features: Feature[]): FeatureCollectio
 		});
 	}
 
+	for (const feature of features) {
+		const count = countLiteralNewlines(feature);
+		if (count === 0) continue;
+		warnings.push({
+			id: feature.directory ?? feature.id ?? 'unknown',
+			message:
+				`Text contains ${count} literal \\n where a newline was meant (JSON double-escape); ` +
+				'numbered criteria render as one unbroken line',
+		});
+	}
+
 	const edges = validateDependencyEdges(features);
 	issues.push(...edges.issues);
 	warnings.push(...edges.warnings);
 
 	return { issues, warnings };
+}
+
+// A literal backslash-n written where a real newline belonged — the value was escaped twice ("\\n"
+// emitted for "\n") on its way into the JSON. Nothing else catches this: the file still parses, the
+// field is still a valid string, and --check-features reports it clean. It only surfaces when a
+// human reads the spec and finds every numbered criterion run together on one line.
+//
+// Matched only where what follows looks like the START OF A NEW LINE: an optional indent, then a
+// numbered item ("2."), a sentence, a heading, a bullet, another separator, or end of text. Plenty
+// of specs legitimately *describe* the escape rather than use it — "renders \n, \r and \t", "so
+// `\n` characters wrap", the HMAC canonical string `timestamp\nmethod\npath\nbody`, the Windows
+// path `.aidd\notes.md`. Those are followed by a backtick, comma, slash, paren or lowercase word,
+// and are deliberately left alone: a false positive here sends someone to "repair" correct content.
+//
+// The cost is undercounting separators inside an indented code block (the next line starts
+// lowercase). That is cheap — such a record always carries ordinary numbered separators too, so it
+// is still named. Measured on the 1325-occurrence corpus that motivated this check: identical
+// feature-level recall (79/79) against a looser rule, with six fewer false positives.
+const LITERAL_NEWLINE = /\\n(?=[ \t]*(?:\\n|[0-9A-Z#*]|[-+][ \t]|$))/g;
+
+function countLiteralNewlines(feature: Feature): number {
+	const texts: string[] = [];
+	for (const field of [feature.title, feature.description, feature.spec, feature.notes]) {
+		if (typeof field === 'string') texts.push(field);
+		else if (Array.isArray(field))
+			for (const entry of field) {
+				if (typeof entry === 'string') texts.push(entry);
+			}
+	}
+	let count = 0;
+	for (const text of texts) count += (text.match(LITERAL_NEWLINE) ?? []).length;
+	return count;
 }
 
 // Edge-level integrity for the dependency DAG. Both defects here are invisible at runtime: the

@@ -179,6 +179,83 @@ describe('findDependencyCycles', () => {
 	});
 });
 
+describe('validateFeatureCollection — literal \\n detection', () => {
+	// The defect is invisible to every other check: the file parses, the field is a valid string,
+	// and the spec silently renders as one unbroken line instead of numbered criteria.
+	const LITERAL = String.raw`1. First step\n2. Second step\n\nHEADING follows`;
+
+	test('flags a spec whose separators were double-escaped', () => {
+		const result = validateFeatureCollection([feature({ id: 'api', spec: LITERAL })]);
+		expect(result.issues).toEqual([]);
+		const warning = result.warnings.find((w) => w.message.includes('literal'));
+		expect(warning?.id).toBe('api');
+		// Three sequences: before "2.", then both halves of the blank-line pair.
+		expect(warning?.message).toContain('3 literal');
+	});
+
+	test('never hard-fails, so a legacy backlog still validates', () => {
+		const result = validateFeatureCollection([feature({ id: 'api', spec: LITERAL })]);
+		expect(result.issues).toEqual([]);
+	});
+
+	test('exempts a genuine escape describing a real delimiter or path', () => {
+		// Both are content, not layout: the HMAC canonical string and a Windows path (the latter
+		// taken from aidd's own new-subtab-notes-free-form-persistent record).
+		const result = validateFeatureCollection([
+			feature({
+				id: 'api',
+				notes: [String.raw`Sign over timestamp\nmethod\npath\nbody`],
+				spec: String.raw`Reject a stored path such as .aidd\notes.md`,
+			}),
+		]);
+		expect(result.warnings.filter((w) => w.message.includes('literal'))).toEqual([]);
+	});
+
+	test('exempts a spec that describes the escape instead of using it', () => {
+		// Real records from the console-escaping work: the \n is the subject of the sentence, not a
+		// separator. Flagging these sends someone to "repair" correct content.
+		const result = validateFeatureCollection([
+			feature({
+				description: String.raw`the path was encoded as \\n but the raw newline leaked`,
+				id: 'api',
+				notes: [String.raw`escapes newline/CR/tab as \n/\r/\t and other C0 controls`],
+				spec: String.raw`Render newline, CR and tab as the visible sequences \n, \r, and \t`,
+			}),
+		]);
+		expect(result.warnings.filter((w) => w.message.includes('literal'))).toEqual([]);
+	});
+
+	test('flags an indented bullet, which is a separator despite the leading whitespace', () => {
+		const result = validateFeatureCollection([
+			feature({ id: 'api', spec: String.raw`Edit the panel:\n   - Update the React import` }),
+		]);
+		expect(result.warnings.find((w) => w.message.includes('literal'))?.message).toContain(
+			'1 literal',
+		);
+	});
+
+	test('says nothing about correctly written text', () => {
+		const result = validateFeatureCollection([
+			feature({ id: 'api', spec: '1. First step\n2. Second step' }),
+		]);
+		expect(result.warnings.filter((w) => w.message.includes('literal'))).toEqual([]);
+	});
+
+	test('counts across title, description, spec and notes', () => {
+		const result = validateFeatureCollection([
+			feature({
+				description: String.raw`One\n2. two`,
+				id: 'api',
+				notes: String.raw`Three\n4. four`,
+				spec: String.raw`Five\n6. six`,
+			}),
+		]);
+		expect(result.warnings.find((w) => w.message.includes('literal'))?.message).toContain(
+			'3 literal',
+		);
+	});
+});
+
 describe('validateFeatureCollection — dependency edges', () => {
 	test('a dangling ref on unfinished work is a hard issue', () => {
 		const result = validateFeatureCollection([feature({ dependencies: ['ghost'], id: 'api' })]);

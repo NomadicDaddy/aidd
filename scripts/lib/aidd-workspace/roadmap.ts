@@ -65,7 +65,9 @@ function buildMilestoneSummaries(
 
 function computeRoadmapChange(plan: RoadmapFeaturePlan): RoadmapChangePlan {
 	const priorityMatches = Number(plan.feature.priority) === plan.priority;
-	const depsMatch = dependenciesMatch(plan.feature.dependencies, plan.dependencies);
+	const depsMatch =
+		plan.dependencies === undefined ||
+		dependenciesMatch(plan.feature.dependencies, plan.dependencies);
 	return {
 		...plan,
 		changed: !priorityMatches || !depsMatch,
@@ -118,19 +120,23 @@ export async function applyRoadmap(
 		}
 
 		const feature = await readJsonObject(filePath);
-		const dependencies: string[] = [];
-		for (const dependencyName of readDependencyNames(config.dependencies)) {
-			const dependencyId = lookup.get(dependencyName);
-			if (dependencyId === undefined) {
-				warnings.push(
-					`Dependency '${dependencyName}' has no matching feature directory; skipping`,
-				);
-				continue;
+		const dependencyPlan: Pick<RoadmapFeaturePlan, 'dependencies'> = {};
+		if (Object.hasOwn(config, 'dependencies')) {
+			const dependencies: string[] = [];
+			for (const dependencyName of readDependencyNames(config.dependencies)) {
+				const dependencyId = lookup.get(dependencyName);
+				if (dependencyId === undefined) {
+					warnings.push(
+						`Dependency '${dependencyName}' has no matching feature directory; skipping`,
+					);
+					continue;
+				}
+				dependencies.push(dependencyId);
 			}
-			dependencies.push(dependencyId);
+			dependencyPlan.dependencies = dependencies;
 		}
 		plans.push({
-			dependencies,
+			...dependencyPlan,
 			dirName,
 			feature,
 			filePath,
@@ -141,6 +147,8 @@ export async function applyRoadmap(
 	if (errors.length > 0) {
 		return {
 			appName: basename(resolvedProjectDir),
+			dependenciesPreserved: 0,
+			dependenciesWritten: 0,
 			dryRun: options.dryRun === true,
 			errors,
 			milestones: buildMilestoneSummaries(milestones, roadmapFeatures),
@@ -161,7 +169,7 @@ export async function applyRoadmap(
 		for (const plan of changed) {
 			const nextFeature = {
 				...plan.feature,
-				dependencies: plan.dependencies,
+				...(plan.dependencies === undefined ? {} : { dependencies: plan.dependencies }),
 				priority: plan.priority,
 				updatedAt,
 			};
@@ -172,6 +180,8 @@ export async function applyRoadmap(
 
 	return {
 		appName: basename(resolvedProjectDir),
+		dependenciesPreserved: plans.filter((plan) => plan.dependencies === undefined).length,
+		dependenciesWritten: plans.filter((plan) => plan.dependencies !== undefined).length,
 		dryRun,
 		errors,
 		milestones: buildMilestoneSummaries(milestones, roadmapFeatures),

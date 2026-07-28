@@ -101,6 +101,8 @@ function printRoadmapApplySummary(summary: RoadmapApplySummary): void {
 	console.log(`  Unchanged: ${summary.skipped}`);
 	console.log(`  Missing:   ${summary.missing}`);
 	console.log(`  Total:     ${summary.total}`);
+	console.log(`  Dependencies written:   ${summary.dependenciesWritten}`);
+	console.log(`  Dependencies preserved: ${summary.dependenciesPreserved}`);
 	console.log('');
 	for (const milestone of summary.milestones) {
 		const description =

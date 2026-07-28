@@ -45,6 +45,8 @@ export interface RoadmapApplyOptions {
 
 export interface RoadmapApplySummary {
 	appName: string;
+	dependenciesPreserved: number;
+	dependenciesWritten: number;
 	dryRun: boolean;
 	errors: string[];
 	milestones: RoadmapMilestoneSummary[];
@@ -64,7 +66,7 @@ export interface RoadmapMilestoneSummary {
 }
 
 export interface RoadmapFeaturePlan {
-	dependencies: string[];
+	dependencies?: string[];
 	dirName: string;
 	feature: Record<string, unknown>;
 	filePath: string;

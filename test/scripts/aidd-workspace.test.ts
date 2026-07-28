@@ -246,6 +246,84 @@ describe('roadmap apply', () => {
 		});
 	});
 
+	test('preserves omitted dependencies while applying explicit dependency lists', async () => {
+		const root = await tempRoot('roadmap-dependency-intent');
+		const projectDir = join(root, 'demo');
+		await writeFeature(projectDir, 'feature-base');
+		await writeFeature(projectDir, 'feature-preserved', {
+			dependencies: ['feature-base'],
+			priority: 1,
+			updatedAt: '2026-05-01T00:00:00.000Z',
+		});
+		await writeFeature(projectDir, 'feature-cleared', {
+			dependencies: ['feature-base'],
+			priority: 1,
+		});
+		await writeFeature(projectDir, 'feature-replaced', {
+			dependencies: [],
+			priority: 1,
+		});
+		await writeJson(join(projectDir, '.aidd', 'roadmap.json'), {
+			features: {
+				'feature-cleared': { dependencies: [], milestone: 'MVP' },
+				'feature-preserved': { milestone: 'MVP' },
+				'feature-replaced': {
+					dependencies: ['feature-base', 'missing-feature'],
+					milestone: 'MVP',
+				},
+			},
+			milestones: { MVP: { priority: 1 } },
+		});
+
+		const dryRun = await applyRoadmap(projectDir, { dryRun: true });
+		const applied = await applyRoadmap(projectDir, {
+			now: new Date('2026-05-22T12:34:56.789Z'),
+		});
+		const preserved = await readFeature(projectDir, 'feature-preserved');
+		const cleared = await readFeature(projectDir, 'feature-cleared');
+		const replaced = await readFeature(projectDir, 'feature-replaced');
+		const cliResult = await runAiddTools([
+			'roadmap:apply',
+			'--project-dir',
+			projectDir,
+			'--dry-run',
+		]);
+
+		expect(dryRun).toMatchObject({
+			dependenciesPreserved: 1,
+			dependenciesWritten: 2,
+			skipped: 1,
+			updated: 2,
+		});
+		expect(applied).toMatchObject({
+			dependenciesPreserved: 1,
+			dependenciesWritten: 2,
+			skipped: 1,
+			updated: 2,
+		});
+		expect(applied.warnings).toEqual([
+			"Dependency 'missing-feature' has no matching feature directory; skipping",
+		]);
+		expect(preserved).toMatchObject({
+			dependencies: ['feature-base'],
+			priority: 1,
+			updatedAt: '2026-05-01T00:00:00.000Z',
+		});
+		expect(cleared).toMatchObject({
+			dependencies: [],
+			priority: 1,
+			updatedAt: '2026-05-22T12:34:56.000Z',
+		});
+		expect(replaced).toMatchObject({
+			dependencies: ['feature-base'],
+			priority: 1,
+			updatedAt: '2026-05-22T12:34:56.000Z',
+		});
+		expect(cliResult.exitCode).toBe(0);
+		expect(cliResult.stdout).toContain('Dependencies written:   2');
+		expect(cliResult.stdout).toContain('Dependencies preserved: 1');
+	});
+
 	test('warns and skips missing dependency targets', async () => {
 		const root = await tempRoot('roadmap-deps');
 		const projectDir = join(root, 'demo');

@@ -31,7 +31,6 @@ Launching a recipe creates a pipeline session. A session that completes some ste
 | `generate-testing-scenarios`                | generate testing scenarios                                                   | 1     | application                           |
 | `interview`                                 | interview                                                                    | 9     | application                           |
 | `interview-postq`                           | interview                                                                    | 8     | application                           |
-| `interview-postq-resume`                    | interview resume                                                             | 6     | application                           |
 | `new-app-from-idea`                         | new-app-from-idea                                                            | 8     | application, stopBeforeImplementation |
 | `project-intake`                            | project-intake                                                               | 9     | application                           |
 | `project-reintake`                          | project-reintake                                                             | 2     | application                           |
@@ -293,23 +292,6 @@ Review the responses, convert them into remediations, and summarize the resultin
 6. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims,...)
 7. `aidd-cli` - Validate completions (validate: true)
 8. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
-
-### interview-postq-resume
-
-Resume the post-question interview workflow at the response-to-feature conversion, for a session whose interview and response review already completed.
-
-- **Name:** interview resume
-- **Parameters:** application
-- **Steps:** 6
-
-1. `skill` - Convert responses to features (args: .aidd/responses {application}; skillId: doc2feature)
-2. `aidd-cli` - Review remediation features (maxIterations: 1; prompt: Review and assess the remediation features created from the interview responses for {application}. Create or update {application}/.aidd/remediation-review.md with your findings, i...)
-3. `skill` - Review features (args: {application}; skillId: feature-review)
-4. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Generate a consolidated list of the assertions established in {application}. Create or update {application}/.aidd/assertions.md with a clear, deduplicated checklist of the claims,...)
-5. `aidd-cli` - Validate completions (validate: true)
-6. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
-
-This is `interview-postq` with its first two steps (the interview itself and the response review) removed, for restarting a pipeline that died at or after the `doc2feature` conversion. The `doc2feature` step applies changes, so the target worktree must be clean before launch — an uncommitted `.aidd/responses/` tree is what blocks it.
 
 ### new-app-from-idea
 

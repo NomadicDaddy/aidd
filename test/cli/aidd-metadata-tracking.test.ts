@@ -62,4 +62,24 @@ describe('renderLaunchContext', () => {
 		expect(renderLaunchContext({})).toBeUndefined();
 		expect(renderLaunchContext({ aiddMetadataUntracked: false })).toBeUndefined();
 	});
+
+	// A flat "do not start a server" read as a veto on the project's own gates: a fleet release
+	// refused to run its release script — which rebuilds and restarts the app as part of its own
+	// run — and parked the whole pipeline citing this block. Both the live and unreachable
+	// variants must keep saying that scripted gates are still ordinary work, or the ban re-widens
+	// the next time someone tightens the wording.
+	for (const [label, status] of [
+		['live', 'live'],
+		['unreachable', 'unreachable'],
+	] as const) {
+		test(`the ${label} app block bounds how to reach the app, not which scripts may run`, () => {
+			const rendered =
+				renderLaunchContext({ appUrl: 'http://127.0.0.1:3210', appUrlStatus: status }) ??
+				'';
+			expect(rendered).toContain('http://127.0.0.1:3210');
+			expect(rendered).toContain('no other port is a substitute');
+			expect(rendered).toMatch(/test, QC, or release script/);
+			expect(rendered).toMatch(/run it when the task calls\s+for it/);
+		});
+	}
 });

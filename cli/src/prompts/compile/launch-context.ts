@@ -28,12 +28,21 @@ function renderUntrackedMetadata(): string {
 // just the aidd panel, so it must not name aidd's own scripts. The address itself is the point —
 // without it agents fall back to framework defaults (localhost:3000, :5173) and burn the run probing
 // ports the app was never on.
+//
+// The scope sentence is load-bearing. Worded as a flat ban on starting a server, this block read as
+// a veto on the project's OWN gates: a fleet release refused to run its release script (which
+// rebuilds and restarts the app as part of its own run, then stops it) and parked the whole
+// pipeline, citing this text. The prohibition is about how you REACH the app under test, not about
+// which scripts may execute.
 function renderLiveApp(appUrl: string): string {
 	return (
 		`The application under test for this project is at ${appUrl}. Use that address for ` +
 		`live verification (curl / agent-browser). Do **not** probe other ports, hunt for a ` +
-		`listening process, or start another server (\`start\` / \`dev\` / \`start:web\`) — if this ` +
-		`address does not respond, the app is not running, and no other port is a substitute. ` +
+		`listening process, or launch your own instance (\`start\` / \`dev\` / \`start:web\`) to ` +
+		`verify against — if this address does not respond, the app is not running, and no other ` +
+		`port is a substitute. That bounds how you reach this app; it does not veto the project's ` +
+		`own scripted gates. A test, QC, or release script that starts and stops a server as part ` +
+		`of its own run is ordinary work — run it when the task calls for it. ` +
 		`If \`agent-browser\` is unavailable or you cannot reach the app after two honest attempts, ` +
 		`run the headless gates you can (typecheck, lint, tests, the project's QC script) and mark ` +
 		`the feature \`waiting_approval\` with the manual verification steps documented.`
@@ -51,7 +60,9 @@ function renderUnreachableApp(appUrl: string): string {
 		`re-investigate:\n\n` +
 		`- Do **not** start, restart, or rebuild a server to revive it, and do **not** scan other ` +
 		`ports or hunt for a listening process. This app was launched outside your session; no ` +
-		`other port is a substitute.\n` +
+		`other port is a substitute. A test, QC, or release script that manages a server as part ` +
+		`of its own run is not an attempt to revive this address — run it when the task calls ` +
+		`for it.\n` +
 		`- One confirming \`curl\` is the entire budget for re-checking. If it answers now, proceed ` +
 		`normally; if not, stop probing.\n` +
 		`- Prefer work that does not need live UI verification. If the selected feature does need ` +

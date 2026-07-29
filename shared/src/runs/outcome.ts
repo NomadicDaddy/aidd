@@ -65,6 +65,15 @@ export function hasUncommittedSourceMarker(summary: null | string | undefined): 
 // concurrent operator work must stay visible without downgrading a clean run.
 export const unattributedSourceMarker = 'unattributed_source_files:';
 
+// Marker the web heartbeat reaper appends when a hard-killed CLI left a structurally valid
+// AIDD_RESULT in its final assistant message. The row remains failed/heartbeat_stale: this records
+// the agent's unfinalized claim without promoting it to an accepted run result.
+export const unfinalizedAgentResultMarker = 'unfinalized_agent_result:';
+
+export function hasUnfinalizedAgentResultMarker(summary: null | string | undefined): boolean {
+	return (summary ?? '').includes(unfinalizedAgentResultMarker);
+}
+
 const completedWithUncommittedSource: WebRunOutcome = {
 	label: 'Completed · dirty tree',
 	title: 'Run completed but left uncommitted source changes in the working tree at run end; review and commit or discard them.',
@@ -137,6 +146,13 @@ export function decodeExitCode(exitCode: null | number | undefined): null | WebR
 }
 
 export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
+	if (hasUnfinalizedAgentResultMarker(run.summary)) {
+		return {
+			label: 'Result reported · CLI died',
+			title: 'The agent reported a result, but the CLI died before aidd could finalize and verify it.',
+			tone: 'amber',
+		};
+	}
 	if (run.stopReason === 'blocked') {
 		if (hasCompletionMarkerWarning(run.summary)) {
 			return {

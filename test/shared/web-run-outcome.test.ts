@@ -3,6 +3,7 @@ import {
 	classifyWebRun,
 	classifyWebRunTelemetryBucket,
 	unattributedSourceMarker,
+	unfinalizedAgentResultMarker,
 } from '../../shared/src/runs/outcome.ts';
 
 describe('classifyWebRun', () => {
@@ -31,6 +32,35 @@ describe('classifyWebRun', () => {
 		const outcome = classifyWebRun({ status: 'failed', stopReason: 'blocked', exitCode: 1 });
 		expect(outcome.label).toBe('Blocked: gate');
 		expect(outcome.tone).toBe('red');
+	});
+
+	test('classifies an unfinalized recovered agent result as its own amber outcome', () => {
+		const outcome = classifyWebRun({
+			exitCode: -1,
+			status: 'failed',
+			stopReason: 'heartbeat_stale',
+			summary: `${unfinalizedAgentResultMarker} {"featureId":"demo","status":"completed","passes":true}`,
+		});
+		expect(outcome).toEqual({
+			label: 'Result reported · CLI died',
+			title: 'The agent reported a result, but the CLI died before aidd could finalize and verify it.',
+			tone: 'amber',
+		});
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: -1,
+				status: 'failed',
+				stopReason: 'heartbeat_stale',
+				summary: `${unfinalizedAgentResultMarker} {"passes":true}`,
+			}),
+		).toBe('warnings');
+		expect(
+			classifyWebRun({
+				exitCode: -1,
+				status: 'failed',
+				stopReason: 'partial_success_blocked',
+			}).label,
+		).toBe('Partial success');
 	});
 
 	test('decodes a named orchestrator exit code on exit_error', () => {

@@ -16,6 +16,7 @@ import { webLogger } from '../../logger.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { terminalStatusFromHeartbeat } from './activeRunHeartbeatFile.ts';
 import { asContinuationReason, resolveHeartbeatContinuationValue } from './continuation.ts';
+import { appendRecoveredAgentResult, recoverResultFromRunLog } from './staleResultRecovery.ts';
 import { RECONCILED_EXIT_CODE, TELEMETRY_RUN_SOURCES } from './types.ts';
 
 export async function stopTail(ctx: HeartbeatWatcherContext, runId: string): Promise<void> {
@@ -190,11 +191,19 @@ export async function markStale(
 ): Promise<void> {
 	const completedAt = Date.now();
 	const errorMessage = 'Heartbeat stale; run process appears to be dead.';
+	const recoveredResult = await recoverResultFromRunLog(record.logPath);
+	const staleRecord =
+		recoveredResult === undefined
+			? record
+			: {
+					...record,
+					summary: appendRecoveredAgentResult(record.summary),
+				};
 
 	let outcome: HeartbeatWriteOutcome;
 	try {
 		outcome = await withSqliteRetry(
-			() => ctx.commands.markRunStale({ completedAt, errorMessage, record }),
+			() => ctx.commands.markRunStale({ completedAt, errorMessage, record: staleRecord }),
 			{ label: 'heartbeat.markStale' },
 		);
 	} catch (err) {
@@ -203,7 +212,7 @@ export async function markStale(
 	}
 
 	if (outcome.kind === 'inserted') {
-		broadcastInsertedRun(ctx, record, 'failed', errorMessage);
+		broadcastInsertedRun(ctx, staleRecord, 'failed', errorMessage);
 		await stopTail(ctx, record.id);
 		await rm(activeRunFilePath(record.projectPath, record.id), { force: true }).catch(() => {});
 		return;
@@ -216,7 +225,13 @@ export async function markStale(
 		return;
 	}
 	ctx.hub.broadcast({
-		payload: { error: errorMessage, exitCode: -1, status: 'failed' },
+		payload: {
+			error: errorMessage,
+			exitCode: -1,
+			status: 'failed',
+			stopReason: staleRecord.stopReason ?? 'heartbeat_stale',
+			summary: staleRecord.summary,
+		},
 		runId: record.id,
 		type: 'run_status',
 	});

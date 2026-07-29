@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import { resolve } from 'node:path';
+import { unfinalizedAgentResultMarker } from '../../shared/src/runs/outcome.ts';
 import type { RunRecord } from '../../frontend/src/api/types.ts';
 import {
 	classifyRunRecord,
@@ -45,6 +47,31 @@ function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
 	};
 }
 
+function renderRunRow(run: RunRecord): string {
+	const script = [
+		"import { mock } from 'bun:test';",
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { MemoryRouter } from 'react-router';",
+		"mock.module('./src/hooks/useStopRequested.ts', () => ({ useStopRequested: () => false }));",
+		"const { ActiveRunRow } = await import('./src/pages/runs/ActiveRunRow.tsx');",
+		`const run = ${JSON.stringify(run)};`,
+		'const row = createElement(ActiveRunRow, { continued: false, continuePendingId: undefined, now: 1000, onContinue: () => {}, onKill: () => {}, onSelect: () => {}, onStop: () => {}, run, selected: false });',
+		"const table = createElement('table', null, createElement('tbody', null, row));",
+		'console.log(renderToStaticMarkup(createElement(MemoryRouter, null, table)));',
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) {
+		throw new Error(new TextDecoder().decode(result.stderr));
+	}
+	return new TextDecoder().decode(result.stdout).trim();
+}
+
 describe('DB run outcome classification', () => {
 	test('classifies blocked completion-marker runs as completed with warnings', () => {
 		const outcome = classifyRunRecord(
@@ -88,6 +115,22 @@ describe('DB run outcome classification', () => {
 		);
 		expect(outcome.label).toBe('Blocked: user input');
 		expect(outcome.tone).toBe('amber');
+	});
+
+	test('renders recovered stale results through the shared outcome classifier', () => {
+		const run = makeRun({
+			exitCode: -1,
+			status: 'failed',
+			stopReason: 'heartbeat_stale',
+			summary: `${unfinalizedAgentResultMarker} {"featureId":"demo","status":"completed","passes":true}`,
+		});
+		const outcome = classifyRunRecord(run);
+		expect(outcome.label).toBe('Result reported · CLI died');
+		expect(outcome.title).toContain('CLI died before aidd could finalize');
+		expect(outcome.tone).toBe('amber');
+		expect(renderRunRow(run)).toMatch(
+			/<span[^>]+bg-amber[^>]*>Result reported · CLI died<\/span>/,
+		);
 	});
 
 	test('reveals a newly launched run regardless of prior activity filters', () => {

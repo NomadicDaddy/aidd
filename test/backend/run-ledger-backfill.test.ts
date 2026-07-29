@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
+import { unfinalizedAgentResultMarker } from 'aidd-shared/runs/outcome';
 import { wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { runs } from '../../backend/src/db/schema.ts';
@@ -143,6 +144,47 @@ describe('reconcileRunLedgerDrift', () => {
 			expect(row?.continuationReason).toBe('none');
 			expect(row?.exitCode).toBeNull();
 			// Once evaluated, the row leaves the candidate set: later sweeps are no-ops.
+			expect(await reconcileRunLedgerDrift(db)).toBe(0);
+		} finally {
+			sqlite.close();
+			await rm(projectDir, { force: true, recursive: true });
+		}
+	});
+
+	test('replaces an inferred stale result with a later authoritative ledger entry', async () => {
+		const projectDir = await testTempDir('aidd-backfill-recovered-');
+		const { db, sqlite } = makeDb();
+		try {
+			await seedRun(db, {
+				exitCode: -1,
+				id: 'run-recovered-result',
+				projectPath: projectDir,
+				status: 'failed',
+				stopReason: 'heartbeat_stale',
+				summary: `${unfinalizedAgentResultMarker} {"status":"completed","passes":true}`,
+			});
+			await writeLedgerLine(projectDir, [
+				{
+					durationMs: 4321,
+					exitCode: 0,
+					runId: 'run-recovered-result',
+					stopReason: 'completed',
+					summary: 'coding completed feature-demo',
+				},
+			]);
+
+			expect(await reconcileRunLedgerDrift(db)).toBe(1);
+			const row = (
+				await db.select().from(runs).where(eq(runs.id, 'run-recovered-result'))
+			)[0];
+			expect(row).toMatchObject({
+				durationMs: 4321,
+				exitCode: 0,
+				status: 'failed',
+				stopReason: 'completed',
+				summary: 'coding completed feature-demo',
+			});
+			expect(row?.summary).not.toContain(unfinalizedAgentResultMarker);
 			expect(await reconcileRunLedgerDrift(db)).toBe(0);
 		} finally {
 			sqlite.close();

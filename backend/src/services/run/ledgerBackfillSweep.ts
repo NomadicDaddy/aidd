@@ -1,3 +1,7 @@
+import {
+	hasUnfinalizedAgentResultMarker,
+	unfinalizedAgentResultMarker,
+} from 'aidd-shared/runs/outcome';
 import { and, gte, inArray, isNull, or, sql } from 'drizzle-orm';
 
 import type { WebDatabase } from '../../db/client.ts';
@@ -12,7 +16,6 @@ import { readLedgerTerminalEntries } from './ledgerReconcile.ts';
 import { TERMINAL_STATUSES } from './types.ts';
 
 const SWEEP_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-
 interface SweepCandidate {
 	continuationReason: null | string;
 	mode: string;
@@ -30,13 +33,19 @@ function continuationFillFor(
 	entry: LedgerTerminalEntry | undefined,
 ): null | RunContinuationValue {
 	if (candidate.continuationReason !== null) return null;
+	const entryReplacesRecoveredResult =
+		entry !== undefined && hasUnfinalizedAgentResultMarker(candidate.summary);
 	return evaluateContinuationValue(
 		{
 			mode: candidate.mode,
 			pipelineSessionId: candidate.pipelineSessionId,
 			status: candidate.status,
-			stopReason: candidate.stopReason ?? entry?.stopReason ?? null,
-			summary: candidate.summary ?? entry?.summary ?? null,
+			stopReason: entryReplacesRecoveredResult
+				? entry.stopReason
+				: (candidate.stopReason ?? entry?.stopReason ?? null),
+			summary: entryReplacesRecoveredResult
+				? entry.summary
+				: (candidate.summary ?? entry?.summary ?? null),
 		},
 		entry,
 	);
@@ -53,8 +62,10 @@ function continuationFillFor(
  * Continue affordance converges for historical rows. 'none' is written for ineligible rows —
  * NULL strictly means "not yet evaluated" — which keeps each row a one-time candidate.
  *
- * Each row is repaired with a single atomic COALESCE update scoped to terminal statuses, so
- * a concurrent terminalization can never be overwritten (fill-NULL-only; status untouched).
+ * Each row is repaired with one atomic update scoped to terminal statuses. Ordinary repairs remain
+ * fill-NULL-only. A stale row carrying the inferred unfinalized-result marker is the deliberate
+ * exception: a later ledger entry replaces those inferred terminal facts while status stays
+ * untouched, so authoritative finalization evidence wins without the reaper promoting the row.
  * The exit/stop field repair scans runs from the last 7 days each sweep — older rows either
  * got repaired already or have no ledger line to repair from. The continuation evaluation is
  * NOT windowed: rows terminalized before the continuation column existed are arbitrarily old,
@@ -85,7 +96,11 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 				or(
 					and(
 						gte(runs.startedAt, cutoff),
-						or(isNull(runs.exitCode), isNull(runs.stopReason)),
+						or(
+							isNull(runs.exitCode),
+							isNull(runs.stopReason),
+							sql`instr(${runs.summary}, ${unfinalizedAgentResultMarker}) > 0`,
+						),
 					),
 					isNull(runs.continuationReason),
 				),
@@ -117,6 +132,8 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 			const runId = candidate.id;
 			const entry = ledger.get(runId);
 			const continuationFill = continuationFillFor(candidate, entry);
+			const replacesRecoveredResult =
+				entry !== undefined && hasUnfinalizedAgentResultMarker(candidate.summary);
 			// A continuation evaluation is possible even without a ledger line (row facts alone
 			// decide non-coding and wall-clock cases); the terminal-field fills still need one.
 			if (!entry && continuationFill === null) continue;
@@ -125,6 +142,7 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 			// on every sweep.
 			const fillsSomething =
 				continuationFill !== null ||
+				replacesRecoveredResult ||
 				(entry !== undefined &&
 					((candidate.exitCode === null && entry.exitCode !== null) ||
 						(candidate.stopReason === null && entry.stopReason !== null) ||
@@ -138,15 +156,26 @@ export async function reconcileRunLedgerDrift(db: WebDatabase): Promise<number> 
 							.update(runs)
 							.set({
 								continuationReason: sql`COALESCE(${runs.continuationReason}, ${continuationFill})`,
-								durationMs: sql`COALESCE(${runs.durationMs}, ${entry?.durationMs ?? null})`,
-								exitCode: sql`COALESCE(${runs.exitCode}, ${entry?.exitCode ?? null})`,
-								stopReason: sql`COALESCE(${runs.stopReason}, ${entry?.stopReason ?? null})`,
-								summary: sql`COALESCE(${runs.summary}, ${entry?.summary ?? null})`,
+								durationMs: replacesRecoveredResult
+									? (entry?.durationMs ?? null)
+									: sql`COALESCE(${runs.durationMs}, ${entry?.durationMs ?? null})`,
+								exitCode: replacesRecoveredResult
+									? (entry?.exitCode ?? null)
+									: sql`COALESCE(${runs.exitCode}, ${entry?.exitCode ?? null})`,
+								stopReason: replacesRecoveredResult
+									? (entry?.stopReason ?? null)
+									: sql`COALESCE(${runs.stopReason}, ${entry?.stopReason ?? null})`,
+								summary: replacesRecoveredResult
+									? (entry?.summary ?? null)
+									: sql`COALESCE(${runs.summary}, ${entry?.summary ?? null})`,
 							})
 							.where(
 								and(
 									sql`${runs.id} = ${runId}`,
 									inArray(runs.status, [...TERMINAL_STATUSES]),
+									replacesRecoveredResult
+										? sql`${runs.summary} = ${candidate.summary}`
+										: undefined,
 								),
 							),
 					{ label: 'runs.ledgerDriftBackfill' },

@@ -145,6 +145,7 @@
 			"recipes/ship-changes.json",
 			"recipes/spernakit-bump.json",
 			"recipes/spernakit-dance.json",
+			"recipes/spernakit-dance-resume.json",
 			"recipes/spernakit-propagate.json",
 			"recipes/spernakit-release.json",
 			"recipes/spernakit-replatform-assessment.json",

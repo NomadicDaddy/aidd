@@ -89,6 +89,15 @@ export function MilestonePlanDialog({
 						))}
 					</div>
 				)}
+				{plan.backfills.length > 0 ? (
+					<p className="text-xs text-muted-foreground">
+						{plan.backfills.length} completed feature
+						{plan.backfills.length === 1 ? '' : 's'} will have{' '}
+						<span className="font-mono">shippedVersion</span> backfilled to{' '}
+						<span className="font-mono">{plan.backfills[0]?.shippedVersion}</span> (the
+						app&rsquo;s current version).
+					</p>
+				) : null}
 				{plan.priorityUpdates.length > 0 ? (
 					<p className="text-xs text-muted-foreground">
 						{plan.priorityUpdates.length} feature

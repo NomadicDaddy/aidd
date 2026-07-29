@@ -4,6 +4,7 @@ import type { MilestoneMove, MilestonePlan } from './types.ts';
 
 import { orderedMilestoneNames } from '../roadmap.ts';
 import { repairPlacement } from './placement.ts';
+import { reconcileShippedPlacement } from './version-mapping.ts';
 
 export type MilestoneOperationErrorCode =
 	| 'duplicate_name'
@@ -223,7 +224,29 @@ function assertKnownMilestoneTarget(roadmap: Roadmap, name: string): void {
 	}
 }
 
-/** Dependency-safe re-placement with no milestone change: repairs unmapped features and violations. */
-export function planMilestoneReassign(roadmap: Roadmap, features: Feature[]): MilestonePlan {
-	return repairPlacement(roadmap, features);
+export interface ReassignOptions {
+	/** The target app's package.json version, used to place (and backfill) completed features that
+	 *  never got `shippedVersion` stamped. Null/absent skips backfilling. */
+	appVersion?: null | string;
+}
+
+/**
+ * Dependency-safe re-placement with no milestone change: repairs unmapped features and violations,
+ * and pulls completed features back from milestones ahead of the version they actually shipped in
+ * (never forward — see reconcileShippedPlacement). Only completed features are seeded earlier — the
+ * dependency pass still only pushes later, so a completed feature whose dependency sits in a later
+ * milestone is pushed back (reason `dependency`) rather than the invariant being silently violated;
+ * the conflict stays visible in the plan preview.
+ */
+export function planMilestoneReassign(
+	roadmap: Roadmap,
+	features: Feature[],
+	options: ReassignOptions = {},
+): MilestonePlan {
+	const { backfills, seedMoves } = reconcileShippedPlacement(
+		roadmap,
+		features,
+		options.appVersion ?? null,
+	);
+	return { ...repairPlacement(roadmap, features, seedMoves), backfills };
 }

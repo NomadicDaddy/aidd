@@ -42,6 +42,7 @@ export function repairPlacement(
 	const ordered = orderedMilestoneNames(normalized);
 	if (ordered.length === 0) {
 		return {
+			backfills: [],
 			moves: [],
 			priorityUpdates: [],
 			roadmap: normalized,
@@ -115,6 +116,8 @@ export function repairPlacement(
 	const cycleBound = [...requires.keys()].filter((node) => !placed.has(node)).sort();
 
 	return {
+		// Backfills are not placement's concern — planMilestoneReassign attaches the real ones.
+		backfills: [],
 		moves,
 		priorityUpdates: collectPriorityUpdates(planned, features, finalRank, ordered),
 		roadmap: planned,

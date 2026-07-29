@@ -636,6 +636,105 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(await readFile(roadmapPath, 'utf8')).toBe(before);
 	});
 
+	test('writeFeature re-homes a completed feature into the milestone matching its shipped version', async () => {
+		const store = await makeStore('roadmap-shipped-version');
+		await store.writeRoadmap({
+			milestones: { 'v1.0': { priority: 1 }, 'v2.0': { priority: 2 } },
+			features: {
+				'feature-open': { milestone: 'v2.0' },
+				'feature-shipped': { milestone: 'v2.0' },
+			},
+		});
+		await store.writeFeature({ id: 'feature-open', status: 'backlog', passes: false });
+
+		await store.writeFeature({
+			id: 'feature-shipped',
+			status: 'completed',
+			passes: true,
+			shippedVersion: '1.3.0',
+		});
+
+		const roadmap = JSON.parse(
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
+		) as { features: Record<string, { milestone?: string }> };
+		expect(roadmap.features['feature-shipped']?.milestone).toBe('v1.0');
+		// Priority mirrors the new milestone, same propagation as roadmap:apply.
+		const persisted = JSON.parse(
+			await readFile(
+				join(store.metadataDir, 'features', 'feature-shipped', 'feature.json'),
+				'utf8',
+			),
+		) as { priority?: number };
+		expect(persisted.priority).toBe(1);
+	});
+
+	test('writeFeature places an unmapped completed feature by shipped version, not future backlog', async () => {
+		const store = await makeStore('roadmap-shipped-version-unmapped');
+		await store.writeRoadmap({
+			milestones: { 'v1.0': { priority: 1 }, 'v2.0': { priority: 2 } },
+			features: { 'feature-open': { milestone: 'v2.0' } },
+		});
+		await store.writeFeature({ id: 'feature-open', status: 'backlog', passes: false });
+
+		// No roadmap entry at all: ordinary assignment would favor the future-backlog milestone,
+		// which is exactly the wrong bucket for work that already shipped in 1.3.0.
+		await store.writeFeature({
+			id: 'feature-late-ingest',
+			status: 'completed',
+			passes: true,
+			shippedVersion: '1.3.0',
+		});
+
+		const roadmap = JSON.parse(
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
+		) as { features: Record<string, { milestone?: string }> };
+		expect(roadmap.features['feature-late-ingest']?.milestone).toBe('v1.0');
+	});
+
+	test('writeFeature never moves a completed feature forward out of an earlier milestone', async () => {
+		const store = await makeStore('roadmap-shipped-version-forward');
+		await store.writeRoadmap({
+			milestones: { MVP: { priority: 1 }, 'v1.0': { priority: 2 } },
+			features: {
+				'feature-open': { milestone: 'v1.0' },
+				'feature-original': { milestone: 'MVP' },
+			},
+		});
+		await store.writeFeature({ id: 'feature-open', status: 'backlog', passes: false });
+
+		// Revised in 1.4 but delivered as MVP scope — the mapping stays put.
+		await store.writeFeature({
+			id: 'feature-original',
+			status: 'completed',
+			passes: true,
+			shippedVersion: '1.4.0',
+		});
+
+		const roadmap = JSON.parse(
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
+		) as { features: Record<string, { milestone?: string }> };
+		expect(roadmap.features['feature-original']?.milestone).toBe('MVP');
+	});
+
+	test('writeFeature leaves completed features without a shipped version where they are', async () => {
+		const store = await makeStore('roadmap-shipped-version-absent');
+		await store.writeRoadmap({
+			milestones: { 'v1.0': { priority: 1 }, 'v2.0': { priority: 2 } },
+			features: {
+				'feature-open': { milestone: 'v1.0' },
+				'feature-unstamped': { milestone: 'v2.0' },
+			},
+		});
+		await store.writeFeature({ id: 'feature-open', status: 'backlog', passes: false });
+
+		await store.writeFeature({ id: 'feature-unstamped', status: 'completed', passes: true });
+
+		const roadmap = JSON.parse(
+			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
+		) as { features: Record<string, { milestone?: string }> };
+		expect(roadmap.features['feature-unstamped']?.milestone).toBe('v2.0');
+	});
+
 	test('writeFeature does not create a milestone when roadmap lifecycle is lts', async () => {
 		const store = await makeStore('roadmap-lts');
 		await store.writeRoadmap({

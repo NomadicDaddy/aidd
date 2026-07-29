@@ -172,6 +172,18 @@ common optional `priority`, `spec`, `affectedFiles`, `summary`, `notes`, `create
     `shippedVersion` to the newer version. Revision detail must be specific (what behavior/area
     changed), not a generic "updated".
 
+    **Milestone follows shipped version**: after stamping `shippedVersion` on a completed
+    feature, check its entry in `.aidd/roadmap.json` (`features.<dir>.milestone`). A completed
+    feature belongs in the milestone whose `v<major>.<minor>`-named bound is the greatest one at
+    or below the shipped version (the last such milestone is open-ended upward). Only pull the
+    feature BACK: if its current milestone sits ahead of that target in priority order, rewrite
+    `features.<dir>.milestone` and mirror the new milestone's `priority` into the feature's
+    `priority` field. Never move a feature forward out of an earlier milestone (`shippedVersion`
+    records the latest revision, not original delivery — an MVP feature revised in 1.4 stays in
+    MVP), and leave the mapping untouched when no milestone name parses as `v<major>.<minor>`.
+    The web panel's Milestones tab "Auto-place features" repair applies the same rule as a
+    safety net for anything missed here.
+
 ### Phase 6 - Draft the changelog entry
 
 All prose written in this phase (and any refreshed `description`/`summary`/`spec` prose in Phase 5)

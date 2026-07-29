@@ -29,6 +29,16 @@ interface DefaultsJson {
 	app?: { slug?: unknown };
 }
 
+/**
+ * package.json `version` only — callers that don't need stack detection shouldn't pay for it.
+ * @param projectDir The project root directory.
+ * @returns The declared version, or null when package.json or its version field is absent.
+ */
+export async function readAppVersion(projectDir: string): Promise<null | string> {
+	const pkg = await readJsonOrNull<PackageJson>(join(projectDir, 'package.json'));
+	return typeof pkg?.version === 'string' ? pkg.version : null;
+}
+
 export async function gatherVersionInfo(
 	projectDir: string,
 	stackOptions: DetectProjectStackOptions = {},

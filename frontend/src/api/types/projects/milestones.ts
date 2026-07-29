@@ -3,12 +3,14 @@ import type {
 	MilestoneMove,
 	MilestonePriorityUpdate,
 	MilestoneWarning,
+	ShippedVersionBackfill,
 } from 'aidd-shared/metadata/roadmap-milestones';
 
 export type {
 	MilestoneMove,
 	MilestoneMoveReason,
 	MilestoneWarningCode,
+	ShippedVersionBackfill,
 } from 'aidd-shared/metadata/roadmap-milestones';
 
 export interface ProjectMilestone {
@@ -37,6 +39,8 @@ export interface ProjectMilestonesView {
  */
 export interface ProjectMilestonePlan {
 	applied: boolean;
+	/** Completed features whose missing `shippedVersion` will be stamped with the app's version. */
+	backfills: ShippedVersionBackfill[];
 	moves: MilestoneMove[];
 	priorityUpdates: MilestonePriorityUpdate[];
 	view: ProjectMilestonesView;

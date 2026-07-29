@@ -25,7 +25,9 @@ import type { FeatureContext } from './features.ts';
 
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { HttpError } from '../errors.ts';
+import { readAppVersion } from '../projectMetadata/versionHelpers.ts';
 import { buildMilestonesView, reordersExistingMilestones } from './milestonesView.ts';
+import { syncFeaturePriorities, syncShippedVersions } from './milestoneSync.ts';
 
 export type MilestoneContext = FeatureContext;
 
@@ -107,12 +109,17 @@ async function settle(
 	if (!options.dryRun) {
 		await assertQuiescent(state, milestonePlan, options.hasActiveRuns);
 		await state.store.writeRoadmap(milestonePlan.roadmap);
-		await syncFeaturePriorities(state, milestonePlan);
+		// Backfills before priorities: both rewrite feature.json via re-read, so a priority write
+		// after the backfill preserves it, while the reverse order would also work — the fixed order
+		// just keeps the writes deterministic for the data-movement trace.
+		await syncShippedVersions(state.store, milestonePlan);
+		await syncFeaturePriorities(state.store, milestonePlan);
 		recordDataMovement({
 			category: 'metadata',
 			operation: `milestone.${operation}`,
 			status: 'success',
 			summary: {
+				backfills: milestonePlan.backfills.length,
 				moves: milestonePlan.moves.length,
 				priorityUpdates: milestonePlan.priorityUpdates.length,
 			},
@@ -125,6 +132,7 @@ async function settle(
 	);
 	return {
 		applied: !options.dryRun,
+		backfills: milestonePlan.backfills,
 		moves: milestonePlan.moves,
 		priorityUpdates: milestonePlan.priorityUpdates,
 		view,
@@ -149,6 +157,7 @@ async function assertQuiescent(
 	const disruptive =
 		milestonePlan.moves.length > 0 ||
 		milestonePlan.priorityUpdates.length > 0 ||
+		milestonePlan.backfills.length > 0 ||
 		reordersExistingMilestones(
 			orderedMilestoneNames(state.roadmap),
 			orderedMilestoneNames(milestonePlan.roadmap),
@@ -170,28 +179,6 @@ function applyPriorities(features: Feature[], milestonePlan: MilestonePlan): Fea
 		const priority = updates.get(featureNodeId(feature));
 		return priority === undefined ? feature : { ...feature, priority };
 	});
-}
-
-// feature.json mirrors its milestone's priority (syncFeaturePriority in the store, and
-// roadmap:apply). Milestone edits renumber those tiers, so the mirror is rewritten here — otherwise
-// every feature keeps pointing at its old tier until the next unrelated write repairs it.
-async function syncFeaturePriorities(
-	state: MilestoneState,
-	milestonePlan: MilestonePlan,
-): Promise<void> {
-	if (milestonePlan.priorityUpdates.length === 0) return;
-	for (const update of milestonePlan.priorityUpdates) {
-		// Re-read rather than writing back the snapshot taken at loadState: writeFeature persists the
-		// whole record, so a stale copy would silently revert any other field changed since. Only
-		// `priority` is ours to set here.
-		let feature: Feature;
-		try {
-			feature = await state.store.readFeature(update.featureDirectory);
-		} catch {
-			continue;
-		}
-		await state.store.writeFeature({ ...feature, priority: update.to });
-	}
 }
 
 export async function getMilestones(
@@ -263,8 +250,9 @@ export async function reassignMilestones(
 	hasActiveRuns: HasActiveRuns,
 ): Promise<ProjectMilestonePlanDto> {
 	const state = await loadState(ctx, projectId);
+	const appVersion = await readAppVersion(state.store.projectDir);
 	const built = plan(state, (current) =>
-		planMilestoneReassign(current.roadmap, current.features),
+		planMilestoneReassign(current.roadmap, current.features, { appVersion }),
 	);
 	return settle(state, built, 'reassign', { dryRun: input.dryRun === true, hasActiveRuns });
 }

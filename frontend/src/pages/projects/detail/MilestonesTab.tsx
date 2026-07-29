@@ -143,7 +143,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 						<Button
 							disabled={busy}
 							onClick={() => void start({ kind: 'reassign' })}
-							title="Push every feature to a milestone at or after all of its dependencies">
+							title="Repair placement: push features after their dependencies, pull completed features back to the milestone matching their shipped version, and backfill missing shippedVersion from the app's current version">
 							<Wand2 className="h-4 w-4" />
 							Auto-place features
 						</Button>

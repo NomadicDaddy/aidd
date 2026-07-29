@@ -23,6 +23,7 @@ interface SeedFeature {
 	milestone: string;
 	passes?: boolean;
 	priority?: number;
+	shippedVersion?: string;
 	status?: string;
 }
 
@@ -44,6 +45,7 @@ async function seedProject(features: SeedFeature[], milestones: string[]): Promi
 					...(feature.dependencies ? { dependencies: feature.dependencies } : {}),
 					passes: feature.passes ?? false,
 					priority: feature.priority ?? tier(feature.milestone),
+					...(feature.shippedVersion ? { shippedVersion: feature.shippedVersion } : {}),
 					status: feature.status ?? 'backlog',
 					title: feature.directory,
 				},
@@ -89,6 +91,18 @@ function send(app: ReturnType<typeof createApp>, method: string, path: string, b
 
 async function readRoadmapFile(dir: string): Promise<string> {
 	return readFile(join(dir, '.aidd', 'roadmap.json'), 'utf8');
+}
+
+async function writeAppVersion(dir: string, version: string): Promise<void> {
+	await writeFile(join(dir, 'package.json'), `${JSON.stringify({ name: 'fixture', version })}\n`);
+}
+
+async function readFeatureFile(
+	dir: string,
+	directory: string,
+): Promise<{ notes?: string[]; priority?: number; shippedVersion?: string }> {
+	const raw = await readFile(join(dir, '.aidd', 'features', directory, 'feature.json'), 'utf8');
+	return JSON.parse(raw) as { notes?: string[]; priority?: number; shippedVersion?: string };
 }
 
 async function readPriority(dir: string, directory: string): Promise<number | undefined> {
@@ -356,6 +370,129 @@ describe('POST /:id/milestones/reassign', () => {
 		);
 		const response = await send(createApp(dir, true), 'POST', '/reassign', {});
 		expect(response.status).toBe(409);
+	});
+
+	test('dry run plans shipped-version moves and backfills without touching disk', async () => {
+		const dir = await seedProject(
+			[
+				{
+					directory: 'audit-x-finding',
+					milestone: 'v2.0',
+					passes: true,
+					status: 'completed',
+				},
+				{
+					directory: 'shipped',
+					milestone: 'v2.0',
+					passes: true,
+					shippedVersion: '1.3.0',
+					status: 'completed',
+				},
+			],
+			['MVP', 'v1.0', 'v2.0'],
+		);
+		await writeAppVersion(dir, '1.4.1');
+		const before = await readRoadmapFile(dir);
+
+		const response = await send(createApp(dir), 'POST', '/reassign', { dryRun: true });
+		expect(response.status).toBe(200);
+		const plan = (await response.json()) as ProjectMilestonePlanDto;
+		expect(plan.applied).toBe(false);
+		expect(plan.moves).toEqual([
+			{
+				featureDirectory: 'audit-x-finding',
+				from: 'v2.0',
+				reason: 'shipped-version',
+				to: 'v1.0',
+			},
+			{ featureDirectory: 'shipped', from: 'v2.0', reason: 'shipped-version', to: 'v1.0' },
+		]);
+		expect(plan.backfills).toEqual([
+			{ featureDirectory: 'audit-x-finding', shippedVersion: '1.4.1' },
+		]);
+		expect(await readRoadmapFile(dir)).toBe(before);
+		expect((await readFeatureFile(dir, 'audit-x-finding')).shippedVersion).toBeUndefined();
+	});
+
+	test('apply re-homes by shipped version, stamps backfills, and re-syncs priorities', async () => {
+		const dir = await seedProject(
+			[
+				{
+					directory: 'audit-x-finding',
+					milestone: 'v2.0',
+					passes: true,
+					status: 'completed',
+				},
+				{
+					directory: 'shipped',
+					milestone: 'v2.0',
+					passes: true,
+					shippedVersion: '1.3.0',
+					status: 'completed',
+				},
+			],
+			['MVP', 'v1.0', 'v2.0'],
+		);
+		await writeAppVersion(dir, '1.4.1');
+
+		const response = await send(createApp(dir), 'POST', '/reassign', {});
+		expect(response.status).toBe(200);
+		expect(((await response.json()) as ProjectMilestonePlanDto).applied).toBe(true);
+		const parsed = JSON.parse(await readRoadmapFile(dir)) as {
+			features: Record<string, { milestone: string }>;
+			milestones: Record<string, unknown>;
+		};
+		expect(parsed.features['audit-x-finding']?.milestone).toBe('v1.0');
+		expect(parsed.features.shipped?.milestone).toBe('v1.0');
+		// The now-empty v2.0 milestone survives: it documents planned scope, the repair only re-homes.
+		expect(Object.keys(parsed.milestones)).toEqual(['MVP', 'v1.0', 'v2.0']);
+		const backfilled = await readFeatureFile(dir, 'audit-x-finding');
+		expect(backfilled).toMatchObject({ priority: 2, shippedVersion: '1.4.1' });
+		// A backfill is inferred provenance, not a recorded ship — the dated note must say so
+		// (the shippedVersion field contract pairs every stamp with a revision note).
+		expect(backfilled.notes?.some((note) => note.includes('backfilled'))).toBe(true);
+		const stamped = await readFeatureFile(dir, 'shipped');
+		expect(stamped).toMatchObject({ priority: 2, shippedVersion: '1.3.0' });
+		expect(stamped.notes).toBeUndefined();
+	});
+
+	test('409s mid-run when the only disruption is a shippedVersion backfill', async () => {
+		const dir = await seedProject(
+			[{ directory: 'settled', milestone: 'v1.0', passes: true, status: 'completed' }],
+			['MVP', 'v1.0'],
+		);
+		await writeAppVersion(dir, '1.4.1');
+		const response = await send(createApp(dir, true), 'POST', '/reassign', {});
+		expect(response.status).toBe(409);
+		expect((await readFeatureFile(dir, 'settled')).shippedVersion).toBeUndefined();
+	});
+
+	test('without a package.json version, completed features with versions still re-home', async () => {
+		const dir = await seedProject(
+			[
+				{
+					directory: 'shipped',
+					milestone: 'v2.0',
+					passes: true,
+					shippedVersion: '1.3.0',
+					status: 'completed',
+				},
+				{
+					directory: 'unstamped',
+					milestone: 'v2.0',
+					passes: true,
+					status: 'completed',
+				},
+			],
+			['MVP', 'v1.0', 'v2.0'],
+		);
+		const response = await send(createApp(dir), 'POST', '/reassign', {});
+		expect(response.status).toBe(200);
+		const plan = (await response.json()) as ProjectMilestonePlanDto;
+		expect(plan.backfills).toEqual([]);
+		expect(plan.moves).toEqual([
+			{ featureDirectory: 'shipped', from: 'v2.0', reason: 'shipped-version', to: 'v1.0' },
+		]);
 	});
 });
 

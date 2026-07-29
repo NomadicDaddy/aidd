@@ -17,4 +17,9 @@ export {
 	type MilestonePriorityUpdate,
 	type MilestoneWarning,
 	type MilestoneWarningCode,
+	type ShippedVersionBackfill,
 } from './roadmap-milestones/types.ts';
+export {
+	milestoneForShippedVersion,
+	reconcileShippedPlacement,
+} from './roadmap-milestones/version-mapping.ts';

@@ -18,8 +18,11 @@ export interface CrossMilestoneViolation {
 /**
  * Why a feature moved. `unmapped` covers features with no valid milestone at all — they block every
  * coding run project-wide (`blockReason: 'unmapped_features'`), so any plan repairs them.
+ * `shipped-version` re-homes a completed feature into the milestone matching the version it
+ * actually shipped in (see version-mapping.ts).
  */
-export type MilestoneMoveReason = 'delete-cascade' | 'dependency' | 'rename' | 'unmapped';
+export type MilestoneMoveReason =
+	'delete-cascade' | 'dependency' | 'rename' | 'shipped-version' | 'unmapped';
 
 export interface MilestoneMove {
 	featureDirectory: string;
@@ -48,7 +51,18 @@ export interface MilestoneWarning {
 	featureDirectory: string;
 }
 
+/**
+ * A completed feature that never got `shippedVersion` stamped, to be repaired with the app's
+ * current version. Settling one rewrites feature.json, so appliers must treat backfills as
+ * disruptive the same way they treat priority updates.
+ */
+export interface ShippedVersionBackfill {
+	featureDirectory: string;
+	shippedVersion: string;
+}
+
 export interface MilestonePlan {
+	backfills: ShippedVersionBackfill[];
 	moves: MilestoneMove[];
 	priorityUpdates: MilestonePriorityUpdate[];
 	/** The resulting roadmap, ready to hand to `FileAiddStore.writeRoadmap`. */

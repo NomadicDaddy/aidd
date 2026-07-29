@@ -56,13 +56,19 @@ export function milestonePlanNeedsReview(
 	request: MilestoneRequest,
 ): boolean {
 	if (request.kind === 'delete') return true;
-	return plan.moves.length > 0 || plan.warnings.length > 0 || plan.violations.length > 0;
+	return (
+		plan.moves.length > 0 ||
+		plan.backfills.length > 0 ||
+		plan.warnings.length > 0 ||
+		plan.violations.length > 0
+	);
 }
 
 const moveReasonLabels: Record<MilestoneMoveReason, string> = {
 	'delete-cascade': 'milestone deleted',
 	dependency: 'depends on later work',
 	rename: 'milestone renamed',
+	'shipped-version': 'placed by shipped version',
 	unmapped: 'had no milestone',
 };
 

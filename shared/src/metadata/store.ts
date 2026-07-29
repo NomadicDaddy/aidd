@@ -15,6 +15,11 @@ import {
 import { type IterationRecord } from './iterations.ts';
 import { metadataPath, STOP_FILE } from './paths.ts';
 import {
+	shippedMilestoneOverride,
+	withFeatureMilestone,
+} from './roadmap-milestones/version-mapping.ts';
+import {
+	type AssignmentMilestoneSelection,
 	type Roadmap,
 	roadmapSchema,
 	selectAssignmentMilestone,
@@ -160,20 +165,30 @@ export class FileAiddStore implements AiddStore {
 		const directory = feature.directory ?? feature.id;
 		const existingMilestone = roadmap.features[directory]?.milestone;
 		if (existingMilestone && roadmap.milestones[existingMilestone]) {
+			// Completed features belong in the milestone matching the version they shipped in, not
+			// wherever intake filed them. Store-mediated writes are only a partial net — agents
+			// edit feature.json directly — so the milestone reassign repair is the safety net.
+			const shippedMilestone = shippedMilestoneOverride(roadmap, feature);
+			if (shippedMilestone !== null) {
+				const updatedRoadmap = withFeatureMilestone(roadmap, directory, shippedMilestone);
+				await this.writeRoadmap(updatedRoadmap);
+				await this.syncFeaturePriority(feature, updatedRoadmap, shippedMilestone);
+				return;
+			}
 			await this.syncFeaturePriority(feature, roadmap, existingMilestone);
 			return;
 		}
 		const features = await this.listFeatures({ includeAudit: true });
-		const selection = selectAssignmentMilestone(roadmap, features, directory);
+		// Unmapped/invalid completed features are placed by shipped version too — the ordinary
+		// assignment below favors the future-backlog milestone, which is exactly the wrong bucket
+		// for work that already shipped.
+		const shipped = shippedMilestoneOverride(roadmap, feature);
+		const selection: AssignmentMilestoneSelection =
+			shipped === null
+				? selectAssignmentMilestone(roadmap, features, directory)
+				: { milestone: shipped };
 		const updatedRoadmap: Roadmap = {
-			...roadmap,
-			features: {
-				...roadmap.features,
-				[directory]: {
-					...(roadmap.features[directory] ?? {}),
-					milestone: selection.milestone,
-				},
-			},
+			...withFeatureMilestone(roadmap, directory, selection.milestone),
 			milestones: selection.createdMilestone
 				? { ...roadmap.milestones, [selection.milestone]: selection.createdMilestone }
 				: roadmap.milestones,

@@ -15,6 +15,7 @@ import {
 function plan(overrides: Partial<ProjectMilestonePlan> = {}): ProjectMilestonePlan {
 	return {
 		applied: false,
+		backfills: [],
 		moves: [],
 		priorityUpdates: [],
 		view: {
@@ -60,6 +61,15 @@ describe('milestonePlanNeedsReview', () => {
 			milestonePlanNeedsReview(plan({ moves: [move('alpha', 'v1.0')] }), {
 				kind: 'reassign',
 			}),
+		).toBe(true);
+	});
+
+	test('shippedVersion backfills stop for review — they rewrite feature files', () => {
+		expect(
+			milestonePlanNeedsReview(
+				plan({ backfills: [{ featureDirectory: 'alpha', shippedVersion: '1.4.1' }] }),
+				{ kind: 'reassign' },
+			),
 		).toBe(true);
 	});
 
@@ -117,7 +127,13 @@ describe('request copy', () => {
 	});
 
 	test('every move reason and warning code has operator-facing copy', () => {
-		for (const reason of ['delete-cascade', 'dependency', 'rename', 'unmapped'] as const) {
+		for (const reason of [
+			'delete-cascade',
+			'dependency',
+			'rename',
+			'shipped-version',
+			'unmapped',
+		] as const) {
 			expect(moveReasonLabel(reason)).not.toBe('');
 		}
 		for (const code of [

@@ -127,6 +127,13 @@ export function featureSourceLabel(feature: ProjectFeature): string {
 	return 'Feature backlog';
 }
 
+/** The version a completed feature shipped in; null for incomplete features (a stale
+ *  `shippedVersion` from an earlier completion says nothing about the in-flight revision). */
+export function featureShippedVersion(feature: ProjectFeature): null | string {
+	if (stringValue(feature, 'status') !== 'completed') return null;
+	return stringValue(feature, 'shippedVersion') || null;
+}
+
 export function sourceLabelCategory(label: string): SourceCategory {
 	if (label === 'Remediation') return 'remediation';
 	if (label.startsWith('Audit:')) return 'audit';

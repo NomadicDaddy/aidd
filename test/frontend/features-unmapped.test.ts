@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { ProjectFeature, ProjectRoadmapSummary } from '../../frontend/src/api/types.ts';
 import {
 	featureMatchesFilters,
+	featureShippedVersion,
 	UNASSIGNED_MILESTONE,
 	unmappedRoadmapCallout,
 	withUnassignedMilestoneFilter,
@@ -42,6 +43,19 @@ describe('unmappedRoadmapCallout', () => {
 		);
 		expect(gate?.invalid).toEqual([{ featureDirectory: 'feat-a', milestone: 'ghost' }]);
 		expect(gate?.names).toEqual([]);
+	});
+});
+
+describe('featureShippedVersion', () => {
+	test('shows the shipped version only for completed features', () => {
+		expect(
+			featureShippedVersion({ id: 'a', shippedVersion: '1.4.1', status: 'completed' }),
+		).toBe('1.4.1');
+		// A stale stamp from an earlier completion says nothing about the in-flight revision.
+		expect(
+			featureShippedVersion({ id: 'a', shippedVersion: '1.4.1', status: 'in_progress' }),
+		).toBeNull();
+		expect(featureShippedVersion({ id: 'a', status: 'completed' })).toBeNull();
 	});
 });
 

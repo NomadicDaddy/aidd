@@ -6,7 +6,7 @@ import type {
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { FeatureActions, FeatureMilestoneControl } from './FeatureRowControls.tsx';
-import { featureDirectory, featureSourceLabel } from './featuresUtils.ts';
+import { featureDirectory, featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
 import { statusTone, stringValue } from './shared.ts';
 
 export function FeaturesDesktopTable({
@@ -44,13 +44,14 @@ export function FeaturesDesktopTable({
 		<div className="hidden overflow-x-auto md:block">
 			<table aria-label="Project features" className="w-full table-fixed text-left text-sm">
 				<colgroup>
-					<col className="w-[22%]" />
-					<col className="w-[11%]" />
+					<col className="w-[20%]" />
+					<col className="w-[10%]" />
+					<col className="w-[8%]" />
+					<col className="w-[13%]" />
+					<col className="w-[7%]" />
+					<col className="w-[7%]" />
 					<col className="w-[14%]" />
-					<col className="w-[8%]" />
-					<col className="w-[8%]" />
-					<col className="w-[15%]" />
-					<col className="w-[22%]" />
+					<col className="w-[21%]" />
 				</colgroup>
 				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
 					<tr>
@@ -59,6 +60,9 @@ export function FeaturesDesktopTable({
 						</th>
 						<th className="px-4 py-3" scope="col">
 							Status
+						</th>
+						<th className="px-4 py-3" scope="col">
+							Shipped
 						</th>
 						<th className="px-4 py-3" scope="col">
 							Milestone
@@ -99,6 +103,9 @@ export function FeaturesDesktopTable({
 								</td>
 								<td className="px-4 py-3">
 									<Badge tone={statusTone(status)}>{status}</Badge>
+								</td>
+								<td className="px-4 py-3 font-mono text-xs text-neutral-600 dark:text-neutral-400">
+									{featureShippedVersion(feature) ?? '—'}
 								</td>
 								<td className="px-4 py-3">
 									<FeatureMilestoneControl

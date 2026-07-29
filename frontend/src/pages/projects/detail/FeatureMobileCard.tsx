@@ -6,7 +6,7 @@ import type {
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { FeatureActions, FeatureMilestoneControl } from './FeatureRowControls.tsx';
-import { featureSourceLabel } from './featuresUtils.ts';
+import { featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
 import { statusTone, stringValue } from './shared.ts';
 
 export function FeatureMobileCard({
@@ -70,7 +70,13 @@ export function FeatureMobileCard({
 						)}
 					</dd>
 				</div>
-				<div className="col-span-2 space-y-1">
+				<div className="space-y-1">
+					<dt className="font-medium text-neutral-500 uppercase">Shipped</dt>
+					<dd className="font-mono text-neutral-800 dark:text-neutral-200">
+						{featureShippedVersion(feature) ?? '—'}
+					</dd>
+				</div>
+				<div className="space-y-1">
 					<dt className="font-medium text-neutral-500 uppercase">Source</dt>
 					<dd className="text-neutral-700 dark:text-neutral-300">{source}</dd>
 				</div>

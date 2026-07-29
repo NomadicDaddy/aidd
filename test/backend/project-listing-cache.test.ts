@@ -191,6 +191,10 @@ describe('project listing stack fingerprints', () => {
 			const declarationChanged = await computeProjectFingerprint(projectDir, options);
 			expect(declarationChanged).not.toBe(workspaceChanged);
 
+			// Same-length rewrite: only mtime can move, and Windows stamps file times on a ~15.6ms
+			// clock tick, so a sub-tick rewrite is invisible to the size:mtime fingerprint. Real
+			// edits are never sub-tick; crossing one boundary keeps the assertion about the contract.
+			await Bun.sleep(20);
 			await writeFile(fleetManifest, "'app' = @{ spernakit_version = '3.24.1' }");
 			const manifestChanged = await computeProjectFingerprint(projectDir, options);
 			expect(manifestChanged).not.toBe(declarationChanged);
@@ -248,6 +252,8 @@ describe('project listing stack fingerprints', () => {
 			await writeFile(join(projectDir, '.env.local'), 'BACKEND_PORT=4100\n');
 			const addedEnvironment = await computeProjectFingerprint(projectDir);
 			expect(addedEnvironment).not.toBe(initial);
+			// Same-length rewrite; see the tick-boundary note in the manifest test above.
+			await Bun.sleep(20);
 			await writeFile(join(projectDir, '.env.local'), 'BACKEND_PORT=4101\n');
 			expect(await computeProjectFingerprint(projectDir)).not.toBe(addedEnvironment);
 		} finally {

@@ -21,7 +21,7 @@ the repository material distributed outside the npm graph.
 
 | Package                                                                              | Version | License    |
 | ------------------------------------------------------------------------------------ | ------- | ---------- |
-| [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) | 1.29.0  | MIT        |
+| [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) | 1.30.0  | MIT        |
 | [@xterm/addon-serialize](https://www.npmjs.com/package/@xterm/addon-serialize)       | 0.14.0  | MIT        |
 | [@xterm/headless](https://www.npmjs.com/package/@xterm/headless)                     | 6.0.0   | MIT        |
 | [bun-pty](https://www.npmjs.com/package/bun-pty)                                     | 0.4.10  | MIT        |
@@ -54,7 +54,7 @@ the repository material distributed outside the npm graph.
 | [react-router](https://www.npmjs.com/package/react-router)                                             | 8.3.0   | MIT        |
 | [remark-gfm](https://www.npmjs.com/package/remark-gfm)                                                 | 4.0.1   | MIT        |
 | [sonner](https://www.npmjs.com/package/sonner)                                                         | 2.0.7   | MIT        |
-| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.0.0   | Apache-2.0 |
+| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.0.1   | Apache-2.0 |
 | [zustand](https://www.npmjs.com/package/zustand)                                                       | 5.0.14  | MIT        |
 
 ## Non-package distributed material

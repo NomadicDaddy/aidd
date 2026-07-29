@@ -593,7 +593,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### @modelcontextprotocol/sdk@1.29.0
+### @modelcontextprotocol/sdk@1.30.0
 
 License: MIT
 
@@ -7663,7 +7663,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### web-vitals@6.0.0
+### web-vitals@6.0.1
 
 License: Apache-2.0
 

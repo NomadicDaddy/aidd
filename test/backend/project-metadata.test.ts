@@ -100,6 +100,55 @@ describe('project metadata', () => {
 		expect(usage.byMode[1]).toMatchObject({ reportedCostUsd: 2.5, runCount: 1 });
 	});
 
+	test('aggregates input and output tokens into seven UTC calendar-day buckets', () => {
+		const usage = projectUsageFromLedgerEntries(
+			[
+				{
+					endedAt: '2026-07-24T23:59:59.000Z',
+					totals: { inputTokens: 10, outputTokens: 5 },
+				},
+				{
+					endedAt: '2026-07-25T08:00:00.000Z',
+					runId: 'retried-run',
+					totals: { inputTokens: 90, outputTokens: 9 },
+				},
+				{
+					endedAt: '2026-07-27T08:00:00.000Z',
+					runId: 'retried-run',
+					totals: { inputTokens: 18, outputTokens: 2 },
+				},
+				{
+					endedAt: 'invalid',
+					startedAt: '2026-07-28T02:00:00.000Z',
+					totals: { inputTokens: 7, outputTokens: 3 },
+				},
+				{
+					endedAt: '2026-07-29T18:00:00.000Z',
+					totals: { inputTokens: 5, outputTokens: 2 },
+				},
+				{
+					endedAt: '2026-07-22T23:59:59.000Z',
+					totals: { inputTokens: 1_000, outputTokens: 1_000 },
+				},
+				{
+					endedAt: '2026-07-30T00:00:00.000Z',
+					totals: { inputTokens: 1_000, outputTokens: 1_000 },
+				},
+			],
+			new Date('2026-07-29T20:00:00.000Z'),
+		);
+
+		expect(usage.recentDailyTokens).toEqual([
+			{ date: '2026-07-23', totalTokens: 0 },
+			{ date: '2026-07-24', totalTokens: 15 },
+			{ date: '2026-07-25', totalTokens: 0 },
+			{ date: '2026-07-26', totalTokens: 0 },
+			{ date: '2026-07-27', totalTokens: 20 },
+			{ date: '2026-07-28', totalTokens: 10 },
+			{ date: '2026-07-29', totalTokens: 7 },
+		]);
+	});
+
 	test('uses the full ledger for usage while keeping recent run rows bounded', async () => {
 		const tmpDir = await testTempDir('aidd-project-usage-ledger-');
 		try {

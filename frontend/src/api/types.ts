@@ -139,6 +139,7 @@ export type {
 	ProjectStartImplementationResult,
 	ProjectSummary,
 	ProjectSyncState,
+	ProjectUsageDailyTokens,
 	ProjectUsageExecutionTarget,
 	ProjectUsageMode,
 	ProjectUsageSummary,

@@ -39,6 +39,7 @@ export type {
 	ProjectPorts,
 	ProjectRoadmapSummary,
 	ProjectSyncStateDto,
+	ProjectUsageDailyTokensDto,
 	ProjectUsageExecutionTargetDto,
 	ProjectUsageModeDto,
 	ProjectUsageSummaryDto,

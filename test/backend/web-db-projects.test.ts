@@ -519,7 +519,7 @@ describe('web database and project APIs', () => {
 			passing: 1,
 			total: 2,
 		});
-		expect(projects[0]?.metadata.usage).toEqual({
+		expect(projects[0]?.metadata.usage).toMatchObject({
 			totals: {
 				cachedTokens: 0,
 				inputTokens: 1_000,
@@ -532,6 +532,10 @@ describe('web database and project APIs', () => {
 				totalTokens: 1_200,
 			},
 		});
+		expect(projects[0]?.metadata.usage.recentDailyTokens).toHaveLength(7);
+		expect(
+			projects[0]?.metadata.usage.recentDailyTokens.every((point) => point.totalTokens === 0),
+		).toBe(true);
 
 		const detail = await service.getProjectDetail(projects[0]!.routeId);
 		expect(detail.path).toBe(resolve(projectDir));

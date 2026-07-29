@@ -183,6 +183,11 @@ export interface ProjectUsageTotalsDto {
 	totalTokens: number;
 }
 
+export interface ProjectUsageDailyTokensDto {
+	date: string;
+	totalTokens: number;
+}
+
 export interface ProjectUsageExecutionTargetDto extends ProjectUsageTotalsDto {
 	backend: null | string;
 	model: null | string;
@@ -196,6 +201,7 @@ export interface ProjectUsageModeDto extends ProjectUsageTotalsDto {
 export interface ProjectUsageSummaryDto {
 	byExecutionTarget: ProjectUsageExecutionTargetDto[];
 	byMode: ProjectUsageModeDto[];
+	recentDailyTokens: ProjectUsageDailyTokensDto[];
 	totals: ProjectUsageTotalsDto;
 }
 

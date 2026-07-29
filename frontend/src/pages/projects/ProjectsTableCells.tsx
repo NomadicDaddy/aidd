@@ -5,10 +5,11 @@ import type {
 	ProjectArtifactCheckCounts,
 	ProjectPorts,
 	ProjectSummary,
+	ProjectUsageDailyTokens,
 } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
-import { percent } from '../../lib/formatters.ts';
+import { formatCompactNumber, percent } from '../../lib/formatters.ts';
 import { artifactTone } from './projects-list-shared.ts';
 import { featureProgressColor } from './projects-list-visuals.ts';
 
@@ -22,6 +23,57 @@ function PortDot({ listening }: { listening: boolean | null }) {
 			}`}
 			title={listening ? 'Listening' : 'Not listening'}
 		/>
+	);
+}
+
+const SPARKLINE_WIDTH = 64;
+const SPARKLINE_HEIGHT = 18;
+const SPARKLINE_PADDING = 1;
+
+function sparklinePath(points: ProjectUsageDailyTokens[]): string {
+	const maximum = Math.max(0, ...points.map((point) => point.totalTokens));
+	const usableWidth = SPARKLINE_WIDTH - SPARKLINE_PADDING * 2;
+	const usableHeight = SPARKLINE_HEIGHT - SPARKLINE_PADDING * 2;
+	return points
+		.map((point, index) => {
+			const x = SPARKLINE_PADDING + (index / Math.max(1, points.length - 1)) * usableWidth;
+			const y =
+				maximum === 0
+					? SPARKLINE_HEIGHT - SPARKLINE_PADDING
+					: SPARKLINE_PADDING + (1 - point.totalTokens / maximum) * usableHeight;
+			return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+		})
+		.join(' ');
+}
+
+export function TokenSparkline({ points }: { points: ProjectUsageDailyTokens[] }) {
+	const sevenDays = points.slice(-7);
+	if (sevenDays.length === 0) return null;
+	const total = sevenDays.reduce((sum, point) => sum + point.totalTokens, 0);
+	const details = sevenDays
+		.map((point) => `${point.date}: ${point.totalTokens.toLocaleString()} tokens`)
+		.join(' · ');
+	return (
+		<svg
+			aria-label={`Tokens over the past 7 days: ${formatCompactNumber(total)} total`}
+			className={`block h-[18px] w-16 ${
+				total > 0
+					? 'text-cyan-600 dark:text-cyan-400'
+					: 'text-neutral-300 dark:text-neutral-700'
+			}`}
+			role="img"
+			viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`}>
+			<title>{details}</title>
+			<path
+				d={sparklinePath(sevenDays)}
+				fill="none"
+				stroke="currentColor"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth="1.5"
+				vectorEffect="non-scaling-stroke"
+			/>
+		</svg>
 	);
 }
 

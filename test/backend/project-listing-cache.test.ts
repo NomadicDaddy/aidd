@@ -109,6 +109,7 @@ function cacheValue(): ProjectListingCacheValue {
 				templateVersion: null,
 				testScenariosCount: null,
 				usage: {
+					recentDailyTokens: [],
 					totals: {
 						cachedTokens: 0,
 						inputTokens: 0,

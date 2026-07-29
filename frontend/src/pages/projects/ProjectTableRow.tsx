@@ -22,7 +22,12 @@ import {
 	specAgeColor,
 	templateVersionColor,
 } from './projects-list-visuals.ts';
-import { ArtifactCell, FeatureProgressCell, PortsCell } from './ProjectsTableCells.tsx';
+import {
+	ArtifactCell,
+	FeatureProgressCell,
+	PortsCell,
+	TokenSparkline,
+} from './ProjectsTableCells.tsx';
 import { ProjectStackDisplay } from './ProjectStackDisplay.tsx';
 
 export function ProjectTableRow({
@@ -153,6 +158,7 @@ export function ProjectTableRow({
 				<div className="font-medium tabular-nums">
 					{formatProjectTokenCount(metadata.usage.totals)}
 				</div>
+				<TokenSparkline points={metadata.usage.recentDailyTokens} />
 				<div className="text-[10px] text-neutral-500 tabular-nums">
 					{metadata.usage.totals.runsWithTokenUsage}/{metadata.usage.totals.runCount} runs
 				</div>

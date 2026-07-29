@@ -33,6 +33,7 @@ function renderProjectUsagePanel(): string {
 				totalTokens: 1_200_000,
 			},
 		],
+		recentDailyTokens: [],
 		totals: {
 			cachedTokens: 700_000,
 			inputTokens: 1_000_000,

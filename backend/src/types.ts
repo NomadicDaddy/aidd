@@ -75,6 +75,7 @@ export type {
 	ProjectSummaryDto,
 	ProjectSummaryMetadataDto,
 	ProjectSyncStateDto,
+	ProjectUsageDailyTokensDto,
 	ProjectUsageExecutionTargetDto,
 	ProjectUsageModeDto,
 	ProjectUsageSummaryDto,

@@ -90,7 +90,14 @@ export async function listProjectListings(ctx: ListingsContext): Promise<{
 			featureSummary,
 			id: encodeProjectId(projectDir),
 			...(isSpernakitTemplate ? { isSpernakitTemplate: true } : {}),
-			metadata: { ...metadataRest, phase, usage: { totals: usage.totals } },
+			metadata: {
+				...metadataRest,
+				phase,
+				usage: {
+					recentDailyTokens: usage.recentDailyTokens,
+					totals: usage.totals,
+				},
+			},
 			name: basename(projectDir),
 			path: projectDir,
 			phase,

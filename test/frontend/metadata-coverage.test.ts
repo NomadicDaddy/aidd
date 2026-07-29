@@ -74,6 +74,7 @@ function makeMetadata(overrides: Partial<ProjectMetadata> = {}): ProjectMetadata
 		usage: {
 			byExecutionTarget: [],
 			byMode: [],
+			recentDailyTokens: [],
 			totals: {
 				cachedTokens: 0,
 				inputTokens: 0,

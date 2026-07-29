@@ -9,7 +9,7 @@ import type {
 import type { ProjectMetadataDto } from './metadata.ts';
 
 export type ProjectSummaryMetadataDto = {
-	usage: Pick<ProjectMetadataDto['usage'], 'totals'>;
+	usage: Pick<ProjectMetadataDto['usage'], 'recentDailyTokens' | 'totals'>;
 } & Omit<ProjectMetadataDto, 'usage'>;
 
 export interface ProjectActiveRunSummaryDto {

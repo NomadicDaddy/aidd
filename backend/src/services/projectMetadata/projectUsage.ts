@@ -1,4 +1,5 @@
 import type {
+	ProjectUsageDailyTokensDto,
 	ProjectUsageExecutionTargetDto,
 	ProjectUsageModeDto,
 	ProjectUsageSummaryDto,
@@ -13,6 +14,9 @@ interface LedgerUsageValues {
 	reasoningTokens: number;
 	reportedCostUsd: number;
 }
+
+const RECENT_TOKEN_DAY_COUNT = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function emptyUsageTotals(): ProjectUsageTotalsDto {
 	return {
@@ -77,8 +81,50 @@ function sortUsageRows<T extends ProjectUsageTotalsDto>(rows: T[]): T[] {
 	);
 }
 
+function ledgerEntryDay(entry: RawRunLedgerEntry): null | number {
+	for (const value of [entry.endedAt, entry.startedAt]) {
+		if (typeof value !== 'string') continue;
+		const timestamp = Date.parse(value);
+		if (Number.isFinite(timestamp)) {
+			const date = new Date(timestamp);
+			return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+		}
+	}
+	return null;
+}
+
+function recentDailyTokens(
+	entries: RawRunLedgerEntry[],
+	referenceTime: Date,
+): ProjectUsageDailyTokensDto[] {
+	const referenceDay = Date.UTC(
+		referenceTime.getUTCFullYear(),
+		referenceTime.getUTCMonth(),
+		referenceTime.getUTCDate(),
+	);
+	const firstDay = referenceDay - (RECENT_TOKEN_DAY_COUNT - 1) * DAY_MS;
+	const tokensByDay = new Map<number, number>();
+	for (const entry of entries) {
+		const day = ledgerEntryDay(entry);
+		if (day === null || day < firstDay || day > referenceDay) continue;
+		const values = usageValues(entry);
+		tokensByDay.set(
+			day,
+			(tokensByDay.get(day) ?? 0) + values.inputTokens + values.outputTokens,
+		);
+	}
+	return Array.from({ length: RECENT_TOKEN_DAY_COUNT }, (_, index) => {
+		const day = firstDay + index * DAY_MS;
+		return {
+			date: new Date(day).toISOString().slice(0, 10),
+			totalTokens: tokensByDay.get(day) ?? 0,
+		};
+	});
+}
+
 export function projectUsageFromLedgerEntries(
 	entries: RawRunLedgerEntry[],
+	referenceTime = new Date(),
 ): ProjectUsageSummaryDto {
 	// A crash-fallback line can precede a real final summary for the same modern run id. Last entry
 	// wins for usage accounting; legacy entries without run ids remain individually countable.
@@ -120,6 +166,7 @@ export function projectUsageFromLedgerEntries(
 	return {
 		byExecutionTarget: sortUsageRows([...executionGroups.values()]),
 		byMode: sortUsageRows([...modeGroups.values()]),
+		recentDailyTokens: recentDailyTokens(usageEntries, referenceTime),
 		totals,
 	};
 }

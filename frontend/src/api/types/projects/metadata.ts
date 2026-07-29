@@ -142,6 +142,11 @@ export interface ProjectUsageTotals {
 	totalTokens: number;
 }
 
+export interface ProjectUsageDailyTokens {
+	date: string;
+	totalTokens: number;
+}
+
 export interface ProjectUsageExecutionTarget extends ProjectUsageTotals {
 	backend: null | string;
 	model: null | string;
@@ -155,6 +160,7 @@ export interface ProjectUsageMode extends ProjectUsageTotals {
 export interface ProjectUsageSummary {
 	byExecutionTarget: ProjectUsageExecutionTarget[];
 	byMode: ProjectUsageMode[];
+	recentDailyTokens: ProjectUsageDailyTokens[];
 	totals: ProjectUsageTotals;
 }
 
@@ -196,7 +202,7 @@ export interface ProjectSummary {
 	/** True when this project is a spernakit template checkout (hidden from the list by default). */
 	isSpernakitTemplate?: boolean;
 	metadata: {
-		usage: Pick<ProjectMetadata['usage'], 'totals'>;
+		usage: Pick<ProjectMetadata['usage'], 'recentDailyTokens' | 'totals'>;
 	} & Omit<ProjectMetadata, 'usage'>;
 	name: string;
 	path: string;

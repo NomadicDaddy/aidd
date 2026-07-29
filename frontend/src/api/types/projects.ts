@@ -21,6 +21,7 @@ export type {
 	ProjectRoadmapSummary,
 	ProjectSummary,
 	ProjectSyncState,
+	ProjectUsageDailyTokens,
 	ProjectUsageExecutionTarget,
 	ProjectUsageMode,
 	ProjectUsageSummary,

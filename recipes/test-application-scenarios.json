@@ -12,7 +12,7 @@
 			"configJson": {
 				"args": "{application} run the scripted scenarios recorded in .aidd/testing-scenarios.md",
 				"executionIntent": "apply-changes",
-				"skillId": "spernakit-tester"
+				"skillId": "tester"
 			},
 			"name": "Run testing scenarios",
 			"stepType": "skill"

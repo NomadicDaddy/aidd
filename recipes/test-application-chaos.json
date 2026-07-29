@@ -1,5 +1,5 @@
 {
-	"description": "Run chaos testing via spernakit-tester, then convert bugs to features.",
+	"description": "Run chaos testing via the tester skill, then convert bugs to features.",
 	"name": "test application (chaos)",
 	"parameters": [
 		{
@@ -12,9 +12,9 @@
 			"configJson": {
 				"args": "{application}",
 				"executionIntent": "apply-changes",
-				"skillId": "spernakit-tester"
+				"skillId": "tester"
 			},
-			"name": "Run spernakit-tester",
+			"name": "Run tester",
 			"stepType": "skill"
 		},
 		{

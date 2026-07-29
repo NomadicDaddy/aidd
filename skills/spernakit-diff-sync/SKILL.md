@@ -1,6 +1,6 @@
 ---
 name: spernakit-diff-sync
-description: 'Compare targeted file pairs between Spernakit and a derived application, classify three-way template drift, and apply evidence-backed synchronization in the correct direction. Use for focused drift correction, backporting a proven derived-app fix, or adopting a small set of current template files; use template-refactor for whole-application realignment.'
+description: 'Compare targeted file pairs between Spernakit and a derived application, classify three-way template drift, and apply evidence-backed synchronization in the correct direction. Use for focused drift correction, backporting a proven derived-app fix, or adopting a small set of current template files; use spernakit-template-refactor for whole-application realignment.'
 metadata:
     aidd-category: spernakit-fleet
 ---
@@ -13,7 +13,7 @@ Apply evidence-backed changes directly and keep affected feature metadata accura
 
 ## Relationship to Template Refactor
 
-Use this skill for a specific fix, enhancement, or small file set. Use `template-refactor` when
+Use this skill for a specific fix, enhancement, or small file set. Use `spernakit-template-refactor` when
 the goal is to assess and realign an entire derived application.
 
 Map the two skills' classifications as follows:

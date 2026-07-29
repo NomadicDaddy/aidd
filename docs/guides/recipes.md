@@ -421,10 +421,10 @@ Align the core Spernakit template documentation, then run The Dance across the t
 - **Parameters:** bumpHint (default empty)
 - **Steps:** 2
 
-1. `skill` - Align template docs (skillId: update-spernakit-docs)
-2. `skill` - Run The Dance (args: {bumpHint}; skillId: dance)
+1. `skill` - Align template docs (skillId: spernakit-update-docs)
+2. `skill` - Run The Dance (args: {bumpHint}; skillId: spernakit-dance)
 
-This is the fleet-wide counterpart to `spernakit-release`, which propagates to exactly one `{application}`. The `dance` skill owns the whole fan-out itself — ship the template, three-way sync each app, tester fan-out, triage, remediation, supertest and `smoke:qc` verification, per-app tagging, dev diary, and session report — with checkpointed resume in `<applications-root>/.dance-state.json`. A recipe cannot loop, so it does not try to; it adds the one thing the skill does not do, which is bringing README, STACK, DEVELOPMENT, and the SPERNAKIT audit in line before the template ships. Leave `bumpHint` blank to let the skill size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it.
+This is the fleet-wide counterpart to `spernakit-release`, which propagates to exactly one `{application}`. The `spernakit-dance` skill owns the whole fan-out itself — ship the template, three-way sync each app, tester fan-out, triage, remediation, supertest and `smoke:qc` verification, per-app tagging, dev diary, and session report — with checkpointed resume in `<applications-root>/.dance-state.json`. A recipe cannot loop, so it does not try to; it adds the one thing the skill does not do, which is bringing README, STACK, DEVELOPMENT, and the SPERNAKIT audit in line before the template ships. Leave `bumpHint` blank to let the skill size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it.
 
 Step 1 stops the recipe when it fails. That is deliberate even though a doc misalignment sounds minor: step 2 commits, tags, and pushes the template and every derived application, so it is the one step in this recipe whose output cannot be quietly rolled back. Alignment is the recipe's stated prerequisite for the release, and a prerequisite that can fail without consequence is not one.
 
@@ -436,7 +436,7 @@ Resume an interrupted dance from the .dance-state.json checkpoint in the applica
 - **Parameters:** resumeArgs (default `--resume-from A`)
 - **Steps:** 1
 
-1. `skill` - Resume The Dance (args: {resumeArgs}; skillId: dance)
+1. `skill` - Resume The Dance (args: {resumeArgs}; skillId: spernakit-dance)
 
 `spernakit-dance` is the wrong entry point for a run that already started. Its step 1 re-aligns the template docs and its step 2 sizes and ships a release, so re-running it after a crash re-tags a template the fleet has already taken. This recipe drops both and calls the skill directly, leaving the checkpoint to decide what still needs doing.
 
@@ -450,9 +450,9 @@ Upgrade template, test, fix, validate, commit, and update dev diary.
 - **Parameters:** application, version
 - **Steps:** 11
 
-1. `skill` - Template upgrade (args: {application} --to {version}; skillId: template-upgrade)
-2. `skill` - Classify template drift (args: {application}; skillId: justify-diffs)
-3. `skill` - Template refactor (args: {application}; skillId: template-refactor)
+1. `skill` - Template upgrade (args: {application} --to {version}; skillId: spernakit-template-upgrade)
+2. `skill` - Classify template drift (args: {application}; skillId: spernakit-justify-diffs)
+3. `skill` - Template refactor (args: {application}; skillId: spernakit-template-refactor)
 4. `skill` - Test application (args: {application}; skillId: spernakit-tester)
 5. `recipe-ref` - Bug to feature (params: {"application":"{application}"}; recipeName: bug2feature)
 6. `recipe-ref` - Remediate bugs (params: {"application":"{application}"}; recipeName: remediate bugs)
@@ -464,9 +464,9 @@ Upgrade template, test, fix, validate, commit, and update dev diary.
 
 The `version` parameter is the unprefixed template version (`3.1.16`); the recipe adds the `sv` prefix when it writes the commit message.
 
-Step 2 runs read-only on purpose: `justify-diffs` only classifies each differing hunk as branding, an app-specific requirement, or unjustified drift, and writes nothing. Its classification does **not** reach step 3 — pipeline steps are independent runs with no data passing between them, and `justify-diffs` persists nothing to disk, so its output lands in the run transcript and the operator's review, not in `template-refactor`'s prompt. Read step 2 as a checkpoint a human can inspect when a propagate run goes wrong, not as a guard that constrains the refactor.
+Step 2 runs read-only on purpose: `spernakit-justify-diffs` only classifies each differing hunk as branding, an app-specific requirement, or unjustified drift, and writes nothing. Its classification does **not** reach step 3 — pipeline steps are independent runs with no data passing between them, and `spernakit-justify-diffs` persists nothing to disk, so its output lands in the run transcript and the operator's review, not in `spernakit-template-refactor`'s prompt. Read step 2 as a checkpoint a human can inspect when a propagate run goes wrong, not as a guard that constrains the refactor.
 
-There is deliberately no `spernakit-diff-sync` step. An earlier version ran one after step 3, justified in this guide as "the only skill of the three that executes backports rather than only flagging them" — which is not true: `template-refactor` categorizes a bug fix as "port back to template" and applies the safe default of porting an enhancement to the template first, then refactoring. The two skills also divide by scope in their own contracts: `spernakit-diff-sync` is for "a specific fix, enhancement, or small file set," and `template-refactor` for "when the goal is to assess and realign an entire derived application," which is exactly what propagate does. Running diff-sync immediately after a whole-app realignment left it building its worklist from `bun run check:drift` after that drift had just been eliminated. Use `spernakit-diff-sync` on its own, against a clean tree, for targeted drift work.
+There is deliberately no `spernakit-diff-sync` step. An earlier version ran one after step 3, justified in this guide as "the only skill of the three that executes backports rather than only flagging them" — which is not true: `spernakit-template-refactor` categorizes a bug fix as "port back to template" and applies the safe default of porting an enhancement to the template first, then refactoring. The two skills also divide by scope in their own contracts: `spernakit-diff-sync` is for "a specific fix, enhancement, or small file set," and `spernakit-template-refactor` for "when the goal is to assess and realign an entire derived application," which is exactly what propagate does. Running diff-sync immediately after a whole-app realignment left it building its worklist from `bun run check:drift` after that drift had just been eliminated. Use `spernakit-diff-sync` on its own, against a clean tree, for targeted drift work.
 
 ### spernakit-release
 
@@ -505,23 +505,23 @@ Test application, convert bugs to features, remediate, and produce session repor
 - **Parameters:** application
 - **Steps:** 5
 
-1. `skill` - Test application (args: {application}; skillId: spernakit-tester)
+1. `skill` - Test application (args: {application}; skillId: tester)
 2. `skill` - Convert bugs to features (args: {application}; skillId: bug2feature)
 3. `skill` - Review features (args: {application}; skillId: feature-review)
 4. `recipe-ref` - Remediate bugs (params: {"application":"{application}"}; recipeName: remediate bugs)
 5. `aidd-cli` - Create session report (maxIterations: 1; prompt: Create a session report at {application}/.aidd/reports/ with a timestamp filename. Include: time taken for each step, summary of bugs found, features created, remediations applied...)
 
-Reports live in the application's database, so there is no `data/bugs.json` to clean up, and `remediate bugs` ends in `consolidate-features`, which removes the redundant finding files itself.
+Step 1 runs the stack-agnostic `tester` skill, so this recipe works against any aidd-managed application. On a Spernakit app, findings land in the application's database, so there is no `data/bugs.json` to clean up, and `remediate bugs` ends in `consolidate-features`, which removes the redundant finding files itself. Use `spernakit-tester` directly when a run should bind Spernakit's crawl gates.
 
 ### test-application-chaos
 
-Run chaos testing via spernakit-tester, then convert bugs to features.
+Run chaos testing via the tester skill, then convert bugs to features.
 
 - **Name:** test application (chaos)
 - **Parameters:** application
 - **Steps:** 2
 
-1. `skill` - Run spernakit-tester (args: {application}; skillId: spernakit-tester)
+1. `skill` - Run tester (args: {application}; skillId: tester)
 2. `recipe-ref` - Bug to feature (params: {"application":"{application}"}; recipeName: bug2feature)
 
 ### test-application-scenarios
@@ -532,10 +532,10 @@ Run testing scenarios from testing-scenarios.md, then convert bugs to features.
 - **Parameters:** application
 - **Steps:** 2
 
-1. `skill` - Run testing scenarios (args: {application} run the scripted scenarios recorded in .aidd/testing-scenarios.md; skillId: spernakit-tester)
+1. `skill` - Run testing scenarios (args: {application} run the scripted scenarios recorded in .aidd/testing-scenarios.md; skillId: tester)
 2. `recipe-ref` - Bug to feature (params: {"application":"{application}"}; recipeName: bug2feature)
 
-Step 1 delegates to the `spernakit-tester` skill rather than restating server startup and bug-reporting rules in an inline prompt, so scripted scenario runs and exploratory runs file findings the same way — which is what step 2's `bug2feature` expects to read.
+Step 1 delegates to the `tester` skill rather than restating server startup and bug-reporting rules in an inline prompt, so scripted scenario runs and exploratory runs file findings the same way — which is what step 2's `bug2feature` expects to read.
 
 ### triumvirate-coding-document-changes
 

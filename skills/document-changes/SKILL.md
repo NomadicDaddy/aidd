@@ -1,6 +1,6 @@
 ---
 name: document-changes
-description: "Document a Spernakit/aidd project's changes by updating its changelog, internal version, and feature metadata, then commit logical bundles without pushing or tagging. Use for change documentation, release notes, or version recording."
+description: "Document any project's changes by updating its changelog, internal version, and feature metadata, then commit logical bundles without pushing or tagging. Use for change documentation, release notes, or version recording."
 metadata:
     aidd-category: metadata
     aidd-contracts: humanize-docs
@@ -30,13 +30,39 @@ Resolve the target project:
 1. If a path argument is given, use it.
 2. Otherwise use the current working directory.
 
-The target must contain a root `package.json`. Read, if present:
+The target must be a git repository. Read, if present:
 
-- `package.json` (root): `version` field (authoritative; version lives in root only)
-- `VERSION`: plain-text version file (bump in lockstep with `package.json` when it exists)
+- The project's **version manifest** (see below) — authoritative; the version lives in the root manifest only
+- `VERSION`: plain-text version file (bump in lockstep with the manifest when both exist)
 - The project changelog (see detection order in Phase 1)
 - `.aidd/features/<id>/feature.json`: existing feature records
 - `docs/reference/feature-fields.md`: the feature.json field contract (read it if present; aidd has it)
+
+### Version source
+
+**Applies to any project, whatever its stack.** Discover the version manifest by role rather than
+assuming one ecosystem. Check for these at the repository root, in order, and record which exist:
+
+| Manifest                             | Version field                                 |
+| ------------------------------------ | --------------------------------------------- |
+| `package.json`                       | `version`                                     |
+| `pyproject.toml`                     | `[project] version` / `[tool.poetry] version` |
+| `Cargo.toml`                         | `[package] version`                           |
+| `*.csproj` / `Directory.Build.props` | `<Version>`                                   |
+| `*.psd1` (module manifest)           | `ModuleVersion`                               |
+| `mix.exs`                            | `version:`                                    |
+| `*.gemspec`                          | `spec.version`                                |
+| `VERSION`                            | the whole file                                |
+
+If several exist, the one the project's own build and release tooling reads is authoritative; the
+rest follow it in lockstep. Do not add version fields to child manifests that lack them.
+
+**A project with no version manifest is normal and fully in scope** — Go modules, static sites, docs
+repos, and script collections version by git tag or by changelog header alone. In that case the
+changelog's newest header is the version of record: document the changes and add the new section as
+usual, skip every manifest-write step, and say in the report that the project carries no version
+manifest. **Never create one**; introducing a version file is a project decision, not a documentation
+side effect.
 
 Never run `git stash`. A dirty working tree is the expected input to this skill; its changes are
 part of what gets documented. Do not stash, reset, or discard anything.
@@ -45,8 +71,10 @@ part of what gets documented. Do not stash, reset, or discard anything.
 
 ### Phase 1 - Resolve target and detect artifacts
 
-1. Confirm the target project root and read root `package.json` `version` and `VERSION` (if it
-   exists). These define the current version.
+1. Confirm the target project root, then read the version manifest identified in Inputs and `VERSION`
+   (if it exists). These define the current version. When the project has neither, take the current
+   version from the newest version tag or the changelog's top header, and treat every "write the
+   manifest" instruction below as a no-op.
 
 2. Detect the project changelog, in this order, and record which exist:
     - `docs/CHANGELOG.md` (semver / Keep a Changelog style: `## [x.y.z] - YYYY-MM-DD`)
@@ -110,9 +138,10 @@ part of what gets documented. Do not stash, reset, or discard anything.
     - Stay within the current major unless the invocation explicitly requests a major bump. For
       pre-1.0 apps, never infer a jump to `1.0.0`.
 
-11. The new version is tracked in three places, all of which must agree after Phase 7: root
-    `package.json` `version`, the `VERSION` file (if it exists), and the new changelog section.
-    Per-feature records also stamp it (Phase 5).
+11. The new version is tracked in every place the project actually keeps it, all of which must agree
+    after Phase 7: the root version manifest, the `VERSION` file (if it exists), and the new changelog
+    section. Per-feature records also stamp it (Phase 5). Where a project has no manifest, the
+    changelog section and the feature records are the whole set.
 
 ### Phase 5 - Draft feature.json create/update
 
@@ -242,30 +271,28 @@ user rather than praising the change.
 
 17. Write:
     - Changelog file(s)
-    - Root `package.json` `version` → new version (root only; never child package.json files)
+    - The root version manifest's version field → new version (root only; never child manifests).
+      Edit the field in place and preserve the file's existing formatting; do not reserialize a
+      `pyproject.toml`, `Cargo.toml`, or `.psd1` wholesale to change one line. Skip when the project
+      has no manifest.
     - `VERSION` file → new version (only if it exists)
     - All `feature.json` create/update operations
 
 18. Normalize and validate (best effort, non-fatal; report failures, do not auto-"fix" code):
-    - If a formatter exists, run it on touched files (e.g. `bun run format`).
-    - If the project is aidd or exposes the feature validator, run
-      `bun run start -- --project-dir . --check-features` and confirm it reports all feature
+    - If a formatter exists, run it on touched files (e.g. `bun run format`, `ruff format`, `cargo fmt`).
+    - If the feature validator is available, run it from `<aidd-root>` against the target
+      (`bun run start -- --project-dir <target> --check-features`) and confirm it reports all feature
       files valid.
-    - Verify version consistency:
-
-        ```bash
-        grep '"version"' <target>/package.json
-        cat <target>/VERSION 2>/dev/null
-        ```
-
-        and confirm the new changelog section uses the same version.
+    - Verify version consistency: read the version back out of each place it was written — the
+      manifest, `VERSION` if present — and confirm the new changelog section uses the same version.
+      For a project with no manifest, confirm the changelog header alone.
 
 19. Leave the working tree ready for the commit phase. Do **not** tag or push at any point.
 
 ### Phase 8 - Commit
 
 20. Group the uncommitted changes into coherent bundles. Typical groups for a documentation run:
-    - **docs**: changelog file(s) + root `package.json` version + `VERSION` file (one bundle;
+    - **docs**: changelog file(s) + the root version manifest + `VERSION` file (one bundle;
       these must move together so the version line in the changelog matches the manifest).
     - **features**: `.aidd/features/**/feature.json` create/update batch (one bundle, or split
       per major feature area if the set is large and naturally separable).
@@ -278,7 +305,7 @@ user rather than praising the change.
     the project's own metadata, and expect the tracked changelog to carry the release notes alone. Do
     not "fix" this by force-adding them.
 
-    If `bun run format` was not already run in Phase 7 (step 18), run it now before staging.
+    If the project's formatter was not already run in Phase 7 (step 18), run it now before staging.
 
     For each bundle, stage only that bundle's files, write a commit message in the project's
     existing style (read recent `git log --oneline -20` first), and commit. Do not use
@@ -311,7 +338,8 @@ user rather than praising the change.
 | ---------------------------------------------- | --------------------------------------------------------------------- |
 | Pasting commit subjects / diffs into changelog | Rewrite as concise, user-facing natural language                      |
 | `feature-YYYYMMDD-slug` IDs for new base work  | Clean descriptive slug; directory name equals `id`                    |
-| Bumping child `package.json` versions          | Version lives in root `package.json` only (plus `VERSION` if present) |
+| Bumping child manifest versions                | Version lives in the root manifest only (plus `VERSION` if present)   |
+| Creating a manifest for a project without one  | Version by git tag / changelog header; never introduce a version file |
 | Jumping to `1.0.0` / a new major unprompted    | Stay within the current major                                         |
 | `git stash` to "clean" the tree                | The dirty tree is the input; never stash, reset, or discard           |
 | Generic "updated" revision notes               | Specific: what behavior/area changed in this revision                 |
@@ -327,6 +355,6 @@ user rather than praising the change.
   the next reader, not as machine output.
 - Net-new = did not exist in the codebase before. Such functionality must get a `feature.json`,
   not just a changelog line.
-- "Internal version bump" = the project's own semver in root `package.json` (+ `VERSION`),
+- "Internal version bump" = the project's own semver in its root version manifest (+ `VERSION`),
   surfaced in the changelog and stamped per-feature via `shippedVersion`.
 - If feature/diff matching is ambiguous, preserve existing metadata and report the unresolved match.

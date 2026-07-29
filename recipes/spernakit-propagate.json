@@ -16,7 +16,7 @@
 			"configJson": {
 				"args": "{application} --to {version}",
 				"executionIntent": "apply-changes",
-				"skillId": "template-upgrade"
+				"skillId": "spernakit-template-upgrade"
 			},
 			"name": "Template upgrade",
 			"stepType": "skill"
@@ -25,7 +25,7 @@
 			"configJson": {
 				"args": "{application}",
 				"executionIntent": "review-only",
-				"skillId": "justify-diffs"
+				"skillId": "spernakit-justify-diffs"
 			},
 			"name": "Classify template drift",
 			"stepType": "skill"
@@ -34,7 +34,7 @@
 			"configJson": {
 				"args": "{application}",
 				"executionIntent": "apply-changes",
-				"skillId": "template-refactor"
+				"skillId": "spernakit-template-refactor"
 			},
 			"name": "Template refactor",
 			"stepType": "skill"

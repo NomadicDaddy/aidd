@@ -1,8 +1,8 @@
 # Bug / Feature Request Triage
 
-Convert reports returned by a running Spernakit application's authenticated bug-report API into
-actionable `.aidd/features/` entries. Investigate the affected code, classify each report, and
-generate precise, verifiable feature specifications without modifying report storage.
+Convert reports returned by a project's bug intake into actionable `.aidd/features/` entries.
+Investigate the affected code, classify each report, and generate precise, verifiable feature
+specifications without modifying report storage.
 
 ## Contents
 
@@ -30,18 +30,19 @@ applied and which feature.json naming convention is used:
 bug2feature [app-name] [--report-ids <comma-separated-ids>]
 ```
 
-If no app name is provided, infer it from the current repository or use the sole eligible Spernakit
+If no app name is provided, infer it from the current repository or use the sole eligible
 application listed in `<applications-root>/AGENTS.md`. If multiple candidates remain, return a usage
 error with the candidate list. When report IDs
-are supplied, retrieve the complete API collection but triage only those IDs; report any requested
-ID that is not returned.
+are supplied, retrieve the complete collection from the intake but triage only those IDs; report any
+requested ID that is not returned.
 
 ## Definitions
 
-- **Submission**: A `bug_reports` row returned by `GET /api/v1/bugs`, representing either a bug
+- **Submission**: One report record returned by the project's intake, representing either a bug
   report or feature request
-- **Report identity**: The pair `{app-name}:{id}`. IDs are database-generated numbers and are unique
-  only within one application; never deduplicate fleet reports by numeric ID alone
+- **Report identity**: The pair `{app-name}:{id}`, where `{id}` is whatever stable identifier the
+  intake assigns (a database row number, an issue number, a heading). IDs are unique only within
+  one application and one intake; never deduplicate fleet reports by bare ID alone
 - **Request kind**: The report's `kind`: `'bug'` for a defect or `'feature'` for an enhancement
 - **Actionable submission**: A report whose returned `status` is `"open"` or `"in_progress"`; skip
   `"resolved"` and `"closed"`
@@ -57,43 +58,71 @@ ID that is not returned.
 
 1. **Identify the target application** from the argument, current repository, or sole eligible candidate
 2. **Locate the application** at `<applications-root>/{app-name}/`
-3. **Verify the live intake contract** in the target app before retrieval. The current Spernakit
-   contract is:
+3. **Determine the intake** the project actually uses, in this order. Stop at the first that
+   yields reports, and name the chosen intake in the triage report.
+
+    | Intake                    | How to detect it                                                     | Retrieval                                                |
+    | ------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- |
+    | Reports supplied directly | The user passed a file, a list, or pasted report text                | Read them; the user's list is the complete collection    |
+    | In-app report API         | A bug-report route in the backend, plus a reporting UI               | Paginated authenticated retrieval (steps 4-6)            |
+    | Issue tracker             | A git remote on a hosted forge, with open issues                     | `gh issue list --state open --json ...` or the forge CLI |
+    | Testing run findings      | A `tester` run in this session recorded findings it could not file   | Take them from the run results                           |
+    | Local intake file         | A committed inbox the project maintains (for example `.aidd/inbox/`) | Read the files                                           |
+
+    A project with no intake at all is not an error: report "no bug intake found; nothing to
+    triage" and stop. Never invent one, and never write reports into a storage file the project
+    does not already maintain.
+
+4. **Establish access** for the chosen intake. For an authenticated API, use the application's
+   supported login/session flow and confirm the route shape before retrieval. Never print or
+   persist credentials, access tokens, refresh tokens, cookies, or CSRF values. If the app is not
+   running, the API returns `401` or `403`, the required session role is unavailable, or the
+   response does not match the app's documented contract, stop before triage and before writing
+   feature files. Report the blocker and the exact non-secret response evidence. Do not treat
+   unavailable retrieval as an empty report list, and do not fall back to a test-data copy or a
+   direct database read.
+
+    The current Spernakit contract, for apps that use it, is:
+
     - `POST /api/v1/bugs` submits an authenticated report to the `bug_reports` table
     - `GET /api/v1/bugs?page={page}&limit={limit}` lists reports newest first for ADMIN or SYSOP
     - the list response is `{ data, page, limit, total }`
     - each report includes `id`, `kind`, `status`, `title`, `description`, `metadata`, `createdAt`,
       `updatedAt`, `userId`, and optional `email`
 
-    Confirm the target app still exposes this route shape. Do not fall back to `data/bugs.json`, a
-    test-data copy, or direct database reads.
+    Confirm the target app still exposes this shape rather than assuming it. Another project's
+    report API will differ; read its route definition and use what it returns.
 
-4. **Establish authenticated retrieval** through the application's supported login/session flow.
-   Never print or persist credentials, access tokens, refresh tokens, cookies, or CSRF values. If
-   the app is not running, the API returns `401` or `403`, an ADMIN/SYSOP session is unavailable, or
-   the response does not match the current contract, stop before triage and before writing feature
-   files. Report the blocker and the exact non-secret response evidence. Do not treat unavailable
-   retrieval as an empty report list.
-5. **Retrieve every page** with `limit=100`, beginning at page 1. The service may clamp larger
-   limits, so use the returned `page` and `limit` values. Continue until the number of distinct
-   report identities equals `total`. Treat an empty page before reaching `total`, repeated page,
-   invalid envelope, or missing ID as an incomplete retrieval and stop.
+5. **Retrieve everything the intake holds.** For a paginated API, page with `limit=100` beginning
+   at page 1, using the returned `page` and `limit` values because the service may clamp larger
+   limits, and continue until the number of distinct report identities equals `total`. Treat an
+   empty page before reaching `total`, a repeated page, an invalid envelope, or a missing ID as an
+   incomplete retrieval and stop. For a tracker, page until the query is exhausted. For a file or
+   a supplied list, read it whole.
 6. **Stabilize and deduplicate the snapshot**:
-    - key every row by `{app-name}:{id}` and collapse duplicates returned across pages
-    - after the traversal, fetch page 1 again
-    - if `total` or the page-1 ID set changed, repeat the traversal once
+    - key every record by `{app-name}:{id}` and collapse duplicates returned across pages
+    - for a live intake, re-fetch the first page after the traversal
+    - if the total or the first-page ID set changed, repeat the traversal once
     - if the collection changes again, stop and report an unstable intake snapshot
     - record the retrieval time, total, page count, and ordered report identities as evidence
+    - a static file or user-supplied list cannot drift; note it as a single stable read
 7. **Apply any report-ID scope** only after complete retrieval. Fail closed if a requested ID is
    absent. Check existing `.aidd/features/*/feature.json` notes for the same `{app-name}:{id}` before
-   investigating it; this compensates for the current API's lack of a triage-status mutation.
-8. **Filter to actionable submissions**: status must be `"open"` or `"in_progress"`. Skip
-   `"resolved"` and `"closed"` reports.
+   investigating it; this compensates for intakes with no triage-status mutation.
+8. **Filter to actionable submissions**: skip anything the intake marks resolved or closed. With
+   Spernakit's `status` field, that means keeping `"open"` and `"in_progress"` and skipping
+   `"resolved"` and `"closed"`. With a tracker, keep open issues. With a supplied list, treat every
+   entry as actionable unless the user says otherwise.
 9. **Partition by kind**: split actionable submissions into two groups:
     - `bugKindItems`: entries with `kind === 'bug'`
     - `featureKindItems`: entries with `kind === 'feature'`
+
+    When the intake carries no explicit kind field, derive it from the report itself: a defect in
+    existing behavior is `bug`, a request for behavior that does not exist is `feature`. Section
+    3a-bis governs the boundary either way.
+
 10. **Report**:
-    - Total reports returned by the API
+    - Total reports returned by the intake
     - Reports selected by the optional ID scope
     - Actionable bugs count
     - Actionable feature requests count
@@ -101,34 +130,41 @@ ID that is not returned.
     - Skipped (resolved/closed) count
     - If zero actionable submissions: "No actionable submissions to triage. All entries are resolved or closed.", then stop
 
-The current route exposes only submission and listing operations. It does not expose report status
-updates or deletion. Never invent a `PUT`, `PATCH`, or `DELETE` route, update the database directly,
-or reset report storage. Leave every report intact and preserve its returned status. If the user
-requires reports to be marked processed, report that the application needs an explicit supported
-mutation before this workflow can do so.
+**Triage never mutates the intake.** Spernakit's route, for example, exposes only submission and
+listing; it has no status update or deletion. Never invent a `PUT`, `PATCH`, or `DELETE` route,
+update the database directly, close a tracker issue, or reset report storage. Leave every report
+intact and preserve its status. If the user requires reports to be marked processed, report that
+the intake needs an explicit supported mutation before this workflow can do so.
 
 ### Phase 2: Learn the Codebase (Lightweight)
 
 Before triaging individual bugs, build enough context to investigate affected areas intelligently.
+The directory names below describe the common client/server layout; map them onto whatever
+structure the target actually has. A project with no backend, no frontend, or neither simply skips
+the subsection that does not apply.
 
 #### 2a. Project Identity
 
-- Read `package.json` (root) for: `name`, `version`, `spernakit_version`, and script names
+- Read the project's manifest (`package.json`, `pyproject.toml`, `Cargo.toml`, or equivalent) for
+  the name, version, script names, and `spernakit_version` when the field is present
 - Read `.aidd/project.md` if present for project-specific directives
-- Read `.aidd/docs/template/STACK.md` (staged; `<spernakit-root>/docs/template/STACK.md` in the spernakit repo) for canonical architectural rules
+- For a Spernakit-derived app, read `.aidd/docs/template/STACK.md` (staged;
+  `<spernakit-root>/docs/template/STACK.md` in the spernakit repo) for canonical architectural
+  rules. Other projects use their own architecture doc, or none.
 
 #### 2b. Backend Topology
 
-- List `backend/src/routes/` to map route files to domain areas
-- List `backend/src/services/` to map service files to domain areas
-- List `backend/src/db/schema/` for the data model inventory
+- List the route directory (`backend/src/routes/`) to map route files to domain areas
+- List the service directory (`backend/src/services/`) to map service files to domain areas
+- List the schema directory (`backend/src/db/schema/`) for the data model inventory
 - Identify the route registration file (`backend/src/create-api-app.ts` or `backend/src/app.ts`)
 - Note the API prefix convention (`/api/v1/` vs `/api/`)
 
 #### 2c. Frontend Topology
 
-- List `frontend/src/pages/` to map page directories to URL paths
-- List `frontend/src/api/` to map API client modules to domain areas
+- List the page tree (`frontend/src/pages/`, `src/pages/`, `src/routes/`, or `app/`) to map page
+  directories to URL paths
+- List the API client modules to map them to domain areas
 - Identify the actual route registration files. Current Spernakit apps use
   `frontend/src/routes.tsx` with `frontend/src/routes/lazyPages.ts`; aidd uses
   `frontend/src/App.tsx`. Do not assume one layout for other stacks.
@@ -138,7 +174,7 @@ Before triaging individual bugs, build enough context to investigate affected ar
 
 - Read all `.aidd/features/*/feature.json` files
 - Build three indexes:
-    - **Template index**: entries with `spernakit_version` field. These are template-owned features and must not be modified locally. If a bug or feature request targets code covered by a template feature, the remediation must either be filed as an app-specific feature (if the issue is app-specific drift) or flagged for upstream escalation to the spernakit repo (if the template itself needs fixing).
+    - **Template index**: entries with a `spernakit_version` field. This index is empty for a project that is not template-derived; skip it there. These are template-owned features and must not be modified locally. If a bug or feature request targets code covered by a template feature, the remediation must either be filed as an app-specific feature (if the issue is app-specific drift) or flagged for upstream escalation to the spernakit repo (if the template itself needs fixing).
     - **Remediation index**: entries whose ID starts with `remediation-`, used to dedupe new bug-kind triage results
     - **Feature index**: all other entries, used to dedupe new feature-kind triage results against both completed features and roadmap items
 - For each indexed entry, note its `description`, `id`, and any URL paths, component names, or domain keywords referenced in its `spec`
@@ -184,7 +220,7 @@ After locating the affected area in 3a, decide whether the submission describes:
 
 - **(A) Broken behavior in code that exists**: a bug. Continue with the bug flow (3b-3h).
 - **(B) Missing capability (code that doesn't exist yet)**: implicitly a feature request, even though the user filed it as `kind: 'bug'`. **Reclassify** the submission to `kind: 'feature'`, route it through the feature-request flow (`3a-feature` → `3f-feature`), and emit a `{slug}` directory (clean descriptive slug) instead of a `remediation-*` one. Skip 3b-3h entirely for this entry.
-- **(C) Bug in template-owned code**: the affected file or subsystem is covered by a feature with `spernakit_version` (checked against the Template index from 2d). If the root cause is in template code that all derived apps share, flag the submission as **UPSTREAM** in the triage report with a note: "Root cause is in template-managed code (`{template-feature-id}`). Fix should be applied to `<spernakit-root>` and synced via the aidd-local template-upgrade skill." Still create a `remediation-*` feature.json for the derived app (the app needs the fix now), but add `"notes": "UPSTREAM: root cause is in template feature {id}. Fold fix into spernakit via the aidd-local consolidate-features skill after verification."` so the upstream debt is tracked.
+- **(C) Bug in template-owned code** (template-derived apps only; cannot arise when the Template index from 2d is empty): the affected file or subsystem is covered by a feature with `spernakit_version`. If the root cause is in template code that all derived apps share, flag the submission as **UPSTREAM** in the triage report with a note: "Root cause is in template-managed code (`{template-feature-id}`). Fix should be applied to `<spernakit-root>` and synced via the aidd-local spernakit-template-upgrade skill." Still create a `remediation-*` feature.json for the derived app (the app needs the fix now), but add `"notes": "UPSTREAM: root cause is in template feature {id}. Fold fix into spernakit via the aidd-local consolidate-features skill after verification."` so the upstream debt is tracked.
 
 **(C-bis) The app must deliberately differ from the template.** Sometimes the answer is not "fix it upstream" — the app genuinely needs behavior the template should not have (an app-only shell, a domain-specific policy, a deliberate downgrade). Do **not** edit the template-owned feature to record it: `bun run template:sync-features` overwrites template-owned records on every upgrade, so an edit there is an unrecorded fork that the next sync silently deletes. Instead create an **app-owned** feature (a clean descriptive slug, no `spernakit_version` — the sync never touches records absent from the template corpus) whose notes begin with the sibling of the `UPSTREAM:` prefix:
 
@@ -279,16 +315,18 @@ Before generating a feature.json, confirm:
 2. **Not by-design**: The behavior described is genuinely incorrect (`BY-DESIGN` skips feature creation)
 3. **Not a duplicate**: No existing `.aidd/features/` entry already covers this exact issue (use the deduplication index from Phase 2d). If a duplicate is found, record which feature covers it; do not create a new entry.
 4. **Fixable in-codebase**: The issue is not caused by an external dependency, browser quirk, or environment that cannot be addressed in the application code
-5. **Not a known test-harness false positive**: The submission's description does not match the "Known false positives" list below. Test-harness artifacts are NOT product bugs and must not produce remediations.
+5. **Not a known test-harness false positive**: The submission does not describe an artifact of the automation that filed it. Test-harness artifacts are NOT product bugs and must not produce remediations. The catalogued patterns below are the Spernakit ones; for another project, apply the same rule to that project's known harness artifacts.
 
 Bugs that fail the actionability gate are recorded in the triage report but do not produce feature.json files.
 
 ##### Known test-harness false positives (DO NOT produce remediations)
 
-If the bug's description or `metadata.userAgent` strongly suggests it originated from a Spernakit
-tester, `sb.ts`, or Puppeteer scripted run and the symptom matches one of the patterns below, skip
-it. Record the skip in the triage report's "Skipped: Not Actionable" section with reason
-`TEST-HARNESS-FALSE-POSITIVE: <pattern>`.
+These patterns are catalogued for Spernakit and Spernakit-derived apps. If the bug's description or
+`metadata.userAgent` strongly suggests it originated from a Spernakit tester, `sb.ts`, or Puppeteer
+scripted run and the symptom matches one of the patterns below, skip it. Record the skip in the
+triage report's "Skipped: Not Actionable" section with reason
+`TEST-HARNESS-FALSE-POSITIVE: <pattern>`. On other projects, use the same reason code for that
+project's equivalent artifacts and name the harness in the report.
 
 - **"Radix DropdownMenu / Popover / Dialog trigger does not open when clicked"**. If the report
   predates the 2026-04-15 harness fix, or its evidence explicitly identifies `sb.ts` or the retired
@@ -507,9 +545,10 @@ After investigating all submissions, present a structured triage report, then pr
 ```markdown
 ## Bug & Feature-Request Triage Report: {app-name}
 
-**Application**: {app-name} (spernakit v{spernakit_version})
-**Reports returned by API**: {total} | **Selected**: {selected} | **Actionable bugs**: {bugCount} | **Actionable feature requests**: {featureCount} | **Skipped**: {skipped}
-**Retrieved**: {retrievedAt} across {pageCount} page(s)
+**Application**: {app-name} {version} — add `(spernakit v{spernakit_version})` only when the field exists
+**Intake**: {chosen intake}
+**Reports returned**: {total} | **Selected**: {selected} | **Actionable bugs**: {bugCount} | **Actionable feature requests**: {featureCount} | **Skipped**: {skipped}
+**Retrieved**: {retrievedAt}{ across {pageCount} page(s) when the intake is paginated}
 **Date**: {today YYYY-MM-DD}
 
 ---
@@ -722,10 +761,12 @@ When overlap remains ambiguous, preserve the existing feature set and record the
 ## Anti-Patterns to Avoid
 
 - Do not create feature.json files for resolved/closed submissions
-- Do not read, reset, or recreate `data/bugs.json`; current reports live in the database and are
-  retrieved through the authenticated API
-- Do not mutate `bug_reports` directly or invent report update/delete endpoints
-- Do not continue after partial, unauthorized, forbidden, or unstable paginated retrieval
+- Do not read from, reset, or recreate a storage file the intake does not use. In a Spernakit app
+  current reports live in the database behind the authenticated API, so `data/bugs.json` is stale
+  or absent; read it in no project unless that project's intake is that file.
+- Do not mutate the intake's storage directly — the `bug_reports` table, a tracker's issues, or an
+  inbox file — and do not invent report update or delete endpoints
+- Do not continue after partial, unauthorized, forbidden, or unstable retrieval
 - Do not read the entire codebase speculatively; only read files directly relevant to the affected pathname
 - Do not write vague spec lines like "Verify the bug is fixed" or "Verify the page works"
 - Do not assign Priority 1 to every bug; severity must be earned by actual impact analysis

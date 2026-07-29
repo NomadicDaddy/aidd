@@ -8,7 +8,14 @@ metadata:
 
 # Audit Finding Review
 
-Review all audit-sourced `.aidd/features/` findings in a specified application against the actual codebase. Determine whether each finding is accurate, necessary, over-engineered, and whether it should apply to the Spernakit base template or only to the derived application.
+Review all audit-sourced `.aidd/features/` findings in a specified application against the actual codebase. Determine whether each finding is accurate, necessary, over-engineered, and — for Spernakit-derived apps — whether it should apply to the Spernakit base template or only to the derived application.
+
+**Applies to any aidd-managed project.** The accuracy, necessity, and over-engineering review is
+stack-independent and is the bulk of the work. Template applicability is an **extra dimension that
+engages only when the target is Spernakit-derived** (its `package.json` carries `spernakit_version`,
+or its features do). For every other project there is no template to escalate to: every finding is
+APP-SPECIFIC, the ESCALATE disposition never fires, and the review proceeds on the remaining
+dispositions. Never decline the review because the target is not Spernakit-derived.
 
 ## Usage
 
@@ -55,6 +62,11 @@ Build context for evaluating whether findings are accurate and where they belong
 - Note which files are app-specific vs template-derived
 
 #### 2b. Learn the Spernakit Template
+
+**Skip this subsection entirely when the target is not Spernakit-derived** (no `spernakit_version` in
+its `package.json` or feature records). Record "no template origin: all findings APP-SPECIFIC" in the
+report and go to Phase 3; 2c has nothing to map. A missing `<spernakit-root>` is then expected, not an
+error.
 
 - Read `<spernakit-root>/package.json` for current template version
 - Read `.aidd/docs/template/STACK.md` (staged; `<spernakit-root>/docs/template/STACK.md` in the Spernakit repository) for architectural rules
@@ -165,8 +177,8 @@ Output a structured report organized by disposition:
 ```markdown
 ## Audit Finding Review: {app-name}
 
-**Application**: {app-name} (spernakit v{version})
-**Spernakit template**: v{template-version}
+**Application**: {app-name} (v{version}; add `spernakit v{spernakit_version}` only when derived)
+**Spernakit template**: v{template-version} _(omit this line entirely for non-derived projects)_
 **Findings reviewed**: {count}
 **Date**: {today}
 

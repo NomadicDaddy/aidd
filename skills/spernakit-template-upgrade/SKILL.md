@@ -1,5 +1,5 @@
 ---
-name: template-upgrade
+name: spernakit-template-upgrade
 description: 'Upgrade a derived application to a target Spernakit template version by applying the template delta while preserving domain-specific code. Use to absorb template releases, dependency changes, removals, and breaking changes.'
 metadata:
     aidd-category: spernakit-fleet

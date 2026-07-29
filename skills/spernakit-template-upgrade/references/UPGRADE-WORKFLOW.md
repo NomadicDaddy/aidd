@@ -24,8 +24,8 @@ Upgrade a derived application from its current Spernakit template version to a t
 ## Usage
 
 ```
-template-upgrade [appname]
-template-upgrade [appname] --to [version]
+spernakit-template-upgrade [appname]
+spernakit-template-upgrade [appname] --to [version]
 ```
 
 - **Default target**: Latest Spernakit version (from `spernakit/package.json`)
@@ -576,16 +576,16 @@ Clean up `UPGRADE-PLAN.md`: either delete it or move it to `docs/` as a record.
 
 Three commands work together to keep derived apps and the template in sync:
 
-| Command               | Direction                      | Scope                                  | Backports                                                      |
-| --------------------- | ------------------------------ | -------------------------------------- | -------------------------------------------------------------- |
-| `template-upgrade`    | Template → App (version delta) | What changed between template versions | Detects only: logs candidates and can generate a review packet |
-| `template-refactor`   | Template → App (full audit)    | All drift from current template        | Detects and offers to execute                                  |
-| `spernakit-diff-sync` | Bidirectional                  | Specific file pairs                    | Primary tool for executing backports                           |
+| Command                       | Direction                      | Scope                                  | Backports                                                      |
+| ----------------------------- | ------------------------------ | -------------------------------------- | -------------------------------------------------------------- |
+| `spernakit-template-upgrade`  | Template → App (version delta) | What changed between template versions | Detects only: logs candidates and can generate a review packet |
+| `spernakit-template-refactor` | Template → App (full audit)    | All drift from current template        | Detects and offers to execute                                  |
+| `spernakit-diff-sync`         | Bidirectional                  | Specific file pairs                    | Primary tool for executing backports                           |
 
 **Typical workflow:**
 
-1. Run the aidd-local `template-upgrade` skill to absorb a new template version
-2. Run the aidd-local `template-refactor` skill (optional) to fix pre-existing drift not covered by the upgrade
+1. Run the aidd-local `spernakit-template-upgrade` skill to absorb a new template version
+2. Run the aidd-local `spernakit-template-refactor` skill (optional) to fix pre-existing drift not covered by the upgrade
 3. Run the aidd-local `spernakit-diff-sync` skill to backport any improvements flagged by either of the above
 
 **Shared infrastructure:** All three commands use the same template-managed file list for classification.

@@ -1,5 +1,5 @@
 ---
-name: update-spernakit-docs
+name: spernakit-update-docs
 description: "Documentation-alignment review across the core Spernakit docs (README, STACK, DEVELOPMENT, SPERNAKIT audit, spernakit.psd1, AGENTS). Use to confirm or restore consistency across Spernakit's canonical documentation set."
 metadata:
     aidd-category: spernakit-fleet

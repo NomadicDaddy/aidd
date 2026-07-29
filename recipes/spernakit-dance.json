@@ -12,7 +12,7 @@
 		{
 			"configJson": {
 				"executionIntent": "apply-changes",
-				"skillId": "update-spernakit-docs"
+				"skillId": "spernakit-update-docs"
 			},
 			"name": "Align template docs",
 			"stepType": "skill"
@@ -21,7 +21,7 @@
 			"configJson": {
 				"args": "{bumpHint}",
 				"executionIntent": "apply-changes",
-				"skillId": "dance"
+				"skillId": "spernakit-dance"
 			},
 			"name": "Run The Dance",
 			"stepType": "skill"

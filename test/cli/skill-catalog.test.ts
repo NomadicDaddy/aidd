@@ -39,7 +39,6 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'commit-bundles': 'runtime',
 	'consolidate-features': 'metadata',
 	'convex-guidelines': 'general',
-	dance: 'spernakit-fleet',
 	deepreview: 'runtime',
 	defrag: 'metadata',
 	dependencies: 'metadata',
@@ -58,7 +57,6 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'humanize-docs': 'metadata',
 	hygiene: 'audit-remediation',
 	'hyperscript-guidelines': 'general',
-	'justify-diffs': 'spernakit-fleet',
 	'mustache-guidelines': 'general',
 	'onboarding-interview': 'recipe-maturity',
 	'page-header-audit': 'audit-remediation',
@@ -77,15 +75,19 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	spec: 'recipe-maturity',
 	'spernakit-apply-ui': 'spernakit-fleet',
 	'spernakit-bump': 'spernakit-fleet',
+	'spernakit-dance': 'spernakit-fleet',
 	'spernakit-diff-sync': 'spernakit-fleet',
-	'spernakit-tester': 'runtime',
+	'spernakit-justify-diffs': 'spernakit-fleet',
+	'spernakit-organize-ui': 'spernakit-fleet',
+	'spernakit-template-refactor': 'spernakit-fleet',
+	'spernakit-template-upgrade': 'spernakit-fleet',
+	'spernakit-tester': 'spernakit-fleet',
+	'spernakit-update-docs': 'spernakit-fleet',
 	spirit: 'runtime',
 	'summarize-iterations': 'metadata',
-	'template-refactor': 'spernakit-fleet',
-	'template-upgrade': 'spernakit-fleet',
+	tester: 'runtime',
 	'testing-scenarios': 'recipe-maturity',
 	thorough: 'runtime',
-	'ui-organize': 'spernakit-fleet',
 	'ui-parity': 'audit-remediation',
 	'ui-playground-apply': 'runtime',
 	'ui-playground-sync': 'runtime',
@@ -93,7 +95,6 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'update-audits': 'metadata',
 	'update-roadmap': 'metadata',
 	'update-screen-map': 'metadata',
-	'update-spernakit-docs': 'spernakit-fleet',
 	'validate-build': 'runtime',
 	'validate-tests': 'runtime',
 } as const satisfies Readonly<Record<string, (typeof skillCategories)[number]>>;
@@ -393,6 +394,12 @@ describe('skill catalog', () => {
 		expect(skill.body).toContain('(references/FEATURE-AUTHORING.md)');
 		expect(skill.body).toContain('`.aidd/skills/doc2feature/references/FEATURE-AUTHORING.md`');
 		expect(skillContractDeps(skill)?.contracts).toContain('doc2feature');
+	});
+
+	test('tester stages the fallback used to convert findings into remediation features', async () => {
+		const skill = await readSkillDefinition(process.cwd(), 'tester');
+
+		expect(skillContractDeps(skill)?.contracts).toEqual(['bug2feature', 'testing-scenarios']);
 	});
 
 	test('every bundled repository skill conforms and has usable presentation metadata', async () => {

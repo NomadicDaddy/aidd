@@ -1,5 +1,5 @@
 ---
-name: ui-organize
+name: spernakit-organize-ui
 description: "Reorganize a Spernakit-derived application's primary navigation by workflow and frequency while standardizing groups, labels, and icons. Use to clean up, reorder, or simplify navigation and sidebars."
 metadata:
     aidd-category: spernakit-fleet
@@ -14,7 +14,7 @@ decision, and apply the evidence-backed edits directly.
 ## Usage
 
 ```
-ui-organize [appname...]
+spernakit-organize-ui [appname...]
 ```
 
 - Zero args → infer the target from a cwd under `<applications-root>/<app-name>`. If cwd is the
@@ -232,7 +232,7 @@ Per app, after edits:
 Emit per app (and a combined summary when multiple apps were processed):
 
 ```
-ui-organize: {appname}
+spernakit-organize-ui: {appname}
 
 Purpose:         {one-liner from AGENTS.md}
 Render mode:     Option A (reorder only) | Option B (separators rendered)

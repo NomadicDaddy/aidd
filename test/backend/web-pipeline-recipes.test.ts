@@ -391,11 +391,35 @@ describe('file-backed pipeline recipes', () => {
 		const [align, dance] = recipe.steps;
 
 		expect(recipe.steps).toHaveLength(2);
-		expect(align?.configJson.skillId).toBe('update-spernakit-docs');
-		expect(dance?.configJson.skillId).toBe('dance');
+		expect(align?.configJson.skillId).toBe('spernakit-update-docs');
+		expect(dance?.configJson.skillId).toBe('spernakit-dance');
 		// The dance skill commits, tags, and pushes the template and derived apps, so a
 		// failed prerequisite must abort rather than release.
 		expect(align?.onFailure).toBeUndefined();
+	});
+
+	test('test recipes use the general tester unless their workflow is Spernakit-specific', async () => {
+		const recipeService = new RecipeService(process.cwd());
+		const genericRecipeIds = [
+			'test-and-remediate',
+			'test-application-chaos',
+			'test-application-scenarios',
+		];
+		const spernakitRecipeIds = ['spernakit-bump', 'spernakit-propagate'];
+
+		for (const recipeId of genericRecipeIds) {
+			const recipe = await recipeService.readRecipe(recipeId);
+			expect(recipe.steps.some((step) => step.configJson.skillId === 'tester')).toBe(true);
+			expect(
+				recipe.steps.some((step) => step.configJson.skillId === 'spernakit-tester'),
+			).toBe(false);
+		}
+		for (const recipeId of spernakitRecipeIds) {
+			const recipe = await recipeService.readRecipe(recipeId);
+			expect(
+				recipe.steps.some((step) => step.configJson.skillId === 'spernakit-tester'),
+			).toBe(true);
+		}
 	});
 
 	test('deploy re-checks the working tree after validation so the deployed tree matches a tag', async () => {

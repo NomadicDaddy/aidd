@@ -277,5 +277,5 @@ At the end, produce a structured markdown report:
 - Database files only under `data/` at app root, never `backend/data/`
 - Never skip quality checks or relax linting rules; report a hard blocker if compliance cannot be maintained
 - Require the target app's current `.aidd/features/` layout. If it is absent, stop and direct the
-  user to the aidd onboarding or template-upgrade workflow instead of creating a parallel metadata
+  user to the aidd onboarding or spernakit-template-upgrade workflow instead of creating a parallel metadata
   tree.

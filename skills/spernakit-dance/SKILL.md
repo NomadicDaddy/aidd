@@ -1,11 +1,12 @@
 ---
-name: dance
+name: spernakit-dance
 description: 'Run The Dance across Spernakit and derived apps: ship the template, sync each app via three-way base comparison, test, remediate, verify, tag, and report with checkpointed resume. Use for The Dance, propagation, or a fleet-wide release.'
 metadata:
     aidd-category: spernakit-fleet
     aidd-contracts: >-
-        humanize-docs, spernakit-bump, template-upgrade, template-refactor,
-        spernakit-diff-sync, spernakit-tester, bug2feature, feature-review, devdiary-update
+        humanize-docs, spernakit-bump, spernakit-template-upgrade,
+        spernakit-template-refactor, spernakit-diff-sync, spernakit-tester, bug2feature,
+        feature-review, devdiary-update
 ---
 
 # Propagate the Spernakit Fleet
@@ -151,10 +152,10 @@ commit the change as a distinct, described security fix.
 
 Per-app sequence:
 
-1. `Skill: template-upgrade {app}`: use the supported manual upgrade workflow. Do not create an
+1. `Skill: spernakit-template-upgrade {app}`: use the supported manual upgrade workflow. Do not create an
    automation helper. For an app several releases behind, use the three-way comparison above.
-2. `Skill: template-refactor {app}`: apply structural refactors flagged by the new template version.
-3. `Skill: spernakit-diff-sync {app}`: file-by-file drift check across `lib/`, `hooks/`, `utils/`, `components/shared/`. **This step is non-optional**; `template-upgrade` alone misses per-file drift in these directories (Norm 16).
+2. `Skill: spernakit-template-refactor {app}`: apply structural refactors flagged by the new template version.
+3. `Skill: spernakit-diff-sync {app}`: file-by-file drift check across `lib/`, `hooks/`, `utils/`, `components/shared/`. **This step is non-optional**; `spernakit-template-upgrade` alone misses per-file drift in these directories (Norm 16).
 4. **Lost-lines audit**: report every line the copy removed from a template-managed path that no
    commit in the template repository ever contained, restricted to files whose app history carries a
    commit after `init`. Any hit is app-authored work the upgrade dropped; restore it before

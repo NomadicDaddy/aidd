@@ -1,13 +1,19 @@
 ---
 name: consolidate-features
-description: "Consolidate a Spernakit application's `.aidd/features` by folding completed audit and remediation findings into their source features and removing redundant finding files. Use for feature cleanup, deduplication, or sprawl reduction."
+description: "Consolidate any aidd-managed application's `.aidd/features` by folding completed audit and remediation findings into their source features and removing redundant finding files. Use for feature cleanup, deduplication, or sprawl reduction."
 metadata:
     aidd-category: metadata
 ---
 
 # Feature Consolidation
 
-Analyze, consolidate, and clean up feature files for a Spernakit-derived application. Fold completed audit and remediation findings back into the original features that generated the issues, then remove the standalone finding features.
+Analyze, consolidate, and clean up feature files for an application. Fold completed audit and remediation findings back into the original features that generated the issues, then remove the standalone finding features.
+
+## Applicability
+
+**This skill applies to every aidd-managed project**, whatever its stack — Astro sites, CLIs, libraries, Python services, and Spernakit-derived apps alike. The only requirement is a `.aidd/features/` corpus; nothing here reads application source code or assumes a framework.
+
+The Spernakit rules below (template provenance, `spernakit_version`, upstreaming) are **conditional, not a precondition**. They engage only for features that actually carry a `spernakit_version` field. A project whose features carry none — the common case — simply has zero template features: every feature is app-owned and modifiable, and consolidation proceeds normally. Absence of Spernakit is never a reason to skip a consolidation run or report it as out of scope.
 
 ## Usage
 
@@ -31,16 +37,16 @@ The goal is to ensure every fix, audit finding, and remediation spec is represen
 
 2. **Classify features** into four buckets:
 
-    | Type                     | Pattern                       | Description                                                                  |
-    | ------------------------ | ----------------------------- | ---------------------------------------------------------------------------- |
-    | **Template features**    | Has `spernakit_version` field | Template-owned features copied from Spernakit; **READ-ONLY in derived apps** |
-    | **Base features**        | Everything else (clean slugs) | App-specific features that describe functionality to build                   |
-    | **Remediation features** | `remediation-*`               | Drift fixes and template alignment corrections                               |
-    | **Audit findings**       | `audit-<slug>-<digits>-…`     | Issues discovered during code audits                                         |
+    | Type                     | Pattern                       | Description                                                                                                        |
+    | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+    | **Template features**    | Has `spernakit_version` field | Template-owned features copied from Spernakit; **READ-ONLY in derived apps**. Count is 0 in non-Spernakit projects |
+    | **Base features**        | Everything else (clean slugs) | App-specific features that describe functionality to build                                                         |
+    | **Remediation features** | `remediation-*`               | Drift fixes and template alignment corrections                                                                     |
+    | **Audit findings**       | `audit-<slug>-<digits>-…`     | Issues discovered during code audits                                                                               |
 
     A bare `audit-*` prefix is **not** the test: `audit-logs` is a durable capability feature, and apps carry app-owned records such as `audit-change-history`. A finding directory carries a run-id digit group — `audit-performance-1784357475-slow-queries` — and matches `/^audit-[a-z0-9]+(?:-[a-z0-9]+)*?-\d{6,}-/`, the same predicate `sync-template-features.ts` uses. (`auditSource` is documented as a marker but no record in any corpus actually carries it; naming is the only signal.)
 
-    **Template features** are identified by the presence of a `spernakit_version` field in their feature.json. These features originate from the Spernakit template and are synced to derived apps during template upgrades. In derived apps, they must NEVER be modified, renamed, deleted, or have remediations folded into them. Any fix that belongs in a template feature must be upstreamed to the Spernakit repository and applied there via the aidd-local `consolidate-features` skill.
+    **Template features** are identified by the presence of a `spernakit_version` field in their feature.json. Check for the field; do not infer the bucket from the project's stack or name. When no feature carries it, this bucket is empty and the rest of this subsection does not apply — report `Template features: 0` and continue. These features originate from the Spernakit template and are synced to derived apps during template upgrades. In derived apps, they must NEVER be modified, renamed, deleted, or have remediations folded into them. Any fix that belongs in a template feature must be upstreamed to the Spernakit repository and applied there via the aidd-local `consolidate-features` skill.
 
     **In the Spernakit repository itself**, template features ARE modifiable; remediations can be folded into them and specs can be updated. **Do not bump `spernakit_version` when the spec changes.** It records the template version that _introduced_ the record — an origin marker, not a revision stamp — and every record in the corpus is maintained that way. Bumping it would make the record read as hand-edited to Spernakit's own gates and to the app-side feature-drift check, both of which compare the field exactly. Record the change in the feature's revision notes instead.
 
@@ -77,7 +83,7 @@ For each completed remediation/audit feature, determine which base feature(s) it
 **If a remediation feature cannot be mapped to any base feature**, preserve it and report the
 unresolved mapping rather than silently deleting it.
 
-**Template feature protection (derived apps only)**: If a remediation maps to a feature that has `spernakit_version` and the target app is NOT `spernakit`, do NOT fold the remediation into it. Instead, flag it as "**UPSTREAM**: remediation targets template-owned feature `{id}`; fold this fix in the Spernakit repository via the aidd-local `consolidate-features` skill, then sync to derived apps via the aidd-local `template-upgrade` skill." The remediation feature is left in place until the upstream fix lands.
+**Template feature protection (derived apps only)**: If a remediation maps to a feature that has `spernakit_version` and the target app is NOT `spernakit`, do NOT fold the remediation into it. Instead, flag it as "**UPSTREAM**: remediation targets template-owned feature `{id}`; fold this fix in the Spernakit repository via the aidd-local `consolidate-features` skill, then sync to derived apps via the aidd-local `spernakit-template-upgrade` skill." The remediation feature is left in place until the upstream fix lands.
 
 ### Phase 3: Fold Specifications
 
@@ -183,19 +189,18 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
 1. **Format changed artifacts**: Run Prettier against the changed feature tree and related artifacts before validation. Typical command from the target app root:
 
     ```powershell
-    bunx prettier --write .aidd/features .aidd/roadmap.json .aidd/screen-map.md
+    bunx prettier --ignore-path <empty-file> --write .aidd/features .aidd/roadmap.json .aidd/screen-map.md
     ```
 
-    If one of those files does not exist in the target app, omit that path rather than creating a placeholder.
+    The explicit `--ignore-path` override (pointed at any empty file) is required: most apps list `/.aidd/` in `.prettierignore`, so an unqualified `prettier --write` on those paths matches zero files and exits 0, formatting nothing. If one of the listed paths does not exist in the target app, omit that path rather than creating a placeholder.
 
-2. **Run validation**: Execute the current aidd validator from the target app root:
+2. **Run validation**: Execute the aidd validator **from `<aidd-root>`**, pointed at the target:
 
     ```powershell
-    bun run start -- --project-dir . --check-features
+    bun run start -- --project-dir <applications-root>/{app} --check-features
     ```
 
-    If running from outside the target app root, use
-    `--project-dir <applications-root>/{app}` with the current runtime at `<aidd-root>`.
+    Do not run `bun run start` from the target app root: that resolves to the target's own `start` script (a dev server in most stacks), not the aidd validator.
 
 3. **Verify results**: All features must pass validation (0 invalid files).
 
@@ -264,7 +269,8 @@ Commit: {commit hash or "not committed: reason"}
 6. **Commit gate**: If consolidation changed files and the run was not `--dry-run`, commit the completed, validated bundle before final reporting unless the user explicitly opts out.
 7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements.
 8. **Dry-run safety**: When `--dry-run` is specified, report everything but modify nothing.
-9. **Template provenance**: Features with `spernakit_version` are template-owned. In derived apps, never modify, rename, delete, or fold into them. Fixes to template features must be upstreamed to the Spernakit repository.
+9. **Template provenance**: Features with `spernakit_version` are template-owned. In derived apps, never modify, rename, delete, or fold into them. Fixes to template features must be upstreamed to the Spernakit repository. This principle is inert when no feature carries the field.
+10. **Stack independence**: Never decline a consolidation because of the target's stack, framework, or lack of Spernakit provenance. The corpus is the input; if `.aidd/features/` exists, the skill runs. If it genuinely does not exist, say so plainly instead of reporting a scope restriction.
 
 ## Notes
 
@@ -272,4 +278,4 @@ Commit: {commit hash or "not committed: reason"}
 - If `--dry-run` is passed, run Phases 1-2 only and report the mapping without making changes.
 - Remediation features from any date should be processed, not just the current session's.
 - The `updatedAt` timestamp should use the current date in ISO format (e.g., `2026-03-11T00:00:00.000Z`).
-- This skill complements the aidd-local `template-refactor` skill; run consolidation after refactoring to clean up.
+- This skill complements the aidd-local `spernakit-template-refactor` skill; run consolidation after refactoring to clean up.

@@ -1,5 +1,5 @@
 ---
-name: justify-diffs
+name: spernakit-justify-diffs
 description: 'Compare Spernakit template files with derived-app copies, classifying differences as branding, app requirements, or unjustified drift. Use to explain, audit, or reconcile template-to-app divergence.'
 metadata:
     aidd-category: spernakit-fleet

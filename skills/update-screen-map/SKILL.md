@@ -1,6 +1,6 @@
 ---
 name: update-screen-map
-description: "Reconcile `.aidd/screen-map.md` with live routes, navigation, pages, roles, and feature links while preserving narrative text. Use to audit, refresh, or reconcile a Spernakit application's screen map."
+description: "Reconcile `.aidd/screen-map.md` with live routes, navigation, pages, roles, and feature links while preserving narrative text. Use to audit, refresh, or reconcile any application's screen map."
 metadata:
     aidd-category: metadata
     aidd-contracts: humanize-docs
@@ -8,13 +8,20 @@ metadata:
 
 # Reconcile the Screen Map
 
-Reconcile a Spernakit-derived application's `.aidd/screen-map.md` against the actual frontend routes,
+Reconcile an application's `.aidd/screen-map.md` against the actual frontend routes,
 navigation configuration, page components, and feature blueprints. Detect drift, report it, and apply
 evidence-backed updates inferred from code instead of leaving TODO stubs. Preserve hand-written narrative
 blocks byte for byte. When a route has no matching `.aidd/features/` blueprint, back-fill one so the
 reconstruction blueprint stays complete.
 
 Apply the changes directly. The report and file diff are the review surface.
+
+**Applies to any project with a user-facing screen surface**, whatever its stack — React SPAs, Astro or
+static sites, server-rendered templates, and Spernakit-derived apps alike. The Spernakit details below
+(role hierarchy, `navConfig.tsx`, `spernakit_version`) are examples and conditionals, never
+preconditions: discover the target's own routing, navigation, and role modules as the Context section
+directs. The only genuine precondition is that the project renders screens; a headless library or CLI
+has no screen map, and that — not the absence of Spernakit — is the reason to decline.
 
 ## Usage
 
@@ -213,7 +220,7 @@ Newly inferred narrative prose (Purpose paragraphs, region and control descripti
 ### Phase 7: Backfill missing feature.json blueprints
 
 For every uncovered screen reported in Phase 5, create
-`{app}/.aidd/features/{slug}/feature.json` using this schema (matches Spernakit template conventions).
+`{app}/.aidd/features/{slug}/feature.json` using this schema (the standard aidd feature record).
 A screen without a blueprint leaves the reconstruction incomplete, and a backfill with
 `status: completed` describes code that already exists rather than queuing new work:
 
@@ -239,7 +246,7 @@ Rules for generating a valid feature.json:
 - **`affectedFiles`**: JSON array of known file paths the screen comprises (page component, tabs/sections, dialogs, API modules). May be empty initially, but populate it from the Phase 4 reads when the paths are known. This field is part of the canonical schema (see `feature-review-all.md`).
 - **`dependencies`**: must be a JSON array (even if empty). Every slug in it must match the `id` field of another existing `feature.json` in the same app. Grep `"id":` across `{app}/.aidd/features/**/feature.json` to confirm; directory names are NOT valid dependency slugs; the `id` field value is what matters. Common upstream dependencies for UI screens: the appshell feature's id, the api-client feature's id, and the auth/router feature's id.
 - **`spernakit_version`**: include this only when the target app is Spernakit itself. Omit it for
-  derived apps because `template-upgrade` deletes derived-app features that carry the field. For
+  derived apps because `spernakit-template-upgrade` deletes derived-app features that carry the field. For
   Spernakit, use the exact version from `<spernakit-root>/package.json`; do not patch-bump an older
   value from a neighboring feature.
 - **`spec`**: derive from the page code. Enumerate observable behaviors: "Verify `<Page>.tsx` exists", "Verify `<mutation>` mutation wires through `<API module>`", "Verify `<dialog component>` renders from `<trigger button>`", etc. Aim for 5-12 numbered steps. This is a reconstruction spec; it should be enough for an agent to rebuild the screen if it were deleted.
@@ -291,7 +298,8 @@ After all writes complete:
   give each worker a self-contained prompt listing its screens, page-component conventions,
   `.aidd/features/` location, and required `PURPOSE / DETAILS / DRIVERS` output. Process the same
   groups sequentially when delegation is unavailable.
-- **No helper script.** Do not create a TypeScript helper under `scripts/` for this; it violates Spernakit's "no utilities without an immediate consumer" rule. The reconciliation runs inside this skill each invocation.
-- **Spernakit-lite variants.** If a Spernakit app does not have `navConfig.tsx` (the lite variants
-  omit it), fall back to route-guard minimum roles and readable component names. Note the missing
-  navigation configuration in the report.
+- **No helper script.** Do not create a TypeScript helper under `scripts/` for this; it violates the house "no utilities without an immediate consumer" rule. The reconciliation runs inside this skill each invocation.
+- **No navigation module.** When the app has no central navigation configuration — Spernakit-lite
+  variants omit `navConfig.tsx`, and static-site and server-rendered stacks often have none at all —
+  fall back to route-guard minimum roles and readable component names. Note the missing navigation
+  configuration in the report; it is not a reason to stop.

@@ -42,12 +42,12 @@ This document provides a structured audit framework for evaluating derived appli
 
 ## Related Documents
 
-| Document          | Path                                    | Purpose                                      |
-| ----------------- | --------------------------------------- | -------------------------------------------- |
-| Stack Reference   | `spernakit/docs/template/STACK.md`      | Core architecture and commands               |
-| Project Overrides | `spernakit/.aidd/project.md`            | Technology-specific constraints              |
-| Template Refactor | `skills/template-refactor/SKILL.md`     | Bidirectional enhancement detection workflow |
-| Enhancement Log   | `.claude/logs/template-enhancements.md` | Historical record of template improvements   |
+| Document          | Path                                          | Purpose                                      |
+| ----------------- | --------------------------------------------- | -------------------------------------------- |
+| Stack Reference   | `spernakit/docs/template/STACK.md`            | Core architecture and commands               |
+| Project Overrides | `spernakit/.aidd/project.md`                  | Technology-specific constraints              |
+| Template Refactor | `skills/spernakit-template-refactor/SKILL.md` | Bidirectional enhancement detection workflow |
+| Enhancement Log   | `.claude/logs/template-enhancements.md`       | Historical record of template improvements   |
 
 ## Audit Objectives
 
@@ -1030,7 +1030,7 @@ Compare-Object $template $target -Property Name, Length |
 ## 10.2 Execution Phase
 
 Derived apps at Spernakit v3.28.2 or later sync template changes using a manual cherry-pick
-workflow driven by the `/template-upgrade` slash command. Earlier sources are unsupported and
+workflow driven by the `/spernakit-template-upgrade` slash command. Earlier sources are unsupported and
 must be initialized from the current template. Do not auto-apply changes: domain-extended template
 files require individual review. Drift detection (`bun run check:drift`) is the source of truth
 for sync status. Before applying changes, run

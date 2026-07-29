@@ -13,7 +13,7 @@
 			"configJson": {
 				"args": "{resumeArgs}",
 				"executionIntent": "apply-changes",
-				"skillId": "dance"
+				"skillId": "spernakit-dance"
 			},
 			"name": "Resume The Dance",
 			"stepType": "skill"

@@ -1,6 +1,6 @@
 ---
 name: promote-remediation
-description: 'Convert a misclassified aidd `remediation-*` feature into net-new `feature-*` work while preserving provenance and dependency references. Use when a remediation should be promoted or converted to a feature.'
+description: 'Convert a misclassified aidd remediation record into net-new feature work while preserving provenance and dependency references. Use when a remediation should be promoted or converted to a feature.'
 metadata:
     aidd-category: audit-remediation
 ---
@@ -34,7 +34,7 @@ promote-remediation --all-blocked  (promote every remediation whose notes contai
 | Argument                    | Required                        | Description                                                                                                                                                                                                                                                                                                 |
 | --------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `{app}/{remediation-slug}`  | One of these or `--all-blocked` | Path-like locator: app name + remediation directory name. Example: `<app-name>/remediation-YYYYMMDD-inventory-dashboard`.                                                                                                                                                                                   |
-| `--all-blocked`             | One of these or a slug          | Sweep mode: promote every remediation across every app whose `notes` field contains the literal string "BLOCKED". The flag authorizes the complete discovered batch.                                                                                                                                        |
+| `--all-blocked`             | One of these or a slug          | Sweep mode: promote every remediation whose `notes` field contains the literal string "BLOCKED", across every aidd-managed app (any stack; see Phase 1). The flag authorizes the complete discovered batch.                                                                                                 |
 | `--new-slug {feature-slug}` | Optional                        | Override the target slug. By default the date and slug are preserved (only the prefix changes). Use this when the remediation is being scope-narrowed and the new slug should reflect the narrower scope (e.g., `homework-datetime-and-milestones` → `homework-milestones` after the datetime half landed). |
 | `--reason "<text>"`         | Optional                        | Reason text inserted into the provenance note. If omitted, defaults to "promoted because affected area does not exist (bug filed against missing capability)".                                                                                                                                              |
 
@@ -65,10 +65,13 @@ The same discipline applies to any workflow that picks up a BLOCKED/scope flag f
 ### Phase 1: Resolve target(s)
 
 1. **Single mode** (`{app}/{slug}` argument): verify the directory exists at `<applications-root>/{app}/.aidd/features/{slug}/` and contains a `feature.json`. If the slug doesn't start with `remediation-`, error out; only remediations can be promoted. If the feature.json has a `spernakit_version` field, error out; template-owned features cannot be promoted (they are managed by the spernakit repo).
-2. **Sweep mode** (`--all-blocked`): scan every Spernakit application registered in `<spernakit-root>/spernakit.psd1`. For each app, list every directory under `.aidd/features/` that:
+2. **Sweep mode** (`--all-blocked`): discover candidate apps from `<applications-root>/AGENTS.md`, then filter to roots that actually contain a `.aidd/features` tree; exclude `.old` directories. This is the same discovery the aidd-local `feature-review-all` skill uses, and it is **deliberately not** the Spernakit fleet manifest: a blocked remediation is an aidd feature record, so any aidd-managed project can hold one regardless of stack or template provenance. For each app, list every directory under `.aidd/features/` that:
     - Starts with `remediation-`
     - Has a `feature.json` whose `notes` field contains the substring "BLOCKED" (case-insensitive)
-      Present the candidate list, then promote the complete batch directly.
+
+    Present the candidate list, then promote the complete batch directly. Report how many roots were
+    scanned and how many were skipped for having no `.aidd/features`, so a short candidate list is
+    visibly a real result rather than a narrow scan.
 
 ### Phase 2: For each target, validate and dry-run
 

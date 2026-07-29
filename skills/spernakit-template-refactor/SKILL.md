@@ -1,5 +1,5 @@
 ---
-name: template-refactor
+name: spernakit-template-refactor
 description: 'Assess and realign a derived application with the Spernakit template while preserving intentional domain differences and behavior. Use to remediate template drift or clean up unjustified divergence.'
 metadata:
     aidd-category: spernakit-fleet
@@ -13,8 +13,8 @@ Assess a derived application against the Spernakit template, identify all drift,
 ## Usage
 
 ```
-template-refactor [appname]
-template-refactor [appname] --pairs (explicit file pairs mode)
+spernakit-template-refactor [appname]
+spernakit-template-refactor [appname] --pairs (explicit file pairs mode)
 ```
 
 - **Full assessment mode** (default): Assess an entire derived app against Spernakit, generate a remediation plan and feature files, then execute.
@@ -40,7 +40,7 @@ Drift must be meaningful, deliberate, and necessary for the derived application'
 Determine the input mode based on user's request:
 
 1. **Full assessment mode** (default):
-    - User asks for the aidd-local `template-refactor` skill for an app or says "Refactor [appname]"
+    - User asks for the aidd-local `spernakit-template-refactor` skill for an app or says "Refactor [appname]"
     - Proceed to Phase 1 (Codebase Assessment)
 
 2. **Explicit pairs mode**:

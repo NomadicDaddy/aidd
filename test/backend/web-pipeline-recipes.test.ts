@@ -269,7 +269,7 @@ describe('file-backed pipeline recipes', () => {
 			'validate-tests',
 		];
 
-		expect(recipes).toHaveLength(35);
+		expect(recipes).toHaveLength(36);
 		expect(recipeIds.has('interview-postq')).toBe(true);
 		expect(recipeIds.has('reconcile-project-artifacts')).toBe(true);
 		expect(retiredWrapperIds.filter((id) => recipeIds.has(id))).toEqual([]);

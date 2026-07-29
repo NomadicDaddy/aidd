@@ -1,0 +1,22 @@
+{
+	"description": "Resume an interrupted dance from the .dance-state.json checkpoint in the applications root. Single step: no template-docs alignment and no release, so it will not re-ship a template that is already tagged. Set the resume args to match the checkpoint's phase before launching.",
+	"name": "spernakit dance (resume)",
+	"parameters": [
+		{
+			"defaultValue": "--resume-from A",
+			"description": "Resume arguments for the dance skill (e.g. --resume-from A --pilot <app>). Do NOT pass a bump hint: a bump hint forces a template release.",
+			"name": "resumeArgs"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{resumeArgs}",
+				"executionIntent": "apply-changes",
+				"skillId": "dance"
+			},
+			"name": "Resume The Dance",
+			"stepType": "skill"
+		}
+	]
+}

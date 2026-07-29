@@ -40,6 +40,7 @@ Launching a recipe creates a pipeline session. A session that completes some ste
 | `ship-changes`                              | ship changes                                                                 | 4     | application                           |
 | `spernakit-bump`                            | spernakit bump                                                               | 4     | version                               |
 | `spernakit-dance`                           | spernakit dance                                                              | 2     | bumpHint                              |
+| `spernakit-dance-resume`                    | spernakit dance (resume)                                                     | 1     | resumeArgs                            |
 | `spernakit-propagate`                       | spernakit propagate                                                          | 11    | application, version                  |
 | `spernakit-release`                         | spernakit release                                                            | 3     | version, application                  |
 | `spernakit-replatform-assessment`           | spernakit-replatform-assessment                                              | 7     | application                           |
@@ -426,6 +427,20 @@ Align the core Spernakit template documentation, then run The Dance across the t
 This is the fleet-wide counterpart to `spernakit-release`, which propagates to exactly one `{application}`. The `dance` skill owns the whole fan-out itself — ship the template, three-way sync each app, tester fan-out, triage, remediation, supertest and `smoke:qc` verification, per-app tagging, dev diary, and session report — with checkpointed resume in `<applications-root>/.dance-state.json`. A recipe cannot loop, so it does not try to; it adds the one thing the skill does not do, which is bringing README, STACK, DEVELOPMENT, and the SPERNAKIT audit in line before the template ships. Leave `bumpHint` blank to let the skill size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it.
 
 Step 1 stops the recipe when it fails. That is deliberate even though a doc misalignment sounds minor: step 2 commits, tags, and pushes the template and every derived application, so it is the one step in this recipe whose output cannot be quietly rolled back. Alignment is the recipe's stated prerequisite for the release, and a prerequisite that can fail without consequence is not one.
+
+### spernakit-dance-resume
+
+Resume an interrupted dance from the .dance-state.json checkpoint in the applications root. Single step: no template-docs alignment and no release, so it will not re-ship a template that is already tagged. Set the resume args to match the checkpoint's phase before launching.
+
+- **Name:** spernakit dance (resume)
+- **Parameters:** resumeArgs (default `--resume-from A`)
+- **Steps:** 1
+
+1. `skill` - Resume The Dance (args: {resumeArgs}; skillId: dance)
+
+`spernakit-dance` is the wrong entry point for a run that already started. Its step 1 re-aligns the template docs and its step 2 sizes and ships a release, so re-running it after a crash re-tags a template the fleet has already taken. This recipe drops both and calls the skill directly, leaving the checkpoint to decide what still needs doing.
+
+The `resumeArgs` default is a placeholder, not a suggestion — always set it from the checkpoint before launching. Read `<applications-root>/.dance-state.json`, pass `--resume-from` matching its `phase`, and pass `--scope` matching its `scope` exactly when narrowing to a subset. Changing the scope or bump via flags alone makes the skill archive the checkpoint and restart from Phase 0, so narrow the checkpoint first and let the flag agree with it. Never pass a bump hint here: a bump hint forces a template release, which is the thing this recipe exists to avoid.
 
 ### spernakit-propagate
 

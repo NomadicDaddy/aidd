@@ -228,6 +228,11 @@ describe('roadmap apply', () => {
 	test('supports dry-run and applies priority plus dependency ids', async () => {
 		const root = await tempRoot('roadmap');
 		const projectDir = join(root, 'demo');
+		await writeJson(join(projectDir, '.prettierrc'), {
+			printWidth: 100,
+			tabWidth: 4,
+			useTabs: true,
+		});
 		await writeFeature(projectDir, 'feature-base', {
 			dependencies: [],
 			priority: 9,
@@ -253,6 +258,10 @@ describe('roadmap apply', () => {
 		});
 		const base = await readFeature(projectDir, 'feature-base');
 		const child = await readFeature(projectDir, 'feature-child');
+		const childRaw = await readFile(
+			join(projectDir, '.aidd', 'features', 'feature-child', 'feature.json'),
+			'utf8',
+		);
 
 		expect(dryRun.updated).toBe(2);
 		expect(beforeApply.priority).toBe(9);
@@ -267,6 +276,7 @@ describe('roadmap apply', () => {
 			priority: 2,
 			updatedAt: '2026-05-22T12:34:56.000Z',
 		});
+		expect(childRaw).toContain('\t"dependencies": ["feature-base"],');
 	});
 
 	test('preserves omitted dependencies while applying explicit dependency lists', async () => {

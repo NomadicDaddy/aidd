@@ -1,5 +1,6 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
+import { format, resolveConfig } from 'prettier';
 
 import { isObject, pathExists, pathIsDirectory, readJsonObject } from './fs-utils.ts';
 import {
@@ -29,6 +30,16 @@ function dependenciesMatch(current: unknown, expected: string[]): boolean {
 	if (!Array.isArray(current)) return false;
 	if (current.length !== expected.length) return false;
 	return expected.every((dependency) => current.includes(dependency));
+}
+
+async function serializeFeature(filePath: string, value: unknown): Promise<string> {
+	const config = await resolveConfig(filePath);
+	if (config === null) return `${JSON.stringify(value, null, '\t')}\n`;
+	return await format(JSON.stringify(value), {
+		...config,
+		filepath: filePath,
+		parser: 'json',
+	});
 }
 
 /**
@@ -194,7 +205,7 @@ export async function applyRoadmap(
 				...(plan.templateOwned ? {} : { updatedAt }),
 			};
 			await mkdir(join(featuresDir, plan.dirName), { recursive: true });
-			await writeFile(plan.filePath, `${JSON.stringify(nextFeature, null, '\t')}\n`);
+			await writeFile(plan.filePath, await serializeFeature(plan.filePath, nextFeature));
 		}
 	}
 

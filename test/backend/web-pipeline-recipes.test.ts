@@ -557,11 +557,15 @@ describe('file-backed pipeline recipes', () => {
 		// backend no longer pre-compiles a --prompt for skill steps.
 		const rootDir = await makeRoot(`
 const projectDir = process.argv[process.argv.indexOf('--project-dir') + 1];
-const skillIdx = process.argv.indexOf('--skill');
-const argsIdx = process.argv.indexOf('--skill-args');
-const skill = skillIdx >= 0 ? process.argv[skillIdx + 1] : '';
-const skillArgs = argsIdx >= 0 ? process.argv[argsIdx + 1] : '';
-const hasPrompt = process.argv.includes('--prompt');
+const flagValue = (name) => {
+	const inline = process.argv.find((token) => token.startsWith(name + '='));
+	if (inline !== undefined) return inline.slice(name.length + 1);
+	const idx = process.argv.indexOf(name);
+	return idx >= 0 ? process.argv[idx + 1] : '';
+};
+const skill = flagValue('--skill');
+const skillArgs = flagValue('--skill-args');
+const hasPrompt = process.argv.some((t) => t === '--prompt' || t.startsWith('--prompt='));
 const hasReadonly = process.argv.includes('--directive-readonly');
 await Bun.write(projectDir + '/skill-invocation.txt', skill + ' :: ' + skillArgs + ' :: prompt=' + hasPrompt + ' :: readonly=' + hasReadonly);
 ${heartbeatTerminator()}
@@ -667,10 +671,14 @@ ${heartbeatTerminator()}
 		const workspace = await testTempDir('aidd-pipeline-oneshot-');
 		const rootDir = await makeRoot(`
 const projectDir = process.argv[process.argv.indexOf('--project-dir') + 1];
-const skillIdx = process.argv.indexOf('--skill');
-const argsIdx = process.argv.indexOf('--skill-args');
-const skill = skillIdx >= 0 ? process.argv[skillIdx + 1] : '';
-const skillArgs = argsIdx >= 0 ? process.argv[argsIdx + 1] : '';
+const flagValue = (name) => {
+	const inline = process.argv.find((token) => token.startsWith(name + '='));
+	if (inline !== undefined) return inline.slice(name.length + 1);
+	const idx = process.argv.indexOf(name);
+	return idx >= 0 ? process.argv[idx + 1] : '';
+};
+const skill = flagValue('--skill');
+const skillArgs = flagValue('--skill-args');
 await Bun.write(projectDir + '/oneshot-invocation.txt', skill + ' :: ' + skillArgs);
 ${heartbeatTerminator()}
 `);
@@ -2053,7 +2061,10 @@ INSERT INTO pipeline_step_results (
 					.all() as { command_args_json: null | string }[];
 				const prompts = argvRows.map((row) => {
 					const argv = JSON.parse(row.command_args_json ?? '[]') as string[];
-					return argv[argv.indexOf('--prompt') + 1] ?? '';
+					// The launcher emits the inline `--prompt=value` spelling so prompt text
+					// beginning with dashes survives the CLI arg parser.
+					const flag = '--prompt=';
+					return argv.find((token) => token.startsWith(flag))?.slice(flag.length) ?? '';
 				});
 				expect(prompts).toHaveLength(2);
 				expect(prompts[0]).toContain('Remediate the findings.');

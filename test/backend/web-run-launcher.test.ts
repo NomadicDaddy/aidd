@@ -10,6 +10,7 @@ import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 import { type WebDatabase, wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import * as schema from '../../backend/src/db/schema.ts';
+import { parseArgs } from 'aidd-shared/args/index';
 import { buildLaunchCommand } from '../../backend/src/services/runLauncher.ts';
 import {
 	buildDetachedRunSpawnPlan,
@@ -967,12 +968,54 @@ describe('web run launcher', () => {
 				'1',
 				'--feature',
 				'feature-one',
-				'--prompt',
-				'check it',
+				'--prompt=check it',
 				'--init-git-after-scaffold',
 				'--stop-before-implementation',
 				'--simulation',
 			]);
+		} finally {
+			await removeTempTree(rootDir);
+		}
+	});
+
+	// Regression: skill args are almost always flags (`--apply`), and the space-separated
+	// `--skill-args --apply` spelling is rejected by the CLI parser as a missing value, which
+	// killed every flag-carrying skill launch at startup. Round-trip the built argv through the
+	// real parser rather than asserting on tokens — the token shape is the fix, not the contract.
+	test('builds skill args the CLI parser accepts when the value starts with dashes', async () => {
+		const rootDir = await makeLauncherRoot('console.log("ok");\n');
+		try {
+			const projectDir = resolve('demo-project');
+			const command = await buildLaunchCommand(
+				rootDir,
+				{
+					mode: 'directive',
+					projectDir,
+					skillArgs: '--apply --include-completed',
+					skillId: 'feature-coverage-audit',
+				},
+				'native',
+			);
+
+			const parsed = parseArgs(command.args.slice(2));
+			expect(parsed.skillId).toBe('feature-coverage-audit');
+			expect(parsed.skillArgs).toBe('--apply --include-completed');
+		} finally {
+			await removeTempTree(rootDir);
+		}
+	});
+
+	test('builds a dash-leading prompt the CLI parser accepts', async () => {
+		const rootDir = await makeLauncherRoot('console.log("ok");\n');
+		try {
+			const projectDir = resolve('demo-project');
+			const command = await buildLaunchCommand(
+				rootDir,
+				{ mode: 'directive', projectDir, prompt: '--dry-run the migration' },
+				'native',
+			);
+
+			expect(parseArgs(command.args.slice(2)).customPrompt).toBe('--dry-run the migration');
 		} finally {
 			await removeTempTree(rootDir);
 		}
@@ -1097,12 +1140,10 @@ describe('web run launcher', () => {
 			);
 
 			expect(apply.args).toContain('--directive');
-			expect(apply.args).toContain('--prompt');
-			expect(apply.args).toContain('Apply the focused change.');
+			expect(apply.args).toContain('--prompt=Apply the focused change.');
 			expect(apply.args).not.toContain('--directive-readonly');
 			expect(review.args).toContain('--directive');
-			expect(review.args).toContain('--prompt');
-			expect(review.args).toContain('Review the focused change.');
+			expect(review.args).toContain('--prompt=Review the focused change.');
 			expect(review.args).toContain('--directive-readonly');
 		} finally {
 			await removeTempTree(rootDir);

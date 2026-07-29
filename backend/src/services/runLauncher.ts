@@ -267,13 +267,15 @@ export async function buildLaunchCommand(
 		if (input.auditFindingsSource) args.push(input.auditFindingsSource);
 	}
 	addOptionalFlag(args, '--spec', input.specFile);
-	if (input.prompt) args.push('--prompt', input.prompt);
+	// Inline `--flag=value` here and for --skill-args below: both carry free-form text that often
+	// starts with dashes, which the space-separated spelling parses as a missing value.
+	if (input.prompt) args.push(`--prompt=${input.prompt}`);
 	// A skill launch forwards its identity (not a pre-compiled prompt): the CLI compiles the
 	// directive AND stages the skill's contract dependencies into the project's `.aidd/`.
 	// --skill is mutually exclusive with --prompt (enforced by the CLI arg validator).
 	if (input.skillId) {
 		args.push('--skill', input.skillId);
-		if (input.skillArgs) args.push('--skill-args', input.skillArgs);
+		if (input.skillArgs) args.push(`--skill-args=${input.skillArgs}`);
 	}
 	if (input.directiveReadonly) args.push('--directive-readonly');
 	if (input.checkArtifacts) args.push('--check-artifacts');

@@ -105,6 +105,20 @@ describe('parseArgs', () => {
 		expect(() => parseArgs(['--skill', 'demo', '--prompt', 'do work'])).toThrow(ArgsError);
 	});
 
+	test('accepts dash-leading skill args only in the inline spelling', () => {
+		// Skill args are usually flags. The space-separated form cannot carry them (the value reads
+		// as a missing value), so callers building argv programmatically must use `--flag=value`.
+		const args = parseArgs([
+			'--skill',
+			'feature-coverage-audit',
+			'--skill-args=--apply --include-completed',
+		]);
+		expect(args.skillArgs).toBe('--apply --include-completed');
+		expect(() =>
+			parseArgs(['--skill', 'feature-coverage-audit', '--skill-args', '--apply']),
+		).toThrow(ArgsError);
+	});
+
 	test('rejects retired command and prior catalog flags', () => {
 		expect(() => parseArgs(['--command', 'update-roadmap'])).toThrow(ArgsError);
 		expect(() => parseArgs([`--${'ingre'}${'dient'}`, 'bug2feature'])).toThrow(ArgsError);

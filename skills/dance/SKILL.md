@@ -51,6 +51,13 @@ of default scope; include only when explicitly passed via `--scope`.
 
 The skill maintains state at `<applications-root>/.dance-state.json`. Schema documented in `state-schema.json` co-located with this SKILL.md. Always write the checkpoint after each phase transition so a crash mid-dance can resume cleanly.
 
+`perApp` is the per-app record of record, keyed by app slug. Each entry carries `A`, `B`,
+`D1_supertest`, and `D2_smokeqc` — each one `pending`, `ok`, `failed`, or `skipped` — plus
+`D3_tagged` (the tag string written, or null) and `lastError`. Use those four status values and no
+others: nothing validates this file, so an invented status such as `completed` survives into the next
+resume and reads as neither done nor pending. There are no top-level `completed` or `failed` arrays.
+Per-app outcomes go in `perApp`; phase-wide facts and owner decisions go in `notes`.
+
 ## Phase 0 - Pre-flight
 
 Run unconditionally on every invocation (even with `--resume-from`).
@@ -179,9 +186,9 @@ complete A2 checklist. Otherwise process the apps sequentially with the same iso
 - Stop an app's server only if **this agent started it**. If the server was already running when the
   agent arrived, the user owns it; leave it running and do not stop or reset it.
 
-After all agents return, update checkpoint: `{ phase: 'A', completed: [...], failed: [...] }`. If any
-failed, finish independent cleanup, present the failures, and exit non-success before Part B. Never
-leave the run waiting for direction.
+After all agents return, set `perApp[app].A` to `ok` or `failed` for every scoped app, write
+`lastError` on each failure, and update `{ phase: 'A' }`. If any failed, finish independent cleanup,
+present the failures, and exit non-success before Part B. Never leave the run waiting for direction.
 
 ## Part B - Tester + Triage
 
@@ -193,19 +200,30 @@ testing-scenarios catalog when present at `{APP_DIR}/.aidd/testing-scenarios.md`
 
 Before starting a tester, establish a safe database-backed intake baseline for that app:
 
-1. Confirm the app is running and its current source still exposes authenticated
-   `POST /api/v1/bugs` plus ADMIN/SYSOP-only
+1. **Start the app unless it is already running.** Part B needs a session that outlives the command
+   that created it, and neither dev entry point provides one: `bun run smoke:dev` starts, crawls, and
+   stops by design, while `bun run dev` holds the foreground indefinitely
+   (`scripts/dev-with-logs.ts` calls `process.stdin.resume()`), so a worker that backgrounds it loses
+   the server the moment its turn ends. Use `bun run start`, the same launcher A2's 3-guard step
+   already uses: it spawns backend and frontend as detached processes, writes PID files, and returns
+   once both are listening. Confirm the app answers on the `server.frontendPort` from
+   `config/<slug>.json`. If the server was already running when the worker arrived, leave it alone
+   and do not restart it — per the concurrency caveats above, it belongs to the user.
+2. Confirm its current source still exposes authenticated `POST /api/v1/bugs` plus ADMIN/SYSOP-only
    `GET /api/v1/bugs?page={page}&limit={limit}`.
-2. Through the app's supported authenticated session, retrieve the complete report collection with
+3. Through the app's supported authenticated session, retrieve the complete report collection with
    `limit=100`. Follow the returned `{ data, page, limit, total }` envelope until all distinct IDs
    are present. Re-fetch page 1; repeat once if its IDs or `total` changed. Treat another change,
    an incomplete page sequence, or an invalid envelope as unstable intake.
-3. Record the app-qualified baseline identities (`{app}:{id}`), retrieval time, page count, and total
+4. Record the app-qualified baseline identities (`{app}:{id}`), retrieval time, page count, and total
    in the worker result and `checkpoint.notes`. Never record credentials, tokens, cookies, or CSRF
    values.
-4. If authenticated retrieval is unavailable, returns `401`/`403`, or remains unstable, mark Part B
-   blocked for that app and do not run a tester that could create reports which this session cannot
-   retrieve and triage. Never interpret retrieval failure as zero reports.
+5. If the app cannot be started, or authenticated retrieval is unavailable, returns `401`/`403`, or
+   remains unstable, mark Part B blocked for that app and do not run a tester that could create
+   reports which this session cannot retrieve and triage. Never interpret retrieval failure as zero
+   reports. An unreachable URL is not by itself a blocker: start the app first, and block only if
+   the start fails. Blocking a whole fan-out on servers nobody was told to start is a false negative
+   — every app reports blocked while its `smoke:qc` is green.
 
 Each unblocked worker then:
 
@@ -271,7 +289,9 @@ identity appears in exactly one cluster and has either a direct-fix record, a re
 an explicit skip/blocker reason.
 
 Write checkpoint:
-`{ phase: 'B', remediationFeatures: [...], directFixes: [...], notes: [report evidence...] }`.
+`{ phase: 'B', remediationFeatures: [...], directFixes: [...], notes: [report evidence...] }`, and
+set `perApp[app].B` for every scoped app: `ok` when its baseline, sweep, and post-test retrieval all
+completed, `failed` with `lastError` when B1 marked it blocked.
 
 ## Part C - Remediation Implementation
 
@@ -282,7 +302,9 @@ Write checkpoint:
     - Read each feature, repository instructions, affected implementation, and existing tests.
     - Implement the complete end-to-end remediation, run focused validation, and update feature
       status and pass state only when the evidence supports completion.
-    - Record `{ phase: 'C', completed: [...], failed: [...] }` after processing every feature.
+    - Record `{ phase: 'C' }` after processing every feature, listing resolved and unresolved feature
+      paths in `notes`. Part C works the template's own feature backlog, not the fleet, so it writes
+      no `perApp` fields.
     - If any feature remains unresolved, preserve its backlog state and exit non-success before Part
       D with exact evidence. Otherwise continue directly to Part D.
 
@@ -369,14 +391,23 @@ descriptions, lessons) follow the humanize-docs style contract
 (`.aidd/skills/humanize-docs/SKILL.md`, staged into this workspace; or `<aidd-root>/skills/humanize-docs/SKILL.md` in the aidd repo): flat factual statements, no aphorisms or
 lesson-lines, no AI filler.
 
-Write checkpoint: `{ phase: 'D-complete', completedAt }`.
+Write checkpoint: `{ phase: 'D-complete', completedAt }`. D1, D2, and D3 each set their own `perApp`
+field as they go — `D1_supertest`, `D2_smokeqc`, and `D3_tagged` (the tag string written, or null for
+an app that was not tagged) — so write those at each step rather than reconstructing them here.
 
 ## Resume Behavior
 
-`--resume-from <A|B|C|D>` reads `.dance-state.json` and skips all earlier phases. Always run
-preflight and validate that the checkpoint's scope and bump match before resuming. If flags changed
-either value, rename the checkpoint to `.dance-state.mismatch-<timestamp>.json`, report the preserved
-path, initialize a fresh checkpoint, and restart from Phase 0.
+`--resume-from <A|B|C|D>` reads `.dance-state.json` and skips all earlier phases. Within the phase it
+resumes, skip every app whose `perApp` field for that phase is already `ok`, and re-run the ones
+marked `failed` or `pending`. A dance interrupted partway through a fan-out leaves apps already
+committed and tagged; re-running those repeats work the checkpoint has already accounted for.
+`--skip-parts` still skips whole parts regardless of `perApp`.
+
+Always run preflight and validate that the checkpoint's scope and bump match before resuming. If
+flags changed either value, rename the checkpoint to `.dance-state.mismatch-<timestamp>.json`, report
+the preserved path, initialize a fresh checkpoint, and restart from Phase 0. Narrowing `--scope` to a
+subset counts as such a change: edit the checkpoint's `scope` to the intended list before launching,
+so the flag agrees with it, or the resume discards the checkpoint and starts the dance over.
 
 ## Upgrade Constraints
 
@@ -391,6 +422,9 @@ path, initialize a fresh checkpoint, and restart from Phase 0.
   does not prove app-owned work survived the copy.
 - Read every override and every `branded` file from the target side, not only the app side.
 - Refresh `spernakit.psd1` from each app after D3 and require `check:fleet-manifest` to exit 0.
+- Start each app with `bun run start` before its Part B tester; `smoke:dev` stops itself and `dev`
+  cannot be held open by a worker, so neither leaves a session to authenticate against.
+- Record per-app outcomes in `perApp` using its four status values, never in invented top-level keys.
 - Take ports and versions from `config/<slug>.json` and `package.json`, never from the manifest,
   `.env`, or a framework default.
 - Format-check `.aidd` metadata with an explicit `--ignore-path` override; `/.aidd/` sits in

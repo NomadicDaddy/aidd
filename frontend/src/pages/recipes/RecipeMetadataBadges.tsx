@@ -1,13 +1,31 @@
 import type { RecipeDefinition } from '../../api/types.ts';
 
-import { Badge } from '../../components/ui/badge.tsx';
+import {
+	applySkillExplainer,
+	autoFixPolicyExplainer,
+	continuePolicyExplainer,
+	recipeMetadataOnlyExplainer,
+	recipeSystemExplainer,
+	retriesExplainer,
+	reviewSkillExplainer,
+	stopPolicyExplainer,
+} from './recipe-badge-explainers.ts';
 import { getRecipePolicySummary } from './recipe-policy.ts';
+import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
 
 export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
 	return (
 		<>
-			{recipe.system === true && <Badge tone="violet">system</Badge>}
-			{recipe.metadataOnly === true && <Badge tone="amber">metadata-only</Badge>}
+			{recipe.system === true && (
+				<RecipeBadgeTooltip content={recipeSystemExplainer} tone="violet">
+					system
+				</RecipeBadgeTooltip>
+			)}
+			{recipe.metadataOnly === true && (
+				<RecipeBadgeTooltip content={recipeMetadataOnlyExplainer} tone="amber">
+					metadata-only
+				</RecipeBadgeTooltip>
+			)}
 		</>
 	);
 }
@@ -17,20 +35,42 @@ export function RecipePolicyBadges({ recipe }: { recipe: RecipeDefinition }) {
 	return (
 		<div className="flex flex-wrap gap-1.5">
 			{policy.stopSteps > 0 && (
-				<Badge tone="neutral">failure: stop ({policy.stopSteps})</Badge>
+				<RecipeBadgeTooltip content={stopPolicyExplainer(policy.stopSteps)}>
+					failure: stop ({policy.stopSteps})
+				</RecipeBadgeTooltip>
 			)}
 			{policy.continueSteps > 0 && (
-				<Badge tone="amber">failure: continue ({policy.continueSteps})</Badge>
+				<RecipeBadgeTooltip
+					content={continuePolicyExplainer(policy.continueSteps)}
+					tone="amber">
+					failure: continue ({policy.continueSteps})
+				</RecipeBadgeTooltip>
 			)}
 			{policy.autoFixSteps > 0 && (
-				<Badge tone="teal">failure: auto-fix ({policy.autoFixSteps})</Badge>
+				<RecipeBadgeTooltip
+					content={autoFixPolicyExplainer(policy.autoFixSteps)}
+					tone="teal">
+					failure: auto-fix ({policy.autoFixSteps})
+				</RecipeBadgeTooltip>
 			)}
-			{policy.retries > 0 && <Badge tone="neutral">retries: {policy.retries}</Badge>}
+			{policy.retries > 0 && (
+				<RecipeBadgeTooltip content={retriesExplainer(policy.retries)}>
+					retries: {policy.retries}
+				</RecipeBadgeTooltip>
+			)}
 			{policy.reviewSkillSteps > 0 && (
-				<Badge tone="teal">skills: review ({policy.reviewSkillSteps})</Badge>
+				<RecipeBadgeTooltip
+					content={reviewSkillExplainer(policy.reviewSkillSteps)}
+					tone="teal">
+					skills: review ({policy.reviewSkillSteps})
+				</RecipeBadgeTooltip>
 			)}
 			{policy.applySkillSteps > 0 && (
-				<Badge tone="emerald">skills: apply ({policy.applySkillSteps})</Badge>
+				<RecipeBadgeTooltip
+					content={applySkillExplainer(policy.applySkillSteps)}
+					tone="emerald">
+					skills: apply ({policy.applySkillSteps})
+				</RecipeBadgeTooltip>
 			)}
 		</div>
 	);

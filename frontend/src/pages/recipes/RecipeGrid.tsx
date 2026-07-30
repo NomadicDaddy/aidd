@@ -4,10 +4,16 @@ import { Link } from 'react-router';
 
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';
 
-import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatUsageBadge } from '../../lib/usageBadge.ts';
+import {
+	recipeParameterCountExplainer,
+	recipeStepCountExplainer,
+	recipeStepTypeExplainer,
+	recipeTypeExplainer,
+} from './recipe-badge-explainers.ts';
+import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
 import { RecipeContractBadges, RecipePolicyBadges } from './RecipeMetadataBadges.tsx';
 
 export function RecipeCard({
@@ -38,26 +44,30 @@ export function RecipeCard({
 				</div>
 				<div className="flex flex-wrap justify-end gap-1.5">
 					<RecipeContractBadges recipe={recipe} />
-					<Badge tone={isPipeline ? 'teal' : 'neutral'}>
+					<RecipeBadgeTooltip
+						content={recipeTypeExplainer[isPipeline ? 'pipeline' : 'single-step']}
+						tone={isPipeline ? 'teal' : 'neutral'}>
 						{isPipeline ? 'pipeline' : 'single-step'}
-					</Badge>
+					</RecipeBadgeTooltip>
 				</div>
 			</div>
 			<p className="mb-4 min-h-10 text-sm text-neutral-600 dark:text-neutral-300">
 				{recipe.description ?? 'No description'}
 			</p>
 			<div className="mb-4 flex flex-wrap gap-2">
-				<Badge>
+				<RecipeBadgeTooltip content={recipeStepCountExplainer}>
 					{recipe.steps.length} {recipe.steps.length === 1 ? 'step' : 'steps'}
-				</Badge>
+				</RecipeBadgeTooltip>
 				{recipe.parameters.length > 0 && (
-					<Badge tone="amber">
+					<RecipeBadgeTooltip content={recipeParameterCountExplainer} tone="amber">
 						{recipe.parameters.length}{' '}
 						{recipe.parameters.length === 1 ? 'parameter' : 'parameters'}
-					</Badge>
+					</RecipeBadgeTooltip>
 				)}
 				{[...new Set(recipe.steps.map((step) => step.stepType))].map((stepType) => (
-					<Badge key={stepType}>{stepType}</Badge>
+					<RecipeBadgeTooltip content={recipeStepTypeExplainer[stepType]} key={stepType}>
+						{stepType}
+					</RecipeBadgeTooltip>
 				))}
 			</div>
 			<div className="mb-4">
@@ -144,9 +154,15 @@ export function RecipeTable({
 								</td>
 								<td className="px-3 py-3">
 									<div className="flex flex-wrap gap-1.5">
-										<Badge tone={isPipeline ? 'teal' : 'neutral'}>
+										<RecipeBadgeTooltip
+											content={
+												recipeTypeExplainer[
+													isPipeline ? 'pipeline' : 'single-step'
+												]
+											}
+											tone={isPipeline ? 'teal' : 'neutral'}>
 											{isPipeline ? 'pipeline' : 'single-step'}
-										</Badge>
+										</RecipeBadgeTooltip>
 										<RecipeContractBadges recipe={recipe} />
 									</div>
 								</td>

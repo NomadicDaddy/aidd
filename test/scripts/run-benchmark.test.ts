@@ -62,6 +62,23 @@ describe('benchmark harness', () => {
 		expect(() => loadManifest(manifestPath)).toThrow('Unsupported benchmark backend');
 	});
 
+	test('admits Cline without adding an installation-specific default stack', () => {
+		const defaultManifestPath = path.join(repoRoot, 'benchmarks', 'manifest.json');
+		const manifest = JSON.parse(readFileSync(defaultManifestPath, 'utf8')) as BenchmarkManifest;
+		expect(manifest.stacks.some((stack) => stack.cli === 'cline')).toBe(false);
+
+		const manifestPath = path.join(testTempDirSync('aidd-benchmark-cline-'), 'manifest.json');
+		manifest.stacks.push({
+			cli: 'cline',
+			label: 'cline-installation-default',
+			model: 'installation-specific',
+			view: 'cline',
+		});
+		writeFileSync(manifestPath, JSON.stringify(manifest));
+
+		expect(loadManifest(manifestPath).stacks.at(-1)?.cli).toBe('cline');
+	});
+
 	test('builds v2 CLI invocations without extract-structured', () => {
 		const manifest = loadManifest(path.join(repoRoot, 'benchmarks', 'manifest.json'));
 		const stack = manifest.stacks.find((candidate) => candidate.cli === 'native');

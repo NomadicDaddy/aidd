@@ -1,5 +1,5 @@
 export type BenchmarkBackendName =
-	'claude-code' | 'codex' | 'kilocode' | 'lmstudio' | 'native' | 'ollama' | 'opencode';
+	'claude-code' | 'cline' | 'codex' | 'kilocode' | 'lmstudio' | 'native' | 'ollama' | 'opencode';
 export type RunStatus = 'failure' | 'preflight_failed' | 'skipped' | 'success' | 'timeout';
 
 export interface BenchmarkStack {

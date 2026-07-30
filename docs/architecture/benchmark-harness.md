@@ -18,6 +18,9 @@ It creates disposable fixture copies, invokes the current CLI entrypoint, reads 
 - Fairness cohorts defined in `benchmarks/manifest.json`
 - Control tasks reported separately from the composite leaderboard
 
+The benchmark schemas also accept `cline`. No default Cline stack is included because Cline owns
+provider and model selection; add an explicit stack only when the benchmark environment pins both.
+
 Local-model stacks (Ollama, LM Studio) need models loaded with a context window large enough for
 aidd's prompts (the audit task alone sends ~58-65k tokens) and typically run with
 `--skip-preflight`; see `benchmarks/README.md` for the local-model context guidance.

@@ -17,4 +17,5 @@ export const backendNames = [
 	'opencode',
 	'kilocode',
 	'codex',
+	'cline',
 ] as const;

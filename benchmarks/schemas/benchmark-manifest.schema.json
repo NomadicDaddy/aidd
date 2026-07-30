@@ -132,7 +132,8 @@
 							"claude-code",
 							"opencode",
 							"kilocode",
-							"codex"
+							"codex",
+							"cline"
 						],
 						"type": "string"
 					},

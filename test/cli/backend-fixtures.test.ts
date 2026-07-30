@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent } from 'aidd-shared/backends/types';
+import { parseClineBackendOutput } from 'aidd-shared/backends/parsers/cline';
 import { parsePlainBackendOutput } from 'aidd-shared/backends/parsers/plain';
 import { parseCodexBackendOutput } from 'aidd-shared/backends/parsers/codex';
 import { parseGrokBackendOutput } from 'aidd-shared/backends/parsers/grok';
@@ -11,6 +12,7 @@ const fixturesRoot = join(import.meta.dir, '..', 'fixtures', 'backends');
 
 const parsers: Record<BackendName, typeof parsePlainBackendOutput> = {
 	'claude-code': parsePlainBackendOutput,
+	cline: parseClineBackendOutput,
 	codex: parseCodexBackendOutput,
 	grok: parseGrokBackendOutput,
 	kilocode: parsePlainBackendOutput,

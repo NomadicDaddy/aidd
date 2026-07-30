@@ -4,7 +4,7 @@ All backends implement `CLIBackend` and emit normalized `AgentEvent` values.
 
 Event normalization lets the orchestrator handle provider output without knowing whether the source
 was the native backend, Ollama or LM Studio through the native backend, an external CLI process
-(Claude Code, OpenCode, or KiloCode) parsed as plain text, or Codex JSON.
+(Claude Code, Cline, OpenCode, or KiloCode), or a dedicated JSON parser.
 
 Adapter responsibilities:
 
@@ -23,15 +23,15 @@ Adapter responsibilities:
 | `lmstudio`    | Native backend with LM Studio provider defaults.                                                                    |
 | `openai`      | Native backend with OpenAI provider defaults (direct `api.openai.com`, no external CLI).                            |
 | `claude-code` | External Claude Code CLI process; output handled by the default plain-text parser.                                  |
+| `cline`       | External Cline CLI process with dedicated modern and legacy NDJSON parsing.                                         |
 | `opencode`    | External OpenCode CLI process; output handled by the default plain-text parser.                                     |
 | `kilocode`    | External KiloCode CLI process; output handled by the default plain-text parser.                                     |
 | `codex`       | External Codex CLI process with dedicated JSON/event parsing.                                                       |
 | `grok`        | External Grok Build (`grok`) CLI process with dedicated streaming-json parsing.                                     |
 
 `shared/src/plan/types.ts` is the source of truth for backend names. Unsupported backend names are
-rejected at input boundaries before a run plan is executed. `codex` and `grok` use dedicated parsers
-(`shared/src/backends/parsers/codex.ts`, `shared/src/backends/parsers/grok.ts`); the other external
-CLIs use the shared plain-text parser (`shared/src/backends/parsers/plain.ts`).
+rejected at input boundaries before a run plan is executed. `cline`, `codex`, and `grok` use
+dedicated parsers; the other external CLIs use the shared plain-text parser.
 
 ## Setting Up a Backend
 
@@ -41,8 +41,8 @@ with `--cli <name>`. There are two families:
 - **`native` / `ollama` / `lmstudio` / `openai`**: aidd talks to an OpenAI-compatible model provider
   itself. Simplest if you have a provider API key (or a local Ollama / LM Studio server). No extra
   tool to install.
-- **`claude-code` / `opencode` / `kilocode` / `codex` / `grok`**: aidd drives an external agent CLI
-  you install and sign in to separately.
+- **`claude-code` / `cline` / `opencode` / `kilocode` / `codex` / `grok`**: aidd drives an
+  external agent CLI you install and sign in to separately.
 
 ### Native backend (`native`)
 
@@ -127,18 +127,31 @@ Start LM Studio's local server (Developer → Start Server) and load a model fir
 match the model loaded in LM Studio; the built-in default is only a placeholder. aidd does not send
 `reasoning_effort` to LM Studio, since it is not part of LM Studio's documented chat parameters.
 
-### External CLI backends (`claude-code`, `opencode`, `kilocode`, `codex`, `grok`)
+### External CLI backends (`claude-code`, `cline`, `opencode`, `kilocode`, `codex`, `grok`)
 
 aidd spawns an agent CLI you provide; authentication and model config for that tool live in the tool
 itself. To use one:
 
 1. **Install and sign in** to the CLI per its own docs, and confirm the command is on your `PATH`:
-   `claude` (claude-code), `opencode`, `kilo` (kilocode), `codex`, or `grok`.
+   `claude` (claude-code), `cline`, `opencode`, `kilo` (kilocode), `codex`, or `grok`.
 2. **Point aidd at it** with `cli` (or `--cli`), and optionally pin a model with `backends.<name>.model`:
 
     ```json
     { "backends": { "opencode": { "model": "zai-coding-plan/glm-5.2" } }, "cli": "opencode" }
     ```
+
+> **Cline (`cline`).** Install `cline`, run `cline auth`, and leave provider selection in Cline.
+> aidd runs Cline non-interactively with JSON output and tool auto-approval, pipes the prompt over
+> stdin, and passes only optional model and reasoning overrides. Cline 3.0.47 requires a fixed
+> non-user-controlled positional bootstrap before it will read JSON-mode stdin; the actual AIDD
+> prompt remains exclusively on stdin. A `backends.cline.model` value is a bare model id scoped to
+> the provider Cline is authenticated against (`cline auth -p <provider> -m <model-id>`), not a
+> `provider/model` slug. Reasoning maps `minimal` to `low` and `max` to `xhigh`;
+> other supported levels pass through. Modern `agent_event`/`run_result` streams provide live text,
+> reasoning, tool events, token usage, and cost. Per-iteration `usage` events stream live and are
+> reconciled against the terminal `run_result` aggregate, so totals stay exact and a run that dies
+> mid-flight still reports the tokens it spent. Older `ask`/`say` streams remain accepted as a
+> compatibility fallback.
 
 > **Grok Build (`grok`).** Install via xAI's instructions (docs.x.ai/build) and authenticate with
 > `grok login` or `XAI_API_KEY`. aidd runs it headless with `--permission-mode bypassPermissions` and

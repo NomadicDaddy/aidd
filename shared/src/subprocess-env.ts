@@ -12,7 +12,7 @@
  *      subprocess (tool and backend).
  *   2. **Provider credentials and per-CLI config overrides** (added in `backendEnvKeys`) — API
  *      keys and config-file overrides honored by the external coding-CLI processes that aidd
- *      invokes (Claude Code, Codex, OpenCode, KiloCode). These pass only to backend CLI
+ *      invokes (Claude Code, Cline, Codex, OpenCode, KiloCode). These pass only to backend CLI
  *      subprocesses, not to internal tool subprocesses.
  *
  * Anything else — feature toggles, paths, settings — must go through `loadNativeFileConfig()`
@@ -56,6 +56,12 @@ const backendEnvKeys = [
 	'ANTHROPIC_API_KEY',
 	'ANTHROPIC_AUTH_TOKEN',
 	'CLAUDE_CODE_API_KEY',
+	// Cline credentials, provider credentials, and state location.
+	'CLINE_API_KEY',
+	'CLINE_DATA_DIR',
+	'OPENROUTER_API_KEY',
+	'AI_GATEWAY_API_KEY',
+	'V0_API_KEY',
 	// OpenAI credentials and endpoint override (used by OpenAI-compatible providers).
 	'OPENAI_API_KEY',
 	'OPENAI_BASE_URL',

@@ -367,6 +367,10 @@ describe('resolveConfig', () => {
 						model: 'claude-specific-model',
 						idleNudgeTimeoutSeconds: 100,
 					},
+					cline: {
+						model: 'cline-specific-model',
+						reasoningEffort: 'high',
+					},
 				},
 			}),
 		);
@@ -393,6 +397,10 @@ describe('resolveConfig', () => {
 		expect(claudeConfig.timeoutSeconds).toBe(7200);
 		// idleNudgeTimeoutSeconds is overridden by claude-code backend config
 		expect(claudeConfig.idleNudgeTimeoutSeconds).toBe(100);
+
+		const clineConfig = await resolveTestConfig({ ...baseArgs, cli: 'cline', projectDir });
+		expect(clineConfig.model).toBe('cline-specific-model');
+		expect(clineConfig.reasoningEffort).toBe('high');
 
 		// Test ollama backend - should get shared values (no ollama-specific overrides)
 		const ollamaArgs: ParsedArgs = { ...baseArgs, projectDir, cli: 'ollama' };

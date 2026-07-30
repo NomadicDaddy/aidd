@@ -1,0 +1,109 @@
+import type { BackendDefaultSettings, BackendName, ReasoningEffort } from '../../api/types.ts';
+
+import { Input } from '../../components/ui/input.tsx';
+import { selectClass } from '../../lib/formStyles.ts';
+import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
+
+const modelPlaceholders: Record<BackendName, string> = {
+	'claude-code': 'e.g., claude-opus-5',
+	cline: 'e.g., claude-opus-5',
+	codex: 'e.g., gpt-5.6-sol',
+	grok: 'e.g., grok-4.5',
+	kilocode: 'e.g., claude-opus-5',
+	lmstudio: 'e.g., openai/gpt-oss-20b',
+	native: 'e.g., claude-opus-5',
+	ollama: 'e.g., llama3.1',
+	openai: 'e.g., gpt-5.6-sol',
+	opencode: 'e.g., gpt-5.6-sol',
+};
+const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
+
+export function BackendDefaultFields({
+	backend,
+	defaults,
+	setBackendDefault,
+	shadowedSharedModel,
+	showLabels = false,
+}: {
+	backend: BackendName;
+	defaults: BackendDefaultSettings;
+	setBackendDefault: (
+		backend: BackendName,
+		key: keyof BackendDefaultSettings,
+		value: null | number | string,
+	) => void;
+	shadowedSharedModel?: null | string;
+	showLabels?: boolean;
+}) {
+	const labelClass = showLabels ? 'mb-1 block text-xs text-neutral-500' : 'sr-only';
+	return (
+		<>
+			<label className="min-w-0">
+				<span className={labelClass}>Model</span>
+				<Input
+					aria-label={`${backend} model`}
+					onChange={(event) =>
+						setBackendDefault(backend, 'model', nullableText(event.target.value))
+					}
+					placeholder={modelPlaceholders[backend]}
+					value={textValue(defaults.model)}
+				/>
+				{shadowedSharedModel ? (
+					<p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+						Outranks the shared Default Model (“{shadowedSharedModel}”) for {backend}{' '}
+						launches — clear this to use the shared default.
+					</p>
+				) : null}
+			</label>
+			<label className="min-w-0">
+				<span className={labelClass}>Reasoning</span>
+				<select
+					aria-label={`${backend} reasoning effort`}
+					className={`${selectClass} w-full`}
+					onChange={(event) =>
+						setBackendDefault(backend, 'reasoningEffort', event.target.value || null)
+					}
+					value={defaults.reasoningEffort ?? ''}>
+					<option value="">Shared default</option>
+					{reasoningOptions.map((option) => (
+						<option key={option} value={option}>
+							{option}
+						</option>
+					))}
+				</select>
+			</label>
+			<label className="min-w-0">
+				<span className={labelClass}>Idle timeout</span>
+				<Input
+					aria-label={`${backend} idle timeout`}
+					inputMode="numeric"
+					onChange={(event) =>
+						setBackendDefault(
+							backend,
+							'idleTimeoutSeconds',
+							nullableNumber(event.target.value),
+						)
+					}
+					placeholder="e.g., 300"
+					value={numberValue(defaults.idleTimeoutSeconds)}
+				/>
+			</label>
+			<label className="min-w-0">
+				<span className={labelClass}>Idle nudge timeout</span>
+				<Input
+					aria-label={`${backend} idle nudge timeout`}
+					inputMode="numeric"
+					onChange={(event) =>
+						setBackendDefault(
+							backend,
+							'idleNudgeTimeoutSeconds',
+							nullableNumber(event.target.value),
+						)
+					}
+					placeholder="e.g., 120"
+					value={numberValue(defaults.idleNudgeTimeoutSeconds)}
+				/>
+			</label>
+		</>
+	);
+}

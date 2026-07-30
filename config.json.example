@@ -8,6 +8,12 @@
 			"idleTimeoutSeconds": 900,
 			"model": "claude-opus-5"
 		},
+		"cline": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "claude-opus-5",
+			"reasoningEffort": "high"
+		},
 		"codex": {
 			"idleNudgeTimeoutSeconds": 600,
 			"idleTimeoutSeconds": 900,

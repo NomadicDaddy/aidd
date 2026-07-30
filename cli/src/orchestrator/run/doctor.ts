@@ -28,6 +28,7 @@ const probeTimeoutMs = 3000;
 
 const backendCliBinaries: Partial<Record<BackendName, string>> = {
 	'claude-code': 'claude',
+	cline: 'cline',
 	codex: 'codex',
 	grok: 'grok',
 	kilocode: 'kilo',

@@ -61,6 +61,7 @@ export interface ResolvedBackendConfig {
 	idleNudgeTimeoutSeconds?: number | undefined;
 	idleTimeoutSeconds?: number | undefined;
 	model?: string | undefined;
+	reasoningEffort?: PersistedReasoningEffortValue | undefined;
 	timeoutSeconds?: number | undefined;
 }
 
@@ -99,6 +100,7 @@ export interface ResolvedConfig {
 	sharedDirs?: string[];
 	sharedFiles?: ({ source: string; target?: string | undefined } | string)[];
 	sharedModel?: string;
+	sharedReasoningEffort?: PersistedReasoningEffortValue;
 	timeoutSeconds: number;
 	triumvirate?: ResolvedTriumvirateConfig;
 	web?: ResolvedWebConfig;

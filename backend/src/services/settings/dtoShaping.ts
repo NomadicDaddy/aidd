@@ -31,6 +31,7 @@ function backendDto(
 		idleNudgeTimeoutSeconds: value?.idleNudgeTimeoutSeconds ?? null,
 		idleTimeoutSeconds: value?.idleTimeoutSeconds ?? null,
 		model: value?.model ?? null,
+		reasoningEffort: value?.reasoningEffort ?? null,
 	};
 }
 

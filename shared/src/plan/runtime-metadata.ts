@@ -61,5 +61,12 @@ export function resolveBackendReasoningEffort(
 	backend: BackendName,
 	env: NodeJS.ProcessEnv = process.env,
 ): string {
-	return providerScopedReasoningEffort(backend, config, env) ?? config.reasoningEffort;
+	// Same precedence as resolveEffectiveLaunchTarget, including why sharedReasoningEffort is
+	// consulted before config.reasoningEffort — see the comment there.
+	return (
+		config.backends?.[backend]?.reasoningEffort ??
+		providerScopedReasoningEffort(backend, config, env) ??
+		config.sharedReasoningEffort ??
+		config.reasoningEffort
+	);
 }

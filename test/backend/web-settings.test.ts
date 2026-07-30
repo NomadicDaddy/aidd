@@ -142,6 +142,12 @@ describe('web settings config', () => {
 			applicationRoots: [allowedRoot],
 			auditModel: 'audit-model',
 			backends: {
+				cline: {
+					idleNudgeTimeoutSeconds: 333,
+					idleTimeoutSeconds: 444,
+					model: 'cline-model',
+					reasoningEffort: 'high',
+				},
 				codex: {
 					idleNudgeTimeoutSeconds: 111,
 					idleTimeoutSeconds: 222,
@@ -218,6 +224,12 @@ describe('web settings config', () => {
 		expect(written.cli).toBe('native');
 		expect(result.config.applicationRoots).toEqual([resolve(allowedRoot)]);
 		expect(result.config.ignoredFolders).toEqual(['node_modules', 'generated']);
+		expect(result.config.backends.cline).toEqual({
+			idleNudgeTimeoutSeconds: 333,
+			idleTimeoutSeconds: 444,
+			model: 'cline-model',
+			reasoningEffort: 'high',
+		});
 		expect(result.config.backends.codex?.model).toBe('codex-model');
 		expect(result.resolvedConfig.web.dataDir).toBe(web.dataDir);
 		expect(result.resolvedConfig.web.port).toBe(web.port);
@@ -923,6 +935,10 @@ describe('web settings config', () => {
 		expect(cliBody.backends.find((entry) => entry.backend === 'codex')).toMatchObject({
 			command: 'codex --version',
 			status: 'unavailable',
+		});
+		expect(cliBody.backends.find((entry) => entry.backend === 'cline')).toMatchObject({
+			command: 'cline --version',
+			status: 'available',
 		});
 		expect(cliBody.backends.find((entry) => entry.backend === 'native')).toMatchObject({
 			command: 'bun --version',

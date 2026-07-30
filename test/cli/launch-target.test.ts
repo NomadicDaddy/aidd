@@ -192,6 +192,7 @@ describe('resolveEffectiveLaunchTarget', () => {
 		const config: ResolvedConfig = {
 			...baseConfig,
 			cli: 'native',
+			sharedReasoningEffort: 'medium',
 			providers: { zhipu: { reasoningEffort: 'high' } },
 		};
 		expect(resolveEffectiveLaunchTarget(config, 'coding', {}, emptyEnv).reasoningEffort).toBe(
@@ -200,6 +201,26 @@ describe('resolveEffectiveLaunchTarget', () => {
 		// Non-provider backends have no provider scope: top-level effort applies.
 		expect(
 			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'claude-code' }, emptyEnv)
+				.reasoningEffort,
+		).toBe('medium');
+	});
+
+	test('backend-scoped reasoning follows an overridden backend without leaking config CLI effort', () => {
+		const config: ResolvedConfig = {
+			...baseConfig,
+			backends: {
+				'claude-code': { reasoningEffort: 'low' },
+				cline: { reasoningEffort: 'high' },
+			},
+			reasoningEffort: 'low',
+			sharedReasoningEffort: 'medium',
+		};
+		expect(
+			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'cline' }, emptyEnv)
+				.reasoningEffort,
+		).toBe('high');
+		expect(
+			resolveEffectiveLaunchTarget(config, 'coding', { backend: 'codex' }, emptyEnv)
 				.reasoningEffort,
 		).toBe('medium');
 	});

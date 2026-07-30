@@ -1,6 +1,7 @@
 import type { ResolvedConfig } from 'aidd-shared/config';
 
 import { describe, expect, test } from 'bun:test';
+import { resolveEffectiveLaunchTarget } from 'aidd-shared/plan/launch-target';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -27,6 +28,7 @@ const baseConfig: ResolvedConfig = {
 	rateLimitBackoffSeconds: 300,
 	rateLimitBufferSeconds: 60,
 	reasoningEffort: 'medium',
+	sharedReasoningEffort: 'medium',
 	sharedModel: 'shared-model',
 	model: 'shared-model',
 	timeoutSeconds: 3600,
@@ -108,6 +110,23 @@ describe('resolveLaunchConfig', () => {
 			expect(config.model).toBe('project-codex-model');
 			// Base config is not mutated.
 			expect(baseConfig.cli).toBe('claude-code');
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('overlays project reasoningEffort so launch-target resolution honors it', async () => {
+		const { projectDir, root } = await makeProjectWithConfig({ reasoningEffort: 'xhigh' });
+		try {
+			const { config } = await resolveLaunchConfig({ base: baseConfig, projectDir });
+			expect(config.reasoningEffort).toBe('xhigh');
+			// sharedReasoningEffort outranks config.reasoningEffort in the launch-target chain, so
+			// leaving it at the base value would silently discard the project's setting.
+			expect(config.sharedReasoningEffort).toBe('xhigh');
+			expect(resolveEffectiveLaunchTarget(config, 'coding', {}, {}).reasoningEffort).toBe(
+				'xhigh',
+			);
+			expect(baseConfig.sharedReasoningEffort).toBe('medium');
 		} finally {
 			await removeTempTree(root);
 		}

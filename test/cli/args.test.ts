@@ -60,6 +60,7 @@ describe('parseArgs', () => {
 
 	test('parses --flag=value for normal values and splits on the first =', () => {
 		expect(parseArgs(['--cli=codex']).cli).toBe('codex');
+		expect(parseArgs(['--cli=cline']).cli).toBe('cline');
 		expect(parseArgs(['--max-iterations=3']).maxIterations).toBe(3);
 		expect(parseArgs(['--prompt=a=b']).customPrompt).toBe('a=b');
 		// A non-flag token containing = is left untouched.

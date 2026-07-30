@@ -31,6 +31,7 @@ const BACKENDS: Backend[] = [
 	{ command: 'opencode', extra: [], name: 'opencode' },
 	{ command: 'kilo', extra: [], name: 'kilocode' },
 	{ command: 'codex', extra: [], name: 'codex' },
+	{ command: 'cline', extra: [], name: 'cline' },
 ];
 
 const { values } = parseArgs({

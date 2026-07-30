@@ -67,6 +67,7 @@ export function mergeBackendDefaults(
 		idleNudgeTimeoutSeconds?: number | undefined;
 		idleTimeoutSeconds?: number | undefined;
 		model?: string | undefined;
+		reasoningEffort?: NonNullable<BackendDefaultSettingsInput['reasoningEffort']> | undefined;
 	};
 	const merged: Partial<Record<BackendName, BackendEntry>> = { ...(existing ?? {}) };
 	for (const backend of backendNames) {
@@ -82,6 +83,7 @@ export function mergeBackendDefaults(
 			...(optionalNumber(entry.idleNudgeTimeoutSeconds) !== undefined
 				? { idleNudgeTimeoutSeconds: optionalNumber(entry.idleNudgeTimeoutSeconds) }
 				: {}),
+			...(entry.reasoningEffort ? { reasoningEffort: entry.reasoningEffort } : {}),
 		};
 		if (Object.keys(normalized).length === 0) delete merged[backend];
 		else merged[backend] = normalized;

@@ -9,16 +9,10 @@ import type {
 
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
-import { Input } from '../../components/ui/input.tsx';
 import { useCliStatus } from '../../hooks/useSettings.ts';
+import { BackendDefaultFields } from './BackendDefaultFields.tsx';
 import { SettingsToolStatusBadge } from './SettingsToolStatusBadge.tsx';
-import {
-	emptyBackendDefault,
-	nullableNumber,
-	nullableText,
-	numberValue,
-	textValue,
-} from './settingsUtils.ts';
+import { emptyBackendDefault } from './settingsUtils.ts';
 
 const backendDefaultOptions: BackendName[] = [
 	'native',
@@ -29,23 +23,10 @@ const backendDefaultOptions: BackendName[] = [
 	'opencode',
 	'kilocode',
 	'codex',
+	'cline',
 	'grok',
 ];
 
-const modelPlaceholders: Record<BackendName, string> = {
-	'claude-code': 'e.g., claude-opus-5',
-	codex: 'e.g., gpt-5.6-sol',
-	grok: 'e.g., grok-4.5',
-	kilocode: 'e.g., claude-opus-5',
-	lmstudio: 'e.g., openai/gpt-oss-20b',
-	native: 'e.g., claude-opus-5',
-	ollama: 'e.g., llama3.1',
-	openai: 'e.g., gpt-5.6-sol',
-	opencode: 'e.g., gpt-5.6-sol',
-};
-
-const idleTimeoutPlaceholder = 'e.g., 300';
-const idleNudgeTimeoutPlaceholder = 'e.g., 120';
 const ansiSgrPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 
 function BackendIdentity({
@@ -72,85 +53,6 @@ function BackendIdentity({
 				{loading ? 'Checking status…' : statusText || 'Not detected'}
 			</p>
 		</div>
-	);
-}
-
-function BackendFields({
-	backend,
-	defaults,
-	setBackendDefault,
-	shadowedSharedModel,
-	showLabels = false,
-}: {
-	backend: BackendName;
-	defaults: BackendDefaultSettings;
-	setBackendDefault: (
-		backend: BackendName,
-		key: keyof BackendDefaultSettings,
-		value: null | number | string,
-	) => void;
-	/** The shared Default Model this row's model shadows for default-CLI launches, when set. */
-	shadowedSharedModel?: null | string;
-	showLabels?: boolean;
-}) {
-	return (
-		<>
-			<label className="min-w-0">
-				<span className={showLabels ? 'mb-1 block text-xs text-neutral-500' : 'sr-only'}>
-					Model
-				</span>
-				<Input
-					aria-label={`${backend} model`}
-					onChange={(event) =>
-						setBackendDefault(backend, 'model', nullableText(event.target.value))
-					}
-					placeholder={modelPlaceholders[backend]}
-					value={textValue(defaults.model)}
-				/>
-				{shadowedSharedModel ? (
-					<p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
-						Outranks the shared Default Model (“{shadowedSharedModel}”) for {backend}{' '}
-						launches — clear this to use the shared default.
-					</p>
-				) : null}
-			</label>
-			<label className="min-w-0">
-				<span className={showLabels ? 'mb-1 block text-xs text-neutral-500' : 'sr-only'}>
-					Idle timeout
-				</span>
-				<Input
-					aria-label={`${backend} idle timeout`}
-					inputMode="numeric"
-					onChange={(event) =>
-						setBackendDefault(
-							backend,
-							'idleTimeoutSeconds',
-							nullableNumber(event.target.value),
-						)
-					}
-					placeholder={idleTimeoutPlaceholder}
-					value={numberValue(defaults.idleTimeoutSeconds)}
-				/>
-			</label>
-			<label className="min-w-0">
-				<span className={showLabels ? 'mb-1 block text-xs text-neutral-500' : 'sr-only'}>
-					Idle nudge timeout
-				</span>
-				<Input
-					aria-label={`${backend} idle nudge timeout`}
-					inputMode="numeric"
-					onChange={(event) =>
-						setBackendDefault(
-							backend,
-							'idleNudgeTimeoutSeconds',
-							nullableNumber(event.target.value),
-						)
-					}
-					placeholder={idleNudgeTimeoutPlaceholder}
-					value={numberValue(defaults.idleNudgeTimeoutSeconds)}
-				/>
-			</label>
-		</>
 	);
 }
 
@@ -191,8 +93,8 @@ export function BackendDefaultsTable({
 						Backend Matrix
 					</h2>
 					<p className="mt-0.5 text-xs text-neutral-500">
-						Installation status is read-only; model and timeout defaults apply to new
-						runs.
+						Installation status is read-only; model, reasoning, and timeout defaults
+						apply to new runs.
 					</p>
 					{statusQuery.isError ? (
 						<p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -223,6 +125,9 @@ export function BackendDefaultsTable({
 								Model
 							</th>
 							<th className="px-3 py-2 font-medium" scope="col">
+								Reasoning
+							</th>
+							<th className="px-3 py-2 font-medium" scope="col">
 								Idle Timeout
 							</th>
 							<th className="px-3 py-2 font-medium" scope="col">
@@ -244,9 +149,9 @@ export function BackendDefaultsTable({
 											status={statuses.get(backend)}
 										/>
 									</td>
-									<td className="px-3 py-2" colSpan={3}>
-										<div className="grid grid-cols-3 gap-3">
-											<BackendFields
+									<td className="px-3 py-2" colSpan={4}>
+										<div className="grid grid-cols-4 gap-3">
+											<BackendDefaultFields
 												backend={backend}
 												defaults={defaults}
 												setBackendDefault={setBackendDefault}
@@ -275,7 +180,7 @@ export function BackendDefaultsTable({
 								status={statuses.get(backend)}
 							/>
 							<div className="grid gap-2">
-								<BackendFields
+								<BackendDefaultFields
 									backend={backend}
 									defaults={defaults}
 									setBackendDefault={setBackendDefault}

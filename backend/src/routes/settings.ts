@@ -25,6 +25,7 @@ const backendDefaultsBody = t.Object({
 	idleNudgeTimeoutSeconds: t.Optional(nullableNumber),
 	idleTimeoutSeconds: t.Optional(nullableNumber),
 	model: t.Optional(nullableString),
+	reasoningEffort: t.Optional(t.Union([reasoningEffortBody, t.Null()])),
 });
 const triumvirateBody = t.Object({
 	execCli: t.Optional(t.Union([backendNameBody, t.Null()])),
@@ -78,6 +79,7 @@ export const settingsConfigBody = t.Object({
 	backends: t.Optional(
 		t.Object({
 			'claude-code': t.Optional(backendDefaultsBody),
+			cline: t.Optional(backendDefaultsBody),
 			codex: t.Optional(backendDefaultsBody),
 			grok: t.Optional(backendDefaultsBody),
 			kilocode: t.Optional(backendDefaultsBody),

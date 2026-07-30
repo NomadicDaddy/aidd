@@ -240,7 +240,8 @@ export function resolveMergedConfig(
 		quitOnAbort: merged.quitOnAbort ?? defaults.quitOnAbort,
 		rateLimitBackoffSeconds: merged.rateLimitBackoffSeconds ?? defaults.rateLimitBackoffSeconds,
 		rateLimitBufferSeconds: merged.rateLimitBufferSeconds ?? defaults.rateLimitBufferSeconds,
-		reasoningEffort: merged.reasoningEffort ?? defaults.reasoningEffort,
+		reasoningEffort:
+			backendOverrides.reasoningEffort ?? merged.reasoningEffort ?? defaults.reasoningEffort,
 		timeoutSeconds:
 			backendOverrides.timeoutSeconds ?? merged.timeoutSeconds ?? defaults.timeoutSeconds,
 		web: resolveWebConfig(merged, { baseDir: options.baseDir }),
@@ -251,6 +252,7 @@ export function resolveMergedConfig(
 	const director = resolveDirectorConfig(merged.director);
 	if (director !== undefined) resolved.director = director;
 	if (merged.model !== undefined) resolved.sharedModel = merged.model;
+	resolved.sharedReasoningEffort = merged.reasoningEffort ?? defaults.reasoningEffort;
 	if (merged.providers !== undefined) resolved.providers = merged.providers;
 	if (merged.initModel !== undefined) resolved.initModel = merged.initModel;
 	if (merged.codeModel !== undefined) resolved.codeModel = merged.codeModel;

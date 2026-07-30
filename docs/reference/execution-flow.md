@@ -88,7 +88,8 @@ Backends implement one normalized event interface:
 - `native` runs the in-process OpenAI-compatible agent loop in `shared/src/agent`.
 - `ollama` uses native backend machinery with Ollama provider defaults.
 - `lmstudio` uses native backend machinery with LM Studio provider defaults.
-- `claude-code`, `opencode`, `kilocode`, and `codex` spawn external CLIs and parse their output.
+- `claude-code`, `cline`, `opencode`, `kilocode`, `codex`, and `grok` spawn external CLIs and
+  parse their output.
 
 The monitor layer handles stdout/stderr capture, idle timing, provider errors, rate-limit
 classification, and process termination.

@@ -52,7 +52,7 @@ export const directorProfiles = sqliteTable(
 	(table) => [
 		check(
 			'ck_director_profiles_backend',
-			sql`${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
+			sql`${table.backend} IN ('claude-code','cline','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check(
 			'ck_director_profiles_reasoning_effort',

@@ -112,8 +112,8 @@ Separately, when the agent itself uses a shell tool, a policy blocks home-direct
 
 aidd runs whatever backend you choose:
 
-- **External CLIs** (`claude`, `opencode`, `kilo`, `codex`): aidd spawns the tool you installed and
-  authenticated. That tool's own network activity is outside aidd's control.
+- **External CLIs** (`claude`, `cline`, `opencode`, `kilo`, `codex`, `grok`): aidd spawns the tool
+  you installed and authenticated. That tool's own network activity is outside aidd's control.
 - **Native backend:** aidd makes the model calls itself, as direct HTTPS requests to the
   OpenAI-compatible provider you configure (e.g. Zhipu, xAI, a local Ollama). Your API key comes from
   your config or environment and is sent only in the request's auth header, never logged or printed.

@@ -10,6 +10,10 @@ export interface BackendCommand {
 }
 
 const SAFE_BACKEND_ARG = /^[A-Za-z0-9._:/@-]+$/;
+// Cline 3.0.47 rejects --json before reading stdin unless Commander also produced a positional
+// prompt. Keep the real AIDD prompt exclusively on stdin and use a fixed, non-user-controlled
+// bootstrap argument to activate its documented piped-input path.
+const CLINE_STDIN_BOOTSTRAP = 'Complete the AIDD task supplied over standard input.';
 
 function assertSafeBackendArg(label: string, value: string): void {
 	if (!SAFE_BACKEND_ARG.test(value)) {
@@ -38,6 +42,13 @@ function claudeEffortArgs(input: PromptInput): string[] {
 	const effort = normalizedReasoningEffort(input);
 	if (effort === undefined || effort === 'none' || effort === 'minimal') return [];
 	return ['--effort', effort];
+}
+
+function clineEffortArgs(input: PromptInput): string[] {
+	const effort = normalizedReasoningEffort(input);
+	if (effort === undefined) return [];
+	const clineEffort = effort === 'minimal' ? 'low' : effort === 'max' ? 'xhigh' : effort;
+	return ['--thinking', clineEffort];
 }
 
 function variantArgs(input: PromptInput): string[] {
@@ -80,6 +91,20 @@ export function buildBackendCommand(backend: BackendName, input: PromptInput): B
 					...claudeEffortArgs(input),
 				],
 				command: 'claude',
+			};
+		case 'cline':
+			return {
+				args: [
+					'--json',
+					'--auto-approve',
+					'true',
+					'--cwd',
+					input.cwd,
+					...modelArgs(input),
+					...clineEffortArgs(input),
+					CLINE_STDIN_BOOTSTRAP,
+				],
+				command: 'cline',
 			};
 		case 'codex': {
 			const effort = normalizedReasoningEffort(input);

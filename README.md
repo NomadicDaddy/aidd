@@ -8,7 +8,7 @@ telemetry leaves your machine.
 
 Point it at a backend you already use: the built-in **native** provider (any
 OpenAI-compatible API, including xAI/Grok), a local **Ollama** or **LM Studio**
-server, or an agent CLI like **Claude Code**, **opencode**, **kilocode**, or
+server, or an agent CLI like **Claude Code**, **Cline**, **opencode**, **kilocode**, or
 **codex**. aidd handles the orchestration, structured results, audits, and
 run history.
 

@@ -1,0 +1,11 @@
+{"type":"hook_event","hookEventName":"agent_start","agentId":"agent_1","taskId":"conv_1","parentAgentId":null}
+{"type":"agent_event","event":{"type":"iteration_start","iteration":1}}
+{"type":"agent_event","event":{"type":"content_start","contentType":"text","text":"Working"}}
+{"type":"agent_event","event":{"type":"content_start","contentType":"tool","toolCallId":"call_1","toolName":"run_commands","input":{"commands":["bun test"]}}}
+{"type":"agent_event","event":{"type":"content_end","contentType":"tool","toolCallId":"call_1","toolName":"run_commands","output":"1 pass"}}
+{"type":"agent_event","event":{"type":"usage","inputTokens":60,"outputTokens":12,"cacheReadTokens":0,"cacheWriteTokens":0,"cost":0.06,"totalInputTokens":60,"totalOutputTokens":12,"totalCacheReadTokens":0,"totalCacheWriteTokens":0,"totalCost":0.06}}
+{"type":"agent_event","event":{"type":"iteration_end","iteration":1,"hadToolCalls":true,"toolCallCount":1}}
+{"type":"agent_event","event":{"type":"iteration_start","iteration":2}}
+{"type":"agent_event","event":{"type":"usage","inputTokens":40,"outputTokens":8,"cacheReadTokens":40,"cacheWriteTokens":0,"cost":0.04,"totalInputTokens":100,"totalOutputTokens":20,"totalCacheReadTokens":40,"totalCacheWriteTokens":0,"totalCost":0.1}}
+{"type":"agent_event","event":{"type":"done","reason":"completed","text":"Done","iterations":2,"usage":{"inputTokens":100,"outputTokens":20,"cacheReadTokens":40,"cacheWriteTokens":0,"totalCost":0.1}}}
+{"type":"run_result","finishReason":"completed","iterations":2,"usage":{"inputTokens":100,"outputTokens":20,"cacheReadTokens":40,"cacheWriteTokens":5,"totalCost":0.1},"aggregateUsage":{"inputTokens":100,"outputTokens":20,"cacheReadTokens":40,"cacheWriteTokens":5,"totalCost":0.1},"durationMs":1000,"text":"Done","model":{"id":"glm-5.2","provider":"zai","info":{"id":"glm-5.2","name":"GLM-5.2","contextWindow":1000000}}}

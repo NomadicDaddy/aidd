@@ -8,6 +8,7 @@ import { createProcessCliBackend } from './process-cli-backend.ts';
 export function createBackend(name: BackendName, callSurface?: AiCallSurface): CLIBackend {
 	switch (name) {
 		case 'claude-code':
+		case 'cline':
 		case 'codex':
 		case 'grok':
 		case 'kilocode':

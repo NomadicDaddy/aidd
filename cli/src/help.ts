@@ -8,7 +8,7 @@ Subcommands:
       create a project from a GitHub template repo (degit semantics: fresh history)
 
 Key options:
-  --cli native|ollama|lmstudio|openai|claude-code|opencode|kilocode|codex|grok
+  --cli native|ollama|lmstudio|openai|claude-code|opencode|kilocode|codex|cline|grok
   --project-dir DIR
   --spec FILE
   --stop-before-implementation

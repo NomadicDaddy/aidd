@@ -104,7 +104,8 @@ export const TOOLS: ToolDefinition[] = [
 		inputSchema: {
 			properties: {
 				backend: {
-					description: 'Backend/CLI to use (e.g. native, claude-code, codex, opencode).',
+					description:
+						'Backend/CLI to use (e.g. native, claude-code, cline, codex, opencode).',
 					type: 'string',
 				},
 				feature: {

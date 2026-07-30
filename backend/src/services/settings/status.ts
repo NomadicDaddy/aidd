@@ -25,6 +25,7 @@ const providerLoginStatusArgs = ['au' + 'th', 'status'];
 
 const backendCommands: Record<BackendName, { args: string[]; command: string }> = {
 	'claude-code': { args: ['--version'], command: 'claude' },
+	cline: { args: ['--version'], command: 'cline' },
 	codex: { args: ['--version'], command: 'codex' },
 	grok: { args: ['--version'], command: 'grok' },
 	kilocode: { args: ['--version'], command: 'kilo' },

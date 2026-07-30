@@ -15,7 +15,12 @@ describe('shadowingBackendModel', () => {
 		form.cli = 'codex';
 		form.model = 'gpt-5.6-sol';
 		form.backends = {
-			codex: { idleNudgeTimeoutSeconds: null, idleTimeoutSeconds: null, model: 'gpt-5.6' },
+			codex: {
+				idleNudgeTimeoutSeconds: null,
+				idleTimeoutSeconds: null,
+				model: 'gpt-5.6',
+				reasoningEffort: null,
+			},
 		};
 		expect(shadowingBackendModel(form)).toBe('gpt-5.6');
 	});
@@ -24,7 +29,12 @@ describe('shadowingBackendModel', () => {
 		const form = createBlankSettings();
 		form.cli = 'codex';
 		form.backends = {
-			codex: { idleNudgeTimeoutSeconds: null, idleTimeoutSeconds: null, model: 'gpt-5.6' },
+			codex: {
+				idleNudgeTimeoutSeconds: null,
+				idleTimeoutSeconds: null,
+				model: 'gpt-5.6',
+				reasoningEffort: null,
+			},
 		};
 		expect(shadowingBackendModel(form)).toBeNull();
 	});
@@ -35,7 +45,12 @@ describe('shadowingBackendModel', () => {
 		form.model = 'gpt-5.6-sol';
 		form.backends = {
 			// Another backend's model never shadows the default CLI's launches.
-			native: { idleNudgeTimeoutSeconds: null, idleTimeoutSeconds: null, model: 'glm-5.2' },
+			native: {
+				idleNudgeTimeoutSeconds: null,
+				idleTimeoutSeconds: null,
+				model: 'glm-5.2',
+				reasoningEffort: null,
+			},
 		};
 		expect(shadowingBackendModel(form)).toBeNull();
 	});
@@ -47,7 +62,12 @@ describe('shadowingBackendModel', () => {
 		form.cli = 'native';
 		form.model = 'glm-5.2';
 		form.backends = {
-			native: { idleNudgeTimeoutSeconds: null, idleTimeoutSeconds: null, model: 'glm-5.2' },
+			native: {
+				idleNudgeTimeoutSeconds: null,
+				idleTimeoutSeconds: null,
+				model: 'glm-5.2',
+				reasoningEffort: null,
+			},
 		};
 		expect(shadowingBackendModel(form)).toBe('glm-5.2');
 	});

@@ -193,7 +193,15 @@ async function runSnapshotTest(check: boolean): Promise<number> {
 	const snapshotDir = join(rootDir, 'cli', 'src', 'prompts', 'snapshots');
 	await mkdir(snapshotDir, { recursive: true });
 	const { format, resolveConfig } = await import('prettier');
-	const backends = ['native', 'claude-code', 'opencode', 'kilocode', 'codex', 'grok'] as const;
+	const backends = [
+		'native',
+		'claude-code',
+		'opencode',
+		'kilocode',
+		'codex',
+		'cline',
+		'grok',
+	] as const;
 	// Mirror the web Director's app-data cycle directory so the reviewable examples do not teach
 	// callers to create unclassified runtime artifacts in project-owned .aidd metadata.
 	const directorSnapshotDir = 'data/director';

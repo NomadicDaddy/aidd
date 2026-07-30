@@ -25,6 +25,7 @@ export interface BackendDefaultSettings {
 	idleNudgeTimeoutSeconds: null | number;
 	idleTimeoutSeconds: null | number;
 	model: null | string;
+	reasoningEffort: null | ReasoningEffort;
 }
 
 export interface TriumvirateSettings {

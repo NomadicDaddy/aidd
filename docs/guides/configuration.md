@@ -91,10 +91,13 @@ Backend names:
 - `native`
 - `ollama`
 - `lmstudio`
+- `openai`
 - `claude-code`
+- `cline`
 - `opencode`
 - `kilocode`
 - `codex`
+- `grok`
 
 Persisted reasoning efforts:
 
@@ -116,14 +119,15 @@ Persisted reasoning efforts:
 			"idleNudgeTimeoutSeconds": 600,
 			"idleTimeoutSeconds": 900,
 			"model": "gpt-5.6",
+			"reasoningEffort": "high",
 			"timeoutSeconds": 14400
 		}
 	}
 }
 ```
 
-Backend-specific `model`, `idleTimeoutSeconds`, and `idleNudgeTimeoutSeconds` override the shared
-top-level values for that backend only.
+Backend-specific `model`, `reasoningEffort`, `idleTimeoutSeconds`, and
+`idleNudgeTimeoutSeconds` override the shared top-level values for that backend only.
 
 Every launch surface (CLI plan and web launches) resolves the effective backend/model/effort
 through one shared resolver (`resolveEffectiveLaunchTarget`). Model precedence, most specific
@@ -173,18 +177,20 @@ Recognized provider names and their defaults:
 
 `providers.<provider>.reasoningEffort` only takes effect for backends that consult the provider
 map: `native` (provider resolved from `defaultProvider`), `ollama` (provider forced to `ollama`),
-and `lmstudio` (provider forced to `lmstudio`). External CLI backends (`claude-code`, `codex`,
-`opencode`, `kilocode`) ignore it and fall back to the top-level `reasoningEffort` instead. Note
-that `lmstudio` does not send `reasoning_effort` on the wire, as it is not part of LM Studio's
-documented chat parameters.
+and `lmstudio` (provider forced to `lmstudio`). External CLI backends (`claude-code`, `cline`,
+`codex`, `grok`, `opencode`, `kilocode`) ignore it. All backends first consult their
+`backends.<backend>.reasoningEffort` value, then fall back to the shared top-level
+`reasoningEffort`. Note that `lmstudio` does not send `reasoning_effort` on the wire, as it is not
+part of LM Studio's documented chat parameters.
 
 Precedence (most specific wins):
 
 1. CLI flag `--reasoning-effort` / per-call request override
 2. `directAi.reasoningEffort` (direct AI calls only)
-3. `providers.<provider>.reasoningEffort`
-4. Top-level `reasoningEffort`
-5. Built-in default (`low`)
+3. `backends.<backend>.reasoningEffort` (run launches only)
+4. `providers.<provider>.reasoningEffort`
+5. Top-level `reasoningEffort`
+6. Built-in default (`low`)
 
 Shell credential variables are documented exceptions for provider credentials only:
 `NATIVE_API_KEY`, `ZHIPU_API_KEY`, `XAI_API_KEY`, `NATIVE_BASE_URL`, `NATIVE_MODEL`, and `NATIVE_PROVIDER`.

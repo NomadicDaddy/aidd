@@ -12,6 +12,7 @@ export function emptyBackendDefault(): BackendDefaultSettings {
 		idleNudgeTimeoutSeconds: null,
 		idleTimeoutSeconds: null,
 		model: null,
+		reasoningEffort: null,
 	};
 }
 

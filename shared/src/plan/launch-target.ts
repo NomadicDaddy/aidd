@@ -67,8 +67,9 @@ function modeScopedModel(config: ResolvedConfig, mode: AiddMode): string | undef
  * The single source of truth for "which backend/model/effort will this run use".
  * Precedence mirrors the CLI plan semantics (`resolveRunRuntimeMetadata` delegates here):
  * override → mode model (auditModel/codeModel, only when effective backend == config.cli) →
- * backend-scoped model → shared model → provider default. Both the CLI plan and the web
- * launch path resolve through this function so the two can never drift.
+ * backend-scoped model → shared model → provider default. Reasoning follows per-launch →
+ * backend-scoped → provider-scoped → shared. Both the CLI plan and the web launch path resolve
+ * through this function so the two can never drift.
  */
 export function resolveEffectiveLaunchTarget(
 	config: ResolvedConfig,
@@ -115,9 +116,16 @@ export function resolveEffectiveLaunchTarget(
 		if (model !== undefined) modelSource = 'provider-default';
 	}
 
+	// sharedReasoningEffort outranks config.reasoningEffort because resolveMergedConfig folds the
+	// *resolving* backend's scoped effort into config.reasoningEffort — consulting it first would
+	// leak backend A's effort into a launch target computed for backend B. resolveMergedConfig
+	// always populates sharedReasoningEffort, so the final fallback only serves configs built
+	// another way (e.g. `defaults`).
 	const reasoningEffort =
 		overrides.reasoningEffort ??
+		config.backends?.[backend]?.reasoningEffort ??
 		providerScopedReasoningEffort(backend, config, env) ??
+		config.sharedReasoningEffort ??
 		config.reasoningEffort;
 
 	return {

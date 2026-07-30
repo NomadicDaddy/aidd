@@ -54,7 +54,7 @@ export const pipelineSessions = sqliteTable(
 		),
 		check(
 			'ck_pipeline_sessions_launch_backend',
-			sql`${table.launchBackend} IS NULL OR ${table.launchBackend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
+			sql`${table.launchBackend} IS NULL OR ${table.launchBackend} IN ('claude-code','cline','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check(
 			'ck_pipeline_sessions_launch_reasoning_effort',
@@ -149,7 +149,7 @@ export const runs = sqliteTable(
 		),
 		check(
 			'ck_runs_backend',
-			sql`${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
+			sql`${table.backend} IN ('claude-code','cline','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check('ck_runs_source', sql`${table.source} IN ('cli','web','director')`),
 		// Mirrors ck_director_profiles_reasoning_effort, but reasoning_effort is
@@ -285,7 +285,7 @@ export const invocationEvents = sqliteTable(
 		// Mirrors ck_runs_backend, but backend is nullable here so NULL is allowed explicitly.
 		check(
 			'ck_invocation_events_backend',
-			sql`${table.backend} IS NULL OR ${table.backend} IN ('claude-code','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
+			sql`${table.backend} IS NULL OR ${table.backend} IN ('claude-code','cline','codex','grok','kilocode','lmstudio','native','ollama','openai','opencode')`,
 		),
 		check(
 			'ck_invocation_events_status',

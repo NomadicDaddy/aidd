@@ -33,7 +33,7 @@ async function makeProjectDir(name: string): Promise<string> {
 	return projectDir;
 }
 
-function plan(projectDir: string, cli: 'claude-code' | 'codex' | 'native' = 'native') {
+function plan(projectDir: string, cli: 'claude-code' | 'cline' | 'codex' | 'native' = 'native') {
 	return resolveRunPlan(parseArgs(['--project-dir', projectDir, '--cli', cli]), {
 		...config,
 		cli,
@@ -55,6 +55,18 @@ describe('runPreflightDoctor', () => {
 		const result = await runPreflightDoctor(plan(projectDir, 'codex'), { prober });
 		expect(result.ok).toBe(true);
 		expect(probed).toEqual([['codex', '--version']]);
+	});
+
+	test('probes the Cline binary', async () => {
+		const projectDir = await makeProjectDir('cline-ok');
+		const probed: string[][] = [];
+		const prober: DoctorProber = (cmd) => {
+			probed.push(cmd);
+			return Promise.resolve({ ok: true });
+		};
+		const result = await runPreflightDoctor(plan(projectDir, 'cline'), { prober });
+		expect(result.ok).toBe(true);
+		expect(probed).toEqual([['cline', '--version']]);
 	});
 
 	test('fails fast with an actionable summary when the backend CLI is missing', async () => {

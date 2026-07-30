@@ -53,8 +53,8 @@ backend/mode/phase/role        # role is the literal `none` when no role wrapper
 ## Snapshot tests
 
 `cli/src/prompts/snapshots/` holds byte-for-byte snapshots for every
-`backend × mode` combination (native/claude-code/opencode/kilocode/codex × coding, todo,
-validate, audit, interview, director, directive-mutation, directive-readonly). Regenerate
+`backend × mode` combination (native/claude-code/cline/opencode/kilocode/codex/grok × coding,
+todo, validate, audit, interview, director, directive-mutation, directive-readonly). Regenerate
 them in the same change that alters compiler or prompt behavior:
 
 ```powershell

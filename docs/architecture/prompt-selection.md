@@ -42,9 +42,11 @@ These fragments adapt tool guidance for:
 
 - `native`
 - `claude-code`
+- `cline`
 - `opencode`
 - `kilocode`
 - `codex`
+- `grok`
 
 `ollama` and `lmstudio` use native backend behavior with their respective provider
 configuration (both resolve to the `native.md` fragment).

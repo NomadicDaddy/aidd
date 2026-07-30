@@ -5,7 +5,8 @@ aidd preserves a stable public runtime contract for projects and operators.
 ## Stable surfaces
 
 - documented CLI flags remain valid where implemented by `shared/src/args/`
-- backend names remain `native`, `ollama`, `lmstudio`, `claude-code`, `opencode`, `kilocode`, and `codex`
+- backend names remain `native`, `ollama`, `lmstudio`, `openai`, `claude-code`, `cline`,
+  `opencode`, `kilocode`, `codex`, and `grok`
 - prompt source files remain under `prompts/`
 - `.aidd/features/*/feature.json` remains the feature contract
 - `.aidd/iterations/NNN.log` and `.aidd/iterations/NNN.json` remain the iteration artifacts

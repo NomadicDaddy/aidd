@@ -1,5 +1,6 @@
 export type BackendName =
 	| 'claude-code'
+	| 'cline'
 	| 'codex'
 	| 'grok'
 	| 'kilocode'

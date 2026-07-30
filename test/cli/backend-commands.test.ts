@@ -71,6 +71,32 @@ describe('backend command builders', () => {
 		expect(command.env?.SHELL).toBe(process.platform === 'win32' ? undefined : '/usr/bin/bash');
 	});
 
+	test('builds Cline JSON invocation with mapped reasoning', () => {
+		const command = buildBackendCommand('cline', input);
+		expect(command.command).toBe('cline');
+		expect(command.args).toEqual([
+			'--json',
+			'--auto-approve',
+			'true',
+			'--cwd',
+			input.cwd,
+			'--model',
+			input.model,
+			'--thinking',
+			'low',
+			'Complete the AIDD task supplied over standard input.',
+		]);
+		expect(command.args).not.toContain('--provider');
+		expect(command.args).not.toContain(input.text);
+
+		const minimal = buildBackendCommand('cline', { ...input, reasoningEffort: 'minimal' });
+		expect(minimal.args.slice(-3, -1)).toEqual(['--thinking', 'low']);
+		const maximum = buildBackendCommand('cline', { ...input, reasoningEffort: 'max' });
+		expect(maximum.args.slice(-3, -1)).toEqual(['--thinking', 'xhigh']);
+		const none = buildBackendCommand('cline', { ...input, reasoningEffort: 'none' });
+		expect(none.args.slice(-3, -1)).toEqual(['--thinking', 'none']);
+	});
+
 	test('preserves Native shorter idle defaults', () => {
 		const backend = new NativeBackend();
 		expect(backend.idleDefaults.nudgeMs).toBe(300_000);
@@ -83,7 +109,12 @@ describe('backend command builders', () => {
 			{
 				PATH: '/bin',
 				ANTHROPIC_API_KEY: 'anthropic-key',
+				CLINE_API_KEY: 'cline-key',
+				CLINE_DATA_DIR: '/tmp/cline',
 				OPENAI_API_KEY: 'openai-key',
+				OPENROUTER_API_KEY: 'openrouter-key',
+				AI_GATEWAY_API_KEY: 'gateway-key',
+				V0_API_KEY: 'v0-key',
 				CODEX_HOME: '/tmp/codex',
 				OPENCODE_CONFIG: '/tmp/opencode.json',
 				KILOCODE_CONFIG: '/tmp/kilocode.json',
@@ -103,7 +134,12 @@ describe('backend command builders', () => {
 
 		expect(env.PATH).toBe('/bin');
 		expect(env.ANTHROPIC_API_KEY).toBe('anthropic-key');
+		expect(env.CLINE_API_KEY).toBe('cline-key');
+		expect(env.CLINE_DATA_DIR).toBe('/tmp/cline');
 		expect(env.OPENAI_API_KEY).toBe('openai-key');
+		expect(env.OPENROUTER_API_KEY).toBe('openrouter-key');
+		expect(env.AI_GATEWAY_API_KEY).toBe('gateway-key');
+		expect(env.V0_API_KEY).toBe('v0-key');
 		expect(env.CODEX_HOME).toBe('/tmp/codex');
 		expect(env.OPENCODE_CONFIG).toBe('/tmp/opencode.json');
 		expect(env.KILOCODE_CONFIG).toBe('/tmp/kilocode.json');
@@ -130,6 +166,12 @@ describe('backend command builders', () => {
 
 		test('codex rejects model with pipe: foo|whoami', () => {
 			expect(() => buildBackendCommand('codex', { ...input, model: 'foo|whoami' })).toThrow(
+				/Unsafe model value/,
+			);
+		});
+
+		test('cline rejects model with shell metacharacters', () => {
+			expect(() => buildBackendCommand('cline', { ...input, model: 'foo; whoami' })).toThrow(
 				/Unsafe model value/,
 			);
 		});

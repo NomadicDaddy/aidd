@@ -7,6 +7,7 @@ export const backendNames = [
 	'opencode',
 	'kilocode',
 	'codex',
+	'cline',
 	'grok',
 ] as const;
 export type BackendName = (typeof backendNames)[number];

@@ -6,6 +6,7 @@ import type { BackendName } from '../api/types.ts';
 // canonical shared list so a new backend appears everywhere at once.
 const backendLabels: Record<BackendName, string> = {
 	'claude-code': 'Claude Code',
+	cline: 'Cline',
 	codex: 'Codex',
 	grok: 'Grok',
 	kilocode: 'KiloCode',

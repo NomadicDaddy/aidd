@@ -39,7 +39,13 @@ export async function resolveLaunchConfig(
 	if (project.model !== undefined) config.sharedModel = project.model;
 	if (project.codeModel !== undefined) config.codeModel = project.codeModel;
 	if (project.auditModel !== undefined) config.auditModel = project.auditModel;
-	if (project.reasoningEffort !== undefined) config.reasoningEffort = project.reasoningEffort;
+	if (project.reasoningEffort !== undefined) {
+		config.reasoningEffort = project.reasoningEffort;
+		// sharedReasoningEffort is the un-backend-scoped value launch-target resolution consults
+		// ahead of config.reasoningEffort, so it must move with the overlay or the project's
+		// effort is ignored in favor of the base config's.
+		config.sharedReasoningEffort = project.reasoningEffort;
+	}
 	if (project.defaultProvider !== undefined) config.defaultProvider = project.defaultProvider;
 	if (project.backends !== undefined) config.backends = { ...base.backends, ...project.backends };
 	if (project.providers !== undefined) config.providers = project.providers;

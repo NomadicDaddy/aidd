@@ -47,7 +47,7 @@ const orchestrateToolDefinitions: ToolDefinition[] = [
 		{
 			properties: {
 				backend: {
-					description: 'Backend/CLI to use (e.g. native, codex).',
+					description: 'Backend/CLI to use (e.g. native, cline, codex).',
 					type: 'string',
 				},
 				feature: {

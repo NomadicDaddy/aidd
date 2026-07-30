@@ -5,6 +5,7 @@ import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
+import { migrations } from '../../backend/src/db/migrations/registry.ts';
 import * as schema from '../../backend/src/db/schema.ts';
 import { assertAllowedPath, encodeProjectId } from '../../backend/src/paths.ts';
 import {
@@ -82,7 +83,7 @@ function webProjectConfig(root: string, ignoredFolders = ['.git', 'node_modules'
 	};
 }
 
-const EXPECTED_MIGRATION_VERSIONS = ['0001_unhinged_taco_party'];
+const EXPECTED_MIGRATION_VERSIONS = ['0001_unhinged_taco_party', '0002_cline_backend'];
 
 describe('web database and project APIs', () => {
 	test('startup migration creates only the web control panel product tables', () => {
@@ -205,6 +206,49 @@ describe('web database and project APIs', () => {
 				(col) => col === 'pipeline_session_id',
 			).length;
 			expect(pipelineSessionIdCount).toBe(1);
+		} finally {
+			sqlite.close();
+		}
+	});
+
+	test('Cline migration preserves populated pre-Cline backend tables', () => {
+		const sqlite = new Database(':memory:');
+		try {
+			const baseline = migrations[0];
+			if (baseline === undefined) throw new Error('missing baseline migration');
+			sqlite.exec(baseline.sql);
+			sqlite.exec(`
+				CREATE TABLE schema_migrations (
+					version TEXT PRIMARY KEY,
+					applied_at TEXT NOT NULL
+				);
+				INSERT INTO schema_migrations VALUES ('0001_unhinged_taco_party','2026-01-01');
+			`);
+			sqlite.run(
+				"INSERT INTO pipeline_sessions (id, recipe_id, recipe_name, project_path, project_name, parameters_json, started_at, total_steps, launch_backend) VALUES ('s1','recipe','Recipe','/p','p','{}',1,1,'codex')",
+			);
+			sqlite.run(
+				"INSERT INTO director_profiles (id, backend, created_at, updated_at) VALUES ('d1','native',1,1)",
+			);
+			sqlite.run(
+				"INSERT INTO runs (id, project_path, project_name, backend, started_at, pipeline_session_id) VALUES ('r1','/p','p','codex',1,'s1')",
+			);
+			sqlite.run(
+				"INSERT INTO invocation_events (id, resource_type, resource_id, resource_name, source, run_id, session_id, project_path, project_name, backend, started_at) VALUES ('e1','run','r1','Run','web','r1','s1','/p','p','codex',1)",
+			);
+
+			migrateWebDatabase(sqlite);
+			expect(sqlite.query('PRAGMA foreign_key_check').all()).toEqual([]);
+			expect(
+				sqlite.query<{ count: number }, []>('SELECT COUNT(*) AS count FROM runs').get()
+					?.count,
+			).toBe(1);
+			sqlite.run(
+				"INSERT INTO runs (id, project_path, project_name, backend, started_at) VALUES ('cline-run','/p','p','cline',2)",
+			);
+			sqlite.run("UPDATE pipeline_sessions SET launch_backend = 'cline' WHERE id = 's1'");
+			sqlite.run("UPDATE director_profiles SET backend = 'cline' WHERE id = 'd1'");
+			sqlite.run("UPDATE invocation_events SET backend = 'cline' WHERE id = 'e1'");
 		} finally {
 			sqlite.close();
 		}

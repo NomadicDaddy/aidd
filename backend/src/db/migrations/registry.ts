@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="./sql.d.ts" />
 import init0001 from './0001_unhinged_taco_party.sql' with { type: 'text' };
+import clineBackend0002 from './0002_cline_backend.sql' with { type: 'text' };
 
 /**
  * Migration definitions bundled at module load time.
@@ -26,5 +27,9 @@ export const migrations: MigrationDefinition[] = [
 	{
 		sql: init0001,
 		version: '0001_unhinged_taco_party',
+	},
+	{
+		sql: clineBackend0002,
+		version: '0002_cline_backend',
 	},
 ];

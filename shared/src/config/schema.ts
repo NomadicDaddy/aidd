@@ -101,6 +101,7 @@ export const configSchema = z
 					idleNudgeTimeoutSeconds: z.number().int().nonnegative().optional(),
 					idleTimeoutSeconds: z.number().int().nonnegative().optional(),
 					model: z.string().optional(),
+					reasoningEffort: z.enum(persistedReasoningEffortValues).optional(),
 					timeoutSeconds: z.number().int().nonnegative().optional(),
 				}),
 			)

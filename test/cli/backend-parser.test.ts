@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { parseClineBackendLine, parseClineBackendOutput } from 'aidd-shared/backends/parsers/cline';
 import { parseCodexBackendLine, parseCodexBackendOutput } from 'aidd-shared/backends/parsers/codex';
 import { parseOpencodeFamilyOutput } from 'aidd-shared/backends/parsers/opencode-family';
 import { parsePlainBackendOutput } from 'aidd-shared/backends/parsers/plain';
@@ -240,6 +241,315 @@ describe('backend parser', () => {
 		expect(usage.inputTokens).toBe(15329); // 15265 fresh + 64 cache.read
 		expect(usage.cachedTokens).toBe(64);
 		expect(usage.outputTokens).toBe(3);
+	});
+});
+
+describe('cline structured output', () => {
+	test('normalizes modern deltas, tools, aggregate usage, and canonical text', () => {
+		const stdout = [
+			JSON.stringify({
+				type: 'agent_event',
+				event: { type: 'content_start', contentType: 'text', text: 'Working' },
+			}),
+			JSON.stringify({
+				type: 'agent_event',
+				event: {
+					type: 'content_start',
+					contentType: 'reasoning',
+					reasoning: 'Checking',
+				},
+			}),
+			JSON.stringify({
+				type: 'agent_event',
+				event: {
+					type: 'content_start',
+					contentType: 'tool',
+					toolName: 'run_commands',
+					input: { commands: ['bun test'] },
+				},
+			}),
+			JSON.stringify({
+				type: 'agent_event',
+				event: {
+					type: 'content_end',
+					contentType: 'tool',
+					toolName: 'run_commands',
+					output: '1 pass',
+				},
+			}),
+			JSON.stringify({
+				type: 'run_result',
+				finishReason: 'completed',
+				text: 'Done',
+				usage: { inputTokens: 2, outputTokens: 1 },
+				aggregateUsage: {
+					inputTokens: 120,
+					outputTokens: 30,
+					cacheReadTokens: 80,
+					cacheWriteTokens: 10,
+					totalCost: 0.25,
+				},
+			}),
+		].join('\n');
+		const events = parseClineBackendOutput(stdout, '', 0);
+
+		expect(events).toContainEqual({
+			chunk: 'Working',
+			kind: 'text',
+			type: 'assistant_delta',
+		});
+		expect(events).toContainEqual({
+			chunk: 'Checking',
+			kind: 'reasoning',
+			type: 'assistant_delta',
+		});
+		expect(events).toContainEqual({
+			args: { commands: ['bun test'] },
+			tool: 'run_commands',
+			type: 'tool_call',
+		});
+		expect(events).toContainEqual({
+			result: '1 pass',
+			tool: 'run_commands',
+			type: 'tool_result',
+		});
+		expect(events.filter((event) => event.type === 'assistant_text')).toEqual([
+			{ chunk: 'Done', type: 'assistant_text' },
+		]);
+		expect(events).toContainEqual({
+			cachedTokens: 80,
+			costUsd: 0.25,
+			inputTokens: 120,
+			outputTokens: 30,
+			type: 'usage',
+		});
+	});
+
+	test('streams per-iteration usage and reconciles it against the run aggregate', () => {
+		// Shapes taken from a real cline 3.0.47 three-iteration run: the non-prefixed fields are
+		// per-turn, total* are cumulative, and aggregateUsage equals the per-turn sum.
+		const events = parseClineBackendOutput(
+			[
+				JSON.stringify({
+					type: 'agent_event',
+					event: {
+						type: 'usage',
+						inputTokens: 5768,
+						outputTokens: 339,
+						cacheReadTokens: 0,
+						cost: 0.0095668,
+						totalInputTokens: 5768,
+						totalOutputTokens: 339,
+						totalCacheReadTokens: 0,
+						totalCost: 0.0095668,
+					},
+				}),
+				JSON.stringify({
+					type: 'agent_event',
+					event: {
+						type: 'usage',
+						inputTokens: 6177,
+						outputTokens: 100,
+						cacheReadTokens: 5760,
+						cost: 0.0025214,
+						totalInputTokens: 11945,
+						totalOutputTokens: 439,
+						totalCacheReadTokens: 5760,
+						totalCost: 0.0120882,
+					},
+				}),
+				JSON.stringify({
+					type: 'run_result',
+					finishReason: 'completed',
+					text: 'Done',
+					aggregateUsage: {
+						inputTokens: 11945,
+						outputTokens: 439,
+						cacheReadTokens: 5760,
+						totalCost: 0.0120882,
+					},
+				}),
+			].join('\n'),
+			'',
+			0,
+		);
+
+		const usage = events.filter((event) => event.type === 'usage');
+		// Live usage arrives per iteration rather than only at the end.
+		expect(usage.length).toBe(2);
+		expect(usage[0]).toEqual({
+			cachedTokens: 0,
+			costUsd: 0.0095668,
+			inputTokens: 5768,
+			outputTokens: 339,
+			type: 'usage',
+		});
+		// Totals are summed downstream, so the aggregate must not be re-emitted on top of the
+		// per-iteration events it already covers.
+		const summed = usage.reduce(
+			(acc, event) => ({
+				cachedTokens: acc.cachedTokens + (event.cachedTokens ?? 0),
+				costUsd: acc.costUsd + (event.costUsd ?? 0),
+				inputTokens: acc.inputTokens + (event.inputTokens ?? 0),
+				outputTokens: acc.outputTokens + (event.outputTokens ?? 0),
+			}),
+			{ cachedTokens: 0, costUsd: 0, inputTokens: 0, outputTokens: 0 },
+		);
+		expect(summed.inputTokens).toBe(11945);
+		expect(summed.outputTokens).toBe(439);
+		expect(summed.cachedTokens).toBe(5760);
+		expect(summed.costUsd).toBeCloseTo(0.0120882, 9);
+	});
+
+	test('tops the running usage sum up to a larger run aggregate', () => {
+		const events = parseClineBackendOutput(
+			[
+				JSON.stringify({
+					type: 'agent_event',
+					event: { type: 'usage', inputTokens: 40, outputTokens: 5, cost: 0.01 },
+				}),
+				JSON.stringify({
+					type: 'run_result',
+					finishReason: 'completed',
+					text: 'Done',
+					// A missing or unparseable iteration line must not lose tokens: cline's
+					// aggregate stays authoritative and the remainder is emitted.
+					aggregateUsage: { inputTokens: 100, outputTokens: 20, totalCost: 0.05 },
+				}),
+			].join('\n'),
+			'',
+			0,
+		);
+		const usage = events.filter((event) => event.type === 'usage');
+		expect(usage.length).toBe(2);
+		expect(usage[1]).toEqual({
+			costUsd: 0.04,
+			inputTokens: 60,
+			outputTokens: 15,
+			type: 'usage',
+		});
+	});
+
+	test('keeps per-iteration usage when the run dies before a run result', () => {
+		const events = parseClineBackendOutput(
+			JSON.stringify({
+				type: 'agent_event',
+				event: { type: 'usage', inputTokens: 77, outputTokens: 9, cost: 0.02 },
+			}),
+			'',
+			1,
+		);
+		expect(events).toContainEqual({
+			costUsd: 0.02,
+			inputTokens: 77,
+			outputTokens: 9,
+			type: 'usage',
+		});
+	});
+
+	test('keeps tool errors as tool results and ignores recoverable agent errors', () => {
+		const tool = parseClineBackendLine(
+			JSON.stringify({
+				type: 'agent_event',
+				event: {
+					type: 'content_end',
+					contentType: 'tool',
+					toolName: 'run_commands',
+					error: 'command failed',
+				},
+			}),
+		);
+		expect(tool).toEqual([
+			{ result: 'command failed', tool: 'run_commands', type: 'tool_result' },
+		]);
+
+		const recoverable = parseClineBackendLine(
+			JSON.stringify({
+				type: 'agent_event',
+				event: { type: 'error', recoverable: true, error: { message: 'retrying' } },
+			}),
+		);
+		expect(recoverable).toEqual([]);
+	});
+
+	test('classifies unsuccessful run results and rate limits', () => {
+		const events = parseClineBackendOutput(
+			JSON.stringify({
+				type: 'run_result',
+				finishReason: 'error',
+				text: '429 rate limit exceeded',
+			}),
+			'',
+			1,
+		);
+		expect(events.some((event) => event.type === 'rate_limit')).toBe(true);
+		expect(
+			events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
+		).toBe(true);
+	});
+
+	test('supports legacy partial and completed say events', () => {
+		const events = parseClineBackendOutput(
+			[
+				JSON.stringify({ type: 'say', text: 'Work', partial: true }),
+				JSON.stringify({ type: 'ask', reasoning: 'Why', partial: true }),
+				JSON.stringify({ type: 'say', text: 'Superseded', partial: false }),
+				JSON.stringify({ type: 'say', text: 'Finished', partial: false }),
+			].join('\n'),
+			'',
+			0,
+		);
+		expect(events).toContainEqual({
+			chunk: 'Work',
+			kind: 'text',
+			type: 'assistant_delta',
+		});
+		expect(events).toContainEqual({
+			chunk: 'Why',
+			kind: 'reasoning',
+			type: 'assistant_delta',
+		});
+		expect(events).toContainEqual({ chunk: 'Finished', type: 'assistant_text' });
+		expect(events).not.toContainEqual({ chunk: 'Superseded', type: 'assistant_text' });
+	});
+
+	test('lets the final modern result override legacy completions', () => {
+		const events = parseClineBackendOutput(
+			[
+				JSON.stringify({ partial: false, text: 'Legacy', type: 'say' }),
+				JSON.stringify({
+					finishReason: 'completed',
+					text: 'Modern',
+					type: 'run_result',
+				}),
+			].join('\n'),
+			'',
+			0,
+		);
+		expect(events).toContainEqual({ chunk: 'Modern', type: 'assistant_text' });
+		expect(events).not.toContainEqual({ chunk: 'Legacy', type: 'assistant_text' });
+	});
+
+	test('preserves a modern stream with no run result through the shared finalizer', () => {
+		const stdout = JSON.stringify({
+			event: { contentType: 'text', text: 'Partial', type: 'content_start' },
+			type: 'agent_event',
+		});
+		const events = parseClineBackendOutput(stdout, '', 0);
+		expect(events).toContainEqual({
+			chunk: 'Partial',
+			kind: 'text',
+			type: 'assistant_delta',
+		});
+		expect(events).toContainEqual({ chunk: stdout, type: 'assistant_text' });
+	});
+
+	test('preserves malformed stdout and reports provider failure', () => {
+		const events = parseClineBackendOutput('not-json', 'Cline failed', 1);
+		expect(events).toContainEqual({ chunk: 'not-json', type: 'assistant_text' });
+		expect(events.some((event) => event.type === 'error' && event.reason === 'provider')).toBe(
+			true,
+		);
 	});
 });
 

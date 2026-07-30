@@ -10,7 +10,8 @@ operating that runtime over a discovered fleet of projects.
 
 **CLI**:
 A pluggable execution engine that runs an agent session: one of `native`, `ollama`, `lmstudio`,
-`claude-code`, `opencode`, `kilocode`, `codex`. Selected with `--cli` / config `cli`.
+`openai`, `claude-code`, `cline`, `opencode`, `kilocode`, `codex`, `grok`. Selected with
+`--cli` / config `cli`.
 _Avoid_: Backend (doc-only synonym; the code and flags say "cli"), agent, engine.
 
 **Provider**:

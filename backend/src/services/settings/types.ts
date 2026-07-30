@@ -13,6 +13,7 @@ export interface BackendDefaultSettingsInput {
 	idleNudgeTimeoutSeconds?: null | number;
 	idleTimeoutSeconds?: null | number;
 	model?: null | string;
+	reasoningEffort?: null | ReasoningEffort;
 }
 
 export interface TriumvirateSettingsInput {

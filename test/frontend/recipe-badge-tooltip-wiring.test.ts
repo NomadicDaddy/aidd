@@ -1,0 +1,154 @@
+import { describe, expect, test } from 'bun:test';
+import { resolve } from 'node:path';
+
+import type { RecipeDefinition } from '../../frontend/src/api/types.ts';
+
+// The explainer strings are covered by recipe-badge-explainers.test.ts. What that suite cannot see
+// is whether the badges on the Recipes page are actually wrapped in a tooltip, which is the part a
+// refactor silently drops by swapping RecipeBadgeTooltip back to a bare Badge. Tooltip content
+// lives in a portal that only mounts while open, so it never reaches static markup — but the
+// trigger does: Tooltip wraps its child in `relative inline-flex` and injects `tabIndex` 0, and it
+// returns the child untouched when content is empty (components/ui/tooltip.tsx). So counting
+// triggers against badges proves every badge carries a live tooltip, and the explainer suite
+// proves none of the content is empty.
+const BADGE_CLASS =
+	/inline-flex items-center gap-1\.5 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset/g;
+const TRIGGER_ATTR = /tabindex="0"/g;
+const WRAPPER_CLASS = /class="relative inline-flex"/g;
+const WRAPPED_BADGE =
+	/<span class="inline-flex rounded-md focus-visible:[^"]*" tabindex="0"><span class="inline-flex items-center gap-1\.5[^"]*">(.*?)<\/span><\/span>/g;
+
+function renderMarkup(body: string): string {
+	const script = [
+		"import { createElement as h } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { MemoryRouter } from 'react-router';",
+		"import { RecipeCard, RecipeTable } from './src/pages/recipes/RecipeGrid.tsx';",
+		"import { RecipeBadgeTooltip } from './src/pages/recipes/RecipeBadgeTooltip.tsx';",
+		'const render = (element) => renderToStaticMarkup(h(MemoryRouter, null, element));',
+		body,
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) {
+		throw new Error(new TextDecoder().decode(result.stderr));
+	}
+	return new TextDecoder().decode(result.stdout).trim();
+}
+
+// One recipe that lights up every badge either view can render.
+const recipe: RecipeDefinition = {
+	description: 'Every badge at once',
+	id: 'all-badges',
+	metadataOnly: true,
+	name: 'All badges',
+	parameters: [{ name: 'target' }],
+	steps: [
+		{ configJson: {}, id: 'a', name: 'A', onFailure: 'stop', stepType: 'aidd-cli' },
+		{ configJson: {}, id: 'b', name: 'B', onFailure: 'continue', stepType: 'recipe-ref' },
+		{
+			configJson: {},
+			id: 'c',
+			name: 'C',
+			onFailure: 'auto-fix',
+			retryCount: 2,
+			stepType: 'shell',
+		},
+		{
+			configJson: { executionIntent: 'review-only', skillId: 'review' },
+			id: 'd',
+			name: 'D',
+			onFailure: 'stop',
+			stepType: 'skill',
+		},
+		{
+			configJson: { executionIntent: 'apply-changes', skillId: 'apply' },
+			id: 'e',
+			name: 'E',
+			onFailure: 'stop',
+			stepType: 'skill',
+		},
+	],
+	system: true,
+};
+
+const policyLabels = [
+	'failure: auto-fix (1)',
+	'failure: continue (1)',
+	'failure: stop (3)',
+	'retries: 2',
+	'skills: apply (1)',
+	'skills: review (1)',
+];
+
+function counts(markup: string) {
+	return {
+		badges: (markup.match(BADGE_CLASS) ?? []).length,
+		triggers: (markup.match(TRIGGER_ATTR) ?? []).length,
+		wrappers: (markup.match(WRAPPER_CLASS) ?? []).length,
+	};
+}
+
+function wrappedLabels(markup: string): string[] {
+	return [...markup.matchAll(WRAPPED_BADGE)].map((match) => match[1] ?? '').sort();
+}
+
+const cardMarkup = renderMarkup(
+	`console.log(render(h(RecipeCard, { launchDisabled: false, launchPending: false, onLaunch: () => {}, recipe: ${JSON.stringify(recipe)}, usage: undefined })));`,
+);
+const tableMarkup = renderMarkup(
+	`console.log(render(h(RecipeTable, { launchDisabled: false, launchPending: false, onLaunch: () => {}, recipes: [${JSON.stringify(recipe)}], usageByResourceId: new Map() })));`,
+);
+
+describe('recipe badge tooltip wiring', () => {
+	test('every badge in the card view is a tooltip trigger', () => {
+		const { badges, triggers, wrappers } = counts(cardMarkup);
+		expect(badges).toBeGreaterThan(0);
+		expect(triggers).toBe(badges);
+		expect(wrappers).toBe(badges);
+	});
+
+	test('every badge in the table view is a tooltip trigger', () => {
+		const { badges, triggers, wrappers } = counts(tableMarkup);
+		expect(badges).toBeGreaterThan(0);
+		expect(triggers).toBe(badges);
+		expect(wrappers).toBe(badges);
+	});
+
+	test('card view explains the type, counts, step types, contract, and policy badges', () => {
+		expect(wrappedLabels(cardMarkup)).toEqual(
+			[
+				'1 parameter',
+				'5 steps',
+				'aidd-cli',
+				'metadata-only',
+				'pipeline',
+				'recipe-ref',
+				'shell',
+				'skill',
+				'system',
+				...policyLabels,
+			].sort(),
+		);
+	});
+
+	test('table view explains the type, contract, and policy badges', () => {
+		expect(wrappedLabels(tableMarkup)).toEqual(
+			['metadata-only', 'pipeline', 'system', ...policyLabels].sort(),
+		);
+	});
+
+	test('an empty explainer leaves the badge with no tooltip trigger', () => {
+		// Guards the assertions above: Tooltip returns its child untouched when content is empty,
+		// so a badge whose explainer goes missing loses the trigger and the counts diverge.
+		const markup = renderMarkup(
+			`console.log(render(h(RecipeBadgeTooltip, { content: '' }, 'orphan')));`,
+		);
+		expect(markup).toContain('orphan');
+		expect(counts(markup)).toEqual({ badges: 1, triggers: 0, wrappers: 0 });
+	});
+});

@@ -1,4 +1,4 @@
-# aidd: local mission control for AI coding agents
+# aidd: local control panel for AI coding work
 
 **aidd** drives coding agents through a real plan → code → audit → review loop and gives you
 a single local control panel to launch, watch, and steer that work across all your projects.

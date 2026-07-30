@@ -33,6 +33,7 @@ FROM node:24-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736
 # Defaults mirror AGENT_CLI_VERSIONS in scripts/docker-image.ts (the source
 # of truth — `bun run docker:build` passes them as --build-arg).
 ARG CLAUDE_CODE_VERSION=2.1.175
+ARG CLINE_VERSION=3.0.47
 ARG CODEX_VERSION=0.139.0
 ARG OPENCODE_VERSION=1.17.4
 ARG KILOCODE_VERSION=7.3.45
@@ -48,6 +49,7 @@ RUN apt-get update \
 # volume) on first boot from the operator's own npm, under the operator's vendor agreements. The
 # versions travel as ENV so the runtime pins exactly what the build intended.
 ENV AIDD_CLAUDE_CODE_VERSION=${CLAUDE_CODE_VERSION} \
+	AIDD_CLINE_VERSION=${CLINE_VERSION} \
 	AIDD_CODEX_VERSION=${CODEX_VERSION} \
 	AIDD_OPENCODE_VERSION=${OPENCODE_VERSION} \
 	AIDD_KILOCODE_VERSION=${KILOCODE_VERSION}

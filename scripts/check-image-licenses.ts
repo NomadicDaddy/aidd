@@ -47,7 +47,7 @@ const REQUIRED_IN_IMAGE = [
  * `kilo`, so listing it as `kilocode` looked for something that never exists and would have waved
  * a re-baked Kilo Code CLI straight through the one check meant to catch it.
  */
-const FORBIDDEN_IN_IMAGE = ['claude', 'codex', 'opencode', 'kilo'];
+const FORBIDDEN_IN_IMAGE = ['claude', 'cline', 'codex', 'opencode', 'kilo'];
 
 interface Args {
 	image: string;

@@ -89,6 +89,7 @@ install_agent_cli() {
 if [[ "${AIDD_SKIP_AGENT_CLI_INSTALL:-0}" != "1" ]]; then
 	mkdir -p "${NPM_CONFIG_PREFIX:-${HOME}/.npm-global}"
 	install_agent_cli '@anthropic-ai/claude-code' "${AIDD_CLAUDE_CODE_VERSION:-}" claude
+	install_agent_cli 'cline' "${AIDD_CLINE_VERSION:-}" cline
 	install_agent_cli '@openai/codex' "${AIDD_CODEX_VERSION:-}" codex
 	install_agent_cli 'opencode-ai' "${AIDD_OPENCODE_VERSION:-}" opencode
 	# @kilocode/cli installs a binary called `kilo`, not `kilocode` (see the backend command table

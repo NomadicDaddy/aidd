@@ -5,9 +5,9 @@
  * methodology). docker-compose.production.yml requires APP_VERSION (no
  * :latest fallback), so both tags always exist for compose-up and rollback.
  *
- * The agent-backend CLI versions baked into the image are pinned here (single
+ * The runtime-provisioned agent-backend CLI versions are pinned here (single
  * source of truth) and passed to the Dockerfile as build args — bump a version
- * on this map and rebuild to ship newer CLIs.
+ * on this map and rebuild to ship newer CLI defaults.
  *
  * Usage:
  *   bun scripts/docker-image.ts build   # docker build with both tags
@@ -19,6 +19,7 @@ import { join, resolve } from 'node:path';
 
 export const AGENT_CLI_VERSIONS = {
 	CLAUDE_CODE_VERSION: '2.1.175',
+	CLINE_VERSION: '3.0.47',
 	CODEX_VERSION: '0.139.0',
 	KILOCODE_VERSION: '7.3.45',
 	OPENCODE_VERSION: '1.17.4',

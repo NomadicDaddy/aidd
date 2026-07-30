@@ -97,6 +97,7 @@
 			"licenses/distributed-materials.json",
 			"licenses/releases/README.md",
 			"prompts/_cli/claude-code.md",
+			"prompts/_cli/cline.md",
 			"prompts/_cli/codex.md",
 			"prompts/_cli/grok.md",
 			"prompts/_cli/kilocode.md",

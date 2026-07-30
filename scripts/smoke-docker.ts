@@ -26,7 +26,10 @@ const smokeRoot = join(projectRoot, '.docker', 'smoke');
 const SMOKE_TOKEN = 'aidd-smoke-token-0123456789abcdef0123456789abcdef';
 const SMOKE_PORT = 3219;
 const BASE_URL = `http://127.0.0.1:${SMOKE_PORT}`;
-const HEALTH_TIMEOUT_MS = 90_000;
+// First boot provisions all vendor CLIs into the disposable home volume before aidd starts.
+// Cline's package is substantially larger than the other CLIs, so allow the complete pinned
+// install sequence to finish on an uncached host.
+const HEALTH_TIMEOUT_MS = 300_000;
 const RUN_TERMINAL_TIMEOUT_MS = 240_000;
 const STOP_GRACE_BUDGET_MS = 35_000;
 

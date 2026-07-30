@@ -46,12 +46,12 @@ Manual equivalent: copy `compose.vars.example` → `compose.vars`, edit, then
 
 ### Volumes
 
-| Container path | Purpose                                                                                                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| `/home/aidd`   | `~/.aidd/config.json`, agent-CLI credentials (`~/.claude`, `~/.codex`, …), `~/.gitconfig`, caches          |
-| `/app/data`    | `aidd-panel.db`, run data, managed `skills/`, `backups/` (entrypoint pre-start copies, keeps 5)            |
-| `/app/logs`    | `backend.pid`, backend logs (path is fixed relative to the binary; rootfs is read-only)                    |
-| `/projects`    | Project working trees aidd manages; **must stay path-stable**: `/projects/...` paths persist in the web DB |
+| Container path | Purpose                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| `/home/aidd`   | `~/.aidd/config.json`, agent-CLI credentials (`~/.claude`, `~/.cline`, `~/.codex`, …), `~/.gitconfig`, caches |
+| `/app/data`    | `aidd-panel.db`, run data, managed `skills/`, `backups/` (entrypoint pre-start copies, keeps 5)               |
+| `/app/logs`    | `backend.pid`, backend logs (path is fixed relative to the binary; rootfs is read-only)                       |
+| `/projects`    | Project working trees aidd manages; **must stay path-stable**: `/projects/...` paths persist in the web DB    |
 
 On Linux hosts the `${APPDATA_ROOT}/aidd` tree must be owned by uid 1000. Docker Desktop
 (Windows/macOS) bind mounts handle ownership transparently.
@@ -74,6 +74,7 @@ dropped.
 | Backend           | API-key auth (compose.env)              | Subscription auth                                                     |
 | ----------------- | --------------------------------------- | --------------------------------------------------------------------- |
 | `claude-code`     | `ANTHROPIC_API_KEY`                     | `docker exec -it <container> claude /login` (persists in home volume) |
+| `cline`           | Cline or selected-provider API key      | `docker exec -it <container> cline auth` (persists in home volume)    |
 | `codex`           | `OPENAI_API_KEY`                        | `docker exec -it <container> codex login`                             |
 | `opencode`/`kilo` | provider keys per their config          | their respective login flows                                          |
 | `native`/`ollama` | `NATIVE_API_KEY`/`NATIVE_BASE_URL` etc. | n/a (in-process; point `NATIVE_BASE_URL` at an Ollama host)           |
@@ -118,7 +119,9 @@ Two auth facts matter at the edge:
   update frequently - bump `AGENT_CLI_VERSIONS` in `scripts/docker-image.ts` and restart to pick
   up newer ones (a version change reinstalls; an unchanged version reuses the volume). Agent
   self-update stays disabled: the entrypoint writes `~/.claude/settings.json` with
-  `autoUpdates: false` on first boot, so the version aidd pins is the version that runs.
+  `autoUpdates: false` on first boot, and Cline only updates on an explicit `cline update`, so the
+  version aidd pins is the version that runs. Cline is runtime-installed at the pinned version and
+  is never baked into the image (`FORBIDDEN_IN_IMAGE` in `scripts/check-image-licenses.ts`).
 - **CPU baseline.** The binaries use the `bun-linux-x64-modern` target (AVX2-class). Very old
   x64 hosts would need a `baseline` build target added to `scripts/lib/standalone/constants.ts`.
 

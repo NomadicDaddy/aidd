@@ -17,7 +17,7 @@ import { join } from 'node:path';
  * buildBackendCommand is the single source of truth for what each backend actually invokes; pin
  * the shell script and the guard to it.
  */
-const CLI_BACKENDS: BackendName[] = ['claude-code', 'codex', 'kilocode', 'opencode'];
+const CLI_BACKENDS: BackendName[] = ['claude-code', 'cline', 'codex', 'kilocode', 'opencode'];
 
 function binaryFor(backend: BackendName): string {
 	return buildBackendCommand(backend, { cwd: '.', text: 'noop' }).command;

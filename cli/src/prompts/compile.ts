@@ -181,55 +181,10 @@ async function runSnapshotTest(check: boolean): Promise<number> {
 	const snapshotDir = join(rootDir, 'cli', 'src', 'prompts', 'snapshots');
 	await mkdir(snapshotDir, { recursive: true });
 	const { format, resolveConfig } = await import('prettier');
-	const backends = [
-		'native',
-		'claude-code',
-		'opencode',
-		'kilocode',
-		'codex',
-		'cline',
-		'grok',
-	] as const;
-	// Mirror the web Director's app-data cycle directory so the reviewable examples do not teach
-	// callers to create unclassified runtime artifacts in project-owned .aidd metadata.
-	const directorSnapshotDir = 'data/director';
-	const modes: { args: string[]; name: string; phase?: string }[] = [
-		{ args: [], name: 'coding' },
-		// Initializer/onboarding are state-detected phases with no CLI flag (see
-		// applyInitialPhaseDetection in preflight.ts); replicate its phase-fragment rewrite here so
-		// their prompt sources are covered by the drift gate like every other phase.
-		{ args: [], name: 'initializer', phase: 'initializer' },
-		{ args: [], name: 'onboarding', phase: 'onboarding' },
-		{ args: ['--todo'], name: 'todo' },
-		{ args: ['--validate'], name: 'validate' },
-		{ args: ['--audit', 'SECURITY'], name: 'audit' },
-		{ args: ['--interview'], name: 'interview' },
-		{
-			args: [
-				'--director',
-				'--fleet-summary',
-				`${directorSnapshotDir}/snapshot-fleet-summary.json`,
-				'--director-output',
-				`${directorSnapshotDir}/snapshot-output.json`,
-			],
-			name: 'director',
-		},
-		{
-			args: ['--prompt', 'Refactor src/example.ts to extract a helper function.'],
-			name: 'directive-mutation',
-		},
-		{
-			args: [
-				'--prompt',
-				'Review src/example.ts and report any inconsistencies.',
-				'--directive-readonly',
-			],
-			name: 'directive-readonly',
-		},
-	];
+	const { snapshotBackends, snapshotModes } = await import('./snapshot-matrix.ts');
 	const stale: string[] = [];
-	for (const backend of backends) {
-		for (const mode of modes) {
+	for (const backend of snapshotBackends) {
+		for (const mode of snapshotModes) {
 			const plan = resolveRunPlan(
 				parseArgs(['--project-dir', '.', '--cli', backend, ...mode.args]),
 				{ ...config, cli: backend },

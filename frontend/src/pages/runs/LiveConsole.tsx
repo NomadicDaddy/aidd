@@ -1,40 +1,32 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { default as ArrowDownToLine } from 'lucide-react/dist/esm/icons/arrow-down-to-line';
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
-import { default as Copy } from 'lucide-react/dist/esm/icons/copy';
-import { default as Search } from 'lucide-react/dist/esm/icons/search';
-import { default as WrapText } from 'lucide-react/dist/esm/icons/wrap-text';
-import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { RunRecord } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
-import { Button, IconButton } from '../../components/ui/button.tsx';
+import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
-import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatBytes } from '../../lib/formatters.ts';
+import { entrySearchText, parseConsoleEntries } from './consoleEntries.ts';
+import { LiveConsoleControls } from './LiveConsoleControls.tsx';
+import {
+	type ConsoleView,
+	readViewPreference,
+	readWrapPreference,
+	writeViewPreference,
+	writeWrapPreference,
+} from './liveConsolePrefs.ts';
+import { LiveConsolePretty } from './LiveConsolePretty.tsx';
 import { highlightLine, windowTail } from './liveConsoleText.tsx';
 import { RunDetailPanel } from './RunDetailPanel.tsx';
 
 export interface LiveConsoleBadge {
 	label: string;
 	tone: 'neutral' | 'teal';
-}
-
-// Session-scoped so the wrap preference survives switching between runs (and reloads) within the
-// tab, but does not leak into a fresh browser session. Plain sessionStorage rather than a Zustand
-// persist store because the preference is local to this one console surface.
-const WRAP_PREFERENCE_KEY = 'aidd.liveConsole.wrap';
-
-function readWrapPreference(): boolean {
-	try {
-		return sessionStorage.getItem(WRAP_PREFERENCE_KEY) === '1';
-	} catch {
-		return false;
-	}
 }
 
 function prefersReducedMotion(): boolean {
@@ -60,16 +52,17 @@ export function LiveConsole({
 }) {
 	const isTerminal = selectedRun !== undefined && selectedRun.status !== 'running';
 	const showPanel = isTerminal;
-	// Default the raw stream collapsed for every terminal run (failed, killed, stopped, and clean
-	// completions) so the structured panel reads as primary and the operator opts in to the raw
-	// transcript via "Show raw console". Running runs keep the stream open — live streaming output
+	// Default the console collapsed for every terminal run (failed, killed, stopped, and clean
+	// completions) so the structured panel reads as primary and the operator opts in to the
+	// transcript via "Show console". Running runs keep the stream open — live streaming output
 	// is the point and there is no toggle for them.
 	const collapsedByDefault = isTerminal;
-	const [rawOpen, setRawOpen] = useState(!collapsedByDefault);
+	const [consoleOpen, setConsoleOpen] = useState(!collapsedByDefault);
+	const [view, setView] = useState<ConsoleView>(readViewPreference);
 	const [wrap, setWrap] = useState(readWrapPreference);
 	const [findQuery, setFindQuery] = useState('');
 	const [pinnedToBottom, setPinnedToBottom] = useState(true);
-	const scrollRef = useRef<HTMLPreElement>(null);
+	const scrollRef = useRef<HTMLDivElement>(null);
 	// Mirror of pinnedToBottom for reads inside the content-follow effect without making that
 	// effect re-run on every pin/unpin toggle (which would fight an in-flight jump animation).
 	const pinnedRef = useRef(true);
@@ -85,33 +78,45 @@ export function LiveConsole({
 	// to whatever the previously selected run left it at. Find and scroll pinning are also
 	// per-run state, so reset them when the operator switches runs.
 	useEffect(() => {
-		setRawOpen(!collapsedByDefault);
+		setConsoleOpen(!collapsedByDefault);
 		setFindQuery('');
 		programmaticScrollRef.current = false;
 		setPinned(true);
 	}, [selectedRun?.id, collapsedByDefault]);
 	useEffect(() => {
-		try {
-			sessionStorage.setItem(WRAP_PREFERENCE_KEY, wrap ? '1' : '0');
-		} catch {
-			// Storage can be unavailable (private mode quota); the in-memory toggle still works.
-		}
+		writeWrapPreference(wrap);
 	}, [wrap]);
+	useEffect(() => {
+		writeViewPreference(view);
+	}, [view]);
 
+	// Placeholder/status messages are prose, not a transcript; render them as plain text
+	// regardless of the preferred view.
+	const effectiveView: ConsoleView = hasOutput ? view : 'raw';
 	const trimmedFind = findQuery.trim();
-	const matchingLines = useMemo(() => {
-		if (!trimmedFind) return null;
-		const needle = trimmedFind.toLowerCase();
-		return message.split('\n').filter((line) => line.toLowerCase().includes(needle));
-	}, [message, trimmedFind]);
 
-	// Lay out only the trailing window of the transcript (see MAX_RENDERED_CHARS). Memoized so the
-	// slice runs once per new-output frame rather than on every unrelated re-render. The displayed
-	// total is the larger of what we hold in memory and the server's reported on-disk size, so a
-	// server-side tail cap still reports the true file size.
-	const renderedMessage = useMemo(() => windowTail(message), [message]);
+	// Lay out only the trailing window of the transcript (see MAX_RENDERED_CHARS). These derived
+	// values are plain expressions — the React Compiler memoizes them per its inputs, so the
+	// slice/parse runs once per new-output frame rather than on every unrelated re-render. The
+	// displayed total is the larger of what we hold in memory and the server's reported on-disk
+	// size, so a server-side tail cap still reports the true file size.
+	const renderedMessage = windowTail(message);
 	const totalBytes = Math.max(message.length, sourceTotalBytes ?? 0);
 	const isWindowed = renderedMessage.length < message.length || totalBytes > message.length;
+
+	const findNeedle = trimmedFind.toLowerCase();
+	const matchingLines =
+		trimmedFind && effectiveView === 'raw'
+			? message.split('\n').filter((line) => line.toLowerCase().includes(findNeedle))
+			: null;
+
+	const entries =
+		effectiveView === 'pretty'
+			? parseConsoleEntries(renderedMessage, selectedRun?.backend)
+			: [];
+	const visibleEntries = trimmedFind
+		? entries.filter((entry) => entrySearchText(entry).toLowerCase().includes(findNeedle))
+		: entries;
 
 	// Follow new output to the bottom while the operator stays pinned there. Plain scrollTop
 	// (instant, no animation) so streaming output does not fight a running scroll animation and so
@@ -119,11 +124,11 @@ export function LiveConsole({
 	// Reads pinnedRef rather than depending on pinnedToBottom so a pin/unpin toggle alone does not
 	// re-trigger an instant snap mid-jump.
 	useEffect(() => {
-		if (!rawOpen || !pinnedRef.current) return;
+		if (!consoleOpen || !pinnedRef.current) return;
 		const node = scrollRef.current;
 		if (!node) return;
 		node.scrollTop = node.scrollHeight;
-	}, [renderedMessage, trimmedFind, wrap, rawOpen]);
+	}, [renderedMessage, trimmedFind, wrap, consoleOpen, effectiveView]);
 
 	function handleScroll(): void {
 		const node = scrollRef.current;
@@ -165,8 +170,12 @@ export function LiveConsole({
 		}
 	}
 
-	const showControls = rawOpen && hasOutput;
-	const matchCount = matchingLines?.length ?? 0;
+	const showControls = consoleOpen && hasOutput;
+	const matchCount = trimmedFind
+		? effectiveView === 'pretty'
+			? visibleEntries.length
+			: (matchingLines?.length ?? 0)
+		: null;
 
 	return (
 		<section className="space-y-2">
@@ -185,64 +194,31 @@ export function LiveConsole({
 				) : null}
 				{showPanel ? (
 					<Button
-						aria-expanded={rawOpen}
+						aria-expanded={consoleOpen}
 						className="mb-2"
-						onClick={() => setRawOpen((open) => !open)}
+						onClick={() => setConsoleOpen((open) => !open)}
 						size="compact"
 						variant="ghost">
 						<ChevronRight
 							aria-hidden="true"
-							className={`h-4 w-4 transition-transform ${rawOpen ? 'rotate-90' : ''}`}
+							className={`h-4 w-4 transition-transform ${consoleOpen ? 'rotate-90' : ''}`}
 						/>
-						{rawOpen ? 'Hide raw console' : 'Show raw console'}
+						{consoleOpen ? 'Hide console' : 'Show console'}
 					</Button>
 				) : null}
 				{showControls ? (
-					<div className="mb-2 flex flex-wrap items-center gap-2">
-						<div className="relative w-full sm:w-56">
-							<Search
-								aria-hidden="true"
-								className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
-							/>
-							<Input
-								aria-label="Find in console"
-								className="w-full pr-8 pl-8"
-								onChange={(event) => setFindQuery(event.target.value)}
-								placeholder="Find in console"
-								type="text"
-								value={findQuery}
-							/>
-							{findQuery ? (
-								<IconButton
-									ariaLabel="Clear find"
-									className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 border-0 bg-transparent text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-900 dark:hover:text-neutral-200"
-									onClick={() => setFindQuery('')}
-									variant="ghost">
-									<X aria-hidden="true" className="h-3.5 w-3.5" />
-								</IconButton>
-							) : null}
-						</div>
-						{trimmedFind ? (
-							<span className="text-xs text-neutral-500 dark:text-neutral-400">
-								{matchCount} {matchCount === 1 ? 'match' : 'matches'}
-							</span>
-						) : null}
-						<div className="flex items-center gap-2 sm:ml-auto">
-							<Button
-								aria-pressed={wrap}
-								onClick={() => setWrap((value) => !value)}
-								variant="ghost">
-								<WrapText aria-hidden="true" className="h-3.5 w-3.5" />
-								{wrap ? 'No wrap' : 'Wrap'}
-							</Button>
-							<Button onClick={() => void copyAll()} variant="ghost">
-								<Copy aria-hidden="true" className="h-3.5 w-3.5" />
-								Copy all
-							</Button>
-						</div>
-					</div>
+					<LiveConsoleControls
+						find={findQuery}
+						matchCount={matchCount}
+						onCopyAll={() => void copyAll()}
+						onFindChange={setFindQuery}
+						onViewChange={setView}
+						onWrapToggle={() => setWrap((value) => !value)}
+						view={view}
+						wrap={wrap}
+					/>
 				) : null}
-				{rawOpen ? (
+				{consoleOpen ? (
 					<div className="relative">
 						{showControls && isWindowed && !trimmedFind ? (
 							<p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
@@ -251,30 +227,37 @@ export function LiveConsole({
 								for the full loaded transcript.
 							</p>
 						) : null}
-						<pre
+						<div
 							aria-label="Run console output"
-							className={cn(
-								'h-[520px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner',
-								wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre',
-							)}
+							className="h-[520px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner"
 							onScroll={handleScroll}
 							ref={scrollRef}>
-							{matchingLines ? (
-								matchingLines.length === 0 ? (
-									<span className="text-neutral-500">
-										No lines match “{trimmedFind}”.
-									</span>
-								) : (
-									matchingLines.map((line, index) => (
-										<span className="block" key={`${index}-${line}`}>
-											{highlightLine(line, trimmedFind)}
-										</span>
-									))
-								)
+							{effectiveView === 'pretty' ? (
+								<LiveConsolePretty entries={visibleEntries} find={trimmedFind} />
 							) : (
-								renderedMessage
+								<pre
+									className={cn(
+										'font-mono',
+										wrap ? 'break-words whitespace-pre-wrap' : 'whitespace-pre',
+									)}>
+									{matchingLines ? (
+										matchingLines.length === 0 ? (
+											<span className="text-neutral-500">
+												No lines match “{trimmedFind}”.
+											</span>
+										) : (
+											matchingLines.map((line, index) => (
+												<span className="block" key={`${index}-${line}`}>
+													{highlightLine(line, trimmedFind)}
+												</span>
+											))
+										)
+									) : (
+										renderedMessage
+									)}
+								</pre>
 							)}
-						</pre>
+						</div>
 						{showControls && !pinnedToBottom ? (
 							<Button
 								aria-label="Jump to latest output"

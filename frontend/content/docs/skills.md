@@ -12,6 +12,11 @@ Select a skill, project, and optional backend or model. Supply one free-form arg
 launch. aidd tracks the one-shot as a synthetic `skill:{id}` pipeline session and records the same
 telemetry as a recipe skill step.
 
+Execution intent decides whether the run may write. `Review only` holds it to a read-only contract:
+no file edits, no metadata or changelog writes, no commits — a skill that would apply a fix
+describes the diff instead. `Apply changes` lets the skill carry its fixes through. Skill
+definitions are written write-intentional, so the intent alone governs.
+
 ## Import a local skill
 
 Enter a local folder under a configured allowed root, choose an aidd category, and preview it.

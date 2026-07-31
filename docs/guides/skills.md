@@ -79,12 +79,35 @@ Recipes reference skills with `stepType: "skill"` and `configJson.skillId`:
 {
 	"configJson": {
 		"args": "{application}",
+		"executionIntent": "review-only",
 		"skillId": "feature-review"
 	},
 	"name": "Review features",
 	"stepType": "skill"
 }
 ```
+
+## Execution intent
+
+Every skill run declares `executionIntent`, either `review-only` or `apply-changes`. A recipe step
+must declare it explicitly — a `skill` step without it is rejected at normalization. One-shot
+launches default to `review-only`.
+
+`review-only` wraps the compiled skill in aidd's read-only directive contract: the run may not edit
+files, write metadata, touch a changelog, or create commits, and a skill step that asks for changes
+is redirected into describing the diff it would have produced. `apply-changes` uses the mutation
+contract instead, which permits writes.
+
+Skill definitions are written write-intentional: a workflow that finds a problem also states the
+fix and applies it. The prohibition lives in `review-only` and nowhere else. Do not restate it in a
+skill body — a definition that declares its own read-only boundary applies under both intents,
+because that sentence is the only instruction in the prompt on the subject and `apply-changes`
+merely omits a prohibition rather than adding an instruction. Such a skill silently does nothing
+when an operator asks it to apply changes.
+
+Skills whose deliverable is itself a written artifact (`codebase-analysis` writes an audit report;
+`testing-scenarios` writes `.aidd/testing-scenarios.md`) scope their writes to that artifact. That
+is a deliverable boundary, not an intent boundary, and it belongs in the definition.
 
 ## Importing local skills
 

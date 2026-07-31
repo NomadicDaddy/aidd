@@ -22,8 +22,9 @@ Verify that a file's actual implementation matches what it should be doing based
     - Hypothesize about the cause of each discrepancy
     - Develop a remediation plan for any issues found
 
-4. **Preserve the boundary**: Keep the review read-only unless the user explicitly requests
-   remediation.
+4. **Apply the remediation**: Carry out the remediation plan for every discrepancy you confirmed.
+   aidd decides whether this run may write — a review-only run forbids edits outright, turning this
+   step into reporting the plan you would have executed.
 
 ## Validation
 

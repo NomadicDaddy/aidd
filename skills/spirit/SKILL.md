@@ -49,7 +49,9 @@ working tree alone.
 4. Trace the changed behavior end to end, including callers, consumers, tests, and documentation.
 5. Identify omissions, scope drift, shortcuts, regressions, and technically passing changes that
    miss the intended outcome.
-6. Keep the review read-only unless the user explicitly requests fixes.
+6. Fix the gaps you identified, smallest change first. aidd decides whether this run may write — a
+   review-only run forbids edits outright, turning this step into naming the fixes the work still
+   needs.
 
 ## Output
 

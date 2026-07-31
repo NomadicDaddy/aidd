@@ -22,7 +22,9 @@ counterparts.
    template backport.
 3. Classify reusable improvements as backport candidates.
 4. Classify all remaining differences as unjustified drift.
-5. Keep the review read-only unless the user requests reconciliation.
+5. Reconcile the differences you classified as unjustified drift, in the direction step 4 named.
+   aidd decides whether this run may write — a review-only run forbids edits outright, turning this
+   step into recommending the reconciliation.
 
 ## Validation
 

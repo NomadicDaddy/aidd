@@ -17,7 +17,8 @@ service.
 3. Evaluate all twelve factors, recording which factors apply and any justified exceptions.
 4. Recommend the smallest changes that improve portability, disposability, observability, and
    environment parity.
-5. Do not mutate the project unless the user has requested implementation.
+5. Implement the changes you recommended. aidd decides whether this run may write — a review-only
+   run forbids edits outright, turning this step into proposing them.
 6. Validate implemented changes with the repository's own quality and deployment gates.
 
 ## Output

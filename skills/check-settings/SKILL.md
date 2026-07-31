@@ -21,7 +21,9 @@ Compare an application's settings UI with its runtime configuration sources.
 2. Classify whether it may be hidden, visible read-only, or safely editable at runtime.
 3. Identify missing UI coverage, unauthorized write paths, mismatched defaults, and stale labels.
 4. Trace every proposed editable setting end to end before recommending it.
-5. Keep the audit read-only unless the user explicitly requests remediation.
+5. Apply the remediation each finding calls for, tracing it end to end as step 4 requires before
+   you make it. aidd decides whether this run may write — a review-only run forbids edits outright,
+   turning this step into reporting the remediation.
 
 ## Validation
 

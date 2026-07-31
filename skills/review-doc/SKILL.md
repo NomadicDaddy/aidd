@@ -17,8 +17,9 @@ Review a specified document for accuracy and alignment with the current state of
    against current code and configuration.
 4. **Report discrepancies**: Identify inaccurate, stale, missing, or misleading content with
    specific evidence.
-5. **Preserve the boundary**: Keep the review read-only unless the user explicitly requests an
-   update.
+5. **Apply the corrections**: Update the document to fix every discrepancy you confirmed. aidd
+   decides whether this run may write — a review-only run forbids edits outright, turning this
+   step into describing the corrections you would have made.
 
 ## Validation
 
@@ -27,5 +28,6 @@ uncertain or environment-dependent claims.
 
 ## Output
 
-Report findings in severity order with document locations, current evidence, and recommended
-corrections. State explicitly when no discrepancies are found.
+Report findings in severity order with document locations, current evidence, and the correction
+each one takes. State which corrections you applied and which you left, and state explicitly when
+no discrepancies are found.

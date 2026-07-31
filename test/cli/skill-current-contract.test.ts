@@ -47,6 +47,24 @@ const FORBIDDEN_INTERACTION_MARKERS = [
 	'wait for explicit confirmation',
 ] as const;
 
+// A skill body must not declare its own read-only boundary. `executionIntent: apply-changes` only
+// *omits* aidd's read-only prohibition — it never adds an instruction — so a sentence like "keep
+// the review read-only unless the user requests an update" is the sole instruction in the prompt
+// on the subject and applies under both intents. The skill then silently does nothing when an
+// operator asks it to apply changes. Definitions state the fix and apply it; `review-only` is the
+// only thing that forbids writing. Scoping writes to a skill's own deliverable (an audit report,
+// `.aidd/testing-scenarios.md`) is a deliverable boundary, not an intent one, and stays allowed.
+const FORBIDDEN_INTENT_BOUNDARY_MARKERS = [
+	'do not mutate the project unless',
+	'read-only unless',
+	'readonly unless',
+	'remain read-only unless',
+	'unless the user explicitly requests an update',
+	'unless the user explicitly requests fixes',
+	'unless the user explicitly requests remediation',
+	'unless the user requests reconciliation',
+] as const;
+
 const REQUIRED_COMPATIBILITY_MARKERS = {
 	'skills/bug2feature/references/TRIAGE-WORKFLOW.md': ['2026-04-15', '`sb.ts`'],
 	'skills/consolidate-features/SKILL.md': ['feature-{8 digits}-{rest}'],
@@ -122,6 +140,19 @@ describe('bundled skill current-contract guidance', () => {
 		for (const path of await collectFiles(SKILLS_DIR)) {
 			const body = (await readFile(path, 'utf8')).toLowerCase();
 			for (const marker of FORBIDDEN_INTERACTION_MARKERS) {
+				if (body.includes(marker)) {
+					offenders.push(`${relative(ROOT, path).replaceAll('\\', '/')} -> ${marker}`);
+				}
+			}
+		}
+		expect(offenders).toEqual([]);
+	});
+
+	test('declares no read-only boundary of its own, leaving that to execution intent', async () => {
+		const offenders: string[] = [];
+		for (const path of await collectFiles(SKILLS_DIR)) {
+			const body = (await readFile(path, 'utf8')).toLowerCase();
+			for (const marker of FORBIDDEN_INTENT_BOUNDARY_MARKERS) {
 				if (body.includes(marker)) {
 					offenders.push(`${relative(ROOT, path).replaceAll('\\', '/')} -> ${marker}`);
 				}

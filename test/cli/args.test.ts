@@ -120,6 +120,43 @@ describe('parseArgs', () => {
 		).toThrow(ArgsError);
 	});
 
+	test('a skill run without a declared intent resolves to review-only', () => {
+		// Every other skill entry point refuses a run that declares no execution intent: a recipe
+		// step is rejected at normalization and again at dispatch, and the web one-shot route 400s.
+		// The CLI cannot refuse a bare `--skill` without breaking the documented command line, so
+		// it resolves the omission to the safe end instead of inheriting `--prompt`'s writable
+		// default. Skill bodies are written write-intentional (spirit tells the agent to fix what
+		// it finds), so this default is the only thing standing between `aidd --skill spirit` and
+		// an unrequested edit to the tree.
+		expect(parseArgs(['--skill', 'spirit']).directiveReadonly).toBe(true);
+		expect(
+			parseArgs(['--skill', 'spirit', '--skill-intent', 'review-only']).directiveReadonly,
+		).toBe(true);
+		expect(
+			parseArgs(['--skill', 'spirit', '--skill-intent', 'apply-changes']).directiveReadonly,
+		).toBe(false);
+		// A plain directive is unaffected: only `--skill` carries this contract.
+		expect(parseArgs(['--prompt', 'do work']).directiveReadonly).toBe(false);
+	});
+
+	test('rejects an unusable or contradictory skill intent', () => {
+		expect(() => parseArgs(['--skill', 'spirit', '--skill-intent', 'whatever'])).toThrow(
+			ArgsError,
+		);
+		expect(() => parseArgs(['--skill-intent', 'review-only'])).toThrow(ArgsError);
+		// Both spellings reach the same flag, so asking for writes and read-only at once is the
+		// operator's to resolve rather than ours to decide silently.
+		expect(() =>
+			parseArgs([
+				'--skill',
+				'spirit',
+				'--skill-intent',
+				'apply-changes',
+				'--directive-readonly',
+			]),
+		).toThrow(ArgsError);
+	});
+
 	test('rejects retired command and prior catalog flags', () => {
 		expect(() => parseArgs(['--command', 'update-roadmap'])).toThrow(ArgsError);
 		expect(() => parseArgs([`--${'ingre'}${'dient'}`, 'bug2feature'])).toThrow(ArgsError);

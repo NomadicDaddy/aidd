@@ -1,4 +1,5 @@
 import { type BackendName } from '../../plan/types.ts';
+import { type SkillExecutionIntent } from '../../skill-execution-intent.ts';
 import { type ReasoningEffortValue, type ThinkingLevelValue } from '../constants.ts';
 
 export interface ParsedArgs {
@@ -61,6 +62,11 @@ export interface ParsedArgs {
 	simulation: boolean;
 	skillArgs?: string;
 	skillId?: string;
+	/**
+	 * Declared execution intent of a `--skill` run. Left undefined when the operator did not say,
+	 * which `parseArgs` resolves to the safe end of the contract — see `resolveSkillIntent`.
+	 */
+	skillIntent?: SkillExecutionIntent;
 	specFile?: string;
 	stopBeforeImplementation: boolean;
 	stopSignal: boolean;

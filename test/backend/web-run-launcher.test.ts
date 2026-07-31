@@ -1150,6 +1150,35 @@ describe('web run launcher', () => {
 		}
 	});
 
+	test('a skill launch states its execution intent instead of relying on the CLI default', async () => {
+		// An apply-changes skill step reaches the launcher as nothing more than the absence of
+		// directiveReadonly. The CLI defaults a bare `--skill` to review-only, so omitting the
+		// declaration here would hand the agent the read-only contract and the step would report
+		// the diff it would have made rather than making it.
+		const rootDir = await makeLauncherRoot('console.log("ok");\n');
+		try {
+			const projectDir = resolve('demo-project');
+			const apply = await buildLaunchCommand(
+				rootDir,
+				{ mode: 'directive', projectDir, skillId: 'spirit' },
+				'native',
+			);
+			const review = await buildLaunchCommand(
+				rootDir,
+				{ directiveReadonly: true, mode: 'directive', projectDir, skillId: 'spirit' },
+				'native',
+			);
+
+			expect(apply.args).toContain('--skill');
+			expect(apply.args[apply.args.indexOf('--skill-intent') + 1]).toBe('apply-changes');
+			expect(apply.args).not.toContain('--directive-readonly');
+			expect(review.args[review.args.indexOf('--skill-intent') + 1]).toBe('review-only');
+			expect(review.args).toContain('--directive-readonly');
+		} finally {
+			await removeTempTree(rootDir);
+		}
+	});
+
 	test('rejects extraArgs with an unterminated quote as a 400', async () => {
 		const rootDir = await makeLauncherRoot('console.log("ok");\n');
 		try {

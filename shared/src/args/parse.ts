@@ -67,5 +67,22 @@ export function parseArgs(argv: string[]): ParsedArgs {
 	}
 
 	validateParsedArgs(args);
+	resolveSkillIntent(args);
 	return args;
+}
+
+/**
+ * Turn a skill run's declared execution intent into the read-only flag the directive compiler
+ * reads. Every other skill entry point rejects a run that fails to declare one: a recipe step is
+ * refused at normalization and again at dispatch, and the web one-shot route 400s. The CLI cannot
+ * refuse a bare `--skill` without breaking the documented command line, so it resolves the missing
+ * declaration to the safe end of the contract instead of inheriting the writable default that
+ * `--prompt` gets. Skill bodies are written write-intentional — `spirit` instructs the agent to fix
+ * what it finds — so a bare `aidd --skill spirit` used to edit the tree with nothing having asked
+ * it to. `--directive-readonly` keeps working on its own; the validator rejects it alongside an
+ * explicit `apply-changes` rather than silently picking a winner.
+ */
+function resolveSkillIntent(args: ParsedArgs): void {
+	if (!args.skillId) return;
+	if (args.skillIntent !== 'apply-changes') args.directiveReadonly = true;
 }

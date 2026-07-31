@@ -16,6 +16,17 @@ export function validateParsedArgs(args: ParsedArgs): void {
 	if (args.skillArgs && !args.skillId) {
 		throw new ArgsError('--skill-args requires --skill <id>');
 	}
+	if (args.skillIntent && !args.skillId) {
+		throw new ArgsError('--skill-intent requires --skill <id>');
+	}
+	// Both spellings reach the same read-only flag, so a run asking for writes while also asking
+	// for read-only is a contradiction the operator has to resolve. Picking a winner silently is
+	// how a skill run ends up with the opposite of the permission its launcher believed it sent.
+	if (args.skillIntent === 'apply-changes' && args.directiveReadonly) {
+		throw new ArgsError(
+			'--skill-intent apply-changes cannot be combined with --directive-readonly',
+		);
+	}
 	if (args.filterBy && !args.filterValue) {
 		throw new ArgsError('--filter-by requires --filter <value>');
 	}

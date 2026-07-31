@@ -32,6 +32,8 @@ Key options:
   --in-progress
   --prompt "DIRECTIVE"
   --skill SKILL_ID [--skill-args "ARGS"]
+  --skill-intent review-only|apply-changes
+                              execution intent of a --skill run (default review-only)
   --audit AUDIT[,AUDIT]
   --audit-model MODEL
   --audit-all

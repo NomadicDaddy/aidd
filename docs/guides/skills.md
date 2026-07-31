@@ -64,6 +64,14 @@ bun run start -- --project-dir C:\path\to\my-app --skill hygiene --skill-args "f
 `--skill-args` is optional and is substituted wherever the definition references `$ARGUMENTS`.
 The CLI discovers bundled and managed imported skills through the same merged catalog.
 
+`--skill-intent review-only|apply-changes` declares the run's execution intent (see below). It
+defaults to `review-only`, so a skill that finds problems reports them; add
+`--skill-intent apply-changes` to let the run edit the project:
+
+```powershell
+bun run start -- --project-dir C:\path\to\my-app --skill hygiene --skill-intent apply-changes
+```
+
 Every invocation tells the agent to adapt the skill's intent to the target project's actual code,
 architecture, stack, tooling, paths, and conventions. Spernakit-specific details are examples when
 the skill otherwise applies; explicitly Spernakit-only skills retain that applicability boundary
@@ -90,8 +98,12 @@ Recipes reference skills with `stepType: "skill"` and `configJson.skillId`:
 ## Execution intent
 
 Every skill run declares `executionIntent`, either `review-only` or `apply-changes`. A recipe step
-must declare it explicitly — a `skill` step without it is rejected at normalization. One-shot
-launches default to `review-only`.
+must declare it explicitly — a `skill` step without it is rejected at normalization, and again at
+dispatch. The web one-shot launcher rejects a request that omits it and its selector opens on
+`review-only`. The CLI is the one entry point that cannot reject an omission without breaking
+`--skill` on the command line, so a bare `--skill` resolves to `review-only`; `--skill-intent`
+overrides it, and `--skill-intent apply-changes` alongside `--directive-readonly` is rejected as a
+contradiction rather than resolved silently.
 
 `review-only` wraps the compiled skill in aidd's read-only directive contract: the run may not edit
 files, write metadata, touch a changelog, or create commits, and a skill step that asks for changes

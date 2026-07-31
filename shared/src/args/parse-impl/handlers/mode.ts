@@ -1,3 +1,5 @@
+import { isSkillExecutionIntent, skillExecutionIntents } from '../../../skill-execution-intent.ts';
+import { ArgsError } from '../../validate.ts';
 import { type ParseContext, type ParsedArgs } from '../types.ts';
 
 export function applyModeFlags(
@@ -40,6 +42,16 @@ export function applyModeFlags(
 		case '--skill-args':
 			args.skillArgs = ctx.requireValue(i, flag);
 			return i + 2;
+		case '--skill-intent': {
+			const value = ctx.requireValue(i, flag);
+			if (!isSkillExecutionIntent(value)) {
+				throw new ArgsError(
+					`--skill-intent must be one of: ${skillExecutionIntents.join(', ')}`,
+				);
+			}
+			args.skillIntent = value;
+			return i + 2;
+		}
 		case '--stop':
 			args.stopSignal = true;
 			return i + 1;

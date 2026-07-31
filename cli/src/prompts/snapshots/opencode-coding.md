@@ -370,7 +370,7 @@ failing quality checks.**
 
 ## YOUR ROLE - CODING AGENT (Session 2+)
 
-You are in Code mode and ready to continue work on a long-running autonomous development task. You have no time limit for this session.
+You are in Code mode and ready to continue work on a long-running autonomous development task. There is no artificial pressure to rush, but the run has a wall-clock budget enforced by the aidd runtime — it warns you as the deadline approaches. Prioritize correctness and a clean, committed state.
 
 **IMPORTANT:** Refer to the CLI-specific instructions prepended to this prompt for tool names and capabilities.
 
@@ -1297,13 +1297,13 @@ After verifying clean state:
 
 ### Iteration Management
 
-- **ABORT CRITERIA:** After 3 failed attempts, skip to next feature
+- **ABORT CRITERIA:** After 3 failed attempts on the selected feature, stop and park it: set its feature.json to its true status (`in_progress` or `waiting_approval`, `passes: false`), record what blocked you in `/.aidd/CHANGELOG.md`, and report the blocker in your response instead of emitting AIDD_RESULT. Do NOT pick up a different feature — the scope guard forbids completing unassigned work.
 - **QUALITY OVER QUANTITY:** One complete feature > multiple half-done
 - **NO RUSHING:** Take time to write clean, testable code
 
-### You Have Unlimited Time
+### Pace Yourself — the Run Has a Wall-Clock Budget
 
-Take as long as needed to get it right. The most important thing is leaving the codebase in a clean state before terminating the session.
+Take the time needed to get it right — quality over speed, and no artificial deadline pressure. The run itself is bounded by a wall-clock budget enforced by the runtime; aidd injects a wind-down warning when little budget remains. The most important thing is leaving the codebase in a clean, committed state before the session ends.
 
 ---
 

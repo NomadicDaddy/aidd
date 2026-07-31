@@ -115,6 +115,10 @@ describe('armBaselineNoteIfNeeded', () => {
 		expect(note).toContain(head);
 		// The gate that still has to run is the post-change one; the completion bar is unchanged.
 		expect(note).toContain('post-change');
+		// The note must state the coding prompt's real ordering — fast checks before the
+		// commit, full gate after it — not the inverted full-gate-before-commit claim that
+		// once contradicted Step 10.3/10.4.
+		expect(note).toContain('run the full quality gate after the commit');
 	});
 
 	test('arms nothing when the previous iteration did not verify a baseline', async () => {

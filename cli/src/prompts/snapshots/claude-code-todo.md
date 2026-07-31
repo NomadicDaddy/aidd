@@ -871,9 +871,9 @@ committed and verified.**
 - Next session will use coding.md prompt
 - Feature implementation will continue
 
-### You Have Unlimited Time
+### Pace Yourself — the Run Has a Wall-Clock Budget
 
-Take as long as needed to get it right. The most important thing is leaving the codebase in a clean state before terminating the session.
+Take the time needed to get it right — quality over speed, and no artificial deadline pressure. The run itself is bounded by a wall-clock budget enforced by the runtime; aidd injects a wind-down warning when little budget remains. The most important thing is leaving the codebase in a clean, committed state before the session ends.
 
 ---
 

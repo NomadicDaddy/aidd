@@ -37,9 +37,10 @@ export function baselineVerifiedNote(headSha: string): string {
 		'changed since. Treat STEP 4 (RUN QUALITY CHECKS) as satisfied for this baseline:\n\n' +
 		'- Do **not** run `smoke:qc`, `smoke:dev`, or a standalone lint/typecheck/test sweep before ' +
 		'you start work. Go straight to selecting and implementing the feature.\n' +
-		"- The gate you still owe is the **post-change** one: run the project's full quality gate " +
-		'after your edits and before you commit, exactly as the prompt requires. Nothing about the ' +
-		'completion bar has been relaxed.\n' +
+		'- The gate you still owe is the **post-change** one: after your edits, run the fast checks ' +
+		'before you commit, commit, then run the full quality gate after the commit and fold any ' +
+		'fixes in with `--amend` — exactly the Step 10.2 → 10.3 → 10.4 order the prompt requires. ' +
+		'Nothing about the completion bar has been relaxed.\n' +
 		`- This note is void if reality disagrees: if \`git status\` is dirty or \`HEAD\` is not ` +
 		`\`${headSha}\`, ignore it and run the baseline gate normally.`
 	);

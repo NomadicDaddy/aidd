@@ -156,6 +156,7 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 	};
 	if (args.customPrompt) prompt.customDirective = args.customPrompt;
 	if (args.customPrompt && args.directiveReadonly) prompt.customDirectiveReadonly = true;
+	if (args.skillId) prompt.skillId = args.skillId;
 	if (args.feature) prompt.featureFocus = { directory: args.feature, value: args.feature };
 	if (args.milestone) prompt.milestone = { featureDirectories: [], value: args.milestone };
 

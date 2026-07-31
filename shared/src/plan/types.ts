@@ -153,6 +153,13 @@ export interface PromptPlan {
 	milestone?: MilestoneFilter;
 	mode: AiddMode;
 	phase: string;
+	/**
+	 * Set when the run's directive was compiled from a skill (`--skill <id>`). The prompt is a
+	 * plain directive either way; this records what the operator actually invoked so run
+	 * summaries can say "skill 'review-doc'" instead of the generic "directive run", matching
+	 * the KIND column the web Runs table shows for the same run.
+	 */
+	skillId?: string;
 	variables: Record<string, unknown>;
 }
 

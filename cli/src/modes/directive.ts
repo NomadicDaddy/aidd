@@ -10,6 +10,11 @@ import { createPlanBackedMode } from './base.ts';
 // `none`, which the orchestrator skips) while leaving every feature untouched.
 export function createDirectiveMode(plan: RunPlan): ModeHandler {
 	const base = createPlanBackedMode(plan);
+	// A skill run *is* a directive run, but the operator invoked a named skill and the web Runs
+	// table labels it KIND=Skill. Summarizing it as "directive run" contradicts that label, so
+	// name the skill whenever one compiled this prompt.
+	const skillId = plan.prompt.skillId;
+	const label = skillId === undefined ? 'directive run' : `skill '${skillId}' run`;
 	return {
 		...base,
 		async buildPromptPlan() {
@@ -20,13 +25,13 @@ export function createDirectiveMode(plan: RunPlan): ModeHandler {
 			return {
 				complete: result.exitCode === 0,
 				summary: result.skipped
-					? 'directive run skipped'
-					: `directive run finished with exit code ${result.exitCode}`,
+					? `${label} skipped`
+					: `${label} finished with exit code ${result.exitCode}`,
 			};
 		},
 		async selectWork(_context: ModeContext): Promise<SelectedWork> {
 			return {
-				description: 'directive run',
+				description: label,
 				id: 'directive',
 				kind: 'generic',
 			};

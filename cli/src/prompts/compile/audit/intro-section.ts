@@ -50,7 +50,7 @@ ${priorContext ? `${renderAuditPriorContext(priorContext)}\n\n` : ''}### COMMON 
 ### HARD CONSTRAINTS
 
 1. **Do not run** \`scripts/setup.ts\` or any other setup scripts.
-2. If there is a **blocking ambiguity** or missing requirements, **stop** and record in \`/.aidd/CHANGELOG.md\`.
+2. If there is a **blocking ambiguity** or missing requirements, **stop** and report the blocker in your final response instead of emitting \`AIDD_RESULT\`. Do not record it in \`/.aidd/CHANGELOG.md\` — audit mode never writes that file.
 3. Do not run any blocking processes (no dev servers inline).
 4. **Do NOT fix issues** - only document them as structured findings in \`AIDD_RESULT\`.
 5. **Do NOT write directly to \`/.aidd/features/\`, \`/.aidd/audit-reports/\`, \`/.aidd/CHANGELOG.md\`, or git.** aidd will persist accepted findings and reports after parsing \`AIDD_RESULT\`.

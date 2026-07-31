@@ -17,6 +17,7 @@ import { compileDependencyTopology } from './compile/dependency-topology.ts';
 import { compileDirective } from './compile/directive.ts';
 import { compileDirectorPrompt } from './compile/director.ts';
 import { applyFilters } from './compile/filters.ts';
+import { applyGuardrails } from './compile/guardrails.ts';
 import { compileInterviewPrompt } from './compile/interview.ts';
 import { type AppUrlStatus, renderLaunchContext } from './compile/launch-context.ts';
 import { renderCodingPriorContext } from './compile/prior-context.ts';
@@ -112,22 +113,6 @@ async function applyBackend(plan: PromptPlan, rootDir: string, source: string): 
 	return `${backend}\n\n---\n\n${source}`;
 }
 
-const guardrailFragments = [
-	'prompts/_common/hard-constraints.md',
-	'prompts/_common/forbidden-commands.md',
-	'prompts/_common/artifact-git-policy.md',
-] as const;
-
-async function applyGuardrails(rootDir: string, source: string): Promise<string> {
-	const parts: string[] = [];
-	for (const path of guardrailFragments) {
-		const fragment = await readFragment(rootDir, path);
-		if (fragment.trim()) parts.push(fragment.trim());
-	}
-	if (parts.length === 0) return source;
-	return `${parts.join('\n\n---\n\n')}\n\n---\n\n${source}`;
-}
-
 // The prompt fragments write browser steps against an `<app-url>` placeholder. Nothing ever
 // substituted it, so agents read a literal `<app-url>` and fell back to framework defaults. Fill it
 // in when the address is known; leave the placeholder untouched when it is not, so the fragment
@@ -143,7 +128,10 @@ export async function compilePrompt(
 	const source = await compileSourcePrompt(plan, options);
 	const filtered = applyFilters(plan, source);
 	const withBackend = await applyBackend(plan, options.rootDir, filtered);
-	let text = applyAppUrl(await applyGuardrails(options.rootDir, withBackend), options.appUrl);
+	let text = applyAppUrl(
+		await applyGuardrails(plan, options.rootDir, withBackend),
+		options.appUrl,
+	);
 	const launchContext = renderLaunchContext(options);
 	if (launchContext) text += `\n\n---\n\n${launchContext}`;
 	// Immediately before the result contract, whose scope guard reads against `required_by`. Coding

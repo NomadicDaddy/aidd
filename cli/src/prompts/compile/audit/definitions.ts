@@ -10,6 +10,11 @@ export interface AuditPromptDefinition {
 	nameLower: string;
 }
 
+// Trust boundary: `rootDir` is the aidd installation, so `audits/*.md` is the shipped
+// catalog — trusted install content spliced raw into the prompt below. A future loader
+// that reads audit definitions from a target project directory instead must NOT inherit
+// this raw splice; project-writable content needs the fenced/untrusted treatment that
+// prior-context.ts applies.
 export async function loadAuditPromptDefinition(
 	rootDir: string,
 	auditName: string,

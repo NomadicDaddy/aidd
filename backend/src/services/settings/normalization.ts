@@ -53,6 +53,15 @@ export function normalizeBackendInput(value: BackendInputName): BackendName {
 	return normalized;
 }
 
+/** Fields the settings UI controls on a backend entry and replaces individually. Every other key
+ * (e.g. `timeoutSeconds`) is unmanaged: JSON-config-only, and carried forward verbatim. */
+const managedBackendFields = new Set([
+	'idleNudgeTimeoutSeconds',
+	'idleTimeoutSeconds',
+	'model',
+	'reasoningEffort',
+]);
+
 /** Merge backend default inputs into existing, returning the merged map.
  * @param input - The backend default settings input.
  * @param existing - The existing backend defaults config.
@@ -63,17 +72,24 @@ export function mergeBackendDefaults(
 	existing: PartialAiddConfig['backends'],
 ): PartialAiddConfig['backends'] {
 	if (input === undefined) return existing;
-	type BackendEntry = {
-		idleNudgeTimeoutSeconds?: number | undefined;
-		idleTimeoutSeconds?: number | undefined;
-		model?: string | undefined;
-		reasoningEffort?: NonNullable<BackendDefaultSettingsInput['reasoningEffort']> | undefined;
-	};
+	type BackendEntry = NonNullable<NonNullable<PartialAiddConfig['backends']>[BackendName]>;
 	const merged: Partial<Record<BackendName, BackendEntry>> = { ...(existing ?? {}) };
 	for (const backend of backendNames) {
 		const entry = input[backend];
 		if (entry === undefined) continue;
+		// Carry forward keys the settings UI does not manage (e.g. `timeoutSeconds`) from the
+		// existing entry, the same way mergeProviders preserves `stream`/`streamIdleTimeoutMs`.
+		// Rebuilding the entry from the managed fields alone silently deleted a hand-written
+		// per-backend timeout the first time anyone pressed Save.
+		const existingEntry: BackendEntry = merged[backend] ?? {};
+		const unmanaged: BackendEntry = {};
+		for (const [key, value] of Object.entries(existingEntry)) {
+			if (!managedBackendFields.has(key)) {
+				(unmanaged as Record<string, unknown>)[key] = value;
+			}
+		}
 		const normalized: BackendEntry = {
+			...unmanaged,
 			...(optionalString(entry.model) !== undefined
 				? { model: optionalString(entry.model) }
 				: {}),

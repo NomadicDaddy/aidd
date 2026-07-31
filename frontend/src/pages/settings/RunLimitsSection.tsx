@@ -12,22 +12,27 @@ function FieldRow({
 	min,
 	onChange,
 	placeholder,
+	step,
 	value,
 }: {
 	label: string;
 	min?: number;
 	onChange: (value: null | number) => void;
 	placeholder?: string;
+	step?: number;
 	value: null | number;
 }) {
 	return (
 		<label className="space-y-1">
 			<span className={fieldLabelClass}>{label}</span>
 			<Input
-				inputMode="numeric"
+				// A fractional step means a currency field, which needs the decimal keypad; the
+				// integer fields keep the plain numeric one.
+				inputMode={step !== undefined && !Number.isInteger(step) ? 'decimal' : 'numeric'}
 				min={min}
 				onChange={(event) => onChange(nullableNumber(event.target.value))}
 				placeholder={placeholder}
+				step={step}
 				type="number"
 				value={numberValue(value)}
 			/>
@@ -108,7 +113,7 @@ export function RunLimitsSection({
 			</SettingsBlock>
 
 			<SettingsBlock
-				description="Bound overall runs, iterations, turns, and idle detection. Empty optional values use built-in defaults."
+				description="Bound overall runs, iterations, turns, and idle detection. Empty optional values use built-in defaults. The token and cost budgets are cumulative across a whole run and warn-only — an exceeded budget logs a warning and the run continues."
 				title="Budgets & Timeouts">
 				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
 					<FieldRow
@@ -131,6 +136,21 @@ export function RunLimitsSection({
 						onChange={(value) => setField('maxTurns', value)}
 						placeholder="25"
 						value={form.maxTurns}
+					/>
+					<FieldRow
+						label="Max tokens per run"
+						min={0}
+						onChange={(value) => setField('maxTokens', value)}
+						placeholder="Unlimited"
+						value={form.maxTokens}
+					/>
+					<FieldRow
+						label="Max cost per run (USD)"
+						min={0}
+						onChange={(value) => setField('maxCostUsd', value)}
+						placeholder="Unlimited"
+						step={0.01}
+						value={form.maxCostUsd}
 					/>
 					<FieldRow
 						label="Idle timeout (seconds)"
@@ -173,6 +193,13 @@ export function RunLimitsSection({
 						onChange={(value) => setField('noWorkBackoffMs', value)}
 						placeholder="30000"
 						value={form.noWorkBackoffMs}
+					/>
+					<FieldRow
+						label="Max consecutive timeout retries"
+						min={0}
+						onChange={(value) => setField('maxConsecutiveTimeoutRetries', value)}
+						placeholder="2"
+						value={form.maxConsecutiveTimeoutRetries}
 					/>
 					<FieldRow
 						label="Dirty tree threshold"

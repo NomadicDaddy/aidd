@@ -239,6 +239,62 @@ describe('web settings config', () => {
 		await rm(workspace, { force: true, recursive: true });
 	});
 
+	test('round-trips run budgets and preserves unmanaged per-backend keys', async () => {
+		const workspace = await testTempDir('aidd-web-settings-budgets-');
+		const configPath = join(workspace, 'config.json');
+		const allowedRoot = join(workspace, 'apps');
+		// `backends.<name>.timeoutSeconds` is a valid schema key the resolver honours but the
+		// settings UI does not manage. Rebuilding the entry from the managed fields alone used to
+		// delete it on the first Save, silently discarding a hand-written per-backend timeout.
+		await Bun.write(
+			configPath,
+			JSON.stringify({ backends: { native: { model: 'kept-model', timeoutSeconds: 7200 } } }),
+		);
+		const service = new SettingsService(
+			makeConfig({ ...runtimeWeb, dataDir: join(workspace, 'data') }),
+			configPath,
+		);
+		const base = {
+			applicationRoots: [allowedRoot],
+			cli: 'native' as const,
+			ignoredFolders: ['node_modules'],
+			reasoningEffort: 'low' as const,
+		};
+
+		const set = await service.updateConfig({
+			...base,
+			backends: { native: { model: 'kept-model' } },
+			maxCostUsd: 12.5,
+			maxTokens: 1_000_000,
+		});
+		const written = JSON.parse(await readFile(configPath, 'utf8')) as Record<string, unknown>;
+
+		expect(written.maxTokens).toBe(1_000_000);
+		// A decimal budget must survive the generic numeric writer unrounded.
+		expect(written.maxCostUsd).toBe(12.5);
+		expect(set.config.maxTokens).toBe(1_000_000);
+		expect(set.config.maxCostUsd).toBe(12.5);
+		expect(set.resolvedConfig.maxTokens).toBe(1_000_000);
+		expect((written.backends as Record<string, unknown>).native).toEqual({
+			model: 'kept-model',
+			timeoutSeconds: 7200,
+		});
+
+		const cleared = await service.updateConfig({ ...base, maxCostUsd: null, maxTokens: null });
+		const afterClear = JSON.parse(await readFile(configPath, 'utf8')) as Record<
+			string,
+			unknown
+		>;
+
+		// Clearing removes the keys rather than writing 0, which would mean "budget of zero".
+		expect(afterClear).not.toHaveProperty('maxTokens');
+		expect(afterClear).not.toHaveProperty('maxCostUsd');
+		expect(cleared.config.maxTokens).toBeNull();
+		expect(cleared.config.maxCostUsd).toBeNull();
+
+		await rm(workspace, { force: true, recursive: true });
+	});
+
 	test('writes config file with 0600 permissions (BREAK-THE-ASSUMPTION)', async () => {
 		const workspace = await testTempDir('aidd-web-settings-perms-');
 		const configPath = join(workspace, 'config.json');

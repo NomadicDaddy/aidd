@@ -91,7 +91,9 @@ export interface WebConfigSettings {
 	initModel: null | string;
 	maxConcurrentRuns: number;
 	maxConsecutiveTimeoutRetries: null | number;
+	maxCostUsd: null | number;
 	maxIterations: null | number;
+	maxTokens: null | number;
 	maxTurns: null | number;
 	model: null | string;
 	noClean: boolean;

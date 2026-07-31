@@ -2,11 +2,11 @@ import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
 import { default as Settings2 } from 'lucide-react/dist/esm/icons/settings-2';
 import { useId, useState } from 'react';
 
-import type { BackendName, ReasoningEffort, RunMode } from '../../api/types.ts';
+import type { BackendName, RunMode } from '../../api/types.ts';
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
 import { useLaunchDefaults } from '../../hooks/useLaunchDefaults.ts';
-import { backendLabel, backendOptions } from '../../lib/backends.ts';
+import { backendOptions } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
 import { Button } from '../ui/button.tsx';
@@ -14,45 +14,30 @@ import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
 import { Tooltip } from '../ui/tooltip.tsx';
 import { ExecutionIdentityBadges, ExecutionIdentityDetails } from './ExecutionIdentityBadges.tsx';
+import {
+	type LaunchRole,
+	launchTargetControlModel,
+	type LaunchTargetDefaultScope,
+	mergeLaunchTargetValue,
+	reasoningOptions,
+	roleLabels,
+} from './launchTargetControlModel.ts';
 
 export type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
-const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
-
-export type LaunchRole = 'exec' | 'overseer' | 'primary' | 'secondary';
-
-const roleLabels: Record<LaunchRole, string> = {
-	exec: 'Execution',
-	overseer: 'Overseer',
-	primary: 'Primary',
-	secondary: 'Secondary',
-};
-
-const modelSourceLabels: Record<string, string> = {
-	'backend-config': 'backend default from config',
-	'mode-config': 'mode default from config',
-	override: 'custom override',
-	'provider-default': 'provider default',
-	'shared-config': 'shared default from config',
-	unset: 'backend decides',
-};
+export { LaunchTargetBadge } from './LaunchTargetBadge.tsx';
+export type { LaunchRole } from './launchTargetControlModel.ts';
 
 export interface LaunchTargetControlProps {
+	defaultScope?: LaunchTargetDefaultScope;
 	disabled?: boolean;
+	label?: string;
 	mode?: RunMode;
 	onChange: (value: LaunchTargetValue) => void;
 	projectDir?: string;
 	role?: LaunchRole;
 	value: LaunchTargetValue;
 	variant?: 'chip' | 'inline';
-}
-
-function hasLaunchOverride(value: LaunchTargetValue): boolean {
-	return (
-		value.backend !== undefined ||
-		(value.model ?? '') !== '' ||
-		(value.reasoningEffort ?? '') !== ''
-	);
 }
 
 // The uniform "what CLI/model will this launch use" control. Two variants:
@@ -64,7 +49,9 @@ function hasLaunchOverride(value: LaunchTargetValue): boolean {
 // Unset fields track the server default live; set fields are explicit overrides sent with
 // the launch request.
 export function LaunchTargetControl({
+	defaultScope = 'resolved',
 	disabled,
+	label,
 	mode,
 	onChange,
 	projectDir,
@@ -80,52 +67,36 @@ export function LaunchTargetControl({
 	const effective = defaults.data?.effective;
 	const defaultBackend = roleDefault ? (roleDefault.backend ?? undefined) : effective?.backend;
 	const defaultModel = roleDefault ? (roleDefault.model ?? undefined) : effective?.model;
-	const shownBackend = value.backend ?? defaultBackend;
-	const shownModel = (value.model ?? '') !== '' ? value.model : defaultModel;
-	const shownReasoningEffort = value.reasoningEffort ?? effective?.reasoningEffort;
-	const shownProvider =
-		effective && shownBackend === effective.backend ? effective.provider : undefined;
-	const custom = hasLaunchOverride(value);
-	const backendText = shownBackend
-		? backendLabel(shownBackend)
-		: role === 'exec'
-			? 'Use overseer'
-			: defaults.isLoading
-				? '…'
-				: 'Default';
-	const summaryText = [backendText, shownModel, shownReasoningEffort].filter(Boolean).join(' · ');
-	const provenance = custom
-		? 'Custom override for this launch'
-		: [
-				`CLI ${value.backend ? 'set for this launch' : 'from config'}`,
-				effective ? `model: ${modelSourceLabels[effective.modelSource] ?? ''}` : '',
-				defaults.data?.projectConfigApplied ? 'project config applied' : '',
-			]
-				.filter(Boolean)
-				.join(' · ');
+	const display = launchTargetControlModel({
+		defaultBackend,
+		defaultModel,
+		defaultProvider: effective?.provider,
+		defaultReasoningEffort: effective?.reasoningEffort,
+		defaultScope,
+		isLoading: defaults.isLoading,
+		modelSource: effective?.modelSource,
+		projectConfigApplied: defaults.data?.projectConfigApplied ?? false,
+		role,
+		value,
+	});
 
 	function update(patch: {
 		backend?: BackendName | undefined;
 		model?: string | undefined;
 		reasoningEffort?: string | undefined;
 	}): void {
-		const merged = { ...value, ...patch };
-		const next: LaunchTargetValue = {};
-		if (merged.backend !== undefined) next.backend = merged.backend;
-		if (merged.model) next.model = merged.model;
-		if (merged.reasoningEffort) next.reasoningEffort = merged.reasoningEffort;
-		onChange(next);
+		onChange(mergeLaunchTargetValue(value, patch));
 	}
 
 	const chipButton = (
 		<Tooltip
 			content={
 				<ExecutionIdentityDetails
-					backend={shownBackend}
-					hint={provenance || 'Launch target'}
-					model={shownModel}
-					provider={shownProvider}
-					reasoningEffort={shownReasoningEffort}
+					backend={display.shownBackend}
+					hint={display.provenance || 'Launch target'}
+					model={display.shownModel}
+					provider={display.shownProvider}
+					reasoningEffort={display.shownReasoningEffort}
 				/>
 			}>
 			<button
@@ -134,7 +105,7 @@ export function LaunchTargetControl({
 				aria-haspopup="dialog"
 				className={cn(
 					'inline-flex min-h-7 max-w-full flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1 text-xs transition-colors',
-					custom
+					display.custom
 						? 'border-teal-500 bg-teal-50 text-teal-900 dark:border-teal-500 dark:bg-teal-950/30 dark:text-teal-100'
 						: 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:border-neutral-700',
 					disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
@@ -143,21 +114,23 @@ export function LaunchTargetControl({
 				onClick={() => setOpen(true)}
 				type="button">
 				<Settings2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-				{role ? <span className="font-medium">{roleLabels[role]}:</span> : null}
-				{shownBackend || shownModel || shownReasoningEffort ? (
+				{role || label ? (
+					<span className="font-medium">{role ? roleLabels[role] : label}:</span>
+				) : null}
+				{display.shownBackend || display.shownModel || display.shownReasoningEffort ? (
 					<ExecutionIdentityBadges
-						backend={shownBackend}
-						model={shownModel}
-						provider={shownProvider}
-						reasoningEffort={shownReasoningEffort}
+						backend={display.shownBackend}
+						model={display.shownModel}
+						provider={display.shownProvider}
+						reasoningEffort={display.shownReasoningEffort}
 						withTooltip={false}
 					/>
 				) : (
-					<span className="truncate" title={summaryText}>
-						{summaryText}
+					<span className="truncate" title={display.summaryText}>
+						{display.summaryText}
 					</span>
 				)}
-				{custom ? <span className="font-medium">(custom)</span> : null}
+				{display.custom ? <span className="font-medium">(custom)</span> : null}
 			</button>
 		</Tooltip>
 	);
@@ -176,11 +149,7 @@ export function LaunchTargetControl({
 					})
 				}
 				value={value.backend ?? ''}>
-				<option value="">
-					{role === 'exec' && !defaultBackend
-						? 'Use overseer'
-						: `Default (${defaultBackend ? backendLabel(defaultBackend) : '…'})`}
-				</option>
+				<option value="">{display.backendDefaultLabel}</option>
 				{backendOptions.map((option) => (
 					<option key={option.value} value={option.value}>
 						{option.label}
@@ -196,7 +165,7 @@ export function LaunchTargetControl({
 			<Input
 				disabled={disabled}
 				onChange={(event) => update({ model: event.target.value })}
-				placeholder={defaultModel ? `Default (${defaultModel})` : 'Backend default'}
+				placeholder={display.modelPlaceholder}
 				value={value.model ?? ''}
 			/>
 		</label>
@@ -210,9 +179,7 @@ export function LaunchTargetControl({
 				disabled={disabled}
 				onChange={(event) => update({ reasoningEffort: event.target.value || undefined })}
 				value={value.reasoningEffort ?? ''}>
-				<option value="">
-					Default{effective ? ` (${effective.reasoningEffort})` : ''}
-				</option>
+				<option value="">{display.effortDefaultLabel}</option>
 				{reasoningOptions.map((option) => (
 					<option key={option} value={option}>
 						{option}
@@ -222,7 +189,7 @@ export function LaunchTargetControl({
 		</label>
 	) : null;
 
-	const resetButton = custom ? (
+	const resetButton = display.custom ? (
 		<button
 			className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
 			onClick={() => onChange({})}
@@ -264,10 +231,14 @@ export function LaunchTargetControl({
 								<h2
 									className="text-base font-semibold text-foreground"
 									id={titleId}>
-									{role ? `${roleLabels[role]} launch target` : 'Launch target'}
+									{role
+										? `${roleLabels[role]} launch target`
+										: label
+											? `${label} launch target`
+											: 'Launch target'}
 								</h2>
 								<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-									{provenance ||
+									{display.provenance ||
 										'Choose the CLI, model, and effort for this launch.'}
 								</p>
 							</div>
@@ -289,6 +260,3 @@ export function LaunchTargetControl({
 		</div>
 	);
 }
-
-// Re-exported from its own module so existing import paths keep working.
-export { LaunchTargetBadge } from './LaunchTargetBadge.tsx';

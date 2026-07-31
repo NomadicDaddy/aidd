@@ -1,9 +1,12 @@
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
+import { useState } from 'react';
 
+import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 import type { HealthFilter } from '../auditsUtils.ts';
 
+import { LaunchTargetControl } from '../../../components/shared/LaunchTargetControl.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
@@ -18,12 +21,18 @@ interface CatalogToolbarProps {
 	onEnabledFilterChange: (value: EnabledFilter) => void;
 	onHealthFilterChange: (value: HealthFilter) => void;
 	onQueryChange: (value: string) => void;
-	onRun: (review: boolean, auditAll?: boolean) => void;
+	onRun: (
+		review: boolean,
+		auditAll: boolean | undefined,
+		launchTarget: LaunchTargetValue,
+	) => void;
 	onToggleAuditsEnabled: () => void;
 	query: string;
 	runAllDisabledReason: string | undefined;
+	runLaunchPending: boolean;
 	runSelectedDisabledReason: string | undefined;
 	selectedAuditCount: number;
+	selectedProjectPath: string | undefined;
 	settingsReady: boolean;
 	updatePending: boolean;
 }
@@ -39,17 +48,23 @@ export function CatalogToolbar({
 	onToggleAuditsEnabled,
 	query,
 	runAllDisabledReason,
+	runLaunchPending,
 	runSelectedDisabledReason,
 	selectedAuditCount,
+	selectedProjectPath,
 	settingsReady,
 	updatePending,
 }: CatalogToolbarProps) {
+	const [runTarget, setRunTarget] = useState<LaunchTargetValue>({});
+	const [reviewTarget, setReviewTarget] = useState<LaunchTargetValue>({});
 	const runSelectedDisabled = Boolean(runSelectedDisabledReason);
 	const runAllDisabled = Boolean(runAllDisabledReason);
 	const selectedDescribedBy = runSelectedDisabledReason
 		? 'audits-run-selected-disabled-help'
 		: undefined;
 	const allDescribedBy = runAllDisabledReason ? 'audits-run-all-disabled-help' : undefined;
+	const targetDefaults = selectedProjectPath ? 'resolved' : 'per-project';
+	const projectTargetProps = selectedProjectPath ? { projectDir: selectedProjectPath } : {};
 	return (
 		<>
 			<Card className="flex flex-wrap items-center gap-2">
@@ -60,30 +75,52 @@ export function CatalogToolbar({
 					<ShieldCheck className="h-4 w-4" />
 					{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
 				</Button>
-				<Button
-					aria-describedby={selectedDescribedBy}
-					disabled={runSelectedDisabled}
-					onClick={() => onRun(false)}
-					title={runSelectedDisabledReason}>
-					<Play className="h-4 w-4" />
-					Run Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
-				</Button>
-				<Button
-					aria-describedby={allDescribedBy}
-					disabled={runAllDisabled}
-					onClick={() => onRun(false, true)}
-					title={runAllDisabledReason}
-					variant="secondary">
-					Run All
-				</Button>
-				<Button
-					aria-describedby={selectedDescribedBy}
-					disabled={runSelectedDisabled}
-					onClick={() => onRun(true)}
-					title={runSelectedDisabledReason}
-					variant="secondary">
-					Review Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
-				</Button>
+				<div className="flex min-w-0 flex-wrap items-center gap-2">
+					<LaunchTargetControl
+						defaultScope={targetDefaults}
+						disabled={runLaunchPending}
+						label="Run"
+						mode="audit"
+						onChange={setRunTarget}
+						value={runTarget}
+						{...projectTargetProps}
+					/>
+					<Button
+						aria-describedby={selectedDescribedBy}
+						disabled={runSelectedDisabled}
+						onClick={() => onRun(false, undefined, runTarget)}
+						title={runSelectedDisabledReason}>
+						<Play className="h-4 w-4" />
+						Run Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
+					</Button>
+					<Button
+						aria-describedby={allDescribedBy}
+						disabled={runAllDisabled}
+						onClick={() => onRun(false, true, runTarget)}
+						title={runAllDisabledReason}
+						variant="secondary">
+						Run All
+					</Button>
+				</div>
+				<div className="flex min-w-0 flex-wrap items-center gap-2">
+					<LaunchTargetControl
+						defaultScope={targetDefaults}
+						disabled={runLaunchPending}
+						label="Review"
+						mode="directive"
+						onChange={setReviewTarget}
+						value={reviewTarget}
+						{...projectTargetProps}
+					/>
+					<Button
+						aria-describedby={selectedDescribedBy}
+						disabled={runSelectedDisabled}
+						onClick={() => onRun(true, undefined, reviewTarget)}
+						title={runSelectedDisabledReason}
+						variant="secondary">
+						Review Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
+					</Button>
+				</div>
 				{runSelectedDisabledReason ? (
 					<span
 						className="basis-full text-xs text-neutral-500 dark:text-neutral-400"

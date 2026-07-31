@@ -1,3 +1,4 @@
+import type { LaunchTargetValue } from './launchDefaults.ts';
 import type { ProjectAssuranceBucket } from './projects-profile.ts';
 
 export type AuditAssuranceBucket =
@@ -144,7 +145,7 @@ export interface ProjectAuditsResponse {
 	projectPath: string;
 }
 
-export interface AuditLaunchRequest {
+export interface AuditLaunchRequest extends LaunchTargetValue {
 	auditAll?: boolean;
 	auditNames?: string[];
 	projectIds: string[];

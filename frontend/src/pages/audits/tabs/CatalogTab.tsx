@@ -7,7 +7,6 @@ import { SkeletonRows } from '../../../components/shared/LoadingState.tsx';
 import {
 	useAuditDefinition,
 	useAuditManager,
-	useLaunchAudits,
 	useSaveAuditDefinition,
 } from '../../../hooks/useAudits.ts';
 import { useSettingsConfig, useUpdateSettingsConfig } from '../../../hooks/useSettings.ts';
@@ -21,12 +20,12 @@ import { type HealthFilter, healthFor } from '../auditsUtils.ts';
 import { CatalogSidePanel } from './CatalogSidePanel.tsx';
 import { CatalogTable } from './CatalogTable.tsx';
 import { CatalogToolbar } from './CatalogToolbar.tsx';
+import { useCatalogAuditLauncher } from './useCatalogAuditLauncher.ts';
 
 export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const manager = useAuditManager();
 	const settings = useSettingsConfig();
 	const updateSettings = useUpdateSettingsConfig();
-	const launch = useLaunchAudits();
 	const save = useSaveAuditDefinition();
 	const [selectedAudit, setSelectedAudit] = useState<null | string>(null);
 	const [selectedAuditNames, setSelectedAuditNames] = useState<string[]>([]);
@@ -76,6 +75,10 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const selectedRunnableAuditNames = selectedAuditNames.filter((name) =>
 		enabledDefinitionNames.has(name),
 	);
+	const { launch, runAudits } = useCatalogAuditLauncher({
+		projectIds: selectedProjectIds,
+		selectedAuditNames: selectedRunnableAuditNames,
+	});
 	const { allSelected: allVisibleAuditsSelected, someSelected: someVisibleAuditsSelected } =
 		deriveVisibleSelection(visibleEnabledNames, selectedAuditNames);
 
@@ -121,6 +124,10 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 
 	const auditsEnabled = manager.data?.auditsEnabled ?? settings.data?.auditsEnabled ?? true;
 	const selectedProjectCount = selectedProjectIds.length;
+	const selectedProjectPath =
+		selectedProjectCount === 1
+			? manager.data?.projects.find((project) => project.id === selectedProjectIds[0])?.path
+			: undefined;
 	const dirty = definition.data?.content !== undefined && content !== definition.data.content;
 	const runAllDisabledReason = !auditsEnabled
 		? 'Audits are currently disabled. Enable audits to launch runs.'
@@ -170,34 +177,6 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 		);
 	}
 
-	function runAudits(review: boolean, auditAll = false) {
-		if (!auditAll && selectedRunnableAuditNames.length === 0) return;
-		launch.mutate(
-			{
-				auditAll,
-				auditNames: auditAll ? [] : selectedRunnableAuditNames,
-				projectIds: selectedProjectIds,
-				review,
-			},
-			{
-				onError: (error) =>
-					toast.error(error instanceof Error ? error.message : 'Could not launch audits'),
-				onSuccess: (result) => {
-					if (result.runIds.length > 0) {
-						toast.success(
-							`Launched ${result.runIds.length} run${result.runIds.length === 1 ? '' : 's'}`,
-						);
-					}
-					if (result.failures.length > 0) {
-						toast.error('Some audit launches failed', {
-							description: result.failures.slice(0, 2).join(' | '),
-						});
-					}
-				},
-			},
-		);
-	}
-
 	function saveDefinition() {
 		if (!selectedAudit) return;
 		save.mutate(
@@ -239,8 +218,10 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				onToggleAuditsEnabled={toggleAuditsEnabled}
 				query={query}
 				runAllDisabledReason={runAllDisabledReason}
+				runLaunchPending={launch.isPending}
 				runSelectedDisabledReason={runSelectedDisabledReason}
 				selectedAuditCount={selectedRunnableAuditNames.length}
+				selectedProjectPath={selectedProjectPath}
 				settingsReady={Boolean(settings.data)}
 				updatePending={updateSettings.isPending}
 			/>

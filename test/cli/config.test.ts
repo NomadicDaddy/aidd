@@ -32,8 +32,6 @@ const baseArgs: ParsedArgs = {
 	auditNames: [],
 	auditAll: false,
 	auditFindings: false,
-	auditOnCompletionNames: [],
-	codeAfterAudit: false,
 	simulation: false,
 	interviewMode: false,
 	directorMode: false,

@@ -37,8 +37,6 @@ Key options:
   --audit AUDIT[,AUDIT]
   --audit-model MODEL
   --audit-all
-  --audit-on-completion AUDIT[,AUDIT]
-  --code-after-audit
   --triumvirate --secondary-cli CLI --overseer-cli CLI [--exec-cli CLI]
       when --exec-cli is omitted, execution uses the overseer CLI/model.
   --secondary-model MODEL --overseer-model MODEL --exec-model MODEL

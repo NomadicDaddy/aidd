@@ -29,9 +29,7 @@ function scaffoldPlan(
 
 function auditPlan(names: string[], runAll = false): RunPlan['audit'] {
 	const audit: RunPlan['audit'] = {
-		codeAfterAudit: false,
 		names,
-		onCompletion: [],
 		runAll,
 	};
 	if (names[0]) audit.current = names[0];

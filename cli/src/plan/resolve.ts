@@ -14,7 +14,7 @@ import { resolve } from 'node:path';
 
 function selectMode(args: ParsedArgs): AiddMode {
 	if (args.directorMode) return 'director';
-	if (args.auditMode || args.auditOnCompletionNames.length > 0) return 'audit';
+	if (args.auditMode) return 'audit';
 	if (args.interviewMode) return 'interview';
 	if (args.todoMode) return 'todo';
 	if (args.validateMode || args.checkFeatures || args.checkArtifacts) return 'validate';
@@ -138,7 +138,6 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 		variables: {
 			auditName: args.auditNames[0],
 			auditNames: args.auditNames,
-			auditOnCompletionNames: args.auditOnCompletionNames,
 			director: args.directorMode,
 			directorContextPath: args.directorContextPath,
 			directorOutputPath: args.directorOutputPath,
@@ -217,11 +216,9 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 	}
 
 	if (filters[0]) plan.featureFilter = filters[0];
-	if (args.auditMode || args.auditOnCompletionNames.length > 0) {
+	if (args.auditMode) {
 		const audit: RunPlan['audit'] = {
-			codeAfterAudit: args.codeAfterAudit,
 			names: args.auditNames,
-			onCompletion: args.auditOnCompletionNames,
 			runAll: args.auditAll,
 		};
 		if (args.auditNames[0]) audit.current = args.auditNames[0];

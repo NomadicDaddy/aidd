@@ -128,18 +128,17 @@ describe('CLI use-case compatibility — top invocation shapes against aidd', ()
 		});
 	});
 
-	describe('7. audit-on-completion + code-after-audit cycle', () => {
-		test('plan carries the audit→code→re-audit shape', () => {
-			const plan = planFor([
-				'--project-dir',
-				'.',
-				'--audit-on-completion',
-				'SECURITY,HYGIENE',
-				'--code-after-audit',
-			]);
-			expect(plan.mode).toBe('audit');
-			expect(plan.audit?.onCompletion).toEqual(['SECURITY', 'HYGIENE']);
-			expect(plan.audit?.codeAfterAudit).toBe(true);
+	describe('7. removed audit-cycle flags are rejected', () => {
+		// --audit-on-completion / --code-after-audit were parsed but never consumed by any
+		// runtime path (the combo silently resolved to a blank literal AUDIT audit), so they
+		// were removed outright. A loud unknown-option error beats a silent no-op run.
+		test('--audit-on-completion is an unknown option', () => {
+			expect(() => parseArgs(['--audit-on-completion', 'SECURITY,HYGIENE'])).toThrow(
+				/Unknown option/,
+			);
+		});
+		test('--code-after-audit is an unknown option', () => {
+			expect(() => parseArgs(['--code-after-audit'])).toThrow(/Unknown option/);
 		});
 	});
 

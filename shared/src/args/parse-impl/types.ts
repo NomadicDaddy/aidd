@@ -11,11 +11,9 @@ export interface ParsedArgs {
 	auditMode: boolean;
 	auditModel?: string;
 	auditNames: string[];
-	auditOnCompletionNames: string[];
 	checkArtifacts: boolean;
 	checkFeatures: boolean;
 	cli?: BackendName;
-	codeAfterAudit: boolean;
 	codeModel?: string;
 	complexityTiering: boolean;
 	configMatrix: boolean;
@@ -105,10 +103,8 @@ export function createDefaultParsedArgs(): ParsedArgs {
 		auditFindings: false,
 		auditMode: false,
 		auditNames: [],
-		auditOnCompletionNames: [],
 		checkArtifacts: false,
 		checkFeatures: false,
-		codeAfterAudit: false,
 		complexityTiering: false,
 		configMatrix: false,
 		consistencyGate: false,

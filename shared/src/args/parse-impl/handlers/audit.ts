@@ -25,12 +25,6 @@ export function applyAuditFlags(
 			}
 			return i + 1;
 		}
-		case '--audit-on-completion':
-			args.auditOnCompletionNames = ctx.parseList(ctx.requireValue(i, flag));
-			return i + 2;
-		case '--code-after-audit':
-			args.codeAfterAudit = true;
-			return i + 1;
 		case '--complexity-tiering':
 			args.complexityTiering = true;
 			return i + 1;

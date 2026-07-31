@@ -92,10 +92,8 @@ export interface OutputPolicy {
 }
 
 export interface AuditPlan {
-	codeAfterAudit: boolean;
 	current?: string;
 	names: string[];
-	onCompletion: string[];
 	runAll: boolean;
 }
 

@@ -1,0 +1,44 @@
+import type { ParsedArgs } from 'aidd-shared/args/index';
+import type { ResolvedConfig } from 'aidd-shared/config';
+import type { SkillRootPaths } from 'aidd-shared/skills/catalog';
+
+import { compileSkillDirective, readSkillDefinition } from 'aidd-shared/skills/catalog';
+import { dirname } from 'node:path';
+
+import { skillContractDeps, type SkillContractDeps } from './metadata/scaffoldSkillContracts.ts';
+
+// The roots a skill body may name, as they are on this machine. Only the aidd installation is
+// always known; the others come from config and stay undefined when unconfigured, which
+// compileSkillDirective reports rather than papering over.
+function skillRootPaths(config: ResolvedConfig, rootDir: string): SkillRootPaths {
+	// spernakitRoot = parent of the configured init script, the sole spernakit marker.
+	const spernakit = config.web?.spernakitInitScript;
+	return {
+		aidd: rootDir,
+		...(config.applicationsRoot ? { applications: config.applicationsRoot } : {}),
+		...(config.projectDir ? { project: config.projectDir } : {}),
+		...(spernakit ? { spernakit: dirname(spernakit) } : {}),
+	};
+}
+
+/**
+ * Compile the invoked skill into the run's custom prompt and report the contract dependencies to
+ * stage. Returns undefined when the run is not a skill run, or when the skill declares nothing to
+ * stage. Assigns `args.customPrompt` because the skill directive *is* the run's prompt.
+ */
+export async function prepareSkillRun(
+	args: ParsedArgs,
+	config: ResolvedConfig,
+	rootDir: string,
+): Promise<SkillContractDeps | undefined> {
+	if (!args.skillId) return undefined;
+	const skill = await readSkillDefinition(rootDir, args.skillId, config.web?.dataDir);
+	args.customPrompt = compileSkillDirective(
+		skill,
+		args.skillArgs ?? '',
+		skillRootPaths(config, rootDir),
+	);
+	// The invoked skill's declared contract dependencies are staged into the project's `.aidd/` so a
+	// sandboxed agent can read them locally instead of reaching for a path outside the project.
+	return skillContractDeps(skill);
+}

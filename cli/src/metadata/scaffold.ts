@@ -9,7 +9,6 @@ import { copyCommonModules } from './scaffoldCommon.ts';
 import { pathExists } from './scaffoldFs.ts';
 import { copySkillContracts, type SkillContractDeps } from './scaffoldSkillContracts.ts';
 
-export { skillContractDeps } from './scaffoldSkillContracts.ts';
 export type { SkillContractDeps } from './scaffoldSkillContracts.ts';
 
 const rootScaffoldFiles = [

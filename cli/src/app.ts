@@ -14,7 +14,6 @@ import { resolveMilestone, UnknownMilestoneError } from 'aidd-shared/metadata/ro
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { readAiddVersion, resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
 import { resolveRootDir } from 'aidd-shared/runtime';
-import { compileSkillDirective, readSkillDefinition } from 'aidd-shared/skills/catalog';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -24,7 +23,7 @@ import { printHelp } from './help.ts';
 import { initGitAfterScaffold } from './metadata/git.ts';
 import { ensureMetadata } from './metadata/init.ts';
 import { extractAllIterations, extractLatestIteration } from './metadata/log-extract.ts';
-import { scaffoldProjectAssets, skillContractDeps } from './metadata/scaffold.ts';
+import { scaffoldProjectAssets } from './metadata/scaffold.ts';
 import { buildActiveRunCommandArgs } from './orchestrator/active-run-command.ts';
 import { CliActiveRunHeartbeat } from './orchestrator/active-run-heartbeat.ts';
 import { installCrashFinalizer } from './orchestrator/crash-finalizer.ts';
@@ -47,6 +46,7 @@ import {
 	clearStaleStopFile,
 	handleStopSignal,
 } from './preflight.ts';
+import { prepareSkillRun } from './skill-run.ts';
 
 const rootDir = resolveRootDir(import.meta.url, 2);
 
@@ -100,15 +100,7 @@ export async function run(argv: string[]): Promise<number> {
 		if (args.mcpMode) {
 			return await startMcpServer(config, { rootDir });
 		}
-		let skillContracts: ReturnType<typeof skillContractDeps>;
-		if (args.skillId) {
-			const skill = await readSkillDefinition(rootDir, args.skillId, config.web?.dataDir);
-			args.customPrompt = compileSkillDirective(skill, args.skillArgs ?? '');
-			// The invoked skill's declared contract dependencies are staged into the project's
-			// `.aidd/` below so a sandboxed agent can read them locally instead of reaching for a
-			// `<aidd-root>/...` (or `<spernakit-root>/...`) path outside the project directory.
-			skillContracts = skillContractDeps(skill);
-		}
+		const skillContracts = await prepareSkillRun(args, config, rootDir);
 		await assertProjectForRun(args);
 
 		const plan = resolveRunPlan(args, config);

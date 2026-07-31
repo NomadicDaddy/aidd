@@ -270,3 +270,33 @@ describe('invalidFeatureMetadataNote', () => {
 		expect(note).toContain('preserve the existing `id`');
 	});
 });
+
+describe('featureContractIssuesNote', () => {
+	test('names the failing records and does not send the agent to a validation command', async () => {
+		const { featureContractIssuesNote } =
+			await import('../../cli/src/orchestrator/run/carryover-notes.ts');
+		const note = featureContractIssuesNote([
+			{ id: 'feature-a', message: "dependency 'ghost' does not exist" },
+		]);
+		expect(note).toContain('(1 issue(s))');
+		expect(note).toContain('`feature-a`');
+		expect(note).toContain("dependency 'ghost' does not exist");
+		// The skills no longer shell out to `--check-features`; the note must not reintroduce it.
+		expect(note).not.toContain('--check-features');
+	});
+
+	// A long-standing pre-existing failure must not crowd the assignment out of the prompt.
+	test('caps the listed issues and says how many it elided', async () => {
+		const { featureContractIssuesNote } =
+			await import('../../cli/src/orchestrator/run/carryover-notes.ts');
+		const issues = Array.from({ length: 11 }, (_, index) => ({
+			id: `feature-${index}`,
+			message: 'broken',
+		}));
+		const note = featureContractIssuesNote(issues);
+		expect(note).toContain('(11 issue(s))');
+		expect(note).toContain('`feature-7`');
+		expect(note).not.toContain('`feature-8`');
+		expect(note).toContain('…and 3 more');
+	});
+});

@@ -36,7 +36,7 @@ import {
 import { InvalidRoadmapError } from './store/errors.ts';
 import { collectFeatureReadFailures, type FeatureReadFailure } from './store/read-failures.ts';
 import { appendRunSummary, writeIteration } from './store/runHistory.ts';
-import { serializeFeatureForWrite } from './store/serialize.ts';
+import { serializeFeatureFile } from './store/serialize.ts';
 import { applyCreationStatusPolicy } from './store/status-policy.ts';
 import { evaluateFeatureValidation } from './store/validation.ts';
 
@@ -54,6 +54,9 @@ export interface AiddStore {
 	listAuditReports(): Promise<string[]>;
 	listFeatureReadFailures(): Promise<FeatureReadFailure[]>;
 	listFeatures(query?: FeatureQuery): Promise<Feature[]>;
+	/** The project this store is rooted at — needed by callers whose behavior depends on which
+	 * repository the metadata belongs to (see metadata/reconcile.ts), not just on its contents. */
+	readonly projectDir: string;
 	readAuditReport(filename: string): Promise<string>;
 	readFeature(id: string): Promise<Feature>;
 	readRoadmap(): Promise<Roadmap>;
@@ -122,9 +125,11 @@ export class FileAiddStore implements AiddStore {
 		// `directory ?? id` as the on-disk name everywhere else; keying this off `id` alone would
 		// fork a second directory for every derived feature whose id and directory disagree.
 		const id = feature.directory ?? feature.id;
-		const persistedFeature = serializeFeatureForWrite(feature);
+		const filePath = this.featurePath(id);
+		// Read before write so the record keeps the formatting it already had — see serializeFeatureFile.
+		const existing = await readFile(filePath, 'utf8').catch(() => '');
 		await mkdir(join(this.metadataDir, 'features', id), { recursive: true });
-		await writeFile(this.featurePath(id), `${JSON.stringify(persistedFeature, null, 2)}\n`);
+		await writeFile(filePath, serializeFeatureFile(feature, existing));
 	}
 
 	async writeFeature(feature: Feature): Promise<void> {

@@ -15,6 +15,7 @@ import {
 	gitUntrackedFeatureDirectories,
 	gitWorktreeClean,
 } from './git.ts';
+import { reconcileRunMetadata } from './metadata-reconcile.ts';
 import { type OrchestratorDeps, type RunAccumulator, runRuntimeFields } from './types.ts';
 
 // Iteration-level artifact writers live in ./iteration-artifacts.ts; this module owns the
@@ -31,6 +32,10 @@ export async function writeRunSummary(
 	finalSummary: string,
 ): Promise<number> {
 	const endedAtMs = Date.now();
+	// Metadata reconciliation goes first so everything below — dirty-source accounting, the AI
+	// summary, the worktree merge — observes the reconciled `.aidd`, and so a worktree run's
+	// propagated records ride back to the canonical store with the rest of its evidence.
+	const reconcileNote = await reconcileRunMetadata(deps, acc, plan);
 	// Run-end dirty-source accounting first excludes paths dirty at run start, then attributes
 	// new residue only when the run recorded the path in a file-change event or shell command.
 	// Concurrent operator edits remain observable without being claimed by or downgrading the run.
@@ -50,6 +55,7 @@ export async function writeRunSummary(
 		unattributedDirtySourceFiles = classification.unattributed;
 	}
 	const runEndSummaryParts = [finalSummary];
+	if (reconcileNote !== null) runEndSummaryParts.push(reconcileNote);
 	if (residualDirtySourceFiles.length > 0) {
 		runEndSummaryParts.push(
 			`${uncommittedSourceMarker} this run left ${residualDirtySourceFiles.length} source file(s) uncommitted at run end`,

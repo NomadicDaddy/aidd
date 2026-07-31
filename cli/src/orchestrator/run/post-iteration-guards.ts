@@ -8,7 +8,11 @@ import type { FinalizeIterationResult, MoveFn, OrchestratorDeps, RunAccumulator 
 
 import { writeRunSummary } from './artifacts.ts';
 import { buildFeatureBlockingContext } from './blocking-context.ts';
-import { invalidFeatureMetadataNote, scopeOverrunNote } from './carryover-notes.ts';
+import {
+	featureContractIssuesNote,
+	invalidFeatureMetadataNote,
+	scopeOverrunNote,
+} from './carryover-notes.ts';
 import { attemptCompletionMarkerRecovery } from './completion-recovery.ts';
 import { buildWallClockTimeoutSummary } from './run-ending.ts';
 
@@ -16,6 +20,26 @@ import { buildWallClockTimeoutSummary } from './run-ending.ts';
 // exhaustion, invalid feature metadata, scope overrun, and an unaccepted completion marker. The
 // ones that end the run write their own run summary; the ones that only end the iteration raise a
 // corrective note for the next prompt. Returning `undefined` means the run continues.
+async function pushFeatureContractIssues(
+	acc: RunAccumulator,
+	deps: OrchestratorDeps,
+): Promise<void> {
+	// Fail-soft: an unreadable collection is already reported by the invalid-metadata guard, and a
+	// validator that throws must not be what ends an otherwise good iteration. `try` rather than
+	// `.catch()` — a store stub without the method throws synchronously, before there is a promise.
+	let result;
+	try {
+		result = await deps.store.validateFeatures({ includeAudit: true });
+	} catch {
+		return;
+	}
+	if (result.valid || result.issues.length === 0) return;
+	for (const issue of result.issues) {
+		console.error(`[check-features] ${issue.id}: ${issue.message}`);
+	}
+	acc.pendingCarryoverNotes.push(featureContractIssuesNote(result.issues));
+}
+
 export async function endRunIfIterationGuardTripped(input: {
 	acc: RunAccumulator;
 	deps: OrchestratorDeps;
@@ -60,6 +84,12 @@ export async function endRunIfIterationGuardTripped(input: {
 			invalidFeatureMetadataNote(finalize.featureScope.invalidFeatureMetadata),
 		);
 	}
+
+	// The contract check the skills used to run as `--check-features`, moved to where the agent can
+	// still act on it. Run-end reconciliation reports the same issues, but only to the operator and
+	// only once the agent has gone; catching it here is what makes the loop closeable. Advisory by
+	// design — like the metadata guard above, the agent is the one who can fix it.
+	await pushFeatureContractIssues(acc, deps);
 
 	if (finalize.featureScope.scopeOverrun) {
 		acc.scopeOverrunIterations += 1;

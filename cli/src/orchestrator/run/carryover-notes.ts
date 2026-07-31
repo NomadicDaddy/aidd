@@ -15,7 +15,7 @@ export function flailingNudgeNote(): string {
 		'instance is already running — reuse it. A failed `curl`/`ps` probe is not proof nothing is ' +
 		'listening.\n' +
 		'- If you cannot verify the UI via `agent-browser`/`curl` after one more honest attempt, run the ' +
-		'headless gates (`bun run smoke:qc`, typecheck, lint, `--check-features`), document the manual ' +
+		'headless gates (`bun run smoke:qc`, typecheck, lint), document the manual ' +
 		'verification steps in `/.aidd/CHANGELOG.md`, mark the feature `waiting_approval` (`passes: false`), ' +
 		'and say plainly that the live verification was blocked. Do **not** emit `AIDD_RESULT` for parked ' +
 		'work — the marker means "completed and verified", and aidd records the park from the feature ' +
@@ -77,12 +77,41 @@ export function invalidFeatureMetadataNote(
 		'from selection, from the queue, and from every count:\n\n' +
 		`${lines.join('\n')}\n\n` +
 		'- Fix the JSON, then confirm each file with `bun -e "JSON.parse(await Bun.file(PATH).text())"` ' +
-		"(or the project's `--check-features`) before moving on.\n" +
+		'before moving on.\n' +
 		'- The usual cause is a text edit that put a raw newline, tab, or unescaped backslash inside ' +
 		'a JSON string value. When you amend `spec` or `notes`, write `\\n` (two characters), never a ' +
 		'literal line break, and re-parse the file immediately after every edit.\n' +
 		'- Do not recreate a record from scratch to make it parse: preserve the existing `id`, ' +
 		'`status`, `passes`, and history, and repair only the malformed text.'
+	);
+}
+
+// Raised when the feature collection fails its contract validation at the end of an iteration.
+// aidd validates every record itself at run end, but a run-end report the agent never sees only
+// tells the operator afterwards; the skills used to run `--check-features` mid-run precisely so the
+// agent could repair what it broke. This is that loop, restored on aidd's side: the same check, run
+// where the one party who can fix it is still working. Capped, because a long-standing pre-existing
+// issue must not crowd out the assignment.
+const MAX_LISTED_CONTRACT_ISSUES = 8;
+
+export function featureContractIssuesNote(
+	issues: readonly { id: string; message: string }[],
+): string {
+	const listed = issues.slice(0, MAX_LISTED_CONTRACT_ISSUES);
+	const lines = listed.map((issue) => `  - \`${issue.id}\` — ${issue.message}`);
+	const elided = issues.length - listed.length;
+	return (
+		`**The feature metadata does not satisfy its contract (${issues.length} issue(s)).** aidd ` +
+		'validated every record after your last iteration and these failed:\n\n' +
+		`${lines.join('\n')}${elided > 0 ? `\n  - …and ${elided} more` : ''}\n\n` +
+		'- Repair these records as part of this iteration. A broken contract is real damage: ' +
+		'dependency edges that point nowhere, duplicate ids, and out-of-vocabulary statuses all ' +
+		'corrupt selection for every later run.\n' +
+		'- If an issue predates your work and repairing it is genuinely outside your assignment, ' +
+		'say so in your summary rather than silently leaving it. Do not edit an unrelated ' +
+		"feature's `status` or `passes` to make a message go away.\n" +
+		'- You do not need to run a validation command: aidd re-checks the whole collection after ' +
+		'every iteration and this note will not come back once the records are clean.'
 	);
 }
 

@@ -2,6 +2,8 @@ import { z } from 'zod/v4';
 
 import type { Feature } from './features.ts';
 
+import { printJson } from './json-format.ts';
+
 export const roadmapMilestoneSchema = z
 	.object({
 		description: z.string().optional(),
@@ -27,52 +29,10 @@ export const roadmapSchema = z
 export type Roadmap = z.infer<typeof roadmapSchema>;
 export type RoadmapMilestone = z.infer<typeof roadmapMilestoneSchema>;
 
-// roadmap.json is committed in the project's prettier-canonical form (useTabs, tabWidth 4,
-// printWidth 100, jsonRecursiveSort). A plain JSON.stringify(_, null, 2) diverges from that
-// on every line (2-space indent, unsorted keys, always-multiline arrays), so each routine
-// single-feature write rewrote the entire file and fought the formatter. serializeRoadmap
-// reproduces prettier's JSON printer instead: objects always break one sorted key per line,
-// and arrays stay inline until they would exceed printWidth at their indentation. That keeps
-// routine writes to a single-feature diff and leaves `prettier --write` with nothing to change.
-const ROADMAP_PRINT_WIDTH = 100;
-const ROADMAP_TAB_WIDTH = 4;
-
+// roadmap.json is committed in the project's prettier-canonical form, so it is printed rather than
+// JSON.stringify'd — see metadata/json-format.ts for why that distinction matters.
 export function serializeRoadmap(roadmap: Roadmap): string {
-	return `${printRoadmapValue(roadmap, 0, 0)}\n`;
-}
-
-function printRoadmapValue(value: unknown, depth: number, column: number): string {
-	if (Array.isArray(value)) return printRoadmapArray(value, depth, column);
-	if (value !== null && typeof value === 'object') {
-		return printRoadmapObject(value as Record<string, unknown>, depth);
-	}
-	return JSON.stringify(value);
-}
-
-function printRoadmapObject(object: Record<string, unknown>, depth: number): string {
-	const keys = Object.keys(object).sort();
-	if (keys.length === 0) return '{}';
-	const childIndent = '\t'.repeat(depth + 1);
-	const childColumns = (depth + 1) * ROADMAP_TAB_WIDTH;
-	const lines = keys.map((key) => {
-		const keyText = JSON.stringify(key);
-		const valueColumn = childColumns + keyText.length + 2;
-		return `${childIndent}${keyText}: ${printRoadmapValue(object[key], depth + 1, valueColumn)}`;
-	});
-	return `{\n${lines.join(',\n')}\n${'\t'.repeat(depth)}}`;
-}
-
-function printRoadmapArray(array: unknown[], depth: number, column: number): string {
-	if (array.length === 0) return '[]';
-	const elements = array.map((item) => printRoadmapValue(item, depth + 1, 0));
-	const inline = `[${elements.join(', ')}]`;
-	if (!inline.includes('\n') && column + inline.length <= ROADMAP_PRINT_WIDTH) return inline;
-	const childIndent = '\t'.repeat(depth + 1);
-	const lines = array.map(
-		(item) =>
-			`${childIndent}${printRoadmapValue(item, depth + 1, (depth + 1) * ROADMAP_TAB_WIDTH)}`,
-	);
-	return `[\n${lines.join(',\n')}\n${'\t'.repeat(depth)}]`;
+	return printJson(roadmap);
 }
 
 export type RoadmapCodingGateBlockReason = 'invalid_milestone_mapping' | 'unmapped_features';

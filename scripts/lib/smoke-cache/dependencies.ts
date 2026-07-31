@@ -28,14 +28,21 @@ export const RUN_HISTORY_COPY_TEST_INPUTS = [
 
 export const TEST_RUNTIME_INPUTS = [CI_WORKFLOW_TEST_INPUT, ...RUN_HISTORY_COPY_TEST_INPUTS];
 
+// `shared/` is a build input, not just a typecheck input: the frontend imports aidd-shared directly
+// (the console parsers under shared/src/backends/parsers are compiled into the bundle). Omitting it
+// let an edit to a shared parser leave build:frontend cached, so smoke:qc passed while frontend/dist
+// still served the pre-edit rendering — a green gate over a stale artifact.
 const FRONTEND_BUILD_INPUTS = [
+	'bun.lock',
 	'frontend/index.html',
 	'frontend/package.json',
 	'frontend/src/**/*',
 	'frontend/tsconfig.json',
 	'frontend/vite.config.ts',
 	'package.json',
-	'bun.lock',
+	'shared/package.json',
+	'shared/src/**/*.ts',
+	'shared/tsconfig.json',
 ];
 
 export const STEP_DEPENDENCIES: Record<string, string[]> = {

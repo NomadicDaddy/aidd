@@ -9,6 +9,8 @@ import {
 } from 'aidd-shared';
 import { t } from 'elysia';
 
+import { commitMessageMaxLength } from '../services/git/workingTreeCommit.ts';
+import { maxSelectedPaths } from '../services/git/workingTreeSelection.ts';
 import { projectNotesMaxLength } from '../services/project/notes.ts';
 import { backendNameBody } from './schemas/backend.ts';
 
@@ -27,6 +29,22 @@ export const projectCodeFileQuery = t.Object({
 export const projectNotesBody = t.Object({
 	content: t.String({ maxLength: projectNotesMaxLength }),
 });
+
+// Working-tree paths are repository-relative and are additionally matched against the live
+// `git status` listing before any command runs (see git/workingTreeSelection.ts), so the schema
+// only has to bound size here.
+const workingTreePaths = t.Array(t.String({ maxLength: 1000, minLength: 1 }), {
+	maxItems: maxSelectedPaths,
+	minItems: 1,
+});
+const commitMessageField = t.String({ maxLength: commitMessageMaxLength, minLength: 1 });
+
+export const workingTreePathsBody = t.Object({ paths: workingTreePaths });
+export const workingTreeCommitBody = t.Object({
+	message: commitMessageField,
+	paths: workingTreePaths,
+});
+export const workingTreeCommitStagedBody = t.Object({ message: commitMessageField });
 
 const literal = (value: string) => t.Literal(value);
 type LiteralSchema = ReturnType<typeof literal>;

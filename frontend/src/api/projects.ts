@@ -43,6 +43,15 @@ export {
 	getProjectRepositoryInfo,
 	getProjectRepositoryRefs,
 } from './projects/repository.ts';
+export {
+	commitProjectPaths,
+	commitProjectStaged,
+	discardProjectPaths,
+	getProjectWorkingTree,
+	resetProjectIndex,
+	stageProjectPaths,
+	unstageProjectPaths,
+} from './projects/workingTree.ts';
 
 export async function getProject(id: string, signal?: AbortSignal): Promise<ProjectDetail> {
 	const response = await apiGet<{ project: ProjectDetail }>(projectApiPath(id), {

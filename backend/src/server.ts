@@ -26,6 +26,7 @@ import { createProjectMaturityRoutes } from './routes/projectMaturity.ts';
 import { createProjectMilestoneRoutes } from './routes/projectMilestones.ts';
 import { createProjectNotesRoutes } from './routes/projectNotes.ts';
 import { createProjectsRoutes } from './routes/projects.ts';
+import { createProjectWorkingTreeRoutes } from './routes/projectWorkingTree.ts';
 import { createRecipesRoutes } from './routes/recipes.ts';
 import { createRunsRoutes } from './routes/runs.ts';
 import { createSettingsRoutes } from './routes/settings.ts';
@@ -160,6 +161,7 @@ export function createWebServer(context: WebContext) {
 			.use(createProjectsRoutes(context))
 			.use(createProjectCodeRoutes(context))
 			.use(createProjectNotesRoutes(context))
+			.use(createProjectWorkingTreeRoutes(context))
 			.use(createProjectFeatureRoutes(context))
 			.use(createProjectInitFailureRoutes(context))
 			.use(createProjectMaturityRoutes(context))

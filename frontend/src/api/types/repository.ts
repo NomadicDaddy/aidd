@@ -84,3 +84,41 @@ export interface RepositoryRefsResponse {
 	refs: null | RepositoryRefs;
 	state: RepositoryInfoState;
 }
+
+// Hand-mirrored from backend/src/services/git/workingTree.ts and workingTreeActions.ts.
+
+export type WorkingTreeState = RepositoryInfoState;
+
+export interface WorkingTreeFile {
+	/** True when the entry is an unresolved merge conflict; it can be staged but not discarded. */
+	conflicted: boolean;
+	/** Index-side porcelain letter (`M`, `A`, `D`, `R`, …), or `' '` when the index matches HEAD. */
+	indexStatus: string;
+	/** Pre-rename path for a rename/copy entry, else null. */
+	origPath: null | string;
+	/** Repository-relative path, forward-slashed, exactly as git reported it. */
+	path: string;
+	/** True when the index differs from HEAD for this path. */
+	staged: boolean;
+	/** True when the working tree differs from the index for this path. */
+	unstaged: boolean;
+	/** True when git does not track this path at all. */
+	untracked: boolean;
+	/** Worktree-side porcelain letter, or `' '` when the working tree matches the index. */
+	worktreeStatus: string;
+}
+
+export interface WorkingTreeResponse {
+	files: WorkingTreeFile[];
+	reason: null | string;
+	state: WorkingTreeState;
+	/** True when the listing was capped at the server's file budget. */
+	truncated: boolean;
+}
+
+export interface WorkingTreeActionResponse {
+	/** The listing after the action, so the client refreshes in the same round trip. */
+	after: WorkingTreeResponse;
+	ok: boolean;
+	reason: null | string;
+}

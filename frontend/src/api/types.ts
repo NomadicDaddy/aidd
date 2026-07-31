@@ -154,6 +154,10 @@ export type {
 	RepositoryRefsResponse,
 	RepositoryStash,
 	RepositoryWorktree,
+	WorkingTreeActionResponse,
+	WorkingTreeFile,
+	WorkingTreeResponse,
+	WorkingTreeState,
 } from './types/repository.ts';
 export type {
 	DirectiveRunLaunchRequest,

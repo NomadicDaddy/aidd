@@ -63,7 +63,7 @@ feature-review-all --fix-mode aggressive
 
 7. After any deeper backlog edits, re-run the helper in `--report-only` mode so the aggregate and per-app reports reflect the final state.
 
-8. Run `bun run start -- --project-dir <app> --check-features` from `<aidd-root>` for each targeted app where feature metadata changed, and include pass/fail in the report output.
+8. Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace. This skill sweeps several apps, so name every app whose metadata you changed in the report output; aidd only validates the one this run targets.
 
 ## Current Expectations
 

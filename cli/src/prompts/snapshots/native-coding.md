@@ -275,7 +275,7 @@ You are running in **Native**, a custom coding agent powered by z.ai (GLM models
 - Pattern-based file search (glob)
 - Content search with regex (grep)
 - Directory listing (list_directory)
-- Bash command execution (full shell access)
+- Bash command execution, confined to the project workspace (see Workspace boundary)
 
 **NOT Available:**
 
@@ -286,6 +286,31 @@ You are running in **Native**, a custom coding agent powered by z.ai (GLM models
 - Todo list management
 
 Because browser automation is not available, verify work via `curl` plus the headless gates (typecheck, lint, tests, the project's QC script). For features that require live UI verification, mark the feature `waiting_approval` with the manual verification steps documented.
+
+### Workspace boundary
+
+Unlike the CLI-based backends, Native runs your `bash` tool through aidd's own policy check. Every
+command is screened before it executes, and the project working directory is a hard edge:
+
+- **Paths outside the project directory are denied** — including the aidd installation itself. You
+  cannot read, list, or `cd` into it, so a skill step that runs the aidd CLI from its install
+  directory cannot be run on this backend. Do the work another way inside the project if there is
+  an equivalent, and report the step as unavailable either way.
+- **`cd` destinations must be literal.** A target containing `$VAR`, `${VAR}`, `$(...)`, or a
+  backtick is denied outright, because its real value is only known after the shell expands it.
+- Home-directory references (`~`, `$HOME`, `%USERPROFILE%`, `$HOMEDRIVE`/`$HOMEPATH`) and `printenv`
+  reads of them are denied.
+- `eval`, `bash -c`, `sh -c`, `exec`, and `source` are denied, as are encoded payloads piped into
+  them.
+- Destructive git commands that discard uncommitted work without naming a path (`git reset --hard`,
+  `git checkout .`, `git restore .`, `git clean -f`) are denied.
+- Writes — redirects, `cp`/`mv`/`install`/`ln`/`dd`, `tee` — must target a path inside the project.
+
+These are fixed policy, not environment quirks. A denial will not succeed on retry in a different
+spelling, through a derived or indirect path, or via a different tool. Do not spend turns probing
+the boundary: one denial is the answer. If a task cannot be completed inside the workspace, say so
+plainly in your completion summary and stop — reporting the blocker is the correct outcome, and it
+is far more useful than a run spent searching for a way through.
 
 ### Best Practices
 
@@ -862,8 +887,9 @@ verification immediately**:
 - Do **NOT** bootstrap a server (`bun run start:web` / `start` / `dev`), and do **NOT** keep probing
   ports or hunting for processes. Repeating the same diagnostic is flailing; it wastes the run and
   the orchestrator will abort it.
-- Run the automated gates you _can_ run headlessly (`bun run smoke:qc`, typecheck, lint, build,
-  `--check-features`) and confirm they pass.
+- Run the automated gates you _can_ run headlessly (`bun run smoke:qc`, typecheck, lint, build) and
+  confirm they pass. Feature-contract validation is not yours to run: aidd validates every feature
+  record itself when the run ends and reports what it found.
 - Document in `/.aidd/CHANGELOG.md` exactly what a human should verify in the browser, then mark the
   feature `"status": "waiting_approval"` with `"passes": false` (not `"completed"`), and say plainly
   in your final response that the live verification was blocked. Do **not** emit `AIDD_RESULT`: the

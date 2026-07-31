@@ -299,7 +299,7 @@ Every feature.json create, delete, or rename in Phase 6 must be mirrored in `.ai
 3. **CONSOLIDATE**: delete the merged-away finding entries; assign the surviving/new consolidated feature.
 4. **ESCALATE**: assign the newly created `spernakit-{YYYYMMDD}-{slug}` feature in Spernakit's roadmap.json.
 5. **New assignments** use `roadmap.features["{feature-id}"] = { "milestone": "{target}" }` (merge; preserve existing `dependencies`). The target is the current milestone: the existing milestone with the highest numeric `priority`. Do not create a new milestone. The owner may re-target afterward. DOWNGRADE keeps its existing milestone; only re-assert an entry exists (idempotent; no churn if already mapped).
-6. Run `bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app}` from `<aidd-root>` (and again with `--project-dir <spernakit-root>` if any ESCALATE features were created). Report the command's updated / unchanged / errors summary.
+6. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. ESCALATE features written into Spernakit's roadmap are a separate project by definition — name them in the report as needing their own pass.
 
 ### Phase 7: Verification
 

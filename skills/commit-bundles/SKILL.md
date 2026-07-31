@@ -29,10 +29,10 @@ commit-bundles <app-name-or-path> --dry-run
 4. For each bundle, confirm documentation and aidd metadata are accurate:
     - update affected `.aidd/features/*/feature.json` when behavior changed;
     - update `.aidd/CHANGELOG.md` only when the app's workflow expects it;
-    - run `bun run aidd-tools -- roadmap:apply --project-dir <app-dir>` from `<aidd-root>` if roadmap assignments changed.
+    - leave roadmap propagation to aidd: it applies the roadmap when the run ends and reports the `updated / unchanged / errors` summary. Do not shell into the aidd installation for it.
 5. Validate before committing:
     - `bun run format` in the target when available;
-    - `bun run start -- --project-dir <app-dir> --check-features` from `<aidd-root>` when feature metadata changed;
+    - leave feature-contract validation to aidd: it re-validates every record when the run ends and reports what it found;
     - targeted tests for code changes;
     - `bun run smoke:qc` before claiming the app is working.
 6. Commit each evidence-backed bundle with a concise imperative message. After every commit, re-run `git status --short` and continue until only unrelated user-owned changes remain.

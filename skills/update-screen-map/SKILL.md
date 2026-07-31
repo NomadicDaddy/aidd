@@ -253,15 +253,9 @@ Rules for generating a valid feature.json:
 - **`status`**: use `completed` since the screen already exists in code. (The blueprint is being back-written to match reality, not forward-planning new work.)
 - **`category`**: choose from the vocabulary used by existing features in the same app (grep `"category":` to sample).
 
-Create each `feature.json`, then run the feature validator:
+Create each `feature.json`, then read it back and confirm it is valid JSON with the required fields. Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace.
 
-```bash
-cd <aidd-root> && bun run start -- --project-dir {appname} --check-features
-```
-
-Use the current runtime at `<aidd-root>`.
-
-Report the output. If any blueprint comes back invalid, **fix it before declaring the skill complete**; common failures are:
+If any blueprint is invalid, **fix it before declaring the skill complete**; common failures are:
 
 - Missing `"dependencies": []` field entirely
 - Dependency slugs that match a directory name but not the referenced feature's `id` field; re-grep the target's `"id":` line to get the real slug

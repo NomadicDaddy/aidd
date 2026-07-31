@@ -131,7 +131,7 @@ A promotion renames the feature's directory, so its `.aidd/roadmap.json` key is 
 1. Read `<applications-root>/{app}/.aidd/roadmap.json`. If it does not exist, **create it first**: a single `v1.0` milestone (priority 1) mapping every existing feature directory, preserving dependencies (keyed by directory). The promoted directory already carries its new id after Phase 5, so it maps directly. Roadmap and milestones apply to every project, so a missing file is created, never skipped — then apply the key move below.
 2. If `roadmap.features["{old-id}"]` exists, move it to `roadmap.features["{new-id}"]` **verbatim** (preserve its `milestone` and any `dependencies`), then delete the old key. If no old entry exists, assign the new id to the current milestone: the existing milestone with the highest numeric `priority`. Do not create a new milestone during promotion.
 3. Also update any `roadmap.features[*].dependencies` arrays that referenced `{old-id}` to `{new-id}` (mirror of the Phase 5 feature.json cross-reference update).
-4. Run `bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app}` from `<aidd-root>` once per affected app (in sweep mode, once per app touched). Report the updated / unchanged / errors summary in Phase 7.
+4. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. In sweep mode, name every app touched in the Phase 7 report.
 
 ### Phase 6: Verification
 
@@ -182,7 +182,7 @@ Failed: F (with reasons)
 - **Don't auto-resolve PARTIAL remediations.** If the remediation's notes say half the scope already landed, the agent should warn but not narrow the scope automatically. The user knows what to keep and what to split.
 - **Don't delete the original directory** before the rename succeeds. Use atomic rename, not copy + delete.
 - **Don't promote without a reason.** If `--reason` is omitted, use the default ("promoted because affected area does not exist") but log a warning that a more specific reason is preferred for traceability.
-- **Don't run `bun run smoke:qc` or any build/test gate.** Promotions don't change code; they only relocate metadata. Quality gates are wasted effort here. (`bun run aidd-tools -- roadmap:apply` in Phase 5b is metadata propagation, not a build/test gate - it is required, not optional.)
+- **Don't run `bun run smoke:qc` or any build/test gate.** Promotions don't change code; they only relocate metadata. Quality gates are wasted effort here. (Roadmap propagation still has to happen, but aidd does it at run end — it is not a gate you run.)
 - **Don't open or modify any files outside `.aidd/`.** This is purely a metadata operation. The only files in play are `.aidd/features/**/feature.json` and `.aidd/roadmap.json` (the Phase 5b roadmap key move); nothing else.
 
 ## Examples

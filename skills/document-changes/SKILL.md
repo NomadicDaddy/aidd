@@ -157,7 +157,7 @@ common optional `priority`, `spec`, `affectedFiles`, `summary`, `notes`, `create
     - **Add the feature to `.aidd/roadmap.json` in the same edit** (create the roadmap — a single
       `v1.0` milestone at priority 1 mapping every feature — if it is somehow absent; roadmap and
       milestones apply to every project). The validator rejects a feature with no milestone, so a new
-      record that only exists under `.aidd/features/` fails `--check-features`. Give it the milestone
+      record that only exists under `.aidd/features/` fails aidd's feature-contract check. Give it the milestone
       its nearest sibling uses (the feature it depends on, or the one it extends) rather than
       inventing one.
     - `title` / `description`: clear human prose describing the behavior delivered.
@@ -182,8 +182,8 @@ common optional `priority`, `spec`, `affectedFiles`, `summary`, `notes`, `create
 
     Any feature reaching `status: "completed"` / `passes: true` in this run, whether newly
     created (step 12), modified here, or flipped from `backlog` / `in_progress` to completed, must
-    carry a non-empty `affectedFiles` derived from the diff. `--check-features` emits a (non-blocking)
-    warning for completed features missing it.
+    carry a non-empty `affectedFiles` derived from the diff. aidd's feature-contract check emits a
+    (non-blocking) warning for completed features missing it.
 
 14. **Revision detail + version stamp** (both create and update): append a structured entry to
     the feature's `notes` array (create the array if absent), and stamp the shipped version:
@@ -280,9 +280,9 @@ user rather than praising the change.
 
 18. Normalize and validate (best effort, non-fatal; report failures, do not auto-"fix" code):
     - If a formatter exists, run it on touched files (e.g. `bun run format`, `ruff format`, `cargo fmt`).
-    - If the feature validator is available, run it from `<aidd-root>` against the target
-      (`bun run start -- --project-dir <target> --check-features`) and confirm it reports all feature
-      files valid.
+    - Do not shell into the aidd installation to validate feature files. aidd re-validates every
+      record when the run ends and reports any contract issues with the run; read back what you
+      wrote instead, and report a record you could not make valid.
     - Verify version consistency: read the version back out of each place it was written — the
       manifest, `VERSION` if present — and confirm the new changelog section uses the same version.
       For a project with no manifest, confirm the changelog header alone.

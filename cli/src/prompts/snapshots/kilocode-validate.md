@@ -722,21 +722,13 @@ git commit -m "chore(validation): validate features and todos [aidd-validate]" \
 
 **CRITICAL: Verify all feature.json files are structurally valid after modifications.**
 
-After the commit decision, run the aidd integrity checks to ensure no feature.json files were corrupted or left in an invalid state during validation:
+After the commit decision, confirm no feature.json file was corrupted or left in an invalid state during validation. Do **not** shell out to the aidd CLI for this — it lives outside this project and is not reachable from the workspace. aidd re-validates every feature record itself when the run ends and reports what it found, so your job here is to make sure nothing you wrote is broken before that check runs:
 
-```bash
-# Validate all feature.json files pass structural checks (valid JSON, required fields, valid IDs, etc.)
-aidd --check-features --project-dir .
-```
+1. Read back every feature.json you edited in this session and confirm it is valid JSON with the required fields, a well-formed id, and sane timestamps
+2. Fix each invalid file (common issues: malformed JSON, missing required fields, invalid ID format, bad timestamps)
+3. Amend or create a new commit for tracked fixes; leave ignored aidd metadata local
 
-**If `--check-features` reports invalid files:**
-
-1. Read the error output to identify which files are invalid and why
-2. Fix each invalid feature.json (common issues: malformed JSON, missing required fields, invalid ID format, bad timestamps)
-3. Re-run `--check-features` until all files pass
-4. Amend or create a new commit for tracked fixes; leave ignored aidd metadata local
-
-**The feature contract check must exit cleanly before proceeding to Step 7.**
+**Every record you touched must read back cleanly before proceeding to Step 7.**
 
 ---
 

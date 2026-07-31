@@ -809,8 +809,9 @@ verification immediately**:
 - Do **NOT** bootstrap a server (`bun run start:web` / `start` / `dev`), and do **NOT** keep probing
   ports or hunting for processes. Repeating the same diagnostic is flailing; it wastes the run and
   the orchestrator will abort it.
-- Run the automated gates you _can_ run headlessly (`bun run smoke:qc`, typecheck, lint, build,
-  `--check-features`) and confirm they pass.
+- Run the automated gates you _can_ run headlessly (`bun run smoke:qc`, typecheck, lint, build) and
+  confirm they pass. Feature-contract validation is not yours to run: aidd validates every feature
+  record itself when the run ends and reports what it found.
 - Document in `/.aidd/CHANGELOG.md` exactly what a human should verify in the browser, then mark the
   feature `"status": "waiting_approval"` with `"passes": false` (not `"completed"`), and say plainly
   in your final response that the live verification was blocked. Do **not** emit `AIDD_RESULT`: the

@@ -30,20 +30,10 @@ update-roadmap <app-name-or-path> --dry-run
 4. Treat the current milestone as the milestone with the highest numeric `priority` in `roadmap.milestones`. Assign newly discovered or unmapped features there.
 5. Preserve explicit feature dependencies, but normalize them to existing feature IDs. Flag missing dependencies instead of inventing placeholders.
 6. Keep completed historical features mapped to their existing milestone unless the current roadmap is demonstrably wrong.
-7. After writing `roadmap.json`, run from `<aidd-root>`:
+7. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
-    ```bash
-    bun run aidd-tools -- roadmap:apply --project-dir <app-dir>
-    ```
-
-    Use `--dry-run` first when the roadmap diff is large.
-
-8. If feature metadata changed, validate from `<aidd-root>`:
-
-    ```bash
-    bun run start -- --project-dir <app-dir> --check-features
-    ```
+8. Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace.
 
 ## Output
 
-Report milestone counts, newly mapped features, dependency warnings, the `roadmap:apply` updated/unchanged/error summary, and feature validation status.
+Report milestone counts, newly mapped features, and dependency warnings. aidd reports the roadmap-apply and feature-contract results itself with the run.

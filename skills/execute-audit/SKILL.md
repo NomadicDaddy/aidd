@@ -41,11 +41,7 @@ execute-audit <app-name-or-path> --audit-all
 5. After the run, inspect the summary and generated paths. Expected outputs are:
     - `.aidd/audit-reports/<AUDIT_NAME>-<timestamp>.md`;
     - zero or more `.aidd/features/audit-*` feature directories.
-6. If new feature files were created, run:
-
-    ```bash
-    bun run start -- --project-dir <app-dir> --check-features
-    ```
+6. If new feature files were created, read them back and confirm each is valid JSON with the required fields. Do not shell into the aidd installation to validate: aidd re-validates every record when the run ends and reports any contract issues with the run.
 
 7. When a prior report of the same audit type exists, compare it against the new report before summarizing. Look under `.aidd/audit-reports/` first; also check the legacy location read-only as a fallback: `docs/audits/<AUDIT_NAME>_AUDIT_REPORT_*.md` (do not write new reports there). Treat findings present in both reports (matched by finding ID, affected file path, or clearly equivalent description) as regressions. Do not edit the generated report to record this; surface it in your completion summary.
 8. Report the audit name, report path, finding count, validation result, any regressions, and any remaining audit(s). For a finding that has regressed across 2+ audit runs, flag it for severity escalation and recommend an automated prevention mechanism (lint rule, CI assertion, `smoke:qc` check, or targeted regression test).

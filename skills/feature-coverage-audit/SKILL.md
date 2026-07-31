@@ -12,8 +12,8 @@ Audit one project at a time to answer whether implemented functionality is cover
 human-readable documentation and `.aidd/features/*/feature.json` blueprints.
 
 This workflow is semantic and evidence-driven. It sits above `feature-review`, which reviews
-existing backlog specs, and above `--check-features`, which validates feature metadata syntax and
-roadmap contracts.
+existing backlog specs, and above aidd's own end-of-run feature-contract check, which validates
+feature metadata syntax and roadmap contracts.
 
 ## Usage
 
@@ -167,19 +167,9 @@ If new feature JSON files are created and `.aidd/roadmap.json` exists:
 
 1. Add each new feature ID to the current milestone, defined as the existing milestone with the highest numeric `priority`.
 2. Preserve existing roadmap structure and feature assignments.
-3. Run from `<aidd-root>`:
+3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
-```text
-bun run aidd-tools -- roadmap:apply --project-dir <target>
-```
-
-After any feature metadata edit, run from `<aidd-root>`:
-
-```text
-bun run start -- --project-dir <target> --check-features
-```
-
-If no feature metadata changed, do not run `--check-features` unless the user requested validation.
+Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace.
 
 ## Phase 8: Report
 
@@ -195,7 +185,7 @@ Report these sections:
 2. Auto-fixes applied, with file paths.
 3. Remaining gaps requiring a product decision.
 4. Ambiguous feature boundaries.
-5. Validator result, including `roadmap:apply` when it ran.
+5. Roadmap assignments changed, and any record you could not make valid — aidd reports the roadmap-apply and feature-contract results itself with the run.
 6. Recommended follow-up commands, usually `feature-review` for spec quality or `document-changes` for release documentation.
 
 ## Completion Criteria
@@ -203,5 +193,5 @@ Report these sections:
 - Every implemented capability in the inventory appears in the coverage matrix.
 - All high-confidence safe gaps are fixed unless `--report-only` is set.
 - Ambiguous or risky gaps are reported, not silently changed.
-- Feature metadata edits are validated with `--check-features`.
+- Every feature record written reads back as valid JSON with the required fields.
 - Final report names all files changed and any validation failures.

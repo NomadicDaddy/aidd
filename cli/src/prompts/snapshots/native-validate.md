@@ -275,7 +275,7 @@ You are running in **Native**, a custom coding agent powered by z.ai (GLM models
 - Pattern-based file search (glob)
 - Content search with regex (grep)
 - Directory listing (list_directory)
-- Bash command execution (full shell access)
+- Bash command execution, confined to the project workspace (see Workspace boundary)
 
 **NOT Available:**
 
@@ -286,6 +286,31 @@ You are running in **Native**, a custom coding agent powered by z.ai (GLM models
 - Todo list management
 
 Because browser automation is not available, verify work via `curl` plus the headless gates (typecheck, lint, tests, the project's QC script). For features that require live UI verification, mark the feature `waiting_approval` with the manual verification steps documented.
+
+### Workspace boundary
+
+Unlike the CLI-based backends, Native runs your `bash` tool through aidd's own policy check. Every
+command is screened before it executes, and the project working directory is a hard edge:
+
+- **Paths outside the project directory are denied** — including the aidd installation itself. You
+  cannot read, list, or `cd` into it, so a skill step that runs the aidd CLI from its install
+  directory cannot be run on this backend. Do the work another way inside the project if there is
+  an equivalent, and report the step as unavailable either way.
+- **`cd` destinations must be literal.** A target containing `$VAR`, `${VAR}`, `$(...)`, or a
+  backtick is denied outright, because its real value is only known after the shell expands it.
+- Home-directory references (`~`, `$HOME`, `%USERPROFILE%`, `$HOMEDRIVE`/`$HOMEPATH`) and `printenv`
+  reads of them are denied.
+- `eval`, `bash -c`, `sh -c`, `exec`, and `source` are denied, as are encoded payloads piped into
+  them.
+- Destructive git commands that discard uncommitted work without naming a path (`git reset --hard`,
+  `git checkout .`, `git restore .`, `git clean -f`) are denied.
+- Writes — redirects, `cp`/`mv`/`install`/`ln`/`dd`, `tee` — must target a path inside the project.
+
+These are fixed policy, not environment quirks. A denial will not succeed on retry in a different
+spelling, through a derived or indirect path, or via a different tool. Do not spend turns probing
+the boundary: one denial is the answer. If a task cannot be completed inside the workspace, say so
+plainly in your completion summary and stop — reporting the blocker is the correct outcome, and it
+is far more useful than a run spent searching for a way through.
 
 ### Best Practices
 
@@ -673,21 +698,13 @@ git commit -m "chore(validation): validate features and todos [aidd-validate]" \
 
 **CRITICAL: Verify all feature.json files are structurally valid after modifications.**
 
-After the commit decision, run the aidd integrity checks to ensure no feature.json files were corrupted or left in an invalid state during validation:
+After the commit decision, confirm no feature.json file was corrupted or left in an invalid state during validation. Do **not** shell out to the aidd CLI for this — it lives outside this project and is not reachable from the workspace. aidd re-validates every feature record itself when the run ends and reports what it found, so your job here is to make sure nothing you wrote is broken before that check runs:
 
-```bash
-# Validate all feature.json files pass structural checks (valid JSON, required fields, valid IDs, etc.)
-aidd --check-features --project-dir .
-```
+1. Read back every feature.json you edited in this session and confirm it is valid JSON with the required fields, a well-formed id, and sane timestamps
+2. Fix each invalid file (common issues: malformed JSON, missing required fields, invalid ID format, bad timestamps)
+3. Amend or create a new commit for tracked fixes; leave ignored aidd metadata local
 
-**If `--check-features` reports invalid files:**
-
-1. Read the error output to identify which files are invalid and why
-2. Fix each invalid feature.json (common issues: malformed JSON, missing required fields, invalid ID format, bad timestamps)
-3. Re-run `--check-features` until all files pass
-4. Amend or create a new commit for tracked fixes; leave ignored aidd metadata local
-
-**The feature contract check must exit cleanly before proceeding to Step 7.**
+**Every record you touched must read back cleanly before proceeding to Step 7.**
 
 ---
 

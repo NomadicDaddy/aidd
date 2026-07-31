@@ -205,7 +205,7 @@ For every existing feature whose UI was rebuilt:
 - Update `spec` points whose described elements, names, or interactions changed
 - Leave `id`, `createdAt`, `dependencies`, `status`, `passes`, `priority` unchanged
 
-Commit new Phase 5.6 stubs alongside. If roadmap assignments changed, run `bun run aidd-tools -- roadmap:apply --project-dir <target-app>` from `<aidd-root>`. Then run `bun run check:feature-integration` to confirm every page/route still has a feature entry and every feature still has a wired consumer.
+Commit new Phase 5.6 stubs alongside. Roadmap propagation is aidd's job at run end — do not shell into the aidd installation for it. Then run `bun run check:feature-integration` to confirm every page/route still has a feature entry and every feature still has a wired consumer.
 
 ## Decision Rules
 

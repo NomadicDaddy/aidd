@@ -25,8 +25,8 @@ installing a NEW test harness where none exists is banned.
 **Always prefer agent-browser** unless it is unavailable or the project explicitly overrides this in `project.md`.
 
 **If `agent-browser` is unavailable in this environment, do not improvise a server hunt.** Verify with
-the headless gates you _can_ run (`bun run smoke:qc`, typecheck, lint, build, `--check-features`),
-document the manual browser steps in `/.aidd/CHANGELOG.md`, and mark the feature `waiting_approval`.
+the headless gates you _can_ run (`bun run smoke:qc`, typecheck, lint, build), document the manual
+browser steps in `/.aidd/CHANGELOG.md`, and mark the feature `waiting_approval`.
 When the run launches against an already-running app, the run launch context names its live URL;
 reuse that instance and never start your own server to test against.
 

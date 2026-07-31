@@ -145,20 +145,13 @@ update that feature instead of creating a new remediation, and record the mappin
    milestone. Use the existing current milestone when the roadmap marks one; otherwise use the
    milestone with the highest numeric priority. Do not create a new milestone unless no milestone
    exists.
-2. From `<aidd-root>`, run:
+2. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
-```
-bun run aidd-tools -- roadmap:apply --project-dir {app}
-```
-
-3. From `<aidd-root>`, run:
-
-```
-bun run start -- --project-dir {app} --check-features
-```
+3. Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace.
 
 4. Fix any invalid feature JSON, unresolved dependencies, roadmap drift, duplicate IDs, or orphaned
-   feature directories before reporting completion.
+   feature directories before reporting completion — read the records back yourself rather than
+   waiting for aidd's end-of-run check to find them.
 
 ## Output
 

@@ -182,6 +182,11 @@ priority; do not create a milestone. Then run from aidd:
 bun run aidd-tools -- roadmap:apply --project-dir <app>
 ```
 
+This skill is one of the two deliberate exceptions to "aidd applies the roadmap itself at run end".
+It syncs repositories other than the one this run targets, and aidd only reconciles its own project;
+those other apps have no other way to get propagated. Run it once per modified app, not for the run
+target.
+
 Update a derived application's `spernakit_version` only when it has actually adopted the
 corresponding current template baseline and that baseline resolves in the Spernakit repository.
 

@@ -449,7 +449,7 @@ Then, from `<aidd-root>`:
 bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app}
 ```
 
-Report its updated / unchanged / errors summary. `roadmap:apply` is what rebuilds the dependency graph from the roadmap the sync just wrote; the sync never shells into aidd. Afterwards, **`bun run check:aidd-format` in the app must report zero changed files** — records are serialized through Prettier's API against the app's own config precisely so that holds. A non-zero count is a bug in the sync, not something to fix by reformatting.
+Report its updated / unchanged / errors summary. `roadmap:apply` is what rebuilds the dependency graph from the roadmap the sync just wrote; the sync never shells into aidd. This is the other deliberate exception to "aidd applies the roadmap itself at run end": the standalone tool serializes records through Prettier and aidd's run-end reconciler does not, so only this path can leave `check:aidd-format` at zero changed files — and the app being synced is usually not the project this run targets. Afterwards, **`bun run check:aidd-format` in the app must report zero changed files** — records are serialized through Prettier's API against the app's own config precisely so that holds. A non-zero count is a bug in the sync, not something to fix by reformatting.
 
 **Three classes are blockers.** The write run refuses all three on its own — it applies the rest of the plan and exits 1 — so a non-zero exit here is not a failed sync. Record each as an unresolved blocker in the phase report, with the entries that were applied:
 

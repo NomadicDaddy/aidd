@@ -50,7 +50,7 @@ The goal is to ensure every fix, audit finding, and remediation spec is represen
 
     **In the Spernakit repository itself**, template features ARE modifiable; remediations can be folded into them and specs can be updated. **Do not bump `spernakit_version` when the spec changes.** It records the template version that _introduced_ the record — an origin marker, not a revision stamp — and every record in the corpus is maintained that way. Bumping it would make the record read as hand-edited to Spernakit's own gates and to the app-side feature-drift check, both of which compare the field exactly. Record the change in the feature's revision notes instead.
 
-    **In Spernakit, folding is a precondition of sync, not optional housekeeping.** `bun run template:sync-features` never copies a `remediation-<date>-…` or `audit-<slug>-<digits>-…` record to a derived app — process records from the template's own development stay in the template, permanently and by design. Content reaches apps only by being folded into a durable feature, which then syncs. A completed finding left standing in Spernakit's corpus is therefore a fix that will never reach a single app, however carefully it was written. Fold it, delete the finding record, and remove its `roadmap.json` entry in the same pass (an orphan roadmap entry is a hard error in `roadmap:apply`).
+    **In Spernakit, folding is a precondition of sync, not optional housekeeping.** `bun run template:sync-features` never copies a `remediation-<date>-…` or `audit-<slug>-<digits>-…` record to a derived app — process records from the template's own development stay in the template, permanently and by design. Content reaches apps only by being folded into a durable feature, which then syncs. A completed finding left standing in Spernakit's corpus is therefore a fix that will never reach a single app, however carefully it was written. Fold it, delete the finding record, and remove its `roadmap.json` entry in the same pass (an orphan roadmap entry is a hard error in roadmap reconciliation, which blocks the whole pass).
 
     Base features use clean descriptive slugs (e.g., `run-console-page`, `approval-model`, `director-api-client`). They do NOT use a `feature-` prefix or date stamp. Any base-feature directory starting with `feature-` is a **poorly named** base feature that should be renamed during consolidation (see Phase 4a). This includes both dated names like `feature-20260414-director-api-client` and older generic names like `feature-web-v2-run-launcher`.
 
@@ -182,7 +182,7 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
 
     Already-mapped features are left untouched (idempotent; no churn). The owner may re-target afterward.
 
-5. Run `bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app}` from `<aidd-root>` to propagate milestone priority + resolved dependency IDs into the surviving/renamed feature.json files. Report the updated / unchanged / errors summary. Skip this step only when `--dry-run` was passed.
+5. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. Nothing is propagated on a `--dry-run` pass, because nothing was written.
 
 ### Phase 6: Validation
 
@@ -194,15 +194,9 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
 
     The explicit `--ignore-path` override (pointed at any empty file) is required: most apps list `/.aidd/` in `.prettierignore`, so an unqualified `prettier --write` on those paths matches zero files and exits 0, formatting nothing. If one of the listed paths does not exist in the target app, omit that path rather than creating a placeholder.
 
-2. **Run validation**: Execute the aidd validator **from `<aidd-root>`**, pointed at the target:
+2. **Validation**: Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace. Do not run `bun run start` from the target app root either: that resolves to the target's own `start` script (a dev server in most stacks), which will happily look like it worked.
 
-    ```powershell
-    bun run start -- --project-dir <applications-root>/{app} --check-features
-    ```
-
-    Do not run `bun run start` from the target app root: that resolves to the target's own `start` script (a dev server in most stacks), not the aidd validator.
-
-3. **Verify results**: All features must pass validation (0 invalid files).
+3. **Verify results**: Read back every record you wrote and confirm it is valid JSON with the required fields, so aidd's end-of-run check has nothing left to report.
 
 4. **If validation fails**: Fix the issues (common problems: missing required fields, invalid JSON, broken dependency references) and re-validate.
 
@@ -264,7 +258,7 @@ Commit: {commit hash or "not committed: reason"}
 1. **Traceability over speed**: Every remediation fix must be traceable to a base feature before deletion.
 2. **Conservative deletion**: Never delete a finding that can't be mapped. Flag it instead.
 3. **Spec completeness**: Updated specs should be self-sufficient: a developer reading only the spec should produce correct code without needing remediation.
-4. **Validation gate**: Never finish without passing `--check-features`.
+4. **Validation gate**: Never finish leaving a record you wrote unreadable — aidd's end-of-run feature-contract check is what reports it, and a failure there is your failure.
 5. **Formatting gate**: Format changed feature artifacts before validation and before committing.
 6. **Commit gate**: If consolidation changed files and the run was not `--dry-run`, commit the completed, validated bundle before final reporting unless the user explicitly opts out.
 7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements.

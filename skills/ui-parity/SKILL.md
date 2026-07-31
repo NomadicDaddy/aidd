@@ -161,19 +161,11 @@ For each selected gap, create a feature.json in `/.aidd/features/`:
 
 ### Phase 6: Roadmap and Validate
 
-If `.aidd/roadmap.json` exists in the current codebase, assign each generated feature to the current milestone: the existing milestone with the highest numeric `priority`. Never create a new milestone for parity gaps. Then run from `<aidd-root>`:
+If `.aidd/roadmap.json` exists in the current codebase, assign each generated feature to the current milestone: the existing milestone with the highest numeric `priority`. Never create a new milestone for parity gaps.
 
-```bash
-bun run aidd-tools -- roadmap:apply --project-dir {current_codebase}
-```
+Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
-If aidd is available, run:
-
-```bash
-bun run start -- --project-dir {current_codebase} --check-features
-```
-
-Confirm all generated features are valid JSON with required fields.
+Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace. Read back every feature you generated and confirm it is valid JSON with the required fields.
 
 ## Example Session
 

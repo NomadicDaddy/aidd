@@ -236,7 +236,7 @@ and which lists the template feature's **directory name** in its `roadmap.json` 
 }
 ```
 
-The dependency edge is the machine-readable half: `roadmap:apply` resolves it, aidd renders it, and the divergence stays visible next to the record it diverges from instead of living in a comment. Directory name, not feature title — `id === <dir>` is an enforced invariant (`check:feature-id-directory`), and the resolver reads directories.
+The dependency edge is the machine-readable half: aidd resolves it into the feature records when the run ends, renders it, and the divergence stays visible next to the record it diverges from instead of living in a comment. Directory name, not feature title — `id === <dir>` is an enforced invariant (`check:feature-id-directory`), and the resolver reads directories.
 
 A submission qualifies as (B), missing capability, when **any one** of these signals holds:
 
@@ -690,7 +690,7 @@ Feature persistence is **not complete** until every newly written feature.json (
 
     The owner may re-target any feature afterward.
 
-3. Run `bun run aidd-tools -- roadmap:apply --project-dir <applications-root>/{app-name}` from `<aidd-root>` to propagate milestone priority + resolved dependency IDs into the new feature.json files. Report the command's updated / unchanged / errors summary so any roadmap↔feature drift is visible.
+3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
 ### Phase 6: Verification
 

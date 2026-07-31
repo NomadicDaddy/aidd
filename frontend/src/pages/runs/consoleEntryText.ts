@@ -39,12 +39,45 @@ export function stringify(value: unknown): string {
 // (claude-code style tool_use blocks carry file_path/pattern/url style inputs).
 const titleArgKeys = ['file_path', 'path', 'pattern', 'url', 'query', 'description'] as const;
 
+/**
+ * Read a shell command the way a shell would, collapsing the escapes its quoting added. Codex
+ * renders each exec item's argv as one shell-quoted display string, so on Windows every command
+ * arrives behind a doubled program path — `"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command
+ * …` — and inner paths double too. `\\` and `\"` collapse everywhere except inside single quotes,
+ * which no shell escapes into; the raw view still holds the untouched transcript.
+ */
+export function unescapeShellQuotes(command: string): string {
+	if (!command.includes('\\')) return command;
+	let result = '';
+	let quote: '"' | "'" | undefined;
+	for (let index = 0; index < command.length; index++) {
+		const character = command.charAt(index);
+		if (quote !== "'" && character === '\\') {
+			const next = command.charAt(index + 1);
+			// An escaped quote is content, so it must not flip the quoting state below.
+			if (next === '\\' || next === '"') {
+				result += next;
+				index++;
+				continue;
+			}
+		}
+		if (character === '"' || character === "'") {
+			quote = quote === character ? undefined : (quote ?? character);
+		}
+		result += character;
+	}
+	return result;
+}
+
 export function describeToolCall(tool: string, args: unknown): { detail?: string; title: string } {
 	const record = asRecord(args);
 	const command = typeof record?.command === 'string' ? record.command : undefined;
 	if (command !== undefined) {
 		const cwd = typeof record?.cwd === 'string' ? record.cwd : undefined;
-		return { title: command, ...(cwd === undefined ? {} : { detail: `cwd ${cwd}` }) };
+		return {
+			title: unescapeShellQuotes(command),
+			...(cwd === undefined ? {} : { detail: `cwd ${cwd}` }),
+		};
 	}
 	if (record !== undefined) {
 		for (const key of titleArgKeys) {

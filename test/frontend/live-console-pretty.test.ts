@@ -7,7 +7,9 @@ import {
 	entrySearchText,
 	parseConsoleEntries,
 } from '../../frontend/src/pages/runs/consoleEntries.ts';
+import { unescapeShellQuotes } from '../../frontend/src/pages/runs/consoleEntryText.ts';
 import { readViewPreference } from '../../frontend/src/pages/runs/liveConsolePrefs.ts';
+import { extractStopDetail } from '../../frontend/src/pages/runs/stopDetail.ts';
 
 const FRONTEND_SRC = join(import.meta.dir, '..', '..', 'frontend', 'src');
 
@@ -403,5 +405,81 @@ describe('LiveConsole wiring', () => {
 		);
 		expect(controls).toContain("aria-pressed={view === 'pretty'}");
 		expect(controls).toContain("aria-pressed={view === 'raw'}");
+	});
+});
+
+describe('shell-quoted command titles', () => {
+	test('a codex command title reads as the command an operator would type', () => {
+		// Codex renders argv as one shell-quoted string, so every Windows command arrives with a
+		// doubled program path. Both the raw title and the pretty entry must collapse it.
+		const quoted = '"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe" -Command "rg -n foo"';
+		const readable = '"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "rg -n foo"';
+		expect(unescapeShellQuotes(quoted)).toBe(readable);
+
+		const entries = parseConsoleEntries(
+			[
+				codexCommandStarted('item_1', quoted),
+				codexCommandCompleted('item_1', quoted, 0, 'ok'),
+			].join('\n'),
+			'codex',
+		);
+		const tool = entries[0] as Extract<ConsoleEntry, { kind: 'tool' }>;
+		expect(tool.title).toBe(readable);
+		// Find-in-console searches what the operator sees, not the escaped source.
+		expect(entrySearchText(tool)).toContain('C:\\Program Files\\PowerShell');
+	});
+
+	test('an escaped quote becomes content and does not flip the quoting state', () => {
+		expect(unescapeShellQuotes('pwsh -Command "say \\"hi\\" now"')).toBe(
+			'pwsh -Command "say "hi" now"',
+		);
+	});
+
+	test('single-quoted spans keep their backslashes, since no shell escapes inside them', () => {
+		// A regex argument is the case a blind global replace would corrupt.
+		const command = "rg -n 'a\\\\d+' src";
+		expect(unescapeShellQuotes(command)).toBe(command);
+		expect(unescapeShellQuotes('bun test')).toBe('bun test');
+	});
+});
+
+describe('extractStopDetail', () => {
+	function agentMessage(text: string): string {
+		return JSON.stringify({ item: { text, type: 'agent_message' }, type: 'item.completed' });
+	}
+
+	test('collapses the structured result payload but keeps the message prose', () => {
+		const report = {
+			auditFindings: [{ title: 'Extract the matcher' }],
+			reportMarkdown: '# H\n',
+		};
+		const detail = extractStopDetail(
+			agentMessage(`I have done my best.\n\nAIDD_RESULT: ${JSON.stringify(report)}`),
+		);
+		expect(detail).toBe('I have done my best.\n\nAIDD_RESULT: { … }');
+		expect(detail).not.toContain('auditFindings');
+	});
+
+	test('a message that is only the payload reports no stop detail', () => {
+		expect(extractStopDetail(agentMessage('AIDD_RESULT: {"passes":true}'))).toBeNull();
+	});
+
+	test('a message that merely mentions the marker inline is left intact', () => {
+		const text = 'Finish by emitting AIDD_RESULT: {"passes":true} on its own line.';
+		expect(extractStopDetail(agentMessage(text))).toBe(text);
+	});
+
+	test('a truncated payload is left as written rather than cut to nowhere', () => {
+		const text = 'Stopping early.\n\nAIDD_RESULT: {"passes":';
+		expect(extractStopDetail(agentMessage(text))).toBe(text);
+	});
+
+	test('the last message wins and non-codex output yields nothing', () => {
+		const log = [agentMessage('First pass.'), agentMessage('Stopping: worktree dirty.')].join(
+			'\n',
+		);
+		expect(extractStopDetail(log)).toBe('Stopping: worktree dirty.');
+		expect(extractStopDetail('plain log text\n')).toBeNull();
+		expect(extractStopDetail('')).toBeNull();
 	});
 });

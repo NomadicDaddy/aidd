@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import type { RunRecord } from '../../api/types.ts';
 
 import { useRunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
@@ -62,11 +60,9 @@ export function LiveConsolePanel({
 
 	// The full raw log is already in the browser via useRunLiveOutput; pull the run's last
 	// agent message out of it so the detail panel can show "why" without the operator
-	// scrolling the JSONL. Only meaningful once the run is terminal.
-	const stopDetail = useMemo(
-		() => (selectedRunIsTerminal ? extractStopDetail(output.text) : null),
-		[selectedRunIsTerminal, output.text],
-	);
+	// scrolling the JSONL. Only meaningful once the run is terminal. Plain expression: the
+	// React Compiler memoizes it per its inputs, so the scan runs once per new-output frame.
+	const stopDetail = selectedRunIsTerminal ? extractStopDetail(output.text) : null;
 
 	const liveConsoleBadge = ((): LiveConsoleBadge | null => {
 		if (!selectedRun) return null;

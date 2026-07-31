@@ -1,6 +1,10 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
 
 import { resultMarker } from 'aidd-shared/agent/result-marker';
+import {
+	denialSummary,
+	isWorkspacePolicyDenial,
+} from 'aidd-shared/agent/tools/shell-policy-denial';
 
 function asRecord(value: unknown): null | Record<string, unknown> {
 	return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
@@ -131,6 +135,13 @@ export function renderNativeRunLogLine(event: AgentEvent): null | string {
 			return `[rate-limit]${event.resetAt ? ` until ${event.resetAt}` : ''}\n`;
 		case 'tool_call':
 			return `${renderToolCall(event.tool, event.args)}\n`;
+		// Tool results are otherwise omitted (they are the bulk of a run's bytes), but a workspace
+		// denial has to be visible: the `$ …` line above is logged when the model *requests* the
+		// command, so without this a denied command and an executed one read identically.
+		case 'tool_result':
+			return isWorkspacePolicyDenial(event.result)
+				? `[denied] ${denialSummary(event.result as string)}\n`
+				: null;
 		default:
 			return null;
 	}

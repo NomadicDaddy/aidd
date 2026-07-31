@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { AgentEvent } from 'aidd-shared/backends/types';
+import { checkBashWorkspacePolicy } from 'aidd-shared/agent/tools/shell-policy';
 import {
 	NativeRunLogRenderer,
 	renderNativeRunLogLine,
@@ -45,6 +46,39 @@ describe('renderNativeRunLogLine', () => {
 	test('renders run completion with the exit code', () => {
 		const event: AgentEvent = { type: 'done', exitCode: 0, filesModified: [] };
 		expect(renderNativeRunLogLine(event)).toBe('[done] exit 0\n');
+	});
+
+	// The `$ …` line is written when the model *requests* a command, before the policy check, and
+	// results are otherwise dropped — so until this landed, a denied command and an executed one
+	// were indistinguishable in the transcript.
+	test('renders a workspace-policy denial so it is not invisible in the transcript', () => {
+		const event: AgentEvent = {
+			result: checkBashWorkspacePolicy('ls /elsewhere/aidd', '/projects/app'),
+			tool: 'bash',
+			type: 'tool_result',
+		};
+		const line = renderNativeRunLogLine(event);
+		expect(line).toStartWith('[denied] ERROR: bash command references path outside workspace');
+		// One line only: the trailer is boilerplate and would bury the log in prose.
+		expect(line?.split('\n')).toHaveLength(2);
+	});
+
+	test('ordinary tool results stay out of the log', () => {
+		expect(
+			renderNativeRunLogLine({
+				result: 'on branch main\n',
+				tool: 'bash',
+				type: 'tool_result',
+			}),
+		).toBeNull();
+		// A failing command is not a denial: it is the agent's business, not the log's.
+		expect(
+			renderNativeRunLogLine({
+				result: 'ERROR: file not found\n[exit code: 1]',
+				tool: 'bash',
+				type: 'tool_result',
+			}),
+		).toBeNull();
 	});
 
 	test('skips noise events that would clutter the console', () => {

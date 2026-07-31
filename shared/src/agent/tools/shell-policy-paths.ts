@@ -19,6 +19,23 @@ export function normalizePosixDrivePath(target: string, platform: NodeJS.Platfor
 	return target;
 }
 
+/**
+ * True when a token contains a shell expansion, so its real value is only known at runtime.
+ *
+ * This is the one hole that turned the workspace edge into a suggestion: `cd "$AIDD_ROOT"` reads
+ * to {@link isPathWithinWorkspaceRoot} as the *relative* segment `$AIDD_ROOT`, resolves happily
+ * inside the workspace, and is then expanded by bash to wherever the variable actually points.
+ * A `cd` destination is the one place a lexical filter cannot afford that, because every path
+ * check after it is relative to the directory `cd` chose.
+ *
+ * Deliberately broad — any `$` or backtick, not a curated list of expansion forms. A literal `$`
+ * in a directory name is rare; a spelling this misses is a silent escape. Non-`cd` uses of `$VAR`
+ * are unaffected: those name files that the destination and absolute-path checks still bound.
+ */
+export function expandsAtRuntime(target: string): boolean {
+	return /[$`]/.test(target);
+}
+
 export function isPathWithinWorkspaceRoot(
 	target: string,
 	root: string,

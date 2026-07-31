@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
-import { isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
+import { denialMessage } from './shell-policy-denial.ts';
+import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
 
 /**
  * Home-directory / user-profile references. These expand (in bash, or PowerShell) to a
@@ -77,6 +78,11 @@ const DESTRUCTIVE_GIT_PATTERN =
 	/(?:^|[\s;|&(`])git\s+(?:reset\s+(?:--hard|HEAD~\d+)|checkout\s+(?:--\s+)?\.(?:\s|$)|restore\s+(?:--\s+)?\.(?:\s|$)|clean\s+-[a-z]*f[a-z]*)/;
 
 export function checkBashWorkspacePolicy(command: string, cwd: string): null | string {
+	const violation = evaluateBashWorkspacePolicy(command, cwd);
+	return violation === null ? null : denialMessage(violation);
+}
+
+function evaluateBashWorkspacePolicy(command: string, cwd: string): null | string {
 	const root = resolve(cwd);
 	const stripped = command.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
 
@@ -137,11 +143,16 @@ export function checkBashWorkspacePolicy(command: string, cwd: string): null | s
 	// --- cd/pushd destination check ---
 	const cdPattern = /(?:^|[;|&(`]|\s)(?:cd|pushd)\s+(?:--\s+)?("[^"]*"|'[^']*'|[^\s;|&)]+)/g;
 	for (const match of command.matchAll(cdPattern)) {
-		if (match[1] === undefined) continue;
-		const target = stripSurroundingQuotes(match[1]);
+		const raw = match[1];
+		if (raw === undefined) continue;
+		const target = stripSurroundingQuotes(raw);
 		// `~`/`~/` are handled (denied) by HOME_REFERENCE_PATTERN above; `-` (previous dir)
 		// and empty are benign relative navigations.
 		if (target === '' || target === '-') continue;
+		// Single quotes suppress expansion in bash, so `cd '$lit'` really is a literal name.
+		if (!raw.startsWith("'") && expandsAtRuntime(target)) {
+			return `ERROR: bash command 'cd' target is expanded at runtime and cannot be bounded to the workspace: ${target}`;
+		}
 		if (!isPathWithinWorkspaceRoot(target, root)) {
 			return `ERROR: bash command 'cd' would escape workspace: ${target}`;
 		}

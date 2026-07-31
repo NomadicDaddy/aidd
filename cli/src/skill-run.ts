@@ -33,11 +33,17 @@ export async function prepareSkillRun(
 ): Promise<SkillContractDeps | undefined> {
 	if (!args.skillId) return undefined;
 	const skill = await readSkillDefinition(rootDir, args.skillId, config.web?.dataDir);
-	args.customPrompt = compileSkillDirective(
+	const directive = compileSkillDirective(
 		skill,
 		args.skillArgs ?? '',
 		skillRootPaths(config, rootDir),
 	);
+	// A blank compiled directive would launch an agent with no task and no permission
+	// wrapper — the same hole validateParsedArgs closes for CLI-supplied prompts.
+	if (directive.trim() === '') {
+		throw new Error(`skill '${args.skillId}' compiled to an empty directive`);
+	}
+	args.customPrompt = directive;
 	// The invoked skill's declared contract dependencies are staged into the project's `.aidd/` so a
 	// sandboxed agent can read them locally instead of reaching for a path outside the project.
 	return skillContractDeps(skill);

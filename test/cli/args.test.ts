@@ -58,6 +58,25 @@ describe('parseArgs', () => {
 		expect(args.customPrompt).toBe('--filter-by id --filter audit-*');
 	});
 
+	test('rejects blank directives', () => {
+		// A blank body would compile to a prompt with neither the mutation nor the
+		// read-only wrapper: guardrails and a result contract, but no task.
+		expect(() => parseArgs(['--prompt='])).toThrow(/non-empty directive/);
+		expect(() => parseArgs(['--prompt', '   '])).toThrow(/non-empty directive/);
+		expect(() => parseArgs(['--directive', '--directive-readonly', '--prompt='])).toThrow(
+			/non-empty directive/,
+		);
+		expect(() => parseArgs(['--directive'])).toThrow(/requires --prompt/);
+	});
+
+	test('accepts directives with a body from --prompt or --skill', () => {
+		expect(parseArgs(['--directive', '--prompt', 'do X']).customPrompt).toBe('do X');
+		// Skill runs supply the body later via prepareSkillRun, after parsing.
+		const skillRun = parseArgs(['--directive', '--skill', 'review-doc']);
+		expect(skillRun.skillId).toBe('review-doc');
+		expect(skillRun.customPrompt).toBeUndefined();
+	});
+
 	test('parses --flag=value for normal values and splits on the first =', () => {
 		expect(parseArgs(['--cli=codex']).cli).toBe('codex');
 		expect(parseArgs(['--cli=cline']).cli).toBe('cline');

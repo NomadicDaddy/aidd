@@ -28,17 +28,18 @@ function selectMode(args: ParsedArgs): AiddMode {
 }
 
 function phaseForMode(mode: AiddMode, args: ParsedArgs): string {
-	if (args.customPrompt) return 'directive';
+	if (args.customPrompt !== undefined) return 'directive';
 	if (args.inProgressMode) return 'in-progress';
 	return mode;
 }
 
-// In-process backends (`native`, `ollama`, `lmstudio`) all run through NativeBackend and
+// In-process backends (`native`, `ollama`, `lmstudio`, `openai`) all run through
+// NativeBackend (openai via providerOverride — see shared/src/backends/factory.ts) and
 // share the native tool-use prompt. There is no per-provider fragment on disk, so they all
 // resolve to `native.md`; a per-name path like `prompts/_cli/ollama.md` does not exist and
 // `readFragment` would swallow the ENOENT and silently contribute no backend prompt.
 function backendFragmentPath(backend: string): string {
-	const nativeBackends = new Set(['lmstudio', 'native', 'ollama']);
+	const nativeBackends = new Set(['lmstudio', 'native', 'ollama', 'openai']);
 	const fragment = nativeBackends.has(backend) ? 'native' : backend;
 	return `prompts/_cli/${fragment}.md`;
 }
@@ -59,7 +60,7 @@ function promptFragments(
 	if (mode === 'audit') {
 		fragments.push({ id: 'audit-context', kind: 'audit' });
 	}
-	if (args.customPrompt) {
+	if (args.customPrompt !== undefined) {
 		fragments.push({ id: 'custom-directive', kind: 'inline' });
 	}
 	return fragments;
@@ -153,8 +154,9 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 			suggestionSchemaPath: args.suggestionSchemaPath,
 		},
 	};
-	if (args.customPrompt) prompt.customDirective = args.customPrompt;
-	if (args.customPrompt && args.directiveReadonly) prompt.customDirectiveReadonly = true;
+	if (args.customPrompt !== undefined) prompt.customDirective = args.customPrompt;
+	if (args.customPrompt !== undefined && args.directiveReadonly)
+		prompt.customDirectiveReadonly = true;
 	if (args.skillId) prompt.skillId = args.skillId;
 	if (args.feature) prompt.featureFocus = { directory: args.feature, value: args.feature };
 	if (args.milestone) prompt.milestone = { featureDirectories: [], value: args.milestone };

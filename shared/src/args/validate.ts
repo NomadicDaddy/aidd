@@ -27,6 +27,18 @@ export function validateParsedArgs(args: ParsedArgs): void {
 			'--skill-intent apply-changes cannot be combined with --directive-readonly',
 		);
 	}
+	// A blank directive body compiles to a prompt with neither the mutation nor the
+	// read-only wrapper — the agent would launch with guardrails and a result contract
+	// but no task and no permission framing. Reject it before a plan is ever resolved.
+	// Skill runs are exempt from the bodyless --directive rule: they launch as
+	// `--directive --skill <id>` and the CLI compiles the skill into customPrompt later
+	// (prepareSkillRun), after parsing but before plan resolution.
+	if (args.customPrompt !== undefined && args.customPrompt.trim() === '') {
+		throw new ArgsError('--prompt requires a non-empty directive');
+	}
+	if (args.directiveMode && args.customPrompt === undefined && !args.skillId) {
+		throw new ArgsError('--directive requires --prompt "<directive>" or --skill <id>');
+	}
 	if (args.filterBy && !args.filterValue) {
 		throw new ArgsError('--filter-by requires --filter <value>');
 	}

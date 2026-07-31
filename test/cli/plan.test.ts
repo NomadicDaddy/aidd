@@ -41,8 +41,8 @@ describe('resolveRunPlan', () => {
 		expect(plan.stopBeforeImplementation).toBe(true);
 	});
 
-	test('routes in-process backends (native/ollama/lmstudio) to the native prompt fragment', () => {
-		for (const cli of ['native', 'ollama', 'lmstudio'] as const) {
+	test('routes in-process backends (native/ollama/lmstudio/openai) to the native prompt fragment', () => {
+		for (const cli of ['native', 'ollama', 'lmstudio', 'openai'] as const) {
 			const plan = resolveRunPlan(
 				parseArgs(['--project-dir', 'd:/applications/demo', '--cli', cli]),
 				{

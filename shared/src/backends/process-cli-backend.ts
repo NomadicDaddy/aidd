@@ -1,7 +1,7 @@
 import type { AgentEvent, CLIBackend, PromptInput } from './types.ts';
 
 import { buildBackendCommand } from './commands.ts';
-import { createClineBackendParser } from './parsers/cline.ts';
+import { compactClineLogLine, createClineBackendParser } from './parsers/cline.ts';
 import { finalizeCodexBackend, parseCodexBackendLine } from './parsers/codex.ts';
 import { finalizeGrokBackend, parseGrokLine } from './parsers/grok.ts';
 import {
@@ -35,8 +35,11 @@ export function createProcessCliBackend(name: ProcessCliBackendName): CLIBackend
 			// grok ignores piped stdin — its single-turn prompt must come from a file, so the
 			// process runner writes the prompt to a tempfile and appends `--prompt-file <path>`.
 			const promptViaFile = name === 'grok';
+			// cline re-sends the whole assistant message on every text delta; strip it before the
+			// transcript reaches the run log (see compactClineLogLine).
+			const compact = name === 'cline' ? { compactLogLine: compactClineLogLine } : {};
 			return runProcessBackend(
-				{ backend: name, promptViaFile, ...command, ...parseOptions },
+				{ backend: name, promptViaFile, ...command, ...parseOptions, ...compact },
 				input,
 				signal,
 			);

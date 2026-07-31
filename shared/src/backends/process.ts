@@ -1,63 +1,30 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
 import { rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { delimiter, isAbsolute, join, resolve, sep } from 'node:path';
+import { join } from 'node:path';
 
 import type { BackendName } from '../plan/types.ts';
 import type { AgentEvent, PromptInput } from './types.ts';
 
 import { killProcessTree } from '../lib/processTree.ts';
+import { resolveCommand, shouldDetachProcessBackend } from './process-command.ts';
+
+// Re-exported so this module stays the single import surface for running a process backend.
+export { resolveCommand, shouldDetachProcessBackend } from './process-command.ts';
 import { buildBackendSubprocessEnv } from '../subprocess-env.ts';
-import { finalizePlainBackend, parsePlainBackendLine } from './parsers/plain.ts';
-
-const WIN_PATHEXT_EXTENSIONS = [
-	'.COM',
-	'.EXE',
-	'.BAT',
-	'.CMD',
-	'.VBS',
-	'.VBE',
-	'.JS',
-	'.JSE',
-	'.WSF',
-	'.WSH',
-	'.MSC',
-];
-
-/**
- * Resolve a command for Bun.spawn without shell:true.
- * On non-Windows, returns the command unchanged.
- * On Windows, if the command is absolute or contains a path separator and exists, returns it unchanged.
- * Otherwise, searches PATH entries combined with PATHEXT extensions using synchronous fs checks,
- * falling back to the original command if nothing resolves.
- */
-export function resolveCommand(command: string): string {
-	if (process.platform !== 'win32') return command;
-	if (isAbsolute(command) || command.includes(sep)) {
-		return command;
-	}
-	const pathEnv = process.env.PATH ?? '';
-	const pathExt = process.env.PATHEXT ?? '';
-	const exts = pathExt ? pathExt.split(';').filter((e) => e.length > 0) : WIN_PATHEXT_EXTENSIONS;
-	for (const dir of pathEnv.split(delimiter)) {
-		if (!dir) continue;
-		for (const ext of exts) {
-			const candidate = resolve(dir, command + ext);
-			if (existsSync(candidate)) return candidate;
-		}
-	}
-	return command;
-}
-
-export function shouldDetachProcessBackend(platform: NodeJS.Platform = process.platform): boolean {
-	return platform !== 'win32';
-}
+import { createPlainBackendParser, finalizePlainBackend } from './parsers/plain.ts';
 
 export interface ProcessBackendOptions {
 	args: string[];
 	backend: BackendName;
 	command: string;
+	/**
+	 * Rewrite a single stdout/stderr line before it is streamed to the run log, for backends whose
+	 * stream carries fields aidd never reads. Setting it switches raw_log from arbitrary decoder
+	 * chunks to line-aligned emission (a rewrite needs whole lines), so it costs one line of
+	 * latency; the parsed event stream is unaffected. Return the line unchanged to keep it.
+	 */
+	compactLogLine?: (line: string) => string;
 	env?: Record<string, string>;
 	finalize?: (input: {
 		exitCode: null | number;
@@ -79,8 +46,10 @@ export async function* runProcessBackend(
 	input: PromptInput,
 	signal: AbortSignal,
 ): AsyncIterable<AgentEvent> {
-	const parseLine = options.parseLine ?? parsePlainBackendLine;
+	// One parser instance per run: the plain parser reconciles token usage across the transcript.
+	const parseLine = options.parseLine ?? createPlainBackendParser().parseLine;
 	const finalize = options.finalize ?? finalizePlainBackend;
+	const compactLogLine = options.compactLogLine;
 
 	// Backends that read the prompt from a file (grok) get the prompt written to a tempfile and
 	// `--prompt-file <path>` appended; everyone else receives it over stdin. The file is removed
@@ -171,7 +140,15 @@ export async function* runProcessBackend(
 		const remainder = buffer.slice(newlineIdx + 1);
 		if (which === 'stdout') stdoutBuffer = remainder;
 		else stderrBuffer = remainder;
-		for (const line of complete.split(/\r?\n/)) {
+		const lines = complete.split(/\r?\n/);
+		if (compactLogLine !== undefined) {
+			emit({
+				chunk: `${lines.map(compactLogLine).join('\n')}\n`,
+				stream: which,
+				type: 'raw_log',
+			});
+		}
+		for (const line of lines) {
 			for (const event of parseLine(line)) emit(event);
 		}
 	};
@@ -193,8 +170,10 @@ export async function* runProcessBackend(
 				// Stream the raw chunk as it arrives so the run log fills incrementally during the
 				// run instead of receiving the whole transcript in one burst after exit. The
 				// heartbeat run-log writer only persists raw_log for non-native backends, so this
-				// is what makes the Live Console show progress mid-run.
-				emit({ chunk: text, stream: which, type: 'raw_log' });
+				// is what makes the Live Console show progress mid-run. Backends with a
+				// compactLogLine rewrite emit their raw_log from flushLines instead, line-aligned.
+				if (compactLogLine === undefined)
+					emit({ chunk: text, stream: which, type: 'raw_log' });
 				flushLines(text, which);
 				wake();
 			}
@@ -202,7 +181,8 @@ export async function* runProcessBackend(
 			if (tail) {
 				if (which === 'stdout') stdout += tail;
 				else stderr += tail;
-				emit({ chunk: tail, stream: which, type: 'raw_log' });
+				if (compactLogLine === undefined)
+					emit({ chunk: tail, stream: which, type: 'raw_log' });
 				flushLines(tail, which);
 				wake();
 			}
@@ -250,8 +230,20 @@ export async function* runProcessBackend(
 		await rm(promptFilePath, { force: true }).catch(() => {});
 	}
 
-	for (const remainder of [stdoutBuffer, stderrBuffer]) {
+	for (const [remainder, which] of [
+		[stdoutBuffer, 'stdout'],
+		[stderrBuffer, 'stderr'],
+	] as const) {
 		if (!remainder) continue;
+		// A trailing line with no newline never reached flushLines, so line-aligned backends still
+		// owe it to the log. Chunk-aligned backends already streamed it verbatim above.
+		if (compactLogLine !== undefined) {
+			yield {
+				chunk: `${remainder.split(/\r?\n/).map(compactLogLine).join('\n')}\n`,
+				stream: which,
+				type: 'raw_log',
+			};
+		}
 		for (const line of remainder.split(/\r?\n/)) {
 			for (const event of parseLine(line)) {
 				if (event.type === 'assistant_text') sawAssistantText = true;

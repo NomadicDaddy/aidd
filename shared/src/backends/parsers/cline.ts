@@ -221,3 +221,21 @@ export function parseClineBackendOutput(
 	);
 	return events;
 }
+
+/**
+ * Drop the `accumulated` field cline attaches to every text delta before the line reaches the run
+ * log. Each delta re-sends the entire assistant message so far, so a run's transcript grows
+ * quadratically — a read-only doc review measured 5.4 MB, of which ~95% was these re-sends. That
+ * bloat pushes the run's actual tool calls out of both the server's tail cap and the console's
+ * render window, so the Live Console shows no tool calls for a run whose own stats report a dozen.
+ * Nothing in aidd reads `accumulated` (the deltas carry the same text incrementally), so removing
+ * it loses nothing.
+ */
+export function compactClineLogLine(line: string): string {
+	if (!line.includes('"accumulated"')) return line;
+	const parsed = asRecord(tryJson(line));
+	const event = asRecord(parsed?.event);
+	if (event === undefined || event.accumulated === undefined) return line;
+	delete event.accumulated;
+	return JSON.stringify(parsed);
+}

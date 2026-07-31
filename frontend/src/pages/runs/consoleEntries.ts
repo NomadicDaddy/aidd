@@ -1,7 +1,5 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
 
-import { parsePlainBackendLine } from 'aidd-shared/backends/parsers/plain';
-
 import {
 	asRecord,
 	describeToolCall,
@@ -12,7 +10,7 @@ import {
 	stripAnsi,
 	truncate,
 } from './consoleEntryText.ts';
-import { extractReasoningTexts, selectParser } from './consoleParsers.ts';
+import { createForeignLineParser, extractReasoningTexts, selectParser } from './consoleParsers.ts';
 
 export interface ToolConsoleEntry {
 	/** Secondary line under the title, e.g. the command's working directory. */
@@ -187,6 +185,7 @@ export function parseConsoleEntries(
 	backend: null | string | undefined,
 ): ConsoleEntry[] {
 	const parser = selectParser(backend);
+	const parseForeignLine = createForeignLineParser();
 	const builder = new EntryBuilder();
 	for (const line of text.split(/\r?\n/)) {
 		if (!line.trim()) continue;
@@ -202,24 +201,26 @@ export function parseConsoleEntries(
 		// response text in claude-code content arrays).
 		const reasoningTexts = extractReasoningTexts(json);
 		for (const reasoning of reasoningTexts) builder.pushReasoning(reasoning);
-		// Foreign JSON under a backend-specific parser (mixed-backend triumvirate stages) gets a
-		// best-effort plain parse; reasoning-bearing lines are excluded to avoid re-emitting the
-		// already-extracted text.
+		// JSON this transcript's own parser does not claim is foreign — a triumvirate stage that
+		// ran another backend — so it gets routed across the other parsers rather than dropped.
+		// A parser with no ownsLine (claude-code, native) claims nothing, so its unrecognized JSON
+		// is foreign too; gating this on `ownsLine !== undefined` is what left claude-code-primary
+		// transcripts with no foreign handling at all. Reasoning-bearing lines are excluded to
+		// avoid re-emitting text already pushed above.
 		if (
 			events.length === 0 &&
-			parser.ownsLine !== undefined &&
 			json !== undefined &&
 			reasoningTexts.length === 0 &&
-			!parser.ownsLine(json)
+			parser.ownsLine?.(json) !== true
 		) {
 			try {
-				events = parsePlainBackendLine(line);
+				events = parseForeignLine(line, json);
 			} catch {
 				events = [];
 			}
 		}
 		if (events.length === 0) {
-			if (parsed === undefined) builder.pushRawLine(line);
+			if (parsed === undefined && !parser.dropsUnparsedLines) builder.pushRawLine(line);
 			continue;
 		}
 		const itemId = asRecord(json?.item)?.id;

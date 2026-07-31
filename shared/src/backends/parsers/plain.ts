@@ -1,6 +1,7 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { isProviderFlaggedText } from './flagged-text.ts';
+import { createPlainUsageReconciler, type PlainUsageReconciler } from './plain-usage.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
 
 function tryJson(line: string): undefined | unknown {
@@ -111,7 +112,7 @@ function parseRateLimitEvent(json: unknown): AgentEvent | undefined {
 	};
 }
 
-function parseJsonLine(json: unknown): AgentEvent[] {
+function parseJsonLine(json: unknown, usage: PlainUsageReconciler): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const type = firstString(json, [['type']]);
 	if (type === 'rate_limit_event') {
@@ -173,24 +174,7 @@ function parseJsonLine(json: unknown): AgentEvent[] {
 		});
 	}
 
-	const inputTokens = firstNumber(json, [
-		['usage', 'input_tokens'],
-		['usage', 'prompt_tokens'],
-		['message', 'usage', 'input_tokens'],
-	]);
-	const outputTokens = firstNumber(json, [
-		['usage', 'output_tokens'],
-		['usage', 'completion_tokens'],
-		['message', 'usage', 'output_tokens'],
-	]);
-	const costUsd = firstNumber(json, [['total_cost_usd'], ['usage', 'cost_usd']]);
-	if (inputTokens !== undefined || outputTokens !== undefined || costUsd !== undefined) {
-		const usage: AgentEvent = { type: 'usage' };
-		if (inputTokens !== undefined) usage.inputTokens = inputTokens;
-		if (outputTokens !== undefined) usage.outputTokens = outputTokens;
-		if (costUsd !== undefined) usage.costUsd = costUsd;
-		events.push(usage);
-	}
+	events.push(...usage.usageEvents(json));
 
 	const errorMessage = firstString(json, [
 		['message'],
@@ -217,13 +201,23 @@ function parseJsonLine(json: unknown): AgentEvent[] {
 	return events;
 }
 
-export function parsePlainBackendLine(line: string): AgentEvent[] {
-	if (!line.trim()) return [];
-	const tagged = parseTaggedLine(line);
-	if (tagged) return [tagged];
-	const json = tryJson(line);
-	if (json !== undefined) return parseJsonLine(json);
-	return [];
+/**
+ * Line parser for the plain backend. Stateful: token accounting must reconcile a transcript's
+ * repeated per-message usage against its terminal cumulative total (see `plain-usage.ts`), so a
+ * caller streaming a whole run needs one instance for that run.
+ */
+export function createPlainBackendParser(): { parseLine: (line: string) => AgentEvent[] } {
+	const usage = createPlainUsageReconciler();
+	return {
+		parseLine(line): AgentEvent[] {
+			if (!line.trim()) return [];
+			const tagged = parseTaggedLine(line);
+			if (tagged) return [tagged];
+			const json = tryJson(line);
+			if (json !== undefined) return parseJsonLine(json, usage);
+			return [];
+		},
+	};
 }
 
 export interface FinalizePlainBackendInput {
@@ -271,8 +265,9 @@ export function parsePlainBackendOutput(
 ): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const combined = [stdout, stderr].filter(Boolean).join('\n');
+	const parser = createPlainBackendParser();
 	for (const line of combined.split(/\r?\n/)) {
-		events.push(...parsePlainBackendLine(line));
+		events.push(...parser.parseLine(line));
 	}
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');

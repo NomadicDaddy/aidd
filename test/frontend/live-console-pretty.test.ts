@@ -201,6 +201,34 @@ describe('parseConsoleEntries (codex)', () => {
 		]);
 	});
 
+	// The test above uses a claude-code-shaped message envelope, which the plain fallback already
+	// understood. These are real OpenCode/Kilo envelopes, which it does not: routing them only to
+	// the plain parser dropped the entire stage, and the fallback was additionally gated on the
+	// primary exposing an `ownsLine`, so a claude-code primary got no foreign handling at all.
+	test('non-plain foreign envelopes render under every JSON-transcript primary', () => {
+		const stage = [
+			JSON.stringify({ part: { text: 'Reviewing the README now.' }, type: 'text' }),
+			JSON.stringify({
+				part: {
+					state: { input: { command: 'bun test' }, output: 'ok', status: 'completed' },
+					tool: 'bash',
+				},
+				type: 'tool_use',
+			}),
+			JSON.stringify({
+				part: { tokens: { cache: { read: 5 }, input: 10, output: 2 } },
+				type: 'step_finish',
+			}),
+		].join('\n');
+		for (const primary of ['claude-code', 'cline', 'codex', 'grok', 'kilocode']) {
+			expect(parseConsoleEntries(stage, primary)).toEqual([
+				{ kind: 'text', text: 'Reviewing the README now.' },
+				{ kind: 'tool', output: 'ok', title: 'bun test', tool: 'bash' },
+				{ kind: 'usage', text: 'tokens: 15 in · 5 cached · 2 out' },
+			]);
+		}
+	});
+
 	test('long tool output is clamped for rendering and flagged as truncated', () => {
 		const entries = parseConsoleEntries(
 			[
@@ -481,5 +509,32 @@ describe('extractStopDetail', () => {
 		expect(extractStopDetail(log)).toBe('Stopping: worktree dirty.');
 		expect(extractStopDetail('plain log text\n')).toBeNull();
 		expect(extractStopDetail('')).toBeNull();
+	});
+});
+
+describe('parseConsoleEntries (native)', () => {
+	test('renders the run log as structured entries with no raw fallthrough', () => {
+		const entries = parseConsoleEntries(
+			[
+				'[reasoning…]',
+				"I'll review the README.",
+				'→ read README.md',
+				'$ bun test',
+				'[reasoning… 7.5k chars]',
+				'[done] exit 0',
+			].join('\n'),
+			'native',
+		);
+		expect(entries.map((entry) => entry.kind)).toEqual(['text', 'tool', 'tool']);
+		expect(entries).toContainEqual({
+			kind: 'tool',
+			title: 'read_file README.md',
+			tool: 'read_file',
+		});
+	});
+
+	test('other backends still surface unrecognized plain lines as raw', () => {
+		const entries = parseConsoleEntries('[reasoning…]\nsome stray stderr\n', 'claude-code');
+		expect(entries).toEqual([{ kind: 'raw', text: '[reasoning…]\nsome stray stderr' }]);
 	});
 });

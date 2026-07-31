@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { parseClineBackendLine, parseClineBackendOutput } from 'aidd-shared/backends/parsers/cline';
+import {
+	compactClineLogLine,
+	parseClineBackendLine,
+	parseClineBackendOutput,
+} from 'aidd-shared/backends/parsers/cline';
 import { parseCodexBackendLine, parseCodexBackendOutput } from 'aidd-shared/backends/parsers/codex';
 import { parseOpencodeFamilyOutput } from 'aidd-shared/backends/parsers/opencode-family';
 import { parsePlainBackendOutput } from 'aidd-shared/backends/parsers/plain';
@@ -31,6 +35,79 @@ describe('backend parser', () => {
 		expect(events.some((event) => event.type === 'tool_call')).toBe(true);
 		expect(events.some((event) => event.type === 'tool_result')).toBe(true);
 		expect(events.some((event) => event.type === 'usage')).toBe(true);
+	});
+
+	test('reconciles claude-code disjoint token buckets, block repeats, and the final total', () => {
+		// One assistant message repeated across two content blocks, a second message, then the
+		// terminal cumulative envelope — the three shapes plain-usage.ts has to reconcile.
+		const message = (id: string, usage: Record<string, number>, text: string): string =>
+			JSON.stringify({
+				type: 'assistant',
+				message: { content: [{ type: 'text', text }], id, usage },
+			});
+		const stdout = [
+			message(
+				'msg_a',
+				{
+					cache_creation_input_tokens: 34765,
+					cache_read_input_tokens: 0,
+					input_tokens: 2,
+					output_tokens: 1,
+				},
+				'thinking',
+			),
+			message(
+				'msg_a',
+				{
+					cache_creation_input_tokens: 34765,
+					cache_read_input_tokens: 0,
+					input_tokens: 2,
+					output_tokens: 1,
+				},
+				'still thinking',
+			),
+			message(
+				'msg_b',
+				{
+					cache_creation_input_tokens: 100,
+					cache_read_input_tokens: 34765,
+					input_tokens: 5,
+					output_tokens: 2,
+				},
+				'done',
+			),
+			JSON.stringify({
+				type: 'result',
+				total_cost_usd: 1.5,
+				usage: {
+					cache_creation_input_tokens: 34865,
+					cache_read_input_tokens: 34765,
+					input_tokens: 7,
+					output_tokens: 900,
+				},
+			}),
+		].join('\n');
+		const usage = parsePlainBackendOutput(stdout, '', 0).filter(
+			(event) => event.type === 'usage',
+		);
+		// The repeated block does not count twice, each prompt is its three disjoint buckets, and a
+		// streaming message's snapshot `output_tokens` (1, 2) is dropped rather than reported.
+		expect(usage).toEqual([
+			{ cachedTokens: 0, inputTokens: 34767, type: 'usage' },
+			{ cachedTokens: 34765, inputTokens: 34870, type: 'usage' },
+			// Cumulative envelope, reduced to what the per-message events had not reported: the
+			// prompt already matched exactly, so only the authoritative output total is left.
+			{ costUsd: 1.5, outputTokens: 900, type: 'usage' },
+		]);
+		const summed = usage.reduce(
+			(acc, event) => ({
+				cached: acc.cached + (event.type === 'usage' ? (event.cachedTokens ?? 0) : 0),
+				input: acc.input + (event.type === 'usage' ? (event.inputTokens ?? 0) : 0),
+				output: acc.output + (event.type === 'usage' ? (event.outputTokens ?? 0) : 0),
+			}),
+			{ cached: 0, input: 0, output: 0 },
+		);
+		expect(summed).toEqual({ cached: 34765, input: 69637, output: 900 });
 	});
 
 	test('normalizes Codex JSONL error rate limits', () => {
@@ -754,5 +831,41 @@ describe('codex real error surfacing', () => {
 		expect(
 			events.some((event) => event.type === 'error' && event.reason === 'rate_limit'),
 		).toBe(true);
+	});
+});
+
+describe('compactClineLogLine', () => {
+	// cline attaches the entire assistant message so far to every text delta. A read-only doc
+	// review measured 5.4 MB of transcript, ~95% of it these re-sends, which pushed the run's tool
+	// calls out of the server tail cap and the console render window entirely.
+	const delta = (accumulated: string): string =>
+		JSON.stringify({
+			event: { accumulated, contentType: 'text', text: '--', type: 'content_start' },
+			ts: '2026-07-31T18:21:19.856Z',
+			type: 'agent_event',
+		});
+
+	test('drops accumulated while leaving the parsed events identical', () => {
+		const original = delta('the whole message so far, re-sent on every token');
+		const compacted = compactClineLogLine(original);
+
+		expect(compacted).not.toContain('accumulated');
+		expect(compacted.length).toBeLessThan(original.length);
+		expect(parseClineBackendLine(compacted)).toEqual(parseClineBackendLine(original));
+	});
+
+	test('leaves lines without accumulated untouched', () => {
+		const toolCall = JSON.stringify({
+			event: {
+				contentType: 'tool',
+				input: { path: 'README.md' },
+				toolName: 'read_file',
+				type: 'content_start',
+			},
+			type: 'agent_event',
+		});
+		expect(compactClineLogLine(toolCall)).toBe(toolCall);
+		expect(compactClineLogLine('not json at all')).toBe('not json at all');
+		expect(compactClineLogLine('')).toBe('');
 	});
 });

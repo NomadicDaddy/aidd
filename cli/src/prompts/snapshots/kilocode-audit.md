@@ -1446,7 +1446,11 @@ After completing the audit, include exactly one final result marker in your assi
 AIDD_RESULT: {"auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# AUDIT_NAME Audit Report\n\nSummary..."}
 ```
 
-Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low. If `auditFindings` is empty, include a `noFindingsJustification` string naming the specific files, patterns, or commands you inspected and why nothing qualified — boilerplate such as "no issues" or "looks clean" is not acceptable.
+Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low. If `auditFindings` is empty, include a `noFindingsJustification` string of at least one full sentence naming the specific files, patterns, or commands you inspected and why nothing qualified — boilerplate such as "no issues" or "looks clean" is not acceptable, and an unjustified empty report is recorded as a dropped findings contract (`audit_findings_contract_dropped`), not a clean pass.
+
+aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, `Verified:` description, recognized severity, or at least one affected file, causes the whole report to be rejected and the audit re-run — nothing from it is persisted.
+
+This is an unattended run. Do not ask interactive questions. If the audit cannot proceed (unreadable workspace, missing audit definition, environment failure), report the blocker in your normal response and do NOT emit AIDD_RESULT — never fabricate findings or an empty report to satisfy the contract.
 
 MEASUREMENT CONTRACT — a PERFORMANCE, LIGHTHOUSE, or BUILD_OUTPUT report must declare what produced its numbers:
 

@@ -86,7 +86,10 @@ Return exactly one \`auditReports[]\` entry for each selected audit name. Each e
 EVIDENCE CONTRACT — every entry must prove its own audit actually ran:
 - If \`auditFindings\` is non-empty, each finding's \`description\` must carry a \`Verified:\` line citing a \`path:line\` or grep result, per the audit workflow verification gate.
 - If \`auditFindings\` is empty, the entry MUST include a \`noFindingsJustification\` string of at least one full sentence naming the specific files, patterns, or commands you inspected for THIS audit and why nothing qualified. Boilerplate such as "no issues", "looks clean", or "code is fine" is not acceptable — cite concrete, audit-specific evidence.
-- A batch in which every entry returns empty \`auditFindings\` with no genuine per-audit justification is treated as a dropped findings contract: aidd records the run as a failure (\`audit_findings_contract_dropped\`), not a clean pass. Do the per-audit investigation before reporting zero.
+- Any entry returning empty \`auditFindings\` without genuine per-audit justification is treated as a dropped findings contract: aidd records the run as a failure (\`audit_findings_contract_dropped\`), not a clean pass — a real finding in a sibling report does not excuse an unjustified empty one. Do the per-audit investigation before reporting zero.
+- aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, \`Verified:\` description, recognized severity, or at least one affected file, causes that ENTIRE audit's report to be rejected and re-run — no findings or report from it are persisted.
+
+This is an unattended run. Do not ask interactive questions. If an audit cannot proceed (unreadable workspace, missing audit definition, environment failure), report the blocker in your normal response and do NOT emit AIDD_RESULT — never fabricate findings or an empty report to satisfy the contract.
 
 ${measurementContract}`;
 		}
@@ -98,7 +101,11 @@ After completing the audit, include exactly one final result marker in your assi
 AIDD_RESULT: {"auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# AUDIT_NAME Audit Report\\n\\nSummary..."}
 \`\`\`
 
-Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low. If \`auditFindings\` is empty, include a \`noFindingsJustification\` string naming the specific files, patterns, or commands you inspected and why nothing qualified — boilerplate such as "no issues" or "looks clean" is not acceptable.
+Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low. If \`auditFindings\` is empty, include a \`noFindingsJustification\` string of at least one full sentence naming the specific files, patterns, or commands you inspected and why nothing qualified — boilerplate such as "no issues" or "looks clean" is not acceptable, and an unjustified empty report is recorded as a dropped findings contract (\`audit_findings_contract_dropped\`), not a clean pass.
+
+aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, \`Verified:\` description, recognized severity, or at least one affected file, causes the whole report to be rejected and the audit re-run — nothing from it is persisted.
+
+This is an unattended run. Do not ask interactive questions. If the audit cannot proceed (unreadable workspace, missing audit definition, environment failure), report the blocker in your normal response and do NOT emit AIDD_RESULT — never fabricate findings or an empty report to satisfy the contract.
 
 ${measurementContract}`;
 	}

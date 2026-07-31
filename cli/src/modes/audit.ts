@@ -117,7 +117,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 			const perAuditReportPaths: Record<string, string> = {};
 			let totalFindings = 0;
 			let totalCreated = 0;
-			let unjustifiedEmptyReports = 0;
+			const unjustifiedEmptyAudits: string[] = [];
 			let unmeasuredScoresWithheld = 0;
 			let existing = await context.store.listFeatures({ includeAudit: true });
 			const takenIds = new Set(existing.map((feature) => feature.id));
@@ -130,7 +130,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					findings.length === 0 &&
 					!hasMeaningfulNoFindingsJustification(report.structured)
 				) {
-					unjustifiedEmptyReports++;
+					unjustifiedEmptyAudits.push(report.auditName);
 				}
 				const normalized = findings.map((finding, index) =>
 					normalizeFinding(finding, report.auditName, existing, index),
@@ -193,10 +193,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 				batchIncomplete,
 			);
 			explicitRetryAudits = explicitAuditNames(plan).length > 0 ? remaining : undefined;
-			const complete =
-				result.exitCode === 0 &&
-				remaining.length === 0 &&
-				(!auditBatchMode || !batchIncomplete);
+			const complete = result.exitCode === 0 && remaining.length === 0 && !batchIncomplete;
 			const duplicateCount = totalFindings - totalCreated;
 			const findingSummary =
 				duplicateCount > 0
@@ -216,14 +213,16 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 				totalFindings > totalCreated
 					? ` (${totalCreated} new, ${totalFindings - totalCreated} pre-existing)`
 					: '';
-			const singleSummary = `audit ${auditName} finished with ${totalFindings} finding(s)${preExistingSuffix}${remainingSuffix}`;
+			const singleSummary = `audit ${auditName} finished with ${totalFindings} finding(s)${preExistingSuffix}${invalidSuffix}${remainingSuffix}`;
 			const baseSummary = auditBatchMode ? batchSummary : singleSummary;
-			// A multi-audit batch can finish with report prose but no findings because
-			// the backend dropped the findings contract. Legitimately clean empty
-			// reports must justify their zero-finding result with concrete evidence.
+			// An audit can finish with report prose but no findings because the backend
+			// dropped the findings contract. Legitimately clean empty reports must justify
+			// their zero-finding result with concrete evidence — in every report, whether
+			// the run was a single audit or a batch, and regardless of what sibling
+			// reports found.
 			const findingsContractWarning =
-				completedAudits.length >= 2 && totalFindings === 0 && unjustifiedEmptyReports > 0
-					? `WARNING: ${completedAudits.length} audit report(s) written but 0 structured findings emitted across the batch, and ${unjustifiedEmptyReports} zero-finding report(s) lacked acceptable noFindingsJustification evidence. Nothing was promoted to .aidd/features/. Review the reports manually or re-run on a backend that honors the findings contract.`
+				unjustifiedEmptyAudits.length > 0
+					? `WARNING: ${unjustifiedEmptyAudits.length} audit report(s) had zero structured findings without acceptable noFindingsJustification evidence (${unjustifiedEmptyAudits.join(', ')}); their zero-finding claims are unverified. Review those report(s) manually or re-run on a backend that honors the findings contract.`
 					: undefined;
 			// A measurement audit can print a confident score while its own prose admits no
 			// artifact was parsed. The score is rewritten in the report; surface the fact

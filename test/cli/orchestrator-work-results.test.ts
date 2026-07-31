@@ -166,13 +166,100 @@ describe('orchestrator work results', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
+	test(
+		'fails a single audit whose zero-finding report has no justification',
+		async () => {
+			const store = await makeStore('single-audit-unjustified-empty');
+			const backend = new SequencedBackend([
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"auditFindings":[],"reportMarkdown":"# SECURITY Audit Report\\n\\nAll clean."}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			]);
+			const auditPlan = resolveRunPlan(
+				parseArgs([
+					'--project-dir',
+					store.projectDir,
+					'--cli',
+					'native',
+					'--audit',
+					'SECURITY',
+				]),
+				config,
+			);
+
+			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
+
+			// A single audit was previously exempt from the findings contract (the warning
+			// required >=2 completed audits); an unjustified empty report must fail here too.
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			const structured = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as { findingsContractDropped?: boolean; outcome: { status: string } };
+			expect(structured.findingsContractDropped).toBe(true);
+			expect(structured.outcome.status).toBe('audit_findings_contract_dropped');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'records missing result when a batched report carries malformed findings',
+		async () => {
+			const store = await makeStore('batch-malformed-findings');
+			const backend = new SequencedBackend([
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[null],"reportMarkdown":"# SECURITY Audit Report"},{"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}]}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[{ type: 'error', reason: 'provider' }],
+			]);
+			const auditPlan = resolveRunPlan(
+				parseArgs([
+					'--project-dir',
+					store.projectDir,
+					'--cli',
+					'native',
+					'--audit',
+					'SECURITY,DEAD_CODE',
+				]),
+				config,
+			);
+
+			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
+
+			// The malformed SECURITY report is rejected atomically (nothing persisted) and the
+			// audit re-queued; the retry here hits a provider error, which becomes the exit.
+			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(backend.calls).toBe(2);
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+			const structured = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as {
+				invalidAuditReports: { auditName?: string; reason: string }[];
+				missingAudits: string[];
+			};
+			expect(structured.missingAudits).toEqual(['SECURITY']);
+			expect(structured.invalidAuditReports[0]?.auditName).toBe('SECURITY');
+			expect(structured.invalidAuditReports[0]?.reason).toContain('not an object');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
 	test('does not mark omitted batched audits complete', async () => {
 		const store = await makeStore('multi-audit-missing');
 		const backend = new SequencedBackend([
 			[
 				{
 					type: 'assistant_text',
-					chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],"reportMarkdown":"# SECURITY Audit Report"}]}\n',
+					chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}]}\n',
 				},
 				{ type: 'done', exitCode: 0, filesModified: [] },
 			],
@@ -217,7 +304,7 @@ describe('orchestrator work results', () => {
 			[
 				{
 					type: 'assistant_text',
-					chunk: 'AIDD_RESULT: {"auditFindings":[],"reportMarkdown":"# SECURITY Audit Report"}\n',
+					chunk: 'AIDD_RESULT: {"auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}\n',
 				},
 				{ type: 'done', exitCode: 0, filesModified: [] },
 			],

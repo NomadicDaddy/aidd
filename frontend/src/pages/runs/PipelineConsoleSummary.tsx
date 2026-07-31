@@ -23,7 +23,9 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 	const streamRunId = latestStepWithRun?.runId ?? undefined;
 	const streamRun = useRunRecord(streamRunId, streamRunId !== undefined);
 	return (
-		<div className="space-y-3">
+		// Shares the runs-page console cell, so it needs the same height chain: the summary card
+		// stays auto-height and the console below it takes the rest.
+		<div className="space-y-3 2xl:flex 2xl:min-h-0 2xl:flex-1 2xl:flex-col">
 			<Card className="space-y-2">
 				<div className="flex flex-wrap items-center gap-2">
 					<h2 className="text-sm font-semibold text-foreground">{session.recipeName}</h2>

@@ -173,12 +173,17 @@ export function LiveConsole({
 		: null;
 
 	return (
-		<section className="space-y-2">
+		// On wide screens the column above is sticky at a fixed viewport height, and this flex
+		// chain (every level carrying min-h-0 so it may shrink below its content) hands the
+		// leftover space to the transcript scroller. The header, detail panel, controls, and
+		// notices all vary in height per run, which is why this is a flex chain rather than a
+		// calc() subtraction.
+		<section className="flex min-h-0 flex-col space-y-2 2xl:flex-1">
 			<div className="flex items-center justify-between">
 				<h2 className="text-sm font-semibold text-foreground">Live Console</h2>
 				{badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null}
 			</div>
-			<Card variant="panel">
+			<Card className="flex min-h-0 flex-1 flex-col" variant="panel">
 				{showPanel && selectedRun ? (
 					<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
 				) : selectedRun?.summary ? (
@@ -214,7 +219,7 @@ export function LiveConsole({
 					/>
 				) : null}
 				{consoleOpen ? (
-					<div className="relative">
+					<div className="relative flex min-h-0 flex-1 flex-col">
 						{showControls ? (
 							<LiveConsoleNotices
 								consoleLimit={consoleLimit}
@@ -228,7 +233,7 @@ export function LiveConsole({
 						) : null}
 						<div
 							aria-label="Run console output"
-							className="h-[520px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner"
+							className="h-[560px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner 2xl:h-auto 2xl:min-h-0 2xl:flex-1"
 							onScroll={handleScroll}
 							ref={scrollRef}>
 							{effectiveView === 'pretty' ? (

@@ -37,6 +37,21 @@ export function useConsoleScroll(consoleOpen: boolean, followOn: unknown[]) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [consoleOpen, ...followOn]);
 
+	// The follow effect above only fires on new output, so a container that changes size while the
+	// operator is pinned leaves them stranded mid-transcript. At a fixed height that never
+	// happened; at viewport height a window resize, the sidebar collapse animation, or the
+	// terminal pane opening all change clientHeight without producing any new output.
+	useEffect(() => {
+		const node = scrollRef.current;
+		if (!consoleOpen || !node) return;
+		const observer = new ResizeObserver(() => {
+			if (!pinnedRef.current) return;
+			node.scrollTop = node.scrollHeight;
+		});
+		observer.observe(node);
+		return () => observer.disconnect();
+	}, [consoleOpen]);
+
 	function handleScroll(): void {
 		const node = scrollRef.current;
 		if (!node) return;

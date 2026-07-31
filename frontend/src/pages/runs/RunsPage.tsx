@@ -150,7 +150,7 @@ export function RunsPage() {
 					)}
 				</div>
 				<div
-					className="min-w-0 self-start 2xl:sticky 2xl:top-6 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1"
+					className="min-w-0 self-start 2xl:sticky 2xl:top-6 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1 2xl:flex 2xl:h-[calc(100dvh-3rem)] 2xl:flex-col"
 					ref={page.liveConsoleRef}>
 					{page.selection?.kind === 'pipeline' && page.selectedSession ? (
 						<PipelineConsoleSummary session={page.selectedSession} />

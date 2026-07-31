@@ -5,6 +5,7 @@ import {
 	denialSummary,
 	isWorkspacePolicyDenial,
 } from 'aidd-shared/agent/tools/shell-policy-denial';
+import { escapeNativeLogLine } from 'aidd-shared/backends/parsers/native';
 
 function asRecord(value: unknown): null | Record<string, unknown> {
 	return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
@@ -42,16 +43,21 @@ function renderToolCall(tool: string, args: unknown): string {
 	return `→ ${tool} ${summary}`;
 }
 
+/** Model prose is untrusted input to the log grammar; every line of it is escaped. */
+function escapeProse(text: string): string {
+	return text.split('\n').map(escapeNativeLogLine).join('\n');
+}
+
 // The AIDD_RESULT payload can be tens of thousands of characters of JSON. The console
 // should show the model's narration and that a result was emitted, not the raw blob.
 function renderAssistantText(chunk: string): null | string {
 	const trimmed = chunk.trim();
 	if (trimmed.length === 0) return null;
 	const markerIndex = trimmed.indexOf(resultMarker);
-	if (markerIndex === -1) return trimmed;
+	if (markerIndex === -1) return escapeProse(trimmed);
 	const narration = trimmed.slice(0, markerIndex).trim();
 	const resultNote = `${resultMarker} { … }`;
-	return narration.length > 0 ? `${narration}\n${resultNote}` : resultNote;
+	return narration.length > 0 ? `${escapeProse(narration)}\n${resultNote}` : resultNote;
 }
 
 // Reasoning deltas are progress, not transcript: raw thinking can run to tens of KB per
@@ -70,24 +76,43 @@ function formatReasoningChars(chars: number): string {
  * transcript is never doubled. One instance per run log.
  */
 export class NativeRunLogRenderer {
+	private atLineStart = true;
 	private lastReasoningLineAtMs = 0;
 	private reasoningChars = 0;
 	private streamedTextThisTurn = false;
+
+	/**
+	 * Escape streamed prose. Deltas are arbitrary fragments rather than whole lines — a marker can
+	 * even split across two of them — so escaping has to follow the column: a fragment's first
+	 * segment is only at a line start when the previous fragment ended one.
+	 */
+	private streamProse(chunk: string): string {
+		const escaped = chunk
+			.split('\n')
+			.map((segment, index) =>
+				index === 0 && !this.atLineStart ? segment : escapeNativeLogLine(segment),
+			)
+			.join('\n');
+		this.atLineStart = chunk.endsWith('\n');
+		return escaped;
+	}
 
 	render(event: AgentEvent, nowMs = Date.now()): null | string {
 		if (event.type === 'assistant_delta') {
 			if (event.kind === 'text') {
 				this.streamedTextThisTurn = true;
-				return event.chunk;
+				return this.streamProse(event.chunk);
 			}
 			this.reasoningChars += event.chunk.length;
 			if (this.lastReasoningLineAtMs === 0) {
 				this.lastReasoningLineAtMs = nowMs;
-				return '[reasoning…]\n';
+				return this.structural('[reasoning…]\n');
 			}
 			if (nowMs - this.lastReasoningLineAtMs >= REASONING_LINE_INTERVAL_MS) {
 				this.lastReasoningLineAtMs = nowMs;
-				return `[reasoning… ${formatReasoningChars(this.reasoningChars)} chars]\n`;
+				return this.structural(
+					`[reasoning… ${formatReasoningChars(this.reasoningChars)} chars]\n`,
+				);
 			}
 			return null;
 		}
@@ -106,7 +131,19 @@ export class NativeRunLogRenderer {
 			this.lastReasoningLineAtMs = 0;
 			if (event.type === 'assistant_text' && streamedText) return null;
 		}
-		return renderNativeRunLogLine(event);
+		return this.structural(renderNativeRunLogLine(event));
+	}
+
+	/**
+	 * A structural line must own its line. A text delta can end mid-line, and appending a marker to
+	 * that partial line both corrupts the prose and hides the marker from the parser, so an
+	 * unterminated line is closed first.
+	 */
+	private structural(line: null | string): null | string {
+		if (line === null) return null;
+		const owned = this.atLineStart ? line : `\n${line}`;
+		this.atLineStart = true;
+		return owned;
 	}
 }
 

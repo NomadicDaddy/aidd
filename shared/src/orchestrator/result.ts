@@ -65,6 +65,8 @@ export function exitCodeFromEvents(events: AgentEvent[]): number {
 			case 'spawn':
 			case 'unknown':
 				return orchestratorExitCodes.providerError;
+			case 'provider_flagged':
+				return orchestratorExitCodes.providerFlagged;
 			case 'rate_limit':
 				return orchestratorExitCodes.rateLimited;
 		}

@@ -64,6 +64,8 @@ function outcomeStatusForExitCode(exitCode: number): IterationOutcomeStatus {
 			return 'no_assistant';
 		case orchestratorExitCodes.providerError:
 			return 'provider_error';
+		case orchestratorExitCodes.providerFlagged:
+			return 'provider_flagged';
 		case orchestratorExitCodes.rateLimited:
 			return 'rate_limited';
 		case orchestratorExitCodes.success:

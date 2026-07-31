@@ -1,7 +1,7 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
+import { providerErrorReason } from './flagged-text.ts';
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
-import { isRateLimitText } from './rate-limit-text.ts';
 
 // Grok Build's headless `--output-format streaming-json` emits three JSONL envelope types and
 // NOTHING else — verified against grok 0.2.101:
@@ -103,7 +103,7 @@ export function parseGrokLine(line: string): AgentEvent[] {
 			readString(json.message) ??
 			readString(asRecord(json.error)?.message) ??
 			readString(json.error);
-		const reason: AgentErrorReason = isRateLimitText(message) ? 'rate_limit' : 'provider';
+		const reason: AgentErrorReason = providerErrorReason(message);
 		const events: AgentEvent[] = [];
 		if (reason === 'rate_limit') events.push({ raw: json, type: 'rate_limit' });
 		events.push({ meta: json, reason, type: 'error' });
@@ -127,7 +127,7 @@ function assembleAssistantText(stdout: string): string {
 }
 
 export function finalizeGrokBackend(input: FinalizePlainBackendInput): AgentEvent[] {
-	const { exitCode, sawRateLimit, stderr, stdout } = input;
+	const { stdout } = input;
 	const events: AgentEvent[] = [];
 	const assistantText = assembleAssistantText(stdout);
 	if (assistantText) {
@@ -140,9 +140,7 @@ export function finalizeGrokBackend(input: FinalizePlainBackendInput): AgentEven
 	// Reuse the shared rate-limit / exit-code / done tail. sawAssistantText is forced true because
 	// we always emit the assistant_text above; that keeps finalizePlainBackend from re-emitting the
 	// raw JSON stream as a second assistant_text.
-	events.push(
-		...finalizePlainBackend({ exitCode, sawAssistantText: true, sawRateLimit, stderr, stdout }),
-	);
+	events.push(...finalizePlainBackend({ ...input, sawAssistantText: true }));
 	return events;
 }
 
@@ -157,8 +155,18 @@ export function parseGrokBackendOutput(
 		events.push(...parseGrokLine(line));
 	}
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
+	const sawProviderFlagged = events.some(
+		(event) => event.type === 'error' && event.reason === 'provider_flagged',
+	);
 	events.push(
-		...finalizeGrokBackend({ exitCode, sawAssistantText: true, sawRateLimit, stderr, stdout }),
+		...finalizeGrokBackend({
+			exitCode,
+			sawAssistantText: true,
+			sawProviderFlagged,
+			sawRateLimit,
+			stderr,
+			stdout,
+		}),
 	);
 	return events;
 }

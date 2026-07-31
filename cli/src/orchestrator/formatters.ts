@@ -74,7 +74,11 @@ export function formatFailureSummary(
 		const requestId = details.providerError.requestId
 			? ` requestId=${details.providerError.requestId}`
 			: '';
-		return `${summary}; provider error${requestId}: ${details.providerError.message}`;
+		// Content-policy refusals carry their own classification so flagged runs are
+		// accounted apart from infrastructure provider failures.
+		const label =
+			details.outcome.status === 'provider_flagged' ? 'provider flagged' : 'provider error';
+		return `${summary}; ${label}${requestId}: ${details.providerError.message}`;
 	}
 	// Lead with the classified reason; keep the raw backend number bracketed for grep-ability.
 	// exitCode is the orchestrator's classification and backendExitCode the raw process exit —

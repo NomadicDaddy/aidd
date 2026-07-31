@@ -62,6 +62,7 @@ export interface ProcessBackendOptions {
 	finalize?: (input: {
 		exitCode: null | number;
 		sawAssistantText: boolean;
+		sawProviderFlagged?: boolean;
 		sawRateLimit: boolean;
 		stderr: string;
 		stdout: string;
@@ -143,6 +144,7 @@ export async function* runProcessBackend(
 	let stderrBuffer = '';
 	let sawAssistantText = false;
 	let sawRateLimit = false;
+	let sawProviderFlagged = false;
 	let closed = false;
 	let exitCode: null | number = null;
 	let aborted = false;
@@ -150,6 +152,9 @@ export async function* runProcessBackend(
 	const emit = (event: AgentEvent): void => {
 		if (event.type === 'assistant_text') sawAssistantText = true;
 		else if (event.type === 'rate_limit') sawRateLimit = true;
+		else if (event.type === 'error' && event.reason === 'provider_flagged') {
+			sawProviderFlagged = true;
+		}
 		queue.push(event);
 		wake();
 	};
@@ -251,6 +256,9 @@ export async function* runProcessBackend(
 			for (const event of parseLine(line)) {
 				if (event.type === 'assistant_text') sawAssistantText = true;
 				else if (event.type === 'rate_limit') sawRateLimit = true;
+				else if (event.type === 'error' && event.reason === 'provider_flagged') {
+					sawProviderFlagged = true;
+				}
 				yield event;
 			}
 		}
@@ -260,7 +268,14 @@ export async function* runProcessBackend(
 	// transcript has already been emitted by the time we reach here — do not re-emit it.
 	if (aborted) return;
 
-	for (const event of finalize({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout })) {
+	for (const event of finalize({
+		exitCode,
+		sawAssistantText,
+		sawProviderFlagged,
+		sawRateLimit,
+		stderr,
+		stdout,
+	})) {
 		yield event;
 	}
 }

@@ -145,7 +145,7 @@ export function extractIterationDetails(
 			}
 			const text = eventTextForClassification(event) ?? event.reason;
 			const classified = classifyErrorText(text);
-			if (event.reason === 'provider') {
+			if (event.reason === 'provider' || event.reason === 'provider_flagged') {
 				const isExitFallback = isProviderExitFallbackMeta(event.meta);
 				const priority = isExitFallback ? 0 : fatality === 'unspecified' ? 1 : 2;
 				// The generic {exitCode, stderr} error the parsers emit on process
@@ -164,7 +164,10 @@ export function extractIterationDetails(
 			}
 			errors.push({
 				message: text.slice(0, 500),
-				type: event.reason === 'provider' ? 'provider' : (classified ?? 'general'),
+				type:
+					event.reason === 'provider' || event.reason === 'provider_flagged'
+						? 'provider'
+						: (classified ?? 'general'),
 			});
 		}
 	}

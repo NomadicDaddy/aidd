@@ -118,6 +118,23 @@ describe('native agent loop', () => {
 		]);
 	});
 
+	test('classifies a thrown provider content-flag refusal as provider_flagged', async () => {
+		const flagged =
+			'This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request.';
+		const client: AgentClient = {
+			async complete() {
+				throw new Error(flagged);
+			},
+		};
+
+		const events = await collect(runAgentLoop(input, { client }));
+
+		expect(events).toEqual([
+			{ type: 'error', reason: 'provider_flagged', meta: flagged },
+			{ type: 'done', exitCode: 8, filesModified: [] },
+		]);
+	});
+
 	test('normalizes aborted runs', async () => {
 		const controller = new AbortController();
 		controller.abort('stop requested');

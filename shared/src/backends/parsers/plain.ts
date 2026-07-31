@@ -1,5 +1,6 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
+import { isProviderFlaggedText } from './flagged-text.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
 
 function tryJson(line: string): undefined | unknown {
@@ -206,7 +207,11 @@ function parseJsonLine(json: unknown): AgentEvent[] {
 			events.push({ raw: json, type: 'rate_limit' });
 			events.push({ meta: json, reason: 'rate_limit', type: 'error' });
 		} else {
-			events.push({ meta: json, reason: 'provider', type: 'error' });
+			events.push({
+				meta: json,
+				reason: isProviderFlaggedText(errorMessage) ? 'provider_flagged' : 'provider',
+				type: 'error',
+			});
 		}
 	}
 	return events;
@@ -224,13 +229,15 @@ export function parsePlainBackendLine(line: string): AgentEvent[] {
 export interface FinalizePlainBackendInput {
 	exitCode: null | number;
 	sawAssistantText: boolean;
+	/** True when a structured provider_flagged error was already seen during the stream. */
+	sawProviderFlagged?: boolean;
 	sawRateLimit: boolean;
 	stderr: string;
 	stdout: string;
 }
 
 export function finalizePlainBackend(input: FinalizePlainBackendInput): AgentEvent[] {
-	const { exitCode, sawAssistantText, sawRateLimit, stderr, stdout } = input;
+	const { exitCode, sawAssistantText, sawProviderFlagged, sawRateLimit, stderr, stdout } = input;
 	const combined = [stdout, stderr].filter(Boolean).join('\n');
 	const events: AgentEvent[] = [];
 	if (!sawAssistantText && stdout.trim()) {
@@ -240,11 +247,17 @@ export function finalizePlainBackend(input: FinalizePlainBackendInput): AgentEve
 		events.push({ raw: combined, type: 'rate_limit' });
 	}
 	if ((exitCode ?? 1) !== 0) {
-		// Honor structured rate-limit events seen during the stream: exitCodeFromEvents reads
-		// the LAST error, so this trailing exit-fallback must not downgrade a throttled run
-		// back to a generic provider error.
+		// Honor structured rate-limit and content-flag events seen during the stream:
+		// exitCodeFromEvents reads the LAST error, so this trailing exit-fallback must not
+		// downgrade a throttled or flagged run back to a generic provider error. The flagged
+		// signal comes only from the structured flag (never from scanning `combined` — the word
+		// "flagged" is too common in ordinary transcripts to trust in stream soup).
 		const reason: AgentErrorReason =
-			sawRateLimit || isRateLimitText(combined) ? 'rate_limit' : 'provider';
+			sawRateLimit || isRateLimitText(combined)
+				? 'rate_limit'
+				: sawProviderFlagged
+					? 'provider_flagged'
+					: 'provider';
 		events.push({ meta: { exitCode, stderr }, reason, type: 'error' });
 	}
 	events.push({ exitCode: exitCode ?? 1, filesModified: [], type: 'done' });
@@ -263,8 +276,18 @@ export function parsePlainBackendOutput(
 	}
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
+	const sawProviderFlagged = events.some(
+		(event) => event.type === 'error' && event.reason === 'provider_flagged',
+	);
 	events.push(
-		...finalizePlainBackend({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout }),
+		...finalizePlainBackend({
+			exitCode,
+			sawAssistantText,
+			sawProviderFlagged,
+			sawRateLimit,
+			stderr,
+			stdout,
+		}),
 	);
 	return events;
 }

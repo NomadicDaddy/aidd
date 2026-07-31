@@ -128,6 +128,12 @@ export function decodeExitCode(exitCode: null | number | undefined): null | WebR
 				title: 'The model provider returned an error (network, 5xx, or parse failure).',
 				tone: 'red',
 			};
+		case orchestratorExitCodes.providerFlagged:
+			return {
+				label: 'Provider flagged',
+				title: 'The model provider refused the request on content-policy grounds (the response was flagged). Rephrase the prompt or use a provider/account authorized for this content.',
+				tone: 'red',
+			};
 		case orchestratorExitCodes.rateLimited:
 			return {
 				label: 'Rate limited',
@@ -239,7 +245,7 @@ export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
 }
 
 export type TelemetryOutcomeBucket =
-	'completed' | 'failed' | 'killed' | 'noWork' | 'running' | 'stopped' | 'warnings';
+	'completed' | 'failed' | 'flagged' | 'killed' | 'noWork' | 'running' | 'stopped' | 'warnings';
 
 // Converts the shared rich run outcome into one mutually-exclusive Telemetry bucket without
 // collapsing deliberate stops, kills, no-work runs, or active runs into a generic failure count.
@@ -254,7 +260,9 @@ export function classifyWebRunTelemetryBucket(run: WebRunOutcomeInput): Telemetr
 			if (run.stopReason === 'no_work') return 'noWork';
 			return run.status === 'killed' ? 'killed' : 'stopped';
 		case 'red':
-			return 'failed';
+			// Provider content-policy refusals stay red but are accounted apart from ordinary
+			// failures; the exit code is the authoritative flag signal.
+			return run.exitCode === orchestratorExitCodes.providerFlagged ? 'flagged' : 'failed';
 		case 'teal':
 			return 'running';
 	}

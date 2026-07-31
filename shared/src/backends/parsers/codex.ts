@@ -1,7 +1,7 @@
 import type { AgentErrorEvent, AgentErrorReason, AgentEvent } from '../types.ts';
 
+import { providerErrorReason } from './flagged-text.ts';
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
-import { isRateLimitText } from './rate-limit-text.ts';
 
 function tryJson(line: string): undefined | unknown {
 	try {
@@ -25,12 +25,12 @@ function readNumber(value: unknown): number | undefined {
 }
 
 // Codex error messages are often a JSON-encoded string wrapping the real provider payload;
-// check the decoded form too so nested 429s classify as rate limits.
-function errorTextIsRateLimit(message: string | undefined): boolean {
-	if (isRateLimitText(message)) return true;
-	if (message === undefined) return false;
+// classify the decoded form too so nested 429s and content flags are recognized.
+function codexProviderErrorReason(message: string | undefined): AgentErrorReason {
+	const direct = providerErrorReason(message);
+	if (direct !== 'provider' || message === undefined) return direct;
 	const decoded = tryJson(message);
-	return decoded !== undefined && isRateLimitText(JSON.stringify(decoded));
+	return decoded === undefined ? 'provider' : providerErrorReason(JSON.stringify(decoded));
 }
 
 // Codex reports several benign configuration notices through the same item-error channel it uses
@@ -127,7 +127,7 @@ function parseItemEvent(envelopeType: string, item: Record<string, unknown>): Ag
 		// Mark only recognized advisories nonfatal. Other item errors remain unspecified so they
 		// fail closed for exit classification but can yield to an explicitly fatal terminal error.
 		const message = readString(item.message);
-		const reason: AgentErrorReason = errorTextIsRateLimit(message) ? 'rate_limit' : 'provider';
+		const reason = codexProviderErrorReason(message);
 		if (reason === 'rate_limit') events.push({ raw: item, type: 'rate_limit' });
 		const diagnostic = nonfatalItemDiagnostic(message);
 		const errorEvent: AgentErrorEvent = {
@@ -152,7 +152,7 @@ function parseErrorEvent(json: Record<string, unknown>, fatal = true): AgentEven
 		readString(json.message) ??
 		readString(asRecord(json.error)?.message) ??
 		readString(json.error);
-	const reason: AgentErrorReason = errorTextIsRateLimit(message) ? 'rate_limit' : 'provider';
+	const reason = codexProviderErrorReason(message);
 	if (reason === 'rate_limit') events.push({ raw: json, type: 'rate_limit' });
 	events.push({ fatal, meta: json, reason, type: 'error' });
 	return events;
@@ -211,8 +211,18 @@ export function parseCodexBackendOutput(
 	}
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
+	const sawProviderFlagged = events.some(
+		(event) => event.type === 'error' && event.reason === 'provider_flagged',
+	);
 	events.push(
-		...finalizeCodexBackend({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout }),
+		...finalizeCodexBackend({
+			exitCode,
+			sawAssistantText,
+			sawProviderFlagged,
+			sawRateLimit,
+			stderr,
+			stdout,
+		}),
 	);
 	return events;
 }

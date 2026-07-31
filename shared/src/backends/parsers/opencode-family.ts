@@ -1,7 +1,7 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
+import { providerErrorReason } from './flagged-text.ts';
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
-import { isRateLimitText } from './rate-limit-text.ts';
 
 function tryJson(line: string): undefined | unknown {
 	try {
@@ -97,7 +97,7 @@ function parseError(json: Record<string, unknown>, part: Record<string, unknown>
 		readString(asRecord(part.error)?.message) ??
 		readString(json.message) ??
 		readString(json.error);
-	const reason: AgentErrorReason = isRateLimitText(message) ? 'rate_limit' : 'provider';
+	const reason: AgentErrorReason = providerErrorReason(message);
 	if (reason === 'rate_limit') events.push({ raw: json, type: 'rate_limit' });
 	events.push({ meta: json, reason, type: 'error' });
 	return events;
@@ -138,10 +138,14 @@ export function parseOpencodeFamilyOutput(
 	}
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
+	const sawProviderFlagged = events.some(
+		(event) => event.type === 'error' && event.reason === 'provider_flagged',
+	);
 	events.push(
 		...finalizeOpencodeFamilyBackend({
 			exitCode,
 			sawAssistantText,
+			sawProviderFlagged,
 			sawRateLimit,
 			stderr,
 			stdout,

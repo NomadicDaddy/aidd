@@ -115,6 +115,12 @@ describe('final-check failure surfacing (ISS-001)', () => {
 		expect(outcome.label).toBe('Success');
 	});
 
+	test('a provider content-flag refusal classifies as a red failing outcome', () => {
+		const outcome = classifyIteration(makeIteration({ status: 'provider_flagged' }));
+		expect(outcome.tone).toBe('red');
+		expect(outcome.label).toBe('Provider flagged');
+	});
+
 	test('runFinalCheckFailures aggregates failures across a run iterations', () => {
 		const iterations = [
 			makeIteration({ finalChecks: { smokeQc: 'failed' }, status: 'success' }),

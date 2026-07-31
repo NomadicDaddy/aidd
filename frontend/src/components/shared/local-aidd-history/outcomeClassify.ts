@@ -42,6 +42,7 @@ const failingIterationStatuses = new Set([
 	'idle_timeout',
 	'no_assistant',
 	'provider_error',
+	'provider_flagged',
 	'rate_limited',
 	'validation_error',
 ]);
@@ -54,6 +55,7 @@ const iterationStatusLabels: Readonly<Record<string, string>> = {
 	idle_timeout: 'Idle timeout',
 	no_assistant: 'No assistant response',
 	provider_error: 'Provider error',
+	provider_flagged: 'Provider flagged',
 	rate_limited: 'Rate limited',
 	running: 'Running',
 	success: 'Success',
@@ -111,6 +113,12 @@ export function decodeExitCode(exitCode: null | number | undefined): null | Outc
 			return {
 				label: 'Provider error',
 				title: 'The model provider returned an error (network, 5xx, or parse failure).',
+				tone: 'red',
+			};
+		case orchestratorExitCodes.providerFlagged:
+			return {
+				label: 'Provider flagged',
+				title: 'The model provider refused the request on content-policy grounds (the response was flagged).',
 				tone: 'red',
 			};
 		case orchestratorExitCodes.rateLimited:

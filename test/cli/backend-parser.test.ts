@@ -697,6 +697,34 @@ describe('codex real error surfacing', () => {
 		}
 	});
 
+	test('provider content flags classify as provider_flagged with their own exit code', () => {
+		const flagged =
+			'This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request.';
+		const line = JSON.stringify({ type: 'turn.failed', error: { message: flagged } });
+		const events = parseCodexBackendOutput(line, '', 1);
+		const error = events.find(
+			(event) => event.type === 'error' && event.reason === 'provider_flagged',
+		);
+		expect(error).toBeDefined();
+		expect(exitCodeFromEvents(events)).toBe(orchestratorExitCodes.providerFlagged);
+	});
+
+	test('a nested flagged message inside a JSON-encoded codex error classifies as provider_flagged', () => {
+		const nested = JSON.stringify({
+			error: { message: 'Your request was flagged by our content policy.' },
+			type: 'error',
+		});
+		const line = JSON.stringify({
+			item: { id: 'item_0', message: nested, type: 'error' },
+			type: 'item.completed',
+		});
+		const events = parseCodexBackendOutput(line, '', 1);
+		expect(
+			events.some((event) => event.type === 'error' && event.reason === 'provider_flagged'),
+		).toBe(true);
+		expect(exitCodeFromEvents(events)).toBe(orchestratorExitCodes.providerFlagged);
+	});
+
 	test('turn.failed nested error payload is captured', () => {
 		const nested = JSON.stringify({
 			type: 'error',

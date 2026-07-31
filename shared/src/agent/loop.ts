@@ -1,5 +1,6 @@
 import type { AgentEvent, PromptInput } from '../backends/types.ts';
 
+import { isProviderFlaggedText } from '../backends/parsers/flagged-text.ts';
 import {
 	type AgentClient,
 	type AgentLoopRequest,
@@ -184,9 +185,13 @@ export async function* runAgentLoop(
 			return;
 		}
 
+		// Provider content-policy refusals classify apart from infrastructure failures; the
+		// final exit code derives from this reason via exitCodeFromEvents, so the internal
+		// zrun done code below stays the generic provider value.
+		const message = error instanceof Error ? error.message : String(error);
 		yield {
 			meta: error instanceof Error ? error.message : error,
-			reason: 'provider',
+			reason: isProviderFlaggedText(message) ? 'provider_flagged' : 'provider',
 			type: 'error',
 		};
 		yield { exitCode: zrunExitCodes.providerError, filesModified: [], type: 'done' };

@@ -69,6 +69,31 @@ describe('classifyWebRun', () => {
 		expect(outcome.tone).toBe('red');
 	});
 
+	test('classifies a provider content-flag refusal apart from provider errors', () => {
+		const outcome = classifyWebRun({
+			status: 'failed',
+			stopReason: 'exit_error',
+			exitCode: 78,
+		});
+		expect(outcome.label).toBe('Provider flagged');
+		expect(outcome.tone).toBe('red');
+		// Red like a failure, but accounted in its own telemetry bucket.
+		expect(
+			classifyWebRunTelemetryBucket({
+				status: 'failed',
+				stopReason: 'exit_error',
+				exitCode: 78,
+			}),
+		).toBe('flagged');
+		expect(
+			classifyWebRunTelemetryBucket({
+				status: 'failed',
+				stopReason: 'exit_error',
+				exitCode: 72,
+			}),
+		).toBe('failed');
+	});
+
 	test('downgrades a completed run whose summary carries the uncommitted-source marker to amber', () => {
 		// Regression for run-end-dirty-tree-check: a run that dirties tracked source after its
 		// last feature commit (post-commit formatter/codegen) must not read as a clean emerald

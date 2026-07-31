@@ -12,7 +12,17 @@ export interface PromptInput {
 }
 
 export type AgentErrorReason =
-	'aborted' | 'idle' | 'parse' | 'provider' | 'rate_limit' | 'spawn' | 'unknown';
+	| 'aborted'
+	| 'idle'
+	| 'parse'
+	// provider_flagged: a provider content-policy refusal (error text mentions "flagged") —
+	// still an error, but classified apart from infrastructure provider failures so it is
+	// accounted separately.
+	| 'provider_flagged'
+	| 'provider'
+	| 'rate_limit'
+	| 'spawn'
+	| 'unknown';
 
 export interface AgentErrorEvent {
 	/** False for a recognized advisory; undefined is fail-closed but not explicitly fatal. */

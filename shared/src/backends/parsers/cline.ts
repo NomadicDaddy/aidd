@@ -1,8 +1,8 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { createClineUsageReconciler, parseAggregateUsage, parseTurnUsage } from './cline-usage.ts';
+import { providerErrorReason } from './flagged-text.ts';
 import { finalizePlainBackend, type FinalizePlainBackendInput } from './plain.ts';
-import { isRateLimitText } from './rate-limit-text.ts';
 
 function tryJson(line: string): undefined | unknown {
 	try {
@@ -33,7 +33,7 @@ function errorMessage(value: Record<string, unknown>): string | undefined {
 
 function parseError(value: Record<string, unknown>, fatal: boolean): AgentEvent[] {
 	const message = errorMessage(value);
-	const reason: AgentErrorReason = isRateLimitText(message) ? 'rate_limit' : 'provider';
+	const reason: AgentErrorReason = providerErrorReason(message);
 	const events: AgentEvent[] = [];
 	if (reason === 'rate_limit') events.push({ raw: value, type: 'rate_limit' });
 	events.push({ fatal, meta: value, reason, type: 'error' });
@@ -206,6 +206,18 @@ export function parseClineBackendOutput(
 	}
 	const sawAssistantText = events.some((event) => event.type === 'assistant_text');
 	const sawRateLimit = events.some((event) => event.type === 'rate_limit');
-	events.push(...parser.finalize({ exitCode, sawAssistantText, sawRateLimit, stderr, stdout }));
+	const sawProviderFlagged = events.some(
+		(event) => event.type === 'error' && event.reason === 'provider_flagged',
+	);
+	events.push(
+		...parser.finalize({
+			exitCode,
+			sawAssistantText,
+			sawProviderFlagged,
+			sawRateLimit,
+			stderr,
+			stdout,
+		}),
+	);
 	return events;
 }

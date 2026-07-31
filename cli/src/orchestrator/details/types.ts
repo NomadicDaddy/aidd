@@ -13,6 +13,7 @@ export type IterationOutcomeStatus =
 	| 'missing_audit_artifacts'
 	| 'no_assistant'
 	| 'provider_error'
+	| 'provider_flagged'
 	| 'rate_limited'
 	| 'success'
 	| 'validation_error'

@@ -145,6 +145,7 @@ Feature completion is accepted only when the selected feature metadata and the b
 | `75`  | Flailing (repeated unproductive iterations).                                                                                                   |
 | `76`  | Write-allowlist violation (the run touched paths outside the plan's `writeAllowlist`).                                                         |
 | `77`  | Merge conflict parked.                                                                                                                         |
+| `78`  | Provider flagged (content-policy refusal; the provider error text mentions "flagged").                                                         |
 | `124` | Aborted.                                                                                                                                       |
 
 ## Validation Commands

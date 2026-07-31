@@ -26,6 +26,7 @@ function outcomeBreakdown(row: ResourceUsageRow): string {
 		{ count: row.completed, label: 'completed' },
 		{ count: row.warnings, label: 'warnings' },
 		{ count: row.failed, label: 'failed' },
+		{ count: row.flagged, label: 'flagged' },
 		{ count: row.stopped, label: 'stopped' },
 		{ count: row.killed, label: 'killed' },
 		{ count: row.noWork, label: 'no work' },
@@ -115,6 +116,7 @@ export function TimeseriesChart({
 			point.completed,
 			point.warnings,
 			point.failed,
+			point.flagged,
 			point.stopped,
 			point.killed,
 			point.noWork,
@@ -134,7 +136,7 @@ export function TimeseriesChart({
 						<div
 							className="group flex h-full flex-1 flex-col items-center justify-end"
 							key={point.bucket}
-							title={`${labelText} · ${point.total} invocations (${point.completed} completed, ${point.warnings} warnings, ${point.failed} failed, ${point.stopped} stopped, ${point.killed} killed, ${point.noWork} no work, ${point.running} running)`}>
+							title={`${labelText} · ${point.total} invocations (${point.completed} completed, ${point.warnings} warnings, ${point.failed} failed, ${point.flagged} flagged, ${point.stopped} stopped, ${point.killed} killed, ${point.noWork} no work, ${point.running} running)`}>
 							{/* The wrapper needs a definite height for the stacked segments to size
 						    against: percentage heights inside an auto-height flex wrapper compute
 						    to 0 and the bars render invisible. Height carries the bucket total;
@@ -158,6 +160,12 @@ export function TimeseriesChart({
 									<div
 										className="min-h-0 w-full bg-red-400 group-hover:bg-red-300 dark:bg-red-500 dark:group-hover:bg-red-400"
 										style={{ flexBasis: 0, flexGrow: point.failed }}
+									/>
+								)}
+								{point.flagged > 0 && (
+									<div
+										className="min-h-0 w-full bg-rose-700 group-hover:bg-rose-600 dark:bg-rose-800 dark:group-hover:bg-rose-700"
+										style={{ flexBasis: 0, flexGrow: point.flagged }}
 									/>
 								)}
 								{point.stopped > 0 && (
@@ -193,6 +201,7 @@ export function TimeseriesChart({
 				<LegendDot className="bg-emerald-500" label="Completed" />
 				<LegendDot className="bg-amber-400" label="Warnings" />
 				<LegendDot className="bg-red-400" label="Failed" />
+				<LegendDot className="bg-rose-700" label="Flagged" />
 				<LegendDot className="bg-neutral-400" label="Stopped" />
 				<LegendDot className="bg-orange-700" label="Killed" />
 				<LegendDot className="bg-slate-500" label="No work" />
@@ -205,6 +214,7 @@ export function TimeseriesChart({
 					'Completed',
 					'Warnings',
 					'Failed',
+					'Flagged',
 					'Stopped',
 					'Killed',
 					'No work',

@@ -3,6 +3,7 @@ import { Card } from '../../components/ui/card.tsx';
 export interface TelemetryTotals {
 	completed: number;
 	failed: number;
+	flagged: number;
 	killed: number;
 	nested: number;
 	noWork: number;
@@ -47,10 +48,11 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 				/>
 				<CountCard className="bg-indigo-400" label="Nested steps" value={totals.nested} />
 			</div>
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
 				<CountCard className="bg-emerald-500" label="Completed" value={totals.completed} />
 				<CountCard className="bg-amber-400" label="Warnings" value={totals.warnings} />
 				<CountCard className="bg-red-400" label="Failed" value={totals.failed} />
+				<CountCard className="bg-rose-700" label="Flagged" value={totals.flagged} />
 				<CountCard className="bg-neutral-400" label="Stopped" value={totals.stopped} />
 				<CountCard className="bg-orange-700" label="Killed" value={totals.killed} />
 				<CountCard className="bg-slate-500" label="No work" value={totals.noWork} />

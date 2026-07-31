@@ -22,6 +22,7 @@ beforeEach(() => {
 });
 
 async function seedRun(input: {
+	exitCode?: number;
 	id: string;
 	startedAt: number;
 	status: 'completed' | 'failed' | 'killed' | 'running' | 'stopped';
@@ -29,7 +30,7 @@ async function seedRun(input: {
 }) {
 	await db.insert(runs).values({
 		backend: 'native',
-		exitCode: input.status === 'completed' ? 0 : 1,
+		exitCode: input.exitCode ?? (input.status === 'completed' ? 0 : 1),
 		id: input.id,
 		projectName: 'demo',
 		projectPath: 'd:/applications/demo',
@@ -81,6 +82,14 @@ describe('telemetry aggregation transparency', () => {
 			status: 'completed',
 			stopReason: 'no_work',
 		});
+		// Provider content-flag refusal: exit 78 keeps it red but in its own bucket.
+		await seedRun({
+			exitCode: 78,
+			id: 'run-flagged',
+			startedAt: now,
+			status: 'failed',
+			stopReason: 'exit_error',
+		});
 		await seedInvocation({ id: 'completed', startedAt: now, status: 'completed' });
 		await seedInvocation({ id: 'failed', startedAt: now, status: 'failed' });
 		await seedInvocation({
@@ -115,12 +124,21 @@ describe('telemetry aggregation transparency', () => {
 			startedAt: now,
 			status: 'stopped',
 		});
+		await seedInvocation({
+			backend: 'native',
+			id: 'flagged',
+			resourceType: 'run',
+			runId: 'run-flagged',
+			startedAt: now,
+			status: 'failed',
+		});
 
 		const rows = await getResourceUsage(db);
 		const totals = rows.reduce(
 			(accumulator, row) => ({
 				completed: accumulator.completed + row.completed,
 				failed: accumulator.failed + row.failed,
+				flagged: accumulator.flagged + row.flagged,
 				killed: accumulator.killed + row.killed,
 				nested: accumulator.nested + row.nested,
 				noWork: accumulator.noWork + row.noWork,
@@ -133,6 +151,7 @@ describe('telemetry aggregation transparency', () => {
 			{
 				completed: 0,
 				failed: 0,
+				flagged: 0,
 				killed: 0,
 				nested: 0,
 				noWork: 0,
@@ -146,13 +165,14 @@ describe('telemetry aggregation transparency', () => {
 		expect(totals).toEqual({
 			completed: 1,
 			failed: 1,
+			flagged: 1,
 			killed: 1,
 			nested: 1,
 			noWork: 1,
 			running: 1,
 			stopped: 1,
-			topLevel: 6,
-			total: 7,
+			topLevel: 7,
+			total: 8,
 			warnings: 1,
 		});
 		const points = await getTimeseries(db, { bucket: 'day' });
@@ -160,11 +180,12 @@ describe('telemetry aggregation transparency', () => {
 		expect(points[0]).toMatchObject({
 			completed: 1,
 			failed: 1,
+			flagged: 1,
 			killed: 1,
 			noWork: 1,
 			running: 1,
 			stopped: 1,
-			total: 7,
+			total: 8,
 			warnings: 1,
 		});
 	});

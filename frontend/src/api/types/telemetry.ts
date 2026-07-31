@@ -9,6 +9,7 @@ export interface ResourceUsageRow {
 	avgDurationMs: null | number;
 	completed: number;
 	failed: number;
+	flagged: number;
 	killed: number;
 	lastUsedAt: null | number;
 	nested: number;
@@ -27,6 +28,7 @@ export interface TelemetryTimeseriesPoint {
 	bucket: number;
 	completed: number;
 	failed: number;
+	flagged: number;
 	killed: number;
 	noWork: number;
 	running: number;

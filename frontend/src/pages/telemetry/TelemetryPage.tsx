@@ -102,6 +102,7 @@ export function TelemetryPage() {
 		(acc, row) => ({
 			completed: acc.completed + row.completed,
 			failed: acc.failed + row.failed,
+			flagged: acc.flagged + row.flagged,
 			killed: acc.killed + row.killed,
 			nested: acc.nested + row.nested,
 			noWork: acc.noWork + row.noWork,
@@ -114,6 +115,7 @@ export function TelemetryPage() {
 		{
 			completed: 0,
 			failed: 0,
+			flagged: 0,
 			killed: 0,
 			nested: 0,
 			noWork: 0,

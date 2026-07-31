@@ -17,8 +17,8 @@ function renderCharts(): RenderedCharts {
 		"import { formatTelemetryBucketLabel } from './src/lib/formatters.ts';",
 		'const timestamps = [1772409600000, 1772413200000];',
 		'const invocationPoints = [',
-		'{ bucket: timestamps[0], completed: 11, failed: 5, killed: 3, noWork: 7, running: 4, stopped: 2, total: 36, warnings: 4 },',
-		'{ bucket: timestamps[1], completed: 13, failed: 6, killed: 2, noWork: 8, running: 5, stopped: 3, total: 42, warnings: 5 },',
+		'{ bucket: timestamps[0], completed: 11, failed: 5, flagged: 1, killed: 3, noWork: 7, running: 4, stopped: 2, total: 37, warnings: 4 },',
+		'{ bucket: timestamps[1], completed: 13, failed: 6, flagged: 2, killed: 2, noWork: 8, running: 5, stopped: 3, total: 44, warnings: 5 },',
 		'];',
 		'const outputPoints = [',
 		'{ bucket: timestamps[0], cachedTokens: 101, filesChanged: 11, inputTokens: 501, linesAdded: 401, linesRemoved: 201, outputTokens: 301, reasoningTokens: 51, runs: 4, runsWithFileData: 3, runsWithLineData: 3, runsWithTokenData: 3 },',
@@ -57,10 +57,10 @@ describe('Telemetry chart accessibility', () => {
 			'<th scope="col">Total</th><th scope="col">Completed</th><th scope="col">Warnings</th>',
 		);
 		expect(invocations).toContain(
-			`<th scope="row">${labels[0]}</th><td>36</td><td>11</td><td>4</td><td>5</td><td>2</td><td>3</td><td>7</td><td>4</td>`,
+			`<th scope="row">${labels[0]}</th><td>37</td><td>11</td><td>4</td><td>5</td><td>1</td><td>2</td><td>3</td><td>7</td><td>4</td>`,
 		);
 		expect(invocations).toContain(
-			`<th scope="row">${labels[1]}</th><td>42</td><td>13</td><td>5</td><td>6</td><td>3</td><td>2</td><td>8</td><td>5</td>`,
+			`<th scope="row">${labels[1]}</th><td>44</td><td>13</td><td>5</td><td>6</td><td>2</td><td>3</td><td>2</td><td>8</td><td>5</td>`,
 		);
 	});
 

@@ -96,6 +96,7 @@ export async function getResourceUsage(
 		durationCount: number;
 		durationSum: number;
 		failed: number;
+		flagged: number;
 		killed: number;
 		lastUsedAt: null | number;
 		nested: number;
@@ -119,6 +120,7 @@ export async function getResourceUsage(
 				durationCount: 0,
 				durationSum: 0,
 				failed: 0,
+				flagged: 0,
 				killed: 0,
 				lastUsedAt: null,
 				nested: 0,
@@ -153,6 +155,7 @@ export async function getResourceUsage(
 			: null,
 		completed: group.completed,
 		failed: group.failed,
+		flagged: group.flagged,
 		killed: group.killed,
 		lastUsedAt: group.lastUsedAt,
 		nested: group.nested,
@@ -217,6 +220,7 @@ export async function getTimeseries(
 	interface BucketAccumulator {
 		completed: number;
 		failed: number;
+		flagged: number;
 		killed: number;
 		noWork: number;
 		running: number;
@@ -232,6 +236,7 @@ export async function getTimeseries(
 			point = {
 				completed: 0,
 				failed: 0,
+				flagged: 0,
 				killed: 0,
 				noWork: 0,
 				running: 0,
@@ -250,6 +255,7 @@ export async function getTimeseries(
 			bucket,
 			completed: point.completed,
 			failed: point.failed,
+			flagged: point.flagged,
 			killed: point.killed,
 			noWork: point.noWork,
 			running: point.running,

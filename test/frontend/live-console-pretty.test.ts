@@ -229,6 +229,57 @@ describe('parseConsoleEntries (codex)', () => {
 		}
 	});
 
+	// The test above covers OpenCode envelopes, which no other parser answers for. Cline is the
+	// case that survived it: its parser was absent from the foreign chain entirely, and its
+	// terminal `run_result` carries a `text` field that the plain fallback happily emitted — so a
+	// foreign cline stage looked like it rendered while its streamed prose, tool calls, and usage
+	// were all gone. Cline is also the only stateful foreign parser: it withholds the result until
+	// finalize, so the chain must both route the line and run that finalize pass.
+	test('foreign cline stages keep their prose, tools, and usage under every primary', () => {
+		const stage = [
+			JSON.stringify({
+				event: {
+					contentType: 'text',
+					text: 'Investigating the failure. ',
+					type: 'content_start',
+				},
+				type: 'agent_event',
+			}),
+			JSON.stringify({
+				event: {
+					contentType: 'tool',
+					input: { path: 'a.ts' },
+					toolName: 'read_file',
+					type: 'content_start',
+				},
+				type: 'agent_event',
+			}),
+			JSON.stringify({
+				event: {
+					contentType: 'tool',
+					output: 'ok',
+					toolName: 'read_file',
+					type: 'content_end',
+				},
+				type: 'agent_event',
+			}),
+			JSON.stringify({
+				aggregateUsage: { inputTokens: 1200, outputTokens: 340 },
+				finishReason: 'completed',
+				text: 'Done: fixed the parser.',
+				type: 'run_result',
+			}),
+		].join('\n');
+		for (const primary of ['claude-code', 'cline', 'codex', 'grok', 'native', 'opencode']) {
+			expect(parseConsoleEntries(stage, primary)).toEqual([
+				{ kind: 'text', text: 'Investigating the failure.' },
+				{ kind: 'tool', output: 'ok', title: 'read_file a.ts', tool: 'read_file' },
+				{ kind: 'usage', text: 'tokens: 1,200 in · 340 out' },
+				{ kind: 'text', text: 'Done: fixed the parser.' },
+			]);
+		}
+	});
+
 	test('long tool output is clamped for rendering and flagged as truncated', () => {
 		const entries = parseConsoleEntries(
 			[

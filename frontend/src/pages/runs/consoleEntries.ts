@@ -10,7 +10,12 @@ import {
 	stripAnsi,
 	truncate,
 } from './consoleEntryText.ts';
-import { createForeignLineParser, extractReasoningTexts, selectParser } from './consoleParsers.ts';
+import {
+	createForeignLineParser,
+	extractReasoningTexts,
+	isForeignOwnedShape,
+	selectParser,
+} from './consoleParsers.ts';
 
 export interface ToolConsoleEntry {
 	/** Secondary line under the title, e.g. the command's working directory. */
@@ -185,7 +190,7 @@ export function parseConsoleEntries(
 	backend: null | string | undefined,
 ): ConsoleEntry[] {
 	const parser = selectParser(backend);
-	const parseForeignLine = createForeignLineParser();
+	const foreign = createForeignLineParser();
 	const builder = new EntryBuilder();
 	for (const line of text.split(/\r?\n/)) {
 		if (!line.trim()) continue;
@@ -207,14 +212,20 @@ export function parseConsoleEntries(
 		// is foreign too; gating this on `ownsLine !== undefined` is what left claude-code-primary
 		// transcripts with no foreign handling at all. Reasoning-bearing lines are excluded to
 		// avoid re-emitting text already pushed above.
+		//
+		// Producing events is not enough for such a parser to keep the line: both of them answer
+		// for anything (plain takes any `.text`, native renders the unrecognized as prose), so a
+		// line whose shape a real backend parser recognizes goes to that parser instead. Otherwise
+		// plain swallowed cline's `run_result` and lost the usage attached to it, and native
+		// rendered whole foreign stages as raw JSON.
 		if (
-			events.length === 0 &&
 			json !== undefined &&
 			reasoningTexts.length === 0 &&
-			parser.ownsLine?.(json) !== true
+			parser.ownsLine?.(json) !== true &&
+			(events.length === 0 || (parser.ownsLine === undefined && isForeignOwnedShape(json)))
 		) {
 			try {
-				events = parseForeignLine(line, json);
+				events = foreign.parseLine(line, json);
 			} catch {
 				events = [];
 			}
@@ -227,6 +238,9 @@ export function parseConsoleEntries(
 		const pairId = typeof itemId === 'string' && itemId.length > 0 ? itemId : undefined;
 		for (const event of events) builder.pushEvent(event, pairId);
 	}
+	// Foreign first: a foreign stage's withheld result belongs to output that appeared earlier in
+	// the transcript than the primary backend's own closing answer.
+	for (const event of foreign.finalize()) builder.pushEvent(event);
 	for (const event of parser.finalize?.() ?? []) builder.pushEvent(event);
 	return builder.finish();
 }

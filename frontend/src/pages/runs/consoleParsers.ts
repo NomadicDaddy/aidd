@@ -86,15 +86,18 @@ export function selectParser(backend: null | string | undefined): ConsoleLinePar
 }
 
 /**
- * Every backend-specific parser, for lines a transcript's own parser does not claim. A triumvirate
- * recipe runs several backends and stores one transcript per run, so a codex-primary log can carry
- * whole stages of OpenCode or Kilo envelopes.
+ * Every stateless backend-specific parser, for lines a transcript's own parser does not claim. A
+ * triumvirate recipe runs several backends and stores one transcript per run, so a codex-primary
+ * log can carry whole stages of OpenCode, Kilo, Grok, or Cline envelopes.
  *
  * Falling back to the plain parser alone (as this did) dropped those stages entirely: plain reads
  * claude-code stream-json, and a `{"type":"tool_use",...}` OpenCode envelope means nothing to it,
  * so the line yielded no events and no raw text either. The chain tries each parser that claims the
  * envelope shape and takes the first one to actually produce events — `{"type":"text"}` is claimed
  * by both grok and the OpenCode family, so matching the shape is not on its own enough to route.
+ *
+ * Cline is not in this list because it cannot be: it is stateful and withholds its result, so it
+ * is constructed per parse pass in `createForeignLineParser` below.
  */
 const FOREIGN_PARSERS: { ownsLine: OwnsLine; parseLine: (line: string) => AgentEvent[] }[] = [
 	{ ownsLine: ownsCodexLine, parseLine: parseCodexBackendLine },
@@ -103,21 +106,73 @@ const FOREIGN_PARSERS: { ownsLine: OwnsLine; parseLine: (line: string) => AgentE
 ];
 
 /**
- * Parse one line no primary parser claimed. Stateful (the plain fallback reconciles token usage
- * across a transcript), so callers hold one instance for a whole parse pass.
+ * Cline lines whose parser deliberately emits nothing and stores the content for `finalize`
+ * instead: the terminal `run_result`, and the last non-partial legacy `say`. Yielding no events on
+ * these is the parser working, not declining the line — so the chain must stop here rather than
+ * fall through to plain, which would re-emit the same answer and usage the finalize pass is
+ * already holding and show both twice.
  */
-export function createForeignLineParser(): (
-	line: string,
-	json: Record<string, unknown>,
-) => AgentEvent[] {
+const clineWithholdsLine: OwnsLine = (json) =>
+	json.type === 'run_result' || (json.type === 'say' && json.partial !== true);
+
+/**
+ * True when some backend parser recognizes this envelope's SHAPE, so the line is somebody's native
+ * output rather than loose JSON.
+ *
+ * This outranks a primary parser that exposes no `ownsLine` of its own. Such a parser claims
+ * nothing authoritatively, yet both of them will still answer for a foreign line and win it by
+ * merely producing an event: `plain` emits any `.text` field it finds, which swallowed cline's
+ * terminal `run_result` and dropped the usage riding along on it, and `native` renders anything it
+ * does not recognize as assistant prose, which turned every foreign envelope into a wall of raw
+ * JSON. Deferring to the parser that actually knows the shape is what the "a parser that exposes
+ * no predicate claims nothing" half of the contract means.
+ */
+export function isForeignOwnedShape(json: Record<string, unknown>): boolean {
+	return FOREIGN_PARSERS.some((candidate) => candidate.ownsLine(json)) || ownsClineLine(json);
+}
+
+export interface ForeignLineParser {
+	/** Cline's withheld result. Empty unless this pass actually routed a cline line. */
+	finalize: () => AgentEvent[];
+	parseLine: (line: string, json: Record<string, unknown>) => AgentEvent[];
+}
+
+/**
+ * Parse lines no primary parser claimed. Stateful — the plain fallback reconciles token usage
+ * across a transcript and the cline parser withholds its result until the end — so callers hold
+ * one instance for a whole parse pass and call `finalize` after the last line.
+ */
+export function createForeignLineParser(): ForeignLineParser {
 	const plain = createPlainBackendParser();
-	return (line, json) => {
-		for (const candidate of FOREIGN_PARSERS) {
-			if (!candidate.ownsLine(json)) continue;
-			const events = candidate.parseLine(line);
-			if (events.length > 0) return events;
-		}
-		return plain.parseLine(line);
+	const cline = createClineBackendParser();
+	let sawCline = false;
+	return {
+		finalize: () =>
+			sawCline
+				? cline.finalize({
+						// Same neutral input `selectParser` uses for a cline primary: the transcript
+						// is not the process's stdout, so the raw-dump and synthetic-error fallbacks
+						// in finalizePlainBackend must stay quiet while the stored result surfaces.
+						exitCode: 0,
+						sawAssistantText: true,
+						sawRateLimit: true,
+						stderr: '',
+						stdout: '',
+					})
+				: [],
+		parseLine: (line, json) => {
+			for (const candidate of FOREIGN_PARSERS) {
+				if (!candidate.ownsLine(json)) continue;
+				const events = candidate.parseLine(line);
+				if (events.length > 0) return events;
+			}
+			if (ownsClineLine(json)) {
+				sawCline = true;
+				const events = cline.parseLine(line);
+				if (events.length > 0 || clineWithholdsLine(json)) return events;
+			}
+			return plain.parseLine(line);
+		},
 	};
 }
 

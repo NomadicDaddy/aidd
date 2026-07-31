@@ -12,6 +12,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatDate } from '../../lib/formatters.ts';
+import { runSourceLabel } from '../runs/runRowUtils.ts';
 
 export function ActiveRunsCard({
 	activeRuns,
@@ -66,12 +67,8 @@ export function ActiveRunsCard({
 								<RunCommandInfo command={run.launchCommand} runId={run.id} />
 							</div>
 							<div className="truncate text-xs text-muted-foreground">
-								{run.source === 'cli'
-									? 'CLI'
-									: run.source === 'director'
-										? 'Coord'
-										: 'Web'}{' '}
-								/ {run.mode} / started {formatDate(run.startedAt)}
+								{runSourceLabel(run)} / {run.mode} / started{' '}
+								{formatDate(run.startedAt)}
 							</div>
 							<ExecutionIdentityBadges
 								backend={run.backend}

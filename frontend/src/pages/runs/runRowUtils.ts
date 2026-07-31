@@ -72,6 +72,6 @@ export function consoleSelectionLabel(run: {
 
 export function runSourceLabel(run: Pick<RunRecord, 'source'>): string {
 	if (run.source === 'cli') return 'CLI';
-	if (run.source === 'director') return 'Coordinator';
+	if (run.source === 'director') return 'Director';
 	return 'Web';
 }

@@ -16,7 +16,7 @@ import { Card } from '../../../components/ui/card.tsx';
 import { useNow } from '../../../hooks/useNow.ts';
 import { useRuns } from '../../../hooks/useRuns.ts';
 import { formatActiveDuration, formatDate } from '../../../lib/formatters.ts';
-import { runRuntimeDetail } from '../../runs/runRowUtils.ts';
+import { runRuntimeDetail, runSourceLabel } from '../../runs/runRowUtils.ts';
 import { compareRunsByLiveness } from '../../runs/runsUtils.ts';
 import { ProjectUsagePanel } from './ProjectUsagePanel.tsx';
 
@@ -123,11 +123,7 @@ function ActiveRunsPanel({
 														? 'amber'
 														: 'neutral'
 											}>
-											{run.source === 'cli'
-												? 'CLI'
-												: run.source === 'director'
-													? 'Coord'
-													: 'Web'}
+											{runSourceLabel(run)}
 										</Badge>
 										<ExecutionIdentityBadges
 											backend={run.backend}

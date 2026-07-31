@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { sessionStatusLabel } from '../../frontend/src/pages/runs/pipelineSessionStatus.ts';
-import { consoleSelectionLabel } from '../../frontend/src/pages/runs/runRowUtils.ts';
+import {
+	consoleSelectionLabel,
+	runSourceLabel,
+} from '../../frontend/src/pages/runs/runRowUtils.ts';
 
 const EXECUTION_CONTAINERS = [
 	'ActiveRunRow.tsx',
@@ -136,6 +139,26 @@ describe('Runs row consistency', () => {
 		expect(steps).toContain("aria-current={selected ? 'true' : undefined}");
 		expect(steps).toContain('aria-pressed={selected}');
 		expect(steps).toContain('md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr]');
+	});
+
+	test('run origin labels use the current Director name from one shared helper', async () => {
+		// "Coordinator" was renamed to Director; three surfaces carried drifted copies of this
+		// mapping ('Coordinator' here, abbreviated 'Coord' on the dashboard and project tab), so
+		// the rename missed two of them. One helper, and a check that nobody re-inlines it.
+		expect(runSourceLabel({ source: 'director' })).toBe('Director');
+		expect(runSourceLabel({ source: 'cli' })).toBe('CLI');
+		expect(runSourceLabel({ source: 'web' })).toBe('Web');
+
+		const surfaces = await Promise.all([
+			readRunSource('ActiveRunRow.tsx'),
+			readRunSource('ActiveRunMobileCard.tsx'),
+			readFile(join(FRONTEND_SRC, 'pages', 'dashboard', 'ActiveRunsCard.tsx'), 'utf8'),
+			readFile(join(FRONTEND_SRC, 'pages', 'projects', 'detail', 'RunsTab.tsx'), 'utf8'),
+		]);
+		for (const source of surfaces) {
+			expect(source).toContain('runSourceLabel(run)');
+			expect(source).not.toMatch(/Coordinator|'Coord'/);
+		}
 	});
 
 	test('pipeline status labels match run-row title casing', () => {

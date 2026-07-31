@@ -72,6 +72,39 @@ export function formatUpdatedAgo(updatedAt: number, now: number): string {
 	return days === 1 ? '1d ago' : `${days}d ago`;
 }
 
+/**
+ * Byte length of `text` once UTF-8 encoded, for comparing an in-memory string against a size
+ * reported by the filesystem. `String.length` counts UTF-16 code units, so it undercounts every
+ * non-ASCII character — a transcript full of box-drawing or CJK output measures well short of its
+ * own file size, which reads as missing output rather than as a unit mismatch.
+ *
+ * Counts rather than encoding, so a multi-megabyte transcript is not copied to measure it.
+ */
+export function utf8ByteLength(text: string): number {
+	let bytes = 0;
+	for (let index = 0; index < text.length; index += 1) {
+		const code = text.charCodeAt(index);
+		if (code < 0x80) {
+			bytes += 1;
+		} else if (code < 0x800) {
+			bytes += 2;
+		} else if (code >= 0xd800 && code <= 0xdbff && index + 1 < text.length) {
+			const next = text.charCodeAt(index + 1);
+			// A surrogate pair is one 4-byte code point; an unpaired surrogate encodes as the
+			// 3-byte replacement character, which is what a lone half costs on the wire.
+			if (next >= 0xdc00 && next <= 0xdfff) {
+				bytes += 4;
+				index += 1;
+			} else {
+				bytes += 3;
+			}
+		} else {
+			bytes += 3;
+		}
+	}
+	return bytes;
+}
+
 export function formatBytes(value: null | number | undefined): string {
 	if (value === null || value === undefined || value <= 0) return '0 B';
 	const units = ['B', 'KB', 'MB', 'GB'];

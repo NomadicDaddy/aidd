@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { formatActiveDuration, formatDuration } from '../../frontend/src/lib/formatters.ts';
+import {
+	formatActiveDuration,
+	formatDuration,
+	utf8ByteLength,
+} from '../../frontend/src/lib/formatters.ts';
 
 describe('formatActiveDuration', () => {
 	const startedAt = 1_000_000;
@@ -34,5 +38,29 @@ describe('formatActiveDuration', () => {
 	test('treats a persisted zero durationMs as terminal, not active', () => {
 		// durationMs === 0 is a real persisted value and must not fall through to now - startedAt.
 		expect(formatActiveDuration(0, startedAt, startedAt + 60_000)).toBe('0s');
+	});
+});
+
+describe('utf8ByteLength', () => {
+	// The console compares this against a size read from the filesystem, so it has to agree with
+	// TextEncoder exactly — a shortfall reads as hidden output rather than as a unit mismatch.
+	test('matches TextEncoder across ASCII, multi-byte, and astral text', () => {
+		const samples = [
+			'',
+			'plain ascii transcript line',
+			'│ box drawing ├',
+			'テストの出力',
+			'emoji 👍🏽 and 🧪',
+			'mixed: ok → 完了 ✅',
+		];
+		const encoder = new TextEncoder();
+		for (const sample of samples) {
+			expect(utf8ByteLength(sample)).toBe(encoder.encode(sample).length);
+		}
+	});
+
+	test('counts an unpaired surrogate as the replacement character it encodes to', () => {
+		const lone = 'a�';
+		expect(utf8ByteLength(lone)).toBe(new TextEncoder().encode(lone).length);
 	});
 });

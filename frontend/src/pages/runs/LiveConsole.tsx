@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { default as ArrowDownToLine } from 'lucide-react/dist/esm/icons/arrow-down-to-line';
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { RunRecord } from '../../api/types.ts';
@@ -9,10 +9,12 @@ import type { RunRecord } from '../../api/types.ts';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { backendConsoleLimit } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
-import { formatBytes } from '../../lib/formatters.ts';
+import { utf8ByteLength } from '../../lib/formatters.ts';
 import { entrySearchText, parseConsoleEntries } from './consoleEntries.ts';
 import { LiveConsoleControls } from './LiveConsoleControls.tsx';
+import { LiveConsoleNotices } from './LiveConsoleNotices.tsx';
 import {
 	type ConsoleView,
 	readViewPreference,
@@ -23,14 +25,55 @@ import {
 import { LiveConsolePretty } from './LiveConsolePretty.tsx';
 import { highlightLine, windowTail } from './liveConsoleText.tsx';
 import { RunDetailPanel } from './RunDetailPanel.tsx';
+import { useConsoleScroll } from './useConsoleScroll.ts';
 
 export interface LiveConsoleBadge {
 	label: string;
 	tone: 'neutral' | 'teal';
 }
 
-function prefersReducedMotion(): boolean {
-	return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// The on-disk size and the loaded transcript are sampled at different instants, so a running run
+// writes more between the two reads. Below this, the gap is that race or a handful of lines, not
+// something worth warning an operator about.
+const TRIVIAL_ELISION_BYTES = 4096;
+
+// Bound the pretty view's DOM by entry count rather than by transcript bytes, so a long tail of
+// assistant prose cannot evict the tool calls an operator opened the console to see.
+const MAX_PRETTY_ENTRIES = 2000;
+
+/**
+ * How much of the transcript the raw view lays out, and whether enough is missing to say so. The
+ * displayed total is the larger of what we hold in memory and the server's reported on-disk size,
+ * so a server-side tail cap still reports the true file size.
+ *
+ * Every quantity here is UTF-8 bytes, the unit `sourceTotalBytes` and the notice both speak.
+ * Measuring the string with `.length` instead mixed UTF-16 code units into that comparison, which
+ * understated a non-ASCII transcript against its own file size — enough of it and the shortfall
+ * clears the floor below and warns about hidden output over a transcript that is entirely present.
+ */
+function describeWindow(
+	message: string,
+	sourceTotalBytes: null | number | undefined,
+): {
+	isWindowed: boolean;
+	messageBytes: number;
+	renderedBytes: number;
+	renderedMessage: string;
+	totalBytes: number;
+} {
+	const renderedMessage = windowTail(message);
+	const messageBytes = utf8ByteLength(message);
+	const renderedBytes =
+		renderedMessage.length === message.length ? messageBytes : utf8ByteLength(renderedMessage);
+	const totalBytes = Math.max(messageBytes, sourceTotalBytes ?? 0);
+	const hidden = Math.max(totalBytes - messageBytes, messageBytes - renderedBytes);
+	return {
+		isWindowed: hidden > TRIVIAL_ELISION_BYTES,
+		messageBytes,
+		renderedBytes,
+		renderedMessage,
+		totalBytes,
+	};
 }
 
 export function LiveConsole({
@@ -61,28 +104,18 @@ export function LiveConsole({
 	const [view, setView] = useState<ConsoleView>(readViewPreference);
 	const [wrap, setWrap] = useState(readWrapPreference);
 	const [findQuery, setFindQuery] = useState('');
-	const [pinnedToBottom, setPinnedToBottom] = useState(true);
-	const scrollRef = useRef<HTMLDivElement>(null);
-	// Mirror of pinnedToBottom for reads inside the content-follow effect without making that
-	// effect re-run on every pin/unpin toggle (which would fight an in-flight jump animation).
-	const pinnedRef = useRef(true);
-	// True while a programmatic jump-to-bottom is animating, so the scroll handler ignores the
-	// intermediate positions of that animation instead of treating them as the operator
-	// scrolling up and unpinning.
-	const programmaticScrollRef = useRef(false);
-	function setPinned(value: boolean): void {
-		pinnedRef.current = value;
-		setPinnedToBottom(value);
-	}
+	const { handleScroll, jumpToLatest, pinnedToBottom, resetPin, scrollRef } = useConsoleScroll(
+		consoleOpen,
+		[message, findQuery.trim(), wrap, hasOutput ? view : 'raw'],
+	);
 	// Reselecting a different run must re-derive the default, otherwise the toggle sticks
 	// to whatever the previously selected run left it at. Find and scroll pinning are also
 	// per-run state, so reset them when the operator switches runs.
 	useEffect(() => {
 		setConsoleOpen(!collapsedByDefault);
 		setFindQuery('');
-		programmaticScrollRef.current = false;
-		setPinned(true);
-	}, [selectedRun?.id, collapsedByDefault]);
+		resetPin();
+	}, [selectedRun?.id, collapsedByDefault, resetPin]);
 	useEffect(() => {
 		writeWrapPreference(wrap);
 	}, [wrap]);
@@ -95,14 +128,12 @@ export function LiveConsole({
 	const effectiveView: ConsoleView = hasOutput ? view : 'raw';
 	const trimmedFind = findQuery.trim();
 
-	// Lay out only the trailing window of the transcript (see MAX_RENDERED_CHARS). These derived
-	// values are plain expressions — the React Compiler memoizes them per its inputs, so the
-	// slice/parse runs once per new-output frame rather than on every unrelated re-render. The
-	// displayed total is the larger of what we hold in memory and the server's reported on-disk
-	// size, so a server-side tail cap still reports the true file size.
-	const renderedMessage = windowTail(message);
-	const totalBytes = Math.max(message.length, sourceTotalBytes ?? 0);
-	const isWindowed = renderedMessage.length < message.length || totalBytes > message.length;
+	// These derived values are plain expressions — the React Compiler memoizes them per their
+	// inputs, so the slice/parse runs once per new-output frame rather than on every re-render.
+	const { isWindowed, messageBytes, renderedBytes, renderedMessage, totalBytes } = describeWindow(
+		message,
+		sourceTotalBytes,
+	);
 
 	const findNeedle = trimmedFind.toLowerCase();
 	const matchingLines =
@@ -110,56 +141,20 @@ export function LiveConsole({
 			? message.split('\n').filter((line) => line.toLowerCase().includes(findNeedle))
 			: null;
 
+	// Pretty parses the whole loaded transcript, not the raw byte tail: a chatty backend can push
+	// megabytes of assistant text after its last tool call, so windowing the bytes first drops
+	// every tool call from the structured view while the run's own stats still report them. Entries
+	// are structural and far fewer than lines, so the DOM is bounded by count instead.
+	const allEntries =
+		effectiveView === 'pretty' ? parseConsoleEntries(message, selectedRun?.backend) : [];
 	const entries =
-		effectiveView === 'pretty'
-			? parseConsoleEntries(renderedMessage, selectedRun?.backend)
-			: [];
+		allEntries.length > MAX_PRETTY_ENTRIES
+			? allEntries.slice(allEntries.length - MAX_PRETTY_ENTRIES)
+			: allEntries;
 	const visibleEntries = trimmedFind
 		? entries.filter((entry) => entrySearchText(entry).toLowerCase().includes(findNeedle))
 		: entries;
-
-	// Follow new output to the bottom while the operator stays pinned there. Plain scrollTop
-	// (instant, no animation) so streaming output does not fight a running scroll animation and so
-	// there is nothing to suppress for prefers-reduced-motion; the explicit jump uses smooth.
-	// Reads pinnedRef rather than depending on pinnedToBottom so a pin/unpin toggle alone does not
-	// re-trigger an instant snap mid-jump.
-	useEffect(() => {
-		if (!consoleOpen || !pinnedRef.current) return;
-		const node = scrollRef.current;
-		if (!node) return;
-		node.scrollTop = node.scrollHeight;
-	}, [renderedMessage, trimmedFind, wrap, consoleOpen, effectiveView]);
-
-	function handleScroll(): void {
-		const node = scrollRef.current;
-		if (!node) return;
-		const atBottom = node.scrollHeight - node.scrollTop - node.clientHeight <= 24;
-		if (programmaticScrollRef.current) {
-			// Ignore the animation's intermediate frames; only release the guard once it lands.
-			if (atBottom) {
-				programmaticScrollRef.current = false;
-				setPinned(true);
-			}
-			return;
-		}
-		setPinned(atBottom);
-	}
-
-	function jumpToLatest(): void {
-		const node = scrollRef.current;
-		if (!node) return;
-		programmaticScrollRef.current = true;
-		setPinned(true);
-		node.scrollTo({
-			behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-			top: node.scrollHeight,
-		});
-		// Safety release in case the animation is interrupted (e.g. content grows mid-scroll) and
-		// the at-bottom frame never fires, which would otherwise leave the operator unable to unpin.
-		window.setTimeout(() => {
-			programmaticScrollRef.current = false;
-		}, 700);
-	}
+	const consoleLimit = backendConsoleLimit(selectedRun?.backend);
 
 	async function copyAll(): Promise<void> {
 		try {
@@ -220,12 +215,16 @@ export function LiveConsole({
 				) : null}
 				{consoleOpen ? (
 					<div className="relative">
-						{showControls && isWindowed && !trimmedFind ? (
-							<p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-								Showing the most recent {formatBytes(renderedMessage.length)} of{' '}
-								{formatBytes(totalBytes)}. Older output is hidden — use “Copy all”
-								for the full loaded transcript.
-							</p>
+						{showControls ? (
+							<LiveConsoleNotices
+								consoleLimit={consoleLimit}
+								isPretty={effectiveView === 'pretty'}
+								shownBytes={
+									effectiveView === 'pretty' ? messageBytes : renderedBytes
+								}
+								showWindowNotice={isWindowed && !trimmedFind}
+								totalBytes={totalBytes}
+							/>
 						) : null}
 						<div
 							aria-label="Run console output"

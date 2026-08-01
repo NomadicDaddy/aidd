@@ -1,4 +1,5 @@
 import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
+import type { AiddStore } from 'aidd-shared/metadata/store';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { AgentRunResult, IterationMetrics } from 'aidd-shared/orchestrator/result';
 import type { BackendName, RunPlan, TriumvirateRolePlan } from 'aidd-shared/plan/types';
@@ -11,6 +12,8 @@ export type TriumvirateCwdKind = 'planning_mirror' | 'project';
 export interface TriumvirateStageArtifact {
 	assistantText: string;
 	backend: BackendName;
+	completionCommittedDuringGrace?: boolean;
+	completionFinalizedBeforeBackendExit?: boolean;
 	cwdKind: TriumvirateCwdKind;
 	durationMs: number;
 	endedAt: string;
@@ -34,6 +37,8 @@ export interface TriumvirateStageArtifact {
 export type TriumvirateRunResult =
 	| {
 			artifact: Record<string, unknown>;
+			completionCommittedDuringGrace: boolean;
+			completionFinalizedBeforeBackendExit: boolean;
 			metrics: IterationMetrics;
 			result: AgentRunResult;
 			status: 'executed';
@@ -58,6 +63,8 @@ export type TriumvirateRunResult =
 export interface TriumvirateRunOptions {
 	backendFactory: BackendFactory;
 	compiledPrompt: string;
+	completionMarkerGraceMs?: number;
+	gitHeadBefore?: string;
 	iteration?: number;
 	onAgentEvent?: ((event: AgentEvent) => Promise<void> | void) | undefined;
 	plan: RunPlan;
@@ -65,11 +72,14 @@ export interface TriumvirateRunOptions {
 	/** Run-level abort signal, relayed into every stage's controller so a run-wide stop or
 	 * abort ends the in-flight stage instead of only being noticed between iterations. */
 	signal?: AbortSignal;
+	store?: AiddStore;
 	work: SelectedWork;
 }
 
 export interface StageRunResult {
 	artifact: TriumvirateStageArtifact;
+	completionCommittedDuringGrace: boolean;
+	completionFinalizedBeforeBackendExit: boolean;
 	flailingDetected: boolean;
 	metrics: IterationMetrics;
 	result: AgentRunResult;
@@ -117,6 +127,11 @@ export type OverseerDecision =
 
 export interface StageRunInput {
 	backend: CLIBackend;
+	completion?: {
+		gitHeadBefore?: string;
+		graceMs: number;
+		store: AiddStore;
+	};
 	cwd: string;
 	cwdKind: TriumvirateCwdKind;
 	iteration?: number;

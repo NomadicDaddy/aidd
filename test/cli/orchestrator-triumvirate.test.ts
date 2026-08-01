@@ -1495,6 +1495,11 @@ describe('orchestrator triumvirate', () => {
 				}
 				if (callIndex === 3) {
 					await completeFeature(store, 'feature-core');
+					await runGit(store.projectDir, [
+						'add',
+						'.aidd/features/feature-core/feature.json',
+					]);
+					await runGit(store.projectDir, ['commit', '-m', 'complete feature']);
 				}
 			},
 		);
@@ -1608,9 +1613,11 @@ class RepeatingBackend implements CLIBackend {
 	readonly name = 'native' as const;
 	readonly idleDefaults = { killMs: 20, nudgeMs: 10 };
 	calls = 0;
+	inputs: PromptInput[] = [];
 
-	async *runPrompt(_input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+	async *runPrompt(input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
 		this.calls++;
+		this.inputs.push(input);
 		for (let tick = 0; tick < 40 && !signal.aborted; tick++) {
 			yield { args: { command: 'git status' }, tool: 'bash', type: 'tool_call' };
 			await Bun.sleep(5);
@@ -1620,6 +1627,41 @@ class RepeatingBackend implements CLIBackend {
 			return;
 		}
 		yield { exitCode: 0, filesModified: [], type: 'done' };
+	}
+}
+
+class CommitDuringGraceBackend implements CLIBackend {
+	readonly name = 'native' as const;
+	readonly idleDefaults = { killMs: 20, nudgeMs: 10 };
+	private readonly afterMarker: () => Promise<void>;
+	private readonly beforeMarker: () => Promise<void>;
+	private readonly exitBeforeCommit: boolean;
+	constructor(
+		beforeMarker: () => Promise<void>,
+		afterMarker: () => Promise<void>,
+		exitBeforeCommit = false,
+	) {
+		this.beforeMarker = beforeMarker;
+		this.afterMarker = afterMarker;
+		this.exitBeforeCommit = exitBeforeCommit;
+	}
+
+	async *runPrompt(_input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+		await this.beforeMarker();
+		yield {
+			chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+			type: 'assistant_text',
+		};
+		if (this.exitBeforeCommit) {
+			void this.afterMarker();
+			yield { exitCode: 0, filesModified: [], type: 'done' };
+			return;
+		}
+		await this.afterMarker();
+		await new Promise<void>((resolve) => {
+			if (signal.aborted) resolve();
+			else signal.addEventListener('abort', () => resolve(), { once: true });
+		});
 	}
 }
 
@@ -1651,6 +1693,105 @@ const planningMarker = (planText: string): AgentEvent[] => [
 ];
 
 describe('orchestrator triumvirate safety envelope', () => {
+	test(
+		'execution completion waits when the backend exits before its delayed commit',
+		async () => {
+			const store = await makeStore('safety-completion-after-exit');
+			await initializeGitProject(store.projectDir);
+			const gitHeadBefore = (await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim();
+			const backend = new CommitDuringGraceBackend(
+				async () => await completeFeature(store, 'feature-core'),
+				async () => {
+					await Bun.sleep(50);
+					await runGit(store.projectDir, ['add', '.']);
+					await runGit(store.projectDir, ['commit', '-m', 'complete after exit']);
+				},
+				true,
+			);
+			let stageResult: Awaited<ReturnType<typeof runStage>> | undefined;
+			await captureStdout(async () => {
+				stageResult = await runStage({
+					backend,
+					completion: { gitHeadBefore, graceMs: 2_000, store },
+					cwd: store.projectDir,
+					cwdKind: 'project',
+					plan: plan(store.projectDir, []),
+					prompt: 'work',
+					role: { backend: 'native' },
+					stage: 'execution',
+					work: { description: 'run', id: 'feature-core', kind: 'feature' },
+				});
+			});
+
+			expect(stageResult?.completionCommittedDuringGrace).toBe(true);
+			expect(stageResult?.completionFinalizedBeforeBackendExit).toBe(true);
+			expect((await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim()).not.toBe(
+				gitHeadBefore,
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'execution completion waits for its commit then aborts the lingering backend',
+		async () => {
+			const store = await makeStore('safety-completion-grace');
+			await initializeGitProject(store.projectDir);
+			const planning = new SequencedBackend([
+				planningMarker('Primary plan'),
+				planningMarker('Secondary plan'),
+				[
+					{
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+						type: 'assistant_text',
+					},
+					{ exitCode: 0, filesModified: [], type: 'done' },
+				],
+			]);
+			const execution = new CommitDuringGraceBackend(
+				async () => await completeFeature(store, 'feature-core'),
+				async () => {
+					await Bun.sleep(50);
+					await writeFile(
+						join(store.projectDir, 'implemented.ts'),
+						'export const done = true;\n',
+					);
+					await runGit(store.projectDir, ['add', '.']);
+					await runGit(store.projectDir, ['commit', '-m', 'complete feature']);
+				},
+			);
+			let factoryCalls = 0;
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 15);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend: planning,
+					backendFactory: () => (factoryCalls++ < 3 ? planning : execution),
+					completionMarkerGraceMs: 2_000,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			const iteration = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as {
+				backendCompletionFinalizedEarly: boolean;
+				triumvirate: {
+					execution: {
+						completionCommittedDuringGrace: boolean;
+						completionFinalizedBeforeBackendExit: boolean;
+					};
+				};
+			};
+			expect(iteration.backendCompletionFinalizedEarly).toBe(true);
+			expect(iteration.triumvirate.execution.completionCommittedDuringGrace).toBe(true);
+			expect(iteration.triumvirate.execution.completionFinalizedBeforeBackendExit).toBe(true);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
 	test(
 		'a continuously-emitting stage is aborted at the run wall-clock deadline',
 		async () => {
@@ -1717,6 +1858,10 @@ describe('orchestrator triumvirate safety envelope', () => {
 				.map((line) => JSON.parse(line) as { summary: string });
 			expect(runSummary?.summary).toContain('halted before secondary stage');
 			expect(runSummary?.summary).toContain('wall-clock budget');
+			const iteration = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as { exitCode: number };
+			expect(iteration.exitCode).toBe(orchestratorExitCodes.aborted);
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -1799,8 +1944,9 @@ describe('orchestrator triumvirate safety envelope', () => {
 				},
 			);
 
+			let exitCode = -1;
 			const output = await captureStdout(async () => {
-				await runOrchestrator(runtimePlan, {
+				exitCode = await runOrchestrator(runtimePlan, {
 					backend,
 					backendFactory: () => backend,
 					rootDir,
@@ -1809,8 +1955,20 @@ describe('orchestrator triumvirate safety envelope', () => {
 			});
 
 			expect(output).toContain('flailing detected');
-			// The trip aborts the primary stage; the panel never reaches call 2.
-			expect(backend.calls).toBe(1);
+			// The first planning-stage trip receives the normal corrective nudge; the second
+			// consecutive trip stops and parks with the canonical flailing classification.
+			expect(backend.calls).toBe(2);
+			expect(backend.inputs[1]?.text).toContain('previous attempt was stopped for flailing');
+			expect(exitCode).toBe(orchestratorExitCodes.flailing);
+			expect((await store.readFeature('feature-core')).status).toBe('waiting_approval');
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { exitCode: number; stopReason: string });
+			expect(runSummary).toMatchObject({
+				exitCode: orchestratorExitCodes.flailing,
+				stopReason: 'flailing',
+			});
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -1887,6 +2045,7 @@ describe('orchestrator triumvirate safety envelope', () => {
 				exitCode = await runOrchestrator(runtimePlan, {
 					backend,
 					backendFactory: () => backend,
+					completionMarkerGraceMs: 5,
 					rootDir,
 					store,
 				});
@@ -1913,6 +2072,77 @@ describe('orchestrator triumvirate plan-marker contract', () => {
 		},
 		{ exitCode: 0, filesModified: [], type: 'done' },
 	];
+
+	test(
+		'marker and planning-mirror corrections each receive one retry',
+		async () => {
+			const store = await makeStore('marker-and-mirror-retries');
+			const backend = new SequencedBackend(
+				[
+					proseOnly,
+					planningMarker('Primary plan from mutating retry'),
+					planningMarker('Primary corrected plan'),
+					planningMarker('Secondary plan'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+				],
+				async (callIndex, input) => {
+					if (callIndex === 1) {
+						await writeFile(join(input.cwd, 'rejected-mutation.txt'), 'not allowed\n');
+					}
+					if (callIndex === 5) await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(6);
+			expect(backend.inputs[1]?.text).toContain('aidd PLANNING MARKER RETRY');
+			expect(backend.inputs[2]?.text).toContain('aidd PLANNING MARKER RETRY');
+			expect(backend.inputs[2]?.text).toContain('aidd PLANNING STAGE RETRY');
+			const iteration = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as {
+				triumvirate: {
+					primaryPlan: {
+						planningMarkerRetry: { attempts: number };
+						planningMirrorRetry: { attempts: number };
+					};
+				};
+			};
+			expect(iteration.triumvirate.primaryPlan.planningMarkerRetry.attempts).toBe(3);
+			expect(iteration.triumvirate.primaryPlan.planningMirrorRetry.attempts).toBe(3);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
 
 	test(
 		'a markerless primary planner is retried once and the panel proceeds',

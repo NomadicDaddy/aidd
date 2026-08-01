@@ -95,16 +95,11 @@ export async function executeIteration(
 			kind: 'continue',
 		};
 	}
-	// The remaining false/empty fields are truthful, not gaps: the completion-marker commit
-	// grace and idle-warning capture are single-agent stream-loop concepts that do not run
-	// in triumvirate stages. wallClockTimedOut comes from the stages' shared safety
-	// envelope, so a timed-out execution stage finally reaches the post-iteration
-	// wall-clock guard instead of being hardcoded away.
+	// Idle-warning timing and progress reporting remain owned by the single-agent stream loop.
+	// Completion grace and wall-clock state are propagated from the triumvirate execution stage.
 	return {
 		kind: 'complete',
 		state: {
-			completionCommittedDuringGrace: false,
-			completionFinalizedBeforeBackendExit: false,
 			idleWarningTimestamps: [],
 			progress: undefined,
 			timeToFirstEventMs: undefined,

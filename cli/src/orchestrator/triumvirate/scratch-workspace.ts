@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { cp, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
-import { assertInsideRoot } from './mirror-safety.ts';
+import { assertInsideRoot, normalizeMirrorRelativePath } from './mirror-safety.ts';
 import { mergeMetrics } from './stage-execution.ts';
 import { buildPlanningMarkerRetryPrompt } from './stage-prompts.ts';
 import {
@@ -54,18 +54,18 @@ export async function runPlanningStageWithMirrorGuard(input: {
 	scratchRoot: string;
 	sourceProjectDir: string;
 	stage: Exclude<TriumvirateStageName, 'execution'>;
-	/** Returns the invalid-output reason (e.g. a missing planMarkdown marker), or undefined
-	 * when the stage's output is usable. An invalid first attempt is retried once with a
-	 * marker-retry prompt; a still-invalid second attempt is returned as-is for the caller
-	 * to classify. */
+	/** Returns an invalid-output reason. Marker and mirror-mutation corrections each have
+	 * an independent retry budget, so a stage can consume one of each. */
 	validate?: (result: StageRunResult) => string | undefined;
 }): Promise<PlanningStageRunResult> {
 	const metrics: IterationMetrics = { ...emptyMetrics, errorReasons: [], toolBreakdown: {} };
 	const previousMutations: PlanningMirrorMutation[] = [];
 	let markerRetried = false;
+	let markerRetryReason: string | undefined;
+	let mutationRetried = false;
 	let prompt = input.prompt;
 
-	for (let attempt = 1; attempt <= 2; attempt++) {
+	for (let attempt = 1; attempt <= 3; attempt++) {
 		await resetPlanningMirror(input.scratchRoot, input.sourceProjectDir, input.projectDir);
 		const baseline = await snapshotPlanningMirror(input.projectDir);
 		const result = await input.makeStageRun(prompt);
@@ -91,22 +91,38 @@ export async function runPlanningStageWithMirrorGuard(input: {
 				};
 			}
 			const invalidReason = input.validate?.(result);
-			if (invalidReason !== undefined && attempt < 2) {
+			if (invalidReason !== undefined && !markerRetried) {
 				markerRetried = true;
-				prompt = buildPlanningMarkerRetryPrompt(input.prompt, invalidReason);
+				markerRetryReason = invalidReason;
+				prompt = buildCombinedPlanningRetryPrompt(
+					input.prompt,
+					previousMutations[0],
+					markerRetryReason,
+				);
 				continue;
 			}
-			// A still-invalid second attempt returns as-is; the caller re-validates and
+			// A still-invalid corrected attempt returns as-is; the caller re-validates and
 			// classifies (invalidPlanningOutputResult), keeping failure shaping in one place.
 			return { metrics, result };
 		}
 
-		if (attempt === 2) return { metrics, result, violation: mutation };
+		if (mutationRetried) return { metrics, result, violation: mutation };
+		mutationRetried = true;
 		previousMutations.push(mutation);
-		prompt = buildPlanningRetryPrompt(input.prompt, mutation);
+		prompt = buildCombinedPlanningRetryPrompt(input.prompt, mutation, markerRetryReason);
 	}
 
 	throw new Error(`unreachable planning retry state for ${input.stage}`);
+}
+
+function buildCombinedPlanningRetryPrompt(
+	prompt: string,
+	mutation: PlanningMirrorMutation | undefined,
+	markerReason: string | undefined,
+): string {
+	const corrected =
+		markerReason === undefined ? prompt : buildPlanningMarkerRetryPrompt(prompt, markerReason);
+	return mutation === undefined ? corrected : buildPlanningRetryPrompt(corrected, mutation);
 }
 
 async function snapshotPlanningMirror(projectDir: string): Promise<PlanningMirrorSnapshot> {
@@ -130,7 +146,7 @@ async function addDirectoryToPlanningSnapshot(
 				return;
 			}
 			if (!entry.isFile()) return;
-			const relativePath = normalizeRelativePath(relative(rootDir, fullPath));
+			const relativePath = normalizeMirrorRelativePath(relative(rootDir, fullPath));
 			const content = await readFile(fullPath);
 			const details = await stat(fullPath);
 			const digest = createHash('sha256')
@@ -170,10 +186,6 @@ function changedPlanningMirrorPaths(
 	return [...paths]
 		.filter((path) => before.files.get(path) !== after.files.get(path))
 		.sort((left, right) => left.localeCompare(right));
-}
-
-function normalizeRelativePath(path: string): string {
-	return path.replaceAll('\\', '/');
 }
 
 function buildPlanningRetryPrompt(prompt: string, mutation: PlanningMirrorMutation): string {
@@ -272,7 +284,7 @@ function originalWorktreeStatusPath(line: string): string | undefined {
 	if (!rawPath) return undefined;
 	const renamedPath = rawPath.includes(' -> ') ? rawPath.split(' -> ').at(-1) : rawPath;
 	if (!renamedPath) return undefined;
-	return normalizeRelativePath(renamedPath.replace(/^"|"$/g, ''));
+	return normalizeMirrorRelativePath(renamedPath.replace(/^"|"$/g, ''));
 }
 
 export async function assertUnchanged(

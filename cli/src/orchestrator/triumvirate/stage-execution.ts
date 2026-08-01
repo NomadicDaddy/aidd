@@ -29,6 +29,8 @@ import {
 	formatToolArgs,
 } from '../formatters.ts';
 import { OrchestratorProgressReporter } from '../progress.ts';
+import { acceptedCompletedFeatureFromEvents } from '../run/feature-scope.ts';
+import { waitForCommitOrTimeout } from '../run/git.ts';
 import { summarizeSelectedWork } from './metadata.ts';
 
 export function runStageWithOptions(
@@ -41,6 +43,16 @@ export function runStageWithOptions(
 		stage: TriumvirateStageName;
 	},
 ): Promise<StageRunResult> {
+	const completion =
+		stageInput.stage === 'execution' && options.store !== undefined
+			? {
+					graceMs: options.completionMarkerGraceMs ?? 60_000,
+					store: options.store,
+					...(options.gitHeadBefore !== undefined
+						? { gitHeadBefore: options.gitHeadBefore }
+						: {}),
+				}
+			: undefined;
 	return runStage({
 		backend: options.backendFactory(stageInput.role.backend),
 		cwd: stageInput.cwd,
@@ -50,6 +62,7 @@ export function runStageWithOptions(
 		role: stageInput.role,
 		stage: stageInput.stage,
 		work: options.work,
+		...(completion !== undefined ? { completion } : {}),
 		...(options.iteration !== undefined ? { iteration: options.iteration } : {}),
 		...(options.onAgentEvent ? { onAgentEvent: options.onAgentEvent } : {}),
 		...(options.runStartedAtMs !== undefined ? { runStartedAtMs: options.runStartedAtMs } : {}),
@@ -63,6 +76,10 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	const startedAt = new Date(startedAtMs).toISOString();
 	const controller = new AbortController();
 	const events: AgentEvent[] = [];
+	const completionMarkerGrace = 'completion_marker_grace' as const;
+	let acceptedCompletionFeature: string | undefined;
+	let completionCommittedDuringGrace = false;
+	let completionFinalizedBeforeBackendExit = false;
 	// The same safety envelope the single-agent stream loop runs inside (backend-safety.ts):
 	// wall-clock deadline keyed to the RUN start (not the stage start), flailing guard, child
 	// reaper, and run-signal relay. Every stage — including execution in the real worktree —
@@ -86,16 +103,62 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	});
 	progress.start();
 	progress.setStage('waiting_for_backend', { last: input.cwdKind });
+	const stream = monitorBackend(
+		input.backend,
+		buildPromptInput(input.plan, input.role, input.cwd, input.prompt, input.cwdKind),
+		controller.signal,
+		{
+			idleNudgeTimeoutMs: input.plan.outputPolicy.idleNudgeTimeoutSeconds * 1000,
+			idleTimeoutMs: input.plan.outputPolicy.idleTimeoutSeconds * 1000,
+		},
+	)[Symbol.asyncIterator]();
+	let closeStream = true;
 	try {
-		for await (const event of monitorBackend(
-			input.backend,
-			buildPromptInput(input.plan, input.role, input.cwd, input.prompt, input.cwdKind),
-			controller.signal,
-			{
-				idleNudgeTimeoutMs: input.plan.outputPolicy.idleNudgeTimeoutSeconds * 1000,
-				idleTimeoutMs: input.plan.outputPolicy.idleTimeoutSeconds * 1000,
-			},
-		)) {
+		while (true) {
+			const nextEvent = stream.next();
+			const stepResult =
+				acceptedCompletionFeature !== undefined && input.completion !== undefined
+					? await Promise.race([
+							nextEvent,
+							waitForCommitOrTimeout(
+								input.cwd,
+								input.completion.gitHeadBefore,
+								input.completion.graceMs,
+							).then((outcome) => {
+								completionCommittedDuringGrace = outcome.committed;
+								return completionMarkerGrace;
+							}),
+						])
+					: await nextEvent;
+			if (stepResult === completionMarkerGrace) {
+				completionFinalizedBeforeBackendExit = true;
+				controller.abort('completion_marker_accepted');
+				break;
+			}
+			if (stepResult.done) {
+				closeStream = false;
+				if (acceptedCompletionFeature === undefined && input.completion !== undefined) {
+					acceptedCompletionFeature = await acceptedCompletedFeatureFromEvents(
+						input.completion.store,
+						events,
+						input.work,
+					);
+				}
+				if (
+					acceptedCompletionFeature !== undefined &&
+					input.completion?.gitHeadBefore !== undefined
+				) {
+					const outcome = await waitForCommitOrTimeout(
+						input.cwd,
+						input.completion.gitHeadBefore,
+						input.completion.graceMs,
+					);
+					completionCommittedDuringGrace = outcome.committed;
+					completionFinalizedBeforeBackendExit = true;
+				}
+				break;
+			}
+			const event = stepResult.value;
 			// Live deltas duplicate the turn's final assistant_text — observer/progress only,
 			// never the persisted transcript (see backend-stream.ts for the same rule).
 			if (event.type !== 'assistant_delta') events.push(event);
@@ -109,12 +172,25 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 				process.stdout.write(formatIdleWarningLine(event.afterMs));
 			} else if (event.type === 'assistant_text') {
 				process.stdout.write(event.chunk.endsWith('\n') ? event.chunk : `${event.chunk}\n`);
+				if (input.completion !== undefined && acceptedCompletionFeature === undefined) {
+					acceptedCompletionFeature = await acceptedCompletedFeatureFromEvents(
+						input.completion.store,
+						events,
+						input.work,
+					);
+					if (acceptedCompletionFeature !== undefined) {
+						progress.setStage('completion_marker_grace', {
+							last: `accepted ${acceptedCompletionFeature}`,
+						});
+					}
+				}
 			} else if (event.type === 'tool_call') {
 				process.stdout.write(`· ${event.tool}${formatToolArgs(event.args)}\n`);
 			}
 		}
 		progress.setStage('stage_complete', { last: `events ${events.length}` });
 	} finally {
+		if (closeStream) await stream.return?.();
 		const reapLine = await envelope.teardown();
 		if (reapLine) process.stdout.write(reapLine);
 		progress.stop();
@@ -124,9 +200,11 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	const stageMetrics = metricsFromEvents(events);
 	const result: AgentRunResult = {
 		events,
-		exitCode: envelope.flailingDetected
-			? orchestratorExitCodes.flailing
-			: exitCodeFromEvents(events),
+		exitCode: completionFinalizedBeforeBackendExit
+			? orchestratorExitCodes.success
+			: envelope.flailingDetected
+				? orchestratorExitCodes.flailing
+				: exitCodeFromEvents(events),
 		filesModified: filesModifiedFromEvents(events),
 		selectedWork: input.work,
 		transcript: events.map((event) => JSON.stringify(event)).join('\n'),
@@ -148,11 +226,15 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 		transcript: result.transcript,
 	};
 	if (input.role.model !== undefined) artifact.model = input.role.model;
+	if (completionCommittedDuringGrace) artifact.completionCommittedDuringGrace = true;
+	if (completionFinalizedBeforeBackendExit) artifact.completionFinalizedBeforeBackendExit = true;
 	if (structuredResult !== undefined) artifact.structuredResult = structuredResult;
 	if (envelope.flailingDetected) artifact.flailingDetected = true;
 	if (envelope.wallClockTimedOut) artifact.wallClockTimedOut = true;
 	return {
 		artifact,
+		completionCommittedDuringGrace,
+		completionFinalizedBeforeBackendExit,
 		flailingDetected: envelope.flailingDetected,
 		metrics: stageMetrics,
 		result,

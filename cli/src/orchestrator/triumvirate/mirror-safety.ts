@@ -67,3 +67,7 @@ export function createMirrorCopyFilter(sourceProjectDir: string) {
 		return !(rel.startsWith('..') || resolve(join(resolvedSource, rel)) !== resolvedTarget);
 	};
 }
+
+export function normalizeMirrorRelativePath(path: string): string {
+	return path.replaceAll('\\', '/');
+}

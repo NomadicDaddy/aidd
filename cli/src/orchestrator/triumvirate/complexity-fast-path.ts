@@ -73,6 +73,8 @@ export async function runComplexityFastPath(
 				skippedStages: ['secondary', 'overseer'],
 			},
 		},
+		completionCommittedDuringGrace: execution.completionCommittedDuringGrace,
+		completionFinalizedBeforeBackendExit: execution.completionFinalizedBeforeBackendExit,
 		metrics,
 		result: execution.result,
 		status: 'executed',

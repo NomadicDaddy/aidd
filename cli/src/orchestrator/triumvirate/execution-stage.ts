@@ -82,6 +82,8 @@ export async function finalizeTriumvirateExecution(
 					: {}),
 			},
 		},
+		completionCommittedDuringGrace: execution.completionCommittedDuringGrace,
+		completionFinalizedBeforeBackendExit: execution.completionFinalizedBeforeBackendExit,
 		metrics,
 		result: execution.result,
 		status: 'executed',

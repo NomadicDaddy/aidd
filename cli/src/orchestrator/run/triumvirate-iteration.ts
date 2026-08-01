@@ -1,13 +1,8 @@
-import type { AgentEvent } from 'aidd-shared/backends/types';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { createBackend } from 'aidd-shared/backends/factory';
-import {
-	type AgentRunResult,
-	type IterationMetrics,
-	orchestratorExitCodes,
-} from 'aidd-shared/orchestrator/result';
+import { type AgentRunResult, orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { runRepoDir } from 'aidd-shared/plan/types';
 
 import type { CompiledPrompt } from '../../prompts/types.ts';
@@ -22,28 +17,18 @@ import {
 } from './continuation.ts';
 import { gitDirtyFileCount } from './git.ts';
 import { accumulateIterationEvidence, accumulateIterationMetrics } from './run-accumulator.ts';
-import { buildWallClockTimeoutSummary } from './run-ending.ts';
 import { buildRateLimitBudgetSummary, handleRateLimit } from './run-gates.ts';
+import {
+	finishTriumvirateWallClockTimeout,
+	planningStageFlailingOutcome,
+	type TriumvirateIterationOutcome,
+} from './triumvirate-stage-outcomes.ts';
 import {
 	type MoveFn,
 	type OrchestratorDeps,
 	type RunAccumulator,
 	runRuntimeFields,
 } from './types.ts';
-
-export type TriumvirateIterationOutcome =
-	| { consecutiveAborts: number; consecutiveContinuableInterruptions: number; kind: 'continue' }
-	| {
-			events: AgentEvent[];
-			exitCode: number;
-			kind: 'executed';
-			metrics: IterationMetrics;
-			result: AgentRunResult;
-			stopRequestedAfterRun: boolean;
-			triumvirateArtifacts: Record<string, unknown>;
-			wallClockTimedOut: boolean;
-	  }
-	| { exitCode: number; kind: 'return' };
 
 export async function runTriumvirateIterationStep(input: {
 	acc: RunAccumulator;
@@ -52,6 +37,7 @@ export async function runTriumvirateIterationStep(input: {
 	consecutiveContinuableInterruptions: number;
 	controller: AbortController;
 	deps: OrchestratorDeps;
+	gitHeadBefore: string | undefined;
 	iteration: number;
 	iterationArtifactIndex: number;
 	move: MoveFn;
@@ -68,6 +54,7 @@ export async function runTriumvirateIterationStep(input: {
 		consecutiveContinuableInterruptions,
 		controller,
 		deps,
+		gitHeadBefore,
 		iteration,
 		iterationArtifactIndex,
 		move,
@@ -84,10 +71,14 @@ export async function runTriumvirateIterationStep(input: {
 		iteration,
 		plan,
 		runStartedAtMs,
-		// The run controller's signal reaches every stage, so a run-wide stop/abort ends the
-		// in-flight backend instead of only being noticed between iterations.
+		// Relay run-wide stop/abort into every stage.
 		signal: controller.signal,
+		store: deps.store,
 		work,
+		...(deps.completionMarkerGraceMs !== undefined
+			? { completionMarkerGraceMs: deps.completionMarkerGraceMs }
+			: {}),
+		...(gitHeadBefore !== undefined ? { gitHeadBefore } : {}),
 		...(deps.observer?.onAgentEvent ? { onAgentEvent: deps.observer.onAgentEvent } : {}),
 	});
 	const metrics = triumvirate.metrics;
@@ -96,6 +87,8 @@ export async function runTriumvirateIterationStep(input: {
 		const result = triumvirate.result;
 		const stopRequestedAfterRun = await deps.store.hasStopRequested(plan.stopPolicy.stopFile);
 		return {
+			completionCommittedDuringGrace: triumvirate.completionCommittedDuringGrace,
+			completionFinalizedBeforeBackendExit: triumvirate.completionFinalizedBeforeBackendExit,
 			events: result.events,
 			exitCode: result.exitCode,
 			kind: 'executed',
@@ -111,14 +104,22 @@ export async function runTriumvirateIterationStep(input: {
 	const endedAtMs = Date.now();
 	const endedAt = new Date(endedAtMs).toISOString();
 	const stageResult = triumvirate.status === 'invalid' ? triumvirate.result : undefined;
+	if (stageResult?.exitCode === orchestratorExitCodes.flailing) {
+		return await planningStageFlailingOutcome({
+			artifacts: triumvirateArtifacts,
+			metrics,
+			result: stageResult,
+			stopFile: plan.stopPolicy.stopFile,
+			store: deps.store,
+		});
+	}
 	const stageDetails =
 		stageResult !== undefined
 			? extractIterationDetails(stageResult.events, stageResult.exitCode, work, {
 					residualDirtyFilesCount: await gitDirtyFileCount(runRepoDir(plan)),
 				})
 			: undefined;
-	// Failed-stage file counts flow into run totals via the metrics above, so the path lists must
-	// accumulate too — otherwise the ledger shows nonzero counts with an empty path array.
+	// Keep failed-stage path evidence aligned with the accumulated metric counts.
 	if (stageDetails !== undefined) {
 		accumulateIterationEvidence(acc, stageDetails);
 	}
@@ -127,16 +128,19 @@ export async function runTriumvirateIterationStep(input: {
 		stageDetails !== undefined &&
 		isContinuableBackendInterruption(stageResult.exitCode, stageDetails) &&
 		plan.stopPolicy.continueOnTimeout;
-	// A planning stage that produced no plan carries the missingResult exit code so the run
-	// classifies like a single-agent missing AIDD_RESULT rather than a generic validation
-	// error (invalidPlanningOutputResult rewrites the stage exit).
+	// Preserve missingResult from invalidPlanningOutputResult instead of flattening it to exit 7.
 	const finalExitCode =
-		triumvirate.status === 'aborted'
-			? orchestratorExitCodes.success
-			: stageResult?.exitCode === orchestratorExitCodes.missingResult
-				? orchestratorExitCodes.missingResult
-				: orchestratorExitCodes.validationError;
-	const recordedExitCode = stageResult?.exitCode ?? finalExitCode;
+		triumvirate.wallClockTimedOut === true
+			? orchestratorExitCodes.aborted
+			: triumvirate.status === 'aborted'
+				? orchestratorExitCodes.success
+				: stageResult?.exitCode === orchestratorExitCodes.missingResult
+					? orchestratorExitCodes.missingResult
+					: orchestratorExitCodes.validationError;
+	const recordedExitCode =
+		triumvirate.wallClockTimedOut === true
+			? orchestratorExitCodes.aborted
+			: (stageResult?.exitCode ?? finalExitCode);
 	const stopRequestedAfterStageFailure = await deps.store.hasStopRequested(
 		plan.stopPolicy.stopFile,
 	);
@@ -194,22 +198,15 @@ export async function runTriumvirateIterationStep(input: {
 		);
 		return { exitCode: orchestratorExitCodes.success, kind: 'return' };
 	}
-	// A stage (or the between-stage check) hit the run's wall-clock deadline. Classify the
-	// run as an explicit timeout — without this branch the invalid-status fallthrough below
-	// ledgers it as validation error (exit 7), masking the real cause, exactly the
-	// misclassification the single-agent path fixes in post-iteration-guards.
+	// Preserve the shared in-stage/between-stage timeout classification in the run ledger.
 	if (triumvirate.wallClockTimedOut === true) {
-		const summary = buildWallClockTimeoutSummary(triumvirate.summary, plan);
-		move({ summary, type: 'complete' });
-		await writeRunSummary(
-			deps,
-			plan,
+		return await finishTriumvirateWallClockTimeout({
 			acc,
-			'exit_error',
-			orchestratorExitCodes.aborted,
-			summary,
-		);
-		return { exitCode: orchestratorExitCodes.aborted, kind: 'return' };
+			deps,
+			move,
+			plan,
+			summary: triumvirate.summary,
+		});
 	}
 	if (stageResult?.exitCode === orchestratorExitCodes.rateLimited) {
 		const rate = await handleRateLimit(
@@ -235,8 +232,7 @@ export async function runTriumvirateIterationStep(input: {
 			);
 			return { exitCode: orchestratorExitCodes.success, kind: 'return' };
 		}
-		// Mirrors the single-agent path: avoid a pointless backoff while preserving the actual
-		// provider rate-limit classification instead of reporting a timeout that never elapsed.
+		// Avoid pointless backoff while preserving the provider rate-limit classification.
 		if (rate.backoffExceedsDeadline) {
 			const summary = buildRateLimitBudgetSummary(triumvirate.summary, plan);
 			move({ summary, type: 'complete' });

@@ -21,7 +21,6 @@ import {
 import { disambiguateFeatureId, normalizeFinding } from './audit-findings.ts';
 import { enforceInstrumentBackedScore } from './audit-instruments.ts';
 import {
-	hasMeaningfulNoFindingsJustification,
 	hasStructuredAuditOutput,
 	structuredAuditReports,
 	structuredFindings,
@@ -117,7 +116,6 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 			const perAuditReportPaths: Record<string, string> = {};
 			let totalFindings = 0;
 			let totalCreated = 0;
-			const unjustifiedEmptyAudits: string[] = [];
 			let unmeasuredScoresWithheld = 0;
 			let existing = await context.store.listFeatures({ includeAudit: true });
 			const takenIds = new Set(existing.map((feature) => feature.id));
@@ -126,12 +124,6 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 
 			for (const report of parsedReports.reports) {
 				const findings = structuredFindings(report.structured);
-				if (
-					findings.length === 0 &&
-					!hasMeaningfulNoFindingsJustification(report.structured)
-				) {
-					unjustifiedEmptyAudits.push(report.auditName);
-				}
 				const normalized = findings.map((finding, index) =>
 					normalizeFinding(finding, report.auditName, existing, index),
 				);
@@ -215,15 +207,6 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					: '';
 			const singleSummary = `audit ${auditName} finished with ${totalFindings} finding(s)${preExistingSuffix}${invalidSuffix}${remainingSuffix}`;
 			const baseSummary = auditBatchMode ? batchSummary : singleSummary;
-			// An audit can finish with report prose but no findings because the backend
-			// dropped the findings contract. Legitimately clean empty reports must justify
-			// their zero-finding result with concrete evidence — in every report, whether
-			// the run was a single audit or a batch, and regardless of what sibling
-			// reports found.
-			const findingsContractWarning =
-				unjustifiedEmptyAudits.length > 0
-					? `WARNING: ${unjustifiedEmptyAudits.length} audit report(s) had zero structured findings without acceptable noFindingsJustification evidence (${unjustifiedEmptyAudits.join(', ')}); their zero-finding claims are unverified. Review those report(s) manually or re-run on a backend that honors the findings contract.`
-					: undefined;
 			// A measurement audit can print a confident score while its own prose admits no
 			// artifact was parsed. The score is rewritten in the report; surface the fact
 			// here too so a run summary never reads clean when a number was withheld.
@@ -231,7 +214,7 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 				unmeasuredScoresWithheld > 0
 					? `WARNING: ${unmeasuredScoresWithheld} measurement audit report(s) declared a numeric score with no validated instruments[] entry; each score was rewritten to SKIPPED / data-unavailable. Produce a real measurement artifact and re-run those audits.`
 					: undefined;
-			const summary = [baseSummary, findingsContractWarning, instrumentContractWarning]
+			const summary = [baseSummary, instrumentContractWarning]
 				.filter((line): line is string => line !== undefined)
 				.join('\n');
 			return {
@@ -241,7 +224,6 @@ export function createAuditMode(plan: RunPlan): ModeHandler {
 					auditName,
 					completedAudits,
 					findingIds,
-					findingsContractWarning,
 					findingsCreated: totalCreated,
 					findingsTotal: totalFindings,
 					instrumentContractWarning,

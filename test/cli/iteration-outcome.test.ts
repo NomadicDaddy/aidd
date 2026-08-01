@@ -436,6 +436,43 @@ describe('classifyIterationOutcome', () => {
 		expect(result.recordedExitCode).toBe(73);
 	});
 
+	test('recognized invalid audit reports remain retryable without persisted artifacts', async () => {
+		const projectDir = await makeProjectDir('audit-invalid-report');
+		const structuredResult = { auditFindings: [], reportMarkdown: '# SECURITY' };
+
+		const result = await classifyIterationOutcome({
+			completedResultFeature: undefined,
+			completionFinalizedBeforeBackendExit: false,
+			events: [],
+			exitCode: 0,
+			iterationCommits: [],
+			modeResult: {
+				artifacts: {
+					completedAudits: [],
+					invalidAuditReports: [
+						{
+							auditName: 'SECURITY',
+							index: 0,
+							reason: 'empty auditFindings requires evidence',
+						},
+					],
+					missingAudits: ['SECURITY'],
+					perAuditReportPaths: {},
+				},
+				complete: false,
+				summary: 'audit report rejected; SECURITY remains pending',
+			},
+			plan: { ...basePlan, mode: 'audit' as const, projectDir },
+			startedAtMs: Date.now(),
+			structuredResult,
+			work: { description: 'SECURITY audit', id: 'SECURITY', kind: 'generic' as const },
+		});
+
+		expect(result.missingAuditArtifacts).toBe(false);
+		expect(result.missingAiddResult).toBe(false);
+		expect(result.recordedExitCode).toBe(0);
+	});
+
 	test('phase work is exempt from missing_aidd_result regardless of artifacts', async () => {
 		const projectDir = await makeProjectDir('phase-work');
 		const startedAtMs = Date.now();

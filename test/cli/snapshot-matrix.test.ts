@@ -6,6 +6,7 @@ import type { ResolvedConfig } from 'aidd-shared/config';
 import { backendNames } from 'aidd-shared/plan/types';
 
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
+import { compilePrompt } from '../../cli/src/prompts/compile.ts';
 import { snapshotBackends, snapshotModes } from '../../cli/src/prompts/snapshot-matrix.ts';
 
 const rootDir = join(import.meta.dir, '..', '..');
@@ -27,6 +28,32 @@ const config: ResolvedConfig = {
 	rateLimitBackoffSeconds: 300,
 };
 
+const nativeBackends = ['native', 'ollama', 'lmstudio', 'openai'] as const;
+
+async function compileSnapshotMode(
+	backend: (typeof nativeBackends)[number],
+	mode: (typeof snapshotModes)[number],
+): Promise<string> {
+	const plan = resolveRunPlan(parseArgs(['--project-dir', '.', '--cli', backend, ...mode.args]), {
+		...config,
+		cli: backend,
+	});
+	if (mode.phase) {
+		plan.prompt.phase = mode.phase;
+		plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
+			fragment.kind === 'phase'
+				? { id: mode.phase!, kind: 'phase', path: `prompts/${mode.phase}.md` }
+				: fragment,
+		);
+	}
+	const compiled = await compilePrompt(plan.prompt, {
+		includeProjectContext: false,
+		projectDir: plan.projectDir,
+		rootDir,
+	});
+	return compiled.text;
+}
+
 // The snapshot matrix is the reviewable record of what agents are told, so gaps in it are
 // silent: a backend or phase missing from the matrix compiles fine and never shows up in
 // the drift gate (this is exactly how openai shipped without a backend fragment and
@@ -46,6 +73,18 @@ describe('snapshot matrix completeness', () => {
 			// A native-routed backend compiles byte-identically to the native snapshots, so
 			// omitting it loses nothing. Anything else must join snapshotBackends.
 			expect(`${backend}: ${fragment?.path}`).toBe(`${backend}: prompts/_cli/native.md`);
+		}
+	});
+
+	test('every native-equivalent backend compiles byte-identically in every snapshot mode', async () => {
+		for (const mode of snapshotModes) {
+			const nativeText = await compileSnapshotMode('native', mode);
+			for (const backend of nativeBackends.slice(1)) {
+				const aliasText = await compileSnapshotMode(backend, mode);
+				expect(`${backend}/${mode.name}\n${aliasText}`).toBe(
+					`${backend}/${mode.name}\n${nativeText}`,
+				);
+			}
 		}
 	});
 

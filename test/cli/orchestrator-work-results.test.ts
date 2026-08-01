@@ -87,7 +87,7 @@ describe('orchestrator work results', () => {
 	);
 
 	test(
-		'fails a batched audit that writes reports but emits zero structured findings',
+		'rejects a batched audit whose empty reports lack justification without persisting them',
 		async () => {
 			const store = await makeStore('multi-audit-empty');
 			const backend = new SequencedBackend([
@@ -98,6 +98,7 @@ describe('orchestrator work results', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
+				[{ type: 'error', reason: 'provider' }],
 			]);
 			const auditPlan = resolveRunPlan(
 				parseArgs([
@@ -113,18 +114,18 @@ describe('orchestrator work results', () => {
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
-			// A batch that writes >=2 reports yet supplies no structured findings has dropped the
-			// findings contract; the run must read as a failure, not a clean pass, even though the
-			// report prose was still persisted.
-			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			// Both invalid reports remain queued. The retry's provider error becomes the final
+			// result, while neither rejected report can become freshness data.
+			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(backend.calls).toBe(2);
 			const reports = await store.listAuditReports();
-			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
-			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
-			) as { findingsContractDropped?: boolean; outcome: { status: string } };
-			expect(structured.findingsContractDropped).toBe(true);
-			expect(structured.outcome.status).toBe('audit_findings_contract_dropped');
+			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
+			expect(structured.invalidAuditReports).toHaveLength(2);
+			expect(structured.missingAudits).toEqual(['SECURITY', 'DEAD_CODE']);
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -141,6 +142,7 @@ describe('orchestrator work results', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
+				[{ type: 'error', reason: 'provider' }],
 			]);
 			const auditPlan = resolveRunPlan(
 				parseArgs([
@@ -156,12 +158,16 @@ describe('orchestrator work results', () => {
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
-			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(backend.calls).toBe(2);
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
-			) as { findingsContractDropped?: boolean; outcome: { status: string } };
-			expect(structured.findingsContractDropped).toBe(true);
-			expect(structured.outcome.status).toBe('audit_findings_contract_dropped');
+			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
+			expect(structured.invalidAuditReports).toHaveLength(1);
+			expect(structured.missingAudits).toEqual(['SECURITY']);
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -178,6 +184,7 @@ describe('orchestrator work results', () => {
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
+				[{ type: 'error', reason: 'provider' }],
 			]);
 			const auditPlan = resolveRunPlan(
 				parseArgs([
@@ -193,14 +200,14 @@ describe('orchestrator work results', () => {
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
-			// A single audit was previously exempt from the findings contract (the warning
-			// required >=2 completed audits); an unjustified empty report must fail here too.
-			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(backend.calls).toBe(2);
+			expect(await store.listAuditReports()).toEqual([]);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
-			) as { findingsContractDropped?: boolean; outcome: { status: string } };
-			expect(structured.findingsContractDropped).toBe(true);
-			expect(structured.outcome.status).toBe('audit_findings_contract_dropped');
+			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
+			expect(structured.invalidAuditReports).toHaveLength(1);
+			expect(structured.missingAudits).toEqual(['SECURITY']);
 		},
 		slowOrchestratorTestTimeoutMs,
 	);

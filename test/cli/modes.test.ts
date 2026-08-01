@@ -10,6 +10,10 @@ import {
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { createModeHandler } from '../../cli/src/modes/factory.ts';
 import { detectBlockedVerificationAdmission } from '../../cli/src/modes/coding/verification.ts';
+import {
+	findingValidationReasons,
+	hasMeaningfulNoFindingsJustification,
+} from '../../cli/src/modes/audit-parsing.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { initializeGitProject } from './_helpers/orchestrator-fixture.ts';
 
@@ -66,6 +70,78 @@ function plan(projectDir: string, args: string[] = []) {
 
 afterEach(async () => {
 	await rm(rootDir, { recursive: true, force: true });
+});
+
+describe('audit evidence validation', () => {
+	test('requires substantive Verified evidence rather than a marker alone', () => {
+		const baseFinding = {
+			affectedFiles: ['src/routes.ts'],
+			severity: 'High',
+			spec: 'Add the missing guard.',
+			title: 'Missing route guard',
+		};
+
+		expect(
+			findingValidationReasons({
+				auditFindings: [{ ...baseFinding, description: 'Verified:' }],
+			}),
+		).toContain('auditFindings[0]: description lacks a non-empty Verified: evidence line');
+		expect(
+			findingValidationReasons({
+				auditFindings: [
+					{
+						...baseFinding,
+						description: 'Verified: reviewed the implementation carefully',
+					},
+				],
+			}),
+		).toContain(
+			'auditFindings[0]: Verified: evidence must cite path:line or a scoped search and its result',
+		);
+	});
+
+	test('accepts path-line and scoped search evidence forms', () => {
+		const finding = {
+			affectedFiles: ['src/routes.ts'],
+			severity: 'High',
+			spec: 'Add the missing guard.',
+			title: 'Missing route guard',
+		};
+
+		expect(
+			findingValidationReasons({
+				auditFindings: [
+					{ ...finding, description: 'Verified: src/routes.ts:12 lacks a guard.' },
+				],
+			}),
+		).toEqual([]);
+		expect(
+			findingValidationReasons({
+				auditFindings: [
+					{
+						...finding,
+						description:
+							'Verified: rg searched cli/src/**/*.ts for the unsafe call and returned two matches.',
+					},
+				],
+			}),
+		).toEqual([]);
+	});
+
+	test('requires scope, inspection action, and outcome for a zero-finding report', () => {
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'Inspected src/routes.ts carefully for every relevant problem before completing this audit.',
+			}),
+		).toBe(false);
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'Ran rg for unvalidated handlers in src/routes.ts and confirmed every match has a schema.',
+			}),
+		).toBe(true);
+	});
 });
 
 describe('mode handlers', () => {
@@ -1791,6 +1867,8 @@ describe('mode handlers', () => {
 						{
 							auditName: 'DEAD_CODE',
 							auditFindings: [],
+							noFindingsJustification:
+								'Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed every match is imported by production code.',
 							reportMarkdown: '# DEAD_CODE Audit Report\n\nNo findings.',
 						},
 					],
@@ -1831,7 +1909,7 @@ describe('mode handlers', () => {
 		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
 	});
 
-	test('audit mode warns when a batch writes reports but emits zero structured findings', async () => {
+	test('audit mode rejects a batch whose empty reports lack evidence', async () => {
 		const { projectDir, store } = await makeProject('audit-batch-no-findings');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
@@ -1867,20 +1945,19 @@ describe('mode handlers', () => {
 		const features = await store.listFeatures({ includeAudit: true });
 		const reports = await store.listAuditReports();
 
-		// Both reports land, but nothing is promoted — the suspicious signature.
-		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
-		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+		// Invalid zero-finding claims must not become fresh audit evidence.
+		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
 		expect(features.filter((feature) => feature.auditSource !== undefined)).toHaveLength(0);
+		expect(result.complete).toBe(false);
 		expect(result.artifacts?.findingsCreated).toBe(0);
 		expect(result.artifacts?.findingsTotal).toBe(0);
-		expect(result.summary).toContain('zero structured findings without acceptable');
-		expect(String(result.artifacts?.findingsContractWarning)).toContain(
-			'2 audit report(s) had zero structured findings',
-		);
-		expect(String(result.artifacts?.findingsContractWarning)).toContain('SECURITY, DEAD_CODE');
+		expect(result.artifacts?.completedAudits).toEqual([]);
+		expect(result.artifacts?.missingAudits).toEqual(['SECURITY', 'DEAD_CODE']);
+		expect(result.artifacts?.invalidAuditReports).toHaveLength(2);
 	});
 
-	test('audit mode warns on a single unjustified zero-finding report', async () => {
+	test('audit mode rejects a single unjustified zero-finding report', async () => {
 		const { projectDir, store } = await makeProject('audit-single-no-findings');
 		const mode = createModeHandler(plan(projectDir, ['--audit', 'SECURITY']));
 
@@ -1900,13 +1977,14 @@ describe('mode handlers', () => {
 			},
 		);
 
-		expect(String(result.artifacts?.findingsContractWarning)).toContain(
-			'1 audit report(s) had zero structured findings',
-		);
-		expect(String(result.artifacts?.findingsContractWarning)).toContain('SECURITY');
+		expect(result.complete).toBe(false);
+		expect(result.artifacts?.completedAudits).toEqual([]);
+		expect(result.artifacts?.missingAudits).toEqual(['SECURITY']);
+		expect(result.artifacts?.invalidAuditReports).toHaveLength(1);
+		expect(await store.listAuditReports()).toEqual([]);
 	});
 
-	test('audit mode warns when a sibling empty report lacks justification despite batch findings', async () => {
+	test('audit mode rejects an unjustified sibling without discarding a valid report', async () => {
 		const { projectDir, store } = await makeProject('audit-batch-mixed-unjustified');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
@@ -1948,7 +2026,13 @@ describe('mode handlers', () => {
 		// One real finding elsewhere in the batch must not immunize the
 		// unjustified empty sibling report.
 		expect(result.artifacts?.findingsCreated).toBe(1);
-		expect(String(result.artifacts?.findingsContractWarning)).toContain('(DEAD_CODE)');
+		expect(result.complete).toBe(false);
+		expect(result.artifacts?.completedAudits).toEqual(['SECURITY']);
+		expect(result.artifacts?.missingAudits).toEqual(['DEAD_CODE']);
+		expect(result.artifacts?.invalidAuditReports).toHaveLength(1);
+		const reports = await store.listAuditReports();
+		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
+		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
 	});
 
 	test('boilerplate command-only justification is not meaningful', async () => {
@@ -1971,7 +2055,10 @@ describe('mode handlers', () => {
 			},
 		);
 
-		expect(String(result.artifacts?.findingsContractWarning)).toContain('(SECURITY)');
+		expect(result.complete).toBe(false);
+		expect(result.artifacts?.missingAudits).toEqual(['SECURITY']);
+		expect(result.artifacts?.invalidAuditReports).toHaveLength(1);
+		expect(await store.listAuditReports()).toEqual([]);
 	});
 
 	test('audit mode marks batched result incomplete when a selected audit is omitted', async () => {
@@ -1993,6 +2080,8 @@ describe('mode handlers', () => {
 						{
 							auditName: 'SECURITY',
 							auditFindings: [],
+							noFindingsJustification:
+								'Inspected src/routes.ts and confirmed every route declares an input schema.',
 							reportMarkdown: '# SECURITY Audit Report',
 						},
 					],
@@ -2035,6 +2124,8 @@ describe('mode handlers', () => {
 						{
 							auditName: 'SECURITY',
 							auditFindings: [],
+							noFindingsJustification:
+								'Inspected src/routes.ts and confirmed every route declares an input schema.',
 							reportMarkdown: '# SECURITY Audit Report',
 						},
 						{

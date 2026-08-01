@@ -21,6 +21,28 @@ export function structuredFindings(
 
 const findingSeverities = new Set(['critical', 'high', 'low', 'medium']);
 
+const concretePathPattern = /\b[\w./\\*-]+\.(?:css|html|js|jsx|json|md|sql|ts|tsx|toml|ya?ml)\b/i;
+const pathLinePattern =
+	/(?:[A-Za-z]:[\\/])?(?:[\w.@+-]+[\\/])*[\w.@+-]+\.[A-Za-z0-9]+:\d+(?::\d+)?\b/;
+
+function verifiedEvidenceLines(description: string): string[] {
+	return description
+		.split(/\r?\n/)
+		.map((line) => /^\s*Verified:\s*(.+)\s*$/i.exec(line)?.[1]?.trim())
+		.filter((line): line is string => line !== undefined && line.length > 0);
+}
+
+function describesSearchEvidence(evidence: string): boolean {
+	const namesSearch = /\b(?:findstr|grep|rg|ripgrep|scanned|scanning|searched|searching)\b/i.test(
+		evidence,
+	);
+	const namesResult =
+		/\b(?:confirmed|found|matched|matches|no|none|reported|resulted|returned|showed|yielded|zero)\b/i.test(
+			evidence,
+		);
+	return namesSearch && namesResult && concretePathPattern.test(evidence);
+}
+
 /**
  * Structural validation of a report's findings array against the emitted result
  * contract (see prompts/compile/result-contract.ts): every entry must be an object
@@ -46,8 +68,20 @@ export function findingValidationReasons(structured: Record<string, unknown>): s
 		const description = stringValue(finding.description);
 		if (description === undefined) {
 			reasons.push(`${label}: missing description`);
-		} else if (!description.includes('Verified:')) {
-			reasons.push(`${label}: description lacks a Verified: evidence line`);
+		} else {
+			const evidenceLines = verifiedEvidenceLines(description);
+			if (evidenceLines.length === 0) {
+				reasons.push(`${label}: description lacks a non-empty Verified: evidence line`);
+			} else if (
+				!evidenceLines.some(
+					(evidence) =>
+						pathLinePattern.test(evidence) || describesSearchEvidence(evidence),
+				)
+			) {
+				reasons.push(
+					`${label}: Verified: evidence must cite path:line or a scoped search and its result`,
+				);
+			}
 		}
 		const severity = stringValue(finding.auditSeverity) ?? stringValue(finding.severity);
 		if (severity === undefined || !findingSeverities.has(severity.toLowerCase())) {
@@ -82,11 +116,37 @@ export function hasMeaningfulNoFindingsJustification(
 	if (justification.trim().length < 50) return false;
 
 	const namesConcretePath =
-		/\b[\w./\\-]+\.(?:css|html|js|jsx|json|md|sql|ts|tsx|toml|ya?ml)\b/i.test(justification) ||
+		concretePathPattern.test(justification) ||
 		/(?:\*\*?\/|\*\.|\/\*|\b[\w.-]+\/[\w./*-]+)/.test(justification);
-	// Naming a tool alone ("I ran git status") proves nothing was actually swept;
-	// a tool mention only counts as evidence alongside the paths/globs it covered.
-	return namesConcretePath;
+	const namesInspection =
+		/\b(?:analyzed|attempted|checked|compared|examined|inspected|parsed|queried|reviewed|scanned|searched|traced|verified)\b/i.test(
+			justification,
+		) || /\bran\s+(?:findstr|grep|rg|ripgrep)\b/i.test(justification);
+	const namesOutcome =
+		/\b(?:are on|confirmed|failed|found|is enabled|is on|matched|matches|no\s+\w+|none|nothing|passed|produced|qualified|remain|reported|returned|showed|within budget|yielded|zero\s+\w+)\b/i.test(
+			justification,
+		);
+	// These checks establish a minimum evidence shape, not semantic truth. A concrete scope,
+	// an inspection action, and an observed result are all required so a long sentence that
+	// merely names a file cannot make a failed audit fresh.
+	return namesConcretePath && namesInspection && namesOutcome;
+}
+
+function auditReportValidationReasons(structured: Record<string, unknown>): string[] {
+	const reasons = findingValidationReasons(structured);
+	const raw = structured.auditFindings ?? structured.findings;
+	if (raw === undefined) {
+		reasons.push('missing auditFindings array');
+	} else if (
+		Array.isArray(raw) &&
+		raw.length === 0 &&
+		!hasMeaningfulNoFindingsJustification(structured)
+	) {
+		reasons.push(
+			'empty auditFindings requires a concrete noFindingsJustification with scope, inspection, and outcome evidence',
+		);
+	}
+	return reasons;
 }
 
 export function hasStructuredAuditOutput(
@@ -106,7 +166,7 @@ export function structuredAuditReports(
 	const rawReports = structured.auditReports;
 	if (!Array.isArray(rawReports)) {
 		const auditName = selectedAudits[0] ?? 'AUDIT';
-		const reasons = findingValidationReasons(structured);
+		const reasons = auditReportValidationReasons(structured);
 		if (reasons.length > 0) {
 			return {
 				invalid: [
@@ -143,7 +203,7 @@ export function structuredAuditReports(
 			invalid.push({ auditName, index, reason: 'duplicate auditName' });
 			continue;
 		}
-		const reasons = findingValidationReasons(record);
+		const reasons = auditReportValidationReasons(record);
 		if (reasons.length > 0) {
 			invalid.push({
 				auditName,

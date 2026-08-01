@@ -59,6 +59,7 @@ export async function classifyIterationOutcome(input: {
 	const completedAfterBackendInterruption =
 		completedAfterBackendIdle || completedAfterBackendAbort;
 	const completedAuditsArtifact = modeResult.artifacts?.completedAudits;
+	const invalidAuditReportsArtifact = modeResult.artifacts?.invalidAuditReports;
 	const perAuditReportPathsArtifact = modeResult.artifacts?.perAuditReportPaths;
 	const completedAuditsCount = Array.isArray(completedAuditsArtifact)
 		? completedAuditsArtifact.length
@@ -67,11 +68,18 @@ export async function classifyIterationOutcome(input: {
 		typeof perAuditReportPathsArtifact === 'object' && perAuditReportPathsArtifact !== null
 			? Object.keys(perAuditReportPathsArtifact).length
 			: 0;
+	const hasInvalidAuditReports =
+		Array.isArray(invalidAuditReportsArtifact) && invalidAuditReportsArtifact.length > 0;
+	// A recognized invalid report is not a missing artifact: audit mode parsed the result,
+	// rejected it before persistence, and left the audit in its retry queue. Preserve exit 0
+	// here so post-iteration can select that pending audit again. Truly absent/unrecognized
+	// output still takes missing_audit_artifacts below.
 	const missingAuditArtifacts =
 		plan.mode === 'audit' &&
 		exitCode === orchestratorExitCodes.success &&
 		completedAuditsCount === 0 &&
-		perAuditReportPathsCount === 0;
+		perAuditReportPathsCount === 0 &&
+		!hasInvalidAuditReports;
 	// Whether the .aidd-artifact fallback below is consulted at all. Feature work must emit
 	// AIDD_RESULT, so .aidd writes alone never stand in for a marker there — and the warning
 	// must not claim to have checked for artifacts it never looked at.

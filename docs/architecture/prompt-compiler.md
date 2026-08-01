@@ -71,8 +71,9 @@ defined by `cli/src/prompts/snapshot-matrix.ts`
 (native/claude-code/cline/opencode/kilocode/codex/grok × coding, initializer, onboarding,
 in-progress, todo, validate, audit, interview, director, directive-mutation,
 directive-readonly). `ollama`, `lmstudio`, and `openai` are omitted because they compile
-byte-identically to the `native` snapshots; that parity — and the matrix's coverage of every
-backend and `prompts/*.md` phase file — is locked by `test/cli/snapshot-matrix.test.ts`.
+byte-identically to the `native` snapshots. `test/cli/snapshot-matrix.test.ts` compiles all four
+native-equivalent providers in every snapshot mode and compares their complete prompt text
+byte-for-byte; it also locks the matrix's coverage of every backend and `prompts/*.md` phase file.
 Regenerate snapshots in the same change that alters compiler or prompt behavior:
 
 ```powershell

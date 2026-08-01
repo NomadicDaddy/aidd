@@ -1904,3 +1904,241 @@ describe('orchestrator triumvirate safety envelope', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 });
+
+describe('orchestrator triumvirate plan-marker contract', () => {
+	const proseOnly: AgentEvent[] = [
+		{
+			chunk: 'I looked around the repository and here is what I think.',
+			type: 'assistant_text',
+		},
+		{ exitCode: 0, filesModified: [], type: 'done' },
+	];
+
+	test(
+		'a markerless primary planner is retried once and the panel proceeds',
+		async () => {
+			const store = await makeStore('marker-primary-retry');
+			const backend = new SequencedBackend(
+				[
+					proseOnly,
+					planningMarker('Primary plan after retry'),
+					planningMarker('Secondary plan'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+				],
+				async (callIndex) => {
+					if (callIndex === 4) await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(5);
+			// The second primary attempt carries the marker-retry framing.
+			expect(backend.inputs[1]?.text).toContain('aidd PLANNING MARKER RETRY');
+			expect(backend.inputs[1]?.text).toContain('missing AIDD_RESULT planMarkdown');
+			// The overseer sees the retried plan, never the first attempt's prose.
+			expect(backend.inputs[3]?.text).toContain('Primary plan after retry');
+			expect(backend.inputs[3]?.text).not.toContain('here is what I think');
+			// The marker retry is recorded on the primary stage artifact.
+			const iterationJson = await readFile(
+				join(store.metadataDir, 'iterations', '001.json'),
+				'utf8',
+			);
+			const structured = JSON.parse(iterationJson) as {
+				triumvirate: { primaryPlan: { planningMarkerRetry?: { reason: string } } };
+			};
+			expect(structured.triumvirate.primaryPlan.planningMarkerRetry?.reason).toBe(
+				'missing_plan_markdown',
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a primary planner with no plan after the retry fails the run as a missing result',
+		async () => {
+			const store = await makeStore('marker-primary-invalid');
+			const backend = new SequencedBackend([proseOnly, proseOnly]);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			// Exit-zero prose no longer becomes the plan: the stage is invalid and classified
+			// like a single-agent missing AIDD_RESULT; no later stage launches.
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(backend.calls).toBe(2);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('primary planning stage produced no plan');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'an empty planMarkdown from the secondary planner fails after its retry',
+		async () => {
+			const store = await makeStore('marker-secondary-empty');
+			const emptyPlan: AgentEvent[] = [
+				{ chunk: 'AIDD_RESULT: {"planMarkdown":"  "}\n', type: 'assistant_text' },
+				{ exitCode: 0, filesModified: [], type: 'done' },
+			];
+			const backend = new SequencedBackend([
+				planningMarker('Primary plan'),
+				emptyPlan,
+				emptyPlan,
+			]);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			// primary + two secondary attempts; the overseer never launches.
+			expect(backend.calls).toBe(3);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('secondary planning stage produced no plan');
+			expect(runSummary?.summary).toContain('planMarkdown must be a non-empty string');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'the complexity fast path never executes prose from a markerless planner',
+		async () => {
+			const store = await makeStore('marker-fast-path-invalid');
+			const backend = new SequencedBackend([proseOnly, proseOnly]);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--complexity-tiering',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			// Previously the fast path sent the prose straight to a mutating execution stage;
+			// now the run fails at the planning contract with no execution call.
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(backend.calls).toBe(2);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a valid plan after the marker retry still takes the fast path',
+		async () => {
+			const store = await makeStore('marker-fast-path-retry');
+			const backend = new SequencedBackend(
+				[
+					proseOnly,
+					planningMarker('Primary plan after retry'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+				],
+				async (callIndex) => {
+					if (callIndex === 2) await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--complexity-tiering',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			// Two primary attempts + execution; secondary and overseer stay skipped.
+			expect(backend.calls).toBe(3);
+			expect(backend.inputs[2]?.text).toContain('Primary plan after retry');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});

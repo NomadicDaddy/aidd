@@ -15,6 +15,8 @@ import {
 	failedStageResult,
 	guardedResult,
 	planningMirrorMutationResult,
+	planOrInvalidResult,
+	triumvirateDeadlinePassed,
 	wallClockExceededResult,
 } from './triumvirate/run-result.ts';
 import {
@@ -26,7 +28,11 @@ import {
 	snapshotWorktree,
 } from './triumvirate/scratch-workspace.ts';
 import { mergeMetrics, runStageWithOptions } from './triumvirate/stage-execution.ts';
-import { buildOverseerPrompt, buildPlannerPrompt } from './triumvirate/stage-prompts.ts';
+import {
+	buildOverseerPrompt,
+	buildPlannerPrompt,
+	planValidationReason,
+} from './triumvirate/stage-prompts.ts';
 import { emptyMetrics } from './triumvirate/types.ts';
 
 export type {
@@ -34,14 +40,6 @@ export type {
 	TriumvirateRunOptions,
 	TriumvirateRunResult,
 } from './triumvirate/types.ts';
-
-// True when the run's wall-clock budget is spent. Stages enforce the same deadline
-// internally (BackendSafetyEnvelope), but a stage that finishes just under the wire must
-// not launch the NEXT backend into a dead run — check between stages too.
-export function triumvirateDeadlinePassed(options: TriumvirateRunOptions): boolean {
-	if (options.runStartedAtMs === undefined) return false;
-	return Date.now() >= options.runStartedAtMs + options.plan.outputPolicy.timeoutSeconds * 1000;
-}
 
 export async function runTriumvirateIteration(
 	options: TriumvirateRunOptions,
@@ -108,6 +106,7 @@ export async function runTriumvirateIteration(
 			scratchRoot,
 			sourceProjectDir: scratchSourceDir,
 			stage: 'primary',
+			validate: planValidationReason,
 		});
 		const primary = primaryRun.result;
 		mergeMetrics(metrics, primaryRun.metrics);
@@ -130,11 +129,25 @@ export async function runTriumvirateIteration(
 				primaryPlan: primary.artifact,
 			});
 		}
+		// The planning marker is contractual: a planner that exited 0 without a usable
+		// planMarkdown (after the guard's one marker retry) is an invalid stage, classified
+		// like a single-agent missing AIDD_RESULT — never a prose fallback.
+		const primaryPlan = planOrInvalidResult('primary', primary, metrics, {
+			metadata,
+			primaryPlan: primary.artifact,
+		});
+		if ('failure' in primaryPlan) return primaryPlan.failure;
 
 		// Complexity fast path (conservative tiering): low-complexity work skips the secondary
 		// planner + overseer and executes the primary plan directly. Returns undefined for
 		// medium/high, which fall through to the full panel below.
-		const fastPath = await runComplexityFastPath(options, primary, metadata, metrics);
+		const fastPath = await runComplexityFastPath(
+			options,
+			primary,
+			primaryPlan.plan,
+			metadata,
+			metrics,
+		);
 		if (fastPath) return fastPath;
 
 		if (triumvirateDeadlinePassed(options)) {
@@ -162,6 +175,7 @@ export async function runTriumvirateIteration(
 			scratchRoot,
 			sourceProjectDir: scratchSourceDir,
 			stage: 'secondary',
+			validate: planValidationReason,
 		});
 		const secondary = secondaryRun.result;
 		mergeMetrics(metrics, secondaryRun.metrics);
@@ -191,6 +205,12 @@ export async function runTriumvirateIteration(
 				secondaryPlan: secondary.artifact,
 			});
 		}
+		const secondaryPlan = planOrInvalidResult('secondary', secondary, metrics, {
+			metadata,
+			primaryPlan: primary.artifact,
+			secondaryPlan: secondary.artifact,
+		});
+		if ('failure' in secondaryPlan) return secondaryPlan.failure;
 
 		if (triumvirateDeadlinePassed(options)) {
 			return wallClockExceededResult('overseer', metrics, {
@@ -211,8 +231,8 @@ export async function runTriumvirateIteration(
 			projectDir: planningProjectDirs.overseer,
 			prompt: buildOverseerPrompt(
 				overseerPlanningPrompt,
-				primary,
-				secondary,
+				primaryPlan.plan,
+				secondaryPlan.plan,
 				planningProjectDirs.overseer,
 				options.plan.consistencyGate ?? false,
 			),

@@ -6,10 +6,9 @@ import { runRepoDir } from 'aidd-shared/plan/types';
 
 import type { StageRunResult, TriumvirateRunOptions, TriumvirateRunResult } from './types.ts';
 
-import { triumvirateDeadlinePassed } from '../triumvirate.ts';
-import { wallClockExceededResult } from './run-result.ts';
+import { triumvirateDeadlinePassed, wallClockExceededResult } from './run-result.ts';
 import { mergeMetrics, runStageWithOptions, stageTranscript } from './stage-execution.ts';
-import { buildExecutionPrompt, extractPlan } from './stage-prompts.ts';
+import { buildExecutionPrompt } from './stage-prompts.ts';
 
 // Derive a complexity tier from the selected work. `work.data` carries the feature record for
 // feature work; we read its dependency count and combine title + description length. Other work
@@ -32,6 +31,7 @@ function selectedWorkTier(work: SelectedWork): ComplexityTier {
 export async function runComplexityFastPath(
 	options: TriumvirateRunOptions,
 	primary: StageRunResult,
+	primaryPlanMarkdown: string,
 	metadata: Record<string, unknown>,
 	metrics: IterationMetrics,
 ): Promise<TriumvirateRunResult | undefined> {
@@ -47,7 +47,9 @@ export async function runComplexityFastPath(
 			primaryPlan: primary.artifact,
 		});
 	}
-	const finalActions = extractPlan(primary);
+	// The plan arrives pre-validated (extractPlan in triumvirate.ts): the fast path skips
+	// the secondary planner and the overseer gate, so it must never receive raw prose.
+	const finalActions = primaryPlanMarkdown;
 	const execution = await runStageWithOptions(options, {
 		cwd: runRepoDir(options.plan),
 		cwdKind: 'project',

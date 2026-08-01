@@ -47,8 +47,8 @@ ${compiledPrompt}`;
 
 export function buildOverseerPrompt(
 	compiledPrompt: string,
-	primary: StageRunResult,
-	secondary: StageRunResult,
+	primaryPlan: string,
+	secondaryPlan: string,
 	planningProjectDir: string,
 	consistencyGate = false,
 ): string {
@@ -100,13 +100,13 @@ AIDD_RESULT: {"decision":"abort","reason":"<why execution must not proceed>"}
 
 ## PRIMARY PLAN
 
-${extractPlan(primary)}
+${primaryPlan}
 
 ---
 
 ## SECONDARY PLAN
 
-${extractPlan(secondary)}
+${secondaryPlan}
 
 ---
 
@@ -146,9 +146,53 @@ rules, and aidd result contract above:
 ${finalActions}${consistencyNotes}`;
 }
 
-export function extractPlan(stage: StageRunResult): string {
+export type ExtractedPlan =
+	{ planMarkdown: string; status: 'valid' } | { reason: string; status: 'invalid' };
+
+// The planning marker is contractual, mirroring parseOverseerDecision: a planner that exits
+// 0 without emitting a non-empty planMarkdown produced no plan. The old fallback to raw
+// assistant prose let refusals, tool narration, or an empty transcript become the
+// "approved" implementation plan — worst on the complexity fast path, where that text went
+// straight to a mutating execution stage with no overseer in between.
+export function extractPlan(stage: StageRunResult): ExtractedPlan {
 	const planMarkdown = stage.result.structuredResult?.planMarkdown;
-	return typeof planMarkdown === 'string' && planMarkdown.trim()
-		? planMarkdown
-		: stage.artifact.assistantText;
+	if (typeof planMarkdown !== 'string' || !planMarkdown.trim()) {
+		return {
+			reason:
+				stage.result.structuredResult === undefined
+					? 'missing AIDD_RESULT planMarkdown'
+					: 'planMarkdown must be a non-empty string',
+			status: 'invalid',
+		};
+	}
+	return { planMarkdown: planMarkdown.trim(), status: 'valid' };
+}
+
+/** Validation hook shape for runPlanningStageWithMirrorGuard: the invalid reason, or
+ * undefined when the stage produced a usable plan. */
+export function planValidationReason(stage: StageRunResult): string | undefined {
+	// A stage that already failed (provider error, idle timeout, rate limit, abort) is
+	// classified by its exit code downstream; the marker contract only judges exit-zero
+	// output. Retrying a rate-limited stage here would burn the backoff path's semantics.
+	if (stage.result.exitCode !== 0) return undefined;
+	const plan = extractPlan(stage);
+	return plan.status === 'invalid' ? plan.reason : undefined;
+}
+
+export function buildPlanningMarkerRetryPrompt(prompt: string, reason: string): string {
+	return `## aidd PLANNING MARKER RETRY
+
+The previous planning attempt did not emit a usable plan (${reason}).
+Produce your plan again and end with exactly one result marker containing the complete,
+non-empty plan:
+
+\`\`\`text
+AIDD_RESULT: {"planMarkdown":"<your actionable plan as markdown>"}
+\`\`\`
+
+Prose without the marker is discarded; the marker is the only channel aidd reads.
+
+---
+
+${prompt}`;
 }

@@ -18,6 +18,7 @@ export interface TriumvirateStageArtifact {
 	flailingDetected?: boolean;
 	metrics: IterationMetrics;
 	model?: string;
+	planningMarkerRetry?: PlanningMarkerRetry;
 	planningMirrorMutation?: PlanningMirrorMutation;
 	planningMirrorRetry?: PlanningMirrorRetry;
 	promptChars: number;
@@ -102,6 +103,11 @@ export interface PlanningMirrorRetry {
 	attempts: number;
 	previousMutations: PlanningMirrorMutation[];
 	reason: 'planning_mirror_mutation';
+}
+
+export interface PlanningMarkerRetry {
+	attempts: number;
+	reason: 'missing_plan_markdown';
 }
 
 export type OverseerDecision =

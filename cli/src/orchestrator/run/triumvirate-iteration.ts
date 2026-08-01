@@ -127,10 +127,15 @@ export async function runTriumvirateIterationStep(input: {
 		stageDetails !== undefined &&
 		isContinuableBackendInterruption(stageResult.exitCode, stageDetails) &&
 		plan.stopPolicy.continueOnTimeout;
+	// A planning stage that produced no plan carries the missingResult exit code so the run
+	// classifies like a single-agent missing AIDD_RESULT rather than a generic validation
+	// error (invalidPlanningOutputResult rewrites the stage exit).
 	const finalExitCode =
 		triumvirate.status === 'aborted'
 			? orchestratorExitCodes.success
-			: orchestratorExitCodes.validationError;
+			: stageResult?.exitCode === orchestratorExitCodes.missingResult
+				? orchestratorExitCodes.missingResult
+				: orchestratorExitCodes.validationError;
 	const recordedExitCode = stageResult?.exitCode ?? finalExitCode;
 	const stopRequestedAfterStageFailure = await deps.store.hasStopRequested(
 		plan.stopPolicy.stopFile,

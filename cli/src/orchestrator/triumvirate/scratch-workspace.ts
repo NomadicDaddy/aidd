@@ -6,6 +6,7 @@ import { join, relative } from 'node:path';
 
 import { assertInsideRoot } from './mirror-safety.ts';
 import { mergeMetrics } from './stage-execution.ts';
+import { buildPlanningMarkerRetryPrompt } from './stage-prompts.ts';
 import {
 	emptyMetrics,
 	mirrorExclusions,
@@ -53,9 +54,15 @@ export async function runPlanningStageWithMirrorGuard(input: {
 	scratchRoot: string;
 	sourceProjectDir: string;
 	stage: Exclude<TriumvirateStageName, 'execution'>;
+	/** Returns the invalid-output reason (e.g. a missing planMarkdown marker), or undefined
+	 * when the stage's output is usable. An invalid first attempt is retried once with a
+	 * marker-retry prompt; a still-invalid second attempt is returned as-is for the caller
+	 * to classify. */
+	validate?: (result: StageRunResult) => string | undefined;
 }): Promise<PlanningStageRunResult> {
 	const metrics: IterationMetrics = { ...emptyMetrics, errorReasons: [], toolBreakdown: {} };
 	const previousMutations: PlanningMirrorMutation[] = [];
+	let markerRetried = false;
 	let prompt = input.prompt;
 
 	for (let attempt = 1; attempt <= 2; attempt++) {
@@ -77,6 +84,20 @@ export async function runPlanningStageWithMirrorGuard(input: {
 					reason: 'planning_mirror_mutation',
 				};
 			}
+			if (markerRetried) {
+				result.artifact.planningMarkerRetry = {
+					attempts: attempt,
+					reason: 'missing_plan_markdown',
+				};
+			}
+			const invalidReason = input.validate?.(result);
+			if (invalidReason !== undefined && attempt < 2) {
+				markerRetried = true;
+				prompt = buildPlanningMarkerRetryPrompt(input.prompt, invalidReason);
+				continue;
+			}
+			// A still-invalid second attempt returns as-is; the caller re-validates and
+			// classifies (invalidPlanningOutputResult), keeping failure shaping in one place.
 			return { metrics, result };
 		}
 

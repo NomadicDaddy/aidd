@@ -15,6 +15,7 @@ import {
 	failedStageResult,
 	guardedResult,
 	planningMirrorMutationResult,
+	wallClockExceededResult,
 } from './triumvirate/run-result.ts';
 import {
 	assertUnchanged,
@@ -33,6 +34,14 @@ export type {
 	TriumvirateRunOptions,
 	TriumvirateRunResult,
 } from './triumvirate/types.ts';
+
+// True when the run's wall-clock budget is spent. Stages enforce the same deadline
+// internally (BackendSafetyEnvelope), but a stage that finishes just under the wire must
+// not launch the NEXT backend into a dead run — check between stages too.
+export function triumvirateDeadlinePassed(options: TriumvirateRunOptions): boolean {
+	if (options.runStartedAtMs === undefined) return false;
+	return Date.now() >= options.runStartedAtMs + options.plan.outputPolicy.timeoutSeconds * 1000;
+}
 
 export async function runTriumvirateIteration(
 	options: TriumvirateRunOptions,
@@ -128,6 +137,12 @@ export async function runTriumvirateIteration(
 		const fastPath = await runComplexityFastPath(options, primary, metadata, metrics);
 		if (fastPath) return fastPath;
 
+		if (triumvirateDeadlinePassed(options)) {
+			return wallClockExceededResult('secondary', metrics, {
+				metadata,
+				primaryPlan: primary.artifact,
+			});
+		}
 		const secondaryRun = await runPlanningStageWithMirrorGuard({
 			makeStageRun: (prompt) =>
 				runStageWithOptions(options, {
@@ -177,6 +192,13 @@ export async function runTriumvirateIteration(
 			});
 		}
 
+		if (triumvirateDeadlinePassed(options)) {
+			return wallClockExceededResult('overseer', metrics, {
+				metadata,
+				primaryPlan: primary.artifact,
+				secondaryPlan: secondary.artifact,
+			});
+		}
 		const overseerRun = await runPlanningStageWithMirrorGuard({
 			makeStageRun: (prompt) =>
 				runStageWithOptions(options, {
@@ -226,6 +248,14 @@ export async function runTriumvirateIteration(
 			});
 		}
 
+		if (triumvirateDeadlinePassed(options)) {
+			return wallClockExceededResult('execution', metrics, {
+				metadata,
+				overseerDecision: overseer.artifact,
+				primaryPlan: primary.artifact,
+				secondaryPlan: secondary.artifact,
+			});
+		}
 		return await finalizeTriumvirateExecution({
 			executionRole: roles.execution,
 			metadata,

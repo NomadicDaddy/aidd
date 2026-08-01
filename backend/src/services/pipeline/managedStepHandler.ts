@@ -107,12 +107,10 @@ export class ManagedStepHandler {
 		}
 		// Metadata-only sessions get the CLI-enforced write boundary on every managed
 		// run, including those launched by nested recipe-ref children (context is
-		// inherited). Triumvirate steps are exempted because cli/src/plan/resolve.ts
-		// rejects --triumvirate + --write-allowlist; those steps are instead enforced
-		// through the reverting pipeline backstop in stepRunner. Non-triumvirate managed
-		// steps get the CLI guard AND the pipeline backstop.
-		const isTriumvirate = request.mode === 'triumvirate';
-		if (context.metadataOnly === true && !isTriumvirate) {
+		// inherited) and triumvirate steps (the CLI enforces the allowlist against the
+		// execution stage; planning stages run in scratch mirrors). The reverting
+		// pipeline backstop in stepRunner still applies on top.
+		if (context.metadataOnly === true) {
 			request.writeAllowlist = ['.aidd'];
 		}
 		const run = await this.runService.launchRun(request);

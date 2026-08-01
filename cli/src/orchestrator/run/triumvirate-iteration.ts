@@ -22,6 +22,7 @@ import {
 } from './continuation.ts';
 import { gitDirtyFileCount } from './git.ts';
 import { accumulateIterationEvidence, accumulateIterationMetrics } from './run-accumulator.ts';
+import { buildWallClockTimeoutSummary } from './run-ending.ts';
 import { buildRateLimitBudgetSummary, handleRateLimit } from './run-gates.ts';
 import {
 	type MoveFn,
@@ -40,6 +41,7 @@ export type TriumvirateIterationOutcome =
 			result: AgentRunResult;
 			stopRequestedAfterRun: boolean;
 			triumvirateArtifacts: Record<string, unknown>;
+			wallClockTimedOut: boolean;
 	  }
 	| { exitCode: number; kind: 'return' };
 
@@ -82,6 +84,9 @@ export async function runTriumvirateIterationStep(input: {
 		iteration,
 		plan,
 		runStartedAtMs,
+		// The run controller's signal reaches every stage, so a run-wide stop/abort ends the
+		// in-flight backend instead of only being noticed between iterations.
+		signal: controller.signal,
 		work,
 		...(deps.observer?.onAgentEvent ? { onAgentEvent: deps.observer.onAgentEvent } : {}),
 	});
@@ -98,6 +103,7 @@ export async function runTriumvirateIterationStep(input: {
 			result,
 			stopRequestedAfterRun,
 			triumvirateArtifacts,
+			wallClockTimedOut: triumvirate.wallClockTimedOut ?? false,
 		};
 	}
 
@@ -182,6 +188,23 @@ export async function runTriumvirateIterationStep(input: {
 			triumvirate.summary,
 		);
 		return { exitCode: orchestratorExitCodes.success, kind: 'return' };
+	}
+	// A stage (or the between-stage check) hit the run's wall-clock deadline. Classify the
+	// run as an explicit timeout — without this branch the invalid-status fallthrough below
+	// ledgers it as validation error (exit 7), masking the real cause, exactly the
+	// misclassification the single-agent path fixes in post-iteration-guards.
+	if (triumvirate.wallClockTimedOut === true) {
+		const summary = buildWallClockTimeoutSummary(triumvirate.summary, plan);
+		move({ summary, type: 'complete' });
+		await writeRunSummary(
+			deps,
+			plan,
+			acc,
+			'exit_error',
+			orchestratorExitCodes.aborted,
+			summary,
+		);
+		return { exitCode: orchestratorExitCodes.aborted, kind: 'return' };
 	}
 	if (stageResult?.exitCode === orchestratorExitCodes.rateLimited) {
 		const rate = await handleRateLimit(

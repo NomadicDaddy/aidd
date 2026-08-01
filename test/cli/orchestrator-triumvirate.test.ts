@@ -2,9 +2,11 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
+import { runStage } from '../../cli/src/orchestrator/triumvirate/stage-execution.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
 	captureStdout,
@@ -1574,6 +1576,330 @@ describe('orchestrator triumvirate', () => {
 			]);
 			expect(status).toContain('extra-dirty.txt');
 			expect(status).toContain('.aidd/runs.jsonl');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});
+
+// A backend that emits varied tool_call events forever until its abort signal fires, then
+// surfaces the abort as an error event — the shape of a continuously-active runaway agent
+// that never goes idle. The command varies per tick so the flailing guard never trips.
+class RunawayBackend implements CLIBackend {
+	readonly name = 'native' as const;
+	readonly idleDefaults = { killMs: 20, nudgeMs: 10 };
+	calls = 0;
+	inputs: PromptInput[] = [];
+
+	async *runPrompt(input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+		this.calls++;
+		this.inputs.push(input);
+		let tick = 0;
+		while (!signal.aborted) {
+			yield { args: { command: `probe-${tick}` }, tool: 'bash', type: 'tool_call' };
+			tick++;
+			await Bun.sleep(20);
+		}
+		yield { meta: String(signal.reason), reason: 'aborted', type: 'error' };
+	}
+}
+
+// Same shape, but repeats one identical tool-call signature so the flailing guard trips.
+class RepeatingBackend implements CLIBackend {
+	readonly name = 'native' as const;
+	readonly idleDefaults = { killMs: 20, nudgeMs: 10 };
+	calls = 0;
+
+	async *runPrompt(_input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+		this.calls++;
+		for (let tick = 0; tick < 40 && !signal.aborted; tick++) {
+			yield { args: { command: 'git status' }, tool: 'bash', type: 'tool_call' };
+			await Bun.sleep(5);
+		}
+		if (signal.aborted) {
+			yield { meta: String(signal.reason), reason: 'aborted', type: 'error' };
+			return;
+		}
+		yield { exitCode: 0, filesModified: [], type: 'done' };
+	}
+}
+
+function triumviratePlanWithBudget(
+	projectDir: string,
+	timeoutSeconds: number,
+	extra: string[] = [],
+) {
+	return resolveRunPlan(
+		parseArgs([
+			'--project-dir',
+			projectDir,
+			'--cli',
+			'native',
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			...extra,
+		]),
+		{ ...config, idleNudgeTimeoutSeconds: 15, idleTimeoutSeconds: 15, timeoutSeconds },
+	);
+}
+
+const planningMarker = (planText: string): AgentEvent[] => [
+	{ chunk: `AIDD_RESULT: {"planMarkdown":"${planText}"}\n`, type: 'assistant_text' },
+	{ exitCode: 0, filesModified: [], type: 'done' },
+];
+
+describe('orchestrator triumvirate safety envelope', () => {
+	test(
+		'a continuously-emitting stage is aborted at the run wall-clock deadline',
+		async () => {
+			const store = await makeStore('safety-wallclock-in-stage');
+			const backend = new RunawayBackend();
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 1);
+
+			const startedAt = Date.now();
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			// The primary stage aborts at the deadline; no later stage ever launches, and the
+			// run classifies as an explicit wall-clock timeout instead of a validation error.
+			expect(exitCode).toBe(orchestratorExitCodes.aborted);
+			expect(backend.calls).toBe(1);
+			// Proves the stage actually aborted rather than running to some other limit.
+			expect(Date.now() - startedAt).toBeLessThan(10_000);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { exitCode: number; summary: string });
+			expect(runSummary?.summary).toContain('wall-clock budget');
+			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.aborted);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'the panel halts between stages when the budget is exhausted',
+		async () => {
+			const store = await makeStore('safety-wallclock-between-stages');
+			// Primary finishes instantly but consumed the whole 1s budget in beforeRun; the
+			// pre-secondary deadline check must halt the panel without launching call 2.
+			const backend = new SequencedBackend(
+				[planningMarker('Primary plan')],
+				async (callIndex) => {
+					if (callIndex === 0) await Bun.sleep(1200);
+				},
+			);
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 1);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.aborted);
+			expect(backend.calls).toBe(1);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('halted before secondary stage');
+			expect(runSummary?.summary).toContain('wall-clock budget');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'an execution-stage wall-clock timeout is ledgered as a timeout',
+		async () => {
+			const store = await makeStore('safety-wallclock-execution');
+			// Three fast planning stages, then a runaway execution stage. The stage aborts at
+			// the deadline and the executed result must reach the post-iteration wall-clock
+			// guard (previously hardcoded to false for triumvirate).
+			let executionStarted = false;
+			const planningBackend = new SequencedBackend([
+				planningMarker('Primary plan'),
+				planningMarker('Secondary plan'),
+				[
+					{
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+						type: 'assistant_text',
+					},
+					{ exitCode: 0, filesModified: [], type: 'done' },
+				],
+			]);
+			const runaway = new RunawayBackend();
+			const hybrid: CLIBackend = {
+				idleDefaults: { killMs: 20_000, nudgeMs: 15_000 },
+				name: 'native' as const,
+				runPrompt(input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+					if (planningBackend.calls < 3) return planningBackend.runPrompt(input);
+					executionStarted = true;
+					return runaway.runPrompt(input, signal);
+				},
+			};
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 2);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend: hybrid,
+					backendFactory: () => hybrid,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(executionStarted).toBe(true);
+			expect(exitCode).toBe(orchestratorExitCodes.aborted);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { exitCode: number; summary: string });
+			expect(runSummary?.summary).toContain('wall-clock budget');
+			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.aborted);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'flailing in a stage trips the shared guard and aborts the stage',
+		async () => {
+			const store = await makeStore('safety-flailing-stage');
+			const backend = new RepeatingBackend();
+			const runtimePlan = resolveRunPlan(
+				parseArgs([
+					'--project-dir',
+					store.projectDir,
+					'--cli',
+					'native',
+					'--triumvirate',
+					'--secondary-cli',
+					'native',
+					'--overseer-cli',
+					'native',
+				]),
+				{
+					...config,
+					idleNudgeTimeoutSeconds: 15,
+					idleTimeoutSeconds: 15,
+					maxIterations: 1,
+				},
+			);
+
+			const output = await captureStdout(async () => {
+				await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(output).toContain('flailing detected');
+			// The trip aborts the primary stage; the panel never reaches call 2.
+			expect(backend.calls).toBe(1);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test('a run-level abort signal ends an in-flight stage promptly', async () => {
+		const store = await makeStore('safety-run-signal');
+		const backend = new RunawayBackend();
+		const runController = new AbortController();
+		const stagePromise = captureStdout(async () => {
+			const stage = await runStage({
+				backend,
+				cwd: store.projectDir,
+				cwdKind: 'project',
+				plan: plan(store.projectDir, []),
+				prompt: 'work',
+				role: { backend: 'native' },
+				runStartedAtMs: Date.now(),
+				signal: runController.signal,
+				stage: 'execution',
+				work: { description: 'run', id: 'feature-core', kind: 'feature' },
+			});
+			expect(stage.result.exitCode).toBe(orchestratorExitCodes.aborted);
+			expect(stage.wallClockTimedOut).toBe(false);
+		});
+		await Bun.sleep(100);
+		runController.abort('stop requested');
+		await stagePromise;
+	});
+
+	test(
+		'a triumvirate execution stage violating the write allowlist fails fast with reverted writes',
+		async () => {
+			const store = await makeStore('safety-write-allowlist');
+			await initializeGitProject(store.projectDir);
+			const strayPath = join(store.projectDir, 'stray.ts');
+			const backend = new SequencedBackend(
+				[
+					planningMarker('Primary plan'),
+					planningMarker('Secondary plan'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: ['stray.ts'], type: 'done' },
+					],
+				],
+				async (callIndex) => {
+					if (callIndex === 3) {
+						await writeFile(strayPath, 'export const stray = 1;\n');
+						await completeFeature(store, 'feature-core');
+					}
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--write-allowlist',
+				'.aidd',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.writeAllowlistViolation);
+			// The violating write was reverted, not kept.
+			expect(await Bun.file(strayPath).exists()).toBe(false);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('no retry in triumvirate mode');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);

@@ -15,6 +15,7 @@ export interface TriumvirateStageArtifact {
 	durationMs: number;
 	endedAt: string;
 	exitCode: number;
+	flailingDetected?: boolean;
 	metrics: IterationMetrics;
 	model?: string;
 	planningMirrorMutation?: PlanningMirrorMutation;
@@ -26,6 +27,7 @@ export interface TriumvirateStageArtifact {
 	startedAt: string;
 	structuredResult?: Record<string, unknown>;
 	transcript: string;
+	wallClockTimedOut?: boolean;
 }
 
 export type TriumvirateRunResult =
@@ -34,6 +36,7 @@ export type TriumvirateRunResult =
 			metrics: IterationMetrics;
 			result: AgentRunResult;
 			status: 'executed';
+			wallClockTimedOut?: boolean;
 	  }
 	| {
 			artifact: Record<string, unknown>;
@@ -41,12 +44,14 @@ export type TriumvirateRunResult =
 			result?: AgentRunResult;
 			status: 'invalid';
 			summary: string;
+			wallClockTimedOut?: boolean;
 	  }
 	| {
 			artifact: Record<string, unknown>;
 			metrics: IterationMetrics;
 			status: 'aborted';
 			summary: string;
+			wallClockTimedOut?: boolean;
 	  };
 
 export interface TriumvirateRunOptions {
@@ -56,13 +61,18 @@ export interface TriumvirateRunOptions {
 	onAgentEvent?: ((event: AgentEvent) => Promise<void> | void) | undefined;
 	plan: RunPlan;
 	runStartedAtMs?: number;
+	/** Run-level abort signal, relayed into every stage's controller so a run-wide stop or
+	 * abort ends the in-flight stage instead of only being noticed between iterations. */
+	signal?: AbortSignal;
 	work: SelectedWork;
 }
 
 export interface StageRunResult {
 	artifact: TriumvirateStageArtifact;
+	flailingDetected: boolean;
 	metrics: IterationMetrics;
 	result: AgentRunResult;
+	wallClockTimedOut: boolean;
 }
 
 export interface PlanningStageRunResult {
@@ -109,6 +119,7 @@ export interface StageRunInput {
 	prompt: string;
 	role: TriumvirateRolePlan;
 	runStartedAtMs?: number;
+	signal?: AbortSignal;
 	stage: TriumvirateStageName;
 	work: SelectedWork;
 }

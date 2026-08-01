@@ -210,12 +210,7 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 	if (config.consistencyGateEnabled || args.consistencyGate) plan.consistencyGate = true;
 	const triumvirate = resolveTriumviratePlan(args, config, config.cli, runtimeMetadata.model);
 	if (triumvirate !== undefined) plan.triumvirate = triumvirate;
-	if (args.writeAllowlist.length > 0) {
-		if (plan.triumvirate) {
-			throw new Error('--triumvirate cannot be combined with --write-allowlist');
-		}
-		plan.writeAllowlist = args.writeAllowlist;
-	}
+	if (args.writeAllowlist.length > 0) plan.writeAllowlist = args.writeAllowlist;
 
 	if (filters[0]) plan.featureFilter = filters[0];
 	if (args.auditMode) {

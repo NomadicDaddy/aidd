@@ -95,6 +95,11 @@ export async function executeIteration(
 			kind: 'continue',
 		};
 	}
+	// The remaining false/empty fields are truthful, not gaps: the completion-marker commit
+	// grace and idle-warning capture are single-agent stream-loop concepts that do not run
+	// in triumvirate stages. wallClockTimedOut comes from the stages' shared safety
+	// envelope, so a timed-out execution stage finally reaches the post-iteration
+	// wall-clock guard instead of being hardcoded away.
 	return {
 		kind: 'complete',
 		state: {
@@ -103,7 +108,6 @@ export async function executeIteration(
 			idleWarningTimestamps: [],
 			progress: undefined,
 			timeToFirstEventMs: undefined,
-			wallClockTimedOut: false,
 			...outcome,
 		},
 	};

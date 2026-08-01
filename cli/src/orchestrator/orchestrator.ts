@@ -123,8 +123,9 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 		const startedAt = new Date(startedAtMs).toISOString();
 		const featureSnapshotBefore = await captureFeatureCompletionSnapshot(deps.store);
 		const gitHeadBefore = await readGitHead(runRepoDir(plan));
+		// Covers triumvirate too: its execution stage writes to the real worktree.
 		let writeGuardBaseline: Awaited<ReturnType<typeof captureWriteGuardSnapshot>> = null;
-		if (plan.writeAllowlist !== undefined && !plan.triumvirate) {
+		if (plan.writeAllowlist !== undefined) {
 			writeGuardBaseline = await captureWriteGuardSnapshot(runRepoDir(plan));
 			if (writeGuardBaseline === null) {
 				console.warn(

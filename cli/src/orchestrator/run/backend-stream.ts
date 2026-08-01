@@ -2,13 +2,7 @@ import type { AgentEvent } from 'aidd-shared/backends/types';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
-import {
-	FlailingDetector,
-	formatFlailingSignature,
-	isFlailingGuardDisabled,
-} from 'aidd-shared/backends/flailing';
 import { monitorBackend } from 'aidd-shared/backends/monitor';
-import { ChildProcessReaper, type ReapDiagnostic } from 'aidd-shared/lib/childProcessReaper';
 import {
 	type AgentRunResult,
 	exitCodeFromEvents,
@@ -23,6 +17,7 @@ import { runRepoDir } from 'aidd-shared/plan/types';
 import type { CompiledPrompt } from '../../prompts/types.ts';
 import type { OrchestratorDeps } from './types.ts';
 
+import { BackendSafetyEnvelope } from '../backend-safety.ts';
 import { isAgentSignalEvent } from '../formatters.ts';
 import {
 	formatBackendStarted,
@@ -69,23 +64,13 @@ export async function runBackendStreamLoop(
 	let timeToFirstEventMs: number | undefined;
 	let completionFinalizedBeforeBackendExit = false;
 	let completionCommittedDuringGrace = false;
-	let wallClockTimedOut = false;
-	let flailingDetected = false;
-	// Guardrail: a continuously-emitting agent stuck repeating the same diagnostic/lifecycle shell
-	// commands without making file changes never trips the idle killer. The detector watches the
-	// tool-call stream and aborts the iteration so the run can nudge-then-stop instead of burning
-	// the whole wall-clock window. Opt out with AIDD_DISABLE_FLAILING_GUARD=1.
-	const flailingDetector = isFlailingGuardDisabled() ? undefined : new FlailingDetector();
-	// Teardown hygiene: a verification/dev server the agent starts and fails to stop outlives the
-	// backend (Windows breakaway spawns escape the job object; POSIX detached grandchildren leave
-	// the process group) and keeps holding its listen port, wedging later boots. The reaper
-	// snapshots the pid/ppid table while the backend runs and kills surviving descendants after it
-	// exits.
-	let reapDiagnostic: ReapDiagnostic | undefined;
-	const childReaper = new ChildProcessReaper({
-		onReap: (diagnostic) => {
-			reapDiagnostic = diagnostic;
-		},
+	// Wall-clock deadline, flailing guard, and child-process reaper — the shared safety
+	// envelope both this loop and triumvirate stages run inside (see backend-safety.ts).
+	const envelope = new BackendSafetyEnvelope({
+		controller,
+		onLogLine: (line) => emitRunLogLine(deps, line),
+		runStartedAtMs,
+		wallClockTimeoutMs: plan.outputPolicy.timeoutSeconds * 1000,
 	});
 	const progress = new OrchestratorProgressReporter({
 		backend: plan.backend,
@@ -108,23 +93,7 @@ export async function runBackendStreamLoop(
 		},
 	)[Symbol.asyncIterator]();
 
-	// Wall-clock abort: enforce the advertised --timeout ceiling. A continuously-emitting
-	// runaway agent never trips the idle-based abort inside monitorBackend; this timer
-	// fires at runStartedAtMs + timeoutSeconds * 1000 regardless of event activity.
-	const wallClockTimeoutMs = plan.outputPolicy.timeoutSeconds * 1000;
-	const wallClockDeadlineMs = runStartedAtMs + wallClockTimeoutMs;
-	const wallClockRemainingMs = wallClockDeadlineMs - Date.now();
-	const wallClockTimer: ReturnType<typeof setTimeout> | undefined =
-		wallClockRemainingMs > 0
-			? setTimeout(() => {
-					wallClockTimedOut = true;
-					controller.abort('wall_clock_timeout');
-				}, wallClockRemainingMs)
-			: undefined;
-	if (wallClockRemainingMs <= 0) {
-		wallClockTimedOut = true;
-		controller.abort('wall_clock_timeout');
-	}
+	envelope.arm();
 
 	let closeStream = true;
 	try {
@@ -186,23 +155,7 @@ export async function runBackendStreamLoop(
 			if (event.type !== 'assistant_delta') events.push(event);
 			progress.recordAgentEvent(event);
 			await deps.observer?.onAgentEvent?.(event);
-			if (flailingDetector) {
-				const signal = flailingDetector.record(event);
-				if (signal.kind === 'warn') {
-					await emitRunLogLine(
-						deps,
-						`⚠ possible flailing (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)}`,
-					);
-				} else if (signal.kind === 'trip') {
-					flailingDetected = true;
-					await emitRunLogLine(
-						deps,
-						`✋ flailing detected (${signal.reason}, ×${signal.count}): ${formatFlailingSignature(signal.signature)} — aborting iteration`,
-					);
-					controller.abort('flailing');
-					break;
-				}
-			}
+			if ((await envelope.observe(event)) === 'abort_flailing') break;
 			if (timeToFirstEventMs === undefined && isAgentSignalEvent(event.type)) {
 				timeToFirstEventMs = Date.now() - iterationStartedAtMs;
 			}
@@ -213,11 +166,6 @@ export async function runBackendStreamLoop(
 				});
 			}
 			if (event.type === 'started') {
-				// Only external-process backends report a pid. The in-process native backend's
-				// tool children are direct children of the orchestrator, indistinguishable by
-				// ppid from the CLI's own git/doctor spawns — tracking them would risk reaping
-				// our own in-flight subprocesses, so pid-less backends are not tracked.
-				if (event.pid !== undefined) childReaper.attach(event.pid);
 				process.stdout.write(formatBackendStarted(event.backend, event.pid));
 				process.stdout.write(formatThinkingLine(event.backend));
 			} else if (event.type === 'idle_warning') {
@@ -236,32 +184,22 @@ export async function runBackendStreamLoop(
 					});
 				}
 			} else if (event.type === 'tool_call') {
-				childReaper.noteActivity();
 				process.stdout.write(`· ${event.tool}${formatToolArgs(event.args)}\n`);
 			}
 		}
 	} finally {
-		if (wallClockTimer !== undefined) clearTimeout(wallClockTimer);
 		if (closeStream) await stream.return?.();
-		// Runs on every exit path — normal backend exit, completion grace, flailing/wall-clock
-		// abort, and thrown errors — so a leaked listener never survives the iteration.
-		const reapedPids = await childReaper.reap();
-		if (reapedPids.length > 0) {
-			// Says which table the decision came from: the stale-snapshot path only runs when the
-			// teardown probe failed, and how often that happens is worth knowing.
-			const source = reapDiagnostic?.usedStaleTable
-				? ` (from a ${Math.round(reapDiagnostic.tableAgeMs / 1000)}s-old snapshot: the teardown process-table probe timed out)`
-				: '';
-			process.stdout.write(
-				`♻ reaped ${reapedPids.length} leaked child process(es) at teardown${source}: ${reapedPids.join(', ')}\n`,
-			);
-		}
+		// Envelope teardown runs on every exit path — normal backend exit, completion grace,
+		// flailing/wall-clock abort, and thrown errors — so a leaked timer, listener, or
+		// child process never survives the iteration.
+		const reapLine = await envelope.teardown();
+		if (reapLine) process.stdout.write(reapLine);
 	}
 
 	const stopRequestedAfterRun = await deps.store.hasStopRequested(plan.stopPolicy.stopFile);
 	const exitCode = completionFinalizedBeforeBackendExit
 		? orchestratorExitCodes.success
-		: flailingDetected
+		: envelope.flailingDetected
 			? orchestratorExitCodes.flailing
 			: exitCodeFromEvents(events);
 	progress.setStage('process_result', { last: `exit ${exitCode}` });
@@ -282,7 +220,7 @@ export async function runBackendStreamLoop(
 		metrics,
 		result,
 		stopRequestedAfterRun,
-		wallClockTimedOut,
+		wallClockTimedOut: envelope.wallClockTimedOut,
 		...(timeToFirstEventMs !== undefined ? { timeToFirstEventMs } : {}),
 		completionCommittedDuringGrace,
 		completionFinalizedBeforeBackendExit,

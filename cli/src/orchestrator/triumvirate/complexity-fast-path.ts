@@ -6,6 +6,8 @@ import { runRepoDir } from 'aidd-shared/plan/types';
 
 import type { StageRunResult, TriumvirateRunOptions, TriumvirateRunResult } from './types.ts';
 
+import { triumvirateDeadlinePassed } from '../triumvirate.ts';
+import { wallClockExceededResult } from './run-result.ts';
 import { mergeMetrics, runStageWithOptions, stageTranscript } from './stage-execution.ts';
 import { buildExecutionPrompt, extractPlan } from './stage-prompts.ts';
 
@@ -38,6 +40,13 @@ export async function runComplexityFastPath(
 	const tier = options.plan.complexityTiering ? selectedWorkTier(options.work) : 'high';
 	if (tier !== 'low') return undefined;
 
+	if (triumvirateDeadlinePassed(options)) {
+		return wallClockExceededResult('execution', metrics, {
+			complexityTier: tier,
+			metadata,
+			primaryPlan: primary.artifact,
+		});
+	}
 	const finalActions = extractPlan(primary);
 	const execution = await runStageWithOptions(options, {
 		cwd: runRepoDir(options.plan),
@@ -65,5 +74,6 @@ export async function runComplexityFastPath(
 		metrics,
 		result: execution.result,
 		status: 'executed',
+		...(execution.wallClockTimedOut ? { wallClockTimedOut: true } : {}),
 	};
 }

@@ -49,5 +49,25 @@ export function failedStageResult(
 		result: result.result,
 		status: 'invalid',
 		summary,
+		...(result.wallClockTimedOut ? { wallClockTimedOut: true } : {}),
+	};
+}
+
+// The between-stage counterpart of the in-stage wall-clock abort: a panel whose earlier
+// stages consumed the whole budget must not launch the next backend at all. Without this,
+// only the loop-top check between ITERATIONS notices the deadline, after the whole panel
+// has already overrun it.
+export function wallClockExceededResult(
+	nextStage: string,
+	metrics: IterationMetrics,
+	stageArtifacts: Record<string, unknown>,
+): TriumvirateRunResult {
+	const summary = `triumvirate halted before ${nextStage} stage: wall-clock budget exhausted`;
+	return {
+		artifact: { triumvirate: { ...stageArtifacts, stageFailure: summary } },
+		metrics,
+		status: 'invalid',
+		summary,
+		wallClockTimedOut: true,
 	};
 }

@@ -9,6 +9,7 @@ import {
 	filesModifiedFromEvents,
 	type IterationMetrics,
 	metricsFromEvents,
+	orchestratorExitCodes,
 } from 'aidd-shared/orchestrator/result';
 
 import type {
@@ -20,6 +21,7 @@ import type {
 	TriumvirateStageName,
 } from './types.ts';
 
+import { BackendSafetyEnvelope } from '../backend-safety.ts';
 import {
 	formatBackendStarted,
 	formatIdleWarningLine,
@@ -51,6 +53,7 @@ export function runStageWithOptions(
 		...(options.iteration !== undefined ? { iteration: options.iteration } : {}),
 		...(options.onAgentEvent ? { onAgentEvent: options.onAgentEvent } : {}),
 		...(options.runStartedAtMs !== undefined ? { runStartedAtMs: options.runStartedAtMs } : {}),
+		...(options.signal ? { signal: options.signal } : {}),
 	});
 }
 
@@ -60,6 +63,20 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	const startedAt = new Date(startedAtMs).toISOString();
 	const controller = new AbortController();
 	const events: AgentEvent[] = [];
+	// The same safety envelope the single-agent stream loop runs inside (backend-safety.ts):
+	// wall-clock deadline keyed to the RUN start (not the stage start), flailing guard, child
+	// reaper, and run-signal relay. Every stage — including execution in the real worktree —
+	// gets the same protections a plain coding iteration has.
+	const envelope = new BackendSafetyEnvelope({
+		controller,
+		onLogLine: (line) => {
+			process.stdout.write(`${line}\n`);
+		},
+		runStartedAtMs: input.runStartedAtMs ?? startedAtMs,
+		wallClockTimeoutMs: input.plan.outputPolicy.timeoutSeconds * 1000,
+		...(input.signal ? { runSignal: input.signal } : {}),
+	});
+	envelope.arm();
 	const progress = new OrchestratorProgressReporter({
 		backend: input.role.backend,
 		...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
@@ -84,6 +101,7 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 			if (event.type !== 'assistant_delta') events.push(event);
 			progress.recordAgentEvent(event);
 			await input.onAgentEvent?.(event);
+			if ((await envelope.observe(event)) === 'abort_flailing') break;
 			if (event.type === 'started') {
 				process.stdout.write(formatBackendStarted(event.backend, event.pid));
 				process.stdout.write(formatThinkingLine(event.backend));
@@ -97,6 +115,8 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 		}
 		progress.setStage('stage_complete', { last: `events ${events.length}` });
 	} finally {
+		const reapLine = await envelope.teardown();
+		if (reapLine) process.stdout.write(reapLine);
 		progress.stop();
 	}
 	const endedAtMs = Date.now();
@@ -104,7 +124,9 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	const stageMetrics = metricsFromEvents(events);
 	const result: AgentRunResult = {
 		events,
-		exitCode: exitCodeFromEvents(events),
+		exitCode: envelope.flailingDetected
+			? orchestratorExitCodes.flailing
+			: exitCodeFromEvents(events),
 		filesModified: filesModifiedFromEvents(events),
 		selectedWork: input.work,
 		transcript: events.map((event) => JSON.stringify(event)).join('\n'),
@@ -127,7 +149,15 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	};
 	if (input.role.model !== undefined) artifact.model = input.role.model;
 	if (structuredResult !== undefined) artifact.structuredResult = structuredResult;
-	return { artifact, metrics: stageMetrics, result };
+	if (envelope.flailingDetected) artifact.flailingDetected = true;
+	if (envelope.wallClockTimedOut) artifact.wallClockTimedOut = true;
+	return {
+		artifact,
+		flailingDetected: envelope.flailingDetected,
+		metrics: stageMetrics,
+		result,
+		wallClockTimedOut: envelope.wallClockTimedOut,
+	};
 }
 
 function buildPromptInput(

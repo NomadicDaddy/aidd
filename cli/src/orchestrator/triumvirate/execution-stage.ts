@@ -85,5 +85,6 @@ export async function finalizeTriumvirateExecution(
 		metrics,
 		result: execution.result,
 		status: 'executed',
+		...(execution.wallClockTimedOut ? { wallClockTimedOut: true } : {}),
 	};
 }

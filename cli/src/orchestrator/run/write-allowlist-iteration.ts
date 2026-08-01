@@ -75,6 +75,25 @@ export async function enforceWriteAllowlistForIteration(
 	if (violations === null || violations.length === 0) {
 		return { kind: 'continue', state: toState(input) };
 	}
+	// Triumvirate: the single-agent retry below would re-run runBackendStreamLoop against a
+	// panel-shaped run, which is wrong — and silently continuing after the revert would
+	// swallow the violation. Revert and fail fast; retrying just the execution stage is a
+	// possible follow-up, not v1.
+	if (input.plan.triumvirate) {
+		await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, violations);
+		const summary = `write allowlist violated by triumvirate execution stage: ${formatViolationPaths(violations)} (writes reverted; no retry in triumvirate mode)`;
+		console.error(`[orchestrator] ${summary}`);
+		endIterationWithViolation(input, summary);
+		await writeRunSummary(
+			input.deps,
+			input.plan,
+			input.acc,
+			'exit_error',
+			orchestratorExitCodes.writeAllowlistViolation,
+			summary,
+		);
+		return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
+	}
 	console.warn(
 		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); reverting and retrying once.`,
 	);
@@ -122,7 +141,7 @@ export async function enforceWriteAllowlistForIteration(
 	await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, recheck);
 	const summary = `write allowlist violated after retry: ${formatViolationPaths(recheck)} (writes reverted)`;
 	console.error(`[orchestrator] ${summary}`);
-	input.move({ summary, type: 'complete' });
+	endIterationWithViolation(input, summary, state.result);
 	await writeRunSummary(
 		input.deps,
 		input.plan,
@@ -132,6 +151,18 @@ export async function enforceWriteAllowlistForIteration(
 		summary,
 	);
 	return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
+}
+
+// The guard runs while the state machine still sits in run_agent, and run_agent -> complete
+// is not a legal transition; walk the machine through its normal iteration tail first.
+function endIterationWithViolation(
+	input: WriteAllowlistIterationInput,
+	summary: string,
+	result: AgentRunResult = input.result,
+): void {
+	input.move({ result, type: 'process_result' });
+	input.move({ result, type: 'write_artifacts' });
+	input.move({ summary, type: 'complete' });
 }
 
 function toState(input: WriteAllowlistIterationInput): WriteAllowlistIterationState {

@@ -96,8 +96,81 @@ describe('audit evidence validation', () => {
 				],
 			}),
 		).toContain(
-			'auditFindings[0]: Verified: evidence must cite path:line or a scoped search and its result',
+			'auditFindings[0]: Verified: evidence must cite path:line, a scoped search and its result, or a measured artifact and its value',
 		);
+	});
+
+	test('accepts dotfile, ranged, and directory-qualified path citations', () => {
+		const finding = {
+			affectedFiles: ['.gitignore'],
+			severity: 'High',
+			spec: 'Restrict local reads of the credential file.',
+			title: 'Secret readable by every local user',
+		};
+
+		for (const citation of [
+			'.gitignore:28-30 ignores the file but does not restrict local reads.',
+			'.env.example:4 documents the credential name.',
+			'docker/Dockerfile:14 copies the secret into the image.',
+			'src/routes.ts:12:5 lacks a guard.',
+		]) {
+			expect(
+				findingValidationReasons({
+					auditFindings: [{ ...finding, description: `Verified: ${citation}` }],
+				}),
+			).toEqual([]);
+		}
+	});
+
+	test('a bare colon-number in prose is not a path citation', () => {
+		expect(
+			findingValidationReasons({
+				auditFindings: [
+					{
+						affectedFiles: ['src/routes.ts'],
+						description: 'Verified: the nightly job at 14:30 reproduces the fault.',
+						severity: 'High',
+						spec: 'Add the missing guard.',
+						title: 'Missing route guard',
+					},
+				],
+			}),
+		).toContain(
+			'auditFindings[0]: Verified: evidence must cite path:line, a scoped search and its result, or a measured artifact and its value',
+		);
+	});
+
+	test('accepts a measured artifact and its value as evidence', () => {
+		const finding = {
+			affectedFiles: ['src/lib/archive-lock.ts'],
+			severity: 'Medium',
+			spec: 'Split the module below the cap.',
+			title: 'Module approaching the line cap',
+		};
+
+		expect(
+			findingValidationReasons({
+				auditFindings: [
+					{
+						...finding,
+						description:
+							'Verified: measured src/lib/archive-lock.ts at 297 lines against the 300-line gate.',
+					},
+				],
+			}),
+		).toEqual([]);
+		// A measurement verb without a value is still hand-waving.
+		expect(
+			findingValidationReasons({
+				auditFindings: [
+					{
+						...finding,
+						description:
+							'Verified: measured src/lib/archive-lock.ts and it is too long.',
+					},
+				],
+			}),
+		).not.toEqual([]);
 	});
 
 	test('accepts path-line and scoped search evidence forms', () => {
@@ -141,6 +214,36 @@ describe('audit evidence validation', () => {
 					'Ran rg for unvalidated handlers in src/routes.ts and confirmed every match has a schema.',
 			}),
 		).toBe(true);
+	});
+
+	test('an observed-existence outcome counts as an outcome', () => {
+		// An inventory audit reports what is present rather than what matched a search;
+		// the outcome vocabulary has to cover that or a complete report is rejected.
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'Inspected every fresh file under dist/, including dist/starsync.js, and scanned it for source-map and token markers. Only the expected CLI bundle and Windows executable exist.',
+			}),
+		).toBe(true);
+	});
+
+	test('synthesis across other audits counts as an inspection action', () => {
+		// A synthesis audit reads other audits' output rather than the tree directly.
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'Synthesized the HYGIENE cycle, DEAD_CODE cleanup, and REORG near-cap modules recorded under .aidd/audits/ and confirmed every safety net is already present in its source finding.',
+			}),
+		).toBe(true);
+	});
+
+	test('still rejects a long justification that inspects nothing concrete', () => {
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'Considered the overall shape of the codebase at length and formed the view that everything here is in good order.',
+			}),
+		).toBe(false);
 	});
 });
 

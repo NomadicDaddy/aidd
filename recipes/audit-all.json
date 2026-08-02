@@ -11,7 +11,7 @@
 		{
 			"configJson": {
 				"auditAll": true,
-				"maxIterations": 1
+				"maxIterations": 3
 			},
 			"name": "Run all audits",
 			"stepType": "aidd-cli"

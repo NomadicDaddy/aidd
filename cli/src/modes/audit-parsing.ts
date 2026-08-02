@@ -22,8 +22,21 @@ export function structuredFindings(
 const findingSeverities = new Set(['critical', 'high', 'low', 'medium']);
 
 const concretePathPattern = /\b[\w./\\*-]+\.(?:css|html|js|jsx|json|md|sql|ts|tsx|toml|ya?ml)\b/i;
+// A cited source location. The filename is either dotted (`routes.ts`, and also the
+// extensionless dotfiles a repository actually carries: `.gitignore`, `.env.example`)
+// or bare but qualified by a directory (`docker/Dockerfile`) — a bare undotted token
+// never qualifies on its own, so prose like a `14:30` timestamp cannot pose as a
+// citation. The location accepts a line, a `28-30` range, or a `12:5` line:column.
 const pathLinePattern =
-	/(?:[A-Za-z]:[\\/])?(?:[\w.@+-]+[\\/])*[\w.@+-]+\.[A-Za-z0-9]+:\d+(?::\d+)?\b/;
+	/(?:[A-Za-z]:[\\/])?(?:[\w.@+-]+[\\/])*(?:[\w@+-]*\.[\w@+-]+(?:\.[\w@+-]+)*|(?<=[\\/])[\w@+-]+):\d+(?:-\d+|:\d+)?\b/;
+// Directory and glob scopes: `dist/`, `cli/src/**`, `**/*.ts`, `*.json`. This is
+// deliberately loose — it also matches prose containing a slash (`TypeScript/JSX`,
+// `tests/build`). Tightening it to require a closing separator was tried and rejected:
+// real zero-finding justifications name their scope as bare well-known artifacts
+// (`LICENSE`, `README`, `tsconfig`, `package` metadata) that no path shape accepts, so
+// the strict form turned four substantive reports into false rejections. Treat this as
+// a weak corroborator of `concretePathPattern`, not an independent gate.
+const scopePattern = /(?:\*\*?\/|\*\.|\/\*|\b[\w.-]+\/[\w./*-]+)/;
 
 function verifiedEvidenceLines(description: string): string[] {
 	return description
@@ -41,6 +54,20 @@ function describesSearchEvidence(evidence: string): boolean {
 			evidence,
 		);
 	return namesSearch && namesResult && concretePathPattern.test(evidence);
+}
+
+/**
+ * A measurement stands as evidence when it names the artifact measured, the act of
+ * measuring, and the value that came back — `measured src/lib/archive-lock.ts at 297
+ * lines`. Size, count, and duration findings have no single line to point at, so
+ * without this form they cannot cite themselves and a true finding is rejected.
+ */
+function describesMeasurementEvidence(evidence: string): boolean {
+	const namesMeasurement =
+		/\b(?:benchmarked|clocked|counted|measured|measures|profiled|sized|timed)\b/i.test(
+			evidence,
+		);
+	return namesMeasurement && /\d/.test(evidence) && concretePathPattern.test(evidence);
 }
 
 /**
@@ -75,11 +102,13 @@ export function findingValidationReasons(structured: Record<string, unknown>): s
 			} else if (
 				!evidenceLines.some(
 					(evidence) =>
-						pathLinePattern.test(evidence) || describesSearchEvidence(evidence),
+						pathLinePattern.test(evidence) ||
+						describesSearchEvidence(evidence) ||
+						describesMeasurementEvidence(evidence),
 				)
 			) {
 				reasons.push(
-					`${label}: Verified: evidence must cite path:line or a scoped search and its result`,
+					`${label}: Verified: evidence must cite path:line, a scoped search and its result, or a measured artifact and its value`,
 				);
 			}
 		}
@@ -116,14 +145,13 @@ export function hasMeaningfulNoFindingsJustification(
 	if (justification.trim().length < 50) return false;
 
 	const namesConcretePath =
-		concretePathPattern.test(justification) ||
-		/(?:\*\*?\/|\*\.|\/\*|\b[\w.-]+\/[\w./*-]+)/.test(justification);
+		concretePathPattern.test(justification) || scopePattern.test(justification);
 	const namesInspection =
-		/\b(?:analyzed|attempted|checked|compared|examined|inspected|parsed|queried|reviewed|scanned|searched|traced|verified)\b/i.test(
+		/\b(?:analyzed|attempted|audited|checked|compared|counted|enumerated|examined|inspected|measured|parsed|profiled|queried|reviewed|sampled|scanned|searched|surveyed|synthesized|traced|verified|walked)\b/i.test(
 			justification,
 		) || /\bran\s+(?:findstr|grep|rg|ripgrep)\b/i.test(justification);
 	const namesOutcome =
-		/\b(?:are on|confirmed|failed|found|is enabled|is on|matched|matches|no\s+\w+|none|nothing|passed|produced|qualified|remain|reported|returned|showed|within budget|yielded|zero\s+\w+)\b/i.test(
+		/\b(?:are on|clean|confirmed|exist|exists|failed|found|inapplicable|is enabled|is on|matched|matches|no\s+\w+|none|nothing|observed|passed|produced|qualified|recorded|remain|reported|returned|showed|within budget|yielded|zero\s+\w+)\b/i.test(
 			justification,
 		);
 	// These checks establish a minimum evidence shape, not semantic truth. A concrete scope,

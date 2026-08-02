@@ -116,6 +116,36 @@ export function featureContractIssuesNote(
 	);
 }
 
+// Raised when audit mode rejected one or more reports for failing the result contract. The audit
+// stays in the retry queue (iteration-outcome preserves exit 0 for exactly this), but without the
+// reasons the retry is a blind re-roll: the agent re-runs the same audit with no idea which part of
+// its report was refused. This is the same loop featureContractIssuesNote closes for feature
+// metadata — the validator's own words, handed to the one party who can act on them.
+const MAX_LISTED_REJECTED_REPORTS = 8;
+
+export function rejectedAuditReportsNote(
+	invalid: readonly { auditName?: string; reason: string }[],
+): string {
+	const listed = invalid.slice(0, MAX_LISTED_REJECTED_REPORTS);
+	const lines = listed.map(
+		(report) => `  - \`${report.auditName ?? 'unnamed report'}\` — ${report.reason}`,
+	);
+	const elided = invalid.length - listed.length;
+	return (
+		`**${invalid.length} audit report(s) from your last iteration were rejected and were NOT ` +
+		'persisted.** aidd validated each report against the result contract and these failed:\n\n' +
+		`${lines.join('\n')}${elided > 0 ? `\n  - …and ${elided} more` : ''}\n\n` +
+		'- These audits are still pending and have been re-selected for you. Re-emit a report for ' +
+		'each one, fixing the stated problem — a rejected report persists nothing, so the audit has ' +
+		'no fresh evidence until it passes.\n' +
+		'- A rejection is about the *shape* of the report, not the truth of your conclusion. If you ' +
+		'genuinely found nothing, keep that conclusion and make the evidence concrete: name the ' +
+		'files, globs, or commands you inspected and what came back.\n' +
+		'- Do not invent a finding to escape a rejected empty report. A fabricated finding is a worse ' +
+		'outcome than a pending audit.'
+	);
+}
+
 // Deadline warning injected when the run's wall-clock budget is nearly exhausted, so the agent lands
 // its in-flight work instead of being hard-killed mid-commit (a timeout abort leaves a dirty worktree
 // that poisons the next run's gates). A deadline does not lower the bar for the marker.

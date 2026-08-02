@@ -89,6 +89,44 @@ describe('post-iteration feature contract check', () => {
 		expect(acc.pendingCarryoverNotes).toEqual([]);
 	});
 
+	// Audit mode leaves a rejected report's audit pending for retry. Without the reasons the
+	// retry is a blind re-roll of the same report, which is what maxIterations was buying before.
+	test('hands the next iteration the reasons its audit reports were rejected', async () => {
+		const acc = accumulator();
+		const withRejections = {
+			...finalize(),
+			modeResult: {
+				artifacts: {
+					invalidAuditReports: [
+						{
+							auditName: 'REFACTOR',
+							index: 0,
+							reason: 'invalid auditFindings: no justification',
+						},
+					],
+				},
+			},
+		} as unknown as FinalizeIterationResult;
+
+		const exit = await endRunIfIterationGuardTripped({
+			acc,
+			deps: {
+				store: new FileAiddStore(await healthyProject('aidd-audit-rejected-')),
+			} as unknown as OrchestratorDeps,
+			finalize: withRejections,
+			move: () => undefined,
+			plan: {} as never,
+			wallClockTimedOut: false,
+			work: { kind: 'directive' } as never,
+		});
+
+		// Advisory, like the contract check: the agent is the one who can fix the report.
+		expect(exit).toBeUndefined();
+		expect(acc.pendingCarryoverNotes).toHaveLength(1);
+		expect(acc.pendingCarryoverNotes[0]).toContain('REFACTOR');
+		expect(acc.pendingCarryoverNotes[0]).toContain('no justification');
+	});
+
 	// Metadata bookkeeping must never be what ends an otherwise good iteration.
 	test('fails soft when validation throws', async () => {
 		const acc = accumulator();

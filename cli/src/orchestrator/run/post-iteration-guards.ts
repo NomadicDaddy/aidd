@@ -11,6 +11,7 @@ import { buildFeatureBlockingContext } from './blocking-context.ts';
 import {
 	featureContractIssuesNote,
 	invalidFeatureMetadataNote,
+	rejectedAuditReportsNote,
 	scopeOverrunNote,
 } from './carryover-notes.ts';
 import { attemptCompletionMarkerRecovery } from './completion-recovery.ts';
@@ -38,6 +39,29 @@ async function pushFeatureContractIssues(
 		console.error(`[check-features] ${issue.id}: ${issue.message}`);
 	}
 	acc.pendingCarryoverNotes.push(featureContractIssuesNote(result.issues));
+}
+
+// Audit mode rejects a report whole rather than persisting a partial one, and leaves the audit
+// pending so the next iteration re-selects it. Hand the agent the rejection reasons so that retry
+// is informed rather than a re-roll of the same report.
+function pushRejectedAuditReports(acc: RunAccumulator, finalize: FinalizeIterationResult): void {
+	// Fail-soft like the contract check above: reading an optional artifact must never be what
+	// ends an otherwise good iteration, and non-audit modes carry no such artifact at all.
+	const invalid = finalize.modeResult?.artifacts?.invalidAuditReports;
+	if (!Array.isArray(invalid) || invalid.length === 0) return;
+	const reports = invalid.filter(
+		(report): report is { auditName?: string; reason: string } =>
+			typeof report === 'object' &&
+			report !== null &&
+			typeof (report as { reason?: unknown }).reason === 'string',
+	);
+	if (reports.length === 0) return;
+	for (const report of reports) {
+		console.warn(
+			`[audit-mode] report rejected and not persisted: ${report.auditName ?? 'unnamed'} — ${report.reason}`,
+		);
+	}
+	acc.pendingCarryoverNotes.push(rejectedAuditReportsNote(reports));
 }
 
 export async function endRunIfIterationGuardTripped(input: {
@@ -90,6 +114,8 @@ export async function endRunIfIterationGuardTripped(input: {
 	// only once the agent has gone; catching it here is what makes the loop closeable. Advisory by
 	// design — like the metadata guard above, the agent is the one who can fix it.
 	await pushFeatureContractIssues(acc, deps);
+
+	pushRejectedAuditReports(acc, finalize);
 
 	if (finalize.featureScope.scopeOverrun) {
 		acc.scopeOverrunIterations += 1;

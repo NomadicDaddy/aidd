@@ -29,14 +29,25 @@ const concretePathPattern = /\b[\w./\\*-]+\.(?:css|html|js|jsx|json|md|sql|ts|ts
 // citation. The location accepts a line, a `28-30` range, or a `12:5` line:column.
 const pathLinePattern =
 	/(?:[A-Za-z]:[\\/])?(?:[\w.@+-]+[\\/])*(?:[\w@+-]*\.[\w@+-]+(?:\.[\w@+-]+)*|(?<=[\\/])[\w@+-]+):\d+(?:-\d+|:\d+)?\b/;
-// Directory and glob scopes: `dist/`, `cli/src/**`, `**/*.ts`, `*.json`. This is
-// deliberately loose — it also matches prose containing a slash (`TypeScript/JSX`,
-// `tests/build`). Tightening it to require a closing separator was tried and rejected:
-// real zero-finding justifications name their scope as bare well-known artifacts
-// (`LICENSE`, `README`, `tsconfig`, `package` metadata) that no path shape accepts, so
-// the strict form turned four substantive reports into false rejections. Treat this as
-// a weak corroborator of `concretePathPattern`, not an independent gate.
+// Directory and glob scopes: `dist/`, `cli/src/**`, `**/*.ts`, `*.json`. Deliberately
+// loose — it also matches prose containing a slash (`TypeScript/JSX`, `tests/build`).
+// Tightening it to require a closing separator was tried and rejected: it turned four
+// substantive reports into false rejections. It is one of several ways to name a scope,
+// not a gate on its own; the corroboration count below is what carries the weight.
 const scopePattern = /(?:\*\*?\/|\*\.|\/\*|\b[\w.-]+\/[\w./*-]+)/;
+// Artifacts a repository carries under a well-known name with no extension to match on.
+// These are what a path-shaped pattern structurally cannot see.
+const wellKnownArtifactPattern =
+	/\b(?:CHANGELOG|Dockerfile|docker-compose|LICEN[CS]E|Makefile|README|bunfig|package(?:\s+(?:manifests?|metadata|scripts))?|tsconfig|\.env(?:\.\w+)?|\.gitignore|\.prettierignore|\.github\/workflows)\b/i;
+// A named tool or script invocation is itself a concrete scope: it states what was run.
+// The result contract explicitly invites "commands you inspected", so refusing to accept
+// one as a scope rejected justifications the prompt had asked for.
+const namedCommandPattern =
+	/\b(?:bun\s+(?:run|test|x)|eslint|findstr|glob|grep|knip|lighthouse|npm\s+run|prettier|rg|ripgrep|smoke:qc|tsc|typecheck|wc)\b/i;
+const inspectionVerbPattern =
+	/\b(?:analy[sz]ed|attempted|audited|checked|compared|confirmed|counted|crawled|diffed|enumerated|examined|globbed|grepped|inspected|inventoried|measured|parsed|profiled|queried|read|reviewed|sampled|scanned|searched|surveyed|synthesi[sz]e[sd]?|traced|validated|verified|walked)\b/i;
+const outcomeWordPattern =
+	/\b(?:absent|are on|clean|confirmed|exist|exists|failed|found|inapplicable|is enabled|is on|matched|matches|no\s+\w+|none|not applicable|nothing|observed|passed|produced|qualified|recorded|remain|reported|returned|showed|within budget|yielded|zero\s+\w+)\b/i;
 
 function verifiedEvidenceLines(description: string): string[] {
 	return description
@@ -144,20 +155,29 @@ export function hasMeaningfulNoFindingsJustification(
 	// A justification shorter than a sentence can't describe what was checked and how.
 	if (justification.trim().length < 50) return false;
 
-	const namesConcretePath =
-		concretePathPattern.test(justification) || scopePattern.test(justification);
-	const namesInspection =
-		/\b(?:analyzed|attempted|audited|checked|compared|counted|enumerated|examined|inspected|measured|parsed|profiled|queried|reviewed|sampled|scanned|searched|surveyed|synthesized|traced|verified|walked)\b/i.test(
-			justification,
-		) || /\bran\s+(?:findstr|grep|rg|ripgrep)\b/i.test(justification);
-	const namesOutcome =
-		/\b(?:are on|clean|confirmed|exist|exists|failed|found|inapplicable|is enabled|is on|matched|matches|no\s+\w+|none|nothing|observed|passed|produced|qualified|recorded|remain|reported|returned|showed|within budget|yielded|zero\s+\w+)\b/i.test(
-			justification,
-		);
-	// These checks establish a minimum evidence shape, not semantic truth. A concrete scope,
-	// an inspection action, and an observed result are all required so a long sentence that
-	// merely names a file cannot make a failed audit fresh.
-	return namesConcretePath && namesInspection && namesOutcome;
+	// One hard requirement: the justification must point at something real. Three mandatory
+	// lexical whitelists were tried first and failed closed on phrasing their author had not
+	// anticipated — back-testing against 367 justifications agents actually wrote rejected 37%
+	// of them, three quarters on the inspection verb alone ("Ran bun run smoke:qc and
+	// observed…", "Grep TODO|FIXME over {backend,frontend}/src: no debt markers"). Requiring a
+	// named scope and then corroboration keeps the floor without guessing every verb.
+	const namesArtifact =
+		concretePathPattern.test(justification) ||
+		wellKnownArtifactPattern.test(justification) ||
+		namedCommandPattern.test(justification) ||
+		scopePattern.test(justification);
+	if (!namesArtifact) return false;
+
+	// At least two independent signals that something was actually done and something came
+	// back. This establishes a minimum evidence shape, not semantic truth: a long sentence
+	// that merely names a file still cannot make a failed audit fresh.
+	const corroborations = [
+		inspectionVerbPattern.test(justification),
+		outcomeWordPattern.test(justification),
+		namedCommandPattern.test(justification),
+		/\b\d+\b/.test(justification),
+	].filter(Boolean).length;
+	return corroborations >= 2;
 }
 
 function auditReportValidationReasons(structured: Record<string, unknown>): string[] {

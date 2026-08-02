@@ -14,6 +14,7 @@ import {
 	findingValidationReasons,
 	hasMeaningfulNoFindingsJustification,
 } from '../../cli/src/modes/audit-parsing.ts';
+import { rejectedAuditReportsNote } from '../../cli/src/orchestrator/run/carryover-notes.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { initializeGitProject } from './_helpers/orchestrator-fixture.ts';
 
@@ -244,6 +245,91 @@ describe('audit evidence validation', () => {
 					'Considered the overall shape of the codebase at length and formed the view that everything here is in good order.',
 			}),
 		).toBe(false);
+	});
+
+	// Back-testing the three-whitelist form against justifications agents actually wrote
+	// rejected 37% of them, three quarters on the inspection verb. These are the shapes that
+	// regressed: a named command standing in for a path, and a bare tool name used as a verb.
+	test('accepts a named command as the scope it inspected', () => {
+		for (const justification of [
+			'Ran bun run smoke:qc and observed typecheck, tests, build, and format:check all pass; nothing qualified for this audit.',
+			'Grep for TODO, FIXME, and HACK over the active source returned no debt markers outside documented domain content.',
+			'Knip reported zero unused exports and zero unreferenced files across the workspace, so no dead code qualified.',
+		]) {
+			expect(
+				hasMeaningfulNoFindingsJustification({ noFindingsJustification: justification }),
+			).toBe(true);
+		}
+	});
+
+	test('accepts a well-known bare artifact as the scope it inspected', () => {
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'Inspected LICENSE, README, and tsconfig alongside the package manifests; every declared license is MIT and none conflict, so nothing qualified.',
+			}),
+		).toBe(true);
+	});
+
+	// The scope pattern matches any prose containing a slash, so `N/A` clears it. Corroboration
+	// is what stops it: naming a scope with no stated action or result is not evidence.
+	test('rejects a slash-bearing non-answer that names no action or result', () => {
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'N/A for this batch of work, since the area under review is outside the remit we were given here.',
+			}),
+		).toBe(false);
+	});
+
+	test('rejects a named scope with no action and no outcome', () => {
+		expect(
+			hasMeaningfulNoFindingsJustification({
+				noFindingsJustification:
+					'The relevant material lives in backend/src/routes and frontend/src/pages, which together make up the surface under review.',
+			}),
+		).toBe(false);
+	});
+});
+
+describe('rejected audit report carryover note', () => {
+	test('names each rejected audit with its reason and forbids inventing findings', () => {
+		const note = rejectedAuditReportsNote([
+			{
+				auditName: 'REFACTOR',
+				reason: 'invalid auditFindings: empty auditFindings requires a concrete noFindingsJustification',
+			},
+			{
+				auditName: 'BUILD_OUTPUT',
+				reason: 'invalid auditFindings: auditFindings[0]: missing spec',
+			},
+		]);
+
+		expect(note).toContain('REFACTOR');
+		expect(note).toContain('BUILD_OUTPUT');
+		expect(note).toContain('missing spec');
+		expect(note).toContain('2 audit report(s)');
+		expect(note).toContain('Do not invent a finding');
+	});
+
+	test('elides a long rejection list rather than crowding out the assignment', () => {
+		const note = rejectedAuditReportsNote(
+			Array.from({ length: 11 }, (_, index) => ({
+				auditName: `AUDIT_${String(index)}`,
+				reason: 'invalid auditFindings: missing title',
+			})),
+		);
+
+		expect(note).toContain('11 audit report(s)');
+		expect(note).toContain('AUDIT_7');
+		expect(note).not.toContain('AUDIT_9');
+		expect(note).toContain('…and 3 more');
+	});
+
+	test('falls back to a placeholder when the rejected report had no auditName', () => {
+		expect(rejectedAuditReportsNote([{ reason: 'missing auditName' }])).toContain(
+			'unnamed report',
+		);
 	});
 });
 

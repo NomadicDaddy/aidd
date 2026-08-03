@@ -150,10 +150,30 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 // Defined in ./lib/smoke-qc/fast-subset.ts, which carries the measurements behind the order.
 export { FAST_QC_STEP_NAMES };
 
+/**
+ * Steps the fast gate runs differently from the full gate, keyed by the smoke:qc step they stand
+ * in for. Only lint so far: the inner loop wants ESLint's --cache and the full gate must not have
+ * it, because that cache keys on each file's own content and the type-aware rules do not. A type
+ * change in one file can create a violation in another that the cache then treats as unchanged and
+ * skips, so only the uncached run is authoritative.
+ *
+ * The replacement carries its own `name`, which is also the smoke-cache key. That is the point: a
+ * fast pass records against `lint:fast` and can never leave a result that lets the full gate skip
+ * `lint`. The name it replaces is still checked against SMOKE_QC_STEPS below, so the fast list
+ * cannot drift out of the full list unnoticed.
+ */
+export const FAST_STEP_OVERRIDES: Record<string, SmokeQcStep> = {
+	lint: {
+		command: ['bun', 'run', 'lint:fast'],
+		label: 'lint (cached)',
+		name: 'lint:fast',
+	},
+};
+
 export const FAST_QC_STEPS: SmokeQcStep[] = FAST_QC_STEP_NAMES.map((name) => {
 	const step = SMOKE_QC_STEPS.find((candidate) => candidate.name === name);
 	if (step === undefined) {
 		throw new Error(`smoke-qc: fast step '${name}' is not a smoke:qc step`);
 	}
-	return step;
+	return FAST_STEP_OVERRIDES[name] ?? step;
 });

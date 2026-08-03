@@ -27,8 +27,9 @@
 	"scripts": {
 		"build": "bunx tsc -p tsconfig.json",
 		"dev": "bun --watch src/app.ts",
-		"lint": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-backend/ --report-unused-disable-directives --max-warnings 0",
-		"lint:fix": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-backend/ --report-unused-disable-directives --max-warnings 0 --fix",
+		"lint": "bunx eslint src --report-unused-disable-directives --max-warnings 0",
+		"lint:fast": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-backend/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint src --report-unused-disable-directives --max-warnings 0 --fix",
 		"start": "bun src/app.ts",
 		"typecheck": "bunx tsc -p tsconfig.json --noEmit",
 		"preinstall": "bun ../scripts/require-bun.ts"

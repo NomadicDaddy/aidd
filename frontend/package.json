@@ -45,8 +45,9 @@
 	"scripts": {
 		"build": "bunx tsc -p tsconfig.json && bunx vite build",
 		"dev": "bunx vite --host",
-		"lint": "bunx eslint . --cache --cache-location ../node_modules/.cache/eslint-frontend/ --report-unused-disable-directives --max-warnings 0",
-		"lint:fix": "bunx eslint . --cache --cache-location ../node_modules/.cache/eslint-frontend/ --report-unused-disable-directives --max-warnings 0 --fix",
+		"lint": "bunx eslint . --report-unused-disable-directives --max-warnings 0",
+		"lint:fast": "bunx eslint . --cache --cache-location ../node_modules/.cache/eslint-frontend/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint . --report-unused-disable-directives --max-warnings 0 --fix",
 		"typecheck": "bunx tsc -p tsconfig.json --noEmit"
 	},
 	"type": "module"

@@ -6,6 +6,7 @@ import { assertSmokeCacheCoverage } from './lib/smoke-qc/coverage.ts';
 import {
 	FAST_QC_STEP_NAMES,
 	FAST_QC_STEPS,
+	FAST_STEP_OVERRIDES,
 	SMOKE_QC_STEPS,
 	type SmokeQcStep,
 } from './lib/smoke-qc/steps.ts';
@@ -26,7 +27,7 @@ export interface SmokeQcArgs {
 
 // The step definitions live in ./lib/smoke-qc/steps.ts; re-exported so callers and tests keep a
 // single import surface for "the smoke:qc gate" rather than reaching into its internals.
-export { FAST_QC_STEP_NAMES, FAST_QC_STEPS, SMOKE_QC_STEPS };
+export { FAST_QC_STEP_NAMES, FAST_QC_STEPS, FAST_STEP_OVERRIDES, SMOKE_QC_STEPS };
 
 export function parseSmokeQcArgs(args: string[]): SmokeQcArgs {
 	const { values } = parseArgs({

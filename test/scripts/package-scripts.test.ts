@@ -47,9 +47,23 @@ describe('package script lifecycle contracts', () => {
 
 	test('includes the Bun test corpus in the root lint gate', () => {
 		expect(scripts['lint:test']).toBe(
+			'bunx eslint test --report-unused-disable-directives --max-warnings 0',
+		);
+		expect(scripts['lint:test:fast']).toBe(
 			'bunx eslint test --cache --cache-location node_modules/.cache/eslint-test/ --report-unused-disable-directives --max-warnings 0',
 		);
 		expect(scripts.lint).toContain('bun run lint:test');
+		expect(scripts['lint:fast']).toContain('bun run lint:test:fast');
+	});
+
+	test('keeps --cache out of the authoritative lint gate', () => {
+		// ESLint's --cache keys on each file's own content, which the type-aware rules outlive: a
+		// type change in one file can create a violation in another the cache treats as unchanged
+		// and skips. The fast gate takes that trade for speed; `lint` is what has to be right.
+		for (const [name, command] of Object.entries(scripts)) {
+			if (!name.startsWith('lint') || name.endsWith(':fast')) continue;
+			expect([name, command.includes('--cache')]).toEqual([name, false]);
+		}
 	});
 
 	test('keeps unused exports and types blocking, including script entry points', async () => {

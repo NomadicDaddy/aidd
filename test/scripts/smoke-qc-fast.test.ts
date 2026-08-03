@@ -5,6 +5,7 @@ import { assertSmokeCacheCoverage } from '../../scripts/lib/smoke-qc/coverage.ts
 import {
 	FAST_QC_STEP_NAMES,
 	FAST_QC_STEPS,
+	FAST_STEP_OVERRIDES,
 	parseSmokeQcArgs,
 	SMOKE_QC_STEPS,
 } from '../../scripts/smoke-qc.ts';
@@ -27,10 +28,25 @@ describe('smoke:qc --fast subset', () => {
 	});
 
 	test('every fast step is a real smoke:qc step, in the declared order', () => {
-		expect(FAST_QC_STEPS.map((step) => step.name)).toEqual([...FAST_QC_STEP_NAMES]);
+		expect(FAST_QC_STEPS.map((step) => step.name)).toEqual(
+			FAST_QC_STEP_NAMES.map((name) => FAST_STEP_OVERRIDES[name]?.name ?? name),
+		);
 		const allNames = new Set(SMOKE_QC_STEPS.map((step) => step.name));
 		for (const name of FAST_QC_STEP_NAMES) {
 			expect(allNames.has(name)).toBe(true);
+		}
+	});
+
+	test('the lint override is cached, separately keyed, and classified', () => {
+		// ESLint's --cache keys on each file's own content, which the type-aware rules outlive: a
+		// type change in one file can create a violation in another the cache treats as unchanged.
+		// The fast gate accepts that for speed; the full gate must not, so `lint` stays uncached
+		// and the override runs under its own smoke-cache key.
+		const override = FAST_STEP_OVERRIDES.lint;
+		expect(override?.command).toEqual(['bun', 'run', 'lint:fast']);
+		expect(override?.name).not.toBe('lint');
+		for (const step of FAST_QC_STEPS) {
+			expect(isKnownSmokeCacheStep(step.name)).toBe(true);
 		}
 	});
 

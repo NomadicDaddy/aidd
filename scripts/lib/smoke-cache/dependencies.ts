@@ -45,6 +45,27 @@ const FRONTEND_BUILD_INPUTS = [
 	'shared/tsconfig.json',
 ];
 
+const LINT_DEPENDENCIES = [
+	'backend/package.json',
+	'backend/src/**/*.ts',
+	'bun.lock',
+	'cli/package.json',
+	'cli/src/**/*.ts',
+	'eslint.config.js',
+	'frontend/eslint.config.js',
+	'frontend/package.json',
+	'frontend/src/**/*',
+	'frontend/vite.config.ts',
+	'package.json',
+	'scripts/**/*.ts',
+	'shared/package.json',
+	'shared/src/**/*.ts',
+	'test/**/*.js',
+	'test/**/*.jsx',
+	'test/**/*.ts',
+	'test/**/*.tsx',
+];
+
 export const STEP_DEPENDENCIES: Record<string, string[]> = {
 	'build:frontend': [...FRONTEND_BUILD_INPUTS],
 	'check:backend-cli-boundary': [
@@ -159,26 +180,10 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/check-web-db-integrity.ts',
 	],
 	'format:check': ['.prettierignore', '.prettierrc', 'package.json', 'bun.lock'],
-	lint: [
-		'backend/package.json',
-		'backend/src/**/*.ts',
-		'bun.lock',
-		'cli/package.json',
-		'cli/src/**/*.ts',
-		'eslint.config.js',
-		'frontend/eslint.config.js',
-		'frontend/package.json',
-		'frontend/src/**/*',
-		'frontend/vite.config.ts',
-		'package.json',
-		'scripts/**/*.ts',
-		'shared/package.json',
-		'shared/src/**/*.ts',
-		'test/**/*.js',
-		'test/**/*.jsx',
-		'test/**/*.ts',
-		'test/**/*.tsx',
-	],
+	lint: LINT_DEPENDENCIES,
+	// The fast gate's ESLint-cached stand-in for lint (see FAST_STEP_OVERRIDES). Same dependency
+	// set, deliberately its own cache entry so a fast pass never satisfies the uncached full gate.
+	'lint:fast': LINT_DEPENDENCIES,
 	// The compiled snapshots are an input as well as the thing being checked: editing a snapshot by
 	// hand is itself the drift this gate exists to catch.
 	'prompt:snapshot:check': [

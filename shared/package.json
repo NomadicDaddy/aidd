@@ -22,8 +22,9 @@
 	},
 	"scripts": {
 		"build": "bunx tsc -p tsconfig.json",
-		"lint": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-shared/ --report-unused-disable-directives --max-warnings 0",
-		"lint:fix": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-shared/ --report-unused-disable-directives --max-warnings 0 --fix",
+		"lint": "bunx eslint src --report-unused-disable-directives --max-warnings 0",
+		"lint:fast": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-shared/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint src --report-unused-disable-directives --max-warnings 0 --fix",
 		"typecheck": "bunx tsc -p tsconfig.json --noEmit"
 	},
 	"type": "module"

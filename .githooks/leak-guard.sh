@@ -12,8 +12,8 @@
 # Scans staged ADDITIONS only. Bypass with `git commit --no-verify` for a
 # confirmed false positive.
 #
-# Keep this file byte-identical between the aidd and spernakit repos, and
-# in sync with scripts/check-leak-guard.sh.
+# Keep this file byte-identical between the aidd, spernakit, and starsync
+# repos, and in sync with scripts/check-leak-guard.sh.
 set -euo pipefail
 
 added="$(git diff --cached --unified=0 --no-color -- . ':(exclude).githooks/leak-guard.sh' | grep -E '^\+' | grep -vE '^\+\+\+' || true)"

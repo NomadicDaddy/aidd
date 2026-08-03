@@ -9,7 +9,7 @@
 # already exists; never overwrites. The generated file lives outside the
 # repo and must never be committed.
 #
-# Keep this file byte-identical between the aidd and spernakit repos.
+# Keep this file byte-identical between the aidd, spernakit, and starsync repos.
 set -euo pipefail
 
 target="${LEAK_GUARD_PATTERNS:-$HOME/.config/leak-guard/patterns}"
@@ -18,7 +18,7 @@ target="${LEAK_GUARD_PATTERNS:-$HOME/.config/leak-guard/patterns}"
 # Names that are public (or dot-dirs) and must not become private literals.
 is_public() {
 	case "$1" in
-	aidd | aidd-web | spernakit | node_modules | .*) return 0 ;;
+	aidd | spernakit | starsync | node_modules | .*) return 0 ;;
 	esac
 	return 1
 }

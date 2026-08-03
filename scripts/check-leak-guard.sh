@@ -6,7 +6,7 @@
 # repo under a temp dir; the real user-level pattern file is never read
 # (LEAK_GUARD_PATTERNS is always set explicitly).
 #
-# Keep this file byte-identical between the aidd and spernakit repos.
+# Keep this file byte-identical between the aidd, spernakit, and starsync repos.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"

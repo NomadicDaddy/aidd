@@ -75,11 +75,22 @@ describe('screenshot guard', () => {
 		expect(r.code).toBe(0);
 	});
 
-	test('version tag without its screenshots directory blocks', async () => {
+	test('a repository with no screenshots root does not capture at all and passes', async () => {
+		// A CLI or a library never grows a screenshots/ directory. Treating that as a missing
+		// capture would block every tag push in every headless repository the guard ships to.
 		const root = await makeRoot();
 		const r = await runGuard(root, tagLine('v3.29.0'));
+		expect(r.code).toBe(0);
+	});
+
+	test('once the screenshots root exists, a tag with no capture under it blocks', async () => {
+		// The root is what records the opt-in. Collapsing this case together with the one above
+		// reads an opted-in repository's forgotten capture as an opted-out repository.
+		const root = await makeRoot();
+		await mkdir(join(root, 'screenshots'), { recursive: true });
+		const r = await runGuard(root, tagLine('v3.29.0'));
 		expect(r.code).toBe(1);
-		expect(r.err).toContain('no screenshots/v3.29.0/ directory');
+		expect(r.err).toContain('screenshots/ exists but has no v3.29.0/ capture');
 	});
 
 	test('a nearly empty capture blocks — a crawl that died early is not an artifact', async () => {

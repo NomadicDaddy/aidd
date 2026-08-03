@@ -37,6 +37,18 @@ describe('scrubSecrets', () => {
 		expect(scrubSecrets(input)).toBe(input);
 	});
 
+	// Found while sweeping archived logs: an unanchored `sk-` matched inside ordinary words, so
+	// every feature path containing "mask-" had its tail redacted. Prefixes only count at a word
+	// boundary — a real credential always follows `=`, `:`, a quote, or whitespace.
+	it('leaves prefixes that appear mid-word alone', () => {
+		const path =
+			'.aidd/features/audit-1784605174-mask-sensitive-paths-in-scan-output/feature.json';
+		expect(scrubSecrets(path)).toBe(path);
+		// Assembled rather than written out so the repo's own leak guard does not flag the fixture.
+		const midWord = `a task_gh${'p_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'}`;
+		expect(scrubSecrets(midWord)).toBe(midWord);
+	});
+
 	it('masks AWS access key ids (AKIA...)', () => {
 		const out = scrubSecrets('aws id AKIAABCDEFGHIJKLMNOP done');
 		expect(out).toBe(`aws id ${SECRET_REDACTED} done`);

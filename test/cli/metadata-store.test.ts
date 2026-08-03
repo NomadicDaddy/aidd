@@ -189,6 +189,33 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(structured.ok).toBe(true);
 	});
 
+	// An audit found a still-valid GitHub PAT sitting in 17 iteration logs: the transcript is raw
+	// backend output, so anything the agent read out of `.env` was persisted verbatim.
+	test('redacts secrets from the iteration transcript and its structured sidecar', async () => {
+		const store = await makeStore('iteration-secrets');
+		const token = `github_pat_${'A1b2C3d4E5'.repeat(4)}`;
+		await store.writeIteration({
+			log: `read .env\nGITHUB_TOKEN=${token}\ndone\n`,
+			structured: {
+				commands: [`curl -H "Authorization: Bearer ${token}" https://api.github.com`],
+			},
+		});
+
+		const log = await readFile(join(store.metadataDir, 'iterations', '001.log'), 'utf8');
+		expect(log).not.toContain(token);
+		expect(log).toContain('[REDACTED]');
+		// Redaction must not cost the surrounding transcript: only the value goes.
+		expect(log).toContain('read .env');
+		expect(log).toContain('done');
+
+		// The sidecar is parsed on every report, so it has to survive scrubbing as valid JSON.
+		const raw = await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8');
+		expect(raw).not.toContain(token);
+		const structuredSidecar = JSON.parse(raw) as { commands: string[] };
+		expect(structuredSidecar.commands[0]).toContain('[REDACTED]');
+		expect(structuredSidecar.commands[0]).toContain('api.github.com');
+	});
+
 	test('validates feature contracts and writes artifact check file', async () => {
 		const store = await makeStore('validation');
 		await store.writeFeature({ id: 'feature-good', status: 'completed', passes: true });

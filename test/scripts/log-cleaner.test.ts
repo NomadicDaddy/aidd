@@ -83,6 +83,61 @@ describe('cleanIterationLogs', () => {
 		void firstPass;
 	});
 
+	test('redacts secrets alongside the ANSI strip', async () => {
+		const token = `github_pat_${'A1b2C3d4E5'.repeat(4)}`;
+		const dirty = JSON.stringify({
+			chunk: `\x1b[31mGITHUB_TOKEN=${token}\x1b[0m`,
+			type: 'raw_log',
+		});
+		const iterationsDir = await setupIterations([{ name: '001.log', content: `${dirty}\n` }]);
+		const result = await cleanIterationLogs(iterationsDir);
+		expect(result.cleanedFiles).toBe(1);
+		const cleaned = await readFile(join(iterationsDir, '001.log'), 'utf8');
+		expect(cleaned).not.toContain(token);
+		expect(cleaned).toContain('[REDACTED]');
+	});
+
+	// The gap that let the exposure persist: a directory already swept by the ANSI-only cleaner
+	// carries a marker whose mtime is newer than every log in it, so a later pass that scanned on
+	// mtime alone would skip exactly the files it was added to fix.
+	test('re-sweeps a directory whose marker predates this cleaner version', async () => {
+		const token = `github_pat_${'A1b2C3d4E5'.repeat(4)}`;
+		const iterationsDir = await setupIterations([
+			{ name: '001.log', content: `${JSON.stringify({ chunk: `token=${token}` })}\n` },
+		]);
+		// What the previous cleaner left behind: an empty marker, stamped after the log.
+		await writeFile(join(iterationsDir, '.cleaned'), '');
+
+		const result = await cleanIterationLogs(iterationsDir);
+
+		expect(result.scannedFiles).toBe(1);
+		expect(await readFile(join(iterationsDir, '001.log'), 'utf8')).not.toContain(token);
+		// And the refreshed marker claims the version that actually did the work, so the next run
+		// goes back to skipping on mtime instead of re-reading every log forever.
+		expect((await readFile(join(iterationsDir, '.cleaned'), 'utf8')).trim()).toBe('v2-secrets');
+	});
+
+	// A credential redacted from NNN.log used to survive intact in the NNN.json beside it.
+	test('sweeps the structured sidecar and keeps it parseable', async () => {
+		const token = `github_pat_${'A1b2C3d4E5'.repeat(4)}`;
+		const iterationsDir = await setupIterations([
+			{
+				name: '001.json',
+				content: `${JSON.stringify({ commands: [`gh auth login --with-token ${token}`], iteration: 1 }, null, 2)}\n`,
+			},
+		]);
+
+		const result = await cleanIterationLogs(iterationsDir);
+
+		expect(result.cleanedFiles).toBe(1);
+		const raw = await readFile(join(iterationsDir, '001.json'), 'utf8');
+		expect(raw).not.toContain(token);
+		const parsed = JSON.parse(raw) as { commands: string[]; iteration: number };
+		expect(parsed.iteration).toBe(1);
+		expect(parsed.commands[0]).toContain('gh auth login');
+		expect(parsed.commands[0]).toContain('[REDACTED]');
+	});
+
 	test('returns zero counts for empty / missing dirs', async () => {
 		const projectDir = await testTempDir('aidd-clean-empty-');
 		const result = await cleanIterationLogs(join(projectDir, '.aidd', 'iterations'));

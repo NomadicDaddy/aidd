@@ -5,14 +5,19 @@ interface SecretRule {
 	readonly replacement: string;
 }
 
+// Every prefix rule is left-anchored on a word boundary. Without it a prefix matches mid-word and
+// eats real content: `sk-` alone redacted the tail of feature directories named
+// `...-mask-sensitive-paths-...` (`ma|sk-sensitive-paths...`) in 100+ archived iteration logs.
+// A genuine credential is always preceded by a non-word character — `=`, `:`, a quote, or space —
+// so the boundary costs no coverage.
 const SECRET_RULES: readonly SecretRule[] = [
-	{ pattern: /sk-[A-Za-z0-9_-]{16,}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bsk-[A-Za-z0-9_-]{16,}/g, replacement: SECRET_REDACTED },
 	{ pattern: /Bearer\s+[A-Za-z0-9._-]+/g, replacement: SECRET_REDACTED },
 	{ pattern: /Authorization:\s*\S+/g, replacement: SECRET_REDACTED },
-	{ pattern: /AKIA[0-9A-Z]{16}/g, replacement: SECRET_REDACTED },
-	{ pattern: /github_pat_[A-Za-z0-9_]{20,}/g, replacement: SECRET_REDACTED },
-	{ pattern: /ghp_[A-Za-z0-9]{20,}/g, replacement: SECRET_REDACTED },
-	{ pattern: /AIza[A-Za-z0-9_-]{20,}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bAKIA[0-9A-Z]{16}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bgithub_pat_[A-Za-z0-9_]{20,}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bghp_[A-Za-z0-9]{20,}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bAIza[A-Za-z0-9_-]{20,}/g, replacement: SECRET_REDACTED },
 	{
 		pattern:
 			/\b(api[_-]?key|secret|token|password|passwd|pwd)(["']?\s*[:=]\s*["']?)([^\s"',;&]+)/gi,

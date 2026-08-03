@@ -37,7 +37,10 @@ export function installCrashFinalizer(heartbeat: CliActiveRunHeartbeat): void {
 export async function finalizeCrashedRun(
 	kind: string,
 	cause: unknown,
-	exit: (code: number) => void = process.exit,
+	// Called through an arrow rather than passed as `process.exit` directly, so the receiver is
+	// never dropped. Node happens to close over `process` today, but that is an implementation
+	// detail of the runtime, not part of the documented contract.
+	exit: (code: number) => void = (code) => process.exit(code),
 ): Promise<void> {
 	const heartbeat = crashFinalizerTarget;
 	const detail = scrubSecrets(

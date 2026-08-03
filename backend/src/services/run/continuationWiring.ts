@@ -11,17 +11,20 @@ import { type ContinuationLaunchDeps, continueRun, maybeAutoChainRun } from './c
 // one shared deps builder, so RunService only wires thunks. Thunks — not captured values —
 // because this is created as a class-field initializer, before the service constructor body has
 // assigned db/telemetry/config, and because config is hot-swapped by updateConfig at runtime.
+// Declared as function-valued properties rather than methods: every one of these is a standalone
+// closure that never reads `this`, and method shorthand would both invite unbound-method warnings
+// at each call site that forwards one and type the parameters bivariantly.
 export interface RunContinuationWiring {
-	continueRun(id: string): Promise<WebRunRow>;
+	continueRun: (id: string) => Promise<WebRunRow>;
 	/** Fire-and-forget heartbeat hook; all gating lives in maybeAutoChainRun (never throws). */
-	onRunContinuation(runId: string, reason: RunContinuationReason): void;
+	onRunContinuation: (runId: string, reason: RunContinuationReason) => void;
 }
 
 export function createRunContinuationWiring(input: {
-	db(): WebDatabase;
-	launch(request: RunLaunchRequest): Promise<WebRunRow>;
-	telemetry(): TelemetryService;
-	webConfig(): Pick<ResolvedWebConfig, 'autoChainLimit' | 'autoChainRuns'>;
+	db: () => WebDatabase;
+	launch: (request: RunLaunchRequest) => Promise<WebRunRow>;
+	telemetry: () => TelemetryService;
+	webConfig: () => Pick<ResolvedWebConfig, 'autoChainLimit' | 'autoChainRuns'>;
 }): RunContinuationWiring {
 	const deps = (): ContinuationLaunchDeps => ({
 		db: input.db(),

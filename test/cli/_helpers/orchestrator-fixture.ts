@@ -200,6 +200,10 @@ export async function initializeGitProject(projectDir: string): Promise<void> {
 }
 
 export async function captureStdout(run: () => Promise<void>): Promise<string> {
+	// Saved only to be assigned straight back in the finally below, never called detached, so
+	// the receiver goes back with it. Binding it here would be wrong rather than safer: the
+	// restored value would then be a bound wrapper rather than the function that was replaced.
+	// eslint-disable-next-line @typescript-eslint/unbound-method
 	const originalWrite = process.stdout.write;
 	let output = '';
 	process.stdout.write = ((chunk: string | Uint8Array, ...args: unknown[]): boolean => {

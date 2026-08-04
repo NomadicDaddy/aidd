@@ -124,6 +124,7 @@
 		"licenses:generate": "bun scripts/generate-third-party-licenses.ts",
 		"preinstall": "bun scripts/require-bun.ts",
 		"install:history-guard": "bun scripts/install-history-guard.ts",
+		"install:leak-guard": "bun scripts/install-leak-guard.ts",
 		"prepare": "(git config core.hooksPath .githooks && bun ./scripts/run-bash.ts .githooks/leak-guard-setup.sh) || true",
 		"prompt:snapshot": "bun run --cwd cli prompt:snapshot",
 		"prompt:snapshot:check": "bun run --cwd cli prompt:snapshot:check",

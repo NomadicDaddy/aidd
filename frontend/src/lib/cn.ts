@@ -1,3 +1,5 @@
+import { twMerge } from 'tailwind-merge';
+
 export function cn(...values: (false | null | string | undefined)[]): string {
-	return values.filter(Boolean).join(' ');
+	return twMerge(...values);
 }

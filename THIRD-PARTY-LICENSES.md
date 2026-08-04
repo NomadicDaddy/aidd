@@ -54,6 +54,7 @@ the repository material distributed outside the npm graph.
 | [react-router](https://www.npmjs.com/package/react-router)                                             | 8.3.0   | MIT        |
 | [remark-gfm](https://www.npmjs.com/package/remark-gfm)                                                 | 4.0.1   | MIT        |
 | [sonner](https://www.npmjs.com/package/sonner)                                                         | 2.0.7   | MIT        |
+| [tailwind-merge](https://www.npmjs.com/package/tailwind-merge)                                         | 3.6.0   | MIT        |
 | [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.0.1   | Apache-2.0 |
 | [zustand](https://www.npmjs.com/package/zustand)                                                       | 5.0.14  | MIT        |
 
@@ -101,7 +102,7 @@ Applies to: lucide-react.
 
 ### MIT License
 
-Applies to: @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities, @modelcontextprotocol/sdk, @tanstack/react-query, @xterm/addon-fit, @xterm/addon-search, @xterm/addon-serialize, @xterm/addon-web-links, @xterm/addon-webgl, @xterm/headless, @xterm/xterm, bun-pty, cmdk, elysia, pino, react, react-dom, react-markdown, react-router, remark-gfm, sonner, zod, zustand.
+Applies to: @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities, @modelcontextprotocol/sdk, @tanstack/react-query, @xterm/addon-fit, @xterm/addon-search, @xterm/addon-serialize, @xterm/addon-web-links, @xterm/addon-webgl, @xterm/headless, @xterm/xterm, bun-pty, cmdk, elysia, pino, react, react-dom, react-markdown, react-router, remark-gfm, sonner, tailwind-merge, zod, zustand.
 
 Each MIT-licensed dependency is provided under the standard MIT License, with
 copyright held by the respective package authors as stated in that package.
@@ -139,13 +140,13 @@ are included in the distributed asset tree.
 ## Distributed packages
 
 The tables above enumerate the direct production dependencies. Counting everything they
-pull in transitively, the distributed set is **274** third-party
-packages (270 unique names). Development and build tooling is not part
+pull in transitively, the distributed set is **275** third-party
+packages (271 unique names). Development and build tooling is not part
 of it and is not counted here. The license distribution of what ships is:
 
 | License      | Packages |
 | ------------ | -------- |
-| MIT          | 254      |
+| MIT          | 255      |
 | ISC          | 10       |
 | BSD-3-Clause | 3        |
 | OFL-1.1      | 3        |

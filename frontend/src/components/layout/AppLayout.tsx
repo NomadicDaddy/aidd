@@ -78,25 +78,82 @@ export function AppLayout({ children }: { children: ReactNode }) {
 						'transition-[width] duration-200',
 						collapsed ? 'sm:w-16' : 'sm:w-60',
 					)}>
-					<div className="flex min-h-10 items-center justify-between gap-3 sm:mb-5">
-						<div className="flex min-w-0 shrink-0 items-center gap-2">
-							<img
-								alt=""
-								className="h-10 w-10 shrink-0 rounded-lg ring-1 ring-border/40"
-								src="/favicon-96x96.png"
-							/>
-							{!collapsed && (
+					<div className="flex items-center justify-between gap-2 sm:contents">
+						<div
+							className={cn(
+								'flex min-w-0 flex-1 items-center gap-2 sm:mb-5 sm:flex-none',
+								collapsed ? 'sm:flex-col sm:gap-2' : 'sm:justify-between sm:gap-3',
+							)}>
+							<div className="flex min-w-0 items-center gap-2">
+								<img
+									alt=""
+									className="h-10 w-10 shrink-0 rounded-lg ring-1 ring-border/40"
+									src="/favicon-96x96.png"
+								/>
 								<div
-									className="font-display text-base font-semibold tracking-[0.18em] text-foreground"
+									className={cn(
+										'min-w-0 truncate font-display text-base font-semibold tracking-[0.18em] text-foreground',
+										collapsed && 'sm:hidden',
+									)}
 									translate="no">
 									aidd
 								</div>
-							)}
+							</div>
+							<div className="hidden sm:block">
+								<IconButton ariaLabel="Toggle navigation" onClick={toggle}>
+									<Activity className="h-4 w-4" />
+								</IconButton>
+							</div>
 						</div>
-						<div className="hidden sm:block">
-							<IconButton ariaLabel="Toggle navigation" onClick={toggle}>
-								<Activity className="h-4 w-4" />
-							</IconButton>
+						<div className="flex shrink-0 gap-0.5 sm:order-last sm:mt-3 sm:flex-col sm:gap-1.5 sm:border-t sm:border-border/60 sm:pt-3 max-sm:[&_button]:h-8 max-sm:[&_button]:w-8">
+							<div className="sm:hidden">
+								<IconButton
+									aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}
+									ariaLabel="Open command palette"
+									onClick={() => setPaletteOpen(true)}
+									variant="ghost">
+									<Search className="h-4 w-4" />
+								</IconButton>
+							</div>
+							<DirectiveLaunchButton
+								collapsed={collapsed}
+								onClick={() => setDirectiveLaunchOpen(true)}
+							/>
+							<ProjectReportButton collapsed={collapsed} />
+							<Button
+								aria-label="Set access token"
+								className={cn(
+									'px-0',
+									collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
+								)}
+								onClick={openAuthPrompt}
+								variant="ghost">
+								<KeyRound className="h-4 w-4" />
+								{!collapsed && (
+									<span className="hidden text-sm font-medium sm:inline">
+										Access token
+									</span>
+								)}
+							</Button>
+							<Button
+								aria-label={
+									themeMode === 'dark'
+										? 'Switch to light mode'
+										: 'Switch to dark mode'
+								}
+								className={cn(
+									'px-0',
+									collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
+								)}
+								onClick={toggleThemeMode}
+								variant="ghost">
+								<ThemeIcon className="h-4 w-4" />
+								{!collapsed && (
+									<span className="hidden text-sm font-medium sm:inline">
+										{themeMode === 'dark' ? 'Light mode' : 'Dark mode'}
+									</span>
+								)}
+							</Button>
 						</div>
 					</div>
 					<div className="hidden sm:block">
@@ -204,56 +261,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							</div>
 						))}
 					</nav>
-					<div className="absolute top-3 right-3 flex gap-2 sm:static sm:mt-3 sm:shrink-0 sm:flex-col sm:gap-1.5 sm:border-t sm:border-border/60 sm:pt-3">
-						<div className="sm:hidden">
-							<IconButton
-								aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}
-								ariaLabel="Open command palette"
-								onClick={() => setPaletteOpen(true)}
-								variant="ghost">
-								<Search className="h-4 w-4" />
-							</IconButton>
-						</div>
-						<DirectiveLaunchButton
-							collapsed={collapsed}
-							onClick={() => setDirectiveLaunchOpen(true)}
-						/>
-						<ProjectReportButton collapsed={collapsed} />
-						<Button
-							aria-label="Set access token"
-							className={cn(
-								'px-0',
-								collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
-							)}
-							onClick={openAuthPrompt}
-							variant="ghost">
-							<KeyRound className="h-4 w-4" />
-							{!collapsed && (
-								<span className="hidden text-sm font-medium sm:inline">
-									Access token
-								</span>
-							)}
-						</Button>
-						<Button
-							aria-label={
-								themeMode === 'dark'
-									? 'Switch to light mode'
-									: 'Switch to dark mode'
-							}
-							className={cn(
-								'px-0',
-								collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
-							)}
-							onClick={toggleThemeMode}
-							variant="ghost">
-							<ThemeIcon className="h-4 w-4" />
-							{!collapsed && (
-								<span className="hidden text-sm font-medium sm:inline">
-									{themeMode === 'dark' ? 'Light mode' : 'Dark mode'}
-								</span>
-							)}
-						</Button>
-					</div>
 				</aside>
 				{/* tabIndex={-1} makes the landmark a programmatic focus target for the
 				    route-change focus reset in App.tsx's RootLayout (and the Skip to Content link).

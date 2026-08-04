@@ -123,7 +123,12 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/**/*',
 		'test/scripts/**/*',
 	],
-	'check:leak-guard': ['.githooks/leak-guard.sh', 'package.json', 'scripts/check-leak-guard.sh'],
+	'check:leak-guard': [
+		'.githooks/leak-guard.sh',
+		'package.json',
+		'scripts/check-leak-guard.sh',
+		'scripts/run-bash.ts',
+	],
 	'check:licenses': [
 		'THIRD-PARTY-LICENSES.md',
 		'THIRD-PARTY-NOTICES.md',

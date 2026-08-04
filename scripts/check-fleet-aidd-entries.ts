@@ -8,13 +8,18 @@
  * repository. It cannot see a single real project. This is the other half: does what is actually on
  * disk, in every application, match what the catalog says should be there?
  *
- * Three questions, per repository:
+ * Two profiles, chosen by whether the repository has a push destination.
+ *
+ * A PUBLISHED repository hides `.aidd/` wholesale: nothing under it tracked, and a rule that
+ * actually covers it. That is the same requirement the pre-push history guard enforces, checked
+ * here before someone runs `git add .` rather than after.
+ *
+ * A LOCAL-ONLY repository keeps `.aidd/` and answers two questions per entry:
  *   1. Is every top-level `.aidd/` entry CLASSIFIED? An unknown entry is not merely undocumented —
  *      the managed profile is a denylist, so anything unrecognised is tracked by default. That is
  *      how a stray gets committed and how a secret-bearing file would.
  *   2. Does the DISPOSITION hold? Catalog says committed → it must be tracked. Says not → it must be
  *      ignored. A rule that exists but does not bite is indistinguishable from no rule.
- *   3. Do local-only repositories hide `.aidd/` wholesale?
  *
  * Dispositions are read from docs/reference/artifacts.md rather than restated here: a second copy of
  * the policy is a second thing to forget to update, and the catalog is already the source of truth
@@ -57,6 +62,10 @@ const NON_AIDD: Record<string, 'ignore'> = {
 	'dev-server.out.log': 'ignore',
 	// Stray: tester skills write {APP_DIR}/screenshots/, never .aidd/screenshots/.
 	screenshots: 'ignore',
+	// spernakit/scripts/template-sync-plan.ts writes upgrade-review/<app>/ under the template root,
+	// but takes --outDir, and a template upgrade run pointed one here. A read-only sync packet, not
+	// an aidd artifact and never going to be one.
+	'upgrade-review': 'ignore',
 };
 
 /** Curated, human-authored files that live under .aidd/ and are tracked on purpose. */
@@ -87,29 +96,35 @@ const repos = readdirSync(FLEET_ROOT, { withFileTypes: true })
 	.filter((d) => existsSync(join(d, '.git')) && existsSync(join(d, '.aidd')));
 
 const problems: string[] = [];
-let managed = 0;
 let localOnly = 0;
+let published = 0;
 
 for (const repo of repos) {
 	const name = repo.split(/[\\/]/).pop()!;
-	const isLocalOnly = git(repo, ['remote', '-v']).stdout.includes('(push)');
+	// `git remote -v` prints a `(push)` line per remote and nothing at all without one, so this is
+	// "has somewhere to publish to", not "is publicly readable". The distinction does not matter
+	// here: a repository with any push destination must not carry .aidd/, and one with none cannot
+	// leak it anywhere.
+	const isPublished = git(repo, ['remote', '-v']).stdout.includes('(push)');
 
-	if (isLocalOnly) {
-		localOnly++;
-		// Nothing under .aidd/ may be tracked, and the blanket rule must actually cover it.
+	if (isPublished) {
+		published++;
+		// Nothing under .aidd/ may be tracked, and the blanket rule must actually cover it. This is
+		// the same requirement the pre-push history guard enforces at push time; checking it here
+		// finds the gap before someone runs `git add .` rather than after.
 		const tracked = git(repo, ['ls-files', '.aidd']).stdout.split('\n').filter(Boolean);
 		if (tracked.length > 0) {
-			problems.push(`${name}: local-only but ${tracked.length} tracked .aidd path(s)`);
+			problems.push(`${name}: published but ${tracked.length} tracked .aidd path(s)`);
 		}
 		const covered = Bun.spawnSync(['git', 'check-ignore', '-q', '--no-index', '.aidd/probe'], {
 			cwd: repo,
 			windowsHide: true,
 		}).success;
-		if (!covered) problems.push(`${name}: local-only but no rule covers .aidd/`);
+		if (!covered) problems.push(`${name}: published but no rule covers .aidd/`);
 		continue;
 	}
 
-	managed++;
+	localOnly++;
 	for (const entry of readdirSync(join(repo, '.aidd'))) {
 		const cls = catalog.get(entry);
 		const known = cls !== undefined || entry in NON_AIDD || NON_AIDD_TRACKED.has(entry);
@@ -142,7 +157,7 @@ for (const repo of repos) {
 	}
 }
 
-console.log(`swept ${repos.length} repositories (${localOnly} local-only, ${managed} managed)`);
+console.log(`swept ${repos.length} repositories (${published} published, ${localOnly} local-only)`);
 if (problems.length === 0) {
 	console.log('fleet .aidd entries — every entry classified, every disposition holds.');
 	exit(0);

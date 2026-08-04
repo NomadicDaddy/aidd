@@ -433,7 +433,12 @@ so the flag agrees with it, or the resume discards the checkpoint and starts the
 - Format-check `.aidd` metadata with an explicit `--ignore-path` override; `/.aidd/` sits in
   `.prettierignore`, so an unqualified `prettier --check` on those paths passes having read nothing.
 - Preserve required license-material copy steps in branded Dockerfiles.
-- Remove the Spernakit leak guard from derived apps and record a `DELETED` override.
+- Keep the leak guard in derived apps. Template v3.35.0 put the two-tier guard on the template
+  surface: `.githooks/leak-guard.sh`, `.githooks/leak-guard-setup.sh`, `scripts/check-leak-guard.sh`
+  and `scripts/run-bash.ts` ship to every app, `check:leak-guard` is a real qc step rather than a
+  `templateOnly` one, and `scripts/check-leak-guard.sh` is no longer drift-excluded. Deleting it and
+  recording a `DELETED` override is the pre-3.35.0 instruction, and following it now strips a working
+  commit-time secret guard out of every app it touches.
 - When a template fix requires retagging, resync apps already upgraded and restore the prior release
   tag before running `document-changes`.
 

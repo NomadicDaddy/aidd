@@ -112,20 +112,6 @@ for (const repo of repos) {
 		}
 	}
 
-	// Unstaged and untracked files elsewhere are harmless and deliberately allowed: most of this
-	// fleet is dirty most of the time, and refusing on that would mean never installing anywhere.
-	// Staged work is different — this script runs `git add` on what it writes, so it would silently
-	// enlarge somebody else's next commit. install-leak-guard.ts has refused on this from the start
-	// and its header credits this script with the same behaviour; that was aspirational until now.
-	if (!gitOk(repo, ['diff', '--cached', '--quiet'])) {
-		console.error(
-			`  REFUSED ${name}: the index already holds staged changes; installing would enlarge that commit.\n` +
-				`           Commit or unstage them, then re-run.`,
-		);
-		refused++;
-		continue;
-	}
-
 	// The hook and every guard it chains, as one unit. Installing the hook without a guard it calls
 	// is not a partial install: `set -euo pipefail` turns the missing file into a failed push, so
 	// a half-applied set is strictly worse than none. They are copied together or not at all.
@@ -142,6 +128,26 @@ for (const repo of repos) {
 	if (configuredHooks === '.githooks' && wants.every(same)) {
 		console.log(`  current:   ${name}`);
 		current++;
+		continue;
+	}
+
+	// Only once there is something to write. Unstaged and untracked files elsewhere are harmless and
+	// deliberately allowed: most of this fleet is dirty most of the time, and refusing on that would
+	// mean never installing anywhere. Staged work is different — this script runs `git add` on what
+	// it writes, so it would silently enlarge somebody else's next commit. install-leak-guard.ts has
+	// refused on this from the start and its header credits this script with the same behaviour;
+	// that was aspirational until now.
+	//
+	// The order matters and is not obvious. Checking this before the comparison above would make the
+	// script refuse every repository it had just installed into, because its own `git add` leaves
+	// exactly the staged index this refuses on — turning a clean second run, which is how the
+	// rollout is verified, into a wall of false refusals.
+	if (!gitOk(repo, ['diff', '--cached', '--quiet'])) {
+		console.error(
+			`  REFUSED ${name}: the index already holds staged changes; installing would enlarge that commit.\n` +
+				`           Commit or unstage them, then re-run.`,
+		);
+		refused++;
 		continue;
 	}
 

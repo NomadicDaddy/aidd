@@ -78,6 +78,16 @@ describe('FeatureActions status variants', () => {
 		expect(html).not.toContain('aria-label="Launch coding run for feature-one"');
 	});
 
+	test('renders a canonical status recovery control for an invalid persisted status', () => {
+		const html = renderFeatureActions('pending');
+
+		expect(html).toContain('aria-label="Status for feature-one"');
+		expect(html).toContain('pending (invalid)');
+		expect(html).toContain('<option value="completed">completed</option>');
+		expect(html).not.toContain('aria-label="Launch coding run for feature-one"');
+		expect(html).not.toContain('aria-label="Delete feature-one"');
+	});
+
 	test('renders other statuses as read-only actions', () => {
 		const html = renderFeatureActions('completed');
 

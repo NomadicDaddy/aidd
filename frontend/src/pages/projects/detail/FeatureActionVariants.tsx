@@ -34,6 +34,13 @@ export interface BacklogFeatureActionsProps extends InProgressFeatureActionsProp
 	onStatusChange: (feature: ProjectFeature, status: ProjectFeatureStatus) => void;
 }
 
+export interface InvalidStatusFeatureActionsProps extends FeatureDetailsActionProps {
+	disabled: boolean;
+	feature: ProjectFeature;
+	onStatusChange: (feature: ProjectFeature, status: ProjectFeatureStatus) => void;
+	status: string;
+}
+
 export interface WaitingApprovalFeatureActionsProps extends FeatureDetailsActionProps {
 	decision: string;
 	disabled: boolean;
@@ -92,6 +99,40 @@ function FeatureLaunchButton({
 	);
 }
 
+function FeatureStatusSelect({
+	disabled,
+	feature,
+	onStatusChange,
+	status,
+}: { status: string } & Pick<
+	BacklogFeatureActionsProps,
+	'disabled' | 'feature' | 'onStatusChange'
+>) {
+	const id = feature.id || stringValue(feature, 'id');
+	const invalidStatus = !FEATURE_STATUS_OPTIONS.some((option) => option === status);
+	return (
+		<select
+			aria-label={`Status for ${id}`}
+			className={`${selectClass} px-2`}
+			disabled={disabled}
+			onChange={(event) =>
+				onStatusChange(feature, event.target.value as ProjectFeatureStatus)
+			}
+			value={status}>
+			{invalidStatus ? (
+				<option disabled value={status}>
+					{status} (invalid)
+				</option>
+			) : null}
+			{FEATURE_STATUS_OPTIONS.map((option) => (
+				<option key={option} value={option}>
+					{option}
+				</option>
+			))}
+		</select>
+	);
+}
+
 export function BacklogFeatureActions({
 	disabled,
 	feature,
@@ -106,20 +147,12 @@ export function BacklogFeatureActions({
 	return (
 		<FeatureActionGroup>
 			<FeatureDetailsButton feature={feature} onSelect={onSelect} />
-			<select
-				aria-label={`Status for ${id}`}
-				className={`${selectClass} px-2`}
+			<FeatureStatusSelect
 				disabled={disabled}
-				onChange={(event) =>
-					onStatusChange(feature, event.target.value as ProjectFeatureStatus)
-				}
-				value="backlog">
-				{FEATURE_STATUS_OPTIONS.map((option) => (
-					<option key={option} value={option}>
-						{option}
-					</option>
-				))}
-			</select>
+				feature={feature}
+				onStatusChange={onStatusChange}
+				status="backlog"
+			/>
 			<FeatureLaunchButton
 				disabled={disabled}
 				feature={feature}
@@ -137,6 +170,26 @@ export function BacklogFeatureActions({
 				<Trash2 className="h-4 w-4" />
 				Delete
 			</Button>
+		</FeatureActionGroup>
+	);
+}
+
+export function InvalidStatusFeatureActions({
+	disabled,
+	feature,
+	onSelect,
+	onStatusChange,
+	status,
+}: InvalidStatusFeatureActionsProps) {
+	return (
+		<FeatureActionGroup>
+			<FeatureDetailsButton feature={feature} onSelect={onSelect} />
+			<FeatureStatusSelect
+				disabled={disabled}
+				feature={feature}
+				onStatusChange={onStatusChange}
+				status={status}
+			/>
 		</FeatureActionGroup>
 	);
 }

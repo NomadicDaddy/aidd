@@ -2,6 +2,7 @@ import type { ProjectFeature, ProjectRoadmapSummary } from '../../../api/types.t
 import type {
 	BacklogFeatureActionsProps,
 	InProgressFeatureActionsProps,
+	InvalidStatusFeatureActionsProps,
 	WaitingApprovalFeatureActionsProps,
 } from './FeatureActionVariants.tsx';
 
@@ -10,9 +11,11 @@ import { selectClass } from '../../../lib/formStyles.ts';
 import {
 	BacklogFeatureActions,
 	InProgressFeatureActions,
+	InvalidStatusFeatureActions,
 	ReadOnlyFeatureActions,
 	WaitingApprovalFeatureActions,
 } from './FeatureActionVariants.tsx';
+import { FEATURE_STATUS_OPTIONS } from './featuresUtils.ts';
 import { stringValue } from './shared.ts';
 
 export function FeatureMilestoneControl({
@@ -101,6 +104,19 @@ export function FeatureActions({
 				onStatusChange={onStatusChange}
 			/>
 		);
+	}
+	if (
+		typeof feature.status === 'string' &&
+		!FEATURE_STATUS_OPTIONS.some((option) => option === feature.status)
+	) {
+		const invalidStatusProps: InvalidStatusFeatureActionsProps = {
+			disabled,
+			feature,
+			onSelect,
+			onStatusChange,
+			status,
+		};
+		return <InvalidStatusFeatureActions {...invalidStatusProps} />;
 	}
 	if (status === 'in_progress') return <InProgressFeatureActions {...inProgressProps} />;
 	if (status === 'waiting_approval') {

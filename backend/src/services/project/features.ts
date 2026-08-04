@@ -1,6 +1,6 @@
-import type { Feature } from 'aidd-shared/metadata/features';
 import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 
+import { type Feature, isValidFeatureStatus } from 'aidd-shared/metadata/features';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -154,8 +154,10 @@ export async function updateFeatureStatus(
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
 	const feature = await readFeatureForMutation(store, directory);
-	if (feature.status !== 'backlog') {
-		throw new HttpError('Only backlog features can be updated inline', 409);
+	const hasInvalidPersistedStatus =
+		typeof feature.status === 'string' && !isValidFeatureStatus(feature.status);
+	if (feature.status !== 'backlog' && !hasInvalidPersistedStatus) {
+		throw new HttpError('Only backlog or invalid-status features can be updated inline', 409);
 	}
 	const status = assertProjectFeatureStatus(statusInput);
 	const updatedFeature = updatePassStateForStatus(feature, status);

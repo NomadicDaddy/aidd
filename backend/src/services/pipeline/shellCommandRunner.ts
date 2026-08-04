@@ -1,3 +1,4 @@
+import { augmentEnvPathForGitBash, resolvedBash } from 'aidd-shared/agent/tools/bash-runtime';
 import { buildToolSubprocessEnv } from 'aidd-shared/subprocess-env';
 
 import type { StepDispatchResult } from './types.ts';
@@ -28,11 +29,15 @@ export class ShellCommandRunner {
 		if (!allowedRoots.some((root) => pathIsInside(root, cwd))) {
 			return { errorMessage: 'Shell step cwd is outside allowed roots', ok: false };
 		}
-		const childProcess = Bun.spawn(['bash', '-lc', command], {
+		const bash = resolvedBash();
+		if ('error' in bash) return { errorMessage: bash.error, ok: false };
+
+		const childProcess = Bun.spawn([bash.path, '-lc', command], {
 			cwd,
-			env: buildToolSubprocessEnv(),
+			env: augmentEnvPathForGitBash(bash.path, buildToolSubprocessEnv()),
 			stderr: 'pipe',
 			stdout: 'pipe',
+			windowsHide: true,
 		});
 		const active = this.activeShellProcesses.get(sessionId) ?? new Set();
 		active.add(childProcess);

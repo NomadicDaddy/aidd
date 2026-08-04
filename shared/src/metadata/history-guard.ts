@@ -23,11 +23,19 @@ import { resolveRootDir } from '../runtime/rootDir.ts';
  */
 
 const HOOK = 'pre-push';
-// Every guard body the wrapper sources. The wrapper and the scripts it invokes are one unit: adding
-// a `bash "$hooks_dir/<guard>.sh"` line to scaffolding/.githooks/pre-push WITHOUT listing the guard
-// here ships a hook that immediately fails on a missing script in every derived project. A guard
-// absent from an older scaffolding tag is simply skipped (see the existence check below).
-const GUARDS = ['aidd-history-guard.sh', 'screenshot-guard.sh'];
+/**
+ * Every guard body the wrapper sources. The wrapper and the scripts it invokes are one unit: adding
+ * a `bash "$hooks_dir/<guard>.sh"` line to scaffolding/.githooks/pre-push WITHOUT listing the guard
+ * here ships a hook that immediately fails on a missing script in every derived project. A guard
+ * absent from an older scaffolding tag is simply skipped (see the existence check below).
+ *
+ * Exported because there are two installers, not one: this covers the ingestion lanes, and
+ * scripts/install-history-guard.ts sweeps the existing fleet. They must agree on the file set, and
+ * a second literal is how they would stop agreeing — scripts/install-history-guard.ts already
+ * shipped a hook calling a guard it did not deliver for that exact reason. scripts/ imports this;
+ * shared/ never imports scripts/.
+ */
+export const GUARDS = ['aidd-history-guard.sh', 'screenshot-guard.sh'];
 const MARKER = 'aidd history guard';
 
 export type GuardOutcome =

@@ -39,6 +39,7 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'commit-bundles': 'runtime',
 	'consolidate-features': 'metadata',
 	'convex-guidelines': 'general',
+	'cut-release': 'runtime',
 	deepreview: 'runtime',
 	defrag: 'metadata',
 	dependencies: 'metadata',

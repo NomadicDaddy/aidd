@@ -104,7 +104,9 @@ If `--dry-run`, print the bump decision and the scoped app list, then exit.
 
 ### A1. Ship the template (once, foreground)
 
-Invoke `Skill: spernakit-bump` with the chosen bump arg (`$1` if provided, else the auto-decided value). This bumps `spernakit/package.json`, runs `bun run supertest`, regenerates screenshots, updates CHANGELOG/docs, commits, tags, and pushes. **Single-instance rule applies**; do not run a second `spernakit-bump` in parallel under any circumstance.
+Invoke `Skill: spernakit-bump` with the chosen bump arg (`$1` if provided, else the auto-decided value). This bumps `spernakit/package.json`, runs `bun run supertest`, regenerates screenshots, updates CHANGELOG/docs, commits, pushes `main`, waits for CI to go green on that commit, tags, and then confirms the release published. **Single-instance rule applies**; do not run a second `spernakit-bump` in parallel under any circumstance.
+
+A1 is not complete when the tag is pushed. `release.yml` polls for a green CI run on the tagged commit and gives up after 10 minutes, so a tag pushed ahead of CI produces a tag with no release behind it. Every derived app resolves its sync source from that tag; carrying on into A2 against a half-shipped template propagates from a version that was never published.
 
 After A1 completes, capture the new template version from `<spernakit-root>/package.json` and record it in the checkpoint.
 

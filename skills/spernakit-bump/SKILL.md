@@ -36,6 +36,17 @@ process and monitor it through the active backend's process capability.
   before supertest runs**: `smoke:screenshots` writes to `screenshots/v{package.json version}/`, so
   a pre-bump run both mislabels the new UI as the old version and overwrites the previous release's
   archived screenshots. Bump first, then validate.
+- **the version is claimed in five places, not one.** `check:version-refs` (which `smoke:qc` runs)
+  requires every one of them to agree: the `README.md` title, its "is the current template baseline"
+  sentence, its "is a full-stack" overview sentence, the "as it ships today" sentence in
+  `docs/template/README.md`, and the newest `## [X.Y.Z]` heading in `docs/template/CHANGELOG.md`.
+  The README title and baseline sentences sat at v3.29.0 across seven releases before this check
+  existed. Historical prose, support floors, and provenance stamps are deliberately exempt and stay
+  frozen. Never touch `spernakit_version` in feature records; it is an origin marker, not a release
+  version.
+- run `bun run smoke:docker-local` as well when the release touches runtime, Docker, or
+  dependencies. CI runs the docker-local crawl and a Trivy scan for that half; `smoke:qc` does not
+  cover it.
 - run `bun run fleet-manifest:sync` from `<spernakit-root>` now that `package.json` carries the new
   version. Run this even when `document-changes` performed the bump before this skill started. The
   command restates `spernakit.psd1` from every app's tracked `package.json` and runtime
@@ -70,8 +81,56 @@ process and monitor it through the active backend's process capability.
 - present the staged file list, new version, and tag name, then run the commit/tag/push sequence directly; invoking this release skill authorizes publication
 - commit all changes with 'vX.X.X' as msg unless `document-changes` already committed the bump,
   in which case there is nothing to commit and the tag goes on that commit
+- **skim `git log` since the previous tag before tagging.** `scripts/release-notes.ts` builds the
+  published notes from conventional-commit subjects, not from the commit message you just wrote.
+  `feat`, `fix`, `perf`, `refactor`, and `docs` are published; `build`, `chore`, `ci`, `style`, and
+  `test` are counted but omitted; a subject that does not parse never appears at all. A release
+  whose work landed under unparseable subjects publishes empty notes, and the tag cannot be redone.
+- push `main` first, and **do not push the tag yet**
+
+## Wait for CI green on main
+
+`release.yml` triggers on the tag push and then polls `actions/runs` for a successful CI run against
+that exact commit: 20 attempts, 30 seconds apart, then it fails with "Timed out after 10 minutes
+waiting for CI". It refuses outright if CI concluded anything other than success. Tagging before CI
+is green therefore burns the tag on a release run that cannot publish.
+
+```text
+gh run watch (gh run list --branch main --workflow CI --limit 1 --json databaseId --jq '.[0].databaseId')
+```
+
 - tag release with 'vX.X.X'
-- push to github. The pre-push guards run here: the history guard blocks a push carrying `.aidd/`
+- push the tag. The pre-push guards run here: the history guard blocks a push carrying `.aidd/`
   history (strip the offending commits rather than bypassing it), and the screenshot guard blocks
   a `v*` tag whose `screenshots/v<version>/` directory is missing or near-empty (generate it with
   `bun run smoke:screenshots`, never bypass)
+
+## Watch the release, then verify it
+
+**No second CI run appears for the tag.** Tags are deliberately not built: a duplicate run on a
+byte-identical tree used to contend with CodeQL and cancel its scan. Only `Release` runs, so an
+absent CI run for the tag is the expected state and not a failure to chase.
+
+```text
+gh run list --workflow Release --limit 3
+gh run watch <release-run-id>
+gh release view vX.Y.Z
+```
+
+Confirm the release is marked Latest and that its notes match `docs/template/CHANGELOG.md`. Nothing
+publishes a container image and nothing should: `check:image-publication` enforces that the template
+has no publish path at all.
+
+## Rollback
+
+Fix forward. Never move, delete, or retag a published version: derived apps pin template versions
+and resolve their sync source from the tag, so deleting it breaks their upgrade path retroactively.
+
+```text
+gh release edit vX.Y.Z --prerelease          # or --draft; drops the Latest badge
+gh release edit v<previous-good> --latest    # re-point Latest
+```
+
+Ship the fix as `vX.Y.(Z+1)`; it becomes Latest on its own. Leave the broken tag as a prerelease.
+When a template fix requires retagging mid-dance, resync the apps already upgraded and restore the
+prior release tag before running `document-changes`.

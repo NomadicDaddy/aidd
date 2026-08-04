@@ -20,13 +20,13 @@ export function GeneralDefaultsSection({
 		<Card className="space-y-3 p-3">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">Model Routing</h2>
-				<p className="mt-0.5 text-xs text-neutral-500">
+				<p className="mt-0.5 text-xs text-muted-foreground">
 					Set the default backend, models, reasoning, and project initialization path.
 				</p>
 			</div>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Default CLI
 					</span>
 					<select
@@ -43,7 +43,7 @@ export function GeneralDefaultsSection({
 					</select>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Default Model
 					</span>
 					<Input
@@ -59,7 +59,7 @@ export function GeneralDefaultsSection({
 					) : null}
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Reasoning Effort
 					</span>
 					<select
@@ -76,7 +76,7 @@ export function GeneralDefaultsSection({
 					</select>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Init Model
 					</span>
 					<Input
@@ -87,7 +87,7 @@ export function GeneralDefaultsSection({
 					/>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Code Model
 					</span>
 					<Input
@@ -98,7 +98,7 @@ export function GeneralDefaultsSection({
 					/>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Audit Model
 					</span>
 					<Input
@@ -108,18 +108,16 @@ export function GeneralDefaultsSection({
 						value={textValue(form.auditModel)}
 					/>
 				</label>
-				<label className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+				<label className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
 					<input
 						checked={form.auditsEnabled}
 						onChange={(event) => setField('auditsEnabled', event.target.checked)}
 						type="checkbox"
 					/>
-					<span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
-						Audits enabled
-					</span>
+					<span className="text-sm font-medium text-foreground">Audits enabled</span>
 				</label>
 				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Spernakit Init Script
 					</span>
 					<Input
@@ -129,14 +127,14 @@ export function GeneralDefaultsSection({
 						placeholder="/path/to/spernakit_init.ps1"
 						value={textValue(form.spernakitInitScript)}
 					/>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						Optional path to a local Spernakit checkout's init script. When set,
 						Spernakit apps are created from that checkout; leave empty to clone the
 						template on demand.
 					</p>
 				</label>
 				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Spernakit Template Repo
 					</span>
 					<Input
@@ -146,13 +144,13 @@ export function GeneralDefaultsSection({
 						placeholder="NomadicDaddy/spernakit"
 						value={textValue(form.spernakitTemplateRepo)}
 					/>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						owner/repo cloned when creating a Spernakit app without a configured init
 						script. Defaults to NomadicDaddy/spernakit.
 					</p>
 				</label>
 				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Spernakit Template Ref
 					</span>
 					<Input
@@ -162,12 +160,12 @@ export function GeneralDefaultsSection({
 						placeholder="git tag/branch (default branch if empty)"
 						value={textValue(form.spernakitTemplateRef)}
 					/>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						Optional git tag or branch to clone. Changing it rebuilds the cached clone.
 					</p>
 				</label>
 				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+					<span className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
 						<input
 							checked={form.showSpernakitProject}
 							onChange={(event) =>
@@ -175,11 +173,11 @@ export function GeneralDefaultsSection({
 							}
 							type="checkbox"
 						/>
-						<span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
+						<span className="text-sm font-medium text-foreground">
 							Show Spernakit in projects list
 						</span>
 					</span>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						The Spernakit template checkout is hidden from the projects page by default;
 						enable this if you plan to work on Spernakit itself.
 					</p>

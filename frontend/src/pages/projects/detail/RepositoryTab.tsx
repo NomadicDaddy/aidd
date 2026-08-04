@@ -31,12 +31,12 @@ function WorkingTreePanel({
 			<Card className="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h3 className="text-sm font-semibold text-foreground">Working tree</h3>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						Stage, discard, and commit the files this project has changed since its last
 						commit.
 					</p>
 				</div>
-				<div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+				<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
 					<GitStatusBadge className="max-w-[16rem]" status={status} />
 					{status && ['clean', 'conflicted', 'dirty'].includes(status.state) ? (
 						<span className="tabular-nums">
@@ -65,7 +65,7 @@ export function RepositoryTab({
 		<div className="space-y-4">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">Repository</h2>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					A git snapshot of this project — dominant language, branches, tags,
 					contributors, and lines of code, derived from git-tracked files only.
 				</p>

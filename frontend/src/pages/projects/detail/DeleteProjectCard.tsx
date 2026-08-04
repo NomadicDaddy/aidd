@@ -50,23 +50,23 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 				<AlertTriangle className="mt-0.5 h-5 w-5 text-red-700 dark:text-red-300" />
 				<div>
 					<h2 className="text-base font-semibold text-foreground">Delete project</h2>
-					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+					<p className="mt-1 text-sm text-muted-foreground">
 						Remove only `.aidd` metadata or delete the entire project directory.
 					</p>
 				</div>
 			</div>
 			<div className="mt-4 space-y-3">
-				<label className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
+				<label className="block text-sm font-medium text-foreground">
 					Delete mode
 					<select
-						className="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:ring-neutral-800"
+						className="mt-1 h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring"
 						onChange={(event) => setDeleteMode(event.target.value as ProjectDeleteMode)}
 						value={deleteMode}>
 						<option value="metadata">Remove .aidd metadata only</option>
 						<option value="directory">Delete project directory</option>
 					</select>
 				</label>
-				<label className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
+				<label className="block text-sm font-medium text-foreground">
 					Type the full project path to confirm
 					<Input
 						aria-label="Project path confirmation"

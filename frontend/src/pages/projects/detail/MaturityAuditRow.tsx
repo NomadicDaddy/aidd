@@ -25,9 +25,9 @@ export function MaturityAuditRow({ disabled, entry, onRun, onToggleSkip }: Matur
 	const skipSlug = `audit:${entry.auditName}`;
 	const skipped = entry.skipped;
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-neutral-200 px-2.5 py-1.5 dark:border-neutral-800">
+		<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-2.5 py-1.5">
 			<div className="flex min-w-0 items-center gap-2">
-				<span className="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300">
+				<span className="truncate font-mono text-xs text-foreground">
 					{entry.auditName}
 				</span>
 			</div>
@@ -42,7 +42,7 @@ export function MaturityAuditRow({ disabled, entry, onRun, onToggleSkip }: Matur
 							</Badge>
 						</span>
 						{describeAuditAgeDays(entry.ageDays) ? (
-							<span className="text-xs text-neutral-500">
+							<span className="text-xs text-muted-foreground">
 								{describeAuditAgeDays(entry.ageDays)}
 							</span>
 						) : null}
@@ -50,7 +50,7 @@ export function MaturityAuditRow({ disabled, entry, onRun, onToggleSkip }: Matur
 							{entry.lastRunStatus ?? 'never run'}
 						</Badge>
 						{entry.lastReportAt ? (
-							<span className="text-xs text-neutral-500">
+							<span className="text-xs text-muted-foreground">
 								{formatRelativeAge(entry.lastReportAt)}
 							</span>
 						) : null}

@@ -56,7 +56,7 @@ export function CodeFileViewer({
 	const clipped = lines.length > visibleLines.length;
 	return (
 		<div className="min-w-0">
-			<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-3 dark:border-neutral-800">
+			<div className="flex items-start justify-between gap-3 border-b border-border p-3">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<h3 className="font-mono text-sm font-semibold break-all text-foreground">
@@ -90,7 +90,7 @@ export function CodeFileViewer({
 				</p>
 			) : null}
 			{isImage ? (
-				<div className="flex max-h-[42rem] min-h-[28rem] items-center justify-center overflow-auto bg-neutral-950 p-4">
+				<div className="flex max-h-[42rem] min-h-[28rem] items-center justify-center overflow-auto bg-black/90 p-4">
 					<img
 						alt={data.path}
 						className="max-h-[38rem] max-w-full object-contain"
@@ -98,13 +98,13 @@ export function CodeFileViewer({
 					/>
 				</div>
 			) : (
-				<div className="max-h-[42rem] overflow-auto bg-white py-2 dark:bg-neutral-950">
+				<div className="max-h-[42rem] overflow-auto bg-card py-2">
 					{visibleLines.map((line, index) => (
 						<div className="grid grid-cols-[4rem_minmax(0,1fr)]" key={index}>
-							<div className="border-r border-neutral-100 pr-3 text-right font-mono text-xs leading-6 text-neutral-400 select-none dark:border-neutral-900 dark:text-neutral-600">
+							<div className="border-r border-border pr-3 text-right font-mono text-xs leading-6 text-muted-foreground select-none">
 								{index + 1}
 							</div>
-							<pre className="px-3 font-mono text-xs leading-6 whitespace-pre text-neutral-800 dark:text-neutral-200">
+							<pre className="px-3 font-mono text-xs leading-6 whitespace-pre text-foreground">
 								{line || ' '}
 							</pre>
 						</div>

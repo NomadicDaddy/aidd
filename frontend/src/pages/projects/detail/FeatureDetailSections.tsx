@@ -10,8 +10,8 @@ export function FeatureTextSection({ children, title }: { children: string; titl
 	if (!children) return null;
 	return (
 		<section>
-			<h3 className="text-xs font-semibold text-neutral-500 uppercase">{title}</h3>
-			<p className="mt-2 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm leading-6 whitespace-pre-wrap text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-200">
+			<h3 className="text-xs font-semibold text-muted-foreground uppercase">{title}</h3>
+			<p className="mt-2 rounded-md border border-border bg-muted p-3 text-sm leading-6 whitespace-pre-wrap text-foreground">
 				{children}
 			</p>
 		</section>
@@ -30,14 +30,12 @@ export function FeatureListSection({
 	if (items.length === 0) return null;
 	return (
 		<section>
-			<h3 className="text-xs font-semibold text-neutral-500 uppercase">{title}</h3>
-			{hint ? (
-				<p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{hint}</p>
-			) : null}
+			<h3 className="text-xs font-semibold text-muted-foreground uppercase">{title}</h3>
+			{hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
 			<ul className="mt-2 space-y-1.5">
 				{items.map((item) => (
 					<li
-						className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-200"
+						className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground"
 						key={item}>
 						{item}
 					</li>
@@ -61,16 +59,14 @@ export function FeatureApprovalSection({
 	];
 	return (
 		<section>
-			<h3 className="text-xs font-semibold text-neutral-500 uppercase">Approval</h3>
-			<dl className="mt-2 divide-y divide-neutral-100 overflow-hidden rounded-md border border-neutral-200 text-sm dark:divide-neutral-800 dark:border-neutral-800">
+			<h3 className="text-xs font-semibold text-muted-foreground uppercase">Approval</h3>
+			<dl className="mt-2 divide-y divide-border overflow-hidden rounded-md border border-border text-sm">
 				{rows.map((row) => (
 					<div
 						className="grid grid-cols-[7rem_minmax(0,1fr)] gap-2 px-3 py-2"
 						key={row.key}>
-						<dt className="text-neutral-500">{row.key}</dt>
-						<dd className="break-words text-neutral-800 dark:text-neutral-200">
-							{row.value}
-						</dd>
+						<dt className="text-muted-foreground">{row.key}</dt>
+						<dd className="break-words text-foreground">{row.value}</dd>
 					</div>
 				))}
 			</dl>
@@ -97,19 +93,17 @@ export function FeatureBlockingContextSection({
 			<h3 className="text-xs font-semibold text-amber-700 uppercase dark:text-amber-300">
 				Blocking context
 			</h3>
-			<p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+			<p className="mt-2 text-xs text-muted-foreground">
 				Why this feature was parked — approve past it only once the gate below is
 				understood.
 			</p>
-			<dl className="mt-2 divide-y divide-neutral-100 overflow-hidden rounded-md border border-amber-200 text-sm dark:divide-neutral-800 dark:border-amber-900/60">
+			<dl className="mt-2 divide-y divide-border overflow-hidden rounded-md border border-amber-200 text-sm dark:border-amber-900/60">
 				{rows.map((row) => (
 					<div
 						className="grid grid-cols-[7rem_minmax(0,1fr)] gap-2 px-3 py-2"
 						key={row.key}>
-						<dt className="text-neutral-500">{row.key}</dt>
-						<dd className="break-words text-neutral-800 dark:text-neutral-200">
-							{row.value}
-						</dd>
+						<dt className="text-muted-foreground">{row.key}</dt>
+						<dd className="break-words text-foreground">{row.value}</dd>
 					</div>
 				))}
 			</dl>
@@ -117,7 +111,7 @@ export function FeatureBlockingContextSection({
 				<ul className="mt-2 space-y-1.5">
 					{blockingContext.commands.map((command) => (
 						<li
-							className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 font-mono text-xs break-all text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-200"
+							className="rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs break-all text-foreground"
 							key={command}>
 							{command}
 						</li>
@@ -125,7 +119,7 @@ export function FeatureBlockingContextSection({
 				</ul>
 			) : null}
 			{blockingContext.outputExcerpt ? (
-				<pre className="mt-2 max-h-64 overflow-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs break-words whitespace-pre-wrap text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-300">
+				<pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-muted p-3 text-xs break-words whitespace-pre-wrap text-foreground">
 					{blockingContext.outputExcerpt}
 				</pre>
 			) : null}

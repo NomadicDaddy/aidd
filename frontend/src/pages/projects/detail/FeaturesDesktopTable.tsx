@@ -53,7 +53,7 @@ export function FeaturesDesktopTable({
 					<col className="w-[14%]" />
 					<col className="w-[21%]" />
 				</colgroup>
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="px-4 py-3" scope="col">
 							Feature
@@ -91,12 +91,12 @@ export function FeaturesDesktopTable({
 						const decision = decisions[directory] ?? '';
 						return (
 							<tr
-								className="border-b transition-colors last:border-0 hover:bg-teal-50/60 dark:border-neutral-800 dark:hover:bg-teal-950/20"
+								className="border-b border-border transition-colors last:border-0 hover:bg-teal-50/60 dark:hover:bg-teal-950/20"
 								key={id}>
 								<td className="px-4 py-3">
 									<div className="min-w-0">
 										<div className="font-medium text-foreground">{title}</div>
-										<div className="text-xs break-all text-neutral-500">
+										<div className="text-xs break-all text-muted-foreground">
 											{id}
 										</div>
 									</div>
@@ -104,7 +104,7 @@ export function FeaturesDesktopTable({
 								<td className="px-4 py-3">
 									<Badge tone={statusTone(status)}>{status}</Badge>
 								</td>
-								<td className="px-4 py-3 font-mono text-xs text-neutral-600 dark:text-neutral-400">
+								<td className="px-4 py-3 font-mono text-xs text-muted-foreground">
 									{featureShippedVersion(feature) ?? '—'}
 								</td>
 								<td className="px-4 py-3">
@@ -126,7 +126,7 @@ export function FeaturesDesktopTable({
 										<Badge tone="neutral">no</Badge>
 									)}
 								</td>
-								<td className="px-4 py-3 text-xs break-words text-neutral-600 dark:text-neutral-400">
+								<td className="px-4 py-3 text-xs break-words text-muted-foreground">
 									{source}
 								</td>
 								<td className="px-4 py-3">

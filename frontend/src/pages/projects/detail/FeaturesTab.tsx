@@ -69,7 +69,7 @@ export function FeaturesTab({
 
 	if (total === 0) {
 		return (
-			<Card className="py-10 text-center text-sm text-neutral-500">
+			<Card className="py-10 text-center text-sm text-muted-foreground">
 				This project has no features in <code>.aidd/features</code> yet.
 			</Card>
 		);
@@ -101,7 +101,7 @@ export function FeaturesTab({
 				return (
 					<Card className="flex flex-wrap items-center gap-2 border-red-300 dark:border-red-900">
 						<ShieldCheck className="h-4 w-4 text-red-500" />
-						<span className="text-sm text-neutral-600 dark:text-neutral-300">
+						<span className="text-sm text-muted-foreground">
 							{gate.names.length > 0 ? (
 								<>
 									{gate.names.length} feature director
@@ -147,7 +147,7 @@ export function FeaturesTab({
 			{auditFindingsCount > 0 ? (
 				<Card className="flex flex-wrap items-center gap-2">
 					<ShieldCheck className="h-4 w-4 text-amber-500" />
-					<span className="text-sm text-neutral-600 dark:text-neutral-300">
+					<span className="text-sm text-muted-foreground">
 						{auditFindingsCount} approved audit finding
 						{auditFindingsCount === 1 ? '' : 's'}
 						{auditFindingsSource ? ` from ${auditFindingsSource}` : ''} ready to work
@@ -167,7 +167,7 @@ export function FeaturesTab({
 				</Card>
 			) : null}
 			{filteredTotal === 0 ? (
-				<Card className="py-10 text-center text-sm text-neutral-500">
+				<Card className="py-10 text-center text-sm text-muted-foreground">
 					<p>No features match the active filters.</p>
 					<Button className="mt-4" onClick={resetFilters} variant="secondary">
 						<X className="h-4 w-4" />

@@ -32,7 +32,7 @@ export function LiveConsoleControls({
 			<div className="relative w-full sm:w-56">
 				<Search
 					aria-hidden="true"
-					className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
+					className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
 				/>
 				<Input
 					aria-label="Find in console"
@@ -45,7 +45,7 @@ export function LiveConsoleControls({
 				{find ? (
 					<IconButton
 						ariaLabel="Clear find"
-						className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 border-0 bg-transparent text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-900 dark:hover:text-neutral-200"
+						className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
 						onClick={() => onFindChange('')}
 						variant="ghost">
 						<X aria-hidden="true" className="h-3.5 w-3.5" />
@@ -53,7 +53,7 @@ export function LiveConsoleControls({
 				) : null}
 			</div>
 			{matchCount !== null ? (
-				<span className="text-xs text-neutral-500 dark:text-neutral-400">
+				<span className="text-xs text-muted-foreground">
 					{matchCount} {matchCount === 1 ? 'match' : 'matches'}
 				</span>
 			) : null}

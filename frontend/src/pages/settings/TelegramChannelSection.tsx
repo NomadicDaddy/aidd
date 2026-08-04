@@ -59,13 +59,13 @@ export function TelegramChannelSection({
 				<Send className="mr-1 inline h-4 w-4" />
 				Telegram Channel
 			</div>
-			<p className="text-xs text-neutral-500">
+			<p className="text-xs text-muted-foreground">
 				Telegram bot integration for bridged mode. The bot token is write-only — the current
 				configured state is shown without revealing the stored value.
 			</p>
 
 			<label className="block space-y-1">
-				<span className="text-xs text-neutral-500">Bot Token</span>
+				<span className="text-xs text-muted-foreground">Bot Token</span>
 				<Input
 					onChange={(event) => setBotToken(event.target.value)}
 					placeholder={
@@ -80,7 +80,7 @@ export function TelegramChannelSection({
 			</label>
 
 			<div className="space-y-2">
-				<span className="text-xs text-neutral-500">Allowed Chat IDs</span>
+				<span className="text-xs text-muted-foreground">Allowed Chat IDs</span>
 				{telegram.allowedChatIds.map((chatId, index) => (
 					<div className="flex items-center gap-2" key={index}>
 						<Input

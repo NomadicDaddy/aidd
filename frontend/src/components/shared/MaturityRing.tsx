@@ -99,10 +99,10 @@ export function MaturityRing({
 				})}
 			</svg>
 			{showCenterLabel ? (
-				<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center text-sm leading-tight font-semibold text-neutral-700 dark:text-neutral-200">
+				<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center text-sm leading-tight font-semibold text-foreground">
 					<span>{Math.round(percent ?? 0)}%</span>
 					{centerCaption ? (
-						<span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+						<span className="text-[10px] font-medium text-muted-foreground">
 							{centerCaption}
 						</span>
 					) : null}

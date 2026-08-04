@@ -97,7 +97,7 @@ export function ExecutionIdentityDetails({
 					</div>
 				) : null}
 			</dl>
-			{hint ? <div className="text-neutral-500 dark:text-neutral-400">{hint}</div> : null}
+			{hint ? <div className="text-muted-foreground">{hint}</div> : null}
 		</div>
 	);
 }
@@ -128,7 +128,7 @@ export function ExecutionIdentityBadges({
 		<span
 			aria-label={ariaLabel}
 			className={cn(
-				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] bg-muted text-[11px] leading-5 ring-1 ring-border ring-inset focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300',
+				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] bg-muted text-[11px] leading-5 ring-1 ring-border ring-inset focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
 				className,
 			)}
 			role="group">

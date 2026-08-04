@@ -49,7 +49,7 @@ function BackendIdentity({
 				<span className="font-medium text-foreground">{backend}</span>
 				{status ? <SettingsToolStatusBadge status={status.status} /> : null}
 			</div>
-			<p className="truncate text-xs text-neutral-500">
+			<p className="truncate text-xs text-muted-foreground">
 				{loading ? 'Checking status…' : statusText || 'Not detected'}
 			</p>
 		</div>
@@ -92,7 +92,7 @@ export function BackendDefaultsTable({
 						id="backend-matrix-heading">
 						Backend Matrix
 					</h2>
-					<p className="mt-0.5 text-xs text-neutral-500">
+					<p className="mt-0.5 text-xs text-muted-foreground">
 						Installation status is read-only; model, reasoning, and timeout defaults
 						apply to new runs.
 					</p>
@@ -116,7 +116,7 @@ export function BackendDefaultsTable({
 				<table
 					aria-label="Backend status and defaults"
 					className="w-full min-w-[860px] text-left text-sm">
-					<thead className="border-b bg-neutral-50 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
+					<thead className="border-b border-border bg-muted text-xs text-muted-foreground">
 						<tr>
 							<th className="px-3 py-2 font-medium" scope="col">
 								Backend & Status
@@ -139,9 +139,7 @@ export function BackendDefaultsTable({
 						{backendDefaultOptions.map((backend) => {
 							const defaults = backends[backend] ?? emptyBackendDefault();
 							return (
-								<tr
-									className="border-b last:border-0 dark:border-neutral-800"
-									key={backend}>
+								<tr className="border-b border-border last:border-0" key={backend}>
 									<td className="w-56 px-3 py-2">
 										<BackendIdentity
 											backend={backend}

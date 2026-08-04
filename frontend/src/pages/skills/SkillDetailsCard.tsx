@@ -21,9 +21,7 @@ export function SkillDetailsCard({
 					<h2 className="text-xl font-semibold break-words text-foreground">
 						{skill.title}
 					</h2>
-					<p className="mt-1 text-sm break-words text-neutral-600 dark:text-neutral-400">
-						{skill.description}
-					</p>
+					<p className="mt-1 text-sm break-words text-foreground">{skill.description}</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
 					<Badge tone={skill.origin === 'imported' ? 'amber' : 'neutral'}>
@@ -35,17 +33,17 @@ export function SkillDetailsCard({
 				</div>
 			</div>
 			{skill.compatibility || skill.allowedTools ? (
-				<div className="rounded-md bg-neutral-100 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+				<div className="rounded-md bg-muted p-3 text-xs text-foreground">
 					<div className="font-medium">Advisory declarations</div>
 					{skill.compatibility ? <div>Compatibility: {skill.compatibility}</div> : null}
 					{skill.allowedTools ? <div>Allowed tools: {skill.allowedTools}</div> : null}
-					<div className="mt-1 text-neutral-500">
+					<div className="mt-1 text-muted-foreground">
 						Backend enforcement depends on the selected provider.
 					</div>
 				</div>
 			) : null}
 			{skill.imported ? (
-				<div className="space-y-1 rounded-md bg-neutral-100 p-3 text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+				<div className="space-y-1 rounded-md bg-muted p-3 text-xs text-foreground">
 					<div>Source: {skill.imported.sourcePath}</div>
 					<div>Imported: {new Date(skill.imported.importedAt).toLocaleString()}</div>
 					<div className="font-mono break-all">
@@ -57,12 +55,12 @@ export function SkillDetailsCard({
 				</div>
 			) : null}
 			{skill.usage ? (
-				<pre className="overflow-auto rounded-md bg-neutral-100 p-3 font-mono text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+				<pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs text-foreground">
 					{skill.usage}
 				</pre>
 			) : null}
 			{skill.supportPaths.length > 0 ? (
-				<ul className="max-h-32 overflow-auto rounded-md bg-neutral-100 p-3 font-mono text-xs break-all text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+				<ul className="max-h-32 overflow-auto rounded-md bg-muted p-3 font-mono text-xs break-all text-foreground">
 					{skill.supportPaths.map((path) => (
 						<li key={path}>{path}</li>
 					))}

@@ -40,15 +40,13 @@ function FileChangeTooltipContent({
 	const model = buildRunFileChangeTooltipModel({ kind, paths, source, truncated });
 	return (
 		<div className="space-y-2">
-			<div className="font-medium text-neutral-900 dark:text-neutral-50">{model.title}</div>
-			<p className="text-[0.7rem] leading-snug text-neutral-500 dark:text-neutral-400">
-				{model.sourceNote}
-			</p>
+			<div className="font-medium text-foreground">{model.title}</div>
+			<p className="text-[0.7rem] leading-snug text-muted-foreground">{model.sourceNote}</p>
 			{model.paths.length > 0 ? (
 				<ul className="max-h-64 space-y-1 overflow-auto pr-1">
 					{model.paths.map((path) => (
 						<li
-							className="rounded-sm bg-neutral-100/80 px-1.5 py-1 font-mono text-[0.68rem] leading-snug break-all text-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-100"
+							className="rounded-sm bg-muted/80 px-1.5 py-1 font-mono text-[0.68rem] leading-snug break-all text-foreground"
 							key={path}>
 							{path}
 						</li>
@@ -56,13 +54,11 @@ function FileChangeTooltipContent({
 				</ul>
 			) : null}
 			{model.truncatedNote ? (
-				<p className="text-[0.7rem] leading-snug text-neutral-500 dark:text-neutral-400">
+				<p className="text-[0.7rem] leading-snug text-muted-foreground">
 					{model.truncatedNote}
 				</p>
 			) : null}
-			<p className="text-[0.7rem] leading-snug text-neutral-500 dark:text-neutral-400">
-				{model.countNote}
-			</p>
+			<p className="text-[0.7rem] leading-snug text-muted-foreground">{model.countNote}</p>
 		</div>
 	);
 }
@@ -127,7 +123,7 @@ function RunCommitsSection({ run }: { run: RunRecord }) {
 		<div className="space-y-2">
 			{readOnlyViolation ? <ReadOnlyContractViolation /> : null}
 			{(hasFileChanges || unattributedCount > 0) && (
-				<div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+				<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
 					{data.filesCreated > 0 ? (
 						<FileChangeChip
 							kind="created"
@@ -158,7 +154,7 @@ function RunCommitsSection({ run }: { run: RunRecord }) {
 						<span className="inline-flex items-center gap-1">
 							<GitCommit
 								aria-hidden="true"
-								className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400"
+								className="h-3.5 w-3.5 text-muted-foreground"
 							/>
 							{unattributedCount} {unattributedCount === 1 ? 'commit' : 'commits'}
 						</span>
@@ -167,7 +163,7 @@ function RunCommitsSection({ run }: { run: RunRecord }) {
 			)}
 			{hasCommits ? (
 				<div>
-					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 						Commits
 					</div>
 					<CommitChips commits={data.commits} onSelect={setSelectedCommit} />
@@ -203,7 +199,7 @@ export function RunDetailPanel({
 			: null;
 	const executionIntent = skillDirectiveExecutionIntent(selectedRun);
 	return (
-		<div className="mb-3 min-w-0 space-y-3 rounded-md border border-neutral-200 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-900/40">
+		<div className="mb-3 min-w-0 space-y-3 rounded-md border border-border bg-muted/60 p-3">
 			<div className="flex flex-wrap items-center gap-2">
 				<Tooltip content={outcome.title}>
 					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
@@ -213,9 +209,7 @@ export function RunDetailPanel({
 					</span>
 				</Tooltip>
 				{exitLabel ? (
-					<span className="font-mono text-xs text-neutral-500 dark:text-neutral-400">
-						{exitLabel}
-					</span>
+					<span className="font-mono text-xs text-muted-foreground">{exitLabel}</span>
 				) : null}
 			</div>
 			<dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
@@ -234,7 +228,7 @@ export function RunDetailPanel({
 					value={formatAiddRunProvenance(selectedRun)}
 				/>
 				<div className="col-span-2 flex min-w-0 flex-col">
-					<dt className="text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+					<dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 						Execution target
 					</dt>
 					<dd className="mt-0.5 min-w-0">
@@ -248,47 +242,43 @@ export function RunDetailPanel({
 				</div>
 			</dl>
 			<div>
-				<div className="mb-1 flex items-center gap-1.5 text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+				<div className="mb-1 flex items-center gap-1.5 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 					Command
 					<RunCommandInfo command={selectedRun.launchCommand} runId={selectedRun.id} />
 				</div>
-				<pre className="max-h-28 overflow-auto rounded-md border border-neutral-200 bg-white p-2 font-mono text-xs whitespace-pre-wrap text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200">
+				<pre className="max-h-28 overflow-auto rounded-md border border-border bg-card p-2 font-mono text-xs whitespace-pre-wrap text-foreground">
 					{selectedRun.launchCommand?.display ?? 'Unavailable'}
 				</pre>
 			</div>
 			<RunCommitsSection run={selectedRun} />
 			{selectedRun.aiSummary ? (
-				<p className="text-xs break-words text-neutral-600 dark:text-neutral-400">
-					<span className="font-medium text-neutral-700 dark:text-neutral-300">
-						AI summary:
-					</span>{' '}
+				<p className="text-xs break-words text-foreground">
+					<span className="font-medium text-foreground">AI summary:</span>{' '}
 					{selectedRun.aiSummary}
 				</p>
 			) : null}
 			{selectedRun.summary ? (
-				<p className="text-xs break-words text-neutral-600 dark:text-neutral-400">
-					<span className="font-medium text-neutral-700 dark:text-neutral-300">
-						Summary:
-					</span>{' '}
+				<p className="text-xs break-words text-foreground">
+					<span className="font-medium text-foreground">Summary:</span>{' '}
 					{selectedRun.summary}
 				</p>
 			) : null}
 			{stopDetail ? (
 				<div>
-					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 						Stop detail
 					</div>
-					<pre className="max-h-48 overflow-auto rounded-md border border-neutral-200 bg-white p-2 text-xs whitespace-pre-wrap text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200">
+					<pre className="max-h-48 overflow-auto rounded-md border border-border bg-card p-2 text-xs whitespace-pre-wrap text-foreground">
 						{stopDetail}
 					</pre>
 				</div>
 			) : null}
 			{selectedRun.errorMessage && selectedRun.errorMessage !== selectedRun.summary ? (
 				<div>
-					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 						Error
 					</div>
-					<p className="text-xs break-words text-neutral-700 dark:text-neutral-200">
+					<p className="text-xs break-words text-foreground">
 						{selectedRun.errorMessage}
 					</p>
 				</div>

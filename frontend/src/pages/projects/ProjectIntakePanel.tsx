@@ -63,9 +63,7 @@ export function ProjectIntakePanel({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div>
 					<h2 className="text-base font-semibold text-foreground">Project Intake</h2>
-					<p className="text-sm text-neutral-600 dark:text-neutral-400">
-						{LANE_COPY[lane].description}
-					</p>
+					<p className="text-sm text-foreground">{LANE_COPY[lane].description}</p>
 				</div>
 				<IconButton ariaLabel="Close project intake" onClick={onClose} variant="ghost">
 					<X className="h-4 w-4" />

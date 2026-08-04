@@ -50,13 +50,13 @@ export function BlueprintImplementationCard({ project }: { project: ProjectDetai
 									: 'Blueprint needs attention'}
 						</h2>
 					</div>
-					<p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+					<p className="mt-1 text-xs text-muted-foreground">
 						{implementation.state === 'blueprint_ready'
 							? 'The app scaffold, reviewed backlog, and roadmap are ready. Implementation has not started.'
 							: implementation.reason}
 					</p>
 					{implementation.firstFeature ? (
-						<p className="mt-2 text-sm text-neutral-800 dark:text-neutral-200">
+						<p className="mt-2 text-sm text-foreground">
 							First runnable feature:{' '}
 							<span className="font-medium">{implementation.firstFeature.title}</span>
 						</p>

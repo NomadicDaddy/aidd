@@ -111,7 +111,7 @@ export function OverridesTab() {
 				<div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
 					<Card className="overflow-x-auto p-0">
 						<table aria-label="Audit overrides" className="w-full text-left text-sm">
-							<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+							<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 								<tr>
 									<th className="px-3 py-3" scope="col">
 										Audit
@@ -124,7 +124,7 @@ export function OverridesTab() {
 							<tbody>
 								{(manager.data?.definitions ?? []).map((definition) => (
 									<tr
-										className="border-b last:border-0 dark:border-neutral-800"
+										className="border-b border-border last:border-0"
 										key={definition.name}>
 										<td className="px-3 py-2 font-medium text-foreground">
 											{definition.name}
@@ -154,16 +154,14 @@ export function OverridesTab() {
 					</Card>
 
 					<Card className="space-y-3">
-						<div className="font-medium text-neutral-900 dark:text-neutral-100">
-							Project-scoped Rules
-						</div>
-						<p className="text-xs text-neutral-500 dark:text-neutral-400">
+						<div className="font-medium text-foreground">Project-scoped Rules</div>
+						<p className="text-xs text-muted-foreground">
 							Optional rules layered above the global mapping for this project. JSON
 							array matching the global rule schema.
 						</p>
 						<textarea
 							aria-label="Project audit rules JSON"
-							className="min-h-[260px] w-full resize-y rounded-md border border-neutral-200 bg-white p-3 font-mono text-xs text-neutral-900 outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100"
+							className="min-h-[260px] w-full resize-y rounded-md border border-border bg-card p-3 font-mono text-xs text-foreground outline-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring"
 							onChange={(event) => setRulesText(event.target.value)}
 							value={rulesText}
 						/>

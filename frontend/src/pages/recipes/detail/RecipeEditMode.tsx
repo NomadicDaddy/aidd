@@ -97,7 +97,7 @@ export function RecipeEditMode({
 							Recipes
 						</Link>
 						<span>/</span>
-						<span className="text-neutral-700 dark:text-neutral-300">
+						<span className="text-foreground">
 							{name || (isCreate ? 'New Recipe' : id)}
 						</span>
 					</span>
@@ -109,7 +109,9 @@ export function RecipeEditMode({
 			<Card className={`grid gap-3 ${isCreate ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 				{setId && (
 					<label className="space-y-1">
-						<span className="text-xs font-medium text-neutral-500 uppercase">Id</span>
+						<span className="text-xs font-medium text-muted-foreground uppercase">
+							Id
+						</span>
 						<Input
 							onChange={(event) => setId(event.target.value)}
 							placeholder="my-recipe"
@@ -121,20 +123,22 @@ export function RecipeEditMode({
 					</label>
 				)}
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">Name</span>
+					<span className="text-xs font-medium text-muted-foreground uppercase">
+						Name
+					</span>
 					<Input
 						disabled={nameReadOnly}
 						onChange={(event) => setName(event.target.value)}
 						value={name}
 					/>
 					{nameReadOnly && (
-						<p className="text-xs text-neutral-500">
+						<p className="text-xs text-muted-foreground">
 							System recipe names are reserved and cannot be changed.
 						</p>
 					)}
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Description
 					</span>
 					<Input

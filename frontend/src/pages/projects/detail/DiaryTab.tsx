@@ -18,7 +18,7 @@ export function DiaryTab({ projectPath }: { projectName: string; projectPath: st
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div>
 					<h2 className="text-sm font-semibold text-foreground">Dev diary</h2>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						One narrative entry per day, written from this project&apos;s runs, commits,
 						and feature activity and interleaved with the day&apos;s timeline.
 						Re-running updates today&apos;s entry in place, and a day with no new

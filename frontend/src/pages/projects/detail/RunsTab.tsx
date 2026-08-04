@@ -44,14 +44,14 @@ function ActiveRunsPanel({
 	const now = useNow(runs.some((run) => run.status === 'running'));
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b px-4 py-3 dark:border-neutral-800">
+			<div className="border-b border-border px-4 py-3">
 				<h2 className="text-sm font-semibold text-foreground">Recent runs</h2>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Recent aidd runs for this project from UI launches and CLI sessions (last 24 h).
 				</p>
 			</div>
 			<table aria-label="Recent project runs" className="w-full text-left text-sm">
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="px-4 py-3" scope="col">
 							Run
@@ -76,7 +76,7 @@ function ActiveRunsPanel({
 				<tbody>
 					{isLoading ? (
 						<tr>
-							<td className="px-4 py-4 text-neutral-500" colSpan={6}>
+							<td className="px-4 py-4 text-muted-foreground" colSpan={6}>
 								Loading recent runs...
 							</td>
 						</tr>
@@ -90,7 +90,7 @@ function ActiveRunsPanel({
 					) : null}
 					{!isLoading && !isError && runs.length === 0 ? (
 						<tr>
-							<td className="px-4 py-4 text-neutral-500" colSpan={6}>
+							<td className="px-4 py-4 text-muted-foreground" colSpan={6}>
 								No recent runs for this project.
 							</td>
 						</tr>
@@ -98,14 +98,12 @@ function ActiveRunsPanel({
 					{runs.map((run) => {
 						const liveConsoleHref = `/runs?project=${encodeURIComponent(projectPath)}&run=${encodeURIComponent(run.id)}`;
 						return (
-							<tr
-								className="border-b last:border-0 dark:border-neutral-800"
-								key={run.id}>
+							<tr className="border-b border-border last:border-0" key={run.id}>
 								<td className="px-4 py-3">
 									<div className="flex min-w-0 items-center gap-1.5">
 										<Link
 											aria-label={`Open run ${run.id} in Live Console`}
-											className="font-mono text-xs text-neutral-900 hover:underline dark:text-neutral-100"
+											className="font-mono text-xs text-foreground hover:underline"
 											to={liveConsoleHref}>
 											{run.id}
 										</Link>
@@ -114,7 +112,7 @@ function ActiveRunsPanel({
 											runId={run.id}
 										/>
 									</div>
-									<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+									<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 										<Badge
 											tone={
 												run.source === 'cli'
@@ -192,7 +190,7 @@ export function RunsTab({
 					projectPath={projectPath}
 					runs={runList}
 				/>
-				<Card className="py-10 text-center text-sm text-neutral-500">
+				<Card className="py-10 text-center text-sm text-muted-foreground">
 					<p>No runs recorded for this project.</p>
 					<p className="mt-1 text-xs">
 						Launch a run from the{' '}

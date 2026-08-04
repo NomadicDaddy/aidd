@@ -139,8 +139,8 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 	return (
 		<div className="-mx-2 max-h-[28rem] overflow-auto px-2">
 			<table className="min-w-[760px] text-sm">
-				<thead className="sticky top-0 z-10 bg-white dark:bg-slate-950">
-					<tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500 uppercase dark:border-neutral-800 dark:text-neutral-400">
+				<thead className="sticky top-0 z-10 bg-card">
+					<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
 						<th className="px-3 py-2 text-left">Application</th>
 						<th className="px-3 py-2 text-left">Feature</th>
 						<th className="px-3 py-2 text-left">Type</th>
@@ -151,7 +151,7 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 				<tbody>
 					{rows.map((row) => (
 						<tr
-							className="border-b border-neutral-100 last:border-b-0 dark:border-neutral-900"
+							className="border-b border-border last:border-b-0"
 							key={`${row.projectName}:${row.directory}`}>
 							<td className="max-w-44 truncate px-3 py-2 font-medium text-foreground">
 								{row.projectName}
@@ -163,7 +163,7 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 									<span className="block truncate font-medium text-teal-700 group-hover:text-teal-950 dark:text-teal-300 dark:group-hover:text-teal-100">
 										{row.directory}
 									</span>
-									<span className="mt-0.5 block truncate text-xs text-neutral-500 dark:text-neutral-400">
+									<span className="mt-0.5 block truncate text-xs text-muted-foreground">
 										{row.title}
 									</span>
 								</Link>
@@ -173,10 +173,8 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 									{row.type}
 								</Badge>
 							</td>
-							<td className="px-3 py-2 text-neutral-700 dark:text-neutral-200">
-								{statusLabel(row)}
-							</td>
-							<td className="px-3 py-2 text-right font-medium text-neutral-700 tabular-nums dark:text-neutral-200">
+							<td className="px-3 py-2 text-foreground">{statusLabel(row)}</td>
+							<td className="px-3 py-2 text-right font-medium text-foreground tabular-nums">
 								{priorityLabel(row.priority)}
 							</td>
 						</tr>
@@ -214,7 +212,7 @@ export function FeatureStatusCard({
 							{visibleRows.length} {stateFilter}
 						</Badge>
 					</div>
-					<p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="mt-1 text-xs text-muted-foreground">
 						Fleet feature rows by aidd-tools status filter.
 					</p>
 				</div>

@@ -106,8 +106,8 @@ export function LaunchTargetControl({
 				className={cn(
 					'inline-flex min-h-7 max-w-full flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1 text-xs transition-colors',
 					display.custom
-						? 'border-teal-500 bg-teal-50 text-teal-900 dark:border-teal-500 dark:bg-teal-950/30 dark:text-teal-100'
-						: 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:border-neutral-700',
+						? 'border-accent bg-accent-muted text-accent-muted-foreground'
+						: 'border-border bg-card text-muted-foreground hover:border-accent/40',
 					disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
 				)}
 				disabled={disabled}
@@ -191,7 +191,7 @@ export function LaunchTargetControl({
 
 	const resetButton = display.custom ? (
 		<button
-			className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+			className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
 			onClick={() => onChange({})}
 			type="button">
 			<RotateCcw aria-hidden="true" className="h-3 w-3" />
@@ -224,7 +224,7 @@ export function LaunchTargetControl({
 				<DialogPanel className="w-full max-w-md">
 					<div className="space-y-5 p-5" id={panelId}>
 						<div className="flex items-start gap-3">
-							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-300">
+							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-accent/30 bg-accent-muted text-accent-muted-foreground">
 								<Settings2 className="h-5 w-5" />
 							</div>
 							<div className="min-w-0">
@@ -237,7 +237,7 @@ export function LaunchTargetControl({
 											? `${label} launch target`
 											: 'Launch target'}
 								</h2>
-								<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+								<p className="mt-1 text-sm text-muted-foreground">
 									{display.provenance ||
 										'Choose the CLI, model, and effort for this launch.'}
 								</p>

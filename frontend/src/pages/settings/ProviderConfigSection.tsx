@@ -81,7 +81,7 @@ function ProviderCard({
 			<button
 				aria-controls={panelId}
 				aria-expanded={open}
-				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center dark:hover:bg-neutral-900"
+				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center"
 				onClick={() => setOpen((current) => !current)}
 				type="button">
 				<span className="flex min-w-0 items-center gap-2">
@@ -92,11 +92,9 @@ function ProviderCard({
 							open && 'rotate-180',
 						)}
 					/>
-					<span className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-						{name}
-					</span>
+					<span className="truncate text-sm font-semibold text-foreground">{name}</span>
 				</span>
-				<span className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+				<span className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 					<ExecutionIdentityBadges
 						model={provider.model}
 						provider={name}
@@ -111,7 +109,7 @@ function ProviderCard({
 			</button>
 			{open ? (
 				<div
-					className="grid gap-3 border-t border-neutral-200 p-3 md:grid-cols-2 xl:grid-cols-3 dark:border-neutral-800"
+					className="grid gap-3 border-t border-border p-3 md:grid-cols-2 xl:grid-cols-3"
 					id={panelId}>
 					<label className="space-y-1">
 						<span className={fieldLabelClass}>Base URL</span>
@@ -162,7 +160,7 @@ function ProviderCard({
 							type="password"
 							value={apiKeyValue}
 						/>
-						<span className="text-xs text-neutral-500">
+						<span className="text-xs text-muted-foreground">
 							Leave blank to keep the existing key. Set to empty and save to clear.
 						</span>
 					</label>
@@ -190,7 +188,7 @@ export function ProviderConfigSection({
 						id="provider-settings-heading">
 						Providers
 					</h2>
-					<p className="mt-0.5 text-xs text-neutral-500">
+					<p className="mt-0.5 text-xs text-muted-foreground">
 						Expand a provider to edit its endpoint, model, reasoning, or write-only key.
 					</p>
 				</div>
@@ -220,11 +218,9 @@ export function ProviderConfigSection({
 				</div>
 			) : (
 				<Card className="px-4 py-6 text-center">
-					<p className="text-sm text-neutral-500">
+					<p className="text-sm text-muted-foreground">
 						No providers configured. Add providers to your{' '}
-						<code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
-							config.json
-						</code>{' '}
+						<code className="rounded bg-muted px-1.5 py-0.5 text-xs">config.json</code>{' '}
 						to edit them here.
 					</p>
 				</Card>

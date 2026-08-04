@@ -23,11 +23,9 @@ function formatMs(value: null | number): string {
 
 function Stat({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
-			<div className="text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
-			<div className="mt-0.5 text-sm font-medium text-neutral-800 tabular-nums dark:text-neutral-100">
-				{value}
-			</div>
+		<div className="rounded-md border border-border px-3 py-2">
+			<div className="text-xs text-muted-foreground">{label}</div>
+			<div className="mt-0.5 text-sm font-medium text-foreground tabular-nums">{value}</div>
 		</div>
 	);
 }
@@ -36,7 +34,7 @@ function ratingClass(rating: null | string): string {
 	if (rating === 'good') return 'text-green-600 dark:text-green-400';
 	if (rating === 'needs-improvement') return 'text-amber-600 dark:text-amber-400';
 	if (rating === 'poor') return 'text-red-600 dark:text-red-400';
-	return 'text-neutral-500 dark:text-neutral-400';
+	return 'text-muted-foreground ';
 }
 
 function ResourcePanel({ current }: { current: SystemMetricSnapshot }) {
@@ -59,7 +57,7 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 	const hasSamples = vitals.some((vital) => vital.sampleCount > 0);
 	if (!hasSamples) {
 		return (
-			<p className="text-xs text-neutral-500 dark:text-neutral-400">
+			<p className="text-xs text-muted-foreground">
 				No Core Web Vitals recorded yet. Vitals are reported by the browser as you navigate
 				the panel.
 			</p>
@@ -68,7 +66,7 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 	return (
 		<table className="w-full text-sm">
 			<thead>
-				<tr className="text-left text-xs text-neutral-500 dark:text-neutral-400">
+				<tr className="text-left text-xs text-muted-foreground">
 					<th className="py-1 font-medium">Metric</th>
 					<th className="py-1 text-right font-medium">Latest</th>
 					<th className="py-1 text-right font-medium">Average</th>
@@ -78,9 +76,7 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 			</thead>
 			<tbody>
 				{vitals.map((vital) => (
-					<tr
-						className="border-t border-neutral-100 dark:border-neutral-800"
-						key={vital.name}>
+					<tr className="border-t border-border" key={vital.name}>
 						<td className={`py-1 font-medium ${ratingClass(vital.latestRating)}`}>
 							{vital.name}
 						</td>
@@ -90,10 +86,10 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 						<td className="py-1 text-right tabular-nums">
 							{vital.sampleCount > 0 ? vital.average.toLocaleString() : '—'}
 						</td>
-						<td className="py-1 text-right text-neutral-500 tabular-nums dark:text-neutral-400">
+						<td className="py-1 text-right text-muted-foreground tabular-nums">
 							{vital.threshold.toLocaleString()}
 						</td>
-						<td className="py-1 text-right text-neutral-500 tabular-nums dark:text-neutral-400">
+						<td className="py-1 text-right text-muted-foreground tabular-nums">
 							{vital.sampleCount}
 						</td>
 					</tr>
@@ -117,10 +113,8 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 	return (
 		<Card className="space-y-4 p-3">
 			<div>
-				<h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
-					System metrics
-				</h3>
-				<p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+				<h3 className="text-sm font-medium text-foreground">System metrics</h3>
+				<p className="mt-0.5 text-xs text-muted-foreground">
 					Live process and host resource usage, sampled every minute. Updates every few
 					seconds.
 				</p>
@@ -132,19 +126,14 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 			) : metrics.data ? (
 				<ResourcePanel current={metrics.data.current} />
 			) : (
-				<p
-					aria-live="polite"
-					className="text-xs text-neutral-500 dark:text-neutral-400"
-					role="status">
+				<p aria-live="polite" className="text-xs text-muted-foreground" role="status">
 					Loading metrics…
 				</p>
 			)}
 
-			<div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
-				<h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
-					Core Web Vitals
-				</h3>
-				<p className="mt-0.5 mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+			<div className="border-t border-border pt-4">
+				<h3 className="text-sm font-medium text-foreground">Core Web Vitals</h3>
+				<p className="mt-0.5 mb-2 text-xs text-muted-foreground">
 					Frontend performance over the last 6 hours, rated against Google's thresholds.
 				</p>
 				{vitals.isError ? (
@@ -154,10 +143,7 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 				) : vitals.data ? (
 					<WebVitalsPanel vitals={vitals.data} />
 				) : (
-					<p
-						aria-live="polite"
-						className="text-xs text-neutral-500 dark:text-neutral-400"
-						role="status">
+					<p aria-live="polite" className="text-xs text-muted-foreground" role="status">
 						Loading vitals…
 					</p>
 				)}

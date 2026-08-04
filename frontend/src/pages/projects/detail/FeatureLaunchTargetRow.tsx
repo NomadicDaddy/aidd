@@ -17,7 +17,7 @@ export function FeatureLaunchTargetRow({
 }) {
 	return (
 		<div className="flex items-center gap-2">
-			<span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+			<span className="text-xs text-muted-foreground">{label}</span>
 			<LaunchTargetControl onChange={onChange} projectDir={projectDir} value={value} />
 		</div>
 	);

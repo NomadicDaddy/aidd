@@ -58,23 +58,23 @@ export function DirectAiSection({
 
 	return (
 		<Card className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
-			<div className="flex items-center justify-between gap-3 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+			<div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
 				<label className="flex items-center gap-2">
 					<input
 						checked={directAi.enabled}
 						onChange={(event) => updateDirectAi({ enabled: event.target.checked })}
 						type="checkbox"
 					/>
-					<span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
-						Direct AI
-					</span>
+					<span className="text-sm font-medium text-foreground">Direct AI</span>
 				</label>
-				<span className="text-xs font-medium text-neutral-500">
+				<span className="text-xs font-medium text-muted-foreground">
 					{directAi.apiKeyConfigured ? 'API key configured' : 'No API key'}
 				</span>
 			</div>
 			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">Provider</span>
+				<span className="text-xs font-medium text-muted-foreground uppercase">
+					Provider
+				</span>
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -85,7 +85,7 @@ export function DirectAiSection({
 				/>
 			</label>
 			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">Model</span>
+				<span className="text-xs font-medium text-muted-foreground uppercase">Model</span>
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -96,7 +96,9 @@ export function DirectAiSection({
 				/>
 			</label>
 			<label className={`space-y-1 md:col-span-2 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">Base URL</span>
+				<span className="text-xs font-medium text-muted-foreground uppercase">
+					Base URL
+				</span>
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -107,7 +109,7 @@ export function DirectAiSection({
 				/>
 			</label>
 			<label className={`space-y-1 md:col-span-2 xl:col-span-3 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">API Key</span>
+				<span className="text-xs font-medium text-muted-foreground uppercase">API Key</span>
 				<Input
 					autoComplete="off"
 					disabled={disabled}
@@ -116,13 +118,13 @@ export function DirectAiSection({
 					type="password"
 					value={apiKeyValue}
 				/>
-				<span className="text-xs text-neutral-500">
+				<span className="text-xs text-muted-foreground">
 					Stored as <code>providers.&lt;provider&gt;.apiKey</code>. Leave blank to keep
 					the existing key.
 				</span>
 			</label>
 			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">
+				<span className="text-xs font-medium text-muted-foreground uppercase">
 					Reasoning Effort
 				</span>
 				<select
@@ -144,7 +146,7 @@ export function DirectAiSection({
 				</select>
 			</label>
 			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">Timeout</span>
+				<span className="text-xs font-medium text-muted-foreground uppercase">Timeout</span>
 				<Input
 					disabled={disabled}
 					inputMode="numeric"
@@ -156,11 +158,13 @@ export function DirectAiSection({
 				/>
 			</label>
 			<div className={`grid gap-2 md:col-span-2 xl:col-span-3 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-neutral-500 uppercase">Surfaces</span>
+				<span className="text-xs font-medium text-muted-foreground uppercase">
+					Surfaces
+				</span>
 				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
 					{surfaceOptions.map((surface) => (
 						<label
-							className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800"
+							className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
 							key={surface.key}>
 							<input
 								checked={directAi.surfaces[surface.key]}
@@ -170,7 +174,7 @@ export function DirectAiSection({
 								}
 								type="checkbox"
 							/>
-							<span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
+							<span className="text-sm font-medium text-foreground">
 								{surface.label}
 							</span>
 						</label>
@@ -178,7 +182,7 @@ export function DirectAiSection({
 				</div>
 			</div>
 			<div className="grid gap-2 md:col-span-2 xl:col-span-3">
-				<span className="text-xs font-medium text-neutral-500 uppercase">
+				<span className="text-xs font-medium text-muted-foreground uppercase">
 					Director chat agent
 				</span>
 				<label className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-900/60 dark:bg-amber-950/30">

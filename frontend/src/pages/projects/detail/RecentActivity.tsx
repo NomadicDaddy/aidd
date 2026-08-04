@@ -25,24 +25,22 @@ export function RecentActivity({
 			<div className="mb-1.5 flex items-center justify-between">
 				<h2 className="text-sm font-semibold text-foreground">Recent activity</h2>
 				<Link
-					className="text-xs text-neutral-600 hover:underline dark:text-neutral-400"
+					className="text-xs text-muted-foreground hover:underline"
 					to={`/runs?project=${encodeURIComponent(projectPath)}`}>
 					View all runs
 				</Link>
 			</div>
 			{projectRuns.length === 0 ? (
-				<p className="text-sm text-neutral-500">No runs recorded for this project.</p>
+				<p className="text-sm text-muted-foreground">No runs recorded for this project.</p>
 			) : (
 				<ul aria-label="Recent project activity" className="space-y-1.5 text-sm">
 					{projectRuns.map((run) => (
-						<li
-							className="rounded-md border border-neutral-200 px-2.5 py-1 dark:border-neutral-800"
-							key={run.id}>
+						<li className="rounded-md border border-border px-2.5 py-1" key={run.id}>
 							<div className="flex flex-wrap items-start justify-between gap-2">
 								<div className="min-w-0">
 									<div className="flex flex-wrap items-center gap-2">
 										<Badge tone={runStatusTone(run.status)}>{run.status}</Badge>
-										<span className="font-medium text-neutral-900 dark:text-neutral-100">
+										<span className="font-medium text-foreground">
 											{run.title}
 										</span>
 									</div>
@@ -53,19 +51,19 @@ export function RecentActivity({
 										/>
 									) : null}
 									{run.detailParts.length > 0 ? (
-										<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-neutral-500">
+										<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
 											{run.detailParts.map((part) => (
 												<span key={part}>{part}</span>
 											))}
 											<span>{run.traceLabel}</span>
 										</div>
 									) : (
-										<div className="mt-1 text-xs text-neutral-500">
+										<div className="mt-1 text-xs text-muted-foreground">
 											{run.traceLabel}
 										</div>
 									)}
 								</div>
-								<span className="shrink-0 text-xs text-neutral-500">
+								<span className="shrink-0 text-xs text-muted-foreground">
 									{formatRelativeAge(run.timestamp)}
 								</span>
 							</div>

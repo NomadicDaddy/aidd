@@ -41,7 +41,7 @@ export function ArtifactGroups({
 		<div className="space-y-4">
 			{inventory.groups.map((group) => (
 				<div key={group.id}>
-					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 						{group.label} ({group.entries.length})
 					</h4>
 					<div className="flex flex-col gap-2">
@@ -70,7 +70,7 @@ export function ArtifactGroups({
 			))}
 			{inventory.ungrouped.length > 0 ? (
 				<div>
-					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 						Other artifacts ({inventory.ungrouped.length})
 					</h4>
 					<div className="flex flex-col gap-2">

@@ -50,10 +50,10 @@ export function RunLaunchCard({
 					className={cn(
 						'h-9 min-w-44 flex-1 rounded-md border px-3 text-sm focus-visible:ring-2 focus-visible:outline-none',
 						projectError
-							? 'border-red-500 bg-white focus:border-red-500 focus-visible:ring-red-200 dark:border-red-400 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:border-red-400 dark:focus-visible:ring-red-900/40'
+							? 'border-red-500 bg-card text-foreground focus:border-red-500 focus-visible:ring-red-200 dark:border-red-400 dark:focus:border-red-400 dark:focus-visible:ring-red-900/40'
 							: projectDir
 								? 'border-teal-500 bg-teal-50 text-teal-950 focus-visible:ring-teal-200 dark:border-teal-500 dark:bg-teal-950/30 dark:text-teal-100 dark:focus-visible:ring-teal-900/40'
-								: 'border-neutral-200 bg-white focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:ring-neutral-800',
+								: 'border-border bg-card text-foreground focus-visible:ring-ring',
 					)}
 					onChange={(event) => {
 						traceDataMovement({

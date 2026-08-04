@@ -59,14 +59,14 @@ export function RenameProjectCard({ project }: { project: ProjectDetail }) {
 				<Pencil className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
 				<div>
 					<h2 className="text-base font-semibold text-foreground">Rename project</h2>
-					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+					<p className="mt-1 text-sm text-muted-foreground">
 						Rename the project directory in place. Runs and metadata follow the new
 						path.
 					</p>
 				</div>
 			</div>
 			<div className="mt-4 space-y-3">
-				<label className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
+				<label className="block text-sm font-medium text-foreground">
 					New project name
 					<Input
 						aria-label="New project name"
@@ -75,9 +75,9 @@ export function RenameProjectCard({ project }: { project: ProjectDetail }) {
 						value={renameName}
 					/>
 				</label>
-				<div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-950">
-					<div className="text-xs text-neutral-500 uppercase">New path</div>
-					<div className="mt-1 font-mono text-xs break-all text-neutral-800 dark:text-neutral-200">
+				<div className="rounded-md border border-border bg-muted p-3 text-sm">
+					<div className="text-xs text-muted-foreground uppercase">New path</div>
+					<div className="mt-1 font-mono text-xs break-all text-foreground">
 						{renamePreview}
 					</div>
 				</div>

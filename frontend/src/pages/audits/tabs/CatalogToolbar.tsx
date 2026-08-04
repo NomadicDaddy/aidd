@@ -123,7 +123,7 @@ export function CatalogToolbar({
 				</div>
 				{runSelectedDisabledReason ? (
 					<span
-						className="basis-full text-xs text-neutral-500 dark:text-neutral-400"
+						className="basis-full text-xs text-muted-foreground"
 						id="audits-run-selected-disabled-help"
 						role="status">
 						{runSelectedDisabledReason}
@@ -131,7 +131,7 @@ export function CatalogToolbar({
 				) : null}
 				{runAllDisabledReason && runAllDisabledReason !== runSelectedDisabledReason ? (
 					<span
-						className="basis-full text-xs text-neutral-500 dark:text-neutral-400"
+						className="basis-full text-xs text-muted-foreground"
 						id="audits-run-all-disabled-help"
 						role="status">
 						{runAllDisabledReason}
@@ -143,7 +143,7 @@ export function CatalogToolbar({
 				<label className="space-y-1">
 					<span className={fieldLabelClass}>Search</span>
 					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							className="pl-9"
 							data-shortcut-search=""

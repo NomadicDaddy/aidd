@@ -24,12 +24,10 @@ export function LiveConsoleNotices({
 	return (
 		<>
 			{isPretty && consoleLimit !== undefined ? (
-				<p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-					{consoleLimit}
-				</p>
+				<p className="mb-2 text-xs text-muted-foreground">{consoleLimit}</p>
 			) : null}
 			{showWindowNotice ? (
-				<p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+				<p className="mb-2 text-xs text-muted-foreground">
 					Showing the most recent {formatBytes(shownBytes)} of {formatBytes(totalBytes)}.
 					Older output is hidden — use “Copy all” for the full loaded transcript.
 				</p>

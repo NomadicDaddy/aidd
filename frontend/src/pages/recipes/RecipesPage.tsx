@@ -161,7 +161,7 @@ export function RecipesPage() {
 				<label className="space-y-1">
 					<span className={fieldLabelClass}>Search</span>
 					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							className="pl-9"
 							data-shortcut-search=""
@@ -180,7 +180,7 @@ export function RecipesPage() {
 							<h2 className="text-lg font-semibold text-foreground">
 								Launch {selectedRecipe.name}
 							</h2>
-							<p className="text-sm text-neutral-600 dark:text-neutral-300">
+							<p className="text-sm text-muted-foreground">
 								{selectedRecipe.steps.length} ordered steps will run in the selected
 								project.
 							</p>
@@ -210,7 +210,7 @@ export function RecipesPage() {
 						{selectedRecipe.parameters.every((parameter) =>
 							autoParameters.has(parameter.name),
 						) && (
-							<div className="text-sm text-neutral-600 dark:text-neutral-300">
+							<div className="text-sm text-muted-foreground">
 								Project parameters are filled from the selected launch target.
 							</div>
 						)}

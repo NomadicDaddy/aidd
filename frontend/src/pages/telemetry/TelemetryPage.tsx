@@ -183,7 +183,7 @@ export function TelemetryPage() {
 					<Card className="space-y-3">
 						<div>
 							<h2 className="text-sm font-semibold text-foreground">Backend mix</h2>
-							<p className="text-xs text-neutral-500">
+							<p className="text-xs text-muted-foreground">
 								All invocations in the selected filters.
 							</p>
 						</div>
@@ -199,7 +199,7 @@ export function TelemetryPage() {
 								<h2 className="text-sm font-semibold text-foreground">
 									Agent output
 								</h2>
-								<p className="text-xs text-neutral-500">
+								<p className="text-xs text-muted-foreground">
 									{outputMetric === 'lines'
 										? 'Lines added and removed by run commits'
 										: 'Tokens consumed and produced by runs'}{' '}
@@ -214,7 +214,7 @@ export function TelemetryPage() {
 							/>
 						</div>
 						{!outputApplies ? (
-							<p className="rounded-md border border-dashed border-neutral-300 p-4 text-xs text-neutral-500 dark:border-neutral-700">
+							<p className="rounded-md border border-dashed border-border p-4 text-xs text-muted-foreground">
 								Agent output is collected for runs. Select All or Runs to view it.
 							</p>
 						) : outputQuery.isLoading && outputPoints.length === 0 ? (

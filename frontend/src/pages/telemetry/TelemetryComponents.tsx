@@ -47,37 +47,37 @@ export function LeaderboardCard({ rows }: { rows: ResourceUsageRow[] }) {
 				const width = Math.round((row.total / max) * 100);
 				return (
 					<li
-						className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800"
+						className="rounded-md border border-border p-3"
 						key={`${row.resourceType}:${row.resourceId}`}>
 						<div className="flex items-baseline justify-between gap-3">
 							<div className="min-w-0">
 								<Link
-									className="truncate text-sm font-medium text-neutral-950 hover:underline dark:text-neutral-50"
+									className="truncate text-sm font-medium text-foreground hover:underline"
 									to={resourceLink(row.resourceType, row.resourceId)}>
-									<span className="text-neutral-400">#{index + 1}</span>{' '}
+									<span className="text-muted-foreground">#{index + 1}</span>{' '}
 									{row.resourceName}
 								</Link>
-								<p className="truncate text-xs text-neutral-500">
+								<p className="truncate text-xs text-muted-foreground">
 									{row.resourceType} · {row.resourceId}
 								</p>
 							</div>
 							<div className="shrink-0 text-right">
-								<div className="text-sm font-semibold text-neutral-950 tabular-nums dark:text-neutral-50">
+								<div className="text-sm font-semibold text-foreground tabular-nums">
 									{row.total}
 								</div>
-								<div className="text-[0.7rem] text-neutral-500">
+								<div className="text-[0.7rem] text-muted-foreground">
 									{outcomeBreakdown(row)}
 								</div>
 							</div>
 						</div>
-						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
+						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
 							<div
 								aria-hidden="true"
 								className="h-full rounded-full bg-teal-500"
 								style={{ width: `${width}%` }}
 							/>
 						</div>
-						<div className="mt-1.5 flex flex-wrap justify-between gap-2 text-[0.7rem] text-neutral-500">
+						<div className="mt-1.5 flex flex-wrap justify-between gap-2 text-[0.7rem] text-muted-foreground">
 							<span className="space-x-2">
 								<span>{row.topLevel} top-level</span>
 								<span>{row.nested} nested</span>
@@ -170,7 +170,7 @@ export function TimeseriesChart({
 								)}
 								{point.stopped > 0 && (
 									<div
-										className="min-h-0 w-full bg-neutral-400 group-hover:bg-neutral-300 dark:bg-neutral-600 dark:group-hover:bg-neutral-500"
+										className="min-h-0 w-full bg-muted-foreground group-hover:opacity-80"
 										style={{ flexBasis: 0, flexGrow: point.stopped }}
 									/>
 								)}
@@ -182,7 +182,7 @@ export function TimeseriesChart({
 								)}
 								{point.noWork > 0 && (
 									<div
-										className="min-h-0 w-full bg-slate-500 group-hover:bg-slate-400 dark:bg-slate-700 dark:group-hover:bg-slate-600"
+										className="min-h-0 w-full bg-muted-foreground group-hover:opacity-80"
 										style={{ flexBasis: 0, flexGrow: point.noWork }}
 									/>
 								)}
@@ -197,14 +197,14 @@ export function TimeseriesChart({
 					);
 				})}
 			</div>
-			<div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-neutral-500">
+			<div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-muted-foreground">
 				<LegendDot className="bg-emerald-500" label="Completed" />
 				<LegendDot className="bg-amber-400" label="Warnings" />
 				<LegendDot className="bg-red-400" label="Failed" />
 				<LegendDot className="bg-rose-700" label="Flagged" />
-				<LegendDot className="bg-neutral-400" label="Stopped" />
+				<LegendDot className="bg-muted-foreground" label="Stopped" />
 				<LegendDot className="bg-orange-700" label="Killed" />
-				<LegendDot className="bg-slate-500" label="No work" />
+				<LegendDot className="bg-muted-foreground" label="No work" />
 				<LegendDot className="bg-teal-500" label="Running" />
 			</div>
 			<TelemetryChartTable
@@ -245,12 +245,10 @@ export function BackendBreakdownCard({ rows }: { rows: TelemetryBackendUsageRow[
 				return (
 					<li key={backend}>
 						<div className="flex items-baseline justify-between text-xs">
-							<span className="font-mono text-neutral-700 dark:text-neutral-300">
-								{backend}
-							</span>
-							<span className="text-neutral-500 tabular-nums">{row.count}</span>
+							<span className="font-mono text-foreground">{backend}</span>
+							<span className="text-muted-foreground tabular-nums">{row.count}</span>
 						</div>
-						<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
+						<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
 							<div
 								aria-hidden="true"
 								className="h-full rounded-full bg-teal-500"

@@ -49,7 +49,7 @@ function JsonField({
 	return (
 		<div>
 			<Button
-				className="text-neutral-500 uppercase hover:text-neutral-700 dark:hover:text-neutral-300"
+				className="text-muted-foreground uppercase hover:text-foreground"
 				onClick={() => setCollapsed((c) => !c)}
 				size="compact"
 				variant="ghost">
@@ -60,9 +60,7 @@ function JsonField({
 				)}
 				{label}
 				{!isOpen && hasContent && (
-					<span className="text-neutral-400 normal-case dark:text-neutral-500">
-						(set)
-					</span>
+					<span className="text-muted-foreground normal-case">(set)</span>
 				)}
 			</Button>
 			{isOpen && (
@@ -97,7 +95,7 @@ export function RecipeStepEditor({
 	step,
 }: RecipeStepEditorProps) {
 	return (
-		<div className="space-y-3 rounded-md border border-neutral-200 p-4 dark:border-neutral-800">
+		<div className="space-y-3 rounded-md border border-border p-4">
 			<div className="flex items-center justify-between gap-3">
 				<div>
 					<Badge>Step {index + 1}</Badge>
@@ -173,7 +171,7 @@ export function RecipeStepEditor({
 						<option value="review-only">Review only</option>
 						<option value="apply-changes">Apply changes</option>
 					</select>
-					<span className="text-xs text-neutral-500">
+					<span className="text-xs text-muted-foreground">
 						Skill steps are directives, not audits. Apply changes permits edits and
 						commits.
 					</span>

@@ -50,7 +50,7 @@ export function CommitMessageDialog({
 				<h2 className="text-sm font-semibold text-foreground" id={titleId}>
 					{title}
 				</h2>
-				<p className="mt-1 text-xs text-neutral-500" id={descriptionId}>
+				<p className="mt-1 text-xs text-muted-foreground" id={descriptionId}>
 					{description}
 				</p>
 				<textarea

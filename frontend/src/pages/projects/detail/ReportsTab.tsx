@@ -41,19 +41,19 @@ export function ReportsTab({
 									{report.kind === 'bug' ? 'remediation' : 'feature'}
 								</Badge>
 								<Badge tone="neutral">{report.status}</Badge>
-								<span className="font-mono text-xs text-neutral-500">
+								<span className="font-mono text-xs text-muted-foreground">
 									{report.featureDirectory ?? report.featureId ?? report.id}
 								</span>
 							</div>
-							<span className="text-xs text-neutral-500">
+							<span className="text-xs text-muted-foreground">
 								{formatRelativeAge(report.createdAt)}
 							</span>
 						</div>
-						<p className="mt-3 text-sm whitespace-pre-wrap text-neutral-800 dark:text-neutral-200">
+						<p className="mt-3 text-sm whitespace-pre-wrap text-foreground">
 							{report.description}
 						</p>
 						{report.classificationReason || report.metadata?.pathname ? (
-							<div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+							<div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 								{report.classificationReason ? (
 									<span>{report.classificationReason}</span>
 								) : null}

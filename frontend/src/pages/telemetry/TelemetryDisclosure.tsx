@@ -5,12 +5,8 @@ import { Card } from '../../components/ui/card.tsx';
 function DisclosureItem({ children, title }: { children: string; title: string }) {
 	return (
 		<div>
-			<h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-				{title}
-			</h3>
-			<p className="mt-1 text-xs leading-5 text-neutral-600 dark:text-neutral-400">
-				{children}
-			</p>
+			<h3 className="text-xs font-semibold text-foreground">{title}</h3>
+			<p className="mt-1 text-xs leading-5 text-foreground">{children}</p>
 		</div>
 	);
 }
@@ -20,7 +16,7 @@ export function TelemetryDisclosure() {
 		<Card className="space-y-4 border-teal-200 bg-teal-50/40 dark:border-teal-900 dark:bg-teal-950/10">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">What aidd records</h2>
-				<p className="mt-1 text-xs leading-5 text-neutral-600 dark:text-neutral-400">
+				<p className="mt-1 text-xs leading-5 text-muted-foreground">
 					All telemetry stays in this local aidd installation. aidd does not send usage
 					data to its maintainers or third-party tracking services.
 				</p>
@@ -55,7 +51,7 @@ export function TelemetryDisclosure() {
 					to="/settings?tab=control-panel">
 					View system and browser metrics
 				</Link>
-				<span className="text-neutral-500">
+				<span className="text-muted-foreground">
 					AI call logs rotate at 10 MB with up to five archived files.
 				</span>
 			</div>

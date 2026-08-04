@@ -7,12 +7,10 @@ import { formatDate, formatDuration } from '../../lib/formatters.ts';
 function DetailItem({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<div className="min-w-0">
-			<dt className="text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase">
+			<dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 				{label}
 			</dt>
-			<dd className="mt-0.5 text-xs break-all text-neutral-800 dark:text-neutral-200">
-				{value ?? '—'}
-			</dd>
+			<dd className="mt-0.5 text-xs break-all text-foreground">{value ?? '—'}</dd>
 		</div>
 	);
 }
@@ -30,7 +28,7 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 				className="cursor-pointer text-xs font-medium text-teal-700 hover:underline dark:text-teal-300">
 				Inspect
 			</summary>
-			<div className="mt-2 w-[min(42rem,75vw)] rounded-md border border-neutral-200 bg-neutral-50 p-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+			<div className="mt-2 w-[min(42rem,75vw)] rounded-md border border-border bg-muted p-3 shadow-sm">
 				<dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					<DetailItem label="Invocation ID" value={identifier(invocation.id)} />
 					<DetailItem label="Resource ID" value={identifier(invocation.resourceId)} />
@@ -80,7 +78,7 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 					/>
 				</dl>
 				{invocation.errorMessage && (
-					<div className="mt-3 border-t border-neutral-200 pt-3 dark:border-neutral-700">
+					<div className="mt-3 border-t border-border pt-3">
 						<div className="text-[0.65rem] font-medium tracking-wide text-red-600 uppercase dark:text-red-300">
 							Error message
 						</div>

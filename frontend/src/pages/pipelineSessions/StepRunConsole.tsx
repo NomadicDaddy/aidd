@@ -41,7 +41,7 @@ function RunConsoleContent({
 	return (
 		<pre
 			aria-label="Run console output"
-			className="mt-2 max-h-[520px] w-full max-w-full overflow-auto rounded-md bg-neutral-950 p-4 text-xs leading-relaxed break-words whitespace-pre-wrap text-neutral-100">
+			className="mt-2 max-h-[520px] w-full max-w-full overflow-auto rounded-md bg-black/90 p-4 text-xs leading-relaxed break-words whitespace-pre-wrap text-white/90">
 			{display}
 		</pre>
 	);

@@ -32,15 +32,15 @@ export function RecipeCard({
 	const isPipeline = recipe.steps.length > 1;
 	const usageLine = formatUsageBadge(usage);
 	return (
-		<div className="rounded-md border border-neutral-200 p-4 dark:border-neutral-800">
+		<div className="rounded-md border border-border p-4">
 			<div className="mb-3 flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<Link
-						className="text-base font-semibold text-neutral-950 hover:underline dark:text-neutral-50"
+						className="text-base font-semibold text-foreground hover:underline"
 						to={`/recipes/${recipe.id}`}>
 						{recipe.name}
 					</Link>
-					<p className="truncate text-xs text-neutral-500">{recipe.id}</p>
+					<p className="truncate text-xs text-muted-foreground">{recipe.id}</p>
 				</div>
 				<div className="flex flex-wrap justify-end gap-1.5">
 					<RecipeContractBadges recipe={recipe} />
@@ -51,7 +51,7 @@ export function RecipeCard({
 					</RecipeBadgeTooltip>
 				</div>
 			</div>
-			<p className="mb-4 min-h-10 text-sm text-neutral-600 dark:text-neutral-300">
+			<p className="mb-4 min-h-10 text-sm text-muted-foreground">
 				{recipe.description ?? 'No description'}
 			</p>
 			<div className="mb-4 flex flex-wrap gap-2">
@@ -73,9 +73,7 @@ export function RecipeCard({
 			<div className="mb-4">
 				<RecipePolicyBadges recipe={recipe} />
 			</div>
-			{usageLine ? (
-				<p className="mb-3 text-xs text-neutral-400 dark:text-neutral-500">{usageLine}</p>
-			) : null}
+			{usageLine ? <p className="mb-3 text-xs text-muted-foreground">{usageLine}</p> : null}
 			<div className="flex flex-wrap gap-2">
 				<Button
 					disabled={launchDisabled || launchPending}
@@ -109,7 +107,7 @@ export function RecipeTable({
 	return (
 		<Card className="overflow-x-auto p-0">
 			<table aria-label="Recipes" className="w-full text-left text-sm">
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="px-3 py-3" scope="col">
 							Name
@@ -139,16 +137,14 @@ export function RecipeTable({
 						const isPipeline = recipe.steps.length > 1;
 						const usageLine = formatUsageBadge(usageByResourceId.get(recipe.id));
 						return (
-							<tr
-								className="border-b last:border-0 dark:border-neutral-800"
-								key={recipe.id}>
+							<tr className="border-b border-border last:border-0" key={recipe.id}>
 								<td className="px-3 py-3">
 									<Link
-										className="font-medium text-neutral-950 hover:underline dark:text-neutral-50"
+										className="font-medium text-foreground hover:underline"
 										to={`/recipes/${recipe.id}`}>
 										{recipe.name}
 									</Link>
-									<div className="truncate text-xs text-neutral-500">
+									<div className="truncate text-xs text-muted-foreground">
 										{recipe.id}
 									</div>
 								</td>
@@ -171,7 +167,7 @@ export function RecipeTable({
 									<RecipePolicyBadges recipe={recipe} />
 								</td>
 								<td className="px-3 py-3">{recipe.parameters.length}</td>
-								<td className="px-3 py-3 text-xs text-neutral-500 dark:text-neutral-400">
+								<td className="px-3 py-3 text-xs text-muted-foreground">
 									{usageLine ?? '—'}
 								</td>
 								<td className="px-3 py-3">

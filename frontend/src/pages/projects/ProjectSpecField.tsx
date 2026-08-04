@@ -49,7 +49,7 @@ export function ProjectSpecField({
 					value={specPath}
 				/>
 			) : null}
-			<p className="text-xs text-neutral-500">
+			<p className="text-xs text-muted-foreground">
 				Add a spec, then use the advisor to confirm fresh, Spernakit, or ingest.
 			</p>
 		</div>

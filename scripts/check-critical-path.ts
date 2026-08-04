@@ -81,7 +81,7 @@ interface CriticalAsset {
  * index.html asks it to modulepreload, and the render-blocking stylesheets.
  * Deliberately excludes prefetch/lazy chunks — those are off the critical path.
  */
-function parseCriticalAssets(html: string): string[] {
+export function parseCriticalAssets(html: string): string[] {
 	const names = new Set<string>();
 
 	// Match whole tags, then inspect their attributes, rather than assuming an
@@ -133,7 +133,7 @@ function sizeOf(assetName: string): CriticalAsset {
  * that into a silently skipped waterfall assertion — a gate reporting success having checked
  * nothing. Returns null so the caller must decide explicitly.
  */
-function findEntryChunk(html: string): null | string {
+export function findEntryChunk(html: string): null | string {
 	for (const tag of html.matchAll(/<script\b([^>]*)>/gi)) {
 		const attrs = tag[1] ?? '';
 		if (!/\btype="module"/i.test(attrs)) continue;
@@ -296,4 +296,4 @@ function main(): void {
 	log('\n✓ Critical-path verification passed\n', 'green');
 }
 
-main();
+if (import.meta.main) main();

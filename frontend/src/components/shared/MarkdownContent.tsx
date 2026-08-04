@@ -25,7 +25,7 @@ function renderInline(text: string): ReactNode[] {
 		} else if (match[4] !== undefined) {
 			nodes.push(
 				<code
-					className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[0.85em] dark:bg-neutral-800"
+					className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]"
 					key={`c${key++}`}>
 					{match[4]}
 				</code>,
@@ -39,14 +39,14 @@ function renderInline(text: string): ReactNode[] {
 
 const HEADING_CLASS: Record<1 | 2 | 3, string> = {
 	1: 'mt-4 mb-2 text-lg font-semibold text-foreground',
-	2: 'mt-4 mb-1.5 text-sm font-semibold tracking-wide text-neutral-700 uppercase dark:text-neutral-300',
-	3: 'mt-3 mb-1 text-sm font-semibold text-neutral-800 dark:text-neutral-200',
+	2: 'mt-4 mb-1.5 text-sm font-semibold tracking-wide text-foreground uppercase ',
+	3: 'mt-3 mb-1 text-sm font-semibold text-foreground ',
 };
 
 export function MarkdownContent({ className, markdown }: { className?: string; markdown: string }) {
 	const blocks = parseMarkdownBlocks(markdown);
 	return (
-		<div className={cn('space-y-2 text-sm text-neutral-700 dark:text-neutral-300', className)}>
+		<div className={cn('space-y-2 text-sm text-foreground', className)}>
 			{blocks.map((block, index) => {
 				const key = `block-${index}`;
 				if (block.type === 'heading') {
@@ -71,12 +71,12 @@ export function MarkdownContent({ className, markdown }: { className?: string; m
 					);
 				}
 				if (block.type === 'hr') {
-					return <hr className="border-neutral-200 dark:border-neutral-800" key={key} />;
+					return <hr className="border-border" key={key} />;
 				}
 				if (block.type === 'quote') {
 					return (
 						<blockquote
-							className="border-l-2 border-neutral-300 pl-3 text-neutral-600 italic dark:border-neutral-700 dark:text-neutral-400"
+							className="border-l-2 border-border pl-3 text-muted-foreground italic"
 							key={key}>
 							{block.lines.map((line, lineIndex) => (
 								<p key={`${key}-${lineIndex}`}>{renderInline(line)}</p>

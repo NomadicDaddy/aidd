@@ -65,7 +65,7 @@ export function SettingsSectionTabs({
 						<label className="grid gap-2 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center">
 							<span>
 								<span className={fieldLabelClass}>Applications Root</span>
-								<span className="mt-0.5 block text-xs text-neutral-500">
+								<span className="mt-0.5 block text-xs text-muted-foreground">
 									Resolves bare project names and provides the fallback discovery
 									root.
 								</span>

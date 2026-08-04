@@ -26,7 +26,7 @@ function valueLine(label: string, values: string[]): ReactNode {
 	if (values.length === 0) return null;
 	return (
 		<p>
-			<span className="font-medium text-neutral-200">{label}:</span> {values.join(', ')}
+			<span className="font-medium text-background">{label}:</span> {values.join(', ')}
 		</p>
 	);
 }
@@ -38,7 +38,7 @@ function tooltipContent(stack: ProjectStack) {
 			{valueLine('Languages', stack.languages)}
 			{valueLine('Runtimes', stack.runtimes)}
 			{valueLine('Frameworks', stack.frameworks)}
-			<p className="text-neutral-300">{sourceLabels[stack.source]}</p>
+			<p className="text-muted-foreground">{sourceLabels[stack.source]}</p>
 		</div>
 	);
 }
@@ -66,9 +66,9 @@ export function ProjectStackDisplay({
 			<div className="space-y-1">
 				<div>{primaryBadge(stack)}</div>
 				{technologies.length > 0 ? (
-					<p className="text-xs text-neutral-500">{technologies.join(' · ')}</p>
+					<p className="text-xs text-muted-foreground">{technologies.join(' · ')}</p>
 				) : null}
-				<p className="text-xs text-neutral-500">{sourceLabels[stack.source]}</p>
+				<p className="text-xs text-muted-foreground">{sourceLabels[stack.source]}</p>
 			</div>
 		);
 	}
@@ -91,7 +91,7 @@ export function ProjectStackDisplay({
 		<div className="min-w-0 space-y-1">
 			<div>{primaryBadge(stack)}</div>
 			{technologies.length > 0 ? (
-				<p className="max-w-48 truncate text-[10px] text-neutral-500">
+				<p className="max-w-48 truncate text-[10px] text-muted-foreground">
 					{technologies.slice(0, 3).join(' · ')}
 					{technologies.length > 3 ? ` +${technologies.length - 3}` : ''}
 				</p>

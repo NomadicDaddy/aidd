@@ -20,13 +20,13 @@ export function TriumvirateSection({
 		<Card className="space-y-3 p-3">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">Triumvirate Roles</h2>
-				<p className="mt-0.5 text-xs text-neutral-500">
+				<p className="mt-0.5 text-xs text-muted-foreground">
 					Override the secondary, overseer, and execution roles used by Triumvirate runs.
 				</p>
 			</div>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Secondary CLI
 					</span>
 					<select
@@ -49,7 +49,7 @@ export function TriumvirateSection({
 					</select>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Secondary Model
 					</span>
 					<Input
@@ -60,7 +60,7 @@ export function TriumvirateSection({
 					/>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Overseer CLI
 					</span>
 					<select
@@ -83,7 +83,7 @@ export function TriumvirateSection({
 					</select>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Overseer Model
 					</span>
 					<Input
@@ -94,7 +94,7 @@ export function TriumvirateSection({
 					/>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Execution CLI
 					</span>
 					<select
@@ -117,7 +117,7 @@ export function TriumvirateSection({
 					</select>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Execution Model
 					</span>
 					<Input

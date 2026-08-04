@@ -35,7 +35,7 @@ function IterationFeaturesCell({ iteration }: { iteration: ProjectLocalIteration
 
 	if (distinctFeatures.length <= 1) {
 		return (
-			<td className="max-w-[22rem] px-4 py-3 text-xs break-words text-neutral-600 dark:text-neutral-400">
+			<td className="max-w-[22rem] px-4 py-3 text-xs break-words text-muted-foreground">
 				{fallback}
 			</td>
 		);
@@ -52,15 +52,13 @@ function IterationFeaturesCell({ iteration }: { iteration: ProjectLocalIteration
 	);
 
 	return (
-		<td className="max-w-[22rem] px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
+		<td className="max-w-[22rem] px-4 py-3 text-xs text-muted-foreground">
 			<Tooltip content={tooltipContent}>
 				<span
-					className="inline-flex max-w-full flex-wrap items-baseline gap-x-1 rounded-md break-words focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300"
+					className="inline-flex max-w-full flex-wrap items-baseline gap-x-1 rounded-md break-words focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 					tabIndex={0}>
 					<span className="break-words">{first}</span>
-					<span className="text-neutral-500 dark:text-neutral-400">
-						· +{remaining} more
-					</span>
+					<span className="text-muted-foreground">· +{remaining} more</span>
 				</span>
 			</Tooltip>
 		</td>
@@ -77,7 +75,7 @@ export function LocalIterationsTable({
 	return (
 		<div className="overflow-x-auto">
 			<table aria-label="Local iterations" className="w-full text-left text-sm">
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="px-4 py-3" scope="col">
 							Iteration
@@ -104,7 +102,7 @@ export function LocalIterationsTable({
 						const outcome = classifyIteration(iteration);
 						return (
 							<tr
-								className="border-b last:border-0 dark:border-neutral-800"
+								className="border-b border-border last:border-0"
 								key={`${iteration.startedAt ?? 'iteration'}-${iteration.iteration ?? index}`}>
 								<td className="px-4 py-3 font-mono text-xs">
 									{iteration.iteration ?? '—'}
@@ -119,14 +117,14 @@ export function LocalIterationsTable({
 								</td>
 								<td className="px-4 py-3">
 									<Tooltip content={outcome.title}>
-										<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
+										<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
 											<Badge showDot tone={outcome.tone}>
 												{outcome.label}
 											</Badge>
 										</span>
 									</Tooltip>
 								</td>
-								<td className="px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
+								<td className="px-4 py-3 text-xs text-muted-foreground">
 									{iteration.startedAt ? formatDate(iteration.startedAt) : '—'}
 								</td>
 								<td className="px-4 py-3">

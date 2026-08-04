@@ -191,7 +191,9 @@ export function SettingsPage() {
 
 	if (settings.isLoading) {
 		return (
-			<Card className="py-10 text-center text-sm text-neutral-500">Loading settings…</Card>
+			<Card className="py-10 text-center text-sm text-muted-foreground">
+				Loading settings…
+			</Card>
 		);
 	}
 

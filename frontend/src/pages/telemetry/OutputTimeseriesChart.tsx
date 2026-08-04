@@ -85,7 +85,7 @@ export function OutputTimeseriesChart({
 				{metric === 'lines' ? 'Line changes' : 'Token usage'} by time bucket
 			</h3>
 			<div aria-hidden="true" className="relative">
-				<div className="absolute inset-x-0 top-1/2 h-px bg-neutral-200 dark:bg-neutral-800" />
+				<div className="absolute inset-x-0 top-1/2 h-px bg-muted" />
 				<div className="flex h-40 gap-1">
 					{points.map((point) => {
 						const up = upValue(point);
@@ -128,26 +128,26 @@ export function OutputTimeseriesChart({
 					})}
 				</div>
 			</div>
-			<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+			<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
 				<div className="flex items-center gap-4">
 					<span className="flex items-center gap-1.5">
 						<span aria-hidden="true" className="h-2 w-2 rounded-full bg-teal-600" />
 						{upLabel}{' '}
-						<span className="font-medium text-neutral-950 tabular-nums dark:text-neutral-50">
+						<span className="font-medium text-foreground tabular-nums">
 							{formatCompactNumber(totalUp)}
 						</span>
 					</span>
 					<span className="flex items-center gap-1.5">
 						<span aria-hidden="true" className="h-2 w-2 rounded-full bg-orange-600" />
 						{downLabel}{' '}
-						<span className="font-medium text-neutral-950 tabular-nums dark:text-neutral-50">
+						<span className="font-medium text-foreground tabular-nums">
 							{formatCompactNumber(totalDown)}
 						</span>
 					</span>
 					{metric === 'lines' ? (
 						<span>
 							Files changed{' '}
-							<span className="font-medium text-neutral-950 tabular-nums dark:text-neutral-50">
+							<span className="font-medium text-foreground tabular-nums">
 								{formatCompactNumber(totalFilesChanged)}
 							</span>
 						</span>
@@ -155,20 +155,20 @@ export function OutputTimeseriesChart({
 						<>
 							<span>
 								Cached{' '}
-								<span className="font-medium text-neutral-950 tabular-nums dark:text-neutral-50">
+								<span className="font-medium text-foreground tabular-nums">
 									{formatCompactNumber(totalCachedTokens)}
 								</span>
 							</span>
 							<span>
 								Reasoning{' '}
-								<span className="font-medium text-neutral-950 tabular-nums dark:text-neutral-50">
+								<span className="font-medium text-foreground tabular-nums">
 									{formatCompactNumber(totalReasoningTokens)}
 								</span>
 							</span>
 						</>
 					)}
 				</div>
-				<div className="text-right text-neutral-500">
+				<div className="text-right text-muted-foreground">
 					{totalCaptured}/{totalRuns} runs with {metric === 'lines' ? 'line' : 'token'}{' '}
 					data
 					{metric === 'lines' && ` · ${runsWithFileData}/${totalRuns} with file counts`}

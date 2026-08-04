@@ -37,7 +37,7 @@ export function BackendDefaultFields({
 	shadowedSharedModel?: null | string;
 	showLabels?: boolean;
 }) {
-	const labelClass = showLabels ? 'mb-1 block text-xs text-neutral-500' : 'sr-only';
+	const labelClass = showLabels ? 'mb-1 block text-xs text-muted-foreground' : 'sr-only';
 	return (
 		<>
 			<label className="min-w-0">

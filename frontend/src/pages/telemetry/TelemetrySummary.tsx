@@ -25,13 +25,11 @@ function CountCard({
 }) {
 	return (
 		<Card className="space-y-1">
-			<div className="flex items-center gap-2 text-xs font-medium tracking-wide text-neutral-500 uppercase">
+			<div className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
 				<span aria-hidden="true" className={`h-2 w-2 rounded-full ${className}`} />
 				{label}
 			</div>
-			<div className="text-2xl font-semibold text-neutral-950 tabular-nums dark:text-neutral-50">
-				{value}
-			</div>
+			<div className="text-2xl font-semibold text-foreground tabular-nums">{value}</div>
 		</Card>
 	);
 }
@@ -53,12 +51,12 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 				<CountCard className="bg-amber-400" label="Warnings" value={totals.warnings} />
 				<CountCard className="bg-red-400" label="Failed" value={totals.failed} />
 				<CountCard className="bg-rose-700" label="Flagged" value={totals.flagged} />
-				<CountCard className="bg-neutral-400" label="Stopped" value={totals.stopped} />
+				<CountCard className="bg-muted-foreground" label="Stopped" value={totals.stopped} />
 				<CountCard className="bg-orange-700" label="Killed" value={totals.killed} />
-				<CountCard className="bg-slate-500" label="No work" value={totals.noWork} />
+				<CountCard className="bg-muted-foreground" label="No work" value={totals.noWork} />
 				<CountCard className="bg-teal-500" label="Running" value={totals.running} />
 			</div>
-			<p className="text-xs text-neutral-500">
+			<p className="text-xs text-muted-foreground">
 				Every top-level launch and every nested recipe or skill step is one invocation. Each
 				invocation appears in exactly one outcome above.
 			</p>

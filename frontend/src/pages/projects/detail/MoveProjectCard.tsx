@@ -58,16 +58,16 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 				<FolderInput className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
 				<div>
 					<h2 className="text-base font-semibold text-foreground">Move project</h2>
-					<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+					<p className="mt-1 text-sm text-muted-foreground">
 						Move the project directory to another configured application root.
 					</p>
 				</div>
 			</div>
 			<div className="mt-4 space-y-3">
-				<label className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
+				<label className="block text-sm font-medium text-foreground">
 					Destination root
 					<select
-						className="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:ring-neutral-800"
+						className="mt-1 h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring"
 						onChange={(event) => setDestinationRoot(event.target.value)}
 						value={destinationRoot}>
 						<option value="">Select destination root</option>
@@ -78,7 +78,7 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 						))}
 					</select>
 				</label>
-				<label className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
+				<label className="block text-sm font-medium text-foreground">
 					Destination folder name
 					<Input
 						aria-label="Destination folder name"
@@ -87,9 +87,11 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 						value={destinationName}
 					/>
 				</label>
-				<div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-950">
-					<div className="text-xs text-neutral-500 uppercase">Destination preview</div>
-					<div className="mt-1 font-mono text-xs break-all text-neutral-800 dark:text-neutral-200">
+				<div className="rounded-md border border-border bg-muted p-3 text-sm">
+					<div className="text-xs text-muted-foreground uppercase">
+						Destination preview
+					</div>
+					<div className="mt-1 font-mono text-xs break-all text-foreground">
 						{destinationPreview || 'Select a root to preview the move target'}
 					</div>
 				</div>

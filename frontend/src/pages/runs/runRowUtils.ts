@@ -7,7 +7,7 @@ export type RunLiveness = 'idle' | 'live' | 'stalled' | 'unknown';
 // Split so a selected container keeps the pointer affordance without a hover tint fighting its
 // selected background.
 export const containerSelectableClass = 'cursor-pointer';
-export const containerHoverClass = 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50';
+export const containerHoverClass = 'hover:bg-muted';
 
 // Pointer-only convenience target. The row/card is not focusable and emulates no keys, so it adds
 // neither a tab stop nor a second accessible control — ConsoleSelectionButton stays the semantic

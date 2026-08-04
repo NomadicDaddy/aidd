@@ -20,7 +20,7 @@ export function GithubRepoField({ source }: { source: GithubTemplateSourceState 
 			{source.urlError ? (
 				<p className="text-xs text-red-600 dark:text-red-400">{source.urlError}</p>
 			) : (
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Cloned as a template: history is stripped and a fresh git repo is initialized.
 				</p>
 			)}
@@ -54,7 +54,7 @@ export function ProjectTemplatePicker({
 				))}
 			</select>
 			{selectedTemplate ? (
-				<p className="text-xs text-neutral-500">{selectedTemplate.description}</p>
+				<p className="text-xs text-muted-foreground">{selectedTemplate.description}</p>
 			) : null}
 		</label>
 	);

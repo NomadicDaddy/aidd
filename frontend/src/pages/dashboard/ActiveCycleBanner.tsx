@@ -28,10 +28,10 @@ export function ActiveCycleBanner({ cycle, now }: { cycle: DirectorCycle; now: n
 								{cycleStageLabels[cycle.stage]}
 							</Badge>
 						</div>
-						<p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
+						<p className="mt-1 text-sm text-foreground">
 							{cycleStageDescriptions[cycle.stage]}
 						</p>
-						<p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+						<p className="mt-1 text-xs text-muted-foreground">
 							Elapsed {cycleElapsed(cycle, now)} / started{' '}
 							{formatDate(cycle.startedAt)}
 						</p>

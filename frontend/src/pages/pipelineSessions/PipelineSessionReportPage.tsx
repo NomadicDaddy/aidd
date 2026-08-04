@@ -73,7 +73,7 @@ export function PipelineSessionReportPage() {
 
 	const backLink = (
 		<Link
-			className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-950"
+			className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
 			to="/runs">
 			<ArrowLeft className="h-4 w-4" />
 			Runs
@@ -88,7 +88,7 @@ export function PipelineSessionReportPage() {
 					<h1 className="text-xl font-semibold text-foreground">
 						Pipeline session not found
 					</h1>
-					<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+					<p className="mt-2 text-sm text-muted-foreground">
 						No pipeline session matches this URL. The session may have been removed or
 						the link may be incorrect.
 					</p>
@@ -177,7 +177,7 @@ function SessionSummaryCard({ now, report }: { now: number; report: PipelineSess
 	return (
 		<Card className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
 			<div>
-				<p className="text-xs font-medium text-neutral-500 uppercase">Status</p>
+				<p className="text-xs font-medium text-muted-foreground uppercase">Status</p>
 				<Badge className="mt-2" tone={sessionTone(report.session.status)}>
 					{sessionStatusLabel(report.session.status)}
 				</Badge>
@@ -194,7 +194,7 @@ function SessionSummaryCard({ now, report }: { now: number; report: PipelineSess
 			</div>
 			{skillIntents.length > 0 ? (
 				<div>
-					<p className="text-xs font-medium text-neutral-500 uppercase">
+					<p className="text-xs font-medium text-muted-foreground uppercase">
 						Skill directive intent
 					</p>
 					<div className="mt-2 flex flex-wrap gap-1.5">
@@ -204,33 +204,31 @@ function SessionSummaryCard({ now, report }: { now: number; report: PipelineSess
 							</Badge>
 						))}
 					</div>
-					<p className="mt-1 text-xs text-neutral-500">
+					<p className="mt-1 text-xs text-muted-foreground">
 						Skill steps are directive runs, not audits. Review-only is
 						instruction-enforced.
 					</p>
 				</div>
 			) : null}
 			<div>
-				<p className="text-xs font-medium text-neutral-500 uppercase">Project</p>
-				<p className="mt-2 text-sm text-neutral-700 dark:text-neutral-200">
-					{report.session.projectName}
-				</p>
+				<p className="text-xs font-medium text-muted-foreground uppercase">Project</p>
+				<p className="mt-2 text-sm text-foreground">{report.session.projectName}</p>
 			</div>
 			<div>
-				<p className="text-xs font-medium text-neutral-500 uppercase">Started</p>
-				<p className="mt-2 text-sm text-neutral-700 dark:text-neutral-200">
+				<p className="text-xs font-medium text-muted-foreground uppercase">Started</p>
+				<p className="mt-2 text-sm text-foreground">
 					{formatDate(report.session.startedAt)}
 				</p>
 			</div>
 			<div>
-				<p className="text-xs font-medium text-neutral-500 uppercase">Duration</p>
-				<p className="mt-2 text-sm text-neutral-700 dark:text-neutral-200">
+				<p className="text-xs font-medium text-muted-foreground uppercase">Duration</p>
+				<p className="mt-2 text-sm text-foreground">
 					{formatActiveDuration(report.session.durationMs, report.session.startedAt, now)}
 				</p>
 			</div>
 			<div>
-				<p className="text-xs font-medium text-neutral-500 uppercase">Progress</p>
-				<p className="mt-2 text-sm text-neutral-700 dark:text-neutral-200">
+				<p className="text-xs font-medium text-muted-foreground uppercase">Progress</p>
+				<p className="mt-2 text-sm text-foreground">
 					Step {report.session.currentStepIndex} of {report.session.totalSteps}
 				</p>
 			</div>
@@ -255,7 +253,7 @@ function StepsCard({ now, report }: { now: number; report: PipelineSessionReport
 	return (
 		<Card className="space-y-3">
 			<h2 className="text-lg font-semibold text-foreground">Steps</h2>
-			<p className="text-sm text-neutral-600 dark:text-neutral-300">{stepSummary(report)}</p>
+			<p className="text-sm text-muted-foreground">{stepSummary(report)}</p>
 			<div className="space-y-3">
 				{buildStepRows(report).map((row) =>
 					row.kind === 'executed' ? (

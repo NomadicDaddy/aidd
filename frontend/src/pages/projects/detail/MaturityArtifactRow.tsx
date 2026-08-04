@@ -28,17 +28,15 @@ export function MaturityArtifactRow({
 	const viewable = onOpen !== undefined && viewerTarget !== null;
 	const labelBlock = (
 		<div className="flex min-w-0 items-center gap-2">
-			<span className="truncate font-mono text-xs text-neutral-700 dark:text-neutral-300">
-				{artifact.slug}
-			</span>
+			<span className="truncate font-mono text-xs text-foreground">{artifact.slug}</span>
 			{viewable ? (
-				<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+				<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 			) : null}
-			<span className="truncate text-xs text-neutral-500">{artifact.label}</span>
+			<span className="truncate text-xs text-muted-foreground">{artifact.label}</span>
 		</div>
 	);
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-neutral-200 px-2.5 py-1.5 dark:border-neutral-800">
+		<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-2.5 py-1.5">
 			{viewable ? (
 				<button
 					aria-label={`View ${artifact.label}`}
@@ -54,7 +52,7 @@ export function MaturityArtifactRow({
 				<Badge tone={artifactTone(artifact)}>{artifactStatusLabel(artifact)}</Badge>
 				{artifact.required ? <Badge tone="teal">required</Badge> : null}
 				{artifact.mtime ? (
-					<span className="text-xs text-neutral-500">
+					<span className="text-xs text-muted-foreground">
 						{formatRelativeAge(artifact.mtime)}
 					</span>
 				) : null}

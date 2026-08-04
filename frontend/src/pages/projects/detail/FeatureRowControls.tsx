@@ -35,7 +35,7 @@ export function FeatureMilestoneControl({
 	const milestone = typeof feature.milestone === 'string' ? feature.milestone : '';
 	const milestoneIsKnown = milestone === '' || milestoneOptions.includes(milestone);
 	if (!roadmap) {
-		return <span className="text-xs text-neutral-500">—</span>;
+		return <span className="text-xs text-muted-foreground">—</span>;
 	}
 	return (
 		<div className="flex flex-wrap items-center gap-2">

@@ -31,15 +31,15 @@ export function LocalAiddHistoryPanel({
 			};
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b px-4 py-3 dark:border-neutral-800">
+			<div className="border-b border-border px-4 py-3">
 				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
-				<p className="text-xs text-neutral-500">{description}</p>
+				<p className="text-xs text-muted-foreground">{description}</p>
 			</div>
 			{hasRuns ? (
 				<>
-					<section className="border-b last:border-0 dark:border-neutral-800">
+					<section className="border-b border-border last:border-0">
 						<div className="px-4 py-3">
-							<h3 className="text-xs font-semibold text-neutral-500 uppercase">
+							<h3 className="text-xs font-semibold text-muted-foreground uppercase">
 								Runs
 							</h3>
 						</div>
@@ -50,22 +50,22 @@ export function LocalAiddHistoryPanel({
 								runs={runList}
 							/>
 						) : running.length > 0 ? (
-							<div className="px-4 pb-4 text-sm text-neutral-500">
+							<div className="px-4 pb-4 text-sm text-muted-foreground">
 								A run is in progress. Its summary will appear here once it finishes.
 							</div>
 						) : (
-							<div className="px-4 pb-4 text-sm text-neutral-500">
+							<div className="px-4 pb-4 text-sm text-muted-foreground">
 								No run summary entries found.
 							</div>
 						)}
 					</section>
 					{running.length > 0 ? (
-						<section className="border-b last:border-0 dark:border-neutral-800">
+						<section className="border-b border-border last:border-0">
 							<div className="px-4 py-3">
-								<h3 className="text-xs font-semibold text-neutral-500 uppercase">
+								<h3 className="text-xs font-semibold text-muted-foreground uppercase">
 									In progress
 								</h3>
-								<p className="text-xs text-neutral-500">
+								<p className="text-xs text-muted-foreground">
 									A run is active; its summary will appear under Runs once it
 									finishes.
 								</p>
@@ -76,10 +76,10 @@ export function LocalAiddHistoryPanel({
 					{orphans.length > 0 ? (
 						<section>
 							<div className="px-4 py-3">
-								<h3 className="text-xs font-semibold text-neutral-500 uppercase">
+								<h3 className="text-xs font-semibold text-muted-foreground uppercase">
 									Unassigned iterations
 								</h3>
-								<p className="text-xs text-neutral-500">
+								<p className="text-xs text-muted-foreground">
 									Iterations whose start time does not fall within any recorded
 									run window.
 								</p>
@@ -91,14 +91,14 @@ export function LocalAiddHistoryPanel({
 			) : (
 				<section>
 					<div className="px-4 py-3">
-						<h3 className="text-xs font-semibold text-neutral-500 uppercase">
+						<h3 className="text-xs font-semibold text-muted-foreground uppercase">
 							Iterations
 						</h3>
 					</div>
 					{hasIterationRows ? (
 						<LocalIterationsTable iterations={iterations} now={now} />
 					) : (
-						<div className="px-4 pb-4 text-sm text-neutral-500">
+						<div className="px-4 pb-4 text-sm text-muted-foreground">
 							No aidd iterations found.
 						</div>
 					)}

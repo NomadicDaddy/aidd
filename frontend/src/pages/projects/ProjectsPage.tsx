@@ -166,7 +166,7 @@ export function ProjectsPage() {
 			/>
 
 			{hiddenSpernakitCount > 0 ? (
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Spernakit template checkout hidden — enable “Show Spernakit in projects list” in
 					Settings to display it.
 				</p>

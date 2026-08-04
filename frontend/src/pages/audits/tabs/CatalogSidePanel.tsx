@@ -36,7 +36,7 @@ export function CatalogSidePanel({
 			<Card className="space-y-3">
 				<div className="space-y-1">
 					<div className={fieldLabelClass}>Launch Targets</div>
-					<p className="text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="text-xs text-muted-foreground">
 						Select one or more projects to enable Run Selected, Run All, and Review.
 					</p>
 				</div>
@@ -49,10 +49,10 @@ export function CatalogSidePanel({
 								type="checkbox"
 							/>
 							<span>
-								<span className="block font-medium text-neutral-900 dark:text-neutral-100">
+								<span className="block font-medium text-foreground">
 									{project.name}
 								</span>
-								<span className="block text-xs break-all text-neutral-500">
+								<span className="block text-xs break-all text-muted-foreground">
 									{project.path}
 								</span>
 							</span>
@@ -67,7 +67,7 @@ export function CatalogSidePanel({
 						<div className="font-medium text-foreground">
 							{selectedAudit ?? 'Select an audit'}
 						</div>
-						<div className="text-xs break-all text-neutral-500">{auditPath}</div>
+						<div className="text-xs break-all text-muted-foreground">{auditPath}</div>
 					</div>
 					<Button
 						disabled={!dirty || savePending || !selectedAudit}
@@ -79,7 +79,7 @@ export function CatalogSidePanel({
 				</div>
 				<textarea
 					aria-label="Audit definition markdown"
-					className="min-h-[420px] w-full resize-y rounded-md border border-neutral-200 bg-white p-3 font-mono text-xs text-neutral-900 outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus-visible:ring-neutral-800"
+					className="min-h-[420px] w-full resize-y rounded-md border border-border bg-card p-3 font-mono text-xs text-foreground outline-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring"
 					onChange={(event) => onContentChange(event.target.value)}
 					value={content}
 				/>

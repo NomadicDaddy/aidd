@@ -107,13 +107,13 @@ function FileTreeNode({
 		return (
 			<>
 				<button
-					className="flex w-full items-center gap-1.5 border-b border-neutral-100 py-1.5 pr-3 text-left text-neutral-700 transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-900 dark:text-neutral-300 dark:hover:bg-teal-950/20"
+					className="flex w-full items-center gap-1.5 border-b border-border py-1.5 pr-3 text-left text-foreground transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:bg-teal-950/20"
 					onClick={() => onToggleDir(node.path)}
 					style={indent}
 					type="button">
 					<ChevronRight
 						className={cn(
-							'h-3.5 w-3.5 shrink-0 text-neutral-400 transition-transform',
+							'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
 							isOpen && 'rotate-90',
 						)}
 					/>
@@ -144,18 +144,18 @@ function FileTreeNode({
 	return (
 		<button
 			className={cn(
-				'flex w-full items-center gap-2 border-b border-neutral-100 py-1.5 pr-3 text-left transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-900 dark:hover:bg-teal-950/20',
+				'flex w-full items-center gap-2 border-b border-border py-1.5 pr-3 text-left transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:bg-teal-950/20',
 				selected
 					? 'bg-teal-50 text-teal-950 dark:bg-teal-950/30 dark:text-teal-100'
-					: 'text-neutral-700 dark:text-neutral-300',
+					: 'text-foreground',
 			)}
 			onClick={() => onSelect(node.path)}
 			style={indent}
 			type="button">
-			<FileText className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+			<FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 			<span className="flex min-w-0 flex-1 items-baseline gap-2">
 				<span className="truncate font-mono text-xs">{node.name}</span>
-				<span className="shrink-0 text-[0.7rem] text-neutral-500 dark:text-neutral-400">
+				<span className="shrink-0 text-[0.7rem] text-muted-foreground">
 					{formatBytes(node.file.sizeBytes)}
 				</span>
 			</span>
@@ -208,7 +208,7 @@ export function CodeFileTree({
 	}
 	return (
 		<div className="space-y-2">
-			<div className="max-h-[34rem] overflow-y-auto rounded-md border border-neutral-200 dark:border-neutral-800">
+			<div className="max-h-[34rem] overflow-y-auto rounded-md border border-border">
 				{sortedChildren(tree).map((child) => (
 					<FileTreeNode
 						depth={0}

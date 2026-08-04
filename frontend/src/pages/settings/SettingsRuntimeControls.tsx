@@ -67,7 +67,7 @@ export function SettingsRuntimeControls({
 						<h2 className="text-sm font-semibold text-teal-700 dark:text-teal-300">
 							Control Panel Runtime
 						</h2>
-						<p className="mt-1 max-w-2xl text-sm text-neutral-600 dark:text-neutral-400">
+						<p className="mt-1 max-w-2xl text-sm text-muted-foreground">
 							Manage the running aidd web backend.
 						</p>
 					</div>

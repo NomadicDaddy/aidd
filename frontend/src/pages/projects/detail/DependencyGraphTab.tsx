@@ -166,7 +166,7 @@ export function DependencyGraphTab({
 
 	if (features.length === 0) {
 		return (
-			<Card className="py-10 text-center text-sm text-neutral-500">
+			<Card className="py-10 text-center text-sm text-muted-foreground">
 				This project has no features in <code>.aidd/features</code> yet.
 			</Card>
 		);
@@ -201,10 +201,10 @@ export function DependencyGraphTab({
 							</div>
 						</div>
 						<div className="grid gap-3 lg:grid-cols-[minmax(14rem,1fr)_12rem_13rem_12rem]">
-							<label className="grid gap-1 text-xs font-medium text-neutral-500">
+							<label className="grid gap-1 text-xs font-medium text-muted-foreground">
 								<span className={fieldLabelClass}>Search</span>
 								<div className="relative">
-									<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+									<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 									<Input
 										aria-label="Search dependency graph"
 										className="pl-9"
@@ -248,7 +248,7 @@ export function DependencyGraphTab({
 						</div>
 					</Card>
 					{visibleNodes.length === 0 ? (
-						<Card className="py-10 text-center text-sm text-neutral-500">
+						<Card className="py-10 text-center text-sm text-muted-foreground">
 							No dependency nodes match the active filters.
 						</Card>
 					) : (

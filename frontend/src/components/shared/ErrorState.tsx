@@ -1,6 +1,8 @@
 import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 
+import { cn } from '../../lib/cn.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { Button } from '../ui/button.tsx';
 import { Card } from '../ui/card.tsx';
 
@@ -17,7 +19,7 @@ export function ErrorState({
 }) {
 	const detail = message ?? (error instanceof Error ? error.message : 'Unknown error.');
 	return (
-		<Card className="border-red-200 bg-red-50 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+		<Card className={cn('text-sm', toneBorder.red, toneSurface.red, toneText.red)}>
 			<div className="flex items-start gap-2">
 				<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
 				<div className="flex-1">

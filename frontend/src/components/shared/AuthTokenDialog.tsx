@@ -68,24 +68,20 @@ export function AuthTokenDialog() {
 				{/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
 				<form className="space-y-5 p-5" onSubmit={submit}>
 					<div className="flex items-start gap-3">
-						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-300">
+						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-accent/30 bg-accent-muted text-accent-muted-foreground">
 							<KeyRound className="h-5 w-5" />
 						</div>
 						<div className="min-w-0">
 							<h2 className="text-base font-semibold text-foreground" id={TITLE_ID}>
 								Control panel access
 							</h2>
-							<p
-								className="mt-1 text-sm text-neutral-600 dark:text-neutral-400"
-								id={DESCRIPTION_ID}>
+							<p className="mt-1 text-sm text-foreground" id={DESCRIPTION_ID}>
 								Enter the configured web access token for this browser.
 							</p>
 						</div>
 					</div>
 					<label className="block space-y-2">
-						<span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-							Access token
-						</span>
+						<span className="text-sm font-medium text-foreground">Access token</span>
 						<Input
 							autoComplete="off"
 							disabled={verifying}

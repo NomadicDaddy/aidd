@@ -20,7 +20,7 @@ export function Pagination({
 	const start = total === 0 ? 0 : page * pageSize + 1;
 	const end = Math.min(total, (page + 1) * pageSize);
 	return (
-		<div className="flex items-center justify-between border-t border-neutral-200 px-4 py-3 text-xs text-neutral-500 dark:border-neutral-800">
+		<div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
 			<span>
 				Showing {start}–{end} of {total}
 			</span>

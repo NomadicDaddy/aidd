@@ -21,15 +21,13 @@ export function ProjectAdvisorRecommendation({
 	trimmedDescription: string;
 }) {
 	return (
-		<Card className="space-y-2 border-teal-300 bg-white dark:border-teal-800 dark:bg-neutral-950">
+		<Card className="space-y-2 border-teal-300 bg-card dark:border-teal-800">
 			<div className="flex items-center gap-2 text-sm font-medium">
 				<Sparkles className="h-4 w-4 text-teal-600" />
 				Advisor recommends:{' '}
 				<span className="text-teal-700 dark:text-teal-300">{recommendation.mode}</span>
 			</div>
-			<p className="text-xs text-neutral-600 dark:text-neutral-300">
-				{recommendation.reasoning}
-			</p>
+			<p className="text-xs text-foreground">{recommendation.reasoning}</p>
 			{recommendation.mode === 'ingest' ? (
 				<div className="space-y-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
 					<p>

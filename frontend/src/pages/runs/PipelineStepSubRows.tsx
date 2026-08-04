@@ -30,28 +30,30 @@ export function PipelineStepSubRows({
 	// as having its report page open). Instantiated only while this session is expanded.
 	const report = usePipelineSessionReport(sessionId);
 	if (report.isLoading) {
-		return <p className="px-4 py-3 text-xs text-neutral-500">Loading steps…</p>;
+		return <p className="px-4 py-3 text-xs text-muted-foreground">Loading steps…</p>;
 	}
 	if (!report.data) {
-		return <p className="px-4 py-3 text-xs text-neutral-500">Step details are unavailable.</p>;
+		return (
+			<p className="px-4 py-3 text-xs text-muted-foreground">Step details are unavailable.</p>
+		);
 	}
 	const rows = buildStepRows(report.data);
 	if (rows.length === 0) {
-		return <p className="px-4 py-3 text-xs text-neutral-500">No steps recorded yet.</p>;
+		return <p className="px-4 py-3 text-xs text-muted-foreground">No steps recorded yet.</p>;
 	}
 	return (
-		<ol aria-label="Pipeline steps" className="divide-y dark:divide-neutral-800">
+		<ol aria-label="Pipeline steps" className="divide-y divide-border">
 			{rows.map((row) => {
 				if (row.kind === 'pending') {
 					return (
 						<li
-							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-neutral-500 md:grid md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] md:gap-0 md:px-0 md:py-0"
+							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground md:grid md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] md:gap-0 md:px-0 md:py-0"
 							key={`pending-${row.sequenceNumber}`}>
 							<div className="flex min-w-0 basis-full items-center gap-2 md:px-4 md:py-2">
 								<span className="w-6 text-right font-mono">
 									{row.sequenceNumber}.
 								</span>
-								<span className="truncate text-neutral-500 dark:text-neutral-400">
+								<span className="truncate text-muted-foreground">
 									{row.step.name}
 								</span>
 							</div>
@@ -86,12 +88,10 @@ export function PipelineStepSubRows({
 						<div
 							className="flex min-w-0 basis-full items-center gap-2 py-2 pr-3"
 							style={{ paddingLeft: `${16 + Math.min(step.depth, 4) * 16}px` }}>
-							<span className="w-6 shrink-0 text-right font-mono text-neutral-500">
+							<span className="w-6 shrink-0 text-right font-mono text-muted-foreground">
 								{anchor ? `${step.sequenceNumber}.` : '·'}
 							</span>
-							<span className="truncate text-neutral-700 dark:text-neutral-200">
-								{step.stepName}
-							</span>
+							<span className="truncate text-foreground">{step.stepName}</span>
 						</div>
 						<span aria-hidden="true" className="hidden md:block" />
 						<div className="md:px-3 md:py-2">
@@ -101,7 +101,7 @@ export function PipelineStepSubRows({
 							{step.executionIdentity ? (
 								<ExecutionIdentityBadges {...step.executionIdentity} />
 							) : (
-								<span className="text-neutral-500">—</span>
+								<span className="text-muted-foreground">—</span>
 							)}
 						</div>
 						<div className="min-w-0 md:px-3 md:py-2">
@@ -112,7 +112,7 @@ export function PipelineStepSubRows({
 								</p>
 							)}
 						</div>
-						<span className="whitespace-nowrap text-neutral-500 md:px-3 md:py-2">
+						<span className="whitespace-nowrap text-muted-foreground md:px-3 md:py-2">
 							{formatActiveDuration(step.durationMs, step.startedAt, now)}
 						</span>
 						<div className="md:px-3 md:py-2">
@@ -128,7 +128,7 @@ export function PipelineStepSubRows({
 									Console
 								</Button>
 							) : (
-								<span className="text-neutral-500">—</span>
+								<span className="text-muted-foreground">—</span>
 							)}
 						</div>
 					</li>

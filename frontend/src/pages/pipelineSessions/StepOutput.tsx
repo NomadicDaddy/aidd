@@ -76,7 +76,7 @@ export function StepOutput({ output }: { output: string }) {
 		<div className="mt-3 space-y-2">
 			<pre
 				aria-label="Step output"
-				className="overflow-auto rounded-md bg-neutral-100 p-3 text-xs text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200"
+				className="overflow-auto rounded-md bg-muted p-3 text-xs text-foreground"
 				id={outputId}>
 				{displayed}
 				{collapsed ? '\n…' : ''}

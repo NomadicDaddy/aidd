@@ -21,7 +21,7 @@ export function highlightLine(line: string, query: string): ReactNode {
 	while (match !== -1) {
 		if (match > cursor) nodes.push(line.slice(cursor, match));
 		nodes.push(
-			<mark className="rounded-sm bg-amber-300 text-neutral-950" key={key}>
+			<mark className="rounded-sm bg-amber-300 text-foreground" key={key}>
 				{line.slice(match, match + query.length)}
 			</mark>,
 		);

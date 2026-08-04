@@ -103,9 +103,11 @@ export function ActiveRunRow({
 					</ConsoleSelectionButton>
 					<RunCommandInfo command={run.launchCommand} runId={run.id} />
 				</div>
-				<div className="mt-1 text-xs text-neutral-500">{formatDate(run.startedAt)}</div>
+				<div className="mt-1 text-xs text-muted-foreground">
+					{formatDate(run.startedAt)}
+				</div>
 				{run.aiSummary ? (
-					<div className="mt-1 line-clamp-2 max-w-[26rem] text-xs text-neutral-400 dark:text-neutral-500">
+					<div className="mt-1 line-clamp-2 max-w-[26rem] text-xs text-muted-foreground">
 						{run.aiSummary}
 					</div>
 				) : null}
@@ -115,7 +117,7 @@ export function ActiveRunRow({
 			</td>
 			<td className="px-3 py-3">
 				<Badge tone="neutral">Run</Badge>
-				<div className="mt-1 text-xs text-neutral-500">{runSourceLabel(run)}</div>
+				<div className="mt-1 text-xs text-muted-foreground">{runSourceLabel(run)}</div>
 			</td>
 			<td className="px-3 py-3">
 				<div className="flex max-w-[14rem] flex-wrap items-center gap-1.5">

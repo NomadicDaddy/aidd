@@ -38,7 +38,7 @@ export function FeatureFilters({
 				<label className="space-y-1">
 					<span className={fieldLabelClass}>Search</span>
 					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							className="w-full pl-9"
 							onChange={(event) => onFilterChange('featureQ', event.target.value)}
@@ -92,7 +92,7 @@ export function FeatureFilters({
 				</label>
 			</div>
 			{hasFilters ? (
-				<div className="flex items-center justify-between gap-3 text-xs text-neutral-500">
+				<div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
 					<span>
 						Showing {filteredTotal} of {total} features
 					</span>

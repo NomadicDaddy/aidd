@@ -7,6 +7,8 @@
  *
  * - `toneText`  — foreground text/icon color (light + dark)
  * - `toneBadge` — subtle badge surface: background + text + inset ring (light + dark)
+ * - `toneSurface` — subtle background only, for larger status regions
+ * - `toneBorder` — status-aligned border color
  * - `toneSolid` — solid fill for dots, status pulses, and progress bars (theme-independent)
  *
  * Consumers (`Metric`, `Badge`, the run liveness dot, project/fleet health bands) import from here
@@ -36,11 +38,31 @@ export const toneBadge: Record<Tone, string> = {
 	violet: 'bg-violet-50 text-violet-800 ring-violet-200/70 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-800/50',
 };
 
+/** Subtle background only, for larger status regions that compose their own text and border. */
+export const toneSurface: Record<Tone, string> = {
+	amber: 'bg-amber-50 dark:bg-amber-950/40',
+	emerald: 'bg-emerald-50 dark:bg-emerald-950/40',
+	neutral: 'bg-muted',
+	red: 'bg-red-50 dark:bg-red-950/40',
+	teal: 'bg-accent-muted',
+	violet: 'bg-violet-50 dark:bg-violet-950/40',
+};
+
+/** Status-aligned border color for larger regions. */
+export const toneBorder: Record<Tone, string> = {
+	amber: 'border-amber-300 dark:border-amber-700/60',
+	emerald: 'border-emerald-300 dark:border-emerald-700/60',
+	neutral: 'border-border',
+	red: 'border-red-200 dark:border-red-900/60',
+	teal: 'border-accent/30',
+	violet: 'border-violet-300 dark:border-violet-700/60',
+};
+
 /** Solid fill for dots, status pulses, and progress bars (theme-independent). */
 export const toneSolid: Record<Tone, string> = {
 	amber: 'bg-amber-500',
 	emerald: 'bg-emerald-500',
-	neutral: 'bg-neutral-400',
+	neutral: 'bg-muted-foreground',
 	red: 'bg-red-500',
 	teal: 'bg-teal-500',
 	violet: 'bg-violet-500',

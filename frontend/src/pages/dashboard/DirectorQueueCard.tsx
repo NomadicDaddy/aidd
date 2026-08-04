@@ -57,14 +57,14 @@ export function DirectorQueueCard({
 				)}
 				{suggestions.slice(0, 4).map((suggestion) => (
 					<div
-						className="rounded-md border border-neutral-200 bg-white/75 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:border-neutral-800 dark:bg-slate-950/60 dark:hover:border-teal-800 dark:hover:bg-teal-950/20"
+						className="rounded-md border border-border bg-card/75 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:hover:border-teal-800 dark:hover:bg-teal-950/20"
 						key={suggestion.id}>
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div className="min-w-0">
 								<h3 className="line-clamp-2 text-sm font-semibold text-foreground">
 									{suggestion.title}
 								</h3>
-								<p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
+								<p className="mt-1 truncate text-xs text-muted-foreground">
 									{suggestion.projectId ?? 'fleet'} / {suggestion.taskType}
 								</p>
 							</div>
@@ -72,7 +72,7 @@ export function DirectorQueueCard({
 								{suggestion.riskLevel}
 							</Badge>
 						</div>
-						<p className="line-clamp-3 text-sm text-neutral-600 dark:text-neutral-300">
+						<p className="line-clamp-3 text-sm text-muted-foreground">
 							{suggestion.description}
 						</p>
 					</div>

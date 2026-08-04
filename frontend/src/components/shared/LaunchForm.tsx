@@ -6,7 +6,9 @@ import { useId } from 'react';
 import type { ProjectSummary } from '../../api/types.ts';
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
+import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 import { Button } from '../ui/button.tsx';
 import { Card } from '../ui/card.tsx';
 import { Input } from '../ui/input.tsx';
@@ -66,7 +68,7 @@ export function LaunchForm({
 							))}
 						</select>
 						{projectMissing ? (
-							<p className="text-xs text-amber-700 dark:text-amber-300" id={hintId}>
+							<p className={cn('text-xs', toneText.amber)} id={hintId}>
 								Choose a project to enable launch.
 							</p>
 						) : null}
@@ -80,7 +82,7 @@ export function LaunchForm({
 						/>
 					</label>
 				</div>
-				<div className="rounded-md border border-teal-200 bg-teal-50/60 p-3 text-sm dark:border-teal-900 dark:bg-teal-950/30">
+				<div className="rounded-md border border-accent/30 bg-accent-muted/60 p-3 text-sm">
 					<p className="font-medium text-foreground">
 						Skills run as autonomous directives, not aidd audits.
 					</p>
@@ -95,7 +97,7 @@ export function LaunchForm({
 							<option value="review-only">Review only</option>
 							<option value="apply-changes">Apply changes</option>
 						</select>
-						<span className="text-xs text-neutral-600 dark:text-neutral-300">
+						<span className="text-xs text-muted-foreground">
 							{executionIntent === 'review-only'
 								? 'The directive forbids repository, metadata, changelog, and git mutations.'
 								: 'The directive may execute commands, edit project files and metadata, and create commits when needed.'}

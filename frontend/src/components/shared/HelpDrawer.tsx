@@ -33,11 +33,11 @@ export function HelpDrawer({
 	return (
 		<Dialog aria-labelledby={TITLE_ID} onClose={onClose} open={open}>
 			<div
-				className="fixed inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-neutral-200 bg-white shadow-2xl dark:border-teal-900/70 dark:bg-slate-950"
+				className="fixed inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-card shadow-2xl"
 				onMouseDown={(event) => event.stopPropagation()}>
-				<div className="flex items-start justify-between gap-4 border-b border-neutral-200 px-5 py-4 dark:border-slate-800">
+				<div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
 					<div>
-						<div className="text-[0.65rem] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-300">
+						<div className="text-[0.65rem] font-semibold tracking-wide text-accent uppercase">
 							Help
 						</div>
 						<h2 className="text-base font-semibold text-foreground" id={TITLE_ID}>
@@ -46,7 +46,7 @@ export function HelpDrawer({
 					</div>
 					<IconButton
 						ariaLabel="Close help"
-						className="-mt-1 -mr-1 border-0 bg-transparent text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-slate-800 dark:hover:text-neutral-100"
+						className="-mt-1 -mr-1 border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
 						onClick={onClose}
 						variant="ghost">
 						<X className="h-4 w-4" />
@@ -54,17 +54,13 @@ export function HelpDrawer({
 				</div>
 				<div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
 					<Suspense
-						fallback={
-							<div className="text-sm text-neutral-500 dark:text-neutral-400">
-								Loading…
-							</div>
-						}>
+						fallback={<div className="text-sm text-muted-foreground">Loading…</div>}>
 						<HelpDrawerBody slug={slug} />
 					</Suspense>
 				</div>
-				<div className="border-t border-neutral-200 px-5 py-3 dark:border-slate-800">
+				<div className="border-t border-border px-5 py-3">
 					<Link
-						className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-600 dark:text-teal-300"
+						className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/80"
 						onClick={onClose}
 						to={`/docs/${slug}`}>
 						<ExternalLink className="h-3.5 w-3.5" />

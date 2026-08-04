@@ -136,7 +136,7 @@ export function FeatureSummaryCard({
 							{totals.pending} pending
 						</Badge>
 					</div>
-					<p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="mt-1 text-xs text-muted-foreground">
 						Fleet feature counts by application and backlog type.
 					</p>
 				</div>
@@ -201,7 +201,7 @@ export function FeatureSummaryCard({
 				<div className="-mx-2 overflow-x-auto px-2">
 					<table className="min-w-[700px] text-sm">
 						<thead>
-							<tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500 uppercase dark:border-neutral-800 dark:text-neutral-400">
+							<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
 								{summaryColumns.map((column) => (
 									<th
 										className={
@@ -218,13 +218,13 @@ export function FeatureSummaryCard({
 						<tbody>
 							{rows.map((row) => (
 								<tr
-									className="border-b border-neutral-100 last:border-b-0 dark:border-neutral-900"
+									className="border-b border-border last:border-b-0"
 									key={row.application}>
 									{summaryColumns.map((column) => (
 										<td
 											className={
 												column.align === 'right'
-													? 'px-3 py-2 text-right font-medium text-neutral-700 tabular-nums dark:text-neutral-200'
+													? 'px-3 py-2 text-right font-medium text-foreground tabular-nums'
 													: 'max-w-52 truncate px-3 py-2 font-medium text-foreground'
 											}
 											key={column.header}>
@@ -235,7 +235,7 @@ export function FeatureSummaryCard({
 							))}
 						</tbody>
 						<tfoot>
-							<tr className="border-t border-neutral-200 text-sm font-semibold text-neutral-950 dark:border-neutral-800 dark:text-neutral-50">
+							<tr className="border-t border-border text-sm font-semibold text-foreground">
 								{summaryColumns.map((column) => (
 									<td
 										className={

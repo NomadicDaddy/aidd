@@ -75,12 +75,12 @@ export function ProfileTab({
 				</div>
 				<Card>
 					<label className="grid gap-1">
-						<span className="text-xs font-medium text-neutral-500 uppercase">
+						<span className="text-xs font-medium text-muted-foreground uppercase">
 							Notes
 						</span>
 						<textarea
 							aria-label="Project profile notes"
-							className="min-h-24 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm outline-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100"
+							className="min-h-24 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none"
 							maxLength={4000}
 							onChange={(event) => updateNotes(event.target.value)}
 							placeholder="Optional context for why this profile was chosen."

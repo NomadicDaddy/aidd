@@ -23,10 +23,7 @@ const markdownComponents = {
 		/>
 	),
 	code: (props: React.ComponentProps<'code'>) => (
-		<code
-			{...props}
-			className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[0.85em] dark:bg-neutral-800"
-		/>
+		<code {...props} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]" />
 	),
 	h1: (props: React.ComponentProps<'h1'>) => (
 		<h1 {...props} className="mt-4 mb-2 text-lg font-semibold first:mt-0" />
@@ -40,29 +37,24 @@ const markdownComponents = {
 	h4: (props: React.ComponentProps<'h4'>) => (
 		<h4 {...props} className="mt-3 mb-1 text-sm font-medium first:mt-0" />
 	),
-	hr: (props: React.ComponentProps<'hr'>) => (
-		<hr {...props} className="my-4 border-neutral-200 dark:border-neutral-800" />
-	),
+	hr: (props: React.ComponentProps<'hr'>) => <hr {...props} className="my-4 border-border" />,
 	li: (props: React.ComponentProps<'li'>) => <li {...props} className="my-0.5" />,
 	ol: (props: React.ComponentProps<'ol'>) => <ol {...props} className="my-2 list-decimal pl-6" />,
 	p: (props: React.ComponentProps<'p'>) => <p {...props} className="my-2 leading-6" />,
 	pre: (props: React.ComponentProps<'pre'>) => (
 		<pre
 			{...props}
-			className="my-2 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-xs dark:border-neutral-800 dark:bg-neutral-900/70"
+			className="my-2 overflow-x-auto rounded-md border border-border bg-muted p-3 font-mono text-xs"
 		/>
 	),
 	table: (props: React.ComponentProps<'table'>) => (
 		<table {...props} className="my-2 border-collapse text-xs" />
 	),
 	td: (props: React.ComponentProps<'td'>) => (
-		<td {...props} className="border border-neutral-200 px-2 py-1 dark:border-neutral-800" />
+		<td {...props} className="border border-border px-2 py-1" />
 	),
 	th: (props: React.ComponentProps<'th'>) => (
-		<th
-			{...props}
-			className="border border-neutral-200 bg-neutral-50 px-2 py-1 text-left font-medium dark:border-neutral-800 dark:bg-neutral-900"
-		/>
+		<th {...props} className="border border-border bg-muted px-2 py-1 text-left font-medium" />
 	),
 	ul: (props: React.ComponentProps<'ul'>) => <ul {...props} className="my-2 list-disc pl-6" />,
 };
@@ -99,7 +91,7 @@ export function ArtifactViewerDialog({
 
 	const body = (() => {
 		if (query.isLoading) {
-			return <p className="text-xs text-neutral-500 dark:text-neutral-400">Loading…</p>;
+			return <p className="text-xs text-muted-foreground">Loading…</p>;
 		}
 		if (query.isError || !data) {
 			return (
@@ -110,7 +102,7 @@ export function ArtifactViewerDialog({
 		}
 		if (data.state !== 'ok') {
 			return (
-				<p className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-300">
+				<p className="rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
 					{data.state === 'missing'
 						? 'The file no longer exists on disk.'
 						: (data.reason ?? 'The file could not be read.')}
@@ -119,7 +111,7 @@ export function ArtifactViewerDialog({
 		}
 		if (data.kind === 'markdown' && !data.truncated) {
 			return (
-				<div className="text-sm text-neutral-800 dark:text-neutral-200">
+				<div className="text-sm text-foreground">
 					<ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
 						{data.content}
 					</ReactMarkdown>
@@ -141,7 +133,7 @@ export function ArtifactViewerDialog({
 					{jsonView === 'tree' ? (
 						<JsonTree value={parsedJson} />
 					) : (
-						<pre className="overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-xs whitespace-pre text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-300">
+						<pre className="overflow-x-auto rounded-md border border-border bg-muted p-3 font-mono text-xs whitespace-pre text-foreground">
 							{JSON.stringify(parsedJson, null, 2)}
 						</pre>
 					)}
@@ -149,7 +141,7 @@ export function ArtifactViewerDialog({
 			);
 		}
 		return (
-			<pre className="overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-xs whitespace-pre-wrap text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-300">
+			<pre className="overflow-x-auto rounded-md border border-border bg-muted p-3 font-mono text-xs whitespace-pre-wrap text-foreground">
 				{data.content}
 			</pre>
 		);
@@ -165,18 +157,18 @@ export function ArtifactViewerDialog({
 			overlayClassName="focus:outline-none"
 			role="dialog">
 			<DialogPanel className="flex max-h-[calc(100vh-3rem)] w-full max-w-4xl flex-col overflow-hidden">
-				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
+				<div className="flex items-start justify-between gap-3 border-b border-border p-4">
 					<div className="min-w-0">
 						<h2
 							className="text-sm font-semibold text-foreground"
 							id="artifact-viewer-title">
 							{target.label}
 						</h2>
-						<p className="mt-0.5 font-mono text-xs break-all text-neutral-500">
+						<p className="mt-0.5 font-mono text-xs break-all text-muted-foreground">
 							{target.path}
 						</p>
 						{displaySize !== null || target.mtime ? (
-							<p className="mt-0.5 text-xs text-neutral-500">
+							<p className="mt-0.5 text-xs text-muted-foreground">
 								{displaySize === null ? '—' : formatBytes(displaySize)}
 								{target.mtime
 									? ` · ${formatDate(target.mtime)} (${formatRelativeAge(target.mtime)})`

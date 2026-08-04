@@ -32,14 +32,19 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 			<div className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
 				{record.label}
 				{viewable ? (
-					<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+					<Eye
+						aria-hidden="true"
+						className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+					/>
 				) : null}
 			</div>
-			<div className="mt-0.5 font-mono text-xs break-all text-neutral-500">{record.path}</div>
+			<div className="mt-0.5 font-mono text-xs break-all text-muted-foreground">
+				{record.path}
+			</div>
 		</>
 	);
 	return (
-		<div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
+		<div className="rounded-md border border-border p-3">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 				{viewable ? (
 					<button
@@ -80,25 +85,25 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 					) : null}
 				</div>
 			</div>
-			<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+			<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 				<span>
-					<span className="font-medium text-neutral-500">State:</span>{' '}
+					<span className="font-medium text-muted-foreground">State:</span>{' '}
 					{record.exists ? 'present' : 'missing'}
 				</span>
 				<span>
-					<span className="font-medium text-neutral-500">Modified:</span>{' '}
+					<span className="font-medium text-muted-foreground">Modified:</span>{' '}
 					{record.mtime
 						? `${formatDate(record.mtime)} (${formatRelativeAge(record.mtime)})`
 						: '—'}
 				</span>
 				<span>
-					<span className="font-medium text-neutral-500">Age:</span>{' '}
+					<span className="font-medium text-muted-foreground">Age:</span>{' '}
 					{record.ageDays === null
 						? '—'
 						: `${record.ageDays} day${record.ageDays === 1 ? '' : 's'}`}
 				</span>
 				<span>
-					<span className="font-medium text-neutral-500">Size:</span>{' '}
+					<span className="font-medium text-muted-foreground">Size:</span>{' '}
 					{record.exists ? formatBytes(record.sizeBytes) : '—'}
 				</span>
 			</div>

@@ -53,7 +53,7 @@ export function ArtifactsTab({
 					<h2 className="text-sm font-semibold text-foreground">Artifact health</h2>
 					<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
 				</div>
-				<p className="text-sm text-neutral-500">
+				<p className="text-sm text-muted-foreground">
 					No artifact check data available. Run an artifact check from the CLI to populate{' '}
 					<code>.aidd/.artifacts-check.json</code>.
 				</p>
@@ -79,9 +79,9 @@ export function ArtifactsTab({
 			<div className="grid gap-3 sm:grid-cols-3 md:grid-cols-6">
 				{tiles.map((tile) => (
 					<div
-						className="rounded-md border border-neutral-200 p-3 text-center dark:border-neutral-800"
+						className="rounded-md border border-border p-3 text-center"
 						key={tile.label}>
-						<div className="text-xs text-neutral-500 uppercase">{tile.label}</div>
+						<div className="text-xs text-muted-foreground uppercase">{tile.label}</div>
 						<div className="mt-1 text-lg font-semibold text-foreground">
 							{tile.value}
 						</div>
@@ -91,29 +91,29 @@ export function ArtifactsTab({
 					</div>
 				))}
 			</div>
-			<div className="mt-3 grid gap-2 text-xs text-neutral-600 sm:grid-cols-2 dark:text-neutral-400">
+			<div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
 				<div>
-					<span className="font-medium text-neutral-500">Checked:</span>{' '}
+					<span className="font-medium text-muted-foreground">Checked:</span>{' '}
 					{formatDate(artifactCheck.checkedAt)} (
 					{formatRelativeAge(artifactCheck.checkedAt)})
 				</div>
 				<div>
-					<span className="font-medium text-neutral-500">Stale threshold:</span>{' '}
+					<span className="font-medium text-muted-foreground">Stale threshold:</span>{' '}
 					{artifactCheck.staleThresholdDays} day
 					{artifactCheck.staleThresholdDays === 1 ? '' : 's'}
 				</div>
 			</div>
 			<div className="mt-4">
-				<p className="mb-2 text-xs text-neutral-500">
+				<p className="mb-2 text-xs text-muted-foreground">
 					The health summary covers the assertion catalog checked by{' '}
 					<code>--check-artifacts</code>. The inventory also includes broader maturity
 					evidence such as feature metadata, audit reports, and deployment artifacts.
 				</p>
-				<h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+				<h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 					Artifact inventory ({inventoryCount})
 				</h3>
 				{inventoryCount === 0 ? (
-					<p className="text-sm text-neutral-500">
+					<p className="text-sm text-muted-foreground">
 						No individual artifact records or maturity evidence were reported.
 					</p>
 				) : (

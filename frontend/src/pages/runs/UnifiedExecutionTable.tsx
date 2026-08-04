@@ -50,7 +50,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 		<section className="space-y-2">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
-				<p className="text-xs text-neutral-500">{props.description}</p>
+				<p className="text-xs text-muted-foreground">{props.description}</p>
 			</div>
 			<Card className="overflow-hidden p-0">
 				<div className="hidden overflow-x-auto md:block">
@@ -66,7 +66,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 							<col className="w-[9%]" />
 							<col className="w-[12%]" />
 						</colgroup>
-						<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:bg-neutral-900">
+						<thead className="border-b bg-muted text-xs text-muted-foreground uppercase">
 							<tr>
 								<th className="py-3 pr-3 pl-4" scope="col">
 									Name
@@ -94,7 +94,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 						<tbody>
 							{entries.length === 0 && (
 								<tr>
-									<td className="px-4 py-4 text-neutral-500" colSpan={7}>
+									<td className="px-4 py-4 text-muted-foreground" colSpan={7}>
 										{props.emptyMessage}
 									</td>
 								</tr>
@@ -129,7 +129,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 										/>
 										{isMultiStepSession(entry.session) &&
 											expandedSessions.has(entry.session.id) && (
-												<tr className="border-b bg-neutral-50/60 last:border-0 dark:bg-neutral-900/40">
+												<tr className="border-b bg-muted/60 last:border-0">
 													<td className="p-0" colSpan={7}>
 														<PipelineStepSubRows
 															now={now}
@@ -157,10 +157,12 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 				</div>
 				<div
 					aria-label={title}
-					className="flex flex-col divide-y md:hidden dark:divide-neutral-800"
+					className="flex flex-col divide-y divide-border md:hidden"
 					role="list">
 					{entries.length === 0 && (
-						<p className="px-4 py-4 text-sm text-neutral-500">{props.emptyMessage}</p>
+						<p className="px-4 py-4 text-sm text-muted-foreground">
+							{props.emptyMessage}
+						</p>
 					)}
 					{entries.map((entry) =>
 						entry.kind === 'run' ? (
@@ -192,7 +194,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 								/>
 								{isMultiStepSession(entry.session) &&
 									expandedSessions.has(entry.session.id) && (
-										<div className="bg-neutral-50/60 dark:bg-neutral-900/40">
+										<div className="bg-muted/60">
 											<PipelineStepSubRows
 												now={now}
 												onSelectRun={(runId) =>

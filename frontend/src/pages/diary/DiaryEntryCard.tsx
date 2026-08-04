@@ -31,16 +31,14 @@ export function DiaryEntryCard({
 						) : null}
 						{entry.phase ? <Badge tone="teal">{entry.phase}</Badge> : null}
 						<span
-							className="text-xs text-neutral-500"
+							className="text-xs text-muted-foreground"
 							title={formatDate(`${entry.date}T00:00:00`)}>
 							{entry.date}
 						</span>
 					</div>
 					<h3 className="text-base font-semibold text-foreground">{entry.title}</h3>
 					{entry.summary ? (
-						<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-							{entry.summary}
-						</p>
+						<p className="mt-1 text-sm text-foreground">{entry.summary}</p>
 					) : null}
 				</div>
 				<Button
@@ -51,11 +49,11 @@ export function DiaryEntryCard({
 				</Button>
 			</div>
 			{expanded ? (
-				<div className="mt-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+				<div className="mt-3 border-t border-border pt-3">
 					<MarkdownContent markdown={entry.bodyMd} />
 					{entry.generatedBy ? (
 						<Link
-							className="mt-3 inline-block text-xs text-neutral-500 hover:underline"
+							className="mt-3 inline-block text-xs text-muted-foreground hover:underline"
 							to={`/pipeline-sessions/${entry.generatedBy}`}>
 							View generating run
 						</Link>

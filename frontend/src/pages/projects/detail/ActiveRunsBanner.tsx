@@ -29,16 +29,14 @@ export function ActiveRunsBanner({ projectPath }: { projectPath: string }) {
 			<ul className="min-w-0 flex-1 space-y-2">
 				{running.map((run) => (
 					<li
-						className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200/80 bg-white/60 px-3 py-1.5 text-sm dark:border-amber-900/60 dark:bg-amber-950/10"
+						className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200/80 bg-card/60 px-3 py-1.5 text-sm dark:border-amber-900/60 dark:bg-amber-950/10"
 						key={run.id}>
 						<div className="min-w-0">
 							<span className="inline-flex min-w-0 items-center gap-1.5">
-								<span className="font-mono text-xs text-neutral-900 dark:text-neutral-100">
-									{run.id}
-								</span>
+								<span className="font-mono text-xs text-foreground">{run.id}</span>
 								<RunCommandInfo command={run.launchCommand} runId={run.id} />
 							</span>
-							<span className="ml-2 text-xs text-neutral-600 dark:text-neutral-400">
+							<span className="ml-2 text-xs text-muted-foreground">
 								{run.mode} · started {formatDate(run.startedAt)}
 							</span>
 						</div>

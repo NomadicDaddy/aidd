@@ -40,7 +40,7 @@ export function CatalogTable({
 				<table
 					aria-label="Audit catalog"
 					className="w-full min-w-[960px] text-left text-sm">
-					<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
 							<th className="px-4 py-3" scope="col">
 								<input
@@ -74,7 +74,7 @@ export function CatalogTable({
 					<tbody>
 						{definitions.map((item) => (
 							<tr
-								className={`cursor-pointer border-b last:border-0 dark:border-neutral-800 ${selectedAudit === item.name ? 'bg-teal-50 dark:bg-teal-950/30' : ''}`}
+								className={`cursor-pointer border-b border-border last:border-0 ${selectedAudit === item.name ? 'bg-teal-50 dark:bg-teal-950/30' : ''}`}
 								key={item.name}
 								onClick={() => onSelect(item.name)}>
 								<td className="px-4 py-3">
@@ -89,7 +89,7 @@ export function CatalogTable({
 								</td>
 								<td className="px-4 py-3">
 									<div className="font-medium text-foreground">{item.name}</div>
-									<div className="text-xs break-all text-neutral-500">
+									<div className="text-xs break-all text-muted-foreground">
 										{item.path}
 									</div>
 								</td>
@@ -101,13 +101,13 @@ export function CatalogTable({
 											<Badge tone={bandTone[item.changePotential.band]}>
 												{item.changePotential.band}
 											</Badge>
-											<span className="text-xs text-neutral-500">
+											<span className="text-xs text-muted-foreground">
 												{item.changePotential.score} •{' '}
 												{item.changePotential.confidence.toLowerCase()} conf
 											</span>
 										</span>
 									) : (
-										<span className="text-xs text-neutral-400">—</span>
+										<span className="text-xs text-muted-foreground">—</span>
 									)}
 								</td>
 								<td className="px-4 py-3">
@@ -117,11 +117,11 @@ export function CatalogTable({
 									<span className="text-emerald-700">
 										{item.freshReportCount} fresh
 									</span>
-									<span className="mx-2 text-neutral-400">/</span>
+									<span className="mx-2 text-muted-foreground">/</span>
 									<span className="text-amber-700">
 										{item.staleReportCount} stale
 									</span>
-									<span className="mx-2 text-neutral-400">/</span>
+									<span className="mx-2 text-muted-foreground">/</span>
 									<span className="text-red-700">
 										{item.missingReportCount} missing
 									</span>
@@ -147,7 +147,7 @@ export function CatalogTable({
 				{definitions.length > 0 ? (
 					<div className="flex justify-end">
 						<button
-							className="rounded-md border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-900"
+							className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
 							onClick={allSelected ? onClearAll : onSelectAll}
 							type="button">
 							{allSelected ? 'Unselect All' : 'Select All'}
@@ -160,7 +160,7 @@ export function CatalogTable({
 					return (
 						<div
 							aria-label={item.name}
-							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-950/30' : 'border-neutral-200 hover:bg-teal-50/60 dark:border-neutral-800 dark:hover:bg-teal-950/20'}`}
+							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-950/30' : 'border-border hover:bg-teal-50/60 dark:hover:bg-teal-950/20'}`}
 							key={item.name}
 							role="group">
 							<div className="flex items-start justify-between gap-2">
@@ -181,7 +181,7 @@ export function CatalogTable({
 										<span className="block font-medium text-foreground">
 											{item.name}
 										</span>
-										<span className="block text-xs break-all text-neutral-500">
+										<span className="block text-xs break-all text-muted-foreground">
 											{item.path}
 										</span>
 									</button>
@@ -196,11 +196,11 @@ export function CatalogTable({
 							</div>
 							<dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
 								<div className="space-y-1">
-									<dt className="font-medium text-neutral-500 uppercase">
+									<dt className="font-medium text-muted-foreground uppercase">
 										Change
 									</dt>
 									<dd
-										className="text-neutral-700 dark:text-neutral-300"
+										className="text-foreground"
 										title={
 											item.changePotential
 												? describeChangePotential(item.changePotential)
@@ -212,33 +212,33 @@ export function CatalogTable({
 									</dd>
 								</div>
 								<div className="space-y-1">
-									<dt className="font-medium text-neutral-500 uppercase">
+									<dt className="font-medium text-muted-foreground uppercase">
 										Projects
 									</dt>
-									<dd className="text-neutral-700 dark:text-neutral-300">
+									<dd className="text-foreground">
 										{item.applicableProjectCount} applicable
 									</dd>
 								</div>
 								<div className="col-span-2 space-y-1">
-									<dt className="font-medium text-neutral-500 uppercase">
+									<dt className="font-medium text-muted-foreground uppercase">
 										Reports
 									</dt>
 									<dd className="text-xs">
 										<span className="text-emerald-700">
 											{item.freshReportCount} fresh
 										</span>
-										<span className="mx-2 text-neutral-400">/</span>
+										<span className="mx-2 text-muted-foreground">/</span>
 										<span className="text-amber-700">
 											{item.staleReportCount} stale
 										</span>
-										<span className="mx-2 text-neutral-400">/</span>
+										<span className="mx-2 text-muted-foreground">/</span>
 										<span className="text-red-700">
 											{item.missingReportCount} missing
 										</span>
 									</dd>
 								</div>
 								<div className="col-span-2 space-y-1">
-									<dt className="font-medium text-neutral-500 uppercase">
+									<dt className="font-medium text-muted-foreground uppercase">
 										Buckets
 									</dt>
 									<dd>

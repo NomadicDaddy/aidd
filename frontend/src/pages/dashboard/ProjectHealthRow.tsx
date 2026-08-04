@@ -44,7 +44,7 @@ export function ProjectHealthRow({
 	const ports = project.metadata.ports;
 
 	return (
-		<div className="rounded-md border border-neutral-200/80 bg-white/70 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:border-neutral-800/80 dark:bg-slate-950/60 dark:hover:border-teal-800 dark:hover:bg-teal-950/20">
+		<div className="rounded-md border border-border/80 bg-card/70 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:hover:border-teal-800 dark:hover:bg-teal-950/20">
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
@@ -56,9 +56,7 @@ export function ProjectHealthRow({
 						) : null}
 						<span className="truncate">{project.name}</span>
 					</div>
-					<div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
-						{project.path}
-					</div>
+					<div className="truncate text-xs text-muted-foreground">{project.path}</div>
 				</div>
 				<div className="flex flex-col items-end gap-1">
 					<Badge showDot tone={tone}>
@@ -90,7 +88,7 @@ export function ProjectHealthRow({
 					) : null}
 				</div>
 			) : null}
-			<div className="mt-2 flex items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+			<div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
 				<div className="flex items-center gap-2 truncate">
 					<span className="truncate">{healthBandLabel(project.priorityHealth.band)}</span>
 					{ports && (ports.frontendPort !== null || ports.backendPort !== null) ? (
@@ -114,7 +112,7 @@ export function ProjectHealthRow({
 					{project.featureStats.passing}/{project.featureStats.total}
 				</span>
 			</div>
-			<div className="mt-3 h-1.5 overflow-hidden rounded-full bg-neutral-200 dark:bg-slate-800">
+			<div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
 				<div
 					aria-hidden="true"
 					className={`h-full rounded-full ${toneSolid[tone]}`}

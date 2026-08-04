@@ -29,7 +29,7 @@ export function DiaryFeed({
 	if (groups.length === 0) {
 		return (
 			<Card>
-				<p className="text-sm text-neutral-500">{emptyMessage}</p>
+				<p className="text-sm text-muted-foreground">{emptyMessage}</p>
 			</Card>
 		);
 	}
@@ -38,7 +38,7 @@ export function DiaryFeed({
 		<div className="space-y-5">
 			{groups.map((group) => (
 				<section aria-label={group.label} key={group.key}>
-					<h2 className="mb-2 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+					<h2 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 						{group.label}
 					</h2>
 					<div className="space-y-3">

@@ -29,7 +29,7 @@ export function MilestonesTable({
 	return (
 		<div className="overflow-x-auto">
 			<table aria-label="Project milestones" className="w-full text-left text-sm">
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="w-14 px-4 py-3" scope="col">
 							#
@@ -48,15 +48,15 @@ export function MilestonesTable({
 						</th>
 					</tr>
 				</thead>
-				<tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+				<tbody className="divide-y divide-border">
 					{milestones.map((milestone, index) => (
 						<tr key={milestone.name}>
-							<td className="px-4 py-3 font-mono text-xs text-neutral-500">
+							<td className="px-4 py-3 font-mono text-xs text-muted-foreground">
 								{milestone.priority}
 							</td>
 							<td className="px-4 py-3">
 								<Link
-									className="font-medium text-neutral-900 hover:text-teal-700 dark:text-neutral-100 dark:hover:text-teal-300"
+									className="font-medium text-foreground hover:text-teal-700 dark:hover:text-teal-300"
 									to={projectDetailTabSearch('features', {
 										featureMilestone: milestone.name,
 									})}>
@@ -68,10 +68,10 @@ export function MilestonesTable({
 									</Badge>
 								) : null}
 							</td>
-							<td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">
+							<td className="px-4 py-3 text-muted-foreground">
 								{milestone.description ?? '—'}
 							</td>
-							<td className="px-4 py-3 font-mono text-xs text-neutral-500">
+							<td className="px-4 py-3 font-mono text-xs text-muted-foreground">
 								{milestoneProgressLabel(milestone.completed, milestone.total)}
 							</td>
 							<td className="px-4 py-3">

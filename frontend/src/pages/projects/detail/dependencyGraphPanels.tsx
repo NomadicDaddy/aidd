@@ -85,9 +85,8 @@ export function DependencyGraphCanvas({
 								return (
 									<path
 										className={cn(
-											'text-neutral-300 transition-all duration-150 dark:text-neutral-700',
-											isDimmedEdge &&
-												'text-neutral-200 opacity-20 dark:text-neutral-800',
+											'text-muted-foreground transition-all duration-150',
+											isDimmedEdge && 'opacity-20',
 											isSelectedEdge &&
 												'text-teal-500 opacity-100 dark:text-teal-300',
 										)}
@@ -188,7 +187,9 @@ export function SelectedFeaturePanel({
 		return (
 			<Card className="space-y-3">
 				<h2 className="text-sm font-semibold text-foreground">Selection</h2>
-				<p className="text-sm text-neutral-500">Select a feature node to inspect links.</p>
+				<p className="text-sm text-muted-foreground">
+					Select a feature node to inspect links.
+				</p>
 			</Card>
 		);
 	}
@@ -201,17 +202,23 @@ export function SelectedFeaturePanel({
 					{node.milestone ? <Badge tone="neutral">{node.milestone}</Badge> : null}
 				</div>
 				<h2 className="text-base font-semibold text-foreground">{node.title}</h2>
-				<p className="font-mono text-xs break-all text-neutral-500">{node.directory}</p>
+				<p className="font-mono text-xs break-all text-muted-foreground">
+					{node.directory}
+				</p>
 			</div>
 			<div className="grid grid-cols-2 gap-2 text-sm">
-				<div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
-					<p className="text-xs font-medium text-neutral-500 uppercase">Depends on</p>
+				<div className="rounded-md border border-border p-3">
+					<p className="text-xs font-medium text-muted-foreground uppercase">
+						Depends on
+					</p>
 					<p className="mt-1 text-lg font-semibold text-foreground">
 						{node.resolvedDependencies.length}
 					</p>
 				</div>
-				<div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
-					<p className="text-xs font-medium text-neutral-500 uppercase">Dependents</p>
+				<div className="rounded-md border border-border p-3">
+					<p className="text-xs font-medium text-muted-foreground uppercase">
+						Dependents
+					</p>
 					<p className="mt-1 text-lg font-semibold text-foreground">
 						{node.dependents.length}
 					</p>

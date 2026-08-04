@@ -71,7 +71,7 @@ export function MilestonePlanDialog({
 										<li
 											className="flex flex-wrap items-center gap-1.5 text-xs"
 											key={move.featureDirectory}>
-											<span className="font-mono text-neutral-700 dark:text-neutral-300">
+											<span className="font-mono text-foreground">
 												{move.featureDirectory}
 											</span>
 											<span className="text-muted-foreground">

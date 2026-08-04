@@ -37,8 +37,7 @@ const WAITING_KIND_LABEL: Record<WaitingApprovalKind, string> = {
 
 const MAX_ITEMS = 6;
 
-const ROW_CLASS =
-	'rounded-md border border-neutral-200 bg-white/75 p-3 dark:border-neutral-800 dark:bg-slate-950/60';
+const ROW_CLASS = 'rounded-md border border-border bg-card/75 p-3 ';
 
 /** A suggestion row — manages its own launch/dismiss mutation state. */
 function SuggestionRow({ suggestion }: { suggestion: SuggestionRecord }) {
@@ -52,7 +51,7 @@ function SuggestionRow({ suggestion }: { suggestion: SuggestionRecord }) {
 					<p className="line-clamp-2 text-sm font-semibold text-foreground">
 						{suggestion.title}
 					</p>
-					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="mt-0.5 truncate text-xs text-muted-foreground">
 						{suggestion.projectId ?? 'fleet'} ·{' '}
 						{formatRelativeAge(new Date(suggestion.createdAt).toISOString())}
 					</p>
@@ -61,9 +60,7 @@ function SuggestionRow({ suggestion }: { suggestion: SuggestionRecord }) {
 					{WAITING_KIND_LABEL.suggestion}
 				</Badge>
 			</div>
-			<p className="mt-1 line-clamp-2 text-sm text-neutral-600 dark:text-neutral-300">
-				{suggestion.description}
-			</p>
+			<p className="mt-1 line-clamp-2 text-sm text-foreground">{suggestion.description}</p>
 			<div className="mt-2 flex items-center gap-2">
 				<Button
 					aria-label={`Approve (launch) suggestion: ${suggestion.title}`}
@@ -120,7 +117,7 @@ function WaitingFeatureRow({
 			<div className="flex items-start justify-between gap-2">
 				<div className="min-w-0">
 					<p className="line-clamp-2 text-sm font-semibold text-foreground">{title}</p>
-					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="mt-0.5 truncate text-xs text-muted-foreground">
 						{projectName} · {formatRelativeAge(feature.updatedAt)}
 					</p>
 				</div>
@@ -165,7 +162,7 @@ function BlockedRunRow({ run }: { run: RunRecord }) {
 					<p className="line-clamp-2 text-sm font-semibold text-foreground">
 						{run.projectName} run blocked
 					</p>
-					<p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
+					<p className="mt-0.5 truncate text-xs text-muted-foreground">
 						{run.projectName} ·{' '}
 						{formatRelativeAge(new Date(run.startedAt).toISOString())}
 					</p>
@@ -174,7 +171,7 @@ function BlockedRunRow({ run }: { run: RunRecord }) {
 					{WAITING_KIND_LABEL.run}
 				</Badge>
 			</div>
-			<p className="mt-1 line-clamp-2 text-sm text-neutral-600 dark:text-neutral-300">
+			<p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
 				{run.summary ?? 'Run stopped: needs user input'}
 			</p>
 			<ExecutionIdentityBadges

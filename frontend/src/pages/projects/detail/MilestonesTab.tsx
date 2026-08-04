@@ -133,7 +133,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 				<div className="flex flex-wrap items-start justify-between gap-2">
 					<div>
 						<h2 className="text-sm font-semibold text-foreground">Milestones</h2>
-						<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+						<p className="mt-1 text-sm text-muted-foreground">
 							Coding runs walk these in order and admit only the first incomplete one.
 							Every change is previewed against the dependency graph before it is
 							written to <span className="font-mono text-xs">roadmap.json</span>.

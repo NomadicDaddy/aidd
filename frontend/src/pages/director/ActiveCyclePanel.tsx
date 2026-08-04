@@ -22,16 +22,12 @@ function CycleArtifactRow({
 	status: string;
 }) {
 	return (
-		<div className="min-w-0 rounded-md border border-neutral-200 p-2 dark:border-neutral-800">
+		<div className="min-w-0 rounded-md border border-border p-2">
 			<div className="flex items-center justify-between gap-2">
-				<span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-					{label}
-				</span>
+				<span className="text-xs font-medium text-foreground">{label}</span>
 				<span className={`text-xs font-medium ${artifactTone(status)}`}>{status}</span>
 			</div>
-			<div className="mt-1 text-[11px] break-all text-neutral-500 dark:text-neutral-400">
-				{path}
-			</div>
+			<div className="mt-1 text-[11px] break-all text-muted-foreground">{path}</div>
 		</div>
 	);
 }
@@ -47,7 +43,7 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 						<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 						<span className="truncate">{cycleStageLabels[cycle.stage]}</span>
 					</div>
-					<p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
+					<p className="mt-1 text-sm text-foreground">
 						{cycleStageDescriptions[cycle.stage]}
 					</p>
 				</div>
@@ -59,14 +55,14 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 			{isDirectAi && cycle.directAiMeta && (
 				<div className="mt-3 flex items-center gap-3 rounded-md border border-teal-300 bg-teal-100/60 px-3 py-2 dark:border-teal-800 dark:bg-teal-950/50">
 					<Cpu className="h-4 w-4 shrink-0 text-teal-700 dark:text-teal-300" />
-					<div className="min-w-0 text-sm text-neutral-700 dark:text-neutral-300">
+					<div className="min-w-0 text-sm text-foreground">
 						<ExecutionIdentityBadges
 							backend="direct"
 							model={cycle.directAiMeta.model}
 							provider={cycle.directAiMeta.provider}
 							reasoningEffort={cycle.directAiMeta.reasoningEffort}
 						/>
-						<p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+						<p className="mt-0.5 text-xs text-muted-foreground">
 							Analyzing fleet summary and producing director suggestions.
 						</p>
 					</div>
@@ -89,7 +85,7 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 					status={outputArtifactLabel(cycle)}
 				/>
 			</div>
-			<p className="mt-3 text-xs text-neutral-600 dark:text-neutral-400">
+			<p className="mt-3 text-xs text-muted-foreground">
 				Director cycles run inside the web backend. They produce suggestions here; launched
 				suggestions create normal runs in the activity console.
 			</p>

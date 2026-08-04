@@ -46,7 +46,7 @@ export function RunLivenessIndicator({ now, run }: { now: number; run: RunRecord
 			? 'No heartbeat received yet'
 			: `Last heartbeat ${formatHeartbeatAge(ageMs)} ago`;
 	return (
-		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 			<span className="inline-flex items-center gap-1" title={title}>
 				<span
 					aria-hidden="true"
@@ -58,7 +58,7 @@ export function RunLivenessIndicator({ now, run }: { now: number; run: RunRecord
 				/>
 				<span>{livenessLabel(liveness, ageMs)}</span>
 			</span>
-			{activity ? <span className="text-neutral-400">· {activity}</span> : null}
+			{activity ? <span className="text-muted-foreground">· {activity}</span> : null}
 		</div>
 	);
 }

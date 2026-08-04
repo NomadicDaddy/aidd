@@ -50,15 +50,13 @@ function ToggleRow({
 	onChange: (checked: boolean) => void;
 }) {
 	return (
-		<label className="flex min-h-9 items-center gap-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+		<label className="flex min-h-9 items-center gap-2 rounded-md border border-border px-3 py-2">
 			<input
 				checked={checked}
 				onChange={(event) => onChange(event.target.checked)}
 				type="checkbox"
 			/>
-			<span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
-				{label}
-			</span>
+			<span className="text-sm font-medium text-foreground">{label}</span>
 		</label>
 	);
 }
@@ -73,12 +71,10 @@ function SettingsBlock({
 	title: string;
 }) {
 	return (
-		<section className="grid gap-4 border-t border-neutral-200 p-3 first:border-t-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] dark:border-neutral-800">
+		<section className="grid gap-4 border-t border-border p-3 first:border-t-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)]">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
-				<p className="mt-1 text-xs leading-5 text-neutral-500 dark:text-neutral-400">
-					{description}
-				</p>
+				<p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
 			</div>
 			<div>{children}</div>
 		</section>

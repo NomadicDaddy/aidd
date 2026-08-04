@@ -68,7 +68,7 @@ export function SkillImportPanel() {
 		<Card className="space-y-3">
 			<div>
 				<h2 className="text-base font-semibold text-foreground">Import a local skill</h2>
-				<p className="text-sm text-neutral-600 dark:text-neutral-400">
+				<p className="text-sm text-muted-foreground">
 					Copy a skill folder from an allowed root into persistent aidd data.
 				</p>
 			</div>
@@ -88,7 +88,7 @@ export function SkillImportPanel() {
 				<label className="space-y-1 text-sm">
 					<span>Category</span>
 					<select
-						className="h-9 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+						className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm"
 						onChange={(event) => {
 							setPreview(null);
 							setCategory(event.target.value as SkillCategory);
@@ -109,10 +109,10 @@ export function SkillImportPanel() {
 				</Button>
 			</div>
 			{preview ? (
-				<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
+				<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
 					<div className="min-w-0 text-sm">
 						<div className="font-semibold">{preview.title}</div>
-						<div className="text-neutral-500">
+						<div className="text-muted-foreground">
 							{preview.id} · {preview.fileCount} files ·{' '}
 							{formatBytes(preview.totalBytes)}
 						</div>

@@ -47,12 +47,12 @@ export function ProjectInitFailures({ failures }: { failures: ProjectInitFailure
 			<ul className="space-y-2">
 				{failures.map((failure) => (
 					<li
-						className="space-y-1 rounded border border-red-200 bg-white p-3 text-sm dark:border-red-900/50 dark:bg-neutral-950"
+						className="space-y-1 rounded border border-red-200 bg-card p-3 text-sm dark:border-red-900/50"
 						key={failure.id}>
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div className="min-w-0">
 								<span className="font-medium text-foreground">{failure.name}</span>
-								<span className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
+								<span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
 									{failure.template}
 								</span>
 							</div>
@@ -83,14 +83,14 @@ export function ProjectInitFailures({ failures }: { failures: ProjectInitFailure
 								</Button>
 							</div>
 						</div>
-						<p className="font-mono text-xs break-all text-neutral-500">
+						<p className="font-mono text-xs break-all text-muted-foreground">
 							{failure.targetPath}
 						</p>
 						<p className="text-xs text-red-700 dark:text-red-300">
 							{failure.errorSummary}
 						</p>
 						{failure.quarantinePath ? (
-							<p className="text-xs text-neutral-500">
+							<p className="text-xs text-muted-foreground">
 								Partial output quarantined at{' '}
 								<span className="font-mono break-all">
 									{failure.quarantinePath}

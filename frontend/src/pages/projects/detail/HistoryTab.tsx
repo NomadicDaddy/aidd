@@ -46,13 +46,13 @@ function HistoryEventRow({
 	projectPath: string;
 }) {
 	return (
-		<li className="rounded-md border border-neutral-200 px-3 py-1.5 dark:border-neutral-800">
+		<li className="rounded-md border border-border px-3 py-1.5">
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge tone={event.badgeTone}>{event.badge}</Badge>
 						<Link
-							className="font-medium text-neutral-900 hover:underline dark:text-neutral-100"
+							className="font-medium text-foreground hover:underline"
 							to={eventLink(event, projectPath)}>
 							{event.title}
 						</Link>
@@ -61,7 +61,7 @@ function HistoryEventRow({
 						<ExecutionIdentityBadges {...event.executionIdentity} className="mt-1" />
 					) : null}
 					{event.detailParts.length > 0 ? (
-						<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-neutral-500">
+						<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
 							{event.detailParts.map((part) => (
 								<span key={part}>{part}</span>
 							))}
@@ -74,7 +74,7 @@ function HistoryEventRow({
 					) : null}
 				</div>
 				<span
-					className="shrink-0 text-xs text-neutral-500"
+					className="shrink-0 text-xs text-muted-foreground"
 					title={formatDate(event.timestamp)}>
 					{formatRelativeAge(event.timestamp)}
 				</span>
@@ -110,9 +110,9 @@ export function HistoryTab({
 	}));
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b px-4 py-3 dark:border-neutral-800">
+			<div className="border-b border-border px-4 py-3">
 				<h2 className="text-sm font-semibold text-foreground">Project history</h2>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Timeline of feature, remediation, and audit-finding lifecycle events merged with
 					recorded runs, newest first. Completion times fall back to the feature&apos;s
 					last metadata update when no completion timestamp was recorded.
@@ -130,7 +130,7 @@ export function HistoryTab({
 				/>
 			</div>
 			{filtered.length === 0 ? (
-				<p className="px-4 pb-6 text-sm text-neutral-500">
+				<p className="px-4 pb-6 text-sm text-muted-foreground">
 					{events.length === 0
 						? 'No dated events recorded for this project yet.'
 						: 'No events match the selected filter.'}
@@ -139,7 +139,7 @@ export function HistoryTab({
 				<div className="space-y-4 px-4 pb-4">
 					{groups.map((group) => (
 						<section aria-label={group.label} key={group.key}>
-							<h3 className="mb-1.5 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+							<h3 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 								{group.label}
 							</h3>
 							<ul className="space-y-1.5 text-sm">

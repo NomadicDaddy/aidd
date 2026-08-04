@@ -7,6 +7,8 @@ import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 import { useDirector } from '../../hooks/useDirector.ts';
+import { cn } from '../../lib/cn.ts';
+import { toneSurface, toneText } from '../../lib/tones.ts';
 import { Button, IconButton } from '../ui/button.tsx';
 import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
@@ -73,19 +75,19 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 			open={open}
 			role="dialog">
 			<DialogPanel className="flex max-h-[80vh] w-full max-w-lg flex-col">
-				<div className="flex items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+				<div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
 					<div className="flex items-center gap-2">
-						<Bot className="h-4 w-4 text-teal-700 dark:text-teal-300" />
+						<Bot className="h-4 w-4 text-accent" />
 						<div>
 							<h2
 								className="text-sm font-semibold text-foreground"
 								id="director-chat-modal-title">
 								Director Chat
 							</h2>
-							<p className="text-xs text-neutral-500 dark:text-neutral-400">
+							<p className="text-xs text-muted-foreground">
 								Sent messages are saved — review or continue on the{' '}
 								<Link
-									className="font-medium text-teal-700 hover:underline dark:text-teal-300"
+									className="font-medium text-accent hover:underline"
 									onClick={onClose}
 									to="/director">
 									Director page
@@ -108,38 +110,37 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 					ref={scrollRef}>
 					{messages.map((message) => (
 						<div
-							className={`rounded-md px-3 py-2 text-sm ${
+							className={cn(
+								'rounded-md px-3 py-2 text-sm',
 								message.role === 'user'
-									? 'ml-auto max-w-[82%] bg-neutral-900 text-white dark:bg-neutral-700'
+									? 'ml-auto max-w-[82%] bg-foreground text-background'
 									: message.role === 'assistant'
-										? 'max-w-[88%] bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
-										: 'max-w-[88%] bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200'
-							}`}
+										? 'max-w-[88%] bg-muted text-foreground'
+										: cn('max-w-[88%]', toneSurface.amber, toneText.amber),
+							)}
 							key={message.id}>
 							<div className="break-words whitespace-pre-wrap">{message.content}</div>
 						</div>
 					))}
 					{sending && (
 						<>
-							<div className="ml-auto max-w-[82%] rounded-md bg-neutral-900 px-3 py-2 text-sm text-white opacity-70 dark:bg-neutral-700">
+							<div className="ml-auto max-w-[82%] rounded-md bg-foreground px-3 py-2 text-sm text-background opacity-70">
 								<div className="break-words whitespace-pre-wrap">
 									{pendingContent}
 								</div>
 							</div>
-							<p className="text-xs text-neutral-500 dark:text-neutral-400">
-								Director is thinking…
-							</p>
+							<p className="text-xs text-muted-foreground">Director is thinking…</p>
 						</>
 					)}
 					{messages.length === 0 && !sending && (
-						<p className="text-sm text-neutral-500 dark:text-neutral-400">
+						<p className="text-sm text-muted-foreground">
 							Type a message to the Director. You can dismiss this anytime — it keeps
 							working and the reply is saved.
 						</p>
 					)}
 				</div>
 
-				<div className="border-t border-neutral-200 p-3 dark:border-neutral-800">
+				<div className="border-t border-border p-3">
 					<div className="flex gap-2">
 						<Input
 							aria-label="Director chat message"

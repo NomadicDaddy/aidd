@@ -1,12 +1,10 @@
 export function MetadataItem({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex flex-col">
-			<dt className="text-[0.65rem] font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
+			<dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
 				{label}
 			</dt>
-			<dd className="min-w-0 text-xs break-words text-neutral-700 dark:text-neutral-200">
-				{value}
-			</dd>
+			<dd className="min-w-0 text-xs break-words text-foreground">{value}</dd>
 		</div>
 	);
 }

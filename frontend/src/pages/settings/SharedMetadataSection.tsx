@@ -46,7 +46,7 @@ export function SharedMetadataSection({
 					<FolderSymlink className="mr-1 inline h-4 w-4" />
 					Shared Directories
 				</div>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Directories copied into each project during metadata scaffolding.
 				</p>
 				<ListEditor
@@ -62,7 +62,7 @@ export function SharedMetadataSection({
 					<FileSymlink className="mr-1 inline h-4 w-4" />
 					Shared Files
 				</div>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Files copied into each project during metadata scaffolding. Each entry is a
 					source path with an optional target path (relative to the project directory).
 				</p>
@@ -71,7 +71,7 @@ export function SharedMetadataSection({
 						<div className="flex items-start gap-2" key={index}>
 							<div className="grid flex-1 gap-2 lg:grid-cols-2">
 								<label className="block space-y-1">
-									<span className="text-xs text-neutral-500">Source</span>
+									<span className="text-xs text-muted-foreground">Source</span>
 									<Input
 										aria-label={`Shared file ${index + 1} source`}
 										onChange={(event) =>
@@ -82,7 +82,7 @@ export function SharedMetadataSection({
 									/>
 								</label>
 								<label className="block space-y-1">
-									<span className="text-xs text-neutral-500">
+									<span className="text-xs text-muted-foreground">
 										Target (optional)
 									</span>
 									<Input

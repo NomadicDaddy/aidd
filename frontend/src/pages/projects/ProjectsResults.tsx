@@ -56,7 +56,7 @@ export function ProjectsResults({
 				<p className="text-sm font-medium text-foreground">
 					No registered project roots are reachable.
 				</p>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Every configured allowed root was skipped during discovery. Fix the configured
 					paths in Settings and click Discover Projects to retry.
 				</p>
@@ -74,7 +74,7 @@ export function ProjectsResults({
 				<p className="text-sm font-medium text-foreground">
 					No projects discovered under the configured roots.
 				</p>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					Add a project with a <code>.aidd/</code> directory under one of your configured
 					roots, or add another root in Settings, then click Discover Projects.
 				</p>
@@ -92,7 +92,7 @@ export function ProjectsResults({
 				<p className="text-sm font-medium text-foreground">
 					No projects match the active filters.
 				</p>
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					{allProjectsCount} project{allProjectsCount === 1 ? '' : 's'} discovered; clear
 					filters to see all of them.
 				</p>

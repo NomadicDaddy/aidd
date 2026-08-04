@@ -41,7 +41,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 		].join('\n'),
 	},
 	Markdown: {
-		accent: 'text-neutral-600 dark:text-neutral-300',
+		accent: 'text-muted-foreground ',
 		art: [
 			'█▄   ▄█  ████ ',
 			'█ █ █ █  █   █',
@@ -87,7 +87,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 };
 
 const FALLBACK: LanguageLogo = {
-	accent: 'text-neutral-500 dark:text-neutral-400',
+	accent: 'text-muted-foreground ',
 	art: ['  ●        ', '  │        ', '  ├───●    ', '  │        ', '  ●        '].join('\n'),
 };
 

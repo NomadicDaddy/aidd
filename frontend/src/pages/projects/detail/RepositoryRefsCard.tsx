@@ -16,17 +16,13 @@ function BranchRow({ branch }: BranchRowProps) {
 				) : (
 					<span
 						aria-hidden="true"
-						className="h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-600"
+						className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground"
 					/>
 				)}
-				<code className="truncate text-sm text-neutral-800 dark:text-neutral-100">
-					{branch.name}
-				</code>
+				<code className="truncate text-sm text-foreground">{branch.name}</code>
 			</div>
 			{branch.upstream ? (
-				<span className="shrink-0 text-xs text-neutral-400 dark:text-neutral-500">
-					{branch.upstream}
-				</span>
+				<span className="shrink-0 text-xs text-muted-foreground">{branch.upstream}</span>
 			) : null}
 		</li>
 	);
@@ -35,17 +31,15 @@ function BranchRow({ branch }: BranchRowProps) {
 function BranchPanel({ branches }: { branches: RepositoryBranch[] }) {
 	return (
 		<div className="space-y-2">
-			<h4 className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">
-				Branches ({branches.length})
-			</h4>
+			<h4 className="text-xs font-semibold text-foreground">Branches ({branches.length})</h4>
 			{branches.length > 0 ? (
-				<ul className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+				<ul className="divide-y divide-border">
 					{branches.map((branch) => (
 						<BranchRow branch={branch} key={branch.name} />
 					))}
 				</ul>
 			) : (
-				<p className="text-xs text-neutral-400 dark:text-neutral-500">No local branches.</p>
+				<p className="text-xs text-muted-foreground">No local branches.</p>
 			)}
 		</div>
 	);
@@ -54,9 +48,7 @@ function BranchPanel({ branches }: { branches: RepositoryBranch[] }) {
 function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 	return (
 		<div className="space-y-2">
-			<h4 className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">
-				Stashes ({stashes.length})
-			</h4>
+			<h4 className="text-xs font-semibold text-foreground">Stashes ({stashes.length})</h4>
 			{stashes.length > 0 ? (
 				<ul className="space-y-1">
 					{stashes.map((stash) => (
@@ -64,15 +56,15 @@ function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 							className="flex items-center justify-between gap-3 text-sm"
 							key={`stash-${stash.index}`}>
 							<span className="min-w-0 flex-1">
-								<code className="text-xs text-neutral-500 dark:text-neutral-400">
+								<code className="text-xs text-muted-foreground">
 									stash@&#123;{stash.index}&#125;
 								</code>
-								<span className="ml-2 truncate text-neutral-800 dark:text-neutral-100">
+								<span className="ml-2 truncate text-foreground">
 									{stash.subject}
 								</span>
 							</span>
 							{stash.sha ? (
-								<code className="shrink-0 text-xs text-neutral-400 dark:text-neutral-500">
+								<code className="shrink-0 text-xs text-muted-foreground">
 									{stash.sha}
 								</code>
 							) : null}
@@ -80,7 +72,7 @@ function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 					))}
 				</ul>
 			) : (
-				<p className="text-xs text-neutral-400 dark:text-neutral-500">No stashes.</p>
+				<p className="text-xs text-muted-foreground">No stashes.</p>
 			)}
 		</div>
 	);
@@ -89,7 +81,7 @@ function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 function WorktreePanel({ worktrees }: { worktrees: RepositoryWorktree[] }) {
 	return (
 		<div className="space-y-2">
-			<h4 className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+			<h4 className="text-xs font-semibold text-muted-foreground">
 				Worktrees ({worktrees.length})
 			</h4>
 			{worktrees.length > 0 ? (
@@ -104,21 +96,21 @@ function WorktreePanel({ worktrees }: { worktrees: RepositoryWorktree[] }) {
 								) : (
 									<span
 										aria-hidden="true"
-										className="h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-600"
+										className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground"
 									/>
 								)}
-								<code className="truncate text-xs text-neutral-600 dark:text-neutral-300">
+								<code className="truncate text-xs text-muted-foreground">
 									{worktree.path}
 								</code>
 							</span>
-							<code className="shrink-0 text-xs text-neutral-400 dark:text-neutral-500">
+							<code className="shrink-0 text-xs text-muted-foreground">
 								{worktree.branch}
 							</code>
 						</li>
 					))}
 				</ul>
 			) : (
-				<p className="text-xs text-neutral-400 dark:text-neutral-500">No worktrees.</p>
+				<p className="text-xs text-muted-foreground">No worktrees.</p>
 			)}
 		</div>
 	);

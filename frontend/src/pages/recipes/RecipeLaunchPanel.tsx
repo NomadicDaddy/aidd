@@ -84,7 +84,7 @@ export function RecipeLaunchPanel({
 			<div className="flex items-start justify-between gap-3">
 				<div>
 					<h2 className="text-lg font-semibold text-foreground">Launch {recipe.name}</h2>
-					<p className="text-sm text-neutral-600 dark:text-neutral-300">
+					<p className="text-sm text-muted-foreground">
 						{recipe.steps.length} ordered step{recipe.steps.length !== 1 ? 's' : ''}{' '}
 						will run in the selected project.
 					</p>
@@ -96,7 +96,9 @@ export function RecipeLaunchPanel({
 
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">Project</span>
+					<span className="text-xs font-medium text-muted-foreground uppercase">
+						Project
+					</span>
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) => {
@@ -123,7 +125,7 @@ export function RecipeLaunchPanel({
 				</label>
 				{userParams.map((param) => (
 					<label className="space-y-1" key={param.name}>
-						<span className="text-xs font-medium text-neutral-500 uppercase">
+						<span className="text-xs font-medium text-muted-foreground uppercase">
 							{param.name}
 						</span>
 						<Input
@@ -140,7 +142,7 @@ export function RecipeLaunchPanel({
 				))}
 				{allAuto && (
 					<div className="flex items-end">
-						<p className="text-sm text-neutral-500">
+						<p className="text-sm text-muted-foreground">
 							Project parameters are filled from the selected launch target.
 						</p>
 					</div>

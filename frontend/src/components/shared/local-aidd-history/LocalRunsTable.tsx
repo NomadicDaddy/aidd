@@ -91,7 +91,7 @@ export function LocalRunsTable({
 	};
 	return (
 		<div>
-			<div className="flex flex-wrap items-center gap-2 border-b px-4 py-2 dark:border-neutral-800">
+			<div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
 				<SegmentedControl
 					ariaLabel="Filter by outcome"
 					onToggle={toggleCategory}
@@ -103,7 +103,7 @@ export function LocalRunsTable({
 					}))}
 					values={activeCategories}
 				/>
-				<label className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300">
+				<label className="flex items-center gap-1.5 text-xs text-muted-foreground">
 					<span className="sr-only">Filter by backend</span>
 					<select
 						aria-label="Filter by backend"
@@ -130,13 +130,13 @@ export function LocalRunsTable({
 				</Button>
 			</div>
 			{visibleRuns.length === 0 ? (
-				<div className="px-4 py-4 text-sm text-neutral-500">
+				<div className="px-4 py-4 text-sm text-muted-foreground">
 					No runs match the current filters.
 				</div>
 			) : (
 				<div className="overflow-x-auto">
 					<table aria-label="Local runs" className="w-full text-left text-sm">
-						<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+						<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 							<tr>
 								<th className="w-8 px-2 py-3" scope="col">
 									<span className="sr-only">Expand</span>
@@ -169,7 +169,7 @@ export function LocalRunsTable({
 								const runtimeDetail = runRuntimeDetail(run);
 								return (
 									<Fragment key={key}>
-										<tr className="border-b last:border-0 dark:border-neutral-800">
+										<tr className="border-b border-border last:border-0">
 											<td className="px-2 py-3 align-top">
 												<IconButton
 													aria-expanded={isOpen}
@@ -182,7 +182,7 @@ export function LocalRunsTable({
 													/>
 												</IconButton>
 											</td>
-											<td className="px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
+											<td className="px-4 py-3 text-xs text-muted-foreground">
 												{startedLabel}
 											</td>
 											<td className="px-4 py-3">
@@ -199,10 +199,10 @@ export function LocalRunsTable({
 															roles={run.triumvirateRoles}
 														/>
 													) : null}
-													<span className="text-xs text-neutral-500">
+													<span className="text-xs text-muted-foreground">
 														{runtimeDetail}
 													</span>
-													<span className="text-xs text-neutral-500">
+													<span className="text-xs text-muted-foreground">
 														{formatAiddRunProvenance(run)}
 													</span>
 												</div>
@@ -216,12 +216,12 @@ export function LocalRunsTable({
 											<td className="px-4 py-3">
 												{formatDuration(run.durationMs)}
 											</td>
-											<td className="max-w-[24rem] px-4 py-3 text-xs text-neutral-600 dark:text-neutral-400">
+											<td className="max-w-[24rem] px-4 py-3 text-xs text-muted-foreground">
 												{run.summary ?? '—'}
 											</td>
 										</tr>
 										{isOpen ? (
-											<tr className="border-b bg-neutral-50/50 last:border-0 dark:border-neutral-800 dark:bg-neutral-900/40">
+											<tr className="border-b border-border bg-muted/50 last:border-0">
 												<td className="px-2 py-3" />
 												<td className="px-4 py-3" colSpan={5}>
 													{runIterations.length > 0 ? (
@@ -230,7 +230,7 @@ export function LocalRunsTable({
 															now={now}
 														/>
 													) : (
-														<div className="text-xs text-neutral-500">
+														<div className="text-xs text-muted-foreground">
 															No iterations recorded for this run.
 														</div>
 													)}

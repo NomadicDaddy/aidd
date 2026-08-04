@@ -32,7 +32,7 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 					<Badge tone={sessionStatusTone(session.status)}>
 						{sessionStatusLabel(session.status)}
 					</Badge>
-					<span className="text-xs text-neutral-500">
+					<span className="text-xs text-muted-foreground">
 						{session.currentStepIndex}/{session.totalSteps} steps
 					</span>
 					<Link
@@ -44,7 +44,7 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 				{session.errorMessage && (
 					<p className="text-sm text-red-700 dark:text-red-300">{session.errorMessage}</p>
 				)}
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					{latestStepWithRun
 						? `Streaming step ${latestStepWithRun.sequenceNumber} — ${latestStepWithRun.stepName}`
 						: 'Waiting for the first step to start a run…'}

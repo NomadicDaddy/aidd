@@ -10,9 +10,7 @@ export function HelpDrawerBody({ slug }: { slug: string }) {
 	const body = getDocBody(slug);
 	if (!body) {
 		return (
-			<p className="text-sm text-neutral-500 dark:text-neutral-400">
-				No help is available for this page yet.
-			</p>
+			<p className="text-sm text-muted-foreground">No help is available for this page yet.</p>
 		);
 	}
 	return <MarkdownContent markdown={body} />;

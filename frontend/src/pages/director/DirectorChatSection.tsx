@@ -25,7 +25,7 @@ export type ChatMessage = {
 
 function ChatActionTrail({ actions }: { actions: ChatAgentAction[] }) {
 	return (
-		<ul className="mt-2 space-y-1 border-t border-neutral-200 pt-2 dark:border-neutral-700">
+		<ul className="mt-2 space-y-1 border-t border-border pt-2">
 			{actions.map((action, index) => {
 				const isError = action.status === 'error';
 				const runHref = action.runId
@@ -34,9 +34,7 @@ function ChatActionTrail({ actions }: { actions: ChatAgentAction[] }) {
 				return (
 					<li
 						className={`flex items-center gap-1.5 text-xs ${
-							isError
-								? 'text-amber-700 dark:text-amber-300'
-								: 'text-neutral-600 dark:text-neutral-400'
+							isError ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'
 						}`}
 						key={`${action.tool}-${index}`}>
 						{isError ? (
@@ -142,8 +140,8 @@ export function DirectorChatSection({
 									<div
 										className={`grid grid-cols-[minmax(0,1fr)_2.75rem] items-stretch rounded-md border text-sm ${
 											isActive
-												? 'border-neutral-900 bg-neutral-100 text-neutral-950 dark:border-neutral-100 dark:bg-neutral-800 dark:text-neutral-50'
-												: 'border-neutral-200 bg-white text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300'
+												? 'border-border bg-muted text-foreground'
+												: 'border-border bg-card text-foreground'
 										}`}
 										key={session.id}>
 										<button
@@ -154,7 +152,7 @@ export function DirectorChatSection({
 											<div className="truncate font-medium">
 												{session.title}
 											</div>
-											<div className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+											<div className="mt-1 text-xs text-muted-foreground">
 												{formatDate(session.updatedAt)}
 											</div>
 										</button>
@@ -171,22 +169,20 @@ export function DirectorChatSection({
 								);
 							})}
 							{sessions.length === 0 && (
-								<p className="text-sm text-neutral-500 dark:text-neutral-400">
-									No chats yet.
-								</p>
+								<p className="text-sm text-muted-foreground">No chats yet.</p>
 							)}
 						</div>
 					</div>
 
-					<div className="flex min-h-0 min-w-0 flex-col rounded-md border border-neutral-200 dark:border-neutral-800">
+					<div className="flex min-h-0 min-w-0 flex-col rounded-md border border-border">
 						<div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
 							{messages.map((message) => (
 								<div
 									className={`rounded-md px-3 py-2 text-sm ${
 										message.role === 'user'
-											? 'ml-auto max-w-[82%] bg-neutral-900 text-white dark:bg-neutral-700'
+											? 'ml-auto max-w-[82%] bg-foreground text-background'
 											: message.role === 'assistant'
-												? 'max-w-[88%] bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
+												? 'max-w-[88%] bg-muted text-foreground'
 												: 'max-w-[88%] bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200'
 									}`}
 									key={message.id}>
@@ -199,12 +195,10 @@ export function DirectorChatSection({
 								</div>
 							))}
 							{messages.length === 0 && (
-								<p className="text-sm text-neutral-500 dark:text-neutral-400">
-									No messages yet.
-								</p>
+								<p className="text-sm text-muted-foreground">No messages yet.</p>
 							)}
 						</div>
-						<div className="border-t border-neutral-200 p-3 dark:border-neutral-800">
+						<div className="border-t border-border p-3">
 							<div className="flex gap-2">
 								<Input
 									aria-label="Director chat message"

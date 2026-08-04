@@ -233,7 +233,7 @@ export function LiveConsole({
 						) : null}
 						<div
 							aria-label="Run console output"
-							className="h-[560px] w-full max-w-full overflow-auto rounded-lg border border-neutral-800 bg-[#0a0e14] p-4 text-xs leading-relaxed text-neutral-200 shadow-inner 2xl:h-auto 2xl:min-h-0 2xl:flex-1"
+							className="h-[560px] w-full max-w-full overflow-auto rounded-lg border border-white/10 bg-[#0a0e14] p-4 text-xs leading-relaxed text-white/85 shadow-inner 2xl:h-auto 2xl:min-h-0 2xl:flex-1"
 							onScroll={handleScroll}
 							ref={scrollRef}>
 							{effectiveView === 'pretty' ? (
@@ -246,7 +246,7 @@ export function LiveConsole({
 									)}>
 									{matchingLines ? (
 										matchingLines.length === 0 ? (
-											<span className="text-neutral-500">
+											<span className="text-muted-foreground">
 												No lines match “{trimmedFind}”.
 											</span>
 										) : (
@@ -265,7 +265,7 @@ export function LiveConsole({
 						{showControls && !pinnedToBottom ? (
 							<Button
 								aria-label="Jump to latest output"
-								className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-teal-400/40 bg-neutral-900/90 px-2.5 py-1.5 text-xs font-medium text-teal-200 shadow-lg backdrop-blur hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
+								className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-teal-400/40 bg-black/90 px-2.5 py-1.5 text-xs font-medium text-teal-200 shadow-lg backdrop-blur hover:bg-black focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
 								onClick={jumpToLatest}
 								size="compact"
 								variant="primary">

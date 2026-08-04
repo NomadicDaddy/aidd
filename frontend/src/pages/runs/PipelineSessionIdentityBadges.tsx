@@ -17,7 +17,7 @@ export function PipelineSessionIdentityBadges({
 	identities: PipelineExecutionIdentity[];
 }) {
 	if (identities.length === 0) {
-		return <span className="text-neutral-400 dark:text-neutral-600">—</span>;
+		return <span className="text-muted-foreground">—</span>;
 	}
 	return (
 		<span className="inline-flex max-w-full flex-wrap gap-1">

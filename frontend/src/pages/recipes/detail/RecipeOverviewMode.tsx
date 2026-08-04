@@ -92,7 +92,7 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 			<RecipeParamsOverview parameters={recipe.parameters} />
 
 			<Card>
-				<h2 className="mb-4 text-sm font-semibold text-neutral-500 uppercase">
+				<h2 className="mb-4 text-sm font-semibold text-muted-foreground uppercase">
 					Pipeline ({recipe.steps.length} step{recipe.steps.length !== 1 ? 's' : ''})
 				</h2>
 				<RecipePipelineView steps={recipe.steps} />

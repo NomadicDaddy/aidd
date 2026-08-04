@@ -18,7 +18,7 @@ export function HelpTrigger({ slug }: { slug: string }) {
 			<Tooltip content="Open help for this page">
 				<IconButton
 					ariaLabel="Open help for this page"
-					className="border-0 bg-transparent text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-slate-800 dark:hover:text-neutral-100"
+					className="border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
 					onClick={() => setOpen(true)}
 					variant="ghost">
 					<CircleHelp className="h-4 w-4" />

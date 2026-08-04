@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNow } from '../../hooks/useNow.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatUpdatedAgo } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 import { Button } from '../ui/button.tsx';
 
 // The minimal slice of a TanStack Query result the indicator reads. Any `useQuery` /
@@ -103,7 +104,7 @@ export function DataFreshness({
 			}
 		: isError
 			? {
-					className: 'text-red-600 dark:text-red-300',
+					className: toneText.red,
 					icon: <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5" />,
 					text: 'Refresh failed',
 				}

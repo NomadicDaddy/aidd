@@ -51,7 +51,7 @@ function SortHeader({
 			<button
 				aria-label={`Sort by ${label}${isActive ? ` (${activeDir})` : ''}`}
 				className={`inline-flex items-center gap-1 text-left uppercase ${
-					isActive ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-500'
+					isActive ? 'text-foreground' : 'text-muted-foreground'
 				}`}
 				onClick={() => onSort(sortKey)}
 				type="button">
@@ -83,7 +83,7 @@ export function ProjectsTableView({
 	return (
 		<Card className="overflow-x-auto p-0">
 			<table aria-label="Projects" className="w-full text-left text-sm">
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<SortHeader
 							activeDir={sortDir}

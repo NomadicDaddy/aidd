@@ -58,7 +58,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 					<NotebookPen className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 					<div>
 						<h2 className="text-sm font-semibold text-foreground">Notes</h2>
-						<p className="text-xs text-neutral-500">
+						<p className="text-xs text-muted-foreground">
 							A free-form, persistent markdown scratch pad saved to{' '}
 							<code>.aidd/notes.md</code>.
 						</p>
@@ -88,7 +88,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 				placeholder="Jot down anything about this project — it persists in .aidd/notes.md."
 				value={draft}
 			/>
-			<p className="text-xs text-neutral-500">{formatSavedAt(notes.data.updatedAt)}</p>
+			<p className="text-xs text-muted-foreground">{formatSavedAt(notes.data.updatedAt)}</p>
 		</Card>
 	);
 }

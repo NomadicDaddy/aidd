@@ -77,7 +77,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 	}
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
+			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
 				<div className="flex min-w-0 items-center gap-2">
 					<Code2 className="h-4 w-4 text-teal-700 dark:text-teal-300" />
 					<h2 className="text-sm font-semibold text-foreground">Code</h2>
@@ -86,7 +86,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 				</div>
 				<label className="relative w-full max-w-sm">
 					<span className="sr-only">Search tracked files</span>
-					<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+					<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 					<Input
 						className="pl-9"
 						name="projectCodeSearch"
@@ -97,7 +97,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 				</label>
 			</div>
 			<div className="grid min-h-[32rem] gap-0 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
-				<aside className="border-b border-neutral-200 p-3 lg:border-r lg:border-b-0 dark:border-neutral-800">
+				<aside className="border-b border-border p-3 lg:border-r lg:border-b-0">
 					<CodeFileTree
 						files={files}
 						onSelect={selectFile}

@@ -5,9 +5,9 @@ import { Card } from '../../../../components/ui/card.tsx';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
 function StageColumn({ file }: { file: WorkingTreeFile }) {
-	if (file.conflicted) return <span className="text-xs text-neutral-500">—</span>;
+	if (file.conflicted) return <span className="text-xs text-muted-foreground">—</span>;
 	return (
-		<span className="text-xs text-neutral-500">
+		<span className="text-xs text-muted-foreground">
 			{file.staged && file.unstaged ? 'Partly staged' : file.staged ? 'Staged' : 'Not staged'}
 		</span>
 	);
@@ -32,7 +32,7 @@ export function WorkingTreeTable({
 	return (
 		<Card className="hidden overflow-x-auto p-0 md:block">
 			<table aria-label="Changed files" className="w-full min-w-[640px] text-left text-sm">
-				<thead className="border-b bg-neutral-50 text-xs text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900">
+				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="w-10 px-3 py-3" scope="col">
 							<input
@@ -61,7 +61,7 @@ export function WorkingTreeTable({
 					{files.length === 0 ? (
 						<tr>
 							<td
-								className="px-3 py-6 text-center text-sm text-neutral-500"
+								className="px-3 py-6 text-center text-sm text-muted-foreground"
 								colSpan={4}>
 								The working tree is clean — nothing to stage, discard, or commit.
 							</td>
@@ -70,9 +70,7 @@ export function WorkingTreeTable({
 					{files.map((file) => {
 						const status = describeWorkingTreeFile(file);
 						return (
-							<tr
-								className="border-b last:border-0 dark:border-neutral-800"
-								key={file.path}>
+							<tr className="border-b border-border last:border-0" key={file.path}>
 								<td className="px-3 py-3">
 									<input
 										aria-label={`Select ${file.path}`}
@@ -87,7 +85,7 @@ export function WorkingTreeTable({
 										{file.path}
 									</div>
 									{file.origPath ? (
-										<div className="font-mono text-xs break-all text-neutral-500">
+										<div className="font-mono text-xs break-all text-muted-foreground">
 											was {file.origPath}
 										</div>
 									) : null}

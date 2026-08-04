@@ -23,7 +23,7 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 				<h3 className="text-sm font-semibold text-foreground">Roadmap problems</h3>
 			</div>
 			{unmapped.length > 0 ? (
-				<p className="text-sm text-neutral-600 dark:text-neutral-300">
+				<p className="text-sm text-muted-foreground">
 					{unmapped.length} feature director{unmapped.length === 1 ? 'y has' : 'ies have'}{' '}
 					no milestone and block{unmapped.length === 1 ? 's' : ''} coding selection:{' '}
 					<span className="font-mono text-xs" title={unmapped.join(', ')}>
@@ -35,7 +35,7 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 			) : null}
 			{view.violations.length > 0 ? (
 				<div className="space-y-1">
-					<p className="text-sm text-neutral-600 dark:text-neutral-300">
+					<p className="text-sm text-muted-foreground">
 						{view.violations.length} feature
 						{view.violations.length === 1 ? '' : 's'} depend on work scheduled in a
 						later milestone. The gate does not report this — those features are simply

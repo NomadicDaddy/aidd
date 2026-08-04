@@ -112,7 +112,7 @@ export function ActiveRunMobileCard({
 				</ConsoleSelectionButton>
 				<RunCommandInfo command={run.launchCommand} runId={run.id} />
 			</div>
-			<div className="flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+			<div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 				<Badge tone={outcome.tone}>{outcome.label}</Badge>
 				<Badge tone="neutral">Run</Badge>
 				<ProjectDetailLink href={projectHref} label={projectLabel} name={run.projectName} />
@@ -122,7 +122,7 @@ export function ActiveRunMobileCard({
 				<span>{formatActiveDuration(run.durationMs, run.startedAt, now)}</span>
 			</div>
 			<RunLivenessIndicator now={now} run={run} />
-			<div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+			<div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 				<ExecutionIdentityBadges
 					backend={run.backend}
 					model={run.model}
@@ -132,7 +132,7 @@ export function ActiveRunMobileCard({
 				<span>{runtimeDetail}</span>
 			</div>
 			{run.aiSummary ? (
-				<div className="line-clamp-2 min-w-0 text-xs break-words text-neutral-400 dark:text-neutral-500">
+				<div className="line-clamp-2 min-w-0 text-xs break-words text-muted-foreground">
 					{run.aiSummary}
 				</div>
 			) : null}
@@ -219,7 +219,7 @@ export function ActiveRunMobileCard({
 				</Button>
 			</div>
 			{controlHint && (
-				<p className="text-xs text-neutral-500" id={disabledControlsHintId}>
+				<p className="text-xs text-muted-foreground" id={disabledControlsHintId}>
 					{controlHint}
 				</p>
 			)}

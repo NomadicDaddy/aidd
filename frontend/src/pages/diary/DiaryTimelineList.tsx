@@ -28,7 +28,7 @@ function DiaryTimelineRow({
 }) {
 	const parts = detailParts(item, showProject);
 	return (
-		<li className="rounded-md border border-neutral-200 px-3 py-1.5 dark:border-neutral-800">
+		<li className="rounded-md border border-border px-3 py-1.5">
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
@@ -38,18 +38,16 @@ function DiaryTimelineRow({
 						<Badge tone={timelineItemTone(item)}>{item.status}</Badge>
 						{item.projectPath ? (
 							<Link
-								className="font-medium text-neutral-900 hover:underline dark:text-neutral-100"
+								className="font-medium text-foreground hover:underline"
 								to={`/runs?project=${encodeURIComponent(item.projectPath)}`}>
 								{item.title}
 							</Link>
 						) : (
-							<span className="font-medium text-neutral-900 dark:text-neutral-100">
-								{item.title}
-							</span>
+							<span className="font-medium text-foreground">{item.title}</span>
 						)}
 					</div>
 					{parts.length > 0 ? (
-						<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-neutral-500">
+						<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
 							{parts.map((part, index) => (
 								<span key={`${item.id}-detail-${index}`}>{part}</span>
 							))}
@@ -57,7 +55,7 @@ function DiaryTimelineRow({
 					) : null}
 				</div>
 				<span
-					className="shrink-0 text-xs text-neutral-500"
+					className="shrink-0 text-xs text-muted-foreground"
 					title={formatDate(item.startedAt)}>
 					{formatRelativeAge(isoFromMs(item.startedAt))}
 				</span>

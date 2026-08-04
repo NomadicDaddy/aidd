@@ -53,7 +53,7 @@ export function AuditsMobileList({
 				</div>
 			) : null}
 			{rows.length === 0 ? (
-				<Card className="text-center text-sm text-neutral-500">
+				<Card className="text-center text-sm text-muted-foreground">
 					No audits match the current filters.
 				</Card>
 			) : null}
@@ -67,9 +67,7 @@ export function AuditsMobileList({
 						: undefined;
 				const freshAge = entry.freshReport ? describeFreshAge(entry) : undefined;
 				return (
-					<div
-						className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800"
-						key={entry.name}>
+					<div className="rounded-md border border-border p-3" key={entry.name}>
 						<div className="flex items-start justify-between gap-2">
 							<label className="flex min-w-0 items-start gap-2">
 								<input
@@ -84,7 +82,7 @@ export function AuditsMobileList({
 									<span className="block font-medium text-foreground">
 										{entry.name}
 									</span>
-									<span className="block text-xs break-all text-neutral-500">
+									<span className="block text-xs break-all text-muted-foreground">
 										{entry.path}
 									</span>
 								</span>
@@ -93,7 +91,7 @@ export function AuditsMobileList({
 						</div>
 						<dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
 							<div className="space-y-1">
-								<dt className="font-medium text-neutral-500 uppercase">
+								<dt className="font-medium text-muted-foreground uppercase">
 									Change Potential
 								</dt>
 								<dd>
@@ -104,17 +102,19 @@ export function AuditsMobileList({
 											<Badge tone={bandTone[entry.changePotential.band]}>
 												{entry.changePotential.band}
 											</Badge>
-											<span className="text-neutral-500">
+											<span className="text-muted-foreground">
 												{entry.changePotential.score}
 											</span>
 										</span>
 									) : (
-										<span className="text-neutral-400">—</span>
+										<span className="text-muted-foreground">—</span>
 									)}
 								</dd>
 							</div>
 							<div className="space-y-1">
-								<dt className="font-medium text-neutral-500 uppercase">Report</dt>
+								<dt className="font-medium text-muted-foreground uppercase">
+									Report
+								</dt>
 								<dd>
 									{entry.freshReport ? (
 										<span
@@ -122,7 +122,9 @@ export function AuditsMobileList({
 											title={freshAge}>
 											<Badge tone="emerald">Fresh</Badge>
 											{freshAge && (
-												<span className="text-neutral-500">{freshAge}</span>
+												<span className="text-muted-foreground">
+													{freshAge}
+												</span>
 											)}
 										</span>
 									) : entry.staleReport ? (
@@ -132,12 +134,14 @@ export function AuditsMobileList({
 									) : entry.missingReport ? (
 										<Badge tone="red">Missing</Badge>
 									) : (
-										<span className="text-neutral-400">—</span>
+										<span className="text-muted-foreground">—</span>
 									)}
 								</dd>
 							</div>
 							<div className="col-span-2 space-y-1">
-								<dt className="font-medium text-neutral-500 uppercase">Override</dt>
+								<dt className="font-medium text-muted-foreground uppercase">
+									Override
+								</dt>
 								<dd>
 									<select
 										aria-label={`Override for ${entry.name}`}
@@ -159,7 +163,7 @@ export function AuditsMobileList({
 								</dd>
 							</div>
 						</dl>
-						<div className="mt-3 flex justify-end gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+						<div className="mt-3 flex justify-end gap-2 border-t border-border pt-3">
 							<Button
 								disabled={rowDisabled || launchPending}
 								onClick={() => runSingle(entry.name, false)}

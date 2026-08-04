@@ -81,7 +81,7 @@ export function ProjectIngestLane() {
 	return (
 		<div className="space-y-4">
 			{candidates.isLoading ? (
-				<div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+				<div className="flex items-center gap-2 text-sm text-muted-foreground">
 					<Loader2 className="h-4 w-4 animate-spin" />
 					Scanning configured roots…
 				</div>
@@ -104,7 +104,7 @@ export function ProjectIngestLane() {
 			{!candidates.isLoading && !candidates.isError ? (
 				<div className="space-y-3">
 					<div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-						<span className="text-neutral-600 dark:text-neutral-300">
+						<span className="text-muted-foreground">
 							{selectedIds.size} selected of {importableCount} importable candidates
 						</span>
 						<div className="flex flex-wrap items-center gap-2">
@@ -145,7 +145,7 @@ export function ProjectIngestLane() {
 					</div>
 
 					{(candidates.data?.candidates ?? []).length === 0 ? (
-						<div className="rounded border border-neutral-200 bg-white p-4 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300">
+						<div className="rounded border border-border bg-card p-4 text-sm text-muted-foreground">
 							No import candidates found under the configured roots.
 						</div>
 					) : (
@@ -154,7 +154,7 @@ export function ProjectIngestLane() {
 								const labels = signalLabels(candidate.signals);
 								return (
 									<label
-										className="flex gap-3 rounded border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-950"
+										className="flex gap-3 rounded border border-border bg-card p-3 text-sm"
 										key={candidate.id}>
 										<input
 											checked={selectedIds.has(candidate.id)}
@@ -172,16 +172,16 @@ export function ProjectIngestLane() {
 												<span className="font-medium text-foreground">
 													{candidate.name}
 												</span>
-												<span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
+												<span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
 													{labels.length > 0
 														? labels.join(', ')
 														: 'directory'}
 												</span>
 											</div>
-											<p className="font-mono text-xs break-all text-neutral-500">
+											<p className="font-mono text-xs break-all text-muted-foreground">
 												{candidate.path}
 											</p>
-											<p className="text-xs break-all text-neutral-500">
+											<p className="text-xs break-all text-muted-foreground">
 												Root: {candidate.root}
 											</p>
 											{candidate.reason ? (
@@ -221,12 +221,12 @@ export function ProjectIngestLane() {
 			) : null}
 
 			{results.length > 0 ? (
-				<div className="space-y-2 rounded border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-950">
+				<div className="space-y-2 rounded border border-border bg-card p-3 text-sm">
 					<div className="flex items-center gap-2 font-medium">
 						<CheckCircle2 className="h-4 w-4 text-emerald-600" />
 						{resultSummary(results)}
 					</div>
-					<ul className="space-y-1 text-xs text-neutral-600 dark:text-neutral-300">
+					<ul className="space-y-1 text-xs text-muted-foreground">
 						{results.map((result) => (
 							<li className="break-all" key={result.candidateId}>
 								{result.status === 'imported' ? 'Imported' : 'Failed'} {result.path}

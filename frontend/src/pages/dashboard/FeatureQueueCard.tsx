@@ -63,9 +63,7 @@ function FeatureQueueRow({ item }: { item: FeatureQueueItem }) {
 		<>
 			<div className="min-w-0">
 				<p className="line-clamp-2 text-sm font-semibold text-foreground">{item.title}</p>
-				<p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
-					{item.projectName}
-				</p>
+				<p className="mt-1 truncate text-xs text-muted-foreground">{item.projectName}</p>
 			</div>
 			<Badge showDot tone={priorityTone(item.priority)}>
 				{item.priority === null ? 'P—' : `P${item.priority}`}
@@ -75,7 +73,7 @@ function FeatureQueueRow({ item }: { item: FeatureQueueItem }) {
 
 	if (item.projectId === undefined) {
 		return (
-			<li className="flex items-start justify-between gap-3 rounded-md border border-neutral-200 bg-white/75 p-3 dark:border-neutral-800 dark:bg-slate-950/60">
+			<li className="flex items-start justify-between gap-3 rounded-md border border-border bg-card/75 p-3">
 				{body}
 			</li>
 		);
@@ -84,7 +82,7 @@ function FeatureQueueRow({ item }: { item: FeatureQueueItem }) {
 	return (
 		<li>
 			<Link
-				className="flex items-start justify-between gap-3 rounded-md border border-neutral-200 bg-white/75 p-3 transition-[border-color,background-color] duration-150 outline-none hover:border-teal-300 hover:bg-teal-50/50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-neutral-800 dark:bg-slate-950/60 dark:hover:border-teal-800 dark:hover:bg-teal-950/20 dark:focus-visible:ring-offset-slate-950"
+				className="flex items-start justify-between gap-3 rounded-md border border-border bg-card/75 p-3 transition-[border-color,background-color] duration-150 outline-none hover:border-teal-300 hover:bg-teal-50/50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:hover:border-teal-800 dark:hover:bg-teal-950/20 dark:focus-visible:ring-offset-slate-950"
 				to={`/projects/${encodeURIComponent(item.projectId)}?tab=features`}>
 				{body}
 			</Link>

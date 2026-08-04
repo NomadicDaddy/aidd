@@ -30,21 +30,19 @@ export function DirectorRecentCycles({ cycles, now }: { cycles: DirectorCycle[];
 				<h2 className="text-sm font-semibold text-foreground" id="director-cycles-heading">
 					Recent Cycles
 				</h2>
-				<p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+				<p className="mb-3 text-xs text-muted-foreground">
 					History of completed analysis passes.
 				</p>
 				<div className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
 					{cycles.map((cycle) => (
-						<div
-							className="rounded-md bg-neutral-50 p-3 dark:bg-neutral-900"
-							key={cycle.id}>
+						<div className="rounded-md bg-muted p-3" key={cycle.id}>
 							<div className="flex items-center justify-between gap-2">
 								<div className="truncate text-sm font-medium text-foreground">
 									{cycle.id}
 								</div>
 								<Badge>{cycle.status}</Badge>
 							</div>
-							<div className="mt-2 grid gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+							<div className="mt-2 grid gap-1 text-xs text-muted-foreground">
 								<div className="flex items-center gap-1.5">
 									<Clock className="h-3.5 w-3.5" />
 									<span>{formatDate(cycle.startedAt)}</span>
@@ -114,7 +112,7 @@ function SuggestionLaunchPreviewDialog({
 							id="suggestion-launch-preview-title">
 							Launch preview
 						</h2>
-						<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+						<p className="mt-1 text-sm text-muted-foreground">
 							Launch starts {launchesRecipe ? 'a recipe pipeline' : 'a coding run'} in{' '}
 							<span className="font-medium text-foreground">
 								{suggestion.projectId}
@@ -128,7 +126,7 @@ function SuggestionLaunchPreviewDialog({
 						<X className="h-4 w-4" />
 					</IconButton>
 				</div>
-				<pre className="mt-4 rounded-md bg-neutral-50 p-3 font-mono text-xs break-words whitespace-pre-wrap text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200">
+				<pre className="mt-4 rounded-md bg-muted p-3 font-mono text-xs break-words whitespace-pre-wrap text-foreground">
 					{launchesRecipe
 						? formatRecipeArgs(suggestion.suggestedArgs)
 						: buildSuggestionPrompt(suggestion)}
@@ -161,7 +159,7 @@ export function DirectorSuggestionsList({
 					id="director-suggestions-heading">
 					Suggestions
 				</h2>
-				<p className="text-xs text-neutral-500 dark:text-neutral-400">
+				<p className="text-xs text-muted-foreground">
 					Launch a per-project action or dismiss it once handled.
 				</p>
 			</div>
@@ -182,7 +180,7 @@ export function DirectorSuggestionsList({
 								<h3 className="text-base font-semibold text-foreground">
 									{suggestion.title}
 								</h3>
-								<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+								<p className="mt-1 text-sm text-muted-foreground">
 									{suggestion.description}
 								</p>
 							</div>
@@ -196,7 +194,7 @@ export function DirectorSuggestionsList({
 							</div>
 						</div>
 						{isFleetWide && (
-							<p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+							<p className="mb-3 text-xs text-muted-foreground">
 								Fleet-wide suggestions are not directly launchable. Use them as
 								guidance for choosing per-project actions, then dismiss when
 								handled.

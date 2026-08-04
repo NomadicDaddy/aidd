@@ -46,13 +46,13 @@ export function WorkingTreeList({
 									{file.path}
 								</span>
 								{file.origPath ? (
-									<span className="block font-mono text-xs break-all text-neutral-500">
+									<span className="block font-mono text-xs break-all text-muted-foreground">
 										was {file.origPath}
 									</span>
 								) : null}
 								<span className="mt-2 flex flex-wrap items-center gap-2">
 									<Badge tone={status.tone}>{status.label}</Badge>
-									<span className="text-xs text-neutral-500">
+									<span className="text-xs text-muted-foreground">
 										{file.conflicted
 											? 'Conflicted'
 											: file.staged && file.unstaged

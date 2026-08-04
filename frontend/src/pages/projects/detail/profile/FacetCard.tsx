@@ -26,7 +26,7 @@ export function FacetCard({
 									'flex cursor-pointer items-start gap-3 rounded-md border p-2.5 transition-colors',
 									selected
 										? 'border-teal-400 bg-teal-50/70 dark:border-teal-700 dark:bg-teal-950/30'
-										: 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700',
+										: 'border-border hover:border-border',
 								)}
 								key={opt.value}>
 								<input

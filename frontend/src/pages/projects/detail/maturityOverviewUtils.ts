@@ -19,7 +19,7 @@ export const STAGE_ICON_BY_STATUS: Record<MaturityStageStatus, typeof CircleChec
 
 export const STAGE_ICON_TONE: Record<MaturityStageStatus, string> = {
 	complete: 'text-emerald-600 dark:text-emerald-400',
-	empty: 'text-neutral-400 dark:text-neutral-600',
+	empty: 'text-muted-foreground ',
 	partial: 'text-amber-600 dark:text-amber-400',
 };
 

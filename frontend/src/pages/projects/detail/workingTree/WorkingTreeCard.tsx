@@ -105,7 +105,7 @@ export function WorkingTreeCard({ projectId }: { projectId: string | undefined }
 	return (
 		<div className="space-y-3">
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					{files.length === 0
 						? 'No changed files.'
 						: `${plural(files.length)} changed · ${stagedCount} staged · ${selectedPaths.length} selected`}

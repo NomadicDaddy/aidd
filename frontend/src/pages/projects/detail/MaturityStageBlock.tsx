@@ -47,7 +47,7 @@ export function MaturityStageBlock({
 	const headerId = `maturity-stage-header-${stage.id}`;
 	const ChevronIcon = expanded ? ChevronDown : ChevronRight;
 	return (
-		<div className="rounded-md border border-neutral-200 dark:border-neutral-800">
+		<div className="rounded-md border border-border">
 			<button
 				aria-controls={panelId}
 				aria-expanded={expanded}
@@ -59,19 +59,19 @@ export function MaturityStageBlock({
 					<div className="flex min-w-0 items-center gap-2">
 						<ChevronIcon
 							aria-hidden="true"
-							className="h-4 w-4 shrink-0 text-neutral-500"
+							className="h-4 w-4 shrink-0 text-muted-foreground"
 						/>
 						<Icon className={`h-4 w-4 shrink-0 ${STAGE_ICON_TONE[stage.status]}`} />
 						<span className="truncate text-sm font-medium text-foreground">
 							{stage.order}. {stage.label}
 						</span>
 					</div>
-					<span className="min-w-0 text-xs text-neutral-500 sm:truncate">
+					<span className="min-w-0 text-xs text-muted-foreground sm:truncate">
 						{stage.description}
 					</span>
 				</div>
 				<div className="flex shrink-0 items-center gap-2">
-					<span className="font-mono text-xs text-neutral-500">
+					<span className="font-mono text-xs text-muted-foreground">
 						{stage.complete}/{stage.required}
 					</span>
 					<Badge
@@ -89,11 +89,11 @@ export function MaturityStageBlock({
 			{expanded ? (
 				<div
 					aria-labelledby={headerId}
-					className="space-y-1.5 border-t border-neutral-200 px-3 py-2 dark:border-neutral-800"
+					className="space-y-1.5 border-t border-border px-3 py-2"
 					id={panelId}
 					role="region">
 					{isAuditStage && auditProfileLabel ? (
-						<div className="text-xs text-neutral-500">
+						<div className="text-xs text-muted-foreground">
 							Profile: {auditProfileLabel} — {applicableCount} audit
 							{applicableCount === 1 ? '' : 's'} applicable
 						</div>
@@ -117,7 +117,7 @@ export function MaturityStageBlock({
 								/>
 							))}
 					{stage.artifacts.length === 0 ? (
-						<p className="text-xs text-neutral-500">No artifacts in this stage.</p>
+						<p className="text-xs text-muted-foreground">No artifacts in this stage.</p>
 					) : null}
 					{stageNextAction ? (
 						<div className="flex flex-wrap items-center gap-2 pt-1">
@@ -134,7 +134,7 @@ export function MaturityStageBlock({
 							</Button>
 						</div>
 					) : stage.status === 'complete' ? null : (
-						<p className="pt-1 text-xs text-neutral-500">
+						<p className="pt-1 text-xs text-muted-foreground">
 							Nothing to run — all required artifacts are complete or marked N/A.
 						</p>
 					)}

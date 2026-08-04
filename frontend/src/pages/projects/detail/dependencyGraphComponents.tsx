@@ -75,7 +75,7 @@ export function GraphNodeButton({
 		<button
 			aria-label={`Select ${node.directory}`}
 			className={cn(
-				'absolute overflow-hidden rounded-md border border-l-4 border-neutral-200 bg-white p-3 text-left shadow-sm transition-[border-color,background-color,box-shadow,opacity,filter] duration-150 dark:border-neutral-800 dark:bg-neutral-950',
+				'absolute overflow-hidden rounded-md border border-l-4 border-border bg-card p-3 text-left shadow-sm transition-[border-color,background-color,box-shadow,opacity,filter] duration-150',
 				'hover:border-teal-300 hover:shadow-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:border-teal-700',
 				nodeSourceClass(node.source),
 				isDimmed && 'opacity-25 saturate-50 hover:opacity-60',
@@ -96,10 +96,12 @@ export function GraphNodeButton({
 				<Badge className="shrink-0" tone={statusTone(node.status)}>
 					{node.status}
 				</Badge>
-				<span className="font-mono text-[11px] text-neutral-500">L{node.layer}</span>
+				<span className="font-mono text-[11px] text-muted-foreground">L{node.layer}</span>
 			</div>
 			<p className="mt-2 truncate text-sm font-semibold text-foreground">{node.title}</p>
-			<p className="mt-1 truncate font-mono text-[11px] text-neutral-500">{node.directory}</p>
+			<p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
+				{node.directory}
+			</p>
 		</button>
 	);
 }
@@ -117,9 +119,9 @@ export function DependencyList({
 }) {
 	return (
 		<section>
-			<h3 className="text-xs font-semibold text-neutral-500 uppercase">{title}</h3>
+			<h3 className="text-xs font-semibold text-muted-foreground uppercase">{title}</h3>
 			{directories.length === 0 ? (
-				<p className="mt-2 text-sm text-neutral-500">None</p>
+				<p className="mt-2 text-sm text-muted-foreground">None</p>
 			) : (
 				<ul className="mt-2 space-y-1.5">
 					{directories.map((directory) => {
@@ -127,13 +129,13 @@ export function DependencyList({
 						return (
 							<li key={directory}>
 								<button
-									className="w-full rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-left text-sm text-neutral-800 hover:border-teal-300 hover:bg-teal-50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-200 dark:hover:border-teal-700 dark:hover:bg-teal-950/30"
+									className="w-full rounded-md border border-border bg-muted px-3 py-2 text-left text-sm text-foreground hover:border-teal-300 hover:bg-teal-50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:border-teal-700 dark:hover:bg-teal-950/30"
 									onClick={() => onSelect(directory)}
 									type="button">
 									<span className="block truncate font-medium">
 										{node?.title ?? directory}
 									</span>
-									<span className="block truncate font-mono text-[11px] text-neutral-500">
+									<span className="block truncate font-mono text-[11px] text-muted-foreground">
 										{directory}
 									</span>
 								</button>
@@ -210,7 +212,7 @@ export function GraphZoomControls({
 	zoom: number;
 }) {
 	return (
-		<div className="flex items-center gap-1 rounded-md border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-950">
+		<div className="flex items-center gap-1 rounded-md border border-border bg-card p-1">
 			<IconButton
 				ariaLabel="Zoom out"
 				disabled={zoom <= GRAPH_ZOOM_MIN}

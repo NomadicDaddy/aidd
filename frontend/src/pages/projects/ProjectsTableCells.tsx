@@ -57,9 +57,7 @@ export function TokenSparkline({ points }: { points: ProjectUsageDailyTokens[] }
 		<svg
 			aria-label={`Tokens over the past 7 days: ${formatCompactNumber(total)} total`}
 			className={`block h-[18px] w-16 ${
-				total > 0
-					? 'text-cyan-600 dark:text-cyan-400'
-					: 'text-neutral-300 dark:text-neutral-700'
+				total > 0 ? 'text-cyan-600 dark:text-cyan-400' : 'text-muted-foreground'
 			}`}
 			role="img"
 			viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`}>
@@ -86,7 +84,7 @@ function PortLabel({
 	listening: boolean | null;
 	port: null | number;
 }) {
-	if (port === null) return <span className="text-neutral-400">—</span>;
+	if (port === null) return <span className="text-muted-foreground">—</span>;
 	const cls = collision ? 'font-semibold text-amber-700 dark:text-amber-400' : '';
 	if (listening === true) {
 		return (
@@ -117,7 +115,7 @@ export function PortsCell({
 	status: PortStatusEntry | undefined;
 }) {
 	if (!ports || (ports.frontendPort === null && ports.backendPort === null)) {
-		return <span className="text-neutral-400">—</span>;
+		return <span className="text-muted-foreground">—</span>;
 	}
 	const hasCollision = frontendCollision || backendCollision;
 	const collisionLabel = hasCollision
@@ -175,7 +173,7 @@ export function FeatureProgressCell({
 			</div>
 			<div
 				aria-label={`${pct}% passing`}
-				className="h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
+				className="h-1.5 overflow-hidden rounded-full bg-muted">
 				{total > 0 ? (
 					<div
 						className={`h-full ${featureProgressColor(pct)}`}

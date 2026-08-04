@@ -7,7 +7,7 @@ export function AboutPage() {
 		<div className="page-reveal flex min-h-[calc(100vh-7rem)] items-center justify-center px-2 py-8 sm:px-6">
 			<section
 				aria-labelledby="about-title"
-				className="relative isolate flex w-full max-w-4xl flex-col items-center overflow-hidden rounded-2xl border border-teal-200/60 bg-white/85 px-5 py-10 text-center shadow-[0_24px_80px_rgba(13,148,136,0.08)] backdrop-blur-xl sm:px-10 sm:py-14 dark:border-teal-900/60 dark:bg-slate-950/80 dark:shadow-[0_28px_100px_rgba(0,0,0,0.4)]">
+				className="relative isolate flex w-full max-w-4xl flex-col items-center overflow-hidden rounded-2xl border border-teal-200/60 bg-card/85 px-5 py-10 text-center shadow-[0_24px_80px_rgba(13,148,136,0.08)] backdrop-blur-xl sm:px-10 sm:py-14 dark:border-teal-900/60 dark:shadow-[0_28px_100px_rgba(0,0,0,0.4)]">
 				<div
 					aria-hidden="true"
 					className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(13,148,136,0.14),transparent_36%),radial-gradient(circle_at_76%_30%,rgba(245,158,11,0.12),transparent_32%),linear-gradient(135deg,rgba(13,148,136,0.06),transparent_42%)]"

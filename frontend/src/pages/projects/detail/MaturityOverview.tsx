@@ -141,14 +141,14 @@ export function MaturityOverview({
 							{maturity.currentStageLabel ?? 'All maturity stages complete'}
 						</div>
 						{maturity.nextArtifactLabel ? (
-							<div className="text-xs text-neutral-500">
+							<div className="text-xs text-muted-foreground">
 								Next: {maturity.nextArtifactLabel}
 							</div>
 						) : null}
 					</div>
 					{!isComplete && maturity.nextAction ? (
 						<div className="flex flex-col items-center gap-1">
-							<div className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
+							<div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 								Next overall step
 							</div>
 							<Button
@@ -177,7 +177,7 @@ export function MaturityOverview({
 								projectDir={projectPath}
 								value={launchTarget}
 							/>
-							<span className="text-xs text-neutral-500">
+							<span className="text-xs text-muted-foreground">
 								{maturity.percent}% complete
 							</span>
 						</div>

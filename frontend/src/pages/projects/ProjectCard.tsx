@@ -89,9 +89,9 @@ export function ProjectCard({
 							<span className="truncate">{project.name}</span>
 						)}
 					</h2>
-					<p className="text-xs break-all text-neutral-500">{project.path}</p>
+					<p className="text-xs break-all text-muted-foreground">{project.path}</p>
 					{totalStages > 0 ? (
-						<p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+						<p className="mt-1 text-xs text-muted-foreground">
 							Stage {Math.max(stageIndex, 1)}/{totalStages}:{' '}
 							{maturity.currentStageLabel ?? 'Complete'}
 							{maturity.nextArtifactLabel ? (
@@ -117,7 +117,7 @@ export function ProjectCard({
 						{project.artifactHealth}
 					</Badge>
 					{summary ? (
-						<div className="text-[10px] text-neutral-500 dark:text-neutral-400">
+						<div className="text-[10px] text-muted-foreground">
 							{summary.fresh} fresh · {summary.stale} stale · {summary.missing}{' '}
 							missing
 						</div>
@@ -164,14 +164,14 @@ export function ProjectCard({
 					})}
 				</div>
 			) : null}
-			<div className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
+			<div className="space-y-2 text-sm text-foreground">
 				<div>
 					{passing}/{totalFeatures} features passing
 					{failing > 0 ? (
 						<span className="ml-2 text-xs text-amber-700">({failing} failing)</span>
 					) : null}
 				</div>
-				<div className="h-2 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
+				<div className="h-2 overflow-hidden rounded-full bg-muted">
 					{totalFeatures > 0 ? (
 						<div
 							className={`h-full ${featureProgressColor(pct)}`}
@@ -179,7 +179,7 @@ export function ProjectCard({
 						/>
 					) : null}
 				</div>
-				<div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+				<div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
 					<div>
 						Interview:{' '}
 						{metadata.interview
@@ -191,14 +191,14 @@ export function ProjectCard({
 					<div
 						title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
 						Reported cost:{' '}
-						<span className="font-medium text-neutral-800 tabular-nums dark:text-neutral-200">
+						<span className="font-medium text-foreground tabular-nums">
 							{formatProjectListReportedCost(metadata.usage.totals)}
 						</span>
 					</div>
 					<div
 						title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
 						Tokens:{' '}
-						<span className="font-medium text-neutral-800 tabular-nums dark:text-neutral-200">
+						<span className="font-medium text-foreground tabular-nums">
 							{formatProjectTokenCount(metadata.usage.totals)}
 						</span>
 					</div>
@@ -207,7 +207,7 @@ export function ProjectCard({
 						{specDays !== null ? (
 							<span className={specAgeColor(specDays)}>{specDays}d</span>
 						) : (
-							<span className="text-neutral-400">—</span>
+							<span className="text-muted-foreground">—</span>
 						)}
 					</div>
 					<div>
@@ -217,7 +217,7 @@ export function ProjectCard({
 								{formatRelativeAge(metadata.addedAt)}
 							</span>
 						) : (
-							<span className="text-neutral-400">—</span>
+							<span className="text-muted-foreground">—</span>
 						)}
 					</div>
 					<div>
@@ -235,9 +235,7 @@ export function ProjectCard({
 								</span>
 							) : null}
 							{fePort !== null && bePort !== null ? (
-								<span className="mx-1 text-neutral-300 dark:text-neutral-700">
-									·
-								</span>
+								<span className="mx-1 text-muted-foreground">·</span>
 							) : null}
 							{bePort !== null ? (
 								<span className="inline-flex items-center gap-1">
@@ -249,7 +247,7 @@ export function ProjectCard({
 					) : null}
 				</div>
 				{metadata.sync.lastSyncAt ? (
-					<div className="text-xs text-neutral-500">
+					<div className="text-xs text-muted-foreground">
 						Last aidd run {formatRelativeAge(metadata.sync.lastSyncAt)}
 					</div>
 				) : null}
@@ -258,9 +256,7 @@ export function ProjectCard({
 				) : null}
 			</div>
 			{action ? (
-				<div className="mt-auto flex justify-end border-t border-neutral-100 pt-3 dark:border-neutral-800">
-					{action}
-				</div>
+				<div className="mt-auto flex justify-end border-t border-border pt-3">{action}</div>
 			) : null}
 		</Card>
 	);

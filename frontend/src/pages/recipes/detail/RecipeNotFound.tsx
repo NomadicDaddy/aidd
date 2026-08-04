@@ -8,14 +8,14 @@ export function RecipeNotFound() {
 	return (
 		<div className="space-y-5">
 			<Link
-				className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50"
+				className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
 				to="/recipes">
 				<ArrowLeft className="h-4 w-4" />
 				Recipes
 			</Link>
 			<Card>
 				<h1 className="text-xl font-semibold text-foreground">Recipe not found</h1>
-				<p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+				<p className="mt-2 text-sm text-muted-foreground">
 					No recipe matches this URL. The recipe may have been removed or the link may be
 					incorrect.
 				</p>

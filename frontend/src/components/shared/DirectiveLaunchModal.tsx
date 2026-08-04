@@ -11,8 +11,10 @@ import { toast } from 'sonner';
 import { useLaunchDefaults } from '../../hooks/useLaunchDefaults.ts';
 import { useProjectNames } from '../../hooks/useProjects.ts';
 import { useLaunchDirectiveRun } from '../../hooks/useRuns.ts';
+import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { fieldLabelClass, selectClass, textareaClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 import { Button, IconButton } from '../ui/button.tsx';
 import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import {
@@ -125,10 +127,7 @@ export function DirectiveLaunchModal({ onClose, open }: DirectiveLaunchModalProp
 					<div className="flex items-start justify-between gap-3">
 						<div className="min-w-0">
 							<div className="flex items-center gap-2">
-								<ShieldCheck
-									aria-hidden="true"
-									className="h-4 w-4 text-teal-700 dark:text-teal-300"
-								/>
+								<ShieldCheck aria-hidden="true" className="h-4 w-4 text-accent" />
 								<h2
 									className="text-base font-semibold text-foreground"
 									id="directive-launch-title">
@@ -136,7 +135,7 @@ export function DirectiveLaunchModal({ onClose, open }: DirectiveLaunchModalProp
 								</h2>
 							</div>
 							<p
-								className="mt-1 text-sm text-neutral-600 dark:text-neutral-400"
+								className="mt-1 text-sm text-muted-foreground"
 								id="directive-launch-description">
 								Send a free-text instruction to one project as a supervised run.
 							</p>
@@ -182,15 +181,15 @@ export function DirectiveLaunchModal({ onClose, open }: DirectiveLaunchModalProp
 								required
 								value={prompt}
 							/>
-							<span className="text-xs text-neutral-500 dark:text-neutral-400">
+							<span className="text-xs text-muted-foreground">
 								Press Ctrl+Enter or Cmd+Enter to launch.
 							</span>
-							<span className="text-xs text-amber-700 dark:text-amber-300">
+							<span className={cn('text-xs', toneText.amber)}>
 								{DIRECTIVE_PROMPT_SAFETY_NOTICE}
 							</span>
 						</label>
 
-						<div className="rounded-md border border-teal-200 bg-teal-50/60 p-3 dark:border-teal-900 dark:bg-teal-950/30">
+						<div className="rounded-md border border-accent/30 bg-accent-muted/60 p-3">
 							<label className="grid gap-1.5">
 								<span className={fieldLabelClass}>Execution intent</span>
 								<select
@@ -204,7 +203,7 @@ export function DirectiveLaunchModal({ onClose, open }: DirectiveLaunchModalProp
 									<option value="review-only">Review only</option>
 									<option value="apply-changes">Apply changes</option>
 								</select>
-								<span className="text-xs text-neutral-600 dark:text-neutral-300">
+								<span className="text-xs text-muted-foreground">
 									{executionIntent === 'review-only'
 										? 'The run may inspect the project but must not edit files, metadata, or git history.'
 										: 'The run may edit, test, update metadata, and create commits when the directive requires it.'}
@@ -229,7 +228,7 @@ export function DirectiveLaunchModal({ onClose, open }: DirectiveLaunchModalProp
 										: {})}
 								/>
 							) : (
-								<span className="text-xs text-neutral-500 dark:text-neutral-400">
+								<span className="text-xs text-muted-foreground">
 									{defaults.isError
 										? 'Launch target unavailable'
 										: 'Resolving launch target…'}

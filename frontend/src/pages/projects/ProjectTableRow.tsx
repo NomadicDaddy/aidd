@@ -65,7 +65,7 @@ export function ProjectTableRow({
 	const orphan = isOrphaned(project);
 
 	return (
-		<tr className="border-b last:border-0 dark:border-neutral-800">
+		<tr className="border-b border-border last:border-0">
 			<td className="px-3 py-3">
 				<div className="flex items-center gap-1.5">
 					{orphan ? (
@@ -75,12 +75,12 @@ export function ProjectTableRow({
 						/>
 					) : null}
 					<Link
-						className="font-medium text-neutral-950 hover:underline dark:text-neutral-50"
+						className="font-medium text-foreground hover:underline"
 						to={`/projects/${encodeURIComponent(project.routeId)}`}>
 						{project.name}
 					</Link>
 				</div>
-				<div className="truncate text-xs text-neutral-500">{project.path}</div>
+				<div className="truncate text-xs text-muted-foreground">{project.path}</div>
 				{specDays !== null ? (
 					<div
 						className={`text-xs ${specAgeColor(specDays)}`}
@@ -93,7 +93,7 @@ export function ProjectTableRow({
 				{metadata.appVersion ? (
 					formatAppVersion(metadata.appVersion)
 				) : (
-					<span className="text-neutral-400">
+					<span className="text-muted-foreground">
 						{formatAppVersion(metadata.appVersion)}
 					</span>
 				)}
@@ -103,7 +103,7 @@ export function ProjectTableRow({
 							templateVersionColor(
 								metadata.templateVersion,
 								spernakitTemplateVersion,
-							) || 'text-neutral-500'
+							) || 'text-muted-foreground'
 						}`}>
 						spk {metadata.templateVersion}
 					</div>
@@ -147,7 +147,7 @@ export function ProjectTableRow({
 				<div className="font-medium tabular-nums">
 					{formatProjectListReportedCost(metadata.usage.totals)}
 				</div>
-				<div className="text-[10px] text-neutral-500 tabular-nums">
+				<div className="text-[10px] text-muted-foreground tabular-nums">
 					{metadata.usage.totals.runsWithReportedCost}/{metadata.usage.totals.runCount}{' '}
 					runs
 				</div>
@@ -159,7 +159,7 @@ export function ProjectTableRow({
 					{formatProjectTokenCount(metadata.usage.totals)}
 				</div>
 				<TokenSparkline points={metadata.usage.recentDailyTokens} />
-				<div className="text-[10px] text-neutral-500 tabular-nums">
+				<div className="text-[10px] text-muted-foreground tabular-nums">
 					{metadata.usage.totals.runsWithTokenUsage}/{metadata.usage.totals.runCount} runs
 				</div>
 			</td>
@@ -173,12 +173,12 @@ export function ProjectTableRow({
 							size={36}
 							stages={metadata.maturity.stageStatuses}
 						/>
-						<span className="text-xs text-neutral-500">
+						<span className="text-xs text-muted-foreground">
 							{metadata.maturity.currentStageLabel ?? 'Complete'}
 						</span>
 					</div>
 				) : (
-					<span className="text-neutral-400">—</span>
+					<span className="text-muted-foreground">—</span>
 				)}
 			</td>
 			<td className="px-3 py-3">
@@ -193,16 +193,16 @@ export function ProjectTableRow({
 			<td className="px-3 py-3">
 				<Badge tone={syncTone(metadata.sync.syncState)}>{metadata.sync.syncState}</Badge>
 				{metadata.sync.lastSyncAt ? (
-					<div className="text-xs text-neutral-500">
+					<div className="text-xs text-muted-foreground">
 						{formatRelativeAge(metadata.sync.lastSyncAt)}
 					</div>
 				) : null}
 			</td>
-			<td className="px-3 py-3 text-xs whitespace-nowrap text-neutral-600 dark:text-neutral-400">
+			<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
 				{metadata.addedAt ? (
 					<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
 				) : (
-					<span className="text-neutral-400">—</span>
+					<span className="text-muted-foreground">—</span>
 				)}
 			</td>
 		</tr>

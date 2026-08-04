@@ -2,6 +2,9 @@ import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { useState } from 'react';
 
+import { cn } from '../../lib/cn.ts';
+import { toneText } from '../../lib/tones.ts';
+
 // Hand-rolled collapsible JSON tree. Objects and arrays collapse; the top two levels start
 // expanded so a typical artifact (roadmap.json, feature.json) is scannable on open.
 const defaultExpandedDepth = 2;
@@ -10,16 +13,12 @@ type JsonValue = { [key: string]: JsonValue } | boolean | JsonValue[] | null | n
 
 function PrimitiveValue({ value }: { value: boolean | null | number | string }) {
 	if (typeof value === 'string') {
-		return (
-			<span className="break-all text-emerald-700 dark:text-emerald-400">
-				&quot;{value}&quot;
-			</span>
-		);
+		return <span className={cn('break-all', toneText.emerald)}>&quot;{value}&quot;</span>;
 	}
 	if (typeof value === 'number') {
-		return <span className="text-teal-700 dark:text-teal-400">{String(value)}</span>;
+		return <span className={toneText.teal}>{String(value)}</span>;
 	}
-	return <span className="text-amber-700 dark:text-amber-400">{String(value)}</span>;
+	return <span className={toneText.amber}>{String(value)}</span>;
 }
 
 function entryCountLabel(value: { [key: string]: JsonValue } | JsonValue[]): string {
@@ -45,9 +44,7 @@ function JsonNode({
 }) {
 	const [expanded, setExpanded] = useState(depth < defaultExpandedDepth);
 	const keyPrefix =
-		label !== null ? (
-			<span className="text-neutral-700 dark:text-neutral-300">&quot;{label}&quot;: </span>
-		) : null;
+		label !== null ? <span className="text-foreground">&quot;{label}&quot;: </span> : null;
 
 	if (value === null || typeof value !== 'object') {
 		return (
@@ -68,13 +65,13 @@ function JsonNode({
 	return (
 		<div className={depth === 0 ? '' : 'pl-4'}>
 			<button
-				className="inline-flex items-center gap-1 rounded text-left hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:bg-neutral-800/70"
+				className="inline-flex items-center gap-1 rounded text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 				onClick={() => setExpanded((previous) => !previous)}
 				type="button">
-				<Chevron aria-hidden="true" className="h-3 w-3 shrink-0 text-neutral-500" />
+				<Chevron aria-hidden="true" className="h-3 w-3 shrink-0 text-muted-foreground" />
 				{keyPrefix}
-				<span className="text-neutral-500 dark:text-neutral-400">{brackets}</span>
-				<span className="text-[0.65rem] text-neutral-400 dark:text-neutral-500">
+				<span className="text-muted-foreground">{brackets}</span>
+				<span className="text-[0.65rem] text-muted-foreground">
 					{entryCountLabel(value)}
 				</span>
 			</button>

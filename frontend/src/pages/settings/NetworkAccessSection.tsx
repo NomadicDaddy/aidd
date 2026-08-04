@@ -41,18 +41,18 @@ export function NetworkAccessSection({
 		<>
 			<Card className="grid gap-4 p-3 lg:grid-cols-2">
 				<div className="space-y-4">
-					<label className="flex items-start gap-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+					<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
 						<input
 							checked={form.allowRemote}
 							className="mt-0.5"
 							onChange={(event) => requestAllowRemote(event.target.checked)}
 							type="checkbox"
 						/>
-						<span className="text-sm text-neutral-700 dark:text-neutral-300">
-							<span className="font-medium text-neutral-800 dark:text-neutral-100">
+						<span className="text-sm text-foreground">
+							<span className="font-medium text-foreground">
 								Allow local network access
 							</span>
-							<span className="mt-1 block text-xs text-neutral-500 dark:text-neutral-400">
+							<span className="mt-1 block text-xs text-muted-foreground">
 								{form.allowRemote
 									? 'The next restart can expose the control panel beyond this machine.'
 									: 'Limited to this machine.'}
@@ -61,7 +61,7 @@ export function NetworkAccessSection({
 					</label>
 					<div className="grid gap-4 sm:grid-cols-2">
 						<label className="space-y-1">
-							<span className="text-xs font-medium text-neutral-500 uppercase">
+							<span className="text-xs font-medium text-muted-foreground uppercase">
 								Hostname
 							</span>
 							<Input
@@ -71,7 +71,7 @@ export function NetworkAccessSection({
 							/>
 						</label>
 						<label className="space-y-1">
-							<span className="text-xs font-medium text-neutral-500 uppercase">
+							<span className="text-xs font-medium text-muted-foreground uppercase">
 								Port
 							</span>
 							<Input
@@ -88,7 +88,7 @@ export function NetworkAccessSection({
 							/>
 						</label>
 					</div>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						Listener changes take effect after restarting aidd-web.
 						{form.authTokenConfigured
 							? ' A remote bearer token is configured.'

@@ -115,7 +115,7 @@ function SessionTitle({
 			</ConsoleSelectionButton>
 			{multiStep && (
 				<span
-					className="font-mono text-xs text-neutral-500"
+					className="font-mono text-xs text-muted-foreground"
 					title={`Step ${session.currentStepIndex} of ${session.totalSteps}`}>
 					{session.currentStepIndex}/{session.totalSteps}
 				</span>
@@ -140,7 +140,7 @@ function SessionProjectLink({
 	session,
 }: Pick<PipelineSessionRowProps, 'projectRouteId' | 'session'>) {
 	if (projectRouteId === undefined) {
-		return <span className="text-neutral-500">{session.projectName}</span>;
+		return <span className="text-muted-foreground">{session.projectName}</span>;
 	}
 	return (
 		<ProjectDetailLink
@@ -156,7 +156,7 @@ function SessionMeta({
 	session,
 }: Pick<PipelineSessionRowProps, 'projectRouteId' | 'session'>) {
 	return (
-		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 			<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			<PipelineSessionIdentityBadges identities={session.executionIdentities} />
 			<SessionProjectLink projectRouteId={projectRouteId} session={session} />
@@ -180,7 +180,9 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			onClick={containerSelectionHandler(() => selectSession(onSelect, session))}>
 			<td className="py-3 pr-3 pl-4">
 				<SessionTitle {...props} />
-				<div className="mt-1 text-xs text-neutral-500">{formatDate(session.startedAt)}</div>
+				<div className="mt-1 text-xs text-muted-foreground">
+					{formatDate(session.startedAt)}
+				</div>
 			</td>
 			<td className="px-3 py-3">
 				<SessionProjectLink {...props} />
@@ -225,7 +227,7 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 			role="listitem">
 			<SessionTitle {...props} />
 			<SessionMeta projectRouteId={props.projectRouteId} session={session} />
-			<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+			<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
 				<Badge tone={sessionStatusTone(session.status)}>
 					{sessionStatusLabel(session.status)}
 				</Badge>

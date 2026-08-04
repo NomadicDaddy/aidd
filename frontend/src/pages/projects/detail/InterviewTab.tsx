@@ -37,14 +37,14 @@ export function InterviewTab({
 	}
 	if (!interview.hasQuestionsFile) {
 		return (
-			<Card className="py-10 text-center text-sm text-neutral-500">
+			<Card className="py-10 text-center text-sm text-muted-foreground">
 				No <code>.aidd/questions.md</code> found for this project.
 			</Card>
 		);
 	}
 	if (interview.total === 0) {
 		return (
-			<Card className="py-10 text-center text-sm text-neutral-500">
+			<Card className="py-10 text-center text-sm text-muted-foreground">
 				<p>The interview file is present but contains no parsed questions.</p>
 				<p className="mt-1 text-xs">
 					Questions must use the <code>- **[PRIORITY]** prompt</code> format.
@@ -57,19 +57,19 @@ export function InterviewTab({
 		<div className="space-y-4">
 			<div className="grid gap-4 md:grid-cols-3">
 				<Card>
-					<div className="text-xs text-neutral-500 uppercase">Questions</div>
+					<div className="text-xs text-muted-foreground uppercase">Questions</div>
 					<div className="mt-2 text-2xl font-semibold text-foreground">
 						{interview.total}
 					</div>
 				</Card>
 				<Card>
-					<div className="text-xs text-neutral-500 uppercase">Completed</div>
+					<div className="text-xs text-muted-foreground uppercase">Completed</div>
 					<div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
 						{interview.answered}
 					</div>
 				</Card>
 				<Card>
-					<div className="text-xs text-neutral-500 uppercase">Unanswered</div>
+					<div className="text-xs text-muted-foreground uppercase">Unanswered</div>
 					<div className="mt-2 text-2xl font-semibold text-amber-700 dark:text-amber-400">
 						{remaining}
 					</div>
@@ -78,7 +78,7 @@ export function InterviewTab({
 			<Card>
 				<h2 className="mb-2 text-sm font-semibold text-foreground">Unanswered questions</h2>
 				{interview.unanswered.length === 0 ? (
-					<p className="text-sm text-neutral-500">
+					<p className="text-sm text-muted-foreground">
 						All interview questions have responses.
 					</p>
 				) : (
@@ -90,7 +90,7 @@ export function InterviewTab({
 							const canSubmit = !submitAnswer.isPending && trimmedDraft.length > 0;
 							return (
 								<li
-									className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800"
+									className="rounded-md border border-border p-3"
 									key={question.id}>
 									<div className="mb-1 flex items-center gap-2">
 										<Badge tone="neutral">{question.priority || 'NICE'}</Badge>
@@ -98,15 +98,13 @@ export function InterviewTab({
 											<Badge tone="amber">Draft</Badge>
 										) : null}
 									</div>
-									<p className="text-sm text-neutral-800 dark:text-neutral-200">
-										{question.prompt}
-									</p>
+									<p className="text-sm text-foreground">{question.prompt}</p>
 									<div className="mt-2">
 										{isExpanded ? (
 											<div className="space-y-2">
 												<textarea
 													aria-label={`Answer for question: ${question.prompt}`}
-													className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+													className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
 													disabled={submitAnswer.isPending}
 													onChange={(event) =>
 														setDraftAnswers((prev) => ({
@@ -224,16 +222,14 @@ export function InterviewTab({
 					</h2>
 					<ul className="space-y-3">
 						{interview.answeredQuestions.map((question) => (
-							<li
-								className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800"
-								key={question.id}>
+							<li className="rounded-md border border-border p-3" key={question.id}>
 								<div className="mb-1 flex items-center gap-2">
 									<Badge tone="emerald">{question.priority || 'NICE'}</Badge>
 								</div>
-								<p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+								<p className="text-sm font-medium text-foreground">
 									{question.prompt}
 								</p>
-								<p className="mt-2 text-sm whitespace-pre-wrap text-neutral-600 dark:text-neutral-400">
+								<p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
 									{question.response}
 								</p>
 							</li>

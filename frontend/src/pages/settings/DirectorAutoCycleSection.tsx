@@ -27,14 +27,14 @@ export function DirectorAutoCycleSection({
 		<Card className="p-3">
 			<div>
 				<h2 className="text-base font-semibold text-foreground">Director Auto-Cycle</h2>
-				<p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+				<p className="mt-0.5 text-sm text-muted-foreground">
 					Automatically run a fleet analysis cycle on a fixed cadence. The web process
 					runs a catch-up cycle on startup if the fleet hasn&apos;t been analyzed within
 					the interval. Manual runs from the Director page are always available.
 				</p>
 			</div>
 			<div className="mt-4 grid gap-4 sm:grid-cols-2">
-				<label className="flex items-start gap-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800">
+				<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
 					<input
 						checked={form.directorAutoCycleEnabled}
 						className="mt-0.5"
@@ -43,16 +43,16 @@ export function DirectorAutoCycleSection({
 						}
 						type="checkbox"
 					/>
-					<span className="text-sm text-neutral-800 dark:text-neutral-100">
+					<span className="text-sm text-foreground">
 						<span className="font-medium">Run cycles automatically</span>
-						<span className="mt-1 block text-xs text-neutral-500">
+						<span className="mt-1 block text-xs text-muted-foreground">
 							Off by default. When on, a cycle starts every interval and once on
 							startup if the last cycle is older than the interval.
 						</span>
 					</span>
 				</label>
 				<label className="space-y-1">
-					<span className="text-xs font-medium text-neutral-500 uppercase">
+					<span className="text-xs font-medium text-muted-foreground uppercase">
 						Interval (hours)
 					</span>
 					<Input
@@ -74,9 +74,9 @@ export function DirectorAutoCycleSection({
 					) : null}
 				</label>
 			</div>
-			<div className="mt-6 border-t border-neutral-200 pt-4 dark:border-neutral-800">
+			<div className="mt-6 border-t border-border pt-4">
 				<h3 className="text-sm font-semibold text-foreground">Suggestion granularity</h3>
-				<p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+				<p className="mt-0.5 text-sm text-muted-foreground">
 					<span className="font-medium">Targeted</span> surfaces one suggestion per
 					concrete artifact (the next finding, remediation item, or feature to work) plus
 					a rollup for the rest. <span className="font-medium">Aggregate</span> emits one
@@ -84,11 +84,11 @@ export function DirectorAutoCycleSection({
 				</p>
 				<div className="mt-4 grid gap-4 sm:grid-cols-2">
 					<label className="space-y-1">
-						<span className="text-xs font-medium text-neutral-500 uppercase">
+						<span className="text-xs font-medium text-muted-foreground uppercase">
 							Granularity
 						</span>
 						<select
-							className="w-full rounded-md border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800"
+							className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
 							onChange={(event) =>
 								setField(
 									'directorSuggestionGranularity',
@@ -101,7 +101,7 @@ export function DirectorAutoCycleSection({
 						</select>
 					</label>
 					<label className="space-y-1">
-						<span className="text-xs font-medium text-neutral-500 uppercase">
+						<span className="text-xs font-medium text-muted-foreground uppercase">
 							Max per bucket
 						</span>
 						<Input
@@ -122,7 +122,7 @@ export function DirectorAutoCycleSection({
 								Enter a positive number of artifacts.
 							</span>
 						) : (
-							<span className="text-xs text-neutral-500">
+							<span className="text-xs text-muted-foreground">
 								Artifacts shown per bucket before the rest roll up.
 							</span>
 						)}

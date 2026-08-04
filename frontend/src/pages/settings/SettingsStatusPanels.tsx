@@ -10,10 +10,10 @@ import { SettingsToolStatusBadge } from './SettingsToolStatusBadge.tsx';
 function StatusRows({ items, title }: { items: SettingsSourceControlStatus[]; title: string }) {
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b px-4 py-3 dark:border-neutral-800">
+			<div className="border-b border-border px-4 py-3">
 				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
 			</div>
-			<div className="divide-y dark:divide-neutral-800">
+			<div className="divide-y divide-border">
 				{items.map((item) => (
 					<div
 						className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
@@ -22,19 +22,21 @@ function StatusRows({ items, title }: { items: SettingsSourceControlStatus[]; ti
 							<div className="flex flex-wrap items-center gap-2">
 								<span className="font-medium text-foreground">{item.label}</span>
 								{item.version ? (
-									<span className="text-xs text-neutral-500">{item.version}</span>
+									<span className="text-xs text-muted-foreground">
+										{item.version}
+									</span>
 								) : null}
 							</div>
-							<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+							<p className="mt-1 text-sm text-muted-foreground">
 								{item.authStatus ?? item.detail}
 							</p>
 							{item.authStatus ? (
-								<p className="mt-1 text-xs text-neutral-500">{item.detail}</p>
+								<p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
 							) : null}
 						</div>
 						<div className="flex items-center gap-2 md:justify-end">
 							<SettingsToolStatusBadge status={item.status} />
-							<span className="max-w-[14rem] truncate text-xs text-neutral-500">
+							<span className="max-w-[14rem] truncate text-xs text-muted-foreground">
 								{item.command ?? 'environment'}
 							</span>
 						</div>
@@ -50,7 +52,7 @@ export function SourceControlStatusPanel() {
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center justify-between gap-3">
-				<p className="text-sm text-neutral-600 dark:text-neutral-400">
+				<p className="text-sm text-muted-foreground">
 					Read-only source-control tool status. These rows do not change Git or provider
 					behavior.
 				</p>
@@ -64,7 +66,7 @@ export function SourceControlStatusPanel() {
 				</Button>
 			</div>
 			{query.isLoading ? (
-				<Card className="py-8 text-center text-sm text-neutral-500">
+				<Card className="py-8 text-center text-sm text-muted-foreground">
 					Checking source-control status…
 				</Card>
 			) : query.isError ? (

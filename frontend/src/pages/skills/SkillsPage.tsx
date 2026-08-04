@@ -111,7 +111,7 @@ export function SkillsPage() {
 			<div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
 				<Card className="min-w-0 space-y-3">
 					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-neutral-400" />
+						<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							aria-label="Search skills"
 							className="pl-8"
@@ -134,7 +134,7 @@ export function SkillsPage() {
 							<div className="space-y-2 p-1">
 								{Array.from({ length: 6 }).map((_, index) => (
 									<div
-										className="space-y-2 rounded-md border border-neutral-200 px-3 py-2 dark:border-neutral-800"
+										className="space-y-2 rounded-md border border-border px-3 py-2"
 										key={index}>
 										<SkeletonLines count={2} label="Loading skills…" />
 									</div>
@@ -148,7 +148,7 @@ export function SkillsPage() {
 									className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
 										skill.id === selected?.id
 											? 'border-teal-300 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/30'
-											: 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'
+											: 'border-border hover:bg-muted'
 									}`}
 									key={skill.id}
 									onClick={() => setSelectedId(skill.id)}
@@ -170,11 +170,11 @@ export function SkillsPage() {
 											{skill.origin}
 										</Badge>
 									</div>
-									<p className="mt-1 line-clamp-2 text-xs text-neutral-500">
+									<p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
 										{skillSummary(skill)}
 									</p>
 									{usageLine ? (
-										<p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+										<p className="mt-1 text-xs text-muted-foreground">
 											{usageLine}
 										</p>
 									) : null}
@@ -218,7 +218,7 @@ export function SkillsPage() {
 						/>
 						<Card className="space-y-2">
 							<h3 className="text-sm font-semibold text-foreground">Definition</h3>
-							<pre className="max-h-[28rem] overflow-auto rounded-md bg-neutral-100 p-3 font-mono text-xs text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+							<pre className="max-h-[28rem] overflow-auto rounded-md bg-muted p-3 font-mono text-xs text-foreground">
 								{selected.body}
 							</pre>
 						</Card>

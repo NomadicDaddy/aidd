@@ -75,7 +75,7 @@ export function buildStepRows(report: PipelineSessionReport): StepRow[] {
 export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStepResultRecord }) {
 	return (
 		<div
-			className="rounded-md border border-neutral-200 p-4 dark:border-neutral-800"
+			className="rounded-md border border-border p-4"
 			style={{ marginLeft: `${Math.min(step.depth, 4) * 16}px` }}>
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 				<div className="min-w-0">
@@ -90,7 +90,7 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 					<h3 className="mt-2 text-base font-semibold text-foreground">
 						{step.stepName}
 					</h3>
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-muted-foreground">
 						{formatDate(step.startedAt)} ·{' '}
 						{formatActiveDuration(step.durationMs, step.startedAt, now)}
 					</p>
@@ -123,7 +123,7 @@ export function PendingStepRow({
 	totalSteps: number;
 }) {
 	return (
-		<div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50/50 p-4 dark:border-neutral-700 dark:bg-neutral-900/30">
+		<div className="rounded-md border border-dashed border-border bg-muted/50 p-4">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
@@ -132,16 +132,14 @@ export function PendingStepRow({
 							pending
 						</Badge>
 						<Badge tone="teal">{step.stepType}</Badge>
-						<span className="text-xs font-medium text-neutral-500">
+						<span className="text-xs font-medium text-muted-foreground">
 							Step {sequenceNumber} of {totalSteps}
 						</span>
 					</div>
-					<h3 className="mt-2 text-base font-semibold text-neutral-500 dark:text-neutral-400">
+					<h3 className="mt-2 text-base font-semibold text-muted-foreground">
 						{step.name}
 					</h3>
-					<p className="text-xs text-neutral-400 dark:text-neutral-500">
-						Not started yet
-					</p>
+					<p className="text-xs text-muted-foreground">Not started yet</p>
 				</div>
 			</div>
 		</div>

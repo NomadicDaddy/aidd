@@ -57,7 +57,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 					<ShieldCheck className="mr-1 h-3 w-3" />
 					{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
 				</Badge>
-				<span className="mr-auto text-xs text-neutral-500 dark:text-neutral-400">
+				<span className="mr-auto text-xs text-muted-foreground">
 					Profile bucket: <span className="font-mono">{audits.data?.bucket ?? '—'}</span>
 				</span>
 				<Button
@@ -78,7 +78,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 				</Button>
 				{runDisabledReason ? (
 					<span
-						className="basis-full text-xs text-neutral-500 dark:text-neutral-400"
+						className="basis-full text-xs text-muted-foreground"
 						id="project-audits-run-help"
 						role="status">
 						{runDisabledReason}
@@ -90,7 +90,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 				<label className="space-y-1">
 					<span className={fieldLabelClass}>Search</span>
 					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							className="pl-9"
 							onChange={(event) => setQuery(event.target.value)}

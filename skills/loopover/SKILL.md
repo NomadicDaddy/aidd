@@ -21,21 +21,21 @@ main context.
 
 ## Arguments
 
-| Flag | Meaning |
-| --- | --- |
-| `--files <glob>` | Pattern to match. Repeatable, or comma-separated. Quote patterns containing `**` or spaces. |
-| `--path <dir>` | Root the search here instead of the working directory. |
-| `--recursive` | Search subdirectories. `*.md --recursive` is equivalent to `**/*.md`. Without it, only the root level matches. |
-| `--exclude <glob>` | Drop matches. Repeatable. |
-| `--changed` | Use files changed vs. the merge-base with the main branch instead of a glob. Combinable with `--exclude`. |
+| Flag                    | Meaning                                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `--files <glob>`        | Pattern to match. Repeatable, or comma-separated. Quote patterns containing `**` or spaces.                      |
+| `--path <dir>`          | Root the search here instead of the working directory.                                                           |
+| `--recursive`           | Search subdirectories. `*.md --recursive` is equivalent to `**/*.md`. Without it, only the root level matches.   |
+| `--exclude <glob>`      | Drop matches. Repeatable.                                                                                        |
+| `--changed`             | Use files changed vs. the merge-base with the main branch instead of a glob. Combinable with `--exclude`.        |
 | `--execute "<payload>"` | Required. A slash command (starts with `/`) or a plain-English instruction. `{}` is replaced with the file path. |
-| `--parallel <n>` | Concurrent items. Default `4`. `--parallel 1` is strictly sequential. |
-| `--inline` | Run every item in the main context instead of delegating. Only for small loops or when items must share state. |
-| `--limit <n>` | Process at most the first N matches (after sorting). Report what was skipped. |
-| `--dry-run` | Resolve and print the file list and the expanded payload for the first item, then stop. |
-| `--yes` | Skip the confirmation gate. |
-| `--stop-on-error` | Abort the sweep on the first failing item. Default is to continue and report failures. |
-| `--report <path>` | Also write the summary table to this file. |
+| `--parallel <n>`        | Concurrent items. Default `4`. `--parallel 1` is strictly sequential.                                            |
+| `--inline`              | Run every item in the main context instead of delegating. Only for small loops or when items must share state.   |
+| `--limit <n>`           | Process at most the first N matches (after sorting). Report what was skipped.                                    |
+| `--dry-run`             | Resolve and print the file list and the expanded payload for the first item, then stop.                          |
+| `--yes`                 | Skip the confirmation gate.                                                                                      |
+| `--stop-on-error`       | Abort the sweep on the first failing item. Default is to continue and report failures.                           |
+| `--report <path>`       | Also write the summary table to this file.                                                                       |
 
 ### Placeholders
 
@@ -56,24 +56,24 @@ gets the path appended.
    empty, say so and stop — do not broaden the pattern to find something to do.
 
 3. **Confirmation gate.** Stop and ask the user before executing when either is true:
-   - more than 10 files matched, or
-   - the payload mutates files (edits, reformats, reorders, rewrites) rather than only reporting.
+    - more than 10 files matched, or
+    - the payload mutates files (edits, reformats, reorders, rewrites) rather than only reporting.
 
-   `--yes` and `--dry-run` skip this gate. When the working tree is dirty and the payload mutates
-   files, say so in the confirmation — never run `git stash`.
+    `--yes` and `--dry-run` skip this gate. When the working tree is dirty and the payload mutates
+    files, say so in the confirmation — never run `git stash`.
 
 4. **Execute per item.** For each file, substitute the placeholders, then:
-   - **Slash-command payload** (`/review-doc {}`): resolve the leading token to a skill and run it
-     with the substituted path as its argument. If no skill of that name exists, stop and report it —
-     do not silently treat it as prose.
-   - **Instruction payload**: carry out the instruction against that one file.
+    - **Slash-command payload** (`/review-doc {}`): resolve the leading token to a skill and run it
+      with the substituted path as its argument. If no skill of that name exists, stop and report it —
+      do not silently treat it as prose.
+    - **Instruction payload**: carry out the instruction against that one file.
 
-   Default execution is one subagent per file, `--parallel` at a time. Delegation is intrinsic to
-   this skill — invoking `/loopover` authorizes it. Give each subagent the substituted payload, the
-   single file it owns, and an instruction to return a compact result: status, one-line summary, and
-   a list of any files it changed. It must not touch files outside its assignment.
+    Default execution is one subagent per file, `--parallel` at a time. Delegation is intrinsic to
+    this skill — invoking `/loopover` authorizes it. Give each subagent the substituted payload, the
+    single file it owns, and an instruction to return a compact result: status, one-line summary, and
+    a list of any files it changed. It must not touch files outside its assignment.
 
-   With `--inline`, do the work directly in the main context, one file at a time.
+    With `--inline`, do the work directly in the main context, one file at a time.
 
 5. **Summarize.** Emit a table: file, status (`ok` / `changed` / `no-op` / `failed`), one-line note.
    Follow it with totals, then the failures in full. Write the same content to `--report <path>` when

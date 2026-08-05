@@ -11,7 +11,7 @@ Review an entire running application one surface at a time — every page, and e
 page — using an independent design-review subagent per surface, then merge what they found into one
 consolidated report.
 
-Fan out to observe; centralize to judge. Consistency is a property that only exists *between*
+Fan out to observe; centralize to judge. Consistency is a property that only exists _between_
 surfaces, so a reviewer looking at one page cannot see it, and a single reviewer looking at sixty
 pages runs out of attention long before the last one. This skill splits those jobs.
 
@@ -40,16 +40,16 @@ This skill never edits frontend code. Hand approved changes to `ui-playground-ap
 
 ## Phase 0: Resolve the target and fix the run conditions
 
-| Input           | Default                                                            |
-| --------------- | ------------------------------------------------------------------ |
-| App directory   | Current repository, or the named application root                  |
-| Base URL        | Frontend URL from the project's own dev configuration              |
-| Run id          | `{RUN}` = `YYYYMMDD-HHMM`                                          |
-| Work directory  | `{app}/.aidd/reports/design-sweep/{RUN}/`                          |
-| Screenshots     | `{app}/screenshots/design-sweep/{RUN}/`                            |
-| Viewports       | `1440x900` primary, `768x1024` narrow                              |
-| Theme           | The app's default theme, applied to every surface                  |
-| Authentication  | The highest role the user authorizes; anonymous otherwise          |
+| Input          | Default                                                   |
+| -------------- | --------------------------------------------------------- |
+| App directory  | Current repository, or the named application root         |
+| Base URL       | Frontend URL from the project's own dev configuration     |
+| Run id         | `{RUN}` = `YYYYMMDD-HHMM`                                 |
+| Work directory | `{app}/.aidd/reports/design-sweep/{RUN}/`                 |
+| Screenshots    | `{app}/screenshots/design-sweep/{RUN}/`                   |
+| Viewports      | `1440x900` primary, `768x1024` narrow                     |
+| Theme          | The app's default theme, applied to every surface         |
+| Authentication | The highest role the user authorizes; anonymous otherwise |
 
 Discover the start command from the project's own manifest. If the app is not already reachable,
 start it, record that this run owns the process, and wait for the URL to respond. Leave a
@@ -60,7 +60,7 @@ different conditions cannot be compared, and comparison is the entire point.
 
 ## Phase 1: Enumerate every surface
 
-A *surface* is one distinct visual state a user navigates to. Build the list from these sources in
+A _surface_ is one distinct visual state a user navigates to. Build the list from these sources in
 order, adding what each one contributes:
 
 1. `{app}/.aidd/screen-map.md` when present — the fastest authoritative route list.
@@ -70,12 +70,12 @@ order, adding what each one contributes:
 
 Four kinds of surface, reached differently:
 
-| Kind                | Addressing              | How the reviewer reaches it            |
-| ------------------- | ----------------------- | -------------------------------------- |
-| Static route        | URL                     | Open the URL                           |
-| Nested-route tab    | URL                     | Open the URL                           |
-| Query-param tab     | URL + `?tab=`           | Open the URL with each tab value       |
-| In-page tab panel   | Not addressable         | Open the parent, then click each tab   |
+| Kind              | Addressing      | How the reviewer reaches it          |
+| ----------------- | --------------- | ------------------------------------ |
+| Static route      | URL             | Open the URL                         |
+| Nested-route tab  | URL             | Open the URL                         |
+| Query-param tab   | URL + `?tab=`   | Open the URL with each tab value     |
+| In-page tab panel | Not addressable | Open the parent, then click each tab |
 
 In-page tab panels are the ones sweeps normally miss. A page with five tabs is five surfaces, and
 four of them have no URL. Record the click path for each so the reviewer reaches it deterministically
@@ -98,11 +98,11 @@ Write the work list to `{work}/surfaces.json`:
 {
 	"id": "explorer-databases",
 	"label": "Explorer — Databases",
-	"route": "/explorer/databases",
-	"url": "http://localhost:5173/explorer/databases",
-	"tabs": [{ "id": "overview", "label": "Overview", "reach": "click:tab[Overview]" }],
 	"minRole": "VIEWER",
-	"source": "screen-map"
+	"route": "/explorer/databases",
+	"source": "screen-map",
+	"tabs": [{ "id": "overview", "label": "Overview", "reach": "click:tab[Overview]" }],
+	"url": "http://localhost:5173/explorer/databases"
 }
 ```
 
@@ -171,18 +171,18 @@ padding with generic advice.
 
 Finding schema — one object per observation:
 
-| Field           | Value                                                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `surface`       | Surface id                                                                                                                     |
-| `tab`           | Tab id, or null                                                                                                                |
-| `component`     | The component or region it lives in, named as the codebase names it                                                            |
-| `category`      | `consistency` \| `hierarchy` \| `density` \| `typography` \| `color` \| `spacing` \| `state-feedback` \| `responsive` \| `accessibility` \| `motion` \| `polish` |
-| `severity`      | `P1` blocks or badly degrades a task \| `P2` real usability or hierarchy cost \| `P3` polish                                    |
-| `observation`   | What is on screen, stated so someone else can verify it in the screenshot                                                      |
-| `proposal`      | The concrete change, expressed in the app's existing tokens and components                                                     |
-| `scope`         | `local` to this surface, or `systemic` if the reviewer believes it repeats                                                     |
-| `sharedComponent` | The shared component the fix belongs in, when the finding traces to one                                                      |
-| `evidence`      | Screenshot path                                                                                                               |
+| Field             | Value                                                                                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surface`         | Surface id                                                                                                                                                       |
+| `tab`             | Tab id, or null                                                                                                                                                  |
+| `component`       | The component or region it lives in, named as the codebase names it                                                                                              |
+| `category`        | `consistency` \| `hierarchy` \| `density` \| `typography` \| `color` \| `spacing` \| `state-feedback` \| `responsive` \| `accessibility` \| `motion` \| `polish` |
+| `severity`        | `P1` blocks or badly degrades a task \| `P2` real usability or hierarchy cost \| `P3` polish                                                                     |
+| `observation`     | What is on screen, stated so someone else can verify it in the screenshot                                                                                        |
+| `proposal`        | The concrete change, expressed in the app's existing tokens and components                                                                                       |
+| `scope`           | `local` to this surface, or `systemic` if the reviewer believes it repeats                                                                                       |
+| `sharedComponent` | The shared component the fix belongs in, when the finding traces to one                                                                                          |
+| `evidence`        | Screenshot path                                                                                                                                                  |
 
 If a subagent fails or its surface will not load, record the surface as unreached with the reason.
 Never fill the gap by guessing what that page probably looks like.

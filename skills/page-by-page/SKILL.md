@@ -43,17 +43,17 @@ This skill never edits product code.
 
 ## Phase 0: Resolve the target and fix the run conditions
 
-| Input          | Default                                                          |
-| -------------- | ---------------------------------------------------------------- |
-| App directory  | Current repository, or the named application root                |
-| Question       | The quoted argument, or the design default above                 |
-| Base URL       | Frontend URL from the project's own dev configuration            |
+| Input          | Default                                                           |
+| -------------- | ----------------------------------------------------------------- |
+| App directory  | Current repository, or the named application root                 |
+| Question       | The quoted argument, or the design default above                  |
+| Base URL       | Frontend URL from the project's own dev configuration             |
 | Run id         | `{RUN}` = `YYYYMMDD-HHMM`; `{SLUG}` = 3–4 words from the question |
-| Work directory | `{app}/.aidd/reports/page-by-page/{RUN}/`                        |
-| Screenshots    | `{app}/screenshots/page-by-page/{RUN}/`                          |
-| Viewports      | `1440x900` primary, `768x1024` narrow                            |
-| Theme          | The app's default theme, applied to every page                   |
-| Authentication | The highest role the user authorizes; anonymous otherwise        |
+| Work directory | `{app}/.aidd/reports/page-by-page/{RUN}/`                         |
+| Screenshots    | `{app}/screenshots/page-by-page/{RUN}/`                           |
+| Viewports      | `1440x900` primary, `768x1024` narrow                             |
+| Theme          | The app's default theme, applied to every page                    |
+| Authentication | The highest role the user authorizes; anonymous otherwise         |
 
 Discover the start command from the project's own manifest. If the app is not already reachable,
 start it, record that this run owns the process, and wait for the URL to respond. Leave a
@@ -110,11 +110,11 @@ Write the work list to `{work}/pages.json`:
 {
 	"id": "explorer-databases",
 	"label": "Explorer — Databases",
-	"route": "/explorer/databases",
-	"url": "http://localhost:5173/explorer/databases",
-	"tabs": ["Overview", "Schema"],
 	"minRole": "VIEWER",
-	"source": "screen-map"
+	"route": "/explorer/databases",
+	"source": "screen-map",
+	"tabs": ["Overview", "Schema"],
+	"url": "http://localhost:5173/explorer/databases"
 }
 ```
 
@@ -181,17 +181,17 @@ an empty array rather than padding with generic advice.
 
 Finding schema — one object per observation:
 
-| Field             | Value                                                                            |
-| ----------------- | -------------------------------------------------------------------------------- |
-| `page`            | Page id                                                                          |
-| `where`           | The component or region it lives in, named as the codebase names it              |
-| `category`        | A tag from the Phase 3 vocabulary                                                |
+| Field             | Value                                                                             |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `page`            | Page id                                                                           |
+| `where`           | The component or region it lives in, named as the codebase names it               |
+| `category`        | A tag from the Phase 3 vocabulary                                                 |
 | `severity`        | `P1` blocks or badly degrades a task \| `P2` real cost to the user \| `P3` polish |
-| `observation`     | What is on screen, stated so someone else can verify it in the screenshot        |
-| `proposal`        | The concrete change, expressed in the app's existing patterns and components     |
+| `observation`     | What is on screen, stated so someone else can verify it in the screenshot         |
+| `proposal`        | The concrete change, expressed in the app's existing patterns and components      |
 | `scope`           | `local` to this page, or `systemic` if the reviewer believes it repeats           |
 | `sharedComponent` | The shared component the fix belongs in, when the finding traces to one           |
-| `evidence`        | Screenshot path                                                                  |
+| `evidence`        | Screenshot path                                                                   |
 
 If a reviewer fails or its page will not load, record the page as unreached with the reason. Never
 fill the gap by guessing what that page probably looks like.

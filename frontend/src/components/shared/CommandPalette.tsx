@@ -59,8 +59,10 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 
 	const ThemeIcon = themeMode === 'dark' ? Sun : Moon;
 
-	const iconFrameClass =
-		'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-accent shadow-sm shadow-foreground/5';
+	// Same glyph, same size, same color source as the sidebar: a bordered tile here made the
+	// palette read as a different app, and it hard-coded its own light/dark accent pair.
+	const commandIconClass =
+		'h-4 w-4 shrink-0 text-muted-foreground group-data-[selected=true]:text-accent';
 
 	return (
 		<Dialog
@@ -109,9 +111,10 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 										key={item.to}
 										onSelect={() => runAction(() => navigate(item.to))}
 										value={`${item.label} ${group.label}`}>
-										<span className={iconFrameClass}>
-											<item.icon aria-hidden="true" />
-										</span>
+										<item.icon
+											aria-hidden="true"
+											className={commandIconClass}
+										/>
 										<span className="min-w-0">
 											<span className="block truncate font-medium">
 												{item.label}
@@ -140,9 +143,10 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 											)
 										}
 										value={`project ${project.name}`}>
-										<span className={iconFrameClass}>
-											<FolderKanban aria-hidden="true" />
-										</span>
+										<FolderKanban
+											aria-hidden="true"
+											className={commandIconClass}
+										/>
 										<span className="min-w-0">
 											<span className="block truncate font-medium">
 												{project.name}
@@ -160,9 +164,7 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 								className="min-h-11 gap-3 px-2.5"
 								onSelect={() => runAction(onOpenDirective)}
 								value="launch directive prompt project">
-								<span className={iconFrameClass}>
-									<Play aria-hidden="true" />
-								</span>
+								<Play aria-hidden="true" className={commandIconClass} />
 								<span className="min-w-0">
 									<span className="block truncate font-medium">
 										Launch directive
@@ -181,9 +183,7 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 									})
 								}
 								value="refresh current data reload">
-								<span className={iconFrameClass}>
-									<RefreshCw aria-hidden="true" />
-								</span>
+								<RefreshCw aria-hidden="true" className={commandIconClass} />
 								<span className="min-w-0">
 									<span className="block truncate font-medium">
 										Refresh current data
@@ -201,9 +201,7 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 									)
 								}
 								value="toggle theme dark light mode">
-								<span className={iconFrameClass}>
-									<ThemeIcon aria-hidden="true" />
-								</span>
+								<ThemeIcon aria-hidden="true" className={commandIconClass} />
 								<span className="min-w-0">
 									<span className="block truncate font-medium">
 										{themeMode === 'dark'
@@ -219,9 +217,7 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 								className="min-h-11 gap-3 px-2.5"
 								onSelect={() => runAction(() => navigate('/runs'))}
 								value="launch run start aidd">
-								<span className={iconFrameClass}>
-									<Play aria-hidden="true" />
-								</span>
+								<Play aria-hidden="true" className={commandIconClass} />
 								<span className="min-w-0">
 									<span className="block truncate font-medium">Launch run</span>
 									<span className="block truncate text-xs text-muted-foreground">

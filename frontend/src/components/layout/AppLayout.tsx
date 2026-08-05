@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 import { default as KeyRound } from 'lucide-react/dist/esm/icons/key-round';
 import { default as Moon } from 'lucide-react/dist/esm/icons/moon';
+import { default as PanelLeft } from 'lucide-react/dist/esm/icons/panel-left';
+import { default as PanelLeftClose } from 'lucide-react/dist/esm/icons/panel-left-close';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as Sun } from 'lucide-react/dist/esm/icons/sun';
 import { type ReactNode, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import { useActiveExecutionCount } from '../../hooks/useActiveRunCount.ts';
@@ -24,14 +25,10 @@ import { ShortcutChord } from '../shared/KeyboardShortcut.tsx';
 import { ShortcutsOverlay } from '../shared/ShortcutsOverlay.tsx';
 import { TerminalPane } from '../terminal/TerminalPane.tsx';
 import { Button, IconButton } from '../ui/button.tsx';
-import {
-	activeExecutionCountAccessibleName,
-	searchControlAccessibleName,
-} from './appLayoutAccessibility.ts';
+import { searchControlAccessibleName } from './appLayoutAccessibility.ts';
 import { DirectiveLaunchButton } from './DirectiveLaunchButton.tsx';
-import { navGroups } from './nav-items.ts';
 import { ProjectReportButton } from './ProjectReportButton.tsx';
-import { ProjectsNavDropdown } from './ProjectsNavDropdown.tsx';
+import { SidebarNav } from './SidebarNav.tsx';
 
 export function AppLayout({ children }: { children: ReactNode }) {
 	const collapsed = useSidebarStore((state) => state.collapsed);
@@ -40,6 +37,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	const setThemeMode = useThemeStore((state) => state.setMode);
 	const toggleThemeMode = () => setThemeMode(themeMode === 'dark' ? 'light' : 'dark');
 	const ThemeIcon = themeMode === 'dark' ? Sun : Moon;
+	// The glyph states what the control does, so it changes with the rail rather than sitting on
+	// an unrelated `Activity` pulse that also belonged to Runs.
+	const RailToggleIcon = collapsed ? PanelLeft : PanelLeftClose;
 	const [paletteOpen, setPaletteOpen] = useState(false);
 	const [shortcutsOpen, setShortcutsOpen] = useState(false);
 	const [directorChatOpen, setDirectorChatOpen] = useState(false);
@@ -100,8 +100,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 								</div>
 							</div>
 							<div className="hidden sm:block">
-								<IconButton ariaLabel="Toggle navigation" onClick={toggle}>
-									<Activity className="h-4 w-4" />
+								<IconButton
+									ariaLabel={
+										collapsed ? 'Expand navigation' : 'Collapse navigation'
+									}
+									onClick={toggle}>
+									<RailToggleIcon className="h-4 w-4" />
 								</IconButton>
 							</div>
 						</div>
@@ -120,40 +124,32 @@ export function AppLayout({ children }: { children: ReactNode }) {
 								onClick={() => setDirectiveLaunchOpen(true)}
 							/>
 							<ProjectReportButton collapsed={collapsed} />
-							<Button
-								aria-label="Set access token"
+							{/* Preferences, not actions: as full-width ghost rows they read as two
+							    more things to do. Compact icon controls put them a tier below the
+							    launch anchor and the report row above. Stacked when collapsed —
+							    two 36px controls do not fit a 40px rail. */}
+							<div
 								className={cn(
-									'px-0',
-									collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
-								)}
-								onClick={openAuthPrompt}
-								variant="ghost">
-								<KeyRound className="h-4 w-4" />
-								{!collapsed && (
-									<span className="hidden text-sm font-medium sm:inline">
-										Access token
-									</span>
-								)}
-							</Button>
-							<Button
-								aria-label={
-									themeMode === 'dark'
-										? 'Switch to light mode'
-										: 'Switch to dark mode'
-								}
-								className={cn(
-									'px-0',
-									collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
-								)}
-								onClick={toggleThemeMode}
-								variant="ghost">
-								<ThemeIcon className="h-4 w-4" />
-								{!collapsed && (
-									<span className="hidden text-sm font-medium sm:inline">
-										{themeMode === 'dark' ? 'Light mode' : 'Dark mode'}
-									</span>
-								)}
-							</Button>
+									'flex gap-1.5',
+									collapsed ? 'sm:flex-col' : 'sm:justify-start',
+								)}>
+								<IconButton
+									ariaLabel="Set access token"
+									onClick={openAuthPrompt}
+									variant="ghost">
+									<KeyRound className="h-4 w-4" />
+								</IconButton>
+								<IconButton
+									ariaLabel={
+										themeMode === 'dark'
+											? 'Switch to light mode'
+											: 'Switch to dark mode'
+									}
+									onClick={toggleThemeMode}
+									variant="ghost">
+									<ThemeIcon className="h-4 w-4" />
+								</IconButton>
+							</div>
 						</div>
 					</div>
 					<div className="hidden sm:block">
@@ -178,89 +174,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
 									</span>
 									<ShortcutChord
 										className="ml-auto hidden sm:inline-flex"
-										keyClassName="h-5 min-w-5 rounded px-1 text-[0.62rem]"
+										keyClassName="h-5 min-w-5 rounded px-1 text-2xs"
 										keys={commandPaletteShortcut.keys}
 									/>
 								</>
 							)}
 						</Button>
 					</div>
-					<nav
-						aria-label="Primary"
-						className="-mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:mt-0 sm:block sm:min-h-0 sm:flex-1 sm:space-y-0.5 sm:overflow-x-visible sm:overflow-y-auto sm:px-0 sm:pr-1 sm:pb-0">
-						{navGroups.map((group, groupIndex) => (
-							<div className="contents sm:block" key={group.label}>
-								{!collapsed && (
-									<div
-										className={cn(
-											'hidden px-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase sm:block',
-											groupIndex === 0 ? 'mt-0' : 'mt-5',
-											'mb-1.5',
-										)}>
-										{group.label}
-									</div>
-								)}
-								{collapsed && groupIndex > 0 && (
-									<div className="mx-auto my-2 hidden h-px w-6 rounded-full bg-border/60 sm:block" />
-								)}
-								{group.items.map((item) =>
-									item.to === '/projects' ? (
-										<ProjectsNavDropdown collapsed={collapsed} key={item.to} />
-									) : (
-										<NavLink
-											className={({ isActive }) =>
-												cn(
-													'group relative flex h-11 w-11 shrink-0 items-center justify-center gap-2.5 rounded-lg px-0 text-sm font-medium sm:h-9 sm:w-auto sm:justify-start sm:px-3',
-													'transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-													isActive
-														? 'bg-accent-muted text-accent-muted-foreground shadow-sm dark:bg-accent-muted dark:text-accent-muted-foreground'
-														: 'text-muted-foreground hover:bg-muted hover:text-foreground',
-												)
-											}
-											key={item.to}
-											title={item.label}
-											to={item.to}>
-											{({ isActive }) => (
-												<>
-													<span
-														aria-hidden="true"
-														className={cn(
-															'absolute top-1.5 left-0 hidden h-6 w-[3px] rounded-full bg-accent transition-opacity sm:block',
-															isActive ? 'opacity-100' : 'opacity-0',
-														)}
-													/>
-													<item.icon className="h-4 w-4 shrink-0" />
-													<span
-														className={
-															collapsed
-																? 'sr-only'
-																: 'sr-only sm:not-sr-only sm:inline'
-														}>
-														{item.label}
-													</span>
-													{item.to === '/runs' &&
-														activeExecutionCount > 0 && (
-															<span
-																aria-label={activeExecutionCountAccessibleName(
-																	activeExecutionCount,
-																)}
-																className={cn(
-																	'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-100 px-1 text-[0.62rem] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
-																	collapsed
-																		? 'hidden'
-																		: 'ml-auto hidden sm:inline-flex',
-																)}>
-																{activeExecutionCount}
-															</span>
-														)}
-												</>
-											)}
-										</NavLink>
-									),
-								)}
-							</div>
-						))}
-					</nav>
+					<SidebarNav activeExecutionCount={activeExecutionCount} collapsed={collapsed} />
 				</aside>
 				{/* tabIndex={-1} makes the landmark a programmatic focus target for the
 				    route-change focus reset in App.tsx's RootLayout (and the Skip to Content link).

@@ -4,6 +4,11 @@ export interface ShortcutDefinition {
 	ariaKeyShortcuts?: string;
 	keys: ShortcutKey[];
 	label: string;
+	/**
+	 * True when the keys are pressed one after another (`g` then `d`). Absent means a chord held
+	 * together, which is what the rendered separator has to distinguish.
+	 */
+	sequential?: boolean;
 }
 
 const isApplePlatform =

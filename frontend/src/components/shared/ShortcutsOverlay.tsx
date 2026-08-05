@@ -1,10 +1,12 @@
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 
+import { cn } from '../../lib/cn.ts';
 import {
 	commandPaletteShortcut,
 	type ShortcutDefinition,
 	terminalShortcut,
 } from '../../lib/keyboardShortcuts.ts';
+import { sectionCaptionClass } from '../../lib/typography.ts';
 import { IconButton } from '../ui/button.tsx';
 import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import { ShortcutChord } from './KeyboardShortcut.tsx';
@@ -18,9 +20,9 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 	{
 		heading: 'Navigation',
 		shortcuts: [
-			{ keys: ['g', 'd'], label: 'Go to Dashboard' },
-			{ keys: ['g', 'p'], label: 'Go to Projects' },
-			{ keys: ['g', 'r'], label: 'Go to Runs' },
+			{ keys: ['g', 'd'], label: 'Go to Dashboard', sequential: true },
+			{ keys: ['g', 'p'], label: 'Go to Projects', sequential: true },
+			{ keys: ['g', 'r'], label: 'Go to Runs', sequential: true },
 		],
 	},
 	{
@@ -67,9 +69,7 @@ export function ShortcutsOverlay({ onClose, open }: { onClose: () => void; open:
 				<div className="space-y-4">
 					{SHORTCUT_GROUPS.map((group) => (
 						<section key={group.heading}>
-							<div className="mb-2 text-[0.65rem] font-semibold text-muted-foreground uppercase">
-								{group.heading}
-							</div>
+							<div className={cn('mb-2', sectionCaptionClass)}>{group.heading}</div>
 							<ul className="space-y-1.5">
 								{group.shortcuts.map((shortcut) => (
 									<li
@@ -78,7 +78,10 @@ export function ShortcutsOverlay({ onClose, open }: { onClose: () => void; open:
 										<span className="text-sm text-foreground">
 											{shortcut.label}
 										</span>
-										<ShortcutChord keys={shortcut.keys} />
+										<ShortcutChord
+											keys={shortcut.keys}
+											sequential={shortcut.sequential ?? false}
+										/>
 									</li>
 								))}
 							</ul>

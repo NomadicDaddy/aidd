@@ -64,7 +64,11 @@ export function CommandGroup({
 		<CommandPrimitive.Group
 			className={cn(
 				'overflow-hidden text-foreground',
-				'[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[0.65rem] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:uppercase',
+				// The `sectionCaptionClass` utilities, one variant prefix at a time: cmdk owns the
+				// heading element, so it can only be reached through a descendant variant, and
+				// Tailwind only emits classes it can read literally. `command-caption.test.ts`
+				// holds this list to that shared string.
+				'[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:uppercase',
 				className,
 			)}
 			{...props}
@@ -88,7 +92,9 @@ export function CommandItem({ className, ...props }: ComponentProps<typeof Comma
 	return (
 		<CommandPrimitive.Item
 			className={cn(
-				'relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm outline-none select-none',
+				// `group` so a row's glyph can follow its selected state, the way the sidebar's
+				// active NavLink colors its own icon.
+				'group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm outline-none select-none',
 				'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
 				'data-[selected=true]:bg-accent-muted data-[selected=true]:text-accent-muted-foreground',
 				'[&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0',
@@ -103,7 +109,7 @@ export function CommandShortcut({ className, ...props }: ComponentProps<'span'>)
 	return (
 		<span
 			className={cn(
-				'ml-auto text-[0.7rem] font-medium tracking-widest text-muted-foreground',
+				'ml-auto text-2xs font-medium tracking-widest text-muted-foreground',
 				className,
 			)}
 			{...props}

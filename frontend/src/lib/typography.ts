@@ -26,3 +26,14 @@ export const sectionCaptionClass =
  * for itself, so the micro scale has exactly one declared value.
  */
 export const microLabelClass = 'text-2xs font-medium tracking-wide uppercase';
+
+/**
+ * The reading measure for rendered prose — roughly 68 characters, past which a line is hard to
+ * return from.
+ *
+ * It belongs to whatever *contains* the prose, not to `MarkdownContent` itself. When the renderer
+ * carried it, a doc card stretched its border to the full column and drew it a second gutter away
+ * from the last word of every line, so the card looked empty and the text looked unfinished. A
+ * container that caps itself puts the border back against the prose.
+ */
+export const proseMeasureClass = 'max-w-[68ch]';

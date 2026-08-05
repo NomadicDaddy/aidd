@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 
 import { parseMarkdownBlocks } from '../../frontend/src/lib/markdownBlocks.ts';
 
+function frontend(relative: string): string {
+	return readFileSync(resolve(import.meta.dir, '../../frontend', relative), 'utf8');
+}
+
 function renderMarkdownContent(markdown: string, baseLevel?: 2 | 3 | 4): string {
 	return renderWithProps(baseLevel === undefined ? { markdown } : { baseLevel, markdown });
 }
@@ -91,28 +95,22 @@ describe('parseMarkdownBlocks', () => {
 	});
 
 	test('embeds the shared renderer beneath each consumer heading', () => {
-		const docsPage = readFileSync(
-			resolve(import.meta.dir, '../../frontend/src/pages/docs/DocsPage.tsx'),
-			'utf8',
-		);
-		const diaryCard = readFileSync(
-			resolve(import.meta.dir, '../../frontend/src/pages/diary/DiaryEntryCard.tsx'),
-			'utf8',
-		);
+		const docsPage = frontend('src/pages/docs/DocsPage.tsx');
+		const diaryCard = frontend('src/pages/diary/DiaryEntryCard.tsx');
 
 		expect(docsPage).toContain(
 			'<MarkdownContent baseLevel={2} markdown={body} skipLeadingTitle />',
 		);
-		expect(diaryCard).toContain('<MarkdownContent baseLevel={4} markdown={entry.bodyMd} />');
+		expect(diaryCard).toContain('baseLevel={4}');
+		expect(diaryCard).toContain('markdown={entry.bodyMd}');
 	});
 
-	test('uses the shared type scale, reading measure, semantic tokens, and compact inline code', () => {
+	test('uses the shared type scale, semantic tokens, and compact inline code', () => {
 		const html = renderMarkdownContent(
 			'## A readable question?\n\nUse `aidd`, then continue.',
 			2,
 		);
 
-		expect(html).toContain('max-w-[68ch]');
 		expect(html).toContain('leading-relaxed');
 		expect(html).toContain('text-base font-semibold text-foreground');
 		expect(html).not.toContain('uppercase');
@@ -123,45 +121,147 @@ describe('parseMarkdownBlocks', () => {
 	});
 });
 
-describe('definition lists', () => {
+describe('a list renders as a list', () => {
 	const glossary = [
 		'- **Feature**: the unit of work a coding run claims.',
 		'- **Run**: one backend invocation against a claimed feature.',
 		'- **Recipe**: an ordered set of steps a director executes.',
 	].join('\n');
 
-	test('renders a bulleted glossary as term and definition columns', () => {
+	test('a glossary keeps its bullets and its bold terms', () => {
 		const html = renderWithProps({ baseLevel: 2, markdown: glossary });
 
-		// 25 `**Term**: definition` bullets read as one undifferentiated wall; the pairs are a
-		// definition list, so the renderer emits one.
-		expect(html).toContain('<dl');
-		expect(html).toContain('sm:grid-cols-[11rem_minmax(0,1fr)]');
-		expect(html).toContain('<dt class="text-sm font-medium text-foreground">Feature</dt>');
+		expect(html).toContain('<ul');
+		expect(html).toContain('<strong>Feature</strong>');
 		expect(html).toContain('the unit of work a coding run claims.');
-		expect(html).not.toContain('<ul');
 	});
 
-	test('leaves ordinary bulleted lists alone', () => {
-		const html = renderWithProps({ baseLevel: 2, markdown: '- one\n- two\n- three' });
+	test('one added bullet does not relay the items around it', () => {
+		// The previous treatment swapped the whole block to a two-column `<dl>` only when every
+		// item matched `**term**: definition`, so adding one plain bullet to a glossary silently
+		// changed the layout of every other item in a section the author had not touched.
+		const three = renderWithProps({ baseLevel: 2, markdown: glossary });
+		const four = renderWithProps({
+			baseLevel: 2,
+			markdown: `${glossary}\n- a plain trailing bullet`,
+		});
 
-		expect(html).toContain('<ul');
-		expect(html).not.toContain('<dl');
+		expect(four).toContain(three.slice(three.indexOf('<li>'), three.lastIndexOf('</li>')));
 	});
 
-	test('requires every item to be a definition before switching layout', () => {
-		const mixed = `${glossary}\n- a plain trailing bullet`;
-		const html = renderWithProps({ baseLevel: 2, markdown: mixed });
+	test('no surface can render the same markdown as a different shape', () => {
+		// Identical output across every embedding surface is the point; `baseLevel` shifts the
+		// heading level and nothing else about the document's structure.
+		const bodies = [2, 3, 4].map((level) =>
+			renderWithProps({ baseLevel: level, markdown: glossary }),
+		);
 
-		expect(html).toContain('<ul');
-		expect(html).not.toContain('<dl');
+		expect(new Set(bodies).size).toBe(1);
+		expect(bodies[0]).not.toContain('<dl');
+	});
+});
+
+describe('the measure belongs to the container', () => {
+	test('the renderer sets no width of its own', () => {
+		const html = renderMarkdownContent('A paragraph of prose.', 2);
+
+		// Capped inside, a doc card drew its border at the column's full width and left a second
+		// gutter of empty space to the right of every line.
+		expect(html).not.toContain('max-w-');
 	});
 
-	test('does not treat a lone pair as a glossary', () => {
-		const html = renderWithProps({ baseLevel: 2, markdown: '- **Run**: one invocation.' });
+	test('every surface that embeds prose carries the cap', () => {
+		const measure = frontend('src/lib/typography.ts');
+		expect(measure).toContain("export const proseMeasureClass = 'max-w-[68ch]'");
 
-		expect(html).toContain('<ul');
-		expect(html).not.toContain('<dl');
+		for (const file of [
+			'src/pages/docs/DocsPage.tsx',
+			'src/pages/docs/HelpDrawerBody.tsx',
+			'src/pages/diary/DiaryEntryCard.tsx',
+			'src/pages/skills/SkillsPage.tsx',
+		]) {
+			expect(frontend(file)).toContain('proseMeasureClass');
+		}
+	});
+
+	test('the doc card is what the cap sits on, so its border reaches the prose', () => {
+		expect(frontend('src/pages/docs/DocsPage.tsx')).toContain(
+			"<Card className={cn('min-w-0 p-5 sm:p-7', proseMeasureClass)}>",
+		);
+	});
+});
+
+describe('fenced code and links', () => {
+	test('a fence is code, not reflowed prose', () => {
+		const blocks = parseMarkdownBlocks(
+			'Run it:\n\n```bash\naidd run --watch\n  --verbose\n```',
+		);
+
+		// A skill definition is mostly fenced examples. Without this the fence lines became
+		// paragraphs reading "```bash" and the command was joined into one wrapped run of prose.
+		expect(blocks).toContainEqual({ code: 'aidd run --watch\n  --verbose', type: 'code' });
+		expect(renderMarkdownContent('```\nls -la\n```', 2)).toContain('<pre');
+	});
+
+	test('a rule inside a fence is content', () => {
+		const blocks = parseMarkdownBlocks('```\n---\n```');
+
+		expect(blocks).toEqual([{ code: '---', type: 'code' }]);
+	});
+
+	test('an unterminated fence consumes the rest of the document', () => {
+		const blocks = parseMarkdownBlocks('```\nstill open');
+
+		expect(blocks).toEqual([{ code: 'still open', type: 'code' }]);
+	});
+
+	test('a link is a link in the accessibility tree', () => {
+		const html = renderMarkdownContent('See [the docs](https://example.com/x) for more.', 2);
+
+		expect(html).toContain('href="https://example.com/x"');
+		expect(html).toContain('>the docs</a>');
+		expect(html).toContain('rel="noreferrer"');
+	});
+
+	test('an in-app link opens in place', () => {
+		const html = renderMarkdownContent('Go to [Runs](/runs).', 2);
+
+		expect(html).toContain('href="/runs"');
+		expect(html).not.toContain('target="_blank"');
+	});
+
+	test('a scheme that is not a destination renders as text', () => {
+		// Skill definitions are imported files; a markdown href is untrusted input, and this is
+		// the one sink a renderer with no dangerouslySetInnerHTML could still hand an attacker.
+		const html = renderMarkdownContent('[click](javascript:alert(1))', 2);
+
+		expect(html).not.toContain('<a');
+		expect(html).toContain('click');
+	});
+});
+
+describe('no surface shows markdown source', () => {
+	test('Skills renders its definition through the shared renderer', () => {
+		const page = frontend('src/pages/skills/SkillsPage.tsx');
+
+		// It was monospaced, reflowed mid-word, with its `##` and `-` markers left as literal
+		// characters — the operator read the file rather than the document, and the headings of a
+		// skill definition were nowhere in the accessibility tree.
+		expect(page).toContain('markdown={selected.body}');
+		expect(page).toContain('skipLeadingTitle');
+		expect(page).not.toMatch(/<pre[^>]*>\s*\{selected\.body\}/);
+		expect(page).not.toContain('whitespace-pre-wrap');
+	});
+
+	test('headings and lists survive into the rendered document', () => {
+		const html = renderMarkdownContent(
+			'## Usage\n\n- first step\n- second step\n\n```\naidd go\n```',
+			2,
+		);
+
+		expect(html).toMatch(/<h3[^>]*>Usage<\/h3>/);
+		expect(html).toContain('<li>first step</li>');
+		expect(html).toContain('<code>aidd go</code>');
 	});
 });
 

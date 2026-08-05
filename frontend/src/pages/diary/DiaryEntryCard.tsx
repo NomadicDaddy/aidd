@@ -8,6 +8,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatDate } from '../../lib/formatters.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 
 export function DiaryEntryCard({
 	entry,
@@ -50,7 +51,11 @@ export function DiaryEntryCard({
 			</div>
 			{expanded ? (
 				<div className="mt-3 border-t border-border pt-3">
-					<MarkdownContent baseLevel={4} markdown={entry.bodyMd} />
+					<MarkdownContent
+						baseLevel={4}
+						className={proseMeasureClass}
+						markdown={entry.bodyMd}
+					/>
 					{entry.generatedBy ? (
 						<Link
 							className="mt-3 inline-block text-xs text-muted-foreground hover:underline"

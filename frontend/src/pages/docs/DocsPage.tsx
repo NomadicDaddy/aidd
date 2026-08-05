@@ -5,6 +5,8 @@ import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
+import { cn } from '../../lib/cn.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { getDocBody } from './docs-content.ts';
 import { DEFAULT_DOC_SLUG, docSectionBySlug } from './docs-manifest.ts';
 import { DocsSidebar } from './DocsSidebar.tsx';
@@ -53,7 +55,10 @@ export function DocsPage() {
 						<DocsSidebar />
 					</div>
 				</aside>
-				<Card className="min-w-0 p-5 sm:p-7">
+				{/* The measure is the card's, not the renderer's: capped inside, the border ran to
+				    the full column and the prose sat in the left two thirds of an apparently empty
+				    card. Capped here, the border comes back to the text. */}
+				<Card className={cn('min-w-0 p-5 sm:p-7', proseMeasureClass)}>
 					<article>
 						{body ? (
 							// `skipLeadingTitle`: PageHeader above already renders this document's

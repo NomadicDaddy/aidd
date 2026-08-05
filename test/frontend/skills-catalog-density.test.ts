@@ -144,10 +144,15 @@ describe('the skills page puts the catalog first', () => {
 		expect(split).toBeGreaterThan(filterCard);
 	});
 
-	test('the definition block reflows its prose instead of slicing it at the edge', async () => {
+	test('the definition block is read as a document, not as source', async () => {
 		const page = await skillsSource('SkillsPage.tsx');
 
-		expect(page).toContain('break-words whitespace-pre-wrap');
+		// It used to be the raw file in a `<pre>`, reflowed with `break-words whitespace-pre-wrap`
+		// so the lines would at least stay on screen. Reflowing markdown source is the best a
+		// `<pre>` can do; rendering it is what makes the headings real.
+		expect(page).toContain('<MarkdownContent');
+		expect(page).toContain('markdown={selected.body}');
+		expect(page).not.toContain('whitespace-pre-wrap');
 	});
 });
 

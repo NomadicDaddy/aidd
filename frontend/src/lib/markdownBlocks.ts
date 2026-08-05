@@ -4,6 +4,7 @@
 // subset (headings, lists, blockquotes, hr, paragraphs) is sufficient.
 
 export type MarkdownBlock =
+	| { code: string; type: 'code' }
 	| { items: string[]; ordered: boolean; type: 'list' }
 	| { level: 1 | 2 | 3; text: string; type: 'heading' }
 	| { lines: string[]; type: 'quote' }
@@ -15,6 +16,10 @@ const UNORDERED = /^[-*]\s+(.*)$/;
 const ORDERED = /^\d+\.\s+(.*)$/;
 const QUOTE = /^>\s?(.*)$/;
 const HR = /^(?:---+|\*\*\*+|___+)$/;
+// A skill definition is mostly fenced examples. Without this the fence lines became paragraphs
+// reading "```bash" and their contents were reflowed as prose, which is what a command example
+// cannot survive.
+const FENCE = /^(?:```|~~~)/;
 
 // Strip a leading frontmatter fence so a raw entry body (which still carries its `---` block)
 // renders cleanly even when passed verbatim.
@@ -41,6 +46,21 @@ export function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
 
 		if (trimmed.length === 0) {
 			flushParagraph();
+			continue;
+		}
+		// Checked before HR, because `---` inside a fence is content, not a rule.
+		if (FENCE.test(trimmed)) {
+			flushParagraph();
+			const codeLines: string[] = [];
+			let cursor = index + 1;
+			while (cursor < lines.length && !FENCE.test((lines[cursor] ?? '').trim())) {
+				codeLines.push(lines[cursor] ?? '');
+				cursor++;
+			}
+			blocks.push({ code: codeLines.join('\n'), type: 'code' });
+			// An unterminated fence consumes the rest of the document, which is what a reader
+			// would see in any other renderer too.
+			index = cursor;
 			continue;
 		}
 		if (HR.test(trimmed)) {

@@ -11,6 +11,7 @@ import type { SkillDefinition } from '../../api/types/skills.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { LaunchForm } from '../../components/shared/LaunchForm.tsx';
+import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { AlertDialog } from '../../components/ui/alert-dialog.tsx';
 import { Button } from '../../components/ui/button.tsx';
@@ -22,6 +23,7 @@ import { useProjects } from '../../hooks/useProjects.ts';
 import { useSkillImports, useSkills } from '../../hooks/useSkills.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { SKILL_CATEGORY_FILTERS, type SkillCategoryFilter } from '../../lib/catalogCuration.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { SkillCatalog } from './SkillCatalog.tsx';
 import { SkillDetailsCard } from './SkillDetailsCard.tsx';
 import { SkillImportDialog } from './SkillImportDialog.tsx';
@@ -163,12 +165,20 @@ export function SkillsPage() {
 						/>
 						<Card className="space-y-2">
 							<CardHeader className="mb-0" headingLevel={3} title="Definition" />
-							{/* SKILL.md is prose, not fixed-width code: without reflow the lines were
-							    sliced mid-word at the container edge with no scrollbar to reveal
-							    the rest. */}
-							<pre className="max-h-[28rem] overflow-auto rounded-md bg-muted p-3 font-mono text-xs break-words whitespace-pre-wrap text-foreground">
-								{selected.body}
-							</pre>
+							{/* SKILL.md is a markdown document and is now read as one. It was the last
+							    surface showing raw source: monospaced, reflowed mid-word to keep it
+							    on screen, with its `##` and `-` markers left as literal characters —
+							    the operator was reading the file rather than the document, and its
+							    headings were nowhere in the accessibility tree. Its own `#` title is
+							    dropped because the catalog names the skill above this card. */}
+							<div className="max-h-[28rem] overflow-auto">
+								<MarkdownContent
+									baseLevel={4}
+									className={proseMeasureClass}
+									markdown={selected.body}
+									skipLeadingTitle
+								/>
+							</div>
 						</Card>
 					</div>
 				) : skillList.length === 0 ? (

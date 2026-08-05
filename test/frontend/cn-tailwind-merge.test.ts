@@ -6,8 +6,11 @@ import { cn } from '../../frontend/src/lib/cn.ts';
 // The lookbehind keeps responsive variants (`sm:p-7`) out of the audit: only the unprefixed
 // utility has to beat Card's base `p-4`, and matching the prefixed one too would make the
 // "last declared padding wins" comparison below compare against the wrong utility.
+// Both spellings of a className: the literal string, and the `cn('…', constant)` form a card uses
+// when part of its class list is a shared export. Reading only the literal would have quietly
+// dropped a card from the audit the day its padding moved into a `cn()` call.
 const CARD_PADDING_OVERRIDE =
-	/<Card\b[^>]*className="([^"]*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^"]*)"[^>]*>/g;
+	/<Card\b[^>]*className=(?:"([^"]*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^"]*)"|\{cn\('([^']*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^']*)')/g;
 const PADDING_UTILITY = /(?<![:\w-])p-(?:0|2\.5|3|4|5)\b/g;
 
 async function cardPaddingOverrides(): Promise<string[]> {
@@ -16,7 +19,9 @@ async function cardPaddingOverrides(): Promise<string[]> {
 	for await (const file of glob.scan({ cwd: join(process.cwd(), 'frontend', 'src') })) {
 		const source = await Bun.file(join(process.cwd(), 'frontend', 'src', file)).text();
 		overrides.push(
-			...[...source.matchAll(CARD_PADDING_OVERRIDE)].map((match) => match[1] ?? ''),
+			...[...source.matchAll(CARD_PADDING_OVERRIDE)].map(
+				(match) => match[1] ?? match[2] ?? '',
+			),
 		);
 	}
 	return overrides;

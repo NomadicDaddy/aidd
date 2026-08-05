@@ -72,7 +72,7 @@ describe('docs page layout', () => {
 });
 
 describe('glossary rendering', () => {
-	test('renders all 25 shipped terms as definition pairs', async () => {
+	test('renders all 25 shipped terms as a list of bold terms', async () => {
 		const markdown = await readFile(
 			resolve(FRONTEND_SOURCE, '../content/docs/glossary.md'),
 			'utf8',
@@ -94,8 +94,13 @@ describe('glossary rendering', () => {
 		if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
 		const html = JSON.parse(new TextDecoder().decode(result.stdout).trim()) as string;
 
-		expect(html.match(/<dt\b/g)).toHaveLength(25);
-		expect(html).not.toContain('<ul');
+		// Written as 25 bullets and rendered as 25 bullets. The `<dl>` this used to assert was
+		// reached only when every item in a block matched `**term**: definition`, so one added
+		// plain bullet silently relaid the other 24 — the same source rendering as two different
+		// shapes depending on its neighbours.
+		expect(html.match(/<li\b/g)).toHaveLength(25);
+		expect(html.match(/<strong\b/g)?.length).toBeGreaterThanOrEqual(25);
+		expect(html).not.toContain('<dl');
 		// The page header carries the title, so the body must not restate it.
 		expect(html).not.toContain('>Glossary<');
 	});

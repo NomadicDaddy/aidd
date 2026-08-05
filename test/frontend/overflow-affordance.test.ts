@@ -20,6 +20,10 @@ const exemptions: { file: string; why: string }[] = [
 	{ file: 'components/ui/segmented-control.tsx', why: 'a bordered control, not a scrollport' },
 	{ file: 'pages/projects/detail/ArtifactViewerDialog.tsx', why: 'markdown pre and code blocks' },
 	{ file: 'pages/recipes/StepOverviewCard.tsx', why: 'a code block' },
+	{
+		file: 'components/shared/MarkdownContent.tsx',
+		why: 'the fenced-code block a markdown document renders; a command example cannot wrap',
+	},
 ];
 
 describe('horizontal overflow always says so', () => {

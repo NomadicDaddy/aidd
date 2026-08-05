@@ -18,27 +18,20 @@ const KIND_LABELS: Record<DiaryTimelineKind, string> = {
 	skill: 'Skill',
 };
 
-const KIND_TONES: Record<DiaryTimelineKind, Tone> = {
-	'director-cycle': 'amber',
-	'recipe-session': 'teal',
-	release: 'emerald',
-	run: 'neutral',
-	skill: 'teal',
-};
-
 export function timelineKindLabel(kind: DiaryTimelineKind): string {
 	return KIND_LABELS[kind];
 }
 
-// Releases are point-in-time markers, not lifecycle events, so they take the kind tone directly;
-// everything else colors by run/session status (reusing the Runs/History tone mapping).
+// Each timeline row shows a kind badge beside a status badge. Only the status badge is allowed a
+// tone: kind is taxonomy, and coloring it made a healthy Director cycle render amber next to its
+// own green status. The kind badge renders neutral (see DiaryTimelineList) and is told apart by its
+// label, which leaves tone meaning exactly one thing per row.
+//
+// Releases are point-in-time markers rather than lifecycle events, so they are always a success
+// marker; everything else colors by run/session status (reusing the Runs/History tone mapping).
 export function timelineItemTone(item: DiaryTimelineItem): Tone {
-	if (item.kind === 'release') return KIND_TONES.release;
+	if (item.kind === 'release') return 'emerald';
 	return runStatusTone(item.status);
-}
-
-export function timelineKindTone(kind: DiaryTimelineKind): Tone {
-	return KIND_TONES[kind];
 }
 
 function pad(value: number): string {

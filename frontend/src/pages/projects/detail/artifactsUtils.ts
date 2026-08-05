@@ -3,8 +3,7 @@ import type {
 	MaturityDetail,
 	ProjectArtifactRecord,
 } from '../../../api/types.ts';
-
-export type Tone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
+import type { Tone } from '../../../lib/tones.ts';
 
 export interface ArtifactViewerTarget {
 	label: string;

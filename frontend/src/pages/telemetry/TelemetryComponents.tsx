@@ -13,6 +13,7 @@ import {
 	formatRelativeAge,
 	formatTelemetryBucketLabel,
 } from '../../lib/formatters.ts';
+import { outcomeSolid, outcomeSolidHover } from '../../lib/series.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
@@ -146,49 +147,49 @@ export function TimeseriesChart({
 								style={{ height: `${totalPct}%` }}>
 								{point.completed > 0 && (
 									<div
-										className="min-h-0 w-full rounded-sm bg-emerald-500 group-hover:bg-emerald-400 dark:bg-emerald-600 dark:group-hover:bg-emerald-500"
+										className={`min-h-0 w-full rounded-sm ${outcomeSolid.completed} ${outcomeSolidHover.completed}`}
 										style={{ flexBasis: 0, flexGrow: point.completed }}
 									/>
 								)}
 								{point.warnings > 0 && (
 									<div
-										className="min-h-0 w-full bg-amber-400 group-hover:bg-amber-300 dark:bg-amber-500 dark:group-hover:bg-amber-400"
+										className={`min-h-0 w-full ${outcomeSolid.warnings} ${outcomeSolidHover.warnings}`}
 										style={{ flexBasis: 0, flexGrow: point.warnings }}
 									/>
 								)}
 								{point.failed > 0 && (
 									<div
-										className="min-h-0 w-full bg-red-400 group-hover:bg-red-300 dark:bg-red-500 dark:group-hover:bg-red-400"
+										className={`min-h-0 w-full ${outcomeSolid.failed} ${outcomeSolidHover.failed}`}
 										style={{ flexBasis: 0, flexGrow: point.failed }}
 									/>
 								)}
 								{point.flagged > 0 && (
 									<div
-										className="min-h-0 w-full bg-rose-700 group-hover:bg-rose-600 dark:bg-rose-800 dark:group-hover:bg-rose-700"
+										className={`min-h-0 w-full ${outcomeSolid.flagged} ${outcomeSolidHover.flagged}`}
 										style={{ flexBasis: 0, flexGrow: point.flagged }}
 									/>
 								)}
 								{point.stopped > 0 && (
 									<div
-										className="min-h-0 w-full bg-muted-foreground group-hover:opacity-80"
+										className={`min-h-0 w-full ${outcomeSolid.stopped} ${outcomeSolidHover.stopped}`}
 										style={{ flexBasis: 0, flexGrow: point.stopped }}
 									/>
 								)}
 								{point.killed > 0 && (
 									<div
-										className="min-h-0 w-full bg-orange-700 group-hover:bg-orange-600 dark:bg-orange-800 dark:group-hover:bg-orange-700"
+										className={`min-h-0 w-full ${outcomeSolid.killed} ${outcomeSolidHover.killed}`}
 										style={{ flexBasis: 0, flexGrow: point.killed }}
 									/>
 								)}
 								{point.noWork > 0 && (
 									<div
-										className="min-h-0 w-full bg-muted-foreground group-hover:opacity-80"
+										className={`min-h-0 w-full ${outcomeSolid.noWork} ${outcomeSolidHover.noWork}`}
 										style={{ flexBasis: 0, flexGrow: point.noWork }}
 									/>
 								)}
 								{point.running > 0 && (
 									<div
-										className="min-h-0 w-full bg-teal-500 group-hover:bg-teal-400 dark:bg-teal-600 dark:group-hover:bg-teal-500"
+										className={`min-h-0 w-full ${outcomeSolid.running} ${outcomeSolidHover.running}`}
 										style={{ flexBasis: 0, flexGrow: point.running }}
 									/>
 								)}
@@ -198,14 +199,14 @@ export function TimeseriesChart({
 				})}
 			</div>
 			<div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-muted-foreground">
-				<LegendDot className="bg-emerald-500" label="Completed" />
-				<LegendDot className="bg-amber-400" label="Warnings" />
-				<LegendDot className="bg-red-400" label="Failed" />
-				<LegendDot className="bg-rose-700" label="Flagged" />
-				<LegendDot className="bg-muted-foreground" label="Stopped" />
-				<LegendDot className="bg-orange-700" label="Killed" />
-				<LegendDot className="bg-muted-foreground" label="No work" />
-				<LegendDot className="bg-teal-500" label="Running" />
+				<LegendDot className={outcomeSolid.completed} label="Completed" />
+				<LegendDot className={outcomeSolid.warnings} label="Warnings" />
+				<LegendDot className={outcomeSolid.failed} label="Failed" />
+				<LegendDot className={outcomeSolid.flagged} label="Flagged" />
+				<LegendDot className={outcomeSolid.stopped} label="Stopped" />
+				<LegendDot className={outcomeSolid.killed} label="Killed" />
+				<LegendDot className={outcomeSolid.noWork} label="No work" />
+				<LegendDot className={outcomeSolid.running} label="Running" />
 			</div>
 			<TelemetryChartTable
 				caption="Invocation totals and outcomes for each time bucket"

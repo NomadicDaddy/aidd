@@ -1,16 +1,22 @@
+import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
+import { default as Sparkles } from 'lucide-react/dist/esm/icons/sparkles';
+import { default as SquareTerminal } from 'lucide-react/dist/esm/icons/square-terminal';
+import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
+
 import type { RecipeStepDefinition, RecipeStepType } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { type ConfigSummaryEntry, getConfigSummary } from './recipe-steps.ts';
 
-type BadgeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
-
-const stepTypeTones: Record<RecipeStepType, BadgeTone> = {
-	'aidd-cli': 'teal',
-	'recipe-ref': 'red',
-	shell: 'amber',
-	skill: 'emerald',
+// Step type is taxonomy, not status: a `shell` step is not "needs attention" and a `recipe-ref`
+// step is not "failed". Every type renders neutral and is distinguished by its glyph, leaving the
+// operational tone scale free to mean what it says.
+const stepTypeIcons: Record<RecipeStepType, typeof Terminal> = {
+	'aidd-cli': Terminal,
+	'recipe-ref': ListTree,
+	shell: SquareTerminal,
+	skill: Sparkles,
 };
 
 function ConfigSummary({ entries }: { entries: ConfigSummaryEntry[] }) {
@@ -60,6 +66,7 @@ export function StepOverviewCard({
 	const configSummary = getConfigSummary(step.stepType, step.configJson);
 	const hasOnFailure = step.onFailure && step.onFailure !== 'stop';
 	const hasRetry = step.retryCount !== undefined && step.retryCount > 0;
+	const StepTypeIcon = stepTypeIcons[step.stepType];
 
 	return (
 		<div className="flex gap-3">
@@ -73,7 +80,10 @@ export function StepOverviewCard({
 				<Card className="min-w-0 p-3">
 					<header className="mb-2 flex flex-wrap items-center gap-2">
 						<h3 className="text-sm font-semibold text-foreground">{step.name}</h3>
-						<Badge tone={stepTypeTones[step.stepType]}>{step.stepType}</Badge>
+						<Badge tone="neutral">
+							<StepTypeIcon aria-hidden="true" className="h-3 w-3" />
+							{step.stepType}
+						</Badge>
 						{hasOnFailure && <Badge tone="amber">on failure: {step.onFailure}</Badge>}
 						{hasRetry && <Badge tone="neutral">retry: {step.retryCount}</Badge>}
 					</header>

@@ -30,9 +30,12 @@ export const bucketShortLabels: Record<AuditAssuranceBucket, string> = {
 	single_user_local: 'Single',
 };
 
-export const effectTone: Record<AuditEffect, 'emerald' | 'neutral' | 'red' | 'teal'> = {
-	default: 'emerald',
-	disabled: 'neutral',
+// `default` is the baseline the great majority of applicability cells sit at, so it stays neutral —
+// emphasis is reserved for the cells that carry a real signal. `disabled` is an active suppression
+// rather than an absence, so it keeps a tone of its own instead of blending into the baseline.
+export const effectTone: Record<AuditEffect, 'amber' | 'neutral' | 'red' | 'teal'> = {
+	default: 'neutral',
+	disabled: 'amber',
 	excluded: 'red',
 	required: 'teal',
 };

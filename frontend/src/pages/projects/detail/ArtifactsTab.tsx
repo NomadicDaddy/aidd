@@ -2,7 +2,8 @@ import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { MaturityDetail, ProjectArtifactCheckSummary } from '../../../api/types.ts';
-import type { ArtifactViewerTarget, Tone } from './artifactsUtils.ts';
+import type { Tone } from '../../../lib/tones.ts';
+import type { ArtifactViewerTarget } from './artifactsUtils.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
@@ -62,13 +63,20 @@ export function ArtifactsTab({
 	}
 	const { artifacts, summary } = artifactCheck;
 	const inventoryCount = artifactInventoryCount(artifacts, maturity);
-	const tiles: { label: string; tone: Tone; value: number }[] = [
-		{ label: 'Fresh', tone: 'emerald', value: summary.fresh },
-		{ label: 'Stale', tone: 'amber', value: summary.stale },
-		{ label: 'Missing', tone: 'red', value: summary.missing },
-		{ label: 'Present', tone: 'teal', value: summary.present },
-		{ label: 'Required missing', tone: 'red', value: summary.requiredMissing },
-		{ label: 'Total', tone: 'neutral', value: summary.total },
+	// `health` is the user-facing reading of the count; `tone` stays an internal styling token and is
+	// never rendered as text.
+	const tiles: { health: string; label: string; tone: Tone; value: number }[] = [
+		{ health: 'Healthy', label: 'Fresh', tone: 'emerald', value: summary.fresh },
+		{ health: 'Needs refresh', label: 'Stale', tone: 'amber', value: summary.stale },
+		{ health: 'Not found', label: 'Missing', tone: 'red', value: summary.missing },
+		{ health: 'On disk', label: 'Present', tone: 'teal', value: summary.present },
+		{
+			health: 'Blocking',
+			label: 'Required missing',
+			tone: 'red',
+			value: summary.requiredMissing,
+		},
+		{ health: 'Inventory', label: 'Total', tone: 'neutral', value: summary.total },
 	];
 	return (
 		<Card>
@@ -86,7 +94,7 @@ export function ArtifactsTab({
 							{tile.value}
 						</div>
 						<div className="mt-1">
-							<Badge tone={tile.tone}>{tile.tone}</Badge>
+							<Badge tone={tile.tone}>{tile.health}</Badge>
 						</div>
 					</div>
 				))}

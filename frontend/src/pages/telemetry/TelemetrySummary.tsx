@@ -1,4 +1,5 @@
 import { Card } from '../../components/ui/card.tsx';
+import { outcomeSolid, seriesSolid } from '../../lib/series.ts';
 
 export interface TelemetryTotals {
 	completed: number;
@@ -37,24 +38,54 @@ function CountCard({
 export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 	return (
 		<section aria-label="Invocation summary" className="space-y-3">
+			{/* Shape-of-work breakdown: categorical, so it uses series slots rather than tones. */}
 			<div className="grid gap-3 sm:grid-cols-3">
-				<CountCard className="bg-teal-500" label="Total invocations" value={totals.total} />
 				<CountCard
-					className="bg-blue-500"
+					className={seriesSolid.slot1}
+					label="Total invocations"
+					value={totals.total}
+				/>
+				<CountCard
+					className={seriesSolid.slot2}
 					label="Top-level actions"
 					value={totals.topLevel}
 				/>
-				<CountCard className="bg-indigo-400" label="Nested steps" value={totals.nested} />
+				<CountCard
+					className={seriesSolid.slot3}
+					label="Nested steps"
+					value={totals.nested}
+				/>
 			</div>
+			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. */}
 			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-				<CountCard className="bg-emerald-500" label="Completed" value={totals.completed} />
-				<CountCard className="bg-amber-400" label="Warnings" value={totals.warnings} />
-				<CountCard className="bg-red-400" label="Failed" value={totals.failed} />
-				<CountCard className="bg-rose-700" label="Flagged" value={totals.flagged} />
-				<CountCard className="bg-muted-foreground" label="Stopped" value={totals.stopped} />
-				<CountCard className="bg-orange-700" label="Killed" value={totals.killed} />
-				<CountCard className="bg-muted-foreground" label="No work" value={totals.noWork} />
-				<CountCard className="bg-teal-500" label="Running" value={totals.running} />
+				<CountCard
+					className={outcomeSolid.completed}
+					label="Completed"
+					value={totals.completed}
+				/>
+				<CountCard
+					className={outcomeSolid.warnings}
+					label="Warnings"
+					value={totals.warnings}
+				/>
+				<CountCard className={outcomeSolid.failed} label="Failed" value={totals.failed} />
+				<CountCard
+					className={outcomeSolid.flagged}
+					label="Flagged"
+					value={totals.flagged}
+				/>
+				<CountCard
+					className={outcomeSolid.stopped}
+					label="Stopped"
+					value={totals.stopped}
+				/>
+				<CountCard className={outcomeSolid.killed} label="Killed" value={totals.killed} />
+				<CountCard className={outcomeSolid.noWork} label="No work" value={totals.noWork} />
+				<CountCard
+					className={outcomeSolid.running}
+					label="Running"
+					value={totals.running}
+				/>
 			</div>
 			<p className="text-xs text-muted-foreground">
 				Every top-level launch and every nested recipe or skill step is one invocation. Each

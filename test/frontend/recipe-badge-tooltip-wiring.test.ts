@@ -93,8 +93,13 @@ function counts(markup: string) {
 	};
 }
 
+// Taxonomy badges (recipe type, step type) render a decorative `aria-hidden` glyph beside their
+// label so they can stay neutral instead of spending an operational status tone. The glyph carries
+// no text, so it is stripped here and only the user-facing label is compared.
 function wrappedLabels(markup: string): string[] {
-	return [...markup.matchAll(WRAPPED_BADGE)].map((match) => match[1] ?? '').sort();
+	return [...markup.matchAll(WRAPPED_BADGE)]
+		.map((match) => (match[1] ?? '').replace(/<svg\b[\s\S]*?<\/svg>/g, ''))
+		.sort();
 }
 
 const cardMarkup = renderMarkup(

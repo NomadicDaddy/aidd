@@ -1,3 +1,6 @@
+import { default as CircleDot } from 'lucide-react/dist/esm/icons/circle-dot';
+import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
+
 import type { RecipeDefinition } from '../../api/types.ts';
 
 import {
@@ -6,12 +9,25 @@ import {
 	continuePolicyExplainer,
 	recipeMetadataOnlyExplainer,
 	recipeSystemExplainer,
+	recipeTypeExplainer,
 	retriesExplainer,
 	reviewSkillExplainer,
 	stopPolicyExplainer,
 } from './recipe-badge-explainers.ts';
 import { getRecipePolicySummary } from './recipe-policy.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
+
+// Pipeline vs single-step is taxonomy, so both variants stay neutral and are told apart by their
+// glyph rather than by spending a status tone on shape-of-recipe.
+export function RecipeTypeBadge({ isPipeline }: { isPipeline: boolean }) {
+	const TypeIcon = isPipeline ? ListTree : CircleDot;
+	return (
+		<RecipeBadgeTooltip content={recipeTypeExplainer[isPipeline ? 'pipeline' : 'single-step']}>
+			<TypeIcon aria-hidden="true" className="h-3 w-3" />
+			{isPipeline ? 'pipeline' : 'single-step'}
+		</RecipeBadgeTooltip>
+	);
+}
 
 export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
 	return (

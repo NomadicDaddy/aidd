@@ -1,5 +1,7 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
+import { default as Gauge } from 'lucide-react/dist/esm/icons/gauge';
+import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -158,10 +160,16 @@ export function SkillsPage() {
 											{skill.id}
 										</span>
 										{RECIPE_SKILL_IDS.has(skill.id) ? (
-											<Badge tone="teal">Recipe</Badge>
+											<Badge tone="neutral">
+												<ListTree aria-hidden="true" className="h-3 w-3" />
+												Recipe
+											</Badge>
 										) : null}
 										{MATURITY_SKILL_IDS.has(skill.id) ? (
-											<Badge tone="emerald">Maturity</Badge>
+											<Badge tone="neutral">
+												<Gauge aria-hidden="true" className="h-3 w-3" />
+												Maturity
+											</Badge>
 										) : null}
 										<Badge
 											tone={

@@ -8,14 +8,8 @@ import type { ProjectAssuranceProfileInput } from '../../../../api/types.ts';
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Button } from '../../../../components/ui/button.tsx';
 import { Card } from '../../../../components/ui/card.tsx';
+import { effectTone } from '../../../audits/auditsUtils.ts';
 import { getProfilePosture } from '../../profile/profile-helpers.ts';
-
-const effectTone = {
-	default: 'emerald',
-	disabled: 'neutral',
-	excluded: 'red',
-	required: 'teal',
-} as const;
 
 export function ComputedProfilePanel({
 	dirty,

@@ -8,6 +8,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { useSubmitProjectInterviewAnswer } from '../../../hooks/useProjects.ts';
+import { toneText } from '../../../lib/tones.ts';
 
 export function InterviewTab({
 	interview,
@@ -64,13 +65,13 @@ export function InterviewTab({
 				</Card>
 				<Card>
 					<div className="text-xs text-muted-foreground uppercase">Completed</div>
-					<div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
+					<div className={`mt-2 text-2xl font-semibold ${toneText.emerald}`}>
 						{interview.answered}
 					</div>
 				</Card>
 				<Card>
 					<div className="text-xs text-muted-foreground uppercase">Unanswered</div>
-					<div className="mt-2 text-2xl font-semibold text-amber-700 dark:text-amber-400">
+					<div className={`mt-2 text-2xl font-semibold ${toneText.amber}`}>
 						{remaining}
 					</div>
 				</Card>
@@ -118,7 +119,7 @@ export function InterviewTab({
 												/>
 												<p
 													aria-live="assertive"
-													className="min-h-0 text-xs text-red-700 dark:text-red-400"
+													className={`min-h-0 text-xs ${toneText.red}`}
 													role="alert">
 													{submitError && answeringId === question.id
 														? submitError

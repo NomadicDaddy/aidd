@@ -4,7 +4,7 @@ import type { FleetSummary } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
-import { toneSolid } from '../../lib/tones.ts';
+import { type Tone, toneBorder, toneSolid, toneSurface, toneText } from '../../lib/tones.ts';
 import { type getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 
 export function FleetHealthCard({
@@ -76,35 +76,17 @@ function StatTile({
 	label,
 	value,
 }: {
-	color: 'amber' | 'emerald' | 'teal';
+	color: Extract<Tone, 'amber' | 'emerald' | 'teal'>;
 	label: string;
 	value: number;
 }) {
-	const styles: Record<string, string> = {
-		amber: 'border-amber-200/60 bg-amber-50/80 dark:border-amber-800/40 dark:bg-amber-950/20',
-		emerald:
-			'border-emerald-200/60 bg-emerald-50/80 dark:border-emerald-800/40 dark:bg-emerald-950/20',
-		teal: 'border-teal-200/60 bg-teal-50/80 dark:border-teal-800/40 dark:bg-teal-950/20',
-	};
-	const textStyles: Record<string, string> = {
-		amber: 'text-amber-700 dark:text-amber-300',
-		emerald: 'text-emerald-700 dark:text-emerald-300',
-		teal: 'text-teal-700 dark:text-teal-300',
-	};
-	const valueStyles: Record<string, string> = {
-		amber: 'text-amber-950 dark:text-amber-100',
-		emerald: 'text-emerald-950 dark:text-emerald-100',
-		teal: 'text-teal-950 dark:text-teal-100',
-	};
-
 	return (
-		<div className={`rounded-lg border p-3 ${styles[color]}`}>
+		<div className={`rounded-lg border p-3 ${toneBorder[color]} ${toneSurface[color]}`}>
 			<div
-				className={`text-[0.65rem] font-semibold tracking-wide uppercase ${textStyles[color]}`}>
+				className={`text-[0.65rem] font-semibold tracking-wide uppercase ${toneText[color]}`}>
 				{label}
 			</div>
-			<div
-				className={`mt-1 font-display text-lg font-semibold tabular-nums ${valueStyles[color]}`}>
+			<div className="mt-1 font-display text-lg font-semibold text-foreground tabular-nums">
 				{value}
 			</div>
 		</div>

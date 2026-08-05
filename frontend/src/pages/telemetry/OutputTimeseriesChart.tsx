@@ -2,15 +2,17 @@ import type { TelemetryOutputTimeseriesPoint } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { formatCompactNumber, formatTelemetryBucketLabel } from '../../lib/formatters.ts';
+import { seriesSolid, seriesSolidHover } from '../../lib/series.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 export type OutputMetric = 'lines' | 'tokens';
 
 // Diverging bars from a shared center baseline: production (lines added / tokens in) grows up,
 // the counterpart (lines removed / tokens out) grows down. Both arms share one symmetric scale
-// so their magnitudes stay comparable — position carries the sign, color the identity (teal up,
-// orange down: a warm/cool pair that stays distinct under CVD and never impersonates the
-// emerald/red outcome colors used by the invocations chart).
+// so their magnitudes stay comparable — position carries the sign, color the identity. The two
+// arms are series, not statuses, so they take categorical slots from `lib/series.ts`; the cyan /
+// fuchsia pairing stays separable under red-green CVD and cannot be mistaken for the outcome
+// colors used by the invocations chart.
 export function OutputTimeseriesChart({
 	bucket,
 	metric,
@@ -106,7 +108,7 @@ export function OutputTimeseriesChart({
 								<div className="flex flex-1 items-end">
 									{up > 0 && (
 										<div
-											className="w-full rounded-t-sm bg-teal-600 group-hover:bg-teal-500"
+											className={`w-full rounded-t-sm ${seriesSolid.slot1} ${seriesSolidHover.slot1}`}
 											style={{
 												height: `${Math.max(2, Math.round((up / max) * 100))}%`,
 											}}
@@ -116,7 +118,7 @@ export function OutputTimeseriesChart({
 								<div className="flex flex-1 items-start">
 									{down > 0 && (
 										<div
-											className="w-full rounded-b-sm bg-orange-600 group-hover:bg-orange-500"
+											className={`w-full rounded-b-sm ${seriesSolid.slot3} ${seriesSolidHover.slot3}`}
 											style={{
 												height: `${Math.max(2, Math.round((down / max) * 100))}%`,
 											}}
@@ -131,14 +133,20 @@ export function OutputTimeseriesChart({
 			<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
 				<div className="flex items-center gap-4">
 					<span className="flex items-center gap-1.5">
-						<span aria-hidden="true" className="h-2 w-2 rounded-full bg-teal-600" />
+						<span
+							aria-hidden="true"
+							className={`h-2 w-2 rounded-full ${seriesSolid.slot1}`}
+						/>
 						{upLabel}{' '}
 						<span className="font-medium text-foreground tabular-nums">
 							{formatCompactNumber(totalUp)}
 						</span>
 					</span>
 					<span className="flex items-center gap-1.5">
-						<span aria-hidden="true" className="h-2 w-2 rounded-full bg-orange-600" />
+						<span
+							aria-hidden="true"
+							className={`h-2 w-2 rounded-full ${seriesSolid.slot3}`}
+						/>
 						{downLabel}{' '}
 						<span className="font-medium text-foreground tabular-nums">
 							{formatCompactNumber(totalDown)}

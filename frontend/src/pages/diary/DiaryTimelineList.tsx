@@ -4,7 +4,7 @@ import type { DiaryTimelineItem } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatDate, formatDuration, formatRelativeAge } from '../../lib/formatters.ts';
-import { timelineItemTone, timelineKindLabel, timelineKindTone } from './diaryItems.ts';
+import { timelineItemTone, timelineKindLabel } from './diaryItems.ts';
 
 function isoFromMs(ms: number): string {
 	return new Date(ms).toISOString();
@@ -32,9 +32,7 @@ function DiaryTimelineRow({
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
-						<Badge tone={timelineKindTone(item.kind)}>
-							{timelineKindLabel(item.kind)}
-						</Badge>
+						<Badge tone="neutral">{timelineKindLabel(item.kind)}</Badge>
 						<Badge tone={timelineItemTone(item)}>{item.status}</Badge>
 						{item.projectPath ? (
 							<Link

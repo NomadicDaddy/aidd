@@ -8,8 +8,9 @@ import type {
 	MaturityNextAction,
 	MaturityStageStatus,
 } from '../../../api/types.ts';
+import type { Tone } from '../../../lib/tones.ts';
 
-export type Tone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
+import { toneText } from '../../../lib/tones.ts';
 
 export const STAGE_ICON_BY_STATUS: Record<MaturityStageStatus, typeof CircleCheck> = {
 	complete: CircleCheck,
@@ -18,9 +19,9 @@ export const STAGE_ICON_BY_STATUS: Record<MaturityStageStatus, typeof CircleChec
 };
 
 export const STAGE_ICON_TONE: Record<MaturityStageStatus, string> = {
-	complete: 'text-emerald-600 dark:text-emerald-400',
-	empty: 'text-muted-foreground ',
-	partial: 'text-amber-600 dark:text-amber-400',
+	complete: toneText.emerald,
+	empty: toneText.neutral,
+	partial: toneText.amber,
 };
 
 export function artifactTone(artifact: MaturityArtifact): Tone {

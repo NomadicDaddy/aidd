@@ -11,10 +11,13 @@ import {
 	recipeParameterCountExplainer,
 	recipeStepCountExplainer,
 	recipeStepTypeExplainer,
-	recipeTypeExplainer,
 } from './recipe-badge-explainers.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
-import { RecipeContractBadges, RecipePolicyBadges } from './RecipeMetadataBadges.tsx';
+import {
+	RecipeContractBadges,
+	RecipePolicyBadges,
+	RecipeTypeBadge,
+} from './RecipeMetadataBadges.tsx';
 
 export function RecipeCard({
 	launchDisabled,
@@ -44,11 +47,7 @@ export function RecipeCard({
 				</div>
 				<div className="flex flex-wrap justify-end gap-1.5">
 					<RecipeContractBadges recipe={recipe} />
-					<RecipeBadgeTooltip
-						content={recipeTypeExplainer[isPipeline ? 'pipeline' : 'single-step']}
-						tone={isPipeline ? 'teal' : 'neutral'}>
-						{isPipeline ? 'pipeline' : 'single-step'}
-					</RecipeBadgeTooltip>
+					<RecipeTypeBadge isPipeline={isPipeline} />
 				</div>
 			</div>
 			<p className="mb-4 min-h-10 text-sm text-muted-foreground">
@@ -150,15 +149,7 @@ export function RecipeTable({
 								</td>
 								<td className="px-3 py-3">
 									<div className="flex flex-wrap gap-1.5">
-										<RecipeBadgeTooltip
-											content={
-												recipeTypeExplainer[
-													isPipeline ? 'pipeline' : 'single-step'
-												]
-											}
-											tone={isPipeline ? 'teal' : 'neutral'}>
-											{isPipeline ? 'pipeline' : 'single-step'}
-										</RecipeBadgeTooltip>
+										<RecipeTypeBadge isPipeline={isPipeline} />
 										<RecipeContractBadges recipe={recipe} />
 									</div>
 								</td>

@@ -13,6 +13,7 @@ import { Button } from '../../components/ui/button.tsx';
 import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useImportProjects, useProjectImportCandidates } from '../../hooks/useProjects.ts';
+import { toneText } from '../../lib/tones.ts';
 import { CandidateIntakePreview } from './CandidateIntakePreview.tsx';
 
 function signalLabels(signals: { aidd: boolean; git: boolean; packageJson: boolean }): string[] {
@@ -223,7 +224,7 @@ export function ProjectIngestLane() {
 			{results.length > 0 ? (
 				<div className="space-y-2 rounded border border-border bg-card p-3 text-sm">
 					<div className="flex items-center gap-2 font-medium">
-						<CheckCircle2 className="h-4 w-4 text-emerald-600" />
+						<CheckCircle2 className={`h-4 w-4 ${toneText.emerald}`} />
 						{resultSummary(results)}
 					</div>
 					<ul className="space-y-1 text-xs text-muted-foreground">

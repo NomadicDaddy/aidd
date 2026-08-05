@@ -9,6 +9,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 
 function parseChatId(value: string): number | undefined {
 	const trimmed = value.trim();
@@ -75,7 +76,9 @@ export function TelegramChannelSection({
 					value={telegram.botToken ?? ''}
 				/>
 				{telegram.botTokenConfigured && !telegram.botToken && (
-					<span className="text-xs text-emerald-600">A bot token is configured.</span>
+					<span className={`text-xs ${toneText.emerald}`}>
+						A bot token is configured.
+					</span>
 				)}
 			</FieldRow>
 

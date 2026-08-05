@@ -13,6 +13,7 @@ import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIde
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCount, formatRatio, formatRelativeAge, percent } from '../../../lib/formatters.ts';
+import { toneSolid } from '../../../lib/tones.ts';
 import {
 	bucketLabels,
 	formatAppVersion,
@@ -51,7 +52,10 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 				</div>
 				<div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
 					{total > 0 ? (
-						<div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+						<div
+							className={`h-full ${toneSolid.emerald}`}
+							style={{ width: `${pct}%` }}
+						/>
 					) : null}
 				</div>
 			</Card>

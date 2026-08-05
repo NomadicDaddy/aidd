@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/input.tsx';
 import { useCreateProject, useRecommendProjectMode } from '../../hooks/useProjects.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 import { BlueprintOnlyToggle } from './BlueprintOnlyToggle.tsx';
 import { ProjectAdvisorRecommendation } from './ProjectAdvisorRecommendation.tsx';
 import { ProjectCreateActions } from './ProjectCreateActions.tsx';
@@ -201,7 +202,7 @@ export function ProjectCreateLane({
 			<label className="space-y-1">
 				<span className={fieldLabelClass}>
 					Description
-					{requiresDescription ? <span className="text-red-500"> *</span> : null}
+					{requiresDescription ? <span className={toneText.red}> *</span> : null}
 				</span>
 				<Input
 					maxLength={500}

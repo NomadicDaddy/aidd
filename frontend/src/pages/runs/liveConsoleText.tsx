@@ -21,7 +21,10 @@ export function highlightLine(line: string, query: string): ReactNode {
 	while (match !== -1) {
 		if (match > cursor) nodes.push(line.slice(cursor, match));
 		nodes.push(
-			<mark className="rounded-sm bg-amber-300 text-foreground" key={key}>
+			// The console scroller is a fixed dark surface in both themes, so this highlight fixes
+			// its own foreground rather than inheriting `text-foreground`, which would render
+			// near-white on amber-300 under the dark theme (~1.5:1).
+			<mark className="rounded-sm bg-amber-300 text-neutral-900" key={key}>
 				{line.slice(match, match + query.length)}
 			</mark>,
 		);

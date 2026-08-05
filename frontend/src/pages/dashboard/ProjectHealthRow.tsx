@@ -4,7 +4,7 @@ import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { percent } from '../../lib/formatters.ts';
-import { toneSolid } from '../../lib/tones.ts';
+import { toneSolid, toneText } from '../../lib/tones.ts';
 import { artifactTone } from '../projects/projects-list-shared.ts';
 import { isOrphaned, milestoneBadgeTone } from '../projects/projects-list-visuals.ts';
 import { getHealthTone, healthBandLabel } from './dashboard-shared.ts';
@@ -51,7 +51,7 @@ export function ProjectHealthRow({
 						{orphan ? (
 							<FolderX
 								aria-label="Missing on disk"
-								className="h-3.5 w-3.5 shrink-0 text-amber-500"
+								className={`h-3.5 w-3.5 shrink-0 ${toneText.amber}`}
 							/>
 						) : null}
 						<span className="truncate">{project.name}</span>

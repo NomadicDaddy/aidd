@@ -3,6 +3,7 @@ import { default as ShieldAlert } from 'lucide-react/dist/esm/icons/shield-alert
 import type { ProjectMilestonesView } from '../../../api/types.ts';
 
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { toneText } from '../../../lib/tones.ts';
 
 /**
  * The two ways a roadmap can be wrong, rendered with the same red treatment the features tab uses
@@ -21,7 +22,7 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 			<CardHeader
 				className="mb-0"
 				headingLevel={3}
-				icon={<ShieldAlert className="h-4 w-4 text-red-500" />}
+				icon={<ShieldAlert className={`h-4 w-4 ${toneText.red}`} />}
 				title="Roadmap problems"
 			/>
 			{unmapped.length > 0 ? (

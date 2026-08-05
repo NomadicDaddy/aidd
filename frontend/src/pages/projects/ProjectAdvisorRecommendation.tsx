@@ -4,6 +4,7 @@ import type { ProjectCreateMode, ProjectRecommendResult } from '../../api/types.
 
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { toneText } from '../../lib/tones.ts';
 
 export function ProjectAdvisorRecommendation({
 	createPending,
@@ -23,9 +24,8 @@ export function ProjectAdvisorRecommendation({
 	return (
 		<Card className="space-y-2 border-teal-300 bg-card dark:border-teal-800">
 			<div className="flex items-center gap-2 text-sm font-medium">
-				<Sparkles className="h-4 w-4 text-teal-600" />
-				Advisor recommends:{' '}
-				<span className="text-teal-700 dark:text-teal-300">{recommendation.mode}</span>
+				<Sparkles className={`h-4 w-4 ${toneText.teal}`} />
+				Advisor recommends: <span className={toneText.teal}>{recommendation.mode}</span>
 			</div>
 			<p className="text-xs text-foreground">{recommendation.reasoning}</p>
 			{recommendation.mode === 'ingest' ? (

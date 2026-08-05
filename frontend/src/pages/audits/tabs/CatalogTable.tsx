@@ -3,6 +3,7 @@ import type { AuditDefinition } from '../../../api/types.ts';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { toneText } from '../../../lib/tones.ts';
 import { bandTone, bucketColumns, describeChangePotential } from '../auditsUtils.ts';
 
 interface CatalogTableProps {
@@ -113,15 +114,15 @@ export function CatalogTable({
 									{item.applicableProjectCount} applicable
 								</td>
 								<td className="px-4 py-3">
-									<span className="text-emerald-700">
+									<span className={toneText.emerald}>
 										{item.freshReportCount} fresh
 									</span>
 									<span className="mx-2 text-muted-foreground">/</span>
-									<span className="text-amber-700">
+									<span className={toneText.amber}>
 										{item.staleReportCount} stale
 									</span>
 									<span className="mx-2 text-muted-foreground">/</span>
-									<span className="text-red-700">
+									<span className={toneText.red}>
 										{item.missingReportCount} missing
 									</span>
 								</td>
@@ -222,15 +223,15 @@ export function CatalogTable({
 										Reports
 									</dt>
 									<dd className="text-xs">
-										<span className="text-emerald-700">
+										<span className={toneText.emerald}>
 											{item.freshReportCount} fresh
 										</span>
 										<span className="mx-2 text-muted-foreground">/</span>
-										<span className="text-amber-700">
+										<span className={toneText.amber}>
 											{item.staleReportCount} stale
 										</span>
 										<span className="mx-2 text-muted-foreground">/</span>
-										<span className="text-red-700">
+										<span className={toneText.red}>
 											{item.missingReportCount} missing
 										</span>
 									</dd>

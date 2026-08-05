@@ -6,6 +6,7 @@ import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '.
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatRelativeAge } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
 import {
@@ -71,7 +72,7 @@ export function ProjectTableRow({
 					{orphan ? (
 						<FolderX
 							aria-label="Missing on disk"
-							className="h-4 w-4 shrink-0 text-amber-500"
+							className={`h-4 w-4 shrink-0 ${toneText.amber}`}
 						/>
 					) : null}
 					<Link

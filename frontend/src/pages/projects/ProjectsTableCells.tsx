@@ -10,6 +10,7 @@ import type {
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatCompactNumber, percent } from '../../lib/formatters.ts';
+import { toneSolid } from '../../lib/tones.ts';
 import { artifactTone } from './projects-list-shared.ts';
 import { featureProgressColor } from './projects-list-visuals.ts';
 
@@ -19,7 +20,7 @@ function PortDot({ listening }: { listening: boolean | null }) {
 		<span
 			aria-label={listening ? 'Port listening' : 'Port not listening'}
 			className={`inline-block h-2 w-2 rounded-full ${
-				listening ? 'bg-emerald-500' : 'bg-red-500'
+				toneSolid[listening ? 'emerald' : 'red']
 			}`}
 			title={listening ? 'Listening' : 'Not listening'}
 		/>

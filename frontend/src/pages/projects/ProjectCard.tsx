@@ -9,6 +9,7 @@ import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatCount, formatRatio, formatRelativeAge, percent } from '../../lib/formatters.ts';
+import { toneSolid, toneText } from '../../lib/tones.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
 import {
@@ -76,7 +77,7 @@ export function ProjectCard({
 						{orphan ? (
 							<FolderX
 								aria-label="Missing on disk"
-								className="h-4 w-4 shrink-0 text-amber-500"
+								className={`h-4 w-4 shrink-0 ${toneText.amber}`}
 							/>
 						) : null}
 						{detailHref ? (
@@ -168,7 +169,9 @@ export function ProjectCard({
 				<div>
 					{passing}/{totalFeatures} features passing
 					{failing > 0 ? (
-						<span className="ml-2 text-xs text-amber-700">({failing} failing)</span>
+						<span className={`ml-2 text-xs ${toneText.amber}`}>
+							({failing} failing)
+						</span>
 					) : null}
 				</div>
 				<div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -252,7 +255,7 @@ export function ProjectCard({
 					</div>
 				) : null}
 				{metadata.sync.lastSyncError ? (
-					<div className="text-xs text-red-700">{metadata.sync.lastSyncError}</div>
+					<div className={`text-xs ${toneText.red}`}>{metadata.sync.lastSyncError}</div>
 				) : null}
 			</div>
 			{action ? (
@@ -268,7 +271,7 @@ function PortDotInline({ listening }: { listening: boolean | null }) {
 		<span
 			aria-label={listening ? 'Listening' : 'Not listening'}
 			className={`inline-block h-1.5 w-1.5 rounded-full ${
-				listening ? 'bg-emerald-500' : 'bg-red-500'
+				toneSolid[listening ? 'emerald' : 'red']
 			}`}
 			title={listening ? 'Listening' : 'Not listening'}
 		/>

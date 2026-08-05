@@ -6,6 +6,7 @@ import type { ProjectDetail, ProjectRoadmapSummary } from '../../../api/types.ts
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { toneText } from '../../../lib/tones.ts';
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';
 import { FeatureFilters } from './FeatureFilters.tsx';
 import { FeatureLaunchTargetRow } from './FeatureLaunchTargetRow.tsx';
@@ -100,7 +101,7 @@ export function FeaturesTab({
 				if (!gate) return null;
 				return (
 					<Card className="flex flex-wrap items-center gap-2 border-red-300 dark:border-red-900">
-						<ShieldCheck className="h-4 w-4 text-red-500" />
+						<ShieldCheck className={`h-4 w-4 ${toneText.red}`} />
 						<span className="text-sm text-muted-foreground">
 							{gate.names.length > 0 ? (
 								<>
@@ -146,7 +147,7 @@ export function FeaturesTab({
 			})()}
 			{auditFindingsCount > 0 ? (
 				<Card className="flex flex-wrap items-center gap-2">
-					<ShieldCheck className="h-4 w-4 text-amber-500" />
+					<ShieldCheck className={`h-4 w-4 ${toneText.amber}`} />
 					<span className="text-sm text-muted-foreground">
 						{auditFindingsCount} approved audit finding
 						{auditFindingsCount === 1 ? '' : 's'}

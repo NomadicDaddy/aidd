@@ -8,6 +8,7 @@ import type { ProjectAssuranceProfileInput } from '../../../../api/types.ts';
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Button } from '../../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../../components/ui/card.tsx';
+import { toneText } from '../../../../lib/tones.ts';
 import { effectTone } from '../../../audits/auditsUtils.ts';
 import { getProfilePosture } from '../../profile/profile-helpers.ts';
 
@@ -76,7 +77,9 @@ export function ComputedProfilePanel({
 							<li
 								className="flex items-start gap-1.5 text-xs text-muted-foreground"
 								key={reason}>
-								<span className="text-red-500">⊕</span>
+								<span aria-hidden="true" className={toneText.red}>
+									⊕
+								</span>
 								{reason}
 							</li>
 						))}

@@ -246,7 +246,10 @@ export function LiveConsole({
 									)}>
 									{matchingLines ? (
 										matchingLines.length === 0 ? (
-											<span className="text-muted-foreground">
+											// Inside the fixed dark scroller, so this dims against
+											// that surface instead of the themed `muted-foreground`,
+											// which is a dark grey under the light theme.
+											<span className="text-white/60">
 												No lines match “{trimmedFind}”.
 											</span>
 										) : (

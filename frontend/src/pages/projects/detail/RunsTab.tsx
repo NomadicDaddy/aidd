@@ -16,6 +16,7 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useNow } from '../../../hooks/useNow.ts';
 import { useRuns } from '../../../hooks/useRuns.ts';
 import { formatActiveDuration, formatDate } from '../../../lib/formatters.ts';
+import { toneText } from '../../../lib/tones.ts';
 import { runRuntimeDetail, runSourceLabel } from '../../runs/runRowUtils.ts';
 import { compareRunsByLiveness } from '../../runs/runsUtils.ts';
 import { ProjectUsagePanel } from './ProjectUsagePanel.tsx';
@@ -82,7 +83,7 @@ function ActiveRunsPanel({
 					) : null}
 					{isError ? (
 						<tr>
-							<td className="px-4 py-4 text-red-600" colSpan={6}>
+							<td className={`px-4 py-4 ${toneText.red}`} colSpan={6}>
 								Unable to load recent runs.
 							</td>
 						</tr>

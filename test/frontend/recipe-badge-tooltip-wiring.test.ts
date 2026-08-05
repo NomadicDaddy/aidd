@@ -12,7 +12,7 @@ import type { RecipeDefinition } from '../../frontend/src/api/types.ts';
 // triggers against badges proves every badge carries a live tooltip, and the explainer suite
 // proves none of the content is empty.
 const BADGE_CLASS =
-	/inline-flex items-center gap-1\.5 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset/g;
+	/inline-flex items-center gap-1\.5 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-inset/g;
 const TRIGGER_ATTR = /tabindex="0"/g;
 const WRAPPER_CLASS = /class="relative inline-flex"/g;
 const WRAPPED_BADGE =

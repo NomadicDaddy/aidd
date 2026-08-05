@@ -34,7 +34,7 @@ export function buttonClassName(
 	size: ButtonSize = 'default',
 ): string {
 	return cn(
-		'inline-flex items-center justify-center rounded-lg border font-medium',
+		'inline-flex items-center justify-center rounded-lg border font-medium whitespace-nowrap',
 		'transition-all duration-150',
 		'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 		'disabled:pointer-events-none disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:opacity-60 disabled:shadow-none dark:disabled:border-neutral-800 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600',

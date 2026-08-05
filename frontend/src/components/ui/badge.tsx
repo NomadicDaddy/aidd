@@ -23,7 +23,7 @@ export function Badge({
 	return (
 		<span
 			className={cn(
-				'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
+				'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-inset',
 				'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none focus-visible:[--tw-ring-inset:initial]',
 				toneBadge[tone],
 				className,

@@ -50,7 +50,7 @@ export function DiaryEntryCard({
 			</div>
 			{expanded ? (
 				<div className="mt-3 border-t border-border pt-3">
-					<MarkdownContent markdown={entry.bodyMd} />
+					<MarkdownContent baseLevel={4} markdown={entry.bodyMd} />
 					{entry.generatedBy ? (
 						<Link
 							className="mt-3 inline-block text-xs text-muted-foreground hover:underline"

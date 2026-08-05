@@ -1,6 +1,26 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { parseMarkdownBlocks } from '../../frontend/src/lib/markdownBlocks.ts';
+
+function renderMarkdownContent(markdown: string, baseLevel?: 2 | 3 | 4): string {
+	const props = baseLevel === undefined ? { markdown } : { baseLevel, markdown };
+	const script = [
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { MarkdownContent } from './src/components/shared/MarkdownContent.tsx';",
+		`console.log(renderToStaticMarkup(createElement(MarkdownContent, ${JSON.stringify(props)})));`,
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
+	return new TextDecoder().decode(result.stdout).trim();
+}
 
 describe('parseMarkdownBlocks', () => {
 	test('parses headings at levels 1-3', () => {
@@ -50,5 +70,50 @@ describe('parseMarkdownBlocks', () => {
 	test('strips a leading frontmatter fence', () => {
 		const blocks = parseMarkdownBlocks("---\ntitle: 'X'\n---\n\n# Body");
 		expect(blocks).toEqual([{ level: 1, text: 'Body', type: 'heading' }]);
+	});
+
+	test('renders contiguous heading levels for each embedding surface', () => {
+		const markdown = '# Title\n\n## Section\n\n### Detail';
+		const docs = renderMarkdownContent(markdown, 2);
+		const helpDrawer = renderMarkdownContent(markdown);
+		const diary = renderMarkdownContent(markdown, 4);
+
+		expect(docs).toMatch(/<h2[^>]*>Title<\/h2>.*<h3[^>]*>Section<\/h3>.*<h4[^>]*>Detail<\/h4>/);
+		expect(helpDrawer).toMatch(
+			/<h3[^>]*>Title<\/h3>.*<h4[^>]*>Section<\/h4>.*<h5[^>]*>Detail<\/h5>/,
+		);
+		expect(diary).toMatch(
+			/<h4[^>]*>Title<\/h4>.*<h5[^>]*>Section<\/h5>.*<h6[^>]*>Detail<\/h6>/,
+		);
+	});
+
+	test('embeds the shared renderer beneath each consumer heading', () => {
+		const docsPage = readFileSync(
+			resolve(import.meta.dir, '../../frontend/src/pages/docs/DocsPage.tsx'),
+			'utf8',
+		);
+		const diaryCard = readFileSync(
+			resolve(import.meta.dir, '../../frontend/src/pages/diary/DiaryEntryCard.tsx'),
+			'utf8',
+		);
+
+		expect(docsPage).toContain('<MarkdownContent baseLevel={2} markdown={body} />');
+		expect(diaryCard).toContain('<MarkdownContent baseLevel={4} markdown={entry.bodyMd} />');
+	});
+
+	test('uses the shared type scale, reading measure, semantic tokens, and compact inline code', () => {
+		const html = renderMarkdownContent(
+			'## A readable question?\n\nUse `aidd`, then continue.',
+			2,
+		);
+
+		expect(html).toContain('max-w-[68ch]');
+		expect(html).toContain('leading-relaxed');
+		expect(html).toContain('text-base font-semibold text-foreground');
+		expect(html).not.toContain('uppercase');
+		expect(html).not.toContain('tracking-wide');
+		expect(html).toContain('bg-muted px-0.5 font-mono text-[0.9em] text-foreground');
+		expect(html).not.toContain('px-1');
+		expect(html).not.toContain('py-0.5');
 	});
 });

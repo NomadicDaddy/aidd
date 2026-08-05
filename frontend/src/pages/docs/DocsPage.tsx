@@ -28,7 +28,7 @@ export function DocsPage() {
 				</aside>
 				<article className="min-w-0 rounded-lg border border-border bg-card p-5 sm:p-7">
 					{body ? (
-						<MarkdownContent markdown={body} />
+						<MarkdownContent baseLevel={2} markdown={body} />
 					) : (
 						<EmptyState
 							action={

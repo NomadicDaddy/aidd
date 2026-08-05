@@ -25,7 +25,7 @@ function renderInline(text: string): ReactNode[] {
 		} else if (match[4] !== undefined) {
 			nodes.push(
 				<code
-					className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]"
+					className="rounded-sm bg-muted px-0.5 font-mono text-[0.9em] text-foreground"
 					key={`c${key++}`}>
 					{match[4]}
 				</code>,
@@ -39,36 +39,75 @@ function renderInline(text: string): ReactNode[] {
 
 const HEADING_CLASS: Record<1 | 2 | 3, string> = {
 	1: 'mt-4 mb-2 text-lg font-semibold text-foreground',
-	2: 'mt-4 mb-1.5 text-sm font-semibold tracking-wide text-foreground uppercase ',
-	3: 'mt-3 mb-1 text-sm font-semibold text-foreground ',
+	2: 'mt-6 mb-2 text-base font-semibold text-foreground',
+	3: 'mt-4 mb-1 text-sm font-semibold text-foreground',
 };
 
-export function MarkdownContent({ className, markdown }: { className?: string; markdown: string }) {
+type HeadingBaseLevel = 2 | 3 | 4;
+
+function renderHeading(
+	level: 1 | 2 | 3,
+	text: string,
+	key: string,
+	baseLevel: HeadingBaseLevel,
+): ReactNode {
+	const content = renderInline(text);
+	const renderedLevel = baseLevel + level - 1;
+	if (renderedLevel === 2) {
+		return (
+			<h2 className={HEADING_CLASS[level]} key={key}>
+				{content}
+			</h2>
+		);
+	}
+	if (renderedLevel === 3) {
+		return (
+			<h3 className={HEADING_CLASS[level]} key={key}>
+				{content}
+			</h3>
+		);
+	}
+	if (renderedLevel === 4) {
+		return (
+			<h4 className={HEADING_CLASS[level]} key={key}>
+				{content}
+			</h4>
+		);
+	}
+	if (renderedLevel === 5) {
+		return (
+			<h5 className={HEADING_CLASS[level]} key={key}>
+				{content}
+			</h5>
+		);
+	}
+	return (
+		<h6 className={HEADING_CLASS[level]} key={key}>
+			{content}
+		</h6>
+	);
+}
+
+export function MarkdownContent({
+	baseLevel = 3,
+	className,
+	markdown,
+}: {
+	baseLevel?: HeadingBaseLevel;
+	className?: string;
+	markdown: string;
+}) {
 	const blocks = parseMarkdownBlocks(markdown);
 	return (
-		<div className={cn('space-y-2 text-sm text-foreground', className)}>
+		<div
+			className={cn(
+				'max-w-[68ch] space-y-2 text-sm leading-relaxed text-foreground',
+				className,
+			)}>
 			{blocks.map((block, index) => {
 				const key = `block-${index}`;
 				if (block.type === 'heading') {
-					if (block.level === 1) {
-						return (
-							<h3 className={HEADING_CLASS[1]} key={key}>
-								{renderInline(block.text)}
-							</h3>
-						);
-					}
-					if (block.level === 2) {
-						return (
-							<h4 className={HEADING_CLASS[2]} key={key}>
-								{renderInline(block.text)}
-							</h4>
-						);
-					}
-					return (
-						<h5 className={HEADING_CLASS[3]} key={key}>
-							{renderInline(block.text)}
-						</h5>
-					);
+					return renderHeading(block.level, block.text, key, baseLevel);
 				}
 				if (block.type === 'hr') {
 					return <hr className="border-border" key={key} />;

@@ -5,8 +5,10 @@ import type { SkillCategory, SkillImportPreview } from '../../api/types/skills.t
 
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { useSkillImports } from '../../hooks/useSkills.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 
 const CATEGORIES: readonly SkillCategory[] = [
 	'general',
@@ -73,8 +75,7 @@ export function SkillImportPanel() {
 				</p>
 			</div>
 			<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem_auto] sm:items-end">
-				<label className="space-y-1 text-sm">
-					<span>Local folder</span>
+				<FieldRow label="Local folder">
 					<Input
 						name="skillImportPath"
 						onChange={(event) => {
@@ -84,11 +85,10 @@ export function SkillImportPanel() {
 						placeholder="D:\\skills\\my-skill"
 						value={sourcePath}
 					/>
-				</label>
-				<label className="space-y-1 text-sm">
-					<span>Category</span>
+				</FieldRow>
+				<FieldRow label="Category">
 					<select
-						className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm"
+						className={selectClass}
 						onChange={(event) => {
 							setPreview(null);
 							setCategory(event.target.value as SkillCategory);
@@ -100,7 +100,7 @@ export function SkillImportPanel() {
 							</option>
 						))}
 					</select>
-				</label>
+				</FieldRow>
 				<Button
 					disabled={!sourcePath.trim() || previewImport.isPending}
 					onClick={previewSource}

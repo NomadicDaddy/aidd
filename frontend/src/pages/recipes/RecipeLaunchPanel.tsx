@@ -11,6 +11,7 @@ import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 import { LaunchTargetControl } from '../../components/shared/LaunchTargetControl.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { useProjects } from '../../hooks/useProjects.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
@@ -95,10 +96,7 @@ export function RecipeLaunchPanel({
 			</div>
 
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Project
-					</span>
+				<FieldRow label="Project">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) => {
@@ -122,12 +120,9 @@ export function RecipeLaunchPanel({
 							</option>
 						))}
 					</select>
-				</label>
+				</FieldRow>
 				{userParams.map((param) => (
-					<label className="space-y-1" key={param.name}>
-						<span className="text-xs font-medium text-muted-foreground uppercase">
-							{param.name}
-						</span>
+					<FieldRow key={param.name} label={param.name}>
 						<Input
 							onChange={(event) =>
 								setParameters((current) => ({
@@ -138,7 +133,7 @@ export function RecipeLaunchPanel({
 							placeholder={param.description ?? param.name}
 							value={parameters[param.name] ?? ''}
 						/>
-					</label>
+					</FieldRow>
 				))}
 				{allAuto && (
 					<div className="flex items-end">

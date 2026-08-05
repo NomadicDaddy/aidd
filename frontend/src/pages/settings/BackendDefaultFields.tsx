@@ -1,5 +1,6 @@
 import type { BackendDefaultSettings, BackendName, ReasoningEffort } from '../../api/types.ts';
 
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
@@ -37,11 +38,9 @@ export function BackendDefaultFields({
 	shadowedSharedModel?: null | string;
 	showLabels?: boolean;
 }) {
-	const labelClass = showLabels ? 'mb-1 block text-xs text-muted-foreground' : 'sr-only';
 	return (
 		<>
-			<label className="min-w-0">
-				<span className={labelClass}>Model</span>
+			<FieldRow className="min-w-0" label="Model" labelHidden={!showLabels}>
 				<Input
 					aria-label={`${backend} model`}
 					onChange={(event) =>
@@ -56,9 +55,8 @@ export function BackendDefaultFields({
 						launches — clear this to use the shared default.
 					</p>
 				) : null}
-			</label>
-			<label className="min-w-0">
-				<span className={labelClass}>Reasoning</span>
+			</FieldRow>
+			<FieldRow className="min-w-0" label="Reasoning" labelHidden={!showLabels}>
 				<select
 					aria-label={`${backend} reasoning effort`}
 					className={`${selectClass} w-full`}
@@ -73,9 +71,8 @@ export function BackendDefaultFields({
 						</option>
 					))}
 				</select>
-			</label>
-			<label className="min-w-0">
-				<span className={labelClass}>Idle timeout</span>
+			</FieldRow>
+			<FieldRow className="min-w-0" label="Idle timeout" labelHidden={!showLabels}>
 				<Input
 					aria-label={`${backend} idle timeout`}
 					inputMode="numeric"
@@ -89,9 +86,8 @@ export function BackendDefaultFields({
 					placeholder="e.g., 300"
 					value={numberValue(defaults.idleTimeoutSeconds)}
 				/>
-			</label>
-			<label className="min-w-0">
-				<span className={labelClass}>Idle nudge timeout</span>
+			</FieldRow>
+			<FieldRow className="min-w-0" label="Idle nudge timeout" labelHidden={!showLabels}>
 				<Input
 					aria-label={`${backend} idle nudge timeout`}
 					inputMode="numeric"
@@ -105,7 +101,7 @@ export function BackendDefaultFields({
 					placeholder="e.g., 120"
 					value={numberValue(defaults.idleNudgeTimeoutSeconds)}
 				/>
-			</label>
+			</FieldRow>
 		</>
 	);
 }

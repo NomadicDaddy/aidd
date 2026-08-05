@@ -7,6 +7,7 @@ import type { ProjectDetail } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useMoveProject } from '../../../hooks/useProjects.ts';
 import { traceDataMovement } from '../../../lib/dataMovementTrace.ts';
@@ -66,15 +67,13 @@ export function RenameProjectCard({ project }: { project: ProjectDetail }) {
 				</div>
 			</div>
 			<div className="mt-4 space-y-3">
-				<label className="block text-sm font-medium text-foreground">
-					New project name
+				<FieldRow label="New project name">
 					<Input
 						aria-label="New project name"
-						className="mt-1 w-full"
 						onChange={(event) => setRenameName(event.target.value)}
 						value={renameName}
 					/>
-				</label>
+				</FieldRow>
 				<div className="rounded-md border border-border bg-muted p-3 text-sm">
 					<div className="text-xs text-muted-foreground uppercase">New path</div>
 					<div className="mt-1 font-mono text-xs break-all text-foreground">

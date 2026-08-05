@@ -3,11 +3,12 @@ import type { ReactNode } from 'react';
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
+import { Checkbox } from '../../components/ui/checkbox.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { nullableNumber, numberValue } from './settingsUtils.ts';
 
-function FieldRow({
+function NumberFieldRow({
 	label,
 	min,
 	onChange,
@@ -23,8 +24,7 @@ function FieldRow({
 	value: null | number;
 }) {
 	return (
-		<label className="space-y-1">
-			<span className={fieldLabelClass}>{label}</span>
+		<FieldRow label={label}>
 			<Input
 				// A fractional step means a currency field, which needs the decimal keypad; the
 				// integer fields keep the plain numeric one.
@@ -36,7 +36,7 @@ function FieldRow({
 				type="number"
 				value={numberValue(value)}
 			/>
-		</label>
+		</FieldRow>
 	);
 }
 
@@ -51,11 +51,7 @@ function ToggleRow({
 }) {
 	return (
 		<label className="flex min-h-9 items-center gap-2 rounded-md border border-border px-3 py-2">
-			<input
-				checked={checked}
-				onChange={(event) => onChange(event.target.checked)}
-				type="checkbox"
-			/>
+			<Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />
 			<span className="text-sm font-medium text-foreground">{label}</span>
 		</label>
 	);
@@ -94,7 +90,7 @@ export function RunLimitsSection({
 				description="Control parallel work and isolate coding runs when repository safety requires it."
 				title="Concurrency">
 				<div className="grid gap-3 sm:grid-cols-2">
-					<FieldRow
+					<NumberFieldRow
 						label="Max concurrent runs"
 						min={1}
 						onChange={(value) => setField('maxConcurrentRuns', value ?? 0)}
@@ -112,35 +108,35 @@ export function RunLimitsSection({
 				description="Bound overall runs, iterations, turns, and idle detection. Empty optional values use built-in defaults. The token and cost budgets are cumulative across a whole run and warn-only — an exceeded budget logs a warning and the run continues."
 				title="Budgets & Timeouts">
 				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-					<FieldRow
+					<NumberFieldRow
 						label="Timeout (seconds)"
 						min={0}
 						onChange={(value) => setField('timeoutSeconds', value)}
 						placeholder="3600"
 						value={form.timeoutSeconds}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Max iterations"
 						min={0}
 						onChange={(value) => setField('maxIterations', value)}
 						placeholder="Unlimited"
 						value={form.maxIterations}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Max turns per iteration"
 						min={1}
 						onChange={(value) => setField('maxTurns', value)}
 						placeholder="25"
 						value={form.maxTurns}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Max tokens per run"
 						min={0}
 						onChange={(value) => setField('maxTokens', value)}
 						placeholder="Unlimited"
 						value={form.maxTokens}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Max cost per run (USD)"
 						min={0}
 						onChange={(value) => setField('maxCostUsd', value)}
@@ -148,14 +144,14 @@ export function RunLimitsSection({
 						step={0.01}
 						value={form.maxCostUsd}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Idle timeout (seconds)"
 						min={0}
 						onChange={(value) => setField('idleTimeoutSeconds', value)}
 						placeholder="900"
 						value={form.idleTimeoutSeconds}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Idle nudge timeout (seconds)"
 						min={0}
 						onChange={(value) => setField('idleNudgeTimeoutSeconds', value)}
@@ -169,42 +165,42 @@ export function RunLimitsSection({
 				description="Tune rate-limit recovery and low-level safeguards used by the orchestrator."
 				title="Backoff & Safeguards">
 				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-					<FieldRow
+					<NumberFieldRow
 						label="Rate limit backoff (seconds)"
 						min={0}
 						onChange={(value) => setField('rateLimitBackoffSeconds', value)}
 						placeholder="300"
 						value={form.rateLimitBackoffSeconds}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Rate limit buffer (seconds)"
 						min={0}
 						onChange={(value) => setField('rateLimitBufferSeconds', value)}
 						placeholder="60"
 						value={form.rateLimitBufferSeconds}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="No-work backoff (ms)"
 						min={0}
 						onChange={(value) => setField('noWorkBackoffMs', value)}
 						placeholder="30000"
 						value={form.noWorkBackoffMs}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Max consecutive timeout retries"
 						min={0}
 						onChange={(value) => setField('maxConsecutiveTimeoutRetries', value)}
 						placeholder="2"
 						value={form.maxConsecutiveTimeoutRetries}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Dirty tree threshold"
 						min={0}
 						onChange={(value) => setField('dirtyTreeThreshold', value)}
 						placeholder="50"
 						value={form.dirtyTreeThreshold}
 					/>
-					<FieldRow
+					<NumberFieldRow
 						label="Abort threshold (quitOnAbort)"
 						min={0}
 						onChange={(value) => setField('quitOnAbort', value)}

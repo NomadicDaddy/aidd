@@ -7,6 +7,7 @@ import type { SharedFileEntry, WebConfigSettings } from '../../api/types.ts';
 
 import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { ListEditor } from './ListEditor.tsx';
@@ -70,8 +71,7 @@ export function SharedMetadataSection({
 					{form.sharedFiles.map((entry, index) => (
 						<div className="flex items-start gap-2" key={index}>
 							<div className="grid flex-1 gap-2 lg:grid-cols-2">
-								<label className="block space-y-1">
-									<span className="text-xs text-muted-foreground">Source</span>
+								<FieldRow label="Source">
 									<Input
 										aria-label={`Shared file ${index + 1} source`}
 										onChange={(event) =>
@@ -80,11 +80,8 @@ export function SharedMetadataSection({
 										placeholder="/path/to/source/file"
 										value={entry.source}
 									/>
-								</label>
-								<label className="block space-y-1">
-									<span className="text-xs text-muted-foreground">
-										Target (optional)
-									</span>
+								</FieldRow>
+								<FieldRow label="Target (optional)">
 									<Input
 										aria-label={`Shared file ${index + 1} target`}
 										onChange={(event) =>
@@ -95,7 +92,7 @@ export function SharedMetadataSection({
 										placeholder="relative/target/path"
 										value={entry.target ?? ''}
 									/>
-								</label>
+								</FieldRow>
 							</div>
 							<IconButton
 								ariaLabel={`Remove shared file ${index + 1}`}

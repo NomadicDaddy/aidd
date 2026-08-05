@@ -1,7 +1,10 @@
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
+import { Checkbox } from '../../components/ui/checkbox.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { selectClass } from '../../lib/formStyles.ts';
 
 /**
  * Director auto-cycle schedule. Part of the unified Settings form (config-file
@@ -35,13 +38,12 @@ export function DirectorAutoCycleSection({
 			</div>
 			<div className="mt-4 grid gap-4 sm:grid-cols-2">
 				<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
-					<input
+					<Checkbox
 						checked={form.directorAutoCycleEnabled}
 						className="mt-0.5"
 						onChange={(event) =>
 							setField('directorAutoCycleEnabled', event.target.checked)
 						}
-						type="checkbox"
 					/>
 					<span className="text-sm text-foreground">
 						<span className="font-medium">Run cycles automatically</span>
@@ -51,10 +53,7 @@ export function DirectorAutoCycleSection({
 						</span>
 					</span>
 				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Interval (hours)
-					</span>
+				<FieldRow label="Interval (hours)">
 					<Input
 						inputMode="numeric"
 						onChange={(event) => {
@@ -72,7 +71,7 @@ export function DirectorAutoCycleSection({
 							Enter a positive number of hours.
 						</span>
 					) : null}
-				</label>
+				</FieldRow>
 			</div>
 			<div className="mt-6 border-t border-border pt-4">
 				<h3 className="text-sm font-semibold text-foreground">Suggestion granularity</h3>
@@ -83,12 +82,9 @@ export function DirectorAutoCycleSection({
 					sweeping &ldquo;resolve the whole backlog&rdquo; suggestion per bucket.
 				</p>
 				<div className="mt-4 grid gap-4 sm:grid-cols-2">
-					<label className="space-y-1">
-						<span className="text-xs font-medium text-muted-foreground uppercase">
-							Granularity
-						</span>
+					<FieldRow label="Granularity">
 						<select
-							className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+							className={selectClass}
 							onChange={(event) =>
 								setField(
 									'directorSuggestionGranularity',
@@ -99,11 +95,8 @@ export function DirectorAutoCycleSection({
 							<option value="targeted">Targeted (one per artifact)</option>
 							<option value="aggregate">Aggregate (one per backlog)</option>
 						</select>
-					</label>
-					<label className="space-y-1">
-						<span className="text-xs font-medium text-muted-foreground uppercase">
-							Max per bucket
-						</span>
+					</FieldRow>
+					<FieldRow label="Max per bucket">
 						<Input
 							disabled={!targeted}
 							inputMode="numeric"
@@ -126,7 +119,7 @@ export function DirectorAutoCycleSection({
 								Artifacts shown per bucket before the rest roll up.
 							</span>
 						)}
-					</label>
+					</FieldRow>
 				</div>
 			</div>
 		</Card>

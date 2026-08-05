@@ -3,6 +3,7 @@ import type { ProjectAuditEntry } from '../../../api/types.ts';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
 import {
@@ -51,7 +52,7 @@ export function AuditsDesktopTable({
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="px-3 py-3" scope="col">
-							<input
+							<Checkbox
 								aria-label="Select all audits"
 								checked={allSelected}
 								disabled={selectableNames.length === 0}
@@ -59,7 +60,6 @@ export function AuditsDesktopTable({
 								ref={(el) => {
 									if (el) el.indeterminate = someSelected && !allSelected;
 								}}
-								type="checkbox"
 							/>
 						</th>
 						<th className="px-3 py-3" scope="col">
@@ -104,12 +104,11 @@ export function AuditsDesktopTable({
 						return (
 							<tr className="border-b border-border last:border-0" key={entry.name}>
 								<td className="px-3 py-3">
-									<input
+									<Checkbox
 										aria-label={`Select ${entry.name}`}
 										checked={selected.includes(entry.name)}
 										disabled={!entry.enabled || !auditsEnabled}
 										onChange={() => onToggleSelected(entry.name)}
-										type="checkbox"
 									/>
 								</td>
 								<td className="px-3 py-3">

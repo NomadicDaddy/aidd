@@ -6,6 +6,8 @@ import type {
 } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
+import { Checkbox } from '../../components/ui/checkbox.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
@@ -60,10 +62,9 @@ export function DirectAiSection({
 		<Card className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
 			<div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
 				<label className="flex items-center gap-2">
-					<input
+					<Checkbox
 						checked={directAi.enabled}
 						onChange={(event) => updateDirectAi({ enabled: event.target.checked })}
-						type="checkbox"
 					/>
 					<span className="text-sm font-medium text-foreground">Direct AI</span>
 				</label>
@@ -71,10 +72,7 @@ export function DirectAiSection({
 					{directAi.apiKeyConfigured ? 'API key configured' : 'No API key'}
 				</span>
 			</div>
-			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">
-					Provider
-				</span>
+			<FieldRow className={dimClass} label="Provider">
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -83,9 +81,8 @@ export function DirectAiSection({
 					placeholder="zhipu"
 					value={textValue(directAi.provider)}
 				/>
-			</label>
-			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">Model</span>
+			</FieldRow>
+			<FieldRow className={dimClass} label="Model">
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -94,11 +91,8 @@ export function DirectAiSection({
 					placeholder="glm-5.1"
 					value={textValue(directAi.model)}
 				/>
-			</label>
-			<label className={`space-y-1 md:col-span-2 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">
-					Base URL
-				</span>
+			</FieldRow>
+			<FieldRow className={`md:col-span-2 ${dimClass}`.trim()} label="Base URL">
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -107,9 +101,8 @@ export function DirectAiSection({
 					placeholder="https://api.z.ai/api/coding/paas/v4"
 					value={textValue(directAi.baseUrl)}
 				/>
-			</label>
-			<label className={`space-y-1 md:col-span-2 xl:col-span-3 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">API Key</span>
+			</FieldRow>
+			<FieldRow className={`md:col-span-2 xl:col-span-3 ${dimClass}`.trim()} label="API Key">
 				<Input
 					autoComplete="off"
 					disabled={disabled}
@@ -122,11 +115,8 @@ export function DirectAiSection({
 					Stored as <code>providers.&lt;provider&gt;.apiKey</code>. Leave blank to keep
 					the existing key.
 				</span>
-			</label>
-			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">
-					Reasoning Effort
-				</span>
+			</FieldRow>
+			<FieldRow className={dimClass} label="Reasoning Effort">
 				<select
 					className={`${selectClass} w-full`}
 					disabled={disabled}
@@ -144,9 +134,8 @@ export function DirectAiSection({
 						</option>
 					))}
 				</select>
-			</label>
-			<label className={`space-y-1 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">Timeout</span>
+			</FieldRow>
+			<FieldRow className={dimClass} label="Timeout">
 				<Input
 					disabled={disabled}
 					inputMode="numeric"
@@ -156,7 +145,7 @@ export function DirectAiSection({
 					placeholder="45"
 					value={numberValue(directAi.timeoutSeconds)}
 				/>
-			</label>
+			</FieldRow>
 			<div className={`grid gap-2 md:col-span-2 xl:col-span-3 ${dimClass}`.trim()}>
 				<span className="text-xs font-medium text-muted-foreground uppercase">
 					Surfaces
@@ -166,13 +155,12 @@ export function DirectAiSection({
 						<label
 							className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
 							key={surface.key}>
-							<input
+							<Checkbox
 								checked={directAi.surfaces[surface.key]}
 								disabled={disabled}
 								onChange={(event) =>
 									updateSurface(surface.key, event.target.checked)
 								}
-								type="checkbox"
 							/>
 							<span className="text-sm font-medium text-foreground">
 								{surface.label}
@@ -186,13 +174,12 @@ export function DirectAiSection({
 					Director chat agent
 				</span>
 				<label className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-900/60 dark:bg-amber-950/30">
-					<input
+					<Checkbox
 						checked={directorChatAllowFileEdits}
 						className="mt-0.5"
 						onChange={(event) =>
 							setField('directorChatAllowFileEdits', event.target.checked)
 						}
-						type="checkbox"
 					/>
 					<span className="text-sm text-amber-900 dark:text-amber-200">
 						<span className="font-medium">

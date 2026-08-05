@@ -6,6 +6,7 @@ import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
 
@@ -64,8 +65,7 @@ export function TelegramChannelSection({
 				configured state is shown without revealing the stored value.
 			</p>
 
-			<label className="block space-y-1">
-				<span className="text-xs text-muted-foreground">Bot Token</span>
+			<FieldRow label="Bot Token">
 				<Input
 					onChange={(event) => setBotToken(event.target.value)}
 					placeholder={
@@ -77,7 +77,7 @@ export function TelegramChannelSection({
 				{telegram.botTokenConfigured && !telegram.botToken && (
 					<span className="text-xs text-emerald-600">A bot token is configured.</span>
 				)}
-			</label>
+			</FieldRow>
 
 			<div className="space-y-2">
 				<span className="text-xs text-muted-foreground">Allowed Chat IDs</span>

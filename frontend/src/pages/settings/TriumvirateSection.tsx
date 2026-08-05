@@ -1,6 +1,7 @@
 import type { BackendInputName, TriumvirateSettings } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
@@ -25,10 +26,7 @@ export function TriumvirateSection({
 				</p>
 			</div>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Secondary CLI
-					</span>
+				<FieldRow label="Secondary CLI">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) =>
@@ -47,22 +45,16 @@ export function TriumvirateSection({
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Secondary Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Secondary Model">
 					<Input
 						onChange={(event) =>
 							setTriumvirateField('secondaryModel', nullableText(event.target.value))
 						}
 						value={textValue(triumvirate?.secondaryModel ?? null)}
 					/>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Overseer CLI
-					</span>
+				</FieldRow>
+				<FieldRow label="Overseer CLI">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) =>
@@ -81,22 +73,16 @@ export function TriumvirateSection({
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Overseer Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Overseer Model">
 					<Input
 						onChange={(event) =>
 							setTriumvirateField('overseerModel', nullableText(event.target.value))
 						}
 						value={textValue(triumvirate?.overseerModel ?? null)}
 					/>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Execution CLI
-					</span>
+				</FieldRow>
+				<FieldRow label="Execution CLI">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) =>
@@ -115,18 +101,15 @@ export function TriumvirateSection({
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Execution Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Execution Model">
 					<Input
 						onChange={(event) =>
 							setTriumvirateField('execModel', nullableText(event.target.value))
 						}
 						value={textValue(triumvirate?.execModel ?? null)}
 					/>
-				</label>
+				</FieldRow>
 			</div>
 		</Card>
 	);

@@ -7,10 +7,12 @@ import type { ProjectDetail } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useMoveProject } from '../../../hooks/useProjects.ts';
 import { useSettingsConfig } from '../../../hooks/useSettings.ts';
 import { traceDataMovement } from '../../../lib/dataMovementTrace.ts';
+import { selectClass } from '../../../lib/formStyles.ts';
 import { joinPreviewPath, projectNameFromPath } from './managementPaths.ts';
 
 export function MoveProjectCard({ project }: { project: ProjectDetail }) {
@@ -64,10 +66,9 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 				</div>
 			</div>
 			<div className="mt-4 space-y-3">
-				<label className="block text-sm font-medium text-foreground">
-					Destination root
+				<FieldRow label="Destination root">
 					<select
-						className="mt-1 h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring"
+						className={selectClass}
 						onChange={(event) => setDestinationRoot(event.target.value)}
 						value={destinationRoot}>
 						<option value="">Select destination root</option>
@@ -77,16 +78,14 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="block text-sm font-medium text-foreground">
-					Destination folder name
+				</FieldRow>
+				<FieldRow label="Destination folder name">
 					<Input
 						aria-label="Destination folder name"
-						className="mt-1 w-full"
 						onChange={(event) => setDestinationName(event.target.value)}
 						value={destinationName}
 					/>
-				</label>
+				</FieldRow>
 				<div className="rounded-md border border-border bg-muted p-3 text-sm">
 					<div className="text-xs text-muted-foreground uppercase">
 						Destination preview

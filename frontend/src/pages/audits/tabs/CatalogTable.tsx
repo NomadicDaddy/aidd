@@ -2,6 +2,7 @@ import type { AuditDefinition } from '../../../api/types.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { bandTone, bucketColumns, describeChangePotential } from '../auditsUtils.ts';
 
 interface CatalogTableProps {
@@ -43,7 +44,7 @@ export function CatalogTable({
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
 							<th className="px-4 py-3" scope="col">
-								<input
+								<Checkbox
 									aria-label="Select all visible enabled audits"
 									checked={allSelected}
 									disabled={!hasSelectableDefinitions}
@@ -51,7 +52,6 @@ export function CatalogTable({
 									ref={(el) => {
 										if (el) el.indeterminate = someSelected && !allSelected;
 									}}
-									type="checkbox"
 								/>
 							</th>
 							<th className="px-4 py-3" scope="col">
@@ -78,13 +78,12 @@ export function CatalogTable({
 								key={item.name}
 								onClick={() => onSelect(item.name)}>
 								<td className="px-4 py-3">
-									<input
+									<Checkbox
 										aria-label={`Select ${item.name} for launch`}
 										checked={selectedAuditNames.includes(item.name)}
 										disabled={!item.enabled}
 										onChange={() => onToggleSelected(item.name)}
 										onClick={(event) => event.stopPropagation()}
-										type="checkbox"
 									/>
 								</td>
 								<td className="px-4 py-3">
@@ -165,13 +164,12 @@ export function CatalogTable({
 							role="group">
 							<div className="flex items-start justify-between gap-2">
 								<div className="flex min-w-0 items-start gap-2">
-									<input
+									<Checkbox
 										aria-label={`Select ${item.name} for launch`}
 										checked={checked}
 										className="mt-1"
 										disabled={!item.enabled}
 										onChange={() => onToggleSelected(item.name)}
-										type="checkbox"
 									/>
 									<button
 										aria-pressed={active}

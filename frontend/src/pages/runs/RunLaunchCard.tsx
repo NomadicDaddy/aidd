@@ -48,7 +48,8 @@ export function RunLaunchCard({
 					aria-invalid={projectError || undefined}
 					aria-label="Project to launch"
 					className={cn(
-						'h-9 min-w-44 flex-1 rounded-md border px-3 text-sm focus-visible:ring-2 focus-visible:outline-none',
+						selectClass,
+						'min-w-44 flex-1',
 						projectError
 							? 'border-red-500 bg-card text-foreground focus:border-red-500 focus-visible:ring-red-200 dark:border-red-400 dark:focus:border-red-400 dark:focus-visible:ring-red-900/40'
 							: projectDir

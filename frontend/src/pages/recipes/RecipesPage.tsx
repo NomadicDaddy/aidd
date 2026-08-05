@@ -16,13 +16,14 @@ import { SkeletonCards, SkeletonRows } from '../../components/shared/LoadingStat
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useProjects } from '../../hooks/useProjects.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { RecipeCard, RecipeTable } from './RecipeGrid.tsx';
 
@@ -144,8 +145,7 @@ export function RecipesPage() {
 			/>
 
 			<Card className="grid gap-3 lg:grid-cols-[1fr_2fr]">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Project</span>
+				<FieldRow label="Project">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) => setProjectDir(event.target.value)}
@@ -157,9 +157,8 @@ export function RecipesPage() {
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Search</span>
+				</FieldRow>
+				<FieldRow label="Search">
 					<div className="relative">
 						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
@@ -170,7 +169,7 @@ export function RecipesPage() {
 							value={search}
 						/>
 					</div>
-				</label>
+				</FieldRow>
 			</Card>
 
 			{selectedRecipe && (
@@ -193,8 +192,7 @@ export function RecipesPage() {
 						{selectedRecipe.parameters
 							.filter((parameter) => !autoParameters.has(parameter.name))
 							.map((parameter) => (
-								<label className="space-y-1" key={parameter.name}>
-									<span className={fieldLabelClass}>{parameter.name}</span>
+								<FieldRow key={parameter.name} label={parameter.name}>
 									<Input
 										onChange={(event) =>
 											setParameters((current) => ({
@@ -205,7 +203,7 @@ export function RecipesPage() {
 										placeholder={parameter.description ?? parameter.name}
 										value={parameters[parameter.name] ?? ''}
 									/>
-								</label>
+								</FieldRow>
 							))}
 						{selectedRecipe.parameters.every((parameter) =>
 							autoParameters.has(parameter.name),

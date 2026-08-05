@@ -4,9 +4,11 @@ import { toast } from 'sonner';
 import type { ProjectAssuranceProfile, ProjectAssuranceProfileInput } from '../../../api/types.ts';
 
 import { Card } from '../../../components/ui/card.tsx';
+import { FieldRow } from '../../../components/ui/field.tsx';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue.ts';
 import { useProfilePreview } from '../../../hooks/useProfilePreview.ts';
 import { useUpdateProjectProfile } from '../../../hooks/useProjects.ts';
+import { textareaClass } from '../../../lib/formStyles.ts';
 import { profileInput, sameProfileInput } from '../profile/profile-helpers.ts';
 import { ComputedProfilePanel } from './profile/ComputedProfilePanel.tsx';
 import { FacetCard } from './profile/FacetCard.tsx';
@@ -74,19 +76,16 @@ export function ProfileTab({
 					))}
 				</div>
 				<Card>
-					<label className="grid gap-1">
-						<span className="text-xs font-medium text-muted-foreground uppercase">
-							Notes
-						</span>
+					<FieldRow label="Notes">
 						<textarea
 							aria-label="Project profile notes"
-							className="min-h-24 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none"
+							className={`${textareaClass} min-h-24`}
 							maxLength={4000}
 							onChange={(event) => updateNotes(event.target.value)}
 							placeholder="Optional context for why this profile was chosen."
 							value={form.notes ?? ''}
 						/>
-					</label>
+					</FieldRow>
 				</Card>
 			</div>
 

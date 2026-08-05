@@ -2,6 +2,7 @@ import type { WorkingTreeFile } from '../../../../api/types.ts';
 
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Card } from '../../../../components/ui/card.tsx';
+import { Checkbox } from '../../../../components/ui/checkbox.tsx';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
 function StageColumn({ file }: { file: WorkingTreeFile }) {
@@ -35,7 +36,7 @@ export function WorkingTreeTable({
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="w-10 px-3 py-3" scope="col">
-							<input
+							<Checkbox
 								aria-label="Select all changed files"
 								checked={allSelected}
 								disabled={disabled || files.length === 0}
@@ -43,7 +44,6 @@ export function WorkingTreeTable({
 								ref={(el) => {
 									if (el) el.indeterminate = someSelected && !allSelected;
 								}}
-								type="checkbox"
 							/>
 						</th>
 						<th className="px-3 py-3" scope="col">
@@ -72,12 +72,11 @@ export function WorkingTreeTable({
 						return (
 							<tr className="border-b border-border last:border-0" key={file.path}>
 								<td className="px-3 py-3">
-									<input
+									<Checkbox
 										aria-label={`Select ${file.path}`}
 										checked={selected.has(file.path)}
 										disabled={disabled}
 										onChange={() => onToggleFile(file.path)}
-										type="checkbox"
 									/>
 								</td>
 								<td className="px-3 py-3">

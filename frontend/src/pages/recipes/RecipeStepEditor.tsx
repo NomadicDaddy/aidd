@@ -10,8 +10,9 @@ import type { StepDraft, StepJsonErrors } from './recipe-steps.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { fieldLabelClass, selectClass, textareaClass } from '../../lib/formStyles.ts';
+import { selectClass, textareaClass } from '../../lib/formStyles.ts';
 
 const jsonTextareaClass = `${textareaClass} font-mono text-xs`;
 const errorTextareaClass = `${jsonTextareaClass} border-red-500 focus-visible:border-red-500 focus-visible:ring-red-200 dark:border-red-500 dark:focus-visible:border-red-500 dark:focus-visible:ring-red-900`;
@@ -68,6 +69,7 @@ function JsonField({
 					<textarea
 						aria-describedby={error ? errorId : undefined}
 						aria-invalid={Boolean(error)}
+						aria-label={label}
 						className={error ? errorTextareaClass : jsonTextareaClass}
 						data-testid={`step-${stepId}-${label}`}
 						onChange={(event) => onChange(event.target.value)}
@@ -107,16 +109,14 @@ export function RecipeStepEditor({
 				</Button>
 			</div>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Step name</span>
+				<FieldRow label="Step name">
 					<Input
 						name="step-name"
 						onChange={(event) => onChange({ name: event.target.value })}
 						value={step.name}
 					/>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Step type</span>
+				</FieldRow>
+				<FieldRow label="Step type">
 					<select
 						className={`${selectClass} w-full`}
 						name="step-type"
@@ -132,9 +132,8 @@ export function RecipeStepEditor({
 						<option value="shell">shell</option>
 						<option value="recipe-ref">recipe-ref</option>
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Failure behavior</span>
+				</FieldRow>
+				<FieldRow label="Failure behavior">
 					<select
 						className={`${selectClass} w-full`}
 						name="step-on-failure"
@@ -146,20 +145,18 @@ export function RecipeStepEditor({
 						<option value="continue">continue</option>
 						<option value="auto-fix">auto-fix</option>
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Retry count</span>
+				</FieldRow>
+				<FieldRow label="Retry count">
 					<Input
 						name="step-retry-count"
 						onChange={(event) => onChange({ retryCount: event.target.value })}
 						type="number"
 						value={step.retryCount}
 					/>
-				</label>
+				</FieldRow>
 			</div>
 			{step.stepType === 'skill' ? (
-				<label className="grid max-w-xs gap-1">
-					<span className={fieldLabelClass}>Execution intent</span>
+				<FieldRow className="max-w-xs" label="Execution intent">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) =>
@@ -175,27 +172,25 @@ export function RecipeStepEditor({
 						Skill steps are directives, not audits. Apply changes permits edits and
 						commits.
 					</span>
-				</label>
+				</FieldRow>
 			) : null}
 			<div className="grid gap-3 md:grid-cols-2">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Run when parameter</span>
+				<FieldRow label="Run when parameter">
 					<Input
 						aria-invalid={Boolean(errors.when)}
 						onChange={(event) => onChange({ whenParameter: event.target.value })}
 						placeholder="stopBeforeImplementation"
 						value={step.whenParameter}
 					/>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Equals</span>
+				</FieldRow>
+				<FieldRow label="Equals">
 					<Input
 						aria-invalid={Boolean(errors.when)}
 						onChange={(event) => onChange({ whenEquals: event.target.value })}
 						placeholder="false"
 						value={step.whenEquals}
 					/>
-				</label>
+				</FieldRow>
 				{errors.when ? (
 					<p className="text-xs font-medium text-red-600 md:col-span-2 dark:text-red-400">
 						{errors.when}

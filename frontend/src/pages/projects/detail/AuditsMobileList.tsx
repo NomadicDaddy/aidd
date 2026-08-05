@@ -3,6 +3,7 @@ import type { ProjectAuditEntry } from '../../../api/types.ts';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
 import {
@@ -70,13 +71,12 @@ export function AuditsMobileList({
 					<div className="rounded-md border border-border p-3" key={entry.name}>
 						<div className="flex items-start justify-between gap-2">
 							<label className="flex min-w-0 items-start gap-2">
-								<input
+								<Checkbox
 									aria-label={`Select ${entry.name}`}
 									checked={selected.includes(entry.name)}
 									className="mt-1"
 									disabled={!entry.enabled || !auditsEnabled}
 									onChange={() => onToggleSelected(entry.name)}
-									type="checkbox"
 								/>
 								<span className="min-w-0">
 									<span className="block font-medium text-foreground">

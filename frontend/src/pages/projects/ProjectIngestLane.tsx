@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import type { ProjectImportAction, ProjectImportCandidateResult } from '../../api/types.ts';
 
 import { Button } from '../../components/ui/button.tsx';
+import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useImportProjects, useProjectImportCandidates } from '../../hooks/useProjects.ts';
 import { CandidateIntakePreview } from './CandidateIntakePreview.tsx';
@@ -156,7 +157,7 @@ export function ProjectIngestLane() {
 									<label
 										className="flex gap-3 rounded border border-border bg-card p-3 text-sm"
 										key={candidate.id}>
-										<input
+										<Checkbox
 											checked={selectedIds.has(candidate.id)}
 											className="mt-1 h-4 w-4"
 											disabled={
@@ -165,7 +166,6 @@ export function ProjectIngestLane() {
 											onChange={(event) =>
 												toggleCandidate(candidate.id, event.target.checked)
 											}
-											type="checkbox"
 										/>
 										<div className="min-w-0 flex-1 space-y-1">
 											<div className="flex flex-wrap items-center gap-2">

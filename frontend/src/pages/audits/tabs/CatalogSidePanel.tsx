@@ -4,7 +4,8 @@ import type { AuditManager } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
-import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { fieldLabelClass, textareaClass } from '../../../lib/formStyles.ts';
 
 interface CatalogSidePanelProps {
 	auditPath: string | undefined;
@@ -43,10 +44,9 @@ export function CatalogSidePanel({
 				<div className="max-h-52 space-y-2 overflow-auto pr-1">
 					{projects.map((project) => (
 						<label className="flex items-start gap-2 text-sm" key={project.id}>
-							<input
+							<Checkbox
 								checked={selectedProjectIds.includes(project.id)}
 								onChange={() => onToggleProject(project.id)}
-								type="checkbox"
 							/>
 							<span>
 								<span className="block font-medium text-foreground">
@@ -79,7 +79,7 @@ export function CatalogSidePanel({
 				</div>
 				<textarea
 					aria-label="Audit definition markdown"
-					className="min-h-[420px] w-full resize-y rounded-md border border-border bg-card p-3 font-mono text-xs text-foreground outline-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring"
+					className={`${textareaClass} min-h-[420px] font-mono text-xs`}
 					onChange={(event) => onContentChange(event.target.value)}
 					value={content}
 				/>

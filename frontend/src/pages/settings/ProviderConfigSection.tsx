@@ -6,9 +6,10 @@ import type { ProviderSettings, ReasoningEffort, WebConfigSettings } from '../..
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 import { nullableText, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ('' | ReasoningEffort)[] = [
@@ -111,8 +112,7 @@ function ProviderCard({
 				<div
 					className="grid gap-3 border-t border-border p-3 md:grid-cols-2 xl:grid-cols-3"
 					id={panelId}>
-					<label className="space-y-1">
-						<span className={fieldLabelClass}>Base URL</span>
+					<FieldRow label="Base URL">
 						<Input
 							onChange={(event) =>
 								update({ baseUrl: nullableText(event.target.value) })
@@ -120,9 +120,8 @@ function ProviderCard({
 							placeholder="https://api.example.com/v1"
 							value={textValue(provider.baseUrl)}
 						/>
-					</label>
-					<label className="space-y-1">
-						<span className={fieldLabelClass}>Model</span>
+					</FieldRow>
+					<FieldRow label="Model">
 						<Input
 							onChange={(event) =>
 								update({ model: nullableText(event.target.value) })
@@ -130,9 +129,8 @@ function ProviderCard({
 							placeholder="model-name"
 							value={textValue(provider.model)}
 						/>
-					</label>
-					<label className="space-y-1">
-						<span className={fieldLabelClass}>Reasoning Effort</span>
+					</FieldRow>
+					<FieldRow label="Reasoning Effort">
 						<select
 							className={`${selectClass} w-full`}
 							onChange={(event) =>
@@ -149,9 +147,8 @@ function ProviderCard({
 								</option>
 							))}
 						</select>
-					</label>
-					<label className="space-y-1 md:col-span-2 xl:col-span-3">
-						<span className={fieldLabelClass}>API Key</span>
+					</FieldRow>
+					<FieldRow className="md:col-span-2 xl:col-span-3" label="API Key">
 						<Input
 							autoComplete="off"
 							name={`${name}-api-key`}
@@ -163,7 +160,7 @@ function ProviderCard({
 						<span className="text-xs text-muted-foreground">
 							Leave blank to keep the existing key. Set to empty and save to clear.
 						</span>
-					</label>
+					</FieldRow>
 				</div>
 			) : null}
 		</Card>
@@ -192,8 +189,7 @@ export function ProviderConfigSection({
 						Expand a provider to edit its endpoint, model, reasoning, or write-only key.
 					</p>
 				</div>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Default Provider</span>
+				<FieldRow label="Default Provider">
 					<Input
 						onChange={(event) =>
 							setField('defaultProvider', nullableText(event.target.value))
@@ -201,7 +197,7 @@ export function ProviderConfigSection({
 						placeholder="zhipu"
 						value={textValue(form.defaultProvider)}
 					/>
-				</label>
+				</FieldRow>
 			</Card>
 			{providerNames.length > 0 ? (
 				<div className="space-y-2">

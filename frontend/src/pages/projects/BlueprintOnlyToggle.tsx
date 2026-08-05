@@ -1,3 +1,5 @@
+import { Checkbox } from '../../components/ui/checkbox.tsx';
+
 export function BlueprintOnlyToggle({
 	checked,
 	onChange,
@@ -7,11 +9,10 @@ export function BlueprintOnlyToggle({
 }) {
 	return (
 		<label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3">
-			<input
+			<Checkbox
 				checked={checked}
-				className="mt-0.5 h-4 w-4 rounded border-border text-teal-600 focus:ring-teal-500"
+				className="mt-0.5"
 				onChange={(event) => onChange(event.target.checked)}
-				type="checkbox"
 			/>
 			<span>
 				<span className="block text-sm font-medium text-foreground">

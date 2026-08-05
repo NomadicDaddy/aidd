@@ -10,9 +10,9 @@ import type { SettingsTab } from './settingsNavigation.ts';
 import type { RuntimeAction } from './settingsRuntime.ts';
 
 import { Card } from '../../components/ui/card.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { TabPanel } from '../../components/ui/tabs.tsx';
-import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { BackendDefaultsTable } from './BackendDefaultsTable.tsx';
 import { DirectAiSection } from './DirectAiSection.tsx';
 import { DirectorAutoCycleSection } from './DirectorAutoCycleSection.tsx';
@@ -62,13 +62,10 @@ export function SettingsSectionTabs({
 			<TabPanel activeTab={activeTab} id="workspace" idPrefix="settings">
 				<div className="space-y-4">
 					<Card className="p-3">
-						<label className="grid gap-2 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center">
-							<span>
-								<span className={fieldLabelClass}>Applications Root</span>
-								<span className="mt-0.5 block text-xs text-muted-foreground">
-									Resolves bare project names and provides the fallback discovery
-									root.
-								</span>
+						<FieldRow label="Applications Root">
+							<span className="text-xs text-muted-foreground">
+								Resolves bare project names and provides the fallback discovery
+								root.
 							</span>
 							<Input
 								onChange={(event) =>
@@ -77,7 +74,7 @@ export function SettingsSectionTabs({
 								placeholder="/path/to/applications"
 								value={textValue(form.applicationsRoot)}
 							/>
-						</label>
+						</FieldRow>
 					</Card>
 					<Card className="grid gap-4 p-3 xl:grid-cols-[minmax(14rem,0.7fr)_minmax(0,1.3fr)]">
 						<ListEditor

@@ -4,6 +4,8 @@ import type { WebConfigSettings } from '../../api/types.ts';
 
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { Checkbox } from '../../components/ui/checkbox.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { ListEditor } from './ListEditor.tsx';
 
@@ -42,11 +44,10 @@ export function NetworkAccessSection({
 			<Card className="grid gap-4 p-3 lg:grid-cols-2">
 				<div className="space-y-4">
 					<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
-						<input
+						<Checkbox
 							checked={form.allowRemote}
 							className="mt-0.5"
 							onChange={(event) => requestAllowRemote(event.target.checked)}
-							type="checkbox"
 						/>
 						<span className="text-sm text-foreground">
 							<span className="font-medium text-foreground">
@@ -60,20 +61,14 @@ export function NetworkAccessSection({
 						</span>
 					</label>
 					<div className="grid gap-4 sm:grid-cols-2">
-						<label className="space-y-1">
-							<span className="text-xs font-medium text-muted-foreground uppercase">
-								Hostname
-							</span>
+						<FieldRow label="Hostname">
 							<Input
 								onChange={(event) => setField('hostname', event.target.value)}
 								placeholder="127.0.0.1"
 								value={form.hostname}
 							/>
-						</label>
-						<label className="space-y-1">
-							<span className="text-xs font-medium text-muted-foreground uppercase">
-								Port
-							</span>
+						</FieldRow>
+						<FieldRow label="Port">
 							<Input
 								max={65535}
 								min={1}
@@ -86,7 +81,7 @@ export function NetworkAccessSection({
 								type="number"
 								value={form.port === 0 ? '' : String(form.port)}
 							/>
-						</label>
+						</FieldRow>
 					</div>
 					<p className="text-xs text-muted-foreground">
 						Listener changes take effect after restarting aidd-web.

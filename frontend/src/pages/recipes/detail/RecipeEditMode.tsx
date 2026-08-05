@@ -12,6 +12,7 @@ import type { RecipeParameterDefinition } from '../../../api/types.ts';
 import { PageHeader } from '../../../components/shared/PageHeader.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { newStepDraft, type StepDraft, type StepJsonErrors } from '../recipe-steps.ts';
 import { RecipeStepEditor } from '../RecipeStepEditor.tsx';
@@ -108,10 +109,7 @@ export function RecipeEditMode({
 
 			<Card className={`grid gap-3 ${isCreate ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 				{setId && (
-					<label className="space-y-1">
-						<span className="text-xs font-medium text-muted-foreground uppercase">
-							Id
-						</span>
+					<FieldRow label="Id">
 						<Input
 							onChange={(event) => setId(event.target.value)}
 							placeholder="my-recipe"
@@ -120,12 +118,9 @@ export function RecipeEditMode({
 						{idError && (
 							<p className="text-xs text-red-600 dark:text-red-400">{idError}</p>
 						)}
-					</label>
+					</FieldRow>
 				)}
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Name
-					</span>
+				<FieldRow label="Name">
 					<Input
 						disabled={nameReadOnly}
 						onChange={(event) => setName(event.target.value)}
@@ -136,16 +131,13 @@ export function RecipeEditMode({
 							System recipe names are reserved and cannot be changed.
 						</p>
 					)}
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Description
-					</span>
+				</FieldRow>
+				<FieldRow label="Description">
 					<Input
 						onChange={(event) => setDescription(event.target.value)}
 						value={description}
 					/>
-				</label>
+				</FieldRow>
 			</Card>
 
 			<Card className="space-y-3">

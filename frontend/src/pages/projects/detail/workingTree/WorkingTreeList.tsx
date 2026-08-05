@@ -3,6 +3,7 @@ import type { WorkingTreeFile } from '../../../../api/types.ts';
 import { EmptyState } from '../../../../components/shared/EmptyState.tsx';
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Card } from '../../../../components/ui/card.tsx';
+import { Checkbox } from '../../../../components/ui/checkbox.tsx';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
 // Narrow-content counterpart to WorkingTreeTable — the table starts at `xl:`.
@@ -33,13 +34,12 @@ export function WorkingTreeList({
 				return (
 					<Card key={file.path} variant="panel">
 						<label className="flex items-start gap-3">
-							<input
+							<Checkbox
 								aria-label={`Select ${file.path}`}
 								checked={selected.has(file.path)}
 								className="mt-1"
 								disabled={disabled}
 								onChange={() => onToggleFile(file.path)}
-								type="checkbox"
 							/>
 							<span className="min-w-0 flex-1">
 								<span className="block font-mono text-xs break-all text-foreground">

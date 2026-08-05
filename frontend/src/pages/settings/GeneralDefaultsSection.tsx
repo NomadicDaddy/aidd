@@ -1,6 +1,8 @@
 import type { BackendInputName, ReasoningEffort, WebConfigSettings } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
+import { Checkbox } from '../../components/ui/checkbox.tsx';
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
@@ -25,10 +27,7 @@ export function GeneralDefaultsSection({
 				</p>
 			</div>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Default CLI
-					</span>
+				<FieldRow label="Default CLI">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) =>
@@ -41,11 +40,8 @@ export function GeneralDefaultsSection({
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Default Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Default Model">
 					<Input
 						onChange={(event) => setField('model', nullableText(event.target.value))}
 						value={textValue(form.model)}
@@ -57,11 +53,8 @@ export function GeneralDefaultsSection({
 							shared default. Clear that row to use this value.
 						</p>
 					) : null}
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Reasoning Effort
-					</span>
+				</FieldRow>
+				<FieldRow label="Reasoning Effort">
 					<select
 						className={`${selectClass} w-full`}
 						onChange={(event) =>
@@ -74,52 +67,39 @@ export function GeneralDefaultsSection({
 							</option>
 						))}
 					</select>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Init Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Init Model">
 					<Input
 						onChange={(event) =>
 							setField('initModel', nullableText(event.target.value))
 						}
 						value={textValue(form.initModel)}
 					/>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Code Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Code Model">
 					<Input
 						onChange={(event) =>
 							setField('codeModel', nullableText(event.target.value))
 						}
 						value={textValue(form.codeModel)}
 					/>
-				</label>
-				<label className="space-y-1">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Audit Model
-					</span>
+				</FieldRow>
+				<FieldRow label="Audit Model">
 					<Input
 						onChange={(event) =>
 							setField('auditModel', nullableText(event.target.value))
 						}
 						value={textValue(form.auditModel)}
 					/>
-				</label>
+				</FieldRow>
 				<label className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
-					<input
+					<Checkbox
 						checked={form.auditsEnabled}
 						onChange={(event) => setField('auditsEnabled', event.target.checked)}
-						type="checkbox"
 					/>
 					<span className="text-sm font-medium text-foreground">Audits enabled</span>
 				</label>
-				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Spernakit Init Script
-					</span>
+				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Init Script">
 					<Input
 						onChange={(event) =>
 							setField('spernakitInitScript', nullableText(event.target.value))
@@ -132,11 +112,8 @@ export function GeneralDefaultsSection({
 						Spernakit apps are created from that checkout; leave empty to clone the
 						template on demand.
 					</p>
-				</label>
-				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Spernakit Template Repo
-					</span>
+				</FieldRow>
+				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Template Repo">
 					<Input
 						onChange={(event) =>
 							setField('spernakitTemplateRepo', nullableText(event.target.value))
@@ -148,11 +125,8 @@ export function GeneralDefaultsSection({
 						owner/repo cloned when creating a Spernakit app without a configured init
 						script. Defaults to NomadicDaddy/spernakit.
 					</p>
-				</label>
-				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="text-xs font-medium text-muted-foreground uppercase">
-						Spernakit Template Ref
-					</span>
+				</FieldRow>
+				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Template Ref">
 					<Input
 						onChange={(event) =>
 							setField('spernakitTemplateRef', nullableText(event.target.value))
@@ -163,15 +137,14 @@ export function GeneralDefaultsSection({
 					<p className="text-xs text-muted-foreground">
 						Optional git tag or branch to clone. Changing it rebuilds the cached clone.
 					</p>
-				</label>
+				</FieldRow>
 				<label className="space-y-1 md:col-span-2 xl:col-span-3">
 					<span className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
-						<input
+						<Checkbox
 							checked={form.showSpernakitProject}
 							onChange={(event) =>
 								setField('showSpernakitProject', event.target.checked)
 							}
-							type="checkbox"
 						/>
 						<span className="text-sm font-medium text-foreground">
 							Show Spernakit in projects list

@@ -8,7 +8,7 @@ import {
 } from '../../lib/formatters.ts';
 import { seriesSolid, seriesSolidHover } from '../../lib/series.ts';
 import { ChartAxes } from './ChartAxes.tsx';
-import { divergingTicks } from './chartAxisScale.ts';
+import { divergingTicks, niceAxisMax } from './chartAxisScale.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 export type OutputMetric = 'lines' | 'tokens';
@@ -44,7 +44,11 @@ export function OutputTimeseriesChart({
 			</EmptyState>
 		);
 	}
-	const max = Math.max(...points.map((point) => Math.max(upValue(point), downValue(point))), 1);
+	// One domain per arm. Sharing a single symmetric scale anchored on the larger arm emptied the
+	// whole lower half of the token chart — with 352.9M in against 1.5M out, every downward bar
+	// collapsed to its 2px minimum. Each arm is labelled with its own domain on the axis.
+	const maxUp = niceAxisMax(Math.max(...points.map(upValue), 1));
+	const maxDown = niceAxisMax(Math.max(...points.map(downValue), 1));
 	const totalUp = points.reduce((sum, point) => sum + upValue(point), 0);
 	const totalDown = points.reduce((sum, point) => sum + downValue(point), 0);
 	const totalRuns = points.reduce((sum, point) => sum + point.runs, 0);
@@ -99,7 +103,7 @@ export function OutputTimeseriesChart({
 					categories={points.map((point) =>
 						formatTelemetryAxisTick(bucket, point.bucket),
 					)}
-					ticks={divergingTicks(max)}>
+					ticks={divergingTicks(maxUp, maxDown)}>
 					{/* Shorter than the single-sided chart: the two arms split this height evenly, and the
 					    smaller arm is routinely a fifth of its half, so `h-40` left a persistent empty
 					    band between the bars and the legend. */}
@@ -125,7 +129,7 @@ export function OutputTimeseriesChart({
 											<div
 												className={`w-full rounded-t-sm ${seriesSolid.slot1} ${seriesSolidHover.slot1}`}
 												style={{
-													height: `${Math.max(2, Math.round((up / max) * 100))}%`,
+													height: `${Math.max(2, Math.round((up / maxUp) * 100))}%`,
 												}}
 											/>
 										)}
@@ -135,7 +139,7 @@ export function OutputTimeseriesChart({
 											<div
 												className={`w-full rounded-b-sm ${seriesSolid.slot3} ${seriesSolidHover.slot3}`}
 												style={{
-													height: `${Math.max(2, Math.round((down / max) * 100))}%`,
+													height: `${Math.max(2, Math.round((down / maxDown) * 100))}%`,
 												}}
 											/>
 										)}

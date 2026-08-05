@@ -9,6 +9,7 @@ import type { WebDatabase } from '../../db/client.ts';
 import type { ResourceUsageRow, TelemetryResourceType, TimeseriesPoint } from './types.ts';
 
 import { invocationEvents, runs } from '../../db/schema.ts';
+import { bucketKeysForWindow } from './buckets.ts';
 
 // Fold every invocation into one explicit outcome. Run-backed rows defer to the shared classifier
 // on authoritative `runs` facts, but retain stopped/killed/running as distinct telemetry outcomes
@@ -228,30 +229,40 @@ export async function getTimeseries(
 		total: number;
 		warnings: number;
 	}
+	const emptyBucket = (): BucketAccumulator => ({
+		completed: 0,
+		failed: 0,
+		flagged: 0,
+		killed: 0,
+		noWork: 0,
+		running: 0,
+		stopped: 0,
+		total: 0,
+		warnings: 0,
+	});
+
 	const points = new Map<number, BucketAccumulator>();
 	for (const row of rows) {
 		const bucketKey = Math.floor(row.startedAt / bucketMs) * bucketMs;
 		let point = points.get(bucketKey);
 		if (!point) {
-			point = {
-				completed: 0,
-				failed: 0,
-				flagged: 0,
-				killed: 0,
-				noWork: 0,
-				running: 0,
-				stopped: 0,
-				total: 0,
-				warnings: 0,
-			};
+			point = emptyBucket();
 			points.set(bucketKey, point);
 		}
 		point.total += 1;
 		point[outcomeBucket(row)] += 1;
 	}
-	return [...points.entries()]
-		.sort(([left], [right]) => left - right)
-		.map(([bucket, point]) => ({
+	// Emit the whole window, zeroes included. Dropping empty buckets and drawing the survivors at
+	// equal width made unequal gaps look identical and left this chart covering a different set of
+	// dates from the output chart beneath it.
+	return bucketKeysForWindow({
+		bucketMs,
+		now: Date.now(),
+		observed: points.keys(),
+		windowMs: input.windowMs,
+	}).map((bucket) => {
+		const point = points.get(bucket) ?? emptyBucket();
+		return {
 			bucket,
 			completed: point.completed,
 			failed: point.failed,
@@ -262,5 +273,6 @@ export async function getTimeseries(
 			stopped: point.stopped,
 			total: point.total,
 			warnings: point.warnings,
-		}));
+		};
+	});
 }

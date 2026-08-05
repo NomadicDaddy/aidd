@@ -26,27 +26,73 @@ export function categoryLabelStride(count: number): number {
 	return Math.max(1, Math.ceil(count / MAX_CATEGORY_LABELS));
 }
 
+export interface AxisScaleOptions {
+	/** Set on count axes, where a fractional tick is not a value the data can take. */
+	integral?: boolean;
+}
+
+const NICE_MANTISSAS = [1, 2, 2.5, 5, 10];
+
+/**
+ * The smallest "nice" number — 1, 2, 2.5 or 5 times a power of ten — that is at least `value`.
+ *
+ * Ticks used to be the raw data max and half of it, so a whole-number invocation axis was labelled
+ * `20.5`. Rounding to a step first means the label is always a number a reader would have chosen.
+ */
+export function niceAxisStep(value: number, options: AxisScaleOptions = {}): number {
+	if (!Number.isFinite(value) || value <= 0) return options.integral === true ? 1 : 0;
+	const exponent = Math.floor(Math.log10(value));
+	const magnitude = 10 ** exponent;
+	const mantissa = value / magnitude;
+	const chosen = NICE_MANTISSAS.find((candidate) => mantissa <= candidate + 1e-9) ?? 10;
+	const step = chosen * magnitude;
+	return options.integral === true ? Math.max(1, Math.ceil(step)) : step;
+}
+
+/**
+ * The axis domain: twice a nice step, so the midpoint tick is itself a nice number.
+ *
+ * Charts scale their bars against this same value. Rounding the labels without rounding the domain
+ * would just move the lie from the label to the bar height.
+ *
+ * Idempotent — `niceAxisMax(niceAxisMax(x)) === niceAxisMax(x)` — so a chart may hand an
+ * already-rounded domain to the tick builders without the scale creeping upward.
+ */
+export function niceAxisMax(max: number, options: AxisScaleOptions = {}): number {
+	return 2 * niceAxisStep(max / 2, options);
+}
+
 /** Top, midpoint and baseline ticks for a chart whose bars all grow in one direction. */
-export function singleSidedTicks(max: number): AxisTick[] {
+export function singleSidedTicks(max: number, options: AxisScaleOptions = {}): AxisTick[] {
+	const domain = niceAxisMax(max, options);
 	return [
-		{ label: formatCompactNumber(max), offsetPct: 0 },
-		{ label: formatCompactNumber(max / 2), offsetPct: 50 },
+		{ label: formatCompactNumber(domain), offsetPct: 0 },
+		{ label: formatCompactNumber(domain / 2), offsetPct: 50 },
 		{ label: '0', offsetPct: 100 },
 	];
 }
 
 /**
- * Ticks for a chart whose bars diverge from a shared center baseline. Both arms are drawn against
- * the same symmetric scale, so the labels are magnitudes — the legend names which arm is which.
+ * Ticks for a chart whose bars diverge from a center baseline, one scale per arm.
+ *
+ * A single symmetric scale anchored on the larger arm is what emptied the lower half of the token
+ * chart: against `352.9M` in and `1.5M` out, every downward bar collapsed to its 2px minimum and
+ * no fuchsia was visible anywhere in the plot. Scaling each arm to its own domain costs the
+ * cross-arm magnitude comparison, so the two domains are labelled independently and the reader
+ * takes the magnitude from the axis rather than from the bar.
  */
-export function divergingTicks(max: number): AxisTick[] {
-	const half = formatCompactNumber(max / 2);
-	const full = formatCompactNumber(max);
+export function divergingTicks(
+	up: number,
+	down: number,
+	options: AxisScaleOptions = {},
+): AxisTick[] {
+	const upDomain = niceAxisMax(up, options);
+	const downDomain = niceAxisMax(down, options);
 	return [
-		{ label: full, offsetPct: 0 },
-		{ label: half, offsetPct: 25 },
+		{ label: formatCompactNumber(upDomain), offsetPct: 0 },
+		{ label: formatCompactNumber(upDomain / 2), offsetPct: 25 },
 		{ label: '0', offsetPct: 50 },
-		{ label: half, offsetPct: 75 },
-		{ label: full, offsetPct: 100 },
+		{ label: formatCompactNumber(downDomain / 2), offsetPct: 75 },
+		{ label: formatCompactNumber(downDomain), offsetPct: 100 },
 	];
 }

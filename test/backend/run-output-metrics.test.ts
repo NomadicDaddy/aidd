@@ -117,8 +117,11 @@ describe('getOutputTimeseries', () => {
 			bucket: 'hour',
 			windowMs: 24 * hourMs,
 		});
-		expect(points).toHaveLength(1);
-		expect(points[0]).toEqual({
+		// The window is emitted whole, zeroes included, so the assertion is about the one bucket
+		// that has runs in it rather than about the length of the series.
+		const populated = points.filter((point) => point.runs > 0);
+		expect(populated).toHaveLength(1);
+		expect(populated[0]).toEqual({
 			bucket: Math.floor(recent / hourMs) * hourMs,
 			cachedTokens: 400,
 			filesChanged: 3,
@@ -134,7 +137,7 @@ describe('getOutputTimeseries', () => {
 		});
 	});
 
-	test('returns buckets sorted ascending', async () => {
+	test('returns the whole window ascending and evenly spaced', async () => {
 		const dayMs = 24 * 60 * 60 * 1000;
 		const now = Date.now();
 		await seedRun({ id: 'run_new', linesAdded: 5, linesRemoved: 1, startedAt: now });
@@ -145,10 +148,17 @@ describe('getOutputTimeseries', () => {
 			startedAt: now - 2 * dayMs,
 		});
 		const points = await getOutputTimeseries(db, { bucket: 'day', windowMs: 7 * dayMs });
-		expect(points).toHaveLength(2);
-		expect(points[0]!.bucket).toBeLessThan(points[1]!.bucket);
-		expect(points[0]!.linesAdded).toBe(7);
-		expect(points[1]!.linesAdded).toBe(5);
+		// Eight day boundaries span a seven-day window. The empty days between the two runs are
+		// emitted as zeroes: dropping them drew a two-day gap at the same width as a one-day gap.
+		expect(points).toHaveLength(8);
+		for (let index = 1; index < points.length; index += 1) {
+			expect(points[index]!.bucket - points[index - 1]!.bucket).toBe(dayMs);
+		}
+		const populated = points.filter((point) => point.runs > 0);
+		expect(populated).toHaveLength(2);
+		expect(populated[0]!.linesAdded).toBe(7);
+		expect(populated[1]!.linesAdded).toBe(5);
+		expect(points[points.length - 1]!.linesAdded).toBe(5);
 	});
 });
 

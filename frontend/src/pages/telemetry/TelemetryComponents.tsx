@@ -17,7 +17,7 @@ import {
 } from '../../lib/formatters.ts';
 import { outcomeSolid, outcomeSolidHover } from '../../lib/series.ts';
 import { ChartAxes } from './ChartAxes.tsx';
-import { singleSidedTicks } from './chartAxisScale.ts';
+import { niceAxisMax, singleSidedTicks } from './chartAxisScale.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
@@ -121,7 +121,9 @@ export function TimeseriesChart({
 	points: TelemetryTimeseriesPoint[];
 }) {
 	if (points.length === 0) return <EmptyState>No data in this window yet.</EmptyState>;
-	const max = Math.max(...points.map((point) => point.total), 1);
+	// The bars scale against the same rounded domain the ticks label, so a bar's height means what
+	// the axis says it means. Invocations are counts, so the domain stays whole.
+	const max = niceAxisMax(Math.max(...points.map((point) => point.total), 1), { integral: true });
 	const chartHeadingId = 'telemetry-invocations-chart-heading';
 	const tableRows = points.map((point) => ({
 		bucket: formatTelemetryBucketLabel(bucket, point.bucket),
@@ -147,7 +149,7 @@ export function TimeseriesChart({
 					categories={points.map((point) =>
 						formatTelemetryAxisTick(bucket, point.bucket),
 					)}
-					ticks={singleSidedTicks(max)}>
+					ticks={singleSidedTicks(max, { integral: true })}>
 					<div className="flex h-40 items-end gap-1">
 						{points.map((point) => {
 							const totalPct = Math.max(2, Math.round((point.total / max) * 100));

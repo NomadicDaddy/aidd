@@ -9,6 +9,7 @@ import {
 	getTimeseries,
 	rawStatusBuckets,
 } from '../../backend/src/services/telemetry/aggregation.ts';
+import { getOutputTimeseries } from '../../backend/src/services/telemetry/outputTimeseries.ts';
 import { listInvocations } from '../../backend/src/services/telemetry/queries.ts';
 import { getBackendUsage } from '../../backend/src/services/telemetry/resourceDetail.ts';
 
@@ -234,5 +235,46 @@ describe('telemetry aggregation transparency', () => {
 		expect(
 			(await getTimeseries(db, { bucket: 'day' })).reduce((sum, row) => sum + row.total, 0),
 		).toBe(2);
+	});
+
+	// Both series used to emit only the buckets they had rows for. Drawn at equal column width that
+	// turned a ten-day gap into one column, and — because the two series had different gaps — left
+	// the invocation chart covering a different set of dates from the output chart beneath it.
+	test('emits every bucket in the window, zeroes included, on both series', async () => {
+		const day = 24 * 60 * 60 * 1000;
+		const now = Date.now();
+		// One invocation at each end of the window and nothing between: 5 buckets, 3 of them empty.
+		await seedRun({ id: 'run-old', startedAt: now - 4 * day, status: 'completed' });
+		await seedRun({ id: 'run-new', startedAt: now, status: 'completed' });
+		await seedInvocation({
+			id: 'old',
+			resourceType: 'run',
+			runId: 'run-old',
+			startedAt: now - 4 * day,
+			status: 'completed',
+		});
+		await seedInvocation({
+			id: 'new',
+			resourceType: 'run',
+			runId: 'run-new',
+			startedAt: now,
+			status: 'completed',
+		});
+
+		const invocations = await getTimeseries(db, { bucket: 'day', windowMs: 5 * day });
+		const output = await getOutputTimeseries(db, { bucket: 'day', windowMs: 5 * day });
+
+		expect(invocations).toHaveLength(6);
+		expect(invocations.filter((point) => point.total === 0)).toHaveLength(4);
+		// Evenly spaced: consecutive buckets are exactly one bucket width apart, so a column's
+		// position on the axis is proportional to its time.
+		for (let index = 1; index < invocations.length; index += 1) {
+			expect(invocations[index]!.bucket - invocations[index - 1]!.bucket).toBe(day);
+		}
+		// The two charts are stacked on one page under one window control, so they have to agree
+		// about which dates they cover.
+		expect(output.map((point) => point.bucket)).toEqual(
+			invocations.map((point) => point.bucket),
+		);
 	});
 });

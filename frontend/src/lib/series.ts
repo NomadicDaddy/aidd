@@ -50,12 +50,20 @@ export const seriesSolidHover: Record<SeriesSlot, string> = {
 export type OutcomeSeriesKey =
 	'completed' | 'failed' | 'flagged' | 'killed' | 'noWork' | 'running' | 'stopped' | 'warnings';
 
+/*
+ * Separated by lightness, not by neighbouring hue. `failed` and `flagged` were eight degrees of hue
+ * apart (red-500 against rose-700) and `stopped` and `noWork` were near-identical greys; at the 8px
+ * a stacked segment or a legend dot actually gets, neither pair was separable on screen. Stepping
+ * the lightness instead survives that size, and survives red-green CVD, which a red/rose split does
+ * not. `noWork` additionally takes a hatched fill, so the one outcome that means "nothing ran" is
+ * distinguishable by texture without relying on colour at all.
+ */
 export const outcomeSolid: Record<OutcomeSeriesKey, string> = {
 	completed: toneSolid.emerald,
 	failed: toneSolid.red,
-	flagged: 'bg-rose-700 dark:bg-rose-600',
-	killed: 'bg-orange-700 dark:bg-orange-600',
-	noWork: 'bg-muted-foreground/50',
+	flagged: 'bg-red-900 dark:bg-red-400',
+	killed: 'bg-orange-600 dark:bg-orange-400',
+	noWork: 'bg-muted-foreground/25 bg-[repeating-linear-gradient(45deg,currentColor_0_2px,transparent_2px_5px)] text-muted-foreground/40',
 	running: toneSolid.teal,
 	stopped: toneSolid.neutral,
 	warnings: toneSolid.amber,
@@ -65,8 +73,8 @@ export const outcomeSolid: Record<OutcomeSeriesKey, string> = {
 export const outcomeSolidHover: Record<OutcomeSeriesKey, string> = {
 	completed: 'group-hover:bg-emerald-400 dark:group-hover:bg-emerald-500',
 	failed: 'group-hover:bg-red-400 dark:group-hover:bg-red-400',
-	flagged: 'group-hover:bg-rose-600 dark:group-hover:bg-rose-500',
-	killed: 'group-hover:bg-orange-600 dark:group-hover:bg-orange-500',
+	flagged: 'group-hover:bg-red-800 dark:group-hover:bg-red-300',
+	killed: 'group-hover:bg-orange-500 dark:group-hover:bg-orange-300',
 	noWork: 'group-hover:opacity-80',
 	running: 'group-hover:bg-teal-400 dark:group-hover:bg-teal-400',
 	stopped: 'group-hover:opacity-80',

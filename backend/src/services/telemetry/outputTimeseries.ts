@@ -5,6 +5,7 @@ import type { OutputTimeseriesPoint } from './types.ts';
 
 import { runs } from '../../db/schema.ts';
 import { TERMINAL_STATUSES } from '../run/types.ts';
+import { bucketKeysForWindow } from './buckets.ts';
 
 // Sums per-run output metrics (git lines added/removed, token usage) into time buckets, straight
 // off the `runs` table — no invocation join, since the metrics live on the run row itself. JS
@@ -37,25 +38,27 @@ export async function getOutputTimeseries(
 		.from(runs)
 		.where(and(...filters));
 
+	const emptyPoint = (bucket: number): OutputTimeseriesPoint => ({
+		bucket,
+		cachedTokens: 0,
+		filesChanged: 0,
+		inputTokens: 0,
+		linesAdded: 0,
+		linesRemoved: 0,
+		outputTokens: 0,
+		reasoningTokens: 0,
+		runs: 0,
+		runsWithFileData: 0,
+		runsWithLineData: 0,
+		runsWithTokenData: 0,
+	});
+
 	const points = new Map<number, OutputTimeseriesPoint>();
 	for (const row of rows) {
 		const bucketKey = Math.floor(row.startedAt / bucketMs) * bucketMs;
 		let point = points.get(bucketKey);
 		if (!point) {
-			point = {
-				bucket: bucketKey,
-				cachedTokens: 0,
-				filesChanged: 0,
-				inputTokens: 0,
-				linesAdded: 0,
-				linesRemoved: 0,
-				outputTokens: 0,
-				reasoningTokens: 0,
-				runs: 0,
-				runsWithFileData: 0,
-				runsWithLineData: 0,
-				runsWithTokenData: 0,
-			};
+			point = emptyPoint(bucketKey);
 			points.set(bucketKey, point);
 		}
 		point.runs += 1;
@@ -76,5 +79,12 @@ export async function getOutputTimeseries(
 			point.reasoningTokens += row.reasoningTokens ?? 0;
 		}
 	}
-	return [...points.values()].sort((left, right) => left.bucket - right.bucket);
+	// Emit the whole window, zeroes included, so column position maps linearly to time and this
+	// chart covers exactly the same dates as the invocation chart above it.
+	return bucketKeysForWindow({
+		bucketMs,
+		now: Date.now(),
+		observed: points.keys(),
+		windowMs: input.windowMs,
+	}).map((bucket) => points.get(bucket) ?? emptyPoint(bucket));
 }

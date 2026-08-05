@@ -11,6 +11,7 @@ interface RenderedAxes {
 	diverging: AxisTick[];
 	invocations: string;
 	lines: string;
+	rawExtrema: AxisTick[];
 	singleSided: AxisTick[];
 	strides: number[];
 }
@@ -45,9 +46,10 @@ function renderAxes(): RenderedAxes {
 		'}));',
 		'console.log(JSON.stringify({',
 		'dense: renderToStaticMarkup(createElement(TimeseriesChart, { bucket: "hour", points: densePoints })),',
-		'diverging: divergingTicks(4000),',
+		'diverging: divergingTicks(4000, 1000),',
 		'invocations: renderToStaticMarkup(createElement(TimeseriesChart, { bucket: "hour", points: invocationPoints })),',
 		'lines: renderToStaticMarkup(createElement(OutputTimeseriesChart, { bucket: "hour", metric: "lines", points: outputPoints })),',
+		'rawExtrema: singleSidedTicks(41, { integral: true }),',
 		'singleSided: singleSidedTicks(4000),',
 		'strides: [3, 6, 7, 24, 30].map(categoryLabelStride),',
 		'}));',
@@ -99,14 +101,15 @@ describe('Telemetry chart axes', () => {
 			{ label: '2K', offsetPct: 50 },
 			{ label: '0', offsetPct: 100 },
 		]);
-		// The diverging chart mirrors the scale around a center zero: the two arms are magnitudes
-		// against one shared max, so 50% is the baseline they grow away from.
+		// The diverging chart puts zero at its center, but each arm carries its own domain: a shared
+		// max anchored on the larger arm flattened the smaller one to its 2px minimum, so the two
+		// halves are labelled independently and the reader takes magnitude from the axis.
 		expect(rendered.diverging).toEqual([
 			{ label: '4K', offsetPct: 0 },
 			{ label: '2K', offsetPct: 25 },
 			{ label: '0', offsetPct: 50 },
-			{ label: '2K', offsetPct: 75 },
-			{ label: '4K', offsetPct: 100 },
+			{ label: '500', offsetPct: 75 },
+			{ label: '1K', offsetPct: 100 },
 		]);
 		expect(gridlineOffsets(rendered.invocations)).toEqual(['0%', '50%', '100%']);
 		expect(gridlineOffsets(rendered.lines)).toEqual(['0%', '25%', '50%', '75%', '100%']);
@@ -120,8 +123,22 @@ describe('Telemetry chart axes', () => {
 			),
 		).text();
 
-		expect(output).toContain('divergingTicks(max)');
+		expect(output).toContain('divergingTicks(maxUp, maxDown)');
 		expect(output).not.toContain('top-1/2 h-px bg-muted');
+	});
+
+	test('a count axis is rounded to a whole-number domain, not to the raw data max', () => {
+		// The invocations axis used to label the raw max and half of it, which is how a chart of
+		// whole invocations came to carry a `20.5` tick. Rounding the domain — not just the label —
+		// keeps the bar heights honest about what the axis claims.
+		expect(rendered.rawExtrema).toEqual([
+			{ label: '50', offsetPct: 0 },
+			{ label: '25', offsetPct: 50 },
+			{ label: '0', offsetPct: 100 },
+		]);
+		for (const tick of rendered.rawExtrema) {
+			expect(tick.label).not.toContain('.');
+		}
 	});
 
 	test('axis labels use the meta type scale and semantic tokens', () => {

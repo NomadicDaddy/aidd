@@ -19,7 +19,9 @@ import {
 	consoleSelectionLabel,
 	containerHoverClass,
 	containerSelectableClass,
+	containerSelectedClass,
 	containerSelectionHandler,
+	leadingSlotClass,
 	runSourceLabel,
 } from './runRowUtils.ts';
 import {
@@ -41,6 +43,7 @@ export function ActiveRunRow({
 	onStop,
 	run,
 	selected,
+	showLifecycleControls = true,
 }: {
 	continued: boolean;
 	continuePendingId: string | undefined;
@@ -51,6 +54,7 @@ export function ActiveRunRow({
 	onStop: (id: string) => void;
 	run: RunRecord;
 	selected: boolean;
+	showLifecycleControls?: boolean;
 }) {
 	const terminal = isTerminalStatus(run.status);
 	// A stop request winds the run down gracefully (it finishes its current step first), so the
@@ -87,13 +91,15 @@ export function ActiveRunRow({
 			className={cn(
 				'border-b transition-colors last:border-0',
 				containerSelectableClass,
-				selected
-					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
-					: containerHoverClass,
+				selected ? containerSelectedClass : containerHoverClass,
 			)}
 			onClick={containerSelectionHandler(selectRun)}>
 			<td className="py-3 pr-3 pl-4">
 				<div className="flex flex-wrap items-center gap-2">
+					{/* Empty leading slot: session rows spend these 24px on a chevron or the
+					    Workflow icon, so reserving them here is what gives the column one left
+					    edge across all three row types. */}
+					<span aria-hidden="true" className={leadingSlotClass} />
 					<ConsoleSelectionButton
 						className="capitalize"
 						label={consoleSelectionLabel(run)}
@@ -116,8 +122,13 @@ export function ActiveRunRow({
 				<ProjectDetailLink href={projectHref} label={projectLabel} name={run.projectName} />
 			</td>
 			<td className="px-3 py-3">
-				<Badge tone="neutral">Run</Badge>
-				<div className="mt-1 text-xs text-muted-foreground">{runSourceLabel(run)}</div>
+				{/* One line in both branches of the column: a session row's KIND cell is a single
+				    badge, so the launch source rides beside the badge rather than adding a second
+				    line that only run rows carry. */}
+				<div className="flex flex-wrap items-center gap-1.5">
+					<Badge tone="neutral">Run</Badge>
+					<span className="text-xs text-muted-foreground">{runSourceLabel(run)}</span>
+				</div>
 			</td>
 			<td className="px-3 py-3">
 				<div className="flex max-w-[14rem] flex-wrap items-center gap-1.5">
@@ -154,77 +165,87 @@ export function ActiveRunRow({
 							<span>Continue</span>
 						</Button>
 					) : null}
-					<IconButton
-						ariaLabel={
-							stopping
-								? `Stop requested for the ${run.projectName} run; it stops after its current step`
-								: stopDisabled
-									? directorCycleProjection
-										? 'Stop unavailable: director cycle control is managed from Director'
-										: 'Stop unavailable: run is no longer running'
-									: 'Stop run'
-						}
-						className="h-8 w-8"
-						disabled={stopDisabled}
-						onClick={() => {
-							if (stopDisabled) return;
-							traceDataMovement({
-								category: 'event',
-								layer: 'ui',
-								operation: 'runs.stop',
-								source: 'RunsPage',
-								summary: { runId: run.id },
-								target: '/api/v1/runs/:id/stop',
-							});
-							onStop(run.id);
-						}}
-						title={
-							stopping
-								? 'Stop requested — the run finishes its current step, then stops.'
-								: stopDisabled
-									? directorCycleProjection
-										? 'Director cycle control is managed from Director.'
-										: 'Stop is available only while a run is running.'
-									: 'Stop run'
-						}>
-						{stopping ? (
-							<Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
-						) : (
-							<Square aria-hidden="true" className="h-3.5 w-3.5" />
-						)}
-					</IconButton>
-					<IconButton
-						ariaLabel={
-							killDisabled
-								? directorCycleProjection
-									? 'Kill unavailable: director cycle control is managed from Director'
-									: 'Kill unavailable: run is no longer running'
-								: 'Kill run'
-						}
-						className="h-8 w-8"
-						disabled={killDisabled}
-						onClick={() => {
-							if (killDisabled) return;
-							traceDataMovement({
-								category: 'event',
-								layer: 'ui',
-								operation: 'runs.kill',
-								source: 'RunsPage',
-								summary: { runId: run.id },
-								target: '/api/v1/runs/:id/kill',
-							});
-							onKill(run.id);
-						}}
-						title={
-							killDisabled
-								? directorCycleProjection
-									? 'Director cycle control is managed from Director.'
-									: 'Kill is available only while a run is running.'
-								: 'Kill run'
-						}
-						variant="danger">
-						<X aria-hidden="true" className="h-3.5 w-3.5" />
-					</IconButton>
+					{/* Stop and Kill are only ever enabled on a live run; in History they were ten
+					    greyed icons per screen carrying no information. Continue stays — it is the
+					    one control a finished run can still offer. */}
+					{showLifecycleControls ? (
+						<>
+							<IconButton
+								ariaLabel={
+									stopping
+										? `Stop requested for the ${run.projectName} run; it stops after its current step`
+										: stopDisabled
+											? directorCycleProjection
+												? 'Stop unavailable: director cycle control is managed from Director'
+												: 'Stop unavailable: run is no longer running'
+											: 'Stop run'
+								}
+								className="h-8 w-8"
+								disabled={stopDisabled}
+								onClick={() => {
+									if (stopDisabled) return;
+									traceDataMovement({
+										category: 'event',
+										layer: 'ui',
+										operation: 'runs.stop',
+										source: 'RunsPage',
+										summary: { runId: run.id },
+										target: '/api/v1/runs/:id/stop',
+									});
+									onStop(run.id);
+								}}
+								title={
+									stopping
+										? 'Stop requested — the run finishes its current step, then stops.'
+										: stopDisabled
+											? directorCycleProjection
+												? 'Director cycle control is managed from Director.'
+												: 'Stop is available only while a run is running.'
+											: 'Stop run'
+								}>
+								{stopping ? (
+									<Loader2
+										aria-hidden="true"
+										className="h-3.5 w-3.5 animate-spin"
+									/>
+								) : (
+									<Square aria-hidden="true" className="h-3.5 w-3.5" />
+								)}
+							</IconButton>
+							<IconButton
+								ariaLabel={
+									killDisabled
+										? directorCycleProjection
+											? 'Kill unavailable: director cycle control is managed from Director'
+											: 'Kill unavailable: run is no longer running'
+										: 'Kill run'
+								}
+								className="h-8 w-8"
+								disabled={killDisabled}
+								onClick={() => {
+									if (killDisabled) return;
+									traceDataMovement({
+										category: 'event',
+										layer: 'ui',
+										operation: 'runs.kill',
+										source: 'RunsPage',
+										summary: { runId: run.id },
+										target: '/api/v1/runs/:id/kill',
+									});
+									onKill(run.id);
+								}}
+								title={
+									killDisabled
+										? directorCycleProjection
+											? 'Director cycle control is managed from Director.'
+											: 'Kill is available only while a run is running.'
+										: 'Kill run'
+								}
+								variant="danger">
+								<X aria-hidden="true" className="h-3.5 w-3.5" />
+							</IconButton>
+						</>
+					) : null}
 				</div>
 			</td>
 		</tr>

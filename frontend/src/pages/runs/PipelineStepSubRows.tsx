@@ -7,8 +7,9 @@ import { Button } from '../../components/ui/button.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
-import { stepTone } from '../pipelineSessions/StepOutput.tsx';
 import { buildStepRows } from '../pipelineSessions/StepRows.tsx';
+import { sessionStatusTone, stepStatusLabel } from './pipelineSessionStatus.ts';
+import { containerSelectedClass } from './runRowUtils.ts';
 
 // Compact step list rendered inside an expanded pipeline row of the unified feed.
 // Deliberately lighter than the report page's ExecutedStepRow: no per-step consoles
@@ -81,8 +82,7 @@ export function PipelineStepSubRows({
 						aria-current={selected ? 'true' : undefined}
 						className={cn(
 							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs xl:grid xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0',
-							selected &&
-								'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
+							selected && containerSelectedClass,
 						)}
 						key={step.id}>
 						<div
@@ -105,7 +105,9 @@ export function PipelineStepSubRows({
 							)}
 						</div>
 						<div className="min-w-0 xl:px-3 xl:py-2">
-							<Badge tone={stepTone(step.status)}>{step.status}</Badge>
+							<Badge tone={sessionStatusTone(step.status)}>
+								{stepStatusLabel(step.status)}
+							</Badge>
 							{step.errorMessage && (
 								<p className="mt-1 truncate text-red-700 dark:text-red-300">
 									{step.errorMessage}

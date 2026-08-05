@@ -48,7 +48,13 @@ describe('pipeline step duration stays live while a step runs', () => {
 			'PipelineSessionReportPage.tsx',
 		);
 		expect(table).toContain('useNow');
-		expect(table.match(/<PipelineStepSubRows\s+now=\{now\}/g)).toHaveLength(2);
+		// One `stepSubRows` helper wired to the ticking clock, rendered at both the table and the
+		// mobile-list surface — so the two can no longer drift apart the way two literal copies of
+		// the element could.
+		expect(table).toMatch(
+			/const stepSubRows = [\s\S]*?<PipelineStepSubRows[\s\S]*?now=\{now\}/,
+		);
+		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(2);
 		expect(report).toContain('useNow');
 		expect(report).toContain('<StepsCard now={now}');
 	});

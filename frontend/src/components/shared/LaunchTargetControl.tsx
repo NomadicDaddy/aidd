@@ -36,6 +36,12 @@ export interface LaunchTargetControlProps {
 	onChange: (value: LaunchTargetValue) => void;
 	projectDir?: string;
 	role?: LaunchRole;
+	/**
+	 * `'chip'` (default) is the compact table/card summary. `'control'` puts the chip on the
+	 * 36px form-control rhythm so it sits level with the selects, inputs and buttons of a launch
+	 * row instead of floating short of their top and bottom edges.
+	 */
+	size?: 'chip' | 'control';
 	value: LaunchTargetValue;
 	variant?: 'chip' | 'inline';
 }
@@ -56,6 +62,7 @@ export function LaunchTargetControl({
 	onChange,
 	projectDir,
 	role,
+	size = 'chip',
 	value,
 	variant = 'chip',
 }: LaunchTargetControlProps) {
@@ -104,7 +111,8 @@ export function LaunchTargetControl({
 				aria-expanded={open}
 				aria-haspopup="dialog"
 				className={cn(
-					'inline-flex min-h-7 max-w-full flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1 text-xs transition-colors',
+					'inline-flex max-w-full flex-wrap items-center gap-1.5 border text-xs transition-colors',
+					size === 'control' ? 'h-9 rounded-lg px-2.5' : 'min-h-7 rounded-md px-1.5 py-1',
 					display.custom
 						? 'border-accent bg-accent-muted text-accent-muted-foreground'
 						: 'border-border bg-card text-muted-foreground hover:border-accent/40',

@@ -8,6 +8,16 @@ export type RunLiveness = 'idle' | 'live' | 'stalled' | 'unknown';
 // selected background.
 export const containerSelectableClass = 'cursor-pointer';
 export const containerHoverClass = 'hover:bg-muted';
+// One definition for the four surfaces that render a selected execution (desktop run row, mobile
+// run card, session row, step sub-row). The inset bar is already token-driven; the fill now is too,
+// so the selected state re-themes instead of staying a fixed teal wash.
+export const containerSelectedClass =
+	'bg-accent-muted shadow-[inset_4px_0_0_var(--accent)]' as const;
+
+// The NAME column's fixed leading slot. Run rows render it empty, single-step sessions render the
+// Workflow icon and multi-step sessions render the expand chevron — reserving the width on every
+// row is what keeps the three row types sharing one left edge.
+export const leadingSlotClass = 'flex w-6 shrink-0 items-center justify-center' as const;
 
 // Pointer-only convenience target. The row/card is not focusable and emulates no keys, so it adds
 // neither a tab stop nor a second accessible control — ConsoleSelectionButton stays the semantic

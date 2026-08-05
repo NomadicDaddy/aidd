@@ -78,14 +78,22 @@ describe('status tones carry dark variants', () => {
 		expect(card).toContain('aria-label="Missing on disk"');
 	});
 
-	test('fixes the foreground of console text that sits on the always-dark scroller', async () => {
+	test('keeps console text on the themed scroller surface', async () => {
 		const highlight = await Bun.file(join(pagesRoot, 'runs', 'liveConsoleText.tsx')).text();
 		const console_ = await Bun.file(join(pagesRoot, 'runs', 'LiveConsole.tsx')).text();
+		const pretty = await Bun.file(join(pagesRoot, 'runs', 'LiveConsolePretty.tsx')).text();
 
-		// The transcript scroller is bg-[#0a0e14] in both themes, so themed foreground tokens
-		// invert against it — `text-foreground` on amber-300 is near-white under the dark theme.
+		// The find highlight fills with amber-300 in both themes, so its foreground is pinned dark
+		// rather than themed — `text-foreground` on amber-300 is near-white under the dark theme.
 		expect(highlight).toContain('bg-amber-300 text-neutral-900');
 		expect(highlight).not.toContain('bg-amber-300 text-foreground');
-		expect(console_).toContain('<span className="text-white/60">');
+
+		// The scroller itself is a token surface, one step below the panel around it. It used to be
+		// a raw hex with hard-coded white text, which could not follow the light theme at all — so
+		// nothing rendered inside it may reach for a fixed white foreground either.
+		expect(console_).toContain('border-border bg-background');
+		expect(console_).not.toContain('#0a0e14');
+		expect(console_).not.toContain('text-white/');
+		expect(pretty).not.toContain('text-white/');
 	});
 });

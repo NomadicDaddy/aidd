@@ -19,6 +19,7 @@ import {
 	consoleSelectionLabel,
 	containerHoverClass,
 	containerSelectableClass,
+	containerSelectedClass,
 	containerSelectionHandler,
 	runRuntimeDetail,
 	runSourceLabel,
@@ -40,6 +41,7 @@ export function ActiveRunMobileCard({
 	onStop,
 	run,
 	selected,
+	showLifecycleControls = true,
 }: {
 	continued: boolean;
 	continuePendingId: string | undefined;
@@ -50,6 +52,7 @@ export function ActiveRunMobileCard({
 	onStop: (id: string) => void;
 	run: RunRecord;
 	selected: boolean;
+	showLifecycleControls?: boolean;
 }) {
 	const terminal = isTerminalStatus(run.status);
 	// A stop request winds the run down gracefully (it finishes its current step first), so the
@@ -96,9 +99,7 @@ export function ActiveRunMobileCard({
 			className={cn(
 				'flex flex-col gap-2 px-4 py-3 transition-colors',
 				containerSelectableClass,
-				selected
-					? 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40'
-					: containerHoverClass,
+				selected ? containerSelectedClass : containerHoverClass,
 			)}
 			onClick={containerSelectionHandler(selectRun)}
 			role="listitem">
@@ -153,72 +154,78 @@ export function ActiveRunMobileCard({
 						<span>Continue</span>
 					</Button>
 				) : null}
-				<Button
-					aria-describedby={disabledControlsHintId}
-					aria-label={
-						stopping
-							? `Stop requested for the ${run.projectName} run; it stops after its current step`
-							: stopDisabled
-								? directorCycleProjection
-									? 'Stop unavailable: director cycle control is managed from Director'
-									: 'Stop unavailable: run is no longer running'
-								: 'Stop run'
-					}
-					disabled={stopDisabled}
-					onClick={() => {
-						if (stopDisabled) return;
-						traceDataMovement({
-							category: 'event',
-							layer: 'ui',
-							operation: 'runs.stop',
-							source: 'RunsPage',
-							summary: { runId: run.id },
-							target: '/api/v1/runs/:id/stop',
-						});
-						onStop(run.id);
-					}}
-					size="compact"
-					title={
-						stopping
-							? 'Stop requested — the run finishes its current step, then stops.'
-							: undefined
-					}>
-					{stopping ? (
-						<Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
-					) : (
-						<Square aria-hidden="true" className="h-3.5 w-3.5" />
-					)}
-					<span>{stopping ? 'Stopping…' : 'Stop'}</span>
-				</Button>
-				<Button
-					aria-describedby={disabledControlsHintId}
-					aria-label={
-						killDisabled
-							? directorCycleProjection
-								? 'Kill unavailable: director cycle control is managed from Director'
-								: 'Kill unavailable: run is no longer running'
-							: 'Kill run'
-					}
-					disabled={killDisabled}
-					onClick={() => {
-						if (killDisabled) return;
-						traceDataMovement({
-							category: 'event',
-							layer: 'ui',
-							operation: 'runs.kill',
-							source: 'RunsPage',
-							summary: { runId: run.id },
-							target: '/api/v1/runs/:id/kill',
-						});
-						onKill(run.id);
-					}}
-					size="compact"
-					variant="danger">
-					<X aria-hidden="true" className="h-3.5 w-3.5" />
-					<span>Kill</span>
-				</Button>
+				{/* Stop and Kill are only ever enabled on a live run, so a History card renders
+				    them permanently greyed; Continue is the one control it can still offer. */}
+				{showLifecycleControls ? (
+					<>
+						<Button
+							aria-describedby={disabledControlsHintId}
+							aria-label={
+								stopping
+									? `Stop requested for the ${run.projectName} run; it stops after its current step`
+									: stopDisabled
+										? directorCycleProjection
+											? 'Stop unavailable: director cycle control is managed from Director'
+											: 'Stop unavailable: run is no longer running'
+										: 'Stop run'
+							}
+							disabled={stopDisabled}
+							onClick={() => {
+								if (stopDisabled) return;
+								traceDataMovement({
+									category: 'event',
+									layer: 'ui',
+									operation: 'runs.stop',
+									source: 'RunsPage',
+									summary: { runId: run.id },
+									target: '/api/v1/runs/:id/stop',
+								});
+								onStop(run.id);
+							}}
+							size="compact"
+							title={
+								stopping
+									? 'Stop requested — the run finishes its current step, then stops.'
+									: undefined
+							}>
+							{stopping ? (
+								<Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
+							) : (
+								<Square aria-hidden="true" className="h-3.5 w-3.5" />
+							)}
+							<span>{stopping ? 'Stopping…' : 'Stop'}</span>
+						</Button>
+						<Button
+							aria-describedby={disabledControlsHintId}
+							aria-label={
+								killDisabled
+									? directorCycleProjection
+										? 'Kill unavailable: director cycle control is managed from Director'
+										: 'Kill unavailable: run is no longer running'
+									: 'Kill run'
+							}
+							disabled={killDisabled}
+							onClick={() => {
+								if (killDisabled) return;
+								traceDataMovement({
+									category: 'event',
+									layer: 'ui',
+									operation: 'runs.kill',
+									source: 'RunsPage',
+									summary: { runId: run.id },
+									target: '/api/v1/runs/:id/kill',
+								});
+								onKill(run.id);
+							}}
+							size="compact"
+							variant="danger">
+							<X aria-hidden="true" className="h-3.5 w-3.5" />
+							<span>Kill</span>
+						</Button>
+					</>
+				) : null}
 			</div>
-			{controlHint && (
+			{showLifecycleControls && controlHint && (
 				<p className="text-xs text-muted-foreground" id={disabledControlsHintId}>
 					{controlHint}
 				</p>

@@ -1,98 +1,35 @@
-import type { ReactNode } from 'react';
-
 import { skillExecutionIntentLabel } from 'aidd-shared/skill-execution-intent';
 import { default as FileEdit } from 'lucide-react/dist/esm/icons/file-pen';
 import { default as FilePlus } from 'lucide-react/dist/esm/icons/file-plus';
 import { default as GitCommit } from 'lucide-react/dist/esm/icons/git-commit';
 import { useState } from 'react';
 
-import type { GitCommitRef, RunFileChangeSource, RunRecord } from '../../api/types.ts';
+import type { GitCommitRef, RunRecord } from '../../api/types.ts';
 
 import { CommitChips } from '../../components/shared/CommitChips.tsx';
 import { CommitDiffDialog } from '../../components/shared/CommitDiffDialog.tsx';
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { RunCommandInfo } from '../../components/shared/RunCommandInfo.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
+import { Card } from '../../components/ui/card.tsx';
 import { Tooltip } from '../../components/ui/tooltip.tsx';
 import { useRunCommits } from '../../hooks/useCommits.ts';
 import { useStopRequested } from '../../hooks/useStopRequested.ts';
 import { formatAiddRunProvenance } from '../../lib/aiddRunProvenance.ts';
 import { formatDuration } from '../../lib/formatters.ts';
+import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { MetadataItem, ReadOnlyContractViolation } from './runDetailParts.tsx';
-import { buildRunFileChangeTooltipModel, type RunFileChangeKind } from './runFileChangeTooltip.ts';
+import { FileChangeChip } from './RunFileChangeChip.tsx';
 import { classifyRunRecord, isRunStopping } from './runsUtils.ts';
 import {
 	isReadOnlySkillDirectiveViolation,
 	skillDirectiveExecutionIntent,
 } from './skillDirectiveIntent.ts';
 
-function FileChangeTooltipContent({
-	kind,
-	paths,
-	source,
-	truncated,
-}: {
-	kind: RunFileChangeKind;
-	paths: readonly string[];
-	source: RunFileChangeSource;
-	truncated: boolean;
-}) {
-	const model = buildRunFileChangeTooltipModel({ kind, paths, source, truncated });
-	return (
-		<div className="space-y-2">
-			<div className="font-medium text-foreground">{model.title}</div>
-			<p className="text-[0.7rem] leading-snug text-muted-foreground">{model.sourceNote}</p>
-			{model.paths.length > 0 ? (
-				<ul className="max-h-64 space-y-1 overflow-auto pr-1">
-					{model.paths.map((path) => (
-						<li
-							className="rounded-sm bg-muted/80 px-1.5 py-1 font-mono text-[0.68rem] leading-snug break-all text-foreground"
-							key={path}>
-							{path}
-						</li>
-					))}
-				</ul>
-			) : null}
-			{model.truncatedNote ? (
-				<p className="text-[0.7rem] leading-snug text-muted-foreground">
-					{model.truncatedNote}
-				</p>
-			) : null}
-			<p className="text-[0.7rem] leading-snug text-muted-foreground">{model.countNote}</p>
-		</div>
-	);
-}
-
-function FileChangeChip({
-	children,
-	kind,
-	paths,
-	source,
-	truncated,
-}: {
-	children: ReactNode;
-	kind: RunFileChangeKind;
-	paths: readonly string[];
-	source: RunFileChangeSource;
-	truncated: boolean;
-}) {
-	return (
-		<Tooltip
-			className="!w-[min(34rem,calc(100vw-2rem))] !max-w-none p-3"
-			content={
-				<FileChangeTooltipContent
-					kind={kind}
-					paths={paths}
-					source={source}
-					truncated={truncated}
-				/>
-			}>
-			<span className="inline-flex items-center gap-1 rounded-sm focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
-				{children}
-			</span>
-		</Tooltip>
-	);
-}
+// One surface step below the sunken panel around it, so command text and the stop transcript read
+// as recessed content rather than as a third ad-hoc fill.
+const detailPreClass =
+	'overflow-auto rounded-md border border-border bg-background p-2 text-xs whitespace-pre-wrap text-foreground';
 
 // The panel renders only for terminal runs (LiveConsole gates on status !== 'running'), so the
 // commit query can run unconditionally — the ledger line, if any, already exists.
@@ -163,9 +100,7 @@ function RunCommitsSection({ run }: { run: RunRecord }) {
 			)}
 			{hasCommits ? (
 				<div>
-					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-						Commits
-					</div>
+					<div className={`mb-1 ${fieldLabelClass}`}>Commits</div>
 					<CommitChips commits={data.commits} onSelect={setSelectedCommit} />
 				</div>
 			) : null}
@@ -199,7 +134,7 @@ export function RunDetailPanel({
 			: null;
 	const executionIntent = skillDirectiveExecutionIntent(selectedRun);
 	return (
-		<div className="mb-3 min-w-0 space-y-3 rounded-md border border-border bg-muted/60 p-3">
+		<Card className="mb-3 min-w-0 space-y-3" variant="sunken">
 			<div className="flex flex-wrap items-center gap-2">
 				<Tooltip content={outcome.title}>
 					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:focus-visible:ring-teal-300">
@@ -212,7 +147,15 @@ export function RunDetailPanel({
 					<span className="font-mono text-xs text-muted-foreground">{exitLabel}</span>
 				) : null}
 			</div>
-			<dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+			{/* The narrative summary leads the panel at one step above the metadata around it; the
+			    machine-written `summary` restates the same outcome, so it is filed as the 'Result'
+			    record in the dl below rather than sitting beside this as an equal paragraph. */}
+			{selectedRun.aiSummary ? (
+				<p className="text-sm break-words text-foreground">{selectedRun.aiSummary}</p>
+			) : null}
+			{/* Three columns, not four: the row normally holds exactly Mode, Duration and provenance,
+			    and Execution target takes a full row of its own rather than a half-empty span. */}
+			<dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
 				<MetadataItem label="Mode" value={selectedRun.mode} />
 				{executionIntent ? (
 					<MetadataItem
@@ -227,10 +170,15 @@ export function RunDetailPanel({
 					label="aidd provenance"
 					value={formatAiddRunProvenance(selectedRun)}
 				/>
-				<div className="col-span-2 flex min-w-0 flex-col">
-					<dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-						Execution target
-					</dt>
+				{selectedRun.summary ? (
+					<MetadataItem
+						className="col-span-full"
+						label="Result"
+						value={selectedRun.summary}
+					/>
+				) : null}
+				<div className="col-span-full flex min-w-0 flex-col">
+					<dt className={fieldLabelClass}>Execution target</dt>
 					<dd className="mt-0.5 min-w-0">
 						<ExecutionIdentityBadges
 							backend={selectedRun.backend}
@@ -242,47 +190,29 @@ export function RunDetailPanel({
 				</div>
 			</dl>
 			<div>
-				<div className="mb-1 flex items-center gap-1.5 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
+				<div className={`mb-1 flex items-center gap-1.5 ${fieldLabelClass}`}>
 					Command
 					<RunCommandInfo command={selectedRun.launchCommand} runId={selectedRun.id} />
 				</div>
-				<pre className="max-h-28 overflow-auto rounded-md border border-border bg-card p-2 font-mono text-xs whitespace-pre-wrap text-foreground">
+				<pre className={`max-h-28 font-mono ${detailPreClass}`}>
 					{selectedRun.launchCommand?.display ?? 'Unavailable'}
 				</pre>
 			</div>
 			<RunCommitsSection run={selectedRun} />
-			{selectedRun.aiSummary ? (
-				<p className="text-xs break-words text-foreground">
-					<span className="font-medium text-foreground">AI summary:</span>{' '}
-					{selectedRun.aiSummary}
-				</p>
-			) : null}
-			{selectedRun.summary ? (
-				<p className="text-xs break-words text-foreground">
-					<span className="font-medium text-foreground">Summary:</span>{' '}
-					{selectedRun.summary}
-				</p>
-			) : null}
 			{stopDetail ? (
 				<div>
-					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-						Stop detail
-					</div>
-					<pre className="max-h-48 overflow-auto rounded-md border border-border bg-card p-2 text-xs whitespace-pre-wrap text-foreground">
-						{stopDetail}
-					</pre>
+					<div className={`mb-1 ${fieldLabelClass}`}>Stop detail</div>
+					<pre className={`max-h-48 ${detailPreClass}`}>{stopDetail}</pre>
 				</div>
 			) : null}
 			{selectedRun.errorMessage && selectedRun.errorMessage !== selectedRun.summary ? (
 				<div>
-					<div className="mb-1 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-						Error
-					</div>
+					<div className={`mb-1 ${fieldLabelClass}`}>Error</div>
 					<p className="text-xs break-words text-foreground">
 						{selectedRun.errorMessage}
 					</p>
 				</div>
 			) : null}
-		</div>
+		</Card>
 	);
 }

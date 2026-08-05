@@ -1,18 +1,9 @@
-/* eslint-disable react-refresh/only-export-components */
 import { default as Copy } from 'lucide-react/dist/esm/icons/copy';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { PipelineStepResultRecord } from '../../api/types.ts';
-
 import { Button } from '../../components/ui/button.tsx';
-
-export function stepTone(status: PipelineStepResultRecord['status']) {
-	if (status === 'completed') return 'emerald';
-	if (status === 'failed') return 'red';
-	if (status === 'running' || status === 'queued') return 'teal';
-	return 'amber';
-}
+import { LogPre } from './LogPre.tsx';
 
 const STEP_OUTPUT_COLLAPSE_THRESHOLD = 2000;
 const STEP_OUTPUT_COLLAPSED_LINES = 40;
@@ -74,13 +65,10 @@ export function StepOutput({ output }: { output: string }) {
 
 	return (
 		<div className="mt-3 space-y-2">
-			<pre
-				aria-label="Step output"
-				className="overflow-auto rounded-md bg-muted p-3 text-xs text-foreground"
-				id={outputId}>
+			<LogPre ariaLabel="Step output" id={outputId}>
 				{displayed}
 				{collapsed ? '\n…' : ''}
-			</pre>
+			</LogPre>
 			{(needsCollapse || hasOutput) && (
 				<div className="flex flex-wrap gap-2">
 					{needsCollapse && (

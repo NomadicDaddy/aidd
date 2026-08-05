@@ -5,6 +5,7 @@ import type { PipelineStepStatus } from '../../api/types.ts';
 
 import { Button } from '../../components/ui/button.tsx';
 import { useRunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
+import { LogPre } from './LogPre.tsx';
 
 /** Map a pipeline step status to a RunStatus for the live-output hook. */
 function stepToRunStatus(status: PipelineStepStatus) {
@@ -39,11 +40,9 @@ function RunConsoleContent({
 	}, [output.isStreaming, onStreamingChange]);
 
 	return (
-		<pre
-			aria-label="Run console output"
-			className="mt-2 max-h-[520px] w-full max-w-full overflow-auto rounded-md bg-black/90 p-4 text-xs leading-relaxed break-words whitespace-pre-wrap text-white/90">
+		<LogPre ariaLabel="Run console output" className="mt-2">
 			{display}
-		</pre>
+		</LogPre>
 	);
 }
 

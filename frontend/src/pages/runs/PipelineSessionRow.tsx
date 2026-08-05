@@ -12,6 +12,7 @@ import { Button, buttonClassName, IconButton } from '../../components/ui/button.
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
 import { PipelineSessionIdentityBadges } from './PipelineSessionIdentityBadges.tsx';
 import {
@@ -23,7 +24,9 @@ import {
 import {
 	containerHoverClass,
 	containerSelectableClass,
+	containerSelectedClass,
 	containerSelectionHandler,
+	leadingSlotClass,
 } from './runRowUtils.ts';
 import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
 
@@ -36,16 +39,25 @@ interface PipelineSessionRowProps {
 	projectRouteId: string | undefined;
 	selected: boolean;
 	session: PipelineSessionRecord;
+	/** See UnifiedExecutionTableProps: `false` drops the never-enabled Stop from History rows. */
+	showLifecycleControls: boolean;
 }
 
-function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onStop' | 'session'>) {
+function SessionActions({
+	onStop,
+	session,
+	showLifecycleControls,
+}: Pick<PipelineSessionRowProps, 'onStop' | 'session' | 'showLifecycleControls'>) {
 	const sessionContext = `${session.recipeName} (${session.projectName})`;
 	const stopBlockedReason = sessionStopUnavailableReason(session.status);
 	return (
-		<div className="flex flex-wrap gap-2">
+		// Two 32px controls plus an 8px gap fit the ACTIONS cell at every width the table renders at;
+		// left wrappable they stacked at 768 and every session row grew to double the height of the
+		// single-control run rows beside it.
+		<div className="flex flex-nowrap gap-2">
 			<Link
 				aria-label={`View report for ${sessionContext}`}
-				className={buttonClassName('secondary', 'h-8 w-8', 'icon')}
+				className={cn(buttonClassName('secondary', 'h-8 w-8', 'icon'), 'shrink-0')}
 				onClick={() =>
 					traceDataMovement({
 						category: 'event',
@@ -59,19 +71,21 @@ function SessionActions({ onStop, session }: Pick<PipelineSessionRowProps, 'onSt
 				to={`/pipeline-sessions/${session.id}`}>
 				<FileText aria-hidden="true" className="h-3.5 w-3.5" />
 			</Link>
-			<IconButton
-				ariaLabel={
-					stopBlockedReason !== null
-						? `${stopBlockedReason} for ${sessionContext}`
-						: `Stop session: ${sessionContext}`
-				}
-				className="h-8 w-8"
-				disabled={!isSessionActive(session.status)}
-				onClick={() => onStop(session.id)}
-				title={stopBlockedReason ?? 'Stop session'}
-				variant="danger">
-				<CircleStop aria-hidden="true" className="h-3.5 w-3.5" />
-			</IconButton>
+			{showLifecycleControls ? (
+				<IconButton
+					ariaLabel={
+						stopBlockedReason !== null
+							? `${stopBlockedReason} for ${sessionContext}`
+							: `Stop session: ${sessionContext}`
+					}
+					className="h-8 w-8 shrink-0"
+					disabled={!isSessionActive(session.status)}
+					onClick={() => onStop(session.id)}
+					title={stopBlockedReason ?? 'Stop session'}
+					variant="danger">
+					<CircleStop aria-hidden="true" className="h-3.5 w-3.5" />
+				</IconButton>
+			) : null}
 		</div>
 	);
 }
@@ -87,32 +101,39 @@ function SessionTitle({
 	const multiStep = isMultiStepSession(session);
 	return (
 		<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-			{multiStep && (
-				<Button
-					aria-expanded={expanded}
-					aria-label={`${expanded ? 'Collapse' : 'Expand'} steps for ${session.recipeName}`}
-					className="px-1"
-					onClick={() => onToggle(session.id)}
-					size="compact"
-					variant="ghost">
-					{expanded ? (
-						<ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
+			{/* The leading slot and the name are one group that cannot wrap internally: as separate
+			    wrappable items the teal icon was left orphaned on its own line with a long recipe
+			    name dropping beneath it. The slot is a fixed 24px on every row type — chevron for a
+			    multi-step session, Workflow icon otherwise, empty on run rows — so the whole NAME
+			    column shares one left edge instead of zig-zagging by row type. */}
+			<div className="flex min-w-0 items-center gap-2">
+				<span className={leadingSlotClass}>
+					{multiStep ? (
+						<Button
+							aria-expanded={expanded}
+							aria-label={`${expanded ? 'Collapse' : 'Expand'} steps for ${session.recipeName}`}
+							className="px-1"
+							onClick={() => onToggle(session.id)}
+							size="compact"
+							variant="ghost">
+							{expanded ? (
+								<ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
+							) : (
+								<ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
+							)}
+						</Button>
 					) : (
-						<ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
+						<Workflow aria-hidden="true" className="h-4 w-4 text-accent" />
 					)}
-				</Button>
-			)}
-			<Workflow
-				aria-hidden="true"
-				className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400"
-			/>
-			<ConsoleSelectionButton
-				className="whitespace-nowrap"
-				label={`Show ${session.recipeName} pipeline in Live Console`}
-				onSelect={() => selectSession(onSelect, session)}
-				selected={selected}>
-				{session.recipeName}
-			</ConsoleSelectionButton>
+				</span>
+				<ConsoleSelectionButton
+					className="truncate"
+					label={`Show ${session.recipeName} pipeline in Live Console`}
+					onSelect={() => selectSession(onSelect, session)}
+					selected={selected}>
+					{session.recipeName}
+				</ConsoleSelectionButton>
+			</div>
 			{multiStep && (
 				<span
 					className="font-mono text-xs text-muted-foreground"
@@ -165,8 +186,6 @@ function SessionMeta({
 	);
 }
 
-const selectedRowClass = 'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40';
-
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
 	const { now, onSelect, selected, session } = props;
 	return (
@@ -175,7 +194,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			className={cn(
 				'border-b transition-colors last:border-0',
 				containerSelectableClass,
-				selected ? selectedRowClass : containerHoverClass,
+				selected ? containerSelectedClass : containerHoverClass,
 			)}
 			onClick={containerSelectionHandler(() => selectSession(onSelect, session))}>
 			<td className="py-3 pr-3 pl-4">
@@ -198,7 +217,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 					{sessionStatusLabel(session.status)}
 				</Badge>
 				{session.errorMessage && (
-					<p className="mt-1 max-w-[16rem] truncate text-xs text-red-700 dark:text-red-300">
+					<p className={`mt-1 max-w-[16rem] truncate text-xs ${toneText.red}`}>
 						{session.errorMessage}
 					</p>
 				)}
@@ -207,7 +226,11 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 				{formatActiveDuration(session.durationMs, session.startedAt, now)}
 			</td>
 			<td className="py-3 pr-4 pl-3">
-				<SessionActions onStop={props.onStop} session={session} />
+				<SessionActions
+					onStop={props.onStop}
+					session={session}
+					showLifecycleControls={props.showLifecycleControls}
+				/>
 			</td>
 		</tr>
 	);
@@ -221,7 +244,7 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 			className={cn(
 				'px-4 py-3 transition-colors',
 				containerSelectableClass,
-				selected ? selectedRowClass : containerHoverClass,
+				selected ? containerSelectedClass : containerHoverClass,
 			)}
 			onClick={containerSelectionHandler(() => selectSession(onSelect, session))}
 			role="listitem">
@@ -234,12 +257,14 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 				<span>{formatActiveDuration(session.durationMs, session.startedAt, now)}</span>
 			</div>
 			{session.errorMessage && (
-				<p className="mt-1 text-xs text-red-700 dark:text-red-300">
-					{session.errorMessage}
-				</p>
+				<p className={`mt-1 text-xs ${toneText.red}`}>{session.errorMessage}</p>
 			)}
 			<div className="mt-2">
-				<SessionActions onStop={props.onStop} session={session} />
+				<SessionActions
+					onStop={props.onStop}
+					session={session}
+					showLifecycleControls={props.showLifecycleControls}
+				/>
 			</div>
 		</div>
 	);

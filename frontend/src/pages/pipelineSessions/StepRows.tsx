@@ -12,9 +12,12 @@ import type {
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
+import { sessionStatusTone, stepStatusLabel } from '../runs/pipelineSessionStatus.ts';
 import { pipelineStepLiveConsoleHref } from './pipelineSessionLinks.ts';
-import { StepOutput, stepTone } from './StepOutput.tsx';
+import { StepOutput } from './StepOutput.tsx';
 import { StepRunConsole } from './StepRunConsole.tsx';
 
 /**
@@ -74,41 +77,48 @@ export function buildStepRows(report: PipelineSessionReport): StepRow[] {
 
 export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStepResultRecord }) {
 	return (
-		<div
-			className="rounded-md border border-border p-4"
-			style={{ marginLeft: `${Math.min(step.depth, 4) * 16}px` }}>
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-				<div className="min-w-0">
-					<div className="flex flex-wrap items-center gap-2">
-						<Badge>{step.phase}</Badge>
-						<Badge tone={stepTone(step.status)}>{step.status}</Badge>
-						<Badge tone="teal">{step.stepType}</Badge>
-						{step.executionIdentity ? (
-							<ExecutionIdentityBadges {...step.executionIdentity} />
-						) : null}
+		// The depth indent lives on a wrapper because Card owns its own box; keeping it outside also
+		// means the nested surface keeps the house card radius rather than the badge-sized rounded-md.
+		<div style={{ marginLeft: `${Math.min(step.depth, 4) * 16}px` }}>
+			<Card variant="sunken">
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+					<div className="min-w-0">
+						<div className="flex flex-wrap items-center gap-2">
+							{/* Status leads: `phase` reads 'step' on every top-level row, so it only
+							    earns a badge where it distinguishes a hook, a nested recipe-ref
+							    child or an auto-fix retry. */}
+							<Badge tone={sessionStatusTone(step.status)}>
+								{stepStatusLabel(step.status)}
+							</Badge>
+							{step.phase !== 'step' && <Badge>{step.phase}</Badge>}
+							<Badge tone="teal">{step.stepType}</Badge>
+							{step.executionIdentity ? (
+								<ExecutionIdentityBadges {...step.executionIdentity} />
+							) : null}
+						</div>
+						<h3 className="mt-2 text-base font-semibold text-foreground">
+							{step.stepName}
+						</h3>
+						<p className="text-xs text-muted-foreground">
+							{formatDate(step.startedAt)} ·{' '}
+							{formatActiveDuration(step.durationMs, step.startedAt, now)}
+						</p>
 					</div>
-					<h3 className="mt-2 text-base font-semibold text-foreground">
-						{step.stepName}
-					</h3>
-					<p className="text-xs text-muted-foreground">
-						{formatDate(step.startedAt)} ·{' '}
-						{formatActiveDuration(step.durationMs, step.startedAt, now)}
-					</p>
+					{step.runId && (
+						<Link
+							className={buttonClassName()}
+							to={pipelineStepLiveConsoleHref(step.runId)}>
+							<ExternalLink className="h-4 w-4" />
+							Open in Live Console
+						</Link>
+					)}
 				</div>
-				{step.runId && (
-					<Link
-						className={buttonClassName()}
-						to={pipelineStepLiveConsoleHref(step.runId)}>
-						<ExternalLink className="h-4 w-4" />
-						Open in Live Console
-					</Link>
+				{step.outputSummary && <StepOutput output={step.outputSummary} />}
+				{step.errorMessage && (
+					<p className={`mt-3 text-sm ${toneText.red}`}>{step.errorMessage}</p>
 				)}
-			</div>
-			{step.outputSummary && <StepOutput output={step.outputSummary} />}
-			{step.errorMessage && (
-				<p className="mt-3 text-sm text-red-700 dark:text-red-300">{step.errorMessage}</p>
-			)}
-			{step.runId && <StepRunConsole runId={step.runId} stepStatus={step.status} />}
+				{step.runId && <StepRunConsole runId={step.runId} stepStatus={step.status} />}
+			</Card>
 		</div>
 	);
 }
@@ -123,13 +133,13 @@ export function PendingStepRow({
 	totalSteps: number;
 }) {
 	return (
-		<div className="rounded-md border border-dashed border-border bg-muted/50 p-4">
+		<div className="rounded-xl border border-dashed border-border bg-muted/40 p-4">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge tone="neutral">
 							<CircleDashed className="h-3 w-3" />
-							pending
+							Pending
 						</Badge>
 						<Badge tone="teal">{step.stepType}</Badge>
 						<span className="text-xs font-medium text-muted-foreground">

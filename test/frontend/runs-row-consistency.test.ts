@@ -135,7 +135,10 @@ describe('Runs row consistency', () => {
 		expect(table).toContain('<colgroup>');
 		expect(table).toContain('w-[22%]');
 		expect(table).toContain('Kind');
-		expect(table.match(/selectedRunId=/g)).toHaveLength(2);
+		// Both surfaces render the same `stepSubRows` helper, so the selected step run stays
+		// highlighted in the table and in the mobile list from one declaration.
+		expect(table).toMatch(/const stepSubRows = [\s\S]*?selectedRunId=/);
+		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(2);
 		expect(steps).toContain("aria-current={selected ? 'true' : undefined}");
 		expect(steps).toContain('aria-pressed={selected}');
 		expect(steps).toContain('xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr]');

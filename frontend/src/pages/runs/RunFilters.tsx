@@ -2,6 +2,7 @@ import type { RunMode } from '../../api/types.ts';
 import type { UnifiedStatusFilter } from './unifiedEntries.ts';
 
 import { Button } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
@@ -31,7 +32,10 @@ export function RunFilters({
 	statusFilter: UnifiedStatusFilter;
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-3">
+		// Carded like the launch row above it and the Telemetry filter row: as a bare flex div on
+		// the page background, two adjacent rows of the same control species read as two different
+		// classes of UI.
+		<Card className="flex flex-wrap items-center gap-3">
 			<select
 				aria-label="Filter activity by project"
 				className={cn(selectClass, 'min-w-44 flex-1')}
@@ -117,9 +121,10 @@ export function RunFilters({
 						source: 'RunsPage',
 					});
 					onClear();
-				}}>
+				}}
+				variant="secondary">
 				Clear
 			</Button>
-		</div>
+		</Card>
 	);
 }

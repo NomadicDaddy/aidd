@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { default as ArrowDownToLine } from 'lucide-react/dist/esm/icons/arrow-down-to-line';
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
+import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -8,7 +9,7 @@ import type { RunRecord } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { backendConsoleLimit } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
 import { utf8ByteLength } from '../../lib/formatters.ts';
@@ -178,12 +179,16 @@ export function LiveConsole({
 		// leftover space to the transcript scroller. The header, detail panel, controls, and
 		// notices all vary in height per run, which is why this is a flex chain rather than a
 		// calc() subtraction.
-		<section className="flex min-h-0 flex-col space-y-2 2xl:flex-1">
-			<div className="flex items-center justify-between">
-				<h2 className="text-sm font-semibold text-foreground">Live Console</h2>
-				{badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null}
-			</div>
+		<section className="flex min-h-0 flex-col 2xl:flex-1">
 			<Card className="flex min-h-0 flex-1 flex-col" variant="panel">
+				{/* Title, icon and stream badge sit in the house header row inside the card rather
+				    than floating above it, matching Active/History and the dashboard cards. */}
+				<CardHeader
+					badge={badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : undefined}
+					className="mb-3"
+					icon={<Terminal aria-hidden="true" className="h-4 w-4 text-accent" />}
+					title="Live Console"
+				/>
 				{showPanel && selectedRun ? (
 					<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
 				) : selectedRun?.summary ? (
@@ -195,7 +200,9 @@ export function LiveConsole({
 				{showPanel ? (
 					<Button
 						aria-expanded={consoleOpen}
-						className="mb-2"
+						// self-start: as a flex-column child it stretched to the card's full width and
+						// read as a centred divider instead of a control on the panel's left edge.
+						className="mb-2 self-start"
 						onClick={() => setConsoleOpen((open) => !open)}
 						size="compact"
 						variant="ghost">
@@ -233,7 +240,11 @@ export function LiveConsole({
 						) : null}
 						<div
 							aria-label="Run console output"
-							className="h-[560px] w-full max-w-full overflow-auto rounded-lg border border-white/10 bg-[#0a0e14] p-4 text-xs leading-relaxed text-white/85 shadow-inner 2xl:h-auto 2xl:min-h-0 2xl:flex-1"
+							// Themed tokens, not a raw hex: the scroller recedes one step to
+							// `background` under the `card` panel around it and follows the light/dark
+							// theme. The height is capped against the viewport as well as in pixels so
+							// the console cannot push History off a 900px-tall screen.
+							className="h-[min(560px,45vh)] w-full max-w-full overflow-auto rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner 2xl:h-auto 2xl:min-h-0 2xl:flex-1"
 							onScroll={handleScroll}
 							ref={scrollRef}>
 							{effectiveView === 'pretty' ? (
@@ -246,10 +257,7 @@ export function LiveConsole({
 									)}>
 									{matchingLines ? (
 										matchingLines.length === 0 ? (
-											// Inside the fixed dark scroller, so this dims against
-											// that surface instead of the themed `muted-foreground`,
-											// which is a dark grey under the light theme.
-											<span className="text-white/60">
+											<span className="text-muted-foreground">
 												No lines match “{trimmedFind}”.
 											</span>
 										) : (
@@ -268,7 +276,9 @@ export function LiveConsole({
 						{showControls && !pinnedToBottom ? (
 							<Button
 								aria-label="Jump to latest output"
-								className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md border border-teal-400/40 bg-black/90 px-2.5 py-1.5 text-xs font-medium text-teal-200 shadow-lg backdrop-blur hover:bg-black focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
+								// Position only: the primary variant already owns the fill, border,
+								// hover and focus ring this used to overpaint.
+								className="absolute right-3 bottom-3 shadow-lg"
 								onClick={jumpToLatest}
 								size="compact"
 								variant="primary">

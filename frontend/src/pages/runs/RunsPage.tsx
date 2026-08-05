@@ -1,5 +1,9 @@
 /* eslint-disable react-hooks/refs */
+import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
+// Aliased: the bare name collides with the DOM `History` interface, and TS resolves the global
+// first inside JSX.
+import { default as HistoryIcon } from 'lucide-react/dist/esm/icons/history';
 
 import { DataFreshness } from '../../components/shared/DataFreshness.tsx';
 import { LaunchTargetControl } from '../../components/shared/LaunchTargetControl.tsx';
@@ -25,7 +29,7 @@ export function RunsPage() {
 	const showingInitialSkeleton = page.isLoading && page.loadedEntryCount === 0;
 	const tableProps: Omit<
 		UnifiedExecutionTableProps,
-		'description' | 'emptyMessage' | 'entries' | 'title'
+		'description' | 'emptyMessage' | 'entries' | 'icon' | 'showLifecycleControls' | 'title'
 	> = {
 		continuedRunIds: page.continuedRunIds,
 		continuePendingId: page.continueRun.isPending ? page.continueRun.variables : undefined,
@@ -56,27 +60,26 @@ export function RunsPage() {
 				helpSlug="runs"
 				title="Runs"
 			/>
-			<section className="space-y-2">
-				<h2 className="text-sm font-semibold text-foreground">Launch Run</h2>
-				<RunLaunchCard
-					disabled={form.launch.isPending || !form.projectDir}
-					extraArgs={form.extraArgs}
-					launchTarget={form.primaryTarget}
-					mode={form.mode}
-					onExtraArgsChange={form.setExtraArgs}
-					onLaunch={form.submitLaunch}
-					onLaunchTargetChange={form.setPrimaryTarget}
-					onModeChange={form.setMode}
-					onProjectDirChange={(value) => {
-						form.setProjectDir(value);
-						if (value) form.setProjectError(false);
-					}}
-					projectDir={form.projectDir}
-					projectError={form.projectError}
-					projects={page.projectList}
-					selectedLaunchProject={page.selectedLaunchProject}
-				/>
-			</section>
+			{/* No <section>/<h2> wrapper: the card owns its own header row, so the title sits inside
+			    the surface it names instead of floating on the page background above it. */}
+			<RunLaunchCard
+				disabled={form.launch.isPending || !form.projectDir}
+				extraArgs={form.extraArgs}
+				launchTarget={form.primaryTarget}
+				mode={form.mode}
+				onExtraArgsChange={form.setExtraArgs}
+				onLaunch={form.submitLaunch}
+				onLaunchTargetChange={form.setPrimaryTarget}
+				onModeChange={form.setMode}
+				onProjectDirChange={(value) => {
+					form.setProjectDir(value);
+					if (value) form.setProjectError(false);
+				}}
+				projectDir={form.projectDir}
+				projectError={form.projectError}
+				projects={page.projectList}
+				selectedLaunchProject={page.selectedLaunchProject}
+			/>
 			{form.mode === 'triumvirate' && (
 				<Card className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 					<LaunchTargetControl
@@ -144,6 +147,7 @@ export function RunsPage() {
 							description="Runs and recipe pipelines currently executing."
 							emptyMessage="Nothing is running right now."
 							entries={page.activeEntries}
+							icon={<Activity aria-hidden="true" className="h-4 w-4 text-accent" />}
 							title="Active"
 							{...tableProps}
 						/>
@@ -169,6 +173,12 @@ export function RunsPage() {
 							description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
 							emptyMessage="No runs or pipelines match the current filters."
 							entries={page.historyEntries}
+							icon={
+								<HistoryIcon aria-hidden="true" className="h-4 w-4 text-accent" />
+							}
+							// Every row here is terminal, so Stop and Kill can never enable: ten greyed
+							// icons per screen that carry no information. Continue survives the flag.
+							showLifecycleControls={false}
 							title="History"
 							{...tableProps}
 						/>

@@ -1,9 +1,18 @@
-export function MetadataItem({ label, value }: { label: string; value: string }) {
+import { cn } from '../../lib/cn.ts';
+import { fieldLabelClass } from '../../lib/formStyles.ts';
+
+export function MetadataItem({
+	className,
+	label,
+	value,
+}: {
+	className?: string;
+	label: string;
+	value: string;
+}) {
 	return (
-		<div className="flex flex-col">
-			<dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-				{label}
-			</dt>
+		<div className={cn('flex min-w-0 flex-col', className)}>
+			<dt className={fieldLabelClass}>{label}</dt>
 			<dd className="min-w-0 text-xs break-words text-foreground">{value}</dd>
 		</div>
 	);

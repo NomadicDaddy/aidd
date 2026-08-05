@@ -25,7 +25,7 @@ export function ListEditor({
 	return (
 		<div className="space-y-2">
 			<div className={fieldLabelClass}>{label}</div>
-			<div className={cn('grid gap-2', compactGrid && 'sm:grid-cols-2')}>
+			<div className={cn('grid gap-2', compactGrid && 'lg:grid-cols-2')}>
 				{items.map((item, index) => {
 					const isBlank = validateBlank && item.trim() === '';
 					const errorId = `${label}-entry-${index}-error`;

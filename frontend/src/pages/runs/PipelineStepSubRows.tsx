@@ -47,9 +47,9 @@ export function PipelineStepSubRows({
 				if (row.kind === 'pending') {
 					return (
 						<li
-							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground md:grid md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] md:gap-0 md:px-0 md:py-0"
+							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground xl:grid xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0"
 							key={`pending-${row.sequenceNumber}`}>
-							<div className="flex min-w-0 basis-full items-center gap-2 md:px-4 md:py-2">
+							<div className="flex min-w-0 basis-full items-center gap-2 xl:px-4 xl:py-2">
 								<span className="w-6 text-right font-mono">
 									{row.sequenceNumber}.
 								</span>
@@ -57,19 +57,19 @@ export function PipelineStepSubRows({
 									{row.step.name}
 								</span>
 							</div>
-							<span aria-hidden="true" className="hidden md:block" />
-							<div className="md:px-3 md:py-2">
+							<span aria-hidden="true" className="hidden xl:block" />
+							<div className="xl:px-3 xl:py-2">
 								<Badge tone="teal">{row.step.stepType}</Badge>
 							</div>
-							<span className="hidden md:block md:px-3 md:py-2">—</span>
-							<div className="md:px-3 md:py-2">
+							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
+							<div className="xl:px-3 xl:py-2">
 								<Badge tone="neutral">
 									<CircleDashed aria-hidden="true" className="h-3 w-3" />
 									Pending
 								</Badge>
 							</div>
-							<span className="hidden md:block md:px-3 md:py-2">—</span>
-							<span className="hidden md:block md:px-3 md:py-2">—</span>
+							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
+							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
 						</li>
 					);
 				}
@@ -80,7 +80,7 @@ export function PipelineStepSubRows({
 					<li
 						aria-current={selected ? 'true' : undefined}
 						className={cn(
-							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs md:grid md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] md:gap-0 md:px-0 md:py-0',
+							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs xl:grid xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0',
 							selected &&
 								'bg-teal-100/80 shadow-[inset_4px_0_0_var(--accent)] dark:bg-teal-900/40',
 						)}
@@ -93,18 +93,18 @@ export function PipelineStepSubRows({
 							</span>
 							<span className="truncate text-foreground">{step.stepName}</span>
 						</div>
-						<span aria-hidden="true" className="hidden md:block" />
-						<div className="md:px-3 md:py-2">
+						<span aria-hidden="true" className="hidden xl:block" />
+						<div className="xl:px-3 xl:py-2">
 							<Badge tone="teal">{step.stepType}</Badge>
 						</div>
-						<div className="md:px-3 md:py-2">
+						<div className="xl:px-3 xl:py-2">
 							{step.executionIdentity ? (
 								<ExecutionIdentityBadges {...step.executionIdentity} />
 							) : (
 								<span className="text-muted-foreground">—</span>
 							)}
 						</div>
-						<div className="min-w-0 md:px-3 md:py-2">
+						<div className="min-w-0 xl:px-3 xl:py-2">
 							<Badge tone={stepTone(step.status)}>{step.status}</Badge>
 							{step.errorMessage && (
 								<p className="mt-1 truncate text-red-700 dark:text-red-300">
@@ -112,10 +112,10 @@ export function PipelineStepSubRows({
 								</p>
 							)}
 						</div>
-						<span className="whitespace-nowrap text-muted-foreground md:px-3 md:py-2">
+						<span className="whitespace-nowrap text-muted-foreground xl:px-3 xl:py-2">
 							{formatActiveDuration(step.durationMs, step.startedAt, now)}
 						</span>
-						<div className="md:px-3 md:py-2">
+						<div className="xl:px-3 xl:py-2">
 							{step.runId ? (
 								<Button
 									aria-label={`Show step ${step.stepName} run in Live Console`}

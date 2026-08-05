@@ -19,7 +19,7 @@ export function PageHeader({
 	title: ReactNode;
 }) {
 	return (
-		<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+		<header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 			<div className="min-w-0">
 				{breadcrumb !== undefined && (
 					<div className="mb-1 text-sm text-muted-foreground">{breadcrumb}</div>

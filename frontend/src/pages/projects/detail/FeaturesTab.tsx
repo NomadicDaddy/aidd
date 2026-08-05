@@ -195,7 +195,7 @@ export function FeaturesTab({
 						rows={slice}
 						runActive={hasActiveRun}
 					/>
-					<div className="flex flex-col gap-3 p-4 md:hidden">
+					<div className="flex flex-col gap-3 p-4 xl:hidden">
 						{slice.map((feature) => {
 							const id = feature.id || stringValue(feature, 'id');
 							const directory = featureDirectory(feature);

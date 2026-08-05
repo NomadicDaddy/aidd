@@ -112,7 +112,7 @@ export function BackendDefaultsTable({
 				</Button>
 			</div>
 
-			<Card className="hidden overflow-x-auto p-0 md:block">
+			<Card className="hidden overflow-x-auto p-0 xl:block">
 				<table
 					aria-label="Backend status and defaults"
 					className="w-full min-w-[860px] text-left text-sm">
@@ -167,7 +167,7 @@ export function BackendDefaultsTable({
 				</table>
 			</Card>
 
-			<div className="space-y-2 md:hidden">
+			<div className="space-y-2 xl:hidden">
 				{backendDefaultOptions.map((backend) => {
 					const defaults = backends[backend] ?? emptyBackendDefault();
 					return (

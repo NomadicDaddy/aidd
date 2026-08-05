@@ -30,7 +30,7 @@ export function WorkingTreeTable({
 	const someSelected = files.some((file) => selected.has(file.path));
 
 	return (
-		<Card className="hidden overflow-x-auto p-0 md:block">
+		<Card className="hidden overflow-x-auto p-0 xl:block">
 			<table aria-label="Changed files" className="w-full min-w-[640px] text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>

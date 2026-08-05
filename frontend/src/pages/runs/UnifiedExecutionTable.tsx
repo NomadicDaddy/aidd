@@ -53,7 +53,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 				<p className="text-xs text-muted-foreground">{props.description}</p>
 			</div>
 			<Card className="overflow-hidden p-0">
-				<div className="hidden overflow-x-auto md:block">
+				<div className="hidden overflow-x-auto xl:block">
 					<table
 						aria-label={title}
 						className="w-full min-w-[56rem] table-fixed text-left text-sm">
@@ -157,7 +157,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 				</div>
 				<div
 					aria-label={title}
-					className="flex flex-col divide-y divide-border md:hidden"
+					className="flex flex-col divide-y divide-border xl:hidden"
 					role="list">
 					{entries.length === 0 && (
 						<p className="px-4 py-4 text-sm text-muted-foreground">

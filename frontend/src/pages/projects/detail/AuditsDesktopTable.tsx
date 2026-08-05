@@ -46,7 +46,7 @@ export function AuditsDesktopTable({
 		else onSelectAll();
 	}
 	return (
-		<Card className="hidden overflow-x-auto p-0 md:block">
+		<Card className="hidden overflow-x-auto p-0 xl:block">
 			<table aria-label="Project audits" className="w-full min-w-[960px] text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>

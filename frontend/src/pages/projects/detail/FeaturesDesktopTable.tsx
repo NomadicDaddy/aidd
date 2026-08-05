@@ -41,7 +41,7 @@ export function FeaturesDesktopTable({
 	runActive: boolean;
 }) {
 	return (
-		<div className="hidden overflow-x-auto md:block">
+		<div className="hidden overflow-x-auto xl:block">
 			<table aria-label="Project features" className="w-full table-fixed text-left text-sm">
 				<colgroup>
 					<col className="w-[20%]" />

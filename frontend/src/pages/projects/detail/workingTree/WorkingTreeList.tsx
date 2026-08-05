@@ -5,7 +5,7 @@ import { Badge } from '../../../../components/ui/badge.tsx';
 import { Card } from '../../../../components/ui/card.tsx';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
-// Mobile counterpart to WorkingTreeTable — the table is `hidden md:block`, this is `md:hidden`.
+// Narrow-content counterpart to WorkingTreeTable — the table starts at `xl:`.
 export function WorkingTreeList({
 	disabled,
 	files,
@@ -19,7 +19,7 @@ export function WorkingTreeList({
 }) {
 	if (files.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className="xl:hidden">
 				<EmptyState>
 					The working tree is clean — nothing to stage, discard, or commit.
 				</EmptyState>
@@ -27,7 +27,7 @@ export function WorkingTreeList({
 		);
 	}
 	return (
-		<div className="space-y-2 md:hidden">
+		<div className="space-y-2 xl:hidden">
 			{files.map((file) => {
 				const status = describeWorkingTreeFile(file);
 				return (

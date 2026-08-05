@@ -36,7 +36,7 @@ export function CatalogTable({
 	const hasSelectableDefinitions = definitions.some((item) => item.enabled);
 	return (
 		<div className="space-y-3">
-			<Card className="hidden overflow-x-auto p-0 md:block">
+			<Card className="hidden overflow-x-auto p-0 xl:block">
 				<table
 					aria-label="Audit catalog"
 					className="w-full min-w-[960px] text-left text-sm">
@@ -143,7 +143,7 @@ export function CatalogTable({
 				</table>
 			</Card>
 
-			<div className="space-y-2 md:hidden">
+			<div className="space-y-2 xl:hidden">
 				{definitions.length > 0 ? (
 					<div className="flex justify-end">
 						<button

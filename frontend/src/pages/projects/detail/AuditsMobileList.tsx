@@ -40,7 +40,7 @@ export function AuditsMobileList({
 	const allSelected =
 		selectableNames.length > 0 && selectableNames.every((n) => selected.includes(n));
 	return (
-		<div className="space-y-2 md:hidden">
+		<div className="space-y-2 xl:hidden">
 			{rows.length > 0 && selectableNames.length > 0 ? (
 				<div className="flex justify-end">
 					<Button

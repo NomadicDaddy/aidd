@@ -138,7 +138,7 @@ describe('Runs row consistency', () => {
 		expect(table.match(/selectedRunId=/g)).toHaveLength(2);
 		expect(steps).toContain("aria-current={selected ? 'true' : undefined}");
 		expect(steps).toContain('aria-pressed={selected}');
-		expect(steps).toContain('md:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr]');
+		expect(steps).toContain('xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr]');
 	});
 
 	test('run origin labels use the current Director name from one shared helper', async () => {

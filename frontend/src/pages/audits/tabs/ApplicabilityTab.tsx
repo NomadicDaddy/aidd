@@ -96,7 +96,7 @@ export function ApplicabilityTab() {
 				</Card>
 			)}
 
-			<Card className="hidden overflow-x-auto p-0 md:block">
+			<Card className="hidden overflow-x-auto p-0 xl:block">
 				<table
 					aria-label="Audit applicability matrix"
 					className="w-full min-w-[820px] text-left text-sm">
@@ -139,7 +139,7 @@ export function ApplicabilityTab() {
 				</table>
 			</Card>
 
-			<div className="space-y-2 md:hidden">
+			<div className="space-y-2 xl:hidden">
 				{mapping.data.matrix.map((row) => (
 					<div className="rounded-md border border-border p-3" key={row.auditName}>
 						<div className="font-medium text-foreground">{row.auditName}</div>

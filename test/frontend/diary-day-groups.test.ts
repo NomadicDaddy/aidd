@@ -3,7 +3,13 @@ import { describe, expect, test } from 'bun:test';
 import type { DiaryEntry, DiaryTimelineItem } from '../../frontend/src/api/types.ts';
 
 import {
+	filterDiaryEntries,
+	filterTimelineItems,
+	windowStart,
+} from '../../frontend/src/pages/diary/diaryFilters.ts';
+import {
 	dayKeyFromMs,
+	dayLabelForKey,
 	groupDiaryByDay,
 	hasEntryForDay,
 	timelineItemTone,
@@ -85,10 +91,85 @@ describe('groupDiaryByDay', () => {
 		expect(dayKeyFromMs(msFor('2026-06-09', 23))).toBe('2026-06-09');
 	});
 
-	test('releases keep their kind tone; runs color by status', () => {
-		expect(timelineItemTone({ ...item('r', 1), kind: 'release', status: 'completed' })).toBe(
-			'emerald',
-		);
+	test('colors the status badge by run status', () => {
+		expect(timelineItemTone({ ...item('r', 1), status: 'completed' })).toBe('emerald');
 		expect(timelineItemTone({ ...item('r', 1), status: 'failed' })).toBe('red');
+	});
+});
+
+describe('dayLabelForKey', () => {
+	test('names the two most recent days relatively', () => {
+		expect(dayLabelForKey('2026-06-12', '2026-06-12')).toBe('Today');
+		expect(dayLabelForKey('2026-06-11', '2026-06-12')).toBe('Yesterday');
+	});
+
+	test('crosses a month boundary when resolving yesterday', () => {
+		expect(dayLabelForKey('2026-05-31', '2026-06-01')).toBe('Yesterday');
+	});
+
+	test('formats older days without the full weekday-and-year string', () => {
+		const label = dayLabelForKey('2026-06-01', '2026-06-12');
+		expect(label).not.toBe('2026-06-01');
+		expect(label.toUpperCase()).not.toContain('MONDAY');
+		expect(label.length).toBeLessThan('Monday, June 1, 2026'.length);
+	});
+
+	test('groupDiaryByDay labels its buckets against the supplied clock', () => {
+		const groups = groupDiaryByDay(
+			[],
+			[item('run_a', msFor('2026-06-12', 9)), item('run_b', msFor('2026-06-11', 9))],
+			msFor('2026-06-12', 18),
+		);
+		expect(groups.map((group) => group.label)).toEqual(['Today', 'Yesterday']);
+	});
+});
+
+describe('diary filters', () => {
+	const now = msFor('2026-06-12', 12);
+	const items = [
+		{ ...item('run_today', msFor('2026-06-12', 9)) },
+		{ ...item('skill_recent', msFor('2026-06-02', 9)), kind: 'skill' as const },
+		{ ...item('release_old', msFor('2026-04-01', 9)), kind: 'release' as const },
+	];
+
+	test('all/all is a pass-through', () => {
+		expect(filterTimelineItems(items, 'all', 'all', now)).toHaveLength(3);
+	});
+
+	test('narrows to one kind', () => {
+		expect(filterTimelineItems(items, 'release', 'all', now).map((i) => i.id)).toEqual([
+			'release_old',
+		]);
+	});
+
+	test('narrows to a time window', () => {
+		expect(filterTimelineItems(items, 'all', '7d', now).map((i) => i.id)).toEqual([
+			'run_today',
+		]);
+		expect(filterTimelineItems(items, 'all', '30d', now).map((i) => i.id)).toEqual([
+			'run_today',
+			'skill_recent',
+		]);
+	});
+
+	test('combines both controls', () => {
+		expect(filterTimelineItems(items, 'skill', '30d', now).map((i) => i.id)).toEqual([
+			'skill_recent',
+		]);
+		expect(filterTimelineItems(items, 'skill', '7d', now)).toHaveLength(0);
+	});
+
+	test('windowStart is unbounded only for "all"', () => {
+		expect(windowStart('all', now)).toBeNull();
+		expect(windowStart('7d', now)).toBe(now - 7 * 24 * 60 * 60 * 1000);
+	});
+
+	test('hides narrative entries whenever a specific kind is selected', () => {
+		const entries = [entry('2026-06-12', 'demo'), entry('2026-04-01', 'demo')];
+		expect(filterDiaryEntries(entries, 'all', 'all', now)).toHaveLength(2);
+		expect(filterDiaryEntries(entries, 'all', '7d', now).map((e) => e.date)).toEqual([
+			'2026-06-12',
+		]);
+		expect(filterDiaryEntries(entries, 'run', 'all', now)).toHaveLength(0);
 	});
 });

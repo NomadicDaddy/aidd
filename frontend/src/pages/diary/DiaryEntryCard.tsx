@@ -24,7 +24,7 @@ export function DiaryEntryCard({
 					<div className="mb-1 flex flex-wrap items-center gap-2">
 						{showProject ? (
 							<Link
-								className="text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
+								className="text-xs font-medium text-accent hover:underline"
 								to={`/projects/${encodeURIComponent(entry.projectId)}`}>
 								{entry.projectName}
 							</Link>

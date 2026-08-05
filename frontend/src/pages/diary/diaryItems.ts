@@ -27,10 +27,10 @@ export function timelineKindLabel(kind: DiaryTimelineKind): string {
 // own green status. The kind badge renders neutral (see DiaryTimelineList) and is told apart by its
 // label, which leaves tone meaning exactly one thing per row.
 //
-// Releases are point-in-time markers rather than lifecycle events, so they are always a success
-// marker; everything else colors by run/session status (reusing the Runs/History tone mapping).
+// Releases are point-in-time markers rather than lifecycle events — their status is the literal
+// string "completed" on every row — so DiaryTimelineList renders no status badge for them at all.
+// Everything else colors by run/session status, reusing the Runs/History tone mapping.
 export function timelineItemTone(item: DiaryTimelineItem): Tone {
-	if (item.kind === 'release') return 'emerald';
 	return runStatusTone(item.status);
 }
 
@@ -50,10 +50,23 @@ export function hasEntryForDay(entries: DiaryEntry[], dayKey: string): boolean {
 	return entries.some((entry) => entry.date === dayKey);
 }
 
-function labelForKey(key: string): string {
+function shiftDayKey(key: string, days: number): string {
 	const parsed = Date.parse(`${key}T00:00:00`);
 	if (Number.isNaN(parsed)) return key;
-	return new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(parsed);
+	return dayKeyFromMs(parsed + days * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Day headings are the feed's only structural divider, so they are named the way a reader thinks
+ * about the last two days. `dateStyle: 'full'` produced "TUESDAY, AUGUST 4, 2026" for a repeating
+ * rail element; `medium` keeps the heading short enough to stay legible while sticky.
+ */
+export function dayLabelForKey(key: string, todayKey: string): string {
+	if (key === todayKey) return 'Today';
+	if (key === shiftDayKey(todayKey, -1)) return 'Yesterday';
+	const parsed = Date.parse(`${key}T00:00:00`);
+	if (Number.isNaN(parsed)) return key;
+	return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(parsed);
 }
 
 // Interleave narrative entries and timeline activity into day buckets, newest day first. Within a
@@ -62,13 +75,20 @@ function labelForKey(key: string): string {
 export function groupDiaryByDay(
 	entries: DiaryEntry[],
 	items: DiaryTimelineItem[],
+	now: number = Date.now(),
 ): DiaryDayGroup[] {
 	const groups = new Map<string, DiaryDayGroup>();
+	const todayKey = dayKeyFromMs(now);
 
 	const ensure = (key: string): DiaryDayGroup => {
 		const existing = groups.get(key);
 		if (existing) return existing;
-		const created: DiaryDayGroup = { entries: [], items: [], key, label: labelForKey(key) };
+		const created: DiaryDayGroup = {
+			entries: [],
+			items: [],
+			key,
+			label: dayLabelForKey(key, todayKey),
+		};
 		groups.set(key, created);
 		return created;
 	};

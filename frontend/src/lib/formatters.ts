@@ -6,6 +6,19 @@ export function formatDate(value: null | number | string | undefined): string {
 	}).format(new Date(value));
 }
 
+const timeOfDayFormatter = new Intl.DateTimeFormat(undefined, {
+	hour: '2-digit',
+	minute: '2-digit',
+});
+
+/**
+ * Local wall-clock time with no date, for lists whose grouping already establishes the day. Both
+ * fields are 2-digit so a column of stamps stays a straight rail under `tabular-nums`.
+ */
+export function formatTimeOfDay(value: number | string): string {
+	return timeOfDayFormatter.format(new Date(value));
+}
+
 export function formatDuration(ms: null | number | undefined): string {
 	if (!ms) return '0s';
 	const seconds = Math.round(ms / 1000);

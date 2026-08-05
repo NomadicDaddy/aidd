@@ -18,7 +18,11 @@ export const sectionCaptionClass =
  * block and must stay quieter than the value it introduces, while a section caption heads a
  * navigation group. Colour is deliberately absent so an error field can carry its own tone.
  *
+ * Distinct again from `fieldLabelClass` in lib/formStyles.ts, which labels an interactive form
+ * control: that one is a full type step larger and carries its own colour, because it has to hold
+ * its own against the input beneath it.
+ *
  * The size is the named `text-2xs` step rather than the `text-[0.65rem]` each surface had invented
  * for itself, so the micro scale has exactly one declared value.
  */
-export const fieldLabelClass = 'text-2xs font-medium tracking-wide uppercase';
+export const microLabelClass = 'text-2xs font-medium tracking-wide uppercase';

@@ -4,12 +4,12 @@ import type { InvocationRecord } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
 import { formatDate, formatDuration } from '../../lib/formatters.ts';
-import { fieldLabelClass } from '../../lib/typography.ts';
+import { microLabelClass } from '../../lib/typography.ts';
 
 function DetailItem({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<div className="min-w-0">
-			<dt className={`text-muted-foreground ${fieldLabelClass}`}>{label}</dt>
+			<dt className={`text-muted-foreground ${microLabelClass}`}>{label}</dt>
 			<dd className="mt-0.5 text-xs break-all text-foreground">{value ?? '—'}</dd>
 		</div>
 	);
@@ -81,7 +81,7 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 				</dl>
 				{invocation.errorMessage && (
 					<div className="mt-3 border-t border-border pt-3">
-						<div className={`text-red-600 dark:text-red-300 ${fieldLabelClass}`}>
+						<div className={`text-red-600 dark:text-red-300 ${microLabelClass}`}>
 							Error message
 						</div>
 						<pre className="mt-1 max-h-48 overflow-auto text-xs whitespace-pre-wrap text-red-800 dark:text-red-200">

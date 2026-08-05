@@ -1,8 +1,7 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
-import { default as Gauge } from 'lucide-react/dist/esm/icons/gauge';
-import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
+import { default as Upload } from 'lucide-react/dist/esm/icons/upload';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -12,10 +11,8 @@ import type { SkillDefinition } from '../../api/types/skills.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { LaunchForm } from '../../components/shared/LaunchForm.tsx';
-import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { AlertDialog } from '../../components/ui/alert-dialog.tsx';
-import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
@@ -24,19 +21,10 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useProjects } from '../../hooks/useProjects.ts';
 import { useSkillImports, useSkills } from '../../hooks/useSkills.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
-import {
-	MATURITY_SKILL_IDS,
-	RECIPE_SKILL_IDS,
-	SKILL_CATEGORY_FILTERS,
-	type SkillCategoryFilter,
-} from '../../lib/catalogCuration.ts';
-import { formatUsageBadge } from '../../lib/usageBadge.ts';
+import { SKILL_CATEGORY_FILTERS, type SkillCategoryFilter } from '../../lib/catalogCuration.ts';
+import { SkillCatalog } from './SkillCatalog.tsx';
 import { SkillDetailsCard } from './SkillDetailsCard.tsx';
-import { SkillImportPanel } from './SkillImportPanel.tsx';
-
-function skillSummary(skill: SkillDefinition): string {
-	return skill.description || skill.usage || skill.title;
-}
+import { SkillImportDialog } from './SkillImportDialog.tsx';
 
 export function SkillsPage() {
 	useDocumentTitle('Skills');
@@ -47,6 +35,7 @@ export function SkillsPage() {
 	const [query, setQuery] = useState('');
 	const [category, setCategory] = useState<SkillCategoryFilter>('all');
 	const [deleteTarget, setDeleteTarget] = useState<null | string>(null);
+	const [importOpen, setImportOpen] = useState(false);
 	const [selectedId, setSelectedId] = useState<null | string>(null);
 	const [args, setArgs] = useState('');
 	const [executionIntent, setExecutionIntent] = useState<SkillExecutionIntent>('review-only');
@@ -105,104 +94,49 @@ export function SkillsPage() {
 	return (
 		<div className="page-reveal space-y-4">
 			<PageHeader
+				actions={
+					<Button onClick={() => setImportOpen(true)} size="toolbar" variant="secondary">
+						<Upload aria-hidden="true" className="h-4 w-4" />
+						Import skill
+					</Button>
+				}
 				description="Run aidd-local skill definitions directly or compose them in recipes."
 				helpSlug="skills"
 				title="Skills"
 			/>
-			<SkillImportPanel />
-			<div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
-				{/* self-start keeps the catalog at its own height: the list inside caps at 34rem, so
-				    stretching the Card to match a taller details column leaves ~250px of dead
-				    surface under a scroll region that cannot grow into it. */}
-				<Card className="min-w-0 space-y-3 lg:self-start">
-					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-						<Input
-							aria-label="Search skills"
-							className="pl-8"
-							data-shortcut-search=""
-							name="skillSearch"
-							onChange={(event) => setQuery(event.target.value)}
-							placeholder="Filter skills"
-							value={query}
-						/>
-					</div>
-					<SegmentedControl
-						ariaLabel="Filter skills by category"
-						className="max-w-full"
-						onChange={setCategory}
-						options={SKILL_CATEGORY_FILTERS}
-						value={category}
+			{/* Filters belong above the split, not inside the 18–24rem catalog column: in there the
+			    seven category segments wrapped onto three rows and spent ~110px before a single
+			    skill was shown. This is the same full-width filter Card /recipes and /telemetry use. */}
+			<Card className="grid gap-3 lg:grid-cols-[minmax(0,20rem)_1fr] lg:items-end">
+				<div className="relative">
+					<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+					<Input
+						aria-label="Search skills"
+						className="pl-8"
+						data-shortcut-search=""
+						name="skillSearch"
+						onChange={(event) => setQuery(event.target.value)}
+						placeholder="Filter skills"
+						value={query}
 					/>
-					<div className="max-h-[34rem] space-y-1 overflow-auto pr-1">
-						{skills.isLoading && skillList.length === 0 ? (
-							<div className="space-y-2 p-1">
-								{Array.from({ length: 6 }).map((_, index) => (
-									<div
-										className="space-y-2 rounded-md border border-border px-3 py-2"
-										key={index}>
-										<SkeletonLines count={2} label="Loading skills…" />
-									</div>
-								))}
-							</div>
-						) : null}
-						{filtered.map((skill) => {
-							const usageLine = formatUsageBadge(usageByResourceId.get(skill.id));
-							return (
-								<button
-									className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
-										skill.id === selected?.id
-											? 'border-teal-300 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/30'
-											: 'border-border hover:bg-muted'
-									}`}
-									key={skill.id}
-									onClick={() => setSelectedId(skill.id)}
-									type="button">
-									<div className="flex flex-wrap items-center gap-2">
-										<span className="font-mono text-sm text-foreground">
-											{skill.id}
-										</span>
-										{RECIPE_SKILL_IDS.has(skill.id) ? (
-											<Badge tone="neutral">
-												<ListTree aria-hidden="true" className="h-3 w-3" />
-												Recipe
-											</Badge>
-										) : null}
-										{MATURITY_SKILL_IDS.has(skill.id) ? (
-											<Badge tone="neutral">
-												<Gauge aria-hidden="true" className="h-3 w-3" />
-												Maturity
-											</Badge>
-										) : null}
-										<Badge
-											tone={
-												skill.origin === 'imported' ? 'amber' : 'neutral'
-											}>
-											{skill.origin}
-										</Badge>
-									</div>
-									<p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-										{skillSummary(skill)}
-									</p>
-									{usageLine ? (
-										<p className="mt-1 text-xs text-muted-foreground">
-											{usageLine}
-										</p>
-									) : null}
-								</button>
-							);
-						})}
-						{!skills.isLoading && filtered.length === 0 ? (
-							<EmptyState>
-								{skillList.length === 0
-									? 'No skills available.'
-									: category !== 'all'
-										? 'No skills in this category.'
-										: 'No skills match your search.'}
-							</EmptyState>
-						) : null}
-					</div>
-				</Card>
+				</div>
+				<SegmentedControl
+					ariaLabel="Filter skills by category"
+					className="max-w-full"
+					onChange={setCategory}
+					options={SKILL_CATEGORY_FILTERS}
+					value={category}
+				/>
+			</Card>
+			<div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
+				<SkillCatalog
+					loading={skills.isLoading}
+					onSelect={setSelectedId}
+					selectedId={selected?.id ?? null}
+					skills={filtered}
+					total={skillList.length}
+					usageByResourceId={usageByResourceId}
+				/>
 				{selected ? (
 					<div className="min-w-0 space-y-4">
 						<SkillDetailsCard
@@ -228,8 +162,11 @@ export function SkillsPage() {
 							setProjectDir={setProjectDir}
 						/>
 						<Card className="space-y-2">
-							<h3 className="text-sm font-semibold text-foreground">Definition</h3>
-							<pre className="max-h-[28rem] overflow-auto rounded-md bg-muted p-3 font-mono text-xs text-foreground">
+							<h3 className="text-base font-semibold text-foreground">Definition</h3>
+							{/* SKILL.md is prose, not fixed-width code: without reflow the lines were
+							    sliced mid-word at the container edge with no scrollbar to reveal
+							    the rest. */}
+							<pre className="max-h-[28rem] overflow-auto rounded-md bg-muted p-3 font-mono text-xs break-words whitespace-pre-wrap text-foreground">
 								{selected.body}
 							</pre>
 						</Card>
@@ -247,6 +184,7 @@ export function SkillsPage() {
 					</EmptyState>
 				)}
 			</div>
+			<SkillImportDialog onClose={() => setImportOpen(false)} open={importOpen} />
 			<AlertDialog
 				description="Deletion is blocked when a recipe or maturity action still references this skill."
 				destructive

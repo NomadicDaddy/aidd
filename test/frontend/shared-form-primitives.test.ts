@@ -65,7 +65,7 @@ describe('shared form primitives', () => {
 			['pages/projects/detail/MoveProjectCard.tsx', 'selectClass'],
 			['pages/projects/detail/ProfileTab.tsx', 'textareaClass'],
 			['pages/runs/RunLaunchCard.tsx', 'selectClass'],
-			['pages/skills/SkillImportPanel.tsx', 'selectClass'],
+			['pages/skills/SkillImportDialog.tsx', 'selectClass'],
 		] as const;
 
 		for (const [file, canonicalClass] of auditedControls) {

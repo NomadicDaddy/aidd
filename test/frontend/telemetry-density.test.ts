@@ -155,10 +155,10 @@ describe('telemetry surfaces stay on the token and type scales', () => {
 		]);
 
 		expect(typography).toContain(
-			"export const fieldLabelClass = 'text-2xs font-medium tracking-wide uppercase'",
+			"export const microLabelClass = 'text-2xs font-medium tracking-wide uppercase'",
 		);
-		expect(details).toContain("import { fieldLabelClass } from '../../lib/typography.ts'");
-		expect(details).toContain('${fieldLabelClass}');
+		expect(details).toContain("import { microLabelClass } from '../../lib/typography.ts'");
+		expect(details).toContain('${microLabelClass}');
 	});
 
 	test('the segmented control track re-themes with the cards it sits in', async () => {

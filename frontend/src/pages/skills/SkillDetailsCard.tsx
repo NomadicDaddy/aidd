@@ -4,7 +4,7 @@ import type { SkillDefinition } from '../../api/types/skills.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { microLabelClass } from '../../lib/typography.ts';
 
 /**
@@ -36,26 +36,25 @@ export function SkillDetailsCard({
 	const supportCount = skill.supportPaths.length;
 	return (
 		<Card className="space-y-3">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div className="min-w-0 flex-1">
-					<div className="font-mono text-sm text-accent">{skill.id}</div>
-					{/* One step for every card title on this page: the detail card, the import
-					    dialog and the Definition block sit at the same level of the hierarchy, and
-					    `text-2xl` display is reserved for the PageHeader. */}
-					<h2 className="text-base font-semibold break-words text-foreground">
-						{skill.title}
-					</h2>
-					<p className="mt-1 text-sm break-words text-foreground">{skill.description}</p>
-				</div>
-				<div className="flex flex-wrap gap-2">
-					<Badge tone="neutral">{skill.origin}</Badge>
-					{supportCount > 0 ? (
-						<Badge tone="neutral">
-							{supportCount} {supportCount === 1 ? 'file' : 'files'}
-						</Badge>
-					) : null}
-				</div>
-			</div>
+			{/* The mono skill id is CardHeader's `identifier` slot. This header was hand-rolled
+			    only because that slot did not exist, which is what put the detail card a step out
+			    of line with every other card title on the surface. */}
+			<CardHeader
+				action={
+					<div className="flex flex-wrap gap-2">
+						<Badge tone="neutral">{skill.origin}</Badge>
+						{supportCount > 0 ? (
+							<Badge tone="neutral">
+								{supportCount} {supportCount === 1 ? 'file' : 'files'}
+							</Badge>
+						) : null}
+					</div>
+				}
+				className="mb-0"
+				description={skill.description}
+				identifier={skill.id}
+				title={skill.title}
+			/>
 			{skill.compatibility || skill.allowedTools ? (
 				<DetailBlock title="Advisory declarations">
 					{skill.compatibility ? <div>Compatibility: {skill.compatibility}</div> : null}

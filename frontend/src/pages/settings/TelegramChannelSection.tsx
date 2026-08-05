@@ -5,7 +5,7 @@ import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Button, IconButton } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
@@ -62,10 +62,11 @@ export function TelegramChannelSection({
 		<Card className="space-y-3">
 			{/* The section title takes the h2 its peer cards use; fieldLabelClass belongs on the
 			    field labels below, which had been rendered as plain sentence-case spans. */}
-			<h2 className="text-sm font-semibold text-foreground">
-				<Send aria-hidden="true" className="mr-1 inline h-4 w-4" />
-				Telegram Channel
-			</h2>
+			<CardHeader
+				className="mb-0"
+				icon={<Send className="h-4 w-4" />}
+				title="Telegram Channel"
+			/>
 			<p className="text-xs text-muted-foreground">
 				Telegram bot integration for bridged mode. The bot token is write-only — the current
 				configured state is shown without revealing the stored value.

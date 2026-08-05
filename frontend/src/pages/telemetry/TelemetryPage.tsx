@@ -7,7 +7,7 @@ import { SkeletonLines, SkeletonRows } from '../../components/shared/LoadingStat
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import {
@@ -158,10 +158,11 @@ export function TelemetryPage() {
 			    to its own height and leave 600px of empty canvas in whichever column is shorter. */}
 			<section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 				<Card className="space-y-3">
-					<div className="flex items-center justify-between">
-						<h2 className="text-sm font-semibold text-foreground">Most used</h2>
-						<Badge tone="neutral">top {topRows.length}</Badge>
-					</div>
+					<CardHeader
+						badge={<Badge tone="neutral">top {topRows.length}</Badge>}
+						className="mb-0"
+						title="Most used"
+					/>
 					{topQuery.isLoading && topRows.length === 0 ? (
 						<SkeletonLines count={6} label="Loading leaderboard…" />
 					) : (
@@ -170,14 +171,15 @@ export function TelemetryPage() {
 				</Card>
 				<div className="space-y-4">
 					<Card className="space-y-3">
-						<div className="flex items-center justify-between">
-							<h2 className="text-sm font-semibold text-foreground">
-								Invocations over time
-							</h2>
-							<Badge tone="neutral">
-								{bucket === 'hour' ? 'per hour' : 'per day'}
-							</Badge>
-						</div>
+						<CardHeader
+							badge={
+								<Badge tone="neutral">
+									{bucket === 'hour' ? 'per hour' : 'per day'}
+								</Badge>
+							}
+							className="mb-0"
+							title="Invocations over time"
+						/>
 						{timeseriesQuery.isLoading && timeseriesPoints.length === 0 ? (
 							<SkeletonLines count={5} label="Loading timeseries…" />
 						) : (
@@ -185,12 +187,11 @@ export function TelemetryPage() {
 						)}
 					</Card>
 					<Card className="space-y-3">
-						<div>
-							<h2 className="text-sm font-semibold text-foreground">Backend mix</h2>
-							<p className="text-xs text-muted-foreground">
-								All invocations in the selected filters.
-							</p>
-						</div>
+						<CardHeader
+							className="mb-0"
+							description="All invocations in the selected filters."
+							title="Backend mix"
+						/>
 						{backendsQuery.isLoading && backendRows.length === 0 ? (
 							<SkeletonLines count={4} label="Loading backend mix…" />
 						) : (
@@ -198,25 +199,26 @@ export function TelemetryPage() {
 						)}
 					</Card>
 					<Card className="space-y-3">
-						<div className="flex flex-wrap items-center justify-between gap-2">
-							<div>
-								<h2 className="text-sm font-semibold text-foreground">
-									Agent output
-								</h2>
-								<p className="text-xs text-muted-foreground">
+						<CardHeader
+							action={
+								<SegmentedControl
+									ariaLabel="Output metric"
+									onChange={setOutputMetric}
+									options={outputMetricOptions}
+									value={outputMetric}
+								/>
+							}
+							className="mb-0"
+							description={
+								<>
 									{outputMetric === 'lines'
 										? 'Lines added and removed by run commits'
 										: 'Tokens consumed and produced by runs'}{' '}
 									· {bucket === 'hour' ? 'per hour' : 'per day'}
-								</p>
-							</div>
-							<SegmentedControl
-								ariaLabel="Output metric"
-								onChange={setOutputMetric}
-								options={outputMetricOptions}
-								value={outputMetric}
-							/>
-						</div>
+								</>
+							}
+							title="Agent output"
+						/>
 						{!outputApplies ? (
 							// A filter-driven message, not a loading or absent-data state, so it gets
 							// the shared empty surface and a control that undoes the filter causing it.
@@ -242,10 +244,11 @@ export function TelemetryPage() {
 			</section>
 
 			<Card className="space-y-3">
-				<div className="flex items-center justify-between">
-					<h2 className="text-sm font-semibold text-foreground">Recent invocations</h2>
-					<Badge tone="neutral">latest {invocations.length} in window</Badge>
-				</div>
+				<CardHeader
+					badge={<Badge tone="neutral">latest {invocations.length} in window</Badge>}
+					className="mb-0"
+					title="Recent invocations"
+				/>
 				{invocationsQuery.isLoading && invocations.length === 0 ? (
 					<SkeletonRows columns={7} count={8} label="Loading invocations…" />
 				) : (

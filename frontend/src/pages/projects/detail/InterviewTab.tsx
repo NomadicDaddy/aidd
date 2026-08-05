@@ -86,6 +86,13 @@ export function InterviewTab({
 	const remaining = interview.total - interview.answered;
 	return (
 		<div className="space-y-4">
+			<Card>
+				<CardHeader
+					className="mb-0"
+					description="The intake interview for this project — what has been answered and what is still outstanding."
+					title="Interview"
+				/>
+			</Card>
 			{/* The shared metric tile rather than three more hand-rolled ones: these were the only
 			    place in the app that re-declared the tone colours locally, and they did it with values
 			    `toneText` does not use. */}

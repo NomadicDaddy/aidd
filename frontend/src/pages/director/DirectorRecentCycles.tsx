@@ -10,11 +10,11 @@ import type { Tone } from '../../lib/tones.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { cycleElapsed, cycleStageLabels } from '../../lib/directorConstants.ts';
 import { formatDate } from '../../lib/formatters.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
-import { humanizeEnum, sectionDescClass, sectionTitleClass } from './directorUtils.ts';
+import { humanizeEnum } from './directorUtils.ts';
 
 function cycleTone(status: DirectorCycle['status']): Tone {
 	if (status === 'failed') return 'red';
@@ -83,11 +83,14 @@ export function DirectorRecentCycles({ cycles, now }: { cycles: DirectorCycle[];
 		<section aria-labelledby="director-cycles-heading">
 			<Card>
 				{/* Was 14px/12px against the 16px/14px every other section heading on this page
-				    uses, so the page had two heading scales for two peer sections. */}
-				<h2 className={sectionTitleClass} id="director-cycles-heading">
-					Recent Cycles
-				</h2>
-				<p className={`${sectionDescClass} mb-3`}>History of completed analysis passes.</p>
+				    uses, so the page had two heading scales for two peer sections. Both now come
+				    from CardHeader, which is the only place that scale is declared. */}
+				<CardHeader
+					className="mb-3"
+					description="History of completed analysis passes."
+					id="director-cycles-heading"
+					title="Recent Cycles"
+				/>
 				<div className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
 					{cycles.map((cycle) => (
 						<CycleRow cycle={cycle} key={cycle.id} now={now} />

@@ -5,7 +5,7 @@ import type { ProjectDetail, ProjectRoadmapSummary } from '../../../api/types.ts
 
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { toneText } from '../../../lib/tones.ts';
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';
 import { FeatureFilters } from './FeatureFilters.tsx';
@@ -77,6 +77,13 @@ export function FeaturesTab({
 	}
 	return (
 		<>
+			<Card>
+				<CardHeader
+					className="mb-0"
+					description="Every feature recorded for this project, with its status, priority, milestone and dependencies."
+					title="Features"
+				/>
+			</Card>
 			<FeatureFilters
 				filteredTotal={filteredTotal}
 				hasFilters={hasFilters}

@@ -1,6 +1,6 @@
 import type { BackendInputName, TriumvirateSettings } from '../../api/types.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
@@ -19,12 +19,11 @@ export function TriumvirateSection({
 }) {
 	return (
 		<Card className="space-y-3">
-			<div>
-				<h2 className="text-sm font-semibold text-foreground">Triumvirate Roles</h2>
-				<p className="mt-0.5 text-xs text-muted-foreground">
-					Override the secondary, overseer, and execution roles used by Triumvirate runs.
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0"
+				description="Override the secondary, overseer, and execution roles used by Triumvirate runs."
+				title="Triumvirate Roles"
+			/>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 				<FieldRow label="Secondary CLI">
 					<select

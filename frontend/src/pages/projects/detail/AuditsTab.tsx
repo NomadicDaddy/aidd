@@ -6,7 +6,7 @@ import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { SkeletonRows } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { fieldLabelClass, selectClass } from '../../../lib/formStyles.ts';
 import { AuditsDesktopTable } from './AuditsDesktopTable.tsx';
@@ -52,33 +52,58 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 
 	return (
 		<div className="space-y-4">
-			<Card className="flex flex-wrap items-center gap-2">
-				<Badge tone={auditsEnabled ? 'emerald' : 'red'}>
-					<ShieldCheck className="mr-1 h-3 w-3" />
-					{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
-				</Badge>
-				<span className="mr-auto text-xs text-muted-foreground">
-					Profile bucket: <span className="font-mono">{audits.data?.bucket ?? '—'}</span>
-				</span>
-				<Button
-					aria-describedby={runDisabledReason ? 'project-audits-run-help' : undefined}
-					disabled={!auditsEnabled || selectedRunnable.length === 0 || launch.isPending}
-					onClick={() => runSelected(false)}
-					title={runDisabledReason}>
-					<Play className="h-4 w-4" />
-					Run Selected
-				</Button>
-				<Button
-					aria-describedby={runDisabledReason ? 'project-audits-run-help' : undefined}
-					disabled={!auditsEnabled || selectedRunnable.length === 0 || launch.isPending}
-					onClick={() => runSelected(true)}
-					title={runDisabledReason}
-					variant="secondary">
-					Review Selected
-				</Button>
+			<Card>
+				<CardHeader
+					action={
+						<div className="flex flex-wrap items-center gap-2">
+							<Button
+								aria-describedby={
+									runDisabledReason ? 'project-audits-run-help' : undefined
+								}
+								disabled={
+									!auditsEnabled ||
+									selectedRunnable.length === 0 ||
+									launch.isPending
+								}
+								onClick={() => runSelected(false)}
+								title={runDisabledReason}>
+								<Play className="h-4 w-4" />
+								Run Selected
+							</Button>
+							<Button
+								aria-describedby={
+									runDisabledReason ? 'project-audits-run-help' : undefined
+								}
+								disabled={
+									!auditsEnabled ||
+									selectedRunnable.length === 0 ||
+									launch.isPending
+								}
+								onClick={() => runSelected(true)}
+								title={runDisabledReason}
+								variant="secondary">
+								Review Selected
+							</Button>
+						</div>
+					}
+					badge={
+						<Badge tone={auditsEnabled ? 'emerald' : 'red'}>
+							<ShieldCheck className="mr-1 h-3 w-3" />
+							{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
+						</Badge>
+					}
+					className="mb-0"
+					description={
+						<>
+							Profile bucket:{' '}
+							<span className="font-mono">{audits.data?.bucket ?? '—'}</span>
+						</>
+					}
+					title="Audits"
+				/>
 				{runDisabledReason ? (
 					<span
-						className="basis-full text-xs text-muted-foreground"
+						className="mt-2 block text-xs text-muted-foreground"
 						id="project-audits-run-help"
 						role="status">
 						{runDisabledReason}

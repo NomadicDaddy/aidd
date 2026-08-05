@@ -64,6 +64,7 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 				className="mb-0 border-b border-border px-4 py-3"
 				description="CLI and model combinations."
 				headingLevel={3}
+				level="subsection"
 				title="By execution target"
 			/>
 			<div className="overflow-x-auto">
@@ -115,6 +116,7 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 				className="mb-0 border-b border-border px-4 py-3"
 				description="Recorded mode; skill runs commonly use directive."
 				headingLevel={3}
+				level="subsection"
 				title="By run mode"
 			/>
 			<div className="overflow-x-auto">

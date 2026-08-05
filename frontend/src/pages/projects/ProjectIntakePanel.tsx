@@ -2,7 +2,7 @@ import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useMemo } from 'react';
 
 import { IconButton } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
 import { ProjectCreateLane } from './ProjectCreateLane.tsx';
@@ -60,15 +60,16 @@ export function ProjectIntakePanel({
 
 	return (
 		<Card className="space-y-4 border-teal-200 bg-teal-50/70 dark:border-teal-900/60 dark:bg-teal-950/20">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="text-base font-semibold text-foreground">Project Intake</h2>
-					<p className="text-sm text-foreground">{LANE_COPY[lane].description}</p>
-				</div>
-				<IconButton ariaLabel="Close project intake" onClick={onClose} variant="ghost">
-					<X className="h-4 w-4" />
-				</IconButton>
-			</div>
+			<CardHeader
+				action={
+					<IconButton ariaLabel="Close project intake" onClick={onClose} variant="ghost">
+						<X className="h-4 w-4" />
+					</IconButton>
+				}
+				className="mb-0"
+				description={LANE_COPY[lane].description}
+				title="Project Intake"
+			/>
 
 			<SegmentedControl<IntakeLane>
 				ariaLabel="Project intake lane"

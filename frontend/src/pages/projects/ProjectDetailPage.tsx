@@ -22,7 +22,7 @@ import { AppLaunchControl } from '../../components/shared/AppLaunchControl.tsx';
 import { LoadingState } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { TabList, TabPanel } from '../../components/ui/tabs.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import {
@@ -168,6 +168,16 @@ export function ProjectDetailPage() {
 			/>
 			<TabPanel activeTab={tab} id="overview" idPrefix="project-detail">
 				<div className="space-y-4">
+					{/* Every tab on this page opens with the same carded CardHeader. Overview and
+					    Features were the two that opened straight into content, so a reader landing
+					    on either had no line telling them what they were looking at. */}
+					<Card>
+						<CardHeader
+							className="mb-0"
+							description="Delivery posture, maturity, declared metadata, and the most recent aidd activity for this project."
+							title="Overview"
+						/>
+					</Card>
 					<BlueprintImplementationCard project={detail} />
 					<MaturityOverview
 						maturity={detail.maturityDetail}

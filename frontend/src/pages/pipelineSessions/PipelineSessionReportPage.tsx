@@ -12,7 +12,7 @@ import { ErrorState } from '../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
 import { usePipelineSessionReport, usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
@@ -181,8 +181,8 @@ function stepSummary(report: PipelineSessionReport): string {
 function StepsCard({ now, report }: { now: number; report: PipelineSessionReport }) {
 	return (
 		<Card className="space-y-3">
-			<h2 className="text-lg font-semibold text-foreground">Steps</h2>
-			<p className="text-sm text-muted-foreground">{stepSummary(report)}</p>
+			{/* Was text-lg — the one card title on the surface a step above every other. */}
+			<CardHeader className="mb-0" description={stepSummary(report)} title="Steps" />
 			<div className="space-y-3">
 				{buildStepRows(report).map((row) =>
 					row.kind === 'executed' ? (

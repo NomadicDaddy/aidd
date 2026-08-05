@@ -8,7 +8,7 @@ import type { RuntimeAction } from './settingsRuntime.ts';
 import { requestWebRestart, requestWebShutdown } from '../../api/admin.ts';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 
 export function SettingsRuntimeControls({
@@ -65,32 +65,29 @@ export function SettingsRuntimeControls({
 			    used instead of the accent tokens. The danger-variant Shutdown button carries the
 			    weight; the tint only sets the zone apart. */}
 			<Card className="flex flex-col gap-4 border-border bg-accent-muted">
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-					<div>
-						<h2 className="text-sm font-semibold text-foreground">
-							Control Panel Runtime
-						</h2>
-						<p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-							Manage the running aidd web backend.
-						</p>
-					</div>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							disabled={runtimePending !== null}
-							onClick={() => openRuntimeDialog('restart')}
-							variant="secondary">
-							<RotateCw className="h-4 w-4" />
-							Restart
-						</Button>
-						<Button
-							disabled={runtimePending !== null}
-							onClick={() => openRuntimeDialog('shutdown')}
-							variant="danger">
-							<Power className="h-4 w-4" />
-							Shutdown
-						</Button>
-					</div>
-				</div>
+				<CardHeader
+					action={
+						<div className="flex flex-wrap gap-2">
+							<Button
+								disabled={runtimePending !== null}
+								onClick={() => openRuntimeDialog('restart')}
+								variant="secondary">
+								<RotateCw className="h-4 w-4" />
+								Restart
+							</Button>
+							<Button
+								disabled={runtimePending !== null}
+								onClick={() => openRuntimeDialog('shutdown')}
+								variant="danger">
+								<Power className="h-4 w-4" />
+								Shutdown
+							</Button>
+						</div>
+					}
+					className="mb-0"
+					description="Manage the running aidd web backend."
+					title="Control Panel Runtime"
+				/>
 			</Card>
 
 			<ConfirmDialog

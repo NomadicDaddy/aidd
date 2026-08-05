@@ -11,11 +11,10 @@ import type { ChatAgentAction } from '../../api/types.ts';
 import { ChatMessageBubble } from '../../components/shared/ChatMessageBubble.tsx';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Button, IconButton } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
-import { sectionDescClass, sectionTitleClass } from './directorUtils.ts';
 
 export type ChatSession = { id: string; title: string; updatedAt: number };
 export type ChatMessage = {
@@ -112,14 +111,12 @@ export function DirectorChatSection({
 				title="Delete Director chat?"
 			/>
 			<Card>
-				<div className="mb-3">
-					<h2 className={sectionTitleClass} id="director-chat-heading">
-						Director Chat
-					</h2>
-					<p className={sectionDescClass}>
-						Ask the director about fleet state in a focused conversation.
-					</p>
-				</div>
+				<CardHeader
+					className="mb-3"
+					description="Ask the director about fleet state in a focused conversation."
+					id="director-chat-heading"
+					title="Director Chat"
+				/>
 				{/* The 220px session rail stole a fifth of the width at 768, leaving the transcript
 				    ~470px and the composer too narrow for its own Send button. The rail stacks above
 				    the transcript until lg, where there is width for both. */}

@@ -6,7 +6,7 @@ import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import type { SharedFileEntry, WebConfigSettings } from '../../api/types.ts';
 
 import { Button, IconButton } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { ListEditor } from './ListEditor.tsx';
@@ -44,10 +44,11 @@ export function SharedMetadataSection({
 			<Card className="space-y-2">
 				{/* Card titles take the h2 the rest of the surface uses; fieldLabelClass is for the
 				    field labels inside them. */}
-				<h2 className="text-sm font-semibold text-foreground">
-					<FolderSymlink aria-hidden="true" className="mr-1 inline h-4 w-4" />
-					Shared Directories
-				</h2>
+				<CardHeader
+					className="mb-0"
+					icon={<FolderSymlink className="h-4 w-4" />}
+					title="Shared Directories"
+				/>
 				<p className="text-xs text-muted-foreground">
 					Directories copied into each project during metadata scaffolding.
 				</p>
@@ -63,10 +64,11 @@ export function SharedMetadataSection({
 			</Card>
 
 			<Card className="space-y-2">
-				<h2 className="text-sm font-semibold text-foreground">
-					<FileSymlink aria-hidden="true" className="mr-1 inline h-4 w-4" />
-					Shared Files
-				</h2>
+				<CardHeader
+					className="mb-0"
+					icon={<FileSymlink className="h-4 w-4" />}
+					title="Shared Files"
+				/>
 				<p className="text-xs text-muted-foreground">
 					Files copied into each project during metadata scaffolding. Each entry is a
 					source path with an optional target path (relative to the project directory).

@@ -8,7 +8,7 @@ import {
 	ExecutionIdentityBadges,
 } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { backendLabel, backendOptions } from '../../lib/backends.ts';
 import {
@@ -68,12 +68,7 @@ function CatalogGroup({
 	return (
 		<Card aria-labelledby={id}>
 			<section>
-				<div className="mb-3">
-					<h2 className="text-sm font-semibold text-foreground" id={id}>
-						{title}
-					</h2>
-					<p className="text-xs text-muted-foreground">{description}</p>
-				</div>
+				<CardHeader className="mb-3" description={description} id={id} title={title} />
 				<div className="flex flex-wrap items-center gap-2">{children}</div>
 			</section>
 		</Card>
@@ -112,17 +107,12 @@ export function ExecutionIdentityBadgeLabPage() {
 
 			<Card aria-labelledby="badge-lab-representative" className="overflow-hidden p-0">
 				<section>
-					<header className="border-b border-border px-4 py-3">
-						<h2
-							className="text-sm font-semibold text-foreground"
-							id="badge-lab-representative">
-							Representative identities
-						</h2>
-						<p className="text-xs text-muted-foreground">
-							Composed examples exercise production, provider, custom, and partial
-							data.
-						</p>
-					</header>
+					<CardHeader
+						className="mb-0 border-b border-border px-4 py-3"
+						description="Composed examples exercise production, provider, custom, and partial data."
+						id="badge-lab-representative"
+						title="Representative identities"
+					/>
 					<div className="grid gap-px bg-border sm:grid-cols-2">
 						{representativeIdentities.map(({ description, identity, label }) => (
 							<div className="min-w-0 bg-card p-4" key={label}>

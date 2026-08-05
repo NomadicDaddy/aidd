@@ -4,8 +4,9 @@ import { textareaClass as sharedTextareaClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 
 export const textareaClass = sharedTextareaClass;
-export const sectionTitleClass = 'text-base font-semibold text-foreground';
-export const sectionDescClass = 'mt-0.5 text-sm text-muted-foreground';
+// `sectionTitleClass`/`sectionDescClass` were deleted here. They were a second declaration of the
+// card-title scale, which is why the Director page ran two heading sizes across four peer sections;
+// every section on this page now goes through CardHeader.
 
 export function riskTone(risk: DirectorRiskLevel): 'amber' | 'emerald' | 'red' {
 	if (risk === 'HIGH') return 'red';

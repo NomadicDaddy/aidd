@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { WebConfigSettings } from '../../api/types.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
@@ -88,11 +88,10 @@ function SettingsBlock({
 	title: string;
 }) {
 	return (
-		<section className="grid gap-4 border-t border-border p-3 first:border-t-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)]">
-			<div>
-				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
-				<p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
-			</div>
+		// Was a two-column grid with the title in a 12rem left rail — the only header on the
+		// Settings surface that sat beside what it described rather than above it.
+		<section className="border-t border-border p-3 first:border-t-0">
+			<CardHeader description={description} title={title} />
 			<div>{children}</div>
 		</section>
 	);

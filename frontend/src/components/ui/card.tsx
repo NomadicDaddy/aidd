@@ -37,14 +37,26 @@ export function Card({
 	);
 }
 
+// Two visual steps, and only two. A section title and the subsection titles under it have to be
+// told apart at a glance, but a third step would be indistinguishable from the second at these
+// sizes and would only invite each page to pick its own.
+const headerLevels = {
+	section: 'text-base font-semibold text-foreground',
+	subsection: 'text-sm font-semibold text-foreground',
+} as const;
+
 /**
  * Canonical card/section header: the single declaration of card-title typography and of how the
- * icon, title, badge, description and action slots relate to each other.
+ * icon, title, identifier, badge, description and action slots relate to each other.
  *
- * Every slot is optional so a consumer can render just what it has without inventing a variant, and
- * `headingLevel` selects the semantic level without touching the visual treatment — a card nested
- * under an `h2` section renders `h3` and still looks identical, which is how heading order stays
- * contiguous for screen readers.
+ * Every slot is optional so a consumer can render just what it has without inventing a variant.
+ * `identifier` is the mono line under the title — a recipe id, a skill id, a file path — and it
+ * exists because its absence is what made Recipes and Skills hand-roll their own header instead.
+ *
+ * `headingLevel` and `level` are deliberately independent. The first is semantics: a card nested
+ * under an `h2` section emits `h3` so heading order stays contiguous for screen readers. The second
+ * is typography. They usually agree, but a page may need an `h3` that still reads as a top-level
+ * section, and pinning one to the other would force it to choose between the two.
  *
  * Page-level and document headings are not this component's business; those use `PageHeader` and
  * `MarkdownContent`.
@@ -57,6 +69,8 @@ export function CardHeader({
 	headingLevel = 2,
 	icon,
 	id,
+	identifier,
+	level = 'section',
 	title,
 }: {
 	action?: ReactNode;
@@ -66,6 +80,8 @@ export function CardHeader({
 	headingLevel?: 2 | 3 | 4 | 5 | 6;
 	icon?: ReactNode;
 	id?: string;
+	identifier?: ReactNode;
+	level?: keyof typeof headerLevels;
 	title?: ReactNode;
 }) {
 	const Heading = `h${headingLevel}` as const;
@@ -79,12 +95,17 @@ export function CardHeader({
 						</span>
 					)}
 					{title !== undefined && (
-						<Heading className="text-sm font-semibold text-foreground" id={id}>
+						<Heading className={headerLevels[level]} id={id}>
 							{title}
 						</Heading>
 					)}
 					{badge}
 				</div>
+				{identifier !== undefined && (
+					<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+						{identifier}
+					</p>
+				)}
 				{description !== undefined && (
 					<p className="mt-1 text-xs text-muted-foreground">{description}</p>
 				)}

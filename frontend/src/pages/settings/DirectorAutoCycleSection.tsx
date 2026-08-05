@@ -1,6 +1,6 @@
 import type { WebConfigSettings } from '../../api/types.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
@@ -30,8 +30,8 @@ export function DirectorAutoCycleSection({
 	return (
 		<Card>
 			<div>
-				<h2 className="text-base font-semibold text-foreground">Director Auto-Cycle</h2>
-				<p className="mt-0.5 text-sm text-muted-foreground">
+				<CardHeader className="mb-0" title="Director Auto-Cycle" />
+				<p className="mt-1 text-xs text-muted-foreground">
 					Automatically run a fleet analysis cycle on a fixed cadence. The web process
 					runs a catch-up cycle on startup if the fleet hasn&apos;t been analyzed within
 					the interval. Manual runs from the Director page are always available.
@@ -75,8 +75,13 @@ export function DirectorAutoCycleSection({
 				</FieldRow>
 			</div>
 			<div className="mt-6 border-t border-border pt-4">
-				<h3 className="text-sm font-semibold text-foreground">Suggestion granularity</h3>
-				<p className="mt-0.5 text-sm text-muted-foreground">
+				<CardHeader
+					className="mb-0"
+					headingLevel={3}
+					level="subsection"
+					title="Suggestion granularity"
+				/>
+				<p className="mt-1 text-xs text-muted-foreground">
 					<span className="font-medium">Targeted</span> surfaces one suggestion per
 					concrete artifact (the next finding, remediation item, or feature to work) plus
 					a rollup for the rest. <span className="font-medium">Aggregate</span> emits one

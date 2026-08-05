@@ -5,7 +5,7 @@ import type {
 } from '../../api/metrics.ts';
 import type { Tone } from '../../lib/tones.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useSystemMetrics, useWebVitalsSummary } from '../../hooks/useMetrics.ts';
 import { formatBytes } from '../../lib/formatters.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
@@ -135,13 +135,11 @@ interface SystemMetricsContentProps {
 export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentProps) {
 	return (
 		<Card className="space-y-4">
-			<div>
-				<h3 className="text-sm font-medium text-foreground">System metrics</h3>
-				<p className="mt-0.5 text-xs text-muted-foreground">
-					Live process and host resource usage, sampled every minute. Updates every few
-					seconds.
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0"
+				description="Live process and host resource usage, sampled every minute. Updates every few seconds."
+				title="System metrics"
+			/>
 			{metrics.isError ? (
 				<p className={`text-xs ${toneText.red}`} role="alert">
 					Could not load system metrics.
@@ -155,10 +153,12 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 			)}
 
 			<div className="border-t border-border pt-4">
-				<h3 className="text-sm font-medium text-foreground">Core Web Vitals</h3>
-				<p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-					Frontend performance over the last 6 hours, rated against Google's thresholds.
-				</p>
+				<CardHeader
+					description="Frontend performance over the last 6 hours, rated against Google's thresholds."
+					headingLevel={3}
+					level="subsection"
+					title="Core Web Vitals"
+				/>
 				{vitals.isError ? (
 					<p className={`text-xs ${toneText.red}`} role="alert">
 						Could not load web vitals.

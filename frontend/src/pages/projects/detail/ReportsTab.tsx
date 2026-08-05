@@ -5,7 +5,7 @@ import type { ProjectReportsResponse } from '../../../api/types.ts';
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { formatRelativeAge } from '../../../lib/formatters.ts';
 import { reportOriginLabel, reportStatusTone } from './reportsUtils.ts';
@@ -49,19 +49,22 @@ export function ReportsTab({
 			{/* The tab used to open straight into an unlabelled stack of 21 cards — the one surface
 			    on this page that never said what the reader was looking at or how much of it there
 			    was. This is the section header every sibling tab already uses. */}
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2 className="text-sm font-semibold text-foreground">Project reports</h2>
-				<SegmentedControl<ReportKindFilter>
-					ariaLabel="Filter reports by kind"
-					onChange={setKind}
-					options={[
-						{ label: `All (${ordered.length})`, value: 'all' },
-						{ label: `Remediation (${counts.remediation})`, value: 'remediation' },
-						{ label: `Feature (${counts.feature})`, value: 'feature' },
-					]}
-					value={kind}
-				/>
-			</div>
+			<CardHeader
+				action={
+					<SegmentedControl<ReportKindFilter>
+						ariaLabel="Filter reports by kind"
+						onChange={setKind}
+						options={[
+							{ label: `All (${ordered.length})`, value: 'all' },
+							{ label: `Remediation (${counts.remediation})`, value: 'remediation' },
+							{ label: `Feature (${counts.feature})`, value: 'feature' },
+						]}
+						value={kind}
+					/>
+				}
+				className="mb-0"
+				title="Project reports"
+			/>
 			{visible.length === 0 ? (
 				<Card>No reports match the selected kind.</Card>
 			) : (

@@ -5,7 +5,7 @@ import type { ProviderSettings, ReasoningEffort, WebConfigSettings } from '../..
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
@@ -179,16 +179,12 @@ export function ProviderConfigSection({
 	return (
 		<section aria-labelledby="provider-settings-heading" className="space-y-3">
 			<Card className="grid gap-3 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:items-center">
-				<div>
-					<h2
-						className="text-sm font-semibold text-foreground"
-						id="provider-settings-heading">
-						Providers
-					</h2>
-					<p className="mt-0.5 text-xs text-muted-foreground">
-						Expand a provider to edit its endpoint, model, reasoning, or write-only key.
-					</p>
-				</div>
+				<CardHeader
+					className="mb-0"
+					description="Expand a provider to edit its endpoint, model, reasoning, or write-only key."
+					id="provider-settings-heading"
+					title="Providers"
+				/>
 				<FieldRow label="Default Provider">
 					<Input
 						onChange={(event) =>

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { LaunchTargetBadge } from '../../components/shared/LaunchTargetControl.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDirector } from '../../hooks/useDirector.ts';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
@@ -18,7 +18,7 @@ import { ActiveCyclePanel } from './ActiveCyclePanel.tsx';
 import { DirectorChatSection } from './DirectorChatSection.tsx';
 import { DirectorRecentCycles } from './DirectorRecentCycles.tsx';
 import { DirectorSuggestionsList } from './DirectorSuggestions.tsx';
-import { sectionDescClass, sectionTitleClass, textareaClass } from './directorUtils.ts';
+import { textareaClass } from './directorUtils.ts';
 
 export function DirectorPage() {
 	useDocumentTitle('Director');
@@ -181,40 +181,40 @@ export function DirectorPage() {
 				<div className="space-y-5">
 					<section aria-labelledby="director-cycle-heading">
 						<Card>
-							<div className="flex flex-wrap items-start justify-between gap-3">
-								<div>
-									<h2 className={sectionTitleClass} id="director-cycle-heading">
-										Run Cycle
-									</h2>
-									<p className={sectionDescClass}>
-										Trigger a director analysis pass across the fleet. An
-										optional directive focuses the cycle on a specific concern.
-									</p>
-								</div>
-								<div className="flex flex-wrap items-center gap-2">
-									{cycleTargetBackend ? (
-										<LaunchTargetBadge
-											backend={cycleTargetBackend}
-											hint={
-												directAiActive
-													? 'Cycles use the Direct AI surface — configure under Settings → Direct AI'
-													: 'Cycles use the Director profile below — no per-cycle override'
-											}
-											model={cycleTargetModel}
-											provider={directAiActive ? directProvider : undefined}
-											reasoningEffort={cycleTargetReasoning}
-										/>
-									) : null}
-									<Button
-										disabled={director.triggerCycle.isPending}
-										onClick={triggerCycle}
-										variant="primary">
-										<Bot className="h-4 w-4" />
-										{director.triggerCycle.isPending ? 'Running…' : 'Run Cycle'}
-									</Button>
-								</div>
-							</div>
-							<label className="mt-4 block space-y-1">
+							<CardHeader
+								action={
+									<div className="flex flex-wrap items-center gap-2">
+										{cycleTargetBackend ? (
+											<LaunchTargetBadge
+												backend={cycleTargetBackend}
+												hint={
+													directAiActive
+														? 'Cycles use the Direct AI surface — configure under Settings → Direct AI'
+														: 'Cycles use the Director profile below — no per-cycle override'
+												}
+												model={cycleTargetModel}
+												provider={
+													directAiActive ? directProvider : undefined
+												}
+												reasoningEffort={cycleTargetReasoning}
+											/>
+										) : null}
+										<Button
+											disabled={director.triggerCycle.isPending}
+											onClick={triggerCycle}
+											variant="primary">
+											<Bot className="h-4 w-4" />
+											{director.triggerCycle.isPending
+												? 'Running…'
+												: 'Run Cycle'}
+										</Button>
+									</div>
+								}
+								description="Trigger a director analysis pass across the fleet. An optional directive focuses the cycle on a specific concern."
+								id="director-cycle-heading"
+								title="Run Cycle"
+							/>
+							<label className="block space-y-1">
 								<span className={fieldLabelClass}>Cycle Directive (optional)</span>
 								<textarea
 									className={`${textareaClass} min-h-16`}

@@ -8,7 +8,7 @@ import type {
 } from '../../api/types.ts';
 
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useCliStatus } from '../../hooks/useSettings.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
@@ -89,15 +89,12 @@ export function BackendDefaultsTable({
 		<section aria-labelledby="backend-matrix-heading" className="space-y-3">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
 				<div>
-					<h2
-						className="text-sm font-semibold text-foreground"
-						id="backend-matrix-heading">
-						Backend Matrix
-					</h2>
-					<p className="mt-0.5 text-xs text-muted-foreground">
-						Installation status is read-only; model, reasoning, and timeout defaults
-						apply to new runs.
-					</p>
+					<CardHeader
+						className="mb-0"
+						description="Installation status is read-only; model, reasoning, and timeout defaults apply to new runs."
+						id="backend-matrix-heading"
+						title="Backend Matrix"
+					/>
 					{statusQuery.isError ? (
 						<p className={`mt-1 text-xs ${toneText.red}`}>
 							Could not refresh CLI status.

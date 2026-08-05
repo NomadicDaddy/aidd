@@ -1,6 +1,6 @@
 import type { BackendInputName, ReasoningEffort, WebConfigSettings } from '../../api/types.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
@@ -21,12 +21,11 @@ export function GeneralDefaultsSection({
 	const shadowedBy = shadowingBackendModel(form);
 	return (
 		<Card className="space-y-3">
-			<div>
-				<h2 className="text-sm font-semibold text-foreground">Model Routing</h2>
-				<p className="mt-0.5 text-xs text-muted-foreground">
-					Set the default backend, models, reasoning, and project initialization path.
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0"
+				description="Set the default backend, models, reasoning, and project initialization path."
+				title="Model Routing"
+			/>
 			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 				<FieldRow label="Default CLI">
 					<select

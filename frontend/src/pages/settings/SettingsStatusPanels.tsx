@@ -4,7 +4,7 @@ import type { SettingsSourceControlStatus } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useSourceControlStatus } from '../../hooks/useSettings.ts';
 import { toneText } from '../../lib/tones.ts';
 import { isAuthenticated, sourceControlRowTone } from './sourceControlTone.ts';
@@ -54,13 +54,11 @@ export function SourceControlStatusPanel() {
 		// column's top edge 46px below the Telegram card it shares a row with.
 		<Card className="overflow-hidden p-0">
 			<div className="flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
-				<div className="min-w-0">
-					<h2 className="text-sm font-semibold text-foreground">Source Control</h2>
-					<p className="mt-0.5 text-xs text-muted-foreground">
-						Read-only source-control tool status. These rows do not change Git or
-						provider behavior.
-					</p>
-				</div>
+				<CardHeader
+					className="mb-0"
+					description="Read-only source-control tool status. These rows do not change Git or provider behavior."
+					title="Source Control"
+				/>
 				<Button
 					className="shrink-0"
 					disabled={query.isFetching}

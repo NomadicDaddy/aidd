@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';
 
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { formatUsageBadge, formatUsageBadgeCompact } from '../../lib/usageBadge.ts';
 import {
@@ -65,26 +65,28 @@ export function RecipeCard({
 		// `h-full` plus the `mt-auto` footer below: grid rows stretch to the tallest card, so a
 		// short recipe would otherwise end mid-card and leave the row's remaining height as a void.
 		<Card className="flex h-full flex-col" interactive>
-			<div className="mb-3 flex items-start justify-between gap-3">
-				<div className="min-w-0">
-					{/* A heading, not a bare link: the catalog otherwise carries exactly one heading
-					    (the page h1) and cannot be navigated card by card. `line-clamp-2` keeps a
-					    long name from pushing the description baseline out of line with its row. */}
-					<h2 className="line-clamp-2 text-base font-semibold text-foreground">
-						<Link
-							className="hover:underline"
-							title={recipe.name}
-							to={`/recipes/${recipe.id}`}>
-							{recipe.name}
-						</Link>
-					</h2>
-					<p className="truncate font-mono text-xs text-muted-foreground">{recipe.id}</p>
-				</div>
-				<div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-					<RecipeContractBadges recipe={recipe} />
-					<RecipeTypeBadge isPipeline={isPipeline} />
-				</div>
-			</div>
+			{/* A heading, not a bare link: the catalog otherwise carries exactly one heading (the
+			    page h1) and cannot be navigated card by card. The mono recipe id under it is
+			    CardHeader's `identifier` slot — the absence of that slot is what made this card
+			    hand-roll its header in the first place. */}
+			<CardHeader
+				action={
+					<div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+						<RecipeContractBadges recipe={recipe} />
+						<RecipeTypeBadge isPipeline={isPipeline} />
+					</div>
+				}
+				className="mb-3"
+				identifier={recipe.id}
+				title={
+					<Link
+						className="hover:underline"
+						title={recipe.name}
+						to={`/recipes/${recipe.id}`}>
+						{recipe.name}
+					</Link>
+				}
+			/>
 			<p className="mb-4 text-sm text-muted-foreground">
 				{recipe.description ?? 'No description'}
 			</p>

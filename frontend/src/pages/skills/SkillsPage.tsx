@@ -14,7 +14,7 @@ import { LaunchForm } from '../../components/shared/LaunchForm.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { AlertDialog } from '../../components/ui/alert-dialog.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
@@ -162,7 +162,7 @@ export function SkillsPage() {
 							setProjectDir={setProjectDir}
 						/>
 						<Card className="space-y-2">
-							<h3 className="text-base font-semibold text-foreground">Definition</h3>
+							<CardHeader className="mb-0" headingLevel={3} title="Definition" />
 							{/* SKILL.md is prose, not fixed-width code: without reflow the lines were
 							    sliced mid-word at the container edge with no scrollbar to reveal
 							    the rest. */}

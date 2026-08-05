@@ -163,15 +163,23 @@ describe('the skill detail card labels its blocks', () => {
 	test('card titles collapse to one step and the file count pluralizes', async () => {
 		const source = await skillsSource('SkillDetailsCard.tsx');
 
-		expect(source).toContain('text-base font-semibold break-words text-foreground');
+		// The title used to be a hand-rolled `text-base font-semibold` heading here. That class
+		// pair now lives once, in CardHeader, so the property this test guards — one step, no
+		// text-xl — is held by rendering through the shared header instead of by restating it.
+		expect(source).toContain('<CardHeader');
+		expect(source).toContain('title={skill.title}');
 		expect(source).not.toContain('text-xl');
+		expect(source).not.toMatch(/<h[1-6]/);
 		expect(source).toContain("supportCount === 1 ? 'file' : 'files'");
 	});
 
-	test('the skill id takes the accent token rather than hand-rolled teal', async () => {
+	test('the skill id renders through the shared identifier slot', async () => {
 		const source = await skillsSource('SkillDetailsCard.tsx');
 
-		expect(source).toContain('font-mono text-sm text-accent');
+		// Was a hand-rolled teal mono line, then a hand-rolled accent one. Both were this card
+		// declaring its own treatment for an id; `identifier` is the slot that ended that.
+		expect(source).toContain('identifier={skill.id}');
 		expect(source).not.toContain('text-teal-700');
+		expect(source).not.toContain('font-mono text-sm');
 	});
 });

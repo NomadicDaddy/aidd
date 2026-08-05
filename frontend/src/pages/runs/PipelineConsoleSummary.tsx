@@ -4,7 +4,7 @@ import type { PipelineSessionRecord } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
 import { useRunRecord } from '../../hooks/useRuns.ts';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
@@ -27,20 +27,27 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 		// stays auto-height and the console below it takes the rest.
 		<div className="space-y-3 2xl:flex 2xl:min-h-0 2xl:flex-1 2xl:flex-col">
 			<Card className="space-y-2">
-				<div className="flex flex-wrap items-center gap-2">
-					<h2 className="text-sm font-semibold text-foreground">{session.recipeName}</h2>
-					<Badge tone={sessionStatusTone(session.status)}>
-						{sessionStatusLabel(session.status)}
-					</Badge>
-					<span className="text-xs text-muted-foreground">
-						{session.currentStepIndex}/{session.totalSteps} steps
-					</span>
-					<Link
-						className={buttonClassName('secondary', 'ml-auto', 'compact')}
-						to={`/pipeline-sessions/${session.id}`}>
-						Full report
-					</Link>
-				</div>
+				<CardHeader
+					action={
+						<Link
+							className={buttonClassName('secondary', '', 'compact')}
+							to={`/pipeline-sessions/${session.id}`}>
+							Full report
+						</Link>
+					}
+					badge={
+						<>
+							<Badge tone={sessionStatusTone(session.status)}>
+								{sessionStatusLabel(session.status)}
+							</Badge>
+							<span className="text-xs text-muted-foreground">
+								{session.currentStepIndex}/{session.totalSteps} steps
+							</span>
+						</>
+					}
+					className="mb-0"
+					title={session.recipeName}
+				/>
 				{session.errorMessage && (
 					<p className="text-sm text-red-700 dark:text-red-300">{session.errorMessage}</p>
 				)}

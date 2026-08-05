@@ -35,7 +35,9 @@ export function RecipeCard({
 	const isPipeline = recipe.steps.length > 1;
 	const usageLine = formatUsageBadge(usage);
 	return (
-		<div className="rounded-md border border-border p-4">
+		// `h-full` plus the `mt-auto` footer below: grid rows stretch to the tallest card, so a
+		// short recipe would otherwise end mid-card and leave the row's remaining height as a void.
+		<Card className="flex h-full flex-col" interactive>
 			<div className="mb-3 flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<Link
@@ -73,7 +75,7 @@ export function RecipeCard({
 				<RecipePolicyBadges recipe={recipe} />
 			</div>
 			{usageLine ? <p className="mb-3 text-xs text-muted-foreground">{usageLine}</p> : null}
-			<div className="flex flex-wrap gap-2">
+			<div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
 				<Button
 					disabled={launchDisabled || launchPending}
 					onClick={() => onLaunch(recipe)}
@@ -86,7 +88,7 @@ export function RecipeCard({
 					Details
 				</Link>
 			</div>
-		</div>
+		</Card>
 	);
 }
 

@@ -1379,7 +1379,7 @@ MIT License
     SOFTWARE
 ```
 
-### @types/react@19.2.17
+### @types/react@19.2.18
 
 License: MIT
 
@@ -4054,7 +4054,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### lucide-react@1.27.0
+### lucide-react@1.28.0
 
 License: ISC
 

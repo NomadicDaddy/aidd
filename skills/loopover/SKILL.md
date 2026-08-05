@@ -1,6 +1,8 @@
 ---
 name: loopover
 description: 'Run one slash command or instruction once per matching file. Use when the same review, validation, or edit has to be applied across a set of files (e.g. every *.md, every feature.json) instead of one at a time.'
+metadata:
+    aidd-category: general
 ---
 
 # Loop Over Files
@@ -55,12 +57,14 @@ gets the path appended.
 2. **Report the plan.** Print the count and the list (first 30, then `… and N more`). If the list is
    empty, say so and stop — do not broaden the pattern to find something to do.
 
-3. **Confirmation gate.** Stop and ask the user before executing when either is true:
-    - more than 10 files matched, or
+3. **Safety cap.** Downgrade the run to a dry run — report the plan, execute nothing — when both
+   are true:
+    - more than 10 files matched, and
     - the payload mutates files (edits, reformats, reorders, rewrites) rather than only reporting.
 
-    `--yes` and `--dry-run` skip this gate. When the working tree is dirty and the payload mutates
-    files, say so in the confirmation — never run `git stash`.
+    `--yes` lifts the cap. State plainly that the cap fired and that `--yes` reruns it for real. When
+    the working tree is dirty and the payload mutates files, say so in the report — never run
+    `git stash`.
 
 4. **Execute per item.** For each file, substitute the placeholders, then:
     - **Slash-command payload** (`/review-doc {}`): resolve the leading token to a skill and run it

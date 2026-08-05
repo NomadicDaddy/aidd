@@ -10,14 +10,20 @@ import type {
 	ProfileMatrixSortKey,
 } from './profileMatrixTypes.ts';
 
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
 import { ProfileMatrixRow } from './ProfileMatrixRow.tsx';
 
+// Sticky in both axes: `top-0` keeps the header on screen down a table that is taller than the
+// scrollport, and the leading cell adds `left-0` so a row stays identifiable while the six facet
+// selects are scrolled through in edit mode.
+const headerCellClass = 'sticky top-0 z-20 bg-muted px-3 py-3';
+
 function SortHeader({
 	activeDir,
 	activeKey,
-	className = 'px-3 py-3',
+	className = headerCellClass,
 	label,
 	onSort,
 	sortKey,
@@ -50,6 +56,12 @@ function SortHeader({
 	);
 }
 
+/**
+ * The matrix defaults to a read-only summary: who the project is, where its profile came from, what
+ * posture that produces and which audits it turns on. The six facet selects that produce the
+ * posture are what make the table 1900px wide, and they are only useful while actually editing, so
+ * `showFacets` gates them behind the page's explicit edit mode.
+ */
 export function ProfileMatrixTable({
 	activeSortDir,
 	activeSortKey,
@@ -59,6 +71,7 @@ export function ProfileMatrixTable({
 	onSave,
 	onSort,
 	rows,
+	showFacets,
 }: {
 	activeSortDir: ProfileMatrixSortDir;
 	activeSortKey: ProfileMatrixSortKey;
@@ -72,73 +85,81 @@ export function ProfileMatrixTable({
 	onSave: (projectId: string) => void;
 	onSort: (key: ProfileMatrixSortKey) => void;
 	rows: ProfileMatrixRowModel[];
+	showFacets: boolean;
 }) {
 	return (
-		<Card className="overflow-x-auto p-0">
-			<table aria-label="Project profile matrix" className="w-full text-left text-sm">
-				<thead className="border-b border-border bg-muted/70 text-xs text-muted-foreground uppercase">
-					<tr>
-						<SortHeader
-							activeDir={activeSortDir}
-							activeKey={activeSortKey}
-							className="sticky left-0 z-20 bg-muted px-3 py-3"
-							label="Project"
-							onSort={onSort}
-							sortKey="project"
-						/>
-						<SortHeader
-							activeDir={activeSortDir}
-							activeKey={activeSortKey}
-							label="Source"
-							onSort={onSort}
-							sortKey="source"
-						/>
-						{profileFacets.map((facet) => (
+		<Card className="p-0">
+			<OverflowScroller
+				ariaLabel="Project profile matrix"
+				scrollerClassName="max-h-[70vh] overflow-y-auto">
+				<table aria-label="Project profile matrix" className="w-full text-left text-sm">
+					<thead className="border-b border-border text-xs text-muted-foreground uppercase">
+						<tr>
 							<SortHeader
 								activeDir={activeSortDir}
 								activeKey={activeSortKey}
-								className="min-w-40 px-2 py-3"
-								key={facet.field}
-								label={facet.title}
+								className={`${headerCellClass} left-0 z-30`}
+								label="Project"
 								onSort={onSort}
-								sortKey={facet.field}
+								sortKey="project"
+							/>
+							<SortHeader
+								activeDir={activeSortDir}
+								activeKey={activeSortKey}
+								label="Source"
+								onSort={onSort}
+								sortKey="source"
+							/>
+							{showFacets
+								? profileFacets.map((facet) => (
+										<SortHeader
+											activeDir={activeSortDir}
+											activeKey={activeSortKey}
+											className="sticky top-0 z-20 min-w-40 bg-muted px-2 py-3"
+											key={facet.field}
+											label={facet.title}
+											onSort={onSort}
+											sortKey={facet.field}
+										/>
+									))
+								: null}
+							<SortHeader
+								activeDir={activeSortDir}
+								activeKey={activeSortKey}
+								label="Posture"
+								onSort={onSort}
+								sortKey="posture"
+							/>
+							<th className={headerCellClass} scope="col">
+								Audits
+								{isPreviewing && (
+									<span className="ml-1 font-normal text-muted-foreground lowercase">
+										recalc
+									</span>
+								)}
+							</th>
+							<th className={headerCellClass} scope="col">
+								Updated
+							</th>
+							<th className={headerCellClass} scope="col">
+								Actions
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{rows.map((row) => (
+							<ProfileMatrixRow
+								key={row.project.id}
+								onChange={onChange}
+								onReset={onReset}
+								onSave={onSave}
+								row={row}
+								showFacets={showFacets}
 							/>
 						))}
-						<SortHeader
-							activeDir={activeSortDir}
-							activeKey={activeSortKey}
-							label="Posture"
-							onSort={onSort}
-							sortKey="posture"
-						/>
-						<th className="px-3 py-3" scope="col">
-							Audits
-							{isPreviewing && (
-								<span className="ml-1 font-normal text-muted-foreground lowercase">
-									recalc
-								</span>
-							)}
-						</th>
-						<th className="px-3 py-3" scope="col">
-							Updated
-						</th>
-						<th className="px-3 py-3" scope="col">
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{rows.map((row) => (
-						<ProfileMatrixRow
-							key={row.project.id}
-							onChange={onChange}
-							onReset={onReset}
-							onSave={onSave}
-							row={row}
-						/>
-					))}
-				</tbody>
-			</table>
+					</tbody>
+				</table>
+			</OverflowScroller>
 		</Card>
 	);
 }

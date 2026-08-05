@@ -27,10 +27,13 @@ const emptyProjectsFilters: ProjectsFiltersState = {
 
 interface PrefsState {
 	projectsFilters: ProjectsFiltersState;
+	/** Optional Projects-table columns the user has opted into, by column key. */
+	projectTableColumns: string[];
 	projectView: 'cards' | 'table';
 	recipesView: 'cards' | 'table';
 	resetProjectsFilters: () => void;
 	setProjectsFilters: (filters: ProjectsFiltersState) => void;
+	setProjectTableColumns: (projectTableColumns: string[]) => void;
 	setProjectView: (projectView: PrefsState['projectView']) => void;
 	setRecipesView: (recipesView: PrefsState['recipesView']) => void;
 }
@@ -39,6 +42,7 @@ export const usePrefsStore = create<PrefsState>()(
 	persist(
 		(set, get) => ({
 			projectsFilters: emptyProjectsFilters,
+			projectTableColumns: [],
 			projectView: 'cards',
 			recipesView: 'cards',
 			resetProjectsFilters: () => {
@@ -72,6 +76,21 @@ export const usePrefsStore = create<PrefsState>()(
 						after: summarizeValue(projectsFilters),
 						before: summarizeValue(before),
 						changedKeys,
+					},
+				});
+			},
+			setProjectTableColumns: (projectTableColumns) => {
+				const before = get().projectTableColumns;
+				set({ projectTableColumns });
+				traceDataMovement({
+					category: 'state',
+					layer: 'state',
+					operation: 'setProjectTableColumns',
+					source: 'prefsStore',
+					summary: {
+						after: summarizeValue(projectTableColumns),
+						before: summarizeValue(before),
+						changedKeys: ['projectTableColumns'],
 					},
 				});
 			},

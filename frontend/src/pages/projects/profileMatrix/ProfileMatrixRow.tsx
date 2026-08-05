@@ -62,6 +62,7 @@ export function ProfileMatrixRow({
 	onReset,
 	onSave,
 	row,
+	showFacets,
 }: {
 	onChange: (
 		projectId: string,
@@ -71,6 +72,8 @@ export function ProfileMatrixRow({
 	onReset: (projectId: string) => void;
 	onSave: (projectId: string) => void;
 	row: ProfileMatrixRowModel;
+	/** Matches the header: the facet selects only exist in the page's edit-facets mode. */
+	showFacets: boolean;
 }) {
 	const auditCount = row.preview?.audits.length ?? 0;
 	const applicable = row.preview?.audits.filter((audit) => audit.applies).length ?? 0;
@@ -95,16 +98,18 @@ export function ProfileMatrixRow({
 					{row.dirty && <Badge tone="amber">dirty</Badge>}
 				</div>
 			</td>
-			{profileFacets.map((facet) => (
-				<td className="px-2 py-3" key={facet.field}>
-					<ProfileFacetSelect
-						field={facet.field}
-						onChange={onChange}
-						projectName={row.project.name}
-						row={row}
-					/>
-				</td>
-			))}
+			{showFacets
+				? profileFacets.map((facet) => (
+						<td className="px-2 py-3" key={facet.field}>
+							<ProfileFacetSelect
+								field={facet.field}
+								onChange={onChange}
+								projectName={row.project.name}
+								row={row}
+							/>
+						</td>
+					))
+				: null}
 			<td className="px-3 py-3">
 				<div className="flex min-w-40 flex-col gap-1">
 					<Badge tone={row.posture.tone}>{row.posture.label}</Badge>

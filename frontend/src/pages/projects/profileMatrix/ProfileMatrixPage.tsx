@@ -18,6 +18,10 @@ import { DataFreshness } from '../../../components/shared/DataFreshness.tsx';
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { PageHeader } from '../../../components/shared/PageHeader.tsx';
 import { Button, buttonClassName } from '../../../components/ui/button.tsx';
+import {
+	SegmentedControl,
+	type SegmentedControlOption,
+} from '../../../components/ui/segmented-control.tsx';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue.ts';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle.ts';
 import { useProfilePreviews } from '../../../hooks/useProfilePreview.ts';
@@ -26,6 +30,13 @@ import { invalidateProjectQueries } from '../../../hooks/useProjectsShared.ts';
 import { getProfilePosture, profileInput, sameProfileInput } from '../profile/profile-helpers.ts';
 import { compareProfileMatrixRows } from './profileMatrixSorting.ts';
 import { ProfileMatrixTable } from './ProfileMatrixTable.tsx';
+
+type MatrixMode = 'edit' | 'summary';
+
+const modeOptions: readonly SegmentedControlOption<MatrixMode>[] = [
+	{ label: 'Summary', title: 'Posture and audit outcomes only', value: 'summary' },
+	{ label: 'Edit facets', title: 'Show the six profile facets for bulk editing', value: 'edit' },
+];
 
 function formSignature(form: ProjectAssuranceProfileInput): string {
 	return [
@@ -44,6 +55,9 @@ export function ProfileMatrixPage() {
 	const queryClient = useQueryClient();
 	const projects = useProjects();
 	const [forms, setForms] = useState<Record<string, ProjectAssuranceProfileInput>>({});
+	// The six facet selects are what make this table wider than any screen, so the summary is the
+	// resting state and editing is a mode the operator asks for.
+	const [mode, setMode] = useState<MatrixMode>('summary');
 	const [savingIds, setSavingIds] = useState<ReadonlySet<string>>(new Set());
 	const [sortDir, setSortDir] = useState<ProfileMatrixSortDir>('asc');
 	const [sortKey, setSortKey] = useState<ProfileMatrixSortKey>('project');
@@ -191,6 +205,12 @@ export function ProfileMatrixPage() {
 			<PageHeader
 				actions={
 					<div className="flex flex-wrap items-center gap-2">
+						<SegmentedControl
+							ariaLabel="Profile matrix columns"
+							onChange={setMode}
+							options={modeOptions}
+							value={mode}
+						/>
 						<DataFreshness
 							label="Profile matrix"
 							onRefresh={() => {
@@ -259,6 +279,7 @@ export function ProfileMatrixPage() {
 				}}
 				onSort={toggleSort}
 				rows={sortedRows}
+				showFacets={mode === 'edit'}
 			/>
 		</div>
 	);

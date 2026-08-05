@@ -34,6 +34,7 @@ import { ProjectStackDisplay } from './ProjectStackDisplay.tsx';
 export function ProjectTableRow({
 	collisions,
 	gitStatus,
+	optionalColumns,
 	portStatus,
 	project,
 	spernakitTemplateVersion = null,
@@ -43,6 +44,11 @@ export function ProjectTableRow({
 		frontend: Map<number, string[]>;
 	};
 	gitStatus: ProjectGitStatusSummary | undefined;
+	/**
+	 * Opt-in columns currently enabled. The cells below stay in `projects-table-columns.ts` order
+	 * so the row and the header line up; `projects-table-columns.test.ts` holds them to it.
+	 */
+	optionalColumns: ReadonlySet<string>;
 	portStatus: PortStatusEntry | undefined;
 	project: ProjectSummary;
 	/** Version of the spernakit template checkout; colors the `spk` marker when known. */
@@ -90,51 +96,59 @@ export function ProjectTableRow({
 					</div>
 				) : null}
 			</td>
-			<td className="px-3 py-3 font-mono text-xs">
-				{metadata.appVersion ? (
-					formatAppVersion(metadata.appVersion)
-				) : (
-					<span className="text-muted-foreground">
-						{formatAppVersion(metadata.appVersion)}
-					</span>
-				)}
-				{metadata.templateVersion ? (
-					<div
-						className={`text-[10px] ${
-							templateVersionColor(
-								metadata.templateVersion,
-								spernakitTemplateVersion,
-							) || 'text-muted-foreground'
-						}`}>
-						spk {metadata.templateVersion}
-					</div>
-				) : null}
-			</td>
+			{optionalColumns.has('version') ? (
+				<td className="px-3 py-3 font-mono text-xs">
+					{metadata.appVersion ? (
+						formatAppVersion(metadata.appVersion)
+					) : (
+						<span className="text-muted-foreground">
+							{formatAppVersion(metadata.appVersion)}
+						</span>
+					)}
+					{metadata.templateVersion ? (
+						<div
+							className={`text-[10px] ${
+								templateVersionColor(
+									metadata.templateVersion,
+									spernakitTemplateVersion,
+								) || 'text-muted-foreground'
+							}`}>
+							spk {metadata.templateVersion}
+						</div>
+					) : null}
+				</td>
+			) : null}
 			<td className="px-3 py-3 whitespace-nowrap">
 				<ProjectActiveRunLink activeRuns={project.activeRuns} />
 			</td>
-			<td className="px-3 py-3">
-				<PortsCell
-					backendCollision={backendCollision}
-					collisionPeers={collisionPeers}
-					frontendCollision={frontendCollision}
-					ports={metadata.ports}
-					status={portStatus}
-				/>
-			</td>
-			<td className="px-3 py-3">
-				<ProjectStackDisplay stack={metadata.stack} variant="table" />
-			</td>
-			<td className="px-3 py-3">
-				<div className="flex flex-wrap gap-1">
-					<Badge tone={profileBucketTone(metadata.profile.bucket)}>
-						{bucketLabels[metadata.profile.bucket]}
-					</Badge>
-					{metadata.profile.source === 'inferred' ? (
-						<Badge tone="neutral">inferred</Badge>
-					) : null}
-				</div>
-			</td>
+			{optionalColumns.has('port') ? (
+				<td className="px-3 py-3">
+					<PortsCell
+						backendCollision={backendCollision}
+						collisionPeers={collisionPeers}
+						frontendCollision={frontendCollision}
+						ports={metadata.ports}
+						status={portStatus}
+					/>
+				</td>
+			) : null}
+			{optionalColumns.has('stack') ? (
+				<td className="px-3 py-3">
+					<ProjectStackDisplay stack={metadata.stack} variant="table" />
+				</td>
+			) : null}
+			{optionalColumns.has('profile') ? (
+				<td className="px-3 py-3">
+					<div className="flex flex-wrap gap-1">
+						<Badge tone={profileBucketTone(metadata.profile.bucket)}>
+							{bucketLabels[metadata.profile.bucket]}
+						</Badge>
+						{metadata.profile.source === 'inferred' ? (
+							<Badge tone="neutral">inferred</Badge>
+						) : null}
+					</div>
+				</td>
+			) : null}
 			<td className="px-3 py-3">
 				<FeatureProgressCell
 					failing={project.featureStats.failing}
@@ -142,28 +156,33 @@ export function ProjectTableRow({
 					total={project.featureStats.total}
 				/>
 			</td>
-			<td
-				className="px-3 py-3 whitespace-nowrap"
-				title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
-				<div className="font-medium tabular-nums">
-					{formatProjectListReportedCost(metadata.usage.totals)}
-				</div>
-				<div className="text-[10px] text-muted-foreground tabular-nums">
-					{metadata.usage.totals.runsWithReportedCost}/{metadata.usage.totals.runCount}{' '}
-					runs
-				</div>
-			</td>
-			<td
-				className="px-3 py-3 whitespace-nowrap"
-				title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
-				<div className="font-medium tabular-nums">
-					{formatProjectTokenCount(metadata.usage.totals)}
-				</div>
-				<TokenSparkline points={metadata.usage.recentDailyTokens} />
-				<div className="text-[10px] text-muted-foreground tabular-nums">
-					{metadata.usage.totals.runsWithTokenUsage}/{metadata.usage.totals.runCount} runs
-				</div>
-			</td>
+			{optionalColumns.has('reportedCost') ? (
+				<td
+					className="px-3 py-3 whitespace-nowrap"
+					title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
+					<div className="font-medium tabular-nums">
+						{formatProjectListReportedCost(metadata.usage.totals)}
+					</div>
+					<div className="text-[10px] text-muted-foreground tabular-nums">
+						{metadata.usage.totals.runsWithReportedCost}/
+						{metadata.usage.totals.runCount} runs
+					</div>
+				</td>
+			) : null}
+			{optionalColumns.has('tokens') ? (
+				<td
+					className="px-3 py-3 whitespace-nowrap"
+					title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
+					<div className="font-medium tabular-nums">
+						{formatProjectTokenCount(metadata.usage.totals)}
+					</div>
+					<TokenSparkline points={metadata.usage.recentDailyTokens} />
+					<div className="text-[10px] text-muted-foreground tabular-nums">
+						{metadata.usage.totals.runsWithTokenUsage}/{metadata.usage.totals.runCount}{' '}
+						runs
+					</div>
+				</td>
+			) : null}
 			<td className="px-3 py-3">
 				{metadata.maturity.stageStatuses.length > 0 ? (
 					<div className="flex items-center gap-2">
@@ -182,12 +201,14 @@ export function ProjectTableRow({
 					<span className="text-muted-foreground">—</span>
 				)}
 			</td>
-			<td className="px-3 py-3">
-				<ArtifactCell
-					health={project.artifactHealth}
-					summary={metadata.artifactCheck?.summary ?? null}
-				/>
-			</td>
+			{optionalColumns.has('artifacts') ? (
+				<td className="px-3 py-3">
+					<ArtifactCell
+						health={project.artifactHealth}
+						summary={metadata.artifactCheck?.summary ?? null}
+					/>
+				</td>
+			) : null}
 			<td className="px-3 py-3">
 				<GitStatusBadge className="max-w-[12rem]" status={gitStatus} />
 			</td>
@@ -199,13 +220,15 @@ export function ProjectTableRow({
 					</div>
 				) : null}
 			</td>
-			<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
-				{metadata.addedAt ? (
-					<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
-				) : (
-					<span className="text-muted-foreground">—</span>
-				)}
-			</td>
+			{optionalColumns.has('addedAt') ? (
+				<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
+					{metadata.addedAt ? (
+						<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
+					) : (
+						<span className="text-muted-foreground">—</span>
+					)}
+				</td>
+			) : null}
 		</tr>
 	);
 }

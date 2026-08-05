@@ -3,9 +3,18 @@ import { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up';
 import { default as ArrowUpDown } from 'lucide-react/dist/esm/icons/arrow-up-down';
 
 import type { PortStatusEntry, ProjectGitStatusMapEntry, ProjectSummary } from '../../api/types.ts';
+import type { ProjectColumn } from './projects-table-columns.ts';
 
+import { ColumnChooser } from '../../components/shared/ColumnChooser.tsx';
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { type SortDir, type SortKey } from './projects-list-sort.ts';
+import {
+	optionalProjectColumns,
+	readOptionalColumns,
+	visibleProjectColumns,
+} from './projects-table-columns.ts';
 import { ProjectTableRow } from './ProjectTableRow.tsx';
 
 function buildPortCollisionMap(projects: ProjectSummary[]): {
@@ -31,32 +40,41 @@ function buildPortCollisionMap(projects: ProjectSummary[]): {
 	return { backend, frontend };
 }
 
-function SortHeader({
+function ColumnHeader({
 	activeDir,
 	activeKey,
-	label,
+	column,
 	onSort,
-	sortKey,
 }: {
 	activeDir: SortDir;
 	activeKey: SortKey;
-	label: string;
+	column: ProjectColumn;
 	onSort: (key: SortKey) => void;
-	sortKey: SortKey;
 }) {
+	const sortKey = column.sortKey;
+	if (!sortKey) {
+		return (
+			<th className="px-3 py-3" scope="col">
+				{column.label}
+			</th>
+		);
+	}
 	const isActive = activeKey === sortKey;
 	const Icon = isActive ? (activeDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
 	return (
-		<th className="px-3 py-3" scope="col">
+		<th
+			aria-sort={isActive ? (activeDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+			className="px-3 py-3"
+			scope="col">
 			<button
-				aria-label={`Sort by ${label}${isActive ? ` (${activeDir})` : ''}`}
+				aria-label={`Sort by ${column.label}${isActive ? ` (${activeDir})` : ''}`}
 				className={`inline-flex items-center gap-1 text-left uppercase ${
 					isActive ? 'text-foreground' : 'text-muted-foreground'
 				}`}
 				onClick={() => onSort(sortKey)}
 				type="button">
-				{label}
-				<Icon className="h-3 w-3" />
+				{column.label}
+				<Icon aria-hidden="true" className="h-3 w-3" />
 			</button>
 		</th>
 	);
@@ -79,121 +97,59 @@ export function ProjectsTableView({
 	sortKey: SortKey;
 	spernakitTemplateVersion?: null | string;
 }) {
+	const storedColumns = usePrefsStore((state) => state.projectTableColumns);
+	const setStoredColumns = usePrefsStore((state) => state.setProjectTableColumns);
+	const enabled = new Set<string>(readOptionalColumns(storedColumns));
+	const columns = visibleProjectColumns(enabled);
 	const collisions = buildPortCollisionMap(projects);
+
 	return (
-		<Card className="overflow-x-auto p-0">
-			<table aria-label="Projects" className="w-full text-left text-sm">
-				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
-					<tr>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Name"
-							onSort={onToggleSort}
-							sortKey="name"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Version"
-							onSort={onToggleSort}
-							sortKey="version"
-						/>
-						<th className="px-3 py-3" scope="col">
-							Active runs
-						</th>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Port"
-							onSort={onToggleSort}
-							sortKey="port"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Stack"
-							onSort={onToggleSort}
-							sortKey="stack"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Profile"
-							onSort={onToggleSort}
-							sortKey="profile"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Features"
-							onSort={onToggleSort}
-							sortKey="passing"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Reported Cost"
-							onSort={onToggleSort}
-							sortKey="reportedCost"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Tokens"
-							onSort={onToggleSort}
-							sortKey="tokens"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Maturity"
-							onSort={onToggleSort}
-							sortKey="maturity"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Artifacts"
-							onSort={onToggleSort}
-							sortKey="artifacts"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Git"
-							onSort={onToggleSort}
-							sortKey="git"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Last Web Run"
-							onSort={onToggleSort}
-							sortKey="lastSync"
-						/>
-						<SortHeader
-							activeDir={sortDir}
-							activeKey={sortKey}
-							label="Added"
-							onSort={onToggleSort}
-							sortKey="addedAt"
-						/>
-					</tr>
-				</thead>
-				<tbody>
-					{projects.map((project) => (
-						<ProjectTableRow
-							collisions={collisions}
-							gitStatus={gitStatus?.[project.id]?.status}
-							key={project.id}
-							portStatus={portStatus?.[project.id]}
-							project={project}
-							spernakitTemplateVersion={spernakitTemplateVersion}
-						/>
-					))}
-				</tbody>
-			</table>
-		</Card>
+		<div className="space-y-2">
+			<div className="flex justify-end">
+				<ColumnChooser
+					onReset={() => setStoredColumns([])}
+					onToggle={(key) => {
+						const next = new Set(enabled);
+						if (next.has(key)) next.delete(key);
+						else next.add(key);
+						setStoredColumns(readOptionalColumns([...next]));
+					}}
+					options={optionalProjectColumns}
+					selected={enabled}
+				/>
+			</div>
+			<Card className="p-0">
+				<OverflowScroller ariaLabel="Projects table">
+					<table aria-label="Projects" className="w-full text-left text-sm">
+						<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+							<tr>
+								{columns.map((column) => (
+									<ColumnHeader
+										activeDir={sortDir}
+										activeKey={sortKey}
+										column={column}
+										key={column.key}
+										onSort={onToggleSort}
+									/>
+								))}
+							</tr>
+						</thead>
+						<tbody>
+							{projects.map((project) => (
+								<ProjectTableRow
+									collisions={collisions}
+									gitStatus={gitStatus?.[project.id]?.status}
+									key={project.id}
+									optionalColumns={enabled}
+									portStatus={portStatus?.[project.id]}
+									project={project}
+									spernakitTemplateVersion={spernakitTemplateVersion}
+								/>
+							))}
+						</tbody>
+					</table>
+				</OverflowScroller>
+			</Card>
+		</div>
 	);
 }

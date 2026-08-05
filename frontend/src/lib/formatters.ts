@@ -141,6 +141,17 @@ export function formatTelemetryBucketLabel(bucket: 'day' | 'hour', timestamp: nu
 	return formatter.format(new Date(timestamp));
 }
 
+// Hourly buckets only exist in the 24h window, where the date is implicit and the card header
+// already says "per hour", so the axis tick drops it and keeps the label narrow enough to sit
+// under a single bar column.
+const telemetryHourTickFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric' });
+
+/** Shortest label that still identifies a bucket, for use as a chart axis tick. */
+export function formatTelemetryAxisTick(bucket: 'day' | 'hour', timestamp: number): string {
+	const formatter = bucket === 'hour' ? telemetryHourTickFormatter : telemetryDayFormatter;
+	return formatter.format(new Date(timestamp));
+}
+
 const compactFormatter = new Intl.NumberFormat(undefined, {
 	maximumFractionDigits: 1,
 	notation: 'compact',

@@ -49,7 +49,12 @@ describe('Telemetry chart accessibility', () => {
 
 		expect(invocations).toContain('aria-labelledby="telemetry-invocations-chart-heading"');
 		expect(invocations).toContain('Invocations by time bucket');
-		expect(invocations).toContain('aria-hidden="true" class="flex h-40');
+		// The axis furniture is inside the hidden wrapper too: its ticks repeat numbers the
+		// sr-only table already carries, so exposing them would double-read the chart.
+		expect(invocations).toContain(
+			'<div aria-hidden="true"><div class="grid grid-cols-[auto_minmax(0,1fr)]',
+		);
+		expect(invocations).toContain('class="flex h-40 items-end gap-1"');
 		expect(invocations).toContain(
 			'<caption>Invocation totals and outcomes for each time bucket</caption>',
 		);
@@ -69,7 +74,10 @@ describe('Telemetry chart accessibility', () => {
 
 		expect(lines).toContain('aria-labelledby="telemetry-output-lines-chart-heading"');
 		expect(lines).toContain('Line changes by time bucket');
-		expect(lines).toContain('aria-hidden="true" class="relative"');
+		expect(lines).toContain(
+			'<div aria-hidden="true"><div class="grid grid-cols-[auto_minmax(0,1fr)]',
+		);
+		expect(lines).toContain('class="flex h-40 gap-1"');
 		expect(lines).toContain('<caption>Line changes for each time bucket</caption>');
 		expect(lines).toContain(
 			`<th scope="row">${labels[0]}</th><td>401</td><td>201</td><td>11</td><td>3</td><td>4</td>`,

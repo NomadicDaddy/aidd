@@ -1,8 +1,14 @@
 import type { TelemetryOutputTimeseriesPoint } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
-import { formatCompactNumber, formatTelemetryBucketLabel } from '../../lib/formatters.ts';
+import {
+	formatCompactNumber,
+	formatTelemetryAxisTick,
+	formatTelemetryBucketLabel,
+} from '../../lib/formatters.ts';
 import { seriesSolid, seriesSolidHover } from '../../lib/series.ts';
+import { ChartAxes } from './ChartAxes.tsx';
+import { divergingTicks } from './chartAxisScale.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 export type OutputMetric = 'lines' | 'tokens';
@@ -86,49 +92,56 @@ export function OutputTimeseriesChart({
 			<h3 className="sr-only" id={chartHeadingId}>
 				{metric === 'lines' ? 'Line changes' : 'Token usage'} by time bucket
 			</h3>
-			<div aria-hidden="true" className="relative">
-				<div className="absolute inset-x-0 top-1/2 h-px bg-muted" />
-				<div className="flex h-40 gap-1">
-					{points.map((point) => {
-						const up = upValue(point);
-						const down = downValue(point);
-						const captured = capturedRuns(point);
-						const tooltip = [
-							formatTelemetryBucketLabel(bucket, point.bucket),
-							metric === 'lines'
-								? `+${up.toLocaleString()} / −${down.toLocaleString()} lines · ${point.filesChanged.toLocaleString()} files changed`
-								: `${up.toLocaleString()} in / ${down.toLocaleString()} out · ${point.cachedTokens.toLocaleString()} cached · ${point.reasoningTokens.toLocaleString()} reasoning`,
-							`${captured}/${point.runs} runs captured`,
-						].join(' · ');
-						return (
-							<div
-								className="group flex h-full flex-1 flex-col"
-								key={point.bucket}
-								title={tooltip}>
-								<div className="flex flex-1 items-end">
-									{up > 0 && (
-										<div
-											className={`w-full rounded-t-sm ${seriesSolid.slot1} ${seriesSolidHover.slot1}`}
-											style={{
-												height: `${Math.max(2, Math.round((up / max) * 100))}%`,
-											}}
-										/>
-									)}
+			{/* The 50% gridline is the shared center baseline the two arms diverge from, so the
+			    chart no longer draws one of its own. */}
+			<div aria-hidden="true">
+				<ChartAxes
+					categories={points.map((point) =>
+						formatTelemetryAxisTick(bucket, point.bucket),
+					)}
+					ticks={divergingTicks(max)}>
+					<div className="flex h-40 gap-1">
+						{points.map((point) => {
+							const up = upValue(point);
+							const down = downValue(point);
+							const captured = capturedRuns(point);
+							const tooltip = [
+								formatTelemetryBucketLabel(bucket, point.bucket),
+								metric === 'lines'
+									? `+${up.toLocaleString()} / −${down.toLocaleString()} lines · ${point.filesChanged.toLocaleString()} files changed`
+									: `${up.toLocaleString()} in / ${down.toLocaleString()} out · ${point.cachedTokens.toLocaleString()} cached · ${point.reasoningTokens.toLocaleString()} reasoning`,
+								`${captured}/${point.runs} runs captured`,
+							].join(' · ');
+							return (
+								<div
+									className="group flex h-full flex-1 flex-col"
+									key={point.bucket}
+									title={tooltip}>
+									<div className="flex flex-1 items-end">
+										{up > 0 && (
+											<div
+												className={`w-full rounded-t-sm ${seriesSolid.slot1} ${seriesSolidHover.slot1}`}
+												style={{
+													height: `${Math.max(2, Math.round((up / max) * 100))}%`,
+												}}
+											/>
+										)}
+									</div>
+									<div className="flex flex-1 items-start">
+										{down > 0 && (
+											<div
+												className={`w-full rounded-b-sm ${seriesSolid.slot3} ${seriesSolidHover.slot3}`}
+												style={{
+													height: `${Math.max(2, Math.round((down / max) * 100))}%`,
+												}}
+											/>
+										)}
+									</div>
 								</div>
-								<div className="flex flex-1 items-start">
-									{down > 0 && (
-										<div
-											className={`w-full rounded-b-sm ${seriesSolid.slot3} ${seriesSolidHover.slot3}`}
-											style={{
-												height: `${Math.max(2, Math.round((down / max) * 100))}%`,
-											}}
-										/>
-									)}
-								</div>
-							</div>
-						);
-					})}
-				</div>
+							);
+						})}
+					</div>
+				</ChartAxes>
 			</div>
 			<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
 				<div className="flex items-center gap-4">

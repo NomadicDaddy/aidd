@@ -11,9 +11,12 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import {
 	formatDuration,
 	formatRelativeAge,
+	formatTelemetryAxisTick,
 	formatTelemetryBucketLabel,
 } from '../../lib/formatters.ts';
 import { outcomeSolid, outcomeSolidHover } from '../../lib/series.ts';
+import { ChartAxes } from './ChartAxes.tsx';
+import { singleSidedTicks } from './chartAxisScale.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
@@ -129,74 +132,82 @@ export function TimeseriesChart({
 			<h3 className="sr-only" id={chartHeadingId}>
 				Invocations by time bucket
 			</h3>
-			<div aria-hidden="true" className="flex h-40 items-end gap-1">
-				{points.map((point) => {
-					const totalPct = Math.max(2, Math.round((point.total / max) * 100));
-					const labelText = formatTelemetryBucketLabel(bucket, point.bucket);
-					return (
-						<div
-							className="group flex h-full flex-1 flex-col items-center justify-end"
-							key={point.bucket}
-							title={`${labelText} · ${point.total} invocations (${point.completed} completed, ${point.warnings} warnings, ${point.failed} failed, ${point.flagged} flagged, ${point.stopped} stopped, ${point.killed} killed, ${point.noWork} no work, ${point.running} running)`}>
-							{/* The wrapper needs a definite height for the stacked segments to size
+			<div aria-hidden="true">
+				<ChartAxes
+					categories={points.map((point) =>
+						formatTelemetryAxisTick(bucket, point.bucket),
+					)}
+					ticks={singleSidedTicks(max)}>
+					<div className="flex h-40 items-end gap-1">
+						{points.map((point) => {
+							const totalPct = Math.max(2, Math.round((point.total / max) * 100));
+							const labelText = formatTelemetryBucketLabel(bucket, point.bucket);
+							return (
+								<div
+									className="group flex h-full flex-1 flex-col items-center justify-end"
+									key={point.bucket}
+									title={`${labelText} · ${point.total} invocations (${point.completed} completed, ${point.warnings} warnings, ${point.failed} failed, ${point.flagged} flagged, ${point.stopped} stopped, ${point.killed} killed, ${point.noWork} no work, ${point.running} running)`}>
+									{/* The wrapper needs a definite height for the stacked segments to size
 						    against: percentage heights inside an auto-height flex wrapper compute
 						    to 0 and the bars render invisible. Height carries the bucket total;
 						    the segments split it proportionally via flex-grow. */}
-							<div
-								className="flex w-full flex-col-reverse"
-								style={{ height: `${totalPct}%` }}>
-								{point.completed > 0 && (
 									<div
-										className={`min-h-0 w-full rounded-sm ${outcomeSolid.completed} ${outcomeSolidHover.completed}`}
-										style={{ flexBasis: 0, flexGrow: point.completed }}
-									/>
-								)}
-								{point.warnings > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.warnings} ${outcomeSolidHover.warnings}`}
-										style={{ flexBasis: 0, flexGrow: point.warnings }}
-									/>
-								)}
-								{point.failed > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.failed} ${outcomeSolidHover.failed}`}
-										style={{ flexBasis: 0, flexGrow: point.failed }}
-									/>
-								)}
-								{point.flagged > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.flagged} ${outcomeSolidHover.flagged}`}
-										style={{ flexBasis: 0, flexGrow: point.flagged }}
-									/>
-								)}
-								{point.stopped > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.stopped} ${outcomeSolidHover.stopped}`}
-										style={{ flexBasis: 0, flexGrow: point.stopped }}
-									/>
-								)}
-								{point.killed > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.killed} ${outcomeSolidHover.killed}`}
-										style={{ flexBasis: 0, flexGrow: point.killed }}
-									/>
-								)}
-								{point.noWork > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.noWork} ${outcomeSolidHover.noWork}`}
-										style={{ flexBasis: 0, flexGrow: point.noWork }}
-									/>
-								)}
-								{point.running > 0 && (
-									<div
-										className={`min-h-0 w-full ${outcomeSolid.running} ${outcomeSolidHover.running}`}
-										style={{ flexBasis: 0, flexGrow: point.running }}
-									/>
-								)}
-							</div>
-						</div>
-					);
-				})}
+										className="flex w-full flex-col-reverse"
+										style={{ height: `${totalPct}%` }}>
+										{point.completed > 0 && (
+											<div
+												className={`min-h-0 w-full rounded-sm ${outcomeSolid.completed} ${outcomeSolidHover.completed}`}
+												style={{ flexBasis: 0, flexGrow: point.completed }}
+											/>
+										)}
+										{point.warnings > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.warnings} ${outcomeSolidHover.warnings}`}
+												style={{ flexBasis: 0, flexGrow: point.warnings }}
+											/>
+										)}
+										{point.failed > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.failed} ${outcomeSolidHover.failed}`}
+												style={{ flexBasis: 0, flexGrow: point.failed }}
+											/>
+										)}
+										{point.flagged > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.flagged} ${outcomeSolidHover.flagged}`}
+												style={{ flexBasis: 0, flexGrow: point.flagged }}
+											/>
+										)}
+										{point.stopped > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.stopped} ${outcomeSolidHover.stopped}`}
+												style={{ flexBasis: 0, flexGrow: point.stopped }}
+											/>
+										)}
+										{point.killed > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.killed} ${outcomeSolidHover.killed}`}
+												style={{ flexBasis: 0, flexGrow: point.killed }}
+											/>
+										)}
+										{point.noWork > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.noWork} ${outcomeSolidHover.noWork}`}
+												style={{ flexBasis: 0, flexGrow: point.noWork }}
+											/>
+										)}
+										{point.running > 0 && (
+											<div
+												className={`min-h-0 w-full ${outcomeSolid.running} ${outcomeSolidHover.running}`}
+												style={{ flexBasis: 0, flexGrow: point.running }}
+											/>
+										)}
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				</ChartAxes>
 			</div>
 			<div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-muted-foreground">
 				<LegendDot className={outcomeSolid.completed} label="Completed" />

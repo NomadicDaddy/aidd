@@ -44,7 +44,13 @@ export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) 
 	return (
 		<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
 			<SortableContext items={cardOrder} strategy={rectSortingStrategy}>
-				<section aria-label="Dashboard cards" className="grid gap-4 xl:grid-cols-2">
+				{/* items-start rather than the grid default of stretch. Each card owns its height:
+				    a resized card carries an explicit pixel height that still wins here, and an
+				    auto-height card sits at its content instead of being pulled taller by whichever
+				    unrelated card happens to share its row. No shared cap is imposed. */}
+				<section
+					aria-label="Dashboard cards"
+					className="grid items-start gap-4 xl:grid-cols-2">
 					{ordered.map((card) => (
 						<SortableDashboardCard card={card} key={card.id} locked={locked} />
 					))}

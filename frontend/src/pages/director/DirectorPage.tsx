@@ -234,7 +234,10 @@ export function DirectorPage() {
 				</section>
 			</div>
 
-			<div className="grid gap-5 lg:grid-cols-2">
+			{/* items-start, not the grid default of stretch: the suggestion queue is uncapped and
+			    Recent Cycles caps its own list at 28rem, so stretching the shorter card only adds
+			    empty space below a scroll region that has already stopped growing. */}
+			<div className="grid gap-5 lg:grid-cols-2 lg:items-start">
 				<DirectorSuggestionsList
 					onDismiss={dismissSuggestion}
 					onLaunch={launchSuggestion}

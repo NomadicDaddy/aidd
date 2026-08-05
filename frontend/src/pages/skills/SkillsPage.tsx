@@ -111,7 +111,10 @@ export function SkillsPage() {
 			/>
 			<SkillImportPanel />
 			<div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
-				<Card className="min-w-0 space-y-3">
+				{/* self-start keeps the catalog at its own height: the list inside caps at 34rem, so
+				    stretching the Card to match a taller details column leaves ~250px of dead
+				    surface under a scroll region that cannot grow into it. */}
+				<Card className="min-w-0 space-y-3 lg:self-start">
 					<div className="relative">
 						<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
 						<Input

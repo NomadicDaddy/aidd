@@ -1,7 +1,6 @@
 import { isLowExposureLocalProfile, requiresFullHardening } from 'aidd-shared/contracts';
 
 import type { ProjectAssuranceProfile, ProjectAssuranceProfileInput } from '../../../api/types.ts';
-import type { BadgeTone } from '../projects-list-shared.ts';
 
 import {
 	bucketLabels,
@@ -11,13 +10,18 @@ import {
 	externalIntegrationLabels,
 } from '../projects-list-shared.ts';
 
+/**
+ * Posture carries no tone. It is a configuration reading, not a health reading: "Full hardening" is
+ * the correct answer for a regulated project, and painting it red said a third of the Profile Matrix
+ * was in trouble when nothing was wrong. The three labels are already distinct words, so the
+ * distinction survives going neutral.
+ */
 export interface ProfilePosture {
 	description: string;
 	fullHardening: boolean;
 	label: string;
 	lowExposure: boolean;
 	reasons: string[];
-	tone: BadgeTone;
 }
 
 export function profileInput(profile: ProjectAssuranceProfile): ProjectAssuranceProfileInput {
@@ -84,7 +88,6 @@ export function getProfilePosture(form: ProjectAssuranceProfileInput): ProfilePo
 			label: 'Full hardening',
 			lowExposure,
 			reasons: hardeningReasons(form),
-			tone: 'red',
 		};
 	}
 	if (lowExposure) {
@@ -95,7 +98,6 @@ export function getProfilePosture(form: ProjectAssuranceProfileInput): ProfilePo
 			label: 'Low-exposure local',
 			lowExposure,
 			reasons: [],
-			tone: 'emerald',
 		};
 	}
 	return {
@@ -104,6 +106,5 @@ export function getProfilePosture(form: ProjectAssuranceProfileInput): ProfilePo
 		label: 'Standard',
 		lowExposure,
 		reasons: [],
-		tone: 'teal',
 	};
 }

@@ -85,7 +85,6 @@ export function ProfileMatrixRow({
 	const auditCount = row.preview?.audits.length ?? 0;
 	const applicable = row.preview?.audits.filter((audit) => audit.applies).length ?? 0;
 	const required = row.preview?.audits.filter((audit) => audit.effect === 'required').length ?? 0;
-	const sourceTone = row.project.metadata.profile.source === 'explicit' ? 'teal' : 'neutral';
 
 	return (
 		// A dirty row is promoted at row level, not just by a 40px badge: over a 3000px table the
@@ -111,9 +110,7 @@ export function ProfileMatrixRow({
 			</th>
 			<td className="px-3 py-3">
 				<div className="flex flex-wrap gap-1.5">
-					<Badge tone={sourceTone}>
-						{sourceLabel(row.project.metadata.profile.source)}
-					</Badge>
+					<Badge tone="neutral">{sourceLabel(row.project.metadata.profile.source)}</Badge>
 					{row.dirty && <Badge tone="amber">{unsavedBadgeLabel}</Badge>}
 				</div>
 			</td>
@@ -133,7 +130,7 @@ export function ProfileMatrixRow({
 				{/* `items-start`: the column stretched its Badge into a 160px bar while the Source
 				    Badge two cells earlier stayed an intrinsic pill — one component, two shapes. */}
 				<div className="flex min-w-40 flex-col items-start gap-1">
-					<Badge tone={row.posture.tone}>{row.posture.label}</Badge>
+					<Badge tone="neutral">{row.posture.label}</Badge>
 					{row.posture.reasons.length > 0 && (
 						<span className="text-xs text-muted-foreground">
 							{row.posture.reasons.length} hardening trigger

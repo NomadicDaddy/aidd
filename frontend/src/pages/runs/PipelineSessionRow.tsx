@@ -178,7 +178,7 @@ function SessionMeta({
 }: Pick<PipelineSessionRowProps, 'projectRouteId' | 'session'>) {
 	return (
 		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-			<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
+			<Badge tone="neutral">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			<PipelineSessionIdentityBadges identities={session.executionIdentities} />
 			<SessionProjectLink projectRouteId={projectRouteId} session={session} />
 			<span>{formatDate(session.startedAt)}</span>
@@ -207,7 +207,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 				<SessionProjectLink {...props} />
 			</td>
 			<td className="px-3 py-3">
-				<Badge tone="teal">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
+				<Badge tone="neutral">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			</td>
 			<td className="px-3 py-3">
 				<PipelineSessionIdentityBadges identities={session.executionIdentities} />

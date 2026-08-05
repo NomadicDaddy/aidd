@@ -60,7 +60,7 @@ export function PipelineStepSubRows({
 							</div>
 							<span aria-hidden="true" className="hidden xl:block" />
 							<div className="xl:px-3 xl:py-2">
-								<Badge tone="teal">{row.step.stepType}</Badge>
+								<Badge tone="neutral">{row.step.stepType}</Badge>
 							</div>
 							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
 							<div className="xl:px-3 xl:py-2">
@@ -95,7 +95,7 @@ export function PipelineStepSubRows({
 						</div>
 						<span aria-hidden="true" className="hidden xl:block" />
 						<div className="xl:px-3 xl:py-2">
-							<Badge tone="teal">{step.stepType}</Badge>
+							<Badge tone="neutral">{step.stepType}</Badge>
 						</div>
 						<div className="xl:px-3 xl:py-2">
 							{step.executionIdentity ? (

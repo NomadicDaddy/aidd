@@ -46,7 +46,7 @@ export function LaunchTargetsCard({
 						/>
 					}
 					badge={
-						<Badge tone={selectedProjectIds.length > 0 ? 'teal' : 'neutral'}>
+						<Badge tone="neutral">
 							{selectedProjectIds.length} of {projects.length} selected
 						</Badge>
 					}

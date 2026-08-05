@@ -13,12 +13,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCount, formatRatio, formatRelativeAge } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
-import {
-	bucketLabels,
-	formatAppVersion,
-	formatTemplateVersion,
-	profileBucketTone,
-} from '../projects-list-shared.ts';
+import { bucketLabels, formatAppVersion, formatTemplateVersion } from '../projects-list-shared.ts';
 import { ProjectStackDisplay } from '../ProjectStackDisplay.tsx';
 import { summarizeMetadataCoverage } from './metadataCoverage.ts';
 import { MetadataRow } from './MetadataRow.tsx';
@@ -61,7 +56,7 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 							}>
 							<span>{name}</span>
 							{isCurrent ? (
-								<Badge className="ml-1.5" tone="teal">
+								<Badge className="ml-1.5" tone="neutral">
 									current
 								</Badge>
 							) : null}
@@ -155,7 +150,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 						label="Profile"
 						value={
 							<LinkedValue to={projectDetailTabSearch('profile')}>
-								<Badge tone={profileBucketTone(metadata.profile.bucket)}>
+								<Badge tone="neutral">
 									{bucketLabels[metadata.profile.bucket]}
 								</Badge>
 							</LinkedValue>

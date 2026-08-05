@@ -48,11 +48,9 @@ export function SkillDetailsCard({
 					<p className="mt-1 text-sm break-words text-foreground">{skill.description}</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
-					<Badge tone={skill.origin === 'imported' ? 'amber' : 'neutral'}>
-						{skill.origin}
-					</Badge>
+					<Badge tone="neutral">{skill.origin}</Badge>
 					{supportCount > 0 ? (
-						<Badge tone="teal">
+						<Badge tone="neutral">
 							{supportCount} {supportCount === 1 ? 'file' : 'files'}
 						</Badge>
 					) : null}

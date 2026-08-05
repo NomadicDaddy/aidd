@@ -14,7 +14,6 @@ import {
 	formatAppVersion,
 	formatProjectListReportedCost,
 	formatProjectTokenCount,
-	profileBucketTone,
 	syncTone,
 } from './projects-list-shared.ts';
 import {
@@ -143,9 +142,7 @@ export function ProjectTableRow({
 			{optionalColumns.has('profile') ? (
 				<td className="px-3 py-3">
 					<div className="flex flex-wrap gap-1">
-						<Badge tone={profileBucketTone(metadata.profile.bucket)}>
-							{bucketLabels[metadata.profile.bucket]}
-						</Badge>
+						<Badge tone="neutral">{bucketLabels[metadata.profile.bucket]}</Badge>
 						{metadata.profile.source === 'inferred' ? (
 							<Badge tone="neutral">inferred</Badge>
 						) : null}

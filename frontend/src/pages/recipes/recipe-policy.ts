@@ -1,5 +1,4 @@
 import type { RecipeDefinition, RecipeStepOnFailure } from '../../api/types.ts';
-import type { Tone } from '../../lib/tones.ts';
 
 import {
 	applySkillExplainer,
@@ -20,7 +19,6 @@ export interface RecipePolicyBadge {
 	 * earns a place on the catalog card — the full summary stays on the detail page.
 	 */
 	risk: boolean;
-	tone: Tone;
 }
 
 export interface RecipePolicySummary {
@@ -57,11 +55,10 @@ export function getRecipePolicySummary(recipe: RecipeDefinition): RecipePolicySu
 /**
  * The policy summary as renderable badge descriptors.
  *
- * Tone here is deliberately narrow: the six-value scale means status, so a descriptive count
- * (`failure: stop`, `skills: apply`) stays neutral and only the three risk-bearing facts spend a
- * colour — amber for "it keeps going or tries again", teal for "it repairs itself or reviews
- * without writing". Otherwise an amber `2 parameters` sits beside an amber `failure: continue (1)`
- * and the badge that means something loses its privilege.
+ * These carry no tone. Every one of them is a configuration reading — how the recipe is set up to
+ * behave — and none of them says anything is wrong, so spending the status scale on them left an
+ * amber `retries: 3` beside an amber `failure: continue (1)` on a perfectly healthy recipe. The
+ * labels already name each fact, and `risk` is what decides which of them reach the catalog card.
  */
 export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBadge[] {
 	const policy = getRecipePolicySummary(recipe);
@@ -72,7 +69,6 @@ export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBad
 			key: 'stop',
 			label: `failure: stop (${policy.stopSteps})`,
 			risk: false,
-			tone: 'neutral',
 		});
 	}
 	if (policy.continueSteps > 0) {
@@ -81,7 +77,6 @@ export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBad
 			key: 'continue',
 			label: `failure: continue (${policy.continueSteps})`,
 			risk: true,
-			tone: 'amber',
 		});
 	}
 	if (policy.autoFixSteps > 0) {
@@ -90,7 +85,6 @@ export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBad
 			key: 'auto-fix',
 			label: `failure: auto-fix (${policy.autoFixSteps})`,
 			risk: true,
-			tone: 'teal',
 		});
 	}
 	if (policy.retries > 0) {
@@ -99,7 +93,6 @@ export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBad
 			key: 'retries',
 			label: `retries: ${policy.retries}`,
 			risk: true,
-			tone: 'amber',
 		});
 	}
 	if (policy.reviewSkillSteps > 0) {
@@ -108,7 +101,6 @@ export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBad
 			key: 'review',
 			label: `skills: review (${policy.reviewSkillSteps})`,
 			risk: false,
-			tone: 'teal',
 		});
 	}
 	if (policy.applySkillSteps > 0) {
@@ -117,7 +109,6 @@ export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBad
 			key: 'apply',
 			label: `skills: apply (${policy.applySkillSteps})`,
 			risk: false,
-			tone: 'neutral',
 		});
 	}
 	return badges;

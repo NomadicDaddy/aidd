@@ -4,7 +4,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import { GitStatusBadge } from '../GitStatusBadge.tsx';
-import { bucketLabels, profileBucketTone } from '../projects-list-shared.ts';
+import { bucketLabels } from '../projects-list-shared.ts';
 import { artifactTone } from './shared.ts';
 
 function StatusCell({ children, label }: { children: React.ReactNode; label: string }) {
@@ -51,7 +51,7 @@ export function ProjectStatusStrip({
 					{metadata.roadmap?.currentMilestone ? (
 						<Badge
 							title={`Current milestone: ${metadata.roadmap.currentMilestone}`}
-							tone="teal">
+							tone="neutral">
 							{metadata.roadmap.currentMilestone}
 						</Badge>
 					) : (
@@ -61,7 +61,7 @@ export function ProjectStatusStrip({
 				<StatusCell label="Profile">
 					<Badge
 						title={`Assurance profile: ${bucketLabels[metadata.profile.bucket]}`}
-						tone={profileBucketTone(metadata.profile.bucket)}>
+						tone="neutral">
 						{bucketLabels[metadata.profile.bucket]}
 					</Badge>
 				</StatusCell>
@@ -69,9 +69,7 @@ export function ProjectStatusStrip({
 					<GitStatusBadge className="max-w-full" status={gitStatus} />
 				</StatusCell>
 				<StatusCell label="Profile source">
-					<Badge
-						title={`Profile source: ${metadata.profile.source}`}
-						tone={metadata.profile.source === 'explicit' ? 'teal' : 'neutral'}>
+					<Badge title={`Profile source: ${metadata.profile.source}`} tone="neutral">
 						{metadata.profile.source}
 					</Badge>
 				</StatusCell>

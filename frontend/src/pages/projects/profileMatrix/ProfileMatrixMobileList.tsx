@@ -60,19 +60,14 @@ export function ProfileMatrixMobileList({
 								</p>
 							</div>
 							<div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-								<Badge
-									tone={
-										row.project.metadata.profile.source === 'explicit'
-											? 'teal'
-											: 'neutral'
-									}>
+								<Badge tone="neutral">
 									{sourceLabel(row.project.metadata.profile.source)}
 								</Badge>
 								{row.dirty && <Badge tone="amber">{unsavedBadgeLabel}</Badge>}
 							</div>
 						</div>
 						<div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-							<Badge tone={row.posture.tone}>{row.posture.label}</Badge>
+							<Badge tone="neutral">{row.posture.label}</Badge>
 							<span className="text-muted-foreground tabular-nums">
 								{applicable}/{auditCount} apply · {required} required
 							</span>

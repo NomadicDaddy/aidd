@@ -81,7 +81,7 @@ export function CodeFileViewer({
 						<h3 className="font-mono text-sm font-semibold break-all text-foreground">
 							{data.path}
 						</h3>
-						{data.language ? <Badge tone="teal">{data.language}</Badge> : null}
+						{data.language ? <Badge tone="neutral">{data.language}</Badge> : null}
 						{/* Plain text, matching the tree three inches to the left: Badge is this
 						    app's status pill and a byte count is not a status. */}
 						<span className="text-xs text-muted-foreground tabular-nums">

@@ -13,22 +13,28 @@ export function auditPathTail(path: string): string {
 
 // One word per state, with the qualifier in the tooltip. 'Disabled (override)' was the only label
 // long enough to wrap inside its badge, which made that one row ~14px taller than its neighbours.
+//
+// Enabled is the default and holds for nearly every row, so it renders as plain text rather than as
+// a badge: twenty-odd identical emerald pills carried no information and drowned out the handful of
+// rows that are genuinely exceptional. None of the remaining states is a fault either — an override
+// is a deliberate configuration choice and a profile-disabled audit is the profile working — so the
+// badges are neutral and the words carry the distinction.
 export function stateBadge(entry: ProjectAuditEntry) {
 	if (entry.overrideEffect === 'required') {
 		return (
-			<Badge title="Enabled by a project override" tone="teal">
+			<Badge title="Enabled by a project override" tone="neutral">
 				Overridden on
 			</Badge>
 		);
 	}
 	if (entry.overrideEffect === 'disabled' || entry.overrideEffect === 'excluded') {
 		return (
-			<Badge title="Disabled by a project override" tone="red">
+			<Badge title="Disabled by a project override" tone="neutral">
 				Overridden off
 			</Badge>
 		);
 	}
-	if (entry.enabled) return <Badge tone="emerald">Enabled</Badge>;
+	if (entry.enabled) return <span className="text-xs text-muted-foreground">Enabled</span>;
 	if (!entry.appliesToBucket) {
 		return (
 			<Badge title="Disabled by the project's assurance profile" tone="neutral">

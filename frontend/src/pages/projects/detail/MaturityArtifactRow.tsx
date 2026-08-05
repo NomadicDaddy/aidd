@@ -70,7 +70,7 @@ export function MaturityArtifactRow({
 			)}
 			<div className="flex shrink-0 items-center gap-1.5">
 				<Badge tone={artifactTone(artifact)}>{artifactStatusLabel(artifact)}</Badge>
-				{artifact.required && !hideRequired ? <Badge tone="teal">required</Badge> : null}
+				{artifact.required && !hideRequired ? <Badge tone="neutral">required</Badge> : null}
 				{artifact.mtime ? (
 					<span className="text-xs text-muted-foreground">
 						{formatRelativeAge(artifact.mtime)}

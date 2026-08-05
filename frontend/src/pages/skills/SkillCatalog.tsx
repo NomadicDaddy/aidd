@@ -115,7 +115,7 @@ function SkillCatalogRow({
 				<span className="truncate font-mono text-2xs text-muted-foreground">
 					{skill.id}
 				</span>
-				{skill.origin === 'imported' ? <Badge tone="amber">imported</Badge> : null}
+				{skill.origin === 'imported' ? <Badge tone="neutral">imported</Badge> : null}
 			</div>
 			<p className="line-clamp-1 text-xs text-muted-foreground">{skillSummary(skill)}</p>
 			{tags.length > 0 ? (

@@ -185,7 +185,7 @@ export function GraphDiagnostics({
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			<Badge tone="neutral">{graph.nodes.length} features</Badge>
-			<Badge tone="teal">{graph.edges.length} links</Badge>
+			<Badge tone="neutral">{graph.edges.length} links</Badge>
 			<Badge tone={visibleCount === graph.nodes.length ? 'neutral' : 'amber'}>
 				{visibleCount} visible
 			</Badge>

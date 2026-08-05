@@ -67,8 +67,8 @@ export function ComputedProfilePanel({
 					title="Computed posture"
 				/>
 				<div className="flex flex-wrap items-center gap-2">
-					<Badge tone={posture.tone}>{posture.label}</Badge>
-					<Badge tone={source === 'explicit' ? 'teal' : 'neutral'}>saved: {source}</Badge>
+					<Badge tone="neutral">{posture.label}</Badge>
+					<Badge tone="neutral">saved: {source}</Badge>
 				</div>
 				<p className="mt-2 text-xs text-muted-foreground">{posture.description}</p>
 				{posture.reasons.length > 0 && (

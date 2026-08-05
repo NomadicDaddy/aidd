@@ -73,7 +73,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 						<span className="flex flex-wrap items-center gap-1.5">
 							Current milestone
 							{currentMilestone ? (
-								<Badge tone="teal">{currentMilestone}</Badge>
+								<Badge tone="neutral">{currentMilestone}</Badge>
 							) : (
 								<span>— none active</span>
 							)}

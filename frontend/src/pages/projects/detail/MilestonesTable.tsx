@@ -63,7 +63,7 @@ export function MilestonesTable({
 									{milestone.name}
 								</Link>
 								{milestone.name === activeMilestone ? (
-									<Badge className="ml-1.5" tone="teal">
+									<Badge className="ml-1.5" tone="neutral">
 										current
 									</Badge>
 								) : null}

@@ -65,7 +65,7 @@ export function RecipePolicyBadges({
 	return (
 		<>
 			{visible.map((badge) => (
-				<RecipeBadgeTooltip content={badge.explainer} key={badge.key} tone={badge.tone}>
+				<RecipeBadgeTooltip content={badge.explainer} key={badge.key}>
 					{badge.label}
 				</RecipeBadgeTooltip>
 			))}

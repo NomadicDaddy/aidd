@@ -79,7 +79,7 @@ export function SessionSummaryCard({
 				<SummaryTile label="Skill directive intent">
 					<div className="flex flex-wrap gap-1.5">
 						{[...new Set(skillIntents)].map((intent) => (
-							<Badge key={intent} tone={intent === 'review-only' ? 'teal' : 'amber'}>
+							<Badge key={intent} tone="neutral">
 								{skillExecutionIntentLabel(intent)}
 							</Badge>
 						))}

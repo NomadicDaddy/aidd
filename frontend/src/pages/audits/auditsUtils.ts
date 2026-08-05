@@ -35,14 +35,16 @@ export const bucketShortLabels: Record<AuditAssuranceBucket, string> = {
 	single_user_local: 'Single',
 };
 
-// `default` is the baseline the great majority of applicability cells sit at, so it stays neutral —
-// emphasis is reserved for the cells that carry a real signal. `disabled` is an active suppression
-// rather than an absence, so it keeps a tone of its own instead of blending into the baseline.
-export const effectTone: Record<AuditEffect, 'amber' | 'neutral' | 'red' | 'teal'> = {
+// Applicability is a configuration matrix, not a health readout: every cell here is somebody's
+// deliberate policy and none of them is a fault. `excluded` in particular is the ordinary answer for
+// the Archive bucket, and painting it red made a correctly-configured column look like a wall of
+// failures. All four effects are neutral and the cell text carries the distinction; the matrix
+// reserves emphasis for the one thing that is genuinely wrong, which is nothing on this screen.
+export const effectTone: Record<AuditEffect, 'neutral'> = {
 	default: 'neutral',
-	disabled: 'amber',
-	excluded: 'red',
-	required: 'teal',
+	disabled: 'neutral',
+	excluded: 'neutral',
+	required: 'neutral',
 };
 
 export const overrideEffects: { label: string; value: 'default' | AuditOverrideEffect }[] = [

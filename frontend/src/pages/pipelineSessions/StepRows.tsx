@@ -91,7 +91,7 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 								{stepStatusLabel(step.status)}
 							</Badge>
 							{step.phase !== 'step' && <Badge>{step.phase}</Badge>}
-							<Badge tone="teal">{step.stepType}</Badge>
+							<Badge tone="neutral">{step.stepType}</Badge>
 							{step.executionIdentity ? (
 								<ExecutionIdentityBadges {...step.executionIdentity} />
 							) : null}
@@ -141,7 +141,7 @@ export function PendingStepRow({
 							<CircleDashed className="h-3 w-3" />
 							Pending
 						</Badge>
-						<Badge tone="teal">{step.stepType}</Badge>
+						<Badge tone="neutral">{step.stepType}</Badge>
 						<span className="text-xs font-medium text-muted-foreground">
 							Step {sequenceNumber} of {totalSteps}
 						</span>

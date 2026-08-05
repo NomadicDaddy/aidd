@@ -152,13 +152,9 @@ export const artifactTone: Record<ArtifactHealth, BadgeTone> = {
 	unknown: 'neutral',
 };
 
-export function profileBucketTone(bucket: ProjectAssuranceBucket): BadgeTone {
-	if (bucket === 'critical_regulated' || bucket === 'public_multi_tenant') return 'red';
-	if (bucket === 'internet_single_org') return 'amber';
-	if (bucket === 'prototype_archive') return 'neutral';
-	if (bucket === 'single_user_local') return 'emerald';
-	return 'teal';
-}
+// `profileBucketTone` was deleted here. It spent four of the six status tones on the assurance
+// bucket, so a correctly-configured regulated project rendered red on three separate surfaces while
+// nothing was wrong. The bucket is a configuration reading; `bucketLabels` already names it.
 
 export function syncTone(state: ProjectSyncState): BadgeTone {
 	if (state === 'error') return 'red';

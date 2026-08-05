@@ -166,9 +166,7 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 								</Link>
 							</td>
 							<td className="px-3 py-2">
-								<Badge tone={row.type === 'audit' ? 'amber' : 'teal'}>
-									{row.type}
-								</Badge>
+								<Badge tone="neutral">{row.type}</Badge>
 							</td>
 							<td className="px-3 py-2 text-foreground">{statusLabel(row)}</td>
 							{/* Priority was plain body text here and a toned Badge one card away in

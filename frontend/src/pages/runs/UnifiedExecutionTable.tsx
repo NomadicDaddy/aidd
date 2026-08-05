@@ -92,12 +92,15 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 						<table
 							aria-label={title}
 							className="w-full min-w-[56rem] table-fixed text-left text-sm">
+							{/* MODEL takes six points off STATUS, which was holding 17% for one badge
+							    while MODEL ellipsised every segment of an execution identity to a
+							    character or two down twenty rows. */}
 							<colgroup>
-								<col className="w-[22%]" />
+								<col className="w-[21%]" />
 								<col className="w-[11%]" />
 								<col className="w-[9%]" />
-								<col className="w-[20%]" />
-								<col className="w-[17%]" />
+								<col className="w-[26%]" />
+								<col className="w-[12%]" />
 								<col className="w-[9%]" />
 								<col className="w-[12%]" />
 							</colgroup>

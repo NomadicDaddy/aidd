@@ -209,8 +209,14 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			<td className="px-3 py-3">
 				<Badge tone="neutral">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			</td>
+			{/* The desktop MODEL cell has a fixed budget and a session can carry more than one
+			    runtime, so this is the cell that produced `co…  gpt-5…  hi…`. The wrapping meta
+			    line on the mobile card has no such budget and keeps the full labels. */}
 			<td className="px-3 py-3">
-				<PipelineSessionIdentityBadges identities={session.executionIdentities} />
+				<PipelineSessionIdentityBadges
+					identities={session.executionIdentities}
+					variant="compact"
+				/>
 			</td>
 			<td className="px-3 py-3">
 				<Badge tone={sessionStatusTone(session.status)}>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { default as Gauge } from 'lucide-react/dist/esm/icons/gauge';
 import { default as SquareTerminal } from 'lucide-react/dist/esm/icons/square-terminal';
 import { useCallback, useRef } from 'react';
 
@@ -16,16 +17,41 @@ import { Tooltip } from '../ui/tooltip.tsx';
 
 export type { ExecutionIdentity } from '../../lib/executionIdentity.ts';
 
+/**
+ * Truncate from the head, because the discriminating part of a machine identifier is its tail.
+ *
+ * `claude-opus-5` and `claude-fable-5` share eleven of thirteen characters; tail-truncating both to
+ * a narrow cell produces `claude-o…` and `claude-f…`, which is a coin flip, while head-truncating
+ * produces `…opus-5` and `…fable-5`, which is the answer. `direction: rtl` moves the overflow to
+ * the logical end — visually the left — and `text-left` keeps the run where the reader expects it.
+ *
+ * The label itself goes inside a `<bdi dir="ltr">`. Leaving it bare is not safe: in an RTL box a
+ * neutral character between a letter and a digit resolves to the surrounding direction, so
+ * `glm-5.2` can render its hyphen on the wrong side of the number. The isolate makes the whole
+ * value one LTR run whatever it contains, and the box around it still ellipsises at the left.
+ */
+export const identityTruncateClass = 'truncate text-left [direction:rtl]';
+
 function itemClass(item: ExecutionIdentityItem): string {
+	// Every segment is a value copied verbatim out of configuration — `codex`, `gpt-5.6-sol`,
+	// `xhigh` — and none of them is prose. Geist Sans rendered them as though they were.
 	return item.kind === 'model'
-		? 'font-semibold text-foreground'
-		: 'font-medium text-muted-foreground';
+		? 'font-mono font-semibold text-foreground'
+		: 'font-mono font-medium text-muted-foreground';
 }
 
 function itemFieldLabel(kind: ExecutionIdentityKind): string {
 	if (kind === 'backend') return 'CLI';
 	if (kind === 'model') return 'Model';
 	return 'Reasoning';
+}
+
+function ItemIcon({ kind }: { kind: ExecutionIdentityKind }) {
+	if (kind === 'backend')
+		return <SquareTerminal aria-hidden="true" className="size-3 shrink-0" strokeWidth={2.25} />;
+	if (kind === 'reasoning')
+		return <Gauge aria-hidden="true" className="size-3 shrink-0" strokeWidth={2.25} />;
+	return null;
 }
 
 // Truncation is measured, but the result MUST NOT re-render this span. Wrapping the measured
@@ -68,7 +94,7 @@ function OverflowIdentityValue({
 
 	return (
 		<span className={className} ref={setElement}>
-			{label}
+			<bdi dir="ltr">{label}</bdi>
 		</span>
 	);
 }
@@ -110,16 +136,26 @@ export function ExecutionIdentityBadges({
 	model,
 	provider,
 	reasoningEffort,
+	variant = 'default',
 	withTooltip = true,
 }: {
 	className?: string;
 	hint?: ReactNode;
+	/**
+	 * `compact` is for a table cell with a fixed budget. It keeps the model label whole and demotes
+	 * backend and reasoning effort to their icons, whose values move into the tooltip — three
+	 * segments sharing 179px produced `co…  gpt-5…  hi…`, which names none of the three.
+	 */
+	variant?: 'compact' | 'default';
 	withTooltip?: boolean;
 } & ExecutionIdentity) {
 	const items = executionIdentityItems({ backend, model, provider, reasoningEffort });
 	if (items.length === 0) return null;
+	const compact = variant === 'compact';
 	const cleanProvider = cleanIdentityValue(provider);
-	const hasHiddenDetails = Boolean(cleanProvider || hint);
+	// A demoted segment is a hidden detail like any other, so it takes the same route out.
+	const demotesLabels = compact && items.some((item) => item.kind !== 'model');
+	const hasHiddenDetails = Boolean(cleanProvider || hint) || demotesLabels;
 	const ariaLabel = items
 		.map((item) => `${itemFieldLabel(item.kind)} ${item.label}`)
 		.concat(cleanProvider ? [`Provider ${cleanProvider}`] : [])
@@ -138,21 +174,22 @@ export function ExecutionIdentityBadges({
 						itemClass(item),
 					)}
 					key={item.kind}>
-					{item.kind === 'backend' ? (
-						<SquareTerminal
-							aria-hidden="true"
-							className="size-3 shrink-0"
-							strokeWidth={2.25}
+					<ItemIcon kind={item.kind} />
+					{compact && item.kind !== 'model' ? null : (
+						<OverflowIdentityValue
+							className={cn(
+								'inline-block min-w-0',
+								identityTruncateClass,
+								// Compact hands the whole cell to the model, so capping it here
+								// would re-create the clipping the variant exists to remove.
+								item.kind === 'model' && !compact && 'max-w-48',
+							)}
+							label={item.label}
+							// Every segment, not just the model: a clipped backend used to be
+							// unrecoverable by any means because only the model carried a title.
+							withTooltip={withTooltip && !hasHiddenDetails}
 						/>
-					) : null}
-					<OverflowIdentityValue
-						className={cn(
-							'inline-block min-w-0 truncate',
-							item.kind === 'model' && 'max-w-48',
-						)}
-						label={item.label}
-						withTooltip={withTooltip && !hasHiddenDetails && item.kind === 'model'}
-					/>
+					)}
 				</span>
 			))}
 		</Badge>

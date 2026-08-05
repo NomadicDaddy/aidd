@@ -133,7 +133,7 @@ describe('Runs row consistency', () => {
 
 		expect(table).toContain('table-fixed');
 		expect(table).toContain('<colgroup>');
-		expect(table).toContain('w-[22%]');
+		expect(table).toContain('w-[21%]');
 		expect(table).toContain('Kind');
 		// Both surfaces render the same `stepSubRows` helper, so the selected step run stays
 		// highlighted in the table and in the mobile list from one declaration.
@@ -141,7 +141,9 @@ describe('Runs row consistency', () => {
 		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(2);
 		expect(steps).toContain("aria-current={selected ? 'true' : undefined}");
 		expect(steps).toContain('aria-pressed={selected}');
-		expect(steps).toContain('xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr]');
+		// The sub-row grid mirrors the colgroup exactly; a rebalance that misses one of them
+		// leaves every expanded step offset from the columns it is supposed to sit under.
+		expect(steps).toContain('xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr]');
 	});
 
 	test('run origin labels use the current Director name from one shared helper', async () => {

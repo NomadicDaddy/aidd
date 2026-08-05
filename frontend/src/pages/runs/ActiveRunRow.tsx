@@ -131,12 +131,16 @@ export function ActiveRunRow({
 				</div>
 			</td>
 			<td className="px-3 py-3">
-				<div className="flex max-w-[14rem] flex-wrap items-center gap-1.5">
+				{/* No `max-w` here any more: the column budget is the colgroup's job, and capping
+				    the cell below it was what made the model segment ellipsise to two characters
+				    while the column still had room. */}
+				<div className="flex min-w-0 flex-wrap items-center gap-1.5">
 					<ExecutionIdentityBadges
 						backend={run.backend}
 						model={run.model}
 						provider={run.provider}
 						reasoningEffort={run.reasoningEffort}
+						variant="compact"
 					/>
 				</div>
 			</td>

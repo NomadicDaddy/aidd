@@ -48,7 +48,7 @@ export function PipelineStepSubRows({
 				if (row.kind === 'pending') {
 					return (
 						<li
-							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground xl:grid xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0"
+							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground xl:grid xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0"
 							key={`pending-${row.sequenceNumber}`}>
 							<div className="flex min-w-0 basis-full items-center gap-2 xl:px-4 xl:py-2">
 								<span className="w-6 text-right font-mono">
@@ -81,7 +81,7 @@ export function PipelineStepSubRows({
 					<li
 						aria-current={selected ? 'true' : undefined}
 						className={cn(
-							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs xl:grid xl:grid-cols-[22fr_11fr_9fr_20fr_17fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0',
+							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs xl:grid xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0',
 							selected && containerSelectedClass,
 						)}
 						key={step.id}>
@@ -99,7 +99,11 @@ export function PipelineStepSubRows({
 						</div>
 						<div className="xl:px-3 xl:py-2">
 							{step.executionIdentity ? (
-								<ExecutionIdentityBadges {...step.executionIdentity} />
+								// Same column budget as the session row above it, same variant.
+								<ExecutionIdentityBadges
+									{...step.executionIdentity}
+									variant="compact"
+								/>
 							) : (
 								<span className="text-muted-foreground">—</span>
 							)}

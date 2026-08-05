@@ -13,8 +13,10 @@ function identityKey(identity: PipelineExecutionIdentity): string {
 
 export function PipelineSessionIdentityBadges({
 	identities,
+	variant = 'default',
 }: {
 	identities: PipelineExecutionIdentity[];
+	variant?: 'compact' | 'default';
 }) {
 	if (identities.length === 0) {
 		return <span className="text-muted-foreground">—</span>;
@@ -30,6 +32,7 @@ export function PipelineSessionIdentityBadges({
 							: undefined
 					}
 					key={identityKey(identity)}
+					variant={variant}
 				/>
 			))}
 		</span>

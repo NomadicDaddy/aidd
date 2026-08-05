@@ -41,7 +41,9 @@ describe('ExecutionIdentityBadgeLabPage', () => {
 			`${cliCount} CLIs · ${executionIdentityModelCatalog.length} models · ${executionIdentityReasoningCatalog.length} reasoning levels`,
 		);
 		expect(html).not.toContain('combinations');
-		expect(html.match(/role="group"/g)).toHaveLength(catalogCount + 4);
+		// Four representative specimens at natural width, plus the two constrained ones rendered
+		// at each of the three real column budgets — the specimens that make a failure possible.
+		expect(html.match(/role="group"/g)).toHaveLength(catalogCount + 4 + 6);
 		for (const cli of cliCatalog) {
 			expect(html).toContain(`aria-label="CLI ${cli}"`);
 		}

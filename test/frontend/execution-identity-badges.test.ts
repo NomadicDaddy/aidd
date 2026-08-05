@@ -147,7 +147,7 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html).toContain('border-l border-border');
 		expect(html).toContain('font-medium text-muted-foreground');
 		expect(html).toContain('font-semibold text-foreground');
-		expect(html).toContain('min-w-0 truncate max-w-48');
+		expect(html).toContain('min-w-0 truncate text-left [direction:rtl] max-w-48');
 		expect(html).not.toContain('title=');
 		expect(html).not.toContain('style=');
 		expect(html).not.toContain('hsl(');

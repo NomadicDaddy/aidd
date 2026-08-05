@@ -11,6 +11,7 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { backendLabel, backendOptions } from '../../lib/backends.ts';
+import { cn } from '../../lib/cn.ts';
 import {
 	executionIdentityModelCatalog,
 	executionIdentityReasoningCatalog,
@@ -53,6 +54,38 @@ const representativeIdentities: readonly {
 		label: 'Partial identity',
 	},
 ];
+
+/**
+ * The specimen that was missing.
+ *
+ * Every other specimen on this page renders at its natural width, so the component looked correct
+ * here while shipping `co…  gpt-5…  hi…` in a 179px table cell. These three widths are the real
+ * column budgets: Runs' MODEL column, the Pipeline Sessions history cell, and the narrowest place
+ * an identity is asked to render at all.
+ */
+const constrainedWidths = [
+	{ className: 'w-[240px]', label: '240px' },
+	{ className: 'w-[160px]', label: '160px' },
+	{ className: 'w-[120px]', label: '120px' },
+] as const;
+
+function ConstrainedSpecimens({ identity, label }: { identity: ExecutionIdentity; label: string }) {
+	return (
+		<div className="min-w-0 space-y-2">
+			<h3 className="text-sm font-medium text-foreground">{label}</h3>
+			{constrainedWidths.map((width) => (
+				<div className="flex items-center gap-3" key={width.label}>
+					<span className="w-12 shrink-0 font-mono text-xs text-muted-foreground">
+						{width.label}
+					</span>
+					<div className={cn('min-w-0 overflow-hidden', width.className)}>
+						<ExecutionIdentityBadges {...identity} variant="compact" />
+					</div>
+				</div>
+			))}
+		</div>
+	);
+}
 
 function CatalogGroup({
 	children,
@@ -121,6 +154,24 @@ export function ExecutionIdentityBadgeLabPage() {
 									<p className="text-xs text-muted-foreground">{description}</p>
 								</div>
 								<ExecutionIdentityBadges {...identity} />
+							</div>
+						))}
+					</div>
+				</section>
+			</Card>
+
+			<Card aria-labelledby="badge-lab-constrained" className="overflow-hidden p-0">
+				<section>
+					<CardHeader
+						className="mb-0 border-b border-border px-4 py-3"
+						description="The compact variant at the column budgets it actually has to survive. A specimen page that only shows the component at its natural width cannot fail."
+						id="badge-lab-constrained"
+						title="Constrained widths"
+					/>
+					<div className="grid gap-px bg-border sm:grid-cols-2">
+						{representativeIdentities.slice(0, 2).map(({ identity, label }) => (
+							<div className="bg-card p-4" key={label}>
+								<ConstrainedSpecimens identity={identity} label={label} />
 							</div>
 						))}
 					</div>

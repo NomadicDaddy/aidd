@@ -7,6 +7,16 @@ import type { RunRecord } from '../../types.ts';
 
 import { RECONCILED_EXIT_CODE } from './types.ts';
 
+// Stop reasons a supervisor stamps when it never observed the run's process alive: boot
+// reconciliation found no heartbeat file at all ('heartbeat_missing'), or the orphan sweep found a
+// row whose process exited before writing one ('process_exit'). Only these — plus a null reason,
+// whose provenance is unknown — may be corroborated against the ledger. Every other sentinel-coded
+// row proves the opposite: 'heartbeat_stale'/'heartbeat_removed' are reachable only after the
+// watcher read a real on-disk heartbeat, and 'killed'/'stop_requested' only after an operator acted
+// on a live row. Those runs die mid-flight precisely because something killed them, so the missing
+// ledger line is the expected consequence of the death, not evidence the run was synthetic.
+const UNOBSERVED_STOP_REASONS: ReadonlySet<string> = new Set(['heartbeat_missing', 'process_exit']);
+
 function isDirectorCycleProjection(run: RunRecord): boolean {
 	return (
 		run.source === 'director' &&
@@ -121,9 +131,18 @@ async function readActiveRunIds(projectPath: string): Promise<Set<string>> {
 // a DB row is fake (the append itself can fail). A phantom therefore needs POSITIVE evidence:
 // the row must carry the supervisor's reconciliation sentinel exit code (every force-fail path —
 // sweepOrphanedRuns, markRunStale, reconcileDeadRun, boot reconcile — stamps
-// RECONCILED_EXIT_CODE), AND be absent from a populated ledger, AND have no active-runs/ record.
-// A genuine run whose ledger append failed keeps its real exit code and always survives; hiding
-// it would misreport the project's history.
+// RECONCILED_EXIT_CODE), AND carry a stop reason consistent with a process that was never observed
+// alive (UNOBSERVED_STOP_REASONS), AND be absent from a populated ledger, AND have no active-runs/
+// record. A genuine run whose ledger append failed keeps its real exit code and always survives;
+// hiding it would misreport the project's history.
+//
+// The stop-reason gate is what separates the two ways a row ends up sentinel-coded and unledgered.
+// A run that worked for an hour and then had its heartbeat go stale — or was killed by an operator
+// — carries the sentinel exit code AND no ledger line, because dying mid-flight is exactly what
+// prevents the finalizing append. Without this gate such a run is indistinguishable from a synthetic
+// row and silently vanishes from both the history and active lists while its detail route still
+// serves it, stranding any deep link. Unrecognized stop reasons are kept, not dropped: over-keeping
+// shows a spurious row, over-dropping destroys real history.
 //
 // With no runs.jsonl at all (a fresh project, or a hermetic DB-only context) there is nothing to
 // corroborate against, so every run is kept. Running runs and runs still present in active-runs/
@@ -135,6 +154,10 @@ export async function dropLedgerPhantomRuns(items: RunRecord[]): Promise<RunReco
 		if (isDirectorCycleProjection(run)) continue;
 		// Positive phantom evidence: only supervisor-reconciled rows are drop candidates.
 		if (run.exitCode !== RECONCILED_EXIT_CODE) continue;
+		// ...and only those the supervisor never saw running. A run whose heartbeat went stale (or
+		// that was killed/stopped) demonstrably had a live process, so its ledger silence is
+		// explained by the death itself and must not hide it from history.
+		if (run.stopReason !== null && !UNOBSERVED_STOP_REASONS.has(run.stopReason)) continue;
 		const bucket = terminalByProject.get(run.projectPath);
 		if (bucket) bucket.push(run);
 		else terminalByProject.set(run.projectPath, [run]);

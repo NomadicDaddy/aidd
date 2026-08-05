@@ -113,6 +113,64 @@ describe('dropLedgerPhantomRuns', () => {
 		}
 	});
 
+	test('drops a sentinel-coded run whose stop reason proves it was never observed alive', async () => {
+		const projectDir = await testTempDir('aidd-ledger-reconcile-unobserved-');
+		try {
+			await writeLedger(projectDir, ['run-real']);
+			const items = [
+				makeRun({ id: 'run-real', projectPath: projectDir }),
+				makeRun({
+					id: 'run-no-heartbeat',
+					projectPath: projectDir,
+					status: 'failed',
+					exitCode: -1,
+					stopReason: 'heartbeat_missing',
+				}),
+				makeRun({
+					id: 'run-died-early',
+					projectPath: projectDir,
+					status: 'failed',
+					exitCode: -1,
+					stopReason: 'process_exit',
+				}),
+			];
+			const result = await dropLedgerPhantomRuns(items);
+			expect(result.map((run) => run.id)).toEqual(['run-real']);
+		} finally {
+			await rm(projectDir, { force: true, recursive: true });
+		}
+	});
+
+	// Regression: a run that worked for 42 minutes and then had its heartbeat go stale carries the
+	// same sentinel exit code as a phantom and never appends its ledger line — dying is what stops
+	// the append. It must survive, or real history disappears from the list while its detail route
+	// still serves the deep link.
+	test('keeps sentinel-coded runs whose stop reason proves a live process existed', async () => {
+		const projectDir = await testTempDir('aidd-ledger-reconcile-observed-');
+		try {
+			await writeLedger(projectDir, ['run-real']);
+			const observed = ['heartbeat_stale', 'heartbeat_removed', 'killed', 'stop_requested'];
+			const items = [
+				makeRun({ id: 'run-real', projectPath: projectDir }),
+				...observed.map((stopReason) =>
+					makeRun({
+						id: `run-${stopReason}`,
+						projectPath: projectDir,
+						status: 'failed',
+						exitCode: -1,
+						stopReason,
+					}),
+				),
+			];
+			const result = await dropLedgerPhantomRuns(items);
+			expect(result.map((run) => run.id).sort()).toEqual(
+				['run-real', ...observed.map((reason) => `run-${reason}`)].sort(),
+			);
+		} finally {
+			await rm(projectDir, { force: true, recursive: true });
+		}
+	});
+
 	test('keeps every run when the project has no ledger to reconcile against', async () => {
 		const projectDir = await testTempDir('aidd-ledger-reconcile-noledger-');
 		try {

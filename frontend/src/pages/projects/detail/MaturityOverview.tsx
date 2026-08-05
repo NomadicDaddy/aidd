@@ -126,8 +126,8 @@ export function MaturityOverview({
 	const isComplete = maturity.percent >= 100;
 	return (
 		<Card>
-			<div className="flex flex-wrap items-start gap-4 md:flex-nowrap">
-				<div className="flex shrink-0 flex-col items-center gap-3 max-md:w-full">
+			<div className="flex flex-wrap items-start gap-4 xl:flex-nowrap">
+				<div className="flex shrink-0 flex-col items-center gap-3 max-xl:w-full">
 					<MaturityRing
 						ariaLabel={`Project maturity ${maturity.percent}%`}
 						centerCaption="Maturity"
@@ -168,7 +168,7 @@ export function MaturityOverview({
 					) : null}
 					{isComplete ? <Badge tone="emerald">Fully matured</Badge> : null}
 				</div>
-				<div className="min-w-0 space-y-2 max-md:w-full md:flex-1">
+				<div className="min-w-0 space-y-2 max-xl:w-full xl:flex-1">
 					<div className="mb-1 flex flex-wrap items-center justify-between gap-2">
 						<h2 className="text-sm font-semibold text-foreground">Project maturity</h2>
 						<div className="flex items-center gap-3">

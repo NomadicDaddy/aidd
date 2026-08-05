@@ -5,6 +5,7 @@ import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 
 /**
  * Director auto-cycle schedule. Part of the unified Settings form (config-file
@@ -27,7 +28,7 @@ export function DirectorAutoCycleSection({
 		form.directorSuggestionMaxPerBucket < 1;
 
 	return (
-		<Card className="p-3">
+		<Card>
 			<div>
 				<h2 className="text-base font-semibold text-foreground">Director Auto-Cycle</h2>
 				<p className="mt-0.5 text-sm text-muted-foreground">
@@ -67,7 +68,7 @@ export function DirectorAutoCycleSection({
 						value={String(form.directorAutoCycleIntervalHours)}
 					/>
 					{intervalInvalid ? (
-						<span className="text-xs text-amber-600 dark:text-amber-400">
+						<span className={`text-xs ${toneText.amber}`}>
 							Enter a positive number of hours.
 						</span>
 					) : null}
@@ -111,7 +112,7 @@ export function DirectorAutoCycleSection({
 							value={String(form.directorSuggestionMaxPerBucket)}
 						/>
 						{targeted && maxPerBucketInvalid ? (
-							<span className="text-xs text-amber-600 dark:text-amber-400">
+							<span className={`text-xs ${toneText.amber}`}>
 								Enter a positive number of artifacts.
 							</span>
 						) : (

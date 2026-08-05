@@ -14,11 +14,25 @@ import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { TabList } from '../../components/ui/tabs.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
+import { toneSolid, toneText } from '../../lib/tones.ts';
 
 interface SettingsTabDefinition {
 	icon: ComponentType<{ className?: string }>;
 	id: SettingsTab;
 	label: string;
+}
+
+/**
+ * The locator the armed Save button lacks. `TabPanel` unmounts inactive panels, so an edit made on
+ * Run Engine is invisible from Integrations; this marks the tab holding it.
+ */
+function UnsavedDot() {
+	return (
+		<span className="inline-flex items-center">
+			<span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${toneSolid.amber}`} />
+			<span className="sr-only">unsaved changes</span>
+		</span>
+	);
 }
 
 const settingsTabs: readonly SettingsTabDefinition[] = [
@@ -32,6 +46,7 @@ const settingsTabs: readonly SettingsTabDefinition[] = [
 export function SettingsToolbar({
 	activeTab,
 	dirty,
+	dirtyTabs,
 	onChange,
 	onDiscard,
 	onSave,
@@ -40,14 +55,18 @@ export function SettingsToolbar({
 }: {
 	activeTab: SettingsTab;
 	dirty: boolean;
+	dirtyTabs: ReadonlySet<SettingsTab>;
 	onChange: (tab: SettingsTab) => void;
 	onDiscard: () => void;
 	onSave: () => void;
 	saveBlockReason: null | string;
 	savePending: boolean;
 }) {
+	const tabs = settingsTabs.map((tab) =>
+		dirtyTabs.has(tab.id) ? { ...tab, badge: <UnsavedDot /> } : tab,
+	);
 	return (
-		<Card className="sticky top-0 z-20 space-y-2 border-teal-950/20 bg-card/95 p-2.5 shadow-md backdrop-blur dark:border-teal-950/70">
+		<Card className="sticky top-0 z-20 space-y-2 border-border bg-card/95 p-2.5 shadow-md backdrop-blur">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 				<div className="hidden min-w-0 xl:block">
 					<TabList
@@ -55,7 +74,7 @@ export function SettingsToolbar({
 						ariaLabel="Settings sections"
 						idPrefix="settings"
 						onChange={onChange}
-						tabs={settingsTabs}
+						tabs={tabs}
 					/>
 				</div>
 				<label className="min-w-0 flex-1 xl:hidden">
@@ -69,7 +88,7 @@ export function SettingsToolbar({
 						value={activeTab}>
 						{settingsTabs.map((tab) => (
 							<option key={tab.id} value={tab.id}>
-								{tab.label}
+								{dirtyTabs.has(tab.id) ? `${tab.label} • unsaved` : tab.label}
 							</option>
 						))}
 					</select>
@@ -94,9 +113,7 @@ export function SettingsToolbar({
 				</div>
 			</div>
 			{saveBlockReason && !savePending ? (
-				<p
-					className="text-xs text-amber-600 sm:text-right dark:text-amber-400"
-					role="status">
+				<p className={`text-xs sm:text-right ${toneText.amber}`} role="status">
 					{saveBlockReason}
 				</p>
 			) : null}

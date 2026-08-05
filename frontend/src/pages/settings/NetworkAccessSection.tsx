@@ -41,7 +41,7 @@ export function NetworkAccessSection({
 
 	return (
 		<>
-			<Card className="grid gap-4 p-3 lg:grid-cols-2">
+			<Card className="grid gap-4 lg:grid-cols-2">
 				<div className="space-y-4">
 					<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
 						<Checkbox

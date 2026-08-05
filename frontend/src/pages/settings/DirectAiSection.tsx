@@ -9,7 +9,8 @@ import { Card } from '../../components/ui/card.tsx';
 import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { selectClass } from '../../lib/formStyles.ts';
+import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ('' | ReasoningEffort)[] = [
@@ -59,7 +60,7 @@ export function DirectAiSection({
 		: 'Paste API key';
 
 	return (
-		<Card className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
+		<Card className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 			<div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
 				<label className="flex items-center gap-2">
 					<Checkbox
@@ -147,9 +148,7 @@ export function DirectAiSection({
 				/>
 			</FieldRow>
 			<div className={`grid gap-2 md:col-span-2 xl:col-span-3 ${dimClass}`.trim()}>
-				<span className="text-xs font-medium text-muted-foreground uppercase">
-					Surfaces
-				</span>
+				<span className={fieldLabelClass}>Surfaces</span>
 				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
 					{surfaceOptions.map((surface) => (
 						<label
@@ -170,10 +169,9 @@ export function DirectAiSection({
 				</div>
 			</div>
 			<div className="grid gap-2 md:col-span-2 xl:col-span-3">
-				<span className="text-xs font-medium text-muted-foreground uppercase">
-					Director chat agent
-				</span>
-				<label className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-900/60 dark:bg-amber-950/30">
+				<span className={fieldLabelClass}>Director chat agent</span>
+				<label
+					className={`flex items-start gap-2 rounded-md border px-3 py-2 ${toneBorder.amber} ${toneSurface.amber}`}>
 					<Checkbox
 						checked={directorChatAllowFileEdits}
 						className="mt-0.5"
@@ -181,7 +179,7 @@ export function DirectAiSection({
 							setField('directorChatAllowFileEdits', event.target.checked)
 						}
 					/>
-					<span className="text-sm text-amber-900 dark:text-amber-200">
+					<span className={`text-sm ${toneText.amber}`}>
 						<span className="font-medium">
 							Allow Director chat to edit project files directly
 						</span>

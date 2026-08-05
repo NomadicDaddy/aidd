@@ -8,7 +8,23 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { nullableNumber, numberValue } from './settingsUtils.ts';
 
+/**
+ * The config key a label names, in mono under the label.
+ *
+ * Spelling it inline — 'Abort threshold (quitOnAbort)' — put it through the label's uppercase
+ * transform and it stopped matching the key: ABORT THRESHOLD (QUITONABORT). `aria-hidden` keeps
+ * the accessible name to the label alone.
+ */
+function ConfigKey({ name }: { name: string }) {
+	return (
+		<span aria-hidden="true" className="font-mono text-xs text-muted-foreground">
+			{name}
+		</span>
+	);
+}
+
 function NumberFieldRow({
+	configKey,
 	label,
 	min,
 	onChange,
@@ -16,6 +32,7 @@ function NumberFieldRow({
 	step,
 	value,
 }: {
+	configKey?: string;
 	label: string;
 	min?: number;
 	onChange: (value: null | number) => void;
@@ -25,6 +42,7 @@ function NumberFieldRow({
 }) {
 	return (
 		<FieldRow label={label}>
+			{configKey ? <ConfigKey name={configKey} /> : null}
 			<Input
 				// A fractional step means a currency field, which needs the decimal keypad; the
 				// integer fields keep the plain numeric one.
@@ -42,10 +60,12 @@ function NumberFieldRow({
 
 function ToggleRow({
 	checked,
+	configKey,
 	label,
 	onChange,
 }: {
 	checked: boolean;
+	configKey?: string;
 	label: string;
 	onChange: (checked: boolean) => void;
 }) {
@@ -53,6 +73,7 @@ function ToggleRow({
 		<label className="flex min-h-9 items-center gap-2 rounded-md border border-border px-3 py-2">
 			<Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />
 			<span className="text-sm font-medium text-foreground">{label}</span>
+			{configKey ? <ConfigKey name={configKey} /> : null}
 		</label>
 	);
 }
@@ -201,7 +222,8 @@ export function RunLimitsSection({
 						value={form.dirtyTreeThreshold}
 					/>
 					<NumberFieldRow
-						label="Abort threshold (quitOnAbort)"
+						configKey="quitOnAbort"
+						label="Abort threshold"
 						min={0}
 						onChange={(value) => setField('quitOnAbort', value)}
 						placeholder="0"
@@ -209,7 +231,8 @@ export function RunLimitsSection({
 					/>
 					<ToggleRow
 						checked={form.noClean}
-						label="Skip clean-up (noClean)"
+						configKey="noClean"
+						label="Skip clean-up"
 						onChange={(checked) => setField('noClean', checked)}
 					/>
 				</div>

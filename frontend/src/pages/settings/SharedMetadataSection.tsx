@@ -9,7 +9,6 @@ import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { ListEditor } from './ListEditor.tsx';
 
 export function SharedMetadataSection({
@@ -42,27 +41,32 @@ export function SharedMetadataSection({
 
 	return (
 		<div className="grid gap-4 xl:grid-cols-2">
-			<Card className="space-y-2 p-3">
-				<div className={fieldLabelClass}>
-					<FolderSymlink className="mr-1 inline h-4 w-4" />
+			<Card className="space-y-2">
+				{/* Card titles take the h2 the rest of the surface uses; fieldLabelClass is for the
+				    field labels inside them. */}
+				<h2 className="text-sm font-semibold text-foreground">
+					<FolderSymlink aria-hidden="true" className="mr-1 inline h-4 w-4" />
 					Shared Directories
-				</div>
+				</h2>
 				<p className="text-xs text-muted-foreground">
 					Directories copied into each project during metadata scaffolding.
 				</p>
+				{/* The card title already names the list; the label survives only for the
+				    per-entry aria-labels. */}
 				<ListEditor
 					items={form.sharedDirs}
 					label="Shared Dirs"
+					labelHidden
 					onChange={(items) => setField('sharedDirs', items)}
 					placeholder="/path/to/shared/dir"
 				/>
 			</Card>
 
-			<Card className="space-y-2 p-3">
-				<div className={fieldLabelClass}>
-					<FileSymlink className="mr-1 inline h-4 w-4" />
+			<Card className="space-y-2">
+				<h2 className="text-sm font-semibold text-foreground">
+					<FileSymlink aria-hidden="true" className="mr-1 inline h-4 w-4" />
 					Shared Files
-				</div>
+				</h2>
 				<p className="text-xs text-muted-foreground">
 					Files copied into each project during metadata scaffolding. Each entry is a
 					source path with an optional target path (relative to the project directory).

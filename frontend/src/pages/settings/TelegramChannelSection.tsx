@@ -11,6 +11,8 @@ import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 
+const BOT_TOKEN_HINT_ID = 'settings-telegram-bot-token-hint';
+
 function parseChatId(value: string): number | undefined {
 	const trimmed = value.trim();
 	if (!trimmed) return undefined;
@@ -27,6 +29,7 @@ export function TelegramChannelSection({
 	setField: <K extends keyof WebConfigSettings>(key: K, value: WebConfigSettings[K]) => void;
 }) {
 	const telegram = form.telegram;
+	const configuredHint = telegram.botTokenConfigured && !telegram.botToken;
 
 	function setBotToken(value: string): void {
 		setField('telegram', {
@@ -56,34 +59,43 @@ export function TelegramChannelSection({
 	}
 
 	return (
-		<Card className="space-y-3 p-3">
-			<div className={fieldLabelClass}>
-				<Send className="mr-1 inline h-4 w-4" />
+		<Card className="space-y-3">
+			{/* The section title takes the h2 its peer cards use; fieldLabelClass belongs on the
+			    field labels below, which had been rendered as plain sentence-case spans. */}
+			<h2 className="text-sm font-semibold text-foreground">
+				<Send aria-hidden="true" className="mr-1 inline h-4 w-4" />
 				Telegram Channel
-			</div>
+			</h2>
 			<p className="text-xs text-muted-foreground">
 				Telegram bot integration for bridged mode. The bot token is write-only — the current
 				configured state is shown without revealing the stored value.
 			</p>
 
-			<FieldRow label="Bot Token">
-				<Input
-					onChange={(event) => setBotToken(event.target.value)}
-					placeholder={
-						telegram.botTokenConfigured ? '•••••••• (configured)' : 'Enter bot token'
-					}
-					type="password"
-					value={telegram.botToken ?? ''}
-				/>
-				{telegram.botTokenConfigured && !telegram.botToken && (
-					<span className={`text-xs ${toneText.emerald}`}>
+			<div className="space-y-1">
+				<FieldRow label="Bot Token">
+					<Input
+						aria-describedby={configuredHint ? BOT_TOKEN_HINT_ID : undefined}
+						onChange={(event) => setBotToken(event.target.value)}
+						placeholder={
+							telegram.botTokenConfigured
+								? '•••••••• (configured)'
+								: 'Enter bot token'
+						}
+						type="password"
+						value={telegram.botToken ?? ''}
+					/>
+				</FieldRow>
+				{/* Sibling, not child: inside the label this status line became part of the
+				    control's accessible name ('Bot Token A bot token is configured.'). */}
+				{configuredHint ? (
+					<p className={`text-xs ${toneText.emerald}`} id={BOT_TOKEN_HINT_ID}>
 						A bot token is configured.
-					</span>
-				)}
-			</FieldRow>
+					</p>
+				) : null}
+			</div>
 
 			<div className="space-y-2">
-				<span className="text-xs text-muted-foreground">Allowed Chat IDs</span>
+				<span className={fieldLabelClass}>Allowed Chat IDs</span>
 				{telegram.allowedChatIds.map((chatId, index) => (
 					<div className="flex items-center gap-2" key={index}>
 						<Input

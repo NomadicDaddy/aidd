@@ -6,6 +6,7 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 import { nullableText, shadowingBackendModel, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
@@ -19,7 +20,7 @@ export function GeneralDefaultsSection({
 }) {
 	const shadowedBy = shadowingBackendModel(form);
 	return (
-		<Card className="space-y-3 p-3">
+		<Card className="space-y-3">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">Model Routing</h2>
 				<p className="mt-0.5 text-xs text-muted-foreground">
@@ -47,7 +48,7 @@ export function GeneralDefaultsSection({
 						value={textValue(form.model)}
 					/>
 					{shadowedBy ? (
-						<p className="text-xs text-amber-600 dark:text-amber-500">
+						<p className={`text-xs ${toneText.amber}`}>
 							Shadowed for {form.cli} launches: the Backend Matrix (Run Engine tab)
 							sets “{shadowedBy}” for {form.cli}, and backend models outrank this
 							shared default. Clear that row to use this value.

@@ -3,10 +3,13 @@ import type {
 	SystemMetricsResponse,
 	WebVitalSummary,
 } from '../../api/metrics.ts';
+import type { Tone } from '../../lib/tones.ts';
 
 import { Card } from '../../components/ui/card.tsx';
 import { useSystemMetrics, useWebVitalsSummary } from '../../hooks/useMetrics.ts';
 import { formatBytes } from '../../lib/formatters.ts';
+import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { toneSolid, toneText } from '../../lib/tones.ts';
 
 function formatMetricBytes(bytes: null | number): string {
 	if (bytes === null || !Number.isFinite(bytes)) return '—';
@@ -23,18 +26,31 @@ function formatMs(value: null | number): string {
 
 function Stat({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-md border border-border px-3 py-2">
-			<div className="text-xs text-muted-foreground">{label}</div>
+		<Card className="px-3 py-2" variant="sunken">
+			<div className={fieldLabelClass}>{label}</div>
 			<div className="mt-0.5 text-sm font-medium text-foreground tabular-nums">{value}</div>
-		</div>
+		</Card>
 	);
 }
 
-function ratingClass(rating: null | string): string {
-	if (rating === 'good') return 'text-green-600 dark:text-green-400';
-	if (rating === 'needs-improvement') return 'text-amber-600 dark:text-amber-400';
-	if (rating === 'poor') return 'text-red-600 dark:text-red-400';
-	return 'text-muted-foreground ';
+const ratingTone: Record<string, Tone> = {
+	good: 'emerald',
+	'needs-improvement': 'amber',
+	poor: 'red',
+};
+
+/** Colour belongs on a status element, not on the metric's own name. */
+function RatingDot({ rating }: { rating: null | string }) {
+	const tone = (rating && ratingTone[rating]) || 'neutral';
+	return (
+		<>
+			<span
+				aria-hidden="true"
+				className={`mr-2 inline-block h-2 w-2 rounded-full align-middle ${toneSolid[tone]}`}
+			/>
+			<span className="sr-only">{rating ?? 'no rating'}: </span>
+		</>
+	);
 }
 
 function ResourcePanel({ current }: { current: SystemMetricSnapshot }) {
@@ -77,14 +93,21 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 			<tbody>
 				{vitals.map((vital) => (
 					<tr className="border-t border-border" key={vital.name}>
-						<td className={`py-1 font-medium ${ratingClass(vital.latestRating)}`}>
+						<td className="py-1 font-medium text-foreground">
+							<RatingDot rating={vital.latestRating} />
 							{vital.name}
 						</td>
 						<td className="py-1 text-right tabular-nums">
 							{vital.latest === null ? '—' : vital.latest.toLocaleString()}
 						</td>
 						<td className="py-1 text-right tabular-nums">
-							{vital.sampleCount > 0 ? vital.average.toLocaleString() : '—'}
+							{/* Raw averages arrived at arbitrary precision — 338.638 beside 49,772. */}
+							{vital.sampleCount > 0
+								? vital.average.toLocaleString(undefined, {
+										maximumFractionDigits: 1,
+										minimumFractionDigits: 1,
+									})
+								: '—'}
 						</td>
 						<td className="py-1 text-right text-muted-foreground tabular-nums">
 							{vital.threshold.toLocaleString()}
@@ -111,7 +134,7 @@ interface SystemMetricsContentProps {
 
 export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentProps) {
 	return (
-		<Card className="space-y-4 p-3">
+		<Card className="space-y-4">
 			<div>
 				<h3 className="text-sm font-medium text-foreground">System metrics</h3>
 				<p className="mt-0.5 text-xs text-muted-foreground">
@@ -120,7 +143,7 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 				</p>
 			</div>
 			{metrics.isError ? (
-				<p className="text-xs text-red-600 dark:text-red-400" role="alert">
+				<p className={`text-xs ${toneText.red}`} role="alert">
 					Could not load system metrics.
 				</p>
 			) : metrics.data ? (
@@ -137,7 +160,7 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 					Frontend performance over the last 6 hours, rated against Google's thresholds.
 				</p>
 				{vitals.isError ? (
-					<p className="text-xs text-red-600 dark:text-red-400" role="alert">
+					<p className={`text-xs ${toneText.red}`} role="alert">
 						Could not load web vitals.
 					</p>
 				) : vitals.data ? (

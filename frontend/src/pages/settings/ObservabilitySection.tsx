@@ -11,7 +11,7 @@ export function ObservabilitySection({
 	setField: <K extends keyof WebConfigSettings>(key: K, value: WebConfigSettings[K]) => void;
 }) {
 	return (
-		<Card className="p-3">
+		<Card>
 			<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
 				<Checkbox
 					checked={form.traceDataMovement}

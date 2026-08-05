@@ -3,6 +3,8 @@ import { type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 import { Button } from './button.tsx';
 
 interface TabDefinition<T extends string> {
+	/** Trailing status node, rendered after the label — an unsaved-changes dot, a count, a warning. */
+	badge?: ReactNode;
 	icon?: ComponentType<{ className?: string }>;
 	id: T;
 	label: string;
@@ -76,6 +78,7 @@ export function TabList<T extends string>({
 						variant={selected ? 'primary' : 'secondary'}>
 						{Icon ? <Icon className="h-4 w-4" /> : null}
 						{tab.label}
+						{tab.badge}
 					</Button>
 				);
 			})}

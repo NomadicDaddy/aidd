@@ -25,7 +25,9 @@ import {
 } from '../../hooks/useSettings.ts';
 import { useUnsavedGuard } from '../../hooks/useUnsavedGuard.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { buildSettingsRestartUrl, settingsRestartTargetChanged } from './runtimeRedirect.ts';
+import { dirtySettingsTabs } from './settingsDirtyTabs.ts';
 import { readSettingsTab, settingsTabSearchParams } from './settingsNavigation.ts';
 import { type RuntimeAction, waitForRestartTarget } from './settingsRuntime.ts';
 import { SettingsSectionTabs } from './SettingsSectionTabs.tsx';
@@ -115,6 +117,7 @@ export function SettingsPage() {
 		? JSON.stringify(normalizeIgnoredFolders(form)) !==
 			JSON.stringify(normalizeIgnoredFolders(settings.data))
 		: false;
+	const dirtyTabs = dirtySettingsTabs(form, settings.data);
 	const blocker = useUnsavedGuard(dirty && !update.isPending);
 
 	let saveBlockReason: null | string = null;
@@ -199,7 +202,7 @@ export function SettingsPage() {
 
 	if (settings.isError) {
 		return (
-			<Card className="border-red-200 bg-red-50 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+			<Card className={`text-sm ${toneBorder.red} ${toneSurface.red} ${toneText.red}`}>
 				<div className="flex items-center justify-between gap-3">
 					<span>
 						{settings.error instanceof Error
@@ -226,7 +229,9 @@ export function SettingsPage() {
 					</Link>
 				}
 				description={form.configPath}
-				descriptionClassName="truncate"
+				// The config path is what this whole page edits; --font-mono is the token for
+				// paths and ids everywhere else in the app.
+				descriptionClassName="truncate font-mono text-xs"
 				helpSlug="settings"
 				title="Settings"
 			/>
@@ -234,6 +239,7 @@ export function SettingsPage() {
 			<SettingsToolbar
 				activeTab={activeTab}
 				dirty={dirty}
+				dirtyTabs={dirtyTabs}
 				onChange={changeTab}
 				onDiscard={discardChanges}
 				onSave={submit}

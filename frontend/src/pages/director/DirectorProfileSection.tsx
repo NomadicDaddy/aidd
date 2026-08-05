@@ -24,20 +24,22 @@ export function DirectorProfileSection({
 	pending: boolean;
 }) {
 	return (
+		// A sunken card with a violet 'own record' badge: the profile is a separate object with its
+		// own endpoint, so it is presented as one rather than as a section that happens to ignore
+		// the toolbar's Save.
 		<section aria-labelledby="director-profile-heading">
-			<Card className="border-teal-200/80 dark:border-teal-950/70">
+			<Card variant="sunken">
 				<div className="flex flex-wrap items-start justify-between gap-3">
 					<div>
 						<h2 className={sectionTitleClass} id="director-profile-heading">
 							Director Profile
 						</h2>
 						<p className={sectionDescClass}>
-							Backend, model, and behavior used when running cycles and chat. This
-							profile saves independently from the settings toolbar.
+							Backend, model, and behavior used when running cycles and chat.
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
-						<Badge tone="teal">Separate save</Badge>
+						<Badge tone="violet">Own record</Badge>
 						<Button disabled={pending} onClick={onSave} variant="secondary">
 							<Save aria-hidden="true" className="h-4 w-4" />
 							{pending ? 'Saving…' : 'Save Profile'}

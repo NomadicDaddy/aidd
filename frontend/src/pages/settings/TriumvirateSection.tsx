@@ -18,7 +18,7 @@ export function TriumvirateSection({
 	triumvirate: null | TriumvirateSettings | undefined;
 }) {
 	return (
-		<Card className="space-y-3 p-3">
+		<Card className="space-y-3">
 			<div>
 				<h2 className="text-sm font-semibold text-foreground">Triumvirate Roles</h2>
 				<p className="mt-0.5 text-xs text-muted-foreground">

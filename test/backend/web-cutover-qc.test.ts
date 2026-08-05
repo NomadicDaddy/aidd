@@ -350,6 +350,7 @@ describe('web v2 cutover QC', () => {
 				new Set(['auth', 'rbac']),
 			],
 			[resolve('frontend/src/pages/projects/projects-list-shared.ts'), new Set(['rbac'])],
+			[resolve('frontend/src/pages/settings/settingsDirtyTabs.ts'), new Set(['workspace'])],
 			[resolve('frontend/src/pages/settings/settingsNavigation.ts'), new Set(['workspace'])],
 			[
 				resolve('frontend/src/pages/settings/SettingsSectionTabs.tsx'),

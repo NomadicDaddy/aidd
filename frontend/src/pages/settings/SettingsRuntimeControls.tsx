@@ -61,10 +61,13 @@ export function SettingsRuntimeControls({
 
 	return (
 		<>
-			<Card className="flex flex-col gap-4 border-teal-200/80 bg-teal-50/60 dark:border-teal-950/70 dark:bg-teal-950/20">
+			{/* The one tinted card on the surface, and the only place raw teal-* ladder values were
+			    used instead of the accent tokens. The danger-variant Shutdown button carries the
+			    weight; the tint only sets the zone apart. */}
+			<Card className="flex flex-col gap-4 border-border bg-accent-muted">
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 					<div>
-						<h2 className="text-sm font-semibold text-teal-700 dark:text-teal-300">
+						<h2 className="text-sm font-semibold text-foreground">
 							Control Panel Runtime
 						</h2>
 						<p className="mt-1 max-w-2xl text-sm text-muted-foreground">

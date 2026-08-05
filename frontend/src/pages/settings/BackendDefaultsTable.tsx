@@ -10,6 +10,8 @@ import type {
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useCliStatus } from '../../hooks/useSettings.ts';
+import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 import { BackendDefaultFields } from './BackendDefaultFields.tsx';
 import { SettingsToolStatusBadge } from './SettingsToolStatusBadge.tsx';
 import { emptyBackendDefault } from './settingsUtils.ts';
@@ -97,7 +99,7 @@ export function BackendDefaultsTable({
 						apply to new runs.
 					</p>
 					{statusQuery.isError ? (
-						<p className="mt-1 text-xs text-red-600 dark:text-red-400">
+						<p className={`mt-1 text-xs ${toneText.red}`}>
 							Could not refresh CLI status.
 						</p>
 					) : null}
@@ -116,21 +118,23 @@ export function BackendDefaultsTable({
 				<table
 					aria-label="Backend status and defaults"
 					className="w-full min-w-[860px] text-left text-sm">
-					<thead className="border-b border-border bg-muted text-xs text-muted-foreground">
+					<thead className="border-b border-border bg-muted">
+						{/* Explicit widths give Model the slack that a w-56 name-and-badge column
+						    was wasting: 'kilo/stepfun/step-3.7-flash:f' was cut mid-string. */}
 						<tr>
-							<th className="px-3 py-2 font-medium" scope="col">
+							<th className={`w-44 px-3 py-2 ${fieldLabelClass}`} scope="col">
 								Backend & Status
 							</th>
-							<th className="px-3 py-2 font-medium" scope="col">
+							<th className={`w-[28%] px-3 py-2 ${fieldLabelClass}`} scope="col">
 								Model
 							</th>
-							<th className="px-3 py-2 font-medium" scope="col">
+							<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
 								Reasoning
 							</th>
-							<th className="px-3 py-2 font-medium" scope="col">
+							<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
 								Idle Timeout
 							</th>
-							<th className="px-3 py-2 font-medium" scope="col">
+							<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
 								Idle Nudge Timeout
 							</th>
 						</tr>
@@ -140,26 +144,20 @@ export function BackendDefaultsTable({
 							const defaults = backends[backend] ?? emptyBackendDefault();
 							return (
 								<tr className="border-b border-border last:border-0" key={backend}>
-									<td className="w-56 px-3 py-2">
+									<td className="px-3 py-2 align-top">
 										<BackendIdentity
 											backend={backend}
 											loading={statusQuery.isLoading}
 											status={statuses.get(backend)}
 										/>
 									</td>
-									<td className="px-3 py-2" colSpan={4}>
-										<div className="grid grid-cols-4 gap-3">
-											<BackendDefaultFields
-												backend={backend}
-												defaults={defaults}
-												setBackendDefault={setBackendDefault}
-												shadowedSharedModel={shadowNote(
-													backend,
-													defaults.model,
-												)}
-											/>
-										</div>
-									</td>
+									<BackendDefaultFields
+										backend={backend}
+										defaults={defaults}
+										layout="cells"
+										setBackendDefault={setBackendDefault}
+										shadowedSharedModel={shadowNote(backend, defaults.model)}
+									/>
 								</tr>
 							);
 						})}
@@ -171,7 +169,7 @@ export function BackendDefaultsTable({
 				{backendDefaultOptions.map((backend) => {
 					const defaults = backends[backend] ?? emptyBackendDefault();
 					return (
-						<Card className="space-y-3 p-3" key={backend}>
+						<Card className="space-y-3" key={backend}>
 							<BackendIdentity
 								backend={backend}
 								loading={statusQuery.isLoading}

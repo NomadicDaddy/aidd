@@ -3,6 +3,7 @@ import type { BackendDefaultSettings, BackendName, ReasoningEffort } from '../..
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
 const modelPlaceholders: Record<BackendName, string> = {
@@ -21,15 +22,25 @@ const modelPlaceholders: Record<BackendName, string> = {
 };
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 
+/**
+ * The four per-backend default controls.
+ *
+ * `layout="cells"` emits each control as its own `<td>` so the browser's table algorithm aligns
+ * them under the matching `<th>`. They used to share one `<td colSpan={4}>` holding a private
+ * `grid-cols-4`, and the two grids laid out independently — every header sat 60-80px left of the
+ * control it named.
+ */
 export function BackendDefaultFields({
 	backend,
 	defaults,
+	layout = 'stacked',
 	setBackendDefault,
 	shadowedSharedModel,
 	showLabels = false,
 }: {
 	backend: BackendName;
 	defaults: BackendDefaultSettings;
+	layout?: 'cells' | 'stacked';
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
@@ -38,70 +49,84 @@ export function BackendDefaultFields({
 	shadowedSharedModel?: null | string;
 	showLabels?: boolean;
 }) {
+	const Cell = layout === 'cells' ? 'td' : 'div';
+	const cellClass = layout === 'cells' ? 'px-3 py-2 align-top' : 'min-w-0';
 	return (
 		<>
-			<FieldRow className="min-w-0" label="Model" labelHidden={!showLabels}>
-				<Input
-					aria-label={`${backend} model`}
-					onChange={(event) =>
-						setBackendDefault(backend, 'model', nullableText(event.target.value))
-					}
-					placeholder={modelPlaceholders[backend]}
-					value={textValue(defaults.model)}
-				/>
-				{shadowedSharedModel ? (
-					<p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
-						Outranks the shared Default Model (“{shadowedSharedModel}”) for {backend}{' '}
-						launches — clear this to use the shared default.
-					</p>
-				) : null}
-			</FieldRow>
-			<FieldRow className="min-w-0" label="Reasoning" labelHidden={!showLabels}>
-				<select
-					aria-label={`${backend} reasoning effort`}
-					className={`${selectClass} w-full`}
-					onChange={(event) =>
-						setBackendDefault(backend, 'reasoningEffort', event.target.value || null)
-					}
-					value={defaults.reasoningEffort ?? ''}>
-					<option value="">Shared default</option>
-					{reasoningOptions.map((option) => (
-						<option key={option} value={option}>
-							{option}
-						</option>
-					))}
-				</select>
-			</FieldRow>
-			<FieldRow className="min-w-0" label="Idle timeout" labelHidden={!showLabels}>
-				<Input
-					aria-label={`${backend} idle timeout`}
-					inputMode="numeric"
-					onChange={(event) =>
-						setBackendDefault(
-							backend,
-							'idleTimeoutSeconds',
-							nullableNumber(event.target.value),
-						)
-					}
-					placeholder="e.g., 300"
-					value={numberValue(defaults.idleTimeoutSeconds)}
-				/>
-			</FieldRow>
-			<FieldRow className="min-w-0" label="Idle nudge timeout" labelHidden={!showLabels}>
-				<Input
-					aria-label={`${backend} idle nudge timeout`}
-					inputMode="numeric"
-					onChange={(event) =>
-						setBackendDefault(
-							backend,
-							'idleNudgeTimeoutSeconds',
-							nullableNumber(event.target.value),
-						)
-					}
-					placeholder="e.g., 120"
-					value={numberValue(defaults.idleNudgeTimeoutSeconds)}
-				/>
-			</FieldRow>
+			<Cell className={cellClass}>
+				<FieldRow className="min-w-0" label="Model" labelHidden={!showLabels}>
+					<Input
+						aria-label={`${backend} model`}
+						onChange={(event) =>
+							setBackendDefault(backend, 'model', nullableText(event.target.value))
+						}
+						placeholder={modelPlaceholders[backend]}
+						value={textValue(defaults.model)}
+					/>
+					{shadowedSharedModel ? (
+						<p className={`mt-1 text-xs ${toneText.amber}`}>
+							Outranks the shared Default Model (“{shadowedSharedModel}”) for{' '}
+							{backend} launches — clear this to use the shared default.
+						</p>
+					) : null}
+				</FieldRow>
+			</Cell>
+			<Cell className={cellClass}>
+				<FieldRow className="min-w-0" label="Reasoning" labelHidden={!showLabels}>
+					<select
+						aria-label={`${backend} reasoning effort`}
+						className={`${selectClass} w-full`}
+						onChange={(event) =>
+							setBackendDefault(
+								backend,
+								'reasoningEffort',
+								event.target.value || null,
+							)
+						}
+						value={defaults.reasoningEffort ?? ''}>
+						<option value="">Shared default</option>
+						{reasoningOptions.map((option) => (
+							<option key={option} value={option}>
+								{option}
+							</option>
+						))}
+					</select>
+				</FieldRow>
+			</Cell>
+			<Cell className={cellClass}>
+				<FieldRow className="min-w-0" label="Idle timeout" labelHidden={!showLabels}>
+					<Input
+						aria-label={`${backend} idle timeout`}
+						inputMode="numeric"
+						onChange={(event) =>
+							setBackendDefault(
+								backend,
+								'idleTimeoutSeconds',
+								nullableNumber(event.target.value),
+							)
+						}
+						placeholder="e.g., 300"
+						value={numberValue(defaults.idleTimeoutSeconds)}
+					/>
+				</FieldRow>
+			</Cell>
+			<Cell className={cellClass}>
+				<FieldRow className="min-w-0" label="Idle nudge timeout" labelHidden={!showLabels}>
+					<Input
+						aria-label={`${backend} idle nudge timeout`}
+						inputMode="numeric"
+						onChange={(event) =>
+							setBackendDefault(
+								backend,
+								'idleNudgeTimeoutSeconds',
+								nullableNumber(event.target.value),
+							)
+						}
+						placeholder="e.g., 120"
+						value={numberValue(defaults.idleNudgeTimeoutSeconds)}
+					/>
+				</FieldRow>
+			</Cell>
 		</>
 	);
 }

@@ -2,61 +2,67 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 
 import type { SettingsSourceControlStatus } from '../../api/types.ts';
 
+import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useSourceControlStatus } from '../../hooks/useSettings.ts';
-import { SettingsToolStatusBadge } from './SettingsToolStatusBadge.tsx';
+import { toneText } from '../../lib/tones.ts';
+import { isAuthenticated, sourceControlRowTone } from './sourceControlTone.ts';
 
-function StatusRows({ items, title }: { items: SettingsSourceControlStatus[]; title: string }) {
+function StatusRow({ item }: { item: SettingsSourceControlStatus }) {
+	const tone = sourceControlRowTone(item);
+	const authenticated = isAuthenticated(item.authStatus);
+	const statusLine = item.authStatus ?? item.detail;
+	// `detail` repeats the badge on healthy rows ('Available' under an `available` badge); it only
+	// earns a line when it says something the badge does not.
+	const detailLine =
+		item.authStatus && item.detail.trim().toLowerCase() !== item.status ? item.detail : null;
 	return (
-		<Card className="overflow-hidden p-0">
-			<div className="border-b border-border px-4 py-3">
-				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
+		<div className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+			<div className="min-w-0">
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="font-medium text-foreground">{item.label}</span>
+					{item.version ? (
+						<span className="text-xs text-muted-foreground">{item.version}</span>
+					) : null}
+				</div>
+				<p
+					className={`mt-1 text-sm ${tone === 'emerald' ? 'text-muted-foreground' : toneText[tone]}`}>
+					{statusLine}
+				</p>
+				{detailLine ? (
+					<p className="mt-1 text-xs text-muted-foreground">{detailLine}</p>
+				) : null}
 			</div>
-			<div className="divide-y divide-border">
-				{items.map((item) => (
-					<div
-						className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
-						key={item.id}>
-						<div className="min-w-0">
-							<div className="flex flex-wrap items-center gap-2">
-								<span className="font-medium text-foreground">{item.label}</span>
-								{item.version ? (
-									<span className="text-xs text-muted-foreground">
-										{item.version}
-									</span>
-								) : null}
-							</div>
-							<p className="mt-1 text-sm text-muted-foreground">
-								{item.authStatus ?? item.detail}
-							</p>
-							{item.authStatus ? (
-								<p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
-							) : null}
-						</div>
-						<div className="flex items-center gap-2 md:justify-end">
-							<SettingsToolStatusBadge status={item.status} />
-							<span className="max-w-[14rem] truncate text-xs text-muted-foreground">
-								{item.command ?? 'environment'}
-							</span>
-						</div>
-					</div>
-				))}
+			<div className="flex items-center gap-2 md:justify-end">
+				<Badge showDot tone={tone}>
+					{authenticated ? item.status : 'not authenticated'}
+				</Badge>
+				<span className="max-w-[14rem] truncate text-xs text-muted-foreground">
+					{item.command ?? 'environment'}
+				</span>
 			</div>
-		</Card>
+		</div>
 	);
 }
 
 export function SourceControlStatusPanel() {
 	const query = useSourceControlStatus();
+	const items = query.data ?? [];
 	return (
-		<div className="space-y-3">
-			<div className="flex items-center justify-between gap-3">
-				<p className="text-sm text-muted-foreground">
-					Read-only source-control tool status. These rows do not change Git or provider
-					behavior.
-				</p>
+		// The description and Refresh live inside the Card. Rendered above it they pushed this
+		// column's top edge 46px below the Telegram card it shares a row with.
+		<Card className="overflow-hidden p-0">
+			<div className="flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
+				<div className="min-w-0">
+					<h2 className="text-sm font-semibold text-foreground">Source Control</h2>
+					<p className="mt-0.5 text-xs text-muted-foreground">
+						Read-only source-control tool status. These rows do not change Git or
+						provider behavior.
+					</p>
+				</div>
 				<Button
+					className="shrink-0"
 					disabled={query.isFetching}
 					onClick={() => void query.refetch()}
 					size="compact"
@@ -66,16 +72,20 @@ export function SourceControlStatusPanel() {
 				</Button>
 			</div>
 			{query.isLoading ? (
-				<Card className="py-8 text-center text-sm text-muted-foreground">
+				<p className="px-4 py-8 text-center text-sm text-muted-foreground">
 					Checking source-control status…
-				</Card>
+				</p>
 			) : query.isError ? (
-				<Card className="border-red-200 bg-red-50 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+				<p className={`px-4 py-8 text-center text-sm ${toneText.red}`}>
 					Could not load source-control status.
-				</Card>
+				</p>
 			) : (
-				<StatusRows items={query.data ?? []} title="Source Control" />
+				<div className="divide-y divide-border">
+					{items.map((item) => (
+						<StatusRow item={item} key={item.id} />
+					))}
+				</div>
 			)}
-		</div>
+		</Card>
 	);
 }

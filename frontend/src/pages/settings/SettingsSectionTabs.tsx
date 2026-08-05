@@ -31,6 +31,8 @@ import { SystemMetricsSection } from './SystemMetricsSection.tsx';
 import { TelegramChannelSection } from './TelegramChannelSection.tsx';
 import { TriumvirateSection } from './TriumvirateSection.tsx';
 
+const APPLICATIONS_ROOT_HINT_ID = 'settings-applications-root-hint';
+
 export function SettingsSectionTabs({
 	activeTab,
 	dirty,
@@ -61,13 +63,13 @@ export function SettingsSectionTabs({
 		<>
 			<TabPanel activeTab={activeTab} id="workspace" idPrefix="settings">
 				<div className="space-y-4">
-					<Card className="p-3">
-						<FieldRow label="Applications Root">
-							<span className="text-xs text-muted-foreground">
-								Resolves bare project names and provides the fallback discovery
-								root.
-							</span>
+					<Card className="space-y-1">
+						{/* The help text is a sibling, not a child of the label: nested inside it
+						    the whole paragraph is concatenated into the control's accessible name
+						    and re-announced on every focus. */}
+						<FieldRow className="max-w-xl" label="Applications Root">
 							<Input
+								aria-describedby={APPLICATIONS_ROOT_HINT_ID}
 								onChange={(event) =>
 									setField('applicationsRoot', nullableText(event.target.value))
 								}
@@ -75,8 +77,11 @@ export function SettingsSectionTabs({
 								value={textValue(form.applicationsRoot)}
 							/>
 						</FieldRow>
+						<p className="text-xs text-muted-foreground" id={APPLICATIONS_ROOT_HINT_ID}>
+							Resolves bare project names and provides the fallback discovery root.
+						</p>
 					</Card>
-					<Card className="grid gap-4 p-3 xl:grid-cols-[minmax(14rem,0.7fr)_minmax(0,1.3fr)]">
+					<Card className="grid gap-4 xl:grid-cols-[minmax(14rem,0.7fr)_minmax(0,1.3fr)]">
 						<ListEditor
 							items={form.applicationRoots}
 							label="Application Roots"

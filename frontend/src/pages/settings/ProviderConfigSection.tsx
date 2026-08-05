@@ -178,7 +178,7 @@ export function ProviderConfigSection({
 
 	return (
 		<section aria-labelledby="provider-settings-heading" className="space-y-3">
-			<Card className="grid gap-3 p-3 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:items-center">
+			<Card className="grid gap-3 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:items-center">
 				<div>
 					<h2
 						className="text-sm font-semibold text-foreground"

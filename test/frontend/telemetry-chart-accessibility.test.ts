@@ -77,7 +77,9 @@ describe('Telemetry chart accessibility', () => {
 		expect(lines).toContain(
 			'<div aria-hidden="true"><div class="grid grid-cols-[auto_minmax(0,1fr)]',
 		);
-		expect(lines).toContain('class="flex h-40 gap-1"');
+		// Shorter than the single-sided invocations chart above: the two arms split this height
+		// between them, so `h-40` left a persistent empty band under the smaller arm.
+		expect(lines).toContain('class="flex h-32 gap-1"');
 		expect(lines).toContain('<caption>Line changes for each time bucket</caption>');
 		expect(lines).toContain(
 			`<th scope="row">${labels[0]}</th><td>401</td><td>201</td><td>11</td><td>3</td><td>4</td>`,

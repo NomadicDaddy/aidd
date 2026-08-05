@@ -25,9 +25,16 @@ function CountCard({
 	value: number;
 }) {
 	return (
-		<Card className="space-y-1">
-			<div className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-				<span aria-hidden="true" className={`h-2 w-2 rounded-full ${className}`} />
+		// A one-word label and a two-word label sit in cards of the same height, so anchoring the
+		// value to the bottom is what keeps a row of tiles reading as one set: with the value
+		// stacked directly under the label, "Nested steps" pushed its number a line lower than
+		// "Total" next to it.
+		<Card className="flex h-full flex-col justify-between gap-1">
+			<div className="flex items-start gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+				<span
+					aria-hidden="true"
+					className={`mt-1 h-2 w-2 shrink-0 rounded-full ${className}`}
+				/>
 				{label}
 			</div>
 			<div className="text-2xl font-semibold text-foreground tabular-nums">{value}</div>
@@ -56,8 +63,10 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 					value={totals.nested}
 				/>
 			</div>
-			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. */}
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. The
+			    `md` step is what keeps eight tiles to two rows at tablet width — without it the
+			    grid held two columns until `lg` and the outcome row alone filled the viewport. */}
+			<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8">
 				<CountCard
 					className={outcomeSolid.completed}
 					label="Completed"

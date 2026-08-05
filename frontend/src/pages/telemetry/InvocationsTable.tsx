@@ -9,9 +9,28 @@ import type {
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
+import { cn } from '../../lib/cn.ts';
 import { formatDate, formatDuration } from '../../lib/formatters.ts';
 import { InvocationDetails } from './InvocationDetails.tsx';
+
+/**
+ * Source and Project are the two columns that survive being dropped: at 768 the table pushed Status
+ * and Details — the columns an operator is actually scanning — off the right edge, and Project is
+ * repeated verbatim inside the Inspect panel of every row.
+ */
+const HIDDEN_BELOW_MD = 'hidden md:table-cell';
+
+const columns: { className?: string; label: string }[] = [
+	{ label: 'Resource' },
+	{ className: HIDDEN_BELOW_MD, label: 'Source' },
+	{ className: HIDDEN_BELOW_MD, label: 'Project' },
+	{ label: 'Started' },
+	{ label: 'Duration' },
+	{ label: 'Status' },
+	{ label: 'Details' },
+];
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
 	if (type === 'recipe') return `/recipes/${id}`;
@@ -22,21 +41,16 @@ function resourceLink(type: TelemetryResourceType, id: string): string {
 export function InvocationsTable({ invocations }: { invocations: InvocationRecord[] }) {
 	if (invocations.length === 0) return <EmptyState>No invocations recorded yet.</EmptyState>;
 	return (
-		<div className="overflow-x-auto">
+		<OverflowScroller ariaLabel="Recent invocations table">
 			<table aria-label="Recent invocations" className="w-full text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
-						{[
-							'Resource',
-							'Source',
-							'Project',
-							'Started',
-							'Duration',
-							'Status',
-							'Details',
-						].map((label) => (
-							<th className="px-3 py-2" key={label} scope="col">
-								{label}
+						{columns.map((column) => (
+							<th
+								className={cn('px-3 py-2', column.className)}
+								key={column.label}
+								scope="col">
+								{column.label}
 							</th>
 						))}
 					</tr>
@@ -47,7 +61,7 @@ export function InvocationsTable({ invocations }: { invocations: InvocationRecor
 					))}
 				</tbody>
 			</table>
-		</div>
+		</OverflowScroller>
 	);
 }
 
@@ -74,7 +88,7 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 					{invocation.resourceName}
 				</Link>
 				<div className="mt-1 flex flex-wrap items-center gap-1.5">
-					<span className="text-[0.7rem] text-muted-foreground">
+					<span className="text-2xs text-muted-foreground">
 						{invocation.resourceType}
 					</span>
 					<ExecutionIdentityBadges
@@ -83,12 +97,16 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 					/>
 				</div>
 			</td>
-			<td className="px-3 py-2 text-xs text-foreground">{invocation.source}</td>
-			<td className="px-3 py-2 text-xs text-foreground">{invocation.projectName}</td>
-			<td className="px-3 py-2 text-xs text-foreground">
+			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_MD)}>
+				{invocation.source}
+			</td>
+			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_MD)}>
+				{invocation.projectName}
+			</td>
+			<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground">
 				{formatDate(invocation.startedAt)}
 			</td>
-			<td className="px-3 py-2 text-xs text-muted-foreground tabular-nums">
+			<td className="px-3 py-2 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
 				{invocation.durationMs === null ? '—' : formatDuration(invocation.durationMs)}
 			</td>
 			<td className="px-3 py-2">
@@ -112,6 +130,21 @@ const statusTones: Record<
 	stopped: 'amber',
 };
 
+/**
+ * The badge label for a raw invocation status, in the casing `classifyWebRun` uses for a run.
+ *
+ * Without it the column changed casing with the filter: run-backed rows read "Completed" and rows
+ * with no run read "completed", so the same column was title-case at scope=All and lowercase at
+ * scope=Recipes.
+ */
+const statusLabels: Record<TelemetryInvocationStatus, string> = {
+	completed: 'Completed',
+	failed: 'Failed',
+	killed: 'Killed',
+	running: 'Running',
+	stopped: 'Stopped',
+};
+
 function InvocationStatusCell({ invocation }: { invocation: InvocationRecord }) {
 	if (invocation.runStatus) {
 		const outcome = classifyWebRun({
@@ -120,16 +153,19 @@ function InvocationStatusCell({ invocation }: { invocation: InvocationRecord }) 
 			stopReason: invocation.runStopReason,
 			summary: invocation.runSummary,
 		});
+		// The secondary line earns its place only where the raw status says something the badge
+		// does not. "Completed" over "completed" is noise; "Blocked: gate" over "failed" is not.
+		const echoesBadge = outcome.label.toLowerCase().includes(invocation.status);
 		return (
 			<span title={outcome.title}>
 				<Badge tone={outcome.tone}>{outcome.label}</Badge>
-				{outcome.label.toLowerCase() !== invocation.status && (
-					<span className="mt-0.5 block text-[0.7rem] text-muted-foreground">
+				{echoesBadge ? null : (
+					<span className="mt-0.5 block text-2xs text-muted-foreground">
 						{invocation.status}
 					</span>
 				)}
 			</span>
 		);
 	}
-	return <Badge tone={statusTones[invocation.status]}>{invocation.status}</Badge>;
+	return <Badge tone={statusTones[invocation.status]}>{statusLabels[invocation.status]}</Badge>;
 }

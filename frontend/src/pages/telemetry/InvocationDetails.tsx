@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 
 import type { InvocationRecord } from '../../api/types.ts';
 
+import { Card } from '../../components/ui/card.tsx';
 import { formatDate, formatDuration } from '../../lib/formatters.ts';
+import { fieldLabelClass } from '../../lib/typography.ts';
 
 function DetailItem({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<div className="min-w-0">
-			<dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-				{label}
-			</dt>
+			<dt className={`text-muted-foreground ${fieldLabelClass}`}>{label}</dt>
 			<dd className="mt-0.5 text-xs break-all text-foreground">{value ?? '—'}</dd>
 		</div>
 	);
@@ -25,10 +25,12 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 		<details className="group min-w-24">
 			<summary
 				aria-label={`Inspect telemetry for ${invocation.resourceName}`}
-				className="cursor-pointer text-xs font-medium text-teal-700 hover:underline dark:text-teal-300">
+				className="cursor-pointer text-xs font-medium text-accent hover:underline">
 				Inspect
 			</summary>
-			<div className="mt-2 w-[min(42rem,75vw)] rounded-md border border-border bg-muted p-3 shadow-sm">
+			{/* The nested panel differentiates by fill, not by a second border at the card's own
+			    weight — the same `sunken` step the dashboard uses for a panel inside a panel. */}
+			<Card className="mt-2 w-[min(42rem,75vw)] p-3" variant="sunken">
 				<dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					<DetailItem label="Invocation ID" value={identifier(invocation.id)} />
 					<DetailItem label="Resource ID" value={identifier(invocation.resourceId)} />
@@ -79,7 +81,7 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 				</dl>
 				{invocation.errorMessage && (
 					<div className="mt-3 border-t border-border pt-3">
-						<div className="text-[0.65rem] font-medium tracking-wide text-red-600 uppercase dark:text-red-300">
+						<div className={`text-red-600 dark:text-red-300 ${fieldLabelClass}`}>
 							Error message
 						</div>
 						<pre className="mt-1 max-h-48 overflow-auto text-xs whitespace-pre-wrap text-red-800 dark:text-red-200">
@@ -87,7 +89,7 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 						</pre>
 					</div>
 				)}
-			</div>
+			</Card>
 		</details>
 	);
 }

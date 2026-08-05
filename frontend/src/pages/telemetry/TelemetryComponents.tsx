@@ -8,6 +8,7 @@ import type {
 } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
+import { Card } from '../../components/ui/card.tsx';
 import {
 	formatDuration,
 	formatRelativeAge,
@@ -44,58 +45,67 @@ function outcomeBreakdown(row: ResourceUsageRow): string {
 
 export function LeaderboardCard({ rows }: { rows: ResourceUsageRow[] }) {
 	if (rows.length === 0) return <EmptyState>No invocations recorded yet.</EmptyState>;
-	const max = Math.max(...rows.map((row) => row.total), 1);
+	const totals = rows.map((row) => row.total);
+	const max = Math.max(...totals, 1);
+	// A bar scaled against the maximum encodes nothing when every row holds the same count: ten
+	// identical full-width bars spent the strongest colour on the card to say "these are equal",
+	// which the tabular counts already say. Drop the bar in that case rather than draw a lie.
+	const ranks = max !== Math.min(...totals);
 	return (
 		<ol className="space-y-2">
 			{rows.map((row, index) => {
 				const width = Math.round((row.total / max) * 100);
 				return (
-					<li
-						className="rounded-md border border-border p-3"
-						key={`${row.resourceType}:${row.resourceId}`}>
-						<div className="flex items-baseline justify-between gap-3">
-							<div className="min-w-0">
-								<Link
-									className="truncate text-sm font-medium text-foreground hover:underline"
-									to={resourceLink(row.resourceType, row.resourceId)}>
-									<span className="text-muted-foreground">#{index + 1}</span>{' '}
-									{row.resourceName}
-								</Link>
-								<p className="truncate text-xs text-muted-foreground">
-									{row.resourceType} · {row.resourceId}
-								</p>
-							</div>
-							<div className="shrink-0 text-right">
-								<div className="text-sm font-semibold text-foreground tabular-nums">
-									{row.total}
+					<li key={`${row.resourceType}:${row.resourceId}`}>
+						{/* A sunken fill rather than a second border of the same weight as the card
+						    that contains it — the nesting reads by surface, not by outline. */}
+						<Card className="p-3" variant="sunken">
+							<div className="flex items-baseline justify-between gap-3">
+								<div className="min-w-0">
+									<Link
+										className="truncate text-sm font-medium text-foreground hover:underline"
+										to={resourceLink(row.resourceType, row.resourceId)}>
+										<span className="text-muted-foreground">#{index + 1}</span>{' '}
+										{row.resourceName}
+									</Link>
+									<p className="truncate text-xs text-muted-foreground">
+										{row.resourceType} · {row.resourceId}
+									</p>
 								</div>
-								<div className="text-[0.7rem] text-muted-foreground">
-									{outcomeBreakdown(row)}
+								<div className="shrink-0 text-right">
+									<div className="text-sm font-semibold text-foreground tabular-nums">
+										{row.total}
+									</div>
+									<div className="text-2xs text-muted-foreground">
+										{outcomeBreakdown(row)}
+									</div>
 								</div>
 							</div>
-						</div>
-						<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-							<div
-								aria-hidden="true"
-								className="h-full rounded-full bg-teal-500"
-								style={{ width: `${width}%` }}
-							/>
-						</div>
-						<div className="mt-1.5 flex flex-wrap justify-between gap-2 text-[0.7rem] text-muted-foreground">
-							<span className="space-x-2">
-								<span>{row.topLevel} top-level</span>
-								<span>{row.nested} nested</span>
-							</span>
-							<span>
-								{row.lastUsedAt
-									? `last ${formatRelativeAge(new Date(row.lastUsedAt).toISOString())}`
-									: 'never used'}{' '}
-								·{' '}
-								{row.avgDurationMs !== null
-									? `avg ${formatDuration(row.avgDurationMs)}`
-									: '—'}
-							</span>
-						</div>
+							{ranks ? (
+								<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+									<div
+										aria-hidden="true"
+										className="h-full rounded-full bg-accent"
+										style={{ width: `${width}%` }}
+									/>
+								</div>
+							) : null}
+							<div className="mt-1.5 flex flex-wrap justify-between gap-2 text-2xs text-muted-foreground">
+								<span className="space-x-2">
+									<span>{row.topLevel} top-level</span>
+									<span>{row.nested} nested</span>
+								</span>
+								<span>
+									{row.lastUsedAt
+										? `last ${formatRelativeAge(new Date(row.lastUsedAt).toISOString())}`
+										: 'never used'}{' '}
+									·{' '}
+									{row.avgDurationMs !== null
+										? `avg ${formatDuration(row.avgDurationMs)}`
+										: '—'}
+								</span>
+							</div>
+						</Card>
 					</li>
 				);
 			})}
@@ -209,7 +219,7 @@ export function TimeseriesChart({
 					</div>
 				</ChartAxes>
 			</div>
-			<div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-muted-foreground">
+			<div className="flex flex-wrap gap-x-3 gap-y-1 text-2xs text-muted-foreground">
 				<LegendDot className={outcomeSolid.completed} label="Completed" />
 				<LegendDot className={outcomeSolid.warnings} label="Warnings" />
 				<LegendDot className={outcomeSolid.failed} label="Failed" />
@@ -263,7 +273,7 @@ export function BackendBreakdownCard({ rows }: { rows: TelemetryBackendUsageRow[
 						<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
 							<div
 								aria-hidden="true"
-								className="h-full rounded-full bg-teal-500"
+								className="h-full rounded-full bg-accent"
 								style={{ width: `${Math.round((row.count / max) * 100)}%` }}
 							/>
 						</div>

@@ -52,7 +52,10 @@ export function SegmentedControl<T extends string>({
 		<div
 			aria-label={ariaLabel}
 			className={cn(
-				'flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto rounded-md border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-950',
+				// The track is a sunken well inside whatever card holds it, so it takes `--border` /
+				// `--muted` rather than raw palette steps: the filter bar is the pattern the rest of
+				// the app copies, and it has to re-theme with the cards around it.
+				'flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto rounded-md border border-border bg-muted p-1',
 				responsiveWidthClass,
 				className,
 			)}

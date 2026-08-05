@@ -100,7 +100,10 @@ export function OutputTimeseriesChart({
 						formatTelemetryAxisTick(bucket, point.bucket),
 					)}
 					ticks={divergingTicks(max)}>
-					<div className="flex h-40 gap-1">
+					{/* Shorter than the single-sided chart: the two arms split this height evenly, and the
+					    smaller arm is routinely a fifth of its half, so `h-40` left a persistent empty
+					    band between the bars and the legend. */}
+					<div className="flex h-32 gap-1">
 						{points.map((point) => {
 							const up = upValue(point);
 							const down = downValue(point);

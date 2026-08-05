@@ -9,3 +9,16 @@
  */
 export const sectionCaptionClass =
 	'text-xs font-semibold tracking-wider text-muted-foreground uppercase';
+
+/**
+ * The one uppercase micro-label style for a field name — the `<dt>` above a value inside a detail
+ * panel, and the heading above a stat block.
+ *
+ * Distinct from `sectionCaptionClass` in weight and tracking: a field label sits inside a data
+ * block and must stay quieter than the value it introduces, while a section caption heads a
+ * navigation group. Colour is deliberately absent so an error field can carry its own tone.
+ *
+ * The size is the named `text-2xs` step rather than the `text-[0.65rem]` each surface had invented
+ * for itself, so the micro scale has exactly one declared value.
+ */
+export const fieldLabelClass = 'text-2xs font-medium tracking-wide uppercase';

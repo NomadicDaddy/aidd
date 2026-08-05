@@ -2,9 +2,11 @@ import { useState } from 'react';
 
 import type { TelemetryResourceType } from '../../api/types.ts';
 
+import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines, SkeletonRows } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
+import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
@@ -152,7 +154,9 @@ export function TelemetryPage() {
 
 			<TelemetrySummary totals={totals} />
 
-			<section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+			{/* `items-start`, so a ten-row leaderboard does not stretch the three-card stack beside it
+			    to its own height and leave 600px of empty canvas in whichever column is shorter. */}
+			<section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 				<Card className="space-y-3">
 					<div className="flex items-center justify-between">
 						<h2 className="text-sm font-semibold text-foreground">Most used</h2>
@@ -214,9 +218,16 @@ export function TelemetryPage() {
 							/>
 						</div>
 						{!outputApplies ? (
-							<p className="rounded-md border border-dashed border-border p-4 text-xs text-muted-foreground">
-								Agent output is collected for runs. Select All or Runs to view it.
-							</p>
+							// A filter-driven message, not a loading or absent-data state, so it gets
+							// the shared empty surface and a control that undoes the filter causing it.
+							<EmptyState
+								action={
+									<Button onClick={() => setTypeFilter('all')} size="compact">
+										Show all types
+									</Button>
+								}>
+								Agent output is collected for runs.
+							</EmptyState>
 						) : outputQuery.isLoading && outputPoints.length === 0 ? (
 							<SkeletonLines count={5} label="Loading agent output…" />
 						) : (

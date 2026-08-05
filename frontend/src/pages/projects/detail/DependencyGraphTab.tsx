@@ -1,25 +1,18 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
-import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ProjectDetail, ProjectFeature, ProjectRoadmapSummary } from '../../../api/types.ts';
 import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 
-import { Button } from '../../../components/ui/button.tsx';
-import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { Input } from '../../../components/ui/input.tsx';
+import { Card } from '../../../components/ui/card.tsx';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
-import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import {
-	FilterSelect,
 	GRAPH_ZOOM_DEFAULT,
 	GRAPH_ZOOM_STEP,
-	GraphDiagnostics,
-	GraphZoomControls,
 	nextGraphZoom,
 } from './dependencyGraphComponents.tsx';
+import { DependencyGraphFilters } from './DependencyGraphFilters.tsx';
 import {
 	DependencyGraphCanvas,
 	GraphDiagnosticsCard,
@@ -29,7 +22,7 @@ import { buildFeatureDependencyGraph, featureByDirectory } from './dependencyGra
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';
 import { FeatureLaunchTargetRow } from './FeatureLaunchTargetRow.tsx';
 import {
-	FEATURE_STATUS_FILTER_OPTIONS,
+	type FEATURE_STATUS_FILTER_OPTIONS,
 	featureDirectory,
 	featureMatchesFilters,
 	milestoneFilterOptions,
@@ -174,85 +167,43 @@ export function DependencyGraphTab({
 
 	return (
 		<>
-			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-				<div className="min-w-0 space-y-4">
-					<Card className="space-y-4">
-						<CardHeader
-							action={
-								<div className="flex flex-wrap items-center gap-2">
-									<GraphZoomControls
-										onReset={resetZoom}
-										onZoomIn={zoomIn}
-										onZoomOut={zoomOut}
-										zoom={zoom}
-									/>
-									<Button onClick={resetFilters} variant="secondary">
-										<RotateCcw className="h-4 w-4" />
-										Reset filters
-									</Button>
-								</div>
-							}
-							badge={
-								<GraphDiagnostics
-									graph={graph}
-									visibleCount={visibleNodes.length}
-								/>
-							}
-							className="mb-0"
-							title="Feature Dependencies"
-						/>
-						<div className="grid gap-3 lg:grid-cols-[minmax(14rem,1fr)_12rem_13rem_12rem]">
-							<label className="grid gap-1 text-xs font-medium text-muted-foreground">
-								<span className={fieldLabelClass}>Search</span>
-								<div className="relative">
-									<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-									<Input
-										aria-label="Search dependency graph"
-										className="pl-9"
-										onChange={(event) => setQuery(event.target.value)}
-										placeholder="Filter dependencies"
-										value={query}
-									/>
-								</div>
-							</label>
-							<FilterSelect
-								label="Status"
-								onChange={(value) =>
-									setStatusFilter(value as DependencyFilterStatus)
-								}
-								options={FEATURE_STATUS_FILTER_OPTIONS.map((status) => ({
-									label:
-										status === 'all'
-											? 'All statuses'
-											: status === 'incomplete'
-												? 'incomplete'
-												: status,
-									value: status,
-								}))}
-								value={statusFilter}
-							/>
-							<FilterSelect
-								label="Source"
-								onChange={setSourceFilter}
-								options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
-								value={sourceFilter}
-							/>
-							<FilterSelect
-								label="Milestone"
-								onChange={setMilestoneFilter}
-								options={[
-									{ label: 'All milestones', value: 'all' },
-									...milestoneOptions,
-								]}
-								value={milestoneFilter}
-							/>
-						</div>
+			{/* One full-width column. The 22rem rail used to be permanent, so the canvas — the only
+			    thing on this tab that benefits from width — gave up ~370px to a panel that read
+			    "Select a feature node" until something was selected. */}
+			<div className="min-w-0 space-y-4">
+				<DependencyGraphFilters
+					graph={graph}
+					milestoneFilter={milestoneFilter}
+					milestoneOptions={milestoneOptions}
+					onMilestoneFilterChange={setMilestoneFilter}
+					onQueryChange={setQuery}
+					onResetFilters={resetFilters}
+					onResetZoom={resetZoom}
+					onSourceFilterChange={setSourceFilter}
+					onStatusFilterChange={(value) =>
+						setStatusFilter(value as DependencyFilterStatus)
+					}
+					onZoomIn={zoomIn}
+					onZoomOut={zoomOut}
+					query={query}
+					sourceFilter={sourceFilter}
+					sourceOptions={sourceOptions}
+					statusFilter={statusFilter}
+					visibleCount={visibleNodes.length}
+					zoom={zoom}
+				/>
+				<FeatureLaunchTargetRow
+					label="Runs use"
+					onChange={setLaunchTarget}
+					projectDir={projectPath}
+					value={launchTarget}
+				/>
+				{visibleNodes.length === 0 ? (
+					<Card className="py-10 text-center text-sm text-muted-foreground">
+						No dependency nodes match the active filters.
 					</Card>
-					{visibleNodes.length === 0 ? (
-						<Card className="py-10 text-center text-sm text-muted-foreground">
-							No dependency nodes match the active filters.
-						</Card>
-					) : (
+				) : (
+					<div className="relative">
 						<DependencyGraphCanvas
 							graph={graph}
 							nodeByDirectory={nodeByDirectory}
@@ -263,26 +214,25 @@ export function DependencyGraphTab({
 							visibleNodes={visibleNodes}
 							zoom={zoom}
 						/>
-					)}
-				</div>
-				<div className="space-y-4">
-					<FeatureLaunchTargetRow
-						label="Runs use"
-						onChange={setLaunchTarget}
-						projectDir={projectPath}
-						value={launchTarget}
-					/>
-					<SelectedFeaturePanel
-						hasActiveRun={hasActiveRun}
-						isLaunching={launchingFeature === selectedNode?.directory}
-						node={selectedNode}
-						nodeByDirectory={nodeByDirectory}
-						onLaunchRun={launchSelectedFeature}
-						onOpenDetails={openDetails}
-						onSelect={setSelectedDirectory}
-					/>
-					<GraphDiagnosticsCard graph={graph} />
-				</div>
+						{/* The selection reads as an overlay on the graph it describes rather than
+						    as a column that exists whether or not anything is selected. */}
+						{selectedNode ? (
+							<div className="absolute top-3 right-3 z-10 max-h-[calc(100%-1.5rem)] w-[min(22rem,calc(100%-1.5rem))] overflow-auto">
+								<SelectedFeaturePanel
+									hasActiveRun={hasActiveRun}
+									isLaunching={launchingFeature === selectedNode.directory}
+									node={selectedNode}
+									nodeByDirectory={nodeByDirectory}
+									onClose={() => setSelectedDirectory(null)}
+									onLaunchRun={launchSelectedFeature}
+									onOpenDetails={openDetails}
+									onSelect={setSelectedDirectory}
+								/>
+							</div>
+						) : null}
+					</div>
+				)}
+				<GraphDiagnosticsCard graph={graph} />
 			</div>
 			{detailsFeature ? (
 				<FeatureDetailsDialog

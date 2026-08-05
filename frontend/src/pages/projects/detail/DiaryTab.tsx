@@ -1,7 +1,7 @@
 import { default as PenLine } from 'lucide-react/dist/esm/icons/pen-line';
 
 import { Button } from '../../../components/ui/button.tsx';
-import { CardHeader } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useDiaryEntries, useWriteDiaryEntry } from '../../../hooks/useDiary.ts';
 import { useNow } from '../../../hooks/useNow.ts';
 import { DiaryFeed } from '../../diary/DiaryFeed.tsx';
@@ -16,20 +16,32 @@ export function DiaryTab({ projectPath }: { projectName: string; projectPath: st
 
 	return (
 		<div className="space-y-4">
-			<CardHeader
-				action={
-					<Button
-						disabled={writeEntry.isPending}
-						onClick={() => writeEntry.mutate()}
-						variant="primary">
-						<PenLine className="h-4 w-4" />
-						{writeEntry.isPending ? 'Starting…' : actionLabel}
-					</Button>
-				}
-				className="mb-0"
-				description="One narrative entry per day, written from this project’s runs, commits, and feature activity and interleaved with the day’s timeline. Re-running updates today’s entry in place, and a day with no new activity to ingest produces no entry."
-				title="Dev diary"
-			/>
+			{/* Carded and capped to a reading measure, matching the Repository tab: this ran the
+			    full ~1130px content width at the app's smallest step, for the one paragraph on the
+			    tab that is actually prose. */}
+			<Card>
+				<CardHeader
+					action={
+						<Button
+							disabled={writeEntry.isPending}
+							onClick={() => writeEntry.mutate()}
+							variant="primary">
+							<PenLine className="h-4 w-4" />
+							{writeEntry.isPending ? 'Starting…' : actionLabel}
+						</Button>
+					}
+					className="mb-0"
+					description={
+						<span className="block max-w-prose text-sm">
+							One narrative entry per day, written from this project’s runs, commits,
+							and feature activity and interleaved with the day’s timeline. Re-running
+							updates today’s entry in place, and a day with no new activity to ingest
+							produces no entry.
+						</span>
+					}
+					title="Dev diary"
+				/>
+			</Card>
 			<DiaryFeed
 				emptyMessage="No diary entries yet — write today’s entry to get started."
 				projectPath={projectPath}

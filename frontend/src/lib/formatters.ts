@@ -134,7 +134,9 @@ export function formatBytes(value: null | number | undefined): string {
 
 export function formatCount(value: null | number | undefined): string {
 	if (value === null || value === undefined) return '—';
-	return String(value);
+	// Grouped, because the same figures are rendered as '2,133 files' on the Code and Dependencies
+	// tabs — the Repository tab was the only surface printing the identical datum as '2133'.
+	return value.toLocaleString();
 }
 
 const telemetryDayFormatter = new Intl.DateTimeFormat(undefined, {

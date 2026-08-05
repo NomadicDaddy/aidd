@@ -1,5 +1,6 @@
 import { type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 
+import { selectClass } from '../../lib/formStyles.ts';
 import { Button } from './button.tsx';
 
 interface TabDefinition<T extends string> {
@@ -21,6 +22,14 @@ export function tabPanelId(prefix: string, id: string): string {
 interface TabListProps<T extends string> {
 	activeTab: T;
 	ariaLabel: string;
+	/**
+	 * `compact` shrinks the triggers, drops their icons, and pins the strip to one row: it scrolls
+	 * horizontally from `lg` up and collapses to a labelled dropdown below it. Reach for it once a
+	 * strip carries enough tabs to wrap: sixteen default-size triggers took two rows at 1440 and six
+	 * at 768, where the strip alone was a fifth of the viewport before any panel content began — and
+	 * a wrapping strip has no stable shape, since the row a tab lands on shifts with the selection.
+	 */
+	density?: 'compact' | 'default';
 	idPrefix: string;
 	onChange: (id: T) => void;
 	tabs: readonly TabDefinition<T>[];
@@ -35,10 +44,12 @@ interface TabListProps<T extends string> {
 export function TabList<T extends string>({
 	activeTab,
 	ariaLabel,
+	density = 'default',
 	idPrefix,
 	onChange,
 	tabs,
 }: TabListProps<T>) {
+	const compact = density === 'compact';
 	function focusTab(id: T) {
 		onChange(id);
 		const node = document.getElementById(tabButtonId(idPrefix, id));
@@ -61,28 +72,55 @@ export function TabList<T extends string>({
 	}
 
 	return (
-		<div aria-label={ariaLabel} className="flex flex-wrap gap-2" role="tablist">
-			{tabs.map((tab) => {
-				const selected = activeTab === tab.id;
-				const Icon = tab.icon;
-				return (
-					<Button
-						aria-controls={tabPanelId(idPrefix, tab.id)}
-						aria-selected={selected}
-						id={tabButtonId(idPrefix, tab.id)}
-						key={tab.id}
-						onClick={() => onChange(tab.id)}
-						onKeyDown={onTabKeyDown}
-						role="tab"
-						tabIndex={selected ? 0 : -1}
-						variant={selected ? 'primary' : 'secondary'}>
-						{Icon ? <Icon className="h-4 w-4" /> : null}
-						{tab.label}
-						{tab.badge}
-					</Button>
-				);
-			})}
-		</div>
+		<>
+			{/* Below lg the strip becomes the same labelled dropdown the sidebar's project navigation
+			    uses. Both are rendered: the triggers stay in the DOM so every panel's
+			    `aria-labelledby` keeps resolving, and CSS decides which one is on screen. */}
+			{compact ? (
+				<label className="block lg:hidden">
+					<span className="sr-only">{ariaLabel}</span>
+					<select
+						className={selectClass}
+						onChange={(event) => onChange(event.target.value as T)}
+						value={activeTab}>
+						{tabs.map((tab) => (
+							<option key={tab.id} value={tab.id}>
+								{tab.label}
+							</option>
+						))}
+					</select>
+				</label>
+			) : null}
+			<div
+				aria-label={ariaLabel}
+				className={
+					compact ? 'hidden gap-2 overflow-x-auto pb-1 lg:flex' : 'flex flex-wrap gap-2'
+				}
+				role="tablist">
+				{tabs.map((tab) => {
+					const selected = activeTab === tab.id;
+					const Icon = tab.icon;
+					return (
+						<Button
+							aria-controls={tabPanelId(idPrefix, tab.id)}
+							aria-selected={selected}
+							className={compact ? 'shrink-0' : undefined}
+							id={tabButtonId(idPrefix, tab.id)}
+							key={tab.id}
+							onClick={() => onChange(tab.id)}
+							onKeyDown={onTabKeyDown}
+							role="tab"
+							size={compact ? 'compact' : 'default'}
+							tabIndex={selected ? 0 : -1}
+							variant={selected ? 'primary' : 'secondary'}>
+							{Icon ? <Icon className="h-4 w-4" /> : null}
+							{tab.label}
+							{tab.badge}
+						</Button>
+					);
+				})}
+			</div>
+		</>
 	);
 }
 

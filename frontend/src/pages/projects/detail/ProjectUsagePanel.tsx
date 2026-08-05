@@ -33,14 +33,14 @@ function UsageMetricCells({ usage }: { usage: ProjectUsageTotals }) {
 				<div className="font-medium tabular-nums">
 					{formatCompactNumber(usage.totalTokens)}
 				</div>
-				<div className="text-[11px] text-muted-foreground tabular-nums">
+				<div className="text-2xs whitespace-nowrap text-muted-foreground tabular-nums">
 					{formatCompactNumber(usage.inputTokens)} in ·{' '}
 					{formatCompactNumber(usage.outputTokens)} out
 				</div>
 			</td>
 			<td className="px-3 py-2 text-right">
 				<div className="font-medium tabular-nums">{costLabel(usage)}</div>
-				<div className="text-[11px] text-muted-foreground tabular-nums">
+				<div className="text-2xs whitespace-nowrap text-muted-foreground tabular-nums">
 					{usage.runsWithReportedCost}/{usage.runCount} reported
 				</div>
 			</td>
@@ -75,13 +75,13 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 							<th className="px-3 py-2" scope="col">
 								Target
 							</th>
-							<th className="px-3 py-2 text-right" scope="col">
+							<th className="px-3 py-2 text-right whitespace-nowrap" scope="col">
 								Runs
 							</th>
-							<th className="px-3 py-2 text-right" scope="col">
+							<th className="px-3 py-2 text-right whitespace-nowrap" scope="col">
 								Tokens
 							</th>
-							<th className="px-3 py-2 text-right" scope="col">
+							<th className="px-3 py-2 text-right whitespace-nowrap" scope="col">
 								Reported cost
 							</th>
 						</tr>
@@ -110,7 +110,7 @@ function modeLabel(mode: null | string): string {
 
 function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 	return (
-		<div className="min-w-0 border-t border-border lg:border-t-0 lg:border-l">
+		<div className="min-w-0 border-t border-border">
 			<CardHeader
 				className="mb-0 border-b border-border px-4 py-3"
 				description="Recorded mode; skill runs commonly use directive."
@@ -124,13 +124,13 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 							<th className="px-3 py-2" scope="col">
 								Mode
 							</th>
-							<th className="px-3 py-2 text-right" scope="col">
+							<th className="px-3 py-2 text-right whitespace-nowrap" scope="col">
 								Runs
 							</th>
-							<th className="px-3 py-2 text-right" scope="col">
+							<th className="px-3 py-2 text-right whitespace-nowrap" scope="col">
 								Tokens
 							</th>
-							<th className="px-3 py-2 text-right" scope="col">
+							<th className="px-3 py-2 text-right whitespace-nowrap" scope="col">
 								Reported cost
 							</th>
 						</tr>
@@ -197,10 +197,8 @@ export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
 								value={`${totals.runsWithTokenUsage}/${totals.runCount}`}
 							/>
 						</div>
-						<div className="grid lg:grid-cols-2">
-							<ExecutionBreakdown rows={usage.byExecutionTarget} />
-							<ModeBreakdown rows={usage.byMode} />
-						</div>
+						<ExecutionBreakdown rows={usage.byExecutionTarget} />
+						<ModeBreakdown rows={usage.byMode} />
 						<div className="border-t border-border bg-muted px-4 py-2 text-xs text-muted-foreground">
 							Reported cost excludes zero-valued remote runs because older providers
 							used zero for unknown cost. Cached tokens are part of input; reasoning

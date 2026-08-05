@@ -76,13 +76,12 @@ export function GraphNodeButton({
 			aria-label={`Select ${node.directory}`}
 			className={cn(
 				'absolute overflow-hidden rounded-md border border-l-4 border-border bg-card p-3 text-left shadow-sm transition-[border-color,background-color,box-shadow,opacity,filter] duration-150',
-				'hover:border-teal-300 hover:shadow-md focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:border-teal-700',
+				'hover:border-accent hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
 				nodeSourceClass(node.source),
 				isDimmed && 'opacity-25 saturate-50 hover:opacity-60',
-				isRelated &&
-					'border-teal-300 bg-teal-50/70 opacity-100 saturate-100 dark:border-teal-700 dark:bg-teal-950/30',
+				isRelated && 'border-accent/60 bg-accent-muted opacity-100 saturate-100',
 				isSelected &&
-					'z-10 border-teal-500 bg-teal-50 opacity-100 shadow-md ring-2 ring-teal-400/40 saturate-100 dark:border-teal-400 dark:bg-teal-950/50',
+					'z-10 border-accent bg-accent-muted opacity-100 shadow-md ring-2 ring-ring/40 saturate-100',
 			)}
 			onClick={() => onSelect(node.directory)}
 			style={{
@@ -96,10 +95,10 @@ export function GraphNodeButton({
 				<Badge className="shrink-0" tone={statusTone(node.status)}>
 					{node.status}
 				</Badge>
-				<span className="font-mono text-[11px] text-muted-foreground">L{node.layer}</span>
+				<span className="font-mono text-xs text-muted-foreground">L{node.layer}</span>
 			</div>
 			<p className="mt-2 truncate text-sm font-semibold text-foreground">{node.title}</p>
-			<p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
+			<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
 				{node.directory}
 			</p>
 		</button>
@@ -129,13 +128,13 @@ export function DependencyList({
 						return (
 							<li key={directory}>
 								<button
-									className="w-full rounded-md border border-border bg-muted px-3 py-2 text-left text-sm text-foreground hover:border-teal-300 hover:bg-teal-50 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:border-teal-700 dark:hover:bg-teal-950/30"
+									className="w-full rounded-md border border-border bg-muted px-3 py-2 text-left text-sm text-foreground hover:border-accent hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 									onClick={() => onSelect(directory)}
 									type="button">
 									<span className="block truncate font-medium">
 										{node?.title ?? directory}
 									</span>
-									<span className="block truncate font-mono text-[11px] text-muted-foreground">
+									<span className="block truncate font-mono text-xs text-muted-foreground">
 										{directory}
 									</span>
 								</button>

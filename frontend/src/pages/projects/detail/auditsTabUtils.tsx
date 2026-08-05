@@ -5,15 +5,37 @@ import { Badge } from '../../../components/ui/badge.tsx';
 export type EnabledFilter = 'all' | 'disabled' | 'enabled';
 export type OverrideValue = 'default' | AuditOverrideEffect;
 
+/** The last two path segments — 'audits/CODE_QUALITY.md' — with the absolute path left for a
+ *  `title`. Every audit lives under the same directory, so the prefix identified nothing. */
+export function auditPathTail(path: string): string {
+	return path.split(/[/\\]/u).filter(Boolean).slice(-2).join('/');
+}
+
+// One word per state, with the qualifier in the tooltip. 'Disabled (override)' was the only label
+// long enough to wrap inside its badge, which made that one row ~14px taller than its neighbours.
 export function stateBadge(entry: ProjectAuditEntry) {
 	if (entry.overrideEffect === 'required') {
-		return <Badge tone="teal">Enabled (override)</Badge>;
+		return (
+			<Badge title="Enabled by a project override" tone="teal">
+				Overridden on
+			</Badge>
+		);
 	}
 	if (entry.overrideEffect === 'disabled' || entry.overrideEffect === 'excluded') {
-		return <Badge tone="red">Disabled (override)</Badge>;
+		return (
+			<Badge title="Disabled by a project override" tone="red">
+				Overridden off
+			</Badge>
+		);
 	}
 	if (entry.enabled) return <Badge tone="emerald">Enabled</Badge>;
-	if (!entry.appliesToBucket) return <Badge tone="neutral">Disabled (profile)</Badge>;
+	if (!entry.appliesToBucket) {
+		return (
+			<Badge title="Disabled by the project's assurance profile" tone="neutral">
+				Profile-disabled
+			</Badge>
+		);
+	}
 	return <Badge tone="neutral">Disabled</Badge>;
 }
 

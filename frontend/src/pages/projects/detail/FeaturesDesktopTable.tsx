@@ -6,7 +6,13 @@ import type {
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { FeatureActions, FeatureMilestoneControl } from './FeatureRowControls.tsx';
-import { featureDirectory, featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
+import {
+	featureDirectory,
+	featurePassesDisagrees,
+	featurePriorityTone,
+	featureShippedVersion,
+	featureSourceLabel,
+} from './featuresUtils.ts';
 import { statusTone, stringValue } from './shared.ts';
 
 export function FeaturesDesktopTable({
@@ -44,14 +50,13 @@ export function FeaturesDesktopTable({
 		<div className="hidden overflow-x-auto xl:block">
 			<table aria-label="Project features" className="w-full table-fixed text-left text-sm">
 				<colgroup>
-					<col className="w-[20%]" />
-					<col className="w-[10%]" />
+					<col className="w-[32%]" />
+					<col className="w-[11%]" />
+					<col className="w-[8%]" />
+					<col className="w-[14%]" />
 					<col className="w-[8%]" />
 					<col className="w-[13%]" />
-					<col className="w-[7%]" />
-					<col className="w-[7%]" />
 					<col className="w-[14%]" />
-					<col className="w-[21%]" />
 				</colgroup>
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
@@ -71,9 +76,6 @@ export function FeaturesDesktopTable({
 							Priority
 						</th>
 						<th className="px-4 py-3" scope="col">
-							Passes
-						</th>
-						<th className="px-4 py-3" scope="col">
 							Source
 						</th>
 						<th className="px-4 py-3 whitespace-nowrap" scope="col">
@@ -91,18 +93,29 @@ export function FeaturesDesktopTable({
 						const decision = decisions[directory] ?? '';
 						return (
 							<tr
-								className="border-b border-border transition-colors last:border-0 hover:bg-teal-50/60 dark:hover:bg-teal-950/20"
+								className="group border-b border-border transition-colors last:border-0 hover:bg-muted/40"
 								key={id}>
 								<td className="px-4 py-3">
 									<div className="min-w-0">
 										<div className="font-medium text-foreground">{title}</div>
-										<div className="text-xs break-all text-muted-foreground">
+										<div
+											className="truncate text-xs text-muted-foreground"
+											title={id}>
 											{id}
 										</div>
 									</div>
 								</td>
 								<td className="px-4 py-3">
-									<Badge tone={statusTone(status)}>{status}</Badge>
+									<div className="flex flex-wrap items-center gap-1">
+										<Badge tone={statusTone(status)}>{status}</Badge>
+										{featurePassesDisagrees(feature, status) ? (
+											<Badge
+												title="Feature status and passes flag disagree"
+												tone="amber">
+												not passing
+											</Badge>
+										) : null}
+									</div>
 								</td>
 								<td className="px-4 py-3 font-mono text-xs text-muted-foreground">
 									{featureShippedVersion(feature) ?? '—'}
@@ -115,15 +128,17 @@ export function FeaturesDesktopTable({
 										onChange={(milestone) =>
 											onMilestoneChange(feature, milestone)
 										}
+										quiet
 										roadmap={roadmap}
 									/>
 								</td>
-								<td className="px-4 py-3">{String(feature.priority ?? '—')}</td>
 								<td className="px-4 py-3">
-									{feature.passes === true ? (
-										<Badge tone="emerald">yes</Badge>
+									{typeof feature.priority === 'number' ? (
+										<Badge tone={featurePriorityTone(feature.priority)}>
+											P{feature.priority}
+										</Badge>
 									) : (
-										<Badge tone="neutral">no</Badge>
+										<span className="text-xs text-muted-foreground">—</span>
 									)}
 								</td>
 								<td className="px-4 py-3 text-xs break-words text-muted-foreground">

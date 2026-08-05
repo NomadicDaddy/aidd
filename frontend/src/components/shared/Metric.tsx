@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
-import { Card } from '../../components/ui/card.tsx';
 import { cn } from '../../lib/cn.ts';
 import { type Tone, toneText } from '../../lib/tones.ts';
+import { Card } from '../ui/card.tsx';
 
 export function Metric({
 	detail,

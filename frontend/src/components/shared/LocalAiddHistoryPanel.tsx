@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { ProjectLocalIteration, ProjectLocalRun } from '../../api/types.ts';
 
 import { Card } from '../ui/card.tsx';
@@ -12,7 +14,9 @@ export function LocalAiddHistoryPanel({
 	runs,
 	title = 'aidd run history',
 }: {
-	description: string;
+	// Nodes, not a string: the callers describe file paths, and the one caller that had them was
+	// spelling them with markdown backticks into a plain <p>, which printed the backticks.
+	description: ReactNode;
 	iterations: ProjectLocalIteration[];
 	runs?: ProjectLocalRun[];
 	title?: string;

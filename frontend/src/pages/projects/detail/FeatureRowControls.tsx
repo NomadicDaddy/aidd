@@ -18,17 +18,28 @@ import {
 import { FEATURE_STATUS_OPTIONS } from './featuresUtils.ts';
 import { stringValue } from './shared.ts';
 
+/**
+ * A `quiet` control reads as its value until the row is hovered or the control is focused, at which
+ * point it takes on the full `selectClass` chrome. In the features table a bordered select per row
+ * was the heaviest element in the row — heavier than the feature title — so fifteen rows read as a
+ * form rather than a list. Styling rather than conditional rendering keeps it in the tab order.
+ */
+const quietSelectClass =
+	'w-full max-w-44 min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm text-foreground transition-colors group-hover:border-border group-hover:bg-card focus:border-border focus:bg-card focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none';
+
 export function FeatureMilestoneControl({
 	disabled,
 	feature,
 	milestoneOptions,
 	onChange,
+	quiet = false,
 	roadmap,
 }: {
 	disabled: boolean;
 	feature: ProjectFeature;
 	milestoneOptions: string[];
 	onChange: (milestone: string) => void;
+	quiet?: boolean;
 	roadmap: null | ProjectRoadmapSummary;
 }) {
 	const id = feature.id || stringValue(feature, 'id');
@@ -41,7 +52,7 @@ export function FeatureMilestoneControl({
 		<div className="flex flex-wrap items-center gap-2">
 			<select
 				aria-label={`Milestone for ${id}`}
-				className={`${selectClass} w-full max-w-44 min-w-0 px-2`}
+				className={quiet ? quietSelectClass : `${selectClass} w-full max-w-44 min-w-0 px-2`}
 				disabled={disabled || milestoneOptions.length === 0}
 				onChange={(event) => onChange(event.target.value)}
 				value={milestone}>

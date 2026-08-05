@@ -21,7 +21,6 @@ import { ApiError } from '../../api/client.ts';
 import { AppLaunchControl } from '../../components/shared/AppLaunchControl.tsx';
 import { LoadingState } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
-import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { TabList, TabPanel } from '../../components/ui/tabs.tsx';
@@ -47,22 +46,21 @@ import { ManagementTab } from './detail/ManagementTab.tsx';
 import { MaturityOverview } from './detail/MaturityOverview.tsx';
 import { MilestonesTab } from './detail/MilestonesTab.tsx';
 import { NotesTab } from './detail/NotesTab.tsx';
-import { OverviewMetadata, OverviewSummary } from './detail/OverviewTab.tsx';
+import { OverviewSummary } from './detail/OverviewSummary.tsx';
+import { OverviewMetadata } from './detail/OverviewTab.tsx';
 import { ProfileTab } from './detail/ProfileTab.tsx';
 import {
 	type DetailTab,
 	projectDetailTabSearchParams,
 	readProjectDetailTab,
 } from './detail/projectDetailNavigation.ts';
+import { ProjectStatusStrip } from './detail/ProjectStatusStrip.tsx';
 import { RecentActivity } from './detail/RecentActivity.tsx';
 import { ReportsTab } from './detail/ReportsTab.tsx';
 import { RepositoryTab } from './detail/RepositoryTab.tsx';
 import { RunsTab } from './detail/RunsTab.tsx';
-import { artifactTone } from './detail/shared.ts';
 import { useCanonicalProjectRoute } from './detail/useCanonicalProjectRoute.ts';
-import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { OpenInTerminalButton } from './OpenInTerminalButton.tsx';
-import { bucketLabels, profileBucketTone } from './projects-list-shared.ts';
 
 const PROJECT_TABS = [
 	{ icon: LayoutDashboard, id: 'overview', label: 'Overview' },
@@ -135,23 +133,6 @@ export function ProjectDetailPage() {
 					<div className="flex flex-wrap items-center gap-1.5">
 						<AppLaunchControl projectId={detail.id} />
 						<OpenInTerminalButton path={detail.path} />
-						<Badge tone={artifactTone[detail.artifactHealth]}>
-							{detail.artifactHealth}
-						</Badge>
-						<Badge tone="neutral">{detail.phase}</Badge>
-						{detail.metadata.roadmap?.currentMilestone ? (
-							<Badge tone="teal">{detail.metadata.roadmap.currentMilestone}</Badge>
-						) : null}
-						<Badge tone={profileBucketTone(detail.metadata.profile.bucket)}>
-							{bucketLabels[detail.metadata.profile.bucket]}
-						</Badge>
-						<GitStatusBadge className="max-w-[14rem]" status={gitStatus.data?.status} />
-						<Badge
-							tone={
-								detail.metadata.profile.source === 'explicit' ? 'teal' : 'neutral'
-							}>
-							{detail.metadata.profile.source}
-						</Badge>
 					</div>
 				}
 				breadcrumb={
@@ -164,10 +145,12 @@ export function ProjectDetailPage() {
 				helpSlug="projects"
 				title={detail.name}
 			/>
+			<ProjectStatusStrip gitStatus={gitStatus.data?.status} project={detail} />
 			<ActiveRunsBanner projectPath={detail.path} />
 			<TabList
 				activeTab={tab}
 				ariaLabel="Project sections"
+				density="compact"
 				idPrefix="project-detail"
 				onChange={(nextTab) => {
 					traceDataMovement({
@@ -184,7 +167,7 @@ export function ProjectDetailPage() {
 				tabs={PROJECT_TABS}
 			/>
 			<TabPanel activeTab={tab} id="overview" idPrefix="project-detail">
-				<div className="space-y-3">
+				<div className="space-y-4">
 					<BlueprintImplementationCard project={detail} />
 					<MaturityOverview
 						maturity={detail.maturityDetail}
@@ -192,7 +175,7 @@ export function ProjectDetailPage() {
 						projectPath={detail.path}
 					/>
 					<OverviewSummary project={detail} />
-					<div className="grid gap-3 xl:grid-cols-3">
+					<div className="grid items-start gap-4 xl:grid-cols-3">
 						<div className="xl:col-span-2">
 							<OverviewMetadata metadata={detail.metadata} />
 						</div>

@@ -8,6 +8,7 @@ import { selectClass } from '../../../lib/formStyles.ts';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
 import {
+	auditPathTail,
 	describeFreshAge,
 	describeReportFreshness,
 	type OverrideValue,
@@ -48,9 +49,13 @@ export function AuditsDesktopTable({
 		else onSelectAll();
 	}
 	return (
-		<Card className="hidden overflow-x-auto p-0 xl:block">
+		// The header only sticks against the scroll container that actually scrolls, and the
+		// Card was one (overflow-x-auto computes overflow-y to auto) while never scrolling
+		// vertically — so 'sticky top-0' would have been inert. Bounding the Card's height makes it
+		// the real scroller: past the first screenful of 42 rows the six columns keep their labels.
+		<Card className="hidden max-h-[calc(100dvh-14rem)] overflow-auto p-0 xl:block">
 			<table aria-label="Project audits" className="w-full min-w-[960px] text-left text-sm">
-				<thead className={tableHeadClass}>
+				<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 					<tr>
 						<th className="px-3 py-3" scope="col">
 							<Checkbox
@@ -114,8 +119,14 @@ export function AuditsDesktopTable({
 								</td>
 								<td className="px-3 py-3">
 									<div className="font-medium text-foreground">{entry.name}</div>
-									<div className="text-xs break-all text-muted-foreground">
-										{entry.path}
+									{/* The repo-relative tail, not the absolute path: the first 28
+									    characters were identical on all 42 rows and the last segment
+									    repeated the name above it, wrapping to a second line on the
+									    longer ones and inflating those rows. */}
+									<div
+										className="truncate font-mono text-xs text-muted-foreground"
+										title={entry.path}>
+										{auditPathTail(entry.path)}
 									</div>
 								</td>
 								<td className="px-3 py-3">{stateBadge(entry)}</td>
@@ -127,7 +138,9 @@ export function AuditsDesktopTable({
 											<Badge tone={bandTone[entry.changePotential.band]}>
 												{entry.changePotential.band}
 											</Badge>
-											<span className="text-xs text-muted-foreground">
+											{/* A quantity, right-aligned in a fixed cell so the
+											    digits line up down 42 rows. */}
+											<span className="w-7 text-right text-xs text-muted-foreground tabular-nums">
 												{entry.changePotential.score}
 											</span>
 										</span>

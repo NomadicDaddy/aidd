@@ -1,8 +1,9 @@
 import { default as Eye } from 'lucide-react/dist/esm/icons/eye';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
+import { default as X } from 'lucide-react/dist/esm/icons/x';
 
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Button } from '../../../components/ui/button.tsx';
+import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { cn } from '../../../lib/cn.ts';
 import {
@@ -87,8 +88,7 @@ export function DependencyGraphCanvas({
 										className={cn(
 											'text-muted-foreground transition-all duration-150',
 											isDimmedEdge && 'opacity-20',
-											isSelectedEdge &&
-												'text-teal-500 opacity-100 dark:text-teal-300',
+											isSelectedEdge && 'text-accent opacity-100',
 										)}
 										d={edgePath(source, target)}
 										fill="none"
@@ -166,11 +166,14 @@ export function GraphDiagnosticsCard({
 	);
 }
 
+// Rendered as an overlay over the graph canvas, so it exists only while a node is selected —
+// the empty-state placeholder it used to show in a permanent rail is gone with the rail.
 export function SelectedFeaturePanel({
 	hasActiveRun,
 	isLaunching,
 	node,
 	nodeByDirectory,
+	onClose,
 	onLaunchRun,
 	onOpenDetails,
 	onSelect,
@@ -179,27 +182,26 @@ export function SelectedFeaturePanel({
 	isLaunching: boolean;
 	node: FeatureDependencyNode | null;
 	nodeByDirectory: Map<string, FeatureDependencyNode>;
+	onClose: () => void;
 	onLaunchRun: () => void;
 	onOpenDetails: () => void;
 	onSelect: (directory: string) => void;
 }) {
-	if (!node) {
-		return (
-			<Card className="space-y-3">
-				<CardHeader className="mb-0" title="Selection" />
-				<p className="text-sm text-muted-foreground">
-					Select a feature node to inspect links.
-				</p>
-			</Card>
-		);
-	}
+	if (!node) return null;
 	return (
-		<Card className="space-y-5">
+		<Card className="space-y-5" variant="panel">
 			<div className="space-y-2">
-				<div className="flex flex-wrap items-center gap-2">
-					<Badge tone={statusTone(node.status)}>{node.status}</Badge>
-					<Badge tone={sourceBadgeTone(node.source)}>{sourceLabels[node.source]}</Badge>
-					{node.milestone ? <Badge tone="neutral">{node.milestone}</Badge> : null}
+				<div className="flex items-start justify-between gap-2">
+					<div className="flex flex-wrap items-center gap-2">
+						<Badge tone={statusTone(node.status)}>{node.status}</Badge>
+						<Badge tone={sourceBadgeTone(node.source)}>
+							{sourceLabels[node.source]}
+						</Badge>
+						{node.milestone ? <Badge tone="neutral">{node.milestone}</Badge> : null}
+					</div>
+					<IconButton ariaLabel="Clear selection" onClick={onClose} variant="ghost">
+						<X className="h-4 w-4" />
+					</IconButton>
 				</div>
 				<h2 className="text-base font-semibold text-foreground">{node.title}</h2>
 				<p className="font-mono text-xs break-all text-muted-foreground">

@@ -7,6 +7,7 @@ import {
 	formatDate,
 	formatRelativeAge,
 } from '../../../lib/formatters.ts';
+import { toneSolid } from '../../../lib/tones.ts';
 import { logoForLanguage } from './repositoryLogos.ts';
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -30,7 +31,7 @@ function LanguageBar({ language, total }: { language: RepositoryLanguage; total:
 			</div>
 			<div className="h-1.5 overflow-hidden rounded-full bg-muted">
 				<div
-					className="h-full rounded-full bg-teal-500/80 dark:bg-teal-400/80"
+					className={`h-full rounded-full ${toneSolid.teal}`}
 					style={{ width: `${pct}%` }}
 				/>
 			</div>
@@ -114,14 +115,17 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 export function RepositoryInfoCard({ info }: { info: RepositoryInfo }) {
 	const logo = logoForLanguage(info.dominantLanguage);
 	return (
-		<Card className="flex flex-col gap-5 md:flex-row md:items-stretch">
-			<div className="flex flex-col items-center justify-center gap-3 rounded-md border border-border/70 bg-muted/70 p-5 md:w-64 md:shrink-0">
+		// self-start, and beside the statistics only from xl: as a stretched md:w-64 column the
+		// identity panel matched the full height of the statistics list, so a mark and two short
+		// lines of text owned the largest, emptiest box on the tab.
+		<Card className="flex flex-col gap-5 xl:flex-row xl:items-start">
+			<div className="flex items-center gap-4 self-start rounded-md border border-border/70 bg-muted/70 p-4 xl:w-64 xl:shrink-0 xl:flex-col xl:justify-center xl:p-5">
 				<pre
 					aria-hidden="true"
 					className={`overflow-hidden text-[10px] leading-[1.15] font-bold ${logo.accent}`}>
 					{logo.art}
 				</pre>
-				<div className="text-center">
+				<div className="min-w-0 xl:text-center">
 					<p className="text-sm font-semibold text-foreground">
 						{info.dominantLanguage ?? 'Repository'}
 					</p>

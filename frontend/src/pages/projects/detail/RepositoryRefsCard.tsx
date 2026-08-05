@@ -3,6 +3,18 @@ import type { RepositoryBranch, RepositoryStash, RepositoryWorktree } from '../.
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 
+// Title + count Badge, the presentation the Code and Dependencies tabs already use for a
+// collection size — these three were the app's only parenthetical counts, and the Worktrees heading
+// was additionally the only one of the three rendered in muted rather than foreground.
+function PanelHeading({ count, title }: { count: number; title: string }) {
+	return (
+		<div className="flex items-center gap-2">
+			<h4 className="text-xs font-semibold text-foreground">{title}</h4>
+			<Badge tone="neutral">{count.toLocaleString()}</Badge>
+		</div>
+	);
+}
+
 interface BranchRowProps {
 	branch: RepositoryBranch;
 }
@@ -31,7 +43,7 @@ function BranchRow({ branch }: BranchRowProps) {
 function BranchPanel({ branches }: { branches: RepositoryBranch[] }) {
 	return (
 		<div className="space-y-2">
-			<h4 className="text-xs font-semibold text-foreground">Branches ({branches.length})</h4>
+			<PanelHeading count={branches.length} title="Branches" />
 			{branches.length > 0 ? (
 				<ul className="divide-y divide-border">
 					{branches.map((branch) => (
@@ -48,7 +60,7 @@ function BranchPanel({ branches }: { branches: RepositoryBranch[] }) {
 function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 	return (
 		<div className="space-y-2">
-			<h4 className="text-xs font-semibold text-foreground">Stashes ({stashes.length})</h4>
+			<PanelHeading count={stashes.length} title="Stashes" />
 			{stashes.length > 0 ? (
 				<ul className="space-y-1">
 					{stashes.map((stash) => (
@@ -81,9 +93,7 @@ function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 function WorktreePanel({ worktrees }: { worktrees: RepositoryWorktree[] }) {
 	return (
 		<div className="space-y-2">
-			<h4 className="text-xs font-semibold text-muted-foreground">
-				Worktrees ({worktrees.length})
-			</h4>
+			<PanelHeading count={worktrees.length} title="Worktrees" />
 			{worktrees.length > 0 ? (
 				<ul className="space-y-1">
 					{worktrees.map((worktree) => (

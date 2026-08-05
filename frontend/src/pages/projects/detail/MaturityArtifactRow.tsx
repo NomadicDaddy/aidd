@@ -7,12 +7,29 @@ import type { MaturityArtifact } from '../../../api/types.ts';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { formatRelativeAge } from '../../../lib/formatters.ts';
+import { artifactRowButtonClass } from './artifactRowStyles.ts';
 import { type ArtifactViewerTarget, maturityArtifactViewerTarget } from './artifactsUtils.ts';
 import { artifactStatusLabel, artifactTone } from './maturityOverviewUtils.ts';
+
+/**
+ * Whether the human label says anything the slug does not. Two thirds of the inventory is audit
+ * evidence whose label is its own slug with the `audit:` prefix stripped, so 39 consecutive rows
+ * read 'audit:AI  AI'.
+ */
+function redundantLabel(artifact: MaturityArtifact): boolean {
+	const normalize = (value: string) =>
+		value
+			.replace(/^audit:/, '')
+			.replaceAll(/[\s_-]/gu, '')
+			.toLowerCase();
+	return normalize(artifact.slug) === normalize(artifact.label);
+}
 
 interface MaturityArtifactRowProps {
 	artifact: MaturityArtifact;
 	disabled: boolean;
+	/** Set when the group heading already says every entry is required. */
+	hideRequired?: boolean;
 	onOpen?: ((target: ArtifactViewerTarget) => void) | undefined;
 	onToggleSkip?: ((slug: string, skip: boolean) => void) | undefined;
 }
@@ -20,6 +37,7 @@ interface MaturityArtifactRowProps {
 export function MaturityArtifactRow({
 	artifact,
 	disabled,
+	hideRequired = false,
 	onOpen,
 	onToggleSkip,
 }: MaturityArtifactRowProps) {
@@ -32,7 +50,9 @@ export function MaturityArtifactRow({
 			{viewable ? (
 				<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 			) : null}
-			<span className="truncate text-xs text-muted-foreground">{artifact.label}</span>
+			{redundantLabel(artifact) ? null : (
+				<span className="truncate text-xs text-muted-foreground">{artifact.label}</span>
+			)}
 		</div>
 	);
 	return (
@@ -40,7 +60,7 @@ export function MaturityArtifactRow({
 			{viewable ? (
 				<button
 					aria-label={`View ${artifact.label}`}
-					className="min-w-0 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
+					className={artifactRowButtonClass}
 					onClick={() => onOpen(viewerTarget)}
 					type="button">
 					{labelBlock}
@@ -50,7 +70,7 @@ export function MaturityArtifactRow({
 			)}
 			<div className="flex shrink-0 items-center gap-1.5">
 				<Badge tone={artifactTone(artifact)}>{artifactStatusLabel(artifact)}</Badge>
-				{artifact.required ? <Badge tone="teal">required</Badge> : null}
+				{artifact.required && !hideRequired ? <Badge tone="teal">required</Badge> : null}
 				{artifact.mtime ? (
 					<span className="text-xs text-muted-foreground">
 						{formatRelativeAge(artifact.mtime)}

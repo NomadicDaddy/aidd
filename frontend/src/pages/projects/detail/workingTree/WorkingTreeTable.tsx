@@ -1,7 +1,6 @@
 import type { WorkingTreeFile } from '../../../../api/types.ts';
 
 import { Badge } from '../../../../components/ui/badge.tsx';
-import { Card } from '../../../../components/ui/card.tsx';
 import { Checkbox } from '../../../../components/ui/checkbox.tsx';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
@@ -31,7 +30,9 @@ export function WorkingTreeTable({
 	const someSelected = files.some((file) => selected.has(file.path));
 
 	return (
-		<Card className="hidden overflow-x-auto p-0 xl:block">
+		// A plain scroller now: the toolbar that acts on these rows used to float on the page
+		// background between two Cards, so the Card moved up to WorkingTreeCard and wraps both.
+		<div className="hidden overflow-x-auto xl:block">
 			<table aria-label="Changed files" className="w-full min-w-[640px] text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
@@ -102,6 +103,6 @@ export function WorkingTreeTable({
 					})}
 				</tbody>
 			</table>
-		</Card>
+		</div>
 	);
 }

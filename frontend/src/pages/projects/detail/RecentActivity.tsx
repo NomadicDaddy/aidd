@@ -38,37 +38,30 @@ export function RecentActivity({
 			) : (
 				<ul aria-label="Recent project activity" className="space-y-1.5 text-sm">
 					{projectRuns.map((run) => (
+						// Two lines, not six. The run id used to get its own body line, where a
+						// full UUID was the most prominent thing after the title and the least
+						// readable; it is now the title's tooltip, matching how RunsTab carries it.
 						<li className="rounded-md border border-border px-2.5 py-1" key={run.id}>
-							<div className="flex flex-wrap items-start justify-between gap-2">
-								<div className="min-w-0">
-									<div className="flex flex-wrap items-center gap-2">
-										<Badge tone={runStatusTone(run.status)}>{run.status}</Badge>
-										<span className="font-medium text-foreground">
-											{run.title}
-										</span>
-									</div>
-									{run.executionIdentity ? (
-										<ExecutionIdentityBadges
-											{...run.executionIdentity}
-											className="mt-1"
-										/>
-									) : null}
-									{run.detailParts.length > 0 ? (
-										<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
-											{run.detailParts.map((part) => (
-												<span key={part}>{part}</span>
-											))}
-											<span>{run.traceLabel}</span>
-										</div>
-									) : (
-										<div className="mt-1 text-xs text-muted-foreground">
-											{run.traceLabel}
-										</div>
-									)}
+							<div className="flex flex-wrap items-baseline justify-between gap-x-2">
+								<div className="flex min-w-0 flex-wrap items-center gap-2">
+									<Badge tone={runStatusTone(run.status)}>{run.status}</Badge>
+									<span
+										className="font-medium text-foreground"
+										title={run.traceLabel}>
+										{run.title}
+									</span>
 								</div>
 								<span className="shrink-0 text-xs text-muted-foreground">
 									{formatRelativeAge(run.timestamp)}
 								</span>
+							</div>
+							<div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+								{run.executionIdentity ? (
+									<ExecutionIdentityBadges {...run.executionIdentity} />
+								) : null}
+								{run.detailParts.map((part) => (
+									<span key={part}>{part}</span>
+								))}
 							</div>
 						</li>
 					))}

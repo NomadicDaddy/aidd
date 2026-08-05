@@ -7,12 +7,13 @@ import { toast } from 'sonner';
 import type { ProjectDeleteMode, ProjectDetail } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useDeleteProject } from '../../../hooks/useProjects.ts';
 import { traceDataMovement } from '../../../lib/dataMovementTrace.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
+import { toneText } from '../../../lib/tones.ts';
 
 export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 	const navigate = useNavigate();
@@ -48,16 +49,17 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 
 	return (
 		<Card>
-			<div className="flex items-start gap-3">
-				<AlertTriangle className="mt-0.5 h-5 w-5 text-red-700 dark:text-red-300" />
-				<div>
-					<h2 className="text-base font-semibold text-foreground">Delete project</h2>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Remove only `.aidd` metadata or delete the entire project directory.
-					</p>
-				</div>
-			</div>
-			<div className="mt-4 space-y-3">
+			<CardHeader
+				description={
+					<>
+						Remove only <code className="font-mono">.aidd</code> metadata or delete the
+						entire project directory.
+					</>
+				}
+				icon={<AlertTriangle className={`h-4 w-4 ${toneText.red}`} />}
+				title="Delete project"
+			/>
+			<div className="space-y-3">
 				<FieldRow label="Delete mode">
 					<select
 						className={selectClass}

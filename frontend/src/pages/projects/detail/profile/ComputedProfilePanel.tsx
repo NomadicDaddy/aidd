@@ -57,7 +57,7 @@ export function ComputedProfilePanel({
 							</span>
 						) : (
 							dirty && (
-								<span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+								<span className={`text-xs font-medium ${toneText.amber}`}>
 									Unsaved
 								</span>
 							)
@@ -101,7 +101,7 @@ export function ComputedProfilePanel({
 					title="Applicable audits"
 				/>
 				{isPreviewError ? (
-					<p className="text-sm text-red-600 dark:text-red-400">
+					<p className={`text-sm ${toneText.red}`}>
 						Could not compute audit applicability.
 					</p>
 				) : audits.length === 0 ? (

@@ -2,16 +2,22 @@
 // language, rendered in a monospace <pre>. Each carries a theme-aware accent color (light + dark
 // variants) so the mark keeps contrast in both themes. Languages without a dedicated mark fall back
 // to a generic git branch glyph. Mirrors the dominant-language detection in the backend service.
+//
+// The marks are drawn from the app's six-tone scale rather than per-language brand hues: the blue
+// TypeScript mark was the only non-teal, non-status hue on the Repository tab and read as imported
+// from another product.
+
+import { toneText } from '../../../lib/tones.ts';
 
 export interface LanguageLogo {
-	/** Tailwind text-color classes (light + dark) applied to the <pre>. */
+	/** Tone-scale text color applied to the <pre>, from `lib/tones.ts`. */
 	accent: string;
 	art: string;
 }
 
 const LOGOS: Record<string, LanguageLogo> = {
 	CSS: {
-		accent: 'text-blue-600 dark:text-blue-400',
+		accent: toneText.violet,
 		art: [
 			' ████  █████ █████',
 			'█      █     █    ',
@@ -21,17 +27,17 @@ const LOGOS: Record<string, LanguageLogo> = {
 		].join('\n'),
 	},
 	Go: {
-		accent: 'text-teal-600 dark:text-teal-400',
+		accent: toneText.teal,
 		art: [' ████   ███ ', '█      █   █', '█  ██  █   █', '█   █  █   █', ' ████   ███ '].join(
 			'\n',
 		),
 	},
 	HTML: {
-		accent: 'text-orange-600 dark:text-orange-400',
+		accent: toneText.amber,
 		art: ['  ▄█      █▄ ', '▄█    ██    █▄', ' ▀█   ██   █▀ ', '   ▀█    █▀   '].join('\n'),
 	},
 	JavaScript: {
-		accent: 'text-yellow-600 dark:text-yellow-400',
+		accent: toneText.amber,
 		art: [
 			'      █  █████',
 			'      █  █    ',
@@ -41,7 +47,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 		].join('\n'),
 	},
 	Markdown: {
-		accent: 'text-muted-foreground ',
+		accent: toneText.neutral,
 		art: [
 			'█▄   ▄█  ████ ',
 			'█ █ █ █  █   █',
@@ -51,25 +57,25 @@ const LOGOS: Record<string, LanguageLogo> = {
 		].join('\n'),
 	},
 	Python: {
-		accent: 'text-sky-600 dark:text-sky-400',
+		accent: toneText.teal,
 		art: ['█████  █   █', '█   █  █   █', '█████   ███ ', '█        █  ', '█        █  '].join(
 			'\n',
 		),
 	},
 	Rust: {
-		accent: 'text-orange-600 dark:text-orange-400',
+		accent: toneText.red,
 		art: ['████   █████', '█   █  █    ', '████   █████', '█  █       █', '█   █  █████'].join(
 			'\n',
 		),
 	},
 	Shell: {
-		accent: 'text-emerald-600 dark:text-emerald-400',
+		accent: toneText.emerald,
 		art: ['█████  █   █', '█      █   █', '█████  █████', '    █  █   █', '█████  █   █'].join(
 			'\n',
 		),
 	},
 	SQL: {
-		accent: 'text-indigo-600 dark:text-indigo-400',
+		accent: toneText.violet,
 		art: [
 			'█████  █▄ ▄█  █    ',
 			'█      █ █ █  █    ',
@@ -79,7 +85,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 		].join('\n'),
 	},
 	TypeScript: {
-		accent: 'text-blue-600 dark:text-blue-400',
+		accent: toneText.teal,
 		art: ['█████  █████', '  █    █    ', '  █    █████', '  █        █', '  █    █████'].join(
 			'\n',
 		),
@@ -87,7 +93,7 @@ const LOGOS: Record<string, LanguageLogo> = {
 };
 
 const FALLBACK: LanguageLogo = {
-	accent: 'text-muted-foreground ',
+	accent: toneText.neutral,
 	art: ['  ●        ', '  │        ', '  ├───●    ', '  │        ', '  ●        '].join('\n'),
 };
 

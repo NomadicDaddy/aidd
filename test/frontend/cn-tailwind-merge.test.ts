@@ -67,7 +67,7 @@ describe('Tailwind class merging', () => {
 	test('preserves every audited Card padding override as the winning utility', async () => {
 		const overrides = await cardPaddingOverrides();
 
-		expect(overrides).toHaveLength(34);
+		expect(overrides).toHaveLength(36);
 		for (const className of overrides) {
 			const declaredPadding = className.match(PADDING_UTILITY)?.at(-1);
 			const mergedPadding = cn('p-4', className).match(PADDING_UTILITY);

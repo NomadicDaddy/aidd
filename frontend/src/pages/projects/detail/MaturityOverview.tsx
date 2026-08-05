@@ -171,7 +171,10 @@ export function MaturityOverview({
 				<div className="min-w-0 space-y-2 max-xl:w-full xl:flex-1">
 					<CardHeader
 						action={
-							<div className="flex items-center gap-3">
+							// Wrapping, not a fixed row: below `lg` the launch-target control is
+							// wide enough to sit on top of the completion label, which left
+							// "00%" and "omplete" showing around it.
+							<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
 								<LaunchTargetControl
 									onChange={setLaunchTarget}
 									projectDir={projectPath}

@@ -1,6 +1,24 @@
 import type { ProjectFeature, ProjectRoadmapSummary } from '../../../api/types.ts';
+import type { Tone } from '../../../lib/tones.ts';
 
 import { stringValue } from './shared.ts';
+
+/** The Dashboard feature queue's priority tone, so a table row and a queue row agree on P1. */
+export function featurePriorityTone(priority: number): Tone {
+	if (priority <= 1) return 'red';
+	if (priority === 2) return 'amber';
+	return 'neutral';
+}
+
+/**
+ * Whether the `passes` flag contradicts the status. A completed feature that is not passing (or a
+ * backlog feature that is) is worth a column's worth of attention; agreement is not, which is why
+ * the features table no longer spends a whole column restating it on every row.
+ */
+export function featurePassesDisagrees(feature: ProjectFeature, status: string): boolean {
+	if (status === 'completed') return feature.passes !== true;
+	return feature.passes === true;
+}
 
 export const FEATURE_STATUS_OPTIONS = [
 	'backlog',

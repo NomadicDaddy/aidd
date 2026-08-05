@@ -121,33 +121,19 @@ export function AppLaunchControl({
 
 	if (unavailable) {
 		const unavailableLabel = 'App launch unavailable — no dev or start script configured';
-		if (compact) {
-			return (
-				<Button
-					aria-label={withContext(unavailableLabel)}
-					disabled
-					size="compact"
-					title={unavailableLabel}
-					variant="secondary">
-					<AlertTriangle className="h-4 w-4" />
-					<span>Unavailable</span>
-				</Button>
-			);
-		}
+		// One control, both densities. The full-size branch used to set the same sentence a second
+		// time as visible prose beside the button, which in the project header read as a loose
+		// unattributed line next to a button whose tooltip already said it.
 		return (
-			<div className="flex items-center gap-2">
-				<Button
-					aria-label={withContext(unavailableLabel)}
-					disabled
-					title={unavailableLabel}
-					variant="secondary">
-					<AlertTriangle className="h-4 w-4" />
-					<span>Unavailable</span>
-				</Button>
-				<span className="text-xs text-muted-foreground">
-					No dev/start script configured
-				</span>
-			</div>
+			<Button
+				aria-label={withContext(unavailableLabel)}
+				disabled
+				size={compact ? 'compact' : 'default'}
+				title={unavailableLabel}
+				variant="secondary">
+				<AlertTriangle className="h-4 w-4" />
+				<span>Unavailable</span>
+			</Button>
 		);
 	}
 

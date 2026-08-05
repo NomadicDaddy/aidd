@@ -15,6 +15,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
+import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import {
 	buildHistoryEvents,
 	filterHistoryEvents,
@@ -45,40 +46,35 @@ function HistoryEventRow({
 	onSelectCommit: (commit: GitCommitRef) => void;
 	projectPath: string;
 }) {
+	const hasDetail = Boolean(event.executionIdentity) || event.detailParts.length > 0;
 	return (
-		<li className="rounded-md border border-border px-3 py-1.5">
-			<div className="flex flex-wrap items-start justify-between gap-2">
-				<div className="min-w-0">
-					<div className="flex flex-wrap items-center gap-2">
-						<Badge tone={event.badgeTone}>{event.badge}</Badge>
-						<Link
-							className="font-medium text-foreground hover:underline"
-							to={eventLink(event, projectPath)}>
-							{event.title}
-						</Link>
-					</div>
-					{event.executionIdentity ? (
-						<ExecutionIdentityBadges {...event.executionIdentity} className="mt-1" />
-					) : null}
-					{event.detailParts.length > 0 ? (
-						<div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
-							{event.detailParts.map((part) => (
-								<span key={part}>{part}</span>
-							))}
-						</div>
-					) : null}
-					{event.commits.length > 0 ? (
-						<div className="mt-1.5">
-							<CommitChips commits={event.commits} onSelect={onSelectCommit} />
-						</div>
-					) : null}
-				</div>
-				<span
-					className="shrink-0 text-xs text-muted-foreground"
-					title={formatDate(event.timestamp)}>
+		<li className="py-1">
+			<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+				<Badge tone={event.badgeTone}>{event.badge}</Badge>
+				<Link
+					className="font-medium text-foreground hover:underline"
+					to={eventLink(event, projectPath)}>
+					{event.title}
+				</Link>
+				<span className="text-xs text-muted-foreground" title={formatDate(event.timestamp)}>
 					{formatRelativeAge(event.timestamp)}
 				</span>
 			</div>
+			{hasDetail ? (
+				<div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+					{event.executionIdentity ? (
+						<ExecutionIdentityBadges {...event.executionIdentity} />
+					) : null}
+					{event.detailParts.map((part) => (
+						<span key={part}>{part}</span>
+					))}
+				</div>
+			) : null}
+			{event.commits.length > 0 ? (
+				<div className="mt-1">
+					<CommitChips commits={event.commits} onSelect={onSelectCommit} />
+				</div>
+			) : null}
 		</li>
 	);
 }
@@ -115,7 +111,8 @@ export function HistoryTab({
 				description="Timeline of feature, remediation, and audit-finding lifecycle events merged with recorded runs, newest first. Completion times fall back to the feature's last metadata update when no completion timestamp was recorded."
 				title="Project history"
 			/>
-			<div className="px-4 py-3">
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-3">
+				<span className={fieldLabelClass}>Event kind</span>
 				<SegmentedControl<HistoryFilter>
 					ariaLabel="Filter history events by kind"
 					onChange={(next) => {
@@ -139,7 +136,7 @@ export function HistoryTab({
 							<h3 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 								{group.label}
 							</h3>
-							<ul className="space-y-1.5 text-sm">
+							<ul className="divide-y divide-border text-sm">
 								{group.events.map((event) => (
 									<HistoryEventRow
 										event={event}

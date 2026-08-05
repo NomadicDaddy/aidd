@@ -76,6 +76,7 @@ export type {
 	ProjectExternalIntegrations,
 	ProjectInterviewDetail,
 	ProjectInterviewProgress,
+	ProjectInterviewQuestion,
 	ProjectReport,
 	ProjectReportInput,
 	ProjectReportKind,

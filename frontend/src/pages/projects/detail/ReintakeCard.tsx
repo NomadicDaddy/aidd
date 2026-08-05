@@ -8,8 +8,9 @@ import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 
 import { LaunchTargetControl } from '../../../components/shared/LaunchTargetControl.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useRecipes } from '../../../hooks/useRecipes.ts';
+import { toneText } from '../../../lib/tones.ts';
 
 export function ReintakeCard({ project }: { project: ProjectDetail }) {
 	const navigate = useNavigate();
@@ -34,17 +35,20 @@ export function ReintakeCard({ project }: { project: ProjectDetail }) {
 
 	return (
 		<Card>
-			<div className="flex items-start gap-3">
-				<RefreshCw className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
-				<div>
-					<h2 className="text-base font-semibold text-foreground">Re-run intake</h2>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Reconcile or repair existing `.aidd` metadata and re-run the metadata-only
-						project-intake pipeline. Refreshes artifacts without touching app code.
-					</p>
-				</div>
-			</div>
-			<div className="mt-4 flex flex-wrap items-center gap-3">
+			{/* The canonical card header, and a real <code> element: the description was spelling
+			    the path with markdown backticks into a plain <p>, which printed the backticks. */}
+			<CardHeader
+				description={
+					<>
+						Reconcile or repair existing <code className="font-mono">.aidd</code>{' '}
+						metadata and re-run the metadata-only project-intake pipeline. Refreshes
+						artifacts without touching app code.
+					</>
+				}
+				icon={<RefreshCw className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Re-run intake"
+			/>
+			<div className="flex flex-wrap items-center gap-3">
 				<Button
 					disabled={recipes.launchRecipe.isPending}
 					onClick={handleReintake}

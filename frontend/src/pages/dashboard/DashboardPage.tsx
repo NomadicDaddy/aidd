@@ -9,6 +9,7 @@ import type { DashboardCardDef } from './SortableDashboardGrid.tsx';
 
 import { getProject } from '../../api/projects.ts';
 import { DataFreshness } from '../../components/shared/DataFreshness.tsx';
+import { Metric } from '../../components/shared/Metric.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { useDirectorCycles, useFleetSummary, useSuggestions } from '../../hooks/useDirector.ts';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
@@ -26,7 +27,6 @@ import { buildFeatureQueue, FeatureQueueCard } from './FeatureQueueCard.tsx';
 import { FeatureStatusCard } from './FeatureStatusCard.tsx';
 import { FeatureSummaryCard } from './FeatureSummaryCard.tsx';
 import { FleetHealthCard } from './FleetHealthCard.tsx';
-import { Metric } from './Metric.tsx';
 import { ProjectHealthCard } from './ProjectHealthCard.tsx';
 import { SortableDashboardGrid } from './SortableDashboardGrid.tsx';
 import { WaitingApprovalCard } from './WaitingApprovalCard.tsx';

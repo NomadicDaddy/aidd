@@ -215,7 +215,13 @@ export function RunsTab({
 				runs={runList}
 			/>
 			<LocalAiddHistoryPanel
-				description="Rows read from the project's `.aidd/runs.jsonl` and `.aidd/iterations` metadata."
+				description={
+					<>
+						Rows read from the project&apos;s{' '}
+						<code className="font-mono">.aidd/runs.jsonl</code> and{' '}
+						<code className="font-mono">.aidd/iterations</code> metadata.
+					</>
+				}
 				iterations={localIterations}
 				runs={localRuns}
 			/>

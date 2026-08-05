@@ -55,18 +55,22 @@ export function MaturityStageBlock({
 				id={headerId}
 				onClick={onToggle}
 				type="button">
-				<div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-					<div className="flex min-w-0 items-center gap-2">
+				{/* The identity half does not shrink and the description does. Previously both were
+				    `min-w-0` competing for the same row, so at 768 it was the stage number and name
+				    that got cut — every row read "oduct inte…", "roject stru…" with the status icon
+				    sitting over the first characters. */}
+				<div className="flex min-w-0 flex-1 flex-col gap-0.5 lg:flex-row lg:items-center lg:gap-2">
+					<div className="flex shrink-0 items-center gap-2">
 						<ChevronIcon
 							aria-hidden="true"
 							className="h-4 w-4 shrink-0 text-muted-foreground"
 						/>
 						<Icon className={`h-4 w-4 shrink-0 ${STAGE_ICON_TONE[stage.status]}`} />
-						<span className="truncate text-sm font-medium text-foreground">
+						<span className="text-sm font-medium text-foreground">
 							{stage.order}. {stage.label}
 						</span>
 					</div>
-					<span className="min-w-0 text-xs text-muted-foreground sm:truncate">
+					<span className="min-w-0 truncate text-xs text-muted-foreground">
 						{stage.description}
 					</span>
 				</div>

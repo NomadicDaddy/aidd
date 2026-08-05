@@ -135,7 +135,18 @@ export function LocalRunsTable({
 				</div>
 			) : (
 				<div className="overflow-x-auto">
-					<table aria-label="Local runs" className="w-full text-left text-sm">
+					<table aria-label="Local runs" className="w-full table-fixed text-left text-sm">
+						{/* Auto layout gave DURATION — six characters, always — as much room as SUMMARY,
+						    which is the only free-text column and was wrapping to four lines inside 24rem
+						    while '1m 4s' sat centred in its own wide column. */}
+						<colgroup>
+							<col className="w-10" />
+							<col className="w-[12%]" />
+							<col className="w-[22%]" />
+							<col className="w-[24%]" />
+							<col className="w-[7%]" />
+							<col className="w-[35%]" />
+						</colgroup>
 						<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 							<tr>
 								<th className="w-8 px-2 py-3" scope="col">
@@ -150,7 +161,7 @@ export function LocalRunsTable({
 								<th className="px-4 py-3" scope="col">
 									Result
 								</th>
-								<th className="px-4 py-3" scope="col">
+								<th className="px-4 py-3 whitespace-nowrap" scope="col">
 									Duration
 								</th>
 								<th className="px-4 py-3" scope="col">
@@ -186,7 +197,7 @@ export function LocalRunsTable({
 												{startedLabel}
 											</td>
 											<td className="px-4 py-3">
-												<div className="flex max-w-[18rem] flex-wrap items-center gap-1.5">
+												<div className="flex min-w-0 flex-wrap items-center gap-1.5">
 													<ExecutionIdentityBadges
 														backend={run.backend}
 														model={run.model}
@@ -213,10 +224,10 @@ export function LocalRunsTable({
 													runIterations={runIterations}
 												/>
 											</td>
-											<td className="px-4 py-3">
+											<td className="px-4 py-3 whitespace-nowrap tabular-nums">
 												{formatDuration(run.durationMs)}
 											</td>
-											<td className="max-w-[24rem] px-4 py-3 text-xs text-muted-foreground">
+											<td className="px-4 py-3 text-xs break-words text-muted-foreground">
 												{run.summary ?? '—'}
 											</td>
 										</tr>

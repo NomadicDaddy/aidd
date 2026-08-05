@@ -78,9 +78,17 @@ export function LocalRunResultBadges({
 					</span>
 				</Tooltip>
 			) : null}
-			<span className="font-mono text-xs text-muted-foreground">{run.exitCode ?? '—'}</span>
+			{/* A bare monospace numeral sat between the outcome badge and the iteration count
+			    with nothing saying what it counted — '0' read as a quantity, not a process exit
+			    status. It is only worth a badge when it is not the thing the outcome badge already
+			    says, so a clean success drops it entirely. */}
+			{outcome.tone === 'emerald' ? null : (
+				<Badge title="Process exit code" tone="neutral">
+					exit {run.exitCode ?? '—'}
+				</Badge>
+			)}
 			<span className="text-xs text-muted-foreground">
-				· {runIterations.length} {runIterations.length === 1 ? 'iteration' : 'iterations'}
+				{runIterations.length} {runIterations.length === 1 ? 'iteration' : 'iterations'}
 			</span>
 		</span>
 	);

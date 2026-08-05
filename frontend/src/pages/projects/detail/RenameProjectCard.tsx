@@ -6,11 +6,13 @@ import { toast } from 'sonner';
 import type { ProjectDetail } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useMoveProject } from '../../../hooks/useProjects.ts';
 import { traceDataMovement } from '../../../lib/dataMovementTrace.ts';
+import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import { toneText } from '../../../lib/tones.ts';
 import {
 	joinPreviewPath,
 	parentDirectoryFromPath,
@@ -56,17 +58,12 @@ export function RenameProjectCard({ project }: { project: ProjectDetail }) {
 
 	return (
 		<Card>
-			<div className="flex items-start gap-3">
-				<Pencil className="mt-0.5 h-5 w-5 text-teal-700 dark:text-teal-300" />
-				<div>
-					<h2 className="text-base font-semibold text-foreground">Rename project</h2>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Rename the project directory in place. Runs and metadata follow the new
-						path.
-					</p>
-				</div>
-			</div>
-			<div className="mt-4 space-y-3">
+			<CardHeader
+				description="Rename the project directory in place. Runs and metadata follow the new path."
+				icon={<Pencil className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Rename project"
+			/>
+			<div className="space-y-3">
 				<FieldRow label="New project name">
 					<Input
 						aria-label="New project name"
@@ -75,7 +72,7 @@ export function RenameProjectCard({ project }: { project: ProjectDetail }) {
 					/>
 				</FieldRow>
 				<div className="rounded-md border border-border bg-muted p-3 text-sm">
-					<div className="text-xs text-muted-foreground uppercase">New path</div>
+					<div className={fieldLabelClass}>New path</div>
 					<div className="mt-1 font-mono text-xs break-all text-foreground">
 						{renamePreview}
 					</div>

@@ -5,6 +5,7 @@ import type { MaturityDetail, ProjectArtifactCheckSummary } from '../../../api/t
 import type { Tone } from '../../../lib/tones.ts';
 import type { ArtifactViewerTarget } from './artifactsUtils.ts';
 
+import { Metric } from '../../../components/shared/Metric.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
@@ -86,19 +87,20 @@ export function ArtifactsTab({
 				className="mb-3"
 				title="Artifact health"
 			/>
-			<div className="grid gap-3 sm:grid-cols-3 md:grid-cols-6">
+			{/* The shared Dashboard tile, not a fourth hand-rolled one: the value carries the tone
+			    and the reading sits under it as detail, so a row that used to be number-over-badge in
+			    centred text now matches every other metric row in the app. Six across only where the
+			    tiles have room — at 768 the six-column grid gave each tile ~65px and 'Required
+			    missing' wrapped, dropping its numeral a line below the other five. */}
+			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
 				{tiles.map((tile) => (
-					<div
-						className="rounded-md border border-border p-3 text-center"
-						key={tile.label}>
-						<div className="text-xs text-muted-foreground uppercase">{tile.label}</div>
-						<div className="mt-1 text-lg font-semibold text-foreground">
-							{tile.value}
-						</div>
-						<div className="mt-1">
-							<Badge tone={tile.tone}>{tile.health}</Badge>
-						</div>
-					</div>
+					<Metric
+						detail={tile.health}
+						key={tile.label}
+						label={tile.label}
+						tone={tile.tone}
+						value={tile.value}
+					/>
 				))}
 			</div>
 			<div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">

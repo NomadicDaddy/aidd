@@ -9,8 +9,11 @@ import { SkeletonLines } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
 import { formatBytes } from '../../../lib/formatters.ts';
+import { isCommentLine, splitStrings } from './codeLineTokens.ts';
 
 const maxRenderedLines = 2500;
+
+const lineClass = 'px-3 font-mono text-xs leading-6 whitespace-pre';
 
 const fileMessages: Record<Exclude<ProjectCodeFileState, 'ok'>, string> = {
 	binary: 'Binary file.',
@@ -27,6 +30,22 @@ function copyText(label: string, value: string): void {
 		.writeText(value)
 		.then(() => toast.success(`${label} copied`))
 		.catch(() => toast.error(`Could not copy ${label.toLowerCase()}`));
+}
+
+function CodeLine({ line }: { line: string }) {
+	if (line.length === 0) return <pre className={`${lineClass} text-foreground`}> </pre>;
+	if (isCommentLine(line)) {
+		return <pre className={`${lineClass} text-muted-foreground`}>{line}</pre>;
+	}
+	return (
+		<pre className={`${lineClass} text-foreground`}>
+			{splitStrings(line).map((segment, index) => (
+				<span className={segment.kind === 'string' ? 'text-accent' : undefined} key={index}>
+					{segment.text}
+				</span>
+			))}
+		</pre>
+	);
 }
 
 export function CodeFileViewer({
@@ -63,7 +82,11 @@ export function CodeFileViewer({
 							{data.path}
 						</h3>
 						{data.language ? <Badge tone="teal">{data.language}</Badge> : null}
-						<Badge tone="neutral">{formatBytes(data.sizeBytes)}</Badge>
+						{/* Plain text, matching the tree three inches to the left: Badge is this
+						    app's status pill and a byte count is not a status. */}
+						<span className="text-xs text-muted-foreground tabular-nums">
+							{formatBytes(data.sizeBytes)}
+						</span>
 					</div>
 				</div>
 				<div className="flex shrink-0 items-center gap-1">
@@ -101,12 +124,10 @@ export function CodeFileViewer({
 				<div className="max-h-[42rem] overflow-auto bg-card py-2">
 					{visibleLines.map((line, index) => (
 						<div className="grid grid-cols-[4rem_minmax(0,1fr)]" key={index}>
-							<div className="border-r border-border pr-3 text-right font-mono text-xs leading-6 text-muted-foreground select-none">
+							<div className="border-r border-border pr-3 text-right font-mono text-xs leading-6 text-muted-foreground/60 select-none">
 								{index + 1}
 							</div>
-							<pre className="px-3 font-mono text-xs leading-6 whitespace-pre text-foreground">
-								{line || ' '}
-							</pre>
+							<CodeLine line={line} />
 						</div>
 					))}
 					{clipped ? (

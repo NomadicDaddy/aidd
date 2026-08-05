@@ -5,10 +5,12 @@ import { default as FolderOpen } from 'lucide-react/dist/esm/icons/folder-open';
 import { useMemo, useState } from 'react';
 
 import type { ProjectCodeFileEntry } from '../../../api/types.ts';
+import type { TreeNode } from './codeTreeNodes.ts';
 
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { cn } from '../../../lib/cn.ts';
 import { formatBytes } from '../../../lib/formatters.ts';
+import { toneText } from '../../../lib/tones.ts';
 import {
 	ancestorDirs,
 	type DirExpansionOverrides,
@@ -16,75 +18,13 @@ import {
 	revealSelection,
 	toggleDir,
 } from './codeTreeExpansion.ts';
+import { handleTreeKeyDown } from './codeTreeKeyboard.ts';
+import { buildTree, cappedChildren, matchesQuery, sortedChildren } from './codeTreeNodes.ts';
 
-const maxVisibleFiles = 500;
-
-function matchesQuery(file: ProjectCodeFileEntry, query: string): boolean {
-	const normalized = query.trim().toLowerCase();
-	if (!normalized) return true;
-	return (
-		file.path.toLowerCase().includes(normalized) ||
-		(file.language ?? '').toLowerCase().includes(normalized)
-	);
-}
-
-interface TreeDirNode {
-	children: Map<string, TreeNode>;
-	kind: 'dir';
-	name: string;
-	path: string;
-}
-
-interface TreeFileNode {
-	file: ProjectCodeFileEntry;
-	kind: 'file';
-	name: string;
-	path: string;
-}
-
-type TreeNode = TreeDirNode | TreeFileNode;
-
-// Build a nested directory tree from the flat list of tracked-file paths. Path segments are
-// split on '/'; each intermediate segment becomes a directory node and the final segment a file.
-function buildTree(files: ProjectCodeFileEntry[]): TreeDirNode {
-	const root: TreeDirNode = { children: new Map(), kind: 'dir', name: '', path: '' };
-	for (const file of files) {
-		const segments = file.path.split('/');
-		let current = root;
-		for (let index = 0; index < segments.length; index += 1) {
-			const segment = segments[index] ?? '';
-			const isLeaf = index === segments.length - 1;
-			if (isLeaf) {
-				current.children.set(segment, {
-					file,
-					kind: 'file',
-					name: segment,
-					path: file.path,
-				});
-				continue;
-			}
-			const dirPath = current.path ? `${current.path}/${segment}` : segment;
-			const existing = current.children.get(segment);
-			let next: TreeDirNode;
-			if (existing && existing.kind === 'dir') {
-				next = existing;
-			} else {
-				next = { children: new Map(), kind: 'dir', name: segment, path: dirPath };
-				current.children.set(segment, next);
-			}
-			current = next;
-		}
-	}
-	return root;
-}
-
-// Sort a directory's children: directories first, then files, each alphabetically (case-insensitive).
-function sortedChildren(node: TreeDirNode): TreeNode[] {
-	return [...node.children.values()].sort((left, right) => {
-		if (left.kind !== right.kind) return left.kind === 'dir' ? -1 : 1;
-		return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
-	});
-}
+// One row treatment for both kinds. The per-row `border-b` is gone: ~500 full-width hairlines inside
+// a bordered box inside a bordered pane fought the indentation that actually conveys the hierarchy.
+const rowClass =
+	'flex w-full items-center gap-2 rounded-sm py-1.5 pr-3 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none';
 
 function FileTreeNode({
 	depth,
@@ -93,6 +33,7 @@ function FileTreeNode({
 	onSelect,
 	onToggleDir,
 	selectedPath,
+	tabbablePath,
 }: {
 	depth: number;
 	expanded: (dirPath: string) => boolean;
@@ -100,16 +41,30 @@ function FileTreeNode({
 	onSelect: (path: string) => void;
 	onToggleDir: (dirPath: string) => void;
 	selectedPath: null | string;
+	tabbablePath: null | string;
 }) {
 	const indent = { paddingLeft: `${0.5 + depth * 0.85}rem` };
 	if (node.kind === 'dir') {
 		const isOpen = expanded(node.path);
+		const groupId = `code-tree-group-${node.path}`;
+		const { hidden, shown } = cappedChildren(node);
 		return (
 			<>
 				<button
-					className="flex w-full items-center gap-1.5 border-b border-border py-1.5 pr-3 text-left text-foreground transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:bg-teal-950/20"
+					aria-expanded={isOpen}
+					aria-level={depth + 1}
+					aria-owns={isOpen ? groupId : undefined}
+					className={cn(rowClass, 'gap-1.5 text-foreground')}
 					onClick={() => onToggleDir(node.path)}
+					onKeyDown={(event) => {
+						// Right opens, Left closes — the rest of the roving keys live on the tree.
+						if (event.key !== (isOpen ? 'ArrowLeft' : 'ArrowRight')) return;
+						event.preventDefault();
+						onToggleDir(node.path);
+					}}
+					role="treeitem"
 					style={indent}
+					tabIndex={node.path === tabbablePath ? 0 : -1}
 					type="button">
 					<ChevronRight
 						className={cn(
@@ -118,14 +73,15 @@ function FileTreeNode({
 						)}
 					/>
 					{isOpen ? (
-						<FolderOpen className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+						<FolderOpen className={`h-3.5 w-3.5 shrink-0 ${toneText.teal}`} />
 					) : (
-						<Folder className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+						<Folder className={`h-3.5 w-3.5 shrink-0 ${toneText.teal}`} />
 					)}
 					<span className="truncate font-mono text-xs">{node.name}</span>
 				</button>
-				{isOpen
-					? sortedChildren(node).map((child) => (
+				{isOpen ? (
+					<div id={groupId} role="group">
+						{shown.map((child) => (
 							<FileTreeNode
 								depth={depth + 1}
 								expanded={expanded}
@@ -134,28 +90,41 @@ function FileTreeNode({
 								onSelect={onSelect}
 								onToggleDir={onToggleDir}
 								selectedPath={selectedPath}
+								tabbablePath={tabbablePath}
 							/>
-						))
-					: null}
+						))}
+						{hidden > 0 ? (
+							<p
+								className="py-1 pr-3 text-xs text-muted-foreground"
+								style={{ paddingLeft: `${0.5 + (depth + 1) * 0.85}rem` }}>
+								+{hidden.toLocaleString()} more in this folder
+							</p>
+						) : null}
+					</div>
+				) : null}
 			</>
 		);
 	}
 	const selected = selectedPath === node.path;
 	return (
 		<button
+			aria-level={depth + 1}
+			aria-selected={selected}
 			className={cn(
-				'flex w-full items-center gap-2 border-b border-border py-1.5 pr-3 text-left transition-colors last:border-b-0 hover:bg-teal-50/60 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none dark:hover:bg-teal-950/20',
-				selected
-					? 'bg-teal-50 text-teal-950 dark:bg-teal-950/30 dark:text-teal-100'
-					: 'text-foreground',
+				rowClass,
+				selected ? 'bg-accent-muted text-accent-muted-foreground' : 'text-foreground',
 			)}
 			onClick={() => onSelect(node.path)}
+			role="treeitem"
 			style={indent}
+			tabIndex={node.path === tabbablePath ? 0 : -1}
 			type="button">
 			<FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 			<span className="flex min-w-0 flex-1 items-baseline gap-2">
 				<span className="truncate font-mono text-xs">{node.name}</span>
-				<span className="shrink-0 text-[0.7rem] text-muted-foreground">
+				{/* text-xs, the app's metadata step — this was `text-[0.7rem]`, smaller than the
+				    scale's floor, for the same datum the viewer header shows at text-xs. */}
+				<span className="shrink-0 text-xs text-muted-foreground">
 					{formatBytes(node.file.sizeBytes)}
 				</span>
 			</span>
@@ -181,8 +150,9 @@ export function CodeFileTree({
 		() => files.filter((file) => matchesQuery(file, query)),
 		[files, query],
 	);
-	const visible = filtered.slice(0, maxVisibleFiles);
-	const tree = useMemo(() => buildTree(visible), [visible]);
+	// The whole filtered set, not a 500-file prefix of it: the cap now applies per directory, so the
+	// open file always has a row of its own to be highlighted in.
+	const tree = useMemo(() => buildTree(filtered), [filtered]);
 	const searching = query.trim().length > 0;
 
 	// The user's explicit open/collapse choices per directory. The tree starts collapsed except for
@@ -206,27 +176,32 @@ export function CodeFileTree({
 	if (filtered.length === 0) {
 		return <EmptyState>No tracked files match the current search.</EmptyState>;
 	}
+	const roots = sortedChildren(tree);
+	// Exactly one row is in the tab order; the arrow keys reach the rest.
+	const tabbablePath = filtered.some((file) => file.path === selectedPath)
+		? selectedPath
+		: (roots[0]?.path ?? null);
 	return (
-		<div className="space-y-2">
-			<div className="max-h-[34rem] overflow-y-auto rounded-md border border-border">
-				{sortedChildren(tree).map((child) => (
-					<FileTreeNode
-						depth={0}
-						expanded={isExpanded}
-						key={child.path}
-						node={child}
-						onSelect={onSelect}
-						onToggleDir={onToggleDir}
-						selectedPath={selectedPath}
-					/>
-				))}
-			</div>
-			{filtered.length > visible.length ? (
-				<p className="text-xs text-amber-700 dark:text-amber-400">
-					Showing {visible.length.toLocaleString()} of {filtered.length.toLocaleString()}{' '}
-					matches.
-				</p>
-			) : null}
+		// No inner border: the pane already has one against the viewer, and the Card has another.
+		// The max-height is lifted below lg, where the tree sits under the viewer in page flow
+		// rather than beside it — a nested scroller there swallowed the wheel.
+		<div
+			aria-label="Tracked files"
+			className="overflow-y-auto lg:max-h-[34rem]"
+			onKeyDown={handleTreeKeyDown}
+			role="tree">
+			{roots.map((child) => (
+				<FileTreeNode
+					depth={0}
+					expanded={isExpanded}
+					key={child.path}
+					node={child}
+					onSelect={onSelect}
+					onToggleDir={onToggleDir}
+					selectedPath={selectedPath}
+					tabbablePath={tabbablePath}
+				/>
+			))}
 		</div>
 	);
 }

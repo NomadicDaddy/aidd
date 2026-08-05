@@ -2,6 +2,7 @@ import { default as ShieldAlert } from 'lucide-react/dist/esm/icons/shield-alert
 
 import type { ProjectMilestonesView } from '../../../api/types.ts';
 
+import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { toneText } from '../../../lib/tones.ts';
 
@@ -18,8 +19,14 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 	const unmapped = view.unmappedFeatureDirectories;
 	if (unmapped.length === 0 && view.violations.length === 0) return null;
 	return (
-		<Card className="space-y-2 border-red-300 dark:border-red-900">
+		// A default-bordered Card with a red Badge, not a red-outlined one. The outline was a
+		// fourth way of spelling the red tone and the only outlined surface across the five tabs;
+		// `lib/tones.ts` owns the vocabulary, and it does not include a border variant.
+		<Card className="space-y-2">
 			<CardHeader
+				badge={
+					<Badge tone="red">{unmapped.length + view.violations.length} blocking</Badge>
+				}
 				className="mb-0"
 				headingLevel={3}
 				icon={<ShieldAlert className={`h-4 w-4 ${toneText.red}`} />}
@@ -44,7 +51,7 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 						later milestone. The gate does not report this — those features are simply
 						never selectable while their own milestone is active.
 					</p>
-					<ul className="space-y-0.5 text-xs text-red-600 dark:text-red-400">
+					<ul className={`space-y-0.5 text-xs ${toneText.red}`}>
 						{view.violations.slice(0, 8).map((violation) => (
 							<li key={`${violation.featureDirectory}:${violation.dependency}`}>
 								<span className="font-mono">{violation.featureDirectory}</span> (

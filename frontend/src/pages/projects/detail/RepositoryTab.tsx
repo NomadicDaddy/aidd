@@ -7,7 +7,6 @@ import {
 	useProjectRepositoryInfo,
 	useProjectRepositoryRefs,
 } from '../../../hooks/useRepositoryInfo.ts';
-import { GitStatusBadge } from '../GitStatusBadge.tsx';
 import { RepositoryInfoCard } from './RepositoryInfoCard.tsx';
 import { RepositoryRefsCard } from './RepositoryRefsCard.tsx';
 import { WorkingTreeCard } from './workingTree/WorkingTreeCard.tsx';
@@ -18,39 +17,6 @@ const STATE_MESSAGE: Record<Exclude<RepositoryInfoState, 'ok'>, string> = {
 		'This project directory is not a git repository, so there are no statistics to show.',
 	'project-missing': 'The project directory no longer exists on disk.',
 };
-
-function WorkingTreePanel({
-	projectId,
-	status,
-}: {
-	projectId: string | undefined;
-	status: null | ProjectGitStatusSummary | undefined;
-}) {
-	return (
-		<div className="space-y-3">
-			<Card>
-				<CardHeader
-					action={
-						<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-							<GitStatusBadge className="max-w-[16rem]" status={status} />
-							{status && ['clean', 'conflicted', 'dirty'].includes(status.state) ? (
-								<span className="tabular-nums">
-									{status.staged} staged / {status.unstaged} unstaged /{' '}
-									{status.untracked} untracked
-								</span>
-							) : null}
-						</div>
-					}
-					className="mb-0"
-					description="Stage, discard, and commit the files this project has changed since its last commit."
-					headingLevel={3}
-					title="Working tree"
-				/>
-			</Card>
-			<WorkingTreeCard projectId={projectId} />
-		</div>
-	);
-}
 
 export function RepositoryTab({
 	gitStatus,
@@ -64,12 +30,22 @@ export function RepositoryTab({
 
 	return (
 		<div className="space-y-4">
-			<CardHeader
-				className="mb-0"
-				description="A git snapshot of this project — dominant language, branches, tags, contributors, and lines of code, derived from git-tracked files only."
-				title="Repository"
-			/>
-			<WorkingTreePanel projectId={projectId} status={gitStatus} />
+			{/* Carded, like every other section header on the tab — this one alone sat on the
+			    page background, directly above the carded 'Working tree' header. The measure cap
+			    is the Telemetry tab's prose treatment. */}
+			<Card>
+				<CardHeader
+					className="mb-0"
+					description={
+						<span className="block max-w-prose text-sm">
+							A git snapshot of this project — dominant language, branches, tags,
+							contributors, and lines of code, derived from git-tracked files only.
+						</span>
+					}
+					title="Repository"
+				/>
+			</Card>
+			<WorkingTreeCard projectId={projectId} status={gitStatus} />
 			{query.isLoading ? (
 				<Card aria-busy="true">
 					<SkeletonLines count={6} label="Computing repository statistics…" />

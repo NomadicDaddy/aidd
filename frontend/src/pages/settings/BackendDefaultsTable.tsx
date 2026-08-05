@@ -7,6 +7,7 @@ import type {
 	WebConfigSettings,
 } from '../../api/types.ts';
 
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useCliStatus } from '../../hooks/useSettings.ts';
@@ -111,55 +112,62 @@ export function BackendDefaultsTable({
 				</Button>
 			</div>
 
-			<Card className="hidden overflow-x-auto p-0 xl:block">
-				<table
-					aria-label="Backend status and defaults"
-					className="w-full min-w-[860px] text-left text-sm">
-					<thead className="border-b border-border bg-muted">
-						{/* Explicit widths give Model the slack that a w-56 name-and-badge column
+			<Card className="hidden p-0 xl:block">
+				<OverflowScroller ariaLabel="Backend status and defaults">
+					<table
+						aria-label="Backend status and defaults"
+						className="w-full min-w-[860px] text-left text-sm">
+						<thead className="border-b border-border bg-muted">
+							{/* Explicit widths give Model the slack that a w-56 name-and-badge column
 						    was wasting: 'kilo/stepfun/step-3.7-flash:f' was cut mid-string. */}
-						<tr>
-							<th className={`w-44 px-3 py-2 ${fieldLabelClass}`} scope="col">
-								Backend & Status
-							</th>
-							<th className={`w-[28%] px-3 py-2 ${fieldLabelClass}`} scope="col">
-								Model
-							</th>
-							<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
-								Reasoning
-							</th>
-							<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
-								Idle Timeout
-							</th>
-							<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
-								Idle Nudge Timeout
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{backendDefaultOptions.map((backend) => {
-							const defaults = backends[backend] ?? emptyBackendDefault();
-							return (
-								<tr className="border-b border-border last:border-0" key={backend}>
-									<td className="px-3 py-2 align-top">
-										<BackendIdentity
+							<tr>
+								<th className={`w-44 px-3 py-2 ${fieldLabelClass}`} scope="col">
+									Backend & Status
+								</th>
+								<th className={`w-[28%] px-3 py-2 ${fieldLabelClass}`} scope="col">
+									Model
+								</th>
+								<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
+									Reasoning
+								</th>
+								<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
+									Idle Timeout
+								</th>
+								<th className={`w-[16%] px-3 py-2 ${fieldLabelClass}`} scope="col">
+									Idle Nudge Timeout
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{backendDefaultOptions.map((backend) => {
+								const defaults = backends[backend] ?? emptyBackendDefault();
+								return (
+									<tr
+										className="border-b border-border last:border-0"
+										key={backend}>
+										<td className="px-3 py-2 align-top">
+											<BackendIdentity
+												backend={backend}
+												loading={statusQuery.isLoading}
+												status={statuses.get(backend)}
+											/>
+										</td>
+										<BackendDefaultFields
 											backend={backend}
-											loading={statusQuery.isLoading}
-											status={statuses.get(backend)}
+											defaults={defaults}
+											layout="cells"
+											setBackendDefault={setBackendDefault}
+											shadowedSharedModel={shadowNote(
+												backend,
+												defaults.model,
+											)}
 										/>
-									</td>
-									<BackendDefaultFields
-										backend={backend}
-										defaults={defaults}
-										layout="cells"
-										setBackendDefault={setBackendDefault}
-										shadowedSharedModel={shadowNote(backend, defaults.model)}
-									/>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
+				</OverflowScroller>
 			</Card>
 
 			<div className="space-y-2 xl:hidden">

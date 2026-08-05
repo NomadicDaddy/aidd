@@ -6,6 +6,7 @@ import type {
 } from '../../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCompactNumber } from '../../../lib/formatters.ts';
@@ -67,7 +68,7 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 				level="subsection"
 				title="By execution target"
 			/>
-			<div className="overflow-x-auto">
+			<OverflowScroller ariaLabel="Project usage by execution target">
 				<table
 					aria-label="Project usage by execution target"
 					className="w-full text-left text-sm">
@@ -100,7 +101,7 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 						))}
 					</tbody>
 				</table>
-			</div>
+			</OverflowScroller>
 		</div>
 	);
 }
@@ -119,7 +120,7 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 				level="subsection"
 				title="By run mode"
 			/>
-			<div className="overflow-x-auto">
+			<OverflowScroller ariaLabel="Project usage by run mode">
 				<table aria-label="Project usage by run mode" className="w-full text-left text-sm">
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
@@ -152,7 +153,7 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 						))}
 					</tbody>
 				</table>
-			</div>
+			</OverflowScroller>
 		</div>
 	);
 }

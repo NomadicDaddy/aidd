@@ -10,6 +10,7 @@ import { selectClass } from '../../../lib/formStyles.ts';
 import { Button, IconButton } from '../../ui/button.tsx';
 import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import { ExecutionIdentityBadges } from '../ExecutionIdentityBadges.tsx';
+import { OverflowScroller } from '../OverflowScroller.tsx';
 import { LocalIterationsTable } from './LocalIterationsTable.tsx';
 import { LocalRunResultBadges } from './LocalRunResultBadges.tsx';
 import { categorizeRun, OUTCOME_CATEGORIES, type OutcomeCategory } from './outcome.ts';
@@ -134,7 +135,7 @@ export function LocalRunsTable({
 					No runs match the current filters.
 				</div>
 			) : (
-				<div className="overflow-x-auto">
+				<OverflowScroller ariaLabel="Local runs">
 					<table aria-label="Local runs" className="w-full table-fixed text-left text-sm">
 						{/* Auto layout gave DURATION — six characters, always — as much room as SUMMARY,
 						    which is the only free-text column and was wrapping to four lines inside 24rem
@@ -253,7 +254,7 @@ export function LocalRunsTable({
 							})}
 						</tbody>
 					</table>
-				</div>
+				</OverflowScroller>
 			)}
 		</div>
 	);

@@ -1,6 +1,7 @@
 import { type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 
 import { selectClass } from '../../lib/formStyles.ts';
+import { OverflowScroller } from '../shared/OverflowScroller.tsx';
 import { Button } from './button.tsx';
 
 interface TabDefinition<T extends string> {
@@ -53,7 +54,12 @@ export function TabList<T extends string>({
 	function focusTab(id: T) {
 		onChange(id);
 		const node = document.getElementById(tabButtonId(idPrefix, id));
-		if (node instanceof HTMLElement) node.focus();
+		if (!(node instanceof HTMLElement)) return;
+		node.focus();
+		// `focus()` scrolls an off-screen trigger into view, but it scrolls every scrollable
+		// ancestor to do it, which yanks the page under a keyboard user arrowing along the strip.
+		// `inline: 'nearest'` moves the strip by the least it can and leaves the page where it is.
+		node.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 	}
 
 	function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -70,6 +76,36 @@ export function TabList<T extends string>({
 		event.preventDefault();
 		focusTab(nextId);
 	}
+
+	const tablist = (
+		<div
+			aria-label={ariaLabel}
+			className={compact ? 'flex gap-2' : 'flex flex-wrap gap-2'}
+			role="tablist">
+			{tabs.map((tab) => {
+				const selected = activeTab === tab.id;
+				const Icon = tab.icon;
+				return (
+					<Button
+						aria-controls={tabPanelId(idPrefix, tab.id)}
+						aria-selected={selected}
+						className={compact ? 'shrink-0' : undefined}
+						id={tabButtonId(idPrefix, tab.id)}
+						key={tab.id}
+						onClick={() => onChange(tab.id)}
+						onKeyDown={onTabKeyDown}
+						role="tab"
+						size={compact ? 'compact' : 'default'}
+						tabIndex={selected ? 0 : -1}
+						variant={selected ? 'primary' : 'secondary'}>
+						{Icon ? <Icon className="h-4 w-4" /> : null}
+						{tab.label}
+						{tab.badge}
+					</Button>
+				);
+			})}
+		</div>
+	);
 
 	return (
 		<>
@@ -91,35 +127,22 @@ export function TabList<T extends string>({
 					</select>
 				</label>
 			) : null}
-			<div
-				aria-label={ariaLabel}
-				className={
-					compact ? 'hidden gap-2 overflow-x-auto pb-1 lg:flex' : 'flex flex-wrap gap-2'
-				}
-				role="tablist">
-				{tabs.map((tab) => {
-					const selected = activeTab === tab.id;
-					const Icon = tab.icon;
-					return (
-						<Button
-							aria-controls={tabPanelId(idPrefix, tab.id)}
-							aria-selected={selected}
-							className={compact ? 'shrink-0' : undefined}
-							id={tabButtonId(idPrefix, tab.id)}
-							key={tab.id}
-							onClick={() => onChange(tab.id)}
-							onKeyDown={onTabKeyDown}
-							role="tab"
-							size={compact ? 'compact' : 'default'}
-							tabIndex={selected ? 0 : -1}
-							variant={selected ? 'primary' : 'secondary'}>
-							{Icon ? <Icon className="h-4 w-4" /> : null}
-							{tab.label}
-							{tab.badge}
-						</Button>
-					);
-				})}
-			</div>
+			{/* Only the compact strip scrolls, so only it is wrapped: the default strip wraps to
+			    more rows instead and a scroller around it would emit a landmark for a region that
+			    never scrolls. Unwrapped, Project Detail measured scrollWidth 1804 in a 1312
+			    scrollport at 1600x1200 — Reports, Audits, Profile and Management sat off-screen
+			    with no fade, no arrow and no scrollbar, half the page's navigation invisible.
+			    The tablist stays the tablist; the scroller only wraps it. */}
+			{compact ? (
+				<OverflowScroller
+					ariaLabel={ariaLabel}
+					className="hidden lg:block"
+					scrollerClassName="pb-1">
+					{tablist}
+				</OverflowScroller>
+			) : (
+				tablist
+			)}
 		</>
 	);
 }

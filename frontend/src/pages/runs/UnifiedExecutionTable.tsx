@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Fragment } from 'react';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useNow } from '../../hooks/useNow.ts';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
@@ -87,7 +88,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 				</div>
 			) : (
 				<>
-					<div className="hidden overflow-x-auto xl:block">
+					<OverflowScroller ariaLabel={title} className="hidden xl:block">
 						<table
 							aria-label={title}
 							className="w-full min-w-[56rem] table-fixed text-left text-sm">
@@ -171,7 +172,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 								)}
 							</tbody>
 						</table>
-					</div>
+					</OverflowScroller>
 					<div
 						aria-label={title}
 						className="flex flex-col divide-y divide-border xl:hidden"

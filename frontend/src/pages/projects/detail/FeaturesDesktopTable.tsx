@@ -4,6 +4,7 @@ import type {
 	ProjectRoadmapSummary,
 } from '../../../api/types.ts';
 
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { FeatureActions, FeatureMilestoneControl } from './FeatureRowControls.tsx';
 import {
@@ -47,7 +48,7 @@ export function FeaturesDesktopTable({
 	runActive: boolean;
 }) {
 	return (
-		<div className="hidden overflow-x-auto xl:block">
+		<OverflowScroller ariaLabel="Project features" className="hidden xl:block">
 			<table aria-label="Project features" className="w-full table-fixed text-left text-sm">
 				<colgroup>
 					<col className="w-[32%]" />
@@ -167,6 +168,6 @@ export function FeaturesDesktopTable({
 					})}
 				</tbody>
 			</table>
-		</div>
+		</OverflowScroller>
 	);
 }

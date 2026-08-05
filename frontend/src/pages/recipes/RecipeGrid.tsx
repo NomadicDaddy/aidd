@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';
 
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
@@ -130,96 +131,104 @@ export function RecipeTable({
 	usageByResourceId: Map<string, ResourceUsageRow>;
 } & LaunchProps) {
 	return (
-		<Card className="overflow-x-auto p-0">
-			<table aria-label="Recipes" className="w-full text-left text-sm">
-				<thead className={tableHeadClass}>
-					<tr>
-						<th className="px-3 py-2" scope="col">
-							Name
-						</th>
-						<th className="px-3 py-2" scope="col">
-							Type
-						</th>
-						{/* Counts are read down the column, so they are right-aligned on the shared
+		<Card className="p-0">
+			<OverflowScroller ariaLabel="Recipes">
+				<table aria-label="Recipes" className="w-full text-left text-sm">
+					<thead className={tableHeadClass}>
+						<tr>
+							<th className="px-3 py-2" scope="col">
+								Name
+							</th>
+							<th className="px-3 py-2" scope="col">
+								Type
+							</th>
+							{/* Counts are read down the column, so they are right-aligned on the shared
 						    numeral width the baseline asks for. */}
-						<th className="px-3 py-2 text-right" scope="col">
-							Steps
-						</th>
-						<th className="px-3 py-2" scope="col">
-							Policies
-						</th>
-						<th className="px-3 py-2 text-right" scope="col">
-							Parameters
-						</th>
-						<th className="px-3 py-2" scope="col">
-							Usage
-						</th>
-						<th className="px-3 py-2" scope="col">
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{recipes.map((recipe) => {
-						const usage = usageByResourceId.get(recipe.id);
-						const usageLine = formatUsageBadgeCompact(usage);
-						return (
-							<tr className="border-b border-border last:border-0" key={recipe.id}>
-								<td className="px-3 py-2">
-									<Link
-										className="font-medium text-foreground hover:underline"
-										to={`/recipes/${recipe.id}`}>
-										{recipe.name}
-									</Link>
-									<div className="truncate font-mono text-xs text-muted-foreground">
-										{recipe.id}
-									</div>
-								</td>
-								<td className="px-3 py-2">
-									<div className="flex flex-nowrap items-center gap-1.5">
-										<RecipeTypeBadge isPipeline={recipe.steps.length > 1} />
-										<RecipeContractBadges recipe={recipe} />
-									</div>
-								</td>
-								<td className="px-3 py-2 text-right tabular-nums">
-									{recipe.steps.length}
-								</td>
-								{/* Two badges plus a `+N` that names the rest in its tooltip: the
+							<th className="px-3 py-2 text-right" scope="col">
+								Steps
+							</th>
+							<th className="px-3 py-2" scope="col">
+								Policies
+							</th>
+							<th className="px-3 py-2 text-right" scope="col">
+								Parameters
+							</th>
+							<th className="px-3 py-2" scope="col">
+								Usage
+							</th>
+							<th className="px-3 py-2" scope="col">
+								Actions
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{recipes.map((recipe) => {
+							const usage = usageByResourceId.get(recipe.id);
+							const usageLine = formatUsageBadgeCompact(usage);
+							return (
+								<tr
+									className="border-b border-border last:border-0"
+									key={recipe.id}>
+									<td className="px-3 py-2">
+										<Link
+											className="font-medium text-foreground hover:underline"
+											to={`/recipes/${recipe.id}`}>
+											{recipe.name}
+										</Link>
+										<div className="truncate font-mono text-xs text-muted-foreground">
+											{recipe.id}
+										</div>
+									</td>
+									<td className="px-3 py-2">
+										<div className="flex flex-nowrap items-center gap-1.5">
+											<RecipeTypeBadge isPipeline={recipe.steps.length > 1} />
+											<RecipeContractBadges recipe={recipe} />
+										</div>
+									</td>
+									<td className="px-3 py-2 text-right tabular-nums">
+										{recipe.steps.length}
+									</td>
+									{/* Two badges plus a `+N` that names the rest in its tooltip: the
 								    column used to wrap six pills onto two rows and set the height
 								    of every row in the table. */}
-								<td className="min-w-56 px-3 py-2">
-									<div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
-										<RecipePolicyBadges limit={2} recipe={recipe} />
-									</div>
-								</td>
-								<td className="px-3 py-2 text-right tabular-nums">
-									{recipe.parameters.length}
-								</td>
-								<td
-									className="px-3 py-2 text-xs whitespace-nowrap text-muted-foreground"
-									title={formatUsageBadge(usage) ?? undefined}>
-									{usageLine ?? '—'}
-								</td>
-								<td className="px-3 py-2">
-									<div className="flex flex-nowrap items-center gap-2">
-										<LaunchButton recipe={recipe} size="compact" {...launch} />
-										<Link
-											className={buttonClassName(
-												'secondary',
-												undefined,
-												'compact',
-											)}
-											to={`/recipes/${recipe.id}`}>
-											<ListTree className="h-4 w-4" />
-											Details
-										</Link>
-									</div>
-								</td>
-							</tr>
-						);
-					})}
-				</tbody>
-			</table>
+									<td className="min-w-56 px-3 py-2">
+										<div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
+											<RecipePolicyBadges limit={2} recipe={recipe} />
+										</div>
+									</td>
+									<td className="px-3 py-2 text-right tabular-nums">
+										{recipe.parameters.length}
+									</td>
+									<td
+										className="px-3 py-2 text-xs whitespace-nowrap text-muted-foreground"
+										title={formatUsageBadge(usage) ?? undefined}>
+										{usageLine ?? '—'}
+									</td>
+									<td className="px-3 py-2">
+										<div className="flex flex-nowrap items-center gap-2">
+											<LaunchButton
+												recipe={recipe}
+												size="compact"
+												{...launch}
+											/>
+											<Link
+												className={buttonClassName(
+													'secondary',
+													undefined,
+													'compact',
+												)}
+												to={`/recipes/${recipe.id}`}>
+												<ListTree className="h-4 w-4" />
+												Details
+											</Link>
+										</div>
+									</td>
+								</tr>
+							);
+						})}
+					</tbody>
+				</table>
+			</OverflowScroller>
 		</Card>
 	);
 }

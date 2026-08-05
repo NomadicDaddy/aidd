@@ -75,13 +75,18 @@ export function OverflowScroller({
 				role="region">
 				{children}
 			</div>
+			{/* Two cues, because the gradient alone has two ways to fail. A pinned column is
+			    `bg-card` and `z-10`, so `from-card` over it is card-on-card and its stacking context
+			    puts it above an auto-z-index sibling — the fade was both invisible and behind the
+			    one column that most needs it. `z-30` lifts it over the pinned cells, and the border
+			    is a cue that does not depend on a colour difference against what it sits on. */}
 			<span
 				aria-hidden="true"
-				className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-card to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-start=true]:opacity-100"
+				className="pointer-events-none absolute inset-y-0 left-0 z-30 w-6 border-l border-border bg-gradient-to-r from-card to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-start=true]:opacity-100"
 			/>
 			<span
 				aria-hidden="true"
-				className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-end=true]:opacity-100"
+				className="pointer-events-none absolute inset-y-0 right-0 z-30 w-6 border-r border-border bg-gradient-to-l from-card to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-end=true]:opacity-100"
 			/>
 		</div>
 	);

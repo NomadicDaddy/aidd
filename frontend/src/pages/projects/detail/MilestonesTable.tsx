@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 
 import type { ProjectMilestone } from '../../../api/types.ts';
 
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
 import { milestoneProgressLabel } from './milestonesUtils.ts';
@@ -27,7 +28,7 @@ export function MilestonesTable({
 	onMove: (milestone: ProjectMilestone, position: number) => void;
 }) {
 	return (
-		<div className="overflow-x-auto">
+		<OverflowScroller ariaLabel="Project milestones">
 			<table aria-label="Project milestones" className="w-full text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
@@ -107,6 +108,6 @@ export function MilestonesTable({
 					))}
 				</tbody>
 			</table>
-		</div>
+		</OverflowScroller>
 	);
 }

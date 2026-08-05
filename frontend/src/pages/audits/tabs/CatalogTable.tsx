@@ -1,5 +1,6 @@
 import type { AuditDefinition } from '../../../api/types.ts';
 
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
@@ -39,116 +40,121 @@ export function CatalogTable({
 	const hasSelectableDefinitions = definitions.some((item) => item.enabled);
 	return (
 		<div className="space-y-3">
-			<Card className="hidden overflow-x-auto p-0 xl:block">
-				<table
-					aria-label="Audit catalog"
-					className="w-full min-w-[840px] text-left text-sm">
-					<thead className={tableHeadClass}>
-						<tr>
-							<th className="px-3 py-3" scope="col">
-								<Checkbox
-									aria-label="Select all visible enabled audits"
-									checked={allSelected}
-									disabled={!hasSelectableDefinitions}
-									onChange={handleHeaderCheckbox}
-									ref={(el) => {
-										if (el) el.indeterminate = someSelected && !allSelected;
-									}}
-								/>
-							</th>
-							<th className="px-3 py-3" scope="col">
-								Audit
-							</th>
-							<th className="px-3 py-3" scope="col">
-								Change Potential
-							</th>
-							<th className="px-3 py-3" scope="col">
-								Projects
-							</th>
-							<th className="px-3 py-3" scope="col">
-								Reports
-							</th>
-							<th className="px-3 py-3" scope="col">
-								Buckets
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{definitions.map((item) => (
-							<tr
-								className={`cursor-pointer border-b border-border last:border-0 ${selectedAudit === item.name ? 'bg-accent-muted text-accent-muted-foreground' : 'hover:bg-muted/60'}`}
-								key={item.name}
-								onClick={() => onSelect(item.name)}>
-								<td className="px-3 py-3">
+			<Card className="hidden p-0 xl:block">
+				<OverflowScroller ariaLabel="Audit catalog">
+					<table
+						aria-label="Audit catalog"
+						className="w-full min-w-[840px] text-left text-sm">
+						<thead className={tableHeadClass}>
+							<tr>
+								<th className="px-3 py-3" scope="col">
 									<Checkbox
-										aria-label={`Select ${item.name} for launch`}
-										checked={selectedAuditNames.includes(item.name)}
-										disabled={!item.enabled}
-										onChange={() => onToggleSelected(item.name)}
-										onClick={(event) => event.stopPropagation()}
-									/>
-								</td>
-								<td className="px-3 py-3">
-									<div
-										className="max-w-[18rem] truncate font-medium text-foreground"
-										title={item.name}>
-										{item.name}
-									</div>
-									<div
-										className="max-w-[18rem] truncate text-xs text-muted-foreground"
-										title={item.path}>
-										{auditFileName(item.path)}
-									</div>
-								</td>
-								<td className="px-3 py-3">
-									{item.changePotential ? (
-										<span
-											className="inline-flex items-center gap-2"
-											title={describeChangePotential(item.changePotential)}>
-											<Badge tone={bandTone[item.changePotential.band]}>
-												{item.changePotential.band}
-											</Badge>
-											{/* The confidence reads the same on every visible row; it stays in the
-											    tooltip with the rest of the evidence. */}
-											<span className="text-xs text-muted-foreground tabular-nums">
-												{item.changePotential.score}
-											</span>
-										</span>
-									) : (
-										<span className="text-xs text-muted-foreground">—</span>
-									)}
-								</td>
-								<td className="px-3 py-3">
-									{item.applicableProjectCount} applicable
-								</td>
-								<td className="px-3 py-3">
-									<span className={toneText.emerald}>
-										{item.freshReportCount} fresh
-									</span>
-									<span className="mx-2 text-muted-foreground">/</span>
-									<span className={toneText.amber}>
-										{item.staleReportCount} stale
-									</span>
-									<span className="mx-2 text-muted-foreground">/</span>
-									<span className={toneText.red}>
-										{item.missingReportCount} missing
-									</span>
-								</td>
-								<td className="px-4 py-3 text-xs">
-									<button
-										className="text-accent hover:underline"
-										onClick={(event) => {
-											event.stopPropagation();
-											onJumpToMatrix();
+										aria-label="Select all visible enabled audits"
+										checked={allSelected}
+										disabled={!hasSelectableDefinitions}
+										onChange={handleHeaderCheckbox}
+										ref={(el) => {
+											if (el) el.indeterminate = someSelected && !allSelected;
 										}}
-										type="button">
-										{item.applicableBucketCount}/{bucketColumns.length} buckets
-									</button>
-								</td>
+									/>
+								</th>
+								<th className="px-3 py-3" scope="col">
+									Audit
+								</th>
+								<th className="px-3 py-3" scope="col">
+									Change Potential
+								</th>
+								<th className="px-3 py-3" scope="col">
+									Projects
+								</th>
+								<th className="px-3 py-3" scope="col">
+									Reports
+								</th>
+								<th className="px-3 py-3" scope="col">
+									Buckets
+								</th>
 							</tr>
-						))}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{definitions.map((item) => (
+								<tr
+									className={`cursor-pointer border-b border-border last:border-0 ${selectedAudit === item.name ? 'bg-accent-muted text-accent-muted-foreground' : 'hover:bg-muted/60'}`}
+									key={item.name}
+									onClick={() => onSelect(item.name)}>
+									<td className="px-3 py-3">
+										<Checkbox
+											aria-label={`Select ${item.name} for launch`}
+											checked={selectedAuditNames.includes(item.name)}
+											disabled={!item.enabled}
+											onChange={() => onToggleSelected(item.name)}
+											onClick={(event) => event.stopPropagation()}
+										/>
+									</td>
+									<td className="px-3 py-3">
+										<div
+											className="max-w-[18rem] truncate font-medium text-foreground"
+											title={item.name}>
+											{item.name}
+										</div>
+										<div
+											className="max-w-[18rem] truncate text-xs text-muted-foreground"
+											title={item.path}>
+											{auditFileName(item.path)}
+										</div>
+									</td>
+									<td className="px-3 py-3">
+										{item.changePotential ? (
+											<span
+												className="inline-flex items-center gap-2"
+												title={describeChangePotential(
+													item.changePotential,
+												)}>
+												<Badge tone={bandTone[item.changePotential.band]}>
+													{item.changePotential.band}
+												</Badge>
+												{/* The confidence reads the same on every visible row; it stays in the
+											    tooltip with the rest of the evidence. */}
+												<span className="text-xs text-muted-foreground tabular-nums">
+													{item.changePotential.score}
+												</span>
+											</span>
+										) : (
+											<span className="text-xs text-muted-foreground">—</span>
+										)}
+									</td>
+									<td className="px-3 py-3">
+										{item.applicableProjectCount} applicable
+									</td>
+									<td className="px-3 py-3">
+										<span className={toneText.emerald}>
+											{item.freshReportCount} fresh
+										</span>
+										<span className="mx-2 text-muted-foreground">/</span>
+										<span className={toneText.amber}>
+											{item.staleReportCount} stale
+										</span>
+										<span className="mx-2 text-muted-foreground">/</span>
+										<span className={toneText.red}>
+											{item.missingReportCount} missing
+										</span>
+									</td>
+									<td className="px-4 py-3 text-xs">
+										<button
+											className="text-accent hover:underline"
+											onClick={(event) => {
+												event.stopPropagation();
+												onJumpToMatrix();
+											}}
+											type="button">
+											{item.applicableBucketCount}/{bucketColumns.length}{' '}
+											buckets
+										</button>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</OverflowScroller>
 			</Card>
 
 			<div className="space-y-2 xl:hidden">

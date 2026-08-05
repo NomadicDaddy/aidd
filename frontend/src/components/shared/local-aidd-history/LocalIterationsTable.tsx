@@ -6,6 +6,7 @@ import { formatDate, formatDuration } from '../../../lib/formatters.ts';
 import { Badge } from '../../ui/badge.tsx';
 import { Tooltip } from '../../ui/tooltip.tsx';
 import { ExecutionIdentityBadges } from '../ExecutionIdentityBadges.tsx';
+import { OverflowScroller } from '../OverflowScroller.tsx';
 import { classifyIteration } from './outcome.ts';
 import { TriModeBadge } from './runMetadata.tsx';
 
@@ -73,7 +74,7 @@ export function LocalIterationsTable({
 	now: number;
 }) {
 	return (
-		<div className="overflow-x-auto">
+		<OverflowScroller ariaLabel="Local iterations">
 			<table aria-label="Local iterations" className="w-full text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
@@ -136,6 +137,6 @@ export function LocalIterationsTable({
 					})}
 				</tbody>
 			</table>
-		</div>
+		</OverflowScroller>
 	);
 }

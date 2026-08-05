@@ -79,9 +79,14 @@ export function consumeInitialRunScroll(
 	scroll();
 }
 
-export function filtersForLaunchedRun(run: Pick<RunRecord, 'projectPath'>): RunVisibilityFilters {
+// Launching a run resets every activity filter to its widest value so the new run is guaranteed
+// visible. Scoping the project filter to the launched run's path would also reveal it — but the
+// project filter narrows Active as well as History, so launching in project B would blank out a
+// run still executing in project A. Revealing the new run must never hide concurrent work: 'all'
+// shows the launched run and everything running beside it.
+export function filtersForLaunchedRun(): RunVisibilityFilters {
 	return {
-		historyProject: run.projectPath,
+		historyProject: 'all',
 		modeFilter: 'all',
 		query: '',
 		statusFilter: 'all',

@@ -105,7 +105,7 @@ export function useRunsPage() {
 		});
 	}
 	function onLaunched(run: RunRecord): void {
-		const visibilityFilters = filtersForLaunchedRun(run);
+		const visibilityFilters = filtersForLaunchedRun();
 		setHistoryProject(visibilityFilters.historyProject);
 		setStatusFilter(visibilityFilters.statusFilter);
 		setModeFilter(visibilityFilters.modeFilter);

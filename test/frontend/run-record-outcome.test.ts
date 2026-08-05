@@ -133,9 +133,12 @@ describe('DB run outcome classification', () => {
 		);
 	});
 
-	test('reveals a newly launched run regardless of prior activity filters', () => {
-		expect(filtersForLaunchedRun(makeRun({ projectPath: 'd:/applications/aidd' }))).toEqual({
-			historyProject: 'd:/applications/aidd',
+	// Every filter must widen, never narrow. The project filter applies to Active as well as
+	// History, so pinning it to the launched run's project would hide a run still executing in
+	// another project the moment a second run is launched.
+	test('reveals a newly launched run without hiding concurrent runs in other projects', () => {
+		expect(filtersForLaunchedRun()).toEqual({
+			historyProject: 'all',
 			modeFilter: 'all',
 			query: '',
 			statusFilter: 'all',

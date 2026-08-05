@@ -11,6 +11,7 @@ import {
 	executionIdentityItems,
 	type ExecutionIdentityKind,
 } from '../../lib/executionIdentity.ts';
+import { Badge } from '../ui/badge.tsx';
 import { Tooltip } from '../ui/tooltip.tsx';
 
 export type { ExecutionIdentity } from '../../lib/executionIdentity.ts';
@@ -125,17 +126,14 @@ export function ExecutionIdentityBadges({
 		.concat(typeof hint === 'string' && hint.trim() ? [hint.trim()] : [])
 		.join(', ');
 	const badges = (
-		<span
+		<Badge
 			aria-label={ariaLabel}
-			className={cn(
-				'inline-flex max-w-full min-w-0 items-stretch overflow-hidden rounded-[3px] bg-muted text-[11px] leading-5 ring-1 ring-border ring-inset focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-				className,
-			)}
+			className={cn('max-w-full min-w-0 items-stretch gap-0 overflow-hidden p-0', className)}
 			role="group">
 			{items.map((item, index) => (
 				<span
 					className={cn(
-						'inline-flex min-w-0 items-center gap-1 px-1.5 py-px',
+						'inline-flex min-w-0 items-center gap-1 px-2 py-1',
 						index > 0 ? 'border-l border-border' : '',
 						itemClass(item),
 					)}
@@ -148,15 +146,16 @@ export function ExecutionIdentityBadges({
 						/>
 					) : null}
 					<OverflowIdentityValue
-						className={
-							item.kind === 'model' ? 'inline-block max-w-48 truncate' : undefined
-						}
+						className={cn(
+							'inline-block min-w-0 truncate',
+							item.kind === 'model' && 'max-w-48',
+						)}
 						label={item.label}
 						withTooltip={withTooltip && !hasHiddenDetails && item.kind === 'model'}
 					/>
 				</span>
 			))}
-		</span>
+		</Badge>
 	);
 	return withTooltip && hasHiddenDetails ? (
 		<Tooltip

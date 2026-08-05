@@ -76,6 +76,33 @@ describe('execution identity badge data', () => {
 });
 
 describe('ExecutionIdentityBadges', () => {
+	test('uses the canonical Badge radius, type, and focus ladders', () => {
+		const source = readFileSync(
+			resolve(
+				import.meta.dir,
+				'../../frontend/src/components/shared/ExecutionIdentityBadges.tsx',
+			),
+			'utf8',
+		);
+		const html = renderExecutionIdentity({
+			backend: 'opencode',
+			model: 'organization/repository-long-model-name',
+			reasoningEffort: 'xhigh',
+		});
+
+		expect(source).toContain("import { Badge } from '../ui/badge.tsx';");
+		expect(source).toContain('<Badge');
+		expect(source).not.toContain('rounded-[3px]');
+		expect(source).not.toContain('text-[11px]');
+		expect(html).toContain('rounded-md');
+		expect(html).toContain('text-xs');
+		expect(html).toContain('focus-visible:ring-2');
+		expect(html).toContain('focus-visible:ring-ring/50');
+		expect(html).toContain('focus-visible:ring-offset-2');
+		expect(html).toContain('focus-visible:[--tw-ring-inset:initial]');
+		expect(html.match(/class="[^"]*min-w-0[^"]*truncate[^"]*"/g)).toHaveLength(3);
+	});
+
 	test('truncation measurement never re-renders the measured span', () => {
 		const source = readFileSync(
 			resolve(
@@ -113,13 +140,14 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html).toContain('<svg');
 		expect(html).toContain('lucide-square-terminal');
 		expect(html).not.toContain('lucide-settings');
-		expect(html).toContain('overflow-hidden rounded-[3px]');
+		expect(html).toContain('overflow-hidden');
+		expect(html).toContain('rounded-md');
 		expect(html).toContain('bg-muted');
 		expect(html).toContain('ring-border');
 		expect(html).toContain('border-l border-border');
 		expect(html).toContain('font-medium text-muted-foreground');
 		expect(html).toContain('font-semibold text-foreground');
-		expect(html).toContain('max-w-48 truncate');
+		expect(html).toContain('min-w-0 truncate max-w-48');
 		expect(html).not.toContain('title=');
 		expect(html).not.toContain('style=');
 		expect(html).not.toContain('hsl(');

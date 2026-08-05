@@ -5,7 +5,10 @@ import { resolve } from 'node:path';
 import { parseMarkdownBlocks } from '../../frontend/src/lib/markdownBlocks.ts';
 
 function renderMarkdownContent(markdown: string, baseLevel?: 2 | 3 | 4): string {
-	const props = baseLevel === undefined ? { markdown } : { baseLevel, markdown };
+	return renderWithProps(baseLevel === undefined ? { markdown } : { baseLevel, markdown });
+}
+
+function renderWithProps(props: Record<string, unknown>): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
@@ -97,7 +100,9 @@ describe('parseMarkdownBlocks', () => {
 			'utf8',
 		);
 
-		expect(docsPage).toContain('<MarkdownContent baseLevel={2} markdown={body} />');
+		expect(docsPage).toContain(
+			'<MarkdownContent baseLevel={2} markdown={body} skipLeadingTitle />',
+		);
 		expect(diaryCard).toContain('<MarkdownContent baseLevel={4} markdown={entry.bodyMd} />');
 	});
 
@@ -115,5 +120,72 @@ describe('parseMarkdownBlocks', () => {
 		expect(html).toContain('bg-muted px-0.5 font-mono text-[0.9em] text-foreground');
 		expect(html).not.toContain('px-1');
 		expect(html).not.toContain('py-0.5');
+	});
+});
+
+describe('definition lists', () => {
+	const glossary = [
+		'- **Feature**: the unit of work a coding run claims.',
+		'- **Run**: one backend invocation against a claimed feature.',
+		'- **Recipe**: an ordered set of steps a director executes.',
+	].join('\n');
+
+	test('renders a bulleted glossary as term and definition columns', () => {
+		const html = renderWithProps({ baseLevel: 2, markdown: glossary });
+
+		// 25 `**Term**: definition` bullets read as one undifferentiated wall; the pairs are a
+		// definition list, so the renderer emits one.
+		expect(html).toContain('<dl');
+		expect(html).toContain('sm:grid-cols-[11rem_minmax(0,1fr)]');
+		expect(html).toContain('<dt class="text-sm font-medium text-foreground">Feature</dt>');
+		expect(html).toContain('the unit of work a coding run claims.');
+		expect(html).not.toContain('<ul');
+	});
+
+	test('leaves ordinary bulleted lists alone', () => {
+		const html = renderWithProps({ baseLevel: 2, markdown: '- one\n- two\n- three' });
+
+		expect(html).toContain('<ul');
+		expect(html).not.toContain('<dl');
+	});
+
+	test('requires every item to be a definition before switching layout', () => {
+		const mixed = `${glossary}\n- a plain trailing bullet`;
+		const html = renderWithProps({ baseLevel: 2, markdown: mixed });
+
+		expect(html).toContain('<ul');
+		expect(html).not.toContain('<dl');
+	});
+
+	test('does not treat a lone pair as a glossary', () => {
+		const html = renderWithProps({ baseLevel: 2, markdown: '- **Run**: one invocation.' });
+
+		expect(html).toContain('<ul');
+		expect(html).not.toContain('<dl');
+	});
+});
+
+describe('skipLeadingTitle', () => {
+	const doc = '# Operating aidd\n\nThe body follows.';
+
+	test('drops the leading h1 so the page header is the only title', () => {
+		const html = renderWithProps({ baseLevel: 2, markdown: doc, skipLeadingTitle: true });
+
+		expect(html).not.toContain('Operating aidd');
+		expect(html).toContain('The body follows.');
+	});
+
+	test('keeps the title when the consumer renders no header of its own', () => {
+		expect(renderWithProps({ baseLevel: 2, markdown: doc })).toContain('Operating aidd');
+	});
+
+	test('only drops a leading level-one heading', () => {
+		const html = renderWithProps({
+			baseLevel: 2,
+			markdown: '## Already a section\n\nBody.',
+			skipLeadingTitle: true,
+		});
+
+		expect(html).toContain('Already a section');
 	});
 });

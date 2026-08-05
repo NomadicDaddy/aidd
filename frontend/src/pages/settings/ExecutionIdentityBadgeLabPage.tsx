@@ -66,16 +66,28 @@ function CatalogGroup({
 	title: string;
 }) {
 	return (
-		<section aria-labelledby={id} className="rounded-lg border border-border bg-card p-4">
-			<div className="mb-3">
-				<h2 className="font-semibold text-foreground" id={id}>
-					{title}
-				</h2>
-				<p className="text-xs text-muted-foreground">{description}</p>
-			</div>
-			<div className="flex flex-wrap items-center gap-2">{children}</div>
-		</section>
+		<Card aria-labelledby={id}>
+			<section>
+				<div className="mb-3">
+					<h2 className="text-sm font-semibold text-foreground" id={id}>
+						{title}
+					</h2>
+					<p className="text-xs text-muted-foreground">{description}</p>
+				</div>
+				<div className="flex flex-wrap items-center gap-2">{children}</div>
+			</section>
+		</Card>
 	);
+}
+
+/**
+ * The CLI catalog's stacked prose label restated the chip for most entries — "Ollama" over
+ * "ollama". It survives only where the display name is genuinely different, and inline, so all
+ * three catalog groups render as one flex-wrap chip row.
+ */
+function cliDisplayLabel(cli: string): null | string {
+	const label = cli === 'direct' ? 'Direct AI' : backendLabel(cli);
+	return label.toLowerCase() === cli.toLowerCase() ? null : label;
 }
 
 export function ExecutionIdentityBadgeLabPage() {
@@ -98,43 +110,51 @@ export function ExecutionIdentityBadgeLabPage() {
 				warnings, or actions.
 			</Card>
 
-			<section
-				aria-labelledby="badge-lab-representative"
-				className="overflow-hidden rounded-lg border border-border bg-card">
-				<header className="border-b border-border px-4 py-3">
-					<h2 className="font-semibold text-foreground" id="badge-lab-representative">
-						Representative identities
-					</h2>
-					<p className="text-xs text-muted-foreground">
-						Composed examples exercise production, provider, custom, and partial data.
-					</p>
-				</header>
-				<div className="grid gap-px bg-border sm:grid-cols-2">
-					{representativeIdentities.map(({ description, identity, label }) => (
-						<div className="min-w-0 bg-card p-4" key={label}>
-							<div className="mb-2">
-								<h3 className="text-sm font-medium text-foreground">{label}</h3>
-								<p className="text-xs text-muted-foreground">{description}</p>
+			<Card aria-labelledby="badge-lab-representative" className="overflow-hidden p-0">
+				<section>
+					<header className="border-b border-border px-4 py-3">
+						<h2
+							className="text-sm font-semibold text-foreground"
+							id="badge-lab-representative">
+							Representative identities
+						</h2>
+						<p className="text-xs text-muted-foreground">
+							Composed examples exercise production, provider, custom, and partial
+							data.
+						</p>
+					</header>
+					<div className="grid gap-px bg-border sm:grid-cols-2">
+						{representativeIdentities.map(({ description, identity, label }) => (
+							<div className="min-w-0 bg-card p-4" key={label}>
+								<div className="mb-2">
+									<h3 className="text-sm font-medium text-foreground">{label}</h3>
+									<p className="text-xs text-muted-foreground">{description}</p>
+								</div>
+								<ExecutionIdentityBadges {...identity} />
 							</div>
-							<ExecutionIdentityBadges {...identity} />
-						</div>
-					))}
-				</div>
-			</section>
+						))}
+					</div>
+				</section>
+			</Card>
 
-			<div className="grid gap-4 xl:grid-cols-3">
+			{/* `items-start`: without it the three catalog cards stretch to the tallest and the two
+			    shorter ones end in 90-140px of empty card. */}
+			<div className="grid items-start gap-4 xl:grid-cols-3">
 				<CatalogGroup
 					description="Every built-in execution backend."
 					id="badge-lab-cli-catalog"
 					title="CLIs">
-					{cliCatalog.map((cli) => (
-						<div className="space-y-1" key={cli}>
-							<span className="block text-xs text-muted-foreground">
-								{cli === 'direct' ? 'Direct AI' : backendLabel(cli)}
+					{cliCatalog.map((cli) => {
+						const label = cliDisplayLabel(cli);
+						return (
+							<span className="inline-flex items-center gap-1.5" key={cli}>
+								<ExecutionIdentityBadges backend={cli} withTooltip={false} />
+								{label !== null && (
+									<span className="text-xs text-muted-foreground">{label}</span>
+								)}
 							</span>
-							<ExecutionIdentityBadges backend={cli} withTooltip={false} />
-						</div>
-					))}
+						);
+					})}
 				</CatalogGroup>
 
 				<CatalogGroup

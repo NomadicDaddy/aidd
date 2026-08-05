@@ -3,8 +3,12 @@ import { join, resolve } from 'node:path';
 
 import { cn } from '../../frontend/src/lib/cn.ts';
 
-const CARD_PADDING_OVERRIDE = /<Card\b[^>]*className="([^"]*\bp-(?:0|2\.5|3)\b[^"]*)"[^>]*>/g;
-const PADDING_UTILITY = /\bp-(?:0|2\.5|3|4)\b/g;
+// The lookbehind keeps responsive variants (`sm:p-7`) out of the audit: only the unprefixed
+// utility has to beat Card's base `p-4`, and matching the prefixed one too would make the
+// "last declared padding wins" comparison below compare against the wrong utility.
+const CARD_PADDING_OVERRIDE =
+	/<Card\b[^>]*className="([^"]*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^"]*)"[^>]*>/g;
+const PADDING_UTILITY = /(?<![:\w-])p-(?:0|2\.5|3|4|5)\b/g;
 
 async function cardPaddingOverrides(): Promise<string[]> {
 	const glob = new Bun.Glob('**/*.tsx');
@@ -63,7 +67,7 @@ describe('Tailwind class merging', () => {
 	test('preserves every audited Card padding override as the winning utility', async () => {
 		const overrides = await cardPaddingOverrides();
 
-		expect(overrides).toHaveLength(40);
+		expect(overrides).toHaveLength(43);
 		for (const className of overrides) {
 			const declaredPadding = className.match(PADDING_UTILITY)?.at(-1);
 			const mergedPadding = cn('p-4', className).match(PADDING_UTILITY);

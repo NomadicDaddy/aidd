@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { parseMarkdownBlocks } from '../../lib/markdownBlocks.ts';
@@ -88,16 +88,41 @@ function renderHeading(
 	);
 }
 
+/** `**Term**: definition` — the shape a glossary entry takes in a bulleted list. */
+const DEFINITION_ITEM = /^\*\*([^*]+)\*\*:\s*(.+)$/;
+
+/**
+ * A bulleted list whose every item is `**term**: definition` is a definition list wearing bullets:
+ * the terms and their prose share one ragged run, so the term column cannot be scanned. Two items
+ * is the floor — a single one is a sentence that happens to start bold.
+ */
+function readDefinitionItems(items: string[]): { definition: string; term: string }[] | null {
+	if (items.length < 2) return null;
+	const parsed = items.map((item) => DEFINITION_ITEM.exec(item.trim()));
+	if (parsed.some((match) => match === null)) return null;
+	return parsed.map((match) => ({
+		definition: match?.[2] ?? '',
+		term: match?.[1] ?? '',
+	}));
+}
+
 export function MarkdownContent({
 	baseLevel = 3,
 	className,
 	markdown,
+	skipLeadingTitle = false,
 }: {
 	baseLevel?: HeadingBaseLevel;
 	className?: string;
 	markdown: string;
+	/** Drop a leading `#` heading, for consumers that already render the document's name. */
+	skipLeadingTitle?: boolean;
 }) {
-	const blocks = parseMarkdownBlocks(markdown);
+	const parsed = parseMarkdownBlocks(markdown);
+	const blocks =
+		skipLeadingTitle && parsed[0]?.type === 'heading' && parsed[0].level === 1
+			? parsed.slice(1)
+			: parsed;
 	return (
 		<div
 			className={cn(
@@ -124,6 +149,25 @@ export function MarkdownContent({
 					);
 				}
 				if (block.type === 'list') {
+					const definitions = block.ordered ? null : readDefinitionItems(block.items);
+					if (definitions) {
+						return (
+							<dl
+								className="grid gap-x-4 gap-y-1.5 sm:grid-cols-[11rem_minmax(0,1fr)]"
+								key={key}>
+								{definitions.map(({ definition, term }, itemIndex) => (
+									<Fragment key={`${key}-${itemIndex}`}>
+										<dt className="text-sm font-medium text-foreground">
+											{renderInline(term)}
+										</dt>
+										<dd className="text-sm text-muted-foreground">
+											{renderInline(definition)}
+										</dd>
+									</Fragment>
+								))}
+							</dl>
+						);
+					}
 					const items = block.items.map((item, itemIndex) => (
 						<li key={`${key}-${itemIndex}`}>{renderInline(item)}</li>
 					));

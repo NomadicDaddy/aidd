@@ -69,7 +69,13 @@ export function SegmentedControl<T extends string>({
 					<Button
 						aria-label={option.ariaLabel}
 						aria-pressed={isActive}
-						className="shrink-0 whitespace-nowrap"
+						// The selected segment reads as a raised tile lifted out of the sunken
+						// track, not as a second solid-accent control: a view toggle should not
+						// carry the same weight as the page's primary CTA sitting beside it.
+						className={cn(
+							'shrink-0 whitespace-nowrap',
+							isActive && 'shadow-sm hover:border-border hover:bg-card',
+						)}
 						disabled={option.disabled}
 						key={option.value}
 						onClick={() => {
@@ -81,7 +87,7 @@ export function SegmentedControl<T extends string>({
 						}}
 						size={buttonSize}
 						title={option.title}
-						variant={isActive ? 'primary' : 'ghost'}>
+						variant={isActive ? 'secondary' : 'ghost'}>
 						{option.label}
 					</Button>
 				);

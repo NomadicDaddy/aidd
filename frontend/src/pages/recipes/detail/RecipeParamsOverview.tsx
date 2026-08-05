@@ -7,23 +7,26 @@ export function RecipeParamsOverview({ parameters }: { parameters: RecipeParamet
 	return (
 		<Card>
 			<CardHeader className="mb-3" title="Parameters" />
-			<div className="flex flex-wrap gap-2">
+			{/* A definition list rather than a wrap of pills: the pill run gave the name, the
+			    description and the default equal weight inside one rounded blob, so no column of
+			    names could be scanned. Names align left; everything about a parameter is its row. */}
+			<dl className="grid gap-x-4 gap-y-2 sm:grid-cols-[minmax(8rem,max-content)_1fr]">
 				{parameters.map((param) => (
-					<span
-						className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-sm"
-						key={param.name}>
-						<span className="font-medium text-foreground">{param.name}</span>
-						{param.description && (
-							<span className="text-muted-foreground">{param.description}</span>
-						)}
-						{param.defaultValue !== undefined && (
-							<span className="text-muted-foreground">
-								(default: {param.defaultValue})
-							</span>
-						)}
-					</span>
+					<div className="contents" key={param.name}>
+						<dt className="font-mono text-sm font-medium break-words text-foreground">
+							{param.name}
+						</dt>
+						<dd className="text-sm text-muted-foreground">
+							{param.description ?? 'No description'}
+							{param.defaultValue !== undefined && (
+								<span className="ml-2 rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+									default: {param.defaultValue}
+								</span>
+							)}
+						</dd>
+					</div>
 				))}
-			</div>
+			</dl>
 		</Card>
 	);
 }

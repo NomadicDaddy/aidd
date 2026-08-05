@@ -38,14 +38,19 @@ function ConfigSummary({ entries }: { entries: ConfigSummaryEntry[] }) {
 			{compactEntries.length > 0 && (
 				<div className="flex flex-wrap gap-1.5">
 					{compactEntries.map((entry) => (
+						// A long value (a skill id, a nested recipe path) used to wrap the chip to
+						// three lines and break the row into a ragged block. The chip now clamps to
+						// one line and hands the full value to the title attribute.
 						<span
-							className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
+							className={`inline-flex max-w-full min-w-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
 								entry.primary
 									? 'bg-accent-muted font-medium text-accent-muted-foreground'
 									: 'bg-muted text-muted-foreground'
 							}`}
-							key={entry.key}>
-							<span className="font-medium">{entry.label}:</span> {entry.value}
+							key={entry.key}
+							title={`${entry.label}: ${entry.value}`}>
+							<span className="font-medium whitespace-nowrap">{entry.label}:</span>
+							<span className="truncate">{entry.value}</span>
 						</span>
 					))}
 				</div>

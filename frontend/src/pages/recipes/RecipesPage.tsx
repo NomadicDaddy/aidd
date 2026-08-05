@@ -4,8 +4,8 @@ import { default as PanelsTopLeft } from 'lucide-react/dist/esm/icons/panels-top
 import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
-import { default as Send } from 'lucide-react/dist/esm/icons/send';
-import { useState } from 'react';
+import { default as X } from 'lucide-react/dist/esm/icons/x';
+import { useId, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
@@ -25,9 +25,9 @@ import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { selectClass } from '../../lib/formStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
+import { autoParameters } from './recipe-parameters.ts';
 import { RecipeCard, RecipeTable } from './RecipeGrid.tsx';
-
-const autoParameters = new Set(['application', 'projectDir', 'projectName']);
+import { RecipeQuickLaunchPanel } from './RecipeQuickLaunchPanel.tsx';
 
 function recipeMatches(recipe: RecipeDefinition, search: string): boolean {
 	const query = search.trim().toLowerCase();
@@ -49,6 +49,7 @@ export function RecipesPage() {
 	const [projectDir, setProjectDir] = useState('');
 	const [selectedRecipe, setSelectedRecipe] = useState<null | RecipeDefinition>(null);
 	const [parameters, setParameters] = useState<Record<string, string>>({});
+	const launchHintId = useId();
 
 	const telemetry = useTelemetryResources({ type: 'recipe' });
 	const usageByResourceId = new Map<string, ResourceUsageRow>(
@@ -58,6 +59,12 @@ export function RecipesPage() {
 	const allRecipes = recipes.recipes.data ?? [];
 	const filtered = allRecipes.filter((recipe) => recipeMatches(recipe, search));
 	const launchDisabled = projectDir.length === 0;
+	const launchProps = {
+		launchDisabled,
+		launchHintId,
+		launchPending: recipes.launchRecipe.isPending,
+		onLaunch: openLaunch,
+	};
 
 	function openLaunch(recipe: RecipeDefinition): void {
 		const defaults: Record<string, string> = {};
@@ -89,37 +96,46 @@ export function RecipesPage() {
 		);
 	}
 
+	function reload(): void {
+		recipes.reloadRecipes.mutate(undefined, {
+			onSuccess: () => toast.success('Recipes reloaded'),
+		});
+	}
+
 	return (
 		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
-					<div className="flex items-center gap-2">
+					// `flex-nowrap` plus icon-only labels below `md`: at 768 the labels wrapped
+					// mid-button and pushed the view toggle onto a second row.
+					<div className="flex flex-nowrap items-center gap-2">
 						<Button
+							aria-label="New Recipe"
 							onClick={() => {
 								void navigate('/recipes/new');
 							}}
 							size="toolbar"
 							variant="primary">
 							<Plus className="h-4 w-4" />
-							New Recipe
+							<span className="hidden md:inline">New Recipe</span>
 						</Button>
 						<Button
+							aria-label="Reload recipes"
 							disabled={recipes.reloadRecipes.isPending}
-							onClick={() =>
-								recipes.reloadRecipes.mutate(undefined, {
-									onSuccess: () => toast.success('Recipes reloaded'),
-								})
-							}
+							onClick={reload}
 							size="toolbar">
 							<RefreshCw
 								className={`h-4 w-4 ${
 									recipes.reloadRecipes.isPending ? 'animate-spin' : ''
 								}`}
 							/>
-							{recipes.reloadRecipes.isPending ? 'Reloading…' : 'Reload'}
+							<span className="hidden md:inline">
+								{recipes.reloadRecipes.isPending ? 'Reloading…' : 'Reload'}
+							</span>
 						</Button>
 						<SegmentedControl
 							ariaLabel="Recipe view"
+							className="shrink-0"
 							onChange={setRecipesView}
 							options={[
 								{
@@ -144,83 +160,65 @@ export function RecipesPage() {
 				title="Recipes"
 			/>
 
-			<Card className="grid gap-3 lg:grid-cols-[1fr_2fr]">
-				<FieldRow label="Project">
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) => setProjectDir(event.target.value)}
-						value={projectDir}>
-						<option value="">Launch target project</option>
-						{(projects.data?.projects ?? []).map((project) => (
-							<option key={project.id} value={project.path}>
-								{project.name}
-							</option>
-						))}
-					</select>
-				</FieldRow>
-				<FieldRow label="Search">
-					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-						<Input
-							className="pl-9"
-							data-shortcut-search=""
-							onChange={(event) => setSearch(event.target.value)}
-							placeholder="Filter recipes"
-							value={search}
-						/>
-					</div>
-				</FieldRow>
+			<Card className="space-y-3">
+				<div className="grid gap-3 lg:grid-cols-[1fr_2fr]">
+					<FieldRow label="Project">
+						<select
+							className={selectClass}
+							onChange={(event) => setProjectDir(event.target.value)}
+							value={projectDir}>
+							<option value="">Launch target project</option>
+							{(projects.data?.projects ?? []).map((project) => (
+								<option key={project.id} value={project.path}>
+									{project.name}
+								</option>
+							))}
+						</select>
+						{/* The prerequisite every disabled Launch button in the grid points at. */}
+						{launchDisabled ? (
+							<p className="text-xs text-muted-foreground" id={launchHintId}>
+								Choose a project to enable Launch
+							</p>
+						) : null}
+					</FieldRow>
+					<FieldRow label="Search">
+						<div className="relative">
+							<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+							<Input
+								className="pl-9"
+								data-shortcut-search=""
+								onChange={(event) => setSearch(event.target.value)}
+								placeholder="Filter recipes"
+								value={search}
+							/>
+						</div>
+					</FieldRow>
+				</div>
+				{/* The same count row the projects and features catalogs close with, so filtering
+				    confirms itself instead of leaving a grid of unknown size. */}
+				<div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+					<span>
+						Showing {filtered.length} of {allRecipes.length} recipes
+					</span>
+					{search ? (
+						<Button onClick={() => setSearch('')} variant="ghost">
+							<X className="h-3 w-3" />
+							Clear search
+						</Button>
+					) : null}
+				</div>
 			</Card>
 
 			{selectedRecipe && (
-				<Card className="space-y-4">
-					<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-						<div>
-							<h2 className="text-lg font-semibold text-foreground">
-								Launch {selectedRecipe.name}
-							</h2>
-							<p className="text-sm text-muted-foreground">
-								{selectedRecipe.steps.length} ordered steps will run in the selected
-								project.
-							</p>
-						</div>
-						<Button onClick={() => setSelectedRecipe(null)} variant="ghost">
-							Close
-						</Button>
-					</div>
-					<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-						{selectedRecipe.parameters
-							.filter((parameter) => !autoParameters.has(parameter.name))
-							.map((parameter) => (
-								<FieldRow key={parameter.name} label={parameter.name}>
-									<Input
-										onChange={(event) =>
-											setParameters((current) => ({
-												...current,
-												[parameter.name]: event.target.value,
-											}))
-										}
-										placeholder={parameter.description ?? parameter.name}
-										value={parameters[parameter.name] ?? ''}
-									/>
-								</FieldRow>
-							))}
-						{selectedRecipe.parameters.every((parameter) =>
-							autoParameters.has(parameter.name),
-						) && (
-							<div className="text-sm text-muted-foreground">
-								Project parameters are filled from the selected launch target.
-							</div>
-						)}
-					</div>
-					<Button
-						disabled={recipes.launchRecipe.isPending || !projectDir}
-						onClick={launchSelected}
-						variant="primary">
-						<Send className="h-4 w-4" />
-						Start Session
-					</Button>
-				</Card>
+				<RecipeQuickLaunchPanel
+					launchDisabled={launchDisabled}
+					launchPending={recipes.launchRecipe.isPending}
+					onClose={() => setSelectedRecipe(null)}
+					onLaunch={launchSelected}
+					parameters={parameters}
+					recipe={selectedRecipe}
+					setParameters={setParameters}
+				/>
 			)}
 
 			{recipes.recipes.isLoading && allRecipes.length === 0 ? (
@@ -244,11 +242,7 @@ export function RecipesPage() {
 								</Button>
 								<Button
 									disabled={recipes.reloadRecipes.isPending}
-									onClick={() =>
-										recipes.reloadRecipes.mutate(undefined, {
-											onSuccess: () => toast.success('Recipes reloaded'),
-										})
-									}
+									onClick={reload}
 									variant="secondary">
 									<RefreshCw className="h-4 w-4" />
 									Reload recipes
@@ -266,22 +260,18 @@ export function RecipesPage() {
 				</EmptyState>
 			) : recipesView === 'table' ? (
 				<RecipeTable
-					launchDisabled={launchDisabled}
-					launchPending={recipes.launchRecipe.isPending}
-					onLaunch={openLaunch}
 					recipes={filtered}
 					usageByResourceId={usageByResourceId}
+					{...launchProps}
 				/>
 			) : (
 				<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 					{filtered.map((recipe) => (
 						<RecipeCard
 							key={recipe.id}
-							launchDisabled={launchDisabled}
-							launchPending={recipes.launchRecipe.isPending}
-							onLaunch={openLaunch}
 							recipe={recipe}
 							usage={usageByResourceId.get(recipe.id)}
+							{...launchProps}
 						/>
 					))}
 				</div>

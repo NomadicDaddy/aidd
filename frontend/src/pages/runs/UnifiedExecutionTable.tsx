@@ -5,6 +5,7 @@ import { Fragment } from 'react';
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useNow } from '../../hooks/useNow.ts';
+import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { ActiveRunMobileCard, ActiveRunRow } from './ActiveRunRow.tsx';
 import { PipelineSessionMobileCard, PipelineSessionRow } from './PipelineSessionRow.tsx';
 import { PipelineStepSubRows } from './PipelineStepSubRows.tsx';
@@ -99,7 +100,7 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 								<col className="w-[9%]" />
 								<col className="w-[12%]" />
 							</colgroup>
-							<thead className="border-b bg-muted text-xs text-muted-foreground uppercase">
+							<thead className={tableHeadClass}>
 								<tr>
 									<th className="py-3 pr-3 pl-4" scope="col">
 										Name

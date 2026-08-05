@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
+import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
 import {
 	describeFreshAge,
@@ -49,7 +50,7 @@ export function AuditsDesktopTable({
 	return (
 		<Card className="hidden overflow-x-auto p-0 xl:block">
 			<table aria-label="Project audits" className="w-full min-w-[960px] text-left text-sm">
-				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+				<thead className={tableHeadClass}>
 					<tr>
 						<th className="px-3 py-3" scope="col">
 							<Checkbox

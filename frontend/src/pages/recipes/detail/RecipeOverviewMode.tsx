@@ -13,6 +13,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { DropdownMenu } from '../../../components/ui/dropdown-menu.tsx';
+import { sectionCaptionClass } from '../../../lib/typography.ts';
 import { RecipeLaunchPanel } from '../RecipeLaunchPanel.tsx';
 import { RecipeContractBadges, RecipePolicyBadges } from '../RecipeMetadataBadges.tsx';
 import { RecipePipelineView } from '../RecipePipelineView.tsx';
@@ -32,7 +33,9 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 		<div className="space-y-5">
 			<PageHeader
 				actions={
-					<div className="flex flex-wrap items-center gap-2">
+					// Three controls, one of which is an icon: they fit on one line at every
+					// breakpoint, and `flex-wrap` only ever let Edit fall under Launch mid-resize.
+					<div className="flex flex-nowrap items-center gap-2">
 						<Button onClick={() => setShowLaunch(true)} variant="primary">
 							<Send className="h-4 w-4" />
 							Launch
@@ -81,10 +84,14 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 				title={recipe.name}
 			/>
 
-			<div className="flex flex-wrap items-center gap-2">
+			{/* The contract and policy badges used to float on the page background between the
+			    header and the first card, reading as leftovers from the header rather than as the
+			    recipe's contract. On a labelled panel they are a section like the ones below. */}
+			<Card className="flex flex-wrap items-center gap-2" variant="panel">
+				<span className={`mr-1 ${sectionCaptionClass}`}>Contract</span>
 				<RecipeContractBadges recipe={recipe} />
 				<RecipePolicyBadges recipe={recipe} />
-			</div>
+			</Card>
 
 			{showLaunch && (
 				<RecipeLaunchPanel onClose={() => setShowLaunch(false)} recipe={recipe} />

@@ -15,8 +15,10 @@ const BADGE_CLASS =
 	/inline-flex items-center gap-1\.5 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-inset/g;
 const TRIGGER_ATTR = /tabindex="0"/g;
 const WRAPPER_CLASS = /class="relative inline-flex"/g;
+// The trigger is a `<button>`, not a tabbable `<span>`: Tooltip puts every badge in the tab order,
+// and a span arrived there as an unnamed generic node.
 const WRAPPED_BADGE =
-	/<span class="inline-flex rounded-md focus-visible:[^"]*" tabindex="0"><span class="inline-flex items-center gap-1\.5[^"]*">(.*?)<\/span><\/span>/g;
+	/<button class="inline-flex rounded-md focus-visible:[^"]*"[^>]*><span class="inline-flex items-center gap-1\.5[^"]*">(.*?)<\/span><\/button>/g;
 
 function renderMarkup(body: string): string {
 	const script = [
@@ -76,14 +78,14 @@ const recipe: RecipeDefinition = {
 	system: true,
 };
 
-const policyLabels = [
-	'failure: auto-fix (1)',
-	'failure: continue (1)',
-	'failure: stop (3)',
-	'retries: 2',
-	'skills: apply (1)',
-	'skills: review (1)',
-];
+// The catalog card carries only the policies that change what happens when a step fails; the
+// descriptive rest of the summary (`failure: stop`, `skills: review`, `skills: apply`) stays on the
+// detail page, where there is room to read it.
+const cardPolicyLabels = ['failure: auto-fix (1)', 'failure: continue (1)', 'retries: 2'];
+
+// The table column shows two policies and a `+N` whose tooltip names the rest, rather than wrapping
+// six pills onto two lines and setting the height of every row in the table.
+const tablePolicyLabels = ['failure: stop (3)', 'failure: continue (1)', '+4'];
 
 function counts(markup: string) {
 	return {
@@ -136,14 +138,14 @@ describe('recipe badge tooltip wiring', () => {
 				'shell',
 				'skill',
 				'system',
-				...policyLabels,
+				...cardPolicyLabels,
 			].sort(),
 		);
 	});
 
 	test('table view explains the type, contract, and policy badges', () => {
 		expect(wrappedLabels(tableMarkup)).toEqual(
-			['metadata-only', 'pipeline', 'system', ...policyLabels].sort(),
+			['metadata-only', 'pipeline', 'system', ...tablePolicyLabels].sort(),
 		);
 	});
 

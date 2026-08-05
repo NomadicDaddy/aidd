@@ -3,6 +3,7 @@ import type { AuditDefinition } from '../../../api/types.ts';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { bandTone, bucketColumns, describeChangePotential } from '../auditsUtils.ts';
 
@@ -42,7 +43,7 @@ export function CatalogTable({
 				<table
 					aria-label="Audit catalog"
 					className="w-full min-w-[960px] text-left text-sm">
-					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+					<thead className={tableHeadClass}>
 						<tr>
 							<th className="px-4 py-3" scope="col">
 								<Checkbox

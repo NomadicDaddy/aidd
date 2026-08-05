@@ -1,23 +1,17 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
-import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
-import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
-import { useState } from 'react';
 
 import type { RecipeStepOnFailure, RecipeStepType } from '../../api/types.ts';
 import type { StepDraft, StepJsonErrors } from './recipe-steps.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
-import { Button } from '../../components/ui/button.tsx';
+import { IconButton } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { selectClass, textareaClass } from '../../lib/formStyles.ts';
-
-const jsonTextareaClass = `${textareaClass} font-mono text-xs`;
-const errorTextareaClass = `${jsonTextareaClass} border-red-500 focus-visible:border-red-500 focus-visible:ring-red-200 dark:border-red-500 dark:focus-visible:border-red-500 dark:focus-visible:ring-red-900`;
-
-type JsonFieldKey = 'configJson' | 'postHookJson' | 'preHookJson';
+import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { RecipeStepJsonField } from './RecipeStepJsonField.tsx';
 
 interface RecipeStepEditorProps {
 	errors: StepJsonErrors;
@@ -25,68 +19,6 @@ interface RecipeStepEditorProps {
 	onChange: (patch: Partial<StepDraft>) => void;
 	onDelete: () => void;
 	step: StepDraft;
-}
-
-function JsonField({
-	error,
-	label,
-	onChange,
-	open: forcedOpen,
-	stepId,
-	value,
-}: {
-	error: null | string;
-	label: JsonFieldKey;
-	onChange: (next: string) => void;
-	open?: boolean;
-	stepId: string;
-	value: string;
-}) {
-	const [collapsed, setCollapsed] = useState(false);
-	const isOpen = forcedOpen ?? !collapsed;
-	const hasContent = value.trim().length > 0;
-	const errorId = `${stepId}-${label}-error`;
-
-	return (
-		<div>
-			<Button
-				className="text-muted-foreground uppercase hover:text-foreground"
-				onClick={() => setCollapsed((c) => !c)}
-				size="compact"
-				variant="ghost">
-				{isOpen ? (
-					<ChevronDown className="h-3.5 w-3.5" />
-				) : (
-					<ChevronRight className="h-3.5 w-3.5" />
-				)}
-				{label}
-				{!isOpen && hasContent && (
-					<span className="text-muted-foreground normal-case">(set)</span>
-				)}
-			</Button>
-			{isOpen && (
-				<label className="mt-1 grid gap-1">
-					<textarea
-						aria-describedby={error ? errorId : undefined}
-						aria-invalid={Boolean(error)}
-						aria-label={label}
-						className={error ? errorTextareaClass : jsonTextareaClass}
-						data-testid={`step-${stepId}-${label}`}
-						onChange={(event) => onChange(event.target.value)}
-						value={value}
-					/>
-					{error ? (
-						<p
-							className="text-xs font-medium text-red-600 dark:text-red-400"
-							id={errorId}
-							role="alert">
-							{error}
-						</p>
-					) : null}
-				</label>
-			)}
-		</div>
-	);
 }
 
 export function RecipeStepEditor({
@@ -97,18 +29,28 @@ export function RecipeStepEditor({
 	step,
 }: RecipeStepEditorProps) {
 	return (
-		<div className="space-y-3 rounded-md border border-border p-4">
+		// A sunken card rather than a bare bordered div: the step list sits inside the Steps card,
+		// and nesting a default card in a default card gave two identical surfaces with no depth
+		// between them.
+		<Card className="space-y-3" variant="sunken">
 			<div className="flex items-center justify-between gap-3">
-				<div>
-					<Badge>Step {index + 1}</Badge>
-					<h3 className="mt-2 text-base font-semibold text-foreground">{step.name}</h3>
-				</div>
-				<Button onClick={onDelete} variant="danger">
+				{/* No `<h3>{step.name}</h3>` under the badge: the name is the first editable field
+				    two rows down, so the heading was a second copy that went stale mid-keystroke. */}
+				<Badge>Step {index + 1}</Badge>
+				{/* Deleting one step of many is a row action, not the destructive climax of the
+				    form — it takes an icon button that turns red on hover instead of a filled
+				    danger button repeated down the list. */}
+				<IconButton
+					ariaLabel={`Delete step ${index + 1}`}
+					className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+					onClick={onDelete}
+					variant="ghost">
 					<Trash2 className="h-4 w-4" />
-					Delete
-				</Button>
+				</IconButton>
 			</div>
-			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+			{/* `sm:grid-cols-2` before the 4-up: between 640 and 768 these four controls were a
+			    single stacked column while the card had room for two. */}
+			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 				<FieldRow label="Step name">
 					<Input
 						name="step-name"
@@ -118,7 +60,7 @@ export function RecipeStepEditor({
 				</FieldRow>
 				<FieldRow label="Step type">
 					<select
-						className={`${selectClass} w-full`}
+						className={selectClass}
 						name="step-type"
 						onChange={(event) =>
 							onChange({
@@ -135,7 +77,7 @@ export function RecipeStepEditor({
 				</FieldRow>
 				<FieldRow label="Failure behavior">
 					<select
-						className={`${selectClass} w-full`}
+						className={selectClass}
 						name="step-on-failure"
 						onChange={(event) =>
 							onChange({ onFailure: event.target.value as RecipeStepOnFailure })
@@ -154,73 +96,88 @@ export function RecipeStepEditor({
 						value={step.retryCount}
 					/>
 				</FieldRow>
-			</div>
-			{step.stepType === 'skill' ? (
-				<FieldRow className="max-w-xs" label="Execution intent">
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) =>
-							onChange({
-								skillExecutionIntent: event.target.value as SkillExecutionIntent,
-							})
-						}
-						value={step.skillExecutionIntent}>
-						<option value="review-only">Review only</option>
-						<option value="apply-changes">Apply changes</option>
-					</select>
-					<span className="text-xs text-muted-foreground">
-						Skill steps are directives, not audits. Apply changes permits edits and
-						commits.
-					</span>
-				</FieldRow>
-			) : null}
-			<div className="grid gap-3 md:grid-cols-2">
-				<FieldRow label="Run when parameter">
-					<Input
-						aria-invalid={Boolean(errors.when)}
-						onChange={(event) => onChange({ whenParameter: event.target.value })}
-						placeholder="stopBeforeImplementation"
-						value={step.whenParameter}
-					/>
-				</FieldRow>
-				<FieldRow label="Equals">
-					<Input
-						aria-invalid={Boolean(errors.when)}
-						onChange={(event) => onChange({ whenEquals: event.target.value })}
-						placeholder="false"
-						value={step.whenEquals}
-					/>
-				</FieldRow>
-				{errors.when ? (
-					<p className="text-xs font-medium text-red-600 md:col-span-2 dark:text-red-400">
-						{errors.when}
-					</p>
+				{/* Folded into the same grid instead of its own `max-w-xs` band below it: the
+				    intent is a property of the step like the three beside it, and the stray band
+				    read as a separate section that only skill steps happened to grow. */}
+				{step.stepType === 'skill' ? (
+					<FieldRow label="Execution intent">
+						<select
+							className={selectClass}
+							onChange={(event) =>
+								onChange({
+									skillExecutionIntent: event.target
+										.value as SkillExecutionIntent,
+								})
+							}
+							value={step.skillExecutionIntent}>
+							<option value="review-only">Review only</option>
+							<option value="apply-changes">Apply changes</option>
+						</select>
+						<span className="text-xs text-muted-foreground">
+							Skill steps are directives, not audits. Apply changes permits edits and
+							commits.
+						</span>
+					</FieldRow>
 				) : null}
 			</div>
-			<div className="grid gap-3 lg:grid-cols-3">
-				<JsonField
+			<div>
+				{/* Named as one optional group: the two inputs are meaningless apart, and on their
+				    own they read as two more required fields in the same stack. */}
+				<p className={`mb-1 ${fieldLabelClass}`}>Condition (optional)</p>
+				<div className="grid gap-3 sm:grid-cols-2">
+					<FieldRow label="Run when parameter">
+						<Input
+							aria-invalid={Boolean(errors.when)}
+							onChange={(event) => onChange({ whenParameter: event.target.value })}
+							// A shape, not a plausible value: `stopBeforeImplementation` in grey
+							// was read as a filled-in default often enough to be worth losing.
+							placeholder="parameter name"
+							value={step.whenParameter}
+						/>
+					</FieldRow>
+					<FieldRow label="Equals">
+						<Input
+							aria-invalid={Boolean(errors.when)}
+							onChange={(event) => onChange({ whenEquals: event.target.value })}
+							placeholder="expected value"
+							value={step.whenEquals}
+						/>
+					</FieldRow>
+					{errors.when ? (
+						<p className="text-xs font-medium text-red-600 sm:col-span-2 dark:text-red-400">
+							{errors.when}
+						</p>
+					) : null}
+				</div>
+			</div>
+			{/* Stacked full width rather than three narrow columns: JSON is the one thing here that
+			    is read line by line, and a third of the card wrapped every object into noise. */}
+			<div className="space-y-2">
+				<RecipeStepJsonField
 					error={errors.configJson}
-					label="configJson"
+					fieldKey="configJson"
+					label="Config JSON"
 					onChange={(next) => onChange({ configJson: next })}
-					open={true}
 					stepId={step.id}
 					value={step.configJson}
 				/>
-				<JsonField
+				<RecipeStepJsonField
 					error={errors.preHookJson}
-					label="preHookJson"
+					fieldKey="preHookJson"
+					label="Pre-hook JSON"
 					onChange={(next) => onChange({ preHookJson: next })}
 					stepId={step.id}
 					value={step.preHookJson}
 				/>
-				<JsonField
+				<RecipeStepJsonField
 					error={errors.postHookJson}
-					label="postHookJson"
+					fieldKey="postHookJson"
+					label="Post-hook JSON"
 					onChange={(next) => onChange({ postHookJson: next })}
 					stepId={step.id}
 					value={step.postHookJson}
 				/>
 			</div>
-		</div>
+		</Card>
 	);
 }

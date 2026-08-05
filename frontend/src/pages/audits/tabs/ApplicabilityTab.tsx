@@ -11,6 +11,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { useAuditProfileMapping, useUpdateAuditProfileMapping } from '../../../hooks/useAudits.ts';
+import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { bucketColumns, bucketShortLabels, describeCell, effectTone } from '../auditsUtils.ts';
 
 export function ApplicabilityTab() {
@@ -100,7 +101,7 @@ export function ApplicabilityTab() {
 				<table
 					aria-label="Audit applicability matrix"
 					className="w-full min-w-[820px] text-left text-sm">
-					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+					<thead className={tableHeadClass}>
 						<tr>
 							<th className="px-3 py-3" scope="col">
 								Audit

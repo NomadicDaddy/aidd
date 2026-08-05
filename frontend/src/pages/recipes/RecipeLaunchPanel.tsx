@@ -17,8 +17,7 @@ import { useProjects } from '../../hooks/useProjects.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { selectClass } from '../../lib/formStyles.ts';
-
-const autoParameters = new Set(['application', 'projectDir', 'projectName']);
+import { autoParameters } from './recipe-parameters.ts';
 
 export function RecipeLaunchPanel({
 	onClose,

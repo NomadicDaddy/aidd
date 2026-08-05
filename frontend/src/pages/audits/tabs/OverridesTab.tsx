@@ -13,6 +13,7 @@ import {
 	useUpdateProjectAuditOverrides,
 } from '../../../hooks/useAudits.ts';
 import { fieldLabelClass, selectClass } from '../../../lib/formStyles.ts';
+import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { overrideEffects } from '../auditsUtils.ts';
 
 export function OverridesTab() {
@@ -111,7 +112,7 @@ export function OverridesTab() {
 				<div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
 					<Card className="overflow-x-auto p-0">
 						<table aria-label="Audit overrides" className="w-full text-left text-sm">
-							<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+							<thead className={tableHeadClass}>
 								<tr>
 									<th className="px-3 py-3" scope="col">
 										Audit

@@ -4,17 +4,11 @@ import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
 import type { RecipeDefinition } from '../../api/types.ts';
 
 import {
-	applySkillExplainer,
-	autoFixPolicyExplainer,
-	continuePolicyExplainer,
 	recipeMetadataOnlyExplainer,
 	recipeSystemExplainer,
 	recipeTypeExplainer,
-	retriesExplainer,
-	reviewSkillExplainer,
-	stopPolicyExplainer,
 } from './recipe-badge-explainers.ts';
-import { getRecipePolicySummary } from './recipe-policy.ts';
+import { getRecipePolicyBadges } from './recipe-policy.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
 
 // Pipeline vs single-step is taxonomy, so both variants stay neutral and are told apart by their
@@ -32,13 +26,16 @@ export function RecipeTypeBadge({ isPipeline }: { isPipeline: boolean }) {
 export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
 	return (
 		<>
+			{/* `system` is the one contract fact the shell manages on the operator's behalf, which
+			    is what violet means everywhere else. `metadata-only` is descriptive, so it stays
+			    neutral instead of borrowing the attention tone from the policy badges beside it. */}
 			{recipe.system === true && (
 				<RecipeBadgeTooltip content={recipeSystemExplainer} tone="violet">
 					system
 				</RecipeBadgeTooltip>
 			)}
 			{recipe.metadataOnly === true && (
-				<RecipeBadgeTooltip content={recipeMetadataOnlyExplainer} tone="amber">
+				<RecipeBadgeTooltip content={recipeMetadataOnlyExplainer}>
 					metadata-only
 				</RecipeBadgeTooltip>
 			)}
@@ -46,48 +43,37 @@ export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
 	);
 }
 
-export function RecipePolicyBadges({ recipe }: { recipe: RecipeDefinition }) {
-	const policy = getRecipePolicySummary(recipe);
+/**
+ * The policy summary as badges. Renders a fragment, not a row: the catalog card folds these into
+ * one shared wrap group with the step counts, so the wrapper belongs to the caller.
+ *
+ * `riskOnly` keeps just the badges that change failure behaviour; `limit` caps how many render and
+ * folds the rest into a `+N` badge whose tooltip names them, so a table cell stays one line tall.
+ */
+export function RecipePolicyBadges({
+	limit,
+	recipe,
+	riskOnly = false,
+}: {
+	limit?: number;
+	recipe: RecipeDefinition;
+	riskOnly?: boolean;
+}) {
+	const badges = getRecipePolicyBadges(recipe).filter((badge) => !riskOnly || badge.risk);
+	const visible = limit === undefined ? badges : badges.slice(0, limit);
+	const hidden = badges.slice(visible.length);
 	return (
-		<div className="flex flex-wrap gap-1.5">
-			{policy.stopSteps > 0 && (
-				<RecipeBadgeTooltip content={stopPolicyExplainer(policy.stopSteps)}>
-					failure: stop ({policy.stopSteps})
+		<>
+			{visible.map((badge) => (
+				<RecipeBadgeTooltip content={badge.explainer} key={badge.key} tone={badge.tone}>
+					{badge.label}
+				</RecipeBadgeTooltip>
+			))}
+			{hidden.length > 0 && (
+				<RecipeBadgeTooltip content={hidden.map((badge) => badge.label).join('\n')}>
+					+{hidden.length}
 				</RecipeBadgeTooltip>
 			)}
-			{policy.continueSteps > 0 && (
-				<RecipeBadgeTooltip
-					content={continuePolicyExplainer(policy.continueSteps)}
-					tone="amber">
-					failure: continue ({policy.continueSteps})
-				</RecipeBadgeTooltip>
-			)}
-			{policy.autoFixSteps > 0 && (
-				<RecipeBadgeTooltip
-					content={autoFixPolicyExplainer(policy.autoFixSteps)}
-					tone="teal">
-					failure: auto-fix ({policy.autoFixSteps})
-				</RecipeBadgeTooltip>
-			)}
-			{policy.retries > 0 && (
-				<RecipeBadgeTooltip content={retriesExplainer(policy.retries)}>
-					retries: {policy.retries}
-				</RecipeBadgeTooltip>
-			)}
-			{policy.reviewSkillSteps > 0 && (
-				<RecipeBadgeTooltip
-					content={reviewSkillExplainer(policy.reviewSkillSteps)}
-					tone="teal">
-					skills: review ({policy.reviewSkillSteps})
-				</RecipeBadgeTooltip>
-			)}
-			{policy.applySkillSteps > 0 && (
-				<RecipeBadgeTooltip
-					content={applySkillExplainer(policy.applySkillSteps)}
-					tone="emerald">
-					skills: apply ({policy.applySkillSteps})
-				</RecipeBadgeTooltip>
-			)}
-		</div>
+		</>
 	);
 }

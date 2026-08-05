@@ -65,6 +65,12 @@ export function RecipeEditMode({
 	updateStep,
 }: Props) {
 	const isCreate = setId !== undefined;
+	/* Both of these already stop `onSave` and raise a toast, so the commit action was refusing work
+	   it looked perfectly willing to do. An invalid id is as blocking as unparseable step JSON and
+	   belongs in the same signal. */
+	const saveBlockedBy: string | undefined = hasJsonErrors
+		? 'Fix recipe step JSON errors before saving'
+		: (idError ?? undefined) || undefined;
 	return (
 		<div className="space-y-5">
 			<PageHeader
@@ -81,13 +87,9 @@ export function RecipeEditMode({
 							</Button>
 						)}
 						<Button
-							aria-disabled={hasJsonErrors || undefined}
+							aria-disabled={saveBlockedBy !== undefined || undefined}
 							onClick={onSave}
-							title={
-								hasJsonErrors
-									? 'Fix recipe step JSON errors before saving'
-									: undefined
-							}
+							title={saveBlockedBy}
 							variant="primary">
 							<Save className="h-4 w-4" />
 							{isCreate ? 'Create' : 'Save'}

@@ -84,35 +84,42 @@
 	--color-ring: var(--ring);
 }
 
-body {
-	margin: 0;
-	min-width: 320px;
-	min-height: 100vh;
-	overflow-x: hidden;
-	-webkit-tap-highlight-color: transparent;
-}
+/* These are element resets, so they belong in `base`. Unlayered they outrank every Tailwind
+   utility: the previous `font: inherit` here discarded `font-mono` / `text-xs` / `text-sm` on
+   every control in the app, so JSON editors rendered in proportional Geist Sans at the body size.
+   Tailwind's own preflight already applies `font: inherit` to form controls from inside `base`,
+   which is where that inheritance is supposed to live — this file only adds what preflight does
+   not. */
+@layer base {
+	body {
+		margin: 0;
+		min-width: 320px;
+		min-height: 100vh;
+		overflow-x: hidden;
+		-webkit-tap-highlight-color: transparent;
+	}
 
-button,
-input,
-select,
-textarea {
-	font: inherit;
-	touch-action: manipulation;
-}
+	button,
+	input,
+	select,
+	textarea {
+		touch-action: manipulation;
+	}
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-	outline: 2px solid var(--ring);
-	outline-offset: 2px;
-}
+	button:focus-visible,
+	a:focus-visible,
+	input:focus-visible,
+	select:focus-visible,
+	textarea:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
 
-h1,
-h2,
-h3 {
-	text-wrap: balance;
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
 }
 
 .tabular-nums {

@@ -46,7 +46,10 @@ function anchorRectFor(element: HTMLElement): TooltipAnchorRect {
 	return { bottom: rect.bottom, left: rect.left, top: rect.top, width: rect.width };
 }
 
-export function Tooltip({ children, className, content, side = 'top' }: TooltipProps) {
+// Below by default. Opening upward put the panel over whatever the trigger sat beneath — on the
+// Badge Lab it covered the specimen's own heading, on the one page that exists to show specimens.
+// `resolveTooltipPlacement` still flips to the other side when this one would clip the viewport.
+export function Tooltip({ children, className, content, side = 'bottom' }: TooltipProps) {
 	const [open, setOpen] = useState(false);
 	const [anchor, setAnchor] = useState<null | TooltipAnchorRect>(null);
 	const [placement, setPlacement] = useState<null | TooltipPlacement>(null);
@@ -171,7 +174,12 @@ export function Tooltip({ children, className, content, side = 'top' }: TooltipP
 				? createPortal(
 						<span
 							className={cn(
-								'pointer-events-none fixed z-[1000] w-max max-w-xs rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs whitespace-pre-line text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100',
+								// The panel was built from raw palette literals plus hand-written dark:
+								// overrides, which computed to a chroma-zero grey against the app's
+								// cool-slate cards — the one overlay that visibly did not belong to
+								// the page. The overlay tokens theme-swap on their own, so the dark:
+								// pairs and the forbidden shadow both go.
+								'pointer-events-none fixed z-[1000] w-max max-w-xs rounded-md border border-border bg-overlay px-2 py-1 text-xs whitespace-pre-line text-foreground',
 								className,
 							)}
 							id={tooltipId}

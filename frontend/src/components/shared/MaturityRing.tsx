@@ -15,11 +15,19 @@ interface MaturityRingProps {
 }
 
 const GAP_DEGREES = 4;
-const TRACK_STROKE = 'rgb(229 231 235)';
-const COLOR_BY_STATUS: Record<MaturityStageStatus, string> = {
-	complete: 'rgb(16 185 129)',
-	empty: 'rgb(212 212 216)',
-	partial: 'rgb(245 158 11)',
+
+/* Painted through Tailwind `stroke-*` utilities rather than SVG `stroke` attributes so the ring
+   theme-swaps like everything else. It previously drew hard-coded `rgb()` greys, which made it the
+   only graphic in the app that ignored the theme — and on the dark surface the brightest object in
+   every project card, out-shouting the project name it belongs to.
+
+   The literals mirror `toneSolid.amber` / `toneSolid.emerald` from `lib/tones.ts`; they are spelled
+   out because Tailwind scans for whole class names and cannot see a prefix swapped at runtime. */
+const TRACK_STROKE_CLASS = 'stroke-border';
+const STROKE_CLASS_BY_STATUS: Record<MaturityStageStatus, string> = {
+	complete: 'stroke-emerald-500',
+	empty: 'stroke-muted-foreground',
+	partial: 'stroke-amber-500',
 };
 
 function describeArc(
@@ -73,12 +81,11 @@ export function MaturityRing({
 			style={{ height: size, width: size }}>
 			<svg height={size} viewBox={`0 0 ${size} ${size}`} width={size}>
 				<circle
+					className={TRACK_STROKE_CLASS}
 					cx={cx}
 					cy={cy}
 					fill="none"
 					r={radius}
-					stroke={TRACK_STROKE}
-					strokeOpacity={0.35}
 					strokeWidth={stroke}
 				/>
 				{safeStages.map((stage, index) => {
@@ -87,10 +94,16 @@ export function MaturityRing({
 					const path = describeArc(cx, cy, radius, startDegrees, endDegrees);
 					return (
 						<path
+							className={cn(
+								STROKE_CLASS_BY_STATUS[stage.status],
+								// An untouched stage is background, not a reading. Dimming it
+								// keeps the ring from presenting "nothing has happened yet" at
+								// the same weight as a completed stage.
+								stage.status === 'empty' && 'opacity-40',
+							)}
 							d={path}
 							fill="none"
 							key={stage.id}
-							stroke={COLOR_BY_STATUS[stage.status]}
 							strokeLinecap="round"
 							strokeWidth={stroke}>
 							<title>{`${stage.label}: ${stage.status}`}</title>

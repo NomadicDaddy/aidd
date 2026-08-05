@@ -28,17 +28,32 @@ const sizes: Record<ButtonSize, string> = {
 	toolbar: 'h-10 gap-2 px-3 text-sm',
 };
 
+/* A blocked action has to look blocked. Call sites signal it two ways — the native `disabled`
+   attribute and `aria-disabled` — and only the first was ever styled, so an `aria-disabled` Create
+   button rendered full-strength teal, pixel-identical to a live one.
+
+   This is applied by swapping the whole variant block rather than by stacking `aria-disabled:`
+   overrides on top of it: the variants carry `hover:` rules, and a hover override would have to be
+   restated for every variant to keep a blocked button from lighting up under the pointer.
+
+   The two signals differ only in how they refuse the pointer. `:disabled` is inert. `aria-disabled`
+   keeps pointer events, so the control stays focusable and in the tab order and can still explain
+   itself on hover — which is the whole reason a call site reaches for it. */
+const blocked =
+	'cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 opacity-60 shadow-none hover:border-neutral-200 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-600 dark:hover:border-neutral-800 dark:hover:bg-neutral-900';
+
 export function buttonClassName(
 	variant: ButtonVariant = 'secondary',
 	className?: string,
 	size: ButtonSize = 'default',
+	isBlocked = false,
 ): string {
 	return cn(
 		'inline-flex items-center justify-center rounded-lg border font-medium whitespace-nowrap',
 		'transition-all duration-150',
 		'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-		'disabled:pointer-events-none disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:opacity-60 disabled:shadow-none dark:disabled:border-neutral-800 dark:disabled:bg-neutral-900 dark:disabled:text-neutral-600',
-		variants[variant],
+		'disabled:pointer-events-none',
+		isBlocked ? blocked : variants[variant],
 		sizes[size],
 		className,
 	);
@@ -52,9 +67,13 @@ export function Button({
 	variant = 'secondary',
 	...props
 }: ButtonProps) {
+	const isBlocked =
+		props.disabled === true ||
+		props['aria-disabled'] === true ||
+		props['aria-disabled'] === 'true';
 	return (
 		<button
-			className={buttonClassName(variant, className, size)}
+			className={buttonClassName(variant, className, size, isBlocked)}
 			ref={ref}
 			type="button"
 			{...props}>

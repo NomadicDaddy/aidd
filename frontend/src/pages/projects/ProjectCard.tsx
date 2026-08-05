@@ -88,12 +88,14 @@ export function ProjectCard({
 				</div>
 				<div className="flex flex-col items-end gap-2">
 					{totalStages > 0 ? (
-						// The table ring labels itself with its percentage; the card ring was the
-						// same component with the `percent` prop omitted, so the reader had to
-						// infer the number from the arc.
+						// The table ring labels itself with its percentage. The card ring took the
+						// `percent` prop but not `showCenterLabel`, so it still never drew the
+						// number — the same datum read two ways in two placements, and the larger
+						// of the two rings was the one that said less.
 						<MaturityRing
 							ariaLabel={`Maturity ${maturity.percent}%`}
 							percent={maturity.percent}
+							showCenterLabel
 							size={56}
 							stages={maturity.stageStatuses}
 						/>

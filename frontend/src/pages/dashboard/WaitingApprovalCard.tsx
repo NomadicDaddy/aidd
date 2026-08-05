@@ -17,13 +17,14 @@ import { LaunchTargetBadge } from '../../components/shared/LaunchTargetControl.t
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { useDirector } from '../../hooks/useDirector.ts';
 import {
 	useApproveProjectFeature,
 	useUpdateProjectFeatureStatus,
 } from '../../hooks/useProjectFeatures.ts';
 import { formatRelativeAge } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 
 /** Item kinds that can appear in the waiting-approval queue. */
 export type WaitingApprovalKind = 'run' | 'suggestion' | 'waiting_feature';
@@ -228,23 +229,22 @@ export function WaitingApprovalCard({
 
 	return (
 		<Card aria-labelledby="waiting-approval-heading" variant="panel">
-			<div className="mb-4 flex items-center justify-between gap-3">
-				<div
-					className="flex items-center gap-2 text-sm font-semibold text-foreground"
-					id="waiting-approval-heading">
-					<ShieldQuestion className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-					Waiting Approval
+			<CardHeader
+				action={
+					<Link className={cardHeaderLinkClass} to="/director">
+						Queue
+						<ArrowRight className="h-3.5 w-3.5" />
+					</Link>
+				}
+				badge={
 					<Badge showDot tone={totalItems > 0 ? 'amber' : 'emerald'}>
 						{totalItems}
 					</Badge>
-				</div>
-				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
-					to="/director">
-					Queue
-					<ArrowRight className="h-3.5 w-3.5" />
-				</Link>
-			</div>
+				}
+				icon={<ShieldQuestion className={`h-4 w-4 ${toneText.amber}`} />}
+				id="waiting-approval-heading"
+				title="Waiting Approval"
+			/>
 			{isLoading && totalItems === 0 ? (
 				<SkeletonLines count={4} label="Loading approval items…" />
 			) : totalItems === 0 ? (

@@ -8,7 +8,8 @@ import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
+import { toneText } from '../../lib/tones.ts';
 import { ProjectHealthRow } from './ProjectHealthRow.tsx';
 
 export function ProjectHealthCard({
@@ -26,18 +27,16 @@ export function ProjectHealthCard({
 }) {
 	return (
 		<Card variant="panel">
-			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-					<ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-					Project Health
-				</div>
-				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
-					to="/projects">
-					Projects
-					<ArrowRight className="h-3.5 w-3.5" />
-				</Link>
-			</div>
+			<CardHeader
+				action={
+					<Link className={cardHeaderLinkClass} to="/projects">
+						Projects
+						<ArrowRight className="h-3.5 w-3.5" />
+					</Link>
+				}
+				icon={<ShieldCheck className={`h-4 w-4 ${toneText.emerald}`} />}
+				title="Project Health"
+			/>
 			<div className="space-y-2">
 				{projects.length > 0 ? (
 					projects

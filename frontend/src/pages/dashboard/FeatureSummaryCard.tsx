@@ -9,7 +9,8 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
+import { toneText } from '../../lib/tones.ts';
 
 interface FeatureSummaryColumn {
 	align: 'left' | 'right';
@@ -127,26 +128,22 @@ export function FeatureSummaryCard({
 
 	return (
 		<Card className="overflow-hidden" variant="panel">
-			<div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-						<ListChecks className="h-4 w-4 text-teal-600 dark:text-teal-300" />
-						Feature Summary
-						<Badge showDot tone={pendingTone}>
-							{totals.pending} pending
-						</Badge>
-					</div>
-					<p className="mt-1 text-xs text-muted-foreground">
-						Fleet feature counts by application and backlog type.
-					</p>
-				</div>
-				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
-					to="/projects">
-					Projects
-					<ArrowRight className="h-3.5 w-3.5" />
-				</Link>
-			</div>
+			<CardHeader
+				action={
+					<Link className={cardHeaderLinkClass} to="/projects">
+						Projects
+						<ArrowRight className="h-3.5 w-3.5" />
+					</Link>
+				}
+				badge={
+					<Badge showDot tone={pendingTone}>
+						{totals.pending} pending
+					</Badge>
+				}
+				description="Fleet feature counts by application and backlog type."
+				icon={<ListChecks className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Feature Summary"
+			/>
 
 			<div className="mb-4 grid gap-3 sm:grid-cols-3">
 				<div className="rounded-md bg-amber-50 p-3 dark:bg-amber-950/20">

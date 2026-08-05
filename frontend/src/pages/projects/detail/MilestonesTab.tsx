@@ -9,7 +9,7 @@ import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import {
 	useCreateProjectMilestone,
 	useDeleteProjectMilestone,
@@ -130,32 +130,35 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 	return (
 		<div className="space-y-3">
 			<Card className="space-y-3">
-				<div className="flex flex-wrap items-start justify-between gap-2">
-					<div>
-						<h2 className="text-sm font-semibold text-foreground">Milestones</h2>
-						<p className="mt-1 text-sm text-muted-foreground">
+				<CardHeader
+					action={
+						<div className="flex flex-wrap gap-2">
+							<Button
+								disabled={busy}
+								onClick={() => void start({ kind: 'reassign' })}
+								title="Repair placement: push features after their dependencies, pull completed features back to the milestone matching their shipped version, and backfill missing shippedVersion from the app's current version">
+								<Wand2 className="h-4 w-4" />
+								Auto-place features
+							</Button>
+							<Button
+								disabled={busy}
+								onClick={() => setForm({ milestone: null })}
+								variant="primary">
+								<Plus className="h-4 w-4" />
+								New milestone
+							</Button>
+						</div>
+					}
+					className="mb-0"
+					description={
+						<>
 							Coding runs walk these in order and admit only the first incomplete one.
 							Every change is previewed against the dependency graph before it is
 							written to <span className="font-mono text-xs">roadmap.json</span>.
-						</p>
-					</div>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							disabled={busy}
-							onClick={() => void start({ kind: 'reassign' })}
-							title="Repair placement: push features after their dependencies, pull completed features back to the milestone matching their shipped version, and backfill missing shippedVersion from the app's current version">
-							<Wand2 className="h-4 w-4" />
-							Auto-place features
-						</Button>
-						<Button
-							disabled={busy}
-							onClick={() => setForm({ milestone: null })}
-							variant="primary">
-							<Plus className="h-4 w-4" />
-							New milestone
-						</Button>
-					</div>
-				</div>
+						</>
+					}
+					title="Milestones"
+				/>
 				{view.lifecycle === 'locked' ? (
 					<p className="text-xs text-amber-700 dark:text-amber-300">
 						This roadmap is marked <span className="font-mono">locked</span>. Milestone

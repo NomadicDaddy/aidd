@@ -12,7 +12,7 @@ import { CommitChips } from '../../../components/shared/CommitChips.tsx';
 import { CommitDiffDialog } from '../../../components/shared/CommitDiffDialog.tsx';
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import {
@@ -110,14 +110,11 @@ export function HistoryTab({
 	}));
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b border-border px-4 py-3">
-				<h2 className="text-sm font-semibold text-foreground">Project history</h2>
-				<p className="text-xs text-muted-foreground">
-					Timeline of feature, remediation, and audit-finding lifecycle events merged with
-					recorded runs, newest first. Completion times fall back to the feature&apos;s
-					last metadata update when no completion timestamp was recorded.
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0 border-b border-border px-4 py-3"
+				description="Timeline of feature, remediation, and audit-finding lifecycle events merged with recorded runs, newest first. Completion times fall back to the feature's last metadata update when no completion timestamp was recorded."
+				title="Project history"
+			/>
 			<div className="px-4 py-3">
 				<SegmentedControl<HistoryFilter>
 					ariaLabel="Filter history events by kind"

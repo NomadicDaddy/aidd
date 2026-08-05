@@ -3,7 +3,7 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { cn } from '../../../lib/cn.ts';
 import {
 	DependencyList,
@@ -128,7 +128,7 @@ export function GraphDiagnosticsCard({
 	if (graph.cycles.length === 0 && graph.unresolvedDependencies.length === 0) return null;
 	return (
 		<Card className="space-y-4">
-			<h2 className="text-sm font-semibold text-foreground">Graph Diagnostics</h2>
+			<CardHeader className="mb-0" title="Graph Diagnostics" />
 			{graph.cycles.length > 0 ? (
 				<section>
 					<h3 className="text-xs font-semibold text-red-600 uppercase dark:text-red-300">
@@ -186,7 +186,7 @@ export function SelectedFeaturePanel({
 	if (!node) {
 		return (
 			<Card className="space-y-3">
-				<h2 className="text-sm font-semibold text-foreground">Selection</h2>
+				<CardHeader className="mb-0" title="Selection" />
 				<p className="text-sm text-muted-foreground">
 					Select a feature node to inspect links.
 				</p>

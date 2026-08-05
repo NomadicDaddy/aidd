@@ -4,7 +4,7 @@ import type { ProjectMetadata } from '../../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatRelativeAge } from '../../../lib/formatters.ts';
 import { recentMetadataActivity } from './recentActivityItems.ts';
 import { RECENT_ACTIVITY_LIMIT, runStatusTone } from './shared.ts';
@@ -22,14 +22,17 @@ export function RecentActivity({
 	);
 	return (
 		<Card className="p-2.5">
-			<div className="mb-1.5 flex items-center justify-between">
-				<h2 className="text-sm font-semibold text-foreground">Recent activity</h2>
-				<Link
-					className="text-xs text-muted-foreground hover:underline"
-					to={`/runs?project=${encodeURIComponent(projectPath)}`}>
-					View all runs
-				</Link>
-			</div>
+			<CardHeader
+				action={
+					<Link
+						className="text-xs text-muted-foreground hover:underline"
+						to={`/runs?project=${encodeURIComponent(projectPath)}`}>
+						View all runs
+					</Link>
+				}
+				className="mb-1.5"
+				title="Recent activity"
+			/>
 			{projectRuns.length === 0 ? (
 				<p className="text-sm text-muted-foreground">No runs recorded for this project.</p>
 			) : (

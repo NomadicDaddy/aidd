@@ -8,9 +8,10 @@ import type { ProjectCodeFileEntry, ProjectCodeTreeState } from '../../../api/ty
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useProjectCodeFile, useProjectCodeTree } from '../../../hooks/useProjectCode.ts';
+import { toneText } from '../../../lib/tones.ts';
 import { CodeFileTree } from './CodeFileTree.tsx';
 import { CodeFileViewer } from './CodeFileViewer.tsx';
 
@@ -77,25 +78,30 @@ export function CodeTab({ projectId }: { projectId: string }) {
 	}
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-				<div className="flex min-w-0 items-center gap-2">
-					<Code2 className="h-4 w-4 text-teal-700 dark:text-teal-300" />
-					<h2 className="text-sm font-semibold text-foreground">Code</h2>
-					<Badge tone="neutral">{files.length.toLocaleString()} files</Badge>
-					{tree.data?.truncated ? <Badge tone="amber">capped</Badge> : null}
-				</div>
-				<label className="relative w-full max-w-sm">
-					<span className="sr-only">Search tracked files</span>
-					<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-					<Input
-						className="pl-9"
-						name="projectCodeSearch"
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder="Search tracked files"
-						value={query}
-					/>
-				</label>
-			</div>
+			<CardHeader
+				action={
+					<label className="relative w-full max-w-sm">
+						<span className="sr-only">Search tracked files</span>
+						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+						<Input
+							className="pl-9"
+							name="projectCodeSearch"
+							onChange={(event) => setQuery(event.target.value)}
+							placeholder="Search tracked files"
+							value={query}
+						/>
+					</label>
+				}
+				badge={
+					<>
+						<Badge tone="neutral">{files.length.toLocaleString()} files</Badge>
+						{tree.data?.truncated ? <Badge tone="amber">capped</Badge> : null}
+					</>
+				}
+				className="mb-0 items-center border-b border-border p-4"
+				icon={<Code2 className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Code"
+			/>
 			<div className="grid min-h-[32rem] gap-0 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
 				<aside className="border-b border-border p-3 lg:border-r lg:border-b-0">
 					<CodeFileTree

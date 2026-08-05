@@ -6,7 +6,7 @@ import type { Tone } from '../../../lib/tones.ts';
 import type { ArtifactViewerTarget } from './artifactsUtils.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
 import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
@@ -50,10 +50,11 @@ export function ArtifactsTab({
 	if (!artifactCheck) {
 		return (
 			<Card>
-				<div className="mb-3 flex items-center justify-between">
-					<h2 className="text-sm font-semibold text-foreground">Artifact health</h2>
-					<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
-				</div>
+				<CardHeader
+					action={<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>}
+					className="mb-3"
+					title="Artifact health"
+				/>
 				<p className="text-sm text-muted-foreground">
 					No artifact check data available. Run an artifact check from the CLI to populate{' '}
 					<code>.aidd/.artifacts-check.json</code>.
@@ -80,10 +81,11 @@ export function ArtifactsTab({
 	];
 	return (
 		<Card>
-			<div className="mb-3 flex items-center justify-between">
-				<h2 className="text-sm font-semibold text-foreground">Artifact health</h2>
-				<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>
-			</div>
+			<CardHeader
+				action={<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>}
+				className="mb-3"
+				title="Artifact health"
+			/>
 			<div className="grid gap-3 sm:grid-cols-3 md:grid-cols-6">
 				{tiles.map((tile) => (
 					<div

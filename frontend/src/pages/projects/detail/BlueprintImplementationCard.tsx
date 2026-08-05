@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import type { ProjectDetail } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useStartProjectImplementation } from '../../../hooks/useProjects.ts';
 
 export function BlueprintImplementationCard({ project }: { project: ProjectDetail }) {
@@ -36,25 +36,28 @@ export function BlueprintImplementationCard({ project }: { project: ProjectDetai
 			}>
 			<div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 				<div className="min-w-0">
-					<div className="flex items-center gap-2">
-						{implementation.state === 'preparing' ? (
-							<LoaderCircle className="h-4 w-4 animate-spin text-teal-700 dark:text-teal-300" />
-						) : (
-							<Hammer className="h-4 w-4 text-teal-700 dark:text-teal-300" />
-						)}
-						<h2 className="text-sm font-semibold text-foreground">
-							{implementation.state === 'blueprint_ready'
+					<CardHeader
+						className="mb-0"
+						description={
+							implementation.state === 'blueprint_ready'
+								? 'The app scaffold, reviewed backlog, and roadmap are ready. Implementation has not started.'
+								: implementation.reason
+						}
+						icon={
+							implementation.state === 'preparing' ? (
+								<LoaderCircle className="h-4 w-4 animate-spin text-teal-700 dark:text-teal-300" />
+							) : (
+								<Hammer className="h-4 w-4 text-teal-700 dark:text-teal-300" />
+							)
+						}
+						title={
+							implementation.state === 'blueprint_ready'
 								? 'Blueprint ready for review'
 								: implementation.state === 'preparing'
 									? 'Preparing blueprint'
-									: 'Blueprint needs attention'}
-						</h2>
-					</div>
-					<p className="mt-1 text-xs text-muted-foreground">
-						{implementation.state === 'blueprint_ready'
-							? 'The app scaffold, reviewed backlog, and roadmap are ready. Implementation has not started.'
-							: implementation.reason}
-					</p>
+									: 'Blueprint needs attention'
+						}
+					/>
 					{implementation.firstFeature ? (
 						<p className="mt-2 text-sm text-foreground">
 							First runnable feature:{' '}

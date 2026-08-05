@@ -7,9 +7,10 @@ import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useProjectNotes, useSaveProjectNotes } from '../../../hooks/useProjectNotes.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
+import { toneText } from '../../../lib/tones.ts';
 
 function formatSavedAt(updatedAt: null | number): string {
 	if (updatedAt === null) return 'Not saved yet';
@@ -53,28 +54,29 @@ export function NotesTab({ projectId }: { projectId: string }) {
 
 	return (
 		<Card className="space-y-3">
-			<div className="flex flex-wrap items-start justify-between gap-2">
-				<div className="flex min-w-0 items-center gap-2">
-					<NotebookPen className="h-4 w-4 text-teal-700 dark:text-teal-300" />
-					<div>
-						<h2 className="text-sm font-semibold text-foreground">Notes</h2>
-						<p className="text-xs text-muted-foreground">
-							A free-form, persistent markdown scratch pad saved to{' '}
-							<code>.aidd/notes.md</code>.
-						</p>
+			<CardHeader
+				action={
+					<div className="flex items-center gap-2">
+						{dirty ? <Badge tone="amber">Unsaved changes</Badge> : null}
+						<Button
+							disabled={!dirty || saveNotes.isPending}
+							onClick={save}
+							variant="primary">
+							<Save className="h-4 w-4" />
+							{saveNotes.isPending ? 'Saving…' : 'Save'}
+						</Button>
 					</div>
-				</div>
-				<div className="flex items-center gap-2">
-					{dirty ? <Badge tone="amber">Unsaved changes</Badge> : null}
-					<Button
-						disabled={!dirty || saveNotes.isPending}
-						onClick={save}
-						variant="primary">
-						<Save className="h-4 w-4" />
-						{saveNotes.isPending ? 'Saving…' : 'Save'}
-					</Button>
-				</div>
-			</div>
+				}
+				className="mb-0"
+				description={
+					<>
+						A free-form, persistent markdown scratch pad saved to{' '}
+						<code>.aidd/notes.md</code>.
+					</>
+				}
+				icon={<NotebookPen className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Notes"
+			/>
 			<textarea
 				aria-label="Project notes"
 				className={`${textareaClass} min-h-[28rem] font-mono`}

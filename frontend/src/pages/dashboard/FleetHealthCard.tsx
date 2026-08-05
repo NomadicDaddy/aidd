@@ -3,7 +3,7 @@ import { default as Gauge } from 'lucide-react/dist/esm/icons/gauge';
 import type { FleetSummary } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { type Tone, toneBorder, toneSolid, toneSurface, toneText } from '../../lib/tones.ts';
 import { type getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 
@@ -28,22 +28,20 @@ export function FleetHealthCard({
 }) {
 	return (
 		<Card variant="panel">
-			<div className="flex items-start justify-between gap-4">
-				<div>
-					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-						<Gauge className="h-4 w-4 text-teal-600 dark:text-teal-300" />
-						Fleet Health
-					</div>
-					<p className="mt-1 text-xs text-muted-foreground">
-						{fleet?.fleetAggregations.priorityHealth.band
-							? healthBandLabel(fleet.fleetAggregations.priorityHealth.band)
-							: 'Priority health'}
-					</p>
-				</div>
-				<Badge showDot tone={featureHealthTone}>
-					{featureHealthValue}%
-				</Badge>
-			</div>
+			<CardHeader
+				action={
+					<Badge showDot tone={featureHealthTone}>
+						{featureHealthValue}%
+					</Badge>
+				}
+				description={
+					fleet?.fleetAggregations.priorityHealth.band
+						? healthBandLabel(fleet.fleetAggregations.priorityHealth.band)
+						: 'Priority health'
+				}
+				icon={<Gauge className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Fleet Health"
+			/>
 			<div className="mt-5">
 				<div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
 					<span>{fleetFeaturePassing} passing</span>

@@ -12,7 +12,7 @@ import { LocalAiddHistoryPanel } from '../../../components/shared/LocalAiddHisto
 import { RunCommandInfo } from '../../../components/shared/RunCommandInfo.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { buttonClassName } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useNow } from '../../../hooks/useNow.ts';
 import { useRuns } from '../../../hooks/useRuns.ts';
 import { formatActiveDuration, formatDate } from '../../../lib/formatters.ts';
@@ -44,12 +44,11 @@ function ActiveRunsPanel({
 	const now = useNow(runs.some((run) => run.status === 'running'));
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b border-border px-4 py-3">
-				<h2 className="text-sm font-semibold text-foreground">Recent runs</h2>
-				<p className="text-xs text-muted-foreground">
-					Recent aidd runs for this project from UI launches and CLI sessions (last 24 h).
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0 border-b border-border px-4 py-3"
+				description="Recent aidd runs for this project from UI launches and CLI sessions (last 24 h)."
+				title="Recent runs"
+			/>
 			<table aria-label="Recent project runs" className="w-full text-left text-sm">
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>

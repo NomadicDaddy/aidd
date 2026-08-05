@@ -7,7 +7,7 @@ import type {
 
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCompactNumber } from '../../../lib/formatters.ts';
 import { formatReportedCost } from '../projects-list-shared.ts';
 
@@ -60,10 +60,12 @@ function ExecutionTargetLabel({ row }: { row: ProjectUsageExecutionTarget }) {
 function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 	return (
 		<div className="min-w-0">
-			<div className="border-b border-border px-4 py-3">
-				<h3 className="text-sm font-semibold text-foreground">By execution target</h3>
-				<p className="text-xs text-muted-foreground">CLI and model combinations.</p>
-			</div>
+			<CardHeader
+				className="mb-0 border-b border-border px-4 py-3"
+				description="CLI and model combinations."
+				headingLevel={3}
+				title="By execution target"
+			/>
 			<div className="overflow-x-auto">
 				<table
 					aria-label="Project usage by execution target"
@@ -109,12 +111,12 @@ function modeLabel(mode: null | string): string {
 function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 	return (
 		<div className="min-w-0 border-t border-border lg:border-t-0 lg:border-l">
-			<div className="border-b border-border px-4 py-3">
-				<h3 className="text-sm font-semibold text-foreground">By run mode</h3>
-				<p className="text-xs text-muted-foreground">
-					Recorded mode; skill runs commonly use directive.
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0 border-b border-border px-4 py-3"
+				description="Recorded mode; skill runs commonly use directive."
+				headingLevel={3}
+				title="By run mode"
+			/>
 			<div className="overflow-x-auto">
 				<table aria-label="Project usage by run mode" className="w-full text-left text-sm">
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
@@ -161,16 +163,12 @@ export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
 	return (
 		<section aria-labelledby="project-usage-heading">
 			<Card className="overflow-hidden p-0">
-				<div className="border-b border-border px-4 py-3">
-					<h2
-						className="text-sm font-semibold text-foreground"
-						id="project-usage-heading">
-						AI usage
-					</h2>
-					<p className="text-xs text-muted-foreground">
-						Lifetime totals from this project's finalized .aidd run ledger.
-					</p>
-				</div>
+				<CardHeader
+					className="mb-0 border-b border-border px-4 py-3"
+					description="Lifetime totals from this project's finalized .aidd run ledger."
+					id="project-usage-heading"
+					title="AI usage"
+				/>
 				{totals.runCount === 0 ? (
 					<div className="px-4 py-8 text-center text-sm text-muted-foreground">
 						No finalized runs available for usage accounting.

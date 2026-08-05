@@ -10,8 +10,9 @@ import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { RunCommandInfo } from '../../components/shared/RunCommandInfo.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { formatDate } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 import { runSourceLabel } from '../runs/runRowUtils.ts';
 
 export function ActiveRunsCard({
@@ -25,21 +26,21 @@ export function ActiveRunsCard({
 }) {
 	return (
 		<Card className="overflow-hidden" variant="panel">
-			<div className="mb-4 flex items-center justify-between gap-3">
-				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-					<Activity className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-					Active Runs
+			<CardHeader
+				action={
+					<Link className={cardHeaderLinkClass} to="/runs">
+						Runs
+						<ArrowRight className="h-3.5 w-3.5" />
+					</Link>
+				}
+				badge={
 					<Badge showDot tone={activeRuns.length > 0 ? 'amber' : 'emerald'}>
 						{activeRuns.length}
 					</Badge>
-				</div>
-				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-900 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-teal-300 dark:hover:text-teal-100"
-					to="/runs">
-					Runs
-					<ArrowRight className="h-3.5 w-3.5" />
-				</Link>
-			</div>
+				}
+				icon={<Activity className={`h-4 w-4 ${toneText.amber}`} />}
+				title="Active Runs"
+			/>
 			<div className="space-y-2">
 				{isLoading && runList.length === 0 ? (
 					<SkeletonLines count={4} label="Loading active runs…" />

@@ -9,8 +9,9 @@ import { Link } from 'react-router';
 import type { RecipeDefinition } from '../../../api/types.ts';
 
 import { PageHeader } from '../../../components/shared/PageHeader.tsx';
+import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { DropdownMenu } from '../../../components/ui/dropdown-menu.tsx';
 import { RecipeLaunchPanel } from '../RecipeLaunchPanel.tsx';
 import { RecipeContractBadges, RecipePolicyBadges } from '../RecipeMetadataBadges.tsx';
@@ -92,9 +93,15 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 			<RecipeParamsOverview parameters={recipe.parameters} />
 
 			<Card>
-				<h2 className="mb-4 text-sm font-semibold text-muted-foreground uppercase">
-					Pipeline ({recipe.steps.length} step{recipe.steps.length !== 1 ? 's' : ''})
-				</h2>
+				<CardHeader
+					badge={
+						<Badge tone="neutral">
+							{recipe.steps.length} step{recipe.steps.length !== 1 ? 's' : ''}
+						</Badge>
+					}
+					className="mb-4"
+					title="Steps"
+				/>
 				<RecipePipelineView steps={recipe.steps} />
 			</Card>
 		</div>

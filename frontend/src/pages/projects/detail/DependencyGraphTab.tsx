@@ -8,7 +8,7 @@ import type { ProjectDetail, ProjectFeature, ProjectRoadmapSummary } from '../..
 import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
@@ -177,29 +177,30 @@ export function DependencyGraphTab({
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
 				<div className="min-w-0 space-y-4">
 					<Card className="space-y-4">
-						<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-							<div>
-								<h2 className="text-sm font-semibold text-foreground">
-									Feature Dependencies
-								</h2>
+						<CardHeader
+							action={
+								<div className="flex flex-wrap items-center gap-2">
+									<GraphZoomControls
+										onReset={resetZoom}
+										onZoomIn={zoomIn}
+										onZoomOut={zoomOut}
+										zoom={zoom}
+									/>
+									<Button onClick={resetFilters} variant="secondary">
+										<RotateCcw className="h-4 w-4" />
+										Reset filters
+									</Button>
+								</div>
+							}
+							badge={
 								<GraphDiagnostics
 									graph={graph}
 									visibleCount={visibleNodes.length}
 								/>
-							</div>
-							<div className="flex flex-wrap items-center gap-2">
-								<GraphZoomControls
-									onReset={resetZoom}
-									onZoomIn={zoomIn}
-									onZoomOut={zoomOut}
-									zoom={zoom}
-								/>
-								<Button onClick={resetFilters} variant="secondary">
-									<RotateCcw className="h-4 w-4" />
-									Reset filters
-								</Button>
-							</div>
-						</div>
+							}
+							className="mb-0"
+							title="Feature Dependencies"
+						/>
 						<div className="grid gap-3 lg:grid-cols-[minmax(14rem,1fr)_12rem_13rem_12rem]">
 							<label className="grid gap-1 text-xs font-medium text-muted-foreground">
 								<span className={fieldLabelClass}>Search</span>

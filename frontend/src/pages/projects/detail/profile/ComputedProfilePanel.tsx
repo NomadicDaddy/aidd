@@ -7,7 +7,7 @@ import type { ProjectAssuranceProfileInput } from '../../../../api/types.ts';
 
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Button } from '../../../../components/ui/button.tsx';
-import { Card } from '../../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../../components/ui/card.tsx';
 import { effectTone } from '../../../audits/auditsUtils.ts';
 import { getProfilePosture } from '../../profile/profile-helpers.ts';
 
@@ -42,21 +42,24 @@ export function ComputedProfilePanel({
 	return (
 		<div className="flex flex-col gap-4 lg:sticky lg:top-4">
 			<Card variant="panel">
-				<div className="mb-3 flex items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-foreground">Computed posture</h2>
-					{isPreviewing ? (
-						<span className="flex items-center gap-1 text-xs text-muted-foreground">
-							<Loader2 className="h-3 w-3 animate-spin" />
-							Recalculating…
-						</span>
-					) : (
-						dirty && (
-							<span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-								Unsaved
+				<CardHeader
+					action={
+						isPreviewing ? (
+							<span className="flex items-center gap-1 text-xs text-muted-foreground">
+								<Loader2 className="h-3 w-3 animate-spin" />
+								Recalculating…
 							</span>
+						) : (
+							dirty && (
+								<span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+									Unsaved
+								</span>
+							)
 						)
-					)}
-				</div>
+					}
+					className="mb-3"
+					title="Computed posture"
+				/>
 				<div className="flex flex-wrap items-center gap-2">
 					<Badge tone={posture.tone}>{posture.label}</Badge>
 					<Badge tone={source === 'explicit' ? 'teal' : 'neutral'}>saved: {source}</Badge>
@@ -77,14 +80,18 @@ export function ComputedProfilePanel({
 			</Card>
 
 			<Card variant="panel">
-				<div className="mb-3 flex items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-foreground">Applicable audits</h2>
-					{audits.length > 0 && (
-						<span className="text-xs text-muted-foreground tabular-nums">
-							{applicable.length}/{audits.length} apply · {required.length} required
-						</span>
-					)}
-				</div>
+				<CardHeader
+					action={
+						audits.length > 0 && (
+							<span className="text-xs text-muted-foreground tabular-nums">
+								{applicable.length}/{audits.length} apply · {required.length}{' '}
+								required
+							</span>
+						)
+					}
+					className="mb-3"
+					title="Applicable audits"
+				/>
 				{isPreviewError ? (
 					<p className="text-sm text-red-600 dark:text-red-400">
 						Could not compute audit applicability.

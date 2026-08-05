@@ -16,8 +16,9 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 
 type FeatureStatusState = 'completed' | 'pending';
 
@@ -203,26 +204,22 @@ export function FeatureStatusCard({
 
 	return (
 		<Card className="overflow-hidden" variant="panel">
-			<div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-						<ListFilter className="h-4 w-4 text-teal-600 dark:text-teal-300" />
-						Feature Status
-						<Badge showDot tone={visibleRows.length > 0 ? 'amber' : 'emerald'}>
-							{visibleRows.length} {stateFilter}
-						</Badge>
-					</div>
-					<p className="mt-1 text-xs text-muted-foreground">
-						Fleet feature rows by aidd-tools status filter.
-					</p>
-				</div>
-				<Link
-					className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-950 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-300 dark:hover:text-teal-100 dark:focus-visible:ring-offset-slate-950"
-					to="/projects">
-					Projects
-					<ArrowRight className="h-3.5 w-3.5" />
-				</Link>
-			</div>
+			<CardHeader
+				action={
+					<Link className={cardHeaderLinkClass} to="/projects">
+						Projects
+						<ArrowRight className="h-3.5 w-3.5" />
+					</Link>
+				}
+				badge={
+					<Badge showDot tone={visibleRows.length > 0 ? 'amber' : 'emerald'}>
+						{visibleRows.length} {stateFilter}
+					</Badge>
+				}
+				description="Fleet feature rows by aidd-tools status filter."
+				icon={<ListFilter className={`h-4 w-4 ${toneText.teal}`} />}
+				title="Feature Status"
+			/>
 
 			<div className="mb-4 grid gap-3 sm:grid-cols-2">
 				<label className="space-y-1">

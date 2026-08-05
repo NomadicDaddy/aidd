@@ -1,14 +1,12 @@
 import type { RecipeParameterDefinition } from '../../../api/types.ts';
 
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 
 export function RecipeParamsOverview({ parameters }: { parameters: RecipeParameterDefinition[] }) {
 	if (parameters.length === 0) return null;
 	return (
 		<Card>
-			<h2 className="mb-3 text-sm font-semibold text-muted-foreground uppercase">
-				Parameters
-			</h2>
+			<CardHeader className="mb-3" title="Parameters" />
 			<div className="flex flex-wrap gap-2">
 				{parameters.map((param) => (
 					<span

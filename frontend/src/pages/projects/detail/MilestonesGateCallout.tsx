@@ -2,7 +2,7 @@ import { default as ShieldAlert } from 'lucide-react/dist/esm/icons/shield-alert
 
 import type { ProjectMilestonesView } from '../../../api/types.ts';
 
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 
 /**
  * The two ways a roadmap can be wrong, rendered with the same red treatment the features tab uses
@@ -18,10 +18,12 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 	if (unmapped.length === 0 && view.violations.length === 0) return null;
 	return (
 		<Card className="space-y-2 border-red-300 dark:border-red-900">
-			<div className="flex items-center gap-2">
-				<ShieldAlert className="h-4 w-4 text-red-500" />
-				<h3 className="text-sm font-semibold text-foreground">Roadmap problems</h3>
-			</div>
+			<CardHeader
+				className="mb-0"
+				headingLevel={3}
+				icon={<ShieldAlert className="h-4 w-4 text-red-500" />}
+				title="Roadmap problems"
+			/>
 			{unmapped.length > 0 ? (
 				<p className="text-sm text-muted-foreground">
 					{unmapped.length} feature director{unmapped.length === 1 ? 'y has' : 'ies have'}{' '}

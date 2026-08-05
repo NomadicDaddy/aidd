@@ -11,7 +11,7 @@ import { LaunchTargetControl } from '../../../components/shared/LaunchTargetCont
 import { MaturityRing } from '../../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useRunMaturityNext, useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
 import { defaultExpandedMaturityStageIds } from './maturityExpansion.ts';
 import { nextActionLabel } from './maturityOverviewUtils.ts';
@@ -169,19 +169,22 @@ export function MaturityOverview({
 					{isComplete ? <Badge tone="emerald">Fully matured</Badge> : null}
 				</div>
 				<div className="min-w-0 space-y-2 max-xl:w-full xl:flex-1">
-					<div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-						<h2 className="text-sm font-semibold text-foreground">Project maturity</h2>
-						<div className="flex items-center gap-3">
-							<LaunchTargetControl
-								onChange={setLaunchTarget}
-								projectDir={projectPath}
-								value={launchTarget}
-							/>
-							<span className="text-xs text-muted-foreground">
-								{maturity.percent}% complete
-							</span>
-						</div>
-					</div>
+					<CardHeader
+						action={
+							<div className="flex items-center gap-3">
+								<LaunchTargetControl
+									onChange={setLaunchTarget}
+									projectDir={projectPath}
+									value={launchTarget}
+								/>
+								<span className="text-xs text-muted-foreground">
+									{maturity.percent}% complete
+								</span>
+							</div>
+						}
+						className="mb-1"
+						title="Project maturity"
+					/>
 					{maturity.stages.map((stage) => {
 						const stageNextAction =
 							!isComplete &&

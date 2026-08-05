@@ -6,7 +6,7 @@ import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useSubmitProjectInterviewAnswer } from '../../../hooks/useProjects.ts';
 import { toneText } from '../../../lib/tones.ts';
 
@@ -77,7 +77,7 @@ export function InterviewTab({
 				</Card>
 			</div>
 			<Card>
-				<h2 className="mb-2 text-sm font-semibold text-foreground">Unanswered questions</h2>
+				<CardHeader className="mb-2" title="Unanswered questions" />
 				{interview.unanswered.length === 0 ? (
 					<p className="text-sm text-muted-foreground">
 						All interview questions have responses.
@@ -218,9 +218,7 @@ export function InterviewTab({
 			</Card>
 			{interview.answeredQuestions.length > 0 ? (
 				<Card>
-					<h2 className="mb-2 text-sm font-semibold text-foreground">
-						Answered questions
-					</h2>
+					<CardHeader className="mb-2" title="Answered questions" />
 					<ul className="space-y-3">
 						{interview.answeredQuestions.map((question) => (
 							<li className="rounded-md border border-border p-3" key={question.id}>

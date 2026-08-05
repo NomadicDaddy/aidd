@@ -11,7 +11,7 @@ import type {
 
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCount, formatRatio, formatRelativeAge, percent } from '../../../lib/formatters.ts';
 import {
 	bucketLabels,
@@ -154,16 +154,19 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 	return (
 		<div className="grid gap-4 md:grid-cols-2">
 			<Card>
-				<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-foreground">Project metadata</h2>
-					<Link
-						className="flex min-w-0 flex-wrap items-center gap-1.5"
-						title={coverage.title}
-						to={projectDetailTabSearch('artifacts')}>
-						<span className="text-xs text-muted-foreground">{coverage.detail}</span>
-						<Badge tone={coverage.tone}>{coverage.label}</Badge>
-					</Link>
-				</div>
+				<CardHeader
+					action={
+						<Link
+							className="flex min-w-0 flex-wrap items-center gap-1.5"
+							title={coverage.title}
+							to={projectDetailTabSearch('artifacts')}>
+							<span className="text-xs text-muted-foreground">{coverage.detail}</span>
+							<Badge tone={coverage.tone}>{coverage.label}</Badge>
+						</Link>
+					}
+					className="mb-2"
+					title="Project metadata"
+				/>
 				<div className="divide-y divide-border">
 					<MetadataRow
 						label="App version"
@@ -227,16 +230,19 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 				</div>
 			</Card>
 			<Card>
-				<div className="mb-2 flex items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-foreground">Roadmap</h2>
-					<Link
-						className="text-xs text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
-						to={projectDetailTabSearch('features')}>
-						View features
-					</Link>
-				</div>
+				<CardHeader
+					action={
+						<Link
+							className="text-xs text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
+							to={projectDetailTabSearch('features')}>
+							View features
+						</Link>
+					}
+					className="mb-2"
+					title="Roadmap"
+				/>
 				<RoadmapMilestones roadmap={metadata.roadmap} />
-				<h2 className="mt-4 mb-2 text-sm font-semibold text-foreground">aidd activity</h2>
+				<CardHeader className="mt-4 mb-2" title="aidd activity" />
 				<div className="divide-y divide-border">
 					<MetadataRow
 						label="aidd state"

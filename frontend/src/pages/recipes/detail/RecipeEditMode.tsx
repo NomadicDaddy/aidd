@@ -11,7 +11,7 @@ import type { RecipeParameterDefinition } from '../../../api/types.ts';
 
 import { PageHeader } from '../../../components/shared/PageHeader.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { newStepDraft, type StepDraft, type StepJsonErrors } from '../recipe-steps.ts';
@@ -141,16 +141,22 @@ export function RecipeEditMode({
 			</Card>
 
 			<Card className="space-y-3">
-				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold text-foreground">Parameters</h2>
-					<Button
-						onClick={() =>
-							setParameters((current) => [...current, { description: '', name: '' }])
-						}>
-						<Plus className="h-4 w-4" />
-						Add
-					</Button>
-				</div>
+				<CardHeader
+					action={
+						<Button
+							onClick={() =>
+								setParameters((current) => [
+									...current,
+									{ description: '', name: '' },
+								])
+							}>
+							<Plus className="h-4 w-4" />
+							Add
+						</Button>
+					}
+					className="mb-0"
+					title="Parameters"
+				/>
 				<div className="grid gap-3">
 					{parameters.map((parameter, index) => (
 						<div className="grid gap-3 md:grid-cols-[1fr_2fr_1fr_auto]" key={index}>
@@ -209,13 +215,16 @@ export function RecipeEditMode({
 			</Card>
 
 			<Card className="space-y-4">
-				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold text-foreground">Ordered Steps</h2>
-					<Button onClick={() => setSteps((current) => [...current, newStepDraft()])}>
-						<Plus className="h-4 w-4" />
-						Add Step
-					</Button>
-				</div>
+				<CardHeader
+					action={
+						<Button onClick={() => setSteps((current) => [...current, newStepDraft()])}>
+							<Plus className="h-4 w-4" />
+							Add Step
+						</Button>
+					}
+					className="mb-0"
+					title="Steps"
+				/>
 				<div className="space-y-4">
 					{steps.map((step, index) => {
 						const errors = stepErrors.find((entry) => entry.id === step.id) ?? {

@@ -2,7 +2,7 @@ import type { ProjectGitStatusSummary, RepositoryInfoState } from '../../../api/
 
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../../components/shared/LoadingState.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import {
 	useProjectRepositoryInfo,
 	useProjectRepositoryRefs,
@@ -28,23 +28,24 @@ function WorkingTreePanel({
 }) {
 	return (
 		<div className="space-y-3">
-			<Card className="flex flex-wrap items-center justify-between gap-3">
-				<div>
-					<h3 className="text-sm font-semibold text-foreground">Working tree</h3>
-					<p className="text-xs text-muted-foreground">
-						Stage, discard, and commit the files this project has changed since its last
-						commit.
-					</p>
-				</div>
-				<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-					<GitStatusBadge className="max-w-[16rem]" status={status} />
-					{status && ['clean', 'conflicted', 'dirty'].includes(status.state) ? (
-						<span className="tabular-nums">
-							{status.staged} staged / {status.unstaged} unstaged / {status.untracked}{' '}
-							untracked
-						</span>
-					) : null}
-				</div>
+			<Card>
+				<CardHeader
+					action={
+						<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+							<GitStatusBadge className="max-w-[16rem]" status={status} />
+							{status && ['clean', 'conflicted', 'dirty'].includes(status.state) ? (
+								<span className="tabular-nums">
+									{status.staged} staged / {status.unstaged} unstaged /{' '}
+									{status.untracked} untracked
+								</span>
+							) : null}
+						</div>
+					}
+					className="mb-0"
+					description="Stage, discard, and commit the files this project has changed since its last commit."
+					headingLevel={3}
+					title="Working tree"
+				/>
 			</Card>
 			<WorkingTreeCard projectId={projectId} />
 		</div>
@@ -63,13 +64,11 @@ export function RepositoryTab({
 
 	return (
 		<div className="space-y-4">
-			<div>
-				<h2 className="text-sm font-semibold text-foreground">Repository</h2>
-				<p className="text-xs text-muted-foreground">
-					A git snapshot of this project — dominant language, branches, tags,
-					contributors, and lines of code, derived from git-tracked files only.
-				</p>
-			</div>
+			<CardHeader
+				className="mb-0"
+				description="A git snapshot of this project — dominant language, branches, tags, contributors, and lines of code, derived from git-tracked files only."
+				title="Repository"
+			/>
 			<WorkingTreePanel projectId={projectId} status={gitStatus} />
 			{query.isLoading ? (
 				<Card aria-busy="true">

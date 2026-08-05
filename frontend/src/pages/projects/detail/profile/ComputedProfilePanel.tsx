@@ -39,9 +39,14 @@ export function ComputedProfilePanel({
 	const required = audits.filter((audit) => audit.effect === 'required');
 	const suppressed = audits.filter((audit) => !audit.applies);
 
+	// The rail is a grid item in ProfileTab's lg:grid-cols-[1.5fr_1fr]. Without lg:self-start it
+	// stretches to the full row height, which leaves position: sticky nothing to slide within — the
+	// declaration was inert and Save/Reset scrolled away. self-start restores the slide, and the
+	// viewport-height cap plus the flexing audit list keep the buttons on screen even when the
+	// audit catalog is long.
 	return (
-		<div className="flex flex-col gap-4 lg:sticky lg:top-4">
-			<Card variant="panel">
+		<div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:self-start">
+			<Card className="lg:shrink-0" variant="panel">
 				<CardHeader
 					action={
 						isPreviewing ? (
@@ -79,7 +84,7 @@ export function ComputedProfilePanel({
 				)}
 			</Card>
 
-			<Card variant="panel">
+			<Card className="lg:flex lg:min-h-0 lg:flex-col" variant="panel">
 				<CardHeader
 					action={
 						audits.length > 0 && (
@@ -101,7 +106,7 @@ export function ComputedProfilePanel({
 						{isPreviewing ? 'Computing…' : 'No audits found for this project.'}
 					</p>
 				) : (
-					<div className="max-h-[28rem] space-y-1 overflow-y-auto pr-1">
+					<div className="max-h-[28rem] space-y-1 overflow-y-auto pr-1 lg:max-h-none lg:min-h-0 lg:flex-1">
 						{audits.map((audit) => (
 							<div
 								className="flex items-center justify-between gap-2 rounded px-1 py-0.5"
@@ -127,7 +132,7 @@ export function ComputedProfilePanel({
 				)}
 			</Card>
 
-			<div className="flex items-center gap-2">
+			<div className="flex items-center gap-2 lg:shrink-0">
 				<Button
 					className="flex-1"
 					disabled={!dirty || isSaving}

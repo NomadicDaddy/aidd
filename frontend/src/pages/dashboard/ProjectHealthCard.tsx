@@ -34,6 +34,7 @@ export function ProjectHealthCard({
 						<ArrowRight className="h-3.5 w-3.5" />
 					</Link>
 				}
+				description="Per-project priority health and feature progress."
 				icon={<ShieldCheck className={`h-4 w-4 ${toneText.emerald}`} />}
 				title="Project Health"
 			/>

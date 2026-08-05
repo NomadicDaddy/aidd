@@ -4,9 +4,11 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { Link } from 'react-router';
 
 import type { FeatureSummary, ProjectSummary } from '../../api/types.ts';
+import type { Tone } from '../../lib/tones.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
@@ -111,6 +113,22 @@ function projectSummaryRows(projects: ProjectSummary[]): FeatureSummaryRow[] {
 		.sort((left, right) => left.application.localeCompare(right.application));
 }
 
+/**
+ * One shell and one tint weight for the mini-metric trio. Rendered as bare fills, the emerald and
+ * teal tiles sat so close to `--card` in dark mode that only the amber one read as a box, so two of
+ * three numbers floated unattached beside a boxed sibling.
+ */
+function SummaryTile({ label, tone, value }: { label: string; tone: Tone; value: number }) {
+	return (
+		<Card className="p-3" variant="sunken">
+			<Badge tone={tone}>{label}</Badge>
+			<div className="mt-1.5 font-display text-lg font-semibold text-foreground tabular-nums">
+				{value}
+			</div>
+		</Card>
+	);
+}
+
 export function FeatureSummaryCard({
 	isError,
 	isLoading,
@@ -146,30 +164,9 @@ export function FeatureSummaryCard({
 			/>
 
 			<div className="mb-4 grid gap-3 sm:grid-cols-3">
-				<div className="rounded-md bg-amber-50 p-3 dark:bg-amber-950/20">
-					<div className="text-xs font-medium text-amber-700 uppercase dark:text-amber-300">
-						Pending
-					</div>
-					<div className="mt-1 text-lg font-semibold text-amber-950 tabular-nums dark:text-amber-100">
-						{totals.pending}
-					</div>
-				</div>
-				<div className="rounded-md bg-emerald-50 p-3 dark:bg-emerald-950/20">
-					<div className="text-xs font-medium text-emerald-700 uppercase dark:text-emerald-300">
-						Completed
-					</div>
-					<div className="mt-1 text-lg font-semibold text-emerald-950 tabular-nums dark:text-emerald-100">
-						{totals.completed}
-					</div>
-				</div>
-				<div className="rounded-md bg-teal-50 p-3 dark:bg-teal-950/20">
-					<div className="text-xs font-medium text-teal-700 uppercase dark:text-teal-300">
-						Total
-					</div>
-					<div className="mt-1 text-lg font-semibold text-teal-950 tabular-nums dark:text-teal-100">
-						{totals.total}
-					</div>
-				</div>
+				<SummaryTile label="Pending" tone="amber" value={totals.pending} />
+				<SummaryTile label="Completed" tone="emerald" value={totals.completed} />
+				<SummaryTile label="Total" tone="teal" value={totals.total} />
 			</div>
 
 			{isLoading && rows.length === 0 ? (
@@ -195,9 +192,17 @@ export function FeatureSummaryCard({
 					No projects discovered.
 				</EmptyState>
 			) : (
-				<div className="-mx-2 overflow-x-auto px-2">
+				// A 33-row table with no ceiling ran ~1,400px and killed whatever card shared its
+				// grid row; wider than the card at tablet widths it also clipped PENDING — the one
+				// number this card's own badge highlights — with nothing at the edge saying so.
+				// OverflowScroller supplies the edge fade and a keyboard-reachable scrollport, and
+				// the head and totals row stay pinned while the body scrolls.
+				<OverflowScroller
+					ariaLabel="Feature summary by application"
+					className="-mx-2 px-2"
+					scrollerClassName="max-h-[28rem]">
 					<table className="min-w-[700px] text-sm">
-						<thead>
+						<thead className="sticky top-0 z-10 bg-card">
 							<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
 								{summaryColumns.map((column) => (
 									<th
@@ -231,14 +236,14 @@ export function FeatureSummaryCard({
 								</tr>
 							))}
 						</tbody>
-						<tfoot>
+						<tfoot className="sticky bottom-0 z-10 bg-card">
 							<tr className="border-t border-border text-sm font-semibold text-foreground">
 								{summaryColumns.map((column) => (
 									<td
 										className={
 											column.align === 'right'
-												? 'px-3 pt-3 text-right tabular-nums'
-												: 'px-3 pt-3 text-left'
+												? 'px-3 py-3 text-right tabular-nums'
+												: 'px-3 py-3 text-left'
 										}
 										key={column.header}>
 										{column.header === 'Application'
@@ -249,7 +254,7 @@ export function FeatureSummaryCard({
 							</tr>
 						</tfoot>
 					</table>
-				</div>
+				</OverflowScroller>
 			)}
 		</Card>
 	);

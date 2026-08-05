@@ -13,9 +13,11 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { ActiveCyclePanel } from './ActiveCyclePanel.tsx';
 import { DirectorChatSection } from './DirectorChatSection.tsx';
-import { DirectorRecentCycles, DirectorSuggestionsList } from './DirectorSuggestions.tsx';
+import { DirectorRecentCycles } from './DirectorRecentCycles.tsx';
+import { DirectorSuggestionsList } from './DirectorSuggestions.tsx';
 import { sectionDescClass, sectionTitleClass, textareaClass } from './directorUtils.ts';
 
 export function DirectorPage() {
@@ -173,79 +175,81 @@ export function DirectorPage() {
 					sessions={sessions}
 				/>
 
-				<section aria-labelledby="director-cycle-heading">
-					<Card>
-						<div className="flex flex-wrap items-start justify-between gap-3">
-							<div>
-								<h2 className={sectionTitleClass} id="director-cycle-heading">
-									Run Cycle
-								</h2>
-								<p className={sectionDescClass}>
-									Trigger a director analysis pass across the fleet. An optional
-									directive focuses the cycle on a specific concern.
-								</p>
-							</div>
-							<div className="flex flex-wrap items-center gap-2">
-								{cycleTargetBackend ? (
-									<LaunchTargetBadge
-										backend={cycleTargetBackend}
-										hint={
-											directAiActive
-												? 'Cycles use the Direct AI surface — configure under Settings → Direct AI'
-												: 'Cycles use the Director profile below — no per-cycle override'
-										}
-										model={cycleTargetModel}
-										provider={directAiActive ? directProvider : undefined}
-										reasoningEffort={cycleTargetReasoning}
-									/>
-								) : null}
-								<Button
-									disabled={director.triggerCycle.isPending}
-									onClick={triggerCycle}
-									variant="primary">
-									<Bot className="h-4 w-4" />
-									{director.triggerCycle.isPending ? 'Running…' : 'Run Cycle'}
-								</Button>
-							</div>
-						</div>
-						<label className="mt-4 block space-y-1">
-							<span className={fieldLabelClass}>Cycle Directive (optional)</span>
-							<textarea
-								className={`${textareaClass} min-h-16`}
-								onChange={(event) => setCycleDirective(event.target.value)}
-								placeholder="e.g. prioritize failing builds across the fleet"
-								value={cycleDirective}
-							/>
-						</label>
-						{activeCycle ? (
-							<ActiveCyclePanel cycle={activeCycle} now={now} />
-						) : director.triggerCycle.isPending ? (
-							<div className="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 text-sm text-foreground dark:border-teal-900 dark:bg-teal-950/30">
-								<div className="flex items-center gap-2 font-medium text-foreground">
-									<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
-									Starting director cycle
+				{/* Run Cycle is a short card; Director Chat beside it is 420px tall, so the right
+				    column ended in a tall empty band while Recent Cycles sat below in a second
+				    two-column row. Cycles stack under the control that produces them. */}
+				<div className="space-y-5">
+					<section aria-labelledby="director-cycle-heading">
+						<Card>
+							<div className="flex flex-wrap items-start justify-between gap-3">
+								<div>
+									<h2 className={sectionTitleClass} id="director-cycle-heading">
+										Run Cycle
+									</h2>
+									<p className={sectionDescClass}>
+										Trigger a director analysis pass across the fleet. An
+										optional directive focuses the cycle on a specific concern.
+									</p>
 								</div>
-								<p className="mt-1">
-									Waiting for the backend to publish the cycle record.
-								</p>
+								<div className="flex flex-wrap items-center gap-2">
+									{cycleTargetBackend ? (
+										<LaunchTargetBadge
+											backend={cycleTargetBackend}
+											hint={
+												directAiActive
+													? 'Cycles use the Direct AI surface — configure under Settings → Direct AI'
+													: 'Cycles use the Director profile below — no per-cycle override'
+											}
+											model={cycleTargetModel}
+											provider={directAiActive ? directProvider : undefined}
+											reasoningEffort={cycleTargetReasoning}
+										/>
+									) : null}
+									<Button
+										disabled={director.triggerCycle.isPending}
+										onClick={triggerCycle}
+										variant="primary">
+										<Bot className="h-4 w-4" />
+										{director.triggerCycle.isPending ? 'Running…' : 'Run Cycle'}
+									</Button>
+								</div>
 							</div>
-						) : null}
-					</Card>
-				</section>
+							<label className="mt-4 block space-y-1">
+								<span className={fieldLabelClass}>Cycle Directive (optional)</span>
+								<textarea
+									className={`${textareaClass} min-h-16`}
+									onChange={(event) => setCycleDirective(event.target.value)}
+									placeholder="e.g. prioritize failing builds across the fleet"
+									value={cycleDirective}
+								/>
+							</label>
+							{activeCycle ? (
+								<ActiveCyclePanel cycle={activeCycle} now={now} />
+							) : director.triggerCycle.isPending ? (
+								<div
+									className={`mt-4 rounded-md border p-3 text-sm text-foreground ${toneBorder.teal} ${toneSurface.teal}`}>
+									<div className="flex items-center gap-2 font-medium text-foreground">
+										<Activity className={`h-4 w-4 ${toneText.teal}`} />
+										Starting director cycle
+									</div>
+									<p className="mt-1">
+										Waiting for the backend to publish the cycle record.
+									</p>
+								</div>
+							) : null}
+						</Card>
+					</section>
+					<DirectorRecentCycles cycles={cycles} now={now} />
+				</div>
 			</div>
 
-			{/* items-start, not the grid default of stretch: the suggestion queue is uncapped and
-			    Recent Cycles caps its own list at 28rem, so stretching the shorter card only adds
-			    empty space below a scroll region that has already stopped growing. */}
-			<div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-				<DirectorSuggestionsList
-					onDismiss={dismissSuggestion}
-					onLaunch={launchSuggestion}
-					suggestions={suggestions}
-				/>
-
-				<DirectorRecentCycles cycles={cycles} now={now} />
-			</div>
+			{/* Full width: a suggestion is a title, a two-line description and four actions, which
+			    is a row, not a column. In half the page they wrapped onto three and four lines. */}
+			<DirectorSuggestionsList
+				onDismiss={dismissSuggestion}
+				onLaunch={launchSuggestion}
+				suggestions={suggestions}
+			/>
 		</div>
 	);
 }

@@ -17,6 +17,15 @@ function getSuggestionTone(suggestion: SuggestionRecord): 'amber' | 'red' | 'tea
 	return 'teal';
 }
 
+// The badge read 'HIGH' beside a Feature Queue badge reading 'P1', so two vocabularies for two
+// different concepts sat one card apart looking like one concept. Naming the axis is what
+// separates them; risk is not priority, so it does not become a P-number.
+function riskBadgeLabel(risk: SuggestionRecord['riskLevel']): string {
+	if (risk === 'HIGH') return 'High risk';
+	if (risk === 'MEDIUM') return 'Medium risk';
+	return 'Low risk';
+}
+
 export function DirectorQueueCard({
 	isLoading,
 	suggestions,
@@ -33,6 +42,7 @@ export function DirectorQueueCard({
 						<ArrowRight className="h-3.5 w-3.5" />
 					</Link>
 				}
+				description="Pending director suggestions awaiting a decision."
 				icon={<AlertTriangle className={`h-4 w-4 ${toneText.amber}`} />}
 				title="Director Queue"
 			/>
@@ -56,7 +66,7 @@ export function DirectorQueueCard({
 				)}
 				{suggestions.slice(0, 4).map((suggestion) => (
 					<div
-						className="rounded-md border border-border bg-card/75 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:hover:border-teal-800 dark:hover:bg-teal-950/20"
+						className="rounded-md border border-border bg-card/75 p-3 transition-[border-color,background-color] duration-150 hover:border-accent/40 hover:bg-accent-muted/60"
 						key={suggestion.id}>
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div className="min-w-0">
@@ -68,7 +78,7 @@ export function DirectorQueueCard({
 								</p>
 							</div>
 							<Badge showDot tone={getSuggestionTone(suggestion)}>
-								{suggestion.riskLevel}
+								{riskBadgeLabel(suggestion.riskLevel)}
 							</Badge>
 						</div>
 						<p className="line-clamp-3 text-sm text-muted-foreground">

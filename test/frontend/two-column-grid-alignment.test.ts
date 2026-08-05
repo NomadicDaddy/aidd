@@ -29,13 +29,19 @@ describe('two-column grids do not stretch a card past its own content', () => {
 		expect(source).toContain('useSortable(');
 	});
 
-	test('Director pairs the uncapped suggestion queue with capped Recent Cycles', async () => {
+	test('Director stacks Run Cycle above Recent Cycles and runs Suggestions full width', async () => {
 		const page = await read('pages/director/DirectorPage.tsx');
-		const cycles = await read('pages/director/DirectorSuggestions.tsx');
+		const cycles = await read('pages/director/DirectorRecentCycles.tsx');
 
-		expect(page).toContain('grid gap-5 lg:grid-cols-2 lg:items-start');
-		// Recent Cycles owns its scroll region; the alignment rule is what stops the Card around
-		// it from growing past that cap.
+		// The dead column is gone by composition rather than by an alignment rule: the short Run
+		// Cycle card and the capped Recent Cycles card share the right column of the single
+		// two-column row, and the suggestion queue — rows, not a column — spans the page below it.
+		expect(page).toContain('grid gap-5 lg:grid-cols-2');
+		expect(page).toMatch(
+			/<div className="space-y-5">[\s\S]*<DirectorRecentCycles cycles=\{cycles\} now=\{now\} \/>\s*<\/div>/,
+		);
+		expect(page).not.toContain('lg:grid-cols-2 lg:items-start');
+		// Recent Cycles owns its scroll region, so the card around it stops growing on its own.
 		expect(cycles).toContain('max-h-[28rem]');
 	});
 

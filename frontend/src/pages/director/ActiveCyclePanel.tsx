@@ -10,7 +10,13 @@ import {
 	cycleStageDescriptions,
 	cycleStageLabels,
 } from '../../lib/directorConstants.ts';
-import { artifactTone, contextArtifactLabel, outputArtifactLabel } from './directorUtils.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import {
+	artifactTone,
+	contextArtifactLabel,
+	humanizeEnum,
+	outputArtifactLabel,
+} from './directorUtils.ts';
 
 function CycleArtifactRow({
 	label,
@@ -27,7 +33,7 @@ function CycleArtifactRow({
 				<span className="text-xs font-medium text-foreground">{label}</span>
 				<span className={`text-xs font-medium ${artifactTone(status)}`}>{status}</span>
 			</div>
-			<div className="mt-1 text-[11px] break-all text-muted-foreground">{path}</div>
+			<div className="mt-1 text-2xs break-all text-muted-foreground">{path}</div>
 		</div>
 	);
 }
@@ -36,11 +42,11 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 	const artifacts: DirectorCycleArtifacts = cycle.artifacts;
 	const isDirectAi = cycle.stage === 'running_direct_ai';
 	return (
-		<div className="mt-4 rounded-md border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/30">
+		<div className={`mt-4 rounded-md border p-3 ${toneBorder.teal} ${toneSurface.teal}`}>
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-						<Activity className="h-4 w-4 text-teal-700 dark:text-teal-300" />
+						<Activity className={`h-4 w-4 ${toneText.teal}`} />
 						<span className="truncate">{cycleStageLabels[cycle.stage]}</span>
 					</div>
 					<p className="mt-1 text-sm text-foreground">
@@ -48,13 +54,15 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
-					<Badge>{cycle.status}</Badge>
-					<Badge>{cycleElapsed(cycle, now)}</Badge>
+					<Badge tone="teal">{humanizeEnum(cycle.status)}</Badge>
+					<Badge>
+						<span className="tabular-nums">{cycleElapsed(cycle, now)}</span>
+					</Badge>
 				</div>
 			</div>
 			{isDirectAi && cycle.directAiMeta && (
-				<div className="mt-3 flex items-center gap-3 rounded-md border border-teal-300 bg-teal-100/60 px-3 py-2 dark:border-teal-800 dark:bg-teal-950/50">
-					<Cpu className="h-4 w-4 shrink-0 text-teal-700 dark:text-teal-300" />
+				<div className="mt-3 flex items-center gap-3 rounded-md border border-accent/50 bg-card px-3 py-2">
+					<Cpu className={`h-4 w-4 shrink-0 ${toneText.teal}`} />
 					<div className="min-w-0 text-sm text-foreground">
 						<ExecutionIdentityBadges
 							backend="direct"

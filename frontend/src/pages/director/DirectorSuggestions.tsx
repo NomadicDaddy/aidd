@@ -1,79 +1,24 @@
 import { buildSuggestionPrompt } from 'aidd-shared/contracts/director';
-import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
-import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
-import { default as CheckCircle2 } from 'lucide-react/dist/esm/icons/check-circle-2';
-import { default as Clock } from 'lucide-react/dist/esm/icons/clock';
 import { default as ExternalLink } from 'lucide-react/dist/esm/icons/external-link';
 import { default as Eye } from 'lucide-react/dist/esm/icons/eye';
-import { default as FileJson } from 'lucide-react/dist/esm/icons/file-json';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
-import type { DirectorCycle, DirectorSuggestionRecord } from '../../api/types.ts';
+import type { DirectorSuggestionRecord } from '../../api/types.ts';
+import type { SegmentedControlOption } from '../../components/ui/segmented-control.tsx';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName, IconButton } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Dialog, DialogPanel } from '../../components/ui/dialog.tsx';
-import { cycleElapsed, cycleStageLabels } from '../../lib/directorConstants.ts';
-import { formatDate } from '../../lib/formatters.ts';
-import { riskTone } from './directorUtils.ts';
+import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
+import { humanizeEnum, riskTone } from './directorUtils.ts';
 
-export function DirectorRecentCycles({ cycles, now }: { cycles: DirectorCycle[]; now: number }) {
-	return (
-		<section aria-labelledby="director-cycles-heading">
-			<Card>
-				<h2 className="text-sm font-semibold text-foreground" id="director-cycles-heading">
-					Recent Cycles
-				</h2>
-				<p className="mb-3 text-xs text-muted-foreground">
-					History of completed analysis passes.
-				</p>
-				<div className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
-					{cycles.map((cycle) => (
-						<div className="rounded-md bg-muted p-3" key={cycle.id}>
-							<div className="flex items-center justify-between gap-2">
-								<div className="truncate text-sm font-medium text-foreground">
-									{cycle.id}
-								</div>
-								<Badge>{cycle.status}</Badge>
-							</div>
-							<div className="mt-2 grid gap-1 text-xs text-muted-foreground">
-								<div className="flex items-center gap-1.5">
-									<Clock className="h-3.5 w-3.5" />
-									<span>{formatDate(cycle.startedAt)}</span>
-								</div>
-								<div className="flex items-center gap-1.5">
-									<Activity className="h-3.5 w-3.5" />
-									<span>{cycleStageLabels[cycle.stage]}</span>
-								</div>
-								<div className="flex items-center gap-1.5">
-									<CheckCircle2 className="h-3.5 w-3.5" />
-									<span>{cycleElapsed(cycle, now)}</span>
-								</div>
-								<div className="flex items-center gap-1.5">
-									<FileJson className="h-3.5 w-3.5" />
-									<span>{cycle.totalSuggestions} suggestion(s)</span>
-								</div>
-							</div>
-							{cycle.status === 'failed' && cycle.failureReason && (
-								<div className="mt-2 flex items-start gap-1.5 rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
-									<AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" />
-									<span className="break-words">{cycle.failureReason}</span>
-								</div>
-							)}
-						</div>
-					))}
-					{cycles.length === 0 && <EmptyState>No cycles run yet.</EmptyState>}
-				</div>
-			</Card>
-		</section>
-	);
-}
+const ALL = '__all__';
 
 // Suggestion args are persisted as a JSON object string (the recipe's targeting
 // parameters). Render them as readable `name: value` lines rather than raw JSON so
@@ -136,6 +81,100 @@ function SuggestionLaunchPreviewDialog({
 	);
 }
 
+/**
+ * One suggestion.
+ *
+ * Each of these used to be a full Card with an 16px title, a full-width description, a four-badge
+ * cluster on its own line and four default-size buttons — roughly 190px for what is one decision.
+ * The badges ride with the title, the description clamps to two lines, and the actions are compact,
+ * so a queue of eight is scannable instead of a 1,500px column.
+ */
+function SuggestionRow({
+	onDismiss,
+	onLaunch,
+	onPreview,
+	suggestion,
+}: {
+	onDismiss: (id: string) => void;
+	onLaunch: (id: string) => void;
+	onPreview: (suggestion: DirectorSuggestionRecord) => void;
+	suggestion: DirectorSuggestionRecord;
+}) {
+	const isFleetWide = suggestion.projectId === null;
+	const launchHref = suggestion.launchedPipelineSessionId
+		? `/pipeline-sessions/${encodeURIComponent(suggestion.launchedPipelineSessionId)}`
+		: suggestion.launchedRunId
+			? `/runs?run=${encodeURIComponent(suggestion.launchedRunId)}`
+			: null;
+	return (
+		<Card>
+			<div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+				<h3 className="min-w-0 text-sm font-semibold text-foreground">
+					{suggestion.title}
+				</h3>
+				<div className="flex flex-wrap gap-1.5">
+					<Badge>{humanizeEnum(suggestion.taskType)}</Badge>
+					<Badge tone={riskTone(suggestion.riskLevel)}>
+						{humanizeEnum(suggestion.riskLevel)} risk
+					</Badge>
+					{isFleetWide && <Badge>Fleet-wide</Badge>}
+					<Badge>{humanizeEnum(suggestion.status)}</Badge>
+				</div>
+			</div>
+			<p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+				{suggestion.description}
+			</p>
+			{isFleetWide && (
+				<p className="mt-1 text-xs text-muted-foreground">
+					Fleet-wide suggestions are not directly launchable. Use them as guidance for
+					choosing per-project actions, then dismiss when handled.
+				</p>
+			)}
+			<div className="mt-2 flex flex-wrap gap-2">
+				{launchHref && (
+					<Link
+						className={buttonClassName('secondary', undefined, 'compact')}
+						to={launchHref}>
+						<ExternalLink className="h-3.5 w-3.5" />
+						View launch output
+					</Link>
+				)}
+				{!isFleetWide && (
+					<Button
+						aria-label={`Preview launch for suggestion: ${suggestion.title}`}
+						onClick={() => onPreview(suggestion)}
+						size="compact"
+						title="Show the exact prompt Launch will send"
+						variant="secondary">
+						<Eye className="h-3.5 w-3.5" />
+						Preview
+					</Button>
+				)}
+				<Button
+					aria-label={`Launch suggestion: ${suggestion.title}`}
+					disabled={suggestion.status !== 'pending' || isFleetWide}
+					onClick={() => onLaunch(suggestion.id)}
+					size="compact"
+					variant="primary">
+					<Play className="h-3.5 w-3.5" />
+					Launch
+				</Button>
+				<Button
+					aria-label={`Dismiss suggestion: ${suggestion.title}`}
+					disabled={
+						suggestion.status === 'launching' || suggestion.status === 'dismissed'
+					}
+					onClick={() => onDismiss(suggestion.id)}
+					size="compact"
+					variant="ghost">
+					<Trash2 className="h-3.5 w-3.5" />
+					Dismiss
+				</Button>
+			</div>
+		</Card>
+	);
+}
+
 export function DirectorSuggestionsList({
 	onDismiss,
 	onLaunch,
@@ -148,99 +187,76 @@ export function DirectorSuggestionsList({
 	const [previewSuggestion, setPreviewSuggestion] = useState<DirectorSuggestionRecord | null>(
 		null,
 	);
-	const visibleSuggestions = suggestions.filter(
-		(suggestion) => suggestion.status !== 'dismissed',
+	const [taskFilter, setTaskFilter] = useState<string>(ALL);
+	const [riskFilter, setRiskFilter] = useState<string>(ALL);
+	const openSuggestions = suggestions.filter((suggestion) => suggestion.status !== 'dismissed');
+	const taskOptions: SegmentedControlOption<string>[] = [
+		{ label: 'All types', value: ALL },
+		...[...new Set(openSuggestions.map((suggestion) => suggestion.taskType))]
+			.sort((left, right) => left.localeCompare(right))
+			.map((taskType) => ({ label: humanizeEnum(taskType), value: taskType })),
+	];
+	const riskOptions: SegmentedControlOption<string>[] = [
+		{ label: 'All risk', value: ALL },
+		...['HIGH', 'MEDIUM', 'LOW']
+			.filter((risk) => openSuggestions.some((suggestion) => suggestion.riskLevel === risk))
+			.map((risk) => ({ label: humanizeEnum(risk), value: risk })),
+	];
+	const visibleSuggestions = openSuggestions.filter(
+		(suggestion) =>
+			(taskFilter === ALL || suggestion.taskType === taskFilter) &&
+			(riskFilter === ALL || suggestion.riskLevel === riskFilter),
 	);
+
 	return (
 		<section aria-labelledby="director-suggestions-heading" className="space-y-3">
-			<div>
-				<h2
-					className="text-sm font-semibold text-foreground"
-					id="director-suggestions-heading">
-					Suggestions
-				</h2>
-				<p className="text-xs text-muted-foreground">
-					Launch a per-project action or dismiss it once handled.
-				</p>
-			</div>
-			{visibleSuggestions.length === 0 && (
+			{/* The heading floated bare above a column of cards while its peer sat inside one, so
+			    two side-by-side sections started on two different baselines. It lives in a Card,
+			    which is also where the filters belong. */}
+			<Card>
+				<CardHeader
+					badge={
+						<Badge tone={visibleSuggestions.length > 0 ? 'amber' : 'emerald'}>
+							{visibleSuggestions.length} open
+						</Badge>
+					}
+					className="mb-0"
+					description="Launch a per-project action or dismiss it once handled."
+					id="director-suggestions-heading"
+					title="Suggestions"
+				/>
+				{openSuggestions.length > 0 && (
+					<div className="mt-3 flex flex-wrap items-center gap-2">
+						<SegmentedControl
+							ariaLabel="Filter suggestions by task type"
+							onChange={setTaskFilter}
+							options={taskOptions}
+							value={taskFilter}
+						/>
+						<SegmentedControl
+							ariaLabel="Filter suggestions by risk level"
+							onChange={setRiskFilter}
+							options={riskOptions}
+							value={riskFilter}
+						/>
+					</div>
+				)}
+			</Card>
+			{openSuggestions.length === 0 && (
 				<EmptyState>No suggestions yet. Run a cycle to generate them.</EmptyState>
 			)}
-			{visibleSuggestions.map((suggestion) => {
-				const isFleetWide = suggestion.projectId === null;
-				const launchHref = suggestion.launchedPipelineSessionId
-					? `/pipeline-sessions/${encodeURIComponent(suggestion.launchedPipelineSessionId)}`
-					: suggestion.launchedRunId
-						? `/runs?run=${encodeURIComponent(suggestion.launchedRunId)}`
-						: null;
-				return (
-					<Card key={suggestion.id}>
-						<div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-							<div>
-								<h3 className="text-base font-semibold text-foreground">
-									{suggestion.title}
-								</h3>
-								<p className="mt-1 text-sm text-muted-foreground">
-									{suggestion.description}
-								</p>
-							</div>
-							<div className="flex flex-wrap gap-2">
-								<Badge>{suggestion.taskType}</Badge>
-								<Badge tone={riskTone(suggestion.riskLevel)}>
-									{suggestion.riskLevel}
-								</Badge>
-								{isFleetWide && <Badge>Fleet-wide</Badge>}
-								<Badge>{suggestion.status}</Badge>
-							</div>
-						</div>
-						{isFleetWide && (
-							<p className="mb-3 text-xs text-muted-foreground">
-								Fleet-wide suggestions are not directly launchable. Use them as
-								guidance for choosing per-project actions, then dismiss when
-								handled.
-							</p>
-						)}
-						<div className="flex flex-wrap gap-2">
-							{launchHref && (
-								<Link
-									className={buttonClassName('secondary', undefined, 'toolbar')}
-									to={launchHref}>
-									<ExternalLink className="h-4 w-4" />
-									View launch output
-								</Link>
-							)}
-							{!isFleetWide && (
-								<Button
-									aria-label={`Preview launch for suggestion: ${suggestion.title}`}
-									onClick={() => setPreviewSuggestion(suggestion)}
-									title="Show the exact prompt Launch will send"
-									variant="secondary">
-									<Eye className="h-4 w-4" />
-									Preview
-								</Button>
-							)}
-							<Button
-								aria-label={`Launch suggestion: ${suggestion.title}`}
-								disabled={suggestion.status !== 'pending' || isFleetWide}
-								onClick={() => onLaunch(suggestion.id)}
-								variant="primary">
-								<Play className="h-4 w-4" />
-								Launch
-							</Button>
-							<Button
-								aria-label={`Dismiss suggestion: ${suggestion.title}`}
-								disabled={
-									suggestion.status === 'launching' ||
-									suggestion.status === 'dismissed'
-								}
-								onClick={() => onDismiss(suggestion.id)}>
-								<Trash2 className="h-4 w-4" />
-								Dismiss
-							</Button>
-						</div>
-					</Card>
-				);
-			})}
+			{openSuggestions.length > 0 && visibleSuggestions.length === 0 && (
+				<EmptyState>No suggestions match the selected filters.</EmptyState>
+			)}
+			{visibleSuggestions.map((suggestion) => (
+				<SuggestionRow
+					key={suggestion.id}
+					onDismiss={onDismiss}
+					onLaunch={onLaunch}
+					onPreview={setPreviewSuggestion}
+					suggestion={suggestion}
+				/>
+			))}
 			{previewSuggestion && (
 				<SuggestionLaunchPreviewDialog
 					onClose={() => setPreviewSuggestion(null)}

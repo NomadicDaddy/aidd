@@ -7,11 +7,10 @@ import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 import { useDirector } from '../../hooks/useDirector.ts';
-import { cn } from '../../lib/cn.ts';
-import { toneSurface, toneText } from '../../lib/tones.ts';
 import { Button, IconButton } from '../ui/button.tsx';
 import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
+import { ChatMessageBubble } from './ChatMessageBubble.tsx';
 
 /**
  * Global "press c to talk to the Director" capture surface. Opened from any page
@@ -106,29 +105,24 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 				</div>
 
 				<div
+					aria-live="polite"
 					className="min-h-[160px] flex-1 space-y-3 overflow-y-auto px-4 py-3"
-					ref={scrollRef}>
+					ref={scrollRef}
+					role="log">
 					{messages.map((message) => (
-						<div
-							className={cn(
-								'rounded-md px-3 py-2 text-sm',
-								message.role === 'user'
-									? 'ml-auto max-w-[82%] bg-foreground text-background'
-									: message.role === 'assistant'
-										? 'max-w-[88%] bg-muted text-foreground'
-										: cn('max-w-[88%]', toneSurface.amber, toneText.amber),
-							)}
-							key={message.id}>
-							<div className="break-words whitespace-pre-wrap">{message.content}</div>
-						</div>
+						<ChatMessageBubble
+							content={message.content}
+							key={message.id}
+							role={message.role}
+						/>
 					))}
 					{sending && (
 						<>
-							<div className="ml-auto max-w-[82%] rounded-md bg-foreground px-3 py-2 text-sm text-background opacity-70">
-								<div className="break-words whitespace-pre-wrap">
-									{pendingContent}
-								</div>
-							</div>
+							<ChatMessageBubble
+								className="opacity-70"
+								content={pendingContent}
+								role="user"
+							/>
 							<p className="text-xs text-muted-foreground">Director is thinking…</p>
 						</>
 					)}

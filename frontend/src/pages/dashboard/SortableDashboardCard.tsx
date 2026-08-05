@@ -26,7 +26,7 @@ export interface DashboardCardDef {
 const KEYBOARD_RESIZE_STEP = 24;
 
 const pillClassName =
-	'inline-flex items-center rounded-full border border-teal-300 bg-card px-2 py-0.5 text-teal-700 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-teal-400 dark:border-teal-700 dark:text-teal-300';
+	'inline-flex items-center rounded-full border border-accent/50 bg-card px-2 py-0.5 text-accent shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50';
 
 export function SortableDashboardCard({
 	card,
@@ -89,7 +89,7 @@ export function SortableDashboardCard({
 				'relative min-w-0 rounded-lg',
 				isFull && 'xl:col-span-2',
 				!locked &&
-					'cursor-grab outline-2 outline-offset-2 outline-teal-400/60 outline-dashed active:cursor-grabbing',
+					'cursor-grab outline-2 outline-offset-2 outline-accent/60 outline-dashed active:cursor-grabbing',
 				isDragging && 'z-10 opacity-60',
 			)}
 			ref={(node) => {

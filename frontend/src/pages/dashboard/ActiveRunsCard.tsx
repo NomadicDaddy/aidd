@@ -12,7 +12,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { formatDate } from '../../lib/formatters.ts';
-import { toneText } from '../../lib/tones.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { runSourceLabel } from '../runs/runRowUtils.ts';
 
 export function ActiveRunsCard({
@@ -38,6 +38,7 @@ export function ActiveRunsCard({
 						{activeRuns.length}
 					</Badge>
 				}
+				description="Runs currently executing across the fleet."
 				icon={<Activity className={`h-4 w-4 ${toneText.amber}`} />}
 				title="Active Runs"
 			/>
@@ -58,7 +59,7 @@ export function ActiveRunsCard({
 				)}
 				{activeRuns.slice(0, 4).map((run) => (
 					<div
-						className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-amber-200/80 bg-amber-50/70 p-3 transition-colors hover:border-amber-300/80 dark:border-amber-900/60 dark:bg-amber-950/20 dark:hover:border-amber-800/70"
+						className={`grid grid-cols-[1fr_auto] gap-3 rounded-lg border p-3 transition-colors ${toneBorder.amber} ${toneSurface.amber}`}
 						key={run.id}>
 						<div className="min-w-0">
 							<div className="flex min-w-0 items-center gap-1.5">

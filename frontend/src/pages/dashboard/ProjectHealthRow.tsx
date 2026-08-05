@@ -44,7 +44,7 @@ export function ProjectHealthRow({
 	const ports = project.metadata.ports;
 
 	return (
-		<div className="rounded-md border border-border/80 bg-card/70 p-3 transition-[border-color,background-color] duration-150 hover:border-teal-300 hover:bg-teal-50/50 dark:hover:border-teal-800 dark:hover:bg-teal-950/20">
+		<div className="rounded-md border border-border/80 bg-card/70 p-3 transition-[border-color,background-color] duration-150 hover:border-accent/40 hover:bg-accent-muted/60">
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
@@ -112,10 +112,14 @@ export function ProjectHealthRow({
 					{project.featureStats.passing}/{project.featureStats.total}
 				</span>
 			</div>
+			{/* The fill encodes one thing: feature completion. It used to take the priority-health
+			    hue as well, which painted a 237/238 bar solid red above an 8/8 bar painted green and
+			    left no way to tell whether length or colour was the measure. The band keeps its own
+			    Badge at the top-right of this row. */}
 			<div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
 				<div
 					aria-hidden="true"
-					className={`h-full rounded-full ${toneSolid[tone]}`}
+					className={`h-full rounded-full ${toneSolid.teal}`}
 					style={{ width: `${featureScore}%` }}
 				/>
 			</div>

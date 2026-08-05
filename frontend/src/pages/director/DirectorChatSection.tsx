@@ -8,11 +8,13 @@ import { Link } from 'react-router';
 
 import type { ChatAgentAction } from '../../api/types.ts';
 
+import { ChatMessageBubble } from '../../components/shared/ChatMessageBubble.tsx';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { formatDate } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 import { sectionDescClass, sectionTitleClass } from './directorUtils.ts';
 
 export type ChatSession = { id: string; title: string; updatedAt: number };
@@ -34,7 +36,7 @@ function ChatActionTrail({ actions }: { actions: ChatAgentAction[] }) {
 				return (
 					<li
 						className={`flex items-center gap-1.5 text-xs ${
-							isError ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'
+							isError ? toneText.amber : 'text-foreground'
 						}`}
 						key={`${action.tool}-${index}`}>
 						{isError ? (
@@ -45,7 +47,7 @@ function ChatActionTrail({ actions }: { actions: ChatAgentAction[] }) {
 						<span className="min-w-0 truncate">{action.summary}</span>
 						{runHref && (
 							<Link
-								className="inline-flex shrink-0 items-center gap-1 font-medium text-teal-700 hover:underline dark:text-teal-300"
+								className="inline-flex shrink-0 items-center gap-1 font-medium text-accent hover:underline"
 								to={runHref}>
 								<ExternalLink className="h-3 w-3" />
 								run
@@ -118,7 +120,10 @@ export function DirectorChatSection({
 						Ask the director about fleet state in a focused conversation.
 					</p>
 				</div>
-				<div className="grid min-h-[420px] gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+				{/* The 220px session rail stole a fifth of the width at 768, leaving the transcript
+				    ~470px and the composer too narrow for its own Send button. The rail stacks above
+				    the transcript until lg, where there is width for both. */}
+				<div className="grid min-h-[420px] gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
 					<div className="min-w-0 space-y-2">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="text-sm font-semibold text-foreground">Chats</h3>
@@ -137,16 +142,19 @@ export function DirectorChatSection({
 									session.updatedAt,
 								)})`;
 								return (
+									// bg-muted against bg-card was a ~4% luminance step, so the
+									// selected chat was indistinguishable from the four below it and
+									// nothing said which transcript was on screen.
 									<div
 										className={`grid grid-cols-[minmax(0,1fr)_2.75rem] items-stretch rounded-md border text-sm ${
 											isActive
-												? 'border-border bg-muted text-foreground'
+												? 'border-accent bg-accent-muted text-accent-muted-foreground'
 												: 'border-border bg-card text-foreground'
 										}`}
 										key={session.id}>
 										<button
 											aria-current={isActive ? 'true' : undefined}
-											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-teal-300 dark:focus-visible:ring-offset-slate-950"
+											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
 											onClick={() => onSelectSession(session.id)}
 											type="button">
 											<div className="truncate font-medium">
@@ -175,31 +183,28 @@ export function DirectorChatSection({
 					</div>
 
 					<div className="flex min-h-0 min-w-0 flex-col rounded-md border border-border">
-						<div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+						<div
+							aria-live="polite"
+							className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
+							role="log">
 							{messages.map((message) => (
-								<div
-									className={`rounded-md px-3 py-2 text-sm ${
-										message.role === 'user'
-											? 'ml-auto max-w-[82%] bg-foreground text-background'
-											: message.role === 'assistant'
-												? 'max-w-[88%] bg-muted text-foreground'
-												: 'max-w-[88%] bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200'
-									}`}
-									key={message.id}>
-									<div className="break-words whitespace-pre-wrap">
-										{message.content}
-									</div>
+								<ChatMessageBubble
+									content={message.content}
+									key={message.id}
+									role={message.role}>
 									{message.actions && message.actions.length > 0 && (
 										<ChatActionTrail actions={message.actions} />
 									)}
-								</div>
+								</ChatMessageBubble>
 							))}
 							{messages.length === 0 && (
 								<p className="text-sm text-muted-foreground">No messages yet.</p>
 							)}
 						</div>
 						<div className="border-t border-border p-3">
-							<div className="flex gap-2">
+							{/* min-w-0 on the row: without it the Input's intrinsic width kept the
+							    flex row from shrinking and Send was pushed off the composer at 768. */}
+							<div className="flex min-w-0 gap-2">
 								<Input
 									aria-label="Director chat message"
 									className="flex-1"

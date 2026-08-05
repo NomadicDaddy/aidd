@@ -1,6 +1,7 @@
 import type { DirectorCycle, DirectorProfileInput, DirectorRiskLevel } from '../../api/types.ts';
 
 import { textareaClass as sharedTextareaClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 
 export const textareaClass = sharedTextareaClass;
 export const sectionTitleClass = 'text-base font-semibold text-foreground';
@@ -41,7 +42,19 @@ export function contextArtifactLabel(cycle: DirectorCycle): string {
 }
 
 export function artifactTone(label: string): string {
-	if (label === 'Ready') return 'text-emerald-700 dark:text-emerald-300';
-	if (label === 'Pending' || label === 'Writing') return 'text-amber-700 dark:text-amber-300';
-	return 'text-muted-foreground';
+	if (label === 'Ready') return toneText.emerald;
+	if (label === 'Pending' || label === 'Writing') return toneText.amber;
+	return toneText.neutral;
+}
+
+/**
+ * Render a backend enum as prose: `RUN_AUDIT` → `Run audit`.
+ *
+ * The suggestion queue printed raw SCREAMING_SNAKE task types and risk levels as its only labels, so
+ * a row's two most prominent words were the two least readable ones on the page.
+ */
+export function humanizeEnum(value: string): string {
+	const words = value.replaceAll('_', ' ').trim().toLowerCase();
+	if (words.length === 0) return value;
+	return words[0]!.toUpperCase() + words.slice(1);
 }

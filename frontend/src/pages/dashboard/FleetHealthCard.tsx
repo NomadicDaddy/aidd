@@ -4,89 +4,58 @@ import type { FleetSummary } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { type Tone, toneBorder, toneSolid, toneSurface, toneText } from '../../lib/tones.ts';
+import { toneSolid, toneText } from '../../lib/tones.ts';
 import { type getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 
+/**
+ * The fleet pass rate and the band behind it — and nothing the metric row above already states.
+ *
+ * This card used to restate the Priority Health tile ("2488 passing", "92% pass rate") and the
+ * Projects tile (an ACTIVE / HEALTHY / NEED ATTENTION trio repeating "33 / 5 / 28") directly beneath
+ * them, so the same two numbers were printed five ways above the fold. The metric row owns the
+ * headline numbers; what is left here is the one thing it cannot show — the score as a bar, and the
+ * band diagnostic that explains it.
+ */
 export function FleetHealthCard({
-	_fleetFeatureTotal,
-	failingProjects,
 	featureHealthTone,
 	featureHealthValue,
 	fleet,
-	fleetFeaturePassing,
-	healthyProjects,
-	projectCount,
 }: {
-	_fleetFeatureTotal: number;
-	failingProjects: number;
 	featureHealthTone: ReturnType<typeof getHealthTone>;
 	featureHealthValue: number;
 	fleet: FleetSummary | undefined;
-	fleetFeaturePassing: number;
-	healthyProjects: number;
-	projectCount: number;
 }) {
+	const band = fleet?.fleetAggregations.priorityHealth.band;
 	return (
 		<Card variant="panel">
+			{/* The band was the only statement that most of the fleet needs attention and it sat in
+			    the description slot, at the same weight the neighbouring cards use for static
+			    boilerplate, directly under an emerald 92%. It reads as a Badge beside the score it
+			    qualifies. */}
 			<CardHeader
-				action={
-					<Badge showDot tone={featureHealthTone}>
-						{featureHealthValue}%
-					</Badge>
+				badge={
+					<>
+						<Badge showDot tone={featureHealthTone}>
+							{featureHealthValue}%
+						</Badge>
+						{band ? (
+							<Badge tone={band === 'healthy' ? 'emerald' : 'amber'}>
+								{healthBandLabel(band)}
+							</Badge>
+						) : null}
+					</>
 				}
-				description={
-					fleet?.fleetAggregations.priorityHealth.band
-						? healthBandLabel(fleet.fleetAggregations.priorityHealth.band)
-						: 'Priority health'
-				}
+				description="Share of fleet features passing, and the band driving the score."
 				icon={<Gauge className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Fleet Health"
 			/>
-			<div className="mt-5">
-				<div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
-					<span>{fleetFeaturePassing} passing</span>
-					<span>
-						{fleet?.fleetAggregations.featurePassRate ?? featureHealthValue}% pass rate
-					</span>
-				</div>
-				<div className="h-2.5 overflow-hidden rounded-full bg-muted shadow-inner">
-					<div
-						aria-hidden="true"
-						className={`h-full rounded-full ${toneSolid[featureHealthTone]} transition-[width] duration-500`}
-						style={{ width: `${featureHealthValue}%` }}
-					/>
-				</div>
-			</div>
-			<div className="mt-5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-				Projects
-			</div>
-			<div className="mt-2 grid gap-2 sm:grid-cols-3">
-				<StatTile color="teal" label="Active" value={projectCount} />
-				<StatTile color="emerald" label="Healthy" value={healthyProjects} />
-				<StatTile color="amber" label="Need Attention" value={failingProjects} />
+			<div className="h-2.5 overflow-hidden rounded-full bg-muted shadow-inner">
+				<div
+					aria-hidden="true"
+					className={`h-full rounded-full ${toneSolid[featureHealthTone]} transition-[width] duration-500`}
+					style={{ width: `${featureHealthValue}%` }}
+				/>
 			</div>
 		</Card>
-	);
-}
-
-function StatTile({
-	color,
-	label,
-	value,
-}: {
-	color: Extract<Tone, 'amber' | 'emerald' | 'teal'>;
-	label: string;
-	value: number;
-}) {
-	return (
-		<div className={`rounded-lg border p-3 ${toneBorder[color]} ${toneSurface[color]}`}>
-			<div
-				className={`text-[0.65rem] font-semibold tracking-wide uppercase ${toneText[color]}`}>
-				{label}
-			</div>
-			<div className="mt-1 font-display text-lg font-semibold text-foreground tabular-nums">
-				{value}
-			</div>
-		</div>
 	);
 }

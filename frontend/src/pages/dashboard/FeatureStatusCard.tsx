@@ -17,8 +17,9 @@ import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { toneText } from '../../lib/tones.ts';
+import { priorityLabel, priorityTone } from './dashboard-shared.ts';
 
 type FeatureStatusState = 'completed' | 'pending';
 
@@ -106,11 +107,6 @@ function buildFeatureStatusRows(projects: FeatureStatusSourceProject[]): Feature
 		});
 }
 
-function priorityLabel(priority: null | number | string): string {
-	if (priority === null || priority === '') return 'P-';
-	return `P${priority}`;
-}
-
 function statusLabel(row: FeatureStatusRow): string {
 	if (row.completed) return 'completed';
 	return row.status ?? 'pending';
@@ -159,9 +155,9 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 							</td>
 							<td className="px-3 py-2">
 								<Link
-									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
+									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 									to={rowLink(row)}>
-									<span className="block truncate font-medium text-teal-700 group-hover:text-teal-950 dark:text-teal-300 dark:group-hover:text-teal-100">
+									<span className="block truncate font-medium text-accent group-hover:underline">
 										{row.directory}
 									</span>
 									<span className="mt-0.5 block truncate text-xs text-muted-foreground">
@@ -175,8 +171,16 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 								</Badge>
 							</td>
 							<td className="px-3 py-2 text-foreground">{statusLabel(row)}</td>
-							<td className="px-3 py-2 text-right font-medium text-foreground tabular-nums">
-								{priorityLabel(row.priority)}
+							{/* Priority was plain body text here and a toned Badge one card away in
+							    the Feature Queue, with a different null label ('P-' vs 'P—'), so one
+							    concept changed shape between two cards on the same page. Both now
+							    read through priorityTone/priorityLabel in dashboard-shared. */}
+							<td className="px-3 py-2">
+								<span className="flex justify-end">
+									<Badge tone={priorityTone(row.priority)}>
+										{priorityLabel(row.priority)}
+									</Badge>
+								</span>
 							</td>
 						</tr>
 					))}
@@ -221,35 +225,22 @@ export function FeatureStatusCard({
 				title="Feature Status"
 			/>
 
-			<div className="mb-4 grid gap-3 sm:grid-cols-2">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Status</span>
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) =>
-							setStateFilter(event.target.value as FeatureStatusState)
-						}
-						value={stateFilter}>
-						{stateOptions.map((option) => (
-							<option key={option.value} value={option.value}>
-								{option.label}
-							</option>
-						))}
-					</select>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Type</span>
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) => setTypeFilter(event.target.value as FeatureStatusType)}
-						value={typeFilter}>
-						{typeOptions.map((option) => (
-							<option key={option.value} value={option.value}>
-								{option.label}
-							</option>
-						))}
-					</select>
-				</label>
+			{/* Two full-width labelled dropdowns took a two-column band the height of three table
+			    rows to express five mutually exclusive choices, and neither showed the unselected
+			    options. As segmented tracks the whole filter state is visible in one wrapping row. */}
+			<div className="mb-4 flex flex-wrap items-center gap-2">
+				<SegmentedControl
+					ariaLabel="Feature state"
+					onChange={setStateFilter}
+					options={stateOptions}
+					value={stateFilter}
+				/>
+				<SegmentedControl
+					ariaLabel="Feature type"
+					onChange={setTypeFilter}
+					options={typeOptions}
+					value={typeFilter}
+				/>
 			</div>
 
 			{isLoading && rows.length === 0 ? (

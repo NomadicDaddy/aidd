@@ -87,6 +87,11 @@ export function DashboardPage() {
 	const pendingSuggestions =
 		suggestionsQuery.data?.filter((suggestion) => suggestion.status === 'pending') ?? [];
 	const healthyProjects = Math.max(projectCount - failingProjects.length, 0);
+	// The tile is the loudest statement of fleet state on the page. Painting it accent teal
+	// regardless of the failing count made it read as healthy while its own 12px caption said 28 of
+	// 33 projects need attention.
+	const projectsTone =
+		projectCount > 0 ? getHealthTone(percent(healthyProjects, projectCount)) : 'neutral';
 	const featureStatusProjects = projectList.map<ProjectDetail | ProjectSummary>(
 		(project, index) => featureStatusDetails[index]?.data ?? project,
 	);
@@ -121,14 +126,9 @@ export function DashboardPage() {
 			label: 'Fleet Health',
 			node: (
 				<FleetHealthCard
-					_fleetFeatureTotal={fleetFeatureTotal}
-					failingProjects={failingProjects.length}
 					featureHealthTone={featureHealthTone}
 					featureHealthValue={featureHealthValue}
 					fleet={fleet}
-					fleetFeaturePassing={fleetFeaturePassing}
-					healthyProjects={healthyProjects}
-					projectCount={projectCount}
 				/>
 			),
 		},
@@ -243,15 +243,17 @@ export function DashboardPage() {
 				title="Dashboard"
 			/>
 
+			{/* gap-4 to match SortableDashboardGrid: the two sections share left and right edges, so a
+			    narrower gutter here put the metric column seam a few pixels off the card seam below it. */}
 			<section
 				aria-label="Fleet metrics"
-				className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+				className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				<Metric
-					detail={`${healthyProjects} healthy / ${failingProjects.length} Need Attention`}
+					detail={`${healthyProjects} healthy / ${failingProjects.length} need attention`}
 					icon={<FolderKanban className="h-5 w-5" />}
 					label="Projects"
 					loading={projects.isLoading && !projects.data}
-					tone="teal"
+					tone={projectsTone}
 					value={projectCount}
 				/>
 				<Metric

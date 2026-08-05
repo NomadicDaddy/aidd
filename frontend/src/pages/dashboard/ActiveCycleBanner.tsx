@@ -12,14 +12,12 @@ import {
 	cycleStageLabels,
 } from '../../lib/directorConstants.ts';
 import { formatDate } from '../../lib/formatters.ts';
-import { toneText } from '../../lib/tones.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 
 export function ActiveCycleBanner({ cycle, now }: { cycle: DirectorCycle; now: number }) {
 	return (
 		<section aria-label="Active director cycle">
-			<Card
-				className="border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/30"
-				variant="panel">
+			<Card className={`${toneBorder.teal} ${toneSurface.teal}`} variant="panel">
 				<CardHeader
 					action={
 						<Link className={cardHeaderLinkClass} to="/director">

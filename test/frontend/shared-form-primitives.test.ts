@@ -60,7 +60,7 @@ describe('shared form primitives', () => {
 
 	test('keeps the audited hand-rolled controls on canonical styles', async () => {
 		const auditedControls = [
-			['pages/audits/tabs/CatalogSidePanel.tsx', 'textareaClass'],
+			['pages/audits/tabs/AuditDefinitionEditor.tsx', 'textareaClass'],
 			['pages/projects/detail/DeleteProjectCard.tsx', 'selectClass'],
 			['pages/projects/detail/MoveProjectCard.tsx', 'selectClass'],
 			['pages/projects/detail/ProfileTab.tsx', 'textareaClass'],

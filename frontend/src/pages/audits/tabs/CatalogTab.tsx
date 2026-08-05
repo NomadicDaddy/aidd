@@ -16,10 +16,16 @@ import {
 	selectVisibleAudits as selectVisibleAuditsHelper,
 	toggleAuditSelected as toggleAuditSelectedHelper,
 } from '../auditSelection.ts';
-import { type HealthFilter, healthFor } from '../auditsUtils.ts';
-import { CatalogSidePanel } from './CatalogSidePanel.tsx';
+import {
+	auditDefinitionEditorId,
+	auditLaunchTargetsId,
+	type HealthFilter,
+	healthFor,
+} from '../auditsUtils.ts';
+import { AuditDefinitionEditor } from './AuditDefinitionEditor.tsx';
 import { CatalogTable } from './CatalogTable.tsx';
 import { CatalogToolbar } from './CatalogToolbar.tsx';
+import { LaunchTargetsCard } from './LaunchTargetsCard.tsx';
 import { useCatalogAuditLauncher } from './useCatalogAuditLauncher.ts';
 
 export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
@@ -142,6 +148,21 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 			? 'Select one or more enabled audits to run.'
 			: undefined);
 
+	// The editor sits under a table that can run 2000px tall, so a row click has to bring its own
+	// response into view; the launch-target jump is what the toolbar's disabled-run notice points at.
+	function selectAudit(name: string) {
+		setSelectedAudit(name);
+		document
+			.getElementById(auditDefinitionEditorId)
+			?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	}
+
+	function focusLaunchTargets() {
+		const section = document.getElementById(auditLaunchTargetsId);
+		section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		section?.querySelector<HTMLInputElement>('input')?.focus();
+	}
+
 	function toggleProject(id: string) {
 		setSelectedProjectIds((current) =>
 			current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
@@ -211,7 +232,9 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				auditsEnabled={auditsEnabled}
 				enabledFilter={enabledFilter}
 				healthFilter={healthFilter}
+				needsLaunchTargets={selectedProjectCount === 0}
 				onEnabledFilterChange={setEnabledFilter}
+				onFocusLaunchTargets={focusLaunchTargets}
 				onHealthFilterChange={setHealthFilter}
 				onQueryChange={setQuery}
 				onRun={runAudits}
@@ -226,33 +249,34 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				updatePending={updateSettings.isPending}
 			/>
 
-			<div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-				<CatalogTable
-					allSelected={allVisibleAuditsSelected}
-					definitions={filteredDefinitions}
-					onClearAll={clearVisibleAudits}
-					onJumpToMatrix={onJumpToMatrix}
-					onSelect={setSelectedAudit}
-					onSelectAll={selectVisibleAudits}
-					onToggleSelected={toggleAuditSelected}
-					selectedAudit={selectedAudit}
-					selectedAuditNames={selectedAuditNames}
-					someSelected={someVisibleAuditsSelected}
-				/>
+			<LaunchTargetsCard
+				onToggleProject={toggleProject}
+				projects={manager.data?.projects ?? []}
+				selectedProjectIds={selectedProjectIds}
+			/>
 
-				<CatalogSidePanel
-					auditPath={definition.data?.path}
-					content={content}
-					dirty={dirty}
-					onContentChange={setContent}
-					onSave={saveDefinition}
-					onToggleProject={toggleProject}
-					projects={manager.data?.projects ?? []}
-					savePending={save.isPending}
-					selectedAudit={selectedAudit}
-					selectedProjectIds={selectedProjectIds}
-				/>
-			</div>
+			<CatalogTable
+				allSelected={allVisibleAuditsSelected}
+				definitions={filteredDefinitions}
+				onClearAll={clearVisibleAudits}
+				onJumpToMatrix={onJumpToMatrix}
+				onSelect={selectAudit}
+				onSelectAll={selectVisibleAudits}
+				onToggleSelected={toggleAuditSelected}
+				selectedAudit={selectedAudit}
+				selectedAuditNames={selectedAuditNames}
+				someSelected={someVisibleAuditsSelected}
+			/>
+
+			<AuditDefinitionEditor
+				auditPath={definition.data?.path}
+				content={content}
+				dirty={dirty}
+				onContentChange={setContent}
+				onSave={saveDefinition}
+				savePending={save.isPending}
+				selectedAudit={selectedAudit}
+			/>
 		</div>
 	);
 }

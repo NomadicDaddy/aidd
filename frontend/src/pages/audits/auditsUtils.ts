@@ -10,6 +10,11 @@ import type {
 export type HealthFilter = 'all' | 'fresh' | 'missing' | 'stale';
 export type AuditsTab = 'applicability' | 'catalog' | 'overrides';
 
+// Catalog anchors. They live here rather than beside their components because a file that
+// exports a component may not export anything else (react-refresh/only-export-components).
+export const auditLaunchTargetsId = 'audit-launch-targets';
+export const auditDefinitionEditorId = 'audit-definition-editor';
+
 export const bucketColumns: AuditAssuranceBucket[] = [
 	'prototype_archive',
 	'single_user_local',
@@ -64,6 +69,14 @@ export function describeChangePotential(potential: AuditChangePotential): string
 			` • Apps w/ reports ${ev.appsWithAuditReports}`,
 	];
 	return lines.join(' • ');
+}
+
+// Every audit definition lives in the same directory, so repeating the prefix on all ~40 rows
+// spends the catalog's narrowest column on the one part of the path that never varies. The row shows
+// the file name; the full path stays in the cell's `title` and in the definition editor's header.
+export function auditFileName(path: string): string {
+	const segments = path.split(/[/\\]/);
+	return segments[segments.length - 1] || path;
 }
 
 export function healthFor(definition: {

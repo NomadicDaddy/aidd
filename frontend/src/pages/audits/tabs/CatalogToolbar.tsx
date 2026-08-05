@@ -18,7 +18,9 @@ interface CatalogToolbarProps {
 	auditsEnabled: boolean;
 	enabledFilter: EnabledFilter;
 	healthFilter: HealthFilter;
+	needsLaunchTargets: boolean;
 	onEnabledFilterChange: (value: EnabledFilter) => void;
+	onFocusLaunchTargets: () => void;
 	onHealthFilterChange: (value: HealthFilter) => void;
 	onQueryChange: (value: string) => void;
 	onRun: (
@@ -41,7 +43,9 @@ export function CatalogToolbar({
 	auditsEnabled,
 	enabledFilter,
 	healthFilter,
+	needsLaunchTargets,
 	onEnabledFilterChange,
+	onFocusLaunchTargets,
 	onHealthFilterChange,
 	onQueryChange,
 	onRun,
@@ -67,15 +71,20 @@ export function CatalogToolbar({
 	const projectTargetProps = selectedProjectPath ? { projectDir: selectedProjectPath } : {};
 	return (
 		<>
-			<Card className="flex flex-wrap items-center gap-2">
-				<Button
-					disabled={updatePending || !settingsReady}
-					onClick={onToggleAuditsEnabled}
-					variant={auditsEnabled ? 'secondary' : 'danger'}>
-					<ShieldCheck className="h-4 w-4" />
-					{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
-				</Button>
-				<div className="flex min-w-0 flex-wrap items-center gap-2">
+			<Card className="flex flex-wrap items-center gap-3">
+				{/* Three clusters, not six peers: the global toggle, everything that runs an audit, and
+				    everything that reviews one. Each launch-target picker now reads as bound to the
+				    buttons beside it, and a cluster wraps as a unit instead of shedding one button. */}
+				<div className="flex items-center border-border pr-3 sm:border-r">
+					<Button
+						disabled={updatePending || !settingsReady}
+						onClick={onToggleAuditsEnabled}
+						variant={auditsEnabled ? 'secondary' : 'danger'}>
+						<ShieldCheck className="h-4 w-4" />
+						{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
+					</Button>
+				</div>
+				<div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1.5">
 					<LaunchTargetControl
 						defaultScope={targetDefaults}
 						disabled={runLaunchPending}
@@ -102,7 +111,7 @@ export function CatalogToolbar({
 						Run All
 					</Button>
 				</div>
-				<div className="flex min-w-0 flex-wrap items-center gap-2">
+				<div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1.5">
 					<LaunchTargetControl
 						defaultScope={targetDefaults}
 						disabled={runLaunchPending}
@@ -121,6 +130,15 @@ export function CatalogToolbar({
 						Review Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
 					</Button>
 				</div>
+				{needsLaunchTargets ? (
+					<Button
+						className="basis-full sm:basis-auto"
+						onClick={onFocusLaunchTargets}
+						size="compact"
+						variant="ghost">
+						Choose launch targets
+					</Button>
+				) : null}
 				{runSelectedDisabledReason ? (
 					<span
 						className="basis-full text-xs text-muted-foreground"

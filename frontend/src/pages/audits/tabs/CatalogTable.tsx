@@ -5,7 +5,7 @@ import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
-import { bandTone, bucketColumns, describeChangePotential } from '../auditsUtils.ts';
+import { auditFileName, bandTone, bucketColumns, describeChangePotential } from '../auditsUtils.ts';
 
 interface CatalogTableProps {
 	allSelected: boolean;
@@ -42,10 +42,10 @@ export function CatalogTable({
 			<Card className="hidden overflow-x-auto p-0 xl:block">
 				<table
 					aria-label="Audit catalog"
-					className="w-full min-w-[960px] text-left text-sm">
+					className="w-full min-w-[840px] text-left text-sm">
 					<thead className={tableHeadClass}>
 						<tr>
-							<th className="px-4 py-3" scope="col">
+							<th className="px-3 py-3" scope="col">
 								<Checkbox
 									aria-label="Select all visible enabled audits"
 									checked={allSelected}
@@ -56,19 +56,19 @@ export function CatalogTable({
 									}}
 								/>
 							</th>
-							<th className="px-4 py-3" scope="col">
+							<th className="px-3 py-3" scope="col">
 								Audit
 							</th>
-							<th className="px-4 py-3" scope="col">
+							<th className="px-3 py-3" scope="col">
 								Change Potential
 							</th>
-							<th className="px-4 py-3" scope="col">
+							<th className="px-3 py-3" scope="col">
 								Projects
 							</th>
-							<th className="px-4 py-3" scope="col">
+							<th className="px-3 py-3" scope="col">
 								Reports
 							</th>
-							<th className="px-4 py-3" scope="col">
+							<th className="px-3 py-3" scope="col">
 								Buckets
 							</th>
 						</tr>
@@ -76,10 +76,10 @@ export function CatalogTable({
 					<tbody>
 						{definitions.map((item) => (
 							<tr
-								className={`cursor-pointer border-b border-border last:border-0 ${selectedAudit === item.name ? 'bg-teal-50 dark:bg-teal-950/30' : ''}`}
+								className={`cursor-pointer border-b border-border last:border-0 ${selectedAudit === item.name ? 'bg-accent-muted text-accent-muted-foreground' : 'hover:bg-muted/60'}`}
 								key={item.name}
 								onClick={() => onSelect(item.name)}>
-								<td className="px-4 py-3">
+								<td className="px-3 py-3">
 									<Checkbox
 										aria-label={`Select ${item.name} for launch`}
 										checked={selectedAuditNames.includes(item.name)}
@@ -88,13 +88,19 @@ export function CatalogTable({
 										onClick={(event) => event.stopPropagation()}
 									/>
 								</td>
-								<td className="px-4 py-3">
-									<div className="font-medium text-foreground">{item.name}</div>
-									<div className="text-xs break-all text-muted-foreground">
-										{item.path}
+								<td className="px-3 py-3">
+									<div
+										className="max-w-[18rem] truncate font-medium text-foreground"
+										title={item.name}>
+										{item.name}
+									</div>
+									<div
+										className="max-w-[18rem] truncate text-xs text-muted-foreground"
+										title={item.path}>
+										{auditFileName(item.path)}
 									</div>
 								</td>
-								<td className="px-4 py-3">
+								<td className="px-3 py-3">
 									{item.changePotential ? (
 										<span
 											className="inline-flex items-center gap-2"
@@ -102,19 +108,20 @@ export function CatalogTable({
 											<Badge tone={bandTone[item.changePotential.band]}>
 												{item.changePotential.band}
 											</Badge>
-											<span className="text-xs text-muted-foreground">
-												{item.changePotential.score} •{' '}
-												{item.changePotential.confidence.toLowerCase()} conf
+											{/* The confidence reads the same on every visible row; it stays in the
+											    tooltip with the rest of the evidence. */}
+											<span className="text-xs text-muted-foreground tabular-nums">
+												{item.changePotential.score}
 											</span>
 										</span>
 									) : (
 										<span className="text-xs text-muted-foreground">—</span>
 									)}
 								</td>
-								<td className="px-4 py-3">
+								<td className="px-3 py-3">
 									{item.applicableProjectCount} applicable
 								</td>
-								<td className="px-4 py-3">
+								<td className="px-3 py-3">
 									<span className={toneText.emerald}>
 										{item.freshReportCount} fresh
 									</span>
@@ -129,7 +136,7 @@ export function CatalogTable({
 								</td>
 								<td className="px-4 py-3 text-xs">
 									<button
-										className="text-teal-700 hover:underline dark:text-teal-300"
+										className="text-accent hover:underline"
 										onClick={(event) => {
 											event.stopPropagation();
 											onJumpToMatrix();
@@ -161,7 +168,7 @@ export function CatalogTable({
 					return (
 						<div
 							aria-label={item.name}
-							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-950/30' : 'border-border hover:bg-teal-50/60 dark:hover:bg-teal-950/20'}`}
+							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-accent bg-accent-muted text-accent-muted-foreground' : 'border-border hover:bg-muted/60'}`}
 							key={item.name}
 							role="group">
 							<div className="flex items-start justify-between gap-2">
@@ -175,14 +182,16 @@ export function CatalogTable({
 									/>
 									<button
 										aria-pressed={active}
-										className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
+										className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 										onClick={() => onSelect(item.name)}
 										type="button">
 										<span className="block font-medium text-foreground">
 											{item.name}
 										</span>
-										<span className="block text-xs break-all text-muted-foreground">
-											{item.path}
+										<span
+											className="block truncate text-xs text-muted-foreground"
+											title={item.path}>
+											{auditFileName(item.path)}
 										</span>
 									</button>
 								</div>
@@ -206,9 +215,7 @@ export function CatalogTable({
 												? describeChangePotential(item.changePotential)
 												: undefined
 										}>
-										{item.changePotential
-											? `${item.changePotential.score} • ${item.changePotential.confidence.toLowerCase()} conf`
-											: '—'}
+										{item.changePotential ? item.changePotential.score : '—'}
 									</dd>
 								</div>
 								<div className="space-y-1">
@@ -243,7 +250,7 @@ export function CatalogTable({
 									</dt>
 									<dd>
 										<button
-											className="text-xs text-teal-700 hover:underline dark:text-teal-300"
+											className="text-xs text-accent hover:underline"
 											onClick={(event) => {
 												event.stopPropagation();
 												onJumpToMatrix();

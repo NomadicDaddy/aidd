@@ -33,9 +33,9 @@ export function HelpDrawer({
 	return (
 		<Dialog aria-labelledby={TITLE_ID} onClose={onClose} open={open}>
 			<div
-				className="fixed inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-card shadow-2xl"
+				className="fixed inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-card/95 shadow-2xl backdrop-blur-xl"
 				onMouseDown={(event) => event.stopPropagation()}>
-				<div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+				<div className="flex items-start justify-between gap-4 border-b border-border bg-muted/80 px-5 py-4">
 					<div>
 						<div className="text-[0.65rem] font-semibold tracking-wide text-accent uppercase">
 							Help
@@ -58,7 +58,7 @@ export function HelpDrawer({
 						<HelpDrawerBody slug={slug} />
 					</Suspense>
 				</div>
-				<div className="border-t border-border px-5 py-3">
+				<div className="border-t border-border bg-muted/80 px-5 py-3">
 					<Link
 						className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/80"
 						onClick={onClose}

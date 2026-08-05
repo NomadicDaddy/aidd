@@ -44,7 +44,7 @@ interface DialogProps {
 }
 
 const OVERLAY_BASE =
-	'fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-slate-950/70 px-4 py-6 backdrop-blur-sm';
+	'fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-[var(--overlay)] px-4 py-6 backdrop-blur-sm';
 
 /**
  * Canonical modal dialog primitive.
@@ -148,7 +148,7 @@ export function Dialog({
 }
 
 const PANEL_BASE =
-	'rounded-lg border border-neutral-200 bg-white shadow-2xl ring-1 shadow-teal-950/20 ring-teal-400/10 dark:border-teal-900/70 dark:bg-slate-950';
+	'rounded-lg border border-border bg-card/95 shadow-2xl ring-1 shadow-black/20 ring-ring/10 backdrop-blur-xl';
 
 /**
  * Styled dialog panel surface. Stops `mousedown` propagation so clicks inside

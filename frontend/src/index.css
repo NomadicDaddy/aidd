@@ -34,6 +34,7 @@
 	--accent-foreground: #ffffff;
 	--accent-muted: #f0fdfa;
 	--accent-muted-foreground: #134e4a;
+	--overlay: rgb(15 23 42 / 0.35);
 	--ring: #14b8a6;
 }
 
@@ -55,6 +56,7 @@
 	--accent-foreground: #042f2e;
 	--accent-muted: rgb(13 148 136 / 0.15);
 	--accent-muted-foreground: #ccfbf1;
+	--overlay: rgb(2 6 23 / 0.7);
 	--ring: #2dd4bf;
 }
 
@@ -73,6 +75,7 @@
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent-muted: var(--accent-muted);
 	--color-accent-muted-foreground: var(--accent-muted-foreground);
+	--color-overlay: var(--overlay);
 	--color-ring: var(--ring);
 }
 

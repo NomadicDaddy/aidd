@@ -44,7 +44,7 @@ export function ShortcutsOverlay({ onClose, open }: { onClose: () => void; open:
 			onClose={onClose}
 			open={open}
 			role="dialog">
-			<DialogPanel className="w-full max-w-lg space-y-5 overflow-hidden bg-card/95 p-5 backdrop-blur-xl">
+			<DialogPanel className="w-full max-w-lg space-y-5 overflow-hidden border-border bg-card/95 p-5 backdrop-blur-xl">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<h2

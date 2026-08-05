@@ -51,6 +51,7 @@ frontend/dist/
 *.bak
 *.log
 *.tmp
+.tmp*/
 /tmp/
 logs/
 nul/

@@ -11,6 +11,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { dangerRowActionClass } from '../../lib/tones.ts';
 import { RecipeStepJsonField } from './RecipeStepJsonField.tsx';
 
 interface RecipeStepEditorProps {
@@ -28,6 +29,8 @@ export function RecipeStepEditor({
 	onDelete,
 	step,
 }: RecipeStepEditorProps) {
+	const whenParameterError = errors.when && !step.whenParameter.trim() ? errors.when : null;
+	const whenEqualsError = errors.when && !step.whenEquals.trim() ? errors.when : null;
 	return (
 		// A sunken card rather than a bare bordered div: the step list sits inside the Steps card,
 		// and nesting a default card in a default card gave two identical surfaces with no depth
@@ -42,7 +45,7 @@ export function RecipeStepEditor({
 				    danger button repeated down the list. */}
 				<IconButton
 					ariaLabel={`Delete step ${index + 1}`}
-					className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+					className={dangerRowActionClass}
 					onClick={onDelete}
 					variant="ghost">
 					<Trash2 className="h-4 w-4" />
@@ -125,9 +128,12 @@ export function RecipeStepEditor({
 				    own they read as two more required fields in the same stack. */}
 				<p className={`mb-1 ${fieldLabelClass}`}>Condition (optional)</p>
 				<div className="grid gap-3 sm:grid-cols-2">
-					<FieldRow label="Run when parameter">
+					{/* The message belongs to the empty half of the pair. `errors.when` is raised
+					    when exactly one of the two is filled, so marking both invalid pointed at
+					    the field that was already right, and the sentence sat under the pair
+					    belonging to neither. */}
+					<FieldRow error={whenParameterError} label="Run when parameter">
 						<Input
-							aria-invalid={Boolean(errors.when)}
 							onChange={(event) => onChange({ whenParameter: event.target.value })}
 							// A shape, not a plausible value: `stopBeforeImplementation` in grey
 							// was read as a filled-in default often enough to be worth losing.
@@ -135,19 +141,13 @@ export function RecipeStepEditor({
 							value={step.whenParameter}
 						/>
 					</FieldRow>
-					<FieldRow label="Equals">
+					<FieldRow error={whenEqualsError} label="Equals">
 						<Input
-							aria-invalid={Boolean(errors.when)}
 							onChange={(event) => onChange({ whenEquals: event.target.value })}
 							placeholder="expected value"
 							value={step.whenEquals}
 						/>
 					</FieldRow>
-					{errors.when ? (
-						<p className="text-xs font-medium text-red-600 sm:col-span-2 dark:text-red-400">
-							{errors.when}
-						</p>
-					) : null}
 				</div>
 			</div>
 			{/* Stacked full width rather than three narrow columns: JSON is the one thing here that

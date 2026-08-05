@@ -1,5 +1,6 @@
 import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 
 export function MetadataItem({
 	className,
@@ -20,7 +21,13 @@ export function MetadataItem({
 
 export function ReadOnlyContractViolation() {
 	return (
-		<div className="rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+		<div
+			className={cn(
+				'rounded-md border p-2 text-xs',
+				toneBorder.red,
+				toneSurface.red,
+				toneText.red,
+			)}>
 			<strong>Read-only contract violation.</strong> This skill directive was instructed not
 			to modify the project, but its run evidence includes file changes or commits. aidd
 			preserved the evidence and did not automatically revert any work.

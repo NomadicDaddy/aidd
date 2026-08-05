@@ -7,11 +7,11 @@ import type { ProjectCreateMode, ProjectRecommendResult } from '../../api/types.
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 import type { ProjectTemplateSummary } from '../../api/types/settings.ts';
 
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { useCreateProject, useRecommendProjectMode } from '../../hooks/useProjects.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
-import { toneText } from '../../lib/tones.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 import { BlueprintOnlyToggle } from './BlueprintOnlyToggle.tsx';
 import { ProjectAdvisorRecommendation } from './ProjectAdvisorRecommendation.tsx';
 import { ProjectCreateActions } from './ProjectCreateActions.tsx';
@@ -170,19 +170,14 @@ export function ProjectCreateLane({
 			) : null}
 
 			<div className="grid gap-3 sm:grid-cols-2">
-				<label className="block space-y-1">
-					<span className={fieldLabelClass}>Name</span>
+				<FieldRow error={nameError} label="Name" required>
 					<Input
 						onChange={(event) => github.editName(event.target.value)}
 						placeholder="my-new-app"
 						value={name}
 					/>
-					{nameError ? (
-						<p className="text-xs text-red-600 dark:text-red-400">{nameError}</p>
-					) : null}
-				</label>
-				<label className="block space-y-1">
-					<span className={fieldLabelClass}>Root</span>
+				</FieldRow>
+				<FieldRow label="Root">
 					<select
 						className={selectClass}
 						onChange={(event) => setRoot(event.target.value)}
@@ -196,26 +191,27 @@ export function ProjectCreateLane({
 							</option>
 						))}
 					</select>
-				</label>
+				</FieldRow>
 			</div>
 
-			<label className="block space-y-1">
-				<span className={fieldLabelClass}>
-					Description
-					{requiresDescription ? <span className={toneText.red}> *</span> : null}
-				</span>
+			{/* The `*` was hand-drawn here — the only field in the app that marked itself required
+			    — and it is the marker `FieldRow` now owns, so it travels with the `aria-required`
+			    that was missing beside it. */}
+			<FieldRow
+				error={
+					descriptionMissing
+						? `The ${selectedTemplate?.name ?? 'selected'} template requires a description.`
+						: null
+				}
+				label="Description"
+				required={requiresDescription}>
 				<Input
 					maxLength={500}
 					onChange={(event) => setDescription(event.target.value)}
 					placeholder="What this application is for"
 					value={description}
 				/>
-				{descriptionMissing ? (
-					<p className="text-xs text-red-600 dark:text-red-400">
-						The {selectedTemplate?.name ?? 'selected'} template requires a description.
-					</p>
-				) : null}
-			</label>
+			</FieldRow>
 
 			<ProjectSpecField
 				setSpecKind={setSpecKind}

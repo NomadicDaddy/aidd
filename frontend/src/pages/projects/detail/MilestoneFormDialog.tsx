@@ -4,8 +4,9 @@ import type { ProjectMilestone } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
+import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
-import { fieldLabelClass, textareaClass } from '../../../lib/formStyles.ts';
+import { textareaClass } from '../../../lib/formStyles.ts';
 
 export interface MilestoneFormValues {
 	description: string;
@@ -70,33 +71,38 @@ export function MilestoneFormDialog({
 				<h2 className="text-base font-semibold text-foreground" id="milestone-form-title">
 					{editing ? `Edit ${milestone.name}` : 'New milestone'}
 				</h2>
-				<label className="block space-y-1">
-					<span className={fieldLabelClass}>Name</span>
+				{/* The collision message used to sit outside the field it was about, so the input
+				    it named stayed unmarked and the sentence belonged to the dialog. */}
+				<FieldRow
+					error={collides ? `A milestone named ${trimmedName} already exists.` : null}
+					label="Name"
+					required>
 					<Input
 						aria-label="Milestone name"
 						className="w-full"
 						onChange={(event) => setName(event.target.value)}
 						value={name}
 					/>
-				</label>
-				{collides ? (
-					<p className="text-xs text-red-600 dark:text-red-400">
-						A milestone named {trimmedName} already exists.
-					</p>
-				) : null}
-				<label className="block space-y-1">
-					<span className={fieldLabelClass}>Description</span>
+				</FieldRow>
+				<FieldRow label="Description">
 					<textarea
 						aria-label="Milestone description"
 						className={textareaClass}
 						onChange={(event) => setDescription(event.target.value)}
 						value={description}
 					/>
-				</label>
-				<label className="block space-y-1">
-					<span className={fieldLabelClass}>
-						Position (1 = first milestone the coding gate walks)
-					</span>
+				</FieldRow>
+				{/* Position blocks Submit and said nothing: an out-of-range number left the button
+				    disabled with no mark on the field that disabled it. It seeds valid, so this
+				    can only appear after the operator has typed. */}
+				<FieldRow
+					error={
+						positionValid
+							? null
+							: `Enter a whole number between 1 and ${editing ? count : count + 1}.`
+					}
+					label="Position (1 = first milestone the coding gate walks)"
+					required>
 					<Input
 						aria-label="Milestone position"
 						className="w-24"
@@ -104,7 +110,7 @@ export function MilestoneFormDialog({
 						onChange={(event) => setPosition(event.target.value)}
 						value={position}
 					/>
-				</label>
+				</FieldRow>
 				<p className="text-xs text-muted-foreground">
 					Reordering can push features later to keep them behind their dependencies. You
 					will see exactly what moves before anything is written.

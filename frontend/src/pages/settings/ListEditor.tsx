@@ -4,8 +4,7 @@ import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
-import { fieldLabelClass } from '../../lib/formStyles.ts';
-import { toneBorder, toneText } from '../../lib/tones.ts';
+import { fieldErrorClass, fieldLabelClass } from '../../lib/formStyles.ts';
 import { describeListEntry } from './settingsUtils.ts';
 
 export function ListEditor({
@@ -40,11 +39,10 @@ export function ListEditor({
 									aria-describedby={isBlank ? errorId : undefined}
 									aria-invalid={isBlank || undefined}
 									aria-label={`${label} entry ${index + 1}`}
-									className={
-										isBlank
-											? `${toneBorder.red} focus-visible:ring-red-400/40`
-											: undefined
-									}
+									// No skin here: `aria-invalid` above is what paints it, through
+									// the variant every other control shares. This one reached for
+									// a region-weight border and its own focus ring, so a blank
+									// entry looked unlike every other invalid field in Settings.
 									onChange={(event) => {
 										const next = [...items];
 										next[index] = event.target.value;
@@ -66,7 +64,7 @@ export function ListEditor({
 								</IconButton>
 							</div>
 							{isBlank ? (
-								<p className={`text-xs ${toneText.red}`} id={errorId} role="alert">
+								<p className={fieldErrorClass} id={errorId} role="alert">
 									Enter a folder name or remove this entry.
 								</p>
 							) : null}

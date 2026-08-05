@@ -67,3 +67,28 @@ export const toneSolid: Record<Tone, string> = {
 	teal: 'bg-teal-500',
 	violet: 'bg-violet-500',
 };
+
+/**
+ * The invalid-control treatment. Declared here with the rest of the reds because this file is the
+ * single place a red gets chosen, and `border-red-500` is not one of the shapes above:
+ * `toneBorder.red` is a region edge — a 200-weight tint meant to sit under content — and a control
+ * the operator has to go back and fix needs a line visible at 1px against `bg-card`.
+ *
+ * `aria-invalid:focus-visible:border-red-500` is not redundant with the unfocused rule. Controls
+ * carry `focus-visible:border-accent/60`, which has the same specificity as the plain `aria-invalid`
+ * variant, so the later-generated one won and the field turned teal the moment the operator clicked
+ * into it — the error disappeared exactly when they went to correct it. Pairing the two variants
+ * takes the specificity past it, and an invalid control now holds one border colour either way.
+ */
+export const invalidControlClass =
+	'aria-invalid:border-red-500 aria-invalid:focus-visible:border-red-500 aria-invalid:focus-visible:ring-red-400/40 dark:aria-invalid:border-red-400 dark:aria-invalid:focus-visible:border-red-400';
+
+/**
+ * A destructive row action: quiet until hover.
+ *
+ * The Button `danger` variant is filled at rest, which is right for the one button that ends a form
+ * and wrong for a delete repeated down a list — twelve filled red buttons read as twelve problems.
+ * Recipe steps and recipe parameters both wanted this and both spelled it out by hand.
+ */
+export const dangerRowActionClass =
+	'hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400';

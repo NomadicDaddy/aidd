@@ -7,10 +7,11 @@ import type { ProjectSummary } from '../../api/types.ts';
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
 import { cn } from '../../lib/cn.ts';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 import { Button } from '../ui/button.tsx';
 import { Card } from '../ui/card.tsx';
+import { FieldRow } from '../ui/field.tsx';
 import { Input } from '../ui/input.tsx';
 import { LaunchTargetControl } from './LaunchTargetControl.tsx';
 
@@ -52,11 +53,14 @@ export function LaunchForm({
 		<Card {...(className ? { className } : {})}>
 			<div className="space-y-3">
 				<div className="grid gap-3 md:grid-cols-2">
-					<label className="space-y-1">
-						<span className={fieldLabelClass}>Project</span>
+					{/* Required, not invalid. This select was painted `aria-invalid` on first
+					    paint of a form nobody had touched — the operator had done nothing wrong,
+					    and a screen reader was told the control held a bad value before it held
+					    any value at all. The state being described is "this one is needed",
+					    which is what `required` says. */}
+					<FieldRow label="Project" required>
 						<select
 							aria-describedby={projectMissing ? hintId : undefined}
-							aria-invalid={projectMissing || undefined}
 							className={`${selectClass} w-full`}
 							onChange={(event) => setProjectDir(event.target.value)}
 							value={projectDir}>
@@ -72,22 +76,20 @@ export function LaunchForm({
 								Choose a project to enable launch.
 							</p>
 						) : null}
-					</label>
-					<label className="space-y-1">
-						<span className={fieldLabelClass}>Arguments</span>
+					</FieldRow>
+					<FieldRow label="Arguments">
 						<Input
 							onChange={(event) => setArgs(event.target.value)}
 							placeholder="Passed as $ARGUMENTS"
 							value={args}
 						/>
-					</label>
+					</FieldRow>
 				</div>
 				<div className="rounded-md border border-accent/30 bg-accent-muted/60 p-3 text-sm">
 					<p className="font-medium text-foreground">
 						Skills run as autonomous directives, not aidd audits.
 					</p>
-					<label className="mt-3 grid gap-1">
-						<span className={fieldLabelClass}>Execution intent</span>
+					<FieldRow className="mt-3" label="Execution intent">
 						<select
 							className={`${selectClass} w-full`}
 							onChange={(event) =>
@@ -102,7 +104,7 @@ export function LaunchForm({
 								? 'The directive forbids repository, metadata, changelog, and git mutations.'
 								: 'The directive may execute commands, edit project files and metadata, and create commits when needed.'}
 						</span>
-					</label>
+					</FieldRow>
 				</div>
 				<LaunchTargetControl
 					mode="directive"

@@ -5,6 +5,8 @@ import type { ProjectMilestonePlan } from '../../../api/types.ts';
 
 import { Button } from '../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
+import { cn } from '../../../lib/cn.ts';
+import { toneText } from '../../../lib/tones.ts';
 import {
 	groupMovesByTarget,
 	type MilestoneRequest,
@@ -129,7 +131,7 @@ export function MilestonePlanDialog({
 				{plan.violations.length > 0 ? (
 					<div className="space-y-1.5">
 						<SectionTitle>Unresolved dependency violations</SectionTitle>
-						<ul className="space-y-1 text-xs text-red-600 dark:text-red-400">
+						<ul className={cn('space-y-1 text-xs', toneText.red)}>
 							{plan.violations.map((violation) => (
 								<li key={`${violation.featureDirectory}:${violation.dependency}`}>
 									<span className="font-mono">{violation.featureDirectory}</span>{' '}

@@ -3,13 +3,15 @@ import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-rig
 import { useState } from 'react';
 
 import { Button } from '../../components/ui/button.tsx';
-import { fieldLabelClass, textareaClass } from '../../lib/formStyles.ts';
+import { fieldErrorClass, fieldLabelClass, textareaClass } from '../../lib/formStyles.ts';
 
 // `min-h-40` rather than the old `min-h-28`: a five-line JSON object is the normal case here, and
 // at 112px every real config was clipped mid-object and had to be dragged open before it could be
 // read. `resize-y` still handles the long ones.
+// One class, not two. The invalid skin was built here by hand because `textareaClass` had no
+// invalid state at all; it now carries the same `aria-invalid` variant as every other control, so
+// the attribute this field already sets is what paints it.
 const jsonTextareaClass = `${textareaClass} min-h-40 font-mono text-xs`;
-const errorTextareaClass = `${jsonTextareaClass} border-red-500 focus-visible:border-red-500 focus-visible:ring-red-200 dark:border-red-500 dark:focus-visible:border-red-500 dark:focus-visible:ring-red-900`;
 
 export type StepJsonFieldKey = 'configJson' | 'postHookJson' | 'preHookJson';
 
@@ -66,17 +68,14 @@ export function RecipeStepJsonField({
 					aria-describedby={error ? errorId : undefined}
 					aria-invalid={Boolean(error)}
 					aria-labelledby={labelId}
-					className={error ? errorTextareaClass : jsonTextareaClass}
+					className={jsonTextareaClass}
 					data-testid={`step-${stepId}-${fieldKey}`}
 					id={textareaId}
 					onChange={(event) => onChange(event.target.value)}
 					value={value}
 				/>
 				{error ? (
-					<p
-						className="text-xs font-medium text-red-600 dark:text-red-400"
-						id={errorId}
-						role="alert">
+					<p className={fieldErrorClass} id={errorId} role="alert">
 						{error}
 					</p>
 				) : null}

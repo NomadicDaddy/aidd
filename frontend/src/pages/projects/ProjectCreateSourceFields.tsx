@@ -1,8 +1,9 @@
 import type { ProjectTemplateSummary } from '../../api/types/settings.ts';
 import type { GithubTemplateSourceState } from './useGithubTemplateSource.ts';
 
+import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 
 // Source-selection fields of the create lane (ProjectCreateLane.tsx), split out to keep
 // that file within the modularity budget: the GitHub-repo source field (state lives in
@@ -10,21 +11,20 @@ import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
 
 export function GithubRepoField({ source }: { source: GithubTemplateSourceState }) {
 	return (
-		<label className="block space-y-1">
-			<span className={fieldLabelClass}>GitHub repository</span>
+		<FieldRow error={source.urlError} label="GitHub repository" required>
 			<Input
 				onChange={(event) => source.onUrlChange(event.target.value)}
 				placeholder="https://github.com/owner/repo or owner/repo#ref"
 				value={source.templateUrl}
 			/>
-			{source.urlError ? (
-				<p className="text-xs text-red-600 dark:text-red-400">{source.urlError}</p>
-			) : (
+			{/* The hint stays a sibling and the message is the field's: they were an either/or
+			    before, so learning what the field does cost you the explanation of what it does. */}
+			{source.urlError ? null : (
 				<p className="text-xs text-muted-foreground">
 					Cloned as a template: history is stripped and a fresh git repo is initialized.
 				</p>
 			)}
-		</label>
+		</FieldRow>
 	);
 }
 
@@ -40,8 +40,7 @@ export function ProjectTemplatePicker({
 	templates: ProjectTemplateSummary[];
 }) {
 	return (
-		<label className="block space-y-1">
-			<span className={fieldLabelClass}>Template</span>
+		<FieldRow label="Template">
 			<select
 				className={selectClass}
 				onChange={(event) => onChange(event.target.value)}
@@ -56,6 +55,6 @@ export function ProjectTemplatePicker({
 			{selectedTemplate ? (
 				<p className="text-xs text-muted-foreground">{selectedTemplate.description}</p>
 			) : null}
-		</label>
+		</FieldRow>
 	);
 }

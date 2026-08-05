@@ -16,6 +16,7 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import { dangerRowActionClass } from '../../../lib/tones.ts';
 import { newStepDraft, type StepDraft, type StepJsonErrors } from '../recipe-steps.ts';
 import { RecipeStepEditor } from '../RecipeStepEditor.tsx';
 
@@ -124,19 +125,19 @@ export function RecipeEditMode({
 			/>
 
 			<Card className={`grid gap-3 ${isCreate ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
+				{/* Both of these block Save, and neither said so until Save was pressed. The id
+				    additionally showed a red message beside a control still rendering the ordinary
+				    grey border, which read as a note about the field rather than a fault in it. */}
 				{setId && (
-					<FieldRow label="Id">
+					<FieldRow error={idError} label="Id" required>
 						<Input
 							onChange={(event) => setId(event.target.value)}
 							placeholder="my-recipe"
 							value={id}
 						/>
-						{idError && (
-							<p className="text-xs text-red-600 dark:text-red-400">{idError}</p>
-						)}
 					</FieldRow>
 				)}
-				<FieldRow label="Name">
+				<FieldRow label="Name" required={!nameReadOnly}>
 					<Input
 						disabled={nameReadOnly}
 						onChange={(event) => setName(event.target.value)}
@@ -233,11 +234,12 @@ export function RecipeEditMode({
 								placeholder="default"
 								value={parameter.defaultValue ?? ''}
 							/>
-							{/* Same treatment as the step delete: removing one row of a list is not
-							    the destructive climax of the form, so it stays quiet until hover. */}
+							{/* Same treatment as the step delete, and now literally the same class:
+							    removing one row of a list is not the destructive climax of the
+							    form, so it stays quiet until hover. */}
 							<IconButton
 								ariaLabel={`Remove parameter ${index + 1}`}
-								className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+								className={dangerRowActionClass}
 								onClick={() =>
 									setParameters((current) =>
 										current.filter((_, entryIndex) => entryIndex !== index),

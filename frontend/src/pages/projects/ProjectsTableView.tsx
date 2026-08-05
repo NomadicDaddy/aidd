@@ -8,6 +8,7 @@ import type { ProjectColumn } from './projects-table-columns.ts';
 import { ColumnChooser } from '../../components/shared/ColumnChooser.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { type SortDir, type SortKey } from './projects-list-sort.ts';
 import {
@@ -52,9 +53,16 @@ function ColumnHeader({
 	onSort: (key: SortKey) => void;
 }) {
 	const sortKey = column.sortKey;
+	// Matches the pinned identity `<td>` in ProjectTableRow. The header needs its own opaque
+	// `bg-muted` — the one on `<thead>` does not paint under a sticky child — and a higher
+	// z-index than the body cells so it stays above them at the intersection.
+	const className =
+		column.key === 'name'
+			? 'sticky top-0 left-0 z-30 bg-muted px-3 py-3'
+			: 'sticky top-0 z-20 bg-muted px-3 py-3';
 	if (!sortKey) {
 		return (
-			<th className="px-3 py-3" scope="col">
+			<th className={className} scope="col">
 				{column.label}
 			</th>
 		);
@@ -64,7 +72,7 @@ function ColumnHeader({
 	return (
 		<th
 			aria-sort={isActive ? (activeDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-			className="px-3 py-3"
+			className={className}
 			scope="col">
 			<button
 				aria-label={`Sort by ${column.label}${isActive ? ` (${activeDir})` : ''}`}
@@ -119,9 +127,11 @@ export function ProjectsTableView({
 				/>
 			</div>
 			<Card className="p-0">
-				<OverflowScroller ariaLabel="Projects table">
+				<OverflowScroller
+					ariaLabel="Projects table"
+					scrollerClassName="max-h-[70vh] overflow-y-auto">
 					<table aria-label="Projects" className="w-full text-left text-sm">
-						<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+						<thead className={tableHeadClass}>
 							<tr>
 								{columns.map((column) => (
 									<ColumnHeader

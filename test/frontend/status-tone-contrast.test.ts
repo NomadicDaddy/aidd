@@ -53,6 +53,11 @@ describe('status tones carry dark variants', () => {
 			join(pagesRoot, 'audits', 'tabs', 'CatalogTable.tsx'),
 		).text();
 		const card = await Bun.file(join(pagesRoot, 'projects', 'ProjectCard.tsx')).text();
+		// The card's attribute grid — and with it the port dots — moved into its own file when
+		// ProjectCard crossed the 300-line cap.
+		const metrics = await Bun.file(
+			join(pagesRoot, 'projects', 'ProjectCardMetrics.tsx'),
+		).text();
 
 		// The Audits REPORTS column and the Projects failing-count suffix were the two sites the
 		// sweep measured below AA on the dark canvas.
@@ -62,7 +67,7 @@ describe('status tones carry dark variants', () => {
 		expect(card).toContain('`ml-2 text-xs ${toneText.amber}`');
 		expect(card).toContain('`text-xs ${toneText.red}`}>{metadata.sync.lastSyncError}');
 		// The port dots and the feature-progress bar read their fill from the same scale.
-		expect(card).toContain("toneSolid[listening ? 'emerald' : 'red']");
+		expect(metrics).toContain("toneSolid[listening ? 'emerald' : 'red']");
 	});
 
 	test('never leaves status to color alone', async () => {

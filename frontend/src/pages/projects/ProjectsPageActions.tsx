@@ -5,6 +5,7 @@ import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
 import { Link } from 'react-router';
 
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
+import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 
 export function ProjectsPageActions({
 	importOpen,
@@ -22,7 +23,9 @@ export function ProjectsPageActions({
 	setProjectView: (view: 'cards' | 'table') => void;
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-2">
+		// `flex-nowrap`: at 768 this row wrapped onto three lines and squeezed the PageHeader title
+		// column to ~110px. The two secondary actions drop their labels below `lg` so the row holds.
+		<div className="flex flex-nowrap items-center gap-2">
 			<Button
 				aria-label="New project"
 				onClick={onToggleNew}
@@ -30,32 +33,44 @@ export function ProjectsPageActions({
 				<Plus className="h-4 w-4" />
 				<span className="hidden sm:inline">New Project</span>
 			</Button>
+			{/* A shortcut into the intake panel's Ingest lane, not a peer of the primary entry
+			    point: as a second `primary` it lit teal at the same time as the panel's own
+			    "Ingest Existing" tab, two controls rendering one state. */}
 			<Button
 				aria-label="Import existing projects"
+				aria-pressed={importOpen}
 				onClick={onToggleImport}
-				variant={importOpen ? 'primary' : 'secondary'}>
+				variant="ghost">
 				<PackagePlus className="h-4 w-4" />
-				<span className="hidden sm:inline">Import Existing</span>
+				<span className="hidden lg:inline">Import Existing</span>
 			</Button>
 			<Link
 				aria-label="Open profile matrix"
 				className={buttonClassName('secondary')}
 				to="/projects/profile-matrix">
 				<List className="h-4 w-4" />
-				<span className="hidden sm:inline">Profile Matrix</span>
+				<span className="hidden lg:inline">Profile Matrix</span>
 			</Link>
-			<Button
-				aria-label="Card view"
-				onClick={() => setProjectView('cards')}
-				variant={projectView === 'cards' ? 'primary' : 'secondary'}>
-				<Grid2X2 className="h-4 w-4" />
-			</Button>
-			<Button
-				aria-label="Table view"
-				onClick={() => setProjectView('table')}
-				variant={projectView === 'table' ? 'primary' : 'secondary'}>
-				<List className="h-4 w-4" />
-			</Button>
+			<SegmentedControl
+				ariaLabel="Project view"
+				className="w-auto"
+				onChange={setProjectView}
+				options={[
+					{
+						ariaLabel: 'Card view',
+						label: <Grid2X2 className="h-4 w-4" />,
+						title: 'Card view',
+						value: 'cards',
+					},
+					{
+						ariaLabel: 'Table view',
+						label: <List className="h-4 w-4" />,
+						title: 'Table view',
+						value: 'table',
+					},
+				]}
+				value={projectView}
+			/>
 		</div>
 	);
 }

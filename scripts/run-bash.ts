@@ -14,6 +14,11 @@
 // The shell scripts this runs (.githooks/leak-guard-setup.sh, scripts/check-leak-guard.sh) are
 // kept byte-identical across the aidd, spernakit, and starsync repositories, so the portability
 // fix cannot live inside them. It lives here, in the repository-local script that invokes them.
+//
+// This file is therefore seeded, not synced. scripts/lib/leak-guard/contract.ts lists it under
+// SEEDED_SCRIPTS: an installer writes it into a repository that lacks it and never overwrites one
+// that has it. The three copies are deliberately not byte-identical to each other, because each
+// one names its own repository's entry points.
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';

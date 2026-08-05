@@ -170,7 +170,7 @@ export function ProjectCreateLane({
 			) : null}
 
 			<div className="grid gap-3 sm:grid-cols-2">
-				<label className="space-y-1">
+				<label className="block space-y-1">
 					<span className={fieldLabelClass}>Name</span>
 					<Input
 						onChange={(event) => github.editName(event.target.value)}
@@ -181,10 +181,10 @@ export function ProjectCreateLane({
 						<p className="text-xs text-red-600 dark:text-red-400">{nameError}</p>
 					) : null}
 				</label>
-				<label className="space-y-1">
+				<label className="block space-y-1">
 					<span className={fieldLabelClass}>Root</span>
 					<select
-						className={`${selectClass} w-full`}
+						className={selectClass}
 						onChange={(event) => setRoot(event.target.value)}
 						value={root}>
 						{roots.length === 0 ? (
@@ -199,7 +199,7 @@ export function ProjectCreateLane({
 				</label>
 			</div>
 
-			<label className="space-y-1">
+			<label className="block space-y-1">
 				<span className={fieldLabelClass}>
 					Description
 					{requiresDescription ? <span className={toneText.red}> *</span> : null}

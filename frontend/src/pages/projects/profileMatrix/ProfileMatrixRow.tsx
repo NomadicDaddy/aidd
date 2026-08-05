@@ -9,7 +9,9 @@ import type { ProfileMatrixRowModel } from './profileMatrixTypes.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
+import { selectClass } from '../../../lib/formStyles.ts';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
+import { sourceLabel, unsavedBadgeLabel } from './profileMatrixLabels.ts';
 
 function formatUpdatedAt(value: string): string {
 	if (!value) return 'Unknown';
@@ -19,7 +21,12 @@ function formatUpdatedAt(value: string): string {
 	}).format(new Date(value));
 }
 
-function ProfileFacetSelect({
+/**
+ * One facet dropdown. It reads its skin from the shared `selectClass` rather than a hand-rolled
+ * class list: the literal it replaced painted `bg-background` inside a `bg-card` row, which
+ * inverted the surface stack so all 198 selects read as holes punched through the table.
+ */
+export function ProfileFacetSelect({
 	field,
 	onChange,
 	projectName,
@@ -39,7 +46,7 @@ function ProfileFacetSelect({
 	return (
 		<select
 			aria-label={`${projectName} ${facet.title}`}
-			className="h-8 w-full min-w-36 rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+			className={`${selectClass} h-8 min-w-36 px-2 text-xs`}
 			onChange={(event) =>
 				onChange(
 					row.project.id,
@@ -81,21 +88,33 @@ export function ProfileMatrixRow({
 	const sourceTone = row.project.metadata.profile.source === 'explicit' ? 'teal' : 'neutral';
 
 	return (
-		<tr className="border-b border-border align-top transition-colors hover:bg-muted/40">
-			<th className="sticky left-0 z-10 max-w-64 min-w-56 bg-card px-3 py-3 text-left">
+		// A dirty row is promoted at row level, not just by a 40px badge: over a 3000px table the
+		// badge scrolled out of reach and the header count was the only other signal. The tint plus
+		// the amber rule on the pinned cell make the row findable from the sticky column alone.
+		<tr
+			className={`border-b border-border align-top transition-colors hover:bg-muted/40 ${
+				row.dirty ? 'bg-amber-500/5' : ''
+			}`}
+			data-dirty={row.dirty ? 'true' : undefined}>
+			<th
+				className={`sticky left-0 z-10 max-w-64 min-w-44 bg-card px-3 py-3 text-left ${
+					row.dirty ? 'border-l-2 border-amber-500/60' : ''
+				}`}>
 				<Link
 					className="block truncate text-sm font-semibold text-foreground hover:underline"
 					to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
 					{row.project.name}
 				</Link>
-				<div className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
+				<div className="mt-1 truncate font-mono text-2xs text-muted-foreground">
 					{row.project.path}
 				</div>
 			</th>
 			<td className="px-3 py-3">
 				<div className="flex flex-wrap gap-1.5">
-					<Badge tone={sourceTone}>{row.project.metadata.profile.source}</Badge>
-					{row.dirty && <Badge tone="amber">dirty</Badge>}
+					<Badge tone={sourceTone}>
+						{sourceLabel(row.project.metadata.profile.source)}
+					</Badge>
+					{row.dirty && <Badge tone="amber">{unsavedBadgeLabel}</Badge>}
 				</div>
 			</td>
 			{showFacets
@@ -111,7 +130,9 @@ export function ProfileMatrixRow({
 					))
 				: null}
 			<td className="px-3 py-3">
-				<div className="flex min-w-40 flex-col gap-1">
+				{/* `items-start`: the column stretched its Badge into a 160px bar while the Source
+				    Badge two cells earlier stayed an intrinsic pill — one component, two shapes. */}
+				<div className="flex min-w-40 flex-col items-start gap-1">
 					<Badge tone={row.posture.tone}>{row.posture.label}</Badge>
 					{row.posture.reasons.length > 0 && (
 						<span className="text-xs text-muted-foreground">
@@ -121,7 +142,9 @@ export function ProfileMatrixRow({
 					)}
 				</div>
 			</td>
-			<td className="px-3 py-3 text-xs tabular-nums">
+			{/* `whitespace-nowrap`: at 69px both lines wrapped, making this the tallest cell in
+			    every row and setting an 89px row height across the whole table. */}
+			<td className="min-w-28 px-3 py-3 text-xs whitespace-nowrap tabular-nums">
 				<div className="font-medium text-foreground">
 					{applicable}/{auditCount} apply
 				</div>
@@ -130,7 +153,9 @@ export function ProfileMatrixRow({
 			<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
 				{formatUpdatedAt(row.project.metadata.profile.updatedAt)}
 			</td>
-			<td className="px-3 py-3">
+			{/* Pinned to the trailing edge so the commit controls stay reachable while the facet
+			    selects scroll between the two pinned columns. */}
+			<td className="sticky right-0 z-10 bg-card px-3 py-3 shadow-[inset_-8px_0_8px_-8px_rgba(0,0,0,0.35)]">
 				<div className="flex min-w-32 items-center gap-2">
 					<Button
 						aria-label={`Save ${row.project.name} profile`}

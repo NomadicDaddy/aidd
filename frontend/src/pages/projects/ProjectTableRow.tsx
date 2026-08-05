@@ -73,7 +73,10 @@ export function ProjectTableRow({
 
 	return (
 		<tr className="border-b border-border last:border-0">
-			<td className="px-3 py-3">
+			{/* Pinned: scrolling right to reach the opt-in columns used to carry the name off the
+			    left edge, leaving anonymous rows of numbers. `bg-card` is what stops the scrolled
+			    content showing through the pinned cell. */}
+			<td className="sticky left-0 z-10 bg-card px-3 py-3">
 				<div className="flex items-center gap-1.5">
 					{orphan ? (
 						<FolderX
@@ -107,7 +110,7 @@ export function ProjectTableRow({
 					)}
 					{metadata.templateVersion ? (
 						<div
-							className={`text-[10px] ${
+							className={`text-2xs ${
 								templateVersionColor(
 									metadata.templateVersion,
 									spernakitTemplateVersion,
@@ -163,7 +166,7 @@ export function ProjectTableRow({
 					<div className="font-medium tabular-nums">
 						{formatProjectListReportedCost(metadata.usage.totals)}
 					</div>
-					<div className="text-[10px] text-muted-foreground tabular-nums">
+					<div className="text-2xs text-muted-foreground tabular-nums">
 						{metadata.usage.totals.runsWithReportedCost}/
 						{metadata.usage.totals.runCount} runs
 					</div>
@@ -177,7 +180,7 @@ export function ProjectTableRow({
 						{formatProjectTokenCount(metadata.usage.totals)}
 					</div>
 					<TokenSparkline points={metadata.usage.recentDailyTokens} />
-					<div className="text-[10px] text-muted-foreground tabular-nums">
+					<div className="text-2xs text-muted-foreground tabular-nums">
 						{metadata.usage.totals.runsWithTokenUsage}/{metadata.usage.totals.runCount}{' '}
 						runs
 					</div>

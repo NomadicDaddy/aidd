@@ -10,19 +10,10 @@ import { toast } from 'sonner';
 import type { ProjectImportAction, ProjectImportCandidateResult } from '../../api/types.ts';
 
 import { Button } from '../../components/ui/button.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useImportProjects, useProjectImportCandidates } from '../../hooks/useProjects.ts';
 import { toneText } from '../../lib/tones.ts';
-import { CandidateIntakePreview } from './CandidateIntakePreview.tsx';
-
-function signalLabels(signals: { aidd: boolean; git: boolean; packageJson: boolean }): string[] {
-	const labels: string[] = [];
-	if (signals.packageJson) labels.push('package.json');
-	if (signals.git) labels.push('.git');
-	if (signals.aidd) labels.push('.aidd');
-	return labels;
-}
+import { IngestCandidateRow } from './IngestCandidateRow.tsx';
 
 function resultSummary(results: ProjectImportCandidateResult[]): string {
 	const imported = results.filter((result) => result.status === 'imported').length;
@@ -55,6 +46,15 @@ export function ProjectIngestLane() {
 			const next = new Set(current);
 			if (checked) next.add(id);
 			else next.delete(id);
+			return next;
+		});
+	}
+
+	function togglePreview(id: string): void {
+		setPreviewIds((current) => {
+			const next = new Set(current);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
 			return next;
 		});
 	}
@@ -151,71 +151,28 @@ export function ProjectIngestLane() {
 							No import candidates found under the configured roots.
 						</div>
 					) : (
-						<div className="max-h-[28rem] space-y-2 overflow-auto pr-1">
-							{(candidates.data?.candidates ?? []).map((candidate) => {
-								const labels = signalLabels(candidate.signals);
-								return (
-									<label
-										className="flex gap-3 rounded border border-border bg-card p-3 text-sm"
-										key={candidate.id}>
-										<Checkbox
-											checked={selectedIds.has(candidate.id)}
-											className="mt-1 h-4 w-4"
-											disabled={
-												!candidate.canImport || importProjects.isPending
-											}
-											onChange={(event) =>
-												toggleCandidate(candidate.id, event.target.checked)
-											}
-										/>
-										<div className="min-w-0 flex-1 space-y-1">
-											<div className="flex flex-wrap items-center gap-2">
-												<span className="font-medium text-foreground">
-													{candidate.name}
-												</span>
-												<span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-													{labels.length > 0
-														? labels.join(', ')
-														: 'directory'}
-												</span>
-											</div>
-											<p className="font-mono text-xs break-all text-muted-foreground">
-												{candidate.path}
-											</p>
-											<p className="text-xs break-all text-muted-foreground">
-												Root: {candidate.root}
-											</p>
-											{candidate.reason ? (
-												<p className="text-xs text-amber-700 dark:text-amber-300">
-													{candidate.reason}
-												</p>
-											) : null}
-											<button
-												className="text-xs text-teal-700 underline dark:text-teal-300"
-												onClick={(event) => {
-													event.preventDefault();
-													setPreviewIds((current) => {
-														const next = new Set(current);
-														if (next.has(candidate.id)) {
-															next.delete(candidate.id);
-														} else {
-															next.add(candidate.id);
-														}
-														return next;
-													});
-												}}
-												type="button">
-												{previewIds.has(candidate.id)
-													? 'Hide preview'
-													: 'Preview'}
-											</button>
-											{previewIds.has(candidate.id) ? (
-												<CandidateIntakePreview path={candidate.path} />
-											) : null}
-										</div>
-									</label>
-								);
-							})}
+						// The list scrolls, and with a flat cut edge the row sliced at 28rem read as
+						// a rendering defect rather than as "more below" — hence the bottom fade.
+						<div className="relative">
+							<div className="max-h-[28rem] space-y-2 overflow-auto pr-1 pb-4">
+								{(candidates.data?.candidates ?? []).map((candidate) => (
+									<IngestCandidateRow
+										candidate={candidate}
+										disabled={!candidate.canImport || importProjects.isPending}
+										key={candidate.id}
+										onPreviewToggle={() => togglePreview(candidate.id)}
+										onToggle={(checked) =>
+											toggleCandidate(candidate.id, checked)
+										}
+										previewOpen={previewIds.has(candidate.id)}
+										selected={selectedIds.has(candidate.id)}
+									/>
+								))}
+							</div>
+							<div
+								aria-hidden="true"
+								className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-card to-transparent"
+							/>
 						</div>
 					)}
 				</div>

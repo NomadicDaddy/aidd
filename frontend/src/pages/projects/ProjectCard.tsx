@@ -8,27 +8,13 @@ import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '.
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
-import { formatCount, formatRatio, formatRelativeAge, percent } from '../../lib/formatters.ts';
-import { toneSolid, toneText } from '../../lib/tones.ts';
+import { formatRelativeAge, percent } from '../../lib/formatters.ts';
+import { toneText } from '../../lib/tones.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
-import {
-	artifactTone,
-	bucketLabels,
-	formatAppVersion,
-	formatProjectListReportedCost,
-	formatProjectTokenCount,
-	profileBucketTone,
-	syncTone,
-} from './projects-list-shared.ts';
-import {
-	daysSince,
-	featureProgressColor,
-	isOrphaned,
-	milestoneBadgeTone,
-	specAgeColor,
-	templateVersionColor,
-} from './projects-list-visuals.ts';
+import { ProjectCardMetrics } from './ProjectCardMetrics.tsx';
+import { artifactTone } from './projects-list-shared.ts';
+import { featureProgressColor, isOrphaned, milestoneBadgeTone } from './projects-list-visuals.ts';
 import { ProjectStackDisplay } from './ProjectStackDisplay.tsx';
 
 export function ProjectCard({
@@ -59,16 +45,10 @@ export function ProjectCard({
 		: maturity.stageStatuses.length;
 	const totalStages = maturity.stageStatuses.length;
 	const pct = percent(passing, totalFeatures);
-	const specDays = daysSince(metadata.specUpdatedAt);
 	const orphan = isOrphaned(project);
 	const summary = metadata.artifactCheck?.summary ?? null;
 	const milestoneOrder = metadata.roadmap?.milestoneOrder ?? [];
 	const milestones = metadata.roadmap?.milestones ?? {};
-	const ports = metadata.ports;
-	const fePort = ports?.frontendPort ?? null;
-	const bePort = ports?.backendPort ?? null;
-	const feListening = portStatus?.frontend ?? null;
-	const beListening = portStatus?.backend ?? null;
 	return (
 		<Card className="flex h-full flex-col" interactive>
 			<div className="mb-3 flex items-start justify-between gap-3">
@@ -108,43 +88,37 @@ export function ProjectCard({
 				</div>
 				<div className="flex flex-col items-end gap-2">
 					{totalStages > 0 ? (
+						// The table ring labels itself with its percentage; the card ring was the
+						// same component with the `percent` prop omitted, so the reader had to
+						// infer the number from the arc.
 						<MaturityRing
 							ariaLabel={`Maturity ${maturity.percent}%`}
+							percent={maturity.percent}
 							size={56}
 							stages={maturity.stageStatuses}
 						/>
 					) : null}
-					<Badge tone={artifactTone[project.artifactHealth]}>
+					{/* The fresh/stale/missing breakdown moved onto the badge's title: as a third
+					    row of `text-[10px]` it was off the type scale and squeezed the title block
+					    hard enough to wrap the path and the stage line. */}
+					<Badge
+						title={
+							summary
+								? `${summary.fresh} fresh · ${summary.stale} stale · ${summary.missing} missing`
+								: undefined
+						}
+						tone={artifactTone[project.artifactHealth]}>
 						{project.artifactHealth}
 					</Badge>
-					{summary ? (
-						<div className="text-[10px] text-muted-foreground">
-							{summary.fresh} fresh · {summary.stale} stale · {summary.missing}{' '}
-							missing
-						</div>
-					) : null}
 				</div>
 			</div>
+			{/* One identity row. The card used to open with 8-11 pills of identical weight across
+			    three rows, with tone carrying four unrelated meanings at once — version, template
+			    version, profile bucket and profile source are attributes, not statuses, so they
+			    moved into the metric list below and only what describes the project's current
+			    state stays a badge. */}
 			<div className="mb-3 flex flex-wrap gap-1.5">
-				<Badge tone="neutral">{formatAppVersion(metadata.appVersion)}</Badge>
-				{metadata.templateVersion ? (
-					<Badge tone="neutral">
-						<span
-							className={templateVersionColor(
-								metadata.templateVersion,
-								spernakitTemplateVersion,
-							)}>
-							spk {metadata.templateVersion}
-						</span>
-					</Badge>
-				) : null}
-				<ProjectStackDisplay stack={metadata.stack} variant="badges" />
-				<Badge tone={profileBucketTone(metadata.profile.bucket)}>
-					{bucketLabels[metadata.profile.bucket]}
-				</Badge>
-				<Badge tone={metadata.profile.source === 'explicit' ? 'teal' : 'neutral'}>
-					{metadata.profile.source}
-				</Badge>
+				<ProjectStackDisplay stack={metadata.stack} variant="primary" />
 				<Badge tone="neutral">{project.phase}</Badge>
 				<ProjectActiveRunLink activeRuns={project.activeRuns} />
 				<GitStatusBadge className="max-w-full" status={gitStatus} />
@@ -182,73 +156,11 @@ export function ProjectCard({
 						/>
 					) : null}
 				</div>
-				<div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
-					<div>
-						Interview:{' '}
-						{metadata.interview
-							? formatRatio(metadata.interview.answered, metadata.interview.total)
-							: '—'}
-					</div>
-					<div>Scenarios: {formatCount(metadata.testScenariosCount)}</div>
-					<div>Screens: {formatCount(metadata.screenMapRouteCount)}</div>
-					<div
-						title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
-						Reported cost:{' '}
-						<span className="font-medium text-foreground tabular-nums">
-							{formatProjectListReportedCost(metadata.usage.totals)}
-						</span>
-					</div>
-					<div
-						title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
-						Tokens:{' '}
-						<span className="font-medium text-foreground tabular-nums">
-							{formatProjectTokenCount(metadata.usage.totals)}
-						</span>
-					</div>
-					<div>
-						Spec age:{' '}
-						{specDays !== null ? (
-							<span className={specAgeColor(specDays)}>{specDays}d</span>
-						) : (
-							<span className="text-muted-foreground">—</span>
-						)}
-					</div>
-					<div>
-						Added:{' '}
-						{metadata.addedAt ? (
-							<span title={metadata.addedAt}>
-								{formatRelativeAge(metadata.addedAt)}
-							</span>
-						) : (
-							<span className="text-muted-foreground">—</span>
-						)}
-					</div>
-					<div>
-						aidd state:{' '}
-						<Badge tone={syncTone(metadata.sync.syncState)}>
-							{metadata.sync.syncState}
-						</Badge>
-					</div>
-					{fePort !== null || bePort !== null ? (
-						<div className="font-mono">
-							{fePort !== null ? (
-								<span className="inline-flex items-center gap-1">
-									<PortDotInline listening={feListening} />
-									FE:{fePort}
-								</span>
-							) : null}
-							{fePort !== null && bePort !== null ? (
-								<span className="mx-1 text-muted-foreground">·</span>
-							) : null}
-							{bePort !== null ? (
-								<span className="inline-flex items-center gap-1">
-									<PortDotInline listening={beListening} />
-									BE:{bePort}
-								</span>
-							) : null}
-						</div>
-					) : null}
-				</div>
+				<ProjectCardMetrics
+					portStatus={portStatus}
+					project={project}
+					spernakitTemplateVersion={spernakitTemplateVersion}
+				/>
 				{metadata.sync.lastSyncAt ? (
 					<div className="text-xs text-muted-foreground">
 						Last aidd run {formatRelativeAge(metadata.sync.lastSyncAt)}
@@ -258,22 +170,12 @@ export function ProjectCard({
 					<div className={`text-xs ${toneText.red}`}>{metadata.sync.lastSyncError}</div>
 				) : null}
 			</div>
+			{/* Left-aligned so the footer continues the card's single left edge. Right-aligned, it
+			    pulled the eye across the empty band a stretched grid row opens under a short
+			    card — to the emptiest, least actionable corner of the surface. */}
 			{action ? (
-				<div className="mt-auto flex justify-end border-t border-border pt-3">{action}</div>
+				<div className="mt-auto flex border-t border-border pt-3">{action}</div>
 			) : null}
 		</Card>
-	);
-}
-
-function PortDotInline({ listening }: { listening: boolean | null }) {
-	if (listening === null) return null;
-	return (
-		<span
-			aria-label={listening ? 'Listening' : 'Not listening'}
-			className={`inline-block h-1.5 w-1.5 rounded-full ${
-				toneSolid[listening ? 'emerald' : 'red']
-			}`}
-			title={listening ? 'Listening' : 'Not listening'}
-		/>
 	);
 }

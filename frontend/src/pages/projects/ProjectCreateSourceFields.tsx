@@ -10,7 +10,7 @@ import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
 
 export function GithubRepoField({ source }: { source: GithubTemplateSourceState }) {
 	return (
-		<label className="space-y-1">
+		<label className="block space-y-1">
 			<span className={fieldLabelClass}>GitHub repository</span>
 			<Input
 				onChange={(event) => source.onUrlChange(event.target.value)}
@@ -40,10 +40,10 @@ export function ProjectTemplatePicker({
 	templates: ProjectTemplateSummary[];
 }) {
 	return (
-		<label className="space-y-1">
+		<label className="block space-y-1">
 			<span className={fieldLabelClass}>Template</span>
 			<select
-				className={`${selectClass} w-full`}
+				className={selectClass}
 				onChange={(event) => onChange(event.target.value)}
 				value={templateName}>
 				{templates.length === 0 ? <option value="">No templates configured</option> : null}

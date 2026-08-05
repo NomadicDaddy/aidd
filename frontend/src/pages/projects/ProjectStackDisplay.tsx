@@ -58,7 +58,7 @@ export function ProjectStackDisplay({
 	variant,
 }: {
 	stack: ProjectStack;
-	variant: 'badges' | 'detail' | 'table';
+	variant: 'badges' | 'detail' | 'primary' | 'table';
 }) {
 	const technologies = technologyLabels(stack);
 	if (variant === 'detail') {
@@ -72,6 +72,9 @@ export function ProjectStackDisplay({
 			</div>
 		);
 	}
+	// The primary badge alone. Its tooltip already lists every language, runtime and framework, so a
+	// surface with no room for the technology badges loses nothing by asking for this instead.
+	if (variant === 'primary') return primaryBadge(stack);
 	if (variant === 'badges') {
 		return (
 			<>
@@ -91,7 +94,7 @@ export function ProjectStackDisplay({
 		<div className="min-w-0 space-y-1">
 			<div>{primaryBadge(stack)}</div>
 			{technologies.length > 0 ? (
-				<p className="max-w-48 truncate text-[10px] text-muted-foreground">
+				<p className="max-w-48 truncate text-2xs text-muted-foreground">
 					{technologies.slice(0, 3).join(' · ')}
 					{technologies.length > 3 ? ` +${technologies.length - 3}` : ''}
 				</p>

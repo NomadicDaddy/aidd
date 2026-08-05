@@ -44,7 +44,7 @@ function SortHeader({
 			scope="col">
 			<button
 				aria-label={`Sort by ${label}${isActive ? ` (${activeDir})` : ''}`}
-				className={`inline-flex items-center gap-1 text-left uppercase ${
+				className={`inline-flex items-center gap-1 text-left whitespace-nowrap uppercase ${
 					isActive ? 'text-foreground' : 'text-muted-foreground'
 				}`}
 				onClick={() => onSort(sortKey)}
@@ -88,7 +88,8 @@ export function ProfileMatrixTable({
 	showFacets: boolean;
 }) {
 	return (
-		<Card className="p-0">
+		// Hidden below `md`, where ProfileMatrixMobileList renders the same rows as stacked cards.
+		<Card className="hidden p-0 md:block">
 			<OverflowScroller
 				ariaLabel="Project profile matrix"
 				scrollerClassName="max-h-[70vh] overflow-y-auto">
@@ -141,7 +142,9 @@ export function ProfileMatrixTable({
 							<th className={headerCellClass} scope="col">
 								Updated
 							</th>
-							<th className={headerCellClass} scope="col">
+							<th
+								className={`${headerCellClass} right-0 z-30 shadow-[inset_-8px_0_8px_-8px_rgba(0,0,0,0.35)]`}
+								scope="col">
 								Actions
 							</th>
 						</tr>

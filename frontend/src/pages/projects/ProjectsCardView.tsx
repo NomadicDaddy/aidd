@@ -22,7 +22,9 @@ export function ProjectsCardView({
 	statusByProjectId: Map<string, AppLaunch>;
 }) {
 	return (
-		<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+		// Two columns only from `lg`: at 768 the `md` grid held two ~215px cards, which broke the
+		// project path mid-token and pushed the badge run onto four rows for the same information.
+		<div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 			{projects.map((project) => (
 				// The project name is the navigation target (a real react-router link, as the
 				// table view already does) rather than a stretched empty overlay whose clicks

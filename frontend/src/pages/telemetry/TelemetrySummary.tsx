@@ -1,4 +1,4 @@
-import { Card } from '../../components/ui/card.tsx';
+import { Metric } from '../../components/shared/Metric.tsx';
 import { outcomeSolid, seriesSolid } from '../../lib/series.ts';
 
 export interface TelemetryTotals {
@@ -15,31 +15,15 @@ export interface TelemetryTotals {
 	warnings: number;
 }
 
-function CountCard({
-	className,
-	label,
-	value,
-}: {
-	className: string;
-	label: string;
-	value: number;
-}) {
-	return (
-		// A one-word label and a two-word label sit in cards of the same height, so anchoring the
-		// value to the bottom is what keeps a row of tiles reading as one set: with the value
-		// stacked directly under the label, "Nested steps" pushed its number a line lower than
-		// "Total" next to it.
-		<Card className="flex h-full flex-col justify-between gap-1">
-			<div className="flex items-start gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-				<span
-					aria-hidden="true"
-					className={`mt-1 h-2 w-2 shrink-0 rounded-full ${className}`}
-				/>
-				{label}
-			</div>
-			<div className="text-2xl font-semibold text-foreground tabular-nums">{value}</div>
-		</Card>
-	);
+/**
+ * The categorical swatch that used to be `CountCard`'s reason to exist.
+ *
+ * It is a series slot, not a tone: these colours are shared with the chart bars and the legend
+ * below, where "emerald means healthy" would be a claim nobody made. `Metric`'s `marker` slot takes
+ * it as a node for exactly this reason — so a categorical colour cannot be smuggled in as a tone.
+ */
+function seriesDot(className: string) {
+	return <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${className}`} />;
 }
 
 export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
@@ -47,52 +31,74 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 		<section aria-label="Invocation summary" className="space-y-3">
 			{/* Shape-of-work breakdown: categorical, so it uses series slots rather than tones. */}
 			<div className="grid gap-3 sm:grid-cols-3">
-				<CountCard
-					className={seriesSolid.slot1}
+				<Metric
 					label="Total invocations"
+					marker={seriesDot(seriesSolid.slot1)}
 					value={totals.total}
 				/>
-				<CountCard
-					className={seriesSolid.slot2}
+				<Metric
 					label="Top-level actions"
+					marker={seriesDot(seriesSolid.slot2)}
 					value={totals.topLevel}
 				/>
-				<CountCard
-					className={seriesSolid.slot3}
+				<Metric
 					label="Nested steps"
+					marker={seriesDot(seriesSolid.slot3)}
 					value={totals.nested}
 				/>
 			</div>
 			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. The
 			    `md` step is what keeps eight tiles to two rows at tablet width — without it the
-			    grid held two columns until `lg` and the outcome row alone filled the viewport. */}
+			    grid held two columns until `lg` and the outcome row alone filled the viewport.
+			    These are `compact`: eight tiles at the headline step would out-shout the three
+			    figures above them, which are what the page is actually reporting. */}
 			<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8">
-				<CountCard
-					className={outcomeSolid.completed}
+				<Metric
 					label="Completed"
+					marker={seriesDot(outcomeSolid.completed)}
+					size="compact"
 					value={totals.completed}
 				/>
-				<CountCard
-					className={outcomeSolid.warnings}
+				<Metric
 					label="Warnings"
+					marker={seriesDot(outcomeSolid.warnings)}
+					size="compact"
 					value={totals.warnings}
 				/>
-				<CountCard className={outcomeSolid.failed} label="Failed" value={totals.failed} />
-				<CountCard
-					className={outcomeSolid.flagged}
+				<Metric
+					label="Failed"
+					marker={seriesDot(outcomeSolid.failed)}
+					size="compact"
+					value={totals.failed}
+				/>
+				<Metric
 					label="Flagged"
+					marker={seriesDot(outcomeSolid.flagged)}
+					size="compact"
 					value={totals.flagged}
 				/>
-				<CountCard
-					className={outcomeSolid.stopped}
+				<Metric
 					label="Stopped"
+					marker={seriesDot(outcomeSolid.stopped)}
+					size="compact"
 					value={totals.stopped}
 				/>
-				<CountCard className={outcomeSolid.killed} label="Killed" value={totals.killed} />
-				<CountCard className={outcomeSolid.noWork} label="No work" value={totals.noWork} />
-				<CountCard
-					className={outcomeSolid.running}
+				<Metric
+					label="Killed"
+					marker={seriesDot(outcomeSolid.killed)}
+					size="compact"
+					value={totals.killed}
+				/>
+				<Metric
+					label="No work"
+					marker={seriesDot(outcomeSolid.noWork)}
+					size="compact"
+					value={totals.noWork}
+				/>
+				<Metric
 					label="Running"
+					marker={seriesDot(outcomeSolid.running)}
+					size="compact"
 					value={totals.running}
 				/>
 			</div>

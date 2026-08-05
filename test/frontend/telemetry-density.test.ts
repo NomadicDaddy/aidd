@@ -192,9 +192,14 @@ describe('telemetry lets the data lead', () => {
 	test('the summary tiles anchor their values to a common baseline and pack at tablet width', async () => {
 		const summary = await telemetrySource('TelemetrySummary.tsx');
 
-		expect(summary).toContain('flex h-full flex-col justify-between gap-1');
+		// The baseline used to be `CountCard`'s, declared here. It is now `Metric`'s, so this page
+		// no longer states it — but the property is the same one and still has to survive, which
+		// is why the assertion moved to the rendered markup rather than being deleted with the
+		// class it used to name.
 		expect(summary).toContain('sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8');
-		expect(rendered.summary).toContain('flex h-full flex-col justify-between');
+		expect(summary).not.toMatch(/flex h-full flex-col/);
+		expect(rendered.summary).toContain('flex h-full flex-col');
+		expect(rendered.summary).toContain('flex min-w-0 flex-1 flex-col justify-between');
 	});
 
 	test('the two chart columns size to their own content', async () => {

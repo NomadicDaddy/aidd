@@ -4,10 +4,10 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { Link } from 'react-router';
 
 import type { FeatureSummary, ProjectSummary } from '../../api/types.ts';
-import type { Tone } from '../../lib/tones.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
+import { Metric } from '../../components/shared/Metric.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
@@ -118,17 +118,6 @@ function projectSummaryRows(projects: ProjectSummary[]): FeatureSummaryRow[] {
  * teal tiles sat so close to `--card` in dark mode that only the amber one read as a box, so two of
  * three numbers floated unattached beside a boxed sibling.
  */
-function SummaryTile({ label, tone, value }: { label: string; tone: Tone; value: number }) {
-	return (
-		<Card className="p-3" variant="sunken">
-			<Badge tone={tone}>{label}</Badge>
-			<div className="mt-1.5 font-display text-lg font-semibold text-foreground tabular-nums">
-				{value}
-			</div>
-		</Card>
-	);
-}
-
 export function FeatureSummaryCard({
 	isError,
 	isLoading,
@@ -164,9 +153,12 @@ export function FeatureSummaryCard({
 			/>
 
 			<div className="mb-4 grid gap-3 sm:grid-cols-3">
-				<SummaryTile label="Pending" tone="amber" value={totals.pending} />
-				<SummaryTile label="Completed" tone="emerald" value={totals.completed} />
-				<SummaryTile label="Total" tone="teal" value={totals.total} />
+				{/* Pending and Completed are health readings and keep their tone; Total is a count
+				    of what exists, which is not a reading about anything, so it stays untoned. All
+				    three go neutral at zero — see Metric. */}
+				<Metric label="Pending" size="compact" tone="amber" value={totals.pending} />
+				<Metric label="Completed" size="compact" tone="emerald" value={totals.completed} />
+				<Metric label="Total" size="compact" value={totals.total} />
 			</div>
 
 			{isLoading && rows.length === 0 ? (

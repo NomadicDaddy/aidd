@@ -67,7 +67,10 @@ describe('Tailwind class merging', () => {
 	test('preserves every audited Card padding override as the winning utility', async () => {
 		const overrides = await cardPaddingOverrides();
 
-		expect(overrides).toHaveLength(37);
+		// 36 since the four duplicate metric tiles were deleted: each hand-placed its own
+		// `<Card className="p-3">`, and the one that survives is `Metric`'s, which is not an
+		// override at all.
+		expect(overrides).toHaveLength(36);
 		for (const className of overrides) {
 			const declaredPadding = className.match(PADDING_UTILITY)?.at(-1);
 			const mergedPadding = cn('p-4', className).match(PADDING_UTILITY);

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 
+import { Metric } from '../../components/shared/Metric.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
@@ -57,18 +58,17 @@ export function AboutPage() {
 						</p>
 					</div>
 				</Card>
-				{/* The hero card was 896px wide holding a 180px column; this is the console metadata
-				    that width was always implying. */}
+				{/* The console metadata the 896px hero was always implying — and three labelled
+				    figures, so they are three `Metric`s. This was an all-monospace `<dl>` at
+				    `text-xs`: the fourth divergent copy of the tile pattern, and the one that
+				    stated the app's own version in a face the app uses for nothing else. */}
+				<div className="grid gap-3 sm:grid-cols-3">
+					{metadata.map(({ label, value }) => (
+						<Metric key={label} label={label} size="compact" value={value} />
+					))}
+				</div>
 				<Card className="p-5" variant="sunken">
-					<dl className="grid gap-x-6 gap-y-2 font-mono text-xs sm:grid-cols-3">
-						{metadata.map(({ label, value }) => (
-							<div key={label}>
-								<dt className="text-muted-foreground uppercase">{label}</dt>
-								<dd className="mt-0.5 text-foreground">{value}</dd>
-							</div>
-						))}
-					</dl>
-					<div className="mt-5 flex flex-wrap gap-2">
+					<div className="flex flex-wrap gap-2">
 						<Link className={buttonClassName('secondary')} to="/docs">
 							Read the docs
 						</Link>

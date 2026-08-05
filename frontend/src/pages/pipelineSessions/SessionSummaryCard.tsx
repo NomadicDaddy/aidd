@@ -2,47 +2,18 @@ import {
 	isSkillExecutionIntent,
 	skillExecutionIntentLabel,
 } from 'aidd-shared/skill-execution-intent';
-import { type ReactNode } from 'react';
 
 import type { PipelineSessionReport } from '../../api/types.ts';
 
+import { Metric } from '../../components/shared/Metric.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Card } from '../../components/ui/card.tsx';
-import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { sessionStatusLabel, sessionStatusTone } from '../runs/pipelineSessionStatus.ts';
 
-/**
- * One summary pair. The label/value typography is the house metric treatment (see dashboard's
- * `Metric`) stepped down a size, because this strip carries five to six items rather than three —
- * previously every value here was flat `text-sm` body text inside a single card, so the top of the
- * report had no weight at all and the eye jumped straight to the log block below.
- */
-function SummaryTile({
-	children,
-	label,
-	numeric = false,
-}: {
-	children: ReactNode;
-	label: string;
-	numeric?: boolean;
-}) {
-	return (
-		<Card className="min-w-0" variant="sunken">
-			<p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-				{label}
-			</p>
-			<div
-				className={cn(
-					'mt-2 font-display text-lg font-semibold text-card-foreground',
-					numeric && 'tabular-nums',
-				)}>
-				{children}
-			</div>
-		</Card>
-	);
-}
+/* This file's own `SummaryTile` was deleted here. It was the house metric treatment stepped
+   down a size, restated — which is exactly what `Metric`'s `compact` size now is, so the strip
+   reads the same and there is one declaration of it instead of four. */
 
 export function SessionSummaryCard({
 	now,
@@ -59,52 +30,82 @@ export function SessionSummaryCard({
 		// The `lg` step exists so five (or six, with the skill-intent tile) items divide evenly at the
 		// middle width instead of leaving PROGRESS alone against an empty cell at 768.
 		<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-			<SummaryTile label="Status">
-				<Badge tone={sessionStatusTone(report.session.status)}>
-					{sessionStatusLabel(report.session.status)}
-				</Badge>
-				{report.session.errorMessage && (
-					<p
-						className={cn(
-							'mt-2 text-sm font-normal',
-							report.session.status === 'completed_with_failures'
-								? toneText.amber
-								: toneText.red,
-						)}>
-						{report.session.errorMessage}
-					</p>
-				)}
-			</SummaryTile>
+			<Metric
+				className="min-w-0"
+				detail={
+					report.session.errorMessage ? (
+						<span
+							className={
+								report.session.status === 'completed_with_failures'
+									? toneText.amber
+									: toneText.red
+							}>
+							{report.session.errorMessage}
+						</span>
+					) : undefined
+				}
+				label="Status"
+				size="compact"
+				value={
+					<Badge tone={sessionStatusTone(report.session.status)}>
+						{sessionStatusLabel(report.session.status)}
+					</Badge>
+				}
+			/>
 			{skillIntents.length > 0 ? (
-				<SummaryTile label="Skill directive intent">
-					<div className="flex flex-wrap gap-1.5">
-						{[...new Set(skillIntents)].map((intent) => (
-							<Badge key={intent} tone="neutral">
-								{skillExecutionIntentLabel(intent)}
-							</Badge>
-						))}
-					</div>
-					<p className="mt-1 text-xs font-normal text-muted-foreground">
-						Skill steps are directive runs, not audits. Review-only is
-						instruction-enforced.
-					</p>
-				</SummaryTile>
+				<Metric
+					className="min-w-0"
+					detail="Skill steps are directive runs, not audits. Review-only is instruction-enforced."
+					label="Skill directive intent"
+					size="compact"
+					value={
+						<div className="flex flex-wrap gap-1.5">
+							{[...new Set(skillIntents)].map((intent) => (
+								<Badge key={intent} tone="neutral">
+									{skillExecutionIntentLabel(intent)}
+								</Badge>
+							))}
+						</div>
+					}
+				/>
 			) : null}
-			<SummaryTile label="Project">
-				<span className="block truncate" title={report.session.projectName}>
-					{report.session.projectName}
-				</span>
-			</SummaryTile>
-			<SummaryTile label="Started">{formatDate(report.session.startedAt)}</SummaryTile>
-			<SummaryTile label="Duration" numeric>
-				{formatActiveDuration(report.session.durationMs, report.session.startedAt, now)}
-			</SummaryTile>
-			<SummaryTile label="Progress" numeric>
-				<span
-					title={`Step ${report.session.currentStepIndex} of ${report.session.totalSteps}`}>
-					{report.session.currentStepIndex} / {report.session.totalSteps}
-				</span>
-			</SummaryTile>
+			<Metric
+				className="min-w-0"
+				label="Project"
+				size="compact"
+				value={
+					<span className="block truncate" title={report.session.projectName}>
+						{report.session.projectName}
+					</span>
+				}
+			/>
+			<Metric
+				className="min-w-0"
+				label="Started"
+				size="compact"
+				value={formatDate(report.session.startedAt)}
+			/>
+			<Metric
+				className="min-w-0"
+				label="Duration"
+				size="compact"
+				value={formatActiveDuration(
+					report.session.durationMs,
+					report.session.startedAt,
+					now,
+				)}
+			/>
+			<Metric
+				className="min-w-0"
+				label="Progress"
+				size="compact"
+				value={
+					<span
+						title={`Step ${report.session.currentStepIndex} of ${report.session.totalSteps}`}>
+						{report.session.currentStepIndex} / {report.session.totalSteps}
+					</span>
+				}
+			/>
 		</div>
 	);
 }

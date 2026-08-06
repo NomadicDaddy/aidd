@@ -162,7 +162,7 @@ export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
 	const totals = usage.totals;
 	const unknownCostRuns = totals.runCount - totals.runsWithReportedCost;
 	return (
-		<section aria-labelledby="project-usage-heading">
+		<section aria-labelledby="project-usage-heading" className="@container">
 			<Card className="overflow-hidden p-0">
 				<CardHeader
 					className="mb-0 border-b border-border px-4 py-3"
@@ -176,7 +176,7 @@ export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
 					</div>
 				) : (
 					<>
-						<div className="grid gap-px border-b border-border bg-muted sm:grid-cols-2 xl:grid-cols-4">
+						<div className="grid gap-px border-b border-border bg-muted @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-4">
 							<MetricSummary
 								detail={`${totals.runsWithReportedCost}/${totals.runCount} runs reported dollars`}
 								label="Reported cost"

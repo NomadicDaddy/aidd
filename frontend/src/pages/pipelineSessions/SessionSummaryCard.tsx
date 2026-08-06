@@ -27,85 +27,89 @@ export function SessionSummaryCard({
 		return step.stepType === 'skill' && isSkillExecutionIntent(intent) ? [intent] : [];
 	});
 	return (
-		// The `lg` step exists so five (or six, with the skill-intent tile) items divide evenly at the
-		// middle width instead of leaving PROGRESS alone against an empty cell at 768.
-		<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-			<Metric
-				className="min-w-0"
-				detail={
-					report.session.errorMessage ? (
-						<span
-							className={
-								report.session.status === 'completed_with_failures'
-									? toneText.amber
-									: toneText.red
-							}>
-							{report.session.errorMessage}
-						</span>
-					) : undefined
-				}
-				label="Status"
-				size="compact"
-				value={
-					<Badge tone={sessionStatusTone(report.session.status)}>
-						{sessionStatusLabel(report.session.status)}
-					</Badge>
-				}
-			/>
-			{skillIntents.length > 0 ? (
+		// The steps are keyed off this strip's own width, not the viewport's — see the content-width
+		// table in AppLayout.tsx for why those are different numbers. The middle step exists so five
+		// (or six, with the skill-intent tile) items divide evenly instead of leaving PROGRESS alone
+		// against an empty cell.
+		<div className="@container">
+			<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[45rem]:grid-cols-3 @min-[61rem]:grid-cols-5">
 				<Metric
 					className="min-w-0"
-					detail="Skill steps are directive runs, not audits. Review-only is instruction-enforced."
-					label="Skill directive intent"
+					detail={
+						report.session.errorMessage ? (
+							<span
+								className={
+									report.session.status === 'completed_with_failures'
+										? toneText.amber
+										: toneText.red
+								}>
+								{report.session.errorMessage}
+							</span>
+						) : undefined
+					}
+					label="Status"
 					size="compact"
 					value={
-						<div className="flex flex-wrap gap-1.5">
-							{[...new Set(skillIntents)].map((intent) => (
-								<Badge key={intent} tone="neutral">
-									{skillExecutionIntentLabel(intent)}
-								</Badge>
-							))}
-						</div>
+						<Badge tone={sessionStatusTone(report.session.status)}>
+							{sessionStatusLabel(report.session.status)}
+						</Badge>
 					}
 				/>
-			) : null}
-			<Metric
-				className="min-w-0"
-				label="Project"
-				size="compact"
-				value={
-					<span className="block truncate" title={report.session.projectName}>
-						{report.session.projectName}
-					</span>
-				}
-			/>
-			<Metric
-				className="min-w-0"
-				label="Started"
-				size="compact"
-				value={formatDate(report.session.startedAt)}
-			/>
-			<Metric
-				className="min-w-0"
-				label="Duration"
-				size="compact"
-				value={formatActiveDuration(
-					report.session.durationMs,
-					report.session.startedAt,
-					now,
-				)}
-			/>
-			<Metric
-				className="min-w-0"
-				label="Progress"
-				size="compact"
-				value={
-					<span
-						title={`Step ${report.session.currentStepIndex} of ${report.session.totalSteps}`}>
-						{report.session.currentStepIndex} / {report.session.totalSteps}
-					</span>
-				}
-			/>
+				{skillIntents.length > 0 ? (
+					<Metric
+						className="min-w-0"
+						detail="Skill steps are directive runs, not audits. Review-only is instruction-enforced."
+						label="Skill directive intent"
+						size="compact"
+						value={
+							<div className="flex flex-wrap gap-1.5">
+								{[...new Set(skillIntents)].map((intent) => (
+									<Badge key={intent} tone="neutral">
+										{skillExecutionIntentLabel(intent)}
+									</Badge>
+								))}
+							</div>
+						}
+					/>
+				) : null}
+				<Metric
+					className="min-w-0"
+					label="Project"
+					size="compact"
+					value={
+						<span className="block truncate" title={report.session.projectName}>
+							{report.session.projectName}
+						</span>
+					}
+				/>
+				<Metric
+					className="min-w-0"
+					label="Started"
+					size="compact"
+					value={formatDate(report.session.startedAt)}
+				/>
+				<Metric
+					className="min-w-0"
+					label="Duration"
+					size="compact"
+					value={formatActiveDuration(
+						report.session.durationMs,
+						report.session.startedAt,
+						now,
+					)}
+				/>
+				<Metric
+					className="min-w-0"
+					label="Progress"
+					size="compact"
+					value={
+						<span
+							title={`Step ${report.session.currentStepIndex} of ${report.session.totalSteps}`}>
+							{report.session.currentStepIndex} / {report.session.totalSteps}
+						</span>
+					}
+				/>
+			</div>
 		</div>
 	);
 }

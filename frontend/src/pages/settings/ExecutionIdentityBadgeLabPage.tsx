@@ -64,9 +64,12 @@ const representativeIdentities: readonly {
  * an identity is asked to render at all.
  */
 const constrainedWidths = [
-	{ className: 'w-[240px]', label: '240px' },
-	{ className: 'w-[160px]', label: '160px' },
-	{ className: 'w-[120px]', label: '120px' },
+	// `shrink-0` is load-bearing: these are flex items, so without it the 240px and 160px rows both
+	// collapse to whatever the cell has left and render at an identical width — a constrained-width
+	// specimen that is not actually constrained to the width it is labelled with.
+	{ className: 'w-[240px] shrink-0', label: '240px' },
+	{ className: 'w-[160px] shrink-0', label: '160px' },
+	{ className: 'w-[120px] shrink-0', label: '120px' },
 ] as const;
 
 function ConstrainedSpecimens({ identity, label }: { identity: ExecutionIdentity; label: string }) {
@@ -143,14 +146,14 @@ export function ExecutionIdentityBadgeLabPage() {
 			</Card>
 
 			<Card aria-labelledby="badge-lab-representative" className="overflow-hidden p-0">
-				<section>
+				<section className="@container">
 					<CardHeader
 						className="mb-0 border-b border-border px-4 py-3"
 						description="Composed examples exercise production, provider, custom, and partial data."
 						id="badge-lab-representative"
 						title="Representative identities"
 					/>
-					<div className="grid gap-px bg-border sm:grid-cols-2">
+					<div className="grid gap-px bg-border @min-[32rem]:grid-cols-2">
 						{representativeIdentities.map(({ description, identity, label }) => (
 							<div className="min-w-0 bg-card p-4" key={label}>
 								<div className="mb-2">
@@ -165,14 +168,19 @@ export function ExecutionIdentityBadgeLabPage() {
 			</Card>
 
 			<Card aria-labelledby="badge-lab-constrained" className="overflow-hidden p-0">
-				<section>
+				<section className="@container">
 					<CardHeader
 						className="mb-0 border-b border-border px-4 py-3"
 						description="The compact variant at the column budgets it actually has to survive. A specimen page that only shows the component at its natural width cannot fail."
 						id="badge-lab-constrained"
 						title="Constrained widths"
 					/>
-					<div className="grid gap-px bg-border sm:grid-cols-2">
+					{/* 44rem, not the 32rem the section above uses: these cells hold a specimen
+					    pinned at 240px plus a 48px label and a 12px gap inside 16px of card
+					    padding, so a two-column split needs 704px of section width before the
+					    240px row stops overflowing. A grid that clipped the widest specimen would
+					    defeat the point of the section. */}
+					<div className="grid gap-px bg-border @min-[44rem]:grid-cols-2">
 						{representativeIdentities.slice(0, 2).map(({ identity, label }) => (
 							<div className="bg-card p-4" key={label}>
 								<ConstrainedSpecimens identity={identity} label={label} />

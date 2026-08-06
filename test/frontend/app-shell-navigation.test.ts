@@ -160,8 +160,10 @@ describe('rail default for the viewport', () => {
 		expect(store).toContain(
 			"typeof window === 'undefined' ? false : defaultCollapsedForWidth(window.innerWidth)",
 		);
-		// `persist` rehydrates after this, so a returning user still gets their own choice.
-		expect(store).toContain("{ name: 'aidd-sidebar' }");
+		// `persist` rehydrates after this — but only over a value the user chose. An unchosen
+		// default is re-derived from the width on rehydration; see content-width-contract.test.ts.
+		expect(store).toContain("name: 'aidd-sidebar',");
+		expect(store).toContain('onRehydrateStorage');
 	});
 });
 

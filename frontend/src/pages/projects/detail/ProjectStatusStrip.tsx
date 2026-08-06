@@ -33,47 +33,51 @@ export function ProjectStatusStrip({
 }) {
 	const { metadata } = project;
 	return (
-		<Card aria-label="Project status" variant="sunken">
-			<div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 xl:grid-cols-6">
-				<StatusCell label="Artifact health">
-					<Badge
-						title={`Artifact health: ${project.artifactHealth}`}
-						tone={artifactTone[project.artifactHealth]}>
-						{project.artifactHealth}
-					</Badge>
-				</StatusCell>
-				<StatusCell label="Phase">
-					<Badge title={`Phase: ${project.phase}`} tone="neutral">
-						{project.phase}
-					</Badge>
-				</StatusCell>
-				<StatusCell label="Milestone">
-					{metadata.roadmap?.currentMilestone ? (
+		// Containment sits outside the card, so the query measures the content column rather than the
+		// column minus the card's own padding. See the content-width table in AppLayout.tsx.
+		<div className="@container">
+			<Card aria-label="Project status" variant="sunken">
+				<div className="grid grid-cols-2 gap-x-4 gap-y-3 @min-[32rem]:grid-cols-3 @min-[61rem]:grid-cols-6">
+					<StatusCell label="Artifact health">
 						<Badge
-							title={`Current milestone: ${metadata.roadmap.currentMilestone}`}
-							tone="neutral">
-							{metadata.roadmap.currentMilestone}
+							title={`Artifact health: ${project.artifactHealth}`}
+							tone={artifactTone[project.artifactHealth]}>
+							{project.artifactHealth}
 						</Badge>
-					) : (
-						<span className="text-xs text-muted-foreground">—</span>
-					)}
-				</StatusCell>
-				<StatusCell label="Profile">
-					<Badge
-						title={`Assurance profile: ${bucketLabels[metadata.profile.bucket]}`}
-						tone="neutral">
-						{bucketLabels[metadata.profile.bucket]}
-					</Badge>
-				</StatusCell>
-				<StatusCell label="Working tree">
-					<GitStatusBadge className="max-w-full" status={gitStatus} />
-				</StatusCell>
-				<StatusCell label="Profile source">
-					<Badge title={`Profile source: ${metadata.profile.source}`} tone="neutral">
-						{metadata.profile.source}
-					</Badge>
-				</StatusCell>
-			</div>
-		</Card>
+					</StatusCell>
+					<StatusCell label="Phase">
+						<Badge title={`Phase: ${project.phase}`} tone="neutral">
+							{project.phase}
+						</Badge>
+					</StatusCell>
+					<StatusCell label="Milestone">
+						{metadata.roadmap?.currentMilestone ? (
+							<Badge
+								title={`Current milestone: ${metadata.roadmap.currentMilestone}`}
+								tone="neutral">
+								{metadata.roadmap.currentMilestone}
+							</Badge>
+						) : (
+							<span className="text-xs text-muted-foreground">—</span>
+						)}
+					</StatusCell>
+					<StatusCell label="Profile">
+						<Badge
+							title={`Assurance profile: ${bucketLabels[metadata.profile.bucket]}`}
+							tone="neutral">
+							{bucketLabels[metadata.profile.bucket]}
+						</Badge>
+					</StatusCell>
+					<StatusCell label="Working tree">
+						<GitStatusBadge className="max-w-full" status={gitStatus} />
+					</StatusCell>
+					<StatusCell label="Profile source">
+						<Badge title={`Profile source: ${metadata.profile.source}`} tone="neutral">
+							{metadata.profile.source}
+						</Badge>
+					</StatusCell>
+				</div>
+			</Card>
+		</div>
 	);
 }

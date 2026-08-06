@@ -29,23 +29,25 @@ function outcomeDot(className: string) {
 
 export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 	return (
-		<section aria-label="Invocation summary" className="space-y-3">
+		<section aria-label="Invocation summary" className="@container space-y-3">
 			{/* Shape-of-work breakdown, and the one place on this page a dot would decode to
 			    nothing: these three quantities are not a series in any chart here, so the cyan,
 			    indigo and magenta they carried appeared in no legend and stood for nothing a
 			    reader could look up. The outcome tiles below keep theirs — those colours are the
 			    chart's, and the chart legend states them. */}
-			<div className="grid gap-3 sm:grid-cols-3">
+			<div className="grid gap-3 @min-[32rem]:grid-cols-3">
 				<Metric label="Total invocations" value={totals.total} />
 				<Metric label="Top-level actions" value={totals.topLevel} />
 				<Metric label="Nested steps" value={totals.nested} />
 			</div>
 			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. The
-			    `md` step is what keeps eight tiles to two rows at tablet width — without it the
-			    grid held two columns until `lg` and the outcome row alone filled the viewport.
-			    These are `compact`: eight tiles at the headline step would out-shout the three
-			    figures above them, which are what the page is actually reporting. */}
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+			    middle step is what keeps eight tiles to two rows at tablet width — without it the
+			    grid held two columns until the widest step and the outcome row alone filled the
+			    viewport. The steps read this section's own width, not the viewport's; see the
+			    content-width table in AppLayout.tsx for why those differ. These are `compact`:
+			    eight tiles at the headline step would out-shout the three figures above them,
+			    which are what the page is actually reporting. */}
+			<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[45rem]:grid-cols-4 @min-[61rem]:grid-cols-8">
 				<Metric
 					label="Completed"
 					marker={outcomeDot(outcomeSolid.completed)}

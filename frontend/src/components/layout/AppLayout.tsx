@@ -187,6 +187,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
 				    route-change focus reset in App.tsx's RootLayout (and the Skip to Content link).
 				    focus:outline-none suppresses the ring on that scripted focus — the heuristic
 				    :focus-visible ring still appears for genuine keyboard focus. */}
+				{/* The rail is what makes viewport width a bad proxy for content width here, and the
+				    relationship is not monotonic: crossing `sm` swaps `px-4` for `p-6` AND adds the
+				    rail's 5.5rem/16.5rem, so the content column gets NARROWER as the viewport gets
+				    wider. Choose responsive utilities against this table, not against the viewport
+				    — or better, against the region's own width with `@container` and `@min-[…]:`,
+				    which is what the metric grids and the skills split do.
+
+				      viewport   rail collapsed   rail expanded
+				         390px      358px           358px   (below `sm`: px-4, no rail)
+				         639px      607px           607px
+				         640px      528px           352px   ← wider viewport, narrower column
+				         768px      656px           480px
+				        1024px      736px           736px   (rail defaults to expanded from here)
+				        1280px      992px           992px
+				        1536px     1248px          1248px
+
+				    The `@min-[…]:` steps in use are picked off it: 32rem clears 480 and catches
+				    528, 45rem clears 656 and catches 736, 61rem clears 736 and catches 992. */}
 				<main
 					className={cn(
 						'command-surface min-w-0 px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] transition-[padding] duration-200 focus:outline-none sm:min-h-screen sm:p-6 sm:pb-6',

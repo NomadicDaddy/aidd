@@ -113,7 +113,7 @@ function FeatureStatusSelect({
 	return (
 		<select
 			aria-label={`Status for ${id}`}
-			className={`${selectClass} px-2`}
+			className={`${selectClass} w-full px-2`}
 			disabled={disabled}
 			onChange={(event) =>
 				onStatusChange(feature, event.target.value as ProjectFeatureStatus)

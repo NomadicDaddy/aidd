@@ -1,22 +1,25 @@
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
-import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
 import { useState } from 'react';
 
 import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 import type { HealthFilter } from '../auditsUtils.ts';
 
+import {
+	FilterSearch,
+	FilterSelect,
+	FilterToolbar,
+} from '../../../components/shared/FilterToolbar.tsx';
 import { LaunchTargetControl } from '../../../components/shared/LaunchTargetControl.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
-import { Input } from '../../../components/ui/input.tsx';
-import { fieldLabelClass, selectClass } from '../../../lib/formStyles.ts';
 
 type EnabledFilter = 'all' | 'disabled' | 'enabled';
 
 interface CatalogToolbarProps {
 	auditsEnabled: boolean;
 	enabledFilter: EnabledFilter;
+	filteredCount: number;
 	healthFilter: HealthFilter;
 	needsLaunchTargets: boolean;
 	onEnabledFilterChange: (value: EnabledFilter) => void;
@@ -36,12 +39,14 @@ interface CatalogToolbarProps {
 	selectedAuditCount: number;
 	selectedProjectPath: string | undefined;
 	settingsReady: boolean;
+	totalCount: number;
 	updatePending: boolean;
 }
 
 export function CatalogToolbar({
 	auditsEnabled,
 	enabledFilter,
+	filteredCount,
 	healthFilter,
 	needsLaunchTargets,
 	onEnabledFilterChange,
@@ -57,6 +62,7 @@ export function CatalogToolbar({
 	selectedAuditCount,
 	selectedProjectPath,
 	settingsReady,
+	totalCount,
 	updatePending,
 }: CatalogToolbarProps) {
 	const [runTarget, setRunTarget] = useState<LaunchTargetValue>({});
@@ -157,48 +163,50 @@ export function CatalogToolbar({
 				) : null}
 			</Card>
 
-			<Card className="grid gap-3 lg:grid-cols-[2fr_1fr_1fr]">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Search</span>
-					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-						<Input
-							className="pl-9"
-							data-shortcut-search=""
-							onChange={(event) => onQueryChange(event.target.value)}
-							placeholder="Filter audits"
-							value={query}
-						/>
-					</div>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Health</span>
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) =>
-							onHealthFilterChange(event.target.value as HealthFilter)
-						}
-						value={healthFilter}>
-						<option value="all">All health</option>
-						<option value="fresh">Fresh</option>
-						<option value="missing">Missing reports</option>
-						<option value="stale">Stale reports</option>
-					</select>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>State</span>
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) =>
-							onEnabledFilterChange(event.target.value as EnabledFilter)
-						}
-						value={enabledFilter}>
-						<option value="all">All states</option>
-						<option value="enabled">Enabled</option>
-						<option value="disabled">Disabled</option>
-					</select>
-				</label>
-			</Card>
+			<FilterToolbar
+				columns="lg:grid-cols-[2fr_1fr_1fr]"
+				filtered={filteredCount}
+				hasFilters={
+					query.trim() !== '' || healthFilter !== 'all' || enabledFilter !== 'all'
+				}
+				noun="audits"
+				onReset={() => {
+					onQueryChange('');
+					onHealthFilterChange('all');
+					onEnabledFilterChange('all');
+				}}
+				total={totalCount}>
+				<FilterSearch
+					onChange={onQueryChange}
+					placeholder="Filter audits"
+					shortcut
+					value={query}
+				/>
+				{/* State before Health, matching the project's own Audits tab: that tab has only
+				    Search and State, and the two read as the same toolbar when State is in the
+				    same place in both. */}
+				<FilterSelect
+					label="State"
+					onChange={(value) => onEnabledFilterChange(value as EnabledFilter)}
+					options={[
+						{ label: 'All states', value: 'all' },
+						{ label: 'Enabled', value: 'enabled' },
+						{ label: 'Disabled', value: 'disabled' },
+					]}
+					value={enabledFilter}
+				/>
+				<FilterSelect
+					label="Health"
+					onChange={(value) => onHealthFilterChange(value as HealthFilter)}
+					options={[
+						{ label: 'All health', value: 'all' },
+						{ label: 'Fresh', value: 'fresh' },
+						{ label: 'Missing reports', value: 'missing' },
+						{ label: 'Stale reports', value: 'stale' },
+					]}
+					value={healthFilter}
+				/>
+			</FilterToolbar>
 		</>
 	);
 }

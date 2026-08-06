@@ -1,11 +1,10 @@
-import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
-import { default as Search } from 'lucide-react/dist/esm/icons/search';
-
-import { Button } from '../../../components/ui/button.tsx';
-import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { Input } from '../../../components/ui/input.tsx';
-import { fieldLabelClass } from '../../../lib/formStyles.ts';
-import { FilterSelect, GraphDiagnostics, GraphZoomControls } from './dependencyGraphComponents.tsx';
+import {
+	FilterSearch,
+	FilterSelect,
+	FilterToolbar,
+} from '../../../components/shared/FilterToolbar.tsx';
+import { CardHeader } from '../../../components/ui/card.tsx';
+import { GraphDiagnostics, GraphZoomControls } from './dependencyGraphComponents.tsx';
 import { type buildFeatureDependencyGraph } from './dependencyGraphUtils.ts';
 import { FEATURE_STATUS_FILTER_OPTIONS } from './featuresUtils.ts';
 
@@ -13,6 +12,7 @@ import { FEATURE_STATUS_FILTER_OPTIONS } from './featuresUtils.ts';
 // so both files stay inside the 300-line cap.
 export function DependencyGraphFilters({
 	graph,
+	hasFilters,
 	milestoneFilter,
 	milestoneOptions,
 	onMilestoneFilterChange,
@@ -31,6 +31,7 @@ export function DependencyGraphFilters({
 	zoom,
 }: {
 	graph: ReturnType<typeof buildFeatureDependencyGraph>;
+	hasFilters: boolean;
 	milestoneFilter: string;
 	milestoneOptions: { label: string; value: string }[];
 	onMilestoneFilterChange: (value: string) => void;
@@ -49,64 +50,62 @@ export function DependencyGraphFilters({
 	zoom: number;
 }) {
 	return (
-		<Card className="space-y-4">
-			<CardHeader
-				action={
-					<div className="flex flex-wrap items-center gap-2">
+		<FilterToolbar
+			// Fixed rem columns clipped the longest option labels below xl; the filters wrap to two
+			// rows and each select sizes to its column.
+			columns="sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(9rem,1fr))]"
+			filtered={visibleCount}
+			hasFilters={hasFilters}
+			header={
+				// Zoom stays in the header because it is not a filter. Reset filters moved down to
+				// the toolbar's own footer, where every other filter row keeps it.
+				<CardHeader
+					action={
 						<GraphZoomControls
 							onReset={onResetZoom}
 							onZoomIn={onZoomIn}
 							onZoomOut={onZoomOut}
 							zoom={zoom}
 						/>
-						<Button onClick={onResetFilters} variant="secondary">
-							<RotateCcw className="h-4 w-4" />
-							Reset filters
-						</Button>
-					</div>
-				}
-				badge={<GraphDiagnostics graph={graph} visibleCount={visibleCount} />}
-				className="mb-0"
-				title="Feature Dependencies"
+					}
+					badge={<GraphDiagnostics graph={graph} />}
+					className="mb-0"
+					title="Feature Dependencies"
+				/>
+			}
+			noun="features"
+			onReset={onResetFilters}
+			total={graph.nodes.length}>
+			<FilterSearch
+				ariaLabel="Search dependency graph"
+				onChange={onQueryChange}
+				placeholder="Filter dependencies"
+				value={query}
 			/>
-			{/* Fixed rem columns clipped the longest option labels below xl; the filters now wrap to
-			    two rows and each select sizes to its column. */}
-			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(9rem,1fr))]">
-				<label className="grid gap-1 text-xs font-medium text-muted-foreground">
-					<span className={fieldLabelClass}>Search</span>
-					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-						<Input
-							aria-label="Search dependency graph"
-							className="pl-9"
-							onChange={(event) => onQueryChange(event.target.value)}
-							placeholder="Filter dependencies"
-							value={query}
-						/>
-					</div>
-				</label>
-				<FilterSelect
-					label="Status"
-					onChange={onStatusFilterChange}
-					options={FEATURE_STATUS_FILTER_OPTIONS.map((status) => ({
-						label: status === 'all' ? 'All statuses' : status,
-						value: status,
-					}))}
-					value={statusFilter}
-				/>
-				<FilterSelect
-					label="Source"
-					onChange={onSourceFilterChange}
-					options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
-					value={sourceFilter}
-				/>
-				<FilterSelect
-					label="Milestone"
-					onChange={onMilestoneFilterChange}
-					options={[{ label: 'All milestones', value: 'all' }, ...milestoneOptions]}
-					value={milestoneFilter}
-				/>
-			</div>
-		</Card>
+			{/* Source and Milestone were the other way round here, and the Features tab beside this
+			    one has the same four controls: switching tabs moved the select the operator had
+			    just used. The order is `FILTER_FIELD_ORDER`, on both. */}
+			<FilterSelect
+				label="Status"
+				onChange={onStatusFilterChange}
+				options={FEATURE_STATUS_FILTER_OPTIONS.map((status) => ({
+					label: status === 'all' ? 'All statuses' : status,
+					value: status,
+				}))}
+				value={statusFilter}
+			/>
+			<FilterSelect
+				label="Milestone"
+				onChange={onMilestoneFilterChange}
+				options={[{ label: 'All milestones', value: 'all' }, ...milestoneOptions]}
+				value={milestoneFilter}
+			/>
+			<FilterSelect
+				label="Source"
+				onChange={onSourceFilterChange}
+				options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
+				value={sourceFilter}
+			/>
+		</FilterToolbar>
 	);
 }

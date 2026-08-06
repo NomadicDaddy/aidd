@@ -231,6 +231,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 			<CatalogToolbar
 				auditsEnabled={auditsEnabled}
 				enabledFilter={enabledFilter}
+				filteredCount={filteredDefinitions.length}
 				healthFilter={healthFilter}
 				needsLaunchTargets={selectedProjectCount === 0}
 				onEnabledFilterChange={setEnabledFilter}
@@ -246,6 +247,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				selectedAuditCount={selectedRunnableAuditNames.length}
 				selectedProjectPath={selectedProjectPath}
 				settingsReady={Boolean(settings.data)}
+				totalCount={manager.data?.definitions.length ?? 0}
 				updatePending={updateSettings.isPending}
 			/>
 

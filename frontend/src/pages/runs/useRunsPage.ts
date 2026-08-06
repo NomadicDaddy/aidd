@@ -119,10 +119,9 @@ export function useRunsPage() {
 	const sessionList =
 		pipelineSessions.sessions.data?.pages.flatMap((page) => page.sessions) ?? [];
 	// Hide Continue when a loaded follow-up already points back to this run.
-	const continuedRunIds = new Set<string>();
-	for (const run of runList) {
-		if (run.chainedFromRunId) continuedRunIds.add(run.chainedFromRunId);
-	}
+	const continuedRunIds = new Set(
+		runList.flatMap((run) => (run.chainedFromRunId ? [run.chainedFromRunId] : [])),
+	);
 	const listedRun =
 		selection?.kind === 'run' ? runList.find((run) => run.id === selection.id) : undefined;
 	// Fallback single-record fetch: a pipeline-owned run deep-linked via ?run= is not in the
@@ -265,6 +264,7 @@ export function useRunsPage() {
 		controls,
 		expandedSessions,
 		fetchMore,
+		filteredEntryCount: filteredEntries.length,
 		handleSelectPipeline,
 		handleSelectRun,
 		handleSelectStepRun,

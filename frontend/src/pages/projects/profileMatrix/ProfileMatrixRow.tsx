@@ -46,7 +46,7 @@ export function ProfileFacetSelect({
 	return (
 		<select
 			aria-label={`${projectName} ${facet.title}`}
-			className={`${selectClass} h-8 min-w-36 px-2 text-xs`}
+			className={`${selectClass} h-8 w-full min-w-36 px-2 text-xs`}
 			onChange={(event) =>
 				onChange(
 					row.project.id,

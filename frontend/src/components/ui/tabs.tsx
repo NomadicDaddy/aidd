@@ -1,5 +1,6 @@
 import { type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 
+import { cn } from '../../lib/cn.ts';
 import { selectClass } from '../../lib/formStyles.ts';
 import { OverflowScroller } from '../shared/OverflowScroller.tsx';
 import { Button } from './button.tsx';
@@ -116,7 +117,7 @@ export function TabList<T extends string>({
 				<label className="block lg:hidden">
 					<span className="sr-only">{ariaLabel}</span>
 					<select
-						className={selectClass}
+						className={cn(selectClass, 'w-full')}
 						onChange={(event) => onChange(event.target.value as T)}
 						value={activeTab}>
 						{tabs.map((tab) => (

@@ -117,6 +117,7 @@ export function RunsPage() {
 				</Card>
 			)}
 			<RunFilters
+				filteredCount={page.filteredEntryCount}
 				historyProject={page.historyProject}
 				modeFilter={page.modeFilter}
 				onClear={() => {
@@ -132,6 +133,7 @@ export function RunsPage() {
 				projects={page.projectList}
 				query={page.query}
 				statusFilter={page.statusFilter}
+				totalCount={page.loadedEntryCount}
 			/>
 			{/* The console column spans both rows, so without an explicit flexible second row a
 			    console taller than Active+gap+History has its excess split evenly across both rows —

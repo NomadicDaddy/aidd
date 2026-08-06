@@ -1,14 +1,38 @@
 import type { RunMode } from '../../api/types.ts';
 import type { UnifiedStatusFilter } from './unifiedEntries.ts';
 
-import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
-import { Input } from '../../components/ui/input.tsx';
-import { cn } from '../../lib/cn.ts';
+import {
+	FilterSearch,
+	FilterSelect,
+	FilterToolbar,
+} from '../../components/shared/FilterToolbar.tsx';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
-import { selectClass } from '../../lib/formStyles.ts';
+
+const STATUS_OPTIONS = [
+	{ label: 'All statuses', value: 'all' },
+	{ label: 'Running', value: 'running' },
+	{ label: 'Queued', value: 'queued' },
+	{ label: 'Completed', value: 'completed' },
+	{ label: 'Completed w/ failures', value: 'completed_with_failures' },
+	{ label: 'Failed', value: 'failed' },
+	{ label: 'Stopped', value: 'stopped' },
+	{ label: 'Killed', value: 'killed' },
+];
+
+const MODE_OPTIONS = [
+	{ label: 'All modes', value: 'all' },
+	{ label: 'Coding', value: 'coding' },
+	{ label: 'Audit', value: 'audit' },
+	{ label: 'Director', value: 'director' },
+	{ label: 'Directive', value: 'directive' },
+	{ label: 'Interview', value: 'interview' },
+	{ label: 'Todo', value: 'todo' },
+	{ label: 'Triumvirate', value: 'triumvirate' },
+	{ label: 'Validate', value: 'validate' },
+];
 
 export function RunFilters({
+	filteredCount,
 	historyProject,
 	modeFilter,
 	onClear,
@@ -19,7 +43,9 @@ export function RunFilters({
 	projects,
 	query,
 	statusFilter,
+	totalCount,
 }: {
+	filteredCount: number;
 	historyProject: string;
 	modeFilter: 'all' | RunMode;
 	onClear: () => void;
@@ -30,101 +56,88 @@ export function RunFilters({
 	projects: { id: string; name: string; path: string }[];
 	query: string;
 	statusFilter: UnifiedStatusFilter;
+	totalCount: number;
 }) {
 	return (
-		// Carded like the launch row above it and the Telemetry filter row: as a bare flex div on
-		// the page background, two adjacent rows of the same control species read as two different
-		// classes of UI.
-		<Card className="flex flex-wrap items-center gap-3">
-			<select
-				aria-label="Filter activity by project"
-				className={cn(selectClass, 'min-w-44 flex-1')}
-				onChange={(event) => {
-					traceDataMovement({
-						category: 'event',
-						layer: 'ui',
-						operation: 'runs.filter.project',
-						source: 'RunsPage',
-						summary: { filtered: event.target.value !== 'all' },
-					});
-					onHistoryProjectChange(event.target.value);
-				}}
-				value={historyProject}>
-				<option value="all">All projects</option>
-				{projects.map((project) => (
-					<option key={project.id} value={project.path}>
-						{project.name}
-					</option>
-				))}
-			</select>
-			<select
-				aria-label="Filter runs by status"
-				className={cn(selectClass, 'min-w-36')}
-				onChange={(event) => {
+		// This row was four controls on four lines. Each select carried `min-w-*` and inherited a
+		// `w-full` from the shared select class that `cn()` cannot merge away — with `flex-basis:
+		// auto` the width won, every select resolved to the full 1278px, and a wrap-flex toolbar
+		// became a stack. It is a grid of labelled fields now, in the house order.
+		<FilterToolbar
+			columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1.5fr]"
+			filtered={filteredCount}
+			hasFilters={
+				query.trim() !== '' ||
+				statusFilter !== 'all' ||
+				modeFilter !== 'all' ||
+				historyProject !== 'all'
+			}
+			noun="runs"
+			onReset={() => {
+				traceDataMovement({
+					category: 'event',
+					layer: 'ui',
+					operation: 'runs.filter.clear',
+					source: 'RunsPage',
+				});
+				onClear();
+			}}
+			total={totalCount}>
+			<FilterSearch
+				ariaLabel="Search runs"
+				onChange={onQueryChange}
+				placeholder="Filter runs and pipelines"
+				shortcut
+				value={query}
+			/>
+			<FilterSelect
+				label="Status"
+				onChange={(value) => {
 					traceDataMovement({
 						category: 'event',
 						layer: 'ui',
 						operation: 'runs.filter.status',
 						source: 'RunsPage',
-						summary: { status: event.target.value },
+						summary: { status: value },
 					});
-					onStatusFilterChange(event.target.value as UnifiedStatusFilter);
+					onStatusFilterChange(value as UnifiedStatusFilter);
 				}}
-				value={statusFilter}>
-				<option value="all">All statuses</option>
-				<option value="running">Running</option>
-				<option value="queued">Queued</option>
-				<option value="completed">Completed</option>
-				<option value="completed_with_failures">Completed w/ failures</option>
-				<option value="failed">Failed</option>
-				<option value="stopped">Stopped</option>
-				<option value="killed">Killed</option>
-			</select>
-			<select
-				aria-label="Filter runs by mode"
-				className={cn(selectClass, 'min-w-36')}
-				onChange={(event) => {
+				options={STATUS_OPTIONS}
+				value={statusFilter}
+			/>
+			<FilterSelect
+				label="Mode"
+				onChange={(value) => {
 					traceDataMovement({
 						category: 'event',
 						layer: 'ui',
 						operation: 'runs.filter.mode',
 						source: 'RunsPage',
-						summary: { mode: event.target.value },
+						summary: { mode: value },
 					});
-					onModeFilterChange(event.target.value as 'all' | RunMode);
+					onModeFilterChange(value as 'all' | RunMode);
 				}}
-				value={modeFilter}>
-				<option value="all">All modes</option>
-				<option value="coding">Coding</option>
-				<option value="audit">Audit</option>
-				<option value="director">Director</option>
-				<option value="directive">Directive</option>
-				<option value="interview">Interview</option>
-				<option value="todo">Todo</option>
-				<option value="triumvirate">Triumvirate</option>
-				<option value="validate">Validate</option>
-			</select>
-			<Input
-				aria-label="Search runs"
-				className="min-w-56 flex-[2]"
-				data-shortcut-search=""
-				onChange={(event) => onQueryChange(event.target.value)}
-				placeholder="Filter runs and pipelines"
-				value={query}
+				options={MODE_OPTIONS}
+				value={modeFilter}
 			/>
-			<Button
-				onClick={() => {
+			<FilterSelect
+				label="Project"
+				onChange={(value) => {
 					traceDataMovement({
 						category: 'event',
 						layer: 'ui',
-						operation: 'runs.filter.clear',
+						operation: 'runs.filter.project',
 						source: 'RunsPage',
+						summary: { filtered: value !== 'all' },
 					});
-					onClear();
+					onHistoryProjectChange(value);
 				}}
-				variant="secondary">
-				Clear
-			</Button>
-		</Card>
+				options={[
+					{ label: 'All projects', value: 'all' },
+					...projects.map((project) => ({ label: project.name, value: project.path })),
+				]}
+				value={historyProject}
+			/>
+		</FilterToolbar>
 	);
 }

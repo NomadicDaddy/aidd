@@ -5,7 +5,6 @@ import { default as ZoomOut } from 'lucide-react/dist/esm/icons/zoom-out';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { cn } from '../../../lib/cn.ts';
-import { fieldLabelClass, selectClass } from '../../../lib/formStyles.ts';
 import {
 	type buildFeatureDependencyGraph,
 	type FeatureDependencyNode,
@@ -147,48 +146,20 @@ export function DependencyList({
 	);
 }
 
-export function FilterSelect({
-	label,
-	onChange,
-	options,
-	value,
-}: {
-	label: string;
-	onChange: (value: string) => void;
-	options: { label: string; value: string }[];
-	value: string;
-}) {
-	return (
-		<label className="grid gap-1">
-			<span className={fieldLabelClass}>{label}</span>
-			<select
-				className={`${selectClass} w-full`}
-				onChange={(event) => onChange(event.target.value)}
-				value={value}>
-				{options.map((option) => (
-					<option key={option.value} value={option.value}>
-						{option.label}
-					</option>
-				))}
-			</select>
-		</label>
-	);
-}
+// `FilterSelect` used to live here, a fourth private copy of a labelled select. It is
+// `components/shared/FilterToolbar.tsx` now, with the other five toolbars.
 
 export function GraphDiagnostics({
 	graph,
-	visibleCount,
 }: {
 	graph: ReturnType<typeof buildFeatureDependencyGraph>;
-	visibleCount: number;
 }) {
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			<Badge tone="neutral">{graph.nodes.length} features</Badge>
 			<Badge tone="neutral">{graph.edges.length} links</Badge>
-			<Badge tone={visibleCount === graph.nodes.length ? 'neutral' : 'amber'}>
-				{visibleCount} visible
-			</Badge>
+			{/* "N visible" was here. The toolbar's `role="status"` readout says it, once, and says
+			    it out loud; a badge that changes tone says it only to whoever is watching. */}
 			{graph.cycles.length > 0 ? (
 				<Badge tone="red">{graph.cycles.length} cycles</Badge>
 			) : null}

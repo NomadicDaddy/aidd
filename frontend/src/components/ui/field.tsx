@@ -1,10 +1,11 @@
-import type { LabelHTMLAttributes, ReactElement, ReactNode } from 'react';
+import type { InputHTMLAttributes, LabelHTMLAttributes, ReactElement, ReactNode } from 'react';
 
 import { Children, cloneElement, isValidElement, useId } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { fieldErrorClass, fieldLabelClass } from '../../lib/formStyles.ts';
-import { toneText } from '../../lib/tones.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import { Checkbox } from './checkbox.tsx';
 
 interface FieldRowProps extends LabelHTMLAttributes<HTMLLabelElement> {
 	children: ReactNode;
@@ -74,6 +75,73 @@ export function FieldRow({
 					{error}
 				</p>
 			)}
+		</label>
+	);
+}
+
+interface FieldCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+	/**
+	 * The sentence under the label. There is exactly one place for it, and this is it.
+	 *
+	 * Settings had three: inside the bordered box under the label, outside the box as a sibling
+	 * paragraph, and in the section's own intro prose above the control. The Spernakit toggle used
+	 * the second, so its box read as a bare switch and the sentence explaining it belonged, visually,
+	 * to whatever came next.
+	 */
+	description?: ReactNode;
+	label: ReactNode;
+	/** A status or key rendered at the end of the row — `ConfigKey`, "API key configured". */
+	meta?: ReactNode;
+	/**
+	 * `amber` is for a toggle that widens what the app is allowed to do — the two that let an agent
+	 * write files or open a port. It is the box that changes colour, not a sentence beside it.
+	 */
+	tone?: 'amber' | 'neutral';
+}
+
+/**
+ * A checkbox that owns its bordered box, its label and its description.
+ *
+ * Nine call sites each rebuilt this row by hand and no two agreed: `items-center` against
+ * `items-start`, `mt-0.5` on the box or not, the label at `font-medium text-foreground` or plain
+ * `text-sm`, the description muted or toned or absent, and one that put the border on an inner
+ * `<span>` so the description sat outside it.
+ */
+export function FieldCheckbox({
+	className,
+	description,
+	label,
+	meta,
+	tone = 'neutral',
+	...props
+}: FieldCheckboxProps) {
+	const toned = tone === 'amber';
+	return (
+		<label
+			className={cn(
+				'flex gap-2 rounded-md border px-3 py-2',
+				description ? 'items-start' : 'min-h-9 items-center',
+				toned ? `${toneBorder.amber} ${toneSurface.amber}` : 'border-border',
+				className,
+			)}>
+			<Checkbox className={description ? 'mt-0.5' : undefined} {...props} />
+			<span
+				className={cn(
+					'min-w-0 flex-1 text-sm',
+					toned ? toneText.amber : 'text-foreground',
+				)}>
+				<span className="font-medium">{label}</span>
+				{description ? (
+					<span
+						className={cn(
+							'mt-1 block text-xs',
+							toned ? undefined : 'text-muted-foreground',
+						)}>
+						{description}
+					</span>
+				) : null}
+			</span>
+			{meta}
 		</label>
 	);
 }

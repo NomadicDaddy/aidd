@@ -1,14 +1,16 @@
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
-import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
+import {
+	FilterSearch,
+	FilterSelect,
+	FilterToolbar,
+} from '../../../components/shared/FilterToolbar.tsx';
 import { SkeletonRows } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { Input } from '../../../components/ui/input.tsx';
-import { fieldLabelClass, selectClass } from '../../../lib/formStyles.ts';
 import { AuditsDesktopTable } from './AuditsDesktopTable.tsx';
 import { AuditsMobileList } from './AuditsMobileList.tsx';
 import { useProjectAuditsTab } from './useProjectAuditsTab.ts';
@@ -111,33 +113,28 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 				) : null}
 			</Card>
 
-			<Card className="grid gap-3 md:grid-cols-[2fr_1fr]">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Search</span>
-					<div className="relative">
-						<Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-						<Input
-							className="pl-9"
-							onChange={(event) => setQuery(event.target.value)}
-							placeholder="Filter audits"
-							value={query}
-						/>
-					</div>
-				</label>
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>State</span>
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) =>
-							setEnabledFilter(event.target.value as typeof enabledFilter)
-						}
-						value={enabledFilter}>
-						<option value="all">All states</option>
-						<option value="enabled">Enabled</option>
-						<option value="disabled">Disabled</option>
-					</select>
-				</label>
-			</Card>
+			<FilterToolbar
+				columns="md:grid-cols-[2fr_1fr]"
+				filtered={filtered.length}
+				hasFilters={query.trim() !== '' || enabledFilter !== 'all'}
+				noun="audits"
+				onReset={() => {
+					setQuery('');
+					setEnabledFilter('all');
+				}}
+				total={audits.data?.entries.length ?? filtered.length}>
+				<FilterSearch onChange={setQuery} placeholder="Filter audits" value={query} />
+				<FilterSelect
+					label="State"
+					onChange={(value) => setEnabledFilter(value as typeof enabledFilter)}
+					options={[
+						{ label: 'All states', value: 'all' },
+						{ label: 'Enabled', value: 'enabled' },
+						{ label: 'Disabled', value: 'disabled' },
+					]}
+					value={enabledFilter}
+				/>
+			</FilterToolbar>
 
 			<AuditsDesktopTable
 				auditsEnabled={auditsEnabled}

@@ -180,6 +180,12 @@ export function DependencyGraphTab({
 				</Card>
 				<DependencyGraphFilters
 					graph={graph}
+					hasFilters={
+						query.trim() !== '' ||
+						statusFilter !== 'all' ||
+						milestoneFilter !== 'all' ||
+						sourceFilter !== 'all'
+					}
 					milestoneFilter={milestoneFilter}
 					milestoneOptions={milestoneOptions}
 					onMilestoneFilterChange={setMilestoneFilter}

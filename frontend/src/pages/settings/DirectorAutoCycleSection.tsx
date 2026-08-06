@@ -1,8 +1,7 @@
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
-import { FieldRow } from '../../components/ui/field.tsx';
+import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
@@ -38,22 +37,12 @@ export function DirectorAutoCycleSection({
 				</p>
 			</div>
 			<div className="mt-4 grid gap-4 sm:grid-cols-2">
-				<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
-					<Checkbox
-						checked={form.directorAutoCycleEnabled}
-						className="mt-0.5"
-						onChange={(event) =>
-							setField('directorAutoCycleEnabled', event.target.checked)
-						}
-					/>
-					<span className="text-sm text-foreground">
-						<span className="font-medium">Run cycles automatically</span>
-						<span className="mt-1 block text-xs text-muted-foreground">
-							Off by default. When on, a cycle starts every interval and once on
-							startup if the last cycle is older than the interval.
-						</span>
-					</span>
-				</label>
+				<FieldCheckbox
+					checked={form.directorAutoCycleEnabled}
+					description="Off by default. When on, a cycle starts every interval and once on startup if the last cycle is older than the interval."
+					label="Run cycles automatically"
+					onChange={(event) => setField('directorAutoCycleEnabled', event.target.checked)}
+				/>
 				<FieldRow label="Interval (hours)">
 					<Input
 						inputMode="numeric"

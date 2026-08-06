@@ -1,7 +1,7 @@
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
+import { FieldCheckbox } from '../../components/ui/field.tsx';
 
 export function ObservabilitySection({
 	form,
@@ -12,19 +12,12 @@ export function ObservabilitySection({
 }) {
 	return (
 		<Card>
-			<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
-				<Checkbox
-					checked={form.traceDataMovement}
-					className="mt-0.5"
-					onChange={(event) => setField('traceDataMovement', event.target.checked)}
-				/>
-				<span className="text-sm text-foreground">
-					<span className="font-medium text-foreground">Browser console trace</span>
-					<span className="mt-1 block text-xs text-muted-foreground">
-						Emit local API, backend, socket, and UI trace groups in the browser console.
-					</span>
-				</span>
-			</label>
+			<FieldCheckbox
+				checked={form.traceDataMovement}
+				description="Emit local API, backend, socket, and UI trace groups in the browser console."
+				label="Browser console trace"
+				onChange={(event) => setField('traceDataMovement', event.target.checked)}
+			/>
 		</Card>
 	);
 }

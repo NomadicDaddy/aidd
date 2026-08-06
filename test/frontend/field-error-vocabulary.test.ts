@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { join, resolve } from 'node:path';
 
+import { formControlClass, selectClass, textareaClass } from '../../frontend/src/lib/formStyles.ts';
+import { invalidControlClass } from '../../frontend/src/lib/tones.ts';
+
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 const SRC = join(FRONTEND_ROOT, 'src');
 
@@ -124,13 +127,13 @@ describe('one vocabulary for an invalid field', () => {
 		expect(tones).toContain('aria-invalid:focus-visible:border-red-500');
 		expect(tones).toContain('dark:aria-invalid:focus-visible:border-red-400');
 		// Textareas get the same treatment; `RecipeStepJsonField` hand-built a second skin
-		// precisely because `textareaClass` had no invalid state to inherit.
-		for (const control of ['formControlClass', 'textareaClass']) {
-			const declaration = styles.slice(styles.indexOf(`export const ${control}`));
-			expect(declaration.slice(0, declaration.indexOf(';'))).toContain(
-				'${invalidControlClass}',
-			);
-		}
+		// precisely because `textareaClass` had no invalid state to inherit. Asserted against the
+		// resolved class strings rather than the source line: `formControlClass` composes its
+		// chrome from `controlChromeClass` now that the width was lifted out of it, and reading the
+		// declaration would have failed on the indirection while the property still held.
+		for (const control of [formControlClass, selectClass, textareaClass])
+			expect(control).toContain(invalidControlClass);
+		expect(styles).toContain('${invalidControlClass}');
 	});
 
 	test('no form file spells its own red', async () => {

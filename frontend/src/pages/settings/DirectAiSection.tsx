@@ -6,11 +6,9 @@ import type {
 } from '../../api/types.ts';
 
 import { Card } from '../../components/ui/card.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
-import { FieldRow } from '../../components/ui/field.tsx';
+import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
-import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ('' | ReasoningEffort)[] = [
@@ -61,18 +59,16 @@ export function DirectAiSection({
 
 	return (
 		<Card className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-			<div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
-				<label className="flex items-center gap-2">
-					<Checkbox
-						checked={directAi.enabled}
-						onChange={(event) => updateDirectAi({ enabled: event.target.checked })}
-					/>
-					<span className="text-sm font-medium text-foreground">Direct AI</span>
-				</label>
-				<span className="text-xs font-medium text-muted-foreground">
-					{directAi.apiKeyConfigured ? 'API key configured' : 'No API key'}
-				</span>
-			</div>
+			<FieldCheckbox
+				checked={directAi.enabled}
+				label="Direct AI"
+				meta={
+					<span className="text-xs font-medium text-muted-foreground">
+						{directAi.apiKeyConfigured ? 'API key configured' : 'No API key'}
+					</span>
+				}
+				onChange={(event) => updateDirectAi({ enabled: event.target.checked })}
+			/>
 			<FieldRow className={dimClass} label="Provider">
 				<Input
 					disabled={disabled}
@@ -151,47 +147,27 @@ export function DirectAiSection({
 				<span className={fieldLabelClass}>Surfaces</span>
 				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
 					{surfaceOptions.map((surface) => (
-						<label
-							className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
-							key={surface.key}>
-							<Checkbox
-								checked={directAi.surfaces[surface.key]}
-								disabled={disabled}
-								onChange={(event) =>
-									updateSurface(surface.key, event.target.checked)
-								}
-							/>
-							<span className="text-sm font-medium text-foreground">
-								{surface.label}
-							</span>
-						</label>
+						<FieldCheckbox
+							checked={directAi.surfaces[surface.key]}
+							disabled={disabled}
+							key={surface.key}
+							label={surface.label}
+							onChange={(event) => updateSurface(surface.key, event.target.checked)}
+						/>
 					))}
 				</div>
 			</div>
 			<div className="grid gap-2 md:col-span-2 xl:col-span-3">
 				<span className={fieldLabelClass}>Director chat agent</span>
-				<label
-					className={`flex items-start gap-2 rounded-md border px-3 py-2 ${toneBorder.amber} ${toneSurface.amber}`}>
-					<Checkbox
-						checked={directorChatAllowFileEdits}
-						className="mt-0.5"
-						onChange={(event) =>
-							setField('directorChatAllowFileEdits', event.target.checked)
-						}
-					/>
-					<span className={`text-sm ${toneText.amber}`}>
-						<span className="font-medium">
-							Allow Director chat to edit project files directly
-						</span>
-						<span className="mt-1 block text-xs">
-							Off by default. When off, the Director only orchestrates supervised runs
-							(visible on the Runs page, where you can stop or kill them). When on,
-							the chat agent can write/edit files and run shell commands in your
-							projects with no run-level supervision. Enable only if you understand
-							the risk.
-						</span>
-					</span>
-				</label>
+				<FieldCheckbox
+					checked={directorChatAllowFileEdits}
+					description="Off by default. When off, the Director only orchestrates supervised runs (visible on the Runs page, where you can stop or kill them). When on, the chat agent can write/edit files and run shell commands in your projects with no run-level supervision. Enable only if you understand the risk."
+					label="Allow Director chat to edit project files directly"
+					onChange={(event) =>
+						setField('directorChatAllowFileEdits', event.target.checked)
+					}
+					tone="amber"
+				/>
 			</div>
 		</Card>
 	);

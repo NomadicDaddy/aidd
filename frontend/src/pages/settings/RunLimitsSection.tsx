@@ -3,8 +3,7 @@ import type { ReactNode } from 'react';
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
-import { FieldRow } from '../../components/ui/field.tsx';
+import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { nullableNumber, numberValue } from './settingsUtils.ts';
 
@@ -70,11 +69,12 @@ function ToggleRow({
 	onChange: (checked: boolean) => void;
 }) {
 	return (
-		<label className="flex min-h-9 items-center gap-2 rounded-md border border-border px-3 py-2">
-			<Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />
-			<span className="text-sm font-medium text-foreground">{label}</span>
-			{configKey ? <ConfigKey name={configKey} /> : null}
-		</label>
+		<FieldCheckbox
+			checked={checked}
+			label={label}
+			meta={configKey ? <ConfigKey name={configKey} /> : null}
+			onChange={(event) => onChange(event.target.checked)}
+		/>
 	);
 }
 

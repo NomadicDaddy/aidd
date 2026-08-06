@@ -1,8 +1,7 @@
 import type { BackendInputName, ReasoningEffort, WebConfigSettings } from '../../api/types.ts';
 
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
-import { FieldRow } from '../../components/ui/field.tsx';
+import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
@@ -92,13 +91,11 @@ export function GeneralDefaultsSection({
 						value={textValue(form.auditModel)}
 					/>
 				</FieldRow>
-				<label className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
-					<Checkbox
-						checked={form.auditsEnabled}
-						onChange={(event) => setField('auditsEnabled', event.target.checked)}
-					/>
-					<span className="text-sm font-medium text-foreground">Audits enabled</span>
-				</label>
+				<FieldCheckbox
+					checked={form.auditsEnabled}
+					label="Audits enabled"
+					onChange={(event) => setField('auditsEnabled', event.target.checked)}
+				/>
 				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Init Script">
 					<Input
 						onChange={(event) =>
@@ -138,23 +135,16 @@ export function GeneralDefaultsSection({
 						Optional git tag or branch to clone. Changing it rebuilds the cached clone.
 					</p>
 				</FieldRow>
-				<label className="space-y-1 md:col-span-2 xl:col-span-3">
-					<span className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
-						<Checkbox
-							checked={form.showSpernakitProject}
-							onChange={(event) =>
-								setField('showSpernakitProject', event.target.checked)
-							}
-						/>
-						<span className="text-sm font-medium text-foreground">
-							Show Spernakit in projects list
-						</span>
-					</span>
-					<p className="text-xs text-muted-foreground">
-						The Spernakit template checkout is hidden from the projects page by default;
-						enable this if you plan to work on Spernakit itself.
-					</p>
-				</label>
+				{/* The sentence used to sit outside the bordered box, as a sibling paragraph, so
+				    the box read as an unexplained switch and its explanation looked like the
+				    intro to whatever followed. It is inside the box, where the other eight are. */}
+				<FieldCheckbox
+					checked={form.showSpernakitProject}
+					className="md:col-span-2 xl:col-span-3"
+					description="The Spernakit template checkout is hidden from the projects page by default; enable this if you plan to work on Spernakit itself."
+					label="Show Spernakit in projects list"
+					onChange={(event) => setField('showSpernakitProject', event.target.checked)}
+				/>
 			</div>
 		</Card>
 	);

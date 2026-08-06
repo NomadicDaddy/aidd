@@ -4,8 +4,7 @@ import type { WebConfigSettings } from '../../api/types.ts';
 
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Card } from '../../components/ui/card.tsx';
-import { Checkbox } from '../../components/ui/checkbox.tsx';
-import { FieldRow } from '../../components/ui/field.tsx';
+import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { ListEditor } from './ListEditor.tsx';
 
@@ -43,23 +42,17 @@ export function NetworkAccessSection({
 		<>
 			<Card className="grid gap-4 lg:grid-cols-2">
 				<div className="space-y-4">
-					<label className="flex items-start gap-2 rounded-md border border-border px-3 py-2">
-						<Checkbox
-							checked={form.allowRemote}
-							className="mt-0.5"
-							onChange={(event) => requestAllowRemote(event.target.checked)}
-						/>
-						<span className="text-sm text-foreground">
-							<span className="font-medium text-foreground">
-								Allow local network access
-							</span>
-							<span className="mt-1 block text-xs text-muted-foreground">
-								{form.allowRemote
-									? 'The next restart can expose the control panel beyond this machine.'
-									: 'Limited to this machine.'}
-							</span>
-						</span>
-					</label>
+					<FieldCheckbox
+						checked={form.allowRemote}
+						description={
+							form.allowRemote
+								? 'The next restart can expose the control panel beyond this machine.'
+								: 'Limited to this machine.'
+						}
+						label="Allow local network access"
+						onChange={(event) => requestAllowRemote(event.target.checked)}
+						tone={form.allowRemote ? 'amber' : 'neutral'}
+					/>
 					<div className="grid gap-4 sm:grid-cols-2">
 						<FieldRow label="Hostname">
 							<Input

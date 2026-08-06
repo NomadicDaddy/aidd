@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDiaryEntries, useDiaryTimeline } from '../../hooks/useDiary.ts';
 import { cn } from '../../lib/cn.ts';
+import { sectionCaptionClass } from '../../lib/typography.ts';
 import { DiaryEntryCard } from './DiaryEntryCard.tsx';
 import { DiaryFilterBar } from './DiaryFilterBar.tsx';
 import { filterDiaryEntries, filterTimelineItems } from './diaryFilters.ts';
@@ -83,8 +84,16 @@ export function DiaryFeed({
 				groups.map((group) => (
 					<section aria-label={group.label} key={group.key}>
 						{/* The day is the feed's only structural divider, so it outranks the row
-						    titles it governs and stays visible through a long scroll. */}
-						<h2 className="sticky top-0 z-10 mb-2 border-t border-border bg-background/90 pt-4 pb-2 text-sm font-semibold text-foreground backdrop-blur">
+						    titles it governs and stays visible through a long scroll. It takes the
+						    shared section caption rather than a `text-sm font-semibold` of its own:
+						    at that treatment the grouping level and the content level sat on the
+						    same 14px foreground step and differed only by weight, so the heading
+						    read as one more entry title. */}
+						<h2
+							className={cn(
+								sectionCaptionClass,
+								'sticky top-0 z-10 mb-2 border-t border-border bg-background/90 pt-4 pb-2 backdrop-blur',
+							)}>
 							{group.label}
 						</h2>
 						<div className="space-y-3">
@@ -101,28 +110,25 @@ export function DiaryFeed({
 				))
 			)}
 			{entriesQuery.hasNextPage || timelineQuery.hasNextPage ? (
-				// Both buttons page the same feed, so they are one labelled group above a rule
-				// rather than two loose secondary controls floating on the background.
-				<div
-					aria-label="Load more diary history"
-					className="flex flex-wrap justify-center gap-2 border-t border-border pt-4"
-					role="group">
-					{entriesQuery.hasNextPage ? (
-						<Button
-							disabled={entriesQuery.isFetchingNextPage}
-							onClick={() => void entriesQuery.fetchNextPage()}
-							variant="secondary">
-							{entriesQuery.isFetchingNextPage ? 'Loading…' : 'More entries'}
-						</Button>
-					) : null}
-					{timelineQuery.hasNextPage ? (
-						<Button
-							disabled={timelineQuery.isFetchingNextPage}
-							onClick={() => void timelineQuery.fetchNextPage()}
-							variant="secondary">
-							{timelineQuery.isFetchingNextPage ? 'Loading…' : 'More activity'}
-						</Button>
-					) : null}
+				// One pager over one feed, because there is one counter over one feed. "More
+				// entries" and "More activity" each paged half of what "Showing 1 of 70 loaded"
+				// counted, so the reader was offered two scopes the number above them did not
+				// distinguish. Pressing this extends whichever halves still have history; both
+				// land in the same day groups either way.
+				<div className="flex justify-center border-t border-border pt-4">
+					<Button
+						disabled={
+							entriesQuery.isFetchingNextPage || timelineQuery.isFetchingNextPage
+						}
+						onClick={() => {
+							if (entriesQuery.hasNextPage) void entriesQuery.fetchNextPage();
+							if (timelineQuery.hasNextPage) void timelineQuery.fetchNextPage();
+						}}
+						variant="secondary">
+						{entriesQuery.isFetchingNextPage || timelineQuery.isFetchingNextPage
+							? 'Loading…'
+							: 'Load more'}
+					</Button>
 				</div>
 			) : null}
 		</div>

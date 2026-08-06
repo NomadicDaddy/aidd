@@ -109,20 +109,31 @@ describe('diary feed chrome', () => {
 		);
 
 		expect(feed).toContain('sticky top-0 z-10');
-		expect(feed).toContain('text-sm font-semibold text-foreground');
 		expect(feed).toContain('border-t border-border');
-		expect(feed).not.toContain('text-xs font-semibold tracking-wide text-muted-foreground');
+		// Outranking its rows is a matter of a different step, not a heavier weight at the same one:
+		// at `text-sm font-semibold text-foreground` the heading and the entry titles it governs
+		// were both 14px foreground and differed only by weight. It takes the shared caption now.
+		expect(feed).toContain('sectionCaptionClass');
+		expect(feed).not.toContain('text-sm font-semibold text-foreground');
 	});
 
-	test('constrains the feed to a reading column and groups the pagination controls', async () => {
+	test('constrains the feed to a reading column and pages it with one control', async () => {
 		const feed = await readFile(
 			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFeed.tsx'),
 			'utf8',
 		);
 
 		expect(feed).toContain('max-w-5xl');
-		expect(feed).toContain('aria-label="Load more diary history"');
-		expect(feed).toContain('role="group"');
+		// "More entries" and "More activity" each paged half of what the one counter above them
+		// counted. One feed, one count, one pager. Matched on the string literals, since the
+		// comment in the source names the two labels it replaced.
+		expect(feed).toContain("'Load more'");
+		expect(feed).toContain('if (entriesQuery.hasNextPage) void entriesQuery.fetchNextPage();');
+		expect(feed).toContain(
+			'if (timelineQuery.hasNextPage) void timelineQuery.fetchNextPage();',
+		);
+		expect(feed).not.toContain("'More activity'");
+		expect(feed).not.toContain("'More entries'");
 	});
 
 	test('offers kind and time-window scope with a count of what is shown', async () => {

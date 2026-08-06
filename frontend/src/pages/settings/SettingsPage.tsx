@@ -38,6 +38,7 @@ import {
 	emptyTriumvirate,
 	normalizeIgnoredFolders,
 } from './settingsUtils.ts';
+import { useDirectorProfileForm } from './useDirectorProfileForm.ts';
 
 export function SettingsPage() {
 	useDocumentTitle('Settings');
@@ -47,6 +48,7 @@ export function SettingsPage() {
 	const update = useUpdateSettingsConfig();
 	const [form, setForm] = useState<WebConfigSettings>(() => createBlankSettings());
 	const [runtimePending, setRuntimePending] = useState<null | RuntimeAction>(null);
+	const profile = useDirectorProfileForm();
 	const formSeededRef = useRef(false);
 	const activeTab = readSettingsTab(searchParams.get('tab'));
 
@@ -117,8 +119,17 @@ export function SettingsPage() {
 		? JSON.stringify(normalizeIgnoredFolders(form)) !==
 			JSON.stringify(normalizeIgnoredFolders(settings.data))
 		: false;
-	const dirtyTabs = dirtySettingsTabs(form, settings.data);
-	const blocker = useUnsavedGuard(dirty && !update.isPending);
+	// The Director Profile is its own record with its own Save, but it is rendered inside the
+	// AI & Director panel and that panel unmounts the moment you leave it. Its edit gets the same
+	// locator dot and the same leaving-the-page confirmation as everything the toolbar saves;
+	// nothing else on this surface tells you where an unsaved change is hiding.
+	const savedDirtyTabs = dirtySettingsTabs(form, settings.data);
+	const dirtyTabs: ReadonlySet<SettingsTab> = profile.dirty
+		? new Set<SettingsTab>([...savedDirtyTabs, 'ai-director'])
+		: savedDirtyTabs;
+	const blocker = useUnsavedGuard(
+		(dirty || profile.dirty) && !update.isPending && !profile.pending,
+	);
 
 	let saveBlockReason: null | string = null;
 	if (hasBlankIgnoredFolder) {
@@ -251,6 +262,7 @@ export function SettingsPage() {
 				activeTab={activeTab}
 				dirty={dirty}
 				form={form}
+				profile={profile}
 				runtimePending={runtimePending}
 				setBackendDefault={setBackendDefault}
 				setField={setField}

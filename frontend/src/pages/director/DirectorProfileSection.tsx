@@ -13,11 +13,14 @@ import { textareaClass } from './directorUtils.ts';
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 
 export function DirectorProfileSection({
+	dirty,
 	form,
 	onChange,
 	onSave,
 	pending,
 }: {
+	/** Whether the form differs from the saved record. Drives this island's whole save vocabulary. */
+	dirty: boolean;
 	form: DirectorProfileInput;
 	onChange: (updater: (current: DirectorProfileInput) => DirectorProfileInput) => void;
 	onSave: () => void;
@@ -33,7 +36,12 @@ export function DirectorProfileSection({
 					action={
 						<div className="flex items-center gap-2">
 							<Badge tone="neutral">Own record</Badge>
-							<Button disabled={pending} onClick={onSave} variant="secondary">
+							{/* The same shape as the page's own Save Settings: always the primary
+							    variant, disabled until there is something to save. It was a
+							    permanently-armed secondary button that looked identical whether the
+							    form was dirty or clean, on the one card of this surface that sits
+							    outside the toolbar's save. */}
+							<Button disabled={pending || !dirty} onClick={onSave} variant="primary">
 								<Save aria-hidden="true" className="h-4 w-4" />
 								{pending ? 'Saving…' : 'Save Profile'}
 							</Button>

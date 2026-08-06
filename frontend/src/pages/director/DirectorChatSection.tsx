@@ -94,7 +94,11 @@ export function DirectorChatSection({
 }) {
 	const canSend = Boolean(activeSessionId) && !sendPending && chatInput.trim().length > 0;
 	return (
-		<section aria-labelledby="director-chat-heading">
+		// The grid column beside Recent Cycles is already 867px tall and stretches this section to
+		// match; the height just had nowhere to go. The section, the Card and the inner grid each
+		// pass it down, so the transcript can take what the column had already allocated instead of
+		// leaving 355px of bare page background under a 512px card.
+		<section aria-labelledby="director-chat-heading" className="h-full">
 			<ConfirmDialog
 				cancelLabel="Keep Chat"
 				confirmLabel="Delete Chat"
@@ -110,7 +114,10 @@ export function DirectorChatSection({
 				open={Boolean(deleteSession)}
 				title="Delete Director chat?"
 			/>
-			<Card>
+			{/* The 420px floor moved here from the inner grid. Below `lg` the page is one column and
+			    the row is content-sized, so `h-full` resolves to nothing to fill; the floor keeps
+			    the transcript usable there without capping it where there is room. */}
+			<Card className="flex h-full min-h-[420px] flex-col">
 				<CardHeader
 					className="mb-3"
 					description="Ask the director about fleet state in a focused conversation."
@@ -120,8 +127,8 @@ export function DirectorChatSection({
 				{/* The 220px session rail stole a fifth of the width at 768, leaving the transcript
 				    ~470px and the composer too narrow for its own Send button. The rail stacks above
 				    the transcript until lg, where there is width for both. */}
-				<div className="grid min-h-[420px] gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
-					<div className="min-w-0 space-y-2">
+				<div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+					<div className="flex min-h-0 min-w-0 flex-col gap-2">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="text-sm font-semibold text-foreground">Chats</h3>
 							<IconButton
@@ -132,7 +139,9 @@ export function DirectorChatSection({
 								<MessageSquarePlus className="h-4 w-4" />
 							</IconButton>
 						</div>
-						<div className="space-y-2">
+						{/* The rail scrolls rather than growing: it is the shorter of the two columns
+						    and the reclaimed height is the transcript's, not its. */}
+						<div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
 							{sessions.map((session) => {
 								const isActive = session.id === activeSessionId;
 								const sessionContext = `${session.title} (${formatDate(

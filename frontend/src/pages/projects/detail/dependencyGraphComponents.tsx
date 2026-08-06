@@ -96,8 +96,16 @@ export function GraphNodeButton({
 				</Badge>
 				<span className="font-mono text-xs text-muted-foreground">L{node.layer}</span>
 			</div>
-			<p className="mt-2 truncate text-sm font-semibold text-foreground">{node.title}</p>
-			<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+			{/* Both lines truncate, so neither wraps into the other's row and the box height stays
+			    the constant the layout placed the node at. `title` is what makes the ellipsis
+			    honest: an id cut to `abort-completion-requires-…` is unrecoverable otherwise, and
+			    it is the only thing that names the node. */}
+			<p className="mt-2 truncate text-sm font-semibold text-foreground" title={node.title}>
+				{node.title}
+			</p>
+			<p
+				className="mt-1 truncate font-mono text-xs text-muted-foreground"
+				title={node.directory}>
 				{node.directory}
 			</p>
 		</button>

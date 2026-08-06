@@ -214,6 +214,13 @@ describe('settings help text stays out of the accessible name', () => {
 				activeTab: 'workspace',
 				dirty: false,
 				form: createBlankSettings(),
+				profile: {
+					dirty: false,
+					form: {},
+					pending: false,
+					save: () => {},
+					setForm: () => {},
+				},
 				runtimePending: null,
 				setBackendDefault: () => {},
 				setField: () => {},

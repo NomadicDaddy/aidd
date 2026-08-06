@@ -8,15 +8,16 @@ import type {
 } from '../../api/types.ts';
 import type { SettingsTab } from './settingsNavigation.ts';
 import type { RuntimeAction } from './settingsRuntime.ts';
+import type { DirectorProfileForm } from './useDirectorProfileForm.ts';
 
 import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { TabPanel } from '../../components/ui/tabs.tsx';
+import { DirectorProfileSection } from '../director/DirectorProfileSection.tsx';
 import { BackendDefaultsTable } from './BackendDefaultsTable.tsx';
 import { DirectAiSection } from './DirectAiSection.tsx';
 import { DirectorAutoCycleSection } from './DirectorAutoCycleSection.tsx';
-import { DirectorProfileSettingsSection } from './DirectorProfileSettingsSection.tsx';
 import { GeneralDefaultsSection } from './GeneralDefaultsSection.tsx';
 import { ListEditor } from './ListEditor.tsx';
 import { NetworkAccessSection } from './NetworkAccessSection.tsx';
@@ -37,6 +38,7 @@ export function SettingsSectionTabs({
 	activeTab,
 	dirty,
 	form,
+	profile,
 	runtimePending,
 	setBackendDefault,
 	setField,
@@ -46,6 +48,7 @@ export function SettingsSectionTabs({
 	activeTab: SettingsTab;
 	dirty: boolean;
 	form: WebConfigSettings;
+	profile: DirectorProfileForm;
 	runtimePending: null | RuntimeAction;
 	setBackendDefault: (
 		backend: BackendName,
@@ -122,7 +125,13 @@ export function SettingsSectionTabs({
 						directorChatAllowFileEdits={form.directorChatAllowFileEdits}
 						setField={setField}
 					/>
-					<DirectorProfileSettingsSection />
+					<DirectorProfileSection
+						dirty={profile.dirty}
+						form={profile.form}
+						onChange={profile.setForm}
+						onSave={profile.save}
+						pending={profile.pending}
+					/>
 					<DirectorAutoCycleSection form={form} setField={setField} />
 					<TriumvirateSection
 						setTriumvirateField={setTriumvirateField}

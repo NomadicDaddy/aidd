@@ -12,7 +12,6 @@ import { Button } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { backendConsoleLimit } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
-import { utf8ByteLength } from '../../lib/formatters.ts';
 import { entrySearchText, parseConsoleEntries } from './consoleEntries.ts';
 import { LiveConsoleControls } from './LiveConsoleControls.tsx';
 import { LiveConsoleNotices } from './LiveConsoleNotices.tsx';
@@ -24,7 +23,8 @@ import {
 	writeWrapPreference,
 } from './liveConsolePrefs.ts';
 import { LiveConsolePretty } from './LiveConsolePretty.tsx';
-import { highlightLine, windowTail } from './liveConsoleText.tsx';
+import { highlightLine } from './liveConsoleText.tsx';
+import { describeWindow } from './liveConsoleWindow.ts';
 import { RunDetailPanel } from './RunDetailPanel.tsx';
 import { useConsoleScroll } from './useConsoleScroll.ts';
 
@@ -33,49 +33,9 @@ export interface LiveConsoleBadge {
 	tone: 'neutral' | 'teal';
 }
 
-// The on-disk size and the loaded transcript are sampled at different instants, so a running run
-// writes more between the two reads. Below this, the gap is that race or a handful of lines, not
-// something worth warning an operator about.
-const TRIVIAL_ELISION_BYTES = 4096;
-
 // Bound the pretty view's DOM by entry count rather than by transcript bytes, so a long tail of
 // assistant prose cannot evict the tool calls an operator opened the console to see.
 const MAX_PRETTY_ENTRIES = 2000;
-
-/**
- * How much of the transcript the raw view lays out, and whether enough is missing to say so. The
- * displayed total is the larger of what we hold in memory and the server's reported on-disk size,
- * so a server-side tail cap still reports the true file size.
- *
- * Every quantity here is UTF-8 bytes, the unit `sourceTotalBytes` and the notice both speak.
- * Measuring the string with `.length` instead mixed UTF-16 code units into that comparison, which
- * understated a non-ASCII transcript against its own file size — enough of it and the shortfall
- * clears the floor below and warns about hidden output over a transcript that is entirely present.
- */
-function describeWindow(
-	message: string,
-	sourceTotalBytes: null | number | undefined,
-): {
-	isWindowed: boolean;
-	messageBytes: number;
-	renderedBytes: number;
-	renderedMessage: string;
-	totalBytes: number;
-} {
-	const renderedMessage = windowTail(message);
-	const messageBytes = utf8ByteLength(message);
-	const renderedBytes =
-		renderedMessage.length === message.length ? messageBytes : utf8ByteLength(renderedMessage);
-	const totalBytes = Math.max(messageBytes, sourceTotalBytes ?? 0);
-	const hidden = Math.max(totalBytes - messageBytes, messageBytes - renderedBytes);
-	return {
-		isWindowed: hidden > TRIVIAL_ELISION_BYTES,
-		messageBytes,
-		renderedBytes,
-		renderedMessage,
-		totalBytes,
-	};
-}
 
 export function LiveConsole({
 	badge,
@@ -190,7 +150,15 @@ export function LiveConsole({
 					title="Live Console"
 				/>
 				{showPanel && selectedRun ? (
-					<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
+					// The metadata is what gives, not the transcript. Inside the fixed-height sticky
+					// column this block is unbounded and grows with the run — commits, file changes,
+					// a stop transcript — and a flex item's `min-height: auto` meant it could not be
+					// asked to shrink, so it took the column and left the console output a ~32px
+					// sliver showing one line of a 53,000px transcript. `min-h-0` makes it
+					// shrinkable and `overflow-y-auto` gives it somewhere to put what it loses.
+					<div className="2xl:min-h-0 2xl:overflow-y-auto">
+						<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
+					</div>
 				) : selectedRun?.summary ? (
 					<p className="mb-3 text-xs break-words text-muted-foreground">
 						<span className="font-medium text-foreground">Summary:</span>{' '}
@@ -244,7 +212,14 @@ export function LiveConsole({
 							// `background` under the `card` panel around it and follows the light/dark
 							// theme. The height is capped against the viewport as well as in pixels so
 							// the console cannot push History off a 900px-tall screen.
-							className="h-[min(560px,45vh)] w-full max-w-full overflow-auto rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner 2xl:h-auto 2xl:min-h-0 2xl:flex-1"
+							//
+							// The `2xl` floor is the other half of making the detail block shrink:
+							// `flex-1` on a `basis: 0` item claims free space but concedes all of it
+							// the moment there is none, which is exactly the state a long metadata
+							// block creates. 27rem is 20 lines of `text-xs leading-relaxed` (12px ×
+							// 1.625 = 19.5px, so 390px) plus the 32px of `p-4` — the floor the panel
+							// has to clear to be worth opening at all.
+							className="h-[min(560px,45vh)] w-full max-w-full overflow-auto rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner 2xl:h-auto 2xl:min-h-[27rem] 2xl:flex-1"
 							onScroll={handleScroll}
 							ref={scrollRef}>
 							{effectiveView === 'pretty' ? (

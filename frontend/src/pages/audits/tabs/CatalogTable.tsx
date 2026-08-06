@@ -40,14 +40,25 @@ export function CatalogTable({
 	const hasSelectableDefinitions = definitions.some((item) => item.enabled);
 	return (
 		<div className="space-y-3">
+			{/* The cap goes on the scroller, not on the Card — which is where its two sibling tabs
+			    put it, because neither of them wraps its table in an `OverflowScroller`. A sticky
+			    head sticks inside its nearest scrolling ancestor, and this table already has one:
+			    the scroller scrolls horizontally, which makes it a scroll container in both. Capping
+			    the Card instead would leave the head stuck to a box that never scrolls, and all 42
+			    audits would still read their numbers with no column labels on screen. */}
 			<Card className="hidden p-0 xl:block">
-				<OverflowScroller ariaLabel="Audit catalog">
+				<OverflowScroller
+					ariaLabel="Audit catalog"
+					scrollerClassName="max-h-[calc(100dvh-16rem)]">
 					<table
 						aria-label="Audit catalog"
 						className="w-full min-w-[840px] text-left text-sm">
-						<thead className={tableHeadClass}>
+						{/* `bg-muted` on each cell, not only on the `thead`: a sticky `<thead>` in a
+						    table does not reliably paint its own background, so the rows would scroll
+						    through the labels. Same fix as the applicability matrix. */}
+						<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 							<tr>
-								<th className="px-3 py-3" scope="col">
+								<th className="bg-muted px-3 py-3" scope="col">
 									<Checkbox
 										aria-label="Select all visible enabled audits"
 										checked={allSelected}
@@ -58,19 +69,19 @@ export function CatalogTable({
 										}}
 									/>
 								</th>
-								<th className="px-3 py-3" scope="col">
+								<th className="bg-muted px-3 py-3" scope="col">
 									Audit
 								</th>
-								<th className="px-3 py-3" scope="col">
+								<th className="bg-muted px-3 py-3" scope="col">
 									Change Potential
 								</th>
-								<th className="px-3 py-3" scope="col">
+								<th className="bg-muted px-3 py-3" scope="col">
 									Projects
 								</th>
-								<th className="px-3 py-3" scope="col">
+								<th className="bg-muted px-3 py-3" scope="col">
 									Reports
 								</th>
-								<th className="px-3 py-3" scope="col">
+								<th className="bg-muted px-3 py-3" scope="col">
 									Buckets
 								</th>
 							</tr>

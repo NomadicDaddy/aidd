@@ -9,6 +9,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { CredentialBadge } from './CredentialBadge.tsx';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ('' | ReasoningEffort)[] = [
@@ -62,11 +63,7 @@ export function DirectAiSection({
 			<FieldCheckbox
 				checked={directAi.enabled}
 				label="Direct AI"
-				meta={
-					<span className="text-xs font-medium text-muted-foreground">
-						{directAi.apiKeyConfigured ? 'API key configured' : 'No API key'}
-					</span>
-				}
+				meta={<CredentialBadge configured={directAi.apiKeyConfigured} />}
 				onChange={(event) => updateDirectAi({ enabled: event.target.checked })}
 			/>
 			<FieldRow className={dimClass} label="Provider">

@@ -5,11 +5,13 @@ import type {
 } from '../../api/metrics.ts';
 import type { Tone } from '../../lib/tones.ts';
 
+import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useSystemMetrics, useWebVitalsSummary } from '../../hooks/useMetrics.ts';
 import { formatBytes } from '../../lib/formatters.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
-import { toneSolid, toneText } from '../../lib/tones.ts';
+import { tableHeadClass } from '../../lib/tableStyles.ts';
+import { toneText } from '../../lib/tones.ts';
 
 function formatMetricBytes(bytes: null | number): string {
 	if (bytes === null || !Number.isFinite(bytes)) return '—';
@@ -39,17 +41,20 @@ const ratingTone: Record<string, Tone> = {
 	poor: 'red',
 };
 
-/** Colour belongs on a status element, not on the metric's own name. */
-function RatingDot({ rating }: { rating: null | string }) {
-	const tone = (rating && ratingTone[rating]) || 'neutral';
+/**
+ * The rating, as a word.
+ *
+ * It was a bare 6px dot in front of the metric name, with no adjacent word and no legend anywhere
+ * on the surface — so `good`, `needs-improvement` and `poor` were legible only as hue, to a reader
+ * who already knew the scale. The screen-reader text was correct and carried the word; sighted
+ * readers were the ones getting less. The house Badge keeps the dot and adds the word to it.
+ */
+function RatingBadge({ rating }: { rating: null | string }) {
+	if (!rating) return <span className="text-muted-foreground">—</span>;
 	return (
-		<>
-			<span
-				aria-hidden="true"
-				className={`mr-2 inline-block h-2 w-2 rounded-full align-middle ${toneSolid[tone]}`}
-			/>
-			<span className="sr-only">{rating ?? 'no rating'}: </span>
-		</>
+		<Badge showDot tone={ratingTone[rating] ?? 'neutral'}>
+			{rating}
+		</Badge>
 	);
 }
 
@@ -81,26 +86,29 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 	}
 	return (
 		<table className="w-full text-sm">
-			<thead>
-				<tr className="text-left text-xs text-muted-foreground">
-					<th className="py-1 font-medium">Metric</th>
-					<th className="py-1 text-right font-medium">Latest</th>
-					<th className="py-1 text-right font-medium">Average</th>
-					<th className="py-1 text-right font-medium">Threshold</th>
-					<th className="py-1 text-right font-medium">Samples</th>
+			{/* The same header strip the Backend Matrix uses: this table styled its own with a
+			    different case, weight and background, two cards apart on one surface. */}
+			<thead className={tableHeadClass}>
+				<tr className="text-left">
+					<th className={`px-2 py-1.5 ${fieldLabelClass}`}>Metric</th>
+					<th className={`px-2 py-1.5 ${fieldLabelClass}`}>Rating</th>
+					<th className={`px-2 py-1.5 text-right ${fieldLabelClass}`}>Latest</th>
+					<th className={`px-2 py-1.5 text-right ${fieldLabelClass}`}>Average</th>
+					<th className={`px-2 py-1.5 text-right ${fieldLabelClass}`}>Threshold</th>
+					<th className={`px-2 py-1.5 text-right ${fieldLabelClass}`}>Samples</th>
 				</tr>
 			</thead>
 			<tbody>
 				{vitals.map((vital) => (
 					<tr className="border-t border-border" key={vital.name}>
-						<td className="py-1 font-medium text-foreground">
-							<RatingDot rating={vital.latestRating} />
-							{vital.name}
+						<td className="px-2 py-1 font-medium text-foreground">{vital.name}</td>
+						<td className="px-2 py-1">
+							<RatingBadge rating={vital.latestRating} />
 						</td>
-						<td className="py-1 text-right tabular-nums">
+						<td className="px-2 py-1 text-right tabular-nums">
 							{vital.latest === null ? '—' : vital.latest.toLocaleString()}
 						</td>
-						<td className="py-1 text-right tabular-nums">
+						<td className="px-2 py-1 text-right tabular-nums">
 							{/* Raw averages arrived at arbitrary precision — 338.638 beside 49,772. */}
 							{vital.sampleCount > 0
 								? vital.average.toLocaleString(undefined, {
@@ -109,10 +117,10 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 									})
 								: '—'}
 						</td>
-						<td className="py-1 text-right text-muted-foreground tabular-nums">
+						<td className="px-2 py-1 text-right text-muted-foreground tabular-nums">
 							{vital.threshold.toLocaleString()}
 						</td>
-						<td className="py-1 text-right text-muted-foreground tabular-nums">
+						<td className="px-2 py-1 text-right text-muted-foreground tabular-nums">
 							{vital.sampleCount}
 						</td>
 					</tr>

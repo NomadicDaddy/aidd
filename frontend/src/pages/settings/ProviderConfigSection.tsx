@@ -4,12 +4,12 @@ import { useId, useState } from 'react';
 import type { ProviderSettings, ReasoningEffort, WebConfigSettings } from '../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
-import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { CredentialBadge } from './CredentialBadge.tsx';
 import { nullableText, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ('' | ReasoningEffort)[] = [
@@ -104,9 +104,7 @@ function ProviderCard({
 					/>
 					<span className="min-w-0 truncate">{provider.baseUrl ?? 'No base URL'}</span>
 				</span>
-				<Badge tone={provider.apiKeyConfigured ? 'emerald' : 'neutral'}>
-					{provider.apiKeyConfigured ? 'Key configured' : 'No key'}
-				</Badge>
+				<CredentialBadge configured={provider.apiKeyConfigured} />
 			</button>
 			{open ? (
 				<div

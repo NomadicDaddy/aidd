@@ -12,6 +12,7 @@ import { Button } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useCliStatus } from '../../hooks/useSettings.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 import { BackendDefaultFields } from './BackendDefaultFields.tsx';
 import { SettingsToolStatusBadge } from './SettingsToolStatusBadge.tsx';
@@ -32,6 +33,34 @@ const backendDefaultOptions: BackendName[] = [
 
 const ansiSgrPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 
+const clean = (value: string): string =>
+	value.replace(ansiSgrPattern, '').replace(/\s+/gu, ' ').trim();
+
+/**
+ * The line under a backend's name, and the tone that says what kind of line it is.
+ *
+ * All three kinds used to render in the same muted 12px: `1.3.14`, `Warning: could not connect to a
+ * running Ollama instance` and `error: could not create process` were typographically identical, so
+ * the one row that needed acting on looked exactly like the nine that did not. The status the probe
+ * already reports is what decides the tone — there is no second classification of the text here.
+ *
+ * A version is only a version if it contains a digit. lmstudio answers `--version` with a
+ * box-drawing banner, and stripped of its ANSI that is a row of underscores — printed raw it read
+ * as a rendering fault rather than as a probe that returned nothing useful. Falling through to the
+ * detail line says something true instead.
+ */
+function probeLine(status: SettingsCliStatus | undefined): { text: string; toneClass: string } {
+	const muted = 'text-muted-foreground';
+	if (!status) return { text: 'Not detected', toneClass: muted };
+	const version = clean(status.version ?? '');
+	if (/\d/u.test(version)) return { text: version, toneClass: muted };
+	const detail = clean(status.detail);
+	if (!detail) return { text: 'Not detected', toneClass: muted };
+	if (status.status === 'unavailable') return { text: detail, toneClass: toneText.red };
+	if (status.status === 'missing') return { text: detail, toneClass: toneText.amber };
+	return { text: detail, toneClass: muted };
+}
+
 function BackendIdentity({
 	backend,
 	loading,
@@ -41,10 +70,7 @@ function BackendIdentity({
 	loading: boolean;
 	status: SettingsCliStatus | undefined;
 }) {
-	const statusText = (status?.version ?? status?.detail ?? 'Not detected')
-		.replace(ansiSgrPattern, '')
-		.replace(/\s+/g, ' ')
-		.trim();
+	const probe = probeLine(status);
 
 	return (
 		<div className="min-w-0 space-y-1">
@@ -52,8 +78,10 @@ function BackendIdentity({
 				<span className="font-medium text-foreground">{backend}</span>
 				{status ? <SettingsToolStatusBadge status={status.status} /> : null}
 			</div>
-			<p className="truncate text-xs text-muted-foreground">
-				{loading ? 'Checking status…' : statusText || 'Not detected'}
+			{/* A failure message is the one line here long enough to be truncated, so it carries the
+			    whole of itself on the title. */}
+			<p className={`truncate text-xs ${probe.toneClass}`} title={probe.text}>
+				{loading ? 'Checking status…' : probe.text}
 			</p>
 		</div>
 	);
@@ -117,7 +145,7 @@ export function BackendDefaultsTable({
 					<table
 						aria-label="Backend status and defaults"
 						className="w-full min-w-[860px] text-left text-sm">
-						<thead className="border-b border-border bg-muted">
+						<thead className={tableHeadClass}>
 							{/* Explicit widths give Model the slack that a w-56 name-and-badge column
 						    was wasting: 'kilo/stepfun/step-3.7-flash:f' was cut mid-string. */}
 							<tr>

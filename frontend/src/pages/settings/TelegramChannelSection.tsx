@@ -9,7 +9,7 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
-import { toneText } from '../../lib/tones.ts';
+import { CredentialBadge } from './CredentialBadge.tsx';
 
 const BOT_TOKEN_HINT_ID = 'settings-telegram-bot-token-hint';
 
@@ -86,12 +86,14 @@ export function TelegramChannelSection({
 						value={telegram.botToken ?? ''}
 					/>
 				</FieldRow>
-				{/* Sibling, not child: inside the label this status line became part of the
-				    control's accessible name ('Bot Token A bot token is configured.'). */}
+				{/* Sibling, not child: inside the label this status becomes part of the control's
+				    accessible name ('Bot Token A bot token is configured.'). What changed is the
+				    vocabulary — it is the badge the provider rows and the Direct AI card use, not
+				    a coloured sentence only this field speaks — and not where it is announced. */}
 				{configuredHint ? (
-					<p className={`text-xs ${toneText.emerald}`} id={BOT_TOKEN_HINT_ID}>
-						A bot token is configured.
-					</p>
+					<span className="inline-flex" id={BOT_TOKEN_HINT_ID}>
+						<CredentialBadge configured />
+					</span>
 				) : null}
 			</div>
 

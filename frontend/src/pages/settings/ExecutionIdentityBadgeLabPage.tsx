@@ -109,13 +109,17 @@ function CatalogGroup({
 }
 
 /**
- * The CLI catalog's stacked prose label restated the chip for most entries — "Ollama" over
- * "ollama". It survives only where the display name is genuinely different, and inline, so all
- * three catalog groups render as one flex-wrap chip row.
+ * The display name of a CLI, where it differs from the value the chip already shows.
+ *
+ * It used to render as loose text beside the chip, which meant three of eleven entries carried a
+ * word in the wrap flow and eight carried nothing — a ragged row in which the three exceptions
+ * read as leftover debris rather than as a distinction. The chip is the specimen this page exists
+ * to show; the display name is a gloss on it, so it moved to the title where a reader who wants it
+ * can ask and the row stays one shape.
  */
-function cliDisplayLabel(cli: string): null | string {
+function cliDisplayTitle(cli: string): string | undefined {
 	const label = cli === 'direct' ? 'Direct AI' : backendLabel(cli);
-	return label.toLowerCase() === cli.toLowerCase() ? null : label;
+	return label.toLowerCase() === cli.toLowerCase() ? undefined : label;
 }
 
 export function ExecutionIdentityBadgeLabPage() {
@@ -185,17 +189,14 @@ export function ExecutionIdentityBadgeLabPage() {
 					description="Every built-in execution backend."
 					id="badge-lab-cli-catalog"
 					title="CLIs">
-					{cliCatalog.map((cli) => {
-						const label = cliDisplayLabel(cli);
-						return (
-							<span className="inline-flex items-center gap-1.5" key={cli}>
-								<ExecutionIdentityBadges backend={cli} withTooltip={false} />
-								{label !== null && (
-									<span className="text-xs text-muted-foreground">{label}</span>
-								)}
-							</span>
-						);
-					})}
+					{cliCatalog.map((cli) => (
+						<span
+							className="inline-flex items-center"
+							key={cli}
+							title={cliDisplayTitle(cli)}>
+							<ExecutionIdentityBadges backend={cli} withTooltip={false} />
+						</span>
+					))}
 				</CatalogGroup>
 
 				<CatalogGroup

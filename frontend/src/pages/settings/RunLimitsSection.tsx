@@ -40,8 +40,11 @@ function NumberFieldRow({
 	value: null | number;
 }) {
 	return (
+		// The key renders *after* the input. Between the label and the control it pushed this one
+		// field 10px down from the two beside it in the same grid row — the only row on the surface
+		// whose three inputs did not share a top edge — and, being the first element child, it was
+		// also what FieldRow reached for when wiring `aria-invalid` and the error description.
 		<FieldRow label={label}>
-			{configKey ? <ConfigKey name={configKey} /> : null}
 			<Input
 				// A fractional step means a currency field, which needs the decimal keypad; the
 				// integer fields keep the plain numeric one.
@@ -53,6 +56,7 @@ function NumberFieldRow({
 				type="number"
 				value={numberValue(value)}
 			/>
+			{configKey ? <ConfigKey name={configKey} /> : null}
 		</FieldRow>
 	);
 }

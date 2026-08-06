@@ -152,10 +152,12 @@ describe('small pages', () => {
 
 		expect(page).toContain('<Card aria-labelledby={id}>');
 		expect(page).toContain('<div className="grid items-start gap-4 xl:grid-cols-3">');
-		// "Ollama" over "ollama" restated the chip; the prose label survives only where the
-		// display name genuinely differs.
-		expect(page).toContain('function cliDisplayLabel');
+		// "Ollama" over "ollama" restated the chip, so the prose label survived only where the
+		// display name genuinely differs — which left three of eleven entries carrying a word
+		// loose in the wrap flow and eight carrying nothing. Same rule, on the title now, so the
+		// distinction is still available and every row is one shape.
+		expect(page).toContain('function cliDisplayTitle');
 		expect(page).toContain('label.toLowerCase() === cli.toLowerCase()');
-		expect(page).toContain('{label !== null && (');
+		expect(page).toContain('title={cliDisplayTitle(cli)}');
 	});
 });

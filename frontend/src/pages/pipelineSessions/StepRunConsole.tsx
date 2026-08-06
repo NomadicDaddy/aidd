@@ -6,6 +6,7 @@ import type { PipelineStepStatus } from '../../api/types.ts';
 import { Button } from '../../components/ui/button.tsx';
 import { useRunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
 import { LogPre } from './LogPre.tsx';
+import { StepOutput } from './StepOutput.tsx';
 
 /** Map a pipeline step status to a RunStatus for the live-output hook. */
 function stepToRunStatus(status: PipelineStepStatus) {
@@ -40,23 +41,30 @@ function RunConsoleContent({
 	}, [output.isStreaming, onStreamingChange]);
 
 	return (
-		<LogPre ariaLabel="Run console output" className="mt-2">
+		<LogPre caption="Run console output" className="mt-2">
 			{display}
 		</LogPre>
 	);
 }
 
 /**
- * Inline console for a pipeline step that spawned a run. Shows a collapsible
- * panel with the run's live output (WebSocket for running, HTTP snapshot otherwise).
- * The output hook is mounted lazily — only when the console is expanded — so
- * completed pipeline sessions don't fire one HTTP request per step on page load.
+ * Every log surface for one step, behind one disclosure.
+ *
+ * The step's persisted output summary used to be the DEFAULT content of the card — a raw NDJSON slab
+ * taking most of the page, above a second, visually identical slab holding the same run's console.
+ * Both are transcripts, so both belong in the same place, and that place is closed: what a step did
+ * is the structured detail above this, and the transcript is what you open when that is not enough.
+ *
+ * The output hook is mounted lazily — only once the disclosure has been expanded — so a completed
+ * session with a dozen steps does not fire a dozen transcript fetches on page load.
  */
 export function StepRunConsole({
+	outputSummary,
 	runId,
 	stepStatus,
 }: {
-	runId: string;
+	outputSummary: null | string;
+	runId: null | string;
 	stepStatus: PipelineStepStatus;
 }) {
 	const [open, setOpen] = useState(stepStatus === 'running');
@@ -68,6 +76,10 @@ export function StepRunConsole({
 		setOpen(next);
 		if (next) setMounted(true);
 	};
+
+	// A step with neither a transcript nor a run has nothing to disclose, and an empty toggle reads
+	// as output that failed to load.
+	if (!outputSummary && !runId) return null;
 
 	return (
 		<div className="mt-3">
@@ -88,13 +100,18 @@ export function StepRunConsole({
 					)}
 				</span>
 			</Button>
-			{open && mounted && (
-				<RunConsoleContent
-					onStreamingChange={setStreaming}
-					runId={runId}
-					stepStatus={stepStatus}
-				/>
-			)}
+			{open ? (
+				<>
+					{outputSummary ? <StepOutput output={outputSummary} /> : null}
+					{runId && mounted ? (
+						<RunConsoleContent
+							onStreamingChange={setStreaming}
+							runId={runId}
+							stepStatus={stepStatus}
+						/>
+					) : null}
+				</>
+			) : null}
 		</div>
 	);
 }

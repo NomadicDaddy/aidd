@@ -17,8 +17,8 @@ import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { sessionStatusTone, stepStatusLabel } from '../runs/pipelineSessionStatus.ts';
 import { pipelineStepLiveConsoleHref } from './pipelineSessionLinks.ts';
-import { StepOutput } from './StepOutput.tsx';
 import { StepRunConsole } from './StepRunConsole.tsx';
+import { StepRunDetail } from './StepRunDetail.tsx';
 
 /**
  * Build a unified ordered list of every step in the session — both executed
@@ -113,11 +113,18 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 						</Link>
 					)}
 				</div>
-				{step.outputSummary && <StepOutput output={step.outputSummary} />}
 				{step.errorMessage && (
 					<p className={`mt-3 text-sm ${toneText.red}`}>{step.errorMessage}</p>
 				)}
-				{step.runId && <StepRunConsole runId={step.runId} stepStatus={step.status} />}
+				{/* What the step did, then the transcript behind a disclosure — the order the Live
+				    Console uses. It was the other way round: a raw NDJSON slab as the card's default
+				    content, and nothing structured at all. */}
+				{step.runId ? <StepRunDetail runId={step.runId} step={step} /> : null}
+				<StepRunConsole
+					outputSummary={step.outputSummary}
+					runId={step.runId}
+					stepStatus={step.status}
+				/>
 			</Card>
 		</div>
 	);

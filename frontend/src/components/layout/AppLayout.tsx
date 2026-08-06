@@ -28,6 +28,7 @@ import { Button, IconButton } from '../ui/button.tsx';
 import { searchControlAccessibleName } from './appLayoutAccessibility.ts';
 import { DirectiveLaunchButton } from './DirectiveLaunchButton.tsx';
 import { ProjectReportButton } from './ProjectReportButton.tsx';
+import { observeShellTopBar } from './shellTopBar.ts';
 import { SidebarNav } from './SidebarNav.tsx';
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -77,7 +78,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
 						'sticky top-0 z-20 border-b sm:fixed sm:inset-y-0 sm:left-0 sm:flex sm:flex-col sm:border-r sm:border-b-0',
 						'transition-[width] duration-200',
 						collapsed ? 'sm:w-16' : 'sm:w-60',
-					)}>
+					)}
+					ref={observeShellTopBar}>
 					<div className="flex items-center justify-between gap-2 sm:contents">
 						<div
 							className={cn(

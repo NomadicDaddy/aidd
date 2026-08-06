@@ -135,7 +135,11 @@ export function MarkdownContent({
 		// No measure here. The cap used to sit on this element, so a doc card drew its border at the
 		// container's full width and left a second gutter of empty space to the right of every
 		// line. The container owns the measure now — `proseMeasureClass`, applied by the surface.
-		<div className={cn('min-w-0 space-y-2 text-sm leading-relaxed text-foreground', className)}>
+		<div
+			className={cn(
+				'min-w-0 space-y-2 text-sm leading-relaxed break-words text-foreground',
+				className,
+			)}>
 			{blocks.map((block, index) => {
 				const key = `block-${index}`;
 				if (block.type === 'heading') {

@@ -92,7 +92,10 @@ export function DiaryFeed({
 						<h2
 							className={cn(
 								sectionCaptionClass,
-								'sticky top-0 z-10 mb-2 border-t border-border bg-background/90 pt-4 pb-2 backdrop-blur',
+								// Below `sm` the shell nav is a sticky bar in flow at `z-20`, so a heading stuck at
+								// `top-0` sits inside its footprint and is painted over entirely. The offset is
+								// the shell's own published height, which is 0px once the rail goes `fixed`.
+								'sticky top-[var(--app-topbar-height,0px)] z-10 mb-2 border-t border-border bg-background/90 pt-4 pb-2 backdrop-blur',
 							)}>
 							{group.label}
 						</h2>

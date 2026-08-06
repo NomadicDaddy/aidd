@@ -69,7 +69,10 @@ export function SettingsToolbar({
 		// A border marks the edge, rather than the only drop shadow on the surface. Nothing else on
 		// Settings is lifted off the page, so `shadow-md` gave this one card a z-axis the rest of
 		// the surface does not have — and it is the seam that needs stating, not the elevation.
-		<Card className="sticky top-0 z-20 space-y-2 border-b-2 border-border bg-card/95 p-2.5 backdrop-blur">
+		// The offset is the shell nav bar's own published height. Below `sm` that bar is a sticky
+		// element in flow at the same `z-20`, so an unoffset toolbar and it occupy the same strip
+		// and the later one in the DOM — this — paints over the navigation.
+		<Card className="sticky top-[var(--app-topbar-height,0px)] z-20 space-y-2 border-b-2 border-border bg-card/95 p-2.5 backdrop-blur">
 			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 				<div className="hidden min-w-0 xl:block">
 					<TabList

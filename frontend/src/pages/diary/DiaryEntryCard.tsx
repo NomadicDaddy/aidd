@@ -37,9 +37,11 @@ export function DiaryEntryCard({
 							{entry.date}
 						</span>
 					</div>
-					<h3 className="text-base font-semibold text-foreground">{entry.title}</h3>
+					<h3 className="text-base font-semibold break-words text-foreground">
+						{entry.title}
+					</h3>
 					{entry.summary ? (
-						<p className="mt-1 text-sm text-foreground">{entry.summary}</p>
+						<p className="mt-1 text-sm break-words text-foreground">{entry.summary}</p>
 					) : null}
 				</div>
 				<Button

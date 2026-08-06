@@ -108,7 +108,9 @@ describe('diary feed chrome', () => {
 			'utf8',
 		);
 
-		expect(feed).toContain('sticky top-0 z-10');
+		// The offset, not a bare `top-0`: below `sm` the shell nav bar occupies that strip and
+		// paints over it. Enforced generally in sticky-heading-offset.test.ts.
+		expect(feed).toContain('sticky top-[var(--app-topbar-height,0px)] z-10');
 		expect(feed).toContain('border-t border-border');
 		// Outranking its rows is a matter of a different step, not a heavier weight at the same one:
 		// at `text-sm font-semibold text-foreground` the heading and the entry titles it governs

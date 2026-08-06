@@ -32,11 +32,14 @@ export function NotFoundPage() {
 						Back to Dashboard
 					</Link>
 				}>
-				No page matches{' '}
+				{/* The chip is not the last thing in the sentence. A full stop after a padded
+				    inline chip sits ~5px clear of the box it belongs to and reads as a stray mark;
+				    ending on prose is what puts the punctuation back against a glyph. */}
+				No page is registered at{' '}
 				<code className="rounded-sm bg-background px-1 font-mono text-foreground">
 					{location.pathname}
-				</code>
-				.
+				</code>{' '}
+				on this instance.
 			</EmptyState>
 		</div>
 	);

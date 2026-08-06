@@ -48,7 +48,7 @@ export function DocsPage() {
 							{section ? section.title : 'All sections'}
 						</summary>
 						<div className="mt-3 border-t border-border pt-3">
-							<DocsSidebar label="Documentation sections (compact)" />
+							<DocsSidebar instance="compact" />
 						</div>
 					</details>
 					<div className="hidden lg:block">

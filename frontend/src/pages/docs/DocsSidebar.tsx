@@ -10,15 +10,23 @@ import { DOC_GROUP_ORDER, DOC_SECTIONS } from './docs-manifest.ts';
  * The link treatment is the shell rail's, deliberately: this nav sits about 30px from the primary
  * one, and two vertical navigations marking "you are here" two different ways read as two different
  * applications. `docs-sidebar-nav-parity.test.ts` holds the two lists together.
+ *
+ * One landmark per group, matching {@link SidebarNav}. The three captions were purely visual while a
+ * single `<nav>` wrapped all of them: a screen reader announced sixteen undifferentiated links under
+ * one name, and the words that would have separated them were plain text with no relationship to the
+ * lists beneath.
+ *
+ * `instance` disambiguates the two copies the docs page renders at once — the compact disclosure and
+ * the `lg` sidebar — since duplicate landmark names are as unhelpful as no names at all.
  */
-export function DocsSidebar({ label = 'Documentation sections' }: { label?: string }) {
+export function DocsSidebar({ instance }: { instance?: string }) {
 	return (
-		<nav aria-label={label} className="space-y-5">
+		<div className="space-y-5">
 			{DOC_GROUP_ORDER.map((group) => {
 				const sections = DOC_SECTIONS.filter((section) => section.group === group);
 				if (sections.length === 0) return null;
 				return (
-					<div key={group}>
+					<nav aria-label={instance ? `${group} (${instance})` : group} key={group}>
 						<div className={cn('mb-1.5 px-3', sectionCaptionClass)}>{group}</div>
 						<ul className="space-y-0.5">
 							{sections.map((section) => (
@@ -50,9 +58,9 @@ export function DocsSidebar({ label = 'Documentation sections' }: { label?: stri
 								</li>
 							))}
 						</ul>
-					</div>
+					</nav>
 				);
 			})}
-		</nav>
+		</div>
 	);
 }

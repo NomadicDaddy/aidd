@@ -42,9 +42,10 @@ describe('docs sidebar nav parity', () => {
 			readSource('pages/docs/DocsPage.tsx'),
 		]);
 
-		expect(sidebar).toContain("label = 'Documentation sections'");
-		expect(sidebar).toContain('<nav aria-label={label}');
-		expect(page).toContain('<DocsSidebar label="Documentation sections (compact)" />');
+		// One landmark per group, named by the group — so the qualifier distinguishing the two
+		// simultaneously-rendered copies has to compose with it rather than replace it.
+		expect(sidebar).toContain('aria-label={instance ? `${group} (${instance})` : group}');
+		expect(page).toContain('<DocsSidebar instance="compact" />');
 	});
 });
 

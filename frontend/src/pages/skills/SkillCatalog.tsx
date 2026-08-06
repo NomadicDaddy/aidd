@@ -7,6 +7,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { ListBox } from '../../components/ui/listbox.tsx';
 import { MATURITY_SKILL_IDS, RECIPE_SKILL_IDS } from '../../lib/catalogCuration.ts';
+import { cn } from '../../lib/cn.ts';
 import { formatUsageBadge } from '../../lib/usageBadge.ts';
 
 function skillSummary(skill: SkillDefinition): string {
@@ -22,6 +23,7 @@ function skillSummary(skill: SkillDefinition): string {
  * from the region's own measurement, so the last row is above the fold at rest by construction.
  */
 export function SkillCatalog({
+	className,
 	loading,
 	onSelect,
 	selectedId,
@@ -29,6 +31,7 @@ export function SkillCatalog({
 	total,
 	usageByResourceId,
 }: {
+	className?: string | undefined;
 	loading: boolean;
 	onSelect: (id: string) => void;
 	selectedId: null | string;
@@ -37,7 +40,10 @@ export function SkillCatalog({
 	usageByResourceId: Map<string, ResourceUsageRow>;
 }) {
 	return (
-		<Card className="flex min-w-0 flex-col gap-2 lg:h-full">
+		// `className` carries the show/hide half of the narrow master-detail switch. It arrives on
+		// the Card rather than on a wrapper because the height chain runs through this element —
+		// a div between the grid and the Card would break `h-full` for the sake of two classes.
+		<Card className={cn('flex min-w-0 flex-col gap-2 @min-[40rem]:h-full', className)}>
 			<div className="text-xs text-muted-foreground tabular-nums">
 				{skills.length === total
 					? `${total} skills`

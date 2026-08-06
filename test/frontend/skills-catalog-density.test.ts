@@ -150,7 +150,7 @@ describe('the skills page puts the catalog first', () => {
 	test('the category filter sits in a full-width card above the split', async () => {
 		const page = await skillsSource('SkillsPage.tsx');
 		const filterCard = page.indexOf('<SegmentedControl');
-		const split = page.indexOf('lg:grid-cols-[minmax(18rem,24rem)_1fr]');
+		const split = page.indexOf('@min-[40rem]:grid-cols-[minmax(18rem,24rem)_1fr]');
 
 		expect(filterCard).toBeGreaterThan(-1);
 		expect(split).toBeGreaterThan(filterCard);

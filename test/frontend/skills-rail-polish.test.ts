@@ -20,7 +20,7 @@ describe('the skills split is a sized region, not a page that scrolls', () => {
 		// went further wrong every time the filter strip wrapped to another line.
 		expect(catalog).not.toContain('100vh-9rem');
 		expect(catalog).not.toMatch(/max-h-\[calc\(100vh/);
-		expect(catalog).toContain('lg:h-full');
+		expect(catalog).toContain('@min-[40rem]:h-full');
 		// The card is a column with one scrolling child, so the last row is bounded by the region
 		// rather than by the viewport.
 		expect(catalog).toContain('flex min-w-0 flex-col');
@@ -33,8 +33,11 @@ describe('the skills split is a sized region, not a page that scrolls', () => {
 
 		expect(page).toContain('useViewportFill<HTMLDivElement>()');
 		expect(page).toContain('ref={splitRef}');
-		// The `calc()` is only the pre-measurement fallback; the measured value wins.
-		expect(page).toContain('lg:h-[var(--fill-height,calc(100vh-12rem))]');
+		// The `calc()` is only the pre-measurement fallback; the measured value wins. The gate is a
+		// container query rather than `lg:` because the width that has to fit is the content
+		// column's, and the sidebar rail sets that independently of the viewport — see
+		// skills-mobile-split.test.ts.
+		expect(page).toContain('@min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))]');
 		expect(hook).toContain("node.style.setProperty('--fill-height'");
 		// Measured document-relative, so a mid-scroll measurement matches one taken at rest.
 		expect(hook).toContain('node.getBoundingClientRect().top + window.scrollY');
@@ -46,8 +49,11 @@ describe('the skills split is a sized region, not a page that scrolls', () => {
 	test('the detail column is the scrollport the pattern claims', async () => {
 		const page = stripComments(await read('frontend/src/pages/skills/SkillsPage.tsx'));
 
-		expect(page).toContain('lg:overflow-hidden');
-		expect(page).toContain('lg:h-full lg:overflow-auto');
+		// Only where the two panes are columns. Below that they are alternatives, each one taking the
+		// whole region, and the document is the scrollport again — a 100vh-12rem box on a 390px
+		// viewport would be a scrollport inside a scrollport.
+		expect(page).toContain('@min-[40rem]:overflow-hidden');
+		expect(page).toContain('@min-[40rem]:h-full @min-[40rem]:overflow-auto');
 		// A scrollport inside the scrollport: the definition body had its own 28rem window, so a
 		// long SKILL.md was read through a short box inside a tall one.
 		expect(page).not.toContain('max-h-[28rem]');

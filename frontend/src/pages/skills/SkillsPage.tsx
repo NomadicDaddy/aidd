@@ -1,5 +1,6 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
+import { default as ArrowLeft } from 'lucide-react/dist/esm/icons/arrow-left';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as Upload } from 'lucide-react/dist/esm/icons/upload';
 import { useState } from 'react';
@@ -24,10 +25,21 @@ import { useSkillImports, useSkills } from '../../hooks/useSkills.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { useViewportFill } from '../../hooks/useViewportFill.ts';
 import { SKILL_CATEGORY_FILTERS, type SkillCategoryFilter } from '../../lib/catalogCuration.ts';
+import { cn } from '../../lib/cn.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
 import { SkillCatalog } from './SkillCatalog.tsx';
 import { SkillDetailsCard } from './SkillDetailsCard.tsx';
 import { SkillImportDialog } from './SkillImportDialog.tsx';
+
+/**
+ * The content width at which the catalog and the detail stop being alternatives and become columns.
+ *
+ * 40rem = 640px: the catalog column's own minimum is 18rem, and below roughly this the detail is
+ * left with less than a readable measure. It matches `@min-[40rem]:` in the markup below and is
+ * compared against the region's measured width, never the viewport's — at 768px of viewport the
+ * content column is 656px with the sidebar rail collapsed and 480px with it expanded.
+ */
+const SPLIT_MIN_WIDTH = 640;
 
 export function SkillsPage() {
 	useDocumentTitle('Skills');
@@ -40,6 +52,7 @@ export function SkillsPage() {
 	const [deleteTarget, setDeleteTarget] = useState<null | string>(null);
 	const [importOpen, setImportOpen] = useState(false);
 	const [selectedId, setSelectedId] = useState<null | string>(null);
+	const [showDetail, setShowDetail] = useState(false);
 	const [args, setArgs] = useState('');
 	const [executionIntent, setExecutionIntent] = useState<SkillExecutionIntent>('review-only');
 	const [launchTarget, setLaunchTarget] = useState<LaunchTargetValue>({});
@@ -64,6 +77,19 @@ export function SkillsPage() {
 	function clearFilters(): void {
 		setQuery('');
 		setCategory('all');
+	}
+
+	function selectSkill(id: string): void {
+		setSelectedId(id);
+		// The one place the container threshold is repeated outside a class name, and it is read
+		// off the region itself rather than off the viewport, so it stays true whichever width the
+		// sidebar rail has left. Above the threshold both panes are on screen and a selection
+		// speaks for itself; below it the selection has to bring its pane with it, and the region
+		// has to come back into view — the tap that opened it may have been five screens down.
+		const region = splitRef.current;
+		if (!region || region.offsetWidth >= SPLIT_MIN_WIDTH) return;
+		setShowDetail(true);
+		region.scrollIntoView({ block: 'start' });
 	}
 
 	function launch(skill: SkillDefinition): void {
@@ -94,6 +120,19 @@ export function SkillsPage() {
 			Clear filters
 		</Button>
 	);
+
+	const emptyDetail =
+		skillList.length === 0 ? (
+			<EmptyState>No aidd-local skills were found.</EmptyState>
+		) : category === 'all' ? (
+			<EmptyState action={clearAction}>
+				No skills match this search. Clear filters to view skill details.
+			</EmptyState>
+		) : (
+			<EmptyState action={clearAction}>
+				No skills match the selected category filter. Clear filters to view skill details.
+			</EmptyState>
+		);
 
 	return (
 		<div className="page-reveal space-y-4">
@@ -132,51 +171,81 @@ export function SkillsPage() {
 					value={category}
 				/>
 			</Card>
-			{/* From `lg` up the split is the scrolling region and the page is not. The detail column
+			{/* Above the split the region is the scrolling one and the page is not. The detail column
 			    had no scrollport at all, so the document scrolled instead — which is why the rail's
-			    `lg:sticky` never engaged in any of the 76 states the sweep measured: 144px of
-			    available page scroll against the 172px sticky needs. The height is measured rather
-			    than guessed; see useViewportFill. */}
-			<div
-				className="grid min-w-0 gap-4 lg:h-[var(--fill-height,calc(100vh-12rem))] lg:grid-cols-[minmax(18rem,24rem)_1fr] lg:overflow-hidden"
-				ref={splitRef}>
-				<SkillCatalog
-					loading={skills.isLoading}
-					onSelect={setSelectedId}
-					selectedId={selected?.id ?? null}
-					skills={filtered}
-					total={skillList.length}
-					usageByResourceId={usageByResourceId}
-				/>
-				{selected ? (
-					// The scrollport the list-plus-detail pattern claims. Everything that scrolls
-					// on this surface now scrolls in here or in the rail beside it.
-					<div className="min-w-0 space-y-4 lg:h-full lg:overflow-auto lg:pr-1">
-						<SkillDetailsCard
-							onDelete={() => setDeleteTarget(selected.id)}
-							skill={selected}
-						/>
-						<LaunchForm
-							args={args}
-							executionIntent={executionIntent}
-							launchLabel={
-								executionIntent === 'review-only'
-									? 'Run review-only directive'
-									: 'Run changes-allowed directive'
-							}
-							launchPending={runSkill.isPending}
-							launchTarget={launchTarget}
-							onExecutionIntentChange={setExecutionIntent}
-							onLaunch={() => launch(selected)}
-							onLaunchTargetChange={setLaunchTarget}
-							projectDir={projectDir}
-							projects={projects.data?.projects ?? []}
-							setArgs={setArgs}
-							setProjectDir={setProjectDir}
-						/>
-						<Card className="space-y-2">
-							<CardHeader className="mb-0" headingLevel={3} title="Definition" />
-							{/* SKILL.md is a markdown document and is now read as one. It was the last
+			    sticky never engaged in any of the 76 states the sweep measured: 144px of available
+			    page scroll against the 172px sticky needs. The height is measured rather than
+			    guessed; see useViewportFill.
+
+			    The gate is a container query, not a viewport breakpoint, because the thing that has
+			    to fit is the content column and the sidebar rail sets its width independently of the
+			    viewport: 768px of viewport is 656px of column with the rail collapsed and 480px with
+			    it expanded, and both states occur — the default is computed once at load and then
+			    persisted. `lg:` gated on the one number that does not describe this layout, so it
+			    read 768px as narrow (it is not, collapsed) and 1024px as wide (it is not, expanded).
+			    This wrapper is the container; the query lives on its child. */}
+			<div className="@container">
+				<div
+					className="grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))] @min-[40rem]:grid-cols-[minmax(18rem,24rem)_1fr] @min-[40rem]:overflow-hidden"
+					ref={splitRef}>
+					<SkillCatalog
+						className={showDetail ? 'hidden @min-[40rem]:flex' : undefined}
+						loading={skills.isLoading}
+						onSelect={selectSkill}
+						selectedId={selected?.id ?? null}
+						skills={filtered}
+						total={skillList.length}
+						usageByResourceId={usageByResourceId}
+					/>
+					{selected ? (
+						// The scrollport the list-plus-detail pattern claims. Everything that scrolls
+						// on this surface now scrolls in here or in the rail beside it.
+						//
+						// Below the split the two panes are alternatives rather than columns. They
+						// were stacked before, so the catalog ran 5850px down the document and the
+						// detail began past the end of it: tapping the 30th of 76 skills swapped
+						// content 3962px below the fold, which is indistinguishable from a tap that
+						// did nothing.
+						<div
+							className={cn(
+								'min-w-0 space-y-4 @min-[40rem]:h-full @min-[40rem]:overflow-auto @min-[40rem]:pr-1',
+								showDetail ? undefined : 'hidden @min-[40rem]:block',
+							)}>
+							{/* Reached before any of the detail is scrolled, because a way back that
+							    is 2000px down the document is not a way back. */}
+							<Button
+								className="@min-[40rem]:hidden"
+								onClick={() => setShowDetail(false)}
+								size="toolbar"
+								variant="secondary">
+								<ArrowLeft aria-hidden="true" className="h-4 w-4" />
+								All skills
+							</Button>
+							<SkillDetailsCard
+								onDelete={() => setDeleteTarget(selected.id)}
+								skill={selected}
+							/>
+							<LaunchForm
+								args={args}
+								executionIntent={executionIntent}
+								launchLabel={
+									executionIntent === 'review-only'
+										? 'Run review-only directive'
+										: 'Run changes-allowed directive'
+								}
+								launchPending={runSkill.isPending}
+								launchTarget={launchTarget}
+								onExecutionIntentChange={setExecutionIntent}
+								onLaunch={() => launch(selected)}
+								onLaunchTargetChange={setLaunchTarget}
+								projectDir={projectDir}
+								projects={projects.data?.projects ?? []}
+								setArgs={setArgs}
+								setProjectDir={setProjectDir}
+							/>
+							<Card className="space-y-2">
+								<CardHeader className="mb-0" headingLevel={3} title="Definition" />
+								{/* SKILL.md is a markdown document and is now read as one. It was the last
 							    surface showing raw source: monospaced, reflowed mid-word to keep it
 							    on screen, with its `##` and `-` markers left as literal characters —
 							    the operator was reading the file rather than the document, and its
@@ -186,26 +255,21 @@ export function SkillsPage() {
 							    No inner `max-h`: the detail column is the scrollport now, and a
 							    28rem window inside it meant scrolling a short box inside a tall
 							    one to read a document that already had somewhere to go. */}
-							<MarkdownContent
-								baseLevel={4}
-								className={proseMeasureClass}
-								markdown={selected.body}
-								skipLeadingTitle
-							/>
-						</Card>
-					</div>
-				) : skillList.length === 0 ? (
-					<EmptyState>No aidd-local skills were found.</EmptyState>
-				) : category !== 'all' ? (
-					<EmptyState action={clearAction}>
-						No skills match the selected category filter. Clear filters to view skill
-						details.
-					</EmptyState>
-				) : (
-					<EmptyState action={clearAction}>
-						No skills match this search. Clear filters to view skill details.
-					</EmptyState>
-				)}
+								<MarkdownContent
+									baseLevel={4}
+									className={proseMeasureClass}
+									markdown={selected.body}
+									skipLeadingTitle
+								/>
+							</Card>
+						</div>
+					) : (
+						// Only above the split. Below it the catalog occupies the whole region and says
+						// the same thing in its own empty state, so this one would be a second copy of
+						// the message stacked under the first.
+						<div className="hidden @min-[40rem]:block">{emptyDetail}</div>
+					)}
+				</div>
 			</div>
 			<SkillImportDialog onClose={() => setImportOpen(false)} open={importOpen} />
 			<AlertDialog

@@ -56,7 +56,7 @@ describe('two-column grids do not stretch a card past its own content', () => {
 		// This is the one surface here whose dead column was solved by making the split a sized
 		// region instead of by an alignment rule, so `items-start` is deliberately absent: both
 		// columns are full-height scrollports and the page above them does not scroll.
-		expect(page).toContain('grid min-w-0 gap-4 lg:h-[var(--fill-height');
+		expect(page).toContain('grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height');
 		expect(page).not.toContain('items-start');
 		// `max-h-[34rem]` capped the list ~350px above the card's own bottom edge; replacing it
 		// with `max-h-[calc(100vh-9rem)]` only moved the guess — 9rem against 188px of real chrome
@@ -64,7 +64,7 @@ describe('two-column grids do not stretch a card past its own content', () => {
 		// had no scrollport, so the document scrolled instead of the region.
 		expect(catalog).not.toContain('max-h-[calc(100vh-9rem)]');
 		expect(catalog).not.toContain('lg:sticky');
-		expect(catalog).toContain('lg:h-full');
+		expect(catalog).toContain('@min-[40rem]:h-full');
 		expect(catalog).toContain('min-h-0 flex-1 overflow-auto');
 		expect(page).not.toContain('max-h-[34rem]');
 	});

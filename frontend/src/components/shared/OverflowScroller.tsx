@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useCallback, useRef } from 'react';
 
 import { cn } from '../../lib/cn.ts';
+import { observeOverflow } from '../../lib/observeOverflow.ts';
 
 /**
  * A scrollport that says so.
@@ -40,35 +41,18 @@ export function OverflowScroller({
 		const scroller = root.querySelector<HTMLElement>('[data-overflow-scroller]');
 		if (!scroller) return;
 
-		const measure = () => {
-			// A sub-pixel slack: fractional layout widths otherwise leave a fade permanently lit
-			// at a scroll extreme.
-			const overflow = scroller.scrollWidth - scroller.clientWidth;
-			const overflowing = overflow > 1;
-			root.dataset.overflowStart = String(overflowing && scroller.scrollLeft > 1);
-			root.dataset.overflowEnd = String(overflowing && scroller.scrollLeft < overflow - 1);
+		cleanupRef.current = observeOverflow(scroller, (flags) => {
+			root.dataset.overflowStart = String(flags.start);
+			root.dataset.overflowEnd = String(flags.end);
 			// Only a scrollport that actually has hidden content earns a tab stop; a table that
 			// fits would otherwise add a focus step that goes nowhere. Either axis counts: a
 			// `max-h-*` scrollport hides rows below its fold exactly as this one hides columns
 			// past its right edge, and neither is reachable by arrow key without a tab stop.
 			// The fades stay horizontal-only on purpose — both vertical scrollports here pin a
 			// `sticky top-0` header, and a top fade at `z-30` would paint over it.
-			const scrollsDown = scroller.scrollHeight - scroller.clientHeight > 1;
-			if (overflowing || scrollsDown) scroller.tabIndex = 0;
+			if (flags.start || flags.end || flags.scrollsDown) scroller.tabIndex = 0;
 			else scroller.removeAttribute('tabindex');
-		};
-
-		measure();
-		scroller.addEventListener('scroll', measure, { passive: true });
-		const observer = new ResizeObserver(measure);
-		observer.observe(scroller);
-		// The table grows independently of the scrollport when columns are toggled on.
-		const content = scroller.firstElementChild;
-		if (content) observer.observe(content);
-		cleanupRef.current = () => {
-			scroller.removeEventListener('scroll', measure);
-			observer.disconnect();
-		};
+		});
 	}, []);
 
 	return (

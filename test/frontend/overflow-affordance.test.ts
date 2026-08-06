@@ -17,7 +17,10 @@ const exemptions: { file: string; why: string }[] = [
 		why: 'carries its own mask-image edge fade below sm, where it is a nav rail not a strip',
 	},
 	{ file: 'components/shared/CommitDiffDialog.tsx', why: 'diff hunks and pre blocks' },
-	{ file: 'components/ui/segmented-control.tsx', why: 'a bordered control, not a scrollport' },
+	{
+		file: 'components/ui/segmented-control.tsx',
+		why: 'carries its own measured mask-image edge fade below sm, where the track scrolls',
+	},
 	{ file: 'pages/projects/detail/ArtifactViewerDialog.tsx', why: 'markdown pre and code blocks' },
 	{ file: 'pages/recipes/StepOverviewCard.tsx', why: 'a code block' },
 	{
@@ -57,6 +60,59 @@ describe('horizontal overflow always says so', () => {
 		expect(scroller).toContain('z-30 w-6 border-r border-border bg-gradient-to-l from-card');
 		expect(scroller).toContain('group-data-[overflow-start=true]:opacity-100');
 		expect(scroller).toContain('group-data-[overflow-end=true]:opacity-100');
+	});
+
+	test('the filter track fades its edges only where it actually scrolls', async () => {
+		const control = await read('components', 'ui', 'segmented-control.tsx');
+
+		// Two reviewers measured this independently on unrelated surfaces: /skills hid two of seven
+		// categories (scrollWidth 639 into 322) and /diary clipped "Releases" to "Re". The track was
+		// a bare `overflow-x-auto` with no fade, no touch scrollbar and no cue, so clipped options
+		// read as broken text rather than as content that continues.
+		expect(control).toContain('max-sm:data-[overflow-start=true]:[--fade-start:2rem]');
+		expect(control).toContain('max-sm:data-[overflow-end=true]:[--fade-end:2rem]');
+		expect(control).toContain('max-sm:[mask-image:linear-gradient(to_right,');
+
+		// Every fade class is `max-sm:`. From sm up the track wraps instead of scrolling, so there
+		// is nothing to indicate and a fade there would dim an option for no reason. Comments
+		// stripped: the docstring above the classes explains the mask in prose.
+		const code = control.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
+		for (const line of code.split('\n')) {
+			if (line.includes('fade-') || line.includes('mask-image')) {
+				expect(line).toContain('max-sm:');
+			}
+		}
+	});
+
+	test('a control whose options fit is not dimmed to advertise nothing', async () => {
+		const control = await read('components', 'ui', 'segmented-control.tsx');
+
+		// The `SidebarNav` strip this borrows from fades unconditionally, which is right there — it
+		// always overflows 320px. A two-option filter never overflows, and the same unconditional
+		// fade would dim its last option, the active one half the time, to signal content that does
+		// not exist. So the widths default to zero and the measurement raises them.
+		expect(control).toContain('max-sm:[--fade-end:0px] max-sm:[--fade-start:0px]');
+		expect(control).toContain('observeOverflow(track');
+		expect(control).toContain('track.dataset.overflowEnd = String(flags.end)');
+	});
+
+	test('both edge treatments measure through the one helper', async () => {
+		const [scroller, control, helper] = await Promise.all([
+			read('components', 'shared', 'OverflowScroller.tsx'),
+			read('components', 'ui', 'segmented-control.tsx'),
+			read('lib', 'observeOverflow.ts'),
+		]);
+
+		// Two components deciding independently what "has content past the edge" means is two
+		// answers to one question — including the sub-pixel slack that keeps a fade from staying lit
+		// at a scroll extreme, which is the kind of detail that gets fixed in one copy.
+		expect(scroller).toContain("from '../../lib/observeOverflow.ts'");
+		expect(control).toContain("from '../../lib/observeOverflow.ts'");
+		expect(helper).toContain("scroller.addEventListener('scroll', measure");
+		expect(helper).toContain('new ResizeObserver(measure)');
+		for (const source of [scroller, control]) {
+			expect(source).not.toContain('scrollWidth - ');
+		}
 	});
 
 	test('the compact tab strip scrolls inside a scroller and keeps its tablist', async () => {

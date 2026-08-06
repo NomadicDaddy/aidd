@@ -28,10 +28,17 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 		// there is. What it did need is the scrollport: `overflow-auto` on the Card scrolled forty-two
 		// rows with no way to reach them but a pointer, and being `overflow-auto` rather than
 		// `overflow-x-auto` it slipped past the affordance guard that would have caught it.
+		//
+		// The cap is `xl:` because a `100dvh` subtrahend is a statement about desktop chrome. Ungated,
+		// 16rem put the card's bottom edge 98px past the fold at 390px and 234px at 768px, so the tab
+		// scrolled the page and the card at once. Its sibling ApplicabilityTab carries the same gate;
+		// it just gets it for free from the `hidden xl:block` that swaps in its card stack, and this
+		// table has no stack to swap to. Below xl the page is the one scroll region and the head rides
+		// up with it — the alternative is a nested scrollport on a surface 358px wide.
 		<Card className="p-0">
 			<OverflowScroller
 				ariaLabel="Audit overrides"
-				scrollerClassName="max-h-[calc(100dvh-16rem)]">
+				scrollerClassName="xl:max-h-[calc(100dvh-16rem)]">
 				<table aria-label="Audit overrides" className="w-full text-left text-sm">
 					<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 						<tr>
@@ -52,7 +59,7 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 									className="border-b border-border last:border-0"
 									key={definition.name}>
 									<td
-										className={`border-l-2 px-3 py-2 text-foreground ${
+										className={`border-l-2 px-3 py-2 break-words text-foreground ${
 											overridden
 												? 'border-accent font-semibold'
 												: 'border-transparent font-medium'
@@ -60,9 +67,15 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 										{definition.name}
 									</td>
 									<td className="px-3 py-2 text-right">
+										{/* Sized by its own four options, not by a fixed `w-36`. 144px plus an
+										    audit name pushed the row past the card at 390px, and the card
+										    clipped it with an overflow that renders no scrollbar on touch —
+										    about a third of every select, chevron included, was not hittable,
+										    on the one tab whose whole purpose is changing that value. Every
+										    row offers the same four words, so the column still lines up. */}
 										<select
 											aria-label={`Override for ${definition.name}`}
-											className={`${selectClass} ml-auto w-36`}
+											className={`${selectClass} ml-auto`}
 											onChange={(event) =>
 												onChange(
 													definition.name,

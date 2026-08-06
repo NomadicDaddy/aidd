@@ -8,6 +8,10 @@ function read(...segments: string[]): Promise<string> {
 	return Bun.file(join(...segments)).text();
 }
 
+function stripComments(source: string): string {
+	return source.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
+}
+
 /**
  * The three audits tabs each render a long table, and two of them already had the shape: bound the
  * scroll container's height, stick the head inside it. The catalog — the surface's default tab, and
@@ -33,12 +37,55 @@ describe('a long audits table caps itself and keeps its head', () => {
 		expect(await read(TABS, 'ApplicabilityTab.tsx')).toContain(
 			'max-h-[calc(100dvh-24rem)] overflow-auto p-0',
 		);
-		expect(await read(TABS, 'OverridesList.tsx')).toContain(
-			'scrollerClassName="max-h-[calc(100dvh-16rem)]"',
-		);
 		expect(await read(TABS, 'CatalogTable.tsx')).toContain(
 			'scrollerClassName="max-h-[calc(100dvh-16rem)]"',
 		);
+	});
+
+	test('a 100dvh cap only applies at the width its subtrahend was computed for', async () => {
+		// The rule, not the class string. A `100dvh` subtrahend is a statement about desktop chrome,
+		// so every one of these caps has to be reachable only above `xl`. Applicability and Catalog
+		// get that for free: `hidden ... xl:block` on the Card swaps in a stack below, taking the cap
+		// with it. Overrides has no stack — two columns fit the narrowest content column there is —
+		// so it carries the gate on the cap itself.
+		//
+		// This assertion previously required `max-h-[calc(100dvh-16rem)] overflow-auto p-0` verbatim
+		// on the Overrides card, which is the string that put its bottom edge 98px past the fold at
+		// 390px and 234px at 768px. A guard written as a snapshot of the day's markup pins whatever
+		// was there, defect included, and hands the next fixer a red build that reads as "you were
+		// wrong".
+		//
+		// Comments stripped first: this file explains its own gate in prose directly above the class
+		// that carries it, and a guard that reads the explanation as the gate passes on the strength
+		// of a sentence about the defect.
+		const offenders: string[] = [];
+		for (const file of ['ApplicabilityTab.tsx', 'CatalogTable.tsx', 'OverridesList.tsx']) {
+			const source = stripComments(await read(TABS, file));
+			for (const match of source.matchAll(/max-h-\[calc\(100dvh/g)) {
+				// The gate is either on the cap's own class list — Applicability's `xl:block` shares
+				// the attribute, Overrides prefixes the utility — or on an ancestor written above it,
+				// which is how the Catalog card gates a cap two elements down.
+				const attrStart = source.lastIndexOf('="', match.index);
+				const attr = source.slice(attrStart, source.indexOf('"', attrStart + 2));
+				if (attr.includes('xl:') || source.slice(0, attrStart).includes('xl:block'))
+					continue;
+				offenders.push(`${file}: ungated 100dvh cap`);
+			}
+		}
+		expect(offenders).toEqual([]);
+	});
+
+	test('the override select is sized by its options, not by a fixed width', async () => {
+		const source = await read(TABS, 'OverridesList.tsx');
+		const select = source.slice(source.indexOf('<select'), source.indexOf('</select>'));
+
+		// `w-36` (144px) with `ml-auto`, in a two-column row whose other column is an audit name, made
+		// the row wider than the card at 390px. What the card did about it was clip — `overflow-auto`
+		// renders no scrollbar and no affordance on touch — so roughly a third of every select,
+		// including the chevron, was not hittable. Default / Required / Disabled / Excluded size a
+		// select to well under 144px on their own, and identically in every row.
+		expect(select).not.toMatch(/\bw-(?:\d|\[|full)/);
+		expect(source).toContain('break-words');
 	});
 
 	test('every audits table head is sticky', async () => {

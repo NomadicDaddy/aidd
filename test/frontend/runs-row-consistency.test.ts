@@ -161,7 +161,12 @@ describe('Runs row consistency', () => {
 			readRunSource('ActiveRunRow.tsx'),
 			readRunSource('ActiveRunMobileCard.tsx'),
 			readFile(join(FRONTEND_SRC, 'pages', 'dashboard', 'ActiveRunsCard.tsx'), 'utf8'),
-			readFile(join(FRONTEND_SRC, 'pages', 'projects', 'detail', 'RunsTab.tsx'), 'utf8'),
+			// The Runs tab's table and card stack were extracted into this panel when the pair
+			// was added; the tab itself now only composes panels.
+			readFile(
+				join(FRONTEND_SRC, 'pages', 'projects', 'detail', 'ActiveRunsPanel.tsx'),
+				'utf8',
+			),
 		]);
 		for (const source of surfaces) {
 			expect(source).toContain('runSourceLabel(run)');

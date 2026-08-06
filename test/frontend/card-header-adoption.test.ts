@@ -111,7 +111,17 @@ describe('CardHeader adoption', () => {
 		const missing: string[] = [];
 		for await (const file of glob.scan({ absolute: false, cwd: tabRoot, onlyFiles: true })) {
 			const text = await Bun.file(join(tabRoot, file)).text();
-			if (!text.includes('<CardHeader')) missing.push(file);
+			if (text.includes('<CardHeader')) continue;
+			// A tab that composes sibling panels declares no header of its own — Runs is three
+			// panels, each carrying the house header for its own card. Follow one level of local
+			// imports rather than reading the absence as a missing header.
+			const siblings = [...text.matchAll(/from '\.\/([A-Za-z]+\.tsx)'/g)].flatMap((match) =>
+				match[1] === undefined ? [] : [match[1]],
+			);
+			const headers = await Promise.all(
+				siblings.map((sibling) => Bun.file(join(tabRoot, sibling)).text()),
+			);
+			if (!headers.some((header) => header.includes('<CardHeader'))) missing.push(file);
 		}
 		// Overview lives on the page rather than in a *Tab.tsx file, so it is checked separately.
 		expect(missing).toEqual([]);

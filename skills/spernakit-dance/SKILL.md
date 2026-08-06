@@ -274,7 +274,20 @@ For each cluster:
 - **Cluster size 1-2 apps → formal pipeline**:
     - For each affected app, invoke
       `Skill: bug2feature {app} --report-ids {app-specific-report-ids}` to convert only the reports
-      in this session into `remediation-*` features.
+      in this session into features.
+    - **`remediation-*` is a template-only name.** A cluster filed against `<spernakit-root>` takes
+      `remediation-<YYYYMMDD>-<slug>`; a cluster filed against a derived app takes a clean
+      descriptive slug and records its origin in `title` and `notes`. Check the id before writing the
+      directory, not after: `resident.ts` fails `check:template-features` on any resident
+      `remediation-<date>-…` or `audit-<slug>-<digits>-…` directory in an app, at every template
+      version and with no exemption for app ownership, and it short-circuits before comparing a
+      single durable record. A record written here under the wrong name therefore surfaces at D2 as a
+      whole-app sync failure two phases later, with that app's real drift hidden underneath it. The
+      v3.37.0 dance did exactly this to deeper.
+    - Ownership decides the target repository. When the defect's source file is byte-identical to the
+      template, file against spernakit even at cluster size 1: a fix in a template-managed file
+      inside an app is either reverted by the next sync or reported as drift. When the template has
+      zero occurrences of the pattern, the finding is app-owned.
     - Invoke `Skill: feature-review spernakit + {affected-apps}` to validate the feature specs.
     - Record in `checkpoint.remediationFeatures`.
 

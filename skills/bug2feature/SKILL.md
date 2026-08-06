@@ -36,8 +36,24 @@ report, say so and stop; that, not the absence of a particular API, is the reaso
 2. Investigate each submission against the current codebase.
 3. Classify it as a bug, feature request, duplicate, resolved item, or non-actionable item.
 4. Present the triage report, then create every actionable feature file directly.
-5. Create only actionable entries, using `remediation-*` for bugs and clean feature slugs for
-   feature requests.
+5. Create only actionable entries, using clean feature slugs for feature requests and, for bugs,
+   the `remediation-*` naming **only when the target is the Spernakit template itself**. A bug filed
+   against a derived application takes a clean descriptive slug like any other feature, and records
+   its origin in `title` and `notes` rather than in the id.
+
+    `remediation-<YYYYMMDD>-<slug>` and `audit-<slug>-<digits>-<slug>` name ephemeral process
+    records: findings from the template's own development, whose content reaches applications by
+    being folded into a durable feature, after which the finding is deleted upstream. An app-owned
+    finding has no such lifecycle. Nothing folds it anywhere and nothing deletes it, so it is a
+    durable feature in that app's own corpus from the moment it is written.
+
+    This is enforced, not advisory. `scripts/lib/template-features/resident.ts` in every derived app
+    audits resident records before any version comparison and fails
+    `check:template-features` on any directory matching those patterns, classifying it as a leaked
+    template process record at every template version, with no exemption for app ownership. The
+    failure short-circuits that app's entire feature-record sync, so one badly named record hides
+    every other drift in the app until it is renamed.
+
 6. Assign roadmap metadata and run the required feature validation.
 
 ## Output

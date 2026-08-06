@@ -129,6 +129,14 @@ For every backlog feature, run the following checks. Classify each issue found:
 
 - **Required fields**: `id`, `title`, `description`, `category`, `spec`, `status`, `passes`, `priority`
 - **ID format**: Base features use clean descriptive slugs (e.g., `run-console-page`, `approval-model`). Remediation features use `remediation-{YYYYMMDD}-{slug}`. Audit findings use `audit-{type}-{timestamp}-{slug}`. The legacy `feature-{YYYYMMDD}-{slug}` format is accepted but should be flagged as **MINOR** for renaming via the aidd-local `consolidate-features` skill.
+- **Process-record ids are template-only.** In a Spernakit-derived app (one whose `package.json` carries `spernakit_version`), an id matching `remediation-{YYYYMMDD}-{slug}` or `audit-{slug}-{digits}-{slug}` is a **CONFLICT**, not a style nit. `scripts/lib/template-features/resident.ts` audits resident records ahead of any version comparison and fails `check:template-features` on those patterns at every template version, with no exemption for a finding the app owns, and the failure short-circuits before a single durable record is compared. One such directory therefore hides all of that app's feature-record drift behind an unrelated error.
+
+    Those prefixes mark ephemeral process artifacts belonging to the template's own development: their content reaches apps by being folded into a durable feature, after which the finding is deleted upstream. An app-owned finding has no such lifecycle, so it is a durable feature in that app's corpus from the moment it is written.
+
+    Fix by renaming, never by deleting: the directory, the `id` field, and the `.aidd/roadmap.json` key, with `spec`, `notes`, `description` and dependencies carried over unchanged and the original id recorded in `notes`. Deleting is the remedy the tool prints, and it is correct only when the finding's content already lives in a durable feature; an unfixed finding lives nowhere else, so deleting it discards it. Auto-fix may perform the rename; it must never delete the record.
+
+    This does not apply when the target project is the Spernakit template repository itself, where those ids are correct.
+
 - **Status value**: Must be one of `backlog`, `pending`, `running`, `completed`, `failed`, `verified`, `waiting_approval`, `in_progress`
 - **Priority**: Must be a number (1 = most urgent)
 - **Timestamps**: If present, must be valid ISO 8601 with timezone

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import type { AuditManager } from '../../../api/types.ts';
 
+import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
@@ -71,11 +72,10 @@ export function LaunchTargetsCard({
 									<span className="block truncate font-medium text-foreground">
 										{project.name}
 									</span>
-									<span
+									<FilePath
 										className="block truncate text-xs text-muted-foreground"
-										title={project.path}>
-										{project.path}
-									</span>
+										path={project.path}
+									/>
 								</span>
 							</label>
 						))}

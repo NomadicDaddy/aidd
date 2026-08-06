@@ -19,6 +19,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ApiError } from '../../api/client.ts';
 import { AppLaunchControl } from '../../components/shared/AppLaunchControl.tsx';
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { LoadingState } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Button } from '../../components/ui/button.tsx';
@@ -141,7 +142,7 @@ export function ProjectDetailPage() {
 						Projects
 					</Link>
 				}
-				description={<span className="break-all">{detail.path}</span>}
+				description={<FilePath className="break-all" path={detail.path} />}
 				helpSlug="projects"
 				title={detail.name}
 			/>

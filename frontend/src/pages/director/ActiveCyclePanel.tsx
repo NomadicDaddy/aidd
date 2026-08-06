@@ -4,6 +4,7 @@ import { default as Cpu } from 'lucide-react/dist/esm/icons/cpu';
 import type { DirectorCycle, DirectorCycleArtifacts } from '../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import {
 	cycleElapsed,
@@ -33,7 +34,7 @@ function CycleArtifactRow({
 				<span className="text-xs font-medium text-foreground">{label}</span>
 				<span className={`text-xs font-medium ${artifactTone(status)}`}>{status}</span>
 			</div>
-			<div className="mt-1 text-2xs break-all text-muted-foreground">{path}</div>
+			<FilePath className="mt-1 block text-2xs break-all text-muted-foreground" path={path} />
 		</div>
 	);
 }

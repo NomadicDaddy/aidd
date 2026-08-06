@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 
 import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '../../api/types.ts';
 
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatRelativeAge } from '../../lib/formatters.ts';
@@ -89,7 +90,10 @@ export function ProjectTableRow({
 						{project.name}
 					</Link>
 				</div>
-				<div className="truncate text-xs text-muted-foreground">{project.path}</div>
+				<FilePath
+					className="block truncate text-xs text-muted-foreground"
+					path={project.path}
+				/>
 				{specDays !== null ? (
 					<div
 						className={`text-xs ${specAgeColor(specDays)}`}

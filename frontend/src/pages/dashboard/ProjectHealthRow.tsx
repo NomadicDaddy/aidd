@@ -2,6 +2,7 @@ import { default as FolderX } from 'lucide-react/dist/esm/icons/folder-x';
 
 import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { percent } from '../../lib/formatters.ts';
 import { toneSolid, toneText } from '../../lib/tones.ts';
@@ -56,7 +57,10 @@ export function ProjectHealthRow({
 						) : null}
 						<span className="truncate">{project.name}</span>
 					</div>
-					<div className="truncate text-xs text-muted-foreground">{project.path}</div>
+					<FilePath
+						className="block truncate text-xs text-muted-foreground"
+						path={project.path}
+					/>
 				</div>
 				<div className="flex flex-col items-end gap-1">
 					<Badge showDot tone={tone}>

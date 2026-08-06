@@ -184,3 +184,30 @@ export function formatRatio(
 	if (value === null || value === undefined || total === null || total === undefined) return '—';
 	return `${value}/${total}`;
 }
+
+/**
+ * One filesystem path, rendered the same way everywhere it appears.
+ *
+ * The same project directory reached the screen as `d:\applications\aidd` in the project header and
+ * `D:/applications/aidd` two tabs away — one path, two cases, two separators, and (because only one
+ * of them was monospace) two typefaces. Nothing downstream cares which form it is; the backend is
+ * given the raw string, and this is display only.
+ *
+ * Backslashes become forward slashes, a Windows drive letter is upper-cased, and a trailing
+ * separator is dropped unless the path IS the root. UNC prefixes (`\server\share`) keep their
+ * leading double separator, which is load-bearing rather than cosmetic.
+ */
+export function formatFilesystemPath(path: null | string | undefined): string {
+	if (!path) return '';
+	const unc = path.startsWith('\\') || path.startsWith('//');
+	const slashed = path.replaceAll('\\', '/');
+	const cased = slashed.replace(
+		/^([a-z]):/,
+		(_match, drive: string) => `${drive.toUpperCase()}:`,
+	);
+	const body = unc ? `//${cased.replace(/^\/+/, '')}` : cased;
+	if (body.length > 1 && body.endsWith('/') && !/^[A-Za-z]:\/$/.test(body)) {
+		return body.slice(0, -1);
+	}
+	return body;
+}

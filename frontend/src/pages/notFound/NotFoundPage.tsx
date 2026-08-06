@@ -1,9 +1,9 @@
 import { NOT_FOUND_PAGE_MARKER } from 'aidd-shared/contracts/frontend-routes';
 import { Link, useLocation } from 'react-router';
 
+import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 
 export function NotFoundPage() {
@@ -22,20 +22,22 @@ export function NotFoundPage() {
 				description="The link may be outdated or mistyped."
 				title="Page not found"
 			/>
-			<Card>
-				<p className="text-sm text-muted-foreground">
-					No page matches{' '}
-					<code className="rounded-sm bg-muted px-1 font-mono text-foreground">
-						{location.pathname}
-					</code>
-					.
-				</p>
-				<div className="mt-4">
-					<Link className={buttonClassName('primary')} to="/">
+			{/* The house nothing-here block: a dashed muted inset with its recovery action in the
+			    `action` slot. This was a solid Card with a filled accent button, which read as an
+			    emphasised piece of content rather than as an absence — the Dashboard's equivalent
+			    block, for the same situation, is this. */}
+			<EmptyState
+				action={
+					<Link className={buttonClassName('secondary')} to="/">
 						Back to Dashboard
 					</Link>
-				</div>
-			</Card>
+				}>
+				No page matches{' '}
+				<code className="rounded-sm bg-background px-1 font-mono text-foreground">
+					{location.pathname}
+				</code>
+				.
+			</EmptyState>
 		</div>
 	);
 }

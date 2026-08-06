@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 
 import { Metric } from '../../components/shared/Metric.tsx';
+import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
@@ -15,59 +16,14 @@ export function AboutPage() {
 	useDocumentTitle('About');
 
 	return (
-		<div className="page-reveal flex min-h-[calc(100vh-7rem)] items-center justify-center px-2 py-8 sm:px-6">
-			<section aria-labelledby="about-title" className="w-full max-w-4xl space-y-4">
-				<Card
-					className="relative isolate flex flex-col items-center overflow-hidden px-5 py-10 text-center sm:px-10 sm:py-14"
-					variant="panel">
-					{/* The atmosphere is an aria-hidden overlay on the accent token rather than
-					    hand-picked teal/amber stops, so the hero re-themes with everything else. */}
-					<div
-						aria-hidden="true"
-						className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,var(--color-accent-muted),transparent_38%),radial-gradient(circle_at_76%_30%,var(--color-accent-muted),transparent_34%)] opacity-80"
-					/>
-					<div
-						aria-hidden="true"
-						className="absolute inset-x-8 top-8 -z-10 h-36 rounded-full bg-accent/15 blur-3xl"
-					/>
-					<div className="relative">
-						<div
-							aria-hidden="true"
-							className="absolute inset-8 rounded-full bg-accent/20 blur-2xl"
-						/>
-						<img
-							alt="aidd"
-							className="relative h-48 w-48 rounded-[2rem] object-cover shadow-lg ring-1 ring-border/60 sm:h-64 sm:w-64"
-							decoding="async"
-							height="512"
-							src="/web-app-manifest-512x512.png"
-							width="512"
-						/>
-					</div>
-					<div className="mt-8 grid gap-3">
-						{/* The wordmark is the page's title, so it is the page's `h1`: as a
-						    paragraph it left /about with no heading in its main landmark at all. */}
-						<h1
-							className="font-display text-5xl font-semibold text-foreground sm:text-7xl"
-							id="about-title"
-							translate="no">
-							aidd
-						</h1>
-						<p className="text-base font-medium text-accent sm:text-lg">
-							AI Development Director
-						</p>
-					</div>
-				</Card>
-				{/* The console metadata the 896px hero was always implying — and three labelled
-				    figures, so they are three `Metric`s. This was an all-monospace `<dl>` at
-				    `text-xs`: the fourth divergent copy of the tile pattern, and the one that
-				    stated the app's own version in a face the app uses for nothing else. */}
-				<div className="grid gap-3 sm:grid-cols-3">
-					{metadata.map(({ label, value }) => (
-						<Metric key={label} label={label} size="compact" value={value} />
-					))}
-				</div>
-				<Card className="p-5" variant="sunken">
+		// The same `page-reveal space-y-5` shell as the other twenty routes. This page used to centre
+		// itself in a `max-w-4xl` column at a different vertical rhythm, so navigating to it moved
+		// every landmark on screen — and it was the only route with no PageHeader at all.
+		<div className="page-reveal space-y-5">
+			<PageHeader
+				actions={
+					// The two links were a card of their own below the fold. The actions slot is
+					// where every other route puts exactly this kind of pair.
 					<div className="flex flex-wrap gap-2">
 						<Link className={buttonClassName('secondary')} to="/docs">
 							Read the docs
@@ -82,8 +38,35 @@ export function AboutPage() {
 							</a>
 						)}
 					</div>
-				</Card>
-			</section>
+				}
+				description="AI Development Director"
+				title="aidd"
+			/>
+			{/* What is left of the hero: the mark at a size that identifies the app rather than one
+			    that fills a viewport, on a plain panel. The radial-gradient wash, the two blur
+			    overlays and the `shadow-lg` are gone — they were the only ones on any route — and
+			    the logo was serving as the page's `h1`, which is now real text in the header. */}
+			<Card className="flex flex-col items-center gap-4 py-8 text-center" variant="panel">
+				<img
+					alt=""
+					className="h-32 w-32 rounded-[1.5rem] object-cover ring-1 ring-border sm:h-40 sm:w-40"
+					decoding="async"
+					height="512"
+					src="/web-app-manifest-512x512.png"
+					width="512"
+				/>
+				<p className="max-w-prose text-sm text-muted-foreground">
+					A control panel for running, watching and auditing AI development work across
+					your projects.
+				</p>
+			</Card>
+			{/* Three labelled figures, so they are three `Metric`s — the same tiles the dashboard
+			    uses rather than a fourth divergent copy of the pattern. */}
+			<div className="grid gap-3 sm:grid-cols-3">
+				{metadata.map(({ label, value }) => (
+					<Metric key={label} label={label} size="compact" value={value} />
+				))}
+			</div>
 		</div>
 	);
 }

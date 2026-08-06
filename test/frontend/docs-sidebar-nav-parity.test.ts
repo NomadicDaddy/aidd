@@ -113,17 +113,20 @@ describe('small pages', () => {
 		expect(page).toContain('<PageHeader');
 		expect(page).toContain('title="Page not found"');
 		expect(page).toContain('description="The link may be outdated or mistyped."');
-		expect(page.match(/buttonClassName\('primary'\)/g)).toHaveLength(1);
+		// One recovery action, now secondary: the body is an EmptyState — an absence — and a
+		// filled accent button on it read as an emphasised piece of content instead.
+		expect(page.match(/buttonClassName\('secondary'\)/g)).toHaveLength(1);
+		expect(page).not.toContain("buttonClassName('primary')");
 		expect(page).toContain('Back to Dashboard');
 	});
 
 	test('gives About a real heading and an honest metadata block', async () => {
 		const page = await readSource('pages/about/AboutPage.tsx');
 
-		// The wordmark is the page title; as a paragraph, /about had no heading in its main
-		// landmark at all.
-		expect(page).toMatch(/<h1[\s\S]*?id="about-title"/);
-		expect(page).toContain('aria-labelledby="about-title"');
+		// The heading is `PageHeader`'s h1 now, the same as every other route, rather than a
+		// hand-rolled one inside a hero section — /about used to have no heading at all.
+		expect(page).toContain('<PageHeader');
+		expect(page).toContain('title="aidd"');
 		expect(page).toContain('__AIDD_VERSION__');
 		expect(page).toContain('__AIDD_REPOSITORY_URL__');
 		// Only values the build can actually supply — no invented commit hash or build date.

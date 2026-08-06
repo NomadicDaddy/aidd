@@ -7,6 +7,7 @@ import type { ProjectAssuranceProfileInput } from '../../../api/types.ts';
 import type { FacetField } from '../detail/profile/profile-facets.ts';
 import type { ProfileMatrixRowModel } from './profileMatrixTypes.ts';
 
+import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
@@ -55,9 +56,10 @@ export function ProfileMatrixMobileList({
 									to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
 									{row.project.name}
 								</Link>
-								<p className="truncate font-mono text-2xs text-muted-foreground">
-									{row.project.path}
-								</p>
+								<FilePath
+									className="block truncate text-2xs text-muted-foreground"
+									path={row.project.path}
+								/>
 							</div>
 							<div className="flex shrink-0 flex-wrap justify-end gap-1.5">
 								<Badge tone="neutral">

@@ -3,6 +3,7 @@ import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import type { RunMode } from '../../api/types.ts';
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { LaunchTargetControl } from '../../components/shared/LaunchTargetControl.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
@@ -128,11 +129,11 @@ export function RunLaunchCard({
 			{selectedLaunchProject && (
 				// Only the resolved path: 'Selected: {name}' restated the value the select
 				// already displays, in a third teal that competed with the Launch button.
-				<p
-					aria-live="polite"
-					className="truncate font-mono text-xs text-muted-foreground"
-					title={selectedLaunchProject.path}>
-					{selectedLaunchProject.path}
+				<p aria-live="polite" className="min-w-0">
+					<FilePath
+						className="block truncate text-xs text-muted-foreground"
+						path={selectedLaunchProject.path}
+					/>
 				</p>
 			)}
 		</Card>

@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 
 import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '../../api/types.ts';
 
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
@@ -70,7 +71,10 @@ export function ProjectCard({
 							<span className="truncate">{project.name}</span>
 						)}
 					</h2>
-					<p className="text-xs break-all text-muted-foreground">{project.path}</p>
+					<FilePath
+						className="block text-xs break-all text-muted-foreground"
+						path={project.path}
+					/>
 					{totalStages > 0 ? (
 						<p className="mt-1 text-xs text-muted-foreground">
 							Stage {Math.max(stageIndex, 1)}/{totalStages}:{' '}

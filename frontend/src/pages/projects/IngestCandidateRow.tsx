@@ -2,6 +2,7 @@ import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-rig
 
 import type { ProjectImportCandidate } from '../../api/types/projects/operations.ts';
 
+import { FilePath } from '../../components/shared/FilePath.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
@@ -55,9 +56,10 @@ export function IngestCandidateRow({
 							{labels.length > 0 ? labels.join(', ') : 'directory'}
 						</Badge>
 					</div>
-					<p className="font-mono text-xs break-all text-muted-foreground">
-						{candidate.path}
-					</p>
+					<FilePath
+						className="block text-xs break-all text-muted-foreground"
+						path={candidate.path}
+					/>
 					<p className="text-xs break-all text-muted-foreground">
 						Root: {candidate.root}
 					</p>

@@ -7,6 +7,7 @@ import type { ProjectAssuranceProfileInput } from '../../../api/types.ts';
 import type { FacetField } from '../detail/profile/profile-facets.ts';
 import type { ProfileMatrixRowModel } from './profileMatrixTypes.ts';
 
+import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
@@ -104,9 +105,10 @@ export function ProfileMatrixRow({
 					to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
 					{row.project.name}
 				</Link>
-				<div className="mt-1 truncate font-mono text-2xs text-muted-foreground">
-					{row.project.path}
-				</div>
+				<FilePath
+					className="mt-1 block truncate text-2xs text-muted-foreground"
+					path={row.project.path}
+				/>
 			</th>
 			<td className="px-3 py-3">
 				<div className="flex flex-wrap gap-1.5">

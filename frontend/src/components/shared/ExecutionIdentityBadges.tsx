@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import { default as Gauge } from 'lucide-react/dist/esm/icons/gauge';
 import { default as SquareTerminal } from 'lucide-react/dist/esm/icons/square-terminal';
-import { useCallback, useRef } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import {
@@ -52,51 +51,6 @@ function ItemIcon({ kind }: { kind: ExecutionIdentityKind }) {
 	if (kind === 'reasoning')
 		return <Gauge aria-hidden="true" className="size-3 shrink-0" strokeWidth={2.25} />;
 	return null;
-}
-
-// Truncation is measured, but the result MUST NOT re-render this span. Wrapping the measured
-// element in <Tooltip> reparents it into a `relative inline-flex` span, which changes its
-// clientWidth, which flips the measurement back, which unwraps it again — an unbounded update
-// loop (React error #185, "Maximum update depth exceeded") that took the whole Runs page down.
-// Setting the native title imperatively keeps the measured box independent of the outcome, so the
-// "reveal the full value only when it is actually clipped" behaviour cannot feed back on itself.
-function OverflowIdentityValue({
-	className,
-	label,
-	withTooltip,
-}: {
-	className?: string | undefined;
-	label: string;
-	withTooltip: boolean;
-}) {
-	const observerRef = useRef<null | ResizeObserver>(null);
-
-	const setElement = useCallback(
-		(element: HTMLSpanElement | null) => {
-			observerRef.current?.disconnect();
-			observerRef.current = null;
-			if (!element) return;
-			if (!withTooltip || label.length === 0) {
-				element.removeAttribute('title');
-				return;
-			}
-			const measure = () => {
-				if (element.scrollWidth > element.clientWidth) element.title = label;
-				else element.removeAttribute('title');
-			};
-			measure();
-			const observer = new ResizeObserver(measure);
-			observer.observe(element);
-			observerRef.current = observer;
-		},
-		[label, withTooltip],
-	);
-
-	return (
-		<span className={className} ref={setElement}>
-			<bdi dir="ltr">{label}</bdi>
-		</span>
-	);
 }
 
 export function ExecutionIdentityDetails({
@@ -153,9 +107,6 @@ export function ExecutionIdentityBadges({
 	if (items.length === 0) return null;
 	const compact = variant === 'compact';
 	const cleanProvider = cleanIdentityValue(provider);
-	// A demoted segment is a hidden detail like any other, so it takes the same route out.
-	const demotesLabels = compact && items.some((item) => item.kind !== 'model');
-	const hasHiddenDetails = Boolean(cleanProvider || hint) || demotesLabels;
 	const ariaLabel = items
 		.map((item) => `${itemFieldLabel(item.kind)} ${item.label}`)
 		.concat(cleanProvider ? [`Provider ${cleanProvider}`] : [])
@@ -169,32 +120,50 @@ export function ExecutionIdentityBadges({
 			{items.map((item, index) => (
 				<span
 					className={cn(
-						'inline-flex min-w-0 items-center gap-1 px-2 py-1',
+						'inline-flex items-center gap-1 px-2 py-1',
+						// The model is the only segment allowed to shrink. Backend and reasoning
+						// effort are short values from bounded vocabularies — `opencode`, `xhigh`
+						// — and truncating one leaves nothing: proportional shrink turned
+						// `opencode` into `…ode`, which names no backend at all. The model is the
+						// segment whose truncation is designed to stay informative, because it
+						// loses characters off the head and keeps the discriminating tail.
+						item.kind === 'model' ? 'min-w-[4.5rem]' : 'shrink-0',
 						index > 0 ? 'border-l border-border' : '',
 						itemClass(item),
 					)}
 					key={item.kind}>
 					<ItemIcon kind={item.kind} />
 					{compact && item.kind !== 'model' ? null : (
-						<OverflowIdentityValue
+						<span
 							className={cn(
 								'inline-block min-w-0',
 								identityTruncateClass,
 								// Compact hands the whole cell to the model, so capping it here
 								// would re-create the clipping the variant exists to remove.
 								item.kind === 'model' && !compact && 'max-w-48',
-							)}
-							label={item.label}
-							// Every segment, not just the model: a clipped backend used to be
-							// unrecoverable by any means because only the model carried a title.
-							withTooltip={withTooltip && !hasHiddenDetails}
-						/>
+							)}>
+							<bdi dir="ltr">{item.label}</bdi>
+						</span>
 					)}
 				</span>
 			))}
 		</Badge>
 	);
-	return withTooltip && hasHiddenDetails ? (
+	// Every identity that is allowed a tooltip gets one, unconditionally.
+	//
+	// The gate used to be "does this badge hide anything" — a provider, a hint, a segment the
+	// compact variant demoted — which assumed the visible segments were legible. They are legible
+	// only if the layout gave them room, and the component cannot know that: the badge is
+	// `max-w-full`, so its own page decides. On the Badge Lab at 768px that assumption failed and
+	// a squeezed backend rendered as `…ode` with a native `title` as its only way back, which is
+	// mouse-only — unreachable by touch and unreachable by keyboard.
+	//
+	// Measuring the clipping instead is what caused React #185 here once already: reveal-on-clip
+	// reparents the measured span into Tooltip's `relative inline-flex` wrapper, which changes its
+	// clientWidth, which flips the measurement back. An unconditional wrapper has no such feedback
+	// path, and it also makes focusability a property of the component rather than of whether a
+	// provider happened to be recorded on this particular row.
+	return withTooltip ? (
 		<Tooltip
 			content={
 				<ExecutionIdentityDetails

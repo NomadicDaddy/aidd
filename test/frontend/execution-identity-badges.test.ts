@@ -103,7 +103,7 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html.match(/class="[^"]*min-w-0[^"]*truncate[^"]*"/g)).toHaveLength(3);
 	});
 
-	test('truncation measurement never re-renders the measured span', () => {
+	test('nothing about the badge is decided by measuring the badge', () => {
 		const source = readFileSync(
 			resolve(
 				import.meta.dir,
@@ -111,16 +111,15 @@ describe('ExecutionIdentityBadges', () => {
 			),
 			'utf8',
 		);
-		const start = source.indexOf('function OverflowIdentityValue');
-		const end = source.indexOf('export function ExecutionIdentityDetails');
-		expect(start).toBeGreaterThan(-1);
-		const overflowValue = source.slice(start, end);
 
-		expect(overflowValue).toContain('element.scrollWidth > element.clientWidth');
-		// Re-rendering on the measurement reparents the span into Tooltip's `relative inline-flex`
-		// wrapper, which changes clientWidth, which flips the measurement back — React #185.
-		expect(overflowValue).not.toContain('useState');
-		expect(overflowValue).not.toContain('<Tooltip');
+		// Reveal-on-clip is what took the Runs page down with React #185: the measurement decided
+		// whether to wrap the measured span in Tooltip's `relative inline-flex`, which changed its
+		// clientWidth, which flipped the measurement back. The recovery route is unconditional now,
+		// so there is no measurement left to feed back — and no way to reintroduce the loop without
+		// reintroducing one of these.
+		expect(source).not.toContain('scrollWidth');
+		expect(source).not.toContain('ResizeObserver');
+		expect(source).not.toContain('useState');
 	});
 
 	test('renders the requested direct identity at the component boundary', () => {
@@ -155,15 +154,40 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html).not.toContain('>openai<');
 	});
 
-	test('does not make a fully visible identity an interactive tooltip trigger', () => {
+	test('an identity with nothing hidden is still recoverable by touch and keyboard', () => {
 		const html = renderExecutionIdentity({
 			backend: 'codex',
 			model: 'gpt-5.6-sol',
 			reasoningEffort: 'high',
 		});
 
+		// This used to render no trigger at all, on the theory that a badge hiding no provider and
+		// no hint has nothing to reveal. It hides whatever the layout squeezed out: at 768px the
+		// Badge Lab showed `…ode` for `opencode`. A native `title` was the only way back, and a
+		// native title is mouse-only — not a touch target and not in the tab order.
+		expect(html).toContain('tabindex="0"');
 		expect(html).not.toContain('title=');
-		expect(html).not.toContain('tabindex=');
+	});
+
+	test('the segment that shrinks is the one whose truncation still names something', () => {
+		const html = renderExecutionIdentity({
+			backend: 'opencode',
+			model: 'organization/research-preview-model-with-an-intentionally-long-name',
+			reasoningEffort: 'provider-specific',
+		});
+
+		// Flex shrink is proportional, so a squeezed badge used to take characters off all three
+		// segments at once and `opencode` became `…ode` — a backend that names no backend. The
+		// short bounded vocabularies hold their width; the model absorbs the squeeze, because it
+		// is the one that loses characters off the head and keeps the discriminating tail.
+		// The three segment wrappers are the only spans carrying the machine-value type ladder.
+		const segments = html.match(/<span class="[^"]*font-mono[^"]*"/g) ?? [];
+		expect(segments).toHaveLength(3);
+		expect(segments.filter((segment) => segment.includes('shrink-0'))).toHaveLength(2);
+		expect(segments.filter((segment) => segment.includes('min-w-[4.5rem]'))).toHaveLength(1);
+		// And the badge still cannot push its own container wider than the column it was given.
+		expect(html).toContain('max-w-full');
+		expect(html).toContain('overflow-hidden');
 	});
 
 	test('keeps hidden provider and hint details available in a tooltip', () => {

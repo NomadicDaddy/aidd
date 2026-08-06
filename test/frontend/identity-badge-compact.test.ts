@@ -47,13 +47,24 @@ describe('execution identity survives a narrow column', () => {
 		expect(render(full)).toContain('max-w-48');
 	});
 
-	test('every segment carries the recovery title, not only the model', async () => {
+	test('every segment is recoverable through the tooltip, not only the model', async () => {
 		const source = await read('components', 'shared', 'ExecutionIdentityBadges.tsx');
 
 		// A clipped backend used to be unrecoverable by any means: `title` was gated on
-		// `item.kind === 'model'`, so two of the three segments had no way back at all.
-		expect(source).toContain('withTooltip={withTooltip && !hasHiddenDetails}');
-		expect(source).not.toMatch(/withTooltip &&[^\n]*item\.kind === 'model'/);
+		// `item.kind === 'model'`, so two of the three segments had no way back at all. Then it
+		// was a native `title` on all three, which is mouse-only. Now the whole identity — every
+		// segment, plus provider and hint — is one tooltip, on both variants, whatever is clipped.
+		expect(source).toContain('return withTooltip ? (');
+		expect(source).not.toContain('hasHiddenDetails');
+
+		// Default and compact reach it the same way; only what they display differs.
+		for (const props of [full, { ...full, variant: 'compact' }]) {
+			const html = render(props);
+			expect(html).toContain('tabindex="0"');
+			expect(html).toContain('CLI codex, Model gpt-5.6-sol, Reasoning high');
+			// The mouse-only fallback is gone, not layered underneath.
+			expect(html).not.toContain('title=');
+		}
 	});
 
 	test('truncation takes characters off the head so the tail survives', async () => {

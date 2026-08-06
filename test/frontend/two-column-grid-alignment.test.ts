@@ -45,17 +45,27 @@ describe('two-column grids do not stretch a card past its own content', () => {
 		expect(cycles).toContain('max-h-[28rem]');
 	});
 
-	test('Skills catalog scrolls to the viewport rather than to a fixed cap', async () => {
+	test('Skills catalog fills a measured region rather than a fixed cap', async () => {
 		const page = await read('pages/skills/SkillsPage.tsx');
-		const catalog = await read('pages/skills/SkillCatalog.tsx');
+		// Comments stripped: the card's docstring names the cap it replaced, and an assertion that
+		// the class is gone should not be defeated by the sentence explaining why it went.
+		const catalog = (await read('pages/skills/SkillCatalog.tsx'))
+			.replaceAll(/\/\*[\s\S]*?\*\//g, '')
+			.replaceAll(/\/\/[^\n]*/g, '');
 
-		expect(page).toContain('grid min-w-0 items-start gap-4');
-		// `max-h-[34rem]` capped the list ~350px above the card's own bottom edge, so the operator
-		// scrolled a short inner window inside a long outer page. The scrollport is now the
-		// viewport, and sticky keeps it beside the details column while that column scrolls.
-		expect(catalog).toContain('max-h-[calc(100vh-9rem)]');
-		expect(catalog).toContain('lg:sticky lg:top-4');
-		expect(catalog).toContain('min-h-0 flex-1 space-y-1 overflow-auto');
+		// This is the one surface here whose dead column was solved by making the split a sized
+		// region instead of by an alignment rule, so `items-start` is deliberately absent: both
+		// columns are full-height scrollports and the page above them does not scroll.
+		expect(page).toContain('grid min-w-0 gap-4 lg:h-[var(--fill-height');
+		expect(page).not.toContain('items-start');
+		// `max-h-[34rem]` capped the list ~350px above the card's own bottom edge; replacing it
+		// with `max-h-[calc(100vh-9rem)]` only moved the guess — 9rem against 188px of real chrome
+		// put the last row below the fold, and `lg:sticky` never engaged because the detail column
+		// had no scrollport, so the document scrolled instead of the region.
+		expect(catalog).not.toContain('max-h-[calc(100vh-9rem)]');
+		expect(catalog).not.toContain('lg:sticky');
+		expect(catalog).toContain('lg:h-full');
+		expect(catalog).toContain('min-h-0 flex-1 overflow-auto');
 		expect(page).not.toContain('max-h-[34rem]');
 	});
 });

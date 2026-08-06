@@ -38,17 +38,16 @@ export function SkillDetailsCard({
 		<Card className="space-y-3">
 			{/* The mono skill id is CardHeader's `identifier` slot. This header was hand-rolled
 			    only because that slot did not exist, which is what put the detail card a step out
-			    of line with every other card title on the surface. */}
+			    of line with every other card title on the surface.
+
+			    Two badges became at most one. `bundled` is true of all but a handful of skills and
+			    told the reader nothing, so only `imported` still prints — a badge earns its place by
+			    marking the exception. The `n files` count is gone outright: the SUPPORT FILES block
+			    below lists those files by name, so the badge restated a fact three inches above its
+			    own answer. */}
 			<CardHeader
 				action={
-					<div className="flex flex-wrap gap-2">
-						<Badge tone="neutral">{skill.origin}</Badge>
-						{supportCount > 0 ? (
-							<Badge tone="neutral">
-								{supportCount} {supportCount === 1 ? 'file' : 'files'}
-							</Badge>
-						) : null}
-					</div>
+					skill.origin === 'imported' ? <Badge tone="neutral">imported</Badge> : undefined
 				}
 				className="mb-0"
 				description={skill.description}

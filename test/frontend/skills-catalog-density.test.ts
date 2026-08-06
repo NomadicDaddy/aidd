@@ -89,9 +89,21 @@ describe('the skills catalog scans by name', () => {
 	});
 
 	test('selection is announced, not only painted', () => {
-		// The teal fill was the only signal that a row was the one being detailed.
-		expect(rendered.selected).toContain('aria-pressed="true"');
-		expect(rendered.selected.match(/aria-pressed="false"/g)?.length).toBe(1);
+		// The teal fill was the only signal that a row was the one being detailed. `aria-pressed`
+		// fixed that but said "toggle button", one of 76: the rail is a single-select list, and
+		// `aria-selected` inside a `role="listbox"` is how that is said.
+		expect(rendered.selected).toContain('role="listbox"');
+		expect(rendered.selected).toContain('aria-selected="true"');
+		expect(rendered.selected.match(/aria-selected="false"/g)?.length).toBe(1);
+		expect(rendered.selected).not.toContain('aria-pressed');
+	});
+
+	test('the rail costs one Tab, not one per row', () => {
+		// 76 rows meant 76 tab stops between the category filter and the launch button below.
+		expect(rendered.selected.match(/tabindex="0"/g)?.length).toBe(1);
+		expect(rendered.selected).toContain('tabindex="-1"');
+		// With nothing selected the stop falls on the first row rather than disappearing.
+		expect(rendered.filtered.match(/tabindex="0"/g)?.length).toBe(1);
 	});
 
 	test('selection paints from the accent tokens the rest of the app selects with', async () => {
@@ -165,7 +177,7 @@ describe('the skill detail card labels its blocks', () => {
 		expect(source).toContain('variant="sunken"');
 	});
 
-	test('card titles collapse to one step and the file count pluralizes', async () => {
+	test('card titles collapse to one step', async () => {
 		const source = await skillsSource('SkillDetailsCard.tsx');
 
 		// The title used to be a hand-rolled `text-base font-semibold` heading here. That class
@@ -175,7 +187,9 @@ describe('the skill detail card labels its blocks', () => {
 		expect(source).toContain('title={skill.title}');
 		expect(source).not.toContain('text-xl');
 		expect(source).not.toMatch(/<h[1-6]/);
-		expect(source).toContain("supportCount === 1 ? 'file' : 'files'");
+		// The pluralized `n files` badge this test used to guard is gone rather than fixed: the
+		// SUPPORT FILES block on the same card lists those files by name, so the badge counted
+		// what the reader could see three inches below. See skills-rail-polish.test.ts.
 	});
 
 	test('the skill id renders through the shared identifier slot', async () => {

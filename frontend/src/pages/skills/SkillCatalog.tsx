@@ -1,6 +1,3 @@
-import { default as Gauge } from 'lucide-react/dist/esm/icons/gauge';
-import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
-
 import type { ResourceUsageRow } from '../../api/types.ts';
 import type { SkillDefinition } from '../../api/types/skills.ts';
 
@@ -8,6 +5,7 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { ListBox } from '../../components/ui/listbox.tsx';
 import { MATURITY_SKILL_IDS, RECIPE_SKILL_IDS } from '../../lib/catalogCuration.ts';
 import { formatUsageBadge } from '../../lib/usageBadge.ts';
 
@@ -18,10 +16,10 @@ function skillSummary(skill: SkillDefinition): string {
 /**
  * The scrolling skill list.
  *
- * The card is a viewport-height scrollport rather than a fixed `max-h-[34rem]` block: capped at
- * 34rem it stopped roughly 350px above its own bottom edge, so the operator scrolled a short inner
- * window inside a long outer page while a third of the card sat empty. Sticky keeps the list beside
- * the details column while that column scrolls.
+ * The card fills the split region rather than capping itself: at `max-h-[calc(100vh-9rem)]` its
+ * bottom edge landed 44px below the fold and its last row was clipped, because 9rem was a guess at
+ * chrome that is actually 188px and changes when the filter strip wraps. `h-[--fill-height]` comes
+ * from the region's own measurement, so the last row is above the fold at rest by construction.
  */
 export function SkillCatalog({
 	loading,
@@ -39,13 +37,13 @@ export function SkillCatalog({
 	usageByResourceId: Map<string, ResourceUsageRow>;
 }) {
 	return (
-		<Card className="flex max-h-[calc(100vh-9rem)] min-w-0 flex-col gap-2 lg:sticky lg:top-4">
+		<Card className="flex min-w-0 flex-col gap-2 lg:h-full">
 			<div className="text-xs text-muted-foreground tabular-nums">
 				{skills.length === total
 					? `${total} skills`
 					: `${skills.length} of ${total} skills`}
 			</div>
-			<div className="min-h-0 flex-1 space-y-1 overflow-auto pr-1">
+			<div className="min-h-0 flex-1 overflow-auto pr-1">
 				{loading && total === 0 ? (
 					<div className="space-y-2 p-1">
 						{Array.from({ length: 6 }).map((_, index) => (
@@ -57,15 +55,32 @@ export function SkillCatalog({
 						))}
 					</div>
 				) : null}
-				{skills.map((skill) => (
-					<SkillCatalogRow
-						key={skill.id}
+				{skills.length > 0 ? (
+					<ListBox
+						ariaLabel="Skills"
+						className="space-y-1"
+						idPrefix="skill"
 						onSelect={onSelect}
-						selected={skill.id === selectedId}
-						skill={skill}
-						usage={usageByResourceId.get(skill.id)}
+						optionClassName={(selected) =>
+							`block w-full rounded-md border px-3 py-1.5 text-left transition-colors ${
+								selected
+									? 'border-accent bg-accent-muted'
+									: 'border-border hover:bg-muted'
+							}`
+						}
+						options={skills.map((skill) => ({
+							content: (
+								<SkillCatalogRow
+									skill={skill}
+									usage={usageByResourceId.get(skill.id)}
+								/>
+							),
+							id: skill.id,
+							label: skill.title,
+						}))}
+						selectedId={selectedId}
 					/>
-				))}
+				) : null}
 				{!loading && skills.length === 0 ? (
 					<EmptyState>
 						{total === 0 ? 'No skills available.' : 'No skills match these filters.'}
@@ -77,13 +92,9 @@ export function SkillCatalog({
 }
 
 function SkillCatalogRow({
-	onSelect,
-	selected,
 	skill,
 	usage,
 }: {
-	onSelect: (id: string) => void;
-	selected: boolean;
 	skill: SkillDefinition;
 	usage: ResourceUsageRow | undefined;
 }) {
@@ -91,44 +102,33 @@ function SkillCatalogRow({
 	// Taxonomy, not status: `Recipe` and `Maturity` say what kind of skill this is, so they read as
 	// meta text beside the usage count instead of spending a coloured pill each. `bundled` is on
 	// every row in the catalog and distinguishes nothing, so only `imported` still earns a badge.
+	// The words carry it alone — the icons that preceded them printed a glyph and then the word it
+	// stands for, twice per row.
 	const tags = [
 		...(RECIPE_SKILL_IDS.has(skill.id) ? ['Recipe'] : []),
 		...(MATURITY_SKILL_IDS.has(skill.id) ? ['Maturity'] : []),
 		...(usageLine ? [usageLine] : []),
 	];
 	return (
-		<button
-			// The teal fill was the only signal that this row was the one being detailed; the
-			// SegmentedControl above it has exposed `aria-pressed` all along.
-			aria-pressed={selected}
-			className={`w-full rounded-md border px-3 py-1.5 text-left transition-colors ${
-				selected ? 'border-accent bg-accent-muted' : 'border-border hover:bg-muted'
-			}`}
-			onClick={() => onSelect(skill.id)}
-			type="button">
+		<>
+			{/* The title takes the line. Sharing it with the mono id truncated both — 'Promote
+			    Remediation to Fe…' beside 'promote-remediat…' identified neither — so the id moved
+			    down to the meta line, which already wraps. */}
 			<div className="flex min-w-0 items-baseline gap-2">
-				{/* The list scans by name and the detail card echoes what was clicked: the row led
-				    with the raw mono id and never rendered the title the detail pane shows. */}
 				<span className="truncate text-sm font-semibold text-foreground">
 					{skill.title}
 				</span>
-				<span className="truncate font-mono text-2xs text-muted-foreground">
-					{skill.id}
-				</span>
-				{skill.origin === 'imported' ? <Badge tone="neutral">imported</Badge> : null}
+				{skill.origin === 'imported' ? (
+					<span className="shrink-0">
+						<Badge tone="neutral">imported</Badge>
+					</span>
+				) : null}
 			</div>
 			<p className="line-clamp-1 text-xs text-muted-foreground">{skillSummary(skill)}</p>
-			{tags.length > 0 ? (
-				<p className="flex flex-wrap items-center gap-x-2 text-2xs text-muted-foreground">
-					{RECIPE_SKILL_IDS.has(skill.id) ? (
-						<ListTree aria-hidden="true" className="h-3 w-3" />
-					) : null}
-					{MATURITY_SKILL_IDS.has(skill.id) ? (
-						<Gauge aria-hidden="true" className="h-3 w-3" />
-					) : null}
-					{tags.join(' · ')}
-				</p>
-			) : null}
-		</button>
+			<p className="flex flex-wrap items-center gap-x-2 text-2xs text-muted-foreground">
+				<span className="font-mono break-all">{skill.id}</span>
+				{tags.length > 0 ? <span>{tags.join(' · ')}</span> : null}
+			</p>
+		</>
 	);
 }

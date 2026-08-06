@@ -54,6 +54,12 @@ export const overrideEffects: { label: string; value: 'default' | AuditOverrideE
 	{ label: 'Excluded', value: 'excluded' },
 ];
 
+// Column headers carry the units so the rows do not have to. Every catalog row used to restate
+// "applicable", "buckets" and "fresh / stale / missing" — 168 repeated words in a table whose data
+// is five numbers per row, and the repetition is what stopped the numbers forming columns.
+export const reportsColumnLabel = 'Reports (fresh / stale / missing)';
+export const bucketsColumnLabel = `Buckets (of ${bucketColumns.length})`;
+
 export const bandTone: Record<AuditChangePotentialBand, 'amber' | 'emerald' | 'neutral'> = {
 	High: 'emerald',
 	Low: 'neutral',

@@ -19,12 +19,16 @@ const TOOLBARS = [
 	'pages/projects/detail/DependencyGraphFilters.tsx',
 	'pages/projects/detail/AuditsTab.tsx',
 	'pages/audits/tabs/CatalogToolbar.tsx',
+	'pages/audits/tabs/OverridesTab.tsx',
+	'pages/audits/tabs/ApplicabilityTab.tsx',
 ];
 
 /** The labels a toolbar renders, in the order its JSX declares them. */
 function fieldLabels(text: string): string[] {
 	const labels: string[] = [];
-	for (const match of text.matchAll(/<Filter(Search|Select)\b|\blabel="([^"]+)"/g)) {
+	// `(?<![-\w])` keeps `aria-label` out: the Applicability tab renders its toolbar above a
+	// textarea and a table that each carry one, and they are not filter fields.
+	for (const match of text.matchAll(/<Filter(Search|Select)\b|(?<![-\w])label="([^"]+)"/g)) {
 		if (match[1] === 'Search') labels.push('Search');
 		else if (match[2] !== undefined && labels.length > 0) labels.push(match[2]);
 	}
@@ -41,7 +45,7 @@ function isSubsequence(candidate: string[], order: readonly string[]): boolean {
 	return true;
 }
 
-describe('one filter toolbar, six times', () => {
+describe('one filter toolbar, eight times', () => {
 	test('every filter row renders through the shared toolbar', () => {
 		const missing = TOOLBARS.filter((file) => !source(file).includes('<FilterToolbar'));
 

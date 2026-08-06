@@ -39,6 +39,9 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const [query, setQuery] = useState('');
 	const [healthFilter, setHealthFilter] = useState<HealthFilter>('all');
 	const [enabledFilter, setEnabledFilter] = useState<'all' | 'disabled' | 'enabled'>('all');
+	// Collapsed on arrival: expanded, the 33-project picker put the first header of the catalog
+	// table below the fold. The toolbar's "Choose launch targets" opens it.
+	const [launchTargetsOpen, setLaunchTargetsOpen] = useState(false);
 	const [content, setContent] = useState('');
 	const definition = useAuditDefinition(selectedAudit);
 
@@ -158,6 +161,7 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	}
 
 	function focusLaunchTargets() {
+		setLaunchTargetsOpen(true);
 		const section = document.getElementById(auditLaunchTargetsId);
 		section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		section?.querySelector<HTMLInputElement>('input')?.focus();
@@ -252,7 +256,9 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 			/>
 
 			<LaunchTargetsCard
+				onOpenChange={setLaunchTargetsOpen}
 				onToggleProject={toggleProject}
+				open={launchTargetsOpen}
 				projects={manager.data?.projects ?? []}
 				selectedProjectIds={selectedProjectIds}
 			/>

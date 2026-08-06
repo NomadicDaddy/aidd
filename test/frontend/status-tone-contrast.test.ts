@@ -49,8 +49,10 @@ describe('status tones carry dark variants', () => {
 	});
 
 	test('routes the audited status sites through the tone helpers', async () => {
+		// The REPORTS cell moved out of `CatalogTable.tsx` into `catalogCells.tsx`, which the table
+		// and the below-`xl` card stack now share.
 		const catalog = await Bun.file(
-			join(pagesRoot, 'audits', 'tabs', 'CatalogTable.tsx'),
+			join(pagesRoot, 'audits', 'tabs', 'catalogCells.tsx'),
 		).text();
 		const card = await Bun.file(join(pagesRoot, 'projects', 'ProjectCard.tsx')).text();
 		// The card's attribute grid — and with it the port dots — moved into its own file when
@@ -71,15 +73,21 @@ describe('status tones carry dark variants', () => {
 	});
 
 	test('never leaves status to color alone', async () => {
-		const catalog = await Bun.file(
-			join(pagesRoot, 'audits', 'tabs', 'CatalogTable.tsx'),
-		).text();
+		const cells = await Bun.file(join(pagesRoot, 'audits', 'tabs', 'catalogCells.tsx')).text();
+		const utils = await Bun.file(join(pagesRoot, 'audits', 'auditsUtils.ts')).text();
 		const card = await Bun.file(join(pagesRoot, 'projects', 'ProjectCard.tsx')).text();
 
-		// Each colored count keeps its word, and the orphan glyph keeps its accessible name.
-		expect(catalog).toContain('{item.freshReportCount} fresh');
-		expect(catalog).toContain('{item.staleReportCount} stale');
-		expect(catalog).toContain('{item.missingReportCount} missing');
+		// The three counts used to carry their own word — "12 fresh · 3 stale · 0 missing", 42 rows
+		// deep, which is what stopped the numbers forming a column. The words moved to the column
+		// header, so what disambiguates the three tones is now position within a fixed triple that
+		// the header names in the same order. That is still not colour, so the assertion is that the
+		// header names them and that the cell renders them in that order.
+		expect(utils).toContain("reportsColumnLabel = 'Reports (fresh / stale / missing)'");
+		const order = ['freshReportCount', 'staleReportCount', 'missingReportCount'].map((field) =>
+			cells.indexOf(field),
+		);
+		expect(order.every((index) => index > -1)).toBe(true);
+		expect([...order].sort((left, right) => left - right)).toEqual(order);
 		expect(card).toContain('aria-label="Missing on disk"');
 	});
 

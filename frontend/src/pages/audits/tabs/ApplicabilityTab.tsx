@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import type { AuditApplicabilityCell, AuditProfileMapping } from '../../../api/types.ts';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
+import { FilterSearch, FilterToolbar } from '../../../components/shared/FilterToolbar.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
@@ -22,6 +23,7 @@ export function ApplicabilityTab() {
 	const [editorOpen, setEditorOpen] = useState(false);
 	const [editorText, setEditorText] = useState('');
 	const [editorError, setEditorError] = useState<null | string>(null);
+	const [query, setQuery] = useState('');
 
 	useEffect(() => {
 		if (editorOpen && mapping.data?.mapping) {
@@ -62,30 +64,50 @@ export function ApplicabilityTab() {
 		}
 	}
 
+	// Forty-two audit names with no way to reach one but the scrollbar. The matrix is the only tab
+	// of the three without a filter, and it is the longest.
+	const lower = query.trim().toLowerCase();
+	const visibleRows = mapping.data.matrix.filter((row) =>
+		lower ? row.auditName.toLowerCase().includes(lower) : true,
+	);
+
 	return (
 		<div className="space-y-4">
-			<Card>
-				{/* The prose used to run the full ~1120px card width, which pushed the action onto a
-				    second row at every width tested; capping the measure lets it right-align. */}
-				<CardHeader
-					action={
-						<Button
-							onClick={() => setEditorOpen((value) => !value)}
-							variant="secondary">
-							{editorOpen ? 'Cancel Edit' : 'Edit Global Mapping'}
-						</Button>
-					}
-					className="mb-0"
-					description={
-						<span className="block max-w-2xl">
-							Cells show the strictest effect any rule could produce for that bucket;
-							an asterisk means the rule has additional facet constraints, so the
-							effect only applies for matching profiles. Hover for source and rule id.
-						</span>
-					}
-					title="Audit ✕ Bucket Applicability"
-				/>
-			</Card>
+			{/* The intro card is the toolbar's header rather than a card of its own: as a separate
+			    card it added ~120px of permanent chrome above a region that is already fighting for
+			    vertical room, and the search would then have been a third stacked box. */}
+			<FilterToolbar
+				columns="lg:grid-cols-[2fr]"
+				filtered={visibleRows.length}
+				hasFilters={query.trim() !== ''}
+				header={
+					// The prose used to run the full ~1120px card width, which pushed the action onto
+					// a second row at every width tested; capping the measure lets it right-align.
+					<CardHeader
+						action={
+							<Button
+								onClick={() => setEditorOpen((value) => !value)}
+								variant="secondary">
+								{editorOpen ? 'Cancel Edit' : 'Edit Global Mapping'}
+							</Button>
+						}
+						className="mb-0"
+						description={
+							<span className="block max-w-2xl">
+								Cells show the strictest effect any rule could produce for that
+								bucket; an asterisk means the rule has additional facet constraints,
+								so the effect only applies for matching profiles. Hover for source
+								and rule id.
+							</span>
+						}
+						title="Audit ✕ Bucket Applicability"
+					/>
+				}
+				noun="audits"
+				onReset={() => setQuery('')}
+				total={mapping.data.matrix.length}>
+				<FilterSearch onChange={setQuery} placeholder="Filter audits" value={query} />
+			</FilterToolbar>
 
 			{editorOpen && (
 				<Card className="space-y-3">
@@ -114,8 +136,12 @@ export function ApplicabilityTab() {
 
 			{/* Bounding the card's height is what makes `sticky` work: the Card is the scroll
 			    container, so without a max height the header has nothing to stick inside and the
-			    bucket labels are gone two scroll steps into a ~1800px matrix. */}
-			<Card className="hidden max-h-[calc(100dvh-16rem)] overflow-auto p-0 xl:block">
+			    bucket labels are gone two scroll steps into a ~1800px matrix.
+			    The subtrahend covers what sits above this card — app chrome, the page header, the
+			    tab strip and the toolbar card — so the card ends at the viewport floor and the tab
+			    has one scroll region instead of two nested ones. It was 16rem, which left the card
+			    itself overflowing the screen and the page scrolling behind it. */}
+			<Card className="hidden max-h-[calc(100dvh-24rem)] overflow-auto p-0 xl:block">
 				<table
 					aria-label="Audit applicability matrix"
 					className="w-full min-w-[820px] text-left text-sm">
@@ -143,7 +169,7 @@ export function ApplicabilityTab() {
 						</tr>
 					</thead>
 					<tbody>
-						{mapping.data.matrix.map((row) => (
+						{visibleRows.map((row) => (
 							<tr
 								className="border-b border-border last:border-0"
 								key={row.auditName}>
@@ -157,6 +183,15 @@ export function ApplicabilityTab() {
 								))}
 							</tr>
 						))}
+						{visibleRows.length === 0 && (
+							<tr>
+								<td
+									className="px-3 py-6 text-sm text-muted-foreground"
+									colSpan={bucketColumns.length + 1}>
+									No audits match that search.
+								</td>
+							</tr>
+						)}
 					</tbody>
 				</table>
 			</Card>
@@ -165,7 +200,7 @@ export function ApplicabilityTab() {
 				<Card className="py-2">
 					<MatrixLegend />
 				</Card>
-				{mapping.data.matrix.map((row) => (
+				{visibleRows.map((row) => (
 					<div className="rounded-md border border-border p-3" key={row.auditName}>
 						<div className="font-medium text-foreground">{row.auditName}</div>
 						<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">

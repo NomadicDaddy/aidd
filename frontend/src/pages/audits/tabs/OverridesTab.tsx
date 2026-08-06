@@ -5,6 +5,11 @@ import { toast } from 'sonner';
 
 import type { AuditOverrideEffect, AuditProfileOverrides } from '../../../api/types.ts';
 
+import {
+	FilterSearch,
+	FilterSelect,
+	FilterToolbar,
+} from '../../../components/shared/FilterToolbar.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import {
@@ -12,10 +17,9 @@ import {
 	useProjectAuditOverrides,
 	useUpdateProjectAuditOverrides,
 } from '../../../hooks/useAudits.ts';
-import { fieldLabelClass, selectClass, textareaClass } from '../../../lib/formStyles.ts';
-import { tableHeadClass } from '../../../lib/tableStyles.ts';
+import { textareaClass } from '../../../lib/formStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
-import { overrideEffects } from '../auditsUtils.ts';
+import { OverridesList } from './OverridesList.tsx';
 
 function sameEffects(
 	left: Record<string, AuditOverrideEffect>,
@@ -36,6 +40,8 @@ export function OverridesTab() {
 	const [audits, setAudits] = useState<Record<string, 'default' | AuditOverrideEffect>>({});
 	const [rulesText, setRulesText] = useState('[]');
 	const [rulesError, setRulesError] = useState<null | string>(null);
+	const [query, setQuery] = useState('');
+	const [stateFilter, setStateFilter] = useState<'all' | 'default' | 'overridden'>('all');
 
 	useEffect(() => {
 		if (!manager.data?.projects.length) return;
@@ -70,6 +76,18 @@ export function OverridesTab() {
 			rulesText !== JSON.stringify(overrides.data.rules, null, 2));
 	const overriddenCount = Object.keys(explicitAudits).length;
 
+	// Fifteen overridden audits in a stack of forty-two identical selects had no way to be read on
+	// their own; the row marker says which, and this says only those.
+	const definitions = manager.data?.definitions ?? [];
+	const lower = query.trim().toLowerCase();
+	const visibleDefinitions = definitions.filter((definition) => {
+		if (lower && !definition.name.toLowerCase().includes(lower)) return false;
+		const overridden = (audits[definition.name] ?? 'default') !== 'default';
+		if (stateFilter === 'overridden' && !overridden) return false;
+		if (stateFilter === 'default' && overridden) return false;
+		return true;
+	});
+
 	function applyOverrides() {
 		if (!projectId) return;
 		let parsedRules: AuditProfileOverrides['rules'];
@@ -102,89 +120,70 @@ export function OverridesTab() {
 
 	return (
 		<div className="space-y-4">
-			{/* `auto` on the action column: at 768 a fractional column squeezed the button until its
-			    label wrapped inside it. */}
-			<Card className="grid gap-3 md:grid-cols-[minmax(0,2fr)_auto]">
-				<label className="space-y-1">
-					<span className={fieldLabelClass}>Project</span>
-					<select
-						className={`${selectClass} w-full`}
-						onChange={(event) => setProjectId(event.target.value || null)}
-						value={projectId ?? ''}>
-						<option value="">Select a project…</option>
-						{(manager.data?.projects ?? []).map((project) => (
-							<option key={project.id} value={project.id}>
-								{project.name}
-							</option>
-						))}
-					</select>
-				</label>
-				<div className="flex items-end justify-end">
-					<Button
-						disabled={!projectId || !dirty || update.isPending}
-						onClick={applyOverrides}
-						variant="primary">
-						<Save className="h-4 w-4" />
-						{update.isPending ? 'Saving…' : 'Save Overrides'}
-						{overriddenCount > 0 ? ` (${overriddenCount})` : ''}
-					</Button>
-				</div>
-			</Card>
+			<FilterToolbar
+				columns="lg:grid-cols-[2fr_1fr_1fr]"
+				filtered={visibleDefinitions.length}
+				hasFilters={query.trim() !== '' || stateFilter !== 'all'}
+				header={
+					<CardHeader
+						action={
+							<Button
+								disabled={!projectId || !dirty || update.isPending}
+								onClick={applyOverrides}
+								variant="primary">
+								<Save className="h-4 w-4" />
+								{update.isPending ? 'Saving…' : 'Save Overrides'}
+								{overriddenCount > 0 ? ` (${overriddenCount})` : ''}
+							</Button>
+						}
+						className="mb-0"
+						description="Per-project effects layered above the global mapping."
+						title="Project Overrides"
+					/>
+				}
+				noun="audits"
+				onReset={() => {
+					setQuery('');
+					setStateFilter('all');
+				}}
+				total={definitions.length}>
+				<FilterSearch onChange={setQuery} placeholder="Filter audits" value={query} />
+				<FilterSelect
+					label="State"
+					onChange={(value) => setStateFilter(value as 'all' | 'default' | 'overridden')}
+					options={[
+						{ label: 'All states', value: 'all' },
+						{ label: `Overridden (${overriddenCount})`, value: 'overridden' },
+						{ label: 'Default', value: 'default' },
+					]}
+					value={stateFilter}
+				/>
+				<FilterSelect
+					label="Project"
+					onChange={(value) => setProjectId(value || null)}
+					options={[
+						{ label: 'Select a project…', value: '' },
+						...(manager.data?.projects ?? []).map((project) => ({
+							label: project.name,
+							value: project.id,
+						})),
+					]}
+					value={projectId ?? ''}
+				/>
+			</FilterToolbar>
 
 			{projectId && (
-				<div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
-					<Card className="max-h-[calc(100dvh-16rem)] overflow-auto p-0">
-						<table aria-label="Audit overrides" className="w-full text-left text-sm">
-							<thead className={`${tableHeadClass} sticky top-0 z-10`}>
-								<tr>
-									<th className="bg-muted px-3 py-3" scope="col">
-										Audit
-									</th>
-									<th className="bg-muted px-3 py-3 text-right" scope="col">
-										Override
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{(manager.data?.definitions ?? []).map((definition) => {
-									const value = audits[definition.name] ?? 'default';
-									return (
-										// A tinted row is what makes the handful of overridden audits
-										// scannable in a stack of ~40 identical controls.
-										<tr
-											className={`border-b border-border last:border-0 ${value === 'default' ? '' : 'bg-accent-muted/40'}`}
-											key={definition.name}>
-											<td className="px-3 py-2 font-medium text-foreground">
-												{definition.name}
-											</td>
-											<td className="px-3 py-2 text-right">
-												<select
-													aria-label={`Override for ${definition.name}`}
-													className={`${selectClass} ml-auto w-36`}
-													onChange={(event) =>
-														setAudits((current) => ({
-															...current,
-															[definition.name]: event.target
-																.value as
-																'default' | AuditOverrideEffect,
-														}))
-													}
-													value={value}>
-													{overrideEffects.map((option) => (
-														<option
-															key={option.value}
-															value={option.value}>
-															{option.label}
-														</option>
-													))}
-												</select>
-											</td>
-										</tr>
-									);
-								})}
-							</tbody>
-						</table>
-					</Card>
+				// `items-start`: the rules card holds a heading, two lines and a 260px textarea, and
+				// as a stretched grid item it inherited the 944px height of the list beside it — most
+				// of it empty, while the list it was matching showed 17 of 42 rows.
+				<div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(340px,0.6fr)]">
+					<OverridesList
+						audits={audits}
+						definitions={visibleDefinitions}
+						onChange={(name, value) =>
+							setAudits((current) => ({ ...current, [name]: value }))
+						}
+					/>
 
 					<Card className="space-y-3">
 						<CardHeader

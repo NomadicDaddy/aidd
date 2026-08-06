@@ -6,7 +6,10 @@ const frontendSource = join(process.cwd(), 'frontend', 'src');
 
 const contentBreakpointContracts = [
 	['pages/audits/tabs/ApplicabilityTab.tsx', ['xl:block', 'xl:hidden']],
-	['pages/audits/tabs/CatalogTable.tsx', ['xl:block', 'xl:hidden']],
+	// The catalog's two renderings live in two files now — they were split when the units moved
+	// into the column headers and the pair crossed the per-file line cap.
+	['pages/audits/tabs/CatalogCards.tsx', ['xl:hidden']],
+	['pages/audits/tabs/CatalogTable.tsx', ['xl:block']],
 	['pages/projects/detail/AuditsDesktopTable.tsx', ['xl:block']],
 	['pages/projects/detail/AuditsMobileList.tsx', ['xl:hidden']],
 	['pages/projects/detail/FeaturesDesktopTable.tsx', ['xl:block']],
@@ -22,7 +25,7 @@ describe('content-aware responsive breakpoints', () => {
 		// The expanded pipeline steps are absent by design: PipelineStepTableRows and
 		// PipelineStepSubRows are two unconditional components, and UnifiedExecutionTable below
 		// picks between them at xl. Neither carries a breakpoint of its own to keep honest.
-		expect(contentBreakpointContracts).toHaveLength(10);
+		expect(contentBreakpointContracts).toHaveLength(11);
 
 		for (const [relativePath, expectedClasses] of contentBreakpointContracts) {
 			const source = await readFile(join(frontendSource, ...relativePath.split('/')), 'utf8');

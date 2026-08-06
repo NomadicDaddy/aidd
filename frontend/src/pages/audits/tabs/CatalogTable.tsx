@@ -5,8 +5,15 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
-import { toneText } from '../../../lib/tones.ts';
-import { auditFileName, bandTone, bucketColumns, describeChangePotential } from '../auditsUtils.ts';
+import {
+	auditFileName,
+	bandTone,
+	bucketsColumnLabel,
+	describeChangePotential,
+	reportsColumnLabel,
+} from '../auditsUtils.ts';
+import { CatalogCards } from './CatalogCards.tsx';
+import { ReportCounts } from './catalogCells.tsx';
 
 interface CatalogTableProps {
 	allSelected: boolean;
@@ -20,6 +27,11 @@ interface CatalogTableProps {
 	selectedAuditNames: string[];
 	someSelected: boolean;
 }
+
+// Every numeric column is right-aligned, so the digits line up against the column edge instead of
+// against whatever width the value beside them happened to take.
+const numericCell = 'px-3 py-3 text-right';
+const numericHead = 'bg-muted px-3 py-3 text-right';
 
 export function CatalogTable({
 	allSelected,
@@ -52,7 +64,7 @@ export function CatalogTable({
 					scrollerClassName="max-h-[calc(100dvh-16rem)]">
 					<table
 						aria-label="Audit catalog"
-						className="w-full min-w-[840px] text-left text-sm">
+						className="w-full min-w-[900px] text-left text-sm">
 						{/* `bg-muted` on each cell, not only on the `thead`: a sticky `<thead>` in a
 						    table does not reliably paint its own background, so the rows would scroll
 						    through the labels. Same fix as the applicability matrix. */}
@@ -75,14 +87,20 @@ export function CatalogTable({
 								<th className="bg-muted px-3 py-3" scope="col">
 									Change Potential
 								</th>
-								<th className="bg-muted px-3 py-3" scope="col">
-									Projects
+								{/* The score used to sit inline after a variable-width band badge, so
+								    it started at a different x on every row and never formed a column
+								    despite carrying `tabular-nums`. It is a column now. */}
+								<th className={numericHead} scope="col">
+									Score
 								</th>
-								<th className="bg-muted px-3 py-3" scope="col">
-									Reports
+								<th className={numericHead} scope="col">
+									Applicable Projects
 								</th>
-								<th className="bg-muted px-3 py-3" scope="col">
-									Buckets
+								<th className={numericHead} scope="col">
+									{reportsColumnLabel}
+								</th>
+								<th className={numericHead} scope="col">
+									{bucketsColumnLabel}
 								</th>
 							</tr>
 						</thead>
@@ -115,50 +133,43 @@ export function CatalogTable({
 									</td>
 									<td className="px-3 py-3">
 										{item.changePotential ? (
+											<Badge tone={bandTone[item.changePotential.band]}>
+												{item.changePotential.band}
+											</Badge>
+										) : (
+											<span className="text-xs text-muted-foreground">—</span>
+										)}
+									</td>
+									<td className={numericCell}>
+										{item.changePotential ? (
+											// The confidence reads the same on every visible row; it
+											// stays in the tooltip with the rest of the evidence.
 											<span
-												className="inline-flex items-center gap-2"
+												className="tabular-nums"
 												title={describeChangePotential(
 													item.changePotential,
 												)}>
-												<Badge tone={bandTone[item.changePotential.band]}>
-													{item.changePotential.band}
-												</Badge>
-												{/* The confidence reads the same on every visible row; it stays in the
-											    tooltip with the rest of the evidence. */}
-												<span className="text-xs text-muted-foreground tabular-nums">
-													{item.changePotential.score}
-												</span>
+												{item.changePotential.score}
 											</span>
 										) : (
 											<span className="text-xs text-muted-foreground">—</span>
 										)}
 									</td>
-									<td className="px-3 py-3">
-										{item.applicableProjectCount} applicable
+									<td className={`${numericCell} tabular-nums`}>
+										{item.applicableProjectCount}
 									</td>
-									<td className="px-3 py-3">
-										<span className={toneText.emerald}>
-											{item.freshReportCount} fresh
-										</span>
-										<span className="mx-2 text-muted-foreground">/</span>
-										<span className={toneText.amber}>
-											{item.staleReportCount} stale
-										</span>
-										<span className="mx-2 text-muted-foreground">/</span>
-										<span className={toneText.red}>
-											{item.missingReportCount} missing
-										</span>
+									<td className={numericCell}>
+										<ReportCounts definition={item} />
 									</td>
-									<td className="px-4 py-3 text-xs">
+									<td className={`${numericCell} text-xs`}>
 										<button
-											className="text-accent hover:underline"
+											className="text-accent tabular-nums hover:underline"
 											onClick={(event) => {
 												event.stopPropagation();
 												onJumpToMatrix();
 											}}
 											type="button">
-											{item.applicableBucketCount}/{bucketColumns.length}{' '}
-											buckets
+											{item.applicableBucketCount}
 										</button>
 									</td>
 								</tr>
@@ -168,121 +179,17 @@ export function CatalogTable({
 				</OverflowScroller>
 			</Card>
 
-			<div className="space-y-2 xl:hidden">
-				{definitions.length > 0 ? (
-					<div className="flex justify-end">
-						<button
-							className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-							onClick={allSelected ? onClearAll : onSelectAll}
-							type="button">
-							{allSelected ? 'Unselect All' : 'Select All'}
-						</button>
-					</div>
-				) : null}
-				{definitions.map((item) => {
-					const active = selectedAudit === item.name;
-					const checked = selectedAuditNames.includes(item.name);
-					return (
-						<div
-							aria-label={item.name}
-							className={`w-full rounded-md border p-3 text-left transition-colors ${active ? 'border-accent bg-accent-muted text-accent-muted-foreground' : 'border-border hover:bg-muted/60'}`}
-							key={item.name}
-							role="group">
-							<div className="flex items-start justify-between gap-2">
-								<div className="flex min-w-0 items-start gap-2">
-									<Checkbox
-										aria-label={`Select ${item.name} for launch`}
-										checked={checked}
-										className="mt-1"
-										disabled={!item.enabled}
-										onChange={() => onToggleSelected(item.name)}
-									/>
-									<button
-										aria-pressed={active}
-										className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-										onClick={() => onSelect(item.name)}
-										type="button">
-										<span className="block font-medium text-foreground">
-											{item.name}
-										</span>
-										<span
-											className="block truncate text-xs text-muted-foreground"
-											title={item.path}>
-											{auditFileName(item.path)}
-										</span>
-									</button>
-								</div>
-								<div className="shrink-0">
-									{item.changePotential ? (
-										<Badge tone={bandTone[item.changePotential.band]}>
-											{item.changePotential.band}
-										</Badge>
-									) : null}
-								</div>
-							</div>
-							<dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-								<div className="space-y-1">
-									<dt className="font-medium text-muted-foreground uppercase">
-										Change
-									</dt>
-									<dd
-										className="text-foreground"
-										title={
-											item.changePotential
-												? describeChangePotential(item.changePotential)
-												: undefined
-										}>
-										{item.changePotential ? item.changePotential.score : '—'}
-									</dd>
-								</div>
-								<div className="space-y-1">
-									<dt className="font-medium text-muted-foreground uppercase">
-										Projects
-									</dt>
-									<dd className="text-foreground">
-										{item.applicableProjectCount} applicable
-									</dd>
-								</div>
-								<div className="col-span-2 space-y-1">
-									<dt className="font-medium text-muted-foreground uppercase">
-										Reports
-									</dt>
-									<dd className="text-xs">
-										<span className={toneText.emerald}>
-											{item.freshReportCount} fresh
-										</span>
-										<span className="mx-2 text-muted-foreground">/</span>
-										<span className={toneText.amber}>
-											{item.staleReportCount} stale
-										</span>
-										<span className="mx-2 text-muted-foreground">/</span>
-										<span className={toneText.red}>
-											{item.missingReportCount} missing
-										</span>
-									</dd>
-								</div>
-								<div className="col-span-2 space-y-1">
-									<dt className="font-medium text-muted-foreground uppercase">
-										Buckets
-									</dt>
-									<dd>
-										<button
-											className="text-xs text-accent hover:underline"
-											onClick={(event) => {
-												event.stopPropagation();
-												onJumpToMatrix();
-											}}
-											type="button">
-											{item.applicableBucketCount}/{bucketColumns.length}{' '}
-											buckets
-										</button>
-									</dd>
-								</div>
-							</dl>
-						</div>
-					);
-				})}
-			</div>
+			<CatalogCards
+				allSelected={allSelected}
+				definitions={definitions}
+				onClearAll={onClearAll}
+				onJumpToMatrix={onJumpToMatrix}
+				onSelect={onSelect}
+				onSelectAll={onSelectAll}
+				onToggleSelected={onToggleSelected}
+				selectedAudit={selectedAudit}
+				selectedAuditNames={selectedAuditNames}
+			/>
 		</div>
 	);
 }

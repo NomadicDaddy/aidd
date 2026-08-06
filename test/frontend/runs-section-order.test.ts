@@ -20,7 +20,10 @@ describe('runs page section order', () => {
 		expect(activeIndex).toBeGreaterThan(-1);
 		expect(consoleIndex).toBeGreaterThan(activeIndex);
 		expect(historyIndex).toBeGreaterThan(consoleIndex);
-		expect(showMoreIndex).toBeGreaterThan(historyIndex);
+		// 'Show more' is now the History card's own footer, so it sits inside that card rather
+		// than on the page background below it — after the console, before the card's title prop.
+		expect(showMoreIndex).toBeGreaterThan(consoleIndex);
+		expect(showMoreIndex).toBeLessThan(historyIndex);
 	});
 
 	test('places run lists left and a sticky console right at 2xl', async () => {

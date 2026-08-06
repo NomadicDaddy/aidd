@@ -109,14 +109,16 @@ export function ActiveRunRow({
 					</ConsoleSelectionButton>
 					<RunCommandInfo command={run.launchCommand} runId={run.id} />
 				</div>
-				<div className="mt-1 text-xs text-muted-foreground">
+				{/* One meta line, because a session row has one: the summary used to add a third and
+				    fourth line that only run rows carried, so a Run row stood 100px tall against the
+				    65px Skill row beneath it and the table had no row rhythm at all. The full
+				    summary is on the title here and rendered whole in the detail panel. */}
+				<div
+					className="mt-1 truncate text-xs text-muted-foreground"
+					title={run.aiSummary ?? undefined}>
 					{formatDate(run.startedAt)}
+					{run.aiSummary ? ` · ${run.aiSummary}` : ''}
 				</div>
-				{run.aiSummary ? (
-					<div className="mt-1 line-clamp-2 max-w-[26rem] text-xs text-muted-foreground">
-						{run.aiSummary}
-					</div>
-				) : null}
 			</td>
 			<td className="px-3 py-3">
 				<ProjectDetailLink href={projectHref} label={projectLabel} name={run.projectName} />

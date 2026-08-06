@@ -175,26 +175,29 @@ export function RunsPage() {
 							description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
 							emptyMessage="No runs or pipelines match the current filters."
 							entries={page.historyEntries}
+							footer={
+								page.hasMore ? (
+									<Button
+										disabled={page.isFetchingMore}
+										onClick={page.fetchMore}
+										variant="secondary">
+										<ChevronDown aria-hidden="true" className="h-4 w-4" />
+										{page.isFetchingMore ? 'Loading…' : 'Show more'}
+									</Button>
+								) : null
+							}
 							icon={
 								<HistoryIcon aria-hidden="true" className="h-4 w-4 text-accent" />
 							}
+							// History is the unbounded table: capped in its own scrollport with a
+							// pinned header, so the columns are still named at row 40.
+							scrollBody
 							// Every row here is terminal, so Stop and Kill can never enable: ten greyed
 							// icons per screen that carry no information. Continue survives the flag.
 							showLifecycleControls={false}
 							title="History"
 							{...tableProps}
 						/>
-						{page.hasMore ? (
-							<div className="flex justify-center">
-								<Button
-									disabled={page.isFetchingMore}
-									onClick={page.fetchMore}
-									variant="secondary">
-									<ChevronDown aria-hidden="true" className="h-4 w-4" />
-									{page.isFetchingMore ? 'Loading…' : 'Show more'}
-								</Button>
-							</div>
-						) : null}
 					</div>
 				)}
 			</div>

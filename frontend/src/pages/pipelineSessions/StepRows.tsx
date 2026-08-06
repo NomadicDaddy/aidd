@@ -14,6 +14,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
+import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
 import { toneText } from '../../lib/tones.ts';
 import { sessionStatusTone, stepStatusLabel } from '../runs/pipelineSessionStatus.ts';
 import { pipelineStepLiveConsoleHref } from './pipelineSessionLinks.ts';
@@ -91,7 +92,7 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 								{stepStatusLabel(step.status)}
 							</Badge>
 							{step.phase !== 'step' && <Badge>{step.phase}</Badge>}
-							<Badge tone="neutral">{step.stepType}</Badge>
+							<Badge tone="neutral">{stepTypeLabel(step.stepType)}</Badge>
 							{step.executionIdentity ? (
 								<ExecutionIdentityBadges {...step.executionIdentity} />
 							) : null}
@@ -148,7 +149,7 @@ export function PendingStepRow({
 							<CircleDashed className="h-3 w-3" />
 							Pending
 						</Badge>
-						<Badge tone="neutral">{step.stepType}</Badge>
+						<Badge tone="neutral">{stepTypeLabel(step.stepType)}</Badge>
 						<span className="text-xs font-medium text-muted-foreground">
 							Step {sequenceNumber} of {totalSteps}
 						</span>

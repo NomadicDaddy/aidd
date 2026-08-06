@@ -6,10 +6,12 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useNow } from '../../hooks/useNow.ts';
+import { cn } from '../../lib/cn.ts';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { ActiveRunMobileCard, ActiveRunRow } from './ActiveRunRow.tsx';
 import { PipelineSessionMobileCard, PipelineSessionRow } from './PipelineSessionRow.tsx';
 import { PipelineStepSubRows } from './PipelineStepSubRows.tsx';
+import { PipelineStepTableRows } from './PipelineStepTableRows.tsx';
 import { normalizePathForFilter } from './runsUtils.ts';
 import {
 	entryKey,
@@ -28,6 +30,12 @@ export interface UnifiedExecutionTableProps {
 	emptyMessage: string;
 	entries: UnifiedEntry[];
 	expandedSessions: ReadonlySet<string>;
+	/**
+	 * Rendered inside the Card below the body, as its footer row. History's 'Show more' used to sit
+	 * on the page background beneath the Card, so the control that grows the table was outside the
+	 * box it grows.
+	 */
+	footer?: ReactNode;
 	/** Lucide icon for the card header row, matching the Dashboard/Director card idiom. */
 	icon: ReactNode;
 	onContinue: (id: string) => void;
@@ -40,6 +48,12 @@ export interface UnifiedExecutionTableProps {
 	onStopSession: (id: string) => void;
 	onToggleSession: (id: string) => void;
 	projectRouteIdByPath: ReadonlyMap<string, string>;
+	/**
+	 * Caps the body in its own scrollport with a pinned header row. History is unbounded — after two
+	 * 'Show more' presses the page ran 3214px and the column headings were long gone, with thirty
+	 * rows still below them. Active is short by construction and stays in page flow.
+	 */
+	scrollBody?: boolean;
 	selection: undefined | UnifiedSelection;
 	/**
 	 * Stop and Kill are gated on a non-terminal status, so in a table that only ever holds finished
@@ -52,7 +66,17 @@ export interface UnifiedExecutionTableProps {
 }
 
 export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
-	const { entries, expandedSessions, selection, showLifecycleControls = true, title } = props;
+	const {
+		entries,
+		expandedSessions,
+		scrollBody = false,
+		selection,
+		showLifecycleControls = true,
+		title,
+	} = props;
+	// The chrome above the body — page header, filter card, this card's own header — measured once
+	// rather than repeated, and a floor so the region is still a table on a short viewport.
+	const bodyScrollClass = scrollBody ? 'max-h-[calc(100dvh-22rem)] min-h-[20rem]' : '';
 	// The 1s clock that advances live durations/liveness lives here, scoped to the table, so an
 	// active execution only re-renders these rows — not the launch form, filters, or live console.
 	const now = useNow(entries.some(isEntryActive));
@@ -88,7 +112,10 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 				</div>
 			) : (
 				<>
-					<OverflowScroller ariaLabel={title} className="hidden xl:block">
+					<OverflowScroller
+						ariaLabel={title}
+						className="hidden xl:block"
+						scrollerClassName={bodyScrollClass}>
 						<table
 							aria-label={title}
 							className="w-full min-w-[56rem] table-fixed text-left text-sm">
@@ -104,7 +131,15 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 								<col className="w-[9%]" />
 								<col className="w-[12%]" />
 							</colgroup>
-							<thead className={tableHeadClass}>
+							{/* Pinned per-cell rather than on the <thead>: a sticky thead leaves the cells
+							    transparent, so rows scrolled through the headings. Each th carries the
+							    strip background it needs to sit over them. */}
+							<thead
+								className={cn(
+									tableHeadClass,
+									scrollBody &&
+										'[&>tr>th]:sticky [&>tr>th]:top-0 [&>tr>th]:z-20 [&>tr>th]:bg-muted',
+								)}>
 								<tr>
 									<th className="py-3 pr-3 pl-4" scope="col">
 										Name
@@ -164,11 +199,21 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 											/>
 											{isMultiStepSession(entry.session) &&
 												expandedSessions.has(entry.session.id) && (
-													<tr className="border-b bg-muted/60 last:border-0">
-														<td className="p-0" colSpan={7}>
-															{stepSubRows(entry)}
-														</td>
-													</tr>
+													<PipelineStepTableRows
+														now={now}
+														onSelectRun={(runId) =>
+															props.onSelectStepRun(
+																entry.session.id,
+																runId,
+															)
+														}
+														selectedRunId={
+															selection?.kind === 'run'
+																? selection.id
+																: undefined
+														}
+														sessionId={entry.session.id}
+													/>
 												)}
 										</Fragment>
 									),
@@ -178,7 +223,10 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 					</OverflowScroller>
 					<div
 						aria-label={title}
-						className="flex flex-col divide-y divide-border xl:hidden"
+						className={cn(
+							'flex flex-col divide-y divide-border xl:hidden',
+							bodyScrollClass && `overflow-y-auto ${bodyScrollClass}`,
+						)}
 						role="list">
 						{entries.map((entry) =>
 							entry.kind === 'run' ? (
@@ -220,6 +268,14 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 					</div>
 				</>
 			)}
+			{/* Inside the box it grows. On the page background below the Card it read as a control
+			    belonging to the page rather than to History, and it was the one thing separating
+			    the table from the bottom of a 3214px scroll. */}
+			{props.footer ? (
+				<div className="flex justify-center border-t border-border px-4 py-3">
+					{props.footer}
+				</div>
+			) : null}
 		</Card>
 	);
 }

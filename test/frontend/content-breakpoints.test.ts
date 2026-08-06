@@ -13,14 +13,16 @@ const contentBreakpointContracts = [
 	['pages/projects/detail/FeaturesTab.tsx', ['xl:hidden']],
 	['pages/projects/detail/workingTree/WorkingTreeList.tsx', ['xl:hidden']],
 	['pages/projects/detail/workingTree/WorkingTreeTable.tsx', ['xl:block']],
-	['pages/runs/PipelineStepSubRows.tsx', ['xl:grid']],
 	['pages/runs/UnifiedExecutionTable.tsx', ['xl:block', 'xl:hidden']],
 	['pages/settings/BackendDefaultsTable.tsx', ['xl:block', 'xl:hidden']],
 ] as const;
 
 describe('content-aware responsive breakpoints', () => {
 	test('keeps all desktop table layouts behind the xl content breakpoint', async () => {
-		expect(contentBreakpointContracts).toHaveLength(11);
+		// The expanded pipeline steps are absent by design: PipelineStepTableRows and
+		// PipelineStepSubRows are two unconditional components, and UnifiedExecutionTable below
+		// picks between them at xl. Neither carries a breakpoint of its own to keep honest.
+		expect(contentBreakpointContracts).toHaveLength(10);
 
 		for (const [relativePath, expectedClasses] of contentBreakpointContracts) {
 			const source = await readFile(join(frontendSource, ...relativePath.split('/')), 'utf8');

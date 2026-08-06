@@ -26,6 +26,7 @@ import {
 	containerSelectableClass,
 	containerSelectedClass,
 	containerSelectionHandler,
+	failureReasonClass,
 	leadingSlotClass,
 } from './runRowUtils.ts';
 import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
@@ -223,7 +224,9 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 					{sessionStatusLabel(session.status)}
 				</Badge>
 				{session.errorMessage && (
-					<p className={`mt-1 max-w-[16rem] truncate text-xs ${toneText.red}`}>
+					<p
+						className={`${failureReasonClass} ${toneText.red}`}
+						title={session.errorMessage}>
 						{session.errorMessage}
 					</p>
 				)}
@@ -263,7 +266,9 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 				<span>{formatActiveDuration(session.durationMs, session.startedAt, now)}</span>
 			</div>
 			{session.errorMessage && (
-				<p className={`mt-1 text-xs ${toneText.red}`}>{session.errorMessage}</p>
+				<p className={`mt-1 text-xs ${toneText.red}`} title={session.errorMessage}>
+					{session.errorMessage}
+				</p>
 			)}
 			<div className="mt-2">
 				<SessionActions

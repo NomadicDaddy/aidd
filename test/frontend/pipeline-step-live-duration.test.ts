@@ -54,7 +54,10 @@ describe('pipeline step duration stays live while a step runs', () => {
 		expect(table).toMatch(
 			/const stepSubRows = [\s\S]*?<PipelineStepSubRows[\s\S]*?now=\{now\}/,
 		);
-		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(2);
+		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(1);
+		// The desktop surface is no longer that helper: its steps are real rows of the parent
+		// table, so it takes the same clock through its own element.
+		expect(table).toMatch(/<PipelineStepTableRows[\s\S]*?now=\{now\}/);
 		expect(report).toContain('useNow');
 		expect(report).toContain('<StepsCard now={now}');
 	});

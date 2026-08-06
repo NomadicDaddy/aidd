@@ -96,7 +96,12 @@ describe('execution identity survives a narrow column', () => {
 		expect(table).toContain('w-[26%]');
 		expect(table).not.toContain('w-[20%]');
 		expect(table).not.toContain('w-[17%]');
-		expect(steps).toContain('xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr]');
+		// The sub-rows used to follow it by restating the colgroup as `fr` units. They follow it
+		// now by being rows of this table: seven `<td>` under seven `<col>`, nothing to restate.
+		expect(steps).not.toContain('grid-cols-[');
+		expect(await read('pages', 'runs', 'PipelineStepTableRows.tsx')).not.toContain(
+			'grid-cols-[',
+		);
 	});
 
 	test('the table cells that had a budget use the compact variant', async () => {

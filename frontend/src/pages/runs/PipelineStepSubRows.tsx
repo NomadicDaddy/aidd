@@ -4,18 +4,20 @@ import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
-import { buildStepRows } from '../pipelineSessions/StepRows.tsx';
+import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
 import { sessionStatusTone, stepStatusLabel } from './pipelineSessionStatus.ts';
-import { containerSelectedClass } from './runRowUtils.ts';
+import { stepIndentPx, usePipelineStepSubRows } from './pipelineStepSubRowModel.ts';
+import { containerSelectedClass, failureReasonClass } from './runRowUtils.ts';
 
-// Compact step list rendered inside an expanded pipeline row of the unified feed.
-// Deliberately lighter than the report page's ExecutedStepRow: no per-step consoles
-// (a WebSocket console per step inside a table is a performance hazard) — a step with
-// a run instead selects that run in the page's shared Live Console. The report link
-// on the session row remains the full-detail surface.
+/**
+ * The steps of an expanded pipeline session below `xl`, where the feed is cards rather than a table.
+ *
+ * The desktop rows live in PipelineStepTableRows and are real `<tr>` elements of the parent table;
+ * this list is the same steps in the shape the surrounding cards use. Both read the same model, so
+ * the two views can differ in box and never in content.
+ */
 export function PipelineStepSubRows({
 	now,
 	onSelectRun,
@@ -27,50 +29,23 @@ export function PipelineStepSubRows({
 	selectedRunId: string | undefined;
 	sessionId: string;
 }) {
-	// Per-session report; polls every 3s while the session is active (same load profile
-	// as having its report page open). Instantiated only while this session is expanded.
-	const report = usePipelineSessionReport(sessionId);
-	if (report.isLoading) {
-		return <p className="px-4 py-3 text-xs text-muted-foreground">Loading steps…</p>;
-	}
-	if (!report.data) {
-		return (
-			<p className="px-4 py-3 text-xs text-muted-foreground">Step details are unavailable.</p>
-		);
-	}
-	const rows = buildStepRows(report.data);
-	if (rows.length === 0) {
-		return <p className="px-4 py-3 text-xs text-muted-foreground">No steps recorded yet.</p>;
-	}
+	const { notice, rows } = usePipelineStepSubRows(sessionId);
+	if (notice !== null) return <p className="px-4 py-3 text-xs text-muted-foreground">{notice}</p>;
 	return (
 		<ol aria-label="Pipeline steps" className="divide-y divide-border">
 			{rows.map((row) => {
 				if (row.kind === 'pending') {
 					return (
 						<li
-							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground xl:grid xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0"
+							className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-muted-foreground"
 							key={`pending-${row.sequenceNumber}`}>
-							<div className="flex min-w-0 basis-full items-center gap-2 xl:px-4 xl:py-2">
-								<span className="w-6 text-right font-mono">
-									{row.sequenceNumber}.
-								</span>
-								<span className="truncate text-muted-foreground">
-									{row.step.name}
-								</span>
-							</div>
-							<span aria-hidden="true" className="hidden xl:block" />
-							<div className="xl:px-3 xl:py-2">
-								<Badge tone="neutral">{row.step.stepType}</Badge>
-							</div>
-							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
-							<div className="xl:px-3 xl:py-2">
-								<Badge tone="neutral">
-									<CircleDashed aria-hidden="true" className="h-3 w-3" />
-									Pending
-								</Badge>
-							</div>
-							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
-							<span className="hidden xl:block xl:px-3 xl:py-2">—</span>
+							<span className="w-6 text-right font-mono">{row.sequenceNumber}.</span>
+							<span className="min-w-0 flex-1 truncate">{row.step.name}</span>
+							<Badge tone="neutral">{stepTypeLabel(row.step.stepType)}</Badge>
+							<Badge tone="neutral">
+								<CircleDashed aria-hidden="true" className="h-3 w-3" />
+								Pending
+							</Badge>
 						</li>
 					);
 				}
@@ -80,48 +55,16 @@ export function PipelineStepSubRows({
 				return (
 					<li
 						aria-current={selected ? 'true' : undefined}
-						className={cn(
-							'flex flex-wrap items-center gap-2 px-4 py-2 text-xs xl:grid xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr] xl:gap-0 xl:px-0 xl:py-0',
-							selected && containerSelectedClass,
-						)}
-						key={step.id}>
-						<div
-							className="flex min-w-0 basis-full items-center gap-2 py-2 pr-3"
-							style={{ paddingLeft: `${16 + Math.min(step.depth, 4) * 16}px` }}>
+						className={cn('py-2 pr-4 text-xs', selected && containerSelectedClass)}
+						key={step.id}
+						style={{ paddingLeft: `${stepIndentPx(step.depth)}px` }}>
+						<div className="flex min-w-0 items-center gap-2">
 							<span className="w-6 shrink-0 text-right font-mono text-muted-foreground">
 								{anchor ? `${step.sequenceNumber}.` : '·'}
 							</span>
-							<span className="truncate text-foreground">{step.stepName}</span>
-						</div>
-						<span aria-hidden="true" className="hidden xl:block" />
-						<div className="xl:px-3 xl:py-2">
-							<Badge tone="neutral">{step.stepType}</Badge>
-						</div>
-						<div className="xl:px-3 xl:py-2">
-							{step.executionIdentity ? (
-								// Same column budget as the session row above it, same variant.
-								<ExecutionIdentityBadges
-									{...step.executionIdentity}
-									variant="compact"
-								/>
-							) : (
-								<span className="text-muted-foreground">—</span>
-							)}
-						</div>
-						<div className="min-w-0 xl:px-3 xl:py-2">
-							<Badge tone={sessionStatusTone(step.status)}>
-								{stepStatusLabel(step.status)}
-							</Badge>
-							{step.errorMessage && (
-								<p className="mt-1 truncate text-red-700 dark:text-red-300">
-									{step.errorMessage}
-								</p>
-							)}
-						</div>
-						<span className="whitespace-nowrap text-muted-foreground xl:px-3 xl:py-2">
-							{formatActiveDuration(step.durationMs, step.startedAt, now)}
-						</span>
-						<div className="xl:px-3 xl:py-2">
+							<span className="min-w-0 flex-1 truncate text-foreground">
+								{step.stepName}
+							</span>
 							{step.runId ? (
 								<Button
 									aria-label={`Show step ${step.stepName} run in Live Console`}
@@ -133,10 +76,30 @@ export function PipelineStepSubRows({
 									<Terminal aria-hidden="true" className="h-3 w-3" />
 									Console
 								</Button>
-							) : (
-								<span className="text-muted-foreground">—</span>
-							)}
+							) : null}
 						</div>
+						<div className="mt-1 flex flex-wrap items-center gap-1.5 pl-8 text-muted-foreground">
+							<Badge tone="neutral">{stepTypeLabel(step.stepType)}</Badge>
+							<Badge tone={sessionStatusTone(step.status)}>
+								{stepStatusLabel(step.status)}
+							</Badge>
+							{step.executionIdentity ? (
+								<ExecutionIdentityBadges
+									{...step.executionIdentity}
+									variant="compact"
+								/>
+							) : null}
+							<span className="whitespace-nowrap">
+								{formatActiveDuration(step.durationMs, step.startedAt, now)}
+							</span>
+						</div>
+						{step.errorMessage && (
+							<p
+								className={`${failureReasonClass} pl-8 text-red-700 dark:text-red-300`}
+								title={step.errorMessage}>
+								{step.errorMessage}
+							</p>
+						)}
 					</li>
 				);
 			})}

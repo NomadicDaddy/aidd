@@ -138,12 +138,15 @@ describe('Runs row consistency', () => {
 		// Both surfaces render the same `stepSubRows` helper, so the selected step run stays
 		// highlighted in the table and in the mobile list from one declaration.
 		expect(table).toMatch(/const stepSubRows = [\s\S]*?selectedRunId=/);
-		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(2);
-		expect(steps).toContain("aria-current={selected ? 'true' : undefined}");
-		expect(steps).toContain('aria-pressed={selected}');
-		// The sub-row grid mirrors the colgroup exactly; a rebalance that misses one of them
-		// leaves every expanded step offset from the columns it is supposed to sit under.
-		expect(steps).toContain('xl:grid-cols-[21fr_11fr_9fr_26fr_12fr_9fr_12fr]');
+		expect(table.match(/stepSubRows\(entry\)/g)).toHaveLength(1);
+		for (const surface of [steps, await readRunSource('PipelineStepTableRows.tsx')]) {
+			expect(surface).toContain("aria-current={selected ? 'true' : undefined}");
+			expect(surface).toContain('aria-pressed={selected}');
+		}
+		// The sub-row grid used to mirror the colgroup by hand, and a rebalance that missed one of
+		// them left every expanded step offset from the columns it was supposed to sit under. The
+		// desktop steps are `<td>` in this table now, so they take these widths by construction.
+		expect(steps).not.toContain('grid-cols-[');
 	});
 
 	test('run origin labels use the current Director name from one shared helper', async () => {

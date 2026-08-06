@@ -31,11 +31,11 @@ const taxonomyBadges: { file: string[]; snippets: string[] }[] = [
 	},
 	{
 		file: ['runs', 'PipelineStepSubRows.tsx'],
-		snippets: ['<Badge tone="neutral">{row.step.stepType}</Badge>'],
+		snippets: ['<Badge tone="neutral">{stepTypeLabel(row.step.stepType)}</Badge>'],
 	},
 	{
 		file: ['pipelineSessions', 'StepRows.tsx'],
-		snippets: ['<Badge tone="neutral">{step.stepType}</Badge>'],
+		snippets: ['<Badge tone="neutral">{stepTypeLabel(step.stepType)}</Badge>'],
 	},
 	{
 		file: ['projects', 'ProjectStackDisplay.tsx'],

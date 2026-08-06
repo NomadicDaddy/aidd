@@ -122,7 +122,7 @@ export function RunCommitsSection({ run }: { run: RunRecord }) {
 							truncated={data.fileChanges.truncated}>
 							<FilePlus
 								aria-hidden="true"
-								className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+								className="h-3.5 w-3.5 text-muted-foreground"
 							/>
 							{data.filesCreated} {data.filesCreated === 1 ? 'file' : 'files'} created
 						</FileChangeChip>
@@ -135,7 +135,7 @@ export function RunCommitsSection({ run }: { run: RunRecord }) {
 							truncated={data.fileChanges.truncated}>
 							<FileEdit
 								aria-hidden="true"
-								className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400"
+								className="h-3.5 w-3.5 text-muted-foreground"
 							/>
 							{data.filesEdited} {data.filesEdited === 1 ? 'file' : 'files'} edited
 						</FileChangeChip>

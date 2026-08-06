@@ -8,11 +8,22 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
 import { useRunRecord } from '../../hooks/useRuns.ts';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
-import { sessionStatusLabel, sessionStatusTone } from './pipelineSessionStatus.ts';
+import { isSessionActive, sessionStatusLabel, sessionStatusTone } from './pipelineSessionStatus.ts';
 
 // Console pane for a selected pipeline session: a compact session summary above a live
 // console streaming the most recent step that has spawned a run. Step-level selection
 // (clicking a step's Console button) switches the page selection to that run directly.
+function consoleCaption(
+	active: boolean,
+	step: { sequenceNumber: number; stepName: string } | undefined,
+): string {
+	if (!step) {
+		return active ? 'Waiting for the first step to start a run…' : 'No step started a run.';
+	}
+	const where = `step ${step.sequenceNumber} — ${step.stepName}`;
+	return active ? `Streaming ${where}` : `Showing ${where}, the last step that started a run`;
+}
+
 export function PipelineConsoleSummary({ session }: { session: PipelineSessionRecord }) {
 	const report = usePipelineSessionReport(session.id);
 	// The most recent step that has a run is the one worth streaming; earlier runs are a
@@ -22,6 +33,7 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 		: undefined;
 	const streamRunId = latestStepWithRun?.runId ?? undefined;
 	const streamRun = useRunRecord(streamRunId, streamRunId !== undefined);
+	const active = isSessionActive(session.status);
 	return (
 		// Shares the runs-page console cell, so it needs the same height chain: the summary card
 		// stays auto-height and the console below it takes the rest.
@@ -51,10 +63,11 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 				{session.errorMessage && (
 					<p className="text-sm text-red-700 dark:text-red-300">{session.errorMessage}</p>
 				)}
+				{/* The console below is streaming only while the session is. On a finished session
+				    this line still read 'Streaming step 1' — the present progressive asserting live
+				    output over a transcript that stopped moving hours ago. */}
 				<p className="text-xs text-muted-foreground">
-					{latestStepWithRun
-						? `Streaming step ${latestStepWithRun.sequenceNumber} — ${latestStepWithRun.stepName}`
-						: 'Waiting for the first step to start a run…'}
+					{consoleCaption(active, latestStepWithRun)}
 				</p>
 			</Card>
 			<LiveConsolePanel

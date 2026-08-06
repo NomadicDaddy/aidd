@@ -64,6 +64,14 @@ export function formatHeartbeatAge(ms: number): string {
 	return `${minutes}m ${seconds % 60}s`;
 }
 
+// A failure reason is the one cell whose value the reader came for, and it lands in the STATUS
+// column — the narrowest column that carries free text. It used to be a single `truncate` line
+// capped at 16rem with the full text nowhere: roughly a ninth of a sentence, and no tooltip in the
+// ancestry to recover the rest. Two lines is what the column can give without taking width off the
+// execution identity beside it, and the `title` carries the whole of it. Rows carrying one always
+// pair this class with `title={message}`.
+export const failureReasonClass = 'mt-1 line-clamp-2 text-xs';
+
 export function runRuntimeDetail(run: RunRecord): string {
 	return run.mode ? `mode ${run.mode}` : '—';
 }

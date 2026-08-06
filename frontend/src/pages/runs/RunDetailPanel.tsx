@@ -70,10 +70,9 @@ export function RunDetailPanel({
 					/>
 				) : null}
 				<MetadataItem label="Duration" value={formatDuration(selectedRun.durationMs)} />
-				<MetadataItem
-					label="aidd provenance"
-					value={formatAiddRunProvenance(selectedRun)}
-				/>
+				{/* The label was the only one in the row long enough to wrap, which pushed its value
+				    a line below Mode and Duration — three values in one row on two baselines. */}
+				<MetadataItem label="Provenance" value={formatAiddRunProvenance(selectedRun)} />
 				{selectedRun.summary ? (
 					<MetadataItem
 						className="col-span-full"

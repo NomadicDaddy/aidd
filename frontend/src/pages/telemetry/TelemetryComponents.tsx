@@ -261,7 +261,13 @@ function LegendDot({ className, label }: { className: string; label: string }) {
 
 export function BackendBreakdownCard({ rows }: { rows: TelemetryBackendUsageRow[] }) {
 	if (rows.length === 0) return <EmptyState>No backends recorded yet.</EmptyState>;
-	const max = rows[0]?.count ?? 1;
+	const counts = rows.map((row) => row.count);
+	const max = Math.max(...counts, 1);
+	// The same guard `LeaderboardCard` above makes, for the same reason: a bar scaled against the
+	// maximum encodes nothing when every row holds it. A single-row breakdown drew a full-width
+	// accent bar across the whole card that could only ever be 100% — the strongest colour on the
+	// card spent saying what the count beside it already said.
+	const ranks = max !== Math.min(...counts);
 	return (
 		<ul className="space-y-1.5">
 			{rows.map((row) => {
@@ -272,13 +278,15 @@ export function BackendBreakdownCard({ rows }: { rows: TelemetryBackendUsageRow[
 							<span className="font-mono text-foreground">{backend}</span>
 							<span className="text-muted-foreground tabular-nums">{row.count}</span>
 						</div>
-						<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-							<div
-								aria-hidden="true"
-								className="h-full rounded-full bg-accent"
-								style={{ width: `${Math.round((row.count / max) * 100)}%` }}
-							/>
-						</div>
+						{ranks ? (
+							<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+								<div
+									aria-hidden="true"
+									className="h-full rounded-full bg-accent"
+									style={{ width: `${Math.round((row.count / max) * 100)}%` }}
+								/>
+							</div>
+						) : null}
 					</li>
 				);
 			})}

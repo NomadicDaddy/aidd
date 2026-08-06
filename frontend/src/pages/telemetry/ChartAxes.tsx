@@ -55,22 +55,35 @@ export function ChartAxes({
 				<div className="relative">{children}</div>
 			</div>
 			<div />
-			<div className="flex gap-1 overflow-hidden pt-1.5">
+			{/* The label sits in a cell narrower than itself — 21 daily buckets give each column
+			    20px to hold a 27-35px date — so it is positioned out of the flow rather than laid
+			    out in it. In the flow the cell clipped it ('Aug 1' rendered as 'Aug'); out of it
+			    the text spills over the neighbours the stride leaves empty, which is exactly the
+			    room it needs. The cells stay `flex-1` so the anchors still track the bars, and the
+			    row carries the height the absolute children no longer contribute — `h-3` is exactly
+			    one `text-xs`/`leading-none` line, and the gap above the plot is a margin so the
+			    labels are not offset inside it. */}
+			<div className="mt-1.5 flex h-3 gap-1">
 				{categories.map((label, index) => {
 					// Anchored to the newest bucket rather than the oldest: the right-hand end is
 					// what the window is centered on, so it always keeps its label.
 					const labelled = (lastIndex - index) % stride === 0;
+					// The ends spill inward only: at the edges of the plot there is no neighbour
+					// to spill over, and the gutter and the card are what would clip them.
+					const anchor =
+						index === 0
+							? 'left-0'
+							: index === lastIndex
+								? 'right-0'
+								: 'left-1/2 -translate-x-1/2';
 					return (
-						<span
-							className={`min-w-0 flex-1 text-xs leading-none whitespace-nowrap text-muted-foreground ${
-								index === 0
-									? 'text-left'
-									: index === lastIndex
-										? 'text-right'
-										: 'text-center'
-							}`}
-							key={`${label}-${index}`}>
-							{labelled ? label : ''}
+						<span className="relative min-w-0 flex-1" key={`${label}-${index}`}>
+							{labelled ? (
+								<span
+									className={`absolute top-0 text-xs leading-none whitespace-nowrap text-muted-foreground ${anchor}`}>
+									{label}
+								</span>
+							) : null}
 						</span>
 					);
 				})}

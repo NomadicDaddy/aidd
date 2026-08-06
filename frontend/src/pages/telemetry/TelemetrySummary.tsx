@@ -1,5 +1,5 @@
 import { Metric } from '../../components/shared/Metric.tsx';
-import { outcomeSolid, seriesSolid } from '../../lib/series.ts';
+import { outcomeSolid } from '../../lib/series.ts';
 
 export interface TelemetryTotals {
 	completed: number;
@@ -18,34 +18,27 @@ export interface TelemetryTotals {
 /**
  * The categorical swatch that used to be `CountCard`'s reason to exist.
  *
- * It is a series slot, not a tone: these colours are shared with the chart bars and the legend
- * below, where "emerald means healthy" would be a claim nobody made. `Metric`'s `marker` slot takes
- * it as a node for exactly this reason — so a categorical colour cannot be smuggled in as a tone.
+ * It is a series slot, not a tone: these colours are the chart's own, stated by the legend under
+ * it, where "emerald means healthy" would be a claim nobody made. `Metric`'s `marker` slot takes it
+ * as a node for exactly this reason — so a categorical colour cannot be smuggled in as a tone. It
+ * is only ever given to a tile whose colour the legend below actually names.
  */
-function seriesDot(className: string) {
+function outcomeDot(className: string) {
 	return <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${className}`} />;
 }
 
 export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 	return (
 		<section aria-label="Invocation summary" className="space-y-3">
-			{/* Shape-of-work breakdown: categorical, so it uses series slots rather than tones. */}
+			{/* Shape-of-work breakdown, and the one place on this page a dot would decode to
+			    nothing: these three quantities are not a series in any chart here, so the cyan,
+			    indigo and magenta they carried appeared in no legend and stood for nothing a
+			    reader could look up. The outcome tiles below keep theirs — those colours are the
+			    chart's, and the chart legend states them. */}
 			<div className="grid gap-3 sm:grid-cols-3">
-				<Metric
-					label="Total invocations"
-					marker={seriesDot(seriesSolid.slot1)}
-					value={totals.total}
-				/>
-				<Metric
-					label="Top-level actions"
-					marker={seriesDot(seriesSolid.slot2)}
-					value={totals.topLevel}
-				/>
-				<Metric
-					label="Nested steps"
-					marker={seriesDot(seriesSolid.slot3)}
-					value={totals.nested}
-				/>
+				<Metric label="Total invocations" value={totals.total} />
+				<Metric label="Top-level actions" value={totals.topLevel} />
+				<Metric label="Nested steps" value={totals.nested} />
 			</div>
 			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. The
 			    `md` step is what keeps eight tiles to two rows at tablet width — without it the
@@ -55,49 +48,49 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 			<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8">
 				<Metric
 					label="Completed"
-					marker={seriesDot(outcomeSolid.completed)}
+					marker={outcomeDot(outcomeSolid.completed)}
 					size="compact"
 					value={totals.completed}
 				/>
 				<Metric
 					label="Warnings"
-					marker={seriesDot(outcomeSolid.warnings)}
+					marker={outcomeDot(outcomeSolid.warnings)}
 					size="compact"
 					value={totals.warnings}
 				/>
 				<Metric
 					label="Failed"
-					marker={seriesDot(outcomeSolid.failed)}
+					marker={outcomeDot(outcomeSolid.failed)}
 					size="compact"
 					value={totals.failed}
 				/>
 				<Metric
 					label="Flagged"
-					marker={seriesDot(outcomeSolid.flagged)}
+					marker={outcomeDot(outcomeSolid.flagged)}
 					size="compact"
 					value={totals.flagged}
 				/>
 				<Metric
 					label="Stopped"
-					marker={seriesDot(outcomeSolid.stopped)}
+					marker={outcomeDot(outcomeSolid.stopped)}
 					size="compact"
 					value={totals.stopped}
 				/>
 				<Metric
 					label="Killed"
-					marker={seriesDot(outcomeSolid.killed)}
+					marker={outcomeDot(outcomeSolid.killed)}
 					size="compact"
 					value={totals.killed}
 				/>
 				<Metric
 					label="No work"
-					marker={seriesDot(outcomeSolid.noWork)}
+					marker={outcomeDot(outcomeSolid.noWork)}
 					size="compact"
 					value={totals.noWork}
 				/>
 				<Metric
 					label="Running"
-					marker={seriesDot(outcomeSolid.running)}
+					marker={outcomeDot(outcomeSolid.running)}
 					size="compact"
 					value={totals.running}
 				/>

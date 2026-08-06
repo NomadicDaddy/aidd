@@ -1,4 +1,6 @@
-import { classifyWebRun } from 'aidd-shared/runs/outcome';
+import type { TelemetryOutcomeBucket } from 'aidd-shared/runs/outcome';
+
+import { classifyWebRun, classifyWebRunTelemetryBucket } from 'aidd-shared/runs/outcome';
 import { Link } from 'react-router';
 
 import type {
@@ -112,7 +114,9 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 			<td className="px-3 py-2">
 				<InvocationStatusCell invocation={invocation} />
 			</td>
-			<td className="px-3 py-2 align-top">
+			{/* Inherits the row alignment like every other cell: `align-top` floated all 38
+			    'Inspect' links about 16px above the rows they belong to. */}
+			<td className="px-3 py-2">
 				<InvocationDetails invocation={invocation} />
 			</td>
 		</tr>
@@ -145,23 +149,45 @@ const statusLabels: Record<TelemetryInvocationStatus, string> = {
 	stopped: 'Stopped',
 };
 
+/**
+ * The tile at the top of the page that this row is counted under.
+ *
+ * The secondary line used to print the raw invocation status, and the two are not the same thing:
+ * an aborted run carries `status: 'failed'` and is tallied under Stopped, so the cell read "failed"
+ * in muted text under a neutral grey badge, above a red FAILED tile that does not count it. Derived
+ * from the same classifier the aggregator uses, the line names the tile the row actually feeds and
+ * cannot contradict it.
+ */
+const bucketLabels: Record<TelemetryOutcomeBucket, string> = {
+	completed: 'Completed',
+	failed: 'Failed',
+	flagged: 'Flagged',
+	killed: 'Killed',
+	noWork: 'No work',
+	running: 'Running',
+	stopped: 'Stopped',
+	warnings: 'Warnings',
+};
+
 function InvocationStatusCell({ invocation }: { invocation: InvocationRecord }) {
 	if (invocation.runStatus) {
-		const outcome = classifyWebRun({
+		const run = {
 			exitCode: invocation.runExitCode,
 			status: invocation.runStatus,
 			stopReason: invocation.runStopReason,
 			summary: invocation.runSummary,
-		});
-		// The secondary line earns its place only where the raw status says something the badge
-		// does not. "Completed" over "completed" is noise; "Blocked: gate" over "failed" is not.
-		const echoesBadge = outcome.label.toLowerCase().includes(invocation.status);
+		};
+		const outcome = classifyWebRun(run);
+		const tally = bucketLabels[classifyWebRunTelemetryBucket(run)];
+		// The secondary line earns its place only where the tally says something the badge does
+		// not. "Completed" under "Completed" is noise; "Stopped" under "Aborted" is not.
+		const echoesBadge = outcome.label.toLowerCase().includes(tally.toLowerCase());
 		return (
 			<span title={outcome.title}>
 				<Badge tone={outcome.tone}>{outcome.label}</Badge>
 				{echoesBadge ? null : (
 					<span className="mt-0.5 block text-2xs text-muted-foreground">
-						{invocation.status}
+						Counted under {tally}
 					</span>
 				)}
 			</span>

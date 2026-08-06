@@ -66,11 +66,20 @@ function renderAxes(): RenderedAxes {
 	return JSON.parse(new TextDecoder().decode(result.stdout)) as RenderedAxes;
 }
 
-/** The category row holds only spans, so it can be sliced out without a parser. */
+/**
+ * The category row holds only spans, so it can be sliced out without a parser.
+ *
+ * Two spans per column now, not one: the labels moved out of the flow so a date wider than its 20px
+ * column can spill over the neighbours the stride leaves empty instead of being clipped by them. The
+ * cell span is still one per bar, and a column the stride skips renders an empty one.
+ */
 function categoryLabels(markup: string): string[] {
-	const row = /<div class="flex gap-1 overflow-hidden pt-1\.5">(.*?)<\/div>/.exec(markup);
+	const row = /<div class="mt-1\.5 flex h-3 gap-1">(.*?)<\/div>/.exec(markup);
 	if (!row) throw new Error('no category axis rendered');
-	return [...(row[1] ?? '').matchAll(/<span[^>]*>(.*?)<\/span>/g)].map((match) => match[1] ?? '');
+	return (row[1] ?? '')
+		.split('<span class="relative min-w-0 flex-1">')
+		.slice(1)
+		.map((cell) => /<span class="absolute[^"]*">([^<]*)<\/span>/.exec(cell)?.[1] ?? '');
 }
 
 function gridlineOffsets(markup: string): string[] {
@@ -147,7 +156,7 @@ describe('Telemetry chart axes', () => {
 				'class="absolute right-0 -translate-y-1/2 text-xs leading-none text-muted-foreground tabular-nums"',
 			);
 			expect(markup).toContain(
-				'class="min-w-0 flex-1 text-xs leading-none whitespace-nowrap text-muted-foreground',
+				'class="absolute top-0 text-xs leading-none whitespace-nowrap text-muted-foreground',
 			);
 		}
 		// Hard-coded greys would drop out of the theme; the gridlines and both label rows stay on

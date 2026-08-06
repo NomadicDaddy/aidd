@@ -80,7 +80,9 @@ describe('one labelled-figure tile', () => {
 		const telemetry = await read('pages', 'telemetry', 'TelemetrySummary.tsx');
 		// The outcome ramp is shared with the chart bars and the legend below, where
 		// "emerald means healthy" would be a claim nobody made — so it goes through `marker`.
-		expect(telemetry).toContain('marker={seriesDot(');
+		// `seriesDot` became `outcomeDot` when the three shape-of-work tiles gave theirs up: the
+		// helper only ever hands out colours the legend below names, and it is named for that now.
+		expect(telemetry).toContain('marker={outcomeDot(');
 		expect(telemetry).not.toMatch(/tone=/);
 		expect(telemetry).not.toContain('function CountCard');
 	});

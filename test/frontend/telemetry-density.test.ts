@@ -250,19 +250,21 @@ describe('recent invocations table', () => {
 		expect(rendered.tableRunless.match(badgeText)?.[1]).toBe('Failed');
 	});
 
-	test('keeps the raw status line only where it adds information', () => {
+	test('keeps the secondary status line only where it adds information', () => {
 		const lines = [
 			...rendered.table.matchAll(
 				/class="mt-0[.]5 block text-2xs text-muted-foreground">([^<]+)</g,
 			),
 		].map((match) => match[1]);
 
-		// "Completed" and "Completed · dirty tree" both echo the raw "completed" underneath them.
-		// "Blocked: gate" over "failed" is the one pairing that carries two different facts.
+		// The line names the summary tile the row is counted under, not the raw invocation status:
+		// the two disagree, and the raw one named a tile that does not count the row. A clean
+		// "Completed" is counted under Completed and says nothing worth a second line; a dirty tree
+		// and a blocked gate are each tallied somewhere their badge does not name.
 		expect(rendered.table).toContain('>Completed<');
 		expect(rendered.table).toContain('Completed · dirty tree');
 		expect(rendered.table).toContain('Blocked: gate');
-		expect(lines).toEqual(['failed']);
+		expect(lines).toEqual(['Counted under Warnings', 'Counted under Failed']);
 		expect(rendered.tableRunless).not.toMatch(
 			/class="mt-0[.]5 block text-2xs text-muted-foreground"/,
 		);

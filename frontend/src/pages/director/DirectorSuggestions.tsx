@@ -1,86 +1,44 @@
-import { buildSuggestionPrompt } from 'aidd-shared/contracts/director';
 import { default as ExternalLink } from 'lucide-react/dist/esm/icons/external-link';
 import { default as Eye } from 'lucide-react/dist/esm/icons/eye';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
-import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
-import type { DirectorSuggestionRecord } from '../../api/types.ts';
+import type { DirectorRiskLevel, DirectorSuggestionRecord } from '../../api/types.ts';
 import type { SegmentedControlOption } from '../../components/ui/segmented-control.tsx';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Button, buttonClassName, IconButton } from '../../components/ui/button.tsx';
+import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { Dialog, DialogPanel } from '../../components/ui/dialog.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { humanizeEnum } from '../../lib/formatters.ts';
+import { toneSolid } from '../../lib/tones.ts';
 import { riskTone } from './directorUtils.ts';
+import { SuggestionLaunchPreviewDialog } from './SuggestionLaunchPreviewDialog.tsx';
 
-const ALL = '__all__';
-
-// Suggestion args are persisted as a JSON object string (the recipe's targeting
-// parameters). Render them as readable `name: value` lines rather than raw JSON so
-// the launch preview matches the prompt preview shown for run-backed suggestions.
-function formatRecipeArgs(suggestedArgs: null | string): string {
-	if (!suggestedArgs) return 'No additional recipe parameters.';
-	try {
-		const parsed: unknown = JSON.parse(suggestedArgs);
-		if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-			const lines = Object.entries(parsed as Record<string, unknown>).map(
-				([key, value]) => `${key}: ${String(value)}`,
-			);
-			return lines.length > 0 ? lines.join('\n') : 'No additional recipe parameters.';
-		}
-	} catch {
-		// Not valid JSON — fall back to showing the raw stored value.
-	}
-	return suggestedArgs;
-}
-
-function SuggestionLaunchPreviewDialog({
-	onClose,
-	suggestion,
-}: {
-	onClose: () => void;
-	suggestion: DirectorSuggestionRecord;
-}) {
-	const launchesRecipe = suggestion.suggestedRecipe !== null;
+/**
+ * Risk as a reading, not an alarm.
+ *
+ * A generated batch is uniform: all ten rows carried a filled red "High risk" pill, so the only red
+ * on the surface appeared on 10 of 10 rows and told a reader nothing except that red had stopped
+ * meaning "something is wrong". The ranking is still there to be read — it is what the risk filter
+ * beside it sorts on — but it costs a 8px swatch rather than the loudest object on the page.
+ */
+function RiskReading({ risk }: { risk: DirectorRiskLevel }) {
 	return (
-		<Dialog aria-labelledby="suggestion-launch-preview-title" onClose={onClose} open>
-			<DialogPanel className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto p-5">
-				<div className="flex items-start justify-between gap-3">
-					<div className="min-w-0">
-						<h2
-							className="text-lg font-semibold text-foreground"
-							id="suggestion-launch-preview-title">
-							Launch preview
-						</h2>
-						<p className="mt-1 text-sm text-muted-foreground">
-							Launch starts {launchesRecipe ? 'a recipe pipeline' : 'a coding run'} in{' '}
-							<span className="font-medium text-foreground">
-								{suggestion.projectId}
-							</span>{' '}
-							{launchesRecipe
-								? `using ${suggestion.suggestedRecipe}:`
-								: 'with this prompt:'}
-						</p>
-					</div>
-					<IconButton ariaLabel="Close launch preview" onClick={onClose} variant="ghost">
-						<X className="h-4 w-4" />
-					</IconButton>
-				</div>
-				<pre className="mt-4 rounded-md bg-muted p-3 font-mono text-xs break-words whitespace-pre-wrap text-foreground">
-					{launchesRecipe
-						? formatRecipeArgs(suggestion.suggestedArgs)
-						: buildSuggestionPrompt(suggestion)}
-				</pre>
-			</DialogPanel>
-		</Dialog>
+		<span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+			<span
+				aria-hidden="true"
+				className={`h-2 w-2 shrink-0 rounded-full ${toneSolid[riskTone(risk)]}`}
+			/>
+			{humanizeEnum(risk)} risk
+		</span>
 	);
 }
+
+const ALL = '__all__';
 
 /**
  * One suggestion.
@@ -89,6 +47,10 @@ function SuggestionLaunchPreviewDialog({
  * cluster on its own line and four default-size buttons — roughly 190px for what is one decision.
  * The badges ride with the title, the description clamps to two lines, and the actions are compact,
  * so a queue of eight is scannable instead of a 1,500px column.
+ *
+ * A sunken block inside the section Card rather than a Card of its own: ten detached cards under a
+ * header card made eleven outlined objects and a 2503px page, while `CycleRow` in the column beside
+ * it renders the same shape as compact rows inside one card. This is that shape.
  */
 function SuggestionRow({
 	onDismiss,
@@ -108,18 +70,21 @@ function SuggestionRow({
 			? `/runs?run=${encodeURIComponent(suggestion.launchedRunId)}`
 			: null;
 	return (
-		<Card>
+		<div className="rounded-md bg-muted p-3">
 			<div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
 				<h3 className="min-w-0 text-sm font-semibold text-foreground">
 					{suggestion.title}
 				</h3>
-				<div className="flex flex-wrap gap-1.5">
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 					<Badge>{humanizeEnum(suggestion.taskType)}</Badge>
-					<Badge tone={riskTone(suggestion.riskLevel)}>
-						{humanizeEnum(suggestion.riskLevel)} risk
-					</Badge>
 					{isFleetWide && <Badge>Fleet-wide</Badge>}
-					<Badge>{humanizeEnum(suggestion.status)}</Badge>
+					<RiskReading risk={suggestion.riskLevel} />
+					{/* Every row in this queue is pending — that is what makes it a queue — so the
+					    badge restated the default state ten times and left no room for the states
+					    that are worth a badge. Only a departure from it is announced. */}
+					{suggestion.status === 'pending' ? null : (
+						<Badge>{humanizeEnum(suggestion.status)}</Badge>
+					)}
 				</div>
 			</div>
 			<p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -172,7 +137,7 @@ function SuggestionRow({
 					Dismiss
 				</Button>
 			</div>
-		</Card>
+		</div>
 	);
 }
 
@@ -217,7 +182,7 @@ export function DirectorSuggestionsList({
 			<Card>
 				<CardHeader
 					badge={
-						<Badge tone={visibleSuggestions.length > 0 ? 'amber' : 'emerald'}>
+						<Badge showDot tone={visibleSuggestions.length > 0 ? 'amber' : 'emerald'}>
 							{visibleSuggestions.length} open
 						</Badge>
 					}
@@ -227,37 +192,50 @@ export function DirectorSuggestionsList({
 					title="Suggestions"
 				/>
 				{openSuggestions.length > 0 && (
-					<div className="mt-3 flex flex-wrap items-center gap-2">
+					// The scope bar the Diary and Telemetry use: one group left, the other right,
+					// with the readout between them. Flush left at an 8px gap the two controls read
+					// as one four-segment control, and "All types" next to "All risk" gave no hint
+					// that they were separate axes.
+					<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
 						<SegmentedControl
 							ariaLabel="Filter suggestions by task type"
 							onChange={setTaskFilter}
 							options={taskOptions}
 							value={taskFilter}
 						/>
-						<SegmentedControl
-							ariaLabel="Filter suggestions by risk level"
-							onChange={setRiskFilter}
-							options={riskOptions}
-							value={riskFilter}
-						/>
+						<div className="flex flex-wrap items-center gap-3">
+							<span
+								className="text-xs text-muted-foreground tabular-nums"
+								role="status">
+								Showing {visibleSuggestions.length} of {openSuggestions.length}
+							</span>
+							<SegmentedControl
+								ariaLabel="Filter suggestions by risk level"
+								onChange={setRiskFilter}
+								options={riskOptions}
+								value={riskFilter}
+							/>
+						</div>
 					</div>
 				)}
+				<div className="mt-3 space-y-2">
+					{openSuggestions.length === 0 && (
+						<EmptyState>No suggestions yet. Run a cycle to generate them.</EmptyState>
+					)}
+					{openSuggestions.length > 0 && visibleSuggestions.length === 0 && (
+						<EmptyState>No suggestions match the selected filters.</EmptyState>
+					)}
+					{visibleSuggestions.map((suggestion) => (
+						<SuggestionRow
+							key={suggestion.id}
+							onDismiss={onDismiss}
+							onLaunch={onLaunch}
+							onPreview={setPreviewSuggestion}
+							suggestion={suggestion}
+						/>
+					))}
+				</div>
 			</Card>
-			{openSuggestions.length === 0 && (
-				<EmptyState>No suggestions yet. Run a cycle to generate them.</EmptyState>
-			)}
-			{openSuggestions.length > 0 && visibleSuggestions.length === 0 && (
-				<EmptyState>No suggestions match the selected filters.</EmptyState>
-			)}
-			{visibleSuggestions.map((suggestion) => (
-				<SuggestionRow
-					key={suggestion.id}
-					onDismiss={onDismiss}
-					onLaunch={onLaunch}
-					onPreview={setPreviewSuggestion}
-					suggestion={suggestion}
-				/>
-			))}
 			{previewSuggestion && (
 				<SuggestionLaunchPreviewDialog
 					onClose={() => setPreviewSuggestion(null)}

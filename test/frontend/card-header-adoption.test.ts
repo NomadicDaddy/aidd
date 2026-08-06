@@ -19,7 +19,14 @@ const sectionHeadingClass =
 const exemptions: { file: string; why: string }[] = [
 	{ file: 'diary/DiaryEntryCard.tsx', why: 'list-item title inside a feed row, not a section' },
 	{ file: 'director/DirectorChatSection.tsx', why: 'label for the session rail, not a section' },
-	{ file: 'director/DirectorSuggestions.tsx', why: 'dialog title, owned by DialogPanel' },
+	// The launch-preview dialog moved out of DirectorSuggestions.tsx when the queue rows changed
+	// shape and pushed the module past the per-file line cap; its title went with it. What is left
+	// in the queue file is the per-row title, which is a list item and not a section either.
+	{ file: 'director/DirectorSuggestions.tsx', why: 'per-suggestion row title inside a list' },
+	{
+		file: 'director/SuggestionLaunchPreviewDialog.tsx',
+		why: 'dialog title, owned by DialogPanel',
+	},
 	{ file: 'pipelineSessions/StepRows.tsx', why: 'per-step row title inside a list' },
 	{ file: 'projects/ProjectCard.tsx', why: 'catalog card title, links to the project' },
 	{

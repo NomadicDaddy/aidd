@@ -131,13 +131,18 @@ export function DirectorChatSection({
 					<div className="flex min-h-0 min-w-0 flex-col gap-2">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="text-sm font-semibold text-foreground">Chats</h3>
-							<IconButton
-								ariaLabel="New Director chat"
+							{/* The one constructive action in this column was an unlabelled ghost
+							    glyph while the per-row Delete beside it carried the highest chroma
+							    on the surface — the page pointed at destruction and hid creation.
+							    It says what it does now. */}
+							<Button
 								disabled={createPending}
 								onClick={onStartSession}
-								variant="ghost">
-								<MessageSquarePlus className="h-4 w-4" />
-							</IconButton>
+								size="compact"
+								variant="secondary">
+								<MessageSquarePlus className="h-3.5 w-3.5" />
+								New chat
+							</Button>
 						</div>
 						{/* The rail scrolls rather than growing: it is the shorter of the two columns
 						    and the reclaimed height is the transcript's, not its. */}
@@ -170,13 +175,17 @@ export function DirectorChatSection({
 												{formatDate(session.updatedAt)}
 											</div>
 										</button>
+										{/* A ghost, not a filled danger control: this was the loudest
+										    thing in the left half of the page, repeated once per
+										    row, for an action nobody is looking for. The
+										    confirmation dialog is where the weight belongs. */}
 										<IconButton
 											ariaLabel={`Delete Director chat: ${sessionContext}`}
 											className="m-1 self-center"
 											disabled={deletePending}
 											onClick={() => onRequestDeleteSession(session.id)}
 											title={`Delete ${sessionContext}`}
-											variant="danger">
+											variant="ghost">
 											<Trash2 className="h-4 w-4" />
 										</IconButton>
 									</div>

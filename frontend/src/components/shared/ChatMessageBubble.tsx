@@ -1,18 +1,20 @@
 import type { ReactNode } from 'react';
 
 import { cn } from '../../lib/cn.ts';
-import { toneSurface } from '../../lib/tones.ts';
+import { microLabelClass } from '../../lib/typography.ts';
 
 /** Who wrote a Director chat message. */
 export type ChatMessageRole = 'assistant' | 'system' | 'user';
 
 /**
- * Author names, read out before the message body.
+ * Author names, printed above the message body.
  *
  * The bubbles carried their author only in geometry — right-aligned dark fill for the user,
- * left-aligned grey for the Director — so a screen reader got an undifferentiated run of text, and a
- * pasted-in transcript lost the speakers entirely. The label is visually hidden because the
- * alignment already does the work on screen; it is not hidden from assistive technology.
+ * left-aligned grey for the Director — with the name `sr-only`. That leaves a sighted reader
+ * decoding two fills, and a transcript whose only message is a single filled bubble says nothing at
+ * all about who is speaking. The name is visible now, in the micro step so it labels the message
+ * rather than competing with it, and inherits the bubble's own text colour at reduced opacity
+ * because the user bubble inverts.
  */
 const AUTHOR_LABEL: Record<ChatMessageRole, string> = {
 	assistant: 'Director',
@@ -21,13 +23,14 @@ const AUTHOR_LABEL: Record<ChatMessageRole, string> = {
 };
 
 /**
- * The system bubble was amber — the tone this app reserves for "needs attention" — so routine
- * transcript scaffolding rendered as a warning next to the Director's own replies. Teal is the
- * informational tone, which is what a system note is.
+ * The system bubble was filled — first amber, the tone reserved for "needs attention", then teal,
+ * the accent. Either way routine transcript scaffolding took a full colour field beside the
+ * Director's own replies and differed from them by fill alone. A system note is an aside: it takes
+ * a dashed outline and no fill, which is the one treatment on the surface that is not a bubble.
  */
 const ROLE_CLASS: Record<ChatMessageRole, string> = {
 	assistant: 'max-w-[88%] bg-muted text-foreground',
-	system: cn('max-w-[88%] text-accent-muted-foreground', toneSurface.teal),
+	system: 'max-w-[88%] border border-dashed border-border text-muted-foreground',
 	user: 'ml-auto max-w-[82%] bg-foreground text-background',
 };
 
@@ -51,7 +54,7 @@ export function ChatMessageBubble({
 }) {
 	return (
 		<div className={cn('rounded-md px-3 py-2 text-sm', ROLE_CLASS[role], className)}>
-			<span className="sr-only">{AUTHOR_LABEL[role]}: </span>
+			<div className={cn(microLabelClass, 'mb-1 opacity-70')}>{AUTHOR_LABEL[role]}</div>
 			<div className="break-words whitespace-pre-wrap">{content}</div>
 			{children}
 		</div>

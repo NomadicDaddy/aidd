@@ -40,7 +40,7 @@ export function ProfileMatrixMobileList({
 	showFacets: boolean;
 }) {
 	return (
-		<div className="space-y-3 md:hidden">
+		<div className="space-y-3 xl:hidden">
 			{rows.map((row) => {
 				const auditCount = row.preview?.audits.length ?? 0;
 				const applicable = row.preview?.audits.filter((audit) => audit.applies).length ?? 0;

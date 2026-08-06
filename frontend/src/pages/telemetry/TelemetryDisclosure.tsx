@@ -42,7 +42,7 @@ export function TelemetryDisclosure() {
 						</span>
 					</span>
 				</summary>
-				<div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+				<div className="mt-3 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
 					<DisclosureItem title="Invocations">
 						Resource and project identity, source, backend and model, timestamps,
 						duration, outcome, exit and error information, hierarchy, and run/session

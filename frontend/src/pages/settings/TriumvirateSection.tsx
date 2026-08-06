@@ -24,7 +24,7 @@ export function TriumvirateSection({
 				description="Override the secondary, overseer, and execution roles used by Triumvirate runs."
 				title="Triumvirate Roles"
 			/>
-			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+			<div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
 				<FieldRow label="Secondary CLI">
 					<select
 						className={`${selectClass} w-full`}

@@ -18,7 +18,7 @@ function StatusRow({ item }: { item: SettingsSourceControlStatus }) {
 	const detailLine =
 		item.authStatus && item.detail.trim().toLowerCase() !== item.status ? item.detail : null;
 	return (
-		<div className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+		<div className="grid gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
 			<div className="min-w-0">
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="font-medium text-foreground">{item.label}</span>
@@ -34,7 +34,7 @@ function StatusRow({ item }: { item: SettingsSourceControlStatus }) {
 					<p className="mt-1 text-xs text-muted-foreground">{detailLine}</p>
 				) : null}
 			</div>
-			<div className="flex items-center gap-2 md:justify-end">
+			<div className="flex items-center gap-2 lg:justify-end">
 				<Badge showDot tone={tone}>
 					{authenticated ? item.status : 'not authenticated'}
 				</Badge>

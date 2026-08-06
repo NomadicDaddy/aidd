@@ -119,7 +119,7 @@ export function RecipesPage() {
 							size="toolbar"
 							variant="primary">
 							<Plus className="h-4 w-4" />
-							<span className="hidden md:inline">New Recipe</span>
+							<span className="hidden lg:inline">New Recipe</span>
 						</Button>
 						<Button
 							aria-label="Reload recipes"
@@ -131,7 +131,7 @@ export function RecipesPage() {
 									recipes.reloadRecipes.isPending ? 'animate-spin' : ''
 								}`}
 							/>
-							<span className="hidden md:inline">
+							<span className="hidden lg:inline">
 								{recipes.reloadRecipes.isPending ? 'Reloading…' : 'Reload'}
 							</span>
 						</Button>
@@ -282,7 +282,7 @@ export function RecipesPage() {
 			) : (
 				// `gap-4`, the same gutter the Projects grid uses. At `gap-3` the cards sat closer
 				// to each other than their own padding, so a row read as one banded surface.
-				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				<div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 					{filtered.map((recipe) => (
 						<RecipeCard
 							key={recipe.id}

@@ -18,16 +18,19 @@ import { formatDate, formatDuration } from '../../lib/formatters.ts';
 import { InvocationDetails } from './InvocationDetails.tsx';
 
 /**
- * Source and Project are the two columns that survive being dropped: at 768 the table pushed Status
- * and Details — the columns an operator is actually scanning — off the right edge, and Project is
- * repeated verbatim inside the Inspect panel of every row.
+ * Source and Project are the two columns that survive being dropped: below the content breakpoint
+ * the table pushed Status and Details — the columns an operator is actually scanning — off the
+ * right edge, and Project is repeated verbatim inside the Inspect panel of every row.
+ *
+ * Gated at `xl` rather than the 768px tier it used to use. The main column is 736px wide at 1024
+ * and this table wants 812px, so the columns come back only where they actually fit.
  */
-const HIDDEN_BELOW_MD = 'hidden md:table-cell';
+const HIDDEN_BELOW_XL = 'hidden xl:table-cell';
 
 const columns: { className?: string; label: string }[] = [
 	{ label: 'Resource' },
-	{ className: HIDDEN_BELOW_MD, label: 'Source' },
-	{ className: HIDDEN_BELOW_MD, label: 'Project' },
+	{ className: HIDDEN_BELOW_XL, label: 'Source' },
+	{ className: HIDDEN_BELOW_XL, label: 'Project' },
 	{ label: 'Started' },
 	{ label: 'Duration' },
 	{ label: 'Status' },
@@ -99,10 +102,10 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 					/>
 				</div>
 			</td>
-			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_MD)}>
+			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_XL)}>
 				{invocation.source}
 			</td>
-			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_MD)}>
+			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_XL)}>
 				{invocation.projectName}
 			</td>
 			<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground">

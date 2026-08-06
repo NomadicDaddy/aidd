@@ -78,7 +78,7 @@ export function ProfileTab({
 				{/* items-start so each facet card sizes to its own option count: stretched to an
 				    equal row height with top-aligned content, 'External integrations' (4 options) left
 				    ~180px of void beside 'Data sensitivity' (5). */}
-				<div className="grid items-start gap-4 md:grid-cols-2">
+				<div className="grid items-start gap-4 xl:grid-cols-2">
 					{profileFacets.map((facet) => (
 						<FacetCard
 							facet={facet}

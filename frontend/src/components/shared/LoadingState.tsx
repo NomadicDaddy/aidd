@@ -51,7 +51,7 @@ export function SkeletonCards({
 		<div
 			aria-busy="true"
 			aria-live="polite"
-			className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+			className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
 			<span className="sr-only">{label}</span>
 			{Array.from({ length: count }).map((_, index) => (
 				<Card className="space-y-3" key={index}>

@@ -52,7 +52,7 @@ export function LaunchForm({
 	return (
 		<Card {...(className ? { className } : {})}>
 			<div className="space-y-3">
-				<div className="grid gap-3 md:grid-cols-2">
+				<div className="grid gap-3 lg:grid-cols-2">
 					{/* Required, not invalid. This select was painted `aria-invalid` on first
 					    paint of a form nobody had touched — the operator had done nothing wrong,
 					    and a screen reader was told the control held a bad value before it held

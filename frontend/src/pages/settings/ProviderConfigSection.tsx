@@ -108,7 +108,7 @@ function ProviderCard({
 			</button>
 			{open ? (
 				<div
-					className="grid gap-3 border-t border-border p-3 md:grid-cols-2 xl:grid-cols-3"
+					className="grid gap-3 border-t border-border p-3 lg:grid-cols-2 xl:grid-cols-3"
 					id={panelId}>
 					<FieldRow label="Base URL">
 						<Input
@@ -146,7 +146,7 @@ function ProviderCard({
 							))}
 						</select>
 					</FieldRow>
-					<FieldRow className="md:col-span-2 xl:col-span-3" label="API Key">
+					<FieldRow className="lg:col-span-2 xl:col-span-3" label="API Key">
 						<Input
 							autoComplete="off"
 							name={`${name}-api-key`}

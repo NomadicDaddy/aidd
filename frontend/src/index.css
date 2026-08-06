@@ -17,6 +17,14 @@
 	   inventing 0.62/0.65/0.68rem one-offs that differ from each other by a rounding error. */
 	--text-2xs: 0.6875rem;
 	--text-2xs--line-height: 1rem;
+
+	/* There is no `md` tier in this app. Content width is set by the sidebar rail, not by the
+	   viewport: at 768px the main column is 656px with the rail collapsed and 480px with it
+	   expanded, so a 768px gate reads as "wide" while the content is narrower than a 640px phone
+	   column gets. Layout steps at `sm` (shell reflow), `lg` (page header, multi-column forms) and
+	   `xl` (tables). Deleting the tier means a stray `md:` utility emits nothing at all rather than
+	   silently gating on the one number that does not describe this layout. */
+	--breakpoint-md: initial;
 }
 
 :root {

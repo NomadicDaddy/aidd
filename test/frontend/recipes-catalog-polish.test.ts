@@ -58,7 +58,7 @@ describe('card height is bounded by the card, not by its longest description', (
 
 	test('the grid uses the baseline gutter', async () => {
 		const page = await read('pages/recipes/RecipesPage.tsx');
-		expect(page).toContain('grid gap-4 md:grid-cols-2 xl:grid-cols-3');
+		expect(page).toContain('grid gap-4 lg:grid-cols-2 xl:grid-cols-3');
 	});
 });
 

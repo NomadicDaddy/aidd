@@ -45,7 +45,7 @@ export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
 			    grid held two columns until `lg` and the outcome row alone filled the viewport.
 			    These are `compact`: eight tiles at the headline step would out-shout the three
 			    figures above them, which are what the page is actually reporting. */}
-			<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8">
+			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
 				<Metric
 					label="Completed"
 					marker={outcomeDot(outcomeSolid.completed)}

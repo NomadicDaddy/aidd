@@ -81,7 +81,7 @@ export function RunsPage() {
 				selectedLaunchProject={page.selectedLaunchProject}
 			/>
 			{form.mode === 'triumvirate' && (
-				<Card className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+				<Card className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
 					<LaunchTargetControl
 						mode="triumvirate"
 						onChange={form.setPrimaryTarget}

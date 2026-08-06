@@ -30,11 +30,40 @@ describe('content-aware responsive breakpoints', () => {
 		for (const [relativePath, expectedClasses] of contentBreakpointContracts) {
 			const source = await readFile(join(frontendSource, ...relativePath.split('/')), 'utf8');
 
-			expect(source).not.toMatch(/\bmd:(?:block|hidden|grid)\b/);
 			for (const expectedClass of expectedClasses) {
 				expect(source).toContain(expectedClass);
 			}
 		}
+	});
+
+	test('has no md tier to reach for, anywhere under frontend/src', async () => {
+		// This replaced a per-file `\bmd:(?:block|hidden|grid)\b` check that ran over the eleven
+		// contracts above. Both halves of it were too narrow: the sweep it was written to protect
+		// was undone within two days by 38 `md:` utilities in 26 other files, and the alternation
+		// would have missed most of them anyway — `md:table-cell`, `md:inline`, `md:col-span-2`,
+		// `md:flex-row`, `md:items-center` — including one of the three table/stack swaps it was
+		// specifically aimed at. So: every file, and the bare prefix.
+		//
+		// Shaped to a Tailwind variant and nothing else: the lookbehind drops `spec.md:12` file
+		// references and the `--breakpoint-md:` declaration itself, and requiring a utility
+		// character after the colon drops prose that quotes `md:` while explaining the rule. The
+		// tier is also deleted from @theme, so a stray one emits no CSS; this is what names it.
+		const mdVariant = /(?<![-.\w])md:[a-z0-9[!]/;
+		const glob = new Bun.Glob('**/*.{ts,tsx,css}');
+		const offenders: string[] = [];
+
+		for await (const file of glob.scan({ absolute: false, cwd: frontendSource })) {
+			const path = file.replaceAll('\\', '/');
+			const source = await readFile(join(frontendSource, file), 'utf8');
+			for (const [index, line] of source.split('\n').entries()) {
+				if (mdVariant.test(line)) offenders.push(`${path}:${index + 1}`);
+			}
+		}
+
+		expect(offenders).toEqual([]);
+		// The tier is gone from the theme, not merely unused.
+		const css = await readFile(join(frontendSource, 'index.css'), 'utf8');
+		expect(css).toContain('--breakpoint-md: initial;');
 	});
 
 	test('keeps the shared page header stacked until the lg content breakpoint', async () => {

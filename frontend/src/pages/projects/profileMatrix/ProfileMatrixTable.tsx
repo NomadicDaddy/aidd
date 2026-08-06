@@ -58,7 +58,7 @@ export function ProfileMatrixTable({
 
 	return (
 		// Hidden below `md`, where ProfileMatrixMobileList renders the same rows as stacked cards.
-		<Card className="hidden p-0 md:block">
+		<Card className="hidden p-0 xl:block">
 			<OverflowScroller
 				ariaLabel="Project profile matrix"
 				scrollerClassName="max-h-[70vh] overflow-y-auto">

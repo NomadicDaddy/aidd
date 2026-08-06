@@ -36,7 +36,7 @@ export function FilterToolbar({
 }: {
 	children: ReactNode;
 	className?: string;
-	/** The grid template for the control row, e.g. `md:grid-cols-[2fr_1fr_1fr_1fr]`. */
+	/** The grid template for the control row, e.g. `lg:grid-cols-[2fr_1fr_1fr_1fr]`. */
 	columns: string;
 	filtered: number;
 	hasFilters: boolean;

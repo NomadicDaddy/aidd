@@ -22,7 +22,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 	const currentMilestone = project.metadata.roadmap?.currentMilestone;
 	const check = project.metadata.artifactCheck;
 	return (
-		<div className="grid gap-4 md:grid-cols-3">
+		<div className="grid gap-4 lg:grid-cols-3">
 			<Metric
 				detail={
 					<>

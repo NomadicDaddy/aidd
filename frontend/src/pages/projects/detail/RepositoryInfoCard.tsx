@@ -122,7 +122,7 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 export function RepositoryInfoCard({ info }: { info: RepositoryInfo }) {
 	const logo = logoForLanguage(info.dominantLanguage);
 	return (
-		// self-start, and beside the statistics only from xl: as a stretched md:w-64 column the
+		// self-start, and beside the statistics only from xl: as a stretched 16rem column the
 		// identity panel matched the full height of the statistics list, so a mark and two short
 		// lines of text owned the largest, emptiest box on the tab.
 		<Card className="flex flex-col gap-5 xl:flex-row xl:items-start">

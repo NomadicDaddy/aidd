@@ -189,14 +189,14 @@ describe('telemetry lets the data lead', () => {
 		expect(rendered.disclosure.slice(summaryEnd)).toContain('View system and browser metrics');
 	});
 
-	test('the summary tiles anchor their values to a common baseline and pack at tablet width', async () => {
+	test('the summary tiles anchor their values to a common baseline and pack as the column widens', async () => {
 		const summary = await telemetrySource('TelemetrySummary.tsx');
 
 		// The baseline used to be `CountCard`'s, declared here. It is now `Metric`'s, so this page
 		// no longer states it — but the property is the same one and still has to survive, which
 		// is why the assertion moved to the rendered markup rather than being deleted with the
 		// class it used to name.
-		expect(summary).toContain('sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8');
+		expect(summary).toContain('sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8');
 		expect(summary).not.toMatch(/flex h-full flex-col/);
 		expect(rendered.summary).toContain('flex h-full flex-col');
 		expect(rendered.summary).toContain('flex min-w-0 flex-1 flex-col justify-between');
@@ -270,9 +270,9 @@ describe('recent invocations table', () => {
 		);
 	});
 
-	test('drops the two repeatable columns below md so Status and Details stay on screen', () => {
+	test('drops the two repeatable columns below xl so Status and Details stay on screen', () => {
 		// Header and body cells both, or the table shifts by a column at the breakpoint.
-		expect(rendered.table.match(/hidden md:table-cell/g)?.length).toBe(2 + 2 * 3);
+		expect(rendered.table.match(/hidden xl:table-cell/g)?.length).toBe(2 + 2 * 3);
 		expect(rendered.table).toContain('whitespace-nowrap');
 	});
 

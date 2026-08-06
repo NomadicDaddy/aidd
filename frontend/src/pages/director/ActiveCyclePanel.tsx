@@ -73,7 +73,7 @@ export function ActiveCyclePanel({ cycle, now }: { cycle: DirectorCycle; now: nu
 					</div>
 				</div>
 			)}
-			<div className="mt-3 grid gap-2 md:grid-cols-3">
+			<div className="mt-3 grid gap-2 lg:grid-cols-3">
 				<CycleArtifactRow
 					label="Fleet snapshot"
 					path={artifacts.fleetSummaryPath}

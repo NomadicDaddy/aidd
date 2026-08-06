@@ -32,7 +32,7 @@ export function FeatureFilters({
 }) {
 	return (
 		<FilterToolbar
-			columns="md:grid-cols-[2fr_1fr_1fr_1fr]"
+			columns="lg:grid-cols-[2fr_1fr_1fr_1fr]"
 			filtered={filteredTotal}
 			hasFilters={hasFilters}
 			noun="features"

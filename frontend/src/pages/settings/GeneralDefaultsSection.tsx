@@ -25,7 +25,7 @@ export function GeneralDefaultsSection({
 				description="Set the default backend, models, reasoning, and project initialization path."
 				title="Model Routing"
 			/>
-			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+			<div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
 				<FieldRow label="Default CLI">
 					<select
 						className={`${selectClass} w-full`}
@@ -96,7 +96,7 @@ export function GeneralDefaultsSection({
 					label="Audits enabled"
 					onChange={(event) => setField('auditsEnabled', event.target.checked)}
 				/>
-				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Init Script">
+				<FieldRow className="lg:col-span-2 xl:col-span-3" label="Spernakit Init Script">
 					<Input
 						onChange={(event) =>
 							setField('spernakitInitScript', nullableText(event.target.value))
@@ -110,7 +110,7 @@ export function GeneralDefaultsSection({
 						template on demand.
 					</p>
 				</FieldRow>
-				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Template Repo">
+				<FieldRow className="lg:col-span-2 xl:col-span-3" label="Spernakit Template Repo">
 					<Input
 						onChange={(event) =>
 							setField('spernakitTemplateRepo', nullableText(event.target.value))
@@ -123,7 +123,7 @@ export function GeneralDefaultsSection({
 						script. Defaults to NomadicDaddy/spernakit.
 					</p>
 				</FieldRow>
-				<FieldRow className="md:col-span-2 xl:col-span-3" label="Spernakit Template Ref">
+				<FieldRow className="lg:col-span-2 xl:col-span-3" label="Spernakit Template Ref">
 					<Input
 						onChange={(event) =>
 							setField('spernakitTemplateRef', nullableText(event.target.value))
@@ -140,7 +140,7 @@ export function GeneralDefaultsSection({
 				    intro to whatever followed. It is inside the box, where the other eight are. */}
 				<FieldCheckbox
 					checked={form.showSpernakitProject}
-					className="md:col-span-2 xl:col-span-3"
+					className="lg:col-span-2 xl:col-span-3"
 					description="The Spernakit template checkout is hidden from the projects page by default; enable this if you plan to work on Spernakit itself."
 					label="Show Spernakit in projects list"
 					onChange={(event) => setField('showSpernakitProject', event.target.checked)}

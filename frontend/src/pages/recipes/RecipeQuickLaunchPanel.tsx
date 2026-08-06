@@ -38,7 +38,7 @@ export function RecipeQuickLaunchPanel({
 					Close
 				</Button>
 			</div>
-			<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+			<div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
 				{recipe.parameters
 					.filter((parameter) => !autoParameters.has(parameter.name))
 					.map((parameter) => (

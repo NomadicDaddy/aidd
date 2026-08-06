@@ -138,7 +138,7 @@ export function RepositoryRefsCard({
 	worktrees: RepositoryWorktree[];
 }) {
 	return (
-		<Card className="grid grid-cols-1 gap-6 md:grid-cols-3">
+		<Card className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 			<BranchPanel branches={branches} />
 			<StashPanel stashes={stashes} />
 			<WorktreePanel worktrees={worktrees} />

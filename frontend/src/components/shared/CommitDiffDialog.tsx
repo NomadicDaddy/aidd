@@ -146,7 +146,6 @@ export function CommitDiffDialog({
 		<Dialog
 			aria-labelledby="commit-diff-title"
 			initialFocus="container"
-			lockScroll
 			onClose={onClose}
 			open
 			overlayClassName="focus:outline-none"

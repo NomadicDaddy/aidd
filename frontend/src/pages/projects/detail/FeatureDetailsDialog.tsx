@@ -105,7 +105,6 @@ export function FeatureDetailsDialog({
 		<Dialog
 			aria-labelledby="feature-details-title"
 			initialFocus="container"
-			lockScroll
 			onClose={onClose}
 			open
 			overlayClassName="focus:outline-none"

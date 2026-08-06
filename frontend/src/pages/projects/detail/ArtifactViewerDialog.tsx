@@ -151,7 +151,6 @@ export function ArtifactViewerDialog({
 		<Dialog
 			aria-labelledby="artifact-viewer-title"
 			initialFocus="container"
-			lockScroll
 			onClose={onClose}
 			open
 			overlayClassName="focus:outline-none"

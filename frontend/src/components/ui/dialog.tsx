@@ -34,7 +34,11 @@ interface DialogProps {
 	children: ReactNode;
 	/** Where to place focus on open. Falls back to the dialog container. */
 	initialFocus?: 'container' | 'first' | 'last';
-	/** Lock body scroll while open (off by default to preserve scrollbar layout). */
+	/**
+	 * Lock body scroll while open. On by default: a modal that lets the page move behind it is
+	 * reporting that it did not take the interaction. Pass `false` only for a surface that genuinely
+	 * needs the background to scroll, and say why at the call site.
+	 */
 	lockScroll?: boolean;
 	onClose: () => void;
 	open: boolean;
@@ -60,7 +64,7 @@ export function Dialog({
 	'aria-labelledby': labelledBy,
 	children,
 	initialFocus = 'first',
-	lockScroll = false,
+	lockScroll = true,
 	onClose,
 	open,
 	overlayClassName,
@@ -79,7 +83,19 @@ export function Dialog({
 
 		const releaseInert = acquireAppShellInert();
 		const previousOverflow = lockScroll ? document.body.style.overflow : null;
-		if (lockScroll) document.body.style.overflow = 'hidden';
+		const previousPaddingRight = lockScroll ? document.body.style.paddingRight : null;
+		if (lockScroll) {
+			// The reason locking used to be opt-in was that it reflows the page: removing the
+			// viewport scrollbar hands its width back to the layout, and everything jumps right the
+			// instant a dialog opens. Reserving the gutter is the answer to that, not leaving the
+			// page scrollable under a modal — which on a touch device is the whole defect, since the
+			// finger that meant to scroll the dialog scrolls the page behind it and the dialog reads
+			// as unresponsive. Measured rather than assumed: it is 0 on overlay-scrollbar platforms,
+			// including every phone.
+			const gutter = window.innerWidth - document.documentElement.clientWidth;
+			document.body.style.overflow = 'hidden';
+			if (gutter > 0) document.body.style.paddingRight = `${gutter}px`;
+		}
 
 		const overlay = overlayRef.current;
 		const focusables = overlay ? getFocusableElements(overlay) : [];
@@ -94,7 +110,11 @@ export function Dialog({
 		return () => {
 			releaseInert();
 			if (lockScroll && previousOverflow !== null) {
+				// Restored to what this dialog found, not to the empty string: a dialog opened from
+				// inside another one finds `hidden` and has to leave it that way. `overflow: hidden`
+				// on the body keeps the scroll offset, so closing lands where opening left off.
 				document.body.style.overflow = previousOverflow;
+				document.body.style.paddingRight = previousPaddingRight ?? '';
 			}
 			const trigger = triggerRef.current;
 			if (trigger && document.contains(trigger)) trigger.focus();

@@ -4,11 +4,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { JsonTree } from '../../../components/shared/JsonTree.tsx';
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { useProjectFile } from '../../../hooks/useProjectFile.ts';
-import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import { type ArtifactViewerTarget, formatBytes } from './artifactsUtils.ts';
 
 // Element styling for rendered markdown; the app does not ship a typography plugin, so the
@@ -170,9 +170,12 @@ export function ArtifactViewerDialog({
 						{displaySize !== null || target.mtime ? (
 							<p className="mt-0.5 text-xs text-muted-foreground">
 								{displaySize === null ? '—' : formatBytes(displaySize)}
-								{target.mtime
-									? ` · ${formatDate(target.mtime)} (${formatRelativeAge(target.mtime)})`
-									: ''}
+								{target.mtime ? (
+									<>
+										{' · '}
+										<RelativeAge value={target.mtime} />
+									</>
+								) : null}
 							</p>
 						) : null}
 					</div>

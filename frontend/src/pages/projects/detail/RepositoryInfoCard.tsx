@@ -1,20 +1,26 @@
 import type { RepositoryInfo, RepositoryLanguage } from '../../../api/types.ts';
 
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
-import {
-	formatBytes,
-	formatCount,
-	formatDate,
-	formatRelativeAge,
-} from '../../../lib/formatters.ts';
+import { cn } from '../../../lib/cn.ts';
+import { formatBytes, formatCount } from '../../../lib/formatters.ts';
 import { toneSolid } from '../../../lib/tones.ts';
 import { logoForLanguage } from './repositoryLogos.ts';
 
-function Stat({ label, value }: { label: string; value: string }) {
+// `mono` is for the rows whose value is a git ref rather than a number. The branch name sat in the
+// same proportional face as 'Size on disk' two rows below it, on a card where the commit hash under
+// them both was mono — one repository, two spellings of the same kind of thing.
+function Stat({ label, mono = false, value }: { label: string; mono?: boolean; value: string }) {
 	return (
 		<div className="flex items-baseline justify-between gap-3 py-1">
 			<dt className="text-xs text-muted-foreground">{label}</dt>
-			<dd className="text-right text-sm font-medium text-foreground tabular-nums">{value}</dd>
+			<dd
+				className={cn(
+					'text-right text-sm font-medium text-foreground',
+					mono ? 'font-mono break-all' : 'tabular-nums',
+				)}>
+				{value}
+			</dd>
 		</div>
 	);
 }
@@ -46,7 +52,7 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 	return (
 		<div className="flex-1 space-y-4">
 			<dl className="divide-y divide-border/70">
-				<Stat label="Current branch" value={info.currentBranch} />
+				<Stat label="Current branch" mono value={info.currentBranch} />
 				<Stat
 					label="Branches"
 					value={`${formatCount(info.localBranches)} local · ${formatCount(info.remoteBranches)} remote`}
@@ -64,14 +70,15 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 				<div className="space-y-1 rounded-md border border-border/70 bg-muted/70 p-3">
 					<div className="flex items-center justify-between gap-2">
 						<span className="text-xs text-muted-foreground">Latest commit</span>
-						<code className="text-xs text-foreground">{commit.hash.slice(0, 8)}</code>
+						<code className="font-mono text-xs text-foreground">
+							{commit.hash.slice(0, 8)}
+						</code>
 					</div>
 					<p className="truncate text-sm text-foreground">
 						{commit.subject || '(no message)'}
 					</p>
 					<p className="text-xs text-muted-foreground">
-						{commit.authorName} · {formatRelativeAge(commit.date)}
-						{commit.date ? ` (${formatDate(commit.date)})` : ''}
+						{commit.authorName} · <RelativeAge value={commit.date} />
 					</p>
 				</div>
 			) : null}

@@ -11,6 +11,7 @@ import type { ProjectFeature, ProjectFeatureStatus } from '../../../api/types.ts
 import { Button } from '../../../components/ui/button.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
+import { dangerRowActionClass } from '../../../lib/tones.ts';
 import { FEATURE_STATUS_OPTIONS } from './featuresUtils.ts';
 import { stringValue } from './shared.ts';
 
@@ -162,11 +163,12 @@ export function BacklogFeatureActions({
 			/>
 			<Button
 				aria-label={`Delete ${id}`}
+				className={dangerRowActionClass}
 				disabled={disabled}
 				onClick={() => onDelete(feature)}
 				size="compact"
 				title="Delete"
-				variant="danger">
+				variant="ghost">
 				<Trash2 className="h-4 w-4" />
 				Delete
 			</Button>
@@ -225,11 +227,12 @@ export function WaitingApprovalFeatureActions({
 			<FeatureDetailsButton feature={feature} onSelect={onSelect} />
 			<Button
 				aria-label={`Delete ${id}`}
+				className={dangerRowActionClass}
 				disabled={disabled}
 				onClick={() => onDelete(feature)}
 				size="compact"
 				title="Delete"
-				variant="danger">
+				variant="ghost">
 				<Trash2 className="h-4 w-4" />
 				Delete
 			</Button>
@@ -255,7 +258,8 @@ export function WaitingApprovalFeatureActions({
 				disabled={disabled}
 				onClick={() => onApprove(feature, true)}
 				size="compact"
-				title="Approve with decision">
+				title="Approve with decision"
+				variant="secondary">
 				<ClipboardCheck className="h-4 w-4" />
 				Approve with decision
 			</Button>

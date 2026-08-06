@@ -3,9 +3,9 @@ import { Link } from 'react-router';
 import type { ProjectMetadata } from '../../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { formatRelativeAge } from '../../../lib/formatters.ts';
 import { recentMetadataActivity } from './recentActivityItems.ts';
 import { RECENT_ACTIVITY_LIMIT, runStatusTone } from './shared.ts';
 
@@ -52,7 +52,7 @@ export function RecentActivity({
 									</span>
 								</div>
 								<span className="shrink-0 text-xs text-muted-foreground">
-									{formatRelativeAge(run.timestamp)}
+									<RelativeAge value={run.timestamp} />
 								</span>
 							</div>
 							<div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">

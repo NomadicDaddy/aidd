@@ -11,10 +11,10 @@ import type {
 import { CommitChips } from '../../../components/shared/CommitChips.tsx';
 import { CommitDiffDialog } from '../../../components/shared/CommitDiffDialog.tsx';
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
-import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import {
 	buildHistoryEvents,
@@ -56,9 +56,7 @@ function HistoryEventRow({
 					to={eventLink(event, projectPath)}>
 					{event.title}
 				</Link>
-				<span className="text-xs text-muted-foreground" title={formatDate(event.timestamp)}>
-					{formatRelativeAge(event.timestamp)}
-				</span>
+				<RelativeAge className="text-xs text-muted-foreground" value={event.timestamp} />
 			</div>
 			{hasDetail ? (
 				<div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">

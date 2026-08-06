@@ -11,7 +11,9 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useProjectCodeFile, useProjectCodeTree } from '../../../hooks/useProjectCode.ts';
+import { cn } from '../../../lib/cn.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { codeBrowserHeightClass } from './codeBrowserHeight.ts';
 import { CodeFileTree } from './CodeFileTree.tsx';
 import { CodeFileViewer } from './CodeFileViewer.tsx';
 
@@ -104,9 +106,19 @@ export function CodeTab({ projectId }: { projectId: string }) {
 			/>
 			{/* Below lg the viewer comes first. Stacked above it, the tree's own scroller filled
 			    the entire viewport with file names — not one line of the code the reader came for
-			    was visible, and the nested region stole the wheel on the way past. */}
-			<div className="grid min-h-[32rem] gap-0 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
-				<aside className="order-2 border-t border-border p-3 lg:order-1 lg:border-t-0 lg:border-r">
+			    was visible, and the nested region stole the wheel on the way past.
+
+			    From lg the row takes one height off the viewport and both panes scroll inside it.
+			    They used to carry their own rem caps — 34rem for the tree, 42rem for the viewer —
+			    so the two halves of one browser ended 128px apart, the shorter one leaving a band
+			    of empty card beside a still-scrolling neighbour, and neither number had anything
+			    to do with how tall the window actually was. */}
+			<div
+				className={cn(
+					'grid min-h-[32rem] gap-0 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]',
+					codeBrowserHeightClass,
+				)}>
+				<aside className="order-2 border-t border-border p-3 lg:order-1 lg:flex lg:min-h-0 lg:flex-col lg:border-t-0 lg:border-r">
 					<CodeFileTree
 						files={files}
 						onSelect={selectFile}
@@ -114,7 +126,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 						selectedPath={selectedPath}
 					/>
 				</aside>
-				<section className="order-1 min-w-0 lg:order-2">
+				<section className="order-1 min-w-0 lg:order-2 lg:flex lg:min-h-0 lg:flex-col">
 					<CodeFileViewer
 						data={fileQuery.data}
 						isError={fileQuery.isError}

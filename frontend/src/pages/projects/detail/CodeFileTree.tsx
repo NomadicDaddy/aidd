@@ -11,6 +11,7 @@ import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { cn } from '../../../lib/cn.ts';
 import { formatBytes } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { codeBrowserScrollerClass } from './codeBrowserHeight.ts';
 import {
 	ancestorDirs,
 	type DirExpansionOverrides,
@@ -183,11 +184,12 @@ export function CodeFileTree({
 		: (roots[0]?.path ?? null);
 	return (
 		// No inner border: the pane already has one against the viewer, and the Card has another.
-		// The max-height is lifted below lg, where the tree sits under the viewer in page flow
-		// rather than beside it — a nested scroller there swallowed the wheel.
+		// The height comes from the row (see codeBrowserHeight.ts) and is lifted below lg, where
+		// the tree sits under the viewer in page flow rather than beside it — a nested scroller
+		// there swallowed the wheel.
 		<div
 			aria-label="Tracked files"
-			className="overflow-y-auto lg:max-h-[34rem]"
+			className={cn('overflow-y-auto', codeBrowserScrollerClass)}
 			onKeyDown={handleTreeKeyDown}
 			role="tree">
 			{roots.map((child) => (

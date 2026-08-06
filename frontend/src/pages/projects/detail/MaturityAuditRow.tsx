@@ -4,9 +4,9 @@ import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
 
 import type { MaturityAuditEntry } from '../../../api/types.ts';
 
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { formatRelativeAge } from '../../../lib/formatters.ts';
 import {
 	auditFreshnessTitle,
 	auditFreshnessTone,
@@ -51,7 +51,7 @@ export function MaturityAuditRow({ disabled, entry, onRun, onToggleSkip }: Matur
 						</Badge>
 						{entry.lastReportAt ? (
 							<span className="text-xs text-muted-foreground">
-								{formatRelativeAge(entry.lastReportAt)}
+								<RelativeAge value={entry.lastReportAt} />
 							</span>
 						) : null}
 					</>

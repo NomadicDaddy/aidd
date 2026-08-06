@@ -8,7 +8,9 @@ import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
+import { cn } from '../../../lib/cn.ts';
 import { formatBytes } from '../../../lib/formatters.ts';
+import { codeBrowserScrollerClass } from './codeBrowserHeight.ts';
 import { isCommentLine, splitStrings } from './codeLineTokens.ts';
 
 const maxRenderedLines = 2500;
@@ -74,8 +76,10 @@ export function CodeFileViewer({
 	const visibleLines = lines.slice(0, maxRenderedLines);
 	const clipped = lines.length > visibleLines.length;
 	return (
-		<div className="min-w-0">
-			<div className="flex items-start justify-between gap-3 border-b border-border p-3">
+		// A column so the scroller below can take the height the header and any notice leave, and
+		// end on the same line as the file tree beside it.
+		<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+			<div className="flex shrink-0 items-start justify-between gap-3 border-b border-border p-3">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<h3 className="font-mono text-sm font-semibold break-all text-foreground">
@@ -107,21 +111,25 @@ export function CodeFileViewer({
 				</div>
 			</div>
 			{data.truncated ? (
-				<p className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+				<p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
 					Showing the first {formatBytes(data.content.length)} of{' '}
 					{formatBytes(data.totalBytes)}.
 				</p>
 			) : null}
 			{isImage ? (
-				<div className="flex max-h-[42rem] min-h-[28rem] items-center justify-center overflow-auto bg-black/90 p-4">
+				<div
+					className={cn(
+						'flex min-h-[28rem] items-center justify-center overflow-auto bg-black/90 p-4',
+						codeBrowserScrollerClass,
+					)}>
 					<img
 						alt={data.path}
-						className="max-h-[38rem] max-w-full object-contain"
+						className="max-h-full max-w-full object-contain"
 						src={data.content}
 					/>
 				</div>
 			) : (
-				<div className="max-h-[42rem] overflow-auto bg-card py-2">
+				<div className={cn('overflow-auto bg-card py-2', codeBrowserScrollerClass)}>
 					{visibleLines.map((line, index) => (
 						<div className="grid grid-cols-[4rem_minmax(0,1fr)]" key={index}>
 							<div className="border-r border-border pr-3 text-right font-mono text-xs leading-6 text-muted-foreground/60 select-none">

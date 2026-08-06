@@ -6,6 +6,7 @@ import { LoadingState } from '../../components/shared/LoadingState.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDiaryEntries, useDiaryTimeline } from '../../hooks/useDiary.ts';
+import { cn } from '../../lib/cn.ts';
 import { DiaryEntryCard } from './DiaryEntryCard.tsx';
 import { DiaryFilterBar } from './DiaryFilterBar.tsx';
 import { filterDiaryEntries, filterTimelineItems } from './diaryFilters.ts';
@@ -16,10 +17,19 @@ export function DiaryFeed({
 	emptyMessage = 'No diary entries or activity yet.',
 	projectPath,
 	showProject = false,
+	width = 'reading',
 }: {
 	emptyMessage?: string;
 	projectPath?: string;
 	showProject?: boolean;
+	/**
+	 * `reading` caps the feed at a reading column; `full` lets it fill its container.
+	 *
+	 * The cap is right for /diary, where the feed is the whole page and nothing beside it sets an
+	 * expectation. It is wrong inside the project Diary tab, where the cap made the feed 1024px
+	 * under its own 1312px header card and beside sibling tabs that all run the shell width.
+	 */
+	width?: 'full' | 'reading';
 }) {
 	const entriesQuery = useDiaryEntries(projectPath);
 	const timelineQuery = useDiaryTimeline(projectPath);
@@ -51,7 +61,10 @@ export function DiaryFeed({
 	return (
 		// The feed is a reading column, not a table: at full shell width the content occupied the
 		// left third and the stamp the right edge, with roughly 740px of empty band between them.
-		<div className="max-w-5xl space-y-5">
+		// The prose inside a row is measured separately (`max-w-[68ch]` on the detail line, the
+		// shared prose measure on entry markdown), so a caller that fills its container is not
+		// giving up the line length — only the position of the timestamp rail.
+		<div className={cn('space-y-5', width === 'reading' && 'max-w-5xl')}>
 			<DiaryFilterBar
 				kind={kind}
 				onKindChange={setKind}

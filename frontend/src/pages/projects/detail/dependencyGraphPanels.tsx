@@ -5,14 +5,13 @@ import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { cn } from '../../../lib/cn.ts';
 import {
 	DependencyList,
-	edgePath,
 	GraphNodeButton,
 	sourceBadgeTone,
 	sourceLabels,
 } from './dependencyGraphComponents.tsx';
+import { DependencyEdgeLayer } from './dependencyGraphEdges.tsx';
 import {
 	type buildFeatureDependencyGraph,
 	type FeatureDependencyEdge,
@@ -56,51 +55,12 @@ export function DependencyGraphCanvas({
 							transform: `scale(${zoom})`,
 							width: graph.width,
 						}}>
-						<svg
-							aria-hidden="true"
-							className="absolute inset-0"
-							height={graph.height}
-							viewBox={`0 0 ${graph.width} ${graph.height}`}
-							width={graph.width}>
-							<defs>
-								<marker
-									id="dependency-edge-arrow"
-									markerHeight="8"
-									markerWidth="8"
-									orient="auto"
-									refX="7"
-									refY="4"
-									viewBox="0 0 8 8">
-									<path d="M 0 0 L 8 4 L 0 8 z" fill="currentColor" />
-								</marker>
-							</defs>
-							{visibleEdges.map((edge: FeatureDependencyEdge) => {
-								const source = nodeByDirectory.get(edge.source);
-								const target = nodeByDirectory.get(edge.target);
-								if (!source || !target) return null;
-								const isSelectedEdge =
-									selectedNode !== null &&
-									(edge.source === selectedNode.directory ||
-										edge.target === selectedNode.directory);
-								const isDimmedEdge = selectedNode !== null && !isSelectedEdge;
-								return (
-									<path
-										className={cn(
-											'text-muted-foreground transition-all duration-150',
-											isDimmedEdge && 'opacity-20',
-											isSelectedEdge && 'text-accent opacity-100',
-										)}
-										d={edgePath(source, target)}
-										fill="none"
-										key={edge.id}
-										markerEnd="url(#dependency-edge-arrow)"
-										stroke="currentColor"
-										strokeLinecap="round"
-										strokeWidth={isSelectedEdge ? 2.5 : 1.5}
-									/>
-								);
-							})}
-						</svg>
+						<DependencyEdgeLayer
+							graph={graph}
+							nodeByDirectory={nodeByDirectory}
+							selectedNode={selectedNode}
+							visibleEdges={visibleEdges}
+						/>
 						{visibleNodes.map((node) => (
 							<GraphNodeButton
 								isDimmed={

@@ -9,6 +9,7 @@ import type { ProjectMilestone } from '../../../api/types.ts';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
+import { dangerRowActionClass } from '../../../lib/tones.ts';
 import { milestoneProgressLabel } from './milestonesUtils.ts';
 import { projectDetailTabSearch } from './overviewLinks.ts';
 
@@ -97,9 +98,10 @@ export function MilestonesTable({
 									</IconButton>
 									<IconButton
 										ariaLabel={`Delete ${milestone.name}`}
+										className={dangerRowActionClass}
 										disabled={busy || milestones.length < 2}
 										onClick={() => onDelete(milestone)}
-										variant="danger">
+										variant="ghost">
 										<Trash2 className="h-4 w-4" />
 									</IconButton>
 								</div>

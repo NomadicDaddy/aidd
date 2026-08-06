@@ -28,13 +28,22 @@ describe('declared sticky rails actually stick', () => {
 		}
 	});
 
-	test('keeps the profile rail and its save actions inside the viewport', async () => {
+	test('keeps the profile rail inside the viewport', async () => {
 		const source = await read('pages/projects/detail/profile/ComputedProfilePanel.tsx');
 
-		// Capping the rail at viewport height is what keeps Save/Reset reachable when the audit
-		// catalog is long; the audit list flexes and scrolls to absorb the overflow instead.
+		// Capping the rail at viewport height is what keeps a long audit catalog from pushing the
+		// rail past the fold; the audit list flexes and scrolls to absorb the overflow instead.
 		expect(source).toContain('lg:max-h-[calc(100dvh-2rem)]');
 		expect(source).toContain('lg:max-h-none lg:min-h-0 lg:flex-1');
-		expect(source).toContain('flex items-center gap-2 lg:shrink-0');
+	});
+
+	test('commits the profile from the foot of the form, not the rail beside it', async () => {
+		// Save/Reset used to ride this rail, which is two cards shorter than the form column — so
+		// the commit action sat level with the third facet, three cards of unread fields above the
+		// bottom of what it commits. `project-detail-polish` guards the destination; this guards
+		// that the rail did not quietly take it back.
+		const rail = await read('pages/projects/detail/profile/ComputedProfilePanel.tsx');
+
+		expect(rail).not.toContain('Save profile');
 	});
 });

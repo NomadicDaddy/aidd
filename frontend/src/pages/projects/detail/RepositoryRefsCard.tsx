@@ -31,10 +31,12 @@ function BranchRow({ branch }: BranchRowProps) {
 						className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground"
 					/>
 				)}
-				<code className="truncate text-sm text-foreground">{branch.name}</code>
+				<code className="truncate font-mono text-sm text-foreground">{branch.name}</code>
 			</div>
 			{branch.upstream ? (
-				<span className="shrink-0 text-xs text-muted-foreground">{branch.upstream}</span>
+				<span className="shrink-0 font-mono text-xs text-muted-foreground">
+					{branch.upstream}
+				</span>
 			) : null}
 		</li>
 	);
@@ -68,7 +70,7 @@ function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 							className="flex items-center justify-between gap-3 text-sm"
 							key={`stash-${stash.index}`}>
 							<span className="min-w-0 flex-1">
-								<code className="text-xs text-muted-foreground">
+								<code className="font-mono text-xs text-muted-foreground">
 									stash@&#123;{stash.index}&#125;
 								</code>
 								<span className="ml-2 truncate text-foreground">
@@ -76,7 +78,7 @@ function StashPanel({ stashes }: { stashes: RepositoryStash[] }) {
 								</span>
 							</span>
 							{stash.sha ? (
-								<code className="shrink-0 text-xs text-muted-foreground">
+								<code className="shrink-0 font-mono text-xs text-muted-foreground">
 									{stash.sha}
 								</code>
 							) : null}
@@ -109,11 +111,11 @@ function WorktreePanel({ worktrees }: { worktrees: RepositoryWorktree[] }) {
 										className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground"
 									/>
 								)}
-								<code className="truncate text-xs text-muted-foreground">
+								<code className="truncate font-mono text-xs text-muted-foreground">
 									{worktree.path}
 								</code>
 							</span>
-							<code className="shrink-0 text-xs text-muted-foreground">
+							<code className="shrink-0 font-mono text-xs text-muted-foreground">
 								{worktree.branch}
 							</code>
 						</li>

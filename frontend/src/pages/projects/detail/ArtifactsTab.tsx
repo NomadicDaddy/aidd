@@ -6,10 +6,10 @@ import type { Tone } from '../../../lib/tones.ts';
 import type { ArtifactViewerTarget } from './artifactsUtils.ts';
 
 import { Metric } from '../../../components/shared/Metric.tsx';
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
-import { formatDate, formatRelativeAge } from '../../../lib/formatters.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
 import { artifactInventoryCount } from './artifactsUtils.ts';
 import { type ArtifactHealth, artifactTone } from './shared.ts';
@@ -106,8 +106,7 @@ export function ArtifactsTab({
 			<div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
 				<div>
 					<span className="font-medium text-muted-foreground">Checked:</span>{' '}
-					{formatDate(artifactCheck.checkedAt)} (
-					{formatRelativeAge(artifactCheck.checkedAt)})
+					<RelativeAge value={artifactCheck.checkedAt} />
 				</div>
 				<div>
 					<span className="font-medium text-muted-foreground">Stale threshold:</span>{' '}

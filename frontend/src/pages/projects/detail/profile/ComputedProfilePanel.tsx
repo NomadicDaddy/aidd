@@ -1,12 +1,9 @@
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
-import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
-import { default as Save } from 'lucide-react/dist/esm/icons/save';
 
 import type { ProfilePreview } from '../../../../api/projects.ts';
 import type { ProjectAssuranceProfileInput } from '../../../../api/types.ts';
 
 import { Badge } from '../../../../components/ui/badge.tsx';
-import { Button } from '../../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../../components/ui/card.tsx';
 import { toneText } from '../../../../lib/tones.ts';
 import { effectTone } from '../../../audits/auditsUtils.ts';
@@ -17,9 +14,6 @@ export function ComputedProfilePanel({
 	form,
 	isPreviewError,
 	isPreviewing,
-	isSaving,
-	onReset,
-	onSave,
 	preview,
 	source,
 }: {
@@ -27,9 +21,6 @@ export function ComputedProfilePanel({
 	form: ProjectAssuranceProfileInput;
 	isPreviewError: boolean;
 	isPreviewing: boolean;
-	isSaving: boolean;
-	onReset: () => void;
-	onSave: () => void;
 	preview: ProfilePreview | undefined;
 	source: 'explicit' | 'inferred';
 }) {
@@ -41,10 +32,13 @@ export function ComputedProfilePanel({
 	const suppressed = audits.filter((audit) => !audit.applies);
 
 	// The rail is a grid item in ProfileTab's lg:grid-cols-[1.5fr_1fr]. Without lg:self-start it
-	// stretches to the full row height, which leaves position: sticky nothing to slide within — the
-	// declaration was inert and Save/Reset scrolled away. self-start restores the slide, and the
-	// viewport-height cap plus the flexing audit list keep the buttons on screen even when the
-	// audit catalog is long.
+	// stretches to the full row height, which leaves position: sticky nothing to slide within and
+	// the declaration is inert. self-start restores the slide, and the viewport-height cap plus the
+	// flexing audit list keep the posture readable beside whichever facet is being changed.
+	//
+	// This rail is now read-only. Save and Reset moved to the foot of the form column, because a
+	// rail two cards shorter than the form put the commit action level with the third facet, with
+	// three more cards of unread fields below it.
 	return (
 		<div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:self-start">
 			<Card className="lg:shrink-0" variant="panel">
@@ -134,25 +128,6 @@ export function ComputedProfilePanel({
 					</p>
 				)}
 			</Card>
-
-			<div className="flex items-center gap-2 lg:shrink-0">
-				<Button
-					className="flex-1"
-					disabled={!dirty || isSaving}
-					onClick={onSave}
-					variant="primary">
-					{isSaving ? (
-						<Loader2 className="h-4 w-4 animate-spin" />
-					) : (
-						<Save className="h-4 w-4" />
-					)}
-					Save profile
-				</Button>
-				<Button disabled={!dirty || isSaving} onClick={onReset} variant="secondary">
-					<RotateCcw className="h-4 w-4" />
-					Reset
-				</Button>
-			</div>
 		</div>
 	);
 }

@@ -11,9 +11,10 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useDeleteProject } from '../../../hooks/useProjects.ts';
+import { cn } from '../../../lib/cn.ts';
 import { traceDataMovement } from '../../../lib/dataMovementTrace.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
-import { toneText } from '../../../lib/tones.ts';
+import { toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
 
 export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 	const navigate = useNavigate();
@@ -48,7 +49,11 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 	}
 
 	return (
-		<Card>
+		// The one card on the tab that can destroy the project sat in the same white surface as
+		// 'Rename' and 'Move', so the only thing separating an edit from a deletion was reading
+		// the title. It takes the red region tokens: the card is legible as destructive from the
+		// edge of the eye, before any of it is read.
+		<Card className={cn(toneBorder.red, toneSurface.red)}>
 			<CardHeader
 				description={
 					<>

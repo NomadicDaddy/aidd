@@ -9,9 +9,10 @@ import type {
 } from '../../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { formatCount, formatRatio, formatRelativeAge } from '../../../lib/formatters.ts';
+import { formatCount, formatRatio } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { bucketLabels, formatAppVersion, formatTemplateVersion } from '../projects-list-shared.ts';
 import { ProjectStackDisplay } from '../ProjectStackDisplay.tsx';
@@ -112,15 +113,13 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 						label="Spec updated"
 						value={
 							<LinkedValue to={projectDetailTabSearch('artifacts')}>
-								{metadata.specUpdatedAt
-									? formatRelativeAge(metadata.specUpdatedAt)
-									: '—'}
+								<RelativeAge value={metadata.specUpdatedAt} />
 							</LinkedValue>
 						}
 					/>
 					<MetadataRow
 						label="Date added"
-						value={metadata.addedAt ? formatRelativeAge(metadata.addedAt) : '—'}
+						value={<RelativeAge value={metadata.addedAt} />}
 					/>
 					<MetadataRow
 						label="Screens"
@@ -185,9 +184,11 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 						label="Last run"
 						value={
 							<LinkedValue to={projectDetailTabSearch('runs')}>
-								{metadata.sync.lastSyncAt
-									? formatRelativeAge(metadata.sync.lastSyncAt)
-									: 'Never'}
+								{metadata.sync.lastSyncAt ? (
+									<RelativeAge value={metadata.sync.lastSyncAt} />
+								) : (
+									'Never'
+								)}
 							</LinkedValue>
 						}
 					/>

@@ -1,8 +1,12 @@
+import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
+import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
+import { default as Save } from 'lucide-react/dist/esm/icons/save';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ProjectAssuranceProfile, ProjectAssuranceProfileInput } from '../../../api/types.ts';
 
+import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue.ts';
 import { useProfilePreview } from '../../../hooks/useProfilePreview.ts';
@@ -105,6 +109,30 @@ export function ProfileTab({
 						value={form.notes ?? ''}
 					/>
 				</Card>
+				{/* At the foot of the fields it writes. In the computed-posture rail the pair
+				    landed level with the third facet — a Save button with three cards of unread
+				    form below it — because that rail is two cards shorter than this column. */}
+				<div className="flex items-center gap-2">
+					<Button
+						className="flex-1"
+						disabled={!dirty || updateProfile.isPending}
+						onClick={saveProfile}
+						variant="primary">
+						{updateProfile.isPending ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							<Save className="h-4 w-4" />
+						)}
+						Save profile
+					</Button>
+					<Button
+						disabled={!dirty || updateProfile.isPending}
+						onClick={resetForm}
+						variant="secondary">
+						<RotateCcw className="h-4 w-4" />
+						Reset
+					</Button>
+				</div>
 			</div>
 
 			<ComputedProfilePanel
@@ -112,9 +140,6 @@ export function ProfileTab({
 				form={form}
 				isPreviewError={preview.isError}
 				isPreviewing={preview.isFetching}
-				isSaving={updateProfile.isPending}
-				onReset={resetForm}
-				onSave={saveProfile}
 				preview={preview.data}
 				source={profile.source}
 			/>

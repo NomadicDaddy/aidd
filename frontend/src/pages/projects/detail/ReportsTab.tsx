@@ -4,10 +4,10 @@ import type { ProjectReportsResponse } from '../../../api/types.ts';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
+import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
-import { formatRelativeAge } from '../../../lib/formatters.ts';
 import { reportOriginLabel, reportStatusTone } from './reportsUtils.ts';
 
 type ReportKindFilter = 'all' | 'feature' | 'remediation';
@@ -82,7 +82,7 @@ export function ReportsTab({
 								{report.featureDirectory ?? report.featureId ?? report.id}
 							</span>
 							<span className="text-xs text-muted-foreground">
-								{formatRelativeAge(report.createdAt)}
+								<RelativeAge value={report.createdAt} />
 							</span>
 						</div>
 						<p className="mt-3 text-sm whitespace-pre-wrap text-foreground">

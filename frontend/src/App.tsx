@@ -6,11 +6,18 @@ import {
 	type FrontendRouteId,
 } from 'aidd-shared/contracts/frontend-routes';
 import { lazy, type ReactNode, Suspense, useEffect, useRef } from 'react';
-import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router';
+import {
+	createBrowserRouter,
+	Navigate,
+	Outlet,
+	useLocation,
+	useNavigationType,
+} from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { Toaster } from 'sonner';
 
 import { AppLayout } from './components/layout/AppLayout.tsx';
+import { shouldFocusMainOnNavigation } from './components/layout/route-focus.ts';
 import { ErrorBoundary } from './components/shared/ErrorBoundary.tsx';
 import { useLaunchedRunToasts } from './hooks/useLaunchedRunToasts.ts';
 import { useRealtimeInvalidation } from './hooks/useRealtimeInvalidation.ts';
@@ -114,20 +121,28 @@ function ThemedToaster() {
 
 function RootLayout() {
 	const location = useLocation();
+	const navigationType = useNavigationType();
 	// On SPA navigation, move focus to the <main id="main-content"> landmark so keyboard and
 	// screen-reader users land at the new page's content instead of retaining stale focus on a
 	// now-unmounted control (or the body). main persists across route changes (it lives in
 	// AppLayout, outside the lazy Suspense boundary), so this fires reliably even while the next
-	// page is still loading its chunk. The first mount is skipped so a deep-link landing keeps the
-	// browser's natural initial focus rather than being yanked to main.
-	const isInitialNavigationRef = useRef(true);
+	// page is still loading its chunk. Focusing the landmark also scrolls it into view, which is
+	// what puts the new page's own heading at the top of the viewport — and which is why
+	// `shouldFocusMainOnNavigation` owns the decision rather than a condition written out here.
+	const lastPathnameRef = useRef<null | string>(null);
 	useEffect(() => {
-		if (isInitialNavigationRef.current) {
-			isInitialNavigationRef.current = false;
-			return;
+		const previousPathname = lastPathnameRef.current;
+		lastPathnameRef.current = location.pathname;
+		if (
+			shouldFocusMainOnNavigation({
+				navigationType,
+				nextPathname: location.pathname,
+				previousPathname,
+			})
+		) {
+			document.getElementById('main-content')?.focus();
 		}
-		document.getElementById('main-content')?.focus();
-	}, [location.pathname]);
+	}, [location.pathname, navigationType]);
 	return (
 		<AppLayout>
 			<ErrorBoundary resetKey={location.pathname}>

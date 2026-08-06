@@ -50,6 +50,8 @@ export function ProjectCard({
 	const summary = metadata.artifactCheck?.summary ?? null;
 	const milestoneOrder = metadata.roadmap?.milestoneOrder ?? [];
 	const milestones = metadata.roadmap?.milestones ?? {};
+	const visibleMilestones = milestoneOrder.slice(0, 3);
+	const hiddenMilestones = milestoneOrder.length - visibleMilestones.length;
 	return (
 		<Card className="flex h-full flex-col" interactive>
 			<div className="mb-3 flex items-start justify-between gap-3">
@@ -129,9 +131,14 @@ export function ProjectCard({
 				<ProjectActiveRunLink activeRuns={project.activeRuns} />
 				<GitStatusBadge className="max-w-full" status={gitStatus} />
 			</div>
-			{milestoneOrder.length > 0 ? (
+			{/* Three chips and a count, the same cap the Dashboard's Project Health rows already
+			    use. The run was uncapped, so a project with seven milestones ran to three lines
+			    while its neighbour with none had zero — the tallest card in a row set the height for
+			    every card beside it, and the thing driving it was the least important block on the
+			    card. */}
+			{visibleMilestones.length > 0 ? (
 				<div className="mb-3 flex flex-wrap gap-1">
-					{milestoneOrder.map((name) => {
+					{visibleMilestones.map((name) => {
 						const ms = milestones[name];
 						if (!ms) return null;
 						return (
@@ -143,6 +150,9 @@ export function ProjectCard({
 							</Badge>
 						);
 					})}
+					{hiddenMilestones > 0 ? (
+						<Badge tone="neutral">+{hiddenMilestones}</Badge>
+					) : null}
 				</div>
 			) : null}
 			<div className="space-y-2 text-sm text-foreground">

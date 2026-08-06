@@ -12,6 +12,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import { toneBorder } from '../../../lib/tones.ts';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
 import { sourceLabel, unsavedBadgeLabel } from './profileMatrixLabels.ts';
 import { ProfileFacetSelect } from './ProfileMatrixRow.tsx';
@@ -47,7 +48,8 @@ export function ProfileMatrixMobileList({
 					row.preview?.audits.filter((audit) => audit.effect === 'required').length ?? 0;
 				return (
 					<Card
-						className={row.dirty ? 'border-l-2 border-l-amber-500/60' : ''}
+						// Only the left edge carries width, so a tone that colours all four is fine.
+						className={row.dirty ? `border-l-2 ${toneBorder.amber}` : ''}
 						key={row.project.id}>
 						<div className="flex items-start justify-between gap-2">
 							<div className="min-w-0">
@@ -89,29 +91,33 @@ export function ProfileMatrixMobileList({
 								))}
 							</div>
 						) : null}
-						<div className="mt-3 flex items-center gap-2">
-							<Button
-								aria-label={`Save ${row.project.name} profile`}
-								disabled={!row.dirty || row.saving}
-								onClick={() => onSave(row.project.id)}
-								size="compact"
-								variant="primary">
-								{row.saving ? (
-									<Loader2 className="h-3.5 w-3.5 animate-spin" />
-								) : (
-									<Save className="h-3.5 w-3.5" />
-								)}
-								Save
-							</Button>
-							<Button
-								aria-label={`Reset ${row.project.name} profile`}
-								disabled={!row.dirty || row.saving}
-								onClick={() => onReset(row.project.id)}
-								size="compact"
-								variant="secondary">
-								<RotateCcw className="h-3.5 w-3.5" />
-							</Button>
-						</div>
+						{/* Same rule as the table: a card that has nothing to commit renders no
+						    commit controls rather than two dead ones. */}
+						{row.dirty ? (
+							<div className="mt-3 flex items-center gap-2">
+								<Button
+									aria-label={`Save ${row.project.name} profile`}
+									disabled={row.saving}
+									onClick={() => onSave(row.project.id)}
+									size="compact"
+									variant="primary">
+									{row.saving ? (
+										<Loader2 className="h-3.5 w-3.5 animate-spin" />
+									) : (
+										<Save className="h-3.5 w-3.5" />
+									)}
+									Save
+								</Button>
+								<Button
+									aria-label={`Reset ${row.project.name} profile`}
+									disabled={row.saving}
+									onClick={() => onReset(row.project.id)}
+									size="compact"
+									variant="secondary">
+									<RotateCcw className="h-3.5 w-3.5" />
+								</Button>
+							</div>
+						) : null}
 					</Card>
 				);
 			})}

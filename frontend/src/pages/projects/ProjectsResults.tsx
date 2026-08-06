@@ -147,8 +147,11 @@ function ProjectsResultsView({
 		return (
 			<ProjectsCardView
 				gitStatus={gitStatus}
+				onToggleSort={onToggleSort}
 				portStatus={portStatus.data}
 				projects={sorted}
+				sortDir={sortDir}
+				sortKey={sortKey}
 				spernakitTemplateVersion={spernakitTemplateVersion}
 				statusByProjectId={statusByProjectId}
 			/>

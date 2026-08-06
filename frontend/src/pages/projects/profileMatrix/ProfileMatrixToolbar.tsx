@@ -48,9 +48,12 @@ export function ProfileMatrixToolbar({
 				<SegmentedControl
 					ariaLabel="Filter by posture"
 					onChange={(posture: PostureFilter) => onChange({ ...filters, posture })}
+					// One option per label the Posture column renders — the segment labels are the
+					// column's own strings, so a value on screen is always reachable from here.
 					options={[
 						{ label: 'All', value: 'all' },
 						{ label: 'Standard', value: 'standard' },
+						{ label: 'Low-exposure', value: 'low' },
 						{ label: 'Full hardening', value: 'full' },
 					]}
 					value={filters.posture}

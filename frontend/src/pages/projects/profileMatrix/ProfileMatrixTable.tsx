@@ -1,7 +1,3 @@
-import { default as ArrowDown } from 'lucide-react/dist/esm/icons/arrow-down';
-import { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up';
-import { default as ArrowUpDown } from 'lucide-react/dist/esm/icons/arrow-up-down';
-
 import type { ProjectAssuranceProfileInput } from '../../../api/types.ts';
 import type { FacetField } from '../detail/profile/profile-facets.ts';
 import type {
@@ -11,7 +7,9 @@ import type {
 } from './profileMatrixTypes.ts';
 
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
+import { SortableColumnHeader } from '../../../components/shared/SortableColumnHeader.tsx';
 import { Card } from '../../../components/ui/card.tsx';
+import { pinnedLeftEdgeClass, pinnedRightEdgeClass } from '../../../lib/tableStyles.ts';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
 import { ProfileMatrixRow } from './ProfileMatrixRow.tsx';
 
@@ -19,42 +17,6 @@ import { ProfileMatrixRow } from './ProfileMatrixRow.tsx';
 // scrollport, and the leading cell adds `left-0` so a row stays identifiable while the six facet
 // selects are scrolled through in edit mode.
 const headerCellClass = 'sticky top-0 z-20 bg-muted px-3 py-3';
-
-function SortHeader({
-	activeDir,
-	activeKey,
-	className = headerCellClass,
-	label,
-	onSort,
-	sortKey,
-}: {
-	activeDir: ProfileMatrixSortDir;
-	activeKey: ProfileMatrixSortKey;
-	className?: string;
-	label: string;
-	onSort: (key: ProfileMatrixSortKey) => void;
-	sortKey: ProfileMatrixSortKey;
-}) {
-	const isActive = activeKey === sortKey;
-	const Icon = isActive ? (activeDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
-	return (
-		<th
-			aria-sort={isActive ? (activeDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-			className={className}
-			scope="col">
-			<button
-				aria-label={`Sort by ${label}${isActive ? ` (${activeDir})` : ''}`}
-				className={`inline-flex items-center gap-1 text-left whitespace-nowrap uppercase ${
-					isActive ? 'text-foreground' : 'text-muted-foreground'
-				}`}
-				onClick={() => onSort(sortKey)}
-				type="button">
-				{label}
-				<Icon aria-hidden="true" className="h-3 w-3" />
-			</button>
-		</th>
-	);
-}
 
 /**
  * The matrix defaults to a read-only summary: who the project is, where its profile came from, what
@@ -87,6 +49,13 @@ export function ProfileMatrixTable({
 	rows: ProfileMatrixRowModel[];
 	showFacets: boolean;
 }) {
+	// The resting Summary view has no editable control on screen, so a Save and a reset per row were
+	// 66 permanently-disabled controls in a pinned 152px column that could never do anything. The
+	// column exists while editing — where it is about to be needed — and while anything is unsaved,
+	// so switching back to Summary with pending edits does not strand them. Within the column a row
+	// renders controls only when it is dirty, so the disabled state never appears at all.
+	const showActions = showFacets || rows.some((row) => row.dirty);
+
 	return (
 		// Hidden below `md`, where ProfileMatrixMobileList renders the same rows as stacked cards.
 		<Card className="hidden p-0 md:block">
@@ -96,24 +65,25 @@ export function ProfileMatrixTable({
 				<table aria-label="Project profile matrix" className="w-full text-left text-sm">
 					<thead className="border-b border-border text-xs text-muted-foreground uppercase">
 						<tr>
-							<SortHeader
+							<SortableColumnHeader
 								activeDir={activeSortDir}
 								activeKey={activeSortKey}
-								className={`${headerCellClass} left-0 z-30`}
+								className={`${headerCellClass} left-0 z-30 ${pinnedLeftEdgeClass}`}
 								label="Project"
 								onSort={onSort}
 								sortKey="project"
 							/>
-							<SortHeader
+							<SortableColumnHeader
 								activeDir={activeSortDir}
 								activeKey={activeSortKey}
+								className={headerCellClass}
 								label="Source"
 								onSort={onSort}
 								sortKey="source"
 							/>
 							{showFacets
 								? profileFacets.map((facet) => (
-										<SortHeader
+										<SortableColumnHeader
 											activeDir={activeSortDir}
 											activeKey={activeSortKey}
 											className="sticky top-0 z-20 min-w-40 bg-muted px-2 py-3"
@@ -124,9 +94,10 @@ export function ProfileMatrixTable({
 										/>
 									))
 								: null}
-							<SortHeader
+							<SortableColumnHeader
 								activeDir={activeSortDir}
 								activeKey={activeSortKey}
+								className={headerCellClass}
 								label="Posture"
 								onSort={onSort}
 								sortKey="posture"
@@ -142,11 +113,13 @@ export function ProfileMatrixTable({
 							<th className={headerCellClass} scope="col">
 								Updated
 							</th>
-							<th
-								className={`${headerCellClass} right-0 z-30 shadow-[inset_-8px_0_8px_-8px_rgba(0,0,0,0.35)]`}
-								scope="col">
-								Actions
-							</th>
+							{showActions ? (
+								<th
+									className={`${headerCellClass} right-0 z-30 ${pinnedRightEdgeClass}`}
+									scope="col">
+									Actions
+								</th>
+							) : null}
 						</tr>
 					</thead>
 					<tbody>
@@ -157,6 +130,7 @@ export function ProfileMatrixTable({
 								onReset={onReset}
 								onSave={onSave}
 								row={row}
+								showActions={showActions}
 								showFacets={showFacets}
 							/>
 						))}

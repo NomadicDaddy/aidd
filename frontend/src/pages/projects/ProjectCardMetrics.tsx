@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
@@ -26,6 +28,31 @@ function PortDotInline({ listening }: { listening: boolean | null }) {
 }
 
 /**
+ * One label/value pair on a fixed label track.
+ *
+ * The values used to begin wherever their label ended, so `Screens: 12` and `Reported cost: $4.10`
+ * started 60px apart and the `tabular-nums` on the numbers aligned digits within a value that had no
+ * shared left edge to align against. A fixed track is what makes the column the numerals were
+ * already dressed for.
+ */
+function MetricRow({
+	children,
+	label,
+	title,
+}: {
+	children: ReactNode;
+	label: string;
+	title?: string | undefined;
+}) {
+	return (
+		<div className="grid grid-cols-[5.5rem_1fr] items-baseline gap-x-2" title={title}>
+			<span className="truncate">{label}</span>
+			<span className="min-w-0">{children}</span>
+		</div>
+	);
+}
+
+/**
  * The card's attribute list. Version, template version, profile bucket and profile source live here
  * rather than in the badge run above it: they are attributes, not statuses, and as badges they made
  * tone carry four unrelated meanings at once.
@@ -49,8 +76,7 @@ export function ProjectCardMetrics({
 		// One column below `sm`: at 768 the grid kept two columns of ~100px and wrapped nearly
 		// every row onto two lines.
 		<div className="grid grid-cols-1 gap-x-3 gap-y-1 text-xs text-muted-foreground sm:grid-cols-2">
-			<div>
-				Version:{' '}
+			<MetricRow label="Version">
 				<span className="font-medium text-foreground">
 					{formatAppVersion(metadata.appVersion)}
 				</span>
@@ -68,74 +94,71 @@ export function ProjectCardMetrics({
 						</span>
 					</>
 				) : null}
-			</div>
-			<div>
-				Profile:{' '}
+			</MetricRow>
+			<MetricRow label="Profile">
 				<span className="font-medium text-foreground">
 					{bucketLabels[metadata.profile.bucket]}
 				</span>{' '}
 				({metadata.profile.source})
-			</div>
-			<div>
-				Interview:{' '}
+			</MetricRow>
+			<MetricRow label="Interview">
 				{metadata.interview
 					? formatRatio(metadata.interview.answered, metadata.interview.total)
 					: '—'}
-			</div>
-			<div>Scenarios: {formatCount(metadata.testScenariosCount)}</div>
-			<div>Screens: {formatCount(metadata.screenMapRouteCount)}</div>
-			<div
+			</MetricRow>
+			<MetricRow label="Scenarios">{formatCount(metadata.testScenariosCount)}</MetricRow>
+			<MetricRow label="Screens">{formatCount(metadata.screenMapRouteCount)}</MetricRow>
+			<MetricRow
+				label="Reported cost"
 				title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
-				Reported cost:{' '}
 				<span className="font-medium text-foreground tabular-nums">
 					{formatProjectListReportedCost(metadata.usage.totals)}
 				</span>
-			</div>
-			<div
+			</MetricRow>
+			<MetricRow
+				label="Tokens"
 				title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
-				Tokens:{' '}
 				<span className="font-medium text-foreground tabular-nums">
 					{formatProjectTokenCount(metadata.usage.totals)}
 				</span>
-			</div>
-			<div>
-				Spec age:{' '}
+			</MetricRow>
+			<MetricRow label="Spec age">
 				{specDays !== null ? (
-					<span className={specAgeColor(specDays)}>{specDays}d</span>
+					<span className={`tabular-nums ${specAgeColor(specDays)}`}>{specDays}d</span>
 				) : (
 					<span className="text-muted-foreground">—</span>
 				)}
-			</div>
-			<div>
-				Added:{' '}
+			</MetricRow>
+			<MetricRow label="Added">
 				{metadata.addedAt ? (
 					<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
 				) : (
 					<span className="text-muted-foreground">—</span>
 				)}
-			</div>
-			<div>
-				aidd state:{' '}
+			</MetricRow>
+			<MetricRow label="aidd state">
 				<Badge tone={syncTone(metadata.sync.syncState)}>{metadata.sync.syncState}</Badge>
-			</div>
+			</MetricRow>
 			{fePort !== null || bePort !== null ? (
-				<div className="font-mono">
-					{fePort !== null ? (
-						<span className="inline-flex items-center gap-1">
-							<PortDotInline listening={feListening} />
-							FE:{fePort}
-						</span>
-					) : null}
-					{fePort !== null && bePort !== null ? (
-						<span className="mx-1 text-muted-foreground">·</span>
-					) : null}
-					{bePort !== null ? (
-						<span className="inline-flex items-center gap-1">
-							<PortDotInline listening={beListening} />
-							BE:{bePort}
-						</span>
-					) : null}
-				</div>
+				<MetricRow label="Ports">
+					<span className="font-mono">
+						{fePort !== null ? (
+							<span className="inline-flex items-center gap-1">
+								<PortDotInline listening={feListening} />
+								FE:{fePort}
+							</span>
+						) : null}
+						{fePort !== null && bePort !== null ? (
+							<span className="mx-1 text-muted-foreground">·</span>
+						) : null}
+						{bePort !== null ? (
+							<span className="inline-flex items-center gap-1">
+								<PortDotInline listening={beListening} />
+								BE:{bePort}
+							</span>
+						) : null}
+					</span>
+				</MetricRow>
 			) : null}
 		</div>
 	);

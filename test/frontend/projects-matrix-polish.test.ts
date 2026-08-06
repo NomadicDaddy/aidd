@@ -1,0 +1,258 @@
+import { describe, expect, test } from 'bun:test';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import type { ProfileMatrixRowModel } from '../../frontend/src/pages/projects/profileMatrix/profileMatrixTypes.ts';
+
+import {
+	filterMatrixRows,
+	postureFilterValue,
+} from '../../frontend/src/pages/projects/profileMatrix/profileMatrixFilters.ts';
+import { projectSortOptions } from '../../frontend/src/pages/projects/projects-table-columns.ts';
+
+const frontendSource = join(process.cwd(), 'frontend', 'src');
+
+function read(relativePath: string): Promise<string> {
+	return readFile(join(frontendSource, ...relativePath.split('/')), 'utf8');
+}
+
+// A comment that explains why a class or a control was removed names it, so a test asserting
+// absence has to read the code without the prose about it.
+function stripComments(source: string): string {
+	return source.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
+}
+
+function makeRow(overrides: {
+	dirty?: boolean;
+	fullHardening?: boolean;
+	lowExposure?: boolean;
+	name?: string;
+	source?: 'explicit' | 'inferred';
+}): ProfileMatrixRowModel {
+	const name = overrides.name ?? 'alpha';
+	return {
+		dirty: overrides.dirty ?? false,
+		form: {} as ProfileMatrixRowModel['form'],
+		posture: {
+			fullHardening: overrides.fullHardening ?? false,
+			label: 'Standard',
+			lowExposure: overrides.lowExposure ?? false,
+			reasons: [],
+		} as unknown as ProfileMatrixRowModel['posture'],
+		preview: null,
+		project: {
+			metadata: { profile: { source: overrides.source ?? 'explicit' } },
+			name,
+			path: `/projects/${name}`,
+		},
+		saving: false,
+	} as unknown as ProfileMatrixRowModel;
+}
+
+describe('row height is stable across the first edit', () => {
+	test('the Unsaved badge occupies its slot whether or not the row is dirty', async () => {
+		const source = await read('pages/projects/profileMatrix/ProfileMatrixRow.tsx');
+
+		// Mounted unconditionally and hidden with `invisible`, which keeps the box in flow. A
+		// `row.dirty ? <Badge/> : null` would reflow the cell on the first keystroke.
+		expect(source).toContain("className={row.dirty ? '' : 'invisible'}");
+		expect(source).toContain("aria-hidden={row.dirty ? undefined : 'true'}");
+		expect(source).toContain('<div className="flex gap-1.5 whitespace-nowrap">');
+	});
+
+	test('the facet selects take their width from the column, not their own content', async () => {
+		const source = await read('pages/projects/profileMatrix/ProfileMatrixRow.tsx');
+		expect(source).toContain('${selectClass} h-8 w-full px-2 text-xs');
+	});
+});
+
+describe('the dirty treatment comes from the tone tokens', () => {
+	test('the row tint and rule are toneSurface/toneBorder, not a literal amber class', async () => {
+		const source = await read('pages/projects/profileMatrix/ProfileMatrixRow.tsx');
+		expect(source).toContain("from '../../../lib/tones.ts'");
+		expect(source).toContain('row.dirty ? toneSurface.amber');
+		expect(source).toContain('border-l-2 ${toneBorder.amber}');
+		expect(stripComments(source)).not.toContain('bg-amber-');
+	});
+
+	test('the mobile card carries the same rule', async () => {
+		const source = await read('pages/projects/profileMatrix/ProfileMatrixMobileList.tsx');
+		expect(source).toContain('border-l-2 ${toneBorder.amber}');
+	});
+});
+
+describe('the resting Summary view renders no disabled control', () => {
+	test('the Actions column exists only while editing or while something is unsaved', async () => {
+		const table = await read('pages/projects/profileMatrix/ProfileMatrixTable.tsx');
+		expect(table).toContain('const showActions = showFacets || rows.some((row) => row.dirty);');
+		expect(table).toContain('showActions ? (');
+		expect(table).toContain('showActions={showActions}');
+	});
+
+	test('a clean row renders no commit controls at all, in either layout', async () => {
+		const row = await read('pages/projects/profileMatrix/ProfileMatrixRow.tsx');
+		const mobile = await read('pages/projects/profileMatrix/ProfileMatrixMobileList.tsx');
+
+		// `disabled` is only ever the in-flight save, never "there is nothing to save".
+		for (const source of [row, mobile]) {
+			expect(source).toContain('disabled={row.saving}');
+			expect(source).not.toContain('disabled={!row.dirty');
+			expect(source).toContain('row.dirty ? (');
+		}
+	});
+});
+
+describe('both pinned seams are drawn from one token', () => {
+	test('the shared classes exist and the offsets face the scrolling side', async () => {
+		const styles = await read('lib/tableStyles.ts');
+
+		// A positive x-offset on an inset shadow lays it along the left inner edge: a left-pinned
+		// column's seam faces right (negative) and a right-pinned column's faces left (positive).
+		expect(styles).toContain(
+			"export const pinnedLeftEdgeClass = 'shadow-[inset_-8px_0_8px_-8px_rgba(0,0,0,0.35)]';",
+		);
+		expect(styles).toContain(
+			"export const pinnedRightEdgeClass = 'shadow-[inset_8px_0_8px_-8px_rgba(0,0,0,0.35)]';",
+		);
+	});
+
+	test('every pinned cell imports the seam instead of spelling one', async () => {
+		for (const path of [
+			'pages/projects/profileMatrix/ProfileMatrixTable.tsx',
+			'pages/projects/profileMatrix/ProfileMatrixRow.tsx',
+			'pages/projects/ProjectsTableView.tsx',
+		]) {
+			const source = await read(path);
+			expect(source).toContain('pinnedLeftEdgeClass');
+			expect(stripComments(source)).not.toContain('shadow-[inset_');
+		}
+	});
+});
+
+describe('every filter can express every value its column renders', () => {
+	test('posture is a three-way, not a boolean wearing three labels', () => {
+		expect(postureFilterValue(makeRow({ fullHardening: true }))).toBe('full');
+		expect(postureFilterValue(makeRow({ lowExposure: true }))).toBe('low');
+		expect(postureFilterValue(makeRow({}))).toBe('standard');
+		// Full hardening wins: a project can be both, and that is the stronger statement.
+		expect(postureFilterValue(makeRow({ fullHardening: true, lowExposure: true }))).toBe(
+			'full',
+		);
+	});
+
+	test('a low-exposure row is reachable and is not swept up by Standard', () => {
+		const rows = [
+			makeRow({ fullHardening: true, name: 'hardened' }),
+			makeRow({ lowExposure: true, name: 'local' }),
+			makeRow({ name: 'plain' }),
+		];
+		const names = (posture: 'full' | 'low' | 'standard') =>
+			filterMatrixRows(rows, {
+				dirtyOnly: false,
+				posture,
+				query: '',
+				source: 'all',
+			}).map((row) => row.project.name);
+
+		expect(names('low')).toEqual(['local']);
+		expect(names('standard')).toEqual(['plain']);
+		expect(names('full')).toEqual(['hardened']);
+	});
+
+	test('the control offers one option per posture the column renders', async () => {
+		const toolbar = await read('pages/projects/profileMatrix/ProfileMatrixToolbar.tsx');
+		for (const value of ['standard', 'low', 'full']) {
+			expect(toolbar).toContain(`value: '${value}'`);
+		}
+	});
+});
+
+describe('sortable headers are one component', () => {
+	test('both tables render the shared header, and neither keeps a local one', async () => {
+		const matrix = await read('pages/projects/profileMatrix/ProfileMatrixTable.tsx');
+		const projects = await read('pages/projects/ProjectsTableView.tsx');
+
+		for (const source of [matrix, projects]) {
+			expect(source).toContain('SortableColumnHeader');
+			expect(stripComments(source)).not.toContain('function SortHeader');
+			expect(stripComments(source)).not.toContain('ArrowUpDown');
+		}
+	});
+
+	test('the shared header carries the hover, the cursor and the sort state', async () => {
+		const header = await read('components/shared/SortableColumnHeader.tsx');
+		expect(header).toContain('cursor-pointer');
+		expect(header).toContain('hover:underline');
+		expect(header).toContain('aria-sort=');
+		expect(header).toContain('aria-label={`Sort by ${label}');
+	});
+});
+
+describe('project card heights converge', () => {
+	test('the milestone run caps at three chips plus a +N badge', async () => {
+		const card = await read('pages/projects/ProjectCard.tsx');
+		expect(card).toContain('const visibleMilestones = milestoneOrder.slice(0, 3);');
+		expect(card).toContain(
+			'const hiddenMilestones = milestoneOrder.length - visibleMilestones.length;',
+		);
+		expect(card).toContain('<Badge tone="neutral">+{hiddenMilestones}</Badge>');
+		expect(card).toContain('{hiddenMilestones > 0 ? (');
+		expect(stripComments(card)).not.toContain('milestoneOrder.map(');
+	});
+});
+
+describe('the card attribute list forms a column', () => {
+	test('every row sits on one label track instead of starting after its own label', async () => {
+		const metrics = await read('pages/projects/ProjectCardMetrics.tsx');
+		expect(metrics).toContain('grid grid-cols-[5.5rem_1fr] items-baseline gap-x-2');
+		expect(metrics).toContain('label="Reported cost"');
+		expect(metrics).toContain('<MetricRow label="Version">');
+		// The old shape put the label inside the value cell as bare text.
+		expect(stripComments(metrics)).not.toContain("Version:{' '}");
+		expect(stripComments(metrics)).not.toContain("Tokens:{' '}");
+	});
+});
+
+describe('one primary action on the page', () => {
+	test('New Project is primary at rest and says its open state with aria-pressed', async () => {
+		const actions = await read('pages/projects/ProjectsPageActions.tsx');
+		expect(actions).toContain('aria-pressed={newOpen}');
+		expect(actions).toContain('variant="primary"');
+		expect(stripComments(actions)).not.toContain("newOpen ? 'primary'");
+	});
+
+	test('the card grid launch control is not primary and not a dead button', async () => {
+		const launch = await read('components/shared/AppLaunchControl.tsx');
+		expect(launch).toContain("variant={crashed || compact ? 'secondary' : 'primary'}");
+		// Compact is the list density: unavailable is a label there, not twenty disabled buttons.
+		expect(launch).toContain('if (compact) {');
+		expect(launch).toContain('inline-flex items-center gap-1.5 text-xs text-muted-foreground');
+	});
+});
+
+describe('both views can order the same list the same way', () => {
+	test('the card sort options are the table columns, one per sortable key', () => {
+		expect(projectSortOptions.length).toBeGreaterThan(0);
+		expect(projectSortOptions.map((option) => option.key)).toContain('name');
+		expect(projectSortOptions.find((option) => option.key === 'passing')?.label).toBe(
+			'Features',
+		);
+		expect(new Set(projectSortOptions.map((option) => option.key)).size).toBe(
+			projectSortOptions.length,
+		);
+	});
+
+	test('the card view renders the control and gets the same handler the headers use', async () => {
+		const cardView = await read('pages/projects/ProjectsCardView.tsx');
+		const results = await read('pages/projects/ProjectsResults.tsx');
+		const control = await read('pages/projects/ProjectsCardSort.tsx');
+
+		expect(cardView).toContain('<ProjectsCardSort');
+		expect(cardView).toContain('onToggleSort={onToggleSort}');
+		expect(results).toContain('<ProjectsCardView');
+		expect(results).toMatch(/<ProjectsCardView[\s\S]*?onToggleSort=\{onToggleSort\}/);
+		// Same handler as the table headers: a new key selects it, the current key flips direction.
+		expect(control).toContain('onToggleSort(event.target.value as SortKey)');
+		expect(control).toContain('onClick={() => onToggleSort(sortKey)}');
+	});
+});

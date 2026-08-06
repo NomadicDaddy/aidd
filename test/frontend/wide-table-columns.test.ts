@@ -102,6 +102,9 @@ function matrixRowCells(showFacets) {
 			onReset: noop,
 			onSave: noop,
 			row: matrixRow,
+			// What ProfileMatrixTable computes: the Actions column exists while editing or while
+			// some row is unsaved. The fixture row is clean, so Summary has no Actions cell.
+			showActions: showFacets || matrixRow.dirty,
 			showFacets,
 		}),
 	);
@@ -187,7 +190,9 @@ describe('wide table column strategy', () => {
 	});
 
 	test('the Profile Matrix hides its six facet columns outside edit mode', () => {
-		expect(rendered.matrix.summary).toBe(6);
+		// Five in Summary, not six: the Actions column goes with the facet selects, because with
+		// nothing editable on screen every control in it was permanently disabled.
+		expect(rendered.matrix.summary).toBe(5);
 		expect(rendered.matrix.edit).toBe(12);
 	});
 

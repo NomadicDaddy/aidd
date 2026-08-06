@@ -124,11 +124,26 @@ export function AppLaunchControl({
 		// One control, both densities. The full-size branch used to set the same sentence a second
 		// time as visible prose beside the button, which in the project header read as a loose
 		// unattributed line next to a button whose tooltip already said it.
+		//
+		// In a list the disabled button is the wrong shape: it is button-sized, button-coloured and
+		// permanently inert, so a grid of twenty cards showed a run of controls that look clickable
+		// and are not. Compact says the same thing as a label, which is what it is.
+		if (compact) {
+			return (
+				<span
+					aria-label={withContext(unavailableLabel)}
+					className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+					title={unavailableLabel}>
+					<AlertTriangle aria-hidden="true" className="h-3.5 w-3.5" />
+					Unavailable
+				</span>
+			);
+		}
 		return (
 			<Button
 				aria-label={withContext(unavailableLabel)}
 				disabled
-				size={compact ? 'compact' : 'default'}
+				size="default"
 				title={unavailableLabel}
 				variant="secondary">
 				<AlertTriangle className="h-4 w-4" />
@@ -137,13 +152,17 @@ export function AppLaunchControl({
 		);
 	}
 
+	// Primary only at full size. Compact is the list density, and there the control repeats once per
+	// row — twenty teal Start buttons out-weighted the single primary in the page header, so the
+	// page's most emphatic colour was carried by its most repeated control. Detail pages, where the
+	// control appears once and starting the app is the reason to be there, keep it.
 	return (
 		<Button
 			aria-label={withContext(crashed ? 'Restart app' : 'Start app')}
 			onClick={() => startMutation.mutate()}
 			size={compact ? 'compact' : 'default'}
 			title={crashed ? 'Previous run crashed — click to restart' : 'Start app'}
-			variant={crashed ? 'secondary' : 'primary'}>
+			variant={crashed || compact ? 'secondary' : 'primary'}>
 			{crashed ? <AlertTriangle className="h-4 w-4" /> : <Play className="h-4 w-4" />}
 			<span>{crashed ? 'Restart' : 'Start'}</span>
 		</Button>

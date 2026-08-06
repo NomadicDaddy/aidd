@@ -1,14 +1,11 @@
-import { default as ArrowDown } from 'lucide-react/dist/esm/icons/arrow-down';
-import { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up';
-import { default as ArrowUpDown } from 'lucide-react/dist/esm/icons/arrow-up-down';
-
 import type { PortStatusEntry, ProjectGitStatusMapEntry, ProjectSummary } from '../../api/types.ts';
 import type { ProjectColumn } from './projects-table-columns.ts';
 
 import { ColumnChooser } from '../../components/shared/ColumnChooser.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
+import { SortableColumnHeader } from '../../components/shared/SortableColumnHeader.tsx';
 import { Card } from '../../components/ui/card.tsx';
-import { tableHeadClass } from '../../lib/tableStyles.ts';
+import { pinnedLeftEdgeClass, tableHeadClass } from '../../lib/tableStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { type SortDir, type SortKey } from './projects-list-sort.ts';
 import {
@@ -58,7 +55,7 @@ function ColumnHeader({
 	// z-index than the body cells so it stays above them at the intersection.
 	const className =
 		column.key === 'name'
-			? 'sticky top-0 left-0 z-30 bg-muted px-3 py-3'
+			? `sticky top-0 left-0 z-30 bg-muted px-3 py-3 ${pinnedLeftEdgeClass}`
 			: 'sticky top-0 z-20 bg-muted px-3 py-3';
 	if (!sortKey) {
 		return (
@@ -67,24 +64,15 @@ function ColumnHeader({
 			</th>
 		);
 	}
-	const isActive = activeKey === sortKey;
-	const Icon = isActive ? (activeDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
 	return (
-		<th
-			aria-sort={isActive ? (activeDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+		<SortableColumnHeader
+			activeDir={activeDir}
+			activeKey={activeKey}
 			className={className}
-			scope="col">
-			<button
-				aria-label={`Sort by ${column.label}${isActive ? ` (${activeDir})` : ''}`}
-				className={`inline-flex items-center gap-1 text-left uppercase ${
-					isActive ? 'text-foreground' : 'text-muted-foreground'
-				}`}
-				onClick={() => onSort(sortKey)}
-				type="button">
-				{column.label}
-				<Icon aria-hidden="true" className="h-3 w-3" />
-			</button>
-		</th>
+			label={column.label}
+			onSort={onSort}
+			sortKey={sortKey}
+		/>
 	);
 }
 

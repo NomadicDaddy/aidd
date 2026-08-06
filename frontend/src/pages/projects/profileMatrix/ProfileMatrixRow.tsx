@@ -11,6 +11,8 @@ import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
+import { pinnedLeftEdgeClass, pinnedRightEdgeClass } from '../../../lib/tableStyles.ts';
+import { toneBorder, toneSurface } from '../../../lib/tones.ts';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
 import { sourceLabel, unsavedBadgeLabel } from './profileMatrixLabels.ts';
 
@@ -47,7 +49,10 @@ export function ProfileFacetSelect({
 	return (
 		<select
 			aria-label={`${projectName} ${facet.title}`}
-			className={`${selectClass} h-8 w-full min-w-36 px-2 text-xs`}
+			// `w-full` with no min of its own: the `min-w-40` on the column header is what sets the
+			// track, so all six selects come out one width instead of six widths set by how long
+			// each facet's title happens to be.
+			className={`${selectClass} h-8 w-full px-2 text-xs`}
 			onChange={(event) =>
 				onChange(
 					row.project.id,
@@ -70,6 +75,7 @@ export function ProfileMatrixRow({
 	onReset,
 	onSave,
 	row,
+	showActions,
 	showFacets,
 }: {
 	onChange: (
@@ -80,6 +86,8 @@ export function ProfileMatrixRow({
 	onReset: (projectId: string) => void;
 	onSave: (projectId: string) => void;
 	row: ProfileMatrixRowModel;
+	/** Matches the header: the Actions column only exists when some row can act. */
+	showActions: boolean;
 	/** Matches the header: the facet selects only exist in the page's edit-facets mode. */
 	showFacets: boolean;
 }) {
@@ -93,12 +101,12 @@ export function ProfileMatrixRow({
 		// the amber rule on the pinned cell make the row findable from the sticky column alone.
 		<tr
 			className={`border-b border-border align-top transition-colors hover:bg-muted/40 ${
-				row.dirty ? 'bg-amber-500/5' : ''
+				row.dirty ? toneSurface.amber : ''
 			}`}
 			data-dirty={row.dirty ? 'true' : undefined}>
 			<th
-				className={`sticky left-0 z-10 max-w-64 min-w-44 bg-card px-3 py-3 text-left ${
-					row.dirty ? 'border-l-2 border-amber-500/60' : ''
+				className={`sticky left-0 z-10 max-w-64 min-w-44 bg-card px-3 py-3 text-left ${pinnedLeftEdgeClass} ${
+					row.dirty ? `border-l-2 ${toneBorder.amber}` : ''
 				}`}>
 				<Link
 					className="block truncate text-sm font-semibold text-foreground hover:underline"
@@ -111,9 +119,18 @@ export function ProfileMatrixRow({
 				/>
 			</th>
 			<td className="px-3 py-3">
-				<div className="flex flex-wrap gap-1.5">
+				{/* The Unsaved badge is always in the layout and only sometimes visible. Mounting it
+				    on the first edit could not fit beside `Explicit` in a 91px cell, so it wrapped,
+				    took the row from 65px to 79px and pushed every row below it down by 14px — the
+				    table moved under the cursor on the keystroke that changed it. Reserving the space
+				    costs one hidden pill and makes the height identical in both states. */}
+				<div className="flex gap-1.5 whitespace-nowrap">
 					<Badge tone="neutral">{sourceLabel(row.project.metadata.profile.source)}</Badge>
-					{row.dirty && <Badge tone="amber">{unsavedBadgeLabel}</Badge>}
+					<span
+						aria-hidden={row.dirty ? undefined : 'true'}
+						className={row.dirty ? '' : 'invisible'}>
+						<Badge tone="amber">{unsavedBadgeLabel}</Badge>
+					</span>
 				</div>
 			</td>
 			{showFacets
@@ -153,32 +170,40 @@ export function ProfileMatrixRow({
 				{formatUpdatedAt(row.project.metadata.profile.updatedAt)}
 			</td>
 			{/* Pinned to the trailing edge so the commit controls stay reachable while the facet
-			    selects scroll between the two pinned columns. */}
-			<td className="sticky right-0 z-10 bg-card px-3 py-3 shadow-[inset_-8px_0_8px_-8px_rgba(0,0,0,0.35)]">
-				<div className="flex min-w-32 items-center gap-2">
-					<Button
-						aria-label={`Save ${row.project.name} profile`}
-						disabled={!row.dirty || row.saving}
-						onClick={() => onSave(row.project.id)}
-						size="compact"
-						variant="primary">
-						{row.saving ? (
-							<Loader2 className="h-3.5 w-3.5 animate-spin" />
-						) : (
-							<Save className="h-3.5 w-3.5" />
-						)}
-						Save
-					</Button>
-					<Button
-						aria-label={`Reset ${row.project.name} profile`}
-						disabled={!row.dirty || row.saving}
-						onClick={() => onReset(row.project.id)}
-						size="compact"
-						variant="secondary">
-						<RotateCcw className="h-3.5 w-3.5" />
-					</Button>
-				</div>
-			</td>
+			    selects scroll between the two pinned columns. A clean row keeps the cell — the
+			    column has to stay rectangular — but renders nothing in it rather than two controls
+			    that cannot be pressed. */}
+			{showActions ? (
+				<td className={`sticky right-0 z-10 bg-card px-3 py-3 ${pinnedRightEdgeClass}`}>
+					{row.dirty ? (
+						<div className="flex min-w-32 items-center gap-2">
+							<Button
+								aria-label={`Save ${row.project.name} profile`}
+								disabled={row.saving}
+								onClick={() => onSave(row.project.id)}
+								size="compact"
+								variant="primary">
+								{row.saving ? (
+									<Loader2 className="h-3.5 w-3.5 animate-spin" />
+								) : (
+									<Save className="h-3.5 w-3.5" />
+								)}
+								Save
+							</Button>
+							<Button
+								aria-label={`Reset ${row.project.name} profile`}
+								disabled={row.saving}
+								onClick={() => onReset(row.project.id)}
+								size="compact"
+								variant="secondary">
+								<RotateCcw className="h-3.5 w-3.5" />
+							</Button>
+						</div>
+					) : (
+						<div className="min-w-32" />
+					)}
+				</td>
+			) : null}
 		</tr>
 	);
 }

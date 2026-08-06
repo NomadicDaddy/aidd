@@ -49,6 +49,18 @@ export const projectColumns: readonly ProjectColumn[] = [
 	{ key: 'addedAt', label: 'Added', sortKey: 'addedAt' },
 ];
 
+/**
+ * The orderings the list can express, in table-column order.
+ *
+ * Both views sort the same array with the same comparator, so the card view's option labels are the
+ * table's column labels rather than a second set written by hand — "Features" in the card sort and
+ * the Features header are the one `passing` key.
+ */
+export const projectSortOptions: readonly { key: SortKey; label: string }[] =
+	projectColumns.flatMap((column) =>
+		column.sortKey ? [{ key: column.sortKey, label: column.label }] : [],
+	);
+
 /** Always rendered: identity, what is running, and the three health signals. */
 export const defaultProjectColumns: ReadonlySet<ProjectColumnKey> = new Set([
 	'activeRuns',

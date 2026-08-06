@@ -26,10 +26,15 @@ export function ProjectsPageActions({
 		// `flex-nowrap`: at 768 this row wrapped onto three lines and squeezed the PageHeader title
 		// column to ~110px. The two secondary actions drop their labels below `lg` so the row holds.
 		<div className="flex flex-nowrap items-center gap-2">
+			{/* The page's one primary, and primary at rest — it used to go teal only once the intake
+			    panel was already open, so the resting header had no primary at all while the card
+			    grid below it carried one teal Start per project. `aria-pressed` carries the open
+			    state, which is what it was using tone to say. */}
 			<Button
 				aria-label="New project"
+				aria-pressed={newOpen}
 				onClick={onToggleNew}
-				variant={newOpen ? 'primary' : 'secondary'}>
+				variant="primary">
 				<Plus className="h-4 w-4" />
 				<span className="hidden sm:inline">New Project</span>
 			</Button>

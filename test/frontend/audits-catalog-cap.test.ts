@@ -17,11 +17,14 @@ function read(...segments: string[]): Promise<string> {
  */
 describe('a long audits table caps itself and keeps its head', () => {
 	test('every audits table is bounded, and bounded on whatever actually scrolls', async () => {
-		// The cap has to land on the element that scrolls. Applicability and Overrides put their
-		// table straight in the Card, so the Card is it. The catalog wraps its table in an
-		// `OverflowScroller` for the horizontal fade, and that scroller is already a scroll
-		// container in both axes — capping the Card outside it would leave the head stuck to a box
-		// that never moves.
+		// The cap has to land on the element that scrolls. Applicability puts its table straight in
+		// the Card, so the Card is it. Catalog and Overrides wrap theirs in an `OverflowScroller`
+		// for the horizontal fade, and that scroller is already a scroll container in both axes —
+		// capping the Card outside it would leave the head stuck to a box that never moves.
+		//
+		// Overrides was the third form and is now the second: it capped the Card with `overflow-auto`
+		// and got a scrollport with no fade and no tab stop, which is also why the affordance guard
+		// (written against `overflow-x-auto`) never saw it.
 		//
 		// The subtrahend is per-tab, because what sits above each table differs: Applicability
 		// carries a toolbar whose header holds two lines of prose, so its cap is deeper. It was
@@ -31,7 +34,7 @@ describe('a long audits table caps itself and keeps its head', () => {
 			'max-h-[calc(100dvh-24rem)] overflow-auto p-0',
 		);
 		expect(await read(TABS, 'OverridesList.tsx')).toContain(
-			'max-h-[calc(100dvh-16rem)] overflow-auto p-0',
+			'scrollerClassName="max-h-[calc(100dvh-16rem)]"',
 		);
 		expect(await read(TABS, 'CatalogTable.tsx')).toContain(
 			'scrollerClassName="max-h-[calc(100dvh-16rem)]"',

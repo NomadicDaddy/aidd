@@ -119,6 +119,20 @@ async function telemetrySource(file: string): Promise<string> {
 	return readFile(join(TELEMETRY_DIR, file), 'utf8');
 }
 
+/**
+ * The wide table and the card stack that replaces it below `xl`, as two markup strings.
+ *
+ * `InvocationsTable` renders both, so an assertion over the whole string counts each shared piece
+ * twice and cannot tell which half it came from. Splitting at the stack's own gate is what lets a
+ * claim be made about each rendering separately — which is the point, since the two are supposed
+ * to carry the same information in different shapes.
+ */
+function splitAtStack(markup: string): [string, string] {
+	const boundary = markup.indexOf('xl:hidden');
+	expect(boundary).toBeGreaterThan(-1);
+	return [markup.slice(0, boundary), markup.slice(boundary)];
+}
+
 describe('telemetry surfaces stay on the token and type scales', () => {
 	test('no telemetry file paints from the raw palette or invents a type step', async () => {
 		const files = [
@@ -251,11 +265,16 @@ describe('recent invocations table', () => {
 	});
 
 	test('keeps the secondary status line only where it adds information', () => {
-		const lines = [
-			...rendered.table.matchAll(
-				/class="mt-0[.]5 block text-2xs text-muted-foreground">([^<]+)</g,
-			),
-		].map((match) => match[1]);
+		// Both renderings are in this markup now, and the status cell is shared between them, so
+		// the assertion runs per half — a stack that dropped the line would still pass a count
+		// taken over the whole string.
+		const halves = splitAtStack(rendered.table);
+		const secondaryLines = (markup: string) =>
+			[
+				...markup.matchAll(
+					/class="mt-0[.]5 block text-2xs text-muted-foreground">([^<]+)</g,
+				),
+			].map((match) => match[1]);
 
 		// The line names the summary tile the row is counted under, not the raw invocation status:
 		// the two disagree, and the raw one named a tile that does not count the row. A clean
@@ -264,15 +283,30 @@ describe('recent invocations table', () => {
 		expect(rendered.table).toContain('>Completed<');
 		expect(rendered.table).toContain('Completed · dirty tree');
 		expect(rendered.table).toContain('Blocked: gate');
-		expect(lines).toEqual(['Counted under Warnings', 'Counted under Failed']);
+		for (const half of halves) {
+			expect(secondaryLines(half)).toEqual([
+				'Counted under Warnings',
+				'Counted under Failed',
+			]);
+		}
 		expect(rendered.tableRunless).not.toMatch(
 			/class="mt-0[.]5 block text-2xs text-muted-foreground"/,
 		);
 	});
 
-	test('drops the two repeatable columns below xl so Status and Details stay on screen', () => {
-		// Header and body cells both, or the table shifts by a column at the breakpoint.
-		expect(rendered.table.match(/hidden xl:table-cell/g)?.length).toBe(2 + 2 * 3);
+	test('restores below xl the two columns it used to drop', () => {
+		// This asserted `hidden xl:table-cell` on eight cells: Source and Project were hidden on a
+		// phone because seven columns did not fit and something had to go. That was the card stack
+		// standing in for itself — a column removed rather than relocated, so the information was
+		// simply gone below the breakpoint. With a real stack the hiding is not a trade-off worth
+		// making, and the constant that expressed it is deleted.
+		const [table, stack] = splitAtStack(rendered.table);
+
+		expect(rendered.table).not.toContain('table-cell');
+		for (const half of [table, stack]) {
+			expect(half).toContain('>web<');
+			expect(half).toContain('>demo<');
+		}
 		expect(rendered.table).toContain('whitespace-nowrap');
 	});
 

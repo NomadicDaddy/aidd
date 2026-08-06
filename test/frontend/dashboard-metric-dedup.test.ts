@@ -53,7 +53,10 @@ describe('a dashboard number is stated once', () => {
 
 describe('machine values are not printed in the body face', () => {
 	test('the Feature Status state column reads as prose', async () => {
-		const source = await read('pages/dashboard/FeatureStatusCard.tsx');
+		// The two renderings moved to `FeatureStatusRows.tsx` when the card stack was added and the
+		// pair crossed the line cap; the card kept the header, the filters and the load-state
+		// branch. `statusLabel` went with the rows it labels, and now serves both of them.
+		const source = await read('pages/dashboard/FeatureStatusRows.tsx');
 
 		expect(source).toContain("import { humanizeEnum } from '../../lib/formatters.ts'");
 		expect(source).toContain('humanizeEnum(row.completed');

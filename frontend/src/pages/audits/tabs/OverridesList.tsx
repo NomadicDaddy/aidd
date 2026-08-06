@@ -1,5 +1,6 @@
 import type { AuditDefinition, AuditOverrideEffect } from '../../../api/types.ts';
 
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
@@ -23,64 +24,72 @@ interface OverridesListProps {
  */
 export function OverridesList({ audits, definitions, onChange }: OverridesListProps) {
 	return (
-		<Card className="max-h-[calc(100dvh-16rem)] overflow-auto p-0">
-			<table aria-label="Audit overrides" className="w-full text-left text-sm">
-				<thead className={`${tableHeadClass} sticky top-0 z-10`}>
-					<tr>
-						<th className="bg-muted px-3 py-3" scope="col">
-							Audit
-						</th>
-						<th className="bg-muted px-3 py-3 text-right" scope="col">
-							Override
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{definitions.map((definition) => {
-						const value = audits[definition.name] ?? 'default';
-						const overridden = value !== 'default';
-						return (
-							<tr
-								className="border-b border-border last:border-0"
-								key={definition.name}>
-								<td
-									className={`border-l-2 px-3 py-2 text-foreground ${
-										overridden
-											? 'border-accent font-semibold'
-											: 'border-transparent font-medium'
-									}`}>
-									{definition.name}
-								</td>
-								<td className="px-3 py-2 text-right">
-									<select
-										aria-label={`Override for ${definition.name}`}
-										className={`${selectClass} ml-auto w-36`}
-										onChange={(event) =>
-											onChange(
-												definition.name,
-												event.target.value as EffectValue,
-											)
-										}
-										value={value}>
-										{overrideEffects.map((option) => (
-											<option key={option.value} value={option.value}>
-												{option.label}
-											</option>
-										))}
-									</select>
+		// Two columns, so this one never needs a card stack — it fits the narrowest content column
+		// there is. What it did need is the scrollport: `overflow-auto` on the Card scrolled forty-two
+		// rows with no way to reach them but a pointer, and being `overflow-auto` rather than
+		// `overflow-x-auto` it slipped past the affordance guard that would have caught it.
+		<Card className="p-0">
+			<OverflowScroller
+				ariaLabel="Audit overrides"
+				scrollerClassName="max-h-[calc(100dvh-16rem)]">
+				<table aria-label="Audit overrides" className="w-full text-left text-sm">
+					<thead className={`${tableHeadClass} sticky top-0 z-10`}>
+						<tr>
+							<th className="bg-muted px-3 py-3" scope="col">
+								Audit
+							</th>
+							<th className="bg-muted px-3 py-3 text-right" scope="col">
+								Override
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{definitions.map((definition) => {
+							const value = audits[definition.name] ?? 'default';
+							const overridden = value !== 'default';
+							return (
+								<tr
+									className="border-b border-border last:border-0"
+									key={definition.name}>
+									<td
+										className={`border-l-2 px-3 py-2 text-foreground ${
+											overridden
+												? 'border-accent font-semibold'
+												: 'border-transparent font-medium'
+										}`}>
+										{definition.name}
+									</td>
+									<td className="px-3 py-2 text-right">
+										<select
+											aria-label={`Override for ${definition.name}`}
+											className={`${selectClass} ml-auto w-36`}
+											onChange={(event) =>
+												onChange(
+													definition.name,
+													event.target.value as EffectValue,
+												)
+											}
+											value={value}>
+											{overrideEffects.map((option) => (
+												<option key={option.value} value={option.value}>
+													{option.label}
+												</option>
+											))}
+										</select>
+									</td>
+								</tr>
+							);
+						})}
+						{definitions.length === 0 && (
+							<tr>
+								<td className="px-3 py-6 text-sm text-muted-foreground" colSpan={2}>
+									No audits match those filters.
 								</td>
 							</tr>
-						);
-					})}
-					{definitions.length === 0 && (
-						<tr>
-							<td className="px-3 py-6 text-sm text-muted-foreground" colSpan={2}>
-								No audits match those filters.
-							</td>
-						</tr>
-					)}
-				</tbody>
-			</table>
+						)}
+					</tbody>
+				</table>
+			</OverflowScroller>
 		</Card>
 	);
 }

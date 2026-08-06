@@ -48,8 +48,13 @@ export function OverflowScroller({
 			root.dataset.overflowStart = String(overflowing && scroller.scrollLeft > 1);
 			root.dataset.overflowEnd = String(overflowing && scroller.scrollLeft < overflow - 1);
 			// Only a scrollport that actually has hidden content earns a tab stop; a table that
-			// fits would otherwise add a focus step that goes nowhere.
-			if (overflowing) scroller.tabIndex = 0;
+			// fits would otherwise add a focus step that goes nowhere. Either axis counts: a
+			// `max-h-*` scrollport hides rows below its fold exactly as this one hides columns
+			// past its right edge, and neither is reachable by arrow key without a tab stop.
+			// The fades stay horizontal-only on purpose — both vertical scrollports here pin a
+			// `sticky top-0` header, and a top fade at `z-30` would paint over it.
+			const scrollsDown = scroller.scrollHeight - scroller.clientHeight > 1;
+			if (overflowing || scrollsDown) scroller.tabIndex = 0;
 			else scroller.removeAttribute('tabindex');
 		};
 

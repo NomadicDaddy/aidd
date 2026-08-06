@@ -13,29 +13,10 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { cn } from '../../lib/cn.ts';
 import { formatDate, formatDuration } from '../../lib/formatters.ts';
 import { InvocationDetails } from './InvocationDetails.tsx';
 
-/**
- * Source and Project are the two columns that survive being dropped: below the content breakpoint
- * the table pushed Status and Details — the columns an operator is actually scanning — off the
- * right edge, and Project is repeated verbatim inside the Inspect panel of every row.
- *
- * Gated at `xl` rather than the 768px tier it used to use. The main column is 736px wide at 1024
- * and this table wants 812px, so the columns come back only where they actually fit.
- */
-const HIDDEN_BELOW_XL = 'hidden xl:table-cell';
-
-const columns: { className?: string; label: string }[] = [
-	{ label: 'Resource' },
-	{ className: HIDDEN_BELOW_XL, label: 'Source' },
-	{ className: HIDDEN_BELOW_XL, label: 'Project' },
-	{ label: 'Started' },
-	{ label: 'Duration' },
-	{ label: 'Status' },
-	{ label: 'Details' },
-];
+const columns = ['Resource', 'Source', 'Project', 'Started', 'Duration', 'Status', 'Details'];
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
 	if (type === 'recipe') return `/recipes/${id}`;
@@ -46,27 +27,93 @@ function resourceLink(type: TelemetryResourceType, id: string): string {
 export function InvocationsTable({ invocations }: { invocations: InvocationRecord[] }) {
 	if (invocations.length === 0) return <EmptyState>No invocations recorded yet.</EmptyState>;
 	return (
-		<OverflowScroller ariaLabel="Recent invocations table">
-			<table aria-label="Recent invocations" className="w-full text-left text-sm">
-				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
-					<tr>
-						{columns.map((column) => (
-							<th
-								className={cn('px-3 py-2', column.className)}
-								key={column.label}
-								scope="col">
-								{column.label}
-							</th>
+		<>
+			{/* Seven columns want 812px and the mobile content column is 324px, so 60% of this
+			    table was off-screen at `scrollLeft=0` with Status and Details — the two an operator
+			    is actually scanning — entirely past the edge. The scroller was already here and was
+			    never the fix: a scrollport you have to drag through to reach the point of the row
+			    is contained, not usable. Dropping Source and Project below the breakpoint was the
+			    stack standing in for itself; with a real stack they come back. */}
+			<OverflowScroller ariaLabel="Recent invocations table" className="hidden xl:block">
+				<table aria-label="Recent invocations" className="w-full text-left text-sm">
+					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+						<tr>
+							{columns.map((column) => (
+								<th className="px-3 py-2" key={column} scope="col">
+									{column}
+								</th>
+							))}
+						</tr>
+					</thead>
+					<tbody>
+						{invocations.map((invocation) => (
+							<InvocationRow invocation={invocation} key={invocation.id} />
 						))}
-					</tr>
-				</thead>
-				<tbody>
-					{invocations.map((invocation) => (
-						<InvocationRow invocation={invocation} key={invocation.id} />
-					))}
-				</tbody>
-			</table>
-		</OverflowScroller>
+					</tbody>
+				</table>
+			</OverflowScroller>
+			<div
+				aria-label="Recent invocations"
+				className="flex flex-col divide-y divide-border xl:hidden"
+				role="list">
+				{invocations.map((invocation) => (
+					<InvocationCard invocation={invocation} key={invocation.id} />
+				))}
+			</div>
+		</>
+	);
+}
+
+function InvocationCard({ invocation }: { invocation: InvocationRecord }) {
+	return (
+		<div className="flex flex-col gap-2 py-3" role="listitem">
+			<div className="flex flex-wrap items-start justify-between gap-2">
+				<InvocationResource invocation={invocation} />
+				<InvocationStatusCell invocation={invocation} />
+			</div>
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+				<span className="text-foreground">{invocation.source}</span>
+				<span aria-hidden="true">·</span>
+				<span className="min-w-0 truncate">{invocation.projectName}</span>
+				<span aria-hidden="true">·</span>
+				<span className="whitespace-nowrap">{formatDate(invocation.startedAt)}</span>
+				<span aria-hidden="true">·</span>
+				<span className="whitespace-nowrap tabular-nums">
+					{invocation.durationMs === null ? '—' : formatDuration(invocation.durationMs)}
+				</span>
+			</div>
+			<InvocationDetails invocation={invocation} />
+		</div>
+	);
+}
+
+/** The identity of the row, rendered the same in the table cell and on the card. */
+function InvocationResource({ invocation }: { invocation: InvocationRecord }) {
+	return (
+		<div className="min-w-0">
+			{invocation.parentResourceName && invocation.parentResourceType ? (
+				<div className="text-xs text-muted-foreground">
+					<Link
+						className="hover:underline"
+						to={resourceLink(
+							invocation.parentResourceType,
+							invocation.parentResourceId ?? '',
+						)}>
+						{invocation.parentResourceName}
+					</Link>{' '}
+					→
+				</div>
+			) : null}
+			<Link
+				className="font-medium text-foreground hover:underline"
+				to={resourceLink(invocation.resourceType, invocation.resourceId)}>
+				{invocation.resourceName}
+			</Link>
+			<div className="mt-1 flex flex-wrap items-center gap-1.5">
+				<span className="text-2xs text-muted-foreground">{invocation.resourceType}</span>
+				<ExecutionIdentityBadges backend={invocation.backend} model={invocation.model} />
+			</div>
+		</div>
 	);
 }
 
@@ -74,40 +121,10 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 	return (
 		<tr className="border-b border-border last:border-0">
 			<td className="px-3 py-2">
-				{invocation.parentResourceName && invocation.parentResourceType ? (
-					<div className="text-xs text-muted-foreground">
-						<Link
-							className="hover:underline"
-							to={resourceLink(
-								invocation.parentResourceType,
-								invocation.parentResourceId ?? '',
-							)}>
-							{invocation.parentResourceName}
-						</Link>{' '}
-						→
-					</div>
-				) : null}
-				<Link
-					className="font-medium text-foreground hover:underline"
-					to={resourceLink(invocation.resourceType, invocation.resourceId)}>
-					{invocation.resourceName}
-				</Link>
-				<div className="mt-1 flex flex-wrap items-center gap-1.5">
-					<span className="text-2xs text-muted-foreground">
-						{invocation.resourceType}
-					</span>
-					<ExecutionIdentityBadges
-						backend={invocation.backend}
-						model={invocation.model}
-					/>
-				</div>
+				<InvocationResource invocation={invocation} />
 			</td>
-			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_XL)}>
-				{invocation.source}
-			</td>
-			<td className={cn('px-3 py-2 text-xs text-foreground', HIDDEN_BELOW_XL)}>
-				{invocation.projectName}
-			</td>
+			<td className="px-3 py-2 text-xs text-foreground">{invocation.source}</td>
+			<td className="px-3 py-2 text-xs text-foreground">{invocation.projectName}</td>
 			<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground">
 				{formatDate(invocation.startedAt)}
 			</td>

@@ -5,6 +5,7 @@ import type {
 } from '../../api/metrics.ts';
 import type { Tone } from '../../lib/tones.ts';
 
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useSystemMetrics, useWebVitalsSummary } from '../../hooks/useMetrics.ts';
@@ -85,6 +86,64 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 		);
 	}
 	return (
+		<>
+			{/* The pattern the Backend Matrix two tabs over already uses, which this table did not:
+			    a gated scroller and a stack that replaces it. Six columns measured 462px against a
+			    358px content column and there was no wrapper at all, so the overflow was the page's
+			    and /settings scrolled sideways. Gated at `lg` rather than `xl` because that is where
+			    this particular table fits — 462px into the 736px column an expanded rail leaves at
+			    1024 — and cards for a table that fits would be its own defect. */}
+			<OverflowScroller ariaLabel="Core Web Vitals" className="hidden lg:block">
+				<VitalsTable vitals={vitals} />
+			</OverflowScroller>
+			<div
+				aria-label="Core Web Vitals"
+				className="divide-y divide-border lg:hidden"
+				role="list">
+				{vitals.map((vital) => (
+					<VitalCard key={vital.name} vital={vital} />
+				))}
+			</div>
+		</>
+	);
+}
+
+/** One decimal place, always: raw averages arrived at arbitrary precision — 338.638 beside 49,772. */
+function vitalAverage(vital: WebVitalSummary): string {
+	if (vital.sampleCount === 0) return '—';
+	return vital.average.toLocaleString(undefined, {
+		maximumFractionDigits: 1,
+		minimumFractionDigits: 1,
+	});
+}
+
+function VitalCard({ vital }: { vital: WebVitalSummary }) {
+	const fields: [string, string][] = [
+		['Latest', vital.latest === null ? '—' : vital.latest.toLocaleString()],
+		['Average', vitalAverage(vital)],
+		['Threshold', vital.threshold.toLocaleString()],
+		['Samples', String(vital.sampleCount)],
+	];
+	return (
+		<div className="flex flex-col gap-1.5 py-2.5" role="listitem">
+			<div className="flex items-center justify-between gap-2">
+				<span className="text-sm font-medium text-foreground">{vital.name}</span>
+				<RatingBadge rating={vital.latestRating} />
+			</div>
+			<dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+				{fields.map(([label, value]) => (
+					<div className="flex items-baseline justify-between gap-2" key={label}>
+						<dt className="text-muted-foreground">{label}</dt>
+						<dd className="text-foreground tabular-nums">{value}</dd>
+					</div>
+				))}
+			</dl>
+		</div>
+	);
+}
+
+function VitalsTable({ vitals }: { vitals: WebVitalSummary[] }) {
+	return (
 		<table className="w-full text-sm">
 			{/* The same header strip the Backend Matrix uses: this table styled its own with a
 			    different case, weight and background, two cards apart on one surface. */}
@@ -108,15 +167,7 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 						<td className="px-2 py-1 text-right tabular-nums">
 							{vital.latest === null ? '—' : vital.latest.toLocaleString()}
 						</td>
-						<td className="px-2 py-1 text-right tabular-nums">
-							{/* Raw averages arrived at arbitrary precision — 338.638 beside 49,772. */}
-							{vital.sampleCount > 0
-								? vital.average.toLocaleString(undefined, {
-										maximumFractionDigits: 1,
-										minimumFractionDigits: 1,
-									})
-								: '—'}
-						</td>
+						<td className="px-2 py-1 text-right tabular-nums">{vitalAverage(vital)}</td>
 						<td className="px-2 py-1 text-right text-muted-foreground tabular-nums">
 							{vital.threshold.toLocaleString()}
 						</td>

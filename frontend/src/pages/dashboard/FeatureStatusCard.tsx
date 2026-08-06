@@ -18,22 +18,10 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
-import { humanizeEnum } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
-import { priorityLabel, priorityTone } from './dashboard-shared.ts';
+import { type FeatureStatusRow, FeatureStatusRows } from './FeatureStatusRows.tsx';
 
 type FeatureStatusState = 'completed' | 'pending';
-
-interface FeatureStatusRow {
-	completed: boolean;
-	directory: string;
-	priority: null | number | string;
-	projectId: string;
-	projectName: string;
-	status: null | string;
-	title: string;
-	type: FeatureStatusType;
-}
 
 type FeatureStatusSourceProject = ProjectDetail | ProjectSummary;
 
@@ -108,19 +96,6 @@ function buildFeatureStatusRows(projects: FeatureStatusSourceProject[]): Feature
 		});
 }
 
-function statusLabel(row: FeatureStatusRow): string {
-	return humanizeEnum(row.completed ? 'completed' : (row.status ?? 'pending'));
-}
-
-function rowLink(row: FeatureStatusRow): string {
-	const projectId = encodeURIComponent(row.projectId);
-	const query = new URLSearchParams({
-		featureQ: row.directory,
-		tab: 'features',
-	});
-	return `/projects/${projectId}?${query.toString()}`;
-}
-
 function filteredRows(
 	rows: FeatureStatusRow[],
 	stateFilter: FeatureStatusState,
@@ -130,66 +105,6 @@ function filteredRows(
 		if (row.type !== typeFilter) return false;
 		return stateFilter === 'completed' ? row.completed : !row.completed;
 	});
-}
-
-function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
-	return (
-		<div className="-mx-2 max-h-[28rem] overflow-auto px-2">
-			{/* No TYPE column. The type filter above is single-select and always pins it, so the
-			    column printed the same toned Badge on all 181 rows — a column that cannot vary is
-			    a column that carries no information, and a tone spent on it says "status" about a
-			    taxonomy. The filter states the type once. */}
-			<table className="min-w-[640px] text-sm">
-				<thead className="sticky top-0 z-10 bg-card">
-					<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
-						<th className="px-3 py-2 text-left">Application</th>
-						<th className="px-3 py-2 text-left">Feature</th>
-						<th className="px-3 py-2 text-left">State</th>
-						<th className="px-3 py-2 text-right">Priority</th>
-					</tr>
-				</thead>
-				<tbody>
-					{rows.map((row) => (
-						<tr
-							className="border-b border-border last:border-b-0"
-							key={`${row.projectName}:${row.directory}`}>
-							<td className="max-w-44 truncate px-3 py-2 font-medium text-foreground">
-								{row.projectName}
-							</td>
-							<td className="px-3 py-2">
-								<Link
-									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-									to={rowLink(row)}>
-									<span className="block truncate font-medium text-accent group-hover:underline">
-										{row.directory}
-									</span>
-									<span className="mt-0.5 block truncate text-xs text-muted-foreground">
-										{row.title}
-									</span>
-								</Link>
-							</td>
-							{/* `waiting_approval` was printed raw in font-sans at text-foreground.
-							    Snake_case with an underscore is the one shape the baseline reserves
-							    for machine identifiers set in mono, so a body-face `in_progress`
-							    read as a leaked field name rather than as a state. */}
-							<td className="px-3 py-2 text-foreground">{statusLabel(row)}</td>
-							{/* Priority was plain body text here and a toned Badge one card away in
-							    the Feature Queue, with a different null label ('P-' vs 'P—'), so one
-							    concept changed shape between two cards on the same page. Both now
-							    read through priorityTone/priorityLabel in dashboard-shared. */}
-							<td className="px-3 py-2">
-								<span className="flex justify-end">
-									<Badge tone={priorityTone(row.priority)}>
-										{priorityLabel(row.priority)}
-									</Badge>
-								</span>
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-		</div>
-	);
 }
 
 export function FeatureStatusCard({
@@ -272,7 +187,7 @@ export function FeatureStatusCard({
 					No {stateFilter} {typeFilter} rows match the selected filters.
 				</EmptyState>
 			) : (
-				<FeatureStatusTable rows={visibleRows} />
+				<FeatureStatusRows rows={visibleRows} />
 			)}
 		</Card>
 	);

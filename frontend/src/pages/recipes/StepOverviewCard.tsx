@@ -19,38 +19,54 @@ const stepTypeIcons: Record<RecipeStepType, typeof Terminal> = {
 	skill: Sparkles,
 };
 
+/**
+ * A value long enough that truncating it into a chip would hide the part that identifies it — a
+ * prompt, a nested path, an argument list. Roughly the width of a chip at this card's size, so
+ * anything past it was already arriving as an ellipsis.
+ */
+const blockValueLength = 48;
+
+function isBlockEntry(entry: ConfigSummaryEntry): boolean {
+	return entry.value.length > blockValueLength || entry.value.includes('\n');
+}
+
 function ConfigSummary({ entries }: { entries: ConfigSummaryEntry[] }) {
-	const command = entries.find((entry) => entry.key === 'command');
-	const compactEntries = entries.filter((entry) => entry.key !== 'command');
+	// `command` is always a block because it is always read as a command line, whatever its length.
+	// Everything else earns the block by being too long to survive a chip, which is the same rule
+	// applied to the same kind of value rather than a list of privileged keys.
+	const blockEntries = entries.filter((entry) => entry.key === 'command' || isBlockEntry(entry));
+	const chipEntries = entries.filter((entry) => !blockEntries.includes(entry));
 
 	return (
 		<div className="min-w-0 space-y-2">
-			{command && (
-				<div className="min-w-0">
+			{blockEntries.map((entry) => (
+				<div className="min-w-0" key={entry.key}>
 					<div className="mb-1 text-xs font-medium text-muted-foreground">
-						{command.label}:
+						{entry.label}:
 					</div>
 					<code className="block max-w-full overflow-x-auto rounded-md border border-border bg-muted px-2.5 py-2 font-mono text-xs leading-5 whitespace-pre text-foreground">
-						{command.value}
+						{entry.value}
 					</code>
 				</div>
-			)}
-			{compactEntries.length > 0 && (
+			))}
+			{chipEntries.length > 0 && (
 				<div className="flex flex-wrap gap-1.5">
-					{compactEntries.map((entry) => (
-						// A long value (a skill id, a nested recipe path) used to wrap the chip to
-						// three lines and break the row into a ragged block. The chip now clamps to
-						// one line and hands the full value to the title attribute.
+					{chipEntries.map((entry) => (
+						// One treatment for every chip. Half of them used to render in the accent
+						// colour because a table in recipe-steps.ts called their key "primary",
+						// which put `command` and `skillId` in the tone the app spends on live
+						// state — a step's configuration is not a status, and the reader has no way
+						// to know which keys were on that list. The label stays in the body face
+						// and the value goes `font-mono`, because the label is a word and the value
+						// is a machine string.
 						<span
-							className={`inline-flex max-w-full min-w-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
-								entry.primary
-									? 'bg-accent-muted font-medium text-accent-muted-foreground'
-									: 'bg-muted text-muted-foreground'
-							}`}
+							className="inline-flex max-w-full min-w-0 items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
 							key={entry.key}
 							title={`${entry.label}: ${entry.value}`}>
 							<span className="font-medium whitespace-nowrap">{entry.label}:</span>
-							<span className="truncate">{entry.value}</span>
+							<span className="truncate font-mono text-foreground">
+								{entry.value}
+							</span>
 						</span>
 					))}
 				</div>

@@ -12,19 +12,15 @@ import { formatUsageBadge, formatUsageBadgeCompact } from '../../lib/usageBadge.
 import {
 	recipeParameterCountExplainer,
 	recipeStepCountExplainer,
-	recipeStepTypeExplainer,
 } from './recipe-badge-explainers.ts';
+import { launchHint } from './recipe-launch.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
 import {
 	RecipeContractBadges,
 	RecipePolicyBadges,
+	RecipeStepTypeBadges,
 	RecipeTypeBadge,
 } from './RecipeMetadataBadges.tsx';
-
-// Every Launch button on this page is dead until a project is picked, which is a filter-bar state
-// the button itself cannot show. Both views point at the hint under the Project select instead of
-// leaving thirty greyed buttons to explain themselves.
-const launchHint = 'Choose a project to enable Launch';
 
 interface LaunchProps {
 	launchDisabled: boolean;
@@ -88,7 +84,13 @@ export function RecipeCard({
 					</Link>
 				}
 			/>
-			<p className="mb-4 text-sm text-muted-foreground">
+			{/* Two lines and the rest on `title`. A description is free text from a file on disk, so
+			    one recipe ran to six lines and, because grid rows stretch to their tallest card, set
+			    the height of every card beside it — the block that decided the row was the one field
+			    nothing else on the card depends on. */}
+			<p
+				className="mb-4 line-clamp-2 text-sm text-muted-foreground"
+				title={recipe.description ?? 'No description'}>
 				{recipe.description ?? 'No description'}
 			</p>
 			{/* One facts row rather than three stacked ones, and only the policy badges that change
@@ -103,12 +105,8 @@ export function RecipeCard({
 						{recipe.parameters.length === 1 ? 'parameter' : 'parameters'}
 					</RecipeBadgeTooltip>
 				)}
-				{[...new Set(recipe.steps.map((step) => step.stepType))].map((stepType) => (
-					<RecipeBadgeTooltip content={recipeStepTypeExplainer[stepType]} key={stepType}>
-						{stepType}
-					</RecipeBadgeTooltip>
-				))}
-				<RecipePolicyBadges recipe={recipe} riskOnly />
+				<RecipeStepTypeBadges recipe={recipe} />
+				<RecipePolicyBadges limit={3} recipe={recipe} riskOnly />
 			</div>
 			{usageLine ? <p className="mb-3 text-xs text-muted-foreground">{usageLine}</p> : null}
 			<div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
@@ -147,6 +145,12 @@ export function RecipeTable({
 							<th className="px-3 py-2 text-right" scope="col">
 								Steps
 							</th>
+							{/* The card names what a recipe is built from and the table did not, so
+							    the same recipe was a `shell` recipe in one view and an untyped row
+							    in the other. */}
+							<th className="px-3 py-2" scope="col">
+								Step types
+							</th>
 							<th className="px-3 py-2" scope="col">
 								Policies
 							</th>
@@ -169,7 +173,12 @@ export function RecipeTable({
 								<tr
 									className="border-b border-border last:border-0"
 									key={recipe.id}>
-									<td className="px-3 py-2">
+									{/* The description is the card's fourth line and the table has no
+								    room for it, so it hangs off the identity cell rather than
+								    being a fact only one of the two views has at all. */}
+									<td
+										className="px-3 py-2"
+										title={recipe.description ?? 'No description'}>
 										<Link
 											className="font-medium text-foreground hover:underline"
 											to={`/recipes/${recipe.id}`}>
@@ -188,12 +197,23 @@ export function RecipeTable({
 									<td className="px-3 py-2 text-right tabular-nums">
 										{recipe.steps.length}
 									</td>
-									{/* Two badges plus a `+N` that names the rest in its tooltip: the
-								    column used to wrap six pills onto two rows and set the height
-								    of every row in the table. */}
+									<td className="px-3 py-2">
+										<div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
+											<RecipeStepTypeBadges recipe={recipe} />
+										</div>
+									</td>
+									{/* The same risk-only summary the card shows, capped at the three
+								    badges that summary can produce: the column used to list the
+								    whole policy set, so a row said `failure: stop (3)` — the
+								    default, for every recipe — while the card said only what
+								    departed from it. */}
 									<td className="min-w-56 px-3 py-2">
 										<div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
-											<RecipePolicyBadges limit={2} recipe={recipe} />
+											<RecipePolicyBadges
+												limit={3}
+												recipe={recipe}
+												riskOnly
+											/>
 										</div>
 									</td>
 									<td className="px-3 py-2 text-right tabular-nums">

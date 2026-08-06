@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
+import { default as Info } from 'lucide-react/dist/esm/icons/info';
 import { default as List } from 'lucide-react/dist/esm/icons/list';
 import { default as PanelsTopLeft } from 'lucide-react/dist/esm/icons/panels-top-left';
 import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
@@ -25,6 +26,7 @@ import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { selectClass } from '../../lib/formStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
+import { launchHint } from './recipe-launch.ts';
 import { autoParameters } from './recipe-parameters.ts';
 import { RecipeCard, RecipeTable } from './RecipeGrid.tsx';
 import { RecipeQuickLaunchPanel } from './RecipeQuickLaunchPanel.tsx';
@@ -174,12 +176,6 @@ export function RecipesPage() {
 								</option>
 							))}
 						</select>
-						{/* The prerequisite every disabled Launch button in the grid points at. */}
-						{launchDisabled ? (
-							<p className="text-xs text-muted-foreground" id={launchHintId}>
-								Choose a project to enable Launch
-							</p>
-						) : null}
 					</FieldRow>
 					<FieldRow label="Search">
 						<div className="relative">
@@ -200,12 +196,18 @@ export function RecipesPage() {
 					<span>
 						Showing {filtered.length} of {allRecipes.length} recipes
 					</span>
-					{search ? (
-						<Button onClick={() => setSearch('')} variant="ghost">
-							<X className="h-3 w-3" />
-							Clear search
-						</Button>
-					) : null}
+					{/* Always in the layout, visible only with something to clear. Mounting it on
+					    the first keystroke grew the card by a button's height and pushed the whole
+					    results grid down as you typed; `invisible` keeps the box and takes the
+					    button out of both the tab order and the accessibility tree. */}
+					<Button
+						aria-hidden={search ? undefined : 'true'}
+						className={search ? '' : 'invisible'}
+						onClick={() => setSearch('')}
+						variant="ghost">
+						<X className="h-3 w-3" />
+						Clear search
+					</Button>
 				</div>
 			</Card>
 
@@ -221,9 +223,22 @@ export function RecipesPage() {
 				/>
 			)}
 
+			{/* The prerequisite, next to the buttons it disables. It used to be a line in the corner
+			    of the filter card, which is where the fix is but not where the problem is visible:
+			    below the fold a screen of greyed Launch buttons had nothing to explain them, and
+			    `aria-describedby` pointed off-screen. */}
+			{launchDisabled && filtered.length > 0 ? (
+				<p
+					className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground"
+					id={launchHintId}>
+					<Info aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+					{launchHint}. Details opens without one.
+				</p>
+			) : null}
+
 			{recipes.recipes.isLoading && allRecipes.length === 0 ? (
 				recipesView === 'table' ? (
-					<SkeletonRows columns={7} count={6} label="Loading recipes…" />
+					<SkeletonRows columns={8} count={6} label="Loading recipes…" />
 				) : (
 					<SkeletonCards count={6} label="Loading recipes…" />
 				)
@@ -265,7 +280,9 @@ export function RecipesPage() {
 					{...launchProps}
 				/>
 			) : (
-				<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+				// `gap-4`, the same gutter the Projects grid uses. At `gap-3` the cards sat closer
+				// to each other than their own padding, so a row read as one banded surface.
+				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{filtered.map((recipe) => (
 						<RecipeCard
 							key={recipe.id}

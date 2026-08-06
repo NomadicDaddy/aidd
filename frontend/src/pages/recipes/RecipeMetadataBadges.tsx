@@ -5,6 +5,7 @@ import type { RecipeDefinition } from '../../api/types.ts';
 
 import {
 	recipeMetadataOnlyExplainer,
+	recipeStepTypeExplainer,
 	recipeSystemExplainer,
 	recipeTypeExplainer,
 } from './recipe-badge-explainers.ts';
@@ -20,6 +21,25 @@ export function RecipeTypeBadge({ isPipeline }: { isPipeline: boolean }) {
 			<TypeIcon aria-hidden="true" className="h-3 w-3" />
 			{isPipeline ? 'pipeline' : 'single-step'}
 		</RecipeBadgeTooltip>
+	);
+}
+
+/**
+ * The distinct step types a recipe is built from, in first-use order.
+ *
+ * Shared rather than inlined per view: the card listed these and the table did not, so the same
+ * recipe was a `shell` recipe in one view and an untyped row in the other, and switching views
+ * changed what you knew about it.
+ */
+export function RecipeStepTypeBadges({ recipe }: { recipe: RecipeDefinition }) {
+	return (
+		<>
+			{[...new Set(recipe.steps.map((step) => step.stepType))].map((stepType) => (
+				<RecipeBadgeTooltip content={recipeStepTypeExplainer[stepType]} key={stepType}>
+					{stepType}
+				</RecipeBadgeTooltip>
+			))}
+		</>
 	);
 }
 

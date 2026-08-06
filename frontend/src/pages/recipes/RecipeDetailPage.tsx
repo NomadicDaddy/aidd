@@ -60,6 +60,13 @@ export function RecipeDetailPage() {
 			toast.error('Recipe name is required');
 			return;
 		}
+		// The create page has always checked this; here it never came up, because a new step used to
+		// arrive pre-named. Now that the name is a placeholder, an untouched step is nameless and a
+		// save would write `"name": ""` into the recipe file.
+		if (steps.some((step) => !step.name.trim())) {
+			toast.error('Every step needs a name');
+			return;
+		}
 		if (hasJsonErrors) {
 			toast.error('Fix recipe step JSON errors before saving');
 			return;

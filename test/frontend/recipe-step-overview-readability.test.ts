@@ -51,7 +51,11 @@ describe('recipe step overview readability', () => {
 		expect(source).toContain('bg-accent text-xs font-bold text-accent-foreground');
 		expect(source).toContain('w-px flex-1 bg-border');
 		expect(source).toContain('border-border bg-muted');
-		expect(source).toContain('bg-accent-muted font-medium text-accent-muted-foreground');
+		// The config chips used to fork on an emphasis flag and render half of themselves in
+		// `bg-accent-muted`, which is the tone the app spends on live state. They are one neutral
+		// treatment now, so what is asserted here is the surviving one — still a semantic token.
+		expect(source).toContain('rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground');
+		expect(source).not.toContain('bg-accent-muted');
 		expect(source).not.toMatch(/(?:bg|text|border)-(?:teal|neutral)-/);
 		expect(source).not.toContain('dark:');
 	});

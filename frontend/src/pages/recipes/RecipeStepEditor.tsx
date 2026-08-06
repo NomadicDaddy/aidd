@@ -1,5 +1,7 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
+import { default as ArrowDown } from 'lucide-react/dist/esm/icons/arrow-down';
+import { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 
 import type { RecipeStepOnFailure, RecipeStepType } from '../../api/types.ts';
@@ -12,6 +14,7 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
 import { dangerRowActionClass } from '../../lib/tones.ts';
+import { newStepNamePlaceholder } from './recipe-steps.ts';
 import { RecipeStepJsonField } from './RecipeStepJsonField.tsx';
 
 interface RecipeStepEditorProps {
@@ -19,7 +22,11 @@ interface RecipeStepEditorProps {
 	index: number;
 	onChange: (patch: Partial<StepDraft>) => void;
 	onDelete: () => void;
+	onMoveDown: () => void;
+	onMoveUp: () => void;
 	step: StepDraft;
+	/** How many steps the recipe has, which is what decides whether order is a thing at all. */
+	total: number;
 }
 
 export function RecipeStepEditor({
@@ -27,7 +34,10 @@ export function RecipeStepEditor({
 	index,
 	onChange,
 	onDelete,
+	onMoveDown,
+	onMoveUp,
 	step,
+	total,
 }: RecipeStepEditorProps) {
 	const whenParameterError = errors.when && !step.whenParameter.trim() ? errors.when : null;
 	const whenEqualsError = errors.when && !step.whenEquals.trim() ? errors.when : null;
@@ -40,24 +50,54 @@ export function RecipeStepEditor({
 				{/* No `<h3>{step.name}</h3>` under the badge: the name is the first editable field
 				    two rows down, so the heading was a second copy that went stale mid-keystroke. */}
 				<Badge>Step {index + 1}</Badge>
-				{/* Deleting one step of many is a row action, not the destructive climax of the
-				    form — it takes an icon button that turns red on hover instead of a filled
-				    danger button repeated down the list. */}
-				<IconButton
-					ariaLabel={`Delete step ${index + 1}`}
-					className={dangerRowActionClass}
-					onClick={onDelete}
-					variant="ghost">
-					<Trash2 className="h-4 w-4" />
-				</IconButton>
+				<div className="flex items-center gap-1">
+					{/* Order is the one property of a step the form could not change: the badge
+					    numbers the steps, the runner executes them in that order, and the only way
+					    to move one was to delete it and retype it at the end. Hidden entirely for a
+					    single step — one step has no order — and disabled at each end of the list,
+					    where the alternative is a control that moves depending on which step you
+					    are looking at. */}
+					{total > 1 ? (
+						<>
+							<IconButton
+								ariaLabel={`Move step ${index + 1} up`}
+								disabled={index === 0}
+								onClick={onMoveUp}
+								variant="ghost">
+								<ArrowUp className="h-4 w-4" />
+							</IconButton>
+							<IconButton
+								ariaLabel={`Move step ${index + 1} down`}
+								disabled={index === total - 1}
+								onClick={onMoveDown}
+								variant="ghost">
+								<ArrowDown className="h-4 w-4" />
+							</IconButton>
+						</>
+					) : null}
+					{/* Deleting one step of many is a row action, not the destructive climax of the
+					    form — it takes an icon button that turns red on hover instead of a filled
+					    danger button repeated down the list. */}
+					<IconButton
+						ariaLabel={`Delete step ${index + 1}`}
+						className={dangerRowActionClass}
+						onClick={onDelete}
+						variant="ghost">
+						<Trash2 className="h-4 w-4" />
+					</IconButton>
+				</div>
 			</div>
 			{/* `sm:grid-cols-2` before the 4-up: between 640 and 768 these four controls were a
 			    single stacked column while the card had room for two. */}
 			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-				<FieldRow label="Step name">
+				<FieldRow label="Step name" required>
 					<Input
 						name="step-name"
 						onChange={(event) => onChange({ name: event.target.value })}
+						// A suggestion, not a value: as a value it was already filled in and already
+						// valid, so nothing on the form ever asked for it to be changed and
+						// "New shell step" reached the recipe file under that name.
+						placeholder={newStepNamePlaceholder}
 						value={step.name}
 					/>
 				</FieldRow>

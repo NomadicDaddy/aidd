@@ -78,14 +78,16 @@ const recipe: RecipeDefinition = {
 	system: true,
 };
 
-// The catalog card carries only the policies that change what happens when a step fails; the
-// descriptive rest of the summary (`failure: stop`, `skills: review`, `skills: apply`) stays on the
-// detail page, where there is room to read it.
-const cardPolicyLabels = ['failure: auto-fix (1)', 'failure: continue (1)', 'retries: 2'];
+// Both views carry only the policies that change what happens when a step fails; the descriptive
+// rest of the summary (`failure: stop`, `skills: review`, `skills: apply`) stays on the detail page,
+// where there is room to read it. One list, not two: the table used to show the whole set capped at
+// two plus a `+N`, so a row led with `failure: stop (3)` — the default, true of every recipe — while
+// the card beside it showed only what departed from that default.
+const policyLabels = ['failure: auto-fix (1)', 'failure: continue (1)', 'retries: 2'];
 
-// The table column shows two policies and a `+N` whose tooltip names the rest, rather than wrapping
-// six pills onto two lines and setting the height of every row in the table.
-const tablePolicyLabels = ['failure: stop (3)', 'failure: continue (1)', '+4'];
+// The step types a recipe is built from. Both views render them from RecipeStepTypeBadges, so the
+// same recipe is no longer a `shell` recipe in the cards and an untyped row in the table.
+const stepTypeLabels = ['aidd-cli', 'recipe-ref', 'shell', 'skill'];
 
 function counts(markup: string) {
 	return {
@@ -131,22 +133,28 @@ describe('recipe badge tooltip wiring', () => {
 			[
 				'1 parameter',
 				'5 steps',
-				'aidd-cli',
 				'metadata-only',
 				'pipeline',
-				'recipe-ref',
-				'shell',
-				'skill',
 				'system',
-				...cardPolicyLabels,
+				...stepTypeLabels,
+				...policyLabels,
 			].sort(),
 		);
 	});
 
-	test('table view explains the type, contract, and policy badges', () => {
+	test('table view explains the type, contract, step types, and policy badges', () => {
+		// The counts are the table's own columns rather than badges, so they are the one difference
+		// between the two lists — the same fact in a different shape, not a fact only one view has.
 		expect(wrappedLabels(tableMarkup)).toEqual(
-			['metadata-only', 'pipeline', 'system', ...tablePolicyLabels].sort(),
+			['metadata-only', 'pipeline', 'system', ...stepTypeLabels, ...policyLabels].sort(),
 		);
+	});
+
+	test('both views state the same facts about the same recipe', () => {
+		const cardOnly = wrappedLabels(cardMarkup).filter(
+			(label) => !wrappedLabels(tableMarkup).includes(label),
+		);
+		expect(cardOnly).toEqual(['1 parameter', '5 steps']);
 	});
 
 	test('an empty explainer leaves the badge with no tooltip trigger', () => {

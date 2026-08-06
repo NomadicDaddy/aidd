@@ -15,6 +15,7 @@ function source(relative: string): string {
 const TOOLBARS = [
 	'pages/runs/RunFilters.tsx',
 	'pages/projects/ProjectsToolbar.tsx',
+	'pages/projects/profileMatrix/ProfileMatrixToolbar.tsx',
 	'pages/projects/detail/FeatureFilters.tsx',
 	'pages/projects/detail/DependencyGraphFilters.tsx',
 	'pages/projects/detail/AuditsTab.tsx',
@@ -45,7 +46,7 @@ function isSubsequence(candidate: string[], order: readonly string[]): boolean {
 	return true;
 }
 
-describe('one filter toolbar, eight times', () => {
+describe('one filter toolbar, nine times', () => {
 	test('every filter row renders through the shared toolbar', () => {
 		const missing = TOOLBARS.filter((file) => !source(file).includes('<FilterToolbar'));
 

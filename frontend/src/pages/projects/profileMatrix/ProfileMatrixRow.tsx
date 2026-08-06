@@ -14,15 +14,12 @@ import { selectClass } from '../../../lib/formStyles.ts';
 import { pinnedLeftEdgeClass, pinnedRightEdgeClass } from '../../../lib/tableStyles.ts';
 import { toneBorder, toneSurface } from '../../../lib/tones.ts';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
-import { sourceLabel, unsavedBadgeLabel } from './profileMatrixLabels.ts';
-
-function formatUpdatedAt(value: string): string {
-	if (!value) return 'Unknown';
-	return new Intl.DateTimeFormat(undefined, {
-		dateStyle: 'medium',
-		timeStyle: 'short',
-	}).format(new Date(value));
-}
+import {
+	formatUpdatedAt,
+	hardeningTriggerLabel,
+	sourceLabel,
+	unsavedBadgeLabel,
+} from './profileMatrixLabels.ts';
 
 /**
  * One facet dropdown. It reads its skin from the shared `selectClass` rather than a hand-rolled
@@ -152,8 +149,7 @@ export function ProfileMatrixRow({
 					<Badge tone="neutral">{row.posture.label}</Badge>
 					{row.posture.reasons.length > 0 && (
 						<span className="text-xs text-muted-foreground">
-							{row.posture.reasons.length} hardening trigger
-							{row.posture.reasons.length === 1 ? '' : 's'}
+							{hardeningTriggerLabel(row.posture.reasons.length)}
 						</span>
 					)}
 				</div>

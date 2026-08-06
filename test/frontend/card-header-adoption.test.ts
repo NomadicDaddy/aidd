@@ -30,6 +30,10 @@ const exemptions: { file: string; why: string }[] = [
 	{ file: 'pipelineSessions/StepRows.tsx', why: 'per-step row title inside a list' },
 	{ file: 'projects/ProjectCard.tsx', why: 'catalog card title, links to the project' },
 	{
+		file: 'projects/profileMatrix/ProfileMatrixMobileList.tsx',
+		why: 'the same catalog card title one viewport narrower: it is the row identity in a stack of rows, not a section of one card',
+	},
+	{
 		file: 'projects/detail/CodeFileViewer.tsx',
 		why: 'file path of the open file, not a section',
 	},

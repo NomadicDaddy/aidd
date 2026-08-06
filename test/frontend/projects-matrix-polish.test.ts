@@ -167,6 +167,60 @@ describe('every filter can express every value its column renders', () => {
 	});
 });
 
+describe('the phone card is the table, not a subset of it', () => {
+	const MOBILE = 'pages/projects/profileMatrix/ProfileMatrixMobileList.tsx';
+	const ROW = 'pages/projects/profileMatrix/ProfileMatrixRow.tsx';
+
+	test('every column the table has beyond the facets is on the card too', async () => {
+		const row = await read(ROW);
+		const mobile = await read(MOBILE);
+
+		// Source, Unsaved, Posture with its reason count, Audits, Updated — the five non-facet
+		// columns. The card used to stop after the audit counts, so a phone silently lost the
+		// hardening triggers and the last-written date, and the operator had no way to know a
+		// column existed to be missing.
+		for (const value of [
+			'sourceLabel(row.project.metadata.profile.source)',
+			'unsavedBadgeLabel',
+			'row.posture.label',
+			'{applicable}/{auditCount} apply',
+			'hardeningTriggerLabel(row.posture.reasons.length)',
+			'formatUpdatedAt(row.project.metadata.profile.updatedAt)',
+		]) {
+			expect(row).toContain(value);
+			expect(mobile).toContain(value);
+		}
+	});
+
+	test('the two layouts print those values through one implementation', async () => {
+		const labels = await read('pages/projects/profileMatrix/profileMatrixLabels.ts');
+
+		expect(labels).toContain('export function formatUpdatedAt(');
+		expect(labels).toContain('export function hardeningTriggerLabel(');
+		// A second copy of the formatter is how the two layouts drift back apart.
+		for (const path of [ROW, MOBILE]) {
+			expect(stripComments(await read(path))).not.toContain('Intl.DateTimeFormat');
+		}
+	});
+
+	test('the project name is the card heading and owns the full width', async () => {
+		const mobile = stripComments(await read(MOBILE));
+
+		expect(mobile).toContain('<h2 className="text-sm font-semibold text-foreground">');
+		// The badges sat in a `shrink-0` cluster opposite the name, which took a third of a 358px
+		// card away from the one line that tells fifteen identical cards apart.
+		expect(mobile).not.toContain('justify-between');
+		expect(mobile).not.toContain('shrink-0');
+	});
+
+	test('the facet form reads as subordinate to the project it edits', async () => {
+		const mobile = await read(MOBILE);
+
+		expect(mobile).toContain('Assurance facets');
+		expect(mobile).toContain('border-t border-border pt-3');
+	});
+});
+
 describe('sortable headers are one component', () => {
 	test('both tables render the shared header, and neither keeps a local one', async () => {
 		const matrix = await read('pages/projects/profileMatrix/ProfileMatrixTable.tsx');

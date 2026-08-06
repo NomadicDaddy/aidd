@@ -4,11 +4,22 @@ import type {
 	SourceFilter,
 } from './profileMatrixFilters.ts';
 
-import { Card } from '../../../components/ui/card.tsx';
-import { Input } from '../../../components/ui/input.tsx';
-import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
-import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import {
+	FilterSearch,
+	FilterSelect,
+	FilterToolbar,
+} from '../../../components/shared/FilterToolbar.tsx';
+import { emptyMatrixFilters } from './profileMatrixFilters.ts';
 
+/**
+ * The eighth filter row, and the last one that was still built by hand.
+ *
+ * It used to be a `flex flex-wrap` card of one `<label>` and three segmented controls, which gave
+ * it its own wrap behaviour, its own alignment, its own readout and no reset — four ways of
+ * differing from the seven toolbars an operator meets on the way here. The controls are selects now
+ * for the same reason the others are: three segmented controls of three and four options each are
+ * eleven permanent targets in a row that has to hold a search field too.
+ */
 export function ProfileMatrixToolbar({
 	filters,
 	onChange,
@@ -21,61 +32,60 @@ export function ProfileMatrixToolbar({
 	totalCount: number;
 }) {
 	return (
-		<Card className="flex flex-wrap items-end gap-3">
-			<label className="block min-w-56 flex-1 space-y-1">
-				<span className={fieldLabelClass}>Filter</span>
-				<Input
-					onChange={(event) => onChange({ ...filters, query: event.target.value })}
-					placeholder="Name or path"
-					value={filters.query}
-				/>
-			</label>
-			<div className="space-y-1">
-				<span className={`block ${fieldLabelClass}`}>Source</span>
-				<SegmentedControl
-					ariaLabel="Filter by profile source"
-					onChange={(source: SourceFilter) => onChange({ ...filters, source })}
-					options={[
-						{ label: 'All', value: 'all' },
-						{ label: 'Explicit', value: 'explicit' },
-						{ label: 'Inferred', value: 'inferred' },
-					]}
-					value={filters.source}
-				/>
-			</div>
-			<div className="space-y-1">
-				<span className={`block ${fieldLabelClass}`}>Posture</span>
-				<SegmentedControl
-					ariaLabel="Filter by posture"
-					onChange={(posture: PostureFilter) => onChange({ ...filters, posture })}
-					// One option per label the Posture column renders — the segment labels are the
-					// column's own strings, so a value on screen is always reachable from here.
-					options={[
-						{ label: 'All', value: 'all' },
-						{ label: 'Standard', value: 'standard' },
-						{ label: 'Low-exposure', value: 'low' },
-						{ label: 'Full hardening', value: 'full' },
-					]}
-					value={filters.posture}
-				/>
-			</div>
-			<div className="space-y-1">
-				<span className={`block ${fieldLabelClass}`}>Unsaved</span>
-				<SegmentedControl
-					ariaLabel="Show unsaved rows only"
-					onChange={(value: 'all' | 'dirty') =>
-						onChange({ ...filters, dirtyOnly: value === 'dirty' })
-					}
-					options={[
-						{ label: 'All', value: 'all' },
-						{ label: 'Unsaved only', value: 'dirty' },
-					]}
-					value={filters.dirtyOnly ? 'dirty' : 'all'}
-				/>
-			</div>
-			<p className="ml-auto text-xs text-muted-foreground">
-				Showing {shownCount} of {totalCount} projects
-			</p>
-		</Card>
+		<FilterToolbar
+			// `xl:`, not `lg:`: the rail is expanded from 1024px up, so `lg` is a 736px content
+			// column and four tracks in it put the search field at 245px. See the content-width
+			// table in AppLayout.tsx.
+			columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]"
+			filtered={shownCount}
+			hasFilters={
+				filters.dirtyOnly ||
+				filters.posture !== 'all' ||
+				filters.query.trim().length > 0 ||
+				filters.source !== 'all'
+			}
+			noun="projects"
+			onReset={() => onChange(emptyMatrixFilters)}
+			total={totalCount}>
+			<FilterSearch
+				ariaLabel="Filter projects by name or path"
+				onChange={(query) => onChange({ ...filters, query })}
+				placeholder="Name or path"
+				shortcut
+				value={filters.query}
+			/>
+			<FilterSelect
+				label="Unsaved"
+				onChange={(value) => onChange({ ...filters, dirtyOnly: value === 'dirty' })}
+				options={[
+					{ label: 'All', value: 'all' },
+					{ label: 'Unsaved only', value: 'dirty' },
+				]}
+				value={filters.dirtyOnly ? 'dirty' : 'all'}
+			/>
+			<FilterSelect
+				label="Posture"
+				onChange={(value) => onChange({ ...filters, posture: value as PostureFilter })}
+				// One option per label the Posture column renders — the option labels are the
+				// column's own strings, so a value on screen is always reachable from here.
+				options={[
+					{ label: 'All', value: 'all' },
+					{ label: 'Standard', value: 'standard' },
+					{ label: 'Low-exposure', value: 'low' },
+					{ label: 'Full hardening', value: 'full' },
+				]}
+				value={filters.posture}
+			/>
+			<FilterSelect
+				label="Source"
+				onChange={(value) => onChange({ ...filters, source: value as SourceFilter })}
+				options={[
+					{ label: 'All', value: 'all' },
+					{ label: 'Explicit', value: 'explicit' },
+					{ label: 'Inferred', value: 'inferred' },
+				]}
+				value={filters.source}
+			/>
+		</FilterToolbar>
 	);
 }

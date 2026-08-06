@@ -9,3 +9,21 @@ export function sourceLabel(source: string): string {
 }
 
 export const unsavedBadgeLabel = 'Unsaved';
+
+/**
+ * When the profile was last written. It lives here, not in the row, because the card stack has to
+ * print the same string the table does — a viewport that silently drops a column is the defect the
+ * split was supposed to avoid, and two copies of a formatter is how it comes back.
+ */
+export function formatUpdatedAt(value: string): string {
+	if (!value) return 'Unknown';
+	return new Intl.DateTimeFormat(undefined, {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+	}).format(new Date(value));
+}
+
+/** `3 hardening triggers`, pluralised — the sub-line under the posture badge in both layouts. */
+export function hardeningTriggerLabel(count: number): string {
+	return `${count} hardening trigger${count === 1 ? '' : 's'}`;
+}

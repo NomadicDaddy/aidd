@@ -36,7 +36,14 @@ export function FilterToolbar({
 }: {
 	children: ReactNode;
 	className?: string;
-	/** The grid template for the control row, e.g. `lg:grid-cols-[2fr_1fr_1fr_1fr]`. */
+	/**
+	 * The grid template for the control row, e.g. `sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]`.
+	 *
+	 * Two tiers and no others, because this example is what every consumer copies: `sm` for the
+	 * two-up step while the rail is collapsed, and `xl` for the full row. Not `lg` — the rail
+	 * expands at 1024px, so `lg` buys a four-track row a 736px column and hands the search field
+	 * 245px of it. The earlier version of this line said `md:`, which is a tier the app deleted.
+	 */
 	columns: string;
 	filtered: number;
 	hasFilters: boolean;

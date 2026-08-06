@@ -121,7 +121,7 @@ export function OverridesTab() {
 	return (
 		<div className="space-y-4">
 			<FilterToolbar
-				columns="lg:grid-cols-[2fr_1fr_1fr]"
+				columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr]"
 				filtered={visibleDefinitions.length}
 				hasFilters={query.trim() !== '' || stateFilter !== 'all'}
 				header={

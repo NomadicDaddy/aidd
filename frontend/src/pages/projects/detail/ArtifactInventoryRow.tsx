@@ -69,25 +69,37 @@ export function ArtifactInventoryRow({
 	const identifierIsName = labelAddsNothing(identifier, label);
 	const nameOfRow = label ?? identifier;
 	const nameBlock = (
-		<div className="flex min-w-0 items-center gap-2">
-			{identifierIsName ? (
-				<span className="truncate font-mono text-sm text-foreground">{identifier}</span>
-			) : (
-				<span className="truncate text-sm font-medium text-foreground">{label}</span>
-			)}
-			{viewable ? (
-				<Eye aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-			) : null}
+		// The name and its identifier are two lines on a phone and one line from `sm` up. Sharing a
+		// line was a measured content loss at 390px: `project-structure.md` had 115px for 136px of
+		// text and `.aidd/project-structure.md` 158px for 187px, so both halves of the row's own
+		// name were cut at once and neither said which artifact this was.
+		<div className="flex min-w-0 flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+			<span className="flex max-w-full min-w-0 items-center gap-2">
+				{identifierIsName ? (
+					<span className="truncate font-mono text-sm text-foreground">{identifier}</span>
+				) : (
+					<span className="truncate text-sm font-medium text-foreground">{label}</span>
+				)}
+				{viewable ? (
+					<Eye
+						aria-hidden="true"
+						className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+					/>
+				) : null}
+			</span>
 			{identifierIsName ? null : (
-				<span className="truncate font-mono text-xs text-muted-foreground">
+				<span className="max-w-full min-w-0 truncate font-mono text-xs text-muted-foreground">
 					{identifier}
 				</span>
 			)}
 		</div>
 	);
 	return (
+		// Below `sm` the metadata group gets its own line rather than competing with the name for
+		// one: it is `shrink-0` (badges, an age, a button), so on one line it takes what it needs
+		// and the name takes what is left.
 		<div
-			className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-2.5 py-1.5"
+			className="flex flex-col gap-2 rounded-md border border-border px-2.5 py-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
 			title={rowTitle}>
 			{viewable ? (
 				<button

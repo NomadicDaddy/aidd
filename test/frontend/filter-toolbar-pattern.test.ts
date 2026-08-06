@@ -77,6 +77,35 @@ describe('one filter toolbar, nine times', () => {
 		expect(wrong).toEqual([]);
 	});
 
+	test('every toolbar reaches its multi-column row at the same width', () => {
+		// Three toolbars stepped `sm` → `xl` and five went straight to `lg`, so a 1024px window
+		// showed some filter rows in one column and others already in four — and `lg` is the worst
+		// width to pick, because the nav rail expands at exactly 1024px and takes the gain back.
+		// The only two tiers a control row may use are the two-up step and the full row.
+		const allowed = /^(?:sm:grid-cols-2|xl:grid-cols-\S+)$/;
+		const wrong: string[] = [];
+
+		for (const file of TOOLBARS) {
+			const value = /columns="([^"]+)"/.exec(source(file))?.[1];
+			if (value === undefined) {
+				wrong.push(`${file}: no columns prop`);
+				continue;
+			}
+			const offending = value.split(/\s+/).filter((utility) => !allowed.test(utility));
+			if (offending.length > 0) wrong.push(`${file}: ${offending.join(' ')}`);
+		}
+
+		expect(wrong).toEqual([]);
+	});
+
+	test('the shared component documents the tier it wants copied', () => {
+		const toolbar = source('components/shared/FilterToolbar.tsx');
+
+		// The sweep traced the `md:` tier on four surfaces back to this one JSDoc example: the
+		// contract a shared component prints is the contract its consumers paste.
+		expect(toolbar).toContain('`sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]`');
+	});
+
 	test('the two Project Detail tabs that share four filters share their order', () => {
 		// Features read Search · Status · Milestone · Source and Dependencies read Search · Status ·
 		// Source · Milestone. Two tabs of one page, and switching between them moved the select the

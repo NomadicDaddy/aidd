@@ -114,7 +114,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 			</Card>
 
 			<FilterToolbar
-				columns="lg:grid-cols-[2fr_1fr]"
+				columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr]"
 				filtered={filtered.length}
 				hasFilters={query.trim() !== '' || enabledFilter !== 'all'}
 				noun="audits"

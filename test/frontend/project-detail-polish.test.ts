@@ -95,6 +95,39 @@ describe('artifact inventory', () => {
 			expect(source).not.toContain('rounded-md border border-border px-2.5');
 		}
 	});
+
+	test('the name and its identifier stop sharing one line on a phone', async () => {
+		const row = await detail('ArtifactInventoryRow.tsx');
+
+		// Measured at 390px: `project-structure.md` had 115px for 136px of text and
+		// `.aidd/project-structure.md` 158px for 187px, because the name competed on one line with
+		// a shrink-0 group of badges, an age and a button. Both halves of the row's own name were
+		// truncated at once, which left nothing saying which artifact the row was.
+		expect(row).toContain(
+			'flex min-w-0 flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-2',
+		);
+		expect(row).toContain('sm:flex-row sm:flex-wrap sm:items-center sm:justify-between');
+		// The row shell no longer starts life as a single wrapping line.
+		expect(row).not.toContain('flex flex-wrap items-center justify-between gap-2 rounded-md');
+	});
+});
+
+describe('the overview metadata row survives a long value', () => {
+	test('the value can shrink instead of pushing out of the card', async () => {
+		const row = await detail('MetadataRow.tsx');
+
+		// The values are not all short strings: one is an ExecutionIdentityBadges beside a link,
+		// another is a stack display. Without `min-w-0` a flex item cannot shrink below its content.
+		expect(row).toContain('min-w-0 text-right text-foreground');
+	});
+
+	test('neither overview grid goes two-up before the content column can hold it', async () => {
+		const metadata = await detail('OverviewTab.tsx');
+		const summary = await detail('OverviewSummary.tsx');
+
+		expect(metadata).toContain('grid gap-4 lg:grid-cols-2');
+		expect(summary).toContain('grid gap-4 lg:grid-cols-3');
+	});
 });
 
 describe('relative age', () => {

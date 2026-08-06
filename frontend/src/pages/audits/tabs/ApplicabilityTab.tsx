@@ -77,7 +77,7 @@ export function ApplicabilityTab() {
 			    card it added ~120px of permanent chrome above a region that is already fighting for
 			    vertical room, and the search would then have been a third stacked box. */}
 			<FilterToolbar
-				columns="lg:grid-cols-[2fr]"
+				columns="xl:grid-cols-[2fr]"
 				filtered={visibleRows.length}
 				hasFilters={query.trim() !== ''}
 				header={

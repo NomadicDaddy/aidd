@@ -164,7 +164,7 @@ export function CatalogToolbar({
 			</Card>
 
 			<FilterToolbar
-				columns="lg:grid-cols-[2fr_1fr_1fr]"
+				columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr]"
 				filtered={filteredCount}
 				hasFilters={
 					query.trim() !== '' || healthFilter !== 'all' || enabledFilter !== 'all'

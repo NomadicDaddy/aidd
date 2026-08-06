@@ -165,7 +165,7 @@ export function FeatureStatusCard({
 			) : isError ? (
 				<EmptyState
 					action={
-						<Button className="h-9 text-xs" onClick={onRetry} variant="secondary">
+						<Button className="text-xs" onClick={onRetry} variant="secondary">
 							<RefreshCw className="h-3.5 w-3.5" />
 							Retry
 						</Button>

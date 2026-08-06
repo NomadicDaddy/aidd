@@ -33,7 +33,7 @@ export function RunCommandInfo({
 			side="bottom">
 			<Button
 				aria-label={commandAriaLabel(command, runId)}
-				className="h-7 min-h-0 w-7 px-0"
+				className="sm:h-7 sm:w-7"
 				onClick={() => {
 					if (!command) {
 						toast.error('Command metadata is unavailable for this run');
@@ -44,7 +44,7 @@ export function RunCommandInfo({
 						.then(() => toast.success('Command copied'))
 						.catch(() => toast.error('Could not copy command'));
 				}}
-				size="compact"
+				size="icon"
 				variant="ghost">
 				<Info aria-hidden="true" className="h-3.5 w-3.5" />
 			</Button>

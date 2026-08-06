@@ -21,11 +21,20 @@ const variants: Record<ButtonVariant, string> = {
 		'border-border bg-card text-foreground hover:border-accent/50 hover:bg-accent-muted dark:hover:border-accent/40 dark:hover:bg-accent-muted',
 };
 
+/* Every size carries a 44px floor below `sm` and restores its desk height from `sm` up. The shape is
+   `SidebarNav`'s (`h-11 w-11 … sm:h-9 sm:w-auto`), generalized: not one of the four sizes reached
+   44px before, so the app had no way to spell a compliant touch target — `toolbar`, which exists for
+   the most prominent actions, was 40px. `compact` is 78 call sites across 40 files and is the
+   working default rather than an exception, so raising it is where nearly all of the benefit is.
+
+   The floor is `min-h-*` rather than `h-*` on purpose: a control that wraps to two lines on a narrow
+   viewport has to be allowed to grow past the floor. `sm:min-h-0` then hands the height back to
+   `sm:h-*`, which is what keeps the desk layout pixel-identical. */
 const sizes: Record<ButtonSize, string> = {
-	compact: 'min-h-8 gap-1.5 px-2.5 text-xs',
-	default: 'h-9 gap-2 px-3 text-sm',
-	icon: 'h-9 w-9 shrink-0 px-0',
-	toolbar: 'h-10 gap-2 px-3 text-sm',
+	compact: 'min-h-11 gap-1.5 px-2.5 text-xs sm:min-h-8',
+	default: 'min-h-11 gap-2 px-3 text-sm sm:h-9 sm:min-h-0',
+	icon: 'h-11 w-11 shrink-0 px-0 sm:h-9 sm:w-9',
+	toolbar: 'min-h-11 gap-2 px-3 text-sm sm:h-10 sm:min-h-0',
 };
 
 /* A blocked action has to look blocked. Call sites signal it two ways — the native `disabled`

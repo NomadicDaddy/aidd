@@ -109,7 +109,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 								</IconButton>
 							</div>
 						</div>
-						<div className="flex shrink-0 gap-0.5 sm:order-last sm:mt-3 sm:flex-col sm:gap-1.5 sm:border-t sm:border-border/60 sm:pt-3 max-sm:[&_button]:h-8 max-sm:[&_button]:w-8">
+						<div className="flex shrink-0 gap-0.5 sm:order-last sm:mt-3 sm:flex-col sm:gap-1.5 sm:border-t sm:border-border/60 sm:pt-3">
 							<div className="sm:hidden">
 								<IconButton
 									aria-keyshortcuts={commandPaletteShortcut.ariaKeyShortcuts}

@@ -491,7 +491,7 @@ Page-level routes must be resilient to render-time errors and code-split loading
 ✅ **Good: Organized Classes**:
 
 ```jsx
-<div className="flex w-full max-w-4xl flex-col items-center gap-4 rounded-lg bg-white p-6 text-lg font-semibold text-gray-900 shadow-md md:flex-row md:p-8">
+<div className="flex w-full max-w-4xl flex-col items-center gap-4 rounded-lg bg-white p-6 text-lg font-semibold text-gray-900 shadow-md lg:flex-row lg:p-8">
 	Content
 </div>
 ```

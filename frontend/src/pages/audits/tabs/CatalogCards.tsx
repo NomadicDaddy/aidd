@@ -2,6 +2,7 @@ import type { AuditDefinition } from '../../../api/types.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { touchTargetBoxClass } from '../../../lib/touchTarget.ts';
 import {
 	auditFileName,
 	bandTone,
@@ -62,10 +63,14 @@ export function CatalogCards({
 						role="group">
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex min-w-0 items-start gap-2">
+								{/* The one checkbox in the app with no `<label>` around it: the card's
+								    text is a button that opens the audit, so it cannot also toggle
+								    selection. With no label to enlarge, the 16px box is the whole
+								    target and its hit area has to grow around it. */}
 								<Checkbox
 									aria-label={`Select ${item.name} for launch`}
 									checked={selectedAuditNames.includes(item.name)}
-									className="mt-1"
+									className={`mt-1 ${touchTargetBoxClass}`}
 									disabled={!item.enabled}
 									onChange={() => onToggleSelected(item.name)}
 								/>

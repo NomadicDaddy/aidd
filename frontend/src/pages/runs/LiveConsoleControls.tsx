@@ -45,7 +45,7 @@ export function LiveConsoleControls({
 				{find ? (
 					<IconButton
 						ariaLabel="Clear find"
-						className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+						className="absolute top-1/2 right-1 -translate-y-1/2 border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground sm:h-8 sm:w-8"
 						onClick={() => onFindChange('')}
 						variant="ghost">
 						<X aria-hidden="true" className="h-3.5 w-3.5" />

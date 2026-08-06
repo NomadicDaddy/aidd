@@ -186,7 +186,7 @@ export function ActiveRunRow({
 												: 'Stop unavailable: run is no longer running'
 											: 'Stop run'
 								}
-								className="h-8 w-8"
+								className="sm:h-8 sm:w-8"
 								disabled={stopDisabled}
 								onClick={() => {
 									if (stopDisabled) return;
@@ -226,7 +226,7 @@ export function ActiveRunRow({
 											: 'Kill unavailable: run is no longer running'
 										: 'Kill run'
 								}
-								className="h-8 w-8"
+								className="sm:h-8 sm:w-8"
 								disabled={killDisabled}
 								onClick={() => {
 									if (killDisabled) return;

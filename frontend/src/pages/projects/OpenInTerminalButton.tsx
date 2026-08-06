@@ -8,7 +8,7 @@ export function OpenInTerminalButton({ path }: { path: string }) {
 	return (
 		<IconButton
 			ariaLabel="Open a terminal in this project's directory"
-			className="h-7 w-7"
+			className="sm:h-7 sm:w-7"
 			onClick={() => void openTerminalPaneAt(path)}
 			variant="ghost">
 			<SquareTerminal className="h-4 w-4" />

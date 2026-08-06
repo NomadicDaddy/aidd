@@ -9,7 +9,11 @@ import { invalidControlClass, toneText } from './tones.ts';
 // survive the merge. A flex item with only a min-width has `flex-basis: auto`, reads the `width` it
 // was never meant to keep, resolves to the full 1278px row, and takes a line of its own — which is
 // how the Runs filter row came to be four stacked selects instead of one toolbar.
-const controlChromeClass = `h-9 min-w-0 rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 ${invalidControlClass}`;
+// The height is the same 44px-below-`sm` floor the `Button` scale carries, spelled the same way: a
+// `min-h-*` that lets a control grow, handed back to `sm:h-9` from the tablet breakpoint up so the
+// desk layout is unchanged. A 36px select is a 36px tap target, and this string is every input and
+// every select in the app.
+const controlChromeClass = `min-h-11 min-w-0 rounded-lg sm:h-9 sm:min-h-0 border border-border bg-card px-3 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 ${invalidControlClass}`;
 
 /**
  * An `<input>`'s chrome, plus the width. A text input's intrinsic size is a browser default of about

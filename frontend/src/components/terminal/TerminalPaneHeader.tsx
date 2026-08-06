@@ -99,7 +99,7 @@ export function TerminalPaneHeader({
 					})}
 					<IconButton
 						ariaLabel="New terminal tab"
-						className="h-6 w-6 shrink-0"
+						className="shrink-0 sm:h-6 sm:w-6"
 						onClick={() => void createTerminalTab()}
 						variant="ghost">
 						<Plus className="h-3.5 w-3.5" />
@@ -123,7 +123,7 @@ export function TerminalPaneHeader({
 			<div className="flex items-center gap-1">
 				<IconButton
 					ariaLabel="Restart terminal session"
-					className="h-7 w-7"
+					className="sm:h-7 sm:w-7"
 					disabled={!activeSessionId}
 					onClick={() => {
 						if (activeSessionId) void restartTerminalTab(activeSessionId);
@@ -133,7 +133,7 @@ export function TerminalPaneHeader({
 				</IconButton>
 				<IconButton
 					ariaLabel={maximized ? 'Restore terminal size' : 'Maximize terminal'}
-					className="h-7 w-7"
+					className="sm:h-7 sm:w-7"
 					onClick={() => setMaximized(!maximized)}
 					variant="ghost">
 					{maximized ? (
@@ -144,7 +144,7 @@ export function TerminalPaneHeader({
 				</IconButton>
 				<IconButton
 					ariaLabel="Close terminal"
-					className="h-7 w-7"
+					className="sm:h-7 sm:w-7"
 					onClick={toggleOpen}
 					variant="ghost">
 					<X className="h-3.5 w-3.5" />

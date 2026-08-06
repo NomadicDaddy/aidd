@@ -79,7 +79,7 @@ function SessionActions({
 							? `${stopBlockedReason} for ${sessionContext}`
 							: `Stop session: ${sessionContext}`
 					}
-					className="h-8 w-8 shrink-0"
+					className="shrink-0 sm:h-8 sm:w-8"
 					disabled={!isSessionActive(session.status)}
 					onClick={() => onStop(session.id)}
 					title={stopBlockedReason ?? 'Stop session'}

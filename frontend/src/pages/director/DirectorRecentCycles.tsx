@@ -12,9 +12,8 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { cycleElapsed, cycleStageLabels } from '../../lib/directorConstants.ts';
-import { formatDate } from '../../lib/formatters.ts';
+import { formatDate, humanizeEnum } from '../../lib/formatters.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
-import { humanizeEnum } from './directorUtils.ts';
 
 function cycleTone(status: DirectorCycle['status']): Tone {
 	if (status === 'failed') return 'red';

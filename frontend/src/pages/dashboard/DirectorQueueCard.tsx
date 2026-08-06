@@ -42,7 +42,7 @@ export function DirectorQueueCard({
 						<ArrowRight className="h-3.5 w-3.5" />
 					</Link>
 				}
-				description="Pending director suggestions awaiting a decision."
+				description="Up to four of the suggestions awaiting a decision."
 				icon={<AlertTriangle className={`h-4 w-4 ${toneText.amber}`} />}
 				title="Director Queue"
 			/>

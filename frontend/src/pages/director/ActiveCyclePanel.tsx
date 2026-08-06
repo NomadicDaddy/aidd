@@ -11,13 +11,9 @@ import {
 	cycleStageDescriptions,
 	cycleStageLabels,
 } from '../../lib/directorConstants.ts';
+import { humanizeEnum } from '../../lib/formatters.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
-import {
-	artifactTone,
-	contextArtifactLabel,
-	humanizeEnum,
-	outputArtifactLabel,
-} from './directorUtils.ts';
+import { artifactTone, contextArtifactLabel, outputArtifactLabel } from './directorUtils.ts';
 
 function CycleArtifactRow({
 	label,

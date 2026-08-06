@@ -51,11 +51,17 @@ export function featureProgressColor(pct: number): string {
 	return toneSolid.amber;
 }
 
+/**
+ * Complete milestones are toned; everything else is not.
+ *
+ * A complete milestone was `emerald` and an in-progress one `teal`. At badge size in dark mode
+ * `text-emerald-300` and `text-teal-300` are two adjacent greens, so a row of chips read as one
+ * undifferentiated colour and the distinction was carried entirely by the `3/5` each chip already
+ * prints. Presence of colour is a difference legible at 11px; hue between neighbours on the wheel
+ * is not.
+ */
 export function milestoneBadgeTone(ms: ProjectMilestoneSummary): BadgeTone {
-	if (ms.total === 0) return 'neutral';
-	if (ms.completed === ms.total) return 'emerald';
-	if (ms.completed > 0) return 'teal';
-	return 'neutral';
+	return ms.total > 0 && ms.completed === ms.total ? 'emerald' : 'neutral';
 }
 
 export function isOrphaned(project: ProjectSummary): boolean {

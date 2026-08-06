@@ -26,7 +26,7 @@ import { DirectorQueueCard } from './DirectorQueueCard.tsx';
 import { buildFeatureQueue, FeatureQueueCard } from './FeatureQueueCard.tsx';
 import { FeatureStatusCard } from './FeatureStatusCard.tsx';
 import { FeatureSummaryCard } from './FeatureSummaryCard.tsx';
-import { FleetHealthCard } from './FleetHealthCard.tsx';
+import { PriorityHealthFooter } from './PriorityHealthFooter.tsx';
 import { ProjectHealthCard } from './ProjectHealthCard.tsx';
 import { SortableDashboardGrid } from './SortableDashboardGrid.tsx';
 import { WaitingApprovalCard } from './WaitingApprovalCard.tsx';
@@ -120,18 +120,9 @@ export function DashboardPage() {
 		]);
 	}
 
+	const healthBand = fleet?.fleetAggregations.priorityHealth.band;
+
 	const cards: DashboardCardDef[] = [
-		{
-			id: 'fleet-health',
-			label: 'Fleet Health',
-			node: (
-				<FleetHealthCard
-					featureHealthTone={featureHealthTone}
-					featureHealthValue={featureHealthValue}
-					fleet={fleet}
-				/>
-			),
-		},
 		{
 			id: 'active-runs',
 			label: 'Active Runs',
@@ -264,8 +255,18 @@ export function DashboardPage() {
 					tone={activeRuns.length > 0 ? 'amber' : 'emerald'}
 					value={activeRuns.length}
 				/>
+				{/* The Fleet Health card used to sit below this tile printing the same percentage
+				    in its badge and drawing this bar. Both moved into the tile's `footer` and the
+				    card is gone; see PriorityHealthFooter. */}
 				<Metric
 					detail={`${fleetFeaturePassing}/${fleetFeatureTotal} passing`}
+					footer={
+						<PriorityHealthFooter
+							band={healthBand}
+							tone={featureHealthTone}
+							value={featureHealthValue}
+						/>
+					}
 					icon={<CheckCircle2 className="h-5 w-5" />}
 					label="Priority Health"
 					loading={

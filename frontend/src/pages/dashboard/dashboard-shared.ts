@@ -36,3 +36,22 @@ export function priorityLabel(priority: null | number | string): string {
 	if (priority === null || priority === '') return 'P—';
 	return `P${priority}`;
 }
+
+/**
+ * Index of the card left alone on the final grid row, or `null` when the last row is full.
+ *
+ * At `xl` the dashboard grid is two columns; a full-width card takes a row to itself and resets the
+ * column. If the walk ends mid-row the last card opened a row with nothing beside it, and since the
+ * order puts the tallest cards last that dead column was measured at 1696px of empty background —
+ * the page ran to y=3819 with nothing rendered at x=928..1576 below y=2123. Computed from the walk
+ * rather than from `length % 2` because cards are reorderable and any of them can be set full.
+ */
+export function orphanedLastCardIndex(fullWidths: readonly boolean[]): null | number {
+	let column = 0;
+	for (const full of fullWidths) {
+		if (full) column = 0;
+		else column = column === 0 ? 1 : 0;
+	}
+	// Ending at column 1 means the final card opened a row and nothing followed it.
+	return column === 1 ? fullWidths.length - 1 : null;
+}

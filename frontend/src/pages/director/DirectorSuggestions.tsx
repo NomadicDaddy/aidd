@@ -16,7 +16,8 @@ import { Button, buttonClassName, IconButton } from '../../components/ui/button.
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Dialog, DialogPanel } from '../../components/ui/dialog.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
-import { humanizeEnum, riskTone } from './directorUtils.ts';
+import { humanizeEnum } from '../../lib/formatters.ts';
+import { riskTone } from './directorUtils.ts';
 
 const ALL = '__all__';
 

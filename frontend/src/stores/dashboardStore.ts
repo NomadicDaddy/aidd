@@ -4,7 +4,6 @@ import { persist } from 'zustand/middleware';
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
 
 export const DASHBOARD_CARD_IDS = [
-	'fleet-health',
 	'active-runs',
 	'feature-summary',
 	'feature-queue',

@@ -48,14 +48,5 @@ export function artifactTone(label: string): string {
 	return toneText.neutral;
 }
 
-/**
- * Render a backend enum as prose: `RUN_AUDIT` → `Run audit`.
- *
- * The suggestion queue printed raw SCREAMING_SNAKE task types and risk levels as its only labels, so
- * a row's two most prominent words were the two least readable ones on the page.
- */
-export function humanizeEnum(value: string): string {
-	const words = value.replaceAll('_', ' ').trim().toLowerCase();
-	if (words.length === 0) return value;
-	return words[0]!.toUpperCase() + words.slice(1);
-}
+// `humanizeEnum` moved to lib/formatters.ts. The suggestion queue was not the only surface printing
+// raw SCREAMING_SNAKE or snake_case as a label, so it stopped being a Director-local concern.

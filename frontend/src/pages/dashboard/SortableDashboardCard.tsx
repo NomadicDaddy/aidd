@@ -31,9 +31,16 @@ const pillClassName =
 export function SortableDashboardCard({
 	card,
 	locked,
+	stretch = false,
 }: {
 	card: DashboardCardDef;
 	locked: boolean;
+	/**
+	 * Alone on the final grid row, so it takes both columns. Deliberately separate from `isFull`:
+	 * the width toggle still reports and stores what the operator chose, and reordering the card
+	 * away from the end quietly gives it back its half width.
+	 */
+	stretch?: boolean;
 }) {
 	const setCardHeight = useDashboardStore((state) => state.setCardHeight);
 	const setCardWidth = useDashboardStore((state) => state.setCardWidth);
@@ -87,7 +94,7 @@ export function SortableDashboardCard({
 		<div
 			className={cn(
 				'relative min-w-0 rounded-lg',
-				isFull && 'xl:col-span-2',
+				(isFull || stretch) && 'xl:col-span-2',
 				!locked &&
 					'cursor-grab outline-2 outline-offset-2 outline-accent/60 outline-dashed active:cursor-grabbing',
 				isDragging && 'z-10 opacity-60',

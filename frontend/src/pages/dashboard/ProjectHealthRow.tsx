@@ -63,9 +63,14 @@ export function ProjectHealthRow({
 					/>
 				</div>
 				<div className="flex flex-col items-end gap-1">
-					<Badge showDot tone={tone}>
-						{score}%
-					</Badge>
+					{/* Two percentages live in this row — this score and the completion bar at the
+					    bottom — and the badge said only "93%". Naming it here is the whole fix; a
+					    visible label would not fit at badge size beside the artifact chip. */}
+					<span title={`Priority health ${score}%`}>
+						<Badge showDot tone={tone}>
+							{score}%
+						</Badge>
+					</span>
 					<span title={artifactTooltip}>
 						<Badge tone={artifactTone[project.artifactHealth]}>
 							{project.artifactHealth}

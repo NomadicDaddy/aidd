@@ -15,12 +15,14 @@ import {
 } from '@dnd-kit/sortable';
 
 import { type DashboardCardId, useDashboardStore } from '../../stores/dashboardStore.ts';
+import { orphanedLastCardIndex } from './dashboard-shared.ts';
 import { type DashboardCardDef, SortableDashboardCard } from './SortableDashboardCard.tsx';
 
 export type { DashboardCardDef } from './SortableDashboardCard.tsx';
 
 export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) {
 	const cardOrder = useDashboardStore((state) => state.cardOrder);
+	const cardSizes = useDashboardStore((state) => state.cardSizes);
 	const locked = useDashboardStore((state) => state.locked);
 	const setCardOrder = useDashboardStore((state) => state.setCardOrder);
 	const sensors = useSensors(
@@ -29,6 +31,12 @@ export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) 
 	);
 	const byId = new Map(cards.map((card) => [card.id, card]));
 	const ordered = cardOrder.flatMap((id) => byId.get(id) ?? []);
+	const orphanIndex = orphanedLastCardIndex(
+		ordered.map((card) => {
+			const width = cardSizes[card.id]?.width;
+			return width ? width === 'full' : Boolean(card.fullWidth);
+		}),
+	);
 
 	function handleDragEnd({ active, over }: DragEndEvent) {
 		if (!over || active.id === over.id) return;
@@ -51,8 +59,13 @@ export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) 
 				<section
 					aria-label="Dashboard cards"
 					className="grid items-start gap-4 xl:grid-cols-2">
-					{ordered.map((card) => (
-						<SortableDashboardCard card={card} key={card.id} locked={locked} />
+					{ordered.map((card, index) => (
+						<SortableDashboardCard
+							card={card}
+							key={card.id}
+							locked={locked}
+							stretch={index === orphanIndex}
+						/>
 					))}
 				</section>
 			</SortableContext>

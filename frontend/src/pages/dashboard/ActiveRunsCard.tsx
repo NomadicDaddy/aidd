@@ -26,6 +26,9 @@ export function ActiveRunsCard({
 }) {
 	return (
 		<Card className="overflow-hidden" variant="panel">
+			{/* No count badge, and the description names the rows rather than the count. The ACTIVE
+			    RUNS tile 150px above this header already states the number and captioned it 'runs in
+			    progress'; a card carries a count badge only when no metric tile above states it. */}
 			<CardHeader
 				action={
 					<Link className={cardHeaderLinkClass} to="/runs">
@@ -33,12 +36,7 @@ export function ActiveRunsCard({
 						<ArrowRight className="h-3.5 w-3.5" />
 					</Link>
 				}
-				badge={
-					<Badge showDot tone={activeRuns.length > 0 ? 'amber' : 'emerald'}>
-						{activeRuns.length}
-					</Badge>
-				}
-				description="Runs currently executing across the fleet."
+				description="Up to four of the runs executing right now."
 				icon={<Activity className={`h-4 w-4 ${toneText.amber}`} />}
 				title="Active Runs"
 			/>

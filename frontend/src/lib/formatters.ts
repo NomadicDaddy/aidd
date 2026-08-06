@@ -211,3 +211,17 @@ export function formatFilesystemPath(path: null | string | undefined): string {
 	}
 	return body;
 }
+
+/**
+ * Render a backend enum as prose: `RUN_AUDIT` → `Run audit`, `waiting_approval` → `Waiting approval`.
+ *
+ * Lived in `pages/director/directorUtils.ts` while the Dashboard's Feature Status table printed
+ * `waiting_approval` raw in the body face. Snake_case with an underscore is the one shape the
+ * baseline reserves for machine identifiers set in mono, so a body-face `in_progress` reads as a
+ * leaked field name rather than as a state.
+ */
+export function humanizeEnum(value: string): string {
+	const words = value.replaceAll('_', ' ').trim().toLowerCase();
+	if (words.length === 0) return value;
+	return words[0]!.toUpperCase() + words.slice(1);
+}

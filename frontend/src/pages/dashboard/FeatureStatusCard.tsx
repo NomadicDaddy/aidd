@@ -18,6 +18,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
+import { humanizeEnum } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { priorityLabel, priorityTone } from './dashboard-shared.ts';
 
@@ -108,8 +109,7 @@ function buildFeatureStatusRows(projects: FeatureStatusSourceProject[]): Feature
 }
 
 function statusLabel(row: FeatureStatusRow): string {
-	if (row.completed) return 'completed';
-	return row.status ?? 'pending';
+	return humanizeEnum(row.completed ? 'completed' : (row.status ?? 'pending'));
 }
 
 function rowLink(row: FeatureStatusRow): string {
@@ -135,12 +135,15 @@ function filteredRows(
 function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 	return (
 		<div className="-mx-2 max-h-[28rem] overflow-auto px-2">
-			<table className="min-w-[760px] text-sm">
+			{/* No TYPE column. The type filter above is single-select and always pins it, so the
+			    column printed the same toned Badge on all 181 rows — a column that cannot vary is
+			    a column that carries no information, and a tone spent on it says "status" about a
+			    taxonomy. The filter states the type once. */}
+			<table className="min-w-[640px] text-sm">
 				<thead className="sticky top-0 z-10 bg-card">
 					<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
 						<th className="px-3 py-2 text-left">Application</th>
 						<th className="px-3 py-2 text-left">Feature</th>
-						<th className="px-3 py-2 text-left">Type</th>
 						<th className="px-3 py-2 text-left">State</th>
 						<th className="px-3 py-2 text-right">Priority</th>
 					</tr>
@@ -165,9 +168,10 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 									</span>
 								</Link>
 							</td>
-							<td className="px-3 py-2">
-								<Badge tone="neutral">{row.type}</Badge>
-							</td>
+							{/* `waiting_approval` was printed raw in font-sans at text-foreground.
+							    Snake_case with an underscore is the one shape the baseline reserves
+							    for machine identifiers set in mono, so a body-face `in_progress`
+							    read as a leaked field name rather than as a state. */}
 							<td className="px-3 py-2 text-foreground">{statusLabel(row)}</td>
 							{/* Priority was plain body text here and a toned Badge one card away in
 							    the Feature Queue, with a different null label ('P-' vs 'P—'), so one

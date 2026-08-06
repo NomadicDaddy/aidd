@@ -38,8 +38,11 @@ describe('normalizeCardOrder', () => {
 	});
 
 	test('drops ids that are no longer known', () => {
+		// `fleet-health` is a retired card, not an invented one: it was merged into the Priority
+		// Health metric tile, so every operator with a persisted order still has it stored.
 		const result = normalizeCardOrder(['ghost-card', 'fleet-health']);
 		expect(result).not.toContain('ghost-card');
+		expect(result).not.toContain('fleet-health');
 		expect(result).toHaveLength(DASHBOARD_CARD_IDS.length);
 	});
 
@@ -47,7 +50,7 @@ describe('normalizeCardOrder', () => {
 		const withoutFeatureStatus = DASHBOARD_CARD_IDS.filter((id) => id !== 'feature-status');
 		const result = normalizeCardOrder(withoutFeatureStatus);
 		expect(result).toEqual([...DASHBOARD_CARD_IDS]);
-		expect(result.indexOf('feature-status')).toBe(4);
+		expect(result.indexOf('feature-status')).toBe(3);
 	});
 
 	test('preserves a full custom permutation', () => {
@@ -66,24 +69,24 @@ describe('normalizeCardSizes', () => {
 	test('returns empty sizes for missing or malformed input', () => {
 		expect(normalizeCardSizes(undefined)).toEqual({});
 		expect(normalizeCardSizes('garbage')).toEqual({});
-		expect(normalizeCardSizes({ 'fleet-health': 'garbage' })).toEqual({});
+		expect(normalizeCardSizes({ 'project-health': 'garbage' })).toEqual({});
 	});
 
 	test('drops unknown ids and invalid values, keeps valid entries', () => {
 		const result = normalizeCardSizes({
 			'active-runs': { width: 'sideways' },
-			'fleet-health': { height: 400, width: 'full' },
 			'ghost-card': { height: 300 },
+			'project-health': { height: 400, width: 'full' },
 		});
-		expect(result).toEqual({ 'fleet-health': { height: 400, width: 'full' } });
+		expect(result).toEqual({ 'project-health': { height: 400, width: 'full' } });
 	});
 
 	test('clamps heights into the allowed range', () => {
 		const result = normalizeCardSizes({
 			'active-runs': { height: 10_000 },
-			'fleet-health': { height: 5 },
+			'project-health': { height: 5 },
 		});
-		expect(result['fleet-health']?.height).toBe(CARD_HEIGHT_MIN);
+		expect(result['project-health']?.height).toBe(CARD_HEIGHT_MIN);
 		expect(result['active-runs']?.height).toBe(CARD_HEIGHT_MAX);
 	});
 });
@@ -105,9 +108,9 @@ describe('useDashboardStore', () => {
 
 	test('setCardWidth and setCardHeight update sizes; clearing height removes empty entries', () => {
 		installWindow();
-		useDashboardStore.getState().setCardWidth('fleet-health', 'full');
-		useDashboardStore.getState().setCardHeight('fleet-health', 60);
-		expect(useDashboardStore.getState().cardSizes['fleet-health']).toEqual({
+		useDashboardStore.getState().setCardWidth('project-health', 'full');
+		useDashboardStore.getState().setCardHeight('project-health', 60);
+		expect(useDashboardStore.getState().cardSizes['project-health']).toEqual({
 			height: CARD_HEIGHT_MIN,
 			width: 'full',
 		});

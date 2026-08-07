@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 /**
- * check-audit-artifact-hygiene.ts
+ * Audit Artifact Hygiene Check
  *
- * Enforces: BEH-004 -- audit findings stay distinct and well-formed as artifacts, which starts
- * with a report never claiming a date that has not happened yet.
+ * Enforces: BEH-004 (aidd) / ASSERT-051 (spernakit) -- audit findings stay distinct and
+ * well-formed as artifacts, which starts with a report never claiming a date that has not
+ * happened yet.
  *
  * Fails the build when any audit report under .aidd/audit-reports/ uses a date
  * (in filename or top-level heading) that is after the current local date.
@@ -11,13 +12,22 @@
  *
  * Scope: only .aidd/audit-reports/*.md files. Historical iteration logs and
  * feature.json files are not inspected because their dates record past events.
+ *
+ * This file is delivered by `sync-shared-core.ts`, so it takes a project root rather than
+ * resolving one from `import.meta.dir`.
+ *
+ * Zero reports is `[SKIP]`, not `[OK]`. Both carriers gitignore `/.aidd/` entirely, so the
+ * directory this reads is untracked local working state: a fresh clone or a CI runner
+ * legitimately has nothing here, and that is the one case the anti-vacuity rule exempts. It is
+ * `[SKIP]` rather than `[OK]` so the distinction stays visible -- an `[OK]` over zero reports is
+ * indistinguishable from an `[OK]` over a clean 300.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { exit } from 'node:process';
 
-const ROOT = resolve(import.meta.dir, '..');
-const REPORTS_DIR = resolve(ROOT, '.aidd', 'audit-reports');
+const DEFAULT_PROJECT_ROOT = resolve(import.meta.dir, '..');
+const REPORTS_SUBDIR = '.aidd/audit-reports';
 
 const ISO_DATE = /\b(\d{4}-\d{2}-\d{2})\b/g;
 
@@ -36,12 +46,12 @@ function todayLocalIso(): string {
 	return `${year}-${month}-${day}`;
 }
 
-function listReports(): string[] {
+function listReports(reportsDir: string): string[] {
 	try {
-		const entries = readdirSync(REPORTS_DIR);
+		const entries = readdirSync(reportsDir);
 		return entries
 			.filter((entry) => entry.endsWith('.md'))
-			.map((entry) => resolve(REPORTS_DIR, entry))
+			.map((entry) => resolve(reportsDir, entry))
 			.filter((path) => {
 				try {
 					return statSync(path).isFile();
@@ -54,13 +64,16 @@ function listReports(): string[] {
 	}
 }
 
-function relFromRoot(absPath: string): string {
-	return absPath.replace(`${ROOT}\\`, '').replace(`${ROOT}/`, '').replace(/\\/g, '/');
+function relFromRoot(projectRoot: string, absPath: string): string {
+	return absPath
+		.replace(`${projectRoot}\\`, '')
+		.replace(`${projectRoot}/`, '')
+		.replace(/\\/g, '/');
 }
 
-function collectViolations(today: string, file: string): Violation[] {
+function collectViolations(projectRoot: string, today: string, file: string): Violation[] {
 	const violations: Violation[] = [];
-	const rel = relFromRoot(file);
+	const rel = relFromRoot(projectRoot, file);
 	const basename = file.split(/[\\/]/).pop() ?? '';
 
 	const nameMatch = /\b(\d{4}-\d{2}-\d{2})\b/.exec(basename);
@@ -104,16 +117,20 @@ function collectViolations(today: string, file: string): Violation[] {
 	return violations;
 }
 
-export function runAuditArtifactHygiene(): number {
+export function runAuditArtifactHygiene(projectRoot = DEFAULT_PROJECT_ROOT): number {
 	const today = todayLocalIso();
-	const reports = listReports();
+	const reportsDir = resolve(projectRoot, REPORTS_SUBDIR);
+	const reports = listReports(reportsDir);
 
 	if (reports.length === 0) {
-		console.log('[OK] Audit artifact hygiene: no audit reports to inspect.');
+		console.log(
+			`[SKIP] Audit artifact hygiene: no reports under ${REPORTS_SUBDIR}/. ` +
+				`That directory is untracked local state, so a fresh clone has nothing to inspect.`,
+		);
 		return 0;
 	}
 
-	const violations = reports.flatMap((file) => collectViolations(today, file));
+	const violations = reports.flatMap((file) => collectViolations(projectRoot, today, file));
 
 	if (violations.length === 0) {
 		console.log(

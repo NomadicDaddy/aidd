@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { default as Info } from 'lucide-react/dist/esm/icons/info';
-import { default as List } from 'lucide-react/dist/esm/icons/list';
-import { default as PanelsTopLeft } from 'lucide-react/dist/esm/icons/panels-top-left';
 import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
@@ -19,7 +17,6 @@ import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useProjects } from '../../hooks/useProjects.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
@@ -30,6 +27,7 @@ import { launchHint } from './recipe-launch.ts';
 import { autoParameters } from './recipe-parameters.ts';
 import { RecipeCard, RecipeTable } from './RecipeGrid.tsx';
 import { RecipeQuickLaunchPanel } from './RecipeQuickLaunchPanel.tsx';
+import { RecipesPageActions } from './RecipesPageActions.tsx';
 
 function recipeMatches(recipe: RecipeDefinition, search: string): boolean {
 	const query = search.trim().toLowerCase();
@@ -108,54 +106,15 @@ export function RecipesPage() {
 		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
-					// `flex-nowrap` plus icon-only labels below `md`: at 768 the labels wrapped
-					// mid-button and pushed the view toggle onto a second row.
-					<div className="flex flex-nowrap items-center gap-2">
-						<Button
-							aria-label="New Recipe"
-							onClick={() => {
-								void navigate('/recipes/new');
-							}}
-							size="toolbar"
-							variant="primary">
-							<Plus className="h-4 w-4" />
-							<span className="hidden lg:inline">New Recipe</span>
-						</Button>
-						<Button
-							aria-label="Reload recipes"
-							disabled={recipes.reloadRecipes.isPending}
-							onClick={reload}
-							size="toolbar">
-							<RefreshCw
-								className={`h-4 w-4 ${
-									recipes.reloadRecipes.isPending ? 'animate-spin' : ''
-								}`}
-							/>
-							<span className="hidden lg:inline">
-								{recipes.reloadRecipes.isPending ? 'Reloading…' : 'Reload'}
-							</span>
-						</Button>
-						<SegmentedControl
-							ariaLabel="Recipe view"
-							className="shrink-0"
-							onChange={setRecipesView}
-							options={[
-								{
-									ariaLabel: 'Card view',
-									label: <PanelsTopLeft aria-hidden="true" className="h-4 w-4" />,
-									title: 'Card view',
-									value: 'cards',
-								},
-								{
-									ariaLabel: 'Table view',
-									label: <List aria-hidden="true" className="h-4 w-4" />,
-									title: 'Table view',
-									value: 'table',
-								},
-							]}
-							value={recipesView}
-						/>
-					</div>
+					<RecipesPageActions
+						onNew={() => {
+							void navigate('/recipes/new');
+						}}
+						onReload={reload}
+						recipesView={recipesView}
+						reloading={recipes.reloadRecipes.isPending}
+						setRecipesView={setRecipesView}
+					/>
 				}
 				description="File-backed multi-step recipes from the local recipes directory."
 				helpSlug="recipes"

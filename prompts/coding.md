@@ -448,6 +448,10 @@ Do not select synthetic maintenance work such as `artifact_maintenance` or `audi
 - If browser automation available: Navigate to feature in UI, complete workflow, verify visuals
 - If no browser automation: Use terminal-based verification, curl for APIs, build output checks
 
+**Establish availability by probing, never by assuming.** Run `agent-browser --version`. It is a CLI
+reached through a skill, **not a registered tool** — searching the tool registry for browser
+capability finds nothing and proves nothing. Only a failed probe puts you on the second branch.
+
 #### 7.3 Code Review
 
 Perform a focused code review of the current diff for correctness, security, code quality, and stack compliance. Fix actionable issues before running the final quality gates.
@@ -504,9 +508,22 @@ stand up your own server to verify**; see the "Concurrently UI-managed instance 
 7. Take screenshots at key states: `agent-browser screenshot <project-root>/.aidd/evidence.png` (absolute path — see the path rule in Step 4.1)
 8. Verify UI appearance (no white-on-white, broken layouts, etc.)
 
+**"Unavailable" means a failed probe, not an absent tool entry.** Before taking the escape hatch
+below, run `agent-browser --version`. `agent-browser` is a CLI reached through a skill and is **not
+a registered tool**, so a search of the tool registry returns nothing whether or not it is
+installed. Treating that silence as absence parks features that were verifiable, and — worse — sends
+you to reason about layout from source instead of looking at it. Only a non-zero probe counts.
+
+**Viewport claims are measured, never reasoned.** An acceptance criterion about layout, spacing,
+sizing, overflow, truncation or responsive behaviour at a stated width is satisfied only by setting
+that viewport and capturing it: `agent-browser set viewport <W> <H>` then `screenshot`. Reading the
+Tailwind classes and concluding what they render tells you what was intended, not what happens —
+they interact with container widths, content length, and other rules you did not read. If you cannot
+reach that viewport, the criterion is unverified: park it, do not close it on source reasoning.
+
 **STOP-AND-PARK escape hatch (read this before doing anything server-related).** If `agent-browser`
-is unavailable, OR you cannot reach a running UI after **two** honest attempts, **STOP browser
-verification immediately**:
+is genuinely unavailable by the probe above, OR you cannot reach a running UI after **two** honest
+attempts, **STOP browser verification immediately**:
 
 - Do **NOT** bootstrap a server (`bun run start:web` / `start` / `dev`), and do **NOT** keep probing
   ports or hunting for processes. Repeating the same diagnostic is flailing; it wastes the run and

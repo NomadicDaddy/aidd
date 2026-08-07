@@ -93,11 +93,18 @@ changes expressible through the app's existing framework and component library.
 
 ### Phase 3: Write the Redesign Plan
 
-Create or update:
+Write a **new** report; never overwrite an existing one:
 
 ```
-{app}/.aidd/reports/ui-redesign.md
+{app}/.aidd/reports/ui-redesign-{RUN}.md
 ```
+
+`{RUN}` is the run id of the sweep or review that produced the findings, including its mode when it
+had one (`20260806-1257-mobile`). When invoked without one, use `YYYYMMDD-HHMM`. Two planning passes
+against the same app — different viewport modes, different review questions, different dates — are
+different documents with different conclusions. A bare `ui-redesign.md` makes the second one destroy
+the first, and `.aidd/` is gitignored in many projects, so the loss is unrecoverable. If the target
+path already exists, stop and report it rather than overwriting.
 
 The report must include:
 
@@ -108,6 +115,8 @@ The report must include:
   accessibility concerns, implementation notes, and expected validation.
 - A final table mapping each recommendation to the generated feature ID.
 - A note recording whether the Phase 2 review used `frontend-design` or the fallback.
+- The viewport mode, viewports and commit the findings were observed at, so a later reader knows
+  what this plan does and does not cover.
 
 Write nothing outside `.aidd/`.
 
@@ -133,7 +142,10 @@ Each `feature.json` must:
     - Read existing feature IDs and depend on the closest layout, navigation, design-system, API, or
       workflow feature when applicable.
     - Do not invent dependency IDs. Use an empty array if no valid dependency exists.
-6. Include acceptance criteria in `spec` that a future coding agent can implement and validate.
+6. Include acceptance criteria in `spec` that a future coding agent can implement and validate. When
+   the criterion is visual — layout, spacing, sizing, overflow, responsive behaviour — it must name
+   the viewport to check it at and require a screenshot. A visual criterion that can be satisfied by
+   reading source will be, and the claim will be wrong as often as it is right.
 7. Mention the redesign report path in `notes` for traceability.
 
 Do not create duplicate features. If an existing backlog feature already covers an improvement,

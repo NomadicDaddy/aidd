@@ -18,12 +18,20 @@ pages runs out of attention long before the last one. This skill splits those jo
 ## Usage
 
 ```
-frontend-design-sweep [app] [url] [--scope <nav-group|route-prefix>] [--features]
+frontend-design-sweep [app] [url] [--mode <desktop|tablet|mobile>] [--viewports <WxH,WxH>]
+                      [--scope <nav-group|route-prefix>] [--features]
 ```
 
 - Zero args → infer the app from the current repository, and the URL from its dev configuration.
+- `--mode` → the viewport class this sweep runs at. Default `desktop`. A run at one mode is not
+  comparable to a run at another and never overwrites it — see Phase 0.
+- `--viewports` → override the mode's default viewport pair.
 - `--scope` → limit the sweep to one navigation group or route prefix. Use it for large apps.
 - `--features` → also file remediation features (Phase 6). Default is report only.
+
+The mode may also arrive in prose — "mobile mode", "desktop 1600x1200". Resolve it to a `{MODE}`
+slug in Phase 0 and carry that slug into every path this run writes. **Never run a sweep whose mode
+you did not resolve**; a mode-less run produces a report that silently collides with the last one.
 
 The review question is fixed here: how the UI could look cleaner, sleeker, and more consistent. To
 ask a different question — accessibility, mobile UX, copy, empty states — use `page-by-page`, which
@@ -38,25 +46,54 @@ library, or a single-screen tool has nothing for this skill to do — say so and
 This skill never edits frontend code. Hand approved changes to `ui-playground-apply`,
 `spernakit-apply-ui`, or ordinary implementation work.
 
+**Probe for browser automation before concluding it is missing.** Run `agent-browser --version`. It
+is a CLI reached through the `agent-browser` skill, **not a registered tool** — a search of the tool
+registry finds nothing and proves nothing. A sweep cannot run without it, so establish this in Phase
+0 and stop with the install instruction if the probe genuinely fails. Never substitute reading
+source for looking at the screen: a visual claim derived from source is a hypothesis, and this skill
+exists to test hypotheses against pixels.
+
 ## Phase 0: Resolve the target and fix the run conditions
 
 | Input          | Default                                                   |
 | -------------- | --------------------------------------------------------- |
 | App directory  | Current repository, or the named application root         |
 | Base URL       | Frontend URL from the project's own dev configuration     |
+| Mode           | `{MODE}` = `desktop` unless the invocation says otherwise |
 | Run id         | `{RUN}` = `YYYYMMDD-HHMM`                                 |
-| Work directory | `{app}/.aidd/reports/design-sweep/{RUN}/`                 |
-| Screenshots    | `{app}/screenshots/design-sweep/{RUN}/`                   |
-| Viewports      | `1440x900` primary, `768x1024` narrow                     |
+| Work directory | `{app}/.aidd/reports/design-sweep/{RUN}-{MODE}/`          |
+| Screenshots    | `{app}/screenshots/design-sweep/{RUN}-{MODE}/`            |
+| Viewports      | The mode's pair, below, unless `--viewports` overrides it |
 | Theme          | The app's default theme, applied to every surface         |
 | Authentication | The highest role the user authorizes; anonymous otherwise |
+
+| `{MODE}`  | Primary viewport | Narrow viewport |
+| --------- | ---------------- | --------------- |
+| `desktop` | `1440x900`       | `768x1024`      |
+| `tablet`  | `1024x768`       | `768x1024`      |
+| `mobile`  | `390x844`        | `320x844`       |
+
+Resolve `{MODE}` **before anything else** and echo it back with the resolved viewports. If the
+invocation names a viewport but no mode, derive the mode from the primary width (≥1280 `desktop`,
+≥600 `tablet`, otherwise `mobile`) and record the override. If the invocation is ambiguous, ask —
+do not default silently, because the mode names every path this run writes.
 
 Discover the start command from the project's own manifest. If the app is not already reachable,
 start it, record that this run owns the process, and wait for the URL to respond. Leave a
 pre-existing process alone.
 
+**Verify the running build is current.** If the app serves a built bundle rather than a live dev
+server, rebuild and restart it before capturing anything, and say in the report which commit the
+sweep measured. A sweep of a stale bundle reports fixed defects as open ones.
+
 **Fix theme, viewport, and role once and hold them for the whole run.** Surfaces captured under
 different conditions cannot be compared, and comparison is the entire point.
+
+**Never write to a path that already exists.** Every artifact of this run — work directory,
+screenshots, report — carries both `{RUN}` and `{MODE}`, so two sweeps cannot collide even at the
+same minute. If a target path exists, stop and report it rather than overwriting: `.aidd/` is
+gitignored in many projects, so an overwritten report has no history to recover from and is simply
+gone.
 
 ## Phase 1: Enumerate every surface
 
@@ -142,8 +179,9 @@ Review one surface of {app} as a design critic.
 
 Surface: {label} — {url}
 Tabs to cover: {tab list with click paths, or "none"}
-Viewports: 1440x900, then 768x1024
-Session: ds-{RUN}-{n}
+Mode: {MODE} — viewports {primary}, then {narrow}. Set the viewport explicitly before
+every capture; do not rely on the browser's default.
+Session: ds-{RUN}-{MODE}-{n}
 
 Invoke: /frontend-design {url} — how could this look cleaner? sleeker? more consistent
 across the UI?
@@ -207,9 +245,21 @@ Cluster by **component and category**, not by page. This is the step the fan-out
 
 ## Phase 5: Report
 
-Write `{app}/.aidd/reports/ui-design-sweep.md`:
+Write `{work}/ui-design-sweep-{MODE}.md` — inside this run's own work directory, so the report sits
+with the findings, baseline and `surfaces.json` that produced it and cannot overwrite another run's.
+Then append one line to `{app}/.aidd/reports/design-sweep/index.md`, creating it if absent:
 
-- **Run header** — URL, theme, viewports, role, date, surfaces enumerated, reviewed, unreached.
+```text
+| {RUN} | {MODE} | {viewports} | {commit} | {surfaces reviewed}/{enumerated} | {P1}/{P2}/{P3} | design-sweep/{RUN}-{MODE}/ui-design-sweep-{MODE}.md |
+```
+
+Append only. Never rewrite the index, and never write a mode-agnostic `ui-design-sweep.md` at the
+top level — that filename is what let a mobile sweep destroy the desktop sweep's consolidated report.
+
+The report contains:
+
+- **Run header** — URL, theme, mode, viewports, role, date, commit under test, surfaces enumerated,
+  reviewed, unreached.
 - **Coverage table** — every surface with its tabs, marked `visited`, `partial`, or `unreached` with
   a reason. List the unreached ones explicitly; a sweep that hides its gaps is worse than a smaller
   sweep that names them.
@@ -231,6 +281,33 @@ directly from this skill.
 One feature per systemic finding. Local findings bundle into a single per-area feature unless they
 are `P1`.
 
+Every feature filed from this sweep must name, in its acceptance criteria, **the mode and viewport
+the fix will be verified at** and the screenshot path that will show it. A visual feature whose spec
+does not say where to look invites closure on source reasoning — see Phase 7.
+
+## Phase 7: Verify the remediation (required when Phase 6 ran)
+
+Remediation is not finished when the features close. It is finished when a sweep at the same mode
+shows the defects gone and nothing new in their place. **Every remediation pass gets a verification
+sweep; the last one in a sequence is the one most likely to be skipped and the only one with nothing
+downstream to catch it.**
+
+After the features from this run are implemented:
+
+1. Re-run this skill at the **same `{MODE}`** against the rebuilt application, scoped to the surfaces
+   the remediation touched. It gets its own `{RUN}` and its own report; it does not edit this one.
+2. Diff the two runs' findings. Report three counts: **resolved** (present before, absent now),
+   **persisting** (present in both), and **introduced** (absent before, present now).
+3. Treat every introduced finding as a regression caused by the remediation, and file it as such
+   rather than as an ordinary new finding. Remediation at the shared-component layer changes surfaces
+   nobody edited, which is exactly why this pass exists.
+4. A shared-layer fix that changed control sizing, spacing, or type scale invalidates every height
+   cap, clamp, and truncation tuned against the old values. Re-capture the surfaces that carry them
+   even when no feature named them.
+
+A remediation reported as complete without this pass is unverified. Say so in the report rather than
+implying it was checked.
+
 ## Cleanup
 
 1. Confirm every subagent closed its browser session; close any that remain.
@@ -251,3 +328,7 @@ are `P1`.
 6. **Coverage honesty beats coverage.** Naming the surfaces you could not reach is part of the
    result.
 7. **A tab is a page.** A sweep that stops at the router misses most of the application.
+8. **Every artifact carries its run and mode.** Reports are evidence; a filename that two runs can
+   claim is a filename that loses one of them.
+9. **Remediation is verified by re-sweeping, not by closing features.** The fix and the proof that it
+   worked are two separate pieces of work.

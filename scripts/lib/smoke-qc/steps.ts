@@ -72,6 +72,12 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:env-spread',
 	},
 	{
+		command: ['bun', 'run', 'check:git-window-hide'],
+		description: 'Direct Git subprocesses hide their Windows console window (SEC-006)',
+		label: 'check:git-window-hide',
+		name: 'check:git-window-hide',
+	},
+	{
 		command: ['bun', 'run', 'check:backend-cli-boundary'],
 		description: 'aidd-backend never imports aidd-cli, which would close a cycle (QUAL-004)',
 		label: 'check:backend-cli-boundary',

@@ -25,6 +25,7 @@ function git(cwd: string, args: string[]): string {
 	const result = Bun.spawnSync(['git', '-C', cwd, ...args], {
 		stderr: 'pipe',
 		stdout: 'pipe',
+		windowsHide: true,
 	});
 	if (result.exitCode !== 0) {
 		const detail = result.stderr.toString().trim();

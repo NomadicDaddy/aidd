@@ -73,6 +73,20 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/gate-conventions-allowlist.json',
 		'scripts/lib/gate/**/*.ts',
 	],
+	// The gate scans seven roots; every one of them that exists here is listed. `skills/**/*.ts` is
+	// the reason this entry is not a copy of check:env-spread's: the only live violation this rule
+	// ever had in this repository was under skills/, outside the root list of the hand-rolled test
+	// that used to enforce it.
+	'check:git-window-hide': [
+		'backend/src/**/*',
+		'cli/src/**/*',
+		'frontend/src/**/*',
+		'package.json',
+		'scripts/**/*',
+		'shared/src/**/*',
+		'skills/**/*',
+		'test/**/*',
+	],
 	'check:leak-guard': [
 		'.githooks/leak-guard.sh',
 		'package.json',

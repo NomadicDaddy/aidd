@@ -86,6 +86,7 @@
 		"check:audit-profile-mapping": "bun scripts/aidd-tools.ts audit:profile-mapping",
 		"check:env-spread": "bun scripts/check-env-spread.ts",
 		"check:fresh-release": "bun scripts/check-fresh-release.ts",
+		"check:git-window-hide": "bun scripts/check-git-window-hide.ts",
 		"check:feature-integration": "bun scripts/check-feature-integration.ts",
 		"check:gate-conventions": "bun scripts/check-gate-conventions.ts",
 		"check:leak-guard": "bun ./scripts/run-bash.ts scripts/check-leak-guard.sh",

@@ -78,6 +78,12 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:git-window-hide',
 	},
 	{
+		command: ['bun', 'run', 'check:docs'],
+		description: 'Every internal Markdown link resolves to a file that exists',
+		label: 'check:docs',
+		name: 'check:docs',
+	},
+	{
 		command: ['bun', 'run', 'check:backend-cli-boundary'],
 		description: 'aidd-backend never imports aidd-cli, which would close a cycle (QUAL-004)',
 		label: 'check:backend-cli-boundary',

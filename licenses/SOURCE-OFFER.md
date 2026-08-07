@@ -36,7 +36,7 @@ alongside the artifacts for as long as the artifacts remain available, and the o
 in addition to them.
 
 **Identifying the exact sources.** Every release archive contains
-[`SOURCE-MANIFEST.md`](./SOURCE-MANIFEST.md), which records the aidd commit, the Bun version and
+[`SOURCE-MANIFEST.md`](./SOURCE-MANIFEST.md), which records the aidd commit, the Bun version and <!-- check-docs-allow: SOURCE-MANIFEST.md is generated into the staging directory by scripts/package-release.ts at package time, so this link resolves in every archive this file ships in and in no checkout of the source tree. -->
 tag (whose submodules pin the exact WebKit/JavaScriptCore and TinyCC revisions), and the dependency
 lockfile hash for that binary. The same facts are retained per release under `licenses/releases/`,
 keyed by the artifact's SHA-256, so a request about a binary downloaded long ago can be answered

@@ -312,6 +312,7 @@ describe('smoke cache', () => {
 			'check:web-db-integrity',
 			'check:env-spread',
 			'check:git-window-hide',
+			'check:docs',
 			'check:backend-cli-boundary',
 			'check:no-inline-references',
 			'check:schema-parity',

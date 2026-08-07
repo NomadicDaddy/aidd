@@ -41,6 +41,12 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'test/**/*.ts',
 		'tsconfig.json',
 	],
+	// `**/*.md` rather than the documentation directories by name: the gate walks the whole tree, so
+	// a glob list naming today's doc roots would let the cache skip the run that would have seen a
+	// broken link in a markdown file added somewhere else. It over-hashes in one direction only —
+	// gitignored markdown the gate itself skips still counts as an input, which costs a cache miss
+	// and never a missed finding.
+	'check:docs': ['**/*.md', 'package.json', 'scripts/check-docs.ts', 'scripts/lib/docs/*.ts'],
 	'check:env-spread': [
 		'backend/src/**/*.ts',
 		'cli/src/**/*.ts',

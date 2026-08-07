@@ -1,20 +1,18 @@
-import { aiddExecutionModes } from 'aidd-shared/execution-mode';
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { Fragment, useState } from 'react';
 
 import type { ProjectLocalIteration, ProjectLocalRun } from '../../../api/types.ts';
 
-import { formatAiddRunProvenance } from '../../../lib/aiddRunProvenance.ts';
 import { formatDate, formatDuration } from '../../../lib/formatters.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { Button, IconButton } from '../../ui/button.tsx';
 import { SegmentedControl } from '../../ui/segmented-control.tsx';
-import { ExecutionIdentityBadges } from '../ExecutionIdentityBadges.tsx';
 import { OverflowScroller } from '../OverflowScroller.tsx';
 import { LocalIterationsTable } from './LocalIterationsTable.tsx';
+import { LocalRunCards, RunExecutionTarget } from './LocalRunCards.tsx';
 import { LocalRunResultBadges } from './LocalRunResultBadges.tsx';
 import { categorizeRun, OUTCOME_CATEGORIES, type OutcomeCategory } from './outcome.ts';
-import { runRowKey, runRuntimeDetail, TriModeBadge } from './runMetadata.tsx';
+import { runRowKey } from './runMetadata.tsx';
 
 export function LocalRunsTable({
 	iterationsByRunKey,
@@ -135,126 +133,117 @@ export function LocalRunsTable({
 					No runs match the current filters.
 				</div>
 			) : (
-				<OverflowScroller ariaLabel="Local runs">
-					<table aria-label="Local runs" className="w-full table-fixed text-left text-sm">
-						{/* Auto layout gave DURATION — six characters, always — as much room as SUMMARY,
+				<>
+					<LocalRunCards
+						expanded={expanded}
+						iterationsByRunKey={iterationsByRunKey}
+						now={now}
+						onToggle={toggle}
+						visibleRuns={visibleRuns}
+					/>
+					<OverflowScroller ariaLabel="Local runs" className="hidden xl:block">
+						<table
+							aria-label="Local runs"
+							className="w-full table-fixed text-left text-sm">
+							{/* Auto layout gave DURATION — six characters, always — as much room as SUMMARY,
 						    which is the only free-text column and was wrapping to four lines inside 24rem
 						    while '1m 4s' sat centred in its own wide column. */}
-						<colgroup>
-							<col className="w-10" />
-							<col className="w-[12%]" />
-							<col className="w-[22%]" />
-							<col className="w-[24%]" />
-							<col className="w-[7%]" />
-							<col className="w-[35%]" />
-						</colgroup>
-						<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
-							<tr>
-								<th className="w-8 px-2 py-3" scope="col">
-									<span className="sr-only">Expand</span>
-								</th>
-								<th className="px-4 py-3" scope="col">
-									Started
-								</th>
-								<th className="px-4 py-3" scope="col">
-									Execution target
-								</th>
-								<th className="px-4 py-3" scope="col">
-									Result
-								</th>
-								<th className="px-4 py-3 whitespace-nowrap" scope="col">
-									Duration
-								</th>
-								<th className="px-4 py-3" scope="col">
-									Summary
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{visibleRuns.map(({ index, run }) => {
-								const key = runRowKey(run, index);
-								const isOpen = expanded.has(key);
-								const runIterations = iterationsByRunKey.get(key) ?? [];
-								const startedLabel = run.startedAt
-									? formatDate(run.startedAt)
-									: '—';
-								const runtimeDetail = runRuntimeDetail(run);
-								return (
-									<Fragment key={key}>
-										<tr className="border-b border-border last:border-0">
-											<td className="px-2 py-3 align-top">
-												<IconButton
-													aria-expanded={isOpen}
-													ariaLabel={`${isOpen ? 'Hide' : 'Show'} iterations for run started ${startedLabel}`}
-													onClick={() => toggle(key)}
-													variant="ghost">
-													<ChevronRight
-														aria-hidden="true"
-														className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`}
-													/>
-												</IconButton>
-											</td>
-											<td className="px-4 py-3 text-xs text-muted-foreground">
-												{startedLabel}
-											</td>
-											<td className="px-4 py-3">
-												<div className="flex min-w-0 flex-wrap items-center gap-1.5">
-													<ExecutionIdentityBadges
-														backend={run.backend}
-														model={run.model}
-														provider={run.provider}
-														reasoningEffort={run.reasoningEffort}
-													/>
-													{run.executionMode ===
-													aiddExecutionModes.triumvirate ? (
-														<TriModeBadge
-															roles={run.triumvirateRoles}
+							<colgroup>
+								<col className="w-10" />
+								<col className="w-[12%]" />
+								<col className="w-[22%]" />
+								<col className="w-[24%]" />
+								<col className="w-[7%]" />
+								<col className="w-[35%]" />
+							</colgroup>
+							<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
+								<tr>
+									<th className="w-8 px-2 py-3" scope="col">
+										<span className="sr-only">Expand</span>
+									</th>
+									<th className="px-4 py-3" scope="col">
+										Started
+									</th>
+									<th className="px-4 py-3" scope="col">
+										Execution target
+									</th>
+									<th className="px-4 py-3" scope="col">
+										Result
+									</th>
+									<th className="px-4 py-3 whitespace-nowrap" scope="col">
+										Duration
+									</th>
+									<th className="px-4 py-3" scope="col">
+										Summary
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{visibleRuns.map(({ index, run }) => {
+									const key = runRowKey(run, index);
+									const isOpen = expanded.has(key);
+									const runIterations = iterationsByRunKey.get(key) ?? [];
+									const startedLabel = run.startedAt
+										? formatDate(run.startedAt)
+										: '—';
+									return (
+										<Fragment key={key}>
+											<tr className="border-b border-border last:border-0">
+												<td className="px-2 py-3 align-top">
+													<IconButton
+														aria-expanded={isOpen}
+														ariaLabel={`${isOpen ? 'Hide' : 'Show'} iterations for run started ${startedLabel}`}
+														onClick={() => toggle(key)}
+														variant="ghost">
+														<ChevronRight
+															aria-hidden="true"
+															className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`}
 														/>
-													) : null}
-													<span className="text-xs text-muted-foreground">
-														{runtimeDetail}
-													</span>
-													<span className="text-xs text-muted-foreground">
-														{formatAiddRunProvenance(run)}
-													</span>
-												</div>
-											</td>
-											<td className="px-4 py-3">
-												<LocalRunResultBadges
-													run={run}
-													runIterations={runIterations}
-												/>
-											</td>
-											<td className="px-4 py-3 whitespace-nowrap tabular-nums">
-												{formatDuration(run.durationMs)}
-											</td>
-											<td className="px-4 py-3 text-xs break-words text-muted-foreground">
-												{run.summary ?? '—'}
-											</td>
-										</tr>
-										{isOpen ? (
-											<tr className="border-b border-border bg-muted/50 last:border-0">
-												<td className="px-2 py-3" />
-												<td className="px-4 py-3" colSpan={5}>
-													{runIterations.length > 0 ? (
-														<LocalIterationsTable
-															iterations={runIterations}
-															now={now}
-														/>
-													) : (
-														<div className="text-xs text-muted-foreground">
-															No iterations recorded for this run.
-														</div>
-													)}
+													</IconButton>
+												</td>
+												<td className="px-4 py-3 text-xs text-muted-foreground">
+													{startedLabel}
+												</td>
+												<td className="px-4 py-3">
+													<RunExecutionTarget run={run} />
+												</td>
+												<td className="px-4 py-3">
+													<LocalRunResultBadges
+														run={run}
+														runIterations={runIterations}
+													/>
+												</td>
+												<td className="px-4 py-3 whitespace-nowrap tabular-nums">
+													{formatDuration(run.durationMs)}
+												</td>
+												<td className="px-4 py-3 text-xs break-words text-muted-foreground">
+													{run.summary ?? '—'}
 												</td>
 											</tr>
-										) : null}
-									</Fragment>
-								);
-							})}
-						</tbody>
-					</table>
-				</OverflowScroller>
+											{isOpen ? (
+												<tr className="border-b border-border bg-muted/50 last:border-0">
+													<td className="px-2 py-3" />
+													<td className="px-4 py-3" colSpan={5}>
+														{runIterations.length > 0 ? (
+															<LocalIterationsTable
+																iterations={runIterations}
+																now={now}
+															/>
+														) : (
+															<div className="text-xs text-muted-foreground">
+																No iterations recorded for this run.
+															</div>
+														)}
+													</td>
+												</tr>
+											) : null}
+										</Fragment>
+									);
+								})}
+							</tbody>
+						</table>
+					</OverflowScroller>
+				</>
 			)}
 		</div>
 	);

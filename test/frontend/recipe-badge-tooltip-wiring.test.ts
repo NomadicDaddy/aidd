@@ -109,9 +109,13 @@ function wrappedLabels(markup: string): string[] {
 const cardMarkup = renderMarkup(
 	`console.log(render(h(RecipeCard, { launchDisabled: false, launchPending: false, onLaunch: () => {}, recipe: ${JSON.stringify(recipe)}, usage: undefined })));`,
 );
-const tableMarkup = renderMarkup(
+// `RecipeTable` renders the card stack as well — the card IS this table's phone rendering, see
+// table-containment — so the table half is sliced out here. Comparing the whole render against
+// `cardMarkup` would be comparing the card with a copy of itself.
+const tableViewMarkup = renderMarkup(
 	`console.log(render(h(RecipeTable, { launchDisabled: false, launchPending: false, onLaunch: () => {}, recipes: [${JSON.stringify(recipe)}], usageByResourceId: new Map() })));`,
 );
+const tableMarkup = tableViewMarkup.slice(tableViewMarkup.indexOf('<table'));
 
 describe('recipe badge tooltip wiring', () => {
 	test('every badge in the card view is a tooltip trigger', () => {

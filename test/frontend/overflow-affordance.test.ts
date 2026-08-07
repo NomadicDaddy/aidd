@@ -142,7 +142,10 @@ describe('horizontal overflow always says so', () => {
 
 	test('the surfaces the reviewers measured all scroll inside the scroller', async () => {
 		const surfaces = [
-			['pages', 'dashboard', 'FeatureSummaryCard.tsx'],
+			// The fleet counts table moved out of FeatureSummaryCard into FeatureSummaryRows when
+			// it gained a card stack — the FeatureStatusCard/FeatureStatusRows split again.
+			// The scroller went with the table.
+			['pages', 'dashboard', 'FeatureSummaryRows.tsx'],
 			['pages', 'projects', 'profileMatrix', 'ProfileMatrixTable.tsx'],
 			['pages', 'recipes', 'RecipeGrid.tsx'],
 			['pages', 'projects', 'detail', 'FeaturesDesktopTable.tsx'],

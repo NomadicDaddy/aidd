@@ -8,59 +8,11 @@ import type { FeatureSummary, ProjectSummary } from '../../api/types.ts';
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Metric } from '../../components/shared/Metric.tsx';
-import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { toneText } from '../../lib/tones.ts';
-
-interface FeatureSummaryColumn {
-	align: 'left' | 'right';
-	header: string;
-	value: (row: FeatureSummaryRow) => number | string;
-}
-
-interface FeatureSummaryRow extends FeatureSummary {
-	application: string;
-}
-
-const summaryColumns: FeatureSummaryColumn[] = [
-	{
-		align: 'left',
-		header: 'Application',
-		value: (row) => row.application,
-	},
-	{
-		align: 'right',
-		header: 'Audit',
-		value: (row) => row.audit,
-	},
-	{
-		align: 'right',
-		header: 'Remediation',
-		value: (row) => row.remediation,
-	},
-	{
-		align: 'right',
-		header: 'Feature',
-		value: (row) => row.feature,
-	},
-	{
-		align: 'right',
-		header: 'Pending',
-		value: (row) => row.pending,
-	},
-	{
-		align: 'right',
-		header: 'Completed',
-		value: (row) => row.completed,
-	},
-	{
-		align: 'right',
-		header: 'Total',
-		value: (row) => row.total,
-	},
-];
+import { type FeatureSummaryRow, FeatureSummaryRows } from './FeatureSummaryRows.tsx';
 
 function emptyFeatureSummary(): FeatureSummary {
 	return {
@@ -184,69 +136,7 @@ export function FeatureSummaryCard({
 					No projects discovered.
 				</EmptyState>
 			) : (
-				// A 33-row table with no ceiling ran ~1,400px and killed whatever card shared its
-				// grid row; wider than the card at tablet widths it also clipped PENDING — the one
-				// number this card's own badge highlights — with nothing at the edge saying so.
-				// OverflowScroller supplies the edge fade and a keyboard-reachable scrollport, and
-				// the head and totals row stay pinned while the body scrolls.
-				<OverflowScroller
-					ariaLabel="Feature summary by application"
-					className="-mx-2 px-2"
-					scrollerClassName="max-h-[28rem]">
-					<table className="min-w-[700px] text-sm">
-						<thead className="sticky top-0 z-10 bg-card">
-							<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
-								{summaryColumns.map((column) => (
-									<th
-										className={
-											column.align === 'right'
-												? 'px-3 py-2 text-right'
-												: 'px-3 py-2 text-left'
-										}
-										key={column.header}>
-										{column.header}
-									</th>
-								))}
-							</tr>
-						</thead>
-						<tbody>
-							{rows.map((row) => (
-								<tr
-									className="border-b border-border last:border-b-0"
-									key={row.application}>
-									{summaryColumns.map((column) => (
-										<td
-											className={
-												column.align === 'right'
-													? 'px-3 py-2 text-right font-medium text-foreground tabular-nums'
-													: 'max-w-52 truncate px-3 py-2 font-medium text-foreground'
-											}
-											key={column.header}>
-											{column.value(row)}
-										</td>
-									))}
-								</tr>
-							))}
-						</tbody>
-						<tfoot className="sticky bottom-0 z-10 bg-card">
-							<tr className="border-t border-border text-sm font-semibold text-foreground">
-								{summaryColumns.map((column) => (
-									<td
-										className={
-											column.align === 'right'
-												? 'px-3 py-3 text-right tabular-nums'
-												: 'px-3 py-3 text-left'
-										}
-										key={column.header}>
-										{column.header === 'Application'
-											? 'Total'
-											: column.value({ application: 'Total', ...totals })}
-									</td>
-								))}
-							</tr>
-						</tfoot>
-					</table>
-				</OverflowScroller>
+				<FeatureSummaryRows rows={rows} totals={totals} />
 			)}
 		</Card>
 	);

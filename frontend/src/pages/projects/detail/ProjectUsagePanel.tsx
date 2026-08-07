@@ -49,6 +49,42 @@ function UsageMetricCells({ usage }: { usage: ProjectUsageTotals }) {
 	);
 }
 
+/**
+ * The same three metrics `UsageMetricCells` carries, as a card body.
+ *
+ * Both breakdown tables come to about 620px of minimum width — the target badges, then three
+ * numeric columns whose sub-lines (`800.0K in · 400.0K out`, `12/15 reported`) are the widest thing
+ * in them — so `lg` is the smallest tier whose content column holds one, and these stand in below
+ * that. The sub-lines lose `whitespace-nowrap` here: in a card they have a line to wrap onto.
+ */
+function UsageMetricFields({ usage }: { usage: ProjectUsageTotals }) {
+	return (
+		<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+			<div>
+				<dt className="text-muted-foreground uppercase">Runs</dt>
+				<dd className="mt-0.5 font-medium tabular-nums">{usage.runCount}</dd>
+			</div>
+			<div>
+				<dt className="text-muted-foreground uppercase">Tokens</dt>
+				<dd className="mt-0.5 font-medium tabular-nums">
+					{formatCompactNumber(usage.totalTokens)}
+				</dd>
+				<dd className="text-2xs text-muted-foreground tabular-nums">
+					{formatCompactNumber(usage.inputTokens)} in ·{' '}
+					{formatCompactNumber(usage.outputTokens)} out
+				</dd>
+			</div>
+			<div>
+				<dt className="text-muted-foreground uppercase">Reported cost</dt>
+				<dd className="mt-0.5 font-medium tabular-nums">{costLabel(usage)}</dd>
+				<dd className="text-2xs text-muted-foreground tabular-nums">
+					{usage.runsWithReportedCost}/{usage.runCount} reported
+				</dd>
+			</div>
+		</dl>
+	);
+}
+
 function ExecutionTargetLabel({ row }: { row: ProjectUsageExecutionTarget }) {
 	if (row.backend === null && row.model === null && row.provider === null) {
 		return <Badge tone="neutral">Unknown / legacy</Badge>;
@@ -68,7 +104,19 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 				level="subsection"
 				title="By execution target"
 			/>
-			<OverflowScroller ariaLabel="Project usage by execution target">
+			<div className="space-y-2 p-4 lg:hidden">
+				{rows.map((row) => (
+					<div
+						className="rounded-md border border-border p-3"
+						key={JSON.stringify([row.backend, row.model, row.provider])}>
+						<ExecutionTargetLabel row={row} />
+						<UsageMetricFields usage={row} />
+					</div>
+				))}
+			</div>
+			<OverflowScroller
+				ariaLabel="Project usage by execution target"
+				className="hidden lg:block">
 				<table
 					aria-label="Project usage by execution target"
 					className="w-full text-left text-sm">
@@ -120,7 +168,19 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 				level="subsection"
 				title="By run mode"
 			/>
-			<OverflowScroller ariaLabel="Project usage by run mode">
+			<div className="space-y-2 p-4 lg:hidden">
+				{rows.map((row) => (
+					<div
+						className="rounded-md border border-border p-3"
+						key={row.mode ?? 'unknown'}>
+						<Badge className="capitalize" tone="neutral">
+							{modeLabel(row.mode)}
+						</Badge>
+						<UsageMetricFields usage={row} />
+					</div>
+				))}
+			</div>
+			<OverflowScroller ariaLabel="Project usage by run mode" className="hidden lg:block">
 				<table aria-label="Project usage by run mode" className="w-full text-left text-sm">
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>

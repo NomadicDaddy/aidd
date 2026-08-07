@@ -29,6 +29,16 @@ const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
 		tier: 'xl',
 	},
 	{
+		stack: 'components/shared/local-aidd-history/LocalIterationsTable.tsx',
+		table: 'components/shared/local-aidd-history/LocalIterationsTable.tsx',
+		tier: 'xl',
+	},
+	{
+		stack: 'components/shared/local-aidd-history/LocalRunCards.tsx',
+		table: 'components/shared/local-aidd-history/LocalRunsTable.tsx',
+		tier: 'xl',
+	},
+	{
 		stack: 'pages/audits/tabs/CatalogCards.tsx',
 		table: 'pages/audits/tabs/CatalogTable.tsx',
 		tier: 'xl',
@@ -36,6 +46,11 @@ const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
 	{
 		stack: 'pages/dashboard/FeatureStatusRows.tsx',
 		table: 'pages/dashboard/FeatureStatusRows.tsx',
+		tier: 'lg',
+	},
+	{
+		stack: 'pages/dashboard/FeatureSummaryRows.tsx',
+		table: 'pages/dashboard/FeatureSummaryRows.tsx',
 		tier: 'lg',
 	},
 	{
@@ -54,6 +69,16 @@ const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
 		tier: 'xl',
 	},
 	{
+		stack: 'pages/projects/detail/MilestonesTable.tsx',
+		table: 'pages/projects/detail/MilestonesTable.tsx',
+		tier: 'lg',
+	},
+	{
+		stack: 'pages/projects/detail/ProjectUsagePanel.tsx',
+		table: 'pages/projects/detail/ProjectUsagePanel.tsx',
+		tier: 'lg',
+	},
+	{
 		stack: 'pages/projects/detail/workingTree/WorkingTreeList.tsx',
 		table: 'pages/projects/detail/workingTree/WorkingTreeTable.tsx',
 		tier: 'xl',
@@ -61,6 +86,11 @@ const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
 	{
 		stack: 'pages/projects/profileMatrix/ProfileMatrixMobileList.tsx',
 		table: 'pages/projects/profileMatrix/ProfileMatrixTable.tsx',
+		tier: 'xl',
+	},
+	{
+		stack: 'pages/recipes/RecipeGrid.tsx',
+		table: 'pages/recipes/RecipeGrid.tsx',
 		tier: 'xl',
 	},
 	{
@@ -86,23 +116,15 @@ const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
 ];
 
 /**
- * Contained, but with no card stack. Two different claims live here and the `why` says which:
- * a table narrow enough that there is nothing to replace it with, or a wide one whose stack is
- * filed and not yet built. The second kind is a debt this list makes visible rather than a rule
- * it excuses — a silent exemption is how the first round of this went wrong.
+ * Contained, but with no card stack — a table narrow enough that there is nothing to replace it
+ * with. The list also held six wide tables whose stacks were filed and unbuilt, marked
+ * `stack filed`; remediation-20260806-table-stacks-remainder built all six and they are paired
+ * above. A `stack filed` entry is a debt this list makes visible rather than a rule it excuses, and
+ * the guard below now refuses to let one sit here indefinitely.
  */
 const unpairedTables: { file: string; why: string }[] = [
 	{ file: 'pages/audits/tabs/OverridesList.tsx', why: 'two columns; fits the 358px column' },
 	{ file: 'pages/projects/ProjectsTableView.tsx', why: 'three columns; fits the 358px column' },
-	// Filed as remediation-20260806-table-stacks-remainder. Each needs a designed mobile rendering,
-	// and the 2026-08-06 sweep produced no evidence for any of them — inventing six card layouts
-	// from no observation is how a remediation becomes its own finding next time.
-	{ file: 'components/shared/local-aidd-history/LocalIterationsTable.tsx', why: 'stack filed' },
-	{ file: 'components/shared/local-aidd-history/LocalRunsTable.tsx', why: 'stack filed' },
-	{ file: 'pages/dashboard/FeatureSummaryCard.tsx', why: 'min-w-[700px]; stack filed' },
-	{ file: 'pages/projects/detail/MilestonesTable.tsx', why: 'six columns; stack filed' },
-	{ file: 'pages/projects/detail/ProjectUsagePanel.tsx', why: 'ten columns; stack filed' },
-	{ file: 'pages/recipes/RecipeGrid.tsx', why: 'nine columns; stack filed' },
 ];
 
 /** Matches a naive `<table` scan and is not a scrollport at all. */
@@ -204,6 +226,116 @@ describe('wide tables are contained and replaced', () => {
 		// stack has no equivalent of — the stack would have rendered as nothing at all.
 		expect(panel).toContain('const placeholder =');
 		expect(panel.slice(panel.indexOf('xl:hidden'))).toContain('{placeholder}');
+	});
+
+	test('a filed stack is built, not parked in the unpaired list', async () => {
+		// The six that carried this reason are the whole of what the list was deferring. Written as
+		// a rule rather than as six deletions: the next table that lands here with a promise
+		// attached fails immediately instead of waiting for someone to notice the list grew.
+		expect(unpairedTables.filter((entry) => entry.why.includes('stack filed'))).toEqual([]);
+	});
+
+	test('the remainder stacks carry every column their table carries', async () => {
+		// Field-by-field, because a stack that drops a column is the failure this pairing exists to
+		// prevent — and it passes every structural check above while doing it.
+		const stacks: { fields: string[]; file: string; start: string }[] = [
+			{
+				fields: [
+					'startedLabel',
+					'<RunExecutionTarget',
+					'<LocalRunResultBadges',
+					'formatDuration(run.durationMs)',
+					'run.summary',
+				],
+				file: 'components/shared/local-aidd-history/LocalRunCards.tsx',
+				start: 'export function LocalRunCards',
+			},
+			{
+				fields: ['cardColumns.map', 'Fleet total'],
+				file: 'pages/dashboard/FeatureSummaryRows.tsx',
+				start: 'function FeatureSummaryCards',
+			},
+			{
+				fields: [
+					'milestone.priority',
+					'milestone.description',
+					'milestoneProgressLabel',
+					'<MilestoneRowActions',
+				],
+				file: 'pages/projects/detail/MilestonesTable.tsx',
+				start: 'function MilestonesList',
+			},
+			{
+				fields: ['<RecipeCard'],
+				file: 'pages/recipes/RecipeGrid.tsx',
+				start: 'export function RecipeTable',
+			},
+		];
+		const offenders: string[] = [];
+
+		for (const { fields, file, start } of stacks) {
+			const source = await readPath(file);
+			// Bounded at the scrollport, not at end of file: three of these declare the stack
+			// immediately above the table they replace, so an unbounded slice reads the table's own
+			// cells and a stack that dropped a column would still pass.
+			const from = source.indexOf(start);
+			const scroller = source.indexOf('<OverflowScroller', from);
+			const stack = source.slice(from, scroller < 0 ? undefined : scroller);
+			for (const field of fields) {
+				if (!stack.includes(field)) offenders.push(`${file}: stack drops ${field}`);
+			}
+		}
+
+		expect(offenders).toEqual([]);
+	});
+
+	test('the iterations and usage stacks reuse the cells rather than restating them', async () => {
+		// Both tables split their cells into components the stack calls too, so a column can only
+		// change in both renderings at once. The alternative — a second copy of the same markup —
+		// is how the two recipe launch panels drifted apart.
+		const iterations = await read(
+			'components',
+			'shared',
+			'local-aidd-history',
+			'LocalIterationsTable.tsx',
+		);
+		const iterationCards = iterations.slice(
+			iterations.indexOf('function IterationCards'),
+			iterations.indexOf('<OverflowScroller'),
+		);
+		for (const cell of ['<IterationStatus', '<IterationTarget', '<IterationFeatures']) {
+			expect(iterationCards).toContain(cell);
+		}
+		expect(iterationCards).toContain('iterationDurationLabel');
+
+		const usage = await read('pages', 'projects', 'detail', 'ProjectUsagePanel.tsx');
+		// Once per breakdown: by execution target and by run mode.
+		expect(usage.split('<UsageMetricFields').length - 1).toBe(2);
+		const fields = usage.slice(usage.indexOf('function UsageMetricFields'));
+		for (const metric of ['usage.runCount', 'usage.totalTokens', 'costLabel(usage)']) {
+			expect(fields).toContain(metric);
+		}
+	});
+
+	test('the remainder placeholders live outside the scrollport', async () => {
+		// A loading, error or empty state expressed only as a colSpan row renders as nothing at all
+		// in a card stack. Both of the six that own a placeholder branch above their scroller, so
+		// the message is the same one at every width.
+		const runs = await read('components', 'shared', 'local-aidd-history', 'LocalRunsTable.tsx');
+		expect(runs).toContain('No runs match the current filters.');
+		expect(runs.indexOf('No runs match the current filters.')).toBeLessThan(
+			runs.indexOf('<OverflowScroller'),
+		);
+
+		// Source order is not render order here — both breakdowns are declared above the panel that
+		// uses them — so this reads the panel's own body, where the empty branch and the two
+		// breakdowns are the two arms of one ternary.
+		const usage = await read('pages', 'projects', 'detail', 'ProjectUsagePanel.tsx');
+		const panel = usage.slice(usage.indexOf('export function ProjectUsagePanel'));
+		expect(panel).toContain('totals.runCount === 0 ?');
+		expect(panel.indexOf('No finalized runs available')).toBeLessThan(
+			panel.indexOf('<ExecutionBreakdown'),
+		);
 	});
 
 	test('the invocations stack carries the columns the table used to drop', async () => {

@@ -180,14 +180,47 @@ describe('the measure belongs to the container', () => {
 			'src/pages/diary/DiaryEntryCard.tsx',
 			'src/pages/skills/SkillsPage.tsx',
 		]) {
-			expect(frontend(file)).toContain('proseMeasureClass');
+			// `proseMeasureCardClass` satisfies this too, and is meant to: the docs card wraps the
+			// prose instead of being it, so it carries the corrected form of the same measure.
+			expect(frontend(file)).toContain('proseMeasure');
 		}
 	});
 
 	test('the doc card is what the cap sits on, so its border reaches the prose', () => {
 		expect(frontend('src/pages/docs/DocsPage.tsx')).toContain(
-			"<Card className={cn('min-w-0 p-5 sm:p-7', proseMeasureClass)}>",
+			"<Card className={cn('min-w-0 p-5 sm:p-7', proseMeasureCardClass)}>",
 		);
+	});
+
+	test('a container that wraps the prose corrects for its own face and padding', () => {
+		const measure = frontend('src/lib/typography.ts');
+
+		// Two corrections, and dropping either one leaves the measure wrong. `ch` is the advance of
+		// `0` in the element's own face: on the 16px card that is not the `text-sm` the prose is set
+		// in, and `14/16` is the whole of the difference. And `max-width` on a `border-box` element
+		// includes padding, so the card's `p-7` was being taken out of the 68 characters instead of
+		// sitting outside them.
+		expect(measure).toContain(
+			"export const proseMeasureCardClass = 'max-w-[calc(68ch*0.875_+_3.5rem)]'",
+		);
+	});
+
+	test('the docs split measures the column it is splitting, not the viewport', () => {
+		const page = frontend('src/pages/docs/DocsPage.tsx');
+
+		// `lg:` reads the viewport, and the viewport does not know how wide the rail is. At 768 the
+		// same tier covered a 656px column (rail collapsed) and a 480px one (rail expanded), where
+		// the sidebar would have left roughly 230px of prose beside 224px of navigation.
+		expect(page).toContain('className="@container"');
+		expect(page).toContain('@min-[45rem]:grid-cols-[14rem_minmax(0,1fr)]');
+		expect(page).toContain('@min-[45rem]:hidden');
+		expect(page).toContain('hidden @min-[45rem]:block');
+
+		// Nothing on this page decides anything by viewport tier any more — a leftover `lg:` beside
+		// a container query is the two answers this change exists to collapse into one. Comments
+		// stripped: the note above the grid names the tier it replaced.
+		const code = page.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
+		expect(code).not.toContain('lg:');
 	});
 });
 

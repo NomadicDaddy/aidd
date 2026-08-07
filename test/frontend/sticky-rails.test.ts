@@ -14,7 +14,10 @@ function read(relativePath: string): Promise<string> {
 // its sticky declaration with a self-start so the rail is shorter than the row it scrolls beside.
 const stickyRails = [
 	['pages/projects/detail/profile/ComputedProfilePanel.tsx', 'lg:sticky', 'lg:self-start'],
-	['pages/docs/DocsPage.tsx', 'lg:sticky', 'lg:self-start'],
+	// Docs gates its split on the region's own width rather than the viewport tier, so the pairing
+	// this suite exists to enforce is scoped to the container query instead of to `lg`. The rule is
+	// unchanged: a grid item that declares sticky at a condition needs self-start at the same one.
+	['pages/docs/DocsPage.tsx', '@min-[45rem]:sticky', '@min-[45rem]:self-start'],
 	['pages/runs/RunsPage.tsx', '2xl:sticky', 'self-start'],
 ] as const;
 

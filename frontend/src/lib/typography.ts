@@ -37,3 +37,19 @@ export const microLabelClass = 'text-2xs font-medium tracking-wide uppercase';
  * container that caps itself puts the border back against the prose.
  */
 export const proseMeasureClass = 'max-w-[68ch]';
+
+/**
+ * The same measure for a container that *wraps* the prose rather than being it — a card with its
+ * own padding — where `proseMeasureClass` lands wrong twice over.
+ *
+ * `ch` is the advance of `0` in the element's own face, and a card's face is the 16px body while
+ * the prose inside it is `text-sm`. So `68ch` on the card caps at 68 characters of a size the
+ * reader is not reading; `14/16` corrects it to the face that is actually set. Separately,
+ * `max-width` on a `border-box` element includes padding, so the card's `p-7` was coming out of the
+ * measure allowance instead of sitting outside it — `3.5rem` puts it back, and the line the reader
+ * returns from is the full 68 the docstring above promises.
+ *
+ * Below `sm` the padding is `p-5` rather than `p-7`, which this does not model. It does not need
+ * to: at those widths the column is a few hundred pixels and the cap is nowhere near binding.
+ */
+export const proseMeasureCardClass = 'max-w-[calc(68ch*0.875_+_3.5rem)]';

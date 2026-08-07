@@ -53,12 +53,13 @@ describe('docs page layout', () => {
 	test('collapses navigation behind a labelled disclosure below the two-column breakpoint', async () => {
 		const page = await readSource('pages/docs/DocsPage.tsx');
 
-		// Below `lg` the shell rail plus a 14rem sidebar leaves the article too narrow, so the
-		// 16 section labels move behind one control instead of stacking above the prose.
+		// Below the split a 14rem sidebar leaves the article too narrow, so the 16 section labels
+		// move behind one control instead of stacking above the prose. The condition is the
+		// region's own width now, not a viewport tier — see markdown-content for why.
 		expect(page).toContain('<details className="rounded-xl border border-border bg-card');
-		expect(page).toContain('lg:hidden');
+		expect(page).toContain('@min-[45rem]:hidden');
 		expect(page).toContain('<summary');
-		expect(page).toContain('<div className="hidden lg:block">');
+		expect(page).toContain('<div className="hidden @min-[45rem]:block">');
 	});
 
 	test('keeps the article heading out of the body and inside the page header', async () => {

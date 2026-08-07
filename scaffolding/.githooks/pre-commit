@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
-
-echo "pre-commit: qc (cached subset of smoke:qc)"
-bun run smoke:qc:fast
-
-echo "pre-commit: passed"

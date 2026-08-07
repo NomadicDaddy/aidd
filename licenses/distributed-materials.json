@@ -162,7 +162,6 @@
 			"scaffolding/.editorconfig",
 			"scaffolding/.gitattributes",
 			"scaffolding/.githooks/aidd-history-guard.sh",
-			"scaffolding/.githooks/pre-commit",
 			"scaffolding/.githooks/pre-push",
 			"scaffolding/.githooks/screenshot-guard.sh",
 			"scaffolding/.gitignore",

@@ -1,5 +1,12 @@
+/**
+ * Verifies the compiled standalone distribution layout for every target.
+ *
+ * Enforces: BEH-001 -- CLI contracts remain stable where documented, which includes the binary
+ * names and directory layout a released standalone build presents.
+ */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { parseArgs } from 'node:util';
 
 import {
 	ALL_TARGETS,
@@ -41,30 +48,31 @@ interface ProbeSpec {
 const DEFAULT_PROBE_TIMEOUT_MS = 5_000;
 
 export function parseCheckStandaloneArgs(argv: string[]): CheckStandaloneArgs {
-	const targets: CompileTarget[] = [];
-	let probeBinaries = false;
+	const { values } = parseArgs({
+		args: argv,
+		options: {
+			'probe-binaries': { type: 'boolean' },
+			target: { multiple: true, type: 'string' },
+		},
+		strict: true,
+	});
 
-	for (let i = 0; i < argv.length; i++) {
-		const token = argv[i];
-		if (token === '--target') {
-			const name = argv[++i];
-			if (!name) throw new Error('Missing value for --target');
-			const target = ALL_TARGETS.find((candidate) => candidate.name === name);
-			if (!target) {
-				throw new Error(
-					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
-				);
-			}
-			targets.push(target);
-		} else if (token === '--probe-binaries') {
-			probeBinaries = true;
-		} else {
-			throw new Error(`Unknown argument: ${token}`);
+	const targets = (values.target ?? []).map((name) => {
+		// parseArgs takes the token after `--target` as its value even when that token is itself a
+		// flag, so `--target --probe-binaries` would otherwise be reported as an unknown target
+		// rather than as the missing value it is.
+		if (!name || name.startsWith('-')) throw new Error('Missing value for --target');
+		const target = ALL_TARGETS.find((candidate) => candidate.name === name);
+		if (!target) {
+			throw new Error(
+				`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
+			);
 		}
-	}
+		return target;
+	});
 
 	return {
-		probeBinaries,
+		probeBinaries: values['probe-binaries'] === true,
 		targets: targets.length > 0 ? targets : ALL_TARGETS,
 	};
 }

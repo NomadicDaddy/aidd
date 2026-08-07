@@ -302,6 +302,10 @@ describe('smoke cache', () => {
 		expect(parseSmokeQcArgs(['--cache-status']).cacheStatus).toBe(true);
 		expect(SMOKE_QC_STEPS.map((step) => step.label)).toEqual([
 			'check:max-lines',
+			// The meta-gate's own self-test runs first: a broken rule library would otherwise be
+			// reported as gate violations.
+			'test:gate-conventions',
+			'check:gate-conventions',
 			'check:fresh-release',
 			'check:web-db-integrity',
 			'check:env-spread',
@@ -318,6 +322,7 @@ describe('smoke cache', () => {
 			'check:licenses',
 			'prompt:snapshot:check',
 			'check:leak-guard',
+			'check:shared-core',
 			'format:check',
 			'typecheck',
 			'lint',

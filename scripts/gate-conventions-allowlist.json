@@ -1,0 +1,20 @@
+{
+	"excluded": {
+		"scripts/aidd-tools.ts": "Not a gate. `check:audit-profile-mapping` runs `bun scripts/aidd-tools.ts audit:profile-mapping`, so discovery reaches the multi-command CLI rather than the check behind it. The rules apply to the unit a task invokes as a gate; here that unit is a subcommand inside a dispatcher that also carries the audit, feature, and roadmap tools. Phase 2 extracts the profile-mapping check into its own entry script, which is when this exclusion is replaced by a real gate.",
+		"scripts/run-bash.ts": "The bash shim. `check:leak-guard` runs `bun ./scripts/run-bash.ts scripts/check-leak-guard.sh`, so discovery reaches the shim rather than the guard. The shim spawns a subprocess and returns its exit code; it enforces no rule of its own, and the guard it runs is a `.sh` file with none of the eight rules' surfaces."
+	},
+	"waivers": {
+		"GC1": {
+			"paths": ["scripts/check-license-core.ts", "scripts/sync-shared-core.ts"],
+			"reason": "Both files are spernakit-owned copies delivered by the shared-core sync, so they must not be hand-edited here: an edit in aidd is drift the next sync overwrites, and until then `--check` reports this repo as diverged from a source it agrees with. Both are already migrated upstream in spernakit. These two waivers are discharged by running the sync, not by editing the files."
+		},
+		"GC3": {
+			"paths": ["scripts/check-license-core.ts", "scripts/sync-shared-core.ts"],
+			"reason": "Same reason as GC1: spernakit-owned synced files, already carrying the four status markers upstream. Waived here only for the window between the upstream migration and the sync that delivers it."
+		},
+		"GC4": {
+			"paths": ["scripts/sync-shared-core.ts"],
+			"reason": "Spernakit-owned synced file. Reported under a misleading message: this copy defines its OWN function named `parseArgs`, so the rule sees the call and not the import. The finding is still right (a hand-rolled loop is not `parseArgs({ strict: true })`), but do not read the message as a missing option. Migrated upstream; discharged by the sync."
+		}
+	}
+}

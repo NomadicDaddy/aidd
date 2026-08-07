@@ -2,6 +2,9 @@
 /**
  * check-fleet-hook-wiring.ts
  *
+ * Enforces: SEC-003 -- repository-bounded work stays explicit. A guard that reads as installed and
+ * does not fire makes the bound a claim rather than a fact.
+ *
  * Sweeps every repository in the fleet and fails on a guard that reads as installed and does not
  * fire.
  *
@@ -30,10 +33,9 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { argv, exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
 const AIDD_ROOT = resolve(import.meta.dir, '..');
-const rootIdx = argv.indexOf('--root');
-const FLEET_ROOT = rootIdx === -1 ? resolve(AIDD_ROOT, '..') : resolve(argv[rootIdx + 1]!);
 
 /** Hooks git executes directly. Anything else in .githooks is a body invoked via `bash <path>`. */
 const EXECUTED = new Set([
@@ -67,15 +69,24 @@ const invokedScripts = (body: string, hooksRel: string): string[] => {
 	return [...found];
 };
 
-const repos = readdirSync(FLEET_ROOT, { withFileTypes: true })
-	.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
-	.map((e) => join(FLEET_ROOT, e.name))
-	.filter((d) => existsSync(join(d, '.git')));
+export interface HookWiringOptions {
+	root: string;
+}
 
-const problems: string[] = [];
-let wired = 0;
+export function parseHookWiringArgs(args: string[]): HookWiringOptions {
+	const { values } = parseArgs({ args, options: { root: { type: 'string' } }, strict: true });
+	// parseArgs takes the token after `--root` as its value even when that token is itself a flag,
+	// so a mistyped invocation would sweep a directory named after the flag, discover no
+	// repositories, and report the fleet clean.
+	if (values.root !== undefined && (values.root.trim() === '' || values.root.startsWith('-'))) {
+		throw new Error('--root requires a directory path.');
+	}
+	return { root: values.root === undefined ? resolve(AIDD_ROOT, '..') : resolve(values.root) };
+}
 
-for (const repo of repos) {
+/** The five answers for one repository, plus whether it has any hook git would execute. */
+function inspectRepo(repo: string): { problems: string[]; wired: boolean } {
+	const problems: string[] = [];
 	const name = repo.split(/[\\/]/).pop()!;
 	const configured = git(repo, ['config', '--local', 'core.hooksPath']).stdout;
 
@@ -85,17 +96,16 @@ for (const repo of repos) {
 		problems.push(
 			`${name}: core.hooksPath is '${configured}' but that directory does not exist — no hook runs at all. Create it or unset the config.`,
 		);
-		continue;
+		return { problems, wired: false };
 	}
 
 	const hooksRel = configured === '' ? '.git/hooks' : configured;
 	const hooksDir = join(repo, hooksRel);
-	if (!existsSync(hooksDir)) continue;
+	if (!existsSync(hooksDir)) return { problems, wired: false };
 
 	const hooks = readdirSync(hooksDir).filter(
 		(f) => EXECUTED.has(f) && statSync(join(hooksDir, f)).isFile(),
 	);
-	if (hooks.length > 0) wired++;
 
 	for (const hook of hooks) {
 		const body = readFileSync(join(hooksDir, hook), 'utf8');
@@ -142,15 +152,41 @@ for (const repo of repos) {
 	// 5. The guard catches a secret on its way into a commit; the ignore rule keeps it out of the
 	// staged set in the first place. Neither substitutes for the other.
 	if (!ignored(repo, '.env')) problems.push(`${name}: no ignore rule covers .env`);
+
+	return { problems, wired: hooks.length > 0 };
 }
 
-console.log(`swept ${repos.length} repositories (${wired} with hooks wired)`);
-if (problems.length === 0) {
-	console.log(
-		'fleet hook wiring — every installed guard is reachable and every .env is ignored.',
-	);
-	exit(0);
+export function runFleetHookWiring(options: HookWiringOptions): number {
+	const repos = readdirSync(options.root, { withFileTypes: true })
+		.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
+		.map((e) => join(options.root, e.name))
+		.filter((d) => existsSync(join(d, '.git')));
+
+	const results = repos.map((repo) => inspectRepo(repo));
+	const problems = results.flatMap((r) => r.problems);
+	const wired = results.filter((r) => r.wired).length;
+
+	console.log(`swept ${repos.length} repositories (${wired} with hooks wired)`);
+	if (problems.length === 0) {
+		console.log(
+			'[OK] fleet hook wiring — every installed guard is reachable and every .env is ignored.',
+		);
+		return 0;
+	}
+	for (const p of problems) console.error(`  ${p}`);
+	console.error(`\n[FAIL] fleet hook wiring: ${problems.length} problem(s).`);
+	return 1;
 }
-for (const p of problems) console.error(`  ${p}`);
-console.error(`\n${problems.length} problem(s).`);
-exit(1);
+
+if (import.meta.main) {
+	let options: HookWiringOptions;
+	try {
+		options = parseHookWiringArgs(argv.slice(2));
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		console.error(`[FAIL] check-fleet-hook-wiring: ${message}`);
+		console.error('Usage: bun scripts/check-fleet-hook-wiring.ts [--root <dir>]');
+		exit(2);
+	}
+	exit(runFleetHookWiring(options));
+}

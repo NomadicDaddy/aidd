@@ -7,10 +7,15 @@
  *
  * The file ships inside the release archive, so it must describe the installed
  * dependency graph. --check runs in smoke:qc and CI to catch omissions and stale versions.
+ *
+ * Enforces: the committed third-party documents match what the installed dependency graph and the
+ * distributed-materials registry generate. No assertion ID: the catalog states no invariant over
+ * third-party notices.
  */
 
 import { join } from 'node:path';
 import { cwd, exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
 import { collectLicensedClosure, summarizeClosure } from './lib/third-party-licenses/closure.ts';
 import { collectDirectDependencies, workspaceNames } from './lib/third-party-licenses/collect.ts';
@@ -165,21 +170,30 @@ export async function generate(root: string): Promise<GeneratedDocuments> {
 	};
 }
 
-async function main(): Promise<void> {
+export interface ThirdPartyLicenseOptions {
+	/** True verifies the committed documents; false rewrites them. */
+	check: boolean;
+}
+
+export function parseThirdPartyLicenseArgs(args: string[]): ThirdPartyLicenseOptions {
+	const { values } = parseArgs({ args, options: { check: { type: 'boolean' } }, strict: true });
+	return { check: values.check === true };
+}
+
+export async function runThirdPartyLicenses(options: ThirdPartyLicenseOptions): Promise<number> {
 	const root = cwd();
-	const check = Bun.argv.includes('--check');
 	const generated = await generate(root);
 	const documents = [
 		{ content: generated.summary, name: OUTPUT },
 		{ content: generated.notices, name: NOTICES_OUTPUT },
 	];
 
-	if (!check) {
+	if (!options.check) {
 		for (const document of documents) {
 			await Bun.write(join(root, document.name), document.content);
-			console.log(`Wrote ${document.name}`);
+			console.log(`[OK] Wrote ${document.name}`);
 		}
-		return;
+		return 0;
 	}
 
 	for (const document of documents) {
@@ -189,18 +203,30 @@ async function main(): Promise<void> {
 
 		if (committed !== document.content) {
 			console.error(
-				`${document.name} is out of date with the dependency graph or distributed-materials registry.`,
+				`[FAIL] ${document.name} is out of date with the dependency graph or distributed-materials registry.`,
 			);
 			console.error('Run `bun run licenses:generate` and commit the result.');
-			exit(1);
+			return 1;
 		}
 	}
 
 	console.log(
-		`${OUTPUT} and ${NOTICES_OUTPUT} match the dependency graph and distributed-materials registry.`,
+		`[OK] ${OUTPUT} and ${NOTICES_OUTPUT} match the dependency graph and distributed-materials registry.`,
 	);
+	return 0;
 }
 
 if (import.meta.main) {
-	await main();
+	// Without --check this rewrites two committed files, so a mistyped flag must not fall through
+	// to a real write. Bad arguments exit 2; drift exits 1.
+	let options: ThirdPartyLicenseOptions;
+	try {
+		options = parseThirdPartyLicenseArgs(Bun.argv.slice(2));
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		console.error(`[FAIL] generate-third-party-licenses: ${message}`);
+		console.error('Usage: bun scripts/generate-third-party-licenses.ts [--check]');
+		exit(2);
+	}
+	exit(await runThirdPartyLicenses(options));
 }

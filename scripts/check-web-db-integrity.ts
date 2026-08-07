@@ -1,7 +1,14 @@
 #!/usr/bin/env bun
+/**
+ * Foreign-key integrity check for the web control-panel database.
+ *
+ * Enforces: DATA-007 -- run and pipeline rows hold denormalized project fields against discovered
+ * projects, so the references those rows do carry must all resolve.
+ */
 import { Database } from 'bun:sqlite';
 import { stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { exit } from 'node:process';
 
 import { formatForeignKeyViolation, getForeignKeyViolations } from '../backend/src/db/integrity.ts';
 import { migrateWebDatabase } from '../backend/src/db/migrate.ts';
@@ -22,10 +29,10 @@ async function fileExists(path: string): Promise<boolean> {
 	}
 }
 
-async function main(): Promise<void> {
+export async function runWebDbIntegrity(): Promise<number> {
 	if (!(await fileExists(dbPath))) {
-		console.log('Web database integrity check skipped: data/aidd-panel.db does not exist.');
-		return;
+		console.log('[SKIP] Web database integrity check: data/aidd-panel.db does not exist.');
+		return 0;
 	}
 
 	const sqlite = new Database(dbPath);
@@ -35,20 +42,23 @@ async function main(): Promise<void> {
 
 		const violations = getForeignKeyViolations(sqlite);
 		if (violations.length > 0) {
-			console.error(`Web database foreign key violations detected: ${violations.length}`);
+			console.error(
+				`[FAIL] Web database foreign key violations detected: ${violations.length}`,
+			);
 			for (const violation of violations.slice(0, 20)) {
 				console.error(`  ${formatForeignKeyViolation(violation)}`);
 			}
 			if (violations.length > 20) {
 				console.error(`  ${violations.length - 20} additional violation(s) omitted.`);
 			}
-			process.exit(1);
+			return 1;
 		}
 
-		console.log('Web database integrity check passed.');
+		console.log('[OK] Web database integrity check passed.');
+		return 0;
 	} finally {
 		sqlite.close();
 	}
 }
 
-await main();
+if (import.meta.main) exit(await runWebDbIntegrity());

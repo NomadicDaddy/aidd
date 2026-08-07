@@ -2,9 +2,9 @@
 /**
  * check-artifact-parity.ts
  *
- * Enforces the contract stated in docs/reference/artifacts.md: that table is the
- * complete catalog of every `.aidd/` path aidd recognizes, and scaffolding/.gitignore
- * is its derived projection.
+ * Enforces: DATA-001 and DATA-005 -- docs/reference/artifacts.md is the complete catalog of
+ * every `.aidd/` path aidd recognizes, scaffolding/.gitignore is its derived projection, and
+ * artifact health stays observable from code and metadata rather than by inspection.
  *
  * Four failures are caught:
  *   1. class/rule disagreement — a committed row that an ignore rule matches (it
@@ -145,21 +145,24 @@ export function findParityProblems(
 	return problems;
 }
 
-if (import.meta.main) {
+export function runArtifactParity(): number {
 	const catalogText = readFileSync(CATALOG, 'utf8');
 	const scaffoldText = readFileSync(SCAFFOLD, 'utf8');
 	const problems = findParityProblems(catalogText, scaffoldText);
 
 	if (problems.length > 0) {
-		console.error('Artifact catalog and scaffold ignore file disagree:\n');
+		console.error('[FAIL] Artifact catalog and scaffold ignore file disagree:\n');
 		for (const p of problems) console.error(`  - ${p}`);
 		console.error(`\n${problems.length} problem(s). See docs/reference/artifacts.md.`);
-		exit(1);
+		return 1;
 	}
 
 	const rowCount = parseCatalog(catalogText).rows.length;
 	const ruleCount = parseScaffold(scaffoldText).length;
 	console.log(
-		`check:artifact-parity — ${rowCount} catalog rows, ${ruleCount} ignore rules, no drift.`,
+		`[OK] check:artifact-parity — ${rowCount} catalog rows, ${ruleCount} ignore rules, no drift.`,
 	);
+	return 0;
 }
+
+if (import.meta.main) exit(runArtifactParity());

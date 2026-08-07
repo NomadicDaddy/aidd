@@ -6,6 +6,10 @@ export const UNCACHEABLE_STEPS = new Set([
 	'check:audit-profile-mapping',
 	'check:feature-integration',
 	'check:schema-parity',
+	// Its inputs are up to fifty sibling checkouts. Hashing this repository's files answers "did the
+	// owner change" and never "did a target drift", and a target drifting is the only thing it
+	// checks, so a cached pass would replay over a fleet it did not look at.
+	'check:shared-core',
 	'check:web-db-integrity',
 ]);
 export const TEST_STEP_NAME = 'test';
@@ -80,6 +84,7 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'frontend/dist/**/*',
 		'scripts/check-critical-path.ts',
 		'scripts/critical-path-budget.json',
+		'scripts/lib/critical-path/**/*.ts',
 	],
 	'check:dead-code': [
 		'backend/package.json',
@@ -122,6 +127,16 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/lib/fresh-release/**/*.ts',
 		'scripts/**/*',
 		'test/scripts/**/*',
+	],
+	'check:gate-conventions': [
+		// Every gate's own source is an input, because the gate reads all of them. `scripts/*.ts` is
+		// deliberately the whole directory rather than the current gate list: a task added to
+		// package.json changes the population, and a glob list naming today's gates would let the
+		// cache skip the run that would have seen the new one.
+		'package.json',
+		'scripts/*.ts',
+		'scripts/gate-conventions-allowlist.json',
+		'scripts/lib/gate/**/*.ts',
 	],
 	'check:leak-guard': [
 		'.githooks/leak-guard.sh',
@@ -223,6 +238,14 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/smoke-cache.ts',
 		'scripts/smoke-qc.ts',
 		'test/**/*.ts',
+	],
+	'test:gate-conventions': [
+		// The gate and its rule library are the inputs; the fixture the test writes is created and
+		// deleted inside the run, so it can never be a cache input.
+		'package.json',
+		'scripts/check-gate-conventions.ts',
+		'scripts/lib/gate/**/*.ts',
+		'scripts/test-gate-conventions.ts',
 	],
 	typecheck: [
 		'backend/package.json',

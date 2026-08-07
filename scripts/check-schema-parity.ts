@@ -6,10 +6,14 @@
  *
  * Exits 0 on parity, 1 on any drift. Excludes schema_migrations from
  * product-table comparison. Type-safe: no `any`.
+ *
+ * Enforces: DATA-006 -- run history is file-backed, which is only true if the database the
+ * migrations produce is the database the Drizzle schema declares.
  */
 
 import { Database } from 'bun:sqlite';
 import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core';
+import { exit } from 'node:process';
 
 import { migrateWebDatabase } from '../backend/src/db/migrate.ts';
 import * as schema from '../backend/src/db/schema.ts';
@@ -99,26 +103,27 @@ function collectExtraSqliteTableMismatches(
 		);
 }
 
-function reportMismatches(allMismatches: string[]): void {
-	if (allMismatches.length === 0) return;
-	console.error('Schema parity mismatches detected:\n');
+/** Prints the drift, if any. Returns whether the schemas agree. */
+function reportMismatches(allMismatches: string[]): boolean {
+	if (allMismatches.length === 0) return true;
+	console.error('[FAIL] Schema parity mismatches detected:\n');
 	for (const mismatch of allMismatches) {
 		console.error(mismatch);
 	}
 	console.error(`\nTotal mismatches: ${allMismatches.length}`);
-	process.exit(1);
+	return false;
 }
 
-function main(): void {
+export function runSchemaParity(): number {
 	const sqlite = new Database(':memory:');
 	try {
 		migrateWebDatabase(sqlite);
-		reportMismatches(collectTableMismatches(sqlite));
-		console.log('Schema parity check passed; Drizzle schema matches migrated SQLite.');
-		process.exit(0);
+		if (!reportMismatches(collectTableMismatches(sqlite))) return 1;
+		console.log('[OK] Schema parity check passed; Drizzle schema matches migrated SQLite.');
+		return 0;
 	} finally {
 		sqlite.close();
 	}
 }
 
-main();
+if (import.meta.main) exit(runSchemaParity());

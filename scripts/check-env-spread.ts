@@ -5,6 +5,8 @@ import { cwd, exit } from 'node:process';
 /**
  * Targeted check for accidental full-environment spreading to child processes.
  *
+ * Enforces: SEC-002 -- child processes receive only the environment they need.
+ *
  * aidd's policy (see `cli/src/subprocess-env.ts` header) is that backend and tool subprocesses
  * receive an allowlisted environment via `buildBackendSubprocessEnv` / `buildToolSubprocessEnv`.
  * Spreading the full parent environment into a Bun.spawn or child_process call bypasses that
@@ -87,7 +89,7 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 	}
 
 	if (findings.length > 0) {
-		console.error('aidd env-spread check failed.');
+		console.error('[FAIL] aidd env-spread check.');
 		console.error(
 			'Child processes must receive an allowlisted environment via buildBackendSubprocessEnv / buildToolSubprocessEnv.',
 		);
@@ -97,7 +99,7 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 		return 1;
 	}
 
-	console.log('aidd env-spread check passed.');
+	console.log('[OK] aidd env-spread check passed.');
 	return 0;
 }
 

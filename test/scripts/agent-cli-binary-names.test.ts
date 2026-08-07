@@ -6,6 +6,8 @@ import { buildBackendCommand } from 'aidd-shared/backends/commands';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { FORBIDDEN_IN_IMAGE } from '../../scripts/lib/image-licenses/image-notices.ts';
+
 /**
  * The agent CLIs are no longer baked into the image (2.116.0): the entrypoint installs them at
  * first boot, and check-image-licenses proves none were re-baked. Both work in BINARY names, and
@@ -34,13 +36,11 @@ describe('agent CLI binary names', () => {
 		expect(probed.sort()).toEqual(CLI_BACKENDS.map(binaryFor).sort());
 	});
 
-	test('the redistribution guard forbids the binary each backend actually invokes', async () => {
-		const guard = await readFile(join('scripts', 'check-image-licenses.ts'), 'utf8');
-		const declared = /const FORBIDDEN_IN_IMAGE = \[([^\]]+)\]/.exec(guard)?.[1];
-
-		expect(declared).toBeDefined();
-		const forbidden = [...(declared ?? '').matchAll(/'([^']+)'/g)].map((match) => match[1]);
-
-		expect(forbidden.sort()).toEqual(CLI_BACKENDS.map(binaryFor).sort());
+	test('the redistribution guard forbids the binary each backend actually invokes', () => {
+		// Read the list itself rather than scraping the guard's source. The scrape silently
+		// degraded to "constant not found" when the max-lines split moved this declaration into
+		// scripts/lib/image-licenses/, and a guard nobody can find is indistinguishable here from
+		// a guard that forbids nothing.
+		expect([...FORBIDDEN_IN_IMAGE].sort()).toEqual(CLI_BACKENDS.map(binaryFor).sort());
 	});
 });

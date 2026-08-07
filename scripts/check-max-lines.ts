@@ -3,7 +3,8 @@ import { join, relative, sep } from 'node:path';
 import { cwd, exit } from 'node:process';
 
 /**
- * Enforces the 300-line-per-file modularity rule across the tracked source trees.
+ * Enforces: the 300-line-per-file modularity rule, across the tracked source trees. No assertion
+ * ID: the rule is stated in `AGENTS.md` rather than in the assertion catalog.
  *
  * Any tracked `.ts`/`.tsx` source file over `MAX_LINES` fails `smoke:qc`, so oversized files must be
  * split before landing. The threshold is a hard ceiling with no grandfather list.
@@ -65,7 +66,7 @@ export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 	if (findings.length > 0) {
 		findings.sort((a, b) => b.lines - a.lines);
 		console.error(
-			`aidd max-lines check failed: ${findings.length} file(s) exceed ${MAX_LINES} lines.`,
+			`[FAIL] aidd max-lines check: ${findings.length} file(s) exceed ${MAX_LINES} lines.`,
 		);
 		console.error(
 			'Split oversized files into cohesive modules (facade + submodules / extracted components).',
@@ -76,7 +77,7 @@ export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 		return 1;
 	}
 
-	console.log(`aidd max-lines check passed (no file exceeds ${MAX_LINES} lines).`);
+	console.log(`[OK] aidd max-lines check passed (no file exceeds ${MAX_LINES} lines).`);
 	return 0;
 }
 

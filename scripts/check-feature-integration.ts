@@ -2,6 +2,9 @@
 /**
  * check-feature-integration.ts
  *
+ * Enforces: QUAL-004 -- runtime modules keep their ownership boundaries, which includes a route
+ * plugin or page that exists but is registered nowhere and therefore belongs to no module at all.
+ *
  * Fails the build when:
  *   1 - A backend route plugin exported from backend/src/routes/*.ts is not
  *       referenced (.use(createXxxRoutes(...))) in backend/src/server.ts.
@@ -176,7 +179,7 @@ function checkFrontendPages(): string[] {
 	return errors;
 }
 
-function main(): number {
+export function runFeatureIntegration(): number {
 	const allErrors: string[] = [];
 
 	const backendErrors = checkBackendRoutes();
@@ -203,5 +206,5 @@ function main(): number {
 
 if (import.meta.main) {
 	void cwd();
-	exit(main());
+	exit(runFeatureIntegration());
 }

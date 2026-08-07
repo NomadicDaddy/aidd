@@ -23,6 +23,16 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:max-lines',
 	},
 	{
+		command: ['bun', 'run', 'test:gate-conventions'],
+		label: 'test:gate-conventions',
+		name: 'test:gate-conventions',
+	},
+	{
+		command: ['bun', 'run', 'check:gate-conventions'],
+		label: 'check:gate-conventions',
+		name: 'check:gate-conventions',
+	},
+	{
 		command: ['bun', 'run', 'check:fresh-release'],
 		label: 'check:fresh-release',
 		name: 'check:fresh-release',
@@ -101,6 +111,15 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		command: ['bun', 'run', 'check:leak-guard'],
 		label: 'check:leak-guard',
 		name: 'check:leak-guard',
+	},
+	// Beside check:leak-guard because both look outward: this one compares every shared file in the
+	// fleet against the repository that owns it. It is registered uncacheable — its inputs are the
+	// sibling checkouts, so hashing this repository answers "did the owner change" and never "did a
+	// target drift", which is the only thing it asks.
+	{
+		command: ['bun', 'run', 'check:shared-core'],
+		label: 'check:shared-core',
+		name: 'check:shared-core',
 	},
 	{
 		command: ['bun', 'run', 'format:check'],

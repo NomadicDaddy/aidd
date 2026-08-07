@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { findEntryChunk, parseCriticalAssets } from '../../scripts/check-critical-path.ts';
+import { findEntryChunk, parseCriticalAssets } from '../../scripts/lib/critical-path/assets.ts';
 
 describe('critical-path HTML discovery', () => {
 	test('finds blocking assets regardless of attribute or tag casing', () => {

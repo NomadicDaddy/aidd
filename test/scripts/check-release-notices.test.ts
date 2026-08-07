@@ -28,7 +28,8 @@ describe('check:release-notices fails closed with no artifact to inspect', () =>
 				(target) => target.name,
 			),
 		).toEqual(['bun-windows-x64-modern']);
-		expect(() => parseReleaseNoticeArgs(['--unknown'])).toThrow('Unknown argument');
+		// The rejection now comes from node:util parseArgs in strict mode, not a hand-rolled loop.
+		expect(() => parseReleaseNoticeArgs(['--unknown'])).toThrow('Unknown option');
 	});
 
 	test('exits non-zero when the release directory does not exist', async () => {

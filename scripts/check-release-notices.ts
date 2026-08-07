@@ -1,8 +1,15 @@
-/** Verifies the exact release archives users will receive. */
+/**
+ * Verifies the exact release archives users will receive.
+ *
+ * Enforces: every release archive carries the notices its contents require, checked by opening the
+ * archive rather than the source tree. No assertion ID: the catalog states no invariant over
+ * distribution obligations.
+ */
 
 import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { cwd, exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
 import { ALL_TARGETS, type CompileTarget } from './build-standalone.ts';
 import { openReleaseArchive } from './lib/release-notices/archive.ts';
@@ -25,29 +32,33 @@ interface ReleaseNoticeArgs {
 }
 
 export function parseReleaseNoticeArgs(argv: string[]): ReleaseNoticeArgs {
-	const targets: CompileTarget[] = [];
-	let dir = join('dist', 'release');
-	for (let index = 0; index < argv.length; index++) {
-		const token = argv[index];
-		if (token === '--all-targets') {
-			targets.splice(0, targets.length, ...ALL_TARGETS);
-		} else if (token === '--dir') {
-			dir = argv[++index] ?? '';
-			if (dir.length === 0) throw new Error('Missing value for --dir');
-		} else if (token === '--target') {
-			const name = argv[++index];
-			if (name === undefined) throw new Error('Missing value for --target');
-			const target = ALL_TARGETS.find((candidate) => candidate.name === name);
-			if (target === undefined) {
-				throw new Error(
-					`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
-				);
-			}
-			targets.push(target);
-		} else {
-			throw new Error(`Unknown argument: ${token}`);
+	const { values } = parseArgs({
+		args: argv,
+		options: {
+			'all-targets': { type: 'boolean' },
+			dir: { type: 'string' },
+			target: { multiple: true, type: 'string' },
+		},
+		strict: true,
+	});
+	// parseArgs takes the token after a string flag as its value even when that token is itself a
+	// flag, so `--dir --all-targets` would look for archives in a directory named `--all-targets`,
+	// find none, and report a missing release rather than the bad argument that caused it.
+	const dir = values.dir ?? join('dist', 'release');
+	if (dir.length === 0 || dir.startsWith('-')) throw new Error('Missing value for --dir');
+	if (values['all-targets'] === true) return { dir, targets: [...ALL_TARGETS] };
+
+	const targets = (values.target ?? []).map((name) => {
+		if (name.length === 0 || name.startsWith('-'))
+			throw new Error('Missing value for --target');
+		const target = ALL_TARGETS.find((candidate) => candidate.name === name);
+		if (target === undefined) {
+			throw new Error(
+				`Unknown target: ${name}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
+			);
 		}
-	}
+		return target;
+	});
 	return {
 		dir,
 		targets: targets.length > 0 ? uniqueTargets(targets) : [windowsTarget()],
@@ -103,18 +114,21 @@ export async function checkReleaseNotices(
 	return issues;
 }
 
-export async function main(argv = Bun.argv.slice(2), rootDir = cwd()): Promise<number> {
+export async function runReleaseNotices(
+	argv = Bun.argv.slice(2),
+	rootDir = cwd(),
+): Promise<number> {
 	try {
 		const issues = await checkReleaseNotices(rootDir, parseReleaseNoticeArgs(argv));
 		if (issues.length > 0) {
-			console.error('[release-notices] release archive validation failed:');
+			console.error('[FAIL] release-notices: release archive validation failed:');
 			for (const issue of issues) console.error(`- ${issue}`);
 			return 1;
 		}
-		console.log('[release-notices] release archives match the current source and catalog');
+		console.log('[OK] release-notices: release archives match the current source and catalog');
 		return 0;
 	} catch (err) {
-		console.error(`Error: ${errorMessage(err)}`);
+		console.error(`[FAIL] release-notices: ${errorMessage(err)}`);
 		return 2;
 	}
 }
@@ -129,4 +143,4 @@ function uniqueTargets(targets: CompileTarget[]): CompileTarget[] {
 	return [...new Map(targets.map((target) => [target.name, target])).values()];
 }
 
-if (import.meta.main) exit(await main());
+if (import.meta.main) exit(await runReleaseNotices());

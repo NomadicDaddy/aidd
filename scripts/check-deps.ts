@@ -7,6 +7,9 @@ import { checkBunPinDrift, readPinnedBunVersion } from './lib/check-deps/bun-pin
 /**
  * Read-only dependency version validation for aidd.
  *
+ * Enforces: QUAL-003 -- the workspace stays type-safe and ESM-only, which depends on every
+ * workspace agreeing on the version of each shared dependency and on a parseable lockfile.
+ *
  * Validates that cross-workspace shared dependencies carry consistent version
  * specifiers across root, frontend, backend, cli, and shared package.json files,
  * and that the bun.lock lockfile is present and parseable.

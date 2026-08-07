@@ -41,6 +41,7 @@ Docs are organized by audience:
 | [audit-applicability.md](./reference/audit-applicability.md)                           | Global and per-project audit applicability mapping and `/audits` matrix UI. |
 | [artifacts.md](./reference/artifacts.md)                                               | How each `.aidd/` artifact is created or refreshed.                         |
 | [execution-flow.md](./reference/execution-flow.md)                                     | Execution flow from CLI args through iteration artifacts.                   |
+| [gate-conventions.md](./reference/gate-conventions.md)                                 | The eight rules every `check*` gate follows, and how to change one.         |
 | [project-reports.md](./reference/project-reports.md)                                   | Web bug/feature reports and the feature records they generate.              |
 | [dashboard-data-refresh.md](./reference/dashboard-data-refresh.md)                     | Dashboard elements, their API endpoints, query keys, and refresh behavior.  |
 | [dashboard-metrics.md](./reference/dashboard-metrics.md)                               | Definition of record for the four dashboard fleet-metric numbers.           |

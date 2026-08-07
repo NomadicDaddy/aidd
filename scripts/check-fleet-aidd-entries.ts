@@ -2,6 +2,9 @@
 /**
  * check-fleet-aidd-entries.ts
  *
+ * Enforces: DATA-001 -- project metadata remains rooted in `.aidd/`, checked against what is
+ * actually on disk in every application rather than against this repository's own catalog.
+ *
  * Sweeps every repository with a `.aidd/` and fails on anything the policy does not account for.
  *
  * `check:artifact-parity` proves aidd's catalog agrees with aidd's scaffold — both files inside this
@@ -37,12 +40,11 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { argv, exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
 import { parseCatalog } from './check-artifact-parity.ts';
 
 const AIDD_ROOT = resolve(import.meta.dir, '..');
-const rootIdx = argv.indexOf('--root');
-const FLEET_ROOT = rootIdx === -1 ? resolve(AIDD_ROOT, '..') : resolve(argv[rootIdx + 1]!);
 
 const COMMITTED = new Set(['optional', 'recommended', 'required', 'tracked']);
 
@@ -83,48 +85,51 @@ const git = (cwd: string, args: string[]): { ok: boolean; stdout: string } => {
 /** Catalog paths are `.aidd/x` or `.aidd/x/`; reduce to the top-level entry name. */
 const topLevel = (p: string): string => p.replace(/^\.aidd\//, '').replace(/\/.*$/, '');
 
-const catalog = new Map<string, string>();
-for (const row of parseCatalog(
-	readFileSync(join(AIDD_ROOT, 'docs', 'reference', 'artifacts.md'), 'utf8'),
-).rows) {
-	catalog.set(topLevel(row.path), row.class);
+function loadCatalog(): Map<string, string> {
+	const catalog = new Map<string, string>();
+	for (const row of parseCatalog(
+		readFileSync(join(AIDD_ROOT, 'docs', 'reference', 'artifacts.md'), 'utf8'),
+	).rows) {
+		catalog.set(topLevel(row.path), row.class);
+	}
+	return catalog;
 }
 
-const repos = readdirSync(FLEET_ROOT, { withFileTypes: true })
-	.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
-	.map((e) => join(FLEET_ROOT, e.name))
-	.filter((d) => existsSync(join(d, '.git')) && existsSync(join(d, '.aidd')));
+export interface FleetEntriesOptions {
+	root: string;
+}
 
-const problems: string[] = [];
-let localOnly = 0;
-let published = 0;
-
-for (const repo of repos) {
-	const name = repo.split(/[\\/]/).pop()!;
-	// `git remote -v` prints a `(push)` line per remote and nothing at all without one, so this is
-	// "has somewhere to publish to", not "is publicly readable". The distinction does not matter
-	// here: a repository with any push destination must not carry .aidd/, and one with none cannot
-	// leak it anywhere.
-	const isPublished = git(repo, ['remote', '-v']).stdout.includes('(push)');
-
-	if (isPublished) {
-		published++;
-		// Nothing under .aidd/ may be tracked, and the blanket rule must actually cover it. This is
-		// the same requirement the pre-push history guard enforces at push time; checking it here
-		// finds the gap before someone runs `git add .` rather than after.
-		const tracked = git(repo, ['ls-files', '.aidd']).stdout.split('\n').filter(Boolean);
-		if (tracked.length > 0) {
-			problems.push(`${name}: published but ${tracked.length} tracked .aidd path(s)`);
-		}
-		const covered = Bun.spawnSync(['git', 'check-ignore', '-q', '--no-index', '.aidd/probe'], {
-			cwd: repo,
-			windowsHide: true,
-		}).success;
-		if (!covered) problems.push(`${name}: published but no rule covers .aidd/`);
-		continue;
+export function parseFleetEntriesArgs(args: string[]): FleetEntriesOptions {
+	const { values } = parseArgs({ args, options: { root: { type: 'string' } }, strict: true });
+	// parseArgs takes the token after `--root` as its value even when that token is itself a flag,
+	// so a mistyped invocation would sweep a directory named after the flag, discover no
+	// repositories, and report the fleet clean.
+	if (values.root !== undefined && (values.root.trim() === '' || values.root.startsWith('-'))) {
+		throw new Error('--root requires a directory path.');
 	}
+	return { root: values.root === undefined ? resolve(AIDD_ROOT, '..') : resolve(values.root) };
+}
 
-	localOnly++;
+/** The published profile: nothing under `.aidd/` tracked, and a rule that actually covers it. */
+function inspectPublished(repo: string, name: string): string[] {
+	const problems: string[] = [];
+	// This is the same requirement the pre-push history guard enforces at push time; checking it
+	// here finds the gap before someone runs `git add .` rather than after.
+	const tracked = git(repo, ['ls-files', '.aidd']).stdout.split('\n').filter(Boolean);
+	if (tracked.length > 0) {
+		problems.push(`${name}: published but ${tracked.length} tracked .aidd path(s)`);
+	}
+	const covered = Bun.spawnSync(['git', 'check-ignore', '-q', '--no-index', '.aidd/probe'], {
+		cwd: repo,
+		windowsHide: true,
+	}).success;
+	if (!covered) problems.push(`${name}: published but no rule covers .aidd/`);
+	return problems;
+}
+
+/** The local-only profile: every top-level entry classified, every disposition held. */
+function inspectLocalOnly(repo: string, name: string, catalog: Map<string, string>): string[] {
+	const problems: string[] = [];
 	for (const entry of readdirSync(join(repo, '.aidd'))) {
 		const cls = catalog.get(entry);
 		const known = cls !== undefined || entry in NON_AIDD || NON_AIDD_TRACKED.has(entry);
@@ -155,13 +160,56 @@ for (const repo of repos) {
 			);
 		}
 	}
+	return problems;
 }
 
-console.log(`swept ${repos.length} repositories (${published} published, ${localOnly} local-only)`);
-if (problems.length === 0) {
-	console.log('fleet .aidd entries — every entry classified, every disposition holds.');
-	exit(0);
+export function runFleetAiddEntries(options: FleetEntriesOptions): number {
+	const catalog = loadCatalog();
+	const repos = readdirSync(options.root, { withFileTypes: true })
+		.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
+		.map((e) => join(options.root, e.name))
+		.filter((d) => existsSync(join(d, '.git')) && existsSync(join(d, '.aidd')));
+
+	const problems: string[] = [];
+	let localOnly = 0;
+	let published = 0;
+
+	for (const repo of repos) {
+		const name = repo.split(/[\\/]/).pop()!;
+		// `git remote -v` prints a `(push)` line per remote and nothing at all without one, so this
+		// is "has somewhere to publish to", not "is publicly readable". The distinction does not
+		// matter here: a repository with any push destination must not carry .aidd/, and one with
+		// none cannot leak it anywhere.
+		if (git(repo, ['remote', '-v']).stdout.includes('(push)')) {
+			published++;
+			problems.push(...inspectPublished(repo, name));
+			continue;
+		}
+		localOnly++;
+		problems.push(...inspectLocalOnly(repo, name, catalog));
+	}
+
+	console.log(
+		`swept ${repos.length} repositories (${published} published, ${localOnly} local-only)`,
+	);
+	if (problems.length === 0) {
+		console.log('[OK] fleet .aidd entries — every entry classified, every disposition holds.');
+		return 0;
+	}
+	for (const p of problems) console.error(`  ${p}`);
+	console.error(`\n[FAIL] fleet .aidd entries: ${problems.length} problem(s).`);
+	return 1;
 }
-for (const p of problems) console.error(`  ${p}`);
-console.error(`\n${problems.length} problem(s).`);
-exit(1);
+
+if (import.meta.main) {
+	let options: FleetEntriesOptions;
+	try {
+		options = parseFleetEntriesArgs(argv.slice(2));
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		console.error(`[FAIL] check-fleet-aidd-entries: ${message}`);
+		console.error('Usage: bun scripts/check-fleet-aidd-entries.ts [--root <dir>]');
+		exit(2);
+	}
+	exit(runFleetAiddEntries(options));
+}

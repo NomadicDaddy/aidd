@@ -2,6 +2,9 @@
 /**
  * check-audit-artifact-hygiene.ts
  *
+ * Enforces: BEH-004 -- audit findings stay distinct and well-formed as artifacts, which starts
+ * with a report never claiming a date that has not happened yet.
+ *
  * Fails the build when any audit report under .aidd/audit-reports/ uses a date
  * (in filename or top-level heading) that is after the current local date.
  * This prevents reports with invalid future-dated metadata from landing.
@@ -101,7 +104,7 @@ function collectViolations(today: string, file: string): Violation[] {
 	return violations;
 }
 
-function main(): number {
+export function runAuditArtifactHygiene(): number {
 	const today = todayLocalIso();
 	const reports = listReports();
 
@@ -129,5 +132,5 @@ function main(): number {
 }
 
 if (import.meta.main) {
-	exit(main());
+	exit(runAuditArtifactHygiene());
 }

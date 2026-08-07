@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 /**
- * Critical-Path Verification Script
+ * Enforces: WEB-001 -- the bundled web surface stays a lean single-user control plane, measured
+ * where leanness is observable: what the browser must fetch before it can render.
  *
  * Guards the bytes and the *shape* of the first page load. A total-size budget is
  * structurally blind to how bytes are distributed: in spernakit, a release that moved
@@ -19,211 +20,38 @@
  * Regenerate the budget after intentional growth:
  *   bun scripts/check-critical-path.ts --update-budget
  */
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { brotliCompressSync, constants } from 'node:zlib';
+import { existsSync, readFileSync } from 'node:fs';
+import { exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = join(__dirname, '..');
-const DIST_DIR = join(ROOT_DIR, 'frontend', 'dist');
-const ASSETS_DIR = join(DIST_DIR, 'assets');
-const INDEX_HTML = join(DIST_DIR, 'index.html');
-const BUDGET_PATH = join(__dirname, 'critical-path-budget.json');
+import {
+	type CriticalAsset,
+	findEntryChunk,
+	findReactRuntimeChunk,
+	INDEX_HTML,
+	parseCriticalAssets,
+	sizeOf,
+	staticImportsOf,
+} from './lib/critical-path/assets.ts';
+import { checkBudget } from './lib/critical-path/budget.ts';
+import { kb, log } from './lib/critical-path/report.ts';
 
-/** Headroom applied when writing a new budget so hash/chunk churn doesn't flap the gate. */
-const BUDGET_HEADROOM = 1.1;
-
-/**
- * Must track `compressOnce` in backend/src/staticAssets.ts, which serves this app's static assets.
- * Measuring at a different quality than production serves makes every number here a fiction.
- */
-const SERVED_BROTLI_QUALITY = 5;
-
-/**
- * Markers unique to React's production runtime. `react.production.js` builds this
- * string for element types; it is absent from react-dom, so it identifies the chunk
- * holding React itself rather than the renderer.
- */
-const REACT_RUNTIME_MARKERS = ['react.transitional.element', 'react.fragment'];
-
-// ANSI color codes
-const colors: Record<string, string> = {
-	blue: '\x1b[34m',
-	cyan: '\x1b[36m',
-	green: '\x1b[32m',
-	red: '\x1b[31m',
-	reset: '\x1b[0m',
-	yellow: '\x1b[33m',
-};
-
-function log(message: string, color = 'reset'): void {
-	console.log(`${colors[color] ?? colors['reset']}${message}${colors['reset']}`);
+export interface CriticalPathOptions {
+	/** True rewrites scripts/critical-path-budget.json from this build instead of checking it. */
+	updateBudget: boolean;
 }
 
-function kb(bytes: number): string {
-	return `${(bytes / 1024).toFixed(2)} KB`;
+export function parseCriticalPathArgs(args: string[]): CriticalPathOptions {
+	const { values } = parseArgs({
+		args,
+		options: { 'update-budget': { type: 'boolean' } },
+		strict: true,
+	});
+	return { updateBudget: values['update-budget'] === true };
 }
 
-interface CriticalPathBudget {
-	maxCriticalPathBrotliBytes: number;
-}
-
-interface CriticalAsset {
-	/** Bytes actually sent: the precompressed sibling when nginx has one, else raw. */
-	brotliBytes: number;
-	name: string;
-	rawBytes: number;
-}
-
-/**
- * Assets the browser must fetch before it can render: the entry module, everything
- * index.html asks it to modulepreload, and the render-blocking stylesheets.
- * Deliberately excludes prefetch/lazy chunks — those are off the critical path.
- */
-export function parseCriticalAssets(html: string): string[] {
-	const names = new Set<string>();
-
-	// Match whole tags, then inspect their attributes, rather than assuming an
-	// attribute order. A regex like /rel="modulepreload"[^>]+href=/ silently misses
-	// any tag that emits href first, and a gate that under-counts is worse than none.
-	// Matched case-insensitively for the same reason: tag and attribute names are
-	// case-insensitive in HTML, so a transform emitting <SCRIPT> or TYPE="module"
-	// would zero out this scan and report a passing gate having counted nothing.
-	for (const tag of html.matchAll(/<(script|link)\b([^>]*)>/gi)) {
-		const [, tagName = '', attrs = ''] = tag;
-		const href = /\b(?:src|href)="\/assets\/([^"]+)"/i.exec(attrs)?.[1];
-		if (!href) continue;
-
-		if (tagName.toLowerCase() === 'script') {
-			if (/\btype="module"/i.test(attrs)) names.add(href);
-			continue;
-		}
-		// Only render-blocking link types belong on the critical path. `prefetch`,
-		// `preload as=...`, and `modulepreload` for lazy routes are deliberately excluded.
-		if (/\brel="(?:modulepreload|stylesheet)"/i.test(attrs)) names.add(href);
-	}
-	return [...names];
-}
-
-function sizeOf(assetName: string): CriticalAsset {
-	const raw = join(ASSETS_DIR, assetName);
-	const br = `${raw}.br`;
-	const rawBytes = statSync(raw).size;
-	// This build emits no precompressed siblings, so brotli is computed here. Falling back to RAW
-	// bytes (as the spernakit original does, where the build does emit .br) would silently turn
-	// this into a ~3.5x looser raw-size budget while still printing "br".
-	//
-	// The quality must match what THIS app actually serves, not what a static precompression step
-	// would produce. backend/src/staticAssets.ts compresses on demand at BROTLI_PARAM_QUALITY 5
-	// and memoises the result, so quality 11 understated real delivered bytes by ~15 KB — enough
-	// to pass an artifact that was over its own stated budget.
-	const brotliBytes = existsSync(br)
-		? statSync(br).size
-		: brotliCompressSync(readFileSync(raw), {
-				params: { [constants.BROTLI_PARAM_QUALITY]: SERVED_BROTLI_QUALITY },
-			}).length;
-	return { brotliBytes, name: assetName, rawBytes };
-}
-
-/**
- * The entry module, located with the same order-independent scan parseCriticalAssets uses. The
- * previous `/<script[^>]+type="module"[^>]+src=/` regex assumed `type` precedes `src`; any bundler
- * or HTML transform emitting them the other way round produced no match, and the caller turned
- * that into a silently skipped waterfall assertion — a gate reporting success having checked
- * nothing. Returns null so the caller must decide explicitly.
- */
-export function findEntryChunk(html: string): null | string {
-	for (const tag of html.matchAll(/<script\b([^>]*)>/gi)) {
-		const attrs = tag[1] ?? '';
-		if (!/\btype="module"/i.test(attrs)) continue;
-		const src = /\bsrc="\/assets\/([^"]+)"/i.exec(attrs)?.[1];
-		if (src) return src;
-	}
-	return null;
-}
-
-/** Chunks the entry imports statically, i.e. needed before anything can execute. */
-function staticImportsOf(entryName: string): string[] {
-	const source = readFileSync(join(ASSETS_DIR, entryName), 'utf-8');
-	const imports = new Set<string>();
-	// Binding imports (`...from"./c.js"`) AND side-effect imports (`import"./c.js"`). Matching
-	// only the first under-reports the waterfall: a side-effect import is just as serialized, and
-	// a chunk pulled in purely for its side effects is exactly the kind a refactor introduces
-	// without anyone noticing. `import("./c.js")` is deliberately not matched — dynamic imports
-	// are lazy by definition and belong off the critical path.
-	for (const m of source.matchAll(/(?:from|import)\s*["']\.\/([^"']+\.js)["']/g)) {
-		if (m[1]) imports.add(m[1]);
-	}
-	return [...imports];
-}
-
-function findReactRuntimeChunk(): null | string {
-	// Only .js chunks can hold the runtime; skip .br/.gz/.map siblings and CSS.
-	for (const name of readdirSync(ASSETS_DIR).filter((f) => f.endsWith('.js'))) {
-		const content = readFileSync(join(ASSETS_DIR, name), 'utf-8');
-		if (REACT_RUNTIME_MARKERS.some((marker) => content.includes(marker))) return name;
-	}
-	return null;
-}
-
-function checkBudget(totalBrotli: number, updateBudget: boolean): boolean {
-	if (updateBudget) {
-		const budget: CriticalPathBudget = {
-			maxCriticalPathBrotliBytes: Math.ceil(totalBrotli * BUDGET_HEADROOM),
-		};
-		writeFileSync(BUDGET_PATH, `${JSON.stringify(budget, null, '\t')}\n`);
-		log(
-			`\nBudget written to scripts/critical-path-budget.json (${kb(budget.maxCriticalPathBrotliBytes)}, +${Math.round((BUDGET_HEADROOM - 1) * 100)}% headroom)`,
-			'cyan',
-		);
-		return true;
-	}
-
-	if (!existsSync(BUDGET_PATH)) {
-		log('\nNo scripts/critical-path-budget.json found — budget check skipped.', 'yellow');
-		log('Create one with: bun scripts/check-critical-path.ts --update-budget', 'yellow');
-		return true;
-	}
-
-	const budget = JSON.parse(readFileSync(BUDGET_PATH, 'utf-8')) as CriticalPathBudget;
-	if (totalBrotli > budget.maxCriticalPathBrotliBytes) {
-		log(
-			`✗ Critical path ${kb(totalBrotli)} exceeds budget ${kb(budget.maxCriticalPathBrotliBytes)}`,
-			'red',
-		);
-		log(
-			'If the growth is intentional, regenerate: bun scripts/check-critical-path.ts --update-budget',
-			'yellow',
-		);
-		return false;
-	}
-	log(
-		`✓ Critical path ${kb(totalBrotli)} within budget ${kb(budget.maxCriticalPathBrotliBytes)}`,
-		'green',
-	);
-	return true;
-}
-
-function main(): void {
-	const updateBudget = process.argv.includes('--update-budget');
-
-	log('\n=== Critical-Path Verification ===\n', 'blue');
-
-	if (!existsSync(INDEX_HTML)) {
-		log('✗ frontend/dist/index.html not found — build the frontend first:', 'red');
-		log('  bun run build:frontend', 'yellow');
-		process.exit(1);
-	}
-
-	const html = readFileSync(INDEX_HTML, 'utf-8');
-	const criticalNames = parseCriticalAssets(html);
-	if (criticalNames.length === 0) {
-		log('✗ No entry/modulepreload/stylesheet assets found in index.html', 'red');
-		process.exit(1);
-	}
-
-	const assets = criticalNames.map(sizeOf).sort((a, b) => b.brotliBytes - a.brotliBytes);
+/** Prints the per-asset table and returns the brotli total the budget is measured against. */
+function reportCriticalAssets(assets: CriticalAsset[]): number {
 	const totalBrotli = assets.reduce((s, a) => s + a.brotliBytes, 0);
 	const totalRaw = assets.reduce((s, a) => s + a.rawBytes, 0);
 
@@ -234,28 +62,24 @@ function main(): void {
 		`\n${String(assets.length).padStart(2)} blocking assets   ${kb(totalBrotli)} br  (${kb(totalRaw)} raw)\n`,
 		'cyan',
 	);
+	return totalBrotli;
+}
 
-	const budgetOk = checkBudget(totalBrotli, updateBudget);
-
-	// --- Check 2: the React runtime must be preloaded, not discovered late ---
-	const entryName = findEntryChunk(html);
-	if (entryName === null) {
-		log('✗ Could not identify the entry module in index.html.', 'red');
-		log('  The waterfall assertion cannot run, and a check that did not run must', 'yellow');
-		log('  never be reported as one that passed.', 'yellow');
-		process.exit(1);
-	}
+/** Check 2: the React runtime must be preloaded, not discovered late. */
+function checkRuntimePreloaded(criticalNames: string[]): boolean {
 	const reactChunk = findReactRuntimeChunk();
-	let runtimeOk = true;
-
 	if (!reactChunk) {
 		log(
-			'✗ Could not locate the React runtime in any chunk — update REACT_RUNTIME_MARKERS.',
+			'[FAIL] Could not locate the React runtime in any chunk — update REACT_RUNTIME_MARKERS.',
 			'red',
 		);
-		runtimeOk = false;
-	} else if (!criticalNames.includes(reactChunk)) {
-		log(`✗ React runtime lives in ${reactChunk}, which index.html does not preload.`, 'red');
+		return false;
+	}
+	if (!criticalNames.includes(reactChunk)) {
+		log(
+			`[FAIL] React runtime lives in ${reactChunk}, which index.html does not preload.`,
+			'red',
+		);
 		log('  It will be discovered only after the entry chunk is parsed, costing a', 'yellow');
 		log(
 			'  round trip on every page load. This build declares no manual chunking, so',
@@ -266,34 +90,76 @@ function main(): void {
 			'yellow',
 		);
 		log('  import boundary above the React import in frontend/src.', 'yellow');
-		runtimeOk = false;
-	} else {
-		log(`✓ React runtime is in ${reactChunk}, which is preloaded`, 'green');
+		return false;
 	}
-
-	// --- Check 3: no static import of a chunk the browser was not told to preload ---
-	let waterfallOk = true;
-	{
-		const late = staticImportsOf(entryName).filter((dep) => !criticalNames.includes(dep));
-		if (late.length > 0) {
-			log(`✗ Entry chunk statically imports ${late.length} non-preloaded chunk(s):`, 'red');
-			for (const dep of late) log(`    ${dep}`, 'red');
-			log(
-				'  A static import that is not preloaded is a serialized round trip: the',
-				'yellow',
-			);
-			log('  browser cannot request it until it has parsed the entry chunk.', 'yellow');
-			waterfallOk = false;
-		} else {
-			log('✓ Entry chunk statically imports only preloaded chunks', 'green');
-		}
-	}
-
-	if (!budgetOk || !runtimeOk || !waterfallOk) {
-		log('\n✗ Critical-path verification failed\n', 'red');
-		process.exit(1);
-	}
-	log('\n✓ Critical-path verification passed\n', 'green');
+	log(`[OK] React runtime is in ${reactChunk}, which is preloaded`, 'green');
+	return true;
 }
 
-if (import.meta.main) main();
+/** Check 3: no static import of a chunk the browser was not told to preload. */
+function checkWaterfall(entryName: string, criticalNames: string[]): boolean {
+	const late = staticImportsOf(entryName).filter((dep) => !criticalNames.includes(dep));
+	if (late.length === 0) {
+		log('[OK] Entry chunk statically imports only preloaded chunks', 'green');
+		return true;
+	}
+	log(`[FAIL] Entry chunk statically imports ${late.length} non-preloaded chunk(s):`, 'red');
+	for (const dep of late) log(`    ${dep}`, 'red');
+	log('  A static import that is not preloaded is a serialized round trip: the', 'yellow');
+	log('  browser cannot request it until it has parsed the entry chunk.', 'yellow');
+	return false;
+}
+
+export function runCriticalPath(options: CriticalPathOptions): number {
+	log('\n=== Critical-Path Verification ===\n', 'blue');
+
+	if (!existsSync(INDEX_HTML)) {
+		log('[FAIL] frontend/dist/index.html not found — build the frontend first:', 'red');
+		log('  bun run build:frontend', 'yellow');
+		return 1;
+	}
+
+	const html = readFileSync(INDEX_HTML, 'utf-8');
+	const criticalNames = parseCriticalAssets(html);
+	if (criticalNames.length === 0) {
+		log('[FAIL] No entry/modulepreload/stylesheet assets found in index.html', 'red');
+		return 1;
+	}
+
+	const assets = criticalNames.map(sizeOf).sort((a, b) => b.brotliBytes - a.brotliBytes);
+	const budgetOk = checkBudget(reportCriticalAssets(assets), options.updateBudget);
+
+	const entryName = findEntryChunk(html);
+	if (entryName === null) {
+		log('[FAIL] Could not identify the entry module in index.html.', 'red');
+		log('  The waterfall assertion cannot run, and a check that did not run must', 'yellow');
+		log('  never be reported as one that passed.', 'yellow');
+		return 1;
+	}
+
+	const runtimeOk = checkRuntimePreloaded(criticalNames);
+	const waterfallOk = checkWaterfall(entryName, criticalNames);
+
+	if (!budgetOk || !runtimeOk || !waterfallOk) {
+		log('\n[FAIL] Critical-path verification failed\n', 'red');
+		return 1;
+	}
+	log('\n[OK] Critical-path verification passed\n', 'green');
+	return 0;
+}
+
+if (import.meta.main) {
+	// `--update-budget` rewrites a committed file, so a mistyped flag must not fall through to a
+	// run that quietly measures against the old budget instead. Bad arguments exit 2; findings
+	// exit 1.
+	let options: CriticalPathOptions;
+	try {
+		options = parseCriticalPathArgs(Bun.argv.slice(2));
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		console.error(`[FAIL] check-critical-path: ${message}`);
+		console.error('Usage: bun scripts/check-critical-path.ts [--update-budget]');
+		exit(2);
+	}
+	exit(runCriticalPath(options));
+}

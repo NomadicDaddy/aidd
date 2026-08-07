@@ -5,6 +5,9 @@ import { cwd, exit } from 'node:process';
 /**
  * Boundary guard: backend/src must not reach into cli/src.
  *
+ * Enforces: QUAL-004 -- runtime modules keep their ownership boundaries. `aidd-cli` depends on
+ * `aidd-backend`, so the reverse edge cannot exist without a cycle.
+ *
  * The `aidd-cli` package depends on `aidd-backend` (cli/src/app.ts launches the backend's web,
  * MCP, and chat-bridge servers), so a backend -> cli source dependency cannot be represented in
  * the workspace package graph without creating a cycle. Backend-consumed contracts, config, and
@@ -82,17 +85,17 @@ function scan(file: string, source: string): Finding[] {
 	return findings;
 }
 
-async function main(): Promise<void> {
+export async function runBackendCliBoundary(): Promise<number> {
 	const files = await collectFiles(BACKEND_SRC);
 	const findings: Finding[] = [];
 	for (const file of files) {
 		findings.push(...scan(file, await readFile(file, 'utf8')));
 	}
 	if (findings.length === 0) {
-		console.log(`check-backend-cli-boundary: OK (${files.length} files scanned)`);
-		return;
+		console.log(`[OK] check-backend-cli-boundary (${files.length} files scanned)`);
+		return 0;
 	}
-	console.error('check-backend-cli-boundary: backend/src must not import cli/src.');
+	console.error('[FAIL] check-backend-cli-boundary: backend/src must not import cli/src.');
 	console.error(
 		'Move shared contracts/helpers into aidd-shared and import via the package name.\n',
 	);
@@ -100,7 +103,7 @@ async function main(): Promise<void> {
 		const rel = finding.file.split(sep).join('/');
 		console.error(`  ${rel}:${finding.line}  ${finding.specifier}  (${finding.reason})`);
 	}
-	exit(1);
+	return 1;
 }
 
-await main();
+if (import.meta.main) exit(await runBackendCliBoundary());

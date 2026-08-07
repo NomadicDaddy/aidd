@@ -47,7 +47,7 @@ the repository material distributed outside the npm graph.
 | [@xterm/addon-webgl](https://www.npmjs.com/package/@xterm/addon-webgl)                                 | 0.19.0  | MIT        |
 | [@xterm/xterm](https://www.npmjs.com/package/@xterm/xterm)                                             | 6.0.0   | MIT        |
 | [cmdk](https://www.npmjs.com/package/cmdk)                                                             | 1.1.1   | MIT        |
-| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.28.0  | ISC        |
+| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.29.0  | ISC        |
 | [react](https://www.npmjs.com/package/react)                                                           | 19.2.8  | MIT        |
 | [react-dom](https://www.npmjs.com/package/react-dom)                                                   | 19.2.8  | MIT        |
 | [react-markdown](https://www.npmjs.com/package/react-markdown)                                         | 10.1.0  | MIT        |
@@ -55,7 +55,7 @@ the repository material distributed outside the npm graph.
 | [remark-gfm](https://www.npmjs.com/package/remark-gfm)                                                 | 4.0.1   | MIT        |
 | [sonner](https://www.npmjs.com/package/sonner)                                                         | 2.0.7   | MIT        |
 | [tailwind-merge](https://www.npmjs.com/package/tailwind-merge)                                         | 3.6.0   | MIT        |
-| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.0.1   | Apache-2.0 |
+| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.1.0   | Apache-2.0 |
 | [zustand](https://www.npmjs.com/package/zustand)                                                       | 5.0.14  | MIT        |
 
 ## Non-package distributed material

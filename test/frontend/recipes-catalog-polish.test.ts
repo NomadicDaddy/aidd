@@ -216,9 +216,9 @@ describe('config values get one treatment', () => {
 		const card = await read('pages/recipes/StepOverviewCard.tsx');
 
 		expect(card).toContain(
-			'inline-flex max-w-full min-w-0 items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground',
+			'inline-flex max-w-full min-w-0 items-start gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground',
 		);
-		expect(card).toContain('truncate font-mono text-foreground');
+		expect(card).toContain('font-mono break-all text-foreground');
 		expect(stripComments(card)).not.toContain('entry.primary');
 		expect(stripComments(card)).not.toContain('bg-accent-muted');
 	});

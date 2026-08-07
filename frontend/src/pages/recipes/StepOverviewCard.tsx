@@ -20,11 +20,25 @@ const stepTypeIcons: Record<RecipeStepType, typeof Terminal> = {
 };
 
 /**
- * A value long enough that truncating it into a chip would hide the part that identifies it — a
- * prompt, a nested path, an argument list. Roughly the width of a chip at this card's size, so
- * anything past it was already arriving as an ellipsis.
+ * A value long enough that a pill stops reading as one — a prompt, a nested path, an argument list.
+ * Roughly the width of a chip at this card's size: past it the value wants a full-width line of its
+ * own rather than a pill wrapping onto four.
  */
 const blockValueLength = 48;
+
+/**
+ * `command` is the one block value that is a single line by construction, so it keeps the
+ * non-wrapping treatment and the scrollport that goes with it — a shell command broken across three
+ * lines at whatever spaces happen to fall near the edge is harder to read, not easier, and it can no
+ * longer be copied as one line. Every other block is a prompt, an argument list or a nested path:
+ * free text, where `whitespace-pre` turned a 358px column into a horizontal scrollport per paragraph
+ * and hid the sentence rather than the indentation. Those wrap and keep their newlines.
+ */
+function blockValueClass(entry: ConfigSummaryEntry): string {
+	return entry.key === 'command'
+		? 'overflow-x-auto whitespace-pre'
+		: 'break-words whitespace-pre-wrap';
+}
 
 function isBlockEntry(entry: ConfigSummaryEntry): boolean {
 	return entry.value.length > blockValueLength || entry.value.includes('\n');
@@ -38,13 +52,17 @@ function ConfigSummary({ entries }: { entries: ConfigSummaryEntry[] }) {
 	const chipEntries = entries.filter((entry) => !blockEntries.includes(entry));
 
 	return (
-		<div className="min-w-0 space-y-2">
+		// `space-y-3` between entries against `mb-1` from a label to its own value: in one 358px
+		// column every entry is a full-width stack, so the only thing left saying which label owns
+		// which block is the gap, and an even one said nothing.
+		<div className="min-w-0 space-y-3">
 			{blockEntries.map((entry) => (
 				<div className="min-w-0" key={entry.key}>
 					<div className="mb-1 text-xs font-medium text-muted-foreground">
 						{entry.label}:
 					</div>
-					<code className="block max-w-full overflow-x-auto rounded-md border border-border bg-muted px-2.5 py-2 font-mono text-xs leading-5 whitespace-pre text-foreground">
+					<code
+						className={`block max-w-full rounded-md border border-border bg-muted px-2.5 py-2 font-mono text-xs leading-5 text-foreground ${blockValueClass(entry)}`}>
 						{entry.value}
 					</code>
 				</div>
@@ -59,12 +77,20 @@ function ConfigSummary({ entries }: { entries: ConfigSummaryEntry[] }) {
 						// to know which keys were on that list. The label stays in the body face
 						// and the value goes `font-mono`, because the label is a word and the value
 						// is a machine string.
+						//
+						// The value wraps rather than truncating. `truncate` cuts the tail, and the
+						// tail is where these values differ: `skillId` and `recipeName` share a
+						// prefix far more often than they share an ending, so a chip narrowed to
+						// 358px ellipsed away the only part that said which one it was. Nothing
+						// here is longer than `blockValueLength` — anything that is has already
+						// become a block — so the worst case is two lines in the pill, and the
+						// `title` still carries the whole thing for a pointer.
 						<span
-							className="inline-flex max-w-full min-w-0 items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+							className="inline-flex max-w-full min-w-0 items-start gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
 							key={entry.key}
 							title={`${entry.label}: ${entry.value}`}>
 							<span className="font-medium whitespace-nowrap">{entry.label}:</span>
-							<span className="truncate font-mono text-foreground">
+							<span className="font-mono break-all text-foreground">
 								{entry.value}
 							</span>
 						</span>

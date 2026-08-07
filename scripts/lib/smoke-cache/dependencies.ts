@@ -175,7 +175,7 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'backend/src/db/**/*.ts',
 		'backend/src/db/migrations/**/*.sql',
 		'package.json',
-		'scripts/check-web-schema-parity.ts',
+		'scripts/check-schema-parity.ts',
 		'scripts/lib/web-schema-parity/**/*.ts',
 	],
 	'check:web-db-integrity': [

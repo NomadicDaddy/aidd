@@ -92,7 +92,7 @@
 		"check:licenses": "bun run check:license-core && bun scripts/generate-third-party-licenses.ts --check",
 		"check:release-notices": "bun scripts/check-release-notices.ts",
 		"check:max-lines": "bun scripts/check-max-lines.ts",
-		"check:schema-parity": "bun scripts/check-web-schema-parity.ts",
+		"check:schema-parity": "bun scripts/check-schema-parity.ts",
 		"check:standalone": "bun scripts/check-standalone.ts",
 		"check:web-db-integrity": "bun scripts/check-web-db-integrity.ts",
 		"crawltest": "bun scripts/crawltest-run.ts",

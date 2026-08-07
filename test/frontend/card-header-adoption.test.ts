@@ -49,8 +49,9 @@ const exemptions: { file: string; why: string }[] = [
 		why: 'selected-node title in a side panel',
 	},
 	{ file: 'projects/detail/workingTree/CommitMessageDialog.tsx', why: 'dialog title' },
-	{ file: 'recipes/RecipeLaunchPanel.tsx', why: 'launch drawer title' },
-	{ file: 'recipes/RecipeQuickLaunchPanel.tsx', why: 'launch drawer title' },
+	// The two launch panels were exempted as "launch drawer titles". Neither is a drawer: both are
+	// in-flow cards with a title, a step-count description and a Close action — CardHeader's exact
+	// slot set — and both now use it.
 	{ file: 'recipes/StepOverviewCard.tsx', why: 'per-step row title inside a list' },
 	{ file: 'settings/ExecutionIdentityBadgeLabPage.tsx', why: 'per-example label in a grid' },
 	{ file: 'skills/SkillImportDialog.tsx', why: 'dialog title, wired to aria-labelledby' },

@@ -10,7 +10,7 @@ import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
 import { LaunchTargetControl } from '../../components/shared/LaunchTargetControl.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { useProjects } from '../../hooks/useProjects.ts';
@@ -81,18 +81,20 @@ export function RecipeLaunchPanel({
 
 	return (
 		<Card className="space-y-4" variant="panel">
-			<div className="flex items-start justify-between gap-3">
-				<div>
-					<h2 className="text-lg font-semibold text-foreground">Launch {recipe.name}</h2>
-					<p className="text-sm text-muted-foreground">
-						{recipe.steps.length} ordered step{recipe.steps.length !== 1 ? 's' : ''}{' '}
-						will run in the selected project.
-					</p>
-				</div>
-				<Button onClick={onClose} variant="ghost">
-					<X className="h-4 w-4" />
-				</Button>
-			</div>
+			{/* The same header as the Recipes-list quick launch, through the same component: two
+			    copies of one panel drifting apart is what put a hand-rolled `h2` in both. */}
+			<CardHeader
+				action={
+					<Button aria-label="Close launch panel" onClick={onClose} variant="ghost">
+						<X className="h-4 w-4" />
+					</Button>
+				}
+				className="mb-0"
+				description={`${recipe.steps.length} ordered step${
+					recipe.steps.length === 1 ? '' : 's'
+				} will run in the selected project.`}
+				title={`Launch ${recipe.name}`}
+			/>
 
 			<div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
 				<FieldRow label="Project">

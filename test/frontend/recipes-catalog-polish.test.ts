@@ -105,6 +105,49 @@ describe('both catalog views identify a recipe by the same facts', () => {
 	});
 });
 
+describe('the launch panel is a titled card, not a block of loose text', () => {
+	const PANELS = [
+		'pages/recipes/RecipeQuickLaunchPanel.tsx',
+		'pages/recipes/RecipeLaunchPanel.tsx',
+	];
+
+	test('both panels title themselves through CardHeader', async () => {
+		for (const path of PANELS) {
+			const panel = await read(path);
+			expect(panel).toContain('<CardHeader');
+			expect(panel).toContain('title={`Launch ${recipe.name}`}');
+			// The hand-rolled header is what let the Close button inherit `stretch` in one copy
+			// and not the other; card-header-adoption.test.ts no longer exempts either file.
+			expect(stripComments(panel)).not.toContain('<h2');
+		}
+	});
+
+	test('the Close button sizes to its label at every width', async () => {
+		const panel = await read('pages/recipes/RecipeQuickLaunchPanel.tsx');
+		// Measured at 390px before the fix: Close 324x36 against Start Session at 138x36, because
+		// `items-start` was gated behind `sm:` and below it the flex default is `stretch`.
+		expect(stripComments(panel)).not.toContain('sm:items-start');
+		expect(stripComments(panel)).not.toContain('sm:justify-between');
+	});
+
+	test('opening the panel from far down the list brings it on screen', async () => {
+		const panel = await read('pages/recipes/RecipeQuickLaunchPanel.tsx');
+
+		expect(panel).toContain('<div ref={panelRef}>');
+		expect(panel).toContain("node.scrollIntoView({ behavior: 'smooth', block: 'start' })");
+		// Only when it is actually off-screen — the same test the Runs console applies, so a
+		// selection made with the panel already in view does not move the page under the tap.
+		expect(panel).toContain('rect.top < 0 || rect.top > viewportHeight');
+	});
+
+	test('one step is one step in both panels', async () => {
+		for (const path of PANELS) {
+			const panel = await read(path);
+			expect(panel).toContain("recipe.steps.length === 1 ? '' : 's'");
+		}
+	});
+});
+
 describe('a step can be moved without being retyped', () => {
 	const drafts = ['a', 'b', 'c'];
 

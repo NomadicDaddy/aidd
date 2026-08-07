@@ -127,8 +127,14 @@ export function DirectorChatSection({
 				/>
 				{/* The 220px session rail stole a fifth of the width at 768, leaving the transcript
 				    ~470px and the composer too narrow for its own Send button. The rail stacks above
-				    the transcript until lg, where there is width for both. */}
-				<div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+				    the transcript until there is width for both.
+
+				    That threshold is `xl`, not `lg`: this card sits in the page's own
+				    `lg:grid-cols-2`, so 1024 is where the card halves to 358px at the same moment the
+				    rail would claim 220 of it. The transcript column came out 92px wide and the
+				    composer needed 130px in 90 — the rail and the split arriving together is the
+				    whole failure. At 1280 the card is 486px and the two columns are 220 each. */}
+				<div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[220px_minmax(0,1fr)]">
 					<div className="flex min-h-0 min-w-0 flex-col gap-2">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="text-sm font-semibold text-foreground">Chats</h3>

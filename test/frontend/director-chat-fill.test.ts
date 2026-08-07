@@ -24,7 +24,7 @@ describe('the Director chat fills the column it was given', () => {
 			'<section aria-labelledby="director-chat-heading" className="h-full">',
 		);
 		expect(source).toContain('<Card className="flex h-full min-h-[420px] flex-col">');
-		expect(source).toContain('grid min-h-0 flex-1 gap-3 lg:grid-cols-[220px_minmax(0,1fr)]');
+		expect(source).toContain('grid min-h-0 flex-1 gap-3 xl:grid-cols-[220px_minmax(0,1fr)]');
 		expect(source).toContain('flex min-h-0 min-w-0 flex-col rounded-md border border-border');
 		expect(source).toContain('min-h-0 flex-1 space-y-3 overflow-y-auto p-3');
 	});
@@ -62,5 +62,18 @@ describe('the Director chat fills the column it was given', () => {
 		// `h-full` on the chat is only meaningful while its sibling is the tall one; if the page
 		// ever stops being a stretched two-column grid, this fix stops meaning anything.
 		expect(page).toContain('grid gap-5 lg:grid-cols-2');
+	});
+
+	test('the session rail waits a breakpoint past the one that halves the card', async () => {
+		const page = await read('pages/director/DirectorPage.tsx');
+		const source = await read('pages/director/DirectorChatSection.tsx');
+
+		// The page halves at `lg`, so a rail that also splits at `lg` claims 220 of the card's 358
+		// on the exact width the card first has to share. The transcript came out 92px and the
+		// composer needed 130px in 90. Below `xl` the rail stacks; at 1280 the card is 486 and the
+		// two columns are 220 each.
+		expect(page).toContain('lg:grid-cols-2');
+		expect(source).toContain('xl:grid-cols-[220px_minmax(0,1fr)]');
+		expect(source).not.toContain('lg:grid-cols-[220px_minmax(0,1fr)]');
 	});
 });

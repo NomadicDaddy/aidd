@@ -258,12 +258,24 @@ describe('project card heights converge', () => {
 describe('the card attribute list forms a column', () => {
 	test('every row sits on one label track instead of starting after its own label', async () => {
 		const metrics = await read('pages/projects/ProjectCardMetrics.tsx');
-		expect(metrics).toContain('grid grid-cols-[5.5rem_1fr] items-baseline gap-x-2');
+		expect(metrics).toContain('grid grid-cols-[5rem_1fr] items-baseline gap-x-2');
 		expect(metrics).toContain('label="Reported cost"');
 		expect(metrics).toContain('<MetricRow label="Version">');
 		// The old shape put the label inside the value cell as bare text.
 		expect(stripComments(metrics)).not.toContain("Version:{' '}");
 		expect(stripComments(metrics)).not.toContain("Tokens:{' '}");
+	});
+
+	test('the track is narrow enough for the widest value, not just the widest label', async () => {
+		const metrics = await read('pages/projects/ProjectCardMetrics.tsx');
+
+		// At 1024 a row gets 157px. 5.5rem left 61px for the value and the `aidd state` badge is
+		// `whitespace-nowrap` at 67px for `unknown`, so it spilled 6px out of the card — the value
+		// span is `min-w-0`, so the grid never counted the badge as a requirement.
+		expect(stripComments(metrics)).not.toContain('grid-cols-[5.5rem_1fr]');
+		expect(metrics).toContain('<Badge tone={syncTone(metadata.sync.syncState)}>');
+		// The cell stays shrinkable; the track, not the value, is what was over-budget.
+		expect(metrics).toContain('<span className="min-w-0">{children}</span>');
 	});
 });
 

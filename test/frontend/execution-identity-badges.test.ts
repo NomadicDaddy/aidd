@@ -103,6 +103,26 @@ describe('ExecutionIdentityBadges', () => {
 		expect(html.match(/class="[^"]*min-w-0[^"]*truncate[^"]*"/g)).toHaveLength(3);
 	});
 
+	test('the tooltip wrapper does not revoke the shrinking the badge asks for', () => {
+		const html = renderExecutionIdentity({
+			backend: 'codex',
+			model: 'gpt-5.6-sol',
+			reasoningEffort: 'high',
+		});
+		const tooltip = readFileSync(
+			resolve(import.meta.dir, '../../frontend/src/components/ui/tooltip.tsx'),
+			'utf8',
+		);
+
+		// The badge declares `max-w-full min-w-0`, but that resolves against whatever box encloses
+		// it. Tooltip's wrapper was a rigid `relative inline-flex`, so on Project Detail the badge
+		// needed 226px in a 219px cell and spilled out of the card instead of head-truncating the
+		// model — the wrapper, not the badge, decided it could not shrink.
+		expect(tooltip).toContain('<span className="relative inline-flex max-w-full min-w-0"');
+		expect(html).toContain('class="relative inline-flex max-w-full min-w-0"');
+		expect(html).toContain('max-w-full min-w-0 items-stretch');
+	});
+
 	test('nothing about the badge is decided by measuring the badge', () => {
 		const source = readFileSync(
 			resolve(

@@ -168,7 +168,13 @@ export function Tooltip({ children, className, content, side = 'bottom' }: Toolt
 		: { left: anchor?.left ?? 0, top: anchor?.top ?? 0, visibility: 'hidden' };
 
 	return (
-		<span className="relative inline-flex" ref={wrapperRef}>
+		// `max-w-full min-w-0`, because this wrapper has to be transparent to sizing. A trigger that
+		// declares its own `max-w-full min-w-0` — `ExecutionIdentityBadges` does — resolves that
+		// against the wrapper rather than against the cell, so wrapping it in a rigid shell silently
+		// revokes its ability to shrink. On Project Detail the identity badge needed 226px in a 219px
+		// cell and spilled out of the card instead of head-truncating the model as designed. Neither
+		// class does anything to a wrapper whose content already fits.
+		<span className="relative inline-flex max-w-full min-w-0" ref={wrapperRef}>
 			{trigger}
 			{open && anchor
 				? createPortal(

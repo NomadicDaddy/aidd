@@ -34,6 +34,14 @@ function PortDotInline({ listening }: { listening: boolean | null }) {
  * started 60px apart and the `tabular-nums` on the numbers aligned digits within a value that had no
  * shared left edge to align against. A fixed track is what makes the column the numerals were
  * already dressed for.
+ *
+ * The track is 5rem rather than the 5.5rem it started at, because the value column has to hold a
+ * badge. At 1024 the card body is 326px and this list is two columns, so a row gets 157px; 5.5rem
+ * left 61px for the value and the `aidd state` badge is `whitespace-nowrap` at 67px for `unknown`.
+ * The value span is `min-w-0`, so the grid never saw the badge as a requirement and the badge simply
+ * spilled 6px out of the card. Both sides are closed sets — four sync states, eleven hard-coded
+ * labels — so 5rem is exact rather than lucky: the widest label, `Reported cost`, needs 77.3px, and
+ * it truncates rather than overflowing if a fallback font ever makes it wider.
  */
 function MetricRow({
 	children,
@@ -45,7 +53,7 @@ function MetricRow({
 	title?: string | undefined;
 }) {
 	return (
-		<div className="grid grid-cols-[5.5rem_1fr] items-baseline gap-x-2" title={title}>
+		<div className="grid grid-cols-[5rem_1fr] items-baseline gap-x-2" title={title}>
 			<span className="truncate">{label}</span>
 			<span className="min-w-0">{children}</span>
 		</div>

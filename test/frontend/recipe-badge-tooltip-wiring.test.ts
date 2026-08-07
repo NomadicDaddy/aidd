@@ -14,7 +14,7 @@ import type { RecipeDefinition } from '../../frontend/src/api/types.ts';
 const BADGE_CLASS =
 	/inline-flex items-center gap-1\.5 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-inset/g;
 const TRIGGER_ATTR = /tabindex="0"/g;
-const WRAPPER_CLASS = /class="relative inline-flex"/g;
+const WRAPPER_CLASS = /class="relative inline-flex max-w-full min-w-0"/g;
 // The trigger is a `<button>`, not a tabbable `<span>`: Tooltip puts every badge in the tab order,
 // and a span arrived there as an unnamed generic node.
 const WRAPPED_BADGE =

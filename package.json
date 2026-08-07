@@ -83,6 +83,7 @@
 		"check:backend-cli-boundary": "bun scripts/check-backend-cli-boundary.ts",
 		"check:critical-path": "bun scripts/check-critical-path.ts",
 		"check:dead-code": "bunx knip",
+		"check:destructive-confirmation": "bun scripts/check-destructive-confirmation.ts",
 		"check:docs": "bun scripts/check-docs.ts",
 		"check:audit-profile-mapping": "bun scripts/aidd-tools.ts audit:profile-mapping",
 		"check:env-spread": "bun scripts/check-env-spread.ts",

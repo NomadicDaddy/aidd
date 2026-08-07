@@ -84,6 +84,12 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:docs',
 	},
 	{
+		command: ['bun', 'run', 'check:destructive-confirmation'],
+		description: 'Every destructive frontend action is confirmed before dispatch (WEB-007)',
+		label: 'check:destructive-confirmation',
+		name: 'check:destructive-confirmation',
+	},
+	{
 		command: ['bun', 'run', 'check:backend-cli-boundary'],
 		description: 'aidd-backend never imports aidd-cli, which would close a cycle (QUAL-004)',
 		label: 'check:backend-cli-boundary',

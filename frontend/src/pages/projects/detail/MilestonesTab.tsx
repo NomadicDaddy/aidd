@@ -50,6 +50,11 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 			case 'create':
 				return createMilestone.mutateAsync({ ...request.input, dryRun });
 			case 'delete':
+				// destructive-confirmation-allow: `run` is the shared apply path for every plan, so
+				// the confirmation is not at this line. It is in `milestonePlanNeedsReview`, which
+				// returns true unconditionally for `kind === 'delete'`: a delete is always previewed,
+				// always routed to MilestonePlanDialog, and only reaches `run(request, false)` from
+				// `confirm()`.
 				return deleteMilestone.mutateAsync({
 					input: { ...request.input, dryRun },
 					name: request.name,

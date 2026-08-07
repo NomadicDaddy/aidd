@@ -28,6 +28,10 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 
 	async function handleDelete(): Promise<void> {
 		try {
+			// destructive-confirmation-allow: the confirmation here is the typed-path field above,
+			// not a dialog. `deleteDisabled` holds the submit button until the operator has typed
+			// `project.path` exactly, and the same string is sent as `confirmation` for the backend
+			// to re-check, so the action cannot be dispatched by a single click at all.
 			await deleteProject.mutateAsync({
 				confirmation: deleteConfirmation.trim(),
 				mode: deleteMode,

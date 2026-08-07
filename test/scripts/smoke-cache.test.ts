@@ -313,6 +313,7 @@ describe('smoke cache', () => {
 			'check:env-spread',
 			'check:git-window-hide',
 			'check:docs',
+			'check:destructive-confirmation',
 			'check:backend-cli-boundary',
 			'check:no-inline-references',
 			'check:schema-parity',

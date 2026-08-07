@@ -98,8 +98,15 @@ describe('status tones carry dark variants', () => {
 
 		// The find highlight fills with amber-300 in both themes, so its foreground is pinned dark
 		// rather than themed — `text-foreground` on amber-300 is near-white under the dark theme.
-		expect(highlight).toContain('bg-amber-300 text-neutral-900');
-		expect(highlight).not.toContain('bg-amber-300 text-foreground');
+		// Read off the tag rather than the file: the mark also carries a weight and a rule now (see
+		// runs-pipelines-polish), those sort between the fill and the foreground, and the comment
+		// above the tag names the class this asserts the absence of.
+		const markAt = highlight.indexOf('<mark');
+		const markClass = highlight.slice(markAt, highlight.indexOf('>', markAt));
+
+		expect(markClass).toContain('bg-amber-300');
+		expect(markClass).toContain('text-neutral-900');
+		expect(markClass).not.toContain('text-foreground');
 
 		// The scroller itself is a token surface, one step below the panel around it. It used to be
 		// a raw hex with hard-coded white text, which could not follow the light theme at all — so

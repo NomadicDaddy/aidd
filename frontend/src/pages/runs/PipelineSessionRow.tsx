@@ -12,8 +12,8 @@ import { Button, buttonClassName, IconButton } from '../../components/ui/button.
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
-import { toneText } from '../../lib/tones.ts';
 import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
+import { FailureReason } from './FailureReason.tsx';
 import { PipelineSessionIdentityBadges } from './PipelineSessionIdentityBadges.tsx';
 import {
 	isSessionActive,
@@ -26,7 +26,6 @@ import {
 	containerSelectableClass,
 	containerSelectedClass,
 	containerSelectionHandler,
-	failureReasonClass,
 	leadingSlotClass,
 } from './runRowUtils.ts';
 import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
@@ -223,13 +222,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 				<Badge tone={sessionStatusTone(session.status)}>
 					{sessionStatusLabel(session.status)}
 				</Badge>
-				{session.errorMessage && (
-					<p
-						className={`${failureReasonClass} ${toneText.red}`}
-						title={session.errorMessage}>
-						{session.errorMessage}
-					</p>
-				)}
+				{session.errorMessage && <FailureReason message={session.errorMessage} />}
 			</td>
 			<td className="px-3 py-3 whitespace-nowrap">
 				{formatActiveDuration(session.durationMs, session.startedAt, now)}
@@ -265,11 +258,7 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 				</Badge>
 				<span>{formatActiveDuration(session.durationMs, session.startedAt, now)}</span>
 			</div>
-			{session.errorMessage && (
-				<p className={`mt-1 text-xs ${toneText.red}`} title={session.errorMessage}>
-					{session.errorMessage}
-				</p>
-			)}
+			{session.errorMessage && <FailureReason message={session.errorMessage} />}
 			<div className="mt-2">
 				<SessionActions
 					onStop={props.onStop}

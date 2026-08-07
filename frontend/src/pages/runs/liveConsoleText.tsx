@@ -24,7 +24,15 @@ export function highlightLine(line: string, query: string): ReactNode {
 			// The console scroller is a fixed dark surface in both themes, so this highlight fixes
 			// its own foreground rather than inheriting `text-foreground`, which would render
 			// near-white on amber-300 under the dark theme (~1.5:1).
-			<mark className="rounded-sm bg-amber-300 text-neutral-900" key={key}>
+			//
+			// The weight and the rule are the part that does not depend on seeing amber. A reader
+			// who cannot separate that swatch from the surrounding transcript was left with a
+			// paragraph of monospace and no marks in it; bold plus an underline says the same thing
+			// in the two channels a fixed-width face still has. `decoration-current` keeps the rule
+			// on the mark's own dark foreground rather than the scroller's near-white one.
+			<mark
+				className="rounded-sm bg-amber-300 font-bold text-neutral-900 underline decoration-current decoration-2 underline-offset-2"
+				key={key}>
 				{line.slice(match, match + query.length)}
 			</mark>,
 		);

@@ -7,9 +7,10 @@ import { Button } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
+import { FailureReason } from './FailureReason.tsx';
 import { sessionStatusTone, stepStatusLabel } from './pipelineSessionStatus.ts';
 import { stepIndentPx, usePipelineStepSubRows } from './pipelineStepSubRowModel.ts';
-import { containerSelectedClass, failureReasonClass } from './runRowUtils.ts';
+import { containerSelectedClass } from './runRowUtils.ts';
 
 /**
  * The steps of an expanded pipeline session below `xl`, where the feed is cards rather than a table.
@@ -94,11 +95,7 @@ export function PipelineStepSubRows({
 							</span>
 						</div>
 						{step.errorMessage && (
-							<p
-								className={`${failureReasonClass} pl-8 text-red-700 dark:text-red-300`}
-								title={step.errorMessage}>
-								{step.errorMessage}
-							</p>
+							<FailureReason className="pl-8" message={step.errorMessage} />
 						)}
 					</li>
 				);

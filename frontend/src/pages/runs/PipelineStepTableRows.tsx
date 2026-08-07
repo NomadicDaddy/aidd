@@ -7,9 +7,10 @@ import { Button } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
+import { FailureReason } from './FailureReason.tsx';
 import { sessionStatusTone, stepStatusLabel } from './pipelineSessionStatus.ts';
 import { stepIndentPx, usePipelineStepSubRows } from './pipelineStepSubRowModel.ts';
-import { containerSelectedClass, failureReasonClass } from './runRowUtils.ts';
+import { containerSelectedClass } from './runRowUtils.ts';
 
 const cellClass = 'px-3 py-2 align-top text-xs';
 const nameCellClass = 'py-2 pr-3 align-top text-xs';
@@ -126,13 +127,7 @@ export function PipelineStepTableRows({
 							<Badge tone={sessionStatusTone(step.status)}>
 								{stepStatusLabel(step.status)}
 							</Badge>
-							{step.errorMessage && (
-								<p
-									className={`${failureReasonClass} text-red-700 dark:text-red-300`}
-									title={step.errorMessage}>
-									{step.errorMessage}
-								</p>
-							)}
+							{step.errorMessage && <FailureReason message={step.errorMessage} />}
 						</td>
 						<td className={cn(cellClass, 'whitespace-nowrap text-muted-foreground')}>
 							{formatActiveDuration(step.durationMs, step.startedAt, now)}

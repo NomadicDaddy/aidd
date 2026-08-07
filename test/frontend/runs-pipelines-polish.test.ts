@@ -9,6 +9,10 @@ import { describe, expect, test } from 'bun:test';
 const runs = async (file: string): Promise<string> =>
 	await Bun.file(`${import.meta.dir}/../../frontend/src/pages/runs/${file}`).text();
 
+function stripComments(source: string): string {
+	return source.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
+}
+
 describe('runs and pipelines polish', () => {
 	test('caps the History body in its own scrollport with a pinned header', async () => {
 		const table = await runs('UnifiedExecutionTable.tsx');
@@ -37,22 +41,86 @@ describe('runs and pipelines polish', () => {
 	});
 
 	test('makes a failure reason readable and fully recoverable', async () => {
-		const utils = await runs('runRowUtils.ts');
+		const reason = await runs('FailureReason.tsx');
 
 		// Two lines is what the STATUS column can give without taking width off the execution
-		// identity beside it; the `title` carries the rest.
-		expect(utils).toContain("export const failureReasonClass = 'mt-1 line-clamp-2 text-xs'");
+		// identity beside it; the `title` carries the rest. The clamp is on the message rather than
+		// the row, because clamping the row would take the glyph with it.
+		expect(reason).toContain('line-clamp-2');
+		expect(reason).toContain('title={message}');
 		for (const file of [
 			'PipelineSessionRow.tsx',
 			'PipelineStepSubRows.tsx',
 			'PipelineStepTableRows.tsx',
 		]) {
 			const source = await runs(file);
-			expect(source).toContain('failureReasonClass');
-			expect(source).toContain('title={');
+			expect(source).toContain("import { FailureReason } from './FailureReason.tsx';");
+			// Every failure reason on these surfaces goes through the component. A hand-rolled
+			// paragraph beside it is how the copies drifted apart in the first place, and the tell
+			// is a red tone reappearing in a file whose only red was the failure reason.
+			expect(source).not.toContain('toneText');
+			expect(source).not.toMatch(/red-\d/u);
 		}
+		// The class the three surfaces used to share is gone, not merely unreferenced.
+		expect(await runs('runRowUtils.ts')).not.toContain('failureReasonClass');
 		// The old single-line cap with the full text nowhere.
 		expect(await runs('PipelineSessionRow.tsx')).not.toContain('max-w-[16rem] truncate');
+	});
+
+	test('says a step failed with something other than the colour red', async () => {
+		const reason = await runs('FailureReason.tsx');
+
+		// The glyph is the non-colour carrier: a reader who cannot separate this red from the muted
+		// grey beside it was looking at an unlabelled paragraph.
+		expect(reason).toContain('icons/triangle-alert');
+		expect(reason).toContain('<TriangleAlert aria-hidden="true"');
+		// And the glyph being decorative, the word it stands for is spelled out for a screen reader.
+		expect(reason).toContain('<span className="sr-only">Failure reason: </span>');
+		// The tone is the semantic token, not the palette pair two of the three surfaces inlined.
+		// Comments first: this file's own docstring names the literal it stopped using.
+		expect(reason).toContain('toneText.red');
+		expect(stripComments(reason)).not.toMatch(/red-\d/u);
+	});
+
+	test('marks a console search hit in a channel that survives colour blindness', async () => {
+		const text = await runs('liveConsoleText.tsx');
+		const controls = await runs('LiveConsoleControls.tsx');
+		const consoleSource = await runs('LiveConsole.tsx');
+
+		// Weight and rule carry the mark; the amber swatch is no longer the only thing that does.
+		const markAt = text.indexOf('<mark');
+		const markClass = text.slice(markAt, text.indexOf('>', markAt));
+
+		expect(markClass).toContain('font-bold');
+		expect(markClass).toContain('underline');
+		// The fixed foreground stays: this scroller is dark in both themes and `text-foreground`
+		// would put near-white on amber-300.
+		expect(markClass).toContain('text-neutral-900');
+		// Position is discoverable without seeing any highlight at all: the view filters to the
+		// matching lines and the toolbar counts them.
+		expect(consoleSource).toContain('matchingLines');
+		expect(controls).toContain("{matchCount === 1 ? 'match' : 'matches'}");
+	});
+
+	test('leads the session report with its status, not with five equal tiles', async () => {
+		const card = await Bun.file(
+			`${import.meta.dir}/../../frontend/src/pages/pipelineSessions/SessionSummaryCard.tsx`,
+		).text();
+		const statusAt = card.indexOf('label="Status"');
+		const gridAt = card.indexOf('grid gap-3 @min-[32rem]:grid-cols-2');
+
+		// Status is outside — and above — the metadata grid, and it is the one tile that keeps the
+		// default value size, so the strip has a leading reading instead of five interchangeable ones.
+		expect(statusAt).toBeGreaterThan(-1);
+		expect(gridAt).toBeGreaterThan(statusAt);
+		expect(card.slice(statusAt, card.indexOf('/>', statusAt))).not.toContain('size=');
+		// PROJECT restated the PageHeader description one line above it.
+		expect(card).not.toContain('label="Project"');
+		expect(
+			await Bun.file(
+				`${import.meta.dir}/../../frontend/src/pages/pipelineSessions/PipelineSessionReportPage.tsx`,
+			).text(),
+		).toContain('{report.session.projectName}');
 	});
 
 	test('uses the accent token for row links, not a raw teal', async () => {

@@ -7,6 +7,7 @@ import type { PipelineSessionReport } from '../../api/types.ts';
 
 import { Metric } from '../../components/shared/Metric.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
+import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { sessionStatusLabel, sessionStatusTone } from '../runs/pipelineSessionStatus.ts';
@@ -28,33 +29,45 @@ export function SessionSummaryCard({
 	});
 	return (
 		// The steps are keyed off this strip's own width, not the viewport's — see the content-width
-		// table in AppLayout.tsx for why those are different numbers. The middle step exists so five
-		// (or six, with the skill-intent tile) items divide evenly instead of leaving PROGRESS alone
-		// against an empty cell.
-		<div className="@container">
-			<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[45rem]:grid-cols-3 @min-[61rem]:grid-cols-5">
-				<Metric
-					className="min-w-0"
-					detail={
-						report.session.errorMessage ? (
-							<span
-								className={
-									report.session.status === 'completed_with_failures'
-										? toneText.amber
-										: toneText.red
-								}>
-								{report.session.errorMessage}
-							</span>
-						) : undefined
-					}
-					label="Status"
-					size="compact"
-					value={
-						<Badge tone={sessionStatusTone(report.session.status)}>
-							{sessionStatusLabel(report.session.status)}
-						</Badge>
-					}
-				/>
+		// table in AppLayout.tsx for why those are different numbers.
+		<div className="@container space-y-3">
+			{/* STATUS is what the page is being opened to find out, and at 390px it was the first of
+			    five tiles of equal weight in a single stacked column — the reader scrolled a strip of
+			    interchangeable cards looking for the one that answered the question. It leads now, at
+			    the default value size and the panel surface that comes with it, and the rest of the
+			    strip is metadata sitting under it at `compact` on the sunken surface. That is the
+			    same hierarchy the report's PageHeader states one line above: session identity first,
+			    detail after. */}
+			<Metric
+				className="min-w-0"
+				detail={
+					report.session.errorMessage ? (
+						<span
+							className={
+								report.session.status === 'completed_with_failures'
+									? toneText.amber
+									: toneText.red
+							}>
+							{report.session.errorMessage}
+						</span>
+					) : undefined
+				}
+				label="Status"
+				value={
+					<Badge tone={sessionStatusTone(report.session.status)}>
+						{sessionStatusLabel(report.session.status)}
+					</Badge>
+				}
+			/>
+			{/* The column count follows the tile count so the last row is never one tile against
+			    empty cells — three without a skill step, four with one. */}
+			<div
+				className={cn(
+					'grid gap-3 @min-[32rem]:grid-cols-2',
+					skillIntents.length > 0
+						? '@min-[45rem]:grid-cols-4'
+						: '@min-[45rem]:grid-cols-3',
+				)}>
 				{skillIntents.length > 0 ? (
 					<Metric
 						className="min-w-0"
@@ -72,16 +85,6 @@ export function SessionSummaryCard({
 						}
 					/>
 				) : null}
-				<Metric
-					className="min-w-0"
-					label="Project"
-					size="compact"
-					value={
-						<span className="block truncate" title={report.session.projectName}>
-							{report.session.projectName}
-						</span>
-					}
-				/>
 				<Metric
 					className="min-w-0"
 					label="Started"

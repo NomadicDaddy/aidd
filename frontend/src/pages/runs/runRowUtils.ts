@@ -70,7 +70,6 @@ export function formatHeartbeatAge(ms: number): string {
 // ancestry to recover the rest. Two lines is what the column can give without taking width off the
 // execution identity beside it, and the `title` carries the whole of it. Rows carrying one always
 // pair this class with `title={message}`.
-export const failureReasonClass = 'mt-1 line-clamp-2 text-xs';
 
 export function runRuntimeDetail(run: RunRecord): string {
 	return run.mode ? `mode ${run.mode}` : '—';

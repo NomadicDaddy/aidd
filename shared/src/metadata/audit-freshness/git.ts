@@ -4,10 +4,14 @@ export interface AuditFreshnessContext {
 	currentHead?: Promise<null | string>;
 	gitNumstatLogs?: Map<string, Promise<null | string>>;
 	isGitWorktree?: Promise<boolean>;
+	// Every audit in a maturity pass lists the same audit-reports directory. Memoising the
+	// listing turns one readdir per audit (39 sweeps of a 335-entry directory here) into one
+	// per directory for the lifetime of the context, which callers scope to a single request.
+	reportDirEntries?: Map<string, Promise<string[]>>;
 }
 
 export function createAuditFreshnessContext(): AuditFreshnessContext {
-	return { gitNumstatLogs: new Map() };
+	return { gitNumstatLogs: new Map(), reportDirEntries: new Map() };
 }
 
 const excludedPathSegments = new Set([
@@ -77,18 +81,59 @@ async function gitOutput(projectDir: string, args: string[]): Promise<null | str
 	return await new Response(proc.stdout).text();
 }
 
+// `git log <sha>..HEAD --numstat` and `git log --since=<stamp> --numstat` are pure functions of
+// the commit graph reachable from HEAD and their own arguments — nothing in the working tree, and
+// nothing any .aidd writer touches, can change their output while HEAD stands still. That makes
+// HEAD a complete invalidation key, so the results survive between requests: a maturity pass over
+// this repository resolves to eight distinct invocations, two of which walk 266 commits, and
+// re-running them per request was the largest remaining cost in the project detail endpoint.
+// Entries for a repository are discarded wholesale the moment its HEAD moves.
+const gitHistoryCache = new Map<
+	string,
+	{ entries: Map<string, Promise<null | string>>; head: string }
+>();
+
+/** Drop every cached history read. Exported for tests that reuse one project directory. */
+export function clearGitHistoryCache(): void {
+	gitHistoryCache.clear();
+}
+
 export async function cachedGitNumstatOutput(
 	projectDir: string,
 	args: string[],
 	context: AuditFreshnessContext,
 ): Promise<null | string> {
-	const cache = (context.gitNumstatLogs ??= new Map());
+	const requestCache = (context.gitNumstatLogs ??= new Map());
 	const key = JSON.stringify([projectDir, ...args]);
-	let promise = cache.get(key);
+	const inFlight = requestCache.get(key);
+	if (inFlight) return await inFlight;
+
+	const head = await currentGitHead(projectDir, context);
+	if (head === null) {
+		// No HEAD to key on (not a worktree, or a repository with no commits yet). Fall back to
+		// request-scoped deduplication only.
+		const promise = gitOutput(projectDir, args);
+		requestCache.set(key, promise);
+		return await promise;
+	}
+
+	let repoCache = gitHistoryCache.get(projectDir);
+	if (!repoCache || repoCache.head !== head) {
+		repoCache = { entries: new Map(), head };
+		gitHistoryCache.set(projectDir, repoCache);
+	}
+	let promise = repoCache.entries.get(key);
 	if (!promise) {
 		promise = gitOutput(projectDir, args);
-		cache.set(key, promise);
+		repoCache.entries.set(key, promise);
+		// A null means git itself failed. Failures can be transient (a spawn that lost a race with
+		// an index lock), so drop them rather than pinning the failure until the next commit.
+		const entries = repoCache.entries;
+		void promise.then((output) => {
+			if (output === null) entries.delete(key);
+		});
 	}
+	requestCache.set(key, promise);
 	return await promise;
 }
 

@@ -23,7 +23,11 @@ import {
 	thresholds,
 } from './audit-freshness/metadata.ts';
 
-export { type AuditFreshnessContext, createAuditFreshnessContext } from './audit-freshness/git.ts';
+export {
+	type AuditFreshnessContext,
+	clearGitHistoryCache,
+	createAuditFreshnessContext,
+} from './audit-freshness/git.ts';
 export {
 	type AuditChangeCounts,
 	type AuditReportFreshness,
@@ -52,7 +56,12 @@ export async function evaluateAuditReportFreshness(
 ): Promise<AuditReportFreshness> {
 	const now = options.now ?? new Date();
 	const context = options.context ?? createAuditFreshnessContext();
-	const latest = await latestAuditReport(projectDir, auditName, options.excludedReportMarker);
+	const latest = await latestAuditReport(
+		projectDir,
+		auditName,
+		options.excludedReportMarker,
+		context,
+	);
 	if (!latest) {
 		return {
 			ageDays: null,
@@ -111,45 +120,65 @@ export async function writeAuditReportWithMetadata(
 	return path;
 }
 
+async function readReportDirEntries(
+	reportDir: string,
+	context?: AuditFreshnessContext,
+): Promise<string[]> {
+	const cache = context?.reportDirEntries;
+	if (!cache) return await readdir(reportDir).catch(() => []);
+	let pending = cache.get(reportDir);
+	if (!pending) {
+		pending = readdir(reportDir).catch(() => []);
+		cache.set(reportDir, pending);
+	}
+	return await pending;
+}
+
+// Only the newest surviving report is ever returned, so stat the candidates first and read
+// exactly the one that wins. Reading every historical report of every audit up front cost
+// ~116 ms per request on a 335-file report directory to discard all but 39 of the bodies.
+// When an excludedReportMarker is set the marker can only be seen in the content, so walk
+// newest-first and read until one passes — the same result, and still one read in the
+// common case where the newest report is not excluded.
 async function latestAuditReport(
 	projectDir: string,
 	auditName: string,
 	excludedReportMarker?: string,
+	context?: AuditFreshnessContext,
 ): Promise<AuditReportSnapshot | null> {
 	const reportDir = auditReportsDir(projectDir);
-	let entries: string[];
-	try {
-		entries = await readdir(reportDir);
-	} catch {
-		return null;
-	}
+	const entries = await readReportDirEntries(reportDir, context);
 	const matching = entries.filter(
 		(entry) => entry.startsWith(`${auditName}-`) && entry.endsWith('.md'),
 	);
-	const snapshots = await Promise.all(
+	const stamped = await Promise.all(
 		matching.map(async (entry) => {
 			try {
-				const reportPath = join(reportDir, basename(entry));
-				const [content, stats] = await Promise.all([
-					readFile(reportPath, 'utf8'),
-					stat(reportPath),
-				]);
-				if (excludedReportMarker && content.includes(excludedReportMarker)) return null;
-				return {
-					content,
-					mtimeMs: stats.mtimeMs,
-					report: entry,
-				} satisfies AuditReportSnapshot;
+				const stats = await stat(join(reportDir, basename(entry)));
+				return { entry, mtimeMs: stats.mtimeMs };
 			} catch {
 				return null;
 			}
 		}),
 	);
-	return (
-		snapshots
-			.filter((item): item is AuditReportSnapshot => item !== null)
-			.sort((left, right) => right.mtimeMs - left.mtimeMs)[0] ?? null
-	);
+	const candidates = stamped
+		.filter((item): item is { entry: string; mtimeMs: number } => item !== null)
+		.sort((left, right) => right.mtimeMs - left.mtimeMs);
+	for (const candidate of candidates) {
+		let content: string;
+		try {
+			content = await readFile(join(reportDir, basename(candidate.entry)), 'utf8');
+		} catch {
+			continue;
+		}
+		if (excludedReportMarker && content.includes(excludedReportMarker)) continue;
+		return {
+			content,
+			mtimeMs: candidate.mtimeMs,
+			report: candidate.entry,
+		} satisfies AuditReportSnapshot;
+	}
+	return null;
 }
 
 async function codeChangesSinceReport(

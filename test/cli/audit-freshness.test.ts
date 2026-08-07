@@ -3,6 +3,7 @@ import { mkdir, rm, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
 	type AuditReportMetadata,
+	clearGitHistoryCache,
 	createAuditFreshnessContext,
 	evaluateAuditReportFreshness,
 	prependAuditReportMetadata,
@@ -166,6 +167,43 @@ describe('audit report freshness', () => {
 			expect(first.gitInspected).toBe(true);
 		} finally {
 			spawnCounter.restore();
+		}
+	});
+
+	test('reuses git history across freshness contexts until HEAD moves', async () => {
+		clearGitHistoryCache();
+		const projectDir = await initGitProject('cross-context-cache');
+		const base = await gitOutput(projectDir, ['rev-parse', 'HEAD']);
+		await writeAuditReport(projectDir, 'SECURITY', metadata(base.trim(), now));
+		await commitSourceFile(projectDir, 'src/one.ts', 'export const one = 1;\n');
+		const spawnCounter = countGitNumstatSpawns();
+		try {
+			const first = await evaluateAuditReportFreshness(projectDir, 'SECURITY', {
+				context: createAuditFreshnessContext(),
+				now,
+			});
+			expect(spawnCounter.count()).toBe(1);
+			expect(first.changes?.codeCommits).toBe(1);
+
+			// A fresh context is a fresh request. The history is unchanged, so it is not re-read.
+			const second = await evaluateAuditReportFreshness(projectDir, 'SECURITY', {
+				context: createAuditFreshnessContext(),
+				now,
+			});
+			expect(spawnCounter.count()).toBe(1);
+			expect(second.changes).toEqual(first.changes);
+
+			// Moving HEAD discards the cached history, so the next read sees the new commit.
+			await commitSourceFile(projectDir, 'src/two.ts', 'export const two = 2;\n');
+			const third = await evaluateAuditReportFreshness(projectDir, 'SECURITY', {
+				context: createAuditFreshnessContext(),
+				now,
+			});
+			expect(spawnCounter.count()).toBe(2);
+			expect(third.changes?.codeCommits).toBe(2);
+		} finally {
+			spawnCounter.restore();
+			clearGitHistoryCache();
 		}
 	});
 });

@@ -164,14 +164,27 @@ export async function computeMaturity(input: MaturityComputeInput): Promise<Matu
 					auditProfileOverrides,
 				),
 			);
-			for (const auditName of applicable) {
-				const classification = await classifyAuditEntry(
-					auditName,
-					input.projectDir,
-					skip,
-					input.latestProjectAuditRun,
-					auditFreshnessContext,
-				);
+			// Classify concurrently. Each audit's freshness check spawns `git log --numstat`
+			// from that report's recorded head, and awaiting them one at a time serialised
+			// every one of those subprocesses: 39 audits resolved to 8 distinct git
+			// invocations totalling ~700 ms of the endpoint's ~1.0 s, two of them ~295 ms
+			// apiece because they walk 266 commits. Run concurrently they cost about as much
+			// as the slowest one. The numstat cache in AuditFreshnessContext stores promises
+			// rather than values, so concurrent callers with identical arguments still share
+			// a single subprocess instead of racing to spawn duplicates. Promise.all
+			// preserves input order, so the artifact and entry lists are unchanged.
+			const classifications = await Promise.all(
+				applicable.map((auditName) =>
+					classifyAuditEntry(
+						auditName,
+						input.projectDir,
+						skip,
+						input.latestProjectAuditRun,
+						auditFreshnessContext,
+					),
+				),
+			);
+			for (const classification of classifications) {
 				artifacts.push(classification.artifact);
 				auditEntries.push(classification.entry);
 			}

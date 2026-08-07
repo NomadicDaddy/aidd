@@ -28,7 +28,15 @@ export function RecipesPageActions({
 	return (
 		// `flex-nowrap` plus icon-only labels below `md`: at 768 the labels wrapped mid-button and
 		// pushed the view toggle onto a second row.
-		<div className="flex flex-nowrap items-center gap-2">
+		//
+		// `shrink-0` because `lg` is the worst possible threshold for this row: 1024 is where
+		// `PageHeader` turns into a row AND where these two buttons take their labels, so the
+		// cluster first has to share a line on the exact width it first becomes wide. At 1024 it
+		// needs 330px and the header offered 327.3 — the buttons are `whitespace-nowrap` and the
+		// view toggle is `shrink-0`, so nothing inside could absorb the 2.7px and it overflowed
+		// instead. The title column beside it is a wrapping paragraph under `min-w-0`; it is the
+		// one that should give, and giving costs it a second description line at one width.
+		<div className="flex shrink-0 flex-nowrap items-center gap-2">
 			<Button aria-label="New Recipe" onClick={onNew} size="toolbar" variant="primary">
 				<Plus className="h-4 w-4" />
 				<span className="hidden lg:inline">New Recipe</span>

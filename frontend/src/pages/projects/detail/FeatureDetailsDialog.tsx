@@ -8,7 +8,7 @@ import type { ProjectFeature } from '../../../api/types.ts';
 
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
-import { useUpdateProjectFeatureMetadata } from '../../../hooks/useProjects.ts';
+import { useProjectFeature, useUpdateProjectFeatureMetadata } from '../../../hooks/useProjects.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
 import {
 	FeatureApprovalSection,
@@ -16,6 +16,7 @@ import {
 	FeatureListSection,
 	FeatureTextSection,
 } from './FeatureDetailSections.tsx';
+import { featureEditorGate, featureNotesForEdit } from './featureProseEditor.ts';
 import {
 	displayValue,
 	FEATURE_METADATA_KEYS,
@@ -25,13 +26,6 @@ import {
 	textBlockValue,
 } from './featuresUtils.ts';
 import { stringValue } from './shared.ts';
-
-function featureNotesForEdit(feature: ProjectFeature): string {
-	const notes = feature.notes;
-	if (Array.isArray(notes)) return (notes as unknown[]).map((n) => String(n)).join('\n');
-	if (typeof notes === 'string') return notes;
-	return '';
-}
 
 export function FeatureDetailsDialog({
 	feature,
@@ -48,25 +42,32 @@ export function FeatureDetailsDialog({
 	const [editSpec, setEditSpec] = useState('');
 	const [editNotes, setEditNotes] = useState('');
 	const updateMetadata = useUpdateProjectFeatureMetadata(projectId);
+	// The row this dialog opened from is a summary: the project-detail response drops `spec`,
+	// `notes`, `affectedFiles` and `aiddReport` so that listing 300+ features does not ship a
+	// megabyte of prose. Merge the fetched record over the row rather than swapping to it, so the
+	// header, metadata and dependencies stay on screen while the prose is in flight.
+	const detail = useProjectFeature(projectId, featureDirectory(feature));
+	const full = detail.data ? { ...feature, ...detail.data } : feature;
+	const editorGate = featureEditorGate(detail);
 
-	const id = feature.id || stringValue(feature, 'id');
-	const title = stringValue(feature, 'title') || id;
-	const description = textBlockValue(feature.description);
-	const spec = textBlockValue(feature.spec);
-	const steps = textBlockValue(feature.steps);
-	const dependencies = listValue(feature.dependencies);
-	const requiredBy = featureDependents(feature, features);
-	const affectedFiles = listValue(feature.affectedFiles);
-	const notes = listValue(feature.notes);
+	const id = full.id || stringValue(full, 'id');
+	const title = stringValue(full, 'title') || id;
+	const description = textBlockValue(full.description);
+	const spec = textBlockValue(full.spec);
+	const steps = textBlockValue(full.steps);
+	const dependencies = listValue(full.dependencies);
+	const requiredBy = featureDependents(full, features);
+	const affectedFiles = listValue(full.affectedFiles);
+	const notes = listValue(full.notes);
 	const metadataRows = FEATURE_METADATA_KEYS.map((key) => ({
 		key,
-		value: displayValue(feature[key]),
+		value: displayValue(full[key]),
 	})).filter((row) => row.value !== '—');
-	const rawJson = JSON.stringify(feature, null, 2);
+	const rawJson = JSON.stringify(full, null, 2);
 
 	function startEditing(): void {
 		setEditSpec(spec);
-		setEditNotes(featureNotesForEdit(feature));
+		setEditNotes(featureNotesForEdit(full));
 		setEditing(true);
 	}
 
@@ -75,7 +76,7 @@ export function FeatureDetailsDialog({
 	}
 
 	function saveMetadata(): void {
-		const featureId = featureDirectory(feature);
+		const featureId = featureDirectory(full);
 		const notesLines = editNotes
 			.split('\n')
 			.map((line) => line.trimEnd())
@@ -125,8 +126,9 @@ export function FeatureDetailsDialog({
 						{!editing ? (
 							<Button
 								aria-label="Edit feature metadata"
+								disabled={editorGate.disabled}
 								onClick={startEditing}
-								title="Edit spec and notes"
+								title={editorGate.reason}
 								variant="secondary">
 								<Pencil className="h-4 w-4" />
 								Edit
@@ -140,6 +142,13 @@ export function FeatureDetailsDialog({
 						</IconButton>
 					</div>
 				</div>
+				{editorGate.disabled ? (
+					<p className="mt-3 text-xs text-muted-foreground" role="status">
+						{detail.isError
+							? 'The spec, notes and affected files could not be loaded.'
+							: 'Loading spec, notes and affected files…'}
+					</p>
+				) : null}
 				<div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
 					<div className="space-y-5">
 						<FeatureTextSection title="Description">{description}</FeatureTextSection>
@@ -220,8 +229,8 @@ export function FeatureDetailsDialog({
 								))}
 							</dl>
 						</section>
-						<FeatureBlockingContextSection blockingContext={feature.blockingContext} />
-						<FeatureApprovalSection approval={feature.approval} />
+						<FeatureBlockingContextSection blockingContext={full.blockingContext} />
+						<FeatureApprovalSection approval={full.approval} />
 						<FeatureListSection items={dependencies} title="Dependencies" />
 						<FeatureListSection
 							hint="Features declaring a dependency on this one — changing its surface affects them."

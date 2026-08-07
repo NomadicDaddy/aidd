@@ -11,10 +11,12 @@ import {
 	deleteFeature as deleteFeatureInternal,
 	type FeatureContext,
 	type FeatureMetadataInput,
+	readFeature as readFeatureInternal,
 	updateFeatureMetadata as updateFeatureMetadataInternal,
 	updateFeatureMilestone as updateFeatureMilestoneInternal,
 	updateFeatureStatus as updateFeatureStatusInternal,
 } from './features.ts';
+import { withRoadmapMilestone } from './listings/featureMappers.ts';
 
 // Feature CRUD delegators, split out of ProjectService so that facade stays within the
 // modularity budget. Builds its FeatureContext from the shared project resolver.
@@ -42,6 +44,16 @@ export class ProjectFeatureService {
 
 	async deleteFeature(projectId: string, featureDirectory: string): Promise<{ id: string }> {
 		return deleteFeatureInternal(this.context(), projectId, featureDirectory);
+	}
+
+	// Answers with the same shape a list row has, plus the prose the list projection drops.
+	async readFeature(projectId: string, featureDirectory: string): Promise<ProjectFeatureDto> {
+		const { feature, roadmap } = await readFeatureInternal(
+			this.context(),
+			projectId,
+			featureDirectory,
+		);
+		return withRoadmapMilestone(feature, roadmap);
 	}
 
 	async updateFeatureMetadata(

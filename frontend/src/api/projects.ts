@@ -133,6 +133,20 @@ export async function approveProjectFeature(
 	return response.feature;
 }
 
+// The project-detail response carries feature summaries without `spec`, `notes`, `affectedFiles`
+// or `aiddReport`, so the details dialog fetches the one record it renders those from.
+export async function getProjectFeature(
+	id: string,
+	featureId: string,
+	signal?: AbortSignal,
+): Promise<ProjectFeature> {
+	const response = await apiGet<{ feature: ProjectFeature }>(
+		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}`,
+		{ signal },
+	);
+	return response.feature;
+}
+
 export async function deleteProjectFeature(id: string, featureId: string): Promise<{ id: string }> {
 	const response = await apiSend<{ deleted: { id: string } }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}`,

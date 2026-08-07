@@ -117,6 +117,11 @@ function normalizedSearchValue(value: unknown): string {
 export function featureMatchesSearch(feature: ProjectFeature, query: string): boolean {
 	const trimmed = query.trim().toLowerCase();
 	if (!trimmed) return true;
+	// `summary` stands where `spec` used to. The project-detail response stopped shipping `spec`
+	// with every row — it was a third of a two-megabyte payload — and a filter cannot match text
+	// the client does not hold. `summary` is the one-line statement of the same thing, so a search
+	// for what a feature does still finds it; searching the full acceptance criteria now requires
+	// opening the feature.
 	const searchableFields = [
 		featureDirectory(feature),
 		feature.id,
@@ -125,7 +130,7 @@ export function featureMatchesSearch(feature: ProjectFeature, query: string): bo
 		feature.category,
 		feature.auditSource,
 		feature.auditSeverity,
-		feature.spec,
+		feature.summary,
 	];
 	return searchableFields.some((value) => normalizedSearchValue(value).includes(trimmed));
 }

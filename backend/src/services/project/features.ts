@@ -75,6 +75,26 @@ async function readFeatureForMutation(
 	}
 }
 
+// The read half of the payload split: the project-detail listing drops the prose fields, so the
+// one surface that renders them — the feature details dialog — asks for a single record here.
+export async function readFeature(
+	ctx: FeatureContext,
+	projectId: string,
+	featureDirectory: string,
+): Promise<{ feature: Feature; roadmap: Roadmap | undefined }> {
+	const store = await ctx.storeForProject(projectId);
+	const directory = assertFeatureDirectory(featureDirectory);
+	const feature = await readFeatureForMutation(store, directory);
+	let roadmap: Roadmap | undefined;
+	try {
+		roadmap = await store.readRoadmap();
+	} catch {
+		// A project without a roadmap still has features; the milestone is simply null.
+		roadmap = undefined;
+	}
+	return { feature, roadmap };
+}
+
 export async function approveFeature(
 	ctx: FeatureContext,
 	projectId: string,

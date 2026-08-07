@@ -19,6 +19,7 @@ import {
 	dismissProjectInitFailure,
 	getPortStatus,
 	getProject,
+	getProjectFeature,
 	getProjectGitStatus,
 	getProjectIntakePreview,
 	getProjectInterview,
@@ -52,6 +53,17 @@ export function useProject(id: string | undefined) {
 		enabled: Boolean(id),
 		queryFn: ({ signal }) => getProject(id ?? '', signal),
 		queryKey: ['project', id],
+		retry: retryUnlessClientError,
+	});
+}
+
+// One full feature record, for the details dialog. The project-detail response deliberately
+// omits the prose fields, so this is the only place they are fetched.
+export function useProjectFeature(id: string | undefined, featureId: string | undefined) {
+	return useQuery({
+		enabled: Boolean(id) && Boolean(featureId),
+		queryFn: ({ signal }) => getProjectFeature(id ?? '', featureId ?? '', signal),
+		queryKey: ['project-feature', id, featureId],
 		retry: retryUnlessClientError,
 	});
 }

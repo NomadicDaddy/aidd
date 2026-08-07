@@ -35,7 +35,11 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 		// it just gets it for free from the `hidden xl:block` that swaps in its card stack, and this
 		// table has no stack to swap to. Below xl the page is the one scroll region and the head rides
 		// up with it — the alternative is a nested scrollport on a surface 358px wide.
-		<Card className="p-0">
+		//
+		// `min-w-0` is what makes that scrollport actually scroll. A grid item's automatic minimum
+		// size is its min-content size, so this card sized to the widest thing in the table — 384px
+		// in a 358px track — and the overflow escaped past the scroller to the document instead.
+		<Card className="min-w-0 p-0">
 			<OverflowScroller
 				ariaLabel="Audit overrides"
 				scrollerClassName="xl:max-h-[calc(100dvh-16rem)]">
@@ -58,8 +62,16 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 								<tr
 									className="border-b border-border last:border-0"
 									key={definition.name}>
+									{/* `wrap-anywhere`, not `break-words`. Both break a long audit name the
+									    same way once the line is too narrow; only this one lowers the
+									    column's min-content floor, and the floor is what mattered — the
+									    longest name held the table 26px wider than the card, which put
+									    every row's select 14px past the scrollport edge. Measured across
+									    all 42 rows at 390px: the column narrows 252px to 226px and not one
+									    row gains a line, because the names were already wrapping where
+									    they wrap now. */}
 									<td
-										className={`border-l-2 px-3 py-2 break-words text-foreground ${
+										className={`border-l-2 px-3 py-2 wrap-anywhere text-foreground ${
 											overridden
 												? 'border-accent font-semibold'
 												: 'border-transparent font-medium'

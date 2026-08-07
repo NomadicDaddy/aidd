@@ -5,9 +5,10 @@ import { cwd, exit } from 'node:process';
 /**
  * Targeted check for accidental full-environment spreading to child processes.
  *
- * Enforces: SEC-002 -- child processes receive only the environment they need.
+ * Enforces: SEC-002 (aidd) / ASSERT-038 (spernakit) -- child processes receive only the
+ * environment they need.
  *
- * aidd's policy (see `cli/src/subprocess-env.ts` header) is that backend and tool subprocesses
+ * aidd's policy (see `shared/src/subprocess-env.ts` header) is that backend and tool subprocesses
  * receive an allowlisted environment via `buildBackendSubprocessEnv` / `buildToolSubprocessEnv`.
  * Spreading the full parent environment into a Bun.spawn or child_process call bypasses that
  * allowlist and propagates unrelated parent variables (including unrelated secrets) verbatim.
@@ -16,9 +17,21 @@ import { cwd, exit } from 'node:process';
  * forbids spreading either object — narrowing only `process.env` would let a full `Bun.env` spread
  * reintroduce the identical full-environment leak.
  *
- * This script scans `cli/src/`, `backend/src/`, `shared/src/`, and `scripts/` for the forbidden source patterns described in the
- * `forbiddenPatterns` table below. Lines that legitimately need to discuss the pattern (such as
- * this file's own scanner table) are exempt via the line-level `allow-env-spread-policy` marker.
+ * This file is delivered by `sync-shared-core.ts`, so its output names no repository and its scan
+ * roots are the union across carriers: a root that does not exist here is skipped rather than
+ * failed, which is what lets one copy serve a repository with a `cli/` package and one without.
+ * Lines that legitimately need to discuss the pattern (such as this file's own scanner table) are
+ * exempt via the line-level `allow-env-spread-policy` marker, which should carry a comment saying
+ * why that particular process needs the whole environment.
+ *
+ * Known limit, stated so nobody reads a pass as more than it is: this catches an EXPLICIT spread,
+ * not the default. `Bun.spawn` inherits the parent environment when the `env` option is omitted, so
+ * deleting a spread line silences the finding without narrowing anything at all. Narrow the
+ * environment or mark the line; do not delete the spread.
+ *
+ * (This header deliberately does not spell the forbidden expression out. A scanner that reads every
+ * file in `scripts/` reads this one, and prose describing the pattern would otherwise have to waive
+ * itself -- which is exactly the shape of waiver the gate exists to discourage.)
  */
 
 const scannedRoots = ['cli/src', 'backend/src', 'shared/src', 'scripts'];
@@ -89,9 +102,10 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 	}
 
 	if (findings.length > 0) {
-		console.error('[FAIL] aidd env-spread check.');
+		console.error('[FAIL] env-spread check.');
 		console.error(
-			'Child processes must receive an allowlisted environment via buildBackendSubprocessEnv / buildToolSubprocessEnv.',
+			'Child processes must receive only the environment they need. Narrow the spread, or mark ' +
+				'the line with `allow-env-spread-policy` and say why that process needs all of it.',
 		);
 		for (const finding of findings) {
 			console.error(`- ${finding.file}:${finding.line} [${finding.rule}] ${finding.text}`);
@@ -99,7 +113,7 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 		return 1;
 	}
 
-	console.log('[OK] aidd env-spread check passed.');
+	console.log('[OK] env-spread check passed.');
 	return 0;
 }
 

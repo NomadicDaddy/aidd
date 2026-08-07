@@ -136,6 +136,14 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/**/*.sh',
 		'scripts/**/*.ts',
 	],
+	// The registry is the input on both sides: it is what the runbook is generated from and what the
+	// gate compares the runbook against, so a step added there must re-run this.
+	'check:smoke-docs': [
+		'package.json',
+		'scripts/lib/smoke-qc/**/*.ts',
+		'scripts/smoke-qc.md',
+		'scripts/sync-smoke-docs.ts',
+	],
 	'check:web-db-integrity': [
 		'backend/src/db/**/*.ts',
 		'backend/src/db/migrations/**/*.sql',

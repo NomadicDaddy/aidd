@@ -50,14 +50,31 @@ export function FeaturesDesktopTable({
 	return (
 		<OverflowScroller ariaLabel="Project features" className="hidden xl:block">
 			<table aria-label="Project features" className="w-full table-fixed text-left text-sm">
+				{/* Actions carries up to five controls and had the same 14% as Milestone, which carries
+				    one select. This cell is what sets the row height, so at 2321 — the width the defect
+				    was reported at — a backlog row stood 141px tall and a waiting-approval row 181px
+				    while Priority held 162px of width for a 30px badge. Below 1536 the cell was
+				    narrower than its own widest single control and overflowed: 184px of `Approve with
+				    decision` in 139px.
+
+				    Two tiers, because a percentage is not a width. The floor on Shipped and Priority
+				    is their own uppercase header — `PRIORITY` needs 72px and `SHIPPED` 68px, and a
+				    single-word header cannot wrap — so 6% and 7% are affordable against a 2031px
+				    table and not against a 990px one. Below 2xl they keep 8% and Actions takes what
+				    Source can spare instead. Feature holds its 28% at both tiers: taking it to 26%
+				    made the title wrap and handed the row-height job straight back to that column.
+
+				    Status is deliberately untouched at 11%: that cell is already 19px short of a
+				    `waiting_approval` badge at 1280, and paying for Actions out of it would deepen a
+				    defect this change is not fixing. */}
 				<colgroup>
-					<col className="w-[32%]" />
+					<col className="w-[28%]" />
 					<col className="w-[11%]" />
+					<col className="w-[8%] 2xl:w-[6%]" />
+					<col className="w-[12%]" />
+					<col className="w-[8%] 2xl:w-[7%]" />
 					<col className="w-[8%]" />
-					<col className="w-[14%]" />
-					<col className="w-[8%]" />
-					<col className="w-[13%]" />
-					<col className="w-[14%]" />
+					<col className="w-[25%] 2xl:w-[28%]" />
 				</colgroup>
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>

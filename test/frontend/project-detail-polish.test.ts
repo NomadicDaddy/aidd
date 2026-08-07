@@ -39,7 +39,53 @@ describe('per-row action cells', () => {
 		const source = await detail('FeatureActionVariants.tsx');
 		// `Approve with decision` sat beside `Approve` as a second filled primary, so the row put
 		// two equal-weight calls to action next to a destructive one.
-		expect(source).toContain('title="Approve with decision"\n\t\t\t\tvariant="secondary">');
+		// Matched loosely on whitespace: the button is nested a level deeper now that it shares a
+		// row with the decision field, and the tone is the assertion — not the indentation.
+		expect(source).toMatch(/title="Approve with decision"\s+variant="secondary">/u);
+	});
+
+	test('the status select shares its line instead of claiming one', async () => {
+		const source = await detail('FeatureActionVariants.tsx');
+
+		// `w-full` on a flex item resolves to the whole action group, so this one select made every
+		// backlog row three lines tall at 2321 and four at 1280 — the column's width never mattered.
+		// `selectClass` carries no width for exactly this reason, and says so.
+		expect(source).toContain('className={`${selectClass} px-2`}');
+		expect(source).not.toContain('${selectClass} w-full');
+	});
+
+	test('the decision field sits with the button that consumes it', async () => {
+		const source = await detail('FeatureActionVariants.tsx');
+
+		// The Input took a line of its own and pushed `Approve with decision` onto a third, which is
+		// what made a waiting-approval row the tallest in the table: 221px at 1280, 181px at 2321.
+		expect(source).toContain(
+			'<div className="flex w-full min-w-0 flex-wrap items-center gap-2">',
+		);
+		// `w-auto` is load-bearing: `Input` merges `formControlClass`, which is `w-full`.
+		expect(source).toContain('className="w-auto min-w-32 flex-1"');
+		expect(source).not.toContain('className="w-full min-w-0"');
+	});
+
+	test('the actions column is sized for what it holds', async () => {
+		const source = await detail('FeaturesDesktopTable.tsx');
+
+		// Actions had Milestone's 14% for up to five controls, and this cell is what sets the row
+		// height. Below 1536 it was narrower than its own widest single control — 184px of `Approve
+		// with decision` in 139px. At 2321 a backlog row goes 141px to 61px, waiting-approval 181
+		// to 101, and the cell stops overflowing at 1280 and 1536.
+		expect(source).toContain('<col className="w-[25%] 2xl:w-[28%]" />');
+		expect(source).not.toContain('<col className="w-[14%]" />');
+
+		// The second tier is not cosmetic. Shipped and Priority are floored by their own
+		// single-word uppercase headers — 68px and 72px, unwrappable — so 6% and 7% buy width
+		// against a 2031px table and starve the header against a 990px one.
+		expect(source).toContain('<col className="w-[8%] 2xl:w-[6%]" />');
+		expect(source).toContain('<col className="w-[8%] 2xl:w-[7%]" />');
+
+		// Status keeps its 11%. That cell is already 19px short of a `waiting_approval` badge at
+		// 1280, and paying for Actions out of it would deepen a defect this change is not fixing.
+		expect(source).toContain('<col className="w-[11%]" />');
 	});
 
 	test('the audits row keeps its two secondaries', async () => {

@@ -112,9 +112,13 @@ function FeatureStatusSelect({
 	const id = feature.id || stringValue(feature, 'id');
 	const invalidStatus = !FEATURE_STATUS_OPTIONS.some((option) => option === status);
 	return (
+		// No width, which is what `selectClass` documents: `w-full` on a flex item resolves to the
+		// whole action group and takes a line of its own, so this select alone made every backlog row
+		// three lines tall however much width the column had. Its intrinsic width is its longest
+		// option — 156px — and `min-w-0` from the shared chrome still lets it shrink below that.
 		<select
 			aria-label={`Status for ${id}`}
-			className={`${selectClass} w-full px-2`}
+			className={`${selectClass} px-2`}
 			disabled={disabled}
 			onChange={(event) =>
 				onStatusChange(feature, event.target.value as ProjectFeatureStatus)
@@ -245,24 +249,30 @@ export function WaitingApprovalFeatureActions({
 				<Check className="h-4 w-4" />
 				Approve
 			</Button>
-			<Input
-				aria-label={`Decision for ${id}`}
-				className="w-full min-w-0"
-				disabled={disabled}
-				onChange={(event) => onDecisionChange(event.target.value)}
-				placeholder="Decision"
-				value={decision}
-			/>
-			<Button
-				aria-label={`Approve ${id} with decision`}
-				disabled={disabled}
-				onClick={() => onApprove(feature, true)}
-				size="compact"
-				title="Approve with decision"
-				variant="secondary">
-				<ClipboardCheck className="h-4 w-4" />
-				Approve with decision
-			</Button>
+			{/* The field and the button that consumes it share a line. `w-full` on the Input took a
+			    line of its own and pushed the button onto a third, which is why a waiting-approval
+			    row was the tallest thing in the table. The pair keeps `flex-wrap`, so where the cell
+			    is narrower than the button it stacks instead of overflowing. */}
+			<div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+				<Input
+					aria-label={`Decision for ${id}`}
+					className="w-auto min-w-32 flex-1"
+					disabled={disabled}
+					onChange={(event) => onDecisionChange(event.target.value)}
+					placeholder="Decision"
+					value={decision}
+				/>
+				<Button
+					aria-label={`Approve ${id} with decision`}
+					disabled={disabled}
+					onClick={() => onApprove(feature, true)}
+					size="compact"
+					title="Approve with decision"
+					variant="secondary">
+					<ClipboardCheck className="h-4 w-4" />
+					Approve with decision
+				</Button>
+			</div>
 		</FeatureActionGroup>
 	);
 }

@@ -14,6 +14,11 @@
  *   full        package.json defines both names -> .githooks/pre-commit, byte-identical to aidd's
  *   guard-only  it does not                     -> .githooks/pre-commit-leak-guard-only, installed
  *                                                  as pre-commit; same guard, no static checks
+ *
+ * The two names themselves are no longer stated here. Choosing the variant belongs to the sync,
+ * which reads them from the `leak-guard-hooks` group's `requiresScripts` in
+ * `scripts/shared-core-manifest.json`; a second copy of that list here could disagree with the one
+ * that actually decides, and the disagreement would be invisible.
  */
 import { resolve } from 'node:path';
 
@@ -30,9 +35,6 @@ export const MARKER = 'bash .githooks/leak-guard.sh';
  * Deliberate, not inferred: see classifyHook for why content cannot decide it.
  */
 export const LOCAL_CHAIN = '# leak-guard: local chain, kept by hand';
-
-/** The names the full hook calls. `check:leak-guard` is the qc self-test, not a hook dependency. */
-export const CONTRACT = ['smoke:qc:fast', 'check:licenses'] as const;
 
 export const HOOK_FILES = ['leak-guard.sh', 'leak-guard-setup.sh'];
 

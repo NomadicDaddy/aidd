@@ -8,15 +8,6 @@ export const sh = (cwd: string, args: string[]): string => {
 	return p.success ? new TextDecoder().decode(p.stdout).trim() : '';
 };
 
-export const gitOk = (cwd: string, args: string[]): boolean =>
-	Bun.spawnSync(['git', ...args], { cwd, windowsHide: true }).success;
-
-/** Reported only, never used to filter: a repository with no remote today may have one tomorrow. */
-export const hasPushRemote = (dir: string): boolean =>
-	sh(dir, ['remote', '-v'])
-		.split('\n')
-		.some((l) => l.includes('(push)'));
-
 export type Scripts = Record<string, string>;
 
 /** `undefined` means no package.json at all, which is what selects the guard-only hook. */

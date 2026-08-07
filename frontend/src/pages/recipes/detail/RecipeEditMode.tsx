@@ -14,6 +14,7 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { moveStep, newStepDraft, type StepDraft, type StepJsonErrors } from '../recipe-steps.ts';
 import { RecipeStepEditor } from '../RecipeStepEditor.tsx';
 import { RecipeParametersCard } from './RecipeParametersCard.tsx';
@@ -97,7 +98,7 @@ export function RecipeEditMode({
 				}
 				breadcrumb={
 					<span className="flex items-center gap-2">
-						<Link className="hover:underline" to="/recipes">
+						<Link className={`hover:underline ${touchTargetTextClass}`} to="/recipes">
 							Recipes
 						</Link>
 						<span>/</span>

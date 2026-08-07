@@ -3,6 +3,8 @@ import { Link } from 'react-router';
 
 import type { ProjectActiveRunSummary } from '../../api/types.ts';
 
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
+
 export function ProjectActiveRunLink({
 	activeRuns,
 	className = '',
@@ -15,7 +17,7 @@ export function ProjectActiveRunLink({
 	return (
 		<Link
 			aria-label={`Open latest active run: ${label}`}
-			className={`inline-flex items-center gap-1.5 rounded text-amber-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 dark:text-amber-300 ${className}`}
+			className={`inline-flex items-center gap-1.5 rounded text-amber-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 dark:text-amber-300 ${touchTargetTextClass} ${className}`}
 			to={`/runs?run=${encodeURIComponent(activeRuns.latestRunId)}`}>
 			<LoaderCircle
 				aria-hidden="true"

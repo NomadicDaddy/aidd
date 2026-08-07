@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router';
 
 import { cn } from '../../lib/cn.ts';
+import { touchTargetRowClass } from '../../lib/touchTarget.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
 import { DOC_GROUP_ORDER, DOC_SECTIONS } from './docs-manifest.ts';
 
@@ -35,6 +36,12 @@ export function DocsSidebar({ instance }: { instance?: string }) {
 										className={({ isActive }) =>
 											cn(
 												'relative flex items-center rounded-lg px-3 py-1.5 text-sm font-medium',
+												// 32px at `py-1.5`, and on a phone this list is the
+												// only way into the docs. The row idiom, not the
+												// text one: `space-y-0.5` puts 2px between rows, so
+												// anything that borrowed space above would land its
+												// hit area on the section above it.
+												touchTargetRowClass,
 												'transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 												isActive
 													? 'bg-accent-muted text-accent-muted-foreground shadow-sm'

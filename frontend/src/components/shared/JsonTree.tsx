@@ -65,7 +65,7 @@ function JsonNode({
 	return (
 		<div className={depth === 0 ? '' : 'pl-4'}>
 			<button
-				className="inline-flex items-center gap-1 rounded text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				className="inline-flex items-center gap-1 rounded text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 				onClick={() => setExpanded((previous) => !previous)}
 				type="button">
 				<Chevron aria-hidden="true" className="h-3 w-3 shrink-0 text-muted-foreground" />

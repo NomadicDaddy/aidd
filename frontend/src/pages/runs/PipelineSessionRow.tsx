@@ -57,7 +57,11 @@ function SessionActions({
 		<div className="flex flex-nowrap gap-2">
 			<Link
 				aria-label={`View report for ${sessionContext}`}
-				className={cn(buttonClassName('secondary', 'h-8 w-8', 'icon'), 'shrink-0')}
+				// The `h-8 w-8` override stripped the `icon` size's `h-11 w-11` and left 32x32 on a
+				// phone — the smallest control in the app that is a real navigation action. The
+				// override is now `sm:` scoped, so the ACTIONS cell keeps its 32px pair at the
+				// widths the reasoning below is about, and the floor applies where there is no cell.
+				className={cn(buttonClassName('secondary', 'sm:h-8 sm:w-8', 'icon'), 'shrink-0')}
 				onClick={() =>
 					traceDataMovement({
 						category: 'event',

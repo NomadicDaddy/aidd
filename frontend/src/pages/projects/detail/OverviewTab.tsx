@@ -14,6 +14,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCount, formatRatio } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { touchTargetRowClass, touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { bucketLabels, formatAppVersion, formatTemplateVersion } from '../projects-list-shared.ts';
 import { ProjectStackDisplay } from '../ProjectStackDisplay.tsx';
 import { summarizeMetadataCoverage } from './metadataCoverage.ts';
@@ -23,7 +24,12 @@ import { projectDetailTabSearch } from './overviewLinks.ts';
 function LinkedValue({ children, to }: { children: ReactNode; to: string }) {
 	return (
 		<Link
-			className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+			// `max-sm:min-w-11` because the values here are things like `83`, `47` and `0/40`:
+			// measured 15.5px wide, the narrowest target left in the app and under the 24px
+			// AA minimum as well as the 44px one. It is the whole content of its `dd`, so the
+			// width it gains is empty space to the right of a number rather than a wedge
+			// driven into a line of text.
+			className={`rounded-sm text-accent underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none max-sm:min-w-11 ${touchTargetTextClass}`}
 			to={to}>
 			{children}
 		</Link>
@@ -46,7 +52,7 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 				const isCurrent = roadmap.currentMilestone === name;
 				return (
 					<Link
-						className="group flex items-center justify-between gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+						className={`group flex items-center justify-between gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${touchTargetRowClass}`}
 						key={name}
 						to={projectDetailTabSearch('features', { featureMilestone: name })}>
 						<div
@@ -87,7 +93,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 				<CardHeader
 					action={
 						<Link
-							className="flex min-w-0 flex-wrap items-center gap-1.5"
+							className={`flex min-w-0 flex-wrap items-center gap-1.5 ${touchTargetTextClass}`}
 							title={coverage.title}
 							to={projectDetailTabSearch('artifacts')}>
 							<span className="text-xs text-muted-foreground">{coverage.detail}</span>
@@ -161,7 +167,7 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 				<CardHeader
 					action={
 						<Link
-							className="text-xs text-accent underline-offset-2 hover:underline"
+							className={`text-xs text-accent underline-offset-2 hover:underline ${touchTargetTextClass}`}
 							to={projectDetailTabSearch('features')}>
 							View features
 						</Link>

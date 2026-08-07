@@ -11,6 +11,7 @@ import type {
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatCompactNumber, percent } from '../../lib/formatters.ts';
 import { toneSolid } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { artifactTone } from './projects-list-shared.ts';
 import { featureProgressColor } from './projects-list-visuals.ts';
 
@@ -90,7 +91,7 @@ function PortLabel({
 	if (listening === true) {
 		return (
 			<a
-				className={`underline-offset-2 hover:underline ${cls}`}
+				className={`underline-offset-2 hover:underline ${cls} ${touchTargetTextClass}`}
 				href={`http://localhost:${port}/`}
 				onClick={(event) => event.stopPropagation()}
 				rel="noreferrer"

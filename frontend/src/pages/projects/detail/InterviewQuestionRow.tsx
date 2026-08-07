@@ -55,7 +55,7 @@ export function InterviewQuestionRow({
 							? `Resume draft for question: ${question.prompt}`
 							: `Answer question: ${question.prompt}`
 					}
-					className="flex w-full flex-wrap items-center gap-2 rounded-md p-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:opacity-60"
+					className="flex w-full flex-wrap items-center gap-2 rounded-md p-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:opacity-60 max-sm:min-h-11"
 					disabled={pending}
 					onClick={onExpand}
 					type="button">

@@ -16,6 +16,7 @@ import {
 	formatTelemetryBucketLabel,
 } from '../../lib/formatters.ts';
 import { outcomeSolid, outcomeSolidHover } from '../../lib/series.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { ChartAxes } from './ChartAxes.tsx';
 import { niceAxisMax, singleSidedTicks } from './chartAxisScale.ts';
 import { TelemetryChartTable } from './TelemetryChartTable.tsx';
@@ -63,7 +64,7 @@ export function LeaderboardCard({ rows }: { rows: ResourceUsageRow[] }) {
 							<div className="flex items-baseline justify-between gap-3">
 								<div className="min-w-0">
 									<Link
-										className="truncate text-sm font-medium text-foreground hover:underline"
+										className={`truncate text-sm font-medium text-foreground hover:underline ${touchTargetTextClass}`}
 										to={resourceLink(row.resourceType, row.resourceId)}>
 										<span className="text-muted-foreground">#{index + 1}</span>{' '}
 										{row.resourceName}

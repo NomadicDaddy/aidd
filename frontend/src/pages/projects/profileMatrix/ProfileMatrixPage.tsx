@@ -15,6 +15,7 @@ import {
 	type SegmentedControlOption,
 } from '../../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle.ts';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { emptyMatrixFilters, filterMatrixRows } from './profileMatrixFilters.ts';
 import { ProfileMatrixMobileList } from './ProfileMatrixMobileList.tsx';
 import { compareProfileMatrixRows } from './profileMatrixSorting.ts';
@@ -117,7 +118,7 @@ export function ProfileMatrixPage() {
 					</div>
 				}
 				breadcrumb={
-					<Link className="hover:underline" to="/projects">
+					<Link className={`hover:underline ${touchTargetTextClass}`} to="/projects">
 						Projects
 					</Link>
 				}
@@ -126,7 +127,7 @@ export function ProfileMatrixPage() {
 						{projectList.length} discovered projects ·{' '}
 						{dirtyRows.length > 0 ? (
 							<button
-								className="underline underline-offset-2 hover:text-foreground"
+								className={`underline underline-offset-2 hover:text-foreground ${touchTargetTextClass}`}
 								onClick={revealFirstDirtyRow}
 								type="button">
 								{dirtyRows.length} unsaved profile edits

@@ -17,7 +17,7 @@ export function CommitChips({
 		<div className="flex flex-wrap gap-1.5">
 			{commits.map((commit) => (
 				<button
-					className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-left text-xs text-foreground transition-colors hover:border-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+					className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-left text-xs text-foreground transition-colors hover:border-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 					key={commit.hash}
 					onClick={() => onSelect(commit)}
 					title={`View changes for ${commit.hash}`}

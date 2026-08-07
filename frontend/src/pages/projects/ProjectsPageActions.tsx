@@ -51,7 +51,9 @@ export function ProjectsPageActions({
 			</Button>
 			<Link
 				aria-label="Open profile matrix"
-				className={buttonClassName('secondary')}
+				// Icon-only below `lg`, so `px-3` around a 16px glyph left it 42px wide against a
+				// 44px height. `min-w-11` rather than a width, so the label still sizes it at `lg`.
+				className={buttonClassName('secondary', 'max-sm:min-w-11')}
 				to="/projects/profile-matrix">
 				<List className="h-4 w-4" />
 				<span className="hidden lg:inline">Profile Matrix</span>

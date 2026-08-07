@@ -33,7 +33,7 @@ export function WorkingTreeList({
 				const status = describeWorkingTreeFile(file);
 				return (
 					<Card key={file.path} variant="panel">
-						<label className="flex items-start gap-3">
+						<label className="flex items-start gap-3 max-sm:min-h-11">
 							<Checkbox
 								aria-label={`Select ${file.path}`}
 								checked={selected.has(file.path)}

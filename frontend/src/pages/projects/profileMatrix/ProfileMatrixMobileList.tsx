@@ -13,6 +13,7 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import { toneBorder } from '../../../lib/tones.ts';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { profileFacets } from '../detail/profile/profile-facets.ts';
 import {
 	formatUpdatedAt,
@@ -63,7 +64,10 @@ export function ProfileMatrixMobileList({
 						    are a row under it now, where they wrap into the width they need. */}
 						<h2 className="text-sm font-semibold text-foreground">
 							<Link
-								className="block truncate hover:underline"
+								// A two-character project name (`g5`) measured 17.9px wide. The link
+								// is the sole child of its heading, so the horizontal floor costs
+								// nothing here.
+								className={`block truncate hover:underline max-sm:min-w-11 ${touchTargetTextClass}`}
 								to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
 								{row.project.name}
 							</Link>

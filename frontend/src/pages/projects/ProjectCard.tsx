@@ -11,6 +11,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatRelativeAge, percent } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
 import { ProjectCardMetrics } from './ProjectCardMetrics.tsx';
@@ -65,7 +66,10 @@ export function ProjectCard({
 						) : null}
 						{detailHref ? (
 							<Link
-								className="-my-1 truncate rounded py-1 hover:underline focus-visible:underline focus-visible:outline-none"
+								// 20.4px wide for a short project name, under the 24px AA minimum. The
+								// link is last in its heading row, so the width it gains extends the
+								// hit area into space the card already had.
+								className={`-my-1 truncate rounded py-1 hover:underline focus-visible:underline focus-visible:outline-none max-sm:min-w-11 ${touchTargetTextClass}`}
 								to={detailHref}>
 								{project.name}
 							</Link>

@@ -38,7 +38,7 @@ export function SortableColumnHeader<Key extends string>({
 			scope="col">
 			<button
 				aria-label={`Sort by ${label}${isActive ? ` (${activeDir})` : ''}`}
-				className={`inline-flex cursor-pointer items-center gap-1 rounded-sm text-left whitespace-nowrap uppercase underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none ${
+				className={`inline-flex cursor-pointer items-center gap-1 rounded-sm text-left whitespace-nowrap uppercase underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none max-sm:min-h-11 ${
 					isActive ? 'text-foreground' : 'text-muted-foreground'
 				}`}
 				onClick={() => onSort(sortKey)}

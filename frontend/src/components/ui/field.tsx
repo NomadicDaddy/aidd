@@ -119,7 +119,12 @@ export function FieldCheckbox({
 	return (
 		<label
 			className={cn(
-				'flex gap-2 rounded-md border px-3 py-2',
+				// `max-sm:min-h-11` on the label, not the box. The 16px `<input>` cannot carry the
+				// touch floor itself — Chrome drops padding on a native checkbox — and it does not
+				// need to: this row is already its hit area, so raising the row raises the target.
+				// Measured at 390 the no-description variant sat at 36px (`min-h-9`), which is what
+				// put 70 checkboxes under the floor across the settings and audits surfaces.
+				'flex gap-2 rounded-md border px-3 py-2 max-sm:min-h-11',
 				description ? 'items-start' : 'min-h-9 items-center',
 				toned ? `${toneBorder.amber} ${toneSurface.amber}` : 'border-border',
 				className,

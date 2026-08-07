@@ -82,7 +82,7 @@ function ProviderCard({
 			<button
 				aria-controls={panelId}
 				aria-expanded={open}
-				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center"
+				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none max-sm:min-h-11 sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center"
 				onClick={() => setOpen((current) => !current)}
 				type="button">
 				<span className="flex min-w-0 items-center gap-2">

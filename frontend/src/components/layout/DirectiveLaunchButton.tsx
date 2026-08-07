@@ -21,7 +21,15 @@ export function DirectiveLaunchButton({
 	return (
 		<Button
 			aria-label="Launch a project directive"
-			className={cn('px-0', collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3')}
+			// `w-11` below `sm`, `w-10` from there. The `default` size already reaches `min-h-11` on
+			// a phone, so the `w-10` this carried made it 40x44 — a control that took the floor on
+			// one axis and missed it on the other, which is exactly the shape the guard could not
+			// see: its regex reads the first quoted string in a `cn(...)` call, and `w-10` was in
+			// the second.
+			className={cn(
+				'px-0',
+				collapsed ? 'w-11 sm:w-10' : 'w-11 sm:w-full sm:justify-start sm:px-3',
+			)}
 			onClick={onClick}
 			type="button"
 			variant="secondary">

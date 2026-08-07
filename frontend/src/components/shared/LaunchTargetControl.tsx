@@ -9,6 +9,7 @@ import { useLaunchDefaults } from '../../hooks/useLaunchDefaults.ts';
 import { backendOptions } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { Button } from '../ui/button.tsx';
 import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
@@ -112,6 +113,11 @@ export function LaunchTargetControl({
 				aria-haspopup="dialog"
 				className={cn(
 					'inline-flex max-w-full flex-wrap items-center gap-1.5 border text-xs transition-colors',
+					// `max-sm:min-h-11` on both size variants: this is a bordered control that opens a
+					// dialog, so it takes the floor the way the `Button` scale does — by growing —
+					// rather than by borrowing space it may share with the label beside it. Measured
+					// at 28-36px depending on whether the summary wrapped.
+					'max-sm:min-h-11',
 					size === 'control' ? 'h-9 rounded-lg px-2.5' : 'min-h-7 rounded-md px-1.5 py-1',
 					display.custom
 						? 'border-accent bg-accent-muted text-accent-muted-foreground'
@@ -199,7 +205,7 @@ export function LaunchTargetControl({
 
 	const resetButton = display.custom ? (
 		<button
-			className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+			className={`inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground ${touchTargetTextClass}`}
 			onClick={() => onChange({})}
 			type="button">
 			<RotateCcw aria-hidden="true" className="h-3 w-3" />

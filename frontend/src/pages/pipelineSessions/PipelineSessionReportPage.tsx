@@ -16,6 +16,7 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
 import { usePipelineSessionReport, usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { SessionSummaryCard } from './SessionSummaryCard.tsx';
 import { buildStepRows, ExecutedStepRow, PendingStepRow } from './StepRows.tsx';
 
@@ -57,7 +58,7 @@ export function PipelineSessionReportPage() {
 
 	const backLink = (
 		<Link
-			className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+			className={`inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground ${touchTargetTextClass}`}
 			to="/runs">
 			<ArrowLeft className="h-4 w-4" />
 			Runs
@@ -101,7 +102,7 @@ export function PipelineSessionReportPage() {
 					) : undefined
 				}
 				breadcrumb={
-					<Link className="hover:underline" to="/runs">
+					<Link className={`hover:underline ${touchTargetTextClass}`} to="/runs">
 						Runs
 					</Link>
 				}

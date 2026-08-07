@@ -98,7 +98,9 @@ export function LaunchTargetsCard({
 							id={PANEL_ID}>
 							{visible.map((project) => (
 								<label
-									className="flex min-w-0 items-start gap-2 rounded-md p-1 text-sm hover:bg-muted/60"
+									// `max-sm:min-h-11` on the label: the 16px checkbox inside it cannot
+									// carry the floor itself, and this row already is its hit area.
+									className="flex min-w-0 items-start gap-2 rounded-md p-1 text-sm hover:bg-muted/60 max-sm:min-h-11"
 									key={project.id}>
 									<Checkbox
 										checked={selectedProjectIds.includes(project.id)}

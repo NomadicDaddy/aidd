@@ -16,6 +16,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import {
 	buildHistoryEvents,
 	filterHistoryEvents,
@@ -52,7 +53,7 @@ function HistoryEventRow({
 			<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 				<Badge tone={event.badgeTone}>{event.badge}</Badge>
 				<Link
-					className="font-medium text-foreground hover:underline"
+					className={`font-medium text-foreground hover:underline ${touchTargetTextClass}`}
 					to={eventLink(event, projectPath)}>
 					{event.title}
 				</Link>

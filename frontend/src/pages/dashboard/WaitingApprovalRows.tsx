@@ -14,6 +14,7 @@ import {
 	useUpdateProjectFeatureStatus,
 } from '../../hooks/useProjectFeatures.ts';
 import { formatRelativeAge } from '../../lib/formatters.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 /** Item kinds that can appear in the waiting-approval queue. */
 export type WaitingApprovalKind = 'run' | 'suggestion' | 'waiting_feature';
@@ -195,7 +196,7 @@ export function BlockedRunRow({ run, showKind }: { run: RunRecord; showKind: boo
 				reasoningEffort={run.reasoningEffort}
 			/>
 			<Link
-				className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+				className={`mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline ${touchTargetTextClass}`}
 				to={`/runs?run=${encodeURIComponent(run.id)}`}>
 				View run
 				<ArrowRight className="h-3.5 w-3.5" />

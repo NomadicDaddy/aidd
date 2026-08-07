@@ -33,6 +33,7 @@ import {
 	useProjectReports,
 } from '../../hooks/useProjects.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { ActiveRunsBanner } from './detail/ActiveRunsBanner.tsx';
 import { ArtifactsTab } from './detail/ArtifactsTab.tsx';
 import { AuditsTab } from './detail/AuditsTab.tsx';
@@ -102,7 +103,7 @@ export function ProjectDetailPage() {
 		return (
 			<div className="space-y-5">
 				<Link
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+					className={`inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground ${touchTargetTextClass}`}
 					to="/projects">
 					<ArrowLeft className="h-4 w-4" />
 					Projects
@@ -137,7 +138,9 @@ export function ProjectDetailPage() {
 					</div>
 				}
 				breadcrumb={
-					<Link className="inline-flex items-center gap-1 hover:underline" to="/projects">
+					<Link
+						className={`inline-flex items-center gap-1 hover:underline ${touchTargetTextClass}`}
+						to="/projects">
 						<ArrowLeft className="h-3.5 w-3.5" />
 						Projects
 					</Link>

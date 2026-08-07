@@ -162,7 +162,7 @@ export function DropdownMenu({ align = 'end', className, items, trigger }: Dropd
 						return (
 							<button
 								className={cn(
-									'flex w-full items-center gap-2 px-3 py-2 text-left text-sm outline-none',
+									'flex w-full items-center gap-2 px-3 py-2 text-left text-sm outline-none max-sm:min-h-11',
 									'focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-inset',
 									toneClass[tone],
 									isDisabled && 'cursor-not-allowed opacity-60',

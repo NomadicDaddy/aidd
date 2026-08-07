@@ -3,6 +3,7 @@ import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { lazy, Suspense } from 'react';
 import { Link } from 'react-router';
 
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { docSectionBySlug } from '../../pages/docs/docs-manifest.ts';
 import { IconButton } from '../ui/button.tsx';
 import { Dialog } from '../ui/dialog.tsx';
@@ -60,7 +61,7 @@ export function HelpDrawer({
 				</div>
 				<div className="border-t border-border bg-muted/80 px-5 py-3">
 					<Link
-						className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/80"
+						className={`inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/80 ${touchTargetTextClass}`}
 						onClick={onClose}
 						to={`/docs/${slug}`}>
 						<ExternalLink className="h-3.5 w-3.5" />

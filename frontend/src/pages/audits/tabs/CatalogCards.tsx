@@ -2,7 +2,7 @@ import type { AuditDefinition } from '../../../api/types.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
-import { touchTargetBoxClass } from '../../../lib/touchTarget.ts';
+import { touchTargetBoxClass, touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import {
 	auditFileName,
 	bandTone,
@@ -45,8 +45,10 @@ export function CatalogCards({
 		<div className="space-y-2 xl:hidden">
 			{definitions.length > 0 ? (
 				<div className="flex justify-end">
+					{/* A real bordered button, so it takes the floor by raising its own height the way
+					    every `Button` size does. At `py-1.5` it measured 30px. */}
 					<button
-						className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+						className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted max-sm:min-h-11"
 						onClick={allSelected ? onClearAll : onSelectAll}
 						type="button">
 						{allSelected ? 'Unselect All' : 'Select All'}
@@ -66,17 +68,26 @@ export function CatalogCards({
 								{/* The one checkbox in the app with no `<label>` around it: the card's
 								    text is a button that opens the audit, so it cannot also toggle
 								    selection. With no label to enlarge, the 16px box is the whole
-								    target and its hit area has to grow around it. */}
-								<Checkbox
-									aria-label={`Select ${item.name} for launch`}
-									checked={selectedAuditNames.includes(item.name)}
-									className={`mt-1 ${touchTargetBoxClass}`}
-									disabled={!item.enabled}
-									onChange={() => onToggleSelected(item.name)}
-								/>
+								    target and its hit area has to grow around it — so this adds the
+								    label the card does not otherwise need, purely as the hit area.
+								    The expansion cannot go on the `<input>`: Chrome drops padding on
+								    a native checkbox, so it stayed 16x16 while the negative margin
+								    pulled it into its neighbours. */}
+								<label className={`mt-1 ${touchTargetBoxClass}`}>
+									<Checkbox
+										aria-label={`Select ${item.name} for launch`}
+										checked={selectedAuditNames.includes(item.name)}
+										disabled={!item.enabled}
+										onChange={() => onToggleSelected(item.name)}
+									/>
+								</label>
+								{/* `max-sm:min-h-11`, not the text expansion: this button is two stacked
+								    lines and already has a height (40px), so it takes the floor the
+								    same way the `Button` scale does. The text expansion is for a
+								    glyph-height box with no height to raise. */}
 								<button
 									aria-pressed={active}
-									className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+									className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 									onClick={() => onSelect(item.name)}
 									type="button">
 									<span className="block font-medium text-foreground">
@@ -133,8 +144,14 @@ export function CatalogCards({
 									{bucketsColumnLabel}
 								</dt>
 								<dd>
+									{/* The smallest target measured anywhere in the app: a one- or
+									    two-digit count, 16px tall and as little as 7px wide. The text
+									    expansion gives it the vertical axis; the horizontal one it
+									    does not address, so `min-w-11` supplies it. No negative
+									    margin is needed there — this `dd` spans both grid columns and
+									    the digit has nothing beside it to displace. */}
 									<button
-										className="text-xs text-accent tabular-nums hover:underline"
+										className={`text-xs text-accent tabular-nums hover:underline max-sm:min-w-11 ${touchTargetTextClass}`}
 										onClick={(event) => {
 											event.stopPropagation();
 											onJumpToMatrix();

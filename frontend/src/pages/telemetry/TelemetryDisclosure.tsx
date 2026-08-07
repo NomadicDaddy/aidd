@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 
 import { Card } from '../../components/ui/card.tsx';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 function DisclosureItem({ children, title }: { children: string; title: string }) {
 	return (
@@ -69,7 +70,7 @@ export function TelemetryDisclosure() {
 			</details>
 			<div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
 				<Link
-					className="font-medium text-accent hover:underline"
+					className={`font-medium text-accent hover:underline ${touchTargetTextClass}`}
 					to="/settings?tab=control-panel">
 					View system and browser metrics
 				</Link>

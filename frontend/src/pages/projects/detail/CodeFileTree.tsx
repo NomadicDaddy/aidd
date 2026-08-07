@@ -11,6 +11,7 @@ import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { cn } from '../../../lib/cn.ts';
 import { formatBytes } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { touchTargetRowClass } from '../../../lib/touchTarget.ts';
 import { codeBrowserScrollerClass } from './codeBrowserHeight.ts';
 import {
 	ancestorDirs,
@@ -24,8 +25,7 @@ import { buildTree, cappedChildren, matchesQuery, sortedChildren } from './codeT
 
 // One row treatment for both kinds. The per-row `border-b` is gone: ~500 full-width hairlines inside
 // a bordered box inside a bordered pane fought the indentation that actually conveys the hierarchy.
-const rowClass =
-	'flex w-full items-center gap-2 rounded-sm py-1.5 pr-3 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none';
+const rowClass = `flex w-full items-center gap-2 rounded-sm py-1.5 pr-3 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none ${touchTargetRowClass}`;
 
 function FileTreeNode({
 	depth,

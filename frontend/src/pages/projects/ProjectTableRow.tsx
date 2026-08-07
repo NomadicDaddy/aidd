@@ -8,6 +8,7 @@ import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatRelativeAge } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
 import {
@@ -85,7 +86,7 @@ export function ProjectTableRow({
 						/>
 					) : null}
 					<Link
-						className="font-medium text-foreground hover:underline"
+						className={`font-medium text-foreground hover:underline ${touchTargetTextClass}`}
 						to={`/projects/${encodeURIComponent(project.routeId)}`}>
 						{project.name}
 					</Link>

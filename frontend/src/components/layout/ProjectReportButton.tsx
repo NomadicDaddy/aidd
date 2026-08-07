@@ -106,9 +106,11 @@ export function ProjectReportButton({ collapsed }: { collapsed: boolean }) {
 		<>
 			<Button
 				aria-label="Report a bug or request a feature"
+				// See `DirectiveLaunchButton`: 40x44 before this, the rail's other half of the same
+				// pair.
 				className={cn(
 					'px-0',
-					collapsed ? 'w-10' : 'w-10 sm:w-full sm:justify-start sm:px-3',
+					collapsed ? 'w-11 sm:w-10' : 'w-11 sm:w-full sm:justify-start sm:px-3',
 				)}
 				onClick={() => setOpen(true)}
 				onClickCapture={() =>

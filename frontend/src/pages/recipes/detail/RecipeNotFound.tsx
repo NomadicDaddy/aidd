@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { PageHeader } from '../../../components/shared/PageHeader.tsx';
 import { buttonClassName } from '../../../components/ui/button.tsx';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 
 export function RecipeNotFound() {
 	return (
@@ -13,7 +14,7 @@ export function RecipeNotFound() {
 		<div className="space-y-5">
 			<PageHeader
 				breadcrumb={
-					<Link className="hover:text-foreground" to="/recipes">
+					<Link className={`hover:text-foreground ${touchTargetTextClass}`} to="/recipes">
 						Recipes
 					</Link>
 				}

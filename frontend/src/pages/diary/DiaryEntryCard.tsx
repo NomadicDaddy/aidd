@@ -8,6 +8,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { formatDate } from '../../lib/formatters.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
 
 export function DiaryEntryCard({
@@ -25,7 +26,7 @@ export function DiaryEntryCard({
 					<div className="mb-1 flex flex-wrap items-center gap-2">
 						{showProject ? (
 							<Link
-								className="text-xs font-medium text-accent hover:underline"
+								className={`text-xs font-medium text-accent hover:underline ${touchTargetTextClass}`}
 								to={`/projects/${encodeURIComponent(entry.projectId)}`}>
 								{entry.projectName}
 							</Link>
@@ -60,7 +61,7 @@ export function DiaryEntryCard({
 					/>
 					{entry.generatedBy ? (
 						<Link
-							className="mt-3 inline-block text-xs text-muted-foreground hover:underline"
+							className={`mt-3 text-xs text-muted-foreground hover:underline ${touchTargetTextClass}`}
 							to={`/pipeline-sessions/${entry.generatedBy}`}>
 							View generating run
 						</Link>

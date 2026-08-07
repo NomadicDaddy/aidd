@@ -6,6 +6,7 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { cn } from '../../lib/cn.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { proseMeasureCardClass } from '../../lib/typography.ts';
 import { getDocBody } from './docs-content.ts';
 import { DEFAULT_DOC_SLUG, docSectionBySlug } from './docs-manifest.ts';
@@ -26,7 +27,9 @@ export function DocsPage() {
 			    section context the generic title used to carry. */}
 			<PageHeader
 				breadcrumb={
-					<Link className="hover:text-foreground" to={`/docs/${DEFAULT_DOC_SLUG}`}>
+					<Link
+						className={`hover:text-foreground ${touchTargetTextClass}`}
+						to={`/docs/${DEFAULT_DOC_SLUG}`}>
 						Docs
 					</Link>
 				}
@@ -82,7 +85,7 @@ export function DocsPage() {
 								<EmptyState
 									action={
 										<Link
-											className="font-medium text-accent underline underline-offset-2"
+											className={`font-medium text-accent underline underline-offset-2 ${touchTargetTextClass}`}
 											to={`/docs/${DEFAULT_DOC_SLUG}`}>
 											Back to Getting started
 										</Link>

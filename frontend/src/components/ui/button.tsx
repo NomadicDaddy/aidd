@@ -29,12 +29,19 @@ const variants: Record<ButtonVariant, string> = {
 
    The floor is `min-h-*` rather than `h-*` on purpose: a control that wraps to two lines on a narrow
    viewport has to be allowed to grow past the floor. `sm:min-h-0` then hands the height back to
-   `sm:h-*`, which is what keeps the desk layout pixel-identical. */
+   `sm:h-*`, which is what keeps the desk layout pixel-identical.
+
+   `max-sm:min-w-11` is the same floor on the other axis, and only `icon` had it. The three padded
+   sizes take their width from their content, so a short label missed the floor horizontally while
+   clearing it vertically: measured at 390, `Refresh`-style icon-in-a-compact-button came out 36x44
+   and the `7d` / `All` / `24h` range pickers 35.7-36.7x44. Twenty-five such controls across ten
+   surfaces, all fixed here rather than at the call sites, because the call sites were not doing
+   anything wrong. A label wide enough to pass already exceeds the minimum, so nothing else moves. */
 const sizes: Record<ButtonSize, string> = {
-	compact: 'min-h-11 gap-1.5 px-2.5 text-xs sm:min-h-8',
-	default: 'min-h-11 gap-2 px-3 text-sm sm:h-9 sm:min-h-0',
+	compact: 'min-h-11 gap-1.5 px-2.5 text-xs max-sm:min-w-11 sm:min-h-8',
+	default: 'min-h-11 gap-2 px-3 text-sm max-sm:min-w-11 sm:h-9 sm:min-h-0',
 	icon: 'h-11 w-11 shrink-0 px-0 sm:h-9 sm:w-9',
-	toolbar: 'min-h-11 gap-2 px-3 text-sm sm:h-10 sm:min-h-0',
+	toolbar: 'min-h-11 gap-2 px-3 text-sm max-sm:min-w-11 sm:h-10 sm:min-h-0',
 };
 
 /* A blocked action has to look blocked. Call sites signal it two ways — the native `disabled`

@@ -14,6 +14,7 @@ import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdenti
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatDate, formatDuration } from '../../lib/formatters.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { InvocationDetails } from './InvocationDetails.tsx';
 
 const columns = ['Resource', 'Source', 'Project', 'Started', 'Duration', 'Status', 'Details'];
@@ -94,7 +95,7 @@ function InvocationResource({ invocation }: { invocation: InvocationRecord }) {
 			{invocation.parentResourceName && invocation.parentResourceType ? (
 				<div className="text-xs text-muted-foreground">
 					<Link
-						className="hover:underline"
+						className={`hover:underline ${touchTargetTextClass}`}
 						to={resourceLink(
 							invocation.parentResourceType,
 							invocation.parentResourceId ?? '',
@@ -105,7 +106,7 @@ function InvocationResource({ invocation }: { invocation: InvocationRecord }) {
 				</div>
 			) : null}
 			<Link
-				className="font-medium text-foreground hover:underline"
+				className={`font-medium text-foreground hover:underline ${touchTargetTextClass}`}
 				to={resourceLink(invocation.resourceType, invocation.resourceId)}>
 				{invocation.resourceName}
 			</Link>

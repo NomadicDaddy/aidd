@@ -8,6 +8,7 @@ import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { formatUsageBadge, formatUsageBadgeCompact } from '../../lib/usageBadge.ts';
 import {
 	recipeParameterCountExplainer,
@@ -77,7 +78,7 @@ export function RecipeCard({
 				identifier={recipe.id}
 				title={
 					<Link
-						className="hover:underline"
+						className={`hover:underline ${touchTargetTextClass}`}
 						title={recipe.name}
 						to={`/recipes/${recipe.id}`}>
 						{recipe.name}
@@ -203,7 +204,7 @@ export function RecipeTable({
 											className="px-3 py-2"
 											title={recipe.description ?? 'No description'}>
 											<Link
-												className="font-medium text-foreground hover:underline"
+												className={`font-medium text-foreground hover:underline ${touchTargetTextClass}`}
 												to={`/recipes/${recipe.id}`}>
 												{recipe.name}
 											</Link>

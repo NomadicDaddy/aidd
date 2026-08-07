@@ -24,7 +24,7 @@ export function FacetCard({
 						return (
 							<label
 								className={cn(
-									'flex cursor-pointer items-start gap-3 rounded-md border p-2.5 transition-colors',
+									'flex cursor-pointer items-start gap-3 rounded-md border p-2.5 transition-colors max-sm:min-h-11',
 									// Tokens, not palette steps: the hand-picked teal did not match
 									// --accent-muted, so a selected option here read a different
 									// green-teal than the selected tab pill directly above it.

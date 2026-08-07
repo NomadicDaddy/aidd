@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { toneText, toneTextHoverStrong } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 type CardVariant = 'default' | 'panel' | 'sunken';
 
@@ -127,6 +128,10 @@ export function CardHeader({
  */
 export const cardHeaderLinkClass = [
 	'inline-flex shrink-0 items-center gap-1 rounded-md text-sm font-medium',
+	// A card header's action sits alone on its row, so the touch floor costs nothing here: the
+	// expansion is vertical and the negative margin cancels it, leaving the header's own height
+	// unchanged. Measured at 20px before this.
+	touchTargetTextClass,
 	toneText.teal,
 	'transition-colors outline-none',
 	toneTextHoverStrong.teal,

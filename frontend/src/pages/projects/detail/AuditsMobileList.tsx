@@ -70,7 +70,8 @@ export function AuditsMobileList({
 				return (
 					<div className="rounded-md border border-border p-3" key={entry.name}>
 						<div className="flex items-start justify-between gap-2">
-							<label className="flex min-w-0 items-start gap-2">
+							{/* The label is the checkbox's hit area; raise the label, not the box. */}
+							<label className="flex min-w-0 items-start gap-2 max-sm:min-h-11">
 								<Checkbox
 									aria-label={`Select ${entry.name}`}
 									checked={selected.includes(entry.name)}

@@ -16,6 +16,7 @@ import {
 	executionIdentityModelCatalog,
 	executionIdentityReasoningCatalog,
 } from '../../lib/executionIdentity.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 const cliCatalog = [...backendOptions.map(({ value }) => value), 'direct'] as const;
 
@@ -131,7 +132,9 @@ export function ExecutionIdentityBadgeLabPage() {
 		<div className="page-reveal space-y-5">
 			<PageHeader
 				breadcrumb={
-					<Link className="hover:underline" to={FRONTEND_ROUTE_PATHS.settings}>
+					<Link
+						className={`hover:underline ${touchTargetTextClass}`}
+						to={FRONTEND_ROUTE_PATHS.settings}>
 						Settings
 					</Link>
 				}

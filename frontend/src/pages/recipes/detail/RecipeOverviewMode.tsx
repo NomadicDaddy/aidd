@@ -13,6 +13,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { DropdownMenu } from '../../../components/ui/dropdown-menu.tsx';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { sectionCaptionClass } from '../../../lib/typography.ts';
 import { RecipeLaunchPanel } from '../RecipeLaunchPanel.tsx';
 import { RecipeContractBadges, RecipePolicyBadges } from '../RecipeMetadataBadges.tsx';
@@ -75,7 +76,7 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 					</div>
 				}
 				breadcrumb={
-					<Link className="hover:underline" to="/recipes">
+					<Link className={`hover:underline ${touchTargetTextClass}`} to="/recipes">
 						Recipes
 					</Link>
 				}

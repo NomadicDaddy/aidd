@@ -5,6 +5,7 @@ import type { FeatureStatusType } from '../../api/types.ts';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { humanizeEnum } from '../../lib/formatters.ts';
+import { touchTargetRowClass } from '../../lib/touchTarget.ts';
 import { priorityLabel, priorityTone } from './dashboard-shared.ts';
 
 export interface FeatureStatusRow {
@@ -72,7 +73,7 @@ function FeatureStatusCardRow({ row }: { row: FeatureStatusRow }) {
 		<div className="flex items-start justify-between gap-3 py-2.5" role="listitem">
 			<div className="min-w-0">
 				<Link
-					className="group block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+					className={`group block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${touchTargetRowClass}`}
 					to={rowLink(row)}>
 					<span className="block truncate font-medium text-accent group-hover:underline">
 						{row.directory}
@@ -120,7 +121,7 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 							</td>
 							<td className="px-3 py-2">
 								<Link
-									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+									className="group block max-w-[28rem] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background max-sm:min-h-11"
 									to={rowLink(row)}>
 									<span className="block truncate font-medium text-accent group-hover:underline">
 										{row.directory}

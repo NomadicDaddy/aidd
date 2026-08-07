@@ -53,7 +53,7 @@ function DiffFileSection({
 	return (
 		<section className="overflow-hidden rounded-md border border-border" ref={sectionRef}>
 			<button
-				className="flex w-full items-center gap-2 bg-muted px-3 py-2 text-left hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				className="flex w-full items-center gap-2 bg-muted px-3 py-2 text-left hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 				onClick={onToggle}
 				type="button">
 				<Chevron
@@ -209,7 +209,7 @@ export function CommitDiffDialog({
 						<div className="flex flex-wrap gap-1.5">
 							{parsed.files.map((file, index) => (
 								<button
-									className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-2 py-0.5 text-left font-mono text-[0.7rem] text-muted-foreground hover:border-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+									className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-2 py-0.5 text-left font-mono text-[0.7rem] text-muted-foreground hover:border-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 									key={`${file.displayPath}-${index}`}
 									onClick={() => jumpToFile(index)}
 									type="button">

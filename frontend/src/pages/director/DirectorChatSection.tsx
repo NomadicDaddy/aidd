@@ -15,6 +15,7 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 export type ChatSession = { id: string; title: string; updatedAt: number };
 export type ChatMessage = {
@@ -46,7 +47,7 @@ function ChatActionTrail({ actions }: { actions: ChatAgentAction[] }) {
 						<span className="min-w-0 truncate">{action.summary}</span>
 						{runHref && (
 							<Link
-								className="inline-flex shrink-0 items-center gap-1 font-medium text-accent hover:underline"
+								className={`inline-flex shrink-0 items-center gap-1 font-medium text-accent hover:underline ${touchTargetTextClass}`}
 								to={runHref}>
 								<ExternalLink className="h-3 w-3" />
 								run
@@ -165,7 +166,7 @@ export function DirectorChatSection({
 										key={session.id}>
 										<button
 											aria-current={isActive ? 'true' : undefined}
-											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none max-sm:min-h-11"
 											onClick={() => onSelectSession(session.id)}
 											type="button">
 											<div className="truncate font-medium">

@@ -68,7 +68,7 @@ export function ColumnChooser({
 						<div className="flex flex-col gap-1.5">
 							{options.map((option) => (
 								<label
-									className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+									className="flex cursor-pointer items-center gap-2 text-sm text-foreground max-sm:min-h-11"
 									key={option.key}>
 									<Checkbox
 										checked={selected.has(option.key)}

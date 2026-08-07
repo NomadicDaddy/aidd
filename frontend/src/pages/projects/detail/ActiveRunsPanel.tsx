@@ -11,6 +11,7 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useNow } from '../../../hooks/useNow.ts';
 import { formatActiveDuration, formatDate } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { runRuntimeDetail, runSourceLabel } from '../../runs/runRowUtils.ts';
 
 function statusTone(status: RunRecord['status']): 'amber' | 'emerald' | 'neutral' | 'red' {
@@ -104,7 +105,7 @@ export function ActiveRunsPanel({
 									<div className="flex min-w-0 items-center gap-1.5">
 										<Link
 											aria-label={`Open run ${run.id} in Live Console`}
-											className="font-mono text-xs text-foreground hover:underline"
+											className={`font-mono text-xs text-foreground hover:underline ${touchTargetTextClass}`}
 											to={liveConsoleHref(run.id)}>
 											{run.id}
 										</Link>
@@ -157,7 +158,7 @@ export function ActiveRunsPanel({
 						<div className="flex min-w-0 items-center gap-1.5">
 							<Link
 								aria-label={`Open run ${run.id} in Live Console`}
-								className="min-w-0 truncate font-mono text-xs text-foreground hover:underline"
+								className={`min-w-0 truncate font-mono text-xs text-foreground hover:underline ${touchTargetTextClass}`}
 								to={liveConsoleHref(run.id)}>
 								{run.id}
 							</Link>

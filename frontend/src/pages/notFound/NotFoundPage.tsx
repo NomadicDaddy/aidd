@@ -5,6 +5,7 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 export function NotFoundPage() {
 	useDocumentTitle('Not Found');
@@ -15,7 +16,7 @@ export function NotFoundPage() {
 			    breadcrumb slot so the card can hold exactly one emphasised recovery action. */}
 			<PageHeader
 				breadcrumb={
-					<Link className="hover:text-foreground" to="/">
+					<Link className={`hover:text-foreground ${touchTargetTextClass}`} to="/">
 						Dashboard
 					</Link>
 				}

@@ -6,6 +6,7 @@ import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIde
 import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { recentMetadataActivity } from './recentActivityItems.ts';
 import { RECENT_ACTIVITY_LIMIT, runStatusTone } from './shared.ts';
 
@@ -25,7 +26,7 @@ export function RecentActivity({
 			<CardHeader
 				action={
 					<Link
-						className="text-xs text-muted-foreground hover:underline"
+						className={`text-xs text-muted-foreground hover:underline ${touchTargetTextClass}`}
 						to={`/runs?project=${encodeURIComponent(projectPath)}`}>
 						View all runs
 					</Link>

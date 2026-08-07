@@ -84,6 +84,12 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:backend-cli-boundary',
 	},
 	{
+		command: ['bun', 'run', 'check:no-inline-references'],
+		description: 'Drizzle foreign keys are declared as named constraints (DATA-008)',
+		label: 'check:no-inline-references',
+		name: 'check:no-inline-references',
+	},
+	{
 		command: ['bun', 'run', 'check:schema-parity'],
 		description: 'The migrations produce the database the Drizzle schema declares (DATA-006)',
 		label: 'check:schema-parity',

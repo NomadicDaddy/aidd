@@ -40,45 +40,47 @@ Steps (in order):
     - Direct Git subprocesses hide their Windows console window (SEC-006).
 10. `bun run check:backend-cli-boundary`
     - aidd-backend never imports aidd-cli, which would close a cycle (QUAL-004).
-11. `bun run check:schema-parity`
+11. `bun run check:no-inline-references`
+    - Drizzle foreign keys are declared as named constraints (DATA-008).
+12. `bun run check:schema-parity`
     - The migrations produce the database the Drizzle schema declares (DATA-006).
-12. `bun run check:feature-integration`
+13. `bun run check:feature-integration`
     - Every route plugin and page is registered somewhere (QUAL-004).
-13. `bun run check:artifact-parity`
+14. `bun run check:artifact-parity`
     - artifacts.md is the whole .aidd catalog and scaffolding/.gitignore its projection.
-14. `bun run check:audit-artifact-hygiene`
+15. `bun run check:audit-artifact-hygiene`
     - Audit findings stay distinct, well-formed, and never future-dated (BEH-004).
-15. `bun run check:audit-profile-mapping`
+16. `bun run check:audit-profile-mapping`
     - The audit profile mapping parses and every audit it names exists.
-16. `bun run check-application`
+17. `bun run check-application`
     - Databases and runtime state live in the repository-root data/ tree (DATA-001).
-17. `bun run check-deps`
+18. `bun run check-deps`
     - Workspaces agree on each shared dependency and the lockfile parses (QUAL-003).
-18. `bun run check:dead-code`
+19. `bun run check:dead-code`
     - knip finds no unused files, exports, or dependencies.
-19. `bun run self-contained`
+20. `bun run self-contained`
     - Every path a standalone checkout needs is present, with no sibling-tree references.
-20. `bun run check:licenses`
+21. `bun run check:licenses`
     - Every package in the resolved closure has a recognized license and a notice.
-21. `bun run prompt:snapshot:check`
+22. `bun run prompt:snapshot:check`
     - The committed prompt snapshots match what the prompt sources compile to.
-22. `bun run check:leak-guard`
+23. `bun run check:leak-guard`
     - The commit-time leak guard still blocks every secret shape it claims to.
-23. `bun run check:shared-core`
+24. `bun run check:shared-core`
     - Every shared file is byte-identical in the repositories the manifest sends it to.
-24. `bun run format:check`
+25. `bun run format:check`
     - Prettier reports no formatting drift.
-25. `bun run typecheck`
+26. `bun run typecheck`
     - The root and frontend TypeScript projects compile with no errors.
-26. `bun run lint`
+27. `bun run lint`
     - Every workspace passes ESLint, uncached so the type-aware rules are authoritative.
-27. `bun run test:coverage`
+28. `bun run test:coverage`
     - The bun:test suite passes and coverage stays above its thresholds.
-28. `bun run build:frontend`
+29. `bun run build:frontend`
     - The Vite production build of the web surface succeeds.
-29. `bun run verify-minification`
+30. `bun run verify-minification`
     - Frontend assets are minified and the bundle stays inside its byte budget.
-30. `bun run check:critical-path`
+31. `bun run check:critical-path`
     - The first load keeps its preloaded-chunk shape, not only its byte total (WEB-001).
 
 ## Fast gate (`bun run smoke:qc:fast`)

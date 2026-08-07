@@ -135,6 +135,14 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/check-max-lines.ts',
 		'package.json',
 	],
+	// Narrower than check:schema-parity's list on purpose: this gate reads the schema's source text
+	// and nothing else, so migrations and the parity lib are not inputs. `backend/src/db/schema-pg/`
+	// does not exist here and is not listed; a glob for it would hash to nothing either way.
+	'check:no-inline-references': [
+		'backend/src/db/schema/**/*.ts',
+		'package.json',
+		'scripts/check-no-inline-references.ts',
+	],
 	'check:schema-parity': [
 		'backend/src/db/**/*.ts',
 		'backend/src/db/migrations/**/*.sql',

@@ -94,6 +94,7 @@
 		"check:licenses": "bun run check:license-core && bun scripts/generate-third-party-licenses.ts --check",
 		"check:release-notices": "bun scripts/check-release-notices.ts",
 		"check:max-lines": "bun scripts/check-max-lines.ts",
+		"check:no-inline-references": "bun scripts/check-no-inline-references.ts",
 		"check:schema-parity": "bun scripts/check-schema-parity.ts",
 		"check:script-targets": "bun scripts/check-script-targets.ts",
 		"check:shared-core": "bun scripts/sync-shared-core.ts --check",

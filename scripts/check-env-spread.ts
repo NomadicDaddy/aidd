@@ -20,6 +20,8 @@ import { cwd, exit } from 'node:process';
  * This file is delivered by `sync-shared-core.ts`, so its output names no repository and its scan
  * roots are the union across carriers: a root that does not exist here is skipped rather than
  * failed, which is what lets one copy serve a repository with a `cli/` package and one without.
+ * Skipping every root is a different case and fails, because a pass over zero files is a pass
+ * earned by looking at nothing.
  * Lines that legitimately need to discuss the pattern (such as this file's own scanner table) are
  * exempt via the line-level `allow-env-spread-policy` marker, which should carry a comment saying
  * why that particular process needs the whole environment.
@@ -86,6 +88,7 @@ function scanFile(relPath: string, text: string): Finding[] {
 
 export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 	const findings: Finding[] = [];
+	let examined = 0;
 	for (const root of scannedRoots) {
 		const fullRoot = join(projectRoot, root);
 		try {
@@ -95,6 +98,7 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 		}
 		const files = await collectFiles(fullRoot);
 		for (const file of files) {
+			examined++;
 			const text = await readFile(file, 'utf8');
 			const relPath = relative(projectRoot, file).split(sep).join('/');
 			findings.push(...scanFile(relPath, text));
@@ -113,7 +117,18 @@ export async function runCheckEnvSpread(projectRoot = cwd()): Promise<number> {
 		return 1;
 	}
 
-	console.log('[OK] env-spread check passed.');
+	// Skipping an absent root is deliberate (see `scannedRoots`), but skipping every one of them
+	// means this file was delivered somewhere none of the layouts it knows about exist. Reporting
+	// `[OK]` there would be a pass earned by looking at nothing.
+	if (examined === 0) {
+		console.error(
+			`[FAIL] No files were examined. None of the scanned roots exist under ${projectRoot}: ` +
+				`${scannedRoots.join(', ')}.`,
+		);
+		return 1;
+	}
+
+	console.log(`[OK] env-spread check passed (${examined} file(s) examined).`);
 	return 0;
 }
 

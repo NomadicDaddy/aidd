@@ -76,6 +76,23 @@ describe('check-env-spread tool', () => {
 		}
 	});
 
+	/**
+	 * Skipping an absent root is what lets one delivered copy serve a carrier with a `cli/` package
+	 * and one without. Skipping every root is a different thing entirely, and it used to print
+	 * `[OK]`. `check:gate-conventions` cannot catch that -- the anti-vacuity rule "has no static
+	 * form" -- so it has to be caught here.
+	 */
+	test('fails rather than passing when no root exists', async () => {
+		const tmp = await testTempDir('aidd-env-spread-empty-');
+		try {
+			const { exitCode, stderr } = await captureStderr(() => runCheckEnvSpread(tmp));
+			expect(exitCode).toBe(1);
+			expect(stderr).toContain('No files were examined');
+		} finally {
+			await rm(tmp, { force: true, recursive: true });
+		}
+	});
+
 	test('honors the allow-env-spread-policy marker', async () => {
 		const tmp = await testTempDir('aidd-env-spread-marker-');
 		try {

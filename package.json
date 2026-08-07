@@ -94,6 +94,7 @@
 		"check:release-notices": "bun scripts/check-release-notices.ts",
 		"check:max-lines": "bun scripts/check-max-lines.ts",
 		"check:schema-parity": "bun scripts/check-schema-parity.ts",
+		"check:script-targets": "bun scripts/check-script-targets.ts",
 		"check:shared-core": "bun scripts/sync-shared-core.ts --check",
 		"check:standalone": "bun scripts/check-standalone.ts",
 		"check:web-db-integrity": "bun scripts/check-web-db-integrity.ts",

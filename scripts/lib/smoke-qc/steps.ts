@@ -23,6 +23,11 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:max-lines',
 	},
 	{
+		command: ['bun', 'run', 'check:script-targets'],
+		label: 'check:script-targets',
+		name: 'check:script-targets',
+	},
+	{
 		command: ['bun', 'run', 'test:gate-conventions'],
 		label: 'test:gate-conventions',
 		name: 'test:gate-conventions',

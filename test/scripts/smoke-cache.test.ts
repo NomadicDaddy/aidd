@@ -302,6 +302,7 @@ describe('smoke cache', () => {
 		expect(parseSmokeQcArgs(['--cache-status']).cacheStatus).toBe(true);
 		expect(SMOKE_QC_STEPS.map((step) => step.label)).toEqual([
 			'check:max-lines',
+			'check:script-targets',
 			// The meta-gate's own self-test runs first: a broken rule library would otherwise be
 			// reported as gate violations.
 			'test:gate-conventions',

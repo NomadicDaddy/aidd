@@ -13,6 +13,16 @@ This skill is a thin wrapper around the general `tester` skill. `tester` owns th
 exploration, evidence capture, scripted cases, validation, and output. This file supplies the
 Spernakit-specific answers to the questions `tester` would otherwise have to discover.
 
+## Usage
+
+```
+spernakit-tester [app] [url] [--scope <route-prefix|workflow>] [--role <role>]
+                 [--scenarios <path|id,id>]
+```
+
+- Zero args → infer the app from the current repository and use the general `tester` defaults.
+- Arguments have the same meanings as `tester`; this wrapper only adds the bindings below.
+
 ## How to run
 
 1. Load the staged `tester` contract from `.aidd/skills/tester/SKILL.md` (or

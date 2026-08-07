@@ -20,7 +20,7 @@ dispositions. Never decline the review because the target is not Spernakit-deriv
 ## Usage
 
 ```
-audit-finding-review [app-name]
+audit-finding-review [app]
 ```
 
 If no app name is provided, infer it from the current repository or use the sole eligible application

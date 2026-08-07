@@ -26,6 +26,24 @@ Every command, path, and reporting channel below is discovered from the target p
 assume a script exists because another project has one. A project that defines fewer gates than
 another is still fully in scope; say which were available and which ran.
 
+## Usage
+
+```
+tester [app] [url] [--scope <route-prefix|workflow>] [--role <role>]
+       [--scenarios <path|id,id>]
+```
+
+- Zero args → infer the app from the current repository, the URL from its dev configuration, and
+  run the full user-accessible application anonymously. Use the project scenario catalog when it
+  exists; otherwise run exploratory coverage.
+- `[app]` → application name or path. A supplied URL does not replace the application context.
+- `[url]` → explicit reachable base URL. If omitted, use the target project's dev configuration.
+- `--scope` → limit coverage to a route prefix or named workflow.
+- `--role` → test as the named authorized role. Credentials still come from the user or project
+  test configuration; never place them in the invocation.
+- `--scenarios` → Markdown scenario file or comma-separated scenario IDs. Inline cases in the
+  request are also valid scripted coverage.
+
 ## Inputs
 
 Resolve these values before testing:

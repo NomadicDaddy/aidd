@@ -12,13 +12,12 @@ Review the dirty tree for an aidd-managed application, split related work into c
 ## Usage
 
 ```
-commit-bundles <app-name-or-path>
-commit-bundles <app-name-or-path> --dry-run
+commit-bundles <app> [--dry-run]
 ```
 
 ## Arguments
 
-- `<app-name-or-path>` - Target app from `<applications-root>/AGENTS.md` or an explicit project path.
+- `<app>` - Target app from `<applications-root>/AGENTS.md` or an explicit project path.
 - `--dry-run` - Group and describe bundles without committing.
 
 ## Workflow

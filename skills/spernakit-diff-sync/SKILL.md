@@ -27,6 +27,17 @@ Map the two skills' classifications as follows:
 | Reusable enhancement or fix | Enhancement or bug fix                   |
 | App-only utility            | No equivalent; do not backport           |
 
+## Usage
+
+```
+spernakit-diff-sync <app> <target...>
+```
+
+- `<app>` → derived application name or path.
+- `<target...>` → one or more files, file pairs, features, or drift areas to compare.
+- Resolve the Spernakit repository and the app's baseline version from the workspace and its
+  `package.json`; do not require them as duplicate invocation arguments.
+
 ## Inputs and Preconditions
 
 Resolve these values before comparing files:

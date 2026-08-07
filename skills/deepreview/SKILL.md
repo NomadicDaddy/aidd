@@ -11,6 +11,16 @@ metadata:
 Perform an exhaustive review of the requested change set, reconcile independent perspectives, and
 apply confirmed in-scope fixes directly. Prefer `review` for a routine focused pass.
 
+## Usage
+
+```
+deepreview [boundary] [focus]
+```
+
+- Zero args → review the current unit of work using the resolution rules below.
+- `[boundary]` → base ref, commit, commit range, or path.
+- `[focus]` → optional review emphasis stated in plain language.
+
 ## Inputs
 
 Accept an optional base ref, commit range, path, or focus area. When none is supplied, review all

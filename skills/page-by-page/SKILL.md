@@ -16,7 +16,7 @@ consolidate by cause rather than by page — does not change with it.
 ## Usage
 
 ```
-page-by-page [app] "<review question>" [--url <base>] [--scope <nav-group|prefix>] [--features]
+page-by-page [app] "<question>" [--url <base>] [--scope <nav-group|prefix>] [--features]
 ```
 
 ```

@@ -12,7 +12,7 @@ Thoroughly review the commit history of a specified application for recurring pa
 ## Usage
 
 ```
-commit-archaeology <app-name> [--since <date>] [--path <subpath>]
+commit-archaeology <app> [--since <date>] [--path <path>]
 ```
 
 - **app-name** _(required)_: Application name from `<applications-root>/AGENTS.md`

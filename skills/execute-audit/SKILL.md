@@ -14,14 +14,14 @@ Run an aidd audit against a local project through audit mode, preserving reports
 ## Usage
 
 ```
-execute-audit <app-name-or-path> <AUDIT_NAME>
-execute-audit <app-name-or-path> --audit-all
+execute-audit <app> <audit-name>
+execute-audit <app> --audit-all
 ```
 
 ## Arguments
 
-- `<app-name-or-path>` - Target app from `<applications-root>/AGENTS.md` or an explicit path containing `.aidd/`.
-- `<AUDIT_NAME>` - Audit definition name from `<aidd-root>/audits/`, without `.md`.
+- `<app>` - Target app from `<applications-root>/AGENTS.md` or an explicit path containing `.aidd/`.
+- `<audit-name>` - Audit definition name from `<aidd-root>/audits/`, without `.md`.
 - `--audit-all` - Run the applicable audit set through aidd's profile-aware audit selection.
 
 ## Workflow

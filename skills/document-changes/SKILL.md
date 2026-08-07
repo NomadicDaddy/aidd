@@ -19,8 +19,7 @@ logical bundles. It does not modify product code, and it does not push or tag.
 ## Usage
 
 ```
-document-changes
-document-changes <aidd-root>
+document-changes [app]
 ```
 
 ## Inputs

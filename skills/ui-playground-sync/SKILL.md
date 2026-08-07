@@ -10,6 +10,20 @@ metadata:
 Create or update a fixture-backed design playground without changing the source site. Preserve
 the site's frontend structure so reviewed designer work can return as a scoped diff.
 
+## Usage
+
+```
+ui-playground-sync [site-or-playground-path] [--ref <source-ref>]
+                   [--paths <path,...>]
+```
+
+- Zero args → use the current repository as the source and its sibling
+  `<site-name>-ui-playground` as the destination.
+- `[site-or-playground-path]` → source site or existing playground path.
+- `--ref` → exact source ref to copy. Default is the source `HEAD`.
+- `--paths` → comma-separated tracked paths to copy. Default is the frontend plus required
+  workspace packages.
+
 ## Inputs
 
 Resolve:

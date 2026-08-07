@@ -37,6 +37,17 @@ manifest is missing one or contains a non-semver value. `spernakit/spernakit.psd
 do not hardcode app counts, lists, or individual app slugs elsewhere. `spernakit-lite` apps are out
 of default scope; include only when explicitly passed via `--scope`.
 
+## Usage
+
+```
+spernakit-dance [bump-hint] [--scope <app,...>] [--pilot <app>]
+                [--skip-parts <A,B,C,D>] [--resume-from <A|B|C|D>] [--dry-run]
+```
+
+- Zero args → infer the bump from Git history and process all pinned derived apps.
+- `[bump-hint]` → `+0.0.1` or `+0.1.0`.
+- Flags use the defaults and meanings in the Arguments table below.
+
 ## Arguments
 
 | Arg                    | Default                              | Purpose                                                                                                                                                             |

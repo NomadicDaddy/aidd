@@ -10,6 +10,16 @@ metadata:
 Classify every difference between selected Spernakit template files and their derived-application
 counterparts.
 
+## Usage
+
+```
+spernakit-justify-diffs <app> [file-pair...]
+```
+
+- `<app>` → derived application name or path.
+- `[file-pair...]` → one or more canonical/derived file pairs. If omitted, use the selected
+  template-managed worklist supplied by the invoking workflow.
+
 ## Inputs
 
 - Resolve the canonical Spernakit file and each derived counterpart.

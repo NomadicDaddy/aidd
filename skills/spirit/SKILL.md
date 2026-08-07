@@ -9,6 +9,16 @@ metadata:
 
 Judge whether the current changes satisfy the task's intent, not merely its literal wording.
 
+## Usage
+
+```
+spirit [boundary] [focus]
+```
+
+- Zero args → resolve the current unit of work using the rules below.
+- `[boundary]` → base ref, commit, commit range, or path.
+- `[focus]` → optional review emphasis stated in plain language.
+
 ## Inputs
 
 Accept an optional base ref, commit range, path, or review focus. When none is supplied, resolve

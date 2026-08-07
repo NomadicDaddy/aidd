@@ -15,8 +15,7 @@ UI delta, validate the site, and synchronize the playground to the resulting sit
 
 ```text
 ui-playground-apply [site-or-playground-path]
-ui-playground-apply [site-or-playground-path] --apply
-ui-playground-apply [site-or-playground-path] --apply --no-commit
+ui-playground-apply [site-or-playground-path] --apply [--no-commit]
 ```
 
 Run without `--apply` to produce a read-only review. End that invocation after reporting the exact

@@ -13,16 +13,16 @@ Convert prose documents (interview responses, audit narratives, analysis reports
 ## Usage
 
 ```
-doc2feature <document-path | directory> [app-name]
+doc2feature <document-path-or-directory> [app]
 ```
 
-- `<document-path | directory>`: Path to the prose document to process (markdown, text, or
+- `<document-path-or-directory>`: Path to the prose document to process (markdown, text, or
   similar), **or** a directory of prose documents. When a directory is given (e.g. an interview's
   `.aidd/responses/`), process every `*.md` inside it as one combined claim corpus — read them all,
   extract claims across the whole set, and deduplicate claims that recur between files. A pure index
   file (a table of links with no prose answers, such as `.aidd/responses.md`) is not a source
   document; skip it and read the files it links instead.
-- `[app-name]`: Optional. If omitted, infer it from a document/directory path under
+- `[app]`: Optional. If omitted, infer it from a document/directory path under
   `<applications-root>/<app-name>/.aidd/responses/`. If inference fails, return a usage error with
   the discovered candidate paths.
 

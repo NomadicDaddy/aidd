@@ -9,6 +9,15 @@ metadata:
 
 Verify that a file's actual implementation matches what it should be doing based on its context.
 
+## Usage
+
+```
+reality-check <file-path>
+```
+
+- `<file-path>` → file to evaluate, relative to the current repository or absolute.
+- If the request does not resolve exactly one file, return a usage error with the candidates.
+
 ## Process
 
 1. **Infer purpose first**: Before reading the target file, review the surrounding codebase and project structure to form a logic inference of the file's purpose and intended functionality

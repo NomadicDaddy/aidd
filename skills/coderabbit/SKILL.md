@@ -15,10 +15,10 @@ this skill on projects whose owner is comfortable with that.
 ## Usage
 
 ```
-coderabbit [appname] [base]
+coderabbit [app] [base-ref]
 ```
 
-If `[appname]` is omitted, infer from the current working directory. `[base]` is the branch to
+If `[app]` is omitted, infer from the current working directory. `[base-ref]` is the branch to
 compare against; when omitted, use `main` if it exists (locally or as `origin/main`), otherwise
 `master`.
 
@@ -43,7 +43,7 @@ compare against; when omitted, use `main` if it exists (locally or as `origin/ma
 
 ### Step 1: Resolve scope
 
-- Determine the base ref: use the `[base]` argument if provided; otherwise `main` (local or
+- Determine the base ref: use the `[base-ref]` argument if provided; otherwise `main` (local or
   `origin/main`), else `master`. If none exists, review only uncommitted changes.
 - Confirm there is something to review (`git status --porcelain` and
   `git log <base>..HEAD --oneline`). If both are empty, report "nothing to review" and stop.

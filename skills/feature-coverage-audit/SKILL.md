@@ -18,10 +18,7 @@ feature metadata syntax and roadmap contracts.
 ## Usage
 
 ```text
-feature-coverage-audit [app-name-or-path]
-feature-coverage-audit --report-only
-feature-coverage-audit --apply
-feature-coverage-audit --include-completed
+feature-coverage-audit [app] [--report-only|--apply] [--include-completed]
 ```
 
 ## Modes

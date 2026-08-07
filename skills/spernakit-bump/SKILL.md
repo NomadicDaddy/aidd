@@ -10,6 +10,16 @@ metadata:
 
 Ship a new Spernakit template version from `<spernakit-root>`, validate the template, update template metadata, and publish the release tag.
 
+## Usage
+
+```
+spernakit-bump [bump-hint]
+```
+
+- Zero args → infer the bump from commits since the previous tag.
+- `[bump-hint]` → `+0.0.1` or `+0.1.0`. The hint overrides automatic sizing but does not skip
+  validation or publication.
+
 ## Target
 
 Spernakit template codebase:

@@ -9,6 +9,15 @@ metadata:
 
 Compare an application's settings UI with its runtime configuration sources.
 
+## Usage
+
+```
+check-settings [app]
+```
+
+- Zero args → use the current repository.
+- `[app]` → application name or path.
+
 ## Inputs
 
 - Resolve the target application and every settings route or component.

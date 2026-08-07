@@ -15,9 +15,11 @@ surfaced in the web control panel's per-project **Diary** tab and the global **D
 ## Usage
 
 ```
-diary-entry
-diary-entry --date 2026-06-12
+diary-entry [--date <YYYY-MM-DD>]
 ```
+
+- Zero args → write the entry for the current date.
+- `--date` → write the entry for the specified calendar date.
 
 ## Target File
 

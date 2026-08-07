@@ -51,6 +51,10 @@ All notable public aidd releases are documented here.
 
 ### Changed
 
+- Argument-taking bundled skills now publish the same parseable `Usage` contract: a fenced
+  invocation beginning with the skill id, `<required>` and `[optional]` placeholders, documented
+  flags, and explicit zero-argument defaults where supported. Catalog coverage prevents implicit
+  prose-only contracts such as the former `tester` inputs from returning.
 - Skill definitions are write-intentional by default. Execution intent is a permission rather than
   an instruction, so a skill body that declared its own read-only boundary kept it under both
   intents and made `apply-changes` a silent no-op. Six review skills now state the fix and apply it,

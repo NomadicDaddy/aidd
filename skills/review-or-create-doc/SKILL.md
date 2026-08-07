@@ -9,9 +9,20 @@ metadata:
 
 Ensure a specified document is accurate and aligned with the current state of the application. If the document does not yet exist, create it from the current application state instead of reporting it as missing.
 
+## Usage
+
+```
+review-or-create-doc [app] <document-path>
+```
+
+- `[app]` → application name or path. If omitted, use the current repository.
+- `<document-path>` → document to review or create, relative to the resolved application or
+  absolute. A path that already includes the app directory resolves both values.
+
 ## Process
 
-1. **Resolve the target**: Identify the document from `$ARGUMENTS`. When the argument is an application name rather than a file path, scope the work to that application's documentation directory.
+1. **Resolve the target**: Identify the document and application from the invocation. When the
+   optional app is supplied, scope relative document paths to that application's directory.
 2. **Check existence**:
     - If the document exists, run the review branch below.
     - If the document does not exist, run the create branch below.

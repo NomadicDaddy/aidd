@@ -13,8 +13,7 @@ Assess a derived application against the Spernakit template, identify all drift,
 ## Usage
 
 ```
-spernakit-template-refactor [appname]
-spernakit-template-refactor [appname] --pairs (explicit file pairs mode)
+spernakit-template-refactor [app] [--pairs]
 ```
 
 - **Full assessment mode** (default): Assess an entire derived app against Spernakit, generate a remediation plan and feature files, then execute.
@@ -40,7 +39,8 @@ Drift must be meaningful, deliberate, and necessary for the derived application'
 Determine the input mode based on user's request:
 
 1. **Full assessment mode** (default):
-    - User asks for the aidd-local `spernakit-template-refactor` skill for an app or says "Refactor [appname]"
+    - User asks for the aidd-local `spernakit-template-refactor` skill for an app or says
+      "Refactor [app]"
     - Proceed to Phase 1 (Codebase Assessment)
 
 2. **Explicit pairs mode**:

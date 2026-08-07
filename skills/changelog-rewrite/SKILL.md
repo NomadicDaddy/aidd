@@ -13,8 +13,7 @@ Replace a mechanically generated changelog (one version bump per feature/vertica
 ## Usage
 
 ```
-changelog-rewrite
-changelog-rewrite <applications-root>/myapp
+changelog-rewrite [app]
 ```
 
 ## Inputs

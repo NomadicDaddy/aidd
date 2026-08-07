@@ -11,6 +11,16 @@ metadata:
 Upgrade a derived application to a target Spernakit version while preserving domain-specific
 behavior and intentional template overrides.
 
+## Usage
+
+```
+spernakit-template-upgrade <app> --to <target-version>
+```
+
+- `<app>` → derived application name or path.
+- `<target-version>` → Spernakit tag or version to adopt. Resolve the current version from the
+  derived application's `package.json`.
+
 ## Inputs
 
 - Resolve the derived application, current template version, and target template version.

@@ -11,7 +11,12 @@ Fetch a GitHub issue by number, verify it's a real issue, and fix it if valid.
 
 ## Usage
 
-This skill accepts a GitHub issue number as input (for example, `123`).
+```
+gh-issue [issue-number]
+```
+
+- `[issue-number]` → GitHub issue number. If omitted, infer one unambiguous issue reference from
+  the branch, commits, or current pull request; otherwise return a usage error.
 
 ## Instructions
 

@@ -21,6 +21,17 @@ normal and fully in scope.
 The one genuine precondition is that reports exist and can be read. If no intake yields any
 report, say so and stop; that, not the absence of a particular API, is the reason to decline.
 
+## Usage
+
+```
+bug2feature [app] [--report-ids <id,...>]
+```
+
+- Zero args → infer the app from the current repository and process the available unread reports.
+- `[app]` → application name or path.
+- `--report-ids` → comma-separated intake identifiers. If omitted, process the applicable
+  available reports from the resolved intake.
+
 ## Inputs
 
 - Resolve the target application and, when supplied, the report IDs to process.

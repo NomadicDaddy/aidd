@@ -15,7 +15,7 @@ Execute the HYGIENE audit as defined in `.aidd/audits/HYGIENE.md` (staged into t
 ## Usage
 
 ```
-hygiene <app-name-or-path>
+hygiene <app>
 ```
 
 Resolve the target app locally, then run aidd audit mode from `<aidd-root>`:

@@ -19,9 +19,7 @@ Invoking this skill authorizes its commit, push, tag, release, and publish steps
 ## Usage
 
 ```
-cut-release
-cut-release <repo-path>
-cut-release <repo-path> --dry-run
+cut-release [repo-path] [--dry-run]
 ```
 
 `--dry-run` runs Phase 0 and prints the plan, then stops. Nothing is written, pushed, or tagged.

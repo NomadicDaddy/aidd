@@ -14,7 +14,7 @@ decision, and apply the evidence-backed edits directly.
 ## Usage
 
 ```
-spernakit-organize-ui [appname...]
+spernakit-organize-ui [app...]
 ```
 
 - Zero args → infer the target from a cwd under `<applications-root>/<app-name>`. If cwd is the

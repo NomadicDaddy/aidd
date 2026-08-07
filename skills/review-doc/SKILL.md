@@ -9,6 +9,16 @@ metadata:
 
 Review a specified document for accuracy and alignment with the current state of the application.
 
+## Usage
+
+```
+review-doc [app] <document-path> [instructions]
+```
+
+- `[app]` → application name or path. If omitted, use the current repository.
+- `<document-path>` → document to review, relative to the resolved application or absolute.
+- `[instructions]` → optional review or correction emphasis stated in plain language.
+
 ## Process
 
 1. **Resolve the target**: Identify the document and the application state it describes.

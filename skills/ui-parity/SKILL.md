@@ -13,7 +13,7 @@ Compare a **reference** codebase (old version, backup, or pre-rebuild snapshot) 
 
 ```
 ui-parity
-ui-parity <applications-root>/myapp.old <applications-root>/myapp
+ui-parity <reference-path> <current-path>
 ```
 
 ## Inputs

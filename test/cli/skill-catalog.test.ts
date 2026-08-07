@@ -103,6 +103,67 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'validate-tests': 'runtime',
 } as const satisfies Readonly<Record<string, (typeof skillCategories)[number]>>;
 
+// Argument-taking skills must expose the same parseable synopsis contract used by
+// frontend-design-sweep. Keep this list explicit so a skill cannot quietly accept prose-only
+// inputs that the catalog UI cannot present.
+const ARGUMENT_ACCEPTING_SKILL_IDS = new Set([
+	'audit-finding-review',
+	'audit-review',
+	'bug2feature',
+	'changelog-rewrite',
+	'check-settings',
+	'codebase-analysis',
+	'coderabbit',
+	'coderabbit-pr',
+	'commit-archaeology',
+	'commit-bundles',
+	'consolidate-features',
+	'cut-release',
+	'deepreview',
+	'deployment-readiness',
+	'diary-entry',
+	'doc2feature',
+	'document-changes',
+	'execute-audit',
+	'feature-coverage-audit',
+	'feature-review-all',
+	'frontend-design-sweep',
+	'gh-issue',
+	'hygiene',
+	'loopover',
+	'onboarding-interview',
+	'page-by-page',
+	'page-header-audit',
+	'promote-remediation',
+	'rbac',
+	'reality-check',
+	'refactor',
+	'repo-governance-audit',
+	'review',
+	'review-doc',
+	'review-or-create-doc',
+	'spec',
+	'spernakit-apply-ui',
+	'spernakit-bump',
+	'spernakit-dance',
+	'spernakit-diff-sync',
+	'spernakit-justify-diffs',
+	'spernakit-organize-ui',
+	'spernakit-template-refactor',
+	'spernakit-template-upgrade',
+	'spernakit-tester',
+	'spirit',
+	'summarize-iterations',
+	'tester',
+	'testing-scenarios',
+	'ui-parity',
+	'ui-playground-apply',
+	'ui-playground-sync',
+	'ui-redesign-planner',
+	'update-roadmap',
+	'update-screen-map',
+]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -429,6 +490,41 @@ describe('skill catalog', () => {
 				);
 			}
 		}
+		expect(errors).toEqual([]);
+	});
+
+	test('argument-taking skills publish a consistent usage synopsis', async () => {
+		const skills = await listSkillDefinitions(process.cwd());
+		const errors: string[] = [];
+		const skillIds = new Set(skills.map((skill) => skill.id));
+
+		for (const skillId of ARGUMENT_ACCEPTING_SKILL_IDS) {
+			if (!skillIds.has(skillId)) errors.push(`${skillId} is not a bundled skill`);
+		}
+
+		for (const skill of skills) {
+			if (!ARGUMENT_ACCEPTING_SKILL_IDS.has(skill.id)) continue;
+			if (!skill.usage) {
+				errors.push(`${skill.id} is missing a Usage synopsis`);
+				continue;
+			}
+			if (!skill.body.match(/^## Usage\s*\r?\n\r?\n```(?:text)?\r?\n/m)) {
+				errors.push(`${skill.id} Usage must begin with a fenced invocation synopsis`);
+			}
+			if (!skill.usage.trimStart().startsWith(skill.id)) {
+				errors.push(`${skill.id} Usage must start with its skill id`);
+			}
+			if (!/(?:<[^>]+>|\[[^\]]+\]|--[a-z])/.test(skill.usage)) {
+				errors.push(`${skill.id} Usage does not declare any arguments`);
+			}
+			if (skill.usage.includes(`/${skill.id}`)) {
+				errors.push(`${skill.id} Usage must not use a provider-specific slash prefix`);
+			}
+			if (/\{[a-z][^}]*\}/i.test(skill.usage)) {
+				errors.push(`${skill.id} Usage must use <required> or [optional] placeholders`);
+			}
+		}
+
 		expect(errors).toEqual([]);
 	});
 

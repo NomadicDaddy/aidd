@@ -15,7 +15,7 @@ Produce a structured report, apply supported updates directly, and verify the re
 ## Usage
 
 ```
-audit-review [AUDIT_NAME]
+audit-review [audit-name]
 ```
 
 If no audit name is provided, process every audit under `<aidd-root>/audits/` except

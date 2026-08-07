@@ -14,14 +14,27 @@ test client.
 
 This skill only creates and edits the scenario catalog. Do not execute the scenarios.
 
+## Usage
+
+```
+testing-scenarios [app] [--mode <seed|augment|refresh>] [--count <n>]
+                    [--focus <area>]
+```
+
+- `[app]` → application name or path. If omitted, use the current repository when it uniquely
+  resolves the target; otherwise return a usage error.
+- `--mode` → catalog operation. Default is `augment`, or `seed` when the catalog is missing.
+- `--count` → number of scenarios to add. Defaults are defined in Setup.
+- `--focus` → limit new scenarios to the named feature area or executable surface.
+
 ## Setup
 
-| Parameter | Default                                                | Example override                     |
-| --------- | ------------------------------------------------------ | ------------------------------------ |
-| **App**   | _(required)_                                           | `<app-name>`                         |
-| **Mode**  | `augment`                                              | `seed`, `augment`, `refresh`         |
-| **Count** | `5` (augment) / `10` (seed) / match existing (refresh) | `15`                                 |
-| **Focus** | whole app                                              | `focus: workflow builder, analytics` |
+| Parameter | Default                                                | Example override                        |
+| --------- | ------------------------------------------------------ | --------------------------------------- |
+| **App**   | current repository when uniquely resolvable            | `<app-name>`                            |
+| **Mode**  | `augment`                                              | `seed`, `augment`, `refresh`            |
+| **Count** | `5` (augment) / `10` (seed) / match existing (refresh) | `15`                                    |
+| **Focus** | whole app                                              | `--focus "workflow builder, analytics"` |
 
 ### Modes
 
@@ -211,7 +224,7 @@ aidd-local `spernakit-tester` skill only when the target is Spernakit or derived
 **Augment with default count:**
 
 ```
-testing-scenarios <app-name>
+testing-scenarios <app>
 ```
 
 Reads the app's blueprint and existing 15 scenarios, identifies about five gaps, and appends
@@ -220,7 +233,7 @@ scenarios 16-20.
 **Seed a fresh catalog:**
 
 ```
-testing-scenarios <app-name> seed 15
+testing-scenarios <app> --mode seed --count 15
 ```
 
 Creates `.aidd/testing-scenarios.md` from scratch with 15 scenarios covering major features and all
@@ -229,7 +242,7 @@ applicable interfaces, roles, contract boundaries, and persistent effects.
 **Focused generation:**
 
 ```
-testing-scenarios <app-name> focus: compliance, migration assessment
+testing-scenarios <app> --focus "compliance, migration assessment"
 ```
 
 Generates scenarios concentrated on the named focus areas, even if overall coverage is already high.
@@ -237,7 +250,7 @@ Generates scenarios concentrated on the named focus areas, even if overall cover
 **Refresh:**
 
 ```
-testing-scenarios spernakit refresh
+testing-scenarios spernakit --mode refresh
 ```
 
 Rewrite Spernakit's scenario list from scratch. Print the plan, then write it directly.

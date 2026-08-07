@@ -13,7 +13,7 @@ Create detailed feature specifications with comprehensive context analysis and t
 ## Usage
 
 ```
-spec [feature description or "what's next?"]
+spec [feature-description]
 ```
 
 ## Instructions

@@ -13,13 +13,12 @@ roadmap conventions.
 ## Usage
 
 ```
-update-roadmap <app-name-or-path>
-update-roadmap <app-name-or-path> --dry-run
+update-roadmap <app> [--dry-run]
 ```
 
 ## Arguments
 
-- `<app-name-or-path>` - Target app from `<applications-root>/AGENTS.md` or an explicit path containing `.aidd/features`.
+- `<app>` - Target app from `<applications-root>/AGENTS.md` or an explicit path containing `.aidd/features`.
 - `--dry-run` - Report intended roadmap changes before writing.
 
 ## Workflow

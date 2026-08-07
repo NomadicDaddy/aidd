@@ -12,7 +12,7 @@ Perform safe, context-aware code refactoring with comprehensive impact analysis 
 ## Usage
 
 ```
-refactor [target file/function/component]
+refactor [target]
 ```
 
 If no target is specified, infer it from the request and current diff. If no unique target exists,

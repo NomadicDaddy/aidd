@@ -26,10 +26,10 @@ has no screen map, and that — not the absence of Spernakit — is the reason t
 ## Usage
 
 ```
-update-screen-map [appname]
+update-screen-map [app]
 ```
 
-If `[appname]` is omitted, infer it from the current working directory under
+If `[app]` is omitted, infer it from the current working directory under
 `<applications-root>/<app-name>`.
 
 ## Context

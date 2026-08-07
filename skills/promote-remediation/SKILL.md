@@ -23,19 +23,18 @@ The script also warns about (or applies) any cleanup the user should know about;
 ## Usage
 
 ```
-promote-remediation {app}/{remediation-slug}
-promote-remediation {app}/{remediation-slug} --new-slug {feature-slug}
-promote-remediation {app}/{remediation-slug} --reason "<one-line provenance reason>"
-promote-remediation --all-blocked  (promote every remediation whose notes contain "BLOCKED")
+promote-remediation <app>/<remediation-slug> [--new-slug <feature-slug>]
+                    [--reason "<one-line provenance reason>"]
+promote-remediation --all-blocked
 ```
 
 ### Arguments
 
 | Argument                    | Required                        | Description                                                                                                                                                                                                                                                                                                 |
 | --------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{app}/{remediation-slug}`  | One of these or `--all-blocked` | Path-like locator: app name + remediation directory name. Example: `<app-name>/remediation-YYYYMMDD-inventory-dashboard`.                                                                                                                                                                                   |
+| `<app>/<remediation-slug>`  | One of these or `--all-blocked` | Path-like locator: app name + remediation directory name. Example: `<app-name>/remediation-YYYYMMDD-inventory-dashboard`.                                                                                                                                                                                   |
 | `--all-blocked`             | One of these or a slug          | Sweep mode: promote every remediation whose `notes` field contains the literal string "BLOCKED", across every aidd-managed app (any stack; see Phase 1). The flag authorizes the complete discovered batch.                                                                                                 |
-| `--new-slug {feature-slug}` | Optional                        | Override the target slug. By default the date and slug are preserved (only the prefix changes). Use this when the remediation is being scope-narrowed and the new slug should reflect the narrower scope (e.g., `homework-datetime-and-milestones` → `homework-milestones` after the datetime half landed). |
+| `--new-slug <feature-slug>` | Optional                        | Override the target slug. By default the date and slug are preserved (only the prefix changes). Use this when the remediation is being scope-narrowed and the new slug should reflect the narrower scope (e.g., `homework-datetime-and-milestones` → `homework-milestones` after the datetime half landed). |
 | `--reason "<text>"`         | Optional                        | Reason text inserted into the provenance note. If omitted, defaults to "promoted because affected area does not exist (bug filed against missing capability)".                                                                                                                                              |
 
 ## Workflow

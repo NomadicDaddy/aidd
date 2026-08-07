@@ -14,7 +14,7 @@ product frontend code.
 ## Usage
 
 ```
-ui-redesign-planner {app}
+ui-redesign-planner <app>
 ```
 
 ## Design review source

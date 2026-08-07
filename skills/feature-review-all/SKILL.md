@@ -12,12 +12,8 @@ Run the aidd-local feature review sweep across selected applications that contai
 ## Usage
 
 ```
-feature-review-all
-feature-review-all --apps spernakit,hidden-path
-feature-review-all --dry-run
-feature-review-all --report-only
-feature-review-all --depth full-backlog-light-completed
-feature-review-all --fix-mode aggressive
+feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
+                   [--depth <mode>] [--fix-mode <mode>]
 ```
 
 ## Arguments

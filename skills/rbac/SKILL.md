@@ -7,6 +7,16 @@ metadata:
 
 # RBAC
 
+## Usage
+
+```
+rbac [app] [requirements]
+```
+
+- Zero args → use the current repository and its documented RBAC requirements.
+- `[app]` → application name or path.
+- `[requirements]` → additional RBAC requirements stated in plain language.
+
 Use `$ARGUMENTS` as the optional target application or additional RBAC requirements. Resolve the
 target and incorporate any supplied requirements before reviewing or changing documentation.
 

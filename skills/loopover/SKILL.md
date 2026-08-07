@@ -14,11 +14,8 @@ main context.
 ## Usage
 
 ```
-/loopover --files *.md --recursive --execute "/review-doc {}"
-/loopover --files *.json --recursive --execute "validate structure and order keys in {}"
-/loopover --files "docs/**/*.md" --execute "/review-doc {}" --parallel 6
-/loopover --files *.ts --path src --exclude "*.test.ts" --execute "add missing JSDoc to {}" --dry-run
-/loopover --changed --execute "/review {}" --yes
+loopover --files <glob> [--files <glob>...] --execute "<payload>" [options]
+loopover --changed --execute "<payload>" [options]
 ```
 
 ## Arguments

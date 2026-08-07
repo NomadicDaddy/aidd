@@ -12,14 +12,12 @@ Summarize aidd run and iteration history for a local project from `.aidd/runs.js
 ## Usage
 
 ```
-summarize-iterations <app-name-or-path>
-summarize-iterations <app-name-or-path> --since <YYYY-MM-DD>
-summarize-iterations <app-name-or-path> --run <run-id>
+summarize-iterations <app> [--since <YYYY-MM-DD>|--run <run-id>]
 ```
 
 ## Arguments
 
-- `<app-name-or-path>` - Target app from `<applications-root>/AGENTS.md` or an explicit path containing `.aidd/`.
+- `<app>` - Target app from `<applications-root>/AGENTS.md` or an explicit path containing `.aidd/`.
 - `--since <YYYY-MM-DD>` - Optional lower bound for run history.
 - `--run <run-id>` - Optional single run or pipeline session to inspect.
 

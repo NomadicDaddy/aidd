@@ -12,7 +12,7 @@ Scan an application for pages that use manual heading markup instead of its shar
 ## Usage
 
 ```
-page-header-audit [appname]
+page-header-audit [app]
 ```
 
 ## Applicability

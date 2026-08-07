@@ -12,7 +12,7 @@ Generate a definitive handoff questionnaire for a project you are about to inher
 ## Usage
 
 ```
-onboarding-interview [application]
+onboarding-interview [app]
 ```
 
 - `application`: app name or absolute path. If omitted, use the current working directory.

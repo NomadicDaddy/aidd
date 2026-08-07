@@ -16,10 +16,10 @@ performs a deployment and never touches credentials or secrets.
 ## Usage
 
 ```
-deployment-readiness [appname]
+deployment-readiness [app]
 ```
 
-If `[appname]` is omitted, infer from the current working directory.
+If `[app]` is omitted, infer from the current working directory.
 
 ## Context
 

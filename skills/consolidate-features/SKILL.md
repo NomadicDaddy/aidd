@@ -18,8 +18,7 @@ The Spernakit rules below (template provenance, `spernakit_version`, upstreaming
 ## Usage
 
 ```
-consolidate-features [appname]
-consolidate-features [appname] --dry-run (analysis only, no changes)
+consolidate-features [app] [--dry-run]
 ```
 
 ## Arguments

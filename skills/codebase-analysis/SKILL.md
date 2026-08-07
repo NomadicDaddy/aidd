@@ -14,8 +14,7 @@ Run a broad aidd-oriented codebase analysis across architecture, performance, se
 ## Usage
 
 ```
-codebase-analysis
-codebase-analysis <app-name-or-path>
+codebase-analysis [app]
 ```
 
 ## Scope (analysis only)

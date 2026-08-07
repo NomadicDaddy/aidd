@@ -15,10 +15,10 @@ and addresses it.
 ## Usage
 
 ```
-coderabbit-pr [appname] [pr]
+coderabbit-pr [app] [pr-number]
 ```
 
-If `[appname]` is omitted, infer from the current working directory. If `[pr]` is omitted, use
+If `[app]` is omitted, infer from the current working directory. If `[pr-number]` is omitted, use
 the open pull request for the current branch.
 
 ## Setup
@@ -35,7 +35,7 @@ the open pull request for the current branch.
 
 ### Step 1: Resolve the pull request
 
-- Use the `[pr]` argument if provided; otherwise `gh pr view --json number,headRefName,state`
+- Use the `[pr-number]` argument if provided; otherwise `gh pr view --json number,headRefName,state`
   for the current branch.
 - If no PR exists, report that and stop. If the PR's head branch does not match the current
   branch, check out the head branch first (stop instead if the working tree is dirty).

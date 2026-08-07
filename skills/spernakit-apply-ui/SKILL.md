@@ -24,8 +24,7 @@ leave uncovered pages unchanged.
 ## Usage
 
 ```
-spernakit-apply-ui
-spernakit-apply-ui <path-to-source-ui>
+spernakit-apply-ui [source-ui-path]
 ```
 
 `<path-to-source-ui>` may be a directory of screenshots, an HTML/JSX file, a template repo root, or

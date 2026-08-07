@@ -27,6 +27,35 @@ export const toneText: Record<Tone, string> = {
 	violet: 'text-violet-700 dark:text-violet-300',
 };
 
+/**
+ * The tone's foreground color applied on hover, for a control that is neutral at rest — a table
+ * row link that only reveals its destination under the cursor. Declared here rather than spelled
+ * out per call site because a tone consumed only by hand-written hover strings is not a source of
+ * truth: the next change to what "informational" means would miss every one of them.
+ */
+export const toneTextHover: Record<Tone, string> = {
+	amber: 'hover:text-amber-600 dark:hover:text-amber-300',
+	emerald: 'hover:text-emerald-700 dark:hover:text-emerald-300',
+	neutral: 'hover:text-muted-foreground',
+	red: 'hover:text-red-700 dark:hover:text-red-300',
+	teal: 'hover:text-teal-700 dark:hover:text-teal-300',
+	violet: 'hover:text-violet-700 dark:hover:text-violet-300',
+};
+
+/**
+ * One step further along the tone on hover, for a control that already carries `toneText` at rest.
+ * Distinct from `toneTextHover` because the two answer different questions: this one deepens a
+ * color that is already there, that one introduces a color that is not.
+ */
+export const toneTextHoverStrong: Record<Tone, string> = {
+	amber: 'hover:text-amber-800 dark:hover:text-amber-100',
+	emerald: 'hover:text-emerald-900 dark:hover:text-emerald-100',
+	neutral: 'hover:text-foreground',
+	red: 'hover:text-red-900 dark:hover:text-red-100',
+	teal: 'hover:text-teal-900 dark:hover:text-teal-100',
+	violet: 'hover:text-violet-900 dark:hover:text-violet-100',
+};
+
 /** Subtle badge surface: background + text + inset ring (light + dark). */
 export const toneBadge: Record<Tone, string> = {
 	amber: 'bg-amber-50 text-amber-800 ring-amber-200/70 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/50',

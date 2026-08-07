@@ -7,6 +7,7 @@ import type { ProjectDetail } from '../../../api/types.ts';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useStartProjectImplementation } from '../../../hooks/useProjects.ts';
+import { toneText } from '../../../lib/tones.ts';
 
 export function BlueprintImplementationCard({ project }: { project: ProjectDetail }) {
 	const startImplementation = useStartProjectImplementation(project.id);
@@ -45,9 +46,9 @@ export function BlueprintImplementationCard({ project }: { project: ProjectDetai
 						}
 						icon={
 							implementation.state === 'preparing' ? (
-								<LoaderCircle className="h-4 w-4 animate-spin text-teal-700 dark:text-teal-300" />
+								<LoaderCircle className={`h-4 w-4 animate-spin ${toneText.teal}`} />
 							) : (
-								<Hammer className="h-4 w-4 text-teal-700 dark:text-teal-300" />
+								<Hammer className={`h-4 w-4 ${toneText.teal}`} />
 							)
 						}
 						title={

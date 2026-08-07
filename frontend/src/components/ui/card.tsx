@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { cn } from '../../lib/cn.ts';
+import { toneText, toneTextHoverStrong } from '../../lib/tones.ts';
 
 type CardVariant = 'default' | 'panel' | 'sunken';
 
@@ -118,6 +119,16 @@ export function CardHeader({
 /**
  * The one treatment for a card header's "go to the full page" link, previously copied verbatim into
  * six Dashboard cards with two divergent focus rings.
+ *
+ * The colour comes from the tone scale rather than being spelled out here: the pair this used to
+ * carry was `toneText.teal` character for character, so the scale could be changed without this
+ * link following. The composed class set is unchanged; only the order of the tokens differs, which
+ * Tailwind does not read.
  */
-export const cardHeaderLinkClass =
-	'inline-flex shrink-0 items-center gap-1 rounded-md text-sm font-medium text-teal-700 transition-colors outline-none hover:text-teal-900 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-teal-300 dark:hover:text-teal-100';
+export const cardHeaderLinkClass = [
+	'inline-flex shrink-0 items-center gap-1 rounded-md text-sm font-medium',
+	toneText.teal,
+	'transition-colors outline-none',
+	toneTextHoverStrong.teal,
+	'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+].join(' ');

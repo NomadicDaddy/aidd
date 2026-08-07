@@ -9,7 +9,7 @@ import type { ProjectMilestone } from '../../../api/types.ts';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
-import { dangerRowActionClass } from '../../../lib/tones.ts';
+import { dangerRowActionClass, toneTextHover } from '../../../lib/tones.ts';
 import { milestoneProgressLabel } from './milestonesUtils.ts';
 import { projectDetailTabSearch } from './overviewLinks.ts';
 
@@ -100,7 +100,7 @@ function MilestonesList({
 					<div className="flex items-start justify-between gap-2">
 						<div className="min-w-0">
 							<Link
-								className="font-medium text-foreground hover:text-teal-700 dark:hover:text-teal-300"
+								className={`font-medium text-foreground ${toneTextHover.teal}`}
 								to={projectDetailTabSearch('features', {
 									featureMilestone: milestone.name,
 								})}>
@@ -173,7 +173,7 @@ export function MilestonesTable(props: MilestonesProps) {
 								</td>
 								<td className="px-4 py-3">
 									<Link
-										className="font-medium text-foreground hover:text-teal-700 dark:hover:text-teal-300"
+										className={`font-medium text-foreground ${toneTextHover.teal}`}
 										to={projectDetailTabSearch('features', {
 											featureMilestone: milestone.name,
 										})}>

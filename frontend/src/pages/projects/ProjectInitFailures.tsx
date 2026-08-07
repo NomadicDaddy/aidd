@@ -11,6 +11,7 @@ import {
 	useDismissProjectInitFailure,
 	useRetryProjectInitFailure,
 } from '../../hooks/useProjects.ts';
+import { toneText } from '../../lib/tones.ts';
 
 // Surfaces failed project-template scaffolds so a broken init stays visible with retry
 // and dismiss actions instead of vanishing after the toast.
@@ -59,7 +60,7 @@ export function ProjectInitFailures({ failures }: { failures: ProjectInitFailure
 							<div className="flex flex-wrap items-center gap-2">
 								{failure.hasLog ? (
 									<a
-										className="text-xs text-teal-700 underline dark:text-teal-300"
+										className={`text-xs underline ${toneText.teal}`}
 										href={projectInitFailureLogUrl(failure.id)}
 										rel="noreferrer"
 										target="_blank">

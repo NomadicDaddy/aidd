@@ -192,7 +192,7 @@ export function ProjectIngestLane() {
 									<>
 										{', '}
 										<Link
-											className="text-teal-700 underline dark:text-teal-300"
+											className={`${toneText.teal} underline`}
 											to={`/pipeline-sessions/${result.intakeSessionId}`}>
 											intake session
 										</Link>

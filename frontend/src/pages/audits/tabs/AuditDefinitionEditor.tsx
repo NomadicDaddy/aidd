@@ -30,7 +30,11 @@ export function AuditDefinitionEditor({
 	selectedAudit,
 }: AuditDefinitionEditorProps) {
 	return (
-		<section className="scroll-mt-4" id={auditDefinitionEditorId}>
+		// No `scroll-mt-4`: the 1rem gap it bought is now the tail of the root's
+		// `scroll-padding-top`, which every anchor gets for free. Left here it would stack on top of
+		// that padding, so the two jump targets on this tab would land 16px lower than every other
+		// anchor in the app.
+		<section id={auditDefinitionEditorId}>
 			<Card className="space-y-3">
 				<CardHeader
 					action={

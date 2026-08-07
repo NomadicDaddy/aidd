@@ -47,7 +47,9 @@ export function LaunchTargetsCard({
 		: projects;
 
 	return (
-		<section className="scroll-mt-4" id={auditLaunchTargetsId}>
+		// `scroll-mt-4` removed with the same reasoning as `AuditDefinitionEditor`: the root now
+		// declares that 1rem, and a scroll margin here would add to it rather than replace it.
+		<section id={auditLaunchTargetsId}>
 			<Card className={open ? 'space-y-3' : ''}>
 				<CardHeader
 					action={

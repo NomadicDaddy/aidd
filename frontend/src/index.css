@@ -99,6 +99,23 @@
    which is where that inheritance is supposed to live — this file only adds what preflight does
    not. */
 @layer base {
+	/* `html` is the scroll container — `document.scrollingElement` is the root element and it is what
+	   actually moves, so this is the box every `scrollIntoView` and every `#id` navigation aligns
+	   against. Below `sm` the shell bar is `position: sticky; top: 0` and opaque, so an anchor aligned
+	   to the top of that scrollport lands underneath it: measured on /audits at 390, the launch-targets
+	   section landed at y=16 with the bar's bottom edge at y=129, burying its heading and the first
+	   113px of the card the jump exists to show.
+
+	   The subtrahend is the bar's own measured height, not a literal. `observeShellTopBar` publishes
+	   `--app-topbar-height` on this element from a ResizeObserver, so a future change to the control
+	   sizing carries through here with no second number to update — and it publishes `0px` when the
+	   bar computes to `fixed`, which is the `sm:` rail. That is what scopes the offset to the widths
+	   where the bar is actually in flow: no breakpoint override is needed, because at `sm` and above
+	   this resolves to a plain `1rem` of breathing room. */
+	html {
+		scroll-padding-top: calc(var(--app-topbar-height, 0px) + 1rem);
+	}
+
 	body {
 		margin: 0;
 		min-width: 320px;

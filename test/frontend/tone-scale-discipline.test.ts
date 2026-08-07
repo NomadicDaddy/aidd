@@ -65,10 +65,6 @@ const brandIdentity: { file: string; why: string }[] = [
 		why: 'bg-teal-400 running pulse; toneSolid.teal is bg-teal-500 and reads dull animated',
 	},
 	{
-		file: 'pages/projects/detail/ArtifactViewerDialog.tsx',
-		why: 'markdown link colour inside rendered documents',
-	},
-	{
 		file: 'pages/projects/detail/BlueprintImplementationCard.tsx',
 		why: 'blueprint-ready card surface: 50/60 and 950/20 tints, no scale equivalent',
 	},
@@ -106,17 +102,14 @@ const duplicateExemptions: { file: string; why: string }[] = [
 		file: 'components/terminal/TerminalPaneHeader.tsx',
 		why: "the active tab chip borrows toneBadge.teal's bg-teal-50/dark:bg-teal-950/40 surface but not its text or ring — it prints neutral text under a teal-400/60 border, so it is the terminal palette rather than a badge",
 	},
-	{
-		file: 'pages/projects/detail/ArtifactViewerDialog.tsx',
-		why: 'markdown links are text-teal-700 dark:text-teal-400 — light half matches toneText.teal, dark half is one step brighter. Adopting the scale would change rendered colour inside every artifact, so it is filed rather than migrated: remediation-20260807-artifact-link-tone-drift',
-	},
 ];
 
 describe('tone scale discipline', () => {
 	test('every teal or cyan literal outside the scale is classified', async () => {
 		// The guard that was missing. Seven call sites spelled `text-teal-700 dark:text-teal-300`
 		// out by hand — `toneText.teal` character for character — and the scale could have been
-		// changed without any of them following. A new file now has to say which kind it is.
+		// changed without any of them following. An eighth matched only its light half, which is
+		// worse: it looked decided. A new file now has to say which kind it is.
 		const classified = new Set([
 			scalePath,
 			...brandIdentity.map((entry) => entry.file),

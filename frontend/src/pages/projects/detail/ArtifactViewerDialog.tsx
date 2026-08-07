@@ -9,18 +9,19 @@ import { IconButton } from '../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { useProjectFile } from '../../../hooks/useProjectFile.ts';
+import { toneText } from '../../../lib/tones.ts';
 import { type ArtifactViewerTarget, formatBytes } from './artifactsUtils.ts';
 
 // Element styling for rendered markdown; the app does not ship a typography plugin, so the
 // few elements artifacts actually use are styled here.
 const markdownComponents = {
+	// The link colour comes from the tone scale. It used to be spelled out as
+	// `text-teal-700 dark:text-teal-400` — the light half matching `toneText.teal` exactly and the
+	// dark half one step deeper — which read as a deliberate choice but was never decided. Measured
+	// against the dialog background both clear AAA (11.0 against 14.0), so the deciding argument was
+	// consistency: informational teal means one thing everywhere else in the app.
 	a: (props: React.ComponentProps<'a'>) => (
-		<a
-			{...props}
-			className="text-teal-700 underline dark:text-teal-400"
-			rel="noreferrer"
-			target="_blank"
-		/>
+		<a {...props} className={`underline ${toneText.teal}`} rel="noreferrer" target="_blank" />
 	),
 	code: (props: React.ComponentProps<'code'>) => (
 		<code {...props} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]" />

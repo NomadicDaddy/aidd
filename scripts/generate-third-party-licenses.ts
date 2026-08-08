@@ -90,6 +90,14 @@ async function pinnedBunVersion(root: string): Promise<string> {
 
 interface GeneratedDocuments {
 	notices: string;
+	/**
+	 * Distributed packages whose licenses were read. Rule 5's count for this gate.
+	 *
+	 * The closure is discovered from the lockfile, and the two documents are rendered from whatever
+	 * it holds. An empty closure renders an empty appendix, which the committed empty appendix then
+	 * matches, so `--check` reports parity between two documents that attribute nobody.
+	 */
+	packages: number;
 	summary: string;
 }
 
@@ -166,6 +174,7 @@ export async function generate(root: string): Promise<GeneratedDocuments> {
 
 	return {
 		notices: await formatMarkdown(notices, root),
+		packages: new Set(attributed.map((entry) => entry.name)).size,
 		summary: await formatMarkdown(summary, root),
 	};
 }
@@ -210,8 +219,17 @@ export async function runThirdPartyLicenses(options: ThirdPartyLicenseOptions): 
 		}
 	}
 
+	// Rule 5. See `GeneratedDocuments.packages`: parity between two documents generated from an
+	// empty closure is parity between two documents that attribute nobody.
+	if (generated.packages === 0) {
+		console.error('[FAIL] The runtime closure held no distributed packages.');
+		console.error('Attribution cannot be verified against a closure that resolved to nothing.');
+		return 1;
+	}
+
 	console.log(
-		`[OK] ${OUTPUT} and ${NOTICES_OUTPUT} match the dependency graph and distributed-materials registry.`,
+		`[OK] ${OUTPUT} and ${NOTICES_OUTPUT} match the dependency graph and ` +
+			`distributed-materials registry (${generated.packages} package(s) attributed).`,
 	);
 	return 0;
 }

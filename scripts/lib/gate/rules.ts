@@ -1,5 +1,5 @@
 /**
- * The six statically decidable rules of `docs/reference/gate-conventions.md`.
+ * The statically decidable rules of `docs/reference/gate-conventions.md`.
  *
  * Each function takes one gate and returns its findings. They are pure over `Gate`, with the single
  * exception of GC6, which is handed the assertion IDs its caller already read, so that every rule
@@ -8,6 +8,7 @@
 
 import { scanTopLevel } from './toplevel.ts';
 import { type Finding, type Gate } from './types.ts';
+import { inspectVacuity } from './vacuity.ts';
 
 function lineOf(source: string, index: number): number {
 	return source.slice(0, index).split('\n').length;
@@ -130,6 +131,27 @@ export function checkArguments(gate: Gate): Finding[] {
 	return findings;
 }
 
+/**
+ * GC5 -- anti-vacuity, the half of it that has a static form.
+ *
+ * Only the count half is decidable here, and only where the population is discovered rather than
+ * fixed. A gate comparing one artifact against one source has no count to state, and demanding one
+ * would produce more waivers than findings. See `vacuity.ts` for why each half falls where it does.
+ */
+export function checkAntiVacuity(gate: Gate): Finding[] {
+	const { countlessLine, discovers } = inspectVacuity(gate.source);
+	if (!discovers || countlessLine === null) return [];
+	return [
+		finding(
+			gate,
+			countlessLine,
+			'GC5',
+			'discovers the items it examines, but its success line states no count, so a run that ' +
+				'found nothing reads exactly like a run that looked at nothing',
+		),
+	];
+}
+
 /** Any assertion ID shape the fleet uses: `ASSERT-001` in spernakit, `SEC-001` and peers in aidd. */
 export const ASSERTION_ID = /\b[A-Z]{3,6}-\d{3}\b/g;
 
@@ -200,6 +222,7 @@ export function checkGate(gate: Gate, assertionIds: Set<string>): Finding[] {
 		...checkExitCodes(gate),
 		...checkOutput(gate),
 		...checkArguments(gate),
+		...checkAntiVacuity(gate),
 		...checkRuleLinkage(gate, assertionIds),
 		...checkJson(gate),
 	];

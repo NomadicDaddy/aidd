@@ -17,6 +17,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { exit } from 'node:process';
 
+import { CONFORMING, discovering, VIOLATING } from './lib/gate/fixtures.ts';
+
 interface RunResult {
 	exitCode: number;
 	output: string;
@@ -57,49 +59,6 @@ function writeManifest(scripts: Record<string, string>): void {
 function writeAllowlist(value: unknown): void {
 	write('scripts/gate-conventions-allowlist.json', `${JSON.stringify(value, null, '\t')}\n`);
 }
-
-/** A scratch gate satisfying GC1, GC2, GC3, GC4, GC6 and GC8. */
-const CONFORMING = [
-	'#!/usr/bin/env bun',
-	'/**',
-	' * Enforces: FIXTURE-001 -- the fixture rule.',
-	' */',
-	"import { exit } from 'node:process';",
-	"import { parseArgs } from 'node:util';",
-	'',
-	'export function runConforming(): number {',
-	"\tconsole.log('[OK] conforming -- 1 item examined.');",
-	'\treturn 0;',
-	'}',
-	'',
-	'if (import.meta.main) {',
-	'\tparseArgs({ args: Bun.argv.slice(2), options: {}, strict: true });',
-	'\texit(runConforming());',
-	'}',
-	'',
-].join('\n');
-
-/**
- * A scratch gate violating every statically decidable rule at once: no exported runner, no main
- * guard, imperative statements at module scope, an exit code outside 0/1/2, no status marker, a
- * pictograph, hand-read `argv`, no `Enforces:` line, and a `--json` flag with no envelope.
- *
- * The pictograph is written as an escape so this test file does not itself carry one.
- */
-const VIOLATING = [
-	'#!/usr/bin/env bun',
-	'/** A scratch gate that conforms to nothing. */',
-	'',
-	"const target = process.argv[2] ?? '.';",
-	"console.log('scanned', target, '\\u2705');",
-	"if (process.argv.includes('--json')) {",
-	"\tconsole.log('{}');",
-	'}',
-	"if (target === 'nope') {",
-	'\tprocess.exit(3);',
-	'}',
-	'',
-].join('\n');
 
 const ALL_RULES = ['GC1', 'GC2', 'GC3', 'GC4', 'GC6', 'GC8'] as const;
 
@@ -215,6 +174,54 @@ try {
 	assert(
 		result.exitCode === 0 && result.output.includes('1 gates'),
 		`An excluded path must leave the population:\n${result.output}`,
+	);
+
+	// --- GC5: a discovering gate must say how many items it examined. -------------------------
+	// The three cases are the three ways the check has been wrong. `vacuous` is the finding
+	// itself. `counting` wraps its success line across two concatenated fragments with the count
+	// in the second, which is how most of them are written under the 100-column limit and which
+	// an unmerged reading calls countless. `quoted` puts an apostrophe in an earlier argument,
+	// which used to make the scan pair that quote with the next one, swallow the real backtick
+	// success line, and report a line number from the middle of unrelated code.
+	writeAllowlist({ excluded: {}, waivers: {} });
+	write('scripts/check-vacuous.ts', discovering('Vacuous', ["console.log('[OK] vacuous.');"]));
+	write(
+		'scripts/check-counting.ts',
+		discovering('Counting', [
+			'console.log(',
+			'\t`[OK] counting -- ${files.length} file(s) examined, ` +',
+			"\t\t'nothing out of place.',",
+			');',
+		]),
+	);
+	write(
+		'scripts/check-quoted.ts',
+		discovering('Quoted', [
+			"console.log('   reading the project\\'s scripts directory...');",
+			'console.log(`[OK] quoted -- ${files.length} file(s) examined.`);',
+		]),
+	);
+	writeManifest({
+		'check:counting': 'bun scripts/check-counting.ts',
+		'check:quoted': 'bun scripts/check-quoted.ts',
+		'check:vacuous': 'bun scripts/check-vacuous.ts',
+	});
+	result = runCheck();
+	assert(
+		result.exitCode === 1 && /check-vacuous\.ts:\d+ \[GC5 /.test(result.output),
+		`A discovering gate with no count must be reported against GC5:\n${result.output}`,
+	);
+	assert(
+		!result.output.includes('check-counting.ts') && !result.output.includes('check-quoted.ts'),
+		`A success line that states its count must not be reported:\n${result.output}`,
+	);
+
+	// --- A gate over a fixed population has no count to state, so GC5 does not reach it. -------
+	writeManifest({ 'check:conforming': 'bun scripts/check-conforming.ts' });
+	result = runCheck();
+	assert(
+		result.exitCode === 0,
+		`A gate whose population is fixed in source must stay exempt:\n${result.output}`,
 	);
 
 	// --- Anti-vacuity: examining nothing is a failure, not a pass (rule 5). --------------------

@@ -82,7 +82,20 @@ function relFromRoot(absPath: string): string {
 	return absPath.replace(`${ROOT}\\`, '').replace(`${ROOT}/`, '').replace(/\\/g, '/');
 }
 
-function checkBackendRoutes(): string[] {
+interface HalfScan {
+	errors: string[];
+	/**
+	 * Files this half actually opened. Rule 5's count.
+	 *
+	 * Both halves swallow their own directory-read failure into an error string, and both walk a
+	 * directory whose contents are discovered rather than named here. A rename that emptied either
+	 * directory would produce zero findings, which is the same result a fully-registered tree
+	 * produces. Only the count separates them.
+	 */
+	examined: number;
+}
+
+function checkBackendRoutes(): HalfScan {
 	const errors: string[] = [];
 
 	let serverSource: string;
@@ -90,7 +103,7 @@ function checkBackendRoutes(): string[] {
 		serverSource = readText(SERVER_FILE);
 	} catch {
 		errors.push(`  Cannot read backend/src/server.ts; backend route check skipped.`);
-		return errors;
+		return { errors, examined: 0 };
 	}
 
 	const registered = extractServerUseCalls(serverSource);
@@ -100,7 +113,7 @@ function checkBackendRoutes(): string[] {
 		routeFiles = listRouteFiles(ROUTES_DIR);
 	} catch {
 		errors.push(`  Cannot read backend/src/routes/; backend route check skipped.`);
-		return errors;
+		return { errors, examined: 0 };
 	}
 
 	for (const routeFile of routeFiles) {
@@ -116,7 +129,7 @@ function checkBackendRoutes(): string[] {
 		}
 	}
 
-	return errors;
+	return { errors, examined: routeFiles.length };
 }
 
 function extractAppPageImports(source: string): Set<string> {
@@ -140,7 +153,7 @@ function extractAppPageImports(source: string): Set<string> {
 	return components;
 }
 
-function checkFrontendPages(): string[] {
+function checkFrontendPages(): HalfScan {
 	const errors: string[] = [];
 
 	let appSource: string;
@@ -148,7 +161,7 @@ function checkFrontendPages(): string[] {
 		appSource = readText(APP_FILE);
 	} catch {
 		errors.push(`  Cannot read frontend/src/App.tsx; frontend page check skipped.`);
-		return errors;
+		return { errors, examined: 0 };
 	}
 
 	const imported = extractAppPageImports(appSource);
@@ -158,7 +171,7 @@ function checkFrontendPages(): string[] {
 		pageFiles = listPageFiles(PAGES_DIR);
 	} catch {
 		errors.push(`  Cannot read frontend/src/pages/; frontend page check skipped.`);
-		return errors;
+		return { errors, examined: 0 };
 	}
 
 	for (const pageFile of pageFiles) {
@@ -176,20 +189,20 @@ function checkFrontendPages(): string[] {
 		}
 	}
 
-	return errors;
+	return { errors, examined: pageFiles.length };
 }
 
 export function runFeatureIntegration(): number {
 	const allErrors: string[] = [];
 
-	const backendErrors = checkBackendRoutes();
-	if (backendErrors.length > 0) {
-		allErrors.push('Backend route registration mismatches:', ...backendErrors);
+	const backend = checkBackendRoutes();
+	if (backend.errors.length > 0) {
+		allErrors.push('Backend route registration mismatches:', ...backend.errors);
 	}
 
-	const frontendErrors = checkFrontendPages();
-	if (frontendErrors.length > 0) {
-		allErrors.push('Frontend page registration mismatches:', ...frontendErrors);
+	const frontend = checkFrontendPages();
+	if (frontend.errors.length > 0) {
+		allErrors.push('Frontend page registration mismatches:', ...frontend.errors);
 	}
 
 	if (allErrors.length > 0) {
@@ -200,7 +213,22 @@ export function runFeatureIntegration(): number {
 		return 1;
 	}
 
-	console.log('[OK] Feature integration check passed.');
+	// Rule 5. Both halves assert an absence -- no unregistered route, no unimported page -- over a
+	// directory they discover at run time. A move that emptied either one returns no findings, and
+	// without the counts that is indistinguishable from a tree where everything is wired up.
+	if (backend.examined === 0 || frontend.examined === 0) {
+		console.error('[FAIL] Feature integration check examined nothing on one or both halves.');
+		console.error(
+			`  backend/src/routes/: ${backend.examined} file(s); ` +
+				`frontend/src/pages/: ${frontend.examined} file(s).`,
+		);
+		return 1;
+	}
+
+	console.log(
+		`[OK] Feature integration check passed (${backend.examined} route file(s) and ` +
+			`${frontend.examined} page file(s) examined).`,
+	);
 	return 0;
 }
 

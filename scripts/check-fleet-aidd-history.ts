@@ -125,8 +125,20 @@ export function runFleetAiddHistory(options: FleetHistoryOptions): number {
 		.map((repo) => inspectRepo(repo, options.fetch))
 		.filter((f): f is Finding => f !== null);
 
+	// Rule 5. The population comes from reading the applications root, and the filter chain drops
+	// silently. A wrong `--root` yields zero repositories and zero findings, which is exactly what a
+	// fleet with no unpublished .aidd history yields.
+	if (repos.length === 0) {
+		console.error(`[FAIL] fleet .aidd history: no repositories found under ${options.root}.`);
+		console.error('  No history was read, so no history can be declared clean.');
+		return 1;
+	}
+
 	if (findings.length === 0) {
-		console.log('[OK] fleet .aidd history — all local-only repositories clean.');
+		console.log(
+			`[OK] fleet .aidd history — ${repos.length} repositories examined; all local-only ` +
+				'repositories clean.',
+		);
 		return 0;
 	}
 

@@ -192,8 +192,21 @@ export function runFleetAiddEntries(options: FleetEntriesOptions): number {
 	console.log(
 		`swept ${repos.length} repositories (${published} published, ${localOnly} local-only)`,
 	);
+
+	// Rule 5. The sweep discovers its own population by reading the applications root, and every
+	// filter in that chain silently drops what it does not match. A wrong `--root` produces zero
+	// repositories, zero problems, and a pass -- the same verdict a clean fleet earns.
+	if (repos.length === 0) {
+		console.error(`[FAIL] fleet .aidd entries: no repositories found under ${options.root}.`);
+		console.error('  A sweep that swept nothing cannot assert that every entry is classified.');
+		return 1;
+	}
+
 	if (problems.length === 0) {
-		console.log('[OK] fleet .aidd entries — every entry classified, every disposition holds.');
+		console.log(
+			`[OK] fleet .aidd entries — ${repos.length} repositories examined; every entry ` +
+				'classified, every disposition holds.',
+		);
 		return 0;
 	}
 	for (const p of problems) console.error(`  ${p}`);

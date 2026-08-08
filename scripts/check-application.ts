@@ -31,32 +31,49 @@ function normalizeRelPath(path: string): string {
 	return path.replace(/\\/g, '/');
 }
 
-async function findDbFiles(dir: string, basePath = ''): Promise<string[]> {
-	const dbFiles: string[] = [];
+interface DbFileScan {
+	/**
+	 * Entries the walk actually examined, after exclusions.
+	 *
+	 * The walk swallows read errors so a permission problem does not fail the gate, which means a
+	 * tree it never reached returns the same empty file list as a genuinely clean one. The count is
+	 * what separates them, and rule 5 of `docs/reference/gate-conventions.md` requires the caller
+	 * to report it.
+	 */
+	examined: number;
+	files: string[];
+}
+
+async function findDbFiles(dir: string, basePath = ''): Promise<DbFileScan> {
+	const files: string[] = [];
+	let examined = 0;
 
 	let entries: string[];
 	try {
 		entries = await readdir(dir);
 	} catch {
-		return dbFiles;
+		return { examined, files };
 	}
 
 	for (const entry of entries) {
 		if (EXCLUDED_DIRECTORIES.has(entry)) continue;
+		examined += 1;
 
 		const fullPath = resolve(dir, entry);
 		const relativePath = basePath ? `${basePath}/${entry}` : entry;
 		const stats = await stat(fullPath);
 		if (stats.isDirectory()) {
-			dbFiles.push(...(await findDbFiles(fullPath, relativePath)));
+			const sub = await findDbFiles(fullPath, relativePath);
+			files.push(...sub.files);
+			examined += sub.examined;
 			continue;
 		}
 		if (entry.endsWith('.db')) {
-			dbFiles.push(relativePath);
+			files.push(relativePath);
 		}
 	}
 
-	return dbFiles;
+	return { examined, files };
 }
 
 async function findRogueDataFolders(): Promise<string[]> {
@@ -80,11 +97,22 @@ async function findRogueDataFolders(): Promise<string[]> {
 	return rogueFolders;
 }
 
-async function checkDatabaseLocation(): Promise<void> {
+async function checkDatabaseLocation(): Promise<number> {
 	console.log('Checking database file locations...');
 	const allowed = 'data/aidd-panel.db';
-	const dbFiles = await findDbFiles(repoRoot);
-	const unauthorizedFiles = dbFiles.map(normalizeRelPath).filter((file) => file !== allowed);
+	const { examined, files } = await findDbFiles(repoRoot);
+
+	// Rule 5. Both sub-checks here assert an absence, and the walk swallows its own read errors,
+	// so a tree it could not open produces the same verdict as a clean one. Fail on zero rather
+	// than report a pass with nothing behind it.
+	if (examined === 0) {
+		throw new Error(
+			'The repository walk examined no entries. An absence of stray database files cannot ' +
+				'be asserted from a tree that was never read.',
+		);
+	}
+
+	const unauthorizedFiles = files.map(normalizeRelPath).filter((file) => file !== allowed);
 
 	if (unauthorizedFiles.length > 0) {
 		console.error('[FAIL] Unauthorized database files detected:');
@@ -92,7 +120,8 @@ async function checkDatabaseLocation(): Promise<void> {
 		throw new Error(`Database files should only exist at ${allowed}.`);
 	}
 
-	console.log('   No unauthorized database files found.');
+	console.log(`   No unauthorized database files found (${examined} entries examined).`);
+	return examined;
 }
 
 async function checkRogueDataFolders(): Promise<void> {
@@ -110,9 +139,9 @@ async function checkRogueDataFolders(): Promise<void> {
 
 export async function runApplicationChecks(): Promise<number> {
 	try {
-		await checkDatabaseLocation();
+		const examined = await checkDatabaseLocation();
 		await checkRogueDataFolders();
-		console.log('[OK] Application checks passed.');
+		console.log(`[OK] Application checks passed (${examined} repository entries examined).`);
 		return 0;
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);

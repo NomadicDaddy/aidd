@@ -45,6 +45,7 @@ function countLines(text: string): number {
 
 export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 	const findings: Finding[] = [];
+	let examined = 0;
 	for (const root of scannedRoots) {
 		const fullRoot = join(projectRoot, root);
 		try {
@@ -53,6 +54,7 @@ export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 			continue;
 		}
 		const files = await collectFiles(fullRoot);
+		examined += files.length;
 		for (const file of files) {
 			const text = await readFile(file, 'utf8');
 			const lines = countLines(text);
@@ -77,7 +79,21 @@ export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 		return 1;
 	}
 
-	console.log(`[OK] aidd max-lines check passed (no file exceeds ${MAX_LINES} lines).`);
+	// Rule 5. Every scanned root is skipped when absent, so a rename or a wrong `projectRoot`
+	// leaves nothing to walk and the check reports the same pass it would over a clean tree.
+	// `${MAX_LINES}` below is a threshold, not a count; the count has to be stated separately.
+	if (examined === 0) {
+		console.error('[FAIL] aidd max-lines check examined no files.');
+		console.error(
+			`None of the scanned roots exist under ${projectRoot}: ${scannedRoots.join(', ')}.`,
+		);
+		return 1;
+	}
+
+	console.log(
+		`[OK] aidd max-lines check passed (${examined} file(s) examined, ` +
+			`none exceeds ${MAX_LINES} lines).`,
+	);
 	return 0;
 }
 

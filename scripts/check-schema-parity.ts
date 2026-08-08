@@ -42,7 +42,13 @@ function getDrizzleTableEntries(): [string, SQLiteTable][] {
 	return entries;
 }
 
-function collectTableMismatches(sqlite: Database): string[] {
+interface ParityScan {
+	mismatches: string[];
+	/** Drizzle-declared tables compared against SQLite. Rule 5's count for this gate. */
+	tablesCompared: number;
+}
+
+function collectTableMismatches(sqlite: Database): ParityScan {
 	const drizzleEntries = getDrizzleTableEntries();
 	const allMismatches: string[] = [];
 	const drizzleTableNames = new Set<string>();
@@ -81,7 +87,7 @@ function collectTableMismatches(sqlite: Database): string[] {
 	}
 
 	allMismatches.push(...collectExtraSqliteTableMismatches(sqlite, drizzleTableNames));
-	return allMismatches;
+	return { mismatches: allMismatches, tablesCompared: drizzleEntries.length };
 }
 
 function collectExtraSqliteTableMismatches(
@@ -118,8 +124,26 @@ export function runSchemaParity(): number {
 	const sqlite = new Database(':memory:');
 	try {
 		migrateWebDatabase(sqlite);
-		if (!reportMismatches(collectTableMismatches(sqlite))) return 1;
-		console.log('[OK] Schema parity check passed; Drizzle schema matches migrated SQLite.');
+		const { mismatches, tablesCompared } = collectTableMismatches(sqlite);
+		if (!reportMismatches(mismatches)) return 1;
+
+		// Rule 5. `getDrizzleTableEntries` discovers its population by walking the schema barrel's
+		// exports and swallowing every non-table in a bare `catch`, so a barrel that exported
+		// nothing -- a bad re-export, a renamed file -- yields zero tables, zero mismatches, and a
+		// pass identical to the one a matching schema earns.
+		if (tablesCompared === 0) {
+			console.error('[FAIL] Schema parity check compared no tables.');
+			console.error(
+				'backend/src/db/schema.ts exported no Drizzle tables. Parity cannot be asserted ' +
+					'against a schema that was never read.',
+			);
+			return 1;
+		}
+
+		console.log(
+			`[OK] Schema parity check passed (${tablesCompared} table(s) compared; ` +
+				'Drizzle schema matches migrated SQLite).',
+		);
 		return 0;
 	} finally {
 		sqlite.close();

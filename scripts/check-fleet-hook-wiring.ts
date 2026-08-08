@@ -167,9 +167,20 @@ export function runFleetHookWiring(options: HookWiringOptions): number {
 	const wired = results.filter((r) => r.wired).length;
 
 	console.log(`swept ${repos.length} repositories (${wired} with hooks wired)`);
+
+	// Rule 5. The population is read off the applications root, and a wrong `--root` filters every
+	// candidate away without saying so. Zero repositories give zero problems, which is the verdict a
+	// correctly wired fleet gives.
+	if (repos.length === 0) {
+		console.error(`[FAIL] fleet hook wiring: no repositories found under ${options.root}.`);
+		console.error('  No hook was read, so no guard can be declared reachable.');
+		return 1;
+	}
+
 	if (problems.length === 0) {
 		console.log(
-			'[OK] fleet hook wiring — every installed guard is reachable and every .env is ignored.',
+			`[OK] fleet hook wiring — ${repos.length} repositories examined; every installed ` +
+				'guard is reachable and every .env is ignored.',
 		);
 		return 0;
 	}

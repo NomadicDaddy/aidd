@@ -2,17 +2,19 @@
 /**
  * check-gate-conventions.ts
  *
- * The meta-gate. Statically enforces the six decidable rules of `docs/reference/gate-conventions.md`
+ * The meta-gate. Statically enforces the decidable rules of `docs/reference/gate-conventions.md`
  * across every TypeScript file a `check*` task runs, so that the conventions are a contract rather
  * than a document nobody reads.
  *
  * Enforces: ASSERT-050 (spernakit) / QUAL-006 (aidd) -- every gate follows the conventions in
  * docs/reference/gate-conventions.md.
  *
- * Rules 5 (anti-vacuity) and 7 (waiver forms) have no static form and are reviewed during the
- * phase-2 migration. Gates that do not conform yet are named in `scripts/gate-conventions-allowlist.json`
- * with a reason; that list can only shrink, because a waiver whose rule has started passing is
- * reported as a finding against the allowlist itself.
+ * Rule 7 (waiver forms) has no static form, and rule 5 (anti-vacuity) has one for half of itself:
+ * whether a success line states a count is decidable, whether a run legitimately reached zero items
+ * is not. Both remainders are reviewed during the phase-2 migration. Gates that do not conform yet
+ * are named in `scripts/gate-conventions-allowlist.json` with a reason; that list can only shrink,
+ * because a waiver whose rule has started passing is reported as a finding against the allowlist
+ * itself.
  *
  * This file is its own first test case: it satisfies all eight rules, including the two nobody
  * checks, and is the shape every gate is migrating toward.

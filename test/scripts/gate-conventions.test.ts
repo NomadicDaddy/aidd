@@ -131,8 +131,11 @@ describe('gate conventions rules', () => {
 		);
 	});
 
-	test('every static rule has a title, and the list stays the sparse six', () => {
-		expect(STATIC_RULES).toEqual(['GC1', 'GC2', 'GC3', 'GC4', 'GC6', 'GC8']);
+	// GC5 joined the list when rule 5's count half was given a static form; GC7 has none, and
+	// rule 5's zero-items half remains a review item. The assertion is here so a rule cannot be
+	// added to the checker without someone deciding it is genuinely decidable from the text.
+	test('every static rule has a title, and the list stays the sparse seven', () => {
+		expect(STATIC_RULES).toEqual(['GC1', 'GC2', 'GC3', 'GC4', 'GC5', 'GC6', 'GC8']);
 		for (const rule of STATIC_RULES) expect(RULE_TITLES[rule]).toBeTruthy();
 	});
 });

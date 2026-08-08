@@ -65,10 +65,18 @@ export function parseReleaseNoticeArgs(argv: string[]): ReleaseNoticeArgs {
 	};
 }
 
+export interface ReleaseNoticeScan {
+	/** Archives opened and validated. */
+	archives: number;
+	/** Tracked catalog files compared against each archive. Rule 5's count for this gate. */
+	filesCompared: number;
+	issues: string[];
+}
+
 export async function checkReleaseNotices(
 	rootDir: string,
 	args: ReleaseNoticeArgs,
-): Promise<string[]> {
+): Promise<ReleaseNoticeScan> {
 	const releaseDir = resolve(rootDir, args.dir);
 	const info = await readVersionInfo(rootDir);
 	const issues = assertVersionParity(info);
@@ -76,7 +84,11 @@ export async function checkReleaseNotices(
 	try {
 		entries = await readdir(releaseDir, { withFileTypes: true });
 	} catch {
-		return [`No built release found under ${releaseDir}`];
+		return {
+			archives: 0,
+			filesCompared: 0,
+			issues: [`No built release found under ${releaseDir}`],
+		};
 	}
 	issues.push(
 		...validateReleaseDirectory(
@@ -89,7 +101,7 @@ export async function checkReleaseNotices(
 			args.targets,
 		),
 	);
-	if (issues.length > 0) return issues;
+	if (issues.length > 0) return { archives: 0, filesCompared: 0, issues };
 
 	const revisions = await collectSourceRevisions(rootDir, info.packageVersion);
 	const catalogPaths = await listTrackedFiles(rootDir, CORE_CATALOG_DIRS);
@@ -111,7 +123,7 @@ export async function checkReleaseNotices(
 			issues.push(`${name}: ${errorMessage(err)}`);
 		}
 	}
-	return issues;
+	return { archives: args.targets.length, filesCompared: catalogPaths.length, issues };
 }
 
 export async function runReleaseNotices(
@@ -119,13 +131,32 @@ export async function runReleaseNotices(
 	rootDir = cwd(),
 ): Promise<number> {
 	try {
-		const issues = await checkReleaseNotices(rootDir, parseReleaseNoticeArgs(argv));
+		const { archives, filesCompared, issues } = await checkReleaseNotices(
+			rootDir,
+			parseReleaseNoticeArgs(argv),
+		);
 		if (issues.length > 0) {
 			console.error('[FAIL] release-notices: release archive validation failed:');
 			for (const issue of issues) console.error(`- ${issue}`);
 			return 1;
 		}
-		console.log('[OK] release-notices: release archives match the current source and catalog');
+
+		// Rule 5. The catalog side of this comparison is discovered by listing tracked files under
+		// `CORE_CATALOG_DIRS`, so a renamed directory produces an empty catalog, no mismatch to
+		// report, and a pass that compared each archive against nothing at all.
+		if (archives === 0 || filesCompared === 0) {
+			console.error('[FAIL] release-notices: nothing was compared.');
+			console.error(
+				`- ${archives} archive(s) validated against ${filesCompared} catalog file(s); ` +
+					'an archive matches the catalog only if there was a catalog to match.',
+			);
+			return 1;
+		}
+
+		console.log(
+			`[OK] release-notices: ${archives} release archive(s) match the current source and ` +
+				`catalog (${filesCompared} tracked file(s) compared)`,
+		);
 		return 0;
 	} catch (err) {
 		console.error(`[FAIL] release-notices: ${errorMessage(err)}`);

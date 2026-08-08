@@ -125,7 +125,11 @@ async function dispatchRunNext(
 				criticality: inferred.criticality,
 				dataSensitivity: inferred.dataSensitivity,
 				deployment: inferred.deployment,
+				derivesFromTemplate: inferred.derivesFromTemplate,
 				externalIntegrations: inferred.externalIntegrations,
+				hasCliBinary: inferred.hasCliBinary,
+				publishesReleaseArchives: inferred.publishesReleaseArchives,
+				shipsContainerImage: inferred.shipsContainerImage,
 				...(inferred.notes ? { notes: inferred.notes } : {}),
 			});
 			return {

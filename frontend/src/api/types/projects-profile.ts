@@ -111,14 +111,26 @@ export type ProjectCriticality = 'business_critical' | 'operational' | 'toy' | '
 export type ProjectExternalIntegrations =
 	'financial_or_security' | 'none' | 'read_only' | 'write_capable';
 
+export type ProjectContainerImage = 'local_only' | 'none' | 'published';
+
+export type ProjectCliBinary = 'none' | 'packaged_binary' | 'script_entry';
+
+export type ProjectTemplateOrigin = 'none' | 'spernakit';
+
+export type ProjectReleaseArtifacts = 'binary_archives' | 'none' | 'source_only';
+
 export interface ProjectAssuranceProfile {
 	authMode: ProjectAuthMode;
 	bucket: ProjectAssuranceBucket;
 	criticality: ProjectCriticality;
 	dataSensitivity: ProjectDataSensitivity;
 	deployment: ProjectDeployment;
+	derivesFromTemplate: ProjectTemplateOrigin;
 	externalIntegrations: ProjectExternalIntegrations;
+	hasCliBinary: ProjectCliBinary;
 	notes?: string;
+	publishesReleaseArchives: ProjectReleaseArtifacts;
+	shipsContainerImage: ProjectContainerImage;
 	source: 'explicit' | 'inferred';
 	updatedAt: string;
 }
@@ -129,6 +141,10 @@ export interface ProjectAssuranceProfileInput {
 	criticality: ProjectCriticality;
 	dataSensitivity: ProjectDataSensitivity;
 	deployment: ProjectDeployment;
+	derivesFromTemplate: ProjectTemplateOrigin;
 	externalIntegrations: ProjectExternalIntegrations;
+	hasCliBinary: ProjectCliBinary;
 	notes?: string;
+	publishesReleaseArchives: ProjectReleaseArtifacts;
+	shipsContainerImage: ProjectContainerImage;
 }

@@ -758,8 +758,12 @@ describe('web database and project APIs', () => {
 			criticality: 'business_critical',
 			dataSensitivity: 'regulated',
 			deployment: 'cloud',
+			derivesFromTemplate: 'none',
 			externalIntegrations: 'financial_or_security',
+			hasCliBinary: 'none',
 			notes: 'Hosted customer-facing app.',
+			publishesReleaseArchives: 'binary_archives',
+			shipsContainerImage: 'published',
 		});
 
 		expect(profile).toMatchObject({
@@ -782,7 +786,11 @@ describe('web database and project APIs', () => {
 				criticality: 'utility',
 				dataSensitivity: 'low',
 				deployment: 'local',
+				derivesFromTemplate: 'none',
 				externalIntegrations: 'none',
+				hasCliBinary: 'none',
+				publishesReleaseArchives: 'none',
+				shipsContainerImage: 'none',
 			}),
 		).rejects.toThrow('Invalid project profile field: bucket');
 	});
@@ -822,7 +830,11 @@ describe('web database and project APIs', () => {
 			criticality: 'utility',
 			dataSensitivity: 'low',
 			deployment: 'local',
+			derivesFromTemplate: 'none',
 			externalIntegrations: 'none',
+			hasCliBinary: 'none',
+			publishesReleaseArchives: 'none',
+			shipsContainerImage: 'none',
 		});
 		const header = JSON.parse(dataMovementTraceHeader()) as {
 			events: { operation: string; target?: string }[];

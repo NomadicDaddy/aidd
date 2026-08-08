@@ -13,7 +13,11 @@ const publicProfile: ProjectAssuranceProfile = {
 	criticality: 'business_critical',
 	dataSensitivity: 'confidential',
 	deployment: 'public_server',
+	derivesFromTemplate: 'none',
 	externalIntegrations: 'write_capable',
+	hasCliBinary: 'none',
+	publishesReleaseArchives: 'none',
+	shipsContainerImage: 'none',
 	source: 'explicit',
 	updatedAt: '2026-05-24T00:00:00.000Z',
 };

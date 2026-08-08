@@ -56,6 +56,15 @@ facet keys mirror `ProjectAssuranceProfile`:
 - `deployment` - `ProjectDeployment[]`
 - `externalIntegrations` - `ProjectExternalIntegrations[]`
 - `authMode` - `ProjectAuthMode[]`
+- `shipsContainerImage` - `ProjectContainerImage[]`
+- `hasCliBinary` - `ProjectCliBinary[]`
+- `publishesReleaseArchives` - `ProjectReleaseArtifacts[]`
+- `derivesFromTemplate` - `ProjectTemplateOrigin[]`
+
+The last four are carriage facets: they scope a rule by what the project produces rather than by how
+exposed it is. A gate about image scanning, binary signing, or template drift is scoped on these.
+Before they existed such a gate could only be scoped as a list of repository names, which is the
+thing this file exists to replace.
 
 `audits` is a list of audit names (upper-snake, matching the `.md` filename) or `["*"]` to mean
 "every audit in the catalog".
@@ -185,9 +194,11 @@ operator is forced to fix the file rather than silently inherit "no overrides."
 - Every `rule.match` facet key is a valid `ProjectAssuranceProfile` field.
 - Every facet value array contains only valid enum members.
 - No duplicate rule IDs.
-- Every runnable, non-reference audit is reachable in at least one bucket, unless an explicit
+- Every runnable, non-reference audit is reachable by at least one probed profile, unless an explicit
   unconditional `disabled` rule makes it opt-in by default (catches accidental sweep rules while
-  permitting intentional opt-in audits).
+  permitting intentional opt-in audits). The probe is the cross product of every bucket with every
+  value of the four carriage facets. A bucket-only sweep would report an audit unreachable purely
+  because the single probe profile never shipped an image or published an archive.
 
 Reference documents such as `AUDIT_METHODOLOGY.md` and `SEVERITY_CLASSIFICATION.md` can be copied
 alongside selected audits for prompt context, but they are not selectable audit definitions and are

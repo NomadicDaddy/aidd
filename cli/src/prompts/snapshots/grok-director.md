@@ -474,7 +474,11 @@ The fleet summary is a JSON object with this shape:
 				"criticality": "utility",
 				"dataSensitivity": "personal",
 				"deployment": "local",
+				"derivesFromTemplate": "none",
 				"externalIntegrations": "none",
+				"hasCliBinary": "none",
+				"publishesReleaseArchives": "none",
+				"shipsContainerImage": "local_only",
 				"source": "explicit",
 				"updatedAt": "2026-04-15T18:00:00.000Z"
 			},
@@ -548,6 +552,7 @@ Project profiles are applicability context:
 - `multi_user_local` and `private_team` should keep auth, data ownership, backups, and team workflow findings visible, but avoid internet-only conclusions unless deployment or integrations justify them.
 - `internet_single_org`, `public_multi_tenant`, `critical_regulated`, `dataSensitivity=regulated`, `deployment=public_server|cloud`, `criticality=business_critical`, or `externalIntegrations=financial_or_security` justify stronger security, CI/CD, audit freshness, and release-gate suggestions.
 - `prototype_archive` should produce no normal backlog push unless the prioritized work already exposes a concrete high-risk operational issue.
+- `shipsContainerImage`, `hasCliBinary`, `publishesReleaseArchives`, and `derivesFromTemplate` say what the project produces, not how exposed it is. Use them to decide whether a suggestion is applicable at all — image scanning, release signing, binary distribution, template drift — and never to raise or lower risk on their own. A project that ships nothing is not safer; the suggestion simply does not apply to it.
 - When `prioritizedWork[].evidence.profileAdjustment` is present, mention it in `reasoning` and keep the emitted risk aligned with `prioritizedWork[].riskLevel`.
 
 `projects[].dependencyBlockedCount` is topology, not a task type. It counts otherwise-eligible unfinished work — features, audit findings, and remediations alike — that a coding run cannot select because its declared dependencies are not all passing. Items awaiting approval are excluded, because approval rather than topology is what holds those back. Read it as follows, and never emit a suggestion whose only evidence is this number:

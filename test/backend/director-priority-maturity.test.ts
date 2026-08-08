@@ -14,7 +14,11 @@ const fullHardeningProfile: ProjectAssuranceProfile = {
 	criticality: 'business_critical',
 	dataSensitivity: 'regulated',
 	deployment: 'cloud',
+	derivesFromTemplate: 'none',
 	externalIntegrations: 'financial_or_security',
+	hasCliBinary: 'none',
+	publishesReleaseArchives: 'none',
+	shipsContainerImage: 'published',
 	source: 'explicit',
 	updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -25,7 +29,11 @@ const lowExposureProfile: ProjectAssuranceProfile = {
 	criticality: 'utility',
 	dataSensitivity: 'low',
 	deployment: 'local',
+	derivesFromTemplate: 'none',
 	externalIntegrations: 'none',
+	hasCliBinary: 'none',
+	publishesReleaseArchives: 'none',
+	shipsContainerImage: 'none',
 	source: 'explicit',
 	updatedAt: '2026-01-01T00:00:00.000Z',
 };

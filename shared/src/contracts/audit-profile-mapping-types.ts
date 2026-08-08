@@ -1,10 +1,14 @@
 import {
 	type ProjectAssuranceBucket,
 	type ProjectAuthMode,
+	type ProjectCliBinary,
+	type ProjectContainerImage,
 	type ProjectCriticality,
 	type ProjectDataSensitivity,
 	type ProjectDeployment,
 	type ProjectExternalIntegrations,
+	type ProjectReleaseArtifacts,
+	type ProjectTemplateOrigin,
 } from './project-profile.ts';
 
 export const auditEffectValues = ['default', 'disabled', 'required', 'excluded'] as const;
@@ -22,13 +26,24 @@ export type AuditApplicabilitySource = (typeof auditApplicabilitySources)[number
 
 export const auditWildcard = '*';
 
+/**
+ * A rule matches a profile when every facet it names contains the profile's value; an unnamed facet
+ * is unconstrained. The carriage facets are here for the same reason as the exposure ones — a gate
+ * about container images or release archives is scoped by what the project produces, not by how
+ * exposed it is, and before these existed such a gate could only be scoped by a list of repository
+ * names.
+ */
 export interface AuditProfileMatch {
 	authMode?: ProjectAuthMode[];
 	bucket?: ProjectAssuranceBucket[];
 	criticality?: ProjectCriticality[];
 	dataSensitivity?: ProjectDataSensitivity[];
 	deployment?: ProjectDeployment[];
+	derivesFromTemplate?: ProjectTemplateOrigin[];
 	externalIntegrations?: ProjectExternalIntegrations[];
+	hasCliBinary?: ProjectCliBinary[];
+	publishesReleaseArchives?: ProjectReleaseArtifacts[];
+	shipsContainerImage?: ProjectContainerImage[];
 }
 
 export interface AuditProfileRule {

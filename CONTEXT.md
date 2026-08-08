@@ -98,10 +98,13 @@ recommended next action.
 _Avoid_: Phase, Milestone.
 
 **Project Profile** (assurance profile):
-`.aidd/project-profile.json` describing how much assurance/hardening a Project needs across six
-enums (`bucket`, `authMode`, `criticality`, `dataSensitivity`, `deployment`,
-`externalIntegrations`). Inferred from project signals until written explicitly via the Profile tab.
-Drives audit applicability and risk posture (`requiresFullHardening`, `isLowExposureLocalProfile`).
+`.aidd/project-profile.json` describing a Project across ten enums. Six say how exposed it is and
+therefore how much hardening it needs (`bucket`, `authMode`, `criticality`, `dataSensitivity`,
+`deployment`, `externalIntegrations`); four say what it produces and therefore which gates apply to
+it at all (`shipsContainerImage`, `hasCliBinary`, `publishesReleaseArchives`,
+`derivesFromTemplate`). Inferred from project signals until written explicitly via the Profile tab.
+Drives audit applicability and risk posture (`requiresFullHardening`, `isLowExposureLocalProfile`);
+only the six exposure enums move posture.
 _Avoid_: Maturity, Director profile.
 
 > Phase, Maturity stage, and Milestone are three orthogonal axes. Do not conflate them.

@@ -70,6 +70,8 @@ export type {
 	ProjectAssuranceProfile,
 	ProjectAssuranceProfileInput,
 	ProjectAuthMode,
+	ProjectCliBinary,
+	ProjectContainerImage,
 	ProjectCriticality,
 	ProjectDataSensitivity,
 	ProjectDeployment,
@@ -77,10 +79,12 @@ export type {
 	ProjectInterviewDetail,
 	ProjectInterviewProgress,
 	ProjectInterviewQuestion,
+	ProjectReleaseArtifacts,
 	ProjectReport,
 	ProjectReportInput,
 	ProjectReportKind,
 	ProjectReportsResponse,
+	ProjectTemplateOrigin,
 } from './types/projects-profile.ts';
 export type {
 	FeatureStatusEntry,

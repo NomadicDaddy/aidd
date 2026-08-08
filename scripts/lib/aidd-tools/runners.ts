@@ -1,4 +1,11 @@
-import { type AuditProfileMapping, projectAssuranceBuckets } from 'aidd-shared';
+import {
+	type AuditProfileMapping,
+	projectAssuranceBuckets,
+	projectCliBinaryValues,
+	projectContainerImageValues,
+	projectReleaseArtifactValues,
+	projectTemplateOriginValues,
+} from 'aidd-shared';
 import {
 	auditProfileMappingPath,
 	loadAuditProfileMapping,
@@ -193,16 +200,32 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 		}
 	}
 
-	const probeProfiles = projectAssuranceBuckets.map((bucket) => ({
-		authMode: 'login' as const,
-		bucket,
-		criticality: 'utility' as const,
-		dataSensitivity: 'personal' as const,
-		deployment: 'private_server' as const,
-		externalIntegrations: 'read_only' as const,
-		source: 'inferred' as const,
-		updatedAt: '1970-01-01T00:00:00.000Z',
-	}));
+	// An audit is reachable if some profile makes it apply, so the probe has to vary every facet a
+	// rule may be scoped on. The bucket sweep alone was enough while buckets were the only such
+	// facet; a rule matching `shipsContainerImage: ['published']` would otherwise be reported as
+	// unreachable purely because the one probe profile never shipped an image.
+	const probeProfiles = projectAssuranceBuckets.flatMap((bucket) =>
+		projectContainerImageValues.flatMap((shipsContainerImage) =>
+			projectCliBinaryValues.flatMap((hasCliBinary) =>
+				projectTemplateOriginValues.flatMap((derivesFromTemplate) =>
+					projectReleaseArtifactValues.map((publishesReleaseArchives) => ({
+						authMode: 'login' as const,
+						bucket,
+						criticality: 'utility' as const,
+						dataSensitivity: 'personal' as const,
+						deployment: 'private_server' as const,
+						derivesFromTemplate,
+						externalIntegrations: 'read_only' as const,
+						hasCliBinary,
+						publishesReleaseArchives,
+						shipsContainerImage,
+						source: 'inferred' as const,
+						updatedAt: '1970-01-01T00:00:00.000Z',
+					})),
+				),
+			),
+		),
+	);
 
 	const { isAuditApplicableToProfile } = await import('aidd-shared');
 	for (const name of knownAudits) {
@@ -216,7 +239,7 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 	for (const audit of knownAudits) {
 		if (!reachableAudits.has(audit) && !intentionallyDefaultDisabledAudits.has(audit)) {
 			errors.push(
-				`Audit ${audit} is unreachable: excluded by global rules for every assurance bucket`,
+				`Audit ${audit} is unreachable: excluded by global rules for every probed profile`,
 			);
 		}
 	}

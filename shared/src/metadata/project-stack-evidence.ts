@@ -2,6 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 export interface PackageJsonShape {
+	bin?: unknown;
 	dependencies?: Record<string, unknown>;
 	description?: unknown;
 	devDependencies?: Record<string, unknown>;

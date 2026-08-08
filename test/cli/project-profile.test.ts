@@ -37,8 +37,12 @@ describe('project profile metadata', () => {
 			criticality: 'business_critical',
 			dataSensitivity: 'regulated',
 			deployment: 'cloud',
+			derivesFromTemplate: 'none',
 			externalIntegrations: 'financial_or_security',
+			hasCliBinary: 'none',
 			notes: '  Hosted customer-facing app.  ',
+			publishesReleaseArchives: 'none',
+			shipsContainerImage: 'published',
 		});
 		const written = JSON.parse(
 			await readFile(join(projectDir, '.aidd', 'project-profile.json'), 'utf8'),
@@ -50,8 +54,12 @@ describe('project profile metadata', () => {
 			'criticality',
 			'dataSensitivity',
 			'deployment',
+			'derivesFromTemplate',
 			'externalIntegrations',
+			'hasCliBinary',
 			'notes',
+			'publishesReleaseArchives',
+			'shipsContainerImage',
 			'source',
 			'updatedAt',
 		]);

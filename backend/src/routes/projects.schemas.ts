@@ -1,11 +1,15 @@
 import {
 	projectAssuranceBuckets,
 	projectAuthModeValues,
+	projectCliBinaryValues,
+	projectContainerImageValues,
 	projectCriticalityValues,
 	projectDataSensitivityValues,
 	projectDeploymentValues,
 	projectExternalIntegrationValues,
 	projectProfileNotesMaxLength,
+	projectReleaseArtifactValues,
+	projectTemplateOriginValues,
 } from 'aidd-shared';
 import { t } from 'elysia';
 
@@ -61,8 +65,12 @@ export const projectProfileBody = t.Object({
 	criticality: literalUnion(projectCriticalityValues),
 	dataSensitivity: literalUnion(projectDataSensitivityValues),
 	deployment: literalUnion(projectDeploymentValues),
+	derivesFromTemplate: literalUnion(projectTemplateOriginValues),
 	externalIntegrations: literalUnion(projectExternalIntegrationValues),
+	hasCliBinary: literalUnion(projectCliBinaryValues),
 	notes: t.Optional(t.String({ maxLength: projectProfileNotesMaxLength })),
+	publishesReleaseArchives: literalUnion(projectReleaseArtifactValues),
+	shipsContainerImage: literalUnion(projectContainerImageValues),
 });
 
 export const projectProfilePreviewsBody = t.Object({

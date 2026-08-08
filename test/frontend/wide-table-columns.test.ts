@@ -189,11 +189,13 @@ describe('wide table column strategy', () => {
 		expect(readOptionalColumns(['bucket', 'name', 'lastSync'])).toEqual([]);
 	});
 
-	test('the Profile Matrix hides its six facet columns outside edit mode', () => {
-		// Five in Summary, not six: the Actions column goes with the facet selects, because with
-		// nothing editable on screen every control in it was permanently disabled.
+	test('the Profile Matrix hides its ten facet columns outside edit mode', () => {
+		// Five in Summary, not ten: the Actions column goes with the facet selects, because with
+		// nothing editable on screen every control in it was permanently disabled. Edit mode is
+		// those five plus one select per facet in `profileFacets`, so adding a facet moves this
+		// number and leaves the Summary count alone.
 		expect(rendered.matrix.summary).toBe(5);
-		expect(rendered.matrix.edit).toBe(12);
+		expect(rendered.matrix.edit).toBe(16);
 	});
 
 	test('both tables sit in a scrollport that signals and exposes its overflow', async () => {

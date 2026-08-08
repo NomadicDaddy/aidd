@@ -2,14 +2,18 @@ import type {
 	MaturityStageId,
 	ProjectAssuranceBucket,
 	ProjectAuthMode,
+	ProjectCliBinary,
+	ProjectContainerImage,
 	ProjectCriticality,
 	ProjectDataSensitivity,
 	ProjectDeployment,
 	ProjectExternalIntegrations,
 	ProjectMetadata,
 	ProjectPhase,
+	ProjectReleaseArtifacts,
 	ProjectSummary,
 	ProjectSyncState,
+	ProjectTemplateOrigin,
 	ProjectUsageTotals,
 } from '../../api/types.ts';
 
@@ -102,6 +106,29 @@ export const externalIntegrationLabels: Record<ProjectExternalIntegrations, stri
 	write_capable: 'Write-capable',
 };
 
+export const containerImageLabels: Record<ProjectContainerImage, string> = {
+	local_only: 'Built locally',
+	none: 'None',
+	published: 'Published',
+};
+
+export const cliBinaryLabels: Record<ProjectCliBinary, string> = {
+	none: 'None',
+	packaged_binary: 'Packaged binary',
+	script_entry: 'Script entry',
+};
+
+export const templateOriginLabels: Record<ProjectTemplateOrigin, string> = {
+	none: 'None',
+	spernakit: 'Spernakit',
+};
+
+export const releaseArtifactLabels: Record<ProjectReleaseArtifacts, string> = {
+	binary_archives: 'Binary archives',
+	none: 'None',
+	source_only: 'Source only',
+};
+
 export const bucketOptions: ProjectAssuranceBucket[] = [
 	'prototype_archive',
 	'single_user_local',
@@ -143,6 +170,14 @@ export const externalIntegrationOptions: ProjectExternalIntegrations[] = [
 	'read_only',
 	'write_capable',
 	'financial_or_security',
+];
+export const containerImageOptions: ProjectContainerImage[] = ['none', 'local_only', 'published'];
+export const cliBinaryOptions: ProjectCliBinary[] = ['none', 'script_entry', 'packaged_binary'];
+export const templateOriginOptions: ProjectTemplateOrigin[] = ['none', 'spernakit'];
+export const releaseArtifactOptions: ProjectReleaseArtifacts[] = [
+	'none',
+	'source_only',
+	'binary_archives',
 ];
 
 export const artifactTone: Record<ArtifactHealth, BadgeTone> = {

@@ -31,7 +31,11 @@ export function profileInput(profile: ProjectAssuranceProfile): ProjectAssurance
 		criticality: profile.criticality,
 		dataSensitivity: profile.dataSensitivity,
 		deployment: profile.deployment,
+		derivesFromTemplate: profile.derivesFromTemplate,
 		externalIntegrations: profile.externalIntegrations,
+		hasCliBinary: profile.hasCliBinary,
+		publishesReleaseArchives: profile.publishesReleaseArchives,
+		shipsContainerImage: profile.shipsContainerImage,
 	};
 	if (profile.notes) input.notes = profile.notes;
 	return input;
@@ -47,7 +51,11 @@ export function sameProfileInput(
 		a.criticality === b.criticality &&
 		a.dataSensitivity === b.dataSensitivity &&
 		a.deployment === b.deployment &&
+		a.derivesFromTemplate === b.derivesFromTemplate &&
 		a.externalIntegrations === b.externalIntegrations &&
+		a.hasCliBinary === b.hasCliBinary &&
+		a.publishesReleaseArchives === b.publishesReleaseArchives &&
+		a.shipsContainerImage === b.shipsContainerImage &&
 		(a.notes ?? '') === (b.notes ?? '')
 	);
 }

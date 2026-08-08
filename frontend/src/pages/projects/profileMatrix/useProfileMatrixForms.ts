@@ -20,7 +20,11 @@ function formSignature(form: ProjectAssuranceProfileInput): string {
 		form.criticality,
 		form.dataSensitivity,
 		form.deployment,
+		form.derivesFromTemplate,
 		form.externalIntegrations,
+		form.hasCliBinary,
+		form.publishesReleaseArchives,
+		form.shipsContainerImage,
 		form.notes ?? '',
 	].join('|');
 }

@@ -19,8 +19,12 @@ invalid, `readProjectAssuranceProfile()` falls back to inference from project si
 	"criticality": "utility",
 	"dataSensitivity": "personal",
 	"deployment": "local",
+	"derivesFromTemplate": "none",
 	"externalIntegrations": "none",
+	"hasCliBinary": "none",
 	"notes": "Optional context for why this profile was chosen.",
+	"publishesReleaseArchives": "none",
+	"shipsContainerImage": "local_only",
 	"source": "explicit",
 	"updatedAt": "2026-05-19T00:00:00.000Z"
 }
@@ -34,11 +38,22 @@ contract, and `updatedAt` is an ISO timestamp from the write operation. Files wi
 
 ## Fields
 
-All six core fields are required enums. Within each field, values are listed from lowest to highest
-assurance, the same order they appear in the Profile UI dropdowns. The **UI label** column matches
-the short text shown in the web Profile tab and project list badges. Values marked **⊕ full
-hardening** satisfy a clause of `requiresFullHardening()`; values marked **⊖ low-exposure** are the
-only ones permitted by `isLowExposureLocalProfile()` (see [Operational Effect](#operational-effect)).
+All ten core fields are required enums, in two groups.
+
+The **six exposure facets** (`bucket`, `dataSensitivity`, `deployment`, `authMode`, `criticality`,
+`externalIntegrations`) say how exposed the project is, and therefore how hard the gates that apply
+to it should press. Within each, values are listed from lowest to highest assurance, the same order
+they appear in the Profile UI dropdowns. Values marked **⊕ full hardening** satisfy a clause of
+`requiresFullHardening()`; values marked **⊖ low-exposure** are the only ones permitted by
+`isLowExposureLocalProfile()` (see [Operational Effect](#operational-effect)).
+
+The **four carriage facets** (`shipsContainerImage`, `hasCliBinary`, `publishesReleaseArchives`,
+`derivesFromTemplate`) say what the project produces and where that output goes, and therefore which
+gates apply to it at all. No value of any of them moves the posture predicates, so none carries a ⊕
+or ⊖ marker: a project that ships nothing is not thereby safer, the gate simply has nothing to
+inspect.
+
+The **UI label** column matches the short text shown in the web Profile tab and project list badges.
 
 ### `bucket`: overall exposure and operating model
 
@@ -100,6 +115,40 @@ only ones permitted by `isLowExposureLocalProfile()` (see [Operational Effect](#
 | `write_capable`         | Write-capable      | Can write to or modify external systems.                                                                       |
 | `financial_or_security` | Financial/security | Integrates with financial or security-sensitive systems (payments, auth providers, secrets). ⊕ full hardening. |
 
+### `shipsContainerImage`: whether a container image is built, and whether it reaches a registry
+
+| Value        | UI label        | Meaning                                                                                           |
+| ------------ | --------------- | ------------------------------------------------------------------------------------------------- |
+| `none`       | None            | No container image is built.                                                                      |
+| `local_only` | Local only      | A `Dockerfile` exists and images are built locally or in CI, but nothing is pushed to a registry. |
+| `published`  | Published image | Images are pushed to a registry (ghcr, Docker Hub, a private registry) and consumed from there.   |
+
+### `hasCliBinary`: whether the project is invoked as a command, and whether it ships a compiled artifact
+
+| Value             | UI label        | Meaning                                                                                     |
+| ----------------- | --------------- | ------------------------------------------------------------------------------------------- |
+| `none`            | None            | Not invoked as a command-line program.                                                      |
+| `script_entry`    | Script entry    | Exposes a command that runs from source: a `bin` entry, or a script invoked directly.       |
+| `packaged_binary` | Packaged binary | Compiles to a standalone executable that runs without the source tree or a package manager. |
+
+### `publishesReleaseArchives`: what a published release carries
+
+| Value             | UI label        | Meaning                                                                                               |
+| ----------------- | --------------- | ----------------------------------------------------------------------------------------------------- |
+| `none`            | None            | No releases are published.                                                                            |
+| `source_only`     | Source only     | Releases are published, but carry only what the forge attaches automatically plus notes.              |
+| `binary_archives` | Binary archives | Releases carry built artifacts uploaded by the release job: archives, installers, checksum manifests. |
+
+### `derivesFromTemplate`: which template the project was scaffolded from
+
+| Value       | UI label  | Meaning                                                                   |
+| ----------- | --------- | ------------------------------------------------------------------------- |
+| `none`      | None      | Not scaffolded from a fleet template.                                     |
+| `spernakit` | Spernakit | Scaffolded from the Spernakit template and subject to its drift contract. |
+
+This one names the template rather than answering yes or no, so a second template can be added
+without changing the type of anything that already reads the facet.
+
 ### Inference defaults
 
 When no valid explicit file is present, `inferProjectAssuranceProfile()` picks one of four preset
@@ -111,6 +160,22 @@ profiles from project signals (first match wins):
 | `convex` dependency or `react+convex` stack  | `internet_single_org` | `login`       | `operational` | `personal`      | `cloud`    | `write_capable`      |
 | Spernakit stack (excluding `spernakit-lite`) | `multi_user_local`    | `rbac`        | `utility`     | `personal`      | `local`    | `none`               |
 | Fallback (anything else)                     | `single_user_local`   | `local_owner` | `utility`     | `low`           | `local`    | `none`               |
+
+The four carriage facets are not part of these presets. They are read from the filesystem
+independently and merged into whichever preset matched:
+
+| Facet                      | Inferred from                                                  | Ceiling                                                                 |
+| -------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `shipsContainerImage`      | A `Dockerfile` at the project root.                            | `local_only`; `published` is never inferred.                            |
+| `hasCliBinary`             | A `bin` entry, or a `package.json` script running `--compile`. | `packaged_binary` is inferred when a script compiles.                   |
+| `publishesReleaseArchives` | Nothing.                                                       | Always `none`.                                                          |
+| `derivesFromTemplate`      | A `spernakit_version` key in `package.json`.                   | `spernakit` when the key is present; the template itself infers `none`. |
+
+Two of the four have a top rung inference deliberately never reaches. A registry push and an
+uploaded release archive both live in CI workflow YAML, and reading that here would mean parsing
+every forge's syntax to answer a question the explicit profile answers directly. Inference stops at
+the rung it can prove, which under-claims rather than over-claims: a gate scoped to `published` is
+withheld from a project nobody profiled, instead of applied to one that turns out not to publish.
 
 Inferred profiles carry `source: "inferred"`; writing through the Profile UI promotes the profile to
 `source: "explicit"` and persists the canonical file.
@@ -158,3 +223,5 @@ excluded`. The resolver is shared between `filterApplicableAuditNames`, the dire
     - `isLowExposureLocalProfile(profile)` returns `true` only when **all** of: `bucket` is
       `single_user_local`; `deployment` is `local`; `dataSensitivity` is `none` or `low`;
       `externalIntegrations` is `none` or `read_only`; and `criticality` is `toy` or `utility`.
+    - Neither predicate reads a carriage facet. Those scope applicability through the mapping file in
+      (1), where a rule may match on them exactly as it matches on `bucket`.

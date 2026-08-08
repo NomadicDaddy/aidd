@@ -13,7 +13,11 @@ const validInput = {
 	criticality: 'business_critical',
 	dataSensitivity: 'regulated',
 	deployment: 'cloud',
+	derivesFromTemplate: 'none',
 	externalIntegrations: 'financial_or_security',
+	hasCliBinary: 'packaged_binary',
+	publishesReleaseArchives: 'binary_archives',
+	shipsContainerImage: 'published',
 } as const;
 
 describe('project profile contract', () => {
@@ -64,6 +68,21 @@ describe('project profile contract', () => {
 			source: 'explicit',
 			updatedAt: '2026-05-19T00:00:00.000Z',
 		});
+	});
+
+	// A profile written before a carriage facet existed must fail rather than normalize to a value
+	// nobody chose. The failure is silent one level up, where a rejected file falls back to
+	// inference, so this is the only place the contract is visible.
+	test('rejects a profile missing a carriage facet', () => {
+		const { shipsContainerImage: _omitted, ...withoutCarriage } = validInput;
+
+		expect(() =>
+			normalizeProjectAssuranceProfileFile({
+				...withoutCarriage,
+				source: 'explicit',
+				updatedAt: '2026-05-19T00:00:00.000Z',
+			}),
+		).toThrow('Invalid project profile field: shipsContainerImage');
 	});
 
 	test('rejects invalid enum values', () => {

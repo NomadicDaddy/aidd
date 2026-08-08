@@ -1,10 +1,14 @@
 import type {
 	ProjectAssuranceBucket,
 	ProjectAuthMode,
+	ProjectCliBinary,
+	ProjectContainerImage,
 	ProjectCriticality,
 	ProjectDataSensitivity,
 	ProjectDeployment,
 	ProjectExternalIntegrations,
+	ProjectReleaseArtifacts,
+	ProjectTemplateOrigin,
 } from '../../../../api/types.ts';
 
 import {
@@ -12,6 +16,10 @@ import {
 	authModeOptions,
 	bucketLabels,
 	bucketOptions,
+	cliBinaryLabels,
+	cliBinaryOptions,
+	containerImageLabels,
+	containerImageOptions,
 	criticalityLabels,
 	criticalityOptions,
 	dataSensitivityLabels,
@@ -20,16 +28,24 @@ import {
 	deploymentOptions,
 	externalIntegrationLabels,
 	externalIntegrationOptions,
+	releaseArtifactLabels,
+	releaseArtifactOptions,
+	templateOriginLabels,
+	templateOriginOptions,
 } from '../../projects-list-shared.ts';
 
-/** The six editable facets of a project assurance profile (everything except `notes`). */
+/** The ten editable facets of a project assurance profile (everything except `notes`). */
 export type FacetField =
 	| 'authMode'
 	| 'bucket'
 	| 'criticality'
 	| 'dataSensitivity'
 	| 'deployment'
-	| 'externalIntegrations';
+	| 'derivesFromTemplate'
+	| 'externalIntegrations'
+	| 'hasCliBinary'
+	| 'publishesReleaseArchives'
+	| 'shipsContainerImage';
 
 export interface FacetOption<Value extends string> {
 	/** Short one-line meaning, sourced from docs/reference/project-profile.md. */
@@ -104,6 +120,29 @@ const criticalityBlurbs: Record<ProjectCriticality, string> = {
 	operational: 'Supports day-to-day operations; failure disrupts real work.',
 	toy: 'Experiment or demo; failure has no consequence.',
 	utility: 'Helpful tool; failure is an easily worked-around inconvenience.',
+};
+
+const containerImageBlurbs: Record<ProjectContainerImage, string> = {
+	local_only: 'A Dockerfile or compose file exists, but nothing pushes an image anywhere.',
+	none: 'No container image is built.',
+	published: 'An image is built and pushed to a registry.',
+};
+
+const cliBinaryBlurbs: Record<ProjectCliBinary, string> = {
+	none: 'Nothing here is invoked as a command.',
+	packaged_binary: 'A compiled or standalone executable is produced and distributed.',
+	script_entry: 'Command entry points exist (a package `bin`, or documented scripts); no binary.',
+};
+
+const templateOriginBlurbs: Record<ProjectTemplateOrigin, string> = {
+	none: 'Not scaffolded from a fleet template.',
+	spernakit: 'Scaffolded from Spernakit; carries `spernakit_version` and template-managed files.',
+};
+
+const releaseArtifactBlurbs: Record<ProjectReleaseArtifacts, string> = {
+	binary_archives: 'Releases carry built artifacts: archives, checksums, or installers.',
+	none: 'Nothing is published as a release.',
+	source_only: "Releases are cut, but carry only notes and the forge's own source tarballs.",
 };
 
 const integrationsBlurbs: Record<ProjectExternalIntegrations, string> = {
@@ -183,7 +222,45 @@ export const externalIntegrationsFacet: FacetDef<ProjectExternalIntegrations> = 
 	title: 'External integrations',
 };
 
-// Order: most → least audit-impactful, matching how the facets cascade into posture.
+export const shipsContainerImageFacet: FacetDef<ProjectContainerImage> = {
+	description: 'Whether a container image is produced, and whether it leaves the machine.',
+	field: 'shipsContainerImage',
+	options: containerImageOptions.map((value) =>
+		option(value, containerImageLabels[value], containerImageBlurbs[value]),
+	),
+	title: 'Container image',
+};
+
+export const hasCliBinaryFacet: FacetDef<ProjectCliBinary> = {
+	description: 'Whether the project is invoked as a command, and whether it ships an executable.',
+	field: 'hasCliBinary',
+	options: cliBinaryOptions.map((value) =>
+		option(value, cliBinaryLabels[value], cliBinaryBlurbs[value]),
+	),
+	title: 'CLI binary',
+};
+
+export const derivesFromTemplateFacet: FacetDef<ProjectTemplateOrigin> = {
+	description: 'Which fleet template scaffolded the project, if any.',
+	field: 'derivesFromTemplate',
+	options: templateOriginOptions.map((value) =>
+		option(value, templateOriginLabels[value], templateOriginBlurbs[value]),
+	),
+	title: 'Template origin',
+};
+
+export const publishesReleaseArchivesFacet: FacetDef<ProjectReleaseArtifacts> = {
+	description: 'What a published release carries, if the project publishes releases at all.',
+	field: 'publishesReleaseArchives',
+	options: releaseArtifactOptions.map((value) =>
+		option(value, releaseArtifactLabels[value], releaseArtifactBlurbs[value]),
+	),
+	title: 'Release artifacts',
+};
+
+// Exposure facets first, ordered most → least audit-impactful, matching how they cascade into
+// posture. The four carriage facets follow: they scope which gates apply rather than how hard the
+// applicable ones press, so no value of any of them moves the posture reading.
 export const profileFacets = [
 	bucketFacet,
 	deploymentFacet,
@@ -191,4 +268,8 @@ export const profileFacets = [
 	externalIntegrationsFacet,
 	criticalityFacet,
 	authModeFacet,
+	shipsContainerImageFacet,
+	hasCliBinaryFacet,
+	publishesReleaseArchivesFacet,
+	derivesFromTemplateFacet,
 ] as const;

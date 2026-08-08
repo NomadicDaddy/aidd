@@ -16,7 +16,11 @@ const serverProfile: ProjectAssuranceProfile = {
 	criticality: 'operational',
 	dataSensitivity: 'personal',
 	deployment: 'public_server',
+	derivesFromTemplate: 'none',
 	externalIntegrations: 'none',
+	hasCliBinary: 'none',
+	publishesReleaseArchives: 'none',
+	shipsContainerImage: 'none',
 	source: 'explicit',
 	updatedAt: '2026-07-01T00:00:00.000Z',
 };

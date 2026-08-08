@@ -1,62 +1,30 @@
-export const projectAssuranceBuckets = [
-	'prototype_archive',
-	'single_user_local',
-	'multi_user_local',
-	'private_team',
-	'internet_single_org',
-	'public_multi_tenant',
-	'critical_regulated',
-] as const;
+import {
+	type ProjectAssuranceBucket,
+	projectAssuranceBuckets,
+	type ProjectAuthMode,
+	projectAuthModeValues,
+	type ProjectCliBinary,
+	projectCliBinaryValues,
+	type ProjectContainerImage,
+	projectContainerImageValues,
+	type ProjectCriticality,
+	projectCriticalityValues,
+	type ProjectDataSensitivity,
+	projectDataSensitivityValues,
+	type ProjectDeployment,
+	projectDeploymentValues,
+	type ProjectExternalIntegrations,
+	projectExternalIntegrationValues,
+	projectProfileFileSourceValues,
+	projectProfileNotesMaxLength,
+	type ProjectProfileSource,
+	type ProjectReleaseArtifacts,
+	projectReleaseArtifactValues,
+	type ProjectTemplateOrigin,
+	projectTemplateOriginValues,
+} from './project-profile-values.ts';
 
-export const projectDataSensitivityValues = [
-	'none',
-	'low',
-	'personal',
-	'confidential',
-	'regulated',
-] as const;
-
-export const projectDeploymentValues = [
-	'local',
-	'lan',
-	'private_server',
-	'public_server',
-	'cloud',
-] as const;
-
-export const projectAuthModeValues = [
-	'none',
-	'local_owner',
-	'login',
-	'rbac',
-	'tenant_rbac',
-] as const;
-
-export const projectCriticalityValues = [
-	'toy',
-	'utility',
-	'operational',
-	'business_critical',
-] as const;
-
-export const projectExternalIntegrationValues = [
-	'none',
-	'read_only',
-	'write_capable',
-	'financial_or_security',
-] as const;
-
-export const projectProfileSourceValues = ['explicit', 'inferred'] as const;
-export const projectProfileFileSourceValues = ['explicit'] as const;
-export const projectProfileNotesMaxLength = 4000;
-
-export type ProjectAssuranceBucket = (typeof projectAssuranceBuckets)[number];
-export type ProjectAuthMode = (typeof projectAuthModeValues)[number];
-export type ProjectCriticality = (typeof projectCriticalityValues)[number];
-export type ProjectDataSensitivity = (typeof projectDataSensitivityValues)[number];
-export type ProjectDeployment = (typeof projectDeploymentValues)[number];
-export type ProjectExternalIntegrations = (typeof projectExternalIntegrationValues)[number];
-export type ProjectProfileSource = (typeof projectProfileSourceValues)[number];
+export * from './project-profile-values.ts';
 
 export interface ProjectAssuranceProfile {
 	authMode: ProjectAuthMode;
@@ -64,8 +32,12 @@ export interface ProjectAssuranceProfile {
 	criticality: ProjectCriticality;
 	dataSensitivity: ProjectDataSensitivity;
 	deployment: ProjectDeployment;
+	derivesFromTemplate: ProjectTemplateOrigin;
 	externalIntegrations: ProjectExternalIntegrations;
+	hasCliBinary: ProjectCliBinary;
 	notes?: string;
+	publishesReleaseArchives: ProjectReleaseArtifacts;
+	shipsContainerImage: ProjectContainerImage;
 	source: ProjectProfileSource;
 	updatedAt: string;
 }
@@ -76,8 +48,12 @@ export interface ProjectAssuranceProfileInput {
 	criticality: ProjectCriticality;
 	dataSensitivity: ProjectDataSensitivity;
 	deployment: ProjectDeployment;
+	derivesFromTemplate: ProjectTemplateOrigin;
 	externalIntegrations: ProjectExternalIntegrations;
+	hasCliBinary: ProjectCliBinary;
 	notes?: string;
+	publishesReleaseArchives: ProjectReleaseArtifacts;
+	shipsContainerImage: ProjectContainerImage;
 }
 
 type JsonSchemaString = {
@@ -90,29 +66,30 @@ type JsonSchemaString = {
 type ProjectAssuranceProfileSchema = {
 	readonly $schema: 'https://json-schema.org/draft/2020-12/schema';
 	readonly additionalProperties: false;
-	readonly properties: {
-		readonly authMode: JsonSchemaString;
-		readonly bucket: JsonSchemaString;
-		readonly criticality: JsonSchemaString;
-		readonly dataSensitivity: JsonSchemaString;
-		readonly deployment: JsonSchemaString;
-		readonly externalIntegrations: JsonSchemaString;
-		readonly notes: JsonSchemaString;
-		readonly source?: JsonSchemaString;
-		readonly updatedAt?: JsonSchemaString;
-	};
+	readonly properties: Readonly<Record<string, JsonSchemaString>>;
 	readonly required: readonly string[];
 	readonly title: string;
 	readonly type: 'object';
 };
 
+/**
+ * The facets a profile must carry. Both schemas mark every one of them required, which is what makes
+ * a profile written before a facet existed fail `normalizeProjectAssuranceProfileFile` rather than
+ * quietly normalize to a value nobody chose — but the failure is silent one level up, since
+ * `readExplicitProjectAssuranceProfile` answers a rejected file with inference. Adding a name here
+ * therefore means populating every `.aidd/project-profile.json` in the same change.
+ */
 const projectProfileCoreFields = [
 	'authMode',
 	'bucket',
 	'criticality',
 	'dataSensitivity',
 	'deployment',
+	'derivesFromTemplate',
 	'externalIntegrations',
+	'hasCliBinary',
+	'publishesReleaseArchives',
+	'shipsContainerImage',
 ] as const;
 
 function stringEnumSchema(values: readonly string[]): JsonSchemaString {
@@ -125,8 +102,12 @@ const projectAssuranceProfileCoreProperties = {
 	criticality: stringEnumSchema(projectCriticalityValues),
 	dataSensitivity: stringEnumSchema(projectDataSensitivityValues),
 	deployment: stringEnumSchema(projectDeploymentValues),
+	derivesFromTemplate: stringEnumSchema(projectTemplateOriginValues),
 	externalIntegrations: stringEnumSchema(projectExternalIntegrationValues),
+	hasCliBinary: stringEnumSchema(projectCliBinaryValues),
 	notes: { maxLength: projectProfileNotesMaxLength, type: 'string' },
+	publishesReleaseArchives: stringEnumSchema(projectReleaseArtifactValues),
+	shipsContainerImage: stringEnumSchema(projectContainerImageValues),
 } as const;
 
 export const projectAssuranceProfileInputSchema = {
@@ -152,11 +133,15 @@ export const projectAssuranceProfileFileSchema = {
 } as const satisfies ProjectAssuranceProfileSchema;
 
 const bucketSet = allowedSet(projectAssuranceBuckets);
+const cliBinarySet = allowedSet(projectCliBinaryValues);
+const containerImageSet = allowedSet(projectContainerImageValues);
 const dataSensitivitySet = allowedSet(projectDataSensitivityValues);
 const deploymentSet = allowedSet(projectDeploymentValues);
 const authModeSet = allowedSet(projectAuthModeValues);
 const criticalitySet = allowedSet(projectCriticalityValues);
 const externalIntegrationSet = allowedSet(projectExternalIntegrationValues);
+const releaseArtifactSet = allowedSet(projectReleaseArtifactValues);
+const templateOriginSet = allowedSet(projectTemplateOriginValues);
 
 function allowedSet(values: readonly string[]): ReadonlySet<string> {
 	return new Set(values);
@@ -211,10 +196,26 @@ export function normalizeProjectAssuranceProfile(
 			'dataSensitivity',
 		),
 		deployment: enumField<ProjectDeployment>(raw.deployment, deploymentSet, 'deployment'),
+		derivesFromTemplate: enumField<ProjectTemplateOrigin>(
+			raw.derivesFromTemplate,
+			templateOriginSet,
+			'derivesFromTemplate',
+		),
 		externalIntegrations: enumField<ProjectExternalIntegrations>(
 			raw.externalIntegrations,
 			externalIntegrationSet,
 			'externalIntegrations',
+		),
+		hasCliBinary: enumField<ProjectCliBinary>(raw.hasCliBinary, cliBinarySet, 'hasCliBinary'),
+		publishesReleaseArchives: enumField<ProjectReleaseArtifacts>(
+			raw.publishesReleaseArchives,
+			releaseArtifactSet,
+			'publishesReleaseArchives',
+		),
+		shipsContainerImage: enumField<ProjectContainerImage>(
+			raw.shipsContainerImage,
+			containerImageSet,
+			'shipsContainerImage',
 		),
 		source: options.source,
 		updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : fallbackUpdatedAt,

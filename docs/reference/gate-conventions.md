@@ -117,6 +117,22 @@ what makes the regression visible:
 Zero examined items is always a defect in the gate, never a clean repository. If a gate can
 legitimately have nothing to look at, it prints `[SKIP]` with the reason and exits `0`.
 
+The count half of this rule is checked statically; the zero-items half is not. Whether a given run
+reached nothing is a property of a code path, but whether the success line states a number is a
+property of its text. `GC5` therefore reports any gate that **discovers** its population -- reads a
+directory, runs a glob, or calls a `find*`/`collect*`-shaped helper -- and whose `[OK]` line
+interpolates no quantity. A gate comparing a fixed pair named in its own source has no count to
+state and is out of scope; requiring one there would produce more waivers than findings.
+
+Name the quantity as a quantity. The check reads the interpolated expression, not the sentence
+around it, and recognizes `.length`, `.size`, `.filter(...)`, and identifiers built from a count
+vocabulary (`count`, `examined`, `scanned`, `files`, `rows`, `entries`, `packages`, and a handful
+more, bare or camelCase). It does this rather than accept any interpolation because
+`check-max-lines.ts` passes with `no file exceeds ${MAX_LINES} lines`, and that number is a
+threshold, not a count of anything the gate looked at. A gate whose count lives in a domain noun --
+`${workflows}`, say -- renames it (`${scanned}`) rather than taking a waiver; the count reads more
+plainly for a human that way too.
+
 ### 6. Rule linkage
 
 Every gate names the rule it enforces, in a header line:
@@ -181,7 +197,7 @@ The point is that one consumer can read every gate's JSON without a per-gate ada
 
 ## Enforcement
 
-`scripts/check-gate-conventions.ts` (owner: spernakit, run in both repositories) enforces the six
+`scripts/check-gate-conventions.ts` (owner: spernakit, run in both repositories) enforces the
 statically decidable rules. It reads `package.json`, follows every `check*` task to the `.ts` file it
 runs, follows `bun run <task>` references transitively, and applies the rules to each file's source.
 
@@ -191,14 +207,18 @@ runs, follows `bun run <task>` references transitively, and applies the rules to
 | `GC2` | Exit codes     | Yes: every `exit(<literal>)` is `0`, `1`, or `2`                           |
 | `GC3` | Output         | Partly: a status tag is present, and no pictographs anywhere               |
 | `GC4` | Arguments      | Yes: no hand-read `argv`, and `parseArgs` carries `strict: true`           |
-| `GC5` | Anti-vacuity   | No: reviewed when the gate is migrated                                     |
+| `GC5` | Anti-vacuity   | Partly: a discovering gate's `[OK]` line states a count                    |
 | `GC6` | Rule linkage   | Yes: an `Enforces:` line, and a cited ID resolves where the catalog exists |
 | `GC7` | Waiver forms   | No: reviewed when the gate is migrated                                     |
 | `GC8` | `--json` shape | Yes: if `--json` appears, all four envelope keys appear                    |
 
-Rules 5 and 7 have no static form. Whether a gate fails on zero items is a property of a code path,
-not of its text, and a waiver design is recognizable only by reading it. Both are checked by hand
-during the phase-2 migration of each gate, which is the point at which someone is reading it anyway.
+Rule 7 has no static form, and rule 5 has one for half of itself. A waiver design is recognizable
+only by reading it, and whether a gate fails on zero items is a property of a code path rather than
+of its text; both are checked by hand during the phase-2 migration of each gate, which is the point
+at which someone is reading it anyway. Whether a success line states a count is text, so that half
+is checked here. It was worth splitting: eighteen gates across the two repositories were passing
+without saying what they had looked at, and every one of the six found earlier by hand would have
+been caught by it.
 
 The findings-to-stderr half of rule 3 is likewise deferred: a gate that calls `console.log` for
 findings today is doing so from a code path the migration will replace wholesale, and flagging it

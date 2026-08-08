@@ -4,7 +4,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { collectGateConventions, readAssertionIds } from '../../scripts/check-gate-conventions.ts';
 import { applyAllowlist, parseAllowlist } from '../../scripts/lib/gate/allowlist.ts';
-import { discoverGates } from '../../scripts/lib/gate/discover.ts';
+import { discoverGates, staleDeclarations } from '../../scripts/lib/gate/discover.ts';
 import { checkGate } from '../../scripts/lib/gate/rules.ts';
 import { scanTopLevel } from '../../scripts/lib/gate/toplevel.ts';
 import { type Gate, RULE_TITLES, STATIC_RULES } from '../../scripts/lib/gate/types.ts';
@@ -182,6 +182,40 @@ describe('gate conventions discovery', () => {
 	test('a manifest with no scripts object is an error, not an empty population', () => {
 		expect(() => discoverGates('{"name":"x"}')).toThrow('no "scripts" object');
 	});
+
+	// A gate is declared by the `check*` name or by the allowlist's `gates` map. Without the
+	// second half the population is whatever the naming convention happened to catch, which is
+	// rule 5's own defect one level up: a true count over the wrong population.
+	test('a declared task enters the population under a name the convention never matches', () => {
+		const manifest = JSON.stringify({
+			scripts: {
+				build: 'bun scripts/build.ts',
+				'verify-minification': 'bun scripts/verify-minification.ts',
+			},
+		});
+		expect(discoverGates(manifest)).toEqual([]);
+		expect(discoverGates(manifest, ['verify-minification'])).toEqual([
+			{ path: 'scripts/verify-minification.ts', tasks: ['verify-minification'] },
+		]);
+	});
+
+	test('a declaration that has stopped describing anything is itself a finding', () => {
+		const manifest = JSON.stringify({
+			scripts: {
+				'check:licenses': 'bun scripts/check-licenses.ts',
+				'lint:config': 'bunx eslint eslint.config.js',
+				'verify-minification': 'bun scripts/verify-minification.ts',
+			},
+		});
+		expect(staleDeclarations(manifest, ['verify-minification'])).toEqual([]);
+		expect(staleDeclarations(manifest, ['verify-nothing'])[0]).toContain('no such task');
+		expect(staleDeclarations(manifest, ['check:licenses'])[0]).toContain(
+			'already matches the check* convention',
+		);
+		expect(staleDeclarations(manifest, ['lint:config'])[0]).toContain(
+			'runs no TypeScript file',
+		);
+	});
 });
 
 describe('gate conventions allowlist', () => {
@@ -240,10 +274,17 @@ describe('gate conventions report', () => {
 	async function fixtureRoot(
 		scripts: Record<string, string>,
 		files: [string, string][],
+		allowlist?: Record<string, unknown>,
 	): Promise<string> {
 		const root = await testTempDir('aidd-gate-conventions-');
 		await mkdir(join(root, 'scripts'), { recursive: true });
 		await writeFile(join(root, 'package.json'), `${JSON.stringify({ scripts })}\n`);
+		if (allowlist !== undefined) {
+			await writeFile(
+				join(root, 'scripts/gate-conventions-allowlist.json'),
+				`${JSON.stringify(allowlist)}\n`,
+			);
+		}
 		for (const [path, content] of files) await writeFile(join(root, path), content);
 		return root;
 	}
@@ -254,12 +295,38 @@ describe('gate conventions report', () => {
 		]);
 		const report = await collectGateConventions(root);
 		expect(report).toEqual({
+			declared: 0,
 			examined: 1,
 			findings: [],
 			gate: 'check:gate-conventions',
 			status: 'pass',
 			waived: [],
 		});
+	});
+
+	// The count in the success line has to move with the population, or widening the population
+	// reintroduces the vacuity the widening was meant to close.
+	test('a declared gate is examined and counted separately from the convention', async () => {
+		const root = await fixtureRoot(
+			{ 'verify-fixture': 'bun scripts/verify-fixture.ts' },
+			[['scripts/verify-fixture.ts', CONFORMING]],
+			{ gates: { 'verify-fixture': 'A gate under a different verb, for this fixture.' } },
+		);
+		const report = await collectGateConventions(root);
+		expect(report.declared).toBe(1);
+		expect(report.examined).toBe(1);
+		expect(report.findings).toEqual([]);
+	});
+
+	test('a declaration naming a task the manifest does not have is reported, not ignored', async () => {
+		const root = await fixtureRoot(
+			{ 'check:fixture': 'bun scripts/check-fixture.ts' },
+			[['scripts/check-fixture.ts', CONFORMING]],
+			{ gates: { 'verify-ghost': 'Declares a task that no longer exists.' } },
+		);
+		const report = await collectGateConventions(root);
+		expect(report.status).toBe('fail');
+		expect(report.findings.map((item) => item.message).join('\n')).toContain('no such task');
 	});
 
 	test('a task pointing at a missing file is an error, not a convention finding', async () => {

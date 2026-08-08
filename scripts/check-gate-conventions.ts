@@ -3,8 +3,10 @@
  * check-gate-conventions.ts
  *
  * The meta-gate. Statically enforces the decidable rules of `docs/reference/gate-conventions.md`
- * across every TypeScript file a `check*` task runs, so that the conventions are a contract rather
- * than a document nobody reads.
+ * across every TypeScript file a gate task runs, so that the conventions are a contract rather
+ * than a document nobody reads. A gate task is one named `check*`, or one the allowlist's `gates`
+ * map declares with a reason -- see `lib/gate/discover.ts` for why the naming convention alone was
+ * not the population.
  *
  * Enforces: ASSERT-050 (spernakit) / QUAL-006 (aidd) -- every gate follows the conventions in
  * docs/reference/gate-conventions.md.
@@ -27,7 +29,7 @@ import { exit } from 'node:process';
 import { parseArgs } from 'node:util';
 
 import { applyAllowlist, loadAllowlist } from './lib/gate/allowlist.ts';
-import { discoverGates } from './lib/gate/discover.ts';
+import { discoverGates, staleDeclarations } from './lib/gate/discover.ts';
 import { ASSERTION_ID, checkGate } from './lib/gate/rules.ts';
 import { type Finding, type Gate, RULE_TITLES } from './lib/gate/types.ts';
 
@@ -43,6 +45,8 @@ export interface GateConventionsOptions {
 }
 
 export interface GateConventionsReport {
+	/** Gate tasks the allowlist declares, of the population `examined` was drawn from. */
+	declared: number;
 	examined: number;
 	findings: Finding[];
 	gate: string;
@@ -67,7 +71,9 @@ export function readAssertionIds(root: string): Set<string> {
 /** Analyze the repository at `root` and return its report. Pure with respect to stdout. */
 export async function collectGateConventions(root: string): Promise<GateConventionsReport> {
 	const allowlist = await loadAllowlist(join(root, ALLOWLIST));
-	const discovered = discoverGates(readFileSync(join(root, 'package.json'), 'utf8'));
+	const manifest = readFileSync(join(root, 'package.json'), 'utf8');
+	const declared = Object.keys(allowlist.gates);
+	const discovered = discoverGates(manifest, declared);
 	const allPaths = new Set(discovered.map((entry) => entry.path));
 	const assertionIds = readAssertionIds(root);
 
@@ -89,9 +95,17 @@ export async function collectGateConventions(root: string): Promise<GateConventi
 	}
 
 	const raw = gates.flatMap((gate) => checkGate(gate, assertionIds));
-	const applied = applyAllowlist(allowlist, gates, raw, allPaths, ALLOWLIST);
+	const applied = applyAllowlist(
+		allowlist,
+		gates,
+		raw,
+		allPaths,
+		ALLOWLIST,
+		staleDeclarations(manifest, declared),
+	);
 
 	return {
+		declared: declared.length,
 		examined: gates.length,
 		findings: applied.surviving,
 		gate: 'check:gate-conventions',
@@ -133,8 +147,9 @@ export async function runGateConventions(options: GateConventionsOptions = {}): 
 
 	if (report.examined === 0) {
 		console.error(
-			'[FAIL] check:gate-conventions examined no gates. Either package.json declares no `check*` ' +
-				'task or the allowlist excludes all of them; both are defects, not a pass.',
+			'[FAIL] check:gate-conventions examined no gates. Either package.json has no `check*` task ' +
+				'and the allowlist declares none, or the allowlist excludes every file they reach; ' +
+				'all of those are defects, not a pass.',
 		);
 		return 1;
 	}
@@ -155,8 +170,9 @@ export async function runGateConventions(options: GateConventionsOptions = {}): 
 	}
 
 	console.log(
-		`[OK] check:gate-conventions -- ${report.examined} gates examined, no unwaived violations, ` +
-			`${report.waived.length} waived by ${ALLOWLIST}.`,
+		`[OK] check:gate-conventions -- ${report.examined} gates examined from \`check*\` plus ` +
+			`${report.declared} task(s) declared in ${ALLOWLIST}, no unwaived violations, ` +
+			`${report.waived.length} waived.`,
 	);
 	return 0;
 }

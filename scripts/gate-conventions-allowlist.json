@@ -3,5 +3,9 @@
 		"scripts/aidd-tools.ts": "Not a gate. `check:audit-profile-mapping` runs `bun scripts/aidd-tools.ts audit:profile-mapping`, so discovery reaches the multi-command CLI rather than the check behind it. The rules apply to the unit a task invokes as a gate; here that unit is a subcommand inside a dispatcher that also carries the audit, feature, and roadmap tools. Phase 2 extracts the profile-mapping check into its own entry script, which is when this exclusion is replaced by a real gate.",
 		"scripts/run-bash.ts": "The bash shim. `check:leak-guard` runs `bun ./scripts/run-bash.ts scripts/check-leak-guard.sh`, so discovery reaches the shim rather than the guard. The shim spawns a subprocess and returns its exit code; it enforces no rule of its own, and the guard it runs is a `.sh` file with none of the eight rules' surfaces."
 	},
+	"gates": {
+		"release:check": "Asserts the repository is releasable -- clean tree, version parity across the files that claim a version, every required public file present, a complete standalone distribution layout -- and then runs the command gates. It reports findings and exits non-zero on any of them, which is a gate; it is named for the moment it runs at rather than for the namespace. It cannot be renamed into `check:` either, because it belongs to the `release:` family beside `release:package` and reads as the release runbook's step.",
+		"verify-minification": "Asserts the built assets in `frontend/dist/assets` against the budgets in `scripts/bundle-budget.json` and exits non-zero when one is blown. A gate under a different verb, and the same file spernakit declares for the same reason."
+	},
 	"waivers": {}
 }

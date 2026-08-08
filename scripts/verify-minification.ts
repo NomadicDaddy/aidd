@@ -8,19 +8,20 @@
  *     threshold for files larger than 5 KB)
  *   - the total bundle size exceeds the budget in scripts/bundle-budget.json
  *
+ * Enforces: the built frontend ships minified assets within the recorded bundle budget. No
+ * assertion ID: the rule lives in this gate and scripts/bundle-budget.json, and `.aidd/` files it
+ * under no ASSERT- number today.
+ *
  * Regenerate the budget after intentional bundle growth:
  *   bun scripts/verify-minification.ts --update-budget
+ *
+ * Run: bun run verify-minification [--root <dir>] [--update-budget]
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = join(__dirname, '..');
-const DIST_DIR = join(ROOT_DIR, 'frontend', 'dist');
-const ASSETS_DIR = join(DIST_DIR, 'assets');
-const BUDGET_PATH = join(__dirname, 'bundle-budget.json');
+import { join, resolve } from 'node:path';
+import { exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
 /** Files >5KB with an average line length below this look unminified. */
 const MIN_AVG_LINE_LENGTH = 200;
@@ -122,13 +123,20 @@ function kb(bytes: number): string {
 	return `${(bytes / 1024).toFixed(2)} KB`;
 }
 
-function checkBudget(totalJs: number, totalCss: number, updateBudget: boolean): boolean {
+function checkBudget(
+	root: string,
+	totalJs: number,
+	totalCss: number,
+	updateBudget: boolean,
+): boolean {
+	const budgetPath = join(root, 'scripts', 'bundle-budget.json');
+
 	if (updateBudget) {
 		const budget: BundleBudget = {
 			maxCssBytes: Math.ceil(totalCss * BUDGET_HEADROOM),
 			maxJsBytes: Math.ceil(totalJs * BUDGET_HEADROOM),
 		};
-		writeFileSync(BUDGET_PATH, `${JSON.stringify(budget, null, '\t')}\n`, 'utf-8');
+		writeFileSync(budgetPath, `${JSON.stringify(budget, null, '\t')}\n`, 'utf-8');
 		log(
 			`\nBudget written to scripts/bundle-budget.json (${BUDGET_HEADROOM}x headroom)`,
 			'cyan',
@@ -136,27 +144,27 @@ function checkBudget(totalJs: number, totalCss: number, updateBudget: boolean): 
 		return true;
 	}
 
-	if (!existsSync(BUDGET_PATH)) {
-		log('\nNo scripts/bundle-budget.json found — budget check skipped.', 'yellow');
+	if (!existsSync(budgetPath)) {
+		log('\n[SKIP] No scripts/bundle-budget.json found — budget check skipped.', 'yellow');
 		log('Create one with: bun scripts/verify-minification.ts --update-budget', 'yellow');
 		return true;
 	}
 
-	const budget = JSON.parse(readFileSync(BUDGET_PATH, 'utf-8')) as BundleBudget;
+	const budget = JSON.parse(readFileSync(budgetPath, 'utf-8')) as BundleBudget;
 	let ok = true;
 
 	if (totalJs > budget.maxJsBytes) {
-		log(`✗ JS bundle ${kb(totalJs)} exceeds budget ${kb(budget.maxJsBytes)}`, 'red');
+		log(`  JS bundle ${kb(totalJs)} exceeds budget ${kb(budget.maxJsBytes)}`, 'red');
 		ok = false;
 	} else {
-		log(`✓ JS bundle ${kb(totalJs)} within budget ${kb(budget.maxJsBytes)}`, 'green');
+		log(`  JS bundle ${kb(totalJs)} within budget ${kb(budget.maxJsBytes)}`, 'green');
 	}
 
 	if (totalCss > budget.maxCssBytes) {
-		log(`✗ CSS bundle ${kb(totalCss)} exceeds budget ${kb(budget.maxCssBytes)}`, 'red');
+		log(`  CSS bundle ${kb(totalCss)} exceeds budget ${kb(budget.maxCssBytes)}`, 'red');
 		ok = false;
 	} else {
-		log(`✓ CSS bundle ${kb(totalCss)} within budget ${kb(budget.maxCssBytes)}`, 'green');
+		log(`  CSS bundle ${kb(totalCss)} within budget ${kb(budget.maxCssBytes)}`, 'green');
 	}
 
 	if (!ok) {
@@ -168,21 +176,36 @@ function checkBudget(totalJs: number, totalCss: number, updateBudget: boolean): 
 	return ok;
 }
 
-async function main(): Promise<void> {
-	const updateBudget = process.argv.includes('--update-budget');
+export interface MinificationOptions {
+	root?: string | undefined;
+	/** Rewrite the budget from this build instead of asserting against it. */
+	updateBudget?: boolean | undefined;
+}
+
+/**
+ * Run the gate. Returns the process exit code: 0 pass, 1 findings.
+ *
+ * A missing `frontend/dist/assets` is a finding rather than a could-not-run. The gate's whole
+ * subject is the build output, and "there is no build output" is the strongest thing it can say
+ * about it; an empty assets directory is a failure here for the same reason.
+ */
+export async function runMinification(options: MinificationOptions = {}): Promise<number> {
+	const root = resolve(options.root ?? join(import.meta.dir, '..'));
+	const assetsDir = join(root, 'frontend', 'dist', 'assets');
+	const updateBudget = options.updateBudget === true;
 
 	log('\n=== Minification Verification ===\n', 'blue');
 
-	if (!existsSync(ASSETS_DIR)) {
-		log('✗ frontend/dist/assets not found — build the frontend first:', 'red');
+	if (!existsSync(assetsDir)) {
+		log('[FAIL] frontend/dist/assets not found — build the frontend first:', 'red');
 		log('  bun run build:frontend', 'yellow');
-		process.exit(1);
+		return 1;
 	}
 
-	const assets = await collectAssets(ASSETS_DIR);
+	const assets = await collectAssets(assetsDir);
 	if (assets.length === 0) {
-		log('✗ No JS/CSS assets found in frontend/dist/assets', 'red');
-		process.exit(1);
+		log('[FAIL] No JS/CSS assets found in frontend/dist/assets', 'red');
+		return 1;
 	}
 
 	assets.sort((a, b) => b.sizeBytes - a.sizeBytes);
@@ -200,17 +223,19 @@ async function main(): Promise<void> {
 		);
 	}
 
-	const totalJs = assets.filter((a) => a.type === 'js').reduce((s, a) => s + a.sizeBytes, 0);
-	const totalCss = assets.filter((a) => a.type === 'css').reduce((s, a) => s + a.sizeBytes, 0);
+	const js = assets.filter((a) => a.type === 'js');
+	const css = assets.filter((a) => a.type === 'css');
+	const totalJs = js.reduce((s, a) => s + a.sizeBytes, 0);
+	const totalCss = css.reduce((s, a) => s + a.sizeBytes, 0);
 
 	log('\n=== Totals ===\n', 'cyan');
-	log(`JS:  ${kb(totalJs)} across ${assets.filter((a) => a.type === 'js').length} files`);
-	log(`CSS: ${kb(totalCss)} across ${assets.filter((a) => a.type === 'css').length} files`);
+	log(`JS:  ${kb(totalJs)} across ${js.length} files`);
+	log(`CSS: ${kb(totalCss)} across ${css.length} files`);
 
-	const budgetOk = checkBudget(totalJs, totalCss, updateBudget);
+	const budgetOk = checkBudget(root, totalJs, totalCss, updateBudget);
 
 	if (unminified.length > 0) {
-		log(`\n✗ ${unminified.length} JS asset(s) look unminified:`, 'red');
+		log(`\n[FAIL] ${unminified.length} JS asset(s) look unminified:`, 'red');
 		for (const a of unminified) {
 			log(
 				`  ${a.name}: ${kb(a.sizeBytes)}, avg line length ${Math.round(a.avgLineLength)} < ${MIN_AVG_LINE_LENGTH}`,
@@ -221,14 +246,37 @@ async function main(): Promise<void> {
 	}
 
 	if (unminified.length > 0 || !budgetOk) {
-		log('\n✗ Minification verification FAILED\n', 'red');
-		process.exit(1);
+		log('\n[FAIL] verify-minification -- minification verification failed\n', 'red');
+		return 1;
 	}
 
-	log('\n✓ Minification verification passed\n', 'green');
+	log(
+		`\n[OK] verify-minification -- ${assets.length} assets inspected ` +
+			`(${js.length} JS, ${css.length} CSS), all minified and within budget\n`,
+		'green',
+	);
+	return 0;
 }
 
-main().catch((error: unknown) => {
-	log(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`, 'red');
-	process.exit(1);
-});
+if (import.meta.main) {
+	// `parseArgs` throws on an unknown flag, and an uncaught throw exits 1 -- the code reserved for
+	// findings. A mistyped flag reporting "one unminified asset" is the confusion the status codes
+	// exist to end, so bad arguments are caught and mapped onto 2 here.
+	let options: MinificationOptions;
+	try {
+		const { values } = parseArgs({
+			args: Bun.argv.slice(2),
+			options: {
+				root: { type: 'string' },
+				'update-budget': { type: 'boolean' },
+			},
+			strict: true,
+		});
+		options = { root: values.root, updateBudget: values['update-budget'] };
+	} catch (err) {
+		log(`[FAIL] verify-minification: ${(err as Error).message}`, 'red');
+		log('Usage: verify-minification [--root <dir>] [--update-budget]', 'yellow');
+		exit(2);
+	}
+	exit(await runMinification(options));
+}

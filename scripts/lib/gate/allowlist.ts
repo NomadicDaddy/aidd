@@ -28,10 +28,35 @@ export interface RuleWaiver {
 export interface Allowlist {
 	/** Paths a `check*` task reaches that are not gates, each with a reason. */
 	excluded: Record<string, string>;
+	/**
+	 * Tasks that are gates without being named `check*`, each with a reason.
+	 *
+	 * The mirror image of `excluded`, and the only way into the population that is not the naming
+	 * convention. It exists because four tasks in this fleet assert about the repository and fail
+	 * the build under a different verb, so the convention alone reported a population smaller than
+	 * the suite it was describing.
+	 */
+	gates: Record<string, string>;
 	waivers: Partial<Record<RuleId, RuleWaiver>>;
 }
 
-const EMPTY: Allowlist = { excluded: {}, waivers: {} };
+const EMPTY: Allowlist = { excluded: {}, gates: {}, waivers: {} };
+
+/** Read one `{ key: reason }` section, rejecting a missing or blank reason. */
+function reasonMap(raw: unknown, field: string, key: string): Record<string, string> {
+	const map: Record<string, string> = {};
+	if (raw === undefined) return map;
+	if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+		throw new Error(`allowlist "${field}" must be an object of ${key} to reason`);
+	}
+	for (const [name, reason] of Object.entries(raw)) {
+		if (typeof reason !== 'string' || reason.trim() === '') {
+			throw new Error(`allowlist "${field}" entry ${name} has no reason`);
+		}
+		map[name] = reason;
+	}
+	return map;
+}
 
 /** Parse and validate an allowlist document. Throws with a specific message on a malformed entry. */
 export function parseAllowlist(text: string): Allowlist {
@@ -39,20 +64,10 @@ export function parseAllowlist(text: string): Allowlist {
 	if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
 		throw new Error('allowlist must be a JSON object');
 	}
-	const raw = parsed as { excluded?: unknown; waivers?: unknown };
+	const raw = parsed as { excluded?: unknown; gates?: unknown; waivers?: unknown };
 
-	const excluded: Record<string, string> = {};
-	if (raw.excluded !== undefined) {
-		if (typeof raw.excluded !== 'object' || raw.excluded === null) {
-			throw new Error('allowlist "excluded" must be an object of path to reason');
-		}
-		for (const [path, reason] of Object.entries(raw.excluded)) {
-			if (typeof reason !== 'string' || reason.trim() === '') {
-				throw new Error(`allowlist "excluded" entry ${path} has no reason`);
-			}
-			excluded[path] = reason;
-		}
-	}
+	const excluded = reasonMap(raw.excluded, 'excluded', 'path');
+	const gates = reasonMap(raw.gates, 'gates', 'task');
 
 	const waivers: Partial<Record<RuleId, RuleWaiver>> = {};
 	if (raw.waivers !== undefined) {
@@ -74,7 +89,7 @@ export function parseAllowlist(text: string): Allowlist {
 		}
 	}
 
-	return { excluded, waivers };
+	return { excluded, gates, waivers };
 }
 
 /** Read an allowlist from disk, treating an absent file as an empty one. */
@@ -96,7 +111,8 @@ export interface Applied {
  *
  * `gates` is the population after exclusions and `allPaths` the population before them, so a stale
  * `excluded` entry -- naming a path no `check*` task reaches any more -- is caught as well as a
- * stale waiver.
+ * stale waiver. `declarationProblems` carries the same treatment for the `gates` map, computed by
+ * `staleDeclarations` because only the caller has the package.json the declarations point at.
  */
 export function applyAllowlist(
 	allowlist: Allowlist,
@@ -104,6 +120,7 @@ export function applyAllowlist(
 	findings: Finding[],
 	allPaths: Set<string>,
 	allowlistPath: string,
+	declarationProblems: string[] = [],
 ): Applied {
 	const suppressed: Finding[] = [];
 	const surviving: Finding[] = [];
@@ -147,6 +164,9 @@ export function applyAllowlist(
 		surviving.push(
 			stale('GC1', `excludes ${path}, which no \`check*\` task reaches. Remove it.`),
 		);
+	}
+	for (const problem of declarationProblems) {
+		surviving.push(stale('GC1', problem));
 	}
 
 	return { suppressed, surviving };

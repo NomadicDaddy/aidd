@@ -98,6 +98,25 @@ describe('release check script', () => {
 		);
 	});
 
+	// `--all-targets` is the wider request, so it wins over a named target in either order rather
+	// than depending on which flag the caller typed last.
+	test('--all-targets beats --target regardless of order', () => {
+		const names = ALL_TARGETS.map((target) => target.name);
+		for (const argv of [
+			['--all-targets', '--target', 'bun-windows-x64-modern'],
+			['--target', 'bun-windows-x64-modern', '--all-targets'],
+		]) {
+			expect(parseReleaseCheckArgs(argv).targets.map((target) => target.name)).toEqual(names);
+		}
+	});
+
+	test('rejects an unknown flag and an unknown target name', () => {
+		expect(() => parseReleaseCheckArgs(['--allow-dirtyy'])).toThrow();
+		expect(() => parseReleaseCheckArgs(['--target', 'bun-solaris-sparc'])).toThrow(
+			'Unknown target',
+		);
+	});
+
 	test('passes static checks for a complete release layout', async () => {
 		const root = await makeRoot();
 		await seedReleaseFiles(root);

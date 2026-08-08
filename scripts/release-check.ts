@@ -1,6 +1,22 @@
+#!/usr/bin/env bun
+/**
+ * release-check.ts
+ *
+ * Asserts that this repository is releasable: the working tree is clean, every file that claims a
+ * version agrees on it, the required public files are present, the standalone distribution layout
+ * is complete, and each command gate the release depends on passes.
+ *
+ * Enforces: a release is only cut from a clean tree whose version claims agree and whose
+ * distribution layout is complete. No assertion ID: `.aidd/` files the release checks under the
+ * release runbook rather than under an ASSERT- number.
+ *
+ * Run: bun run release:check [--allow-dirty] [--skip-command-gates] [--all-targets]
+ *                            [--target <name>]...
+ */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { cwd, exit } from 'node:process';
+import { parseArgs } from 'node:util';
 
 import { ALL_TARGETS, type CompileTarget } from './build-standalone.ts';
 import {
@@ -42,39 +58,44 @@ const COMMAND_GATES: { command: string[]; label: string }[] = [
 	{ command: ['bun', 'run', 'smoke:qc'], label: 'smoke:qc' },
 ];
 
+/**
+ * Parse the gate's arguments. Throws on anything unrecognized, which the caller maps onto exit 2.
+ *
+ * `--all-targets` and `--target` both write the same slot, and `--all-targets` wins regardless of
+ * order: it is the wider request, so a run that names both is asking for every target rather than
+ * for whichever flag happened to come last.
+ */
 export function parseReleaseCheckArgs(argv: string[]): ReleaseCheckArgs {
-	const targets: CompileTarget[] = [];
-	let allowDirty = false;
-	let skipCommandGates = false;
-	for (let i = 0; i < argv.length; i++) {
-		const token = argv[i];
-		if (token === '--allow-dirty') {
-			allowDirty = true;
-		} else if (token === '--all-targets') {
-			targets.splice(0, targets.length, ...ALL_TARGETS);
-		} else if (token === '--skip-command-gates') {
-			skipCommandGates = true;
-		} else if (token === '--target') {
-			const targetName = argv[++i];
-			if (!targetName) throw new Error('Missing value for --target');
-			const target = ALL_TARGETS.find((item) => item.name === targetName);
-			if (!target) {
-				throw new Error(
-					`Unknown target: ${targetName}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
-				);
-			}
-			targets.push(target);
-		} else {
-			throw new Error(`Unknown argument: ${token}`);
+	const { values } = parseArgs({
+		args: argv,
+		options: {
+			'all-targets': { type: 'boolean' },
+			'allow-dirty': { type: 'boolean' },
+			'skip-command-gates': { type: 'boolean' },
+			target: { multiple: true, type: 'string' },
+		},
+		strict: true,
+	});
+
+	const named = (values.target ?? []).map((targetName) => {
+		const target = ALL_TARGETS.find((item) => item.name === targetName);
+		if (!target) {
+			throw new Error(
+				`Unknown target: ${targetName}. Known: ${ALL_TARGETS.map((item) => item.name).join(', ')}`,
+			);
 		}
-	}
+		return target;
+	});
+
+	// Default to the Windows target so `release:package && release:check` with no args stays
+	// consistent (packaging is Windows-only by default); widen with --target or --all-targets.
+	let targets = named.length > 0 ? named : [windowsTarget()];
+	if (values['all-targets'] === true) targets = [...ALL_TARGETS];
+
 	return {
-		allowDirty,
-		skipCommandGates,
-		// Default to the Windows target so `release:package && release:check`
-		// with no args stays consistent (packaging is Windows-only by default);
-		// widen with --target or --all-targets.
-		targets: targets.length > 0 ? targets : [windowsTarget()],
+		allowDirty: values['allow-dirty'] === true,
+		skipCommandGates: values['skip-command-gates'] === true,
+		targets,
 	};
 }
 
@@ -84,6 +105,14 @@ function windowsTarget(): CompileTarget {
 	return target;
 }
 
+/**
+ * Run the gate. Returns the process exit code: 0 pass, 1 findings, 2 could not run.
+ *
+ * A command gate's own exit code is mapped rather than propagated. A gate that exits 2 could not
+ * determine its answer, so neither can this one and 2 is passed along; any other non-zero code is a
+ * finding it reported, which is a finding here too. Propagating an arbitrary code verbatim would
+ * put values outside the sanctioned three into the release runbook's exit status.
+ */
 export async function runReleaseCheck(
 	rootDir: string,
 	args: ReleaseCheckArgs,
@@ -107,31 +136,36 @@ export async function runReleaseCheck(
 		return 1;
 	}
 
-	if (!args.skipCommandGates) {
-		const gates = [
-			{
-				command: [
-					'bun',
-					'run',
-					'check:release-notices',
-					'--',
-					...args.targets.flatMap((target) => ['--target', target.name]),
-				],
-				label: 'release archive gate',
-			},
-			...COMMAND_GATES,
-		];
-		for (const gate of gates) {
-			console.log(`[release-check] ${gate.label}`);
-			const exitCode = await commandRunner({ command: gate.command, cwd: rootDir });
-			if (exitCode !== 0) {
-				console.error(`[release-check] ${gate.label} failed with exit code ${exitCode}`);
-				return exitCode;
-			}
+	const gates = args.skipCommandGates
+		? []
+		: [
+				{
+					command: [
+						'bun',
+						'run',
+						'check:release-notices',
+						'--',
+						...args.targets.flatMap((target) => ['--target', target.name]),
+					],
+					label: 'release archive gate',
+				},
+				...COMMAND_GATES,
+			];
+
+	for (const gate of gates) {
+		console.log(`[release-check] ${gate.label}`);
+		const exitCode = await commandRunner({ command: gate.command, cwd: rootDir });
+		if (exitCode !== 0) {
+			console.error(`[FAIL] release:check -- ${gate.label} exited ${exitCode}`);
+			return exitCode === 2 ? 2 : 1;
 		}
 	}
 
-	console.log('[release-check] release checks passed');
+	console.log(
+		`[OK] release:check -- ${args.targets.length} standalone target(s) and ` +
+			`${REQUIRED_PUBLIC_FILES.length} required public file(s) checked, ` +
+			`${gates.length} command gate(s) run.`,
+	);
 	return 0;
 }
 
@@ -139,7 +173,9 @@ export async function main(argv = Bun.argv.slice(2), rootDir = cwd()): Promise<n
 	try {
 		return await runReleaseCheck(rootDir, parseReleaseCheckArgs(argv));
 	} catch (err) {
-		console.error(`Error: ${errorMessage(err)}`);
+		// Bad arguments and an unexpected throw share exit 2: neither is a release problem this
+		// gate found, and both mean it never got as far as looking.
+		console.error(`[FAIL] release:check -- ${errorMessage(err)}`);
 		return 2;
 	}
 }
@@ -166,9 +202,10 @@ async function checkVersionAndFiles(rootDir: string): Promise<string[]> {
 }
 
 function formatIssues(issues: string[]): string {
-	return ['[release-check] release checks failed:', ...issues.map((issue) => `- ${issue}`)].join(
-		'\n',
-	);
+	return [
+		`[FAIL] release:check -- ${issues.length} issue(s):`,
+		...issues.map((issue) => `- ${issue}`),
+	].join('\n');
 }
 
 if (import.meta.main) {

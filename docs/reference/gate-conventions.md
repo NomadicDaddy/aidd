@@ -1,7 +1,9 @@
 # Gate Conventions
 
-A **gate** is a script a `check*` task runs to assert something about the repository and fail the
-build when the assertion does not hold. aidd and spernakit have roughly sixty of them between them,
+A **gate** is a script that asserts something about the repository and fails the build when the
+assertion does not hold. It is declared by a `check*` task, or by a reasoned entry in that
+repository's `scripts/gate-conventions-allowlist.json` under `gates` for the handful that assert
+under a different verb. aidd and spernakit have roughly sixty of them between them,
 written over two years by whoever needed one, and they disagree on nearly every surface a caller
 touches: how they are invoked, what their exit codes mean, where their findings go, and how a known
 exception is recorded.
@@ -200,8 +202,9 @@ The point is that one consumer can read every gate's JSON without a per-gate ada
 ## Enforcement
 
 `scripts/check-gate-conventions.ts` (owner: spernakit, run in both repositories) enforces the
-statically decidable rules. It reads `package.json`, follows every `check*` task to the `.ts` file it
-runs, follows `bun run <task>` references transitively, and applies the rules to each file's source.
+statically decidable rules. It reads `package.json`, follows every `check*` task and every task the
+allowlist's `gates` map declares to the `.ts` file it runs, follows `bun run <task>` references
+transitively, and applies the rules to each file's source.
 
 | ID    | Rule           | Statically enforced                                                        |
 | ----- | -------------- | -------------------------------------------------------------------------- |
@@ -236,6 +239,9 @@ rule:
 	"excluded": {
 		"scripts/run-bash.ts": "The bash shim, not a gate. Discovery reaches it because …"
 	},
+	"gates": {
+		"verify-minification": "Asserts the built assets against the recorded budget and exits …"
+	},
 	"waivers": {
 		"GC1": {
 			"paths": ["scripts/check-thing.ts", "…"],
@@ -255,12 +261,29 @@ Three things make the list shrink rather than sit:
   allowlist. Fixing a gate forces the waiver out.
 - A waived path that is **no longer a gate** is reported.
 - An excluded path that **no `check*` task reaches** is reported.
+- A declared task that **package.json no longer has**, or that **already matches `check*`**, or
+  that **runs no TypeScript file**, is reported.
 
 A waiver with no `reason`, or naming an unknown rule, or with an empty `paths` list, is a parse
-error and exits `2`. The gate refuses to run rather than silently honouring it.
+error and exits `2`. The gate refuses to run rather than silently honouring it. An `excluded` or
+`gates` entry with a missing or blank reason is the same parse error.
 
 `excluded` is a different thing from a waiver: it removes a path from the population entirely,
 because it is not a gate. Use it sparingly and say why in the reason.
+
+`gates` is `excluded`'s mirror image, and the only way into the population that is not the naming
+convention. It exists because `check*` is a convention and a handful of tasks assert about the
+repository and fail the build without obeying it: `verify-compression`, `verify-minification`,
+`config:validate`, `release:check`. Before the map existed the meta-gate reported "35 gates
+examined", which was true and incomplete -- rule 5's own defect one level up, a pass over the wrong
+population rather than over the wrong items. Widening the regex would only have moved the boundary
+to a different set of words. The success line states the two halves separately, so the count still
+moves with the population:
+
+```text
+[OK] check:gate-conventions -- 38 gates examined from `check*` plus 3 task(s) declared in
+scripts/gate-conventions-allowlist.json, no unwaived violations, 0 waived.
+```
 
 ## The six-part shape
 

@@ -37,10 +37,14 @@ export interface BadWaiver {
 export function waiverReason(line: string): null | string {
 	const at = line.indexOf(WAIVER_MARKER);
 	if (at === -1) return null;
-	return line
-		.slice(at + WAIVER_MARKER.length)
-		.replace(/-->\s*$/, '')
-		.trim();
+	return (
+		line
+			.slice(at + WAIVER_MARKER.length)
+			// `--!>` closes an HTML comment just as `-->` does, so a waiver written with it would
+			// otherwise keep the terminator in its reason text.
+			.replace(/--!?>\s*$/, '')
+			.trim()
+	);
 }
 
 /** Markers that are not doing the job a marker is for. `used` holds the line indexes that were. */

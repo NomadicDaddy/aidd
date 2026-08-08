@@ -37,6 +37,7 @@ import { join, resolve } from 'node:path';
 import { argv, exit } from 'node:process';
 
 import { AIDD_ROOT, GUARDS, HOOK, MARKER } from './lib/push-guards/contract.ts';
+import { declineReason } from './lib/shared-core/targets.ts';
 
 /** The manifest group holding the hook and every guard it chains. */
 const GROUP = 'push-guards';
@@ -77,7 +78,15 @@ const stagedElsewhere = (repo: string): string[] =>
 const repos = readdirSync(FLEET_ROOT, { withFileTypes: true })
 	.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
 	.map((e) => join(FLEET_ROOT, e.name))
-	.filter((d) => existsSync(join(d, '.git')) && existsSync(join(d, '.aidd')));
+	.filter((d) => existsSync(join(d, '.git')) && existsSync(join(d, '.aidd')))
+	// The sync's own predicate, imported rather than restated. This script prepares dispatch before
+	// delegating, and preparing dispatch in a repository the sync will then decline to write to is
+	// half an install performed on a repository that said no.
+	.filter((d) => {
+		const declined = declineReason(d);
+		if (declined !== null) console.log(`  DECLINED ${d.split(/[\\/]/).pop()}: ${declined}`);
+		return declined === null;
+	});
 
 let prepared = 0;
 let refused = 0;

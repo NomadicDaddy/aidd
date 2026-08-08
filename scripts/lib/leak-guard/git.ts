@@ -2,6 +2,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { declineReason } from '../shared-core/targets.ts';
+
 /** Trimmed stdout, or '' when git fails — every caller treats failure and absence the same way. */
 export const sh = (cwd: string, args: string[]): string => {
 	const p = Bun.spawnSync(['git', ...args], { cwd, windowsHide: true });
@@ -32,13 +34,24 @@ export const readScripts = (repo: string): Scripts | undefined => {
  * Discovery, not a list — a hardcoded roster goes stale silently, and the repository it forgets is
  * the one that leaks. `only` narrows the sweep for ordering, and reports names that matched nothing
  * rather than passing over a typo in silence.
+ *
+ * A repository that declines is dropped here and named, using the sync's own predicate rather than a
+ * second copy of it. The installer prepares dispatch before delegating the files, so without this it
+ * would half-install into a repository the sync then refuses to write to. `declineReason` is only
+ * true of a repository with no push remote, which is what keeps this from being a way out of the
+ * guard for anything that can publish.
  */
 export const discoverRepos = (fleetRoot: string, only?: Set<string>): string[] => {
 	const repos = readdirSync(fleetRoot, { withFileTypes: true })
 		.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
 		.filter((e) => only === undefined || only.has(e.name))
 		.map((e) => join(fleetRoot, e.name))
-		.filter((d) => existsSync(join(d, '.git')));
+		.filter((d) => existsSync(join(d, '.git')))
+		.filter((d) => {
+			const declined = declineReason(d);
+			if (declined !== null) console.log(`  DECLINED ${repoName(d)}: ${declined}`);
+			return declined === null;
+		});
 
 	if (only !== undefined) {
 		const found = new Set(repos.map((r) => repoName(r)));

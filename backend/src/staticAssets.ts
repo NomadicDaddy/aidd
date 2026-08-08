@@ -1,13 +1,23 @@
 /**
- * Content typing, cache policy, and response compression for the prebuilt frontend.
+ * Content typing, cache policy, response compression, and file serving for the prebuilt frontend.
  *
  * The web binary serves `frontend/dist` itself — there is no nginx or other proxy in the
  * default loopback path or in the Docker image (see Dockerfile), so anything a reverse proxy
  * would normally add has to happen here. Policy mirrors the template's nginx config
  * (spernakit `docker/nginx.conf`) so behaviour is consistent across the fleet:
  * `/assets/` immutable for a year, gzip level 6 / brotli level 5, `Vary: Accept-Encoding`.
+ *
+ * `serveStaticFile` lives here rather than in `server.ts` because it is the only place the
+ * policy above becomes an actual response header, and `server.ts` cannot be reached from a test
+ * without standing up the whole service graph. Keeping the decision beside the helpers it
+ * composes is what lets `test/backend/static-assets.test.ts` assert that a **served** response
+ * carries `Content-Encoding`, rather than only that the compressor compresses.
  */
+import { existsSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { brotliCompressSync, constants as zlibConstants } from 'node:zlib';
+
+import { pathIsInside } from './paths.ts';
 
 const IMMUTABLE_MAX_AGE = 31_536_000;
 /** Root-level assets (favicon, og-image, manifest) carry no content hash, so they must revalidate. */
@@ -147,4 +157,92 @@ export function compressed(
 export function resetCompressionCache(): void {
 	cache.clear();
 	cachedBytes = 0;
+}
+
+type StaticFileOptions = {
+	fallbackToIndex?: boolean;
+};
+
+/**
+ * Apply the negotiated content encoding, falling back to the unencoded body when the client
+ * accepts nothing we speak, the payload is too small or already compressed, or compression
+ * failed to shrink it. `Vary` is set whenever the body was eligible, so a shared cache never
+ * serves an encoded payload to a client that cannot read it.
+ */
+function encodedResponse(
+	bytes: Uint8Array<ArrayBuffer>,
+	contentType: string,
+	cacheControl: null | string,
+	acceptEncoding: null | string,
+	identity: string,
+	etag: null | string,
+): Response {
+	const headers = new Headers({ 'content-type': contentType });
+	if (cacheControl) headers.set('Cache-Control', cacheControl);
+	if (etag) headers.set('ETag', etag);
+	if (!isCompressible(contentType, bytes.byteLength)) {
+		return new Response(bytes, { headers });
+	}
+	headers.set('Vary', 'Accept-Encoding');
+	const encoding = negotiateEncoding(acceptEncoding);
+	const payload = encoding ? compressed(encoding, bytes, identity) : null;
+	if (!encoding || !payload) {
+		return new Response(bytes, { headers });
+	}
+	headers.set('Content-Encoding', encoding);
+	return new Response(payload, { headers });
+}
+
+export async function serveStaticFile(
+	distDir: string,
+	path: string,
+	traceDefault: boolean,
+	acceptEncoding: null | string,
+	ifNoneMatch: null | string,
+	options: StaticFileOptions = {},
+): Promise<Response> {
+	const relativePath = path.replace(/^\/+/, '') || 'index.html';
+	const candidate = resolve(distDir, relativePath);
+	const candidateExists = pathIsInside(distDir, candidate) && existsSync(candidate);
+	if (!candidateExists && options.fallbackToIndex !== true) {
+		return new Response('Not found', {
+			headers: { 'content-type': 'text/plain; charset=utf-8' },
+			status: 404,
+		});
+	}
+	const target = candidateExists ? candidate : join(distDir, 'index.html');
+	const contentType = contentTypeFor(target);
+	// Policy follows the served URL, not the resolved file: an unknown path that falls back to
+	// index.html must not inherit the caching of the path that was requested.
+	const servedPath = candidateExists ? path : '/index.html';
+	const cacheControl = cacheControlFor(servedPath, contentType);
+	const file = Bun.file(target);
+	if (contentType.startsWith('text/html')) {
+		const html = await file.text();
+		const bootstrap = `<meta name="aidd-trace-default" content="${traceDefault ? 'true' : 'false'}" />`;
+		const injected = html.includes('</head>')
+			? html.replace('</head>', `\t\t${bootstrap}\n\t</head>`)
+			: `${bootstrap}${html}`;
+		// The injected marker varies with config, so this body is not the file on disk and is
+		// deliberately not memoised.
+		const bytes = new TextEncoder().encode(injected);
+		const headers = new Headers({ 'content-type': contentType, Vary: 'Accept-Encoding' });
+		const encoding = negotiateEncoding(acceptEncoding);
+		if (!encoding || !isCompressible(contentType, bytes.byteLength)) {
+			return new Response(bytes, { headers });
+		}
+		headers.set('Content-Encoding', encoding);
+		return new Response(compressOnce(encoding, bytes), { headers });
+	}
+	const stats = statSync(target);
+	const identity = `${target}:${stats.mtimeMs}:${stats.size}`;
+	const etag = servedPath.startsWith('/assets/') ? null : fileEtag(stats.mtimeMs, stats.size);
+	if (etag && ifNoneMatchMatches(ifNoneMatch, etag)) {
+		const headers = new Headers({ ETag: etag });
+		if (cacheControl) headers.set('Cache-Control', cacheControl);
+		if (isCompressible(contentType, stats.size)) headers.set('Vary', 'Accept-Encoding');
+		return new Response(null, { headers, status: 304 });
+	}
+	const bytes = new Uint8Array(await file.arrayBuffer());
+	return encodedResponse(bytes, contentType, cacheControl, acceptEncoding, identity, etag);
 }

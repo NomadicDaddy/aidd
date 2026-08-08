@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import {
@@ -10,7 +12,10 @@ import {
 	isCompressible,
 	negotiateEncoding,
 	resetCompressionCache,
+	serveStaticFile,
 } from '../../backend/src/staticAssets.ts';
+
+import { testTempDir } from '../_helpers/temp.ts';
 
 const textBody = () => new TextEncoder().encode('export const x = 1;\n'.repeat(200));
 
@@ -146,5 +151,103 @@ describe('compression', () => {
 		// High-entropy bytes are incompressible; gzip framing makes the result larger.
 		const noisy = crypto.getRandomValues(new Uint8Array(2048));
 		expect(compressed('gzip', noisy, 'noise:1:2048')).toBeNull();
+	});
+});
+
+// Everything above tests the compressor. None of it tests the header. spernakit enforces
+// "text compression is actually served" with `verify-compression`, a runtime probe against a
+// running server behind nginx; aidd has no proxy tier and precompresses nothing at build time,
+// so that gate does not port -- its dev mode cannot fail and its build half would fail by
+// design. The rule still applies, and this is where it is enforced instead: the two places the
+// negotiated encoding becomes a response header, reached directly rather than through a server.
+describe('serveStaticFile actually sets Content-Encoding', () => {
+	/** A dist tree covering each branch: compressible asset, incompressible type, sub-floor body. */
+	async function distFixture(): Promise<string> {
+		const dist = await testTempDir('aidd-static-serve-');
+		await mkdir(join(dist, 'assets'), { recursive: true });
+		await writeFile(join(dist, 'assets', 'app.js'), 'export const x = 1;\n'.repeat(200));
+		await writeFile(join(dist, 'assets', 'logo.png'), Buffer.alloc(4096, 7));
+		await writeFile(join(dist, 'assets', 'tiny.css'), 'a{color:red}');
+		// Root-level, so it revalidates rather than being immutable, and carries an ETag.
+		await writeFile(
+			join(dist, 'sw.js'),
+			'self.addEventListener("fetch", () => {});\n'.repeat(60),
+		);
+		await writeFile(
+			join(dist, 'index.html'),
+			`<html><head></head><body>${'x'.repeat(2000)}</body></html>`,
+		);
+		return dist;
+	}
+
+	const serve = (dist: string, path: string, accept: null | string) =>
+		serveStaticFile(dist, path, false, accept, null);
+
+	test('a served asset carries the encoding the client asked for, and a shorter body', async () => {
+		resetCompressionCache();
+		const dist = await distFixture();
+		const identity = await serve(dist, '/assets/app.js', null);
+		const identityBytes = (await identity.arrayBuffer()).byteLength;
+
+		for (const encoding of ['br', 'gzip', 'zstd'] as const) {
+			resetCompressionCache();
+			const response = await serve(dist, '/assets/app.js', encoding);
+			expect(response.headers.get('Content-Encoding')).toBe(encoding);
+			expect(response.headers.get('Vary')).toBe('Accept-Encoding');
+			// The header is only true if the body is the encoded one. Asserting the header alone
+			// would pass against a response that labelled identity bytes as compressed.
+			expect((await response.arrayBuffer()).byteLength).toBeLessThan(identityBytes);
+		}
+	});
+
+	test('the generated index.html body is encoded too, not just files read from disk', async () => {
+		resetCompressionCache();
+		const dist = await distFixture();
+		// index.html takes a separate branch: the trace marker is injected per request, so the
+		// body is compressed unmemoised rather than served from the identity cache.
+		const response = await serve(dist, '/', 'gzip');
+		expect(response.headers.get('Content-Encoding')).toBe('gzip');
+		expect(response.headers.get('Vary')).toBe('Accept-Encoding');
+		const decoded = Bun.gunzipSync(new Uint8Array(await response.arrayBuffer()));
+		expect(new TextDecoder().decode(decoded)).toContain('aidd-trace-default');
+	});
+
+	test('a client that accepts nothing gets identity bytes but still gets Vary', async () => {
+		resetCompressionCache();
+		const dist = await distFixture();
+		const response = await serve(dist, '/assets/app.js', null);
+		expect(response.headers.get('Content-Encoding')).toBeNull();
+		// Without Vary a shared cache could hand these identity bytes to the next client as if
+		// they were the compressed representation, or the reverse.
+		expect(response.headers.get('Vary')).toBe('Accept-Encoding');
+	});
+
+	test('an already-compressed type is served untouched, with no Vary to negotiate over', async () => {
+		resetCompressionCache();
+		const dist = await distFixture();
+		const response = await serve(dist, '/assets/logo.png', 'br');
+		expect(response.headers.get('Content-Encoding')).toBeNull();
+		expect(response.headers.get('Vary')).toBeNull();
+	});
+
+	test('a body below the size floor is served unencoded', async () => {
+		resetCompressionCache();
+		const dist = await distFixture();
+		const response = await serve(dist, '/assets/tiny.css', 'br');
+		expect(response.headers.get('Content-Encoding')).toBeNull();
+	});
+
+	test('a 304 carries no encoding for a body it is not sending', async () => {
+		resetCompressionCache();
+		const dist = await distFixture();
+		const first = await serve(dist, '/sw.js', 'br');
+		expect(first.headers.get('Content-Encoding')).toBe('br');
+		const etag = first.headers.get('ETag');
+		expect(etag).not.toBeNull();
+		const revalidated = await serveStaticFile(dist, '/sw.js', false, 'br', etag);
+		expect(revalidated.status).toBe(304);
+		expect(revalidated.headers.get('Content-Encoding')).toBeNull();
+		// Vary survives the 304 so the cache entry the client already holds stays keyed correctly.
+		expect(revalidated.headers.get('Vary')).toBe('Accept-Encoding');
 	});
 });

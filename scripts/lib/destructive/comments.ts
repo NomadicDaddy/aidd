@@ -26,6 +26,12 @@
  * evidence window of an unguarded call passes it, exactly as the comment form did. The delimiters
  * stay so the surrounding line still reads as code; only what sits between them goes.
  *
+ * A template's interpolations are the exception, and they have to be, because `${deleteThing
+ * .mutate(id)}` is a call that runs. Dropping it would not weaken the evidence for a site; it would
+ * delete the site, and a site nobody counted is the one outcome the bias below refuses. So `${` and
+ * its matching `}` open a window back into code inside a string, and everything between them is
+ * scanned as code, including further strings and templates nested in it.
+ *
  * Line count and indentation are preserved, because both callers index into the result alongside
  * the raw lines and `enclosingFunction` measures depth from what it is given.
  *
@@ -50,9 +56,12 @@ const QUOTES = new Set(["'", '"', '`']);
 export function codeOnly(lines: string[]): string[] {
 	const stripped: string[] = [];
 	let inBlock = false;
-	// A template literal carries across lines the same way a block comment does, so `quote` lives out
-	// here rather than inside the line loop.
-	let quote: null | string = null;
+	// Innermost context last. A quote character means "inside a string of that kind"; a brace means
+	// "inside a template interpolation", one entry per brace still open. A stack rather than one
+	// `quote`, because the two nest arbitrarily and each layer ends the one above it: `${a['b']}` is
+	// a string inside an interpolation inside a template. It lives out here because a template and
+	// its interpolations both carry across lines, the same way a block comment does.
+	const stack: string[] = [];
 
 	for (const line of lines) {
 		let code = '';
@@ -60,6 +69,7 @@ export function codeOnly(lines: string[]): string[] {
 		for (let i = 0; i < line.length; i++) {
 			const char = line[i]!;
 			const next = line[i + 1];
+			const top = stack.at(-1);
 
 			if (inBlock) {
 				if (char === '*' && next === '/') {
@@ -69,20 +79,34 @@ export function codeOnly(lines: string[]): string[] {
 				continue;
 			}
 
-			if (quote !== null) {
+			if (top !== undefined && QUOTES.has(top)) {
 				// Neither character of an escape pair is content, and skipping the second is what keeps
 				// `'it\'s'` from being read as closing here and reopening at the apostrophe.
 				if (char === '\\') {
 					i++;
-				} else if (char === quote) {
+				} else if (char === top) {
 					code += char;
-					quote = null;
+					stack.pop();
+				} else if (top === '`' && char === '$' && next === '{') {
+					code += '${';
+					stack.push('{');
+					i++;
 				}
 				continue;
 			}
 
+			// Braces are only counted inside an interpolation. Tracking them in code as well would mean
+			// following every JSX brace in the file for no gain, and one unbalanced brace in prose would
+			// then desynchronise everything after it.
+			if (top === '{' && (char === '{' || char === '}')) {
+				if (char === '{') stack.push('{');
+				else stack.pop();
+				code += char;
+				continue;
+			}
+
 			if (QUOTES.has(char)) {
-				quote = char;
+				stack.push(char);
 				code += char;
 				continue;
 			}
@@ -99,10 +123,10 @@ export function codeOnly(lines: string[]): string[] {
 			code += char;
 		}
 
-		// Only a backtick survives the line boundary. A single- or double-quoted string cannot legally
-		// span one, so an unterminated one is the scan having gone wrong rather than the file, and
-		// carrying it would blank every line after it.
-		if (quote !== '`') quote = null;
+		// A single- or double-quoted string cannot legally span a line, so an unterminated one is the
+		// scan having gone wrong rather than the file, and carrying it would blank every line after it.
+		// A template and an interpolation both can span one, so both are left standing.
+		while (stack.at(-1) === "'" || stack.at(-1) === '"') stack.pop();
 		stripped.push(code);
 	}
 

@@ -33,7 +33,7 @@ import { join, relative, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { stripComments } from './lib/destructive/comments.ts';
+import { codeOnly } from './lib/destructive/comments.ts';
 import { hasConfirmationEvidence } from './lib/destructive/evidence.ts';
 import {
 	type BadWaiver,
@@ -100,9 +100,9 @@ function checkFile(projectRoot: string, filePath: string): FileResult {
 
 	// Sites and evidence are read from the code, waivers from the raw lines. A waiver lives in a
 	// comment by definition, so the two views are not interchangeable: reading markers out of the
-	// stripped text would find none, and reading evidence out of the raw text is what let a comment
-	// naming a dialog stand in for the dialog. See `comments.ts` for the four faults that came of it.
-	const code = stripComments(lines);
+	// code view would find none, and reading evidence out of the raw text is what let a comment
+	// naming a dialog stand in for the dialog. See `comments.ts` for the faults that came of it.
+	const code = codeOnly(lines);
 
 	const used = new Set<number>();
 	for (const [index, line] of code.entries()) {

@@ -19,41 +19,39 @@
  *   the reason that skip existed: the marker's own text can no longer match a destructive pattern,
  *   so the line stays a site and the marker on it is found and honoured.
  *
+ * String contents are dropped for the same reason, and it is the same fault one layer over: a
+ * primitive named in a toast message, in a route path, or in a test's expected text is prose that
+ * happens to sit inside quotes rather than inside a comment, and the evidence scan cannot tell the
+ * two apart. `'Deleting this is permanent -- confirm in the ConfirmAlertDialog'` sitting in the
+ * evidence window of an unguarded call passes it, exactly as the comment form did. The delimiters
+ * stay so the surrounding line still reads as code; only what sits between them goes.
+ *
  * Line count and indentation are preserved, because both callers index into the result alongside
  * the raw lines and `enclosingFunction` measures depth from what it is given.
  *
  * Where the scan cannot be exact it removes too much rather than too little, and the asymmetry is
  * deliberate. This is not a parser: a `//` inside JSX text, or the trailing delimiter of a regex
- * literal, truncates the rest of its line. Dropping real evidence produces a finding on a call that
- * has confirmation, which a reader sees and can waive. Keeping prose produces a pass on a call that
- * has none, which nobody sees at all.
- *
- * The one place it can err the other way is the backtick, which has to carry across lines for
- * multiline templates to be read as the strings they are. A stray unbalanced backtick -- in a regex
- * literal, or in JSX text -- opens a template that never closes, and the rest of the file is
- * preserved as string content. It stays bounded to a line for the two quote characters that cannot
- * legally span one.
+ * literal, truncates the rest of its line, and an unbalanced backtick blanks the rest of the file.
+ * Dropping real evidence produces a finding on a call that has confirmation, which a reader sees
+ * and can waive. Keeping prose produces a pass on a call that has none, which nobody sees at all.
  */
 
-/** Quote characters that open a string the scan must not read comment markers inside of. */
+/** Quote characters that open a string whose contents the scan drops. */
 const QUOTES = new Set(["'", '"', '`']);
 
 /**
- * `lines` with every comment blanked, one output line per input line.
+ * `lines` with every comment and the contents of every string blanked, one output line per input
+ * line. Quote delimiters are kept; the prose between them is not.
  *
- * Block comments carry across lines, which is why this takes the whole file rather than working a
- * line at a time: a `/*` opened three lines above is still open here, and a line-at-a-time scan
- * reads the prose inside it as code.
+ * Block comments and template literals both carry across lines, which is why this takes the whole
+ * file rather than working a line at a time: a `/*` or a backtick opened three lines above is still
+ * open here, and a line-at-a-time scan reads what is inside it as code.
  */
-export function stripComments(lines: string[]): string[] {
+export function codeOnly(lines: string[]): string[] {
 	const stripped: string[] = [];
 	let inBlock = false;
 	// A template literal carries across lines the same way a block comment does, so `quote` lives out
-	// here rather than inside the line loop. Reset per line, the continuation lines of a multiline
-	// template were read as code, and a `ConfirmAlertDialog` named inside template text counted as
-	// evidence for the call below it. Only a backtick survives the line boundary: a single- or
-	// double-quoted string cannot span one, and leaving either open would read the rest of the file
-	// as string content.
+	// here rather than inside the line loop.
 	let quote: null | string = null;
 
 	for (const line of lines) {
@@ -72,11 +70,12 @@ export function stripComments(lines: string[]): string[] {
 			}
 
 			if (quote !== null) {
-				code += char;
+				// Neither character of an escape pair is content, and skipping the second is what keeps
+				// `'it\'s'` from being read as closing here and reopening at the apostrophe.
 				if (char === '\\') {
-					code += next ?? '';
 					i++;
 				} else if (char === quote) {
+					code += char;
 					quote = null;
 				}
 				continue;
@@ -100,6 +99,9 @@ export function stripComments(lines: string[]): string[] {
 			code += char;
 		}
 
+		// Only a backtick survives the line boundary. A single- or double-quoted string cannot legally
+		// span one, so an unterminated one is the scan having gone wrong rather than the file, and
+		// carrying it would blank every line after it.
 		if (quote !== '`') quote = null;
 		stripped.push(code);
 	}

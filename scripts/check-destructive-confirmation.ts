@@ -33,6 +33,7 @@ import { join, relative, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { stripComments } from './lib/destructive/comments.ts';
 import { hasConfirmationEvidence } from './lib/destructive/evidence.ts';
 import {
 	type BadWaiver,
@@ -40,7 +41,6 @@ import {
 	coveringMarker,
 	reportWaivers,
 	WAIVER_MARKER,
-	waiverReason,
 } from './lib/destructive/waivers.ts';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -98,20 +98,29 @@ function checkFile(projectRoot: string, filePath: string): FileResult {
 	if (!MUTATION_PATTERN.test(content)) return result;
 	result.mutations = true;
 
+	// Sites and evidence are read from the code, waivers from the raw lines. A waiver lives in a
+	// comment by definition, so the two views are not interchangeable: reading markers out of the
+	// stripped text would find none, and reading evidence out of the raw text is what let a comment
+	// naming a dialog stand in for the dialog. See `comments.ts` for the four faults that came of it.
+	const code = stripComments(lines);
+
 	const used = new Set<number>();
-	for (const [index, line] of lines.entries()) {
+	for (const [index, line] of code.entries()) {
 		if (!line) continue;
-		if (waiverReason(line) !== null) continue;
 		if (!DESTRUCTIVE_PATTERNS.some((pattern) => pattern.test(line))) continue;
 
 		result.sites += 1;
-		if (hasConfirmationEvidence(lines, index)) continue;
+		if (hasConfirmationEvidence(code, index)) continue;
 		const marker = coveringMarker(lines, index);
 		if (marker !== null) {
 			used.add(marker);
 			continue;
 		}
-		result.violations.push({ content: line.trim(), file: relativePath, line: index + 1 });
+		result.violations.push({
+			content: (lines[index] ?? line).trim(),
+			file: relativePath,
+			line: index + 1,
+		});
 	}
 
 	result.waivers = badWaivers(relativePath, lines, used);

@@ -38,10 +38,24 @@ export const EVIDENCE_WINDOW_LINES = 15;
  * The declaration forms a handler is written in, capturing its indentation and its name. Both
  * carriers use `function name()` and `const name = () =>`; a `const` bound to anything that is not
  * a parameter list is not a function and is not matched.
+ *
+ * The `const` form also allows a `useCallback` wrapper, because that is how a React handler with a
+ * dependency array is written and the unwrapped form was the only one that resolved. A wrapped
+ * handler returned `null`, which took the hop away entirely and reported the site as unconfirmed
+ * with an `onConfirm={handleDelete}` sitting in the same file. g5's episode delete was one, and it
+ * was converted to the shared dialog component to clear a finding the gate should have resolved on
+ * the code already there.
+ *
+ * `useCallback` is named rather than accepting any wrapping call, and the difference is not
+ * cosmetic. `const ids = selectedRows.map((u) => u.id)` satisfies "identifier, open paren,
+ * parameter list" as readily as `useCallback` does, and it sits at the same depth as the statement
+ * below it, so the indentation test reads it as a closed sibling and returns `null` for a call that
+ * a plain `function handleBulkDelete()` two lines up was resolving correctly. `UsersTab.tsx:79` is
+ * that line. A wrapper this scan stops on has to be one that actually declares handlers.
  */
 const DECLARATION_PATTERNS = [
 	/^(\s*)(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/,
-	/^(\s*)(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*(?:async\s*)?\(/,
+	/^(\s*)(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*(?:(?:[\w$]+\.)?useCallback\s*\(\s*)?(?:async\s*)?\(/,
 ];
 
 /**

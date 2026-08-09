@@ -38,8 +38,47 @@ const HOOK = 'pre-push';
 export const GUARDS = ['aidd-history-guard.sh', 'screenshot-guard.sh'];
 const MARKER = 'aidd history guard';
 
+export const COMMIT_HOOK = 'pre-commit';
+/**
+ * The scaffolded commit hook is the leak-guard-only variant, deliberately not aidd's own
+ * `pre-commit`. That one runs `bun run check:licenses` and `bun run smoke:qc:fast`, and a scaffolded
+ * package.json defines only the second: a project born with it would fail every commit rather than
+ * be guarded by one. `pre-commit-leak-guard-only` names no task at all, so it runs anywhere, and
+ * scripts/sync-shared-core.ts reaches the same conclusion from that group's `requiresScripts` /
+ * `fallbackSource` — it upgrades the hook in place once a project defines both names.
+ *
+ * Without this, a project is unguarded at commit time from creation until the next fleet-wide
+ * sync, which is exactly the window in which a fresh project accumulates its first secrets.
+ */
+export const COMMIT_SOURCE = 'pre-commit-leak-guard-only';
+/**
+ * Every guard the guard-only hook sources. Deliberately shorter than the leak-guard contract's
+ * `HOOK_FILES`: the fleet sync also carries `leak-guard-setup.sh`, which seeds the tier-2 pattern
+ * file from a `prepare` script, and a scaffolded package.json has no `prepare` to run it. Copying it
+ * here would deliver a file nothing invokes.
+ */
+export const COMMIT_GUARDS = ['leak-guard.sh'];
+export const COMMIT_MARKER = 'bash .githooks/leak-guard.sh';
+
 export type GuardOutcome =
-	'foreign-hook' | 'foreign-hooks-path' | 'installed' | 'no-source' | 'not-a-repo' | 'skipped';
+	| 'foreign-commit-hook'
+	| 'foreign-hook'
+	| 'foreign-hooks-path'
+	| 'installed'
+	| 'no-source'
+	| 'not-a-repo'
+	| 'skipped';
+
+interface HookSpec {
+	/** Bodies the wrapper sources; each must be delivered with it or the hook fails on first run. */
+	guards: string[];
+	/** Name the hook takes in `.githooks/`, which is what `core.hooksPath` makes git run. */
+	hook: string;
+	/** Text that identifies the hook as ours, so a foreign one is refused rather than replaced. */
+	marker: string;
+	/** Name in `scaffolding/.githooks/`, which differs from `hook` for the commit guard. */
+	sourceFile: string;
+}
 
 const git = async (cwd: string, args: string[]): Promise<{ ok: boolean; stdout: string }> => {
 	try {
@@ -59,6 +98,71 @@ const normalize = (v: string): string => {
 	const n = v.replace(/\\/g, '/').replace(/\/+$/, '');
 	return process.platform === 'win32' ? n.toLowerCase() : n;
 };
+
+/**
+ * Copy one wrapper and the guards it sources into `.githooks`, then stage all of them.
+ *
+ * Shared by both hooks because the sequence is not obvious and getting half of it right is what
+ * ships a broken repository: the wrapper and its guards are one unit, the index mode is the only
+ * part that survives a clone, and a wrapper staged without its guards fails on a fresh checkout.
+ */
+async function installHook(
+	projectDir: string,
+	source: string,
+	hooksDir: string,
+	spec: HookSpec,
+): Promise<'foreign-hook' | 'installed' | 'no-source' | 'skipped'> {
+	const hookSource = join(source, spec.sourceFile);
+	if (!(await Bun.file(hookSource).exists())) return 'no-source';
+
+	// core.hooksPath allows exactly one hook of each name. Overwriting one we did not write would
+	// silently disable whatever it was doing, so refuse and leave it to a human to chain.
+	const hookPath = join(hooksDir, spec.hook);
+	try {
+		const existing = await readFile(hookPath, 'utf8');
+		if (!existing.includes(spec.marker)) return 'foreign-hook';
+	} catch {
+		/* No hook yet — the normal case. */
+	}
+
+	try {
+		await mkdir(hooksDir, { recursive: true });
+		for (const guard of spec.guards) {
+			const guardSource = join(source, guard);
+			// A guard the current scaffolding does not ship is not an error: only guards the wrapper
+			// actually sources are present, and copying a missing one would fail the whole install.
+			if (await Bun.file(guardSource).exists()) {
+				await copyFile(guardSource, join(hooksDir, guard));
+			}
+		}
+		await copyFile(hookSource, hookPath);
+	} catch {
+		return 'skipped';
+	}
+
+	// The index mode is the only part that survives a clone: under core.fileMode=false (Windows) git
+	// ignores the filesystem exec bit and records 100644, and POSIX git will not run a hook that is
+	// not executable — yielding a repository that looks guarded and is not.
+	const stagedHook = await git(projectDir, [
+		'update-index',
+		'--add',
+		'--chmod=+x',
+		`.githooks/${spec.hook}`,
+	]);
+	// Stage every guard body too. Staging only the wrapper lets a routine `git commit` publish a hook
+	// that sources a file which is not in the repository — so a fresh clone runs a hook that
+	// immediately fails on a missing script. The wrapper and the guards it sources are one unit.
+	let stagedGuards = true;
+	for (const guard of spec.guards) {
+		// Only guards that were actually copied above exist to stage; skip the rest silently.
+		if (!(await Bun.file(join(hooksDir, guard)).exists())) continue;
+		const staged = await git(projectDir, ['add', `.githooks/${guard}`]);
+		stagedGuards &&= staged.ok;
+	}
+
+	if (!stagedHook.ok || !stagedGuards) return 'skipped';
+	return 'installed';
+}
 
 /**
  * @param rootDir aidd's install root. Resolved from this module's own location by default, so
@@ -106,56 +210,33 @@ export async function ensureHistoryGuard(
 	}
 
 	const hooksDir = join(projectDir, '.githooks');
-	const hookPath = join(hooksDir, HOOK);
 
-	// core.hooksPath allows exactly one pre-push. Overwriting a hook we did not write would silently
-	// disable whatever it was doing, so refuse and leave it to a human to chain.
-	try {
-		const existing = await readFile(hookPath, 'utf8');
-		if (!existing.includes(MARKER)) return 'foreign-hook';
-	} catch {
-		/* No hook yet — the normal case. */
-	}
-
-	try {
-		await mkdir(hooksDir, { recursive: true });
-		for (const guard of GUARDS) {
-			const guardSource = join(source, guard);
-			// A guard the current scaffolding does not ship is not an error: only guards the wrapper
-			// actually sources are present, and copying a missing one would fail the whole install.
-			if (await Bun.file(guardSource).exists()) {
-				await copyFile(guardSource, join(hooksDir, guard));
-			}
-		}
-		await copyFile(hookSource, hookPath);
-	} catch {
-		return 'skipped';
-	}
-
-	const configured2 = await git(projectDir, ['config', 'core.hooksPath', '.githooks']);
-	// The index mode is the only part that survives a clone: under core.fileMode=false (Windows) git
-	// ignores the filesystem exec bit and records 100644, and POSIX git will not run a hook that is
-	// not executable — yielding a repository that looks guarded and is not.
-	const stagedHook = await git(projectDir, [
-		'update-index',
-		'--add',
-		'--chmod=+x',
-		`.githooks/${HOOK}`,
-	]);
-	// Stage every guard body too. Staging only the wrapper lets a routine `git commit` publish a hook
-	// that sources a file which is not in the repository — so a fresh clone runs a pre-push that
-	// immediately fails on a missing script. The wrapper and the guards it sources are one unit.
-	let stagedGuards = true;
-	for (const guard of GUARDS) {
-		// Only guards that were actually copied above exist to stage; skip the rest silently.
-		if (!(await Bun.file(join(hooksDir, guard)).exists())) continue;
-		const staged = await git(projectDir, ['add', `.githooks/${guard}`]);
-		stagedGuards &&= staged.ok;
-	}
-
+	const push = await installHook(projectDir, source, hooksDir, {
+		guards: GUARDS,
+		hook: HOOK,
+		marker: MARKER,
+		sourceFile: HOOK,
+	});
 	// Report what actually happened. Returning 'installed' unconditionally would let a read-only
 	// checkout, a locked index, or a git too old for --chmod look identical to success — and the
 	// entire point of this guard is that a silent no-op is the worst outcome.
-	if (!configured2.ok || !stagedHook.ok || !stagedGuards) return 'skipped';
+	if (push !== 'installed') return push;
+
+	const configured2 = await git(projectDir, ['config', 'core.hooksPath', '.githooks']);
+	if (!configured2.ok) return 'skipped';
+
+	// The commit-time guard is installed second and reported separately, because it is the weaker
+	// of the two obligations: the push guard is what keeps `.aidd/` history off a remote, so a
+	// project that gets one and not the other should get that one. A scaffolding tag predating the
+	// leak guard has no source file here and simply yields the push-only install ('no-source' below
+	// falls through to 'installed'), which is what every project got before this existed.
+	const commit = await installHook(projectDir, source, hooksDir, {
+		guards: COMMIT_GUARDS,
+		hook: COMMIT_HOOK,
+		marker: COMMIT_MARKER,
+		sourceFile: COMMIT_SOURCE,
+	});
+	if (commit === 'foreign-hook') return 'foreign-commit-hook';
+	if (commit === 'skipped') return 'skipped';
 	return 'installed';
 }

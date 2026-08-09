@@ -1,6 +1,10 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
+// The scaffold's own gate owns this list; this gate reads it rather than restating it, because a
+// second copy only stays right for as long as everyone who adds a scaffold file remembers it.
+import { REQUIRED_SCAFFOLD_PATHS } from './check-scaffold.ts';
+
 const requiredPaths = [
 	'backend',
 	'cli',
@@ -14,16 +18,6 @@ const requiredPaths = [
 	'scripts',
 	'package.json',
 	'tsconfig.json',
-];
-
-const requiredScaffoldingFiles = [
-	'scaffolding/.editorconfig',
-	'scaffolding/.gitattributes',
-	'scaffolding/.gitignore',
-	'scaffolding/.prettierignore',
-	'scaffolding/.prettierrc',
-	'scaffolding/eslint.config.js',
-	'scaffolding/frontend/eslint.config.js',
 ];
 
 const scannedPaths = [
@@ -144,7 +138,7 @@ async function main(): Promise<number> {
 	for (const path of requiredPaths) {
 		if (!(await pathExists(join(root, path)))) missing.push(path);
 	}
-	for (const path of requiredScaffoldingFiles) {
+	for (const path of REQUIRED_SCAFFOLD_PATHS) {
 		if (!(await pathExists(join(root, path)))) missing.push(path);
 	}
 

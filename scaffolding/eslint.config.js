@@ -136,6 +136,18 @@ export default defineConfig([
 		},
 	},
 	{
+		files: ['**/*.{ts,tsx}'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+		rules: {
+			'@typescript-eslint/unbound-method': 'error',
+		},
+	},
+	{
 		files: ['**/*.js'],
 		languageOptions: {
 			globals: globals.node,
@@ -162,7 +174,12 @@ export default defineConfig([
 		},
 	},
 	{
-		files: ['**/vite.config.ts', '**/tailwind.config.js', '**/drizzle.config.ts'],
+		files: [
+			'**/drizzle.config.ts',
+			'**/eslint.config.js',
+			'**/tailwind.config.js',
+			'**/vite.config.ts',
+		],
 		rules: {
 			'import/no-default-export': 'off',
 		},

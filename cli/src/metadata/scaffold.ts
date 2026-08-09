@@ -19,6 +19,7 @@ const rootScaffoldFiles = [
 	'.prettierrc',
 	'eslint.config.js',
 	'package.json',
+	'tsconfig.json',
 ];
 
 // .githooks is deliberately NOT scaffolded here. The hook is installed by ensureHistoryGuard

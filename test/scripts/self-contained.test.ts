@@ -53,6 +53,9 @@ describe('self-contained tool', () => {
 			expect(stdout).toContain('scaffolding/.gitignore');
 			expect(stdout).toContain('scaffolding/.prettierignore');
 			expect(stdout).toContain('scaffolding/.prettierrc');
+			expect(stdout).toContain('scaffolding/package.json');
+			expect(stdout).toContain('scaffolding/scripts/require-bun.ts');
+			expect(stdout).toContain('scaffolding/tsconfig.json');
 		} finally {
 			await rm(tmp, { recursive: true, force: true });
 		}
@@ -229,6 +232,9 @@ describe('self-contained package spec verification', () => {
 			'scaffolding/.gitignore',
 			'scaffolding/.prettierignore',
 			'scaffolding/.prettierrc',
+			'scaffolding/package.json',
+			'scaffolding/scripts/require-bun.ts',
+			'scaffolding/tsconfig.json',
 		];
 		for (const file of requiredScaffolding) {
 			const exists = await Bun.file(file).exists();

@@ -136,4 +136,41 @@ describe('ensureHistoryGuard', () => {
 		const dir = await makeRepo('no-source');
 		expect(await ensureHistoryGuard(dir, join(tmpRoot, 'nowhere'))).toBe('no-source');
 	});
+
+	test('installs the commit-time leak guard alongside the push guard', async () => {
+		// A project is unguarded at commit time from creation until the next fleet-wide sync
+		// otherwise, which is exactly the window in which it accumulates its first secrets.
+		const dir = await makeRepo('commit-guard');
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
+
+		const hook = join(dir, '.githooks', 'pre-commit');
+		expect(existsSync(hook)).toBe(true);
+		expect(existsSync(join(dir, '.githooks', 'leak-guard.sh'))).toBe(true);
+
+		// The guard-only variant, not aidd's own pre-commit: a scaffolded package.json does not define
+		// check:licenses, and a hook that calls a task the project does not define fails every commit
+		// rather than guarding one.
+		// Matched against executable lines only: the file's header explains the script-name contract
+		// at length, so a substring search over the whole body finds those names in prose.
+		const body = readFileSync(hook, 'utf8');
+		expect(body).toContain('bash .githooks/leak-guard.sh');
+		expect(body).not.toMatch(/^\s*bun run /m);
+
+		const staged = git(dir, ['diff', '--cached', '--name-only']).split('\n');
+		expect(staged).toContain('.githooks/pre-commit');
+		expect(staged).toContain('.githooks/leak-guard.sh');
+		expect(git(dir, ['ls-files', '-s', '.githooks/pre-commit']).split(/\s+/)[0]).toBe('100755');
+	});
+
+	test('refuses to clobber a foreign pre-commit, and says which hook it refused', async () => {
+		// The push guard still installs: it is the stronger obligation of the two, and a project
+		// that can only have one should get the one that keeps `.aidd/` history off a remote.
+		const dir = await makeRepo('foreign-commit');
+		await mkdir(join(dir, '.githooks'), { recursive: true });
+		await writeFile(join(dir, '.githooks', 'pre-commit'), '#!/usr/bin/env bash\necho mine\n');
+
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('foreign-commit-hook');
+		expect(await Bun.file(join(dir, '.githooks', 'pre-commit')).text()).toContain('echo mine');
+		expect(indexMode(dir)).toBe('100755');
+	});
 });

@@ -88,6 +88,16 @@ function fileReferences(tokens: string[]): string[] {
 	return tokens.filter((token) => !token.startsWith('-') && SCRIPT_FILE.test(token));
 }
 
+/**
+ * Every script file a command names, across all of its segments. Exported so setup's branding pass
+ * can ask this module which file a task runs instead of carrying a second, weaker parser: the
+ * question "which task points at a file this app will not receive" is the same one this gate
+ * answers, and the two drifting apart is what shipped three unrunnable tasks to every new app.
+ */
+export function commandFileReferences(command: string): string[] {
+	return segments(command).flatMap(fileReferences);
+}
+
 export interface TaskReference {
 	/** Directory holding the manifest that must define the task, relative to the project root. */
 	dir: string;

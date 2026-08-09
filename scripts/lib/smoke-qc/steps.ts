@@ -121,6 +121,19 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:artifact-parity',
 	},
 	{
+		command: ['bun', 'run', 'check:hook-parity'],
+		description: 'scaffolding/.githooks matches .githooks and ships every guard it sources',
+		label: 'check:hook-parity',
+		name: 'check:hook-parity',
+	},
+	{
+		command: ['bun', 'run', 'check:scaffold'],
+		description:
+			'The fresh-project scaffold matches its owners and passes its own quality gate',
+		label: 'check:scaffold',
+		name: 'check:scaffold',
+	},
+	{
 		command: ['bun', 'run', 'check:audit-artifact-hygiene'],
 		description: 'Audit findings stay distinct, well-formed, and never future-dated (BEH-004)',
 		label: 'check:audit-artifact-hygiene',

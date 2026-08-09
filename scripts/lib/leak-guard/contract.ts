@@ -24,11 +24,27 @@ import { resolve } from 'node:path';
 
 export const AIDD_ROOT = resolve(import.meta.dir, '..', '..', '..');
 
-export const HOOK = 'pre-commit';
-export const GUARD_ONLY_SOURCE = 'pre-commit-leak-guard-only';
-
-/** Present in both hook variants and in no foreign hook: the line that invokes the guard. */
-export const MARKER = 'bash .githooks/leak-guard.sh';
+/**
+ * The hook name, the guard-only variant's filename, and the marker that tells our hook from a
+ * stranger's.
+ *
+ * Re-exported from the ingestion-lane installer rather than restated, for the same reason
+ * push-guards/contract.ts re-exports GUARDS: two installers cover different populations of the same
+ * fleet, both write the one file core.hooksPath allows, and a divergence between them is invisible
+ * until a commit fails. shared/ never imports scripts/, so the shared module owns the names and this
+ * one follows.
+ */
+export {
+	/**
+	 * What the guard-only variant sources, which is HOOK_FILES minus `leak-guard-setup.sh`: the
+	 * setup script is invoked from a `prepare` key, and the population that gets the guard-only
+	 * hook is the population with no such key. See the shared module for the full reasoning.
+	 */
+	COMMIT_GUARDS as GUARD_ONLY_FILES,
+	COMMIT_SOURCE as GUARD_ONLY_SOURCE,
+	COMMIT_HOOK as HOOK,
+	COMMIT_MARKER as MARKER,
+} from '../../../shared/src/metadata/history-guard.ts';
 
 /**
  * Opt-out a repository writes into its own hook to say "this chain is deliberate, sync around it".

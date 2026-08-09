@@ -319,6 +319,8 @@ describe('smoke cache', () => {
 			'check:schema-parity',
 			'check:feature-integration',
 			'check:artifact-parity',
+			'check:hook-parity',
+			'check:scaffold',
 			'check:audit-artifact-hygiene',
 			'check:audit-profile-mapping',
 			'check-application',

@@ -56,6 +56,7 @@ describe('scaffoldProjectAssets', () => {
 		await writeFile(join(aiddRoot, 'scaffolding', '.gitattributes'), '* text=auto\n');
 		await writeFile(join(aiddRoot, 'scaffolding', '.prettierrc'), '{}\n');
 		await writeFile(join(aiddRoot, 'scaffolding', 'package.json'), '{}\n');
+		await writeFile(join(aiddRoot, 'scaffolding', 'tsconfig.json'), '{}\n');
 		await writeFile(join(aiddRoot, 'scaffolding', '.aidd', 'CHANGELOG.md'), '# Changelog\n');
 		await writeFile(join(aiddRoot, 'scaffolding', '.aidd', 'project.md'), '# Project\n');
 		await writeFile(
@@ -72,6 +73,7 @@ describe('scaffoldProjectAssets', () => {
 		expect(existsSync(join(projectDir, '.gitattributes'))).toBe(true);
 		expect(existsSync(join(projectDir, '.prettierrc'))).toBe(true);
 		expect(existsSync(join(projectDir, 'package.json'))).toBe(true);
+		expect(existsSync(join(projectDir, 'tsconfig.json'))).toBe(true);
 		expect(existsSync(join(projectDir, '.aidd', 'CHANGELOG.md'))).toBe(true);
 		expect(existsSync(join(projectDir, '.aidd', 'project.md'))).toBe(true);
 		expect(existsSync(join(projectDir, '.aidd', 'project-structure.md'))).toBe(true);
@@ -130,6 +132,7 @@ describe('scaffoldProjectAssets', () => {
 		await mkdir(projectDir, { recursive: true });
 		await writeFile(join(aiddRoot, 'scaffolding', 'package.json'), '{}\n');
 		await writeFile(join(aiddRoot, 'scaffolding', 'eslint.config.js'), '{}\n');
+		await writeFile(join(aiddRoot, 'scaffolding', 'tsconfig.json'), '{}\n');
 		await writeFile(join(aiddRoot, 'scaffolding', 'frontend', 'index.html'), '<html></html>\n');
 		await writeFile(join(aiddRoot, 'scaffolding', '.aidd', 'CHANGELOG.md'), '# Changelog\n');
 		await writeFile(sharedAgents, '# Agents\n');
@@ -149,6 +152,7 @@ describe('scaffoldProjectAssets', () => {
 		// Scaffold-owned files do not land at the application root...
 		expect(existsSync(join(projectDir, 'package.json'))).toBe(false);
 		expect(existsSync(join(projectDir, 'eslint.config.js'))).toBe(false);
+		expect(existsSync(join(projectDir, 'tsconfig.json'))).toBe(false);
 		expect(existsSync(join(projectDir, 'frontend'))).toBe(false);
 		// ...but configured shared files and .aidd-internal installs still run.
 		expect(await readFile(join(projectDir, 'AGENTS.md'), 'utf8')).toBe('# Agents\n');
@@ -168,6 +172,7 @@ describe('scaffoldProjectAssets', () => {
 		await mkdir(join(aiddRoot, 'scaffolding', 'frontend'), { recursive: true });
 		await writeFile(join(aiddRoot, 'scaffolding', 'package.json'), '{}\n');
 		await writeFile(join(aiddRoot, 'scaffolding', 'eslint.config.js'), '{}\n');
+		await writeFile(join(aiddRoot, 'scaffolding', 'tsconfig.json'), '{}\n');
 		await writeFile(join(aiddRoot, 'scaffolding', 'frontend', 'index.html'), '<html></html>\n');
 		await writeFile(join(aiddRoot, 'scaffolding', '.aidd', 'CHANGELOG.md'), '# Changelog\n');
 		await writeFile(sharedAgents, '# Agents\n');
@@ -179,6 +184,7 @@ describe('scaffoldProjectAssets', () => {
 
 		expect(existsSync(join(projectDir, 'package.json'))).toBe(true);
 		expect(existsSync(join(projectDir, 'eslint.config.js'))).toBe(true);
+		expect(existsSync(join(projectDir, 'tsconfig.json'))).toBe(true);
 		expect(existsSync(join(projectDir, 'frontend'))).toBe(true);
 		expect(await readFile(join(projectDir, 'AGENTS.md'), 'utf8')).toBe('# Agents\n');
 		expect(existsSync(join(projectDir, '.aidd', 'CHANGELOG.md'))).toBe(true);

@@ -99,6 +99,18 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'skills/**/*',
 		'test/**/*',
 	],
+	// Both halves it compares, plus the contract modules that decide which files it demands. The hook
+	// directories are globbed rather than listed: a file present on one side and not the other is
+	// itself the drift, so a list of today's filenames would cache away the run that would see it.
+	'check:hook-parity': [
+		'.githooks/**/*',
+		'package.json',
+		'scaffolding/.githooks/**/*',
+		'scripts/check-hook-parity.ts',
+		'scripts/lib/leak-guard/contract.ts',
+		'scripts/lib/push-guards/contract.ts',
+		'shared/src/metadata/history-guard.ts',
+	],
 	'check:leak-guard': [
 		'.githooks/leak-guard.sh',
 		'package.json',
@@ -154,6 +166,24 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'backend/src/db/schema/**/*.ts',
 		'package.json',
 		'scripts/check-no-inline-references.ts',
+	],
+	'check:scaffold': [
+		'.editorconfig',
+		'.gitattributes',
+		'.prettierignore',
+		'.prettierrc',
+		'bun.lock',
+		'frontend/eslint.config.js',
+		'package.json',
+		'scaffolding/.aidd/**/*',
+		'scaffolding/.editorconfig',
+		'scaffolding/.gitattributes',
+		'scaffolding/.gitignore',
+		'scaffolding/.prettierignore',
+		'scaffolding/.prettierrc',
+		'scaffolding/**/*',
+		'scripts/check-scaffold.ts',
+		'scripts/require-bun.ts',
 	],
 	'check:schema-parity': [
 		'backend/src/db/**/*.ts',

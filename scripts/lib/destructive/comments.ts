@@ -27,6 +27,12 @@
  * literal, truncates the rest of its line. Dropping real evidence produces a finding on a call that
  * has confirmation, which a reader sees and can waive. Keeping prose produces a pass on a call that
  * has none, which nobody sees at all.
+ *
+ * The one place it can err the other way is the backtick, which has to carry across lines for
+ * multiline templates to be read as the strings they are. A stray unbalanced backtick -- in a regex
+ * literal, or in JSX text -- opens a template that never closes, and the rest of the file is
+ * preserved as string content. It stays bounded to a line for the two quote characters that cannot
+ * legally span one.
  */
 
 /** Quote characters that open a string the scan must not read comment markers inside of. */
@@ -42,10 +48,16 @@ const QUOTES = new Set(["'", '"', '`']);
 export function stripComments(lines: string[]): string[] {
 	const stripped: string[] = [];
 	let inBlock = false;
+	// A template literal carries across lines the same way a block comment does, so `quote` lives out
+	// here rather than inside the line loop. Reset per line, the continuation lines of a multiline
+	// template were read as code, and a `ConfirmAlertDialog` named inside template text counted as
+	// evidence for the call below it. Only a backtick survives the line boundary: a single- or
+	// double-quoted string cannot span one, and leaving either open would read the rest of the file
+	// as string content.
+	let quote: null | string = null;
 
 	for (const line of lines) {
 		let code = '';
-		let quote: null | string = null;
 
 		for (let i = 0; i < line.length; i++) {
 			const char = line[i]!;
@@ -88,6 +100,7 @@ export function stripComments(lines: string[]): string[] {
 			code += char;
 		}
 
+		if (quote !== '`') quote = null;
 		stripped.push(code);
 	}
 

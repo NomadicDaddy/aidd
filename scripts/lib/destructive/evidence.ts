@@ -52,10 +52,17 @@ export const EVIDENCE_WINDOW_LINES = 15;
  * below it, so the indentation test reads it as a closed sibling and returns `null` for a call that
  * a plain `function handleBulkDelete()` two lines up was resolving correctly. `UsersTab.tsx:79` is
  * that line. A wrapper this scan stops on has to be one that actually declares handlers.
+ *
+ * The wrapped form is its own pattern rather than an optional group inside the bare one, because it
+ * has to accept a parameter list that is not on the same line. Prettier wraps a handler whose
+ * arguments outrun the print width, and `const handleDelete = useCallback(` then ends the line with
+ * `async (id: string) => {` underneath it. Requiring the `(` here made the formatter decide whether
+ * a handler resolved.
  */
 const DECLARATION_PATTERNS = [
 	/^(\s*)(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/,
-	/^(\s*)(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*(?:(?:[\w$]+\.)?useCallback\s*\(\s*)?(?:async\s*)?\(/,
+	/^(\s*)(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*(?:async\s*)?\(/,
+	/^(\s*)(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*(?:[\w$]+\.)?useCallback\s*\(\s*(?:(?:async\s*)?\(|$)/,
 ];
 
 /**

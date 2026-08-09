@@ -15,6 +15,7 @@ function configWith(options: {
 	return {
 		directAi: {
 			enabled: options.enabled,
+			model: 'glm-5.2',
 			provider: 'zhipu',
 			surfaces: {
 				directorChat: options.directorChat,
@@ -57,8 +58,8 @@ describe('DirectAiService.resolveSurfaceMeta', () => {
 		const service = new DirectAiService(
 			configWith({ enabled: true, directorChat: true, apiKey: 'secret' }),
 		);
-		expect(service.resolveSurfaceMeta('directorCycle', 'gpt-5.6', 'high')).toEqual({
-			model: 'gpt-5.6',
+		expect(service.resolveSurfaceMeta('directorCycle', 'high')).toEqual({
+			model: 'glm-5.2',
 			provider: 'zhipu',
 			reasoningEffort: 'high',
 		});

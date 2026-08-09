@@ -52,7 +52,6 @@ export async function runTextOnlyChatTurn(
 	if (deps.directAiService.isSurfaceEnabled('directorChat')) {
 		const directReply = await deps.directAiService.completeText({
 			cwd,
-			...(profile.model ? { model: profile.model } : {}),
 			prompt,
 			reasoningEffort: normalizeReasoningEffort(profile.reasoningEffort),
 			surface: 'directorChat',

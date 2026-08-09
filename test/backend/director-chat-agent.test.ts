@@ -96,6 +96,35 @@ function clientConfigWith(responses: unknown[]): () => OpenAICompatibleClientCon
 }
 
 describe('DirectorChatAgent', () => {
+	test('uses the Direct AI client model instead of the Director CLI model', async () => {
+		let requestedModel: unknown;
+		const agent = new DirectorChatAgent({
+			resolveClient: () => ({
+				baseUrl: 'https://provider.example/v1',
+				fetch: async (_input, init) => {
+					const body = JSON.parse(String(init?.body)) as { model?: unknown };
+					requestedModel = body.model;
+					return jsonResponse(finalChunk('Provider-specific reply.'));
+				},
+				model: 'glm-5.2',
+				provider: 'zhipu',
+				stream: false,
+			}),
+			toolContext: stubContext(),
+		});
+
+		const result = await agent.runTurn({
+			allowFileEdits: false,
+			fleetSummary,
+			messages: [userMessage('Are you there?')],
+			profile: { ...profile, model: 'gpt-5.6-terra' },
+			sessionId: 's1',
+		});
+
+		expect(result.text).toBe('Provider-specific reply.');
+		expect(requestedModel).toBe('glm-5.2');
+	});
+
 	test('grounds recipe claims in the catalog and exact recipe inspection', () => {
 		const preamble = buildAgenticPreamble({
 			allowFileEdits: false,

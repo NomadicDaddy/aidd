@@ -248,7 +248,6 @@ function fakeBackend(
 function directAiRunner(reply: string | null): {
 	calls: string[];
 	metaCalls: {
-		model: string | undefined;
 		reasoningEffort: DirectAiCompleteRequest['reasoningEffort'];
 	}[];
 	requests: DirectAiCompleteRequest[];
@@ -256,7 +255,6 @@ function directAiRunner(reply: string | null): {
 } {
 	const calls: string[] = [];
 	const metaCalls: {
-		model: string | undefined;
 		reasoningEffort: DirectAiCompleteRequest['reasoningEffort'];
 	}[] = [];
 	const requests: DirectAiCompleteRequest[] = [];
@@ -282,11 +280,11 @@ function directAiRunner(reply: string | null): {
 			resolveClientConfig() {
 				return null;
 			},
-			resolveSurfaceMeta(_surface, model, reasoningEffort) {
-				metaCalls.push({ model, reasoningEffort });
+			resolveSurfaceMeta(_surface, reasoningEffort) {
+				metaCalls.push({ reasoningEffort });
 				return reply !== null
 					? {
-							model: model ?? 'test-model',
+							model: 'test-model',
 							provider: 'test',
 							reasoningEffort: reasoningEffort ?? 'low',
 						}
@@ -969,7 +967,7 @@ describe('DirectorService chat and profile', () => {
 		}
 	});
 
-	test('stores user and assistant messages from direct AI chat when enabled', async () => {
+	test('keeps the Director profile model out of Direct AI text chat requests', async () => {
 		const {
 			commands,
 			config,
@@ -995,6 +993,7 @@ describe('DirectorService chat and profile', () => {
 				},
 				direct.runner,
 			);
+			await chatService.updateProfile({ model: 'gpt-5.6-terra' });
 			const session = await chatService.createChatSession();
 			const result = await chatService.sendChatMessage(session.id, {
 				content: 'What should the next cycle do?',
@@ -1004,6 +1003,7 @@ describe('DirectorService chat and profile', () => {
 			expect(result.assistant.content).toBe('Direct director reply.');
 			expect(direct.calls).toHaveLength(1);
 			expect(direct.calls[0]).toContain('What should the next cycle do?');
+			expect(direct.requests[0]?.model).toBeUndefined();
 			const messages = await chatService.listChatMessages(session.id);
 			expect(messages.map((message) => message.role)).toEqual(['user', 'assistant']);
 		} finally {
@@ -1494,10 +1494,8 @@ describe('DirectorService.runCycle context', () => {
 			);
 			expect(await Bun.file(outputPath).exists()).toBe(true);
 			expect(direct.calls[0]).toContain('sample-project');
-			expect(direct.metaCalls).toEqual([
-				{ model: 'director-model', reasoningEffort: 'high' },
-			]);
-			expect(direct.requests[0]?.model).toBe('director-model');
+			expect(direct.metaCalls).toEqual([{ reasoningEffort: 'high' }]);
+			expect(direct.requests[0]?.model).toBeUndefined();
 			expect(direct.requests[0]?.reasoningEffort).toBe('high');
 		} finally {
 			sqlite.close();

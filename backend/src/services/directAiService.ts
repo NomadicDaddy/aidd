@@ -40,14 +40,10 @@ export interface DirectAiRunner {
 	 * Returns null when the surface is disabled or no provider can be resolved, so callers can
 	 * fall back to a non-agentic path instead of failing.
 	 */
-	resolveClientConfig(
-		surface: DirectAiSurface,
-		model?: string,
-	): null | OpenAICompatibleClientConfig;
+	resolveClientConfig(surface: DirectAiSurface): null | OpenAICompatibleClientConfig;
 	/** Resolve the provider, model, and reasoning effort for a surface without making a call. */
 	resolveSurfaceMeta(
 		surface: DirectAiSurface,
-		model?: string,
 		reasoningEffort?: PersistedReasoningEffortValue,
 	): DirectAiSurfaceMeta | null;
 	updateConfig(config: WebRuntimeConfig): void;
@@ -87,17 +83,13 @@ export class DirectAiService implements DirectAiRunner {
 		return isDirectAiSurfaceEnabled(this.config.directAi, surface);
 	}
 
-	resolveClientConfig(
-		surface: DirectAiSurface,
-		model?: string,
-	): null | OpenAICompatibleClientConfig {
+	resolveClientConfig(surface: DirectAiSurface): null | OpenAICompatibleClientConfig {
 		if (!this.isSurfaceEnabled(surface)) return null;
 		try {
 			return this.resolveProvider({
 				cwd: '',
 				prompt: '',
 				surface,
-				...(model ? { model } : {}),
 			}).config;
 		} catch {
 			// A misconfigured provider (missing baseUrl/model/key) means there is no usable
@@ -109,7 +101,6 @@ export class DirectAiService implements DirectAiRunner {
 
 	resolveSurfaceMeta(
 		surface: DirectAiSurface,
-		model?: string,
 		requestedReasoningEffort?: PersistedReasoningEffortValue,
 	): DirectAiSurfaceMeta | null {
 		if (!this.isSurfaceEnabled(surface)) return null;
@@ -118,7 +109,6 @@ export class DirectAiService implements DirectAiRunner {
 				cwd: '',
 				prompt: '',
 				surface,
-				...(model ? { model } : {}),
 				...(requestedReasoningEffort ? { reasoningEffort: requestedReasoningEffort } : {}),
 			});
 			const {

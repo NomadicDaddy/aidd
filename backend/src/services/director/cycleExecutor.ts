@@ -77,19 +77,13 @@ export async function runDirectCycle(
 	}
 	const config = deps.getConfig();
 	const profile = cycleContext?.profile ?? (await deps.profileService.getProfile());
-	const modelOverride = profile.model || undefined;
 	const reasoningEffort = normalizeReasoningEffort(profile.reasoningEffort);
-	const meta = deps.directAiService.resolveSurfaceMeta(
-		'directorCycle',
-		modelOverride,
-		reasoningEffort,
-	);
+	const meta = deps.directAiService.resolveSurfaceMeta('directorCycle', reasoningEffort);
 	deps.setCycleStage(cycleId, 'running_direct_ai', meta);
 	let output: DirectorOutput;
 	try {
 		const rawOutput = await deps.directAiService.completeJson<unknown>({
 			cwd: join(config.web.dataDir, 'director'),
-			...(profile.model ? { model: profile.model } : {}),
 			prompt: buildDirectCyclePrompt(fleetSummary, profile, cycleContext?.context),
 			reasoningEffort,
 			surface: 'directorCycle',

@@ -55,7 +55,7 @@ export interface ChatAgentTurnResult {
 export interface DirectorChatAgentOptions {
 	maxTurns?: number;
 	perCallTimeoutMs?: number;
-	resolveClient: (model?: string) => null | OpenAICompatibleClientConfig;
+	resolveClient: () => null | OpenAICompatibleClientConfig;
 	toolContext: ChatAgentToolContext;
 }
 
@@ -66,7 +66,7 @@ export interface DirectorChatAgentOptions {
  * itself only edits files when `allowFileEdits` is on.
  */
 export class DirectorChatAgent {
-	private readonly resolveClient: (model?: string) => null | OpenAICompatibleClientConfig;
+	private readonly resolveClient: () => null | OpenAICompatibleClientConfig;
 	private readonly toolContext: ChatAgentToolContext;
 	private readonly maxTurns: number;
 	private readonly perCallTimeoutMs: number;
@@ -79,7 +79,7 @@ export class DirectorChatAgent {
 	}
 
 	async runTurn(input: ChatAgentTurnInput): Promise<ChatAgentTurnResult> {
-		const clientConfig = this.resolveClient(input.profile.model ?? undefined);
+		const clientConfig = this.resolveClient();
 		if (clientConfig === null) throw new NoToolCallingProviderError();
 		const client = new OpenAICompatibleAgentClient({
 			...clientConfig,
@@ -95,14 +95,7 @@ export class DirectorChatAgent {
 		for (let turn = 0; turn < this.maxTurns; turn++) {
 			let response;
 			try {
-				response = await this.complete(
-					client,
-					messages,
-					tools,
-					input.profile,
-					reasoningEffort,
-					turn,
-				);
+				response = await this.complete(client, messages, tools, reasoningEffort, turn);
 			} catch (err) {
 				// A provider/abort err after at least one action would otherwise lose the trail of
 				// real side effects (e.g. a launched run). Surface what happened instead of throwing.
@@ -174,7 +167,6 @@ export class DirectorChatAgent {
 		client: OpenAICompatibleAgentClient,
 		messages: AgentMessage[],
 		tools: ReturnType<typeof buildToolDefinitions>,
-		profile: ProfileRow,
 		reasoningEffort: string,
 		turn: number,
 	): Promise<AgentLoopResponse> {
@@ -189,7 +181,6 @@ export class DirectorChatAgent {
 					reasoningEffort,
 					tools,
 					turn,
-					...(profile.model ? { model: profile.model } : {}),
 				},
 				controller.signal,
 			);

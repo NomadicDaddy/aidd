@@ -90,7 +90,7 @@ export class DirectorService {
 			stopRun: (id) => runService.stopRun(id),
 		};
 		const chatAgent = new DirectorChatAgent({
-			resolveClient: (model) => directAiService.resolveClientConfig('directorChat', model),
+			resolveClient: () => directAiService.resolveClientConfig('directorChat'),
 			toolContext,
 		});
 		this.chatService = new DirectorChatService(

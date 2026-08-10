@@ -277,12 +277,14 @@ repository and fail the build without obeying it: `verify-compression`, `verify-
 `config:validate`, `release:check`. Before the map existed the meta-gate reported "35 gates
 examined", which was true and incomplete -- rule 5's own defect one level up, a pass over the wrong
 population rather than over the wrong items. Widening the regex would only have moved the boundary
-to a different set of words. The success line states the two halves separately, so the count still
-moves with the population:
+to a different set of words. The success line reports the whole population as one number and then
+says how the declared ones got in, because `discoverGates` takes the map as an input and returns a
+single population -- the declared tasks are already inside `examined`, not added to it:
 
 ```text
-[OK] check:gate-conventions -- 38 gates examined from `check*` plus 3 task(s) declared in
-scripts/gate-conventions-allowlist.json, no unwaived violations, 0 waived.
+[OK] check:gate-conventions -- 38 gates examined, of which 3 reached the population by declaration
+in scripts/gate-conventions-allowlist.json and the rest by the `check*` name; no unwaived
+violations, 0 waived.
 ```
 
 ## The six-part shape

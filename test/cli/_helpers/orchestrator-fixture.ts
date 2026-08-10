@@ -10,6 +10,13 @@ import { resolveRunPlan } from '../../../cli/src/plan/resolve.ts';
 
 export const rootDir = join(import.meta.dir, '..', '..', '..');
 export const slowOrchestratorTestTimeoutMs = 15_000;
+/** For tests whose subject is a real elapsed deadline, so the run cannot be shortened to buy
+ * margin. Both suite entry points impose a 15s per-test ceiling and both stretch these runs:
+ * `bun run test` at `--parallel=8` with every worker spawning its own git children, and
+ * `bun run test:coverage` serially but under Bun's coverage instrumentation, which is where the
+ * three known failures actually surfaced. A run that takes ~1.8s alone has a several-fold tail in
+ * either. These tests are not slower than the ones above — they have nothing left to trade. */
+export const saturatedSuiteTestTimeoutMs = 45_000;
 export const config: ResolvedConfig = {
 	cli: 'native',
 	dirtyTreeThreshold: 50,

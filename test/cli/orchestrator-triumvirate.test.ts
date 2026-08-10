@@ -20,6 +20,7 @@ import {
 	plan,
 	rootDir,
 	runGit,
+	saturatedSuiteTestTimeoutMs,
 	SequencedBackend,
 	slowOrchestratorTestTimeoutMs,
 } from './_helpers/orchestrator-fixture.ts';
@@ -1120,9 +1121,12 @@ describe('orchestrator triumvirate', () => {
 			{
 				...config,
 				maxIterations: 1,
-				rateLimitBackoffSeconds: 300,
+				// See the same test in orchestrator.test.ts: the budget only has to be smaller than
+				// the backoff, and a 1s one was also small enough for the iteration to trip the
+				// wall-clock envelope, which classifies ahead of the rate-limit branch.
+				rateLimitBackoffSeconds: 3600,
 				rateLimitBufferSeconds: 0,
-				timeoutSeconds: 1,
+				timeoutSeconds: 120,
 			},
 		);
 
@@ -1790,7 +1794,9 @@ describe('orchestrator triumvirate safety envelope', () => {
 			expect(iteration.triumvirate.execution.completionCommittedDuringGrace).toBe(true);
 			expect(iteration.triumvirate.execution.completionFinalizedBeforeBackendExit).toBe(true);
 		},
-		slowOrchestratorTestTimeoutMs,
+		// This one's run budget is 15s, the same value the harness ceiling used to be: a run slow
+		// enough to matter would trip both at once, and the budget firing breaks the assertions.
+		saturatedSuiteTestTimeoutMs,
 	);
 	test(
 		'a continuously-emitting stage is aborted at the run wall-clock deadline',
@@ -1814,8 +1820,13 @@ describe('orchestrator triumvirate safety envelope', () => {
 			// run classifies as an explicit wall-clock timeout instead of a validation error.
 			expect(exitCode).toBe(orchestratorExitCodes.aborted);
 			expect(backend.calls).toBe(1);
-			// Proves the stage actually aborted rather than running to some other limit.
-			expect(Date.now() - startedAt).toBeLessThan(10_000);
+			// Which limit fired is settled by the summary assertion below, not by this bound: the
+			// only other finite limit here is the 15s idle guard, and an idle abort writes a
+			// different summary. This is a hang detector, so it is sized against the suite rather
+			// than against the 1s budget — the run nominally finishes in ~1.8s, but under either
+			// suite entry point (parallel workers each spawning git, or serial-but-instrumented
+			// `test:coverage`) the tail is several-fold, and a 10s bound was inside it.
+			expect(Date.now() - startedAt).toBeLessThan(40_000);
 			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
 				.trim()
 				.split(/\r?\n/)
@@ -1823,7 +1834,7 @@ describe('orchestrator triumvirate safety envelope', () => {
 			expect(runSummary?.summary).toContain('wall-clock budget');
 			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.aborted);
 		},
-		slowOrchestratorTestTimeoutMs,
+		saturatedSuiteTestTimeoutMs,
 	);
 
 	test(
@@ -1863,7 +1874,7 @@ describe('orchestrator triumvirate safety envelope', () => {
 			) as { exitCode: number };
 			expect(iteration.exitCode).toBe(orchestratorExitCodes.aborted);
 		},
-		slowOrchestratorTestTimeoutMs,
+		saturatedSuiteTestTimeoutMs,
 	);
 
 	test(
@@ -1916,7 +1927,7 @@ describe('orchestrator triumvirate safety envelope', () => {
 			expect(runSummary?.summary).toContain('wall-clock budget');
 			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.aborted);
 		},
-		slowOrchestratorTestTimeoutMs,
+		saturatedSuiteTestTimeoutMs,
 	);
 
 	test(

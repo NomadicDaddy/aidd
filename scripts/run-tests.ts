@@ -24,6 +24,11 @@ const serial =
 const workerCount = Math.min(8, Math.max(2, availableParallelism() - 2));
 // Workers saturate every core, so a git- or spawn-heavy test can blow bun's default 5s
 // per-test ceiling on load alone. Raise it for parallel runs unless the caller chose one.
+// This is a floor, not a ceiling: a test whose subject IS an elapsed deadline has nothing to
+// trade for margin and must set its own. See saturatedSuiteTestTimeoutMs in
+// test/cli/_helpers/orchestrator-fixture.ts, and do not size such a test against this number.
+// run-test-coverage.ts passes the same 15000 explicitly, so a serial coverage run is subject to
+// it too — dropping parallelism does not buy those tests any headroom back.
 const timeoutArgs =
 	serial || forwarded.some((arg) => arg.startsWith('--timeout')) ? [] : ['--timeout=15000'];
 

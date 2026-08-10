@@ -605,15 +605,22 @@ describe('orchestrator transitions and exit mapping', () => {
 		expect(backend.calls).toBe(2);
 	});
 
+	// `timeoutSeconds` has to be small enough that `now + backoff` crosses the deadline and large
+	// enough that the iteration itself does not. Those are separate jobs, and a 1s budget did both:
+	// the iteration needed ~0.9s of the 1s, so on a loaded machine the safety envelope fired first
+	// and endRunIfIterationGuardTripped ended the run as `wall_clock_timeout`/aborted before the
+	// rate-limit branch below it ever ran — failing every assertion here at once. That precedence is
+	// correct (the envelope is a hard boundary), so the budget is what has to give. 120s of headroom
+	// against a 1h backoff keeps the crossing unconditional and takes the timing out of it.
 	test('preserves rate-limit classification when the backoff exceeds the run budget', async () => {
 		const store = await makeStore('rate-limit-beyond-budget');
 		const runtimePlan = resolveRunPlan(
 			parseArgs(['--project-dir', store.projectDir, '--cli', 'native']),
 			{
 				...config,
-				rateLimitBackoffSeconds: 300,
+				rateLimitBackoffSeconds: 3600,
 				rateLimitBufferSeconds: 0,
-				timeoutSeconds: 1,
+				timeoutSeconds: 120,
 			},
 		);
 		const backend = new FakeBackend([{ type: 'error', reason: 'rate_limit' }]);

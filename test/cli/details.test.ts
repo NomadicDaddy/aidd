@@ -561,16 +561,16 @@ describe('codex stream end-to-end provider error', () => {
 
 	test('advisory emitted on a run that failed without any provider error yields none', async () => {
 		const { parseCodexBackendOutput } = await import('aidd-shared/backends/parsers/codex');
-		// The run_1784553894666_38781597 shape: codex exits 0 having emitted only the
-		// skills-budget advisory, and the orchestrator independently records exit 73 for a
-		// missing AIDD_RESULT. The summary must not read "provider error: Skill descriptions…".
+		// Codex exits 0 having emitted only the current percentage-free skills-budget advisory,
+		// and the orchestrator independently records exit 73 for a missing AIDD_RESULT. The
+		// summary must not read "provider error: Skill descriptions…".
 		const stdout = JSON.stringify({
 			type: 'item.completed',
 			item: {
 				id: 'item_0',
 				type: 'error',
 				message:
-					'Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter.',
+					'Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.',
 			},
 		});
 		const events = parseCodexBackendOutput(stdout, '', 0);

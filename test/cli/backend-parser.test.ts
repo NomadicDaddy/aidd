@@ -705,6 +705,11 @@ describe('codex real error surfacing', () => {
 				message: 'Skill descriptions were shortened to fit the 2% skills context budget.',
 			},
 			{
+				expected: 'skills context budget',
+				message:
+					'Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.',
+			},
+			{
 				expected: 'token accounting',
 				message:
 					'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata.',
@@ -733,7 +738,7 @@ describe('codex real error surfacing', () => {
 					id: 'item_0',
 					type: 'error',
 					message:
-						'Skill descriptions were shortened to fit the 2% skills context budget.',
+						'Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.',
 				},
 			}),
 			JSON.stringify({

@@ -40,10 +40,10 @@ function codexProviderErrorReason(message: string | undefined): AgentErrorReason
 const nonfatalItemDiagnostics: { advice?: string; pattern: RegExp }[] = [
 	{
 		advice:
-			'Codex truncated its skill descriptions to fit its skills context budget, so the agent ' +
-			'may not have seen every installed skill. If a skill it needed went unused, trim the ' +
-			'installed skill set or raise the skills context budget in the Codex config.',
-		pattern: /^Skill descriptions were shortened to fit the \d+% skills context budget\./i,
+			'Codex truncated its skill descriptions to fit its skills context budget, which can ' +
+			'make skill selection less reliable. Trim unused skills or plugins, or raise the skills ' +
+			'context budget in the Codex config.',
+		pattern: /^Skill descriptions were shortened to fit the (?:\d+% )?skills context budget\./i,
 	},
 	{
 		advice:

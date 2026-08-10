@@ -170,9 +170,9 @@ export async function runGateConventions(options: GateConventionsOptions = {}): 
 	}
 
 	console.log(
-		`[OK] check:gate-conventions -- ${report.examined} gates examined from \`check*\` plus ` +
-			`${report.declared} task(s) declared in ${ALLOWLIST}, no unwaived violations, ` +
-			`${report.waived.length} waived.`,
+		`[OK] check:gate-conventions -- ${report.examined} gates examined, of which ` +
+			`${report.declared} reached the population by declaration in ${ALLOWLIST} and the rest ` +
+			`by the \`check*\` name; no unwaived violations, ${report.waived.length} waived.`,
 	);
 	return 0;
 }

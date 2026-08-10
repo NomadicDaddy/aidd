@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import { collectLockfileClosure } from '../license-core/lockfile.ts';
 import { licenseOf } from './collect.ts';
 import { byCodepoint } from './order.ts';
-import { readJson, readLicenseText, readNoticeText, resolveInstalledVersion } from './resolve.ts';
+import { readJson, readLicenseText, readNoticeText, resolveVersionedDir } from './resolve.ts';
 
 export interface ClosurePackage {
 	license: string;
@@ -56,7 +56,7 @@ export async function collectLicensedClosure(
 	const unresolved = [...locked.unresolved];
 
 	for (const pkg of locked.packages) {
-		const dir = await resolveInstalledVersion(root, workspaces, pkg.name, pkg.version);
+		const dir = await resolveVersionedDir(root, workspaces, pkg.name, pkg.version);
 		if (dir === null) {
 			unresolved.push(`${pkg.name}@${pkg.version}`);
 			continue;

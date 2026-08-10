@@ -2,5 +2,5 @@ export { readJson } from '../license-core/manifest.ts';
 export {
 	readLicenseText,
 	readNoticeText,
-	resolveInstalledPackage as resolveInstalledVersion,
+	resolveInstalledPackage as resolveVersionedDir,
 } from '../license-core/resolve.ts';

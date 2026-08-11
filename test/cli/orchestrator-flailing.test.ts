@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -19,7 +19,7 @@ import {
 
 const { cleanup, makeStore } = createOrchestratorTestContext('flailing');
 
-afterEach(cleanup);
+afterAll(cleanup);
 
 // One dead action repeated past the repeat threshold: the shape the guard exists to catch.
 function flailingBatch(): AgentEvent[] {

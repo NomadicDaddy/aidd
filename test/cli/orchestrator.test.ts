@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent } from 'aidd-shared/backends/types';
@@ -26,7 +26,7 @@ import {
 
 const { cleanup, makeStore } = createOrchestratorTestContext('core');
 
-afterEach(cleanup);
+afterAll(cleanup);
 
 describe('orchestrator transitions and exit mapping', () => {
 	// These cases drive a FakeBackend that reports a made-up pid, so the reaper attaches to it and

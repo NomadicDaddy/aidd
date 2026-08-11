@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
@@ -27,7 +27,7 @@ import {
 
 const { cleanup, makeStore } = createOrchestratorTestContext('triumvirate');
 
-afterEach(cleanup);
+afterAll(cleanup);
 
 describe('orchestrator triumvirate', () => {
 	test('triumvirate runs primary, secondary, overseer, then execution', async () => {

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
@@ -22,7 +22,7 @@ import {
 
 const { cleanup, makeStore } = createOrchestratorTestContext('termination');
 
-afterEach(cleanup);
+afterAll(cleanup);
 
 describe('wall-clock timeout classification', () => {
 	class CompleteThenHangBackend implements CLIBackend {

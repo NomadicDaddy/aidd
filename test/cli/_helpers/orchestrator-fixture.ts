@@ -245,13 +245,36 @@ export function gitHeavyPlan(projectDir: string, extra: string[] = []) {
 	});
 }
 
+/**
+ * A scope root plus the two hooks its suite needs. `cleanup` belongs in `afterAll`, not
+ * `afterEach`: an orchestrator test spawns git children, and on Windows those keep handles on
+ * files under the root for a moment after they exit. Removing the whole root between tests meant
+ * one removal per test -- each able to trip over a handle left by any earlier test's fixture, and
+ * each reported against whichever test had just passed rather than the one that opened the file.
+ * Once per suite, after every child of every test is gone, is both a thirtieth of the attempts and
+ * the point at which the handles are actually released.
+ *
+ * That only holds while each fixture name is used once, which `makeStore` enforces rather than
+ * assumes: a reused name would silently hand the second test the first one's `.git` directory and
+ * leftover features.
+ */
 export function createOrchestratorTestContext(scope: string): {
 	cleanup: () => Promise<void>;
 	makeStore: (name: string) => Promise<FileAiddStore>;
 } {
 	const tmpRoot = join(rootDir, `.tmp-orchestrator-tests-${scope}`);
+	const claimed = new Set<string>();
 	return {
 		cleanup: () => removeTempTree(tmpRoot),
-		makeStore: (name) => makeStoreAt(tmpRoot, name),
+		makeStore: async (name) => {
+			if (claimed.has(name)) {
+				throw new Error(
+					`orchestrator fixture "${name}" is already claimed in the "${scope}" suite. ` +
+						'Fixtures live until the suite ends, so each test needs its own name.',
+				);
+			}
+			claimed.add(name);
+			return await makeStoreAt(tmpRoot, name);
+		},
 	};
 }

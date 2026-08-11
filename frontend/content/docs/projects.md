@@ -40,12 +40,14 @@ Click a project to open its detail view. Its tabs:
 
 - **Overview**: phase, maturity, and key counts.
 - **Features**: the tracked units of work and their status.
+- **Milestones**: the roadmap milestones and which features each one carries.
 - **Dependencies**: the feature dependency graph.
 - **Runs**: history of runs launched against this project.
 - **History**: recent activity for the project.
 - **Repository**: git status and branch information.
 - **Code**: a browsable file tree (collapsed by default) with file previews.
 - **Diary**: the project's development diary entries.
+- **Notes**: a free-form markdown scratch pad saved to `.aidd/notes.md`.
 - **Artifacts**: generated documents and their freshness.
 - **Interview**: onboarding answers, once captured.
 - **Reports**: bug and feature reports filed from the panel.

@@ -2,10 +2,13 @@
 
 Settings is where you configure the aidd runtime for this machine. Changes here
 affect discovery, defaults, and how runs behave across your whole fleet. The
-page is organized into tabs: **Paths**, **Runtime**, **Defaults**, **Providers**,
-**Backends**, **Channels**, and **Source Control**.
+page is organized into five tabs: **Workspace**, **Run Engine**,
+**AI & Director**, **Integrations**, and **Control Panel**.
 
-## Paths
+Each tab marks itself when it holds unsaved edits, and one Save commits the
+whole form.
+
+## Workspace
 
 - **Applications Root**: the top-level directory used to resolve bare project
   names, and the fallback for Application Roots when none are configured.
@@ -15,36 +18,29 @@ page is organized into tabs: **Paths**, **Runtime**, **Defaults**, **Providers**
 - **Ignored Folders**: patterns excluded from discovery and scanning. Use
   these to keep large or irrelevant directories (build output, caches,
   vendored code) out of the way.
-- **Network Access**: the panel binds to localhost by default; enabling
-  remote access requires an access token.
 - **Shared Metadata**: directories and files copied into newly scaffolded
   `.aidd/` metadata.
 
-## Runtime
+## Run Engine
 
-- **Control panel**: restart or shut down the panel, and change the listener
-  port. A port change triggers a graceful restart and redirects your browser
-  to the new port.
-- **Run Limits**: caps on concurrent managed runs, fleet-wide and per
-  project.
-- **Director Auto-Cycle**: opt-in scheduled Director cycles on a fixed
-  interval.
-- **Observability** and **System Metrics**: tracing switches and live
-  process/system metrics.
+- **Run Limits**: caps on concurrent managed runs, fleet-wide and per project.
+- **Backend defaults**: a per-backend table covering every engine, including
+  local Ollama and LM Studio servers. Each row carries that backend's model and
+  idle timeouts, and shows whether the CLI is installed and reachable, so
+  install status and defaults live in one place.
 
-## Defaults
+## AI & Director
 
-- **CLI and model defaults**: the execution engine and model used when a run
-  doesn't specify its own. Every launch surface resolves the same way:
-  per-launch override, then mode model (audit/code), then backend model, then
-  the shared model, then the provider default.
+- **Model Routing**: the execution engine and model used when a run doesn't
+  specify its own — Default CLI, Default Model, Reasoning Effort, and the
+  per-mode Init, Code, and Audit models. Every launch surface resolves the same
+  way: per-launch override, then mode model (init/code/audit), then backend
+  model, then the shared model, then the provider default.
 - **Audits enabled**: a single global toggle for audit behavior. Per-audit
   applicability and overrides live on the Audits page.
-- **Triumvirate defaults**: the planner and overseer configuration used when
-  a run opts into the Triumvirate wrapper.
-
-## Providers
-
+- **Spernakit template**: the init script, template repository, and ref used by
+  the From Template intake lane, plus whether Spernakit itself appears in the
+  projects list.
 - **Provider configuration**: base URLs, models, and credentials for the
   OpenAI-compatible providers used by the native-family engines.
 - **Direct AI**: an opt-in capability that lets the control panel call a
@@ -52,25 +48,31 @@ page is organized into tabs: **Paths**, **Runtime**, **Defaults**, **Providers**
   chat, project recommendations) instead of spawning a full run.
 - **Director profile**: the persona the Director uses: engine, model,
   reasoning effort, role, and behavior instructions.
+- **Director Auto-Cycle**: opt-in scheduled Director cycles on a fixed
+  interval.
+- **Triumvirate defaults**: the planner and overseer configuration used when a
+  run opts into the Triumvirate wrapper.
 
-## Backends
+## Integrations
 
-A status panel showing which agent CLIs are installed and reachable, plus a
-per-backend defaults table (model and idle timeouts) covering every engine,
-including local Ollama and LM Studio servers.
+- **Telegram**: a bot token plus allowed chat IDs let you chat with the
+  Director from your phone. The token stays in the local config file.
+- **Source Control**: a read-only status panel for the git tooling aidd
+  depends on.
 
-## Channels
+## Control Panel
 
-The Telegram bridge: a bot token plus allowed chat IDs let you chat with the
-Director from your phone. The token stays in the local config file.
-
-## Source Control
-
-A read-only status panel for the git tooling aidd depends on.
+- **Runtime controls**: restart or shut down the panel, and change the listener
+  port. A port change triggers a graceful restart and redirects your browser to
+  the new port.
+- **Network Access**: the panel binds to localhost by default; enabling remote
+  access requires an access token.
+- **Observability** and **System Metrics**: tracing switches and live
+  process/system metrics.
 
 ## Tips
 
 - If projects aren't being discovered, check roots and ignored folders under
-  **Paths** first.
+  **Workspace** first.
 - Save persists your changes; a port change is the only setting that restarts
   the panel.

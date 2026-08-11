@@ -58,6 +58,7 @@ Press **?** on any page for the full cheatsheet. The essentials:
 - **g d** / **g p** / **g r**: go to Dashboard / Projects / Runs.
 - **/**: focus the current page's search or filter.
 - **r**: refresh the current page's data.
+- **d**: open the directive launcher.
 - **c**: open Director chat.
 
 ## Where to go next

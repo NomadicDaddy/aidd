@@ -25,6 +25,6 @@ a report page reviewing its full step history.
 
 ## Starting a session
 
-Sessions are launched from **Recipes** (or by running an **Skill** as a
+Sessions are launched from **Recipes** (or by running a **skill** as a
 one-shot). The Runs feed and this report are for reviewing and stopping them,
 not starting them.

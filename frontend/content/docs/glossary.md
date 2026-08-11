@@ -5,8 +5,9 @@ control panel.
 
 ## Runtime and orchestration
 
-- **CLI**: the execution engine that runs an agent session (for example
-  `native`, `ollama`, `lmstudio`, `claude-code`, `cline`). Chosen per run or by default.
+- **CLI**: the execution engine that runs an agent session — `claude-code`,
+  `cline`, `codex`, `grok`, `kilocode`, `lmstudio`, `native`, `ollama`,
+  `openai`, or `opencode`. Chosen per run or by default.
 - **Provider**: the compatible API a CLI talks to. The in-process engines run
   against a provider; the others shell out to external tools.
 - **Model**: the specific model id a CLI runs.

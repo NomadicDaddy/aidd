@@ -244,6 +244,42 @@
 	animation: none;
 }
 
+/* A nested `.page-reveal` hands its entrance to its own children rather than arriving as one block.
+   The Dashboard is what this is for: its card section is the outer reveal's third child, so all
+   3802px of the page's 4127px — every one of the seven cards — arrived in the single 100ms beat,
+   while the ladder's last two steps went to two dnd-kit accessibility live regions measuring 0px and
+   1px tall. Marking the section as its own reveal root would have raced its first card against the
+   page header at 0ms, so the section itself animates not at all and its children carry the ladder
+   forward from the 100ms slot the section held. Two class selectors plus the pseudo-class outrank
+   the one-class rules above, so the outer delays never apply here. */
+.page-reveal > .page-reveal {
+	animation: none;
+}
+
+.page-reveal > .page-reveal > *:nth-child(1) {
+	animation-delay: 100ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(2) {
+	animation-delay: 140ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(3) {
+	animation-delay: 180ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(4) {
+	animation-delay: 220ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(5) {
+	animation-delay: 260ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(n + 6) {
+	animation-delay: 300ms;
+}
+
 @keyframes page-reveal-in {
 	from {
 		opacity: 0;

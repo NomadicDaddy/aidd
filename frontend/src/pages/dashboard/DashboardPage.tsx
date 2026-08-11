@@ -29,7 +29,7 @@ import { FeatureSummaryCard } from './FeatureSummaryCard.tsx';
 import { PriorityHealthFooter } from './PriorityHealthFooter.tsx';
 import { ProjectHealthCard } from './ProjectHealthCard.tsx';
 import { SortableDashboardGrid } from './SortableDashboardGrid.tsx';
-import { WaitingApprovalCard } from './WaitingApprovalCard.tsx';
+import { WAITING_APPROVAL_MAX_ITEMS, WaitingApprovalCard } from './WaitingApprovalCard.tsx';
 
 export function DashboardPage() {
 	useDocumentTitle('Dashboard');
@@ -195,7 +195,10 @@ export function DashboardPage() {
 			node: (
 				<DirectorQueueCard
 					isLoading={suggestionsQuery.isLoading && pendingSuggestions.length === 0}
-					suggestions={pendingSuggestions}
+					// The overflow, not the same list again. Waiting Approval fills its rows with
+					// pending suggestions before anything else, so these are exactly the ones it
+					// has no room for; see the note on WAITING_APPROVAL_MAX_ITEMS.
+					suggestions={pendingSuggestions.slice(WAITING_APPROVAL_MAX_ITEMS)}
 				/>
 			),
 		},

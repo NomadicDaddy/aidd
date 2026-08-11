@@ -64,12 +64,11 @@ export function OverflowScroller({
 		cleanupRef.current = observeOverflow(scroller, (flags) => {
 			root.dataset.overflowStart = String(flags.start);
 			root.dataset.overflowEnd = String(flags.end);
+			root.dataset.overflowDown = String(flags.scrollsDown);
 			// Only a scrollport that actually has hidden content earns a tab stop; a table that
 			// fits would otherwise add a focus step that goes nowhere. Either axis counts: a
 			// `max-h-*` scrollport hides rows below its fold exactly as this one hides columns
 			// past its right edge, and neither is reachable by arrow key without a tab stop.
-			// The fades stay horizontal-only on purpose — both vertical scrollports here pin a
-			// `sticky top-0` header, and a top fade at `z-30` would paint over it.
 			if (flags.start || flags.end || flags.scrollsDown) scroller.tabIndex = 0;
 			else scroller.removeAttribute('tabindex');
 		});
@@ -115,6 +114,19 @@ export function OverflowScroller({
 				aria-hidden="true"
 				className={cn(
 					'pointer-events-none absolute inset-y-0 right-0 z-30 w-6 border-r border-border bg-gradient-to-l to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-end=true]:opacity-100',
+					fadeFrom[surface],
+				)}
+			/>
+			{/* Bottom only, never top. A `max-h-*` scrollport pins a `sticky top-0` header, and a
+			    top fade at `z-30` would paint over it — which is why there is no mirror of this at
+			    the other end. The bottom edge has no pinned content, and without a cue the only
+			    signal that ~370 more rows exist is the row the cap happens to slice through: Feature
+			    Status showed 448px of a 10,042px table with its eleventh row cut horizontally
+			    through the glyphs. */}
+			<span
+				aria-hidden="true"
+				className={cn(
+					'pointer-events-none absolute inset-x-0 bottom-0 z-30 h-6 border-b border-border bg-gradient-to-t to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-down=true]:opacity-100',
 					fadeFrom[surface],
 				)}
 			/>

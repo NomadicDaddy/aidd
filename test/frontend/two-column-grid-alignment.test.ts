@@ -16,7 +16,9 @@ describe('two-column grids do not stretch a card past its own content', () => {
 	test('Dashboard aligns cards to the start and imposes no shared height policy', async () => {
 		const source = await read('pages/dashboard/SortableDashboardGrid.tsx');
 
-		expect(source).toContain('className="grid items-start gap-4 xl:grid-cols-2"');
+		// `page-reveal` on the same element is the entrance ladder, not a height policy: the section
+		// is the page reveal's third child, so without it all seven cards arrived in one beat.
+		expect(source).toContain('className="page-reveal grid items-start gap-4 xl:grid-cols-2"');
 		// A shared cap or forced equal-height row would override the persisted per-card heights
 		// that SortableDashboardCard writes as an inline pixel height.
 		expect(source).not.toMatch(/\bmax-h-|\bh-full\b|auto-rows-fr/);

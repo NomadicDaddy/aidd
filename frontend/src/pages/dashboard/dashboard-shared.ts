@@ -1,3 +1,4 @@
+import type { SuggestionRecord } from '../../api/types.ts';
 import type { Tone } from '../../lib/tones.ts';
 
 export function getHealthTone(value: number): 'amber' | 'emerald' | 'red' {
@@ -35,6 +36,25 @@ export function priorityTone(priority: null | number | string): Tone {
 export function priorityLabel(priority: null | number | string): string {
 	if (priority === null || priority === '') return 'P—';
 	return `P${priority}`;
+}
+
+// One reading of suggestion risk for the whole dashboard, for the same reason priority has one.
+// These lived in `DirectorQueueCard` while it was the only card that showed risk; Waiting Approval
+// showed the same four suggestions with the controls and no risk, so the copy you could act from
+// was the one that did not say how dangerous the action was. Both cards read risk from here now.
+export function suggestionRiskTone(risk: SuggestionRecord['riskLevel']): Tone {
+	if (risk === 'HIGH') return 'red';
+	if (risk === 'MEDIUM') return 'amber';
+	return 'teal';
+}
+
+// The badge read 'HIGH' beside a Feature Queue badge reading 'P1', so two vocabularies for two
+// different concepts sat one card apart looking like one concept. Naming the axis is what
+// separates them; risk is not priority, so it does not become a P-number.
+export function suggestionRiskLabel(risk: SuggestionRecord['riskLevel']): string {
+	if (risk === 'HIGH') return 'High risk';
+	if (risk === 'MEDIUM') return 'Medium risk';
+	return 'Low risk';
 }
 
 /**

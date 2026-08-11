@@ -56,9 +56,15 @@ export function SortableDashboardGrid({ cards }: { cards: DashboardCardDef[] }) 
 				    a resized card carries an explicit pixel height that still wins here, and an
 				    auto-height card sits at its content instead of being pulled taller by whichever
 				    unrelated card happens to share its row. No shared cap is imposed. */}
+				{/* `page-reveal` so the cards stagger individually. This section is the page's own
+				    reveal root's third child, so the whole card region used to arrive in one 100ms
+				    beat while the ladder's last two steps were spent on the two dnd-kit live regions
+				    below — 0px and 1px tall, animating nothing. The nested-reveal rules in index.css
+				    suppress this element's own entrance and continue the ladder through its
+				    children, which are exactly the cards. */}
 				<section
 					aria-label="Dashboard cards"
-					className="grid items-start gap-4 xl:grid-cols-2">
+					className="page-reveal grid items-start gap-4 xl:grid-cols-2">
 					{ordered.map((card, index) => (
 						<SortableDashboardCard
 							card={card}

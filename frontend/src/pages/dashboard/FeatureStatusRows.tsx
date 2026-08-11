@@ -70,7 +70,11 @@ export function FeatureStatusRows({ rows }: { rows: FeatureStatusRow[] }) {
 
 function FeatureStatusCardRow({ row }: { row: FeatureStatusRow }) {
 	return (
-		<div className="flex items-start justify-between gap-3 py-2.5" role="listitem">
+		<div
+			// The same tracking tint the `<tr>` below carries, so the card stack and the table are
+			// one behaviour at two widths rather than two.
+			className="-mx-2 flex items-start justify-between gap-3 px-2 py-2.5 transition-colors hover:bg-muted/40"
+			role="listitem">
 			<div className="min-w-0">
 				<Link
 					className={`group block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${touchTargetRowClass}`}

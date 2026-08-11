@@ -83,23 +83,27 @@ export function Metric({
 	const compact = size === 'compact';
 	const reading = readingTone(tone, value);
 	return (
-		// `h-full` plus the two `justify-between` columns are the common baseline: a strip mixes
-		// one-line labels with two-line ones, and without this the values sat at whatever height
-		// their own label left them, so a row of tiles had no line to read across. Telemetry's
-		// `CountCard` was the only tile that got this right; now every tile does.
+		// `h-full` so a strip of tiles is one height, and the reading block stacks from the top of
+		// that height rather than being distributed down it. It used to be the other way round —
+		// the row took `flex-1` and the left column `justify-between`, which pinned the value to
+		// the bottom edge — and that made the value's position depend on whether the tile had a
+		// footer. The Fleet strip measured it: four tiles at 161px, and Priority Health's value sat
+		// 51px above the other three because its bar and band badge had taken 51px out of the row
+		// the value was being pinned to. Stacking from the top puts every label on line one and
+		// every value on line two across the whole strip, and `mt-auto` on the footer keeps the bar
+		// on the tile's bottom edge, full card width, where the old layout had it.
 		<Card
 			className={cn('flex h-full flex-col overflow-hidden', className)}
 			interactive={interactive}
 			variant={surface ?? (compact ? 'sunken' : 'panel')}>
-			<div className="flex flex-1 items-stretch justify-between gap-3">
-				<div className="flex min-w-0 flex-1 flex-col justify-between">
+			<div className="flex items-stretch justify-between gap-3">
+				<div className="flex min-w-0 flex-1 flex-col">
 					<div className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
 						{marker}
 						<span className="min-w-0">{label}</span>
 					</div>
-					{/* Value and caption travel together, so the column has two children and
-					    `justify-between` puts the reading on the bottom edge rather than
-					    distributing three blocks down the card. */}
+					{/* Value and caption travel together in one block, so a tile with a caption and
+					    one without still put their values on the same line. */}
 					<div>
 						{loading ? (
 							<div
@@ -140,7 +144,7 @@ export function Metric({
 					</div>
 				)}
 			</div>
-			{footer}
+			{footer !== undefined && <div className="mt-auto">{footer}</div>}
 		</Card>
 	);
 }

@@ -10,22 +10,19 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { toneText } from '../../lib/tones.ts';
+import { suggestionRiskLabel, suggestionRiskTone } from './dashboard-shared.ts';
 
-function getSuggestionTone(suggestion: SuggestionRecord): 'amber' | 'red' | 'teal' {
-	if (suggestion.riskLevel === 'HIGH') return 'red';
-	if (suggestion.riskLevel === 'MEDIUM') return 'amber';
-	return 'teal';
-}
-
-// The badge read 'HIGH' beside a Feature Queue badge reading 'P1', so two vocabularies for two
-// different concepts sat one card apart looking like one concept. Naming the axis is what
-// separates them; risk is not priority, so it does not become a P-number.
-function riskBadgeLabel(risk: SuggestionRecord['riskLevel']): string {
-	if (risk === 'HIGH') return 'High risk';
-	if (risk === 'MEDIUM') return 'Medium risk';
-	return 'Low risk';
-}
-
+/**
+ * The pending suggestions the approval queue below does not have room for.
+ *
+ * `suggestions` is already the overflow — `DashboardPage` slices it past
+ * `WAITING_APPROVAL_MAX_ITEMS` — because this card used to take `slice(0, 4)` of the same pending
+ * list Waiting Approval renders. At 2250 that printed 'deeper-license-cli / htmx-debugger /
+ * astrid.chat / routebook' with their descriptions here and again 726px further down, and the two
+ * copies disagreed about what mattered: this one carried the risk badge and no controls, that one
+ * carried Approve/Dismiss and no risk. Risk moved to the row that acts on it; this card now shows
+ * what is queued behind the decisions rather than a second rendering of them.
+ */
 export function DirectorQueueCard({
 	isLoading,
 	suggestions,
@@ -42,7 +39,7 @@ export function DirectorQueueCard({
 						<ArrowRight className="h-3.5 w-3.5" />
 					</Link>
 				}
-				description="Up to four of the suggestions awaiting a decision."
+				description="Pending suggestions queued behind the approval list."
 				icon={<AlertTriangle className={`h-4 w-4 ${toneText.amber}`} />}
 				title="Director Queue"
 			/>
@@ -61,12 +58,15 @@ export function DirectorQueueCard({
 							</Link>
 						}
 						className="lg:col-span-2">
-						No pending suggestions.
+						Nothing queued behind the approval list.
 					</EmptyState>
 				)}
 				{suggestions.slice(0, 4).map((suggestion) => (
 					<div
-						className="rounded-md border border-border bg-card/75 p-3 transition-[border-color,background-color] duration-150 hover:border-accent/40 hover:bg-accent-muted/60"
+						// Neutral tracking, not accent: nothing at row level here acts on a click,
+						// and the accent pair is what the page uses to say an element does. See
+						// `ProjectHealthRow` for the other half of the same correction.
+						className="rounded-md border border-border bg-card/75 p-3 transition-colors duration-150 hover:bg-muted/40"
 						key={suggestion.id}>
 						<div className="mb-2 flex items-start justify-between gap-3">
 							<div className="min-w-0">
@@ -77,8 +77,8 @@ export function DirectorQueueCard({
 									{suggestion.projectId ?? 'fleet'} / {suggestion.taskType}
 								</p>
 							</div>
-							<Badge showDot tone={getSuggestionTone(suggestion)}>
-								{riskBadgeLabel(suggestion.riskLevel)}
+							<Badge showDot tone={suggestionRiskTone(suggestion.riskLevel)}>
+								{suggestionRiskLabel(suggestion.riskLevel)}
 							</Badge>
 						</div>
 						<p className="line-clamp-3 text-sm text-muted-foreground">

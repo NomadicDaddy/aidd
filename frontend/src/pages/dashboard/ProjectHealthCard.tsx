@@ -7,6 +7,7 @@ import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { toneText } from '../../lib/tones.ts';
@@ -38,17 +39,29 @@ export function ProjectHealthCard({
 				icon={<ShieldCheck className={`h-4 w-4 ${toneText.emerald}`} />}
 				title="Project Health"
 			/>
-			<div className="space-y-2">
+			{/* The same capped scrollport `FeatureSummaryRows` and `FeatureStatusRows` use, and for
+			    the same reason one card away. This card's rows are the tallest on the page, so it
+			    was the one that set its grid row's height and left the card beside it as bare
+			    background: at 2250 Director Queue ended at y=2455 against this card's y=3165, a
+			    973x710px empty column, and the same void appeared at 1920 and 1280. 28rem is not a
+			    new number — it is what the other two data cards already cap at.
+			    `-mx-2 px-2` so a row's focus ring and hover tint are not shaved by the scrollport's
+			    edge, matching FeatureStatusRows.
+			    With a ceiling there is no longer a reason to cut the list at six: the cap was
+			    standing in for one, and six of thirty-three projects with no marker saying so is
+			    the fault the scrollport's own bottom fade now states. */}
+			<OverflowScroller
+				ariaLabel="Project health by project"
+				className="-mx-2 px-2"
+				scrollerClassName="max-h-[28rem] space-y-2">
 				{projects.length > 0 ? (
-					projects
-						.slice(0, 6)
-						.map((project) => (
-							<ProjectHealthRow
-								key={project.id}
-								portStatus={portStatus?.[project.id]}
-								project={project}
-							/>
-						))
+					projects.map((project) => (
+						<ProjectHealthRow
+							key={project.id}
+							portStatus={portStatus?.[project.id]}
+							project={project}
+						/>
+					))
 				) : isError ? (
 					<EmptyState
 						action={
@@ -72,7 +85,7 @@ export function ProjectHealthCard({
 						No projects discovered.
 					</EmptyState>
 				)}
-			</div>
+			</OverflowScroller>
 		</Card>
 	);
 }

@@ -18,7 +18,17 @@ import { useDirector } from '../../hooks/useDirector.ts';
 import { toneText } from '../../lib/tones.ts';
 import { BlockedRunRow, SuggestionRow, WaitingFeatureRow } from './WaitingApprovalRows.tsx';
 
-const MAX_ITEMS = 6;
+/**
+ * Rows this card will show, and the boundary the Director Queue card reads to find its own content.
+ *
+ * Suggestions fill the queue before features and runs do, so the first `MAX_ITEMS` pending
+ * suggestions are always the ones rendered here and `pendingSuggestions.slice(MAX_ITEMS)` is exactly
+ * what this card does not show. Exported because the Director Queue card used to render its own
+ * `slice(0, 4)` of the same list and printed the same four records a second time on the same screen.
+ */
+export const WAITING_APPROVAL_MAX_ITEMS = 6;
+
+const MAX_ITEMS = WAITING_APPROVAL_MAX_ITEMS;
 
 export function WaitingApprovalCard({
 	isLoading,

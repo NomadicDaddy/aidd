@@ -145,7 +145,12 @@ export function FeatureStatusCard({
 			{/* Two full-width labelled dropdowns took a two-column band the height of three table
 			    rows to express five mutually exclusive choices, and neither showed the unselected
 			    options. As segmented tracks the whole filter state is visible in one wrapping row. */}
-			<div className="mb-4 flex flex-wrap items-center gap-2">
+			{/* `gap-x-4`, because two adjacent tracks 8px apart with the same border and background
+			    read as one five-cell control with two cells lit — the segments inside a track are
+			    4px apart, so the only thing separating "Pending | Completed" from "Features |
+			    Remediation | Audit" was 4px more air. 4 is the card's own header step. The vertical
+			    gap stays at 2 so the stack is still tight when the row wraps. */}
+			<div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
 				<SegmentedControl
 					ariaLabel="Feature state"
 					onChange={setStateFilter}

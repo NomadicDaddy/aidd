@@ -215,7 +215,12 @@ describe('telemetry lets the data lead', () => {
 		);
 		expect(summary).not.toMatch(/flex h-full flex-col/);
 		expect(rendered.summary).toContain('flex h-full flex-col');
-		expect(rendered.summary).toContain('flex min-w-0 flex-1 flex-col justify-between');
+		// The reading column stacks from the top of a full-height tile rather than distributing
+		// down it. `justify-between` used to stand in for the baseline and got it wrong whenever a
+		// tile carried a footer: the footer took its height out of the row the value was being
+		// pushed to the bottom of, so Priority Health's value sat 51px above its neighbours'.
+		expect(rendered.summary).toContain('flex min-w-0 flex-1 flex-col');
+		expect(rendered.summary).not.toContain('flex-col justify-between');
 	});
 
 	test('the two chart columns size to their own content', async () => {

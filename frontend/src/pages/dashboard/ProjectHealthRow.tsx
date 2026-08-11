@@ -45,7 +45,15 @@ export function ProjectHealthRow({
 	const ports = project.metadata.ports;
 
 	return (
-		<div className="rounded-md border border-border/80 bg-card/70 p-3 transition-[border-color,background-color] duration-150 hover:border-accent/40 hover:bg-accent-muted/60">
+		<div
+			// A neutral tracking tint, not the accent pair this used to carry. The page runs two
+			// hover vocabularies and they were reversed: this row and the Director Queue row lit
+			// accent on hover with nothing to click at row level, while the Feature Status rows —
+			// whose Feature cell is a real link to the project's features tab — offered only the
+			// title underline. `bg-muted/40` is what the Feature Status `<tr>` and the Projects
+			// table row already use for "you are on this row"; accent stays reserved for an
+			// element that acts when clicked.
+			className="rounded-md border border-border/80 bg-card/70 p-3 transition-colors duration-150 hover:bg-muted/40">
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">

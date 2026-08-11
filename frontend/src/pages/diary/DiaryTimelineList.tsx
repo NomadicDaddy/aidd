@@ -115,72 +115,82 @@ function DiaryTimelineRow({
 		// resolves against, and the ring is `focus-within` because the focus lands on that overlay.
 		<li
 			className={cn(
-				'relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-3 py-2',
+				'relative px-3 py-2',
 				href &&
 					'transition-colors focus-within:bg-muted/60 focus-within:ring-2 focus-within:ring-ring/50 focus-within:ring-inset hover:bg-muted/60',
 			)}>
-			<div className="min-w-0">
-				<div className="flex flex-wrap items-center gap-2">
-					<Badge tone="neutral">{timelineKindLabel(item.kind)}</Badge>
-					{/* A release has no lifecycle — its status is the literal string "completed" on
+			{/* The hover band and the hairline separators stay full-bleed with the card, like every
+			    sibling list; the two columns inside stop at 61rem. Uncapped on the project Diary tab
+			    at 2250 a row's narrative ended near x=908 against its own 68ch measure while the
+			    stamp stayed pinned at x=2160 — about 1250px of nothing between an entry and its
+			    time, which made the measure read as an accident rather than as the deliberate line
+			    length it is. */}
+			<div className="grid max-w-[61rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+				<div className="min-w-0">
+					<div className="flex flex-wrap items-center gap-2">
+						<Badge tone="neutral">{timelineKindLabel(item.kind)}</Badge>
+						{/* A release has no lifecycle — its status is the literal string "completed" on
 					    every row — so the badge was a second pill repeating the first. */}
-					{item.kind === 'release' ? null : (
-						<Badge tone={timelineItemTone(item)}>{item.status}</Badge>
-					)}
-					{href ? (
-						<Link
-							aria-label={rowLinkLabel(item)}
-							// The accent, not an underline the reader cannot see. `decoration-border`
-							// is 1.23:1 against the row, so of the 70 rows in this feed the 36 that
-							// navigate and the 34 that do not were indistinguishable at rest — and
-							// filtering to Releases showed 20 inert rows painted exactly like the run
-							// rows above them. This is the treatment the Dashboard's feature rows and
-							// the entry cards on this same page already use for a linked title; the
-							// underline arrives on hover, where it costs no layout.
-							className="font-medium text-accent underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none"
-							to={href}>
-							{renderTitle(item)}
-						</Link>
-					) : (
-						<span className="font-medium text-foreground">{renderTitle(item)}</span>
-					)}
-					{/* Inline with the title rather than on a line of its own: a release row spent two
+						{item.kind === 'release' ? null : (
+							<Badge tone={timelineItemTone(item)}>{item.status}</Badge>
+						)}
+						{href ? (
+							<Link
+								aria-label={rowLinkLabel(item)}
+								// The accent, not an underline the reader cannot see. `decoration-border`
+								// is 1.23:1 against the row, so of the 70 rows in this feed the 36 that
+								// navigate and the 34 that do not were indistinguishable at rest — and
+								// filtering to Releases showed 20 inert rows painted exactly like the run
+								// rows above them. This is the treatment the Dashboard's feature rows and
+								// the entry cards on this same page already use for a linked title; the
+								// underline arrives on hover, where it costs no layout.
+								className="font-medium text-accent underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none"
+								to={href}>
+								{renderTitle(item)}
+							</Link>
+						) : (
+							<span className="font-medium text-foreground">{renderTitle(item)}</span>
+						)}
+						{/* Inline with the title rather than on a line of its own: a release row spent two
 					    lines of height to carry the single word "aidd". The parts are divided by a
 					    rendered separator, because an 8px gap between three muted spans left the
 					    reader to guess where "aidd" ended and "coding" began. */}
-					{parts.map((part, index) => (
-						<span
-							className="flex items-center gap-2 text-xs text-muted-foreground"
-							key={`${item.id}-meta-${index}`}>
-							{/* `text-muted-foreground`, the weight of the values it divides.
+						{parts.map((part, index) => (
+							<span
+								className="flex items-center gap-2 text-xs text-muted-foreground"
+								key={`${item.id}-meta-${index}`}>
+								{/* `text-muted-foreground`, the weight of the values it divides.
 							    At `text-border` the glyph measured 1.23:1 and did not render:
 							    the row read as three gap-separated spans, which is the exact
 							    ambiguity the separator was added to remove. `text-border` is a
 							    stroke colour — its only other use is an SVG edge in the
 							    dependency graph. */}
-							<span aria-hidden="true" className="text-muted-foreground">
-								·
+								<span aria-hidden="true" className="text-muted-foreground">
+									·
+								</span>
+								<span className={part.className}>{part.text}</span>
 							</span>
-							<span className={part.className}>{part.text}</span>
-						</span>
-					))}
+						))}
+					</div>
+					{item.detail ? (
+						<p className="mt-1 max-w-[68ch] text-sm text-muted-foreground">
+							{item.detail}
+						</p>
+					) : null}
 				</div>
-				{item.detail ? (
-					<p className="mt-1 max-w-[68ch] text-sm text-muted-foreground">{item.detail}</p>
-				) : null}
-			</div>
-			{/* The day heading establishes the date, so the stamp carries the intra-day ordering the
+				{/* The day heading establishes the date, so the stamp carries the intra-day ordering the
 			    relative age ("3d ago" on nine consecutive rows) could not, and puts the exact value
 			    in the DOM rather than in a `title` no keyboard user can reach. A date-only record
 			    draws none: see `isDateOnly`. */}
-			{isDateOnly(item) ? null : (
-				<time
-					className="shrink-0 text-xs text-muted-foreground tabular-nums"
-					dateTime={isoFromMs(item.startedAt)}
-					title={formatDate(item.startedAt)}>
-					{formatTimeOfDay(item.startedAt)}
-				</time>
-			)}
+				{isDateOnly(item) ? null : (
+					<time
+						className="shrink-0 text-xs text-muted-foreground tabular-nums"
+						dateTime={isoFromMs(item.startedAt)}
+						title={formatDate(item.startedAt)}>
+						{formatTimeOfDay(item.startedAt)}
+					</time>
+				)}
+			</div>
 		</li>
 	);
 }

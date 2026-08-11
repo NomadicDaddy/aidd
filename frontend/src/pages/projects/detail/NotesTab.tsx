@@ -1,4 +1,3 @@
-import { default as NotebookPen } from 'lucide-react/dist/esm/icons/notebook-pen';
 import { default as Save } from 'lucide-react/dist/esm/icons/save';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -10,7 +9,6 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useProjectNotes, useSaveProjectNotes } from '../../../hooks/useProjectNotes.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
-import { toneText } from '../../../lib/tones.ts';
 import { monoEditorMeasureClass } from '../../../lib/typography.ts';
 
 function formatSavedAt(updatedAt: null | number): string {
@@ -75,12 +73,21 @@ export function NotesTab({ projectId }: { projectId: string }) {
 						<code>.aidd/notes.md</code>.
 					</>
 				}
-				icon={<NotebookPen className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Notes"
 			/>
+			{/* The editor grows with the window from `lg` up, on the same principle as the code
+			    browser: a fixed 28rem left this pad 448px tall inside a 1309px viewport, so the one
+			    surface on the page whose whole purpose is a long block of text was the one showing
+			    the least of it, with 500px of empty card and empty page below it. 28rem stays as
+			    the floor for short windows and for the stacked layout below `lg`.
+
+			    The 25rem subtrahend is derived rather than measured: 19rem is the chrome above a
+			    tab's card content on this page (see codeBrowserHeight.ts), and the remaining 6rem
+			    is this card's own padding, the gap under the header, and the gap and saved-at line
+			    beneath the field, which the code browser does not carry. */}
 			<textarea
 				aria-label="Project notes"
-				className={`${textareaClass} ${monoEditorMeasureClass} min-h-[28rem] font-mono`}
+				className={`${textareaClass} ${monoEditorMeasureClass} min-h-[28rem] font-mono lg:h-[calc(100vh-25rem)]`}
 				onChange={(event) => setDraft(event.target.value)}
 				onKeyDown={(event) => {
 					if ((event.metaKey || event.ctrlKey) && event.key === 's') {

@@ -1,11 +1,22 @@
 import type { MaturityDetail, ProjectArtifactRecord } from '../../../api/types.ts';
 
+import { microLabelClass } from '../../../lib/typography.ts';
 import { ArtifactRow } from './ArtifactRow.tsx';
 import { type ArtifactViewerTarget, buildArtifactInventory } from './artifactsUtils.ts';
 import { MaturityArtifactRow } from './MaturityArtifactRow.tsx';
 
 /** Above this many entries a group scrolls inside itself rather than pushing the tab down. */
 const LONG_GROUP = 12;
+
+/**
+ * A group heading, one declared step under the section caption that heads the inventory.
+ *
+ * It used to be a local copy of that caption's own utilities, so `ARTIFACT INVENTORY (56)` and
+ * `SPECIFIED (3)` directly beneath it computed identically — 12px, weight 600, the same grey — and
+ * the h3/h4 nesting that exists in the accessibility tree was invisible on screen. The colour is not
+ * part of `microLabelClass` on purpose: a field label elsewhere carries its own tone.
+ */
+const groupHeadingClass = `mb-1.5 text-muted-foreground ${microLabelClass}`;
 
 interface ArtifactGroupsProps {
 	disabled: boolean;
@@ -48,7 +59,7 @@ export function ArtifactGroups({
 				const allRequired = group.entries.every(({ artifact }) => artifact.required);
 				return (
 					<div key={group.id}>
-						<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+						<h4 className={groupHeadingClass}>
 							{group.label} ({group.entries.length})
 							{allRequired ? ' · all required' : ''}
 						</h4>
@@ -85,7 +96,7 @@ export function ArtifactGroups({
 			})}
 			{inventory.ungrouped.length > 0 ? (
 				<div>
-					<h4 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+					<h4 className={groupHeadingClass}>
 						Other artifacts ({inventory.ungrouped.length})
 					</h4>
 					<div className="flex flex-col gap-2">

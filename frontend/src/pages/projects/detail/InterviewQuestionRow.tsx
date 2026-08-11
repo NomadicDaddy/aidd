@@ -56,12 +56,24 @@ export function InterviewQuestionRow({
 							? `Resume draft for question: ${question.prompt}`
 							: `Answer question: ${question.prompt}`
 					}
-					className="flex w-full flex-wrap items-center gap-2 rounded-md p-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:opacity-60 max-sm:min-h-11"
+					className="flex w-full items-start gap-2 rounded-md p-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:opacity-60 max-sm:min-h-11"
 					disabled={pending}
 					onClick={onExpand}
 					type="button">
-					{chips}
-					<span className="text-sm text-foreground">{question.prompt}</span>
+					{/* A fixed leading column, because the priority badge is the one thing every
+					    row in this list has and the prompt is the thing being read down it. Sharing
+					    a single wrapping flex line, the prompt's left edge moved with the length of
+					    the badge's word — four different x-origins in the first eight rows at 1440 —
+					    and a prompt with no room left dropped below the badge entirely, so one list
+					    held 44px, 72px and 92px rows. 6rem clears `CRITICAL`, the longest of the
+					    four; the occasional `Draft` chip wraps under it rather than pushing forty
+					    prompts sideways for the one row that has a draft. */}
+					<span className="flex w-24 shrink-0 flex-wrap items-center gap-1.5">
+						{chips}
+					</span>
+					<span className="min-w-0 flex-1 text-sm text-foreground">
+						{question.prompt}
+					</span>
 				</button>
 			</li>
 		);

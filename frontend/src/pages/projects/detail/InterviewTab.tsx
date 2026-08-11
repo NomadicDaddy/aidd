@@ -95,10 +95,18 @@ export function InterviewTab({
 			{/* The shared metric tile rather than three more hand-rolled ones: these were the only
 			    place in the app that re-declared the tone colours locally, and they did it with values
 			    `toneText` does not use. */}
+			{/* Each tile carries its `detail` line, the way the Artifacts row one tab away does.
+			    Without it the two rows of the same shared tile rendered at visibly different heights,
+			    and the shorter Interview strip read as a different, lesser component. */}
 			<div className="grid gap-4 sm:grid-cols-3">
-				<Metric label="Questions" value={interview.total} />
-				<Metric label="Completed" tone="emerald" value={interview.answered} />
-				<Metric label="Unanswered" tone="amber" value={remaining} />
+				<Metric detail="In this interview" label="Questions" value={interview.total} />
+				<Metric
+					detail="Answered"
+					label="Completed"
+					tone="emerald"
+					value={interview.answered}
+				/>
+				<Metric detail="Outstanding" label="Unanswered" tone="amber" value={remaining} />
 			</div>
 			<Card>
 				<CardHeader className="mb-2" title="Unanswered questions" />

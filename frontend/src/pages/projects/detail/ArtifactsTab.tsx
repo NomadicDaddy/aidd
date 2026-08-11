@@ -10,7 +10,7 @@ import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
-import { proseMeasureClass } from '../../../lib/typography.ts';
+import { proseMeasureClass, sectionCaptionClass } from '../../../lib/typography.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
 import { artifactInventoryCount } from './artifactsUtils.ts';
 import { type ArtifactHealth, artifactTone } from './shared.ts';
@@ -104,7 +104,11 @@ export function ArtifactsTab({
 					/>
 				))}
 			</div>
-			<div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+			{/* An inline pair. As sm:grid-cols-2 the second fact landed on the midpoint of a
+			    1928px card at 2250 — roughly 800px clear on either side of it — so a two-item row
+			    read as one fact and one orphan. There is no column here to align; there are two
+			    short strings that belong beside each other. */}
+			<div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
 				<div>
 					<span className="font-medium text-muted-foreground">Checked:</span>{' '}
 					<RelativeAge value={artifactCheck.checkedAt} />
@@ -121,7 +125,12 @@ export function ArtifactsTab({
 					<code>--check-artifacts</code>. The inventory also includes broader maturity
 					evidence such as feature metadata, audit reports, and deployment artifacts.
 				</p>
-				<h3 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+				{/* The declared caption, not a hand-rolled near-copy of it. This and the group
+				    headings under it computed to the same 12px, weight 600, same grey, so an h3 and
+				    the h4s it governs read as one flat run and the inventory looked like a list with
+				    no sections. sectionCaptionClass also carries the app's real caption tracking,
+				    which the local copy had drifted off by a notch. */}
+				<h3 className={`mb-2 ${sectionCaptionClass}`}>
 					Artifact inventory ({inventoryCount})
 				</h3>
 				{inventoryCount === 0 ? (

@@ -58,8 +58,15 @@ describe('diary timeline rows', () => {
 			timelineItem({ detail: 'A long agent-written narrative summary of what happened.' }),
 		]);
 
-		expect(html).toContain('grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2');
+		expect(html).toContain(
+			'grid max-w-[61rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-2',
+		);
 		expect(html).toContain('shrink-0 text-xs text-muted-foreground tabular-nums');
+
+		// The grid is one level in from the `li`, which keeps the hover band and the separators
+		// full-bleed while the content stops at a width the eye can cross: uncapped at 2250 a row's
+		// narrative ended near x=908 and its stamp sat at x=2160.
+		expect(html).toContain('<li class="relative px-3 py-2');
 	});
 
 	test('renders the exact start time as a machine-readable element, not a title-only tooltip', () => {

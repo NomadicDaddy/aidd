@@ -1,4 +1,3 @@
-import { default as Code2 } from 'lucide-react/dist/esm/icons/code-2';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -12,7 +11,6 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { useProjectCodeFile, useProjectCodeTree } from '../../../hooks/useProjectCode.ts';
 import { cn } from '../../../lib/cn.ts';
-import { toneText } from '../../../lib/tones.ts';
 import { codeBrowserHeightClass } from './codeBrowserHeight.ts';
 import { CodeFileTree } from './CodeFileTree.tsx';
 import { CodeFileViewer } from './CodeFileViewer.tsx';
@@ -81,6 +79,11 @@ export function CodeTab({ projectId }: { projectId: string }) {
 	return (
 		// `@container`: the two tiers below are read off this card's width. See codeBrowserHeight.ts.
 		<Card className="@container overflow-hidden p-0">
+			{/* No icon on a tab's opening header. Fifteen of the seventeen project tabs open with a
+			    bare title, so on Code and on Notes the title started about 22px further right than
+			    on their neighbours and picked up a teal mark that said nothing the word did not
+			    already say. Icons stay on the cards inside a tab that are saying something the text
+			    is not — the red mark on Delete project, on Move, on the milestones gate. */}
 			<CardHeader
 				action={
 					<label className="relative w-full max-w-sm">
@@ -102,7 +105,6 @@ export function CodeTab({ projectId }: { projectId: string }) {
 					</>
 				}
 				className="mb-0 items-center border-b border-border p-4"
-				icon={<Code2 className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Code"
 			/>
 			{/* Stacked, the viewer comes first. Above it, the tree's own scroller filled the entire

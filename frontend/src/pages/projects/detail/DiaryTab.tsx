@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useDiaryEntries, useWriteDiaryEntry } from '../../../hooks/useDiary.ts';
 import { useNow } from '../../../hooks/useNow.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
 import { DiaryFeed } from '../../diary/DiaryFeed.tsx';
 import { dayKeyFromMs, hasEntryForDay } from '../../diary/diaryItems.ts';
 
@@ -32,7 +33,11 @@ export function DiaryTab({ projectPath }: { projectName: string; projectPath: st
 					}
 					className="mb-0"
 					description={
-						<span className="block max-w-prose text-sm">
+						// The declared measure, not Tailwind's built-in `max-w-prose`. At 2250 this
+						// wrapped near 603px while the diary prose three rows below it wrapped
+						// near 631px: two reading measures in one viewport, in one face and one
+						// colour, differing by just enough to look like a mistake.
+						<span className={`block text-sm ${proseMeasureClass}`}>
 							One narrative entry per day, written from this project’s runs, commits,
 							and feature activity and interleaved with the day’s timeline. Re-running
 							updates today’s entry in place, and a day with no new activity to ingest

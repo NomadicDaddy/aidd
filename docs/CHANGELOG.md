@@ -4,22 +4,6 @@ All notable public aidd releases are documented here.
 
 ## [2.137.1] - 2026-08-11
 
-### Fixed
-
-- The quality gate passes from a fresh clone. The audit artifact hygiene check reports that it
-  skipped when there are no reports to inspect, but its own test still demanded the wording it uses
-  when reports are present. `.aidd/audit-reports/` is untracked local state, so the test passed on a
-  machine that had run an audit and failed everywhere else, including CI.
-- The UI crawl runs at 1440x900 instead of the 800x600 it inherited by default. Everything the
-  crawl calls desktop is now measured, asserted and screenshotted at a width the desktop layout is
-  designed for, so the release screenshot archive records the interface a desktop user sees.
-- Two crawl assertions stop reporting failures that are not there. A disabled button was compared
-  for colorfulness in one unit and judged in another, which failed every correctly disabled control
-  against the dark theme's blue-tinted greys, and the project features actions check measured the
-  desktop table at viewports where the app deliberately shows a card list instead.
-
-## [2.137.0] - 2026-08-10
-
 ### Added
 
 - Cline is a first-class backend, verified against 3.0.47. It arrives with its own command builder,
@@ -247,6 +231,18 @@ All notable public aidd releases are documented here.
 - Accessibility: a failed run says so without relying on the color red, execution-identity badges are
   recoverable by touch and keyboard, and a redirect route no longer scrolls the page title out of
   view on arrival.
+- The quality gate passes from a fresh clone. The audit artifact hygiene check reports that it
+  skipped when there are no reports to inspect, but its own test still demanded the wording it uses
+  when reports are present. `.aidd/audit-reports/` is untracked local state, so the test passed on a
+  machine that had run an audit and failed everywhere else, including CI.
+- The UI crawl runs at 1440x900 instead of the 800x600 it inherited by default. Everything the crawl
+  calls desktop is now measured, asserted and screenshotted at a width the desktop layout is
+  designed for, so the release screenshot archive records the interface a desktop user sees. Two
+  assertions that had been reading that geometry stop reporting failures that are not there: a
+  disabled button was compared for colorfulness in one unit and judged in another, which failed
+  every correctly disabled control against the dark theme's blue-tinted greys, and the project
+  features actions check measured the desktop table at viewports where the app deliberately shows a
+  card list instead.
 
 ### Security
 

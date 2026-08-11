@@ -3,7 +3,11 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { findHookParityProblems } from '../../scripts/check-hook-parity.ts';
-import { GUARD_ONLY_FILES, GUARD_ONLY_SOURCE } from '../../scripts/lib/leak-guard/contract.ts';
+import {
+	HOOK as COMMIT_HOOK,
+	GUARD_ONLY_FILES,
+	GUARD_ONLY_SOURCE,
+} from '../../scripts/lib/leak-guard/contract.ts';
 import { GUARDS, HOOK } from '../../scripts/lib/push-guards/contract.ts';
 import { testTempDirSync } from '../_helpers/temp.ts';
 
@@ -69,6 +73,30 @@ describe('hook parity checker', () => {
 		// scaffolded, so their absence from the scaffold must not be a finding.
 		const { owner, scaffold } = hookDirs();
 		writeFileSync(join(owner, 'leak-guard-setup.sh'), '# owner only\n');
+		expect(findHookParityProblems(owner, scaffold)).toEqual([]);
+	});
+
+	test('the guard-only variant collapsed onto pre-commit fails — the destination-name collision', () => {
+		// From 2026-08-09 ensureHistoryGuard copied pre-commit-leak-guard-only over the full
+		// pre-commit and staged it, in this repository and every other .aidd-carrying one. Both
+		// variants carry the marker that copy is guarded by, so nothing refused it. Name for name the
+		// two directories still agreed, so the two assertions above stayed green throughout: the
+		// collision is on the DESTINATION name, and only this case looks at destinations.
+		const { owner, scaffold } = hookDirs();
+		writeFileSync(join(owner, COMMIT_HOOK), `# ${GUARD_ONLY_SOURCE}\n`);
+		const problems = findHookParityProblems(owner, scaffold);
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain('byte-identical');
+		expect(problems[0]).toContain(COMMIT_HOOK);
+		expect(problems[0]).toContain(GUARD_ONLY_SOURCE);
+	});
+
+	test('a richer pre-commit that merely shares the marker passes', () => {
+		// The healthy state, and the reason the check is byte-identity rather than a marker test: the
+		// full hook chains the same guard by the same line, so any marker-based check sees the two
+		// files as the same file.
+		const { owner, scaffold } = hookDirs();
+		writeFileSync(join(owner, COMMIT_HOOK), `# ${GUARD_ONLY_SOURCE}\nbun run check:licenses\n`);
 		expect(findHookParityProblems(owner, scaffold)).toEqual([]);
 	});
 

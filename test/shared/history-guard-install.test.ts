@@ -162,6 +162,28 @@ describe('ensureHistoryGuard', () => {
 		expect(git(dir, ['ls-files', '-s', '.githooks/pre-commit']).split(/\s+/)[0]).toBe('100755');
 	});
 
+	test('keeps an existing pre-commit that already carries the marker — it may be the richer variant', async () => {
+		// The 2026-08-09 downgrade. What ships from the scaffold is deliberately the LESSER of two
+		// pre-commit variants, and the marker it is guarded by (`bash .githooks/leak-guard.sh`) is a
+		// line both variants carry — so the foreign-hook test passes on the full hook and the copy
+		// proceeds. Every aidd run then replaced the richer hook with the poorer one and staged the
+		// result, in this repository among 31 others. A hook that already exists is never overwritten.
+		const dir = await makeRepo('richer-commit');
+		await mkdir(join(dir, '.githooks'), { recursive: true });
+		const mine = '#!/usr/bin/env bash\nbash .githooks/leak-guard.sh\nbun run check:licenses\n';
+		await writeFile(join(dir, '.githooks', 'pre-commit'), mine);
+
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
+		expect(readFileSync(join(dir, '.githooks', 'pre-commit'), 'utf8')).toBe(mine);
+
+		const staged = git(dir, ['diff', '--cached', '--name-only']).split('\n');
+		expect(staged).not.toContain('.githooks/pre-commit');
+		// The guard the kept hook chains is still delivered: keeping the hook must not leave it
+		// sourcing a script that is not there, which under `set -euo pipefail` fails every commit.
+		expect(existsSync(join(dir, '.githooks', 'leak-guard.sh'))).toBe(true);
+		expect(staged).toContain('.githooks/leak-guard.sh');
+	});
+
 	test('refuses to clobber a foreign pre-commit, and says which hook it refused', async () => {
 		// The push guard still installs: it is the stronger obligation of the two, and a project
 		// that can only have one should get the one that keeps `.aidd/` history off a remote.

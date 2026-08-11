@@ -17,12 +17,33 @@ const triggerClass =
 export function RecipeBadgeTooltip({
 	children,
 	content,
+	plain = false,
 	tone = 'neutral',
 }: {
 	children: ReactNode;
-	content: ReactNode;
+	/** A plain string, because a `plain` badge carries it on `title`. */
+	content: string;
+	/**
+	 * Render the badge outside the tab order, with the explainer on `title`.
+	 *
+	 * A tab stop per chip is right where a single recipe's badges are the content, and wrong on a
+	 * catalog of them. Counted live on the loaded list at 2250x1309, `main` held 314 focusable
+	 * elements and 198 of them were tooltip-only badge buttons, so reaching the Launch control of a
+	 * recipe near the bottom cost roughly 300 tab stops of which none but the last few did
+	 * anything. Thirty-six cards' worth of chips are decoration around the two controls that act,
+	 * and the explainer they carry is one click away on the recipe's own page. Hover still answers
+	 * the question in place.
+	 */
+	plain?: boolean;
 	tone?: Tone;
 }) {
+	if (plain) {
+		return (
+			<Badge title={content || undefined} tone={tone}>
+				{children}
+			</Badge>
+		);
+	}
 	return (
 		<Tooltip content={content}>
 			{/* A real button rather than a tabbable span: Tooltip puts every badge in the tab order,

@@ -70,15 +70,18 @@ export function RecipeCard({
 			<CardHeader
 				action={
 					<div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-						<RecipeContractBadges recipe={recipe} />
-						<RecipeTypeBadge isPipeline={isPipeline} />
+						<RecipeContractBadges plain recipe={recipe} />
+						<RecipeTypeBadge isPipeline={isPipeline} plain />
 					</div>
 				}
 				className="mb-3"
 				identifier={recipe.id}
 				title={
+					// `line-clamp-2`, with the full name already on `title`: `CardHeader` stops
+					// wrapping its badge rail at `lg`, so from there the title column is what
+					// absorbs a long name, and one recipe here runs to eleven words.
 					<Link
-						className={`hover:underline ${touchTargetTextClass}`}
+						className={`line-clamp-2 hover:underline ${touchTargetTextClass}`}
 						title={recipe.name}
 						to={`/recipes/${recipe.id}`}>
 						{recipe.name}
@@ -96,18 +99,22 @@ export function RecipeCard({
 			</p>
 			{/* One facts row rather than three stacked ones, and only the policy badges that change
 			    what happens on failure — the full policy summary is on the detail page. */}
+			{/* Every chip here is `plain`: on the catalog they are facts about a card, not controls,
+			    and a tab stop each put 198 tooltip-only buttons between the top of the list and the
+			    Launch button of a recipe near the bottom. The explainers stay on hover, and on the
+			    recipe's own page they are triggers again. */}
 			<div className="mb-4 flex flex-wrap gap-1.5">
-				<RecipeBadgeTooltip content={recipeStepCountExplainer}>
+				<RecipeBadgeTooltip content={recipeStepCountExplainer} plain>
 					{recipe.steps.length} {recipe.steps.length === 1 ? 'step' : 'steps'}
 				</RecipeBadgeTooltip>
 				{recipe.parameters.length > 0 && (
-					<RecipeBadgeTooltip content={recipeParameterCountExplainer}>
+					<RecipeBadgeTooltip content={recipeParameterCountExplainer} plain>
 						{recipe.parameters.length}{' '}
 						{recipe.parameters.length === 1 ? 'parameter' : 'parameters'}
 					</RecipeBadgeTooltip>
 				)}
-				<RecipeStepTypeBadges recipe={recipe} />
-				<RecipePolicyBadges limit={3} recipe={recipe} riskOnly />
+				<RecipeStepTypeBadges plain recipe={recipe} />
+				<RecipePolicyBadges limit={3} plain recipe={recipe} riskOnly />
 			</div>
 			{usageLine ? <p className="mb-3 text-xs text-muted-foreground">{usageLine}</p> : null}
 			<div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
@@ -137,9 +144,9 @@ export function RecipeTable({
 			    badges, step and parameter counts, step-type and policy badges, the usage line, Launch
 			    and Details — so a phone-width Table view is the catalog's own card, not a reduction.
 
-			    Eight columns come to roughly 1160px of minimum width: 200px of name over a mono id,
-			    140px for the type and contract badges, 70px for a right-aligned count, 140px of
-			    step-type badges, the policy cell's declared `min-w-56` (224px), 90px for parameters,
+			    Eight columns come to roughly 1160px of minimum width: the name cell's declared
+			    `min-w-56` (224px) over a mono id, 140px for the type and contract badges, 70px for a
+			    right-aligned count, 140px of step-type badges, 200px of policies, 90px for parameters,
 			    120px of nowrap usage, and 180px for a compact Launch beside a compact Details. `xl`
 			    is the tier where the 992px content column an expanded rail leaves gets close enough
 			    that the scrollport is carrying a scroll rather than hiding most of the table. */}
@@ -158,7 +165,12 @@ export function RecipeTable({
 					<table aria-label="Recipes" className="w-full text-left text-sm">
 						<thead className={tableHeadClass}>
 							<tr>
-								<th className="px-3 py-2" scope="col">
+								{/* The floor belongs on identity, not on the data. `min-w-56` sat on the
+								    policies cell, which is the emptiest column in the table — most
+								    recipes deviate from the default in no way at all — so the surplus
+								    at wide viewports landed on 467px of blank while a name over a mono
+								    id made do with 335px and wrapped. */}
+								<th className="min-w-56 px-3 py-2" scope="col">
 									Name
 								</th>
 								<th className="px-3 py-2" scope="col">
@@ -212,12 +224,17 @@ export function RecipeTable({
 												{recipe.id}
 											</div>
 										</td>
+										{/* `plain` throughout the table for the reason the card gives:
+										    a row's chips are facts about the row, and a tab stop each
+										    buried the two controls that act behind hundreds that do
+										    not. */}
 										<td className="px-3 py-2">
 											<div className="flex flex-nowrap items-center gap-1.5">
 												<RecipeTypeBadge
 													isPipeline={recipe.steps.length > 1}
+													plain
 												/>
-												<RecipeContractBadges recipe={recipe} />
+												<RecipeContractBadges plain recipe={recipe} />
 											</div>
 										</td>
 										<td className="px-3 py-2 text-right tabular-nums">
@@ -225,7 +242,7 @@ export function RecipeTable({
 										</td>
 										<td className="px-3 py-2">
 											<div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
-												<RecipeStepTypeBadges recipe={recipe} />
+												<RecipeStepTypeBadges plain recipe={recipe} />
 											</div>
 										</td>
 										{/* The same risk-only summary the card shows, capped at the three
@@ -233,10 +250,11 @@ export function RecipeTable({
 								    whole policy set, so a row said `failure: stop (3)` — the
 								    default, for every recipe — while the card said only what
 								    departed from it. */}
-										<td className="min-w-56 px-3 py-2">
+										<td className="px-3 py-2">
 											<div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
 												<RecipePolicyBadges
 													limit={3}
+													plain
 													recipe={recipe}
 													riskOnly
 												/>

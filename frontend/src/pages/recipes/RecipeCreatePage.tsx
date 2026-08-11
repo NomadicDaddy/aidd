@@ -132,7 +132,9 @@ export function RecipeCreatePage() {
 	const blocker = useUnsavedGuard(dirty);
 
 	return (
-		<div className="page-reveal">
+		// A fragment, not a wrapper: `RecipeEditMode` carries `page-reveal` itself now, and this div
+		// added nothing but a single-child container for the stagger to find.
+		<>
 			<RecipeEditMode
 				description={description}
 				dirty={dirty}
@@ -164,6 +166,6 @@ export function RecipeCreatePage() {
 				open={blocker.state === 'blocked'}
 				title="Discard unsaved changes?"
 			/>
-		</div>
+		</>
 	);
 }

@@ -98,8 +98,20 @@ export function CardHeader({
 }) {
 	const Heading = `h${headingLevel}` as const;
 	return (
-		<header className={cn('mb-4 flex flex-wrap items-start justify-between gap-3', className)}>
-			<div className="min-w-0">
+		// `flex-wrap` up to `lg`, `flex-nowrap` from there. Wrapping is the right answer on a narrow
+		// card, where the action rail genuinely has nowhere to go but the next line. It is the wrong
+		// one on a wide card: `justify-between` means a title that grows by one word pushes the whole
+		// action slot to line two and hard against the left edge, directly under the title it belongs
+		// beside, with a full card's width of nothing to its right. One recipe card did that at
+		// 2250px and half a dozen more at 1440 and 1280. From `lg` the row stays on one line and the
+		// title column absorbs the growth instead, which is what `flex-1` and the callers'
+		// `line-clamp` are for.
+		<header
+			className={cn(
+				'mb-4 flex flex-wrap items-start justify-between gap-3 lg:flex-nowrap',
+				className,
+			)}>
+			<div className="min-w-0 flex-1">
 				<div className="flex flex-wrap items-center gap-2">
 					{icon !== undefined && (
 						<span aria-hidden="true" className="flex shrink-0 items-center">

@@ -194,7 +194,9 @@ export function RecipeDetailPage() {
 	}
 
 	return (
-		<div className="page-reveal">
+		// A fragment, not a wrapper: `RecipeEditMode` carries `page-reveal` itself now. The overview
+		// branch above keeps its own, because `RecipeOverviewMode` does not.
+		<>
 			<RecipeEditMode
 				description={description}
 				dirty={dirty}
@@ -217,6 +219,6 @@ export function RecipeDetailPage() {
 			/>
 			{deleteConfirm}
 			{unsavedConfirm}
-		</div>
+		</>
 	);
 }

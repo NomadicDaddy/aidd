@@ -43,6 +43,7 @@ const sanctionedSteps = new Set([
 	'44rem',
 	'45rem',
 	'46rem',
+	'58rem',
 	'61rem',
 	'62rem',
 	'66rem',

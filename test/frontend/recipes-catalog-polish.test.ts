@@ -83,7 +83,9 @@ describe('both catalog views identify a recipe by the same facts', () => {
 		const badges = await read('pages/recipes/RecipeMetadataBadges.tsx');
 
 		expect(badges).toContain('export function RecipeStepTypeBadges');
-		expect(grid.match(/<RecipeStepTypeBadges recipe=\{recipe\} \/>/g)).toHaveLength(2);
+		// `plain` in both: the catalog's chips are facts about a row, not controls. See
+		// recipe-badge-tooltip-wiring.test.ts, which owns that contract.
+		expect(grid.match(/<RecipeStepTypeBadges plain recipe=\{recipe\} \/>/g)).toHaveLength(2);
 		// Neither view derives the set itself any more.
 		expect(stripComments(grid)).not.toContain('new Set(recipe.steps.map');
 		expect(grid).toContain('Step types');
@@ -93,7 +95,9 @@ describe('both catalog views identify a recipe by the same facts', () => {
 		const grid = await read('pages/recipes/RecipeGrid.tsx');
 		// Whitespace-tolerant: the table's call site is wrapped across lines by the formatter.
 		expect(
-			grid.match(/<RecipePolicyBadges\s+limit=\{3\}\s+recipe=\{recipe\}\s+riskOnly\s*\/>/g),
+			grid.match(
+				/<RecipePolicyBadges\s+limit=\{3\}\s+plain\s+recipe=\{recipe\}\s+riskOnly\s*\/>/g,
+			),
 		).toHaveLength(2);
 		expect(stripComments(grid)).not.toContain('limit={2}');
 	});

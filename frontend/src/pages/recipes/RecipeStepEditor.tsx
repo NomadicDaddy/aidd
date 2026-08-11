@@ -12,8 +12,9 @@ import { IconButton } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { selectClass } from '../../lib/formStyles.ts';
 import { dangerRowActionClass } from '../../lib/tones.ts';
+import { microLabelClass } from '../../lib/typography.ts';
 import { newStepNamePlaceholder } from './recipe-steps.ts';
 import { RecipeStepJsonField } from './RecipeStepJsonField.tsx';
 
@@ -45,8 +46,12 @@ export function RecipeStepEditor({
 		// A sunken card rather than a bare bordered div: the step list sits inside the Steps card,
 		// and nesting a default card in a default card gave two identical surfaces with no depth
 		// between them.
-		<Card className="space-y-3" variant="sunken">
-			<div className="flex items-center justify-between gap-3">
+		<Card className="@container space-y-3" variant="sunken">
+			{/* Left-aligned, not `justify-between`. The step number and the controls that act on that
+			    step are one group, and pushing them to opposite ends of the card put roughly 1650px
+			    between `Step 1` and its own delete button at 2250px — a trash icon that far from
+			    anything reads as belonging to the card, not the row. */}
+			<div className="flex items-center gap-2">
 				{/* No `<h3>{step.name}</h3>` under the badge: the name is the first editable field
 				    two rows down, so the heading was a second copy that went stale mid-keystroke. */}
 				<Badge>Step {index + 1}</Badge>
@@ -87,9 +92,13 @@ export function RecipeStepEditor({
 					</IconButton>
 				</div>
 			</div>
-			{/* `sm:grid-cols-2` before the 4-up: between 640 and 768 these four controls were a
-			    single stacked column while the card had room for two. */}
-			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+			{/* Two steps, both measured against this card rather than the viewport. A step editor is
+			    two cards deep — the Steps card and this sunken one, `p-4` each — so its interior is
+			    the content column less 64px, and `sm:`/`xl:` here were describing a width the
+			    controls never actually had. `32rem` is the first width where two of these are still
+			    wide enough to read; `58rem` is the interior at the 992px content tier, which is where
+			    the 4-up used to arrive and still does. */}
+			<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[58rem]:grid-cols-4">
 				<FieldRow label="Step name" required>
 					<Input
 						name="step-name"
@@ -163,10 +172,13 @@ export function RecipeStepEditor({
 					</FieldRow>
 				) : null}
 			</div>
-			<div>
+			<div className="flex flex-col gap-2">
 				{/* Named as one optional group: the two inputs are meaningless apart, and on their
-				    own they read as two more required fields in the same stack. */}
-				<p className={`mb-1 ${fieldLabelClass}`}>Condition (optional)</p>
+				    own they read as two more required fields in the same stack.
+				    A group caption, not a third field label: in `fieldLabelClass` it was the same
+				    size, weight and colour as `Run when parameter` directly beneath it, 4px away, so
+				    the two read as siblings and the grouping it exists to state was invisible. */}
+				<p className={`${microLabelClass} text-muted-foreground`}>Condition (optional)</p>
 				<div className="grid gap-3 sm:grid-cols-2">
 					{/* The message belongs to the empty half of the pair. `errors.when` is raised
 					    when exactly one of the two is filled, so marking both invalid pointed at

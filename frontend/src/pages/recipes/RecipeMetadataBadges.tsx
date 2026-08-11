@@ -12,12 +12,27 @@ import {
 import { getRecipePolicyBadges } from './recipe-policy.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
 
+/**
+ * Passed straight through to `RecipeBadgeTooltip`, which explains why the catalog sets it: 198 of
+ * the 314 focusable elements on the loaded list were tooltip-only badge buttons. Every one of these
+ * components renders on both the catalog and a recipe's own page, so the choice belongs to the
+ * caller rather than to the badge.
+ */
+interface PlainProp {
+	plain?: boolean;
+}
+
 // Pipeline vs single-step is taxonomy, so both variants stay neutral and are told apart by their
 // glyph rather than by spending a status tone on shape-of-recipe.
-export function RecipeTypeBadge({ isPipeline }: { isPipeline: boolean }) {
+export function RecipeTypeBadge({
+	isPipeline,
+	plain = false,
+}: { isPipeline: boolean } & PlainProp) {
 	const TypeIcon = isPipeline ? ListTree : CircleDot;
 	return (
-		<RecipeBadgeTooltip content={recipeTypeExplainer[isPipeline ? 'pipeline' : 'single-step']}>
+		<RecipeBadgeTooltip
+			content={recipeTypeExplainer[isPipeline ? 'pipeline' : 'single-step']}
+			plain={plain}>
 			<TypeIcon aria-hidden="true" className="h-3 w-3" />
 			{isPipeline ? 'pipeline' : 'single-step'}
 		</RecipeBadgeTooltip>
@@ -31,11 +46,17 @@ export function RecipeTypeBadge({ isPipeline }: { isPipeline: boolean }) {
  * recipe was a `shell` recipe in one view and an untyped row in the other, and switching views
  * changed what you knew about it.
  */
-export function RecipeStepTypeBadges({ recipe }: { recipe: RecipeDefinition }) {
+export function RecipeStepTypeBadges({
+	plain = false,
+	recipe,
+}: { recipe: RecipeDefinition } & PlainProp) {
 	return (
 		<>
 			{[...new Set(recipe.steps.map((step) => step.stepType))].map((stepType) => (
-				<RecipeBadgeTooltip content={recipeStepTypeExplainer[stepType]} key={stepType}>
+				<RecipeBadgeTooltip
+					content={recipeStepTypeExplainer[stepType]}
+					key={stepType}
+					plain={plain}>
 					{stepType}
 				</RecipeBadgeTooltip>
 			))}
@@ -43,19 +64,22 @@ export function RecipeStepTypeBadges({ recipe }: { recipe: RecipeDefinition }) {
 	);
 }
 
-export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
+export function RecipeContractBadges({
+	plain = false,
+	recipe,
+}: { recipe: RecipeDefinition } & PlainProp) {
 	return (
 		<>
 			{/* `system` is the one contract fact the shell manages on the operator's behalf, which
 			    is what violet means everywhere else. `metadata-only` is descriptive, so it stays
 			    neutral instead of borrowing the attention tone from the policy badges beside it. */}
 			{recipe.system === true && (
-				<RecipeBadgeTooltip content={recipeSystemExplainer} tone="violet">
+				<RecipeBadgeTooltip content={recipeSystemExplainer} plain={plain} tone="violet">
 					system
 				</RecipeBadgeTooltip>
 			)}
 			{recipe.metadataOnly === true && (
-				<RecipeBadgeTooltip content={recipeMetadataOnlyExplainer}>
+				<RecipeBadgeTooltip content={recipeMetadataOnlyExplainer} plain={plain}>
 					metadata-only
 				</RecipeBadgeTooltip>
 			)}
@@ -72,25 +96,28 @@ export function RecipeContractBadges({ recipe }: { recipe: RecipeDefinition }) {
  */
 export function RecipePolicyBadges({
 	limit,
+	plain = false,
 	recipe,
 	riskOnly = false,
 }: {
 	limit?: number;
 	recipe: RecipeDefinition;
 	riskOnly?: boolean;
-}) {
+} & PlainProp) {
 	const badges = getRecipePolicyBadges(recipe).filter((badge) => !riskOnly || badge.risk);
 	const visible = limit === undefined ? badges : badges.slice(0, limit);
 	const hidden = badges.slice(visible.length);
 	return (
 		<>
 			{visible.map((badge) => (
-				<RecipeBadgeTooltip content={badge.explainer} key={badge.key}>
+				<RecipeBadgeTooltip content={badge.explainer} key={badge.key} plain={plain}>
 					{badge.label}
 				</RecipeBadgeTooltip>
 			))}
 			{hidden.length > 0 && (
-				<RecipeBadgeTooltip content={hidden.map((badge) => badge.label).join('\n')}>
+				<RecipeBadgeTooltip
+					content={hidden.map((badge) => badge.label).join('\n')}
+					plain={plain}>
 					+{hidden.length}
 				</RecipeBadgeTooltip>
 			)}

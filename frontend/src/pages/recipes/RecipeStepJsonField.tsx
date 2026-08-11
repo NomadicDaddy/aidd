@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { Button } from '../../components/ui/button.tsx';
 import { fieldErrorClass, fieldLabelClass, textareaClass } from '../../lib/formStyles.ts';
+import { monoEditorMeasureClass } from '../../lib/typography.ts';
 
 // `min-h-40` rather than the old `min-h-28`: a five-line JSON object is the normal case here, and
 // at 112px every real config was clipped mid-object and had to be dragged open before it could be
@@ -11,7 +12,11 @@ import { fieldErrorClass, fieldLabelClass, textareaClass } from '../../lib/formS
 // One class, not two. The invalid skin was built here by hand because `textareaClass` had no
 // invalid state at all; it now carries the same `aria-invalid` variant as every other control, so
 // the attribute this field already sets is what paints it.
-const jsonTextareaClass = `${textareaClass} min-h-40 font-mono text-xs`;
+// The measure is the mono one, and it is a real limit here rather than a nicety: the field is the
+// full width of the step card, so at 2250px it was a 1894px line of JSON 160px tall, and an object
+// wrapped across that distance is read by scanning sideways. `monoEditorMeasureClass` is 100
+// characters exactly in this face, which is wider than any hook config the app writes.
+const jsonTextareaClass = `${textareaClass} ${monoEditorMeasureClass} min-h-40 font-mono text-xs`;
 
 export type StepJsonFieldKey = 'configJson' | 'postHookJson' | 'preHookJson';
 

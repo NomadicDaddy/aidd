@@ -112,7 +112,11 @@ export function RecipeEditMode({
 		steps,
 	});
 	return (
-		<div className="space-y-5">
+		// `page-reveal` belongs here rather than on the wrapper each caller supplied: the animation
+		// staggers a container's *direct children*, and both callers wrapped this component in a
+		// single div, so the whole form was one child and faded in as a single block. Here the header,
+		// the action bar, and the three cards are the children the stagger was written for.
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
 					onReload ? (
@@ -166,7 +170,12 @@ export function RecipeEditMode({
 				saveLabel={isCreate ? 'Create' : 'Save'}
 			/>
 
-			<Card className={`grid gap-3 ${isCreate ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
+			{/* Weighted tracks, not equal ones. Three `1fr` columns gave a slug field, a name and a
+			    description 635px each at 2250px, which is several times what an id will ever hold and
+			    still the tightest of the three for the one field that takes a sentence. The
+			    `minmax(0,…)` floors keep the first two from being squeezed below their content. */}
+			<Card
+				className={`grid gap-3 ${isCreate ? 'lg:grid-cols-[minmax(0,16rem)_minmax(0,20rem)_1fr]' : 'lg:grid-cols-[minmax(0,20rem)_1fr]'}`}>
 				{/* Both of these block Save, and neither said so until Save was pressed. The id
 				    additionally showed a red message beside a control still rendering the ordinary
 				    grey border, which read as a note about the field rather than a fault in it. */}

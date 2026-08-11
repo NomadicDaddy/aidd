@@ -95,7 +95,11 @@ describe('tone taxonomy', () => {
 		expect(codeOnly(policy)).not.toContain('tone');
 
 		const badges = await source('recipes', 'RecipeMetadataBadges.tsx');
-		expect(badges).toContain('<RecipeBadgeTooltip content={badge.explainer} key={badge.key}>');
+		// No `tone` on the policy chip. The trailing props are matched loosely because whether the
+		// chip is a tooltip trigger or a plain `title` is the caller's decision, not a tone one.
+		expect(badges).toMatch(
+			/<RecipeBadgeTooltip content=\{badge\.explainer\} key=\{badge\.key\}(?: plain=\{plain\})?>/u,
+		);
 		// `system` survives because violet means system-managed everywhere else in the shell; it is
 		// the one contract fact the shell owns rather than the operator.
 		expect(badges).toContain('tone="violet"');

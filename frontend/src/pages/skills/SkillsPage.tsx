@@ -33,7 +33,7 @@ import { SkillImportDialog } from './SkillImportDialog.tsx';
 /**
  * The content width at which the catalog and the detail stop being alternatives and become columns.
  *
- * 40rem = 640px: the catalog column's own minimum is 18rem, and below roughly this the detail is
+ * 40rem = 640px: the catalog column takes up to 20rem of that, and below roughly this the detail is
  * left with less than a readable measure. It matches `@min-[40rem]:` in the markup below and is
  * compared against the region's measured width, never the viewport's — at 768px of viewport the
  * content column is 656px with the sidebar rail collapsed and 480px with it expanded.
@@ -198,7 +198,13 @@ export function SkillsPage() {
 				{/* The explicit row track, not just the height: an implicit `auto` row sizes to its
 				    content (5390px measured), so `overflow-auto` below had nothing to overflow. */}
 				<div
-					className="grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))] @min-[40rem]:grid-cols-[minmax(18rem,24rem)_1fr] @min-[40rem]:grid-rows-[minmax(0,1fr)] @min-[40rem]:overflow-hidden"
+					// The index yields and the work surface keeps the remainder. `minmax(18rem,24rem)`
+					// pinned the catalog at its 384px maximum at every desktop width, so at a 736px
+					// content column the 76-row picker was wider than the pane holding the launch
+					// form and the whole SKILL.md — the list of things to choose from was given more
+					// room than the thing chosen. A 20rem cap fits a title, a summary line and an id
+					// without wrapping any of them, and every pixel above that goes to the document.
+					className="grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))] @min-[40rem]:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] @min-[40rem]:grid-rows-[minmax(0,1fr)] @min-[40rem]:overflow-hidden"
 					ref={splitRef}>
 					<SkillCatalog
 						className={showDetail ? 'hidden @min-[40rem]:flex' : undefined}

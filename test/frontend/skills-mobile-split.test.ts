@@ -29,9 +29,12 @@ describe('the skills split has a layout below its split point', () => {
 		// practice. A viewport gate is wrong in both directions at once — it called 768 narrow when
 		// it is not, and 1024 wide when it is not.
 		for (const source of [page, catalog]) {
-			expect(source).not.toMatch(/lg:(?:h-|grid-cols-\[minmax\(18|overflow-|pr-1)/);
+			expect(source).not.toMatch(/lg:(?:h-|grid-cols-\[minmax\(|overflow-|pr-1)/);
 		}
-		expect(page).toContain('@min-[40rem]:grid-cols-[minmax(18rem,24rem)_1fr]');
+		// The catalog cap came down from 24rem to 20rem and the detail track gained a `minmax(0,…)`
+		// floor: the index was pinned at its maximum at every desktop width, which left the pane
+		// holding the launch form and the SKILL.md narrower than the picker beside it.
+		expect(page).toContain('@min-[40rem]:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]');
 		expect(page).toContain('@min-[40rem]:h-[var(--fill-height');
 		expect(page).toContain('@min-[40rem]:overflow-hidden');
 		expect(catalog).toContain('@min-[40rem]:h-full');

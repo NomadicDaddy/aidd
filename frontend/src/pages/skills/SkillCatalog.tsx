@@ -67,11 +67,17 @@ export function SkillCatalog({
 						className="space-y-1"
 						idPrefix="skill"
 						onSelect={onSelect}
+						// The row body separates the rows, not a 1.23:1 outline. `border-border`
+						// (#252b38) on `--card` (#161a22) is barely a line, and 76 rows of three
+						// tightly stacked lines behind it read as one continuous field of text
+						// rather than as a list. Filling each row makes it a tile against the card,
+						// and the border stays in the class list at `transparent` so the selected
+						// state's accent outline does not change the row's height by a pixel.
 						optionClassName={(selected) =>
 							`block w-full rounded-md border px-3 py-1.5 text-left transition-colors ${
 								selected
 									? 'border-accent bg-accent-muted'
-									: 'border-border hover:bg-muted'
+									: 'border-transparent bg-muted/60 hover:bg-muted'
 							}`
 						}
 						options={skills.map((skill) => ({

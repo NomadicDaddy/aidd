@@ -40,12 +40,22 @@ windowsOnly('listProcessTableNative', () => {
 	test('is fast enough to snapshot a short-lived process before it exits', async () => {
 		// The property that matters. The WMI probe took 3-4s, which is longer than a backend that
 		// starts its server and exits — by the time the table arrived, the root was gone.
-		const startedAt = Date.now();
-		const table = await listProcessTableNative();
-		const elapsedMs = Date.now() - startedAt;
+		//
+		// Measured as the best of several samples, not a single one. A single sample times the
+		// scheduler as much as the probe: under the parallel suite this call has been preempted
+		// into 5s, which says nothing about whether the probe is the fast one. The minimum is what
+		// the probe costs when it gets the CPU, and that is the claim being made here. It does not
+		// soften the test — the WMI fallback this bound exists to exclude is 3-4s on every sample,
+		// so no minimum of it lands under the bound.
+		let fastestMs = Number.POSITIVE_INFINITY;
+		for (let attempt = 0; attempt < 5; attempt += 1) {
+			const startedAt = Date.now();
+			const table = await listProcessTableNative();
+			fastestMs = Math.min(fastestMs, Date.now() - startedAt);
+			expect(table?.length).toBeGreaterThan(0);
+		}
 
-		expect(table?.length).toBeGreaterThan(0);
-		expect(elapsedMs).toBeLessThan(1_500);
+		expect(fastestMs).toBeLessThan(1_500);
 	});
 
 	test('tolerates processes it cannot open: they keep pid/ppid, only the token is absent', async () => {

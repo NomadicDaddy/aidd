@@ -103,19 +103,27 @@ describe('a long audits table caps itself and keeps its head', () => {
 		// through the labels rather than under them. Both siblings put `bg-muted` on each `<th>`;
 		// the catalog's seven now do too — seven, not six, since the change-potential score became a
 		// right-aligned column of its own instead of trailing the band badge.
+		//
+		// Four of the seven are `SortableColumnHeader`, which renders the `<th>` itself and takes
+		// its classes as a prop, so the count spans both spellings.
 		const source = await read(TABS, 'CatalogTable.tsx');
 		const heads = source.slice(source.indexOf('<thead'), source.indexOf('</thead>'));
-		const cells = heads.match(/<th\b[^>]*/g) ?? [];
+		const cells = heads.match(/<(?:th|SortableColumnHeader)\b[\s\S]*?(?:\/>|>)/g) ?? [];
 		expect(cells.length).toBe(7);
 		for (const cell of cells) expect(cell).toMatch(/bg-muted|numericHead/u);
 	});
 
 	test('the catalog keeps the column scopes it already had', async () => {
 		// The cap is a layout change. A header cell that stopped naming its column would trade one
-		// unlabelled reading for another.
+		// unlabelled reading for another. Three cells spell `scope` here; the other four get it from
+		// the shared sortable header, which is where it has to live so the next table cannot ship
+		// without it.
 		const source = await read(TABS, 'CatalogTable.tsx');
+		const shared = await read(SRC, 'components/shared/SortableColumnHeader.tsx');
 		const heads = source.slice(source.indexOf('<thead'), source.indexOf('</thead>'));
-		expect((heads.match(/scope="col"/g) ?? []).length).toBe(7);
+		expect((heads.match(/scope="col"/g) ?? []).length).toBe(3);
+		expect((heads.match(/<SortableColumnHeader\b/g) ?? []).length).toBe(4);
+		expect(shared).toContain('scope="col"');
 		expect(source).toContain('aria-label="Audit catalog"');
 	});
 });

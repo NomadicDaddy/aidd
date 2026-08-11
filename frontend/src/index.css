@@ -233,6 +233,17 @@
 	animation-delay: 190ms;
 }
 
+/* A tab panel is not a route arrival. `TabPanel` unmounts and remounts on every tab change, so a
+   panel rendered as a direct child of `.page-reveal` replayed the whole entrance on an in-page
+   click: measured two frames after switching tabs on /audits, the new panel computed
+   `animation-delay: 0.1s` with `opacity: 0` — blank for 100ms and then 380ms of fade and 6px rise,
+   for a control the reader expects to be instant. Exempting the panel here rather than restructuring
+   each page keeps the header and tab strip animating on arrival, which is the part the reveal was
+   written for, and covers every tabbed surface at once. */
+.page-reveal > [role='tabpanel'] {
+	animation: none;
+}
+
 @keyframes page-reveal-in {
 	from {
 		opacity: 0;

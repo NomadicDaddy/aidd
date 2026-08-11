@@ -3,20 +3,20 @@ import { default as Save } from 'lucide-react/dist/esm/icons/save';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { AuditApplicabilityCell, AuditProfileMapping } from '../../../api/types.ts';
+import type { AuditProfileMapping } from '../../../api/types.ts';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { FilterSearch, FilterToolbar } from '../../../components/shared/FilterToolbar.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
-import { Badge, StatusDot } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useAuditProfileMapping, useUpdateAuditProfileMapping } from '../../../hooks/useAudits.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
-import { bucketColumns, bucketShortLabels, describeCell, effectTone } from '../auditsUtils.ts';
+import { bucketColumns, bucketShortLabels } from '../auditsUtils.ts';
+import { EffectCell, MatrixLegend } from './matrixCells.tsx';
 
 export function ApplicabilityTab() {
 	const mapping = useAuditProfileMapping();
@@ -101,14 +101,28 @@ export function ApplicabilityTab() {
 						}
 						className="mb-0"
 						description={
-							<span className="block max-w-2xl">
-								Cells show the strictest effect any rule could produce for that
-								bucket; an asterisk means the rule has additional facet constraints,
-								so the effect only applies for matching profiles. Hover for source
-								and rule id.
-							</span>
+							// No `title`. The selected tab trigger two rows above already reads
+							// "Applicability", so titling the card with the tab's own name restated
+							// it verbatim and emitted a second `h2` carrying the trigger's
+							// accessible name. The Catalog tab gives its toolbar no header at all,
+							// so of the three tabs on the app's reference tabbed page two were
+							// titled with their own tab name and one was not.
+							<>
+								<span className="block max-w-2xl">
+									Cells show the strictest effect any rule could produce for that
+									bucket; an asterisk means the rule has additional facet
+									constraints, so the effect only applies for matching profiles.
+									Hover for source and rule id.
+								</span>
+								{/* The legend belongs to the card, not to the `<thead>`. As a second
+								    header row it shared the `bg-muted` strip and the border of the
+								    column labels, so it read as a second row of them — and its
+								    `<th colSpan={8} scope="colgroup">` was announced as a column
+								    header for every row beneath it. The card stack below already
+								    rendered the legend outside its grid; both layouts agree now. */}
+								<MatrixLegend />
+							</>
 						}
-						title="Audit ✕ Bucket Applicability"
 					/>
 				}
 				noun="audits"
@@ -184,19 +198,16 @@ export function ApplicabilityTab() {
 									</th>
 								))}
 							</tr>
-							<tr>
-								<th
-									className="border-b border-border bg-muted px-3 py-1.5 font-normal normal-case"
-									colSpan={bucketColumns.length + 1}
-									scope="colgroup">
-									<MatrixLegend />
-								</th>
-							</tr>
 						</thead>
 						<tbody>
 							{visibleRows.map((row) => (
+								// The same `hover:bg-muted/60` the Catalog tab's rows carry. About 85%
+								// of these cells are a 6px neutral dot and the row rule is 1.23:1
+								// against the card, so tracking one audit across eight columns and
+								// 1960px rested on a separator at the threshold of visible with
+								// nothing for the eye to land on between.
 								<tr
-									className="border-b border-border last:border-0"
+									className="border-b border-border last:border-0 hover:bg-muted/60"
 									key={row.auditName}>
 									{/* The same audit id the Catalog tab renders in mono. It is one string
 								    identifying one file, and reading it in two faces on two tabs of the
@@ -226,10 +237,8 @@ export function ApplicabilityTab() {
 				</OverflowScroller>
 			</Card>
 
+			{/* No legend card here any more: the toolbar header above carries it at every width. */}
 			<div className="space-y-2 xl:hidden">
-				<Card className="py-2">
-					<MatrixLegend />
-				</Card>
 				{visibleRows.map((row) => (
 					<div className="rounded-md border border-border p-3" key={row.auditName}>
 						<div className="font-mono font-medium text-foreground">{row.auditName}</div>
@@ -249,47 +258,5 @@ export function ApplicabilityTab() {
 				))}
 			</div>
 		</div>
-	);
-}
-
-/**
- * `default` is roughly 85% of the cells. Rendered as a filled badge it produced six near-identical
- * columns of pills and buried the handful of cells that carry a decision, so the baseline is a muted
- * dot and the badge is reserved for the effects that deviate from it.
- */
-function EffectCell({ cell }: { cell: AuditApplicabilityCell }) {
-	if (cell.effect === 'default') {
-		return (
-			<span
-				className="inline-flex items-center gap-0.5 text-xs text-muted-foreground"
-				title={describeCell(cell)}>
-				<StatusDot />
-				<span className="sr-only">default</span>
-				{cell.conditional ? '*' : ''}
-			</span>
-		);
-	}
-	return (
-		<Badge tone={effectTone[cell.effect]}>
-			<span title={describeCell(cell)}>
-				{cell.effect}
-				{cell.conditional ? '*' : ''}
-			</span>
-		</Badge>
-	);
-}
-
-function MatrixLegend() {
-	return (
-		<span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-			<span className="inline-flex items-center gap-1">
-				<StatusDot />
-				default
-			</span>
-			<Badge tone={effectTone.required}>required</Badge>
-			<Badge tone={effectTone.disabled}>disabled</Badge>
-			<Badge tone={effectTone.excluded}>excluded</Badge>
-			<span>* also constrained by non-bucket facets</span>
-		</span>
 	);
 }

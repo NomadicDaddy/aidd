@@ -137,8 +137,10 @@ export function OverridesTab() {
 							</Button>
 						}
 						className="mb-0"
+						// No `title`: the selected tab trigger already reads "Project Overrides"
+						// 60px above this, and the duplicate heading also duplicated the trigger's
+						// accessible name. Same call as the Applicability tab.
 						description="Per-project effects layered above the global mapping."
-						title="Project Overrides"
 					/>
 				}
 				noun="audits"
@@ -191,9 +193,13 @@ export function OverridesTab() {
 							description="Optional rules layered above the global mapping for this project. JSON array matching the global rule schema."
 							title="Project-scoped Rules"
 						/>
+						{/* `xl:min-h-[34rem]`: `items-start` above stops this card inheriting the
+						    list's height, which was right — but at 2250x1309 it left 694px of empty
+						    column beside the densest table on the page. The room goes to the editor
+						    rather than to the card frame, so the card still shrink-wraps below xl. */}
 						<textarea
 							aria-label="Project audit rules JSON"
-							className={`${textareaClass} min-h-[260px] font-mono text-xs`}
+							className={`${textareaClass} min-h-[260px] font-mono text-xs xl:min-h-[34rem]`}
 							onChange={(event) => setRulesText(event.target.value)}
 							value={rulesText}
 						/>

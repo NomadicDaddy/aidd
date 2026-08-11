@@ -4,6 +4,7 @@ import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { textareaClass } from '../../../lib/formStyles.ts';
+import { monoEditorMeasureClass } from '../../../lib/typography.ts';
 import { auditDefinitionEditorId } from '../auditsUtils.ts';
 
 interface AuditDefinitionEditorProps {
@@ -65,9 +66,14 @@ export function AuditDefinitionEditor({
 					identifier={selectedAudit ?? undefined}
 					title="Audit definition"
 				/>
+				{/* Audit definitions are mostly markdown prose, and at the full 1962px card width
+				    this ran about 270 characters to the line while three quarters of every
+				    frontmatter line sat empty. `monoEditorMeasureClass` is the same 100ch cap the
+				    notes pad and the spec field use; the card, its header and Save keep the full
+				    width. */}
 				<textarea
 					aria-label="Audit definition markdown"
-					className={`${textareaClass} min-h-[320px] font-mono text-xs`}
+					className={`${textareaClass} ${monoEditorMeasureClass} min-h-[320px] font-mono text-xs`}
 					onChange={(event) => onContentChange(event.target.value)}
 					value={content}
 				/>

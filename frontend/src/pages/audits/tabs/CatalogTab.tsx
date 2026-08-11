@@ -16,12 +16,14 @@ import {
 	selectVisibleAudits as selectVisibleAuditsHelper,
 	toggleAuditSelected as toggleAuditSelectedHelper,
 } from '../auditSelection.ts';
+import { auditDefinitionEditorId, type HealthFilter } from '../auditsUtils.ts';
 import {
-	auditDefinitionEditorId,
-	auditLaunchTargetsId,
-	type HealthFilter,
-	healthFor,
-} from '../auditsUtils.ts';
+	type CatalogSort,
+	type CatalogSortKey,
+	defaultCatalogSort,
+	filterAndSortCatalog,
+	nextCatalogSort,
+} from '../catalogSort.ts';
 import { AuditDefinitionEditor } from './AuditDefinitionEditor.tsx';
 import { CatalogTable } from './CatalogTable.tsx';
 import { CatalogToolbar } from './CatalogToolbar.tsx';
@@ -39,8 +41,10 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const [query, setQuery] = useState('');
 	const [healthFilter, setHealthFilter] = useState<HealthFilter>('all');
 	const [enabledFilter, setEnabledFilter] = useState<'all' | 'disabled' | 'enabled'>('all');
+	const [sort, setSort] = useState<CatalogSort>(defaultCatalogSort);
 	// Collapsed on arrival: expanded, the 33-project picker put the first header of the catalog
-	// table below the fold. The toolbar's "Choose launch targets" opens it.
+	// table below the fold. Its own "Choose targets" button, in the actions card beside the run
+	// buttons it gates, opens it.
 	const [launchTargetsOpen, setLaunchTargetsOpen] = useState(false);
 	const [content, setContent] = useState('');
 	const definition = useAuditDefinition(selectedAudit);
@@ -48,21 +52,16 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const lower = query.trim().toLowerCase();
 	// Memoize the filtered+sorted list so its reference stays stable across renders and downstream
 	// name-set memos keyed on filteredDefinitions can cache without retriggering their effects.
-	const filteredDefinitions = useMemo(() => {
-		const matching = (manager.data?.definitions ?? []).filter((item) => {
-			if (lower && !`${item.name} ${item.path}`.toLowerCase().includes(lower)) return false;
-			if (healthFilter !== 'all' && healthFor(item) !== healthFilter) return false;
-			if (enabledFilter === 'enabled' && !item.enabled) return false;
-			if (enabledFilter === 'disabled' && item.enabled) return false;
-			return true;
-		});
-		return matching.sort((left, right) => {
-			const leftScore = left.changePotential?.score ?? -1;
-			const rightScore = right.changePotential?.score ?? -1;
-			if (leftScore !== rightScore) return rightScore - leftScore;
-			return left.name.localeCompare(right.name);
-		});
-	}, [manager.data?.definitions, lower, healthFilter, enabledFilter]);
+	const filteredDefinitions = useMemo(
+		() =>
+			filterAndSortCatalog(manager.data?.definitions ?? [], {
+				enabledFilter,
+				healthFilter,
+				query: lower,
+				sort,
+			}),
+		[manager.data?.definitions, lower, healthFilter, enabledFilter, sort],
+	);
 
 	const filteredNames = useMemo(
 		() => new Set(filteredDefinitions.map((d) => d.name)),
@@ -160,13 +159,6 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 			?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	}
 
-	function focusLaunchTargets() {
-		setLaunchTargetsOpen(true);
-		const section = document.getElementById(auditLaunchTargetsId);
-		section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		section?.querySelector<HTMLInputElement>('input')?.focus();
-	}
-
 	function toggleProject(id: string) {
 		setSelectedProjectIds((current) =>
 			current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
@@ -237,9 +229,16 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				enabledFilter={enabledFilter}
 				filteredCount={filteredDefinitions.length}
 				healthFilter={healthFilter}
-				needsLaunchTargets={selectedProjectCount === 0}
+				launchTargets={
+					<LaunchTargetsCard
+						onOpenChange={setLaunchTargetsOpen}
+						onToggleProject={toggleProject}
+						open={launchTargetsOpen}
+						projects={manager.data?.projects ?? []}
+						selectedProjectIds={selectedProjectIds}
+					/>
+				}
 				onEnabledFilterChange={setEnabledFilter}
-				onFocusLaunchTargets={focusLaunchTargets}
 				onHealthFilterChange={setHealthFilter}
 				onQueryChange={setQuery}
 				onRun={runAudits}
@@ -255,14 +254,6 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				updatePending={updateSettings.isPending}
 			/>
 
-			<LaunchTargetsCard
-				onOpenChange={setLaunchTargetsOpen}
-				onToggleProject={toggleProject}
-				open={launchTargetsOpen}
-				projects={manager.data?.projects ?? []}
-				selectedProjectIds={selectedProjectIds}
-			/>
-
 			<CatalogTable
 				allSelected={allVisibleAuditsSelected}
 				definitions={filteredDefinitions}
@@ -270,10 +261,14 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				onJumpToMatrix={onJumpToMatrix}
 				onSelect={selectAudit}
 				onSelectAll={selectVisibleAudits}
+				onSort={(key: CatalogSortKey) =>
+					setSort((current) => nextCatalogSort(current, key))
+				}
 				onToggleSelected={toggleAuditSelected}
 				selectedAudit={selectedAudit}
 				selectedAuditNames={selectedAuditNames}
 				someSelected={someVisibleAuditsSelected}
+				sort={sort}
 			/>
 
 			<AuditDefinitionEditor

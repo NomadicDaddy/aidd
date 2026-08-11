@@ -1,7 +1,9 @@
 import type { AuditDefinition } from '../../../api/types.ts';
+import type { CatalogSort, CatalogSortKey } from '../catalogSort.ts';
 
 import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
+import { SortableColumnHeader } from '../../../components/shared/SortableColumnHeader.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
@@ -23,10 +25,12 @@ interface CatalogTableProps {
 	onJumpToMatrix: () => void;
 	onSelect: (name: string) => void;
 	onSelectAll: () => void;
+	onSort: (key: CatalogSortKey) => void;
 	onToggleSelected: (name: string) => void;
 	selectedAudit: null | string;
 	selectedAuditNames: string[];
 	someSelected: boolean;
+	sort: CatalogSort;
 }
 
 // Every numeric column is right-aligned, so the digits line up against the column edge instead of
@@ -41,10 +45,12 @@ export function CatalogTable({
 	onJumpToMatrix,
 	onSelect,
 	onSelectAll,
+	onSort,
 	onToggleSelected,
 	selectedAudit,
 	selectedAuditNames,
 	someSelected,
+	sort,
 }: CatalogTableProps) {
 	function handleHeaderCheckbox() {
 		if (allSelected) onClearAll();
@@ -90,19 +96,47 @@ export function CatalogTable({
 								</th>
 								{/* The score used to sit inline after a variable-width band badge, so
 								    it started at a different x on every row and never formed a column
-								    despite carrying `tabular-nums`. It is a column now. */}
-								<th className={numericHead} scope="col">
-									Score
-								</th>
-								<th className={numericHead} scope="col">
-									Applicable Projects
-								</th>
-								<th className={numericHead} scope="col">
-									{reportsColumnLabel}
-								</th>
-								<th className={numericHead} scope="col">
-									{bucketsColumnLabel}
-								</th>
+								    despite carrying `tabular-nums`. It is a column now.
+
+								    All four numeric columns are `SortableColumnHeader`. The table was
+								    already sorted — score descending, visibly so — but said nothing
+								    about it and offered no way to change it, on the surface the
+								    baseline names as this component's reference consumer. The
+								    header's own `<button>` is what makes the affordance visible; the
+								    `text-right` cells put it against the column edge the digits use,
+								    so the label still lines up with the numbers below it. */}
+								<SortableColumnHeader
+									activeDir={sort.dir}
+									activeKey={sort.key}
+									className={numericHead}
+									label="Score"
+									onSort={onSort}
+									sortKey="score"
+								/>
+								<SortableColumnHeader
+									activeDir={sort.dir}
+									activeKey={sort.key}
+									className={numericHead}
+									label="Applicable Projects"
+									onSort={onSort}
+									sortKey="projects"
+								/>
+								<SortableColumnHeader
+									activeDir={sort.dir}
+									activeKey={sort.key}
+									className={numericHead}
+									label={reportsColumnLabel}
+									onSort={onSort}
+									sortKey="reports"
+								/>
+								<SortableColumnHeader
+									activeDir={sort.dir}
+									activeKey={sort.key}
+									className={numericHead}
+									label={bucketsColumnLabel}
+									onSort={onSort}
+									sortKey="buckets"
+								/>
 							</tr>
 						</thead>
 						<tbody>

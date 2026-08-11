@@ -22,12 +22,30 @@ describe('the catalog table starts on the first screen', () => {
 		expect(card).toContain('{open &&');
 	});
 
-	test('the tab arrives with it collapsed and opens it to focus it', async () => {
+	test('the tab arrives with it collapsed', async () => {
 		const tab = await read(TABS, 'CatalogTab.tsx');
 
 		expect(tab).toContain('useState(false)');
-		expect(tab).toContain('setLaunchTargetsOpen(true)');
 		expect(tab).toContain('open={launchTargetsOpen}');
+	});
+
+	test('the picker lives in the card holding the buttons it gates', async () => {
+		// Collapsed it was a title, a count badge and one button in a card of its own, stacked
+		// under another card holding the four buttons it gates — and the toolbar carried a second
+		// "Choose launch targets" button doing the same thing as the one in its header.
+		// Comments stripped from the two negatives: each file explains the markup it lost in a
+		// comment that quotes it.
+		const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, '');
+		const tab = await read(TABS, 'CatalogTab.tsx');
+		const toolbar = strip(await read(TABS, 'CatalogToolbar.tsx'));
+		const picker = strip(await read(TABS, 'LaunchTargetsCard.tsx'));
+
+		expect(tab).toContain('launchTargets={');
+		expect(toolbar).toContain('{launchTargets}');
+		expect(toolbar).not.toContain('Choose launch targets');
+		// The picker brings no card of its own; the actions card is the card. (`<CardHeader` is
+		// still expected, which is why this matches the tag boundary rather than the prefix.)
+		expect(picker).not.toMatch(/<Card[\s>]/u);
 	});
 });
 
@@ -117,9 +135,34 @@ describe('the applicability matrix can be searched', () => {
 		expect(caps).toEqual(['max-h-[calc(100dvh-24rem)]']);
 		// The intro prose is the toolbar's header rather than a card of its own — one fewer box of
 		// permanent chrome above a region already short of vertical room.
-		expect(tab).toContain('title="Audit ✕ Bucket Applicability"');
+		expect(tab).toContain('Cells show the strictest effect');
 		expect(tab.indexOf('<FilterToolbar')).toBeLessThan(
-			tab.indexOf('title="Audit ✕ Bucket Applicability"'),
+			tab.indexOf('Cells show the strictest effect'),
 		);
+	});
+
+	test('the toolbar header does not restate the tab name', async () => {
+		// The selected tab trigger two rows above already reads "Applicability". Titling the
+		// card with the tab's own name restated it verbatim and emitted a second `h2` carrying
+		// the trigger's accessible name. The Catalog tab gives its toolbar no header at all, so
+		// of the three tabs on this page two were titled with their own tab name and one was not.
+		const applicability = await read(TABS, 'ApplicabilityTab.tsx');
+		const overrides = await read(TABS, 'OverridesTab.tsx');
+
+		expect(applicability).not.toContain('Bucket Applicability');
+		expect(overrides).not.toContain(String.raw`title="Project Overrides"`);
+	});
+
+	test('the legend belongs to the card, not to a second header row', async () => {
+		// As a `<th colSpan={8} scope="colgroup">` it shared the `bg-muted` strip and the border
+		// of the column labels, so it read as a second row of them, and it was announced as a
+		// column header for every row beneath it.
+		// Comments stripped first: the JSX comment where the old markup is explained quotes the
+		// very attribute this asserts is gone.
+		const tab = (await read(TABS, 'ApplicabilityTab.tsx')).replace(/\/\*[\s\S]*?\*\//g, '');
+
+		expect(tab).not.toContain(String.raw`scope="colgroup"`);
+		// One legend on the tab, in the toolbar header, serving the table and the card stack both.
+		expect((tab.match(/<MatrixLegend \/>/g) ?? []).length).toBe(1);
 	});
 });

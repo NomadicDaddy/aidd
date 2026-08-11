@@ -1,6 +1,6 @@
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 import type { HealthFilter } from '../auditsUtils.ts';
@@ -21,9 +21,9 @@ interface CatalogToolbarProps {
 	enabledFilter: EnabledFilter;
 	filteredCount: number;
 	healthFilter: HealthFilter;
-	needsLaunchTargets: boolean;
+	/** The launch-target disclosure, rendered inside the actions card whose buttons it gates. */
+	launchTargets: ReactNode;
 	onEnabledFilterChange: (value: EnabledFilter) => void;
-	onFocusLaunchTargets: () => void;
 	onHealthFilterChange: (value: HealthFilter) => void;
 	onQueryChange: (value: string) => void;
 	onRun: (
@@ -48,9 +48,8 @@ export function CatalogToolbar({
 	enabledFilter,
 	filteredCount,
 	healthFilter,
-	needsLaunchTargets,
+	launchTargets,
 	onEnabledFilterChange,
-	onFocusLaunchTargets,
 	onHealthFilterChange,
 	onQueryChange,
 	onRun,
@@ -77,90 +76,92 @@ export function CatalogToolbar({
 	const projectTargetProps = selectedProjectPath ? { projectDir: selectedProjectPath } : {};
 	return (
 		<>
-			<Card className="flex flex-wrap items-center gap-3">
-				{/* Three clusters, not six peers: the global toggle, everything that runs an audit, and
-				    everything that reviews one. Each launch-target picker now reads as bound to the
-				    buttons beside it, and a cluster wraps as a unit instead of shedding one button. */}
-				<div className="flex items-center border-border pr-3 sm:border-r">
-					<Button
-						disabled={updatePending || !settingsReady}
-						onClick={onToggleAuditsEnabled}
-						variant={auditsEnabled ? 'secondary' : 'danger'}>
-						<ShieldCheck className="h-4 w-4" />
-						{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
-					</Button>
+			{/* One card for everything that launches: the action row, then the disclosure naming the
+			    projects it launches against. They were two stacked cards, and the second was three
+			    controls in a box 829px wider than they need. */}
+			<Card className="flex flex-col gap-3">
+				<div className="flex flex-wrap items-center gap-3">
+					{/* Three clusters, not six peers: the global toggle, everything that runs an
+					    audit, and everything that reviews one. Each launch-target picker reads as
+					    bound to the buttons beside it, and a cluster wraps as a unit instead of
+					    shedding one button. */}
+					<div className="flex items-center border-border pr-3 sm:border-r">
+						<Button
+							disabled={updatePending || !settingsReady}
+							onClick={onToggleAuditsEnabled}
+							variant={auditsEnabled ? 'secondary' : 'danger'}>
+							<ShieldCheck className="h-4 w-4" />
+							{auditsEnabled ? 'Audits Enabled' : 'Audits Disabled'}
+						</Button>
+					</div>
+					<div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1.5">
+						<LaunchTargetControl
+							defaultScope={targetDefaults}
+							disabled={runLaunchPending}
+							label="Run"
+							mode="audit"
+							onChange={setRunTarget}
+							value={runTarget}
+							{...projectTargetProps}
+						/>
+						<Button
+							aria-describedby={selectedDescribedBy}
+							disabled={runSelectedDisabled}
+							onClick={() => onRun(false, undefined, runTarget)}
+							title={runSelectedDisabledReason}>
+							<Play className="h-4 w-4" />
+							Run Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
+						</Button>
+						<Button
+							aria-describedby={allDescribedBy}
+							disabled={runAllDisabled}
+							onClick={() => onRun(false, true, runTarget)}
+							title={runAllDisabledReason}
+							variant="secondary">
+							Run All
+						</Button>
+					</div>
+					<div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1.5">
+						<LaunchTargetControl
+							defaultScope={targetDefaults}
+							disabled={runLaunchPending}
+							label="Review"
+							mode="directive"
+							onChange={setReviewTarget}
+							value={reviewTarget}
+							{...projectTargetProps}
+						/>
+						<Button
+							aria-describedby={selectedDescribedBy}
+							disabled={runSelectedDisabled}
+							onClick={() => onRun(true, undefined, reviewTarget)}
+							title={runSelectedDisabledReason}
+							variant="secondary">
+							Review Selected
+							{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
+						</Button>
+					</div>
+					{/* No "Choose launch targets" button here any more: the disclosure it used to
+					    scroll to is the next thing in this card, and its own header carries the
+					    same control. */}
+					{runSelectedDisabledReason ? (
+						<span
+							className="basis-full text-xs text-muted-foreground"
+							id="audits-run-selected-disabled-help"
+							role="status">
+							{runSelectedDisabledReason}
+						</span>
+					) : null}
+					{runAllDisabledReason && runAllDisabledReason !== runSelectedDisabledReason ? (
+						<span
+							className="basis-full text-xs text-muted-foreground"
+							id="audits-run-all-disabled-help"
+							role="status">
+							{runAllDisabledReason}
+						</span>
+					) : null}
 				</div>
-				<div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1.5">
-					<LaunchTargetControl
-						defaultScope={targetDefaults}
-						disabled={runLaunchPending}
-						label="Run"
-						mode="audit"
-						onChange={setRunTarget}
-						value={runTarget}
-						{...projectTargetProps}
-					/>
-					<Button
-						aria-describedby={selectedDescribedBy}
-						disabled={runSelectedDisabled}
-						onClick={() => onRun(false, undefined, runTarget)}
-						title={runSelectedDisabledReason}>
-						<Play className="h-4 w-4" />
-						Run Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
-					</Button>
-					<Button
-						aria-describedby={allDescribedBy}
-						disabled={runAllDisabled}
-						onClick={() => onRun(false, true, runTarget)}
-						title={runAllDisabledReason}
-						variant="secondary">
-						Run All
-					</Button>
-				</div>
-				<div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1.5">
-					<LaunchTargetControl
-						defaultScope={targetDefaults}
-						disabled={runLaunchPending}
-						label="Review"
-						mode="directive"
-						onChange={setReviewTarget}
-						value={reviewTarget}
-						{...projectTargetProps}
-					/>
-					<Button
-						aria-describedby={selectedDescribedBy}
-						disabled={runSelectedDisabled}
-						onClick={() => onRun(true, undefined, reviewTarget)}
-						title={runSelectedDisabledReason}
-						variant="secondary">
-						Review Selected{selectedAuditCount > 0 ? ` (${selectedAuditCount})` : ''}
-					</Button>
-				</div>
-				{needsLaunchTargets ? (
-					<Button
-						className="basis-full sm:basis-auto"
-						onClick={onFocusLaunchTargets}
-						size="compact"
-						variant="ghost">
-						Choose launch targets
-					</Button>
-				) : null}
-				{runSelectedDisabledReason ? (
-					<span
-						className="basis-full text-xs text-muted-foreground"
-						id="audits-run-selected-disabled-help"
-						role="status">
-						{runSelectedDisabledReason}
-					</span>
-				) : null}
-				{runAllDisabledReason && runAllDisabledReason !== runSelectedDisabledReason ? (
-					<span
-						className="basis-full text-xs text-muted-foreground"
-						id="audits-run-all-disabled-help"
-						role="status">
-						{runAllDisabledReason}
-					</span>
-				) : null}
+				{launchTargets}
 			</Card>
 
 			<FilterToolbar

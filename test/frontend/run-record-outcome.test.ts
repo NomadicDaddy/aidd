@@ -139,6 +139,9 @@ describe('DB run outcome classification', () => {
 	test('reveals a newly launched run without hiding concurrent runs in other projects', () => {
 		expect(filtersForLaunchedRun()).toEqual({
 			historyProject: 'all',
+			// Kind widens with the rest: launching an ad-hoc run while the feed is filtered to
+			// Pipelines would otherwise reveal nothing at all.
+			kindFilter: 'all',
 			modeFilter: 'all',
 			query: '',
 			statusFilter: 'all',

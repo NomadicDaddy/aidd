@@ -40,6 +40,7 @@ const MAX_PRETTY_ENTRIES = 2000;
 export function LiveConsole({
 	badge,
 	hasOutput,
+	hasSelection,
 	message,
 	selectedRun,
 	sourceTotalBytes,
@@ -47,6 +48,10 @@ export function LiveConsole({
 }: {
 	badge: LiveConsoleBadge | null;
 	hasOutput: boolean;
+	// Whether a run is selected at all, which `selectedRun` cannot answer: it is also `undefined`
+	// while the selected run's record is still being fetched, and collapsing the console on that
+	// would flash the empty state at the start of every selection.
+	hasSelection: boolean;
 	message: string;
 	selectedRun: RunRecord | undefined;
 	// Full transcript size on disk, when known. The fetched `message` may be shorter (server tail
@@ -83,6 +88,26 @@ export function LiveConsole({
 	useEffect(() => {
 		writeViewPreference(view);
 	}, [view]);
+
+	// Nothing selected is not an empty transcript, and it was being drawn as one: a 27rem scroller
+	// with an inset shadow and a border, holding the single sentence "Select a run to view output."
+	// — 432px of empty console reserved for output that cannot exist yet, on the state the page
+	// opens in. The card keeps its header so the column still says what it is, and the sentence
+	// renders as the prose it is. Placed after every hook so the hook order never changes.
+	if (!hasSelection) {
+		return (
+			<section className="flex min-h-0 flex-col">
+				<Card className="flex flex-col" variant="panel">
+					<CardHeader
+						className="mb-2"
+						icon={<Terminal aria-hidden="true" className="h-4 w-4 text-accent" />}
+						title="Live Console"
+					/>
+					<p className="text-xs text-muted-foreground">{message}</p>
+				</Card>
+			</section>
+		);
+	}
 
 	// Placeholder/status messages are prose, not a transcript; render them as plain text
 	// regardless of the preferred view.

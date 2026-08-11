@@ -19,6 +19,13 @@ export type UnifiedEntry =
 export type UnifiedStatusFilter =
 	'all' | 'completed_with_failures' | 'queued' | PipelineSessionStatus | RunStatus;
 
+// What kind of thing a row is, as the table already labels it. The feed merges three kinds under
+// one heading and the toolbar could filter by status, mode and project but not by the one axis the
+// merge introduced: a project with a dozen recipe sessions had no way to see just its ad-hoc runs.
+// `skill` is a pipeline session under the hood — see isSkillSession — but it reads as its own kind
+// in the KIND column, so it filters as its own kind too.
+export type UnifiedKindFilter = 'all' | 'pipeline' | 'run' | 'skill';
+
 export type UnifiedSelection = { id: string; kind: 'pipeline' | 'run' };
 
 export function entryKey(entry: UnifiedEntry): string {
@@ -84,7 +91,14 @@ export function entryMatchesStatus(entry: UnifiedEntry, filter: UnifiedStatusFil
 	return entry.kind === 'run' ? entry.run.status === filter : entry.session.status === filter;
 }
 
+export function entryMatchesKind(entry: UnifiedEntry, filter: UnifiedKindFilter): boolean {
+	if (filter === 'all') return true;
+	if (entry.kind === 'run') return filter === 'run';
+	return filter === (isSkillSession(entry.session) ? 'skill' : 'pipeline');
+}
+
 export interface UnifiedEntryFilters {
+	kind: UnifiedKindFilter;
 	mode: 'all' | RunMode;
 	project: string;
 	query: string;
@@ -99,6 +113,7 @@ export function entryMatchesFilters(entry: UnifiedEntry, filters: UnifiedEntryFi
 	) {
 		return false;
 	}
+	if (!entryMatchesKind(entry, filters.kind)) return false;
 	if (!entryMatchesStatus(entry, filters.status)) return false;
 	// Mode is a run-only concept; a specific mode filter hides pipeline entries.
 	if (filters.mode !== 'all' && (entry.kind !== 'run' || entry.run.mode !== filters.mode)) {

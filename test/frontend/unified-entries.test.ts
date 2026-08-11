@@ -78,7 +78,7 @@ function makeSession(overrides: Partial<PipelineSessionRecord> = {}): PipelineSe
 }
 
 function baseFilters(overrides: Partial<UnifiedEntryFilters> = {}): UnifiedEntryFilters {
-	return { mode: 'all', project: 'all', query: '', status: 'all', ...overrides };
+	return { kind: 'all', mode: 'all', project: 'all', query: '', status: 'all', ...overrides };
 }
 
 describe('unified execution entries', () => {

@@ -35,7 +35,9 @@ export function StepRunDetail({
 
 	const result = run.aiSummary ?? run.summary;
 	return (
-		<div className="mt-3 space-y-3">
+		// The containment goes here rather than on the step Card, because a container query cannot
+		// style the element that declares it and the grid below is this wrapper's own child.
+		<div className="@container mt-3 space-y-3">
 			{result ? (
 				// The step's AI summary is the one paragraph of running prose on this page, and it
 				// was setting at the full report width. The error message below stays uncapped:
@@ -44,7 +46,12 @@ export function StepRunDetail({
 					{result}
 				</p>
 			) : null}
-			<dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+			{/* Keyed off the step card's own width, not the window's. `sm:` measured a viewport that
+			    has nothing to do with this grid — the card is indented by its depth and sits inside
+			    the report column — so a two-item metadata row went three-up at 640px of *window*
+			    regardless of how narrow the card had become. The cap keeps MODE and EXIT CODE beside
+			    each other instead of stretching two short values across 1900px. */}
+			<dl className="grid max-w-[45rem] grid-cols-2 gap-x-4 gap-y-2 @min-[32rem]:grid-cols-3">
 				<MetadataItem label="Mode" mono value={run.mode} />
 				{/* No Duration here. The docstring above says the step card's own header keeps the
 				    timestamps and the duration, and this grid printed `step.durationMs` anyway —

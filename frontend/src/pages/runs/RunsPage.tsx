@@ -123,14 +123,17 @@ export function RunsPage() {
 			<RunFilters
 				filteredCount={page.filteredEntryCount}
 				historyProject={page.historyProject}
+				kindFilter={page.kindFilter}
 				modeFilter={page.modeFilter}
 				onClear={() => {
 					page.setHistoryProject('all');
 					page.setStatusFilter('all');
+					page.setKindFilter('all');
 					page.setModeFilter('all');
 					page.setQuery('');
 				}}
 				onHistoryProjectChange={page.setHistoryProject}
+				onKindFilterChange={page.setKindFilter}
 				onModeFilterChange={page.setModeFilter}
 				onQueryChange={page.setQuery}
 				onStatusFilterChange={page.setStatusFilter}

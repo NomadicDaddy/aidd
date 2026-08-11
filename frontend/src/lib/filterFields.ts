@@ -15,6 +15,10 @@ export const FILTER_FIELD_ORDER = [
 	'Status',
 	'State',
 	'Unsaved',
+	// What kind of thing the row is. It sits ahead of Mode because Mode narrows within a kind — it
+	// is a run-only concept, so choosing one already hides every pipeline and skill session — and
+	// behind Status because status is the one axis every kind shares.
+	'Kind',
 	'Mode',
 	'Health',
 	'Posture',

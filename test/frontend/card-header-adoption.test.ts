@@ -27,7 +27,11 @@ const exemptions: { file: string; why: string }[] = [
 		file: 'director/SuggestionLaunchPreviewDialog.tsx',
 		why: 'dialog title, owned by DialogPanel',
 	},
-	{ file: 'pipelineSessions/StepRows.tsx', why: 'per-step row title inside a list' },
+	// `pipelineSessions/StepRows.tsx` was exempt as a "per-step row title inside a list". Each
+	// executed step is a sunken Card carrying a badge rail, a title, a timestamp line and an "Open in
+	// Live Console" action — CardHeader's slot set exactly — and hand-rolling it is what let twelve
+	// step titles render at the same rank as the one card title above them. Both rows use CardHeader
+	// at `level="subsection"` now, so the file is scanned like the rest.
 	// `projects/ProjectCard.tsx` was exempt as a "catalog card title". It is a card with a title, a
 	// mono path, a stage line and a ring-plus-badge rail — CardHeader's slot set exactly — and
 	// hand-rolling it is what let the path render `break-all` while every other card identifier in

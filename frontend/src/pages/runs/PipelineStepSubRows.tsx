@@ -3,7 +3,7 @@ import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Button } from '../../components/ui/button.tsx';
+import { IconButton } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
@@ -66,17 +66,22 @@ export function PipelineStepSubRows({
 							<span className="min-w-0 flex-1 truncate text-foreground">
 								{step.stepName}
 							</span>
+							{/* The same square the session above uses for Report and Stop, at the same
+							    32px. It was a labelled `Console` button, which put a 78px pill on
+							    every step row directly beneath a rail of icon squares — the child
+							    action reading as the more prominent one, and each row's step name
+							    truncating that much earlier to pay for it. The label moves to the
+							    tooltip and the accessible name, both of which name the step. */}
 							{step.runId ? (
-								<Button
-									aria-label={`Show step ${step.stepName} run in Live Console`}
+								<IconButton
 									aria-pressed={selected}
+									ariaLabel={`Show step ${step.stepName} run in Live Console`}
+									className="shrink-0 sm:h-8 sm:w-8"
 									onClick={() => onSelectRun(step.runId ?? '')}
-									size="compact"
 									title="Show in Live Console"
 									variant={selected ? 'primary' : 'secondary'}>
-									<Terminal aria-hidden="true" className="h-3 w-3" />
-									Console
-								</Button>
+									<Terminal aria-hidden="true" className="h-3.5 w-3.5" />
+								</IconButton>
 							) : null}
 						</div>
 						<div className="mt-1 flex flex-wrap items-center gap-1.5 pl-8 text-muted-foreground">

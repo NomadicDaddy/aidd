@@ -2,9 +2,11 @@ import { classifyWebRun } from 'aidd-shared/runs/outcome';
 
 import type { RunContinuationReason, RunMode, RunRecord, RunStatus } from '../../api/types.ts';
 import type { OutcomeClassification } from '../../components/shared/local-aidd-history/outcome.ts';
+import type { UnifiedKindFilter } from './unifiedEntries.ts';
 
 export interface RunVisibilityFilters {
 	historyProject: string;
+	kindFilter: UnifiedKindFilter;
 	modeFilter: 'all' | RunMode;
 	query: string;
 	statusFilter: 'all' | RunStatus;
@@ -87,6 +89,7 @@ export function consumeInitialRunScroll(
 export function filtersForLaunchedRun(): RunVisibilityFilters {
 	return {
 		historyProject: 'all',
+		kindFilter: 'all',
 		modeFilter: 'all',
 		query: '',
 		statusFilter: 'all',

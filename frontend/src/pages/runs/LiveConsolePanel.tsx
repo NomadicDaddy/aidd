@@ -82,6 +82,7 @@ export function LiveConsolePanel({
 		<LiveConsole
 			badge={liveConsoleBadge}
 			hasOutput={liveConsoleHasOutput}
+			hasSelection={selectedRunId !== undefined}
 			message={liveConsoleMessage}
 			selectedRun={selectedRun}
 			sourceTotalBytes={output.totalBytes}

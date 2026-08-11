@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
-import type { RunMode, RunRecord } from '../../api/types.ts';
+import type { RunRecord } from '../../api/types.ts';
 
 import { usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
 import { useProjects } from '../../hooks/useProjects.ts';
 import { useContinueRun, useRunControls, useRunRecord, useRuns } from '../../hooks/useRuns.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
-import { consumeInitialRunScroll, filtersForLaunchedRun } from './runsUtils.ts';
+import { consumeInitialRunScroll } from './runsUtils.ts';
 import {
 	buildProjectRouteIdByPath,
 	buildUnifiedEntries,
@@ -21,8 +21,8 @@ import {
 	oldestStartedAt,
 	splitEntriesByLiveness,
 	type UnifiedSelection,
-	type UnifiedStatusFilter,
 } from './unifiedEntries.ts';
+import { useRunFilterState } from './useRunFilterState.ts';
 import { useRunLaunchForm } from './useRunLaunchForm.ts';
 
 // Auto-expanded active sessions on first load; a bound so many simultaneously active
@@ -57,10 +57,11 @@ export function useRunsPage() {
 	// State (not a ref) because it guards a render-phase adjustment below, where ref
 	// access is disallowed.
 	const [seededExpansion, setSeededExpansion] = useState(false);
-	const [historyProject, setHistoryProject] = useState(searchParams.get('project') ?? 'all');
-	const [statusFilter, setStatusFilter] = useState<UnifiedStatusFilter>('all');
-	const [modeFilter, setModeFilter] = useState<'all' | RunMode>('all');
-	const [query, setQuery] = useState('');
+	// `filters` and the reset are consumed here; everything else in the group is toolbar state that
+	// the page re-exports untouched, so it is spread straight into the returned object below.
+	const { filters, resetFiltersForLaunchedRun, ...filterState } = useRunFilterState(
+		searchParams.get('project') ?? 'all',
+	);
 	const [historyLimit, setHistoryLimit] = useState(HISTORY_DEFAULT_VISIBLE);
 
 	function scrollConsoleIntoView(): void {
@@ -105,11 +106,7 @@ export function useRunsPage() {
 		});
 	}
 	function onLaunched(run: RunRecord): void {
-		const visibilityFilters = filtersForLaunchedRun();
-		setHistoryProject(visibilityFilters.historyProject);
-		setStatusFilter(visibilityFilters.statusFilter);
-		setModeFilter(visibilityFilters.modeFilter);
-		setQuery(visibilityFilters.query);
+		resetFiltersForLaunchedRun();
 		setSelection({ id: run.id, kind: 'run' });
 	}
 	const launchForm = useRunLaunchForm(onLaunched);
@@ -138,7 +135,6 @@ export function useRunsPage() {
 	const selectedLaunchProject = projectList.find(
 		(project) => project.path === launchForm.projectDir,
 	);
-	const filters = { mode: modeFilter, project: historyProject, query, status: statusFilter };
 	const filteredEntries = buildUnifiedEntries(runList, sessionList).filter((entry) =>
 		entryMatchesFilters(entry, filters),
 	);
@@ -187,11 +183,11 @@ export function useRunsPage() {
 
 	useEffect(() => {
 		const next = new URLSearchParams();
-		if (historyProject !== 'all') next.set('project', historyProject);
+		if (filterState.historyProject !== 'all') next.set('project', filterState.historyProject);
 		if (selection?.kind === 'run') next.set('run', selection.id);
 		if (pipelineContextId !== undefined) next.set('pipeline', pipelineContextId);
 		setSearchParams(next, { replace: true });
-	}, [historyProject, pipelineContextId, selection, setSearchParams]);
+	}, [filterState.historyProject, pipelineContextId, selection, setSearchParams]);
 
 	function submitContinue(id: string): void {
 		traceDataMovement({
@@ -258,6 +254,7 @@ export function useRunsPage() {
 	}
 
 	return {
+		...filterState,
 		activeEntries,
 		continuedRunIds,
 		continueRun,
@@ -270,17 +267,14 @@ export function useRunsPage() {
 		handleSelectStepRun,
 		hasMore,
 		historyEntries,
-		historyProject,
 		isFetchingMore,
 		isLoading: runs.isLoading || pipelineSessions.sessions.isLoading,
 		launchForm,
 		liveConsoleRef,
 		loadedEntryCount: runList.length + sessionList.length,
-		modeFilter,
 		projectList,
 		projectRouteIdByPath,
 		projects,
-		query,
 		refresh,
 		runs,
 		selectedLaunchProject,
@@ -288,11 +282,6 @@ export function useRunsPage() {
 		selectedSession,
 		selection,
 		sessionsQuery: pipelineSessions.sessions,
-		setHistoryProject,
-		setModeFilter,
-		setQuery,
-		setStatusFilter,
-		statusFilter,
 		stopSession,
 		submitContinue,
 		toggleSession,

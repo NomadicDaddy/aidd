@@ -1,5 +1,5 @@
 import type { RunMode } from '../../api/types.ts';
-import type { UnifiedStatusFilter } from './unifiedEntries.ts';
+import type { UnifiedKindFilter, UnifiedStatusFilter } from './unifiedEntries.ts';
 
 import {
 	FilterSearch,
@@ -19,6 +19,17 @@ const STATUS_OPTIONS = [
 	{ label: 'Killed', value: 'killed' },
 ];
 
+// The KIND column's own vocabulary. The feed merges three kinds of execution under one heading and
+// the toolbar could filter by everything except the axis that merge introduced, so the only way to
+// read a project's ad-hoc runs apart from its recipe sessions was to type into the search box and
+// hope the word did not also appear in a project path.
+const KIND_OPTIONS = [
+	{ label: 'All kinds', value: 'all' },
+	{ label: 'Runs', value: 'run' },
+	{ label: 'Pipelines', value: 'pipeline' },
+	{ label: 'Skills', value: 'skill' },
+];
+
 const MODE_OPTIONS = [
 	{ label: 'All modes', value: 'all' },
 	{ label: 'Coding', value: 'coding' },
@@ -34,9 +45,11 @@ const MODE_OPTIONS = [
 export function RunFilters({
 	filteredCount,
 	historyProject,
+	kindFilter,
 	modeFilter,
 	onClear,
 	onHistoryProjectChange,
+	onKindFilterChange,
 	onModeFilterChange,
 	onQueryChange,
 	onStatusFilterChange,
@@ -47,9 +60,11 @@ export function RunFilters({
 }: {
 	filteredCount: number;
 	historyProject: string;
+	kindFilter: UnifiedKindFilter;
 	modeFilter: 'all' | RunMode;
 	onClear: () => void;
 	onHistoryProjectChange: (value: string) => void;
+	onKindFilterChange: (value: UnifiedKindFilter) => void;
 	onModeFilterChange: (value: 'all' | RunMode) => void;
 	onQueryChange: (value: string) => void;
 	onStatusFilterChange: (value: UnifiedStatusFilter) => void;
@@ -64,11 +79,12 @@ export function RunFilters({
 		// auto` the width won, every select resolved to the full 1278px, and a wrap-flex toolbar
 		// became a stack. It is a grid of labelled fields now, in the house order.
 		<FilterToolbar
-			columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1.5fr]"
+			columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_1.5fr]"
 			filtered={filteredCount}
 			hasFilters={
 				query.trim() !== '' ||
 				statusFilter !== 'all' ||
+				kindFilter !== 'all' ||
 				modeFilter !== 'all' ||
 				historyProject !== 'all'
 			}
@@ -104,6 +120,23 @@ export function RunFilters({
 				}}
 				options={STATUS_OPTIONS}
 				value={statusFilter}
+			/>
+			{/* Kind before Mode, because Mode narrows within a kind: it is a run-only concept, so
+			    picking one already hides every pipeline and skill session. */}
+			<FilterSelect
+				label="Kind"
+				onChange={(value) => {
+					traceDataMovement({
+						category: 'event',
+						layer: 'ui',
+						operation: 'runs.filter.kind',
+						source: 'RunsPage',
+						summary: { kind: value },
+					});
+					onKindFilterChange(value as UnifiedKindFilter);
+				}}
+				options={KIND_OPTIONS}
+				value={kindFilter}
 			/>
 			<FilterSelect
 				label="Mode"

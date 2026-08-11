@@ -104,7 +104,12 @@ export function StepRunConsole({
 			</Button>
 			{open ? (
 				<>
-					{outputSummary ? <StepOutput output={outputSummary} /> : null}
+					{/* The persisted summary is a fallback, not a companion. Where the step has a
+					    run, the console below fetches that run's full transcript and the summary is
+					    a truncated copy of its head — so opening the disclosure produced two
+					    visually identical slabs, the second containing the first. It renders only
+					    where there is no run to fetch from, which is the case it exists for. */}
+					{outputSummary && !runId ? <StepOutput output={outputSummary} /> : null}
 					{runId && mounted ? (
 						<RunConsoleContent
 							onStreamingChange={setStreaming}

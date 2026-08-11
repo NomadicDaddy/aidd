@@ -103,10 +103,17 @@ describe('execution identity survives a narrow column', () => {
 		const table = await read('pages', 'runs', 'UnifiedExecutionTable.tsx');
 		const steps = await read('pages', 'runs', 'PipelineStepSubRows.tsx');
 
-		// MODEL held 20% and ellipsised every segment; STATUS held 17% for one badge.
-		expect(table).toContain('w-[26%]');
+		// MODEL held 20% and ellipsised every segment; STATUS held 17% for one badge. 26% was the
+		// correction and it overshot — the badges use around 150px of a 279px column at a 1075px
+		// table while NAME truncates a pipeline title and STATUS clamps a failure reason to a
+		// stub. 23% is the settled budget: three points back to the two columns that needed them,
+		// and still clear of the 20% that was measured as too narrow.
+		expect(table).toContain('w-[23%]');
 		expect(table).not.toContain('w-[20%]');
 		expect(table).not.toContain('w-[17%]');
+		// The identity column and the only prose column are what the points were taken for.
+		expect(table).toContain('w-[24%]');
+		expect(table).toContain('w-[14%]');
 		// The sub-rows used to follow it by restating the colgroup as `fr` units. They follow it
 		// now by being rows of this table: seven `<td>` under seven `<col>`, nothing to restate.
 		expect(steps).not.toContain('grid-cols-[');

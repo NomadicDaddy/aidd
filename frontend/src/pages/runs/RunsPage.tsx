@@ -151,8 +151,17 @@ export function RunsPage() {
 			    arithmetic works: the console's own `minmax(24rem,…)` floor takes 384px, the 1.25rem
 			    gap takes 20px, and the table keeps the ~650px it needs to stay readable. Below it
 			    the two stack, which is the correct answer for a 1024px column however wide the
-			    window behind it happens to be. */}
-			<div className="grid min-w-0 gap-5 @min-[66rem]:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] @min-[66rem]:grid-rows-[auto_1fr] @min-[66rem]:items-start">
+			    window behind it happens to be.
+
+			    Above 100rem the ratio inverts toward the console, because the two columns hold
+			    opposite kinds of content. The table's widest cell is a badge group and a duration;
+			    the console's is a 200-character launch command. At `2fr` in a 1962px column the
+			    table took 1295px and the transcript 647px, and `git status --porcelain=v2` wrapped
+			    as `--porcel` / `ain=v2` — a broken flag beside a table with slack in every column.
+			    `1.4fr` puts that at ~1133/809. It is a second step rather than a flat swap because
+			    the table carries `min-w-[56rem]` and scrolls under it: below a 1600px column, 2fr
+			    is what keeps the table above its own floor. */}
+			<div className="grid min-w-0 gap-5 @min-[66rem]:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] @min-[66rem]:grid-rows-[auto_1fr] @min-[66rem]:items-start @min-[100rem]:grid-cols-[minmax(0,1.4fr)_minmax(24rem,1fr)]">
 				<div className="min-w-0 @min-[66rem]:col-start-1 @min-[66rem]:row-start-1">
 					{showingInitialSkeleton ? (
 						<SkeletonRows columns={4} count={6} label="Loading runs…" />

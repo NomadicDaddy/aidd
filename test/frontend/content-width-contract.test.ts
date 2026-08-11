@@ -38,6 +38,12 @@ async function* sources(): AsyncGenerator<{ path: string; source: string }> {
  * to prevent.
  */
 const sanctionedSteps = new Set([
+	// Sorted as strings, so the widest step leads. The Runs split re-weights here rather than
+	// turning on: 1600px is where the table can give points to the transcript and still clear its
+	// own `min-w-[56rem]`, measured on the column and not on a window — the 1920 window's content
+	// column is 1632px and the 2250 one's is 1962px, while 1536 and 1440 sit below it and keep the
+	// original ratio.
+	'100rem',
 	'32rem',
 	'40rem',
 	'44rem',

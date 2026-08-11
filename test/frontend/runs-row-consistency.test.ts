@@ -133,7 +133,11 @@ describe('Runs row consistency', () => {
 
 		expect(table).toContain('table-fixed');
 		expect(table).toContain('<colgroup>');
-		expect(table).toContain('w-[21%]');
+		// NAME's budget, pinned so a later rebalance has to come back through this test. It was
+		// 21%, which truncated a pipeline title and broke its step chip and timestamp onto lines of
+		// their own at a 1075px table; the points came off MODEL, which had more than its badges
+		// use. `identity-badge-compact.test.ts` holds the other side of that trade.
+		expect(table).toContain('w-[24%]');
 		expect(table).toContain('Kind');
 		// Both surfaces render the same `stepSubRows` helper, so the selected step run stays
 		// highlighted in the table and in the mobile list from one declaration.

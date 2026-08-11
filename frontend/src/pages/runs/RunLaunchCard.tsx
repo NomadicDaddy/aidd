@@ -101,7 +101,14 @@ export function RunLaunchCard({
 				</select>
 				<Input
 					aria-label="Additional CLI args"
-					className="min-w-56 flex-[2]"
+					// Capped, not weighted. At `flex-[2]` this field absorbed every pixel of slack
+					// in the row: 915px of it at 2250 for a short flag string, which pushed the
+					// launch-target control and the Launch button to x=2111 — 1830px right of the
+					// project select the operator had touched a moment earlier. The row is
+					// `flex-wrap` with start packing, so capping the field is all it takes to pull
+					// them back beside the fields they belong with. `min-w-56` stays, and is what
+					// keeps the placeholder off the truncation it hit at 1280.
+					className="max-w-[68ch] min-w-56 flex-1"
 					onChange={(event) => onExtraArgsChange(event.target.value)}
 					placeholder="Additional args (e.g. --filter-by id --filter audit-*)"
 					value={extraArgs}

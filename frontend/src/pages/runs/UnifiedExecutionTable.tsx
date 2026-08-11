@@ -119,17 +119,26 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 						<table
 							aria-label={title}
 							className="w-full min-w-[56rem] table-fixed text-left text-sm">
-							{/* MODEL takes six points off STATUS, which was holding 17% for one badge
+							{/* MODEL took six points off STATUS, which was holding 17% for one badge
 							    while MODEL ellipsised every segment of an execution identity to a
-							    character or two down twenty rows. */}
+							    character or two down twenty rows. That was right, and 20% stays
+							    the floor it may not go back under — but 26% overshot. In a 1075px
+							    table the identity badges render around 150px inside a 279px MODEL
+							    column, while NAME at 225px truncates 'reconcile project artifacts'
+							    and drops its step chip and its timestamp onto lines of their own,
+							    and STATUS at 129px clamps a failure reason to 'directive run
+							    finished with…'. Three points come back off MODEL (247px, still
+							    clear of the floor) and one each off DURATION, which holds
+							    '24m 55s', and ACTIONS, which holds two icon buttons. NAME and
+							    STATUS take them. */}
 							<colgroup>
-								<col className="w-[21%]" />
+								<col className="w-[24%]" />
 								<col className="w-[11%]" />
 								<col className="w-[9%]" />
-								<col className="w-[26%]" />
-								<col className="w-[12%]" />
-								<col className="w-[9%]" />
-								<col className="w-[12%]" />
+								<col className="w-[23%]" />
+								<col className="w-[14%]" />
+								<col className="w-[8%]" />
+								<col className="w-[11%]" />
 							</colgroup>
 							{/* Pinned per-cell rather than on the <thead>: a sticky thead leaves the cells
 							    transparent, so rows scrolled through the headings. Each th carries the

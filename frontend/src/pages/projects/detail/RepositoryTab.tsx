@@ -2,7 +2,8 @@ import type { ProjectGitStatusSummary, RepositoryInfoState } from '../../../api/
 
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../../components/shared/LoadingState.tsx';
-import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { TabIntro } from '../../../components/shared/TabIntro.tsx';
+import { Card } from '../../../components/ui/card.tsx';
 import {
 	useProjectRepositoryInfo,
 	useProjectRepositoryRefs,
@@ -30,21 +31,14 @@ export function RepositoryTab({
 
 	return (
 		<div className="space-y-4">
-			{/* Carded, like every other section header on the tab — this one alone sat on the
-			    page background, directly above the carded 'Working tree' header. The measure cap
-			    is the Telemetry tab's prose treatment. */}
-			<Card>
-				<CardHeader
-					className="mb-0"
-					description={
-						<span className="block max-w-prose text-sm">
-							A git snapshot of this project — dominant language, branches, tags,
-							contributors, and lines of code, derived from git-tracked files only.
-						</span>
-					}
-					title="Repository"
-				/>
-			</Card>
+			{/* Uncarded, like every other tab intro. This one was carded once for the opposite
+			    reason — it was then the only intro sitting on the page background — and the
+			    consistency argument now points the other way: no tab opens with a bordered panel
+			    around a heading the tab strip already gave. */}
+			<TabIntro
+				description="A git snapshot of this project — dominant language, branches, tags, contributors, and lines of code, derived from git-tracked files only."
+				title="Repository"
+			/>
 			<WorkingTreeCard projectId={projectId} status={gitStatus} />
 			{query.isLoading ? (
 				<Card aria-busy="true">

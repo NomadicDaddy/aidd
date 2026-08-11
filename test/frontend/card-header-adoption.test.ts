@@ -8,6 +8,13 @@ function source(...segments: string[]): Promise<string> {
 	return Bun.file(join(pagesRoot, ...segments)).text();
 }
 
+// The two ways a panel is allowed to name itself. `CardHeader` when the header carries controls or
+// titles a card; `TabIntro` when all the header had was the tab's own label and a sentence, where
+// the box around it was the whole cost.
+function declaresHeader(text: string): boolean {
+	return text.includes('<CardHeader') || text.includes('<TabIntro');
+}
+
 // A section header is a heading that titles a card or a page section. Dialog titles, list-item
 // titles and the small uppercase field-group labels are not section headers and are not in scope —
 // so the scan looks for the two typographic ranks CardHeader owns rather than for every `<h2>`.
@@ -134,7 +141,7 @@ describe('CardHeader adoption', () => {
 		const missing: string[] = [];
 		for await (const file of glob.scan({ absolute: false, cwd: tabRoot, onlyFiles: true })) {
 			const text = await Bun.file(join(tabRoot, file)).text();
-			if (text.includes('<CardHeader')) continue;
+			if (declaresHeader(text)) continue;
 			// A tab that composes sibling panels declares no header of its own — Runs is three
 			// panels, each carrying the house header for its own card. Follow one level of local
 			// imports rather than reading the absence as a missing header.
@@ -144,11 +151,29 @@ describe('CardHeader adoption', () => {
 			const headers = await Promise.all(
 				siblings.map((sibling) => Bun.file(join(tabRoot, sibling)).text()),
 			);
-			if (!headers.some((header) => header.includes('<CardHeader'))) missing.push(file);
+			if (!headers.some(declaresHeader)) missing.push(file);
 		}
 		// Overview lives on the page rather than in a *Tab.tsx file, so it is checked separately.
 		expect(missing).toEqual([]);
 		const page = await source('projects', 'ProjectDetailPage.tsx');
+		expect(page).toContain('<TabIntro');
 		expect(page).toContain('title="Overview"');
+	});
+
+	test('the tab intro names its panel without drawing a box around the name', async () => {
+		const intro = await Bun.file(
+			join(frontendRoot, 'components', 'shared', 'TabIntro.tsx'),
+		).text();
+		// The heading survives for the accessibility tree, where it is the panel's name. What went
+		// is the `rounded-xl border p-4` around a label the tab strip had already given: roughly
+		// 90px of every tab spent restating the selected tab back at the reader.
+		expect(intro).toContain('<h2 className="sr-only">{title}</h2>');
+		expect(intro).toContain('proseMeasureClass');
+		expect(intro).not.toContain('<Card');
+
+		// A tab whose header carries controls keeps its Card, because there the panel is holding
+		// something. Milestones is the one that does.
+		const milestones = await source('projects', 'detail', 'MilestonesTab.tsx');
+		expect(milestones).toContain('<CardHeader');
 	});
 });

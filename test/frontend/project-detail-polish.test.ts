@@ -74,8 +74,15 @@ describe('per-row action cells', () => {
 		// height. Below 1536 it was narrower than its own widest single control — 184px of `Approve
 		// with decision` in 139px. At 2321 a backlog row goes 141px to 61px, waiting-approval 181
 		// to 101, and the cell stops overflowing at 1280 and 1536.
-		expect(source).toContain('<col className="w-[25%] 2xl:w-[28%]" />');
+		expect(source).toContain('<col className="w-[25%] 2xl:w-[24%]" />');
 		expect(source).not.toContain('<col className="w-[14%]" />');
+
+		// The 2xl tier gives 3% each back to Feature and Source: Actions held 549px of a 1960px
+		// table for rows that usually render one `Details` button, while `Feature: Documentation`
+		// wrapped in the 157px Source cell. It stops at 24% and not the 19% the sweep proposed,
+		// because a backlog row's four controls are about 405px and 19% is 372px at 2250.
+		expect(source).toContain('<col className="w-[28%] 2xl:w-[29%]" />');
+		expect(source).toContain('<col className="w-[8%] 2xl:w-[11%]" />');
 
 		// The second tier is not cosmetic. Shipped and Priority are floored by their own
 		// single-word uppercase headers — 68px and 72px, unwrappable — so 6% and 7% buy width

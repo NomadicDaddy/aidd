@@ -15,8 +15,21 @@ import {
 	ReadOnlyFeatureActions,
 	WaitingApprovalFeatureActions,
 } from './FeatureActionVariants.tsx';
-import { FEATURE_STATUS_OPTIONS } from './featuresUtils.ts';
+import { FEATURE_STATUS_OPTIONS, featurePriorityTone } from './featuresUtils.ts';
 import { stringValue } from './shared.ts';
+
+/**
+ * Priority, rendered the one way. The stacked card below `xl` used to print the bare number as
+ * foreground text — `PRIORITY / 3` where the table showed a toned `P3` — so the tone that carries
+ * the entire signal (P1 red, P2 amber, P3 neutral) vanished at the width where the table did, and
+ * the value changed shape at the same time. Both layouts call this now.
+ */
+export function FeaturePriorityBadge({ priority }: { priority: number | string | undefined }) {
+	if (typeof priority !== 'number') {
+		return <span className="text-xs text-muted-foreground">—</span>;
+	}
+	return <Badge tone={featurePriorityTone(priority)}>P{priority}</Badge>;
+}
 
 /**
  * A `quiet` control reads as its value until the row is hovered or the control is focused, at which

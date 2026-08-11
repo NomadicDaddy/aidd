@@ -5,7 +5,8 @@ import type { ProjectAssuranceProfile, ProjectAssuranceProfileInput } from '../.
 
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog.tsx';
 import { EditorActionBar } from '../../../components/shared/EditorActionBar.tsx';
-import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { TabIntro } from '../../../components/shared/TabIntro.tsx';
+import { Card } from '../../../components/ui/card.tsx';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue.ts';
 import { useProfilePreview } from '../../../hooks/useProfilePreview.ts';
 import { useUpdateProjectProfile } from '../../../hooks/useProjects.ts';
@@ -84,13 +85,10 @@ export function ProfileTab({
 			/>
 			<div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
 				<div className="flex flex-col gap-4">
-					<Card>
-						<CardHeader
-							className="mb-0"
-							description="The six facets that decide this project's assurance bucket, and with it which audits apply."
-							title="Assurance profile"
-						/>
-					</Card>
+					<TabIntro
+						description="The six facets that decide this project's assurance bucket, and with it which audits apply."
+						title="Assurance profile"
+					/>
 					{/* items-start so each facet card sizes to its own option count: stretched to an
 					    equal row height with top-aligned content, 'External integrations' (4 options)
 					    left ~180px of void beside 'Data sensitivity' (5). */}

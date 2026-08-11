@@ -6,11 +6,14 @@ import type {
 
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
-import { FeatureActions, FeatureMilestoneControl } from './FeatureRowControls.tsx';
+import {
+	FeatureActions,
+	FeatureMilestoneControl,
+	FeaturePriorityBadge,
+} from './FeatureRowControls.tsx';
 import {
 	featureDirectory,
 	featurePassesDisagrees,
-	featurePriorityTone,
 	featureShippedVersion,
 	featureSourceLabel,
 } from './featuresUtils.ts';
@@ -66,15 +69,25 @@ export function FeaturesDesktopTable({
 
 				    Status is deliberately untouched at 11%: that cell is already 19px short of a
 				    `waiting_approval` badge at 1280, and paying for Actions out of it would deepen a
-				    defect this change is not fixing. */}
+				    defect this change is not fixing.
+
+				    The 2xl tier was then re-cut once more. At 2250 the table is 1960px and Actions took
+				    549px of it to hold rows that, on a corpus whose features are nearly all completed,
+				    render one `Details` button — while `Feature: Documentation` wrapped in a 157px
+				    Source cell beside it. Feature and Source take 3% each off Actions there. Not the
+				    19% the sweep proposed for Actions: a backlog row is Details + Launch run + a 156px
+				    status select + delete, about 405px of controls, and 19% is 372px at 2250 — it would
+				    put the widest row back on two lines at the one width where it currently fits on
+				    one. 24% leaves 470px, which clears it, and the recovered 78px is the part of the
+				    void that was actually free. */}
 				<colgroup>
-					<col className="w-[28%]" />
+					<col className="w-[28%] 2xl:w-[29%]" />
 					<col className="w-[11%]" />
 					<col className="w-[8%] 2xl:w-[6%]" />
 					<col className="w-[12%]" />
 					<col className="w-[8%] 2xl:w-[7%]" />
-					<col className="w-[8%]" />
-					<col className="w-[25%] 2xl:w-[28%]" />
+					<col className="w-[8%] 2xl:w-[11%]" />
+					<col className="w-[25%] 2xl:w-[24%]" />
 				</colgroup>
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
@@ -151,13 +164,7 @@ export function FeaturesDesktopTable({
 									/>
 								</td>
 								<td className="px-4 py-3">
-									{typeof feature.priority === 'number' ? (
-										<Badge tone={featurePriorityTone(feature.priority)}>
-											P{feature.priority}
-										</Badge>
-									) : (
-										<span className="text-xs text-muted-foreground">—</span>
-									)}
+									<FeaturePriorityBadge priority={feature.priority} />
 								</td>
 								<td className="px-4 py-3 text-xs break-words text-muted-foreground">
 									{source}

@@ -5,7 +5,11 @@ import type {
 } from '../../../api/types.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
-import { FeatureActions, FeatureMilestoneControl } from './FeatureRowControls.tsx';
+import {
+	FeatureActions,
+	FeatureMilestoneControl,
+	FeaturePriorityBadge,
+} from './FeatureRowControls.tsx';
 import { featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
 import { statusTone, stringValue } from './shared.ts';
 
@@ -56,7 +60,9 @@ export function FeatureMobileCard({
 			<dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
 				<div className="space-y-1">
 					<dt className="font-medium text-muted-foreground uppercase">Priority</dt>
-					<dd className="text-foreground">{String(feature.priority ?? '—')}</dd>
+					<dd>
+						<FeaturePriorityBadge priority={feature.priority} />
+					</dd>
 				</div>
 				<div className="space-y-1">
 					<dt className="font-medium text-muted-foreground uppercase">Passes</dt>

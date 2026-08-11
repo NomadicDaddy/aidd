@@ -59,6 +59,13 @@ export function DependencyGraphFilters({
 			header={
 				// Zoom stays in the header because it is not a filter. Reset filters moved down to
 				// the toolbar's own footer, where every other filter row keeps it.
+				//
+				// Untitled, unlike it once was. One thing was named three ways inside 250px: the tab
+				// read `Dependencies`, the intro heading `Dependency graph`, and this header
+				// `Feature Dependencies` — the only Title-Cased-Second-Word heading on a surface
+				// whose sibling cards are all sentence case. The tab strip and the panel's own
+				// heading now carry the single name; a filter toolbar that titles itself is
+				// something no other tab on this page does.
 				<CardHeader
 					action={
 						<GraphZoomControls
@@ -70,7 +77,6 @@ export function DependencyGraphFilters({
 					}
 					badge={<GraphDiagnostics graph={graph} />}
 					className="mb-0"
-					title="Feature Dependencies"
 				/>
 			}
 			noun="features"

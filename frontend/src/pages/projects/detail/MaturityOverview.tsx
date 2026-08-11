@@ -126,6 +126,30 @@ export function MaturityOverview({
 	const isComplete = maturity.percent >= 100;
 	return (
 		<Card>
+			{/* The header is the card's first flow child at every width, not the first child of the
+			    right-hand column. Below `xl` the two columns stack and the ring went first: at
+			    1024x768 the card opened at y=433 with an unlabelled 210px graphic and its own
+			    "Project maturity" heading did not appear until y=678, 245px inside the card. Only
+			    the body reflows now, so the card is titled at the top in both layouts. */}
+			<CardHeader
+				action={
+					// Wrapping, not a fixed row: below `lg` the launch-target control is wide
+					// enough to sit on top of the completion label, which left "00%" and
+					// "omplete" showing around it.
+					<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+						<LaunchTargetControl
+							onChange={setLaunchTarget}
+							projectDir={projectPath}
+							value={launchTarget}
+						/>
+						<span className="text-xs text-muted-foreground">
+							{maturity.percent}% complete
+						</span>
+					</div>
+				}
+				className="mb-3"
+				title="Project maturity"
+			/>
 			<div className="flex flex-wrap items-start gap-4 xl:flex-nowrap">
 				<div className="flex shrink-0 flex-col items-center gap-3 max-xl:w-full">
 					<MaturityRing
@@ -169,25 +193,6 @@ export function MaturityOverview({
 					{isComplete ? <Badge tone="emerald">Fully matured</Badge> : null}
 				</div>
 				<div className="min-w-0 space-y-2 max-xl:w-full xl:flex-1">
-					<CardHeader
-						action={
-							// Wrapping, not a fixed row: below `lg` the launch-target control is
-							// wide enough to sit on top of the completion label, which left
-							// "00%" and "omplete" showing around it.
-							<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-								<LaunchTargetControl
-									onChange={setLaunchTarget}
-									projectDir={projectPath}
-									value={launchTarget}
-								/>
-								<span className="text-xs text-muted-foreground">
-									{maturity.percent}% complete
-								</span>
-							</div>
-						}
-						className="mb-1"
-						title="Project maturity"
-					/>
 					{maturity.stages.map((stage) => {
 						const stageNextAction =
 							!isComplete &&

@@ -94,14 +94,20 @@ export function MilestoneFormDialog({
 				</FieldRow>
 				{/* Position blocks Submit and said nothing: an out-of-range number left the button
 				    disabled with no mark on the field that disabled it. It seeds valid, so this
-				    can only appear after the operator has typed. */}
+				    can only appear after the operator has typed.
+
+				    One word for the label, like Name and Description above it. It used to read
+				    `Position (1 = first milestone the coding gate walks)` — a whole explanatory
+				    sentence pushed through the uppercase micro-type that field labels use, in a
+				    dialog that already had a sentence-case help paragraph two rows down doing
+				    exactly that job. The parenthetical moved into it. */}
 				<FieldRow
 					error={
 						positionValid
 							? null
 							: `Enter a whole number between 1 and ${editing ? count : count + 1}.`
 					}
-					label="Position (1 = first milestone the coding gate walks)"
+					label="Position"
 					required>
 					<Input
 						aria-label="Milestone position"
@@ -112,8 +118,9 @@ export function MilestoneFormDialog({
 					/>
 				</FieldRow>
 				<p className="text-xs text-muted-foreground">
-					Reordering can push features later to keep them behind their dependencies. You
-					will see exactly what moves before anything is written.
+					Position 1 is the first milestone the coding gate walks. Reordering can push
+					features later to keep them behind their dependencies. You will see exactly what
+					moves before anything is written.
 				</p>
 				<div className="flex justify-end gap-2">
 					<Button disabled={busy} onClick={onClose}>

@@ -147,9 +147,27 @@ export function MilestonesTable(props: MilestonesProps) {
 			<MilestonesList {...props} />
 			<OverflowScroller ariaLabel="Project milestones" className="hidden lg:block">
 				<table aria-label="Project milestones" className="w-full text-left text-sm">
+					{/* Description had no stated share, so auto layout handed it every spare pixel:
+					    1364px at 2250x1309, where the v1.0 row set a 133-character sentence on one
+					    line and the eye then travelled that whole width to reach `12/12 passing`.
+					    The same column collapsed to ~215px at 1024, five wrapped lines and a 125px
+					    row. One column swung 1364 → 215 with nothing in between.
+
+					    Preferences rather than `table-fixed`: the four 36px icon buttons in Actions
+					    need about 188px and a fixed 17% of an `lg` content column is 125px, which
+					    would clip them. Auto layout still lets a column outgrow its share when its
+					    content demands it — which is why the measure cap below, not the percentage,
+					    is what actually bounds the sentence. */}
+					<colgroup>
+						<col className="w-[7%]" />
+						<col className="w-[22%]" />
+						<col className="w-[38%]" />
+						<col className="w-[16%]" />
+						<col className="w-[17%]" />
+					</colgroup>
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
-							<th className="w-14 px-4 py-3" scope="col">
+							<th className="px-4 py-3" scope="col">
 								#
 							</th>
 							<th className="px-4 py-3" scope="col">
@@ -158,10 +176,10 @@ export function MilestonesTable(props: MilestonesProps) {
 							<th className="px-4 py-3" scope="col">
 								Description
 							</th>
-							<th className="w-40 px-4 py-3" scope="col">
+							<th className="px-4 py-3" scope="col">
 								Features
 							</th>
-							<th className="w-36 px-4 py-3 text-right" scope="col">
+							<th className="px-4 py-3 text-right" scope="col">
 								Actions
 							</th>
 						</tr>
@@ -187,7 +205,11 @@ export function MilestonesTable(props: MilestonesProps) {
 									) : null}
 								</td>
 								<td className="px-4 py-3 text-muted-foreground">
-									{milestone.description ?? '—'}
+									{/* A measure, not a column width. 60ch is the widest this
+									    sentence gets however wide the table is. */}
+									<span className="block max-w-[60ch]">
+										{milestone.description ?? '—'}
+									</span>
 								</td>
 								<td className="px-4 py-3 font-mono text-xs text-muted-foreground">
 									{milestoneProgressLabel(milestone.completed, milestone.total)}

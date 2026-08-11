@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { default as Eye } from 'lucide-react/dist/esm/icons/eye';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
@@ -21,6 +23,7 @@ import { statusTone } from './shared.ts';
 
 export function DependencyGraphCanvas({
 	graph,
+	header,
 	nodeByDirectory,
 	onSelect,
 	relatedDirectories,
@@ -30,6 +33,8 @@ export function DependencyGraphCanvas({
 	zoom,
 }: {
 	graph: ReturnType<typeof buildFeatureDependencyGraph>;
+	/** A strip above the canvas, for controls that govern what the canvas can launch. */
+	header?: ReactNode;
 	nodeByDirectory: Map<string, FeatureDependencyNode>;
 	onSelect: (directory: string) => void;
 	relatedDirectories: Set<string>;
@@ -40,7 +45,16 @@ export function DependencyGraphCanvas({
 }) {
 	return (
 		<Card className="min-w-0 overflow-hidden p-0">
-			<div className="max-h-[70vh] min-h-[32rem] overflow-auto">
+			{header}
+			{/* The graph bottoms out at the viewport instead of at `70vh`, the way the Code tab's
+			    two panes already do. Capped at 70vh it was 916px of pane below 627px of chrome at
+			    2250x1309, so the document scrolled as well as the pane and the wheel did different
+			    things depending on where the cursor sat. The subtracted 34rem is the chrome above
+			    and inside this card — app and page header, status strip, tab strip, intro, filter
+			    card, and this card's own launch strip — measured after the intro lost its Card.
+			    Below `lg` only the floor applies: there the page is meant to scroll as one column
+			    and a nested scroller swallows the wheel on the way past. */}
+			<div className="min-h-[32rem] overflow-auto lg:h-[calc(100vh-34rem)]">
 				<div
 					data-dependency-graph-shell="true"
 					style={{

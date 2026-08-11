@@ -1,4 +1,14 @@
-export const GRAPH_COLUMN_GAP = 96;
+/**
+ * Half of what it was, with the other half handed to the node.
+ *
+ * The column pitch — gap plus node width — is unchanged at 324, so the canvas is the same size and
+ * the same number of columns fits the pane. What changed is the split: at 96 the gutters were about
+ * 30% of the horizontal space while every multi-word title ellipsised in every column
+ * (`Audit Measurement Instrum…`, `Backend Adapter Smoke Ma…`), and widening the viewport added
+ * columns but never a character of title. 48 is still more than `edgePath`'s 56px minimum bend
+ * consumes, so adjacent-layer edges draw exactly as they did.
+ */
+export const GRAPH_COLUMN_GAP = 48;
 /**
  * Tall enough for what a node draws, arrived at by adding it up rather than by eye.
  *
@@ -10,7 +20,8 @@ export const GRAPH_COLUMN_GAP = 96;
  * arithmetic, so changing the type scale inside a node fails there rather than in a screenshot.
  */
 export const GRAPH_NODE_HEIGHT = 98;
-export const GRAPH_NODE_WIDTH = 228;
+/** The 48px `GRAPH_COLUMN_GAP` gave up, added to the 228 this used to be. */
+export const GRAPH_NODE_WIDTH = 276;
 export const GRAPH_PADDING = 28;
 export const GRAPH_ROW_GAP = 36;
 

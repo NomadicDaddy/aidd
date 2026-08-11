@@ -5,6 +5,7 @@ import type { ProjectInterviewDetail, ProjectInterviewQuestion } from '../../../
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Metric } from '../../../components/shared/Metric.tsx';
+import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useSubmitProjectInterviewAnswer } from '../../../hooks/useProjects.ts';
@@ -87,13 +88,10 @@ export function InterviewTab({
 	const remaining = interview.total - interview.answered;
 	return (
 		<div className="space-y-4">
-			<Card>
-				<CardHeader
-					className="mb-0"
-					description="The intake interview for this project — what has been answered and what is still outstanding."
-					title="Interview"
-				/>
-			</Card>
+			<TabIntro
+				description="The intake interview for this project — what has been answered and what is still outstanding."
+				title="Interview"
+			/>
 			{/* The shared metric tile rather than three more hand-rolled ones: these were the only
 			    place in the app that re-declared the tone colours locally, and they did it with values
 			    `toneText` does not use. */}

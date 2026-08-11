@@ -4,8 +4,9 @@ import { default as X } from 'lucide-react/dist/esm/icons/x';
 import type { ProjectDetail, ProjectRoadmapSummary } from '../../../api/types.ts';
 
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog.tsx';
+import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { Card } from '../../../components/ui/card.tsx';
 import { toneText } from '../../../lib/tones.ts';
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';
 import { FeatureFilters } from './FeatureFilters.tsx';
@@ -77,13 +78,10 @@ export function FeaturesTab({
 	}
 	return (
 		<>
-			<Card>
-				<CardHeader
-					className="mb-0"
-					description="Every feature recorded for this project, with its status, priority, milestone and dependencies."
-					title="Features"
-				/>
-			</Card>
+			<TabIntro
+				description="Every feature recorded for this project, with its status, priority, milestone and dependencies."
+				title="Features"
+			/>
 			<FeatureFilters
 				filteredTotal={filteredTotal}
 				hasFilters={hasFilters}
@@ -96,12 +94,6 @@ export function FeaturesTab({
 				sourceOptions={sourceOptions}
 				statusFilter={statusFilter}
 				total={total}
-			/>
-			<FeatureLaunchTargetRow
-				label="Feature runs use"
-				onChange={setLaunchTarget}
-				projectDir={projectPath}
-				value={launchTarget}
 			/>
 			{(() => {
 				const gate = unmappedRoadmapCallout(roadmap);
@@ -185,6 +177,11 @@ export function FeaturesTab({
 			) : null}
 			{filteredTotal > 0 ? (
 				<Card className="overflow-hidden p-0">
+					<FeatureLaunchTargetRow
+						onChange={setLaunchTarget}
+						projectDir={projectPath}
+						value={launchTarget}
+					/>
 					<FeaturesDesktopTable
 						decisions={decisions}
 						isMutating={isMutating}

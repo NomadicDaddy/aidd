@@ -37,7 +37,11 @@ export function ProjectStatusStrip({
 		// column minus the card's own padding. See the content-width table in AppLayout.tsx.
 		<div className="@container">
 			<Card aria-label="Project status" variant="sunken">
-				<div className="grid grid-cols-2 gap-x-4 gap-y-3 @min-[32rem]:grid-cols-3 @min-[61rem]:grid-cols-6">
+				{/* `max-w-[76rem]` past the last step: at 2250 the six tracks resolved to 308px each
+				    across a 1928px container, and every one holds a 2xs label over a short value
+				    like "coding" or "v2.0", so ~250px of each track was empty and six related facts
+				    read as six unrelated islands. The cap leaves 1024-1440 exactly as measured. */}
+				<div className="grid max-w-[76rem] grid-cols-2 gap-x-4 gap-y-3 @min-[32rem]:grid-cols-3 @min-[61rem]:grid-cols-6">
 					<StatusCell label="Artifact health">
 						<Badge
 							title={`Artifact health: ${project.artifactHealth}`}

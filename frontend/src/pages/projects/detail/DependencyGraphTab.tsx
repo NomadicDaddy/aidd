@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import type { ProjectDetail, ProjectFeature, ProjectRoadmapSummary } from '../../../api/types.ts';
 import type { LaunchTargetValue } from '../../../api/types/launchDefaults.ts';
 
-import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { TabIntro } from '../../../components/shared/TabIntro.tsx';
+import { Card } from '../../../components/ui/card.tsx';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import {
 	GRAPH_ZOOM_DEFAULT,
@@ -171,13 +172,13 @@ export function DependencyGraphTab({
 			    thing on this tab that benefits from width — gave up ~370px to a panel that read
 			    "Select a feature node" until something was selected. */}
 			<div className="min-w-0 space-y-4">
-				<Card>
-					<CardHeader
-						className="mb-0"
-						description="How this project's features depend on one another. Select a node to see what it blocks and what blocks it."
-						title="Dependency graph"
-					/>
-				</Card>
+				{/* `Dependencies`, the tab's own label, the way the other tabs in this group name
+				    themselves. It was `Dependency graph` while the toolbar below said `Feature
+				    Dependencies`, which made three names for one thing on one surface. */}
+				<TabIntro
+					description="How this project's features depend on one another. Select a node to see what it blocks and what blocks it."
+					title="Dependencies"
+				/>
 				<DependencyGraphFilters
 					graph={graph}
 					hasFilters={
@@ -205,12 +206,6 @@ export function DependencyGraphTab({
 					visibleCount={visibleNodes.length}
 					zoom={zoom}
 				/>
-				<FeatureLaunchTargetRow
-					label="Runs use"
-					onChange={setLaunchTarget}
-					projectDir={projectPath}
-					value={launchTarget}
-				/>
 				{visibleNodes.length === 0 ? (
 					<Card className="py-10 text-center text-sm text-muted-foreground">
 						No dependency nodes match the active filters.
@@ -219,6 +214,13 @@ export function DependencyGraphTab({
 					<div className="relative">
 						<DependencyGraphCanvas
 							graph={graph}
+							header={
+								<FeatureLaunchTargetRow
+									onChange={setLaunchTarget}
+									projectDir={projectPath}
+									value={launchTarget}
+								/>
+							}
 							nodeByDirectory={nodeByDirectory}
 							onSelect={setSelectedDirectory}
 							relatedDirectories={relatedDirectories}

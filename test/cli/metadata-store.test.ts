@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { selectNextFeature } from 'aidd-shared/metadata/features';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const tmpRoot = join(import.meta.dir, '..', '..', '.tmp-tests');
 
@@ -13,7 +14,7 @@ async function makeStore(name: string): Promise<FileAiddStore> {
 }
 
 afterEach(async () => {
-	await rm(tmpRoot, { recursive: true, force: true });
+	await removeTempTree(tmpRoot);
 });
 
 describe('FileAiddStore feature compatibility', () => {

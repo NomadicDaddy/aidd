@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { classifyIterationOutcome } from '../../cli/src/orchestrator/run/iteration-outcome.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(import.meta.dir, '..', '..', '.tmp-iteration-outcome-tests');
 
@@ -18,7 +19,7 @@ const basePlan = {
 } as Parameters<typeof classifyIterationOutcome>[0]['plan'];
 
 afterEach(async () => {
-	await rm(rootDir, { recursive: true, force: true });
+	await removeTempTree(rootDir);
 });
 
 async function makeProjectDir(name: string): Promise<string> {

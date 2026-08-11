@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runAgentLoop } from 'aidd-shared/agent/loop';
 import type { AgentClient, AgentLoopRequest } from 'aidd-shared/agent/client';
 import type { AgentEvent, PromptInput } from 'aidd-shared/backends/types';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const input: PromptInput = {
 	text: 'Implement the selected feature.',
 	cwd: 'D:/applications/demo',
@@ -207,7 +208,7 @@ describe('native agent loop', () => {
 				filesModified: ['result.txt'],
 			});
 		} finally {
-			await rm(cwd, { recursive: true, force: true });
+			await removeTempTree(cwd);
 		}
 	});
 

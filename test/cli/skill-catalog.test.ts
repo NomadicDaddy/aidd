@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { MATURITY_INVOCATIONS } from 'aidd-shared/metadata/maturity';
@@ -14,6 +14,7 @@ import {
 import { MATURITY_SKILL_IDS, RECIPE_SKILL_IDS } from '../../frontend/src/lib/catalogCuration.ts';
 import { skillContractDeps } from '../../cli/src/metadata/scaffoldSkillContracts.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 interface RecipeDefinition {
 	id: string;
@@ -368,7 +369,7 @@ describe('skill catalog', () => {
 				{ id: 'beta', origin: 'imported' },
 			]);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -399,7 +400,7 @@ describe('skill catalog', () => {
 			);
 			await expect(listSkillDefinitions(root, dataDir)).rejects.toThrow(/Duplicate skill id/);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 

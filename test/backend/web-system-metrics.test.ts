@@ -1,4 +1,3 @@
-import { rm } from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { ResolvedWebConfig } from 'aidd-shared/config';
 import type { WebContext } from '../../backend/src/context.ts';
@@ -8,6 +7,7 @@ import { createSystemRoutes } from '../../backend/src/routes/system.ts';
 import { MetricsService } from '../../backend/src/services/metricsService.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function makeWeb(dataDir: string): ResolvedWebConfig {
 	return {
 		allowRemote: false,
@@ -101,7 +101,7 @@ describe('MetricsService against a real database', () => {
 
 	afterEach(async () => {
 		await handle.close();
-		await rm(dataDir, { force: true, recursive: true });
+		await removeTempTree(dataDir);
 	});
 
 	test('stores web vitals and summarizes them by metric with thresholds', async () => {

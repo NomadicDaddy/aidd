@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { validateFreshRelease } from '../../scripts/lib/fresh-release/validation.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const roots: string[] = [];
 
@@ -29,7 +30,7 @@ async function seedRoot(extraFiles: Record<string, string> = {}): Promise<string
 }
 
 afterEach(async () => {
-	for (const root of roots.splice(0)) await rm(root, { force: true, recursive: true });
+	for (const root of roots.splice(0)) await removeTempTree(root);
 });
 
 describe('fresh release baseline validation', () => {

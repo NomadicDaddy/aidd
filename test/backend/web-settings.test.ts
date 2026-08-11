@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
@@ -9,6 +9,7 @@ import { buildSettingsDto } from '../../backend/src/services/settings/dtoShaping
 import type { StatusCommandRunner } from '../../backend/src/services/settings/status.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
@@ -236,7 +237,7 @@ describe('web settings config', () => {
 		expect(result.config.traceDataMovement).toBe(false);
 		expect(result.resolvedConfig.web.traceDataMovement).toBe(false);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips run budgets and preserves unmanaged per-backend keys', async () => {
@@ -292,7 +293,7 @@ describe('web settings config', () => {
 		expect(cleared.config.maxTokens).toBeNull();
 		expect(cleared.config.maxCostUsd).toBeNull();
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('writes config file with 0600 permissions (BREAK-THE-ASSUMPTION)', async () => {
@@ -339,7 +340,7 @@ describe('web settings config', () => {
 		// On all platforms the file must exist and be writable by owner
 		expect(mode & 0o200).toBe(0o200); // owner-write bit set
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('rejects a Direct AI base URL pointing at a cloud metadata endpoint (SSRF guard)', async () => {
@@ -412,7 +413,7 @@ describe('web settings config', () => {
 		});
 		expect(ok.config.directAi.baseUrl).toBe('http://127.0.0.1:11434/v1');
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('settings route accepts valid updates and rejects invalid backends', async () => {
@@ -499,7 +500,7 @@ describe('web settings config', () => {
 		).toBe(true);
 		expect(invalid.status).toBe(422);
 		expect(internalAlias.status).toBe(422);
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('partial PUT preserves omitted fields; explicit null clears them', async () => {
@@ -615,7 +616,7 @@ describe('web settings config', () => {
 		expect(afterClear).not.toHaveProperty('auditModel');
 		expect(afterClear.web?.spernakitInitScript).toBeUndefined();
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('settings route notifies the Telegram bridge service after config updates', async () => {
@@ -683,7 +684,7 @@ describe('web settings config', () => {
 			botToken: 'token-route',
 		});
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('persists director suggestion settings through the route body schema', async () => {
@@ -755,7 +756,7 @@ describe('web settings config', () => {
 			maxPerBucket: 5,
 		});
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips run isolation settings through settings config', async () => {
@@ -807,7 +808,7 @@ describe('web settings config', () => {
 		expect(result.resolvedConfig.web.maxConcurrentRuns).toBe(5);
 		expect(result.resolvedConfig.web.useWorktrees).toBe(true);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('generates a remote auth token when enabling remote access without one', async () => {
@@ -853,7 +854,7 @@ describe('web settings config', () => {
 		expect(result.config.authTokenConfigured).toBe(true);
 		expect(result.resolvedConfig.web.allowRemote).toBe(false);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('rejects invalid network host and port updates', async () => {
@@ -917,7 +918,7 @@ describe('web settings config', () => {
 
 		expect(invalidPort.status).toBe(422);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('settings status routes report CLI and source-control tool health', async () => {
@@ -1010,7 +1011,7 @@ describe('web settings config', () => {
 		});
 		expect(calls).toContain('gh auth status');
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('settings status routes cache probes until a refresh is requested', async () => {
@@ -1082,7 +1083,7 @@ describe('web settings config', () => {
 		await app.handle(new Request('http://localhost/api/v1/settings/source-control-status'));
 		expect(probes).toBe(afterSourceControl);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('settings status routes probe at construction only when warm-start is enabled', async () => {
@@ -1166,7 +1167,7 @@ describe('web settings config', () => {
 		).text();
 		expect(serverSource).toContain('createSettingsRoutes(context, { warmStatusCache: true })');
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('normalizes persisted ignoredFolders containing blank and duplicate values on read', async () => {
@@ -1216,7 +1217,7 @@ describe('web settings config', () => {
 		expect(dto.ignoredFolders.every((value) => value.trim().length > 0)).toBe(true);
 		expect(dto.traceDataMovement).toBe(true);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('writes Direct AI apiKey to providers, omits it from DTO, and validates pre-flight', async () => {
@@ -1354,7 +1355,7 @@ describe('web settings config', () => {
 		expect(providersAfterClear?.zhipu?.apiKey).toBeUndefined();
 		expect(cleared.config.directAi.apiKeyConfigured).toBe(false);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('persists network fields while keeping active listener restart-bound', async () => {
@@ -1427,7 +1428,7 @@ describe('web settings config', () => {
 		expect(result.resolvedConfig.web.dataDir).toBe(web.dataDir);
 		expect(result.resolvedConfig.web.port).toBe(web.port);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('rejects malformed allowed origins with config validation message', async () => {
@@ -1466,7 +1467,7 @@ describe('web settings config', () => {
 			}),
 		).rejects.toThrow(/web\.allowedOrigins entry "not a url" is invalid/);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips director auto-cycle settings without clobbering chat file-edits', async () => {
@@ -1545,7 +1546,7 @@ describe('web settings config', () => {
 		expect(written2.director?.chat?.allowFileEdits).toBe(true);
 		expect(written2.director?.schedule).toEqual({ enabled: false, intervalHours: 12 });
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips runSummaries surface through settings config', async () => {
@@ -1624,7 +1625,7 @@ describe('web settings config', () => {
 		};
 		expect(written.directAi?.surfaces?.runSummaries).toBe(true);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips applicationsRoot separately from applicationRoots', async () => {
@@ -1694,7 +1695,7 @@ describe('web settings config', () => {
 		expect(cleared.config.applicationsRoot).toBeNull();
 		expect(cleared.config.applicationRoots).toEqual([workspace, join(workspace, 'extra')]);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips defaultProvider and provider config through settings', async () => {
@@ -1819,7 +1820,7 @@ describe('web settings config', () => {
 		expect(writtenCleared.defaultProvider).toBeUndefined();
 		expect(cleared.config.defaultProvider).toBeNull();
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('preserves provider streaming controls and absent providers through settings save', async () => {
@@ -1901,7 +1902,7 @@ describe('web settings config', () => {
 		expect(result.config.providers.openai?.apiKeyConfigured).toBe(true);
 		expect('apiKey' in (result.config.providers.openai ?? {})).toBe(false);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('clears provider API key when explicitly sent as null', async () => {
@@ -1963,7 +1964,7 @@ describe('web settings config', () => {
 		).toBeUndefined();
 		expect(result.config.providers.zhipu!.apiKeyConfigured).toBe(false);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips runtime defaults through settings config', async () => {
@@ -2123,7 +2124,7 @@ describe('web settings config', () => {
 		expect(cleared.resolvedConfig.rateLimitBufferSeconds).toBe(60);
 		expect(cleared.resolvedConfig.noClean).toBe(false);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('runtime defaults route accepts valid values and rejects negative numbers', async () => {
@@ -2218,7 +2219,7 @@ describe('web settings config', () => {
 		);
 		expect(invalid.status).toBe(422);
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips sharedDirs and sharedFiles through settings config', async () => {
@@ -2301,7 +2302,7 @@ describe('web settings config', () => {
 		expect(writtenCleared.sharedDirs).toBeUndefined();
 		expect(writtenCleared.sharedFiles).toBeUndefined();
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 
 	test('round-trips telegram channel settings through settings config', async () => {
@@ -2430,6 +2431,6 @@ describe('web settings config', () => {
 		});
 		expect(afterPreserve.reasoningEffort).toBe('medium');
 
-		await rm(workspace, { force: true, recursive: true });
+		await removeTempTree(workspace);
 	});
 });

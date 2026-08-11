@@ -1,17 +1,17 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { existsSync } from 'node:fs';
-import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { ensureProjectGitRepo } from '../../cli/src/metadata/git.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const dirs: string[] = [];
 
 afterEach(async () => {
 	for (const dir of dirs.splice(0)) {
-		await rm(dir, { force: true, recursive: true });
+		await removeTempTree(dir);
 	}
 });
 

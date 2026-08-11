@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
@@ -26,6 +26,7 @@ import {
 } from '../../cli/src/orchestrator/orchestrator.ts';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { initialRunTotals } from '../../cli/src/orchestrator/run/types.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(import.meta.dir, '..', '..');
 const tmpRoot = join(rootDir, '.tmp-active-run-heartbeat-tests');
@@ -97,7 +98,7 @@ function plan(projectDir: string) {
 }
 
 afterEach(async () => {
-	await rm(tmpRoot, { force: true, recursive: true });
+	await removeTempTree(tmpRoot);
 });
 
 describe('terminalStateFromStopReason', () => {

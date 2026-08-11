@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -12,6 +11,7 @@ import {
 import { reportOrphanedSocket } from '../../scripts/lib/stop-web/process-control.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 function captureConsole(callback: () => void): string[] {
 	const lines: string[] = [];
 	const original = console.log;
@@ -102,7 +102,7 @@ describe('stop-web script helpers', () => {
 				{ id: 'run_live', pid: process.pid, projectPath: 'd:/applications/aidd' },
 			]);
 		} finally {
-			await rm(dataDir, { force: true, recursive: true });
+			await removeTempTree(dataDir);
 		}
 	});
 });

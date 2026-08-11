@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { unfinalizedAgentResultMarker } from 'aidd-shared/runs/outcome';
@@ -10,6 +10,7 @@ import { reconcileRunLedgerDrift } from '../../backend/src/services/run/ledgerBa
 import { eq } from 'drizzle-orm';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function makeDb() {
 	const sqlite = new Database(':memory:');
 	sqlite.exec('PRAGMA foreign_keys = ON;');
@@ -124,7 +125,7 @@ describe('reconcileRunLedgerDrift', () => {
 			expect(running?.status).toBe('running');
 		} finally {
 			sqlite.close();
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -147,7 +148,7 @@ describe('reconcileRunLedgerDrift', () => {
 			expect(await reconcileRunLedgerDrift(db)).toBe(0);
 		} finally {
 			sqlite.close();
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -188,7 +189,7 @@ describe('reconcileRunLedgerDrift', () => {
 			expect(await reconcileRunLedgerDrift(db)).toBe(0);
 		} finally {
 			sqlite.close();
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });

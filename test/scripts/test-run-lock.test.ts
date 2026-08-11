@@ -1,4 +1,4 @@
-import { rm, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { describe, expect, test } from 'bun:test';
 import {
 	acquireTestRunLock,
@@ -7,6 +7,7 @@ import {
 } from '../../scripts/lib/test-run-lock.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 async function makeRoot(): Promise<string> {
 	return await testTempDir('aidd-test-run-lock-');
 }
@@ -32,7 +33,7 @@ describe('test run lock', () => {
 			expect(reacquired).toBeDefined();
 			reacquired!.release();
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -48,7 +49,7 @@ describe('test run lock', () => {
 			expect(lock).toBeDefined();
 			lock!.release();
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -61,7 +62,7 @@ describe('test run lock', () => {
 			expect(lock).toBeDefined();
 			lock!.release();
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -77,8 +78,8 @@ describe('test run lock', () => {
 			lockA!.release();
 			lockB!.release();
 		} finally {
-			await rm(rootA, { force: true, recursive: true });
-			await rm(rootB, { force: true, recursive: true });
+			await removeTempTree(rootA);
+			await removeTempTree(rootB);
 		}
 	});
 });

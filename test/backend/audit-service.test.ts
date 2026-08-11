@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { AuditService } from '../../backend/src/services/auditService.ts';
@@ -9,6 +9,7 @@ import type { ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function makeConfig(
 	auditsEnabled: boolean,
 	overrides: Partial<ResolvedConfig> = {},
@@ -93,7 +94,7 @@ describe('audit service', () => {
 				service.saveAuditDefinition('../SECURITY', '# Security\n\nBad path.'),
 			).rejects.toThrow('Invalid audit name');
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -140,10 +141,10 @@ describe('audit service', () => {
 				expect(security.changePotential.evidence.appsWithCompletedFeatureEvidence).toBe(1);
 				expect(security.changePotential.score).toBeGreaterThan(reorg.changePotential.score);
 			} finally {
-				await rm(applicationsRoot, { force: true, recursive: true });
+				await removeTempTree(applicationsRoot);
 			}
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -160,7 +161,7 @@ describe('audit service', () => {
 			expect(security?.changePotential?.band).toBe('Low');
 			expect(security?.changePotential?.confidence).toBe('Low');
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -210,7 +211,7 @@ describe('audit service', () => {
 			expect(security?.reportFreshness?.reasons).toContain('code_commits');
 			expect(security?.reportFreshness?.changes?.codeCommits).toBe(10);
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -242,7 +243,7 @@ describe('audit service', () => {
 			expect(response.projectName).toBe('project');
 			expect(response.projectPath).toBe(projectDir);
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -258,7 +259,7 @@ describe('audit service', () => {
 				}),
 			).rejects.toThrow('Audits are disabled.');
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 

@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, stat, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { scaffoldProjectAssets } from '../../cli/src/metadata/scaffold.ts';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const roots: string[] = [];
 
 async function makeRoot(): Promise<string> {
@@ -39,7 +40,7 @@ function auditPlan(names: string[], runAll = false): RunPlan['audit'] {
 describe('scaffoldProjectAssets', () => {
 	afterEach(async () => {
 		for (const root of roots.splice(0)) {
-			await rm(root, { recursive: true, force: true });
+			await removeTempTree(root);
 		}
 	});
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { Feature } from 'aidd-shared/metadata/features';
@@ -13,6 +13,7 @@ import {
 	startProjectImplementation,
 } from '../../backend/src/services/project/implementation.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 async function runGit(projectDir: string, args: string[]): Promise<void> {
 	const child = Bun.spawn(['git', ...args], {
@@ -102,7 +103,7 @@ describe('project implementation readiness', () => {
 			expect(result.runId).toBe('run-first-feature');
 			expect(calls).toEqual([{ feature: 'foundation', mode: 'coding', projectDir }]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });

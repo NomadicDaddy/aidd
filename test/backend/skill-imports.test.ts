@@ -1,10 +1,11 @@
-import { lstat, mkdir, readdir, readFile, rm, symlink, truncate } from 'node:fs/promises';
+import { lstat, mkdir, readdir, readFile, symlink, truncate } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { importedSkillRegistryPath, listSkillDefinitions } from 'aidd-shared/skills/catalog';
 
 import { SkillService } from '../../backend/src/services/skillService.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 async function writeSkill(root: string, id: string, description: string): Promise<string> {
 	const path = join(root, id);
@@ -64,7 +65,7 @@ describe('managed skill imports', () => {
 				['demo'],
 			);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -102,7 +103,7 @@ describe('managed skill imports', () => {
 				service.importSkill({ replace: true, sourcePath: bundledSource }),
 			).rejects.toMatchObject({ status: 409 });
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -160,7 +161,7 @@ describe('managed skill imports', () => {
 				status: 400,
 			});
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -194,7 +195,7 @@ describe('managed skill imports', () => {
 				status: 400,
 			});
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -229,7 +230,7 @@ describe('managed skill imports', () => {
 				(await readdir(join(dataDir, 'skills'))).filter((name) => name.startsWith('.')),
 			).toEqual([]);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -267,7 +268,7 @@ describe('managed skill imports', () => {
 			await service.deleteImportedSkill('demo', []);
 			await expect(service.readSkill('demo')).rejects.toMatchObject({ status: 404 });
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 });

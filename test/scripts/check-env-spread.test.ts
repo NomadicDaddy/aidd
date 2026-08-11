@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 import { runCheckEnvSpread } from '../../scripts/check-env-spread.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 async function captureStderr(
 	fn: () => Promise<number>,
 ): Promise<{ exitCode: number; stderr: string }> {
@@ -52,7 +53,7 @@ describe('check-env-spread tool', () => {
 			expect(stderr).toContain('env-equals-process-env');
 			expect(stderr).toContain('cli/src/offender.ts');
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -72,7 +73,7 @@ describe('check-env-spread tool', () => {
 			expect(stderr).toContain('env-equals-bun-env');
 			expect(stderr).toContain('scripts/offender.ts');
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -89,7 +90,7 @@ describe('check-env-spread tool', () => {
 			expect(exitCode).toBe(1);
 			expect(stderr).toContain('No files were examined');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -106,7 +107,7 @@ describe('check-env-spread tool', () => {
 			const { exitCode } = await captureStderr(() => runCheckEnvSpread(tmp));
 			expect(exitCode).toBe(0);
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 });

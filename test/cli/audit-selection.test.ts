@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
 import type { ResolvedConfig } from 'aidd-shared/config';
@@ -7,6 +7,7 @@ import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { auditNames } from '../../cli/src/modes/audit-selection.ts';
 import type { ModeContext } from 'aidd-shared/modes/types';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(import.meta.dir, '..', '..', '.tmp-audit-selection');
 
@@ -28,7 +29,7 @@ const config: ResolvedConfig = {
 };
 
 afterEach(async () => {
-	await rm(rootDir, { recursive: true, force: true });
+	await removeTempTree(rootDir);
 });
 
 async function makeCatalog(

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
 	createDefaultNativeClient,
@@ -13,6 +13,7 @@ import { readChatCompletionStream } from 'aidd-shared/agent/client/stream';
 import { disableAiCallLog } from 'aidd-shared/lib/aiCallLog';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 disableAiCallLog();
 
 // A response whose reader.read() never resolves, to exercise the idle-timeout path directly.
@@ -94,7 +95,7 @@ describe('Native provider client', () => {
 				passes: true,
 			});
 		} finally {
-			await rm(projectDir, { recursive: true, force: true });
+			await removeTempTree(projectDir);
 		}
 	});
 

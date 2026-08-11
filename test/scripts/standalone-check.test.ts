@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import {
@@ -17,6 +17,7 @@ import {
 } from '../../scripts/check-standalone.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const tmpRoots: string[] = [];
 
 function windowsTarget() {
@@ -47,7 +48,7 @@ async function seedDistributionLayout(root: string): Promise<void> {
 
 afterEach(async () => {
 	for (const root of tmpRoots.splice(0)) {
-		await rm(root, { force: true, recursive: true });
+		await removeTempTree(root);
 	}
 });
 

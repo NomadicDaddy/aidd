@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
 import {
@@ -13,6 +13,7 @@ import { PUBLIC_DOC_ASSETS } from '../../scripts/lib/release/common.ts';
 import { packageRelease, parsePackageReleaseArgs } from '../../scripts/package-release.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const tmpRoots: string[] = [];
 
 function windowsTarget() {
@@ -99,7 +100,7 @@ async function seedStandalone(root: string): Promise<void> {
 
 afterEach(async () => {
 	for (const root of tmpRoots.splice(0)) {
-		await rm(root, { force: true, recursive: true });
+		await removeTempTree(root);
 	}
 });
 

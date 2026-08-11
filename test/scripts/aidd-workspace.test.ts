@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
 import {
@@ -10,6 +10,7 @@ import {
 } from '../../scripts/lib/aidd-workspace.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const tempRoots: string[] = [];
 const repositoryRoot = join(import.meta.dir, '..', '..');
 
@@ -20,9 +21,7 @@ async function tempRoot(name: string): Promise<string> {
 }
 
 afterEach(async () => {
-	await Promise.all(
-		tempRoots.splice(0).map((root) => rm(root, { force: true, recursive: true })),
-	);
+	await Promise.all(tempRoots.splice(0).map((root) => removeTempTree(root)));
 });
 
 async function writeJson(path: string, value: unknown): Promise<void> {

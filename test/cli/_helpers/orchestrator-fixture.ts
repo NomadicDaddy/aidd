@@ -3,10 +3,11 @@ import type { ResolvedConfig } from 'aidd-shared/config';
 
 import { parseArgs } from 'aidd-shared/args/index';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
-import { appendFile, mkdir, rm, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { resolveRunPlan } from '../../../cli/src/plan/resolve.ts';
+import { removeTempTree } from '../../../shared/src/lib/remove-temp-tree.ts';
 
 export const rootDir = join(import.meta.dir, '..', '..', '..');
 export const slowOrchestratorTestTimeoutMs = 15_000;
@@ -250,7 +251,7 @@ export function createOrchestratorTestContext(scope: string): {
 } {
 	const tmpRoot = join(rootDir, `.tmp-orchestrator-tests-${scope}`);
 	return {
-		cleanup: () => rm(tmpRoot, { force: true, recursive: true }),
+		cleanup: () => removeTempTree(tmpRoot),
 		makeStore: (name) => makeStoreAt(tmpRoot, name),
 	};
 }

@@ -1,10 +1,11 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import { gatherPorts } from '../../backend/src/services/projectMetadata.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 interface ProjectFixture {
 	files?: Record<string, string>;
@@ -24,7 +25,7 @@ async function withProject<T>(fixture: ProjectFixture, verify: (projectDir: stri
 		}
 		return await verify(projectDir);
 	} finally {
-		await rm(projectDir, { force: true, recursive: true });
+		await removeTempTree(projectDir);
 	}
 }
 

@@ -1,10 +1,11 @@
 import { existsSync } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { ensureProjectGitRepo } from '../../cli/src/metadata/git.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 async function makeRoot(): Promise<string> {
 	return await testTempDir('aidd-git-metadata-test-');
 }
@@ -46,7 +47,7 @@ describe('ensureProjectGitRepo', () => {
 				normalizePath(projectDir),
 			);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -64,7 +65,7 @@ describe('ensureProjectGitRepo', () => {
 				normalizePath(projectDir),
 			);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -82,7 +83,7 @@ describe('ensureProjectGitRepo', () => {
 				normalizePath(projectDir),
 			);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 });

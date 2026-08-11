@@ -81,7 +81,7 @@ describe('readWorkingTree', () => {
 	test('reports not-a-repo for a directory outside git', async () => {
 		const repoDir = await makeWorkingTreeRepo();
 		try {
-			await rm(join(repoDir, '.git'), { force: true, recursive: true });
+			await removeTempTree(join(repoDir, '.git'));
 			const result = await readWorkingTree(repoDir);
 			expect(result.state).toBe('not-a-repo');
 			expect(result.files).toEqual([]);
@@ -172,7 +172,7 @@ describe('stage, unstage, and reset', () => {
 	test('reset works on an unborn HEAD', async () => {
 		const repoDir = await makeWorkingTreeRepo();
 		try {
-			await rm(join(repoDir, '.git'), { force: true, recursive: true });
+			await removeTempTree(join(repoDir, '.git'));
 			await git(repoDir, 'init');
 			await git(repoDir, 'add', 'kept.txt');
 

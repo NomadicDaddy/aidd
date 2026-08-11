@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { runDestructiveConfirmation } from '../../scripts/check-destructive-confirmation.ts';
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 function capture(fn: () => number): { exitCode: number; output: string } {
 	const originalError = console.error;
@@ -51,7 +52,7 @@ describe('check-destructive-confirmation tool', () => {
 			expect(exitCode).toBe(0);
 			expect(output).toContain('[SKIP]');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -73,7 +74,7 @@ describe('check-destructive-confirmation tool', () => {
 				'1 destructive call site(s) with no confirmation, of 1 examined',
 			);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -101,7 +102,7 @@ describe('check-destructive-confirmation tool', () => {
 			const { exitCode } = capture(() => runDestructiveConfirmation(tmp));
 			expect(exitCode).toBe(0);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -130,7 +131,7 @@ describe('check-destructive-confirmation tool', () => {
 			const { exitCode } = capture(() => runDestructiveConfirmation(tmp));
 			expect(exitCode).toBe(1);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -153,7 +154,7 @@ describe('check-destructive-confirmation tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('No destructive call sites found');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -167,7 +168,7 @@ describe('check-destructive-confirmation tool', () => {
 			expect(exitCode).toBe(0);
 			expect(output).toContain('[SKIP]');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -190,7 +191,7 @@ describe('check-destructive-confirmation tool', () => {
 			const { exitCode } = capture(() => runDestructiveConfirmation(tmp));
 			expect(exitCode).toBe(0);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -209,7 +210,7 @@ describe('check-destructive-confirmation tool', () => {
 			const { exitCode } = capture(() => runDestructiveConfirmation(tmp));
 			expect(exitCode).toBe(0);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -228,7 +229,7 @@ describe('check-destructive-confirmation tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('carries no reason');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -248,7 +249,7 @@ describe('check-destructive-confirmation tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('no longer suppresses anything');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 });

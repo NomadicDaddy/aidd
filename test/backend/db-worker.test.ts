@@ -1,4 +1,3 @@
-import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
@@ -10,6 +9,7 @@ import { runs } from '../../backend/src/db/schema.ts';
 import { eq } from 'drizzle-orm';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function webConfig(rootDir: string): ResolvedWebConfig {
 	return {
 		allowRemote: false,
@@ -87,13 +87,13 @@ describe('DB worker round-trip', () => {
 		// retry the cleanup instead of failing on a transient EBUSY.
 		for (let attempt = 0; attempt < 10; attempt++) {
 			try {
-				await rm(rootDir, { force: true, recursive: true });
+				await removeTempTree(rootDir);
 				return;
 			} catch {
 				await sleep(50);
 			}
 		}
-		await rm(rootDir, { force: true, recursive: true });
+		await removeTempTree(rootDir);
 	});
 
 	test('executes statements against the worker-owned connection', async () => {

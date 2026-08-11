@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 import { runGitWindowHide } from '../../scripts/check-git-window-hide.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 /**
  * This file used to re-implement the scanner it now calls. Two copies of one rule drifted to two
@@ -63,7 +64,7 @@ describe('check-git-window-hide tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('scripts/offender.ts:1');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -79,7 +80,7 @@ describe('check-git-window-hide tool', () => {
 			const { exitCode } = captureOutput(() => runGitWindowHide(tmp));
 			expect(exitCode).toBe(0);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -96,7 +97,7 @@ describe('check-git-window-hide tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('skills/example/scripts/review.ts');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -107,7 +108,7 @@ describe('check-git-window-hide tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('No source files were examined');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 });

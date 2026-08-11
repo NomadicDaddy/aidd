@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { computeMaturity } from '../../backend/src/services/maturityCompute.ts';
 import { createAuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
@@ -7,6 +7,7 @@ import { FileAiddStore } from 'aidd-shared/metadata/store';
 import type { ProjectAssuranceProfile } from 'aidd-shared';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 const publicProfile: ProjectAssuranceProfile = {
 	authMode: 'tenant_rbac',
 	bucket: 'public_multi_tenant',
@@ -70,8 +71,8 @@ describe('maturity compute audit freshness', () => {
 			expect(security?.audit?.changes?.codeCommits).toBe(10);
 			expect(auditFreshnessContext.gitNumstatLogs?.size).toBe(1);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
-			await rm(catalogDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
+			await removeTempTree(catalogDir);
 		}
 	});
 });

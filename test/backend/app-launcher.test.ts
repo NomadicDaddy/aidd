@@ -15,6 +15,7 @@ import { ProjectService } from '../../backend/src/services/projectService.ts';
 import { WebSocketHub } from '../../backend/src/webSocketHub.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 interface CapturedMessage {
 	payload: unknown;
 	type: string;
@@ -263,7 +264,7 @@ describe('app launcher service', () => {
 			expect(result.output).toContain('warned');
 			expect(result.signal).toBeNull();
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -718,7 +719,7 @@ describe('app launcher service', () => {
 			expect(statuses).toHaveLength(2);
 		} finally {
 			sqlite.close();
-			await rm(orphanRoot, { force: true, recursive: true });
+			await removeTempTree(orphanRoot);
 		}
 	});
 });

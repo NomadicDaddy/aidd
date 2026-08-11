@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { executeTool, toolDefinitions } from 'aidd-shared/agent/tools/index';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const ripgrepAvailable = await (async (): Promise<boolean> => {
 	try {
 		const proc = Bun.spawn(['rg', '--version'], { stdout: 'ignore', stderr: 'ignore' });
@@ -16,7 +17,7 @@ const ripgrepAvailable = await (async (): Promise<boolean> => {
 async function removeTempWorkspace(cwd: string): Promise<void> {
 	for (let attempt = 0; attempt < 10; attempt += 1) {
 		try {
-			await rm(cwd, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+			await removeTempTree(cwd);
 			return;
 		} catch (error) {
 			const code =
@@ -27,7 +28,7 @@ async function removeTempWorkspace(cwd: string): Promise<void> {
 			await Bun.sleep(50);
 		}
 	}
-	await rm(cwd, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+	await removeTempTree(cwd);
 }
 
 async function withTempWorkspace<T>(fn: (cwd: string) => Promise<T>): Promise<T> {
@@ -361,7 +362,7 @@ describe('native tools', () => {
 				expect(result).toContain('Path escapes working directory');
 				expect(result).not.toContain('secret-data');
 			} finally {
-				await rm(outsideDir, { recursive: true, force: true }).catch(() => {});
+				await removeTempTree(outsideDir).catch(() => {});
 			}
 		});
 	});
@@ -379,7 +380,7 @@ describe('native tools', () => {
 				);
 				expect(result).toContain('Path escapes working directory');
 			} finally {
-				await rm(outsideDir, { recursive: true, force: true }).catch(() => {});
+				await removeTempTree(outsideDir).catch(() => {});
 			}
 		});
 	});

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
@@ -9,6 +9,7 @@ import { classifyWebRun } from 'aidd-shared/runs/outcome';
 import { parseArgs } from 'aidd-shared/args/index';
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 // Regression coverage for run-end-dirty-tree-check: a run that dirties tracked source AFTER its
 // last feature commit (the post-commit formatter/codegen case) must not end as a silent clean
@@ -151,7 +152,7 @@ async function lastLedgerEntry(store: FileAiddStore): Promise<LedgerEntry> {
 }
 
 afterEach(async () => {
-	await rm(tmpRoot, { recursive: true, force: true });
+	await removeTempTree(tmpRoot);
 });
 
 describe('run-end dirty-source check', () => {

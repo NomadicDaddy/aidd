@@ -1,4 +1,4 @@
-import { readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Elysia } from 'elysia';
 import { describe, expect, test } from 'bun:test';
@@ -7,6 +7,7 @@ import { errorHandlerPlugin } from '../../backend/src/plugins/errorHandler.ts';
 import { createProjectMaturityRoutes } from '../../backend/src/routes/projectMaturity.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 interface SkillLaunchCall {
 	launchTarget?: Record<string, string>;
 	parameters?: Record<string, string>;
@@ -97,7 +98,7 @@ describe('project maturity routes', () => {
 			});
 			expect(typeof profile.updatedAt).toBe('string');
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -132,7 +133,7 @@ describe('project maturity routes', () => {
 			]);
 			expect(auditRuns).toEqual([]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -165,7 +166,7 @@ describe('project maturity routes', () => {
 				},
 			]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -192,7 +193,7 @@ describe('project maturity routes', () => {
 			]);
 			expect(skillLaunches).toEqual([]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -219,7 +220,7 @@ describe('project maturity routes', () => {
 			]);
 			expect(skillLaunches).toEqual([]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -247,7 +248,7 @@ describe('project maturity routes', () => {
 			expect(skillLaunches).toEqual([]);
 			expect(auditRuns).toEqual([]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -262,7 +263,7 @@ describe('project maturity routes', () => {
 			expect(skillLaunches).toEqual([]);
 			expect(auditRuns).toEqual([]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });

@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import {
@@ -205,7 +205,7 @@ describe('project metadata', () => {
 			expect(iterations[0]?.iteration).toBe(60);
 			expect(iterations.at(-1)?.iteration).toBe(41);
 		} finally {
-			await rm(tmpDir, { force: true, recursive: true });
+			await removeTempTree(tmpDir);
 		}
 	});
 
@@ -306,7 +306,7 @@ describe('project metadata', () => {
 			expect(iterations[0]?.exitCode).toBe(0);
 			expect(iterations[0]?.finalChecks).toEqual({ smokeQc: 'failed' });
 		} finally {
-			await rm(tmpDir, { force: true, recursive: true });
+			await removeTempTree(tmpDir);
 		}
 	});
 
@@ -330,7 +330,7 @@ describe('project metadata', () => {
 
 			expect(iterations[0]?.finalChecks).toBeNull();
 		} finally {
-			await rm(tmpDir, { force: true, recursive: true });
+			await removeTempTree(tmpDir);
 		}
 	});
 
@@ -360,7 +360,7 @@ describe('project metadata', () => {
 			expect(iterations).toHaveLength(1);
 			expect(iterations[0]?.status).toBe('running');
 		} finally {
-			await rm(tmpDir, { force: true, recursive: true });
+			await removeTempTree(tmpDir);
 		}
 	});
 
@@ -407,7 +407,7 @@ describe('project metadata', () => {
 
 				expect([...runIds].sort()).toEqual(['run-a', 'run-b']);
 			} finally {
-				await rm(tmpDir, { force: true, recursive: true });
+				await removeTempTree(tmpDir);
 			}
 		});
 
@@ -417,7 +417,7 @@ describe('project metadata', () => {
 				const runIds = await gatherLedgerRunIds(join(tmpDir, '.aidd'));
 				expect(runIds.size).toBe(0);
 			} finally {
-				await rm(tmpDir, { force: true, recursive: true });
+				await removeTempTree(tmpDir);
 			}
 		});
 	});

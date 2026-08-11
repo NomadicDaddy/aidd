@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { MATURITY_SKIP_FILE } from 'aidd-shared/metadata/maturity';
@@ -7,6 +7,7 @@ import { metadataPath } from 'aidd-shared/metadata/paths';
 
 import { loadMaturitySkip } from '../../backend/src/services/maturity/artifactClassification.ts';
 import { testTempDirSync } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 // Regression: the writer emitted `.aidd/maturity.json` while the loader read
 // `.aidd/maturity-skip.json`, so every "Mark N/A" skip was written and then silently discarded —
@@ -17,7 +18,7 @@ describe('maturity skip round-trip', () => {
 
 	const makeProject = async (name: string): Promise<string> => {
 		const projectDir = join(tmpRoot, name);
-		await rm(projectDir, { force: true, recursive: true });
+		await removeTempTree(projectDir);
 		await mkdir(metadataPath(projectDir), { recursive: true });
 		return projectDir;
 	};

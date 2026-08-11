@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
 import type { ResolvedConfig } from 'aidd-shared/config';
@@ -17,6 +17,7 @@ import {
 import { rejectedAuditReportsNote } from '../../cli/src/orchestrator/run/carryover-notes.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { initializeGitProject } from './_helpers/orchestrator-fixture.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(import.meta.dir, '..', '..', '.tmp-mode-tests');
 const config: ResolvedConfig = {
@@ -70,7 +71,7 @@ function plan(projectDir: string, args: string[] = []) {
 }
 
 afterEach(async () => {
-	await rm(rootDir, { recursive: true, force: true });
+	await removeTempTree(rootDir);
 });
 
 describe('audit evidence validation', () => {

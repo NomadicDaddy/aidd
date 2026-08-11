@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
 	getProjectInterviewDetail,
@@ -7,6 +7,7 @@ import {
 } from '../../backend/src/services/interviewService.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 const QUESTIONS_CONTENT = `- **[HIGH]** What is the primary goal of this project?
 - **[MED]** What is the target audience?
@@ -21,7 +22,7 @@ async function setupTempProject(): Promise<string> {
 }
 
 async function cleanupTempProject(dir: string): Promise<void> {
-	await rm(dir, { recursive: true, force: true });
+	await removeTempTree(dir);
 }
 
 describe('interviewService', () => {

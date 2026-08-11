@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 async function runSelfContained(cwd: string): Promise<{ exitCode: number; stdout: string }> {
 	const toolPath = join(import.meta.dir, '..', '..', 'scripts', 'self-contained.ts');
 	const proc = Bun.spawn(['bun', toolPath], {
@@ -57,7 +58,7 @@ describe('self-contained tool', () => {
 			expect(stdout).toContain('scaffolding/scripts/require-bun.ts');
 			expect(stdout).toContain('scaffolding/tsconfig.json');
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -105,7 +106,7 @@ describe('self-contained tool', () => {
 			expect(exitCode).toBe(1);
 			expect(stdout).toContain('aidd2');
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -147,7 +148,7 @@ describe('self-contained tool', () => {
 			expect(stdout).toContain('D:\\applications\\ai');
 			expect(stdout).toContain('skills/leak.md');
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -186,7 +187,7 @@ describe('self-contained tool', () => {
 			expect(stdout).toContain('aidd-core');
 			expect(stdout).toContain('skills/leak.md');
 		} finally {
-			await rm(tmp, { recursive: true, force: true });
+			await removeTempTree(tmp);
 		}
 	});
 });

@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
@@ -10,6 +10,7 @@ import {
 	resolveAiddRunProvenance,
 } from '../../shared/src/run-provenance.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 function gitProbe(input: { dirty?: boolean; revision?: null | string }): AiddGitProbe {
 	return async (args) => {
@@ -48,7 +49,7 @@ describe('aidd run provenance', () => {
 				aiddVersion: '2.125.0',
 			});
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -67,7 +68,7 @@ describe('aidd run provenance', () => {
 				aiddVersion: '2.125.0',
 			});
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -82,7 +83,7 @@ describe('aidd run provenance', () => {
 				aiddVersion: '2.125.0',
 			});
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 
@@ -93,7 +94,7 @@ describe('aidd run provenance', () => {
 			await Bun.write(join(rootDir, 'VERSION'), '   \n');
 			expect(await readAiddVersion(rootDir)).toBeNull();
 		} finally {
-			await rm(rootDir, { force: true, recursive: true });
+			await removeTempTree(rootDir);
 		}
 	});
 });

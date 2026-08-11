@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 import {
 	AUDIT_RUN_SUMMARY_PATTERN,
 	buildScoreInput,
@@ -14,7 +15,7 @@ import {
 const rootDir = join(import.meta.dir, '..', '..', '.tmp-audit-scoring');
 
 afterEach(async () => {
-	await rm(rootDir, { recursive: true, force: true });
+	await removeTempTree(rootDir);
 });
 
 async function makeProject(name: string): Promise<string> {

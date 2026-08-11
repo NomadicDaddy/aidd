@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 import { runNoInlineReferences } from '../../scripts/check-no-inline-references.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 /**
  * The gate is delivered by `sync-shared-core.ts` from the repository that owns it; these tests
@@ -64,7 +65,7 @@ describe('check-no-inline-references tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('backend/src/db/schema/offender.ts:2');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -87,7 +88,7 @@ describe('check-no-inline-references tool', () => {
 			const { exitCode } = captureOutput(() => runNoInlineReferences(tmp));
 			expect(exitCode).toBe(0);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -109,7 +110,7 @@ describe('check-no-inline-references tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('backend/src/db/schema-pg/tables.ts:1');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -120,7 +121,7 @@ describe('check-no-inline-references tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('No schema files were examined');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 });

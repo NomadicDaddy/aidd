@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
@@ -19,6 +19,7 @@ import {
 import { writeRunSummary } from '../../cli/src/orchestrator/run/artifacts.ts';
 import { initialRunTotals } from '../../cli/src/orchestrator/run/types.ts';
 import { CliActiveRunHeartbeat } from '../../cli/src/orchestrator/active-run-heartbeat.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(import.meta.dir, '..', '..');
 const tmpRoot = join(rootDir, '.tmp-run-ai-summary-tests');
@@ -91,7 +92,7 @@ function plan(projectDir: string) {
 }
 
 afterEach(async () => {
-	await rm(tmpRoot, { force: true, recursive: true });
+	await removeTempTree(tmpRoot);
 });
 
 describe('createRunAiSummarizer', () => {

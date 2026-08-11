@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 import { runAuditArtifactHygiene } from '../../scripts/check-audit-artifact-hygiene.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 /**
  * The gate compares report dates against the machine's local date, so a fixture with a hardcoded
@@ -81,7 +82,7 @@ describe('check-audit-artifact-hygiene tool', () => {
 			expect(exitCode).toBe(0);
 			expect(output).toContain('1 report(s)');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -96,7 +97,7 @@ describe('check-audit-artifact-hygiene tool', () => {
 			expect(output).toContain('filename');
 			expect(output).toContain(future);
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -116,7 +117,7 @@ describe('check-audit-artifact-hygiene tool', () => {
 			expect(output).toContain('heading');
 			expect(output).toContain('date-field');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 
@@ -133,7 +134,7 @@ describe('check-audit-artifact-hygiene tool', () => {
 			expect(output).toContain('[SKIP]');
 			expect(output).not.toContain('[OK]');
 		} finally {
-			await rm(tmp, { force: true, recursive: true });
+			await removeTempTree(tmp);
 		}
 	});
 });

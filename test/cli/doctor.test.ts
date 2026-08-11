@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import { parseArgs } from 'aidd-shared/args/index';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { type DoctorProber, runPreflightDoctor } from '../../cli/src/orchestrator/run/doctor.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(import.meta.dir, '..', '..');
 const tmpRoot = join(rootDir, '.tmp-doctor-tests');
@@ -41,7 +42,7 @@ function plan(projectDir: string, cli: 'claude-code' | 'cline' | 'codex' | 'nati
 }
 
 afterEach(async () => {
-	await rm(tmpRoot, { force: true, recursive: true });
+	await removeTempTree(tmpRoot);
 });
 
 describe('runPreflightDoctor', () => {

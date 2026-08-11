@@ -12,6 +12,7 @@ import {
 } from '../../backend/src/services/project/listings.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function cacheValue(): ProjectListingCacheValue {
 	return {
 		prioritySummary: {
@@ -162,7 +163,7 @@ describe('ProjectListingCache', () => {
 			expect(computeCount).toBe(1);
 			expect(first).toBe(second);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });
@@ -204,7 +205,7 @@ describe('project listing stack fingerprints', () => {
 			const manifestChanged = await computeProjectFingerprint(projectDir, options);
 			expect(manifestChanged).not.toBe(declarationChanged);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -245,7 +246,7 @@ describe('project listing stack fingerprints', () => {
 			await rm(artifact(1));
 			expect(await computeProjectFingerprint(projectDir)).not.toBe(added);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -262,7 +263,7 @@ describe('project listing stack fingerprints', () => {
 			await writeFile(join(projectDir, '.env.local'), 'BACKEND_PORT=4101\n');
 			expect(await computeProjectFingerprint(projectDir)).not.toBe(addedEnvironment);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });
@@ -328,7 +329,7 @@ describe('ProjectListingCache stale-while-revalidate', () => {
 			expect(tagOf(fresh)).toBe('proj-2');
 			expect(state.calls).toBe(2);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	}, 15_000);
 
@@ -360,7 +361,7 @@ describe('ProjectListingCache stale-while-revalidate', () => {
 			// The entry survived the failed refresh and is still served.
 			expect(tagOf(await cache.getOrCompute(projectDir, compute))).toBe('proj-1');
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	}, 15_000);
 });

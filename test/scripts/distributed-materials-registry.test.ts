@@ -19,6 +19,7 @@ import {
 	type ThirdPartyMaterial,
 } from '../../scripts/lib/third-party-licenses/registry-types.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const REVISION = '4559f18a20c1691c744b4395194290db6a0df5e9';
 const PATHS = [
@@ -234,7 +235,7 @@ describe('distributed materials registry', () => {
 			expect(await Bun.file(join(out, 'audits', 'deleted.md')).exists()).toBe(false);
 			expect(await Bun.file(join(out, 'audits', 'untracked.md')).exists()).toBe(false);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -253,7 +254,7 @@ describe('distributed materials registry', () => {
 			}
 			expect(await Bun.file(join(root, '.git')).exists()).toBe(false);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -274,7 +275,7 @@ describe('distributed materials registry', () => {
 				'Distributed surface path is not repository-relative: ../outside.txt',
 			);
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 

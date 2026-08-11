@@ -206,7 +206,7 @@ describe('worktree-metadata-session', () => {
 			await mkdir(join(wt.dir, '.aidd', 'iterations'), { recursive: true });
 			await writeFile(join(wt.dir, '.aidd', 'iterations', '001.log'), 'only copy\n');
 			// Sabotage the canonical target: a FILE at .aidd/iterations makes mkdir/copy fail.
-			await rm(join(projectDir, '.aidd', 'iterations'), { force: true, recursive: true });
+			await removeTempTree(join(projectDir, '.aidd', 'iterations'));
 			await writeFile(join(projectDir, '.aidd', 'iterations'), 'not a directory\n');
 
 			const finalization = await finalizeRunWorktree({

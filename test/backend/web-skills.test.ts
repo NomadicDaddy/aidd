@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Elysia } from 'elysia';
 import { describe, expect, test } from 'bun:test';
@@ -9,6 +9,7 @@ import { HttpError } from '../../backend/src/services/errors.ts';
 import { SkillService } from '../../backend/src/services/skillService.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 const demoSkill = {
 	body: '# Demo\n',
 	category: 'runtime',
@@ -311,7 +312,7 @@ describe('skills routes', () => {
 			expect(unsafe.status).toBe(400);
 			expect(await unsafe.json()).toEqual({ error: 'Invalid skill id: Bad' });
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 });

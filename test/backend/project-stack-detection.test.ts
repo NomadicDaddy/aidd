@@ -1,9 +1,10 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import { detectProjectStack } from '../../shared/src/metadata/project-stack.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 async function withTempProject(
 	files: Record<string, string>,
@@ -18,7 +19,7 @@ async function withTempProject(
 		}
 		await run(dir);
 	} finally {
-		await rm(dir, { force: true, recursive: true });
+		await removeTempTree(dir);
 	}
 }
 
@@ -95,7 +96,7 @@ describe('project stack detection', () => {
 				source: 'project-declaration',
 			});
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 
@@ -177,7 +178,7 @@ describe('project stack detection', () => {
 				source: 'fleet-manifest',
 			});
 		} finally {
-			await rm(root, { force: true, recursive: true });
+			await removeTempTree(root);
 		}
 	});
 });

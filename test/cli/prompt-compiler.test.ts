@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
 import type { ResolvedConfig } from 'aidd-shared/config';
@@ -8,6 +8,7 @@ import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { compilePrompt } from '../../cli/src/prompts/compile.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const rootDir = join(import.meta.dir, '..', '..');
 const config: ResolvedConfig = {
 	cli: 'native',
@@ -764,7 +765,7 @@ describe('prompt compiler — project context injection', () => {
 	});
 
 	afterAll(async () => {
-		await rm(projectDir, { recursive: true, force: true });
+		await removeTempTree(projectDir);
 	});
 
 	test('coding mode injects CHANGELOG and session reports but not audit-report groups', async () => {
@@ -846,7 +847,7 @@ describe('prompt compiler — project context injection', () => {
 			expect(compiled.text).toContain('### PRIOR CONTEXT (auto-loaded by aidd)');
 			expect(compiled.text).toContain('No prior reports found for the selected audit(s).');
 		} finally {
-			await rm(empty, { recursive: true, force: true });
+			await removeTempTree(empty);
 		}
 	});
 
@@ -865,7 +866,7 @@ describe('prompt compiler — project context injection', () => {
 			expect(compiled.text).toContain('#### Domain context file');
 			expect(compiled.text).toContain('`CONTEXT.md` is present at the project root');
 		} finally {
-			await rm(contextProject, { recursive: true, force: true });
+			await removeTempTree(contextProject);
 		}
 	});
 
@@ -1005,7 +1006,7 @@ describe('prompt compiler — injection boundary', () => {
 	});
 
 	afterAll(async () => {
-		await rm(hostileDir, { recursive: true, force: true });
+		await removeTempTree(hostileDir);
 	});
 
 	test('changelog fence breakout with fake AIDD_RESULT stays contained', async () => {

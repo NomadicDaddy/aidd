@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { rmSync } from 'node:fs';
 import { mkdir, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { evaluateFrontendStaleness } from '../../backend/src/frontendStaleness.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 import { testTempDirSync } from '../_helpers/temp.ts';
 const tmpRoots: string[] = [];
@@ -19,9 +19,9 @@ async function writeAt(path: string, contents: string, epochSeconds: number): Pr
 	await utimes(path, epochSeconds, epochSeconds);
 }
 
-afterEach(() => {
+afterEach(async () => {
 	for (const root of tmpRoots.splice(0)) {
-		rmSync(root, { force: true, recursive: true });
+		await removeTempTree(root);
 	}
 });
 

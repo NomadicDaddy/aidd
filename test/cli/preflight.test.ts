@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { parseArgs } from 'aidd-shared/args/index';
@@ -18,6 +18,7 @@ import {
 } from '../../cli/src/preflight.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const config: ResolvedConfig = {
 	cli: 'native',
 	reasoningEffort: 'low',
@@ -38,7 +39,7 @@ const config: ResolvedConfig = {
 const tmpRoot = join(import.meta.dir, '..', '..', '.tmp-preflight-completed-tests');
 
 afterEach(async () => {
-	await rm(tmpRoot, { recursive: true, force: true });
+	await removeTempTree(tmpRoot);
 });
 
 describe('preflight compatibility', () => {

@@ -1,10 +1,11 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { dropLedgerPhantomRuns } from '../../backend/src/services/run/ledgerReconcile.ts';
 import type { RunRecord } from '../../backend/src/types.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function makeRun(overrides: { id: string; projectPath: string } & Partial<RunRecord>): RunRecord {
 	return {
 		activityState: null,
@@ -69,7 +70,7 @@ describe('dropLedgerPhantomRuns', () => {
 			const result = await dropLedgerPhantomRuns(items);
 			expect(result.map((run) => run.id)).toEqual(['run-real']);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -94,7 +95,7 @@ describe('dropLedgerPhantomRuns', () => {
 				'run-real',
 			]);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -109,7 +110,7 @@ describe('dropLedgerPhantomRuns', () => {
 			const result = await dropLedgerPhantomRuns(items);
 			expect(result.map((run) => run.id).sort()).toEqual(['run-live', 'run-real']);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -137,7 +138,7 @@ describe('dropLedgerPhantomRuns', () => {
 			const result = await dropLedgerPhantomRuns(items);
 			expect(result.map((run) => run.id)).toEqual(['run-real']);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -167,7 +168,7 @@ describe('dropLedgerPhantomRuns', () => {
 				['run-real', ...observed.map((reason) => `run-${reason}`)].sort(),
 			);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -181,7 +182,7 @@ describe('dropLedgerPhantomRuns', () => {
 			const result = await dropLedgerPhantomRuns(items);
 			expect(result.map((run) => run.id).sort()).toEqual(['run-a', 'run-b']);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });
@@ -206,7 +207,7 @@ describe('validate-run exemption', () => {
 			const kept = await dropLedgerPhantomRuns(items);
 			expect(kept.map((run) => run.id).sort()).toEqual(['run-real', 'run-validate']);
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });
@@ -253,7 +254,7 @@ describe('readLedgerTerminalEntries', () => {
 				summary: 'stopped by user',
 			});
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });

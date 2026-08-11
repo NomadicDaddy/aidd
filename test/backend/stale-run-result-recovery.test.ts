@@ -8,7 +8,7 @@ import {
 	unfinalizedAgentResultMarker,
 } from 'aidd-shared/runs/outcome';
 import { eq } from 'drizzle-orm';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
@@ -25,6 +25,7 @@ import { TelemetryService } from '../../backend/src/services/telemetryService.ts
 import { WebSocketHub } from '../../backend/src/webSocketHub.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 const fixturesDir = join(import.meta.dir, '..', 'fixtures', 'run-result-recovery');
 
@@ -100,7 +101,7 @@ describe('stale run result recovery', () => {
 			await mkdir(unreadablePath);
 			expect(await recoverResultFromRunLog(unreadablePath)).toBeUndefined();
 		} finally {
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -151,7 +152,7 @@ describe('stale run result recovery', () => {
 			).toHaveLength(1);
 		} finally {
 			sqlite.close();
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 
@@ -190,7 +191,7 @@ describe('stale run result recovery', () => {
 			expect(hasUnfinalizedAgentResultMarker(row?.summary)).toBe(false);
 		} finally {
 			sqlite.close();
-			await rm(projectDir, { force: true, recursive: true });
+			await removeTempTree(projectDir);
 		}
 	});
 });

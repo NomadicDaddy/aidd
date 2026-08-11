@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
@@ -22,6 +22,7 @@ import { TerminalSessionManager } from '../../backend/src/services/terminal/sess
 import { WebSocketHub } from '../../backend/src/webSocketHub.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 function makeConfig(web: ResolvedWebConfig): { web: ResolvedWebConfig } & ResolvedConfig {
 	return {
 		cli: 'native',
@@ -190,7 +191,7 @@ describe('web v2 cutover QC', () => {
 		} finally {
 			runService.markDisposed();
 			await database.close();
-			await rm(workspace, { force: true, recursive: true });
+			await removeTempTree(workspace);
 		}
 	});
 
@@ -243,7 +244,7 @@ describe('web v2 cutover QC', () => {
 		} finally {
 			runService.markDisposed();
 			await database.close();
-			await rm(workspace, { force: true, recursive: true });
+			await removeTempTree(workspace);
 		}
 	});
 
@@ -271,7 +272,7 @@ describe('web v2 cutover QC', () => {
 		} finally {
 			runService.markDisposed();
 			await database.close();
-			await rm(workspace, { force: true, recursive: true });
+			await removeTempTree(workspace);
 		}
 	});
 
@@ -306,7 +307,7 @@ describe('web v2 cutover QC', () => {
 		} finally {
 			runService.markDisposed();
 			await database.close();
-			await rm(workspace, { recursive: true, force: true });
+			await removeTempTree(workspace);
 		}
 	});
 
@@ -332,7 +333,7 @@ describe('web v2 cutover QC', () => {
 		} finally {
 			runService.markDisposed();
 			await database.close();
-			await rm(workspace, { recursive: true, force: true });
+			await removeTempTree(workspace);
 		}
 	});
 

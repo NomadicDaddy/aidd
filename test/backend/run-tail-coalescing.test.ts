@@ -1,10 +1,11 @@
-import { appendFile, open, rm, writeFile } from 'node:fs/promises';
+import { appendFile, open, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { RunTailWatcher } from '../../backend/src/services/run/tailWatcher.ts';
 import { WebSocketHub } from '../../backend/src/webSocketHub.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 interface CapturedOutput {
 	chunk: string;
 	runId: string;
@@ -40,7 +41,7 @@ describe('RunTailWatcher broadcast coalescing', () => {
 	});
 
 	afterEach(async () => {
-		await rm(dir, { force: true, recursive: true });
+		await removeTempTree(dir);
 	});
 
 	test('emits one coalesced frame per drain and never drops bytes', async () => {

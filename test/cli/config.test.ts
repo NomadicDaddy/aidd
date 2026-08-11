@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, test } from 'bun:test';
@@ -6,6 +6,7 @@ import { configSchema, resolveConfig, resolveMergedConfig } from 'aidd-shared/co
 import type { ParsedArgs } from 'aidd-shared/args/index';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 const emptyUserConfigPath = join(tmpdir(), `aidd-empty-user-config-${process.pid}.json`);
 
 function resolveTestConfig(args: ParsedArgs) {
@@ -53,7 +54,7 @@ describe('config JSON errors', () => {
 		await expect(resolveConfig(baseArgs, { userConfigPath })).rejects.toThrow(
 			/Invalid JSON in aidd config .*user-config\.json/,
 		);
-		await rm(dir, { force: true, recursive: true });
+		await removeTempTree(dir);
 	});
 });
 
@@ -315,7 +316,7 @@ describe('resolveConfig', () => {
 			expect(config.sharedFiles).toEqual(['C:/operator/AGENTS.md']);
 			expect(config.sharedDirs).toBeUndefined();
 		} finally {
-			await rm(tmpDir, { force: true, recursive: true });
+			await removeTempTree(tmpDir);
 		}
 	});
 
@@ -340,7 +341,7 @@ describe('resolveConfig', () => {
 				'Invalid aidd config',
 			);
 		} finally {
-			await rm(tmpDir, { force: true, recursive: true });
+			await removeTempTree(tmpDir);
 		}
 	});
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { defaultIgnoredFolders } from '../../shared/src/config/schema.ts';
@@ -10,11 +10,12 @@ import {
 } from '../../backend/src/services/project/discovery.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 const roots: string[] = [];
 
 afterEach(async () => {
 	for (const root of roots.splice(0)) {
-		await rm(root, { force: true, recursive: true });
+		await removeTempTree(root);
 	}
 });
 

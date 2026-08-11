@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, rm, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
 	type AuditReportMetadata,
@@ -10,12 +10,13 @@ import {
 } from 'aidd-shared/metadata/audit-freshness';
 
 import { testTempRoot } from '../_helpers/temp.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 const rootDir = join(testTempRoot, 'aidd-audit-freshness');
 const now = new Date('2026-05-24T12:00:00.000Z');
 
 afterEach(async () => {
-	await rm(rootDir, { force: true, recursive: true });
+	await removeTempTree(rootDir);
 });
 
 describe('audit report freshness', () => {

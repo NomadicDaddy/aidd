@@ -10,7 +10,6 @@
 // the lock; a worker whose parent IS that pid belongs to the owned run and skips lock,
 // sweep, and cleanup entirely.
 import { afterAll } from 'bun:test';
-import { rmSync } from 'node:fs';
 
 import { acquireTestRunLock, readActiveTestRun } from '../scripts/lib/test-run-lock.ts';
 import { sweepOrphanTestTempTrees } from '../scripts/lib/test-temp-root.ts';
@@ -57,13 +56,11 @@ if (!(await wrapperOwnsThisRun())) {
 	// bun test does not fire process.on('exit') handlers, so end-of-run cleanup lives in a
 	// global afterAll (preload hooks span the whole run). A killed run skips it; the stale
 	// lock self-clears on the next acquire and the sweep above catches the leftover tree.
-	afterAll(() => {
+	afterAll(async () => {
 		lock.release();
-		// Best-effort: a child that outlives the suite can hold a handle on Windows.
-		try {
-			rmSync(testTempRoot, { force: true, recursive: true });
-		} catch {
-			// Swept at the next suite start instead.
-		}
+		// Best-effort: a child that outlives the suite can hold a handle on Windows. The retry
+		// usually outlasts it; a handle that survives even that leaves the tree for the sweep at
+		// the next suite start.
+		await removeTempTree(testTempRoot).catch(() => {});
 	});
 }

@@ -60,7 +60,10 @@ describe('check-audit-artifact-hygiene tool', () => {
 	test('passes against the current repository', () => {
 		const { exitCode, output } = captureOutput(() => runAuditArtifactHygiene(process.cwd()));
 		expect(exitCode).toBe(0);
-		expect(output).toContain('[OK]');
+		// `.aidd/audit-reports/` is untracked local state, so this repository has reports on a
+		// machine that has run an audit and none in a fresh clone. Both are passes and the shape is
+		// all that differs, which is why pinning this to `[OK]` passed here and failed in CI.
+		expect(output).toMatch(/\[(OK|SKIP)\]/);
 	});
 
 	test('is wired into smoke:qc steps', () => {

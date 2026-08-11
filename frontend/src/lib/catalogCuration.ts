@@ -35,6 +35,7 @@ export const RECIPE_SKILL_IDS: ReadonlySet<string> = new Set([
 	'feature-review',
 	'humanize-docs',
 	'onboarding-interview',
+	'refresh-project-artifacts',
 	'review-doc',
 	'ship-pr',
 	'spernakit-apply-ui',

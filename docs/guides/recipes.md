@@ -350,14 +350,19 @@ Re-ingest an already-managed project: reconcile or repair existing .aidd metadat
 
 ### reconcile-project-artifacts
 
-Review missing or stale canonical aidd artifacts against the live project, reconcile inaccurate content within CONTEXT.md and .aidd/, then recalculate artifact status.
+Refresh every documented project artifact against the live application, then recalculate canonical artifact status.
 
 - **Name:** reconcile project artifacts
 - **Parameters:** application
 - **Steps:** 2
 
-1. `aidd-cli` - Reconcile canonical artifacts (maxIterations: 1; writeAllowlist: [.aidd, CONTEXT.md]; prompt: Reconcile {application}'s canonical aidd artifacts against the live project. Begin with .aidd/.artifacts-check.json as status evidence only; do not treat age alone as proof that content is wrong. ...); retryCount: 1
+1. `skill` - Refresh project artifacts (args: {application}; skillId: refresh-project-artifacts); retryCount: 1
 2. `recipe-ref` - Recalculate artifact status (params: {"application":"{application}"}; recipeName: check-artifacts)
+
+The refresh skill reads the canonical reference at runtime and records an outcome for every row,
+including related documentation and deploy configuration. It updates durable artifacts from live
+evidence, runs generated producers only when their inputs exist, preserves manual decisions, and
+protects runtime history and secrets. The final step remains the check-only status recalculation.
 
 ### remediate-audit-findings
 

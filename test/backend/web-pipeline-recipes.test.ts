@@ -299,17 +299,17 @@ describe('file-backed pipeline recipes', () => {
 		expect(prompt).toContain('Write nothing outside .aidd/');
 	});
 
-	test('artifact reconciliation preserves accurate text while recording completed review', async () => {
+	test('artifact reconciliation uses the complete catalog refresh skill before status checks', async () => {
 		const recipeService = new RecipeService(process.cwd());
 		const recipe = await recipeService.readRecipe('reconcile-project-artifacts');
-		const reconcileStep = recipe.steps[0];
-		const prompt = reconcileStep?.configJson.prompt;
+		const refreshStep = recipe.steps[0];
 
-		expect(reconcileStep?.configJson.writeAllowlist).toEqual(['.aidd', 'CONTEXT.md']);
-		expect(prompt).toContain('do not treat age alone as proof that content is wrong');
-		expect(prompt).toContain(
-			'renew its filesystem modification time without changing its text',
-		);
+		expect(refreshStep?.stepType).toBe('skill');
+		expect(refreshStep?.configJson).toMatchObject({
+			args: '{application}',
+			executionIntent: 'apply-changes',
+			skillId: 'refresh-project-artifacts',
+		});
 		expect(recipe.steps[1]?.configJson.recipeName).toBe('check-artifacts');
 	});
 

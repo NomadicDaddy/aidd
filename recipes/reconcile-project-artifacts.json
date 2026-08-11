@@ -1,5 +1,5 @@
 {
-	"description": "Review missing or stale canonical aidd artifacts against the live project, reconcile inaccurate content within CONTEXT.md and .aidd/, then recalculate artifact status.",
+	"description": "Refresh every documented project artifact against the live application, then recalculate canonical artifact status.",
 	"name": "reconcile project artifacts",
 	"parameters": [
 		{
@@ -10,13 +10,13 @@
 	"steps": [
 		{
 			"configJson": {
-				"maxIterations": 1,
-				"prompt": "Reconcile {application}'s canonical aidd artifacts against the live project. Begin with .aidd/.artifacts-check.json as status evidence only; do not treat age alone as proof that content is wrong. Review each missing required artifact and each stale required or recommended artifact against current source, configuration, current planning records, and established project terminology. Create required artifacts that are missing. Update stale artifacts only where their content is inaccurate, incomplete, or no longer represents the current project; preserve still-valid material. For each stale artifact reviewed and found accurate, renew its filesystem modification time without changing its text so the local freshness check records the completed review. Missing recommended artifacts may be created when the project has real content for them. Do not create optional interview artifacts without real interview data. Do not edit generated runtime records, feature status, source code, or files outside CONTEXT.md and .aidd/. In the final summary, distinguish files whose text changed from stale files reviewed, left textually accurate, and timestamp-renewed.",
-				"writeAllowlist": [".aidd", "CONTEXT.md"]
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "refresh-project-artifacts"
 			},
-			"name": "Reconcile canonical artifacts",
+			"name": "Refresh project artifacts",
 			"retryCount": 1,
-			"stepType": "aidd-cli"
+			"stepType": "skill"
 		},
 		{
 			"configJson": {

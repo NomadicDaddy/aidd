@@ -1,0 +1,4 @@
+interface:
+    display_name: 'Refresh Project Artifacts'
+    short_description: 'Refresh every documented AIDD project artifact'
+    default_prompt: 'Use $refresh-project-artifacts to refresh every documented AIDD artifact for this project.'

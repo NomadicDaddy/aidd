@@ -5,8 +5,10 @@ import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { buildFeatureBlockingContext } from './blocking-context.ts';
+import type { RunEvidence } from './dirty-source-attribution.ts';
 import type { FeatureCompletionSnapshot } from './types.ts';
 
+import { runTouchedPath } from './dirty-source-attribution.ts';
 import { gitSuccess } from './git-exec.ts';
 import { gitDirtySourcePaths } from './git.ts';
 
@@ -16,6 +18,9 @@ type CompletionCommitGateInput = {
 	completionCommittedDuringGrace: boolean;
 	completionFinalizedBeforeBackendExit: boolean;
 	dirtySourcePathsAtStart: ReadonlySet<string> | undefined;
+	/** What this run provably wrote or named. Only paths it accounts for may disqualify the
+	 * ignored-metadata allowance below. */
+	evidence: RunEvidence;
 	gitHeadBefore: string | undefined;
 	iterationCommitCount: number;
 	projectDir: string;
@@ -61,7 +66,17 @@ async function ignoredMetadataCompletionSatisfiesCommitGate(
 	const dirtySourcePaths = await gitDirtySourcePaths(input.projectDir);
 	if (dirtySourcePaths === undefined) return false;
 	for (const path of dirtySourcePaths) {
+		// Attribution decides, not dirtiness. A worktree is shared with whoever else is working in
+		// it, and an operator editing an unrelated file mid-run used to sink the whole run: the
+		// completion was demoted to waiting_approval and the run exited 7 over a file the agent
+		// never opened. Residue the run cannot account for is reported at run end (see
+		// classifyResidualDirtySourcePaths) and charged to nobody.
+		if (!runTouchedPath(input.evidence, input.projectDir, path)) continue;
 		if (input.dirtySourcePathsAtStart?.has(path) !== true) return false;
+		// A path already dirty at run start is operator state — but once this run also wrote to it,
+		// the edit is the run's own uncommitted source work. mtime is the corroborating signal:
+		// alone it cannot tell the run's write from a concurrent one, which is why it is reached
+		// only for paths already attributed above.
 		if (await writtenDuringRun(input.projectDir, path, input.startedAtMs)) return false;
 	}
 	return true;
@@ -122,10 +137,9 @@ export async function applySimulatedFeatureCompletion(input: {
 	});
 }
 
-/** A path already dirty at run start is operator state the run must not claim — but only while the
- * run leaves it alone. Once this iteration writes to it, the edit is the run's own uncommitted
- * source work, and the ignored-metadata allowance must not excuse it just because the path was
- * dirty beforehand. An unstattable path (deleted mid-run) counts as written. */
+/** Whether the file changed on disk within this run's window. An unstattable path (deleted
+ * mid-run) counts as written. Only meaningful for paths already attributed to the run — see the
+ * call site. */
 async function writtenDuringRun(
 	projectDir: string,
 	relativePath: string,

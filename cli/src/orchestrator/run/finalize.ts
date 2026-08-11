@@ -17,6 +17,7 @@ import {
 	completionRequiresCommit,
 	parkCompletionsPendingCommit,
 } from './completion-persistence.ts';
+import { runEvidence } from './dirty-source-attribution.ts';
 import {
 	appendInvalidFeatureMetadata,
 	auditFeatureScope,
@@ -82,6 +83,7 @@ export async function finalizeIteration(
 		completionCommittedDuringGrace,
 		completionFinalizedBeforeBackendExit,
 		dirtySourcePathsAtStart: acc.dirtySourcePathsAtStart,
+		evidence: runEvidence({ events, prior: acc }),
 		gitHeadBefore,
 		iterationCommitCount: iterationCommits.length,
 		projectDir: runRepoDir(plan),

@@ -1100,15 +1100,15 @@ describe('orchestrator work results', () => {
 			await initializeGitProject(store.projectDir);
 
 			// Same ignored-.aidd setup as the accepting case, but the run also leaves a source file
-			// uncommitted. The ignored-metadata allowance must not extend to source work: the only
-			// dirt it may excuse is what was already dirty at run start.
+			// uncommitted and declares it in `filesModified`. The ignored-metadata allowance must
+			// not extend to source work the run itself wrote.
 			const backend = new FakeBackend(
 				[
 					{
 						type: 'assistant_text',
 						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
 					},
-					{ type: 'done', exitCode: 0, filesModified: [] },
+					{ type: 'done', exitCode: 0, filesModified: ['src-change.ts'] },
 				],
 				async () => {
 					await writeFile(
@@ -1161,7 +1161,7 @@ describe('orchestrator work results', () => {
 						type: 'assistant_text',
 						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
 					},
-					{ type: 'done', exitCode: 0, filesModified: [] },
+					{ type: 'done', exitCode: 0, filesModified: ['operator-wip.ts'] },
 				],
 				async () => {
 					await writeFile(
@@ -1188,6 +1188,57 @@ describe('orchestrator work results', () => {
 				'utf8',
 			);
 			expect(iterationJson).toContain('"completionPendingCommit": true');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'accepts an ignored metadata-only completion when an unrelated file is edited concurrently',
+		async () => {
+			const store = await makeStore('ignored-metadata-concurrent-edit');
+			await writeFile(join(store.projectDir, '.gitignore'), '.aidd/\n');
+			await initializeGitProject(store.projectDir);
+
+			// Observed on a real run: an operator edited a doc in the shared worktree while the
+			// agent was finishing, and the completion gate charged that file to the run — the
+			// finished feature was demoted to waiting_approval and the run exited 7 over a file the
+			// agent never opened. The run declares no authorship of this path (no tool call, no
+			// filesModified entry, no command naming it), so it must not count against it.
+			const backend = new FakeBackend(
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				async () => {
+					await writeFile(
+						join(store.projectDir, 'operator-edited-elsewhere.ts'),
+						'export const concurrent = 1;\n',
+					);
+					await completeFeature(store, 'feature-core');
+				},
+			);
+
+			const exitCode = await runOrchestrator(plan(store.projectDir), {
+				rootDir,
+				store,
+				backend,
+				completionMarkerGraceMs: 10,
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			await expect(store.readFeature('feature-core')).resolves.toMatchObject({
+				status: 'completed',
+				passes: true,
+			});
+			const iterationJson = await readFile(
+				join(store.metadataDir, 'iterations', '001.json'),
+				'utf8',
+			);
+			expect(iterationJson).toContain('"completedFeature": "feature-core"');
+			expect(iterationJson).not.toContain('"completionPendingCommit": true');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);

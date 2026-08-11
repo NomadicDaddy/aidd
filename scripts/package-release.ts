@@ -29,6 +29,8 @@ import { copyTrackedFiles } from './lib/third-party-licenses/distributed-paths.t
 
 interface PackageReleaseArgs {
 	outDir: string;
+	/** `--retain-record`. See `PackageReleaseOptions.retainRecord`. Off unless asked for. */
+	retainRecord?: boolean;
 	skipBuild: boolean;
 	skipFrontend: boolean;
 	targets: CompileTarget[];
@@ -37,9 +39,9 @@ interface PackageReleaseArgs {
 interface PackageReleaseOptions {
 	commandRunner?: CommandRunner;
 	/**
-	 * Also write the source record into licenses/releases/, for a maintainer to commit. Defaults
-	 * off on CI, where the workspace is discarded (so the copy retains nothing) and an untracked
-	 * file makes the release check refuse to build from a dirty tree.
+	 * Also write the source record into licenses/releases/. Overrides `PackageReleaseArgs`; off
+	 * unless one of them asks for it, because the record a local build produces describes a zip
+	 * nobody receives (see the note at the write site).
 	 */
 	retainRecord?: boolean;
 	standaloneBuilder?: (
@@ -57,6 +59,7 @@ interface ReleaseAsset {
 export function parsePackageReleaseArgs(argv: string[]): PackageReleaseArgs {
 	const targets: CompileTarget[] = [];
 	let outDir = 'dist/release';
+	let retainRecord = false;
 	let skipBuild = false;
 	let skipFrontend = false;
 	for (let i = 0; i < argv.length; i++) {
@@ -66,6 +69,8 @@ export function parsePackageReleaseArgs(argv: string[]): PackageReleaseArgs {
 		} else if (token === '--out-dir') {
 			outDir = argv[++i] ?? '';
 			if (outDir.length === 0) throw new Error('Missing value for --out-dir');
+		} else if (token === '--retain-record') {
+			retainRecord = true;
 		} else if (token === '--skip-build') {
 			skipBuild = true;
 		} else if (token === '--skip-frontend') {
@@ -86,6 +91,7 @@ export function parsePackageReleaseArgs(argv: string[]): PackageReleaseArgs {
 	}
 	return {
 		outDir,
+		retainRecord,
 		skipBuild,
 		skipFrontend,
 		targets: targets.length > 0 ? targets : [windowsTarget()],
@@ -165,17 +171,19 @@ export async function packageRelease(
 	// The record the offer is answered from when a recipient identifies an artifact by hash. It is
 	// always published as a release asset, which is where the durable copy lives.
 	//
-	// The copy under licenses/releases/ is for a maintainer packaging locally, who can commit it.
-	// On CI that copy retains nothing — the workspace is discarded — and writing it there only
-	// dirties the tree, which the release check then (correctly) refuses to build from.
+	// The copy under licenses/releases/ is opt-in, and it used to default on off-CI, which was
+	// wrong in both directions. It dirtied the tree on every local cut, so the release check then
+	// refused to build — and worse, a maintainer who committed it would be publishing a record of
+	// the wrong artifact. The zip a laptop builds is not the zip that ships: v2.137.1 hashed
+	// fe4bff49… locally and d4d5052e… as published, so the retained record maps the source offer
+	// to bytes no recipient holds. Only ask for it when you are hand-distributing the local zip.
 	const record = renderReleaseRecord(
 		revisions,
 		assets
 			.filter((asset) => asset.path.endsWith('.zip'))
 			.map((asset) => ({ name: basename(asset.path), sha256: asset.sha256 })),
 	);
-	const retainRecord = options.retainRecord ?? !process.env.CI;
-	if (retainRecord) {
+	if (options.retainRecord ?? args.retainRecord ?? false) {
 		await Bun.write(
 			join(rootDir, 'licenses', 'releases', `v${info.packageVersion}.md`),
 			record,

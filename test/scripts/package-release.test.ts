@@ -117,6 +117,10 @@ describe('release packager', () => {
 		expect(args.skipFrontend).toBe(true);
 		expect(args.outDir).toBe('out');
 		expect(args.targets.map((target) => target.name)).toEqual(['bun-windows-x64-modern']);
+		// Off unless asked for, on a runner and on a laptop alike. The record a local build
+		// describes is the local zip, which is not the zip that gets published.
+		expect(args.retainRecord).toBe(false);
+		expect(parsePackageReleaseArgs(['--retain-record']).retainRecord).toBe(true);
 	});
 
 	test('stages standalone files, public docs, notes, and checksums', async () => {
@@ -203,9 +207,10 @@ describe('release packager', () => {
 		expect(record).toContain('SHA-256');
 	});
 
-	test('leaves the tree clean when packaging without retention (the CI path)', async () => {
-		// The release check refuses to build from a dirty tree, so packaging on a runner must not
-		// write into the repo. The record still ships: it is published as a release asset.
+	test('leaves the tree clean when nothing asks for retention', async () => {
+		// The default, everywhere. The release check refuses to build from a dirty tree, so
+		// packaging must not write into the repo unless a maintainer explicitly asked for the
+		// local record. The record still ships either way: it is published as a release asset.
 		const root = await makeRoot();
 		await seedReleaseSource(root);
 		await seedStandalone(root);
@@ -225,7 +230,7 @@ describe('release packager', () => {
 				skipFrontend: true,
 				targets: [windowsTarget()],
 			},
-			{ commandRunner: zipRunner, retainRecord: false },
+			{ commandRunner: zipRunner },
 		);
 
 		expect(assets.map((asset) => basename(asset.path))).toContain('source-record-v4.5.6.md');

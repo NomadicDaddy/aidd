@@ -42,6 +42,7 @@ export function Metric({
 	detail,
 	footer,
 	icon,
+	interactive = false,
 	label,
 	loading = false,
 	marker,
@@ -56,6 +57,15 @@ export function Metric({
 	/** Full-width content below the caption — a progress bar, a link row. */
 	footer?: ReactNode;
 	icon?: ReactNode;
+	/**
+	 * Forwarded to `Card`, for the tiles that are also links.
+	 *
+	 * Without it the one clickable tile in the app hand-rolled `transition-colors
+	 * hover:border-border` — a hover to the colour the border already was — so the only tile on the
+	 * Overview that navigates was the only card on the page with no hover at all. `Card` already
+	 * owns this treatment; the tile just had no way to ask for it.
+	 */
+	interactive?: boolean;
 	label: string;
 	loading?: boolean;
 	/**
@@ -79,6 +89,7 @@ export function Metric({
 		// `CountCard` was the only tile that got this right; now every tile does.
 		<Card
 			className={cn('flex h-full flex-col overflow-hidden', className)}
+			interactive={interactive}
 			variant={surface ?? (compact ? 'sunken' : 'panel')}>
 			<div className="flex flex-1 items-stretch justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col justify-between">

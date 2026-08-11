@@ -69,7 +69,10 @@ export function LeaderboardCard({ rows }: { rows: ResourceUsageRow[] }) {
 										<span className="text-muted-foreground">#{index + 1}</span>{' '}
 										{row.resourceName}
 									</Link>
-									<p className="truncate text-xs text-muted-foreground">
+									{/* The id half is the same slug the Recipes grid prints in its
+									    `identifier` slot; the type half is a machine enum. Both are
+									    strings the app matches on, not words it wrote. */}
+									<p className="truncate font-mono text-xs text-muted-foreground">
 										{row.resourceType} · {row.resourceId}
 									</p>
 								</div>
@@ -96,7 +99,7 @@ export function LeaderboardCard({ rows }: { rows: ResourceUsageRow[] }) {
 									<span>{row.topLevel} top-level</span>
 									<span>{row.nested} nested</span>
 								</span>
-								<span>
+								<span className="tabular-nums">
 									{row.lastUsedAt
 										? `last ${formatRelativeAge(new Date(row.lastUsedAt).toISOString())}`
 										: 'never used'}{' '}

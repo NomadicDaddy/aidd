@@ -36,11 +36,11 @@ describe('two-column grids do not stretch a card past its own content', () => {
 		// The dead column is gone by composition rather than by an alignment rule: the short Run
 		// Cycle card and the capped Recent Cycles card share the right column of the single
 		// two-column row, and the suggestion queue — rows, not a column — spans the page below it.
-		expect(page).toContain('grid gap-5 lg:grid-cols-2');
+		expect(page).toContain('grid gap-5 @min-[68rem]:grid-cols-2');
 		expect(page).toMatch(
 			/<div className="space-y-5">[\s\S]*<DirectorRecentCycles cycles=\{cycles\} now=\{now\} \/>\s*<\/div>/,
 		);
-		expect(page).not.toContain('lg:grid-cols-2 lg:items-start');
+		expect(page).not.toContain('grid-cols-2 @min-[68rem]:items-start');
 		// Recent Cycles owns its scroll region, so the card around it stops growing on its own.
 		expect(cycles).toContain('max-h-[28rem]');
 	});

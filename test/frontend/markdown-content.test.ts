@@ -2,7 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { parseMarkdownBlocks } from '../../frontend/src/lib/markdownBlocks.ts';
+import {
+	markdownHeadings,
+	parseMarkdownBlocks,
+	plainInlineText,
+} from '../../frontend/src/lib/markdownBlocks.ts';
 
 function frontend(relative: string): string {
 	return readFileSync(resolve(import.meta.dir, '../../frontend', relative), 'utf8');
@@ -13,11 +17,18 @@ function renderMarkdownContent(markdown: string, baseLevel?: 2 | 3 | 4): string 
 }
 
 function renderWithProps(props: Record<string, unknown>): string {
+	// Wrapped in a router because the renderer emits one: an in-app `[text](/runs)` is a react-router
+	// `<Link>`, which reads `NavigationContext` and throws outright when there is none. The wrapper
+	// contributes no markup of its own, and every surface that mounts `MarkdownContent` is inside the
+	// app's router already — so this makes the harness match where the component actually runs rather
+	// than granting it something it does not have in production.
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { MemoryRouter } from 'react-router';",
 		"import { MarkdownContent } from './src/components/shared/MarkdownContent.tsx';",
-		`console.log(renderToStaticMarkup(createElement(MarkdownContent, ${JSON.stringify(props)})));`,
+		`const content = createElement(MarkdownContent, ${JSON.stringify(props)});`,
+		'console.log(renderToStaticMarkup(createElement(MemoryRouter, null, content)));',
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {
 		cwd: resolve(import.meta.dir, '../../frontend'),
@@ -79,19 +90,136 @@ describe('parseMarkdownBlocks', () => {
 		expect(blocks).toEqual([{ level: 1, text: 'Body', type: 'heading' }]);
 	});
 
+	test('drops HTML comments, which are markup rather than content', () => {
+		// The docs carry `check-docs-allow:` waiver markers as HTML comments, because the gate that
+		// resolves internal links against the filesystem cannot tell an app route from a file path.
+		// Those are instructions to a build gate; without this they printed on the page verbatim.
+		const blocks = parseMarkdownBlocks(
+			'Open [Settings](/settings). <!-- check-docs-allow: app route -->\n' +
+				'<!-- a whole line of it -->\n' +
+				'The paragraph continues.',
+		);
+
+		// One paragraph, not three: a comment on its own line is removed rather than blanked, since
+		// a blank line here would split the paragraph the comment was sitting inside.
+		expect(blocks).toEqual([
+			{ text: 'Open [Settings](/settings). The paragraph continues.', type: 'paragraph' },
+		]);
+	});
+
+	test('drops a comment that spans lines', () => {
+		const blocks = parseMarkdownBlocks('before\n\n<!-- one\ntwo\nthree -->\n\nafter');
+
+		expect(blocks).toEqual([
+			{ text: 'before', type: 'paragraph' },
+			{ text: 'after', type: 'paragraph' },
+		]);
+	});
+
+	test('a comment inside a fence is the example, not a comment', () => {
+		// A skill definition that documents HTML would otherwise have its own sample deleted out of
+		// the code block that exists to show it.
+		const blocks = parseMarkdownBlocks('```html\n<!-- keep me -->\n```');
+
+		expect(blocks).toEqual([{ code: '<!-- keep me -->', type: 'code' }]);
+	});
+
 	test('renders contiguous heading levels for each embedding surface', () => {
 		const markdown = '# Title\n\n## Section\n\n### Detail';
 		const docs = renderMarkdownContent(markdown, 2);
 		const helpDrawer = renderMarkdownContent(markdown);
 		const diary = renderMarkdownContent(markdown, 4);
 
-		expect(docs).toMatch(/<h2[^>]*>Title<\/h2>.*<h3[^>]*>Section<\/h3>.*<h4[^>]*>Detail<\/h4>/);
+		// Each heading now carries its anchor link after the text, so the close tag no longer
+		// follows the words directly.
+		expect(docs).toMatch(
+			/<h2[^>]*>Title .*?<\/h2>.*<h3[^>]*>Section .*?<\/h3>.*<h4[^>]*>Detail .*?<\/h4>/,
+		);
 		expect(helpDrawer).toMatch(
-			/<h3[^>]*>Title<\/h3>.*<h4[^>]*>Section<\/h4>.*<h5[^>]*>Detail<\/h5>/,
+			/<h3[^>]*>Title .*?<\/h3>.*<h4[^>]*>Section .*?<\/h4>.*<h5[^>]*>Detail .*?<\/h5>/,
 		);
 		expect(diary).toMatch(
-			/<h4[^>]*>Title<\/h4>.*<h5[^>]*>Section<\/h5>.*<h6[^>]*>Detail<\/h6>/,
+			/<h4[^>]*>Title .*?<\/h4>.*<h5[^>]*>Section .*?<\/h5>.*<h6[^>]*>Detail .*?<\/h6>/,
 		);
+	});
+
+	test('measures depth from the document, not from the hash count', () => {
+		// `baseLevel + level - 1` read `##` as depth 2 no matter what came before it. Docs passes
+		// `skipLeadingTitle`, so its `#` is already the page `h1` and every remaining heading is at
+		// least `##` — which put the first in-article heading at `h3` and meant the entire
+		// documentation set never emitted an `h2`. A screen reader's outline navigation walks these
+		// levels; a skipped one is a hole in the document, not a cosmetic complaint.
+		const html = renderMarkdownContent('## Section\n\n### Detail', 2);
+
+		expect(html).toMatch(/<h2[^>]*>Section /);
+		expect(html).toMatch(/<h3[^>]*>Detail /);
+		expect(html).not.toContain('<h4');
+	});
+
+	test('an embedded document opens below the card header, not above it', () => {
+		const markdown = '## Workflow\n\n### Output';
+		const docs = renderMarkdownContent(markdown, 2);
+		const skills = renderMarkdownContent(markdown, 4);
+
+		// Measured on /skills at 2250x1309 before this: h1 24px, h2 16px, h3 16px, h4 20px. The
+		// Definition card's own header renders at 16px and the `##` headings of the SKILL.md inside
+		// it rendered at 20px, because the scale was indexed by depth alone and every document
+		// entered it at the top step no matter how deeply the surface embedded it. Distinguishable
+		// from the card header, which is what the scale was built for — and louder than it, which
+		// inverts the nesting the reader is trying to read.
+		expect(docs).toContain('text-xl font-semibold tracking-tight text-foreground');
+		expect(skills).not.toContain('text-xl');
+		expect(skills).not.toContain('text-lg');
+		expect(skills).toContain(
+			'text-sm font-semibold tracking-wide text-muted-foreground uppercase',
+		);
+
+		// Two heading levels still read as two. 39 of this repo's 76 skill definitions use `###`, so
+		// clamping the embedded document to one mark would have traded an inverted outline for a
+		// flattened one — the same collapse this feature was filed against.
+		expect(skills).toContain('text-xs font-semibold tracking-wide text-muted-foreground');
+		const [outer, inner] = ['Workflow', 'Output'].map((text) =>
+			skills.slice(skills.lastIndexOf('<h', skills.indexOf(text)), skills.indexOf(text)),
+		);
+		expect(outer).not.toEqual(inner);
+	});
+
+	test('gives every heading a stable id and an anchor to it', () => {
+		const html = renderMarkdownContent('## Getting started\n\n## Getting started', 2);
+
+		// Derived from the text, so an edit elsewhere in the document does not move an existing
+		// anchor; suffixed on collision, so the second of two identical headings is still reachable.
+		expect(html).toContain('id="getting-started"');
+		expect(html).toContain('href="#getting-started"');
+		expect(html).toContain('id="getting-started-2"');
+		expect(html).toContain('href="#getting-started-2"');
+		// Revealed on hover for a pointer and on focus for a keyboard. Hover alone would make the
+		// anchors reachable by exactly one of the two.
+		expect(html).toContain('group-hover:opacity-100');
+		expect(html).toContain('focus-visible:opacity-100');
+	});
+
+	test('a heading is named by its own text, not by the anchor inside it', () => {
+		const html = renderMarkdownContent('## What `aidd` does', 2);
+
+		// The anchor is a child of the heading, so its label was part of the heading's accessible
+		// name: "What aidd does" announced as "What aidd does, Link to section What aidd does". The
+		// heading labels itself, which lets the anchor stay where it has to be to sit beside the
+		// words. Both labels are the plain text — an `aria-label` is a string, so the backticks of
+		// `` `aidd` `` would otherwise be spoken.
+		expect(html).toContain('aria-label="What aidd does"');
+		expect(html).toContain('aria-label="Link to section What aidd does"');
+		expect(html).not.toContain('`aidd`');
+	});
+
+	test('namespaces heading ids when a page renders several documents', () => {
+		const html = renderWithProps({
+			baseLevel: 4,
+			idPrefix: 'entry-7',
+			markdown: '## Summary',
+		});
+
+		expect(html).toContain('id="entry-7-summary"');
 	});
 
 	test('embeds the shared renderer beneath each consumer heading', () => {
@@ -112,9 +240,20 @@ describe('parseMarkdownBlocks', () => {
 		);
 
 		expect(html).toContain('leading-relaxed');
-		expect(html).toContain('text-base font-semibold text-foreground');
-		expect(html).not.toContain('uppercase');
-		expect(html).not.toContain('tracking-wide');
+		// Document headings must NOT reuse `ui/card`'s two header steps. They did — `text-base
+		// font-semibold text-foreground` and `text-sm font-semibold text-foreground`, character for
+		// character — so a markdown `##` inside a titled Card rendered identically to the card's own
+		// header and the reader had no way to tell the document's structure from the container's.
+		// The card contract is the correct one; this is the scale that had to move.
+		const card = frontend('src/components/ui/card.tsx');
+		for (const step of [
+			'text-base font-semibold text-foreground',
+			'text-sm font-semibold text-foreground',
+		]) {
+			expect(card).toContain(step);
+			expect(html).not.toContain(step);
+		}
+		expect(html).toContain('text-xl font-semibold tracking-tight text-foreground');
 		expect(html).toContain('bg-muted px-0.5 font-mono text-[0.9em] text-foreground');
 		expect(html).not.toContain('px-1');
 		expect(html).not.toContain('py-0.5');
@@ -150,8 +289,10 @@ describe('a list renders as a list', () => {
 	});
 
 	test('no surface can render the same markdown as a different shape', () => {
-		// Identical output across every embedding surface is the point; `baseLevel` shifts the
-		// heading level and nothing else about the document's structure.
+		// Identical output across every embedding surface is the point. `baseLevel` shifts where a
+		// document enters the heading scale — its levels and its type steps — and nothing else:
+		// a glossary carries no heading, so all three renders have to come out character for
+		// character the same.
 		const bodies = [2, 3, 4].map((level) =>
 			renderWithProps({ baseLevel: level, markdown: glossary }),
 		);
@@ -172,13 +313,16 @@ describe('the measure belongs to the container', () => {
 
 	test('every surface that embeds prose carries the cap', () => {
 		const measure = frontend('src/lib/typography.ts');
-		expect(measure).toContain("export const proseMeasureClass = 'max-w-[68ch]'");
+		// `46ch`, not `68ch`, for a 68-character measure. `ch` is the advance of `0`, which in Geist
+		// Sans at 14px is 9.297px against 6.293px for the average character in these pages' prose —
+		// a size-independent ratio of 1.477, so `68ch` was holding 100 characters. 68 / 1.477 = 46.
+		expect(measure).toContain("export const proseMeasureClass = 'max-w-[46ch]'");
 
 		for (const file of [
 			'src/pages/docs/DocsPage.tsx',
 			'src/pages/docs/HelpDrawerBody.tsx',
 			'src/pages/diary/DiaryEntryCard.tsx',
-			'src/pages/skills/SkillsPage.tsx',
+			'src/pages/skills/SkillDefinitionCard.tsx',
 		]) {
 			// `proseMeasureCardClass` satisfies this too, and is meant to: the docs card wraps the
 			// prose instead of being it, so it carries the corrected form of the same measure.
@@ -201,7 +345,7 @@ describe('the measure belongs to the container', () => {
 		// includes padding, so the card's `p-7` was being taken out of the 68 characters instead of
 		// sitting outside them.
 		expect(measure).toContain(
-			"export const proseMeasureCardClass = 'max-w-[calc(68ch*0.875_+_3.5rem)]'",
+			"export const proseMeasureCardClass = 'max-w-[calc(46ch*0.875_+_3.5rem)]'",
 		);
 	});
 
@@ -221,6 +365,59 @@ describe('the measure belongs to the container', () => {
 		// stripped: the note above the grid names the tier it replaced.
 		const code = page.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
 		expect(code).not.toContain('lg:');
+	});
+});
+
+describe('the outline is shared, and the width the measure releases is claimed', () => {
+	test('the plain form of a heading drops the markers and keeps the words', () => {
+		expect(plainInlineText('What `aidd` does')).toBe('What aidd does');
+		expect(plainInlineText('**Never** overwrite a *run*')).toBe('Never overwrite a run');
+		expect(plainInlineText('See [the runs page](/runs)')).toBe('See the runs page');
+	});
+
+	test('the outline reports the ids the renderer will emit', () => {
+		const document = '# Title\n\n## Getting started\n\n### A detail\n\n## Getting started';
+		const outline = markdownHeadings(document, { skipLeadingTitle: true });
+
+		// Same allocator, same order, so a repeated heading suffixes identically on both sides. A
+		// second slugifier here is a table of contents that links to the wrong section.
+		expect(outline.map((heading) => heading.id)).toEqual([
+			'getting-started',
+			'a-detail',
+			'getting-started-2',
+		]);
+		// Depth is measured from the document's own shallowest heading, matching the renderer, so a
+		// `##`-only document is all depth 0 rather than all depth 1.
+		expect(outline.map((heading) => heading.depth)).toEqual([0, 1, 0]);
+
+		const html = renderMarkdownContent(document, 2);
+		for (const heading of outline) expect(html).toContain(`id="${heading.id}"`);
+	});
+
+	test('a rail claims the width the reading measure gives up', () => {
+		const page = frontend('src/pages/docs/DocsPage.tsx');
+
+		// Capping the article without giving anything the width it released made the void worse, not
+		// better: 1231px of a 1962px content column at 2250x1309, against 1027px before the cap. The
+		// third column is the fix, at the width where 224 + 480 + 224 + two 24px gaps still leaves
+		// the article its measure.
+		expect(page).toContain('@min-[61rem]:grid-cols-[14rem_minmax(0,1fr)_14rem]');
+		expect(page).toContain('<DocsOutline body={body} />');
+
+		// Below that width the compact `<details>` already lists every section of every document, so
+		// the rail is hidden rather than stacked under the article as a second copy of it.
+		expect(page).toContain('hidden @min-[61rem]:sticky');
+	});
+
+	test('the rail is the document, not a second navigation', () => {
+		// Not `DocsOnThisPage.tsx`: `check:feature-integration` reads a `*Page.tsx` under `pages/` as a
+		// route and fails the gate when `App.tsx` does not mount it.
+		const rail = frontend('src/pages/docs/DocsOutline.tsx');
+
+		expect(rail).toContain('markdownHeadings(body, { skipLeadingTitle: true })');
+		expect(rail).toContain('aria-label="On this page"');
+		// One heading is not an outline, and a rail listing it is a label pretending to be one.
+		expect(rail).toContain('headings.length < 2');
 	});
 });
 
@@ -275,15 +472,22 @@ describe('fenced code and links', () => {
 
 describe('no surface shows markdown source', () => {
 	test('Skills renders its definition through the shared renderer', () => {
+		// The card, not the page: `SkillsPage` crossed the 300-line ceiling and this is the piece of
+		// it that came out. The page still has to be checked for the raw-source rendering it used to
+		// do, because moving a card out is not the same as having stopped.
+		const card = frontend('src/pages/skills/SkillDefinitionCard.tsx');
 		const page = frontend('src/pages/skills/SkillsPage.tsx');
 
 		// It was monospaced, reflowed mid-word, with its `##` and `-` markers left as literal
 		// characters — the operator read the file rather than the document, and the headings of a
 		// skill definition were nowhere in the accessibility tree.
-		expect(page).toContain('markdown={selected.body}');
-		expect(page).toContain('skipLeadingTitle');
-		expect(page).not.toMatch(/<pre[^>]*>\s*\{selected\.body\}/);
-		expect(page).not.toContain('whitespace-pre-wrap');
+		expect(card).toContain('markdown={body}');
+		expect(card).toContain('skipLeadingTitle');
+		expect(page).toContain('<SkillDefinitionCard body={selected.body} />');
+		for (const source of [card, page]) {
+			expect(source).not.toMatch(/<pre[^>]*>\s*\{(selected\.body|body)\}/);
+			expect(source).not.toContain('whitespace-pre-wrap');
+		}
 	});
 
 	test('headings and lists survive into the rendered document', () => {
@@ -292,7 +496,9 @@ describe('no surface shows markdown source', () => {
 			2,
 		);
 
-		expect(html).toMatch(/<h3[^>]*>Usage<\/h3>/);
+		// `h2`, not `h3`: the caller asked for `baseLevel` 2 and this document's shallowest heading
+		// is its `##`, so that heading is the one the base level names.
+		expect(html).toMatch(/<h2[^>]*>Usage /);
 		expect(html).toContain('<li>first step</li>');
 		expect(html).toContain('<code>aidd go</code>');
 	});

@@ -68,8 +68,9 @@ describe('status tones carry dark variants', () => {
 		expect(catalog).toContain('className={toneText.red}');
 		expect(card).toContain('`ml-2 text-xs ${toneText.amber}`');
 		expect(card).toContain('`text-xs ${toneText.red}`}>{metadata.sync.lastSyncError}');
-		// The port dots and the feature-progress bar read their fill from the same scale.
-		expect(metrics).toContain("toneSolid[listening ? 'emerald' : 'red']");
+		// The port dots read their fill from the same scale — through `StatusDot`, which is the
+		// only thing that indexes `toneSolid` now, rather than by indexing it here.
+		expect(metrics).toContain("<StatusDot tone={listening ? 'emerald' : 'red'} />");
 	});
 
 	test('never leaves status to color alone', async () => {

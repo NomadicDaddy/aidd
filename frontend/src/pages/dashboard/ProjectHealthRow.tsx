@@ -3,7 +3,7 @@ import { default as FolderX } from 'lucide-react/dist/esm/icons/folder-x';
 import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
 import { FilePath } from '../../components/shared/FilePath.tsx';
-import { Badge } from '../../components/ui/badge.tsx';
+import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { percent } from '../../lib/formatters.ts';
 import { toneSolid, toneText } from '../../lib/tones.ts';
 import { artifactTone } from '../projects/projects-list-shared.ts';
@@ -13,13 +13,13 @@ import { getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 function DashboardPortDot({ listening }: { listening: boolean | null }) {
 	if (listening === null) return null;
 	return (
+		// The label rides on the wrapper because `StatusDot` is `aria-hidden`.
 		<span
 			aria-label={listening ? 'Listening' : 'Not listening'}
-			className={`inline-block h-1.5 w-1.5 rounded-full ${
-				toneSolid[listening ? 'emerald' : 'red']
-			}`}
-			title={listening ? 'Listening' : 'Not listening'}
-		/>
+			className="inline-flex items-center"
+			title={listening ? 'Listening' : 'Not listening'}>
+			<StatusDot tone={listening ? 'emerald' : 'red'} />
+		</span>
 	);
 }
 

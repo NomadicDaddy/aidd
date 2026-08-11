@@ -82,6 +82,7 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 				}
 				description={recipe.description}
 				helpSlug="recipes"
+				identifier={recipe.id}
 				title={recipe.name}
 			/>
 

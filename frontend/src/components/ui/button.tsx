@@ -54,9 +54,15 @@ const sizes: Record<ButtonSize, string> = {
 
    The two signals differ only in how they refuse the pointer. `:disabled` is inert. `aria-disabled`
    keeps pointer events, so the control stays focusable and in the tab order and can still explain
-   itself on hover — which is the whole reason a call site reaches for it. */
+   itself on hover — which is the whole reason a call site reaches for it.
+
+   Stated in tokens, not in raw `neutral-*` with a `dark:` pair for each. The palette spelling was
+   achromatic against an app whose greys are blue-tinted, and `opacity-60` composited the label down
+   to rgb(58,59,60) on rgb(23,24,27) — a measured 1.58:1, which is not a legible disabled label but
+   an invisible one. `bg-muted`/`text-muted-foreground` is the same pairing every other quiet
+   surface uses and measures ~6.1:1, and the tokens flip themselves, so the `dark:` half is gone. */
 const blocked =
-	'cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 opacity-60 shadow-none hover:border-neutral-200 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-600 dark:hover:border-neutral-800 dark:hover:bg-neutral-900';
+	'cursor-not-allowed border-border bg-muted text-muted-foreground shadow-none hover:border-border hover:bg-muted';
 
 export function buttonClassName(
 	variant: ButtonVariant = 'secondary',

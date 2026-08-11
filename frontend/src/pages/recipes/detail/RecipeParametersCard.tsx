@@ -23,7 +23,7 @@ export function RecipeParametersCard({
 	setParameters: Dispatch<SetStateAction<RecipeParameterDefinition[]>>;
 }) {
 	return (
-		<Card className="space-y-3">
+		<Card className="flex flex-col gap-3">
 			<CardHeader
 				action={
 					<Button

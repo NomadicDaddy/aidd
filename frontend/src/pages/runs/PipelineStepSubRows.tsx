@@ -90,7 +90,7 @@ export function PipelineStepSubRows({
 									variant="compact"
 								/>
 							) : null}
-							<span className="whitespace-nowrap">
+							<span className="whitespace-nowrap tabular-nums">
 								{formatActiveDuration(step.durationMs, step.startedAt, now)}
 							</span>
 						</div>

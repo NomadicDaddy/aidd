@@ -8,9 +8,8 @@ import type {
 	ProjectUsageDailyTokens,
 } from '../../api/types.ts';
 
-import { Badge } from '../../components/ui/badge.tsx';
+import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { formatCompactNumber, percent } from '../../lib/formatters.ts';
-import { toneSolid } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { artifactTone } from './projects-list-shared.ts';
 import { featureProgressColor } from './projects-list-visuals.ts';
@@ -18,13 +17,14 @@ import { featureProgressColor } from './projects-list-visuals.ts';
 function PortDot({ listening }: { listening: boolean | null }) {
 	if (listening === null) return null;
 	return (
+		// `aria-label` and `title` on the wrapper, because `StatusDot` is `aria-hidden`: the dot is
+		// the whole cell here, so the state it reports has to be said in text somewhere.
 		<span
 			aria-label={listening ? 'Port listening' : 'Port not listening'}
-			className={`inline-block h-2 w-2 rounded-full ${
-				toneSolid[listening ? 'emerald' : 'red']
-			}`}
-			title={listening ? 'Listening' : 'Not listening'}
-		/>
+			className="inline-flex items-center"
+			title={listening ? 'Listening' : 'Not listening'}>
+			<StatusDot tone={listening ? 'emerald' : 'red'} />
+		</span>
 	);
 }
 

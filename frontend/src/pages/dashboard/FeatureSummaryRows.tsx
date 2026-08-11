@@ -85,7 +85,7 @@ export function FeatureSummaryRows({
 				ariaLabel="Feature summary by application"
 				className="-mx-2 hidden px-2 lg:block"
 				scrollerClassName="max-h-[28rem]">
-				<table className="min-w-[700px] text-sm">
+				<table className="w-full min-w-[700px] text-sm">
 					<thead className="sticky top-0 z-10 bg-card">
 						<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
 							{summaryColumns.map((column) => (

@@ -116,7 +116,7 @@ export function BackendDefaultsTable({
 
 	return (
 		<section aria-labelledby="backend-matrix-heading" className="space-y-3">
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+			<div className="flex flex-col gap-2 @min-[32rem]:flex-row @min-[32rem]:items-end @min-[32rem]:justify-between">
 				<div>
 					<CardHeader
 						className="mb-0"
@@ -140,7 +140,7 @@ export function BackendDefaultsTable({
 				</Button>
 			</div>
 
-			<Card className="hidden p-0 xl:block">
+			<Card className="hidden p-0 @min-[61rem]:block">
 				<OverflowScroller ariaLabel="Backend status and defaults">
 					<table
 						aria-label="Backend status and defaults"
@@ -198,7 +198,7 @@ export function BackendDefaultsTable({
 				</OverflowScroller>
 			</Card>
 
-			<div className="space-y-2 xl:hidden">
+			<div className="space-y-2 @min-[61rem]:hidden">
 				{backendDefaultOptions.map((backend) => {
 					const defaults = backends[backend] ?? emptyBackendDefault();
 					return (

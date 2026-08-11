@@ -135,6 +135,7 @@ export function RecipeCreatePage() {
 		<div className="page-reveal">
 			<RecipeEditMode
 				description={description}
+				dirty={dirty}
 				hasJsonErrors={hasJsonErrors}
 				id={id}
 				idError={idError}
@@ -144,6 +145,7 @@ export function RecipeCreatePage() {
 				}}
 				onSave={save}
 				parameters={parameters}
+				saving={recipes.saveRecipe.isPending}
 				setDescription={setDescription}
 				setId={handleId}
 				setName={handleName}

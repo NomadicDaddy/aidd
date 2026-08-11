@@ -64,7 +64,7 @@ export function RunDetailPanel({
 				{/* Three columns, not four: the row normally holds exactly Mode, Duration and provenance,
 			    and Execution target takes a full row of its own rather than a half-empty span. */}
 				<dl className="grid grid-cols-2 gap-x-4 gap-y-2 @min-[32rem]:grid-cols-3">
-					<MetadataItem label="Mode" value={selectedRun.mode} />
+					<MetadataItem label="Mode" mono value={selectedRun.mode} />
 					{executionIntent ? (
 						<MetadataItem
 							label="Directive intent"
@@ -73,7 +73,11 @@ export function RunDetailPanel({
 							}`}
 						/>
 					) : null}
-					<MetadataItem label="Duration" value={formatDuration(selectedRun.durationMs)} />
+					<MetadataItem
+						label="Duration"
+						mono
+						value={formatDuration(selectedRun.durationMs)}
+					/>
 					{/* The label was the only one in the row long enough to wrap, which pushed its value
 				    a line below Mode and Duration — three values in one row on two baselines. */}
 					<MetadataItem label="Provenance" value={formatAiddRunProvenance(selectedRun)} />

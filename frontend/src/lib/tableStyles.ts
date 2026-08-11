@@ -9,6 +9,24 @@ export const tableHeadClass =
 	'border-b border-border bg-muted text-xs text-muted-foreground uppercase';
 
 /**
+ * Where a data table stops widening.
+ *
+ * The tables in this app declare a `min-w-*` floor — the width below which their columns stop being
+ * readable — and nothing above it, so on a 2250px screen they tracked the shell to 1938px and spent
+ * every extra pixel on the tracks that needed it least: an integer score column 260px wide, a
+ * two-word status column 300px wide, and the one column carrying a name still truncating.
+ *
+ * The floor answers "how narrow before this breaks"; this answers "how wide before it stops
+ * helping", and they are different questions. 80rem is the same step `formGridMeasureClass` and the
+ * shared `FilterToolbar` settled on, so a page's table, toolbar and form all stop at one edge and the
+ * surplus goes back to the page rather than into three differently-stretched components.
+ *
+ * Applied at the `<table>`, not the scroller: `OverflowScroller` owns the overflow behaviour and the
+ * edge fades, and capping it would move the fade away from the data.
+ */
+export const tableMeasureClass = 'max-w-[80rem]';
+
+/**
  * The seam a pinned column casts over the cells scrolling beside it.
  *
  * Both edges are one value, mirrored. The Profile Matrix's right-hand Actions column drew

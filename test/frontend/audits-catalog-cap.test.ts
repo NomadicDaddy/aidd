@@ -21,21 +21,22 @@ function stripComments(source: string): string {
  */
 describe('a long audits table caps itself and keeps its head', () => {
 	test('every audits table is bounded, and bounded on whatever actually scrolls', async () => {
-		// The cap has to land on the element that scrolls. Applicability puts its table straight in
-		// the Card, so the Card is it. Catalog and Overrides wrap theirs in an `OverflowScroller`
-		// for the horizontal fade, and that scroller is already a scroll container in both axes —
+		// The cap has to land on the element that scrolls. All three tabs now wrap their table in
+		// an `OverflowScroller`, and that scroller is already a scroll container in both axes —
 		// capping the Card outside it would leave the head stuck to a box that never moves.
 		//
-		// Overrides was the third form and is now the second: it capped the Card with `overflow-auto`
-		// and got a scrollport with no fade and no tab stop, which is also why the affordance guard
-		// (written against `overflow-x-auto`) never saw it.
+		// Applicability was the last one capping the Card directly, and it paid the same price
+		// Overrides did before it: a scrollport with no fade and no tab stop, invisible to the
+		// affordance guard (written against `overflow-x-auto`). It cost the document height too —
+		// the page followed the *un*clipped table, so 843px of nothing scrolled below the card.
 		//
 		// The subtrahend is per-tab, because what sits above each table differs: Applicability
 		// carries a toolbar whose header holds two lines of prose, so its cap is deeper. It was
 		// `16rem` like the others, and the card itself then overflowed the viewport — the tab
 		// scrolled the page *and* the card, which is the double scroll the cap exists to remove.
+		// That is a fact about this tab's chrome, so it survived the cap moving inward.
 		expect(await read(TABS, 'ApplicabilityTab.tsx')).toContain(
-			'max-h-[calc(100dvh-24rem)] overflow-auto p-0',
+			'scrollerClassName="max-h-[calc(100dvh-24rem)]"',
 		);
 		expect(await read(TABS, 'CatalogTable.tsx')).toContain(
 			'scrollerClassName="max-h-[calc(100dvh-16rem)]"',

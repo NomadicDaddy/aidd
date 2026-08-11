@@ -106,6 +106,18 @@ export function RecipeDetailPage() {
 		});
 	}
 
+	/**
+	 * Leave edit mode, and actually drop what was typed.
+	 *
+	 * It used to be `setMode('overview')` alone, so "Cancel" left the form state intact: pressing it
+	 * and then Edit again reopened the editor still holding the abandoned changes, still dirty, and
+	 * still arming the leave-the-page guard. The label promised an undo and delivered a hide.
+	 */
+	function cancelEdit(): void {
+		if (recipeQuery.data) seedFormFromRecipe(recipeQuery.data);
+		setMode('overview');
+	}
+
 	function requestDelete(): void {
 		setShowDeleteConfirm(true);
 	}
@@ -185,14 +197,16 @@ export function RecipeDetailPage() {
 		<div className="page-reveal">
 			<RecipeEditMode
 				description={description}
+				dirty={dirty}
 				hasJsonErrors={hasJsonErrors}
 				id={id}
 				name={name}
 				nameReadOnly={recipe?.system === true}
-				onCancel={() => setMode('overview')}
+				onCancel={cancelEdit}
 				onReload={reload}
 				onSave={save}
 				parameters={parameters}
+				saving={recipes.saveRecipe.isPending}
 				setDescription={setDescription}
 				setName={setName}
 				setParameters={setParameters}

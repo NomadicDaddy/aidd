@@ -84,6 +84,50 @@ describe('the suggestion queue is a list, not a stack of cards', () => {
 		// Scoped to the row: the section still renders a `<Card>`, and that is the point.
 		expect(rowBlock).not.toContain('<Card');
 	});
+
+	test('the blurb fills the row rather than leaving a void beside it', async () => {
+		const source = await read('pages', 'director', 'DirectorSuggestions.tsx');
+		const rowBlock = source.slice(
+			source.indexOf('function SuggestionRow'),
+			source.indexOf('export function DirectorSuggestionsList'),
+		);
+
+		// The right column is anchored to the row's far edge on purpose — 31 rows of Launch and
+		// Dismiss line up in one column the pointer runs down. A reading measure on the blurb under
+		// a right-anchored column does not narrow the row, it moves the empty space inside it:
+		// measured at 2250x1309 the text stopped at x=427 and the badges began at x=1632, so every
+		// row carried 1205px of nothing between the thing described and the button acting on it.
+		const blurb = rowBlock.slice(rowBlock.indexOf('line-clamp-2'));
+		expect(blurb.slice(0, blurb.indexOf('>'))).not.toContain('proseMeasureClass');
+		expect(rowBlock).toContain('min-w-0 @min-[61rem]:flex-1');
+
+		// The fleet-wide note keeps its measure. That one is two sentences of guidance to read, not
+		// a clamped title to scan, so the cap is doing the job it exists for.
+		expect(rowBlock).toContain(`text-xs text-muted-foreground \${proseMeasureClass}`);
+	});
+
+	test('the row is bounded so the gutter is, and the two-column gate still clears', async () => {
+		const source = await read('pages', 'director', 'DirectorSuggestions.tsx');
+		const artifact = await read('pages', 'projects', 'detail', 'ArtifactInventoryRow.tsx');
+
+		// `justify-between` hands everything left over to the space between the two columns, so on a
+		// full-width section the row tracked the page: measured at 2250x1309 unbounded, the
+		// description ended at x=839 and the actions began at x=1925. Bounding the row bounds the
+		// gutter. `ArtifactInventoryRow` is the sibling this borrows from, and the two have to stay
+		// recognisably one treatment.
+		// On the Card, so its border ends where the rows do — DocsPage caps the doc card and not the
+		// prose inside it for the same reason. `ArtifactInventoryRow` is the sibling treatment; it
+		// caps itself because it has no card of its own to put the width on.
+		expect(source).toContain('<Card className="max-w-[66rem]">');
+		expect(artifact).toContain('max-w-[61rem]');
+
+		// The number is arithmetic. The row's two-column shape gates on `@min-[61rem]` of the row's
+		// own content box, so the row needs 976 + 24 of its `p-3` and the Card needs that plus 32 of
+		// its `p-4` — 1032px, or 64.5rem. Below that every row falls back to the stacked form this
+		// shape exists to replace, silently and at every width.
+		expect(source).toContain('@min-[61rem]:flex-row');
+		expect(source).toContain('rounded-md bg-muted p-3');
+	});
 });
 
 /**
@@ -98,8 +142,10 @@ describe('red means something is wrong', () => {
 			suggestion({ id: 'sug_b', riskLevel: 'LOW' }),
 		]);
 
-		expect(html).toContain('h-2 w-2 shrink-0 rounded-full bg-red-500');
-		expect(html).toContain('h-2 w-2 shrink-0 rounded-full bg-emerald-500');
+		// 1.5, not the 2 this started at: the dot is `ui/badge`'s `StatusDot` now, so the risk
+		// reading cannot drift from the size the Suggestions count badge renders beside it.
+		expect(html).toContain('h-1.5 w-1.5 shrink-0 rounded-full bg-red-500');
+		expect(html).toContain('h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500');
 		expect(html).toContain('High risk');
 		// The badge treatment is what was retired: `toneBadge.red` is a red field on a rounded-md
 		// pill, so no rendered element may carry both.
@@ -190,9 +236,10 @@ describe('header counts share one form', () => {
 		const html = renderQueue([suggestion({})]);
 
 		expect(html).toContain('1 open');
-		// The `showDot` swatch, at the Badge's own 1.5 size rather than the risk reading's 2.
+		// The `showDot` swatch — the same `StatusDot` the risk reading beneath it renders, which
+		// is what makes this assertion and the one in `red means something is wrong` agree.
 		expect(html).toContain(
-			'<span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-amber-500"',
+			'<span aria-hidden="true" class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"',
 		);
 	});
 

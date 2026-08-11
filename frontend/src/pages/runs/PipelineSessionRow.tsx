@@ -185,7 +185,7 @@ function SessionMeta({
 			<Badge tone="neutral">{isSkillSession(session) ? 'Skill' : 'Pipeline'}</Badge>
 			<PipelineSessionIdentityBadges identities={session.executionIdentities} />
 			<SessionProjectLink projectRouteId={projectRouteId} session={session} />
-			<span>{formatDate(session.startedAt)}</span>
+			<span className="tabular-nums">{formatDate(session.startedAt)}</span>
 		</div>
 	);
 }
@@ -203,7 +203,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 			onClick={containerSelectionHandler(() => selectSession(onSelect, session))}>
 			<td className="py-3 pr-3 pl-4">
 				<SessionTitle {...props} />
-				<div className="mt-1 text-xs text-muted-foreground">
+				<div className="mt-1 text-xs text-muted-foreground tabular-nums">
 					{formatDate(session.startedAt)}
 				</div>
 			</td>
@@ -228,7 +228,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 				</Badge>
 				{session.errorMessage && <FailureReason message={session.errorMessage} />}
 			</td>
-			<td className="px-3 py-3 whitespace-nowrap">
+			<td className="px-3 py-3 whitespace-nowrap tabular-nums">
 				{formatActiveDuration(session.durationMs, session.startedAt, now)}
 			</td>
 			<td className="py-3 pr-4 pl-3">
@@ -260,7 +260,9 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 				<Badge tone={sessionStatusTone(session.status)}>
 					{sessionStatusLabel(session.status)}
 				</Badge>
-				<span>{formatActiveDuration(session.durationMs, session.startedAt, now)}</span>
+				<span className="tabular-nums">
+					{formatActiveDuration(session.durationMs, session.startedAt, now)}
+				</span>
 			</div>
 			{session.errorMessage && <FailureReason message={session.errorMessage} />}
 			<div className="mt-2">

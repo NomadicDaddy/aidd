@@ -84,7 +84,11 @@ describe('the dirty treatment comes from the tone tokens', () => {
 describe('the resting Summary view renders no disabled control', () => {
 	test('the Actions column exists only while editing or while something is unsaved', async () => {
 		const table = await read('pages/projects/profileMatrix/ProfileMatrixTable.tsx');
-		expect(table).toContain('const showActions = showFacets || rows.some((row) => row.dirty);');
+		// Unsaved work alone, not edit mode. A right-pinned column overlays what is beneath it at
+		// every scroll position short of the extreme — at scrollLeft 0 the empty 152px Actions
+		// column covered 61px of every Release artifacts select — so it may only mount once it has
+		// something to hold. Entering edit mode mounts nothing that can be committed yet.
+		expect(table).toContain('const showActions = rows.some((row) => row.dirty);');
 		expect(table).toContain('showActions ? (');
 		expect(table).toContain('showActions={showActions}');
 	});

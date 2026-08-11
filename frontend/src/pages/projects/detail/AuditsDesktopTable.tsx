@@ -5,7 +5,7 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
-import { tableHeadClass } from '../../../lib/tableStyles.ts';
+import { tableHeadClass, tableMeasureClass } from '../../../lib/tableStyles.ts';
 import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
 import {
 	auditPathTail,
@@ -54,7 +54,9 @@ export function AuditsDesktopTable({
 		// vertically — so 'sticky top-0' would have been inert. Bounding the Card's height makes it
 		// the real scroller: past the first screenful of 42 rows the six columns keep their labels.
 		<Card className="hidden max-h-[calc(100dvh-14rem)] overflow-auto p-0 xl:block">
-			<table aria-label="Project audits" className="w-full min-w-[960px] text-left text-sm">
+			<table
+				aria-label="Project audits"
+				className={`w-full min-w-[960px] text-left text-sm ${tableMeasureClass}`}>
 				<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 					<tr>
 						<th className="px-3 py-3" scope="col">

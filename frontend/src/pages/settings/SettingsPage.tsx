@@ -230,7 +230,16 @@ export function SettingsPage() {
 	}
 
 	return (
-		<div className="page-reveal space-y-5">
+		// `@container` on the page root: every field grid below gates on the width of this column
+		// rather than the window. The two differ by the sidebar rail — 224px expanded, 64px
+		// collapsed, persisted per user — so a viewport tier gave two users at the same window
+		// size two different layouts and could not be told which one it was deciding.
+		//
+		// The tiers below map to the app's declared container steps: what was `sm:` is 32rem, what
+		// was `lg:` is 45rem, what was `xl:` is 61rem. Each is the column width at which that
+		// viewport tier used to fire with the rail expanded, so the layout a user sees at a given
+		// window size is unchanged in the common case and correct in the two cases it was not.
+		<div className="page-reveal @container space-y-5">
 			<PageHeader
 				actions={
 					<Link
@@ -241,8 +250,10 @@ export function SettingsPage() {
 				}
 				description={form.configPath}
 				// The config path is what this whole page edits; --font-mono is the token for
-				// paths and ids everywhere else in the app.
-				descriptionClassName="truncate font-mono text-xs"
+				// paths and ids everywhere else in the app. `max-w-none` opts out of the header's
+				// reading measure: a path is one machine string, and capping it would truncate the
+				// thing the page is about rather than shorten a line.
+				descriptionClassName="max-w-none truncate font-mono text-xs"
 				helpSlug="settings"
 				title="Settings"
 			/>

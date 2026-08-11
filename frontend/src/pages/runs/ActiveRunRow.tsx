@@ -116,7 +116,9 @@ export function ActiveRunRow({
 				<div
 					className="mt-1 truncate text-xs text-muted-foreground"
 					title={run.aiSummary ?? undefined}>
-					{formatDate(run.startedAt)}
+					{/* The span, rather than the line: the summary shares this line and is prose,
+					    which has no columns to line up and reads worse under fixed-width digits. */}
+					<span className="tabular-nums">{formatDate(run.startedAt)}</span>
 					{run.aiSummary ? ` · ${run.aiSummary}` : ''}
 				</div>
 			</td>
@@ -150,7 +152,7 @@ export function ActiveRunRow({
 				<Badge tone={outcome.tone}>{outcome.label}</Badge>
 				<RunLivenessIndicator now={now} run={run} />
 			</td>
-			<td className="px-3 py-3 whitespace-nowrap">
+			<td className="px-3 py-3 whitespace-nowrap tabular-nums">
 				{formatActiveDuration(run.durationMs, run.startedAt, now)}
 			</td>
 			<td className="py-3 pr-4 pl-3">

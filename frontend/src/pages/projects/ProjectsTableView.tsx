@@ -117,7 +117,7 @@ export function ProjectsTableView({
 			<Card className="p-0">
 				<OverflowScroller
 					ariaLabel="Projects table"
-					scrollerClassName="max-h-[70vh] overflow-y-auto">
+					scrollerClassName="max-h-[calc(100dvh-16rem)] overflow-y-auto">
 					<table aria-label="Projects" className="w-full text-left text-sm">
 						<thead className={tableHeadClass}>
 							<tr>

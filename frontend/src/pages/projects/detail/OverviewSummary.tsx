@@ -62,7 +62,7 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 				className="block rounded-xl focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
 				to={projectDetailTabSearch('artifacts')}>
 				<Metric
-					className="group h-full transition-colors hover:border-border"
+					className="group h-full"
 					// The health word stays the tile's caption so all three tiles lead with a
 					// figure at the same step; the Badge that used to be the value carries the tone.
 					detail={
@@ -80,6 +80,10 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 							View artifacts →
 						</div>
 					}
+					// The hand-rolled hover here was `hover:border-border` — a transition to the
+					// colour the border already had. `Card`'s own `interactive` treatment is what
+					// every other clickable card on this page uses.
+					interactive
 					label="Artifact Health"
 					value={
 						check

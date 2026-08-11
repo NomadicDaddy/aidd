@@ -49,19 +49,25 @@ export function ProfileMatrixTable({
 	rows: ProfileMatrixRowModel[];
 	showFacets: boolean;
 }) {
-	// The resting Summary view has no editable control on screen, so a Save and a reset per row were
-	// 66 permanently-disabled controls in a pinned 152px column that could never do anything. The
-	// column exists while editing — where it is about to be needed — and while anything is unsaved,
-	// so switching back to Summary with pending edits does not strand them. Within the column a row
-	// renders controls only when it is dirty, so the disabled state never appears at all.
-	const showActions = showFacets || rows.some((row) => row.dirty);
+	// Gated on unsaved work alone, not on edit mode. A right-pinned column overlays whatever is
+	// beneath it at every scroll position short of the extreme — measured at scrollLeft 0 the empty
+	// 152px Actions column covered 61px of every Release artifacts select, so the header read
+	// "RELEASE ARTIF" and a value read "Binary archiv" with its chevron behind a blank strip. That is
+	// the price of pinning, and it is only worth paying once the column has something to hold:
+	// entering edit mode mounts it before anything can be committed to it, and the bulk path is
+	// already covered by Save all changed in the page header. It re-mounts on the first edit.
+	const showActions = rows.some((row) => row.dirty);
 
 	return (
 		// Hidden below `md`, where ProfileMatrixMobileList renders the same rows as stacked cards.
 		<Card className="hidden p-0 xl:block">
+			{/* `calc(100dvh-16rem)`, not `70vh`: the Audits tables next door subtract the chrome
+			    they actually sit under instead of taking a fraction of the window, and a fraction
+			    gets less accurate the taller the screen — at 1309px `70vh` left 393px of unused
+			    page below the scrollport, roughly two more projects' worth. */}
 			<OverflowScroller
 				ariaLabel="Project profile matrix"
-				scrollerClassName="max-h-[70vh] overflow-y-auto">
+				scrollerClassName="max-h-[calc(100dvh-16rem)] overflow-y-auto">
 				<table aria-label="Project profile matrix" className="w-full text-left text-sm">
 					<thead className="border-b border-border text-xs text-muted-foreground uppercase">
 						<tr>

@@ -134,7 +134,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 	const names = view.milestones.map((milestone) => milestone.name);
 	return (
 		<div className="space-y-3">
-			<Card className="space-y-3">
+			<Card className="flex flex-col gap-3">
 				<CardHeader
 					action={
 						<div className="flex flex-wrap gap-2">

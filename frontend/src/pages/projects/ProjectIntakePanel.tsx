@@ -59,7 +59,7 @@ export function ProjectIntakePanel({
 	);
 
 	return (
-		<Card className="space-y-4 border-teal-200 bg-teal-50/70 dark:border-teal-900/60 dark:bg-teal-950/20">
+		<Card className="flex flex-col gap-4 border-teal-200 bg-teal-50/70 dark:border-teal-900/60 dark:bg-teal-950/20">
 			<CardHeader
 				action={
 					<IconButton ariaLabel="Close project intake" onClick={onClose} variant="ghost">

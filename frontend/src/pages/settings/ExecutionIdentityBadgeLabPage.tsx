@@ -8,6 +8,7 @@ import {
 	ExecutionIdentityBadges,
 } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
+import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { backendLabel, backendOptions } from '../../lib/backends.ts';
@@ -16,9 +17,12 @@ import {
 	executionIdentityModelCatalog,
 	executionIdentityReasoningCatalog,
 } from '../../lib/executionIdentity.ts';
+import { type Tone } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
 const cliCatalog = [...backendOptions.map(({ value }) => value), 'direct'] as const;
+
+const toneCatalog: readonly Tone[] = ['emerald', 'teal', 'amber', 'red', 'violet', 'neutral'];
 
 const representativeIdentities: readonly {
 	description: string;
@@ -189,6 +193,44 @@ export function ExecutionIdentityBadgeLabPage() {
 								<ConstrainedSpecimens identity={identity} label={label} />
 							</div>
 						))}
+					</div>
+				</section>
+			</Card>
+
+			{/* The lab is treated as the place that settles what a shared mark looks like, and it
+			    was silent on the status dot while eight call sites hand-rolled their own at 8px
+			    against the component's 6px. Both rows render the same `StatusDot`, so the size
+			    cannot drift between the badge and the bare dot without showing up here. */}
+			<Card aria-labelledby="badge-lab-status-dots" className="overflow-hidden p-0">
+				<section>
+					<CardHeader
+						className="mb-0 border-b border-border px-4 py-3"
+						description="The one status dot, at 6px, in every tone — inside a badge and standing alone. Nothing else in the app is allowed to draw its own."
+						id="badge-lab-status-dots"
+						title="Status dots"
+					/>
+					<div className="space-y-3 p-4">
+						<div className="flex flex-wrap items-center gap-2">
+							{toneCatalog.map((tone) => (
+								<Badge key={tone} showDot tone={tone}>
+									{tone}
+								</Badge>
+							))}
+						</div>
+						<div className="flex flex-wrap items-center gap-4">
+							{toneCatalog.map((tone) => (
+								<span
+									className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+									key={tone}>
+									<StatusDot tone={tone} />
+									{tone}
+								</span>
+							))}
+							<span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+								<StatusDot pulse tone="teal" />
+								pulse
+							</span>
+						</div>
 					</div>
 				</section>
 			</Card>

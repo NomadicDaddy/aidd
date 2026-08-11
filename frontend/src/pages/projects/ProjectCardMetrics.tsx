@@ -2,9 +2,8 @@ import type { ReactNode } from 'react';
 
 import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
-import { Badge } from '../../components/ui/badge.tsx';
+import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { formatCount, formatRatio, formatRelativeAge } from '../../lib/formatters.ts';
-import { toneSolid } from '../../lib/tones.ts';
 import {
 	bucketLabels,
 	formatAppVersion,
@@ -17,13 +16,18 @@ import { daysSince, specAgeColor, templateVersionColor } from './projects-list-v
 function PortDotInline({ listening }: { listening: boolean | null }) {
 	if (listening === null) return null;
 	return (
+		// The label rides on the wrapper because `StatusDot` is `aria-hidden`, and the wrapper takes
+		// `role="img"` so the label is allowed to exist: `aria-label` on a generic `<span>` is
+		// ignored by name-from-author rules, so the only carrier of listening-vs-not — a colour —
+		// was announced as nothing at all. Every other status on this card is a `ui/badge` with
+		// text; this one is a 6px dot and needs the role to say it is a graphic with a name.
 		<span
 			aria-label={listening ? 'Listening' : 'Not listening'}
-			className={`inline-block h-1.5 w-1.5 rounded-full ${
-				toneSolid[listening ? 'emerald' : 'red']
-			}`}
-			title={listening ? 'Listening' : 'Not listening'}
-		/>
+			className="inline-flex items-center"
+			role="img"
+			title={listening ? 'Listening' : 'Not listening'}>
+			<StatusDot tone={listening ? 'emerald' : 'red'} />
+		</span>
 	);
 }
 

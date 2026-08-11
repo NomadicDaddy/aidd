@@ -4,6 +4,7 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
 const modelPlaceholders: Record<BackendName, string> = {
@@ -64,7 +65,7 @@ export function BackendDefaultFields({
 						value={textValue(defaults.model)}
 					/>
 					{shadowedSharedModel ? (
-						<p className={`mt-1 text-xs ${toneText.amber}`}>
+						<p className={`mt-1 text-xs ${toneText.amber} ${proseMeasureClass}`}>
 							Outranks the shared Default Model (“{shadowedSharedModel}”) for{' '}
 							{backend} launches — clear this to use the shared default.
 						</p>

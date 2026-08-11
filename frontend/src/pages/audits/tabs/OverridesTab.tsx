@@ -185,7 +185,7 @@ export function OverridesTab() {
 						}
 					/>
 
-					<Card className="space-y-3">
+					<Card className="flex flex-col gap-3">
 						<CardHeader
 							className="mb-0"
 							description="Optional rules layered above the global mapping for this project. JSON array matching the global rule schema."

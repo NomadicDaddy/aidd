@@ -1,7 +1,7 @@
 import { default as FileEdit } from 'lucide-react/dist/esm/icons/file-pen';
 import { default as FilePlus } from 'lucide-react/dist/esm/icons/file-plus';
 import { default as GitCommit } from 'lucide-react/dist/esm/icons/git-commit';
-import { useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 
 import type { GitCommitRef, RunLaunchCommand, RunRecord } from '../../api/types.ts';
 
@@ -11,7 +11,9 @@ import { RunCommandInfo } from '../../components/shared/RunCommandInfo.tsx';
 import { useRunCommits } from '../../hooks/useCommits.ts';
 import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
+import { observeOverflow } from '../../lib/observeOverflow.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { FileChangeChip } from './RunFileChangeChip.tsx';
 import { isReadOnlySkillDirectiveViolation } from './skillDirectiveIntent.ts';
 
@@ -20,19 +22,36 @@ import { isReadOnlySkillDirectiveViolation } from './skillDirectiveIntent.ts';
 export const detailPreClass =
 	'overflow-auto rounded-md border border-border bg-background p-2 text-xs whitespace-pre-wrap text-foreground';
 
+/**
+ * One label/value pair in a run's metadata grid.
+ *
+ * `mono` marks the value as a machine string rather than prose. Half of what this component renders
+ * is one — `bypassPermissions`, `exit 2`, `1m 04s` — and it printed all of them in Geist Sans while
+ * the exit code four lines above, in the same panel, was mono. The flag also brings `tabular-nums`,
+ * because every mono value here is a duration, a code or a count, and those sit above and below
+ * each other in the grid.
+ */
 export function MetadataItem({
 	className,
 	label,
+	mono = false,
 	value,
 }: {
 	className?: string;
 	label: string;
+	mono?: boolean;
 	value: string;
 }) {
 	return (
 		<div className={cn('flex min-w-0 flex-col', className)}>
 			<dt className={fieldLabelClass}>{label}</dt>
-			<dd className="min-w-0 text-xs break-words text-foreground">{value}</dd>
+			<dd
+				className={cn(
+					'min-w-0 text-xs break-words text-foreground',
+					mono && 'font-mono tabular-nums',
+				)}>
+				{value}
+			</dd>
 		</div>
 	);
 }
@@ -67,15 +86,59 @@ export function RunCommandBlock({
 	command: null | RunLaunchCommand | undefined;
 	runId: string;
 }) {
+	const [expanded, setExpanded] = useState(false);
+	const [clipped, setClipped] = useState(false);
+	const commandId = useId();
+	const cleanupRef = useRef<(() => void) | null>(null);
+	// Measured through the observer rather than in an effect: the button this drives sits below the
+	// scrollport and cannot change its height, so there is no render-measure-render loop to fall
+	// into, and a ref callback keeps the measurement out of React's render phase entirely.
+	const setPre = useCallback((node: HTMLPreElement | null) => {
+		cleanupRef.current?.();
+		cleanupRef.current = null;
+		if (!node) return;
+		cleanupRef.current = observeOverflow(node, (flags) => setClipped(flags.scrollsDown));
+	}, []);
+
 	return (
 		<div>
 			<div className={`mb-1 flex items-center gap-1.5 ${fieldLabelClass}`}>
 				Command
 				<RunCommandInfo command={command ?? null} runId={runId} />
 			</div>
-			<pre className={`max-h-28 font-mono ${detailPreClass}`}>
+			{/* Six whole lines, then the padding and border the cap has to clear as well. `max-h-28`
+			    is 112px of border box, which is 94px of content once `p-2` and the border are taken
+			    out — five lines and seven-eighths, so the sixth line was cut through its x-height and
+			    a truncated path read as a complete one. `lh` is the line box itself, so the cut can
+			    only ever land between lines. */}
+			<pre
+				className={cn(
+					'max-h-[calc(6lh+1rem+2px)] font-mono',
+					detailPreClass,
+					expanded && 'max-h-none',
+				)}
+				id={commandId}
+				ref={setPre}>
 				{command?.display ?? 'Unavailable'}
 			</pre>
+			{/* The cue and the way out of it. A launch command is one line of shell that happens to
+			    be 900 characters long; nothing about a flush bottom edge says the rest exists. */}
+			{clipped || expanded ? (
+				<button
+					aria-controls={commandId}
+					aria-expanded={expanded}
+					// A `<button>` styled as text has no height to raise, and the space this
+					// borrows above and below belongs to the `<pre>` and the section gap —
+					// neither of which is a tap target, so nothing else can lose a tap to it.
+					className={cn(
+						touchTargetTextClass,
+						'mt-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground',
+					)}
+					onClick={() => setExpanded((previous) => !previous)}
+					type="button">
+					{expanded ? 'Show less' : 'Show full command'}
+				</button>
+			) : null}
 		</div>
 	);
 }

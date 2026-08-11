@@ -1,5 +1,6 @@
 import type { AuditDefinition } from '../../../api/types.ts';
 
+import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { touchTargetBoxClass, touchTargetTextClass } from '../../../lib/touchTarget.ts';
@@ -55,6 +56,13 @@ export function CatalogCards({
 					</button>
 				</div>
 			) : null}
+			{/* The narrow-viewport twin of CatalogTable's empty row — same wording, so the
+			    answer does not change when the layout does. */}
+			{definitions.length === 0 ? (
+				<p className="px-1 py-6 text-center text-sm text-muted-foreground">
+					No audits match the current filters.
+				</p>
+			) : null}
 			{definitions.map((item) => {
 				const active = selectedAudit === item.name;
 				return (
@@ -90,14 +98,14 @@ export function CatalogCards({
 									className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 									onClick={() => onSelect(item.name)}
 									type="button">
-									<span className="block font-medium text-foreground">
+									<span className="block font-mono font-medium text-foreground">
 										{item.name}
 									</span>
-									<span
+									<FilePath
 										className="block truncate text-xs text-muted-foreground"
-										title={item.path}>
-										{auditFileName(item.path)}
-									</span>
+										path={auditFileName(item.path)}
+										title={item.path}
+									/>
 								</button>
 							</div>
 							<div className="shrink-0">

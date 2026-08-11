@@ -102,7 +102,10 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 			    column printed the same toned Badge on all 181 rows — a column that cannot vary is
 			    a column that carries no information, and a tone spent on it says "status" about a
 			    taxonomy. The filter states the type once. */}
-			<table className="min-w-[640px] text-sm">
+			{/* `w-full` beside the floor: `min-w-[640px]` alone lets the table sit at its intrinsic
+			    width inside a much wider `OverflowScroller`, so on a 2250 screen the dashboard's
+			    full-width card held a 640px table against a 1300px void. */}
+			<table className="w-full min-w-[640px] text-sm">
 				<thead className="sticky top-0 z-10 bg-card">
 					<tr className="border-b border-border text-xs font-medium text-muted-foreground uppercase">
 						<th className="px-3 py-2 text-left">Application</th>
@@ -112,9 +115,14 @@ function FeatureStatusTable({ rows }: { rows: FeatureStatusRow[] }) {
 					</tr>
 				</thead>
 				<tbody>
+					{/* The row navigates, but only the 448px link cell said so — the other three cells
+					    were inert surface on a row whose whole width is a click target's worth of
+					    information. The hover moves onto the `tr`, which is the element the pointer
+					    is actually over. `bg-muted/40` and not a new tint: FeaturesDesktopTable and
+					    ProfileMatrixRow are the two table exemplars and this is what they use. */}
 					{rows.map((row) => (
 						<tr
-							className="border-b border-border last:border-b-0"
+							className="border-b border-border transition-colors last:border-b-0 hover:bg-muted/40"
 							key={`${row.projectName}:${row.directory}`}>
 							<td className="max-w-44 truncate px-3 py-2 font-medium text-foreground">
 								{row.projectName}

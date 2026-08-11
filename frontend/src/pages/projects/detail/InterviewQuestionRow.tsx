@@ -4,6 +4,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { textareaClass } from '../../../lib/formStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
 import { interviewPriorityTone } from './interviewUtils.ts';
 
 interface InterviewQuestionRowProps {
@@ -67,9 +68,15 @@ export function InterviewQuestionRow({
 	}
 	return (
 		<li className="rounded-md border border-border p-2.5">
+			{/* The measure applies to the expanded row only. Collapsed rows are a dense single-line
+			    list — the density this component exists to deliver — and capping them would wrap a
+			    long prompt over three lines forty times over. Expanded, the prompt is the heading
+			    the answer is written under, and only one row is ever expanded. */}
 			<div className="flex flex-wrap items-center gap-2">
 				{chips}
-				<span className="text-sm text-foreground">{question.prompt}</span>
+				<span className={`text-sm text-foreground ${proseMeasureClass}`}>
+					{question.prompt}
+				</span>
 			</div>
 			<div className="mt-2 space-y-2">
 				<textarea

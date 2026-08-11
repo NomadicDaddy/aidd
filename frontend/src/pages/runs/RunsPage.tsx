@@ -47,7 +47,11 @@ export function RunsPage() {
 	};
 
 	return (
-		<div className="page-reveal space-y-5">
+		// `@container` on the page root, so every region below gates on the width of the content
+		// column rather than the window. The two differ by the whole sidebar rail, and the rail's
+		// expanded/collapsed state is persisted per user — a viewport tier decides the same layout
+		// two different ways for two users at the same window size.
+		<div className="page-reveal @container space-y-5">
 			<PageHeader
 				actions={
 					<DataFreshness
@@ -81,7 +85,7 @@ export function RunsPage() {
 				selectedLaunchProject={page.selectedLaunchProject}
 			/>
 			{form.mode === 'triumvirate' && (
-				<Card className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
+				<Card className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-4">
 					<LaunchTargetControl
 						mode="triumvirate"
 						onChange={form.setPrimaryTarget}
@@ -139,9 +143,17 @@ export function RunsPage() {
 			    console taller than Active+gap+History has its excess split evenly across both rows —
 			    shifting Active's bottom edge and the History card down by half the overflow every
 			    time the selection (or a streaming run's output) changes height. `auto 1fr` sends the
-			    whole excess to row 2 instead, so the left column never moves. */}
-			<div className="grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] 2xl:grid-rows-[auto_1fr] 2xl:items-start">
-				<div className="min-w-0 2xl:col-start-1 2xl:row-start-1">
+			    whole excess to row 2 instead, so the left column never moves.
+
+			    The split gates on this region's own width, not the viewport. It was `2xl:` — 1536px
+			    of window — which denied the split at 1440 even with the rail collapsed, where the
+			    column is over 1300px and had room for it twice over. 66rem is the width where the
+			    arithmetic works: the console's own `minmax(24rem,…)` floor takes 384px, the 1.25rem
+			    gap takes 20px, and the table keeps the ~650px it needs to stay readable. Below it
+			    the two stack, which is the correct answer for a 1024px column however wide the
+			    window behind it happens to be. */}
+			<div className="grid min-w-0 gap-5 @min-[66rem]:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)] @min-[66rem]:grid-rows-[auto_1fr] @min-[66rem]:items-start">
+				<div className="min-w-0 @min-[66rem]:col-start-1 @min-[66rem]:row-start-1">
 					{showingInitialSkeleton ? (
 						<SkeletonRows columns={4} count={6} label="Loading runs…" />
 					) : (
@@ -156,7 +168,7 @@ export function RunsPage() {
 					)}
 				</div>
 				<div
-					className="min-w-0 self-start 2xl:sticky 2xl:top-6 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1 2xl:flex 2xl:h-[calc(100dvh-3rem)] 2xl:flex-col"
+					className="min-w-0 self-start @min-[66rem]:sticky @min-[66rem]:top-6 @min-[66rem]:col-start-2 @min-[66rem]:row-span-2 @min-[66rem]:row-start-1 @min-[66rem]:flex @min-[66rem]:h-[calc(100dvh-3rem)] @min-[66rem]:flex-col"
 					ref={page.liveConsoleRef}>
 					{page.selection?.kind === 'pipeline' && page.selectedSession ? (
 						<PipelineConsoleSummary session={page.selectedSession} />
@@ -170,7 +182,7 @@ export function RunsPage() {
 					)}
 				</div>
 				{showingInitialSkeleton ? null : (
-					<div className="min-w-0 space-y-3 2xl:col-start-1 2xl:row-start-2">
+					<div className="min-w-0 space-y-3 @min-[66rem]:col-start-1 @min-[66rem]:row-start-2">
 						<UnifiedExecutionTable
 							description="Finished runs from UI launches and CLI sessions (last 24 h) and recipe pipeline history."
 							emptyMessage="No runs or pipelines match the current filters."

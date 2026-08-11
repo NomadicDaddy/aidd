@@ -22,7 +22,10 @@ function readPath(path: string): Promise<string> {
  * — which is the same defect in the other direction. What the guard requires is that both halves
  * name the SAME tier; a pair that disagrees leaves a width showing both renderings or neither.
  */
-const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
+// The tier is the class prefix, not a fixed tier name: a table may gate on a viewport tier (`lg`,
+// `xl`) or on the width of the region it sits in (`@min-[45rem]`). Both are legitimate answers to
+// "where does this table stop fitting"; the pairing rule below is the same either way.
+const pairedTables: { stack: string; table: string; tier: string }[] = [
 	{
 		stack: 'pages/audits/tabs/ApplicabilityTab.tsx',
 		table: 'pages/audits/tabs/ApplicabilityTab.tsx',
@@ -98,15 +101,19 @@ const pairedTables: { stack: string; table: string; tier: 'lg' | 'xl' }[] = [
 		table: 'pages/runs/UnifiedExecutionTable.tsx',
 		tier: 'xl',
 	},
+	// Both settings tables gate on the settings column's own width rather than the window's, so
+	// their tier is a container-query step. The pairing rule is what this suite enforces and it is
+	// indifferent to which of the two the tier is expressed in — only that both halves name the same
+	// one, so the table and its stack can never both be visible or both be hidden.
 	{
 		stack: 'pages/settings/BackendDefaultsTable.tsx',
 		table: 'pages/settings/BackendDefaultsTable.tsx',
-		tier: 'xl',
+		tier: '@min-[61rem]',
 	},
 	{
 		stack: 'pages/settings/SystemMetricsSection.tsx',
 		table: 'pages/settings/SystemMetricsSection.tsx',
-		tier: 'lg',
+		tier: '@min-[45rem]',
 	},
 	{
 		stack: 'pages/telemetry/InvocationsTable.tsx',

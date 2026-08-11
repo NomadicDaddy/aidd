@@ -5,7 +5,7 @@ Common questions about running and operating the aidd control panel.
 ## Why isn't my project showing up?
 
 A folder is discovered only when it contains an `.aidd/` directory **and** lives
-under a configured application root. Open **Settings**, confirm the root is
+under a configured application root. Open [Settings](/settings), confirm the root is <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 listed, and check that your ignored-folders patterns don't match the project.
 
 ## Where is my data stored?
@@ -17,7 +17,7 @@ single-user and runs on your machine.
 
 ## A run looks stuck - what do I do?
 
-Open **Runs** and check the run's liveness indicator. A healthy long run keeps
+Open [Runs](/runs) and check the run's liveness indicator. A healthy long run keeps <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 reporting progress. If it's genuinely stalled, use **stop** for a graceful end
 or **kill** to force it. Run history is preserved either way.
 
@@ -25,7 +25,7 @@ or **kill** to force it. Run history is preserved either way.
 
 A **run** is one orchestrator invocation that loops iterations of agent work. A
 **pipeline session** is one execution of a multi-step **recipe**; some of its
-steps may each spawn their own run. See the **Glossary** for full definitions.
+steps may each spawn their own run. See the [Glossary](/docs/glossary) for full definitions. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 
 ## Can the Director change my code by itself?
 

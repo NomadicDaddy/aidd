@@ -43,7 +43,13 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 			<OverflowScroller
 				ariaLabel="Audit overrides"
 				scrollerClassName="xl:max-h-[calc(100dvh-16rem)]">
-				<table aria-label="Audit overrides" className="w-full text-left text-sm">
+				{/* Half the shared table measure, because this is half a table: two columns, an
+				    audit name and a select. At the full 80rem the pair sat at opposite ends of a
+				    1280px row with nothing between them, which reads as two lists rather than as
+				    one row of pairs. */}
+				<table
+					aria-label="Audit overrides"
+					className="w-full max-w-[52rem] text-left text-sm">
 					<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 						<tr>
 							<th className="bg-muted px-3 py-3" scope="col">
@@ -71,7 +77,7 @@ export function OverridesList({ audits, definitions, onChange }: OverridesListPr
 									    row gains a line, because the names were already wrapping where
 									    they wrap now. */}
 									<td
-										className={`border-l-2 px-3 py-2 wrap-anywhere text-foreground ${
+										className={`border-l-2 px-3 py-2 font-mono wrap-anywhere text-foreground ${
 											overridden
 												? 'border-accent font-semibold'
 												: 'border-transparent font-medium'

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import type { PipelineStepStatus } from '../../api/types.ts';
 
+import { StatusDot } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { useRunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
 import { LogPre } from './LogPre.tsx';
@@ -41,7 +42,10 @@ function RunConsoleContent({
 	}, [output.isStreaming, onStreamingChange]);
 
 	return (
-		<LogPre caption="Run console output" className="mt-2">
+		// `expandable` here and not on `StepOutput`: that one truncates its own content and owns a
+		// toggle already. This slab is the whole transcript, capped only by height, and a running
+		// step's console is the one place where reading past the cap is the point.
+		<LogPre caption="Run console output" className="mt-2" expandable>
 			{display}
 		</LogPre>
 	);
@@ -95,9 +99,7 @@ export function StepRunConsole({
 				/>
 				<span className="flex items-center gap-2">
 					Console
-					{streaming && (
-						<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-teal-400" />
-					)}
+					{streaming && <StatusDot pulse tone="teal" />}
 				</span>
 			</Button>
 			{open ? (

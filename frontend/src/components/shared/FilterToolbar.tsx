@@ -56,11 +56,26 @@ export function FilterToolbar({
 	readoutSuffix?: ReactNode;
 	total: number;
 }) {
+	// `flex flex-col gap-3`, not `space-y-3`. Tailwind v4 lays `space-y-*` down as a margin on the
+	// children, so the `className="mb-0"` that every `CardHeader` in a self-spacing Card passes
+	// cancelled it outright — the toolbars that title themselves measured a 0px gap between the card
+	// description and the first field label, and since both are 12px muted-foreground the control
+	// group read as a third line of the description sentence. `gap` belongs to this element and no
+	// child margin can defeat it.
 	return (
-		<Card className={cn('space-y-3', className)}>
+		<Card className={cn('flex flex-col gap-3', className)}>
 			{header}
-			<div className={cn('grid gap-3', columns)}>{children}</div>
-			<div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+			{/* The grid needs a width to stop at as well as a column count to stop at. `columns` is a
+			    ratio — `2fr_1fr_1fr` — and a ratio has no ceiling, so in a 1962px content column the
+			    three toolbars that share this component handed a status select 490px and the search
+			    field 980px. The tracks were tuned around 1312px; 80rem is the nearest step above that
+			    and leaves four tracks at ~320px each, which is where these controls stop improving.
+			    Capped here rather than at each call site because all three call sites were wrong in
+			    the same way. */}
+			<div className={cn('grid max-w-[80rem] gap-3', columns)}>{children}</div>
+			{/* The same cap as the grid above it, so the readout and its Reset stay the width of
+			    the controls they describe rather than being pushed to opposite ends of the card. */}
+			<div className="flex max-w-[80rem] items-center justify-between gap-3 text-xs text-muted-foreground">
 				<span role="status">
 					Showing {filtered} of {total} {noun}
 					{readoutSuffix}

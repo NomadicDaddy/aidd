@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { ListEditor } from './ListEditor.tsx';
 
 function isLoopbackHostname(hostname: string): boolean {
@@ -40,7 +41,7 @@ export function NetworkAccessSection({
 
 	return (
 		<>
-			<Card className="grid gap-4 lg:grid-cols-2">
+			<Card className="grid gap-4 @min-[45rem]:grid-cols-2">
 				<div className="space-y-4">
 					<FieldCheckbox
 						checked={form.allowRemote}
@@ -53,7 +54,7 @@ export function NetworkAccessSection({
 						onChange={(event) => requestAllowRemote(event.target.checked)}
 						tone={form.allowRemote ? 'amber' : 'neutral'}
 					/>
-					<div className="grid gap-4 sm:grid-cols-2">
+					<div className="grid gap-4 @min-[32rem]:grid-cols-2">
 						<FieldRow label="Hostname">
 							<Input
 								onChange={(event) => setField('hostname', event.target.value)}
@@ -76,7 +77,7 @@ export function NetworkAccessSection({
 							/>
 						</FieldRow>
 					</div>
-					<p className="text-xs text-muted-foreground">
+					<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 						Listener changes take effect after restarting aidd-web.
 						{form.authTokenConfigured
 							? ' A remote bearer token is configured.'

@@ -29,13 +29,25 @@ async function* sources(): AsyncGenerator<{ path: string; source: string }> {
 /**
  * The steps allowed to appear in a container query, and what each one is for.
  *
- * The first three are read off the content-width table in `AppLayout.tsx` — each clears the widest
- * column that must stay one-up and catches the narrowest that must not. The last two are site
- * measurements that earned their own number, and each says why at its call site. A step outside this
- * set is almost always a viewport breakpoint transliterated into a container query, which is the
- * mistake the whole mechanism exists to prevent.
+ * `32rem`, `45rem` and `61rem` are read off the content-width table in `AppLayout.tsx` — each clears
+ * the widest column that must stay one-up and catches the narrowest that must not. The rest are site
+ * measurements that earned their own number, and each says why at its call site: the width at which
+ * a specific two-column split still leaves both columns usable, arrived at by measuring the columns
+ * rather than by picking a viewport tier. A step outside this set is almost always a viewport
+ * breakpoint transliterated into a container query, which is the mistake the whole mechanism exists
+ * to prevent.
  */
-const sanctionedSteps = new Set(['32rem', '40rem', '44rem', '45rem', '61rem']);
+const sanctionedSteps = new Set([
+	'32rem',
+	'40rem',
+	'44rem',
+	'45rem',
+	'46rem',
+	'61rem',
+	'62rem',
+	'66rem',
+	'68rem',
+]);
 
 describe('responsive steps are chosen against content width', () => {
 	test('every container-query step is one of the sanctioned ones', async () => {
@@ -59,14 +71,29 @@ describe('responsive steps are chosen against content width', () => {
 		const offenders: string[] = [];
 
 		for await (const { path, source } of sources()) {
-			if (source.includes('@min-[') && !source.includes('@container')) offenders.push(path);
+			if (!source.includes('@min-[') || source.includes('@container')) continue;
+			// Every section under pages/settings/ is composed into `SettingsPage`, which declares
+			// the container on the page root — asserted below, because that one declaration is
+			// what makes the whole directory's queries resolve against the settings column.
+			if (path.startsWith('pages/settings/')) continue;
+			offenders.push(path);
 		}
 
 		// A `@min-[…]:` with no containment ancestor does not fail loudly — it resolves against the
 		// nearest container in some *other* component, or the viewport, and renders plausibly wrong.
-		// The one exception is a component that is only ever rendered into a container its own page
-		// declares, and the catalog is that: `SkillsPage` owns the split and the containment for it.
-		expect(offenders).toEqual(['pages/skills/SkillCatalog.tsx']);
+		// The exceptions are components that are only ever rendered into a container their own page
+		// declares: `SkillsPage` owns the split and the containment for the catalog, and both console
+		// components are rendered nowhere but `RunsPage`, whose root is the container their height
+		// chain gates against.
+		expect(offenders.sort()).toEqual([
+			'pages/runs/LiveConsole.tsx',
+			'pages/runs/PipelineConsoleSummary.tsx',
+			'pages/skills/SkillCatalog.tsx',
+		]);
+		expect(await read('pages', 'settings', 'SettingsPage.tsx')).toContain(
+			'page-reveal @container',
+		);
+		expect(await read('pages', 'runs', 'RunsPage.tsx')).toContain('page-reveal @container');
 	});
 
 	test('no element both declares containment and queries it', async () => {

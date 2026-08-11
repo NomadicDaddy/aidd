@@ -40,18 +40,16 @@ export function SharedMetadataSection({
 	}
 
 	return (
-		<div className="grid gap-4 xl:grid-cols-2">
-			<Card className="space-y-2">
+		<div className="grid gap-4 @min-[61rem]:grid-cols-2">
+			<Card className="flex flex-col gap-2">
 				{/* Card titles take the h2 the rest of the surface uses; fieldLabelClass is for the
 				    field labels inside them. */}
 				<CardHeader
 					className="mb-0"
+					description="Directories copied into each project during metadata scaffolding."
 					icon={<FolderSymlink className="h-4 w-4" />}
 					title="Shared Directories"
 				/>
-				<p className="text-xs text-muted-foreground">
-					Directories copied into each project during metadata scaffolding.
-				</p>
 				{/* The card title already names the list; the label survives only for the
 				    per-entry aria-labels. */}
 				<ListEditor
@@ -63,20 +61,17 @@ export function SharedMetadataSection({
 				/>
 			</Card>
 
-			<Card className="space-y-2">
+			<Card className="flex flex-col gap-2">
 				<CardHeader
 					className="mb-0"
+					description="Files copied into each project during metadata scaffolding. Each entry is a source path with an optional target path (relative to the project directory)."
 					icon={<FileSymlink className="h-4 w-4" />}
 					title="Shared Files"
 				/>
-				<p className="text-xs text-muted-foreground">
-					Files copied into each project during metadata scaffolding. Each entry is a
-					source path with an optional target path (relative to the project directory).
-				</p>
 				<div className="space-y-3">
 					{form.sharedFiles.map((entry, index) => (
 						<div className="flex items-start gap-2" key={index}>
-							<div className="grid flex-1 gap-2 lg:grid-cols-2">
+							<div className="grid flex-1 gap-2 @min-[45rem]:grid-cols-2">
 								<FieldRow label="Source">
 									<Input
 										aria-label={`Shared file ${index + 1} source`}

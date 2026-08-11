@@ -56,9 +56,12 @@ describe('card height is bounded by the card, not by its longest description', (
 		expect(grid).toContain("title={recipe.description ?? 'No description'}");
 	});
 
-	test('the grid uses the baseline gutter', async () => {
+	test('the grid uses the baseline gutter and a track floor, not a tiered column count', async () => {
 		const page = await read('pages/recipes/RecipesPage.tsx');
-		expect(page).toContain('grid gap-4 lg:grid-cols-2 xl:grid-cols-3');
+		// `auto-fill` off a 20rem track floor rather than `xl:grid-cols-3`: the tiered count capped
+		// at three, so a 1962px column drew three 643px cards for a name, a description and a step
+		// count. The floor reproduces the old counts at the old widths and keeps going above them.
+		expect(page).toContain('grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4');
 	});
 });
 

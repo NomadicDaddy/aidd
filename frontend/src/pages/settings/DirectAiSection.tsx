@@ -59,7 +59,7 @@ export function DirectAiSection({
 		: 'Paste API key';
 
 	return (
-		<Card className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+		<Card className="grid gap-3 @min-[45rem]:grid-cols-2 @min-[61rem]:grid-cols-3">
 			<FieldCheckbox
 				checked={directAi.enabled}
 				label="Direct AI"
@@ -86,7 +86,7 @@ export function DirectAiSection({
 					value={textValue(directAi.model)}
 				/>
 			</FieldRow>
-			<FieldRow className={`lg:col-span-2 ${dimClass}`.trim()} label="Base URL">
+			<FieldRow className={`@min-[45rem]:col-span-2 ${dimClass}`.trim()} label="Base URL">
 				<Input
 					disabled={disabled}
 					onChange={(event) =>
@@ -96,7 +96,9 @@ export function DirectAiSection({
 					value={textValue(directAi.baseUrl)}
 				/>
 			</FieldRow>
-			<FieldRow className={`lg:col-span-2 xl:col-span-3 ${dimClass}`.trim()} label="API Key">
+			<FieldRow
+				className={`@min-[45rem]:col-span-2 @min-[61rem]:col-span-3 ${dimClass}`.trim()}
+				label="API Key">
 				<Input
 					autoComplete="off"
 					disabled={disabled}
@@ -140,9 +142,10 @@ export function DirectAiSection({
 					value={numberValue(directAi.timeoutSeconds)}
 				/>
 			</FieldRow>
-			<div className={`grid gap-2 lg:col-span-2 xl:col-span-3 ${dimClass}`.trim()}>
+			<div
+				className={`grid gap-2 @min-[45rem]:col-span-2 @min-[61rem]:col-span-3 ${dimClass}`.trim()}>
 				<span className={fieldLabelClass}>Surfaces</span>
-				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+				<div className="grid gap-2 @min-[32rem]:grid-cols-2 @min-[45rem]:grid-cols-4">
 					{surfaceOptions.map((surface) => (
 						<FieldCheckbox
 							checked={directAi.surfaces[surface.key]}
@@ -154,7 +157,7 @@ export function DirectAiSection({
 					))}
 				</div>
 			</div>
-			<div className="grid gap-2 lg:col-span-2 xl:col-span-3">
+			<div className="grid gap-2 @min-[45rem]:col-span-2 @min-[61rem]:col-span-3">
 				<span className={fieldLabelClass}>Director chat agent</span>
 				<FieldCheckbox
 					checked={directorChatAllowFileEdits}

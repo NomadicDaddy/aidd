@@ -10,6 +10,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { sessionStatusLabel, sessionStatusTone } from '../runs/pipelineSessionStatus.ts';
 
 /* This file's own `SummaryTile` was deleted here. It was the house metric treatment stepped
@@ -42,12 +43,17 @@ export function SessionSummaryCard({
 				className="min-w-0"
 				detail={
 					report.session.errorMessage ? (
+						// The surviving copy of the failure sentence, so it is the one that gets
+						// the reading measure. `block` because `proseMeasureClass` caps a width,
+						// and an inline span has none to cap.
 						<span
-							className={
+							className={cn(
+								'block',
+								proseMeasureClass,
 								report.session.status === 'completed_with_failures'
 									? toneText.amber
-									: toneText.red
-							}>
+									: toneText.red,
+							)}>
 							{report.session.errorMessage}
 						</span>
 					) : undefined

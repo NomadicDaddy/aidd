@@ -28,9 +28,15 @@ export function FacetCard({
 									// Tokens, not palette steps: the hand-picked teal did not match
 									// --accent-muted, so a selected option here read a different
 									// green-teal than the selected tab pill directly above it.
+									// `hover:border-border` was a no-op — the same colour the rest
+									// state already sets — so `transition-colors` above it had
+									// nothing to transition and a row that changes the project
+									// profile on click acknowledged nothing on approach. The
+									// accent border is `ui/card`'s own `interactive` hover, so a
+									// row previews the colour its selected state will land on.
 									selected
 										? 'border-accent bg-accent-muted text-accent-muted-foreground'
-										: 'border-border hover:border-border',
+										: 'border-border hover:border-accent/40',
 								)}
 								key={opt.value}>
 								<input

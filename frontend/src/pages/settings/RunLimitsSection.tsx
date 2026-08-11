@@ -44,7 +44,11 @@ function NumberFieldRow({
 		// field 10px down from the two beside it in the same grid row — the only row on the surface
 		// whose three inputs did not share a top edge — and, being the first element child, it was
 		// also what FieldRow reached for when wiring `aria-invalid` and the error description.
-		<FieldRow label={label}>
+		// Capped where the row is built, not at twenty call sites: a spinbutton holding `8` took
+		// 962px of a 2250-wide viewport because the grid's third column was the terminal step and
+		// nothing below it bounded the control. 20rem is the width the longest of these values
+		// (`30000`) needs with its stepper, and the label above it wraps rather than stretching.
+		<FieldRow className="max-w-xs" label={label}>
 			<Input
 				// A fractional step means a currency field, which needs the decimal keypad; the
 				// integer fields keep the plain numeric one.
@@ -113,7 +117,7 @@ export function RunLimitsSection({
 			<SettingsBlock
 				description="Control parallel work and isolate coding runs when repository safety requires it."
 				title="Concurrency">
-				<div className="grid gap-3 sm:grid-cols-2">
+				<div className="grid gap-3 @min-[32rem]:grid-cols-2">
 					<NumberFieldRow
 						label="Max concurrent runs"
 						min={1}
@@ -131,7 +135,7 @@ export function RunLimitsSection({
 			<SettingsBlock
 				description="Bound overall runs, iterations, turns, and idle detection. Empty optional values use built-in defaults. The token and cost budgets are cumulative across a whole run and warn-only — an exceeded budget logs a warning and the run continues."
 				title="Budgets & Timeouts">
-				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+				<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-3">
 					<NumberFieldRow
 						label="Timeout (seconds)"
 						min={0}
@@ -188,7 +192,7 @@ export function RunLimitsSection({
 			<SettingsBlock
 				description="Tune rate-limit recovery and low-level safeguards used by the orchestrator."
 				title="Backoff & Safeguards">
-				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+				<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-3">
 					<NumberFieldRow
 						label="Rate limit backoff (seconds)"
 						min={0}

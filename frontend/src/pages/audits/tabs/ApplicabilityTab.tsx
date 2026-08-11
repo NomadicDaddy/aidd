@@ -8,13 +8,14 @@ import type { AuditApplicabilityCell, AuditProfileMapping } from '../../../api/t
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { FilterSearch, FilterToolbar } from '../../../components/shared/FilterToolbar.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
-import { Badge } from '../../../components/ui/badge.tsx';
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
+import { Badge, StatusDot } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useAuditProfileMapping, useUpdateAuditProfileMapping } from '../../../hooks/useAudits.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
-import { toneSolid, toneText } from '../../../lib/tones.ts';
+import { toneText } from '../../../lib/tones.ts';
 import { bucketColumns, bucketShortLabels, describeCell, effectTone } from '../auditsUtils.ts';
 
 export function ApplicabilityTab() {
@@ -75,9 +76,16 @@ export function ApplicabilityTab() {
 		<div className="space-y-4">
 			{/* The intro card is the toolbar's header rather than a card of its own: as a separate
 			    card it added ~120px of permanent chrome above a region that is already fighting for
-			    vertical room, and the search would then have been a third stacked box. */}
+			    vertical room, and the search would then have been a third stacked box.
+
+			    Its single track is `minmax(0,28rem)`, not the `2fr` the multi-control toolbars
+			    lead with. A lone `2fr` is a one-track grid: the fraction has nothing to divide
+			    against, so it resolved to the whole row and the search field measured 1928px on a
+			    2250px screen — a text input sixty times longer than anything typed into it. Every
+			    other toolbar's search shares its row with selects that bound it; this is the only
+			    one that has to state its own bound. */}
 			<FilterToolbar
-				columns="xl:grid-cols-[2fr]"
+				columns="xl:grid-cols-[minmax(0,28rem)]"
 				filtered={visibleRows.length}
 				hasFilters={query.trim() !== ''}
 				header={
@@ -110,7 +118,7 @@ export function ApplicabilityTab() {
 			</FilterToolbar>
 
 			{editorOpen && (
-				<Card className="space-y-3">
+				<Card className="flex flex-col gap-3">
 					<CardHeader
 						action={
 							<Button
@@ -134,66 +142,88 @@ export function ApplicabilityTab() {
 				</Card>
 			)}
 
-			{/* Bounding the card's height is what makes `sticky` work: the Card is the scroll
+			{/* Bounding the height is what makes `sticky` work: the scrollport is the scroll
 			    container, so without a max height the header has nothing to stick inside and the
 			    bucket labels are gone two scroll steps into a ~1800px matrix.
-			    The subtrahend covers what sits above this card — app chrome, the page header, the
-			    tab strip and the toolbar card — so the card ends at the viewport floor and the tab
-			    has one scroll region instead of two nested ones. It was 16rem, which left the card
-			    itself overflowing the screen and the page scrolling behind it. */}
-			<Card className="hidden max-h-[calc(100dvh-24rem)] overflow-auto p-0 xl:block">
-				<table
-					aria-label="Audit applicability matrix"
-					className="w-full min-w-[820px] text-left text-sm">
-					<thead className={`${tableHeadClass} sticky top-0 z-10`}>
-						<tr>
-							<th className="bg-muted px-3 py-3" scope="col">
-								Audit
-							</th>
-							{bucketColumns.map((bucket) => (
-								<th
-									className="bg-muted px-3 py-3 text-center"
-									key={bucket}
-									scope="col">
-									{bucketShortLabels[bucket]}
+			    The cap moved off the Card and onto an `OverflowScroller`, which is what the two
+			    sibling tabs do and what this one alone did not. Capping the Card cost the matrix
+			    its tab stop — the Card reported `tabindex: null` while the catalog's scroller
+			    reported `focusable [tabindex]` in the same snapshot — and left the fade with
+			    nothing to attach to.
+
+			    Moving the cap did not, on its own, close the 843px of empty page that scrolled
+			    below the card. That was the scrollport's layout overflow reaching the document,
+			    and it survived the move — measured again at 2250x1309 as `scrollHeight` 2184
+			    against a card bottom of 1329. `OverflowScroller` clips its own root now, which is
+			    where the fix belongs: every capped scroller leaked the same way, and this tab is
+			    only where it was caught.
+
+			    The subtrahend stays `24rem`, not the siblings' `16rem`: it is a statement about how
+			    much chrome sits above the table on *this* tab, and moving the cap from the Card to
+			    the scroller inside it does not change that. This tab's toolbar carries a header with
+			    two lines of prose, and at `16rem` the card ran past the fold — the tab then scrolled
+			    the page and the card both, which is the double scroll the cap exists to remove. */}
+			<Card className="hidden p-0 xl:block">
+				<OverflowScroller
+					ariaLabel="Audit applicability matrix"
+					scrollerClassName="max-h-[calc(100dvh-24rem)]">
+					<table
+						aria-label="Audit applicability matrix"
+						className="w-full min-w-[820px] text-left text-sm">
+						<thead className={`${tableHeadClass} sticky top-0 z-10`}>
+							<tr>
+								<th className="bg-muted px-3 py-3" scope="col">
+									Audit
 								</th>
-							))}
-						</tr>
-						<tr>
-							<th
-								className="border-b border-border bg-muted px-3 py-1.5 font-normal normal-case"
-								colSpan={bucketColumns.length + 1}
-								scope="colgroup">
-								<MatrixLegend />
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{visibleRows.map((row) => (
-							<tr
-								className="border-b border-border last:border-0"
-								key={row.auditName}>
-								<td className="px-3 py-2 font-medium text-foreground">
-									{row.auditName}
-								</td>
 								{bucketColumns.map((bucket) => (
-									<td className="px-3 py-2 text-center" key={bucket}>
-										<EffectCell cell={row.byBucket[bucket]} />
-									</td>
+									<th
+										className="bg-muted px-3 py-3 text-center"
+										key={bucket}
+										scope="col">
+										{bucketShortLabels[bucket]}
+									</th>
 								))}
 							</tr>
-						))}
-						{visibleRows.length === 0 && (
 							<tr>
-								<td
-									className="px-3 py-6 text-sm text-muted-foreground"
-									colSpan={bucketColumns.length + 1}>
-									No audits match that search.
-								</td>
+								<th
+									className="border-b border-border bg-muted px-3 py-1.5 font-normal normal-case"
+									colSpan={bucketColumns.length + 1}
+									scope="colgroup">
+									<MatrixLegend />
+								</th>
 							</tr>
-						)}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{visibleRows.map((row) => (
+								<tr
+									className="border-b border-border last:border-0"
+									key={row.auditName}>
+									{/* The same audit id the Catalog tab renders in mono. It is one string
+								    identifying one file, and reading it in two faces on two tabs of the
+								    same page is how a reader stops trusting that they are the same
+								    thing. */}
+									<td className="px-3 py-2 font-mono font-medium text-foreground">
+										{row.auditName}
+									</td>
+									{bucketColumns.map((bucket) => (
+										<td className="px-3 py-2 text-center" key={bucket}>
+											<EffectCell cell={row.byBucket[bucket]} />
+										</td>
+									))}
+								</tr>
+							))}
+							{visibleRows.length === 0 && (
+								<tr>
+									<td
+										className="px-3 py-6 text-sm text-muted-foreground"
+										colSpan={bucketColumns.length + 1}>
+										No audits match that search.
+									</td>
+								</tr>
+							)}
+						</tbody>
+					</table>
+				</OverflowScroller>
 			</Card>
 
 			<div className="space-y-2 xl:hidden">
@@ -202,7 +232,7 @@ export function ApplicabilityTab() {
 				</Card>
 				{visibleRows.map((row) => (
 					<div className="rounded-md border border-border p-3" key={row.auditName}>
-						<div className="font-medium text-foreground">{row.auditName}</div>
+						<div className="font-mono font-medium text-foreground">{row.auditName}</div>
 						<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
 							{bucketColumns.map((bucket) => (
 								<div className="space-y-1" key={bucket}>
@@ -233,10 +263,7 @@ function EffectCell({ cell }: { cell: AuditApplicabilityCell }) {
 			<span
 				className="inline-flex items-center gap-0.5 text-xs text-muted-foreground"
 				title={describeCell(cell)}>
-				<span
-					aria-hidden="true"
-					className={`inline-block h-1.5 w-1.5 rounded-full ${toneSolid.neutral}`}
-				/>
+				<StatusDot />
 				<span className="sr-only">default</span>
 				{cell.conditional ? '*' : ''}
 			</span>
@@ -256,10 +283,7 @@ function MatrixLegend() {
 	return (
 		<span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
 			<span className="inline-flex items-center gap-1">
-				<span
-					aria-hidden="true"
-					className={`inline-block h-1.5 w-1.5 rounded-full ${toneSolid.neutral}`}
-				/>
+				<StatusDot />
 				default
 			</span>
 			<Badge tone={effectTone.required}>required</Badge>

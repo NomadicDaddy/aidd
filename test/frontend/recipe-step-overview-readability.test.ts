@@ -61,14 +61,25 @@ describe('recipe step overview readability', () => {
 	});
 
 	test('a command still refuses to wrap, and carries the scrollport that lets it', () => {
-		const classes = blockClassFor(renderShellStep(), 'command');
+		const markup = renderShellStep();
+		const classes = blockClassFor(markup, 'command');
 
 		// `whitespace-pre-wrap` would satisfy a `toContain('whitespace-pre')`, so the assertion has
 		// to be for the class itself and not for a prefix of it. A shell command broken at whatever
 		// spaces fall near a 358px edge is harder to read than one line that scrolls, and it can no
 		// longer be selected and pasted as a command.
 		expect(classes.split(' ')).toContain('whitespace-pre');
-		expect(classes.split(' ')).toContain('overflow-x-auto');
+
+		// The scroll now happens one element out, on the `OverflowScroller` wrapping the `<code>`,
+		// which is why this asserts the region and not the class list above. A bare `overflow-x-auto`
+		// on the code element scrolled — measured at 2250x1309, clientWidth 1862 against scrollWidth
+		// 3483 — with no edge cue, no resting scrollbar and no tab stop, so nearly half the command
+		// was hidden behind nothing that said so.
+		expect(markup).toContain('role="region"');
+		expect(markup).toContain('aria-label="command value"');
+		expect(markup).toContain('data-overflow-scroller');
+		const scrollerAt = markup.indexOf('data-overflow-scroller');
+		expect(markup.lastIndexOf('overflow-x-auto', scrollerAt)).toBeGreaterThan(-1);
 	});
 
 	test('a prompt wraps into the column instead of scrolling sideways', () => {

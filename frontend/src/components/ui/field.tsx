@@ -5,6 +5,7 @@ import { Children, cloneElement, isValidElement, useId } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { fieldErrorClass, fieldLabelClass } from '../../lib/formStyles.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { Checkbox } from './checkbox.tsx';
 
 interface FieldRowProps extends LabelHTMLAttributes<HTMLLabelElement> {
@@ -137,9 +138,14 @@ export function FieldCheckbox({
 				)}>
 				<span className="font-medium">{label}</span>
 				{description ? (
+					// The measure lives on the slot, the way `CardHeader`'s description does. This
+					// is where it pays most: a checkbox row spans the full settings grid, and the
+					// Director-chat note is 289 characters, which ran as one 1551px line beside a
+					// card header wrapping at 366px — two reading measures on one page.
 					<span
 						className={cn(
 							'mt-1 block text-xs',
+							proseMeasureClass,
 							toned ? undefined : 'text-muted-foreground',
 						)}>
 						{description}

@@ -210,8 +210,8 @@ const EXEMPT: Exemption[] = [
 	// below, which belong to the other words. All of these clear the 24px WCAG 2.5.8 AA minimum.
 	{
 		file: 'components/shared/MarkdownContent.tsx',
-		marker: 'text-accent underline underline-offset-2 hover:text-accent/80',
-		reason: 'The `<a>` of the markdown renderer — prose by definition.',
+		marker: 'className={LINK_CLASS}',
+		reason: 'The `<Link>` and `<a>` of the markdown renderer — prose by definition. They share one class constant, which is what this marker names.',
 	},
 	{
 		file: 'pages/projects/detail/ArtifactViewerDialog.tsx',

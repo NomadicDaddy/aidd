@@ -1,5 +1,6 @@
 import { default as Save } from 'lucide-react/dist/esm/icons/save';
 
+import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { textareaClass } from '../../../lib/formStyles.ts';
@@ -35,7 +36,7 @@ export function AuditDefinitionEditor({
 		// that padding, so the two jump targets on this tab would land 16px lower than every other
 		// anchor in the app.
 		<section id={auditDefinitionEditorId}>
-			<Card className="space-y-3">
+			<Card className="flex flex-col gap-3">
 				<CardHeader
 					action={
 						<Button
@@ -49,12 +50,20 @@ export function AuditDefinitionEditor({
 					className="mb-0"
 					description={
 						auditPath ? (
-							<span className="break-all">{auditPath}</span>
+							<FilePath className="break-all" path={auditPath} />
 						) : (
 							'Select a row in the catalog above to edit its definition.'
 						)
 					}
-					title={selectedAudit ?? 'Audit definition'}
+					// The audit id was the card's `title`, which put it in Geist Sans at
+					// `text-base font-semibold` — the same string the catalog above renders in
+					// mono, restyled as prose because it happened to be what this card is
+					// about. `identifier` is the slot for exactly that: it keeps the heading
+					// stable at "Audit definition" so the card is still findable when nothing
+					// is selected, and prints the id beneath it in the face the rest of the
+					// tab uses.
+					identifier={selectedAudit ?? undefined}
+					title="Audit definition"
 				/>
 				<textarea
 					aria-label="Audit definition markdown"

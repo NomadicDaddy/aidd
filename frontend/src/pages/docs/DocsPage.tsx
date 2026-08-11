@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
@@ -10,6 +11,7 @@ import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { proseMeasureCardClass } from '../../lib/typography.ts';
 import { getDocBody } from './docs-content.ts';
 import { DEFAULT_DOC_SLUG, docSectionBySlug } from './docs-manifest.ts';
+import { DocsOutline } from './DocsOutline.tsx';
 import { DocsSidebar } from './DocsSidebar.tsx';
 
 export function DocsPage() {
@@ -19,6 +21,15 @@ export function DocsPage() {
 	const body = getDocBody(slug);
 
 	useDocumentTitle(section ? `Docs · ${section.title}` : 'Docs');
+
+	// Docs are one route with a changing `slug`, so following a sidebar link from halfway down a
+	// long document swapped the article underneath a scroll position that belonged to the previous
+	// one — the new document opened at whatever paragraph happened to sit at that offset, with no
+	// navigation having visibly occurred. The heading-anchor links inside the article change the
+	// hash and not the slug, so in-page jumps are unaffected.
+	useEffect(() => {
+		window.scrollTo({ behavior: 'auto', top: 0 });
+	}, [slug]);
 
 	return (
 		<div className="page-reveal space-y-5">
@@ -50,9 +61,16 @@ export function DocsPage() {
 			    45rem is where 14rem of sidebar plus the 1.5rem gap (248px) still leave the article
 			    the ~480px its own measure asks for. Below it the disclosure carries the wayfinding
 			    and the prose gets the whole column. Only `@min-` variants, so nothing has to be
-			    decided at the boundary twice. */}
+			    decided at the boundary twice.
+
+			    61rem adds the on-this-page rail, at the width where a second 14rem column still
+			    leaves the article its measure (224 + 480 + 224 + two 24px gaps = 976px = 61rem).
+			    The rail is what claims the width the measure gives up: capped and two-column, the
+			    grid left 1231px of a 1962px content column — 63% of it — as blank face to the right
+			    of the card. A measure without a second column is a narrower article in the same
+			    empty room. */}
 			<div className="@container">
-				<div className="grid gap-6 @min-[45rem]:grid-cols-[14rem_minmax(0,1fr)]">
+				<div className="grid gap-6 @min-[45rem]:grid-cols-[14rem_minmax(0,1fr)] @min-[61rem]:grid-cols-[14rem_minmax(0,1fr)_14rem]">
 					<aside className="@min-[45rem]:sticky @min-[45rem]:top-4 @min-[45rem]:self-start">
 						{/* Narrow, the full list is 3 group labels and 13 links — roughly a screen of
 						    navigation above the article a reader just navigated to. Collapsed behind
@@ -95,6 +113,14 @@ export function DocsPage() {
 							)}
 						</article>
 					</Card>
+					{/* Hidden below its own breakpoint rather than absent: the compact `<details>`
+					    above already lists every section of every document, so a narrow reader has a
+					    route to them without a second list under the article. */}
+					{body ? (
+						<aside className="hidden @min-[61rem]:sticky @min-[61rem]:top-4 @min-[61rem]:block @min-[61rem]:self-start">
+							<DocsOutline body={body} />
+						</aside>
+					) : null}
 				</div>
 			</div>
 		</div>

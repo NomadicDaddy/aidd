@@ -29,8 +29,62 @@ function stripFrontmatter(markdown: string): string {
 	return match ? markdown.slice(match[0].length) : markdown;
 }
 
+const COMMENT = /<!--[\s\S]*?-->/g;
+
+/**
+ * Drop HTML comments, which are markup rather than content and print in no other renderer.
+ *
+ * This became load-bearing when the in-app documentation started linking to app routes:
+ * `scripts/check-docs.ts` resolves every internal markdown link against the filesystem, and
+ * `[Settings](/settings)` is a router destination with no file behind it, so those lines carry the
+ * gate's sanctioned `check-docs-allow:` waiver marker as an HTML comment. Without this the markers
+ * rendered on the page as literal `<!-- … -->` text.
+ *
+ * Fenced blocks are exempt: `<!--` inside a code example is the example, not a comment. The fence
+ * state is tracked here rather than left to the main loop because that loop consumes fenced lines
+ * through an inner cursor, so a comment pre-pass has to know about fences on its own.
+ *
+ * A line that held nothing but a comment is removed rather than blanked, since a blank line would
+ * split the paragraph the comment sat inside.
+ */
+function stripComments(lines: string[]): string[] {
+	const out: string[] = [];
+	let inFence = false;
+	let inComment = false;
+
+	for (const raw of lines) {
+		if (!inComment && FENCE.test(raw.trim())) {
+			inFence = !inFence;
+			out.push(raw);
+			continue;
+		}
+		if (inFence) {
+			out.push(raw);
+			continue;
+		}
+
+		let line = raw;
+		if (inComment) {
+			const end = line.indexOf('-->');
+			if (end === -1) continue;
+			line = line.slice(end + 3);
+			inComment = false;
+		}
+		line = line.replace(COMMENT, '');
+		const open = line.indexOf('<!--');
+		if (open !== -1) {
+			line = line.slice(0, open);
+			inComment = true;
+		}
+		if (raw.trim().length > 0 && line.trim().length === 0) continue;
+		out.push(line);
+	}
+
+	return out;
+}
+
 export function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
-	const lines = stripFrontmatter(markdown).split(/\r?\n/);
+	const lines = stripComments(stripFrontmatter(markdown).split(/\r?\n/));
 	const blocks: MarkdownBlock[] = [];
 	let paragraph: string[] = [];
 
@@ -127,4 +181,85 @@ export function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
 	}
 	flushParagraph();
 	return blocks;
+}
+
+/**
+ * The inline pass's grammar: `**bold**`, `*italic*`, `` `code` `` and `[text](href)`.
+ *
+ * It lives here rather than in the renderer because two things need it and they must agree: the
+ * renderer turns the markers into elements, and `plainInlineText` below throws them away. A second
+ * copy of this expression is a heading whose anchor id or accessible name spells its own asterisks.
+ */
+export const INLINE_MARKDOWN = /(\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\))/g;
+
+/** The same text with the markers gone — for an `aria-label`, a `title`, or a table-of-contents row. */
+export function plainInlineText(text: string): string {
+	return text.replace(
+		INLINE_MARKDOWN,
+		(_match, _whole, bold?: string, italic?: string, code?: string, linkText?: string) =>
+			bold ?? italic ?? code ?? linkText ?? '',
+	);
+}
+
+/** A heading id that survives an edit elsewhere in the document: derived from the text, not the index. */
+function slugify(text: string): string {
+	return (
+		plainInlineText(text)
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '') || 'section'
+	);
+}
+
+/**
+ * Ids for one document's headings, in document order.
+ *
+ * Stateful on purpose: two `## Notes` in one file are `notes` and `notes-2`, which only works if
+ * every consumer allocates from the same counter in the same order. The renderer and the
+ * on-this-page list both call this, so a repeated heading cannot land a link on the wrong section.
+ */
+export function headingIdAllocator(idPrefix?: string): (text: string) => string {
+	const seen = new Map<string, number>();
+	return (text) => {
+		const base = `${idPrefix === undefined ? '' : `${idPrefix}-`}${slugify(text)}`;
+		const count = seen.get(base) ?? 0;
+		seen.set(base, count + 1);
+		return count === 0 ? base : `${base}-${count + 1}`;
+	};
+}
+
+export interface MarkdownHeading {
+	/** Steps below the document's own shallowest heading, so a `##`-only document is all depth 0. */
+	depth: number;
+	id: string;
+	text: string;
+}
+
+/**
+ * The document's outline: the same headings, ids and depths `MarkdownContent` will render, computed
+ * without rendering it. This is what a table of contents is built from.
+ */
+export function markdownHeadings(
+	markdown: string,
+	{ idPrefix, skipLeadingTitle = false }: { idPrefix?: string; skipLeadingTitle?: boolean } = {},
+): MarkdownHeading[] {
+	const parsed = parseMarkdownBlocks(markdown);
+	const blocks =
+		skipLeadingTitle && parsed[0]?.type === 'heading' && parsed[0].level === 1
+			? parsed.slice(1)
+			: parsed;
+	const levels = blocks.flatMap((block) => (block.type === 'heading' ? [block.level] : []));
+	const shallowest = Math.min(...levels, 3);
+	const allocate = headingIdAllocator(idPrefix);
+	return blocks.flatMap((block) =>
+		block.type === 'heading'
+			? [
+					{
+						depth: block.level - shallowest,
+						id: allocate(block.text),
+						text: plainInlineText(block.text),
+					},
+				]
+			: [],
+	);
 }

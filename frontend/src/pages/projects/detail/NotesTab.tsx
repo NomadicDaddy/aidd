@@ -11,6 +11,7 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useProjectNotes, useSaveProjectNotes } from '../../../hooks/useProjectNotes.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
+import { monoEditorMeasureClass } from '../../../lib/typography.ts';
 
 function formatSavedAt(updatedAt: null | number): string {
 	if (updatedAt === null) return 'Not saved yet';
@@ -53,7 +54,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 	};
 
 	return (
-		<Card className="space-y-3">
+		<Card className="flex flex-col gap-3">
 			<CardHeader
 				action={
 					<div className="flex items-center gap-2">
@@ -79,7 +80,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 			/>
 			<textarea
 				aria-label="Project notes"
-				className={`${textareaClass} min-h-[28rem] font-mono`}
+				className={`${textareaClass} ${monoEditorMeasureClass} min-h-[28rem] font-mono`}
 				onChange={(event) => setDraft(event.target.value)}
 				onKeyDown={(event) => {
 					if ((event.metaKey || event.ctrlKey) && event.key === 's') {

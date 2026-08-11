@@ -11,11 +11,22 @@ import { formatFilesystemPath } from '../../lib/formatters.ts';
  *
  * `title` carries the full path so a truncated one is still recoverable on hover — the class that
  * cuts it (`truncate`, `break-all`) is the caller's, since only the caller knows its column.
+ *
+ * A caller that renders a *shortened* path — a basename in a narrow column — passes `title` to say
+ * what the hover should recover instead, because the displayed text is no longer the whole answer.
  */
-export function FilePath({ className, path }: { className?: string; path: null | string }) {
+export function FilePath({
+	className,
+	path,
+	title,
+}: {
+	className?: string;
+	path: null | string;
+	title?: string;
+}) {
 	const display = formatFilesystemPath(path);
 	return (
-		<span className={cn('font-mono', className)} title={display}>
+		<span className={cn('font-mono', className)} title={title ?? display}>
 			{display}
 		</span>
 	);

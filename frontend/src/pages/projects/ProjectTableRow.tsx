@@ -73,11 +73,16 @@ export function ProjectTableRow({
 	const orphan = isOrphaned(project);
 
 	return (
-		<tr className="border-b border-border last:border-0">
+		<tr className="group border-b border-border transition-colors last:border-0 hover:bg-muted/40">
 			{/* Pinned: scrolling right to reach the opt-in columns used to carry the name off the
 			    left edge, leaving anonymous rows of numbers. `bg-card` is what stops the scrolled
-			    content showing through the pinned cell. */}
-			<td className="sticky left-0 z-10 bg-card px-3 py-3">
+			    content showing through the pinned cell.
+			    Which is also why the row's hover tint arrives here as a gradient rather than as a
+			    background-color: `hover:bg-muted/40` on this cell would replace `bg-card` with a
+			    40%-opaque fill and the columns sliding underneath would show through the project
+			    name. A flat two-stop gradient paints the same tint in the background-image layer,
+			    above the opaque card colour instead of in place of it. */}
+			<td className="sticky left-0 z-10 bg-card px-3 py-3 group-hover:bg-gradient-to-r group-hover:from-muted/40 group-hover:to-muted/40">
 				<div className="flex items-center gap-1.5">
 					{orphan ? (
 						<FolderX

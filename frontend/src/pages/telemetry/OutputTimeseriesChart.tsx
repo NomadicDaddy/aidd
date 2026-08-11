@@ -13,12 +13,38 @@ import { TelemetryChartTable } from './TelemetryChartTable.tsx';
 
 export type OutputMetric = 'lines' | 'tokens';
 
+/**
+ * One half of the diverging plot, named with the domain it is drawn against.
+ *
+ * `pl-12` is the axis gutter — `w-10` plus the `gap-x-2` beside it — so the caption starts where the
+ * plot starts rather than where the tick labels do.
+ */
+function ScaleCaption({
+	domain,
+	dotClass,
+	label,
+}: {
+	domain: number;
+	dotClass: string;
+	label: string;
+}) {
+	return (
+		<div className="flex items-center gap-1.5 pl-12 text-xs text-muted-foreground">
+			<span aria-hidden="true" className={`h-2 w-2 rounded-full ${dotClass}`} />
+			{label} · this half scales to{' '}
+			<span className="font-medium text-foreground tabular-nums">
+				{formatCompactNumber(domain)}
+			</span>
+		</div>
+	);
+}
+
 // Diverging bars from a shared center baseline: production (lines added / tokens in) grows up,
-// the counterpart (lines removed / tokens out) grows down. Both arms share one symmetric scale
-// so their magnitudes stay comparable — position carries the sign, color the identity. The two
-// arms are series, not statuses, so they take categorical slots from `lib/series.ts`; the cyan /
-// fuchsia pairing stays separable under red-green CVD and cannot be mistaken for the outcome
-// colors used by the invocations chart.
+// the counterpart (lines removed / tokens out) grows down. Position carries the sign, color the
+// identity, and each arm carries its own scale — stated in its caption, because a break the reader
+// cannot see is worse than no break at all. The two arms are series, not statuses, so they take
+// categorical slots from `lib/series.ts`; the cyan / fuchsia pairing stays separable under
+// red-green CVD and cannot be mistaken for the outcome colors used by the invocations chart.
 export function OutputTimeseriesChart({
 	bucket,
 	metric,
@@ -97,8 +123,16 @@ export function OutputTimeseriesChart({
 				{metric === 'lines' ? 'Line changes' : 'Token usage'} by time bucket
 			</h3>
 			{/* The 50% gridline is the shared center baseline the two arms diverge from, so the
-			    chart no longer draws one of its own. */}
-			<div aria-hidden="true">
+			    chart no longer draws one of its own.
+
+			    Each half states the domain it is drawn against, above and below the plot. The two
+			    arms have identical pixel heights and one continuous gutter, so the geometry reads as
+			    a single scale — with 2.3B in against 12M out the two blocks came out comparable in
+			    length and the default reading was wrong by two orders of magnitude. The axis carried
+			    both numbers already; nothing said they were two domains. The caption is text, so the
+			    distinction does not rest on telling cyan from fuchsia. */}
+			<div aria-hidden="true" className="space-y-1">
+				<ScaleCaption domain={maxUp} dotClass={seriesSolid.slot1} label={upLabel} />
 				<ChartAxes
 					categories={points.map((point) =>
 						formatTelemetryAxisTick(bucket, point.bucket),
@@ -107,7 +141,11 @@ export function OutputTimeseriesChart({
 					{/* Shorter than the single-sided chart: the two arms split this height evenly, and the
 					    smaller arm is routinely a fifth of its half, so `h-40` left a persistent empty
 					    band between the bars and the legend. */}
-					<div className="flex h-32 gap-1">
+					<div className="relative flex h-32 gap-1">
+						{/* The break itself. A dashed rule is the conventional mark for a scale
+						    discontinuity, and it is the one line on this plot that is not a
+						    gridline — above it and below it are different scales. */}
+						<span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-dashed border-muted-foreground/50" />
 						{points.map((point) => {
 							const up = upValue(point);
 							const down = downValue(point);
@@ -149,6 +187,7 @@ export function OutputTimeseriesChart({
 						})}
 					</div>
 				</ChartAxes>
+				<ScaleCaption domain={maxDown} dotClass={seriesSolid.slot3} label={downLabel} />
 			</div>
 			<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
 				<div className="flex items-center gap-4">

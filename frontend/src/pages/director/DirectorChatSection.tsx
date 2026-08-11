@@ -118,7 +118,7 @@ export function DirectorChatSection({
 			{/* The 420px floor moved here from the inner grid. Below `lg` the page is one column and
 			    the row is content-sized, so `h-full` resolves to nothing to fill; the floor keeps
 			    the transcript usable there without capping it where there is room. */}
-			<Card className="flex h-full min-h-[420px] flex-col">
+			<Card className="@container flex h-full min-h-[420px] flex-col">
 				<CardHeader
 					className="mb-3"
 					description="Ask the director about fleet state in a focused conversation."
@@ -129,12 +129,13 @@ export function DirectorChatSection({
 				    ~470px and the composer too narrow for its own Send button. The rail stacks above
 				    the transcript until there is width for both.
 
-				    That threshold is `xl`, not `lg`: this card sits in the page's own
-				    `lg:grid-cols-2`, so 1024 is where the card halves to 358px at the same moment the
-				    rail would claim 220 of it. The transcript column came out 92px wide and the
-				    composer needed 130px in 90 — the rail and the split arriving together is the
-				    whole failure. At 1280 the card is 486px and the two columns are 220 each. */}
-				<div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[220px_minmax(0,1fr)]">
+				    The threshold is this card's own width, which is the only number that decides
+				    whether the rail fits — no viewport tier can see it, because the card is half of
+				    a page column that is itself a window minus a rail whose state is persisted per
+				    user. `xl:` was gating on 1280px of window and getting a 486px card, so the rail
+				    took 220 of it and left a 218px transcript. 46rem is the card interior at which
+				    the 220px rail and the 0.75rem gap still leave the transcript over 500px. */}
+				<div className="grid min-h-0 flex-1 gap-3 @min-[46rem]:grid-cols-[220px_minmax(0,1fr)]">
 					<div className="flex min-h-0 min-w-0 flex-col gap-2">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="text-sm font-semibold text-foreground">Chats</h3>
@@ -163,11 +164,17 @@ export function DirectorChatSection({
 									// bg-muted against bg-card was a ~4% luminance step, so the
 									// selected chat was indistinguishable from the four below it and
 									// nothing said which transcript was on screen.
+									//
+									// The inactive branch also had no rest affordance: five rows
+									// that each swap the transcript on click looked exactly as
+									// inert as the card holding them. `hover:bg-muted/60` is the
+									// Audits catalog treatment; the selected branch is untouched
+									// so the two states never compete.
 									<div
-										className={`grid grid-cols-[minmax(0,1fr)_2.75rem] items-stretch rounded-md border text-sm ${
+										className={`grid grid-cols-[minmax(0,1fr)_2.75rem] items-stretch rounded-md border text-sm transition-colors ${
 											isActive
 												? 'border-accent bg-accent-muted text-accent-muted-foreground'
-												: 'border-border bg-card text-foreground'
+												: 'border-border bg-card text-foreground hover:bg-muted/60'
 										}`}
 										key={session.id}>
 										<button

@@ -5,6 +5,7 @@ import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 
 import type { RecipeStepDefinition, RecipeStepType } from '../../api/types.ts';
 
+import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { type ConfigSummaryEntry, getConfigSummary } from './recipe-steps.ts';
@@ -34,10 +35,8 @@ const blockValueLength = 48;
  * free text, where `whitespace-pre` turned a 358px column into a horizontal scrollport per paragraph
  * and hid the sentence rather than the indentation. Those wrap and keep their newlines.
  */
-function blockValueClass(entry: ConfigSummaryEntry): string {
-	return entry.key === 'command'
-		? 'overflow-x-auto whitespace-pre'
-		: 'break-words whitespace-pre-wrap';
+function isCommandEntry(entry: ConfigSummaryEntry): boolean {
+	return entry.key === 'command';
 }
 
 function isBlockEntry(entry: ConfigSummaryEntry): boolean {
@@ -61,10 +60,27 @@ function ConfigSummary({ entries }: { entries: ConfigSummaryEntry[] }) {
 					<div className="mb-1 text-xs font-medium text-muted-foreground">
 						{entry.label}:
 					</div>
-					<code
-						className={`block max-w-full rounded-md border border-border bg-muted px-2.5 py-2 font-mono text-xs leading-5 text-foreground ${blockValueClass(entry)}`}>
-						{entry.value}
-					</code>
+					{isCommandEntry(entry) ? (
+						// The scrollport a raw `overflow-x-auto` was not. Measured at 2250x1309:
+						// clientWidth 1862 against scrollWidth 3483, so 1623px — nearly half the
+						// command — was hidden behind no fade, no resting scrollbar and no tab
+						// stop. `surface="muted"` because this block is `bg-muted`, not a card:
+						// the default `from-card` fade would be the wrong colour against it, the
+						// same fault the project tab strip had against the page ground.
+						<OverflowScroller
+							ariaLabel={`${entry.label} value`}
+							className="rounded-md border border-border bg-muted"
+							scrollerClassName="px-2.5 py-2"
+							surface="muted">
+							<code className="block font-mono text-xs leading-5 whitespace-pre text-foreground">
+								{entry.value}
+							</code>
+						</OverflowScroller>
+					) : (
+						<code className="block max-w-full rounded-md border border-border bg-muted px-2.5 py-2 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-foreground">
+							{entry.value}
+						</code>
+					)}
 				</div>
 			))}
 			{chipEntries.length > 0 && (

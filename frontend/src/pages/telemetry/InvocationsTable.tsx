@@ -77,7 +77,9 @@ function InvocationCard({ invocation }: { invocation: InvocationRecord }) {
 				<span aria-hidden="true">·</span>
 				<span className="min-w-0 truncate">{invocation.projectName}</span>
 				<span aria-hidden="true">·</span>
-				<span className="whitespace-nowrap">{formatDate(invocation.startedAt)}</span>
+				<span className="whitespace-nowrap tabular-nums">
+					{formatDate(invocation.startedAt)}
+				</span>
 				<span aria-hidden="true">·</span>
 				<span className="whitespace-nowrap tabular-nums">
 					{invocation.durationMs === null ? '—' : formatDuration(invocation.durationMs)}
@@ -126,7 +128,9 @@ function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
 			</td>
 			<td className="px-3 py-2 text-xs text-foreground">{invocation.source}</td>
 			<td className="px-3 py-2 text-xs text-foreground">{invocation.projectName}</td>
-			<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground">
+			{/* The duration cell beside this one already had it; the timestamp column did not,
+			    so two adjacent numeric columns set their digits on two different widths. */}
+			<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground tabular-nums">
 				{formatDate(invocation.startedAt)}
 			</td>
 			<td className="px-3 py-2 text-xs whitespace-nowrap text-muted-foreground tabular-nums">

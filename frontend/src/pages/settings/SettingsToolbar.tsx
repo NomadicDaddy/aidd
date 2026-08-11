@@ -10,11 +10,12 @@ import { default as Undo2 } from 'lucide-react/dist/esm/icons/undo-2';
 
 import type { SettingsTab } from './settingsNavigation.ts';
 
+import { StatusDot } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { TabList } from '../../components/ui/tabs.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
-import { toneSolid, toneText } from '../../lib/tones.ts';
+import { toneText } from '../../lib/tones.ts';
 
 interface SettingsTabDefinition {
 	icon: ComponentType<{ className?: string }>;
@@ -29,7 +30,7 @@ interface SettingsTabDefinition {
 function UnsavedDot() {
 	return (
 		<span className="inline-flex items-center">
-			<span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${toneSolid.amber}`} />
+			<StatusDot tone="amber" />
 			<span className="sr-only">unsaved changes</span>
 		</span>
 	);
@@ -73,8 +74,8 @@ export function SettingsToolbar({
 		// element in flow at the same `z-20`, so an unoffset toolbar and it occupy the same strip
 		// and the later one in the DOM — this — paints over the navigation.
 		<Card className="sticky top-[var(--app-topbar-height,0px)] z-20 space-y-2 border-b-2 border-border bg-card/95 p-2.5 backdrop-blur">
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="hidden min-w-0 xl:block">
+			<div className="flex flex-col gap-2 @min-[32rem]:flex-row @min-[32rem]:items-center @min-[32rem]:justify-between">
+				<div className="hidden min-w-0 @min-[61rem]:block">
 					<TabList
 						activeTab={activeTab}
 						ariaLabel="Settings sections"
@@ -83,7 +84,7 @@ export function SettingsToolbar({
 						tabs={tabs}
 					/>
 				</div>
-				<label className="min-w-0 flex-1 xl:hidden">
+				<label className="min-w-0 flex-1 @min-[61rem]:hidden">
 					<span className="sr-only">Settings section</span>
 					<select
 						aria-label="Settings section"
@@ -119,7 +120,7 @@ export function SettingsToolbar({
 				</div>
 			</div>
 			{saveBlockReason && !savePending ? (
-				<p className={`text-xs sm:text-right ${toneText.amber}`} role="status">
+				<p className={`text-xs @min-[32rem]:text-right ${toneText.amber}`} role="status">
 					{saveBlockReason}
 				</p>
 			) : null}

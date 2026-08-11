@@ -157,7 +157,7 @@ export function TelemetryPage() {
 			{/* `items-start`, so a ten-row leaderboard does not stretch the three-card stack beside it
 			    to its own height and leave 600px of empty canvas in whichever column is shorter. */}
 			<section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-				<Card className="space-y-3">
+				<Card className="flex flex-col gap-3">
 					<CardHeader
 						badge={<Badge tone="neutral">top {topRows.length}</Badge>}
 						className="mb-0"
@@ -170,7 +170,7 @@ export function TelemetryPage() {
 					)}
 				</Card>
 				<div className="space-y-4">
-					<Card className="space-y-3">
+					<Card className="flex flex-col gap-3">
 						<CardHeader
 							badge={
 								<Badge tone="neutral">
@@ -186,7 +186,7 @@ export function TelemetryPage() {
 							<TimeseriesChart bucket={bucket} points={timeseriesPoints} />
 						)}
 					</Card>
-					<Card className="space-y-3">
+					<Card className="flex flex-col gap-3">
 						<CardHeader
 							className="mb-0"
 							description="All invocations in the selected filters."
@@ -198,7 +198,7 @@ export function TelemetryPage() {
 							<BackendBreakdownCard rows={backendRows} />
 						)}
 					</Card>
-					<Card className="space-y-3">
+					<Card className="flex flex-col gap-3">
 						<CardHeader
 							action={
 								<SegmentedControl
@@ -243,7 +243,7 @@ export function TelemetryPage() {
 				</div>
 			</section>
 
-			<Card className="space-y-3">
+			<Card className="flex flex-col gap-3">
 				<CardHeader
 					badge={<Badge tone="neutral">latest {invocations.length} in window</Badge>}
 					className="mb-0"

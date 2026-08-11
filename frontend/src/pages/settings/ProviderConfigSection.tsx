@@ -8,7 +8,8 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
-import { selectClass } from '../../lib/formStyles.ts';
+import { formGridMeasureClass, selectClass } from '../../lib/formStyles.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { CredentialBadge } from './CredentialBadge.tsx';
 import { nullableText, textValue } from './settingsUtils.ts';
 
@@ -79,10 +80,16 @@ function ProviderCard({
 
 	return (
 		<Card className="overflow-hidden p-0">
+			{/* `ring-inset`, and the `--ring` token rather than a raw palette teal.
+			    The row is 1960x44 inside a 1962x46 card that clips its overflow, so an
+			    outward-drawn 2px ring had one pixel of card to be drawn into on each edge and
+			    was cut on all four — a focused row was pixel-identical to its neighbours at 3x
+			    zoom, on the only path to every provider's key. Inset draws it over the row's
+			    own padding, which nothing clips. */}
 			<button
 				aria-controls={panelId}
 				aria-expanded={open}
-				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none max-sm:min-h-11 sm:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] sm:items-center"
+				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset max-sm:min-h-11 @min-[32rem]:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] @min-[32rem]:items-center"
 				onClick={() => setOpen((current) => !current)}
 				type="button">
 				<span className="flex min-w-0 items-center gap-2">
@@ -102,13 +109,18 @@ function ProviderCard({
 						reasoningEffort={provider.reasoningEffort}
 						withTooltip={false}
 					/>
-					<span className="min-w-0 truncate">{provider.baseUrl ?? 'No base URL'}</span>
+					{/* Mono only when it is actually a URL — the fallback is prose and would read as a
+				    machine string in the same face as the model chip beside it. */}
+					<span
+						className={`min-w-0 truncate ${provider.baseUrl === null ? '' : 'font-mono'}`}>
+						{provider.baseUrl ?? 'No base URL'}
+					</span>
 				</span>
 				<CredentialBadge configured={provider.apiKeyConfigured} />
 			</button>
 			{open ? (
 				<div
-					className="grid gap-3 border-t border-border p-3 lg:grid-cols-2 xl:grid-cols-3"
+					className={`grid gap-3 border-t border-border p-3 @min-[45rem]:grid-cols-2 @min-[61rem]:grid-cols-3 ${formGridMeasureClass}`}
 					id={panelId}>
 					<FieldRow label="Base URL">
 						<Input
@@ -146,7 +158,9 @@ function ProviderCard({
 							))}
 						</select>
 					</FieldRow>
-					<FieldRow className="lg:col-span-2 xl:col-span-3" label="API Key">
+					<FieldRow
+						className="@min-[45rem]:col-span-2 @min-[61rem]:col-span-3"
+						label="API Key">
 						<Input
 							autoComplete="off"
 							name={`${name}-api-key`}
@@ -155,7 +169,10 @@ function ProviderCard({
 							type="password"
 							value={apiKeyValue}
 						/>
-						<span className="text-xs text-muted-foreground">
+						{/* `FieldRow` clones the control, not the prose under it, so the measure is
+						    applied here — the same cap `CardHeader`'s own description slot carries,
+						    so the two 12px muted lines in this card wrap at one width. */}
+						<span className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 							Leave blank to keep the existing key. Set to empty and save to clear.
 						</span>
 					</FieldRow>
@@ -176,7 +193,7 @@ export function ProviderConfigSection({
 
 	return (
 		<section aria-labelledby="provider-settings-heading" className="space-y-3">
-			<Card className="grid gap-3 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:items-center">
+			<Card className="grid gap-3 @min-[45rem]:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] @min-[45rem]:items-center">
 				<CardHeader
 					className="mb-0"
 					description="Expand a provider to edit its endpoint, model, reasoning, or write-only key."

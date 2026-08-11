@@ -87,7 +87,7 @@ export function GraphDiagnosticsCard({
 }) {
 	if (graph.cycles.length === 0 && graph.unresolvedDependencies.length === 0) return null;
 	return (
-		<Card className="space-y-4">
+		<Card className="flex flex-col gap-4">
 			<CardHeader className="mb-0" title="Graph Diagnostics" />
 			{graph.cycles.length > 0 ? (
 				<section>

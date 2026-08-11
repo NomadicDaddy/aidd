@@ -238,8 +238,10 @@ describe('wide table column strategy', () => {
 		);
 
 		// A bounded scrollport is what `sticky top-0` sticks to; without it the header scrolls
-		// away with the page, which is the defect this replaces.
-		expect(matrix).toContain('max-h-[70vh] overflow-y-auto');
+		// away with the page, which is the defect this replaces. The bound is stated as the chrome
+		// it actually sits under rather than as a fraction of the window — the Audits tables next
+		// door use the same expression, and a fraction gets less accurate the taller the screen.
+		expect(matrix).toContain('max-h-[calc(100dvh-16rem)] overflow-y-auto');
 		expect(matrix).toContain('sticky top-0 z-20 bg-muted');
 		// The leading header cell holds both axes, and the body cell keeps the row identifiable
 		// while the facet selects scroll past it.

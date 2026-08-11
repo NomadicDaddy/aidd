@@ -22,7 +22,11 @@ const exemptions: { file: string; why: string }[] = [
 		why: 'carries its own measured mask-image edge fade below sm, where the track scrolls',
 	},
 	{ file: 'pages/projects/detail/ArtifactViewerDialog.tsx', why: 'markdown pre and code blocks' },
-	{ file: 'pages/recipes/StepOverviewCard.tsx', why: 'a code block' },
+	// `pages/recipes/StepOverviewCard.tsx` was exempted here as "a code block". It was one, and it
+	// was also the widest bare scrollport measured in the sweep — 1623px of a 3483px command hidden
+	// at 2250x1309 behind no fade, no resting scrollbar and no tab stop. The exemption is gone with
+	// the class: that block now goes through `OverflowScroller` like every other scrollport, and a
+	// stale exemption is precisely how the next one would slip back in.
 	{
 		file: 'components/shared/MarkdownContent.tsx',
 		why: 'the fenced-code block a markdown document renders; a command example cannot wrap',
@@ -56,10 +60,50 @@ describe('horizontal overflow always says so', () => {
 		// A pinned cell is `sticky bg-card z-10`. `from-card` over it is card-on-card, and its
 		// stacking context outranks an auto-z-index sibling — so the fade was both invisible and
 		// painted underneath the one column that most needs it. Both halves have to hold.
-		expect(scroller).toContain('z-30 w-6 border-l border-border bg-gradient-to-r from-card');
-		expect(scroller).toContain('z-30 w-6 border-r border-border bg-gradient-to-l from-card');
+		//
+		// The `from-*` stop left the class list when the fade became parameterised, so it is asserted
+		// through `fadeFrom[surface]` rather than inline: a scroller sitting on the page ground or on
+		// `bg-muted` faded `from-card` painted *lighter* than what it covered, which reads as a
+		// container wall rather than as content continuing. `card` stays the default because that is
+		// what the original consumers — tables inside a Card — actually sit on.
+		expect(scroller).toContain(
+			'z-30 w-6 border-l border-border bg-gradient-to-r to-transparent',
+		);
+		expect(scroller).toContain(
+			'z-30 w-6 border-r border-border bg-gradient-to-l to-transparent',
+		);
+		expect(scroller).toContain('fadeFrom[surface]');
+		expect(scroller).toContain("card: 'from-card'");
+		expect(scroller).toContain('surface = ');
 		expect(scroller).toContain('group-data-[overflow-start=true]:opacity-100');
 		expect(scroller).toContain('group-data-[overflow-end=true]:opacity-100');
+	});
+
+	test('a capped scrollport stays out of the page it is capped inside', async () => {
+		const scroller = await read('components', 'shared', 'OverflowScroller.tsx');
+
+		// The scroller's own `overflow-x-auto` clips what it paints, and does not stop its layout
+		// overflow reaching the document. The audits matrix, capped at 925px inside a card ending at
+		// y=1329, still left `document.scrollHeight` at 2184 on a 1309px viewport: 855px of page
+		// below the card holding nothing. Verified by traversal, not by reading this file — the cap
+		// was already correct and the page still scrolled.
+		//
+		// The clip margin is not decoration. This component gives the scrollport a tab stop, so a
+		// root that clipped flush would shave the focus ring off the one thing it made focusable.
+		expect(scroller).toContain('overflow-clip [overflow-clip-margin:4px]');
+	});
+
+	test('a scroller declares the surface it is dissolving into', async () => {
+		// The default is only right inside a Card. These three are the sites measured on ground that
+		// is not one: the compact tab strip sits on `--background` (#0c0f14 against the card's
+		// rgb(22,26,34)), and the recipe step's command block sits on `bg-muted`. Naming the surface
+		// is what keeps the cue reading as "there is more this way".
+		const [tabs, command] = await Promise.all([
+			read('components', 'ui', 'tabs.tsx'),
+			read('pages', 'recipes', 'StepOverviewCard.tsx'),
+		]);
+		expect(tabs).toContain('surface="background"');
+		expect(command).toContain('surface="muted"');
 	});
 
 	test('the filter track fades its edges only where it actually scrolls', async () => {
@@ -152,6 +196,9 @@ describe('horizontal overflow always says so', () => {
 			['pages', 'settings', 'BackendDefaultsTable.tsx'],
 			['pages', 'runs', 'UnifiedExecutionTable.tsx'],
 			['pages', 'audits', 'tabs', 'CatalogTable.tsx'],
+			// The last audits tab still capping its Card directly, so its matrix scrolled with no
+			// fade and no tab stop while both siblings on the same page had both.
+			['pages', 'audits', 'tabs', 'ApplicabilityTab.tsx'],
 		];
 		const missing: string[] = [];
 		for (const segments of surfaces) {

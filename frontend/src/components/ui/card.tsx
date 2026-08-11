@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { toneText, toneTextHoverStrong } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 
 type CardVariant = 'default' | 'panel' | 'sunken';
 
@@ -62,6 +63,15 @@ const headerLevels = {
  *
  * Page-level and document headings are not this component's business; those use `PageHeader` and
  * `MarkdownContent`.
+ *
+ * A caller that wants the *card* to own the vertical rhythm passes `className="mb-0"` here to drop
+ * the `mb-4` below. That is correct only when the Card spaces with `gap`. It is a bug when the Card
+ * spaces with `space-y-*`: Tailwind v4 compiles that to
+ * `:where(.space-y-3 > :not(:last-child)) { margin-block-end: … }`, which lands on this header —
+ * a non-last child — at zero specificity, so `mb-0` cancels the card's whole rhythm and the
+ * description butts against the first row at 0px. Nineteen cards were spaced that way and every one
+ * of them measured 0. `gap` belongs to the parent and no child margin can defeat it, so a
+ * self-spacing Card is `flex flex-col gap-N`, never `space-y-N`.
  */
 export function CardHeader({
 	action,
@@ -109,7 +119,9 @@ export function CardHeader({
 					</p>
 				)}
 				{description !== undefined && (
-					<p className="mt-1 text-xs text-muted-foreground">{description}</p>
+					<p className={cn('mt-1 text-xs text-muted-foreground', proseMeasureClass)}>
+						{description}
+					</p>
 				)}
 			</div>
 			{action}

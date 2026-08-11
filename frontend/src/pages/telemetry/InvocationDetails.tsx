@@ -15,6 +15,17 @@ function DetailItem({ label, value }: { label: string; value: ReactNode }) {
 	);
 }
 
+/**
+ * A timestamp, a duration or an exit code.
+ *
+ * Mono for the same reason the ids beside them are — nothing here is prose — and `tabular-nums`
+ * because this grid stacks Started, Completed and Duration in one column, where proportional digits
+ * put three timestamps on three different rhythms.
+ */
+function numeric(value: number | string): ReactNode {
+	return <span className="font-mono tabular-nums">{value}</span>;
+}
+
 function identifier(value: null | string): ReactNode {
 	return value ? <span className="font-mono">{value}</span> : '—';
 }
@@ -41,13 +52,13 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 						label="Arguments supplied"
 						value={invocation.argsPresent ? 'Yes — values are not stored' : 'No'}
 					/>
-					<DetailItem label="Started" value={formatDate(invocation.startedAt)} />
+					<DetailItem label="Started" value={numeric(formatDate(invocation.startedAt))} />
 					<DetailItem
 						label="Completed"
 						value={
 							invocation.completedAt === null
 								? '—'
-								: formatDate(invocation.completedAt)
+								: numeric(formatDate(invocation.completedAt))
 						}
 					/>
 					<DetailItem
@@ -55,12 +66,15 @@ export function InvocationDetails({ invocation }: { invocation: InvocationRecord
 						value={
 							invocation.durationMs === null
 								? '—'
-								: formatDuration(invocation.durationMs)
+								: numeric(formatDuration(invocation.durationMs))
 						}
 					/>
 					<DetailItem label="Raw invocation status" value={invocation.status} />
 					<DetailItem label="Authoritative run status" value={invocation.runStatus} />
-					<DetailItem label="Exit code" value={effectiveExitCode} />
+					<DetailItem
+						label="Exit code"
+						value={effectiveExitCode === null ? '—' : numeric(effectiveExitCode)}
+					/>
 					<DetailItem label="Run ID" value={identifier(invocation.runId)} />
 					<DetailItem
 						label="Pipeline session ID"

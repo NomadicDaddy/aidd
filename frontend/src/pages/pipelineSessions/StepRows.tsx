@@ -16,6 +16,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
 import { toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { sessionStatusTone, stepStatusLabel } from '../runs/pipelineSessionStatus.ts';
 import { pipelineStepLiveConsoleHref } from './pipelineSessionLinks.ts';
 import { StepRunConsole } from './StepRunConsole.tsx';
@@ -76,7 +77,28 @@ export function buildStepRows(report: PipelineSessionReport): StepRow[] {
 	return rows;
 }
 
-export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStepResultRecord }) {
+/**
+ * One executed step on the session report.
+ *
+ * `sessionErrorMessage` is passed in so the card can tell whether its own `errorMessage` is news.
+ * A failing session usually adopts its failing step's message verbatim, and the report then printed
+ * that one 280-character sentence three times inside 600 vertical pixels — as the Status metric's
+ * detail, as this red paragraph, and again as the run's RESULT record. The Status metric is the
+ * answer the page is opened for and keeps it; this paragraph repeats it and is the copy that goes.
+ */
+export function ExecutedStepRow({
+	now,
+	sessionErrorMessage,
+	step,
+}: {
+	now: number;
+	sessionErrorMessage: null | string;
+	step: PipelineStepResultRecord;
+}) {
+	// Only when it is the *same* sentence. A step that failed differently from the session — the
+	// common case in `completed_with_failures`, where the session names the first failure and a
+	// later step names its own — still says so here.
+	const errorIsRestated = step.errorMessage !== null && step.errorMessage === sessionErrorMessage;
 	return (
 		// The depth indent lives on a wrapper because Card owns its own box; keeping it outside also
 		// means the nested surface keeps the house card radius rather than the badge-sized rounded-md.
@@ -100,7 +122,7 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 						<h3 className="mt-2 text-base font-semibold text-foreground">
 							{step.stepName}
 						</h3>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-xs text-muted-foreground tabular-nums">
 							{formatDate(step.startedAt)} ·{' '}
 							{formatActiveDuration(step.durationMs, step.startedAt, now)}
 						</p>
@@ -114,13 +136,21 @@ export function ExecutedStepRow({ now, step }: { now: number; step: PipelineStep
 						</Link>
 					)}
 				</div>
-				{step.errorMessage && (
-					<p className={`mt-3 text-sm ${toneText.red}`}>{step.errorMessage}</p>
+				{step.errorMessage && !errorIsRestated && (
+					<p className={`mt-3 text-sm ${toneText.red} ${proseMeasureClass}`}>
+						{step.errorMessage}
+					</p>
 				)}
 				{/* What the step did, then the transcript behind a disclosure — the order the Live
 				    Console uses. It was the other way round: a raw NDJSON slab as the card's default
 				    content, and nothing structured at all. */}
-				{step.runId ? <StepRunDetail runId={step.runId} step={step} /> : null}
+				{step.runId ? (
+					<StepRunDetail
+						runId={step.runId}
+						sessionErrorMessage={sessionErrorMessage}
+						step={step}
+					/>
+				) : null}
 				<StepRunConsole
 					outputSummary={step.outputSummary}
 					runId={step.runId}

@@ -52,7 +52,7 @@ describe('Telemetry chart accessibility', () => {
 		// The axis furniture is inside the hidden wrapper too: its ticks repeat numbers the
 		// sr-only table already carries, so exposing them would double-read the chart.
 		expect(invocations).toContain(
-			'<div aria-hidden="true"><div class="grid grid-cols-[auto_minmax(0,1fr)]',
+			'<div aria-hidden="true"><div class="mt-2 grid grid-cols-[auto_minmax(0,1fr)]',
 		);
 		expect(invocations).toContain('class="flex h-40 items-end gap-1"');
 		expect(invocations).toContain(
@@ -74,12 +74,16 @@ describe('Telemetry chart accessibility', () => {
 
 		expect(lines).toContain('aria-labelledby="telemetry-output-lines-chart-heading"');
 		expect(lines).toContain('Line changes by time bucket');
-		expect(lines).toContain(
-			'<div aria-hidden="true"><div class="grid grid-cols-[auto_minmax(0,1fr)]',
-		);
+		// The whole visual half is hidden from the accessibility tree, table and all — but it is no
+		// longer a bare wrapper around the plot: the two arms scale independently, so each carries a
+		// legend row naming the ceiling it was drawn against, above and below the axis grid.
+		expect(lines).toContain('<div aria-hidden="true" class="space-y-1">');
+		expect(lines).toContain('<div class="mt-2 grid grid-cols-[auto_minmax(0,1fr)]');
+		expect(lines).toContain('Added · this half scales to');
+		expect(lines).toContain('Removed · this half scales to');
 		// Shorter than the single-sided invocations chart above: the two arms split this height
 		// between them, so `h-40` left a persistent empty band under the smaller arm.
-		expect(lines).toContain('class="flex h-32 gap-1"');
+		expect(lines).toContain('class="relative flex h-32 gap-1"');
 		expect(lines).toContain('<caption>Line changes for each time bucket</caption>');
 		expect(lines).toContain(
 			`<th scope="row">${labels[0]}</th><td>401</td><td>201</td><td>11</td><td>3</td><td>4</td>`,

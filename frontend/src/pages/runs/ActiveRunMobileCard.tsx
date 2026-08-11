@@ -118,9 +118,11 @@ export function ActiveRunMobileCard({
 				<Badge tone="neutral">Run</Badge>
 				<ProjectDetailLink href={projectHref} label={projectLabel} name={run.projectName} />
 				<span>{runSourceLabel(run)}</span>
-				<span>{formatDate(run.startedAt)}</span>
+				<span className="tabular-nums">{formatDate(run.startedAt)}</span>
 				<span aria-hidden="true">·</span>
-				<span>{formatActiveDuration(run.durationMs, run.startedAt, now)}</span>
+				<span className="tabular-nums">
+					{formatActiveDuration(run.durationMs, run.startedAt, now)}
+				</span>
 			</div>
 			<RunLivenessIndicator now={now} run={run} />
 			<div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">

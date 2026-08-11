@@ -157,14 +157,19 @@ describe('the skills page puts the catalog first', () => {
 	});
 
 	test('the definition block is read as a document, not as source', async () => {
+		// The card, not the page: `SkillsPage` crossed the 300-line ceiling and the definition block
+		// is the piece of it that came out. The page is still held to the raw-source rendering it
+		// used to do, because moving a card into its own file is not the same as having stopped.
+		const card = await skillsSource('SkillDefinitionCard.tsx');
 		const page = await skillsSource('SkillsPage.tsx');
 
 		// It used to be the raw file in a `<pre>`, reflowed with `break-words whitespace-pre-wrap`
 		// so the lines would at least stay on screen. Reflowing markdown source is the best a
 		// `<pre>` can do; rendering it is what makes the headings real.
-		expect(page).toContain('<MarkdownContent');
-		expect(page).toContain('markdown={selected.body}');
-		expect(page).not.toContain('whitespace-pre-wrap');
+		expect(card).toContain('<MarkdownContent');
+		expect(card).toContain('markdown={body}');
+		expect(page).toContain('<SkillDefinitionCard body={selected.body} />');
+		for (const source of [card, page]) expect(source).not.toContain('whitespace-pre-wrap');
 	});
 });
 

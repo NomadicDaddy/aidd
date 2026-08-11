@@ -115,7 +115,10 @@ describe('About is a page, not a splash screen', () => {
 		const about = stripComments(await read('frontend/src/pages/about/AboutPage.tsx'));
 
 		expect(about).toContain('<PageHeader');
-		expect(about).toContain('title="aidd"');
+		// "About", not "aidd": the h1 echoes the nav item that is highlighted while you are here,
+		// which every other top-level route already did. The product name moved to the description,
+		// where a page says what it is rather than repeating the wordmark 234px to its left.
+		expect(about).toContain('title="About"');
 		// The mark stays, but decorative: the accessible name for the page now comes from the
 		// PageHeader h1 rather than from an img's alt text doing double duty as the heading.
 		expect(about).toContain('alt=""');
@@ -183,6 +186,10 @@ const SURFACE_EXEMPTIONS: { file: string; why: string }[] = [
 		file: 'frontend/src/pages/projects/detail/dependencyGraphPanels.tsx',
 		why: 'the graph canvas grid itself, drawn as two linear-gradients rather than an image',
 	},
+	{
+		file: 'frontend/src/pages/projects/ProjectTableRow.tsx',
+		why: 'the pinned name cell needs its hover tint in the background-image layer: bg-card is what stops scrolled columns showing through it, so a translucent hover background-color would replace the very fill that makes the cell opaque',
+	},
 ];
 
 describe('no route decorates itself beyond the card border', () => {
@@ -220,8 +227,11 @@ describe('one path renders one way', () => {
 		expect(component).toContain('formatFilesystemPath');
 		expect(component).toContain("'font-mono'");
 		// A truncated path stays recoverable on hover; the class that truncates it belongs to the
-		// caller, because only the caller knows its column.
-		expect(component).toContain('title={display}');
+		// caller, because only the caller knows its column. `title ?? display` rather than a bare
+		// `display`: the audits catalog renders a basename in a narrow column, so what its hover
+		// has to recover is the full path the cell is no longer showing. The fallback is what
+		// matters here — a caller that says nothing still gets the whole displayed value back.
+		expect(component).toContain('title={title ?? display}');
 	});
 
 	test('the normaliser settles case, separators and trailing slashes', () => {

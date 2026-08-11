@@ -17,7 +17,10 @@ const contentBreakpointContracts = [
 	['pages/projects/detail/workingTree/WorkingTreeList.tsx', ['xl:hidden']],
 	['pages/projects/detail/workingTree/WorkingTreeTable.tsx', ['xl:block']],
 	['pages/runs/UnifiedExecutionTable.tsx', ['xl:block', 'xl:hidden']],
-	['pages/settings/BackendDefaultsTable.tsx', ['xl:block', 'xl:hidden']],
+	// Settings is a container-query surface: `SettingsPage` declares the container and this table
+	// gates on the settings column's own width rather than on the window's, which is the same
+	// content threshold `xl:` was standing in for everywhere else in this list.
+	['pages/settings/BackendDefaultsTable.tsx', ['@min-[61rem]:block', '@min-[61rem]:hidden']],
 ] as const;
 
 describe('content-aware responsive breakpoints', () => {
@@ -88,7 +91,7 @@ describe('content-aware responsive breakpoints', () => {
 
 		expect(telemetryTable).toContain('<div className="sr-only">');
 		expect(telemetryTable).not.toContain('<table className="sr-only">');
-		expect(listEditor).toContain("compactGrid && 'lg:grid-cols-2'");
+		expect(listEditor).toContain("compactGrid && '@min-[45rem]:grid-cols-2'");
 		expect(listEditor).not.toContain("compactGrid && 'sm:grid-cols-2'");
 	});
 });

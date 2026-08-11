@@ -128,7 +128,12 @@ describe('small pages', () => {
 		// The heading is `PageHeader`'s h1 now, the same as every other route, rather than a
 		// hand-rolled one inside a hero section — /about used to have no heading at all.
 		expect(page).toContain('<PageHeader');
-		expect(page).toContain('title="aidd"');
+		// And it says "About", matching the rail item that is highlighted while you are here. This
+		// was the one top-level route whose h1 did not echo its nav label; it repeated the wordmark
+		// sitting 234px to its left instead. The product name moved to the description, which is
+		// where a page says what it is rather than what it is called.
+		expect(page).toContain('title="About"');
+		expect(page).toContain('description="aidd — AI Development Director"');
 		expect(page).toContain('__AIDD_VERSION__');
 		expect(page).toContain('__AIDD_REPOSITORY_URL__');
 		// Only values the build can actually supply — no invented commit hash or build date.

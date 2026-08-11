@@ -95,13 +95,21 @@ export function SkillImportDialog({ onClose, open }: { onClose: () => void; open
 				</div>
 				<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem_auto] sm:items-end">
 					<FieldRow label="Local folder">
+						{/* A JSX string attribute is not a JS string literal, so `\\` is not an escape
+						    here — it reached the screen as the two characters it looks like, and the
+						    placeholder read `D:\\skills\\my-skill`.
+
+						    `font-mono` because what is typed here is a filesystem path, and it was
+						    the only path on this surface set in Geist Sans — the skill id, the
+						    support-file paths and the model chip beside it are all mono. */}
 						<Input
+							className="font-mono"
 							name="skillImportPath"
 							onChange={(event) => {
 								setPreview(null);
 								setSourcePath(event.target.value);
 							}}
-							placeholder="D:\\skills\\my-skill"
+							placeholder="D:\skills\my-skill"
 							value={sourcePath}
 						/>
 					</FieldRow>

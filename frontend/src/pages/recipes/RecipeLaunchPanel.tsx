@@ -80,7 +80,7 @@ export function RecipeLaunchPanel({
 	}
 
 	return (
-		<Card className="space-y-4" variant="panel">
+		<Card className="flex flex-col gap-4" variant="panel">
 			{/* The same header as the Recipes-list quick launch, through the same component: two
 			    copies of one panel drifting apart is what put a hand-rolled `h2` in both. */}
 			<CardHeader

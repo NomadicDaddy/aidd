@@ -129,7 +129,11 @@ export function PipelineStepTableRows({
 							</Badge>
 							{step.errorMessage && <FailureReason message={step.errorMessage} />}
 						</td>
-						<td className={cn(cellClass, 'whitespace-nowrap text-muted-foreground')}>
+						<td
+							className={cn(
+								cellClass,
+								'whitespace-nowrap text-muted-foreground tabular-nums',
+							)}>
 							{formatActiveDuration(step.durationMs, step.startedAt, now)}
 						</td>
 						<td className="py-2 pr-4 pl-3 align-top text-xs">

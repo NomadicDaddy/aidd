@@ -6,6 +6,7 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
+import { proseMeasureCardClass } from '../../lib/typography.ts';
 
 export function NotFoundPage() {
 	useDocumentTitle('Not Found');
@@ -27,12 +28,16 @@ export function NotFoundPage() {
 			    `action` slot. This was a solid Card with a filled accent button, which read as an
 			    emphasised piece of content rather than as an absence — the Dashboard's equivalent
 			    block, for the same situation, is this. */}
+			{/* Capped at the reading measure. A dashed border is a device for marking an absence, and
+			    at 2250x1309 this one drew a 1962px frame around a 490px sentence — roughly 1440px of
+			    empty dashed box, so the emphasis read as the box rather than as the message. */}
 			<EmptyState
 				action={
 					<Link className={buttonClassName('secondary')} to="/">
 						Back to Dashboard
 					</Link>
-				}>
+				}
+				className={proseMeasureCardClass}>
 				{/* The chip is not the last thing in the sentence. A full stop after a padded
 				    inline chip sits ~5px clear of the box it belongs to and reads as a stray mark;
 				    ending on prose is what puts the punctuation back against a glyph. */}

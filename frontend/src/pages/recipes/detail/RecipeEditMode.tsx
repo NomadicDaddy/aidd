@@ -2,12 +2,11 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
 import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
-import { default as Save } from 'lucide-react/dist/esm/icons/save';
-import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { Link } from 'react-router';
 
 import type { RecipeParameterDefinition } from '../../../api/types.ts';
 
+import { EditorActionBar } from '../../../components/shared/EditorActionBar.tsx';
 import { PageHeader } from '../../../components/shared/PageHeader.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
@@ -23,8 +22,43 @@ interface StepErrorEntry extends StepJsonErrors {
 	id: string;
 }
 
+/**
+ * Every condition under which `onSave` bails with a toast, in the order the pages check them.
+ *
+ * The commit control was refusing work it looked perfectly willing to do — a 3572px page whose only
+ * hint was a `title` on the button, which is unreachable from the keyboard and unannounced by a
+ * screen reader. Stating the reason beside the control costs nothing and answers it in place.
+ */
+function saveBlocker({
+	hasJsonErrors,
+	id,
+	idError,
+	isCreate,
+	name,
+	nameReadOnly,
+	steps,
+}: {
+	hasJsonErrors: boolean;
+	id: string;
+	idError: null | string | undefined;
+	isCreate: boolean;
+	name: string;
+	nameReadOnly: boolean;
+	steps: StepDraft[];
+}): null | string {
+	// `nameReadOnly` is a system recipe, whose name is fixed and never empty.
+	if (!nameReadOnly && !name.trim()) return 'Recipe name is required';
+	if (isCreate && !id.trim()) return 'Recipe id is required';
+	if (idError) return idError;
+	if (steps.length === 0) return 'Add at least one step';
+	if (steps.some((step) => !step.name.trim())) return 'Every step needs a name';
+	if (hasJsonErrors) return 'Fix recipe step JSON errors before saving';
+	return null;
+}
+
 interface Props {
 	description: string;
+	dirty: boolean;
 	hasJsonErrors: boolean;
 	id: string;
 	idError?: null | string;
@@ -34,6 +68,7 @@ interface Props {
 	onReload?: () => void;
 	onSave: () => void;
 	parameters: RecipeParameterDefinition[];
+	saving?: boolean;
 	setDescription: Dispatch<SetStateAction<string>>;
 	setId?: (value: string) => void;
 	setName: (value: string) => void;
@@ -46,6 +81,7 @@ interface Props {
 
 export function RecipeEditMode({
 	description,
+	dirty,
 	hasJsonErrors,
 	id,
 	idError,
@@ -55,6 +91,7 @@ export function RecipeEditMode({
 	onReload,
 	onSave,
 	parameters,
+	saving = false,
 	setDescription,
 	setId,
 	setName,
@@ -65,36 +102,25 @@ export function RecipeEditMode({
 	updateStep,
 }: Props) {
 	const isCreate = setId !== undefined;
-	/* Both of these already stop `onSave` and raise a toast, so the commit action was refusing work
-	   it looked perfectly willing to do. An invalid id is as blocking as unparseable step JSON and
-	   belongs in the same signal. */
-	const saveBlockedBy: string | undefined = hasJsonErrors
-		? 'Fix recipe step JSON errors before saving'
-		: (idError ?? undefined) || undefined;
+	const saveBlockedBy = saveBlocker({
+		hasJsonErrors,
+		id,
+		idError,
+		isCreate,
+		name,
+		nameReadOnly,
+		steps,
+	});
 	return (
 		<div className="space-y-5">
 			<PageHeader
 				actions={
-					<div className="flex flex-wrap gap-2">
-						<Button onClick={onCancel} variant="ghost">
-							<X className="h-4 w-4" />
-							Cancel
+					onReload ? (
+						<Button onClick={onReload}>
+							<RefreshCw className="h-4 w-4" />
+							Reload
 						</Button>
-						{onReload && (
-							<Button onClick={onReload}>
-								<RefreshCw className="h-4 w-4" />
-								Reload
-							</Button>
-						)}
-						<Button
-							aria-disabled={saveBlockedBy !== undefined || undefined}
-							onClick={onSave}
-							title={saveBlockedBy}
-							variant="primary">
-							<Save className="h-4 w-4" />
-							{isCreate ? 'Create' : 'Save'}
-						</Button>
-					</div>
+					) : undefined
 				}
 				breadcrumb={
 					<span className="flex items-center gap-2">
@@ -123,13 +149,34 @@ export function RecipeEditMode({
 				}
 			/>
 
+			{/* "Cancel", not "Discard": in edit mode this is also the way back to the overview, which
+			    is why it stays live on a clean form. Settings' Discard reverts in place and has
+			    somewhere to sit idle; this one does not. It does revert — `RecipeDetailPage`
+			    re-seeds the form from the loaded recipe before it changes mode — so the word covers
+			    both halves of what it does rather than only the visible one. */}
+			<EditorActionBar
+				blockReason={saveBlockedBy}
+				dirty={dirty}
+				discardEnabledWhenClean
+				discardLabel="Cancel"
+				onDiscard={onCancel}
+				onSave={onSave}
+				pending={saving}
+				pendingLabel={isCreate ? 'Creating…' : 'Saving…'}
+				saveLabel={isCreate ? 'Create' : 'Save'}
+			/>
+
 			<Card className={`grid gap-3 ${isCreate ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 				{/* Both of these block Save, and neither said so until Save was pressed. The id
 				    additionally showed a red message beside a control still rendering the ordinary
 				    grey border, which read as a note about the field rather than a fault in it. */}
 				{setId && (
 					<FieldRow error={idError} label="Id" required>
+						{/* The one field on this form whose value is a slug rather than prose —
+						    it is what the grid, the telemetry rows and the URL all render in
+						    mono, so it is typed in mono too. */}
 						<Input
+							className="font-mono"
 							onChange={(event) => setId(event.target.value)}
 							placeholder="my-recipe"
 							value={id}
@@ -158,7 +205,7 @@ export function RecipeEditMode({
 
 			<RecipeParametersCard parameters={parameters} setParameters={setParameters} />
 
-			<Card className="space-y-4">
+			<Card className="flex flex-col gap-4">
 				<CardHeader
 					action={
 						<Button onClick={() => setSteps((current) => [...current, newStepDraft()])}>

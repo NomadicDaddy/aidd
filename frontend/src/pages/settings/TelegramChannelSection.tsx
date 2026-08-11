@@ -59,18 +59,18 @@ export function TelegramChannelSection({
 	}
 
 	return (
-		<Card className="space-y-3">
+		<Card className="flex flex-col gap-3">
 			{/* The section title takes the h2 its peer cards use; fieldLabelClass belongs on the
 			    field labels below, which had been rendered as plain sentence-case spans. */}
+			{/* The sentence goes through the header's own description slot, not beside it: the slot
+			    carries the reading measure, and a hand-rolled sibling renders the same 12px muted
+			    line at whatever width the card happens to be. */}
 			<CardHeader
 				className="mb-0"
+				description="Telegram bot integration for bridged mode. The bot token is write-only — the current configured state is shown without revealing the stored value."
 				icon={<Send className="h-4 w-4" />}
 				title="Telegram Channel"
 			/>
-			<p className="text-xs text-muted-foreground">
-				Telegram bot integration for bridged mode. The bot token is write-only — the current
-				configured state is shown without revealing the stored value.
-			</p>
 
 			<div className="space-y-1">
 				<FieldRow label="Bot Token">

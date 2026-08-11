@@ -14,6 +14,7 @@ import { Card } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { TabPanel } from '../../components/ui/tabs.tsx';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { DirectorProfileSection } from '../director/DirectorProfileSection.tsx';
 import { BackendDefaultsTable } from './BackendDefaultsTable.tsx';
 import { DirectAiSection } from './DirectAiSection.tsx';
@@ -80,11 +81,13 @@ export function SettingsSectionTabs({
 								value={textValue(form.applicationsRoot)}
 							/>
 						</FieldRow>
-						<p className="text-xs text-muted-foreground" id={APPLICATIONS_ROOT_HINT_ID}>
+						<p
+							className={`text-xs text-muted-foreground ${proseMeasureClass}`}
+							id={APPLICATIONS_ROOT_HINT_ID}>
 							Resolves bare project names and provides the fallback discovery root.
 						</p>
 					</Card>
-					<Card className="grid gap-4 xl:grid-cols-[minmax(14rem,0.7fr)_minmax(0,1.3fr)]">
+					<Card className="grid gap-4 @min-[61rem]:grid-cols-[minmax(14rem,0.7fr)_minmax(0,1.3fr)]">
 						<ListEditor
 							items={form.applicationRoots}
 							label="Application Roots"
@@ -141,7 +144,7 @@ export function SettingsSectionTabs({
 			</TabPanel>
 
 			<TabPanel activeTab={activeTab} id="integrations" idPrefix="settings">
-				<div className="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+				<div className="grid gap-4 @min-[61rem]:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
 					<TelegramChannelSection form={form} setField={setField} />
 					<SourceControlStatusPanel />
 				</div>

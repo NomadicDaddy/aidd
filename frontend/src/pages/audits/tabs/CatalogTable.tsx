@@ -1,10 +1,11 @@
 import type { AuditDefinition } from '../../../api/types.ts';
 
+import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
-import { tableHeadClass } from '../../../lib/tableStyles.ts';
+import { tableHeadClass, tableMeasureClass } from '../../../lib/tableStyles.ts';
 import {
 	auditFileName,
 	bandTone,
@@ -64,7 +65,7 @@ export function CatalogTable({
 					scrollerClassName="max-h-[calc(100dvh-16rem)]">
 					<table
 						aria-label="Audit catalog"
-						className="w-full min-w-[900px] text-left text-sm">
+						className={`w-full min-w-[900px] text-left text-sm ${tableMeasureClass}`}>
 						{/* `bg-muted` on each cell, not only on the `thead`: a sticky `<thead>` in a
 						    table does not reliably paint its own background, so the rows would scroll
 						    through the labels. Same fix as the applicability matrix. */}
@@ -105,6 +106,20 @@ export function CatalogTable({
 							</tr>
 						</thead>
 						<tbody>
+							{/* Seven column labels over nothing is not an empty state: the filter
+							    readout above says "0 of 42", but the table itself said nothing at
+							    all. Every comparable surface in the app already answers here —
+							    AuditsDesktopTable on the project detail tab uses this exact row,
+							    and /recipes, /runs and /projects each render their own. */}
+							{definitions.length === 0 ? (
+								<tr>
+									<td
+										className="px-3 py-6 text-center text-sm text-muted-foreground"
+										colSpan={7}>
+										No audits match the current filters.
+									</td>
+								</tr>
+							) : null}
 							{definitions.map((item) => (
 								<tr
 									className={`cursor-pointer border-b border-border last:border-0 ${selectedAudit === item.name ? 'bg-accent-muted text-accent-muted-foreground' : 'hover:bg-muted/60'}`}
@@ -120,16 +135,19 @@ export function CatalogTable({
 										/>
 									</td>
 									<td className="px-3 py-3">
+										{/* Both lines are machine strings — an audit id and the file it lives
+										    in — and this table is the catalog reference other surfaces copy,
+										    so it is where sans-rendered ids stop. */}
 										<div
-											className="max-w-[18rem] truncate font-medium text-foreground"
+											className="max-w-[18rem] truncate font-mono font-medium text-foreground"
 											title={item.name}>
 											{item.name}
 										</div>
-										<div
-											className="max-w-[18rem] truncate text-xs text-muted-foreground"
-											title={item.path}>
-											{auditFileName(item.path)}
-										</div>
+										<FilePath
+											className="block max-w-[18rem] truncate text-xs text-muted-foreground"
+											path={auditFileName(item.path)}
+											title={item.path}
+										/>
 									</td>
 									<td className="px-3 py-3">
 										{item.changePotential ? (
@@ -161,7 +179,12 @@ export function CatalogTable({
 									<td className={numericCell}>
 										<ReportCounts definition={item} />
 									</td>
-									<td className={`${numericCell} text-xs`}>
+									{/* No `text-xs` here: this is the sixth right-aligned number in
+									    the row and the other five inherit the table's 14px, so a size
+									    step made it read as a footnote to the row rather than as a
+									    column of it. The accent colour already marks it as the one
+									    number you can click. */}
+									<td className={numericCell}>
 										<button
 											className="text-accent tabular-nums hover:underline"
 											onClick={(event) => {

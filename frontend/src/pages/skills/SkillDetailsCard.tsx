@@ -35,7 +35,10 @@ export function SkillDetailsCard({
 }) {
 	const supportCount = skill.supportPaths.length;
 	return (
-		<Card className="space-y-3">
+		// `gap`, not `space-y-3` — the `mb-0` below defeats a space-y margin, which collapsed the
+		// step between the description and the SUPPORT FILES micro-label to 0px and made that
+		// label read as a fourth line of the description paragraph.
+		<Card className="flex flex-col gap-3">
 			{/* The mono skill id is CardHeader's `identifier` slot. This header was hand-rolled
 			    only because that slot did not exist, which is what put the detail card a step out
 			    of line with every other card title on the surface.

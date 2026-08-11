@@ -23,9 +23,13 @@ const KNOWN_ROUTES = new Set([
 
 // Constructs the bundled MarkdownContent renderer cannot render. Authored docs
 // must avoid them so nothing degrades to raw text in the UI.
+//
+// Links are absent from this list because the inline pass renders them: `[text](/settings)` becomes
+// a router `<Link>`. What replaces the old blanket ban is the targeted check below — the renderer
+// drops an href it will not vouch for to plain text, so the constraint is on the target, not on the
+// syntax.
 const UNSUPPORTED: { label: string; pattern: RegExp }[] = [
 	{ label: 'images', pattern: /!\[[^\]]*\]\(/ },
-	{ label: 'links', pattern: /\[[^\]]+\]\([^)]+\)/ },
 	{ label: 'fenced code blocks', pattern: /^```/m },
 	{ label: 'tables', pattern: /(^\s*\|)|(\|.*\|)/m },
 	{ label: 'raw HTML', pattern: /<[a-zA-Z/]/ },
@@ -70,6 +74,41 @@ describe('docs content', () => {
 			const markdown = readFileSync(resolve(DOCS_DIR, name), 'utf8');
 			for (const { label, pattern } of UNSUPPORTED) {
 				if (pattern.test(markdown)) offenders.push(`${name}: ${label}`);
+			}
+		}
+		expect(offenders).toEqual([]);
+	});
+
+	test('every doc link points somewhere the renderer will actually link to', () => {
+		// `MarkdownContent.safeHref` admits `/…`, `#…` and `http(s)://…` and renders anything else as
+		// plain text, so an unroutable target fails silently: the words stay on the page and only the
+		// link is gone. An internal target has a second way to fail — `/setttings` is a perfectly
+		// valid `<Link>` to the not-found page — so those are checked against the app's real routes,
+		// which is the same set the section metadata above is held to.
+		//
+		// `/docs/:slug` is a route like any other, but a parameterized one, so membership is decided
+		// by the manifest rather than by the fixed list above. A cross-reference between two doc
+		// sections is the most natural link a doc can contain and the easiest one to mistype.
+		const docSlugs = new Set(DOC_SECTIONS.map((section) => section.slug));
+
+		const offenders: string[] = [];
+		for (const name of docFiles()) {
+			const markdown = readFileSync(resolve(DOCS_DIR, name), 'utf8');
+			for (const [, target] of markdown.matchAll(/(?<!!)\[[^\]]+\]\(([^)\s]+)\)/g)) {
+				if (target === undefined) continue;
+				if (/^https?:\/\//i.test(target) || target.startsWith('#')) continue;
+				if (!target.startsWith('/')) {
+					offenders.push(`${name}: ${target} renders as plain text`);
+					continue;
+				}
+				const docSlug = /^\/docs\/([^/#?]+)$/.exec(target)?.[1];
+				if (docSlug !== undefined) {
+					if (!docSlugs.has(docSlug))
+						offenders.push(`${name}: no doc section ${docSlug}`);
+					continue;
+				}
+				if (!KNOWN_ROUTES.has(target))
+					offenders.push(`${name}: ${target} is not an app route`);
 			}
 		}
 		expect(offenders).toEqual([]);

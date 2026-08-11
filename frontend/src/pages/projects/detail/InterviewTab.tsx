@@ -8,6 +8,7 @@ import { Metric } from '../../../components/shared/Metric.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useSubmitProjectInterviewAnswer } from '../../../hooks/useProjects.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
 import { InterviewQuestionRow } from './InterviewQuestionRow.tsx';
 import { interviewPriorityTone } from './interviewUtils.ts';
 
@@ -142,11 +143,17 @@ export function InterviewTab({
 										tone={interviewPriorityTone(question.priority || 'NICE')}>
 										{question.priority || 'NICE'}
 									</Badge>
-									<span className="text-sm font-medium text-foreground">
+									{/* Answered questions are read, not scanned — unlike the collapsed
+									    rows above, which are a dense index and stay uncapped on
+									    purpose. Both halves take the measure, so the answer wraps
+									    under the question rather than at a different width. */}
+									<span
+										className={`text-sm font-medium text-foreground ${proseMeasureClass}`}>
 										{question.prompt}
 									</span>
 								</div>
-								<p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
+								<p
+									className={`mt-2 text-sm whitespace-pre-wrap text-muted-foreground ${proseMeasureClass}`}>
 									{question.response}
 								</p>
 							</li>

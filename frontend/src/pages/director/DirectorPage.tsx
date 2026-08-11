@@ -149,14 +149,19 @@ export function DirectorPage() {
 	}
 
 	return (
-		<div className="page-reveal space-y-5">
+		<div className="page-reveal @container space-y-5">
 			<PageHeader
 				description="Run a fleet analysis cycle, then act on the suggestions it produces."
 				helpSlug="director"
 				title="Director"
 			/>
 
-			<div className="grid gap-5 lg:grid-cols-2">
+			{/* The split gates on this column's width, not the window's. `lg:` split at 1024px of
+			    viewport, which with the rail expanded is a 752px column and two 366px halves — and
+			    Director Chat, the taller and more interactive of the two, cannot work at 366px. It
+			    holds off until each half clears ~500px, which is the width the chat card needs
+			    before its own rail can appear inside it. */}
+			<div className="grid gap-5 @min-[68rem]:grid-cols-2">
 				<DirectorChatSection
 					activeSessionId={activeSessionId}
 					chatInput={chatInput}

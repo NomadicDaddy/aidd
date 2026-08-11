@@ -60,10 +60,9 @@ const brandIdentity: { file: string; why: string }[] = [
 		why: 'terminal 600/400 accent, one step brighter than the scale by design',
 	},
 	{ file: 'components/terminal/TerminalPaneHeader.tsx', why: 'terminal tab chip palette' },
-	{
-		file: 'pages/pipelineSessions/StepRunConsole.tsx',
-		why: 'bg-teal-400 running pulse; toneSolid.teal is bg-teal-500 and reads dull animated',
-	},
+	// `pages/pipelineSessions/StepRunConsole.tsx` was exempt for a `bg-teal-400` running pulse.
+	// It renders `StatusDot pulse tone="teal"` now — the shared 2s `status-pulse` at
+	// `toneSolid.teal`, which is a slower beat than `animate-pulse` and does not read dull.
 	{
 		file: 'pages/projects/detail/BlueprintImplementationCard.tsx',
 		why: 'blueprint-ready card surface: 50/60 and 950/20 tints, no scale equivalent',
@@ -73,10 +72,14 @@ const brandIdentity: { file: string; why: string }[] = [
 		why: 'advisor callout border, 300/800 rather than toneBorder.teal',
 	},
 	{ file: 'pages/projects/ProjectIntakePanel.tsx', why: 'intake panel surface tint' },
-	{ file: 'pages/recipes/RecipeBadgeTooltip.tsx', why: 'accent focus ring' },
+	// `pages/recipes/RecipeBadgeTooltip.tsx` was here for its own accent focus ring, and took
+	// `ring-ring` from the theme token in the same pass that fixed the others below.
 	{ file: 'pages/runs/RunDetailPanel.tsx', why: 'accent focus ring' },
 	{ file: 'pages/runs/RunFileChangeChip.tsx', why: 'accent focus ring' },
-	{ file: 'pages/settings/ProviderConfigSection.tsx', why: 'accent focus ring' },
+	// `pages/settings/ProviderConfigSection.tsx` was here for its own accent focus ring. The
+	// credential rows now take `ring-ring` from the theme token instead of a raw palette teal, so
+	// there is no literal left to classify — which is the outcome this list is meant to drive
+	// toward, not an entry to keep warm.
 ];
 
 /** Class C — a palette entry identifying a series or a graph edge. Not a status. */

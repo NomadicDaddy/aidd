@@ -181,7 +181,7 @@ function stepSummary(report: PipelineSessionReport): string {
 
 function StepsCard({ now, report }: { now: number; report: PipelineSessionReport }) {
 	return (
-		<Card className="space-y-3">
+		<Card className="flex flex-col gap-3">
 			{/* Was text-lg — the one card title on the surface a step above every other. */}
 			<CardHeader className="mb-0" description={stepSummary(report)} title="Steps" />
 			<div className="space-y-3">
@@ -190,6 +190,7 @@ function StepsCard({ now, report }: { now: number; report: PipelineSessionReport
 						<ExecutedStepRow
 							key={`exec-${row.result.id}`}
 							now={now}
+							sessionErrorMessage={report.session.errorMessage}
 							step={row.result}
 						/>
 					) : (

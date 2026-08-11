@@ -38,6 +38,20 @@ export const textareaClass = `min-h-28 w-full min-w-0 resize-y rounded-lg border
 export const fieldLabelClass = 'text-xs font-medium uppercase tracking-wide text-muted-foreground';
 
 /**
+ * Where a settings form grid stops widening.
+ *
+ * The column count is already the terminal step — `@min-[61rem]:grid-cols-3` and nothing above it —
+ * but a three-column grid in a 1962px content column is three 640px tracks, and a field that spans
+ * all three is 1928px of input for a repository URL. The grid needs a width to stop at as well as a
+ * column count to stop at; without one the two settings that read as the app's reference form were
+ * the two worst-proportioned things on a 2250-wide screen.
+ *
+ * 90rem is the widest step in this codebase, so a wide screen shows three comfortable columns and
+ * the surplus goes back to the page rather than into the controls.
+ */
+export const formGridMeasureClass = 'max-w-[90rem]';
+
+/**
  * The message under an invalid control. There were four spellings of this — `text-red-600` at
  * `text-xs`, the same with `font-medium`, `toneText.red` at `text-xs`, and one that added
  * `role="alert"` — for a sentence that always says the same kind of thing. `FieldRow` renders it

@@ -135,10 +135,14 @@ export function TabList<T extends string>({
 			    with no fade, no arrow and no scrollbar, half the page's navigation invisible.
 			    The tablist stays the tablist; the scroller only wraps it. */}
 			{compact ? (
+				// `surface="background"`: a tab strip sits on the page, not inside a Card. Faded
+				// `from-card` the band was lighter than the ground beneath it, so the one consumer
+				// that most needs "there is more this way" was showing "the container ends here".
 				<OverflowScroller
 					ariaLabel={ariaLabel}
 					className="hidden lg:block"
-					scrollerClassName="pb-1">
+					scrollerClassName="pb-1"
+					surface="background">
 					{tablist}
 				</OverflowScroller>
 			) : (

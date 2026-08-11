@@ -13,6 +13,7 @@ import { formatBytes } from '../../lib/formatters.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 
 function formatMetricBytes(bytes: null | number): string {
 	if (bytes === null || !Number.isFinite(bytes)) return '—';
@@ -61,7 +62,7 @@ function RatingBadge({ rating }: { rating: null | string }) {
 
 function ResourcePanel({ current }: { current: SystemMetricSnapshot }) {
 	return (
-		<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+		<div className="grid grid-cols-2 gap-2 @min-[32rem]:grid-cols-4">
 			<Stat label="CPU" value={formatPercent(current.cpuUsage)} />
 			<Stat label="Memory" value={formatPercent(current.memoryUsage)} />
 			<Stat label="Disk" value={formatPercent(current.diskUsage)} />
@@ -79,7 +80,7 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 	const hasSamples = vitals.some((vital) => vital.sampleCount > 0);
 	if (!hasSamples) {
 		return (
-			<p className="text-xs text-muted-foreground">
+			<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 				No Core Web Vitals recorded yet. Vitals are reported by the browser as you navigate
 				the panel.
 			</p>
@@ -93,12 +94,12 @@ function WebVitalsPanel({ vitals }: { vitals: WebVitalSummary[] }) {
 			    and /settings scrolled sideways. Gated at `lg` rather than `xl` because that is where
 			    this particular table fits — 462px into the 736px column an expanded rail leaves at
 			    1024 — and cards for a table that fits would be its own defect. */}
-			<OverflowScroller ariaLabel="Core Web Vitals" className="hidden lg:block">
+			<OverflowScroller ariaLabel="Core Web Vitals" className="hidden @min-[45rem]:block">
 				<VitalsTable vitals={vitals} />
 			</OverflowScroller>
 			<div
 				aria-label="Core Web Vitals"
-				className="divide-y divide-border lg:hidden"
+				className="divide-y divide-border @min-[45rem]:hidden"
 				role="list">
 				{vitals.map((vital) => (
 					<VitalCard key={vital.name} vital={vital} />
@@ -193,7 +194,7 @@ interface SystemMetricsContentProps {
 
 export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentProps) {
 	return (
-		<Card className="space-y-4">
+		<Card className="flex flex-col gap-4">
 			<CardHeader
 				className="mb-0"
 				description="Live process and host resource usage, sampled every minute. Updates every few seconds."

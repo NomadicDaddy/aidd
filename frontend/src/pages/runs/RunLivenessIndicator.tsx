@@ -1,7 +1,7 @@
 import type { RunRecord } from '../../api/types.ts';
 
-import { cn } from '../../lib/cn.ts';
-import { type Tone, toneSolid } from '../../lib/tones.ts';
+import { StatusDot } from '../../components/ui/badge.tsx';
+import { type Tone } from '../../lib/tones.ts';
 import {
 	formatActivityState,
 	formatHeartbeatAge,
@@ -48,14 +48,7 @@ export function RunLivenessIndicator({ now, run }: { now: number; run: RunRecord
 	return (
 		<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 			<span className="inline-flex items-center gap-1" title={title}>
-				<span
-					aria-hidden="true"
-					className={cn(
-						'inline-block h-2 w-2 rounded-full',
-						toneSolid[LIVENESS_TONE[liveness]],
-						liveness === 'live' && 'animate-pulse',
-					)}
-				/>
+				<StatusDot pulse={liveness === 'live'} tone={LIVENESS_TONE[liveness]} />
 				<span>{livenessLabel(liveness, ageMs)}</span>
 			</span>
 			{activity ? <span className="text-muted-foreground">· {activity}</span> : null}

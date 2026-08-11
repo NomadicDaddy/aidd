@@ -27,7 +27,12 @@ export function ChartAxes({
 	const stride = categoryLabelStride(categories.length);
 	const lastIndex = categories.length - 1;
 	return (
-		<div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2">
+		// `mt-2`: the top tick is `-translate-y-1/2` against the plot's own top edge, so half of it
+		// hangs above this grid. With the grid flush to the card's content box that half was
+		// borrowing the card's padding, and the chart's highest number sat closer to the card
+		// description above it than to the gridline it labels. Two units is one text-xs line's
+		// worth of clearance, which is exactly what hangs out.
+		<div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-2">
 			{/* The gutter is a grid item with no content height of its own, so it takes the row's
 			    height from the plot beside it and the percentage tick offsets resolve against the
 			    same box the gridlines use. */}

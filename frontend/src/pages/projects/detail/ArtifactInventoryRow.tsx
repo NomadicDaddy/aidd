@@ -98,8 +98,14 @@ export function ArtifactInventoryRow({
 		// Below `sm` the metadata group gets its own line rather than competing with the name for
 		// one: it is `shrink-0` (badges, an age, a button), so on one line it takes what it needs
 		// and the name takes what is left.
+		//
+		// `max-w-[61rem]` because `justify-between` puts everything left over between the two, and
+		// the row was tracking the raw content column: at 2250 the name ended near x=620 and the
+		// badges did not start until x=1936, so pairing `spec.md` with its `stale / required / 41d
+		// ago` meant crossing 1320px of nothing, 56 times. This is the restraint
+		// `proseMeasureClass` already applies to prose, at the widest step the app declares.
 		<div
-			className="flex flex-col gap-2 rounded-md border border-border px-2.5 py-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+			className="flex max-w-[61rem] flex-col gap-2 rounded-md border border-border px-2.5 py-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
 			title={rowTitle}>
 			{viewable ? (
 				<button

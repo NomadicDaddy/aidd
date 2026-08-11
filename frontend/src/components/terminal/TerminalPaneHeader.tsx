@@ -10,15 +10,17 @@ import type { TerminalStatus, TerminalTab } from './terminalState.ts';
 import { fetchTerminalShells } from '../../api/terminal.ts';
 import { cn } from '../../lib/cn.ts';
 import { shortcutText, terminalShortcut } from '../../lib/keyboardShortcuts.ts';
+import { type Tone } from '../../lib/tones.ts';
 import { useTerminalStore } from '../../stores/terminalStore.ts';
 import { OverflowScroller } from '../shared/OverflowScroller.tsx';
+import { StatusDot } from '../ui/badge.tsx';
 import { IconButton } from '../ui/button.tsx';
 import { closeTerminalTab, createTerminalTab, restartTerminalTab } from './terminalSessions.ts';
 
-const statusStyles: Record<TerminalStatus, { className: string; label: string }> = {
-	connected: { className: 'bg-emerald-500', label: 'Connected' },
-	connecting: { className: 'animate-pulse bg-amber-400', label: 'Connecting…' },
-	exited: { className: 'bg-neutral-400 dark:bg-neutral-600', label: 'Session ended' },
+const statusStyles: Record<TerminalStatus, { label: string; pulse?: boolean; tone: Tone }> = {
+	connected: { label: 'Connected', tone: 'emerald' },
+	connecting: { label: 'Connecting…', pulse: true, tone: 'amber' },
+	exited: { label: 'Session ended', tone: 'neutral' },
 };
 
 /** Last path segment of a Windows or POSIX directory, for compact tab labels. */
@@ -58,12 +60,15 @@ export function TerminalPaneHeader({
 				title={`Toggle with ${shortcutText(terminalShortcut.keys)}`}>
 				Terminal
 			</span>
+			{/* The label rides on the wrapper because `StatusDot` is `aria-hidden`: this dot is the
+			    only report of the terminal's connection state, so it has to be said in text. */}
 			<span
 				aria-label={`Terminal status: ${indicator.label}`}
-				className={cn('h-2 w-2 shrink-0 rounded-full', indicator.className)}
+				className="inline-flex items-center"
 				role="status"
-				title={indicator.label}
-			/>
+				title={indicator.label}>
+				<StatusDot pulse={indicator.pulse ?? false} tone={indicator.tone} />
+			</span>
 			{/* A strip of session tabs that scrolls once a few terminals are open, so it gets the
 			    same edge cue and keyboard-reachable scrollport as every other strip. */}
 			<OverflowScroller ariaLabel="Terminal tabs" className="min-w-0 flex-1">

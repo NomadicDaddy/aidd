@@ -18,7 +18,10 @@ const stickyRails = [
 	// this suite exists to enforce is scoped to the container query instead of to `lg`. The rule is
 	// unchanged: a grid item that declares sticky at a condition needs self-start at the same one.
 	['pages/docs/DocsPage.tsx', '@min-[45rem]:sticky', '@min-[45rem]:self-start'],
-	['pages/runs/RunsPage.tsx', '2xl:sticky', 'self-start'],
+	// Same move as Docs: the runs split now gates on the content column's own width, so the sticky
+	// declaration moved with it. `self-start` here is unconditional — the console column is the one
+	// item that must never stretch, at any width.
+	['pages/runs/RunsPage.tsx', '@min-[66rem]:sticky', 'self-start'],
 ] as const;
 
 describe('declared sticky rails actually stick', () => {

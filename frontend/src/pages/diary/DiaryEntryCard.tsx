@@ -54,9 +54,13 @@ export function DiaryEntryCard({
 			</div>
 			{expanded ? (
 				<div className="mt-3 border-t border-border pt-3">
+					{/* `idPrefix`: the timeline expands many entries into one document, and two
+					    entries that both open with a "Summary" heading would otherwise claim the
+					    same id — the first takes every anchor and the second is unreachable. */}
 					<MarkdownContent
 						baseLevel={4}
 						className={proseMeasureClass}
+						idPrefix={entry.id}
 						markdown={entry.bodyMd}
 					/>
 					{entry.generatedBy ? (

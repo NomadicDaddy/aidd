@@ -4,8 +4,9 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
-import { selectClass } from '../../lib/formStyles.ts';
+import { formGridMeasureClass, selectClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 import { nullableText, shadowingBackendModel, textValue } from './settingsUtils.ts';
 
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
@@ -19,13 +20,14 @@ export function GeneralDefaultsSection({
 }) {
 	const shadowedBy = shadowingBackendModel(form);
 	return (
-		<Card className="space-y-3">
+		<Card className="flex flex-col gap-3">
 			<CardHeader
 				className="mb-0"
 				description="Set the default backend, models, reasoning, and project initialization path."
 				title="Model Routing"
 			/>
-			<div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+			<div
+				className={`grid gap-3 @min-[45rem]:grid-cols-2 @min-[61rem]:grid-cols-3 ${formGridMeasureClass}`}>
 				<FieldRow label="Default CLI">
 					<select
 						className={`${selectClass} w-full`}
@@ -45,8 +47,13 @@ export function GeneralDefaultsSection({
 						onChange={(event) => setField('model', nullableText(event.target.value))}
 						value={textValue(form.model)}
 					/>
+					{/* `FieldRow` has no hint slot on purpose — it clones the control, not the prose
+					    beside it — so the measure is applied here, at each of the four call sites in
+					    this card that render a sentence under a field. `CardHeader` and
+					    `FieldCheckbox` carry it in their own description slots; these are the ones
+					    with nowhere else to put it. */}
 					{shadowedBy ? (
-						<p className={`text-xs ${toneText.amber}`}>
+						<p className={`text-xs ${toneText.amber} ${proseMeasureClass}`}>
 							Shadowed for {form.cli} launches: the Backend Matrix (Run Engine tab)
 							sets “{shadowedBy}” for {form.cli}, and backend models outrank this
 							shared default. Clear that row to use this value.
@@ -96,7 +103,9 @@ export function GeneralDefaultsSection({
 					label="Audits enabled"
 					onChange={(event) => setField('auditsEnabled', event.target.checked)}
 				/>
-				<FieldRow className="lg:col-span-2 xl:col-span-3" label="Spernakit Init Script">
+				<FieldRow
+					className="@min-[45rem]:col-span-2 @min-[61rem]:col-span-3"
+					label="Spernakit Init Script">
 					<Input
 						onChange={(event) =>
 							setField('spernakitInitScript', nullableText(event.target.value))
@@ -104,13 +113,15 @@ export function GeneralDefaultsSection({
 						placeholder="/path/to/spernakit_init.ps1"
 						value={textValue(form.spernakitInitScript)}
 					/>
-					<p className="text-xs text-muted-foreground">
+					<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 						Optional path to a local Spernakit checkout's init script. When set,
 						Spernakit apps are created from that checkout; leave empty to clone the
 						template on demand.
 					</p>
 				</FieldRow>
-				<FieldRow className="lg:col-span-2 xl:col-span-3" label="Spernakit Template Repo">
+				<FieldRow
+					className="@min-[45rem]:col-span-2 @min-[61rem]:col-span-3"
+					label="Spernakit Template Repo">
 					<Input
 						onChange={(event) =>
 							setField('spernakitTemplateRepo', nullableText(event.target.value))
@@ -118,12 +129,14 @@ export function GeneralDefaultsSection({
 						placeholder="NomadicDaddy/spernakit"
 						value={textValue(form.spernakitTemplateRepo)}
 					/>
-					<p className="text-xs text-muted-foreground">
+					<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 						owner/repo cloned when creating a Spernakit app without a configured init
 						script. Defaults to NomadicDaddy/spernakit.
 					</p>
 				</FieldRow>
-				<FieldRow className="lg:col-span-2 xl:col-span-3" label="Spernakit Template Ref">
+				<FieldRow
+					className="@min-[45rem]:col-span-2 @min-[61rem]:col-span-3"
+					label="Spernakit Template Ref">
 					<Input
 						onChange={(event) =>
 							setField('spernakitTemplateRef', nullableText(event.target.value))
@@ -131,7 +144,7 @@ export function GeneralDefaultsSection({
 						placeholder="git tag/branch (default branch if empty)"
 						value={textValue(form.spernakitTemplateRef)}
 					/>
-					<p className="text-xs text-muted-foreground">
+					<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 						Optional git tag or branch to clone. Changing it rebuilds the cached clone.
 					</p>
 				</FieldRow>
@@ -140,7 +153,7 @@ export function GeneralDefaultsSection({
 				    intro to whatever followed. It is inside the box, where the other eight are. */}
 				<FieldCheckbox
 					checked={form.showSpernakitProject}
-					className="lg:col-span-2 xl:col-span-3"
+					className="@min-[45rem]:col-span-2 @min-[61rem]:col-span-3"
 					description="The Spernakit template checkout is hidden from the projects page by default; enable this if you plan to work on Spernakit itself."
 					label="Show Spernakit in projects list"
 					onChange={(event) => setField('showSpernakitProject', event.target.checked)}

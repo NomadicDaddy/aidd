@@ -5,6 +5,7 @@ import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
+import { proseMeasureClass } from '../../lib/typography.ts';
 
 /**
  * Director auto-cycle schedule. Part of the unified Settings form (config-file
@@ -28,15 +29,16 @@ export function DirectorAutoCycleSection({
 
 	return (
 		<Card>
-			<div>
-				<CardHeader className="mb-0" title="Director Auto-Cycle" />
-				<p className="mt-1 text-xs text-muted-foreground">
-					Automatically run a fleet analysis cycle on a fixed cadence. The web process
-					runs a catch-up cycle on startup if the fleet hasn&apos;t been analyzed within
-					the interval. Manual runs from the Director page are always available.
-				</p>
-			</div>
-			<div className="mt-4 grid gap-4 sm:grid-cols-2">
+			{/* Through the header's own description slot rather than as a paragraph beside it. Both
+			    render the same 12px muted line, but only the slot carries the 46ch measure — a
+			    hand-rolled sibling set 221 characters on one 1192px line while the card above it
+			    wrapped at 366px, which is two reading measures inside one settings page. */}
+			<CardHeader
+				className="mb-0"
+				description="Automatically run a fleet analysis cycle on a fixed cadence. The web process runs a catch-up cycle on startup if the fleet hasn't been analyzed within the interval. Manual runs from the Director page are always available."
+				title="Director Auto-Cycle"
+			/>
+			<div className="mt-4 grid gap-4 @min-[32rem]:grid-cols-2">
 				<FieldCheckbox
 					checked={form.directorAutoCycleEnabled}
 					description="Off by default. When on, a cycle starts every interval and once on startup if the last cycle is older than the interval."
@@ -64,19 +66,23 @@ export function DirectorAutoCycleSection({
 				</FieldRow>
 			</div>
 			<div className="mt-6 border-t border-border pt-4">
+				{/* Same slot, and the slot takes a node — the two emphasised terms survive the move. */}
 				<CardHeader
 					className="mb-0"
+					description={
+						<>
+							<span className="font-medium">Targeted</span> surfaces one suggestion
+							per concrete artifact (the next finding, remediation item, or feature to
+							work) plus a rollup for the rest.{' '}
+							<span className="font-medium">Aggregate</span> emits one sweeping
+							&ldquo;resolve the whole backlog&rdquo; suggestion per bucket.
+						</>
+					}
 					headingLevel={3}
 					level="subsection"
 					title="Suggestion granularity"
 				/>
-				<p className="mt-1 text-xs text-muted-foreground">
-					<span className="font-medium">Targeted</span> surfaces one suggestion per
-					concrete artifact (the next finding, remediation item, or feature to work) plus
-					a rollup for the rest. <span className="font-medium">Aggregate</span> emits one
-					sweeping &ldquo;resolve the whole backlog&rdquo; suggestion per bucket.
-				</p>
-				<div className="mt-4 grid gap-4 sm:grid-cols-2">
+				<div className="mt-4 grid gap-4 @min-[32rem]:grid-cols-2">
 					<FieldRow label="Granularity">
 						<select
 							className={selectClass}
@@ -110,7 +116,7 @@ export function DirectorAutoCycleSection({
 								Enter a positive number of artifacts.
 							</span>
 						) : (
-							<span className="text-xs text-muted-foreground">
+							<span className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 								Artifacts shown per bucket before the rest roll up.
 							</span>
 						)}

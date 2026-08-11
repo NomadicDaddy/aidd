@@ -19,11 +19,29 @@ import { observeOverflow } from '../../lib/observeOverflow.ts';
  * measurement changes the render. Writing a data attribute instead leaves the measured box
  * independent of the outcome, so this cannot feed back on itself.
  */
+
+/**
+ * The token the fade dissolves into — whatever the scrollport is actually sitting on.
+ *
+ * `card` is the default because the original consumers are tables inside a Card, and three
+ * reviewers confirmed it is correct there. It is wrong the moment a scroller sits somewhere else:
+ * the project tab strip sits on `--background` (#0c0f14) and faded `from-card` (rgb(22,26,34)), so
+ * the band painted *lighter* than the page it covered and the strip's right edge read as a
+ * container wall rather than as content continuing — five to seven hidden tabs behind a cue saying
+ * "this ends here". The recipe step's command block has the same fault against `bg-muted`.
+ */
+const fadeFrom = {
+	background: 'from-background',
+	card: 'from-card',
+	muted: 'from-muted',
+} as const;
+
 export function OverflowScroller({
 	ariaLabel,
 	children,
 	className,
 	scrollerClassName,
+	surface = 'card',
 }: {
 	/** Names the scrollable region for assistive tech; required because it is focusable. */
 	ariaLabel: string;
@@ -31,6 +49,8 @@ export function OverflowScroller({
 	className?: string;
 	/** Extra classes for the scrolling element itself — a `max-h-*` makes it scroll vertically. */
 	scrollerClassName?: string;
+	/** The surface under the scrollport, so the edge fade dissolves into it rather than over it. */
+	surface?: keyof typeof fadeFrom;
 }) {
 	const cleanupRef = useRef<(() => void) | null>(null);
 
@@ -56,7 +76,22 @@ export function OverflowScroller({
 	}, []);
 
 	return (
-		<div className={cn('group relative', className)} ref={setRoot}>
+		// `overflow-clip` is what actually keeps a capped scrollport out of the page's scroll
+		// height. The scroller's own `overflow-x-auto` clips what it *paints* — the rows past the
+		// cap are not on screen — but its layout overflow still propagated to the document: the
+		// audits matrix capped at 925px left `document.scrollHeight` at 2184 against a card bottom
+		// of 1329, so 855px of page scrolled below the card holding nothing at all. Measured at
+		// 2250x1309; `overflow-y: scroll` on the scroller does not fix it and `contain: paint`
+		// does, which is what says the fault is overflow propagation rather than scroll-container
+		// resolution.
+		//
+		// It clips nothing the scroller was not already clipping, so it is safe on every consumer.
+		// The 4px clip margin is for the scroller's own focus ring: this component hands the
+		// scrollport a tab stop, and a wrapper that shaved the ring off would take back the
+		// keyboard affordance it exists to provide.
+		<div
+			className={cn('group relative overflow-clip [overflow-clip-margin:4px]', className)}
+			ref={setRoot}>
 			<div
 				aria-label={ariaLabel}
 				className={cn('overflow-x-auto', scrollerClassName)}
@@ -71,11 +106,17 @@ export function OverflowScroller({
 			    is a cue that does not depend on a colour difference against what it sits on. */}
 			<span
 				aria-hidden="true"
-				className="pointer-events-none absolute inset-y-0 left-0 z-30 w-6 border-l border-border bg-gradient-to-r from-card to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-start=true]:opacity-100"
+				className={cn(
+					'pointer-events-none absolute inset-y-0 left-0 z-30 w-6 border-l border-border bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-start=true]:opacity-100',
+					fadeFrom[surface],
+				)}
 			/>
 			<span
 				aria-hidden="true"
-				className="pointer-events-none absolute inset-y-0 right-0 z-30 w-6 border-r border-border bg-gradient-to-l from-card to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-end=true]:opacity-100"
+				className={cn(
+					'pointer-events-none absolute inset-y-0 right-0 z-30 w-6 border-r border-border bg-gradient-to-l to-transparent opacity-0 transition-opacity duration-200 group-data-[overflow-end=true]:opacity-100',
+					fadeFrom[surface],
+				)}
 			/>
 		</div>
 	);

@@ -13,7 +13,7 @@ place on your own machine.
 
 ## 1. Point aidd at your code
 
-Open **Settings** and add one or more **application roots**: the folders aidd
+Open [Settings](/settings) and add one or more **application roots**: the folders aidd <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 should scan for projects. Any directory containing an `.aidd/` folder under a
 root is discovered automatically as a **project**.
 
@@ -22,7 +22,7 @@ isn't matched by your ignored-folders list (also in Settings).
 
 ## 2. Review your fleet
 
-Open **Projects** to see everything aidd discovered. Each project shows its
+Open [Projects](/projects) to see everything aidd discovered. Each project shows its <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 maturity stage and a recommended next action. Click any project to open its
 detail view: features, run history, artifacts, and profile.
 
@@ -31,14 +31,14 @@ answers, then move the project into its coding phase.
 
 ## 3. Launch your first run
 
-Open **Runs**, pick a target project, choose a mode (the default `coding` mode
+Open [Runs](/runs), pick a target project, choose a mode (the default `coding` mode <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 picks up tracked features), and launch. The live console streams output as the
 run loops through its iterations. You can stop or kill an active run at any
 time.
 
 ## 4. Let the Director advise you
 
-Open **Director** to run an analysis **cycle** across your whole fleet. It
+Open [Director](/director) to run an analysis **cycle** across your whole fleet. It <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 emits **suggestions**, some launchable as recipe pipelines or supervised runs and some advisory. The
 Director chat can also inspect the fleet and orchestrate work for you.
 

@@ -12,11 +12,10 @@ import type { SkillDefinition } from '../../api/types/skills.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { LaunchForm } from '../../components/shared/LaunchForm.tsx';
-import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { AlertDialog } from '../../components/ui/alert-dialog.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Card, CardHeader } from '../../components/ui/card.tsx';
+import { Card } from '../../components/ui/card.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
@@ -26,8 +25,8 @@ import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { useViewportFill } from '../../hooks/useViewportFill.ts';
 import { SKILL_CATEGORY_FILTERS, type SkillCategoryFilter } from '../../lib/catalogCuration.ts';
 import { cn } from '../../lib/cn.ts';
-import { proseMeasureClass } from '../../lib/typography.ts';
 import { SkillCatalog } from './SkillCatalog.tsx';
+import { SkillDefinitionCard } from './SkillDefinitionCard.tsx';
 import { SkillDetailsCard } from './SkillDetailsCard.tsx';
 import { SkillImportDialog } from './SkillImportDialog.tsx';
 
@@ -150,26 +149,39 @@ export function SkillsPage() {
 			{/* Filters belong above the split, not inside the 18–24rem catalog column: in there the
 			    seven category segments wrapped onto three rows and spent ~110px before a single
 			    skill was shown. This is the same full-width filter Card /recipes and /telemetry use. */}
-			<Card className="grid gap-3 lg:grid-cols-[minmax(0,20rem)_1fr] lg:items-end">
-				<div className="relative">
-					<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-					<Input
-						aria-label="Search skills"
-						className="pl-8"
-						data-shortcut-search=""
-						name="skillSearch"
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder="Filter skills"
-						value={query}
+			<Card className="@container">
+				{/* Gated on the card's own interior, not the viewport — the same reason the shared
+				    `FilterToolbar` warns against `lg:`. The rail expands at exactly 1024px, so `lg:`
+				    split this card in two at the one width where the content column is 735px: the
+				    seven segments wrapped onto three rows in the `1fr` track and `items-end` left the
+				    search field sitting under ~90px of nothing. 62rem is what the pair actually needs
+				    — a 20rem search, the gap, and the ~640px the segments measure unwrapped — so
+				    below it they stack and the segments wrap across the full card instead. */}
+				<div className="grid gap-3 @min-[62rem]:grid-cols-[minmax(0,20rem)_1fr] @min-[62rem]:items-end">
+					<div className="relative">
+						<Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+						<Input
+							aria-label="Search skills"
+							className="pl-8"
+							data-shortcut-search=""
+							name="skillSearch"
+							onChange={(event) => setQuery(event.target.value)}
+							placeholder="Filter skills"
+							value={query}
+						/>
+					</div>
+					{/* `justify-self-start`: the track is already `w-auto`, but as a grid item it was
+					    being stretched to the full `1fr` and the seven segments spread across 1400px
+					    of a 2250 screen — a control that sizes to its content, stretched by the thing
+					    holding it. The search Input beside it is the one that wants its whole track. */}
+					<SegmentedControl
+						ariaLabel="Filter skills by category"
+						className="max-w-full @min-[62rem]:justify-self-start"
+						onChange={setCategory}
+						options={SKILL_CATEGORY_FILTERS}
+						value={category}
 					/>
 				</div>
-				<SegmentedControl
-					ariaLabel="Filter skills by category"
-					className="max-w-full"
-					onChange={setCategory}
-					options={SKILL_CATEGORY_FILTERS}
-					value={category}
-				/>
 			</Card>
 			{/* Above the split the region is the scrolling one and the page is not. The detail column
 			    had no scrollport at all, so the document scrolled instead — which is why the rail's
@@ -177,16 +189,16 @@ export function SkillsPage() {
 			    page scroll against the 172px sticky needs. The height is measured rather than
 			    guessed; see useViewportFill.
 
-			    The gate is a container query, not a viewport breakpoint, because the thing that has
-			    to fit is the content column and the sidebar rail sets its width independently of the
-			    viewport: 768px of viewport is 656px of column with the rail collapsed and 480px with
-			    it expanded, and both states occur — the default is computed once at load and then
-			    persisted. `lg:` gated on the one number that does not describe this layout, so it
-			    read 768px as narrow (it is not, collapsed) and 1024px as wide (it is not, expanded).
-			    This wrapper is the container; the query lives on its child. */}
+			    The gate is a container query, not a viewport breakpoint: the thing that has to fit
+			    is the content column, and the sidebar rail sets its width independently of the
+			    viewport — 768px of viewport is 656px of column with the rail collapsed and 480px
+			    with it expanded, and both states occur. `lg:` gated on the one number that does
+			    not describe this layout. This wrapper is the container, the query its child. */}
 			<div className="@container">
+				{/* The explicit row track, not just the height: an implicit `auto` row sizes to its
+				    content (5390px measured), so `overflow-auto` below had nothing to overflow. */}
 				<div
-					className="grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))] @min-[40rem]:grid-cols-[minmax(18rem,24rem)_1fr] @min-[40rem]:overflow-hidden"
+					className="grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))] @min-[40rem]:grid-cols-[minmax(18rem,24rem)_1fr] @min-[40rem]:grid-rows-[minmax(0,1fr)] @min-[40rem]:overflow-hidden"
 					ref={splitRef}>
 					<SkillCatalog
 						className={showDetail ? 'hidden @min-[40rem]:flex' : undefined}
@@ -243,25 +255,7 @@ export function SkillsPage() {
 								setArgs={setArgs}
 								setProjectDir={setProjectDir}
 							/>
-							<Card className="space-y-2">
-								<CardHeader className="mb-0" headingLevel={3} title="Definition" />
-								{/* SKILL.md is a markdown document and is now read as one. It was the last
-							    surface showing raw source: monospaced, reflowed mid-word to keep it
-							    on screen, with its `##` and `-` markers left as literal characters —
-							    the operator was reading the file rather than the document, and its
-							    headings were nowhere in the accessibility tree. Its own `#` title is
-							    dropped because the catalog names the skill above this card.
-
-							    No inner `max-h`: the detail column is the scrollport now, and a
-							    28rem window inside it meant scrolling a short box inside a tall
-							    one to read a document that already had somewhere to go. */}
-								<MarkdownContent
-									baseLevel={4}
-									className={proseMeasureClass}
-									markdown={selected.body}
-									skipLeadingTitle
-								/>
-							</Card>
+							<SkillDefinitionCard body={selected.body} />
 						</div>
 					) : (
 						// Only above the split. Below it the catalog occupies the whole region and says

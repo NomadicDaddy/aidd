@@ -10,6 +10,7 @@ import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
 import { artifactInventoryCount } from './artifactsUtils.ts';
 import { type ArtifactHealth, artifactTone } from './shared.ts';
@@ -56,7 +57,7 @@ export function ArtifactsTab({
 					className="mb-3"
 					title="Artifact health"
 				/>
-				<p className="text-sm text-muted-foreground">
+				<p className={`text-sm text-muted-foreground ${proseMeasureClass}`}>
 					No artifact check data available. Run an artifact check from the CLI to populate{' '}
 					<code>.aidd/.artifacts-check.json</code>.
 				</p>
@@ -115,7 +116,7 @@ export function ArtifactsTab({
 				</div>
 			</div>
 			<div className="mt-4">
-				<p className="mb-2 text-xs text-muted-foreground">
+				<p className={`mb-2 text-xs text-muted-foreground ${proseMeasureClass}`}>
 					The health summary covers the assertion catalog checked by{' '}
 					<code>--check-artifacts</code>. The inventory also includes broader maturity
 					evidence such as feature metadata, audit reports, and deployment artifacts.

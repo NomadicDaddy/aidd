@@ -121,8 +121,16 @@ export function RecipesPage() {
 				title="Recipes"
 			/>
 
-			<Card className="space-y-3">
-				<div className="grid gap-3 lg:grid-cols-[1fr_2fr]">
+			<Card className="@container space-y-3">
+				{/* Gated on the card's own interior, not the window: this card is the page column
+				    minus its padding, and the page column is the window minus a rail whose width a
+				    viewport tier cannot see. 45rem is where the 1:2 split leaves the project select
+				    its own label width and the second column something to hold. */}
+				{/* The ratio has no ceiling, so `1fr_2fr` in a 1962px card meant a 640px project
+				    select and a 1280px search field. Naming the tracks instead of their ratio keeps
+				    the 1:1.4 proportion where it matters and stops both of them where they stop
+				    getting better — the same treatment the Skills catalog's filter card uses. */}
+				<div className="grid gap-3 @min-[45rem]:grid-cols-[minmax(0,20rem)_minmax(0,28rem)]">
 					<FieldRow label="Project">
 						<select
 							className={selectClass}
@@ -150,8 +158,12 @@ export function RecipesPage() {
 					</FieldRow>
 				</div>
 				{/* The same count row the projects and features catalogs close with, so filtering
-				    confirms itself instead of leaving a grid of unknown size. */}
-				<div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+				    confirms itself instead of leaving a grid of unknown size. Capped at the same
+				    80rem the shared `FilterToolbar` caps its own readout at: `justify-between` in a
+				    1962px card put "Clear search" nearly two thousand pixels from the count it
+				    clears, which reads as an unrelated control rather than as the end of that
+				    sentence. */}
+				<div className="flex max-w-[80rem] items-center justify-between gap-3 text-xs text-muted-foreground">
 					<span>
 						Showing {filtered.length} of {allRecipes.length} recipes
 					</span>
@@ -241,7 +253,14 @@ export function RecipesPage() {
 			) : (
 				// `gap-4`, the same gutter the Projects grid uses. At `gap-3` the cards sat closer
 				// to each other than their own padding, so a row read as one banded surface.
-				<div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+				//
+				// `auto-fill` rather than a viewport-tiered column count. The count was capped at
+				// three by `xl:`, so a 1962px column gave three 643px cards — a card holding a
+				// name, a description and a step count stretched to two-thirds the width of a
+				// laptop screen. A 20rem track floor reproduces the old counts at every width the
+				// old tiers covered and simply keeps going above them: five columns at 1962px, and
+				// no card wider than ~490px at any width this app is used at.
+				<div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
 					{filtered.map((recipe) => (
 						<RecipeCard
 							key={recipe.id}

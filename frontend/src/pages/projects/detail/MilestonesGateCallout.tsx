@@ -22,7 +22,7 @@ export function MilestonesGateCallout({ view }: { view: ProjectMilestonesView })
 		// A default-bordered Card with a red Badge, not a red-outlined one. The outline was a
 		// fourth way of spelling the red tone and the only outlined surface across the five tabs;
 		// `lib/tones.ts` owns the vocabulary, and it does not include a border variant.
-		<Card className="space-y-2">
+		<Card className="flex flex-col gap-2">
 			<CardHeader
 				badge={
 					<Badge tone="red">{unmapped.length + view.violations.length} blocking</Badge>

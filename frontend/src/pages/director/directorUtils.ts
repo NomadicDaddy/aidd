@@ -1,4 +1,4 @@
-import type { DirectorCycle, DirectorProfileInput, DirectorRiskLevel } from '../../api/types.ts';
+import type { DirectorCycle, DirectorProfileInput } from '../../api/types.ts';
 
 import { textareaClass as sharedTextareaClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
@@ -8,11 +8,9 @@ export const textareaClass = sharedTextareaClass;
 // card-title scale, which is why the Director page ran two heading sizes across four peer sections;
 // every section on this page now goes through CardHeader.
 
-export function riskTone(risk: DirectorRiskLevel): 'amber' | 'emerald' | 'red' {
-	if (risk === 'HIGH') return 'red';
-	if (risk === 'MEDIUM') return 'amber';
-	return 'emerald';
-}
+// `riskTone` moved to lib/directorConstants.ts alongside a matching `riskLabel`. The Dashboard
+// rendered the same suggestion records and had grown its own copy of the mapping, and the two had
+// already drifted on `LOW`.
 
 export function profileInput(form: DirectorProfileInput): DirectorProfileInput {
 	const input: DirectorProfileInput = {

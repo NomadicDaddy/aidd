@@ -9,8 +9,8 @@ import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
+import { riskLabel, riskTone } from '../../lib/directorConstants.ts';
 import { toneText } from '../../lib/tones.ts';
-import { suggestionRiskLabel, suggestionRiskTone } from './dashboard-shared.ts';
 
 /**
  * The pending suggestions the approval queue below does not have room for.
@@ -77,8 +77,8 @@ export function DirectorQueueCard({
 									{suggestion.projectId ?? 'fleet'} / {suggestion.taskType}
 								</p>
 							</div>
-							<Badge showDot tone={suggestionRiskTone(suggestion.riskLevel)}>
-								{suggestionRiskLabel(suggestion.riskLevel)}
+							<Badge showDot tone={riskTone(suggestion.riskLevel)}>
+								{riskLabel(suggestion.riskLevel)}
 							</Badge>
 						</div>
 						<p className="line-clamp-3 text-sm text-muted-foreground">

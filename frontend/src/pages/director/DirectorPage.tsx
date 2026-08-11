@@ -12,6 +12,7 @@ import { useDirector } from '../../hooks/useDirector.ts';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
+import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { ActiveCyclePanel } from './ActiveCyclePanel.tsx';
@@ -221,8 +222,17 @@ export function DirectorPage() {
 							/>
 							<label className="block space-y-1">
 								<span className={fieldLabelClass}>Cycle Directive (optional)</span>
+								{/* `cn`, not a template string. `textareaClass` already carries
+								    `min-h-28`, so concatenating `min-h-16` put both on the element and
+								    Tailwind's own cascade order — not the order they were written in —
+								    decided between them. `min-h-28` won, and this field, which the card
+								    labels optional, rendered 937x112px at 2250: an empty box about the
+								    size of the entire Recent Cycles row beneath it. tailwind-merge
+								    resolves the conflict in favour of the call site, which is the only
+								    reason to write an override at all. `resize-y` is on the shared
+								    class, so a long directive can still grow the field. */}
 								<textarea
-									className={`${textareaClass} min-h-16`}
+									className={cn(textareaClass, 'min-h-16')}
 									onChange={(event) => setCycleDirective(event.target.value)}
 									placeholder="e.g. prioritize failing builds across the fleet"
 									value={cycleDirective}

@@ -209,10 +209,33 @@ describe('a chat message says who wrote it', () => {
 			source.indexOf('export function ChatMessageBubble'),
 		);
 
-		// Scoped to the role map: the doc comment above it names the two fills it replaced.
+		// Scoped to the role map: the doc comment above it names the two fills it replaced. The
+		// quote class covers both spellings — the entries are template literals now that they
+		// interpolate the reading measure, and a regex pinned to `'` would pass by matching nothing.
 		expect(roles).toContain('system: ');
 		expect(roles).toContain('border border-dashed border-border');
-		expect(roles).not.toMatch(/system: '[^']*bg-/u);
+		expect(roles).not.toMatch(/system: [`'][^`']*bg-/u);
+	});
+
+	test('a bubble hugs its content instead of filling the transcript', async () => {
+		const source = await read('components', 'shared', 'ChatMessageBubble.tsx');
+		const roles = source.slice(
+			source.indexOf('const ROLE_CLASS'),
+			source.indexOf('export function ChatMessageBubble'),
+		);
+
+		// Block-level divs with only a percentage cap rendered every message at exactly the cap: in
+		// a 703px transcript, 38px of text came out 557px wide. All three roles hug now, and the cap
+		// is the declared reading measure rather than a percentage that keeps growing with the panel.
+		for (const role of ['assistant:', 'system:', 'user:']) {
+			const entry = roles.slice(roles.indexOf(role));
+			expect(entry.slice(0, entry.indexOf('\n'))).toContain('w-fit');
+		}
+		expect(roles).toContain('${proseMeasureClass}');
+		expect(roles).not.toContain('max-w-[88%]');
+		expect(roles).not.toContain('max-w-[82%]');
+		// The user role is still the one that right-aligns; `w-fit` is what gives that any effect.
+		expect(roles).toMatch(/user: `ml-auto /u);
 	});
 });
 

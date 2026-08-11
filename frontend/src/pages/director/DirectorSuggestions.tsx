@@ -13,9 +13,9 @@ import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
+import { riskLabel, riskTone } from '../../lib/directorConstants.ts';
 import { humanizeEnum } from '../../lib/formatters.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
-import { riskTone } from './directorUtils.ts';
 import { SuggestionLaunchPreviewDialog } from './SuggestionLaunchPreviewDialog.tsx';
 
 /**
@@ -25,12 +25,19 @@ import { SuggestionLaunchPreviewDialog } from './SuggestionLaunchPreviewDialog.t
  * on the surface appeared on 10 of 10 rows and told a reader nothing except that red had stopped
  * meaning "something is wrong". The ranking is still there to be read — it is what the risk filter
  * beside it sorts on — but it costs one `StatusDot` rather than the loudest object on the page.
+ *
+ * The Dashboard's Director Queue card draws the same field as a `Badge`, and that stays a
+ * difference: four mixed-risk rows on a card are not 31 rows of one generated batch, and the pill
+ * that reads well at four is what stopped meaning anything at 31. What the two surfaces do share is
+ * the reading itself — `riskTone` and `riskLabel` are one mapping in lib/directorConstants.ts, so
+ * the wording and the colour cannot drift between the two routes again. They already had: this
+ * surface called a `LOW` suggestion emerald and the Dashboard called the same record teal.
  */
 function RiskReading({ risk }: { risk: DirectorRiskLevel }) {
 	return (
 		<span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
 			<StatusDot tone={riskTone(risk)} />
-			{humanizeEnum(risk)} risk
+			{riskLabel(risk)}
 		</span>
 	);
 }

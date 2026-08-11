@@ -14,9 +14,9 @@ import {
 	useApproveProjectFeature,
 	useUpdateProjectFeatureStatus,
 } from '../../hooks/useProjectFeatures.ts';
+import { riskLabel, riskTone } from '../../lib/directorConstants.ts';
 import { formatRelativeAge } from '../../lib/formatters.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
-import { suggestionRiskLabel, suggestionRiskTone } from './dashboard-shared.ts';
 
 /** Item kinds that can appear in the waiting-approval queue. */
 export type WaitingApprovalKind = 'run' | 'suggestion' | 'waiting_feature';
@@ -139,8 +139,8 @@ export function SuggestionRow({
 					// rendered the same four suggestions with no controls — so the copy that said
 					// 'High risk' was the one you could not act from, and the copy you could act
 					// from said nothing about risk.
-					<Badge showDot tone={suggestionRiskTone(suggestion.riskLevel)}>
-						{suggestionRiskLabel(suggestion.riskLevel)}
+					<Badge showDot tone={riskTone(suggestion.riskLevel)}>
+						{riskLabel(suggestion.riskLevel)}
 					</Badge>
 				}
 				kind="suggestion"

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { cn } from '../../lib/cn.ts';
-import { microLabelClass } from '../../lib/typography.ts';
+import { microLabelClass, proseMeasureClass } from '../../lib/typography.ts';
 
 /** Who wrote a Director chat message. */
 export type ChatMessageRole = 'assistant' | 'system' | 'user';
@@ -27,11 +27,26 @@ const AUTHOR_LABEL: Record<ChatMessageRole, string> = {
  * the accent. Either way routine transcript scaffolding took a full colour field beside the
  * Director's own replies and differed from them by fill alone. A system note is an aside: it takes
  * a dashed outline and no fill, which is the one treatment on the surface that is not a bubble.
+ *
+ * `w-fit` is what makes a bubble a bubble. These are block-level `div`s, so a percentage cap was
+ * the only width rule and every message rendered at exactly that cap whatever it held: measured in
+ * a 703px transcript at 2250x1309, "hello?" came out 557px wide and a one-line "DIRECTOR_CHAT_OK"
+ * came out 598px. A column of identical slabs is a column in which the alignment that is supposed
+ * to say who is speaking says nothing, and a two-word reply reads as a paragraph.
+ *
+ * The cap itself is the declared reading measure rather than a percentage, because a percentage
+ * keeps growing with the panel and the panel is unbounded — at 2250 the same 88% that is sensible
+ * in a half-page card is most of the screen. `max-w-[46ch]` is 68 characters here for the reason
+ * `proseMeasureClass` documents, and it lands on the element that sets `text-sm`, which is where
+ * the unit has to be read from. The bubble's own `px-3` comes out of that allowance — 24px, about
+ * four characters — which is close enough to leave alone at this size; the correction only earns
+ * its keep on a card with `p-7`, which is why `proseMeasureCardClass` exists and this does not use
+ * it. `ml-auto` still right-aligns the user role, and now has something narrower to align.
  */
 const ROLE_CLASS: Record<ChatMessageRole, string> = {
-	assistant: 'max-w-[88%] bg-muted text-foreground',
-	system: 'max-w-[88%] border border-dashed border-border text-muted-foreground',
-	user: 'ml-auto max-w-[82%] bg-foreground text-background',
+	assistant: `w-fit ${proseMeasureClass} bg-muted text-foreground`,
+	system: `w-fit ${proseMeasureClass} border border-dashed border-border text-muted-foreground`,
+	user: `ml-auto w-fit ${proseMeasureClass} bg-foreground text-background`,
 };
 
 /**

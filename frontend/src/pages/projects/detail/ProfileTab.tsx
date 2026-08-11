@@ -10,6 +10,7 @@ import { useDebouncedValue } from '../../../hooks/useDebouncedValue.ts';
 import { useProfilePreview } from '../../../hooks/useProfilePreview.ts';
 import { useUpdateProjectProfile } from '../../../hooks/useProjects.ts';
 import { useUnsavedGuard } from '../../../hooks/useUnsavedGuard.ts';
+import { cn } from '../../../lib/cn.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
 import { profileInput, sameProfileInput } from '../profile/profile-helpers.ts';
 import { ComputedProfilePanel } from './profile/ComputedProfilePanel.tsx';
@@ -115,8 +116,14 @@ export function ProfileTab({
 						<p className="mt-0.5 mb-3 text-xs text-muted-foreground">
 							Why this profile was chosen, for whoever reviews the posture next.
 						</p>
+						{/* `cn`, not a template string: `textareaClass` carries `min-h-28` and a
+						    concatenated `min-h-24` is smaller, so both landed on the element and
+						    Tailwind's cascade order handed it to the shared floor. This is the same
+						    defect the Director page's Cycle Directive field had — the two are the only
+						    call sites whose override is *below* the shared minimum, which is why every
+						    other `${textareaClass} min-h-*` site happens to work. */}
 						<textarea
-							className={`${textareaClass} min-h-24`}
+							className={cn(textareaClass, 'min-h-24')}
 							id="profile-notes"
 							maxLength={4000}
 							onChange={(event) => updateNotes(event.target.value)}

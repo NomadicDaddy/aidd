@@ -85,93 +85,105 @@ export function ProjectCardMetrics({
 	const feListening = portStatus?.frontend ?? null;
 	const beListening = portStatus?.backend ?? null;
 	return (
-		// One column below `sm`: at 768 the grid kept two columns of ~100px and wrapped nearly
-		// every row onto two lines.
-		<div className="grid grid-cols-1 gap-x-3 gap-y-1 text-xs text-muted-foreground sm:grid-cols-2">
-			<MetricRow label="Version">
-				<span className="font-medium text-foreground">
-					{formatAppVersion(metadata.appVersion)}
-				</span>
-				{metadata.templateVersion ? (
-					<>
-						{' · '}
-						<span
-							className={
-								templateVersionColor(
-									metadata.templateVersion,
-									spernakitTemplateVersion,
-								) || 'font-medium text-foreground'
-							}>
-							spk {metadata.templateVersion}
-						</span>
-					</>
-				) : null}
-			</MetricRow>
-			<MetricRow label="Profile">
-				<span className="font-medium text-foreground">
-					{bucketLabels[metadata.profile.bucket]}
-				</span>{' '}
-				({metadata.profile.source})
-			</MetricRow>
-			<MetricRow label="Interview">
-				{metadata.interview
-					? formatRatio(metadata.interview.answered, metadata.interview.total)
-					: '—'}
-			</MetricRow>
-			<MetricRow label="Scenarios">{formatCount(metadata.testScenariosCount)}</MetricRow>
-			<MetricRow label="Screens">{formatCount(metadata.screenMapRouteCount)}</MetricRow>
-			<MetricRow
-				label="Reported cost"
-				title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
-				<span className="font-medium text-foreground tabular-nums">
-					{formatProjectListReportedCost(metadata.usage.totals)}
-				</span>
-			</MetricRow>
-			<MetricRow
-				label="Tokens"
-				title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
-				<span className="font-medium text-foreground tabular-nums">
-					{formatProjectTokenCount(metadata.usage.totals)}
-				</span>
-			</MetricRow>
-			<MetricRow label="Spec age">
-				{specDays !== null ? (
-					<span className={`tabular-nums ${specAgeColor(specDays)}`}>{specDays}d</span>
-				) : (
-					<span className="text-muted-foreground">—</span>
-				)}
-			</MetricRow>
-			<MetricRow label="Added">
-				{metadata.addedAt ? (
-					<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
-				) : (
-					<span className="text-muted-foreground">—</span>
-				)}
-			</MetricRow>
-			<MetricRow label="aidd state">
-				<Badge tone={syncTone(metadata.sync.syncState)}>{metadata.sync.syncState}</Badge>
-			</MetricRow>
-			{fePort !== null || bePort !== null ? (
-				<MetricRow label="Ports">
-					<span className="font-mono">
-						{fePort !== null ? (
-							<span className="inline-flex items-center gap-1">
-								<PortDotInline listening={feListening} />
-								FE:{fePort}
+		// Two columns when the card is wide enough for two, and the card's width is set by how many
+		// columns the card grid gave it, not by the viewport. `sm:grid-cols-2` got that wrong in
+		// both directions: at 1280 the card is 318px and at 1440 it is 373px, so a metric column
+		// was ~139px and ~164px against a fixed 5rem label track, leaving ~51px and ~76px for the
+		// value — `Profile: Single-user local (explicit)` wrapped to four lines and three, and the
+		// 48-64px row that made left a void beside the single 16px line of `Version: v0.1.0`. The
+		// containment goes on this wrapper because an element never matches a container it
+		// declares itself.
+		<div className="@container">
+			<div className="grid grid-cols-1 gap-x-3 gap-y-1 text-xs text-muted-foreground @min-[32rem]:grid-cols-2">
+				<MetricRow label="Version">
+					<span className="font-medium text-foreground">
+						{formatAppVersion(metadata.appVersion)}
+					</span>
+					{metadata.templateVersion ? (
+						<>
+							{' · '}
+							<span
+								className={
+									templateVersionColor(
+										metadata.templateVersion,
+										spernakitTemplateVersion,
+									) || 'font-medium text-foreground'
+								}>
+								spk {metadata.templateVersion}
 							</span>
-						) : null}
-						{fePort !== null && bePort !== null ? (
-							<span className="mx-1 text-muted-foreground">·</span>
-						) : null}
-						{bePort !== null ? (
-							<span className="inline-flex items-center gap-1">
-								<PortDotInline listening={beListening} />
-								BE:{bePort}
-							</span>
-						) : null}
+						</>
+					) : null}
+				</MetricRow>
+				<MetricRow label="Profile">
+					<span className="font-medium text-foreground">
+						{bucketLabels[metadata.profile.bucket]}
+					</span>{' '}
+					({metadata.profile.source})
+				</MetricRow>
+				<MetricRow label="Interview">
+					{metadata.interview
+						? formatRatio(metadata.interview.answered, metadata.interview.total)
+						: '—'}
+				</MetricRow>
+				<MetricRow label="Scenarios">{formatCount(metadata.testScenariosCount)}</MetricRow>
+				<MetricRow label="Screens">{formatCount(metadata.screenMapRouteCount)}</MetricRow>
+				<MetricRow
+					label="Reported cost"
+					title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
+					<span className="font-medium text-foreground tabular-nums">
+						{formatProjectListReportedCost(metadata.usage.totals)}
 					</span>
 				</MetricRow>
-			) : null}
+				<MetricRow
+					label="Tokens"
+					title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
+					<span className="font-medium text-foreground tabular-nums">
+						{formatProjectTokenCount(metadata.usage.totals)}
+					</span>
+				</MetricRow>
+				<MetricRow label="Spec age">
+					{specDays !== null ? (
+						<span className={`tabular-nums ${specAgeColor(specDays)}`}>
+							{specDays}d
+						</span>
+					) : (
+						<span className="text-muted-foreground">—</span>
+					)}
+				</MetricRow>
+				<MetricRow label="Added">
+					{metadata.addedAt ? (
+						<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
+					) : (
+						<span className="text-muted-foreground">—</span>
+					)}
+				</MetricRow>
+				<MetricRow label="aidd state">
+					<Badge tone={syncTone(metadata.sync.syncState)}>
+						{metadata.sync.syncState}
+					</Badge>
+				</MetricRow>
+				{fePort !== null || bePort !== null ? (
+					<MetricRow label="Ports">
+						<span className="font-mono">
+							{fePort !== null ? (
+								<span className="inline-flex items-center gap-1">
+									<PortDotInline listening={feListening} />
+									FE:{fePort}
+								</span>
+							) : null}
+							{fePort !== null && bePort !== null ? (
+								<span className="mx-1 text-muted-foreground">·</span>
+							) : null}
+							{bePort !== null ? (
+								<span className="inline-flex items-center gap-1">
+									<PortDotInline listening={beListening} />
+									BE:{bePort}
+								</span>
+							) : null}
+						</span>
+					</MetricRow>
+				) : null}
+			</div>
 		</div>
 	);
 }

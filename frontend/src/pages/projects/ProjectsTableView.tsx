@@ -53,10 +53,16 @@ function ColumnHeader({
 	// Matches the pinned identity `<td>` in ProjectTableRow. The header needs its own opaque
 	// `bg-muted` — the one on `<thead>` does not paint under a sticky child — and a higher
 	// z-index than the body cells so it stays above them at the intersection.
+	//
+	// The data headers carry `projectTableCellClass`'s sizing half for the same reason the cells
+	// do: under `table-layout: auto` a column is as wide as the widest of its header and its
+	// cells, so capping only the body leaves 'Reported Cost' or 'Last Web Run' wrapping to two
+	// lines while the column it heads has already collapsed to its content. NAME is again the
+	// exception, and absorbs the slack.
 	const className =
 		column.key === 'name'
 			? `sticky top-0 left-0 z-30 bg-muted px-3 py-3 ${pinnedLeftEdgeClass}`
-			: 'sticky top-0 z-20 bg-muted px-3 py-3';
+			: 'sticky top-0 z-20 w-px bg-muted px-3 py-3 whitespace-nowrap';
 	if (!sortKey) {
 		return (
 			<th className={className} scope="col">

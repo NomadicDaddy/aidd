@@ -6,6 +6,7 @@ import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '.
 import { FilePath } from '../../components/shared/FilePath.tsx';
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
+import { cn } from '../../lib/cn.ts';
 import { formatRelativeAge } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
@@ -24,6 +25,7 @@ import {
 	specAgeColor,
 	templateVersionColor,
 } from './projects-list-visuals.ts';
+import { projectTableCellClass } from './projects-table-columns.ts';
 import {
 	ArtifactCell,
 	FeatureProgressCell,
@@ -109,7 +111,7 @@ export function ProjectTableRow({
 				) : null}
 			</td>
 			{optionalColumns.has('version') ? (
-				<td className="px-3 py-3 font-mono text-xs">
+				<td className={cn(projectTableCellClass, 'font-mono text-xs')}>
 					{metadata.appVersion ? (
 						formatAppVersion(metadata.appVersion)
 					) : (
@@ -130,11 +132,11 @@ export function ProjectTableRow({
 					) : null}
 				</td>
 			) : null}
-			<td className="px-3 py-3 whitespace-nowrap">
+			<td className={projectTableCellClass}>
 				<ProjectActiveRunLink activeRuns={project.activeRuns} />
 			</td>
 			{optionalColumns.has('port') ? (
-				<td className="px-3 py-3">
+				<td className={projectTableCellClass}>
 					<PortsCell
 						backendCollision={backendCollision}
 						collisionPeers={collisionPeers}
@@ -145,12 +147,12 @@ export function ProjectTableRow({
 				</td>
 			) : null}
 			{optionalColumns.has('stack') ? (
-				<td className="px-3 py-3">
+				<td className={projectTableCellClass}>
 					<ProjectStackDisplay stack={metadata.stack} variant="table" />
 				</td>
 			) : null}
 			{optionalColumns.has('profile') ? (
-				<td className="px-3 py-3">
+				<td className={projectTableCellClass}>
 					<div className="flex flex-wrap gap-1">
 						<Badge tone="neutral">{bucketLabels[metadata.profile.bucket]}</Badge>
 						{metadata.profile.source === 'inferred' ? (
@@ -159,7 +161,7 @@ export function ProjectTableRow({
 					</div>
 				</td>
 			) : null}
-			<td className="px-3 py-3">
+			<td className={projectTableCellClass}>
 				<FeatureProgressCell
 					failing={project.featureStats.failing}
 					passing={project.featureStats.passing}
@@ -168,7 +170,7 @@ export function ProjectTableRow({
 			</td>
 			{optionalColumns.has('reportedCost') ? (
 				<td
-					className="px-3 py-3 whitespace-nowrap"
+					className={projectTableCellClass}
 					title={`${metadata.usage.totals.runsWithReportedCost}/${metadata.usage.totals.runCount} finalized runs reported cost`}>
 					<div className="font-medium tabular-nums">
 						{formatProjectListReportedCost(metadata.usage.totals)}
@@ -181,7 +183,7 @@ export function ProjectTableRow({
 			) : null}
 			{optionalColumns.has('tokens') ? (
 				<td
-					className="px-3 py-3 whitespace-nowrap"
+					className={projectTableCellClass}
 					title={`${metadata.usage.totals.runsWithTokenUsage}/${metadata.usage.totals.runCount} finalized runs reported token usage`}>
 					<div className="font-medium tabular-nums">
 						{formatProjectTokenCount(metadata.usage.totals)}
@@ -193,7 +195,7 @@ export function ProjectTableRow({
 					</div>
 				</td>
 			) : null}
-			<td className="px-3 py-3">
+			<td className={projectTableCellClass}>
 				{metadata.maturity.stageStatuses.length > 0 ? (
 					<div className="flex items-center gap-2">
 						<MaturityRing
@@ -212,17 +214,17 @@ export function ProjectTableRow({
 				)}
 			</td>
 			{optionalColumns.has('artifacts') ? (
-				<td className="px-3 py-3">
+				<td className={projectTableCellClass}>
 					<ArtifactCell
 						health={project.artifactHealth}
 						summary={metadata.artifactCheck?.summary ?? null}
 					/>
 				</td>
 			) : null}
-			<td className="px-3 py-3">
+			<td className={projectTableCellClass}>
 				<GitStatusBadge className="max-w-[12rem]" status={gitStatus} />
 			</td>
-			<td className="px-3 py-3">
+			<td className={projectTableCellClass}>
 				<Badge tone={syncTone(metadata.sync.syncState)}>{metadata.sync.syncState}</Badge>
 				{metadata.sync.lastSyncAt ? (
 					<div className="text-xs text-muted-foreground">
@@ -231,7 +233,7 @@ export function ProjectTableRow({
 				) : null}
 			</td>
 			{optionalColumns.has('addedAt') ? (
-				<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
+				<td className={cn(projectTableCellClass, 'text-xs text-muted-foreground')}>
 					{metadata.addedAt ? (
 						<span title={metadata.addedAt}>{formatRelativeAge(metadata.addedAt)}</span>
 					) : (

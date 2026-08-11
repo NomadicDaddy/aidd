@@ -28,7 +28,11 @@ const exemptions: { file: string; why: string }[] = [
 		why: 'dialog title, owned by DialogPanel',
 	},
 	{ file: 'pipelineSessions/StepRows.tsx', why: 'per-step row title inside a list' },
-	{ file: 'projects/ProjectCard.tsx', why: 'catalog card title, links to the project' },
+	// `projects/ProjectCard.tsx` was exempt as a "catalog card title". It is a card with a title, a
+	// mono path, a stage line and a ring-plus-badge rail — CardHeader's slot set exactly — and
+	// hand-rolling it is what let the path render `break-all` while every other card identifier in
+	// the app truncates. It uses CardHeader now. The mobile profile-matrix row below stays exempt:
+	// it is a row identity in a stack of rows, which is a different thing.
 	{
 		file: 'projects/profileMatrix/ProfileMatrixMobileList.tsx',
 		why: 'the same catalog card title one viewport narrower: it is the row identity in a stack of rows, not a section of one card',

@@ -8,7 +8,7 @@ import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '.
 import { FilePath } from '../../components/shared/FilePath.tsx';
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { formatRelativeAge, percent } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
@@ -55,34 +55,45 @@ export function ProjectCard({
 	const hiddenMilestones = milestoneOrder.length - visibleMilestones.length;
 	return (
 		<Card className="flex h-full flex-col" interactive>
-			<div className="mb-3 flex items-start justify-between gap-3">
-				<div className="min-w-0">
-					<h2 className="flex items-center gap-1.5 truncate text-base font-semibold text-foreground">
-						{orphan ? (
-							<FolderX
-								aria-label="Missing on disk"
-								className={`h-4 w-4 shrink-0 ${toneText.amber}`}
+			{/* The house header, not a hand-rolled copy of it. This card carried a raw `h2` at
+			    exactly `headerLevels.section`, its own `mb-3` where CardHeader owns `mb-4`, and a
+			    `break-all` path — which broke `D:/applications/aidd-beta-harness` mid-token across
+			    two lines at 1280 while every other card identifier in the app truncates on one. The
+			    slot set was already CardHeader's: a title, a mono identifier, a one-line
+			    description, and an action rail. */}
+			<CardHeader
+				action={
+					<div className="flex flex-col items-end gap-2">
+						{totalStages > 0 ? (
+							// The table ring labels itself with its percentage. The card ring took
+							// the `percent` prop but not `showCenterLabel`, so it still never drew
+							// the number — the same datum read two ways in two placements, and the
+							// larger of the two rings was the one that said less.
+							<MaturityRing
+								ariaLabel={`Maturity ${maturity.percent}%`}
+								percent={maturity.percent}
+								showCenterLabel
+								size={56}
+								stages={maturity.stageStatuses}
 							/>
 						) : null}
-						{detailHref ? (
-							<Link
-								// 20.4px wide for a short project name, under the 24px AA minimum. The
-								// link is last in its heading row, so the width it gains extends the
-								// hit area into space the card already had.
-								className={`-my-1 truncate rounded py-1 hover:underline focus-visible:underline focus-visible:outline-none max-sm:min-w-11 ${touchTargetTextClass}`}
-								to={detailHref}>
-								{project.name}
-							</Link>
-						) : (
-							<span className="truncate">{project.name}</span>
-						)}
-					</h2>
-					<FilePath
-						className="block text-xs break-all text-muted-foreground"
-						path={project.path}
-					/>
-					{totalStages > 0 ? (
-						<p className="mt-1 text-xs text-muted-foreground">
+						{/* The fresh/stale/missing breakdown moved onto the badge's title: as a
+						    third row of `text-[10px]` it was off the type scale and squeezed the
+						    title block hard enough to wrap the path and the stage line. */}
+						<Badge
+							title={
+								summary
+									? `${summary.fresh} fresh · ${summary.stale} stale · ${summary.missing} missing`
+									: undefined
+							}
+							tone={artifactTone[project.artifactHealth]}>
+							{project.artifactHealth}
+						</Badge>
+					</div>
+				}
+				description={
+					totalStages > 0 ? (
+						<>
 							Stage {Math.max(stageIndex, 1)}/{totalStages}:{' '}
 							{maturity.currentStageLabel ?? 'Complete'}
 							{maturity.nextArtifactLabel ? (
@@ -93,37 +104,36 @@ export function ProjectCard({
 									</span>
 								</>
 							) : null}
-						</p>
-					) : null}
-				</div>
-				<div className="flex flex-col items-end gap-2">
-					{totalStages > 0 ? (
-						// The table ring labels itself with its percentage. The card ring took the
-						// `percent` prop but not `showCenterLabel`, so it still never drew the
-						// number — the same datum read two ways in two placements, and the larger
-						// of the two rings was the one that said less.
-						<MaturityRing
-							ariaLabel={`Maturity ${maturity.percent}%`}
-							percent={maturity.percent}
-							showCenterLabel
-							size={56}
-							stages={maturity.stageStatuses}
-						/>
-					) : null}
-					{/* The fresh/stale/missing breakdown moved onto the badge's title: as a third
-					    row of `text-[10px]` it was off the type scale and squeezed the title block
-					    hard enough to wrap the path and the stage line. */}
-					<Badge
-						title={
-							summary
-								? `${summary.fresh} fresh · ${summary.stale} stale · ${summary.missing} missing`
-								: undefined
-						}
-						tone={artifactTone[project.artifactHealth]}>
-						{project.artifactHealth}
-					</Badge>
-				</div>
-			</div>
+						</>
+					) : undefined
+				}
+				identifier={<FilePath path={project.path} />}
+				title={
+					// The orphan marker rides in the title, not the `icon` slot: that slot is
+					// wrapped in `aria-hidden`, which would swallow the `Missing on disk` label
+					// that is the only statement of the condition.
+					<span className="flex min-w-0 items-center gap-1.5">
+						{orphan ? (
+							<FolderX
+								aria-label="Missing on disk"
+								className={`h-4 w-4 shrink-0 ${toneText.amber}`}
+							/>
+						) : null}
+						{detailHref ? (
+							<Link
+								// 20.4px wide for a short project name, under the 24px AA minimum.
+								// The link is last in its heading row, so the width it gains
+								// extends the hit area into space the card already had.
+								className={`-my-1 truncate rounded py-1 hover:underline focus-visible:underline focus-visible:outline-none max-sm:min-w-11 ${touchTargetTextClass}`}
+								to={detailHref}>
+								{project.name}
+							</Link>
+						) : (
+							<span className="truncate">{project.name}</span>
+						)}
+					</span>
+				}
+			/>
 			{/* One identity row. The card used to open with 8-11 pills of identical weight across
 			    three rows, with tone carrying four unrelated meanings at once — version, template
 			    version, profile bucket and profile source are attributes, not statuses, so they

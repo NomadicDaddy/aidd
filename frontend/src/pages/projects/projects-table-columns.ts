@@ -24,6 +24,21 @@ export type ProjectColumnKey =
 	| 'tokens'
 	| 'version';
 
+/**
+ * A data cell in the Projects table — every column except the pinned identity one.
+ *
+ * `w-px` with `whitespace-nowrap` is the auto-layout idiom for "size to your own content": the
+ * declared width sits below the cell's minimum, so the column settles at its widest unwrapped
+ * value. Without it the table is `w-full` on `table-layout: auto` and every column takes a share of
+ * the slack. Measured at 2250 on a 1960px table, GIT held a ~150px badge in a 404px column and LAST
+ * WEB RUN a ~40px chip in 269px, so reading one row left to right crossed four accidental gutters
+ * of 150-250px each — and the 970px the table gained between 1280 and 2250 bought no information at
+ * all. NAME is the only column whose content is genuinely variable (project name, path, spec age),
+ * so it is the one cell that does not carry this, and it absorbs the whole remainder as a single
+ * deliberate gutter after the identity column.
+ */
+export const projectTableCellClass = 'w-px px-3 py-3 whitespace-nowrap';
+
 export interface ProjectColumn {
 	key: ProjectColumnKey;
 	label: string;

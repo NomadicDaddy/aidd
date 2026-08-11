@@ -32,10 +32,16 @@ export function ProjectsCardView({
 	return (
 		<div className="space-y-2">
 			<ProjectsCardSort onToggleSort={onToggleSort} sortDir={sortDir} sortKey={sortKey} />
-			{/* Two columns only from `lg`: at 768 the `md` grid held two ~215px cards, which broke
-			    the project path mid-token and pushed the badge run onto four rows for the same
-			    information. */}
-			<div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+			{/* The grid decides its own column count from a card width rather than from viewport
+			    steps, which capped it at three however wide the column got. At 2250 that meant
+			    three 643px cards in a 1962px column, and nothing on a project card is 643px wide:
+			    the metric list's value column held `0/61` and `10` in 210px, so all eleven rows
+			    ended in ~185px of void, twice over. 30rem is the card's real minimum — below it the
+			    metric list drops to one column and the badge run starts wrapping — so `auto-fill`
+			    gives four ~490px cards at 1962, three at 1920, and two at 1440 and 1280 instead of
+			    three starved ones. At 768 it settles on one, which is what the old `lg` floor was
+			    protecting: two ~215px cards broke the project path mid-token. */}
+			<div className="grid grid-cols-[repeat(auto-fill,minmax(30rem,1fr))] gap-4">
 				{projects.map((project) => (
 					// The project name is the navigation target (a real react-router link, as the
 					// table view already does) rather than a stretched empty overlay whose clicks

@@ -119,7 +119,12 @@ export function CardHeader({
 						</span>
 					)}
 					{title !== undefined && (
-						<Heading className={headerLevels[level]} id={id}>
+						// `min-w-0` because the heading is a flex item of this row and a flex item's
+						// default `min-width: auto` is its content's min-content width. A caller
+						// whose title truncates — a project name, a file name — got no truncation at
+						// all without it: the heading refused to shrink below the longest unbroken
+						// token and pushed past the card instead.
+						<Heading className={cn('min-w-0', headerLevels[level])} id={id}>
 							{title}
 						</Heading>
 					)}

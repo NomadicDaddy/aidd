@@ -132,6 +132,10 @@ describe('responsive steps are chosen against content width', () => {
 		// from 607px to 352px with the rail expanded. Form-field grids are deliberately not here.
 		const retiered = [
 			'pages/pipelineSessions/SessionSummaryCard.tsx',
+			// A project card's width comes from how many columns the card grid gave it, so `sm`
+			// was measuring the wrong thing in both directions: two columns in a 318px card at
+			// 1280 wrapped `Single-user local (explicit)` to four lines.
+			'pages/projects/ProjectCardMetrics.tsx',
 			'pages/projects/detail/ProjectStatusStrip.tsx',
 			'pages/projects/detail/ProjectUsagePanel.tsx',
 			'pages/runs/RunDetailPanel.tsx',

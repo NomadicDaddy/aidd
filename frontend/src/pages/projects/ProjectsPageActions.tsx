@@ -2,6 +2,7 @@ import { default as Grid2X2 } from 'lucide-react/dist/esm/icons/grid-2-x-2';
 import { default as List } from 'lucide-react/dist/esm/icons/list';
 import { default as PackagePlus } from 'lucide-react/dist/esm/icons/package-plus';
 import { default as Plus } from 'lucide-react/dist/esm/icons/plus';
+import { default as Table2 } from 'lucide-react/dist/esm/icons/table-2';
 import { Link } from 'react-router';
 
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
@@ -40,12 +41,15 @@ export function ProjectsPageActions({
 			</Button>
 			{/* A shortcut into the intake panel's Ingest lane, not a peer of the primary entry
 			    point: as a second `primary` it lit teal at the same time as the panel's own
-			    "Ingest Existing" tab, two controls rendering one state. */}
+			    "Ingest Existing" tab, two controls rendering one state. `secondary` rather than
+			    `ghost` says the same thing — it is not the teal — while keeping the run of four
+			    at one weight. As the only borderless label between two bordered ones, `ghost`
+			    read as a gap punched through the group rather than as a lower priority. */}
 			<Button
 				aria-label="Import existing projects"
 				aria-pressed={importOpen}
 				onClick={onToggleImport}
-				variant="ghost">
+				variant="secondary">
 				<PackagePlus className="h-4 w-4" />
 				<span className="hidden lg:inline">Import Existing</span>
 			</Button>
@@ -55,7 +59,11 @@ export function ProjectsPageActions({
 				// 44px height. `min-w-11` rather than a width, so the label still sizes it at `lg`.
 				className={buttonClassName('secondary', 'max-sm:min-w-11')}
 				to="/projects/profile-matrix">
-				<List className="h-4 w-4" />
+				{/* Not `list`. That glyph is half of the SegmentedControl's grid/list pair sitting
+				    ~40px to the right, so the row offered the same mark twice — once to change the
+				    view, once to change the route — and diluted the one pairing the toggle depends
+				    on. `table-2` is what the profile-matrix route actually renders. */}
+				<Table2 className="h-4 w-4" />
 				<span className="hidden lg:inline">Profile Matrix</span>
 			</Link>
 			<SegmentedControl

@@ -243,6 +243,11 @@ All notable public aidd releases are documented here.
   every correctly disabled control against the dark theme's blue-tinted greys, and the project
   features actions check measured the desktop table at viewports where the app deliberately shows a
   card list instead.
+- Every filter search box keeps what you type. The field's contents were read back out of the URL,
+  and that write lands a moment after the keystroke, so anyone typing faster than the round trip
+  had each character overwritten by the next and was left filtering on the last letter alone. The
+  field now shows what was typed as it is typed and updates the URL once typing pauses, while a
+  reset or a link that arrives with a filter already set still fills it in.
 
 ### Security
 

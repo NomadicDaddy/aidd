@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
 import type {
@@ -19,18 +18,16 @@ import {
 } from '../../../hooks/useProjects.ts';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import {
-	FEATURE_FILTER_PARAMS,
 	featureDirectory,
 	featureMatchesFilters,
 	featureSourceLabel,
-	isKnownStatusFilter,
 	milestoneFilterOptions,
 	sortedSourceOptions,
 	sourceLabelCategory,
-	withUnassignedMilestoneFilter,
 } from './featuresUtils.ts';
 import { clampPage } from './pagination-utils.ts';
 import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
+import { useFeatureFilterParams } from './useFeatureFilterParams.ts';
 
 const AUDIT_SOURCE_FILTER_PREFIX = 'Audit: ';
 
@@ -53,7 +50,16 @@ export function useFeaturesTab({
 	// Tab-level launch target: one chip in the toolbar applies to every feature run
 	// launched from this tab (per-row chips would be noise × N rows).
 	const [launchTarget, setLaunchTarget] = useState<LaunchTargetValue>({});
-	const [searchParams, setSearchParams] = useSearchParams();
+	const {
+		hasFilters,
+		milestoneFilter,
+		query,
+		resetFilters,
+		showUnassigned,
+		sourceFilter,
+		statusFilter,
+		updateFilterParam,
+	} = useFeatureFilterParams(() => setPage(0));
 	const approveFeature = useApproveProjectFeature(projectId);
 	const deleteFeature = useDeleteProjectFeature(projectId);
 	const updateFeatureMilestone = useUpdateProjectFeatureMilestone(projectId);
@@ -69,22 +75,12 @@ export function useFeaturesTab({
 		runs.data?.pages.some((page) => page.runs.some((run) => run.status === 'running')) ?? false;
 	const total = features.length;
 	const milestoneOptions = roadmap?.milestoneOrder ?? Object.keys(roadmap?.milestones ?? {});
-	const query = searchParams.get('featureQ') ?? '';
-	const rawStatusFilter = searchParams.get('featureStatus') ?? 'all';
-	const statusFilter = isKnownStatusFilter(rawStatusFilter) ? rawStatusFilter : 'all';
-	const milestoneFilter = searchParams.get('featureMilestone') ?? 'all';
-	const sourceFilter = searchParams.get('featureSource') ?? 'all';
 	const sourceOptions = sortedSourceOptions(features);
 	const filterMilestoneOptions = milestoneFilterOptions(features, roadmap);
 	const filteredFeatures = features.filter((feature) =>
 		featureMatchesFilters(feature, { milestoneFilter, query, sourceFilter, statusFilter }),
 	);
 	const filteredTotal = filteredFeatures.length;
-	const hasFilters =
-		query.trim().length > 0 ||
-		statusFilter !== 'all' ||
-		milestoneFilter !== 'all' ||
-		sourceFilter !== 'all';
 	useEffect(() => {
 		setPage(0);
 	}, [projectId]);
@@ -99,26 +95,6 @@ export function useFeaturesTab({
 		updateFeatureMilestone.isPending ||
 		updateFeatureStatus.isPending ||
 		launchRun.isPending;
-
-	function updateFilterParam(key: string, value: string): void {
-		const next = new URLSearchParams(searchParams);
-		if (value === '' || value === 'all') next.delete(key);
-		else next.set(key, value);
-		setPage(0);
-		setSearchParams(next, { replace: true });
-	}
-
-	function showUnassigned(): void {
-		setPage(0);
-		setSearchParams(withUnassignedMilestoneFilter(searchParams), { replace: true });
-	}
-
-	function resetFilters(): void {
-		const next = new URLSearchParams(searchParams);
-		for (const key of FEATURE_FILTER_PARAMS) next.delete(key);
-		setPage(0);
-		setSearchParams(next, { replace: true });
-	}
 
 	function onApprove(feature: ProjectFeature, decisionRequired: boolean): void {
 		const featureId = featureDirectory(feature);

@@ -90,14 +90,23 @@ export function useProjectsPageFilters(
 	const sortKey = readSortKey(searchParams.get('sort'));
 	const sortDir = readSortDir(searchParams.get('dir'));
 
+	// The search box calls this once per keystroke. Building the next params from the
+	// `searchParams` of the render that created this closure means keystrokes batched into
+	// one render all start from the same copy and only the last one survives, so read the
+	// live params through the updater instead.
 	function updateParam(key: string, value: null | string) {
-		const next = new URLSearchParams(searchParams);
-		if (value === null || value === '' || value === 'all') {
-			next.delete(key);
-		} else {
-			next.set(key, value);
-		}
-		setSearchParams(next, { replace: true });
+		setSearchParams(
+			(previous) => {
+				const next = new URLSearchParams(previous);
+				if (value === null || value === '' || value === 'all') {
+					next.delete(key);
+				} else {
+					next.set(key, value);
+				}
+				return next;
+			},
+			{ replace: true },
+		);
 	}
 
 	function resetFilters() {
@@ -111,18 +120,28 @@ export function useProjectsPageFilters(
 	function toggleSort(key: SortKey) {
 		if (key === sortKey) {
 			const nextDir = sortDir === 'asc' ? 'desc' : 'asc';
-			const next = new URLSearchParams(searchParams);
-			next.set('sort', key);
-			if (nextDir === DEFAULT_SORT_DIR) next.delete('dir');
-			else next.set('dir', nextDir);
-			setSearchParams(next, { replace: true });
+			setSearchParams(
+				(previous) => {
+					const next = new URLSearchParams(previous);
+					next.set('sort', key);
+					if (nextDir === DEFAULT_SORT_DIR) next.delete('dir');
+					else next.set('dir', nextDir);
+					return next;
+				},
+				{ replace: true },
+			);
 			return;
 		}
-		const next = new URLSearchParams(searchParams);
-		if (key === DEFAULT_SORT) next.delete('sort');
-		else next.set('sort', key);
-		next.delete('dir');
-		setSearchParams(next, { replace: true });
+		setSearchParams(
+			(previous) => {
+				const next = new URLSearchParams(previous);
+				if (key === DEFAULT_SORT) next.delete('sort');
+				else next.set('sort', key);
+				next.delete('dir');
+				return next;
+			},
+			{ replace: true },
+		);
 	}
 
 	const rootOptions = ((): { label: string; path: string }[] => {

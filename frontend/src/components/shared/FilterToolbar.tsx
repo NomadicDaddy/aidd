@@ -2,7 +2,9 @@ import type { ReactNode } from 'react';
 
 import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
+import { useEffect, useState } from 'react';
 
+import { useDebouncedValue } from '../../hooks/useDebouncedValue.ts';
 import { cn } from '../../lib/cn.ts';
 import { selectClass } from '../../lib/formStyles.ts';
 import { Button } from '../ui/button.tsx';
@@ -110,6 +112,29 @@ export function FilterSearch({
 	shortcut?: boolean;
 	value: string;
 }) {
+	// Every caller stores this value in the URL, and that write commits in a transition that
+	// can land several keystrokes late. Rendering the incoming value directly meant React
+	// reset the input to the not-yet-updated value between keystrokes, so anyone typing
+	// faster than the round trip kept only their last character. `draft` is the copy the
+	// field renders and it updates on the keystroke; the value is pushed outward once typing
+	// settles, and an incoming value is adopted only while no edit is waiting to be pushed,
+	// so a reset button or a deep link still fills the field.
+	const [draft, setDraft] = useState(value);
+	const [lastValue, setLastValue] = useState(value);
+	const settled = useDebouncedValue(draft, 150);
+	if (value !== lastValue) {
+		setLastValue(value);
+		// Adopt an incoming value only when the field is at rest. Mid-edit it is either the
+		// echo of an earlier keystroke or a value about to be superseded, and taking it would
+		// throw away what has been typed since.
+		if (draft === settled) setDraft(value);
+	}
+	useEffect(() => {
+		// `settled === draft` means the pause after typing has elapsed. Without it, a reset
+		// that clears the field would be undone by the previous query still sitting in
+		// `settled` for one more debounce interval.
+		if (settled === draft && settled !== value) onChange(settled);
+	}, [draft, onChange, settled, value]);
 	return (
 		<FieldRow className={className} label="Search">
 			<div className="relative">
@@ -118,9 +143,9 @@ export function FilterSearch({
 					aria-label={ariaLabel}
 					className="pl-9"
 					data-shortcut-search={shortcut ? '' : undefined}
-					onChange={(event) => onChange(event.target.value)}
+					onChange={(event) => setDraft(event.target.value)}
 					placeholder={placeholder}
-					value={value}
+					value={draft}
 				/>
 			</div>
 		</FieldRow>

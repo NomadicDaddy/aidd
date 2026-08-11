@@ -133,6 +133,12 @@ export async function assertProjectFeaturesActionsAffordance(
 		const result = (await page.evaluate(`(() => {
 			const table = document.querySelector('tbody')?.closest('table');
 			if (!table) return { skipped: true, problems: [] };
+			// The features table is the desktop form of a surface that becomes a card list below xl,
+			// and the hidden half stays in the DOM. Measuring it there reports every control as
+			// zero-sized, which is a fact about the viewport rather than about the Actions column.
+			if (table.offsetWidth <= 0 || table.offsetHeight <= 0) {
+				return { skipped: true, problems: [] };
+			}
 			const headers = Array.from(table.querySelectorAll('thead th'));
 			const actionsHeader = headers[headers.length - 1];
 			const problems = [];

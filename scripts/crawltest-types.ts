@@ -21,6 +21,11 @@ const MOBILE_USER_AGENT_IOS =
 const MOBILE_USER_AGENT_ANDROID =
 	'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
 
+/* Puppeteer defaults to 800x600, under every breakpoint the app designs against, so a crawl that
+   called itself `desktop` asserted against and screenshotted the mobile layout. 1440x900 clears
+   `xl`, the widest tier a table gates its desktop form behind. */
+export const DESKTOP_VIEWPORT = { height: 900, width: 1440 } as const;
+
 export const MOBILE_VIEWPORT_PRESETS: Record<string, ViewportPreset> = {
 	'android-sm': {
 		deviceScaleFactor: 2,

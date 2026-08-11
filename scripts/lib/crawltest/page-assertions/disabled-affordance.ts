@@ -14,6 +14,16 @@ function parseRgb(value: string): [number, number, number] | null {
 	return [r, g, b];
 }
 
+function srgbToLinear(channel: number): number {
+	const value = channel / 255;
+	return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+/* Both branches have to answer in the same unit, and the threshold below is stated in OKLCH
+   chroma. The rgb branch used to answer with the widest gap between two channels divided by 255,
+   which is a different scale entirely: `#1e2330`, the app's dark `--muted`, reads 0.071 that way
+   and 0.026 as real chroma, so every quiet surface in the dark theme was judged a coloured one.
+   The conversion is sRGB -> linear -> Oklab, then the hypotenuse of the a/b pair. */
 function colorChroma(value: string): null | number {
 	const oklch = value.match(/oklch\(\s*[\d.]+%?\s+([\d.]+)/i);
 	const chroma = oklch?.[1];
@@ -23,9 +33,14 @@ function colorChroma(value: string): null | number {
 	}
 	const rgb = parseRgb(value);
 	if (!rgb) return null;
-	const [r, g, b] = rgb;
-	const spread = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-	return spread / 255;
+	const [red, green, blue] = rgb.map(srgbToLinear) as [number, number, number];
+	const long = Math.cbrt(0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue);
+	const medium = Math.cbrt(0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue);
+	const short = Math.cbrt(0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue);
+	return Math.hypot(
+		1.9779984951 * long - 2.428592205 * medium + 0.4505937099 * short,
+		0.0259040371 * long + 0.7827717662 * medium - 0.808675766 * short,
+	);
 }
 
 function isNeutralColor(value: string): boolean {

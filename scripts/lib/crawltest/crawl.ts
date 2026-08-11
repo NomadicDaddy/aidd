@@ -10,6 +10,7 @@ import { getVersionedScreenshotDir, writeCrawlResult } from '../../crawltest-scr
 import {
 	type CrawlArgs,
 	type CrawlerOptions,
+	DESKTOP_VIEWPORT,
 	MOBILE_VIEWPORT_NAMES,
 	MOBILE_VIEWPORT_PRESETS,
 	type ViewportArg,
@@ -60,6 +61,8 @@ async function crawl(
 			width: preset.width,
 		});
 		await page.setUserAgent(preset.userAgent);
+	} else {
+		await page.setViewport(DESKTOP_VIEWPORT);
 	}
 
 	const pageErrors: string[] = [];

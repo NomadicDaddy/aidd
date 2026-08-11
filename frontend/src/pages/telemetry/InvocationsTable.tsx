@@ -1,6 +1,7 @@
 import type { TelemetryOutcomeBucket } from 'aidd-shared/runs/outcome';
 
 import { classifyWebRun, classifyWebRunTelemetryBucket } from 'aidd-shared/runs/outcome';
+import { useState } from 'react';
 import { Link } from 'react-router';
 
 import type {
@@ -15,9 +16,32 @@ import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { formatDate, formatDuration } from '../../lib/formatters.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
-import { InvocationDetails } from './InvocationDetails.tsx';
+import {
+	InspectChevron,
+	inspectTriggerClass,
+	InvocationDetails,
+	InvocationDetailsPanel,
+} from './InvocationDetails.tsx';
 
-const columns = ['Resource', 'Source', 'Project', 'Started', 'Duration', 'Status', 'Details'];
+/**
+ * The seven columns, with a width for the five that hold something bounded.
+ *
+ * `table-auto` distributes by content, and the content here is lopsided: Resource carries a name, a
+ * parent line and two identity badges, so it took 42% of the table while Duration — which never
+ * prints more than seven characters — took 14% and Status, which prints a badge and sometimes a
+ * second line under it, was squeezed until 'Counted under Warnings' wrapped to three lines. Fixing
+ * the five bounded columns lets Resource and Project absorb the remainder, which is the only place
+ * variable-length content actually lives.
+ */
+const columns: readonly { className: string; label: string }[] = [
+	{ className: '', label: 'Resource' },
+	{ className: 'w-20', label: 'Source' },
+	{ className: '', label: 'Project' },
+	{ className: 'w-40', label: 'Started' },
+	{ className: 'w-28', label: 'Duration' },
+	{ className: 'w-36', label: 'Status' },
+	{ className: 'w-24', label: 'Details' },
+];
 
 function resourceLink(type: TelemetryResourceType, id: string): string {
 	if (type === 'recipe') return `/recipes/${id}`;
@@ -40,8 +64,11 @@ export function InvocationsTable({ invocations }: { invocations: InvocationRecor
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
 							{columns.map((column) => (
-								<th className="px-3 py-2" key={column} scope="col">
-									{column}
+								<th
+									className={`px-3 py-2 ${column.className}`}
+									key={column.label}
+									scope="col">
+									{column.label}
 								</th>
 							))}
 						</tr>
@@ -120,31 +147,65 @@ function InvocationResource({ invocation }: { invocation: InvocationRecord }) {
 	);
 }
 
+/**
+ * One invocation, plus the row its detail panel opens into.
+ *
+ * The panel used to open inside the Details cell, which is the last of seven: a 672px panel in a
+ * column sized for the word 'Inspect' widened the table to 1518px inside a 1236px scroller, so
+ * opening one row scrolled every other row's Resource column off the left edge and the operator had
+ * to drag back and forth between the row they picked and the panel they opened. A full-width row
+ * underneath is the shape a table has for this. It costs a `useState` per row, which is the reason
+ * the cheaper `<details>` was reached for first, and buys back the whole horizontal axis.
+ *
+ * `<details>` cannot span a table row — its content has to be a child of the element that holds the
+ * summary — so the trigger here is a button carrying the state explicitly. The card stack below
+ * `xl` still uses the `<details>`; both wear the same trigger classes and the same chevron.
+ */
 function InvocationRow({ invocation }: { invocation: InvocationRecord }) {
+	const [open, setOpen] = useState(false);
+	const panelId = `invocation-details-${invocation.id}`;
 	return (
-		<tr className="border-b border-border last:border-0">
-			<td className="px-3 py-2">
-				<InvocationResource invocation={invocation} />
-			</td>
-			<td className="px-3 py-2 text-xs text-foreground">{invocation.source}</td>
-			<td className="px-3 py-2 text-xs text-foreground">{invocation.projectName}</td>
-			{/* The duration cell beside this one already had it; the timestamp column did not,
+		<>
+			<tr className={`border-b border-border ${open ? '' : 'last:border-0'}`}>
+				<td className="px-3 py-2">
+					<InvocationResource invocation={invocation} />
+				</td>
+				<td className="px-3 py-2 text-xs text-foreground">{invocation.source}</td>
+				<td className="px-3 py-2 text-xs text-foreground">{invocation.projectName}</td>
+				{/* The duration cell beside this one already had it; the timestamp column did not,
 			    so two adjacent numeric columns set their digits on two different widths. */}
-			<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground tabular-nums">
-				{formatDate(invocation.startedAt)}
-			</td>
-			<td className="px-3 py-2 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-				{invocation.durationMs === null ? '—' : formatDuration(invocation.durationMs)}
-			</td>
-			<td className="px-3 py-2">
-				<InvocationStatusCell invocation={invocation} />
-			</td>
-			{/* Inherits the row alignment like every other cell: `align-top` floated all 38
-			    'Inspect' links about 16px above the rows they belong to. */}
-			<td className="px-3 py-2">
-				<InvocationDetails invocation={invocation} />
-			</td>
-		</tr>
+				<td className="px-3 py-2 text-xs whitespace-nowrap text-foreground tabular-nums">
+					{formatDate(invocation.startedAt)}
+				</td>
+				<td className="px-3 py-2 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+					{invocation.durationMs === null ? '—' : formatDuration(invocation.durationMs)}
+				</td>
+				<td className="px-3 py-2">
+					<InvocationStatusCell invocation={invocation} />
+				</td>
+				{/* Inherits the row alignment like every other cell: `align-top` floated all 38
+				    'Inspect' links about 16px above the rows they belong to. */}
+				<td className="px-3 py-2">
+					<button
+						aria-controls={panelId}
+						aria-expanded={open}
+						aria-label={`Inspect telemetry for ${invocation.resourceName}`}
+						className={`flex items-center gap-1 ${inspectTriggerClass}`}
+						onClick={() => setOpen(!open)}
+						type="button">
+						<InspectChevron open={open} />
+						Inspect
+					</button>
+				</td>
+			</tr>
+			{open ? (
+				<tr className="border-b border-border last:border-0">
+					<td className="px-3 pb-3" colSpan={columns.length} id={panelId}>
+						<InvocationDetailsPanel invocation={invocation} />
+					</td>
+				</tr>
+			) : null}
+		</>
 	);
 }
 

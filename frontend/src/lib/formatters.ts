@@ -19,11 +19,26 @@ export function formatTimeOfDay(value: number | string): string {
 	return timeOfDayFormatter.format(new Date(value));
 }
 
+/**
+ * An elapsed time as at most two units, rolling up as the magnitude grows.
+ *
+ * The hours branch is the one that had to be added. Without it the formatter topped out at minutes
+ * and the Telemetry Duration column printed '240m 27s', '206m 33s', '170m 58s' one under the other,
+ * with 'avg 240m 27s' repeating the shape in the leaderboard footer. Reading four hours out of
+ * '240m' is arithmetic the operator should not be doing mid-scan, and it costs the column the thing
+ * a duration column is for: 18m and 240m are the same shape at nearly the same width, so nothing
+ * about the list said which runs were the long ones.
+ *
+ * Seconds are dropped once hours appear, keeping the two-part shape the rest of the function has.
+ * At that magnitude the seconds are noise — a run that took four hours is not reported to the
+ * second — and a third unit would push the cell past the widths the table's columns are set to.
+ */
 export function formatDuration(ms: null | number | undefined): string {
 	if (!ms) return '0s';
 	const seconds = Math.round(ms / 1000);
 	if (seconds < 60) return `${seconds}s`;
 	const minutes = Math.floor(seconds / 60);
+	if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 	const remainder = seconds % 60;
 	return remainder === 0 ? `${minutes}m` : `${minutes}m ${remainder}s`;
 }

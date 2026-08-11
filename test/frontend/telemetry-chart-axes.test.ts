@@ -82,11 +82,24 @@ function categoryLabels(markup: string): string[] {
 		.map((cell) => /<span class="absolute[^"]*">([^<]*)<\/span>/.exec(cell)?.[1] ?? '');
 }
 
+/**
+ * Every gridline's offset, in document order.
+ *
+ * The class is matched loosely on purpose. Gridlines carry one of two weights — the zero line is
+ * drawn at twice the strength of the rest, because it is the baseline on one chart and the hinge on
+ * the other — and pinning the exact token would make this helper silently stop seeing one of them.
+ * `gridlineWeights` below is what guards the weights; this one guards the offsets.
+ */
 function gridlineOffsets(markup: string): string[] {
 	return [
-		...markup.matchAll(
-			/<span class="absolute inset-x-0 border-t border-border" style="top:(.*?)"/g,
-		),
+		...markup.matchAll(/<span class="absolute inset-x-0 border-t [^"]*" style="top:(.*?)"/g),
+	].map((match) => match[1] ?? '');
+}
+
+/** The gridline colour token at each offset, so the zero line's extra weight is asserted. */
+function gridlineWeights(markup: string): string[] {
+	return [
+		...markup.matchAll(/<span class="absolute inset-x-0 border-t (border-[^"]*)" style="top:/g),
 	].map((match) => match[1] ?? '');
 }
 
@@ -122,6 +135,26 @@ describe('Telemetry chart axes', () => {
 		]);
 		expect(gridlineOffsets(rendered.invocations)).toEqual(['0%', '50%', '100%']);
 		expect(gridlineOffsets(rendered.lines)).toEqual(['0%', '25%', '50%', '75%', '100%']);
+	});
+
+	test('gridlines carry a visible weight, and the zero line carries twice it', () => {
+		// `border-border` is a card-edge weight, and these rules are not edges: on the card surface
+		// it measured 1.23:1 in dark and 1.26:1 in light, so the thing tying a bar's height to its
+		// tick was invisible. The zero line is separated again from the rest because it is the
+		// baseline on the invocations chart and the axis both arms hinge on in the diverging one.
+		expect(gridlineWeights(rendered.invocations)).toEqual([
+			'border-muted-foreground/20',
+			'border-muted-foreground/20',
+			'border-muted-foreground/40',
+		]);
+		expect(gridlineWeights(rendered.lines)).toEqual([
+			'border-muted-foreground/20',
+			'border-muted-foreground/20',
+			'border-muted-foreground/40',
+			'border-muted-foreground/20',
+			'border-muted-foreground/20',
+		]);
+		expect(gridlineWeights(rendered.invocations)).not.toContain('border-border');
 	});
 
 	test('the diverging chart draws its center baseline as a gridline, not a bespoke rule', async () => {

@@ -42,13 +42,18 @@ describe('telemetry polish', () => {
 	});
 
 	test('skips the breakdown bar when it can only ever be full', async () => {
-		const components = await telemetry('TelemetryComponents.tsx');
-		const guards = components.match(/const ranks = max !== Math\.min\(/gu);
+		// One guard in each of the two components that draw a proportional bar. They live in
+		// separate modules now, so the pair is counted across both rather than within one file.
+		const sources = await Promise.all(
+			['LeaderboardCard.tsx', 'TelemetryComponents.tsx'].map(telemetry),
+		);
+		const joined = sources.join('\n');
+		const guards = joined.match(/const ranks = max !== Math\.min\(/gu);
 
 		// The same guard LeaderboardCard makes: a single-row backend breakdown drew a full-width
 		// accent bar across the card that could only ever read 100%.
 		expect(guards).toHaveLength(2);
-		expect(components.match(/\{ranks \? \(/gu)).toHaveLength(2);
+		expect(joined.match(/\{ranks \? \(/gu)).toHaveLength(2);
 	});
 
 	test('lets the Details cell inherit the row alignment', async () => {
@@ -89,11 +94,33 @@ describe('telemetry polish', () => {
 
 		// Total invocations, Top-level actions and Nested steps are not a series in any chart on
 		// the page, so their cyan, indigo and magenta stood for nothing a reader could look up.
-		expect(summary).toContain('<Metric label="Total invocations" value={totals.total} />');
-		expect(summary).toContain('<Metric label="Top-level actions" value={totals.topLevel} />');
-		expect(summary).toContain('<Metric label="Nested steps" value={totals.nested} />');
+		// Asserted as "these three carry no marker" rather than by pinning their exact markup —
+		// they have since gained a `detail` and an `icon`, neither of which is a colour claim.
+		//
+		// Sliced on the element boundary rather than matched with `[^>]*`: the icon prop holds a
+		// self-closing element of its own, so a `>`-terminated pattern stops inside the tile it is
+		// trying to read and the assertion silently passes on `undefined`.
+		const tiles = summary.split('<Metric').slice(1);
+		for (const label of ['Total invocations', 'Top-level actions', 'Nested steps']) {
+			const tile = tiles.find((chunk) => chunk.includes(`label="${label}"`));
+			expect(`${label}: ${tile !== undefined}`).toBe(`${label}: true`);
+			expect(`${label}: ${tile?.includes('marker=')}`).toBe(`${label}: false`);
+		}
 		expect(summary).not.toContain('seriesSolid');
 		// The outcome tiles keep theirs — those colours are the chart's, and its legend names them.
 		expect(summary.match(/marker=\{outcomeDot\(outcomeSolid\./gu)).toHaveLength(8);
+	});
+
+	test('says what span the headline figures cover and how the split divides', async () => {
+		const summary = await telemetry('TelemetrySummary.tsx');
+		const page = await telemetry('TelemetryPage.tsx');
+
+		// '38' beside 'Total invocations' was 38 of a span named only by a control two cards up,
+		// and Top-level/Nested sum to the total, which is one figure rather than a subtraction the
+		// reader performs.
+		expect(summary).toContain("'in the last 24 hours'");
+		expect(summary).toContain('percent(totals.topLevel, totals.total)');
+		expect(summary).toContain('percent(totals.nested, totals.total)');
+		expect(page).toContain('windowLabel=');
 	});
 });

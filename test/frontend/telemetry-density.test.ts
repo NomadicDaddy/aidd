@@ -24,7 +24,7 @@ function renderSurfaces(): Rendered {
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
-import { LeaderboardCard } from './src/pages/telemetry/TelemetryComponents.tsx';
+import { LeaderboardCard } from './src/pages/telemetry/LeaderboardCard.tsx';
 import { InvocationsTable } from './src/pages/telemetry/InvocationsTable.tsx';
 import { TelemetryDisclosure } from './src/pages/telemetry/TelemetryDisclosure.tsx';
 import { TelemetrySummary } from './src/pages/telemetry/TelemetrySummary.tsx';
@@ -92,7 +92,7 @@ console.log(JSON.stringify({
 	disclosure: render(createElement(TelemetryDisclosure)),
 	leaderboardRanked: render(createElement(LeaderboardCard, { rows: [row('a', 9), row('b', 2)] })),
 	leaderboardTied: render(createElement(LeaderboardCard, { rows: [row('a', 1), row('b', 1)] })),
-	summary: render(createElement(TelemetrySummary, { totals })),
+	summary: render(createElement(TelemetrySummary, { totals, windowLabel: '7d' })),
 	tableRunless: render(createElement(InvocationsTable, { invocations: [invocation({ id: 'plain' })] })),
 	table: render(createElement(InvocationsTable, {
 		invocations: [
@@ -139,6 +139,7 @@ describe('telemetry surfaces stay on the token and type scales', () => {
 			'ChartAxes.tsx',
 			'InvocationDetails.tsx',
 			'InvocationsTable.tsx',
+			'LeaderboardCard.tsx',
 			'OutputTimeseriesChart.tsx',
 			'TelemetryChartTable.tsx',
 			'TelemetryComponents.tsx',
@@ -223,12 +224,29 @@ describe('telemetry lets the data lead', () => {
 		expect(rendered.summary).not.toContain('flex-col justify-between');
 	});
 
-	test('the two chart columns size to their own content', async () => {
+	test('the two chart columns size to their own content, on the page’s own width', async () => {
 		const page = await telemetrySource('TelemetryPage.tsx');
 
+		// The split reads the page's width rather than the window's: `xl:` measured a viewport the
+		// sidebar had already taken 240px out of, so the two columns appeared 240px before the page
+		// had room for them.
 		expect(page).toContain(
-			'grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]',
+			'grid items-start gap-4 @min-[61rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]',
 		);
+		expect(page).not.toContain('xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]');
+	});
+
+	test('the leaderboard columnises rather than leaving a void beside its lower half', async () => {
+		const leaderboard = await telemetrySource('LeaderboardCard.tsx');
+		const page = await telemetrySource('TelemetryPage.tsx');
+
+		// Ten single-file rows stood 1180px tall against a 692px stack of three charts, which left
+		// an 876x488 empty region at 2250 — the largest on any surface in the app. The rows split
+		// into two columns once the card is wide enough, which is what closes it.
+		expect(leaderboard).toContain('grid gap-2 @min-[45rem]:grid-cols-2');
+		expect(leaderboard).not.toContain('<ol className="space-y-2">');
+		// And the card the rows sit in is what declares the container they measure.
+		expect(page).toContain('<Card className="@container flex flex-col gap-3">');
 	});
 
 	test('the filter-driven output message is the shared empty surface with a way out', async () => {
@@ -328,10 +346,38 @@ describe('recent invocations table', () => {
 	test('the Inspect panel is a sunken card, not a hand-rolled well', async () => {
 		const details = await telemetrySource('InvocationDetails.tsx');
 
+		expect(details).toContain('<Card className="w-full p-3" variant="sunken">');
 		expect(details).toContain(
-			'<Card className="mt-2 w-[min(42rem,75vw)] p-3" variant="sunken">',
+			"export const inspectTriggerClass = 'text-xs font-medium text-accent hover:underline'",
 		);
-		expect(details).toContain('text-xs font-medium text-accent hover:underline');
 		expect(rendered.table).toContain('bg-muted/90 shadow-inner');
+	});
+
+	test('the panel takes a full-width row instead of widening the last column', async () => {
+		const details = await telemetrySource('InvocationDetails.tsx');
+		const table = await telemetrySource('InvocationsTable.tsx');
+
+		// A 672px panel inside a column sized for the word 'Inspect' widened the table to 1518px
+		// inside a 1236px scroller, so opening one row scrolled every other row's Resource column
+		// off the left edge. The panel is sized by its container now and the table gives it a row.
+		expect(details).not.toContain('w-[min(42rem,75vw)]');
+		expect(table).toContain('colSpan={columns.length}');
+		expect(table).toContain('aria-expanded={open}');
+		expect(table).toContain('aria-controls={panelId}');
+	});
+
+	test('both disclosure triggers on the page wear the app’s chevron', async () => {
+		const details = await telemetrySource('InvocationDetails.tsx');
+		const disclosure = await telemetrySource('TelemetryDisclosure.tsx');
+
+		// One page was offering two unrelated affordances for one gesture: the privacy card drew a
+		// literal '›' and the Inspect rows kept the browser's native triangle, tinted teal by the
+		// inherited `text-accent`.
+		expect(details).toContain("from 'lucide-react/dist/esm/icons/chevron-right'");
+		expect(details).toContain('marker:content-none');
+		expect(disclosure).toContain('group-open:rotate-90');
+		// Asserted on the markup, not the module: the comment above the replacement names the
+		// glyph it replaced, and a source scan cannot tell that apart from still drawing it.
+		expect(rendered.disclosure).not.toContain('›');
 	});
 });

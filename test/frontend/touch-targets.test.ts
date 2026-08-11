@@ -292,6 +292,11 @@ const EXEMPT: Exemption[] = [
 		marker: 'block truncate text-sm font-semibold',
 		reason: 'Inside `Card className="hidden p-0 xl:block"`; `ProfileMatrixMobileList` stands in.',
 	},
+	{
+		file: 'pages/telemetry/InvocationsTable.tsx',
+		marker: 'aria-controls={panelId}',
+		reason: 'The Inspect trigger of a table row, inside `OverflowScroller className="hidden xl:block"`; `InvocationCard` is the phone rendering and its trigger is a `<summary>` in flow.',
+	},
 
 	// The bottom-docked terminal. It renders at every width, but its chrome lives in a 28px tab
 	// strip whose height is the pane header's, and every control in it is a modifier on an xterm

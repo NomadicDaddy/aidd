@@ -14,10 +14,10 @@ function renderTransparencyComponents(): string {
 		"import { MemoryRouter } from 'react-router';",
 		"import { TelemetryDisclosure } from './src/pages/telemetry/TelemetryDisclosure.tsx';",
 		"import { TelemetrySummary } from './src/pages/telemetry/TelemetrySummary.tsx';",
-		"import { LeaderboardCard } from './src/pages/telemetry/TelemetryComponents.tsx';",
+		"import { LeaderboardCard } from './src/pages/telemetry/LeaderboardCard.tsx';",
 		'const totals = { completed: 1, failed: 1, killed: 1, nested: 4, noWork: 1, running: 1, stopped: 1, topLevel: 8, total: 12, warnings: 6 };',
 		'const row = { avgDurationMs: 1000, completed: 1, failed: 1, killed: 1, lastUsedAt: 1700000000000, nested: 4, noWork: 1, resourceId: "demo", resourceName: "Demo", resourceType: "skill", running: 1, stopped: 1, topLevel: 3, total: 7, warnings: 1 };',
-		'const content = createElement(Fragment, null, createElement(TelemetryDisclosure), createElement(TelemetrySummary, { totals }), createElement(LeaderboardCard, { rows: [row] }));',
+		'const content = createElement(Fragment, null, createElement(TelemetryDisclosure), createElement(TelemetrySummary, { totals, windowLabel: "All" }), createElement(LeaderboardCard, { rows: [row] }));',
 		'console.log(renderToStaticMarkup(createElement(MemoryRouter, null, content)));',
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {

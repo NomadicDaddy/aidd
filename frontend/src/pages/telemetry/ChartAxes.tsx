@@ -47,10 +47,23 @@ export function ChartAxes({
 				))}
 			</div>
 			<div className="relative">
+				{/* `border-border` is the right weight for a card edge, which is a shape cue, and the
+				    wrong one for a rule that carries a measurement: on the card surface it measured
+				    1.23:1 in dark and 1.26:1 in light, so the only thing tying a bar's height to its
+				    tick was effectively invisible. The muted token is the one the bar troughs on this
+				    same page already use, so nothing new is introduced.
+
+				    The zero line takes twice the strength. On the invocations chart it is the
+				    baseline every bar stands on; on the diverging chart it is the axis the two arms
+				    hinge on, and that one read as absent entirely. */}
 				<div className="pointer-events-none absolute inset-0">
 					{ticks.map((tick) => (
 						<span
-							className="absolute inset-x-0 border-t border-border"
+							className={`absolute inset-x-0 border-t ${
+								tick.label === '0'
+									? 'border-muted-foreground/40'
+									: 'border-muted-foreground/20'
+							}`}
 							key={`${tick.label}@${tick.offsetPct}`}
 							style={{ top: `${tick.offsetPct}%` }}
 						/>

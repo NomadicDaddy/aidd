@@ -64,6 +64,13 @@ const exemptions: { file: string; why: string }[] = [
 	{ file: 'skills/SkillImportDialog.tsx', why: 'dialog title, wired to aria-labelledby' },
 	{ file: 'diary/DiaryFeed.tsx', why: 'sticky day divider in a chronological feed' },
 	{ file: 'dashboard/DirectorQueueCard.tsx', why: 'per-suggestion row title inside a list' },
+	// The privacy card's four disclosure items are grid cells inside one card, under that card's own
+	// CardHeader. There is no card for CardHeader to title here, and giving each item one would put
+	// four card headers inside a single card.
+	{
+		file: 'telemetry/TelemetryDisclosure.tsx',
+		why: 'item title inside the disclosure grid of one card, under that card CardHeader',
+	},
 ];
 
 describe('CardHeader adoption', () => {

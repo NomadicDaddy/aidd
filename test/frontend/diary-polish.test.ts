@@ -65,13 +65,13 @@ describe('diary polish', () => {
 		const html = renderTimeline([timelineItem({})]);
 
 		// The title read "coding · aidd" and the meta line directly under it read "aidd coding
-		// 170m 58s" — the same two facts, on two lines, in two treatments. Counted on the rendered
+		// 2h 50m" — the same two facts, on two lines, in two treatments. Counted on the rendered
 		// text: the link's accessible name restates the title on purpose, and it is not read twice.
 		const text = html.replaceAll(/<[^>]*>/gu, '|');
 		expect(text.match(/coding/gu)).toHaveLength(1);
 		expect(text.match(/aidd/gu)).toHaveLength(1);
 		// The duration is the one fact the title does not carry, so it is the one that survives.
-		expect(text).toContain('170m 58s');
+		expect(text).toContain('2h 50m');
 		// The dedupe left the project name stated once, in the title — and the title set it in
 		// Geist Sans while the recipe row directly under it printed the same identifier as a mono
 		// chip. The one place it is stated sets it as the machine string it is.
@@ -130,7 +130,7 @@ describe('diary polish', () => {
 		// Three classes of value rendered as identical muted spans with an 8px gap and nothing
 		// between them: a directory, a mode, and an elapsed time.
 		expect(html).toContain('<span class="font-mono">aidd</span>');
-		expect(html).toContain('<span class="tabular-nums">170m 58s</span>');
+		expect(html).toContain('<span class="tabular-nums">2h 50m</span>');
 		// The separator sits at the weight of the values it divides. `text-border` is 1.23:1
 		// against the row and did not render at all, so the line read as three gap-separated spans
 		// — the ambiguity the separator was added to remove, still there behind a glyph nobody

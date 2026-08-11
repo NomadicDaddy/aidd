@@ -94,13 +94,19 @@ describe('responsive steps are chosen against content width', () => {
 		// chain gates against. `RecipeMetadataCard` is the same case: it is the recipe form's own
 		// three fields, rendered nowhere but `RecipeEditMode`, whose root declares the container —
 		// and it *cannot* declare its own, because the query is on the card element itself and an
-		// element never matches containment it establishes.
+		// element never matches containment it establishes. `LeaderboardCard` is the catalog case
+		// again: it is rendered nowhere but the "Most used" card on `TelemetryPage`, which is the
+		// element that declares the container its rows measure.
 		expect(offenders.sort()).toEqual([
 			'pages/recipes/detail/RecipeMetadataCard.tsx',
 			'pages/runs/LiveConsole.tsx',
 			'pages/runs/PipelineConsoleSummary.tsx',
 			'pages/skills/SkillCatalog.tsx',
+			'pages/telemetry/LeaderboardCard.tsx',
 		]);
+		expect(await read('pages', 'telemetry', 'TelemetryPage.tsx')).toContain(
+			'<Card className="@container flex flex-col gap-3">',
+		);
 		expect(await read('pages', 'settings', 'SettingsPage.tsx')).toContain(
 			'page-reveal @container',
 		);

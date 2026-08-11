@@ -1,12 +1,21 @@
+import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { Link } from 'react-router';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
+/**
+ * One category of what gets recorded.
+ *
+ * `text-xs font-semibold` was a third heading step: `ui/card` defines exactly two — `section` at
+ * 16px and `subsection` at 14px — and these four rendered at 12px, below both. They are `h3` under
+ * the card's own `h2` now, at the `subsection` size, so the page's heading outline is contiguous and
+ * the card stops carrying type the rest of the app does not have.
+ */
 function DisclosureItem({ children, title }: { children: string; title: string }) {
 	return (
 		<div>
-			<h3 className="text-xs font-semibold text-foreground">{title}</h3>
+			<h3 className="text-sm font-semibold text-foreground">{title}</h3>
 			<p className="mt-1 text-xs leading-5 text-muted-foreground">{children}</p>
 		</div>
 	);
@@ -25,23 +34,26 @@ export function TelemetryDisclosure() {
 	return (
 		<Card className="space-y-3 border-border bg-accent-muted">
 			<details className="group">
+				{/* The title goes through `CardHeader` like every other card title on the page. It
+				    was a bare `span` at 14px, so the one card whose content is four headings opened
+				    with no heading at all and those four hung straight off the page `h1` with the
+				    level between them missing. `mb-0` is safe here despite the Card's `space-y-3`:
+				    the header is inside the `summary`, not a direct child of the Card, so the
+				    card's own rhythm is not what this is cancelling.
+
+				    The chevron rides in the header's `icon` slot and is the app's lucide one, not a
+				    literal '›' — the other `<details>` on this page kept the browser's native
+				    triangle, so one page offered two unrelated disclosure affordances and neither
+				    was the app's. */}
 				<summary className="cursor-pointer list-none marker:content-none">
-					<span className="flex items-start gap-1.5">
-						<span
-							aria-hidden="true"
-							className="mt-0.5 inline-block transition-transform group-open:rotate-90">
-							›
-						</span>
-						<span className="min-w-0">
-							<span className="text-sm font-semibold text-foreground">
-								What aidd records
-							</span>
-							<span className="mt-1 block text-xs leading-5 text-muted-foreground">
-								All telemetry stays in this local aidd installation. aidd does not
-								send usage data to its maintainers or third-party tracking services.
-							</span>
-						</span>
-					</span>
+					<CardHeader
+						className="mb-0"
+						description="All telemetry stays in this local aidd installation. aidd does not send usage data to its maintainers or third-party tracking services."
+						icon={
+							<ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+						}
+						title="What aidd records"
+					/>
 				</summary>
 				<div className="mt-3 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
 					<DisclosureItem title="Invocations">

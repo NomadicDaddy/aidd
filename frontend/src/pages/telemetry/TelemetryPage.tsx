@@ -19,8 +19,9 @@ import {
 	useTelemetryTop,
 } from '../../hooks/useTelemetry.ts';
 import { InvocationsTable } from './InvocationsTable.tsx';
+import { LeaderboardCard } from './LeaderboardCard.tsx';
 import { type OutputMetric, OutputTimeseriesChart } from './OutputTimeseriesChart.tsx';
-import { BackendBreakdownCard, LeaderboardCard, TimeseriesChart } from './TelemetryComponents.tsx';
+import { BackendBreakdownCard, TimeseriesChart } from './TelemetryComponents.tsx';
 import { TelemetryDisclosure } from './TelemetryDisclosure.tsx';
 import { TelemetrySummary } from './TelemetrySummary.tsx';
 
@@ -130,13 +131,18 @@ export function TelemetryPage() {
 	);
 
 	return (
-		<div className="page-reveal space-y-5">
+		<div className="page-reveal @container space-y-5">
 			<PageHeader
 				description="Local usage, outcome, output, and health telemetry across skills, recipes, and runs."
 				helpSlug="telemetry"
 				title="Telemetry"
 			/>
-			<Card className="flex flex-wrap items-center justify-between gap-3">
+			{/* Two controls that scope one query, kept next to each other. `justify-between` pinned
+			    Resource type to the left edge and Time window to the right, which at 2250 put 1516px
+			    of empty card between them: nothing about the layout then said the two compose, and
+			    setting one meant crossing the full width to check the other. They read as one filter
+			    row now, and the card still wraps them at narrow widths. */}
+			<Card className="flex flex-wrap items-center justify-start gap-3">
 				<SegmentedControl
 					ariaLabel="Resource type"
 					onChange={setTypeFilter}
@@ -152,12 +158,21 @@ export function TelemetryPage() {
 			</Card>
 			<TelemetryDisclosure />
 
-			<TelemetrySummary totals={totals} />
+			<TelemetrySummary
+				totals={totals}
+				windowLabel={
+					windowOptions.find((option) => option.value === windowFilter)?.label ?? 'All'
+				}
+			/>
 
 			{/* `items-start`, so a ten-row leaderboard does not stretch the three-card stack beside it
-			    to its own height and leave 600px of empty canvas in whichever column is shorter. */}
-			<section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-				<Card className="flex flex-col gap-3">
+			    to its own height and leave 600px of empty canvas in whichever column is shorter.
+
+			    Split on the page's own width rather than the viewport: the two columns are the
+			    page's, not the window's, and `xl:` measured a box the sidebar had already taken
+			    240px out of. */}
+			<section className="grid items-start gap-4 @min-[61rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+				<Card className="@container flex flex-col gap-3">
 					<CardHeader
 						badge={<Badge tone="neutral">top {topRows.length}</Badge>}
 						className="mb-0"

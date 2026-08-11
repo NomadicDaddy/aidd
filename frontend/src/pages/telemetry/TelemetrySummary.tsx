@@ -1,5 +1,23 @@
+import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
+import { default as GitBranch } from 'lucide-react/dist/esm/icons/git-branch';
+import { default as Play } from 'lucide-react/dist/esm/icons/play';
+
 import { Metric } from '../../components/shared/Metric.tsx';
+import { percent } from '../../lib/formatters.ts';
 import { outcomeSolid } from '../../lib/series.ts';
+
+/**
+ * The active time window, said the way the tiles need to say it.
+ *
+ * The filter reads '24h'; a tile cannot, because the tile is a sentence about what the number
+ * counts and '24h' is a control label. Falls through to the all-time phrasing, which is also the
+ * default window.
+ */
+const windowPhrases: Record<string, string> = {
+	'24h': 'in the last 24 hours',
+	'30d': 'in the last 30 days',
+	'7d': 'in the last 7 days',
+};
 
 export interface TelemetryTotals {
 	completed: number;
@@ -27,18 +45,49 @@ function outcomeDot(className: string) {
 	return <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${className}`} />;
 }
 
-export function TelemetrySummary({ totals }: { totals: TelemetryTotals }) {
+export function TelemetrySummary({
+	totals,
+	windowLabel,
+}: {
+	totals: TelemetryTotals;
+	windowLabel: string;
+}) {
+	const window = windowPhrases[windowLabel] ?? 'across all recorded time';
 	return (
 		<section aria-label="Invocation summary" className="@container space-y-3">
 			{/* Shape-of-work breakdown, and the one place on this page a dot would decode to
 			    nothing: these three quantities are not a series in any chart here, so the cyan,
 			    indigo and magenta they carried appeared in no legend and stood for nothing a
 			    reader could look up. The outcome tiles below keep theirs — those colours are the
-			    chart's, and the chart legend states them. */}
+			    chart's, and the chart legend states them.
+
+			    A label and a bare integer is all these three had, and it left two questions the
+			    reader had to answer from elsewhere on the page. The first is what span the number
+			    covers: the window lives in a control two cards up, so '38' beside 'Total
+			    invocations' was 38 of something the tile did not name. The second is how the split
+			    divides — Top-level and Nested sum to the total, which is a relationship worth one
+			    figure rather than one the reader recomputes. The icons are the Dashboard's Metric
+			    idiom and only distinguish the three at a glance; they carry no meaning the text
+			    does not. */}
 			<div className="grid gap-3 @min-[32rem]:grid-cols-3">
-				<Metric label="Total invocations" value={totals.total} />
-				<Metric label="Top-level actions" value={totals.topLevel} />
-				<Metric label="Nested steps" value={totals.nested} />
+				<Metric
+					detail={window}
+					icon={<Activity className="h-5 w-5" />}
+					label="Total invocations"
+					value={totals.total}
+				/>
+				<Metric
+					detail={`${percent(totals.topLevel, totals.total)}% of invocations`}
+					icon={<Play className="h-5 w-5" />}
+					label="Top-level actions"
+					value={totals.topLevel}
+				/>
+				<Metric
+					detail={`${percent(totals.nested, totals.total)}% of invocations`}
+					icon={<GitBranch className="h-5 w-5" />}
+					label="Nested steps"
+					value={totals.nested}
+				/>
 			</div>
 			{/* Outcome breakdown: shares the outcome ramp with the chart bars and legend below. The
 			    middle step is what keeps eight tiles to two rows at tablet width — without it the

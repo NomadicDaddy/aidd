@@ -240,7 +240,11 @@ async function waitForReport(
 	for (;;) {
 		const report = await service.getReport(id);
 		if (report && statuses.has(report.session.status)) return report;
-		if (Date.now() - startedAt > 7000) throw new Error('Timed out waiting for pipeline');
+		// Eight parallel workers each spawn their own children, so a pipeline that finishes in
+		// well under a second alone can take several seconds under a saturated suite. The bound
+		// stays below bun's 15s parallel-run ceiling so a genuinely stuck pipeline still reports
+		// this message rather than an anonymous harness timeout.
+		if (Date.now() - startedAt > 12_000) throw new Error('Timed out waiting for pipeline');
 		await wait(25);
 	}
 }

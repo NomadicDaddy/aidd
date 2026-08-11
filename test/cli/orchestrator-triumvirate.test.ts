@@ -1906,7 +1906,11 @@ describe('orchestrator triumvirate safety envelope', () => {
 					return runaway.runPrompt(input, signal);
 				},
 			};
-			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 2);
+			// The budget has to outlast three planning stages so the deadline lands in the
+			// execution stage, which is what this test is about. Two seconds did on an idle
+			// machine and not under a saturated suite, where planning alone can take longer than
+			// that and the run aborted before execution ever started.
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 10);
 
 			let exitCode = -1;
 			await captureStdout(async () => {

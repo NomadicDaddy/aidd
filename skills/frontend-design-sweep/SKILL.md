@@ -18,14 +18,14 @@ pages runs out of attention long before the last one. This skill splits those jo
 ## Usage
 
 ```
-frontend-design-sweep [app] [url] [--mode <desktop|tablet|mobile>] [--viewports <WxH,WxH>]
+frontend-design-sweep [app] [url] [--mode <desktop|tablet|mobile>] [--viewports <WxH,...>]
                       [--scope <nav-group|route-prefix>] [--features]
 ```
 
 - Zero args → infer the app from the current repository, and the URL from its dev configuration.
 - `--mode` → the viewport class this sweep runs at. Default `desktop`. A run at one mode is not
   comparable to a run at another and never overwrites it — see Phase 0.
-- `--viewports` → override the mode's default viewport pair.
+- `--viewports` → override the mode's default viewport set. First entry is the primary viewport.
 - `--scope` → limit the sweep to one navigation group or route prefix. Use it for large apps.
 - `--features` → also file remediation features (Phase 6). Default is report only.
 
@@ -63,15 +63,18 @@ exists to test hypotheses against pixels.
 | Run id         | `{RUN}` = `YYYYMMDD-HHMM`                                 |
 | Work directory | `{app}/.aidd/reports/design-sweep/{RUN}-{MODE}/`          |
 | Screenshots    | `{app}/screenshots/design-sweep/{RUN}-{MODE}/`            |
-| Viewports      | The mode's pair, below, unless `--viewports` overrides it |
+| Viewports      | The mode's set, below, unless `--viewports` overrides it  |
 | Theme          | The app's default theme, applied to every surface         |
 | Authentication | The highest role the user authorizes; anonymous otherwise |
 
-| `{MODE}`  | Primary viewport | Narrow viewport |
-| --------- | ---------------- | --------------- |
-| `desktop` | `1440x900`       | `768x1024`      |
-| `tablet`  | `1024x768`       | `768x1024`      |
-| `mobile`  | `390x844`        | `320x844`       |
+| `{MODE}`  | Viewports, in capture order — the first is the primary |
+| --------- | ------------------------------------------------------ |
+| `desktop` | `2560x1440`, `2250x1309`, `1920x1200`, `1440x900`      |
+| `tablet`  | `1024x768`, `768x1024`                                 |
+| `mobile`  | `390x844`, `360x800`                                   |
+
+Every viewport in the set is captured on every surface, in the order listed. The primary is the one
+findings are written against; the rest exist to catch what only breaks at another width.
 
 Resolve `{MODE}` **before anything else** and echo it back with the resolved viewports. If the
 invocation names a viewport but no mode, derive the mode from the primary width (≥1280 `desktop`,
@@ -187,8 +190,8 @@ Review one surface of {app} as a design critic.
 
 Surface: {label} — {url}
 Tabs to cover: {tab list with click paths, or "none"}
-Mode: {MODE} — viewports {primary}, then {narrow}. Set the viewport explicitly before
-every capture; do not rely on the browser's default.
+Mode: {MODE} — viewports {viewport list, in order}. Cover every one of them. Set the
+viewport explicitly before every capture; do not rely on the browser's default.
 Session: ds-{RUN}-{MODE}-{n}
 
 Invoke: /frontend-design {url} — how could this look cleaner? sleeker? more consistent

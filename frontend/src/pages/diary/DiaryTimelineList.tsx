@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import type { DiaryTimelineItem } from '../../api/types.ts';
@@ -55,6 +56,34 @@ function metaParts(item: DiaryTimelineItem, showProject: boolean): MetaPart[] {
 }
 
 /**
+ * The title, with any project segment set in the face a project is set in everywhere else.
+ *
+ * A run's title arrives composed as `${mode} · ${projectName}`, and `metaParts` drops the mono chip
+ * for a value the title already states. That left the same identifier in two faces in vertically
+ * adjacent rows: the run row read "directive · podex" in Geist Sans and the recipe row directly
+ * under it printed "podex" as a Geist Mono chip. The dedupe is right — the fact is stated once — so
+ * the fix is that the one place it is stated sets it as the machine string it is.
+ *
+ * Whole ` · ` segments are compared, never substrings, for the same reason `metaParts` does: a
+ * skill titled "Coding run" mentions a mode without being one.
+ */
+function renderTitle(item: DiaryTimelineItem): ReactNode {
+	const project = item.projectName?.toLowerCase();
+	const segments = item.title.split(' · ');
+	if (!project || !segments.some((segment) => segment.toLowerCase() === project)) {
+		return item.title;
+	}
+	return segments.map((segment, index) => (
+		<Fragment key={index}>
+			{index > 0 ? ' · ' : null}
+			<span className={segment.toLowerCase() === project ? 'font-mono' : undefined}>
+				{segment}
+			</span>
+		</Fragment>
+	));
+}
+
+/**
  * The link's accessible name.
  *
  * Every run row in a project links to the same filtered Runs view under the same visible text, so a
@@ -101,12 +130,19 @@ function DiaryTimelineRow({
 					{href ? (
 						<Link
 							aria-label={rowLinkLabel(item)}
-							className="font-medium text-foreground underline decoration-border underline-offset-4 after:absolute after:inset-0 hover:decoration-foreground focus-visible:outline-none"
+							// The accent, not an underline the reader cannot see. `decoration-border`
+							// is 1.23:1 against the row, so of the 70 rows in this feed the 36 that
+							// navigate and the 34 that do not were indistinguishable at rest — and
+							// filtering to Releases showed 20 inert rows painted exactly like the run
+							// rows above them. This is the treatment the Dashboard's feature rows and
+							// the entry cards on this same page already use for a linked title; the
+							// underline arrives on hover, where it costs no layout.
+							className="font-medium text-accent underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none"
 							to={href}>
-							{item.title}
+							{renderTitle(item)}
 						</Link>
 					) : (
-						<span className="font-medium text-foreground">{item.title}</span>
+						<span className="font-medium text-foreground">{renderTitle(item)}</span>
 					)}
 					{/* Inline with the title rather than on a line of its own: a release row spent two
 					    lines of height to carry the single word "aidd". The parts are divided by a
@@ -116,7 +152,13 @@ function DiaryTimelineRow({
 						<span
 							className="flex items-center gap-2 text-xs text-muted-foreground"
 							key={`${item.id}-meta-${index}`}>
-							<span aria-hidden="true" className="text-border">
+							{/* `text-muted-foreground`, the weight of the values it divides.
+							    At `text-border` the glyph measured 1.23:1 and did not render:
+							    the row read as three gap-separated spans, which is the exact
+							    ambiguity the separator was added to remove. `text-border` is a
+							    stroke colour — its only other use is an SVG edge in the
+							    dependency graph. */}
+							<span aria-hidden="true" className="text-muted-foreground">
 								·
 							</span>
 							<span className={part.className}>{part.text}</span>

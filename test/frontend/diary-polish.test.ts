@@ -72,6 +72,10 @@ describe('diary polish', () => {
 		expect(text.match(/aidd/gu)).toHaveLength(1);
 		// The duration is the one fact the title does not carry, so it is the one that survives.
 		expect(text).toContain('170m 58s');
+		// The dedupe left the project name stated once, in the title — and the title set it in
+		// Geist Sans while the recipe row directly under it printed the same identifier as a mono
+		// chip. The one place it is stated sets it as the machine string it is.
+		expect(html).toContain('<span class="font-mono">aidd</span>');
 	});
 
 	test('draws no stamp for a record that carries no clock', () => {
@@ -90,8 +94,14 @@ describe('diary polish', () => {
 		const plain = renderTimeline([release]);
 
 		// The only affordance was the title's colour changing under the pointer, which is nothing
-		// to a reader who is not already pointing at it.
-		expect(linked).toContain('underline decoration-border underline-offset-4');
+		// to a reader who is not already pointing at it. The underline that replaced it was
+		// `decoration-border` — 1.23:1 against the row, so the 36 navigable rows and the 34 inert
+		// ones still looked the same at rest. The accent is what marks a link here, as it does on
+		// the Dashboard's feature rows and on the entry cards of this same page.
+		expect(linked).toContain('font-medium text-accent');
+		expect(linked).toContain('hover:underline');
+		expect(linked).not.toContain('decoration-border');
+		expect(plain).not.toContain('text-accent');
 		expect(linked).toContain('after:absolute after:inset-0');
 		// The overlay is what receives focus, so the ring belongs to the row around it.
 		expect(linked).toContain('focus-within:ring-2');
@@ -121,7 +131,12 @@ describe('diary polish', () => {
 		// between them: a directory, a mode, and an elapsed time.
 		expect(html).toContain('<span class="font-mono">aidd</span>');
 		expect(html).toContain('<span class="tabular-nums">170m 58s</span>');
-		expect(html.match(/aria-hidden="true" class="text-border"/gu)).toHaveLength(3);
+		// The separator sits at the weight of the values it divides. `text-border` is 1.23:1
+		// against the row and did not render at all, so the line read as three gap-separated spans
+		// — the ambiguity the separator was added to remove, still there behind a glyph nobody
+		// could see.
+		expect(html.match(/aria-hidden="true" class="text-muted-foreground"/gu)).toHaveLength(3);
+		expect(html).not.toContain('class="text-border"');
 	});
 
 	test('puts the day heading and the row titles on different type steps', async () => {

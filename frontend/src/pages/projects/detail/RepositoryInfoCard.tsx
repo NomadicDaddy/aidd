@@ -1,7 +1,7 @@
 import type { RepositoryInfo, RepositoryLanguage } from '../../../api/types.ts';
 
 import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { cn } from '../../../lib/cn.ts';
 import { formatBytes, formatCount } from '../../../lib/formatters.ts';
 import { toneSolid } from '../../../lib/tones.ts';
@@ -50,7 +50,12 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 	const topLanguages = info.languages.slice(0, 6);
 	const commit = info.latestCommit;
 	return (
-		<div className="flex-1 space-y-4">
+		// Capped at 48rem. `flex-1` with no ceiling put 'Current branch' at x=555 and 'main' at
+		// x=2170 on a 2250px viewport — 1600px of hairline between a label and its value, six rows
+		// of it — and stretched the language bars onto a ~1470px track, where TypeScript's 244,086
+		// lines filled the bar and JSON's 4,120 and HTML's 2,740 were a 2px and a 1px stub. The
+		// comparison the bars exist to make only survives on a track the eye can cross.
+		<div className="min-w-0 flex-1 space-y-4 xl:max-w-[48rem]">
 			<dl className="divide-y divide-border/70">
 				<Stat label="Current branch" mono value={info.currentBranch} />
 				<Stat
@@ -85,7 +90,7 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 
 			{info.authors.length > 0 ? (
 				<div className="space-y-1">
-					<h4 className="text-xs font-semibold text-foreground">Top contributors</h4>
+					<h4 className="text-sm font-semibold text-foreground">Top contributors</h4>
 					<ul className="space-y-0.5">
 						{info.authors.map((author) => (
 							<li
@@ -103,7 +108,7 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 
 			{topLanguages.length > 0 ? (
 				<div className="space-y-2">
-					<h4 className="text-xs font-semibold text-foreground">Languages</h4>
+					<h4 className="text-sm font-semibold text-foreground">Languages</h4>
 					<ul className="space-y-2">
 						{topLanguages.map((language) => (
 							<LanguageBar
@@ -122,26 +127,35 @@ function MetadataPanel({ info }: { info: RepositoryInfo }) {
 export function RepositoryInfoCard({ info }: { info: RepositoryInfo }) {
 	const logo = logoForLanguage(info.dominantLanguage);
 	return (
-		// self-start, and beside the statistics only from xl: as a stretched 16rem column the
-		// identity panel matched the full height of the statistics list, so a mark and two short
-		// lines of text owned the largest, emptiest box on the tab.
-		<Card className="flex flex-col gap-5 xl:flex-row xl:items-start">
-			<div className="flex items-center gap-4 self-start rounded-md border border-border/70 bg-muted/70 p-4 xl:w-64 xl:shrink-0 xl:flex-col xl:justify-center xl:p-5">
-				<pre
-					aria-hidden="true"
-					className={`overflow-hidden text-[10px] leading-[1.15] font-bold ${logo.accent}`}>
-					{logo.art}
-				</pre>
-				<div className="min-w-0 xl:text-center">
-					<p className="text-sm font-semibold text-foreground">
-						{info.dominantLanguage ?? 'Repository'}
-					</p>
-					<p className="text-xs text-muted-foreground">
-						{info.dominantLanguage ? 'Dominant language' : 'No source detected'}
-					</p>
+		// Titled, like the Working tree card above it. Two of this tab's four cards opened with no
+		// heading at all, so the tab's heading order ran h2 Repository, h3 Working tree, h4 Top
+		// contributors — a card's inner label standing in for the card's own name.
+		<Card className="flex flex-col gap-5">
+			<CardHeader
+				description="Counted from the git-tracked files in the working copy."
+				title="Repository statistics"
+			/>
+			<div className="flex flex-col gap-5 xl:flex-row xl:items-start">
+				{/* self-start, and beside the statistics only from xl: as a stretched 16rem column
+				    the identity panel matched the full height of the statistics list, so a mark and
+				    two short lines of text owned the largest, emptiest box on the tab. */}
+				<div className="flex items-center gap-4 self-start rounded-md border border-border/70 bg-muted/70 p-4 xl:w-64 xl:shrink-0 xl:flex-col xl:justify-center xl:p-5">
+					<pre
+						aria-hidden="true"
+						className={`overflow-hidden text-[10px] leading-[1.15] font-bold ${logo.accent}`}>
+						{logo.art}
+					</pre>
+					<div className="min-w-0 xl:text-center">
+						<p className="text-sm font-semibold text-foreground">
+							{info.dominantLanguage ?? 'Repository'}
+						</p>
+						<p className="text-xs text-muted-foreground">
+							{info.dominantLanguage ? 'Dominant language' : 'No source detected'}
+						</p>
+					</div>
 				</div>
+				<MetadataPanel info={info} />
 			</div>
-			<MetadataPanel info={info} />
 		</Card>
 	);
 }

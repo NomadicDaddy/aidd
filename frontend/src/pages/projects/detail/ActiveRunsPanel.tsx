@@ -12,6 +12,7 @@ import { useNow } from '../../../hooks/useNow.ts';
 import { formatActiveDuration, formatDate } from '../../../lib/formatters.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
+import { tableMeasureClass } from '../../../lib/typography.ts';
 import { runRuntimeDetail, runSourceLabel } from '../../runs/runRowUtils.ts';
 
 function statusTone(status: RunRecord['status']): 'amber' | 'emerald' | 'neutral' | 'red' {
@@ -68,7 +69,9 @@ export function ActiveRunsPanel({
 			    clipped past the card edge with no scroll to recover it — the link was unreachable
 			    by any gesture rather than merely off-screen. */}
 			<OverflowScroller ariaLabel="Recent project runs" className="hidden xl:block">
-				<table aria-label="Recent project runs" className="w-full text-left text-sm">
+				<table
+					aria-label="Recent project runs"
+					className={`w-full text-left text-sm ${tableMeasureClass}`}>
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
 							<th className="px-4 py-3" scope="col">

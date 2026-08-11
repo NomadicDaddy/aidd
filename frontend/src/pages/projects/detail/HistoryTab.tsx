@@ -47,7 +47,10 @@ function HistoryEventRow({
 	onSelectCommit: (commit: GitCommitRef) => void;
 	projectPath: string;
 }) {
-	const hasDetail = Boolean(event.executionIdentity) || event.detailParts.length > 0;
+	const hasDetail =
+		Boolean(event.executionIdentity) ||
+		event.detailParts.length > 0 ||
+		event.traceLabel.length > 0;
 	return (
 		<li className="py-1">
 			<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -64,9 +67,22 @@ function HistoryEventRow({
 					{event.executionIdentity ? (
 						<ExecutionIdentityBadges {...event.executionIdentity} />
 					) : null}
+					{/* `min-w-0`: a run's work summary is one long sentence, and a flex item's
+					    default `min-width: auto` is its content's min-content width, so the
+					    summary pushed the row past the list's measure instead of wrapping
+					    inside it. */}
 					{event.detailParts.map((part) => (
-						<span key={part}>{part}</span>
+						<span className="min-w-0" key={part}>
+							{part}
+						</span>
 					))}
+					{/* The run id, mono like the commit SHA on the row below it. It sat in
+					    proportional type beside the mono backend and model chips, and it was
+					    the full 36-character UUID; `shortRunId` now cuts it to the same eight
+					    characters a short hash uses. */}
+					{event.traceLabel ? (
+						<span className="font-mono">{event.traceLabel}</span>
+					) : null}
 				</div>
 			) : null}
 			{event.commits.length > 0 ? (
@@ -135,7 +151,12 @@ export function HistoryTab({
 							<h3 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 								{group.label}
 							</h3>
-							<ul className="divide-y divide-border text-sm">
+							{/* A measure on the rules, not on the card. Uncapped at 2250x1309 the
+							    list was 1928px wide while a row's ink ended around x=700, so 25
+							    rows stacked into a field of 1500px hairlines separating two short
+							    left-hugging lines each. 72rem is 1152px, which is about where the
+							    list already sat at 1280 — the width the row was tuned for. */}
+							<ul className="max-w-[72rem] divide-y divide-border text-sm">
 								{group.events.map((event) => (
 									<HistoryEventRow
 										event={event}

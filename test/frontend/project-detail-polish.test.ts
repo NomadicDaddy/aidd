@@ -112,16 +112,65 @@ describe('git refs', () => {
 		expect(info).toContain("mono ? 'font-mono break-all' : 'tabular-nums'");
 		expect(info).toContain('<code className="font-mono text-xs text-foreground">');
 	});
+
+	test('both repository cards name themselves and stop at two heading steps', async () => {
+		// Two of the Repository tab's cards opened with no title at all, so their inner `text-xs`
+		// labels — Top contributors, Languages, Branches, Stashes, Worktrees — were carrying the
+		// heading weight of a whole card at the size of a caption.
+		const info = await detail('RepositoryInfoCard.tsx');
+		expect(info).toContain('title="Repository statistics"');
+		expect(info).not.toContain('text-xs font-semibold text-foreground');
+
+		const refs = await detail('RepositoryRefsCard.tsx');
+		expect(refs).toContain('title="Refs"');
+		expect(refs).toContain('level="subsection"');
+		expect(refs).not.toContain('<h4');
+	});
+
+	test('the statistics panel keeps a measure the eye can cross', async () => {
+		// Uncapped, `Current branch` sat at x=555 and `main` at x=2170 on a 2250 viewport, and the
+		// language bars stretched onto a ~1470px track where the third language was a 1px stub.
+		const info = await detail('RepositoryInfoCard.tsx');
+		expect(info).toContain('xl:max-w-[48rem]');
+	});
+});
+
+describe('run tables', () => {
+	test('the tables that fill a card take the shared table measure', async () => {
+		for (const file of ['ProjectUsagePanel.tsx', 'ActiveRunsPanel.tsx']) {
+			const source = await detail(file);
+			expect(source).toContain('tableMeasureClass');
+		}
+
+		// A cap, not a width: `w-full` still comes first so the table fills a narrower card.
+		const usage = await detail('ProjectUsagePanel.tsx');
+		expect(usage).toContain('className={`w-full text-left text-sm ${tableMeasureClass}`}');
+
+		const typography = await src('lib/typography.ts');
+		expect(typography).toContain("export const tableMeasureClass = 'max-w-[80rem]'");
+	});
 });
 
 describe('code browser', () => {
 	test('both panes take one viewport-derived height and scroll inside it', async () => {
 		const shared = await detail('codeBrowserHeight.ts');
-		expect(shared).toContain("export const codeBrowserHeightClass = 'lg:h-[calc(100vh-19rem)]");
+		expect(shared).toContain("'@min-[61rem]:h-[calc(100vh-19rem)] @min-[61rem]:min-h-[28rem]'");
 		expect(shared).toContain('export const codeBrowserScrollerClass');
+
+		// The gate is the card's width, not the window's: with the rail expanded the content column
+		// is about 992px at a 1024 viewport, so `lg:` split the browser in two roughly 32px before
+		// the card had room for it, and un-split it when the rail collapsed at the same viewport.
+		expect(shared).not.toContain("'lg:");
 
 		const tab = await detail('CodeTab.tsx');
 		expect(tab).toContain('codeBrowserHeightClass');
+		expect(tab).toContain('<Card className="@container overflow-hidden p-0">');
+		expect(tab).not.toContain('lg:grid-cols-');
+
+		// Two tree widths. 22rem truncates a nested route path; at 2250 the card has the room to
+		// give the names 30rem and still leave the viewer more measure than source lines use.
+		expect(tab).toContain('@min-[61rem]:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]');
+		expect(tab).toContain('@min-[100rem]:grid-cols-[minmax(22rem,30rem)_minmax(0,1fr)]');
 
 		for (const file of ['CodeFileTree.tsx', 'CodeFileViewer.tsx']) {
 			const source = await detail(file);

@@ -1,17 +1,23 @@
 import type { RepositoryBranch, RepositoryStash, RepositoryWorktree } from '../../../api/types.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 
 // Title + count Badge, the presentation the Code and Dependencies tabs already use for a
 // collection size — these three were the app's only parenthetical counts, and the Worktrees heading
 // was additionally the only one of the three rendered in muted rather than foreground.
+// The heading is `subsection` — the second and last step ui/card defines — rather than the
+// `text-xs` third step it was. Set at 12px against a card that had no 16px title of its own, these
+// three were carrying the whole heading weight of a card at the size of a caption.
 function PanelHeading({ count, title }: { count: number; title: string }) {
 	return (
-		<div className="flex items-center gap-2">
-			<h4 className="text-xs font-semibold text-foreground">{title}</h4>
-			<Badge tone="neutral">{count.toLocaleString()}</Badge>
-		</div>
+		<CardHeader
+			badge={<Badge tone="neutral">{count.toLocaleString()}</Badge>}
+			className="mb-0"
+			headingLevel={3}
+			level="subsection"
+			title={title}
+		/>
 	);
 }
 
@@ -138,10 +144,16 @@ export function RepositoryRefsCard({
 	worktrees: RepositoryWorktree[];
 }) {
 	return (
-		<Card className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-			<BranchPanel branches={branches} />
-			<StashPanel stashes={stashes} />
-			<WorktreePanel worktrees={worktrees} />
+		<Card>
+			<CardHeader
+				description="Local branches, stashes, and linked worktrees for this repository."
+				title="Refs"
+			/>
+			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+				<BranchPanel branches={branches} />
+				<StashPanel stashes={stashes} />
+				<WorktreePanel worktrees={worktrees} />
+			</div>
 		</Card>
 	);
 }

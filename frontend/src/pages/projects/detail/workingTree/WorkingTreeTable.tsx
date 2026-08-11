@@ -3,6 +3,7 @@ import type { WorkingTreeFile } from '../../../../api/types.ts';
 import { OverflowScroller } from '../../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Checkbox } from '../../../../components/ui/checkbox.tsx';
+import { tableMeasureClass } from '../../../../lib/typography.ts';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
 function StageColumn({ file }: { file: WorkingTreeFile }) {
@@ -34,7 +35,9 @@ export function WorkingTreeTable({
 		// A plain scroller now: the toolbar that acts on these rows used to float on the page
 		// background between two Cards, so the Card moved up to WorkingTreeCard and wraps both.
 		<OverflowScroller ariaLabel="Changed files" className="hidden xl:block">
-			<table aria-label="Changed files" className="w-full min-w-[640px] text-left text-sm">
+			<table
+				aria-label="Changed files"
+				className={`w-full min-w-[640px] text-left text-sm ${tableMeasureClass}`}>
 				<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 					<tr>
 						<th className="w-10 px-3 py-3" scope="col">

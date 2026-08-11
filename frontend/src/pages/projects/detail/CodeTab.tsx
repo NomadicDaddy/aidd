@@ -79,7 +79,8 @@ export function CodeTab({ projectId }: { projectId: string }) {
 		return <EmptyState>{treeMessages[tree.data.state]}</EmptyState>;
 	}
 	return (
-		<Card className="overflow-hidden p-0">
+		// `@container`: the two tiers below are read off this card's width. See codeBrowserHeight.ts.
+		<Card className="@container overflow-hidden p-0">
 			<CardHeader
 				action={
 					<label className="relative w-full max-w-sm">
@@ -104,21 +105,29 @@ export function CodeTab({ projectId }: { projectId: string }) {
 				icon={<Code2 className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Code"
 			/>
-			{/* Below lg the viewer comes first. Stacked above it, the tree's own scroller filled
-			    the entire viewport with file names — not one line of the code the reader came for
-			    was visible, and the nested region stole the wheel on the way past.
+			{/* Stacked, the viewer comes first. Above it, the tree's own scroller filled the entire
+			    viewport with file names — not one line of the code the reader came for was visible,
+			    and the nested region stole the wheel on the way past.
 
-			    From lg the row takes one height off the viewport and both panes scroll inside it.
+			    Split, the row takes one height off the viewport and both panes scroll inside it.
 			    They used to carry their own rem caps — 34rem for the tree, 42rem for the viewer —
 			    so the two halves of one browser ended 128px apart, the shorter one leaving a band
 			    of empty card beside a still-scrolling neighbour, and neither number had anything
-			    to do with how tall the window actually was. */}
+			    to do with how tall the window actually was.
+
+			    Two tiers, because one tree width cannot serve both. 22rem holds about 40 characters
+			    of file name, which is where `useProjectCodeTree.ts` or a nested route directory
+			    truncates; at 2250x1309 the card is around 1900px and the viewer still keeps 1550
+			    after the tree grows to 30rem, so the wide tier spends width on the names rather
+			    than on a viewer measure that was already past what source lines use. The viewer
+			    itself is deliberately uncapped: `CodeFileViewer` scrolls long lines sideways, so a
+			    measure there would put lines that currently fit behind a horizontal scrollbar. */}
 			<div
 				className={cn(
-					'grid min-h-[32rem] gap-0 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]',
+					'grid min-h-[32rem] gap-0 @min-[61rem]:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] @min-[100rem]:grid-cols-[minmax(22rem,30rem)_minmax(0,1fr)]',
 					codeBrowserHeightClass,
 				)}>
-				<aside className="order-2 border-t border-border p-3 lg:order-1 lg:flex lg:min-h-0 lg:flex-col lg:border-t-0 lg:border-r">
+				<aside className="order-2 border-t border-border p-3 @min-[61rem]:order-1 @min-[61rem]:flex @min-[61rem]:min-h-0 @min-[61rem]:flex-col @min-[61rem]:border-t-0 @min-[61rem]:border-r">
 					<CodeFileTree
 						files={files}
 						onSelect={selectFile}
@@ -126,7 +135,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 						selectedPath={selectedPath}
 					/>
 				</aside>
-				<section className="order-1 min-w-0 lg:order-2 lg:flex lg:min-h-0 lg:flex-col">
+				<section className="order-1 min-w-0 @min-[61rem]:order-2 @min-[61rem]:flex @min-[61rem]:min-h-0 @min-[61rem]:flex-col">
 					<CodeFileViewer
 						data={fileQuery.data}
 						isError={fileQuery.isError}

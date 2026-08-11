@@ -2,11 +2,31 @@ import type { ReactNode } from 'react';
 
 import type { ProjectLocalIteration, ProjectLocalRun } from '../../api/types.ts';
 
-import { Card } from '../ui/card.tsx';
+import { Card, CardHeader } from '../ui/card.tsx';
 import { LocalIterationsTable } from './local-aidd-history/LocalIterationsTable.tsx';
 import { LocalRunsTable } from './local-aidd-history/LocalRunsTable.tsx';
 import { groupIterationsByRun } from './local-aidd-history/runMetadata.tsx';
 import { useNowWhile } from './local-aidd-history/useNowWhile.ts';
+
+/**
+ * A group of rows inside the panel — Runs, In progress, Unassigned iterations.
+ *
+ * `subsection` is the second and last visual step ui/card defines, so these read one step under the
+ * panel's own title instead of dropping to a `text-xs` uppercase third step that nothing else on
+ * the Runs tab uses. `headingLevel={3}` keeps the accessibility tree nesting under the card's h2
+ * while the type says subsection.
+ */
+function SectionHeading({ description, title }: { description?: string; title: string }) {
+	return (
+		<CardHeader
+			className="mb-0 px-4 py-3"
+			description={description}
+			headingLevel={3}
+			level="subsection"
+			title={title}
+		/>
+	);
+}
 
 export function LocalAiddHistoryPanel({
 	description,
@@ -35,18 +55,20 @@ export function LocalAiddHistoryPanel({
 			};
 	return (
 		<Card className="overflow-hidden p-0">
-			<div className="border-b border-border px-4 py-3">
-				<h2 className="text-sm font-semibold text-foreground">{title}</h2>
-				<p className="text-xs text-muted-foreground">{description}</p>
-			</div>
+			{/* Carded like its two peers on the Runs tab rather than hand-rolled. The title used to
+			    be a bare `text-sm` h2 sitting directly under `AI usage` and `Recent runs` at
+			    `text-base` — three peer cards, three heading sizes — and the section labels inside
+			    it were a third step at `text-xs` uppercase, which ui/card exists to forbid: two
+			    visual steps, and only two. */}
+			<CardHeader
+				className="mb-0 border-b border-border px-4 py-3"
+				description={description}
+				title={title}
+			/>
 			{hasRuns ? (
 				<>
 					<section className="border-b border-border last:border-0">
-						<div className="px-4 py-3">
-							<h3 className="text-xs font-semibold text-muted-foreground uppercase">
-								Runs
-							</h3>
-						</div>
+						<SectionHeading title="Runs" />
 						{hasRunRows ? (
 							<LocalRunsTable
 								iterationsByRunKey={byRunKey}
@@ -65,40 +87,26 @@ export function LocalAiddHistoryPanel({
 					</section>
 					{running.length > 0 ? (
 						<section className="border-b border-border last:border-0">
-							<div className="px-4 py-3">
-								<h3 className="text-xs font-semibold text-muted-foreground uppercase">
-									In progress
-								</h3>
-								<p className="text-xs text-muted-foreground">
-									A run is active; its summary will appear under Runs once it
-									finishes.
-								</p>
-							</div>
+							<SectionHeading
+								description="A run is active; its summary will appear under Runs once it finishes."
+								title="In progress"
+							/>
 							<LocalIterationsTable iterations={running} now={now} />
 						</section>
 					) : null}
 					{orphans.length > 0 ? (
 						<section>
-							<div className="px-4 py-3">
-								<h3 className="text-xs font-semibold text-muted-foreground uppercase">
-									Unassigned iterations
-								</h3>
-								<p className="text-xs text-muted-foreground">
-									Iterations whose start time does not fall within any recorded
-									run window.
-								</p>
-							</div>
+							<SectionHeading
+								description="Iterations whose start time does not fall within any recorded run window."
+								title="Unassigned iterations"
+							/>
 							<LocalIterationsTable iterations={orphans} now={now} />
 						</section>
 					) : null}
 				</>
 			) : (
 				<section>
-					<div className="px-4 py-3">
-						<h3 className="text-xs font-semibold text-muted-foreground uppercase">
-							Iterations
-						</h3>
-					</div>
+					<SectionHeading title="Iterations" />
 					{hasIterationRows ? (
 						<LocalIterationsTable iterations={iterations} now={now} />
 					) : (

@@ -30,7 +30,13 @@ export function RunExecutionTarget({ run }: { run: ProjectLocalRun }) {
 				<TriModeBadge roles={run.triumvirateRoles} />
 			) : null}
 			<span className="text-xs text-muted-foreground">{runRuntimeDetail(run)}</span>
-			<span className="text-xs text-muted-foreground">{formatAiddRunProvenance(run)}</span>
+			{/* Mono, because this line is `aidd 2.137.0 · 716c96c7 · dirty`: a version, a commit
+			    SHA and a tree state, all of them machine strings, set directly beneath the mono
+			    backend and model chips above them. It was the one half of an execution identity
+			    rendered in proportional type. */}
+			<span className="font-mono text-xs text-muted-foreground">
+				{formatAiddRunProvenance(run)}
+			</span>
 		</div>
 	);
 }

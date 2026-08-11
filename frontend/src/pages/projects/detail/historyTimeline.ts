@@ -42,6 +42,8 @@ export interface HistoryEvent {
 	timestamp: string;
 	timeValue: number;
 	title: string;
+	/** The run or iteration this row traces to. Empty for feature lifecycle events. */
+	traceLabel: string;
 }
 
 export interface HistoryDayGroup {
@@ -82,6 +84,7 @@ function createdEvent(feature: ProjectFeature, kind: Exclude<HistoryEventKind, '
 		timestamp: created.iso,
 		timeValue: created.timeValue,
 		title: featureEventTitle(feature),
+		traceLabel: '',
 	};
 }
 
@@ -103,6 +106,7 @@ function completedEvent(feature: ProjectFeature, kind: Exclude<HistoryEventKind,
 		timestamp: completed.iso,
 		timeValue: completed.timeValue,
 		title: featureEventTitle(feature),
+		traceLabel: '',
 	};
 }
 
@@ -122,11 +126,13 @@ function runEvents(
 	localRuns: ProjectLocalRun[],
 	localIterations: ProjectLocalIteration[],
 ): HistoryEvent[] {
+	// `traceLabel` is its own field rather than the last of `detailParts`: it is a machine id and
+	// the row sets it mono, which a flat string list cannot express.
 	return recentMetadataActivity(localRuns, localIterations).map((item) => ({
-		badge: item.status,
+		badge: item.statusLabel,
 		badgeTone: runStatusTone(item.status),
 		commits: item.commits,
-		detailParts: [...item.detailParts, item.traceLabel],
+		detailParts: item.detailParts,
 		executionIdentity: item.executionIdentity,
 		featureDirectory: null,
 		id: item.id,
@@ -134,6 +140,7 @@ function runEvents(
 		timestamp: item.timestamp,
 		timeValue: item.timeValue,
 		title: item.title,
+		traceLabel: item.traceLabel,
 	}));
 }
 

@@ -10,6 +10,7 @@ import { OverflowScroller } from '../../../components/shared/OverflowScroller.ts
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCompactNumber } from '../../../lib/formatters.ts';
+import { tableMeasureClass } from '../../../lib/typography.ts';
 import { formatReportedCost } from '../projects-list-shared.ts';
 
 function costLabel(usage: ProjectUsageTotals): string {
@@ -119,7 +120,7 @@ function ExecutionBreakdown({ rows }: { rows: ProjectUsageExecutionTarget[] }) {
 				className="hidden lg:block">
 				<table
 					aria-label="Project usage by execution target"
-					className="w-full text-left text-sm">
+					className={`w-full text-left text-sm ${tableMeasureClass}`}>
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
 							<th className="px-3 py-2" scope="col">
@@ -181,7 +182,9 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 				))}
 			</div>
 			<OverflowScroller ariaLabel="Project usage by run mode" className="hidden lg:block">
-				<table aria-label="Project usage by run mode" className="w-full text-left text-sm">
+				<table
+					aria-label="Project usage by run mode"
+					className={`w-full text-left text-sm ${tableMeasureClass}`}>
 					<thead className="border-b border-border bg-muted text-xs text-muted-foreground uppercase">
 						<tr>
 							<th className="px-3 py-2" scope="col">

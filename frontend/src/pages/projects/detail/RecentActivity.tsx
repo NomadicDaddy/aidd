@@ -45,7 +45,11 @@ export function RecentActivity({
 						<li className="rounded-md border border-border px-2.5 py-1" key={run.id}>
 							<div className="flex flex-wrap items-baseline justify-between gap-x-2">
 								<div className="flex min-w-0 flex-wrap items-center gap-2">
-									<Badge tone={runStatusTone(run.status)}>{run.status}</Badge>
+									{/* The label, not the enum: `no_work` and `stop_requested` were the
+								    two raw snake_case values reaching a badge. */}
+									<Badge tone={runStatusTone(run.status)}>
+										{run.statusLabel}
+									</Badge>
 									<span
 										className="font-medium text-foreground"
 										title={run.traceLabel}>

@@ -11,6 +11,7 @@ export interface RecentMetadataActivityItem {
 	executionIdentity: ExecutionIdentity | null;
 	id: string;
 	status: string;
+	statusLabel: string;
 	timestamp: string;
 	timeValue: number;
 	title: string;
@@ -42,6 +43,18 @@ function runStatus(run: ProjectLocalRun): string {
 	if (run.exitCode === 0) return 'completed';
 	if (typeof run.exitCode === 'number') return 'failed';
 	return 'unknown';
+}
+
+/**
+ * The badge label for a run status.
+ *
+ * The raw value is an enum and two of them are snake_case, so the timeline printed `no_work`
+ * against neighbours reading `completed` and `feature completed`. The badges around it are
+ * lowercase words, so this is a word-split rather than a sentence-case: `no work`,
+ * `stop_requested` to `stop requested`.
+ */
+export function runStatusLabel(status: string): string {
+	return status.replaceAll(/[-_]+/gu, ' ').trim() || status;
 }
 
 function statusVerb(status: string): string {
@@ -107,9 +120,16 @@ function runWorkSummary(run: ProjectLocalRun): null | string {
 	return null;
 }
 
+/**
+ * Eight characters of a run id, the same length `shortHash` cuts a commit SHA to.
+ *
+ * The split on `_` drops a launcher prefix where one exists. What it did not do was shorten
+ * anything else: an id that is a bare UUID came through all 36 characters, so the timeline's trace
+ * line ended in `Run 23241b43-9a00-40c1-896f-da8662e8a7fe` beside an eight-character commit chip.
+ */
 function shortRunId(runId: null | string): string {
 	if (!runId) return 'run';
-	return runId.split('_').at(-1) ?? runId;
+	return (runId.split('_').at(-1) ?? runId).slice(0, 8);
 }
 
 function activityFromRun(run: ProjectLocalRun, index: number): null | RecentMetadataActivityItem {
@@ -125,6 +145,7 @@ function activityFromRun(run: ProjectLocalRun, index: number): null | RecentMeta
 		executionIdentity: executionIdentity(run),
 		id: `run:${run.runId ?? index + 1}`,
 		status,
+		statusLabel: runStatusLabel(status),
 		timestamp,
 		timeValue: Date.parse(timestamp),
 		title: `${runModeLabel(run)} run ${statusVerb(status)}`,
@@ -170,6 +191,7 @@ function activityFromIteration(
 		executionIdentity: executionIdentity(iteration),
 		id: `iteration:${iteration.runId ?? iteration.iteration ?? index + 1}`,
 		status: iteration.status,
+		statusLabel: runStatusLabel(iteration.status),
 		timestamp,
 		timeValue: Date.parse(timestamp),
 		title: iterationTitle(iteration),

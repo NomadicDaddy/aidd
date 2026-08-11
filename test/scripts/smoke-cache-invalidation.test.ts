@@ -62,11 +62,16 @@ describe('smoke cache invalidation surfaces', () => {
 	});
 
 	// The fixture proves the mechanism; this proves it is wired up in the repo that ships it.
+	//
+	// The explicit timeout is because this is the one case that globs the real repository rather
+	// than a temp fixture — a few thousand files, and every other suite is doing its own I/O at the
+	// same time. It runs in about 3s alone and had been failing at the 5s default under full-suite
+	// load, which reads as a broken dependency graph and is really a busy disk.
 	test("tracks this repository's own workflows as format:check dependencies", async () => {
 		const dependencies = await collectDependencies(process.cwd(), 'format:check');
 
 		expect(dependencies).toContain(CI_WORKFLOW_TEST_INPUT);
-	});
+	}, 30_000);
 });
 
 // A step's inputs being unchanged only justifies skipping it while its output still exists.

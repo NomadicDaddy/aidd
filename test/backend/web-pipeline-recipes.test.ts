@@ -1653,6 +1653,11 @@ INSERT INTO pipeline_step_results (
 		}
 	});
 
+	// The explicit timeout is because the stop leg is the slow one and it is slow for a real reason:
+	// the route does not return until the spawned step process is actually gone. Measured at 4.16s
+	// for that one request under full-suite load on Windows, against a 5s default the other five
+	// legs of this test also have to fit inside. Alone it finishes comfortably; the failure this
+	// prevents is a timeout that reads as a broken stop route and is really process teardown.
 	test('recipe and pipeline routes list, read, launch, report, and stop sessions', async () => {
 		const workspace = await testTempDir('aidd-pipeline-routes-');
 		const rootDir = await makeRoot();
@@ -1747,7 +1752,7 @@ INSERT INTO pipeline_step_results (
 			await removeTempTree(workspace);
 			await removeTempTree(rootDir);
 		}
-	});
+	}, 30_000);
 
 	test('report includes the full recipe step plan, including steps not yet executed', async () => {
 		const workspace = await testTempDir('aidd-pipeline-report-plan-');

@@ -56,4 +56,4 @@ control panel.
 
 The optional **Triumvirate** wrapper has a primary and secondary planner draft
 plans in a scratch mirror, with an overseer deciding whether the real project
-is changed. Configure its defaults in **Settings**.
+is changed. Configure its defaults in [Settings](/settings). <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->

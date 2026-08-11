@@ -63,12 +63,12 @@ Press **?** on any page for the full cheatsheet. The essentials:
 
 ## Where to go next
 
-- **Recipes** and **Skills**: reusable, multi-step automation.
-- **Audits**: structured reviews that turn findings into tracked work.
-- **Telemetry**: usage trends across skills, recipes, and runs.
+- [Recipes](/recipes) and [Skills](/skills): reusable, multi-step automation. <!-- check-docs-allow: app routes rendered by the panel, not files on disk; check-docs resolves link targets against the filesystem -->
+- [Audits](/audits): structured reviews that turn findings into tracked work. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
+- [Telemetry](/telemetry): usage trends across skills, recipes, and runs. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 
 Most pages have a **?** button in the header that opens focused help for that
 screen. A few simpler pages (**Docs** itself, which you're reading, plus the
 **Diary** and **About**) don't, because they're either reference views or this
-documentation. The **Glossary** defines every core term, and the **FAQ** covers
+documentation. The [Glossary](/docs/glossary) defines every core term, and the [FAQ](/docs/faq) covers <!-- check-docs-allow: app routes rendered by the panel, not files on disk; check-docs resolves link targets against the filesystem -->
 common questions.

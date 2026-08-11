@@ -233,7 +233,7 @@ describe('parseMarkdownBlocks', () => {
 		expect(diaryCard).toContain('markdown={entry.bodyMd}');
 	});
 
-	test('uses the shared type scale, semantic tokens, and compact inline code', () => {
+	test('uses the shared type scale, semantic tokens, and a legible inline-code chip', () => {
 		const html = renderMarkdownContent(
 			'## A readable question?\n\nUse `aidd`, then continue.',
 			2,
@@ -254,8 +254,16 @@ describe('parseMarkdownBlocks', () => {
 			expect(html).not.toContain(step);
 		}
 		expect(html).toContain('text-xl font-semibold tracking-tight text-foreground');
-		expect(html).toContain('bg-muted px-0.5 font-mono text-[0.9em] text-foreground');
-		expect(html).not.toContain('px-1');
+		// The chip used to be `bg-muted px-0.5` with nothing vertical, and this test pinned that as
+		// "compact". Compact was the defect: the fill is 1.14:1 against the doc card it sits on, so
+		// two horizontal pixels of an invisible colour left the code with neither an edge nor a
+		// shape. It has both now, and the border is what carries it on a sunken panel where the
+		// fill and the ground are the same token.
+		expect(html).toContain(
+			'rounded-sm border border-border bg-muted px-1 py-px font-mono text-[0.9em] text-foreground',
+		);
+		// Still not the chip idiom used for a metadata pill elsewhere: this is a run of characters
+		// inside a sentence, and `py-0.5` would push the line box of every paragraph holding one.
 		expect(html).not.toContain('py-0.5');
 	});
 });

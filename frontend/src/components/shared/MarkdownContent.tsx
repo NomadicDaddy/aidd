@@ -48,7 +48,18 @@ function renderInline(text: string): ReactNode[] {
 		} else if (match[4] !== undefined) {
 			nodes.push(
 				<code
-					className="rounded-sm bg-muted px-0.5 font-mono text-[0.9em] text-foreground"
+					// The chip has an edge because the fill alone never had one: `bg-muted`
+					// (#1e2330) on the doc card's `--card` (#161a22) is 1.14:1, and with `px-0.5`
+					// and no vertical padding there was no shape either. On /docs/glossary the run
+					// `native, ollama, lmstudio, claude-code, cline` read as a face change with the
+					// commas outside the chips. The fill stays: on a sunken panel the code sits on
+					// `bg-muted` itself, and there the border is the only thing left.
+					//
+					// The size stays relative. `text-xs` is the declared step and `text-[0.9em]` is
+					// a one-off between two of them, but 17 headings across the skill corpus hold
+					// inline code, and a fixed 12px inside a `text-xl` heading is two thirds the
+					// size of the words beside it — a worse error than an undeclared step.
+					className="rounded-sm border border-border bg-muted px-1 py-px font-mono text-[0.9em] text-foreground"
 					key={`c${key++}`}>
 					{match[4]}
 				</code>,

@@ -37,7 +37,7 @@ direct file edits if you explicitly want it.
 
 For normal runs, your chosen CLI handles model access. The in-process **Direct
 AI** capability and the Director chat's tool-calling turns need a compatible
-provider configured in **Settings**; without one, those surfaces fall back to
+provider configured in [Settings](/settings); without one, those surfaces fall back to <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 read-only behavior.
 
 ## How do I update aidd?

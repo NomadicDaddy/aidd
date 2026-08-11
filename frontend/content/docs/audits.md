@@ -28,4 +28,4 @@ Edit a project's profile from its detail view to change what applies.
 ## Launching
 
 You can launch an audit (or a review) for a project directly from this page.
-The resulting run behaves like any other run and shows up in **Runs**.
+The resulting run behaves like any other run and shows up in [Runs](/runs). <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->

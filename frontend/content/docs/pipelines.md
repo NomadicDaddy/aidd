@@ -2,7 +2,7 @@
 
 A **pipeline session** is one execution of a **recipe**: a file-backed,
 multi-step template. Every recipe launch creates exactly one session, even for
-single-step recipes. Sessions appear in the unified **Runs** feed, and each has
+single-step recipes. Sessions appear in the unified [Runs](/runs) feed, and each has <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 a report page reviewing its full step history.
 
 ## What a session records
@@ -17,7 +17,7 @@ a report page reviewing its full step history.
 
 ## Working with sessions
 
-- On **Runs**, expand a pipeline row to see its steps, or open its **Report**
+- On [Runs](/runs), expand a pipeline row to see its steps, or open its **Report** <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
   for step-by-step progress and output summaries.
 - You can **stop** an active session from the Runs feed or the report.
 - Sessions persist after they finish, so you can review what a recipe did long
@@ -25,6 +25,6 @@ a report page reviewing its full step history.
 
 ## Starting a session
 
-Sessions are launched from **Recipes** (or by running a **skill** as a
+Sessions are launched from [Recipes](/recipes) (or by running a **skill** as a <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 one-shot). The Runs feed and this report are for reviewing and stopping them,
 not starting them.

@@ -19,11 +19,11 @@ Use `--triumvirate` with explicit role CLIs:
 
 ```powershell
 bun run start -- --project-dir C:\path\to\your-app `
-  --cli native --model glm-5.1 `
+  --cli native --model glm-5.2 `
   --triumvirate `
   --secondary-cli codex `
   --overseer-cli claude-code --overseer-model "opus 4.8" `
-  --exec-cli native --exec-model glm-5.1
+  --exec-cli native --exec-model glm-5.2
 ```
 
 Required flags when `--triumvirate` is active:

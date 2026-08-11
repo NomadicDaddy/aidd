@@ -62,8 +62,17 @@
 			"type": "object"
 		},
 		"phase": {
-			"description": "Current phase. Used by --resume-from to know where to pick up.",
-			"enum": ["preflight-ok", "A", "B", "C-pending", "C-skipped", "D", "D-complete"],
+			"description": "Current phase. Used by --resume-from to know where to pick up. Part C sits at 'C-pending' while it implements and while any feature remains unresolved, moves to 'C-complete' only when every enumerated feature resolved, and takes 'C-skipped' when C1 found none.",
+			"enum": [
+				"preflight-ok",
+				"A",
+				"B",
+				"C-pending",
+				"C-complete",
+				"C-skipped",
+				"D",
+				"D-complete"
+			],
 			"type": "string"
 		},
 		"pilot": {

@@ -322,18 +322,27 @@ completed, `failed` with `lastError` when B1 marked it blocked.
 
 ## Part C - Remediation Implementation
 
+**Part C implements, and it implements without prompting.** It is the phase that consumes what B3's
+formal pipeline queued; read the other way it is dead code, and the dance tags every derived app at
+D3 with triaged defects still open and nobody told. What is bounded here is the backlog Part C is
+allowed to touch, not whether it does the work — see Out of Scope.
+
 1. Enumerate features matching `remediation-*` glob in `<spernakit-root>/.aidd/features/`.
-2. **Zero features → auto-skip** (confirmed default): write `"Part C: no-op (0 features)"` to checkpoint and proceed directly to Part D.
+2. **Zero features → auto-skip** (confirmed default): write `{ phase: 'C-skipped' }` with
+   `"Part C: no-op (0 features)"` in `notes`, and proceed directly to Part D.
 3. **Features present → implement them directly**:
+    - Write `{ phase: 'C-pending' }` before touching the first feature, so a run interrupted mid-phase
+      resumes into C rather than replaying B or skipping ahead to D.
     - Print the feature list with paths and process it in dependency order.
     - Read each feature, repository instructions, affected implementation, and existing tests.
     - Implement the complete end-to-end remediation, run focused validation, and update feature
       status and pass state only when the evidence supports completion.
-    - Record `{ phase: 'C' }` after processing every feature, listing resolved and unresolved feature
-      paths in `notes`. Part C works the template's own feature backlog, not the fleet, so it writes
-      no `perApp` fields.
-    - If any feature remains unresolved, preserve its backlog state and exit non-success before Part
-      D with exact evidence. Otherwise continue directly to Part D.
+    - Record `{ phase: 'C-complete' }` after processing every feature, listing resolved and unresolved
+      feature paths in `notes`. Part C works the template's own feature backlog, not the fleet, so it
+      writes no `perApp` fields.
+    - If any feature remains unresolved, leave the checkpoint at `C-pending`, preserve that feature's
+      backlog state, and exit non-success before Part D with exact evidence. Otherwise continue
+      directly to Part D.
 
 ## Part D - Verify + Close
 
@@ -430,6 +439,10 @@ marked `failed` or `pending`. A dance interrupted partway through a fan-out leav
 committed and tagged; re-running those repeats work the checkpoint has already accounted for.
 `--skip-parts` still skips whole parts regardless of `perApp`.
 
+Part C is the exception, because it writes no `perApp` fields. Resume it from the backlog instead:
+re-run C1's enumeration and skip every feature already at a completed, passing status. The feature
+records decide what is left; `notes` only describes what the interrupted run believed it had done.
+
 Always run preflight and validate that the checkpoint's scope and bump match before resuming. If
 flags changed either value, rename the checkpoint to `.dance-state.mismatch-<timestamp>.json`, report
 the preserved path, initialize a fresh checkpoint, and restart from Phase 0. Narrowing `--scope` to a
@@ -468,5 +481,11 @@ so the flag agrees with it, or the resume discards the checkpoint and starts the
 
 ## Out of Scope
 
-Do not auto-implement Part C remediation features, and do not include non-Spernakit apps in scope
-(the fleet manifest is what defines membership). If a dance fails after tagging, roll back with `git revert` and retag manually.
+Part C's limit is which backlog it may work, not whether it works one. It implements the
+`remediation-*` features in `<spernakit-root>/.aidd/features/` that step C1 enumerated, and nothing
+else: not a derived app's `.aidd/features/`, not template features outside the `remediation-*` glob,
+and not work that arrived after C1 ran. A derived app's own backlog belongs to a separate run against
+that app.
+
+Do not include non-Spernakit apps in scope (the fleet manifest is what defines membership). If a
+dance fails after tagging, roll back with `git revert` and retag manually.

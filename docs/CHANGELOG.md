@@ -2,7 +2,7 @@
 
 All notable public aidd releases are documented here.
 
-## [2.137.0] - 2026-08-03
+## [2.137.0] - 2026-08-10
 
 ### Added
 
@@ -48,6 +48,21 @@ All notable public aidd releases are documented here.
   instead of applying half a pass, and template-owned records in a derived app are untouched. The
   contract is validated after each iteration as an advisory carryover note, not a completion gate.
   A read-only run reconciles only to report: it names the drifting records and rewrites none.
+- Project detail gains a **Milestones** tab, showing the roadmap milestones and the features each one
+  carries, and a **Notes** tab: a free-form markdown scratch pad persisted to `.aidd/notes.md`.
+- Four bundled skills: `frontend-design-sweep` (whole-app design review, one subagent per surface,
+  with viewport modes), `page-by-page` (one question asked of every page), `loopover` (bounded
+  repeat-until-done sweeps, capped by a dry run rather than a safety prompt), and `cut-release`.
+- The project profile carries four carriage facets, so audit applicability can distinguish how a
+  project ships from how critical it is.
+- A commit-time leak guard installs across the fleet, and a scaffolded project is guarded from its
+  first commit rather than from its first sync. A repository can decline capture explicitly instead
+  of being guessed at, and both fleet sweeps honor the declaration.
+- New quality gates, several carried over from spernakit: `check:docs` (internal link resolution),
+  `check:destructive-confirmation`, `check:no-inline-references`, `check:script-targets`,
+  `check:hook-parity`, and `check:gate-conventions` — a meta-gate every other gate now conforms to.
+  `check:env-spread` became a shared gate, and the `smoke:qc` runbook is generated from the step
+  registry rather than maintained by hand.
 
 ### Changed
 
@@ -109,6 +124,29 @@ All notable public aidd releases are documented here.
   running the uncached `lint`, since that cache keys on each file's own content and cannot see a
   type-aware violation created in one file by a change to another. `@typescript-eslint/unbound-method`
   is enforced for every TypeScript target rather than the frontend alone.
+- The control panel went through a full design sweep, desktop and phone. Every route renders on one
+  shell; every filtered surface uses one filter-toolbar pattern; every card and section panel routes
+  through a shared `CardHeader`; the dashboard's four fleet metrics render as one `Metric` tile toned
+  by its reading rather than its label. The status tone scale is closed and reserved for status, with
+  taxonomy moved off it and semantic color tokens adopted throughout, which is also what makes the
+  dark theme's contrast hold.
+- Responsive layout is keyed off the content column rather than the viewport, so a collapsed sidebar
+  no longer changes which layout a page gets. The `md` tier is gone and guarded against returning,
+  wide tables carry a column strategy plus a sticky header and fall back to card stacks below their
+  own tier, every shared control meets a 44px touch target on the phone, and sticky headings offset
+  by the shell bar's measured height.
+- The Dashboard cards can be reordered by drag and locked in place from the page header.
+- Settings is reorganized from seven tabs into five — **Workspace**, **Run Engine**, **AI &
+  Director**, **Integrations**, and **Control Panel** — with one credential vocabulary throughout and
+  backend install status folded into the per-backend defaults table.
+- The Diary feed is a scannable, filterable timeline with one type hierarchy, one pager, and no
+  invented timestamps. The Audits surfaces are rebuilt around their tables. Telemetry's charts keep
+  empty buckets, round their axes, and draw both value and category axes.
+- Project detail is faster: audit freshness is resolved in parallel and feature summaries come back
+  from the project-detail endpoint instead of a follow-up request per project.
+- The license inventory records platform-gated packages in the lockfile closure and inherits that
+  gating across dependency edges, so a package pulled in only on another platform stops being
+  reported as a missing install.
 
 ### Fixed
 
@@ -168,6 +206,23 @@ All notable public aidd releases are documented here.
 - The license inventory finds packages nested under a scope directory. `@octokit/` holds packages
   rather than being one, so a nested copy under a scoped package was unreachable and a hoisted
   install that kept a second version there reported the package as not installed at all.
+- Launching a run no longer hides the runs belonging to other projects, and a force-failed run stays
+  visible in run history instead of vanishing from the feed that recorded it.
+- A feature whose persisted status is invalid can be recovered rather than blocking the project.
+- The Director honors its configured Direct AI model instead of falling back to the shared default.
+- A recipe's shell is resolved explicitly, so a step no longer inherits whichever shell the panel
+  happened to be started from.
+- The skills context-budget message parses when the backend reports it without a percentage.
+- Windows fixes: locating git no longer flashes a console window, and `bash` is resolved without
+  trusting `PATH`.
+- Hook installation stopped fighting itself. `ensureHistoryGuard` was copying the guard-only
+  `pre-commit` variant over the richer hook in every `.aidd`-carrying project — both carry the marker
+  the copy is guarded by, so nothing refused it. The push hook now installs every guard it chains,
+  the staged-work check runs only when there is work to check, and the leak guard no longer flags a
+  repository's own name. `check:hook-parity` holds the scaffold and the repository copies together.
+- Accessibility: a failed run says so without relying on the color red, execution-identity badges are
+  recoverable by touch and keyboard, and a redirect route no longer scrolls the page title out of
+  view on arrival.
 
 ### Security
 

@@ -24,7 +24,8 @@ how to report privately.
 
 ## Development
 
-aidd is a Bun + TypeScript monorepo (backend, frontend, CLI), Windows-first and local-first.
+aidd is a Bun + TypeScript monorepo (`shared`, `backend`, `frontend`, `cli`), Windows-first and
+local-first.
 
 - Install [Bun](https://bun.sh) (see `package.json` `engines` for the version).
 - `bun install`

@@ -7,10 +7,11 @@ against project-local `.aidd/` metadata. There are no accounts and no cloud serv
 telemetry leaves your machine.
 
 Point it at a backend you already use: the built-in **native** provider (any
-OpenAI-compatible API, including xAI/Grok), a local **Ollama** or **LM Studio**
-server, or an agent CLI like **Claude Code**, **Cline**, **opencode**, **kilocode**, or
-**codex**. aidd handles the orchestration, structured results, audits, and
-run history.
+OpenAI-compatible API, including xAI/Grok), the **openai** preset, a local
+**Ollama** or **LM Studio** server, or an agent CLI — **Claude Code**,
+**Cline**, **codex**, **grok**, **kilocode**, or **opencode**. aidd handles the
+orchestration, structured results, audits, and run history. See
+[docs/guides/backends.md](docs/guides/backends.md) for all ten.
 
 ## Highlights
 

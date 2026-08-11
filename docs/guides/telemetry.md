@@ -34,8 +34,8 @@ finishes. On web startup, stale running invocations are reconciled against autho
 
 Every top-level launch and every nested recipe or skill step is a separate invocation. The
 dashboard therefore displays total, top-level, and nested counts separately. Outcome counts are
-also mutually exclusive: completed, warnings, failed, stopped, killed, no work, and running always
-add up to the total. Run-backed rows use the same outcome classifier as the Runs page; a warning is
+also mutually exclusive: completed, warnings, failed, flagged, stopped, killed, no work, and running
+always add up to the total. Run-backed rows use the same outcome classifier as the Runs page; a warning is
 not a failure, and stopped, killed, or no-work outcomes are never relabeled as failed.
 
 The recent-invocations table exposes an **Inspect** control for every row. It displays the exact
@@ -83,8 +83,8 @@ history or project is removed.
 `frontend/src/pages/telemetry/TelemetryPage.tsx` provides:
 
 - Type filter (All / Skills / Recipes / Runs) and time window (24h / 7d / 30d / All).
-- Summary cards: total, top-level, nested, completed, warnings, failed, stopped, killed, no work,
-  and running.
+- Summary cards: total, top-level, nested, completed, warnings, failed, flagged, stopped, killed,
+  no work, and running.
 - Most-used leaderboard, invocations-over-time series, and a backend-mix breakdown.
 - An agent-output chart: diverging bars per hour/day — lines added above the baseline and
   removed below, toggleable to tokens in/out — with line, file, and token capture coverage.

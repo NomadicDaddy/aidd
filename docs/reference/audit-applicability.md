@@ -7,7 +7,7 @@ matrix UI on `/audits`.
 ## Why an external mapping
 
 Earlier versions of audit-manager hardcoded applicability via two `Set` constants in
-`cli/src/metadata/project-profile.ts` (`prototypeAuditNames` and `localOnlyExcludedAuditNames`).
+`shared/src/metadata/project-profile.ts` (`prototypeAuditNames` and `localOnlyExcludedAuditNames`).
 That worked but had three problems:
 
 1. Operators could not change what runs without editing TypeScript and rebuilding the CLI.

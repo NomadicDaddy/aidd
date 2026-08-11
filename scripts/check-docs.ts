@@ -14,7 +14,7 @@
  *
  * Usage:
  *   bun scripts/check-docs.ts
- *   bun run check-docs
+ *   bun run check:docs
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';

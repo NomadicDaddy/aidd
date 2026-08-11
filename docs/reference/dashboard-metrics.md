@@ -5,7 +5,7 @@ headline numbers. This page is their definition of record: change the numbers he
 the code, and do not re-derive them ad hoc.
 
 The four metrics are rendered by the generic `<Metric>` card
-(`frontend/src/pages/dashboard/Metric.tsx`); the values are computed at the top of `DashboardPage()`.
+(`frontend/src/components/shared/Metric.tsx`); the values are computed at the top of `DashboardPage()`.
 
 ## Metrics
 

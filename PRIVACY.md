@@ -10,6 +10,16 @@ invocation is recorded in a local SQLite database and read back only to render t
 Nothing in the telemetry service makes outbound network calls. See
 [docs/guides/telemetry.md](docs/guides/telemetry.md).
 
+Alongside invocations, the panel keeps two other local records, both described in full by the
+**What aidd records** panel on the Telemetry page:
+
+- **System and browser health**: CPU, memory, heap, RSS, disk, event-loop latency, connections,
+  requests, and Core Web Vitals against a sanitized route path. Samples are retained locally for up
+  to 30 days.
+- **AI call diagnostics**: a rotating local log of call timing, provider and model, endpoint host,
+  request size, outcome, optional project/run identity, and reported tokens. Prompt and response
+  contents are not written to it. The log rotates at 10 MB, keeping up to five archives.
+
 ## Where your data lives
 
 | Data                                  | Location                          |

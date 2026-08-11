@@ -71,13 +71,16 @@ deploy credentials.
 
 ## Configuration
 
-aidd reads two config files and **writes neither**:
+aidd reads two config files:
 
 - `~/.aidd/config.json`: your user-level settings (roots, default backend/model, web options)
 - `<project>/.aidd/aidd.config.json`: optional per-project overrides
 
-You create and edit these yourself. The web **Settings** page saves your UI preferences into the
-control panel's database; it does not rewrite your `config.json`.
+The per-project file is yours alone — aidd **never writes it**. The user-level file you can also
+edit by hand, but saving the web **Settings** page rewrites it: the panel writes the merged result
+back to `~/.aidd/config.json` with owner-only permissions (`0600`, in a `0700` directory), because
+that file holds your provider API keys, `web.authToken`, and the Telegram bot token. Secret values
+are never read back out to the browser — the Settings page shows them as set-or-unset.
 
 ## The control panel's data and logs
 
@@ -136,8 +139,8 @@ home"** anywhere in aidd.
 
 ## What aidd does not do
 
-- It does not write outside the project you point it at, except its own `data/`/`logs/` and the
-  (read-only) `~/.aidd/config.json`.
+- It does not write outside the project you point it at, except its own `data/`/`logs/` and
+  `~/.aidd/config.json` when you save the Settings page.
 - It does not overwrite your existing files during scaffolding.
 - It does not auto-commit your source code.
 - It does not send telemetry, usage analytics, or any data to us or a third party. Its usage

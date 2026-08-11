@@ -6,20 +6,22 @@ import {
 	submitProjectInterviewAnswer,
 } from '../../backend/src/services/interviewService.ts';
 
-const TEMP_DIR = join(import.meta.dir, '__interview_test_temp__');
+import { testTempDir } from '../_helpers/temp.ts';
+
 const QUESTIONS_CONTENT = `- **[HIGH]** What is the primary goal of this project?
 - **[MED]** What is the target audience?
 - **[LOW]** What color scheme do you prefer?
 `;
 
 async function setupTempProject(): Promise<string> {
-	await mkdir(join(TEMP_DIR, '.aidd'), { recursive: true });
-	await writeFile(join(TEMP_DIR, '.aidd', 'questions.md'), QUESTIONS_CONTENT, 'utf8');
-	return TEMP_DIR;
+	const dir = await testTempDir('interview-');
+	await mkdir(join(dir, '.aidd'), { recursive: true });
+	await writeFile(join(dir, '.aidd', 'questions.md'), QUESTIONS_CONTENT, 'utf8');
+	return dir;
 }
 
-async function cleanupTempProject(): Promise<void> {
-	await rm(TEMP_DIR, { recursive: true, force: true });
+async function cleanupTempProject(dir: string): Promise<void> {
+	await rm(dir, { recursive: true, force: true });
 }
 
 describe('interviewService', () => {
@@ -35,7 +37,7 @@ describe('interviewService', () => {
 			expect(detail.unanswered[0]?.id).toBe('q-1');
 			expect(detail.unanswered[0]?.priority).toBe('HIGH');
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
@@ -59,7 +61,7 @@ describe('interviewService', () => {
 			expect(responsesContent).toContain('**[HIGH]**');
 			expect(responsesContent).toContain('Response: To build a great product.');
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
@@ -76,7 +78,7 @@ describe('interviewService', () => {
 				expect(error instanceof Error && error.message).toContain('Unknown question id');
 			}
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
@@ -93,12 +95,12 @@ describe('interviewService', () => {
 				expect(error instanceof Error && error.message).toContain('empty');
 			}
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
 	test('skips Legend and Summary sections when parsing questions', async () => {
-		const dir = TEMP_DIR;
+		const dir = await testTempDir('interview-');
 		try {
 			await mkdir(join(dir, '.aidd'), { recursive: true });
 			const fixture = [
@@ -147,7 +149,7 @@ describe('interviewService', () => {
 			expect(responsesContent).not.toContain('Must answer before changing ownership');
 			expect(responsesContent).not.toContain('Summary bullet');
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
@@ -176,7 +178,7 @@ describe('interviewService', () => {
 			expect(reread.answeredQuestions[0]?.id).toBe('q-2');
 			expect(reread.answeredQuestions[0]?.response).toBe('Developers and operators.');
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
@@ -203,7 +205,7 @@ describe('interviewService', () => {
 			expect(rereadById.get('q-1')).toBe('Ship a great product.');
 			expect(rereadById.get('q-3')).toBe('Blue and slate.');
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 
@@ -225,7 +227,7 @@ describe('interviewService', () => {
 			expect(second.answered).toBe(1);
 			expect(second.answeredQuestions[0]?.response).toBe('Updated answer.');
 		} finally {
-			await cleanupTempProject();
+			await cleanupTempProject(dir);
 		}
 	});
 });

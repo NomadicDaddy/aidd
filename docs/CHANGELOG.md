@@ -147,6 +147,14 @@ All notable public aidd releases are documented here.
 - The license inventory records platform-gated packages in the lockfile closure and inherits that
   gating across dependency edges, so a package pulled in only on another platform stops being
   reported as a missing install.
+- The in-app help pages describe the panel that shipped. Settings documents its five tabs rather
+  than seven, the dashboard page drops a card that no longer exists and gains the fleet metrics and
+  card controls, telemetry and projects cover their whole surfaces, and the backend lists name all
+  ten backends.
+- The trust and configuration references are corrected. `what-aidd-modifies.md` now says that
+  saving the Settings page rewrites `~/.aidd/config.json`, `PRIVACY.md` names the system, browser,
+  and AI-call records the panel keeps locally, and `configuration.md` documents
+  `web.autoChainRuns`, `web.autoChainLimit`, and the per-provider streaming keys.
 
 ### Fixed
 

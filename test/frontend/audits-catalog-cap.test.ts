@@ -43,12 +43,11 @@ describe('a long audits table caps itself and keeps its head', () => {
 		);
 	});
 
-	test('a 100dvh cap only applies at the width its subtrahend was computed for', async () => {
-		// The rule, not the class string. A `100dvh` subtrahend is a statement about desktop chrome,
-		// so every one of these caps has to be reachable only above `xl`. Applicability and Catalog
-		// get that for free: `hidden ... xl:block` on the Card swaps in a stack below, taking the cap
-		// with it. Overrides has no stack — two columns fit the narrowest content column there is —
-		// so it carries the gate on the cap itself.
+	test('a 100dvh cap only applies at the content width its subtrahend supports', async () => {
+		// The rule, not a shared viewport breakpoint. Applicability and Catalog swap to cards below
+		// `xl`, so their desktop caps leave with their tables. Overrides keeps the same two-column
+		// table everywhere: it queries the tab's own width so the cap engages in the 736px content
+		// region at a 1024px viewport, but not in the 656px region at 768 or on phones.
 		//
 		// This assertion previously required `max-h-[calc(100dvh-16rem)] overflow-auto p-0` verbatim
 		// on the Overrides card, which is the string that put its bottom edge 98px past the fold at
@@ -56,16 +55,24 @@ describe('a long audits table caps itself and keeps its head', () => {
 		// was there, defect included, and hands the next fixer a red build that reads as "you were
 		// wrong".
 		//
-		// Comments stripped first: this file explains its own gate in prose directly above the class
-		// that carries it, and a guard that reads the explanation as the gate passes on the strength
-		// of a sentence about the defect.
+		const overridesList = stripComments(await read(TABS, 'OverridesList.tsx'));
+		const overridesTab = stripComments(await read(TABS, 'OverridesTab.tsx'));
+		const overridesCaps =
+			overridesTab.match(/(?:@min-\[45rem\]:)?max-h-\[calc\(100dvh-\d+rem\)\]/g) ?? [];
+		expect(overridesCaps).toEqual(['@min-[45rem]:max-h-[calc(100dvh-16rem)]']);
+		expect(overridesTab).toContain('<div className="@container space-y-4">');
+		expect(overridesTab).toContain('xl:grid-cols-[minmax(0,1.4fr)_minmax(340px,0.6fr)]');
+		expect(overridesList).toContain('scrollerClassName={scrollerClassName}');
+
+		// Comments stripped first: each module explains its gate directly above the class that carries
+		// it, and a guard that reads the explanation as implementation passes on prose alone.
 		const offenders: string[] = [];
-		for (const file of ['ApplicabilityTab.tsx', 'CatalogTable.tsx', 'OverridesList.tsx']) {
+		for (const file of ['ApplicabilityTab.tsx', 'CatalogTable.tsx']) {
 			const source = stripComments(await read(TABS, file));
 			for (const match of source.matchAll(/max-h-\[calc\(100dvh/g)) {
 				// The gate is either on the cap's own class list — Applicability's `xl:block` shares
-				// the attribute, Overrides prefixes the utility — or on an ancestor written above it,
-				// which is how the Catalog card gates a cap two elements down.
+				// the attribute — or on an ancestor written above it, which is how the Catalog card
+				// gates a cap two elements down.
 				const attrStart = source.lastIndexOf('="', match.index);
 				const attr = source.slice(attrStart, source.indexOf('"', attrStart + 2));
 				if (attr.includes('xl:') || source.slice(0, attrStart).includes('xl:block'))
@@ -77,7 +84,7 @@ describe('a long audits table caps itself and keeps its head', () => {
 	});
 
 	test('the override select is sized by its options, not by a fixed width', async () => {
-		const source = await read(TABS, 'OverridesList.tsx');
+		const source = stripComments(await read(TABS, 'OverridesList.tsx'));
 		const select = source.slice(source.indexOf('<select'), source.indexOf('</select>'));
 
 		// `w-36` (144px) with `ml-auto`, in a two-column row whose other column is an audit name, made
@@ -86,7 +93,7 @@ describe('a long audits table caps itself and keeps its head', () => {
 		// including the chevron, was not hittable. Default / Required / Disabled / Excluded size a
 		// select to well under 144px on their own, and identically in every row.
 		expect(select).not.toMatch(/\bw-(?:\d|\[|full)/);
-		expect(source).toContain('break-words');
+		expect(source).toContain('wrap-anywhere');
 	});
 
 	test('every audits table head is sticky', async () => {

@@ -119,7 +119,7 @@ export function OverridesTab() {
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="@container space-y-4">
 			<FilterToolbar
 				columns="sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr]"
 				filtered={visibleDefinitions.length}
@@ -175,6 +175,11 @@ export function OverridesTab() {
 			</FilterToolbar>
 
 			{projectId && (
+				// The cap follows this tab's content width rather than the viewport. At 1024px the
+				// expanded rail leaves 736px here: enough room for a labelled scroll region, and too
+				// little viewport height to put 42 rows before the rules editor. At 768px this region
+				// is only 656px wide, so the page remains the one scroll region there and at phone
+				// widths. The 45rem boundary is the shared AppLayout threshold between those widths.
 				// `items-start`: the rules card holds a heading, two lines and a 260px textarea, and
 				// as a stretched grid item it inherited the 944px height of the list beside it — most
 				// of it empty, while the list it was matching showed 17 of 42 rows.
@@ -185,6 +190,7 @@ export function OverridesTab() {
 						onChange={(name, value) =>
 							setAudits((current) => ({ ...current, [name]: value }))
 						}
+						scrollerClassName="@min-[45rem]:max-h-[calc(100dvh-16rem)]"
 					/>
 
 					<Card className="flex flex-col gap-3">

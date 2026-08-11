@@ -12,6 +12,7 @@ interface OverridesListProps {
 	audits: Record<string, EffectValue>;
 	definitions: AuditDefinition[];
 	onChange: (name: string, value: EffectValue) => void;
+	scrollerClassName: string;
 }
 
 /**
@@ -22,27 +23,23 @@ interface OverridesListProps {
  * case. The marker is a 2px rule in the row's own gutter and a heavier audit name: both are shape,
  * so neither depends on telling two colours apart. Every row reserves the 2px, so nothing shifts.
  */
-export function OverridesList({ audits, definitions, onChange }: OverridesListProps) {
+export function OverridesList({
+	audits,
+	definitions,
+	onChange,
+	scrollerClassName,
+}: OverridesListProps) {
 	return (
 		// Two columns, so this one never needs a card stack — it fits the narrowest content column
 		// there is. What it did need is the scrollport: `overflow-auto` on the Card scrolled forty-two
 		// rows with no way to reach them but a pointer, and being `overflow-auto` rather than
 		// `overflow-x-auto` it slipped past the affordance guard that would have caught it.
 		//
-		// The cap is `xl:` because a `100dvh` subtrahend is a statement about desktop chrome. Ungated,
-		// 16rem put the card's bottom edge 98px past the fold at 390px and 234px at 768px, so the tab
-		// scrolled the page and the card at once. Its sibling ApplicabilityTab carries the same gate;
-		// it just gets it for free from the `hidden xl:block` that swaps in its card stack, and this
-		// table has no stack to swap to. Below xl the page is the one scroll region and the head rides
-		// up with it — the alternative is a nested scrollport on a surface 358px wide.
-		//
 		// `min-w-0` is what makes that scrollport actually scroll. A grid item's automatic minimum
 		// size is its min-content size, so this card sized to the widest thing in the table — 384px
 		// in a 358px track — and the overflow escaped past the scroller to the document instead.
 		<Card className="min-w-0 p-0">
-			<OverflowScroller
-				ariaLabel="Audit overrides"
-				scrollerClassName="xl:max-h-[calc(100dvh-16rem)]">
+			<OverflowScroller ariaLabel="Audit overrides" scrollerClassName={scrollerClassName}>
 				{/* Half the shared table measure, because this is half a table: two columns, an
 				    audit name and a select. At the full 80rem the pair sat at opposite ends of a
 				    1280px row with nothing between them, which reads as two lists rather than as

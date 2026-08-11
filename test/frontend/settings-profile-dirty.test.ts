@@ -61,10 +61,13 @@ describe('the Director Profile card has the surface dirty vocabulary', () => {
 	test('the dot is announced, not only drawn', async () => {
 		const toolbar = await read('pages/settings/SettingsToolbar.tsx');
 
-		// Whatever lands in `dirtyTabs` inherits both: the trigger's accessible name gains "unsaved
-		// changes", and the narrow-viewport select spells it into the option text.
+		// Whatever lands in `dirtyTabs` gains "unsaved changes" in the trigger's accessible name.
+		// It used to also spell " • unsaved" into a narrow-viewport select's option text; that
+		// select is gone, so the dot is the single marker and it has to carry the announcement.
 		expect(toolbar).toContain('<span className="sr-only">unsaved changes</span>');
-		expect(toolbar).toContain('`${tab.label} • unsaved`');
+		expect(toolbar).toContain(
+			'dirtyTabs.has(tab.id) ? { ...tab, badge: <UnsavedDot /> } : tab',
+		);
 	});
 
 	test('nothing copies the profile into state behind an effect', async () => {

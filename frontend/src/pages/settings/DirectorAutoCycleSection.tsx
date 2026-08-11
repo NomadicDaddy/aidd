@@ -80,7 +80,7 @@ export function DirectorAutoCycleSection({
 					}
 					headingLevel={3}
 					level="subsection"
-					title="Suggestion granularity"
+					title="Suggestion Granularity"
 				/>
 				<div className="mt-4 grid gap-4 @min-[32rem]:grid-cols-2">
 					<FieldRow label="Granularity">

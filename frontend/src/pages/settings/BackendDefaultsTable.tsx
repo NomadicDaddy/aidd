@@ -208,7 +208,11 @@ export function BackendDefaultsTable({
 								loading={statusQuery.isLoading}
 								status={statuses.get(backend)}
 							/>
-							<div className="grid gap-2">
+							{/* Two-up. Stacked one control per row, the run-engine tab grew to 4,573px
+							    of scroll height at 1024x768 against 1,625px at 2250x1309 — roughly six
+							    screens to reach the Observability card at the bottom. The column at
+							    1024 is 736px, which fits two of these comfortably. */}
+							<div className="grid gap-2 @min-[32rem]:grid-cols-2">
 								<BackendDefaultFields
 									backend={backend}
 									defaults={defaults}

@@ -18,7 +18,12 @@ function StatusRow({ item }: { item: SettingsSourceControlStatus }) {
 	const detailLine =
 		item.authStatus && item.detail.trim().toLowerCase() !== item.status ? item.detail : null;
 	return (
-		<div className="grid gap-3 px-4 py-3 @min-[45rem]:grid-cols-[minmax(0,1fr)_auto] @min-[45rem]:items-center">
+		// Capped. The `_auto` right column pushed the badge and the command to the far edge of a
+		// 1180px track, leaving measured voids of 796px, 756px, 715px and 812px between a four-word
+		// status sentence and the badge naming it, four rows deep. The row keeps the two-column
+		// split — the left side is a three-line block, not the single flex line the finding first
+		// proposed — and stops growing once both sides are comfortable.
+		<div className="grid max-w-3xl gap-3 px-4 py-3 @min-[45rem]:grid-cols-[minmax(0,1fr)_auto] @min-[45rem]:items-center">
 			<div className="min-w-0">
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="font-medium text-foreground">{item.label}</span>

@@ -166,9 +166,13 @@ describe('responsive steps are chosen against content width', () => {
 		const start = lab.indexOf('const constrainedWidths');
 		const table = lab.slice(start, lab.indexOf('] as const', start));
 
-		// Without `shrink-0` the 240px and 160px rows both collapse to the cell's leftover width and
-		// render identically, which makes the section demonstrate the opposite of its own point.
-		for (const width of ['240px', '160px', '120px']) {
+		// Without `shrink-0` the wider rows collapse to the cell's leftover width and render
+		// identically, which makes the section demonstrate the opposite of its own point.
+		//
+		// 179px is the Runs MODEL column the docstring names as the real budget, and 96px is the
+		// tight step: at the 160px this list used to carry, the Production badge measured 153px and
+		// rendered identically to its own 240px row.
+		for (const width of ['240px', '179px', '120px', '96px']) {
 			expect(table).toContain(`w-[${width}] shrink-0`);
 		}
 	});

@@ -115,7 +115,16 @@ export function ExecutionIdentityBadges({
 	const badges = (
 		<Badge
 			aria-label={ariaLabel}
-			className={cn('max-w-full min-w-0 items-stretch gap-0 overflow-hidden p-0', className)}
+			className={cn(
+				'max-w-full min-w-0 items-stretch gap-0 overflow-hidden p-0',
+				// Only the ones that actually hold more. The Badge Lab renders 34 chips in one
+				// treatment of which 10 are keyboard-focusable tooltip triggers, and at rest they
+				// were pixel-identical to the 24 inert ones: same fill, `cursor: auto`, no hover
+				// response. The ring step matches the `interactive` card's `hover:border-accent/40`,
+				// so "there is more here" reads the same on a chip as it does on a card.
+				withTooltip && 'cursor-help transition-shadow hover:ring-accent/40',
+				className,
+			)}
 			role="group">
 			{items.map((item, index) => (
 				<span

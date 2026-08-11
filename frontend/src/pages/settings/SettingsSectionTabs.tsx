@@ -10,7 +10,7 @@ import type { SettingsTab } from './settingsNavigation.ts';
 import type { RuntimeAction } from './settingsRuntime.ts';
 import type { DirectorProfileForm } from './useDirectorProfileForm.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { TabPanel } from '../../components/ui/tabs.tsx';
@@ -30,10 +30,10 @@ import { SourceControlStatusPanel } from './SettingsStatusPanels.tsx';
 import { nullableText, textValue } from './settingsUtils.ts';
 import { SharedMetadataSection } from './SharedMetadataSection.tsx';
 import { SystemMetricsSection } from './SystemMetricsSection.tsx';
-import { TelegramChannelSection } from './TelegramChannelSection.tsx';
-import { TriumvirateSection } from './TriumvirateSection.tsx';
 
 const APPLICATIONS_ROOT_HINT_ID = 'settings-applications-root-hint';
+import { TelegramChannelSection } from './TelegramChannelSection.tsx';
+import { TriumvirateSection } from './TriumvirateSection.tsx';
 
 export function SettingsSectionTabs({
 	activeTab,
@@ -67,11 +67,19 @@ export function SettingsSectionTabs({
 		<>
 			<TabPanel activeTab={activeTab} id="workspace" idPrefix="settings">
 				<div className="space-y-4">
+					{/* Titled. Untitled, the strongest label on this card was the same 12px uppercase
+					    field label its own control carries, so a tab that opens with two h2-titled
+					    cards continued into two that read as one undifferentiated form. The field
+					    label goes visually hidden rather than repeating the title one line under
+					    it — the input keeps its name.
+
+					    The hint stays a sibling paragraph rather than moving into the header's
+					    description slot: `CardHeader` renders the description without an id, so a
+					    hint that moved there would lose the `aria-describedby` association and go
+					    back to being a sentence that only sighted readers get. */}
 					<Card className="space-y-1">
-						{/* The help text is a sibling, not a child of the label: nested inside it
-						    the whole paragraph is concatenated into the control's accessible name
-						    and re-announced on every focus. */}
-						<FieldRow className="max-w-xl" label="Applications Root">
+						<CardHeader level="section" title="Applications Root" />
+						<FieldRow className="max-w-xl" label="Applications Root" labelHidden>
 							<Input
 								aria-describedby={APPLICATIONS_ROOT_HINT_ID}
 								onChange={(event) =>
@@ -88,6 +96,11 @@ export function SettingsSectionTabs({
 						</p>
 					</Card>
 					<Card className="grid gap-4 @min-[61rem]:grid-cols-[minmax(14rem,0.7fr)_minmax(0,1.3fr)]">
+						<CardHeader
+							className="@min-[61rem]:col-span-2"
+							level="section"
+							title="Workspace Roots"
+						/>
 						<ListEditor
 							items={form.applicationRoots}
 							label="Application Roots"

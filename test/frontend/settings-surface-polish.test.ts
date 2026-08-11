@@ -190,12 +190,18 @@ describe('settings toolbar unsaved locator', () => {
 		);
 	}
 
-	test('marks each dirty tab trigger and its mobile option', () => {
+	test('marks the dirty tab trigger, once, wherever the toolbar renders', () => {
 		const html = renderToolbar(['run-engine']);
+		const runEngine = html.indexOf('Run Engine');
+		const aiDirector = html.indexOf('AI &amp; Director');
 
+		// One marker, on one trigger. There used to be two — the strip's dot and a duplicate
+		// " • unsaved" inside a narrow-viewport select — and the select is gone, so the count
+		// stating that is what keeps a second one from coming back.
 		expect(html.match(/unsaved changes/g)).toHaveLength(1);
-		expect(html).toContain('Run Engine • unsaved');
-		expect(html).not.toContain('Workspace • unsaved');
+		expect(html).not.toContain('• unsaved');
+		expect(html.indexOf('unsaved changes')).toBeGreaterThan(runEngine);
+		expect(html.indexOf('unsaved changes')).toBeLessThan(aiDirector);
 	});
 
 	test('renders no dot when nothing is pending', () => {

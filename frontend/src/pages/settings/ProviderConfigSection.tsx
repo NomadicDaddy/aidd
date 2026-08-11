@@ -89,16 +89,18 @@ function ProviderCard({
 			<button
 				aria-controls={panelId}
 				aria-expanded={open}
-				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset max-sm:min-h-11 @min-[32rem]:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1fr)_auto] @min-[32rem]:items-center"
+				className="grid w-full gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset max-sm:min-h-11 @min-[32rem]:grid-cols-[minmax(8rem,14rem)_minmax(0,44rem)_auto] @min-[32rem]:items-center"
 				onClick={() => setOpen((current) => !current)}
 				type="button">
 				<span className="flex min-w-0 items-center gap-2">
+					{/* No transition. The panel it announces is mounted conditionally — computed
+					    `transition-duration: 0s`, `animation-name: none` — so roughly 330px of
+					    fields appeared in one frame while the arrow above them was still turning
+					    through its 150ms. The surface's direction is restraint in motion, so the
+					    arrow matches the panel rather than the panel growing an animation. */}
 					<ChevronDown
 						aria-hidden="true"
-						className={cn(
-							'h-4 w-4 shrink-0 transition-transform',
-							open && 'rotate-180',
-						)}
+						className={cn('h-4 w-4 shrink-0', open && 'rotate-180')}
 					/>
 					<span className="truncate text-sm font-semibold text-foreground">{name}</span>
 				</span>

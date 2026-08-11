@@ -14,7 +14,6 @@ import { StatusDot } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { TabList } from '../../components/ui/tabs.tsx';
-import { selectClass } from '../../lib/formStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 
 interface SettingsTabDefinition {
@@ -74,8 +73,18 @@ export function SettingsToolbar({
 		// element in flow at the same `z-20`, so an unoffset toolbar and it occupy the same strip
 		// and the later one in the DOM — this — paints over the navigation.
 		<Card className="sticky top-[var(--app-topbar-height,0px)] z-20 space-y-2 border-b-2 border-border bg-card/95 p-2.5 backdrop-blur">
-			<div className="flex flex-col gap-2 @min-[32rem]:flex-row @min-[32rem]:items-center @min-[32rem]:justify-between">
-				<div className="hidden min-w-0 @min-[61rem]:block">
+			{/* The inner row is capped; the Card keeps its full-bleed border-b seam. Uncapped and
+			    justified, the strip's right edge measured x=954 and Discard's left edge x=1999 at
+			    2250x1309 — a 1045px empty band across the one element that is always on screen. Left
+			    anchored at the same 80rem the shared FilterToolbar uses, so the toolbar and the cards
+			    under it start and stop at the same two edges. */}
+			<div className="flex max-w-[80rem] flex-col gap-2 @min-[32rem]:flex-row @min-[32rem]:items-center @min-[32rem]:justify-between">
+				{/* The strip stays a strip at every width. It used to be swapped for a native select
+				    below 61rem, which lost the icons, the accent underline, and downgraded the unsaved
+				    marker from an amber dot to the words " • unsaved" inside an option — while every
+				    other tabbed surface in the app kept its tabs. Five tabs measure roughly 640px and
+				    the column at 1024 is 736px, so nothing scrolls or wraps there either. */}
+				<div className="min-w-0">
 					<TabList
 						activeTab={activeTab}
 						ariaLabel="Settings sections"
@@ -84,22 +93,6 @@ export function SettingsToolbar({
 						tabs={tabs}
 					/>
 				</div>
-				<label className="min-w-0 flex-1 @min-[61rem]:hidden">
-					<span className="sr-only">Settings section</span>
-					<select
-						aria-label="Settings section"
-						autoComplete="off"
-						className={`${selectClass} w-full`}
-						name="settings-section"
-						onChange={(event) => onChange(event.target.value as SettingsTab)}
-						value={activeTab}>
-						{settingsTabs.map((tab) => (
-							<option key={tab.id} value={tab.id}>
-								{dirtyTabs.has(tab.id) ? `${tab.label} • unsaved` : tab.label}
-							</option>
-						))}
-					</select>
-				</label>
 				<div className="flex shrink-0 items-center justify-end gap-2">
 					<Button
 						disabled={savePending || !dirty}

@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 import { FRONTEND_ROUTE_PATHS } from 'aidd-shared/contracts/frontend-routes';
 import { Link } from 'react-router';
 
@@ -11,16 +9,16 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
-import { backendLabel, backendOptions } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
 import {
+	executionIdentityCliCatalog,
 	executionIdentityModelCatalog,
 	executionIdentityReasoningCatalog,
 } from '../../lib/executionIdentity.ts';
 import { type Tone } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
-
-const cliCatalog = [...backendOptions.map(({ value }) => value), 'direct'] as const;
+import { proseMeasureClass } from '../../lib/typography.ts';
+import { ExecutionIdentityCatalogSections } from './ExecutionIdentityCatalogSections.tsx';
 
 const toneCatalog: readonly Tone[] = ['emerald', 'teal', 'amber', 'red', 'violet', 'neutral'];
 
@@ -69,65 +67,41 @@ const representativeIdentities: readonly {
  * an identity is asked to render at all.
  */
 const constrainedWidths = [
-	// `shrink-0` is load-bearing: these are flex items, so without it the 240px and 160px rows both
-	// collapse to whatever the cell has left and render at an identical width — a constrained-width
-	// specimen that is not actually constrained to the width it is labelled with.
+	// `shrink-0` is load-bearing: these are flex items, so without it the wider budgets collapse to
+	// whatever the cell has left and render at an identical width — a constrained-width specimen
+	// that is not actually constrained to the width it is labelled with.
+	//
+	// 179px, not the 160px this list used to carry: 179 is the Runs MODEL column the docstring above
+	// names as the real budget, and the sheet was never exercising it. 96px is the tight step that
+	// row was meant to be — at 160px the Production badge measured 153px and rendered identically to
+	// its own 240px row, so two of three rows were showing the same outcome.
 	{ className: 'w-[240px] shrink-0', label: '240px' },
-	{ className: 'w-[160px] shrink-0', label: '160px' },
+	{ className: 'w-[179px] shrink-0', label: '179px' },
 	{ className: 'w-[120px] shrink-0', label: '120px' },
+	{ className: 'w-[96px] shrink-0', label: '96px' },
 ] as const;
 
 function ConstrainedSpecimens({ identity, label }: { identity: ExecutionIdentity; label: string }) {
 	return (
-		<div className="min-w-0 space-y-2">
-			<h3 className="text-sm font-medium text-foreground">{label}</h3>
-			{constrainedWidths.map((width) => (
-				<div className="flex items-center gap-3" key={width.label}>
-					<span className="w-12 shrink-0 font-mono text-xs text-muted-foreground">
-						{width.label}
-					</span>
-					<div className={cn('min-w-0 overflow-hidden', width.className)}>
-						<ExecutionIdentityBadges {...identity} variant="compact" />
+		<div className="min-w-0">
+			<CardHeader className="mb-2" headingLevel={3} level="subsection" title={label} />
+			{/* Side by side, not stacked. Stacked, the 240px, 179px and 120px results sat 768px
+			    apart down a 948px row on the one section whose entire job is comparing them; the
+			    budgets together total 635px and wrap as a set when the cell is narrower. */}
+			<div className="flex flex-wrap items-start gap-4">
+				{constrainedWidths.map((width) => (
+					<div className="min-w-0" key={width.label}>
+						<div className="mb-1 font-mono text-xs text-muted-foreground">
+							{width.label}
+						</div>
+						<div className={cn('min-w-0 overflow-hidden', width.className)}>
+							<ExecutionIdentityBadges {...identity} variant="compact" />
+						</div>
 					</div>
-				</div>
-			))}
+				))}
+			</div>
 		</div>
 	);
-}
-
-function CatalogGroup({
-	children,
-	description,
-	id,
-	title,
-}: {
-	children: ReactNode;
-	description: string;
-	id: string;
-	title: string;
-}) {
-	return (
-		<Card aria-labelledby={id}>
-			<section>
-				<CardHeader className="mb-3" description={description} id={id} title={title} />
-				<div className="flex flex-wrap items-center gap-2">{children}</div>
-			</section>
-		</Card>
-	);
-}
-
-/**
- * The display name of a CLI, where it differs from the value the chip already shows.
- *
- * It used to render as loose text beside the chip, which meant three of eleven entries carried a
- * word in the wrap flow and eight carried nothing — a ragged row in which the three exceptions
- * read as leftover debris rather than as a distinction. The chip is the specimen this page exists
- * to show; the display name is a gloss on it, so it moved to the title where a reader who wants it
- * can ask and the row stays one shape.
- */
-function cliDisplayTitle(cli: string): string | undefined {
-	const label = cli === 'direct' ? 'Direct AI' : backendLabel(cli);
-	return label.toLowerCase() === cli.toLowerCase() ? undefined : label;
 }
 
 export function ExecutionIdentityBadgeLabPage() {
@@ -142,14 +116,19 @@ export function ExecutionIdentityBadgeLabPage() {
 						Settings
 					</Link>
 				}
-				description={`${cliCatalog.length} CLIs · ${executionIdentityModelCatalog.length} models · ${executionIdentityReasoningCatalog.length} reasoning levels`}
+				description={`${executionIdentityCliCatalog.length} CLIs · ${executionIdentityModelCatalog.length} models · ${executionIdentityReasoningCatalog.length} reasoning levels`}
 				title="Execution Identity Badge Lab"
 			/>
 
 			<Card className="text-sm text-muted-foreground" variant="sunken">
-				Execution identity is quiet operational metadata. One neutral treatment keeps the
-				backend, model, and reasoning effort readable without competing with statuses,
-				warnings, or actions.
+				{/* The card keeps its full-width surface; only the text run is capped. Uncapped it
+				    set 182 characters as one 1167px line at 2250x1309, roughly 2.7x the measure the
+				    app declares for prose. */}
+				<p className={proseMeasureClass}>
+					Execution identity is quiet operational metadata. One neutral treatment keeps
+					the backend, model, and reasoning effort readable without competing with
+					statuses, warnings, or actions.
+				</p>
 			</Card>
 
 			<Card aria-labelledby="badge-lab-representative" className="overflow-hidden p-0">
@@ -160,13 +139,24 @@ export function ExecutionIdentityBadgeLabPage() {
 						id="badge-lab-representative"
 						title="Representative identities"
 					/>
-					<div className="grid gap-px bg-border @min-[32rem]:grid-cols-2">
+					{/* A third step, so all four specimens sit in one comparable row once there is
+					    room for it. At two columns and 1962px the cells measured 980px against
+					    badges of 226, 223, 454 and 75px — up to 872px of empty cell each, on a
+					    sheet whose whole job is side-by-side comparison. */}
+					<div className="grid gap-px bg-border @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-4">
 						{representativeIdentities.map(({ description, identity, label }) => (
 							<div className="min-w-0 bg-card p-4" key={label}>
-								<div className="mb-2">
-									<h3 className="text-sm font-medium text-foreground">{label}</h3>
-									<p className="text-xs text-muted-foreground">{description}</p>
-								</div>
+								{/* The card contract's own subsection step, not a hand-rolled
+								    `text-sm font-medium` — a third 14px weight at the same size as
+								    the sanctioned one is exactly what `headerLevels` exists to
+								    prevent. */}
+								<CardHeader
+									className="mb-2"
+									description={description}
+									headingLevel={3}
+									level="subsection"
+									title={label}
+								/>
 								<ExecutionIdentityBadges {...identity} />
 							</div>
 						))}
@@ -235,45 +225,7 @@ export function ExecutionIdentityBadgeLabPage() {
 				</section>
 			</Card>
 
-			{/* `items-start`: without it the three catalog cards stretch to the tallest and the two
-			    shorter ones end in 90-140px of empty card. */}
-			<div className="grid items-start gap-4 xl:grid-cols-3">
-				<CatalogGroup
-					description="Every built-in execution backend."
-					id="badge-lab-cli-catalog"
-					title="CLIs">
-					{cliCatalog.map((cli) => (
-						<span
-							className="inline-flex items-center"
-							key={cli}
-							title={cliDisplayTitle(cli)}>
-							<ExecutionIdentityBadges backend={cli} withTooltip={false} />
-						</span>
-					))}
-				</CatalogGroup>
-
-				<CatalogGroup
-					description="Every built-in model identifier."
-					id="badge-lab-model-catalog"
-					title="Models">
-					{executionIdentityModelCatalog.map((model) => (
-						<ExecutionIdentityBadges key={model} model={model} withTooltip={false} />
-					))}
-				</CatalogGroup>
-
-				<CatalogGroup
-					description="Every supported reasoning-effort value."
-					id="badge-lab-reasoning-catalog"
-					title="Reasoning">
-					{executionIdentityReasoningCatalog.map((reasoningEffort) => (
-						<ExecutionIdentityBadges
-							key={reasoningEffort}
-							reasoningEffort={reasoningEffort}
-							withTooltip={false}
-						/>
-					))}
-				</CatalogGroup>
-			</div>
+			<ExecutionIdentityCatalogSections />
 		</div>
 	);
 }

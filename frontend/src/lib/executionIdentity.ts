@@ -1,3 +1,5 @@
+import { backendOptions } from './backends.ts';
+
 export interface ExecutionIdentity {
 	backend?: null | string | undefined;
 	model?: null | string | undefined;
@@ -11,6 +13,17 @@ export interface ExecutionIdentityItem {
 	kind: ExecutionIdentityKind;
 	label: string;
 }
+
+/**
+ * Every backend an execution identity can name, including the in-process `direct` client.
+ *
+ * It lives beside the model and reasoning catalogs rather than in the Badge Lab page, because a
+ * page that also exports a component cannot export a constant without breaking fast refresh.
+ */
+export const executionIdentityCliCatalog = [
+	...backendOptions.map(({ value }) => value),
+	'direct',
+] as const;
 
 export const executionIdentityModelCatalog = [
 	'claude-fable-5',

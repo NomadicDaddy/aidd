@@ -5,6 +5,7 @@ import type {
 } from '../../api/metrics.ts';
 import type { Tone } from '../../lib/tones.ts';
 
+import { Metric } from '../../components/shared/Metric.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
@@ -26,15 +27,6 @@ function formatPercent(value: null | number): string {
 
 function formatMs(value: null | number): string {
 	return value === null || !Number.isFinite(value) ? '—' : `${value.toFixed(2)} ms`;
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-	return (
-		<Card className="px-3 py-2" variant="sunken">
-			<div className={fieldLabelClass}>{label}</div>
-			<div className="mt-0.5 text-sm font-medium text-foreground tabular-nums">{value}</div>
-		</Card>
-	);
 }
 
 const ratingTone: Record<string, Tone> = {
@@ -63,15 +55,26 @@ function RatingBadge({ rating }: { rating: null | string }) {
 function ResourcePanel({ current }: { current: SystemMetricSnapshot }) {
 	return (
 		<div className="grid grid-cols-2 gap-2 @min-[32rem]:grid-cols-4">
-			<Stat label="CPU" value={formatPercent(current.cpuUsage)} />
-			<Stat label="Memory" value={formatPercent(current.memoryUsage)} />
-			<Stat label="Disk" value={formatPercent(current.diskUsage)} />
-			<Stat label="Event loop" value={formatMs(current.eventLoopLatency)} />
-			<Stat label="Heap used" value={formatMetricBytes(current.heapUsed)} />
-			<Stat label="Heap total" value={formatMetricBytes(current.heapTotal)} />
-			<Stat label="RSS" value={formatMetricBytes(current.rss)} />
-			<Stat label="Connections" value={String(current.activeConnections)} />
-			<Stat label="Requests served" value={current.requestCount.toLocaleString()} />
+			{/* The shared tile, not a seventh private copy of it. The local `Stat` set its value at
+			    14px where `Metric size="compact"` sets 18px, so the numbers on the app's own metrics
+			    panel were smaller than the numbers on every dashboard tile. */}
+			<Metric label="CPU" size="compact" value={formatPercent(current.cpuUsage)} />
+			<Metric label="Memory" size="compact" value={formatPercent(current.memoryUsage)} />
+			<Metric label="Disk" size="compact" value={formatPercent(current.diskUsage)} />
+			<Metric label="Event loop" size="compact" value={formatMs(current.eventLoopLatency)} />
+			<Metric label="Heap used" size="compact" value={formatMetricBytes(current.heapUsed)} />
+			<Metric
+				label="Heap total"
+				size="compact"
+				value={formatMetricBytes(current.heapTotal)}
+			/>
+			<Metric label="RSS" size="compact" value={formatMetricBytes(current.rss)} />
+			<Metric label="Connections" size="compact" value={String(current.activeConnections)} />
+			<Metric
+				label="Requests served"
+				size="compact"
+				value={current.requestCount.toLocaleString()}
+			/>
 		</div>
 	);
 }
@@ -198,7 +201,7 @@ export function SystemMetricsContent({ metrics, vitals }: SystemMetricsContentPr
 			<CardHeader
 				className="mb-0"
 				description="Live process and host resource usage, sampled every minute. Updates every few seconds."
-				title="System metrics"
+				title="System Metrics"
 			/>
 			{metrics.isError ? (
 				<p className={`text-xs ${toneText.red}`} role="alert">

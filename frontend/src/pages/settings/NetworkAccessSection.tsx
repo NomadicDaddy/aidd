@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { WebConfigSettings } from '../../api/types.ts';
 
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldCheckbox, FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { proseMeasureClass } from '../../lib/typography.ts';
@@ -41,8 +41,12 @@ export function NetworkAccessSection({
 
 	return (
 		<>
+			{/* Titled, like the cards above and below it. Untitled, its strongest label was the
+			    same 12px uppercase field label its own controls carry, so the section rhythm of the
+			    tab broke: two h2-titled cards, then two that read as one continuous form. */}
 			<Card className="grid gap-4 @min-[45rem]:grid-cols-2">
 				<div className="space-y-4">
+					<CardHeader level="section" title="Network Access" />
 					<FieldCheckbox
 						checked={form.allowRemote}
 						description={

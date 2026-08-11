@@ -129,11 +129,14 @@ describe('settings polish', () => {
 	});
 
 	test('keeps the Badge Lab rows one shape', async () => {
-		const lab = await settings('ExecutionIdentityBadgeLabPage.tsx');
+		const lab = await settings('ExecutionIdentityCatalogSections.tsx');
 
 		// Three of eleven entries used to carry a display name loose in the wrap flow, which read
-		// as debris beside the eight that carried nothing. It is a title on the chip now.
+		// as debris beside the eight that carried nothing. It rides the chip's own tooltip now,
+		// which is reachable by keyboard and by touch — the native `title` it briefly used was
+		// neither.
 		expect(lab).toContain('function cliDisplayTitle(');
-		expect(lab).toContain('title={cliDisplayTitle(cli)}');
+		expect(lab).toContain('hint={cliDisplayTitle(cli)}');
+		expect(lab).not.toContain('title={cliDisplayTitle(cli)}');
 	});
 });

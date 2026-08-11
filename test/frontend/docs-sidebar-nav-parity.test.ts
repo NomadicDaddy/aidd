@@ -154,16 +154,20 @@ describe('small pages', () => {
 	});
 
 	test('labels every badge-lab catalog card and stops the short ones stretching', async () => {
-		const page = await readSource('pages/settings/ExecutionIdentityBadgeLabPage.tsx');
+		const page = await readSource('pages/settings/ExecutionIdentityCatalogSections.tsx');
 
 		expect(page).toContain('<Card aria-labelledby={id}>');
-		expect(page).toContain('<div className="grid items-start gap-4 xl:grid-cols-3">');
+		// Container steps, not `xl:`. The row reads its own width, so the 736px column at 1024x768
+		// gets two columns instead of the single one the viewport breakpoint gave it.
+		expect(page).toContain(
+			'<div className="grid items-start gap-4 @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-3">',
+		);
 		// "Ollama" over "ollama" restated the chip, so the prose label survived only where the
 		// display name genuinely differs — which left three of eleven entries carrying a word
-		// loose in the wrap flow and eight carrying nothing. Same rule, on the title now, so the
-		// distinction is still available and every row is one shape.
+		// loose in the wrap flow and eight carrying nothing. Same rule, through the tooltip's
+		// `hint` now, so the distinction is still available and every row is one shape.
 		expect(page).toContain('function cliDisplayTitle');
 		expect(page).toContain('label.toLowerCase() === cli.toLowerCase()');
-		expect(page).toContain('title={cliDisplayTitle(cli)}');
+		expect(page).toContain('hint={cliDisplayTitle(cli)}');
 	});
 });

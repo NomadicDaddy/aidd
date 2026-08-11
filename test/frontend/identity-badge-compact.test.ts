@@ -94,7 +94,7 @@ describe('execution identity survives a narrow column', () => {
 		// The reason this shipped: every specimen rendered at its natural width, so the failing
 		// case had no specimen and the lab could not fail.
 		expect(lab).toContain('variant="compact"');
-		for (const width of ['w-[240px]', 'w-[160px]', 'w-[120px]']) {
+		for (const width of ['w-[240px]', 'w-[179px]', 'w-[120px]', 'w-[96px]']) {
 			expect(lab).toContain(width);
 		}
 	});

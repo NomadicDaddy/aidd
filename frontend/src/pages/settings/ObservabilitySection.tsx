@@ -1,6 +1,6 @@
 import type { WebConfigSettings } from '../../api/types.ts';
 
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldCheckbox } from '../../components/ui/field.tsx';
 
 export function ObservabilitySection({
@@ -12,6 +12,7 @@ export function ObservabilitySection({
 }) {
 	return (
 		<Card>
+			<CardHeader level="section" title="Observability" />
 			<FieldCheckbox
 				checked={form.traceDataMovement}
 				description="Emit local API, backend, socket, and UI trace groups in the browser console."

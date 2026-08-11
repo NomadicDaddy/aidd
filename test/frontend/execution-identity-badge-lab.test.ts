@@ -42,10 +42,14 @@ describe('ExecutionIdentityBadgeLabPage', () => {
 		);
 		expect(html).not.toContain('combinations');
 		// Four representative specimens at natural width, plus the two constrained ones rendered
-		// at each of the three real column budgets — the specimens that make a failure possible.
-		expect(html.match(/role="group"/g)).toHaveLength(catalogCount + 4 + 6);
+		// at each of the four real column budgets — the specimens that make a failure possible.
+		expect(html.match(/role="group"/g)).toHaveLength(catalogCount + 4 + 8);
 		for (const cli of cliCatalog) {
-			expect(html).toContain(`aria-label="CLI ${cli}"`);
+			// The catalog chips carry the CLI's display name as a tooltip hint where it differs
+			// from the value on the chip, and the hint joins the accessible name, so the label is
+			// `CLI codex` on the ones that match and `CLI claude, Claude Code` on the ones that
+			// do not. Both start the same way.
+			expect(html).toContain(`aria-label="CLI ${cli}`);
 		}
 		for (const model of executionIdentityModelCatalog) {
 			expect(html).toContain(`aria-label="Model ${model}"`);

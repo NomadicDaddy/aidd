@@ -89,6 +89,14 @@ sweep measured. A sweep of a stale bundle reports fixed defects as open ones.
 **Fix theme, viewport, and role once and hold them for the whole run.** Surfaces captured under
 different conditions cannot be compared, and comparison is the entire point.
 
+**Measure the motion state; never assume it.** Whether the sweep browser reports reduced-motion is a
+property of this machine, this browser build and this run's flags — it changes without notice, so it
+is a run condition to establish, not a fact to carry between runs. In the sweep browser, evaluate
+`matchMedia('(prefers-reduced-motion: reduce)').matches` and the computed `animation-duration` of one
+element the app actually animates. Record both in the baseline and pass the result into every
+subagent prompt. A stale assumption here silently suppresses a whole finding category: reviewers told
+motion is forced off stop reporting motion at all.
+
 **Never write to a path that already exists.** Every artifact of this run — work directory,
 screenshots, report — carries both `{RUN}` and `{MODE}`, so two sweeps cannot collide even at the
 same minute. If a target path exists, stop and report it rather than overwriting: `.aidd/` is
@@ -199,9 +207,9 @@ create or modify ui-redesign.md, any feature.json, the roadmap, or any product s
 Other reviewers are running concurrently and the consolidation is done by the caller.
 
 Do not report: authorization blocks, empty states caused by absent data, loading
-skeletons, or anything you did not see on screen. This machine reports
-prefers-reduced-motion in every browser — confirm a motion finding against the code
-before calling motion absent.
+skeletons, or anything you did not see on screen. Motion in this run: {motion state,
+measured in Phase 0}. Whatever it says, confirm against the code before calling an
+animation absent — absence is easy to misread from a static screenshot.
 
 Return findings as JSON matching {schema}. Return an empty findings array rather than
 padding with generic advice.

@@ -172,8 +172,9 @@ or modify any report, feature.json, roadmap, or product source. Other reviewers 
 concurrently and the caller does the consolidation.
 
 Do not report: authorization blocks, empty states caused by absent data, loading skeletons,
-or anything you did not see on screen. This machine reports prefers-reduced-motion in every
-browser — confirm a motion finding against the code before calling motion absent.
+or anything you did not see on screen. Do not assume the browser's motion state — measure it
+(`matchMedia('(prefers-reduced-motion: reduce)').matches`, plus the computed `animation-duration`
+of one element the app animates) and confirm against the code before calling motion absent.
 
 Return findings as JSON matching {schema}, tagged with the category vocabulary above. Return
 an empty array rather than padding with generic advice.

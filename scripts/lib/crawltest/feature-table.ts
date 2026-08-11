@@ -11,12 +11,35 @@ async function setInputValue(page: Page, selector: string, value: string): Promi
 	await page.keyboard.type(value);
 }
 
-async function selectFeatureFilter(page: Page, index: number, value: string): Promise<void> {
+/**
+ * A JS expression resolving the Features toolbar select carrying `label`, or null.
+ *
+ * These were addressed as `document.querySelectorAll('select')[n]`, which is document order across
+ * the whole page rather than position within the toolbar. Index 0 is the tab picker the detail
+ * page renders above the filters, so the status read came back as `["overview", "features", …]`,
+ * never contained a feature status, and every caller below took its give-up branch: half of this
+ * check read as if it exercised the selects and never touched them.
+ *
+ * The anchor is the search field, which is the one control in the toolbar with a unique selector.
+ * Its `FieldRow` label and the three select rows are siblings in the same grid, so this finds the
+ * toolbar's own Status and Source and cannot reach a row-level status select or another tab's.
+ */
+function featureFilterSelect(label: string): string {
+	return `(() => {
+		const search = document.querySelector('input[placeholder="Filter by feature metadata"]');
+		const grid = search?.closest('label')?.parentElement;
+		if (!grid) return null;
+		const field = Array.from(grid.children).find(
+			(child) => child.querySelector('span')?.textContent?.trim() === ${JSON.stringify(label)},
+		);
+		return field?.querySelector('select') ?? null;
+	})()`;
+}
+
+async function selectFeatureFilter(page: Page, label: string, value: string): Promise<void> {
 	const script = `(() => {
-		const index = ${index};
-		const selects = Array.from(document.querySelectorAll('select'));
-		const select = selects[index];
-		if (!select) throw new Error('Feature filter select ' + index + ' was not found');
+		const select = ${featureFilterSelect(label)};
+		if (!select) throw new Error('Feature ' + ${JSON.stringify(label)} + ' filter select was not found');
 		select.value = ${JSON.stringify(value)};
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 	})()`;
@@ -25,14 +48,20 @@ async function selectFeatureFilter(page: Page, index: number, value: string): Pr
 
 async function featureFilterOptions(page: Page): Promise<{ source: string[]; status: string[] }> {
 	const script = `(() => {
-		const selects = Array.from(document.querySelectorAll('select'));
 		const values = (select) => select ? Array.from(select.options).map((option) => option.value) : [];
 		return {
-			source: values(selects[2]),
-			status: values(selects[0]),
+			source: values(${featureFilterSelect('Source')}),
+			status: values(${featureFilterSelect('Status')}),
 		};
 	})()`;
 	return (await page.evaluate(script)) as { source: string[]; status: string[] };
+}
+
+/** How many feature rows the table holds. Zero means there is nothing for the filters to act on. */
+async function featureRowCount(page: Page): Promise<number> {
+	return (await page.evaluate(
+		'document.querySelectorAll(\'table[aria-label="Project features"] tbody tr\').length',
+	)) as number;
 }
 
 async function actionableFeatureFilterTarget(
@@ -80,14 +109,32 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 			{ timeout: 5_000 },
 		);
 
+		// A project with no features has nothing for the selects to narrow, and that is the one
+		// reason this half may be skipped. Every other give-up below is reported: silently
+		// returning is how the selects went unexercised for as long as they did.
+		if ((await featureRowCount(page)) === 0) return errors;
+
 		const target = await actionableFeatureFilterTarget(page);
 		const options = await featureFilterOptions(page);
 		const status = target?.status ?? (options.status.includes('completed') ? 'completed' : '');
-		const source = target?.source ?? options.source.find((value) => value !== 'all');
-		if (!status || !source || !options.status.includes(status)) return errors;
+		// Without a row to copy from, prefer the "__all_*" aggregate over a specific source label.
+		// A label narrows to one category and can empty the table, and an empty table is not a
+		// finding here; the aggregates still exclude the other two categories, so the filter is
+		// genuinely exercised either way.
+		const source =
+			target?.source ??
+			(options.source.find((value) => value.startsWith('__all_')) ||
+				options.source.find((value) => value !== 'all'));
+		if (!options.status.includes(status) || !source || !options.source.includes(source)) {
+			errors.push(
+				`${route} feature filters could not be exercised: wanted status ${JSON.stringify(status)} ` +
+					`and source ${JSON.stringify(source)}, offered ${JSON.stringify(options)}`,
+			);
+			return errors;
+		}
 
-		await selectFeatureFilter(page, 0, status);
-		await selectFeatureFilter(page, 2, source);
+		await selectFeatureFilter(page, 'Status', status);
+		await selectFeatureFilter(page, 'Source', source);
 		await page.waitForFunction(
 			"new URLSearchParams(location.search).has('featureStatus') && new URLSearchParams(location.search).has('featureSource')",
 			{ timeout: 5_000 },

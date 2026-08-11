@@ -10,7 +10,7 @@ import { OverflowScroller } from '../../../components/shared/OverflowScroller.ts
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCompactNumber } from '../../../lib/formatters.ts';
-import { tableMeasureClass } from '../../../lib/typography.ts';
+import { tableMeasureClass } from '../../../lib/tableStyles.ts';
 import { formatReportedCost } from '../projects-list-shared.ts';
 
 function costLabel(usage: ProjectUsageTotals): string {

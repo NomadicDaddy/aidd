@@ -4,11 +4,10 @@ import type { ProjectReportsResponse } from '../../../api/types.ts';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
-import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
-import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
-import { reportOriginLabel, reportStatusTone } from './reportsUtils.ts';
+import { ReportsDesktopTable } from './ReportsDesktopTable.tsx';
+import { ReportsMobileList } from './ReportsMobileList.tsx';
 
 type ReportKindFilter = 'all' | 'feature' | 'remediation';
 
@@ -46,66 +45,37 @@ export function ReportsTab({
 
 	return (
 		<div className="space-y-3">
-			{/* The tab used to open straight into an unlabelled stack of 21 cards — the one surface
-			    on this page that never said what the reader was looking at or how much of it there
-			    was. This is the section header every sibling tab already uses. */}
-			<CardHeader
-				action={
-					<SegmentedControl<ReportKindFilter>
-						ariaLabel="Filter reports by kind"
-						onChange={setKind}
-						options={[
-							{ label: `All (${ordered.length})`, value: 'all' },
-							{ label: `Remediation (${counts.remediation})`, value: 'remediation' },
-							{ label: `Feature (${counts.feature})`, value: 'feature' },
-						]}
-						value={kind}
-					/>
-				}
-				className="mb-0"
-				title="Project reports"
-			/>
+			{/* Carded, like the header on the Audits tab beside it. The tab used to open straight
+			    into an unlabelled stack of cards; the header that fixed that was then the one
+			    control group on the whole surface floating on the bare page background. */}
+			<Card>
+				<CardHeader
+					action={
+						<SegmentedControl<ReportKindFilter>
+							ariaLabel="Filter reports by kind"
+							onChange={setKind}
+							options={[
+								{ label: `All (${ordered.length})`, value: 'all' },
+								{
+									label: `Remediation (${counts.remediation})`,
+									value: 'remediation',
+								},
+								{ label: `Feature (${counts.feature})`, value: 'feature' },
+							]}
+							value={kind}
+						/>
+					}
+					className="mb-0"
+					title="Project reports"
+				/>
+			</Card>
 			{visible.length === 0 ? (
 				<Card>No reports match the selected kind.</Card>
 			) : (
-				visible.map((report) => (
-					<Card key={report.id}>
-						{/* The age travels with the badges rather than being pushed to the far
-						    edge: at 768 `justify-between` dropped it onto its own line above the
-						    description, where it read as a third undifferentiated metadata line. */}
-						<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-							<Badge tone={reportStatusTone(report.status)}>{report.status}</Badge>
-							<Badge tone="neutral">
-								{report.kind === 'bug' ? 'remediation' : 'feature'}
-							</Badge>
-							<span className="font-mono text-xs text-muted-foreground">
-								{report.featureDirectory ?? report.featureId ?? report.id}
-							</span>
-							<span className="text-xs text-muted-foreground">
-								<RelativeAge value={report.createdAt} />
-							</span>
-						</div>
-						<p className="mt-3 text-sm whitespace-pre-wrap text-foreground">
-							{report.description}
-						</p>
-						{report.classificationReason || report.metadata?.pathname ? (
-							<div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-2xs text-muted-foreground">
-								{report.classificationReason ? (
-									<span>
-										<span className="font-medium">Classified:</span>{' '}
-										{report.classificationReason}
-									</span>
-								) : null}
-								{report.metadata?.pathname ? (
-									<span title={report.metadata.pathname}>
-										<span className="font-medium">Reported from:</span>{' '}
-										{reportOriginLabel(report.metadata.pathname)}
-									</span>
-								) : null}
-							</div>
-						) : null}
-					</Card>
-				))
+				<>
+					<ReportsDesktopTable reports={visible} />
+					<ReportsMobileList reports={visible} />
+				</>
 			)}
 		</div>
 	);

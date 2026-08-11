@@ -10,9 +10,9 @@ import { buttonClassName } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useNow } from '../../../hooks/useNow.ts';
 import { formatActiveDuration, formatDate } from '../../../lib/formatters.ts';
+import { tableMeasureClass } from '../../../lib/tableStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
-import { tableMeasureClass } from '../../../lib/typography.ts';
 import { runRuntimeDetail, runSourceLabel } from '../../runs/runRowUtils.ts';
 
 function statusTone(status: RunRecord['status']): 'amber' | 'emerald' | 'neutral' | 'red' {

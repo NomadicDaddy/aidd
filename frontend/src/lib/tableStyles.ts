@@ -17,9 +17,14 @@ export const tableHeadClass =
  * two-word status column 300px wide, and the one column carrying a name still truncating.
  *
  * The floor answers "how narrow before this breaks"; this answers "how wide before it stops
- * helping", and they are different questions. 80rem is the same step `formGridMeasureClass` and the
- * shared `FilterToolbar` settled on, so a page's table, toolbar and form all stop at one edge and the
- * surplus goes back to the page rather than into three differently-stretched components.
+ * helping", and they are different questions. Measured again on the project Runs tab at 2250x1309:
+ * the execution-target chip ended at x=430 and the RUNS figure belonging to the same row sat at
+ * x=1400, roughly 950px of empty row, nineteen rows deep. 80rem is 1280px, so nothing at or below
+ * 1440 changes and only the viewports that were stretching stop. It is the same step the shared
+ * `FilterToolbar` settled on, so a page's table and the toolbar above it stop at one edge and the
+ * surplus goes back to the page rather than into two differently-stretched components. The form
+ * grids sit a step wider at `formGridMeasureClass` (90rem), because a three-column grid of labelled
+ * controls needs the extra column width that a table's own `min-w-*` floor already guarantees.
  *
  * Applied at the `<table>`, not the scroller: `OverflowScroller` owns the overflow behaviour and the
  * edge fades, and capping it would move the fade away from the data.

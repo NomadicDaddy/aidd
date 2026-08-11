@@ -38,7 +38,10 @@ describe('shared form primitives', () => {
 	test('renders the canonical label above its control and gives checkboxes semantic focus styling', () => {
 		const { checkbox, field } = renderPrimitives();
 
-		expect(field).toContain('<label class="grid gap-1">');
+		// The measure is part of the primitive: uncapped, a field inherited the card, which
+		// inherited the shell, and every control on the Management tab measured 939px at 2250x1309.
+		// A call site that genuinely wants full bleed passes `max-w-none`, which wins the merge.
+		expect(field).toContain('<label class="grid max-w-[36rem] gap-1">');
 		expect(field.indexOf('Project')).toBeLessThan(field.indexOf('<input'));
 		expect(field).toContain('uppercase');
 		expect(checkbox).toContain('type="checkbox"');

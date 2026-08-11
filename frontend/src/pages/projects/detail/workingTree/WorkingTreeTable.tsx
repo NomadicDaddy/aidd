@@ -3,7 +3,7 @@ import type { WorkingTreeFile } from '../../../../api/types.ts';
 import { OverflowScroller } from '../../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Checkbox } from '../../../../components/ui/checkbox.tsx';
-import { tableMeasureClass } from '../../../../lib/typography.ts';
+import { tableMeasureClass } from '../../../../lib/tableStyles.ts';
 import { describeWorkingTreeFile } from './workingTreeStatus.ts';
 
 function StageColumn({ file }: { file: WorkingTreeFile }) {

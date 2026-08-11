@@ -68,6 +68,74 @@ describe('tab headers', () => {
 	});
 });
 
+describe('reports tab', () => {
+	test('the kind filter sits in a card, like the header on the tab beside it', async () => {
+		const tab = await detail('ReportsTab.tsx');
+		expect(tab).toContain('<Card>\n\t\t\t\t<CardHeader');
+	});
+
+	test('a description is clamped in both halves, with the full text reachable', async () => {
+		// The longest in the corpus runs 280 characters, and uncapped it set the height of its row.
+		const table = await detail('ReportsDesktopTable.tsx');
+		expect(table).toContain('line-clamp-2 whitespace-pre-wrap');
+		expect(table).toContain('title={report.description}');
+
+		const list = await detail('ReportsMobileList.tsx');
+		expect(list).toContain('mt-3 max-w-[70ch] text-sm whitespace-pre-wrap text-foreground');
+	});
+});
+
+describe('audits tab', () => {
+	test('the row override select sizes to its options, not to its column', async () => {
+		// Three options whose longest is one word were painted as a 225px chevron box, 42 rows deep.
+		const table = await detail('AuditsDesktopTable.tsx');
+		expect(table).not.toContain('${selectClass} w-full');
+	});
+
+	test('the narrow row shows the same path form the wide one does', async () => {
+		const list = await detail('AuditsMobileList.tsx');
+		expect(list).toContain('auditPathTail(entry.path)');
+		expect(list).toContain('block truncate font-mono text-xs text-muted-foreground');
+	});
+});
+
+describe('profile tab', () => {
+	test('every group title on the form is a heading, at one rank', async () => {
+		// An interactive snapshot returned three headings for a page carrying nine card titles.
+		const facet = await detail('profile/FacetCard.tsx');
+		expect(facet).toContain('<legend className="sr-only">');
+		expect(facet).toContain('headingLevel={3}');
+
+		const tab = await detail('ProfileTab.tsx');
+		expect(tab).toContain('title="Notes"');
+		expect(tab).toContain('<label className="sr-only" htmlFor="profile-notes">');
+	});
+
+	test('an audit name and its effect chip stay adjacent', async () => {
+		// Distributed, a 161px name and a 63px badge left 505px between them on a 737px row.
+		const panel = await detail('profile/ComputedProfilePanel.tsx');
+		expect(panel).toContain('flex items-center gap-2 rounded px-1 py-0.5');
+		expect(panel).toContain('min-w-0 flex-1 truncate text-sm');
+	});
+});
+
+describe('management tab', () => {
+	test('the two tall cards share a row', async () => {
+		// In file order the 130px Re-run intake card left 142px of dead space beside the 272px
+		// Rename, and Delete left 74px beside Move.
+		const tab = await detail('ManagementTab.tsx');
+		const order = [
+			'<RenameProjectCard',
+			'<MoveProjectCard',
+			'<ReintakeCard',
+			'<DeleteProjectCard',
+		];
+		const positions = order.map((card) => tab.indexOf(card));
+		expect(positions).toEqual([...positions].sort((a, b) => a - b));
+		expect(positions.every((at) => at > 0)).toBe(true);
+	});
+});
+
 describe('diary surfaces', () => {
 	test('one declared reading measure, not the built-in prose width', async () => {
 		// The tab intro wrapped near 603px while the diary prose below it wrapped near 631px.

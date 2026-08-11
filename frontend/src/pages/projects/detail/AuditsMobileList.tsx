@@ -7,6 +7,7 @@ import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
 import {
+	auditPathTail,
 	describeFreshAge,
 	describeReportFreshness,
 	type OverrideValue,
@@ -68,7 +69,11 @@ export function AuditsMobileList({
 						: undefined;
 				const freshAge = entry.freshReport ? describeFreshAge(entry) : undefined;
 				return (
-					<div className="rounded-md border border-border p-3" key={entry.name}>
+					// A Card, which is the box this hand-rolled one was imitating: at
+					// `rounded-md` it stepped down a corner radius from the `rounded-xl` filter
+					// toolbar directly above it, and `rounded-md` is not one of the three steps
+					// the baseline scale defines.
+					<Card className="p-3" key={entry.name}>
 						<div className="flex items-start justify-between gap-2">
 							{/* The label is the checkbox's hit area; raise the label, not the box. */}
 							<label className="flex min-w-0 items-start gap-2 max-sm:min-h-11">
@@ -83,8 +88,15 @@ export function AuditsMobileList({
 									<span className="block font-medium text-foreground">
 										{entry.name}
 									</span>
-									<span className="block text-xs break-all text-muted-foreground">
-										{entry.path}
+									{/* The repo-relative tail in mono, the two decisions the
+									    desktop table makes on this same field. Narrow was
+									    showing the absolute path — the longest form of the
+									    string, whose first 28 characters are identical on all
+									    42 rows — in the face reserved for prose. */}
+									<span
+										className="block truncate font-mono text-xs text-muted-foreground"
+										title={entry.path}>
+										{auditPathTail(entry.path)}
 									</span>
 								</span>
 							</label>
@@ -180,7 +192,7 @@ export function AuditsMobileList({
 								Review
 							</Button>
 						</div>
-					</div>
+					</Card>
 				);
 			})}
 		</div>

@@ -82,6 +82,11 @@ const pairedTables: { stack: string; table: string; tier: string }[] = [
 		tier: 'lg',
 	},
 	{
+		stack: 'pages/projects/detail/ReportsMobileList.tsx',
+		table: 'pages/projects/detail/ReportsDesktopTable.tsx',
+		tier: 'xl',
+	},
+	{
 		stack: 'pages/projects/detail/workingTree/WorkingTreeList.tsx',
 		table: 'pages/projects/detail/workingTree/WorkingTreeTable.tsx',
 		tier: 'xl',

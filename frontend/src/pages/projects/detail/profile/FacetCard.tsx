@@ -1,7 +1,7 @@
 import type { FacetDef, FacetField } from './profile-facets.ts';
 
 import { Badge } from '../../../../components/ui/badge.tsx';
-import { Card } from '../../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../../components/ui/card.tsx';
 import { cn } from '../../../../lib/cn.ts';
 
 export function FacetCard({
@@ -16,15 +16,29 @@ export function FacetCard({
 	return (
 		<Card>
 			<fieldset>
-				<legend className="text-sm font-semibold text-foreground">{facet.title}</legend>
-				<p className="mt-0.5 mb-3 text-xs text-muted-foreground">{facet.description}</p>
+				{/* Both facts, not one. The `fieldset`/`legend` pairing is the right semantic for a
+				    radio set and it stays, but a legend is not a heading: an interactive snapshot of
+				    this tab returned three headings for a page carrying nine card titles, so heading
+				    navigation skipped the whole form while the eight titles it skipped rendered at
+				    the same rank as the `CardHeader` h2s on the Management and Audits tabs. */}
+				<legend className="sr-only">{facet.title}</legend>
+				<CardHeader
+					className="mb-3"
+					description={facet.description}
+					headingLevel={3}
+					level="subsection"
+					title={facet.title}
+				/>
 				<div className="grid gap-2">
 					{facet.options.map((opt) => {
 						const selected = opt.value === value;
 						return (
 							<label
 								className={cn(
-									'flex cursor-pointer items-start gap-3 rounded-md border p-2.5 transition-colors max-sm:min-h-11',
+									// `rounded-lg` is the control step of the three the baseline
+									// defines; `rounded-md` is not one of them, and a radio row is
+									// a control.
+									'flex cursor-pointer items-start gap-3 rounded-lg border p-2.5 transition-colors max-sm:min-h-11',
 									// Tokens, not palette steps: the hand-picked teal did not match
 									// --accent-muted, so a selected option here read a different
 									// green-teal than the selected tab pill directly above it.

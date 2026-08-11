@@ -15,10 +15,14 @@ export function ManagementTab({ project }: { project: ProjectDetail }) {
 			/>
 			{/* items-start: stretched to its row's tallest sibling, 'Re-run intake' carried ~180px
 			    of empty card below its single button purely to match 'Rename project' beside it. */}
+			{/* Ordered so the two tall cards share a row. Laid out in file order against
+			    `items-start`, the 130px Re-run intake card left 142px of dead space beside the
+			    272px Rename and Delete left 74px beside Move, and the tab finished around y=890 in
+			    a 1309px viewport. */}
 			<div className="grid items-start gap-4 xl:grid-cols-2">
-				<ReintakeCard project={project} />
 				<RenameProjectCard project={project} />
 				<MoveProjectCard project={project} />
+				<ReintakeCard project={project} />
 				<DeleteProjectCard project={project} />
 			</div>
 		</div>

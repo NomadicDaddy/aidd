@@ -5,6 +5,7 @@ import type { ProjectAssuranceProfileInput } from '../../../../api/types.ts';
 
 import { Badge } from '../../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../../components/ui/card.tsx';
+import { cn } from '../../../../lib/cn.ts';
 import { toneText } from '../../../../lib/tones.ts';
 import { effectTone } from '../../../audits/auditsUtils.ts';
 import { getProfilePosture } from '../../profile/profile-helpers.ts';
@@ -105,18 +106,26 @@ export function ComputedProfilePanel({
 				) : (
 					<div className="max-h-[28rem] space-y-1 overflow-y-auto pr-1 lg:max-h-none lg:min-h-0 lg:flex-1">
 						{audits.map((audit) => (
+							// The chip trails the name at a fixed distance rather than being pushed
+							// to the far edge. Distributed, a 161px name and a 63px badge left a
+							// measured 505px between them on a 737px row, 42 rows deep, so the list
+							// read as two unrelated columns instead of 42 pairs.
 							<div
-								className="flex items-center justify-between gap-2 rounded px-1 py-0.5"
+								className="flex items-center gap-2 rounded px-1 py-0.5"
 								key={audit.name}>
 								<span
-									className={
+									className={cn(
+										'min-w-0 flex-1 truncate text-sm',
 										audit.applies
-											? 'text-sm text-foreground'
-											: 'text-sm text-muted-foreground line-through'
-									}>
+											? 'text-foreground'
+											: 'text-muted-foreground line-through',
+									)}
+									title={audit.name}>
 									{audit.name}
 								</span>
-								<Badge tone={effectTone[audit.effect]}>{audit.effect}</Badge>
+								<Badge className="shrink-0" tone={effectTone[audit.effect]}>
+									{audit.effect}
+								</Badge>
 							</div>
 						))}
 					</div>

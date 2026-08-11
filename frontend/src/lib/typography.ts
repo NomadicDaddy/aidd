@@ -69,22 +69,6 @@ export const proseMeasureClass = 'max-w-[46ch]';
 export const proseMeasureCardClass = 'max-w-[calc(46ch*0.875_+_3.5rem)]';
 
 /**
- * The measure for a data table, which is not a reading measure at all.
- *
- * A table with right-aligned numeric columns and no cap tracks the card edge, so the label and the
- * figure that belongs to it drift apart as the viewport widens and the row stops being scannable.
- * Measured on the Runs tab at 2250x1309: the execution-target chip ended at x=430 and its RUNS
- * figure sat at x=1400, roughly 950px of empty row, repeated over 19 rows. The same tables at
- * 1440x1200 read correctly, which is what fixes the number — 80rem is 1280px, so nothing below
- * 1440 changes and the two viewports above it stop stretching.
- *
- * `w-full` still comes first: the cap is a ceiling on a table that otherwise fills its column, not
- * a width. Tables that set their own column shares with a `colgroup` (Features, Milestones) do not
- * need it, because their percentages already keep the columns adjacent.
- */
-export const tableMeasureClass = 'max-w-[80rem]';
-
-/**
  * The measure for a monospace editing surface — a notes pad, a spec field — where the reading
  * measure above would be wrong in both directions.
  *

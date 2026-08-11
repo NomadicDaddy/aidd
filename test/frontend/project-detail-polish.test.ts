@@ -146,8 +146,13 @@ describe('run tables', () => {
 		const usage = await detail('ProjectUsagePanel.tsx');
 		expect(usage).toContain('className={`w-full text-left text-sm ${tableMeasureClass}`}');
 
+		// One declaration, in the file that owns table furniture. It was briefly declared a
+		// second time in lib/typography.ts, which is the same drift the constant exists to stop.
+		const tableStyles = await src('lib/tableStyles.ts');
+		expect(tableStyles).toContain("export const tableMeasureClass = 'max-w-[80rem]'");
+
 		const typography = await src('lib/typography.ts');
-		expect(typography).toContain("export const tableMeasureClass = 'max-w-[80rem]'");
+		expect(typography).not.toContain('tableMeasureClass');
 	});
 });
 
@@ -249,9 +254,10 @@ describe('relative age', () => {
 			'MaturityAuditRow.tsx',
 			'OverviewTab.tsx',
 			'RecentActivity.tsx',
-			'ReportsTab.tsx',
+			// Both halves of the Reports pair, which is where the age is now rendered.
+			'ReportsDesktopTable.tsx',
+			'ReportsMobileList.tsx',
 			'RepositoryInfoCard.tsx',
-			'ReportsTab.tsx',
 		];
 		for (const file of users) {
 			const source = await detail(file);

@@ -58,7 +58,11 @@ export function FieldRow({
 	});
 
 	return (
-		<label className={cn('grid gap-1', className)} {...props}>
+		// 36rem, which a call site overrides with `max-w-none` for the rare full-bleed field.
+		// Uncapped, every control on the Management tab measured 939px at 2250x1309 — a name input
+		// holding four characters, a two-option Delete mode select whose chevron sat 900px from its
+		// own label — because a field inherited the card, which inherited the shell.
+		<label className={cn('grid max-w-[36rem] gap-1', className)} {...props}>
 			<span className={cn(fieldLabelClass, labelHidden && 'sr-only')}>
 				{label}
 				{/* Decoration: `aria-required` is what a screen reader reads, and announcing "star"

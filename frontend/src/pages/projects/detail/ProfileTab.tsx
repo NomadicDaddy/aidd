@@ -6,7 +6,7 @@ import type { ProjectAssuranceProfile, ProjectAssuranceProfileInput } from '../.
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog.tsx';
 import { EditorActionBar } from '../../../components/shared/EditorActionBar.tsx';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue.ts';
 import { useProfilePreview } from '../../../hooks/useProfilePreview.ts';
 import { useUpdateProjectProfile } from '../../../hooks/useProjects.ts';
@@ -102,18 +102,22 @@ export function ProfileTab({
 							/>
 						))}
 					</div>
-					{/* The same legend rank the six FacetCards use. As a small uppercase field label
-					    it was the seventh group in one form wearing a different heading treatment
-					    from the other six, directly below them. */}
+					{/* The same header the six FacetCards use, for the same reason: as a hand-styled
+					    label it was the seventh group in one form wearing a different heading
+					    treatment from the other six, directly below them, and it was not in the
+					    heading tree at all. The visible title is the `CardHeader` h3; the `label`
+					    the textarea needs stays, visually hidden. */}
 					<Card>
-						<label
-							className="text-sm font-semibold text-foreground"
-							htmlFor="profile-notes">
+						<CardHeader
+							className="mb-3"
+							description="Why this profile was chosen, for whoever reviews the posture next."
+							headingLevel={3}
+							level="subsection"
+							title="Notes"
+						/>
+						<label className="sr-only" htmlFor="profile-notes">
 							Notes
 						</label>
-						<p className="mt-0.5 mb-3 text-xs text-muted-foreground">
-							Why this profile was chosen, for whoever reviews the posture next.
-						</p>
 						{/* `cn`, not a template string: `textareaClass` carries `min-h-28` and a
 						    concatenated `min-h-24` is smaller, so both landed on the element and
 						    Tailwind's cascade order handed it to the shared floor. This is the same

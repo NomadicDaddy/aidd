@@ -175,7 +175,11 @@ export function AuditsDesktopTable({
 								<td className="px-3 py-3">
 									<select
 										aria-label={`Override for ${entry.name}`}
-										className={`${selectClass} w-full`}
+										// No `w-full`: three options whose longest is one word
+										// were painted as a 225px chevron box, 42 of them down
+										// one column. `selectClass` sizes to its longest option,
+										// which is what its own doc comment intends.
+										className={selectClass}
 										disabled={updateOverridesPending}
 										onChange={(event) =>
 											changeOverride(

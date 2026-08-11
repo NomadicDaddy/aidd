@@ -44,10 +44,13 @@ export function SkillCatalog({
 		// the Card rather than on a wrapper because the height chain runs through this element —
 		// a div between the grid and the Card would break `h-full` for the sake of two classes.
 		<Card className={cn('flex min-w-0 flex-col gap-2 @min-[40rem]:h-full', className)}>
+			{/* The wording `FilterToolbar` uses on every other catalog — Projects, Recipes, Runs,
+			    Audits, Profile Matrix — rather than this card's own shorter form. It read
+			    `76 skills` at rest and `12 of 76 skills` filtered, so the one catalog that keeps
+			    its count inside the list instead of in a toolbar was also the one catalog that
+			    said it differently, and at rest it did not say what the filter had to work with. */}
 			<div className="text-xs text-muted-foreground tabular-nums">
-				{skills.length === total
-					? `${total} skills`
-					: `${skills.length} of ${total} skills`}
+				Showing {skills.length} of {total} skills
 			</div>
 			<div className="min-h-0 flex-1 overflow-auto pr-1">
 				{loading && total === 0 ? (

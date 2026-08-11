@@ -40,8 +40,44 @@ ARG KILOCODE_VERSION=7.3.45
 
 # git: aidd runs commit in project working trees. tini: PID 1 zombie reaping —
 # detached run relaunchers re-parent to PID 1 and aidd-web does not reap.
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends ca-certificates git tini \
+#
+# Both the archive and the three versions are frozen, and the archive pin is the one that
+# matters. deb.debian.org serves only the newest build of each package, so an unpinned install
+# resolves differently on every rebuild: git alone drags in 24 more packages (openssl, krb5,
+# libcurl, libnghttp2, and the rest of its closure), and any one of them moving rewrites
+# licenses/base-image-packages.md. A locally cached docker:build keeps passing while CI's fresh
+# build fails the inventory check on a commit that touched nothing near it.
+#
+# snapshot.debian.org serves the archive as it stood at one instant, which freezes the whole
+# closure rather than the three names below; the base image ships its own snapshot timestamp as a
+# comment in debian.sources for exactly this purpose. Writing the file out rather than rewriting
+# the base image's copy keeps the pin visible and stops a format change upstream from silently
+# leaving the build on the live archive.
+#
+# A frozen archive's Release file is stale by definition, which is why the update below turns
+# Check-Valid-Until off; staleness is the property being bought, not a warning to heed.
+#
+# To take Debian updates: bump DEBIAN_SNAPSHOT, set the three versions to what that snapshot
+# serves, then `bun run docker:build && bun run licenses:image` and commit the new inventory.
+ARG DEBIAN_SNAPSHOT=20260810T000000Z
+RUN printf '%s\n' \
+	'Types: deb' \
+	"URIs: http://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}" \
+	'Suites: bookworm bookworm-updates' \
+	'Components: main' \
+	'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' \
+	'' \
+	'Types: deb' \
+	"URIs: http://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}" \
+	'Suites: bookworm-security' \
+	'Components: main' \
+	'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' \
+	> /etc/apt/sources.list.d/debian.sources \
+	&& apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 \
+	&& apt-get install -y --no-install-recommends \
+		ca-certificates=20250419~deb12u1 \
+		git=1:2.39.5-0+deb12u3 \
+		tini=0.19.0-1+b3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 # The agent CLIs are NOT baked into this image because their vendor terms do not grant aidd

@@ -162,7 +162,9 @@ describe('one vocabulary for an invalid field', () => {
 	});
 
 	test('the fields that block a save say so before the save is attempted', async () => {
-		const recipe = await read('pages', 'recipes', 'detail', 'RecipeEditMode.tsx');
+		// The recipe's own three fields moved out of `RecipeEditMode` into their own card when that
+		// file reached the line ceiling; the required/invalid wiring came with them.
+		const recipe = await read('pages', 'recipes', 'detail', 'RecipeMetadataCard.tsx');
 		const milestone = await read('pages', 'projects', 'detail', 'MilestoneFormDialog.tsx');
 		const create = await read('pages', 'projects', 'ProjectCreateLane.tsx');
 

@@ -111,6 +111,32 @@ export function toDrafts(recipe: RecipeDefinition): StepDraft[] {
 	}));
 }
 
+/**
+ * The drafts reduced to the fields the policy summary reads, and nothing else.
+ *
+ * `toStep` is the wrong tool here: it parses the JSON fields, so it throws on a half-typed brace,
+ * and this runs on every keystroke of an open form. Every value the policy summary looks at —
+ * failure behaviour, retry count, execution intent — is a first-class field on the draft, so none of
+ * them needs the JSON parsed at all. The config is emptied rather than parsed, and the one key the
+ * summary reads out of it is written back from the draft's own field.
+ */
+export function policyStepsFromDrafts(drafts: readonly StepDraft[]): RecipeStepDefinition[] {
+	return drafts.map((draft) => {
+		const retryCount = Number(draft.retryCount);
+		return {
+			configJson:
+				draft.stepType === 'skill' ? { executionIntent: draft.skillExecutionIntent } : {},
+			id: draft.id,
+			name: draft.name,
+			...(draft.onFailure === 'stop' ? {} : { onFailure: draft.onFailure }),
+			...(draft.retryCount.trim() && Number.isInteger(retryCount) && retryCount >= 0
+				? { retryCount }
+				: {}),
+			stepType: draft.stepType,
+		};
+	});
+}
+
 export function toStep(draft: StepDraft): RecipeStepDefinition {
 	const configJson = parseConfigJson(draft.configJson, `${draft.name} configJson`);
 	if (draft.stepType === 'skill') {

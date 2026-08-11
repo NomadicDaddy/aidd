@@ -125,10 +125,18 @@ describe('recipe step overview readability', () => {
 			resolve(import.meta.dir, '../../frontend/src/pages/recipes/StepOverviewCard.tsx'),
 			'utf8',
 		);
+		// The number bubble and the spine moved into `RecipeStepMarker`, which the step *editor*
+		// now draws too — the ordering device was missing from the one mode that reorders steps.
+		// Both files are checked, because the tokens have to survive in the shared component.
+		const marker = await readFile(
+			resolve(import.meta.dir, '../../frontend/src/pages/recipes/RecipeStepMarker.tsx'),
+			'utf8',
+		);
 
-		expect(source).toContain('<Card className="min-w-0 p-3">');
-		expect(source).toContain('bg-accent text-xs font-bold text-accent-foreground');
-		expect(source).toContain('w-px flex-1 bg-border');
+		expect(source).toContain('<Card className={`min-w-0 p-3 ${split}`}>');
+		expect(marker).toContain('bg-accent text-xs font-bold text-accent-foreground');
+		expect(marker).toContain('w-px flex-1 bg-border');
+		expect(marker).not.toMatch(/(?:bg|text|border)-(?:teal|neutral)-/);
 		expect(source).toContain('border-border bg-muted');
 		// The config chips used to fork on an emphasis flag and render half of themselves in
 		// `bg-accent-muted`, which is the tone the app spends on live state. They are one neutral

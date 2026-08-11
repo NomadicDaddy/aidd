@@ -11,11 +11,17 @@ import { PageHeader } from '../../../components/shared/PageHeader.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
-import { FieldRow } from '../../../components/ui/field.tsx';
-import { Input } from '../../../components/ui/input.tsx';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
-import { moveStep, newStepDraft, type StepDraft, type StepJsonErrors } from '../recipe-steps.ts';
+import {
+	moveStep,
+	newStepDraft,
+	policyStepsFromDrafts,
+	type StepDraft,
+	type StepJsonErrors,
+} from '../recipe-steps.ts';
+import { RecipePolicyBadges } from '../RecipeMetadataBadges.tsx';
 import { RecipeStepEditor } from '../RecipeStepEditor.tsx';
+import { RecipeMetadataCard } from './RecipeMetadataCard.tsx';
 import { RecipeParametersCard } from './RecipeParametersCard.tsx';
 
 interface StepErrorEntry extends StepJsonErrors {
@@ -116,7 +122,11 @@ export function RecipeEditMode({
 		// staggers a container's *direct children*, and both callers wrapped this component in a
 		// single div, so the whole form was one child and faded in as a single block. Here the header,
 		// the action bar, and the three cards are the children the stagger was written for.
-		<div className="page-reveal space-y-5">
+		//
+		// `@container` on the same element, the way Runs, Settings and Director declare theirs: the
+		// cards below measure the content column rather than the viewport, and a card cannot query
+		// containment it declares on itself.
+		<div className="page-reveal @container space-y-5">
 			<PageHeader
 				actions={
 					onReload ? (
@@ -170,51 +180,26 @@ export function RecipeEditMode({
 				saveLabel={isCreate ? 'Create' : 'Save'}
 			/>
 
-			{/* Weighted tracks, not equal ones. Three `1fr` columns gave a slug field, a name and a
-			    description 635px each at 2250px, which is several times what an id will ever hold and
-			    still the tightest of the three for the one field that takes a sentence. The
-			    `minmax(0,…)` floors keep the first two from being squeezed below their content. */}
-			<Card
-				className={`grid gap-3 ${isCreate ? 'lg:grid-cols-[minmax(0,16rem)_minmax(0,20rem)_1fr]' : 'lg:grid-cols-[minmax(0,20rem)_1fr]'}`}>
-				{/* Both of these block Save, and neither said so until Save was pressed. The id
-				    additionally showed a red message beside a control still rendering the ordinary
-				    grey border, which read as a note about the field rather than a fault in it. */}
-				{setId && (
-					<FieldRow error={idError} label="Id" required>
-						{/* The one field on this form whose value is a slug rather than prose —
-						    it is what the grid, the telemetry rows and the URL all render in
-						    mono, so it is typed in mono too. */}
-						<Input
-							className="font-mono"
-							onChange={(event) => setId(event.target.value)}
-							placeholder="my-recipe"
-							value={id}
-						/>
-					</FieldRow>
-				)}
-				<FieldRow label="Name" required={!nameReadOnly}>
-					<Input
-						disabled={nameReadOnly}
-						onChange={(event) => setName(event.target.value)}
-						value={name}
-					/>
-					{nameReadOnly && (
-						<p className="text-xs text-muted-foreground">
-							System recipe names are reserved and cannot be changed.
-						</p>
-					)}
-				</FieldRow>
-				<FieldRow label="Description">
-					<Input
-						onChange={(event) => setDescription(event.target.value)}
-						value={description}
-					/>
-				</FieldRow>
-			</Card>
+			<RecipeMetadataCard
+				description={description}
+				id={id}
+				idError={idError}
+				name={name}
+				nameReadOnly={nameReadOnly}
+				setDescription={setDescription}
+				setId={setId}
+				setName={setName}
+			/>
 
 			<RecipeParametersCard parameters={parameters} setParameters={setParameters} />
 
 			<Card className="flex flex-col gap-4">
+				{/* The policy summary, off the live draft rather than off a saved recipe. View mode
+				    stated it and edit mode stated nothing, so the summary of the policy you are
+				    editing disappeared at the moment you started editing it. `policyStepsFromDrafts`
+				    reads only the first-class draft fields — failure behaviour, retry count,
+				    execution intent — so it costs no JSON parse and cannot throw on a half-typed
+				    brace, and the chips move as the selects do. */}
 				<CardHeader
 					action={
 						<Button onClick={() => setSteps((current) => [...current, newStepDraft()])}>
@@ -222,10 +207,21 @@ export function RecipeEditMode({
 							Add Step
 						</Button>
 					}
+					badge={
+						<>
+							<Badge tone="neutral">
+								{steps.length} step{steps.length !== 1 ? 's' : ''}
+							</Badge>
+							<RecipePolicyBadges recipe={{ steps: policyStepsFromDrafts(steps) }} />
+						</>
+					}
 					className="mb-0"
 					title="Steps"
 				/>
-				<div className="space-y-4">
+				{/* No `space-y-4`: each step carries its own bottom padding inside the spine's
+				    column, so the spine runs from one marker to the next instead of being cut by a
+				    margin between siblings. */}
+				<div>
 					{steps.map((step, index) => {
 						const errors = stepErrors.find((entry) => entry.id === step.id) ?? {
 							configJson: null,

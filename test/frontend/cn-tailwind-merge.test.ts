@@ -6,12 +6,17 @@ import { cn } from '../../frontend/src/lib/cn.ts';
 // The lookbehind keeps responsive variants (`sm:p-7`) out of the audit: only the unprefixed
 // utility has to beat Card's base `p-4`, and matching the prefixed one too would make the
 // "last declared padding wins" comparison below compare against the wrong utility.
-// Both spellings of a className: the literal string, and the `cn('…', constant)` form a card uses
-// when part of its class list is a shared export. Reading only the literal would have quietly
-// dropped a card from the audit the day its padding moved into a `cn()` call.
+// All three spellings of a className: the literal string, the `cn('…', constant)` form a card uses
+// when part of its class list is a shared export, and the template literal it uses when part of the
+// list is computed inline. Reading only the literal would have quietly dropped a card from the audit
+// the day its padding moved into a `cn()` call — or, as happened, the day a step card grew a
+// conditional two-column split and its `p-3` moved inside backticks.
 const CARD_PADDING_OVERRIDE =
-	/<Card\b[^>]*className=(?:"([^"]*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^"]*)"|\{cn\('([^']*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^']*)')/g;
+	/<Card\b[^>]*className=(?:"([^"]*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^"]*)"|\{cn\('([^']*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^']*)'|\{`([^`]*(?<![:\w-])p-(?:0|2\.5|3|5)\b[^`]*)`)/g;
 const PADDING_UTILITY = /(?<![:\w-])p-(?:0|2\.5|3|4|5)\b/g;
+// An interpolation holds class names the audit cannot resolve from source, and none of them is a
+// padding utility — the point of the audit is the one that is written here.
+const INTERPOLATION = /\$\{[^}]*\}/g;
 
 async function cardPaddingOverrides(): Promise<string[]> {
 	const glob = new Bun.Glob('**/*.tsx');
@@ -19,8 +24,8 @@ async function cardPaddingOverrides(): Promise<string[]> {
 	for await (const file of glob.scan({ cwd: join(process.cwd(), 'frontend', 'src') })) {
 		const source = await Bun.file(join(process.cwd(), 'frontend', 'src', file)).text();
 		overrides.push(
-			...[...source.matchAll(CARD_PADDING_OVERRIDE)].map(
-				(match) => match[1] ?? match[2] ?? '',
+			...[...source.matchAll(CARD_PADDING_OVERRIDE)].map((match) =>
+				(match[1] ?? match[2] ?? match[3] ?? '').replaceAll(INTERPOLATION, ' ').trim(),
 			),
 		);
 	}

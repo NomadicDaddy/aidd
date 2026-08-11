@@ -85,8 +85,12 @@ describe('responsive steps are chosen against content width', () => {
 		// The exceptions are components that are only ever rendered into a container their own page
 		// declares: `SkillsPage` owns the split and the containment for the catalog, and both console
 		// components are rendered nowhere but `RunsPage`, whose root is the container their height
-		// chain gates against.
+		// chain gates against. `RecipeMetadataCard` is the same case: it is the recipe form's own
+		// three fields, rendered nowhere but `RecipeEditMode`, whose root declares the container —
+		// and it *cannot* declare its own, because the query is on the card element itself and an
+		// element never matches containment it establishes.
 		expect(offenders.sort()).toEqual([
+			'pages/recipes/detail/RecipeMetadataCard.tsx',
 			'pages/runs/LiveConsole.tsx',
 			'pages/runs/PipelineConsoleSummary.tsx',
 			'pages/skills/SkillCatalog.tsx',
@@ -95,6 +99,9 @@ describe('responsive steps are chosen against content width', () => {
 			'page-reveal @container',
 		);
 		expect(await read('pages', 'runs', 'RunsPage.tsx')).toContain('page-reveal @container');
+		expect(await read('pages', 'recipes', 'detail', 'RecipeEditMode.tsx')).toContain(
+			'page-reveal @container',
+		);
 	});
 
 	test('no element both declares containment and queries it', async () => {

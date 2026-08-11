@@ -23,7 +23,10 @@ export function RecipeParametersCard({
 	setParameters: Dispatch<SetStateAction<RecipeParameterDefinition[]>>;
 }) {
 	return (
-		<Card className="flex flex-col gap-3">
+		// The card is the container the rows below are measured against, not the viewport. `lg:` is a
+		// 1024px viewport, which is a 736px content column with the rail expanded and a 704px card
+		// interior — the four tracks went side by side there whether or not there was room for them.
+		<Card className="@container flex flex-col gap-3">
 			<CardHeader
 				action={
 					<Button
@@ -40,10 +43,10 @@ export function RecipeParametersCard({
 			<div className="grid gap-3">
 				{/* One header row for the whole list instead of a placeholder in every input:
 				    placeholders vanish the moment a row is filled, so a populated table had
-				    three unlabelled columns. Hidden below `lg`, where the rows stack and each
-				    input carries its own `aria-label` for both the reader and the screen. */}
+				    three unlabelled columns. Hidden below the 4-up step, where the rows stack and
+				    each input carries its own `aria-label` for both the reader and the screen. */}
 				{parameters.length > 0 && (
-					<div className="hidden gap-3 lg:grid lg:grid-cols-[1fr_2fr_1fr_auto]">
+					<div className="hidden gap-3 @min-[61rem]:grid @min-[61rem]:grid-cols-[1fr_2fr_1fr_auto]">
 						<span className={fieldLabelClass}>Name</span>
 						<span className={fieldLabelClass}>Description</span>
 						<span className={fieldLabelClass}>Default</span>
@@ -52,9 +55,12 @@ export function RecipeParametersCard({
 					</div>
 				)}
 				{parameters.map((parameter, index) => (
-					// `lg` rather than `md`: four columns inside a card at 768px gave the name
-					// field about eight characters of usable width.
-					<div className="grid gap-3 lg:grid-cols-[1fr_2fr_1fr_auto]" key={index}>
+					// `61rem` of card interior before the row goes 4-up: below that the 1fr name
+					// track is under 200px, which is where a parameter name starts scrolling
+					// inside its own field. Stacked rows read fine and each input is labelled.
+					<div
+						className="grid gap-3 @min-[61rem]:grid-cols-[1fr_2fr_1fr_auto]"
+						key={index}>
 						<Input
 							aria-label={`Parameter ${index + 1} name`}
 							onChange={(event) =>

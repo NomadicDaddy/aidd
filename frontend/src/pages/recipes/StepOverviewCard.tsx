@@ -7,8 +7,9 @@ import type { RecipeStepDefinition, RecipeStepType } from '../../api/types.ts';
 
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
-import { Card } from '../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { type ConfigSummaryEntry, getConfigSummary } from './recipe-steps.ts';
+import { RecipeStepMarker } from './RecipeStepMarker.tsx';
 
 // Step type is taxonomy, not status: a `shell` step is not "needs attention" and a `recipe-ref`
 // step is not "failed". Every type renders neutral and is distinguished by its glyph, leaving the
@@ -131,25 +132,45 @@ export function StepOverviewCard({
 	const hasRetry = step.retryCount !== undefined && step.retryCount > 0;
 	const StepTypeIcon = stepTypeIcons[step.stepType];
 
+	// Two tracks once the card itself is wide enough, one below that. At 2250x1309 each step was a
+	// 1888px band whose content stopped between 231px and 568px in — measured empty right gutter of
+	// 1320 to 1657px per step, five times over, with the list still running past the fold. The header
+	// takes a 20rem track and the config takes the rest, so the gutter carries the configuration
+	// instead of nothing and the list is half as tall. `61rem` is the content-column step: below it
+	// the two tracks would be narrower than the config blocks need, so the stack is the right answer.
+	const split =
+		configSummary.length > 0
+			? 'grid gap-3 @min-[61rem]:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]'
+			: '';
+
 	return (
 		<div className="flex gap-3">
-			<div className="flex flex-col items-center">
-				<div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground ring-2 ring-card">
-					{stepNumber}
-				</div>
-				{!isLast && <div className="w-px flex-1 bg-border" />}
-			</div>
-			<div className="min-w-0 flex-1 pb-6">
-				<Card className="min-w-0 p-3">
-					<header className="mb-2 flex flex-wrap items-center gap-2">
-						<h3 className="text-sm font-semibold text-foreground">{step.name}</h3>
-						<Badge tone="neutral">
-							<StepTypeIcon aria-hidden="true" className="h-3 w-3" />
-							{step.stepType}
-						</Badge>
-						{hasOnFailure && <Badge tone="amber">on failure: {step.onFailure}</Badge>}
-						{hasRetry && <Badge tone="neutral">retry: {step.retryCount}</Badge>}
-					</header>
+			<RecipeStepMarker isLast={isLast} stepNumber={stepNumber} />
+			{/* The containment is declared here, not on the pipeline: this element is the card's own
+			    width, without the marker rail, which is the width the split above is measured at. */}
+			<div className="@container min-w-0 flex-1 pb-6">
+				<Card className={`min-w-0 p-3 ${split}`}>
+					<CardHeader
+						badge={
+							<>
+								<Badge tone="neutral">
+									<StepTypeIcon aria-hidden="true" className="h-3 w-3" />
+									{step.stepType}
+								</Badge>
+								{hasOnFailure && (
+									<Badge tone="amber">on failure: {step.onFailure}</Badge>
+								)}
+								{hasRetry && <Badge tone="neutral">retry: {step.retryCount}</Badge>}
+							</>
+						}
+						// `mb-0` is safe because the Card spaces with `gap` in the split state and
+						// holds a single child otherwise; see the note on CardHeader.
+						className="mb-0"
+						headingLevel={3}
+						identifier={step.id}
+						level="subsection"
+						title={step.name}
+					/>
 					{configSummary.length > 0 && <ConfigSummary entries={configSummary} />}
 				</Card>
 			</div>

@@ -180,7 +180,10 @@ export function RecipeDetailPage() {
 
 	if (mode === 'overview' && recipe) {
 		return (
-			<div className="page-reveal">
+			// Both branches are fragments now: each mode component carries `page-reveal` on its
+			// own `space-y-5` root, and the dialogs are siblings so they are not counted as
+			// children of the stagger.
+			<>
 				<RecipeOverviewMode
 					onDelete={requestDelete}
 					onEdit={() => setMode('edit')}
@@ -189,13 +192,12 @@ export function RecipeDetailPage() {
 				/>
 				{deleteConfirm}
 				{unsavedConfirm}
-			</div>
+			</>
 		);
 	}
 
 	return (
-		// A fragment, not a wrapper: `RecipeEditMode` carries `page-reveal` itself now. The overview
-		// branch above keeps its own, because `RecipeOverviewMode` does not.
+		// A fragment, not a wrapper: `RecipeEditMode` carries `page-reveal` itself now.
 		<>
 			<RecipeEditMode
 				description={description}

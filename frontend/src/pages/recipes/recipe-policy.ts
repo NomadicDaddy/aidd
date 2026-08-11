@@ -1,4 +1,4 @@
-import type { RecipeDefinition, RecipeStepOnFailure } from '../../api/types.ts';
+import type { RecipeStepDefinition, RecipeStepOnFailure } from '../../api/types.ts';
 
 import {
 	applySkillExplainer,
@@ -30,7 +30,18 @@ export interface RecipePolicySummary {
 	stopSteps: number;
 }
 
-export function getRecipePolicySummary(recipe: RecipeDefinition): RecipePolicySummary {
+/**
+ * Everything the policy summary reads: the steps, and nothing else about the recipe.
+ *
+ * A saved `RecipeDefinition` satisfies this, and so does the live step draft the edit form holds —
+ * which is the point. The summary used to be view-mode-only because it asked for a whole recipe, and
+ * a recipe is the one thing the edit form does not have until Save succeeds.
+ */
+export interface RecipePolicySource {
+	steps: readonly RecipeStepDefinition[];
+}
+
+export function getRecipePolicySummary(recipe: RecipePolicySource): RecipePolicySummary {
 	const summary: RecipePolicySummary = {
 		applySkillSteps: 0,
 		autoFixSteps: 0,
@@ -60,7 +71,7 @@ export function getRecipePolicySummary(recipe: RecipeDefinition): RecipePolicySu
  * amber `retries: 3` beside an amber `failure: continue (1)` on a perfectly healthy recipe. The
  * labels already name each fact, and `risk` is what decides which of them reach the catalog card.
  */
-export function getRecipePolicyBadges(recipe: RecipeDefinition): RecipePolicyBadge[] {
+export function getRecipePolicyBadges(recipe: RecipePolicySource): RecipePolicyBadge[] {
 	const policy = getRecipePolicySummary(recipe);
 	const badges: RecipePolicyBadge[] = [];
 	if (policy.stopSteps > 0) {

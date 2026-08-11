@@ -52,7 +52,10 @@ const exemptions: { file: string; why: string }[] = [
 	// The two launch panels were exempted as "launch drawer titles". Neither is a drawer: both are
 	// in-flow cards with a title, a step-count description and a Close action — CardHeader's exact
 	// slot set — and both now use it.
-	{ file: 'recipes/StepOverviewCard.tsx', why: 'per-step row title inside a list' },
+	// `recipes/StepOverviewCard.tsx` was exempt as a "per-step row title inside a list". It is not a
+	// row: it is a card with a title, a mono step id and three badges, which is CardHeader's slot set
+	// exactly, and hand-rolling it meant the step id rendered in a different place and face than the
+	// same id does on every other surface. It uses CardHeader now, so it is scanned like the rest.
 	{ file: 'settings/ExecutionIdentityBadgeLabPage.tsx', why: 'per-example label in a grid' },
 	{ file: 'skills/SkillImportDialog.tsx', why: 'dialog title, wired to aria-labelledby' },
 	{ file: 'diary/DiaryFeed.tsx', why: 'sticky day divider in a chronological feed' },

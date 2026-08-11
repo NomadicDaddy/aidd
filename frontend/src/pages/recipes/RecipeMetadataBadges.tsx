@@ -9,7 +9,7 @@ import {
 	recipeSystemExplainer,
 	recipeTypeExplainer,
 } from './recipe-badge-explainers.ts';
-import { getRecipePolicyBadges } from './recipe-policy.ts';
+import { getRecipePolicyBadges, type RecipePolicySource } from './recipe-policy.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
 
 /**
@@ -93,6 +93,9 @@ export function RecipeContractBadges({
  *
  * `riskOnly` keeps just the badges that change failure behaviour; `limit` caps how many render and
  * folds the rest into a `+N` badge whose tooltip names them, so a table cell stays one line tall.
+ *
+ * The source is `RecipePolicySource` rather than a whole `RecipeDefinition` because the edit form
+ * renders these too, off its own step draft, and it has no saved recipe to hand until Save returns.
  */
 export function RecipePolicyBadges({
 	limit,
@@ -101,7 +104,7 @@ export function RecipePolicyBadges({
 	riskOnly = false,
 }: {
 	limit?: number;
-	recipe: RecipeDefinition;
+	recipe: RecipePolicySource;
 	riskOnly?: boolean;
 } & PlainProp) {
 	const badges = getRecipePolicyBadges(recipe).filter((badge) => !riskOnly || badge.risk);

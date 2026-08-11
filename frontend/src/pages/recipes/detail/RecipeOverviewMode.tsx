@@ -14,7 +14,6 @@ import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { DropdownMenu } from '../../../components/ui/dropdown-menu.tsx';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
-import { sectionCaptionClass } from '../../../lib/typography.ts';
 import { RecipeLaunchPanel } from '../RecipeLaunchPanel.tsx';
 import { RecipeContractBadges, RecipePolicyBadges } from '../RecipeMetadataBadges.tsx';
 import { RecipePipelineView } from '../RecipePipelineView.tsx';
@@ -31,7 +30,11 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 	const [showLaunch, setShowLaunch] = useState(false);
 
 	return (
-		<div className="space-y-5">
+		// `page-reveal` here rather than on the wrapper `RecipeDetailPage` supplied: the stagger
+		// animates a container's *direct children*, and that wrapper had exactly one, so the four
+		// cards faded in together as a single block instead of in sequence. The other twenty routes
+		// put `page-reveal` on the same element as their `space-y-5` root, which is this one.
+		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
 					// Three controls, one of which is an icon: they fit on one line at every
@@ -86,15 +89,6 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 				title={recipe.name}
 			/>
 
-			{/* The contract and policy badges used to float on the page background between the
-			    header and the first card, reading as leftovers from the header rather than as the
-			    recipe's contract. On a labelled panel they are a section like the ones below. */}
-			<Card className="flex flex-wrap items-center gap-2" variant="panel">
-				<span className={`mr-1 ${sectionCaptionClass}`}>Contract</span>
-				<RecipeContractBadges recipe={recipe} />
-				<RecipePolicyBadges recipe={recipe} />
-			</Card>
-
 			{showLaunch && (
 				<RecipeLaunchPanel onClose={() => setShowLaunch(false)} recipe={recipe} />
 			)}
@@ -102,11 +96,22 @@ export function RecipeOverviewMode({ onDelete, onEdit, onReload, recipe }: Props
 			<RecipeParamsOverview parameters={recipe.parameters} />
 
 			<Card>
+				{/* The contract and policy chips used to be a card of their own: 1962px wide, 58px
+				    tall, and empty from 379px in. Every fact in it — `failure: stop (5)`,
+				    `retries: 1`, `skills: apply (3)` — is a statement about the steps, so it reads
+				    beside the step count rather than as a section above it, and the page loses a
+				    card and a gap. It also survives the flip into edit mode, where the summary of
+				    the policy being edited used to disappear entirely; `RecipeEditMode` renders the
+				    same chips off its live draft. */}
 				<CardHeader
 					badge={
-						<Badge tone="neutral">
-							{recipe.steps.length} step{recipe.steps.length !== 1 ? 's' : ''}
-						</Badge>
+						<>
+							<Badge tone="neutral">
+								{recipe.steps.length} step{recipe.steps.length !== 1 ? 's' : ''}
+							</Badge>
+							<RecipeContractBadges recipe={recipe} />
+							<RecipePolicyBadges recipe={recipe} />
+						</>
 					}
 					className="mb-4"
 					title="Steps"

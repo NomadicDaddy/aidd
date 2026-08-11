@@ -115,36 +115,12 @@ export function ProfileMatrixRow({
 					path={row.project.path}
 				/>
 			</th>
-			<td className="px-3 py-3">
-				{/* The Unsaved badge is always in the layout and only sometimes visible. Mounting it
-				    on the first edit could not fit beside `Explicit` in a 91px cell, so it wrapped,
-				    took the row from 65px to 79px and pushed every row below it down by 14px — the
-				    table moved under the cursor on the keystroke that changed it. Reserving the space
-				    costs one hidden pill and makes the height identical in both states. */}
-				<div className="flex gap-1.5 whitespace-nowrap">
-					<Badge tone="neutral">{sourceLabel(row.project.metadata.profile.source)}</Badge>
-					<span
-						aria-hidden={row.dirty ? undefined : 'true'}
-						className={row.dirty ? '' : 'invisible'}>
-						<Badge tone="amber">{unsavedBadgeLabel}</Badge>
-					</span>
-				</div>
-			</td>
-			{showFacets
-				? profileFacets.map((facet) => (
-						<td className="px-2 py-3" key={facet.field}>
-							<ProfileFacetSelect
-								field={facet.field}
-								onChange={onChange}
-								projectName={row.project.name}
-								row={row}
-							/>
-						</td>
-					))
-				: null}
+			{/* Posture and Audits lead, Source trails — see the header comment in ProfileMatrixTable.
+			    The two cells that recompute as facets change stay beside the pinned project name
+			    instead of sitting 669px off the right edge of the scrollport in edit mode. */}
 			<td className="px-3 py-3">
 				{/* `items-start`: the column stretched its Badge into a 160px bar while the Source
-				    Badge two cells earlier stayed an intrinsic pill — one component, two shapes. */}
+				    Badge stayed an intrinsic pill — one component, two shapes. */}
 				<div className="flex min-w-40 flex-col items-start gap-1">
 					<Badge tone="neutral">{row.posture.label}</Badge>
 					{row.posture.reasons.length > 0 && (
@@ -161,6 +137,33 @@ export function ProfileMatrixRow({
 					{applicable}/{auditCount} apply
 				</div>
 				<div className="text-muted-foreground">{required} required</div>
+			</td>
+			{showFacets
+				? profileFacets.map((facet) => (
+						<td className="px-2 py-3" key={facet.field}>
+							<ProfileFacetSelect
+								field={facet.field}
+								onChange={onChange}
+								projectName={row.project.name}
+								row={row}
+							/>
+						</td>
+					))
+				: null}
+			<td className="px-3 py-3">
+				{/* The Unsaved badge is always in the layout and only sometimes visible. Mounting it
+				    on the first edit could not fit beside `Explicit` in a 91px cell, so it wrapped,
+				    took the row from 65px to 79px and pushed every row below it down by 14px — the
+				    table moved under the cursor on the keystroke that changed it. Reserving the space
+				    costs one hidden pill and makes the height identical in both states. */}
+				<div className="flex gap-1.5 whitespace-nowrap">
+					<Badge tone="neutral">{sourceLabel(row.project.metadata.profile.source)}</Badge>
+					<span
+						aria-hidden={row.dirty ? undefined : 'true'}
+						className={row.dirty ? '' : 'invisible'}>
+						<Badge tone="amber">{unsavedBadgeLabel}</Badge>
+					</span>
+				</div>
 			</td>
 			<td className="px-3 py-3 text-xs whitespace-nowrap text-muted-foreground">
 				{formatUpdatedAt(row.project.metadata.profile.updatedAt)}

@@ -5,12 +5,13 @@ import { Link } from 'react-router';
 
 import type { ProjectAssuranceProfileInput } from '../../../api/types.ts';
 import type { FacetField } from '../detail/profile/profile-facets.ts';
-import type { ProfileMatrixRowModel } from './profileMatrixTypes.ts';
+import type { ProfileMatrixRowModel, ProfileMatrixSortKey } from './profileMatrixTypes.ts';
 
+import { CardSortControl } from '../../../components/shared/CardSortControl.tsx';
 import { FilePath } from '../../../components/shared/FilePath.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
-import { Card } from '../../../components/ui/card.tsx';
+import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import { toneBorder } from '../../../lib/tones.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
@@ -22,6 +23,7 @@ import {
 	unsavedBadgeLabel,
 } from './profileMatrixLabels.ts';
 import { ProfileFacetSelect } from './ProfileMatrixRow.tsx';
+import { profileMatrixSortOptions } from './profileMatrixSorting.ts';
 
 /**
  * The narrow-viewport counterpart to `ProfileMatrixTable`, following the split every other wide
@@ -32,8 +34,11 @@ export function ProfileMatrixMobileList({
 	onChange,
 	onReset,
 	onSave,
+	onSort,
 	rows,
 	showFacets,
+	sortDir,
+	sortKey,
 }: {
 	onChange: (
 		projectId: string,
@@ -42,11 +47,31 @@ export function ProfileMatrixMobileList({
 	) => void;
 	onReset: (projectId: string) => void;
 	onSave: (projectId: string) => void;
+	onSort: (key: ProfileMatrixSortKey) => void;
 	rows: ProfileMatrixRowModel[];
 	showFacets: boolean;
+	sortDir: 'asc' | 'desc';
+	sortKey: ProfileMatrixSortKey;
 }) {
+	// The facet keys are offered exactly when the facet columns exist in the table, so the two views
+	// sort on the same set rather than the cards quietly keeping a key the table has put away.
+	const sortOptions = showFacets
+		? [
+				...profileMatrixSortOptions,
+				...profileFacets.map((facet) => ({ key: facet.field, label: facet.title })),
+			]
+		: profileMatrixSortOptions;
+
 	return (
 		<div className="space-y-3 xl:hidden">
+			{/* The table sorts through its column headers, which do not exist here. Without this the
+			    same 33 rows were locked to Project-ascending for every viewport below 1280. */}
+			<CardSortControl
+				onToggleSort={onSort}
+				options={sortOptions}
+				sortDir={sortDir}
+				sortKey={sortKey}
+			/>
 			{rows.map((row) => {
 				const auditCount = row.preview?.audits.length ?? 0;
 				const applicable = row.preview?.audits.filter((audit) => audit.applies).length ?? 0;
@@ -57,37 +82,41 @@ export function ProfileMatrixMobileList({
 						// Only the left edge carries width, so a tone that colours all four is fine.
 						className={row.dirty ? `border-l-2 ${toneBorder.amber}` : ''}
 						key={row.project.id}>
-						{/* The card is a heading and its detail, not a two-column split. The badges used
-						    to sit in a `shrink-0` cluster on the right, which took a third of a 358px
-						    card away from the one line that says which project this is — and the name
-						    is the only thing that distinguishes one card from the next fourteen. They
-						    are a row under it now, where they wrap into the width they need. */}
-						<h2 className="text-sm font-semibold text-foreground">
-							<Link
-								// A two-character project name (`g5`) measured 17.9px wide. The link
-								// is the sole child of its heading, so the horizontal floor costs
-								// nothing here.
-								className={`block truncate hover:underline max-sm:min-w-11 ${touchTargetTextClass}`}
-								to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
-								{row.project.name}
-							</Link>
-						</h2>
-						<FilePath
-							className="block truncate text-2xs text-muted-foreground"
-							path={row.project.path}
+						{/* Name, path and badges through the shared header rather than three stacked
+						    blocks of the card's own. It is the same information in one wrap row plus
+						    the path line: badges that fit beside the name sit beside it and only wrap
+						    when they cannot, which took the head of a clean card from three lines to
+						    two and the whole card from ~131px to ~90px. Fifteen cards at 1024 gained
+						    most of a card's worth of screen back. */}
+						<CardHeader
+							badge={
+								<span className="flex flex-wrap items-center gap-1.5">
+									<Badge tone="neutral">
+										{sourceLabel(row.project.metadata.profile.source)}
+									</Badge>
+									{row.dirty && <Badge tone="amber">{unsavedBadgeLabel}</Badge>}
+									<Badge tone="neutral">{row.posture.label}</Badge>
+								</span>
+							}
+							className="mb-2"
+							identifier={<FilePath className="text-2xs" path={row.project.path} />}
+							level="subsection"
+							title={
+								<Link
+									// A two-character project name (`g5`) measured 17.9px wide. The
+									// link is the sole child of its heading, so the horizontal floor
+									// costs nothing here.
+									className={`block truncate hover:underline max-sm:min-w-11 ${touchTargetTextClass}`}
+									to={`/projects/${encodeURIComponent(row.project.routeId)}?tab=profile`}>
+									{row.project.name}
+								</Link>
+							}
 						/>
-						<div className="mt-2 flex flex-wrap items-center gap-1.5">
-							<Badge tone="neutral">
-								{sourceLabel(row.project.metadata.profile.source)}
-							</Badge>
-							{row.dirty && <Badge tone="amber">{unsavedBadgeLabel}</Badge>}
-							<Badge tone="neutral">{row.posture.label}</Badge>
-						</div>
 						{/* Everything the table's remaining columns carry. The card used to print the
 						    audit counts and stop, so a phone silently lost the posture reasons and the
 						    Updated column — a viewport that drops information is the failure the
 						    table/card split exists to avoid, not a licence it grants. */}
-						<div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+						<div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
 							<span className="tabular-nums">
 								{applicable}/{auditCount} apply · {required} required
 							</span>

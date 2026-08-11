@@ -7,8 +7,9 @@ import type {
 import type { SortDir, SortKey } from './projects-list-sort.ts';
 
 import { AppLaunchControl } from '../../components/shared/AppLaunchControl.tsx';
+import { CardSortControl } from '../../components/shared/CardSortControl.tsx';
 import { ProjectCard } from './ProjectCard.tsx';
-import { ProjectsCardSort } from './ProjectsCardSort.tsx';
+import { projectSortOptions } from './projects-table-columns.ts';
 
 export function ProjectsCardView({
 	gitStatus,
@@ -31,7 +32,12 @@ export function ProjectsCardView({
 }) {
 	return (
 		<div className="space-y-2">
-			<ProjectsCardSort onToggleSort={onToggleSort} sortDir={sortDir} sortKey={sortKey} />
+			<CardSortControl
+				onToggleSort={onToggleSort}
+				options={projectSortOptions}
+				sortDir={sortDir}
+				sortKey={sortKey}
+			/>
 			{/* The grid decides its own column count from a card width rather than from viewport
 			    steps, which capped it at three however wide the column got. At 2250 that meant
 			    three 643px cards in a 1962px column, and nothing on a project card is 643px wide:

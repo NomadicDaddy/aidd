@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { default as ArrowDown } from 'lucide-react/dist/esm/icons/arrow-down';
 import { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up';
 import { default as ArrowUpDown } from 'lucide-react/dist/esm/icons/arrow-up-down';
@@ -17,6 +19,7 @@ export function SortableColumnHeader<Key extends string>({
 	activeDir,
 	activeKey,
 	className,
+	hint,
 	label,
 	onSort,
 	sortKey,
@@ -25,6 +28,12 @@ export function SortableColumnHeader<Key extends string>({
 	activeKey: Key;
 	/** The `<th>` classes — sticky positioning and padding are the caller's business. */
 	className: string;
+	/**
+	 * A note beside the label, outside the button: the Profile Matrix marks its Audits column
+	 * "recalc" while a preview is in flight, and that word is a status, not part of the control's
+	 * name or of what pressing it does.
+	 */
+	hint?: ReactNode;
 	label: string;
 	onSort: (key: Key) => void;
 	sortKey: Key;
@@ -46,6 +55,7 @@ export function SortableColumnHeader<Key extends string>({
 				{label}
 				<Icon aria-hidden="true" className="h-3 w-3" />
 			</button>
+			{hint}
 		</th>
 	);
 }

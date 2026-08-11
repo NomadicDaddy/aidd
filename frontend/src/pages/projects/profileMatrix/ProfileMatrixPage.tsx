@@ -176,8 +176,11 @@ export function ProfileMatrixPage() {
 				onSave={(projectId) => {
 					void saveRow(projectId);
 				}}
+				onSort={toggleSort}
 				rows={sortedRows}
 				showFacets={mode === 'edit'}
+				sortDir={sortDir}
+				sortKey={sortKey}
 			/>
 
 			<ProfileMatrixTable

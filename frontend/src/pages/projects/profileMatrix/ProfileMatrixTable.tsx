@@ -57,6 +57,13 @@ export function ProfileMatrixTable({
 	// entering edit mode mounts it before anything can be committed to it, and the bulk path is
 	// already covered by Save all changed in the page header. It re-mounts on the first edit.
 	const showActions = rows.some((row) => row.dirty);
+	// Fixed widths only where the layout is fixed. In Summary the table is five columns of `w-full`,
+	// and `auto` split 1960px evenly into four gutters: the Source cell was 356px around a 62px
+	// badge and Posture 423px around a ~100px one, so the eye travelled ~1200px from a project's
+	// name to its timestamp. Pinning the four trailing columns near their intrinsic widths sends the
+	// surplus to the identity column, which is the one that can use it. In Edit facets the table has
+	// to overflow to 2629px, and a fixed layout is exactly what would stop it.
+	const summaryWidth = (width: string) => (showFacets ? '' : width);
 
 	return (
 		// Hidden below `md`, where ProfileMatrixMobileList renders the same rows as stacked cards.
@@ -68,8 +75,20 @@ export function ProfileMatrixTable({
 			<OverflowScroller
 				ariaLabel="Project profile matrix"
 				scrollerClassName="max-h-[calc(100dvh-16rem)] overflow-y-auto">
-				<table aria-label="Project profile matrix" className="w-full text-left text-sm">
+				<table
+					aria-label="Project profile matrix"
+					className={`w-full text-left text-sm ${showFacets ? '' : 'table-fixed'}`}>
 					<thead className="border-b border-border text-xs text-muted-foreground uppercase">
+						{/* Posture and Audits lead the facet block, and Source trails it. Edit facets
+						    makes the table 2629px inside a 1960px scrollport, and the three columns it
+						    used to push off the right edge were the ones showing the *result* of an
+						    edit: change Data sensitivity and the recomputed posture, the audit counts
+						    and the header's own "recalc" hint were 669px away behind a horizontal
+						    scroll. Cause and effect share the scrollport now, and the trailing slot
+						    goes to Source, a static Explicit/Inferred badge that cannot change while
+						    editing. The order is the same in both modes so nothing moves under the
+						    cursor when the mode toggles; the Unsaved badge travels with Source, which
+						    the row tint and the amber rule on the pinned cell already cover. */}
 						<tr>
 							<SortableColumnHeader
 								activeDir={activeSortDir}
@@ -82,10 +101,25 @@ export function ProfileMatrixTable({
 							<SortableColumnHeader
 								activeDir={activeSortDir}
 								activeKey={activeSortKey}
-								className={headerCellClass}
-								label="Source"
+								className={`${headerCellClass} ${summaryWidth('w-50')}`}
+								label="Posture"
 								onSort={onSort}
-								sortKey="source"
+								sortKey="posture"
+							/>
+							<SortableColumnHeader
+								activeDir={activeSortDir}
+								activeKey={activeSortKey}
+								className={`${headerCellClass} ${summaryWidth('w-35')}`}
+								hint={
+									isPreviewing ? (
+										<span className="ml-1 font-normal text-muted-foreground lowercase">
+											recalc
+										</span>
+									) : null
+								}
+								label="Audits"
+								onSort={onSort}
+								sortKey="audits"
 							/>
 							{showFacets
 								? profileFacets.map((facet) => (
@@ -103,22 +137,19 @@ export function ProfileMatrixTable({
 							<SortableColumnHeader
 								activeDir={activeSortDir}
 								activeKey={activeSortKey}
-								className={headerCellClass}
-								label="Posture"
+								className={`${headerCellClass} ${summaryWidth('w-40')}`}
+								label="Source"
 								onSort={onSort}
-								sortKey="posture"
+								sortKey="source"
 							/>
-							<th className={headerCellClass} scope="col">
-								Audits
-								{isPreviewing && (
-									<span className="ml-1 font-normal text-muted-foreground lowercase">
-										recalc
-									</span>
-								)}
-							</th>
-							<th className={headerCellClass} scope="col">
-								Updated
-							</th>
+							<SortableColumnHeader
+								activeDir={activeSortDir}
+								activeKey={activeSortKey}
+								className={`${headerCellClass} ${summaryWidth('w-45')}`}
+								label="Updated"
+								onSort={onSort}
+								sortKey="updated"
+							/>
 							{showActions ? (
 								<th
 									className={`${headerCellClass} right-0 z-30 ${pinnedRightEdgeClass}`}

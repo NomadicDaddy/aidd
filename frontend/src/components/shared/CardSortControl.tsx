@@ -2,33 +2,34 @@ import { default as ArrowDown } from 'lucide-react/dist/esm/icons/arrow-down';
 import { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up';
 import { useId } from 'react';
 
-import type { SortDir, SortKey } from './projects-list-sort.ts';
-
-import { Button } from '../../components/ui/button.tsx';
 import { selectClass } from '../../lib/formStyles.ts';
-import { projectSortOptions } from './projects-table-columns.ts';
+import { Button } from '../ui/button.tsx';
 
 /**
- * The card view's ordering control.
+ * The card view's ordering control, for any list whose wide layout sorts through column headers.
  *
- * The two views already order the same array — `sorted` comes from `useProjectsPageFilters` and goes
- * to both — but only the table could change the order, because the affordance was the column header.
- * Switching from table to cards silently took the ordering away and switching back restored it, so
- * the same list had two capabilities depending on which shape it was drawn in.
+ * Both views of such a list already order the same array, but only the table can change the order,
+ * because the affordance is the column header. Switching from table to cards silently takes the
+ * ordering away and switching back restores it, so the same list has two capabilities depending on
+ * which shape it happens to be drawn in. Projects hit this first; the Profile Matrix had it too,
+ * with 33 project cards locked to Project-ascending below 1280.
  *
  * Not a `FilterSelect` in the toolbar: sorting is not filtering, and `FILTER_FIELD_ORDER` (which the
- * toolbar-pattern test enforces) has no Sort field to slot it into. It sits above the grid, where the
- * table view already puts its own view control.
+ * toolbar-pattern test enforces) has no Sort field to slot it into. It sits above the cards, where
+ * the table view already puts its own view controls.
  */
-export function ProjectsCardSort({
+export function CardSortControl<Key extends string>({
 	onToggleSort,
+	options,
 	sortDir,
 	sortKey,
 }: {
 	/** Same handler the table headers use: a new key selects it, the current key flips direction. */
-	onToggleSort: (key: SortKey) => void;
-	sortDir: SortDir;
-	sortKey: SortKey;
+	onToggleSort: (key: Key) => void;
+	/** The keys the wide table sorts on, in the order its headers declare them. */
+	options: readonly { key: Key; label: string }[];
+	sortDir: 'asc' | 'desc';
+	sortKey: Key;
 }) {
 	const selectId = useId();
 	const DirIcon = sortDir === 'asc' ? ArrowUp : ArrowDown;
@@ -40,9 +41,9 @@ export function ProjectsCardSort({
 			<select
 				className={`${selectClass} h-8 py-0 text-xs`}
 				id={selectId}
-				onChange={(event) => onToggleSort(event.target.value as SortKey)}
+				onChange={(event) => onToggleSort(event.target.value as Key)}
 				value={sortKey}>
-				{projectSortOptions.map((option) => (
+				{options.map((option) => (
 					<option key={option.key} value={option.key}>
 						{option.label}
 					</option>

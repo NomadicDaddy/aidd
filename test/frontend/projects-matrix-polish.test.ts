@@ -210,9 +210,16 @@ describe('the phone card is the table, not a subset of it', () => {
 	test('the project name is the card heading and owns the full width', async () => {
 		const mobile = stripComments(await read(MOBILE));
 
-		expect(mobile).toContain('<h2 className="text-sm font-semibold text-foreground">');
+		// The heading, the path and the badges are one `CardHeader` rather than three stacked
+		// blocks the card rolls itself: same information, one wrap row plus the path line, and the
+		// h2 comes from the shared component so its rank and size are not this file's opinion.
+		expect(mobile).toContain('<CardHeader');
+		expect(mobile).toContain('level="subsection"');
+		expect(mobile).toMatch(/title=\{[\s\S]*?<Link/);
+		expect(mobile).toMatch(/identifier=\{<FilePath/);
 		// The badges sat in a `shrink-0` cluster opposite the name, which took a third of a 358px
-		// card away from the one line that tells fifteen identical cards apart.
+		// card away from the one line that tells fifteen identical cards apart. CardHeader keeps
+		// them inside the `min-w-0 flex-1` column with the title, so they wrap instead of squeezing.
 		expect(mobile).not.toContain('justify-between');
 		expect(mobile).not.toContain('shrink-0');
 	});
@@ -315,14 +322,28 @@ describe('both views can order the same list the same way', () => {
 	test('the card view renders the control and gets the same handler the headers use', async () => {
 		const cardView = await read('pages/projects/ProjectsCardView.tsx');
 		const results = await read('pages/projects/ProjectsResults.tsx');
-		const control = await read('pages/projects/ProjectsCardSort.tsx');
+		const control = await read('components/shared/CardSortControl.tsx');
 
-		expect(cardView).toContain('<ProjectsCardSort');
+		expect(cardView).toContain('<CardSortControl');
 		expect(cardView).toContain('onToggleSort={onToggleSort}');
 		expect(results).toContain('<ProjectsCardView');
 		expect(results).toMatch(/<ProjectsCardView[\s\S]*?onToggleSort=\{onToggleSort\}/);
 		// Same handler as the table headers: a new key selects it, the current key flips direction.
-		expect(control).toContain('onToggleSort(event.target.value as SortKey)');
+		expect(control).toContain('onToggleSort(event.target.value as Key)');
 		expect(control).toContain('onClick={() => onToggleSort(sortKey)}');
+	});
+
+	// The control was Projects-only, and the Profile Matrix had the identical hole: 33 cards below
+	// `xl` with no way to reorder them. It is shared now, so the third list to need it inherits the
+	// affordance instead of reinventing it.
+	test('the profile matrix card list sorts through the same shared control', async () => {
+		const mobile = await read('pages/projects/profileMatrix/ProfileMatrixMobileList.tsx');
+		const page = await read('pages/projects/profileMatrix/ProfileMatrixPage.tsx');
+
+		expect(mobile).toContain('<CardSortControl');
+		expect(mobile).toContain('profileMatrixSortOptions');
+		// The facet keys are offered exactly when the facet columns exist.
+		expect(mobile).toContain('showFacets');
+		expect(page).toMatch(/<ProfileMatrixMobileList[\s\S]*?onSort=\{toggleSort\}/);
 	});
 });

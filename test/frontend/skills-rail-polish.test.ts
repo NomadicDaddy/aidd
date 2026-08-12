@@ -69,10 +69,14 @@ describe('the rail is one list with a current item, not 76 buttons', () => {
 		expect(listbox).toContain('aria-selected={selected}');
 		// Exactly one row is tabbable, so the rail costs one Tab to enter and one to leave.
 		expect(listbox).toContain('tabIndex={index === tabStopIndex ? 0 : -1}');
-		expect(listbox).toContain('const tabStopIndex = selectedIndex === -1 ? 0 : selectedIndex;');
+		expect(listbox).toContain('let tabStopIndex = activeIndex;');
+		expect(listbox).toContain(
+			'if (tabStopIndex === -1) tabStopIndex = selectedIndex === -1 ? 0 : selectedIndex;',
+		);
 		for (const key of ['ArrowDown', 'ArrowUp', 'Home', 'End']) {
 			expect(listbox).toContain(`event.key === '${key}'`);
 		}
+		expect(listbox).toContain("event.key === 'Enter' || event.key === ' '");
 		// Moving focus must not drag every scrollable ancestor with it.
 		expect(listbox).toContain("scrollIntoView({ block: 'nearest', inline: 'nearest' })");
 	});

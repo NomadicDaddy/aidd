@@ -13,6 +13,7 @@ function stripComments(source: string): string {
 
 const PAGE = 'frontend/src/pages/skills/SkillsPage.tsx';
 const CATALOG = 'frontend/src/pages/skills/SkillCatalog.tsx';
+const MASTER_DETAIL = 'frontend/src/pages/skills/useSkillsMasterDetail.ts';
 
 describe('the skills split has a layout below its split point', () => {
 	test('the split is gated on the region, not on the viewport', async () => {
@@ -73,12 +74,16 @@ describe('the skills split has a layout below its split point', () => {
 
 	test('a selection below the split point is acknowledged and reversible', async () => {
 		const page = stripComments(await read(PAGE));
+		const state = stripComments(await read(MASTER_DETAIL));
 
 		// The acknowledgement: the pane comes with the selection, and the region comes back into
 		// view — the tap that opened it may have been five screens down.
-		expect(page).toContain('function selectSkill(');
-		expect(page).toContain('setShowDetail(true)');
-		expect(page).toContain("region.scrollIntoView({ block: 'start' })");
+		expect(state).toContain('function selectSkill(');
+		expect(state).toContain('setShowDetail(true)');
+		expect(state).toContain("region.scrollIntoView({ block: 'start' })");
+		expect(state).toContain(
+			'requestAnimationFrame(() => backButtonRef.current?.focus({ preventScroll: true }))',
+		);
 		expect(page).toContain('onSelect={selectSkill}');
 		expect(page).not.toContain('onSelect={setSelectedId}');
 
@@ -88,23 +93,48 @@ describe('the skills split has a layout below its split point', () => {
 		const detailAt = page.indexOf('<SkillDetailsCard');
 		expect(backAt).toBeGreaterThan(-1);
 		expect(detailAt).toBeGreaterThan(backAt);
-		expect(page).toContain('setShowDetail(false)');
+		expect(page).toContain('onClick={() => showCatalog(selected.id)}');
+		expect(page).toContain('ref={backButtonRef}');
 		expect(page.slice(0, backAt)).toContain('@min-[40rem]:hidden');
+	});
+
+	test('mobile selection reflects only visible detail and return restores focus', async () => {
+		const page = stripComments(await read(PAGE));
+		const state = stripComments(await read(MASTER_DETAIL));
+
+		expect(page).toContain('const catalogSelectedId = catalogHasSelection');
+		expect(page).toContain('activeId={selected?.id ?? null}');
+		expect(page).toContain('selectedId={catalogSelectedId}');
+		expect(state).toContain("listBoxOptionId('skill', id)");
+		expect(state).toContain('option.focus({ preventScroll: true })');
+	});
+
+	test('the visible selection follows the same measured split as the layout', async () => {
+		const page = stripComments(await read(PAGE));
+		const state = stripComments(await read(MASTER_DETAIL));
+
+		expect(state).toContain(
+			'setSplitLayout(measuredRegion.offsetWidth >= SKILLS_SPLIT_MIN_WIDTH)',
+		);
+		expect(state).toContain('const observer = new ResizeObserver(update)');
+		expect(state).toContain('observer.observe(measuredRegion)');
+		expect(page + state).not.toContain('matchMedia');
 	});
 
 	test('the threshold is measured off the region, never off the viewport', async () => {
 		const page = stripComments(await read(PAGE));
+		const state = stripComments(await read(MASTER_DETAIL));
 
 		// `window.innerWidth` and a viewport media query both answer a question this layout is not
 		// asking. The region's own width is the quantity the CSS gates on, so it is the quantity
 		// the handler reads — otherwise the two disagree at exactly the widths that motivated the
 		// container query, which is every width where the rail is expanded.
-		expect(page).toContain('region.offsetWidth >= SPLIT_MIN_WIDTH');
-		expect(page).not.toContain('innerWidth');
-		expect(page).not.toContain('matchMedia');
+		expect(state).toContain('region.offsetWidth >= SKILLS_SPLIT_MIN_WIDTH');
+		expect(page + state).not.toContain('innerWidth');
+		expect(page + state).not.toContain('matchMedia');
 
 		// The constant and the class name are the same number stated twice; they have to agree.
-		expect(page).toMatch(/const SPLIT_MIN_WIDTH = 640;/);
+		expect(state).toMatch(/const SKILLS_SPLIT_MIN_WIDTH = 640;/);
 		expect(page).toContain('@min-[40rem]:');
 	});
 

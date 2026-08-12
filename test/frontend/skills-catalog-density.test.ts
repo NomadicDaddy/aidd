@@ -12,6 +12,7 @@ const SKILLS_DIR = join(FRONTEND_ROOT, 'src', 'pages', 'skills');
  */
 interface Rendered {
 	filtered: string;
+	focusRestored: string;
 	selected: string;
 	unselected: string;
 }
@@ -47,6 +48,7 @@ const rows = [
 function render(props) {
 	return renderToStaticMarkup(
 		createElement(SkillCatalog, {
+			activeId: null,
 			loading: false,
 			onSelect: () => {},
 			total: 2,
@@ -57,9 +59,10 @@ function render(props) {
 }
 
 console.log(JSON.stringify({
-	selected: render({ selectedId: 'demo-skill', skills: rows }),
-	unselected: render({ selectedId: 'imported-skill', skills: rows }),
+	selected: render({ activeId: 'demo-skill', selectedId: 'demo-skill', skills: rows }),
+	unselected: render({ activeId: 'imported-skill', selectedId: 'imported-skill', skills: rows }),
 	filtered: render({ selectedId: null, skills: [rows[0]] }),
+	focusRestored: render({ activeId: 'imported-skill', selectedId: null, skills: rows }),
 }));
 `;
 	const result = Bun.spawnSync([process.execPath, '-e', script], {
@@ -104,6 +107,15 @@ describe('the skills catalog scans by name', () => {
 		expect(rendered.selected).toContain('tabindex="-1"');
 		// With nothing selected the stop falls on the first row rather than disappearing.
 		expect(rendered.filtered.match(/tabindex="0"/g)?.length).toBe(1);
+	});
+
+	test('a focus-restored row remains active without claiming selection', () => {
+		expect(rendered.focusRestored).not.toContain('aria-selected="true"');
+		expect(rendered.focusRestored.match(/aria-selected="false"/g)?.length).toBe(2);
+		expect(rendered.focusRestored.match(/tabindex="0"/g)?.length).toBe(1);
+		expect(rendered.focusRestored).toMatch(
+			/aria-label="Imported Skill" aria-selected="false"[^>]*id="skill-option-imported-skill"[^>]*tabindex="0"/,
+		);
 	});
 
 	test('selection paints from the accent tokens the rest of the app selects with', async () => {

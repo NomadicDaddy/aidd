@@ -15,8 +15,8 @@ export function listBoxOptionId(prefix: string, id: string): string {
 }
 
 /**
- * Canonical single-select list primitive: `role="listbox"` with `role="option"` rows, one
- * `tabIndex 0` on the selection, and ArrowUp/ArrowDown/Home/End moving focus and selection together.
+ * Canonical single-select list primitive: `role="listbox"` with `role="option"` rows, one active
+ * `tabIndex 0`, and ArrowUp/ArrowDown/Home/End moving focus and selection together.
  *
  * The alternative — a plain div of `<button aria-pressed>` siblings — is what the skills rail was:
  * 76 focusables occupying positions 30 through 105 of that page's 110, so reaching the launch
@@ -28,6 +28,7 @@ export function listBoxOptionId(prefix: string, id: string): string {
  * A list whose selection triggers a fetch wants the aria-activedescendant model instead.
  */
 export function ListBox({
+	activeId,
 	ariaLabel,
 	className,
 	idPrefix,
@@ -36,6 +37,7 @@ export function ListBox({
 	options,
 	selectedId,
 }: {
+	activeId: null | string;
 	ariaLabel: string;
 	className?: string;
 	idPrefix: string;
@@ -45,10 +47,12 @@ export function ListBox({
 	options: ListBoxOption[];
 	selectedId: null | string;
 }) {
+	const activeIndex = options.findIndex((option) => option.id === activeId);
 	const selectedIndex = options.findIndex((option) => option.id === selectedId);
-	// With nothing selected the first row holds the tab stop, so the list is always reachable in
-	// exactly one Tab and never swallows the stop entirely.
-	const tabStopIndex = selectedIndex === -1 ? 0 : selectedIndex;
+	// Selection and the roving tab stop usually travel together. Keeping them separate lets a
+	// master-detail view restore focus to its prior row without claiming hidden detail is selected.
+	let tabStopIndex = activeIndex;
+	if (tabStopIndex === -1) tabStopIndex = selectedIndex === -1 ? 0 : selectedIndex;
 
 	function focusOption(index: number): void {
 		const option = options[index];
@@ -63,6 +67,12 @@ export function ListBox({
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLDivElement>, index: number): void {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			const option = options[index];
+			if (option) onSelect(option.id);
+			return;
+		}
 		let next: number | undefined;
 		if (event.key === 'ArrowDown') next = Math.min(index + 1, options.length - 1);
 		else if (event.key === 'ArrowUp') next = Math.max(index - 1, 0);

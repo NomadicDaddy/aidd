@@ -29,6 +29,7 @@ import { SkillCatalog } from './SkillCatalog.tsx';
 import { SkillDefinitionCard } from './SkillDefinitionCard.tsx';
 import { SkillDetailsCard } from './SkillDetailsCard.tsx';
 import { SkillImportDialog } from './SkillImportDialog.tsx';
+import { useSkillsMasterDetail } from './useSkillsMasterDetail.ts';
 
 /**
  * The content width at which the catalog and the detail stop being alternatives and become columns.
@@ -38,8 +39,6 @@ import { SkillImportDialog } from './SkillImportDialog.tsx';
  * compared against the region's measured width, never the viewport's — at 768px of viewport the
  * content column is 656px with the sidebar rail collapsed and 480px with it expanded.
  */
-const SPLIT_MIN_WIDTH = 640;
-
 export function SkillsPage() {
 	useDocumentTitle('Skills');
 	const { runSkill, skills } = useSkills();
@@ -50,13 +49,20 @@ export function SkillsPage() {
 	const [category, setCategory] = useState<SkillCategoryFilter>('all');
 	const [deleteTarget, setDeleteTarget] = useState<null | string>(null);
 	const [importOpen, setImportOpen] = useState(false);
-	const [selectedId, setSelectedId] = useState<null | string>(null);
-	const [showDetail, setShowDetail] = useState(false);
 	const [args, setArgs] = useState('');
 	const [executionIntent, setExecutionIntent] = useState<SkillExecutionIntent>('review-only');
 	const [launchTarget, setLaunchTarget] = useState<LaunchTargetValue>({});
 	const [projectDir, setProjectDir] = useState('');
 	const splitRef = useViewportFill<HTMLDivElement>();
+	const {
+		backButtonRef,
+		catalogHasSelection,
+		clearSelection,
+		selectedId,
+		selectSkill,
+		showCatalog,
+		showDetail,
+	} = useSkillsMasterDetail(splitRef);
 
 	const skillList = skills.data ?? [];
 	const usageByResourceId = new Map<string, ResourceUsageRow>(
@@ -72,23 +78,11 @@ export function SkillsPage() {
 			.includes(normalizedQuery);
 	});
 	const selected = filtered.find((skill) => skill.id === selectedId) ?? filtered[0] ?? null;
+	const catalogSelectedId = catalogHasSelection ? (selected?.id ?? null) : null;
 
 	function clearFilters(): void {
 		setQuery('');
 		setCategory('all');
-	}
-
-	function selectSkill(id: string): void {
-		setSelectedId(id);
-		// The one place the container threshold is repeated outside a class name, and it is read
-		// off the region itself rather than off the viewport, so it stays true whichever width the
-		// sidebar rail has left. Above the threshold both panes are on screen and a selection
-		// speaks for itself; below it the selection has to bring its pane with it, and the region
-		// has to come back into view — the tap that opened it may have been five screens down.
-		const region = splitRef.current;
-		if (!region || region.offsetWidth >= SPLIT_MIN_WIDTH) return;
-		setShowDetail(true);
-		region.scrollIntoView({ block: 'start' });
 	}
 
 	function launch(skill: SkillDefinition): void {
@@ -207,10 +201,11 @@ export function SkillsPage() {
 					className="grid min-w-0 gap-4 @min-[40rem]:h-[var(--fill-height,calc(100vh-12rem))] @min-[40rem]:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] @min-[40rem]:grid-rows-[minmax(0,1fr)] @min-[40rem]:overflow-hidden"
 					ref={splitRef}>
 					<SkillCatalog
+						activeId={selected?.id ?? null}
 						className={showDetail ? 'hidden @min-[40rem]:flex' : undefined}
 						loading={skills.isLoading}
 						onSelect={selectSkill}
-						selectedId={selected?.id ?? null}
+						selectedId={catalogSelectedId}
 						skills={filtered}
 						total={skillList.length}
 						usageByResourceId={usageByResourceId}
@@ -233,7 +228,8 @@ export function SkillsPage() {
 							    is 2000px down the document is not a way back. */}
 							<Button
 								className="@min-[40rem]:hidden"
-								onClick={() => setShowDetail(false)}
+								onClick={() => showCatalog(selected.id)}
+								ref={backButtonRef}
 								size="toolbar"
 								variant="secondary">
 								<ArrowLeft aria-hidden="true" className="h-4 w-4" />
@@ -287,7 +283,7 @@ export function SkillsPage() {
 						onSuccess: () => {
 							toast.success(`${deleteTarget} deleted`);
 							setDeleteTarget(null);
-							setSelectedId(null);
+							clearSelection();
 						},
 					});
 				}}

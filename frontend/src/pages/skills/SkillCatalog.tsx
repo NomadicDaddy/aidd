@@ -23,6 +23,7 @@ function skillSummary(skill: SkillDefinition): string {
  * from the region's own measurement, so the last row is above the fold at rest by construction.
  */
 export function SkillCatalog({
+	activeId,
 	className,
 	loading,
 	onSelect,
@@ -31,6 +32,7 @@ export function SkillCatalog({
 	total,
 	usageByResourceId,
 }: {
+	activeId: null | string;
 	className?: string | undefined;
 	loading: boolean;
 	onSelect: (id: string) => void;
@@ -66,6 +68,7 @@ export function SkillCatalog({
 				) : null}
 				{skills.length > 0 ? (
 					<ListBox
+						activeId={activeId}
 						ariaLabel="Skills"
 						className="space-y-1"
 						idPrefix="skill"

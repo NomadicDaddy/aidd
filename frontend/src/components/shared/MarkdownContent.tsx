@@ -10,6 +10,7 @@ import {
 	plainInlineText,
 } from '../../lib/markdownBlocks.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
+import { MarkdownDefinitionList } from './MarkdownDefinitionList.tsx';
 
 // A small, dependency-free markdown renderer for diary entries, docs and skill definitions. Block
 // parsing lives in lib/markdownBlocks.ts; this file owns the inline pass and JSX. The renderer
@@ -226,6 +227,17 @@ export function MarkdownContent({
 			)}>
 			{blocks.map((block, index) => {
 				const key = `block-${index}`;
+				if (block.type === 'definitions') {
+					return (
+						<MarkdownDefinitionList
+							entries={block.entries.map(({ definition, term }) => ({
+								definition: renderInline(definition),
+								term: renderInline(term),
+							}))}
+							key={key}
+						/>
+					);
+				}
 				if (block.type === 'heading') {
 					const depth = block.level - shallowest;
 					return renderHeading(

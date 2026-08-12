@@ -5,16 +5,23 @@
 
 export type MarkdownBlock =
 	| { code: string; type: 'code' }
+	| { entries: MarkdownDefinition[]; type: 'definitions' }
 	| { items: string[]; ordered: boolean; type: 'list' }
 	| { level: 1 | 2 | 3; text: string; type: 'heading' }
 	| { lines: string[]; type: 'quote' }
 	| { text: string; type: 'paragraph' }
 	| { type: 'hr' };
 
+export interface MarkdownDefinition {
+	definition: string;
+	term: string;
+}
+
 const HEADING = /^(#{1,3})\s+(.*)$/;
 const UNORDERED = /^[-*]\s+(.*)$/;
 const ORDERED = /^\d+\.\s+(.*)$/;
 const QUOTE = /^>\s?(.*)$/;
+const DEFINITION = /^:\s+(.+)$/;
 const HR = /^(?:---+|\*\*\*+|___+)$/;
 // A skill definition is mostly fenced examples. Without this the fence lines became paragraphs
 // reading "```bash" and their contents were reflowed as prose, which is what a command example
@@ -144,6 +151,30 @@ export function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
 				cursor++;
 			}
 			blocks.push({ lines: quoteLines, type: 'quote' });
+			index = cursor - 1;
+			continue;
+		}
+		const firstDefinition = DEFINITION.exec((lines[index + 1] ?? '').trim());
+		if (firstDefinition) {
+			flushParagraph();
+			const entries: MarkdownDefinition[] = [];
+			let cursor = index;
+			while (cursor + 1 < lines.length) {
+				const term = (lines[cursor] ?? '').trim();
+				const marker = DEFINITION.exec((lines[cursor + 1] ?? '').trim());
+				if (term.length === 0 || !marker) break;
+				const definition = [marker[1] ?? ''];
+				cursor += 2;
+				while (cursor < lines.length) {
+					const continuation = lines[cursor] ?? '';
+					const nextMarker = DEFINITION.exec((lines[cursor + 1] ?? '').trim());
+					if (continuation.trim().length === 0 || nextMarker) break;
+					definition.push(continuation.trim());
+					cursor++;
+				}
+				entries.push({ definition: definition.join(' '), term });
+			}
+			blocks.push({ entries, type: 'definitions' });
 			index = cursor - 1;
 			continue;
 		}

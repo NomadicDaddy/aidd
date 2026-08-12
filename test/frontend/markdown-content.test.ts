@@ -67,6 +67,25 @@ describe('parseMarkdownBlocks', () => {
 		]);
 	});
 
+	test('parses explicitly authored term and definition rows', () => {
+		const blocks = parseMarkdownBlocks(
+			'Feature\n: a unit of tracked work with a status.\nThe status is explicit.\nRun\n: one orchestrator invocation.',
+		);
+
+		expect(blocks).toEqual([
+			{
+				entries: [
+					{
+						definition: 'a unit of tracked work with a status. The status is explicit.',
+						term: 'Feature',
+					},
+					{ definition: 'one orchestrator invocation.', term: 'Run' },
+				],
+				type: 'definitions',
+			},
+		]);
+	});
+
 	test('collects blockquote lines', () => {
 		const blocks = parseMarkdownBlocks('> quoted line\n> second line');
 		expect(blocks).toEqual([{ lines: ['quoted line', 'second line'], type: 'quote' }]);
@@ -268,45 +287,114 @@ describe('parseMarkdownBlocks', () => {
 	});
 });
 
-describe('a list renders as a list', () => {
-	const glossary = [
+describe('lists and explicitly authored definitions keep their own structure', () => {
+	const bulletedGlossary = [
 		'- **Feature**: the unit of work a coding run claims.',
 		'- **Run**: one backend invocation against a claimed feature.',
 		'- **Recipe**: an ordered set of steps a director executes.',
 	].join('\n');
+	const definitions = [
+		'Feature',
+		': the unit of work a coding run claims.',
+		'Run',
+		': one orchestrator invocation against a claimed feature.',
+	].join('\n');
 
-	test('a glossary keeps its bullets and its bold terms', () => {
-		const html = renderWithProps({ baseLevel: 2, markdown: glossary });
+	test('ordinary bold-first bullets stay bullets', () => {
+		const html = renderWithProps({ baseLevel: 2, markdown: bulletedGlossary });
 
 		expect(html).toContain('<ul');
 		expect(html).toContain('<strong>Feature</strong>');
 		expect(html).toContain('the unit of work a coding run claims.');
+		expect(html).not.toContain('<dl');
 	});
 
 	test('one added bullet does not relay the items around it', () => {
 		// The previous treatment swapped the whole block to a two-column `<dl>` only when every
 		// item matched `**term**: definition`, so adding one plain bullet to a glossary silently
 		// changed the layout of every other item in a section the author had not touched.
-		const three = renderWithProps({ baseLevel: 2, markdown: glossary });
+		const three = renderWithProps({ baseLevel: 2, markdown: bulletedGlossary });
 		const four = renderWithProps({
 			baseLevel: 2,
-			markdown: `${glossary}\n- a plain trailing bullet`,
+			markdown: `${bulletedGlossary}\n- a plain trailing bullet`,
 		});
 
 		expect(four).toContain(three.slice(three.indexOf('<li>'), three.lastIndexOf('</li>')));
 	});
 
-	test('no surface can render the same markdown as a different shape', () => {
-		// Identical output across every embedding surface is the point. `baseLevel` shifts where a
-		// document enters the heading scale — its levels and its type steps — and nothing else:
-		// a glossary carries no heading, so all three renders have to come out character for
-		// character the same.
+	test('explicit definitions render as semantic rows on every embedding surface', () => {
+		// The `:` marker belongs to the authored structure. Unlike the retired bold-plus-colon
+		// heuristic, it does not ask the surrounding items what shape this block should take.
 		const bodies = [2, 3, 4].map((level) =>
-			renderWithProps({ baseLevel: level, markdown: glossary }),
+			renderWithProps({ baseLevel: level, markdown: definitions }),
 		);
 
 		expect(new Set(bodies).size).toBe(1);
-		expect(bodies[0]).not.toContain('<dl');
+		expect(bodies[0]).toContain('<dl');
+		expect(bodies[0]).toContain('<dt class="font-semibold text-foreground">Feature</dt>');
+		expect(bodies[0]).toContain('<dd class="mt-1 text-muted-foreground">');
+		expect(bodies[0]).not.toContain('<ul');
+	});
+
+	test('the Glossary renders every heading group and every term semantically', () => {
+		const markdown = frontend('content/docs/glossary.md');
+		const blocks = parseMarkdownBlocks(markdown);
+		const groups = [
+			'Runtime and orchestration',
+			'Work tracking',
+			'Project assessment',
+			'Director',
+			'Control panel',
+		];
+		const terms = [
+			'CLI',
+			'Provider',
+			'Model',
+			'Run',
+			'Iteration',
+			'Mode',
+			'Triumvirate',
+			'Feature',
+			'Audit finding',
+			'Remediation',
+			'Milestone',
+			'Dependency',
+			'Phase',
+			'Maturity stage',
+			'Project profile',
+			'Director',
+			'Cycle',
+			'Suggestion',
+			'Fleet',
+			'Project',
+			'Recipe',
+			'Pipeline session',
+			'Skill',
+			'Audit',
+			'Direct AI',
+		];
+		const definitionBlocks = blocks.filter((block) => block.type === 'definitions');
+
+		expect(
+			blocks.flatMap((block) =>
+				block.type === 'heading' && block.level === 2 ? [block.text] : [],
+			),
+		).toEqual(groups);
+		expect(definitionBlocks).toHaveLength(5);
+		expect(
+			definitionBlocks.flatMap((block) => block.entries.map((entry) => entry.term)),
+		).toEqual(terms);
+
+		const html = renderWithProps({ baseLevel: 2, markdown, skipLeadingTitle: true });
+		expect(html.match(/<dl/g)).toHaveLength(5);
+		expect(html.match(/<dt/g)).toHaveLength(25);
+		expect(html.match(/<dd/g)).toHaveLength(25);
+		for (const group of groups) expect(html).toContain(`aria-label="${group}"`);
+		for (const term of terms) {
+			expect(html).toContain(`<dt class="font-semibold text-foreground">${term}</dt>`);
+		}
+		expect(html).toContain('<code');
+		expect(html).toContain('claude-code</code>');
 	});
 });
 

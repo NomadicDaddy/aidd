@@ -69,7 +69,7 @@ const pairedTables: { stack: string; table: string; tier: string }[] = [
 	{
 		stack: 'pages/projects/detail/FeaturesTab.tsx',
 		table: 'pages/projects/detail/FeaturesDesktopTable.tsx',
-		tier: 'xl',
+		tier: '@min-[80rem]',
 	},
 	{
 		stack: 'pages/projects/detail/MilestonesTable.tsx',

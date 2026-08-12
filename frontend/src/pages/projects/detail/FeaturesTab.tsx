@@ -176,7 +176,7 @@ export function FeaturesTab({
 				</Card>
 			) : null}
 			{filteredTotal > 0 ? (
-				<Card className="overflow-hidden p-0">
+				<Card className="@container overflow-hidden p-0">
 					<FeatureLaunchTargetRow
 						onChange={setLaunchTarget}
 						projectDir={projectPath}
@@ -200,7 +200,7 @@ export function FeaturesTab({
 						rows={slice}
 						runActive={hasActiveRun}
 					/>
-					<div className="flex flex-col gap-3 p-4 xl:hidden">
+					<div className="flex flex-col gap-3 p-4 @min-[80rem]:hidden">
 						{slice.map((feature) => {
 							const id = feature.id || stringValue(feature, 'id');
 							const directory = featureDirectory(feature);

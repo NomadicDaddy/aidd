@@ -1,3 +1,6 @@
+import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
+import { useState } from 'react';
+
 import type {
 	ProjectUsageExecutionTarget,
 	ProjectUsageMode,
@@ -8,6 +11,7 @@ import type {
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
+import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { formatCompactNumber } from '../../../lib/formatters.ts';
 import { tableMeasureClass } from '../../../lib/tableStyles.ts';
@@ -16,7 +20,6 @@ import { formatReportedCost } from '../projects-list-shared.ts';
 function costLabel(usage: ProjectUsageTotals): string {
 	return formatReportedCost(usage);
 }
-
 function MetricSummary({ detail, label, value }: { detail: string; label: string; value: string }) {
 	return (
 		<div className="min-w-0 bg-card px-4 py-3">
@@ -222,8 +225,12 @@ function ModeBreakdown({ rows }: { rows: ProjectUsageMode[] }) {
 }
 
 export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
+	const [breakdownOpen, setBreakdownOpen] = useState(false);
 	const totals = usage.totals;
 	const unknownCostRuns = totals.runCount - totals.runsWithReportedCost;
+	const runsWithoutTokenUse = totals.runCount - totals.runsWithTokenUsage;
+	const cachedInputShare =
+		totals.inputTokens > 0 ? Math.round((totals.cachedTokens / totals.inputTokens) * 100) : 0;
 	return (
 		<section aria-labelledby="project-usage-heading" className="@container">
 			<Card className="overflow-hidden p-0">
@@ -241,28 +248,45 @@ export function ProjectUsagePanel({ usage }: { usage: ProjectUsageSummary }) {
 					<>
 						<div className="grid gap-px border-b border-border bg-muted @min-[32rem]:grid-cols-2 @min-[61rem]:grid-cols-4">
 							<MetricSummary
-								detail={`${totals.runsWithReportedCost}/${totals.runCount} runs reported dollars`}
+								detail={`${totals.runsWithReportedCost}/${totals.runCount} runs reported dollars · ${unknownCostRuns} unknown`}
 								label="Reported cost"
 								value={costLabel(totals)}
 							/>
 							<MetricSummary
-								detail={`${formatCompactNumber(totals.inputTokens)} input · ${formatCompactNumber(totals.outputTokens)} output`}
+								detail={`${formatCompactNumber(totals.inputTokens)} input · ${formatCompactNumber(totals.outputTokens)} output · ${formatCompactNumber(totals.reasoningTokens)} reasoning`}
 								label="Total tokens"
 								value={formatCompactNumber(totals.totalTokens)}
 							/>
 							<MetricSummary
-								detail={`${formatCompactNumber(totals.reasoningTokens)} reasoning`}
+								detail={`${cachedInputShare}% of input tokens`}
 								label="Cached tokens"
 								value={formatCompactNumber(totals.cachedTokens)}
 							/>
 							<MetricSummary
-								detail={`${unknownCostRuns} runs have unknown cost`}
+								detail={`${runsWithoutTokenUse} without token usage`}
 								label="Runs with token use"
 								value={`${totals.runsWithTokenUsage}/${totals.runCount}`}
 							/>
 						</div>
-						<ExecutionBreakdown rows={usage.byExecutionTarget} />
-						<ModeBreakdown rows={usage.byMode} />
+						<div className="border-b border-border p-3 sm:hidden">
+							<Button
+								aria-expanded={breakdownOpen}
+								className="w-full justify-between"
+								onClick={() => setBreakdownOpen((current) => !current)}
+								variant="secondary">
+								<span>
+									Usage breakdown · {usage.byExecutionTarget.length} targets ·{' '}
+									{usage.byMode.length} modes
+								</span>
+								<ChevronDown
+									className={`h-4 w-4 transition-transform ${breakdownOpen ? 'rotate-180' : ''}`}
+								/>
+							</Button>
+						</div>
+						<div className={breakdownOpen ? 'block' : 'hidden sm:block'}>
+							<ExecutionBreakdown rows={usage.byExecutionTarget} />
+							<ModeBreakdown rows={usage.byMode} />
+						</div>
 						<div className="border-t border-border bg-muted px-4 py-2 text-xs text-muted-foreground">
 							Reported cost excludes zero-valued remote runs because older providers
 							used zero for unknown cost. Cached tokens are part of input; reasoning

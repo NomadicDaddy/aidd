@@ -56,7 +56,7 @@ export function InterviewQuestionRow({
 							? `Resume draft for question: ${question.prompt}`
 							: `Answer question: ${question.prompt}`
 					}
-					className="flex w-full items-start gap-2 rounded-md p-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:opacity-60 max-sm:min-h-11"
+					className="flex w-full flex-col items-start gap-1.5 rounded-md p-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:opacity-60 max-sm:min-h-11 sm:flex-row sm:gap-2"
 					disabled={pending}
 					onClick={onExpand}
 					type="button">
@@ -68,10 +68,10 @@ export function InterviewQuestionRow({
 					    held 44px, 72px and 92px rows. 6rem clears `CRITICAL`, the longest of the
 					    four; the occasional `Draft` chip wraps under it rather than pushing forty
 					    prompts sideways for the one row that has a draft. */}
-					<span className="flex w-24 shrink-0 flex-wrap items-center gap-1.5">
+					<span className="flex flex-wrap items-center gap-1.5 sm:w-24 sm:shrink-0">
 						{chips}
 					</span>
-					<span className="min-w-0 flex-1 text-sm text-foreground">
+					<span className="min-w-0 flex-1 text-sm text-foreground max-sm:line-clamp-3">
 						{question.prompt}
 					</span>
 				</button>

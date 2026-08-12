@@ -7,9 +7,17 @@ import { GitStatusBadge } from '../GitStatusBadge.tsx';
 import { bucketLabels } from '../projects-list-shared.ts';
 import { artifactTone } from './shared.ts';
 
-function StatusCell({ children, label }: { children: React.ReactNode; label: string }) {
+function StatusCell({
+	children,
+	className,
+	label,
+}: {
+	children: React.ReactNode;
+	className?: string;
+	label: string;
+}) {
 	return (
-		<div className="min-w-0 space-y-1">
+		<div className={`min-w-0 space-y-1 ${className ?? ''}`}>
 			<span className={`block ${fieldLabelClass}`}>{label}</span>
 			{children}
 		</div>
@@ -41,7 +49,7 @@ export function ProjectStatusStrip({
 				    across a 1928px container, and every one holds a 2xs label over a short value
 				    like "coding" or "v2.0", so ~250px of each track was empty and six related facts
 				    read as six unrelated islands. The cap leaves 1024-1440 exactly as measured. */}
-				<div className="grid max-w-[76rem] grid-cols-2 gap-x-4 gap-y-3 @min-[32rem]:grid-cols-3 @min-[61rem]:grid-cols-6">
+				<div className="grid max-w-[76rem] grid-cols-2 gap-x-4 gap-y-3 @min-[32rem]:grid-cols-3 @min-[68rem]:grid-cols-6">
 					<StatusCell label="Artifact health">
 						<Badge
 							title={`Artifact health: ${project.artifactHealth}`}
@@ -72,7 +80,7 @@ export function ProjectStatusStrip({
 							{bucketLabels[metadata.profile.bucket]}
 						</Badge>
 					</StatusCell>
-					<StatusCell label="Working tree">
+					<StatusCell className="col-span-2 @min-[32rem]:col-span-1" label="Working tree">
 						<GitStatusBadge className="max-w-full" status={gitStatus} />
 					</StatusCell>
 					<StatusCell label="Profile source">

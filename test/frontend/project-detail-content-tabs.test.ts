@@ -41,7 +41,7 @@ describe('interview tab', () => {
 		// the badge's word — four x-origins in the first eight rows — and a prompt with no room left
 		// dropped below the badge, so one list held 44px, 72px and 92px rows.
 		const row = await detail('InterviewQuestionRow.tsx');
-		expect(row).toContain('flex w-24 shrink-0 flex-wrap items-center gap-1.5');
+		expect(row).toContain('sm:w-24 sm:shrink-0');
 		expect(row).toContain('min-w-0 flex-1 text-sm text-foreground');
 		expect(row).not.toContain('flex w-full flex-wrap items-center gap-2 rounded-md');
 	});
@@ -93,8 +93,8 @@ describe('audits tab', () => {
 	});
 
 	test('the narrow row shows the same path form the wide one does', async () => {
-		const list = await detail('AuditsMobileList.tsx');
-		expect(list).toContain('auditPathTail(entry.path)');
+		const list = await detail('AuditCompactRow.tsx');
+		expect(list).toContain('auditPathTail(row.path)');
 		expect(list).toContain('block truncate font-mono text-xs text-muted-foreground');
 	});
 });

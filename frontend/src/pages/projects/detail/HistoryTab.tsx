@@ -1,3 +1,4 @@
+import { default as CircleHelp } from 'lucide-react/dist/esm/icons/circle-help';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
@@ -13,8 +14,10 @@ import { CommitDiffDialog } from '../../../components/shared/CommitDiffDialog.ts
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
+import { IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
+import { Tooltip } from '../../../components/ui/tooltip.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import {
@@ -122,11 +125,18 @@ export function HistoryTab({
 	return (
 		<Card className="overflow-hidden p-0">
 			<CardHeader
+				action={
+					<Tooltip content="Completion times use the feature's last metadata update when no completion timestamp was recorded.">
+						<IconButton ariaLabel="About history completion times" variant="ghost">
+							<CircleHelp className="h-4 w-4" />
+						</IconButton>
+					</Tooltip>
+				}
 				className="mb-0 border-b border-border px-4 py-3"
-				description="Timeline of feature, remediation, and audit-finding lifecycle events merged with recorded runs, newest first. Completion times fall back to the feature's last metadata update when no completion timestamp was recorded."
+				description="Feature, remediation, audit-finding, and run events, newest first."
 				title="Project history"
 			/>
-			<div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-3">
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-4 py-2 sm:py-3">
 				<span className={fieldLabelClass}>Event kind</span>
 				<SegmentedControl<HistoryFilter>
 					ariaLabel="Filter history events by kind"

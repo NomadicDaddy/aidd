@@ -136,6 +136,16 @@ export function WorkingTreeCard({
 			</Card>
 		);
 	}
+	if (files.length === 0) {
+		return (
+			<Card className="p-0">
+				{header}
+				<EmptyState className="m-4">
+					The working tree is clean — nothing to stage, discard, or commit.
+				</EmptyState>
+			</Card>
+		);
+	}
 
 	return (
 		<>
@@ -143,9 +153,7 @@ export function WorkingTreeCard({
 				{header}
 				<div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
 					<p className="text-xs text-muted-foreground">
-						{files.length === 0
-							? 'No changed files.'
-							: `${plural(files.length)} changed · ${stagedCount} staged · ${selectedPaths.length} selected`}
+						{`${plural(files.length)} changed · ${stagedCount} staged · ${selectedPaths.length} selected`}
 						{query.data.truncated ? ' · listing truncated at the server limit' : ''}
 					</p>
 					<WorkingTreeToolbar

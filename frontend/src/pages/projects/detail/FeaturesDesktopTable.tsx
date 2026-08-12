@@ -51,7 +51,7 @@ export function FeaturesDesktopTable({
 	runActive: boolean;
 }) {
 	return (
-		<OverflowScroller ariaLabel="Project features" className="hidden xl:block">
+		<OverflowScroller ariaLabel="Project features" className="hidden @min-[80rem]:block">
 			<table aria-label="Project features" className="w-full table-fixed text-left text-sm">
 				{/* Actions carries up to five controls and had the same 14% as Milestone, which carries
 				    one select. This cell is what sets the row height, so at 2321 — the width the defect
@@ -166,8 +166,10 @@ export function FeaturesDesktopTable({
 								<td className="px-4 py-3">
 									<FeaturePriorityBadge priority={feature.priority} />
 								</td>
-								<td className="px-4 py-3 text-xs break-words text-muted-foreground">
-									{source}
+								<td
+									className="px-4 py-3 text-xs text-muted-foreground"
+									title={source}>
+									{source.replaceAll('_', ' ')}
 								</td>
 								<td className="px-4 py-3">
 									<FeatureActions

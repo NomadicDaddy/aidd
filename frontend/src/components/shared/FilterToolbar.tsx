@@ -23,16 +23,11 @@ interface MobileFilters {
 	/** Search remains exposed, so only non-default secondary controls contribute to this count. */
 	activeCount: number;
 	children: ReactNode;
+	/** Collapse against this toolbar's content width instead of the viewport's `sm` step. */
+	contentAware?: boolean;
 }
 
-/**
- * One filter row: a card, a grid of labelled controls, and a readout of what the filters left.
- *
- * The readout is rendered whether or not anything is filtered. It used to appear only once a filter
- * was set, which put a `role="status"` region into the DOM at the same moment its text changed —
- * and a live region announces changes to a region that was already there. Mounted from the start, a
- * filter change is spoken; mounted by the change, it is usually silent.
- */
+/** One filter row with labelled controls and an always-mounted result readout. */
 export function FilterToolbar({
 	children,
 	className,
@@ -71,6 +66,7 @@ export function FilterToolbar({
 	total: number;
 }) {
 	const [filtersOpen, setFiltersOpen] = useState(false);
+	const contentAware = mobileFilters?.contentAware === true;
 	const mobileFiltersPanelId = useId();
 	const mobileFiltersTitleId = useId();
 	// `flex flex-col gap-3`, not `space-y-3`. Tailwind v4 lays `space-y-*` down as a margin on the
@@ -84,7 +80,10 @@ export function FilterToolbar({
 			<Card
 				className={cn(
 					'flex flex-col gap-3',
-					mobileFilters && 'max-sm:gap-2 max-sm:p-3',
+					mobileFilters &&
+						(contentAware
+							? '@container @max-[48rem]:gap-2 @max-[48rem]:p-3'
+							: 'max-sm:gap-2 max-sm:p-3'),
 					className,
 				)}>
 				{header}
@@ -99,13 +98,19 @@ export function FilterToolbar({
 					className={cn(
 						'grid max-w-[80rem] gap-3',
 						mobileFilters &&
-							'max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-end max-sm:gap-2',
+							(contentAware
+								? '@max-[48rem]:grid-cols-[minmax(0,1fr)_auto] @max-[48rem]:items-end @max-[48rem]:gap-2'
+								: 'max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-end max-sm:gap-2'),
 						columns,
 					)}>
 					{children}
 					{mobileFilters ? (
 						<>
-							<div className="flex items-center gap-1 sm:hidden">
+							<div
+								className={cn(
+									'items-center gap-1',
+									contentAware ? 'hidden @max-[48rem]:flex' : 'flex sm:hidden',
+								)}>
 								<Button
 									aria-controls={mobileFiltersPanelId}
 									aria-expanded={filtersOpen}
@@ -135,7 +140,14 @@ export function FilterToolbar({
 									<RotateCcw className="h-3.5 w-3.5" />
 								</IconButton>
 							</div>
-							<div className="hidden sm:contents">{mobileFilters.children}</div>
+							<div
+								className={
+									contentAware
+										? 'hidden @min-[48rem]:contents'
+										: 'hidden sm:contents'
+								}>
+								{mobileFilters.children}
+							</div>
 						</>
 					) : null}
 				</div>
@@ -144,7 +156,7 @@ export function FilterToolbar({
 				<div
 					className={cn(
 						'flex max-w-[80rem] items-center justify-between gap-3 text-xs text-muted-foreground',
-						mobileFilters && 'max-sm:hidden',
+						mobileFilters && (contentAware ? '@max-[48rem]:hidden' : 'max-sm:hidden'),
 					)}>
 					<span role="status">
 						Showing {filtered} of {total} {noun}

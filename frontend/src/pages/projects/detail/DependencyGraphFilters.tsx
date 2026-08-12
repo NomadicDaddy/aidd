@@ -114,6 +114,7 @@ export function DependencyGraphFilters({
 						/>
 					</>
 				),
+				contentAware: true,
 			}}
 			noun="features"
 			onReset={onResetFilters}

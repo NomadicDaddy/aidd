@@ -4,6 +4,7 @@ import { default as Eye } from 'lucide-react/dist/esm/icons/eye';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 
+import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
@@ -54,7 +55,9 @@ export function DependencyGraphCanvas({
 			    card, and this card's own launch strip — measured after the intro lost its Card.
 			    Below `lg` only the floor applies: there the page is meant to scroll as one column
 			    and a nested scroller swallows the wheel on the way past. */}
-			<div className="min-h-[32rem] overflow-auto lg:h-[calc(100vh-34rem)]">
+			<OverflowScroller
+				ariaLabel="Dependency graph canvas"
+				scrollerClassName="min-h-[32rem] overflow-y-auto lg:h-[calc(100vh-34rem)]">
 				<div
 					data-dependency-graph-shell="true"
 					style={{
@@ -89,7 +92,7 @@ export function DependencyGraphCanvas({
 						))}
 					</div>
 				</div>
-			</div>
+			</OverflowScroller>
 		</Card>
 	);
 }

@@ -1,5 +1,6 @@
 import type { MaturityDetail, ProjectArtifactRecord } from '../../../api/types.ts';
 
+import { cn } from '../../../lib/cn.ts';
 import { microLabelClass } from '../../../lib/typography.ts';
 import { ArtifactRow } from './ArtifactRow.tsx';
 import { type ArtifactViewerTarget, buildArtifactInventory } from './artifactsUtils.ts';
@@ -64,11 +65,11 @@ export function ArtifactGroups({
 							{allRequired ? ' · all required' : ''}
 						</h4>
 						<div
-							className={`flex flex-col gap-2${
-								group.entries.length > LONG_GROUP
-									? 'max-h-[28rem] overflow-y-auto pr-1'
-									: ''
-							}`}>
+							className={cn(
+								'flex flex-col gap-2',
+								group.entries.length > LONG_GROUP &&
+									'max-h-[28rem] overflow-y-auto pr-1',
+							)}>
 							{group.entries.map(({ artifact, record }) =>
 								record ? (
 									<ArtifactRow

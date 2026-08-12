@@ -86,9 +86,20 @@ export function ProfileTab({
 			<div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
 				<div className="flex flex-col gap-4">
 					<TabIntro
-						description="The six facets that decide this project's assurance bucket, and with it which audits apply."
+						description="The profile facets that decide this project's assurance bucket, and with it which audits apply."
 						title="Assurance profile"
 					/>
+					<div className="lg:hidden">
+						<ComputedProfilePanel
+							dirty={dirty}
+							form={form}
+							isPreviewError={preview.isError}
+							isPreviewing={preview.isFetching}
+							mode="summary"
+							preview={preview.data}
+							source={profile.source}
+						/>
+					</div>
 					{/* items-start so each facet card sizes to its own option count: stretched to an
 					    equal row height with top-aligned content, 'External integrations' (4 options)
 					    left ~180px of void beside 'Data sensitivity' (5). */}
@@ -133,16 +144,29 @@ export function ProfileTab({
 							value={form.notes ?? ''}
 						/>
 					</Card>
+					<div className="lg:hidden">
+						<ComputedProfilePanel
+							dirty={dirty}
+							form={form}
+							isPreviewError={preview.isError}
+							isPreviewing={preview.isFetching}
+							mode="audits"
+							preview={preview.data}
+							source={profile.source}
+						/>
+					</div>
 				</div>
 
-				<ComputedProfilePanel
-					dirty={dirty}
-					form={form}
-					isPreviewError={preview.isError}
-					isPreviewing={preview.isFetching}
-					preview={preview.data}
-					source={profile.source}
-				/>
+				<div className="hidden lg:block">
+					<ComputedProfilePanel
+						dirty={dirty}
+						form={form}
+						isPreviewError={preview.isError}
+						isPreviewing={preview.isFetching}
+						preview={preview.data}
+						source={profile.source}
+					/>
+				</div>
 			</div>
 			<ConfirmDialog
 				confirmLabel="Discard changes"

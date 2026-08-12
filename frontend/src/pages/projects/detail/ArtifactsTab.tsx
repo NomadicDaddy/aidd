@@ -82,7 +82,7 @@ export function ArtifactsTab({
 		{ health: 'Inventory', label: 'Total', tone: 'neutral', value: summary.total },
 	];
 	return (
-		<Card>
+		<Card className="@container">
 			<CardHeader
 				action={<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>}
 				className="mb-3"
@@ -93,7 +93,7 @@ export function ArtifactsTab({
 			    centred text now matches every other metric row in the app. Six across only where the
 			    tiles have room — at 768 the six-column grid gave each tile ~65px and 'Required
 			    missing' wrapped, dropping its numeral a line below the other five. */}
-			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+			<div className="grid grid-cols-2 gap-3 @min-[32rem]:grid-cols-3 @min-[68rem]:grid-cols-6">
 				{tiles.map((tile) => (
 					<Metric
 						detail={tile.health}

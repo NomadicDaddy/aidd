@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import type { ProjectReportsResponse } from '../../../api/types.ts';
 
+import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
@@ -31,7 +32,7 @@ export function ReportsTab({
 
 	const items = reports?.bugs ?? [];
 	if (items.length === 0) {
-		return <Card>No reports filed for this project.</Card>;
+		return <EmptyState>No reports filed for this project.</EmptyState>;
 	}
 	const ordered = items.slice().reverse();
 	const visible = ordered.filter((report) => {
@@ -70,7 +71,7 @@ export function ReportsTab({
 				/>
 			</Card>
 			{visible.length === 0 ? (
-				<Card>No reports match the selected kind.</Card>
+				<EmptyState>No reports match the selected kind.</EmptyState>
 			) : (
 				<>
 					<ReportsDesktopTable reports={visible} />

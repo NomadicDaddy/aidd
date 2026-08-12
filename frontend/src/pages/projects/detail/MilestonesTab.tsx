@@ -137,15 +137,18 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 			<Card className="flex flex-col gap-3">
 				<CardHeader
 					action={
-						<div className="flex flex-wrap gap-2">
+						<div className="flex w-full gap-2 sm:w-auto sm:flex-wrap">
 							<Button
+								className="flex-1 sm:flex-none"
 								disabled={busy}
 								onClick={() => void start({ kind: 'reassign' })}
 								title="Repair placement: push features after their dependencies, pull completed features back to the milestone matching their shipped version, and backfill missing shippedVersion from the app's current version">
 								<Wand2 className="h-4 w-4" />
-								Auto-place features
+								<span className="sm:hidden">Auto-place</span>
+								<span className="max-sm:hidden">Auto-place features</span>
 							</Button>
 							<Button
+								className="flex-1 sm:flex-none"
 								disabled={busy}
 								onClick={() => setForm({ milestone: null })}
 								variant="primary">
@@ -154,6 +157,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 							</Button>
 						</div>
 					}
+					actionLayout="stacked"
 					className="mb-0"
 					description={
 						<>

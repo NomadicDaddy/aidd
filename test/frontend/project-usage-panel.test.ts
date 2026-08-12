@@ -71,8 +71,10 @@ describe('ProjectUsagePanel', () => {
 
 		expect(html).toContain('AI usage');
 		expect(html).toContain('$12.50');
-		expect(html).toContain('1/3 runs reported dollars');
-		expect(html).toContain('2 runs have unknown cost');
+		expect(html).toContain('1/3 runs reported dollars · 2 unknown');
+		expect(html).toContain('70% of input tokens');
+		expect(html).toContain('1 without token usage');
+		expect(html).toContain('Usage breakdown · 1 targets · 1 modes');
 		expect(html).toContain('aria-label="Project usage by execution target"');
 		expect(html).toContain('aria-label="CLI native, Model glm-5.2, Provider zhipu"');
 		expect(html).toContain('aria-label="Project usage by run mode"');

@@ -7,6 +7,7 @@ import type {
 } from '../../../api/types.ts';
 
 import { LocalAiddHistoryPanel } from '../../../components/shared/LocalAiddHistoryPanel.tsx';
+import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { useRuns } from '../../../hooks/useRuns.ts';
 import { compareRunsByLiveness } from '../../runs/runsUtils.ts';
@@ -39,7 +40,10 @@ export function RunsTab({
 	) {
 		return (
 			<div className="space-y-4">
-				<ProjectUsagePanel usage={usage} />
+				<TabIntro
+					description="Recent activity and the recorded run ledger, followed by lifetime AI accounting."
+					title="Runs"
+				/>
 				<ActiveRunsPanel
 					isError={activeRuns.isError}
 					isLoading={activeRuns.isLoading}
@@ -58,12 +62,16 @@ export function RunsTab({
 						to see history here.
 					</p>
 				</Card>
+				<ProjectUsagePanel usage={usage} />
 			</div>
 		);
 	}
 	return (
 		<div className="space-y-4">
-			<ProjectUsagePanel usage={usage} />
+			<TabIntro
+				description="Recent activity and the recorded run ledger, followed by lifetime AI accounting."
+				title="Runs"
+			/>
 			<ActiveRunsPanel
 				isError={activeRuns.isError}
 				isLoading={activeRuns.isLoading}
@@ -81,6 +89,7 @@ export function RunsTab({
 				iterations={localIterations}
 				runs={localRuns}
 			/>
+			<ProjectUsagePanel usage={usage} />
 		</div>
 	);
 }

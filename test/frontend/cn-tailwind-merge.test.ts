@@ -80,8 +80,9 @@ describe('Tailwind class merging', () => {
 		// 36 + the Badge Lab's status-dot specimen card, which takes the same `p-0` the two
 		// specimen cards above it take so its own header can carry the card's padding, + the two
 		// the Reports/Audits pair added: the reports table's `p-0` scrollport and the compact
-		// `p-3` audit row that replaced a hand-rolled bordered div.
-		expect(overrides).toHaveLength(39);
+		// `p-3` audit row that replaced a hand-rolled bordered div, + the compact audit row's
+		// unpadded Card whose internal identity/details regions own their padding independently.
+		expect(overrides).toHaveLength(40);
 		for (const className of overrides) {
 			const declaredPadding = className.match(PADDING_UTILITY)?.at(-1);
 			const mergedPadding = cn('p-4', className).match(PADDING_UTILITY);

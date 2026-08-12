@@ -2,20 +2,25 @@ import { default as ExternalLink } from 'lucide-react/dist/esm/icons/external-li
 import { default as Eye } from 'lucide-react/dist/esm/icons/eye';
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
-import { useState } from 'react';
+import { useReducer, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { DirectorRiskLevel, DirectorSuggestionRecord } from '../../api/types.ts';
-import type { SegmentedControlOption } from '../../components/ui/segmented-control.tsx';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { riskLabel, riskTone } from '../../lib/directorConstants.ts';
 import { humanizeEnum } from '../../lib/formatters.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
+import {
+	ALL_SUGGESTIONS,
+	initialSuggestionDisclosureState,
+	MOBILE_SUGGESTION_BATCH_SIZE,
+	suggestionDisclosureReducer,
+} from './directorDisclosure.ts';
+import { DirectorSuggestionFilters } from './DirectorSuggestionFilters.tsx';
 import { SuggestionLaunchPreviewDialog } from './SuggestionLaunchPreviewDialog.tsx';
 
 /**
@@ -41,8 +46,6 @@ function RiskReading({ risk }: { risk: DirectorRiskLevel }) {
 		</span>
 	);
 }
-
-const ALL = '__all__';
 
 /**
  * One suggestion.
@@ -178,10 +181,12 @@ function SuggestionRow({
 }
 
 export function DirectorSuggestionsList({
+	isMobileLayout = false,
 	onDismiss,
 	onLaunch,
 	suggestions,
 }: {
+	isMobileLayout?: boolean;
 	onDismiss: (id: string) => void;
 	onLaunch: (id: string) => void;
 	suggestions: DirectorSuggestionRecord[];
@@ -189,52 +194,33 @@ export function DirectorSuggestionsList({
 	const [previewSuggestion, setPreviewSuggestion] = useState<DirectorSuggestionRecord | null>(
 		null,
 	);
-	const [taskFilter, setTaskFilter] = useState<string>(ALL);
-	const [riskFilter, setRiskFilter] = useState<string>(ALL);
-	const openSuggestions = suggestions.filter((suggestion) => suggestion.status !== 'dismissed');
-	const taskOptions: SegmentedControlOption<string>[] = [
-		{ label: 'All types', value: ALL },
-		...[...new Set(openSuggestions.map((suggestion) => suggestion.taskType))]
-			.sort((left, right) => left.localeCompare(right))
-			.map((taskType) => ({ label: humanizeEnum(taskType), value: taskType })),
-	];
-	const riskOptions: SegmentedControlOption<string>[] = [
-		{ label: 'All risk', value: ALL },
-		...['HIGH', 'MEDIUM', 'LOW']
-			.filter((risk) => openSuggestions.some((suggestion) => suggestion.riskLevel === risk))
-			.map((risk) => ({ label: humanizeEnum(risk), value: risk })),
-	];
-	const visibleSuggestions = openSuggestions.filter(
-		(suggestion) =>
-			(taskFilter === ALL || suggestion.taskType === taskFilter) &&
-			(riskFilter === ALL || suggestion.riskLevel === riskFilter),
+	const [disclosure, dispatchDisclosure] = useReducer(
+		suggestionDisclosureReducer,
+		initialSuggestionDisclosureState,
 	);
+	const openSuggestions = suggestions.filter((suggestion) => suggestion.status !== 'dismissed');
+	const filteredSuggestions = openSuggestions.filter(
+		(suggestion) =>
+			(disclosure.taskFilter === ALL_SUGGESTIONS ||
+				suggestion.taskType === disclosure.taskFilter) &&
+			(disclosure.riskFilter === ALL_SUGGESTIONS ||
+				suggestion.riskLevel === disclosure.riskFilter),
+	);
+	const displayedSuggestions = isMobileLayout
+		? filteredSuggestions.slice(0, disclosure.visibleCount)
+		: filteredSuggestions;
+	const hasMoreSuggestions = displayedSuggestions.length < filteredSuggestions.length;
 
 	return (
 		<section aria-labelledby="director-suggestions-heading" className="space-y-3">
-			{/* The heading floated bare above a column of cards while its peer sat inside one, so
-			    two side-by-side sections started on two different baselines. It lives in a Card,
-			    which is also where the filters belong.
-
-			    `max-w-[66rem]` because `justify-between` inside each row hands everything left over
-			    to the space between the title and the button that acts on it, and this section is
-			    full width by design — a suggestion is a row, not a column, and in half the page the
-			    rows wrapped onto four lines. Unbounded at 2250x1309 the rows tracked the page: the
-			    description ended at x=839 and the actions began at x=1925, 1086px away, 62 times
-			    down the queue. The cap is on the Card rather than on the row so the border ends
-			    where the rows do — the same reason DocsPage caps the doc card and not the prose
-			    inside it.
-
-			    The number is arithmetic, not taste: the row's two-column shape gates on
-			    `@min-[61rem]` of the row's own content box, so the row needs 976 + 24 of its `p-3`,
-			    and the Card needs that plus 32 of its `p-4` — 1032px, or 64.5rem. 66rem is that
-			    with a little slack. Lower it below 64.5rem and every row silently falls back to the
-			    stacked form this shape exists to replace. */}
+			{/* The Card owns the 66rem cap so its border ends with its rows. The row's two-column
+			    shape needs 61rem of inner width plus row and Card padding, so lowering this below
+			    64.5rem silently restores the stacked layout. */}
 			<Card className="max-w-[66rem]">
 				<CardHeader
 					badge={
-						<Badge showDot tone={visibleSuggestions.length > 0 ? 'amber' : 'emerald'}>
-							{visibleSuggestions.length} open
+						<Badge showDot tone={filteredSuggestions.length > 0 ? 'amber' : 'emerald'}>
+							{filteredSuggestions.length} open
 						</Badge>
 					}
 					className="mb-0"
@@ -243,40 +229,27 @@ export function DirectorSuggestionsList({
 					title="Suggestions"
 				/>
 				{openSuggestions.length > 0 && (
-					// The scope bar the Diary and Telemetry use: one group left, the other right,
-					// with the readout between them. Flush left at an 8px gap the two controls read
-					// as one four-segment control, and "All types" next to "All risk" gave no hint
-					// that they were separate axes.
-					<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-						<SegmentedControl
-							ariaLabel="Filter suggestions by task type"
-							onChange={setTaskFilter}
-							options={taskOptions}
-							value={taskFilter}
-						/>
-						<div className="flex flex-wrap items-center gap-3">
-							<span
-								className="text-xs text-muted-foreground tabular-nums"
-								role="status">
-								Showing {visibleSuggestions.length} of {openSuggestions.length}
-							</span>
-							<SegmentedControl
-								ariaLabel="Filter suggestions by risk level"
-								onChange={setRiskFilter}
-								options={riskOptions}
-								value={riskFilter}
-							/>
-						</div>
-					</div>
+					<DirectorSuggestionFilters
+						displayedCount={displayedSuggestions.length}
+						onRiskFilterChange={(filter) =>
+							dispatchDisclosure({ filter, type: 'set-risk-filter' })
+						}
+						onTaskFilterChange={(filter) =>
+							dispatchDisclosure({ filter, type: 'set-task-filter' })
+						}
+						openSuggestions={openSuggestions}
+						riskFilter={disclosure.riskFilter}
+						taskFilter={disclosure.taskFilter}
+					/>
 				)}
-				<div className="mt-3 space-y-2">
+				<div className="mt-3 space-y-2" id="director-suggestion-items">
 					{openSuggestions.length === 0 && (
 						<EmptyState>No suggestions yet. Run a cycle to generate them.</EmptyState>
 					)}
-					{openSuggestions.length > 0 && visibleSuggestions.length === 0 && (
+					{openSuggestions.length > 0 && filteredSuggestions.length === 0 && (
 						<EmptyState>No suggestions match the selected filters.</EmptyState>
 					)}
-					{visibleSuggestions.map((suggestion) => (
+					{displayedSuggestions.map((suggestion) => (
 						<SuggestionRow
 							key={suggestion.id}
 							onDismiss={onDismiss}
@@ -286,6 +259,25 @@ export function DirectorSuggestionsList({
 						/>
 					))}
 				</div>
+				{isMobileLayout && filteredSuggestions.length > MOBILE_SUGGESTION_BATCH_SIZE && (
+					<div className="mt-3 border-t border-border pt-3">
+						<Button
+							aria-controls="director-suggestion-items"
+							aria-disabled={!hasMoreSuggestions}
+							className="w-full"
+							onClick={() => {
+								if (!hasMoreSuggestions) return;
+								dispatchDisclosure({
+									total: filteredSuggestions.length,
+									type: 'show-more',
+								});
+							}}
+							size="compact"
+							variant="secondary">
+							{hasMoreSuggestions ? 'Show more' : 'All suggestions shown'}
+						</Button>
+					</div>
+				)}
 			</Card>
 			{previewSuggestion && (
 				<SuggestionLaunchPreviewDialog

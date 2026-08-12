@@ -173,7 +173,7 @@ describe('the filter row reads as two axes', () => {
 			suggestion({ id: 'sug_b', taskType: 'ci_failure' }),
 		]);
 		const bar =
-			/<div class="mt-3 flex flex-wrap items-center justify-between gap-3">.*?<div class="mt-3 space-y-2">/su.exec(
+			/<div class="mt-3 flex flex-wrap items-center justify-between gap-3">.*?<div class="mt-3 space-y-2"/su.exec(
 				html,
 			);
 

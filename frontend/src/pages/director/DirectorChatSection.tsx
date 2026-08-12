@@ -4,6 +4,7 @@ import { default as MessageSquarePlus } from 'lucide-react/dist/esm/icons/messag
 import { default as Send } from 'lucide-react/dist/esm/icons/send';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
 import { default as Zap } from 'lucide-react/dist/esm/icons/zap';
+import { useState } from 'react';
 import { Link } from 'react-router';
 
 import type { ChatAgentAction } from '../../api/types.ts';
@@ -16,6 +17,7 @@ import { Input } from '../../components/ui/input.tsx';
 import { formatDate } from '../../lib/formatters.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
+import { compactChatSessions, MOBILE_CHAT_PREVIEW_COUNT } from './directorDisclosure.ts';
 
 export type ChatSession = { id: string; title: string; updatedAt: number };
 export type ChatMessage = {
@@ -66,6 +68,7 @@ export function DirectorChatSection({
 	createPending,
 	deletePending,
 	deleteSession,
+	isMobileLayout,
 	messages,
 	onChatInputChange,
 	onCloseDeleteSession,
@@ -82,6 +85,7 @@ export function DirectorChatSection({
 	createPending: boolean;
 	deletePending: boolean;
 	deleteSession: ChatSession | undefined;
+	isMobileLayout: boolean;
 	messages: ChatMessage[];
 	onChatInputChange: (value: string) => void;
 	onCloseDeleteSession: () => void;
@@ -93,7 +97,11 @@ export function DirectorChatSection({
 	sendPending: boolean;
 	sessions: ChatSession[];
 }) {
+	const [showAllChats, setShowAllChats] = useState(false);
 	const canSend = Boolean(activeSessionId) && !sendPending && chatInput.trim().length > 0;
+	const displayedSessions =
+		isMobileLayout && !showAllChats ? compactChatSessions(sessions, activeSessionId) : sessions;
+	const hasHiddenSessions = sessions.length > MOBILE_CHAT_PREVIEW_COUNT;
 	return (
 		// The grid column beside Recent Cycles is already 867px tall and stretches this section to
 		// match; the height just had nowhere to go. The section, the Card and the inner grid each
@@ -121,7 +129,11 @@ export function DirectorChatSection({
 			<Card className="@container flex h-full min-h-[420px] flex-col">
 				<CardHeader
 					className="mb-3"
-					description="Ask the director about fleet state in a focused conversation."
+					description={
+						<span className="max-sm:hidden">
+							Ask the director about fleet state in a focused conversation.
+						</span>
+					}
 					id="director-chat-heading"
 					title="Director Chat"
 				/>
@@ -154,8 +166,10 @@ export function DirectorChatSection({
 						</div>
 						{/* The rail scrolls rather than growing: it is the shorter of the two columns
 						    and the reclaimed height is the transcript's, not its. */}
-						<div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
-							{sessions.map((session) => {
+						<div
+							className="min-h-0 flex-1 space-y-2 overflow-y-auto max-sm:max-h-72"
+							id="director-chat-sessions">
+							{displayedSessions.map((session) => {
 								const isActive = session.id === activeSessionId;
 								const sessionContext = `${session.title} (${formatDate(
 									session.updatedAt,
@@ -179,13 +193,13 @@ export function DirectorChatSection({
 										key={session.id}>
 										<button
 											aria-current={isActive ? 'true' : undefined}
-											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none max-sm:min-h-11"
+											className="min-w-0 rounded-l-md px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none max-sm:flex max-sm:min-h-11 max-sm:items-center max-sm:gap-2 max-sm:py-1"
 											onClick={() => onSelectSession(session.id)}
 											type="button">
-											<div className="truncate font-medium">
+											<div className="truncate font-medium max-sm:flex-1">
 												{session.title}
 											</div>
-											<div className="mt-1 text-xs text-muted-foreground">
+											<div className="mt-1 shrink-0 text-xs text-muted-foreground max-sm:mt-0">
 												{formatDate(session.updatedAt)}
 											</div>
 										</button>
@@ -209,6 +223,17 @@ export function DirectorChatSection({
 								<p className="text-sm text-muted-foreground">No chats yet.</p>
 							)}
 						</div>
+						{isMobileLayout && hasHiddenSessions ? (
+							<Button
+								aria-controls="director-chat-sessions"
+								aria-expanded={showAllChats}
+								className="w-full"
+								onClick={() => setShowAllChats((current) => !current)}
+								size="compact"
+								variant="ghost">
+								{showAllChats ? 'Show recent chats' : 'View all chats'}
+							</Button>
+						) : null}
 					</div>
 
 					<div className="flex min-h-0 min-w-0 flex-col rounded-md border border-border">

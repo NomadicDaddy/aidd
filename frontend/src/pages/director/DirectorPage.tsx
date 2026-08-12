@@ -17,6 +17,7 @@ import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { ActiveCyclePanel } from './ActiveCyclePanel.tsx';
 import { DirectorChatSection } from './DirectorChatSection.tsx';
+import { useDirectorMobileLayout } from './directorDisclosure.ts';
 import { DirectorRecentCycles } from './DirectorRecentCycles.tsx';
 import { DirectorSuggestionsList } from './DirectorSuggestions.tsx';
 import { textareaClass } from './directorUtils.ts';
@@ -27,6 +28,7 @@ export function DirectorPage() {
 	const [chatInput, setChatInput] = useState('');
 	const [cycleDirective, setCycleDirective] = useState('');
 	const [deleteSessionId, setDeleteSessionId] = useState<string>();
+	const isMobileLayout = useDirectorMobileLayout();
 	const director = useDirector(activeSessionId);
 	const suggestions = director.suggestions.data ?? [];
 	const cycles = director.cycles.data ?? [];
@@ -169,6 +171,7 @@ export function DirectorPage() {
 					createPending={director.createChatSession.isPending}
 					deletePending={director.deleteChatSession.isPending}
 					deleteSession={deleteSession}
+					isMobileLayout={isMobileLayout}
 					messages={messages}
 					onChatInputChange={setChatInput}
 					onCloseDeleteSession={() => setDeleteSessionId(undefined)}
@@ -206,6 +209,7 @@ export function DirectorPage() {
 											/>
 										) : null}
 										<Button
+											className="max-sm:order-first"
 											disabled={director.triggerCycle.isPending}
 											onClick={triggerCycle}
 											variant="primary">
@@ -216,7 +220,12 @@ export function DirectorPage() {
 										</Button>
 									</div>
 								}
-								description="Trigger a director analysis pass across the fleet. An optional directive focuses the cycle on a specific concern."
+								description={
+									<span className="max-sm:hidden">
+										Trigger a director analysis pass across the fleet. An
+										optional directive focuses the cycle on a specific concern.
+									</span>
+								}
 								id="director-cycle-heading"
 								title="Run Cycle"
 							/>
@@ -261,6 +270,7 @@ export function DirectorPage() {
 			{/* Full width: a suggestion is a title, a two-line description and four actions, which
 			    is a row, not a column. In half the page they wrapped onto three and four lines. */}
 			<DirectorSuggestionsList
+				isMobileLayout={isMobileLayout}
 				onDismiss={dismissSuggestion}
 				onLaunch={launchSuggestion}
 				suggestions={suggestions}

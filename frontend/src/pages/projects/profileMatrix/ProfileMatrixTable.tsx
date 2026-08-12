@@ -67,7 +67,9 @@ export function ProfileMatrixTable({
 
 	return (
 		// Hidden below `md`, where ProfileMatrixMobileList renders the same rows as stacked cards.
-		<Card className="hidden p-0 xl:block">
+		// Summary stops at the same 80rem measure as the toolbar so its fixed outcome columns stay
+		// beside project identity on wide screens. Edit facets keeps the full canvas for its scroller.
+		<Card className={`hidden p-0 xl:block ${showFacets ? '' : 'max-w-[80rem]'}`}>
 			{/* `calc(100dvh-16rem)`, not `70vh`: the Audits tables next door subtract the chrome
 			    they actually sit under instead of taking a fraction of the window, and a fraction
 			    gets less accurate the taller the screen — at 1309px `70vh` left 393px of unused

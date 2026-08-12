@@ -46,6 +46,9 @@ const sanctionedSteps = new Set([
 	// original ratio.
 	'100rem',
 	'22rem',
+	// The Projects card grid and its metric list share 30rem: three cards at the 1920px
+	// workspace leave each metric region 499px wide, which clears this step but not 32rem.
+	'30rem',
 	'32rem',
 	'40rem',
 	'44rem',

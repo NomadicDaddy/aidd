@@ -90,11 +90,13 @@ export function ProjectCardMetrics({
 		// both directions: at 1280 the card is 318px and at 1440 it is 373px, so a metric column
 		// was ~139px and ~164px against a fixed 5rem label track, leaving ~51px and ~76px for the
 		// value — `Profile: Single-user local (explicit)` wrapped to four lines and three, and the
-		// 48-64px row that made left a void beside the single 16px line of `Version: v0.1.0`. The
-		// containment goes on this wrapper because an element never matches a container it
-		// declares itself.
+		// 48-64px row that made left a void beside the single 16px line of `Version: v0.1.0`.
+		// At 1920 the three-column outer grid gives this region 499px: enough for two 243px metric
+		// columns, but just below the old 32rem step, which made that middle desktop width taller
+		// than both adjacent layouts. Matching the outer grid's 30rem step keeps the density aligned.
+		// Containment goes on this wrapper because an element never matches a container it declares.
 		<div className="@container">
-			<div className="grid grid-cols-1 gap-x-3 gap-y-1 text-xs text-muted-foreground @min-[32rem]:grid-cols-2">
+			<div className="grid grid-cols-1 gap-x-3 gap-y-1 text-xs text-muted-foreground @min-[30rem]:grid-cols-2">
 				<MetricRow label="Version">
 					<span className="font-medium text-foreground">
 						{formatAppVersion(metadata.appVersion)}

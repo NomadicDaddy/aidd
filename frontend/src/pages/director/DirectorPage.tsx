@@ -189,7 +189,9 @@ export function DirectorPage() {
 				    two-column row. Cycles stack under the control that produces them. */}
 				<div className="space-y-5">
 					<section aria-labelledby="director-cycle-heading">
-						<Card>
+						{/* This action rail needs 372px by itself. Give the copy and controls separate
+						    lines until this card—not the viewport—has about 46rem to share. */}
+						<Card className="@container">
 							<CardHeader
 								action={
 									<div className="flex flex-wrap items-center gap-2">
@@ -220,6 +222,7 @@ export function DirectorPage() {
 										</Button>
 									</div>
 								}
+								className="flex-col items-stretch @min-[46rem]:flex-row @min-[46rem]:flex-nowrap @min-[46rem]:items-start"
 								description={
 									<span className="max-sm:hidden">
 										Trigger a director analysis pass across the fleet. An

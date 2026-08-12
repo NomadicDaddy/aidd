@@ -5,6 +5,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { touchTargetBoxClass, touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import {
+	auditCatalogCardId,
 	auditFileName,
 	bandTone,
 	bucketsColumnLabel,
@@ -96,6 +97,7 @@ export function CatalogCards({
 								<button
 									aria-pressed={active}
 									className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+									id={auditCatalogCardId(item.name)}
 									onClick={() => onSelect(item.name)}
 									type="button">
 									<span className="block font-mono font-medium text-foreground">

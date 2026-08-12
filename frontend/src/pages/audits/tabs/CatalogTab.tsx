@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
@@ -16,7 +16,7 @@ import {
 	selectVisibleAudits as selectVisibleAuditsHelper,
 	toggleAuditSelected as toggleAuditSelectedHelper,
 } from '../auditSelection.ts';
-import { auditDefinitionEditorId, type HealthFilter } from '../auditsUtils.ts';
+import { auditCatalogListId, type HealthFilter } from '../auditsUtils.ts';
 import {
 	type CatalogSort,
 	type CatalogSortKey,
@@ -25,10 +25,12 @@ import {
 	nextCatalogSort,
 } from '../catalogSort.ts';
 import { AuditDefinitionEditor } from './AuditDefinitionEditor.tsx';
+import { CatalogSelectionDialog } from './CatalogSelectionDialog.tsx';
 import { CatalogTable } from './CatalogTable.tsx';
 import { CatalogToolbar } from './CatalogToolbar.tsx';
 import { LaunchTargetsCard } from './LaunchTargetsCard.tsx';
 import { useCatalogAuditLauncher } from './useCatalogAuditLauncher.ts';
+import { useCatalogMobileNavigation } from './useCatalogMobileNavigation.ts';
 
 export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const manager = useAuditManager();
@@ -42,16 +44,12 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const [healthFilter, setHealthFilter] = useState<HealthFilter>('all');
 	const [enabledFilter, setEnabledFilter] = useState<'all' | 'disabled' | 'enabled'>('all');
 	const [sort, setSort] = useState<CatalogSort>(defaultCatalogSort);
-	// Collapsed on arrival: expanded, the 33-project picker put the first header of the catalog
-	// table below the fold. Its own "Choose targets" button, in the actions card beside the run
-	// buttons it gates, opens it.
 	const [launchTargetsOpen, setLaunchTargetsOpen] = useState(false);
 	const [content, setContent] = useState('');
+	const selectionInitializedRef = useRef(false);
 	const definition = useAuditDefinition(selectedAudit);
 
 	const lower = query.trim().toLowerCase();
-	// Memoize the filtered+sorted list so its reference stays stable across renders and downstream
-	// name-set memos keyed on filteredDefinitions can cache without retriggering their effects.
 	const filteredDefinitions = useMemo(
 		() =>
 			filterAndSortCatalog(manager.data?.definitions ?? [], {
@@ -90,16 +88,14 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const { allSelected: allVisibleAuditsSelected, someSelected: someVisibleAuditsSelected } =
 		deriveVisibleSelection(visibleEnabledNames, selectedAuditNames);
 
-	// Auto-select the first definition when none is selected yet.
 	useEffect(() => {
-		if (selectedAudit !== null) return;
+		if (selectionInitializedRef.current || selectedAudit !== null) return;
 		const first = manager.data?.definitions[0]?.name;
-		if (first) setSelectedAudit(first);
+		if (!first) return;
+		selectionInitializedRef.current = true;
+		setSelectedAudit(first);
 	}, [manager.data?.definitions, selectedAudit]);
 
-	// Reconcile selection with the current filter: if the selected audit is no
-	// longer visible, clear it (and auto-select the sole match when exactly one
-	// row remains).
 	useEffect(() => {
 		if (selectedAudit === null) return;
 		if (filteredNames.has(selectedAudit)) return;
@@ -112,20 +108,17 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	}, [filteredDefinitions, filteredNames, selectedAudit]);
 
 	useEffect(() => {
-		if (definition.data?.content !== undefined) setContent(definition.data.content);
-	}, [definition.data?.content]);
+		if (definition.data?.name !== selectedAudit || definition.data.content === undefined)
+			return;
+		setContent(definition.data.content);
+	}, [definition.data?.content, definition.data?.name, selectedAudit]);
 
-	// Prune any selected names that are no longer enabled, reusing the already
-	// derived enabledDefinitionNames set rather than recomputing it inline.
 	useEffect(() => {
 		setSelectedAuditNames((current) =>
 			current.filter((name) => enabledDefinitionNames.has(name)),
 		);
 	}, [enabledDefinitionNames]);
 
-	// When the selected audit is cleared (e.g. by a filter), reset the editor
-	// content so the textarea and heading don't show stale text from a
-	// previously selected audit that is no longer visible.
 	useEffect(() => {
 		if (selectedAudit === null) setContent('');
 	}, [selectedAudit]);
@@ -136,7 +129,21 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 		selectedProjectCount === 1
 			? manager.data?.projects.find((project) => project.id === selectedProjectIds[0])?.path
 			: undefined;
-	const dirty = definition.data?.content !== undefined && content !== definition.data.content;
+	const activeDefinition = definition.data?.name === selectedAudit ? definition.data : undefined;
+	const dirty = activeDefinition?.content !== undefined && content !== activeDefinition.content;
+	const {
+		cancelSelection,
+		catalogRef,
+		confirmSelection,
+		pendingAudit,
+		returnToCatalog,
+		selectAudit,
+		showEditor,
+	} = useCatalogMobileNavigation({
+		dirty,
+		onSelectAudit: setSelectedAudit,
+		selectedAudit,
+	});
 	const runAllDisabledReason = !auditsEnabled
 		? 'Audits are currently disabled. Enable audits to launch runs.'
 		: selectedProjectCount === 0
@@ -149,15 +156,6 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 		(selectedRunnableAuditNames.length === 0
 			? 'Select one or more enabled audits to run.'
 			: undefined);
-
-	// The editor sits under a table that can run 2000px tall, so a row click has to bring its own
-	// response into view; the launch-target jump is what the toolbar's disabled-run notice points at.
-	function selectAudit(name: string) {
-		setSelectedAudit(name);
-		document
-			.getElementById(auditDefinitionEditorId)
-			?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-	}
 
 	function toggleProject(id: string) {
 		setSelectedProjectIds((current) =>
@@ -254,31 +252,47 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 				updatePending={updateSettings.isPending}
 			/>
 
-			<CatalogTable
-				allSelected={allVisibleAuditsSelected}
-				definitions={filteredDefinitions}
-				onClearAll={clearVisibleAudits}
-				onJumpToMatrix={onJumpToMatrix}
-				onSelect={selectAudit}
-				onSelectAll={selectVisibleAudits}
-				onSort={(key: CatalogSortKey) =>
-					setSort((current) => nextCatalogSort(current, key))
-				}
-				onToggleSelected={toggleAuditSelected}
-				selectedAudit={selectedAudit}
-				selectedAuditNames={selectedAuditNames}
-				someSelected={someVisibleAuditsSelected}
-				sort={sort}
-			/>
+			<div
+				aria-label="Audit catalog list"
+				className={showEditor ? 'hidden xl:block' : undefined}
+				id={auditCatalogListId}
+				ref={catalogRef}
+				role="region"
+				tabIndex={-1}>
+				<CatalogTable
+					allSelected={allVisibleAuditsSelected}
+					definitions={filteredDefinitions}
+					onClearAll={clearVisibleAudits}
+					onJumpToMatrix={onJumpToMatrix}
+					onSelect={selectAudit}
+					onSelectAll={selectVisibleAudits}
+					onSort={(key: CatalogSortKey) =>
+						setSort((current) => nextCatalogSort(current, key))
+					}
+					onToggleSelected={toggleAuditSelected}
+					selectedAudit={selectedAudit}
+					selectedAuditNames={selectedAuditNames}
+					someSelected={someVisibleAuditsSelected}
+					sort={sort}
+				/>
+			</div>
 
-			<AuditDefinitionEditor
-				auditPath={definition.data?.path}
-				content={content}
-				dirty={dirty}
-				onContentChange={setContent}
-				onSave={saveDefinition}
-				savePending={save.isPending}
-				selectedAudit={selectedAudit}
+			<div className={showEditor ? undefined : 'hidden xl:block'}>
+				<AuditDefinitionEditor
+					auditPath={activeDefinition?.path}
+					content={activeDefinition ? content : ''}
+					dirty={dirty}
+					onContentChange={setContent}
+					onReturnToCatalog={returnToCatalog}
+					onSave={saveDefinition}
+					savePending={save.isPending}
+					selectedAudit={selectedAudit}
+				/>
+			</div>
+			<CatalogSelectionDialog
+				onCancel={cancelSelection}
+				onConfirm={confirmSelection}
+				pendingAudit={pendingAudit}
 			/>
 		</div>
 	);

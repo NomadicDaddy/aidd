@@ -1,3 +1,4 @@
+import { default as ArrowLeft } from 'lucide-react/dist/esm/icons/arrow-left';
 import { default as Save } from 'lucide-react/dist/esm/icons/save';
 
 import { FilePath } from '../../../components/shared/FilePath.tsx';
@@ -12,6 +13,7 @@ interface AuditDefinitionEditorProps {
 	content: string;
 	dirty: boolean;
 	onContentChange: (value: string) => void;
+	onReturnToCatalog: () => void;
 	onSave: () => void;
 	savePending: boolean;
 	selectedAudit: null | string;
@@ -27,6 +29,7 @@ export function AuditDefinitionEditor({
 	content,
 	dirty,
 	onContentChange,
+	onReturnToCatalog,
 	onSave,
 	savePending,
 	selectedAudit,
@@ -36,7 +39,15 @@ export function AuditDefinitionEditor({
 		// `scroll-padding-top`, which every anchor gets for free. Left here it would stack on top of
 		// that padding, so the two jump targets on this tab would land 16px lower than every other
 		// anchor in the app.
-		<section id={auditDefinitionEditorId}>
+		<section className="space-y-3" id={auditDefinitionEditorId}>
+			<Button
+				className="xl:hidden"
+				onClick={onReturnToCatalog}
+				size="toolbar"
+				variant="secondary">
+				<ArrowLeft aria-hidden="true" className="h-4 w-4" />
+				Back to audit list
+			</Button>
 			<Card className="flex flex-col gap-3">
 				<CardHeader
 					action={

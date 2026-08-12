@@ -14,6 +14,11 @@ export type AuditsTab = 'applicability' | 'catalog' | 'overrides';
 // exports a component may not export anything else (react-refresh/only-export-components).
 export const auditLaunchTargetsId = 'audit-launch-targets';
 export const auditDefinitionEditorId = 'audit-definition-editor';
+export const auditCatalogListId = 'audit-catalog-list';
+
+export function auditCatalogCardId(name: string): string {
+	return `audit-catalog-card-${encodeURIComponent(name)}`;
+}
 
 export const bucketColumns: AuditAssuranceBucket[] = [
 	'prototype_archive',

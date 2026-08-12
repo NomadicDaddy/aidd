@@ -73,6 +73,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 					Skip to Content
 				</a>
 				<aside
+					aria-label="Application navigation"
 					className={cn(
 						'border-border/60 bg-card/70 p-3 backdrop-blur-xl',
 						'sticky top-0 z-20 border-b sm:fixed sm:inset-y-0 sm:left-0 sm:flex sm:flex-col sm:border-r sm:border-b-0',

@@ -71,7 +71,9 @@ export function DocsPage() {
 			    empty room. */}
 			<div className="@container">
 				<div className="grid gap-6 @min-[45rem]:grid-cols-[14rem_minmax(0,1fr)] @min-[61rem]:grid-cols-[14rem_minmax(0,1fr)_14rem]">
-					<aside className="@min-[45rem]:sticky @min-[45rem]:top-4 @min-[45rem]:self-start">
+					<aside
+						aria-label="Documentation navigation"
+						className="@min-[45rem]:sticky @min-[45rem]:top-4 @min-[45rem]:self-start">
 						{/* Narrow, the full list is 3 group labels and 13 links — roughly a screen of
 						    navigation above the article a reader just navigated to. Collapsed behind
 						    the current section name, the wayfinding cue survives and the prose leads. */}
@@ -117,7 +119,9 @@ export function DocsPage() {
 					    above already lists every section of every document, so a narrow reader has a
 					    route to them without a second list under the article. */}
 					{body ? (
-						<aside className="hidden @min-[61rem]:sticky @min-[61rem]:top-4 @min-[61rem]:block @min-[61rem]:self-start">
+						<aside
+							aria-label="On this page"
+							className="hidden @min-[61rem]:sticky @min-[61rem]:top-4 @min-[61rem]:block @min-[61rem]:self-start">
 							<DocsOutline body={body} />
 						</aside>
 					) : null}

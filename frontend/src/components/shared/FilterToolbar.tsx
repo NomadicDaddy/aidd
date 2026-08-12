@@ -2,19 +2,28 @@ import type { ReactNode } from 'react';
 
 import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
-import { useEffect, useState } from 'react';
+import { default as SlidersHorizontal } from 'lucide-react/dist/esm/icons/sliders-horizontal';
+import { useEffect, useId, useState } from 'react';
 
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.ts';
 import { cn } from '../../lib/cn.ts';
 import { selectClass } from '../../lib/formStyles.ts';
-import { Button } from '../ui/button.tsx';
+import { Badge } from '../ui/badge.tsx';
+import { Button, IconButton } from '../ui/button.tsx';
 import { Card } from '../ui/card.tsx';
+import { Dialog, DialogPanel } from '../ui/dialog.tsx';
 import { FieldRow } from '../ui/field.tsx';
 import { Input } from '../ui/input.tsx';
 
 // The house field order these toolbars all follow lives in `lib/filterFields.ts`, not here: it is
 // data, the guard test imports it, and a `.tsx` module that exports a constant is a fast-refresh
 // boundary the whole file loses.
+
+interface MobileFilters {
+	/** Search remains exposed, so only non-default secondary controls contribute to this count. */
+	activeCount: number;
+	children: ReactNode;
+}
 
 /**
  * One filter row: a card, a grid of labelled controls, and a readout of what the filters left.
@@ -31,6 +40,7 @@ export function FilterToolbar({
 	filtered,
 	hasFilters,
 	header,
+	mobileFilters,
 	noun,
 	onReset,
 	readoutSuffix,
@@ -51,6 +61,8 @@ export function FilterToolbar({
 	hasFilters: boolean;
 	/** A `CardHeader` above the controls, for the toolbars that title themselves. */
 	header?: ReactNode;
+	/** Secondary controls to move into the canonical dialog below `sm`. */
+	mobileFilters?: MobileFilters;
 	/** What is being counted, already plural: `features`, `runs`, `projects`. */
 	noun: string;
 	onReset: () => void;
@@ -58,6 +70,9 @@ export function FilterToolbar({
 	readoutSuffix?: ReactNode;
 	total: number;
 }) {
+	const [filtersOpen, setFiltersOpen] = useState(false);
+	const mobileFiltersPanelId = useId();
+	const mobileFiltersTitleId = useId();
 	// `flex flex-col gap-3`, not `space-y-3`. Tailwind v4 lays `space-y-*` down as a margin on the
 	// children, so the `className="mb-0"` that every `CardHeader` in a self-spacing Card passes
 	// cancelled it outright — the toolbars that title themselves measured a 0px gap between the card
@@ -65,31 +80,117 @@ export function FilterToolbar({
 	// group read as a third line of the description sentence. `gap` belongs to this element and no
 	// child margin can defeat it.
 	return (
-		<Card className={cn('flex flex-col gap-3', className)}>
-			{header}
-			{/* The grid needs a width to stop at as well as a column count to stop at. `columns` is a
+		<>
+			<Card
+				className={cn(
+					'flex flex-col gap-3',
+					mobileFilters && 'max-sm:gap-2 max-sm:p-3',
+					className,
+				)}>
+				{header}
+				{/* The grid needs a width to stop at as well as a column count to stop at. `columns` is a
 			    ratio — `2fr_1fr_1fr` — and a ratio has no ceiling, so in a 1962px content column the
 			    three toolbars that share this component handed a status select 490px and the search
 			    field 980px. The tracks were tuned around 1312px; 80rem is the nearest step above that
 			    and leaves four tracks at ~320px each, which is where these controls stop improving.
 			    Capped here rather than at each call site because all three call sites were wrong in
 			    the same way. */}
-			<div className={cn('grid max-w-[80rem] gap-3', columns)}>{children}</div>
-			{/* The same cap as the grid above it, so the readout and its Reset stay the width of
+				<div
+					className={cn(
+						'grid max-w-[80rem] gap-3',
+						mobileFilters &&
+							'max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-end max-sm:gap-2',
+						columns,
+					)}>
+					{children}
+					{mobileFilters ? (
+						<>
+							<div className="flex items-center gap-1 sm:hidden">
+								<Button
+									aria-controls={mobileFiltersPanelId}
+									aria-expanded={filtersOpen}
+									aria-haspopup="dialog"
+									className="flex-col items-start gap-0 px-2 py-1 text-left"
+									onClick={() => setFiltersOpen(true)}>
+									<span className="inline-flex items-center gap-1.5">
+										<SlidersHorizontal className="h-3.5 w-3.5" />
+										Filters
+										<Badge
+											className="px-1.5 py-0.5"
+											tone={
+												mobileFilters.activeCount > 0 ? 'teal' : 'neutral'
+											}>
+											{mobileFilters.activeCount} active
+										</Badge>
+									</span>
+									<span className="text-xs font-normal text-muted-foreground">
+										Showing {filtered}/{total}
+									</span>
+								</Button>
+								<IconButton
+									ariaLabel="Reset filters"
+									disabled={!hasFilters}
+									onClick={onReset}
+									variant="ghost">
+									<RotateCcw className="h-3.5 w-3.5" />
+								</IconButton>
+							</div>
+							<div className="hidden sm:contents">{mobileFilters.children}</div>
+						</>
+					) : null}
+				</div>
+				{/* The same cap as the grid above it, so the readout and its Reset stay the width of
 			    the controls they describe rather than being pushed to opposite ends of the card. */}
-			<div className="flex max-w-[80rem] items-center justify-between gap-3 text-xs text-muted-foreground">
-				<span role="status">
-					Showing {filtered} of {total} {noun}
-					{readoutSuffix}
-				</span>
-				{/* Disabled rather than unmounted: a control that appears when you first type moves
+				<div
+					className={cn(
+						'flex max-w-[80rem] items-center justify-between gap-3 text-xs text-muted-foreground',
+						mobileFilters && 'max-sm:hidden',
+					)}>
+					<span role="status">
+						Showing {filtered} of {total} {noun}
+						{readoutSuffix}
+					</span>
+					{/* Disabled rather than unmounted: a control that appears when you first type moves
 				    the readout beside it, and the row it sits in changes height on the keystroke. */}
-				<Button disabled={!hasFilters} onClick={onReset} variant="ghost">
-					<RotateCcw className="h-3 w-3" />
-					Reset filters
-				</Button>
-			</div>
-		</Card>
+					<Button disabled={!hasFilters} onClick={onReset} variant="ghost">
+						<RotateCcw className="h-3 w-3" />
+						Reset filters
+					</Button>
+				</div>
+			</Card>
+			{mobileFilters ? (
+				<Dialog
+					aria-labelledby={mobileFiltersTitleId}
+					onClose={() => setFiltersOpen(false)}
+					open={filtersOpen}>
+					<DialogPanel
+						className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto p-5"
+						id={mobileFiltersPanelId}>
+						<div className="space-y-1">
+							<h2
+								className="text-lg font-semibold text-foreground"
+								id={mobileFiltersTitleId}>
+								Filters
+							</h2>
+							<p className="text-sm text-muted-foreground">
+								{mobileFilters.activeCount} active secondary{' '}
+								{mobileFilters.activeCount === 1 ? 'filter' : 'filters'}
+							</p>
+						</div>
+						<div className="mt-4 grid gap-3">{mobileFilters.children}</div>
+						<div className="mt-5 flex items-center justify-between gap-3">
+							<Button disabled={!hasFilters} onClick={onReset} variant="ghost">
+								<RotateCcw className="h-3 w-3" />
+								Reset filters
+							</Button>
+							<Button onClick={() => setFiltersOpen(false)} variant="primary">
+								Show results
+							</Button>
+						</div>
+					</DialogPanel>
+				</Dialog>
+			) : null}
+		</>
 	);
 }
 

@@ -26,14 +26,16 @@ const TOOLBARS = [
 
 /** The labels a toolbar renders, in the order its JSX declares them. */
 function fieldLabels(text: string): string[] {
-	const labels: string[] = [];
-	// `(?<![-\w])` keeps `aria-label` out: the Applicability tab renders its toolbar above a
-	// textarea and a table that each carry one, and they are not filter fields.
-	for (const match of text.matchAll(/<Filter(Search|Select)\b|(?<![-\w])label="([^"]+)"/g)) {
-		if (match[1] === 'Search') labels.push('Search');
-		else if (match[2] !== undefined && labels.length > 0) labels.push(match[2]);
-	}
-	return labels;
+	const labels = Array.from(
+		text.matchAll(/<FilterSelect\b[\s\S]*?\blabel="([^"]+)"/g),
+		(match) => match[1],
+	).filter((label): label is string => label !== undefined);
+
+	// Mobile-disclosure consumers pass their secondary elements through a named prop before the
+	// rendered Search child. Runtime order remains Search first, so model the elements rather than
+	// their prop declaration order. Matching FilterSelect directly also keeps unrelated aria-labels
+	// on the surrounding page out of this inventory.
+	return text.includes('<FilterSearch') ? ['Search', ...labels] : labels;
 }
 
 function isSubsequence(candidate: string[], order: readonly string[]): boolean {

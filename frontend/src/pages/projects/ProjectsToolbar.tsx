@@ -5,6 +5,7 @@ import {
 	FilterSelect,
 	FilterToolbar,
 } from '../../components/shared/FilterToolbar.tsx';
+import { countActiveFilters } from '../../lib/filterFields.ts';
 import { type MaturityFilter, maturityFilterLabels } from './projects-list-shared.ts';
 
 const MATURITY_OPTIONS: MaturityFilter[] = [
@@ -54,6 +55,75 @@ export function ProjectsToolbar({
 			columns="sm:grid-cols-2 xl:grid-cols-[2fr_repeat(5,minmax(0,1fr))]"
 			filtered={sortedCount}
 			hasFilters={hasFilters}
+			mobileFilters={{
+				activeCount: countActiveFilters(
+					syncFilter !== 'all',
+					phaseFilter !== 'all',
+					maturityFilter !== 'all',
+					rootFilter !== 'all',
+					milestoneFilter !== 'all',
+				),
+				children: (
+					<>
+						<FilterSelect
+							label="Sync"
+							onChange={(value) => onUpdateParam('sync', value)}
+							options={[
+								{ label: 'All sync states', value: 'all' },
+								{ label: 'Idle', value: 'idle' },
+								{ label: 'Syncing', value: 'syncing' },
+								{ label: 'Error', value: 'error' },
+								{ label: 'Unknown', value: 'unknown' },
+							]}
+							value={syncFilter}
+						/>
+						<FilterSelect
+							label="Phase"
+							onChange={(value) => onUpdateParam('phase', value)}
+							options={[
+								{ label: 'All phases', value: 'all' },
+								{ label: 'Initializer', value: 'initializer' },
+								{ label: 'Onboarding', value: 'onboarding' },
+								{ label: 'Coding', value: 'coding' },
+							]}
+							value={phaseFilter}
+						/>
+						<FilterSelect
+							label="Maturity"
+							onChange={(value) => onUpdateParam('maturity', value)}
+							options={MATURITY_OPTIONS.map((option) => ({
+								label: maturityFilterLabels[option],
+								value: option,
+							}))}
+							value={maturityFilter}
+						/>
+						<FilterSelect
+							label="Root"
+							onChange={(value) => onUpdateParam('root', value)}
+							options={[
+								{ label: 'All roots', value: 'all' },
+								...rootOptions.map((root) => ({
+									label: root.label,
+									value: root.path,
+								})),
+							]}
+							value={rootFilter}
+						/>
+						<FilterSelect
+							label="Milestone"
+							onChange={(value) => onUpdateParam('milestone', value)}
+							options={[
+								{ label: 'All milestones', value: 'all' },
+								...milestoneOptions.map((milestone) => ({
+									label: milestone,
+									value: milestone,
+								})),
+							]}
+							value={milestoneFilter}
+						/>
+					</>
+				),
+			}}
 			noun="projects"
 			onReset={onResetFilters}
 			readoutSuffix={
@@ -67,59 +137,6 @@ export function ProjectsToolbar({
 				placeholder="Filter by name or path"
 				shortcut
 				value={query}
-			/>
-			<FilterSelect
-				label="Sync"
-				onChange={(value) => onUpdateParam('sync', value)}
-				options={[
-					{ label: 'All sync states', value: 'all' },
-					{ label: 'Idle', value: 'idle' },
-					{ label: 'Syncing', value: 'syncing' },
-					{ label: 'Error', value: 'error' },
-					{ label: 'Unknown', value: 'unknown' },
-				]}
-				value={syncFilter}
-			/>
-			<FilterSelect
-				label="Phase"
-				onChange={(value) => onUpdateParam('phase', value)}
-				options={[
-					{ label: 'All phases', value: 'all' },
-					{ label: 'Initializer', value: 'initializer' },
-					{ label: 'Onboarding', value: 'onboarding' },
-					{ label: 'Coding', value: 'coding' },
-				]}
-				value={phaseFilter}
-			/>
-			<FilterSelect
-				label="Maturity"
-				onChange={(value) => onUpdateParam('maturity', value)}
-				options={MATURITY_OPTIONS.map((option) => ({
-					label: maturityFilterLabels[option],
-					value: option,
-				}))}
-				value={maturityFilter}
-			/>
-			<FilterSelect
-				label="Root"
-				onChange={(value) => onUpdateParam('root', value)}
-				options={[
-					{ label: 'All roots', value: 'all' },
-					...rootOptions.map((root) => ({ label: root.label, value: root.path })),
-				]}
-				value={rootFilter}
-			/>
-			<FilterSelect
-				label="Milestone"
-				onChange={(value) => onUpdateParam('milestone', value)}
-				options={[
-					{ label: 'All milestones', value: 'all' },
-					...milestoneOptions.map((milestone) => ({
-						label: milestone,
-						value: milestone,
-					})),
-				]}
-				value={milestoneFilter}
 			/>
 		</FilterToolbar>
 	);

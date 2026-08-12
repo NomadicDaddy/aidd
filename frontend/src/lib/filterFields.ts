@@ -30,3 +30,8 @@ export const FILTER_FIELD_ORDER = [
 	'Milestone',
 	'Source',
 ] as const;
+
+/** Count page-owned filters without moving their state into the shared presentation component. */
+export function countActiveFilters(...filters: boolean[]): number {
+	return filters.filter(Boolean).length;
+}

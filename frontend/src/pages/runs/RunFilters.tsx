@@ -7,6 +7,7 @@ import {
 	FilterToolbar,
 } from '../../components/shared/FilterToolbar.tsx';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
+import { countActiveFilters } from '../../lib/filterFields.ts';
 
 const STATUS_OPTIONS = [
 	{ label: 'All statuses', value: 'all' },
@@ -88,6 +89,84 @@ export function RunFilters({
 				modeFilter !== 'all' ||
 				historyProject !== 'all'
 			}
+			mobileFilters={{
+				activeCount: countActiveFilters(
+					statusFilter !== 'all',
+					kindFilter !== 'all',
+					modeFilter !== 'all',
+					historyProject !== 'all',
+				),
+				children: (
+					<>
+						<FilterSelect
+							label="Status"
+							onChange={(value) => {
+								traceDataMovement({
+									category: 'event',
+									layer: 'ui',
+									operation: 'runs.filter.status',
+									source: 'RunsPage',
+									summary: { status: value },
+								});
+								onStatusFilterChange(value as UnifiedStatusFilter);
+							}}
+							options={STATUS_OPTIONS}
+							value={statusFilter}
+						/>
+						<FilterSelect
+							label="Kind"
+							onChange={(value) => {
+								traceDataMovement({
+									category: 'event',
+									layer: 'ui',
+									operation: 'runs.filter.kind',
+									source: 'RunsPage',
+									summary: { kind: value },
+								});
+								onKindFilterChange(value as UnifiedKindFilter);
+							}}
+							options={KIND_OPTIONS}
+							value={kindFilter}
+						/>
+						<FilterSelect
+							label="Mode"
+							onChange={(value) => {
+								traceDataMovement({
+									category: 'event',
+									layer: 'ui',
+									operation: 'runs.filter.mode',
+									source: 'RunsPage',
+									summary: { mode: value },
+								});
+								onModeFilterChange(value as 'all' | RunMode);
+							}}
+							options={MODE_OPTIONS}
+							value={modeFilter}
+						/>
+						<FilterSelect
+							label="Project"
+							onChange={(value) => {
+								traceDataMovement({
+									category: 'event',
+									layer: 'ui',
+									operation: 'runs.filter.project',
+									source: 'RunsPage',
+									summary: { filtered: value !== 'all' },
+								});
+								onHistoryProjectChange(value);
+							}}
+							options={[
+								{ label: 'All projects', value: 'all' },
+								...projects.map((project) => ({
+									label: project.name,
+									value: project.path,
+								})),
+							]}
+							value={historyProject}
+						/>
+					</>
+				),
+			}}
 			noun="runs"
 			onReset={() => {
 				traceDataMovement({
@@ -106,71 +185,8 @@ export function RunFilters({
 				shortcut
 				value={query}
 			/>
-			<FilterSelect
-				label="Status"
-				onChange={(value) => {
-					traceDataMovement({
-						category: 'event',
-						layer: 'ui',
-						operation: 'runs.filter.status',
-						source: 'RunsPage',
-						summary: { status: value },
-					});
-					onStatusFilterChange(value as UnifiedStatusFilter);
-				}}
-				options={STATUS_OPTIONS}
-				value={statusFilter}
-			/>
 			{/* Kind before Mode, because Mode narrows within a kind: it is a run-only concept, so
 			    picking one already hides every pipeline and skill session. */}
-			<FilterSelect
-				label="Kind"
-				onChange={(value) => {
-					traceDataMovement({
-						category: 'event',
-						layer: 'ui',
-						operation: 'runs.filter.kind',
-						source: 'RunsPage',
-						summary: { kind: value },
-					});
-					onKindFilterChange(value as UnifiedKindFilter);
-				}}
-				options={KIND_OPTIONS}
-				value={kindFilter}
-			/>
-			<FilterSelect
-				label="Mode"
-				onChange={(value) => {
-					traceDataMovement({
-						category: 'event',
-						layer: 'ui',
-						operation: 'runs.filter.mode',
-						source: 'RunsPage',
-						summary: { mode: value },
-					});
-					onModeFilterChange(value as 'all' | RunMode);
-				}}
-				options={MODE_OPTIONS}
-				value={modeFilter}
-			/>
-			<FilterSelect
-				label="Project"
-				onChange={(value) => {
-					traceDataMovement({
-						category: 'event',
-						layer: 'ui',
-						operation: 'runs.filter.project',
-						source: 'RunsPage',
-						summary: { filtered: value !== 'all' },
-					});
-					onHistoryProjectChange(value);
-				}}
-				options={[
-					{ label: 'All projects', value: 'all' },
-					...projects.map((project) => ({ label: project.name, value: project.path })),
-				]}
-				value={historyProject}
-			/>
 		</FilterToolbar>
 	);
 }

@@ -4,6 +4,7 @@ import {
 	FilterToolbar,
 } from '../../../components/shared/FilterToolbar.tsx';
 import { CardHeader } from '../../../components/ui/card.tsx';
+import { countActiveFilters } from '../../../lib/filterFields.ts';
 import { GraphDiagnostics, GraphZoomControls } from './dependencyGraphComponents.tsx';
 import { type buildFeatureDependencyGraph } from './dependencyGraphUtils.ts';
 import { FEATURE_STATUS_FILTER_OPTIONS } from './featuresUtils.ts';
@@ -79,6 +80,41 @@ export function DependencyGraphFilters({
 					className="mb-0"
 				/>
 			}
+			mobileFilters={{
+				activeCount: countActiveFilters(
+					statusFilter !== 'all',
+					milestoneFilter !== 'all',
+					sourceFilter !== 'all',
+				),
+				children: (
+					<>
+						<FilterSelect
+							label="Status"
+							onChange={onStatusFilterChange}
+							options={FEATURE_STATUS_FILTER_OPTIONS.map((status) => ({
+								label: status === 'all' ? 'All statuses' : status,
+								value: status,
+							}))}
+							value={statusFilter}
+						/>
+						<FilterSelect
+							label="Milestone"
+							onChange={onMilestoneFilterChange}
+							options={[
+								{ label: 'All milestones', value: 'all' },
+								...milestoneOptions,
+							]}
+							value={milestoneFilter}
+						/>
+						<FilterSelect
+							label="Source"
+							onChange={onSourceFilterChange}
+							options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
+							value={sourceFilter}
+						/>
+					</>
+				),
+			}}
 			noun="features"
 			onReset={onResetFilters}
 			total={graph.nodes.length}>
@@ -91,27 +127,6 @@ export function DependencyGraphFilters({
 			{/* Source and Milestone were the other way round here, and the Features tab beside this
 			    one has the same four controls: switching tabs moved the select the operator had
 			    just used. The order is `FILTER_FIELD_ORDER`, on both. */}
-			<FilterSelect
-				label="Status"
-				onChange={onStatusFilterChange}
-				options={FEATURE_STATUS_FILTER_OPTIONS.map((status) => ({
-					label: status === 'all' ? 'All statuses' : status,
-					value: status,
-				}))}
-				value={statusFilter}
-			/>
-			<FilterSelect
-				label="Milestone"
-				onChange={onMilestoneFilterChange}
-				options={[{ label: 'All milestones', value: 'all' }, ...milestoneOptions]}
-				value={milestoneFilter}
-			/>
-			<FilterSelect
-				label="Source"
-				onChange={onSourceFilterChange}
-				options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
-				value={sourceFilter}
-			/>
 		</FilterToolbar>
 	);
 }

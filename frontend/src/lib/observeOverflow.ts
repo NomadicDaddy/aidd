@@ -7,6 +7,32 @@ export interface OverflowFlags {
 	start: boolean;
 }
 
+export function overflowFlagsForMetrics({
+	clientHeight,
+	clientWidth,
+	scrollHeight,
+	scrollLeft,
+	scrollTop,
+	scrollWidth,
+}: {
+	clientHeight: number;
+	clientWidth: number;
+	scrollHeight: number;
+	scrollLeft: number;
+	scrollTop: number;
+	scrollWidth: number;
+}): OverflowFlags {
+	// A sub-pixel slack: fractional layout dimensions otherwise leave an edge permanently lit at
+	// a scroll extreme.
+	const horizontalOverflow = scrollWidth - clientWidth;
+	const verticalOverflow = scrollHeight - clientHeight;
+	return {
+		end: horizontalOverflow > 1 && scrollLeft < horizontalOverflow - 1,
+		scrollsDown: verticalOverflow > 1 && scrollTop < verticalOverflow - 1,
+		start: horizontalOverflow > 1 && scrollLeft > 1,
+	};
+}
+
 /**
  * Reports which edges of one scrolling element have content beyond them, and keeps reporting as the
  * element scrolls or resizes.
@@ -24,15 +50,16 @@ export function observeOverflow(
 	onChange: (flags: OverflowFlags) => void,
 ): () => void {
 	const measure = () => {
-		// A sub-pixel slack: fractional layout widths otherwise leave an edge permanently lit at a
-		// scroll extreme.
-		const overflow = scroller.scrollWidth - scroller.clientWidth;
-		const overflowing = overflow > 1;
-		onChange({
-			end: overflowing && scroller.scrollLeft < overflow - 1,
-			scrollsDown: scroller.scrollHeight - scroller.clientHeight > 1,
-			start: overflowing && scroller.scrollLeft > 1,
-		});
+		onChange(
+			overflowFlagsForMetrics({
+				clientHeight: scroller.clientHeight,
+				clientWidth: scroller.clientWidth,
+				scrollHeight: scroller.scrollHeight,
+				scrollLeft: scroller.scrollLeft,
+				scrollTop: scroller.scrollTop,
+				scrollWidth: scroller.scrollWidth,
+			}),
+		);
 	};
 
 	measure();

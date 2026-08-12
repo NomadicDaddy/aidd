@@ -88,6 +88,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 							</Button>
 						</div>
 					}
+					actionLayout="stacked"
 					badge={
 						<Badge tone={auditsEnabled ? 'emerald' : 'red'}>
 							<ShieldCheck className="mr-1 h-3 w-3" />

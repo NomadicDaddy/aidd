@@ -84,6 +84,7 @@ export function SettingsRuntimeControls({
 							</Button>
 						</div>
 					}
+					actionLayout="stacked"
 					className="mb-0"
 					description="Manage the running aidd web backend."
 					title="Control Panel Runtime"

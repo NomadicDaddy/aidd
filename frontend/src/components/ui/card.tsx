@@ -7,6 +7,8 @@ import { proseMeasureClass } from '../../lib/typography.ts';
 
 type CardVariant = 'default' | 'panel' | 'sunken';
 
+type CardHeaderActionLayout = 'default' | 'stacked';
+
 const variants: Record<CardVariant, string> = {
 	default: 'border-border bg-card shadow-sm',
 	panel: 'border-border/80 bg-card/95 shadow-[0_12px_32px_rgba(0,0,0,0.06)] backdrop-blur-sm dark:bg-card/90 dark:shadow-[0_12px_32px_rgba(0,0,0,0.3)]',
@@ -75,6 +77,7 @@ const headerLevels = {
  */
 export function CardHeader({
 	action,
+	actionLayout = 'default',
 	badge,
 	className,
 	description,
@@ -86,6 +89,7 @@ export function CardHeader({
 	title,
 }: {
 	action?: ReactNode;
+	actionLayout?: CardHeaderActionLayout;
 	badge?: ReactNode;
 	className?: string;
 	description?: ReactNode;
@@ -97,51 +101,65 @@ export function CardHeader({
 	title?: ReactNode;
 }) {
 	const Heading = `h${headingLevel}` as const;
+	const identity = (
+		<div className="min-w-0 flex-1">
+			<div className="flex flex-wrap items-center gap-2">
+				{icon !== undefined && (
+					<span aria-hidden="true" className="flex shrink-0 items-center">
+						{icon}
+					</span>
+				)}
+				{title !== undefined && (
+					// `min-w-0` because the heading is a flex item of this row and a flex item's
+					// default `min-width: auto` is its content's min-content width. A caller
+					// whose title truncates — a project name, a file name — got no truncation at
+					// all without it: the heading refused to shrink below the longest unbroken
+					// token and pushed past the card instead.
+					<Heading className={cn('min-w-0', headerLevels[level])} id={id}>
+						{title}
+					</Heading>
+				)}
+				{badge}
+			</div>
+			{identifier !== undefined && (
+				<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+					{identifier}
+				</p>
+			)}
+			{description !== undefined && (
+				<p className={cn('mt-1 text-xs text-muted-foreground', proseMeasureClass)}>
+					{description}
+				</p>
+			)}
+		</div>
+	);
+	const usesStackedActionLayout = action !== undefined && actionLayout === 'stacked';
+	const content = (
+		<>
+			{identity}
+			{action}
+		</>
+	);
+
 	return (
-		// `flex-wrap` up to `lg`, `flex-nowrap` from there. Wrapping is the right answer on a narrow
-		// card, where the action rail genuinely has nowhere to go but the next line. It is the wrong
-		// one on a wide card: `justify-between` means a title that grows by one word pushes the whole
-		// action slot to line two and hard against the left edge, directly under the title it belongs
-		// beside, with a full card's width of nothing to its right. One recipe card did that at
-		// 2250px and half a dozen more at 1440 and 1280. From `lg` the row stays on one line and the
-		// title column absorbs the growth instead, which is what `flex-1` and the callers'
-		// `line-clamp` are for.
+		// Default headers retain the established wrap-until-lg behavior. Action-heavy consumers opt
+		// into containment: below 32rem of header width, identity and action receive separate rows;
+		// above it, the same source order returns to the existing side-by-side composition.
 		<header
 			className={cn(
-				'mb-4 flex flex-wrap items-start justify-between gap-3 lg:flex-nowrap',
+				'mb-4',
+				usesStackedActionLayout
+					? '@container'
+					: 'flex flex-wrap items-start justify-between gap-3 lg:flex-nowrap',
 				className,
 			)}>
-			<div className="min-w-0 flex-1">
-				<div className="flex flex-wrap items-center gap-2">
-					{icon !== undefined && (
-						<span aria-hidden="true" className="flex shrink-0 items-center">
-							{icon}
-						</span>
-					)}
-					{title !== undefined && (
-						// `min-w-0` because the heading is a flex item of this row and a flex item's
-						// default `min-width: auto` is its content's min-content width. A caller
-						// whose title truncates — a project name, a file name — got no truncation at
-						// all without it: the heading refused to shrink below the longest unbroken
-						// token and pushed past the card instead.
-						<Heading className={cn('min-w-0', headerLevels[level])} id={id}>
-							{title}
-						</Heading>
-					)}
-					{badge}
+			{usesStackedActionLayout ? (
+				<div className="flex flex-col items-stretch justify-between gap-3 @min-[32rem]:flex-row @min-[32rem]:items-start">
+					{content}
 				</div>
-				{identifier !== undefined && (
-					<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-						{identifier}
-					</p>
-				)}
-				{description !== undefined && (
-					<p className={cn('mt-1 text-xs text-muted-foreground', proseMeasureClass)}>
-						{description}
-					</p>
-				)}
-			</div>
-			{action}
+			) : (
+				content
+			)}
 		</header>
 	);
 }

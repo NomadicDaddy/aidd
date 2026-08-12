@@ -99,6 +99,7 @@ export function ApplicabilityTab() {
 								{editorOpen ? 'Cancel Edit' : 'Edit Global Mapping'}
 							</Button>
 						}
+						actionLayout="stacked"
 						className="mb-0"
 						description={
 							// No `title`. The selected tab trigger two rows above already reads

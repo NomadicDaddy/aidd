@@ -31,6 +31,7 @@ export function DiaryTab({ projectPath }: { projectName: string; projectPath: st
 							{writeEntry.isPending ? 'Starting…' : actionLabel}
 						</Button>
 					}
+					actionLayout="stacked"
 					className="mb-0"
 					description={
 						// The declared measure, not Tailwind's built-in `max-w-prose`. At 2250 this

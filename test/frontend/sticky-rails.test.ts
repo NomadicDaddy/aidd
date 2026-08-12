@@ -21,7 +21,7 @@ const stickyRails = [
 	// Same move as Docs: the runs split now gates on the content column's own width, so the sticky
 	// declaration moved with it. `self-start` here is unconditional — the console column is the one
 	// item that must never stretch, at any width.
-	['pages/runs/RunsPage.tsx', '@min-[66rem]:sticky', 'self-start'],
+	['pages/runs/RunsPage.tsx', '@min-[81.25rem]:sticky', 'self-start'],
 ] as const;
 
 describe('declared sticky rails actually stick', () => {

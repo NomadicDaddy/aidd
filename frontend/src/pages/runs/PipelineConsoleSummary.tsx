@@ -37,7 +37,7 @@ export function PipelineConsoleSummary({ session }: { session: PipelineSessionRe
 	return (
 		// Shares the runs-page console cell, so it needs the same height chain: the summary card
 		// stays auto-height and the console below it takes the rest.
-		<div className="space-y-3 @min-[66rem]:flex @min-[66rem]:min-h-0 @min-[66rem]:flex-1 @min-[66rem]:flex-col">
+		<div className="space-y-3 @min-[81.25rem]:flex @min-[81.25rem]:min-h-0 @min-[81.25rem]:flex-1 @min-[81.25rem]:flex-col">
 			<Card className="flex flex-col gap-2">
 				<CardHeader
 					action={

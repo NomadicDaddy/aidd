@@ -61,6 +61,8 @@ const sanctionedSteps = new Set([
 	'66rem',
 	'68rem',
 	'80rem',
+	// Runs needs the 56rem History table, 24rem console, and 1.25rem gap before it splits.
+	'81.25rem',
 ]);
 
 describe('responsive steps are chosen against content width', () => {

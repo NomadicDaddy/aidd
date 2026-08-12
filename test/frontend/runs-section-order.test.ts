@@ -10,10 +10,26 @@ describe('runs page section order', () => {
 		);
 	}
 
+	async function readWorkspaceTabs(): Promise<string> {
+		return readFile(
+			join(
+				import.meta.dir,
+				'..',
+				'..',
+				'frontend',
+				'src',
+				'pages',
+				'runs',
+				'RunsPanelTabs.tsx',
+			),
+			'utf8',
+		);
+	}
+
 	test('keeps Live Console between Active and History in narrow source order', async () => {
 		const source = await readRunsPage();
 		const activeIndex = source.indexOf('title="Active"');
-		const consoleIndex = source.indexOf('ref={page.liveConsoleRef}');
+		const consoleIndex = source.indexOf('ref={liveConsoleRef}');
 		const historyIndex = source.indexOf('title="History"');
 		const showMoreIndex = source.indexOf("'Show more'");
 
@@ -29,16 +45,18 @@ describe('runs page section order', () => {
 	test('places run lists left and a sticky console right once the region is wide enough', async () => {
 		const source = await readRunsPage();
 
-		// The step is the region's own width, not the window's. `2xl:` denied the split at 1440
-		// even with the rail collapsed, where this column is over 1300px; 66rem is where the
-		// console's 24rem floor, the 1.25rem gap and a ~650px table all fit.
-		expect(source).toContain('@min-[66rem]:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)]');
-		expect(source).toContain('@min-[66rem]:items-start');
-		expect(source).toContain('@min-[66rem]:col-start-1 @min-[66rem]:row-start-1');
+		// The step is the region's own width, not the window's. History's 56rem table, the
+		// console's 24rem floor, and the 1.25rem gap require 81.25rem before they may split.
+		expect(source).toContain('@min-[81.25rem]:grid-cols-[minmax(0,2fr)_minmax(24rem,1fr)]');
+		expect(source).toContain('@min-[81.25rem]:items-start');
+		expect(source).toContain('@min-[81.25rem]:col-start-1 @min-[81.25rem]:row-start-1');
 		expect(source).toContain(
-			'@min-[66rem]:sticky @min-[66rem]:top-6 @min-[66rem]:col-start-2 @min-[66rem]:row-span-2 @min-[66rem]:row-start-1',
+			'@min-[81.25rem]:sticky @min-[81.25rem]:top-6 @min-[81.25rem]:col-start-2 @min-[81.25rem]:row-span-2 @min-[81.25rem]:row-start-1',
 		);
-		expect(source).toContain('space-y-3 @min-[66rem]:col-start-1 @min-[66rem]:row-start-2');
+		expect(source).toContain(
+			'space-y-3 @min-[81.25rem]:col-start-1 @min-[81.25rem]:row-start-2',
+		);
+		expect(source).not.toContain('@min-[66rem]');
 	});
 
 	test('absorbs console overflow in the second row so the left column cannot shift', async () => {
@@ -48,6 +66,32 @@ describe('runs page section order', () => {
 		// Active+gap+History has its excess split evenly between them, so switching between a
 		// pipeline summary and a taller run console moved History down by half the overflow.
 		// The flexible second row takes the whole excess instead.
-		expect(source).toContain('@min-[66rem]:grid-rows-[auto_1fr]');
+		expect(source).toContain('@min-[81.25rem]:grid-rows-[auto_1fr]');
+	});
+
+	test('uses canonical mobile tabs with one workspace panel in flow', async () => {
+		const source = await readRunsPage();
+		const tabs = await readWorkspaceTabs();
+
+		expect(tabs).toContain('<TabList');
+		expect(tabs).toContain('ariaLabel="Run panels"');
+		expect(tabs).toContain('className="sm:hidden"');
+		expect(tabs).toContain('aria-label="Selection active"');
+		for (const panel of ['active', 'console', 'history']) {
+			expect(source).toContain(`tabPanelId(RUNS_PANEL_ID, '${panel}')`);
+			expect(source).toContain(`mobilePanel === '${panel}' ? 'block' : 'hidden sm:block'`);
+		}
+	});
+
+	test('activates and focuses the mobile Console panel after a row selection', async () => {
+		const source = await readRunsPage();
+
+		expect(source).toContain("window.matchMedia('(max-width: 639px)').matches");
+		expect(source).toContain("setMobilePanel('console')");
+		expect(source).toContain('focusConsoleAfterActivationRef.current = true');
+		expect(source).toContain("mobilePanel !== 'console'");
+		expect(source).toContain('node.focus({ preventScroll: true })');
+		expect(source).toContain('onSelectRun: (id) => selectConsoleTarget');
+		expect(source).toContain('onSelectStepRun: (sessionId, runId) =>');
 	});
 });

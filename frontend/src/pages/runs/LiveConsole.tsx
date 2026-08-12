@@ -164,7 +164,7 @@ export function LiveConsole({
 		// leftover space to the transcript scroller. The header, detail panel, controls, and
 		// notices all vary in height per run, which is why this is a flex chain rather than a
 		// calc() subtraction.
-		<section className="flex min-h-0 flex-col @min-[66rem]:flex-1">
+		<section className="flex min-h-0 flex-col @min-[81.25rem]:flex-1">
 			<Card className="flex min-h-0 flex-1 flex-col" variant="panel">
 				{/* Title, icon and stream badge sit in the house header row inside the card rather
 				    than floating above it, matching Active/History and the dashboard cards. */}
@@ -181,7 +181,7 @@ export function LiveConsole({
 					// asked to shrink, so it took the column and left the console output a ~32px
 					// sliver showing one line of a 53,000px transcript. `min-h-0` makes it
 					// shrinkable and `overflow-y-auto` gives it somewhere to put what it loses.
-					<div className="@min-[66rem]:min-h-0 @min-[66rem]:overflow-y-auto">
+					<div className="@min-[81.25rem]:min-h-0 @min-[81.25rem]:overflow-y-auto">
 						<RunDetailPanel selectedRun={selectedRun} stopDetail={stopDetail} />
 					</div>
 				) : selectedRun?.summary ? (
@@ -244,7 +244,7 @@ export function LiveConsole({
 							// block creates. 27rem is 20 lines of `text-xs leading-relaxed` (12px ×
 							// 1.625 = 19.5px, so 390px) plus the 32px of `p-4` — the floor the panel
 							// has to clear to be worth opening at all.
-							className="h-[min(560px,45vh)] w-full max-w-full overflow-auto rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner @min-[66rem]:h-auto @min-[66rem]:min-h-[27rem] @min-[66rem]:flex-1"
+							className="h-[min(560px,45vh)] w-full max-w-full overflow-auto rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-foreground shadow-inner @min-[81.25rem]:h-auto @min-[81.25rem]:min-h-[27rem] @min-[81.25rem]:flex-1"
 							onScroll={handleScroll}
 							ref={scrollRef}>
 							{effectiveView === 'pretty' ? (

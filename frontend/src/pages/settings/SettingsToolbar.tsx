@@ -69,10 +69,10 @@ export function SettingsToolbar({
 		// A border marks the edge, rather than the only drop shadow on the surface. Nothing else on
 		// Settings is lifted off the page, so `shadow-md` gave this one card a z-axis the rest of
 		// the surface does not have — and it is the seam that needs stating, not the elevation.
-		// The offset is the shell nav bar's own published height. Below `sm` that bar is a sticky
-		// element in flow at the same `z-20`, so an unoffset toolbar and it occupy the same strip
-		// and the later one in the DOM — this — paints over the navigation.
-		<Card className="sticky top-[var(--app-topbar-height,0px)] z-20 space-y-2 border-b-2 border-border bg-card/95 p-2.5 backdrop-blur">
+		// The full toolbar stays in normal flow below `sm`; pinning its wrapped tabs and actions under
+		// the mobile shell consumed 42% of a 390x844 viewport. At `sm` and above it keeps the shell's
+		// published offset and the existing sticky desktop behavior.
+		<Card className="space-y-2 border-b-2 border-border bg-card/95 p-2.5 backdrop-blur sm:sticky sm:top-[var(--app-topbar-height,0px)] sm:z-20">
 			{/* The inner row is capped; the Card keeps its full-bleed border-b seam. Uncapped and
 			    justified, the strip's right edge measured x=954 and Discard's left edge x=1999 at
 			    2250x1309 — a 1045px empty band across the one element that is always on screen. Left

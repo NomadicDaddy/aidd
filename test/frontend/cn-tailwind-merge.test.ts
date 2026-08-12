@@ -81,8 +81,9 @@ describe('Tailwind class merging', () => {
 		// specimen cards above it take so its own header can carry the card's padding, + the two
 		// the Reports/Audits pair added: the reports table's `p-0` scrollport and the compact
 		// `p-3` audit row that replaced a hand-rolled bordered div, + the compact audit row's
-		// unpadded Card whose internal identity/details regions own their padding independently.
-		expect(overrides).toHaveLength(40);
+		// unpadded Card whose internal identity/details regions own their padding independently,
+		// + the mobile backend disclosure whose summary and control regions own their padding.
+		expect(overrides).toHaveLength(41);
 		for (const className of overrides) {
 			const declaredPadding = className.match(PADDING_UTILITY)?.at(-1);
 			const mergedPadding = cn('p-4', className).match(PADDING_UTILITY);

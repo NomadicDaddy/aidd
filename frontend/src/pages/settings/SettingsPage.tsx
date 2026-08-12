@@ -47,6 +47,7 @@ export function SettingsPage() {
 	const settings = useSettingsConfig();
 	const update = useUpdateSettingsConfig();
 	const [form, setForm] = useState<WebConfigSettings>(() => createBlankSettings());
+	const [formSeeded, setFormSeeded] = useState(false);
 	const [runtimePending, setRuntimePending] = useState<null | RuntimeAction>(null);
 	const profile = useDirectorProfileForm();
 	const formSeededRef = useRef(false);
@@ -57,6 +58,7 @@ export function SettingsPage() {
 		if (formSeededRef.current) return;
 		formSeededRef.current = true;
 		setForm(normalizeIgnoredFolders(settings.data));
+		setFormSeeded(true);
 	}, [settings.data]);
 
 	function discardChanges() {
@@ -203,7 +205,7 @@ export function SettingsPage() {
 		}
 	}
 
-	if (settings.isLoading) {
+	if (settings.isLoading || (!settings.isError && !formSeeded)) {
 		return (
 			<Card className="py-10 text-center text-sm text-muted-foreground">
 				Loading settings…
@@ -275,6 +277,7 @@ export function SettingsPage() {
 				form={form}
 				profile={profile}
 				runtimePending={runtimePending}
+				savedBackends={settings.data?.backends}
 				setBackendDefault={setBackendDefault}
 				setField={setField}
 				setRuntimePending={setRuntimePending}

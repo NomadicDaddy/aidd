@@ -41,6 +41,7 @@ export function SettingsSectionTabs({
 	form,
 	profile,
 	runtimePending,
+	savedBackends,
 	setBackendDefault,
 	setField,
 	setRuntimePending,
@@ -51,6 +52,7 @@ export function SettingsSectionTabs({
 	form: WebConfigSettings;
 	profile: DirectorProfileForm;
 	runtimePending: null | RuntimeAction;
+	savedBackends: undefined | WebConfigSettings['backends'];
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
@@ -126,6 +128,7 @@ export function SettingsSectionTabs({
 					<BackendDefaultsTable
 						backends={form.backends}
 						defaultCli={normalizeBackendName(form.cli)}
+						savedBackends={savedBackends}
 						setBackendDefault={setBackendDefault}
 						sharedModel={form.model}
 					/>

@@ -15,6 +15,7 @@ import { fieldLabelClass } from '../../lib/formStyles.ts';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 import { BackendDefaultFields } from './BackendDefaultFields.tsx';
+import { BackendDefaultsDisclosureRow } from './BackendDefaultsDisclosureRow.tsx';
 import { SettingsToolStatusBadge } from './SettingsToolStatusBadge.tsx';
 import { emptyBackendDefault } from './settingsUtils.ts';
 
@@ -90,12 +91,14 @@ function BackendIdentity({
 export function BackendDefaultsTable({
 	backends,
 	defaultCli,
+	savedBackends,
 	setBackendDefault,
 	sharedModel,
 }: {
 	backends: WebConfigSettings['backends'];
 	/** The normalized default CLI, used to flag the row whose model shadows the shared default. */
 	defaultCli?: BackendName | null | undefined;
+	savedBackends: undefined | WebConfigSettings['backends'];
 	setBackendDefault: (
 		backend: BackendName,
 		key: keyof BackendDefaultSettings,
@@ -198,7 +201,7 @@ export function BackendDefaultsTable({
 				</OverflowScroller>
 			</Card>
 
-			<div className="space-y-2 @min-[61rem]:hidden">
+			<div className="hidden gap-2 @min-[32rem]:grid @min-[32rem]:grid-cols-2 @min-[61rem]:hidden">
 				{backendDefaultOptions.map((backend) => {
 					const defaults = backends[backend] ?? emptyBackendDefault();
 					return (
@@ -222,6 +225,31 @@ export function BackendDefaultsTable({
 								/>
 							</div>
 						</Card>
+					);
+				})}
+			</div>
+
+			<div className="space-y-2 @min-[32rem]:hidden">
+				{backendDefaultOptions.map((backend) => {
+					const defaults = backends[backend] ?? emptyBackendDefault();
+					const savedDefaults = savedBackends?.[backend] ?? emptyBackendDefault();
+					return (
+						<BackendDefaultsDisclosureRow
+							backend={backend}
+							defaults={defaults}
+							identity={
+								<BackendIdentity
+									backend={backend}
+									loading={statusQuery.isLoading}
+									status={statuses.get(backend)}
+								/>
+							}
+							key={backend}
+							savedDefaults={savedDefaults}
+							setBackendDefault={setBackendDefault}
+							shadowedSharedModel={shadowNote(backend, defaults.model)}
+							sharedModel={sharedModel}
+						/>
 					);
 				})}
 			</div>

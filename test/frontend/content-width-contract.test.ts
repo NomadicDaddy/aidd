@@ -29,10 +29,11 @@ async function* sources(): AsyncGenerator<{ path: string; source: string }> {
 /**
  * The steps allowed to appear in a container query, and what each one is for.
  *
- * `32rem`, `45rem` and `61rem` are read off the content-width table in `AppLayout.tsx` — each clears
- * the widest column that must stay one-up and catches the narrowest that must not. The rest are site
- * measurements that earned their own number, and each says why at its call site: the width at which
- * a specific two-column split still leaves both columns usable, arrived at by measuring the columns
+ * `22rem`, `32rem`, `45rem` and `61rem` are read off the content-width table in `AppLayout.tsx` —
+ * each clears the widest column that must stay one-up and catches the narrowest that must not. The
+ * rest are site measurements that earned their own number, and each says why at its call site: the
+ * width at which a specific two-column split still leaves both columns usable, arrived at by
+ * measuring the columns
  * rather than by picking a viewport tier. A step outside this set is almost always a viewport
  * breakpoint transliterated into a container query, which is the mistake the whole mechanism exists
  * to prevent.
@@ -44,6 +45,7 @@ const sanctionedSteps = new Set([
 	// column is 1632px and the 2250 one's is 1962px, while 1536 and 1440 sit below it and keep the
 	// original ratio.
 	'100rem',
+	'22rem',
 	'32rem',
 	'40rem',
 	'44rem',

@@ -236,59 +236,60 @@ export function DashboardPage() {
 				helpSlug="dashboard"
 				title="Dashboard"
 			/>
-
-			{/* gap-4 to match SortableDashboardGrid: the two sections share left and right edges, so a
-			    narrower gutter here put the metric column seam a few pixels off the card seam below it. */}
-			<section
-				aria-label="Fleet metrics"
-				className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-				<Metric
-					detail={`${healthyProjects} healthy / ${failingProjects.length} need attention`}
-					icon={<FolderKanban className="h-5 w-5" />}
-					label="Projects"
-					loading={projects.isLoading && !projects.data}
-					tone={projectsTone}
-					value={projectCount}
-				/>
-				<Metric
-					detail={activeRuns.length === 1 ? 'run in progress' : 'runs in progress'}
-					icon={<History className="h-5 w-5" />}
-					label="Active Runs"
-					loading={runs.isLoading && runList.length === 0}
-					tone={activeRuns.length > 0 ? 'amber' : 'emerald'}
-					value={activeRuns.length}
-				/>
-				{/* The Fleet Health card used to sit below this tile printing the same percentage
+			<section aria-label="Fleet metrics" className="@container">
+				<div className="grid gap-4 @min-[22rem]:grid-cols-2 @min-[61rem]:grid-cols-4">
+					<Metric
+						compactOnMobile
+						detail={`${healthyProjects} healthy / ${failingProjects.length} need attention`}
+						icon={<FolderKanban className="h-5 w-5" />}
+						label="Projects"
+						loading={projects.isLoading && !projects.data}
+						tone={projectsTone}
+						value={projectCount}
+					/>
+					<Metric
+						compactOnMobile
+						detail={activeRuns.length === 1 ? 'run in progress' : 'runs in progress'}
+						icon={<History className="h-5 w-5" />}
+						label="Active Runs"
+						loading={runs.isLoading && runList.length === 0}
+						tone={activeRuns.length > 0 ? 'amber' : 'emerald'}
+						value={activeRuns.length}
+					/>
+					{/* The Fleet Health card used to sit below this tile printing the same percentage
 				    in its badge and drawing this bar. Both moved into the tile's `footer` and the
 				    card is gone; see PriorityHealthFooter. */}
-				<Metric
-					detail={`${fleetFeaturePassing}/${fleetFeatureTotal} passing`}
-					footer={
-						<PriorityHealthFooter
-							band={healthBand}
-							tone={featureHealthTone}
-							value={featureHealthValue}
-						/>
-					}
-					icon={<CheckCircle2 className="h-5 w-5" />}
-					label="Priority Health"
-					loading={
-						fleetQuery.isLoading &&
-						!fleetQuery.data &&
-						projects.isLoading &&
-						!projects.data
-					}
-					tone={featureHealthTone}
-					value={`${featureHealthValue}%`}
-				/>
-				<Metric
-					detail="pending director actions"
-					icon={<Bot className="h-5 w-5" />}
-					label="Suggestions"
-					loading={suggestionsQuery.isLoading && !suggestionsQuery.data}
-					tone={pendingSuggestions.length > 0 ? 'amber' : 'emerald'}
-					value={pendingSuggestions.length}
-				/>
+					<Metric
+						compactOnMobile
+						detail={`${fleetFeaturePassing}/${fleetFeatureTotal} passing`}
+						footer={
+							<PriorityHealthFooter
+								band={healthBand}
+								tone={featureHealthTone}
+								value={featureHealthValue}
+							/>
+						}
+						icon={<CheckCircle2 className="h-5 w-5" />}
+						label="Priority Health"
+						loading={
+							fleetQuery.isLoading &&
+							!fleetQuery.data &&
+							projects.isLoading &&
+							!projects.data
+						}
+						tone={featureHealthTone}
+						value={`${featureHealthValue}%`}
+					/>
+					<Metric
+						compactOnMobile
+						detail="pending director actions"
+						icon={<Bot className="h-5 w-5" />}
+						label="Suggestions"
+						loading={suggestionsQuery.isLoading && !suggestionsQuery.data}
+						tone={pendingSuggestions.length > 0 ? 'amber' : 'emerald'}
+						value={pendingSuggestions.length}
+					/>
+				</div>
 			</section>
 
 			{activeCycle && <ActiveCycleBanner cycle={activeCycle} now={now} />}

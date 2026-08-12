@@ -38,7 +38,7 @@ describe('a dashboard number is stated once', () => {
 		// `footer` is the Metric slot for full-width content below the caption; the bar and the
 		// band badge are the only things the deleted card had that the tile did not.
 		expect(page).toContain('label="Priority Health"');
-		expect(page).toContain('footer={\n\t\t\t\t\t\t<PriorityHealthFooter');
+		expect(page).toMatch(/footer=\{\s*<PriorityHealthFooter/);
 		expect(footer).toContain('healthBandLabel(band)');
 		expect(footer).toContain('toneSolid[tone]');
 	});

@@ -39,6 +39,7 @@ function valueToneClass(tone: Tone): string {
 
 export function Metric({
 	className,
+	compactOnMobile = false,
 	detail,
 	footer,
 	icon,
@@ -52,6 +53,8 @@ export function Metric({
 	value,
 }: {
 	className?: string;
+	/** Reuse the compact value and spacing below `sm`, preserving the default wider treatment. */
+	compactOnMobile?: boolean;
 	/** Muted caption under the value. */
 	detail?: ReactNode;
 	/** Full-width content below the caption — a progress bar, a link row. */
@@ -81,6 +84,7 @@ export function Metric({
 	value: ReactNode;
 }) {
 	const compact = size === 'compact';
+	const responsiveCompact = compactOnMobile && !compact;
 	const reading = readingTone(tone, value);
 	return (
 		// `h-full` so a strip of tiles is one height, and the reading block stacks from the top of
@@ -93,7 +97,12 @@ export function Metric({
 		// every value on line two across the whole strip, and `mt-auto` on the footer keeps the bar
 		// on the tile's bottom edge, full card width, where the old layout had it.
 		<Card
-			className={cn('flex h-full flex-col overflow-hidden', className)}
+			className={cn(
+				'flex h-full flex-col overflow-hidden',
+				compact && 'p-3',
+				responsiveCompact && 'p-3 sm:p-4',
+				className,
+			)}
 			interactive={interactive}
 			variant={surface ?? (compact ? 'sunken' : 'panel')}>
 			<div className="flex items-stretch justify-between gap-3">
@@ -115,7 +124,7 @@ export function Metric({
 							<div
 								className={cn(
 									'mt-1.5 truncate font-display font-semibold tabular-nums',
-									valueSizes[size],
+									responsiveCompact ? 'text-lg sm:text-2xl' : valueSizes[size],
 									valueToneClass(reading),
 								)}>
 								{value}
@@ -138,6 +147,7 @@ export function Metric({
 						aria-hidden="true"
 						className={cn(
 							'h-fit self-center rounded-xl border border-border bg-muted/60 p-2.5 transition-[border-color,background-color] duration-200',
+							responsiveCompact && 'hidden sm:block',
 							toneText[reading],
 						)}>
 						{icon}

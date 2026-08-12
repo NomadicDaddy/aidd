@@ -212,7 +212,7 @@ describe('telemetry lets the data lead', () => {
 		// is why the assertion moved to the rendered markup rather than being deleted with the
 		// class it used to name.
 		expect(summary).toContain(
-			'@min-[32rem]:grid-cols-2 @min-[45rem]:grid-cols-4 @min-[61rem]:grid-cols-8',
+			'@min-[22rem]:grid-cols-2 @min-[45rem]:grid-cols-4 @min-[61rem]:grid-cols-8',
 		);
 		expect(summary).not.toMatch(/flex h-full flex-col/);
 		expect(rendered.summary).toContain('flex h-full flex-col');

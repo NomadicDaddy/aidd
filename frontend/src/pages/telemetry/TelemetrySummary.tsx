@@ -69,20 +69,24 @@ export function TelemetrySummary({
 			    figure rather than one the reader recomputes. The icons are the Dashboard's Metric
 			    idiom and only distinguish the three at a glance; they carry no meaning the text
 			    does not. */}
-			<div className="grid gap-3 @min-[32rem]:grid-cols-3">
+			<div className="grid gap-3 @min-[22rem]:grid-cols-2 @min-[32rem]:grid-cols-3">
 				<Metric
+					compactOnMobile
 					detail={window}
 					icon={<Activity className="h-5 w-5" />}
 					label="Total invocations"
 					value={totals.total}
 				/>
 				<Metric
+					compactOnMobile
 					detail={`${percent(totals.topLevel, totals.total)}% of invocations`}
 					icon={<Play className="h-5 w-5" />}
 					label="Top-level actions"
 					value={totals.topLevel}
 				/>
 				<Metric
+					className="@min-[22rem]:col-span-2 @min-[32rem]:col-span-1"
+					compactOnMobile
 					detail={`${percent(totals.nested, totals.total)}% of invocations`}
 					icon={<GitBranch className="h-5 w-5" />}
 					label="Nested steps"
@@ -96,7 +100,7 @@ export function TelemetrySummary({
 			    content-width table in AppLayout.tsx for why those differ. These are `compact`:
 			    eight tiles at the headline step would out-shout the three figures above them,
 			    which are what the page is actually reporting. */}
-			<div className="grid gap-3 @min-[32rem]:grid-cols-2 @min-[45rem]:grid-cols-4 @min-[61rem]:grid-cols-8">
+			<div className="grid gap-3 @min-[22rem]:grid-cols-2 @min-[45rem]:grid-cols-4 @min-[61rem]:grid-cols-8">
 				<Metric
 					label="Completed"
 					marker={outcomeDot(outcomeSolid.completed)}

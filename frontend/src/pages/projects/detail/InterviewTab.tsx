@@ -87,7 +87,7 @@ export function InterviewTab({
 	}
 	const remaining = interview.total - interview.answered;
 	return (
-		<div className="space-y-4">
+		<div className="@container space-y-4">
 			<TabIntro
 				description="The intake interview for this project — what has been answered and what is still outstanding."
 				title="Interview"
@@ -98,15 +98,27 @@ export function InterviewTab({
 			{/* Each tile carries its `detail` line, the way the Artifacts row one tab away does.
 			    Without it the two rows of the same shared tile rendered at visibly different heights,
 			    and the shorter Interview strip read as a different, lesser component. */}
-			<div className="grid gap-4 sm:grid-cols-3">
-				<Metric detail="In this interview" label="Questions" value={interview.total} />
+			<div className="grid gap-4 @min-[22rem]:grid-cols-3">
 				<Metric
+					compactOnMobile
+					detail="In this interview"
+					label="Questions"
+					value={interview.total}
+				/>
+				<Metric
+					compactOnMobile
 					detail="Answered"
 					label="Completed"
 					tone="emerald"
 					value={interview.answered}
 				/>
-				<Metric detail="Outstanding" label="Unanswered" tone="amber" value={remaining} />
+				<Metric
+					compactOnMobile
+					detail="Outstanding"
+					label="Unanswered"
+					tone="amber"
+					value={remaining}
+				/>
 			</div>
 			<Card>
 				<CardHeader className="mb-2" title="Unanswered questions" />

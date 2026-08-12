@@ -1,5 +1,6 @@
+import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import type { ProjectCodeFileEntry, ProjectCodeTreeState } from '../../../api/types.ts';
@@ -14,6 +15,7 @@ import { cn } from '../../../lib/cn.ts';
 import { codeBrowserHeightClass } from './codeBrowserHeight.ts';
 import { CodeFileTree } from './CodeFileTree.tsx';
 import { CodeFileViewer } from './CodeFileViewer.tsx';
+import { matchesQuery } from './codeTreeNodes.ts';
 
 const treeMessages: Record<Exclude<ProjectCodeTreeState, 'ok'>, string> = {
 	error: 'Tracked files could not be loaded.',
@@ -27,9 +29,15 @@ function chooseInitialFile(files: ProjectCodeFileEntry[]): null | string {
 
 export function CodeTab({ projectId }: { projectId: string }) {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const navigationId = useId();
+	const [navigationOpen, setNavigationOpen] = useState(false);
 	const [query, setQuery] = useState('');
 	const tree = useProjectCodeTree(projectId);
-	const files = tree.data?.state === 'ok' ? tree.data.files : [];
+	const files = useMemo(() => (tree.data?.state === 'ok' ? tree.data.files : []), [tree.data]);
+	const matchingFileCount = useMemo(
+		() => files.filter((file) => matchesQuery(file, query)).length,
+		[files, query],
+	);
 	const requestedFile = searchParams.get('file');
 	const selectedPath = files.some((file) => file.path === requestedFile)
 		? requestedFile
@@ -49,6 +57,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 	}, [requestedFile, selectedPath, setSearchParams]);
 
 	const selectFile = (path: string) => {
+		setNavigationOpen(false);
 		setSearchParams(
 			(previous) => {
 				const next = new URLSearchParams(previous);
@@ -107,9 +116,9 @@ export function CodeTab({ projectId }: { projectId: string }) {
 				className="mb-0 items-center border-b border-border p-4"
 				title="Code"
 			/>
-			{/* Stacked, the viewer comes first. Above it, the tree's own scroller filled the entire
-			    viewport with file names — not one line of the code the reader came for was visible,
-			    and the nested region stole the wheel on the way past.
+			{/* Below the split, a 44px disclosure keeps file navigation ahead of the viewer without
+			    filling the initial viewport with the tree. Its closed row retains the current path and
+			    filtered count; opening it reveals the same keyboard tree used by the split layout.
 
 			    Split, the row takes one height off the viewport and both panes scroll inside it.
 			    They used to carry their own rem caps — 34rem for the tree, 42rem for the viewer —
@@ -129,15 +138,48 @@ export function CodeTab({ projectId }: { projectId: string }) {
 					'grid min-h-[32rem] gap-0 @min-[61rem]:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] @min-[100rem]:grid-cols-[minmax(22rem,30rem)_minmax(0,1fr)]',
 					codeBrowserHeightClass,
 				)}>
-				<aside className="order-2 border-t border-border p-3 @min-[61rem]:order-1 @min-[61rem]:flex @min-[61rem]:min-h-0 @min-[61rem]:flex-col @min-[61rem]:border-t-0 @min-[61rem]:border-r">
-					<CodeFileTree
-						files={files}
-						onSelect={selectFile}
-						query={query}
-						selectedPath={selectedPath}
-					/>
+				<aside className="order-1 border-b border-border @min-[61rem]:flex @min-[61rem]:min-h-0 @min-[61rem]:flex-col @min-[61rem]:border-r @min-[61rem]:border-b-0">
+					<button
+						aria-controls={navigationId}
+						aria-expanded={navigationOpen}
+						aria-label={`Tracked files, ${selectedPath ?? 'no file selected'}, ${matchingFileCount.toLocaleString()} results`}
+						className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none @min-[61rem]:hidden"
+						onClick={() => setNavigationOpen((open) => !open)}
+						type="button">
+						<span className="shrink-0 text-sm font-medium text-foreground">
+							Tracked files
+						</span>
+						<span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
+							{selectedPath ?? 'No file selected'}
+						</span>
+						<span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+							{matchingFileCount.toLocaleString()} results
+						</span>
+						<ChevronDown
+							aria-hidden="true"
+							className={cn(
+								'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+								navigationOpen && 'rotate-180',
+							)}
+						/>
+					</button>
+					<div
+						className={cn(
+							'min-h-0 flex-col p-3',
+							navigationOpen ? 'flex' : 'hidden',
+							'@min-[61rem]:flex @min-[61rem]:flex-1',
+						)}
+						id={navigationId}>
+						<CodeFileTree
+							className="max-h-[28rem] @min-[61rem]:max-h-none"
+							files={files}
+							onSelect={selectFile}
+							query={query}
+							selectedPath={selectedPath}
+						/>
+					</div>
 				</aside>
-				<section className="order-1 min-w-0 @min-[61rem]:order-2 @min-[61rem]:flex @min-[61rem]:min-h-0 @min-[61rem]:flex-col">
+				<section className="order-2 min-w-0 @min-[61rem]:flex @min-[61rem]:min-h-0 @min-[61rem]:flex-col">
 					<CodeFileViewer
 						data={fileQuery.data}
 						isError={fileQuery.isError}

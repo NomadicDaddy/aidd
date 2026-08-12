@@ -157,6 +157,22 @@ describe('run tables', () => {
 });
 
 describe('code browser', () => {
+	test('keeps labelled file navigation before the viewer below the split', async () => {
+		const tab = await detail('CodeTab.tsx');
+		const navigation = tab.indexOf('aria-controls={navigationId}');
+		const viewer = tab.indexOf('<CodeFileViewer');
+
+		expect(navigation).toBeGreaterThan(-1);
+		expect(navigation).toBeLessThan(viewer);
+		expect(tab).toContain('aria-expanded={navigationOpen}');
+		expect(tab).toContain('aria-label={`Tracked files, ${selectedPath');
+		expect(tab).toContain('min-h-11 w-full');
+		expect(tab).toContain("navigationOpen ? 'flex' : 'hidden'");
+		expect(tab).toContain('className="max-h-[28rem] @min-[61rem]:max-h-none"');
+		expect(tab).toContain('@min-[61rem]:hidden');
+		expect(tab).toContain('setNavigationOpen(false)');
+	});
+
 	test('both panes take one viewport-derived height and scroll inside it', async () => {
 		const shared = await detail('codeBrowserHeight.ts');
 		expect(shared).toContain("'@min-[61rem]:h-[calc(100vh-19rem)] @min-[61rem]:min-h-[28rem]'");

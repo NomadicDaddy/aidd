@@ -137,11 +137,13 @@ function FileTreeNode({
 // start collapsed except for the folders leading to the selected file; an active search keeps every
 // matching folder open so results stay visible.
 export function CodeFileTree({
+	className,
 	files,
 	onSelect,
 	query,
 	selectedPath,
 }: {
+	className?: string;
 	files: ProjectCodeFileEntry[];
 	onSelect: (path: string) => void;
 	query: string;
@@ -189,7 +191,7 @@ export function CodeFileTree({
 		// there swallowed the wheel.
 		<div
 			aria-label="Tracked files"
-			className={cn('overflow-y-auto', codeBrowserScrollerClass)}
+			className={cn('overflow-y-auto', codeBrowserScrollerClass, className)}
 			onKeyDown={handleTreeKeyDown}
 			role="tree">
 			{roots.map((child) => (

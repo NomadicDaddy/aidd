@@ -23,7 +23,7 @@ const WRAPPER_CLASS = /class="relative inline-flex max-w-full min-w-0"/g;
 // The interactive trigger is a `<button>`, not a tabbable `<span>`: Tooltip puts its child in the
 // tab order, and a span arrived there as an unnamed generic node.
 const WRAPPED_BADGE =
-	/<button class="inline-flex rounded-md focus-visible:[^"]*"[^>]*><span class="inline-flex items-center gap-1\.5[^"]*">(.*?)<\/span><\/button>/g;
+	/<button class="inline-flex items-center justify-center rounded-md focus-visible:[^"]*"[^>]*><span class="inline-flex items-center gap-1\.5[^"]*">(.*?)<\/span><\/button>/g;
 // The plain trigger. `Badge` spreads its extra props after `className`, so the explainer lands
 // immediately after the class list.
 const TITLED_BADGE =
@@ -119,9 +119,8 @@ function labelsFrom(markup: string, pattern: RegExp): string[] {
 const cardMarkup = renderMarkup(
 	`console.log(render(h(RecipeCard, { launchDisabled: false, launchPending: false, onLaunch: () => {}, recipe: ${JSON.stringify(recipe)}, usage: undefined })));`,
 );
-// `RecipeTable` renders the card stack as well — the card IS this table's phone rendering, see
-// table-containment — so the table half is sliced out here. Comparing the whole render against
-// `cardMarkup` would be comparing the card with a copy of itself.
+// `RecipeTable` renders the compact list beside the desktop table in static markup, so the table
+// half is sliced out here. Its own badge contract is the one under test in this file.
 const tableViewMarkup = renderMarkup(
 	`console.log(render(h(RecipeTable, { launchDisabled: false, launchPending: false, onLaunch: () => {}, recipes: [${JSON.stringify(recipe)}], usageByResourceId: new Map() })));`,
 );
@@ -182,6 +181,7 @@ describe('recipe badge tooltip wiring', () => {
 		);
 		expect(counts(markup)).toEqual({ badges: 1, explained: 0, triggers: 1, wrappers: 1 });
 		expect(labelsFrom(markup, WRAPPED_BADGE)).toEqual(['explained']);
+		expect(markup).toContain('max-sm:min-h-11 max-sm:min-w-11');
 	});
 
 	test('a recipe page keeps the interactive badges', async () => {

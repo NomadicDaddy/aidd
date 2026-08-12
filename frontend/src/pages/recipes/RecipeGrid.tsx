@@ -1,11 +1,10 @@
 import { default as ListTree } from 'lucide-react/dist/esm/icons/list-tree';
-import { default as Send } from 'lucide-react/dist/esm/icons/send';
 import { Link } from 'react-router';
 
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';
 
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
-import { Button, buttonClassName } from '../../components/ui/button.tsx';
+import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
@@ -14,8 +13,9 @@ import {
 	recipeParameterCountExplainer,
 	recipeStepCountExplainer,
 } from './recipe-badge-explainers.ts';
-import { launchHint } from './recipe-launch.ts';
 import { RecipeBadgeTooltip } from './RecipeBadgeTooltip.tsx';
+import { RecipeCompactList } from './RecipeCompactList.tsx';
+import { RecipeLaunchButton, type RecipeLaunchProps } from './RecipeLaunchButton.tsx';
 import {
 	RecipeContractBadges,
 	RecipePolicyBadges,
@@ -23,40 +23,11 @@ import {
 	RecipeTypeBadge,
 } from './RecipeMetadataBadges.tsx';
 
-interface LaunchProps {
-	launchDisabled: boolean;
-	launchHintId?: string;
-	launchPending: boolean;
-	onLaunch: (recipe: RecipeDefinition) => void;
-}
-
-function LaunchButton({
-	launchDisabled,
-	launchHintId,
-	launchPending,
-	onLaunch,
-	recipe,
-	size = 'default',
-}: { recipe: RecipeDefinition; size?: 'compact' | 'default' } & LaunchProps) {
-	return (
-		<Button
-			aria-describedby={launchDisabled ? launchHintId : undefined}
-			disabled={launchDisabled || launchPending}
-			onClick={() => onLaunch(recipe)}
-			size={size}
-			title={launchDisabled ? launchHint : undefined}
-			variant="primary">
-			<Send className="h-4 w-4" />
-			Launch
-		</Button>
-	);
-}
-
 export function RecipeCard({
 	recipe,
 	usage,
 	...launch
-}: { recipe: RecipeDefinition; usage: ResourceUsageRow | undefined } & LaunchProps) {
+}: { recipe: RecipeDefinition; usage: ResourceUsageRow | undefined } & RecipeLaunchProps) {
 	const isPipeline = recipe.steps.length > 1;
 	const usageLine = formatUsageBadge(usage);
 	return (
@@ -118,7 +89,7 @@ export function RecipeCard({
 			</div>
 			{usageLine ? <p className="mb-3 text-xs text-muted-foreground">{usageLine}</p> : null}
 			<div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
-				<LaunchButton recipe={recipe} {...launch} />
+				<RecipeLaunchButton recipe={recipe} {...launch} />
 				<Link className={buttonClassName()} to={`/recipes/${recipe.id}`}>
 					<ListTree className="h-4 w-4" />
 					Details
@@ -135,30 +106,21 @@ export function RecipeTable({
 }: {
 	recipes: RecipeDefinition[];
 	usageByResourceId: Map<string, ResourceUsageRow>;
-} & LaunchProps) {
+} & RecipeLaunchProps) {
 	return (
 		<>
-			{/* The Table toggle is a user choice, and honouring it at 390px meant eight columns in a
-			    358px column. The stack is `RecipeCard` itself rather than a second card layout: it
-			    already carries every column this table has — name, id, description, type and contract
-			    badges, step and parameter counts, step-type and policy badges, the usage line, Launch
-			    and Details — so a phone-width Table view is the catalog's own card, not a reduction.
-
-			    Eight columns come to roughly 1160px of minimum width: the name cell's declared
+			{/* Eight columns come to roughly 1160px of minimum width: the name cell's declared
 			    `min-w-56` (224px) over a mono id, 140px for the type and contract badges, 70px for a
 			    right-aligned count, 140px of step-type badges, 200px of policies, 90px for parameters,
 			    120px of nowrap usage, and 180px for a compact Launch beside a compact Details. `xl`
 			    is the tier where the 992px content column an expanded rail leaves gets close enough
 			    that the scrollport is carrying a scroll rather than hiding most of the table. */}
-			<div className="grid gap-3 xl:hidden">
-				{recipes.map((recipe) => (
-					<RecipeCard
-						key={recipe.id}
-						recipe={recipe}
-						usage={usageByResourceId.get(recipe.id)}
-						{...launch}
-					/>
-				))}
+			<div className="xl:hidden">
+				<RecipeCompactList
+					recipes={recipes}
+					usageByResourceId={usageByResourceId}
+					{...launch}
+				/>
 			</div>
 			<Card className="hidden p-0 xl:block">
 				<OverflowScroller ariaLabel="Recipes">
@@ -270,7 +232,7 @@ export function RecipeTable({
 										</td>
 										<td className="px-3 py-2">
 											<div className="flex flex-nowrap items-center gap-2">
-												<LaunchButton
+												<RecipeLaunchButton
 													recipe={recipe}
 													size="compact"
 													{...launch}

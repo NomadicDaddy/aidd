@@ -38,14 +38,16 @@ describe('the launch prerequisite is stated where the dead buttons are', () => {
 	test('the button title and the notice are one string', async () => {
 		const hint = await read('pages/recipes/recipe-launch.ts');
 		const grid = await read('pages/recipes/RecipeGrid.tsx');
+		const launchButton = await read('pages/recipes/RecipeLaunchButton.tsx');
 		const page = await read('pages/recipes/RecipesPage.tsx');
 
 		expect(hint).toContain("export const launchHint = 'Choose a project to enable Launch';");
-		for (const source of [grid, page]) {
+		for (const source of [launchButton, page]) {
 			expect(source).toContain("from './recipe-launch.ts'");
 			expect(stripComments(source)).not.toContain("'Choose a project to enable Launch'");
 		}
-		expect(grid).toContain('title={launchDisabled ? launchHint : undefined}');
+		expect(grid).toContain('<RecipeLaunchButton');
+		expect(launchButton).toContain('title={launchDisabled ? launchHint : undefined}');
 	});
 });
 

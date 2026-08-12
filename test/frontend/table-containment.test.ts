@@ -278,7 +278,7 @@ describe('wide tables are contained and replaced', () => {
 				start: 'function MilestonesList',
 			},
 			{
-				fields: ['<RecipeCard'],
+				fields: ['<RecipeCompactList'],
 				file: 'pages/recipes/RecipeGrid.tsx',
 				start: 'export function RecipeTable',
 			},

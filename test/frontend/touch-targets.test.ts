@@ -374,13 +374,6 @@ const EXEMPT: Exemption[] = [
 		marker: 'cursor-ns-resize',
 		reason: 'A pointer/keyboard resize grip; `handleResizeKeyDown` is the accessible path.',
 	},
-
-	// Measured and kept.
-	{
-		file: 'pages/recipes/RecipeBadgeTooltip.tsx',
-		marker: 'className={triggerClass}',
-		reason: '198 badges at 24px. `Tooltip` injects the tap handler, but the badge text is already the information and the tooltip only elaborates; the chips sit in a `flex flex-wrap gap-1.5` cluster where a 44px box would overlap its neighbours and steal their taps. Clears WCAG 2.5.8 AA.',
-	},
 ];
 
 /** The opening tag at `start`, brace-aware so a `{...}` prop and an arrow `=>` do not end it. */

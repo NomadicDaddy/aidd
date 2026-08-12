@@ -11,8 +11,12 @@ import { type Tone } from '../../lib/tones.ts';
 // value that does not track `--accent`, and the token flips itself, so the `dark:` half is not a
 // correction the app needs to carry. Same combination `formControlClass` and
 // `artifactRowButtonClass` use.
+// The mobile minimums enlarge the button box without changing Badge's compact padding or type.
+// These triggers appear as one policy-summary row on the recipe editor rather than as catalog
+// controls; catalog callers use `plain`, so the hundreds of read-only chips stay outside the tab
+// order and do not inherit this touch area.
 const triggerClass =
-	'inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none';
+	'inline-flex items-center justify-center rounded-md focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none max-sm:min-h-11 max-sm:min-w-11';
 
 export function RecipeBadgeTooltip({
 	children,

@@ -71,9 +71,9 @@ export function RecipesPageActions({
 						value: 'cards',
 					},
 					{
-						ariaLabel: 'Table view',
+						ariaLabel: 'Compact list view',
 						label: <List aria-hidden="true" className="h-4 w-4" />,
-						title: 'Table view',
+						title: 'Compact list view',
 						value: 'table',
 					},
 				]}

@@ -170,9 +170,11 @@ describe('horizontal overflow always says so', () => {
 		// Only the compact strip scrolls. Wrapping the wrapping strip too would emit a region
 		// landmark for a scrollport that never scrolls.
 		expect(tabs).toContain("className={compact ? 'flex gap-2' : 'flex flex-wrap gap-2'}");
-		// Arrowing to a trigger that is off the scrollport has to bring it into view, and has to
-		// do it without scrolling the page under the operator.
-		expect(tabs).toContain("scrollIntoView({ block: 'nearest', inline: 'nearest' })");
+		// Arrowing to an offscreen trigger moves only the local scrollport. `scrollIntoView` can
+		// also move every ancestor, including the document, so focus and reveal are explicit.
+		expect(tabs).toContain('node.focus({ preventScroll: true })');
+		expect(tabs).toContain('revealElementWithinScroller(scroller, node)');
+		expect(tabs).not.toContain('scrollIntoView');
 	});
 
 	test('Project Detail asks for the compact strip that scrolls', async () => {

@@ -90,9 +90,11 @@ describe('the rail is one list with a current item, not 76 buttons', () => {
 		const tabs = await read('frontend/src/components/ui/tabs.tsx');
 
 		// If the house roving-tabindex pattern moves, the listbox should move with it rather than
-		// quietly become a second convention.
+		// quietly become a second convention. Tabs additionally constrain their reveal to the local
+		// overflow strip because a page-level tab change must not move the document.
 		expect(tabs).toContain('tabIndex={selected ? 0 : -1}');
-		expect(tabs).toContain("scrollIntoView({ block: 'nearest', inline: 'nearest' })");
+		expect(tabs).toContain('node.focus({ preventScroll: true })');
+		expect(tabs).toContain('revealElementWithinScroller(scroller, node)');
 	});
 });
 

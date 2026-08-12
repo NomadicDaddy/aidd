@@ -2,6 +2,7 @@ import { type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { revealElementWithinScroller } from '../../lib/revealWithinScroller.ts';
 import { OverflowScroller } from '../shared/OverflowScroller.tsx';
 import { Button } from './button.tsx';
 
@@ -56,11 +57,9 @@ export function TabList<T extends string>({
 		onChange(id);
 		const node = document.getElementById(tabButtonId(idPrefix, id));
 		if (!(node instanceof HTMLElement)) return;
-		node.focus();
-		// `focus()` scrolls an off-screen trigger into view, but it scrolls every scrollable
-		// ancestor to do it, which yanks the page under a keyboard user arrowing along the strip.
-		// `inline: 'nearest'` moves the strip by the least it can and leaves the page where it is.
-		node.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+		node.focus({ preventScroll: true });
+		const scroller = node.closest<HTMLElement>('[data-overflow-scroller]');
+		if (scroller) revealElementWithinScroller(scroller, node);
 	}
 
 	function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -141,6 +140,7 @@ export function TabList<T extends string>({
 				<OverflowScroller
 					ariaLabel={ariaLabel}
 					className="hidden lg:block"
+					revealElementId={tabButtonId(idPrefix, activeTab)}
 					scrollerClassName="pb-1"
 					surface="background">
 					{tablist}

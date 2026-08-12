@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { observeOverflow } from '../../lib/observeOverflow.ts';
+import { revealElementWithinScroller } from '../../lib/revealWithinScroller.ts';
 
 /**
  * A scrollport that says so.
@@ -40,6 +41,7 @@ export function OverflowScroller({
 	ariaLabel,
 	children,
 	className,
+	revealElementId,
 	scrollerClassName,
 	surface = 'card',
 }: {
@@ -47,16 +49,20 @@ export function OverflowScroller({
 	ariaLabel: string;
 	children: ReactNode;
 	className?: string;
+	/** Reveals this descendant when its id changes, without moving any ancestor scrollport. */
+	revealElementId?: string;
 	/** Extra classes for the scrolling element itself — a `max-h-*` makes it scroll vertically. */
 	scrollerClassName?: string;
 	/** The surface under the scrollport, so the edge fade dissolves into it rather than over it. */
 	surface?: keyof typeof fadeFrom;
 }) {
 	const cleanupRef = useRef<(() => void) | null>(null);
+	const rootRef = useRef<HTMLDivElement | null>(null);
 
 	const setRoot = useCallback((root: HTMLDivElement | null) => {
 		cleanupRef.current?.();
 		cleanupRef.current = null;
+		rootRef.current = root;
 		if (!root) return;
 		const scroller = root.querySelector<HTMLElement>('[data-overflow-scroller]');
 		if (!scroller) return;
@@ -73,6 +79,14 @@ export function OverflowScroller({
 			else scroller.removeAttribute('tabindex');
 		});
 	}, []);
+
+	useLayoutEffect(() => {
+		if (!revealElementId) return;
+		const scroller = rootRef.current?.querySelector<HTMLElement>('[data-overflow-scroller]');
+		const target = document.getElementById(revealElementId);
+		if (!scroller || !(target instanceof HTMLElement) || !scroller.contains(target)) return;
+		revealElementWithinScroller(scroller, target);
+	}, [revealElementId]);
 
 	return (
 		// `overflow-clip` is what actually keeps a capped scrollport out of the page's scroll

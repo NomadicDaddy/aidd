@@ -31,38 +31,40 @@ export function PageHeader({
 	title: ReactNode;
 }) {
 	return (
-		<header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-			<div className="min-w-0">
-				{breadcrumb !== undefined && (
-					<div className="mb-1 text-sm text-muted-foreground">{breadcrumb}</div>
-				)}
-				<div className="flex items-center gap-1.5">
-					<h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
-						{title}
-					</h1>
-					{helpSlug !== undefined && <HelpTrigger slug={helpSlug} />}
+		<header className="@container">
+			<div className="flex flex-col gap-2 @min-[61rem]:flex-row @min-[61rem]:items-end @min-[61rem]:justify-between @min-[61rem]:gap-3">
+				<div className="min-w-0">
+					{breadcrumb !== undefined && (
+						<div className="mb-1 text-sm text-muted-foreground">{breadcrumb}</div>
+					)}
+					<div className="flex items-center gap-1.5">
+						<h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
+							{title}
+						</h1>
+						{helpSlug !== undefined && <HelpTrigger slug={helpSlug} />}
+					</div>
+					{identifier !== undefined && (
+						<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+							{identifier}
+						</p>
+					)}
+					{description !== undefined && (
+						// The measure is the default rather than each page's decision: a page
+						// description is running prose, and at 2250px wide it otherwise ran the full
+						// content column. `descriptionClassName` still overrides it — a description
+						// that is a machine string rather than prose opts out with `max-w-none`.
+						<p
+							className={cn(
+								'text-sm text-muted-foreground',
+								proseMeasureClass,
+								descriptionClassName,
+							)}>
+							{description}
+						</p>
+					)}
 				</div>
-				{identifier !== undefined && (
-					<p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-						{identifier}
-					</p>
-				)}
-				{description !== undefined && (
-					// The measure is the default rather than each page's decision: a page
-					// description is running prose, and at 2250px wide it otherwise ran the full
-					// content column. `descriptionClassName` still overrides it — a description
-					// that is a machine string rather than prose opts out with `max-w-none`.
-					<p
-						className={cn(
-							'text-sm text-muted-foreground',
-							proseMeasureClass,
-							descriptionClassName,
-						)}>
-						{description}
-					</p>
-				)}
+				{actions}
 			</div>
-			{actions}
 		</header>
 	);
 }

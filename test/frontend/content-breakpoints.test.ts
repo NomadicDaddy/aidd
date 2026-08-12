@@ -69,14 +69,17 @@ describe('content-aware responsive breakpoints', () => {
 		expect(css).toContain('--breakpoint-md: initial;');
 	});
 
-	test('keeps the shared page header stacked until the lg content breakpoint', async () => {
+	test('gates the shared page header row on its own content width', async () => {
 		const source = await readFile(
 			join(frontendSource, 'components', 'shared', 'PageHeader.tsx'),
 			'utf8',
 		);
 
-		expect(source).toContain('flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between');
-		expect(source).not.toContain('sm:flex-row sm:items-end sm:justify-between');
+		expect(source).toContain('<header className="@container">');
+		expect(source).toContain(
+			'flex flex-col gap-2 @min-[61rem]:flex-row @min-[61rem]:items-end @min-[61rem]:justify-between @min-[61rem]:gap-3',
+		);
+		expect(source).not.toMatch(/(?:sm|lg):flex-row/);
 	});
 
 	test('contains narrow telemetry and settings content within the main column', async () => {

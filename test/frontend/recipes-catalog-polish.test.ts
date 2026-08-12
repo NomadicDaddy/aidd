@@ -244,23 +244,23 @@ describe('config values get one treatment', () => {
 });
 
 describe('the header actions fit on the width where they first share a line', () => {
-	test('the actions row refuses to shrink, so the title column absorbs instead', async () => {
+	test('the actions remain one complete unit at every header composition', async () => {
 		const actions = await read('pages/recipes/RecipesPageActions.tsx');
 
-		// 1024 is both where `PageHeader` becomes a row and where these buttons take their
-		// labels, so the cluster first has to share a line on the exact width it first becomes
-		// wide. It needs 330px there and the header offered 327.3.
+		// The 330px cluster does not shrink or wrap internally. Below the shared header's content
+		// threshold it receives its own row; above it the title and actions have room to coexist.
 		expect(actions).toContain('<div className="flex shrink-0 flex-nowrap items-center gap-2">');
 		expect(actions).toContain('className="w-auto shrink-0"');
 	});
 
-	test('the column beside it is the one that can give', async () => {
+	test('the header shares a row only after its own content can fit both sides', async () => {
 		const header = await read('components/shared/PageHeader.tsx');
 
 		// Nothing inside the actions row can absorb: the buttons are `whitespace-nowrap` and the
-		// view toggle is `shrink-0`. The title column is a wrapping paragraph under `min-w-0`,
-		// and giving costs it a second description line at one width band.
-		expect(header).toContain('lg:flex-row lg:items-end lg:justify-between');
+		// view toggle is `shrink-0`. The header therefore waits for 61rem of its own content width
+		// before sharing a row, with `min-w-0` retained as the final overflow guard.
+		expect(header).toContain('<header className="@container">');
+		expect(header).toContain('@min-[61rem]:flex-row');
 		expect(header).toContain('<div className="min-w-0">');
 	});
 });

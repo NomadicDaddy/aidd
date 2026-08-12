@@ -85,7 +85,7 @@ export function ProfileMatrixPage() {
 		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
-					<div className="flex flex-wrap items-center gap-2">
+					<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 						<SegmentedControl
 							ariaLabel="Profile matrix columns"
 							onChange={setMode}
@@ -99,7 +99,9 @@ export function ProfileMatrixPage() {
 							}}
 							queries={[projects, previews]}
 						/>
-						<Link className={buttonClassName('secondary')} to="/projects">
+						<Link
+							className={buttonClassName('secondary', 'hidden sm:inline-flex')}
+							to="/projects">
 							Projects
 						</Link>
 						<Button

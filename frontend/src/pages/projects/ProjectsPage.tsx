@@ -95,8 +95,9 @@ export function ProjectsPage() {
 		<div className="page-reveal space-y-5">
 			<PageHeader
 				actions={
-					<div className="flex flex-wrap items-center gap-2">
+					<div className="flex flex-wrap items-center gap-1">
 						<DataFreshness
+							className="gap-1"
 							label="Project list"
 							onRefresh={handleRefresh}
 							queries={[projects]}

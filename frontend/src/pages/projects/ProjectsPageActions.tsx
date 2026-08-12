@@ -24,9 +24,9 @@ export function ProjectsPageActions({
 	setProjectView: (view: 'cards' | 'table') => void;
 }) {
 	return (
-		// `flex-nowrap`: at 768 this row wrapped onto three lines and squeezed the PageHeader title
-		// column to ~110px. The two secondary actions drop their labels below `lg` so the row holds.
-		<div className="flex flex-nowrap items-center gap-2">
+		// PageHeader owns the responsive wrap. Keeping this cluster intact with the compact spacing
+		// step lets every desktop label fit beside freshness in the 736px content column.
+		<div className="flex flex-nowrap items-center gap-1">
 			{/* The page's one primary, and primary at rest — it used to go teal only once the intake
 			    panel was already open, so the resting header had no primary at all while the card
 			    grid below it carried one teal Start per project. `aria-pressed` carries the open

@@ -1,3 +1,4 @@
+import { EXT_LOG_PATH_ENV } from 'aidd-shared/metadata/active-runs';
 import { buildBackendSubprocessEnv, buildToolSubprocessEnv } from 'aidd-shared/subprocess-env';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -46,6 +47,14 @@ export function executeAidd(
 ): { invocation: { args: string[]; command: string }; result: CommandResult } {
 	const invocation = buildAiddInvocation(stack, task, workspaceDir);
 	const overrideEnv: Record<string, string> = { ...fixedEnv };
+	// The CLI resolves its data directory from the aidd INSTALL root, never from --project-dir, so
+	// an unclaimed run writes its transcript to `<install>/data/run-logs`. For a benchmark that is
+	// the live control panel's own data directory: disposable simulation runs land in real run
+	// history, and under the test suite they litter the developer's working copy. Claim the log
+	// path explicitly — the same contract the web backend uses to own a detached run's log — so the
+	// benchmark keeps its transcripts with its own artifacts. Sibling of the workspace, not inside
+	// it, so it is neither fixture-hashed nor mistaken for a run artifact.
+	overrideEnv[EXT_LOG_PATH_ENV] = `${workspaceDir}.run.log`;
 	if (stack.provider) overrideEnv.NATIVE_PROVIDER = stack.provider;
 	if (stack.cli === 'ollama') overrideEnv.NATIVE_PROVIDER = 'ollama';
 	if (stack.simulation) overrideEnv.AIDD_NATIVE_SIMULATION = '1';

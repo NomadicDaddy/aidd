@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import {
@@ -364,6 +364,12 @@ describe('benchmark harness', () => {
 			'benchmark',
 			'manifest.simulation.json',
 		);
+		// The benchmark drives the real CLI, which resolves its data directory from the aidd
+		// install root — this working copy — regardless of --project-dir. Before the log path was
+		// claimed, every replicate wrote its transcript into the developer's live
+		// `data/run-logs`, so the suite silently deposited simulation runs in real run history.
+		const liveRunLogs = path.join(repoRoot, 'data', 'run-logs');
+		const before = new Set(existsSync(liveRunLogs) ? readdirSync(liveRunLogs) : []);
 		const run = spawnSync(
 			'bun',
 			[
@@ -381,6 +387,21 @@ describe('benchmark harness', () => {
 			{ cwd: repoRoot, encoding: 'utf8', windowsHide: true },
 		);
 		expect(run.status).toBe(0);
+
+		// A user-owned panel run can legitimately add a log here while the suite runs, so this
+		// asserts attribution rather than an unchanged directory: nothing new may reference this
+		// benchmark's disposable workspaces.
+		const added = existsSync(liveRunLogs)
+			? readdirSync(liveRunLogs).filter((name) => !before.has(name))
+			: [];
+		for (const name of added) {
+			expect(readFileSync(path.join(liveRunLogs, name), 'utf8')).not.toContain(root);
+		}
+		const transcripts = readdirSync(workspacesDir).filter((name) => name.endsWith('.run.log'));
+		expect(transcripts.length).toBeGreaterThan(0);
+		expect(readFileSync(path.join(workspacesDir, transcripts[0] ?? ''), 'utf8')).toContain(
+			'AIDD_RESULT',
+		);
 		const runsJsonl = readFileSync(path.join(resultsDir, 'runs.jsonl'), 'utf8');
 		expect(runsJsonl).toContain('"taskId":"interview"');
 

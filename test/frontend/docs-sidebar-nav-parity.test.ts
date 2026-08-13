@@ -74,7 +74,7 @@ describe('docs page layout', () => {
 });
 
 describe('glossary rendering', () => {
-	test('renders all 25 shipped terms as a list of bold terms', async () => {
+	test('renders all 25 shipped terms in five semantic definition groups', async () => {
 		const markdown = await readFile(
 			resolve(FRONTEND_SOURCE, '../content/docs/glossary.md'),
 			'utf8',
@@ -96,13 +96,12 @@ describe('glossary rendering', () => {
 		if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
 		const html = JSON.parse(new TextDecoder().decode(result.stdout).trim()) as string;
 
-		// Written as 25 bullets and rendered as 25 bullets. The `<dl>` this used to assert was
-		// reached only when every item in a block matched `**term**: definition`, so one added
-		// plain bullet silently relaid the other 24 — the same source rendering as two different
-		// shapes depending on its neighbours.
-		expect(html.match(/<li\b/g)).toHaveLength(25);
-		expect(html.match(/<strong\b/g)?.length).toBeGreaterThanOrEqual(25);
-		expect(html).not.toContain('<dl');
+		// The structure is explicit in the source rather than inferred from bold-first bullets, so
+		// all five authored groups keep their shape when an ordinary list elsewhere changes.
+		expect(html.match(/<dl\b/g)).toHaveLength(5);
+		expect(html.match(/<dt\b/g)).toHaveLength(25);
+		expect(html.match(/<dd\b/g)).toHaveLength(25);
+		expect(html).not.toContain('<ul');
 		// The page header carries the title, so the body must not restate it.
 		expect(html).not.toContain('>Glossary<');
 	});

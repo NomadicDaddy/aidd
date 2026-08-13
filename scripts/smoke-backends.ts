@@ -2,13 +2,16 @@
 /**
  * Backend adapter smoke matrix.
  *
- * Runs one aidd iteration per backend against a throwaway per-backend project and asserts the
- * seeded feature came back completed. A backend whose CLI is not installed is skipped with a
- * warning; under `--require-external` a missing or failing backend is a hard failure instead.
+ * Runs one aidd iteration per registered backend -- every name in the canonical `backendNames`
+ * list, so the matrix covers the product rather than a hand-kept subset of it -- against a
+ * throwaway per-backend project, and asserts the seeded feature came back completed. A backend
+ * whose CLI is not installed is skipped with a warning; under `--require-external` a missing or
+ * failing backend is a hard failure instead.
  *
  *   bun run smoke:backends [-- --project-dir <path>] [-- --require-external]
  */
 import { EXT_LOG_PATH_ENV } from 'aidd-shared/metadata/active-runs';
+import { type BackendName, backendNames } from 'aidd-shared/plan/types';
 import { buildBackendSubprocessEnv } from 'aidd-shared/subprocess-env';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -19,21 +22,44 @@ import { removeTempTree } from '../shared/src/lib/remove-temp-tree.ts';
 interface Backend {
 	command: string;
 	extra: string[];
-	name: string;
+	name: BackendName;
 }
 
 const root = resolve(import.meta.dirname, '..');
 const entry = join(root, 'cli', 'src', 'index.ts');
 
-const BACKENDS: Backend[] = [
-	{ command: 'bun', extra: ['--simulation'], name: 'native' },
-	{ command: 'bun', extra: ['--simulation'], name: 'ollama' },
-	{ command: 'claude', extra: [], name: 'claude-code' },
-	{ command: 'opencode', extra: [], name: 'opencode' },
-	{ command: 'kilo', extra: [], name: 'kilocode' },
-	{ command: 'codex', extra: [], name: 'codex' },
-	{ command: 'cline', extra: [], name: 'cline' },
-];
+/**
+ * How to invoke each backend, keyed by the canonical `backendNames` so the matrix cannot fall
+ * behind the product: adding a backend to the shared list makes this record fail to typecheck
+ * until it is given a smoke entry. It previously drifted exactly that way -- grok, lmstudio and
+ * openai were registered backends that nothing here ever ran.
+ *
+ * `command` is the binary probed with Bun.which to decide whether the backend is installed; it
+ * matches the command in shared/src/backends/commands.ts, which is not always the backend name
+ * (kilocode ships as `kilo`, claude-code as `claude`).
+ *
+ * lmstudio/native/ollama/openai all resolve to the in-process native client (see the
+ * nativeBackends set in cli/src/plan/resolve.ts), so `--simulation` short-circuits them before any
+ * provider call. Those rows prove argument plumbing and the completion contract, not the provider
+ * adapter, and they need no daemon, key, or network. The rest spawn a real external CLI and do
+ * real billable work -- which is the point of this smoke, and why it is not a smoke:qc step.
+ */
+const BACKEND_SPECS: Record<BackendName, Omit<Backend, 'name'>> = {
+	'claude-code': { command: 'claude', extra: [] },
+	cline: { command: 'cline', extra: [] },
+	codex: { command: 'codex', extra: [] },
+	grok: { command: 'grok', extra: [] },
+	kilocode: { command: 'kilo', extra: [] },
+	lmstudio: { command: 'bun', extra: ['--simulation'] },
+	native: { command: 'bun', extra: ['--simulation'] },
+	ollama: { command: 'bun', extra: ['--simulation'] },
+	openai: { command: 'bun', extra: ['--simulation'] },
+	opencode: { command: 'opencode', extra: [] },
+};
+
+// Ordered by backendNames rather than by the record's alphabetical keys, which puts the four free
+// in-process simulations first: a plumbing break surfaces before any paid CLI is spawned.
+const BACKENDS: Backend[] = backendNames.map((name) => ({ ...BACKEND_SPECS[name], name }));
 
 const { values } = parseArgs({
 	options: {

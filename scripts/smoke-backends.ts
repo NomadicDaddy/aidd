@@ -8,6 +8,7 @@
  *
  *   bun run smoke:backends [-- --project-dir <path>] [-- --require-external]
  */
+import { EXT_LOG_PATH_ENV } from 'aidd-shared/metadata/active-runs';
 import { buildBackendSubprocessEnv } from 'aidd-shared/subprocess-env';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -43,6 +44,11 @@ const { values } = parseArgs({
 
 const projectRoot = resolve(values['project-dir']);
 const requireExternal = values['require-external'];
+// The CLI resolves its data directory from the aidd install root, never from --project-dir, so an
+// unclaimed run writes its transcript into this working copy's live `data/run-logs` — real run
+// history, for a throwaway smoke. Claim the path instead, in a sibling directory the next run wipes
+// along with the projects themselves.
+const logsRoot = `${projectRoot}-logs`;
 
 const SPEC =
 	'This is an aidd backend adapter smoke test. Do not implement application code. Mark this ' +
@@ -88,15 +94,26 @@ function runBackend(backend: Backend, project: string): number {
 	// predecessor mutated the parent environment and restored it afterwards; here the toggle rides
 	// the same allowlist aidd itself uses to spawn backend CLIs, so no parent state is touched and
 	// check:env-spread stays satisfied. Non-simulation backends inherit the environment untouched
-	// because their external CLI may need host credentials this script has no business filtering.
+	// because their external CLI may need host credentials this script has no business filtering:
+	// this smoke is the one place those credentials are exercised end to end, so narrowing them to
+	// the allowlist here would quietly change what the smoke proves. The log-path claim is the only
+	// addition, and it has to ride an explicit spread precisely because the inherit is deliberate.
 	const simulation = backend.extra.includes('--simulation');
+	const logPath = join(logsRoot, `${backend.name}.log`);
 	const result = simulation
 		? Bun.spawnSync(['bun', ...args], {
-				env: buildBackendSubprocessEnv({ AIDD_NATIVE_SIMULATION: '1' }),
+				env: buildBackendSubprocessEnv({
+					AIDD_NATIVE_SIMULATION: '1',
+					[EXT_LOG_PATH_ENV]: logPath,
+				}),
 				stderr: 'inherit',
 				stdout: 'inherit',
 			})
-		: Bun.spawnSync(['bun', ...args], { stderr: 'inherit', stdout: 'inherit' });
+		: Bun.spawnSync(['bun', ...args], {
+				env: { ...process.env, [EXT_LOG_PATH_ENV]: logPath }, // allow-env-spread-policy
+				stderr: 'inherit',
+				stdout: 'inherit',
+			});
 
 	return result.exitCode;
 }
@@ -112,6 +129,7 @@ function featureCompleted(project: string): boolean {
 
 async function main(): Promise<number> {
 	const failures: string[] = [];
+	await removeTempTree(logsRoot);
 
 	for (const backend of BACKENDS) {
 		if (!Bun.which(backend.command)) {

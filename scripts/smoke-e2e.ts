@@ -8,6 +8,8 @@
  *
  *   bun run smoke:e2e [-- --project-dir <path>]
  */
+import { EXT_LOG_PATH_ENV } from 'aidd-shared/metadata/active-runs';
+import { buildBackendSubprocessEnv } from 'aidd-shared/subprocess-env';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -27,6 +29,11 @@ const project = resolve(values['project-dir']);
 // The CLI takes the project directory as a forward-slash path so Windows backslashes never reach
 // argument parsing as escape sequences.
 const runtimeProject = project.replaceAll('\\', '/');
+// The CLI resolves its data directory from the aidd install root, never from --project-dir, so an
+// unclaimed run writes its transcript into this working copy's live `data/run-logs` — real run
+// history, for a throwaway smoke. Claim the path instead, in a sibling directory the next run wipes
+// along with the project itself.
+const logsDir = `${project}-logs`;
 
 const SPEC =
 	'Use simulation mode to complete this feature. Include the exact final marker: ' +
@@ -50,8 +57,13 @@ function scaffoldProject(title: string, spec: string): void {
 	writeFileSync(join(project, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
 }
 
-function runCli(...args: string[]): number {
+function runCli(logName: string, ...args: string[]): number {
 	const result = Bun.spawnSync(['bun', entry, ...args], {
+		// The allowlist aidd itself uses to spawn backend CLIs, which is also the only way to hand the
+		// child one extra variable without spreading the parent environment past check:env-spread.
+		env: buildBackendSubprocessEnv({
+			[EXT_LOG_PATH_ENV]: join(logsDir, `${logName}.log`),
+		}),
 		stderr: 'inherit',
 		stdout: 'inherit',
 	});
@@ -69,9 +81,11 @@ function featureCompleted(): boolean {
 
 async function main(): Promise<number> {
 	await removeTempTree(project);
+	await removeTempTree(logsDir);
 	scaffoldProject('Core feature', SPEC);
 
 	const runExit = runCli(
+		'iteration',
 		'--project-dir',
 		runtimeProject,
 		'--cli',
@@ -92,7 +106,7 @@ async function main(): Promise<number> {
 		return 1;
 	}
 
-	const checkExit = runCli('--project-dir', runtimeProject, '--check-features');
+	const checkExit = runCli('check-features', '--project-dir', runtimeProject, '--check-features');
 	if (checkExit !== 0) {
 		console.error(`feature contract smoke failed with exit code ${checkExit}`);
 		return 1;

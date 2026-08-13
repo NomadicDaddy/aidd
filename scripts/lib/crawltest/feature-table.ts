@@ -21,16 +21,18 @@ async function setInputValue(page: Page, selector: string, value: string): Promi
  * check read as if it exercised the selects and never touched them.
  *
  * The anchor is the search field, which is the one control in the toolbar with a unique selector.
- * Its `FieldRow` label and the three select rows are siblings in the same grid, so this finds the
- * toolbar's own Status and Source and cannot reach a row-level status select or another tab's.
+ * The desktop controls are nested in the toolbar's responsive `display: contents` wrapper. Search
+ * the grid's descendant `FieldRow` labels rather than its direct children: CSS flattens that
+ * wrapper visually, but the DOM does not. Anchoring on the grid still prevents this from reaching
+ * a row-level status select or another tab's controls.
  */
 function featureFilterSelect(label: string): string {
 	return `(() => {
 		const search = document.querySelector('input[placeholder="Filter by feature metadata"]');
 		const grid = search?.closest('label')?.parentElement;
 		if (!grid) return null;
-		const field = Array.from(grid.children).find(
-			(child) => child.querySelector('span')?.textContent?.trim() === ${JSON.stringify(label)},
+		const field = Array.from(grid.querySelectorAll('label')).find(
+			(field) => field.querySelector(':scope > span')?.textContent?.trim() === ${JSON.stringify(label)},
 		);
 		return field?.querySelector('select') ?? null;
 	})()`;

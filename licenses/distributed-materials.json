@@ -232,6 +232,8 @@
 			"skills/rbac/SKILL.md",
 			"skills/reality-check/SKILL.md",
 			"skills/refactor/SKILL.md",
+			"skills/refresh-project-artifacts/SKILL.md",
+			"skills/refresh-project-artifacts/agents/openai.yaml",
 			"skills/repo-governance-audit/SKILL.md",
 			"skills/review-doc/SKILL.md",
 			"skills/review-or-create-doc/SKILL.md",

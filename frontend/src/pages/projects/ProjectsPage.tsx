@@ -11,6 +11,7 @@ import { useSettingsConfig } from '../../hooks/useSettings.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { ProjectInitFailures } from './ProjectInitFailures.tsx';
 import { type IntakeLane, ProjectIntakePanel } from './ProjectIntakePanel.tsx';
+import { resolveProjectsResultsState } from './projects-results-state.ts';
 import { ProjectsPageActions } from './ProjectsPageActions.tsx';
 import { ProjectsResults } from './ProjectsResults.tsx';
 import { ProjectsToolbar } from './ProjectsToolbar.tsx';
@@ -83,13 +84,13 @@ export function ProjectsPage() {
 		}
 	}
 
-	const isError = projects.isError;
-	const isLoading = projects.isLoading;
-	const noRegistered =
-		!isLoading && !isError && allProjects.length === 0 && skippedRoots.length > 0;
-	const noDiscovered =
-		!isLoading && !isError && allProjects.length === 0 && skippedRoots.length === 0;
-	const noMatch = !isLoading && !isError && allProjects.length > 0 && sorted.length === 0;
+	const resultsState = resolveProjectsResultsState({
+		allProjectsCount: allProjects.length,
+		isError: projects.isError,
+		isLoading: projects.isLoading,
+		skippedRootsCount: skippedRoots.length,
+		sorted,
+	});
 
 	return (
 		<div className="page-reveal space-y-5">
@@ -132,7 +133,7 @@ export function ProjectsPage() {
 				/>
 			) : null}
 
-			{isError ? (
+			{projects.isError ? (
 				<ErrorState
 					error={projects.error}
 					message="Unknown error fetching project list."
@@ -174,20 +175,15 @@ export function ProjectsPage() {
 			) : null}
 
 			<ProjectsResults
-				allProjectsCount={allProjects.length}
 				gitStatus={gitStatus.data?.projects}
-				isLoading={isLoading}
-				noDiscovered={noDiscovered}
-				noMatch={noMatch}
-				noRegistered={noRegistered}
 				onRefresh={handleRefresh}
 				onResetFilters={resetFilters}
 				onToggleSort={toggleSort}
 				projectView={projectView}
 				sortDir={sortDir}
-				sorted={sorted}
 				sortKey={sortKey}
 				spernakitTemplateVersion={projects.data?.spernakitTemplateVersion ?? null}
+				state={resultsState}
 			/>
 		</div>
 	);

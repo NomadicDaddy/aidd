@@ -2,12 +2,14 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { ProjectSummary } from '../../frontend/src/api/types.ts';
 import type { ProfileMatrixRowModel } from '../../frontend/src/pages/projects/profileMatrix/profileMatrixTypes.ts';
 
 import {
 	filterMatrixRows,
 	postureFilterValue,
 } from '../../frontend/src/pages/projects/profileMatrix/profileMatrixFilters.ts';
+import { resolveProjectsResultsState } from '../../frontend/src/pages/projects/projects-results-state.ts';
 import { projectSortOptions } from '../../frontend/src/pages/projects/projects-table-columns.ts';
 
 const frontendSource = join(process.cwd(), 'frontend', 'src');
@@ -20,6 +22,60 @@ function read(relativePath: string): Promise<string> {
 // absence has to read the code without the prose about it.
 function stripComments(source: string): string {
 	return source.replaceAll(/\/\*[\s\S]*?\*\//g, '').replaceAll(/\/\/[^\n]*/g, '');
+}
+
+function renderProjectsResultsStates(): Record<
+	'loading' | 'noDiscovered' | 'noMatch' | 'noRegistered' | 'ready',
+	string
+> {
+	const script = String.raw`
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { ProjectsResults } from './src/pages/projects/ProjectsResults.tsx';
+
+const common = {
+	gitStatus: undefined,
+	onRefresh: () => {},
+	onResetFilters: () => {},
+	onToggleSort: () => {},
+	projectView: 'cards',
+	sortDir: 'asc',
+	sortKey: 'name',
+};
+
+function render(state) {
+	const client = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
+	return renderToStaticMarkup(
+		createElement(
+			QueryClientProvider,
+			{ client },
+			createElement(ProjectsResults, { ...common, state }),
+		),
+	);
+}
+
+console.log(JSON.stringify({
+	loading: render({ type: 'loading' }),
+	noDiscovered: render({ type: 'no_discovered' }),
+	noMatch: render({ allProjectsCount: 3, type: 'no_match' }),
+	noRegistered: render({ type: 'no_registered' }),
+	ready: render({ projects: [], type: 'ready' }),
+}));
+`;
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: join(import.meta.dir, '..', '..', 'frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) {
+		throw new Error(new TextDecoder().decode(result.stderr));
+	}
+	return JSON.parse(new TextDecoder().decode(result.stdout)) as Record<
+		'loading' | 'noDiscovered' | 'noMatch' | 'noRegistered' | 'ready',
+		string
+	>;
 }
 
 function makeRow(overrides: {
@@ -345,5 +401,68 @@ describe('both views can order the same list the same way', () => {
 		// The facet keys are offered exactly when the facet columns exist.
 		expect(mobile).toContain('showFacets');
 		expect(page).toMatch(/<ProfileMatrixMobileList[\s\S]*?onSort=\{toggleSort\}/);
+	});
+});
+
+describe('Projects results use one explicit state', () => {
+	const readyProjects = [{}] as ProjectSummary[];
+	const rendered = renderProjectsResultsStates();
+	const resolve = (overrides: Partial<Parameters<typeof resolveProjectsResultsState>[0]> = {}) =>
+		resolveProjectsResultsState({
+			allProjectsCount: readyProjects.length,
+			isError: false,
+			isLoading: false,
+			skippedRootsCount: 0,
+			sorted: readyProjects,
+			...overrides,
+		});
+
+	test('resolves every mutually exclusive result outcome', () => {
+		expect(resolve({ isLoading: true })).toEqual({ type: 'loading' });
+		expect(resolve({ allProjectsCount: 0, skippedRootsCount: 1, sorted: [] })).toEqual({
+			type: 'no_registered',
+		});
+		expect(resolve({ allProjectsCount: 0, sorted: [] })).toEqual({
+			type: 'no_discovered',
+		});
+		expect(resolve({ sorted: [] })).toEqual({ allProjectsCount: 1, type: 'no_match' });
+		expect(resolve()).toEqual({ projects: readyProjects, type: 'ready' });
+	});
+
+	test('keeps the error presentation beside a ready result state', () => {
+		expect(resolve({ allProjectsCount: 0, isError: true, sorted: [] })).toEqual({
+			projects: [],
+			type: 'ready',
+		});
+	});
+
+	test('renders the named component for each result state', () => {
+		expect(rendered.loading).toContain('Loading projects…');
+		expect(rendered.loading).toContain('aria-busy="true"');
+		expect(rendered.noRegistered).toContain('No registered project roots are reachable.');
+		expect(rendered.noRegistered).toContain('Discover Projects');
+		expect(rendered.noDiscovered).toContain(
+			'No projects discovered under the configured roots.',
+		);
+		expect(rendered.noDiscovered).toContain('<code>.aidd/</code>');
+		expect(rendered.noMatch).toContain('3 projects discovered; clear filters');
+		expect(rendered.noMatch).toContain('Clear filters');
+		expect(rendered.ready).toContain('Sort by');
+		expect(rendered.ready).not.toContain('No projects');
+	});
+
+	test('the sole caller passes the discriminated state instead of boolean modes', async () => {
+		const page = await read('pages/projects/ProjectsPage.tsx');
+		const results = await read('pages/projects/ProjectsResults.tsx');
+
+		expect(page).toContain('const resultsState = resolveProjectsResultsState({');
+		expect(page).toMatch(/<ProjectsResults[\s\S]*?state=\{resultsState\}/);
+		for (const prop of ['isLoading=', 'noDiscovered=', 'noMatch=', 'noRegistered=']) {
+			expect(page).not.toContain(prop);
+			expect(results).not.toContain(prop);
+		}
+		for (const type of ['loading', 'no_registered', 'no_discovered', 'no_match', 'ready']) {
+			expect(results).toContain(`case '${type}':`);
+		}
 	});
 });

@@ -3,6 +3,7 @@ import {
 	type CliActiveRunRecord,
 	type CliActiveRunSource,
 } from 'aidd-shared/metadata/active-runs';
+import { reapRunFeatureLeases } from 'aidd-shared/metadata/feature-leases';
 import { and, eq } from 'drizzle-orm';
 import { rm } from 'node:fs/promises';
 
@@ -209,6 +210,18 @@ export async function markStale(
 	} catch (err) {
 		webLogger.warn({ err, runId: record.id }, 'Failed to mark run stale');
 		return;
+	}
+
+	// A hard death skips the in-process release, so this run's cross-run feature leases outlive it,
+	// and sweepOrphanedRuns cannot collect them: it scans only non-terminal rows and the write above
+	// just drove this one terminal. Keyed by the dead run's id, so a live run's lease is never
+	// touched; placed before the branches so an already-terminal row is covered too.
+	const reapedLeases = await reapRunFeatureLeases(record.projectPath, record.id);
+	if (reapedLeases > 0) {
+		webLogger.warn(
+			{ count: reapedLeases, runId: record.id },
+			'Reaped feature leases held by stale run',
+		);
 	}
 
 	if (outcome.kind === 'inserted') {

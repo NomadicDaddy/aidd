@@ -4,11 +4,15 @@ import {
 	createCliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
 import {
+	createFeatureLeaseService,
+	resolveFeatureLeaseDir,
+} from 'aidd-shared/metadata/feature-leases';
+import {
 	hasUnfinalizedAgentResultMarker,
 	unfinalizedAgentResultMarker,
 } from 'aidd-shared/runs/outcome';
 import { eq } from 'drizzle-orm';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
@@ -52,6 +56,18 @@ function makeRecord(projectDir: string, logPath: null | string): CliActiveRunRec
 
 async function fixture(name: string): Promise<string> {
 	return readFile(join(fixturesDir, name), 'utf8');
+}
+
+// Leases live under git's common dir, so a lease assertion needs a real repository to land in.
+async function gitInitRepo(dir: string): Promise<void> {
+	const proc = Bun.spawn(['git', 'init', dir], {
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if ((await proc.exited) !== 0) {
+		throw new Error(`git init failed: ${await new Response(proc.stderr).text()}`);
+	}
 }
 
 describe('stale run result recovery', () => {
@@ -189,6 +205,60 @@ describe('stale run result recovery', () => {
 				summary: null,
 			});
 			expect(hasUnfinalizedAgentResultMarker(row?.summary)).toBe(false);
+		} finally {
+			sqlite.close();
+			await removeTempTree(projectDir);
+		}
+	});
+
+	// Regression: a run reaped for a stale heartbeat kept its feature leases forever. The two
+	// paths that reap leases (activeRunSweep, boot reconcile) scan only non-terminal rows, and
+	// markStale drives the row terminal — so nothing ever released them, and the feature stayed
+	// locked against later runs until the holder pid happened to be reused or reclaimed.
+	test('releases the dead run feature leases, leaving other runs holdings alone', async () => {
+		const projectDir = await testTempDir('aidd-stale-lease-');
+		const { commands, db, sqlite } = makeDb();
+		try {
+			await gitInitRepo(projectDir);
+			const record = makeRecord(projectDir, null);
+			const leaseDir = await resolveFeatureLeaseDir(projectDir);
+			expect(leaseDir).not.toBeNull();
+			const mine = createFeatureLeaseService({
+				pid: record.pid ?? process.pid,
+				projectDir,
+				runId: record.id,
+			});
+			const other = createFeatureLeaseService({
+				pid: process.pid,
+				projectDir,
+				runId: 'run_still_alive',
+			});
+			expect((await mine.acquire('feature-held-by-dead-run')).acquired).toBe(true);
+			expect((await other.acquire('feature-held-by-live-run')).acquired).toBe(true);
+
+			await db.insert(runs).values({
+				backend: record.backend,
+				id: record.id,
+				mode: record.mode,
+				projectName: record.projectName,
+				projectPath: record.projectPath,
+				source: 'web',
+				startedAt: record.startedAt,
+				status: 'running',
+			});
+			await markStale(
+				{
+					commands,
+					db,
+					hub: new WebSocketHub(),
+					tailWatchers: new Map(),
+					telemetry: new TelemetryService({ commands, db }),
+				},
+				record,
+			);
+
+			const remaining = await readdir(leaseDir ?? '');
+			expect(remaining).toEqual(['feature-held-by-live-run.json']);
 		} finally {
 			sqlite.close();
 			await removeTempTree(projectDir);

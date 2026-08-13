@@ -238,9 +238,11 @@ async function removeRunLeases(leaseDir: string, runId: string): Promise<number>
 	return removed;
 }
 
-/** Delete every lease owned by a run already determined dead. Called from the EXISTING web
- * orphan-run reap paths (activeRunSweep and boot-time activeRunReconcile) alongside the
- * worktree reap — the release of record when a hard process death skipped in-process release.
+/** Delete every lease owned by a run already determined dead. Called from the web's dead-run
+ * paths — activeRunSweep and boot-time activeRunReconcile (alongside the worktree reap), and
+ * the HeartbeatWatcher's stale-heartbeat transition, which the two sweeps cannot cover because
+ * they only scan non-terminal rows — the release of record when a hard process death skipped
+ * in-process release.
  * Keyed strictly by run id, so a live run's leases are never touched. Best-effort; returns the
  * number of leases removed. */
 export async function reapRunFeatureLeases(projectDir: string, runId: string): Promise<number> {

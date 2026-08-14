@@ -3,6 +3,42 @@ import { join, resolve } from 'node:path';
 
 import { formControlClass, textareaClass } from '../../frontend/src/lib/formStyles.ts';
 
+const stylesPath = resolve(import.meta.dir, '../../frontend/src/index.css');
+
+function cssThemeBlock(styles: string, selector: ':root' | '.dark'): string {
+	const escapedSelector = selector === '.dark' ? '\\.dark' : ':root';
+	const match = new RegExp(`${escapedSelector}\\s*\\{([\\s\\S]*?)\\n\\}`).exec(styles);
+	if (!match?.[1]) throw new Error(`Missing ${selector} theme block`);
+	return match[1];
+}
+
+function cssHexToken(block: string, token: string): string {
+	const match = new RegExp(`--${token}:\\s*(#[0-9a-f]{6});`, 'i').exec(block);
+	if (!match?.[1]) throw new Error(`Missing --${token} hex token`);
+	return match[1];
+}
+
+function relativeLuminance(hex: string): number {
+	const channels: [number, number, number] = [
+		Number.parseInt(hex.slice(1, 3), 16) / 255,
+		Number.parseInt(hex.slice(3, 5), 16) / 255,
+		Number.parseInt(hex.slice(5, 7), 16) / 255,
+	];
+	const [red, green, blue] = channels;
+	const linearize = (channel: number): number =>
+		channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+	return 0.2126 * linearize(red) + 0.7152 * linearize(green) + 0.0722 * linearize(blue);
+}
+
+function contrastRatio(first: string, second: string): number {
+	const firstLuminance = relativeLuminance(first);
+	const secondLuminance = relativeLuminance(second);
+	return (
+		(Math.max(firstLuminance, secondLuminance) + 0.05) /
+		(Math.min(firstLuminance, secondLuminance) + 0.05)
+	);
+}
+
 function renderPrimitives(): { checkbox: string; field: string } {
 	const script = [
 		"import { createElement } from 'react';",
@@ -33,6 +69,23 @@ describe('shared form primitives', () => {
 		expect(formControlClass).toContain('min-w-0');
 		expect(textareaClass).toContain('w-full');
 		expect(textareaClass).toContain('min-w-0');
+	});
+
+	test('keeps canonical control boundaries at non-text contrast in both themes', async () => {
+		const styles = await Bun.file(stylesPath).text();
+
+		for (const selector of [':root', '.dark'] as const) {
+			const theme = cssThemeBlock(styles, selector);
+			expect(
+				contrastRatio(cssHexToken(theme, 'control-border'), cssHexToken(theme, 'card')),
+			).toBeGreaterThanOrEqual(3);
+		}
+
+		expect(styles).toContain('--color-control-border: var(--control-border);');
+		expect(formControlClass).toContain('border-control-border');
+		expect(textareaClass).toContain('border-control-border');
+		expect(formControlClass).not.toContain('border-border');
+		expect(textareaClass).not.toContain('border-border');
 	});
 
 	test('renders the canonical label above its control and gives checkboxes semantic focus styling', () => {

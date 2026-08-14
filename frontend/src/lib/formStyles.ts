@@ -13,7 +13,7 @@ import { invalidControlClass, toneText } from './tones.ts';
 // `min-h-*` that lets a control grow, handed back to `sm:h-9` from the tablet breakpoint up so the
 // desk layout is unchanged. A 36px select is a 36px tap target, and this string is every input and
 // every select in the app.
-const controlChromeClass = `min-h-11 min-w-0 rounded-lg sm:h-9 sm:min-h-0 border border-border bg-card px-3 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 ${invalidControlClass}`;
+const controlChromeClass = `min-h-11 min-w-0 rounded-lg sm:h-9 sm:min-h-0 border border-control-border bg-card px-3 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 ${invalidControlClass}`;
 
 /**
  * An `<input>`'s chrome, plus the width. A text input's intrinsic size is a browser default of about
@@ -33,7 +33,7 @@ export const selectClass = controlChromeClass;
 // The textarea carries the same invalid variant as every other control. `RecipeStepJsonField` built
 // a second `errorTextareaClass` by hand because this one had no invalid state at all, and it picked
 // a different focus ring than the inputs beside it.
-export const textareaClass = `min-h-28 w-full min-w-0 resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm leading-6 text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 ${invalidControlClass}`;
+export const textareaClass = `min-h-28 w-full min-w-0 resize-y rounded-lg border border-control-border bg-card px-3 py-2 text-sm leading-6 text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-ring/20 ${invalidControlClass}`;
 
 export const fieldLabelClass = 'text-xs font-medium uppercase tracking-wide text-muted-foreground';
 

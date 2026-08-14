@@ -13,10 +13,14 @@ import { getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 function DashboardPortDot({ listening }: { listening: boolean | null }) {
 	if (listening === null) return null;
 	return (
-		// The label rides on the wrapper because `StatusDot` is `aria-hidden`.
+		// The label rides on the wrapper because `StatusDot` is `aria-hidden`, and the wrapper takes
+		// `role="img"` so the label is allowed to exist: `aria-label` on a generic `<span>` is
+		// prohibited by name-from-author rules, so the listening state was nameless to assistive
+		// technology. Same contract as `PortDotInline` in ProjectCardMetrics.tsx.
 		<span
 			aria-label={listening ? 'Listening' : 'Not listening'}
 			className="inline-flex items-center"
+			role="img"
 			title={listening ? 'Listening' : 'Not listening'}>
 			<StatusDot tone={listening ? 'emerald' : 'red'} />
 		</span>

@@ -18,10 +18,13 @@ function PortDot({ listening }: { listening: boolean | null }) {
 	if (listening === null) return null;
 	return (
 		// `aria-label` and `title` on the wrapper, because `StatusDot` is `aria-hidden`: the dot is
-		// the whole cell here, so the state it reports has to be said in text somewhere.
+		// the whole cell here, so the state it reports has to be said in text somewhere. The wrapper
+		// also takes `role="img"` — `aria-label` on a generic `<span>` is prohibited by
+		// name-from-author rules — matching `PortDotInline` in ProjectCardMetrics.tsx.
 		<span
 			aria-label={listening ? 'Port listening' : 'Port not listening'}
 			className="inline-flex items-center"
+			role="img"
 			title={listening ? 'Listening' : 'Not listening'}>
 			<StatusDot tone={listening ? 'emerald' : 'red'} />
 		</span>

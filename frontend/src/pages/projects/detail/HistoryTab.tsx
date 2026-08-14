@@ -123,7 +123,7 @@ export function HistoryTab({
 		value,
 	}));
 	return (
-		<Card className="overflow-hidden p-0">
+		<Card className="max-w-[72rem] overflow-hidden p-0">
 			<CardHeader
 				action={
 					<Tooltip content="Completion times use the feature's last metadata update when no completion timestamp was recorded.">
@@ -161,12 +161,7 @@ export function HistoryTab({
 							<h3 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 								{group.label}
 							</h3>
-							{/* A measure on the rules, not on the card. Uncapped at 2250x1309 the
-							    list was 1928px wide while a row's ink ended around x=700, so 25
-							    rows stacked into a field of 1500px hairlines separating two short
-							    left-hugging lines each. 72rem is 1152px, which is about where the
-							    list already sat at 1280 — the width the row was tuned for. */}
-							<ul className="max-w-[72rem] divide-y divide-border text-sm">
+							<ul className="divide-y divide-border text-sm">
 								{group.events.map((event) => (
 									<HistoryEventRow
 										event={event}

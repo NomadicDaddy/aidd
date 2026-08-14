@@ -20,7 +20,7 @@ export function DiaryEntryCard({
 }) {
 	const [expanded, setExpanded] = useState(false);
 	return (
-		<Card variant="panel">
+		<Card className="max-w-[61rem]" variant="panel">
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div className="min-w-0">
 					<div className="mb-1 flex flex-wrap items-center gap-2">

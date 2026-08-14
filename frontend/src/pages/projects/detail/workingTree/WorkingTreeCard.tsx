@@ -9,6 +9,7 @@ import { EmptyState } from '../../../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../../../components/shared/LoadingState.tsx';
 import { Card, CardHeader } from '../../../../components/ui/card.tsx';
 import { useProjectWorkingTree, useWorkingTreeCommand } from '../../../../hooks/useWorkingTree.ts';
+import { tableMeasureClass } from '../../../../lib/tableStyles.ts';
 import { GitStatusBadge } from '../../GitStatusBadge.tsx';
 import { CommitMessageDialog } from './CommitMessageDialog.tsx';
 import { describeDiscard, STATE_MESSAGE } from './workingTreeCopy.ts';
@@ -112,7 +113,7 @@ export function WorkingTreeCard({
 
 	if (query.isLoading) {
 		return (
-			<Card className="p-0">
+			<Card className={`p-0 ${tableMeasureClass}`}>
 				{header}
 				<div aria-busy="true" className="p-4">
 					<SkeletonLines count={4} label="Reading changed files…" />
@@ -122,7 +123,7 @@ export function WorkingTreeCard({
 	}
 	if (query.isError || !query.data || query.data.state !== 'ok') {
 		return (
-			<Card className="p-0">
+			<Card className={`p-0 ${tableMeasureClass}`}>
 				{header}
 				<div className="p-4">
 					<EmptyState>
@@ -138,7 +139,7 @@ export function WorkingTreeCard({
 	}
 	if (files.length === 0) {
 		return (
-			<Card className="p-0">
+			<Card className={`p-0 ${tableMeasureClass}`}>
 				{header}
 				<EmptyState className="m-4">
 					The working tree is clean — nothing to stage, discard, or commit.
@@ -149,7 +150,7 @@ export function WorkingTreeCard({
 
 	return (
 		<>
-			<Card className="p-0">
+			<Card className={`p-0 ${tableMeasureClass}`}>
 				{header}
 				<div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
 					<p className="text-xs text-muted-foreground">

@@ -7,7 +7,7 @@ import { OverflowScroller } from '../../../components/shared/OverflowScroller.ts
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
-import { tableHeadClass, tableMeasureClass } from '../../../lib/tableStyles.ts';
+import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { overrideEffects } from '../../audits/auditsUtils.ts';
 import {
 	AuditActionButton,
@@ -72,7 +72,7 @@ export function AuditsDesktopTable({
 				scrollerClassName="max-h-[calc(100dvh-14rem)]">
 				<table
 					aria-label="Project audits"
-					className={`w-full min-w-[960px] text-left text-sm ${tableMeasureClass}`}>
+					className="w-full min-w-[960px] text-left text-sm">
 					<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 						<tr>
 							<th className="px-3 py-3" scope="col">

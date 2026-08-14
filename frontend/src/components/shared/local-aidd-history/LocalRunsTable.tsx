@@ -5,6 +5,7 @@ import type { ProjectLocalIteration, ProjectLocalRun } from '../../../api/types.
 
 import { formatDate, formatDuration } from '../../../lib/formatters.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
+import { tableMeasureClass } from '../../../lib/tableStyles.ts';
 import { Button, IconButton } from '../../ui/button.tsx';
 import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import { OverflowScroller } from '../OverflowScroller.tsx';
@@ -144,7 +145,7 @@ export function LocalRunsTable({
 					<OverflowScroller ariaLabel="Local runs" className="hidden xl:block">
 						<table
 							aria-label="Local runs"
-							className="w-full table-fixed text-left text-sm">
+							className={`w-full table-fixed text-left text-sm ${tableMeasureClass}`}>
 							{/* Auto layout gave DURATION — six characters, always — as much room as SUMMARY,
 						    which is the only free-text column and was wrapping to four lines inside 24rem
 						    while '1m 4s' sat centred in its own wide column. */}

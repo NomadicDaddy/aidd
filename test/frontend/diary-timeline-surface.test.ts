@@ -58,14 +58,11 @@ describe('diary timeline rows', () => {
 			timelineItem({ detail: 'A long agent-written narrative summary of what happened.' }),
 		]);
 
-		expect(html).toContain(
-			'grid max-w-[61rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-2',
-		);
+		expect(html).toContain('grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2');
+		expect(html).toContain('max-w-[61rem] overflow-hidden p-0');
 		expect(html).toContain('shrink-0 text-xs text-muted-foreground tabular-nums');
 
-		// The grid is one level in from the `li`, which keeps the hover band and the separators
-		// full-bleed while the content stops at a width the eye can cross: uncapped at 2250 a row's
-		// narrative ended near x=908 and its stamp sat at x=2160.
+		// The Card carries the measure so the grid, hover band, separators, and border stop together.
 		expect(html).toContain('<li class="relative px-3 py-2');
 	});
 
@@ -139,11 +136,12 @@ describe('diary feed chrome', () => {
 		// The whole-page `max-w-5xl` cap is gone: /diary ran as a lone centered 1024px column at a
 		// 2321px viewport while every sibling page filled the 2033px shell, and the layout read as
 		// broken rather than as a deliberate reading column. The page is on the shared shell now,
-		// and the feed keeps no width variant — the rows carry the measure instead.
+		// and the feed keeps no width variant — its chrome-owning children carry the measure instead.
 		expect(page).toContain('page-reveal space-y-5');
 		expect(page).not.toContain('max-w-5xl');
 		expect(feed).not.toContain('max-w-5xl');
-		expect(feed).not.toContain('width');
+		expect(feed).toContain('<div className="space-y-5">');
+		expect(feed).toContain('max-w-[61rem] border-t border-border');
 		// "More entries" and "More activity" each paged half of what the one counter above them
 		// counted. One feed, one count, one pager. Matched on the string literals, since the
 		// comment in the source names the two labels it replaced.

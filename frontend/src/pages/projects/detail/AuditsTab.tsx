@@ -13,6 +13,7 @@ import { SkeletonRows } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { tableMeasureClass } from '../../../lib/tableStyles.ts';
 import { AuditsDesktopTable } from './AuditsDesktopTable.tsx';
 import { AuditsMobileList } from './AuditsMobileList.tsx';
 import { useProjectAuditsTab } from './useProjectAuditsTab.ts';
@@ -63,7 +64,7 @@ export function AuditsTab({
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className={`space-y-4 ${tableMeasureClass}`}>
 			<Card>
 				<CardHeader
 					action={

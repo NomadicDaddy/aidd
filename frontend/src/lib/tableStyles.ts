@@ -9,7 +9,7 @@ export const tableHeadClass =
 	'border-b border-border bg-muted text-xs text-muted-foreground uppercase';
 
 /**
- * Where a data table stops widening.
+ * Where a data table composition stops widening.
  *
  * The tables in this app declare a `min-w-*` floor — the width below which their columns stop being
  * readable — and nothing above it, so on a 2250px screen they tracked the shell to 1938px and spent
@@ -26,8 +26,9 @@ export const tableHeadClass =
  * grids sit a step wider at `formGridMeasureClass` (90rem), because a three-column grid of labelled
  * controls needs the extra column width that a table's own `min-w-*` floor already guarantees.
  *
- * Applied at the `<table>`, not the scroller: `OverflowScroller` owns the overflow behaviour and the
- * edge fades, and capping it would move the fade away from the data.
+ * Apply it to the outer Card or composition when that element draws header bands, row rules, or a
+ * border around the table. A table inside an intentionally full-width composition may take the cap
+ * directly; `OverflowScroller` still owns overflow behaviour and edge fades.
  */
 export const tableMeasureClass = 'max-w-[80rem]';
 

@@ -40,12 +40,9 @@ export function DiaryFilterBar({
 	total: number;
 }) {
 	return (
-		// The card runs the full width like every other card on the page; the controls inside it
-		// stop at the widest measure the app declares. Justified against the raw column at 2250 the
-		// kind control ended near x=660 and the count and time window did not begin until x=1924, so
-		// one control set was read as two, separated by 1260px of empty toolbar.
-		<Card>
-			<div className="flex max-w-[61rem] flex-wrap items-center justify-between gap-3">
+		// The border owns the shared measure so the card and its controls end at the same edge.
+		<Card className="max-w-[61rem]">
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<SegmentedControl
 					ariaLabel="Event kind"
 					onChange={onKindChange}

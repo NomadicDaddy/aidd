@@ -191,10 +191,12 @@ describe('diary surfaces', () => {
 	});
 
 	test('the filter toolbar keeps its two control groups inside one scan', async () => {
-		// Justified against the raw column at 2250, the kind control ended near x=660 and the count
-		// and time window did not begin until x=1924.
+		// The filter Card owns the measure so its chrome and both control groups end together.
 		const bar = await src('pages/diary/DiaryFilterBar.tsx');
-		expect(bar).toContain('flex max-w-[61rem] flex-wrap items-center justify-between gap-3');
+		const feed = await src('pages/diary/DiaryFeed.tsx');
+		expect(feed).toContain('<div className="space-y-5">');
+		expect(bar).toContain('flex flex-wrap items-center justify-between gap-3');
+		expect(bar).toContain('<Card className="max-w-[61rem]">');
 		expect(bar).not.toContain('<Card className="flex flex-wrap items-center justify-between');
 	});
 });

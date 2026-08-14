@@ -109,6 +109,7 @@ describe('the suggestion queue is a list, not a stack of cards', () => {
 	test('the row is bounded so the gutter is, and the two-column gate still clears', async () => {
 		const source = await read('pages', 'director', 'DirectorSuggestions.tsx');
 		const artifact = await read('pages', 'projects', 'detail', 'ArtifactInventoryRow.tsx');
+		const artifacts = await read('pages', 'projects', 'detail', 'ArtifactsTab.tsx');
 
 		// `justify-between` hands everything left over to the space between the two columns, so on a
 		// full-width section the row tracked the page: measured at 2250x1309 unbounded, the
@@ -117,9 +118,10 @@ describe('the suggestion queue is a list, not a stack of cards', () => {
 		// recognisably one treatment.
 		// On the Card, so its border ends where the rows do — DocsPage caps the doc card and not the
 		// prose inside it for the same reason. `ArtifactInventoryRow` is the sibling treatment; it
-		// caps itself because it has no card of its own to put the width on.
+		// now puts that width on its containing inventory Card for the same chrome-alignment rule.
 		expect(source).toContain('<Card className="max-w-[66rem]">');
-		expect(artifact).toContain('max-w-[61rem]');
+		expect(artifacts).toContain('<Card className="@container max-w-[61rem]">');
+		expect(artifact).not.toContain('max-w-[61rem]');
 
 		// The number is arithmetic. The row's two-column shape gates on `@min-[61rem]` of the row's
 		// own content box, so the row needs 976 + 24 of its `p-3` and the Card needs that plus 32 of

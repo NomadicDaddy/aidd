@@ -42,7 +42,7 @@ describe('project detail density contracts', () => {
 		expect(features).toContain('@min-[80rem]:hidden');
 		expect(featureTable).toContain('hidden @min-[80rem]:block');
 		expect(featureTable).toContain("source.replaceAll('_', ' ')");
-		expect(artifacts).toContain('<Card className="@container">');
+		expect(artifacts).toContain('<Card className="@container max-w-[61rem]">');
 		expect(artifacts).toContain('@min-[68rem]:grid-cols-6');
 	});
 

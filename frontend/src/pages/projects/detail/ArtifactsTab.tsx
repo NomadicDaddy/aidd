@@ -51,7 +51,7 @@ export function ArtifactsTab({
 	}
 	if (!artifactCheck) {
 		return (
-			<Card>
+			<Card className="max-w-[61rem]">
 				<CardHeader
 					action={<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>}
 					className="mb-3"
@@ -82,7 +82,7 @@ export function ArtifactsTab({
 		{ health: 'Inventory', label: 'Total', tone: 'neutral', value: summary.total },
 	];
 	return (
-		<Card className="@container">
+		<Card className="@container max-w-[61rem]">
 			<CardHeader
 				action={<Badge tone={artifactTone[artifactHealth]}>{artifactHealth}</Badge>}
 				className="mb-3"

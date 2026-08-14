@@ -119,13 +119,9 @@ function DiaryTimelineRow({
 				href &&
 					'transition-colors focus-within:bg-muted/60 focus-within:ring-2 focus-within:ring-ring/50 focus-within:ring-inset hover:bg-muted/60',
 			)}>
-			{/* The hover band and the hairline separators stay full-bleed with the card, like every
-			    sibling list; the two columns inside stop at 61rem. Uncapped on the project Diary tab
-			    at 2250 a row's narrative ended near x=908 against its own 68ch measure while the
-			    stamp stayed pinned at x=2160 — about 1250px of nothing between an entry and its
-			    time, which made the measure read as an accident rather than as the deliberate line
-			    length it is. */}
-			<div className="grid max-w-[61rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+			{/* The enclosing Card owns the 61rem measure, so the two columns, hover band, and row
+			    rules share one edge while the narrative retains its narrower reading measure. */}
+			<div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge tone="neutral">{timelineKindLabel(item.kind)}</Badge>
@@ -206,7 +202,7 @@ export function DiaryTimelineList({
 	return (
 		// One raised card per day with hairline separators — the primitive Runs already uses —
 		// instead of 40+ individually outlined rows floating on the canvas.
-		<Card className="overflow-hidden p-0">
+		<Card className="max-w-[61rem] overflow-hidden p-0">
 			<ul className="divide-y divide-border text-sm">
 				{items.map((item) => (
 					<DiaryTimelineRow item={item} key={item.id} showProject={showProject} />

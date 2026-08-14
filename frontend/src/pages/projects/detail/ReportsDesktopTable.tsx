@@ -59,10 +59,9 @@ function ReportsTableRow({ report }: { report: ReportRow }) {
  */
 export function ReportsDesktopTable({ reports }: { reports: ReportRow[] }) {
 	return (
-		<Card className="hidden max-h-[calc(100dvh-16rem)] overflow-auto p-0 xl:block">
-			<table
-				aria-label="Project reports"
-				className={`w-full min-w-[52rem] text-left text-sm ${tableMeasureClass}`}>
+		<Card
+			className={`hidden max-h-[calc(100dvh-16rem)] overflow-auto p-0 xl:block ${tableMeasureClass}`}>
+			<table aria-label="Project reports" className="w-full min-w-[52rem] text-left text-sm">
 				<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 					<tr>
 						<th className="px-3 py-3" scope="col">

@@ -8,6 +8,7 @@ import { useEffect, useId, useState } from 'react';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue.ts';
 import { cn } from '../../lib/cn.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { tableMeasureClass } from '../../lib/tableStyles.ts';
 import { Badge } from '../ui/badge.tsx';
 import { Button, IconButton } from '../ui/button.tsx';
 import { Card } from '../ui/card.tsx';
@@ -80,6 +81,7 @@ export function FilterToolbar({
 			<Card
 				className={cn(
 					'flex flex-col gap-3',
+					tableMeasureClass,
 					mobileFilters &&
 						(contentAware
 							? '@container @max-[48rem]:gap-2 @max-[48rem]:p-3'
@@ -87,16 +89,11 @@ export function FilterToolbar({
 					className,
 				)}>
 				{header}
-				{/* The grid needs a width to stop at as well as a column count to stop at. `columns` is a
-			    ratio — `2fr_1fr_1fr` — and a ratio has no ceiling, so in a 1962px content column the
-			    three toolbars that share this component handed a status select 490px and the search
-			    field 980px. The tracks were tuned around 1312px; 80rem is the nearest step above that
-			    and leaves four tracks at ~320px each, which is where these controls stop improving.
-			    Capped here rather than at each call site because all three call sites were wrong in
-			    the same way. */}
+				{/* Ratios such as `2fr_1fr_1fr` have no ceiling. The shared 80rem Card measure keeps the
+				    tuned control widths while making its border and controls terminate together. */}
 				<div
 					className={cn(
-						'grid max-w-[80rem] gap-3',
+						'grid gap-3',
 						mobileFilters &&
 							(contentAware
 								? '@max-[48rem]:grid-cols-[minmax(0,1fr)_auto] @max-[48rem]:items-end @max-[48rem]:gap-2'
@@ -151,11 +148,10 @@ export function FilterToolbar({
 						</>
 					) : null}
 				</div>
-				{/* The same cap as the grid above it, so the readout and its Reset stay the width of
-			    the controls they describe rather than being pushed to opposite ends of the card. */}
+				{/* The readout and its Reset fill the same capped Card as the controls they describe. */}
 				<div
 					className={cn(
-						'flex max-w-[80rem] items-center justify-between gap-3 text-xs text-muted-foreground',
+						'flex items-center justify-between gap-3 text-xs text-muted-foreground',
 						mobileFilters && (contentAware ? '@max-[48rem]:hidden' : 'max-sm:hidden'),
 					)}>
 					<span role="status">

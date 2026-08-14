@@ -83,41 +83,46 @@ export function InterviewQuestionRow({
 			{/* The measure applies to the expanded row only. Collapsed rows are a dense single-line
 			    list — the density this component exists to deliver — and capping them would wrap a
 			    long prompt over three lines forty times over. Expanded, the prompt is the heading
-			    the answer is written under, and only one row is ever expanded. */}
-			<div className="flex flex-wrap items-center gap-2">
-				{chips}
-				<span className={`text-sm text-foreground ${proseMeasureClass}`}>
-					{question.prompt}
-				</span>
-			</div>
-			<div className="mt-2 space-y-2">
-				<textarea
-					aria-label={`Answer for question: ${question.prompt}`}
-					className={textareaClass}
-					disabled={pending}
-					onChange={(event) => onDraftChange(event.target.value)}
-					placeholder="Type your answer…"
-					rows={3}
-					value={draft}
-				/>
-				<p aria-live="assertive" className={`min-h-0 text-xs ${toneText.red}`} role="alert">
-					{submitError ?? ''}
-				</p>
-				<div className="flex gap-2">
-					<Button
-						aria-label={`Submit answer for question: ${question.prompt}`}
-						disabled={pending || trimmedDraft.length === 0}
-						onClick={onSubmit}
-						variant="primary">
-						Submit
-					</Button>
-					<Button
-						aria-label={`Cancel answer for question: ${question.prompt}`}
+			    the answer is written under, and only one row is ever expanded. The cap wraps the
+			    complete prompt-and-answer composition so the field and action row end with the text
+			    they belong to. */}
+			<div className={`text-sm ${proseMeasureClass}`}>
+				<div className="flex flex-wrap items-center gap-2">
+					{chips}
+					<span className="text-foreground">{question.prompt}</span>
+				</div>
+				<div className="mt-2 space-y-2">
+					<textarea
+						aria-label={`Answer for question: ${question.prompt}`}
+						className={textareaClass}
 						disabled={pending}
-						onClick={onCancel}
-						variant="secondary">
-						Cancel
-					</Button>
+						onChange={(event) => onDraftChange(event.target.value)}
+						placeholder="Type your answer…"
+						rows={3}
+						value={draft}
+					/>
+					<p
+						aria-live="assertive"
+						className={`min-h-0 text-xs ${toneText.red}`}
+						role="alert">
+						{submitError ?? ''}
+					</p>
+					<div className="flex gap-2">
+						<Button
+							aria-label={`Submit answer for question: ${question.prompt}`}
+							disabled={pending || trimmedDraft.length === 0}
+							onClick={onSubmit}
+							variant="primary">
+							Submit
+						</Button>
+						<Button
+							aria-label={`Cancel answer for question: ${question.prompt}`}
+							disabled={pending}
+							onClick={onCancel}
+							variant="secondary">
+							Cancel
+						</Button>
+					</div>
 				</div>
 			</div>
 		</li>

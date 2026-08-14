@@ -9,7 +9,7 @@ import { Button } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useProjectNotes, useSaveProjectNotes } from '../../../hooks/useProjectNotes.ts';
 import { textareaClass } from '../../../lib/formStyles.ts';
-import { monoEditorMeasureClass } from '../../../lib/typography.ts';
+import { monoEditorMeasureCardClass } from '../../../lib/typography.ts';
 
 function formatSavedAt(updatedAt: null | number): string {
 	if (updatedAt === null) return 'Not saved yet';
@@ -52,7 +52,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 	};
 
 	return (
-		<Card className="flex flex-col gap-3">
+		<Card className={`flex flex-col gap-3 ${monoEditorMeasureCardClass}`}>
 			<CardHeader
 				action={
 					<div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export function NotesTab({ projectId }: { projectId: string }) {
 			    beneath the field, which the code browser does not carry. */}
 			<textarea
 				aria-label="Project notes"
-				className={`${textareaClass} ${monoEditorMeasureClass} min-h-[28rem] font-mono lg:h-[calc(100vh-25rem)]`}
+				className={`${textareaClass} min-h-[28rem] font-mono lg:h-[calc(100vh-25rem)]`}
 				onChange={(event) => setDraft(event.target.value)}
 				onKeyDown={(event) => {
 					if ((event.metaKey || event.ctrlKey) && event.key === 's') {

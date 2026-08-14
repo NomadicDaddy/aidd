@@ -40,7 +40,7 @@ export function DiaryFeed({
 
 	if (total === 0) {
 		return (
-			<Card>
+			<Card className="max-w-[61rem]">
 				<p className="text-sm text-muted-foreground">{emptyMessage}</p>
 			</Card>
 		);
@@ -51,12 +51,9 @@ export function DiaryFeed({
 	const groups = groupDiaryByDay(entries, items, now);
 
 	return (
-		// The feed fills its container, like every page body in the shell. A whole-page cap here
-		// made /diary a lone centered column beside sibling routes that all fill the shell; the
-		// prose inside a row is measured separately (`max-w-[68ch]` on the detail line, the shared
-		// prose measure on entry markdown) and each row's columns stop at `max-w-[61rem]`, so a
-		// caller that fills the shell is not giving up the line length — only the position of the
-		// timestamp rail.
+		// The feed keeps the full-width page contract. Each child that draws chrome owns the shared
+		// measure, so its border, rule, hover band, and content terminate together without turning the
+		// whole page back into a centered reading column.
 		<div className="space-y-5">
 			<DiaryFilterBar
 				kind={kind}
@@ -67,7 +64,7 @@ export function DiaryFeed({
 				total={total}
 			/>
 			{groups.length === 0 ? (
-				<Card>
+				<Card className="max-w-[61rem]">
 					<p className="text-sm text-muted-foreground">
 						No activity matches the current filters.
 					</p>
@@ -87,7 +84,7 @@ export function DiaryFeed({
 								// Below `sm` the shell nav is a sticky bar in flow at `z-20`, so a heading stuck at
 								// `top-0` sits inside its footprint and is painted over entirely. The offset is
 								// the shell's own published height, which is 0px once the rail goes `fixed`.
-								'sticky top-[var(--app-topbar-height,0px)] z-10 mb-2 border-t border-border bg-background/90 pt-4 pb-2 backdrop-blur',
+								'sticky top-[var(--app-topbar-height,0px)] z-10 mb-2 max-w-[61rem] border-t border-border bg-background/90 pt-4 pb-2 backdrop-blur',
 							)}>
 							{group.label}
 						</h2>
@@ -110,7 +107,7 @@ export function DiaryFeed({
 				// counted, so the reader was offered two scopes the number above them did not
 				// distinguish. Pressing this extends whichever halves still have history; both
 				// land in the same day groups either way.
-				<div className="flex justify-center border-t border-border pt-4">
+				<div className="flex max-w-[61rem] justify-center border-t border-border pt-4">
 					<Button
 						disabled={
 							entriesQuery.isFetchingNextPage || timelineQuery.isFetchingNextPage

@@ -82,3 +82,6 @@ export const proseMeasureCardClass = 'max-w-[calc(46ch*0.875_+_3.5rem)]';
  * ~220-character line.
  */
 export const monoEditorMeasureClass = 'max-w-[100ch]';
+
+/** The monospace editor measure plus a Card's horizontal `p-4`, applied to the Card itself. */
+export const monoEditorMeasureCardClass = 'max-w-[calc(100ch_+_2rem)]';

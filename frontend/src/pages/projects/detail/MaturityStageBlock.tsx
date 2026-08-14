@@ -47,7 +47,7 @@ export function MaturityStageBlock({
 	const headerId = `maturity-stage-header-${stage.id}`;
 	const ChevronIcon = expanded ? ChevronDown : ChevronRight;
 	return (
-		<div className="rounded-md border border-border">
+		<div className="max-w-[61rem] rounded-md border border-border">
 			<button
 				aria-controls={panelId}
 				aria-expanded={expanded}

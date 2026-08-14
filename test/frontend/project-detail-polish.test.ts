@@ -327,16 +327,16 @@ describe('profile tab', () => {
 });
 
 describe('diary tab', () => {
-	test('both diary surfaces fill the shell like their siblings, measures carried by the content', async () => {
+	test('the page and feed keep the shared shell while chrome-owning children carry the measure', async () => {
 		const tab = await detail('DiaryTab.tsx');
 		expect(tab).not.toContain('width="full"');
 
 		const feed = await readFile(resolve(FRONTEND_SRC, 'pages/diary/DiaryFeed.tsx'), 'utf8');
-		// The feed has no width variant at all: it fills its container, and the line length is
-		// protected where it is read — rows stop at 61rem, the detail line at 68ch.
+		// The route and feed keep the full-width page shell, while each chrome-owning child carries the
+		// established measure so cards, sticky rules, hover bands, filters, and content share an edge.
 		expect(feed).not.toContain('max-w-5xl');
-		expect(feed).not.toContain('width');
-		expect(feed).toContain('max-w-[61rem]');
+		expect(feed).toContain('<div className="space-y-5">');
+		expect(feed).toContain('max-w-[61rem] border-t border-border');
 
 		const page = await readFile(resolve(FRONTEND_SRC, 'pages/diary/DiaryPage.tsx'), 'utf8');
 		// /diary is on the same `page-reveal space-y-5` shell as every other page. It used to cap

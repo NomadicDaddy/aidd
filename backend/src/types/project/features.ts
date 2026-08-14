@@ -27,6 +27,7 @@ export interface WebFeatureStatusEntryDto {
 	status: null | string;
 	title: string;
 	type: WebFeatureStatusType;
+	updatedAt: null | string;
 }
 
 export interface ProjectFeatureDto {

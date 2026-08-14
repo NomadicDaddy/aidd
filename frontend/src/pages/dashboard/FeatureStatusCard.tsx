@@ -4,13 +4,7 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
-import type {
-	FeatureStatusEntry,
-	FeatureStatusType,
-	ProjectDetail,
-	ProjectFeature,
-	ProjectSummary,
-} from '../../api/types.ts';
+import type { FeatureStatusType, ProjectSummary } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
@@ -23,8 +17,6 @@ import { type FeatureStatusRow, FeatureStatusRows } from './FeatureStatusRows.ts
 
 type FeatureStatusState = 'completed' | 'pending';
 
-type FeatureStatusSourceProject = ProjectDetail | ProjectSummary;
-
 const stateOptions: { label: string; value: FeatureStatusState }[] = [
 	{ label: 'Pending', value: 'pending' },
 	{ label: 'Completed', value: 'completed' },
@@ -36,49 +28,10 @@ const typeOptions: { label: string; value: FeatureStatusType }[] = [
 	{ label: 'Audit', value: 'audit' },
 ];
 
-function featureDirectory(feature: ProjectFeature): string {
-	return feature.directory || feature.id;
-}
-
-function featureType(feature: ProjectFeature): FeatureStatusType {
-	const directory = featureDirectory(feature);
-	if (feature.auditSource || /^audit-[a-z][a-z0-9-]*-\d+-/.test(directory)) return 'audit';
-	if (/^remediation(-\d+)?-[a-zA-Z0-9-]+$/.test(directory)) return 'remediation';
-	return 'feature';
-}
-
-function featureCompleted(feature: ProjectFeature): boolean {
-	const type = featureType(feature);
-	return type === 'audit'
-		? feature.status === 'completed' && feature.passes === true
-		: feature.status === 'completed';
-}
-
-function statusEntriesFromFeatures(features: ProjectFeature[] | undefined): FeatureStatusEntry[] {
-	return (features ?? []).map((feature) => {
-		const directory = featureDirectory(feature);
-		return {
-			completed: featureCompleted(feature),
-			directory,
-			id: feature.id,
-			priority: feature.priority ?? null,
-			status: feature.status ?? null,
-			title: feature.title ?? directory,
-			type: featureType(feature),
-		};
-	});
-}
-
-function statusEntries(project: FeatureStatusSourceProject): FeatureStatusEntry[] {
-	if (project.featureStatus?.length > 0) return project.featureStatus;
-	if ('features' in project) return statusEntriesFromFeatures(project.features);
-	return [];
-}
-
-function buildFeatureStatusRows(projects: FeatureStatusSourceProject[]): FeatureStatusRow[] {
+function buildFeatureStatusRows(projects: ProjectSummary[]): FeatureStatusRow[] {
 	return projects
 		.flatMap((project) =>
-			statusEntries(project).map((feature) => ({
+			project.featureStatus.map((feature) => ({
 				completed: feature.completed,
 				directory: feature.directory,
 				priority: feature.priority,
@@ -116,7 +69,7 @@ export function FeatureStatusCard({
 	isError: boolean;
 	isLoading: boolean;
 	onRetry: () => void;
-	projects: FeatureStatusSourceProject[];
+	projects: ProjectSummary[];
 }) {
 	const [stateFilter, setStateFilter] = useState<FeatureStatusState>('pending');
 	const [typeFilter, setTypeFilter] = useState<FeatureStatusType>('feature');

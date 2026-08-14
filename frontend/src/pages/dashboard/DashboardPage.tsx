@@ -1,13 +1,11 @@
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { default as Bot } from 'lucide-react/dist/esm/icons/bot';
 import { default as CheckCircle2 } from 'lucide-react/dist/esm/icons/check-circle-2';
 import { default as FolderKanban } from 'lucide-react/dist/esm/icons/folder-kanban';
 import { default as History } from 'lucide-react/dist/esm/icons/history';
 
-import type { ProjectDetail, ProjectSummary } from '../../api/types.ts';
 import type { DashboardCardDef } from './SortableDashboardGrid.tsx';
 
-import { getProject } from '../../api/projects.ts';
 import { DataFreshness } from '../../components/shared/DataFreshness.tsx';
 import { Metric } from '../../components/shared/Metric.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
@@ -44,16 +42,6 @@ export function DashboardPage() {
 	const activeCycle = cycleList.find((cycle) => cycle.status === 'running');
 	const now = useNow(Boolean(activeCycle));
 	const projectList = (projects.data?.projects ?? []).filter((p) => !p.name.endsWith('.old'));
-	const featureStatusDetails = useQueries({
-		queries: projectList.map((project) => ({
-			enabled:
-				(project.featureStats.total > 0 && (project.featureStatus?.length ?? 0) === 0) ||
-				project.featureStats.waitingApproval > 0,
-			queryFn: ({ signal }: { signal: AbortSignal }) => getProject(project.id, signal),
-			queryKey: ['project', project.id],
-			staleTime: 30_000,
-		})),
-	});
 	const runList = runs.data?.pages.flatMap((page) => page.runs) ?? [];
 	const activeRuns = runList.filter((run) => run.status === 'running');
 	const totalFeatures = projectList.reduce((sum, project) => sum + project.featureStats.total, 0);
@@ -92,14 +80,7 @@ export function DashboardPage() {
 	// 33 projects need attention.
 	const projectsTone =
 		projectCount > 0 ? getHealthTone(percent(healthyProjects, projectCount)) : 'neutral';
-	const featureStatusProjects = projectList.map<ProjectDetail | ProjectSummary>(
-		(project, index) => featureStatusDetails[index]?.data ?? project,
-	);
-	const featureStatusLoading =
-		(projects.isLoading && !projects.data) ||
-		featureStatusDetails.some((query) => query.isLoading && !query.data);
-	const featureStatusError =
-		projects.isError || featureStatusDetails.some((query) => query.isError);
+	const featureStatusLoading = projects.isLoading && !projects.data;
 
 	function refreshDashboard() {
 		traceDataMovement({
@@ -164,13 +145,12 @@ export function DashboardPage() {
 			label: 'Feature Status',
 			node: (
 				<FeatureStatusCard
-					isError={featureStatusError}
+					isError={projects.isError}
 					isLoading={featureStatusLoading}
 					onRetry={() => {
 						void projects.refetch();
-						for (const query of featureStatusDetails) void query.refetch();
 					}}
-					projects={featureStatusProjects}
+					projects={projectList}
 				/>
 			),
 		},
@@ -211,7 +191,7 @@ export function DashboardPage() {
 						suggestionsQuery.isLoading ||
 						(featureStatusLoading && pendingSuggestions.length === 0)
 					}
-					projects={featureStatusProjects}
+					projects={projectList}
 					runList={runList}
 					suggestions={suggestionsQuery.data ?? []}
 				/>

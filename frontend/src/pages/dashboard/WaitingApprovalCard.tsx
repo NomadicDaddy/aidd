@@ -3,7 +3,7 @@ import { default as ShieldQuestion } from 'lucide-react/dist/esm/icons/shield-qu
 import { Link } from 'react-router';
 
 import type {
-	ProjectDetail,
+	FeatureStatusEntry,
 	ProjectSummary,
 	RunRecord,
 	SuggestionRecord,
@@ -37,7 +37,7 @@ export function WaitingApprovalCard({
 	suggestions,
 }: {
 	isLoading: boolean;
-	projects: (ProjectDetail | ProjectSummary)[];
+	projects: ProjectSummary[];
 	runList: RunRecord[];
 	suggestions: SuggestionRecord[];
 }) {
@@ -47,13 +47,12 @@ export function WaitingApprovalCard({
 		(run) => run.status !== 'running' && run.stopReason === 'blocked_needs_user_input',
 	);
 	const waitingFeatures: {
-		feature: ProjectDetail['features'][number];
+		feature: FeatureStatusEntry;
 		projectId: string;
 		projectName: string;
 	}[] = [];
 	for (const project of projects) {
-		if (!('features' in project) || !project.features) continue;
-		for (const feature of project.features) {
+		for (const feature of project.featureStatus) {
 			if (feature.status === 'waiting_approval') {
 				waitingFeatures.push({ feature, projectId: project.id, projectName: project.name });
 			}

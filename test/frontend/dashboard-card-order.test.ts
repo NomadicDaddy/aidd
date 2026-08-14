@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
 import {
 	CARD_HEIGHT_MAX,
 	CARD_HEIGHT_MIN,
@@ -7,6 +8,36 @@ import {
 	normalizeCardSizes,
 	useDashboardStore,
 } from '../../frontend/src/stores/dashboardStore.ts';
+
+const dashboardSourceRoot = join(import.meta.dir, '../../frontend/src/pages/dashboard');
+
+function readDashboardSource(file: string): Promise<string> {
+	return Bun.file(join(dashboardSourceRoot, file)).text();
+}
+
+describe('dashboard project summary contract', () => {
+	test('does not fan out project-detail queries after loading project summaries', async () => {
+		const source = await readDashboardSource('DashboardPage.tsx');
+		expect(source).not.toContain('useQueries');
+		expect(source).not.toContain('getProject');
+		expect(source).not.toContain('featureStatusDetails');
+		expect(source).toContain('projects={projectList}');
+	});
+
+	test('feature cards consume only the project summary status projection', async () => {
+		const [featureStatusCard, waitingApprovalCard, waitingApprovalRows] = await Promise.all([
+			readDashboardSource('FeatureStatusCard.tsx'),
+			readDashboardSource('WaitingApprovalCard.tsx'),
+			readDashboardSource('WaitingApprovalRows.tsx'),
+		]);
+		expect(featureStatusCard).toContain('projects: ProjectSummary[]');
+		expect(featureStatusCard).toContain('project.featureStatus.map');
+		expect(featureStatusCard).not.toContain('ProjectDetail');
+		expect(waitingApprovalCard).toContain('projects: ProjectSummary[]');
+		expect(waitingApprovalCard).toContain('for (const feature of project.featureStatus)');
+		expect(waitingApprovalRows).toContain('feature: FeatureStatusEntry');
+	});
+});
 
 function installWindow(): void {
 	const storage = new Map<string, string>();

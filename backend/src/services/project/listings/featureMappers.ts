@@ -66,6 +66,7 @@ export function toWebFeatureStatusEntries(features: Feature[]): WebFeatureStatus
 				status: feature.status ?? null,
 				title: feature.title ?? directory,
 				type: classifyFeatureStatusType(feature),
+				updatedAt: typeof feature.updatedAt === 'string' ? feature.updatedAt : null,
 			};
 		})
 		.sort((left, right) => left.directory.localeCompare(right.directory));

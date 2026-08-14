@@ -4,7 +4,7 @@ import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { type ReactNode } from 'react';
 import { Link } from 'react-router';
 
-import type { ProjectDetail, RunRecord, SuggestionRecord } from '../../api/types.ts';
+import type { FeatureStatusEntry, RunRecord, SuggestionRecord } from '../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
@@ -162,7 +162,7 @@ export function WaitingFeatureRow({
 	projectName,
 	showKind,
 }: {
-	feature: ProjectDetail['features'][number];
+	feature: FeatureStatusEntry;
 	projectId: string;
 	projectName: string;
 	showKind: boolean;

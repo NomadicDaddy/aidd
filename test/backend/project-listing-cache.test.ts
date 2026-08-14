@@ -10,9 +10,42 @@ import {
 	mapSettledWithConcurrency,
 	PROJECT_LISTING_COMPUTE_CONCURRENCY,
 } from '../../backend/src/services/project/listings.ts';
+import { toWebFeatureStatusEntries } from '../../backend/src/services/project/listings/featureMappers.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
+
+describe('toWebFeatureStatusEntries', () => {
+	test('includes feature update times in the project summary projection', () => {
+		expect(
+			toWebFeatureStatusEntries([
+				{
+					id: 'waiting-feature',
+					status: 'waiting_approval',
+					title: 'Waiting feature',
+					updatedAt: '2026-08-13T18:00:00.000Z',
+				},
+			]),
+		).toEqual([
+			{
+				completed: false,
+				directory: 'waiting-feature',
+				id: 'waiting-feature',
+				priority: null,
+				status: 'waiting_approval',
+				title: 'Waiting feature',
+				type: 'feature',
+				updatedAt: '2026-08-13T18:00:00.000Z',
+			},
+		]);
+	});
+
+	test('uses null when a feature has no update time', () => {
+		const [entry] = toWebFeatureStatusEntries([{ id: 'undated-feature' }]);
+		expect(entry?.updatedAt).toBeNull();
+	});
+});
+
 function cacheValue(): ProjectListingCacheValue {
 	return {
 		prioritySummary: {

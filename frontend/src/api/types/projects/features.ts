@@ -27,6 +27,7 @@ export interface FeatureStatusEntry {
 	status: null | string;
 	title: string;
 	type: FeatureStatusType;
+	updatedAt: null | string;
 }
 
 export type ProjectFeatureStatus = 'backlog' | 'completed' | 'in_progress' | 'waiting_approval';

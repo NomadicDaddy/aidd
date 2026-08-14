@@ -1,6 +1,8 @@
 import { default as Play } from 'lucide-react/dist/esm/icons/play';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
 
+import type { ProjectFeature } from '../../../api/types.ts';
+
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import {
 	FilterSearch,
@@ -15,7 +17,15 @@ import { AuditsDesktopTable } from './AuditsDesktopTable.tsx';
 import { AuditsMobileList } from './AuditsMobileList.tsx';
 import { useProjectAuditsTab } from './useProjectAuditsTab.ts';
 
-export function AuditsTab({ projectId, projectName }: { projectId: string; projectName: string }) {
+export function AuditsTab({
+	features,
+	projectId,
+	projectName,
+}: {
+	features: ProjectFeature[];
+	projectId: string;
+	projectName: string;
+}) {
 	const {
 		audits,
 		auditsEnabled,
@@ -140,6 +150,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 			<AuditsDesktopTable
 				auditsEnabled={auditsEnabled}
 				changeOverride={changeOverride}
+				features={features}
 				launchPending={launch.isPending}
 				onClearAll={clearAll}
 				onSelectAll={selectAll}
@@ -154,6 +165,7 @@ export function AuditsTab({ projectId, projectName }: { projectId: string; proje
 			<AuditsMobileList
 				auditsEnabled={auditsEnabled}
 				changeOverride={changeOverride}
+				features={features}
 				launchPending={launch.isPending}
 				onClearAll={clearAll}
 				onSelectAll={selectAll}

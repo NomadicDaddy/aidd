@@ -1,46 +1,27 @@
-import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
 import { useId } from 'react';
 
-import type { ProjectAuditEntry } from '../../../api/types.ts';
+import type { ProjectAuditEntry, ProjectFeature } from '../../../api/types.ts';
 
-import { Badge } from '../../../components/ui/badge.tsx';
-import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { selectClass } from '../../../lib/formStyles.ts';
-import { bandTone, describeChangePotential, overrideEffects } from '../../audits/auditsUtils.ts';
+import { overrideEffects } from '../../audits/auditsUtils.ts';
 import {
-	auditPathTail,
-	describeFreshAge,
-	describeReportFreshness,
-	type OverrideValue,
-	stateBadge,
-} from './auditsTabUtils.tsx';
-
-function ReportState({ entry }: { entry: ProjectAuditEntry }) {
-	if (entry.freshReport) {
-		return (
-			<span className="inline-flex items-center gap-1.5" title={describeFreshAge(entry)}>
-				<Badge tone="emerald">Fresh</Badge>
-				<span className="text-xs text-muted-foreground">{describeFreshAge(entry)}</span>
-			</span>
-		);
-	}
-	if (entry.staleReport) {
-		return (
-			<span title={describeReportFreshness(entry)}>
-				<Badge tone="amber">Stale</Badge>
-			</span>
-		);
-	}
-	if (entry.missingReport) return <Badge tone="red">Missing</Badge>;
-	return <span className="text-xs text-muted-foreground">No report</span>;
-}
+	AuditActionButton,
+	AuditChangePotential,
+	AuditDetailsToggle,
+	AuditFindingList,
+	AuditPath,
+	AuditReportState,
+	AuditStateBadge,
+} from './auditRowContent.tsx';
+import { type OverrideValue } from './auditsTabUtils.ts';
 
 export function AuditCompactRow({
 	auditsEnabled,
 	changeOverride,
 	expanded,
+	findings,
 	launchPending,
 	onToggleExpanded,
 	onToggleSelected,
@@ -52,6 +33,7 @@ export function AuditCompactRow({
 	auditsEnabled: boolean;
 	changeOverride: (name: string, value: OverrideValue) => void;
 	expanded: boolean;
+	findings: ProjectFeature[];
 	launchPending: boolean;
 	onToggleExpanded: () => void;
 	onToggleSelected: () => void;
@@ -62,7 +44,6 @@ export function AuditCompactRow({
 }) {
 	const detailsId = useId();
 	const overrideValue: OverrideValue = row.overrideEffect ?? 'default';
-	const rowDisabled = !auditsEnabled || !row.enabled;
 	const rowTooltip = !auditsEnabled
 		? 'Audits are globally disabled.'
 		: !row.enabled
@@ -72,7 +53,7 @@ export function AuditCompactRow({
 	return (
 		<Card className="p-0">
 			<div className="grid gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-				<label className="flex min-w-0 items-start gap-2 max-sm:min-h-11">
+				<div className="flex min-w-0 items-start gap-2 max-sm:min-h-11">
 					<Checkbox
 						aria-label={`Select ${row.name}`}
 						checked={selected}
@@ -82,28 +63,21 @@ export function AuditCompactRow({
 					/>
 					<span className="min-w-0">
 						<span className="block font-medium text-foreground">{row.name}</span>
-						<span
-							className="block truncate font-mono text-xs text-muted-foreground"
-							title={row.path}>
-							{auditPathTail(row.path)}
-						</span>
+						<AuditPath entry={row} />
 					</span>
-				</label>
+				</div>
 				<div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
-					{stateBadge(row)}
-					<ReportState entry={row} />
-					<Button
-						aria-controls={detailsId}
-						aria-expanded={expanded}
-						className="ml-auto"
-						onClick={onToggleExpanded}
-						size="compact"
-						variant="ghost">
-						{expanded ? 'Hide details' : 'Details'}
-						<ChevronDown
-							className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+					<AuditStateBadge entry={row} />
+					<AuditReportState entry={row} />
+					<div className="ml-auto">
+						<AuditDetailsToggle
+							auditName={row.name}
+							detailsId={detailsId}
+							expanded={expanded}
+							findingCount={findings.length}
+							onToggle={onToggleExpanded}
 						/>
-					</Button>
+					</div>
 				</div>
 			</div>
 			{expanded ? (
@@ -114,26 +88,13 @@ export function AuditCompactRow({
 								Change potential
 							</dt>
 							<dd>
-								{row.changePotential ? (
-									<span
-										className="inline-flex items-center gap-2"
-										title={describeChangePotential(row.changePotential)}>
-										<Badge tone={bandTone[row.changePotential.band]}>
-											{row.changePotential.band}
-										</Badge>
-										<span className="text-muted-foreground tabular-nums">
-											{row.changePotential.score}
-										</span>
-									</span>
-								) : (
-									<span className="text-muted-foreground">—</span>
-								)}
+								<AuditChangePotential entry={row} />
 							</dd>
 						</div>
 						<div className="space-y-1">
 							<dt className="font-medium text-muted-foreground uppercase">Report</dt>
 							<dd>
-								<ReportState entry={row} />
+								<AuditReportState entry={row} />
 							</dd>
 						</div>
 						<div className="space-y-1">
@@ -160,22 +121,31 @@ export function AuditCompactRow({
 								</select>
 							</dd>
 						</div>
+						<div className="space-y-1 sm:col-span-3">
+							<dt className="font-medium text-muted-foreground uppercase">
+								Definition path
+							</dt>
+							<dd className="font-mono break-all text-muted-foreground">
+								{row.path}
+							</dd>
+						</div>
 					</dl>
+					<div className="mt-3 border-t border-border pt-3">
+						<AuditFindingList auditName={row.name} findings={findings} />
+					</div>
 					<div className="mt-3 flex justify-end gap-2 border-t border-border pt-3">
-						<Button
-							disabled={rowDisabled || launchPending}
+						<AuditActionButton
+							disabledReason={rowTooltip}
+							label="Run"
 							onClick={() => runSingle(row.name, false)}
-							title={rowTooltip}
-							variant="secondary">
-							Run
-						</Button>
-						<Button
-							disabled={rowDisabled || launchPending}
+							pending={launchPending}
+						/>
+						<AuditActionButton
+							disabledReason={rowTooltip}
+							label="Review"
 							onClick={() => runSingle(row.name, true)}
-							title={rowTooltip}
-							variant="secondary">
-							Review
-						</Button>
+							pending={launchPending}
+						/>
 					</div>
 				</div>
 			) : null}

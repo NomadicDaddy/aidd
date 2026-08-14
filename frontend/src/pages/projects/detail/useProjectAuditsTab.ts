@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { AuditOverrideEffect } from '../../../api/types.ts';
-import type { EnabledFilter, OverrideValue } from './auditsTabUtils.tsx';
+import type { EnabledFilter, OverrideValue } from './auditsTabUtils.ts';
 
 import {
 	useLaunchAudits,

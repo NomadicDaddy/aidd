@@ -12,11 +12,12 @@ describe('project detail density contracts', () => {
 	test('bounds the compact audit inventory and discloses complete row controls', async () => {
 		const list = await detail('AuditsMobileList.tsx');
 		const row = await detail('AuditCompactRow.tsx');
+		const content = await detail('auditRowContent.tsx');
 
 		expect(list).toContain('ariaLabel="Project audits compact inventory"');
 		expect(list).toContain('max-h-[28rem] overflow-y-auto');
 		expect(list).toContain('sticky top-px');
-		expect(row).toContain('aria-expanded={expanded}');
+		expect(content).toContain('aria-expanded={expanded}');
 		expect(row).toContain('Override for ${row.name}');
 		expect(row).toContain('runSingle(row.name, true)');
 	});

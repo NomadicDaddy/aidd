@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { activeAuditFindings } from '../../frontend/src/pages/projects/detail/auditsTabUtils.ts';
+
 const FRONTEND_SRC = resolve(import.meta.dir, '../../frontend/src');
 
 const src = (file: string) => readFile(resolve(FRONTEND_SRC, file), 'utf8');
@@ -92,10 +94,53 @@ describe('audits tab', () => {
 		expect(table).not.toContain('${selectClass} w-full');
 	});
 
-	test('the narrow row shows the same path form the wide one does', async () => {
+	test('both row variants share the same keyboard-reachable audit path', async () => {
+		const table = await detail('AuditsDesktopTable.tsx');
 		const list = await detail('AuditCompactRow.tsx');
-		expect(list).toContain('auditPathTail(row.path)');
-		expect(list).toContain('block truncate font-mono text-xs text-muted-foreground');
+		const content = await detail('auditRowContent.tsx');
+		expect(table).toContain('<AuditPath entry={entry} />');
+		expect(list).toContain('<AuditPath entry={row} />');
+		expect(content).toContain('<Tooltip content={entry.path}>');
+	});
+
+	test('uses one container threshold and equivalent row affordances in both variants', async () => {
+		const table = await detail('AuditsDesktopTable.tsx');
+		const list = await detail('AuditsMobileList.tsx');
+		const row = await detail('AuditCompactRow.tsx');
+		const content = await detail('auditRowContent.tsx');
+
+		expect(table).toContain('hidden p-0 @min-[80rem]:block');
+		expect(list).toContain('className="@min-[80rem]:hidden"');
+		expect(table).toContain('<OverflowScroller');
+		expect(table).toContain('<EmptyState className="hidden @min-[80rem]:block">');
+		expect(list).toContain('<EmptyState className="@min-[80rem]:hidden">');
+		expect(table).toContain('<AuditDetailsToggle');
+		expect(row).toContain('<AuditDetailsToggle');
+		expect(table).toContain('<AuditActionButton');
+		expect(row).toContain('<AuditActionButton');
+		expect(content).toContain('size="compact"');
+		expect(table).not.toContain('title=');
+	});
+
+	test('matches only active findings from the row audit', () => {
+		const findings = activeAuditFindings(
+			[
+				{ auditSource: 'SECURITY', id: 'one', status: 'backlog' },
+				{ auditSource: 'SECURITY', id: 'done', status: 'completed' },
+				{ auditSource: 'SECURITY', id: 'passing', passes: true, status: 'backlog' },
+				{ id: 'audit-composition-patterns-1234-convention', status: 'in_progress' },
+				{ auditSource: 'HYGIENE', id: 'other', status: 'backlog' },
+			],
+			'SECURITY',
+		);
+
+		expect(findings.map((finding) => finding.id)).toEqual(['one']);
+		expect(
+			activeAuditFindings(
+				[{ id: 'audit-composition-patterns-1234-convention', status: 'in_progress' }],
+				'COMPOSITION_PATTERNS',
+			).map((finding) => finding.id),
+		).toEqual(['audit-composition-patterns-1234-convention']);
 	});
 });
 

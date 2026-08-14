@@ -1,16 +1,17 @@
 import { useState } from 'react';
 
-import type { ProjectAuditEntry } from '../../../api/types.ts';
+import type { ProjectAuditEntry, ProjectFeature } from '../../../api/types.ts';
 
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { AuditCompactRow } from './AuditCompactRow.tsx';
-import { type OverrideValue } from './auditsTabUtils.tsx';
+import { activeAuditFindings, type OverrideValue } from './auditsTabUtils.ts';
 
 export function AuditsMobileList({
 	auditsEnabled,
 	changeOverride,
+	features,
 	launchPending,
 	onClearAll,
 	onSelectAll,
@@ -23,6 +24,7 @@ export function AuditsMobileList({
 }: {
 	auditsEnabled: boolean;
 	changeOverride: (name: string, value: OverrideValue) => void;
+	features: ProjectFeature[];
 	launchPending: boolean;
 	onClearAll: () => void;
 	onSelectAll: () => void;
@@ -38,13 +40,17 @@ export function AuditsMobileList({
 		selectableNames.length > 0 && selectableNames.every((name) => selected.includes(name));
 
 	if (rows.length === 0) {
-		return <EmptyState className="xl:hidden">No audits match the current filters.</EmptyState>;
+		return (
+			<EmptyState className="@min-[80rem]:hidden">
+				No audits match the current filters.
+			</EmptyState>
+		);
 	}
 
 	return (
 		<OverflowScroller
 			ariaLabel="Project audits compact inventory"
-			className="xl:hidden"
+			className="@min-[80rem]:hidden"
 			scrollerClassName="max-h-[28rem] overflow-y-auto"
 			surface="background">
 			<div className="space-y-2 pr-1">
@@ -67,6 +73,7 @@ export function AuditsMobileList({
 						auditsEnabled={auditsEnabled}
 						changeOverride={changeOverride}
 						expanded={expanded.has(row.name)}
+						findings={activeAuditFindings(features, row.name)}
 						key={row.name}
 						launchPending={launchPending}
 						onToggleExpanded={() =>

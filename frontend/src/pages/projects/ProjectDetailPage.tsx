@@ -130,7 +130,7 @@ export function ProjectDetailPage() {
 	}
 	const artifactCheckSummary = detail.metadata.artifactCheck;
 	return (
-		<div className="page-reveal space-y-5">
+		<div className="page-reveal @container space-y-5">
 			<PageHeader
 				actions={
 					<div className="flex flex-wrap items-center gap-1.5">
@@ -267,7 +267,11 @@ export function ProjectDetailPage() {
 				/>
 			</TabPanel>
 			<TabPanel activeTab={tab} id="audits" idPrefix="project-detail">
-				<AuditsTab projectId={detail.id} projectName={detail.name} />
+				<AuditsTab
+					features={detail.features}
+					projectId={detail.id}
+					projectName={detail.name}
+				/>
 			</TabPanel>
 			<TabPanel activeTab={tab} id="profile" idPrefix="project-detail">
 				<ProfileTab profile={detail.metadata.profile} projectId={detail.id} />

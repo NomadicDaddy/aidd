@@ -103,11 +103,14 @@ describe('responsive steps are chosen against content width', () => {
 		// chain gates against. `RecipeMetadataCard` is the same case: it is the recipe form's own
 		// three fields, rendered nowhere but `RecipeEditMode`, whose root declares the container —
 		// and it *cannot* declare its own, because the query is on the card element itself and an
-		// element never matches containment it establishes. `FeaturesDesktopTable` is rendered only
-		// in the inventory Card that `FeaturesTab` declares as its container. `LeaderboardCard` is
-		// the catalog case again: it is rendered nowhere but the "Most used" card on `TelemetryPage`,
-		// which is the element that declares the container its rows measure.
+		// element never matches containment it establishes. Both Audits inventory variants render
+		// only in `ProjectDetailPage`, whose root owns their rail-sensitive container. The Features
+		// table is rendered only in the inventory Card that `FeaturesTab` declares as its container.
+		// `LeaderboardCard` is the catalog case again: it is rendered nowhere but the "Most used"
+		// card on `TelemetryPage`, which is the element that declares the container its rows measure.
 		expect(offenders.sort()).toEqual([
+			'pages/projects/detail/AuditsDesktopTable.tsx',
+			'pages/projects/detail/AuditsMobileList.tsx',
 			'pages/projects/detail/FeaturesDesktopTable.tsx',
 			'pages/recipes/detail/RecipeMetadataCard.tsx',
 			'pages/runs/LiveConsole.tsx',
@@ -123,6 +126,9 @@ describe('responsive steps are chosen against content width', () => {
 		);
 		expect(await read('pages', 'runs', 'RunsPage.tsx')).toContain('page-reveal @container');
 		expect(await read('pages', 'recipes', 'detail', 'RecipeEditMode.tsx')).toContain(
+			'page-reveal @container',
+		);
+		expect(await read('pages', 'projects', 'ProjectDetailPage.tsx')).toContain(
 			'page-reveal @container',
 		);
 	});

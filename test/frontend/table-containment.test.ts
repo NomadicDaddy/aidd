@@ -64,7 +64,7 @@ const pairedTables: { stack: string; table: string; tier: string }[] = [
 	{
 		stack: 'pages/projects/detail/AuditsMobileList.tsx',
 		table: 'pages/projects/detail/AuditsDesktopTable.tsx',
-		tier: 'xl',
+		tier: '@min-[80rem]',
 	},
 	{
 		stack: 'pages/projects/detail/FeaturesTab.tsx',
@@ -152,7 +152,7 @@ const exemptTables: { file: string; why: string }[] = [
 ];
 
 // A bounded Card is a legitimate scrollport where `sticky top-0` has to stick against the element
-// that actually scrolls; ApplicabilityTab and AuditsDesktopTable both document that choice.
+// that actually scrolls; ApplicabilityTab documents that choice.
 const containment = /<OverflowScroller|max-h-\[[^\]]+\] overflow-auto/;
 
 describe('wide tables are contained and replaced', () => {

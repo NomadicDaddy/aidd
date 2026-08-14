@@ -76,14 +76,18 @@ describe('tone taxonomy', () => {
 		// the ordinary answer for the Archive bucket, so a red cell there read as a wall of failures.
 		expect(Object.values(effectTone)).toEqual(['neutral', 'neutral', 'neutral', 'neutral']);
 
-		const auditsTab = await source('projects', 'detail', 'auditsTabUtils.tsx');
-		expect(auditsTab).not.toMatch(/tone="(?:amber|emerald|red|teal|violet)"/);
+		const auditContent = await source('projects', 'detail', 'auditRowContent.tsx');
+		const stateBadges = auditContent.slice(
+			auditContent.indexOf('export function AuditStateBadge'),
+			auditContent.indexOf('export function AuditPath'),
+		);
+		expect(stateBadges).not.toMatch(/tone="(?:amber|emerald|red|teal|violet)"/);
 		// Colour was never the only signal on this column — each state still says its own word, and
 		// the invariant majority state is plain text rather than a badge that says nothing.
 		for (const label of ['Overridden on', 'Overridden off', 'Profile-disabled', 'Disabled']) {
-			expect(auditsTab).toContain(label);
+			expect(stateBadges).toContain(label);
 		}
-		expect(auditsTab).toContain(
+		expect(stateBadges).toContain(
 			'<span className="text-xs text-muted-foreground">Enabled</span>',
 		);
 	});

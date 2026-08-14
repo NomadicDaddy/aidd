@@ -21,6 +21,7 @@ import { statusTone, stringValue } from './shared.ts';
 
 export function FeaturesDesktopTable({
 	decisions,
+	deemphasizePriority,
 	isMutating,
 	launchingFeature,
 	milestoneOptions,
@@ -36,6 +37,7 @@ export function FeaturesDesktopTable({
 	runActive,
 }: {
 	decisions: Record<string, string>;
+	deemphasizePriority: boolean;
 	isMutating: boolean;
 	launchingFeature: null | string;
 	milestoneOptions: string[];
@@ -164,7 +166,10 @@ export function FeaturesDesktopTable({
 									/>
 								</td>
 								<td className="px-4 py-3">
-									<FeaturePriorityBadge priority={feature.priority} />
+									<FeaturePriorityBadge
+										deemphasized={deemphasizePriority}
+										priority={feature.priority}
+									/>
 								</td>
 								<td
 									className="px-4 py-3 text-xs text-muted-foreground"

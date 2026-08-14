@@ -45,8 +45,11 @@ export function ArtifactRow({ disabled, onOpen, onToggleSkip, record, skipped }:
 		<ArtifactInventoryRow
 			badges={
 				<>
-					{skipped ? <Badge tone="neutral">skipped</Badge> : null}
-					<Badge tone={status.tone}>{status.label}</Badge>
+					{skipped ? (
+						<Badge tone="neutral">skipped</Badge>
+					) : (
+						<Badge tone={status.tone}>{status.label}</Badge>
+					)}
 					<Badge tone={severityTone(record.severity)}>{record.severity}</Badge>
 				</>
 			}

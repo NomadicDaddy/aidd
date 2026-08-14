@@ -15,6 +15,7 @@ import { statusTone, stringValue } from './shared.ts';
 
 export function FeatureMobileCard({
 	decision,
+	deemphasizePriority,
 	disabled,
 	feature,
 	launching,
@@ -30,6 +31,7 @@ export function FeatureMobileCard({
 	runActive,
 }: {
 	decision: string;
+	deemphasizePriority: boolean;
 	disabled: boolean;
 	feature: ProjectFeature;
 	launching: boolean;
@@ -61,7 +63,10 @@ export function FeatureMobileCard({
 				<div className="space-y-1">
 					<dt className="font-medium text-muted-foreground uppercase">Priority</dt>
 					<dd>
-						<FeaturePriorityBadge priority={feature.priority} />
+						<FeaturePriorityBadge
+							deemphasized={deemphasizePriority}
+							priority={feature.priority}
+						/>
 					</dd>
 				</div>
 				<div className="space-y-1">

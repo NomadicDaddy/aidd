@@ -13,7 +13,11 @@ import { FeatureFilters } from './FeatureFilters.tsx';
 import { FeatureLaunchTargetRow } from './FeatureLaunchTargetRow.tsx';
 import { FeatureMobileCard } from './FeatureMobileCard.tsx';
 import { FeaturesDesktopTable } from './FeaturesDesktopTable.tsx';
-import { featureDirectory, unmappedRoadmapCallout } from './featuresUtils.ts';
+import {
+	featureDirectory,
+	featurePrioritiesAreUniform,
+	unmappedRoadmapCallout,
+} from './featuresUtils.ts';
 import { Pagination } from './Pagination.tsx';
 import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
 import { useFeaturesTab } from './useFeaturesTab.ts';
@@ -68,6 +72,7 @@ export function FeaturesTab({
 		total,
 		updateFilterParam,
 	} = useFeaturesTab({ features, projectId, projectPath, roadmap });
+	const deemphasizePriority = featurePrioritiesAreUniform(slice);
 
 	if (total === 0) {
 		return (
@@ -184,6 +189,7 @@ export function FeaturesTab({
 					/>
 					<FeaturesDesktopTable
 						decisions={decisions}
+						deemphasizePriority={deemphasizePriority}
 						isMutating={isMutating}
 						launchingFeature={launchingFeature}
 						milestoneOptions={milestoneOptions}
@@ -207,6 +213,7 @@ export function FeaturesTab({
 							return (
 								<FeatureMobileCard
 									decision={decisions[directory] ?? ''}
+									deemphasizePriority={deemphasizePriority}
 									disabled={isMutating}
 									feature={feature}
 									key={id}

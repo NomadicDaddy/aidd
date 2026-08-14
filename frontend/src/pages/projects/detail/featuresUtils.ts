@@ -10,6 +10,17 @@ export function featurePriorityTone(priority: number): Tone {
 	return 'neutral';
 }
 
+/** Whether every visible feature carries the same numeric priority. */
+export function featurePrioritiesAreUniform(
+	features: readonly Pick<ProjectFeature, 'priority'>[],
+): boolean {
+	if (features.length < 2) return false;
+	const priority = features[0]?.priority;
+	return (
+		typeof priority === 'number' && features.every((feature) => feature.priority === priority)
+	);
+}
+
 /**
  * Whether the `passes` flag contradicts the status. A completed feature that is not passing (or a
  * backlog feature that is) is worth a column's worth of attention; agreement is not, which is why

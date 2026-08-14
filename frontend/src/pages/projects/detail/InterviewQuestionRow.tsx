@@ -43,7 +43,7 @@ export function InterviewQuestionRow({
 	const chips = (
 		<>
 			<Badge tone={interviewPriorityTone(priority)}>{priority}</Badge>
-			{!expanded && trimmedDraft.length > 0 ? <Badge tone="amber">Draft</Badge> : null}
+			{!expanded && trimmedDraft.length > 0 ? <Badge tone="neutral">Draft</Badge> : null}
 		</>
 	);
 	if (!expanded) {

@@ -20,15 +20,23 @@ import { stringValue } from './shared.ts';
 
 /**
  * Priority, rendered the one way. The stacked card below `xl` used to print the bare number as
- * foreground text — `PRIORITY / 3` where the table showed a toned `P3` — so the tone that carries
- * the entire signal (P1 red, P2 amber, P3 neutral) vanished at the width where the table did, and
- * the value changed shape at the same time. Both layouts call this now.
+ * foreground text — `PRIORITY / 3` where the table showed a toned `P3` — so the value changed
+ * shape at the same time. Both layouts call this now. A priority shared by every visible row stays
+ * neutral; otherwise the tone carries the distinction (P1 red, P2 amber, P3 neutral).
  */
-export function FeaturePriorityBadge({ priority }: { priority: number | string | undefined }) {
+export function FeaturePriorityBadge({
+	deemphasized,
+	priority,
+}: {
+	deemphasized: boolean;
+	priority: number | string | undefined;
+}) {
 	if (typeof priority !== 'number') {
 		return <span className="text-xs text-muted-foreground">—</span>;
 	}
-	return <Badge tone={featurePriorityTone(priority)}>P{priority}</Badge>;
+	return (
+		<Badge tone={deemphasized ? 'neutral' : featurePriorityTone(priority)}>P{priority}</Badge>
+	);
 }
 
 /**

@@ -30,7 +30,7 @@ export function LocalRunResultBadges({
 			{run.runLedgerDirty ? (
 				<Tooltip content="Run summary could not be reconciled into the latest commit; recorded metrics may be incomplete.">
 					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
-						<Badge tone="teal">Ledger out of sync</Badge>
+						<Badge tone="amber">Ledger out of sync</Badge>
 					</span>
 				</Tooltip>
 			) : null}
@@ -46,7 +46,7 @@ export function LocalRunResultBadges({
 				<Tooltip
 					content={`Source files changed in the worktree during this run but were not attributable to it:\n${unattributedDirtySourceFiles.join('\n')}`}>
 					<span className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
-						<Badge tone="teal">Concurrent source changes</Badge>
+						<Badge tone="amber">Concurrent source changes</Badge>
 					</span>
 				</Tooltip>
 			) : null}

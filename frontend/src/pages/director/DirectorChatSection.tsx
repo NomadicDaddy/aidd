@@ -103,10 +103,10 @@ export function DirectorChatSection({
 		isMobileLayout && !showAllChats ? compactChatSessions(sessions, activeSessionId) : sessions;
 	const hasHiddenSessions = sessions.length > MOBILE_CHAT_PREVIEW_COUNT;
 	return (
-		// The grid column beside Recent Cycles is already 867px tall and stretches this section to
-		// match; the height just had nowhere to go. The section, the Card and the inner grid each
-		// pass it down, so the transcript can take what the column had already allocated instead of
-		// leaving 355px of bare page background under a 512px card.
+		// The grid's operational column stretches this section to match its Cycle and Suggestion
+		// surfaces; the height just had nowhere to go. The section, the Card and the inner grid each
+		// pass it down, so the transcript can take what the column allocated instead of leaving bare
+		// page background under the chat card.
 		<section aria-labelledby="director-chat-heading" className="h-full">
 			<ConfirmDialog
 				cancelLabel="Keep Chat"

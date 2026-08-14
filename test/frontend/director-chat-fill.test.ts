@@ -62,11 +62,12 @@ describe('the Director chat fills the column it was given', () => {
 		expect(source).toContain('role="log"');
 	});
 
-	test('the column it stretches against is the one holding the cycles', async () => {
+	test('the column it stretches against holds the operational cycle flow', async () => {
 		const page = await read('pages/director/DirectorPage.tsx');
 
-		// `h-full` on the chat is only meaningful while its sibling is the tall one; if the page
-		// ever stops being a stretched two-column grid, this fix stops meaning anything.
+		// `h-full` on the chat is only meaningful while its sibling holds the Cycle and Suggestion
+		// surfaces; if the page stops being a stretched two-column grid, this fix stops meaning
+		// anything.
 		expect(page).toContain('grid gap-5 @min-[68rem]:grid-cols-2');
 	});
 

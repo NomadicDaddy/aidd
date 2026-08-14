@@ -31,16 +31,22 @@ describe('two-column grids do not stretch a card past its own content', () => {
 		expect(source).toContain('useSortable(');
 	});
 
-	test('Director stacks Run Cycle above Recent Cycles and runs Suggestions full width', async () => {
+	test('Director stacks Suggestions under Recent Cycles in the operational column', async () => {
 		const page = await read('pages/director/DirectorPage.tsx');
 		const cycles = await read('pages/director/DirectorRecentCycles.tsx');
 
-		// The dead column is gone by composition rather than by an alignment rule: the short Run
-		// Cycle card and the capped Recent Cycles card share the right column of the single
-		// two-column row, and the suggestion queue — rows, not a column — spans the page below it.
+		// The Director flow reads down the right column: launch a Cycle, inspect its history, then
+		// act on its Suggestions. Chat remains the independent left-column surface, so Suggestions
+		// cannot fall below the entire grid (and therefore below Chat) again.
 		expect(page).toContain('grid gap-5 @min-[68rem]:grid-cols-2');
 		expect(page).toMatch(
-			/<div className="space-y-5">[\s\S]*<DirectorRecentCycles cycles=\{cycles\} now=\{now\} \/>\s*<\/div>/,
+			/<div className="min-w-0 space-y-5">[\s\S]*<DirectorRecentCycles cycles=\{cycles\} now=\{now\} \/>\s*<DirectorSuggestionsList[\s\S]*suggestions=\{suggestions\}[\s\S]*\/>\s*<\/div>/,
+		);
+		// Suggestion filters have a wide intrinsic size. The grid item must be allowed to shrink or
+		// moving the queue into it widens the 390px page to the filter row's min-content width.
+		expect(page).toContain('<div className="min-w-0 space-y-5">');
+		expect(page.indexOf('<DirectorSuggestionsList')).toBeGreaterThan(
+			page.indexOf('<DirectorRecentCycles'),
 		);
 		expect(page).not.toContain('grid-cols-2 @min-[68rem]:items-start');
 		// Recent Cycles owns its scroll region, so the card around it stops growing on its own.

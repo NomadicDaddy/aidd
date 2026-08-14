@@ -184,10 +184,10 @@ export function DirectorPage() {
 					sessions={sessions}
 				/>
 
-				{/* Run Cycle is a short card; Director Chat beside it is 420px tall, so the right
-				    column ended in a tall empty band while Recent Cycles sat below in a second
-				    two-column row. Cycles stack under the control that produces them. */}
-				<div className="space-y-5">
+				{/* The operational flow stays together in the right column: run a Cycle, inspect
+				    its history, then act on the Suggestions it produced. Director Chat remains the
+				    independent conversation surface in the left column. */}
+				<div className="min-w-0 space-y-5">
 					<section aria-labelledby="director-cycle-heading">
 						{/* This action rail needs 372px by itself. Give the copy and controls separate
 						    lines until this card—not the viewport—has about 46rem to share. */}
@@ -267,17 +267,14 @@ export function DirectorPage() {
 						</Card>
 					</section>
 					<DirectorRecentCycles cycles={cycles} now={now} />
+					<DirectorSuggestionsList
+						isMobileLayout={isMobileLayout}
+						onDismiss={dismissSuggestion}
+						onLaunch={launchSuggestion}
+						suggestions={suggestions}
+					/>
 				</div>
 			</div>
-
-			{/* Full width: a suggestion is a title, a two-line description and four actions, which
-			    is a row, not a column. In half the page they wrapped onto three and four lines. */}
-			<DirectorSuggestionsList
-				isMobileLayout={isMobileLayout}
-				onDismiss={dismissSuggestion}
-				onLaunch={launchSuggestion}
-				suggestions={suggestions}
-			/>
 		</div>
 	);
 }

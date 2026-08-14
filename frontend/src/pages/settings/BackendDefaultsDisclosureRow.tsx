@@ -76,7 +76,7 @@ export function BackendDefaultsDisclosureRow({
 				aria-describedby={dirty ? dirtyMessageId : undefined}
 				aria-expanded={expanded}
 				aria-label={`${expanded ? 'Collapse' : 'Expand'} ${backend} backend defaults`}
-				className="grid min-h-11 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 text-left focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
+				className="grid min-h-11 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 text-left transition-colors duration-150 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
 				onClick={toggleDisclosure}
 				ref={triggerRef}
 				type="button">

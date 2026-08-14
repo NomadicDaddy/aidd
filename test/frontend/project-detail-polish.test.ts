@@ -23,6 +23,19 @@ describe('dependency-graph edges', () => {
 	});
 });
 
+describe('maturity stage disclosures', () => {
+	test('pair hover feedback with expanded-state and keyboard-focus semantics', async () => {
+		const source = await detail('MaturityStageBlock.tsx');
+		const styles = await src('index.css');
+
+		expect(source).toContain('transition-colors duration-150 hover:bg-muted/40');
+		expect(source).toContain('aria-controls={panelId}');
+		expect(source).toContain('aria-expanded={expanded}');
+		expect(source).toContain('aria-labelledby={headerId}');
+		expect(styles).toMatch(/button:focus-visible,[\s\S]*outline: 2px solid var\(--ring\)/u);
+	});
+});
+
 describe('per-row action cells', () => {
 	test('delete repeated down a list is quiet until hover, never filled danger', async () => {
 		const tones = await src('lib/tones.ts');

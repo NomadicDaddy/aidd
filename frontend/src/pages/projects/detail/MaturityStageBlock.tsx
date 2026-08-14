@@ -51,7 +51,7 @@ export function MaturityStageBlock({
 			<button
 				aria-controls={panelId}
 				aria-expanded={expanded}
-				className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left max-sm:min-h-11"
+				className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors duration-150 hover:bg-muted/40 max-sm:min-h-11"
 				id={headerId}
 				onClick={onToggle}
 				type="button">

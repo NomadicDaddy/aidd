@@ -39,6 +39,11 @@ describe('Settings mobile backend disclosures', () => {
 		const html = renderDisclosure(defaults);
 
 		expect(html).toContain('aria-expanded="false"');
+		expect(html).toMatch(/aria-controls="[^"]+" aria-expanded="false"/u);
+		expect(html).toContain('transition-colors duration-150 hover:bg-muted/40');
+		expect(html).toContain(
+			'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset',
+		);
 		expect(html).toContain('codex installed');
 		expect(html).toContain('Model: gpt-5.6-sol');
 		expect(html).toContain('Local defaults');

@@ -68,9 +68,17 @@ export function DocsPage() {
 			    The rail is what claims the width the measure gives up: capped and two-column, the
 			    grid left 1231px of a 1962px content column — 63% of it — as blank face to the right
 			    of the card. A measure without a second column is a narrower article in the same
-			    empty room. */}
+			    empty room.
+
+			    That 976px is also the composition's cap. Above 61rem the grid once stretched its
+			    middle track to the shell, exiling the rail ~1300px right of a 483px article at the
+			    reporter's 2321px viewport — a narrow column floating beside blank canvas, with the
+			    wayfinding a screen away from the prose it indexes. `mx-auto max-w-[61rem]` holds
+			    the three columns together and centres the finished composition, so extra shell
+			    width becomes symmetric margins either side of it rather than a void to the right
+			    of the prose. The measure itself stays on the card, where the border hugs it. */}
 			<div className="@container">
-				<div className="grid gap-6 @min-[45rem]:grid-cols-[14rem_minmax(0,1fr)] @min-[61rem]:grid-cols-[14rem_minmax(0,1fr)_14rem]">
+				<div className="mx-auto grid max-w-[61rem] gap-6 @min-[45rem]:grid-cols-[14rem_minmax(0,1fr)] @min-[61rem]:grid-cols-[14rem_minmax(0,1fr)_14rem]">
 					<aside
 						aria-label="Documentation navigation"
 						className="@min-[45rem]:sticky @min-[45rem]:top-4 @min-[45rem]:self-start">

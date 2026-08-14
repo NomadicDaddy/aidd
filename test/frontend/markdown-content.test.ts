@@ -503,6 +503,13 @@ describe('the outline is shared, and the width the measure releases is claimed',
 		// Below that width the compact `<details>` already lists every section of every document, so
 		// the rail is hidden rather than stacked under the article as a second copy of it.
 		expect(page).toContain('hidden @min-[61rem]:sticky');
+
+		// The 976px composition is also its cap. With an unbounded middle track the grid stretched
+		// to the shell above 61rem, exiling the rail ~1300px right of a 483px article at the
+		// reporter's 2321x1309 viewport — the "very narrow column" the report named. Holding the
+		// grid at the width where the three columns were designed to sit together turns extra shell
+		// width into symmetric margins instead of a void to the right of the prose.
+		expect(page).toContain('mx-auto grid max-w-[61rem] gap-6');
 	});
 
 	test('the rail is the document, not a second navigation', () => {

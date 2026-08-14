@@ -183,10 +183,6 @@ const SURFACE_EXEMPTIONS: { file: string; why: string }[] = [
 		why: 'jump-to-latest button floats over the transcript it scrolls, so it needs to read as above it',
 	},
 	{
-		file: 'frontend/src/pages/projects/detail/dependencyGraphPanels.tsx',
-		why: 'the graph canvas grid itself, drawn as two linear-gradients rather than an image',
-	},
-	{
 		file: 'frontend/src/pages/projects/ProjectTableRow.tsx',
 		why: 'the pinned name cell needs its hover tint in the background-image layer: bg-card is what stops scrolled columns showing through it, so a translucent hover background-color would replace the very fill that makes the cell opaque',
 	},

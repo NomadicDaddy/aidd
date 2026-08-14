@@ -14,12 +14,17 @@ async function src(file: string): Promise<string> {
 }
 
 describe('dependency-graph edges', () => {
-	test('are 1px, dimmed off the hovered path, and accent only on it', async () => {
-		const source = await detail('dependencyGraphEdges.tsx');
-		expect(source).toContain('strokeWidth={isSelectedEdge ? 2 : 1}');
-		expect(source).toContain("'text-accent opacity-100'");
-		expect(source).toContain("'text-border opacity-15'");
-		expect(source).toContain("'text-border opacity-70'");
+	test('keeps resting edges legible and selected edges strongest', async () => {
+		const edges = await detail('dependencyGraphEdges.tsx');
+		const panels = await detail('dependencyGraphPanels.tsx');
+
+		expect(edges).toContain('strokeWidth={isSelectedEdge ? 2 : 1}');
+		expect(edges).toContain("'text-accent opacity-100'");
+		expect(edges).toContain("'text-border opacity-15'");
+		expect(edges).toContain("'text-border opacity-100'");
+		expect(panels).toContain('<Card className="min-w-0 overflow-hidden p-0" variant="sunken">');
+		expect(panels).toContain('className="relative origin-top-left"');
+		expect(panels).not.toContain('linear-gradient');
 	});
 });
 

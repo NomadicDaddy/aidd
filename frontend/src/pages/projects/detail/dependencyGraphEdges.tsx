@@ -75,7 +75,7 @@ export function DependencyEdgeLayer({
 								? 'text-accent opacity-100'
 								: isDimmedEdge
 									? 'text-border opacity-15'
-									: 'text-border opacity-70',
+									: 'text-border opacity-100',
 						)}
 						d={edgePath(source, target)}
 						fill="none"

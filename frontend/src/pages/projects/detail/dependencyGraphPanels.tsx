@@ -45,7 +45,7 @@ export function DependencyGraphCanvas({
 	zoom: number;
 }) {
 	return (
-		<Card className="min-w-0 overflow-hidden p-0">
+		<Card className="min-w-0 overflow-hidden p-0" variant="sunken">
 			{header}
 			{/* The graph bottoms out at the viewport instead of at `70vh`, the way the Code tab's
 			    two panes already do. Capped at 70vh it was 916px of pane below 627px of chrome at
@@ -65,7 +65,7 @@ export function DependencyGraphCanvas({
 						width: graph.width * zoom,
 					}}>
 					<div
-						className="relative origin-top-left bg-[linear-gradient(to_right,rgba(148,163,184,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.14)_1px,transparent_1px)] bg-[size:28px_28px]"
+						className="relative origin-top-left"
 						data-dependency-graph-canvas="true"
 						style={{
 							height: graph.height,

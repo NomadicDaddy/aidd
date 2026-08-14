@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
+import { resilientLocalStorage } from './persistStorage.ts';
 
 export const DASHBOARD_CARD_IDS = [
 	'active-runs',
@@ -176,6 +177,7 @@ export const useDashboardStore = create<DashboardState>()(
 				};
 			},
 			name: 'aidd-dashboard',
+			storage: createJSONStorage(() => resilientLocalStorage),
 		},
 	),
 );

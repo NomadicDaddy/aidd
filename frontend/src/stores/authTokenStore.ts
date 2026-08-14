@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { traceDataMovement } from '../lib/dataMovementTrace.ts';
+import { resilientLocalStorage } from './persistStorage.ts';
 
 interface AuthTokenState {
 	clearToken: () => void;
@@ -67,6 +68,7 @@ export const useAuthTokenStore = create<AuthTokenState>()(
 		{
 			name: 'aidd-access-token',
 			partialize: (state) => ({ token: state.token }),
+			storage: createJSONStorage(() => resilientLocalStorage),
 		},
 	),
 );

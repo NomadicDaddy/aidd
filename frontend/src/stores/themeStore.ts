@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
+import { resilientLocalStorage } from './persistStorage.ts';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
 
@@ -30,6 +31,9 @@ export const useThemeStore = create<ThemeState>()(
 				});
 			},
 		}),
-		{ name: 'aidd-theme' },
+		{
+			name: 'aidd-theme',
+			storage: createJSONStorage(() => resilientLocalStorage),
+		},
 	),
 );

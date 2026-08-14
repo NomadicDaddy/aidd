@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
+import { resilientLocalStorage } from './persistStorage.ts';
 
 interface SidebarState {
 	collapsed: boolean;
@@ -77,6 +78,7 @@ export const useSidebarStore = create<SidebarState>()(
 				if (typeof window === 'undefined') return;
 				state?.syncToViewport(window.innerWidth);
 			},
+			storage: createJSONStorage(() => resilientLocalStorage),
 		},
 	),
 );

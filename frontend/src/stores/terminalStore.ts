@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
+import { resilientLocalStorage } from './persistStorage.ts';
 
 export const TERMINAL_MIN_HEIGHT_PX = 120;
 export const TERMINAL_DEFAULT_HEIGHT_PX = 320;
@@ -93,6 +94,7 @@ export const useTerminalStore = create<TerminalState>()(
 				open: state.open,
 				shellId: state.shellId,
 			}),
+			storage: createJSONStorage(() => resilientLocalStorage),
 		},
 	),
 );

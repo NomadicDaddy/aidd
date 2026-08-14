@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
+import { resilientLocalStorage } from './persistStorage.ts';
 
 export interface ProjectsFiltersState {
 	dir: string;
@@ -125,6 +126,9 @@ export const usePrefsStore = create<PrefsState>()(
 				});
 			},
 		}),
-		{ name: 'aidd-prefs' },
+		{
+			name: 'aidd-prefs',
+			storage: createJSONStorage(() => resilientLocalStorage),
+		},
 	),
 );

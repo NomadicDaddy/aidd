@@ -13,3 +13,10 @@ export function parentDirectoryFromPath(path: string): string {
 	const separatorIndex = Math.max(trimmed.lastIndexOf('\\'), trimmed.lastIndexOf('/'));
 	return separatorIndex > 0 ? trimmed.slice(0, separatorIndex) : trimmed;
 }
+
+export function projectPathsMatch(candidate: string, projectPath: string): boolean {
+	const normalize = (path: string) =>
+		path.trim().replaceAll('\\', '/').replace(/\/+$/, '').toLowerCase();
+	const normalizedProjectPath = normalize(projectPath);
+	return normalizedProjectPath !== '' && normalize(candidate) === normalizedProjectPath;
+}

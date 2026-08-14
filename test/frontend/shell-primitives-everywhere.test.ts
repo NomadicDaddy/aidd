@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { join, resolve } from 'node:path';
 
 import { formatFilesystemPath } from '../../frontend/src/lib/formatters.ts';
+import { projectPathsMatch } from '../../frontend/src/pages/projects/detail/managementPaths.ts';
 
 const ROOT = resolve(import.meta.dir, '../..');
 
@@ -246,17 +247,10 @@ describe('one path renders one way', () => {
 	});
 
 	test('no page renders a project path as bare text', async () => {
-		/**
-		 * The one place a raw path is correct. The typed confirmation is posted to the backend and
-		 * compared byte-exact against the stored path, so a normalised placeholder would show the
-		 * user a string that cannot be typed to satisfy the check.
-		 */
-		const exempt = new Set(['frontend/src/pages/projects/detail/DeleteProjectCard.tsx']);
 		const offenders: string[] = [];
 
 		for await (const relative of new Bun.Glob('frontend/src/pages/**/*.tsx').scan(ROOT)) {
 			const file = relative.replaceAll('\\', '/');
-			if (exempt.has(file)) continue;
 			const source = stripComments(await read(file));
 			// A path interpolated as an element's own CHILD. The lookbehind drops every
 			// `something={project.path}` — passing the value to a prop is how it reaches FilePath,
@@ -271,12 +265,20 @@ describe('one path renders one way', () => {
 		expect(offenders).toEqual([]);
 	});
 
-	test('the delete confirmation is exempt for the reason claimed', async () => {
+	test('the delete confirmation accepts display spelling without revealing the answer', async () => {
 		const card = await read('frontend/src/pages/projects/detail/DeleteProjectCard.tsx');
 
-		expect(card).toContain('placeholder={project.path}');
-		// If the typed value ever stopped being compared against the raw path, the exemption would
-		// have to go with it.
-		expect(card).toContain('project.path');
+		expect(card).toContain('placeholder="Full project path"');
+		expect(card).toContain('error={confirmationError}');
+		expect(card).toContain('confirmation: project.path');
+		expect(
+			projectPathsMatch('D:/applications/agentwatch', 'd:\\applications\\agentwatch'),
+		).toBe(true);
+		expect(
+			projectPathsMatch('D:/applications/agentwatch/', 'd:\\applications\\agentwatch'),
+		).toBe(true);
+		expect(
+			projectPathsMatch('D:/applications/agentwatch-copy', 'd:\\applications\\agentwatch'),
+		).toBe(false);
 	});
 });

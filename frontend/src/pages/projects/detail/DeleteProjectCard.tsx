@@ -15,25 +15,29 @@ import { cn } from '../../../lib/cn.ts';
 import { traceDataMovement } from '../../../lib/dataMovementTrace.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
+import { projectPathsMatch } from './managementPaths.ts';
 
 export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 	const navigate = useNavigate();
 	const deleteProject = useDeleteProject(project.id);
 	const [deleteMode, setDeleteMode] = useState<ProjectDeleteMode>('metadata');
 	const [deleteConfirmation, setDeleteConfirmation] = useState('');
-	const deleteDisabled =
-		deleteProject.isPending ||
-		deleteConfirmation.trim() !== project.path ||
-		project.path === '';
+	const confirmationMatches = projectPathsMatch(deleteConfirmation, project.path);
+	const confirmationError =
+		deleteConfirmation.trim() !== '' && !confirmationMatches
+			? 'The path does not match this project.'
+			: null;
+	const deleteDisabled = deleteProject.isPending || !confirmationMatches;
 
 	async function handleDelete(): Promise<void> {
+		if (!confirmationMatches) return;
 		try {
 			// destructive-confirmation-allow: the confirmation here is the typed-path field above,
-			// not a dialog. `deleteDisabled` holds the submit button until the operator has typed
-			// `project.path` exactly, and the same string is sent as `confirmation` for the backend
-			// to re-check, so the action cannot be dispatched by a single click at all.
+			// not a dialog. `deleteDisabled` holds the submit button until the operator has typed the
+			// full project path, allowing only case and separator differences. The stored path is then
+			// sent as `confirmation` for the backend's byte-exact re-check.
 			await deleteProject.mutateAsync({
-				confirmation: deleteConfirmation.trim(),
+				confirmation: project.path,
 				mode: deleteMode,
 			});
 			traceDataMovement({
@@ -78,12 +82,12 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 						<option value="directory">Delete project directory</option>
 					</select>
 				</FieldRow>
-				<FieldRow label="Type the full project path to confirm">
+				<FieldRow error={confirmationError} label="Type the full project path to confirm">
 					<Input
 						aria-label="Project path confirmation"
 						className="font-mono"
 						onChange={(event) => setDeleteConfirmation(event.target.value)}
-						placeholder={project.path}
+						placeholder="Full project path"
 						value={deleteConfirmation}
 					/>
 				</FieldRow>

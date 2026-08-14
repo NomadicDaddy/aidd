@@ -25,7 +25,7 @@ import { buildTree, cappedChildren, matchesQuery, sortedChildren } from './codeT
 
 // One row treatment for both kinds. The per-row `border-b` is gone: ~500 full-width hairlines inside
 // a bordered box inside a bordered pane fought the indentation that actually conveys the hierarchy.
-const rowClass = `flex w-full items-center gap-2 rounded-sm py-1.5 pr-3 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none ${touchTargetRowClass}`;
+const rowClass = `flex w-full items-center gap-1.5 rounded-sm py-1.5 pr-3 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none ${touchTargetRowClass}`;
 
 function FileTreeNode({
 	depth,
@@ -113,13 +113,16 @@ function FileTreeNode({
 			aria-selected={selected}
 			className={cn(
 				rowClass,
-				selected ? 'bg-accent-muted text-accent-muted-foreground' : 'text-foreground',
+				selected
+					? 'bg-accent-muted text-accent-muted-foreground shadow-[inset_4px_0_0_var(--accent)]'
+					: 'text-foreground',
 			)}
 			onClick={() => onSelect(node.path)}
 			role="treeitem"
 			style={indent}
 			tabIndex={node.path === tabbablePath ? 0 : -1}
 			type="button">
+			<span aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
 			<FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 			<span className="flex min-w-0 flex-1 items-baseline gap-2">
 				<span className="truncate font-mono text-xs">{node.name}</span>

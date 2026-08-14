@@ -175,6 +175,32 @@ describe('run tables', () => {
 });
 
 describe('code browser', () => {
+	test('keeps tree depth, selection, filtering, focus, and source rhythm legible', async () => {
+		const tab = await detail('CodeTab.tsx');
+		const tree = await detail('CodeFileTree.tsx');
+		const viewer = await detail('CodeFileViewer.tsx');
+
+		// Files reserve the same leading chevron slot as folders, so every depth step moves a
+		// child name right instead of first paying back a missing control.
+		expect(tree).toContain('<span aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />');
+		expect(tree).toContain('depth * 0.85');
+		expect(tree).toContain('shadow-[inset_4px_0_0_var(--accent)]');
+
+		// Both bare tree controls use the same visible ring and offset treatment as shared buttons.
+		for (const source of [tab, tree]) {
+			expect(source).toContain('focus-visible:ring-ring/50');
+			expect(source).toContain('focus-visible:ring-offset-2');
+			expect(source).toContain('focus-visible:ring-offset-background');
+			expect(source).not.toContain('ring-ring/40');
+		}
+
+		expect(tab).toContain('? `${matchingFileCount.toLocaleString()} results`');
+		expect(tab).toContain(': `${files.length.toLocaleString()} files`}');
+		expect(viewer).toContain('text-xs leading-relaxed');
+		expect(viewer).toContain('icons/clipboard-copy');
+		expect(viewer).not.toContain('icons/code-2');
+	});
+
 	test('keeps labelled file navigation before the viewer below the split', async () => {
 		const tab = await detail('CodeTab.tsx');
 		const navigation = tab.indexOf('aria-controls={navigationId}');

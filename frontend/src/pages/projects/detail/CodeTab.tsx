@@ -38,6 +38,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 		() => files.filter((file) => matchesQuery(file, query)).length,
 		[files, query],
 	);
+	const searching = query.trim().length > 0;
 	const requestedFile = searchParams.get('file');
 	const selectedPath = files.some((file) => file.path === requestedFile)
 		? requestedFile
@@ -109,7 +110,11 @@ export function CodeTab({ projectId }: { projectId: string }) {
 				}
 				badge={
 					<>
-						<Badge tone="neutral">{files.length.toLocaleString()} files</Badge>
+						<Badge tone="neutral">
+							{searching
+								? `${matchingFileCount.toLocaleString()} results`
+								: `${files.length.toLocaleString()} files`}
+						</Badge>
 						{tree.data?.truncated ? <Badge tone="amber">capped</Badge> : null}
 					</>
 				}
@@ -143,7 +148,7 @@ export function CodeTab({ projectId }: { projectId: string }) {
 						aria-controls={navigationId}
 						aria-expanded={navigationOpen}
 						aria-label={`Tracked files, ${selectedPath ?? 'no file selected'}, ${matchingFileCount.toLocaleString()} results`}
-						className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none @min-[61rem]:hidden"
+						className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none @min-[61rem]:hidden"
 						onClick={() => setNavigationOpen((open) => !open)}
 						type="button">
 						<span className="shrink-0 text-sm font-medium text-foreground">

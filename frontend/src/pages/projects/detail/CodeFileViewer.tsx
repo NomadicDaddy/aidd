@@ -1,4 +1,4 @@
-import { default as Code2 } from 'lucide-react/dist/esm/icons/code-2';
+import { default as ClipboardCopy } from 'lucide-react/dist/esm/icons/clipboard-copy';
 import { default as Copy } from 'lucide-react/dist/esm/icons/copy';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ import { isCommentLine, splitStrings } from './codeLineTokens.ts';
 
 const maxRenderedLines = 2500;
 
-const lineClass = 'px-3 font-mono text-xs leading-6 whitespace-pre';
+const lineClass = 'px-3 font-mono text-xs leading-relaxed whitespace-pre';
 
 const fileMessages: Record<Exclude<ProjectCodeFileState, 'ok'>, string> = {
 	binary: 'Binary file.',
@@ -105,7 +105,7 @@ export function CodeFileViewer({
 							ariaLabel="Copy file content"
 							onClick={() => copyText('File content', data.content)}
 							variant="ghost">
-							<Code2 className="h-4 w-4" />
+							<ClipboardCopy className="h-4 w-4" />
 						</IconButton>
 					)}
 				</div>
@@ -132,7 +132,7 @@ export function CodeFileViewer({
 				<div className={cn('overflow-auto bg-card py-2', codeBrowserScrollerClass)}>
 					{visibleLines.map((line, index) => (
 						<div className="grid grid-cols-[4rem_minmax(0,1fr)]" key={index}>
-							<div className="border-r border-border pr-3 text-right font-mono text-xs leading-6 text-muted-foreground/60 select-none">
+							<div className="border-r border-border pr-3 text-right font-mono text-xs leading-relaxed text-muted-foreground/60 select-none">
 								{index + 1}
 							</div>
 							<CodeLine line={line} />

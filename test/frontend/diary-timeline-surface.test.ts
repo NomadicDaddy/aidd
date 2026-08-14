@@ -126,13 +126,24 @@ describe('diary feed chrome', () => {
 		expect(feed).not.toContain('text-sm font-semibold text-foreground');
 	});
 
-	test('constrains the feed to a reading column and pages it with one control', async () => {
+	test('fills the shell and pages it with one control', async () => {
 		const feed = await readFile(
 			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFeed.tsx'),
 			'utf8',
 		);
+		const page = await readFile(
+			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryPage.tsx'),
+			'utf8',
+		);
 
-		expect(feed).toContain('max-w-5xl');
+		// The whole-page `max-w-5xl` cap is gone: /diary ran as a lone centered 1024px column at a
+		// 2321px viewport while every sibling page filled the 2033px shell, and the layout read as
+		// broken rather than as a deliberate reading column. The page is on the shared shell now,
+		// and the feed keeps no width variant — the rows carry the measure instead.
+		expect(page).toContain('page-reveal space-y-5');
+		expect(page).not.toContain('max-w-5xl');
+		expect(feed).not.toContain('max-w-5xl');
+		expect(feed).not.toContain('width');
 		// "More entries" and "More activity" each paged half of what the one counter above them
 		// counted. One feed, one count, one pager. Matched on the string literals, since the
 		// comment in the source names the two labels it replaced.

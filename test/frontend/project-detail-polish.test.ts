@@ -322,15 +322,22 @@ describe('profile tab', () => {
 });
 
 describe('diary tab', () => {
-	test('fills the shell like its sibling tabs while /diary keeps its reading column', async () => {
+	test('both diary surfaces fill the shell like their siblings, measures carried by the content', async () => {
 		const tab = await detail('DiaryTab.tsx');
-		expect(tab).toContain('width="full"');
+		expect(tab).not.toContain('width="full"');
 
 		const feed = await readFile(resolve(FRONTEND_SRC, 'pages/diary/DiaryFeed.tsx'), 'utf8');
-		expect(feed).toContain("width = 'reading'");
-		expect(feed).toContain("width === 'reading' && 'max-w-5xl'");
+		// The feed has no width variant at all: it fills its container, and the line length is
+		// protected where it is read — rows stop at 61rem, the detail line at 68ch.
+		expect(feed).not.toContain('max-w-5xl');
+		expect(feed).not.toContain('width');
+		expect(feed).toContain('max-w-[61rem]');
 
 		const page = await readFile(resolve(FRONTEND_SRC, 'pages/diary/DiaryPage.tsx'), 'utf8');
-		expect(page).not.toContain('width="full"');
+		// /diary is on the same `page-reveal space-y-5` shell as every other page. It used to cap
+		// itself at a centered max-w-5xl column, which at the reporter's 2321px viewport put a
+		// ~940px band of empty canvas down both sides while sibling routes filled the shell.
+		expect(page).toContain('page-reveal space-y-5');
+		expect(page).not.toContain('max-w-5xl');
 	});
 });

@@ -18,19 +18,10 @@ export function DiaryFeed({
 	emptyMessage = 'No diary entries or activity yet.',
 	projectPath,
 	showProject = false,
-	width = 'reading',
 }: {
 	emptyMessage?: string;
 	projectPath?: string;
 	showProject?: boolean;
-	/**
-	 * `reading` caps the feed at a reading column; `full` lets it fill its container.
-	 *
-	 * The cap is right for /diary, where the feed is the whole page and nothing beside it sets an
-	 * expectation. It is wrong inside the project Diary tab, where the cap made the feed 1024px
-	 * under its own 1312px header card and beside sibling tabs that all run the shell width.
-	 */
-	width?: 'full' | 'reading';
 }) {
 	const entriesQuery = useDiaryEntries(projectPath);
 	const timelineQuery = useDiaryTimeline(projectPath);
@@ -60,12 +51,13 @@ export function DiaryFeed({
 	const groups = groupDiaryByDay(entries, items, now);
 
 	return (
-		// The feed is a reading column, not a table: at full shell width the content occupied the
-		// left third and the stamp the right edge, with roughly 740px of empty band between them.
-		// The prose inside a row is measured separately (`max-w-[68ch]` on the detail line, the
-		// shared prose measure on entry markdown), so a caller that fills its container is not
-		// giving up the line length — only the position of the timestamp rail.
-		<div className={cn('space-y-5', width === 'reading' && 'max-w-5xl')}>
+		// The feed fills its container, like every page body in the shell. A whole-page cap here
+		// made /diary a lone centered column beside sibling routes that all fill the shell; the
+		// prose inside a row is measured separately (`max-w-[68ch]` on the detail line, the shared
+		// prose measure on entry markdown) and each row's columns stop at `max-w-[61rem]`, so a
+		// caller that fills the shell is not giving up the line length — only the position of the
+		// timestamp rail.
+		<div className="space-y-5">
 			<DiaryFilterBar
 				kind={kind}
 				onKindChange={setKind}

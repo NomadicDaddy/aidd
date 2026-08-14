@@ -48,12 +48,11 @@ export function DiaryTab({ projectPath }: { projectName: string; projectPath: st
 					title="Dev diary"
 				/>
 			</Card>
-			{/* Full width, like every sibling tab. The feed's own default is a reading column,
-			    which left the body 1024px wide directly under this 1312px card. */}
+			{/* Full width, like every sibling tab. The feed fills its container by default now; the
+			    rows and the prose inside them carry their own measures. */}
 			<DiaryFeed
 				emptyMessage="No diary entries yet — write today’s entry to get started."
 				projectPath={projectPath}
-				width="full"
 			/>
 		</div>
 	);

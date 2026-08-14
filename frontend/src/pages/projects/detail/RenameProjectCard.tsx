@@ -60,6 +60,7 @@ export function RenameProjectCard({ project }: { project: ProjectDetail }) {
 		<Card>
 			<CardHeader
 				description="Rename the project directory in place. Runs and metadata follow the new path."
+				headingLevel={3}
 				icon={<Pencil className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Rename project"
 			/>

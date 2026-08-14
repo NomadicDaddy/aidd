@@ -119,14 +119,24 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 		});
 	}
 
-	if (milestones.isLoading) return <LoadingState message="Loading milestones…" />;
+	if (milestones.isLoading) {
+		return (
+			<div className="space-y-3">
+				<h2 className="sr-only">Milestones</h2>
+				<LoadingState message="Loading milestones…" />
+			</div>
+		);
+	}
 	if (milestones.isError || !milestones.data) {
 		return (
-			<ErrorState
-				error={milestones.error}
-				onRetry={() => void milestones.refetch()}
-				title="Could not load milestones"
-			/>
+			<div className="space-y-3">
+				<h2 className="sr-only">Milestones</h2>
+				<ErrorState
+					error={milestones.error}
+					onRetry={() => void milestones.refetch()}
+					title="Could not load milestones"
+				/>
+			</div>
 		);
 	}
 
@@ -134,6 +144,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 	const names = view.milestones.map((milestone) => milestone.name);
 	return (
 		<div className="space-y-3">
+			<h2 className="sr-only">Milestones</h2>
 			<Card className="flex flex-col gap-3">
 				<CardHeader
 					action={
@@ -166,6 +177,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 							written to <span className="font-mono text-xs">roadmap.json</span>.
 						</>
 					}
+					headingLevel={3}
 					title="Milestones"
 				/>
 				{view.lifecycle === 'locked' ? (

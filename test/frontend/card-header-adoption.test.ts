@@ -176,4 +176,37 @@ describe('CardHeader adoption', () => {
 		const milestones = await source('projects', 'detail', 'MilestonesTab.tsx');
 		expect(milestones).toContain('<CardHeader');
 	});
+
+	test('keeps Project Detail card headings below their containing panel', async () => {
+		for (const file of [
+			'DeleteProjectCard.tsx',
+			'MoveProjectCard.tsx',
+			'ReintakeCard.tsx',
+			'RenameProjectCard.tsx',
+		]) {
+			const card = await source('projects', 'detail', file);
+			expect(card).toContain('headingLevel={3}');
+		}
+
+		const repositoryInfo = await source('projects', 'detail', 'RepositoryInfoCard.tsx');
+		expect(repositoryInfo).toContain('headingLevel={3}');
+
+		const repositoryRefs = await source('projects', 'detail', 'RepositoryRefsCard.tsx');
+		expect(repositoryRefs).toContain('headingLevel={3}');
+		expect(repositoryRefs).toContain('headingLevel={4}');
+
+		const overview = await source('projects', 'detail', 'OverviewTab.tsx');
+		expect(overview).toMatch(
+			/<CardHeader[\s\S]*?headingLevel=\{3\}[\s\S]*?level="subsection"[\s\S]*?title="aidd activity"/u,
+		);
+
+		for (const [file, title] of [
+			['MilestonesTab.tsx', 'Milestones'],
+			['ReportsTab.tsx', 'Reports'],
+		] as const) {
+			const tab = await source('projects', 'detail', file);
+			expect(tab).toContain(`<h2 className="sr-only">${title}</h2>`);
+			expect(tab).toContain('headingLevel={3}');
+		}
+	});
 });

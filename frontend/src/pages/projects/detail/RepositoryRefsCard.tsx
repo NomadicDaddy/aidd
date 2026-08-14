@@ -14,7 +14,7 @@ function PanelHeading({ count, title }: { count: number; title: string }) {
 		<CardHeader
 			badge={<Badge tone="neutral">{count.toLocaleString()}</Badge>}
 			className="mb-0"
-			headingLevel={3}
+			headingLevel={4}
 			level="subsection"
 			title={title}
 		/>
@@ -147,6 +147,7 @@ export function RepositoryRefsCard({
 		<Card>
 			<CardHeader
 				description="Local branches, stashes, and linked worktrees for this repository."
+				headingLevel={3}
 				title="Refs"
 			/>
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

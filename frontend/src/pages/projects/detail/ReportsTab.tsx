@@ -23,16 +23,31 @@ export function ReportsTab({
 }) {
 	const [kind, setKind] = useState<ReportKindFilter>('all');
 	if (isLoading) {
-		return <LoadingState message="Loading reports…" />;
+		return (
+			<div className="space-y-3">
+				<h2 className="sr-only">Reports</h2>
+				<LoadingState message="Loading reports…" />
+			</div>
+		);
 	}
 
 	if (isError) {
-		return <ErrorState message="Could not load project reports." />;
+		return (
+			<div className="space-y-3">
+				<h2 className="sr-only">Reports</h2>
+				<ErrorState message="Could not load project reports." />
+			</div>
+		);
 	}
 
 	const items = reports?.bugs ?? [];
 	if (items.length === 0) {
-		return <EmptyState>No reports filed for this project.</EmptyState>;
+		return (
+			<div className="space-y-3">
+				<h2 className="sr-only">Reports</h2>
+				<EmptyState>No reports filed for this project.</EmptyState>
+			</div>
+		);
 	}
 	const ordered = items.slice().reverse();
 	const visible = ordered.filter((report) => {
@@ -46,6 +61,7 @@ export function ReportsTab({
 
 	return (
 		<div className="space-y-3">
+			<h2 className="sr-only">Reports</h2>
 			{/* Carded, like the header on the Audits tab beside it. The tab used to open straight
 			    into an unlabelled stack of cards; the header that fixed that was then the one
 			    control group on the whole surface floating on the bare page background. */}
@@ -67,6 +83,7 @@ export function ReportsTab({
 						/>
 					}
 					className="mb-0"
+					headingLevel={3}
 					title="Project reports"
 				/>
 			</Card>

@@ -45,6 +45,7 @@ export function ReintakeCard({ project }: { project: ProjectDetail }) {
 						artifacts without touching app code.
 					</>
 				}
+				headingLevel={3}
 				icon={<RefreshCw className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Re-run intake"
 			/>

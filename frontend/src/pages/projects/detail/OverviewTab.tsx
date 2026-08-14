@@ -176,7 +176,12 @@ export function OverviewMetadata({ metadata }: { metadata: ProjectMetadata }) {
 					title="Roadmap"
 				/>
 				<RoadmapMilestones roadmap={metadata.roadmap} />
-				<CardHeader className="mt-4 mb-2" title="aidd activity" />
+				<CardHeader
+					className="mt-4 mb-2"
+					headingLevel={3}
+					level="subsection"
+					title="aidd activity"
+				/>
 				<div className="divide-y divide-border">
 					<MetadataRow
 						label="aidd state"

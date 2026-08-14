@@ -69,6 +69,7 @@ export function DeleteProjectCard({ project }: { project: ProjectDetail }) {
 						entire project directory.
 					</>
 				}
+				headingLevel={3}
 				icon={<AlertTriangle className={`h-4 w-4 ${toneText.red}`} />}
 				title="Delete project"
 			/>

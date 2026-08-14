@@ -59,6 +59,7 @@ export function MoveProjectCard({ project }: { project: ProjectDetail }) {
 		<Card>
 			<CardHeader
 				description="Move the project directory to another configured application root."
+				headingLevel={3}
 				icon={<FolderInput className={`h-4 w-4 ${toneText.teal}`} />}
 				title="Move project"
 			/>

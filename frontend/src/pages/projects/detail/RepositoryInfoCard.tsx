@@ -133,6 +133,7 @@ export function RepositoryInfoCard({ info }: { info: RepositoryInfo }) {
 		<Card className="flex flex-col gap-5">
 			<CardHeader
 				description="Counted from the git-tracked files in the working copy."
+				headingLevel={3}
 				title="Repository statistics"
 			/>
 			<div className="flex flex-col gap-5 xl:flex-row xl:items-start">

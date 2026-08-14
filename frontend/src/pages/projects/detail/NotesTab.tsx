@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
+import { ShortcutChord } from '../../../components/shared/KeyboardShortcut.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
@@ -39,6 +40,11 @@ export function NotesTab({ projectId }: { projectId: string }) {
 	}
 
 	const dirty = draft !== notes.data.content;
+	const saveState = saveNotes.isPending
+		? 'Saving…'
+		: dirty
+			? 'Unsaved changes'
+			: formatSavedAt(notes.data.updatedAt);
 	const save = () => {
 		if (!dirty || saveNotes.isPending) return;
 		saveNotes.mutate(draft, {
@@ -55,22 +61,34 @@ export function NotesTab({ projectId }: { projectId: string }) {
 		<Card className={`flex flex-col gap-3 ${monoEditorMeasureCardClass}`}>
 			<CardHeader
 				action={
-					<div className="flex items-center gap-2">
-						{dirty ? <Badge tone="amber">Unsaved changes</Badge> : null}
+					<div className="flex flex-wrap items-center justify-end gap-2">
+						{dirty || saveNotes.isPending ? (
+							<Badge tone={dirty ? 'amber' : 'neutral'}>{saveState}</Badge>
+						) : (
+							<span className="text-xs text-muted-foreground">{saveState}</span>
+						)}
+						<ShortcutChord
+							className="max-sm:hidden"
+							keyClassName="h-5 min-w-5 px-1"
+							keys={['Ctrl/⌘', 'S']}
+						/>
 						<Button
 							disabled={!dirty || saveNotes.isPending}
 							onClick={save}
+							title="Save notes (Ctrl/Cmd+S)"
 							variant="primary">
 							<Save className="h-4 w-4" />
-							{saveNotes.isPending ? 'Saving…' : 'Save'}
+							Save
 						</Button>
 					</div>
 				}
 				className="mb-0"
 				description={
 					<>
-						A free-form, persistent markdown scratch pad saved to{' '}
-						<code>.aidd/notes.md</code>.
+						A free-form, persistent markdown scratch pad{' '}
+						<span className="whitespace-nowrap">
+							saved to <code>.aidd/notes.md</code>.
+						</span>
 					</>
 				}
 				title="Notes"
@@ -82,10 +100,11 @@ export function NotesTab({ projectId }: { projectId: string }) {
 			    the floor for short windows and for the stacked layout below `lg`.
 
 			    The 25rem subtrahend is derived rather than measured: 19rem is the chrome above a
-			    tab's card content on this page (see codeBrowserHeight.ts), and the remaining 6rem
-			    is this card's own padding, the gap under the header, and the gap and saved-at line
-			    beneath the field, which the code browser does not carry. */}
+			    tab's card content on this page (see codeBrowserHeight.ts), and the remaining 6rem is
+			    this card's own padding, header action, and gap beneath the header, which the code
+			    browser does not carry. */}
 			<textarea
+				aria-keyshortcuts="Control+S Meta+S"
 				aria-label="Project notes"
 				className={`${textareaClass} min-h-[28rem] font-mono lg:h-[calc(100vh-25rem)]`}
 				onChange={(event) => setDraft(event.target.value)}
@@ -98,7 +117,6 @@ export function NotesTab({ projectId }: { projectId: string }) {
 				placeholder="Jot down anything about this project — it persists in .aidd/notes.md."
 				value={draft}
 			/>
-			<p className="text-xs text-muted-foreground">{formatSavedAt(notes.data.updatedAt)}</p>
 		</Card>
 	);
 }

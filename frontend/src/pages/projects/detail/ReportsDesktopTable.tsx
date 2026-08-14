@@ -9,30 +9,35 @@ import { reportOriginLabel, reportStatusTone } from './reportsUtils.ts';
 type ReportRow = ProjectReportsResponse['bugs'][number];
 
 function ReportsTableRow({ report }: { report: ReportRow }) {
+	const identifier = report.featureDirectory ?? report.featureId ?? report.id;
 	return (
 		<tr className="border-b border-border last:border-0">
 			<td className="px-3 py-2.5 align-top">
 				<Badge tone={reportStatusTone(report.status)}>{report.status}</Badge>
 			</td>
-			<td className="px-3 py-2.5 align-top">
+			<td
+				className="px-3 py-2.5 align-top"
+				title={
+					report.classificationReason
+						? `Classified: ${report.classificationReason}`
+						: undefined
+				}>
 				<Badge tone="neutral">{report.kind === 'bug' ? 'remediation' : 'feature'}</Badge>
-			</td>
-			<td className="px-3 py-2.5 align-top font-mono text-xs text-muted-foreground">
-				{report.featureDirectory ?? report.featureId ?? report.id}
-			</td>
-			{/* Two lines, with the whole text on `title`. A report's description is a paragraph
-			    written by whoever filed it — one of them runs 280 characters — and uncapped it set
-			    the height of its row, which is what made a 24-item list four screens long. */}
-			<td className="px-3 py-2.5 align-top">
-				<p className="line-clamp-2 whitespace-pre-wrap" title={report.description}>
-					{report.description}
-				</p>
 				{report.classificationReason ? (
-					<p className="mt-0.5 text-2xs text-muted-foreground">
-						<span className="font-medium">Classified:</span>{' '}
-						{report.classificationReason}
-					</p>
+					<span className="sr-only">Classified: {report.classificationReason}</span>
 				) : null}
+			</td>
+			<td className="px-3 py-2.5 align-top">
+				<div className="min-w-0">
+					<p className="truncate font-medium text-foreground" title={report.description}>
+						{report.description}
+					</p>
+					<p
+						className="truncate font-mono text-xs text-muted-foreground"
+						title={identifier}>
+						{identifier}
+					</p>
+				</div>
 			</td>
 			<td className="px-3 py-2.5 align-top text-xs whitespace-nowrap text-muted-foreground">
 				<RelativeAge value={report.createdAt} />
@@ -61,7 +66,16 @@ export function ReportsDesktopTable({ reports }: { reports: ReportRow[] }) {
 	return (
 		<Card
 			className={`hidden max-h-[calc(100dvh-16rem)] overflow-auto p-0 xl:block ${tableMeasureClass}`}>
-			<table aria-label="Project reports" className="w-full min-w-[52rem] text-left text-sm">
+			<table
+				aria-label="Project reports"
+				className="w-full min-w-[52rem] table-fixed text-left text-sm">
+				<colgroup>
+					<col className="w-[12%]" />
+					<col className="w-[14%]" />
+					<col className="w-[43%]" />
+					<col className="w-[13%]" />
+					<col className="w-[18%]" />
+				</colgroup>
 				<thead className={`${tableHeadClass} sticky top-0 z-10`}>
 					<tr>
 						<th className="px-3 py-3" scope="col">
@@ -72,9 +86,6 @@ export function ReportsDesktopTable({ reports }: { reports: ReportRow[] }) {
 						</th>
 						<th className="px-3 py-3" scope="col">
 							Report
-						</th>
-						<th className="px-3 py-3" scope="col">
-							Description
 						</th>
 						<th className="px-3 py-3" scope="col">
 							Filed

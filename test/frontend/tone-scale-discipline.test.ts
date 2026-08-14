@@ -89,10 +89,6 @@ const dataPalette: { file: string; why: string }[] = [
 		file: 'pages/projects/ProjectsTableCells.tsx',
 		why: 'cyan column accent; the scale has no cyan tone and should not grow one for a table',
 	},
-	{
-		file: 'pages/projects/detail/dependencyGraphComponents.tsx',
-		why: 'border-l-teal-500 edge marker in the dependency graph',
-	},
 ];
 
 /**

@@ -32,18 +32,38 @@ function zoomLabel(zoom: number): string {
 	return `${Math.round(zoom * 100)}%`;
 }
 
-function nodeSourceClass(source: FeatureDependencyNode['source']): string {
-	if (source === 'audit') return 'border-l-amber-500';
-	if (source === 'remediation') return 'border-l-red-500';
-	return 'border-l-teal-500';
+function nodeSourceRailClass(source: FeatureDependencyNode['source']): string {
+	if (source === 'audit') return 'bg-amber-500';
+	if (source === 'remediation') return 'bg-red-500';
+	return 'bg-violet-500';
 }
 
 export function sourceBadgeTone(
 	source: FeatureDependencyNode['source'],
-): 'amber' | 'neutral' | 'red' | 'teal' {
+): 'amber' | 'red' | 'violet' {
 	if (source === 'audit') return 'amber';
 	if (source === 'remediation') return 'red';
-	return 'teal';
+	return 'violet';
+}
+
+export function GraphSourceLegend() {
+	const sources = ['feature', 'audit', 'remediation'] as const;
+	return (
+		<div
+			aria-label="Node source legend"
+			className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border px-4 py-2 text-xs text-muted-foreground"
+			role="list">
+			{sources.map((source) => (
+				<span className="inline-flex items-center gap-1.5" key={source} role="listitem">
+					<span
+						aria-hidden="true"
+						className={`h-4 w-1 rounded-full ${nodeSourceRailClass(source)}`}
+					/>
+					{sourceLabels[source]}
+				</span>
+			))}
+		</div>
+	);
 }
 
 export function edgePath(source: FeatureDependencyNode, target: FeatureDependencyNode): string {
@@ -72,11 +92,9 @@ export function GraphNodeButton({
 }) {
 	return (
 		<button
-			aria-label={`Select ${node.directory}`}
 			className={cn(
-				'absolute overflow-hidden rounded-md border border-l-4 border-border bg-card p-3 text-left shadow-sm transition-[border-color,background-color,box-shadow,opacity,filter] duration-150',
+				'absolute min-h-11 overflow-hidden rounded-md border border-border bg-card p-3 text-left shadow-sm transition-[border-color,background-color,box-shadow,opacity,filter] duration-150',
 				'hover:border-accent hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-				nodeSourceClass(node.source),
 				isDimmed && 'opacity-25 saturate-50 hover:opacity-60',
 				isRelated && 'border-accent/60 bg-accent-muted opacity-100 saturate-100',
 				isSelected &&
@@ -90,6 +108,10 @@ export function GraphNodeButton({
 				width: GRAPH_NODE_WIDTH,
 			}}
 			type="button">
+			<span
+				aria-hidden="true"
+				className={`absolute inset-y-0 left-0 w-1 ${nodeSourceRailClass(node.source)}`}
+			/>
 			<div className="flex items-center justify-between gap-2">
 				<Badge className="shrink-0" tone={statusTone(node.status)}>
 					{node.status}

@@ -72,14 +72,12 @@ export function ArtifactsTab({
 		{ health: 'Healthy', label: 'Fresh', tone: 'emerald', value: summary.fresh },
 		{ health: 'Needs refresh', label: 'Stale', tone: 'amber', value: summary.stale },
 		{ health: 'Not found', label: 'Missing', tone: 'red', value: summary.missing },
-		{ health: 'On disk', label: 'Present', tone: 'teal', value: summary.present },
 		{
 			health: 'Blocking',
 			label: 'Required missing',
 			tone: 'red',
 			value: summary.requiredMissing,
 		},
-		{ health: 'Inventory', label: 'Total', tone: 'neutral', value: summary.total },
 	];
 	return (
 		<Card className="@container max-w-[61rem]">
@@ -88,12 +86,10 @@ export function ArtifactsTab({
 				className="mb-3"
 				title="Artifact health"
 			/>
-			{/* The shared Dashboard tile, not a fourth hand-rolled one: the value carries the tone
-			    and the reading sits under it as detail, so a row that used to be number-over-badge in
-			    centred text now matches every other metric row in the app. Six across only where the
-			    tiles have room — at 768 the six-column grid gave each tile ~65px and 'Required
-			    missing' wrapped, dropping its numeral a line below the other five. */}
-			<div className="grid grid-cols-2 gap-3 @min-[32rem]:grid-cols-3 @min-[68rem]:grid-cols-6">
+			{/* Present and Total are derived from Fresh, Stale and Missing. Giving all six equal
+			    weight made the same inventory look like six independent health signals, so the
+			    summary keeps only the four numbers that guide an operator's next action. */}
+			<div className="grid grid-cols-2 gap-3 @min-[32rem]:grid-cols-4">
 				{tiles.map((tile) => (
 					<Metric
 						detail={tile.health}

@@ -11,6 +11,7 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import {
 	DependencyList,
 	GraphNodeButton,
+	GraphSourceLegend,
 	sourceBadgeTone,
 	sourceLabels,
 } from './dependencyGraphComponents.tsx';
@@ -47,6 +48,7 @@ export function DependencyGraphCanvas({
 	return (
 		<Card className="min-w-0 overflow-hidden p-0" variant="sunken">
 			{header}
+			<GraphSourceLegend />
 			{/* The graph bottoms out at the viewport instead of at `70vh`, the way the Code tab's
 			    two panes already do. Capped at 70vh it was 916px of pane below 627px of chrome at
 			    2250x1309, so the document scrolled as well as the pane and the wheel did different

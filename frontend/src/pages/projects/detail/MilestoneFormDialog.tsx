@@ -7,6 +7,7 @@ import { Dialog, DialogPanel } from '../../../components/ui/dialog.tsx';
 import { FieldRow } from '../../../components/ui/field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
 import { textareaClass } from '../../../lib/formStyles.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
 
 export interface MilestoneFormValues {
 	description: string;
@@ -117,7 +118,7 @@ export function MilestoneFormDialog({
 						value={position}
 					/>
 				</FieldRow>
-				<p className="text-xs text-muted-foreground">
+				<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 					Position 1 is the first milestone the coding gate walks. Reordering can push
 					features later to keep them behind their dependencies. You will see exactly what
 					moves before anything is written.

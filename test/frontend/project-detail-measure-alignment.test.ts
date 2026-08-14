@@ -73,7 +73,7 @@ describe('Project Detail measure alignment', () => {
 		expect(audits).toContain('className={`space-y-4 ${tableMeasureClass}`}');
 		expect(auditTable).not.toContain('tableMeasureClass');
 		expect(reports).toContain('xl:block ${tableMeasureClass}');
-		expect(reports).toContain('className="w-full min-w-[52rem] text-left text-sm"');
+		expect(reports).toContain('className="w-full min-w-[52rem] table-fixed text-left text-sm"');
 		expect(localRuns).toContain('text-sm ${tableMeasureClass}');
 		expect(workingTree.match(/<Card className={`p-0 \$\{tableMeasureClass\}`}/g)).toHaveLength(
 			4,

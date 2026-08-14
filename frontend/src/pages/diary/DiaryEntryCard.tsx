@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link } from 'react-router';
 
 import type { DiaryEntry } from '../../api/types.ts';
@@ -19,6 +19,7 @@ export function DiaryEntryCard({
 	showProject?: boolean;
 }) {
 	const [expanded, setExpanded] = useState(false);
+	const detailsId = useId();
 	return (
 		<Card className="max-w-[61rem]" variant="panel">
 			<div className="flex flex-wrap items-start justify-between gap-2">
@@ -46,6 +47,9 @@ export function DiaryEntryCard({
 					) : null}
 				</div>
 				<Button
+					aria-controls={detailsId}
+					aria-expanded={expanded}
+					aria-label={`${expanded ? 'Hide entry' : 'Read entry'}: ${entry.title}`}
 					onClick={() => setExpanded((prev) => !prev)}
 					size="compact"
 					variant="secondary">
@@ -53,7 +57,7 @@ export function DiaryEntryCard({
 				</Button>
 			</div>
 			{expanded ? (
-				<div className="mt-3 border-t border-border pt-3">
+				<div className="mt-3 border-t border-border pt-3" id={detailsId}>
 					{/* `idPrefix`: the timeline expands many entries into one document, and two
 					    entries that both open with a "Summary" heading would otherwise claim the
 					    same id — the first takes every anchor and the second is unreachable. */}

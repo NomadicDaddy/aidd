@@ -273,7 +273,7 @@ describe('artifact inventory', () => {
 		expect(row).toContain(
 			'flex min-w-0 flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-2',
 		);
-		expect(row).toContain('sm:flex-row sm:flex-wrap sm:items-center sm:justify-between');
+		expect(row).toContain('sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center');
 		// The row shell no longer starts life as a single wrapping line.
 		expect(row).not.toContain('flex flex-wrap items-center justify-between gap-2 rounded-md');
 	});

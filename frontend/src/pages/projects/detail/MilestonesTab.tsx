@@ -143,7 +143,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 	const view = milestones.data;
 	const names = view.milestones.map((milestone) => milestone.name);
 	return (
-		<div className="space-y-3">
+		<div className="space-y-4">
 			<h2 className="sr-only">Milestones</h2>
 			<Card className="flex flex-col gap-3">
 				<CardHeader
@@ -188,7 +188,7 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
 				) : null}
 			</Card>
 			<MilestonesGateCallout view={view} />
-			<Card className="p-0">
+			<Card className="overflow-hidden p-0">
 				{view.milestones.length === 0 ? (
 					<EmptyState className="m-4">
 						This roadmap has no milestones. Add one to give the coding gate an ordering

@@ -95,14 +95,13 @@ export function ArtifactInventoryRow({
 		</div>
 	);
 	return (
-		// Below `sm` the metadata group gets its own line rather than competing with the name for
-		// one: it is `shrink-0` (badges, an age, a button), so on one line it takes what it needs
-		// and the name takes what is left.
+		// Below `sm` the metadata group gets its own line rather than competing with the name. From
+		// `sm` up the row becomes a two-column grid and every metadata group reserves the same tracks.
 		//
 		// The parent composition owns the measure. Keeping the cap here instead made the surrounding
 		// card, metric strip, and headings continue for another half-screen after every row ended.
 		<div
-			className="flex flex-col gap-2 rounded-md border border-border px-2.5 py-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+			className="flex flex-col gap-2 rounded-md border border-border px-2.5 py-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
 			title={rowTitle}>
 			{viewable ? (
 				<button
@@ -115,35 +114,44 @@ export function ArtifactInventoryRow({
 			) : (
 				nameBlock
 			)}
-			<div className="flex shrink-0 items-center gap-1.5">
-				{badges}
-				{mtime ? (
-					<RelativeAge
-						className="text-xs whitespace-nowrap text-muted-foreground"
-						value={mtime}
-					/>
-				) : null}
-				{onToggleSkip ? (
-					<Button
-						aria-label={skipped ? `Restore ${nameOfRow}` : `Mark ${nameOfRow} as N/A`}
-						disabled={disabled}
-						onClick={onToggleSkip}
-						size="compact"
-						title={skipped ? 'Restore artifact' : 'Mark artifact as not applicable'}
-						variant={skipped ? 'ghost' : 'secondary'}>
-						{skipped ? (
-							<>
-								<RotateCcw className="h-3.5 w-3.5" />
-								Restore
-							</>
-						) : (
-							<>
-								<Ban className="h-3.5 w-3.5" />
-								Mark N/A
-							</>
-						)}
-					</Button>
-				) : null}
+			{/* Every desktop row reserves the same three metadata tracks. Badges used to start
+			    wherever the age and optional action left room, so their left edge moved by 173px
+			    down one inventory. */}
+			<div className="flex w-full flex-wrap items-center gap-1.5 sm:grid sm:w-auto sm:grid-cols-[11rem_5rem_7rem]">
+				<div className="flex items-center gap-1.5">{badges}</div>
+				<div className="flex justify-start sm:justify-end">
+					{mtime ? (
+						<RelativeAge
+							className="text-xs whitespace-nowrap text-muted-foreground"
+							value={mtime}
+						/>
+					) : null}
+				</div>
+				<div className="flex justify-end">
+					{onToggleSkip ? (
+						<Button
+							aria-label={
+								skipped ? `Restore ${nameOfRow}` : `Mark ${nameOfRow} as N/A`
+							}
+							disabled={disabled}
+							onClick={onToggleSkip}
+							size="compact"
+							title={skipped ? 'Restore artifact' : 'Mark artifact as not applicable'}
+							variant={skipped ? 'ghost' : 'secondary'}>
+							{skipped ? (
+								<>
+									<RotateCcw className="h-3.5 w-3.5" />
+									Restore
+								</>
+							) : (
+								<>
+									<Ban className="h-3.5 w-3.5" />
+									Mark N/A
+								</>
+							)}
+						</Button>
+					) : null}
+				</div>
 			</div>
 		</div>
 	);

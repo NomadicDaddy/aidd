@@ -43,7 +43,7 @@ describe('project detail density contracts', () => {
 		expect(featureTable).toContain('hidden @min-[80rem]:block');
 		expect(featureTable).toContain("source.replaceAll('_', ' ')");
 		expect(artifacts).toContain('<Card className="@container max-w-[61rem]">');
-		expect(artifacts).toContain('@min-[68rem]:grid-cols-6');
+		expect(artifacts).toContain('@min-[32rem]:grid-cols-4');
 	});
 
 	test('keeps repository divergence visible and short-circuits a clean tree', async () => {

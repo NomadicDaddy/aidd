@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import type { ProjectFeature } from '../../frontend/src/api/types.ts';
-import { buildFeatureDependencyGraph } from '../../frontend/src/pages/projects/detail/dependencyGraphUtils.ts';
+import {
+	buildFeatureDependencyGraph,
+	fitFeatureDependencyGraph,
+} from '../../frontend/src/pages/projects/detail/dependencyGraphUtils.ts';
 
 function feature(input: {
 	dependencies?: string[];
@@ -84,5 +87,24 @@ describe('project feature dependency graph', () => {
 		expect(middle?.x).toBeLessThan(top?.x ?? 0);
 		expect(graph.width).toBeGreaterThan(0);
 		expect(graph.height).toBeGreaterThan(0);
+	});
+
+	test('refits a filtered result without mutating the full graph', () => {
+		const graph = buildFeatureDependencyGraph([
+			feature({ directory: 'base' }),
+			feature({ dependencies: ['base'], directory: 'middle' }),
+			feature({ dependencies: ['middle'], directory: 'top' }),
+			feature({ dependencies: ['top'], directory: 'final' }),
+		]);
+		const fitted = fitFeatureDependencyGraph(graph, new Set(['middle', 'top']));
+		const middle = fitted.nodes.find((node) => node.directory === 'middle');
+		const top = fitted.nodes.find((node) => node.directory === 'top');
+
+		expect(fitted.nodes.map((node) => node.directory)).toEqual(['middle', 'top']);
+		expect(fitted.edges.map((edge) => [edge.source, edge.target])).toEqual([['middle', 'top']]);
+		expect(middle?.layer).toBe(0);
+		expect(top?.layer).toBe(1);
+		expect(fitted.width).toBeLessThan(graph.width);
+		expect(graph.nodes).toHaveLength(4);
 	});
 });

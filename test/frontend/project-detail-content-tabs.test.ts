@@ -76,11 +76,13 @@ describe('reports tab', () => {
 		expect(tab).toContain('<Card>\n\t\t\t\t<CardHeader');
 	});
 
-	test('a description is clamped in both halves, with the full text reachable', async () => {
-		// The longest in the corpus runs 280 characters, and uncapped it set the height of its row.
+	test('desktop report identities stay within two lines and retain their full text', async () => {
+		// The description and slug each get one table line; titles retain both complete values.
 		const table = await detail('ReportsDesktopTable.tsx');
-		expect(table).toContain('line-clamp-2 whitespace-pre-wrap');
+		expect(table).toContain('truncate font-medium text-foreground');
+		expect(table).toContain('truncate font-mono text-xs text-muted-foreground');
 		expect(table).toContain('title={report.description}');
+		expect(table).toContain('title={identifier}');
 
 		const list = await detail('ReportsMobileList.tsx');
 		expect(list).toContain('mt-3 max-w-[70ch] text-sm whitespace-pre-wrap text-foreground');

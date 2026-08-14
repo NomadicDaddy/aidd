@@ -165,3 +165,37 @@ export function buildFeatureDependencyGraph(features: ProjectFeature[]): Feature
 		width: size.width,
 	};
 }
+
+/**
+ * Reposition a filtered graph around the nodes it still renders.
+ *
+ * Filtering used to hide nodes without changing the full graph's 2,000px-plus shell, leaving a
+ * three-node result stranded at its original coordinates. The full relationship data stays on the
+ * source graph for diagnostics and the selection panel; this view copy only narrows the links used
+ * to assign visible layers and calculate the canvas bounds.
+ */
+export function fitFeatureDependencyGraph(
+	graph: FeatureDependencyGraph,
+	visibleDirectories: Set<string>,
+): FeatureDependencyGraph {
+	const visibleNodes = graph.nodes
+		.filter((node) => visibleDirectories.has(node.directory))
+		.map((node) => ({
+			...node,
+			dependents: node.dependents.filter((directory) => visibleDirectories.has(directory)),
+			resolvedDependencies: node.resolvedDependencies.filter((directory) =>
+				visibleDirectories.has(directory),
+			),
+		}));
+	const positionedNodes = positionNodes(visibleNodes);
+	const size = graphSize(positionedNodes);
+	return {
+		...graph,
+		edges: graph.edges.filter(
+			(edge) => visibleDirectories.has(edge.source) && visibleDirectories.has(edge.target),
+		),
+		height: size.height,
+		nodes: positionedNodes,
+		width: size.width,
+	};
+}

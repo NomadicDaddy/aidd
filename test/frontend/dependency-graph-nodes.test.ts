@@ -47,7 +47,8 @@ describe('a dependency graph node fits what it draws', () => {
 
 		expect(button).toContain('title={node.title}');
 		expect(button).toContain('title={node.directory}');
-		// The accessible name was already the directory; the `title` is for the pointer.
-		expect(button).toContain('aria-label={`Select ${node.directory}`}');
+		// Status, layer, title and directory are all visible button content. An overriding label
+		// would discard three of those four facts from the accessibility tree.
+		expect(button).not.toContain('aria-label=');
 	});
 });

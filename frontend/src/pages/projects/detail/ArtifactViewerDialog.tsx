@@ -160,7 +160,7 @@ export function ArtifactViewerDialog({
 				<div className="flex items-start justify-between gap-3 border-b border-border p-4">
 					<div className="min-w-0">
 						<h2
-							className="text-sm font-semibold text-foreground"
+							className="text-lg font-semibold text-foreground"
 							id="artifact-viewer-title">
 							{target.label}
 						</h2>

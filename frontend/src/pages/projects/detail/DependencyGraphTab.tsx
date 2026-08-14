@@ -19,7 +19,11 @@ import {
 	GraphDiagnosticsCard,
 	SelectedFeaturePanel,
 } from './dependencyGraphPanels.tsx';
-import { buildFeatureDependencyGraph, featureByDirectory } from './dependencyGraphUtils.ts';
+import {
+	buildFeatureDependencyGraph,
+	featureByDirectory,
+	fitFeatureDependencyGraph,
+} from './dependencyGraphUtils.ts';
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';
 import { FeatureLaunchTargetRow } from './FeatureLaunchTargetRow.tsx';
 import {
@@ -86,12 +90,18 @@ export function DependencyGraphTab({
 			),
 		[features, milestoneFilter, query, sourceFilter, statusFilter],
 	);
-	const visibleNodes = graph.nodes.filter((node) => visibleDirectories.has(node.directory));
-	const visibleEdges = graph.edges.filter(
-		(edge) => visibleDirectories.has(edge.source) && visibleDirectories.has(edge.target),
+	const visibleGraph = useMemo(
+		() => fitFeatureDependencyGraph(graph, visibleDirectories),
+		[graph, visibleDirectories],
+	);
+	const visibleNodeByDirectory = useMemo(
+		() => new Map(visibleGraph.nodes.map((node) => [node.directory, node])),
+		[visibleGraph.nodes],
 	);
 	const selectedNode = selectedDirectory
-		? (nodeByDirectory.get(selectedDirectory) ?? null)
+		? visibleDirectories.has(selectedDirectory)
+			? (nodeByDirectory.get(selectedDirectory) ?? null)
+			: null
 		: null;
 	const relatedDirectories = new Set([
 		...(selectedNode ? [selectedNode.directory] : []),
@@ -100,10 +110,10 @@ export function DependencyGraphTab({
 	]);
 
 	useEffect(() => {
-		if (selectedDirectory && !nodeByDirectory.has(selectedDirectory)) {
+		if (selectedDirectory && !visibleDirectories.has(selectedDirectory)) {
 			setSelectedDirectory(null);
 		}
-	}, [nodeByDirectory, selectedDirectory]);
+	}, [selectedDirectory, visibleDirectories]);
 
 	function resetFilters(): void {
 		setMilestoneFilter('all');
@@ -203,17 +213,22 @@ export function DependencyGraphTab({
 					sourceFilter={sourceFilter}
 					sourceOptions={sourceOptions}
 					statusFilter={statusFilter}
-					visibleCount={visibleNodes.length}
+					visibleCount={visibleGraph.nodes.length}
 					zoom={zoom}
 				/>
-				{visibleNodes.length === 0 ? (
+				{visibleGraph.nodes.length === 0 ? (
 					<Card className="py-10 text-center text-sm text-muted-foreground">
 						No dependency nodes match the active filters.
 					</Card>
 				) : (
-					<div className="relative">
+					<div
+						className={
+							selectedNode
+								? 'grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]'
+								: 'min-w-0'
+						}>
 						<DependencyGraphCanvas
-							graph={graph}
+							graph={visibleGraph}
 							header={
 								<FeatureLaunchTargetRow
 									onChange={setLaunchTarget}
@@ -221,18 +236,20 @@ export function DependencyGraphTab({
 									value={launchTarget}
 								/>
 							}
-							nodeByDirectory={nodeByDirectory}
+							nodeByDirectory={visibleNodeByDirectory}
 							onSelect={setSelectedDirectory}
 							relatedDirectories={relatedDirectories}
 							selectedNode={selectedNode}
-							visibleEdges={visibleEdges}
-							visibleNodes={visibleNodes}
+							visibleEdges={visibleGraph.edges}
+							visibleNodes={visibleGraph.nodes}
 							zoom={zoom}
 						/>
-						{/* The selection reads as an overlay on the graph it describes rather than
-						    as a column that exists whether or not anything is selected. */}
+						{/* The rail only exists while selected, preserving the canvas width at rest.
+						    It sits beside the graph at desktop widths instead of covering the launch
+						    strip and the highlighted nodes it describes. The viewport cap reserves
+						    the Project Detail header, status strip, tabs, and graph controls. */}
 						{selectedNode ? (
-							<div className="absolute top-3 right-3 z-10 max-h-[calc(100%-1.5rem)] w-[min(22rem,calc(100%-1.5rem))] overflow-auto">
+							<div className="xl:sticky xl:top-4 xl:max-h-[calc(100vh-41rem)] xl:overflow-auto">
 								<SelectedFeaturePanel
 									hasActiveRun={hasActiveRun}
 									isLaunching={launchingFeature === selectedNode.directory}

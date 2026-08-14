@@ -262,11 +262,6 @@ const EXEMPT: Exemption[] = [
 	},
 	{
 		file: 'pages/projects/detail/dependencyGraphComponents.tsx',
-		marker: 'absolute overflow-hidden rounded-md border border-l-4',
-		reason: 'A graph node, absolutely positioned at a size the layout pass computes.',
-	},
-	{
-		file: 'pages/projects/detail/dependencyGraphComponents.tsx',
 		marker: 'w-full rounded-md border border-border bg-muted px-3 py-2',
 		reason: 'Two stacked lines of text at `py-2` — 52px before any floor is applied.',
 	},

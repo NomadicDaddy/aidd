@@ -115,6 +115,8 @@ export function SegmentedControl<T extends string>({
 						className={cn(
 							'shrink-0 whitespace-nowrap',
 							isActive && 'shadow-sm hover:border-border hover:bg-card',
+							option.disabled &&
+								'border-transparent bg-transparent shadow-none hover:border-transparent hover:bg-transparent',
 						)}
 						disabled={option.disabled}
 						key={option.value}

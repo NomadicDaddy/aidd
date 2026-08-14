@@ -60,9 +60,15 @@ const sizes: Record<ButtonSize, string> = {
    achromatic against an app whose greys are blue-tinted, and `opacity-60` composited the label down
    to rgb(58,59,60) on rgb(23,24,27) — a measured 1.58:1, which is not a legible disabled label but
    an invisible one. `bg-muted`/`text-muted-foreground` is the same pairing every other quiet
-   surface uses and measures ~6.1:1, and the tokens flip themselves, so the `dark:` half is gone. */
+   surface uses and measures ~6.1:1, and the tokens flip themselves, so the `dark:` half is gone.
+
+   Icon buttons are the exception to the filled plate. Their icon already communicates the action,
+   and a transparent surface with a quiet border lets the disabled control recede beside a live
+   secondary control without sacrificing the muted-foreground icon's contrast. */
 const blocked =
 	'cursor-not-allowed border-border bg-muted text-muted-foreground shadow-none hover:border-border hover:bg-muted';
+const blockedIcon =
+	'cursor-not-allowed border-border/60 bg-transparent text-muted-foreground shadow-none hover:border-border/60 hover:bg-transparent';
 
 export function buttonClassName(
 	variant: ButtonVariant = 'secondary',
@@ -75,7 +81,7 @@ export function buttonClassName(
 		'transition-all duration-150',
 		'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 		'disabled:pointer-events-none',
-		isBlocked ? blocked : variants[variant],
+		isBlocked ? (size === 'icon' ? blockedIcon : blocked) : variants[variant],
 		sizes[size],
 		className,
 	);

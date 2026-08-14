@@ -23,12 +23,13 @@ import { useProjects } from '../../hooks/useProjects.ts';
 import { useSkillImports, useSkills } from '../../hooks/useSkills.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { useViewportFill } from '../../hooks/useViewportFill.ts';
-import { SKILL_CATEGORY_FILTERS, type SkillCategoryFilter } from '../../lib/catalogCuration.ts';
+import { SKILL_CATEGORY_FILTERS } from '../../lib/catalogCuration.ts';
 import { cn } from '../../lib/cn.ts';
 import { SkillCatalog } from './SkillCatalog.tsx';
 import { SkillDefinitionCard } from './SkillDefinitionCard.tsx';
 import { SkillDetailsCard } from './SkillDetailsCard.tsx';
 import { SkillImportDialog } from './SkillImportDialog.tsx';
+import { useSkillsFilterParams } from './useSkillsFilterParams.ts';
 import { useSkillsMasterDetail } from './useSkillsMasterDetail.ts';
 
 /**
@@ -45,8 +46,10 @@ export function SkillsPage() {
 	const { deleteImport } = useSkillImports();
 	const projects = useProjects();
 	const telemetry = useTelemetryResources({ type: 'skill' });
-	const [query, setQuery] = useState('');
-	const [category, setCategory] = useState<SkillCategoryFilter>('all');
+	// The catalog filters are URL-backed (`q`, `category`), so a filtered view can be bookmarked,
+	// shared, restored, and traversed with browser history. Selection, dialogs, and launch state
+	// below stay local on purpose.
+	const { category, clearFilters, query, setCategory, setQuery } = useSkillsFilterParams();
 	const [deleteTarget, setDeleteTarget] = useState<null | string>(null);
 	const [importOpen, setImportOpen] = useState(false);
 	const [args, setArgs] = useState('');
@@ -79,11 +82,6 @@ export function SkillsPage() {
 	});
 	const selected = filtered.find((skill) => skill.id === selectedId) ?? filtered[0] ?? null;
 	const catalogSelectedId = catalogHasSelection ? (selected?.id ?? null) : null;
-
-	function clearFilters(): void {
-		setQuery('');
-		setCategory('all');
-	}
 
 	function launch(skill: SkillDefinition): void {
 		if (!projectDir) return;

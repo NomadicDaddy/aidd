@@ -5,7 +5,7 @@ import { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw';
 import { default as Search } from 'lucide-react/dist/esm/icons/search';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useId, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
 import type { RecipeDefinition, ResourceUsageRow } from '../../api/types.ts';
@@ -21,6 +21,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useProjects } from '../../hooks/useProjects.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
+import { catalogFilterSearchParams, readCatalogQuery } from '../../lib/catalogFilterParams.ts';
 import { selectClass } from '../../lib/formStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { launchHint } from './recipe-launch.ts';
@@ -45,7 +46,11 @@ export function RecipesPage() {
 	const projects = useProjects();
 	const recipesView = usePrefsStore((state) => state.recipesView);
 	const setRecipesView = usePrefsStore((state) => state.setRecipesView);
-	const [search, setSearch] = useState('');
+	const [searchParams, setSearchParams] = useSearchParams();
+	// The search filter is URL-backed: `q` comes straight from the query string, so a filtered
+	// view can be bookmarked, shared, and restored with the browser's back button. Project
+	// target, selection, and parameters below stay local on purpose.
+	const search = readCatalogQuery(searchParams);
 	const [projectDir, setProjectDir] = useState('');
 	const [selectedRecipe, setSelectedRecipe] = useState<null | RecipeDefinition>(null);
 	const [parameters, setParameters] = useState<Record<string, string>>({});
@@ -65,6 +70,12 @@ export function RecipesPage() {
 		launchPending: recipes.launchRecipe.isPending,
 		onLaunch: openLaunch,
 	};
+
+	function setSearch(value: string): void {
+		setSearchParams((previous) => catalogFilterSearchParams(previous, { q: value }), {
+			replace: true,
+		});
+	}
 
 	function openLaunch(recipe: RecipeDefinition): void {
 		const defaults: Record<string, string> = {};

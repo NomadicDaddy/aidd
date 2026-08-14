@@ -11,6 +11,7 @@ import {
 	newStepDraft,
 	newStepNamePlaceholder,
 } from '../../frontend/src/pages/recipes/recipe-steps.ts';
+import { readCatalogQuery } from '../../frontend/src/lib/catalogFilterParams.ts';
 
 const frontendSource = join(process.cwd(), 'frontend', 'src');
 
@@ -264,5 +265,37 @@ describe('the header actions fit on the width where they first share a line', ()
 		expect(header).toContain('<header className="@container">');
 		expect(header).toContain('@min-[61rem]:flex-row');
 		expect(header).toContain('<div className="min-w-0">');
+	});
+});
+
+describe('the recipes search filter is URL-backed', () => {
+	test('q is derived from the search params, not component state', async () => {
+		const page = await read('pages/recipes/RecipesPage.tsx');
+
+		// Deriving the filter from the router is the whole contract: a filtered view can be
+		// bookmarked, shared, restored, and traversed with browser history. The project target,
+		// selected recipe, and parameters stay local — the audit finding named exactly that
+		// boundary.
+		expect(page).toContain('useSearchParams()');
+		expect(page).toContain('readCatalogQuery(searchParams)');
+		// The search filter is no longer useState: local state would fork from the URL the
+		// moment a back/forward navigation restored a previous entry.
+		expect(
+			page.match(/useState(<[^>]*>)?\(\s*''\s*\)/g)?.some((match) => /search/i.test(match)) ??
+				false,
+		).toBe(false);
+	});
+
+	test('the search writer goes through the shared param helper', async () => {
+		const page = await read('pages/recipes/RecipesPage.tsx');
+
+		expect(page).toContain('catalogFilterSearchParams(previous, { q: value })');
+		// Replace, not push: typing a query writes one entry per keystroke into history otherwise.
+		expect(page.match(/replace: true/g)).toHaveLength(1);
+	});
+
+	test('the initial query and a populated one read from the URL', () => {
+		expect(readCatalogQuery(new URLSearchParams(''))).toBe('');
+		expect(readCatalogQuery(new URLSearchParams('q=deploy'))).toBe('deploy');
 	});
 });

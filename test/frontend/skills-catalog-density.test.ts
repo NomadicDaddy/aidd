@@ -2,6 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
+import {
+	readSkillCategoryFilter,
+	SKILL_CATEGORY_FILTERS,
+} from '../../frontend/src/lib/catalogCuration.ts';
+import {
+	catalogFilterSearchParams,
+	readCatalogQuery,
+} from '../../frontend/src/lib/catalogFilterParams.ts';
+
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 const SKILLS_DIR = join(FRONTEND_ROOT, 'src', 'pages', 'skills');
 
@@ -217,5 +226,74 @@ describe('the skill detail card labels its blocks', () => {
 		expect(source).toContain('identifier={skill.id}');
 		expect(source).not.toContain('text-teal-700');
 		expect(source).not.toContain('font-mono text-sm');
+	});
+});
+
+describe('the skills filters are URL-backed', () => {
+	test('q and category are derived from the search params, not component state', async () => {
+		const page = await skillsSource('SkillsPage.tsx');
+		const hook = await skillsSource('useSkillsFilterParams.ts');
+
+		// Deriving the filters from the router is the whole contract: a filtered view can be
+		// bookmarked, shared, restored, and traversed with browser history. Selection, dialogs,
+		// and launch state stay local — the audit finding named exactly that boundary.
+		expect(page).toContain('useSkillsFilterParams()');
+		expect(hook).toContain('useSearchParams()');
+		expect(hook).toContain('readCatalogQuery(searchParams)');
+		expect(hook).toContain("readSkillCategoryFilter(searchParams.get('category'))");
+		// The hook holds neither filter in useState: local state would fork from the URL the
+		// moment a back/forward navigation restored a previous entry.
+		expect(hook).not.toContain('useState');
+	});
+
+	test('every filter writer goes through the shared param helper and removes empty values', async () => {
+		const hook = await skillsSource('useSkillsFilterParams.ts');
+
+		expect(hook).toContain('catalogFilterSearchParams(previous, { q: value })');
+		// `all` is the category default, so it is removed rather than written as `category=all`.
+		expect(hook).toContain(
+			"catalogFilterSearchParams(previous, { category: value === 'all' ? '' : value })",
+		);
+		expect(hook).toContain("catalogFilterSearchParams(previous, { category: '', q: '' })");
+		// Replace, not push: typing a query writes one entry per keystroke into history otherwise.
+		expect(hook.match(/replace: true/g)).toHaveLength(3);
+	});
+
+	test('the initial query and absent category read as the unfiltered default', () => {
+		expect(readCatalogQuery(new URLSearchParams(''))).toBe('');
+		expect(readCatalogQuery(new URLSearchParams('q=tester'))).toBe('tester');
+		expect(readSkillCategoryFilter(null)).toBe('all');
+	});
+
+	test('an invalid category value reads as all', () => {
+		// A stale or hand-edited link must not select a category the SegmentedControl cannot
+		// display, and must not crash the page.
+		expect(readSkillCategoryFilter('not-a-category')).toBe('all');
+		expect(readSkillCategoryFilter('')).toBe('all');
+		// Every rendered filter value round-trips.
+		for (const option of SKILL_CATEGORY_FILTERS) {
+			if (option.value === 'all') continue;
+			expect(readSkillCategoryFilter(option.value)).toBe(option.value);
+		}
+	});
+
+	test('filter writes preserve unrelated parameters and drop empty ones', () => {
+		const current = new URLSearchParams('category=runtime&tab=features&z=1');
+		const next = catalogFilterSearchParams(current, { category: '', q: 'tester' });
+
+		expect(next.get('category')).toBeNull();
+		expect(next.get('q')).toBe('tester');
+		expect(next.get('tab')).toBe('features');
+		expect(next.get('z')).toBe('1');
+		// The input params object is never mutated — the router's updater form diffed against it.
+		expect(current.get('category')).toBe('runtime');
+		expect(current.get('q')).toBeNull();
+	});
+
+	test('clearing both filters leaves unrelated parameters intact', () => {
+		const current = new URLSearchParams('q=ship&category=runtime&featureStatus=open');
+		const next = catalogFilterSearchParams(current, { category: '', q: '' });
+
+		expect(next.toString()).toBe('featureStatus=open');
 	});
 });

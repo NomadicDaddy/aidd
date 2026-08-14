@@ -13,6 +13,19 @@ export const SKILL_CATEGORY_FILTERS: readonly { label: string; value: SkillCateg
 	{ label: 'Spernakit Fleet', value: 'spernakit-fleet' },
 ];
 
+const skillCategoryFilterValues = new Set<string>(SKILL_CATEGORY_FILTERS.map((o) => o.value));
+
+/**
+ * Reads the Skills category filter from the `category` query parameter. Anything that is not one
+ * of the rendered filter values — including `null` (absent) — reads as `all`, so a stale or
+ * hand-edited link cannot select a category the SegmentedControl cannot display.
+ */
+export function readSkillCategoryFilter(value: null | string): SkillCategoryFilter {
+	return value !== null && skillCategoryFilterValues.has(value)
+		? (value as SkillCategoryFilter)
+		: 'all';
+}
+
 /**
  * Skill ids referenced by `recipes/*.json` steps (`stepType: "skill"`).
  * Source of truth lives in the recipe files; the CLI catalog test

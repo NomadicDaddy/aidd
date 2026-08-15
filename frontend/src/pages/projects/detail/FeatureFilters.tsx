@@ -4,7 +4,9 @@ import {
 	FilterToolbar,
 } from '../../../components/shared/FilterToolbar.tsx';
 import { countActiveFilters } from '../../../lib/filterFields.ts';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import { FEATURE_STATUS_OPTIONS, type FeatureStatusFilter } from './featuresUtils.ts';
+import { featureSourceDisplayLabel } from './shared.ts';
 
 export function FeatureFilters({
 	filteredTotal,
@@ -49,9 +51,9 @@ export function FeatureFilters({
 							onChange={(value) => onFilterChange('featureStatus', value)}
 							options={[
 								{ label: 'All statuses', value: 'all' },
-								{ label: 'incomplete', value: 'incomplete' },
+								{ label: 'Incomplete', value: 'incomplete' },
 								...FEATURE_STATUS_OPTIONS.map((option) => ({
-									label: option,
+									label: humanizeEnum(option),
 									value: option,
 								})),
 							]}
@@ -69,7 +71,13 @@ export function FeatureFilters({
 						<FilterSelect
 							label="Source"
 							onChange={(value) => onFilterChange('featureSource', value)}
-							options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
+							options={[
+								{ label: 'All sources', value: 'all' },
+								...sourceOptions.map((option) => ({
+									...option,
+									label: featureSourceDisplayLabel(option.label),
+								})),
+							]}
 							value={sourceFilter}
 						/>
 					</>

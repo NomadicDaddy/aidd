@@ -82,8 +82,9 @@ describe('FeatureActions status variants', () => {
 		const html = renderFeatureActions('pending');
 
 		expect(html).toContain('aria-label="Status for feature-one"');
-		expect(html).toContain('pending (invalid)');
-		expect(html).toContain('<option value="completed">completed</option>');
+		expect(html).toContain('value="pending"');
+		expect(html).toContain('Pending (invalid)');
+		expect(html).toContain('<option value="completed">Completed</option>');
 		expect(html).not.toContain('aria-label="Launch coding run for feature-one"');
 		expect(html).not.toContain('aria-label="Delete feature-one"');
 	});

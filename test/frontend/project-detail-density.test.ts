@@ -41,7 +41,7 @@ describe('project detail density contracts', () => {
 		expect(features).toContain('<Card className="@container overflow-hidden p-0">');
 		expect(features).toContain('@min-[61rem]:hidden');
 		expect(featureTable).toContain('hidden @min-[61rem]:block');
-		expect(featureTable).toContain("source.replaceAll('_', ' ')");
+		expect(featureTable).toContain('featureSourceDisplayLabel(source)');
 		expect(artifacts).toContain('<Card className="@container max-w-[61rem]">');
 		expect(artifacts).toContain('@min-[32rem]:grid-cols-4');
 	});

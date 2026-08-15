@@ -6,6 +6,7 @@ import type {
 
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import {
 	FeatureActions,
 	FeatureMilestoneControl,
@@ -17,7 +18,7 @@ import {
 	featureShippedVersion,
 	featureSourceLabel,
 } from './featuresUtils.ts';
-import { statusTone, stringValue } from './shared.ts';
+import { featureSourceDisplayLabel, statusTone, stringValue } from './shared.ts';
 
 export function FeaturesDesktopTable({
 	decisions,
@@ -116,6 +117,7 @@ export function FeaturesDesktopTable({
 						const title = stringValue(feature, 'title') || id;
 						const status = stringValue(feature, 'status') || 'unknown';
 						const source = featureSourceLabel(feature);
+						const sourceDisplay = featureSourceDisplayLabel(source);
 						const directory = featureDirectory(feature);
 						const decision = decisions[directory] ?? '';
 						return (
@@ -134,7 +136,9 @@ export function FeaturesDesktopTable({
 								</td>
 								<td className="px-4 py-3">
 									<div className="flex flex-wrap items-center gap-1">
-										<Badge tone={statusTone(status)}>{status}</Badge>
+										<Badge tone={statusTone(status)}>
+											{humanizeEnum(status)}
+										</Badge>
 										{featurePassesDisagrees(feature, status) ? (
 											<Badge
 												title="Feature status and passes flag disagree"
@@ -167,8 +171,8 @@ export function FeaturesDesktopTable({
 								</td>
 								<td
 									className="px-4 py-3 text-xs text-muted-foreground"
-									title={source}>
-									{source.replaceAll('_', ' ')}
+									title={sourceDisplay}>
+									{sourceDisplay}
 								</td>
 								<td className="px-4 py-3">
 									<FeatureActions

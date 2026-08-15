@@ -8,6 +8,7 @@ import { OverflowScroller } from '../../../components/shared/OverflowScroller.ts
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import {
 	DependencyList,
 	GraphNodeButton,
@@ -172,7 +173,7 @@ export function SelectedFeaturePanel({
 			<div className="space-y-2">
 				<div className="flex items-start justify-between gap-2">
 					<div className="flex flex-wrap items-center gap-2">
-						<Badge tone={statusTone(node.status)}>{node.status}</Badge>
+						<Badge tone={statusTone(node.status)}>{humanizeEnum(node.status)}</Badge>
 						<Badge tone={sourceBadgeTone(node.source)}>
 							{sourceLabels[node.source]}
 						</Badge>

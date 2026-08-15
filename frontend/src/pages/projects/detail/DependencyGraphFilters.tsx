@@ -5,9 +5,11 @@ import {
 } from '../../../components/shared/FilterToolbar.tsx';
 import { CardHeader } from '../../../components/ui/card.tsx';
 import { countActiveFilters } from '../../../lib/filterFields.ts';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import { GraphDiagnostics, GraphZoomControls } from './dependencyGraphComponents.tsx';
 import { type buildFeatureDependencyGraph } from './dependencyGraphUtils.ts';
 import { FEATURE_STATUS_FILTER_OPTIONS } from './featuresUtils.ts';
+import { featureSourceDisplayLabel } from './shared.ts';
 
 // The graph tab's header, counts, zoom controls and four filters. Extracted from DependencyGraphTab
 // so both files stay inside the 300-line cap.
@@ -92,7 +94,7 @@ export function DependencyGraphFilters({
 							label="Status"
 							onChange={onStatusFilterChange}
 							options={FEATURE_STATUS_FILTER_OPTIONS.map((status) => ({
-								label: status === 'all' ? 'All statuses' : status,
+								label: status === 'all' ? 'All statuses' : humanizeEnum(status),
 								value: status,
 							}))}
 							value={statusFilter}
@@ -109,7 +111,13 @@ export function DependencyGraphFilters({
 						<FilterSelect
 							label="Source"
 							onChange={onSourceFilterChange}
-							options={[{ label: 'All sources', value: 'all' }, ...sourceOptions]}
+							options={[
+								{ label: 'All sources', value: 'all' },
+								...sourceOptions.map((option) => ({
+									...option,
+									label: featureSourceDisplayLabel(option.label),
+								})),
+							]}
 							value={sourceFilter}
 						/>
 					</>

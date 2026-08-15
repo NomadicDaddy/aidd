@@ -5,6 +5,7 @@ import { default as ZoomOut } from 'lucide-react/dist/esm/icons/zoom-out';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../../components/ui/button.tsx';
 import { cn } from '../../../lib/cn.ts';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import {
 	type buildFeatureDependencyGraph,
 	type FeatureDependencyNode,
@@ -114,7 +115,7 @@ export function GraphNodeButton({
 			/>
 			<div className="flex items-center justify-between gap-2">
 				<Badge className="shrink-0" tone={statusTone(node.status)}>
-					{node.status}
+					{humanizeEnum(node.status)}
 				</Badge>
 				<span className="font-mono text-xs text-muted-foreground">L{node.layer}</span>
 			</div>

@@ -1,5 +1,7 @@
 import type { ProjectDetail } from '../../../api/types.ts';
 
+import { humanizeEnum } from '../../../lib/formatters.ts';
+
 export const FEATURES_PAGE_SIZE = 15;
 export const RECENT_ACTIVITY_LIMIT = 5;
 
@@ -15,6 +17,12 @@ export const artifactTone: Record<ArtifactHealth, 'amber' | 'emerald' | 'neutral
 export function stringValue(record: Record<string, unknown>, key: string): string {
 	const value = record[key];
 	return typeof value === 'string' ? value : '';
+}
+
+export function featureSourceDisplayLabel(label: string): string {
+	const auditPrefix = 'Audit: ';
+	if (!label.startsWith(auditPrefix)) return label;
+	return `${auditPrefix}${humanizeEnum(label.slice(auditPrefix.length))}`;
 }
 
 // Only the canonical feature statuses (FEATURE_STATUSES in

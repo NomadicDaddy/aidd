@@ -5,13 +5,14 @@ import type {
 } from '../../../api/types.ts';
 
 import { Badge } from '../../../components/ui/badge.tsx';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import {
 	FeatureActions,
 	FeatureMilestoneControl,
 	FeaturePriorityBadge,
 } from './FeatureRowControls.tsx';
 import { featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
-import { statusTone, stringValue } from './shared.ts';
+import { featureSourceDisplayLabel, statusTone, stringValue } from './shared.ts';
 
 export function FeatureMobileCard({
 	decision,
@@ -49,7 +50,7 @@ export function FeatureMobileCard({
 	const id = feature.id || stringValue(feature, 'id');
 	const title = stringValue(feature, 'title') || id;
 	const status = stringValue(feature, 'status') || 'unknown';
-	const source = featureSourceLabel(feature);
+	const source = featureSourceDisplayLabel(featureSourceLabel(feature));
 	return (
 		<div className="rounded-md border border-border p-3">
 			<div className="flex items-start justify-between gap-2">
@@ -57,7 +58,7 @@ export function FeatureMobileCard({
 					<div className="font-medium text-foreground">{title}</div>
 					<div className="text-xs break-all text-muted-foreground">{id}</div>
 				</div>
-				<Badge tone={statusTone(status)}>{status}</Badge>
+				<Badge tone={statusTone(status)}>{humanizeEnum(status)}</Badge>
 			</div>
 			<dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
 				<div className="space-y-1">

@@ -10,6 +10,7 @@ import type { ProjectFeature, ProjectFeatureStatus } from '../../../api/types.ts
 
 import { Button } from '../../../components/ui/button.tsx';
 import { Input } from '../../../components/ui/input.tsx';
+import { humanizeEnum } from '../../../lib/formatters.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { dangerRowActionClass } from '../../../lib/tones.ts';
 import { FEATURE_STATUS_OPTIONS } from './featuresUtils.ts';
@@ -126,12 +127,12 @@ function FeatureStatusSelect({
 			value={status}>
 			{invalidStatus ? (
 				<option disabled value={status}>
-					{status} (invalid)
+					{humanizeEnum(status)} (invalid)
 				</option>
 			) : null}
 			{FEATURE_STATUS_OPTIONS.map((option) => (
 				<option key={option} value={option}>
-					{option}
+					{humanizeEnum(option)}
 				</option>
 			))}
 		</select>

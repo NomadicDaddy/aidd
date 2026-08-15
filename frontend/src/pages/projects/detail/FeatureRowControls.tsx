@@ -46,7 +46,7 @@ export function FeaturePriorityBadge({
  * form rather than a list. Styling rather than conditional rendering keeps it in the tab order.
  */
 const quietSelectClass =
-	'w-full max-w-44 min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm text-foreground transition-colors group-hover:border-border group-hover:bg-card focus:border-border focus:bg-card focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none';
+	'max-w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm text-foreground transition-colors group-hover:border-border group-hover:bg-card focus:border-border focus:bg-card focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none';
 
 export function FeatureMilestoneControl({
 	disabled,

@@ -85,22 +85,34 @@ describe('per-row action cells', () => {
 		expect(source).not.toContain('className="w-full min-w-0"');
 	});
 
-	test('the actions column is sized for what it holds', async () => {
+	test('the feature table preserves compact rows at every supported desktop width', async () => {
 		const source = await detail('FeaturesDesktopTable.tsx');
+		const cards = await detail('FeatureMobileCard.tsx');
+		const controls = await detail('FeatureRowControls.tsx');
+		const tab = await detail('FeaturesTab.tsx');
+
+		expect(source).toContain('hidden @min-[61rem]:block');
+		expect(tab).toContain('@min-[61rem]:hidden');
+		expect(tab).toContain('<EmptyState>No features match the active filters.</EmptyState>');
+		expect(cards).not.toContain('>Passes</dt>');
+		const quietControl = controls.slice(
+			controls.indexOf('const quietSelectClass'),
+			controls.indexOf('export function FeatureMilestoneControl'),
+		);
+		expect(quietControl).toContain('max-w-full');
+		expect(quietControl).not.toContain('max-w-44');
 
 		// Actions had Milestone's 14% for up to five controls, and this cell is what sets the row
 		// height. Below 1536 it was narrower than its own widest single control — 184px of `Approve
 		// with decision` in 139px. At 2321 a backlog row goes 141px to 61px, waiting-approval 181
 		// to 101, and the cell stops overflowing at 1280 and 1536.
-		expect(source).toContain('<col className="w-[25%] 2xl:w-[24%]" />');
 		expect(source).not.toContain('<col className="w-[14%]" />');
 
-		// The 2xl tier gives 3% each back to Feature and Source: Actions held 549px of a 1960px
-		// table for rows that usually render one `Details` button, while `Feature: Documentation`
-		// wrapped in the 157px Source cell. It stops at 24% and not the 19% the sweep proposed,
-		// because a backlog row's four controls are about 405px and 19% is 372px at 2250.
-		expect(source).toContain('<col className="w-[28%] 2xl:w-[29%]" />');
+		// The widest tier holds the action track at the roughly 400px backlog action group plus cell
+		// padding. Feature receives the automatic remainder instead of letting Actions grow forever.
+		expect(source).toContain('<col className="w-[28%] 2xl:w-[29%] @min-[100rem]:w-auto" />');
 		expect(source).toContain('<col className="w-[8%] 2xl:w-[11%]" />');
+		expect(source).toContain('<col className="w-[25%] 2xl:w-[24%] @min-[100rem]:w-[27rem]" />');
 
 		// The second tier is not cosmetic. Shipped and Priority are floored by their own
 		// single-word uppercase headers — 68px and 72px, unwrappable — so 6% and 7% buy width

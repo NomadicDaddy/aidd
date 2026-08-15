@@ -70,16 +70,6 @@ export function FeatureMobileCard({
 					</dd>
 				</div>
 				<div className="space-y-1">
-					<dt className="font-medium text-muted-foreground uppercase">Passes</dt>
-					<dd>
-						{feature.passes === true ? (
-							<Badge tone="emerald">yes</Badge>
-						) : (
-							<Badge tone="neutral">no</Badge>
-						)}
-					</dd>
-				</div>
-				<div className="space-y-1">
 					<dt className="font-medium text-muted-foreground uppercase">Shipped</dt>
 					<dd className="font-mono text-foreground">
 						{featureShippedVersion(feature) ?? '—'}

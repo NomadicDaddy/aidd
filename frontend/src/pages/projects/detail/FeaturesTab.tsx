@@ -1,9 +1,9 @@
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
-import { default as X } from 'lucide-react/dist/esm/icons/x';
 
 import type { ProjectDetail, ProjectRoadmapSummary } from '../../../api/types.ts';
 
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog.tsx';
+import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
@@ -172,13 +172,7 @@ export function FeaturesTab({
 				</Card>
 			) : null}
 			{filteredTotal === 0 ? (
-				<Card className="py-10 text-center text-sm text-muted-foreground">
-					<p>No features match the active filters.</p>
-					<Button className="mt-4" onClick={resetFilters} variant="secondary">
-						<X className="h-4 w-4" />
-						Reset filters
-					</Button>
-				</Card>
+				<EmptyState>No features match the active filters.</EmptyState>
 			) : null}
 			{filteredTotal > 0 ? (
 				<Card className="@container overflow-hidden p-0">
@@ -206,7 +200,7 @@ export function FeaturesTab({
 						rows={slice}
 						runActive={hasActiveRun}
 					/>
-					<div className="flex flex-col gap-3 p-4 @min-[80rem]:hidden">
+					<div className="flex flex-col gap-3 p-4 @min-[61rem]:hidden">
 						{slice.map((feature) => {
 							const id = feature.id || stringValue(feature, 'id');
 							const directory = featureDirectory(feature);

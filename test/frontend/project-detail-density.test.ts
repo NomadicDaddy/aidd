@@ -39,8 +39,8 @@ describe('project detail density contracts', () => {
 		const artifacts = await detail('ArtifactsTab.tsx');
 
 		expect(features).toContain('<Card className="@container overflow-hidden p-0">');
-		expect(features).toContain('@min-[80rem]:hidden');
-		expect(featureTable).toContain('hidden @min-[80rem]:block');
+		expect(features).toContain('@min-[61rem]:hidden');
+		expect(featureTable).toContain('hidden @min-[61rem]:block');
 		expect(featureTable).toContain("source.replaceAll('_', ' ')");
 		expect(artifacts).toContain('<Card className="@container max-w-[61rem]">');
 		expect(artifacts).toContain('@min-[32rem]:grid-cols-4');

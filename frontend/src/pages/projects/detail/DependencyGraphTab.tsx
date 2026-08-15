@@ -49,10 +49,6 @@ export function DependencyGraphTab({
 }) {
 	const graph = useMemo(() => buildFeatureDependencyGraph(features), [features]);
 	const featureMap = useMemo(() => featureByDirectory(features), [features]);
-	const nodeByDirectory = useMemo(
-		() => new Map(graph.nodes.map((node) => [node.directory, node])),
-		[graph.nodes],
-	);
 	const [detailsFeature, setDetailsFeature] = useState<null | ProjectFeature>(null);
 	const [launchingFeature, setLaunchingFeature] = useState<null | string>(null);
 	// Tab-level launch target for feature runs launched from the graph's selected panel.
@@ -99,9 +95,7 @@ export function DependencyGraphTab({
 		[visibleGraph.nodes],
 	);
 	const selectedNode = selectedDirectory
-		? visibleDirectories.has(selectedDirectory)
-			? (nodeByDirectory.get(selectedDirectory) ?? null)
-			: null
+		? (visibleNodeByDirectory.get(selectedDirectory) ?? null)
 		: null;
 	const relatedDirectories = new Set([
 		...(selectedNode ? [selectedNode.directory] : []),
@@ -254,7 +248,7 @@ export function DependencyGraphTab({
 									hasActiveRun={hasActiveRun}
 									isLaunching={launchingFeature === selectedNode.directory}
 									node={selectedNode}
-									nodeByDirectory={nodeByDirectory}
+									nodeByDirectory={visibleNodeByDirectory}
 									onClose={() => setSelectedDirectory(null)}
 									onLaunchRun={launchSelectedFeature}
 									onOpenDetails={openDetails}

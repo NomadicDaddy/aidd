@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import { resolve } from 'node:path';
+
 import type { ProjectFeature } from '../../frontend/src/api/types.ts';
 import {
 	buildFeatureDependencyGraph,
@@ -20,6 +22,69 @@ function feature(input: {
 	};
 	if (input.dependencies) result.dependencies = input.dependencies;
 	return result;
+}
+
+function renderFilteredSelectionPanel(): string {
+	const script = String.raw`
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { SelectedFeaturePanel } from './src/pages/projects/detail/dependencyGraphPanels.tsx';
+import {
+	buildFeatureDependencyGraph,
+	fitFeatureDependencyGraph,
+} from './src/pages/projects/detail/dependencyGraphUtils.ts';
+
+const graph = buildFeatureDependencyGraph([
+	{ directory: 'base', id: 'base', status: 'backlog', title: 'Hidden dependency' },
+	{
+		dependencies: ['base'],
+		directory: 'middle',
+		id: 'middle',
+		status: 'in_progress',
+		title: 'Selected feature',
+	},
+	{
+		dependencies: ['middle'],
+		directory: 'top',
+		id: 'top',
+		status: 'backlog',
+		title: 'Visible dependent',
+	},
+	{
+		dependencies: ['top'],
+		directory: 'final',
+		id: 'final',
+		status: 'backlog',
+		title: 'Hidden dependent',
+	},
+]);
+const visibleGraph = fitFeatureDependencyGraph(graph, new Set(['middle', 'top']));
+const nodeByDirectory = new Map(visibleGraph.nodes.map((node) => [node.directory, node]));
+const node = nodeByDirectory.get('middle');
+
+console.log(
+	renderToStaticMarkup(
+		createElement(SelectedFeaturePanel, {
+			hasActiveRun: false,
+			isLaunching: false,
+			node,
+			nodeByDirectory,
+			onClose: () => undefined,
+			onLaunchRun: () => undefined,
+			onOpenDetails: () => undefined,
+			onSelect: () => undefined,
+		}),
+	),
+);
+`;
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
+	return new TextDecoder().decode(result.stdout).trim();
 }
 
 describe('project feature dependency graph', () => {
@@ -104,7 +169,21 @@ describe('project feature dependency graph', () => {
 		expect(fitted.edges.map((edge) => [edge.source, edge.target])).toEqual([['middle', 'top']]);
 		expect(middle?.layer).toBe(0);
 		expect(top?.layer).toBe(1);
+		expect(middle?.resolvedDependencies).toEqual([]);
+		expect(middle?.dependents).toEqual(['top']);
+		expect(top?.resolvedDependencies).toEqual(['middle']);
+		expect(top?.dependents).toEqual([]);
 		expect(fitted.width).toBeLessThan(graph.width);
 		expect(graph.nodes).toHaveLength(4);
+	});
+
+	test('renders only relationships retained by the active filters', () => {
+		const markup = renderFilteredSelectionPanel();
+
+		expect(markup).toMatch(/Depends on<\/p><p[^>]*>0<\/p>/u);
+		expect(markup).toMatch(/Dependents<\/p><p[^>]*>1<\/p>/u);
+		expect(markup).toContain('Visible dependent');
+		expect(markup).not.toContain('Hidden dependency');
+		expect(markup).not.toContain('Hidden dependent');
 	});
 });

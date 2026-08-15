@@ -171,8 +171,8 @@ export function buildFeatureDependencyGraph(features: ProjectFeature[]): Feature
  *
  * Filtering used to hide nodes without changing the full graph's 2,000px-plus shell, leaving a
  * three-node result stranded at its original coordinates. The full relationship data stays on the
- * source graph for diagnostics and the selection panel; this view copy only narrows the links used
- * to assign visible layers and calculate the canvas bounds.
+ * source graph for diagnostics; this view copy narrows the links used by the visible layout and
+ * selection panel without mutating that source.
  */
 export function fitFeatureDependencyGraph(
 	graph: FeatureDependencyGraph,

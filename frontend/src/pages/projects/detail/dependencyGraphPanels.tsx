@@ -146,8 +146,8 @@ export function GraphDiagnosticsCard({
 	);
 }
 
-// Rendered as an overlay over the graph canvas, so it exists only while a node is selected —
-// the empty-state placeholder it used to show in a permanent rail is gone with the rail.
+// Rendered as a side rail beside the graph canvas only while a node is selected; the empty-state
+// placeholder it used to show in a permanent rail is gone with that permanent layout.
 export function SelectedFeaturePanel({
 	hasActiveRun,
 	isLaunching,

@@ -322,7 +322,6 @@ describe('relative age', () => {
 			'ArtifactInventoryRow.tsx',
 			'ArtifactViewerDialog.tsx',
 			'ArtifactsTab.tsx',
-			'HistoryTab.tsx',
 			'MaturityAuditRow.tsx',
 			'OverviewTab.tsx',
 			'RecentActivity.tsx',

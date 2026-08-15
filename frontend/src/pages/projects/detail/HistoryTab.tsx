@@ -12,7 +12,6 @@ import type {
 import { CommitChips } from '../../../components/shared/CommitChips.tsx';
 import { CommitDiffDialog } from '../../../components/shared/CommitDiffDialog.tsx';
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
-import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
@@ -20,6 +19,7 @@ import { SegmentedControl } from '../../../components/ui/segmented-control.tsx';
 import { Tooltip } from '../../../components/ui/tooltip.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
 import {
 	buildHistoryEvents,
 	filterHistoryEvents,
@@ -50,20 +50,30 @@ function HistoryEventRow({
 	onSelectCommit: (commit: GitCommitRef) => void;
 	projectPath: string;
 }) {
+	const isRun = event.kind === 'run';
 	const hasDetail =
-		Boolean(event.executionIdentity) ||
-		event.detailParts.length > 0 ||
-		event.traceLabel.length > 0;
+		isRun &&
+		(Boolean(event.executionIdentity) ||
+			event.detailParts.length > 0 ||
+			event.traceLabel.length > 0);
 	return (
 		<li className="py-1">
 			<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-				<Badge tone={event.badgeTone}>{event.badge}</Badge>
 				<Link
 					className={`font-medium text-foreground hover:underline ${touchTargetTextClass}`}
 					to={eventLink(event, projectPath)}>
 					{event.title}
 				</Link>
-				<RelativeAge className="text-xs text-muted-foreground" value={event.timestamp} />
+				<Badge tone={event.badgeTone}>{event.badge}</Badge>
+				{isRun
+					? null
+					: event.detailParts.map((part, index) => (
+							<span
+								className="text-xs text-muted-foreground"
+								key={`${part}-${index}`}>
+								{part}
+							</span>
+						))}
 			</div>
 			{hasDetail ? (
 				<div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -74,8 +84,14 @@ function HistoryEventRow({
 					    default `min-width: auto` is its content's min-content width, so the
 					    summary pushed the row past the list's measure instead of wrapping
 					    inside it. */}
-					{event.detailParts.map((part) => (
-						<span className="min-w-0" key={part}>
+					{event.detailParts.map((part, index) => (
+						<span
+							className={
+								index === event.detailParts.length - 1
+									? `min-w-0 break-words ${proseMeasureClass}`
+									: undefined
+							}
+							key={`${part}-${index}`}>
 							{part}
 						</span>
 					))}
@@ -157,10 +173,13 @@ export function HistoryTab({
 			) : (
 				<div className="space-y-4 px-4 pb-4">
 					{groups.map((group) => (
-						<section aria-label={group.label} key={group.key}>
-							<h3 className="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-								{group.label}
-							</h3>
+						<section key={group.key}>
+							<CardHeader
+								className="mb-1.5"
+								headingLevel={3}
+								level="subsection"
+								title={group.label}
+							/>
 							<ul className="divide-y divide-border text-sm">
 								{group.events.map((event) => (
 									<HistoryEventRow

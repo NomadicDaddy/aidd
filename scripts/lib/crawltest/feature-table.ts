@@ -2,6 +2,23 @@ import type { Page } from 'puppeteer';
 
 import { clickButtonByText, isProjectDetailRoute } from './page-assertions.ts';
 
+interface FeatureFilterOption {
+	label: string;
+	value: string;
+}
+
+interface FeatureFilterOptions {
+	source: FeatureFilterOption[];
+	status: FeatureFilterOption[];
+}
+
+export function filterValueForLabel(
+	options: readonly FeatureFilterOption[],
+	label: string,
+): string {
+	return options.find((option) => option.label === label)?.value ?? '';
+}
+
 async function setInputValue(page: Page, selector: string, value: string): Promise<void> {
 	await page.click(selector);
 	await page.keyboard.down('Control');
@@ -48,15 +65,18 @@ async function selectFeatureFilter(page: Page, label: string, value: string): Pr
 	await page.evaluate(script);
 }
 
-async function featureFilterOptions(page: Page): Promise<{ source: string[]; status: string[] }> {
+async function featureFilterOptions(page: Page): Promise<FeatureFilterOptions> {
 	const script = `(() => {
-		const values = (select) => select ? Array.from(select.options).map((option) => option.value) : [];
+		const options = (select) => select ? Array.from(select.options).map((option) => ({
+			label: option.textContent?.trim() ?? '',
+			value: option.value,
+		})) : [];
 		return {
-			source: values(${featureFilterSelect('Source')}),
-			status: values(${featureFilterSelect('Status')}),
+			source: options(${featureFilterSelect('Source')}),
+			status: options(${featureFilterSelect('Status')}),
 		};
 	})()`;
-	return (await page.evaluate(script)) as { source: string[]; status: string[] };
+	return (await page.evaluate(script)) as FeatureFilterOptions;
 }
 
 /** How many feature rows the table holds. Zero means there is nothing for the filters to act on. */
@@ -118,16 +138,26 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 
 		const target = await actionableFeatureFilterTarget(page);
 		const options = await featureFilterOptions(page);
-		const status = target?.status ?? (options.status.includes('completed') ? 'completed' : '');
+		const status = target
+			? filterValueForLabel(options.status, target.status)
+			: options.status.some((option) => option.value === 'completed')
+				? 'completed'
+				: '';
 		// Without a row to copy from, prefer the "__all_*" aggregate over a specific source label.
 		// A label narrows to one category and can empty the table, and an empty table is not a
 		// finding here; the aggregates still exclude the other two categories, so the filter is
 		// genuinely exercised either way.
-		const source =
-			target?.source ??
-			(options.source.find((value) => value.startsWith('__all_')) ||
-				options.source.find((value) => value !== 'all'));
-		if (!options.status.includes(status) || !source || !options.source.includes(source)) {
+		const source = target
+			? filterValueForLabel(options.source, target.source)
+			: (
+					options.source.find((option) => option.value.startsWith('__all_')) ??
+					options.source.find((option) => option.value !== 'all')
+				)?.value;
+		if (
+			!options.status.some((option) => option.value === status) ||
+			!source ||
+			!options.source.some((option) => option.value === source)
+		) {
 			errors.push(
 				`${route} feature filters could not be exercised: wanted status ${JSON.stringify(status)} ` +
 					`and source ${JSON.stringify(source)}, offered ${JSON.stringify(options)}`,

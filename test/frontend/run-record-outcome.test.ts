@@ -1,0 +1,218 @@
+import { describe, expect, test } from 'bun:test';
+import { resolve } from 'node:path';
+import { unfinalizedAgentResultMarker } from '../../shared/src/runs/outcome.ts';
+import type { RunRecord } from '../../frontend/src/api/types.ts';
+import {
+	classifyRunRecord,
+	filtersForLaunchedRun,
+} from '../../frontend/src/pages/runs/runsUtils.ts';
+
+function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
+	return {
+		activityState: null,
+		aiddDirty: null,
+		aiddRevision: null,
+		aiddVersion: null,
+		aiSummary: null,
+		backend: 'native',
+		canKill: false,
+		canReadOutput: true,
+		canStop: false,
+		chainedFromRunId: null,
+		completedAt: 1_000,
+		continuationReason: null,
+		durationMs: 1_000,
+		driverId: null,
+		driverKind: null,
+		driverSha256: null,
+		errorMessage: null,
+		exitCode: 0,
+		heartbeatAt: null,
+		id: 'run_record_outcome',
+		initiator: null,
+		launchCommand: null,
+		logPath: null,
+		mode: 'coding',
+		model: null,
+		pid: null,
+		pipelineSessionId: null,
+		projectId: 'aidd',
+		projectName: 'aidd',
+		projectPath: 'd:/applications/aidd',
+		provider: null,
+		reasoningEffort: null,
+		source: 'web',
+		startedAt: 1_000,
+		status: 'completed',
+		stopReason: null,
+		stopRequested: false,
+		summary: null,
+		...overrides,
+	};
+}
+
+function renderRunRow(run: RunRecord): string {
+	const script = [
+		"import { mock } from 'bun:test';",
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { MemoryRouter } from 'react-router';",
+		"mock.module('./src/hooks/useStopRequested.ts', () => ({ useStopRequested: () => false }));",
+		"const { ActiveRunRow } = await import('./src/pages/runs/ActiveRunRow.tsx');",
+		`const run = ${JSON.stringify(run)};`,
+		'const row = createElement(ActiveRunRow, { continued: false, continuePendingId: undefined, now: 1000, onContinue: () => {}, onKill: () => {}, onSelect: () => {}, onStop: () => {}, run, selected: false });',
+		"const table = createElement('table', null, createElement('tbody', null, row));",
+		'console.log(renderToStaticMarkup(createElement(MemoryRouter, null, table)));',
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) {
+		throw new Error(new TextDecoder().decode(result.stderr));
+	}
+	return new TextDecoder().decode(result.stdout).trim();
+}
+
+function renderRunDetail(run: RunRecord): string {
+	const script = [
+		"import { mock } from 'bun:test';",
+		"import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { MemoryRouter } from 'react-router';",
+		"mock.module('./src/hooks/useStopRequested.ts', () => ({ useStopRequested: () => false }));",
+		"mock.module('./src/hooks/useCommits.ts', () => ({ useCommitDiff: () => ({ data: undefined }), useRunCommits: () => ({ data: undefined }) }));",
+		"const { RunDetailPanel } = await import('./src/pages/runs/RunDetailPanel.tsx');",
+		`const run = ${JSON.stringify(run)};`,
+		'const panel = createElement(RunDetailPanel, { selectedRun: run, stopDetail: null });',
+		// The panel reads the project-detail query for the run's final checks. Nothing is primed
+		// here, so those render as the loading sentence -- this harness is about the outcome
+		// badge and the exit line; the checks have their own test.
+		'const client = new QueryClient({ defaultOptions: { queries: { enabled: false, retry: false } } });',
+		'const tree = createElement(QueryClientProvider, { client }, createElement(MemoryRouter, null, panel));',
+		'console.log(renderToStaticMarkup(tree));',
+	].join('\n');
+	const result = Bun.spawnSync([process.execPath, '-e', script], {
+		cwd: resolve(import.meta.dir, '../../frontend'),
+		stderr: 'pipe',
+		stdout: 'pipe',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) {
+		throw new Error(new TextDecoder().decode(result.stderr));
+	}
+	return new TextDecoder().decode(result.stdout).trim();
+}
+
+describe('DB run outcome classification', () => {
+	test('classifies blocked completion-marker runs as completed with warnings', () => {
+		const outcome = classifyRunRecord(
+			makeRun({
+				exitCode: 7,
+				status: 'failed',
+				stopReason: 'blocked',
+				summary:
+					'coding has no incomplete feature work; completion_marker_missing_or_unaccepted: completed allowed feature(s): demo-feature',
+			}),
+		);
+		expect(outcome.label).toBe('Completed (warnings)');
+		expect(outcome.tone).toBe('amber');
+	});
+
+	test('falls back to decoded validation failure when stopReason is unavailable', () => {
+		const outcome = classifyRunRecord(makeRun({ exitCode: 7, status: 'failed' }));
+		expect(outcome.label).toBe('Validation failed');
+		expect(outcome.tone).toBe('red');
+	});
+
+	test('classifies dirty-worktree blocked runs explicitly', () => {
+		const outcome = classifyRunRecord(
+			makeRun({
+				exitCode: 7,
+				status: 'failed',
+				stopReason: 'blocked_dirty_worktree',
+			}),
+		);
+		expect(outcome.label).toBe('Blocked: dirty tree');
+		expect(outcome.tone).toBe('red');
+	});
+
+	test('classifies user-input blocked runs explicitly', () => {
+		const outcome = classifyRunRecord(
+			makeRun({
+				exitCode: 7,
+				status: 'failed',
+				stopReason: 'blocked_needs_user_input',
+			}),
+		);
+		expect(outcome.label).toBe('Blocked: user input');
+		expect(outcome.tone).toBe('amber');
+	});
+
+	test('renders recovered stale results through the shared outcome classifier', () => {
+		const run = makeRun({
+			exitCode: -1,
+			status: 'failed',
+			stopReason: 'heartbeat_stale',
+			summary: `${unfinalizedAgentResultMarker} {"featureId":"demo","status":"completed","passes":true}`,
+		});
+		const outcome = classifyRunRecord(run);
+		expect(outcome.label).toBe('Result reported · CLI died');
+		expect(outcome.title).toContain('CLI died before aidd could finalize');
+		expect(outcome.tone).toBe('amber');
+		expect(renderRunRow(run)).toMatch(
+			/<span[^>]+bg-amber[^>]*>Result reported · CLI died<\/span>/,
+		);
+	});
+
+	test('renders heartbeat reaping without the -1 sentinel while preserving real exit codes', () => {
+		const reaped = makeRun({
+			exitCode: -1,
+			status: 'failed',
+			stopReason: 'heartbeat_stale',
+		});
+		const reapedMarkup = renderRunDetail(reaped);
+		expect(reapedMarkup).toContain('Reaped: stale heartbeat');
+		expect(reapedMarkup).not.toContain('Exit -1');
+
+		const validationFailureMarkup = renderRunDetail(
+			makeRun({ exitCode: 7, status: 'failed', stopReason: 'exit_error' }),
+		);
+		expect(validationFailureMarkup).toContain('Exit 7 · Validation failed');
+	});
+
+	test('a run with no recorded initiator renders as Unknown, never as Operator', () => {
+		// The failure this guards against is silent: an unrecorded run rendered as "Operator" reads
+		// as a person having asked for it, which is a claim nothing in the record supports.
+		const markup = renderRunRow(makeRun({ initiator: null }));
+		expect(markup).toMatch(/>Unknown<\/span>/);
+		expect(markup).not.toMatch(/>Operator<\/span>/);
+		expect(markup).toContain('This run predates run trigger provenance.');
+
+		expect(renderRunRow(makeRun({ initiator: 'operator' }))).toMatch(/>Operator<\/span>/);
+		const automatic = renderRunRow(makeRun({ initiator: 'automatic' }));
+		expect(automatic).toMatch(/>Automatic<\/span>/);
+		expect(automatic).toContain('nobody asked for it');
+	});
+
+	// Every filter must widen, never narrow. The project filter applies to Active as well as
+	// History, so pinning it to the launched run's project would hide a run still executing in
+	// another project the moment a second run is launched.
+	test('reveals a newly launched run without hiding concurrent runs in other projects', () => {
+		expect(filtersForLaunchedRun()).toEqual({
+			historyProject: 'all',
+			// Initiator too: a feed narrowed to "everything aidd started" would otherwise hide the
+			// run the operator just launched by hand.
+			initiatorFilter: 'all',
+			// Kind widens with the rest: launching an ad-hoc run while the feed is filtered to
+			// Pipelines would otherwise reveal nothing at all.
+			kindFilter: 'all',
+			modeFilter: 'all',
+			query: '',
+			statusFilter: 'all',
+		});
+	});
+});

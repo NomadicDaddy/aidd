@@ -1,0 +1,436 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+@theme {
+	--font-sans:
+		'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+		sans-serif;
+	--font-mono:
+		'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+		monospace;
+	--font-display:
+		'Space Grotesk Variable', 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+		Roboto, Helvetica, Arial, sans-serif;
+
+	/* The one step below `text-xs`, for keycaps and count chips. Named so those surfaces stop
+	   inventing 0.62/0.65/0.68rem one-offs that differ from each other by a rounding error. */
+	--text-2xs: 0.6875rem;
+	--text-2xs--line-height: 1rem;
+
+	/* There is no `md` tier in this app. Content width is set by the sidebar rail, not by the
+	   viewport: at 768px the main column is 656px with the rail collapsed and 480px with it
+	   expanded, so a 768px gate reads as "wide" while the content is narrower than a 640px phone
+	   column gets. Layout steps at `sm` (shell reflow), `lg` (page header, multi-column forms) and
+	   `xl` (tables). Deleting the tier means a stray `md:` utility emits nothing at all rather than
+	   silently gating on the one number that does not describe this layout. */
+	--breakpoint-md: initial;
+}
+
+:root {
+	color: #1a1d26;
+	background: #f4f6f9;
+	color-scheme: light;
+	font-family: var(--font-sans);
+
+	/* Semantic theme tokens (light). Light/dark is data-driven: components reference the
+	   token-backed utilities (bg-card, border-border, text-muted-foreground, ...) and inherit
+	   correct theming automatically without per-utility .dark override rules. */
+	--background: #f4f6f9;
+	--foreground: #1a1d26;
+	--card: #ffffff;
+	--card-foreground: #1a1d26;
+	--muted: #f0f2f5;
+	--muted-foreground: #5c6370;
+	/* An available segment on pointer hover, between its muted well and selected raised plate. */
+	--raised-hover: #c0c6cf;
+	/* A selected plate above muted wells that stays distinct from both its track and card host. */
+	--raised: #818998;
+	--raised-foreground: #1a1d26;
+	--border: #e2e5ea;
+	--control-border: #848c9a;
+	--accent: #0d9488;
+	--accent-foreground: #ffffff;
+	--accent-muted: #f0fdfa;
+	--accent-muted-foreground: #134e4a;
+	--overlay: rgb(15 23 42 / 0.35);
+	/* Measured, not asserted: the ring is a focus indicator, so it answers to the 3:1 non-text
+	   floor (WCAG 1.4.11) against every surface a focused control can sit on. The old #14b8a6 was
+	   2.49:1 on --card and 2.30:1 on --background at full strength, so the global :focus-visible
+	   outline failed on every light surface in the app. teal-700 measures 5.47 and 5.06, which
+	   also leaves the shared /80 ring above the floor. See test/frontend/focus-ring-contrast. */
+	--ring: #0f766e;
+}
+
+.dark {
+	color: #e8eaed;
+	background: #0c0f14;
+	color-scheme: dark;
+
+	/* Semantic theme tokens (dark). Same token names, dark values — flipping .dark on the root
+	   rethemes every token-driven surface. */
+	--background: #0c0f14;
+	--foreground: #e8eaed;
+	--card: #161a22;
+	--card-foreground: #e8eaed;
+	--muted: #1e2330;
+	--muted-foreground: #9ca3af;
+	--raised-hover: #394150;
+	--raised: #666f82;
+	--raised-foreground: #ffffff;
+	--border: #252b38;
+	--control-border: #646d7f;
+	--accent: #2dd4bf;
+	--accent-foreground: #042f2e;
+	--accent-muted: rgb(13 148 136 / 0.15);
+	--accent-muted-foreground: #ccfbf1;
+	--overlay: rgb(2 6 23 / 0.7);
+	--ring: #2dd4bf;
+}
+
+/* Expose the semantic tokens as Tailwind color utilities (bg-card, border-border,
+   text-foreground, text-muted-foreground, bg-muted, bg-accent, ...). `inline` resolves the
+   var() at use sites so the .dark overrides above take effect. */
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-raised-hover: var(--raised-hover);
+	--color-raised: var(--raised);
+	--color-raised-foreground: var(--raised-foreground);
+	--color-border: var(--border);
+	--color-control-border: var(--control-border);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent-muted: var(--accent-muted);
+	--color-accent-muted-foreground: var(--accent-muted-foreground);
+	--color-overlay: var(--overlay);
+	--color-ring: var(--ring);
+}
+
+/* These are element resets, so they belong in `base`. Unlayered they outrank every Tailwind
+   utility: the previous `font: inherit` here discarded `font-mono` / `text-xs` / `text-sm` on
+   every control in the app, so JSON editors rendered in proportional Geist Sans at the body size.
+   Tailwind's own preflight already applies `font: inherit` to form controls from inside `base`,
+   which is where that inheritance is supposed to live — this file only adds what preflight does
+   not. */
+@layer base {
+	/* `html` is the scroll container — `document.scrollingElement` is the root element and it is what
+	   actually moves, so this is the box every `scrollIntoView` and every `#id` navigation aligns
+	   against. Below `sm` the shell bar is `position: sticky; top: 0` and opaque, so an anchor aligned
+	   to the top of that scrollport lands underneath it: measured on /audits at 390, the launch-targets
+	   section landed at y=16 with the bar's bottom edge at y=129, burying its heading and the first
+	   113px of the card the jump exists to show.
+
+	   The subtrahend is the bar's own measured height, not a literal. `observeShellTopBar` publishes
+	   `--app-topbar-height` on this element from a ResizeObserver, so a future change to the control
+	   sizing carries through here with no second number to update — and it publishes `0px` when the
+	   bar computes to `fixed`, which is the `sm:` rail. That is what scopes the offset to the widths
+	   where the bar is actually in flow: no breakpoint override is needed, because at `sm` and above
+	   this resolves to a plain `1rem` of breathing room. */
+	html {
+		scroll-padding-top: calc(var(--app-topbar-height, 0px) + 1rem);
+	}
+
+	body {
+		margin: 0;
+		min-width: 320px;
+		min-height: 100vh;
+		overflow-x: hidden;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* The body suppresses the browser's indiscriminate tap flash, so actual controls replace it
+	   with a semantic accent cue. The held state is intentionally paint-only: moving a target while
+	   a finger is down makes its release point less predictable. `aria-disabled` joins native
+	   disabled here because focusable blocked controls explain themselves without pretending the
+	   attempted press activated anything. */
+	@media (hover: none) and (pointer: coarse) {
+		:where(
+				a[href],
+				button,
+				.press-feedback,
+				[role='button'],
+				[role='group'][tabindex],
+				[role='link'],
+				[role='menuitem'],
+				[role='tab']
+			):not(:disabled):not([aria-disabled='true']) {
+			-webkit-tap-highlight-color: var(--accent);
+
+			&:active {
+				filter: brightness(0.82);
+			}
+		}
+
+		.coarse-heading-anchor {
+			color: var(--accent) !important;
+			opacity: 1 !important;
+		}
+
+		.coarse-interactive-ring {
+			outline: 2px solid var(--accent);
+			outline-offset: -2px;
+		}
+
+		.danger-row-action:active {
+			background-color: var(--danger-row-active) !important;
+		}
+	}
+
+	button,
+	input,
+	select,
+	textarea {
+		touch-action: manipulation;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
+}
+
+.tabular-nums {
+	font-variant-numeric: tabular-nums;
+}
+
+/* The glows are anchored to the viewport, not the document: sized against the element they would
+   stretch over a 3297px route like Audits, putting the second ellipse thousands of pixels below the
+   fold and leaving that page with a visibly different composition from a short one. `fixed` keeps
+   every route showing the same gradient. */
+.app-shell {
+	background:
+		radial-gradient(ellipse at 20% 0%, rgba(13, 148, 136, 0.06), transparent 60%),
+		radial-gradient(ellipse at 80% 100%, rgba(14, 165, 233, 0.04), transparent 50%),
+		var(--background);
+	background-attachment: fixed;
+}
+
+.dark .app-shell {
+	background:
+		radial-gradient(ellipse at 20% 0%, rgba(13, 148, 136, 0.08), transparent 60%),
+		radial-gradient(ellipse at 80% 100%, rgba(14, 165, 233, 0.05), transparent 50%),
+		var(--background);
+	background-attachment: fixed;
+}
+
+.command-surface {
+	background-image:
+		linear-gradient(rgba(13, 148, 136, 0.04) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(13, 148, 136, 0.04) 1px, transparent 1px);
+	background-size: 32px 32px;
+}
+
+.dark .command-surface {
+	background-image:
+		linear-gradient(rgba(45, 212, 191, 0.04) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(45, 212, 191, 0.04) 1px, transparent 1px);
+	background-size: 32px 32px;
+}
+
+.status-pulse {
+	animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+	0%,
+	100% {
+		opacity: 0.5;
+		transform: scale(0.92);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.1);
+	}
+}
+
+/* Orchestrated page-load reveal: one staggered entrance per route. Applied to a page's root
+   container; direct children fade/rise in sequence (header first, then metrics, then panels)
+   purely via animation-delay. Because the animation runs on mount of the route's element, it
+   plays on route change and not on TanStack Query refetches or in-page state updates (the
+   container persists, so the already-finished animation is not replayed). `both` fill-mode
+   holds opacity:1/translateY(0) after completion, and only opacity + transform are animated —
+   neither reflows layout, so there is no cumulative layout shift. The global reduced-motion
+   rule below collapses the animation to ~0ms, so content appears immediately. */
+.page-reveal > * {
+	animation: page-reveal-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-reveal > *:nth-child(1) {
+	animation-delay: 0ms;
+}
+
+.page-reveal > *:nth-child(2) {
+	animation-delay: 50ms;
+}
+
+.page-reveal > *:nth-child(3) {
+	animation-delay: 100ms;
+}
+
+.page-reveal > *:nth-child(4) {
+	animation-delay: 150ms;
+}
+
+.page-reveal > *:nth-child(n + 5) {
+	animation-delay: 190ms;
+}
+
+/* A tab panel is not a route arrival. `TabPanel` unmounts and remounts on every tab change, so a
+   panel rendered as a direct child of `.page-reveal` replayed the whole entrance on an in-page
+   click: measured two frames after switching tabs on /audits, the new panel computed
+   `animation-delay: 0.1s` with `opacity: 0` — blank for 100ms and then 380ms of fade and 6px rise,
+   for a control the reader expects to be instant. Exempting the panel here rather than restructuring
+   each page keeps the header and tab strip animating on arrival, which is the part the reveal was
+   written for, and covers every tabbed surface at once. */
+.page-reveal > [role='tabpanel'] {
+	animation: none;
+}
+
+/* A nested `.page-reveal` hands its entrance to its own children rather than arriving as one block.
+   Dashboard's card section and Docs' three-column grid use this: a composition wrapper that would
+   otherwise swallow most of the page animates not at all, and its children carry the ladder forward
+   from the 100ms slot the wrapper held. That keeps those regions behind the page header instead of
+   racing its 0ms beat. Two class selectors plus the pseudo-class outrank the one-class rules above,
+   so the outer delays never apply here. */
+.page-reveal > .page-reveal {
+	animation: none;
+}
+
+.page-reveal > .page-reveal > *:nth-child(1) {
+	animation-delay: 100ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(2) {
+	animation-delay: 140ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(3) {
+	animation-delay: 180ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(4) {
+	animation-delay: 220ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(5) {
+	animation-delay: 260ms;
+}
+
+.page-reveal > .page-reveal > *:nth-child(n + 6) {
+	animation-delay: 300ms;
+}
+
+@keyframes page-reveal-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Scheduled forms and occurrence history grow the content that actually moves layout. */
+.scheduled-content-reveal {
+	--scheduled-reveal-margin-end: 0rem;
+	--scheduled-reveal-margin-start: 0rem;
+
+	display: grid;
+	animation: scheduled-content-reveal-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-reveal > [data-scheduled-form-motion] {
+	--scheduled-reveal-margin-end: 1.25rem;
+}
+
+/* Project Intake is toggled inside an arrived route, so it expands immediately instead of
+   inheriting the page ladder's second-child delay. */
+.page-reveal > [data-project-intake-motion] {
+	animation-delay: 0ms;
+}
+
+[data-scheduled-occurrences-motion] {
+	--scheduled-reveal-margin-start: -0.75rem;
+}
+
+/* Occurrence history stays mounted so opening and closing share one disclosure transition. */
+.scheduled-occurrence-disclosure {
+	display: grid;
+	grid-template-rows: 0fr;
+	margin-block-start: -0.75rem;
+	opacity: 0;
+	transition:
+		grid-template-rows 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+		margin-block-start 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scheduled-occurrence-disclosure[data-expanded='true'] {
+	grid-template-rows: 1fr;
+	margin-block-start: 0;
+	opacity: 1;
+}
+
+.scheduled-content-reveal-inner {
+	min-height: 0;
+	overflow: hidden;
+}
+
+@keyframes scheduled-content-reveal-in {
+	from {
+		grid-template-rows: 0fr;
+		margin-block-end: 0;
+		margin-block-start: var(--scheduled-reveal-margin-start);
+		opacity: 0;
+	}
+	to {
+		grid-template-rows: 1fr;
+		margin-block-end: var(--scheduled-reveal-margin-end);
+		margin-block-start: 0;
+		opacity: 1;
+	}
+}
+
+/* Card hover lift for interactive cards */
+.card-hover {
+	transition:
+		transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+		border-color 0.2s ease;
+}
+
+.card-hover:hover {
+	transform: translateY(-1px);
+	box-shadow:
+		0 8px 25px rgba(0, 0, 0, 0.06),
+		0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.dark .card-hover:hover {
+	box-shadow:
+		0 8px 25px rgba(0, 0, 0, 0.3),
+		0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::before,
+	::after {
+		scroll-behavior: auto !important;
+		animation-delay: 0ms !important;
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+	}
+}

@@ -1,0 +1,128 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"additionalProperties": false,
+	"description": "Checkpoint state for the dance skill. Persisted at <applications-root>/.dance-state.json between phase transitions.",
+	"properties": {
+		"bumpSize": {
+			"description": "Auto-decided or user-supplied bump size for the spernakit template.",
+			"enum": ["+0.0.1", "+0.1.0", null],
+			"type": ["string", "null"]
+		},
+		"completedAt": {
+			"description": "ISO 8601 timestamp of when Part D finished. Null until D-complete.",
+			"format": "date-time",
+			"type": ["string", "null"]
+		},
+		"decidedAt": {
+			"description": "ISO 8601 timestamp of the latest preflight bump-size decision.",
+			"format": "date-time",
+			"type": "string"
+		},
+		"directFixes": {
+			"description": "Direct-remediation log from Part B (>=3-app clusters, keyed by route, error class, and first stack frame).",
+			"items": {
+				"properties": {
+					"appsAffected": { "items": { "type": "string" }, "type": "array" },
+					"fixedAt": { "format": "date-time", "type": "string" },
+					"signature": {
+						"description": "Cluster signature (route + error class + first stack frame).",
+						"type": "string"
+					},
+					"templatePath": {
+						"description": "Path under <spernakit-root>/ that was patched.",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"type": "array"
+		},
+		"notes": {
+			"description": "Free-form notes captured during the dance, surfaced in the session report.",
+			"items": { "type": "string" },
+			"type": "array"
+		},
+		"perApp": {
+			"additionalProperties": {
+				"properties": {
+					"A": { "enum": ["pending", "ok", "failed", "skipped"], "type": "string" },
+					"B": { "enum": ["pending", "ok", "failed", "skipped"], "type": "string" },
+					"D1_supertest": {
+						"enum": ["pending", "ok", "failed", "skipped"],
+						"type": "string"
+					},
+					"D2_smokeqc": {
+						"enum": ["pending", "ok", "failed", "skipped"],
+						"type": "string"
+					},
+					"D3_tagged": {
+						"description": "Tag string written, e.g., 'v1.4.2'. Null if not tagged.",
+						"type": ["string", "null"]
+					},
+					"lastError": { "type": ["string", "null"] }
+				},
+				"type": "object"
+			},
+			"description": "Per-app outcome map keyed by app slug.",
+			"type": "object"
+		},
+		"phase": {
+			"description": "Current phase. Used by --resume-from to know where to pick up. Part C sits at 'C-pending' while it implements and while any feature remains unresolved, moves to 'C-complete' only when every enumerated feature resolved, and takes 'C-skipped' when C1 found none.",
+			"enum": [
+				"preflight-ok",
+				"A",
+				"B",
+				"C-pending",
+				"C-complete",
+				"C-skipped",
+				"D",
+				"D-complete"
+			],
+			"type": "string"
+		},
+		"pilot": {
+			"description": "Derived app slug used as the Part A pilot. Defaults to the first pinned app in spernakit.psd1, resolved at run time; override with --pilot.",
+			"type": "string"
+		},
+		"remediationFeatures": {
+			"description": "Paths to feature records created by Part B's formal route. Findings use remediation-* in either repository; durable features use clean slugs.",
+			"items": { "type": "string" },
+			"type": "array"
+		},
+		"scope": {
+			"description": "List of derived app slugs in scope for this dance.",
+			"items": { "type": "string" },
+			"type": "array"
+		},
+		"skippedParts": {
+			"items": { "enum": ["A", "B", "C", "D"], "type": "string" },
+			"type": "array"
+		},
+		"startedAt": {
+			"description": "ISO 8601 timestamp of when the dance started.",
+			"format": "date-time",
+			"type": "string"
+		},
+		"templateVersion": {
+			"properties": {
+				"from": {
+					"description": "Spernakit version before the dance, e.g., '3.2.1'.",
+					"type": "string"
+				},
+				"to": {
+					"description": "Spernakit version after Part A1. Null until A1 completes.",
+					"type": ["string", "null"]
+				}
+			},
+			"type": "object"
+		},
+		"version": {
+			"const": 1,
+			"description": "Schema version. Bump when making breaking changes to the checkpoint format.",
+			"type": "integer"
+		}
+	},
+	"required": ["version", "startedAt", "phase", "scope", "pilot"],
+	"title": "DanceCheckpoint",
+	"type": "object"
+}

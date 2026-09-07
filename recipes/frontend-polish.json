@@ -1,0 +1,128 @@
+{
+	"description": "Observe every frontend surface at desktop and mobile and exercise the running application against one build, file every finding through a single writer, then remediate, validate, and consolidate it in one pass before re-sweeping to prove the fixes landed.",
+	"name": "frontend polish",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "id",
+			"description": "Feature field used to select this run's findings. Sweep findings and converted defects share the remediation-* process-record shape, so one filter selects both.",
+			"name": "filterBy"
+		},
+		{
+			"defaultValue": "remediation-*",
+			"description": "Feature value or glob used to select this run's findings",
+			"name": "filterValue"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application} --mode desktop",
+				"executionIntent": "apply-changes",
+				"skillId": "frontend-design-sweep"
+			},
+			"name": "Sweep desktop surfaces",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application} --mode mobile",
+				"executionIntent": "apply-changes",
+				"skillId": "frontend-design-sweep"
+			},
+			"name": "Sweep mobile surfaces",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "tester"
+			},
+			"name": "Test application",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application} --source design-sweep:desktop,design-sweep:mobile",
+				"executionIntent": "apply-changes",
+				"skillId": "ui-redesign-planner"
+			},
+			"name": "File sweep findings",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "bug2feature"
+			},
+			"name": "Convert defects to features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-review"
+			},
+			"name": "Review filed features",
+			"retryCount": 1,
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"filterBy": "{filterBy}",
+				"filterValue": "{filterValue}"
+			},
+			"name": "Remediate findings",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"name": "Validate remediations",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"name": "Consolidate features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application} --mode desktop",
+				"executionIntent": "apply-changes",
+				"skillId": "frontend-design-sweep"
+			},
+			"name": "Verify desktop remediations",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application} --mode mobile",
+				"executionIntent": "apply-changes",
+				"skillId": "frontend-design-sweep"
+			},
+			"name": "Verify mobile remediations",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document changes",
+			"stepType": "skill"
+		}
+	]
+}

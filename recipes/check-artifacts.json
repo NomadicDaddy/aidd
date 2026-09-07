@@ -1,0 +1,15 @@
+{
+	"description": "Recalculate .aidd/.artifacts-check.json by running `aidd --check-artifacts` against the target project. This validates artifact status; it does not edit project artifacts.",
+	"name": "check-artifacts",
+	"parameters": [],
+	"steps": [
+		{
+			"configJson": {
+				"checkArtifacts": true,
+				"validate": true
+			},
+			"name": "Run aidd --check-artifacts",
+			"stepType": "aidd-cli"
+		}
+	]
+}

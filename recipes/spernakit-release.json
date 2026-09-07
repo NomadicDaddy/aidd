@@ -1,0 +1,58 @@
+{
+	"description": "Full spernakit release: bump the template version, propagate it to an application, write the changelog. Steps are independent runs with no data passing between them, so the bump cannot hand its new version to the propagate step — you supply both the bump hint and the version it will produce, and they must agree.",
+	"name": "spernakit release",
+	"parameters": [
+		{
+			"description": "Bump size for the template release: +0.0.1 or +0.1.0. Required here, unlike the standalone spernakit-bump recipe: the propagate step needs a version it can be told up front, and only an explicit hint makes the bump's output predictable.",
+			"name": "bumpHint"
+		},
+		{
+			"description": "The version step 2 will produce: spernakit's current package.json version plus bumpHint, unprefixed (e.g. 3.1.16). Get it wrong and step 3 fails resolving a template tag that does not exist, rather than shipping the wrong version.",
+			"name": "version"
+		},
+		{
+			"description": "Target application to propagate to",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"command": "if [ \"$(basename \"$PWD\")\" = \"spernakit\" ] && [ -f scripts/init.ts ]; then echo \"refusing to run: this project directory is the spernakit template itself, not a derived application. Propagation would upgrade the template to its own version and run 'git add -A' over the release commit. Launch this recipe against the derived app.\" >&2; exit 1; fi; echo \"confirmed derived application: $(basename \"$PWD\")\""
+			},
+			"name": "Refuse to release into the template",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"params": {
+					"bumpHint": "{bumpHint}"
+				},
+				"recipeName": "spernakit bump"
+			},
+			"name": "Bump spernakit",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}",
+					"version": "{version}"
+				},
+				"recipeName": "spernakit propagate"
+			},
+			"name": "Propagate to application",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "changelog-rewrite"
+			},
+			"name": "Write changelog",
+			"onFailure": "continue",
+			"stepType": "skill"
+		}
+	]
+}

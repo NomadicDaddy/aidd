@@ -1,0 +1,27 @@
+{
+	"routes": [
+		"/",
+		"/about",
+		"/audits",
+		"/diary",
+		"/director",
+		"/docs",
+		"/docs/getting-started",
+		"/pipeline-sessions",
+		"/pipeline-sessions/[^/]+",
+		"/projects",
+		"/projects/(?!profile-matrix$)[^/]+",
+		"/projects/profile-matrix",
+		"/recipes",
+		"/recipes/new",
+		"/recipes/(?!new$)[^/]+",
+		"/runs",
+		"/scheduled",
+		"/settings",
+		"/settings/execution-identity-badges",
+		"/skills",
+		"/telemetry"
+	],
+	"schema": 1,
+	"viewport": { "height": 1309, "width": 2250 }
+}

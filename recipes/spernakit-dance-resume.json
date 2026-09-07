@@ -1,0 +1,22 @@
+{
+	"description": "Resume an interrupted dance from the .dance-state.json checkpoint in the applications root. Single step: it drops the template-docs alignment that the full spernakit-dance recipe runs first and calls the dance skill directly, leaving the checkpoint to decide what still needs doing. Always set the resume args from the checkpoint before launching: the default is a placeholder, and Part A begins with A1, which ships a new template release.",
+	"name": "spernakit dance (resume)",
+	"parameters": [
+		{
+			"defaultValue": "--resume-from A",
+			"description": "Resume arguments for the dance skill. Read <applications-root>/.dance-state.json and pass --resume-from matching its phase, plus --scope/--pilot agreeing with its scope when narrowing. --resume-from A re-runs A1 and re-ships the template; only use it when the template ship really is unfinished. Do NOT pass a bump hint: a bump hint that disagrees with the checkpoint makes the skill archive the checkpoint and restart the whole dance from Phase 0.",
+			"name": "resumeArgs"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{resumeArgs}",
+				"executionIntent": "apply-changes",
+				"skillId": "spernakit-dance"
+			},
+			"name": "Resume The Dance",
+			"stepType": "skill"
+		}
+	]
+}

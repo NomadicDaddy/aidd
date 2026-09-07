@@ -1,0 +1,47 @@
+{
+	"description": "Review and update application documentation to match current implementation, humanize the prose, then document and commit the changes.",
+	"name": "update application documentation",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review {application}'s current codebase state and update all documentation in the docs/ directory to accurately reflect the current implementation. Update API references, architecture docs, and any feature documentation. Do not create new documentation files that don't already exist — only update existing ones."
+			},
+			"name": "Update docs",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application} docs/ — rewrite every Markdown file under docs/ in place, saving each humanized version back over its own file; do not return the rewrites as chat output",
+				"executionIntent": "apply-changes",
+				"skillId": "humanize-docs"
+			},
+			"name": "Humanize doc prose",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application} docs/ — correct every inaccuracy you confirm, saving each correction back over its own file",
+				"executionIntent": "apply-changes",
+				"skillId": "review-or-create-doc"
+			},
+			"name": "Review and correct docs",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document changes",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,211 @@
+import { QueryClientProvider } from '@tanstack/react-query';
+import {
+	DEFAULT_DOCS_ROUTE,
+	FRONTEND_ROUTE_IDS,
+	FRONTEND_ROUTE_PATHS,
+	type FrontendRouteId,
+} from 'aidd-shared/contracts/frontend-routes';
+import { lazy, type ReactNode, Suspense, useEffect, useRef } from 'react';
+import {
+	createBrowserRouter,
+	Navigate,
+	Outlet,
+	useLocation,
+	useNavigationType,
+} from 'react-router';
+import { RouterProvider } from 'react-router/dom';
+
+import { AppLayout } from './components/layout/AppLayout.tsx';
+import { shouldFocusMainOnNavigation } from './components/layout/route-focus.ts';
+import { ErrorBoundary } from './components/shared/ErrorBoundary.tsx';
+import { useLaunchedRunToasts } from './hooks/useLaunchedRunToasts.ts';
+import { useRealtimeInvalidation } from './hooks/useRealtimeInvalidation.ts';
+import { useTheme } from './hooks/useTheme.ts';
+import { createQueryClient } from './queryClient.ts';
+import { useThemeStore } from './stores/themeStore.ts';
+
+const AboutPage = lazy(() =>
+	import('./pages/about/AboutPage.tsx').then((m) => ({ default: m.AboutPage })),
+);
+const DirectorPage = lazy(() =>
+	import('./pages/director/DirectorPage.tsx').then((m) => ({ default: m.DirectorPage })),
+);
+const DashboardPage = lazy(() =>
+	import('./pages/dashboard/DashboardPage.tsx').then((m) => ({ default: m.DashboardPage })),
+);
+const DiaryPage = lazy(() =>
+	import('./pages/diary/DiaryPage.tsx').then((m) => ({ default: m.DiaryPage })),
+);
+const DocsPage = lazy(() =>
+	import('./pages/docs/DocsPage.tsx').then((m) => ({ default: m.DocsPage })),
+);
+const AuditsPage = lazy(() =>
+	import('./pages/audits/AuditsPage.tsx').then((m) => ({ default: m.AuditsPage })),
+);
+const SkillsPage = lazy(() =>
+	import('./pages/skills/SkillsPage.tsx').then((m) => ({
+		default: m.SkillsPage,
+	})),
+);
+// 404 is a route like any other: eagerly imported it dragged PageHeader, the help drawer, and
+// the card primitives into the entry chunk every visitor downloads, to render a page almost none
+// of them ever sees.
+const NotFoundPage = lazy(() =>
+	import('./pages/notFound/NotFoundPage.tsx').then((m) => ({ default: m.NotFoundPage })),
+);
+const PipelineSessionReportPage = lazy(() =>
+	import('./pages/pipelineSessions/PipelineSessionReportPage.tsx').then((m) => ({
+		default: m.PipelineSessionReportPage,
+	})),
+);
+const ProjectDetailPage = lazy(() =>
+	import('./pages/projects/ProjectDetailPage.tsx').then((m) => ({
+		default: m.ProjectDetailPage,
+	})),
+);
+const ProjectProfileMatrixPage = lazy(() =>
+	import('./pages/projects/profileMatrix/ProfileMatrixPage.tsx').then((m) => ({
+		default: m.ProfileMatrixPage,
+	})),
+);
+const ProjectsPage = lazy(() =>
+	import('./pages/projects/ProjectsPage.tsx').then((m) => ({ default: m.ProjectsPage })),
+);
+const RecipeCreatePage = lazy(() =>
+	import('./pages/recipes/RecipeCreatePage.tsx').then((m) => ({ default: m.RecipeCreatePage })),
+);
+const RecipeDetailPage = lazy(() =>
+	import('./pages/recipes/RecipeDetailPage.tsx').then((m) => ({ default: m.RecipeDetailPage })),
+);
+const RecipesPage = lazy(() =>
+	import('./pages/recipes/RecipesPage.tsx').then((m) => ({ default: m.RecipesPage })),
+);
+const RunsPage = lazy(() =>
+	import('./pages/runs/RunsPage.tsx').then((m) => ({ default: m.RunsPage })),
+);
+const ScheduledPage = lazy(() =>
+	import('./pages/scheduled/ScheduledPage.tsx').then((m) => ({ default: m.ScheduledPage })),
+);
+const SettingsPage = lazy(() =>
+	import('./pages/settings/SettingsPage.tsx').then((m) => ({ default: m.SettingsPage })),
+);
+const ExecutionIdentityBadgeLabPage = lazy(() =>
+	import('./pages/settings/ExecutionIdentityBadgeLabPage.tsx').then((m) => ({
+		default: m.ExecutionIdentityBadgeLabPage,
+	})),
+);
+const TelemetryPage = lazy(() =>
+	import('./pages/telemetry/TelemetryPage.tsx').then((m) => ({ default: m.TelemetryPage })),
+);
+
+const queryClient = createQueryClient();
+
+function ThemeApplicator({ children }: { children: ReactNode }) {
+	useTheme();
+	return <>{children}</>;
+}
+
+function RealtimeInvalidator() {
+	useRealtimeInvalidation();
+	useLaunchedRunToasts();
+	return null;
+}
+
+// sonner is the toaster and `toast()` in one module, so a static import of either would put all
+// of it in the entry chunk. Loaded here instead, alongside the first route: a toast raised before
+// it arrives is replayed to the toaster when it subscribes rather than dropped.
+const Toaster = lazy(() => import('sonner').then((m) => ({ default: m.Toaster })));
+
+function ThemedToaster() {
+	const mode = useThemeStore((state) => state.mode);
+	return (
+		<Suspense fallback={null}>
+			<Toaster position="bottom-right" richColors theme={mode} />
+		</Suspense>
+	);
+}
+
+function RootLayout() {
+	const location = useLocation();
+	const navigationType = useNavigationType();
+	// On SPA navigation, move focus to the <main id="main-content"> landmark so keyboard and
+	// screen-reader users land at the new page's content instead of retaining stale focus on a
+	// now-unmounted control (or the body). main persists across route changes (it lives in
+	// AppLayout, outside the lazy Suspense boundary), so this fires reliably even while the next
+	// page is still loading its chunk. Focusing the landmark also scrolls it into view, which is
+	// what puts the new page's own heading at the top of the viewport — and which is why
+	// `shouldFocusMainOnNavigation` owns the decision rather than a condition written out here.
+	const lastPathnameRef = useRef<null | string>(null);
+	useEffect(() => {
+		const previousPathname = lastPathnameRef.current;
+		lastPathnameRef.current = location.pathname;
+		if (
+			shouldFocusMainOnNavigation({
+				navigationType,
+				nextPathname: location.pathname,
+				previousPathname,
+			})
+		) {
+			document.getElementById('main-content')?.focus();
+		}
+	}, [location.pathname, navigationType]);
+	return (
+		<AppLayout>
+			<ErrorBoundary resetKey={location.pathname}>
+				<Suspense
+					fallback={<div className="p-6 text-sm text-muted-foreground">Loading…</div>}>
+					<Outlet />
+				</Suspense>
+			</ErrorBoundary>
+		</AppLayout>
+	);
+}
+
+const routeElements: Record<FrontendRouteId, ReactNode> = {
+	about: <AboutPage />,
+	audits: <AuditsPage />,
+	dashboard: <DashboardPage />,
+	diary: <DiaryPage />,
+	director: <DirectorPage />,
+	docs: <Navigate replace to={DEFAULT_DOCS_ROUTE} />,
+	docsDetail: <DocsPage />,
+	notFound: <NotFoundPage />,
+	pipelineSessionDetail: <PipelineSessionReportPage />,
+	// Executions are listed on the Runs page; the sessions list path is a redirect so
+	// bookmarks and external links to it resolve. The per-session report is its own page.
+	pipelineSessions: <Navigate replace to="/runs" />,
+	projectDetail: <ProjectDetailPage />,
+	projectProfileMatrix: <ProjectProfileMatrixPage />,
+	projects: <ProjectsPage />,
+	recipeCreate: <RecipeCreatePage />,
+	recipeDetail: <RecipeDetailPage />,
+	recipes: <RecipesPage />,
+	runs: <RunsPage />,
+	scheduled: <ScheduledPage />,
+	settings: <SettingsPage />,
+	settingsExecutionIdentityBadges: <ExecutionIdentityBadgeLabPage />,
+	skills: <SkillsPage />,
+	telemetry: <TelemetryPage />,
+};
+
+const router = createBrowserRouter([
+	{
+		children: FRONTEND_ROUTE_IDS.map((id) => ({
+			element: routeElements[id],
+			path: FRONTEND_ROUTE_PATHS[id],
+		})),
+		element: <RootLayout />,
+	},
+]);
+
+export function App() {
+	return (
+		<QueryClientProvider client={queryClient}>
+			<ThemeApplicator>
+				<RealtimeInvalidator />
+				<RouterProvider router={router} />
+				<ThemedToaster />
+			</ThemeApplicator>
+		</QueryClientProvider>
+	);
+}

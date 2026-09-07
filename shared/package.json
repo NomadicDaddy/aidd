@@ -1,0 +1,32 @@
+{
+	"name": "aidd-shared",
+	"private": true,
+	"engines": {
+		"bun": ">=1.4.2"
+	},
+	"dependencies": {
+		"zod": "4.5.4"
+	},
+	"exports": {
+		".": "./src/index.ts",
+		"./contracts": "./src/contracts/index.ts",
+		"./contracts/director": "./src/contracts/director.ts",
+		"./contracts/frontend-routes": "./src/contracts/frontend-routes.ts",
+		"./contracts/project-notes": "./src/contracts/project-notes.ts",
+		"./contracts/project-profile": "./src/contracts/project-profile.ts",
+		"./contracts/terminal": "./src/contracts/terminal.ts",
+		"./contracts/websocket": "./src/contracts/websocket.ts",
+		"./execution-mode": "./src/execution-mode.ts",
+		"./orchestrator/exit-codes": "./src/orchestrator/exit-codes.ts",
+		"./runtime": "./src/runtime/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"build": "bunx tsc -p tsconfig.json",
+		"lint": "bunx eslint src --report-unused-disable-directives --max-warnings 0",
+		"lint:fast": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-shared/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint src --report-unused-disable-directives --max-warnings 0 --fix",
+		"typecheck": "bunx tsc -p tsconfig.json --noEmit"
+	},
+	"type": "module"
+}

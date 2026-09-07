@@ -1,0 +1,22 @@
+version: 2
+
+# The `bun` ecosystem is deliberately absent. This repo's third-party licence inventory is
+# generated from bun.lock and gated by `check:licenses` in smoke:qc, and dependabot cannot
+# regenerate it — so every bun PR it opened was red by construction and needed a manual
+# `bun run licenses:generate` before it could merge. Dependency bumps are done as deliberate
+# passes instead: bump, regenerate the inventory, run the gate, commit them together.
+#
+# Do not re-add it without first giving dependabot branches a way to regenerate that
+# inventory; otherwise it only produces PRs nobody can merge.
+#
+# The `docker` ecosystem is absent because aidd ships as source and has no Dockerfile. This file
+# is otherwise kept in step with the other repo's copy; that entry is the one sanctioned
+# divergence, so `cmp` reports it and a diff is the drift check.
+#
+# `github-actions` is kept because it carries the security value and can actually go green: it
+# does not touch bun.lock, so it does not trip the licence gate.
+updates:
+    - package-ecosystem: 'github-actions'
+      directory: '/'
+      schedule:
+          interval: 'weekly'

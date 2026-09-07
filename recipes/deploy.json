@@ -1,0 +1,85 @@
+{
+	"description": "Deploy the application with its own deploy script, gated by build and test validation, verified by a health check, tagged, and audited. aidd orchestrates; the project owns the deploy command and credentials.",
+	"name": "deploy",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		},
+		{
+			"defaultValue": "bun run deploy",
+			"description": "Command that performs the deployment (runs in the project directory)",
+			"name": "deployCommand"
+		},
+		{
+			"defaultValue": "",
+			"description": "URL to poll after deploying (e.g. https://example.com/api/v1/health); empty skips the check",
+			"name": "healthUrl"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"refusing to deploy: working tree has uncommitted changes\" >&2; exit 1; fi; echo \"working tree clean\""
+			},
+			"name": "Require a clean working tree",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "validate-build"
+			},
+			"name": "Validate build",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "validate-tests"
+			},
+			"name": "Validate tests",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"auditNames": "DEPLOYMENT",
+				"maxIterations": 1
+			},
+			"name": "Deployment audit",
+			"onFailure": "continue",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"refusing to deploy: validation or the audit left uncommitted changes; commit them so the deployed tree matches a commit and can be tagged\" >&2; exit 1; fi; echo \"working tree still clean after validation\""
+			},
+			"name": "Re-check the working tree",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"command": "{deployCommand}"
+			},
+			"name": "Deploy",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"command": "if [ -n \"{healthUrl}\" ]; then curl --fail --silent --show-error --retry 5 --retry-delay 3 --retry-all-errors \"{healthUrl}\" > /dev/null && echo \"healthy: {healthUrl}\"; else echo \"No healthUrl provided; skipping health check\"; fi"
+			},
+			"name": "Post-deploy health check",
+			"stepType": "shell"
+		},
+		{
+			"configJson": {
+				"command": "if [ -n \"$(git status --porcelain)\" ]; then echo \"refusing to tag: the deploy left uncommitted changes, so the tag would not match what was deployed\" >&2; exit 1; fi; tag=\"deploy-$(date +%Y%m%d-%H%M%S)\"; git tag \"$tag\" && echo \"tagged $tag\""
+			},
+			"name": "Tag release",
+			"onFailure": "continue",
+			"stepType": "shell"
+		}
+	]
+}

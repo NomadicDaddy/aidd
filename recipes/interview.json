@@ -1,0 +1,86 @@
+{
+	"description": "Run an interview workflow, review the responses, convert them into remediation features, review and validate those features, and record the durable invariants the interview established.",
+	"name": "interview",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "onboarding-interview"
+			},
+			"name": "Generate interview questions",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"interview": true
+			},
+			"name": "Answer interview questions",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review and assess the interview responses for {application}. Read every response file under .aidd/responses/ and verify each claim against the live codebase. Create or update .aidd/response-review.md — the project-relative path skill:doc2feature reads back in the next step — covering: claims the codebase contradicts or that look fabricated; claims confirmed accurate, each with the file paths that prove it; a severity and priority judgment per claim; context corrections where a response mischaracterized by-design behavior or conflated two issues; and the remaining gaps, contradictions, and follow-up concerns. Write nothing outside .aidd/."
+			},
+			"name": "Review interview responses",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": ".aidd/responses {application}",
+				"executionIntent": "apply-changes",
+				"skillId": "doc2feature"
+			},
+			"name": "Convert responses to features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Review and assess the remediation features created from the interview responses for {application}. Create or update .aidd/remediation-review.md — the project-relative path skill:feature-review reads back in a later step — with a per-feature assessment giving its strengths and concerns, a shipping verdict, and any priority recalibration, followed by cross-cutting observations (duplicates, undeclared dependencies, features that should be split or consolidated, decisions that need a human) and a recommended execution order. Write nothing outside .aidd/."
+			},
+			"name": "Review remediation features",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-review"
+			},
+			"name": "Review features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Record the durable invariants the interview established for {application} in .aidd/assertions.md. That file is the project's catalog of behavioral, data, and UX rules that must not regress, and its stable IDs are cited by gates and audit reports — so merge new invariants into the file's existing structure and ID scheme, deduplicating against what is already recorded, and never renumber, reword, or remove an existing entry. Add only settled rules the interview and the review artifacts actually establish; leave anything still open as a question in .aidd/questions.md rather than asserting it. Write nothing outside .aidd/."
+			},
+			"name": "Generate assertions list",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"validate": true
+			},
+			"name": "Validate completions",
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "consolidate-features"
+			},
+			"name": "Consolidate features",
+			"stepType": "skill"
+		}
+	]
+}

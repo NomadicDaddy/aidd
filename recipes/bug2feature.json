@@ -1,0 +1,30 @@
+{
+	"description": "Convert bugs to feature remediations and review them.",
+	"name": "bug2feature",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "bug2feature"
+			},
+			"name": "Run bug2feature",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-review"
+			},
+			"name": "Review features",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,1 @@
+{"type":"run_result","finishReason":"error","iterations":1,"usage":{"inputTokens":10,"outputTokens":0,"cacheReadTokens":0,"cacheWriteTokens":0,"totalCost":0},"durationMs":100,"text":"429 rate limit exceeded","model":"test-model"}

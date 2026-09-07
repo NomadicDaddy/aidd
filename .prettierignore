@@ -1,0 +1,83 @@
+# tooling/caches
+.worktrees/
+bun.lock
+bun.lockb
+node_modules/
+package-lock.json
+ps_modules/
+
+# aidd / agent-generated artifacts
+/.aidd/
+.claude/
+.windsurf/
+AGENTS.md
+CLAUDE.md
+opencode.json
+
+# aidd-adjacent run/test outputs
+*.pre-crawl-bak
+*.tsbuildinfo
+artifacts/
+crawltest.json
+devdocs/
+dogfood-output/
+screenshots/
+scripts/*-error.png
+scripts/smoke-cache.json
+test-html-report/
+test-results/
+testResults.xml
+upgrade-review/
+
+# generated
+backend/drizzle/meta/
+backups/
+data/.seeded
+data/*.bak
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+data/*.db.lock
+data/director/
+data/exports/
+data/migration-history.json
+data/run-logs/
+data/scratch/
+data/uploads/
+dist/
+frontend/dist/
+
+# logs/temp
+*.bak
+*.log
+*.tmp
+.tmp*/
+/tmp/
+logs/
+nul/
+
+# local config
+/config/*.json
+/config/*.json.backup.*
+/config/testing.local.json
+!/config/config-schema.json
+!/config/example.json
+VERSION
+
+# mock/test data
+.lighthouseci/
+*.test.log
+benchmarks/manifest.*-20*.json
+benchmarks/results/
+benchmarks/workspaces/
+coverage/
+
+# os/ide
+.DS_Store
+.idea/
+.vscode/
+*.swo
+*.swp
+*~
+Thumbs.db

@@ -1,0 +1,4 @@
+{"type":"thought","data":"The user wants a short greeting."}
+{"type":"text","data":"Hello"}
+{"type":"text","data":", world."}
+{"type":"end","stopReason":"EndTurn","sessionId":"s1","requestId":"r1","usage":{"input_tokens":100,"cache_read_input_tokens":50,"output_tokens":10,"reasoning_tokens":4,"total_tokens":160},"num_turns":1,"modelUsage":{"grok-4.6":{"inputTokens":100,"outputTokens":10,"cacheReadInputTokens":50,"modelCalls":1}}}

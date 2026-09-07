@@ -1,0 +1,94 @@
+{
+	"description": "Metadata-only intake for an existing codebase: analyze, interview, infer profile, check artifacts, generate feature coverage and testing scenarios, audit, park open generated features for approval, and produce an intake report. Understands the project; never mutates app code outside .aidd/.",
+	"metadataOnly": true,
+	"name": "project-intake",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "codebase-analysis"
+			},
+			"name": "Analyze codebase",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "interview"
+			},
+			"name": "Onboarding interview",
+			"onFailure": "continue",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Read the codebase analysis output and source tree for this project. Infer and write .aidd/project-profile.json describing the project's assurance profile. The file contract is strict and a file that breaks it is rejected silently — aidd falls back to inference and the audits this step is meant to scope are chosen without you — so match it exactly. All ten facets are required, each is a closed enum: bucket (prototype_archive | single_user_local | multi_user_local | private_team | internet_single_org | public_multi_tenant | critical_regulated), dataSensitivity (none | low | personal | confidential | regulated), deployment (local | lan | private_server | public_server | cloud), authMode (none | local_owner | login | rbac | tenant_rbac), criticality (toy | utility | operational | business_critical), externalIntegrations (none | read_only | write_capable | financial_or_security), shipsContainerImage (none | local_only | published), hasCliBinary (none | script_entry | packaged_binary), publishesReleaseArchives (none | source_only | binary_archives), derivesFromTemplate (none | spernakit). Alongside them the file must carry \"source\": \"explicit\" and an ISO-8601 \"updatedAt\"; the only other permitted key is an optional \"notes\" string (4000 characters max). Any additional property invalidates the whole file. There is no field for the detected stack or for the project's own validation command (package.json scripts, Makefile, etc) — record both in \"notes\" rather than inventing keys for them. If .aidd/project-profile.json already exists, refresh only the facets that are clearly wrong and restamp \"updatedAt\". Do not modify any file outside .aidd/."
+			},
+			"name": "Infer project profile",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "check-artifacts"
+			},
+			"name": "Check artifacts",
+			"onFailure": "continue",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "generate application features"
+			},
+			"name": "Generate feature coverage",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "generate testing scenarios"
+			},
+			"name": "Generate testing scenarios",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "audit (all)"
+			},
+			"name": "Run audits",
+			"onFailure": "continue",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Park all open generated features for approval. Walk every .aidd/features/*/feature.json in this project: for each feature whose status is 'backlog' or 'in_progress', set status to 'waiting_approval' and leave every other field (including 'passes') untouched. Do not modify features whose status is already 'waiting_approval' or 'completed'. Intake must never leave actionable open work behind — generated features require explicit human approval before any agent may pick them up. After editing, re-normalize every touched feature.json with prettier: `bunx prettier --write --ignore-path /dev/null \".aidd/features/*/feature.json\"`. The --ignore-path override is required, not optional — .aidd/ is listed in .prettierignore in aidd and in every project scaffolded from its template, so the plain command matches zero files and reports success without formatting anything. Then run the aidd feature check from an aidd checkout, pointing it at this project rather than at the checkout: `bun run start -- --project-dir {projectDir} --check-features` (the `start` script exists only in the aidd repo, and a bare `--project-dir .` there would validate aidd's own features instead of these). Fix anything it reports; if no aidd checkout is reachable from here, say so in your summary instead of skipping the check silently. State the number of features parked in your final summary. Write nothing outside .aidd/."
+			},
+			"name": "Park features for approval",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Write an intake report to .aidd/reports/intake.md (overwrite if present, and record the current date inside it). Summarize: detected stack and inferred project profile; which .aidd artifacts were created or refreshed during intake; feature inventory counts split into implemented, waiting approval (open work parked for human sign-off), and remediation, including how many features were parked to waiting_approval during intake; audit findings summary; open questions from .aidd/questions.md if present; and recommended next actions for this project. Write nothing outside .aidd/."
+			},
+			"name": "Intake report",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		}
+	]
+}

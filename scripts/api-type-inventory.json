@@ -1,0 +1,231 @@
+{
+	"surfaces": [
+		{
+			"backendRoute": "backend/src/routes/director.ts",
+			"contracts": [
+				{
+					"endpoint": "DELETE /api/v1/director/chat/sessions/:param"
+				},
+				{
+					"endpoint": "GET /api/v1/director/chat/sessions",
+					"response": {
+						"backend": {
+							"exportName": "DirectorChatSessionRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorChatSessionRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/director/chat/sessions/:param/messages",
+					"response": {
+						"backend": {
+							"exportName": "DirectorChatMessageRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorChatMessageRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/director/cycles",
+					"response": {
+						"backend": {
+							"exportName": "DirectorCycleRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorCycleRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/director/fleet",
+					"response": {
+						"backend": {
+							"exportName": "FleetSummary",
+							"module": "backend/src/services/director/types.ts"
+						},
+						"frontend": {
+							"exportName": "FleetSummary",
+							"module": "frontend/src/api/types/fleet.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/director/profile",
+					"response": {
+						"backend": {
+							"exportName": "DirectorProfileRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorProfileRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/director/suggestions",
+					"response": {
+						"backend": {
+							"exportName": "DirectorSuggestionRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorSuggestionRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "POST /api/v1/director/chat/sessions",
+					"response": {
+						"backend": {
+							"exportName": "DirectorChatSessionRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorChatSessionRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "POST /api/v1/director/chat/sessions/:param/messages",
+					"request": {
+						"backend": {
+							"exportName": "DirectorChatMessageInput",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorChatMessageInput",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					},
+					"response": {
+						"backend": {
+							"exportName": "DirectorChatMessageRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorChatMessageRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "POST /api/v1/director/cycles",
+					"request": {
+						"backend": {
+							"exportName": "DirectorCycleInput",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorCycleInput",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "POST /api/v1/director/suggestions/:param/dismiss"
+				},
+				{
+					"endpoint": "POST /api/v1/director/suggestions/:param/launch",
+					"response": {
+						"backend": {
+							"exportName": "DirectorSuggestionLaunch",
+							"module": "backend/src/services/director/suggestionService.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorSuggestionLaunch",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "PUT /api/v1/director/profile",
+					"request": {
+						"backend": {
+							"exportName": "DirectorProfileUpdate",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorProfileUpdate",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					},
+					"response": {
+						"backend": {
+							"exportName": "DirectorProfileRecord",
+							"module": "shared/src/contracts/director.ts"
+						},
+						"frontend": {
+							"exportName": "DirectorProfileRecord",
+							"module": "frontend/src/api/types/director.ts"
+						}
+					}
+				}
+			],
+			"frontendModule": "frontend/src/api/director.ts",
+			"pathPrefix": "/api/v1/director"
+		},
+		{
+			"backendRoute": "backend/src/routes/telemetry.ts",
+			"contracts": [
+				{
+					"endpoint": "GET /api/v1/telemetry/backends"
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/invocations",
+					"response": {
+						"backend": {
+							"exportName": "InvocationRecord",
+							"module": "backend/src/services/telemetry/types.ts"
+						},
+						"frontend": {
+							"exportName": "InvocationRecord",
+							"module": "frontend/src/api/types/telemetry.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/output-timeseries"
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/projects",
+					"response": {
+						"backend": {
+							"exportName": "ProjectCostRow",
+							"module": "backend/src/services/telemetry/types.ts"
+						},
+						"frontend": {
+							"exportName": "TelemetryProjectCostRow",
+							"module": "frontend/src/api/types/telemetry.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/resource/:param/:param"
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/resources"
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/timeseries"
+				},
+				{
+					"endpoint": "GET /api/v1/telemetry/top"
+				}
+			],
+			"frontendModule": "frontend/src/api/telemetry.ts",
+			"pathPrefix": "/api/v1/telemetry"
+		}
+	]
+}

@@ -1,0 +1,4 @@
+interface:
+    display_name: 'Watermark Audit'
+    short_description: 'Scan a repo for AI watermarks and hidden channels'
+    default_prompt: 'Use $watermark-audit to scan this repository for AI-origin watermarks, steganography, hidden telemetry, and embedded provenance.'

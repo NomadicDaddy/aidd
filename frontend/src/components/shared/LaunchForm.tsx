@@ -1,0 +1,131 @@
+import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
+
+import { default as Play } from 'lucide-react/dist/esm/icons/play';
+
+import type { ProjectNameSummary } from '../../api/types.ts';
+import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
+
+import { cn } from '../../lib/cn.ts';
+import { selectClass } from '../../lib/formStyles.ts';
+import { toneText } from '../../lib/tones.ts';
+import { Button } from '../ui/button.tsx';
+import { Card } from '../ui/card.tsx';
+import { FieldRow } from '../ui/field.tsx';
+import { Input } from '../ui/input.tsx';
+import { LaunchTargetControl } from './LaunchTargetControl.tsx';
+
+interface LaunchFormProps {
+	args: string;
+	className?: string;
+	executionIntent: SkillExecutionIntent;
+	launchLabel: string;
+	launchPending: boolean;
+	launchTarget: LaunchTargetValue;
+	onExecutionIntentChange: (value: SkillExecutionIntent) => void;
+	onLaunch: () => void;
+	onLaunchTargetChange: (value: LaunchTargetValue) => void;
+	projectDir: string;
+	projects: ProjectNameSummary[];
+	setArgs: (value: string) => void;
+	setProjectDir: (value: string) => void;
+}
+
+export function LaunchForm({
+	args,
+	className,
+	executionIntent,
+	launchLabel,
+	launchPending,
+	launchTarget,
+	onExecutionIntentChange,
+	onLaunch,
+	onLaunchTargetChange,
+	projectDir,
+	projects,
+	setArgs,
+	setProjectDir,
+}: LaunchFormProps) {
+	const projectMissing = projectDir.length === 0;
+	const disabled = projectMissing || launchPending;
+	return (
+		<Card className={cn('@container', className)}>
+			<div className="space-y-3">
+				{/* This form renders both as a full-width page card and inside a project detail
+				    panel about 336px wide. `lg:` saw only the window, so at 1024 it split the
+				    336px panel into two 162px columns and put a project select and a mode select
+				    in them. 32rem is the interior at which two columns are each wide enough to
+				    hold their own control. */}
+				<div className="grid gap-3 @min-[32rem]:grid-cols-2">
+					{/* Required, not invalid. This select was painted `aria-invalid` on first
+					    paint of a form nobody had touched — the operator had done nothing wrong,
+					    and a screen reader was told the control held a bad value before it held
+					    any value at all. The state being described is "this one is needed",
+					    which is what `required` says. */}
+					<FieldRow
+						hint={
+							projectMissing ? (
+								<span className={toneText.amber}>
+									Choose a project to enable launch.
+								</span>
+							) : undefined
+						}
+						label="Project"
+						required>
+						<select
+							className={`${selectClass} w-full`}
+							onChange={(event) => setProjectDir(event.target.value)}
+							value={projectDir}>
+							<option value="">Select project</option>
+							{projects.map((project) => (
+								<option key={project.path} value={project.path}>
+									{project.name}
+								</option>
+							))}
+						</select>
+					</FieldRow>
+					<FieldRow label="Arguments">
+						<Input
+							onChange={(event) => setArgs(event.target.value)}
+							placeholder="Passed as $ARGUMENTS"
+							value={args}
+						/>
+					</FieldRow>
+				</div>
+				<div className="rounded-md border border-accent/30 bg-accent-muted/60 p-3 text-sm">
+					<p className="font-medium text-foreground">
+						Skills run as autonomous directives, not aidd audits.
+					</p>
+					<FieldRow
+						className="mt-3"
+						hint={
+							executionIntent === 'review-only'
+								? 'The directive forbids repository, metadata, changelog, and git mutations.'
+								: 'The directive may execute commands, edit project files and metadata, and create commits when needed.'
+						}
+						label="Execution intent">
+						<select
+							className={`${selectClass} w-full`}
+							onChange={(event) =>
+								onExecutionIntentChange(event.target.value as SkillExecutionIntent)
+							}
+							value={executionIntent}>
+							<option value="review-only">Review only</option>
+							<option value="apply-changes">Apply changes</option>
+						</select>
+					</FieldRow>
+				</div>
+				<LaunchTargetControl
+					mode="directive"
+					onChange={onLaunchTargetChange}
+					projectDir={projectDir}
+					size="default"
+					value={launchTarget}
+				/>
+				<Button disabled={disabled} onClick={onLaunch} variant="primary">
+					<Play className="h-4 w-4" />
+					{launchLabel}
+				</Button>
+			</div>
+		</Card>
+	);
+}

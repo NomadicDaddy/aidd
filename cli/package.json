@@ -1,0 +1,26 @@
+{
+	"name": "aidd-cli",
+	"private": true,
+	"packageManager": "bun@1.4.2",
+	"engines": {
+		"bun": ">=1.4.2"
+	},
+	"dependencies": {
+		"aidd-backend": "workspace:*",
+		"aidd-shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.1",
+		"@types/node": "26.4.1",
+		"typescript": "6.0.3"
+	},
+	"scripts": {
+		"build": "bunx tsc -p tsconfig.json",
+		"prompt:snapshot": "bun --cwd .. cli/src/prompts/compile.ts --snapshot-test",
+		"prompt:snapshot:check": "bun --cwd .. cli/src/prompts/compile.ts --snapshot-test --check",
+		"start": "bun --cwd .. cli/src/index.ts",
+		"typecheck": "bunx tsc -p tsconfig.json --noEmit",
+		"preinstall": "bun ../scripts/require-bun.ts"
+	},
+	"type": "module"
+}

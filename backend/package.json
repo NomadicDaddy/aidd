@@ -1,0 +1,39 @@
+{
+	"name": "aidd-backend",
+	"private": true,
+	"packageManager": "bun@1.4.2",
+	"engines": {
+		"bun": ">=1.4.2"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.30.0",
+		"@xterm/addon-serialize": "0.14.0",
+		"@xterm/headless": "6.0.0",
+		"aidd-shared": "workspace:*",
+		"bun-pty": "0.4.10",
+		"croner": "10.0.1",
+		"drizzle-orm": "0.45.2",
+		"elysia": "1.4.30",
+		"pino": "10.3.1",
+		"zod": "4.5.4"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.1",
+		"@types/node": "26.4.1",
+		"typescript": "6.0.3"
+	},
+	"exports": {
+		".": "./src/start.ts"
+	},
+	"scripts": {
+		"build": "bunx tsc -p tsconfig.json",
+		"dev": "bun --watch src/app.ts",
+		"lint": "bunx eslint src --report-unused-disable-directives --max-warnings 0",
+		"lint:fast": "bunx eslint src --cache --cache-location ../node_modules/.cache/eslint-backend/ --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "bunx eslint src --report-unused-disable-directives --max-warnings 0 --fix",
+		"start": "bun src/app.ts",
+		"typecheck": "bunx tsc -p tsconfig.json --noEmit",
+		"preinstall": "bun ../scripts/require-bun.ts"
+	},
+	"type": "module"
+}

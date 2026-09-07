@@ -1,0 +1,24 @@
+{
+	"description": "Resync aidd's derived audit definitions with their source skills, then review every audit against current practice.",
+	"name": "audit maintenance",
+	"parameters": [],
+	"steps": [
+		{
+			"configJson": {
+				"executionIntent": "apply-changes",
+				"skillId": "update-audits"
+			},
+			"name": "Resync derived audits",
+			"onFailure": "continue",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"executionIntent": "apply-changes",
+				"skillId": "audit-review"
+			},
+			"name": "Review audit definitions",
+			"stepType": "skill"
+		}
+	]
+}

@@ -1,0 +1,111 @@
+.env
+
+# tooling/caches
+.worktrees/
+node_modules/
+ps_modules/
+
+# aidd / agent-generated artifacts
+#
+# Derived from the artifact catalog in docs/reference/artifacts.md: this block lists exactly the
+# rows classed runtime/generated/secret, and nothing else. Everything else under .aidd/ is
+# a durable blueprint and is committed on purpose. Add a row there before adding a rule here.
+.agents/
+
+# generated — reproducible by re-running the producer
+.aidd/_common/
+.aidd/.artifacts-check.json
+.aidd/audit-reports/
+.aidd/audits/
+.aidd/docs/
+.aidd/feature-review-report.md
+.aidd/remediation-review.md
+.aidd/reports/
+.aidd/response-review.md
+.aidd/screenshots/
+.aidd/skills/
+
+# runtime — meaningful only for the run that wrote it
+.aidd/active-runs/
+.aidd/findings-ledger.jsonl
+.aidd/iterations/
+.aidd/runs.jsonl
+.aidd/.stop
+
+# secret — holds provider API keys, web.authToken, botToken; never commit
+.aidd/aidd.config.json
+
+.claude/
+.codex/
+.windsurf/
+AGENTS.md
+CLAUDE.md
+opencode.json
+
+# aidd-adjacent run/test outputs
+*.pre-crawl-bak
+*.tsbuildinfo
+artifacts/
+crawltest.json
+devdocs/
+dogfood-output/
+screenshots/
+scripts/*-error.png
+scripts/smoke-cache.json
+test-html-report/
+test-results/
+testResults.xml
+upgrade-review/
+
+# generated
+backend/drizzle/meta/
+backups/
+data/.seeded
+data/*.bak
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+data/*.db.lock
+data/director/
+data/exports/
+data/migration-history.json
+data/run-logs/
+data/Trace-*.json.gz
+data/uploads/
+data/worktrees/
+dist/
+frontend/dist/
+
+# logs/temp
+*.bak
+*.log
+*.tmp
+.tmp*/
+/tmp/
+logs/
+nul/
+
+# local config
+/config/*.json
+/config/*.json.backup.*
+/config/testing.local.json
+!/config/config-schema.json
+!/config/example.json
+
+# mock/test data
+.lighthouseci/
+*.test.log
+benchmarks/manifest.*-20*.json
+benchmarks/results/
+benchmarks/workspaces/
+coverage/
+
+# os/ide
+.DS_Store
+.idea/
+.vscode/
+*.swo
+*.swp
+*~
+Thumbs.db

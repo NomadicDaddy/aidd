@@ -1,0 +1,13 @@
+{
+	"category": "Benchmark",
+	"createdAt": "2026-04-09T00:00:00.000Z",
+	"dependencies": [],
+	"description": "Future benchmark helper that does not exist yet.",
+	"id": "feature-202604090002-future-helper",
+	"passes": false,
+	"priority": 2,
+	"spec": "1. Create src/future.js\n2. Export futureFeature()\n3. Make futureFeature() return 'future'",
+	"status": "backlog",
+	"title": "Future benchmark helper",
+	"updatedAt": "2026-04-09T00:00:00.000Z"
+}

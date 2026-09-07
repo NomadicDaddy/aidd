@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<title>aidd: local control panel for AI coding work</title>
+		<meta
+			content="aidd plans work from specs, launches bounded runs with the agent you already use, and keeps features open until tests, lint, and browser gates pass. Local, agent-agnostic, every capability included, no account, no telemetry."
+			name="description" />
+		<meta content="aidd: local control panel for AI coding work" property="og:title" />
+		<meta
+			content="Turn a spec into a backlog, run the agent locally, verify the result, and keep the receipts. Your agent, your keys, your machine. Free, with every capability included."
+			property="og:description" />
+		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="website" property="og:type" />
+		<meta content="https://nomadicdaddy.github.io/aidd/" property="og:url" />
+		<meta content="summary_large_image" name="twitter:card" />
+		<link href="favicon.svg" rel="icon" type="image/svg+xml" />
+		<link href="favicon.ico" rel="shortcut icon" />
+		<link as="image" href="og-image.jpg" rel="preload" />
+		<style>
+			:root {
+				--ink: #08111f;
+				--muted: #536070;
+				--panel: #ffffff;
+				--wash: #f6f8fb;
+				--line: #d7dee8;
+				--cyan: #0891b2;
+				--cyan-soft: #d9f7fb;
+				--green: #10b981;
+				--amber: #f59e0b;
+				--coral: #f9735b;
+				--night: #07111f;
+				--night-2: #0d1b2f;
+				--night-line: rgba(168, 209, 229, 0.24);
+				--night-text: #e9f6ff;
+				--night-muted: #9cb5c8;
+				--radius: 8px;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html {
+				scroll-behavior: smooth;
+			}
+			body {
+				margin: 0;
+				background: var(--wash);
+				color: var(--ink);
+				font:
+					16px/1.55 Inter,
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					'Segoe UI',
+					sans-serif;
+			}
+			a {
+				color: inherit;
+			}
+			a:focus-visible,
+			button:focus-visible {
+				outline: 3px solid var(--amber);
+				outline-offset: 4px;
+			}
+			.site-header {
+				position: absolute;
+				z-index: 5;
+				left: 0;
+				right: 0;
+				top: 0;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+				color: var(--night-text);
+			}
+			.site-header-inner,
+			.section-inner,
+			.hero-inner {
+				width: min(1120px, calc(100% - 40px));
+				margin: 0 auto;
+			}
+			.site-header-inner {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 20px;
+				min-height: 72px;
+			}
+			.brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 12px;
+				color: var(--night-text);
+				text-decoration: none;
+			}
+			.brand-mark {
+				display: block;
+				width: 36px;
+				height: 36px;
+				border-radius: 8px;
+				box-shadow: 0 0 28px rgba(34, 211, 238, 0.26);
+			}
+			.brand-name {
+				font-size: 18px;
+				font-weight: 800;
+				letter-spacing: 0.18em;
+				text-transform: lowercase;
+			}
+			nav {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex-wrap: wrap;
+				justify-content: flex-end;
+			}
+			nav a {
+				border: 1px solid transparent;
+				border-radius: 999px;
+				color: rgba(233, 246, 255, 0.78);
+				font-size: 14px;
+				font-weight: 700;
+				padding: 8px 12px;
+				text-decoration: none;
+			}
+			nav a:hover {
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.08);
+				color: #ffffff;
+			}
+			.hero {
+				position: relative;
+				overflow: hidden;
+				min-height: min(720px, 82svh);
+				padding: 142px 0 70px;
+				background:
+					linear-gradient(
+						90deg,
+						rgba(7, 17, 31, 0.96) 0%,
+						rgba(7, 17, 31, 0.82) 42%,
+						rgba(7, 17, 31, 0.24) 100%
+					),
+					linear-gradient(
+						0deg,
+						rgba(7, 17, 31, 0.86) 0%,
+						rgba(7, 17, 31, 0.18) 48%,
+						rgba(7, 17, 31, 0.76) 100%
+					),
+					url('og-image.jpg') center / cover;
+				color: var(--night-text);
+			}
+			.hero::after {
+				position: absolute;
+				inset: auto 0 0;
+				height: 180px;
+				background: linear-gradient(0deg, var(--night) 0%, rgba(7, 17, 31, 0) 100%);
+				content: '';
+				pointer-events: none;
+			}
+			.hero-inner {
+				position: relative;
+				z-index: 1;
+				display: grid;
+				gap: 28px;
+			}
+			.eyebrow {
+				display: inline-flex;
+				width: fit-content;
+				align-items: center;
+				gap: 10px;
+				margin: 0;
+				border: 1px solid rgba(125, 211, 252, 0.34);
+				border-radius: 999px;
+				background: rgba(7, 17, 31, 0.46);
+				color: #acecff;
+				font-size: 13px;
+				font-weight: 800;
+				letter-spacing: 0.11em;
+				padding: 7px 12px;
+				text-transform: uppercase;
+			}
+			.eyebrow::before {
+				width: 8px;
+				height: 8px;
+				border-radius: 999px;
+				background: var(--green);
+				box-shadow: 0 0 18px var(--green);
+				content: '';
+			}
+			h1 {
+				margin: 0;
+				max-width: 11ch;
+				font-size: clamp(74px, 17vw, 186px);
+				font-weight: 900;
+				letter-spacing: 0;
+				line-height: 0.82;
+				text-transform: lowercase;
+			}
+			.lede {
+				max-width: 720px;
+				margin: 0;
+				color: rgba(233, 246, 255, 0.86);
+				font-size: clamp(20px, 2.4vw, 30px);
+				font-weight: 700;
+				line-height: 1.18;
+			}
+			.hero-copy {
+				max-width: 660px;
+				margin: 0;
+				color: var(--night-muted);
+				font-size: 17px;
+			}
+			.actions {
+				display: flex;
+				gap: 12px;
+				flex-wrap: wrap;
+			}
+			.hero-facts {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px 20px;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+				color: var(--night-muted);
+				font-size: 14px;
+				font-weight: 700;
+			}
+			.hero-facts li {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.hero-facts li::before {
+				content: '';
+				width: 7px;
+				height: 7px;
+				border-radius: 999px;
+				background: var(--green);
+			}
+			.button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 46px;
+				border-radius: 8px;
+				font-weight: 850;
+				padding: 11px 18px;
+				text-decoration: none;
+				transition:
+					transform 150ms ease,
+					border-color 150ms ease,
+					background 150ms ease;
+			}
+			.button:hover {
+				transform: translateY(-1px);
+			}
+			.button-primary {
+				background: #ecfeff;
+				color: #06202a;
+				box-shadow: 0 18px 40px rgba(34, 211, 238, 0.2);
+			}
+			.button-secondary {
+				border: 1px solid rgba(255, 255, 255, 0.28);
+				background: rgba(255, 255, 255, 0.08);
+				color: #ffffff;
+			}
+			.signal-grid {
+				display: grid;
+				width: min(820px, 100%);
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				margin: 8px 0 0;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(7, 17, 31, 0.52);
+				backdrop-filter: blur(10px);
+			}
+			.signal-grid div {
+				min-width: 0;
+				padding: 15px 16px;
+			}
+			.signal-grid div + div {
+				border-left: 1px solid rgba(255, 255, 255, 0.13);
+			}
+			.signal-grid dt {
+				color: var(--night-muted);
+				font-size: 12px;
+				font-weight: 800;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.signal-grid dd {
+				margin: 5px 0 0;
+				color: #ffffff;
+				font-size: 18px;
+				font-weight: 850;
+			}
+			.proofbar {
+				background: var(--night);
+				color: var(--night-text);
+				border-top: 1px solid var(--night-line);
+				border-bottom: 1px solid var(--night-line);
+			}
+			.proofbar .section-inner {
+				display: grid;
+				grid-template-columns: 1fr auto;
+				gap: 22px;
+				align-items: center;
+				padding: 22px 0;
+			}
+			.proofbar p {
+				margin: 0;
+				color: var(--night-muted);
+				font-weight: 650;
+			}
+			.proofbar strong {
+				color: #ffffff;
+			}
+			.proof-links {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+				justify-content: flex-end;
+			}
+			.proof-links a {
+				border: 1px solid var(--night-line);
+				border-radius: 999px;
+				color: #b8edff;
+				font-size: 13px;
+				font-weight: 800;
+				padding: 8px 12px;
+				text-decoration: none;
+			}
+			section {
+				position: relative;
+			}
+			.section-block {
+				padding: 76px 0;
+			}
+			.section-alt {
+				background: #ffffff;
+			}
+			.section-kicker {
+				margin: 0 0 10px;
+				color: var(--cyan);
+				font-size: 13px;
+				font-weight: 900;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+			}
+			h2 {
+				margin: 0;
+				max-width: 760px;
+				color: var(--ink);
+				font-size: clamp(34px, 5vw, 58px);
+				font-weight: 900;
+				letter-spacing: 0;
+				line-height: 1;
+			}
+			.section-lede {
+				max-width: 720px;
+				margin: 16px 0 0;
+				color: var(--muted);
+				font-size: 18px;
+			}
+			.loop-grid {
+				display: grid;
+				grid-template-columns: repeat(5, minmax(0, 1fr));
+				gap: 10px;
+				margin-top: 34px;
+			}
+			.loop-card,
+			.trust-card,
+			.release-panel,
+			.link-panel {
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+			}
+			.loop-card {
+				position: relative;
+				min-height: 242px;
+				overflow: hidden;
+				padding: 18px;
+			}
+			.loop-card::before {
+				position: absolute;
+				inset: 0 0 auto;
+				height: 4px;
+				background: var(--accent, var(--cyan));
+				content: '';
+			}
+			.loop-card:nth-child(1) {
+				--accent: var(--cyan);
+			}
+			.loop-card:nth-child(2) {
+				--accent: var(--amber);
+			}
+			.loop-card:nth-child(3) {
+				--accent: var(--green);
+			}
+			.loop-card:nth-child(4) {
+				--accent: #7c3aed;
+			}
+			.loop-card:nth-child(5) {
+				--accent: var(--coral);
+			}
+			.step-index {
+				display: inline-grid;
+				width: 34px;
+				height: 34px;
+				margin-bottom: 18px;
+				border-radius: 8px;
+				background: color-mix(in srgb, var(--accent) 16%, #ffffff);
+				color: color-mix(in srgb, var(--accent) 80%, #08111f);
+				font-size: 13px;
+				font-weight: 900;
+				place-items: center;
+			}
+			.loop-card h3,
+			.trust-card h3,
+			.release-panel h3,
+			.link-panel h3 {
+				margin: 0 0 10px;
+				font-size: 19px;
+				line-height: 1.14;
+			}
+			.loop-card p,
+			.trust-card p,
+			.link-panel p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			code.inline {
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				background: #eef4f7;
+				color: #092033;
+				font:
+					0.92em/1.2 ui-monospace,
+					Consolas,
+					monospace;
+				padding: 2px 5px;
+			}
+			.receipts-layout {
+				display: grid;
+				grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+				gap: 26px;
+				align-items: start;
+				margin-top: 34px;
+			}
+			.receipt-copy {
+				border-left: 4px solid var(--cyan);
+				padding-left: 18px;
+			}
+			.receipt-copy p {
+				margin: 0 0 16px;
+				color: var(--muted);
+				font-size: 17px;
+			}
+			.receipt-copy a,
+			.link-panel a,
+			.release-panel a {
+				color: #0369a1;
+				font-weight: 850;
+				text-decoration-thickness: 2px;
+				text-underline-offset: 3px;
+			}
+			.tablewrap {
+				overflow-x: auto;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: #ffffff;
+				box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+				min-width: 0;
+			}
+			table {
+				width: 100%;
+				min-width: 620px;
+				border-collapse: collapse;
+				font-size: 14px;
+			}
+			th,
+			td {
+				padding: 15px 16px;
+				border-bottom: 1px solid var(--line);
+				text-align: left;
+				vertical-align: top;
+			}
+			tr:last-child td {
+				border-bottom: 0;
+			}
+			th {
+				background: #f7fafc;
+				color: #526071;
+				font-size: 12px;
+				font-weight: 900;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			td:first-child {
+				color: #0f766e;
+				font-weight: 850;
+			}
+			.trust-grid {
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 14px;
+				margin-top: 34px;
+			}
+			.trust-card {
+				min-height: 220px;
+				padding: 20px;
+			}
+			.field-grid {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: 14px;
+				margin-top: 34px;
+			}
+			.field-card {
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+				padding: 20px;
+			}
+			.field-card h3 {
+				margin: 0 0 10px;
+				font-size: 19px;
+				line-height: 1.14;
+			}
+			.field-card p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			.field-card .counter {
+				margin-top: 14px;
+				border-top: 1px dashed var(--line);
+				padding-top: 12px;
+				color: var(--ink);
+				font-weight: 650;
+			}
+			.field-card .counter strong {
+				color: #0e7490;
+			}
+			.field-table {
+				margin-top: 26px;
+			}
+			.fit-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				margin-top: 26px;
+			}
+			.free-layout {
+				display: grid;
+				grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+				gap: 14px;
+				margin-top: 34px;
+			}
+			.free-panel {
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+				padding: 22px;
+			}
+			.free-panel h3 {
+				margin: 0 0 4px;
+				color: var(--muted);
+				font-size: 13px;
+				font-weight: 800;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.free-price {
+				margin: 0 0 12px;
+				font-size: 44px;
+				font-weight: 900;
+				line-height: 1;
+			}
+			.free-panel p {
+				margin: 0 0 12px;
+				color: var(--muted);
+			}
+			.included-list {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin: 0 0 16px;
+				padding: 0;
+				list-style: none;
+			}
+			.included-list li {
+				border: 1px solid var(--line);
+				border-radius: 999px;
+				background: var(--wash);
+				padding: 5px 11px;
+				font-size: 13px;
+				font-weight: 700;
+			}
+			.free-ledger {
+				display: grid;
+				grid-template-columns: 1fr;
+				margin: 0;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				overflow: hidden;
+			}
+			.free-ledger div {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+				gap: 12px;
+				padding: 13px 18px;
+			}
+			.free-ledger div + div {
+				border-top: 1px solid var(--line);
+			}
+			.free-ledger dt {
+				color: var(--muted);
+				font-size: 13px;
+				font-weight: 800;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+			.free-ledger dd {
+				margin: 0;
+				font-weight: 700;
+			}
+			.fine-print {
+				margin: 14px 0 0;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.trust-label {
+				display: inline-flex;
+				margin-bottom: 22px;
+				border-radius: 999px;
+				background: var(--cyan-soft);
+				color: #0e7490;
+				font-size: 12px;
+				font-weight: 900;
+				letter-spacing: 0.08em;
+				padding: 6px 9px;
+				text-transform: uppercase;
+			}
+			.download-layout {
+				display: grid;
+				grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+				gap: 18px;
+				margin-top: 34px;
+			}
+			.release-panel,
+			.link-panel {
+				padding: 22px;
+				min-width: 0;
+			}
+			pre {
+				overflow-x: auto;
+				margin: 18px 0 0;
+				border-radius: var(--radius);
+				background:
+					linear-gradient(90deg, rgba(34, 211, 238, 0.1), transparent 36%), var(--night-2);
+				color: #dbf5ff;
+				font:
+					13px/1.65 ui-monospace,
+					Consolas,
+					monospace;
+				padding: 18px;
+			}
+			.link-panel {
+				display: grid;
+				gap: 12px;
+			}
+			.resource-link {
+				display: block;
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				background: #f8fbfd;
+				padding: 14px;
+				text-decoration: none;
+			}
+			.resource-link strong {
+				display: block;
+				color: var(--ink);
+				font-size: 15px;
+			}
+			.resource-link span {
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.license-note {
+				border-top: 1px solid var(--line);
+				margin-top: 28px;
+				padding-top: 24px;
+				color: var(--muted);
+			}
+			.license-note p {
+				max-width: 860px;
+				margin: 0 0 12px;
+			}
+			.site-footer {
+				background: var(--night);
+				color: var(--night-muted);
+			}
+			.footer-inner {
+				display: flex;
+				width: min(1120px, calc(100% - 40px));
+				margin: 0 auto;
+				align-items: center;
+				justify-content: space-between;
+				gap: 20px;
+				padding: 28px 0;
+				flex-wrap: wrap;
+				font-size: 14px;
+			}
+			.footer-links {
+				display: flex;
+				gap: 14px;
+				flex-wrap: wrap;
+			}
+			.footer-links a {
+				color: var(--night-muted);
+				text-decoration: none;
+			}
+			.footer-links a:hover {
+				color: #ffffff;
+			}
+			@media (prefers-reduced-motion: no-preference) {
+				.brand-mark,
+				.eyebrow::before {
+					animation: pulse 3.2s ease-in-out infinite;
+				}
+				@keyframes pulse {
+					0%,
+					100% {
+						filter: brightness(1);
+					}
+					50% {
+						filter: brightness(1.24);
+					}
+				}
+			}
+			@media (max-width: 960px) {
+				.hero {
+					background-position: center top;
+				}
+				.signal-grid,
+				.loop-grid,
+				.receipts-layout,
+				.trust-grid,
+				.download-layout {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
+				.field-grid,
+				.fit-grid {
+					grid-template-columns: 1fr;
+				}
+				.receipts-layout,
+				.download-layout,
+				.free-layout {
+					grid-template-columns: 1fr;
+				}
+			}
+			@media (max-width: 680px) {
+				.site-header {
+					position: relative;
+					background: var(--night);
+				}
+				.site-header-inner,
+				.section-inner,
+				.hero-inner,
+				.footer-inner {
+					width: min(100% - 28px, 1120px);
+				}
+				.site-header-inner {
+					align-items: flex-start;
+					flex-direction: column;
+					justify-content: center;
+					padding: 14px 0;
+				}
+				nav {
+					justify-content: flex-start;
+				}
+				nav a {
+					padding: 7px 9px;
+				}
+				.hero {
+					min-height: auto;
+					padding: 38px 0 34px;
+				}
+				.hero-inner {
+					gap: 18px;
+				}
+				h1 {
+					font-size: clamp(58px, 25vw, 94px);
+				}
+				.lede {
+					font-size: 20px;
+				}
+				.hero-copy {
+					font-size: 15px;
+				}
+				.button {
+					min-height: 42px;
+					padding: 9px 13px;
+				}
+				.loop-grid,
+				.trust-grid {
+					grid-template-columns: 1fr;
+				}
+				.signal-grid {
+					display: none;
+				}
+				.signal-grid div + div {
+					border-top: 1px solid rgba(255, 255, 255, 0.13);
+					border-left: 0;
+				}
+				.proofbar .section-inner {
+					grid-template-columns: 1fr;
+				}
+				.proof-links {
+					justify-content: flex-start;
+				}
+				.section-block {
+					padding: 54px 0;
+				}
+				.loop-card,
+				.trust-card {
+					min-height: auto;
+				}
+				.field-card {
+					padding: 16px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="site-header-inner">
+				<a class="brand" aria-label="aidd home" href="#top">
+					<img class="brand-mark" alt="" src="favicon.svg" />
+					<span class="brand-name">aidd</span>
+				</a>
+				<nav aria-label="Primary navigation">
+					<a href="#field">Why aidd</a>
+					<a href="explainer.html">What is aidd?</a>
+					<a href="#free">Free</a>
+					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
+					<a href="https://github.com/NomadicDaddy/aidd/tree/main/docs">Docs</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/docs/CHANGELOG.md"
+						>Changelog</a
+					>
+					<a href="https://github.com/NomadicDaddy/aidd/releases/latest">Get source</a>
+				</nav>
+			</div>
+		</header>
+
+		<main id="top">
+			<section class="hero" aria-labelledby="hero-title">
+				<div class="hero-inner">
+					<p class="eyebrow">Plan → run → audit → review</p>
+					<h1 id="hero-title">aidd</h1>
+					<p class="lede">
+						A local control panel for planning AI coding work and checking whether it
+						really passed.
+					</p>
+					<p class="hero-copy">
+						Point it at a codebase, give it a spec, and choose the agent or model you
+						already use. aidd builds the backlog, runs bounded agent sessions, keeps
+						features open until the gates pass, and leaves behind the run history you
+						need later. In current market language it is a local, agent-agnostic
+						<strong>agentic development environment</strong>: delegated work and durable
+						results are the primary units, not files in an editor. Your projects, your
+						keys, your machine.
+					</p>
+					<div class="actions">
+						<a
+							class="button button-primary"
+							href="https://github.com/NomadicDaddy/aidd/releases/latest"
+							>Get latest source</a
+						>
+						<a
+							class="button button-secondary"
+							href="https://github.com/NomadicDaddy/aidd"
+							>View source</a
+						>
+					</div>
+					<ul class="hero-facts" aria-label="Product facts">
+						<li>Every capability included</li>
+						<li>No account</li>
+						<li>No telemetry sent. No phone home.</li>
+					</ul>
+					<dl class="signal-grid" aria-label="aidd operating signals">
+						<div>
+							<dt>Backends</dt>
+							<dd>Claude, Codex, local</dd>
+						</div>
+						<div>
+							<dt>Control</dt>
+							<dd>Time, iterations, budget</dd>
+						</div>
+						<div>
+							<dt>Verification</dt>
+							<dd>Tests, lint, browser gates</dd>
+						</div>
+						<div>
+							<dt>Cost</dt>
+							<dd>Free, every capability</dd>
+						</div>
+					</dl>
+				</div>
+			</section>
+
+			<section class="proofbar" aria-label="release proof">
+				<div class="section-inner">
+					<p>
+						aidd was built out through seven creation lanes across three languages, with
+						real gates, published failures as well as passes, and run ledgers you can
+						inspect.
+					</p>
+					<div class="proof-links">
+						<a href="#receipts">See receipts</a>
+						<a href="https://github.com/NomadicDaddy/aidd/blob/main/docs/CHANGELOG.md"
+							>Read changelog</a
+						>
+					</div>
+				</div>
+			</section>
+
+			<section class="section-block" id="field">
+				<div class="section-inner">
+					<p class="section-kicker">The field</p>
+					<h2>The missing piece is usually verification.</h2>
+					<p class="section-lede">
+						In 2026 you can rent a cloud agent by the task, put a board over your
+						terminal agents, or generate a clean spec. Those are useful pieces. aidd is
+						for the awkward part after that: turning the spec into work, running the
+						agent under limits, and making the result pass the project gate.
+					</p>
+					<div class="field-grid fit-grid">
+						<article class="field-card">
+							<span class="trust-label">Use aidd when</span>
+							<h3>You need to trust an outcome, not merely watch a terminal.</h3>
+							<p>
+								Your work spans real repositories, repeatable workflows, quality
+								gates, and human approval, on one project or across a fleet.
+							</p>
+						</article>
+						<article class="field-card">
+							<span class="trust-label">Skip aidd when</span>
+							<h3>
+								You want autocomplete, a replacement IDE, or one-click unattended
+								autonomy.
+							</h3>
+							<p>
+								aidd is not the coding agent. If you do not need an evidence trail,
+								it is more process than you need.
+							</p>
+						</article>
+					</div>
+					<div class="field-grid">
+						<article class="field-card">
+							<span class="trust-label">Cloud agents</span>
+							<h3>Hosted execution</h3>
+							<p>
+								Hosted agents make it easy to hand off work without keeping a local
+								machine running. Pricing, sandbox access, and the evidence returned
+								with a run vary by provider.
+							</p>
+							<p class="counter">
+								<strong>aidd:</strong> uses the agent subscription you already have,
+								on your machine, under iteration and wall-clock caps with the run
+								cost reported as it accrues.
+							</p>
+						</article>
+						<article class="field-card">
+							<span class="trust-label">Agent boards</span>
+							<h3>Session visibility</h3>
+							<p>
+								Kanban boards, worktree apps, and terminal managers provide useful
+								views of active sessions and diffs. Planning depth, automated gates,
+								and platform support depend on the product and configuration.
+							</p>
+							<p class="counter">
+								<strong>aidd:</strong> keeps a feature open until tests, typecheck,
+								lint, and browser verification pass.
+							</p>
+						</article>
+						<article class="field-card">
+							<span class="trust-label">Spec kits</span>
+							<h3>Requirements first</h3>
+							<p>
+								Spec-driven kits help turn an idea into structured requirements.
+								Execution and verification are usually handled by the agent workflow
+								that consumes those artifacts.
+							</p>
+							<p class="counter">
+								<strong>aidd:</strong> keeps the spec connected to
+								dependency-ordered work, acceptance criteria, gate checks, and a
+								decision queue for the calls a tool should not fake.
+							</p>
+						</article>
+					</div>
+					<div class="tablewrap field-table">
+						<table>
+							<thead>
+								<tr>
+									<th>What you need</th>
+									<th>Cloud agents</th>
+									<th>Agent boards</th>
+									<th>Spec kits</th>
+									<th>aidd</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Where the work runs</td>
+									<td>Provider-managed environment</td>
+									<td>Your machine</td>
+									<td>Your repo</td>
+									<td><strong>Your machine, your keys</strong></td>
+								</tr>
+								<tr>
+									<td>Spec becomes a backlog</td>
+									<td>Task or issue based</td>
+									<td>Often user-managed</td>
+									<td>Requirements and planning artifacts</td>
+									<td>
+										<strong
+											>Dependency-ordered, with acceptance criteria</strong
+										>
+									</td>
+								</tr>
+								<tr>
+									<td>&ldquo;Done&rdquo; means</td>
+									<td>Provider workflow completed</td>
+									<td>Project-defined review</td>
+									<td>Requirements are ready for execution</td>
+									<td>
+										<strong
+											>Tests, typecheck, lint, and browser gates
+											passed</strong
+										>
+									</td>
+								</tr>
+								<tr>
+									<td>Cost model</td>
+									<td>Per-task metering</td>
+									<td>Free, futures vary</td>
+									<td>Free CLI</td>
+									<td>
+										<strong
+											>aidd is free; your existing agent plan, metered per
+											run</strong
+										>
+									</td>
+								</tr>
+								<tr>
+									<td>Run receipts</td>
+									<td>Provider-dependent</td>
+									<td>Session history</td>
+									<td>Planning artifacts</td>
+									<td>
+										<strong>Commits, iterations, tool activity, cost</strong>
+									</td>
+								</tr>
+								<tr>
+									<td>Windows</td>
+									<td>Browser-accessible</td>
+									<td>Product-dependent</td>
+									<td>Varies</td>
+									<td><strong>Smoke-tested, first-class</strong></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<p class="fine-print">
+						High-level category snapshot, July 2026, rather than a feature-by-feature
+						comparison. Examples include Devin, OpenAI Codex cloud, Google Jules,
+						Copilot coding agent, Factory, Vibe Kanban, Conductor, Sculptor, Claude
+						Squad, GitHub Spec Kit, AWS Kiro, and BMAD. Capabilities and pricing change;
+						aidd is focused on the local planning, run, and verification loop.
+					</p>
+				</div>
+			</section>
+
+			<section class="section-block section-alt" id="how">
+				<div class="section-inner">
+					<p class="section-kicker">The loop</p>
+					<h2>From folder to verified feature.</h2>
+					<p class="section-lede">
+						aidd turns intent into backlog items, selects runnable work, launches
+						bounded agent sessions, checks the result, and parks anything that needs a
+						human call.
+					</p>
+					<div class="loop-grid">
+						<article class="loop-card">
+							<span class="step-index">01</span>
+							<h3>Ingest the codebase</h3>
+							<p>
+								Add application roots in Settings. Any folder with an
+								<code class="inline">.aidd/</code> contract becomes a project,
+								including foreign stacks.
+							</p>
+						</article>
+						<article class="loop-card">
+							<span class="step-index">02</span>
+							<h3>Plan the backlog</h3>
+							<p>
+								Onboarding turns a plain-language spec into dependency-ordered
+								feature work with verifiable acceptance criteria.
+							</p>
+						</article>
+						<article class="loop-card">
+							<span class="step-index">03</span>
+							<h3>Launch gated runs</h3>
+							<p>
+								Use Claude Code, Cline, Codex, Grok, OpenCode, or KiloCode, or
+								OpenAI-compatible endpoints including OpenAI, LM Studio, and Ollama.
+							</p>
+						</article>
+						<article class="loop-card">
+							<span class="step-index">04</span>
+							<h3>Prove the work</h3>
+							<p>
+								Features complete only after the project gate passes: tests,
+								typecheck, lint, and browser-level verification when the project has
+								a UI to drive.
+							</p>
+						</article>
+						<article class="loop-card">
+							<span class="step-index">05</span>
+							<h3>Review receipts</h3>
+							<p>
+								Every run keeps commits, iterations, tool activity, cost, and an
+								honest summary. Unclear work lands in the decision queue.
+							</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section-block" id="receipts">
+				<div class="section-inner">
+					<p class="section-kicker">Receipts</p>
+					<h2>The proofs used real apps.</h2>
+					<div class="receipts-layout">
+						<div class="receipt-copy">
+							<p>
+								aidd built and repaired real applications through seven different
+								creation lanes. The runs were there to find rough edges, file the
+								failures, fix them, and leave a public trail.
+							</p>
+							<p>
+								All seven are published in full - app snapshots, run ledgers,
+								iteration evidence, and scrubbed transcripts - in the
+								<a href="https://github.com/NomadicDaddy/aidd-build-proofs"
+									>build-proofs repository</a
+								>, including the lane that failed. This is first-party evidence, not
+								a benchmark or an independent audit.
+							</p>
+						</div>
+						<div class="tablewrap">
+							<table>
+								<thead>
+									<tr>
+										<th>Lane</th>
+										<th>App</th>
+										<th>Stack</th>
+										<th>Result</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>Fresh scaffold from a spec</td>
+										<td>Habit tracker</td>
+										<td>Bun + TS + React</td>
+										<td>25/25 features passing, gate clean, roughly 2.5 h</td>
+									</tr>
+									<tr>
+										<td>Third-party template init</td>
+										<td>Kanban board</td>
+										<td>Vite + React</td>
+										<td>
+											23/23 features, 10/10 headless acceptance scenarios in
+											the gate
+										</td>
+									</tr>
+									<tr>
+										<td>Full-stack template init</td>
+										<td>SMB infrastructure dashboard</td>
+										<td>Bun + Elysia + React + Drizzle</td>
+										<td>
+											26 features passing plus one retained remediation
+											record, 30-step gate green
+										</td>
+									</tr>
+									<tr>
+										<td>Existing-codebase ingest</td>
+										<td>Flask tutorial app</td>
+										<td>Python + Flask</td>
+										<td>
+											Profiled the foreign stack, produced a grounded security
+											audit, then fixed findings with pytest as the gate. Zero
+											writes outside
+											<code class="inline">.aidd/</code>.
+										</td>
+									</tr>
+									<tr>
+										<td>GitHub-template clone</td>
+										<td>Pantry tracker</td>
+										<td>PowerShell + Pode + htmx</td>
+										<td>26/26 features, Pester 88/88, analyzer clean</td>
+									</tr>
+									<tr>
+										<td>Local model only</td>
+										<td>Markdown TOC tool</td>
+										<td>Bun + TS, LM Studio, no cloud calls</td>
+										<td>
+											0/14 features. Five coding runs finished nothing, and
+											the completion contract refused to record success.
+											Published exactly as it ran.
+										</td>
+									</tr>
+									<tr>
+										<td>Agent-driven build</td>
+										<td>Margin calculator</td>
+										<td>Bun + Elysia + React + Drizzle</td>
+										<td>
+											29/29 features across 48 supervised iterations, gate
+											green at the end
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section-block section-alt" id="trust">
+				<div class="section-inner">
+					<p class="section-kicker">Trust model</p>
+					<h2>Built for people who let agents touch real repos.</h2>
+					<p class="section-lede">
+						The default posture is deliberately plain: local data, no account, explicit
+						model backends, bounded runs, and documented write surfaces.
+					</p>
+					<div class="trust-grid">
+						<article class="trust-card">
+							<span class="trust-label">Local</span>
+							<h3>Your machine stays in charge</h3>
+							<p>
+								The runtime, panel, ledger, and project metadata live locally.
+								Network traffic goes only to the model backends you configure.
+							</p>
+						</article>
+						<article class="trust-card">
+							<span class="trust-label">Quiet</span>
+							<h3>No account, no telemetry</h3>
+							<p>
+								There is no aidd account and no hosted control plane. It sends no
+								telemetry and does not phone home; network traffic comes only from
+								providers or integrations you configure, or downloads you initiate.
+								The write allowlist is documented, including what lives under
+								<code class="inline">.aidd/</code> and when source can change.
+							</p>
+						</article>
+						<article class="trust-card">
+							<span class="trust-label">Bounded</span>
+							<h3>Hard limits on runs</h3>
+							<p>
+								Iteration caps, wall-clock caps, dirty-tree guards, and parked
+								decisions stop a run outright; cost and token budgets are warn-only,
+								reported against the run rather than cutting it off mid-edit.
+							</p>
+						</article>
+						<article class="trust-card">
+							<span class="trust-label">Open</span>
+							<h3>Security docs in public</h3>
+							<p>
+								Review
+								<a href="https://github.com/NomadicDaddy/aidd/blob/main/SECURITY.md"
+									>SECURITY</a
+								>,
+								<a href="https://github.com/NomadicDaddy/aidd/blob/main/PRIVACY.md"
+									>PRIVACY</a
+								>, and
+								<a href="https://github.com/NomadicDaddy/aidd/blob/main/SUPPORT.md"
+									>SUPPORT</a
+								>.
+							</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section-block" id="free">
+				<div class="section-inner">
+					<p class="section-kicker">Included under FSL</p>
+					<h2>Every capability is included.</h2>
+					<p class="section-lede">
+						Run aidd supervised or unattended, on one project or across a fleet. Every
+						capability ships together under FSL. You provide access to the AI providers
+						you choose.
+					</p>
+					<div class="free-layout">
+						<article class="free-panel">
+							<h3>aidd</h3>
+							<p class="free-price">One product</p>
+							<p>
+								Everything aidd does ships together, for any number of projects and
+								machines.
+							</p>
+							<ul class="included-list" aria-label="Included capabilities">
+								<li>Runs and gates</li>
+								<li>All backends</li>
+								<li>Audits</li>
+								<li>Recipes and skills</li>
+								<li>Director cycles</li>
+								<li>Scheduled fleet automation</li>
+								<li>Continuous follow-ups</li>
+								<li>Telegram bridge</li>
+								<li>MCP server</li>
+							</ul>
+							<p>
+								Source-available under
+								<a href="https://github.com/NomadicDaddy/aidd/blob/main/LICENSE"
+									>FSL-1.1-ALv2</a
+								>, converting to Apache 2.0 two years after each release.
+							</p>
+							<a class="button button-primary" href="#get">Install from source</a>
+						</article>
+						<dl class="free-ledger" aria-label="Where things live">
+							<div>
+								<dt>Project state</dt>
+								<dd>Your local <code class="inline">.aidd/</code> metadata</dd>
+							</div>
+							<div>
+								<dt>Control plane</dt>
+								<dd>Your machine</dd>
+							</div>
+							<div>
+								<dt>aidd account</dt>
+								<dd>None</dd>
+							</div>
+							<div>
+								<dt>Telemetry sent</dt>
+								<dd>None</dd>
+							</div>
+							<div>
+								<dt>Model access</dt>
+								<dd>Your configured provider or agent CLI</dd>
+							</div>
+						</dl>
+					</div>
+				</div>
+			</section>
+
+			<section class="section-block section-alt" id="get">
+				<div class="section-inner">
+					<p class="section-kicker">Get it</p>
+					<h2>Four commands. Nothing to sign up for.</h2>
+					<p class="section-lede">
+						Windows 11 + PowerShell 7 is the current smoke-tested path. Install Git and
+						Bun 1.4.0 or newer, then run aidd directly from its source checkout.
+					</p>
+					<div class="download-layout">
+						<article class="release-panel">
+							<h3>Source install</h3>
+							<pre><code>git clone https://github.com/NomadicDaddy/aidd.git C:\Tools\aidd
+Set-Location C:\Tools\aidd
+bun install
+bun run start:web
+
+# Open http://127.0.0.1:3210</code></pre>
+						</article>
+						<aside class="link-panel" aria-label="setup resources">
+							<h3>Bring a map</h3>
+							<a
+								class="resource-link"
+								href="https://github.com/NomadicDaddy/aidd/blob/main/docs/reference/deployment.md">
+								<strong>Deployment guide</strong>
+								<span>Install, update, rollback, and uninstall notes.</span>
+							</a>
+							<a
+								class="resource-link"
+								href="https://github.com/NomadicDaddy/aidd/blob/main/docs/quickstart.md">
+								<strong>Quickstart</strong>
+								<span
+									>First launch, project setup, and the first verified
+									feature.</span
+								>
+							</a>
+							<a
+								class="resource-link"
+								href="https://github.com/NomadicDaddy/aidd/blob/main/docs/reference/backends.md">
+								<strong>Backends guide</strong>
+								<span
+									>Claude Code, Cline, Codex, Grok, OpenCode, KiloCode, OpenAI, LM
+									Studio, and Ollama.</span
+								>
+							</a>
+						</aside>
+					</div>
+					<div class="license-note" id="license">
+						<p>
+							aidd ships under
+							<a href="https://github.com/NomadicDaddy/aidd/blob/main/LICENSE"
+								>FSL-1.1-ALv2</a
+							>: available for any use except making it available to others as a
+							competing commercial product or service, and each version automatically
+							becomes Apache 2.0 two years after release. The
+							<code class="inline">.aidd/</code> contract format is an open spec
+							anyone may implement. Spernakit, the companion full-stack template, is
+							MIT.
+						</p>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="site-footer">
+			<div class="footer-inner">
+				<strong>aidd - local runs, local receipts.</strong>
+				<div class="footer-links">
+					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
+					<a href="https://github.com/NomadicDaddy/aidd/tree/main/docs">Docs</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/docs/CHANGELOG.md"
+						>Changelog</a
+					>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/SUPPORT.md">Support</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/PRIVACY.md">Privacy</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/SECURITY.md"
+						>Security</a
+					>
+				</div>
+			</div>
+		</footer>
+	</body>
+</html>

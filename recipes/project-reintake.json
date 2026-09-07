@@ -1,0 +1,30 @@
+{
+	"description": "Re-ingest an already-managed project: reconcile or repair existing .aidd metadata (stale contract artifacts) and then re-run the metadata-only project-intake pipeline, refreshing artifacts without duplicating existing features. Intake ends by parking open features for approval, so a re-intake also moves this project's existing backlog and in-progress features back to waiting_approval.",
+	"metadataOnly": true,
+	"name": "project-reintake",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Reconcile this project's .aidd metadata before re-ingestion. Inspect what already exists and repair it in place: (1) if .aidd/ holds artifacts that do not match the current contract shape, refresh them without discarding still-valid content; (2) leave the .aidd/features/ inventory on disk complete and accurate, because the later feature-generation step reads those records itself to decide what is already covered and refresh rather than duplicate it — nothing from this step's own output is forwarded into the nested intake recipe. Do not delete legitimate existing features, and write nothing outside .aidd/."
+			},
+			"name": "Reconcile existing metadata",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "project-intake"
+			},
+			"name": "Re-run project intake",
+			"stepType": "recipe-ref"
+		}
+	]
+}

@@ -1,0 +1,64 @@
+/* Geist Sans / Geist Mono @font-face declarations, variable weight axis, woff2 only.
+   Written by hand rather than importing the @fontsource CSS for two reasons: the package
+   stylesheets list a .woff fallback after the .woff2 source (dead weight — no browser that
+   runs this app lacks woff2 support), and they only ship the whole subset set, where the app
+   needs latin alone.
+
+   One variable file per family rather than static weight files: six static faces (sans
+   400/500/600/700 + mono 400/500) cost ~165KB, where ~53KB covers the full 100-900 axis. It also
+   gives real glyphs to every weight the app asks for — `font-mono font-semibold` (600) and
+   xterm's bold — which the browser would otherwise synthesise from the nearest loaded face.
+
+   The family names are 'Geist Sans' and 'Geist Mono' rather than the upstream packages' 'Geist
+   Variable' and 'Geist Mono Variable', so the theme tokens in index.css and the xterm fontFamily
+   in TerminalTabView.tsx name the family, not the packaging.
+
+   Subsetting is latin, plus the mono `symbols2` subset for box drawing — see the note on that
+   face below for why it is worth its 5.8KB and why its declaration order matters. */
+
+@font-face {
+	font-family: 'Geist Sans';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/geist/files/geist-latin-wght-normal.woff2')
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+		U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Box drawing (U+2500-259F) and the vertical box parts (U+23B8-23BD). Agent output rendered as
+   plain HTML — diffs, artifact bodies, director suggestions, run logs — is full of tree glyphs
+   like ├──, and without this subset those characters fall back to a system monospace font
+   mid-line, so a single line of tree output renders in two different fonts.
+
+   Not for the terminal: xterm sets `customGlyphs: true` by default and draws block and box
+   characters itself for continuous lines, so the WebGL renderer never consults this face. It
+   only reaches the font in the DOM-renderer fallback.
+
+   Declared BEFORE the latin face on purpose. Its range overlaps latin at U+2000-2001, U+2004-2008
+   and U+200A, and per CSS Fonts § font matching, faces with overlapping unicode-range are checked
+   in reverse declaration order — last wins. Keeping latin last means those common space
+   characters resolve to latin and this file is only fetched when box drawing is actually used. */
+@font-face {
+	font-family: 'Geist Mono';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/geist-mono/files/geist-mono-symbols2-wght-normal.woff2')
+		format('woff2-variations');
+	unicode-range: U+2000-2001, U+2004-2008, U+200A, U+23B8-23BD, U+2500-259F;
+}
+
+@font-face {
+	font-family: 'Geist Mono';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2')
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+		U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

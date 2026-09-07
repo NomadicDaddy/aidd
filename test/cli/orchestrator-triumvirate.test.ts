@@ -1,0 +1,2387 @@
+import { afterAll, describe, expect, test } from 'bun:test';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { parseArgs } from 'aidd-shared/args/index';
+import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
+import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
+
+import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
+import { runStage } from '../../cli/src/orchestrator/triumvirate/stage-execution.ts';
+import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
+import {
+	captureStdout,
+	completeFeature,
+	config,
+	createOrchestratorTestContext,
+	FakeBackend,
+	gitHeavyPlan,
+	gitText,
+	initializeGitProject,
+	plan,
+	rootDir,
+	runGit,
+	saturatedSuiteTestTimeoutMs,
+	SequencedBackend,
+	slowOrchestratorTestTimeoutMs,
+} from './_helpers/orchestrator-fixture.ts';
+
+const { cleanup, makeStore } = createOrchestratorTestContext('triumvirate');
+
+afterAll(cleanup);
+
+describe('orchestrator triumvirate', () => {
+	test('triumvirate runs primary, secondary, overseer, then execution', async () => {
+		const store = await makeStore('triumvirate-order');
+		const backend = new SequencedBackend(
+			[
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement the approved path."}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 3) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+			'--exec-model',
+			'exec-model',
+		]);
+
+		let exitCode = -1;
+		const output = await captureStdout(async () => {
+			exitCode = await runOrchestrator(runtimePlan, {
+				backend,
+				backendFactory: () => backend,
+				rootDir,
+				store,
+			});
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(output).toContain('triumvirate primary waiting for backend');
+		expect(output).toContain('triumvirate secondary waiting for backend');
+		expect(output).toContain('triumvirate overseer waiting for backend');
+		expect(output).toContain('triumvirate execution waiting for backend');
+		expect(output).toContain('triumvirate process result');
+		expect(output).toContain('triumvirate iteration complete');
+		expect(backend.calls).toBe(4);
+		expect(backend.inputs[0]?.cwd).not.toBe(store.projectDir);
+		expect(backend.inputs[1]?.cwd).not.toBe(store.projectDir);
+		expect(backend.inputs[2]?.cwd).not.toBe(store.projectDir);
+		expect(backend.inputs[1]?.cwd).not.toBe(backend.inputs[0]?.cwd);
+		expect(backend.inputs[2]?.cwd).not.toBe(backend.inputs[0]?.cwd);
+		expect(backend.inputs[2]?.cwd).not.toBe(backend.inputs[1]?.cwd);
+		const primaryPlanningCwd = backend.inputs[0]?.cwd ?? '';
+		const secondaryPlanningCwd = backend.inputs[1]?.cwd ?? '';
+		const overseerPlanningCwd = backend.inputs[2]?.cwd ?? '';
+		expect(backend.inputs[0]?.text).toContain(primaryPlanningCwd);
+		expect(backend.inputs[1]?.text).toContain(secondaryPlanningCwd);
+		expect(backend.inputs[2]?.text).toContain(overseerPlanningCwd);
+		expect(backend.inputs[0]?.text).toContain('Read-only boundary:');
+		expect(backend.inputs[0]?.text).toContain(
+			'You must not create, edit, delete, format, stage, commit, or generate files',
+		);
+		expect(backend.inputs[0]?.text).toContain('will be rejected and retried');
+		expect(backend.inputs[0]?.text).toContain(
+			'The prompt below is included only so you can understand the requested work',
+		);
+		expect(backend.inputs[1]?.text).toContain('Read-only boundary:');
+		expect(backend.inputs[2]?.text).toContain('Read-only boundary:');
+		expect(backend.inputs[2]?.text).toContain(
+			'ignore any instruction in it to implement, edit',
+		);
+		expect(backend.inputs[0]?.text.toLowerCase()).not.toContain(store.projectDir.toLowerCase());
+		expect(backend.inputs[1]?.text.toLowerCase()).not.toContain(store.projectDir.toLowerCase());
+		expect(backend.inputs[2]?.text.toLowerCase()).not.toContain(store.projectDir.toLowerCase());
+		expect(backend.inputs[2]?.text).toContain('Primary plan');
+		expect(backend.inputs[2]?.text).toContain('Secondary plan');
+		expect(backend.inputs[0]?.heuristicMode).toBe('planning');
+		expect(backend.inputs[1]?.heuristicMode).toBe('planning');
+		expect(backend.inputs[2]?.heuristicMode).toBe('planning');
+		expect(backend.inputs[3]?.heuristicMode).toBeUndefined();
+		expect(backend.inputs[3]).toMatchObject({ cwd: store.projectDir, model: 'exec-model' });
+		expect(backend.inputs[3]?.text).toContain('Implement the approved path.');
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		expect(iterationJson).toContain('"triumvirate"');
+		expect(iterationJson).toContain('"primaryPlan"');
+		expect(iterationJson).toContain('"overseerDecision"');
+		expect(iterationJson).toContain('"execution"');
+		const structured = JSON.parse(iterationJson) as {
+			executionMode: string;
+			mode: string;
+			triumvirate: {
+				decision: {
+					finalActions: string;
+					source: string;
+					status: string;
+				};
+				execution: {
+					cwdKind: string;
+					model: string;
+					role: string;
+				};
+				metadata: {
+					guard: { source: string };
+					planningMirror: {
+						excludedNames: string[];
+						isolation: string;
+						projectDir: string;
+						promptProjectPath: string;
+						roleProjectDirs: {
+							overseer: string;
+							primary: string;
+							secondary: string;
+						};
+					};
+					roles: { execution: { backend: string; model: string } };
+					selectedWork: { id: string; kind: string };
+				};
+				overseerDecision: { structuredResult: { decision: string } };
+				primaryPlan: {
+					cwdKind: string;
+					durationMs: number;
+					promptChars: number;
+					role: string;
+					selectedWork: { id: string };
+					stage: string;
+					startedAt: string;
+				};
+			};
+			triumvirateRoles: {
+				execution: { backend: string; model: string };
+				overseer: { backend: string };
+				primary: { backend: string };
+				secondary: { backend: string };
+			};
+		};
+		expect(structured.mode).toBe('coding');
+		expect(structured.executionMode).toBe('triumvirate');
+		expect(structured.triumvirateRoles.execution).toEqual({
+			backend: 'native',
+			model: 'exec-model',
+		});
+		expect(structured.triumvirate.metadata.selectedWork).toMatchObject({
+			id: 'feature-core',
+			kind: 'feature',
+		});
+		expect(structured.triumvirate.metadata.roles.execution).toMatchObject({
+			backend: 'native',
+			model: 'exec-model',
+		});
+		expect(structured.triumvirate.metadata.guard.source).toBe(
+			'git status --porcelain=v1 --untracked-files=all',
+		);
+		expect(structured.triumvirate.metadata.planningMirror.excludedNames).toContain('data');
+		expect(structured.triumvirate.metadata.planningMirror).toMatchObject({
+			isolation: 'per_role',
+			projectDir: primaryPlanningCwd,
+			promptProjectPath: 'rewritten_to_role_planning_mirror',
+			roleProjectDirs: {
+				overseer: overseerPlanningCwd,
+				primary: primaryPlanningCwd,
+				secondary: secondaryPlanningCwd,
+			},
+		});
+		expect(structured.triumvirate.primaryPlan).toMatchObject({
+			cwdKind: 'planning_mirror',
+			role: 'primary',
+			selectedWork: { id: 'feature-core', kind: 'feature' },
+			stage: 'primary',
+		});
+		expect(structured.triumvirate.primaryPlan.promptChars).toBeGreaterThan(0);
+		expect(structured.triumvirate.primaryPlan.durationMs).toBeGreaterThanOrEqual(0);
+		expect(structured.triumvirate.primaryPlan.startedAt).toContain('T');
+		expect(structured.triumvirate.overseerDecision.structuredResult.decision).toBe('execute');
+		expect(structured.triumvirate.decision).toMatchObject({
+			finalActions: 'Implement the approved path.',
+			source: 'overseer.AIDD_RESULT',
+			status: 'execute',
+		});
+		expect(structured.triumvirate.execution).toMatchObject({
+			cwdKind: 'project',
+			model: 'exec-model',
+			role: 'execution',
+		});
+		const runs = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
+		expect(runs).toContain('"executionMode":"triumvirate"');
+		expect(runs).toContain('"triumvirateRoles"');
+	});
+
+	test('complexity tiering: a low-complexity feature skips secondary + overseer', async () => {
+		const store = await makeStore('triumvirate-low-tier');
+		const backend = new SequencedBackend(
+			[
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 1) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--complexity-tiering',
+		]);
+
+		let exitCode = -1;
+		const output = await captureStdout(async () => {
+			exitCode = await runOrchestrator(runtimePlan, {
+				backend,
+				backendFactory: () => backend,
+				rootDir,
+				store,
+			});
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		// Only two backend calls: primary planner, then execution. Secondary + overseer skipped.
+		expect(backend.calls).toBe(2);
+		expect(output).toContain('triumvirate primary waiting for backend');
+		expect(output).toContain('triumvirate execution waiting for backend');
+		expect(output).not.toContain('triumvirate secondary waiting for backend');
+		expect(output).not.toContain('triumvirate overseer waiting for backend');
+		// Execution runs against the real project tree using the primary plan.
+		expect(backend.inputs[1]).toMatchObject({ cwd: store.projectDir });
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: { complexityTier: string; skippedStages: string[] };
+		};
+		expect(structured.triumvirate.complexityTier).toBe('low');
+		expect(structured.triumvirate.skippedStages).toEqual(['secondary', 'overseer']);
+	});
+
+	test('consistency gate: overseer checks the plan and execution receives flagged issues', async () => {
+		const store = await makeStore('triumvirate-consistency');
+		const backend = new SequencedBackend(
+			[
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement the approved path.","consistencyIssues":["assertion A is unmet"]}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 3) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--consistency-gate',
+		]);
+
+		let exitCode = -1;
+		await captureStdout(async () => {
+			exitCode = await runOrchestrator(runtimePlan, {
+				backend,
+				backendFactory: () => backend,
+				rootDir,
+				store,
+			});
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(4);
+		// The overseer prompt instructs the consistency check against spec/assertions/feature.
+		expect(backend.inputs[2]?.text).toContain('CONSISTENCY CHECK');
+		// The execution prompt carries the overseer's flagged issue forward as a must-address note.
+		expect(backend.inputs[3]?.text).toContain('CONSISTENCY NOTES');
+		expect(backend.inputs[3]?.text).toContain('assertion A is unmet');
+	});
+
+	test('triumvirate uses overseer identity for execution when exec cli is omitted', async () => {
+		const store = await makeStore('triumvirate-overseer-exec');
+		const backend = new SequencedBackend(
+			[
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary plan"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement as overseer."}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 3) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'opencode',
+			'--overseer-model',
+			'overseer-model',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(4);
+		expect(backend.inputs[2]?.heuristicMode).toBe('planning');
+		expect(backend.inputs[3]).toMatchObject({
+			cwd: store.projectDir,
+			model: 'overseer-model',
+		});
+		expect(backend.inputs[3]?.heuristicMode).toBeUndefined();
+		expect(backend.inputs[3]?.text).toContain('Implement as overseer.');
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				execution: {
+					backend: string;
+					cwdKind: string;
+					model: string;
+					role: string;
+				};
+				metadata: {
+					roles: {
+						execution: { backend: string; model: string };
+						overseer: { backend: string; model: string };
+					};
+				};
+			};
+		};
+		expect(structured.triumvirate.metadata.roles.overseer).toEqual({
+			backend: 'opencode',
+			model: 'overseer-model',
+		});
+		expect(structured.triumvirate.metadata.roles.execution).toEqual({
+			backend: 'opencode',
+			model: 'overseer-model',
+		});
+		expect(structured.triumvirate.execution).toMatchObject({
+			backend: 'opencode',
+			cwdKind: 'project',
+			model: 'overseer-model',
+			role: 'execution',
+		});
+	});
+
+	test('triumvirate isolates planner mirrors between planning roles', async () => {
+		const store = await makeStore('triumvirate-isolated-planners');
+		let secondarySawPrimaryFile = false;
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: ['primary-only.txt'] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary retry"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex, input) => {
+				if (callIndex === 0) {
+					await writeFile(join(input.cwd, 'primary-only.txt'), 'primary mutation\n');
+					return;
+				}
+				if (callIndex === 2) {
+					try {
+						await readFile(join(input.cwd, 'primary-only.txt'), 'utf8');
+						secondarySawPrimaryFile = true;
+					} catch {
+						secondarySawPrimaryFile = false;
+					}
+					return;
+				}
+				if (callIndex === 4) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(secondarySawPrimaryFile).toBe(false);
+		expect(backend.calls).toBe(5);
+		expect(backend.inputs[1]?.cwd).toBe(backend.inputs[0]?.cwd);
+		expect(backend.inputs[1]?.text).toContain('aidd PLANNING STAGE RETRY');
+		expect(backend.inputs[2]?.cwd).not.toBe(backend.inputs[0]?.cwd);
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				primaryPlan: {
+					planningMirrorMutation?: unknown;
+					planningMirrorRetry: {
+						attempts: number;
+						previousMutations: {
+							changedPaths: string[];
+							filesModifiedCount: number;
+							role: string;
+							stage: string;
+							structuredResultEmitted: boolean;
+						}[];
+						reason: string;
+					};
+				};
+				secondaryPlan: {
+					planningMirrorMutation?: unknown;
+				};
+			};
+			triumviratePlanningRecovery: {
+				stages: {
+					attempts: number;
+					changedPaths: string[];
+					stage: string;
+				}[];
+				status: string;
+			};
+			summary: string;
+		};
+		expect(structured.summary).toContain('planning_stage_mutation_recovered');
+		expect(structured.triumviratePlanningRecovery).toEqual({
+			stages: [
+				{
+					attempts: 2,
+					changedPaths: ['primary-only.txt'],
+					stage: 'primary',
+				},
+			],
+			status: 'planning_stage_mutation_recovered',
+		});
+		expect(structured.triumvirate.primaryPlan.planningMirrorMutation).toBeUndefined();
+		expect(structured.triumvirate.primaryPlan.planningMirrorRetry).toEqual({
+			attempts: 2,
+			previousMutations: [
+				{
+					changedPaths: ['primary-only.txt'],
+					filesModifiedCount: 1,
+					role: 'primary',
+					stage: 'primary',
+					structuredResultEmitted: true,
+				},
+			],
+			reason: 'planning_mirror_mutation',
+		});
+		expect(structured.triumvirate.secondaryPlan.planningMirrorMutation).toBeUndefined();
+		await expect(store.readFeature('feature-core')).resolves.toMatchObject({
+			passes: true,
+			status: 'completed',
+		});
+		const runs = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
+		expect(runs).toContain('planning_stage_mutation_recovered');
+	});
+
+	test('triumvirate ignores generated planning mirror directories during mutation checks', async () => {
+		const store = await makeStore('triumvirate-generated-dir-mutation');
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex, input) => {
+				if (callIndex === 0) {
+					const packageDir = join(input.cwd, 'node_modules', 'generated-package');
+					const distDir = join(input.cwd, 'frontend', 'dist', 'assets');
+					await mkdir(packageDir, { recursive: true });
+					await mkdir(distDir, { recursive: true });
+					await writeFile(
+						join(packageDir, 'index.js'),
+						'export const generated = true;\n',
+					);
+					await writeFile(join(distDir, 'bundle.js'), 'console.log("generated");\n');
+					return;
+				}
+				if (callIndex === 3) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(4);
+		expect(backend.inputs[1]?.text).not.toContain('aidd PLANNING STAGE RETRY');
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				primaryPlan: {
+					planningMirrorMutation?: unknown;
+					planningMirrorRetry?: unknown;
+				};
+			};
+		};
+		expect(structured.triumvirate.primaryPlan.planningMirrorMutation).toBeUndefined();
+		expect(structured.triumvirate.primaryPlan.planningMirrorRetry).toBeUndefined();
+	});
+
+	test('triumvirate caps large planning mirror mutation lists in retry prompts', async () => {
+		const store = await makeStore('triumvirate-large-planning-mutation');
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary retry"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['x.ts'] },
+				],
+			],
+			async (callIndex, input) => {
+				if (callIndex === 0) {
+					const mutationDir = join(input.cwd, 'generated-mutations');
+					await mkdir(mutationDir, { recursive: true });
+					await Promise.all(
+						Array.from({ length: 130 }, (_, index) =>
+							writeFile(
+								join(mutationDir, `mutation-${String(index).padStart(3, '0')}.txt`),
+								`mutation ${index}\n`,
+							),
+						),
+					);
+					return;
+				}
+				if (callIndex === 4) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(5);
+		expect(backend.inputs[1]?.text).toContain('aidd PLANNING STAGE RETRY');
+		expect(backend.inputs[1]?.text).toContain('30 more path(s) omitted from prompt');
+		expect(backend.inputs[1]?.text).toContain('Omitted changed-path groups:');
+		expect(backend.inputs[1]?.text).toContain('- generated-mutations: 30');
+		expect(backend.inputs[1]?.text).toContain('generated-mutations/mutation-099.txt');
+		expect(backend.inputs[1]?.text).not.toContain('generated-mutations/mutation-129.txt');
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				primaryPlan: {
+					planningMirrorRetry: {
+						previousMutations: {
+							changedPaths: string[];
+							filesModifiedCount: number;
+						}[];
+					};
+				};
+			};
+		};
+		expect(
+			structured.triumvirate.primaryPlan.planningMirrorRetry.previousMutations[0]
+				?.changedPaths,
+		).toHaveLength(130);
+		expect(
+			structured.triumvirate.primaryPlan.planningMirrorRetry.previousMutations[0]
+				?.filesModifiedCount,
+		).toBe(130);
+	});
+
+	test('triumvirate overseer abort prevents execution', async () => {
+		const store = await makeStore('triumvirate-abort');
+		const backend = new SequencedBackend([
+			[
+				{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+				{ type: 'done', exitCode: 0, filesModified: [] },
+			],
+			[
+				{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n' },
+				{ type: 'done', exitCode: 0, filesModified: [] },
+			],
+			[
+				{
+					type: 'assistant_text',
+					chunk: 'AIDD_RESULT: {"decision":"abort","reason":"Plans conflict"}\n',
+				},
+				{ type: 'done', exitCode: 0, filesModified: [] },
+			],
+		]);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(3);
+		await expect(store.readFeature('feature-core')).resolves.toMatchObject({
+			passes: false,
+			status: 'in_progress',
+		});
+		const runs = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
+		expect(runs).toContain('"stopReason":"blocked"');
+		expect(runs).toContain('Plans conflict');
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				decision: { reason: string; status: string };
+				execution?: unknown;
+			};
+		};
+		expect(structured.triumvirate.decision).toMatchObject({
+			reason: 'Plans conflict',
+			status: 'abort',
+		});
+		expect(structured.triumvirate.execution).toBeUndefined();
+	});
+
+	test('triumvirate continues after transient primary provider errors by default', async () => {
+		const store = await makeStore('triumvirate-transient-primary-provider-error');
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'tool_call', tool: 'edit', args: { file_path: 'src/partial.ts' } },
+					{
+						type: 'error',
+						reason: 'provider',
+						meta: 'zhipu request failed: HTTP 500 {"error":{"code":"1234","message":"Network error, please try again later"}}',
+					},
+				],
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 4) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(5);
+		const firstIteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as {
+			exitCode: number;
+			outcome: { status: string };
+			triumvirate: { stageFailure: string };
+		};
+		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.providerError);
+		expect(firstIteration.outcome.status).toBe('provider_error');
+		expect(firstIteration.triumvirate.stageFailure).toBe(
+			'triumvirate primary stage failed with exit code 72',
+		);
+		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
+		expect(runs).toContain('"stopReason":"completed"');
+		expect(runs).toContain('"iterations":2');
+		// The failed primary stage edited a file before the provider error; its path must reach the
+		// ledger's filesEdited list so counts and paths stay in sync for stage-failure iterations.
+		const ledgerEntry = JSON.parse(runs.split('\n').at(-1) ?? '{}') as {
+			filesEdited: string[];
+		};
+		expect(ledgerEntry.filesEdited).toContain('src/partial.ts');
+	});
+
+	test('triumvirate continues after primary idle timeout when max iterations is one', async () => {
+		const store = await makeStore('triumvirate-primary-idle-timeout-max-one');
+		const backend = new SequencedBackend(
+			[
+				[{ type: 'error', reason: 'idle' }],
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 4) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = resolveRunPlan(
+			parseArgs([
+				'--project-dir',
+				store.projectDir,
+				'--cli',
+				'native',
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--exec-cli',
+				'native',
+			]),
+			{ ...config, maxIterations: 1 },
+		);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(5);
+		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
+		const firstIteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as {
+			exitCode: number;
+			outcome: { status: string };
+			triumvirate: { stageFailure: string };
+		};
+		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.idleTimeout);
+		expect(firstIteration.outcome.status).toBe('idle_timeout');
+		expect(firstIteration.triumvirate.stageFailure).toBe(
+			'triumvirate primary stage failed with exit code 71',
+		);
+		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
+		expect(runs).toContain('"stopReason":"completed"');
+		expect(runs).toContain('"iterations":2');
+		expect(runs).not.toContain('"stopReason":"max_iterations"');
+	});
+
+	test('triumvirate retries after primary rate limit like single-agent mode', async () => {
+		const store = await makeStore('triumvirate-primary-rate-limit');
+		const backend = new SequencedBackend(
+			[
+				[{ type: 'error', reason: 'rate_limit', meta: 'rate limit' }],
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 4) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = resolveRunPlan(
+			parseArgs([
+				'--project-dir',
+				store.projectDir,
+				'--cli',
+				'native',
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--exec-cli',
+				'native',
+			]),
+			{ ...config, maxIterations: 1, rateLimitBackoffSeconds: 0, rateLimitBufferSeconds: 0 },
+		);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(5);
+		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
+		const firstIteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as { exitCode: number };
+		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.rateLimited);
+		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
+		expect(runs).toContain('"stopReason":"completed"');
+		expect(runs).toContain('"iterations":2');
+		expect(runs).not.toContain('"stopReason":"max_iterations"');
+	});
+
+	test('triumvirate preserves rate-limit classification when backoff exceeds budget', async () => {
+		const store = await makeStore('triumvirate-rate-limit-beyond-budget');
+		const backend = new FakeBackend([
+			{ type: 'error', reason: 'rate_limit', meta: 'rate limit' },
+		]);
+		const runtimePlan = resolveRunPlan(
+			parseArgs([
+				'--project-dir',
+				store.projectDir,
+				'--cli',
+				'native',
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--exec-cli',
+				'native',
+			]),
+			{
+				...config,
+				maxIterations: 1,
+				// See the same test in orchestrator.test.ts: the budget only has to be smaller than
+				// the backoff, and a 1s one was also small enough for the iteration to trip the
+				// wall-clock envelope, which classifies ahead of the rate-limit branch.
+				rateLimitBackoffSeconds: 3600,
+				rateLimitBufferSeconds: 0,
+				timeoutSeconds: 120,
+			},
+		);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.rateLimited);
+		expect(backend.calls).toBe(1);
+		const runs = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
+		const entry = JSON.parse(runs.trim()) as { exitCode: number; summary: string };
+		expect(entry.exitCode).toBe(orchestratorExitCodes.rateLimited);
+		expect(entry.summary).toContain('rate_limit_wait_exceeds_budget');
+		expect(entry.summary).not.toContain('wall_clock_timeout');
+	});
+
+	test('triumvirate honors stop requests after planning-stage backend failures', async () => {
+		const store = await makeStore('triumvirate-stop-after-planning-failure');
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+		const backend = new SequencedBackend(
+			[[{ type: 'error', reason: 'idle' }]],
+			async (callIndex) => {
+				if (callIndex === 0) await writeFile(runtimePlan.stopPolicy.stopFile, 'stop\n');
+			},
+		);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(1);
+		const iteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as { stopRequested: boolean };
+		expect(iteration.stopRequested).toBe(true);
+		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
+		expect(runs).toContain('"stopReason":"stop_requested"');
+		expect(runs).toContain('"exitCode":0');
+		expect(runs).not.toContain('"stopReason":"completed"');
+	});
+
+	test('triumvirate continues after execution idle timeout when max iterations is one', async () => {
+		const store = await makeStore('triumvirate-execution-idle-timeout-max-one');
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[{ type: 'error', reason: 'idle' }],
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 7) await completeFeature(store, 'feature-core');
+			},
+		);
+		const runtimePlan = resolveRunPlan(
+			parseArgs([
+				'--project-dir',
+				store.projectDir,
+				'--cli',
+				'native',
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--exec-cli',
+				'native',
+			]),
+			{ ...config, maxIterations: 1 },
+		);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(8);
+		await expect(store.readFeature('feature-core')).resolves.toMatchObject({ passes: true });
+		const firstIteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as {
+			exitCode: number;
+			outcome: { status: string };
+		};
+		expect(firstIteration.exitCode).toBe(orchestratorExitCodes.idleTimeout);
+		expect(firstIteration.outcome.status).toBe('idle_timeout');
+		const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8')).trim();
+		expect(runs).toContain('"stopReason":"completed"');
+		expect(runs).toContain('"iterations":2');
+		expect(runs).not.toContain('"stopReason":"max_iterations"');
+	});
+
+	test('triumvirate invalid stage failures write the run ledger before exiting', async () => {
+		const store = await makeStore('triumvirate-invalid-stage-run-ledger');
+		const backend = new SequencedBackend([
+			[{ type: 'error', reason: 'provider', meta: 'HTTP 401 invalid API key.' }],
+		]);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.validationError);
+		expect(backend.calls).toBe(1);
+		const iteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as { exitCode: number; outcome: { status: string }; runId: string };
+		expect(iteration.exitCode).toBe(orchestratorExitCodes.providerError);
+		expect(iteration.outcome.status).toBe('provider_error');
+		const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+			.trim()
+			.split(/\r?\n/)
+			.map(
+				(line) =>
+					JSON.parse(line) as { exitCode: number; runId: string; stopReason: string },
+			);
+		expect(runSummary).toMatchObject({
+			exitCode: orchestratorExitCodes.validationError,
+			runId: iteration.runId,
+			stopReason: 'exit_error',
+		});
+	});
+
+	test('triumvirate aborts when a planning stage repeatedly mutates its mirror', async () => {
+		const store = await makeStore('triumvirate-repeated-planning-mutation');
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: ['primary-only.txt'] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Primary retry"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: ['primary-retry.txt'] },
+				],
+			],
+			async (callIndex, input) => {
+				if (callIndex === 0) {
+					await writeFile(join(input.cwd, 'primary-only.txt'), 'primary mutation\n');
+					return;
+				}
+				if (callIndex === 1) {
+					await writeFile(join(input.cwd, 'primary-retry.txt'), 'retry mutation\n');
+				}
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.validationError);
+		expect(backend.calls).toBe(2);
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		expect(iterationJson).toContain(
+			'triumvirate primary planning stage modified its planning mirror after retry',
+		);
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				execution?: unknown;
+				planningMirrorViolation: {
+					changedPaths: string[];
+					filesModifiedCount: number;
+					role: string;
+					stage: string;
+					structuredResultEmitted: boolean;
+				};
+				primaryPlan: {
+					planningMirrorMutation: {
+						changedPaths: string[];
+					};
+				};
+				stageFailure: string;
+			};
+		};
+		expect(structured.triumvirate.stageFailure).toBe(
+			'triumvirate primary planning stage modified its planning mirror after retry',
+		);
+		expect(structured.triumvirate.planningMirrorViolation).toEqual({
+			changedPaths: ['primary-retry.txt'],
+			filesModifiedCount: 1,
+			role: 'primary',
+			stage: 'primary',
+			structuredResultEmitted: true,
+		});
+		expect(structured.triumvirate.primaryPlan.planningMirrorMutation.changedPaths).toEqual([
+			'primary-retry.txt',
+		]);
+		expect(structured.triumvirate.execution).toBeUndefined();
+	});
+
+	test('triumvirate aborts when a planning stage mutates the original worktree', async () => {
+		const store = await makeStore('triumvirate-guard');
+		await initializeGitProject(store.projectDir);
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			],
+			() => writeFile(join(store.projectDir, 'unexpected.txt'), 'changed\n'),
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.validationError);
+		expect(backend.calls).toBe(1);
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		expect(iterationJson).toContain('original worktree changed during primary planning stage');
+		const structured = JSON.parse(iterationJson) as {
+			triumvirate: {
+				guardFailure: string;
+				metadata: { guard: { target: string } };
+				primaryPlan: { cwdKind: string; role: string };
+			};
+		};
+		expect(structured.triumvirate.guardFailure).toBe(
+			'original worktree changed during primary planning stage',
+		);
+		expect(structured.triumvirate.metadata.guard.target).toBe('original_project_worktree');
+		expect(structured.triumvirate.primaryPlan).toMatchObject({
+			cwdKind: 'planning_mirror',
+			role: 'primary',
+		});
+	});
+
+	test('triumvirate original worktree guard ignores run ledger updates', async () => {
+		const store = await makeStore('triumvirate-guard-run-ledger');
+		await initializeGitProject(store.projectDir);
+		const backend = new SequencedBackend(
+			[
+				[
+					{ type: 'assistant_text', chunk: 'AIDD_RESULT: {"planMarkdown":"Primary"}\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"planMarkdown":"Secondary"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			],
+			async (callIndex) => {
+				if (callIndex === 0) {
+					await writeFile(
+						join(store.metadataDir, 'runs.jsonl'),
+						'{"summary":"external run ledger update"}\n',
+					);
+				}
+				if (callIndex === 3) {
+					await completeFeature(store, 'feature-core');
+					await runGit(store.projectDir, [
+						'add',
+						'.aidd/features/feature-core/feature.json',
+					]);
+					await runGit(store.projectDir, ['commit', '-m', 'complete feature']);
+				}
+			},
+		);
+		const runtimePlan = plan(store.projectDir, [
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			'--exec-cli',
+			'native',
+		]);
+
+		const exitCode = await runOrchestrator(runtimePlan, {
+			backend,
+			backendFactory: () => backend,
+			rootDir,
+			store,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		expect(backend.calls).toBe(4);
+		const iterationJson = await readFile(
+			join(store.metadataDir, 'iterations', '001.json'),
+			'utf8',
+		);
+		expect(iterationJson).not.toContain('original worktree changed');
+		const status = await gitText(store.projectDir, [
+			'status',
+			'--porcelain=v1',
+			'--untracked-files=all',
+		]);
+		expect(status).toContain('.aidd/runs.jsonl');
+	});
+
+	test(
+		'never commits the run ledger, and reports runLedgerDirty when real dirt is present',
+		async () => {
+			const store = await makeStore('ineligible-commit');
+			await writeFile(join(store.projectDir, '.gitignore'), '.aidd/iterations/\n');
+			await initializeGitProject(store.projectDir);
+			const exitCode = await runOrchestrator(gitHeavyPlan(store.projectDir), {
+				rootDir,
+				store,
+				backend: new FakeBackend(
+					[
+						{
+							type: 'assistant_text',
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+						},
+						{ type: 'done', exitCode: 0, filesModified: [] },
+					],
+					async () => {
+						await completeFeature(store, 'feature-core');
+						await runGit(store.projectDir, [
+							'add',
+							'.aidd/features/feature-core/feature.json',
+						]);
+						await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
+						// Introduce an additional dirty change that is NOT the run ledger.
+						await writeFile(join(store.projectDir, 'extra-dirty.txt'), 'dirty\n');
+					},
+				),
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			// .aidd/runs.jsonl must exist.
+			const runsContent = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
+			expect(runsContent.length).toBeGreaterThan(0);
+			// runLedgerDirty must be true because the worktree carried real (non-harness) dirt.
+			const runSummary = JSON.parse(runsContent.trim()) as { runLedgerDirty: boolean };
+			expect(runSummary.runLedgerDirty).toBe(true);
+			// The ledger is never committed — not "not committed because the worktree was dirty".
+			// aidd makes no commits of its own, so worktree state cannot make it commit the ledger.
+			const status = await gitText(store.projectDir, [
+				'status',
+				'--porcelain=v1',
+				'--untracked-files=all',
+			]);
+			expect(status).toContain('extra-dirty.txt');
+			expect(status).toContain('.aidd/runs.jsonl');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});
+
+// A backend that emits varied tool_call events forever until its abort signal fires, then
+// surfaces the abort as an error event — the shape of a continuously-active runaway agent
+// that never goes idle. The command varies per tick so the flailing guard never trips.
+class RunawayBackend implements CLIBackend {
+	readonly name = 'native' as const;
+	// Keep the idle guard well beyond the 20ms event cadence. Matching killMs to the sleep made
+	// coverage instrumentation race the next event and misclassify this active backend as idle.
+	readonly idleDefaults = { killMs: 5_000, nudgeMs: 2_500 };
+	calls = 0;
+	inputs: PromptInput[] = [];
+
+	async *runPrompt(input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+		this.calls++;
+		this.inputs.push(input);
+		let tick = 0;
+		while (!signal.aborted) {
+			yield { args: { command: `probe-${tick}` }, tool: 'bash', type: 'tool_call' };
+			tick++;
+			await Bun.sleep(20);
+		}
+		yield { meta: String(signal.reason), reason: 'aborted', type: 'error' };
+	}
+}
+
+// Same shape, but repeats one identical tool-call signature so the flailing guard trips.
+class RepeatingBackend implements CLIBackend {
+	readonly name = 'native' as const;
+	readonly idleDefaults = { killMs: 20, nudgeMs: 10 };
+	calls = 0;
+	inputs: PromptInput[] = [];
+
+	async *runPrompt(input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+		this.calls++;
+		this.inputs.push(input);
+		for (let tick = 0; tick < 40 && !signal.aborted; tick++) {
+			yield { args: { command: 'git status' }, tool: 'bash', type: 'tool_call' };
+			await Bun.sleep(5);
+		}
+		if (signal.aborted) {
+			yield { meta: String(signal.reason), reason: 'aborted', type: 'error' };
+			return;
+		}
+		yield { exitCode: 0, filesModified: [], type: 'done' };
+	}
+}
+
+class CommitDuringGraceBackend implements CLIBackend {
+	readonly name = 'native' as const;
+	readonly idleDefaults = { killMs: 20, nudgeMs: 10 };
+	private readonly afterMarker: () => Promise<void>;
+	private readonly beforeMarker: () => Promise<void>;
+	private readonly exitBeforeCommit: boolean;
+	constructor(
+		beforeMarker: () => Promise<void>,
+		afterMarker: () => Promise<void>,
+		exitBeforeCommit = false,
+	) {
+		this.beforeMarker = beforeMarker;
+		this.afterMarker = afterMarker;
+		this.exitBeforeCommit = exitBeforeCommit;
+	}
+
+	async *runPrompt(_input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+		await this.beforeMarker();
+		yield {
+			chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+			type: 'assistant_text',
+		};
+		if (this.exitBeforeCommit) {
+			void this.afterMarker();
+			yield { exitCode: 0, filesModified: [], type: 'done' };
+			return;
+		}
+		await this.afterMarker();
+		await new Promise<void>((resolve) => {
+			if (signal.aborted) resolve();
+			else signal.addEventListener('abort', () => resolve(), { once: true });
+		});
+	}
+}
+
+function triumviratePlanWithBudget(
+	projectDir: string,
+	timeoutSeconds: number,
+	extra: string[] = [],
+) {
+	return resolveRunPlan(
+		parseArgs([
+			'--project-dir',
+			projectDir,
+			'--cli',
+			'native',
+			'--triumvirate',
+			'--secondary-cli',
+			'native',
+			'--overseer-cli',
+			'native',
+			...extra,
+		]),
+		{ ...config, idleNudgeTimeoutSeconds: 15, idleTimeoutSeconds: 15, timeoutSeconds },
+	);
+}
+
+const planningMarker = (planText: string): AgentEvent[] => [
+	{ chunk: `AIDD_RESULT: {"planMarkdown":"${planText}"}\n`, type: 'assistant_text' },
+	{ exitCode: 0, filesModified: [], type: 'done' },
+];
+
+describe('orchestrator triumvirate safety envelope', () => {
+	test(
+		'execution completion waits when the backend exits before its delayed commit',
+		async () => {
+			const store = await makeStore('safety-completion-after-exit');
+			await initializeGitProject(store.projectDir);
+			const gitHeadBefore = (await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim();
+			const backend = new CommitDuringGraceBackend(
+				async () => await completeFeature(store, 'feature-core'),
+				async () => {
+					await Bun.sleep(50);
+					await runGit(store.projectDir, ['add', '.']);
+					await runGit(store.projectDir, ['commit', '-m', 'complete after exit']);
+				},
+				true,
+			);
+			let stageResult: Awaited<ReturnType<typeof runStage>> | undefined;
+			await captureStdout(async () => {
+				stageResult = await runStage({
+					backend,
+					completion: { gitHeadBefore, graceMs: 2_000, store },
+					cwd: store.projectDir,
+					cwdKind: 'project',
+					plan: plan(store.projectDir, []),
+					prompt: 'work',
+					role: { backend: 'native' },
+					stage: 'execution',
+					work: { description: 'run', id: 'feature-core', kind: 'feature' },
+				});
+			});
+
+			expect(stageResult?.completionCommittedDuringGrace).toBe(true);
+			expect(stageResult?.completionFinalizedBeforeBackendExit).toBe(true);
+			expect((await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim()).not.toBe(
+				gitHeadBefore,
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'execution completion waits for its commit then aborts the lingering backend',
+		async () => {
+			const store = await makeStore('safety-completion-grace');
+			await initializeGitProject(store.projectDir);
+			const planning = new SequencedBackend([
+				planningMarker('Primary plan'),
+				planningMarker('Secondary plan'),
+				[
+					{
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+						type: 'assistant_text',
+					},
+					{ exitCode: 0, filesModified: [], type: 'done' },
+				],
+			]);
+			const execution = new CommitDuringGraceBackend(
+				async () => await completeFeature(store, 'feature-core'),
+				async () => {
+					await Bun.sleep(50);
+					await writeFile(
+						join(store.projectDir, 'implemented.ts'),
+						'export const done = true;\n',
+					);
+					await runGit(store.projectDir, ['add', '.']);
+					await runGit(store.projectDir, ['commit', '-m', 'complete feature']);
+				},
+			);
+			let factoryCalls = 0;
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 15);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend: planning,
+					backendFactory: () => (factoryCalls++ < 3 ? planning : execution),
+					completionMarkerGraceMs: 2_000,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			const iteration = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as {
+				backendCompletionFinalizedEarly: boolean;
+				triumvirate: {
+					execution: {
+						completionCommittedDuringGrace: boolean;
+						completionFinalizedBeforeBackendExit: boolean;
+					};
+				};
+			};
+			expect(iteration.backendCompletionFinalizedEarly).toBe(true);
+			expect(iteration.triumvirate.execution.completionCommittedDuringGrace).toBe(true);
+			expect(iteration.triumvirate.execution.completionFinalizedBeforeBackendExit).toBe(true);
+		},
+		// This one's run budget is 15s; a harness ceiling at the same value would let a run slow
+		// enough to matter trip both at once, and the budget firing breaks the assertions.
+		saturatedSuiteTestTimeoutMs,
+	);
+	test(
+		'a continuously-emitting stage is aborted at the run wall-clock deadline',
+		async () => {
+			const store = await makeStore('safety-wallclock-in-stage');
+			const backend = new RunawayBackend();
+			// The budget must leave enough time for fixture and orchestrator startup so the
+			// deadline lands inside the primary stage, which is the boundary this test covers.
+			// A one-second budget could expire before runPrompt under full-suite instrumentation.
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 10);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			// The primary stage aborts at the deadline; no later stage ever launches, and the
+			// run classifies as an explicit wall-clock timeout instead of a validation error.
+			expect(exitCode).toBe(orchestratorExitCodes.aborted);
+			expect(backend.calls).toBe(1);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { exitCode: number; summary: string });
+			expect(runSummary?.summary).toContain('wall-clock budget');
+			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.aborted);
+		},
+		saturatedSuiteTestTimeoutMs,
+	);
+
+	test(
+		'the panel halts between stages when the budget is exhausted',
+		async () => {
+			const store = await makeStore('safety-wallclock-between-stages');
+			// Leave fixture and orchestrator startup outside the synthetic deadline, then let
+			// primary consume the whole budget in beforeRun. The pre-secondary deadline check
+			// must halt the panel without launching call 2.
+			const backend = new SequencedBackend(
+				[planningMarker('Primary plan')],
+				async (callIndex) => {
+					if (callIndex === 0) await Bun.sleep(10_200);
+				},
+			);
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 10);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.aborted);
+			expect(backend.calls).toBe(1);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('halted before secondary stage');
+			expect(runSummary?.summary).toContain('wall-clock budget');
+			const iteration = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as { exitCode: number };
+			expect(iteration.exitCode).toBe(orchestratorExitCodes.aborted);
+		},
+		saturatedSuiteTestTimeoutMs,
+	);
+
+	test(
+		'an execution-stage wall-clock timeout is ledgered as a timeout',
+		async () => {
+			const store = await makeStore('safety-wallclock-execution');
+			// Three fast planning stages, then a runaway execution stage. The stage aborts at
+			// the deadline and the executed result must reach the post-iteration wall-clock
+			// guard, which triumvirate must not bypass.
+			let executionStarted = false;
+			const planningBackend = new SequencedBackend([
+				planningMarker('Primary plan'),
+				planningMarker('Secondary plan'),
+				[
+					{
+						chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+						type: 'assistant_text',
+					},
+					{ exitCode: 0, filesModified: [], type: 'done' },
+				],
+			]);
+			const runaway = new RunawayBackend();
+			const hybrid: CLIBackend = {
+				idleDefaults: { killMs: 20_000, nudgeMs: 15_000 },
+				name: 'native' as const,
+				runPrompt(input: PromptInput, signal: AbortSignal): AsyncIterable<AgentEvent> {
+					if (planningBackend.calls < 3) return planningBackend.runPrompt(input);
+					executionStarted = true;
+					return runaway.runPrompt(input, signal);
+				},
+			};
+			// The budget has to outlast three planning stages so the deadline lands in the
+			// execution stage, which is what this test is about. Two seconds did on an idle
+			// machine and not under a saturated suite, where planning alone can take longer than
+			// that and the run aborted before execution ever started.
+			const runtimePlan = triumviratePlanWithBudget(store.projectDir, 10);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend: hybrid,
+					backendFactory: () => hybrid,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(executionStarted).toBe(true);
+			expect(exitCode).toBe(orchestratorExitCodes.aborted);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { exitCode: number; summary: string });
+			expect(runSummary?.summary).toContain('wall-clock budget');
+			expect(runSummary?.exitCode).toBe(orchestratorExitCodes.aborted);
+		},
+		saturatedSuiteTestTimeoutMs,
+	);
+
+	test(
+		'flailing in a stage trips the shared guard and aborts the stage',
+		async () => {
+			const store = await makeStore('safety-flailing-stage');
+			const backend = new RepeatingBackend();
+			const runtimePlan = resolveRunPlan(
+				parseArgs([
+					'--project-dir',
+					store.projectDir,
+					'--cli',
+					'native',
+					'--triumvirate',
+					'--secondary-cli',
+					'native',
+					'--overseer-cli',
+					'native',
+				]),
+				{
+					...config,
+					idleNudgeTimeoutSeconds: 15,
+					idleTimeoutSeconds: 15,
+					maxIterations: 1,
+				},
+			);
+
+			let exitCode = -1;
+			const output = await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(output).toContain('flailing detected');
+			// The first planning-stage trip receives the normal corrective nudge; the second
+			// consecutive trip stops and parks with the canonical flailing classification.
+			expect(backend.calls).toBe(2);
+			expect(backend.inputs[1]?.text).toContain('previous attempt was stopped for flailing');
+			expect(exitCode).toBe(orchestratorExitCodes.flailing);
+			expect((await store.readFeature('feature-core')).status).toBe('waiting_approval');
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { exitCode: number; stopReason: string });
+			expect(runSummary).toMatchObject({
+				exitCode: orchestratorExitCodes.flailing,
+				stopReason: 'flailing',
+			});
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test('a run-level abort signal ends an in-flight stage promptly', async () => {
+		const store = await makeStore('safety-run-signal');
+		const backend = new RunawayBackend();
+		const runController = new AbortController();
+		const stagePromise = captureStdout(async () => {
+			const stage = await runStage({
+				backend,
+				cwd: store.projectDir,
+				cwdKind: 'project',
+				plan: plan(store.projectDir, []),
+				prompt: 'work',
+				role: { backend: 'native' },
+				runStartedAtMs: Date.now(),
+				signal: runController.signal,
+				stage: 'execution',
+				work: { description: 'run', id: 'feature-core', kind: 'feature' },
+			});
+			expect(stage.result.exitCode).toBe(orchestratorExitCodes.aborted);
+			expect(stage.wallClockTimedOut).toBe(false);
+		});
+		await Bun.sleep(100);
+		runController.abort('stop requested');
+		await stagePromise;
+	});
+
+	test(
+		'a triumvirate execution stage violating the write allowlist fails fast with reverted writes',
+		async () => {
+			const store = await makeStore('safety-write-allowlist');
+			await initializeGitProject(store.projectDir);
+			const strayPath = join(store.projectDir, 'stray.ts');
+			const backend = new SequencedBackend(
+				[
+					planningMarker('Primary plan'),
+					planningMarker('Secondary plan'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: ['stray.ts'], type: 'done' },
+					],
+				],
+				async (callIndex) => {
+					if (callIndex === 3) {
+						await writeFile(strayPath, 'export const stray = 1;\n');
+						await completeFeature(store, 'feature-core');
+					}
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--write-allowlist',
+				'.aidd',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					completionMarkerGraceMs: 5,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.writeAllowlistViolation);
+			// The violating write was reverted, not kept.
+			expect(await Bun.file(strayPath).exists()).toBe(false);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('no retry in triumvirate mode');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});
+
+describe('orchestrator triumvirate plan-marker contract', () => {
+	const proseOnly: AgentEvent[] = [
+		{
+			chunk: 'I looked around the repository and here is what I think.',
+			type: 'assistant_text',
+		},
+		{ exitCode: 0, filesModified: [], type: 'done' },
+	];
+
+	test(
+		'marker and planning-mirror corrections each receive one retry',
+		async () => {
+			const store = await makeStore('marker-and-mirror-retries');
+			const backend = new SequencedBackend(
+				[
+					proseOnly,
+					planningMarker('Primary plan from mutating retry'),
+					planningMarker('Primary corrected plan'),
+					planningMarker('Secondary plan'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+				],
+				async (callIndex, input) => {
+					if (callIndex === 1) {
+						await writeFile(join(input.cwd, 'rejected-mutation.txt'), 'not allowed\n');
+					}
+					if (callIndex === 5) await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(6);
+			expect(backend.inputs[1]?.text).toContain('aidd PLANNING MARKER RETRY');
+			expect(backend.inputs[2]?.text).toContain('aidd PLANNING MARKER RETRY');
+			expect(backend.inputs[2]?.text).toContain('aidd PLANNING STAGE RETRY');
+			const iteration = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+			) as {
+				triumvirate: {
+					primaryPlan: {
+						planningMarkerRetry: { attempts: number };
+						planningMirrorRetry: { attempts: number };
+					};
+				};
+			};
+			expect(iteration.triumvirate.primaryPlan.planningMarkerRetry.attempts).toBe(3);
+			expect(iteration.triumvirate.primaryPlan.planningMirrorRetry.attempts).toBe(3);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a markerless primary planner is retried once and the panel proceeds',
+		async () => {
+			const store = await makeStore('marker-primary-retry');
+			const backend = new SequencedBackend(
+				[
+					proseOnly,
+					planningMarker('Primary plan after retry'),
+					planningMarker('Secondary plan'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"decision":"execute","finalActions":"Implement."}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+				],
+				async (callIndex) => {
+					if (callIndex === 4) await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(5);
+			// The second primary attempt carries the marker-retry framing.
+			expect(backend.inputs[1]?.text).toContain('aidd PLANNING MARKER RETRY');
+			expect(backend.inputs[1]?.text).toContain('missing AIDD_RESULT planMarkdown');
+			// The overseer sees the retried plan, never the first attempt's prose.
+			expect(backend.inputs[3]?.text).toContain('Primary plan after retry');
+			expect(backend.inputs[3]?.text).not.toContain('here is what I think');
+			// The marker retry is recorded on the primary stage artifact.
+			const iterationJson = await readFile(
+				join(store.metadataDir, 'iterations', '001.json'),
+				'utf8',
+			);
+			const structured = JSON.parse(iterationJson) as {
+				triumvirate: { primaryPlan: { planningMarkerRetry?: { reason: string } } };
+			};
+			expect(structured.triumvirate.primaryPlan.planningMarkerRetry?.reason).toBe(
+				'missing_plan_markdown',
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a primary planner with no plan after the retry fails the run as a missing result',
+		async () => {
+			const store = await makeStore('marker-primary-invalid');
+			const backend = new SequencedBackend([proseOnly, proseOnly]);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			// Exit-zero prose no longer becomes the plan: the stage is invalid and classified
+			// like a single-agent missing AIDD_RESULT; no later stage launches.
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(backend.calls).toBe(2);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('primary planning stage produced no plan');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'an empty planMarkdown from the secondary planner fails after its retry',
+		async () => {
+			const store = await makeStore('marker-secondary-empty');
+			const emptyPlan: AgentEvent[] = [
+				{ chunk: 'AIDD_RESULT: {"planMarkdown":"  "}\n', type: 'assistant_text' },
+				{ exitCode: 0, filesModified: [], type: 'done' },
+			];
+			const backend = new SequencedBackend([
+				planningMarker('Primary plan'),
+				emptyPlan,
+				emptyPlan,
+			]);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			// primary + two secondary attempts; the overseer never launches.
+			expect(backend.calls).toBe(3);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('secondary planning stage produced no plan');
+			expect(runSummary?.summary).toContain('planMarkdown must be a non-empty string');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'the complexity fast path never executes prose from a markerless planner',
+		async () => {
+			const store = await makeStore('marker-fast-path-invalid');
+			const backend = new SequencedBackend([proseOnly, proseOnly]);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--complexity-tiering',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			// The fast path must not send the prose to a mutating execution stage: the run
+			// fails at the planning contract with no execution call.
+			expect(exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(backend.calls).toBe(2);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a valid plan after the marker retry still takes the fast path',
+		async () => {
+			const store = await makeStore('marker-fast-path-retry');
+			const backend = new SequencedBackend(
+				[
+					proseOnly,
+					planningMarker('Primary plan after retry'),
+					[
+						{
+							chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+							type: 'assistant_text',
+						},
+						{ exitCode: 0, filesModified: [], type: 'done' },
+					],
+				],
+				async (callIndex) => {
+					if (callIndex === 2) await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, [
+				'--triumvirate',
+				'--secondary-cli',
+				'native',
+				'--overseer-cli',
+				'native',
+				'--complexity-tiering',
+			]);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, {
+					backend,
+					backendFactory: () => backend,
+					rootDir,
+					store,
+				});
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			// Two primary attempts + execution; secondary and overseer stay skipped.
+			expect(backend.calls).toBe(3);
+			expect(backend.inputs[2]?.text).toContain('Primary plan after retry');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});

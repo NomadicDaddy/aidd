@@ -1,0 +1,32 @@
+{
+	"description": "Refresh every documented project artifact against the live application, then recalculate canonical artifact status.",
+	"name": "reconcile project artifacts",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "refresh-project-artifacts"
+			},
+			"name": "Refresh project artifacts",
+			"retryCount": 1,
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "check-artifacts"
+			},
+			"name": "Recalculate artifact status",
+			"stepType": "recipe-ref"
+		}
+	]
+}

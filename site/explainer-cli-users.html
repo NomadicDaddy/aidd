@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<title>aidd for CLI-agent users: the layer above claude-code</title>
+		<meta
+			content="If you already run claude-code, cline, codex, or opencode, here's what aidd adds: dependency-ordered backlogs, unattended runs, gates that decide done, and receipts on disk."
+			name="description" />
+		<meta content="aidd for CLI-agent users: the layer above claude-code" property="og:title" />
+		<meta
+			content="Your CLI agent is a great engine and a poor manager. aidd orchestrates the agent you already use: backlogs with acceptance criteria, gates that decide done, and a run ledger in your repo."
+			property="og:description" />
+		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="website" property="og:type" />
+		<meta
+			content="https://nomadicdaddy.github.io/aidd/explainer-cli-users.html"
+			property="og:url" />
+		<meta content="summary_large_image" name="twitter:card" />
+		<link href="favicon.svg" rel="icon" type="image/svg+xml" />
+		<link href="favicon.ico" rel="shortcut icon" />
+		<style>
+			:root {
+				--ink: #08111f;
+				--muted: #536070;
+				--panel: #ffffff;
+				--wash: #f6f8fb;
+				--line: #d7dee8;
+				--cyan: #0891b2;
+				--cyan-soft: #d9f7fb;
+				--green: #10b981;
+				--amber: #f59e0b;
+				--night: #07111f;
+				--night-line: rgba(168, 209, 229, 0.24);
+				--night-text: #e9f6ff;
+				--night-muted: #9cb5c8;
+				--radius: 8px;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: var(--wash);
+				color: var(--ink);
+				font:
+					17px/1.65 Inter,
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					'Segoe UI',
+					sans-serif;
+			}
+			a {
+				color: inherit;
+			}
+			a:focus-visible {
+				outline: 3px solid var(--amber);
+				outline-offset: 4px;
+			}
+			.site-header {
+				background: var(--night);
+				color: var(--night-text);
+				border-bottom: 1px solid var(--night-line);
+			}
+			.site-header-inner {
+				display: flex;
+				width: min(760px, calc(100% - 40px));
+				margin: 0 auto;
+				align-items: center;
+				justify-content: space-between;
+				gap: 20px;
+				min-height: 64px;
+			}
+			.brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 12px;
+				color: var(--night-text);
+				text-decoration: none;
+			}
+			.brand-mark {
+				display: block;
+				width: 30px;
+				height: 30px;
+			}
+			.brand-name {
+				font-size: 16px;
+				font-weight: 800;
+				letter-spacing: 0.18em;
+				text-transform: lowercase;
+			}
+			nav {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex-wrap: wrap;
+				justify-content: flex-end;
+			}
+			nav a {
+				border: 1px solid transparent;
+				border-radius: 999px;
+				color: rgba(233, 246, 255, 0.78);
+				font-size: 14px;
+				font-weight: 700;
+				padding: 7px 11px;
+				text-decoration: none;
+			}
+			nav a:hover {
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.08);
+				color: #ffffff;
+			}
+			.page {
+				width: min(760px, calc(100% - 40px));
+				margin: 0 auto;
+				padding: 56px 0 72px;
+			}
+			.kicker {
+				margin: 0 0 10px;
+				color: var(--cyan);
+				font-size: 13px;
+				font-weight: 900;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+			}
+			h1 {
+				margin: 0 0 16px;
+				font-size: clamp(32px, 6vw, 44px);
+				font-weight: 900;
+				line-height: 1.06;
+				text-wrap: balance;
+			}
+			.lede {
+				margin: 0 0 40px;
+				color: var(--muted);
+				font-size: 20px;
+				line-height: 1.5;
+				text-wrap: balance;
+			}
+			.lede strong {
+				color: var(--ink);
+			}
+			h2 {
+				margin: 44px 0 12px;
+				font-size: 24px;
+				font-weight: 850;
+				line-height: 1.15;
+				text-wrap: balance;
+			}
+			p {
+				margin: 0 0 16px;
+			}
+			.loop {
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 10px;
+				margin: 24px 0 12px;
+			}
+			.loop-step {
+				position: relative;
+				overflow: hidden;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				background: var(--panel);
+				box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+				padding: 16px;
+			}
+			.loop-step::before {
+				position: absolute;
+				inset: 0 0 auto;
+				height: 4px;
+				background: var(--accent, var(--cyan));
+				content: '';
+			}
+			.loop-step:nth-child(1) {
+				--accent: var(--cyan);
+			}
+			.loop-step:nth-child(2) {
+				--accent: var(--green);
+			}
+			.loop-step:nth-child(3) {
+				--accent: var(--amber);
+			}
+			.loop-step:nth-child(4) {
+				--accent: #7c3aed;
+			}
+			.loop-step h3 {
+				margin: 0 0 6px;
+				font-size: 13px;
+				font-weight: 900;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+			}
+			.loop-step p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+				line-height: 1.5;
+			}
+			.loop-caption {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 18px 26px;
+				margin-top: 20px;
+			}
+			.grid h3 {
+				margin: 0 0 5px;
+				font-size: 17px;
+				font-weight: 800;
+			}
+			.grid p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 15px;
+			}
+			.callout {
+				border: 1px solid var(--line);
+				border-left: 4px solid var(--cyan);
+				border-radius: 0 var(--radius) var(--radius) 0;
+				background: var(--cyan-soft);
+				margin: 44px 0 0;
+				padding: 18px 22px;
+			}
+			.callout p {
+				margin: 0;
+				font-size: 16px;
+			}
+			.facts {
+				display: flex;
+				border-top: 1px solid var(--line);
+				margin-top: 48px;
+				padding-top: 20px;
+				gap: 8px 32px;
+				flex-wrap: wrap;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.facts b {
+				color: var(--ink);
+				font-weight: 800;
+			}
+			.facts a {
+				color: #0369a1;
+				font-weight: 700;
+			}
+			.site-footer {
+				background: var(--night);
+				color: var(--night-muted);
+			}
+			.footer-inner {
+				display: flex;
+				width: min(760px, calc(100% - 40px));
+				margin: 0 auto;
+				align-items: center;
+				justify-content: space-between;
+				gap: 20px;
+				padding: 26px 0;
+				flex-wrap: wrap;
+				font-size: 14px;
+			}
+			.footer-links {
+				display: flex;
+				gap: 14px;
+				flex-wrap: wrap;
+			}
+			.footer-links a {
+				color: var(--night-muted);
+				text-decoration: none;
+			}
+			.footer-links a:hover {
+				color: #ffffff;
+			}
+			@media (max-width: 620px) {
+				.loop,
+				.grid {
+					grid-template-columns: 1fr;
+				}
+				.site-header-inner {
+					align-items: flex-start;
+					flex-direction: column;
+					justify-content: center;
+					padding: 12px 0;
+				}
+				nav {
+					justify-content: flex-start;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="site-header-inner">
+				<a class="brand" aria-label="aidd home" href="index.html">
+					<img class="brand-mark" alt="" src="favicon.svg" />
+					<span class="brand-name">aidd</span>
+				</a>
+				<nav aria-label="Primary navigation">
+					<a href="index.html">Home</a>
+					<a href="explainer.html">Explainer</a>
+					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
+					<a href="https://github.com/NomadicDaddy/aidd/releases/latest">Get source</a>
+				</nav>
+			</div>
+		</header>
+
+		<main class="page">
+			<p class="kicker">If you already run claude-code, cline, codex, or opencode</p>
+			<h1>The management layer above your coding agent.</h1>
+			<p class="lede">
+				You already know what a CLI agent can do in one session. <strong>aidd</strong>
+				sits above it: dependency-ordered backlogs, unattended multi-iteration runs, gates
+				that decide what counts as done, and a run ledger in your repo - driving the same
+				agent you use today.
+			</p>
+
+			<section>
+				<h2>What your CLI doesn't do</h2>
+				<p>
+					A session is one repo, one context window, one conversation. The agent decides
+					for itself when it's finished, and you've seen how that goes: "I've completed
+					the implementation" over a diff with a stubbed function and a test that asserts
+					nothing. When the session ends, the transcript is the only record. CLAUDE.md
+					gives an agent standing instructions inside one repo, but nothing looks across
+					your projects, orders the work, or enforces completion.
+				</p>
+				<p>
+					That's not a knock on the agent. It's an execution engine. It's just also been
+					doing its own project management, and it's bad at that job.
+				</p>
+			</section>
+
+			<section>
+				<h2>What aidd is</h2>
+				<p>
+					aidd is a local orchestrator - a Bun/TypeScript CLI plus a local web panel -
+					that launches your agent as the execution engine. A spec becomes features with
+					acceptance criteria and dependencies under <code>.aidd/features/</code>. A run
+					loops: pick the next eligible feature, compile the prompt, invoke the CLI once,
+					check the result. Repeat until the backlog empties or the run hits its iteration
+					or wall-clock limit.
+				</p>
+				<div class="loop">
+					<div class="loop-step">
+						<h3>Plan</h3>
+						<p>Spec to dependency-ordered features, each with acceptance criteria.</p>
+					</div>
+					<div class="loop-step">
+						<h3>Build</h3>
+						<p>Iterations, one CLI invocation each, watchable live from the panel.</p>
+					</div>
+					<div class="loop-step">
+						<h3>Verify</h3>
+						<p>Tests, typecheck, lint, and browser-level checks gate every feature.</p>
+					</div>
+					<div class="loop-step">
+						<h3>Record</h3>
+						<p>Run ledger, per-iteration logs, and audit reports as plain files.</p>
+					</div>
+				</div>
+				<p class="loop-caption">
+					A feature the agent claims is done but that fails a gate stays open and goes
+					back around the loop. The model doesn't get a vote.
+				</p>
+			</section>
+
+			<section>
+				<h2>What you get on top</h2>
+				<div class="grid">
+					<div>
+						<h3>Your CLI stays</h3>
+						<p>
+							claude-code, cline, codex, opencode, kilocode, grok, any
+							OpenAI-compatible API, or local Ollama / LM Studio. The CLI is a per-run
+							setting, so comparing agents on the same backlog is a dropdown.
+						</p>
+					</div>
+					<div>
+						<h3>Receipts in the repo</h3>
+						<p>
+							<code>.aidd/runs.jsonl</code>, per-iteration logs, feature status, and
+							audit reports live next to the code as plain files. Greppable, diffable,
+							and not hostage to aidd - the format is documented.
+						</p>
+					</div>
+					<div>
+						<h3>Audits with evidence</h3>
+						<p>
+							Security, architecture, performance, and integration audits (among ~45)
+							where every finding must cite current-code evidence - file and line -
+							before it lands in the backlog as work.
+						</p>
+					</div>
+					<div>
+						<h3>A director for the fleet</h3>
+						<p>
+							Discovers every project under the roots you configure, scans them in
+							cycles, and proposes prioritized work. Accept a suggestion and it
+							launches a run. Cycles can run on a schedule, and suggestion auto-launch
+							is available: bounded, and off by default.
+						</p>
+					</div>
+					<div>
+						<h3>Recipes, not re-prompting</h3>
+						<p>
+							Multi-step workflows - review, fix, verify - saved as JSON files and
+							rerun on any project, from the panel or on a schedule.
+						</p>
+					</div>
+					<div>
+						<h3>MCP and Telegram</h3>
+						<p>
+							An MCP server (<code>bun run start -- --mcp</code>, alongside the
+							running panel) exposes it to other agent sessions, and a Telegram bridge
+							puts the fleet Director in your pocket - ask it what's going on from
+							your phone. Both are included with aidd.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<h2>What it isn't</h2>
+				<p>
+					It doesn't replace interactive sessions - you'll still drop into claude-code
+					directly for exploratory work, and aidd stays out of the way when you do. It's
+					not a cloud platform; there's no hosted anything. It is opinionated about
+					project state: work is tracked as features in <code>.aidd/</code>, and coding
+					runs select from that backlog rather than freeform prompts - a one-off
+					instruction is its own mode (<code>--prompt</code>), not the default. Windows 11
+					with PowerShell 7 is the first-class platform; Linux runs the full quality gate
+					in CI, and macOS is expected to work but is checked by hand. There are no
+					prebuilt binaries - aidd ships as source on every platform and runs on Bun.
+				</p>
+			</section>
+
+			<div class="callout">
+				<p>
+					<strong>Your keys, your machine, your plan.</strong> Runs use the subscription
+					or API keys you already have, bounded per run by iteration and wall-clock
+					limits, with cost and token ceilings you set surfacing as warnings in the run
+					log. aidd has no hosted control plane or user account; it sends no telemetry and
+					does not phone home. Network traffic comes only from providers or integrations
+					you configure, or downloads you initiate.
+				</p>
+			</div>
+
+			<div class="facts">
+				<span><b>Runs on</b> your own machine</span>
+				<span><b>Install</b> from source; needs Bun 1.4.0+</span>
+				<span><b>Platform</b> Windows-first; Linux tested in CI, macOS by hand</span>
+				<span><b>Product</b> every capability included</span>
+				<span><b>AI usage</b> you pay only your own AI provider</span>
+				<span>
+					<b>License</b>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/LICENSE">FSL-1.1-ALv2</a
+					>, Apache 2.0 after two years
+				</span>
+				<span>
+					<b>Source</b>
+					<a href="https://github.com/NomadicDaddy/aidd">github.com/NomadicDaddy/aidd</a>
+				</span>
+			</div>
+		</main>
+
+		<footer class="site-footer">
+			<div class="footer-inner">
+				<strong>aidd - local runs, local receipts.</strong>
+				<div class="footer-links">
+					<a href="index.html">Home</a>
+					<a href="explainer.html">Explainer</a>
+					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/SUPPORT.md">Support</a>
+					<a href="https://github.com/NomadicDaddy/aidd/blob/main/PRIVACY.md">Privacy</a>
+				</div>
+			</div>
+		</footer>
+	</body>
+</html>

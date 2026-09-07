@@ -1,0 +1,30 @@
+{
+	"description": "Analyze the codebase and generate feature.json reconstruction blueprints.",
+	"name": "generate application features",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application} --apply",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-coverage-audit"
+			},
+			"name": "Generate features",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "feature-review"
+			},
+			"name": "Review features",
+			"stepType": "skill"
+		}
+	]
+}

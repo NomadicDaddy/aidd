@@ -1,0 +1,236 @@
+{
+	"applicationsRoot": "C:\\path\\to\\workspace",
+	"auditModel": "glm-5.3",
+	"auditsEnabled": true,
+	"backends": {
+		"claude-code": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "claude-opus-5",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"cline": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "claude-opus-5",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"codex": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"grok": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "grok-4.6",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"kilocode": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"lmstudio": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "openai/gpt-oss-20b",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"native": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "glm-5.3",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"ollama": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "gpt-oss:20b",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"openai": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		},
+		"opencode": {
+			"idleNudgeTimeoutSeconds": 600,
+			"idleTimeoutSeconds": 900,
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "low",
+			"timeoutSeconds": 10800
+		}
+	},
+	"channels": {
+		"telegram": {
+			"allowedChatIds": [123456789],
+			"botToken": "YOUR_TELEGRAM_BOT_TOKEN"
+		}
+	},
+	"cli": "native",
+	"codeModel": "glm-5.3",
+	"complexityTieredPlanning": false,
+	"consistencyGateEnabled": false,
+	"defaultProvider": "zhipu",
+	"directAi": {
+		"baseUrl": "https://api.z.ai/api/coding/paas/v4",
+		"enabled": false,
+		"model": "glm-5.3",
+		"provider": "zhipu",
+		"reasoningEffort": "low",
+		"surfaces": {
+			"directorChat": false,
+			"directorCycle": false,
+			"projectAdvisor": false,
+			"runSummaries": false
+		},
+		"timeoutSeconds": 120
+	},
+	"director": {
+		"chat": {
+			"allowFileEdits": false
+		},
+		"schedule": {
+			"enabled": false,
+			"intervalHours": 12
+		},
+		"suggestions": {
+			"autoLaunch": {
+				"allowedRecipes": ["coding", "remediate-audit-findings", "remediate-bugs"],
+				"enabled": false,
+				"maxPerCycle": 1,
+				"maxRank": 1,
+				"riskCeiling": "LOW"
+			},
+			"granularity": "targeted",
+			"maxPerBucket": 3
+		}
+	},
+	"dirtyTreeThreshold": 50,
+	"idleNudgeTimeoutSeconds": 600,
+	"idleTimeoutSeconds": 900,
+	"maxConsecutiveTimeoutRetries": 2,
+	"maxCostUsd": 25,
+	"maxIterations": 30,
+	"maxTokens": 1000000,
+	"maxTurns": 25,
+	"model": "glm-5.3",
+	"noClean": false,
+	"noWorkBackoffMs": 30000,
+	"preflightDoctor": true,
+	"providers": {
+		"lmstudio": {
+			"baseUrl": "http://localhost:1234/v1",
+			"model": "openai/gpt-oss-20b",
+			"reasoningEffort": "low",
+			"stream": false,
+			"streamIdleTimeoutMs": 180000
+		},
+		"ollama": {
+			"baseUrl": "http://localhost:11434/v1",
+			"model": "gpt-oss:20b",
+			"reasoningEffort": "low",
+			"stream": false,
+			"streamIdleTimeoutMs": 180000
+		},
+		"openai": {
+			"apiKey": "YOUR_OPENAI_API_KEY",
+			"baseUrl": "https://api.openai.com/v1",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "low",
+			"stream": true,
+			"streamIdleTimeoutMs": 180000
+		},
+		"xai": {
+			"apiKey": "YOUR_XAI_API_KEY",
+			"baseUrl": "https://api.x.ai/v1",
+			"model": "grok-4.6",
+			"reasoningEffort": "low",
+			"stream": true,
+			"streamIdleTimeoutMs": 180000
+		},
+		"zhipu": {
+			"apiKey": "YOUR_ZHIPU_API_KEY",
+			"baseUrl": "https://api.z.ai/api/coding/paas/v4",
+			"model": "glm-5.3",
+			"reasoningEffort": "low",
+			"stream": true,
+			"streamIdleTimeoutMs": 180000
+		}
+	},
+	"quitOnAbort": 0,
+	"rateLimitBackoffSeconds": 300,
+	"rateLimitBufferSeconds": 60,
+	"reasoningEffort": "low",
+	"sharedDirs": ["C:\\path\\to\\workspace\\ai\\commands"],
+	"sharedFiles": [
+		"C:\\path\\to\\workspace\\AGENTS.md",
+		{
+			"source": "C:\\path\\to\\workspace\\ai\\shared\\workspace-notes.md",
+			"target": ".aidd\\workspace-notes.md"
+		}
+	],
+	"timeoutSeconds": 10800,
+	"triumvirate": {
+		"execCli": "native",
+		"execModel": "glm-5.3",
+		"overseerCli": "claude-code",
+		"overseerModel": "claude-fable-5",
+		"secondaryCli": "codex",
+		"secondaryModel": "gpt-5.6-sol"
+	},
+	"web": {
+		"allowRemote": false,
+		"allowedOrigins": [],
+		"allowedRoots": ["C:\\path\\to\\workspace"],
+		"authToken": "set-a-long-random-secret-required-when-allowRemote-is-true",
+		"autoChainLimit": 3,
+		"autoChainRuns": false,
+		"dataDir": "data",
+		"hostname": "127.0.0.1",
+		"ignoredFolders": [
+			".git",
+			"data",
+			"dist",
+			"frontend",
+			"logs",
+			"node_modules",
+			"scaffolding",
+			"screenshots"
+		],
+		"maxConcurrentRuns": 2,
+		"maxConcurrentRunsPerProject": 2,
+		"port": 3210,
+		"showSpernakitProject": false,
+		"spernakitFleetManifest": "C:\\path\\to\\workspace\\spernakit\\spernakit.psd1",
+		"spernakitInitScript": "C:\\path\\to\\workspace\\spernakit\\init.ps1",
+		"spernakitTemplateRef": "v3.45.0",
+		"spernakitTemplateRepo": "NomadicDaddy/spernakit",
+		"templates": [
+			{
+				"cwd": "targetPath",
+				"description": "vite-react",
+				"initCommand": ["bun", "create", "vite", ".", "--template", "react-ts"],
+				"name": "vite-react",
+				"postCreate": "ingest",
+				"requiresDescription": false,
+				"rootMustBeInitDir": false
+			}
+		],
+		"traceDataMovement": false,
+		"useWorktrees": false
+	}
+}

@@ -1,0 +1,93 @@
+import { describe, expect, test } from 'bun:test';
+
+import { isKnownSmokeCacheStep } from '../../scripts/lib/smoke-cache/dependencies.ts';
+import { assertSmokeCacheCoverage } from '../../scripts/lib/smoke-qc/coverage.ts';
+import {
+	FAST_QC_STEP_NAMES,
+	FAST_QC_STEPS,
+	FAST_STEP_OVERRIDES,
+	parseSmokeQcArgs,
+	SMOKE_QC_STEPS,
+} from '../../scripts/smoke-qc.ts';
+
+describe('smoke:qc --fast subset', () => {
+	test('--fast flag parses', () => {
+		expect(parseSmokeQcArgs(['--fast']).fast).toBe(true);
+		expect(parseSmokeQcArgs([]).fast).toBe(false);
+	});
+
+	test('strict parsing rejects mistyped fast flags', () => {
+		expect(() => parseSmokeQcArgs(['--fasst'])).toThrow("Unknown option '--fasst'");
+	});
+
+	test('omits the slow steps so it stays inner-loop cheap', () => {
+		// The whole point of the fast gate is to skip the build and the test suite — the two
+		// steps that make a full smoke:qc slow enough to blow an external CLI's command timeout.
+		expect(FAST_QC_STEP_NAMES).not.toContain('test');
+		expect(FAST_QC_STEP_NAMES).not.toContain('build:frontend');
+	});
+
+	test('every fast step is a real smoke:qc step, in the declared order', () => {
+		expect(FAST_QC_STEPS.map((step) => step.name)).toEqual(
+			FAST_QC_STEP_NAMES.map((name) => FAST_STEP_OVERRIDES[name]?.name ?? name),
+		);
+		const allNames = new Set(SMOKE_QC_STEPS.map((step) => step.name));
+		for (const name of FAST_QC_STEP_NAMES) {
+			expect(allNames.has(name)).toBe(true);
+		}
+	});
+
+	test('the lint override is cached, separately keyed, and classified', () => {
+		// ESLint's --cache keys on each file's own content, which the type-aware rules outlive: a
+		// type change in one file can create a violation in another the cache treats as unchanged.
+		// The fast gate accepts that for speed; the full gate must not, so `lint` stays uncached
+		// and the override runs under its own smoke-cache key.
+		const override = FAST_STEP_OVERRIDES.lint;
+		expect(override?.command).toEqual(['bun', 'run', 'lint:fast']);
+		expect(override?.name).not.toBe('lint');
+		for (const step of FAST_QC_STEPS) {
+			expect(isKnownSmokeCacheStep(step.name)).toBe(true);
+		}
+	});
+
+	test('covers the code-quality checks the fix loop iterates on', () => {
+		// Types + lint are the errors an implementation loop actually chases; max-lines and
+		// format guard the two other cheap gates that otherwise only surface in the full run.
+		expect(FAST_QC_STEP_NAMES).toContain('typecheck');
+		expect(FAST_QC_STEP_NAMES).toContain('lint');
+		expect(FAST_QC_STEP_NAMES).toContain('check:max-lines');
+		expect(FAST_QC_STEP_NAMES).toContain('format:check');
+	});
+
+	test('classifies every smoke step as cacheable or intentionally uncacheable', () => {
+		for (const step of SMOKE_QC_STEPS) {
+			expect(isKnownSmokeCacheStep(step.name)).toBe(true);
+		}
+	});
+
+	test('runs cheapest-first so a doomed tree fails fast', () => {
+		// The full order is measured (see scripts/lib/smoke-qc/fast-subset.ts); the two ends are
+		// the load-bearing part. check:max-lines is ~70x cheaper than lint, so surfacing a lint
+		// error first spends ~10s reporting what a 0.14s gate could have caught. Asserting the
+		// whole array here would just restate the constant and pin nothing.
+		expect(FAST_QC_STEP_NAMES[0]).toBe('check:max-lines');
+		expect(FAST_QC_STEP_NAMES.at(-1)).toBe('lint');
+	});
+
+	test('places typecheck before formatting in both full and fast gates', () => {
+		const full = SMOKE_QC_STEPS.map((step) => step.name);
+		expect(full.indexOf('typecheck')).toBeLessThan(full.indexOf('format:check'));
+		expect(FAST_QC_STEP_NAMES.indexOf('typecheck')).toBeLessThan(
+			FAST_QC_STEP_NAMES.indexOf('format:check'),
+		);
+	});
+
+	test('refuses to run a step with no cache classification', () => {
+		expect(() => assertSmokeCacheCoverage(['check:brand-new'])).toThrow(
+			'need cache classifications',
+		);
+		expect(() =>
+			assertSmokeCacheCoverage(SMOKE_QC_STEPS.map((step) => step.name)),
+		).not.toThrow();
+	});
+});

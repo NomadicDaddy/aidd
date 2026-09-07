@@ -1,0 +1,21 @@
+{
+	"description": "Run a broad codebase analysis across architecture, performance, security, metadata health, and technical debt. Analysis only: it writes a dated report under .aidd/audit-reports/ and a summary in .aidd/CHANGELOG.md, never edits application code or configuration, and leaves its output as uncommitted workspace artifacts.",
+	"name": "codebase-analysis",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application} — save the analysis report under .aidd/audit-reports/ using the dated CODEBASE_ANALYSIS filename the skill specifies; this is the explicit report request the skill requires",
+				"executionIntent": "apply-changes",
+				"skillId": "codebase-analysis"
+			},
+			"name": "Analyze codebase",
+			"stepType": "skill"
+		}
+	]
+}

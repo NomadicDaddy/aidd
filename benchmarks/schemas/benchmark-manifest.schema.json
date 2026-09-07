@@ -1,0 +1,214 @@
+{
+	"$id": "https://github.com/NomadicDaddy/aidd/schemas/benchmark-manifest.schema.json",
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"additionalProperties": true,
+	"properties": {
+		"cohorts": {
+			"items": {
+				"additionalProperties": true,
+				"properties": {
+					"members": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"name": {
+						"type": "string"
+					},
+					"targetModelFamily": {
+						"type": "string"
+					}
+				},
+				"required": ["name", "targetModelFamily", "members"],
+				"type": "object"
+			},
+			"type": "array"
+		},
+		"pricing": {
+			"additionalProperties": {
+				"additionalProperties": false,
+				"properties": {
+					"cachedPerMtok": {
+						"minimum": 0,
+						"type": "number"
+					},
+					"inputPerMtok": {
+						"minimum": 0,
+						"type": "number"
+					},
+					"outputPerMtok": {
+						"minimum": 0,
+						"type": "number"
+					},
+					"reasoningPerMtok": {
+						"minimum": 0,
+						"type": "number"
+					}
+				},
+				"required": ["inputPerMtok", "outputPerMtok"],
+				"type": "object"
+			},
+			"type": "object"
+		},
+		"scoring": {
+			"additionalProperties": true,
+			"properties": {
+				"correctnessWeight": {
+					"maximum": 1,
+					"minimum": 0,
+					"type": "number"
+				},
+				"costPolicy": {
+					"type": "string"
+				},
+				"costWeight": {
+					"maximum": 1,
+					"minimum": 0,
+					"type": "number"
+				},
+				"reliabilityWeight": {
+					"maximum": 1,
+					"minimum": 0,
+					"type": "number"
+				},
+				"timeWeight": {
+					"maximum": 1,
+					"minimum": 0,
+					"type": "number"
+				}
+			},
+			"required": [
+				"correctnessWeight",
+				"reliabilityWeight",
+				"timeWeight",
+				"costWeight",
+				"costPolicy"
+			],
+			"type": "object"
+		},
+		"settings": {
+			"additionalProperties": true,
+			"properties": {
+				"controlTasksExcludedFromComposite": {
+					"type": "boolean"
+				},
+				"fixedEnv": {
+					"additionalProperties": {
+						"type": "string"
+					},
+					"type": "object"
+				},
+				"preflight": {
+					"properties": {
+						"timeoutSeconds": {
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					"required": ["timeoutSeconds"],
+					"type": "object"
+				},
+				"scoredRepetitions": {
+					"minimum": 1,
+					"type": "integer"
+				},
+				"warmupRepetitions": {
+					"minimum": 0,
+					"type": "integer"
+				}
+			},
+			"type": "object"
+		},
+		"stacks": {
+			"items": {
+				"additionalProperties": true,
+				"properties": {
+					"cli": {
+						"enum": [
+							"native",
+							"ollama",
+							"lmstudio",
+							"claude-code",
+							"opencode",
+							"kilocode",
+							"codex",
+							"cline"
+						],
+						"type": "string"
+					},
+					"label": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"model": {
+						"minLength": 1,
+						"type": "string"
+					},
+					"provider": {
+						"type": "string"
+					},
+					"reasoningEffort": {
+						"type": "string"
+					},
+					"simulation": {
+						"type": "boolean"
+					},
+					"thinking": {
+						"type": "boolean"
+					},
+					"thinkingLevel": {
+						"enum": ["low", "medium", "high"],
+						"type": "string"
+					},
+					"view": {
+						"enum": ["native-best", "fairness"],
+						"type": "string"
+					}
+				},
+				"required": ["cli", "model", "label", "view"],
+				"type": "object"
+			},
+			"minItems": 1,
+			"type": "array"
+		},
+		"tasks": {
+			"items": {
+				"additionalProperties": true,
+				"properties": {
+					"category": {
+						"enum": ["control", "agentic"],
+						"type": "string"
+					},
+					"command": {
+						"type": "string"
+					},
+					"evaluation": {
+						"type": "string"
+					},
+					"fixture": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"timeoutSeconds": {
+						"minimum": 1,
+						"type": "integer"
+					}
+				},
+				"required": ["id", "command", "fixture", "category", "timeoutSeconds"],
+				"type": "object"
+			},
+			"minItems": 1,
+			"type": "array"
+		},
+		"version": {
+			"const": 1,
+			"type": "integer"
+		}
+	},
+	"required": ["version", "stacks", "cohorts", "tasks", "scoring"],
+	"title": "aidd Benchmark Manifest",
+	"type": "object"
+}

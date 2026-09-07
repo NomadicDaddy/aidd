@@ -1,0 +1,40 @@
+{
+	"description": "Run all audits, review the findings, remediate them, and produce a session report.",
+	"name": "audit and remediate",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "audit (all)"
+			},
+			"name": "Run audits and review findings",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "remediate audit findings"
+			},
+			"name": "Remediate audit findings",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Write a session report to .aidd/reports/audit-and-remediate-<YYYYMMDD-HHMM>.md, using the current date and time for the filename. Read the per-step timing and outcome data from {sessionMetricsPath}, which the pipeline wrote for this session and refreshed after every completed step; do not glob for it, because a concurrent pipeline in the same project refreshes its own file. Summarize: time taken for each step, the audit findings raised, the features created, the remediations applied, and any issues encountered. Write nothing outside .aidd/."
+			},
+			"name": "Create session report",
+			"stepType": "aidd-cli"
+		}
+	]
+}

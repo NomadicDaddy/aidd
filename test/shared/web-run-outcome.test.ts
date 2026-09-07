@@ -1,0 +1,298 @@
+import { describe, expect, test } from 'bun:test';
+import {
+	classifyWebRun,
+	classifyWebRunTelemetryBucket,
+	decodeExitCode,
+	isProcessExitCode,
+	parkedWorkMarker,
+	unattributedSourceMarker,
+	unfinalizedAgentResultMarker,
+} from '../../shared/src/runs/outcome.ts';
+
+describe('classifyWebRun', () => {
+	test('classifies a clean completion as emerald success', () => {
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'completed',
+			exitCode: 0,
+		});
+		expect(outcome.tone).toBe('emerald');
+		expect(outcome.label).toBe('Completed');
+	});
+
+	test('classifies a blocked completion-marker run as amber warnings', () => {
+		const outcome = classifyWebRun({
+			status: 'failed',
+			stopReason: 'blocked',
+			exitCode: 7,
+			summary: 'completion_marker_missing_or_unaccepted: completed feature demo',
+		});
+		expect(outcome.label).toBe('Completed (warnings)');
+		expect(outcome.tone).toBe('amber');
+	});
+
+	test('classifies a hard gate block as red', () => {
+		const outcome = classifyWebRun({ status: 'failed', stopReason: 'blocked', exitCode: 1 });
+		expect(outcome.label).toBe('Blocked: gate');
+		expect(outcome.tone).toBe('red');
+	});
+
+	test('classifies an unfinalized recovered agent result as its own amber outcome', () => {
+		const outcome = classifyWebRun({
+			exitCode: -1,
+			status: 'failed',
+			stopReason: 'heartbeat_stale',
+			summary: `${unfinalizedAgentResultMarker} {"featureId":"demo","status":"completed","passes":true}`,
+		});
+		expect(outcome).toEqual({
+			label: 'Result reported · CLI died',
+			title: 'The agent reported a result, but the CLI died before aidd could finalize and verify it.',
+			tone: 'amber',
+		});
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: -1,
+				status: 'failed',
+				stopReason: 'heartbeat_stale',
+				summary: `${unfinalizedAgentResultMarker} {"passes":true}`,
+			}),
+		).toBe('warnings');
+		expect(
+			classifyWebRun({
+				exitCode: -1,
+				status: 'failed',
+				stopReason: 'partial_success_blocked',
+			}).label,
+		).toBe('Partial success');
+	});
+
+	test('classifies a heartbeat-reaped run without presenting its sentinel as an exit code', () => {
+		const run = {
+			exitCode: -1,
+			status: 'failed',
+			stopReason: 'heartbeat_stale',
+		} as const;
+
+		expect(classifyWebRun(run)).toEqual({
+			label: 'Reaped: stale heartbeat',
+			title: 'aidd reaped the Run after its heartbeat went stale and the CLI process appeared dead.',
+			tone: 'red',
+		});
+		expect(classifyWebRunTelemetryBucket(run)).toBe('failed');
+		expect(decodeExitCode(-1)).toBeNull();
+		expect(isProcessExitCode(-1)).toBeFalse();
+		expect(isProcessExitCode(7)).toBeTrue();
+	});
+
+	test('decodes a named orchestrator exit code on exit_error', () => {
+		const outcome = classifyWebRun({ status: 'failed', stopReason: 'exit_error', exitCode: 7 });
+		expect(outcome.label).toBe('Validation failed');
+		expect(outcome.tone).toBe('red');
+	});
+
+	test('classifies a provider content-flag refusal apart from provider errors', () => {
+		const outcome = classifyWebRun({
+			status: 'failed',
+			stopReason: 'exit_error',
+			exitCode: 78,
+		});
+		expect(outcome.label).toBe('Provider flagged');
+		expect(outcome.tone).toBe('red');
+		// Red like a failure, but accounted in its own telemetry bucket.
+		expect(
+			classifyWebRunTelemetryBucket({
+				status: 'failed',
+				stopReason: 'exit_error',
+				exitCode: 78,
+			}),
+		).toBe('flagged');
+		expect(
+			classifyWebRunTelemetryBucket({
+				status: 'failed',
+				stopReason: 'exit_error',
+				exitCode: 72,
+			}),
+		).toBe('failed');
+	});
+
+	test('downgrades a completed run whose summary carries the uncommitted-source marker to amber', () => {
+		// Regression for run-end-dirty-tree-check: a run that dirties tracked source after its
+		// last feature commit (post-commit formatter/codegen) must not read as a clean emerald
+		// "Completed". The orchestrator appends the marker to the run summary at run end.
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'completed',
+			exitCode: 0,
+			summary:
+				'coding completed feature-x; no incomplete feature work; uncommitted_source_files: 13 source file(s) left uncommitted at run end',
+		});
+		expect(outcome.label).toBe('Completed · dirty tree');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 0,
+				status: 'completed',
+				stopReason: 'completed',
+				summary: 'uncommitted_source_files: 13 source file(s) left uncommitted at run end',
+			}),
+		).toBe('warnings');
+	});
+
+	test('downgrades a completed run that parked its feature instead of completing it', () => {
+		// The failure this closes: a coding run whose live verification is blocked parks the
+		// selected feature as waiting_approval and still exits 0 with stopReason 'completed'. Every
+		// such run read emerald, so a pipeline session made of three of them reported fully green
+		// while none of the three features had actually been done.
+		const summary = `coding parked governed-mailbox-connection as waiting_approval (live verification blocked); 3 feature(s) pending approval; ${parkedWorkMarker} governed-mailbox-connection was parked, not completed`;
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'completed',
+			exitCode: 0,
+			summary,
+		});
+		expect(outcome.label).toBe('Completed · work parked');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 0,
+				status: 'completed',
+				stopReason: 'completed',
+				summary,
+			}),
+		).toBe('warnings');
+	});
+
+	test('the parked-work marker also survives the status fallback branch', () => {
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'unrecognized_reason',
+			exitCode: 0,
+			summary: `done; ${parkedWorkMarker} feature-x was parked, not completed`,
+		});
+		expect(outcome.label).toBe('Completed · work parked');
+	});
+
+	test('marker-free completed summaries stay emerald via the status fallback branch too', () => {
+		const clean = classifyWebRun({
+			status: 'completed',
+			stopReason: 'unrecognized_reason',
+			exitCode: 0,
+			summary: 'done',
+		});
+		expect(clean.tone).toBe('emerald');
+		const dirty = classifyWebRun({
+			status: 'completed',
+			stopReason: 'unrecognized_reason',
+			exitCode: 0,
+			summary: 'done; uncommitted_source_files: 2 source file(s) left uncommitted at run end',
+		});
+		expect(dirty.tone).toBe('amber');
+		expect(dirty.label).toBe('Completed · dirty tree');
+	});
+
+	test('keeps an unattributed-source observation as clean completed', () => {
+		const summary = `done; ${unattributedSourceMarker} 2 source file(s) changed in the worktree during this run but were not attributable to it`;
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'completed',
+			exitCode: 0,
+			summary,
+		});
+		expect(outcome.label).toBe('Completed');
+		expect(outcome.tone).toBe('emerald');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 0,
+				status: 'completed',
+				stopReason: 'completed',
+				summary,
+			}),
+		).toBe('completed');
+	});
+
+	test('classifies a parked worktree merge as an amber "Awaiting merge" (warnings, not failure)', () => {
+		const outcome = classifyWebRun({
+			status: 'waiting_approval',
+			stopReason: 'merge_conflict_parked',
+			exitCode: 77,
+		});
+		expect(outcome.label).toBe('Awaiting merge');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 77,
+				status: 'waiting_approval',
+				stopReason: 'merge_conflict_parked',
+			}),
+		).toBe('warnings');
+	});
+
+	// A guard-stopped run records exit 75 rather than 0, and the decode turns that into a badge that
+	// says why instead of a bare "Failed" with nothing naming the guard. Deliberately red: the bucket
+	// matches the status fallback, so this does not silently reclassify already-recorded flailing
+	// runs out of the telemetry failure count.
+	test('names the flailing guard rather than falling back to a bare "Failed"', () => {
+		const run = { exitCode: 75, status: 'failed', stopReason: 'flailing' } as const;
+		const outcome = classifyWebRun(run);
+		expect(outcome.label).toBe('Flailing guard');
+		expect(outcome.tone).toBe('red');
+		expect(classifyWebRunTelemetryBucket(run)).toBe('failed');
+	});
+
+	test('classifies a metadata-conflict park distinctly from a git merge park', () => {
+		const outcome = classifyWebRun({
+			status: 'waiting_approval',
+			stopReason: 'metadata_conflict_parked',
+			exitCode: 77,
+		});
+		expect(outcome.label).toBe('Parked: metadata conflict');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 77,
+				status: 'waiting_approval',
+				stopReason: 'metadata_conflict_parked',
+			}),
+		).toBe('warnings');
+	});
+	// Exit 0, but the run stopped short of its own deadline rather than finishing its scope — a
+	// green "Completed" badge would hide that there is work left over.
+	test('classifies a deliberate thin-budget stop as an amber "Time budget"', () => {
+		const outcome = classifyWebRun({
+			status: 'completed',
+			stopReason: 'wall_clock_budget',
+			exitCode: 0,
+		});
+		expect(outcome.label).toBe('Time budget');
+		expect(outcome.tone).toBe('amber');
+		expect(
+			classifyWebRunTelemetryBucket({
+				exitCode: 0,
+				status: 'completed',
+				stopReason: 'wall_clock_budget',
+			}),
+		).toBe('warnings');
+	});
+});
+
+describe('classifyWebRunTelemetryBucket', () => {
+	test('keeps every telemetry outcome distinct', () => {
+		expect(classifyWebRunTelemetryBucket({ status: 'completed', exitCode: 0 })).toBe(
+			'completed',
+		);
+		expect(classifyWebRunTelemetryBucket({ status: 'failed', exitCode: 1 })).toBe('failed');
+		expect(classifyWebRunTelemetryBucket({ status: 'killed', stopReason: 'killed' })).toBe(
+			'killed',
+		);
+		expect(classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'no_work' })).toBe(
+			'noWork',
+		);
+		expect(classifyWebRunTelemetryBucket({ status: 'running' })).toBe('running');
+		expect(
+			classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'stop_requested' }),
+		).toBe('stopped');
+		expect(
+			classifyWebRunTelemetryBucket({ status: 'stopped', stopReason: 'max_iterations' }),
+		).toBe('warnings');
+	});
+});

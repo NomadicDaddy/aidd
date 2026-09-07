@@ -1,0 +1,357 @@
+{
+	"cohorts": [
+		{
+			"members": ["native-glm53-low", "opencode-glm53-low", "kilocode-glm53-low"],
+			"name": "glm-5.3-low",
+			"targetModelFamily": "glm-5.3"
+		},
+		{
+			"members": ["native-glm53-medium", "opencode-glm53-medium", "kilocode-glm53-medium"],
+			"name": "glm-5.3-medium",
+			"targetModelFamily": "glm-5.3"
+		},
+		{
+			"members": ["native-glm53-high", "opencode-glm53-high", "kilocode-glm53-high"],
+			"name": "glm-5.3-high",
+			"targetModelFamily": "glm-5.3"
+		},
+		{
+			"members": [
+				"claude-code-opus48-low",
+				"claude-code-opus48-medium",
+				"claude-code-opus48-high",
+				"claude-code-opus48-xhigh",
+				"claude-code-opus48-max"
+			],
+			"name": "claude-opus-4-8",
+			"targetModelFamily": "claude-opus-4-8"
+		},
+		{
+			"members": [
+				"codex-gpt56-sol-low",
+				"codex-gpt56-sol-medium",
+				"codex-gpt56-sol-high",
+				"codex-gpt56-sol-xhigh"
+			],
+			"name": "gpt-5.6-sol",
+			"targetModelFamily": "gpt-5.6-sol"
+		},
+		{
+			"members": [
+				"ollama-qwen36-latest",
+				"ollama-qwen36-latest-thinking",
+				"ollama-qwen36-27b",
+				"ollama-qwen36-27b-thinking",
+				"ollama-gpt-oss-20b-low",
+				"ollama-gpt-oss-20b-medium",
+				"ollama-gpt-oss-20b-high",
+				"ollama-gemma4-12b"
+			],
+			"name": "ollama-local",
+			"targetModelFamily": "local-ollama"
+		},
+		{
+			"members": ["lmstudio-gpt-oss-20b", "lmstudio-gemma-4-e4b"],
+			"name": "lmstudio-local",
+			"targetModelFamily": "local-lmstudio"
+		}
+	],
+	"pricing": {
+		"glm-5.3": {
+			"cachedPerMtok": 0.26,
+			"inputPerMtok": 1.4,
+			"outputPerMtok": 4.4
+		},
+		"gpt-5.6-sol": {
+			"cachedPerMtok": 0.4,
+			"inputPerMtok": 4,
+			"outputPerMtok": 20
+		}
+	},
+	"scoring": {
+		"correctnessWeight": 0.45,
+		"costPolicy": "unknown-cost-redistribute-to-correctness-and-reliability",
+		"costWeight": 0.1,
+		"reliabilityWeight": 0.25,
+		"timeWeight": 0.2
+	},
+	"settings": {
+		"controlTasksExcludedFromComposite": true,
+		"fixedEnv": {
+			"AIDD_BENCHMARK": "1"
+		},
+		"preflight": {
+			"timeoutSeconds": 180
+		},
+		"scoredRepetitions": 3,
+		"warmupRepetitions": 1
+	},
+	"stacks": [
+		{
+			"cli": "native",
+			"label": "native-glm53-low",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "native",
+			"label": "native-glm53-medium",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "native",
+			"label": "native-glm53-high",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-low",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-medium",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-high",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-low",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-medium",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-high",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "claude-code",
+			"label": "claude-code-opus48-low",
+			"model": "claude-opus-4-8",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "claude-code",
+			"label": "claude-code-opus48-medium",
+			"model": "claude-opus-4-8",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "claude-code",
+			"label": "claude-code-opus48-high",
+			"model": "claude-opus-4-8",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "claude-code",
+			"label": "claude-code-opus48-xhigh",
+			"model": "claude-opus-4-8",
+			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "claude-code",
+			"label": "claude-code-opus48-max",
+			"model": "claude-opus-4-8",
+			"reasoningEffort": "max",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-low",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-medium",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-high",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-xhigh",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-qwen36-latest",
+			"model": "qwen3.6:latest",
+			"thinking": false,
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-qwen36-latest-thinking",
+			"model": "qwen3.6:latest",
+			"thinking": true,
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-qwen36-27b",
+			"model": "qwen3.6:27b",
+			"thinking": false,
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-qwen36-27b-thinking",
+			"model": "qwen3.6:27b",
+			"thinking": true,
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-gpt-oss-20b-low",
+			"model": "gpt-oss:20b",
+			"thinkingLevel": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-gpt-oss-20b-medium",
+			"model": "gpt-oss:20b",
+			"thinkingLevel": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-gpt-oss-20b-high",
+			"model": "gpt-oss:20b",
+			"thinkingLevel": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "ollama",
+			"label": "ollama-gemma4-12b",
+			"model": "hf.co/unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+			"thinking": false,
+			"view": "native-best"
+		},
+		{
+			"cli": "lmstudio",
+			"label": "lmstudio-gpt-oss-20b",
+			"model": "gpt-oss-20b",
+			"view": "native-best"
+		},
+		{
+			"cli": "lmstudio",
+			"label": "lmstudio-gemma-4-e4b",
+			"model": "google/gemma-4-e4b",
+			"view": "native-best"
+		}
+	],
+	"tasks": [
+		{
+			"category": "control",
+			"command": "--version",
+			"evaluation": "version",
+			"fixture": "preflight",
+			"id": "version",
+			"timeoutSeconds": 60
+		},
+		{
+			"category": "control",
+			"command": "--check-features",
+			"evaluation": "check-features",
+			"fixture": "validate",
+			"id": "check-features",
+			"timeoutSeconds": 60
+		},
+		{
+			"category": "control",
+			"command": "--check-artifacts",
+			"evaluation": "check-artifacts",
+			"fixture": "validate",
+			"id": "check-artifacts",
+			"timeoutSeconds": 60
+		},
+		{
+			"category": "agentic",
+			"command": "--interview --max-iterations 1",
+			"evaluation": "interview",
+			"fixture": "interview",
+			"id": "interview",
+			"timeoutSeconds": 600
+		},
+		{
+			"category": "agentic",
+			"command": "--audit \"SPERNAKIT,REACT_BEST_PRACTICES,COMPOSITION_PATTERNS,SECURITY\" --max-iterations 1",
+			"evaluation": "audit",
+			"fixture": "audit",
+			"id": "audit-primary",
+			"timeoutSeconds": 900
+		},
+		{
+			"category": "agentic",
+			"command": "--filter-by id --filter remediation-benchmark-* --max-iterations 1",
+			"evaluation": "remediation",
+			"fixture": "remediation",
+			"id": "remediation",
+			"timeoutSeconds": 900
+		},
+		{
+			"category": "agentic",
+			"command": "--validate --max-iterations 1",
+			"evaluation": "validate",
+			"fixture": "validate",
+			"id": "validate",
+			"timeoutSeconds": 900
+		},
+		{
+			"category": "agentic",
+			"command": "--interview --max-iterations 1",
+			"evaluation": "quiz",
+			"fixture": "quiz",
+			"id": "quiz",
+			"scoredRepetitions": 1,
+			"timeoutSeconds": 180,
+			"warmupRepetitions": 0
+		}
+	],
+	"version": 1
+}

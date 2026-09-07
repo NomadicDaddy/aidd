@@ -1,0 +1,4 @@
+interface:
+    display_name: 'Point Me'
+    short_description: 'Pick the skill or recipe that fits a goal'
+    default_prompt: 'Use $pointme to name the one or two skills or recipes that best accomplish a stated goal, with the exact invocation.'

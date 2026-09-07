@@ -1,0 +1,5 @@
+{
+	"minPrecision": 0.75,
+	"minRecall": 0.75,
+	"minRuns": 3
+}

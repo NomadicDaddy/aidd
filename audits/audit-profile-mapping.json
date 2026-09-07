@@ -1,0 +1,92 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"rules": [
+		{
+			"audits": ["*"],
+			"description": "Prototype/archive projects exclude all audits by default.",
+			"effect": "excluded",
+			"id": "archive-prototype-sweep",
+			"match": { "bucket": ["prototype_archive"] }
+		},
+		{
+			"audits": ["ASSERTIONS", "DOCUMENTATION", "HYGIENE"],
+			"description": "Prototype/archive projects still run the hygiene-class audits.",
+			"effect": "required",
+			"id": "archive-prototype-keep",
+			"match": { "bucket": ["prototype_archive"] }
+		},
+		{
+			"audits": ["UI_PARITY"],
+			"description": "UI parity requires an explicit per-project opt-in.",
+			"effect": "disabled",
+			"id": "ui-parity-default-disabled",
+			"match": {}
+		},
+		{
+			"audits": [
+				"BUILD_OUTPUT",
+				"CONVEX",
+				"DATABASE",
+				"DEPLOYMENT",
+				"DEVOPS",
+				"LICENSING",
+				"LIGHTHOUSE",
+				"PERFORMANCE",
+				"SCHEMA_CONSTRAINTS"
+			],
+			"description": "Low-exposure single-user local projects skip infra and performance audits.",
+			"effect": "disabled",
+			"id": "low-exposure-local-skip-infra",
+			"match": {
+				"bucket": ["single_user_local"],
+				"criticality": ["toy", "utility"],
+				"dataSensitivity": ["none", "low"],
+				"deployment": ["local"],
+				"externalIntegrations": ["none", "read_only"]
+			}
+		},
+		{
+			"audits": [
+				"PROXY_AUTH_BOUNDARY",
+				"OUTBOUND_SSRF",
+				"SECRET_HANDLING_RETENTION",
+				"AGENT_TOOL_SANDBOX",
+				"GIT_DESTRUCTIVE_SAFETY",
+				"ORCHESTRATOR_CONCURRENCY",
+				"SECURITY"
+			],
+			"description": "Agent-orchestration local tools (aidd) MUST run the agent/proxy/secret audits — their real attack surface.",
+			"effect": "required",
+			"id": "agent-orchestration-local-require",
+			"match": {
+				"bucket": ["single_user_local"],
+				"externalIntegrations": ["write_capable", "financial_or_security"]
+			}
+		},
+		{
+			"audits": ["PROXY_AUTH_BOUNDARY", "OUTBOUND_SSRF", "SECRET_HANDLING_RETENTION"],
+			"description": "All web-backend targets run the fleet-wide proxy/SSRF/secret audits.",
+			"effect": "required",
+			"id": "web-backend-require-proxy-secret",
+			"match": {
+				"deployment": ["local", "lan", "private_server", "public_server", "cloud"]
+			}
+		},
+		{
+			"audits": ["AGENT_TOOL_SANDBOX", "GIT_DESTRUCTIVE_SAFETY", "ORCHESTRATOR_CONCURRENCY"],
+			"description": "Targets without an agent tool/pipeline skip the aidd-unique agent audits.",
+			"effect": "disabled",
+			"id": "non-agent-skip-agent-audits",
+			"match": {
+				"bucket": [
+					"multi_user_local",
+					"private_team",
+					"internet_single_org",
+					"public_multi_tenant",
+					"critical_regulated"
+				]
+			}
+		}
+	],
+	"version": 1
+}

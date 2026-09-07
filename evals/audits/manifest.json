@@ -1,0 +1,153 @@
+{
+	"cohorts": [
+		{
+			"members": ["codex-gpt56-sol-high"],
+			"name": "audit-evals",
+			"targetModelFamily": "gpt-5.6-sol"
+		}
+	],
+	"pricing": {
+		"gpt-5.6-sol": {
+			"cachedPerMtok": 0.4,
+			"inputPerMtok": 4,
+			"outputPerMtok": 20
+		}
+	},
+	"scoring": {
+		"auditEval": {
+			"lineTolerance": 3,
+			"precisionWeight": 0.5,
+			"recallWeight": 0.5,
+			"strictPrecision": false
+		},
+		"correctnessWeight": 1,
+		"costPolicy": "advisory",
+		"costWeight": 0,
+		"reliabilityWeight": 0,
+		"timeWeight": 0
+	},
+	"settings": {
+		"controlTasksExcludedFromComposite": true,
+		"fixedEnv": {},
+		"preflight": {
+			"timeoutSeconds": 180
+		},
+		"scoredRepetitions": 3,
+		"warmupRepetitions": 0
+	},
+	"stacks": [
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-high",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "high",
+			"view": "audit-evals"
+		}
+	],
+	"tasks": [
+		{
+			"auditEval": {
+				"auditId": "SECURITY",
+				"decoys": [
+					{
+						"aliases": [
+							"authentication",
+							"health",
+							"public",
+							"rate limit",
+							"unauthenticated"
+						],
+						"auditId": "SECURITY",
+						"file": "backend/src/server.ts",
+						"id": "public-health-is-intentional",
+						"severity": "Info",
+						"symbol": "health"
+					},
+					{
+						"aliases": [
+							"asset",
+							"injection",
+							"open redirect",
+							"traversal",
+							"unencoded",
+							"url"
+						],
+						"auditId": "SECURITY",
+						"file": "backend/src/storage.ts",
+						"id": "encoded-asset-url-is-safe",
+						"severity": "Info",
+						"symbol": "publicAssetUrl"
+					}
+				],
+				"defects": [
+					{
+						"aliases": [
+							"cross-site scripting",
+							"escape",
+							"escaping",
+							"html injection",
+							"inject",
+							"interpolat",
+							"markup",
+							"raw html",
+							"reflect",
+							"sanitiz",
+							"unescaped",
+							"unescaped html",
+							"without escaping",
+							"xss"
+						],
+						"auditId": "SECURITY",
+						"file": "backend/src/server.ts",
+						"id": "unescaped-debug-html",
+						"severity": "High",
+						"symbol": "renderDebugHtml"
+					},
+					{
+						"aliases": [
+							"authorization bypass",
+							"caller-controlled",
+							"caller-supplied",
+							"client-controlled",
+							"forge",
+							"spoof",
+							"trusted header",
+							"x-admin"
+						],
+						"auditId": "SECURITY",
+						"file": "backend/src/server.ts",
+						"id": "spoofable-admin-header",
+						"severity": "Critical",
+						"symbol": "isAdmin"
+					},
+					{
+						"aliases": [
+							"../",
+							"absolute",
+							"directory traversal",
+							"escape",
+							"outside the upload",
+							"outside uploads",
+							"parent directory",
+							"parent-directory",
+							"path traversal",
+							"traversal"
+						],
+						"auditId": "SECURITY",
+						"file": "backend/src/storage.ts",
+						"id": "upload-path-traversal",
+						"severity": "High",
+						"symbol": "readUpload"
+					}
+				]
+			},
+			"category": "agentic",
+			"command": "--audit SECURITY --max-iterations 1",
+			"evaluation": "audit-eval",
+			"fixture": "security",
+			"id": "security-planted-defects",
+			"timeoutSeconds": 900
+		}
+	],
+	"version": 1
+}

@@ -1,0 +1,5 @@
+# The commit a source archive was cut from. `git archive` -- and the source archives GitHub
+# generates for a release -- substitute the placeholder in `.build-revision`, so a build unpacked
+# from an archive with no .git can still stamp its revision. A normal checkout leaves the literal
+# in place and resolves the revision from Git instead.
+.build-revision export-subst

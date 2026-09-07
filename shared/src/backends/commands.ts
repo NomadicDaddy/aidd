@@ -1,0 +1,179 @@
+import type { BackendName } from '../plan/types.ts';
+import type { PromptInput } from './types.ts';
+
+import { normalizeReasoningEffort } from '../args/constants.ts';
+import { isSafeBackendArg } from './safe-arg.ts';
+
+export interface BackendCommand {
+	args: string[];
+	command: string;
+	env?: Record<string, string>;
+}
+
+// Cline 3.0.47 rejects --json before reading stdin unless Commander also produced a positional
+// prompt. Keep the real AIDD prompt exclusively on stdin and use a fixed, non-user-controlled
+// bootstrap argument to activate its documented piped-input path.
+const CLINE_STDIN_BOOTSTRAP = 'Complete the AIDD task supplied over standard input.';
+
+function assertSafeBackendArg(label: string, value: string): void {
+	if (!isSafeBackendArg(value)) {
+		throw new Error(
+			`Unsafe ${label} value: "${value}" contains characters outside the allowed set [A-Za-z0-9_.:/@-]`,
+		);
+	}
+}
+
+function modelArgs(input: PromptInput): string[] {
+	if (input.model) assertSafeBackendArg('model', input.model);
+	return input.model ? ['--model', input.model] : [];
+}
+
+function normalizedReasoningEffort(input: PromptInput): string | undefined {
+	if (!input.reasoningEffort) return undefined;
+	assertSafeBackendArg('reasoningEffort', input.reasoningEffort);
+	const normalized = normalizeReasoningEffort(input.reasoningEffort);
+	if (normalized === undefined) {
+		throw new Error(`Invalid reasoningEffort value: "${input.reasoningEffort}"`);
+	}
+	return normalized;
+}
+
+function claudeEffortArgs(input: PromptInput): string[] {
+	const effort = normalizedReasoningEffort(input);
+	if (effort === undefined || effort === 'none' || effort === 'minimal') return [];
+	return ['--effort', effort];
+}
+
+function clineEffortArgs(input: PromptInput): string[] {
+	const effort = normalizedReasoningEffort(input);
+	if (effort === undefined) return [];
+	const clineEffort = effort === 'minimal' ? 'low' : effort === 'max' ? 'xhigh' : effort;
+	return ['--thinking', clineEffort];
+}
+
+function variantArgs(input: PromptInput): string[] {
+	const effort = normalizedReasoningEffort(input);
+	if (effort === undefined || effort === 'none') return [];
+	return ['--variant', effort];
+}
+
+function thinkingArgs(input: PromptInput): string[] {
+	if (input.thinking === true) return ['--thinking'];
+	if (input.thinking === false) return ['--no-thinking'];
+	return [];
+}
+
+// Grok Build takes the model via `-m` (not `--model`) and only accepts high/medium/low for
+// --reasoning-effort, so xhigh is clamped to high and none/minimal are dropped.
+function grokModelArgs(input: PromptInput): string[] {
+	if (input.model) assertSafeBackendArg('model', input.model);
+	return input.model ? ['-m', input.model] : [];
+}
+
+function grokEffortArgs(input: PromptInput): string[] {
+	const effort = normalizedReasoningEffort(input);
+	if (effort === undefined || effort === 'none' || effort === 'minimal') return [];
+	return ['--reasoning-effort', effort === 'xhigh' ? 'high' : effort];
+}
+
+export function buildBackendCommand(backend: BackendName, input: PromptInput): BackendCommand {
+	switch (backend) {
+		case 'claude-code':
+			return {
+				args: [
+					'--print',
+					'--output-format',
+					'stream-json',
+					'--verbose',
+					'--dangerously-skip-permissions',
+					'--no-session-persistence',
+					...modelArgs(input),
+					...claudeEffortArgs(input),
+				],
+				command: 'claude',
+			};
+		case 'cline':
+			return {
+				args: [
+					'--json',
+					'--auto-approve',
+					'true',
+					'--cwd',
+					input.cwd,
+					...modelArgs(input),
+					...clineEffortArgs(input),
+					CLINE_STDIN_BOOTSTRAP,
+				],
+				command: 'cline',
+			};
+		case 'codex': {
+			const effort = normalizedReasoningEffort(input);
+			if (effort === 'max') throw new Error('Codex does not support max reasoning effort');
+			const args = [
+				'exec',
+				'--json',
+				'--skip-git-repo-check',
+				'--dangerously-bypass-approvals-and-sandbox',
+				'--cd',
+				input.cwd,
+				...modelArgs(input),
+			];
+			if (effort !== undefined) {
+				args.push('-c', `model_reasoning_effort=${effort}`);
+			}
+			// Codex resolves its own shell. On POSIX hosts it honours SHELL, so pin bash for a
+			// predictable, POSIX-quoting environment. On Windows it ignores SHELL entirely and
+			// runs PowerShell regardless — setting it there only made the prompt's shell
+			// guidance a lie, so don't. See prompts/_cli/codex.md.
+			if (process.platform === 'win32') return { args, command: 'codex' };
+			return { args, command: 'codex', env: { SHELL: '/usr/bin/bash' } };
+		}
+		case 'grok':
+			// The single-turn prompt is delivered via `--prompt-file <tempfile>`, appended by
+			// runProcessBackend (grok ignores piped stdin and only reads a prompt from an arg or
+			// file). bypassPermissions is grok's --dangerously-skip-permissions equivalent.
+			return {
+				args: [
+					'--output-format',
+					'streaming-json',
+					'--permission-mode',
+					'bypassPermissions',
+					...grokModelArgs(input),
+					...grokEffortArgs(input),
+				],
+				command: 'grok',
+			};
+		case 'kilocode':
+			return {
+				args: [
+					'run',
+					'--format',
+					'json',
+					...modelArgs(input),
+					...variantArgs(input),
+					...thinkingArgs(input),
+				],
+				command: 'kilo',
+			};
+		case 'lmstudio':
+		case 'native':
+		case 'ollama':
+		case 'openai':
+			return {
+				args: ['run', 'src/agent/loop.ts', ...modelArgs(input)],
+				command: 'bun',
+			};
+		case 'opencode':
+			return {
+				args: [
+					'run',
+					'--format',
+					'json',
+					...modelArgs(input),
+					...variantArgs(input),
+					...thinkingArgs(input),
+				],
+				command: 'opencode',
+			};
+	}
+}

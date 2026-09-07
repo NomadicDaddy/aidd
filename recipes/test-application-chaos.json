@@ -1,0 +1,31 @@
+{
+	"description": "Run chaos testing via the tester skill, then convert bugs to features.",
+	"name": "test application (chaos)",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application} run an exploratory chaos pass: ignore the project scenario catalog in .aidd/testing-scenarios.md and instead probe the application through its visible controls with boundary and invalid input, rapid repeated and out-of-order interactions, interrupted and abandoned workflows, and browser back and forward navigation mid-flow",
+				"executionIntent": "apply-changes",
+				"skillId": "tester"
+			},
+			"name": "Run chaos tester",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "{application}"
+				},
+				"recipeName": "bug2feature"
+			},
+			"name": "Bug to feature",
+			"stepType": "recipe-ref"
+		}
+	]
+}

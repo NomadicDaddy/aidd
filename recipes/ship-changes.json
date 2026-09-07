@@ -1,0 +1,48 @@
+{
+	"description": "Validate the working tree, document and commit the work, then publish it as a GitHub pull request.",
+	"name": "ship changes",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "validate-build"
+			},
+			"name": "Validate build",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "validate-tests"
+			},
+			"name": "Validate tests",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "document-changes"
+			},
+			"name": "Document and commit changes",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"args": "{application}",
+				"executionIntent": "apply-changes",
+				"skillId": "ship-pr"
+			},
+			"name": "Open pull request",
+			"stepType": "skill"
+		}
+	]
+}

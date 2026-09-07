@@ -1,0 +1,299 @@
+export function formatDate(value: null | number | string | undefined, timeZone?: string): string {
+	if (value === null || value === undefined) return 'Never';
+	return new Intl.DateTimeFormat(undefined, {
+		dateStyle: 'medium',
+		...(timeZone ? { timeZone } : {}),
+		timeStyle: 'short',
+	}).format(new Date(value));
+}
+
+/** A schedule-owned instant, rendered in and explicitly naming its IANA timezone. */
+export function formatZonedDate(value: number | string, timeZone: string): string {
+	return `${formatDate(value, timeZone)} · ${timeZone}`;
+}
+
+const timeOfDayFormatter = new Intl.DateTimeFormat(undefined, {
+	hour: '2-digit',
+	minute: '2-digit',
+});
+
+/**
+ * Local wall-clock time with no date, for lists whose grouping already establishes the day. Both
+ * fields are 2-digit so a column of stamps stays a straight rail under `tabular-nums`.
+ */
+export function formatTimeOfDay(value: number | string): string {
+	return timeOfDayFormatter.format(new Date(value));
+}
+
+/**
+ * An elapsed time as at most two units, rolling up as the magnitude grows.
+ *
+ * The hours branch is the one that had to be added. Without it the formatter topped out at minutes
+ * and the Telemetry Duration column printed '240m 27s', '206m 33s', '170m 58s' one under the other,
+ * with 'avg 240m 27s' repeating the shape in the leaderboard footer. Reading four hours out of
+ * '240m' is arithmetic the operator should not be doing mid-scan, and it costs the column the thing
+ * a duration column is for: 18m and 240m are the same shape at nearly the same width, so nothing
+ * about the list said which runs were the long ones.
+ *
+ * Seconds are dropped once hours appear, keeping the two-part shape the rest of the function has.
+ * At that magnitude the seconds are noise — a run that took four hours is not reported to the
+ * second — and a third unit would push the cell past the widths the table's columns are set to.
+ */
+export function formatDuration(ms: null | number | undefined): string {
+	if (!ms) return '0s';
+	const seconds = Math.round(ms / 1000);
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+	const remainder = seconds % 60;
+	return remainder === 0 ? `${minutes}m` : `${minutes}m ${remainder}s`;
+}
+
+/**
+ * Formats elapsed time for a session that may still be active. When `durationMs`
+ * has been persisted (terminal session) it is used directly via `formatDuration`.
+ * While `durationMs` is null/undefined (queued or running), the live elapsed time
+ * is derived from `startedAt` and the supplied `now` value so the label advances
+ * past `0s` before the backend writes the final duration.
+ */
+export function formatActiveDuration(
+	durationMs: null | number | undefined,
+	startedAt: null | number | undefined,
+	now: number,
+): string {
+	if (durationMs !== null && durationMs !== undefined) return formatDuration(durationMs);
+	if (startedAt === null || startedAt === undefined) return formatDuration(durationMs);
+	return formatDuration(now - startedAt);
+}
+
+export function percent(value: number, total: number): number {
+	if (total === 0) return 0;
+	return Math.round((value / total) * 100);
+}
+
+/**
+ * Whole-number percentages for two complementary parts of one total, allocated together with the
+ * largest-remainder method. Independent half-up rounding can make the pair display as 101%; one
+ * allocation keeps each part at its nearest displayed precision while making the pair reconcile.
+ */
+export function partitionPercentages(
+	values: readonly [number, number],
+	total: number,
+): readonly [number, number] {
+	if (total <= 0) return [0, 0];
+
+	const shares = values.map((value, index) => {
+		const exact = (value / total) * 100;
+		const base = Math.floor(exact);
+		return { base, exact, index, remainder: exact - base };
+	});
+	const baseTotal = shares.reduce((sum, share) => sum + share.base, 0);
+	const roundedTotal = Math.round(shares.reduce((sum, share) => sum + share.exact, 0));
+	const remaining = roundedTotal - baseTotal;
+	const rounded = shares.map((share) => share.base);
+
+	for (const share of [...shares]
+		.sort((left, right) => right.remainder - left.remainder || left.index - right.index)
+		.slice(0, remaining)) {
+		rounded[share.index] = share.base + 1;
+	}
+
+	return [rounded[0] ?? 0, rounded[1] ?? 0];
+}
+
+export function formatRelativeAge(value: null | string | undefined): string {
+	if (!value) return '—';
+	const then = new Date(value).getTime();
+	if (!Number.isFinite(then)) return '—';
+	const diffMs = Date.now() - then;
+	const future = diffMs < 0;
+	const elapsedMs = Math.abs(diffMs);
+	const relative = (amount: number, unit: string) =>
+		future ? `in ${amount}${unit}` : `${amount}${unit} ago`;
+	const days = Math.floor(elapsedMs / 86_400_000);
+	if (days >= 1) return relative(days, 'd');
+	const hours = Math.floor(elapsedMs / 3_600_000);
+	if (hours >= 1) return relative(hours, 'h');
+	const minutes = Math.floor(elapsedMs / 60_000);
+	if (minutes >= 1) return relative(minutes, 'm');
+	return 'just now';
+}
+
+/**
+ * Relative "updated Ns ago" label for a freshness indicator. Unlike `formatRelativeAge`, this
+ * takes an explicit `now` (so it can advance on a ticking clock without a data refetch) and a
+ * millisecond timestamp (TanStack Query's `dataUpdatedAt`), and it has second-level granularity
+ * for the first minute so a just-refreshed surface reads "Updated 12s ago" rather than "just now".
+ */
+export function formatUpdatedAgo(updatedAt: number, now: number): string {
+	if (!updatedAt) return 'not yet';
+	const diffMs = Math.max(0, now - updatedAt);
+	const seconds = Math.floor(diffMs / 1000);
+	if (seconds < 5) return 'just now';
+	if (seconds < 60) return `${seconds}s ago`;
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return minutes === 1 ? '1m ago' : `${minutes}m ago`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return hours === 1 ? '1h ago' : `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return days === 1 ? '1d ago' : `${days}d ago`;
+}
+
+/**
+ * Byte length of `text` once UTF-8 encoded, for comparing an in-memory string against a size
+ * reported by the filesystem. `String.length` counts UTF-16 code units, so it undercounts every
+ * non-ASCII character — a transcript full of box-drawing or CJK output measures well short of its
+ * own file size, which reads as missing output rather than as a unit mismatch.
+ *
+ * Counts rather than encoding, so a multi-megabyte transcript is not copied to measure it.
+ */
+export function utf8ByteLength(text: string): number {
+	let bytes = 0;
+	for (let index = 0; index < text.length; index += 1) {
+		const code = text.charCodeAt(index);
+		if (code < 0x80) {
+			bytes += 1;
+		} else if (code < 0x800) {
+			bytes += 2;
+		} else if (code >= 0xd800 && code <= 0xdbff && index + 1 < text.length) {
+			const next = text.charCodeAt(index + 1);
+			// A surrogate pair is one 4-byte code point; an unpaired surrogate encodes as the
+			// 3-byte replacement character, which is what a lone half costs on the wire.
+			if (next >= 0xdc00 && next <= 0xdfff) {
+				bytes += 4;
+				index += 1;
+			} else {
+				bytes += 3;
+			}
+		} else {
+			bytes += 3;
+		}
+	}
+	return bytes;
+}
+
+export function formatBytes(value: null | number | undefined): string {
+	if (value === null || value === undefined || value <= 0) return '0 B';
+	const units = ['B', 'KB', 'MB', 'GB'];
+	let size = value;
+	let unit = 0;
+	while (size >= 1024 && unit < units.length - 1) {
+		size /= 1024;
+		unit += 1;
+	}
+	// Whole bytes read cleaner without a decimal; larger units keep one significant fraction.
+	const rounded = unit === 0 ? Math.round(size) : Math.round(size * 10) / 10;
+	return `${rounded} ${units[unit]}`;
+}
+
+export function formatCount(value: null | number | undefined): string {
+	if (value === null || value === undefined) return '—';
+	// Grouped, because the same figures are rendered as '2,133 files' on the Code and Dependencies
+	// tabs — the Repository tab was the only surface printing the identical datum as '2133'.
+	return value.toLocaleString();
+}
+
+const telemetryDayFormatter = new Intl.DateTimeFormat(undefined, {
+	day: 'numeric',
+	month: 'short',
+	timeZone: 'UTC',
+});
+
+const telemetryHourFormatter = new Intl.DateTimeFormat(undefined, {
+	day: 'numeric',
+	hour: 'numeric',
+	minute: '2-digit',
+	month: 'short',
+	timeZone: 'UTC',
+});
+
+export function formatTelemetryBucketLabel(bucket: 'day' | 'hour', timestamp: number): string {
+	const formatter = bucket === 'hour' ? telemetryHourFormatter : telemetryDayFormatter;
+	return `${formatter.format(new Date(timestamp))} UTC`;
+}
+
+// Hourly buckets only exist in the 24h window, where the date is implicit and the card header
+// already says "per hour", so the axis tick drops it and keeps the label narrow enough to sit
+// under a single bar column.
+const telemetryHourTickFormatter = new Intl.DateTimeFormat(undefined, {
+	hour: 'numeric',
+	timeZone: 'UTC',
+});
+
+/** Shortest label that still identifies a bucket, for use as a chart axis tick. */
+export function formatTelemetryAxisTick(bucket: 'day' | 'hour', timestamp: number): string {
+	const formatter = bucket === 'hour' ? telemetryHourTickFormatter : telemetryDayFormatter;
+	return formatter.format(new Date(timestamp));
+}
+
+const compactFormatter = new Intl.NumberFormat(undefined, {
+	maximumFractionDigits: 1,
+	notation: 'compact',
+});
+
+const usdFormatter = new Intl.NumberFormat(undefined, {
+	currency: 'USD',
+	currencyDisplay: 'narrowSymbol',
+	maximumFractionDigits: 2,
+	minimumFractionDigits: 2,
+	style: 'currency',
+});
+
+/** Backend-reported money, in the one presentation every surface that prints dollars uses. */
+export function formatUsd(value: number): string {
+	return usdFormatter.format(value);
+}
+
+export function formatCompactNumber(value: null | number | undefined): string {
+	if (value === null || value === undefined) return '—';
+	return compactFormatter.format(value);
+}
+
+export function formatRatio(
+	value: null | number | undefined,
+	total: null | number | undefined,
+): string {
+	if (value === null || value === undefined || total === null || total === undefined) return '—';
+	return `${value}/${total}`;
+}
+
+/**
+ * One filesystem path, rendered the same way everywhere it appears.
+ *
+ * The same project directory reached the screen as `d:\applications\aidd` in the project header and
+ * `D:/applications/aidd` two tabs away — one path, two cases, two separators, and (because only one
+ * of them was monospace) two typefaces. Nothing downstream cares which form it is; the backend is
+ * given the raw string, and this is display only.
+ *
+ * Backslashes become forward slashes, a Windows drive letter is upper-cased, and a trailing
+ * separator is dropped unless the path IS the root. UNC prefixes (`\server\share`) keep their
+ * leading double separator, which is load-bearing rather than cosmetic.
+ */
+export function formatFilesystemPath(path: null | string | undefined): string {
+	if (!path) return '';
+	const unc = path.startsWith('\\') || path.startsWith('//');
+	const slashed = path.replaceAll('\\', '/');
+	const cased = slashed.replace(
+		/^([a-z]):/,
+		(_match, drive: string) => `${drive.toUpperCase()}:`,
+	);
+	const body = unc ? `//${cased.replace(/^\/+/, '')}` : cased;
+	if (body.length > 1 && body.endsWith('/') && !/^[A-Za-z]:\/$/.test(body)) {
+		return body.slice(0, -1);
+	}
+	return body;
+}
+
+/**
+ * Render a backend enum as prose: `RUN_AUDIT` → `Run audit`, `waiting_approval` → `Waiting approval`.
+ *
+ * Lived in `pages/director/directorUtils.ts` while the Dashboard's Feature Status table printed
+ * `waiting_approval` raw in the body face. Snake_case with an underscore is the one shape the
+ * baseline reserves for machine identifiers set in mono, so a body-face `in_progress` reads as a
+ * leaked field name rather than as a state.
+ */
+export function humanizeEnum(value: string): string {
+	const words = value.replaceAll('_', ' ').trim().toLowerCase();
+	if (words.length === 0) return value;
+	return words[0]!.toUpperCase() + words.slice(1);
+}

@@ -1,0 +1,82 @@
+name: Release
+
+on:
+    workflow_run:
+        workflows: [CI]
+        types: [completed]
+
+# Only one release workflow per triggering CI run.
+concurrency:
+    group: release-${{ github.event.workflow_run.id }}
+    cancel-in-progress: false
+
+permissions:
+    contents: write
+
+jobs:
+    github-release:
+        name: Create GitHub Release
+        # aidd ships as source: GitHub generates the source archives from the tag itself, so this
+        # job only renders the notes. No packaging, and no platform requirement on the runner.
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        # Only create a release when CI succeeds AND the CI run was triggered by a version tag.
+        if: >-
+            ${{
+                github.event.workflow_run.conclusion == 'success' &&
+                github.event.workflow_run.event == 'push' &&
+                github.event.workflow_run.head_repository.full_name == github.repository &&
+                startsWith(github.event.workflow_run.head_branch, 'v')
+            }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.event.workflow_run.head_sha }}
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+              with:
+                  bun-version-file: package.json
+
+            # Cache only Bun's content-addressed download cache. Never cache node_modules: a job
+            # that dies mid-install can save an incomplete tree in the post step.
+            - name: Cache Bun dependencies
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-dl-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: |
+                      bun-dl-${{ runner.os }}-
+
+            # This job renders release notes only; it never serves the control panel, so the root
+            # postinstall's frontend build is dead weight here.
+            - name: Install dependencies
+              env:
+                  AIDD_SKIP_POSTINSTALL_BUILD: '1'
+              run: bun install --frozen-lockfile
+
+            # CI already ran the behavioral gates (bun test, build:frontend, smoke:qc,
+            # feature/artifact checks) on this exact SHA before this workflow_run fired. This
+            # re-checks only that the tag's version metadata agrees before it is published.
+            - name: Release notes
+              run: bun run release:notes
+
+            # The published artifact is a source archive, and the only thing that turns it into a
+            # runnable control panel is the install lifecycle. This exports the tag's tracked tree
+            # and runs a real `bun install` in it, so the frontend build -- and its need for a
+            # revision no longer readable from Git -- is exercised the way a user's install is. A
+            # tag is not publishable if that lifecycle has stopped producing a panel.
+            - name: Source install lifecycle
+              run: bun run check:source-install
+
+            - name: Create GitHub Release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAG_NAME: ${{ github.event.workflow_run.head_branch }}
+              run: >
+                  gh release create "${TAG_NAME}"
+                  --notes-file dist/release/release-notes.md
+                  --verify-tag

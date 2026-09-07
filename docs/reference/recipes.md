@@ -1,0 +1,625 @@
+# aidd Recipes
+
+Recipes are multi-step pipelines defined in `recipes/*.json`. Recipe ids are derived from filenames, so the JSON file does not need an explicit id field. The embedded web control panel and pipeline runner read the same files.
+
+Supported step types are `aidd-cli`, `skill`, `shell`, and `recipe-ref`. Steps may carry `preHookJson`, `postHookJson`, `onFailure`, `retryCount`, and `when` values depending on the workflow.
+
+Recipe launches use the selected launch target for CLI, model, and reasoning effort. The session-level launch target wins over the same field in a step's own config, so a backend or model chosen visibly at launch is never beaten by buried step config; where the launch target leaves a field unset, the step's config applies, then the project and global defaults.
+
+A step whose config sets `includePriorStepOutput: true` receives the immediately preceding step's output summary appended to its prompt under a labelled heading. Steps are otherwise independent processes with no memory of each other, so the review → remediate recipes use this flag to hand review findings to the remediation step instead of making it rediscover them.
+
+Launching a recipe creates a pipeline session. A session that completes some steps but fails others resolves to a `completed_with_failures` partial-success status (with a failed-step summary) rather than a bare `failed`. Telemetry records partial successes as `failed`, since invocation events have no partial-success status.
+
+Every attempt at a step is persisted as its own row in that session's report. A step with `retryCount` records attempt 1, attempt 2, and so on, each keeping its own status, exit code, and error message, so a step that failed and then succeeded still shows the failure that provoked the retry. A step with `onFailure: auto-fix` records the remediation run between the two attempts it sits between, labelled `Auto-fix after attempt N`; a step that ran once carries no attempt label at all. Sessions recorded before aidd persisted attempt identity — and the duplicate rows left behind by earlier duplicate executions — have none of these fields. Those are grouped by parent, depth, sequence number, step definition, and name, numbered only when a step definition anchors the group, and otherwise labelled `Retry (legacy)` rather than given a fabricated ordinal.
+
+A web restart during a retry cycle resumes the step rather than moving past it. The attempt in flight keeps its row until the row that supersedes it exists, and an auto-fix run never becomes the only live row for its step, so the resumed session always finds the step it was still owed. Any remediation or hook row left open by the restart is terminalized when the step resumes rather than sitting `running` beside it.
+
+Step config strings substitute `{name}` placeholders from the session's parameters. Alongside the recipe's own parameters and the built-in `{application}`, `{projectDir}`, and `{projectName}`, two reserved names resolve from the executing session and cannot be overridden by a recipe parameter of the same name:
+
+- `{pipelineSessionId}` — the session's id.
+- `{sessionMetricsPath}` — the project-relative path of this session's metrics file (`.aidd/runtime/pipeline-sessions/<id>/metrics.json`), which the pipeline refreshes after every completed top-level step. A step that reports on the session reads that path directly. Do not glob for the file or pick the most recently modified one: two pipelines running in the same project each refresh their own, so that selection can summarize the wrong session. The metrics are transient — a boot sweep removes every session's file once it is no longer running.
+
+## Recipe Index
+
+| Recipe ID                                   | Name                                                                         | Steps | Parameters                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------- | ----- | ------------------------------------- |
+| `apply-ui`                                  | apply ui                                                                     | 5     | application, source                   |
+| `audit-all`                                 | audit (all)                                                                  | 3     | application                           |
+| `audit-and-remediate`                       | audit and remediate                                                          | 3     | application                           |
+| `audit-maintenance`                         | audit maintenance                                                            | 2     | none                                  |
+| `bug2feature`                               | bug2feature                                                                  | 2     | application                           |
+| `check-artifacts`                           | check-artifacts                                                              | 1     | none                                  |
+| `codebase-analysis`                         | codebase-analysis                                                            | 1     | application                           |
+| `coding`                                    | coding                                                                       | 4     | application, feature                  |
+| `coding-review-remediate-document-changes`  | coding, deep review, remediation, and change documentation                   | 4     | application, feature                  |
+| `coding-spirit-coderabbit-document-changes` | coding, spirit and CodeRabbit reviews, remediation, and change documentation | 6     | application, feature                  |
+| `deploy`                                    | deploy                                                                       | 8     | application, deployCommand, healthUrl |
+| `feature-consolidation-document-changes`    | feature consolidation and document changes                                   | 3     | application                           |
+| `frontend-polish`                           | frontend polish                                                              | 12    | application, filterBy, filterValue    |
+| `generate-application-features`             | generate application features                                                | 2     | application                           |
+| `generate-testing-scenarios`                | generate testing scenarios                                                   | 1     | application                           |
+| `interview`                                 | interview                                                                    | 9     | application                           |
+| `new-app-from-idea`                         | new-app-from-idea                                                            | 8     | application, stopBeforeImplementation |
+| `project-intake`                            | project-intake                                                               | 9     | application                           |
+| `project-reintake`                          | project-reintake                                                             | 2     | application                           |
+| `reconcile-project-artifacts`               | reconcile project artifacts                                                  | 2     | application                           |
+| `remediate-audit-findings`                  | remediate audit findings                                                     | 3     | application, filterBy, filterValue    |
+| `remediate-bugs`                            | remediate bugs                                                               | 3     | application, filterBy, filterValue    |
+| `ship-changes`                              | ship changes                                                                 | 4     | application                           |
+| `spernakit-bump`                            | spernakit bump                                                               | 4     | bumpHint                              |
+| `spernakit-dance`                           | spernakit dance                                                              | 2     | bumpHint                              |
+| `spernakit-dance-resume`                    | spernakit dance (resume)                                                     | 1     | resumeArgs                            |
+| `spernakit-propagate`                       | spernakit propagate                                                          | 12    | application, version                  |
+| `spernakit-release`                         | spernakit release                                                            | 4     | bumpHint, version, application        |
+| `spernakit-replatform-assessment`           | spernakit-replatform-assessment                                              | 7     | application                           |
+| `test-and-remediate`                        | test and remediate                                                           | 5     | application                           |
+| `test-application-chaos`                    | test application (chaos)                                                     | 2     | application                           |
+| `test-application-scenarios`                | test application (scenarios)                                                 | 2     | application                           |
+| `triumvirate-coding-document-changes`       | triumvirate coding and document changes                                      | 2     | application                           |
+| `ui-redesign`                               | ui redesign                                                                  | 3     | application                           |
+| `update-application-documentation`          | update application documentation                                             | 4     | application                           |
+
+## Recipes
+
+### apply-ui
+
+Apply an externally provided UI to an application, compare the result against a pre-apply snapshot to catch dropped behavior, then review and validate the resulting feature metadata.
+
+- **Name:** apply ui
+- **Parameters:** application, source
+- **Steps:** 5
+
+1. `shell` - Snapshot pre-apply UI (command: refuse on a dirty working tree or a pre-existing `.worktrees/ui-reference`, then `git worktree add --detach .worktrees/ui-reference HEAD`)
+2. `skill` - Apply source UI (args: {source}; skillId: spernakit-apply-ui)
+3. `skill` - Check UI parity (args: .worktrees/ui-reference .; skillId: ui-parity); post-hook removes the snapshot worktree
+4. `skill` - Review parity features (args: {application}; skillId: feature-review); retryCount: 1
+5. `aidd-cli` - Validate feature metadata (validate: true)
+
+`spernakit-apply-ui` re-skins the app in place, and its own Phase 5.6 only files backlog stubs for _net-new_ source elements. It cannot see the opposite direction: existing behavior the rebuild silently dropped, degraded, or relocated. That is what `ui-parity` reports — but `ui-parity` compares two codebase _paths_, and after an in-place apply the pre-apply version exists only in git history. Step 1 therefore materializes it as a detached worktree at `.worktrees/ui-reference`, which the template `.gitignore` already excludes.
+
+Step 1 **refuses rather than repairs**. It exits non-zero if the working tree is dirty, because `HEAD` is the parity reference and uncommitted UI work would be invisible to the snapshot and then reported back as a gap. It also exits non-zero if `.worktrees/ui-reference` already exists, naming the manual `git worktree remove` that clears it. Force-removing that path and then `rm -rf`'ing it would silently destroy an unrelated worktree that happened to occupy the name; a recipe step must never delete a directory it has not confirmed it owns.
+
+Cleanup is a **post-hook on step 3**, not a trailing step, because `stepExecutor` stops the pipeline as soon as a step fails (`if (!result.ok && (step.onFailure ?? 'stop') !== 'continue') return result`), so a final cleanup step would be skipped in exactly the failure cases that leave a snapshot behind. Post-hooks run after the step completes regardless of its status and cannot fail the parent step, which is the finalization semantics this needs. Step 3 is the last step that reads the reference, so the hook is safe there. A failure in step 2 still leaves the worktree on disk — harmless, ignored, and step 1 will name it on the next run.
+
+Step 3 is `apply-changes`, not `review-only`: `ui-parity` does not merely report: its Phase 5 writes `.aidd/features/` entries for every high- and medium-priority gap and its Phase 6 assigns each one to the current milestone. Steps 4 and 5 then review and validate that generated metadata, mirroring `ui-redesign`'s tail. Unlike `ui-redesign` this recipe is not metadata-only — step 2 rewrites frontend code.
+
+Both skill paths in step 3 resolve against the target app, which is the working directory for every step in the pipeline.
+
+### audit-all
+
+Run all audits, review findings, and review features.
+
+- **Name:** audit (all)
+- **Parameters:** application
+- **Steps:** 3
+
+1. `aidd-cli` - Run all audits (auditAll: true; maxIterations: 3)
+2. `skill` - Review audit findings (args: {application}; skillId: audit-finding-review)
+3. `skill` - Review features (args: {application}; skillId: feature-review)
+
+### audit-and-remediate
+
+Run all audits, review the findings, remediate them, and produce a session report.
+
+- **Name:** audit and remediate
+- **Parameters:** application
+- **Steps:** 3
+
+1. `recipe-ref` - Run audits and review findings (params: {"application":"{application}"}; recipeName: audit (all))
+2. `recipe-ref` - Remediate audit findings (params: {"application":"{application}"}; recipeName: remediate audit findings)
+3. `aidd-cli` - Create session report (maxIterations: 1; prompt: Write a session report to .aidd/reports/audit-and-remediate-<YYYYMMDD-HHMM>.md, using the current date and time for the filename. Read the per-step timing and outcome data from {sessionMetricsPath}, which the pipeline wrote for this session and refreshed after every completed step...)
+
+Step 1 delegates to `audit-all`, so the audits actually run before their findings are reviewed. There is no "delete resolved features" step: `remediate audit findings` ends in `consolidate-features`, which folds completed findings into their source features and removes the redundant files itself.
+
+### audit-maintenance
+
+Resync aidd's derived audit definitions with their source skills, then review every audit against current practice.
+
+- **Name:** audit maintenance
+- **Parameters:** none
+- **Steps:** 2
+
+1. `skill` - Resync derived audits (skillId: update-audits); onFailure: continue
+2. `skill` - Review audit definitions (skillId: audit-review)
+
+This recipe maintains aidd itself, not a managed application, so it takes no `application` parameter. Step 1 pulls the Vercel-derived audits (`COMPOSITION_PATTERNS`, `REACT_BEST_PRACTICES`, `WEB_DESIGN_GUIDELINES`) back in line with their upstream source skills and continues on failure when those sources are unreachable; step 2 then reviews every audit under `audits/` against report history and the skills that feed it.
+
+This recipe is deliberately **not** metadata-only. Both skills write `<aidd-root>/audits/{NAME}.md`, which is outside the `.aidd/` allowlist that metadata-only sessions enforce: `managedStepHandler` would pass `--write-allowlist .aidd` to the run and the `stepRunner` backstop would then diff the worktree, revert every audit edit, and fail the step. Marking this recipe metadata-only makes it undo its own output.
+
+### bug2feature
+
+Convert bugs to feature remediations and review them.
+
+- **Name:** bug2feature
+- **Parameters:** application
+- **Steps:** 2
+
+1. `skill` - Run bug2feature (args: {application}; skillId: bug2feature)
+2. `skill` - Review features (args: {application}; skillId: feature-review)
+
+### check-artifacts
+
+Recalculate .aidd/.artifacts-check.json by running `aidd --check-artifacts` against the target project. This validates artifact status; it does not edit project artifacts.
+
+- **Name:** check-artifacts
+- **Parameters:** none
+- **Steps:** 1
+
+1. `aidd-cli` - Run aidd --check-artifacts (checkArtifacts: true; validate: true)
+
+### codebase-analysis
+
+Run a broad codebase analysis across architecture, performance, security, metadata health, and technical debt. Analysis only: it writes a dated report under .aidd/audit-reports/ and a summary in .aidd/CHANGELOG.md, never edits application code or configuration, and leaves its output as uncommitted workspace artifacts.
+
+- **Name:** codebase-analysis
+- **Parameters:** application
+- **Steps:** 1
+
+1. `skill` - Analyze codebase (args: {application} — save the analysis report under .aidd/audit-reports/ using the dated CODEBASE_ANALYSIS filename the skill specifies...; skillId: codebase-analysis)
+
+The step is `apply-changes` even though the analysis edits no application code: the skill still has to write its report and changelog entry under `.aidd/`, and a `review-only` step would leave both in the run transcript. This recipe owns the report artifact and also states that request explicitly; a direct skill invocation saves a report only when the caller requests one.
+
+### coding
+
+Default coding run using the selected launch CLI: code the selected work, review the result for spirit and intent, remediate every confirmed and applicable finding, then document and commit the changes.
+
+- **Name:** coding
+- **Parameters:** application, feature (default empty — selects normal backlog work)
+- **Steps:** 4
+
+1. `aidd-cli` - Run coding (feature: {feature})
+2. `skill` - Spirit review (skillId: spirit)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+4. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+The review step takes no args. `spirit` is `spirit [boundary] [focus]`, so an application name lands in the `[boundary]` slot as a ref or path the project does not have; with zero args the skill resolves the change set itself — the working tree plus the commits step 1 just produced — which is what a post-coding review wants. `document-changes` is `document-changes [app]`, so it keeps `{application}`.
+
+### coding-review-remediate-document-changes
+
+Run coding, perform a deep review, remediate every confirmed and applicable finding, then document and commit the changes.
+
+- **Name:** coding, deep review, remediation, and change documentation
+- **Parameters:** application, feature (default empty — selects normal backlog work)
+- **Steps:** 4
+
+1. `aidd-cli` - Run coding (feature: {feature})
+2. `skill` - Deep review (skillId: deepreview)
+3. `aidd-cli` - Remediate deep review findings (maxIterations: 1; prompt: Review the change set the deep review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding deep review findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+4. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+### coding-spirit-coderabbit-document-changes
+
+Run coding, review the result for spirit and intent, remediate every confirmed and applicable finding, run an independent CodeRabbit review, remediate its confirmed and applicable findings, then document and commit the changes.
+
+- **Name:** coding, spirit and CodeRabbit reviews, remediation, and change documentation
+- **Parameters:** application, feature (default empty — selects normal backlog work)
+- **Steps:** 6
+
+1. `aidd-cli` - Run coding (feature: {feature})
+2. `skill` - Spirit review (skillId: spirit)
+3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+4. `skill` - CodeRabbit review (args: {application}; skillId: coderabbit)
+5. `aidd-cli` - Remediate CodeRabbit findings (maxIterations: 1; prompt: Review the change set the CodeRabbit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding CodeRabbit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
+6. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+### deploy
+
+Deploy the application with its own deploy script, gated by build and test validation, verified by a health check, tagged, and audited. aidd orchestrates; the project owns the deploy command and credentials.
+
+- **Name:** deploy
+- **Parameters:** application, deployCommand (default `bun run deploy`), healthUrl (default empty — skips the health check)
+- **Steps:** 8
+
+1. `shell` - Require a clean working tree (fails when `git status --porcelain` reports anything)
+2. `skill` - Validate build (args: {application}; skillId: validate-build)
+3. `skill` - Validate tests (args: {application}; skillId: validate-tests)
+4. `aidd-cli` - Deployment audit (auditNames: DEPLOYMENT; maxIterations: 1); onFailure: continue
+5. `shell` - Re-check the working tree (fails when validation or the audit left anything uncommitted)
+6. `shell` - Deploy ({deployCommand} in the project directory)
+7. `shell` - Post-deploy health check (curl with retries against {healthUrl} when provided)
+8. `shell` - Tag release (`deploy-<timestamp>` git tag; refuses when the tree is dirty); onFailure: continue
+
+The recipe refuses to start from a dirty tree, and the DEPLOYMENT audit runs before the deploy so its findings can inform the release rather than only recording it.
+
+Step 5 exists because steps 1 through 4 can all dirty the tree after step 1 vouched for it: validation runs with `apply-changes`, so `validate-build` and `validate-tests` are expected to fix what they find. Without a second check the deploy would ship those fixes while the tag step — which runs only afterward and carries `onFailure: continue` — quietly declined to tag, leaving deployed bytes that exist in no commit and no release tag, and a pipeline that still reported success. Checking before the deploy converts that into an actionable stop: commit the fixes, then rerun.
+
+The deploy command runs on the web host in the project directory, exactly like other shell steps. aidd never holds deploy credentials: whatever `bun run deploy` (or the override) needs must already be configured for the user account running aidd. The `deployment-readiness` skill prepares a project for this recipe (deploy script, deploy config, `.aidd/deployment.md` runbook).
+
+### feature-consolidation-document-changes
+
+Consolidate completed feature findings, review feature metadata, then document and commit the changes.
+
+- **Name:** feature consolidation and document changes
+- **Parameters:** application
+- **Steps:** 3
+
+1. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+2. `skill` - Review features (args: {application}; skillId: feature-review)
+3. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+### frontend-polish
+
+Observe every frontend surface at desktop and mobile and exercise the running application against one build, file every finding through a single writer, then remediate, validate, and consolidate it in one pass before re-sweeping to prove the fixes landed.
+
+- **Name:** frontend polish
+- **Parameters:** application, filterBy (default `id`), filterValue (default `remediation-*`)
+- **Steps:** 12
+
+1. `skill` - Sweep desktop surfaces (args: {application} --mode desktop; skillId: frontend-design-sweep)
+2. `skill` - Sweep mobile surfaces (args: {application} --mode mobile; skillId: frontend-design-sweep)
+3. `skill` - Test application (args: {application}; skillId: tester)
+4. `skill` - File sweep findings (args: {application} --source design-sweep:desktop,design-sweep:mobile; skillId: ui-redesign-planner)
+5. `skill` - Convert defects to features (args: {application}; skillId: bug2feature)
+6. `skill` - Review filed features (args: {application}; skillId: feature-review); retryCount: 1
+7. `aidd-cli` - Remediate findings (filterBy: {filterBy}; filterValue: {filterValue})
+8. `aidd-cli` - Validate remediations (validate: true)
+9. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+10. `skill` - Verify desktop remediations (args: {application} --mode desktop; skillId: frontend-design-sweep)
+11. `skill` - Verify mobile remediations (args: {application} --mode mobile; skillId: frontend-design-sweep)
+12. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+The recipe runs in four phases: observe (1-3), file (4-5), remediate (6-8), verify (9-12). The phase boundaries are the design, and each one exists to close a specific way the earlier version lost work.
+
+**Observation is separated from filing.** Steps 1 through 3 are pure observation against one build: two sweeps and a test run, none consuming another's output. Judging them against a single build is the point — a remediation between the desktop and mobile sweeps would leave the mobile run measuring a UI the desktop fixes had already changed, and every finding it filed would name a screenshot of a build that no longer exists. The same argument extends to the tester.
+
+But observation being safe to interleave is not the same as _filing_ being safe to interleave, and that distinction is why step 4 is its own step. A sweep run with `--features` hands its findings to `ui-redesign-planner`, which writes into `.aidd/features/`. The planner now requires a mode-qualified slug for a mode-specific finding, uses an unqualified slug only when the finding holds at every supplied viewport, and stops instead of overwriting an existing remediation directory. Those rules prevent silent same-day collisions, but only a planner holding both reports can decide whether two observations are one cross-viewport improvement or two mode-specific ones before it writes either record.
+
+Running both sweeps report-only and filing once from both reports makes that classification once instead of reconciling two independently written backlogs. It is also the sweep skill's own principle: _one writer — exactly one process writes the report and the feature metadata_. The `design-sweep:{mode}` selector resolves through the append-only index the sweeps write, since a recipe cannot know a run-stamped filename in advance.
+
+**One remediation filter, because both writers use the same name.** Step 7 is an ordinary coding run narrowed by `filterBy`/`filterValue`, the same mechanism `remediate-bugs` and `remediate-audit-findings` use, and `buildAiddRequest` reads a single `filterBy`/`filterValue` pair per step. That is enough here because `ui-redesign-planner` and `bug2feature` both mint `remediation-{YYYYMMDD}-{slug}`: the prefix marks a non-standalone finding, not a template-owned one, so `remediation-*` selects the sweep findings and the converted defects together. This recipe carried a second filter pair until 2026-08-30, when the naming convention was relaxed to match what Spernakit's `resident.ts` had already permitted since 2026-08-26; before that, `bug2feature` gave app-owned defects clean slugs and a single `remediation-*` filter silently skipped every one of them, leaving them filed, validated as a no-op, and consolidated unremediated. The step no-ops cleanly when nothing was filed: a run with no matching work stops with `no_work`, which is a completed run, so the pipeline continues.
+
+**Consolidation runs once, at step 9**, immediately after the validate that closes the remediation phase — the position `remediate-bugs`, `remediate-audit-findings`, and `interview` all use. A sweep finding and a defect finding often fold into the same durable owning feature, and consolidating the sweep findings before the defects exist splits that fold across two passes. It sits ahead of the verification sweeps so it never operates on records those sweeps just filed and `feature-review` never saw.
+
+**Steps 10 and 11 are the sweep skill's own verification pass**, which it requires of any run that filed features: remediation is finished when a sweep at the same mode shows the defects gone and nothing new in their place, not when the features close. Each re-sweep gets its own run id and report, diffs against the earlier run at its mode, and reports three counts — resolved, persisting, and introduced. They run without `--features`, so an introduced regression is reported in the diff rather than filed as a record no later step in this run can act on. Passing `--features` here instead files those regressions as backlog for a future run; that is a deliberate choice about whether this recipe ends clean or ends with an open queue, and it is the only thing the flag changes.
+
+The verification sweeps are unscoped, unlike the skill's own suggestion to scope them to the surfaces the remediation touched, because a recipe cannot know those surfaces before the run happens. A full re-sweep is a superset of the scoped one and catches the shared-component fixes that change surfaces nobody edited, at the cost of running long on a large application. Narrow it with a run-specific `--scope` if that matters more than the coverage.
+
+Two things this order gives up. With the tester in the observation phase, a functional regression introduced by the remediation is caught by nothing — the verification sweeps are visual; add a second `tester` step alongside them if that coverage matters more than the pass it costs. And a Spernakit-derived application is no longer a special case here, but only since 2026-08-26: `resident.ts` judges a resident process record by provenance rather than by its name, so this recipe files and remediates sweep findings on derived apps like any other. What still fails that gate is a resident record carrying a `spernakit_version` stamp, which no step here writes.
+
+### generate-application-features
+
+Analyze the codebase and generate feature.json reconstruction blueprints.
+
+- **Name:** generate application features
+- **Parameters:** application
+- **Steps:** 2
+
+1. `skill` - Generate features (args: {application} --apply; skillId: feature-coverage-audit)
+2. `skill` - Review features (args: {application}; skillId: feature-review)
+
+### generate-testing-scenarios
+
+Analyze the codebase and generate testing scenarios for the application.
+
+- **Name:** generate testing scenarios
+- **Parameters:** application
+- **Steps:** 1
+
+1. `skill` - Generate scenarios (args: {application}; skillId: testing-scenarios)
+
+### interview
+
+Run an interview workflow, review the responses, convert them into remediation features, review and validate those features, and record the durable invariants the interview established.
+
+- **Name:** interview
+- **Parameters:** application
+- **Steps:** 9
+
+1. `skill` - Generate interview questions (args: {application}; skillId: onboarding-interview)
+2. `aidd-cli` - Answer interview questions (interview: true)
+3. `aidd-cli` - Review interview responses (maxIterations: 1; prompt: Review and assess the interview responses for {application}. Read every response file under .aidd/responses/ and verify each claim against the live codebase. Create or update .aidd/response-review.md — the project-relative path skill:doc2feature reads back in the next step — covering: claims the codebase contradicts or that look fabricated...)
+4. `skill` - Convert responses to features (args: .aidd/responses {application}; skillId: doc2feature)
+5. `aidd-cli` - Review remediation features (maxIterations: 1; prompt: Review and assess the remediation features created from the interview responses for {application}. Create or update .aidd/remediation-review.md — the project-relative path skill:feature-review reads back in a later step — with a per-feature assessment giving its strengths and concerns...)
+6. `skill` - Review features (args: {application}; skillId: feature-review)
+7. `aidd-cli` - Generate assertions list (maxIterations: 1; prompt: Record the durable invariants the interview established for {application} in .aidd/assertions.md. That file is the project's catalog of behavioral, data, and UX rules that must not regress, and its stable IDs are cited by gates and audit reports...)
+8. `aidd-cli` - Validate completions (validate: true)
+9. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+
+Steps 3, 5, and 7 write to project-relative paths (`.aidd/response-review.md`, `.aidd/remediation-review.md`, `.aidd/assertions.md`). Every step in a pipeline already runs with the target project as its working directory, so prefixing those paths with `{application}` would bury the files one level deeper than the skills that read them back look.
+
+### new-app-from-idea
+
+Take a freshly created project from idea to a validated blueprint by default; feature implementation and build validation require an explicit opt-in.
+
+- **Name:** new-app-from-idea
+- **Parameters:** application, stopBeforeImplementation (default `true` — stops after the validated blueprint)
+- **Steps:** 8
+
+1. `recipe-ref` - Generate features from spec (params: {"application":"{application}"}; recipeName: generate application features); retryCount: 1
+2. `skill` - Create roadmap (args: {application}; skillId: update-roadmap); retryCount: 1
+3. `aidd-cli` - Validate and persist blueprint (maxIterations: 1; prompt: Validate the blueprint only. Confirm roadmap.json includes an MVP milestone; every MVP feature is backlog; every post-MVP feature is waiting_approval; all features have passes:false; and...); retryCount: 1
+4. `recipe-ref` - Implement feature backlog (params: {"application":"{application}"}; recipeName: coding); retryCount: 1; when stopBeforeImplementation equals false
+5. `skill` - Validate build (args: {application}; skillId: validate-build); when stopBeforeImplementation equals false
+6. `skill` - Validate tests (args: {application}; skillId: validate-tests); when stopBeforeImplementation equals false
+7. `skill` - Document changes (args: {application}; skillId: document-changes); when stopBeforeImplementation equals false
+8. `aidd-cli` - First-session report (maxIterations: 1; prompt: Write a first-session report to .aidd/reports/first-session.md (overwrite if present; record the current date inside it). Read the per-step timing and outcome data from {sessionMe...); retryCount: 1
+
+There is no separate feature-review step: `generate application features` already ends with one, so a second pass would re-review the features it just approved.
+
+Steps 5 and 6 stop the pipeline on failure. With `onFailure: continue` a failed build or a failing test suite would fall straight through to step 7, where `document-changes` commits — versioning implementation work that its own gates had just rejected. The cost of stopping is that step 8's first-session report does not run on a validation failure; the step results and their error messages are still recorded on the pipeline session, so the diagnosis survives without it.
+
+### project-intake
+
+Metadata-only intake for an existing codebase: analyze, interview, infer profile, check artifacts, generate feature coverage and testing scenarios, audit, park open generated features for approval, and produce an intake report. Understands the project; never mutates app code outside .aidd/.
+
+- **Name:** project-intake
+- **Metadata-only:** yes
+- **Parameters:** application
+- **Steps:** 9
+
+1. `recipe-ref` - Analyze codebase (params: {"application":"{application}"}; recipeName: codebase-analysis); retryCount: 1
+2. `recipe-ref` - Onboarding interview (params: {"application":"{application}"}; recipeName: interview); onFailure: continue
+3. `aidd-cli` - Infer project profile (maxIterations: 1; prompt: Read the codebase analysis output and source tree for this project. Infer and write .aidd/project-profile.json describing the project's assurance profile. The file contract is strict and a file that breaks it is rejected silently...); retryCount: 1
+4. `recipe-ref` - Check artifacts (params: {"application":"{application}"}; recipeName: check-artifacts); onFailure: continue
+5. `recipe-ref` - Generate feature coverage (params: {"application":"{application}"}; recipeName: generate application features); retryCount: 1
+6. `recipe-ref` - Generate testing scenarios (params: {"application":"{application}"}; recipeName: generate testing scenarios); retryCount: 1
+7. `recipe-ref` - Run audits (params: {"application":"{application}"}; recipeName: audit (all)); onFailure: continue
+8. `aidd-cli` - Park features for approval (maxIterations: 1; prompt: Park all open generated features for approval. Walk every .aidd/features/\*/feature.json in this project: for each feature whose status is 'backlog' or 'in_progress', set status t...); retryCount: 1
+9. `aidd-cli` - Intake report (maxIterations: 1; prompt: Write an intake report to .aidd/reports/intake.md (overwrite if present, and record the current date inside it). Summarize: detected stack and inferred project profile; which .aid...); retryCount: 1
+
+Feature review and audit-finding review are not separate steps: `generate application features` (step 5) already ends in a feature review, and `audit (all)` (step 7) already runs the finding review and a second feature review.
+
+### project-reintake
+
+Re-ingest an already-managed project: reconcile or repair existing .aidd metadata (stale contract artifacts) and then re-run the metadata-only project-intake pipeline, refreshing artifacts without duplicating existing features. Intake ends by parking open features for approval, so a re-intake also moves this project's existing backlog and in-progress features back to waiting_approval.
+
+- **Name:** project-reintake
+- **Metadata-only:** yes
+- **Parameters:** application
+- **Steps:** 2
+
+1. `aidd-cli` - Reconcile existing metadata (maxIterations: 1; prompt: Reconcile this project's .aidd metadata before re-ingestion. Inspect what already exists and repair it in place: (1) if .aidd/ holds artifacts that do not match the current contra...); retryCount: 1
+2. `recipe-ref` - Re-run project intake (params: {"application":"{application}"}; recipeName: project-intake)
+
+### reconcile-project-artifacts
+
+Refresh every documented project artifact against the live application, then recalculate canonical artifact status.
+
+- **Name:** reconcile project artifacts
+- **Parameters:** application
+- **Steps:** 2
+
+1. `skill` - Refresh project artifacts (args: {application}; skillId: refresh-project-artifacts); retryCount: 1
+2. `recipe-ref` - Recalculate artifact status (params: {"application":"{application}"}; recipeName: check-artifacts)
+
+The refresh skill reads the canonical reference at runtime and records an outcome for every row,
+including related documentation and deploy configuration. It updates durable artifacts from live
+evidence, runs generated producers only when their inputs exist, preserves manual decisions, and
+protects runtime history and secrets. The final step remains the check-only status recalculation.
+
+### remediate-audit-findings
+
+Run aidd to remediate audit-sourced feature files, validate, and consolidate.
+
+- **Name:** remediate audit findings
+- **Parameters:** application, filterBy (default `id`), filterValue (default `audit-*`)
+- **Steps:** 3
+
+1. `aidd-cli` - Remediate audit findings (filterBy: {filterBy}; filterValue: {filterValue})
+2. `aidd-cli` - Validate completions (validate: true)
+3. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+
+### remediate-bugs
+
+Run aidd to remediate bug-sourced feature files, validate, and consolidate.
+
+- **Name:** remediate bugs
+- **Parameters:** application, filterBy (default `id`), filterValue (default `remediation-*`)
+- **Steps:** 3
+
+1. `aidd-cli` - Remediate bugs (filterBy: {filterBy}; filterValue: {filterValue})
+2. `aidd-cli` - Validate completions (validate: true)
+3. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+
+### ship-changes
+
+Validate the working tree, document and commit the work, then publish it as a GitHub pull request.
+
+- **Name:** ship changes
+- **Parameters:** application
+- **Steps:** 4
+
+1. `skill` - Validate build (args: {application}; skillId: validate-build)
+2. `skill` - Validate tests (args: {application}; skillId: validate-tests)
+3. `skill` - Document and commit changes (args: {application}; skillId: document-changes)
+4. `skill` - Open pull request (args: {application}; skillId: ship-pr)
+
+This is the tail the coding recipes stop short of: they end at `document-changes`, which writes the changelog and commits in bundles but never pushes. Neither gate uses `onFailure: continue` — a failed build or test suite must stop the recipe rather than open a pull request over broken work. There is no `commit-bundles` step because `document-changes` already groups its commits the way that skill would; use `commit-bundles` on its own when you want the commits without the release documentation.
+
+### spernakit-bump
+
+Test, bug-fix, validate, and bump spernakit template version.
+
+- **Name:** spernakit bump
+- **Parameters:** bumpHint (default empty)
+- **Steps:** 4
+
+1. `skill` - Test spernakit (args: spernakit; skillId: spernakit-tester)
+2. `recipe-ref` - Bug to feature (params: {"application":"spernakit"}; recipeName: bug2feature)
+3. `recipe-ref` - Remediate bugs (params: {"application":"spernakit"}; recipeName: remediate bugs)
+4. `skill` - Bump version (args: {bumpHint}; skillId: spernakit-bump)
+
+There is no separate supertest step: the `spernakit-bump` skill runs `bun run supertest` and `bun run smoke:qc` itself, and fixes what they report, before it stamps the version or tags the release. There is no separate consolidate step either — `remediate bugs` ends with one, and nothing runs between it and the version bump.
+
+The parameter is a bump _hint_, not a version. The `spernakit-bump` skill derives the new version itself; leave `bumpHint` blank to let it size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it. It defaults to empty, so the recipe launches without an argument.
+
+### spernakit-dance
+
+Align the core Spernakit template documentation, then run The Dance across the template and every derived application.
+
+- **Name:** spernakit dance
+- **Parameters:** bumpHint (default empty)
+- **Steps:** 2
+
+1. `skill` - Align template docs (skillId: spernakit-update-docs)
+2. `skill` - Run The Dance (args: {bumpHint}; skillId: spernakit-dance)
+
+This is the fleet-wide counterpart to `spernakit-release`, which propagates to exactly one `{application}`. The `spernakit-dance` skill owns the whole fan-out itself — ship the template, three-way sync each app, tester fan-out, triage, remediation, supertest and `smoke:qc` verification, per-app tagging, fleet-manifest reconciliation, dev diary, and session report — with checkpointed resume in `<applications-root>/.dance-state.json`. A recipe cannot loop, so it does not try to; it adds the one thing the skill does not do, which is bringing README, STACK, DEVELOPMENT, the fleet manifest, workspace AGENTS guidance, and the SPERNAKIT audit in line before the template ships. Leave `bumpHint` blank to let the skill size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it.
+
+Step 1 stops the recipe when it fails. That is deliberate even though a doc misalignment sounds minor: step 2 commits, tags, and pushes the template and every derived application, so it is the one step in this recipe whose output cannot be quietly rolled back. Alignment is the recipe's stated prerequisite for the release, and a prerequisite that can fail without consequence is not one.
+
+### spernakit-dance-resume
+
+Resume an interrupted dance from the .dance-state.json checkpoint in the applications root. Single step: it drops the template-docs alignment that the full spernakit-dance recipe runs first and calls the dance skill directly, leaving the checkpoint to decide what still needs doing. Always set the resume args from the checkpoint before launching: the default is a placeholder, and Part A begins with A1, which ships a new template release.
+
+- **Name:** spernakit dance (resume)
+- **Parameters:** resumeArgs (default `--resume-from A`)
+- **Steps:** 1
+
+1. `skill` - Resume The Dance (args: {resumeArgs}; skillId: spernakit-dance)
+
+`spernakit-dance` is the wrong entry point for a run that already started. Its step 1 re-aligns the template docs, so re-running it after a crash re-checks documentation the interrupted run already shipped. This recipe drops that step and calls the skill directly, leaving the checkpoint to decide what still needs doing.
+
+Dropping step 1 is not the same as guaranteeing no release. The dance skill still owns Part A, and `--resume-from A` re-runs A1, which ships and tags a new template — use it only when the template ship really is the unfinished part.
+
+The `resumeArgs` default is a placeholder, not a suggestion — always set it from the checkpoint before launching. Read `<applications-root>/.dance-state.json`, pass `--resume-from` matching its `phase`, and pass `--scope`/`--pilot` agreeing with its `scope` when narrowing to a subset. The skill validates that the checkpoint's scope and bump match the flags; if either disagrees it renames the checkpoint to `.dance-state.mismatch-<timestamp>.json` and restarts the dance from Phase 0, so narrow the checkpoint first and let the flags agree with it. For the same reason, never pass a bump hint here — a hint that disagrees with the checkpoint is exactly the mismatch that discards it.
+
+Phase 0 gates every resume regardless: it needs clean trees in every scoped app and a green spernakit `smoke:qc`, so an interrupted dance cannot resume until the app it died in is committed or reset.
+
+### spernakit-propagate
+
+Upgrade template, test, fix, validate, commit, and update dev diary.
+
+- **Name:** spernakit propagate
+- **Parameters:** application, version
+- **Steps:** 12
+
+1. `shell` - Refuse to propagate into the template (command: exit 1 when the project directory is named `spernakit` and contains `scripts/init.ts`)
+2. `skill` - Template upgrade (args: {application} --to {version}; skillId: spernakit-template-upgrade)
+3. `skill` - Classify template drift (args: {application}; skillId: spernakit-justify-diffs)
+4. `skill` - Template refactor (args: {application}; skillId: spernakit-template-refactor)
+5. `skill` - Test application (args: {application}; skillId: spernakit-tester)
+6. `recipe-ref` - Bug to feature (params: {"application":"{application}"}; recipeName: bug2feature)
+7. `recipe-ref` - Remediate bugs (params: {"application":"{application}"}; recipeName: remediate bugs)
+8. `shell` - Run supertest (command: bun run supertest); onFailure: auto-fix; retryCount: 3
+9. `shell` - Quality gate (command: bun run smoke:qc); onFailure: auto-fix; retryCount: 2
+10. `skill` - Consolidate features (args: {application}; skillId: consolidate-features)
+11. `shell` - Commit changes (command: git add -A, then commit as `sv{version}: template upgrade for {application}` only when something is staged)
+12. `skill` - Update dev diary (skillId: devdiary-update); onFailure: continue
+
+The `version` parameter is the unprefixed template version (`3.1.16`); the recipe adds the `sv` prefix when it writes the commit message.
+
+Step 1 exists because every later step assumes the working directory is a derived application. Launched against the template itself, step 2 would upgrade spernakit to its own version and step 11 would run `git add -A` over the release commit. The guard is the template-detection predicate the rest of the codebase uses — a directory named `spernakit` that contains `scripts/init.ts` — and it fails the run before anything is written rather than reporting the damage afterward.
+
+Step 11 guards the commit with `git diff --cached --quiet ||` rather than committing unconditionally. Steps 5 through 9 routinely leave nothing to commit — an upgrade that found no drift, or a remediation pass that consolidated its own work — and `git commit` on an empty index exits non-zero, which would abort the pipeline before step 11 on the runs that went cleanest.
+
+Step 2 runs read-only on purpose: `spernakit-justify-diffs` only classifies each differing hunk as branding, an app-specific requirement, or unjustified drift, and writes nothing. Its classification does **not** reach step 3 — pipeline steps are independent runs with no data passing between them, and `spernakit-justify-diffs` persists nothing to disk, so its output lands in the run transcript and the operator's review, not in `spernakit-template-refactor`'s prompt. Read step 2 as a checkpoint a human can inspect when a propagate run goes wrong, not as a guard that constrains the refactor.
+
+There is deliberately no `spernakit-diff-sync` step. Running one after step 3 looks justifiable as "the only skill of the three that executes backports rather than only flagging them" — which is not true: `spernakit-template-refactor` categorizes a bug fix as "port back to template" and applies the safe default of porting an enhancement to the template first, then refactoring. The two skills also divide by scope in their own contracts: `spernakit-diff-sync` is for "a specific fix, enhancement, or small file set," and `spernakit-template-refactor` for "when the goal is to assess and realign an entire derived application," which is exactly what propagate does. Running diff-sync immediately after a whole-app realignment leaves it building its worklist from `bun run check:drift` after that drift has just been eliminated. Use `spernakit-diff-sync` on its own, against a clean tree, for targeted drift work.
+
+### spernakit-release
+
+Full spernakit release: bump the template version, propagate it to an application, write the changelog. Steps are independent runs with no data passing between them, so the bump cannot hand its new version to the propagate step — you supply both the bump hint and the version it will produce, and they must agree.
+
+- **Name:** spernakit release
+- **Parameters:** bumpHint, version, application
+- **Steps:** 4
+
+1. `shell` - Refuse to release into the template (command: exit 1 when the project directory is named `spernakit` and contains `scripts/init.ts`)
+2. `recipe-ref` - Bump spernakit (params: {"bumpHint":"{bumpHint}"}; recipeName: spernakit bump)
+3. `recipe-ref` - Propagate to application (params: {"application":"{application}","version":"{version}"}; recipeName: spernakit propagate)
+4. `skill` - Write changelog (args: {application}; skillId: changelog-rewrite); onFailure: continue
+
+`bumpHint` is required here even though the standalone `spernakit-bump` recipe leaves it optional. A blank hint lets the bump skill size the release from `git log`, which makes its output unpredictable — and step 3 has to be told the version up front, because a pipeline step cannot read what an earlier step produced. Supply `+0.0.1` or `+0.1.0` and set `version` to spernakit's current `package.json` version plus that hint. If the two disagree, step 3 fails resolving a template tag that does not exist instead of quietly shipping the wrong version.
+
+Step 1 is the same template guard `spernakit-propagate` carries, repeated here because this recipe is launched independently and its own step 2 would otherwise bump the template and then propagate that bump back into it.
+
+### spernakit-replatform-assessment
+
+Assess whether an existing project should be replatformed onto Spernakit, and if so produce an evidence-backed migration plan. Runs intake, judges Spernakit fit (honestly — a "do not replatform" verdict is a valid outcome), inventories features and architecture, generates a vertical-slice migration backlog with a risk/parity checklist, and stops at a human approval gate. Read-only on application code: writes only under .aidd/, and never begins the migration.
+
+- **Name:** spernakit-replatform-assessment
+- **Metadata-only:** yes
+- **Parameters:** application
+- **Steps:** 7
+
+1. `recipe-ref` - Project intake (params: {"application":"{application}"}; recipeName: project-intake); retryCount: 1
+2. `aidd-cli` - Spernakit fit assessment (maxIterations: 1; prompt: Assess whether this project is a good candidate to replatform onto Spernakit (the TypeScript full-stack template). Read the intake report (.aidd/reports/intake.md), the inferred p...); retryCount: 1
+3. `aidd-cli` - Feature inventory (maxIterations: 1; prompt: Produce a factual feature inventory as the source of truth for migration scope. Using the features already recorded under .aidd/features/ and the actual source, write .aidd/report...); retryCount: 1
+4. `aidd-cli` - Route, page, and data-model summary (maxIterations: 1; prompt: Summarize the current architecture as migration input. Write .aidd/reports/architecture-summary.md (overwrite; include today's date) covering: routes/endpoints, pages/screens, the...); retryCount: 1
+5. `aidd-cli` - Migration backlog generation (maxIterations: 1; prompt: Generate a migration backlog for moving this project onto Spernakit, as feature records under .aidd/features/ plus the roadmap entries those records require. If the fit assessment (.a...); retryCount: 1
+6. `aidd-cli` - Risk and parity checklist (maxIterations: 1; prompt: Write .aidd/reports/migration-risk-parity.md (overwrite; include today's date) with two sections. Risks: the main risks of this migration (data migration, auth, external integrati...); retryCount: 1
+7. `aidd-cli` - Assessment summary and approval gate (maxIterations: 1; prompt: Write the top-level assessment to .aidd/reports/replatform-assessment.md (overwrite; include today's date): the Spernakit fit verdict and rationale, a short feature-inventory and ...); retryCount: 1
+
+### test-and-remediate
+
+Test application, convert bugs to features, remediate, and produce session report.
+
+- **Name:** test and remediate
+- **Parameters:** application
+- **Steps:** 5
+
+1. `skill` - Test application (args: {application}; skillId: tester)
+2. `skill` - Convert bugs to features (args: {application}; skillId: bug2feature)
+3. `skill` - Review features (args: {application}; skillId: feature-review)
+4. `recipe-ref` - Remediate bugs (params: {"application":"{application}"}; recipeName: remediate bugs)
+5. `aidd-cli` - Create session report (maxIterations: 1; prompt: Write a session report to .aidd/reports/test-and-remediate-<YYYYMMDD-HHMM>.md, using the current date and time for the filename. Read the per-step timing and outcome data from {sessionMetricsPath}, which the pipeline wrote for this session and refreshed after every completed step...)
+
+Step 1 runs the stack-agnostic `tester` skill, so this recipe works against any aidd-managed application. On a Spernakit app, findings land in the application's database, so there is no `data/bugs.json` to clean up, and `remediate bugs` ends in `consolidate-features`, which removes the redundant finding files itself. Use `spernakit-tester` directly when a run should bind Spernakit's crawl gates.
+
+### test-application-chaos
+
+Run chaos testing via the tester skill, then convert bugs to features.
+
+- **Name:** test application (chaos)
+- **Parameters:** application
+- **Steps:** 2
+
+1. `skill` - Run chaos tester (args: {application} run an exploratory chaos pass: ignore the project scenario catalog in .aidd/testing-scenarios.md and instead probe the application through its visible controls with boundary and invalid input...; skillId: tester)
+2. `recipe-ref` - Bug to feature (params: {"application":"{application}"}; recipeName: bug2feature)
+
+The `tester` skill runs the project scenario catalog when it finds one, so a bare `{application}` here would have made this recipe a duplicate of `test-application-scenarios`. The args name the chaos pass explicitly and tell the skill to ignore the catalog.
+
+### test-application-scenarios
+
+Run the scripted scenarios in .aidd/testing-scenarios.md via the tester skill, then convert bugs to features.
+
+- **Name:** test application (scenarios)
+- **Parameters:** application
+- **Steps:** 2
+
+1. `skill` - Run testing scenarios (args: {application} --scenarios .aidd/testing-scenarios.md: run every scenario in the project catalog, in order; if the catalog is missing or has no scenarios, report that and stop...; skillId: tester)
+2. `recipe-ref` - Bug to feature (params: {"application":"{application}"}; recipeName: bug2feature)
+
+Step 1 delegates to the `tester` skill rather than restating server startup and bug-reporting rules in an inline prompt, so scripted scenario runs and exploratory runs file findings the same way — which is what step 2's `bug2feature` expects to read. The args pass the catalog through the skill's own `--scenarios` flag and tell it to stop rather than fall back to an exploratory pass when the catalog is missing, so a project without scenarios fails loudly instead of quietly running the wrong recipe.
+
+### triumvirate-coding-document-changes
+
+Run Triumvirate coding on an application, then document and commit the changes.
+
+- **Name:** triumvirate coding and document changes
+- **Parameters:** application
+- **Steps:** 2
+
+1. `aidd-cli` - Run Triumvirate coding (triumvirate: true)
+2. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+### ui-redesign
+
+Review an application's frontend UX, write a redesign plan, generate remediation feature metadata, review it, and validate the feature set.
+
+- **Name:** ui redesign
+- **Metadata-only:** yes
+- **Parameters:** application
+- **Steps:** 3
+
+1. `skill` - Plan UI redesign (args: {application}; skillId: ui-redesign-planner)
+2. `skill` - Review generated features (args: {application}; skillId: feature-review); retryCount: 1
+3. `aidd-cli` - Validate feature metadata (validate: true)
+
+### update-application-documentation
+
+Review and update application documentation to match current implementation, humanize the prose, then document and commit the changes.
+
+- **Name:** update application documentation
+- **Parameters:** application
+- **Steps:** 4
+
+1. `aidd-cli` - Update docs (maxIterations: 1; prompt: Review {application}'s current codebase state and update all documentation in the docs/ directory to accurately reflect the current implementation. Update API references, architec...)
+2. `skill` - Humanize doc prose (args: {application} docs/ — rewrite every Markdown file under docs/ in place...; skillId: humanize-docs)
+3. `skill` - Review and correct docs (args: {application} docs/ — correct every inaccuracy you confirm...; skillId: review-or-create-doc)
+4. `skill` - Document changes (args: {application}; skillId: document-changes)
+
+Step 2 rewrites the prose an agent just produced in step 1, which is the only place in the pipeline where that happens. It runs before the review, not after: humanizing is a structural rewrite and can introduce inaccuracy, so `review-or-create-doc` needs to check the text that will actually ship. `humanize-docs` rewrites _provided text_ rather than resolving an application on its own, so the step passes an explicit `docs/` scope alongside the application name — and its args go further, demanding the rewrites be saved back over each source file. The skill's own output contract is "provide the rewritten text only," which in a pipeline step means the rewrite lands in the run transcript and disappears; nothing later in the recipe reads that transcript, so the instruction to write in place is what makes the step change anything at all.
+
+Step 3 runs `apply-changes`, and its args carry an explicit correction request. The intent is what makes the step correct anything: `review-or-create-doc` ends by applying the corrections it confirmed, and only a `review-only` step would hold it to reporting. Nothing downstream applies its findings either — `document-changes` documents and commits work that already exists and states outright that it does not modify product code. Left read-only, the review would report inaccuracies into the run transcript and step 4 would then commit the very docs it had just faulted. Pipeline steps are independent runs with no data passing between them, so the correction has to happen inside the step that finds the problem — and for the same reason step 3 stops the recipe when it fails rather than continuing, since a failed correction pass followed by a successful commit ships exactly the documentation the review rejected.

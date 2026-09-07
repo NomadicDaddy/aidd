@@ -1,0 +1,88 @@
+import { afterEach, describe, expect, test } from 'bun:test';
+
+import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import { canonicalProjectPath } from '../../backend/src/paths.ts';
+import { defaultIgnoredFolders } from '../../shared/src/config/schema.ts';
+import {
+	createIgnoredDirectoryMatcher,
+	scanRoot,
+} from '../../backend/src/services/project/discovery.ts';
+
+import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from './_helpers/remove-temp-tree.ts';
+const roots: string[] = [];
+
+afterEach(async () => {
+	for (const root of roots.splice(0)) {
+		await removeTempTree(root);
+	}
+});
+
+// Mirror a standalone install: the app folder (with its bundled asset dirs) sits under the same
+// parent that discovery falls back to when no roots are configured, next to a real user project.
+async function seedInstallLayout(): Promise<string> {
+	const base = await testTempDir('aidd-discovery-');
+	roots.push(base);
+	await mkdir(join(base, 'aidd-v9.9.9-bun-windows-x64-modern', 'scaffolding', '.aidd'), {
+		recursive: true,
+	});
+	await mkdir(join(base, 'aidd-v9.9.9-bun-windows-x64-modern', 'frontend', '.aidd'), {
+		recursive: true,
+	});
+	await mkdir(join(base, 'my-project', '.aidd'), { recursive: true });
+	return base;
+}
+
+describe('project discovery ignores bundled distribution assets', () => {
+	test('surfaces real projects but not the bundled scaffolding/ template', async () => {
+		const base = await seedInstallLayout();
+		const result = await scanRoot(
+			base,
+			5,
+			createIgnoredDirectoryMatcher(defaultIgnoredFolders),
+		);
+		const paths = result.projects.map((project) => project.path);
+
+		expect(paths.some((path) => path.endsWith('my-project'))).toBe(true);
+		expect(paths.some((path) => path.includes('scaffolding'))).toBe(false);
+		expect(paths.some((path) => path.includes('frontend'))).toBe(false);
+	});
+});
+
+describe('project discovery treats a configured root as a container', () => {
+	test('a root with its own .aidd still surfaces the projects beneath it', async () => {
+		const base = await seedInstallLayout();
+		// What a fleet-wide scheduled task leaves behind: the CLI stages a workspace into whatever
+		// directory it runs in, and a no-project task runs from the applications root.
+		await mkdir(join(base, '.aidd'), { recursive: true });
+
+		const result = await scanRoot(
+			base,
+			5,
+			createIgnoredDirectoryMatcher(defaultIgnoredFolders),
+		);
+		const paths = result.projects.map((project) => project.path);
+
+		expect(paths.some((path) => path.endsWith('my-project'))).toBe(true);
+		expect(paths).not.toContain(base);
+	});
+
+	test('a root pointed straight at one project still reads as that project', async () => {
+		const base = await testTempDir('aidd-discovery-single-');
+		roots.push(base);
+		await mkdir(join(base, '.aidd'), { recursive: true });
+		await mkdir(join(base, 'src'), { recursive: true });
+
+		const result = await scanRoot(
+			base,
+			5,
+			createIgnoredDirectoryMatcher(defaultIgnoredFolders),
+		);
+
+		expect(result.projects.map((project) => project.path)).toEqual([
+			canonicalProjectPath(base),
+		]);
+	});
+});

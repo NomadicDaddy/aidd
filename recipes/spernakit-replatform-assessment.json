@@ -1,0 +1,76 @@
+{
+	"description": "Assess whether an existing project should be replatformed onto Spernakit, and if so produce an evidence-backed migration plan. Runs intake, judges Spernakit fit (honestly — a \"do not replatform\" verdict is a valid outcome), inventories features and architecture, generates a vertical-slice migration backlog with a risk/parity checklist, and stops at a human approval gate. Read-only on application code: writes only under .aidd/, and never begins the migration.",
+	"metadataOnly": true,
+	"name": "spernakit-replatform-assessment",
+	"parameters": [
+		{
+			"description": "Target application name",
+			"name": "application"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"params": { "application": "{application}" },
+				"recipeName": "project-intake"
+			},
+			"name": "Project intake",
+			"retryCount": 1,
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Assess whether this project is a good candidate to replatform onto Spernakit (the TypeScript full-stack template). Read the intake report (.aidd/reports/intake.md), the inferred profile (.aidd/project-profile.json), and the source tree. Detect whether the project already derives from Spernakit: the template stamps a `spernakit_version` key into the app's own package.json, and intake records the same conclusion as the `derivesFromTemplate` facet in .aidd/project-profile.json. The fleet manifest spernakit.psd1 lives at the Spernakit checkout root rather than inside a derived app, so its absence here proves nothing. Write .aidd/reports/spernakit-fit.md (overwrite; include today's date) with a clear verdict — Good fit, Conditional, or Not recommended — and the rationale across: stack compatibility, data-model shape, auth model, external integrations, and project size/maturity. Be honest: recommending against replatforming is a valid, expected outcome for CLIs, small utilities, libraries, or mature codebases where replatforming is not worth it. Do not force Spernakit onto an inappropriate stack. Write nothing outside .aidd/."
+			},
+			"name": "Spernakit fit assessment",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Produce a factual feature inventory as the source of truth for migration scope. Using the features already recorded under .aidd/features/ and the actual source, write .aidd/reports/feature-inventory.md (overwrite; include today's date): the app's current capabilities grouped by area, noting which are implemented versus partial, and the primary user-facing surfaces each one touches. Describe what exists — do not propose changes here. Write nothing outside .aidd/."
+			},
+			"name": "Feature inventory",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Summarize the current architecture as migration input. Write .aidd/reports/architecture-summary.md (overwrite; include today's date) covering: routes/endpoints, pages/screens, the data model (entities, key relationships, and where data is stored), and external integrations (APIs, auth providers, queues, storage). Keep it factual and grounded in the code. Write nothing outside .aidd/."
+			},
+			"name": "Route, page, and data-model summary",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Generate a migration backlog for moving this project onto Spernakit, as feature records under .aidd/features/ plus the roadmap entries those records require. If the fit assessment (.aidd/reports/spernakit-fit.md) concluded \"Not recommended\", do NOT invent a migration backlog — state that conclusion in your final summary and stop without creating a single feature. Otherwise, break the migration into vertical slices, one feature per slice, each with explicit dependencies and verifiable acceptance criteria, ordered so every slice is independently shippable and testable. Never create a backend endpoint without a frontend caller, or a page without a route. Create every generated feature with status \"waiting_approval\" and \"passes\": false. Leaving one in \"backlog\" makes it actionable, and the next coding run would begin the migration without the human approval this recipe exists to require. If .aidd/roadmap.json is present, also assign every new feature to a milestone defined there, adding a milestone for the migration if it needs its own: while roadmap.json exists, a feature it does not map is rejected outright by the feature check. Roadmap entries are keyed — and their dependencies cross-referenced — by feature directory, whereas feature.json dependencies may name either the id or the directory. This is a plan, not an execution: do not modify or migrate any application code, and write nothing outside .aidd/. Finally, normalize what you wrote — `bunx prettier --write --ignore-path /dev/null \".aidd/features/*/feature.json\" .aidd/roadmap.json` (the --ignore-path override is required, not optional: .aidd/ is listed in .prettierignore, so the plain command matches zero files and reports success without formatting anything) — then validate it from an aidd checkout with `bun run start -- --project-dir {projectDir} --check-features`. Fix anything it reports; if no aidd checkout is reachable from here, say so in your summary instead of skipping the check silently."
+			},
+			"name": "Migration backlog generation",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Write .aidd/reports/migration-risk-parity.md (overwrite; include today's date) with two sections. Risks: the main risks of this migration (data migration, auth, external integrations, behavior/UX parity, downtime) each with a concrete mitigation. Parity checklist: the checks that must pass after each vertical slice to prove the Spernakit version matches the original before the old project is retired — the old project stays as evidence until parity is proven. For Spernakit apps the validation gate is `bun run smoke:qc`. Write nothing outside .aidd/."
+			},
+			"name": "Risk and parity checklist",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		},
+		{
+			"configJson": {
+				"maxIterations": 1,
+				"prompt": "Write the top-level assessment to .aidd/reports/replatform-assessment.md (overwrite; include today's date): the Spernakit fit verdict and rationale, a short feature-inventory and architecture recap, the migration backlog overview (slice count and ordering, or the \"not recommended\" conclusion), and the key risks and parity gate. End with a \"Decision & approval\" section stating plainly that this recipe only assessed the project and made no code changes, that no migration begins until a human explicitly approves, and what the recommended next action is. Write nothing outside .aidd/."
+			},
+			"name": "Assessment summary and approval gate",
+			"retryCount": 1,
+			"stepType": "aidd-cli"
+		}
+	]
+}

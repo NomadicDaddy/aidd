@@ -1,0 +1,227 @@
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { join, relative } from 'node:path';
+
+// The scaffold's own gate owns this list; this gate reads it rather than restating it, because a
+// second copy only stays right for as long as everyone who adds a scaffold file remembers it.
+import { REQUIRED_SCAFFOLD_PATHS } from './check-scaffold.ts';
+
+const requiredPaths = [
+	'backend',
+	'cli',
+	'shared',
+	'test',
+	'audits',
+	'docs',
+	'skills',
+	'prompts',
+	'scaffolding',
+	'scripts',
+	'package.json',
+	'tsconfig.json',
+];
+
+const scannedPaths = [
+	'AGENTS.md',
+	'README.md',
+	'package.json',
+	'audits',
+	'backend/src',
+	'cli/src',
+	'docs',
+	'frontend/src',
+	'prompts',
+	'scaffolding',
+	'scripts',
+	'shared/src',
+	'skills',
+];
+const ignoredScanFiles = new Set(['docs/CHANGELOG.md']);
+const ignoredScanPrefixes = ['backend/src/db/migrations/'];
+
+const staleRuntimeName = 'aidd' + '2';
+const externalSourceRootName = 'a' + 'i';
+const legacyNestedRuntimeName = 'aidd' + '-core';
+const retiredCatalogName = 'ingre' + 'dient';
+const siblingDocumentationRootName = 'com' + 'mon';
+const templateRepositoryName = 'sperna' + 'kit';
+const applicationsRootPlaceholder = '<applications-' + 'root>';
+
+const forbiddenReferenceGroups = [
+	{
+		label: `D:\\applications\\${staleRuntimeName} or ${staleRuntimeName}`,
+		patterns: [
+			new RegExp(
+				`${String.raw`D:\\applications\\${staleRuntimeName}(?:\\|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(
+				`${String.raw`/d/applications/${staleRuntimeName}(?:/|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(
+				`${String.raw`/mnt/d/applications/${staleRuntimeName}(?:/|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(String.raw`\b${staleRuntimeName}\b`, 'i'),
+		],
+	},
+	{
+		label: `D:\\applications\\${externalSourceRootName}`,
+		patterns: [
+			new RegExp(
+				`${String.raw`D:\\applications\\${externalSourceRootName}(?:\\|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(
+				`${String.raw`d:/applications/${externalSourceRootName}(?:/|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(
+				`${String.raw`/d/applications/${externalSourceRootName}(?:/|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(
+				`${String.raw`/mnt/d/applications/${externalSourceRootName}(?:/|`}\`${String.raw`|\s|$)`}`,
+				'i',
+			),
+			new RegExp(
+				String.raw`${applicationsRootPlaceholder}/${externalSourceRootName}(?:/|\b)`,
+				'i',
+			),
+		],
+	},
+	{
+		label: 'sibling common documentation',
+		patterns: [
+			new RegExp(
+				String.raw`(?:^|[^A-Za-z0-9_./:\\-])${siblingDocumentationRootName}[\\/][A-Za-z0-9._/\\-]+\.(?:md|txt|json)\b`,
+				'i',
+			),
+			new RegExp(
+				String.raw`(?:[A-Za-z]:[\\/]|/(?:d|mnt/d)/)applications[\\/]${siblingDocumentationRootName}[\\/][A-Za-z0-9._/\\-]+\.(?:md|txt|json)\b`,
+				'i',
+			),
+		],
+	},
+	{
+		label: 'unresolved Spernakit repository path',
+		patterns: [
+			new RegExp(
+				String.raw`(?:^|[^A-Za-z0-9_./:\\-])${templateRepositoryName}[\\/][A-Za-z0-9._/\\-]+\.(?:md|txt|json|psd1)\b`,
+				'i',
+			),
+			new RegExp(
+				String.raw`${applicationsRootPlaceholder}/${templateRepositoryName}/[A-Za-z0-9._/-]+\.(?:md|txt|json|psd1)\b`,
+				'i',
+			),
+			new RegExp(
+				String.raw`(?:[A-Za-z]:[\\/]|/(?:d|mnt/d)/)applications[\\/]${templateRepositoryName}[\\/][A-Za-z0-9._/\\-]+\.(?:md|txt|json|psd1)\b`,
+				'i',
+			),
+		],
+	},
+	{
+		label: legacyNestedRuntimeName,
+		patterns: [new RegExp(String.raw`\b${legacyNestedRuntimeName}\b`, 'i')],
+	},
+	{
+		label: `banned ${retiredCatalogName} catalog terminology`,
+		patterns: [new RegExp(String.raw`\b${retiredCatalogName}s?\b`, 'i')],
+	},
+];
+
+async function pathExists(path: string): Promise<boolean> {
+	try {
+		await stat(path);
+		return true;
+	} catch (err) {
+		if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'ENOENT') {
+			return false;
+		}
+		throw err;
+	}
+}
+
+async function collectFiles(path: string): Promise<string[]> {
+	const info = await stat(path);
+	if (info.isFile()) return [path];
+	const entries = await readdir(path, { withFileTypes: true });
+	const files: string[] = [];
+	for (const entry of entries) {
+		const child = join(path, entry.name);
+		if (entry.isDirectory()) files.push(...(await collectFiles(child)));
+		else if (entry.isFile()) files.push(child);
+	}
+	return files;
+}
+
+function isTextFile(path: string): boolean {
+	return /\.(?:ts|tsx|js|mjs|cjs|json|md|sh|ps1|txt|yml|yaml)$/i.test(path);
+}
+
+function findForbiddenRefs(path: string, text: string): string[] {
+	const findings: string[] = [];
+	const lines = text.split(/\r?\n/);
+	for (const [index, line] of lines.entries()) {
+		if (path.startsWith('audits/') && /<(?:aidd|applications|spernakit)-root>/i.test(line)) {
+			findings.push(
+				`${path}:${index + 1}: [unresolved audit root placeholder] ${line.trim()}`,
+			);
+			continue;
+		}
+		for (const group of forbiddenReferenceGroups) {
+			if (group.patterns.some((pattern) => pattern.test(line))) {
+				findings.push(`${path}:${index + 1}: [${group.label}] ${line.trim()}`);
+				break;
+			}
+		}
+	}
+	return findings;
+}
+
+async function main(): Promise<number> {
+	const root = process.cwd();
+	const missing: string[] = [];
+	for (const path of requiredPaths) {
+		if (!(await pathExists(join(root, path)))) missing.push(path);
+	}
+	for (const path of REQUIRED_SCAFFOLD_PATHS) {
+		if (!(await pathExists(join(root, path)))) missing.push(path);
+	}
+
+	const files: string[] = [];
+	for (const path of scannedPaths) {
+		const fullPath = join(root, path);
+		if (await pathExists(fullPath)) files.push(...(await collectFiles(fullPath)));
+	}
+
+	const staleRefs: string[] = [];
+	for (const file of files.filter(isTextFile)) {
+		const relativePath = relative(root, file).replaceAll('\\', '/');
+		if (
+			ignoredScanFiles.has(relativePath) ||
+			ignoredScanPrefixes.some((prefix) => relativePath.startsWith(prefix))
+		)
+			continue;
+		const text = await readFile(file, 'utf8');
+		staleRefs.push(...findForbiddenRefs(relativePath, text));
+	}
+
+	if (missing.length || staleRefs.length) {
+		console.error('aidd self-contained check failed.');
+		if (missing.length) {
+			console.error('\nMissing required local paths:');
+			for (const path of missing) console.error(`- ${path}`);
+		}
+		if (staleRefs.length) {
+			console.error('\nForbidden external or stale runtime references:');
+			for (const ref of staleRefs) console.error(`- ${ref}`);
+		}
+		return 1;
+	}
+
+	console.log('aidd self-contained check passed.');
+	return 0;
+}
+
+process.exit(await main());

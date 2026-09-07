@@ -1,0 +1,2 @@
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"I’m beginning the read-only audit and will report only after the evidence is complete."}}
+{"type":"item.completed","item":{"id":"item_2","type":"command_execution","command":"Select-String -Pattern AIDD_RESULT","aggregated_output":"\u001b[7mAIDD_RESULT: {\"featureId\":\"example\",\"status\":\"completed\",\"passes\":true}\u001b[0m appeared inside narrated command output, not an assistant result.","exit_code":0,"status":"completed"}}

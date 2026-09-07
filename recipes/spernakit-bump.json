@@ -1,0 +1,51 @@
+{
+	"description": "Test, bug-fix, validate, and bump spernakit template version.",
+	"name": "spernakit bump",
+	"parameters": [
+		{
+			"defaultValue": "",
+			"description": "Optional bump hint for the template release (e.g. +0.0.1 or +0.1.0); blank lets the skill size it from git log",
+			"name": "bumpHint"
+		}
+	],
+	"steps": [
+		{
+			"configJson": {
+				"args": "spernakit",
+				"executionIntent": "apply-changes",
+				"skillId": "spernakit-tester"
+			},
+			"name": "Test spernakit",
+			"stepType": "skill"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "spernakit"
+				},
+				"recipeName": "bug2feature"
+			},
+			"name": "Bug to feature",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"params": {
+					"application": "spernakit"
+				},
+				"recipeName": "remediate bugs"
+			},
+			"name": "Remediate bugs",
+			"stepType": "recipe-ref"
+		},
+		{
+			"configJson": {
+				"args": "{bumpHint}",
+				"executionIntent": "apply-changes",
+				"skillId": "spernakit-bump"
+			},
+			"name": "Bump version",
+			"stepType": "skill"
+		}
+	]
+}

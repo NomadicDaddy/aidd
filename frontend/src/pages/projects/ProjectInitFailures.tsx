@@ -1,0 +1,109 @@
+import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
+import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
+import { toast } from 'sonner';
+
+import type { ProjectInitFailure } from '../../api/types.ts';
+
+import { projectInitFailureLogUrl } from '../../api/projects.ts';
+import { Button } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
+import {
+	useDismissProjectInitFailure,
+	useRetryProjectInitFailure,
+} from '../../hooks/useProjects.ts';
+import { cn } from '../../lib/cn.ts';
+import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import { touchTargetTextClass } from '../../lib/touchTarget.ts';
+
+// Surfaces failed project-template scaffolds so a broken init stays visible with retry
+// and dismiss actions instead of vanishing after the toast.
+export function ProjectInitFailures({ failures }: { failures: ProjectInitFailure[] }) {
+	const retry = useRetryProjectInitFailure();
+	const dismiss = useDismissProjectInitFailure();
+	if (failures.length === 0) return null;
+
+	function handleRetry(failure: ProjectInitFailure): void {
+		retry.mutate(failure.id, {
+			onError: (error) =>
+				toast.error('Retry failed', {
+					description: error instanceof Error ? error.message : 'Unknown error.',
+				}),
+			onSuccess: () => toast.success('Retry launched', { description: failure.name }),
+		});
+	}
+
+	function handleDismiss(id: string): void {
+		dismiss.mutate(id, {
+			onError: (error) =>
+				toast.error('Dismiss failed', {
+					description: error instanceof Error ? error.message : 'Unknown error.',
+				}),
+		});
+	}
+
+	return (
+		<Card className={cn('space-y-3', toneBorder.red, toneSurface.red)}>
+			<div className={cn('flex items-center gap-2 text-sm font-semibold', toneText.red)}>
+				<AlertTriangle className="h-4 w-4" />
+				Failed project inits ({failures.length})
+			</div>
+			<ul className="space-y-2">
+				{failures.map((failure) => (
+					<li
+						className={cn(
+							'space-y-1 rounded border bg-card p-3 text-sm',
+							toneBorder.red,
+						)}
+						key={failure.id}>
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<div className="min-w-0">
+								<span className="font-medium text-foreground">{failure.name}</span>
+								<span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+									{failure.template}
+								</span>
+							</div>
+							<div className="flex flex-wrap items-center gap-2">
+								{failure.hasLog ? (
+									<a
+										className={`text-xs underline ${toneText.teal} ${touchTargetTextClass}`}
+										href={projectInitFailureLogUrl(failure.id)}
+										rel="noreferrer"
+										target="_blank">
+										View log
+									</a>
+								) : null}
+								<Button
+									disabled={retry.isPending}
+									onClick={() => handleRetry(failure)}
+									variant="secondary">
+									{retry.isPending && retry.variables === failure.id ? (
+										<Loader2 className="h-3.5 w-3.5 animate-spin" />
+									) : null}
+									Retry
+								</Button>
+								<Button
+									disabled={dismiss.isPending}
+									onClick={() => handleDismiss(failure.id)}
+									variant="ghost">
+									Dismiss
+								</Button>
+							</div>
+						</div>
+						<p className="font-mono text-xs break-all text-muted-foreground">
+							{failure.targetPath}
+						</p>
+						<p className={cn('text-xs', toneText.red)}>{failure.errorSummary}</p>
+						{failure.quarantinePath ? (
+							<p className="text-xs text-muted-foreground">
+								Partial output quarantined at{' '}
+								<span className="font-mono break-all">
+									{failure.quarantinePath}
+								</span>
+							</p>
+						) : null}
+					</li>
+				))}
+			</ul>
+		</Card>
+	);
+}

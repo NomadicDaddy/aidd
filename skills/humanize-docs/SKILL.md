@@ -1,157 +1,166 @@
 ---
 name: humanize-docs
-description: 'Rewrite documentation and release prose to sound natural, concise, and expert-written. Use to remove AI-like wording, improve readability, or adapt tone; this is the prose style contract for other documentation skills.'
+description: 'Review and edit documentation, release prose, and personal posts while preserving the author’s voice, factual scope, and required coverage. Use to remove AI-like structure or wording, improve readability, or adapt tone; this is the prose style contract for other documentation skills.'
 metadata:
     aidd-category: metadata
 ---
 
 # Humanize Docs
 
-Rewrite the provided text as a knowledgeable, concise, approachable human editor.
+Preserve the author's voice and the document's purpose while making the changes the text needs.
+Factual scope and required coverage take precedence over stylistic heuristics.
 
-## The core problem
+## Establish the source and voice
 
-AI tells are structural more than lexical. Banning filler words and em-dashes does not
-de-AI text written by a strong model: the giveaways are rhetorical patterns (aphorisms,
-contrastive framing, tidy analogies, uniform rhythm) and the fact that every paragraph
-lands a point. Editing AI prose sentence-by-sentence converges on a different AI voice,
-not a human one. Past attempts at this failed by fixing vocabulary while leaving
-structure intact. Structure is the job.
+Read the requested text fully before editing. Identify what is worth preserving: distinctive
+phrasing, useful detail, the author's position, and uncertainty that belongs to the account.
 
-## Choose the workflow by how AI-flavored the input is
+For voice matching, prefer user-approved examples or original passages whose history you can check.
+An old publication date does not prove the current text is original. Check relevant revisions when
+the corpus has already been rewritten. Do not treat this task's agent-written revisions as approved
+voice samples unless the author accepts them.
 
-Read the source fully, then decide:
+For first-person work, read `personal-voice.md` beside this skill when present, or its staged copy
+at `.aidd/skills/humanize-docs/personal-voice.md`. Use it only for the author it describes. Follow
+its source references and read a few relevant passages in context. If no reliable samples are
+available, preserve the voice in the supplied text and state the limitation when voice matching
+matters. Do not substitute a generic casual persona.
 
-- **Mostly human, lightly AI**: edit the existing prose using the rules below.
-- **Heavily AI-drafted** (dense with the anti-patterns listed next): do NOT polish or
-  revise it sentence by sentence. Instead:
-    1. Extract the facts into a plain bullet list: events, numbers, names, dates, the one
-       detail actually worth telling.
-    2. Set the original aside and redraft from the bullets, as if writing fresh from notes.
-    3. The redraft should be _less_ polished than the input. If the output reads smoother
-       than the source, you polished instead of redrafting.
+Choose the document's purpose before applying the editing guidance:
 
-## Structural anti-patterns (the real tells)
+- **Personal narrative or retrospective:** select the details that carry the story, where the
+  user permits cuts. Preserve viewpoint and the sequence of events.
+- **Guide or reference:** preserve actionable coverage, exact constraints, and navigable structure.
+  Headings, procedures, tables, and repeated field layouts may be necessary.
+- **Release or operational prose:** preserve the required change coverage, versions, status,
+  limitations, and instructions. Concision must not hide a breaking change or an unfinished task.
 
-Each of these is fine in isolation; the tell is density. Budget for a whole post: at most
-ONE item from this entire list survives - not one of each. Delete or flatten the rest.
+## Choose the amount of editing
 
-1. **Aphorism closers.** Quotable lesson-lines ending a paragraph or section: "Rewrites
-   are tuition, not waste." "Silence is not proof." "The failures are the credibility."
-   Humans rarely coin more than one per piece, usually zero.
-2. **Contrastive framing.** "X isn't Y - it's Z", "not X but Y", "That's the difference
-   between A and B", "The question isn't X, it's Y". Strong models reach for this shape
-   constantly.
-3. **Identity aphorisms.** "The metadata is the product." "Openness is the product
-   working."
-4. **Analogy-per-section.** One vivid, perfectly fitted analogy in each section ("like a
-   contractor renovating your house while you live in it"). Maximum one analogy per
-   post, and it may be imperfect or half-abandoned.
-5. **Punch fragments.** Two-word sentences for effect: "Filed, fixed." "Pick real."
-6. **Numbered lesson lists.** "What this taught me: 1) ... 2) ..." Convert to prose or
-   keep only the single lesson that matters.
-7. **Rule of three.** Triads of parallel phrases. Break the parallelism; use two, or
-   four, or a list that trails off.
-8. **Pull-quoting yourself.** Blockquotes of the author's own one-liners for emphasis.
-9. **Every paragraph lands.** If each paragraph resolves into a conclusion, insight, or
-   button, that is the strongest tell of all. Let several paragraphs just report what
-   happened and move on unresolved.
-10. **Uniform rhythm.** Same paragraph length and shape, section after section; clever
-    mini-title headings on every section. Vary it: one long rambling section, one that
-    is two sentences, a heading that is just plain ("Bugs").
+- **Already effective:** leave it unchanged. A review does not require a diff.
+- **Localized problems:** edit those passages. Keep good sentences and structure around them.
+- **Heavily generated structure:** extract plain notes of the facts, scope, chronology, and a few
+  details worth telling. Separately retain any original phrases worth keeping. Set the prose aside
+  and redraft from those notes, then compare the result with the source.
 
-## Density tells (information architecture)
+Structural revision often does more than substituting words. A paragraph can lose all its filler
+and still sound like a generated essay if it keeps the same analogy, contrast, and lesson ending.
+Remove that unnecessary persuasion and symmetry. Do not deliberately make the writing rougher,
+less grammatical, or harder to follow. Smooth writing is not itself a defect.
 
-Rules 11-14 apply to narrative posts and retrospectives where selective coverage is
-acceptable. Do not use them to remove facts from reference documentation, runbooks,
-API documentation, changelogs, release notes, or any other artifact whose purpose
-requires complete and exact coverage. For those documents, preserve the coverage and
-change only its presentation.
+Read [examples.md](examples.md) when deciding between a useful edit and overcorrection. The examples
+illustrate editorial decisions, not phrases or paragraph shapes to reuse.
 
-Independent review of prose-level rewrites showed the residual AI signal in long posts
-is not wording but coverage and density: uniform structure, statistics in every
-paragraph, tables, and complete summaries "read like a generated run report" even when
-every sentence sounds human. These rules cost real content; that is the point - a human
-never had the complete log in front of them.
+## Check facts and claim strength
 
-11. **Total coverage.** Summarizing everything that happened is a tell. A human picks
-    the two or three things worth telling, drops the rest, or waves at it ("plus a pile
-    of smaller fixes I won't bore you with"). Deleting true, relevant facts is allowed
-    and expected.
-12. **Stat sprinkle.** Precise numbers in every paragraph reads as machine-logged. Keep
-    the headline numbers exact (the ones the post is about); round, approximate, or drop
-    the rest ("about two dozen", "most of a day", "a few hundred commits"). It is fine
-    for the remaining numbers to cluster in one paragraph instead of being distributed
-    evenly.
-13. **Section scaffolding.** A heading every 150 words is a tell. Long posts can run
-    500+ words between headings or flow with none; section lengths should be uneven.
-    Short posts get no headings at all.
-14. **Tables and formal citations.** At most one table, and only when the data grid is
-    itself the point; otherwise narrate the two or three rows that matter and drop the
-    table. Quoted excerpts from the author's own documents (ADRs, plans, specs) count
-    toward the pull-quote budget - one per post, total, across quotes and tables.
+Compare the revision with the evidence, not just with the wording it replaces.
 
-Know the floor: a long, fact-dense technical retrospective will always score moderate
-on AI-detection heuristics because its content comes from machine logs. Going lower
-means cutting facts and length, not more prose editing. When the user wants the detail
-kept, say so and keep it - do not silently trade facts for style.
+- Preserve qualifications and distinguish observed results from general claims. A small successful
+  test does not establish reliability everywhere. An option is not necessarily the default.
+- Distinguish planned work, implemented behavior, and verified outcomes. Keep historical claims
+  anchored to their period; do not silently rewrite an old account as a description of today.
+- Watch certainty and causal language: "sealed", "safe", "impossible", "always", "because", and
+  "this fixed it" can change a claim even when the sentence sounds natural. When a source
+  overstates its evidence, narrow it to what is supported.
+- First-person additions are claims too. Do not invent feelings, motivations, memories, or habits
+  to make prose sound personal. Do not invent a workflow requirement or causal link to connect
+  two facts. Attribution and viewpoint matter more than how often a paragraph says "I".
+- Use available source evidence to resolve a material ambiguity. If that is insufficient, flag it
+  or leave it explicitly uncertain. Do not turn a style edit into an unrelated technical audit.
 
-Self-check before returning output: count surviving instances of patterns 1-8 (more
-than one total means another pass), then scan for 11-14: any paragraph with two or more
-precise statistics, any table that is not load-bearing, any section under 100 words with
-its own heading. Then the read-aloud test: does it sound like a person telling you about
-their day, occasionally rambling, or like an essay where every line was weighed? The
-first is the goal.
+Keep names, dates, links, code, commands, paths, and technical constraints intact unless the request
+includes changing them or an evidence-backed correction is needed. Do not rewrite code blocks or
+exact quotations for style. Check captions, alt text, and summaries too when they repeat a claim
+being corrected.
 
-## Lexical rules
+## Remove imposed structure
 
-- Remove common AI filler and overused phrasing: delve, leverage, streamline, underscore,
-  multifaceted, paradigm, synergy, "it's important to note", "a testament to", mere,
-  dynamic landscape, crucial, vital, intricate tapestry. Replace buzzwords with plain
-  language.
-- Avoid telling readers that something is powerful, innovative, robust, or seamless.
-  Describe what it does instead.
-- Do not use em-dashes (—) or en-dashes (–); they read as AI tells. Use a plain hyphen
-  "-", or restructure the sentence (comma, colon, parentheses, or two sentences) where
-  that reads better. This applies to prose you write and to dashes already in the source.
-- Strip decorative emoji from headings and body text. Keep functional symbols only where
-  they carry meaning (for example ✅ / ❌ marking correct vs. incorrect examples).
-- Use active voice. Prefer specific verbs and concrete nouns over adjectives and adverbs.
-- Break up long, comma-heavy sentences. Mix sentence lengths so the rhythm feels natural.
-- Remove predictable wrap-ups such as "In conclusion", "Ultimately", and "In summary"
-  unless the document is long enough to need a real closing section.
-- Keep the tone clear and direct. Do not become preachy, overly polite, or evasive.
+These are diagnostic patterns, not proof of authorship or automatic deletion rules. Repetition and
+density matter. Preserve an established author phrase or a necessary distinction even when its
+shape appears here.
 
-## First-person entries (personal voice)
+- **Lesson endings and identity slogans:** paragraphs repeatedly ending in quotable conclusions,
+  such as "Silence is not proof" or "The metadata is the product". Usually report what happened
+  and move on. An existing unfinished thought can be a sufficient ending.
+- **Decorative contrasts:** repeated "X isn't Y, it's Z" constructions. Keep contrasts that explain
+  a real difference, such as working-file isolation versus host access.
+- **Analogies and punch fragments:** a fitted analogy in every section, or repeated clipped
+  sentences for emphasis. Keep only those that genuinely help this author make this point.
+- **Parallel packaging:** manufactured triads, numbered lessons, and self-pull-quotes. Remove the
+  packaging when it repeats the prose. Do not distort a real three-item list or a required
+  procedure to avoid its shape.
+- **Uniform sections:** equal-length paragraphs, clever mini-headings, and every section resolving
+  into an insight. Let the material determine the structure. Do not create deliberate rambling
+  or insert uncertainty just to vary the rhythm.
 
-When rewriting first-person diary or blog entries, check for a `personal-voice.md` file
-in the humanize-docs skill's support files. In a staged project run, use
-`.aidd/skills/humanize-docs/personal-voice.md`; inside the aidd repository, use the file
-beside this skill definition. If it exists, read it before drafting and match the voice
-patterns it documents (they are drawn from the author's verified pre-AI writing). If it
-does not exist, aim for the same texture in generic form: admitted uncertainty,
-parenthetical asides, direct address to the reader, uneven structure, and paragraphs
-that end without a payoff, at natural frequency. Do not fake typos or force slang into
-every paragraph.
+In narrative prose, also check coverage and density:
 
-## Documentation handling
+- Choose the few events that carry the account instead of reproducing the whole run log. Drop
+  secondary detail when allowed, but retain what the reader needs to understand the result.
+- Keep the important measurements exact. Drop or plainly approximate supporting counts when
+  precision adds nothing; do not round versions, thresholds, or numbers needed for a comparison.
+- Short posts often need no subheadings. Longer pieces need headings where they help navigation,
+  not at fixed word intervals.
+- Use a table when its comparisons matter, and citations when the claims need support. Do not add
+  them merely to make a personal post look comprehensive.
 
-- Preserve meaning, facts, requirements, names, links, code, commands, paths, and
-  technical constraints. Do not add new claims, invented examples, or extra sections
-  unless the user asks for them. For technical and operational documents, this rule
-  takes precedence over the narrative density guidance above.
-- Preserve Markdown structure unless a structure change clearly improves readability.
-  Keep headings useful and short.
-- Keep technical terms when they are accurate and useful. Leave code blocks, command
-  examples, API names, config keys, file paths, and quoted text intact unless the user
-  asks for technical editing.
-- If the source text is ambiguous, fix the prose but do not guess the missing facts.
-  Mark the ambiguity only when it would mislead the reader.
+These narrative cuts do not apply where reference or release coverage must be complete. When the
+user asks to retain detail, improve its presentation rather than silently removing it.
+
+## Language and presentation
+
+- Replace vague praise and filler with concrete actions: what changed, what failed, what remains.
+  Avoid stock terms such as "leverage", "streamline", "seamless", and "a testament to" when they
+  contribute no meaning.
+- Prefer direct sentences and specific verbs. Keep technical terms that help the intended reader.
+- Follow the established no-em-dash and no-en-dash style preference in editable prose. Use commas,
+  parentheses, separate sentences, or a plain hyphen as appropriate. This preference is not an
+  authorship test and does not authorize changing code or exact quotations.
+- Remove decorative emoji; retain symbols that carry functional meaning.
+- Do not manufacture slang, typos, ellipses, or parenthetical asides. Preserve them when they
+  belong to the author and still work in context.
+- Remove predictable wrap-ups and repeated takeaways when the text has already finished its job.
+
+## Review the collection
+
+For multiple files, inventory and review the full requested set. Sampling for a voice reference
+does not replace reviewing the target files.
+
+After individual edits, read the titles, openings, and endings across the batch. Look for repeated
+confession-to-lesson arcs, recurring "X versus Y" titles, the same caveat, and variations of the same
+closing moral. Do not replace all of them with a new stock ending such as "I still have work to do".
+
+Check whether a guide is repeating a post's story at unnecessary length, or several posts are
+retelling the same event. Preserve context needed for each to stand alone. Do not merge, delete,
+or reschedule whole documents without authorization.
+
+Consistent voice allows different lengths, levels of detail, and structures. A release note,
+personal aside, and debugging story should not all read like the same essay.
+
+## Acceptance and stopping
+
+Before finishing, check:
+
+- **Meaning:** facts, chronology, uncertainty, and claim strength match the evidence.
+- **Voice:** retained passages and revisions fit the reference without manufactured personality.
+- **Usefulness:** the reader still has the necessary detail, instructions, and limitations.
+- **Structure:** unnecessary rhetoric is gone without removing useful navigation or precision.
+- **File integrity:** for in-place edits, inspect the diff and preserve unrelated work, metadata,
+  publication status, routes, links, and code. If an authorized change affects coupled fields
+  such as a title and H1, keep them consistent. Run relevant existing format/content checks.
+
+Judge these outcomes, not detector scores, rhetorical-device counts, or a target reduction in words.
+Reading aloud is useful for catching an imposed cadence; it is not an instruction to make every
+document sound conversational.
+
+Stop when the requested problems are resolved. Do not keep rewriting acceptable prose merely
+because another variation is possible. Report reviewed and changed files distinctly for a batch,
+and disclose any unreviewed files or unresolved factual questions.
 
 ## Output
 
-When the user provides text and asks for a rewrite, provide the rewritten text only
-unless they ask for notes. When they name files or directories and ask to save, apply,
-or rewrite in place, update those source files and report the files changed. When they
-provide text and ask for review plus rewrite, lead with the rewritten version and keep
-any notes brief. End when the information is complete; avoid forced summary paragraphs.
+For supplied text and a rewrite request, return the revision only unless notes were requested.
+For review plus rewrite, lead with the revision and keep notes brief. For named files and an
+in-place editing request, save the changes and report their scope and validation. Do not add an
+editorial report to the documents themselves or publish, commit, or update a voice reference unless
+asked.

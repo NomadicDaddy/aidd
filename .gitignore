@@ -92,6 +92,7 @@ coverage/
 Thumbs.db
 
 # personal voice
+skills/humanize-docs/examples.md
 skills/humanize-docs/personal-voice.md
 
 # local config

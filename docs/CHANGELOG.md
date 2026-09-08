@@ -2,6 +2,16 @@
 
 All notable public aidd releases are documented here.
 
+## [3.0.1] - 2026-09-08
+
+### Changed
+
+- The About page and page metadata now describe aidd consistently as a local control panel for planning, running, and auditing AI coding work.
+
+### Fixed
+
+- Project intake documentation now lists all four existing lanes and explains that the template lane always includes Spernakit.
+
 ## [3.0.0] - 2026-09-07
 
 Initial public release. aidd is a local-first orchestration runtime and control panel for running

@@ -22,8 +22,8 @@ history, and telemetry kept on the operator's own machine.
   workspace, and Markdown surfaces render tables, inline code, lists, and definition content
   without losing their structure. The About page identifies both the runtime and the frontend
   build.
-- **Projects.** Three creation lanes: create fresh, scaffold from a registered template, or ingest
-  an existing codebase. A directory carrying its own `.aidd` metadata or an active run is
+- **Projects.** Four creation lanes: create fresh, scaffold from a registered template, clone a
+  GitHub template repository with fresh history, or ingest an existing codebase. A directory carrying its own `.aidd` metadata or an active run is
   enumerable as a project at any allowed root. Every project path has one canonical spelling
   across discovery, runs, schedules, diary entries, launches, telemetry, deletion, and move checks.
   Feature lists show Added and Completed dates, sort on every column on desktop and mobile, and

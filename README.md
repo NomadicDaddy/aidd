@@ -26,8 +26,9 @@ Product overview and audience guides: **[nomadicdaddy.github.io/aidd](https://no
   (``Ctrl+` ``) with persistent PTY sessions.
 - **Fleet Director**: looks across every project and proposes prioritized work; a
   tool-calling chat agent can drive it.
-- **Creation lanes**: start a project three ways: create fresh, scaffold from a registered
-  template (`web.templates`), or ingest an existing codebase.
+- **Creation lanes**: start a project four ways: create fresh, scaffold from a registered
+  template (`web.templates`, always including a built-in Spernakit entry), clone a GitHub
+  template repository with fresh history, or ingest an existing codebase.
 - **Repeatable workflows**: file-backed recipes, plus one-shot skills, runnable
   from the panel or the CLI.
 - **Built-in audits**: security, architecture, performance, and more, with findings that flow

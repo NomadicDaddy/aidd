@@ -32,10 +32,11 @@ const LANE_COPY: Record<IntakeLane, { description: string }> = {
 	},
 };
 
-// Unified Project Intake surface. Lanes: Create Fresh / From Template / Ingest Existing, sharing one
-// panel. The template lane is data-driven from web.templates (the synthesized spernakit entry plus any
-// third-party scaffolds) and only appears when at least one template is registered. Controlled by the
-// page so the header buttons and the lane tabs stay in sync.
+// Unified Project Intake surface. Lanes: Create Fresh / From Template / From GitHub / Ingest
+// Existing, sharing one panel. The template lane is data-driven from web.templates, which
+// resolveProjectTemplates always fills with at least the synthesized spernakit entry, so the
+// length guard below is a safety net rather than a lane that disappears in practice. Controlled
+// by the page so the header buttons and the lane tabs stay in sync.
 export function ProjectIntakePanel({
 	lane,
 	onClose,

@@ -8,12 +8,12 @@ A folder becomes a project when it contains an `.aidd/` directory and lives unde
 
 ## Project intake
 
-The **New Project** and **Import Existing** buttons open a shared intake panel with up to four lanes:
+The **New Project** and **Import Existing** buttons open a shared intake panel with four lanes:
 
 Create Fresh
 : scaffold a minimal project under a configured root and launch the initial aidd run.
 From Template
-: scaffold from a registered template (configured in Settings; Spernakit or any third-party generator), then run the golden path or metadata-only intake. This lane appears only when a template is registered.
+: scaffold from a registered template (configured in Settings; Spernakit or any third-party generator), then run the golden path or metadata-only intake. aidd always synthesizes a built-in Spernakit entry when you have not registered one of your own, so this lane is always available.
 From GitHub
 : clone a GitHub repository as a template with fresh history, then run metadata-only intake.
 Ingest Existing

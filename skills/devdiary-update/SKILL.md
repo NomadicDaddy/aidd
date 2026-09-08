@@ -13,7 +13,7 @@ Review recent development activity across the project roots and apply updates to
 ## Usage
 
 ```
-devdiary-update
+devdiary-update [repository-path ...]
 ```
 
 ## Target Files
@@ -125,7 +125,14 @@ Zero reflection bullets is a valid outcome for a day. Do not manufacture one, an
 
 ### Phase 2: Scan Git Repositories
 
-5. **Discover repositories**: List all direct child directories in `<applications-root>/`, `<public-root>/`, `<auto-root>/`, `<pocs-root>/`, `<queue-root>/`, and `<work-root>/` that contain a `.git` directory. Skip optional roots that do not exist.
+5. **Discover repositories**: By default, scan `D:\applications`, `D:\public`, `D:\infra`, and
+   `D:\scripts`. If a listed path is itself a Git repository, include that repository; otherwise,
+   inspect its direct child directories for repositories. Skip paths that do not exist and
+   deduplicate repositories by their resolved Git top-level path.
+
+    When explicit repository paths are supplied, scan only those repositories instead of the
+    defaults. Recognize both `.git` directories and `.git` files, verifying each candidate with
+    `git rev-parse --show-toplevel`.
 
 6. **Scan each repo** for commits since the scan start date:
 

@@ -58,7 +58,7 @@ describe('standalone and documentation local remediation', () => {
 		expect(about).toContain('<CardHeader');
 		expect(about).toContain('title="aidd"');
 		expect(about).toContain(
-			'description="AI Development Director — a control panel for running, watching and auditing AI development work across your projects."',
+			'description="AI Development Director - your local control panel for planning, running, and auditing AI coding work across your projects."',
 		);
 		// No hand-rolled muted line beside the slot that already renders one.
 		expect(about).not.toContain('text-sm text-muted-foreground');

@@ -275,7 +275,7 @@ describe('small pages', () => {
 		// one. The tagline used to sit in the slot with the sentence explaining it as a
 		// sibling paragraph at a different size.
 		expect(page).toContain(
-			'description="AI Development Director — a control panel for running, watching and auditing AI development work across your projects."',
+			'description="AI Development Director - your local control panel for planning, running, and auditing AI coding work across your projects."',
 		);
 		expect(page.match(/description=/gu)).toHaveLength(2);
 		expect(page).toContain('<Card className="@container" variant="panel">');

@@ -52,7 +52,9 @@ describe('type-scale and mono contract boundaries', () => {
 		expect(html).toContain(
 			'<h2 class="min-w-0 text-base font-semibold text-foreground">aidd</h2>',
 		);
-		expect(html).toContain('AI Development Director');
+		expect(html).toContain(
+			'AI Development Director - your local control panel for planning, running, and auditing',
+		);
 		expect(html).not.toContain('font-display text-xl');
 	});
 

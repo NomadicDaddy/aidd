@@ -60,7 +60,7 @@ export function AboutPage() {
 						    header read as two muted registers stacked on each other. */}
 						<CardHeader
 							className="mb-0"
-							description="AI Development Director — a control panel for running, watching and auditing AI development work across your projects."
+							description="AI Development Director - your local control panel for planning, running, and auditing AI coding work across your projects."
 							descriptionClassName="text-sm leading-relaxed"
 							title="aidd"
 						/>

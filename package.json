@@ -6,7 +6,7 @@
 	"bugs": {
 		"url": "https://github.com/NomadicDaddy/aidd/issues"
 	},
-	"description": "AI Development Director",
+	"description": "AI Development Director - your local control panel for planning, running, and auditing AI coding work.",
 	"dependencies": {
 		"aidd-shared": "workspace:*"
 	},

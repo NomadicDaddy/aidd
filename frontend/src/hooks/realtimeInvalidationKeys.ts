@@ -63,7 +63,7 @@ export const realtimeEventInvalidations: Readonly<
 		scoped: { by: 'sessionId', prefixes: [['pipeline-session-report']] },
 	},
 	pipeline_status: {
-		keys: [['pipeline-sessions'], ['telemetry'], ['diary']],
+		keys: [['pipeline-sessions'], ['telemetry'], ['diary'], ['project']],
 		scoped: { by: 'sessionId', prefixes: [['pipeline-session-report']] },
 	},
 	run_output: {
@@ -76,7 +76,17 @@ export const realtimeEventInvalidations: Readonly<
 	run_status: {
 		// A pipeline-owned run's status flip changes its session's step rows; the bare
 		// pipeline-session-report prefix refreshes every expanded report on the unified Runs feed.
-		keys: [['runs'], ['projects'], ['telemetry'], ['diary'], ['pipeline-session-report']],
+		// ['project'] too: the open detail page derives its blueprint wording from live run and
+		// pipeline state, so a run that starts, finishes, or stops must re-read it. Without this the
+		// card keeps whatever it was told at load — which is how a finished run left a spinner up.
+		keys: [
+			['runs'],
+			['projects'],
+			['project'],
+			['telemetry'],
+			['diary'],
+			['pipeline-session-report'],
+		],
 	},
 	suggestion_status: {
 		keys: [['suggestions'], ['runs'], ['pipeline-sessions'], ['director', 'fleet']],
@@ -86,16 +96,12 @@ export const realtimeEventInvalidations: Readonly<
 /**
  * Keys reconnect refreshes that no event produces. Each one needs a reason, because the default is
  * that a key with no realtime producer does not belong here.
+ *
+ * Empty since `run_status` and `pipeline_status` took over ['project']: the detail page's blueprint
+ * status is derived from live run and pipeline state, so those events must refresh it during a
+ * session and not only after a reconnect.
  */
-export const reconnectOnlyKeys: readonly { key: RealtimeQueryKey; reason: string }[] = [
-	{
-		key: ['project'],
-		// ['projects'] does not prefix-match ['project', id] — different first element.
-		reason:
-			'The open project detail page is keyed on the route id. No event refreshes it, so its ' +
-			'record (phase, feature counts) is the one surface whose staleness a restart can hide.',
-	},
-];
+export const reconnectOnlyKeys: readonly { key: RealtimeQueryKey; reason: string }[] = [];
 
 function isPrefixOf(prefix: RealtimeQueryKey, key: RealtimeQueryKey): boolean {
 	return prefix.length < key.length && prefix.every((part, index) => part === key[index]);

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { evaluateBlueprintReadiness } from 'aidd-shared/metadata/blueprint';
+import type { BlueprintSetupContext } from 'aidd-shared/metadata/blueprint-setup';
 import type { Feature } from 'aidd-shared/metadata/features';
 import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 
@@ -92,5 +93,116 @@ describe('blueprint readiness and template-owned records', () => {
 
 		expect(readiness.state).toBe('blocked');
 		expect(readiness.reason).toContain('No product features');
+	});
+});
+
+// The reported defect: `evaluateBlueprintReadiness` returned `preparing` with "Blueprint generation
+// is still in progress" for every phase other than coding, so an idle project claimed live work.
+// The phase says what is on disk; only the injected setup context says what is executing.
+describe('pre-coding readiness separates missing setup from live activity', () => {
+	const missingArtifacts = ['.aidd/spec.md', '.aidd/CHANGELOG.md'];
+
+	function preCoding(setup?: BlueprintSetupContext) {
+		return evaluateBlueprintReadiness('onboarding', [], undefined, setup ? { setup } : {});
+	}
+
+	test('an idle project with missing artifacts reports incomplete setup, not progress', () => {
+		const readiness = preCoding({ activity: null, missingArtifacts });
+
+		expect(readiness.state).toBe('setup_incomplete');
+		expect(readiness.ready).toBe(false);
+		expect(readiness.reason).toBe(
+			'Project setup is incomplete: .aidd/spec.md and .aidd/CHANGELOG.md are missing.',
+		);
+		expect(readiness.reason).not.toContain('in progress');
+		expect(readiness.reason).not.toContain('Preparing');
+	});
+
+	test('a caller with no view of execution state gets the idle reading, never preparing', () => {
+		for (const readiness of [
+			preCoding(),
+			preCoding({ activity: null, missingArtifacts: [] }),
+		]) {
+			expect(readiness.state).toBe('setup_incomplete');
+			expect(readiness.reason).not.toContain('in progress');
+		}
+		expect(evaluateBlueprintReadiness('initializer', [], undefined).state).toBe(
+			'setup_incomplete',
+		);
+	});
+
+	test('only running work earns in-progress wording', () => {
+		const readiness = preCoding({
+			activity: {
+				kind: 'run',
+				label: 'The coding run',
+				lifecycle: 'running',
+				reference: 'run_1',
+			},
+			missingArtifacts,
+		});
+
+		expect(readiness.state).toBe('preparing');
+		expect(readiness.reason).toBe('The coding run is in progress.');
+	});
+
+	test('queued work is described as queued rather than running', () => {
+		const readiness = preCoding({
+			activity: {
+				kind: 'pipeline',
+				label: 'The Project intake pipeline',
+				lifecycle: 'queued',
+				reference: 'pipe_1',
+			},
+			missingArtifacts,
+		});
+
+		expect(readiness.state).toBe('queued');
+		expect(readiness.reason).toContain('is queued and has not started');
+		expect(readiness.reason).toContain('.aidd/spec.md');
+	});
+
+	test('terminal and waiting lifecycles are described by what really happened', () => {
+		const outcomes = (['failed', 'stopped', 'waiting_approval'] as const).map((lifecycle) =>
+			preCoding({
+				activity: { kind: 'run', label: 'The coding run', lifecycle, reference: 'run_1' },
+				missingArtifacts,
+			}),
+		);
+
+		expect(outcomes.map((readiness) => readiness.state)).toEqual([
+			'blocked',
+			'blocked',
+			'blocked',
+		]);
+		expect(outcomes[0]?.reason).toContain('The coding run failed.');
+		expect(outcomes[1]?.reason).toContain('The coding run was stopped.');
+		expect(outcomes[2]?.reason).toContain('The coding run is waiting for approval.');
+		for (const readiness of outcomes) {
+			expect(readiness.reason).not.toContain('in progress');
+			expect(readiness.reason).toContain('.aidd/spec.md');
+		}
+	});
+
+	test('a coding-phase verdict ignores setup context entirely', () => {
+		const readiness = evaluateBlueprintReadiness(
+			'coding',
+			[templateShell, templateBacklog, productFirst, productLater],
+			roadmap,
+			{
+				setup: {
+					activity: {
+						kind: 'run',
+						label: 'The coding run',
+						lifecycle: 'running',
+						reference: 'run_1',
+					},
+					missingArtifacts,
+				},
+			},
+		);
+
+		expect(readiness.state).toBe('ready');
+		expect(readiness.ready).toBe(true);
 	});
 });

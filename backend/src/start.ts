@@ -1,5 +1,5 @@
 import { createBackend } from 'aidd-shared/backends/factory';
-import { getUserConfigPath, type ResolvedConfig, type ResolvedWebConfig } from 'aidd-shared/config';
+import { getUserConfigPath, type ResolvedConfig } from 'aidd-shared/config';
 import { setAiCallLogDir } from 'aidd-shared/lib/aiCallLog';
 import { resolve } from 'node:path';
 
@@ -13,7 +13,6 @@ import { createExecutionServices } from './services/createExecutionServices.ts';
 import { DiaryService } from './services/diaryService.ts';
 import { DirectAiService } from './services/directAiService.ts';
 import { DirectorService } from './services/directorService.ts';
-import { listProjectAuditCatalog } from './services/maturityCompute.ts';
 import { MetricsService } from './services/metricsService.ts';
 import { startOutcomeBackfills } from './services/outcome/startupBackfills.ts';
 import { sweepSessionMetricsAtBoot } from './services/pipeline/sessionMetricsSweep.ts';
@@ -39,6 +38,7 @@ import {
 	wireDirectorScheduling,
 	writeWebPidFile,
 } from './startHelpers.ts';
+import { wireProjectAdvisors, wireProjectExecutionState } from './startProjectWiring.ts';
 import { WebSocketHub } from './webSocketHub.ts';
 
 export { startMcpServer } from './mcp/start.ts';
@@ -102,7 +102,7 @@ export async function startWebServer(
 		telemetryService,
 		retention.request,
 	);
-	projectService.setActiveRunSummaryProvider((paths) => runService.listActiveRunSummaries(paths));
+	wireProjectExecutionState({ db: database.db, projectService, runService });
 	const { appLauncherService, appWatchdog } = createAppLauncher({
 		db: database.db,
 		hub: webSocketHub,
@@ -131,19 +131,12 @@ export async function startWebServer(
 		projectService,
 		rootDir: options.rootDir,
 	});
-	const auditCatalogNames = await listProjectAuditCatalog(options.rootDir);
-	projectService.setMaturityContext({
-		auditCatalogDir: options.rootDir,
-		auditCatalogNames,
-		getLatestProjectAuditRun: (projectPath) => runService.latestProjectAuditRun(projectPath),
-	});
-	projectService.setAdvisor({
-		backendFactory: createBackend,
+	await wireProjectAdvisors({
 		directAiService,
-		getFullConfig: () =>
-			settingsService.getCurrentResolvedConfig() as {
-				web: ResolvedWebConfig;
-			} & ResolvedConfig,
+		projectService,
+		rootDir: options.rootDir,
+		runService,
+		settingsService,
 	});
 	await appLauncherService.reconcileOnBoot();
 	await runService.reconcileStaleRuns();

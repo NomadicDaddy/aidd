@@ -1,11 +1,21 @@
 import { captureWriteGuardSnapshot } from '../pipeline/writeAllowlist.ts';
+import {
+	type BlueprintSetupActivity,
+	type BlueprintSetupContext,
+	describeBlueprintSetup,
+} from './blueprint-setup.ts';
 import { classifyFeatureStatusType, type Feature, selectNextFeature } from './features.ts';
-import { detectInitialPhase, type InitialPhase } from './onboarding.ts';
+import {
+	detectInitialPhase,
+	type InitialPhase,
+	listMissingOnboardingArtifacts,
+} from './onboarding.ts';
 import { evaluateRoadmapCodingGate, type Roadmap } from './roadmap.ts';
 import { FileAiddStore } from './store.ts';
 import { isTemplateOwnedFeature, isTemplateRepo } from './template-ownership.ts';
 
-export type BlueprintReadinessState = 'blocked' | 'building' | 'complete' | 'preparing' | 'ready';
+export type BlueprintReadinessState =
+	'blocked' | 'building' | 'complete' | 'preparing' | 'queued' | 'ready' | 'setup_incomplete';
 
 export interface BlueprintReadiness {
 	firstFeature: Feature | null;
@@ -15,6 +25,12 @@ export interface BlueprintReadiness {
 }
 
 export interface BlueprintReadinessOptions {
+	/**
+	 * What is on disk and what is executing for a project that has not reached the coding phase.
+	 * Omitted by callers with no view of live execution state, which reads as "nothing is running":
+	 * the verdict then describes an idle project rather than claiming work is in flight.
+	 */
+	setup?: BlueprintSetupContext;
 	/**
 	 * Whether `features` were read from the Spernakit template repository itself. There, records
 	 * stamped with `spernakit_version` are the product; anywhere else they are the scaffolded shell
@@ -34,11 +50,14 @@ export function evaluateBlueprintReadiness(
 	options: BlueprintReadinessOptions = {},
 ): BlueprintReadiness {
 	if (phase !== 'coding') {
+		// Readiness cannot speak to activity: what is missing on disk says nothing about whether
+		// anything is working on it. The caller supplies the live execution state it can see.
+		const verdict = describeBlueprintSetup(options.setup);
 		return {
 			firstFeature: null,
 			ready: false,
-			reason: 'Blueprint generation is still in progress.',
-			state: 'preparing',
+			reason: verdict.reason,
+			state: verdict.state,
 		};
 	}
 
@@ -139,8 +158,20 @@ export async function requirePersistedBlueprint(
 	return readiness;
 }
 
+/**
+ * The setup context for a project on disk. `activity` is whatever live work the caller found for
+ * this exact project; callers with no view of execution state pass nothing and get the idle reading.
+ */
+export async function readBlueprintSetupContext(
+	projectDir: string,
+	activity: BlueprintSetupActivity | null = null,
+): Promise<BlueprintSetupContext> {
+	return { activity, missingArtifacts: await listMissingOnboardingArtifacts(projectDir) };
+}
+
 export async function readPersistedBlueprintReadiness(
 	projectDir: string,
+	activity: BlueprintSetupActivity | null = null,
 ): Promise<BlueprintReadiness> {
 	const store = new FileAiddStore(projectDir);
 	const [phase, features, templateRepo] = await Promise.all([
@@ -154,8 +185,13 @@ export async function readPersistedBlueprintReadiness(
 	} catch {
 		roadmap = undefined;
 	}
+	const setup =
+		phase === 'coding' ? undefined : await readBlueprintSetupContext(projectDir, activity);
 	return await requirePersistedBlueprint(
 		projectDir,
-		evaluateBlueprintReadiness(phase, features, roadmap, { templateRepo }),
+		evaluateBlueprintReadiness(phase, features, roadmap, {
+			templateRepo,
+			...(setup ? { setup } : {}),
+		}),
 	);
 }

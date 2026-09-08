@@ -96,11 +96,18 @@ export async function getProjectDetail(
 	}
 	const metadataArtifactCheck = freshArtifactCheck ?? metadata.artifactCheck;
 	const { maturityDetail, ...metadataRest } = metadata;
+	// Only a project short of coding needs an activity lookup; at coding the readiness verdict is
+	// decided by features and the roadmap, and querying runs would answer a question nobody asked.
+	const setupActivity =
+		phase !== 'coding' && ctx.setupActivityProvider
+			? await ctx.setupActivityProvider(projectDir)
+			: null;
 	const implementation = await evaluatePersistedProjectImplementationState(
 		projectDir,
 		phase,
 		features,
 		roadmap,
+		setupActivity,
 	);
 	const summary: ProjectDetailDto = {
 		activeRuns: { count: 0, latestRunId: null },

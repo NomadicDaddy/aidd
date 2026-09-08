@@ -56,6 +56,7 @@ import {
 	updateProjectProfile as updateProjectProfileInternal,
 } from './project/profile.ts';
 import { recommendProjectMode as recommendProjectModeInternal } from './project/recommend.ts';
+import { type SetupActivityProvider } from './project/setupActivity.ts';
 import {
 	type ProjectAdvisorDeps,
 	type ProjectDeleteInput,
@@ -75,6 +76,7 @@ export class ProjectService {
 	private listingCache = new ProjectListingCache();
 	private initFailures: null | ProjectInitFailureService = null;
 	private activeRunSummaryProvider: ActiveRunSummaryProvider | null = null;
+	private setupActivityProvider: null | SetupActivityProvider = null;
 	// Public sub-services rather than pass-through methods for each of their operations: routes reach
 	// them as `projectService.features.*` / `.milestones.*`, and this facade keeps only what it owns —
 	// project discovery, the listing cache, and the id resolution both sub-services are built on.
@@ -89,6 +91,9 @@ export class ProjectService {
 	}
 	setActiveRunSummaryProvider(provider: ActiveRunSummaryProvider): void {
 		this.activeRunSummaryProvider = provider;
+	}
+	setSetupActivityProvider(provider: SetupActivityProvider): void {
+		this.setupActivityProvider = provider;
 	}
 	invalidateProjectListing(projectPath: string): void {
 		this.listingCache.invalidate(projectPath);
@@ -267,6 +272,9 @@ export class ProjectService {
 			listingCache: this.listingCache,
 			maturityContext: this.maturityContext,
 			resolveDiscoveredProject: (id) => this.resolveDiscoveredProject(id),
+			...(this.setupActivityProvider
+				? { setupActivityProvider: this.setupActivityProvider }
+				: {}),
 		};
 	}
 }

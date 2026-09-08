@@ -5,6 +5,7 @@ import type { ProjectDiscoverySkippedRootDto, ProjectSummaryDto } from '../../..
 import type { DirectorProjectPrioritySummary } from '../../directorPriority.ts';
 import type { MaturityContext } from '../../projectMetadata.ts';
 import type { ProjectListingCache } from '../metadataCache.ts';
+import type { SetupActivityProvider } from '../setupActivity.ts';
 
 import { pathIsInside } from '../../../paths.ts';
 import { chooseProjectRoot, createIgnoredDirectoryMatcher, scanRoot } from '../discovery.ts';
@@ -30,6 +31,12 @@ export interface ListingsContext {
 	listingCache?: ProjectListingCache;
 	maturityContext: MaturityContext | null;
 	resolveDiscoveredProject(projectId: string): Promise<string>;
+	/**
+	 * Live run and pipeline state for one project, when the caller has been wired to the execution
+	 * services. Absent in tests and in any context with no view of execution, which reads as "nothing
+	 * is running" — the honest default, since claiming activity is the failure mode being fixed.
+	 */
+	setupActivityProvider?: SetupActivityProvider;
 }
 
 export interface ProjectListingWithPriority {

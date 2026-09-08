@@ -1,4 +1,5 @@
 import type { AiddExecutionMode, AiddTriumvirateRoles } from 'aidd-shared/execution-mode';
+import type { BlueprintSetupActivity } from 'aidd-shared/metadata/blueprint-setup';
 import type { ProjectStack } from 'aidd-shared/metadata/project-stack';
 
 import type { DirectorPriorityHealth } from '../director.ts';
@@ -221,10 +222,19 @@ export interface ProjectDetail extends ProjectSummary {
 	features: ProjectFeature[];
 	featureStatus: FeatureStatusEntry[];
 	implementation: {
+		/** The live run or pipeline the wording came from, or null when nothing relevant is running. */
+		activity: BlueprintSetupActivity | null;
 		blueprintReady: boolean;
 		firstFeature: null | ProjectImplementationFeature;
 		reason: null | string;
-		state: 'blocked' | 'blueprint_ready' | 'building' | 'complete' | 'preparing';
+		state:
+			| 'blocked'
+			| 'blueprint_ready'
+			| 'building'
+			| 'complete'
+			| 'preparing'
+			| 'queued'
+			| 'setup_incomplete';
 	};
 	maturityDetail: MaturityDetail;
 	metadata: ProjectMetadata;

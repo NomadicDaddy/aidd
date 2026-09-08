@@ -1,4 +1,5 @@
 import type { ProjectAssuranceProfileInput } from 'aidd-shared';
+import type { BlueprintSetupActivity } from 'aidd-shared/metadata/blueprint-setup';
 import type { LaunchTargetOverrides } from 'aidd-shared/plan/launch-target';
 
 import type { MaturityDto } from '../maturity.ts';
@@ -55,10 +56,23 @@ export interface ProjectImplementationFeatureDto {
 }
 
 export interface ProjectImplementationStateDto {
+	/**
+	 * The live run or pipeline the pre-coding wording is derived from, or null when nothing relevant
+	 * is executing for this project. Carried on the contract so the card can link to the work it
+	 * names instead of asserting activity the client cannot check.
+	 */
+	activity: BlueprintSetupActivity | null;
 	blueprintReady: boolean;
 	firstFeature: null | ProjectImplementationFeatureDto;
 	reason: null | string;
-	state: 'blocked' | 'blueprint_ready' | 'building' | 'complete' | 'preparing';
+	state:
+		| 'blocked'
+		| 'blueprint_ready'
+		| 'building'
+		| 'complete'
+		| 'preparing'
+		| 'queued'
+		| 'setup_incomplete';
 }
 
 export interface ProjectStartImplementationResultDto {

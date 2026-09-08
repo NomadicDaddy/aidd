@@ -52,15 +52,26 @@ async function hasRealBacklogFeature(featuresDir: string): Promise<boolean> {
 	}
 }
 
-async function isOnboardingComplete(metadataDir: string): Promise<boolean> {
+/**
+ * The onboarding artifacts this project still lacks, named the way a person reading the project
+ * overview would look for them on disk. Empty means onboarding is complete.
+ *
+ * Same reads as the phase check, kept as one function so the phase and the explanation of why the
+ * phase is not `coding` can never disagree: the overview card states these names as its reason,
+ * and a second implementation would eventually describe a project that `detectInitialPhase` had
+ * already moved on from.
+ */
+export async function listMissingOnboardingArtifacts(projectDir: string): Promise<string[]> {
+	const metadataDir = metadataPath(projectDir);
 	const featuresDir = join(metadataDir, 'features');
-	const specPath = join(metadataDir, 'spec.md');
-	const changelogPath = join(metadataDir, 'CHANGELOG.md');
-	if (!(await pathExists(featuresDir))) return false;
-	if (!(await pathExists(specPath))) return false;
-	if (!(await pathExists(changelogPath))) return false;
-	if (!(await hasRealBacklogFeature(featuresDir))) return false;
-	return true;
+	const missing: string[] = [];
+	if (!(await pathExists(featuresDir))) missing.push(`${METADATA_DIR}/features`);
+	else if (!(await hasRealBacklogFeature(featuresDir)))
+		missing.push(`a product feature in ${METADATA_DIR}/features`);
+	if (!(await pathExists(join(metadataDir, 'spec.md')))) missing.push(`${METADATA_DIR}/spec.md`);
+	if (!(await pathExists(join(metadataDir, 'CHANGELOG.md'))))
+		missing.push(`${METADATA_DIR}/CHANGELOG.md`);
+	return missing;
 }
 
 async function isExistingCodebase(projectDir: string): Promise<boolean> {
@@ -73,8 +84,7 @@ async function isExistingCodebase(projectDir: string): Promise<boolean> {
 }
 
 export async function detectInitialPhase(projectDir: string): Promise<InitialPhase> {
-	const metadataDir = metadataPath(projectDir);
-	if (await isOnboardingComplete(metadataDir)) return 'coding';
+	if ((await listMissingOnboardingArtifacts(projectDir)).length === 0) return 'coding';
 	if (await isExistingCodebase(projectDir)) return 'onboarding';
 	return 'initializer';
 }

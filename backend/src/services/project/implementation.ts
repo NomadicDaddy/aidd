@@ -1,11 +1,14 @@
+import type { BlueprintSetupActivity } from 'aidd-shared/metadata/blueprint-setup';
 import type { Feature } from 'aidd-shared/metadata/features';
 import type { InitialPhase } from 'aidd-shared/metadata/onboarding';
 import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 import type { LaunchTargetOverrides } from 'aidd-shared/plan/launch-target';
 
 import {
+	type BlueprintReadiness,
 	type BlueprintReadinessOptions,
 	evaluateBlueprintReadiness,
+	readBlueprintSetupContext,
 	readPersistedBlueprintReadiness,
 	requirePersistedBlueprint,
 } from 'aidd-shared/metadata/blueprint';
@@ -32,14 +35,20 @@ function toImplementationFeature(feature: Feature): ProjectImplementationFeature
 	};
 }
 
-export function evaluateProjectImplementationState(
-	phase: InitialPhase,
-	features: Feature[],
-	roadmap: Roadmap | undefined,
-	options: BlueprintReadinessOptions = {},
+/**
+ * The DTO for a readiness verdict. `activity` is the live work the verdict's wording came from, so
+ * a client never has to infer "something must be running" from the state alone.
+ *
+ * @param readiness The readiness verdict to present.
+ * @param activity The live run or pipeline the verdict describes, or null when none was found.
+ * @returns The project-detail implementation contract for that verdict.
+ */
+function toImplementationState(
+	readiness: BlueprintReadiness,
+	activity: BlueprintSetupActivity | null,
 ): ProjectImplementationStateDto {
-	const readiness = evaluateBlueprintReadiness(phase, features, roadmap, options);
 	return {
+		activity,
 		blueprintReady: readiness.ready,
 		firstFeature: readiness.firstFeature
 			? toImplementationFeature(readiness.firstFeature)
@@ -47,6 +56,18 @@ export function evaluateProjectImplementationState(
 		reason: readiness.reason,
 		state: readiness.state === 'ready' ? 'blueprint_ready' : readiness.state,
 	};
+}
+
+export function evaluateProjectImplementationState(
+	phase: InitialPhase,
+	features: Feature[],
+	roadmap: Roadmap | undefined,
+	options: BlueprintReadinessOptions = {},
+): ProjectImplementationStateDto {
+	return toImplementationState(
+		evaluateBlueprintReadiness(phase, features, roadmap, options),
+		options.setup?.activity ?? null,
+	);
 }
 
 export async function evaluatePersistedProjectImplementationState(
@@ -54,34 +75,35 @@ export async function evaluatePersistedProjectImplementationState(
 	phase: InitialPhase,
 	features: Feature[],
 	roadmap: Roadmap | undefined,
+	activity: BlueprintSetupActivity | null = null,
 ): Promise<ProjectImplementationStateDto> {
 	const templateRepo = await isTemplateRepo(projectDir);
+	// Missing artifacts and live work only describe a project that has not reached coding; asking
+	// for them at coding would read the filesystem to answer a question the verdict never poses.
+	const setup =
+		phase === 'coding' ? undefined : await readBlueprintSetupContext(projectDir, activity);
 	const persisted = await requirePersistedBlueprint(
 		projectDir,
-		evaluateBlueprintReadiness(phase, features, roadmap, { templateRepo }),
+		evaluateBlueprintReadiness(phase, features, roadmap, {
+			templateRepo,
+			...(setup ? { setup } : {}),
+		}),
 	);
-	return {
-		blueprintReady: persisted.ready,
-		firstFeature: persisted.firstFeature
-			? toImplementationFeature(persisted.firstFeature)
-			: null,
-		reason: persisted.reason,
-		state: persisted.state === 'ready' ? 'blueprint_ready' : persisted.state,
-	};
+	return toImplementationState(persisted, setup?.activity ?? null);
 }
 
+/**
+ * Readiness read straight from disk, with no view of live execution. Used by the start-implementation
+ * gate, which only asks whether the blueprint is ready — never what is running — so the reported
+ * activity is null rather than a guess.
+ *
+ * @param projectDir The project to read.
+ * @returns The implementation contract, with a null activity.
+ */
 export async function readProjectImplementationState(
 	projectDir: string,
 ): Promise<ProjectImplementationStateDto> {
-	const readiness = await readPersistedBlueprintReadiness(projectDir);
-	return {
-		blueprintReady: readiness.ready,
-		firstFeature: readiness.firstFeature
-			? toImplementationFeature(readiness.firstFeature)
-			: null,
-		reason: readiness.reason,
-		state: readiness.state === 'ready' ? 'blueprint_ready' : readiness.state,
-	};
+	return toImplementationState(await readPersistedBlueprintReadiness(projectDir), null);
 }
 
 export async function startProjectImplementation(

@@ -11,6 +11,7 @@ All notable public aidd releases are documented here.
 ### Fixed
 
 - Project intake documentation now lists all four existing lanes and explains that the template lane always includes Spernakit.
+- Release validation now preserves public changelog history while rejecting duplicate, out-of-order, and pre-baseline entries.
 
 ## [3.0.0] - 2026-09-07
 

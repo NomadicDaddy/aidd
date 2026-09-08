@@ -91,14 +91,34 @@ describe('fresh release baseline validation', () => {
 		);
 	});
 
-	test('rejects a second current-or-later changelog entry', async () => {
+	test('accepts release history from the public baseline through the current version', async () => {
+		const root = await seedRoot({
+			'package.json': '{"version":"3.1.0"}\n',
+			VERSION: '3.1.0\n',
+			'docs/CHANGELOG.md': '# Changelog\n\n## [3.1.0]\n\n## [3.0.1]\n\n## [3.0.0]\n',
+		});
+		expect(await validateFreshRelease(root)).toEqual([]);
+	});
+
+	test('rejects duplicate or out-of-order release entries', async () => {
 		const root = await seedRoot();
 		await writeFile(
 			join(root, 'docs', 'CHANGELOG.md'),
 			'# Changelog\n\n## [3.0.0]\n\n## [3.0.1]\n',
 		);
 		expect((await validateFreshRelease(root)).join('\n')).toContain(
-			'must contain exactly one 3.0.0 release entry',
+			'release entries must be unique and newest first',
+		);
+		await writeFile(join(root, 'docs', 'CHANGELOG.md'), '## [3.0.0]\n\n## [3.0.0]\n');
+		expect((await validateFreshRelease(root)).join('\n')).toContain(
+			'release entries must be unique and newest first',
+		);
+	});
+
+	test('requires the current version to head the changelog', async () => {
+		const root = await seedRoot({ 'package.json': '{"version":"3.0.1"}\n' });
+		expect((await validateFreshRelease(root)).join('\n')).toContain(
+			'must start with the 3.0.1 release entry',
 		);
 	});
 });

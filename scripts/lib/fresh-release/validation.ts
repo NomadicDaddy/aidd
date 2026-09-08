@@ -124,13 +124,19 @@ async function validateChangelog(rootDir: string, currentVersion: string): Promi
 	const text = await readFile(join(rootDir, 'docs', 'CHANGELOG.md'), 'utf8');
 	const headings = [...text.matchAll(/^## \[([^\]]+)\]/gmu)].map((match) => match[1]);
 	const issues: string[] = [];
-	if (headings.length !== 1 || headings[0] !== currentVersion) {
-		issues.push(`docs/CHANGELOG.md: must contain exactly one ${currentVersion} release entry`);
+	if (headings[0] !== currentVersion) {
+		issues.push(`docs/CHANGELOG.md: must start with the ${currentVersion} release entry`);
 	}
+	let previousVersion: string | undefined;
 	for (const version of headings) {
-		if (version !== undefined && compareVersions(version, BASELINE_VERSION) < 0) {
+		if (version === undefined) continue;
+		if (previousVersion !== undefined && compareVersions(version, previousVersion) >= 0) {
+			issues.push('docs/CHANGELOG.md: release entries must be unique and newest first');
+		}
+		if (compareVersions(version, BASELINE_VERSION) < 0) {
 			issues.push(`docs/CHANGELOG.md: contains pre-baseline release ${version}`);
 		}
+		previousVersion = version;
 	}
 	return issues;
 }

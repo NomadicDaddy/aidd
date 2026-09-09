@@ -37,14 +37,16 @@ export async function ensureProjectGitRepo(
 	projectDir: string,
 	run: GitRunner = gitOutput,
 ): Promise<EnsureProjectGitRepoResult> {
-	const topLevel = await run(projectDir, ['rev-parse', '--show-toplevel']);
+	// `--show-prefix` is projectDir's path relative to the repository root, and is empty exactly
+	// when projectDir IS that root. Ask for it rather than comparing `--show-toplevel` against
+	// projectDir: git answers with the resolved real path, so under an aliased path — a Windows
+	// `subst` drive, a symlink, a junction — the two spellings never match and an already-owned
+	// repository reads as absent, sending this straight back into `git init`.
+	const prefix = await run(projectDir, ['rev-parse', '--show-prefix']);
 	// Post-scaffold git init is a convenience, not a requirement: a clean machine may not have git
 	// installed at all. Skip gracefully rather than crashing the run before it can start.
-	if (topLevel.missing) return 'skipped';
-	if (topLevel.ok) {
-		const owned = topLevel.stdout.trim();
-		if (owned && normalizeGitPath(owned) === normalizeGitPath(projectDir)) return 'present';
-	}
+	if (prefix.missing) return 'skipped';
+	if (prefix.ok && prefix.stdout.trim() === '') return 'present';
 	// Honor the user's Git init.defaultBranch configuration instead of forcing a branch name.
 	await runGit(projectDir, ['init'], run);
 	// The guard is installed wherever .aidd/ is ensured — but for a FRESH project that happens
@@ -53,11 +55,6 @@ export async function ensureProjectGitRepo(
 	// that was already guarded via ensureMetadata simply re-confirms.
 	await ensureHistoryGuard(projectDir);
 	return 'initialized';
-}
-
-function normalizeGitPath(value: string): string {
-	const normalized = value.replace(/\\/g, '/').replace(/\/+$/, '');
-	return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
 }
 
 async function runGit(projectDir: string, args: string[], run: GitRunner): Promise<void> {

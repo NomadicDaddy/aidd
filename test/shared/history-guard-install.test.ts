@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { ensureHistoryGuard } from '../../shared/src/metadata/history-guard.ts';
@@ -59,6 +59,20 @@ describe('ensureHistoryGuard', () => {
 		await mkdir(dir, { recursive: true });
 		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('not-a-repo');
 		expect(existsSync(join(dir, '.githooks'))).toBe(false);
+	});
+
+	test('a repo reached through an aliased path is still the project’s own', async () => {
+		// git answers `--show-toplevel` with the RESOLVED real path, so any aliased spelling of
+		// the project directory — a Windows `subst` drive, a symlink, a junction — compares
+		// unequal to it, and the project's own repository was refused as someone else's.
+		// `junction` is Windows-only and ignored elsewhere: no elevation needed there, plain
+		// symlink here.
+		const dir = await makeRepo('aliased');
+		const alias = join(tmpRoot, `aliased-link-${seq++}`);
+		await symlink(dir, alias, 'junction');
+
+		expect(await ensureHistoryGuard(alias, AIDD_ROOT)).toBe('installed');
+		expect(indexMode(dir)).toBe('100755');
 	});
 
 	test('a project nested inside someone else’s repo is NOT guarded', async () => {

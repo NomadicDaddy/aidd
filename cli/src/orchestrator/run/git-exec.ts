@@ -38,11 +38,11 @@ export async function readGitHead(projectDir: string): Promise<string | undefine
 }
 
 async function projectOwnsGitRepo(projectDir: string): Promise<boolean> {
-	const output = await gitOutput(projectDir, ['rev-parse', '--show-toplevel']);
-	if (!output) return false;
-	const toplevel = output.trim();
-	if (!toplevel) return false;
-	const normalize = (value: string): string =>
-		value.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
-	return normalize(toplevel) === normalize(projectDir);
+	// `--show-prefix` is projectDir's path relative to the repository root, and is empty exactly
+	// when projectDir IS that root. Ask for it rather than comparing `--show-toplevel` against
+	// projectDir: git answers with the resolved real path, so under an aliased path — a Windows
+	// `subst` drive, a symlink, a junction — the two spellings never match, a repository the
+	// project owns reads as a parent's, and every commit the run made goes unattributed.
+	const output = await gitOutput(projectDir, ['rev-parse', '--show-prefix']);
+	return output !== undefined && output.trim() === '';
 }

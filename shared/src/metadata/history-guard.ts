@@ -119,11 +119,6 @@ const git = async (cwd: string, args: string[]): Promise<{ ok: boolean; stdout: 
 	}
 };
 
-const normalize = (v: string): string => {
-	const n = v.replace(/\\/g, '/').replace(/\/+$/, '');
-	return process.platform === 'win32' ? n.toLowerCase() : n;
-};
-
 /**
  * Copy one wrapper and the guards it sources into `.githooks`, then stage all of them.
  *
@@ -210,8 +205,13 @@ export async function ensureHistoryGuard(
 	// Only guard a repository the project OWNS. Without this, a project nested inside an unrelated
 	// repo (a monorepo subdir, or anything under a checked-out parent) would have its parent's hooks
 	// rewritten from underneath it.
-	const top = await git(projectDir, ['rev-parse', '--show-toplevel']);
-	if (!top.ok || normalize(top.stdout) !== normalize(projectDir)) return 'not-a-repo';
+	// `--show-prefix` is projectDir's path relative to the repository root, and is empty exactly
+	// when projectDir IS that root. Ask for it rather than comparing `--show-toplevel` against
+	// projectDir: git answers with the resolved real path, so under an aliased path — a Windows
+	// `subst` drive, a symlink, a junction — the two spellings never match and a repository the
+	// project owns is refused as someone else's.
+	const prefix = await git(projectDir, ['rev-parse', '--show-prefix']);
+	if (!prefix.ok || prefix.stdout !== '') return 'not-a-repo';
 
 	// The scaffold is the single source: it is what a fresh project is built from, whereas the
 	// repo-root .githooks/ is aidd's own.

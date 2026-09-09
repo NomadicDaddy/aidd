@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { writeFile } from 'node:fs/promises';
+import { symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { listGitCommits } from '../../cli/src/orchestrator/run/git.ts';
+import { listGitCommits, readGitHead } from '../../cli/src/orchestrator/run/git.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 
 async function git(cwd: string, args: string[], committedAt?: string): Promise<string> {
@@ -55,5 +55,28 @@ describe('run commit attribution', () => {
 		);
 
 		expect(commits).toEqual([{ hash: after, subject: 'during-run' }]);
+	});
+
+	// git answers path queries with the RESOLVED real path, so a project reached through an
+	// aliased spelling of its own directory — a Windows `subst` drive, a symlink, a junction —
+	// used to fail the "does this project own its repository?" test and report no HEAD at all.
+	// Every commit the run made then went unattributed, and completions that require a commit
+	// were reverted as if the agent had never committed.
+	test('reads HEAD through an aliased path to the project directory', async () => {
+		const projectDir = await testTempDir('aidd-run-git-alias-');
+		await git(projectDir, ['init', '-q']);
+		await git(projectDir, ['config', 'user.email', 'aidd-test@example.invalid']);
+		await git(projectDir, ['config', 'user.name', 'aidd Test']);
+		await writeFile(join(projectDir, 'base.txt'), 'base\n');
+		await git(projectDir, ['add', 'base.txt']);
+		await git(projectDir, ['commit', '-qm', 'base']);
+		const head = await git(projectDir, ['rev-parse', 'HEAD']);
+
+		// `junction` is Windows-only and ignored elsewhere, which is what makes this portable:
+		// a directory junction needs no elevation, and POSIX gets a plain symlink.
+		const alias = `${projectDir}-alias`;
+		await symlink(projectDir, alias, 'junction');
+
+		expect(await readGitHead(alias)).toBe(head);
 	});
 });

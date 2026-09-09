@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 
@@ -18,10 +19,29 @@ function isInsideProject(relativePath: string): boolean {
 	);
 }
 
+// Resolve a path through the filesystem so two spellings of the same location compare equal: a
+// Windows `subst` drive, a symlink, a junction. Bun writes LCOV `SF:` entries as real paths while
+// the project root is whatever spelling the process was launched with, so on such a setup every
+// covered file otherwise reads as living outside the project. Returns the input unchanged when the
+// path does not resolve, which keeps a genuinely foreign path foreign.
+function realPath(path: string): string {
+	try {
+		return realpathSync.native(path);
+	} catch {
+		return path;
+	}
+}
+
 export function normalizeCoverageFile(projectRoot: string, sourceFile: string): string {
 	const trimmed = sourceFile.trim();
 	const absolutePath = isAbsolute(trimmed) ? resolve(trimmed) : resolve(projectRoot, trimmed);
-	const relativePath = relative(projectRoot, absolutePath);
+	let relativePath = relative(projectRoot, absolutePath);
+
+	// Only pay for the filesystem round trip when the plain comparison says "outside": that is
+	// either a real escape or an aliased path, and only the second survives resolution.
+	if (!isInsideProject(relativePath)) {
+		relativePath = relative(realPath(projectRoot), realPath(absolutePath));
+	}
 
 	if (!isInsideProject(relativePath)) {
 		throw new Error(`Coverage file is outside the project root: ${sourceFile}`);

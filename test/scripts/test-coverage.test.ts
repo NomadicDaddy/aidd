@@ -45,6 +45,39 @@ describe('production test coverage', () => {
 		]);
 	});
 
+	test('keeps the fuller record when one file is instrumented twice', () => {
+		// The same source gets one `SF:` record per resolved path the runtime loaded it under, so
+		// a package alias landing on the real path while a relative import keeps the launched one
+		// — what a `subst` drive, a symlink or a junction produces — yields two records for one
+		// file. Letting the barely-exercised instance overwrite the real one erased ~25 points of
+		// measured coverage across shared/.
+		const root = resolve('coverage-fixture');
+		const lcov = [
+			'TN:',
+			`SF:${resolve(root, 'shared', 'src', 'thing.ts')}`,
+			'FNF:14',
+			'FNH:14',
+			'LF:200',
+			'LH:188',
+			'end_of_record',
+			'TN:',
+			'SF:shared\\src\\thing.ts',
+			'FNF:9',
+			'FNH:1',
+			'LF:190',
+			'LH:14',
+			'end_of_record',
+		].join('\n');
+
+		expect([...parseProductionLcov(root, lcov).values()]).toEqual([
+			{
+				functions: { covered: 14, total: 14 },
+				lines: { covered: 188, total: 200 },
+				path: 'shared/src/thing.ts',
+			},
+		]);
+	});
+
 	test('reports module representation separately from loaded-code percentages', () => {
 		const backendFile: FileCoverageMetrics = {
 			functions: { covered: 3, total: 4 },

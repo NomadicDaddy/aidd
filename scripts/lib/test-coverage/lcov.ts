@@ -33,6 +33,23 @@ export function parseProductionLcov(
 
 	function finishRecord(): void {
 		if (current === undefined || !isProductionSourcePath(current.path)) return;
+		// One source file can appear under more than one `SF:` record: when the runtime resolves
+		// the same module through two spellings of its path — a package alias that lands on the
+		// real path while a relative import keeps the launched one, which is what a Windows
+		// `subst` drive, a symlink or a junction produces — it instruments an instance per
+		// spelling, and each gets its own record. Overwriting would let a barely-exercised
+		// duplicate erase the real measurement. Keep the fuller observation instead: whole, so
+		// the covered counts stay paired with the totals they were measured against, and by
+		// max rather than union so the number can never overstate what actually ran.
+		const previous = files.get(current.path);
+		if (
+			previous !== undefined &&
+			(previous.lines.covered > current.lines.covered ||
+				(previous.lines.covered === current.lines.covered &&
+					previous.functions.covered >= current.functions.covered))
+		) {
+			return;
+		}
 		files.set(current.path, {
 			functions: current.functions,
 			lines: current.lines,

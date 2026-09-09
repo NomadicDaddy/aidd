@@ -28,6 +28,10 @@ Downloading the source archive for a tag from the
 run `bun install` inside the extracted directory. A downloaded archive has no git history, so
 updating means downloading the next one.
 
+Unless explicitly skipped, the postinstall step builds the frontend when its assets are missing
+or older than its build inputs. Starting or restarting the backend does not rebuild the UI. After
+editing frontend source, run `bun run build:frontend` before reloading the panel.
+
 ## Configuration File Location
 
 aidd is JSON-only (no `.env`). Config merges in this order, with later sources overriding earlier:
@@ -126,12 +130,16 @@ All runtime state is written under the repository root:
 | `logs/backend.log`          | Detached backend stdout, with up to five `.1`-`.5` archives.         |
 | `logs/backend.error.log`    | Detached backend stderr, with up to five `.1`-`.5` archives.         |
 
-`bun run start:web` rotates both backend log files before it opens the detached process's output
-descriptors. A file at or above 10 MiB is renamed to `<name>.1`, existing archives shift down one
-number, and anything past `<name>.5` is deleted, so each stream costs at most six files. The two
-streams are measured separately, and a file that cannot be renamed (a reader still holds it open on
-Windows) is left alone and retried on the next start rather than truncated. The foreground path
-(`bun run start:web --foreground`) writes to the terminal and rotates nothing.
+`bun run start:web` checks both backend logs before opening the detached process's output files.
+A log at or above 10 MiB is renamed to `<name>.1`, older archives shift toward `<name>.5`, and the
+oldest is removed. Archives older than 30 days are also removed. If a file cannot be renamed,
+the launcher reports the failure and leaves the active log intact.
+
+While the backend runs, it checks the two logs every 30 seconds. A log at or above 10 MiB is
+copied to an archive and truncated in place so the open output handle remains usable. The same
+five-archive and 30-day retention limits apply. Logs can exceed 10 MiB between checks.
+Foreground output goes to the terminal; the backend's periodic task still checks any existing
+detached log files.
 
 `web.dataDir` must resolve inside the runtime root `data/` directory and must never target
 `backend/data`; config resolution throws on either violation. Nothing under `data/` or `logs/` is

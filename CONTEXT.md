@@ -41,8 +41,8 @@ One pass inside a Run: select work → compile prompt → invoke the CLI once �
 _Avoid_: Step (that word belongs to Recipes), turn.
 
 **Mode** (`AiddMode`):
-The kind of work a Run performs, chosen by `selectMode` from flags: one of `director`,
-`audit`, `interview`, `todo`, `validate`, `role`, `directive`, `coding` (default).
+The kind of work a Run performs: `director`, `audit`, `interview`, `todo`, `validate`,
+`directive`, `coding` (default), or the `triumvirate` wrapper.
 _Avoid_: Command, task.
 
 **Phase**:
@@ -93,8 +93,8 @@ or `coding`. Decides what kind of work a Run selects. (Also see Directive/`--in-
 _Avoid_: Stage, Maturity, Milestone.
 
 **Maturity stage**:
-One of six ordered project-readiness steps (`specified → structured → mapped → planned → engaged →
-audited`), computed per Project from artifact presence/freshness and surfaced as a UI badge with a
+One of seven ordered project-readiness steps (`specified → structured → mapped → planned → engaged →
+audited → shipped`), computed per Project from artifact presence/freshness and surfaced as a UI badge with a
 recommended next action.
 _Avoid_: Phase, Milestone.
 
@@ -123,7 +123,8 @@ The saved configuration for the Director persona (CLI, model, reasoning effort, 
 instructions). A distinct concept from the Project (assurance) Profile.
 
 **Cycle**:
-One Director run that analyzes the fleet and produces Suggestions.
+One Director run that analyzes the fleet and produces Suggestions. Scheduled automatic Cycles
+can also launch eligible Suggestions when bounded auto-launch is enabled.
 _Avoid_: Scan, sweep.
 
 **Suggestion**:
@@ -153,10 +154,9 @@ _Avoid_: Workspace, tenancy.
 A discovered application directory with its own `.aidd/` metadata that aidd can drive.
 
 **Creation lane**:
-One of the project-intake paths on the Projects page: Create Fresh, From Template, or Ingest
-Existing. Template lanes are data-driven from registered project templates (config
-`web.templates`, plus the synthesized `spernakit` entry); a template's `initCommand` scaffolds
-the project and `postCreate` either launches the initial coding run or runs project intake.
+One of four project-intake paths on the Projects page: Create Fresh, From Template, From GitHub,
+or Ingest Existing. From Template uses a registered scaffold; From GitHub starts from a GitHub
+template repository with fresh history.
 _Avoid_: Wizard, import (the lane is "Ingest Existing").
 
 **Terminal pane**:
@@ -213,9 +213,9 @@ _Avoid_: Native (that's a CLI), inline AI.
 ## Example dialogue
 
 > **Dev:** "When the **Director** finishes a **Cycle**, does it start work?"
-> **Domain expert:** "No. A Cycle only writes **Suggestions**. Nothing runs until someone launches
-> a project-scoped Suggestion, which spawns a **Run**. Fleet-wide Suggestions are advisory and can't
-> be launched at all."
+> **Domain expert:** "A manually started Cycle produces **Suggestions** for you to review. A
+> scheduled automatic Cycle can launch eligible project-scoped Suggestions when auto-launch is
+> enabled, subject to its configured limits. Fleet-wide Suggestions remain advisory."
 >
 > **Dev:** "And one Run is one agent call?"
 > **Domain expert:** "One **Run** is one orchestrator invocation. Inside it the orchestrator loops

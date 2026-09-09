@@ -65,13 +65,9 @@ exposed it is. A gate about image scanning, binary signing, or template drift is
 Before they existed such a gate could only be scoped as a list of repository names, which is the
 thing this file exists to replace.
 
-**The four carriage facets do not currently take effect.** `normalizeAuditProfileMapping` validates
-them (an unknown facet key or a bad enum value still fails the load) but its `setMatchFacet` switch
-has cases only for `authMode`, `bucket`, `criticality`, `dataSensitivity`, `deployment`, and
-`externalIntegrations`, so a carriage facet is dropped from the normalized `match`. A rule written
-as `"match": { "shipsContainerImage": ["published"] }` normalizes to `"match": {}` and therefore
-applies to every profile. Nothing in `audits/audit-profile-mapping.json` is scoped on these four
-today, so the seeded policy is unaffected; do not add such a rule until the switch handles them.
+All ten facets are validated, retained during normalization, and evaluated against the project's
+profile. For example, `"match": { "shipsContainerImage": ["published"] }` matches only profiles
+that publish a container image. Unknown facet keys and invalid enum values fail validation.
 
 `audits` is a list of audit names (upper-snake, matching the `.md` filename) or `["*"]` to mean
 "every audit in the catalog".

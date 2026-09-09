@@ -1,14 +1,13 @@
 # What aidd Can Modify
 
 aidd is a local tool. It runs on your machine, works against project folders you point it at, and
-talks to an AI backend you configure. This page is the plain-English inventory of everything it
-reads, writes, runs, and sends over the network, so you can decide what to hand it with your eyes
-open.
+talks to an AI backend you configure. This page describes its file changes, Git operations,
+shell access, and network activity.
 
-The short version: aidd only writes inside the project you give it (plus its own control-panel data
-and logs), it never sends analytics or "phones home", and the two things worth understanding before
-you trust it with a project are **code-changing runs** and **recipe shell steps**. Both are covered
-below.
+Most managed writes go to the selected project, aidd's runtime data, or user configuration.
+That is not a host-level filesystem boundary: agent and recipe shell commands can access other
+locations with your account's permissions. Code-changing runs can also create commits, including
+through aidd's completion recovery. Usage telemetry stays local.
 
 ## Your project's `.aidd/` metadata
 
@@ -33,7 +32,9 @@ and any CLI run launched with `--write-allowlist .aidd`, declare an `.aidd`-only
 snapshots the git worktree before the backend runs, reverts anything written outside the allowlist,
 retries the iteration once with the violation named in the prompt, then fails the run (exit 76) if
 it happens again. A triumvirate run skips the retry and fails on the first violation. A plain
-coding run declares no allowlist — changing your source is the point of it.
+coding run declares no allowlist because it is allowed to change source. This checks and restores
+worktree changes after execution; it does not sandbox a shell process or prevent it from accessing
+files elsewhere on the host.
 
 ## Your project's source code
 
@@ -41,13 +42,16 @@ aidd only edits your actual source in **code-changing modes**: a normal `coding`
 a `directive` that asks for changes, or a `triumvirate` run. In those modes the AI backend edits
 files to do the work you asked for, exactly like a developer would.
 
-Everything else is **read-only** on your code: audits, `--check-features` / `--check-artifacts`,
-interview, and the web pipeline's metadata-only steps.
+Audits, interview, validation, and the web pipeline's metadata-only steps are intended to leave
+application code unchanged. They can still write metadata, reports, and run records.
+`--check-artifacts`, for example, writes `.aidd/.artifacts-check.json`.
 
-The one time aidd adds files on its own is **scaffolding a fresh project**, and even then it only
-fills in what's _missing_: starter config like `.editorconfig`, `.gitignore`, `.prettierrc`,
-`eslint.config.js`, a `package.json`, and a `frontend/` skeleton. It never overwrites files you
-already have.
+**Fresh-project scaffolding** adds missing starter files such as `.editorconfig`, `.gitignore`,
+`.prettierrc`, `eslint.config.js`, `package.json`, and a `frontend/` skeleton. Those bundled starter
+files do not replace existing files. Operator-configured `sharedDirs` and `sharedFiles` are
+different: their copies can overwrite matching files. Shared directories land by basename at the
+fresh project's root; shared files use a project-relative target or the source filename at the
+root. A run's write allowlist, when present, limits those targets.
 
 Deploy configuration (a `Dockerfile`, `wrangler.toml`, CI workflow, …) is never emitted
 autonomously. It comes only from the `deployment-readiness` skill — a code-changing
@@ -69,17 +73,22 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   and stages those files so they survive a clone. It refuses and leaves everything alone if the
   repository already has its own `core.hooksPath`, real `.git/hooks`, or a `pre-push` aidd did not
   write.
-- **aidd makes no commits in a project that already has history.** It never auto-commits your
-  source code, and it does not commit the run ledger either. The one commit aidd authors itself is
-  the baseline `chore: import ... template baseline` commit in a project it just created from a
-  template or GitHub repo, where the template's own history has been stripped and there is nothing
-  to disturb. `.aidd/runs.jsonl` records unreviewed
-  run metadata — AI-written summaries, commit subjects, file paths, token and cost totals — which
+- **Template baseline:** aidd creates a `chore: import ... template baseline` commit after
+  creating a project from a template or GitHub repository with fresh history.
+- **Completion recovery:** aidd can commit source changes in an existing project when a backend
+  exits without an accepted completion marker. The selected feature must already be marked
+  completed with `passes: true`. Recovery checks that dirty source paths were clean at run start
+  and recorded as written by the run, then reruns `smoke:qc` (or `smoke:qc:fast` if that is the
+  only available gate) before attempting the commit. Unknown ownership, surviving pre-run changes,
+  or a missing or failing gate prevent recovery. It stages attributed paths, not the whole tree;
+  normal Git hooks still apply.
+- **Local ledgers:** `.aidd/runs.jsonl` records unreviewed
+  run metadata, including AI-written summaries, commit subjects, file paths, token and cost totals, which
   is ignored in every profile and never committed. `.aidd/findings-ledger.jsonl` is local too: it
   keeps emitted, suppressed, recurred, dismissed, and remediated finding events even after a
   feature directory is removed.
-- **Agent commits:** in a code-changing run, the AI backend may commit the work it just did. Those
-  commits are the agent doing the task you asked for, not aidd committing behind your back.
+- **Agent commits:** in a code-changing run, the AI backend may also commit work as part of its
+  instructions. Review the selected recipe and skill before launching work that includes commits.
 - **Worktrees:** runs configured with `--worktree` execute in a throwaway git worktree (under your
   temp dir, or the panel's data dir) on a `aidd/run-<id>` branch, which is removed when the run ends.
 - The native agent's shell policy rejects recognized destructive git commands (`git reset --hard`,
@@ -152,7 +161,7 @@ and paths it detects escaping the workspace. These are lexical checks, not an op
 filesystem sandbox.
 
 **Accepted limitation on Windows:** an interpreter invoked through the tool can construct paths
-at runtime and read outside the workspace, including through the inherited home directory.
+at runtime and access files outside the workspace, including through the inherited home directory.
 Filtering environment variables does not remove the real `HOME` and `USERPROFILE` runtime values.
 The interpreter escape remains unresolved and is recorded as an accepted risk, not a fixed or
 dismissed finding. Treat native shell execution as trusted code running with your account's
@@ -188,10 +197,12 @@ home"** anywhere in aidd.
 
 ## What aidd does not do
 
-- It does not write outside the project you point it at, except its own `data/`/`logs/`,
-  per-run worktrees under your temp dir, and `~/.aidd/config.json` when you save the Settings page.
-- It does not overwrite your existing files during scaffolding.
-- It does not auto-commit your source code.
+- It does not provide an operating-system filesystem sandbox for native-agent or recipe shell
+  commands. Configured roots and write allowlists do not replace host permissions.
+- Bundled starter files do not overwrite existing files during scaffolding. Configured shared
+  copies can, as described above.
+- It does not require manual approval for every commit. Agent instructions and completion
+  recovery can produce commits during a run.
 - It does not send telemetry or usage analytics to us or a third party. Its usage telemetry stays
   local. Outbound content goes only through actions described above: the model provider and
   optional Telegram bridge you configure, a source repository you ask aidd to clone, or the

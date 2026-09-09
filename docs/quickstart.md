@@ -45,15 +45,18 @@ Confirm the version you are on:
 bun run start -- --version   # matches the checked-in VERSION file
 ```
 
-## First CLI run (safe, read-only)
+## First CLI run (metadata checks)
 
-Every CLI command is `bun run start -- <flags>`. The safest first command validates a
-project's `.aidd/` metadata without mutating anything:
+Every CLI command is `bun run start -- <flags>`. Start by checking a project's `.aidd/`
+metadata. These commands do not change application code:
 
 ```powershell
 bun run start -- --project-dir C:\path\to\my-app --check-features
 bun run start -- --project-dir C:\path\to\my-app --check-artifacts
 ```
+
+`--check-features` validates feature records and roadmap coverage. `--check-artifacts` checks
+artifact presence and freshness, then writes `.aidd/.artifacts-check.json` with the results.
 
 `--help` lists every flag and mode:
 
@@ -89,7 +92,8 @@ the command palette.
 ## Add a project
 
 On the **Projects** page, aidd discovers projects under `web.allowedRoots` in
-`~/.aidd/config.json` — the filesystem boundary the panel is allowed to read. When
+`~/.aidd/config.json`. These roots limit project discovery and the panel's project-path checks;
+they are not a filesystem sandbox for agent or recipe shell commands. When
 `web.allowedRoots` is omitted it falls back to `[applicationsRoot]`, or, if that is also unset,
 to the parent of the aidd checkout.
 

@@ -6,9 +6,8 @@ It runs entirely on your machine: a Bun/TypeScript CLI plus an embedded web app,
 against project-local `.aidd/` metadata. There are no accounts and no cloud service, and no
 telemetry leaves your machine.
 
-In current market language, that makes aidd a **local, agent-agnostic agentic development
-environment (ADE)**: delegated work and durable results are the primary units, not files in an
-editor. It complements your IDE rather than trying to replace it.
+Use your IDE to edit code and aidd to manage agent runs across projects. Each run keeps its
+instructions, results, and history available for review.
 
 Point it at a backend you already use: the built-in **native** provider (any
 OpenAI-compatible API, including xAI/Grok), the **openai** preset, a local

@@ -8,12 +8,12 @@ history are not reachable from the current branch.
 The historical boundary comes from the development diary and cutover records: the unified v1
 orchestrator began in January 2026, v2 became the operational target in May, and v2.142.0 is the
 last documented state before the major-version change. The v3 column describes the 3.0.0
-pre-release candidate, including the September 5 release-preparation fixes. It is not a tagged
-release yet. Publication is planned for September 7, 2026.
+public release from September 7, 2026, including the September 5 release-preparation fixes.
+Later maintenance releases are recorded in the [changelog](../CHANGELOG.md).
 
 ## Comparison
 
-| Area                     | v1                                                                                                                | v2 through 2.142.0                                                                                                                                                           | v3 3.0.0 release candidate                                                                                                                                                                                           |
+| Area                     | v1                                                                                                                | v2 through 2.142.0                                                                                                                                                           | v3 3.0.0                                                                                                                                                                                                             |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Main job                 | Run coding agents repeatedly against a structured feature queue.                                                  | Operate AI coding work across projects from one local platform.                                                                                                              | Run that platform safely with more work delegated to aidd itself.                                                                                                                                                    |
 | Architecture             | Bash-centered orchestration assembled from separate provider wrappers and parsers.                                | Bun and TypeScript rewrite with shared contracts, a database-backed web backend, and an integrated React panel.                                                              | The v2 architecture with tighter admission, identity, recovery, install, and release contracts.                                                                                                                      |
@@ -27,7 +27,7 @@ release yet. Publication is planned for September 7, 2026.
 | Remote control           | Local command wrappers.                                                                                           | MCP and Telegram can inspect the fleet and launch supervised work through the web backend.                                                                                   | Remote entry points retain their operator provenance; unattended work remains separately identifiable and bounded.                                                                                                   |
 | Quality and release      | Runtime-oriented checks proved the loop against real applications.                                                | `smoke:qc`, focused tests, crawl reports, screenshot gates, audit evaluation, release checks, and cached validation grew into a full release system.                         | Fresh source installs build themselves, reports carry build identity, bundle analysis rejects stale evidence, hosted CI audits dependencies, and the release is source-only.                                         |
 | UI polish                | Useful and information-dense, with most feedback delivered through terminal output and metadata.                  | Responsive navigation, URL-backed filters, sortable tables, consistent page rails, accessible controls, Markdown rendering, overflow treatment, and compact desktop layouts. | First paint drops from about 226 KB to 162 KB gzip, the dashboard uses a bounded summary payload, Web Vitals report p75, reconnect coverage is shared with live invalidation, and images reserve their layout space. |
-| Distribution             | Internal local tooling assembled around the operator's workspace.                                                 | A packaged local platform, later simplified to source-only delivery.                                                                                                         | Prepared as a new public source baseline under FSL-1.1-ALv2, delivered as source only: no accounts, no prebuilt binaries, and no container image.                                                                    |
+| Distribution             | Internal local tooling assembled around the operator's workspace.                                                 | A packaged local platform, later simplified to source-only delivery.                                                                                                         | Released as a new public source baseline under FSL-1.1-ALv2, delivered as source only: no accounts, no prebuilt binaries, and no container image.                                                                    |
 
 ## What each generation added
 
@@ -54,7 +54,7 @@ which actor started a run, how two launches contend for one checkout, what survi
 whether a report measured the current build, how much code reaches first paint, and whether a fresh
 source archive starts without undocumented build steps.
 
-The release candidate also changes the product boundary. The staged 3.0.0 release presents aidd as
+The 3.0.0 release also changes the product boundary. It presents aidd as
 a new public source baseline and documents the license, install path, privacy boundary, supported
 runtime, and release evidence as product contracts. Release screenshots now bind a successful full
 crawl to the exact tagged source and production build; partial diagnostics cannot replace that
@@ -73,4 +73,4 @@ Windows native-shell boundary remains lexical, with an explicitly accepted inter
   source install.
 
 The shortest fair description is that v1 proved the development loop, v2 assembled the operating
-platform, and v3 is making that platform fit for unattended use and public distribution.
+platform, and v3 adds bounded unattended operation and a public source release.

@@ -48,8 +48,9 @@ and still sound like a generated essay if it keeps the same analogy, contrast, a
 Remove that unnecessary persuasion and symmetry. Do not deliberately make the writing rougher,
 less grammatical, or harder to follow. Smooth writing is not itself a defect.
 
-Read [examples.md](examples.md) when deciding between a useful edit and overcorrection. The examples
-illustrate editorial decisions, not phrases or paragraph shapes to reuse.
+Read `examples.md` beside this skill when present, or its staged copy at
+`.aidd/skills/humanize-docs/examples.md`, when deciding between a useful edit and overcorrection.
+The examples illustrate editorial decisions, not phrases or paragraph shapes to reuse.
 
 ## Check facts and claim strength
 

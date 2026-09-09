@@ -2,6 +2,25 @@
 
 All notable public aidd releases are documented here.
 
+## [3.0.2] - 2026-09-09
+
+### Changed
+
+- The operational documentation now describes what aidd actually does with a project. Managed writes are scoped, but that is not a host-level filesystem boundary: an agent or recipe shell command runs with your account's permissions. Completion recovery can commit source changes in an existing project after checking that the dirty paths were clean at run start, were recorded as written by the run, and pass the project's gate. Operator-configured shared directories and files can overwrite matching files during scaffolding, unlike the bundled starter files. A test suite fails if any of those claims drifts back.
+- Quickstart no longer calls the metadata checks non-mutating. `--check-features` and `--check-artifacts` leave application code alone, and `--check-artifacts` writes `.aidd/.artifacts-check.json`.
+- The deployment reference documents the postinstall frontend build, that restarting the backend does not rebuild the UI, and the backend's own log check every 30 seconds with its 10 MiB threshold, five archives, and 30-day retention.
+- In-app documentation is more honest about limits. The FAQ explains that local storage does not keep prompts and project content off a remote provider, that a recent heartbeat means a run is still reporting rather than making useful progress, and that unattended launches require both the paused Director fleet cycle and Suggestion Auto-Launch to be turned on. Getting Started adds a step for reviewing run output, file changes, and validation evidence before accepting a result. The Dashboard page documents the Fleet Maturity and Recent Activity cards.
+- Recipe badges, the re-intake card, and the Settings sections now state their consequences before you act. Built-in recipes can have their steps edited but not be renamed or deleted, a metadata-only recipe requests an `.aidd/`-only write allowlist rather than a shell sandbox, re-intake returns existing backlog and in-progress features to approval, saving a network-access change restarts the panel, and the Director chat file-edit permission also covers Telegram.
+- The public site pages were rewritten with corrected privacy and validation claims, the right Bun version requirement, a working Flask example, the workflow section ahead of the backend comparison, and a screenshot of the real dashboard in place of generated artwork.
+- The `humanize-docs` skill is now a review-and-edit contract rather than a rewrite instruction. It establishes voice from real samples, decides how much editing the text needs (including leaving good prose alone), and treats factual scope and required coverage as outranking style heuristics.
+- The `devdiary-update` skill accepts explicit repository paths, names its default scan roots, recognizes worktrees whose `.git` is a file, and deduplicates repositories by their resolved top-level path.
+
+### Fixed
+
+- A project reached through an aliased path (a Windows `subst` drive, a symlink, or a junction) is recognized as owning its own Git repository. Repository ownership is now decided by an empty `git rev-parse --show-prefix` instead of comparing `--show-toplevel` against the path aidd was given, which never matched. Previously the history guard could try to re-initialize an existing repository, and every commit a run made went unattributed.
+- Test coverage results survive the same aliased paths. Coverage source paths resolve through the filesystem before the inside-the-project check, and when one source appears under more than one LCOV record the fuller measurement is kept instead of being overwritten by a barely-exercised duplicate.
+- A project with no runs and no pipelines no longer shows an animated "Preparing blueprint" spinner. Blueprint readiness reports incomplete setup and names the missing onboarding artifacts; progress wording appears only when a run or pipeline for that project is actually working, and a finished run can no longer leave a stale spinner behind.
+
 ## [3.0.1] - 2026-09-08
 
 ### Changed

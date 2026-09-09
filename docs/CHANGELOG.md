@@ -21,6 +21,10 @@ All notable public aidd releases are documented here.
 - Test coverage results survive the same aliased paths. Coverage source paths resolve through the filesystem before the inside-the-project check, and when one source appears under more than one LCOV record the fuller measurement is kept instead of being overwritten by a barely-exercised duplicate.
 - A project with no runs and no pipelines no longer shows an animated "Preparing blueprint" spinner. Blueprint readiness reports incomplete setup and names the missing onboarding artifacts; progress wording appears only when a run or pipeline for that project is actually working, and a finished run can no longer leave a stale spinner behind.
 
+### Security
+
+- Installs now resolve hono 4.13.5 through the Model Context Protocol SDK. Three moderate advisories applied to the earlier version: `toSSG()` could write files outside its output directory, deeply nested dot-notation in `parseBody()` could exhaust memory, and the query parser read parameters that appeared after the URL fragment.
+
 ## [3.0.1] - 2026-09-08
 
 ### Changed

@@ -8,16 +8,20 @@ The page merges [bundled skills](/skills) from the installation's `skills/` cata
 
 Select a skill and project, then optionally supply one free-form argument string or override the backend, model, and reasoning effort. aidd tracks the one-shot as a synthetic `skill:{id}` pipeline session and a top-level skill invocation. Skill steps inside stored recipes instead retain their parent recipe in telemetry.
 
-Execution intent decides whether the run may write:
+Execution intent sets the agent's permission to change project files:
 
 Review only
-: holds the run to a read-only contract: no file edits, no metadata or changelog writes, and no commits. A skill that would apply a fix describes the diff instead.
+: instructs the agent not to edit project files, update metadata or changelogs, or make commits. A skill that would apply a fix describes the proposed changes instead. aidd still writes its own run records; this instruction is not a filesystem sandbox.
 Apply changes
-: removes the outer read-only prohibition so the skill may carry authorized changes through and commit them when needed. It does not expand the skill's requested scope or override project rules. Bundled skill definitions are written write-intentional; execution intent supplies the permission boundary.
+: removes the outer read-only prohibition so the skill may carry authorized changes through and commit them when needed. It does not expand the skill's requested scope or override project rules.
 
 ## Import a local skill
 
-Enter a local folder under an Application Root configured in Settings, choose an aidd category, and preview it. Preview validates the root `SKILL.md`, package size and file-count limits, rejects symbolic links, junctions, and storage overlap, and detects id collisions before anything is copied. Agent Skills descriptions are required and must contain 1–1,024 characters; any provider-specific truncation used to display skill listings is separate and does not relax this catalog limit. Import atomically stores an unchanged managed copy in the configured data directory and records its category, canonical source path, import time, and a SHA-256 hash covering every copied file.
+Enter a local folder under an Application Root configured in Settings, choose an aidd category, and preview it. Preview validates the root `SKILL.md`, package size and file-count limits, rejects symbolic links, junctions, and storage overlap, and detects id collisions before anything is copied.
+
+Agent Skills descriptions are required and must contain 1 to 1,024 characters; any provider-specific truncation used to display skill listings is separate and does not relax this catalog limit.
+
+Import atomically stores an unchanged managed copy in the configured data directory and records its category, canonical source path, import time, and a SHA-256 hash covering every copied file.
 
 Replace
 : is required when an imported ID already exists; a successful preview changes the commit action from **Import** to **Replace**.

@@ -1,10 +1,10 @@
 # Getting started
 
-Welcome to the aidd control panel, the web surface for operating the aidd runtime across your configured local projects. This page walks you from an empty panel to your first run.
+Use the aidd control panel to manage agent work across your local projects. This guide takes you from an empty panel to your first run.
 
 ## What aidd does
 
-aidd orchestrates coding-agent sessions against a project's local `.aidd/` contract. The control panel lets you discover a **fleet** of such projects, launch and monitor work, and review what the agents produced, all from one place on your own machine.
+aidd coordinates coding-agent sessions using each project's local `.aidd/` metadata: its tracked work, configuration, and supporting documents. The control panel lets you discover a **fleet** of projects, launch and monitor work, and review what the agents produced.
 
 ## 1. Point aidd at your code
 
@@ -21,6 +21,8 @@ For a brand-new project, use **New Project** to create a fresh project or start 
 ## 3. Launch your first run
 
 Open [Runs](/runs), pick a target project, choose a mode (the default `coding` mode <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> picks up tracked features), and launch. The live console streams output as the run loops through its iterations. You can stop or kill an active run at any time.
+
+Before accepting the result, read the run output, review the file changes, and check the validation evidence. A completion status isn't a substitute for that review.
 
 ## 4. Let the Director advise you
 
@@ -51,8 +53,8 @@ Press {{kbd:?}} on any page for the full cheatsheet. The essentials:
 
 ## Where to go next
 
-- [Recipes](/recipes) and [Skills](/skills): reusable, multi-step automation. <!-- check-docs-allow: app routes rendered by the panel, not files on disk; check-docs resolves link targets against the filesystem -->
+- [Skills](/skills): reusable tasks you can launch on their own. [Recipes](/recipes) combine skills and other steps into workflows. <!-- check-docs-allow: app routes rendered by the panel, not files on disk; check-docs resolves link targets against the filesystem -->
 - [Audits](/audits): structured reviews that turn findings into tracked work. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 - [Telemetry](/telemetry): usage trends across skills, recipes, and runs. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 
-Most pages have a **?** button in the header that opens focused help for that screen. A few simpler pages (**Docs** itself, which you're reading, plus the **Diary** and **About**) don't, because they're either reference views or this documentation. The [Glossary](/docs/glossary) defines every core term, and the [FAQ](/docs/faq) covers <!-- check-docs-allow: app routes rendered by the panel, not files on disk; check-docs resolves link targets against the filesystem --> common questions.
+Most pages have a **?** button in the header that opens focused help for that screen. A few simpler pages (**Docs** itself, which you're reading, plus the **Diary** and **About**) don't, because they're either reference views or this documentation. The [Glossary](/docs/glossary) explains the core terms, and the [FAQ](/docs/faq) covers <!-- check-docs-allow: app routes rendered by the panel, not files on disk; check-docs resolves link targets against the filesystem --> common questions.

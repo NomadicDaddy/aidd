@@ -10,17 +10,21 @@ A folder is discovered only when it contains an `.aidd/` directory **and** lives
 
 Run history, pipeline sessions, and telemetry live in the control panel's local database. Per-project work is recorded under each project's own `.aidd/` directory (features, run ledger, artifacts, audit reports). The panel is single-user and runs on your machine.
 
-## A run looks stuck — what do I do?
+Local storage does not mean every workflow stays offline. Prompts and relevant project content go to the AI backend you choose, which may use a remote provider. The optional Telegram integration exchanges messages with Telegram. aidd does not send usage telemetry to its maintainers or tracking services.
 
-Open [Runs](/runs) and check the run's liveness indicator. A healthy long run keeps <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> reporting progress. If it's genuinely stalled, use **stop** for a graceful end or **kill** to force it. Run history is preserved either way.
+## What should I do if a run looks stuck?
+
+Open [Runs](/runs) and check the liveness indicator and console output. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> A recent heartbeat tells you the run is still reporting, not whether it is making useful progress. If it's stalled, use **stop** for a graceful end or **kill** to force it. Run history is preserved either way.
 
 ## What's the difference between a run and a pipeline session?
 
-A **run** is one orchestrator invocation that loops iterations of agent work. A [pipeline session](/docs/pipelines) is one execution of a multi-step <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> [recipe](/docs/recipes); some of its steps may each spawn their own run. See the <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> [Glossary](/docs/glossary) for full definitions. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
+A **run** is one orchestrator invocation that loops iterations of agent work. A [pipeline session](/docs/pipelines) is one execution of a <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> [recipe](/docs/recipes), which can have one or more steps. Some steps spawn their own run. See the <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> [Glossary](/docs/glossary) for full definitions. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 
 ## Can the Director change my code by itself?
 
-Not by default. [Director chat](/docs/director) orchestrates work through supervised runs <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> rather than editing files directly. There is an opt-in setting that allows direct file edits if you explicitly want it.
+[Director chat](/docs/director) can launch supervised runs that change project files. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem --> Direct file and shell access from chat is a separate, off-by-default permission.
+
+Unattended work is also opt-in. The built-in Director fleet cycle is paused by default, and **Suggestion Auto-Launch** is separately disabled. If you enable both, automatically scheduled cycles can launch eligible suggestions within your configured limits. Manual cycles, including **Run now**, do not auto-launch suggestions.
 
 ## Do I need a model provider configured?
 

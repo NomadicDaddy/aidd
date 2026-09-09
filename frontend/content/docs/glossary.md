@@ -5,23 +5,23 @@ The core vocabulary of aidd. These terms are used consistently throughout the co
 ## Runtime and orchestration
 
 CLI
-: the execution engine that runs an agent session — `claude-code`, `cline`, `codex`, `grok`, `kilocode`, `lmstudio`, `native`, `ollama`, `openai`, or `opencode`. Chosen per run or by default.
+: the execution engine that runs an agent session: `claude-code`, `cline`, `codex`, `grok`, `kilocode`, `lmstudio`, `native`, `ollama`, `openai`, or `opencode`. Chosen per run or by default.
 Provider
 : the compatible AI API used by the in-process engines and Direct AI. External CLI engines shell out to their own tools, which manage their provider connection.
 Model
 : the specific model id an execution engine or Direct AI call uses.
 Run
-: one orchestrator invocation, identified by a single run id, that loops over iterations until work is exhausted.
+: one orchestrator invocation, identified by a single run id, that loops over iterations until the selected work is done, a limit is reached, or the run stops.
 Iteration
 : one pass inside a run: select work, compile a prompt, invoke the configured agent workflow, and record the result. Retries and Triumvirate stages can make more than one agent call within an iteration.
 Mode
 : the kind of work a run performs: `coding` (default), `audit`, `directive`, `director`, `interview`, `todo`, `triumvirate`, or `validate`.
 Source
-: which surface a run arrived through — `cli`, `director`, `scheduled`, or `web`. It says which door, not who opened it.
+: which surface a run arrived through: `cli`, `director`, `scheduled`, or `web`.
 Initiator
-: whether a person asked for a run, or aidd started it on its own — `operator` or `automatic`. Recorded at launch, never inferred afterwards; a run from before aidd recorded it reads as unknown rather than as either answer.
+: whether a run was explicitly requested (`operator`) or started by aidd on its own (`automatic`). Recorded at launch; a missing value displays as unknown and is not inferred from other run details.
 Triumvirate
-: an opt-in run wrapper where primary and secondary planners work in a scratch mirror, an overseer selects the plan, and an execution agent applies it to the run's working tree.
+: an opt-in run wrapper where primary and secondary planners work in separate scratch mirrors, an overseer selects the plan, and an execution agent applies it to the run's working tree.
 
 ## Work tracking
 

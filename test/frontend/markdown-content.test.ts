@@ -573,13 +573,13 @@ describe('lists and explicitly authored definitions keep their own structure', (
 	test('term-definition runs use definition rows throughout the docs set', () => {
 		const expectedCounts = new Map([
 			['audits.md', 3],
-			['dashboard.md', 11],
+			['dashboard.md', 13],
 			['getting-started.md', 7],
 			['glossary.md', 27],
 			['pipelines.md', 4],
 			['projects.md', 20],
 			['recipes.md', 6],
-			['runs.md', 5],
+			['runs.md', 7],
 			['scheduled-tasks.md', 7],
 			['settings.md', 22],
 			['skills.md', 5],

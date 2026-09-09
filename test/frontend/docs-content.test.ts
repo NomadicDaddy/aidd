@@ -109,13 +109,13 @@ describe('docs content', () => {
 	test('named options use explicit definition blocks across the corpus', () => {
 		const expectedCounts = new Map([
 			['audits.md', 3],
-			['dashboard.md', 11],
+			['dashboard.md', 13],
 			['getting-started.md', 7],
 			['glossary.md', 27],
 			['pipelines.md', 4],
 			['projects.md', 20],
 			['recipes.md', 6],
-			['runs.md', 5],
+			['runs.md', 7],
 			['scheduled-tasks.md', 7],
 			['settings.md', 22],
 			['skills.md', 5],
@@ -129,7 +129,7 @@ describe('docs content', () => {
 			['pipelines.md', 1],
 			['projects.md', 2],
 			['recipes.md', 2],
-			['runs.md', 1],
+			['runs.md', 2],
 			['scheduled-tasks.md', 2],
 			['skills.md', 2],
 		]);

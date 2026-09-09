@@ -16,7 +16,7 @@ The 24-hour window uses hourly chart buckets; every other window uses daily buck
 ## What you'll see
 
 Invocation summary
-: totals for the window, split by top-level versus nested invocations and by outcome in the same order as the tiles — Completed, Warnings, Failed, Flagged, Stopped, Killed, No work, and Running. Select an outcome tile to filter and scroll to the recent-invocation list. Failed means the run itself ended in error; Flagged is a provider content-policy refusal. Stopped is a graceful operator request, while Killed is a forced end.
+: totals for the window, split by top-level versus nested invocations and by outcome in the same order as the tiles: Completed, Warnings, Failed, Flagged, Stopped, Killed, No work, and Running. Select an outcome tile to filter and scroll to the recent-invocation list. Failed means the run itself ended in error; Flagged is a provider content-policy refusal. Stopped is a graceful operator request, while Killed is a forced end.
 Most used
 : the ten resources invoked most in the window.
 Invocations over time
@@ -36,6 +36,5 @@ Invocation counts and charts come from the local invocation ledger. Every record
 
 ## Tips
 
-- Low-usage skills or recipes are candidates for consolidation or removal.
 - Pair a time-window filter with the resource filter to answer questions like "what did we run most this week?"
-- A rising flagged or warning count in the summary is usually worth chasing before a rising invocation count.
+- Select Warnings or Flagged in the summary, then expand an entry in Recent invocations to read the recorded details.

@@ -2,7 +2,7 @@
 
 Settings is where you configure the aidd runtime for this machine. Changes here affect discovery, defaults, and how runs behave across your whole fleet. The page is organized into five tabs: **Workspace**, **Run Engine**, **AI & Director**, **Integrations**, and **Control Panel**.
 
-Each tab marks itself when it holds unsaved edits, and one Save commits the config-backed form across all five tabs. The Director Profile is a separate record with its own **Save Profile** button, and restart or shutdown actions also run separately.
+Each tab marks itself when it holds unsaved edits. **Save Settings** saves the configuration across all five tabs. The Director Profile is a separate record with its own **Save Profile** button, and restart or shutdown actions also run separately.
 
 ## Workspace
 
@@ -35,7 +35,7 @@ CLI Matrix
 Director Profile
 : the persona the Director uses: CLI, model, reasoning effort, role, and behavior instructions. This is an independent record saved with **Save Profile**, not **Save Settings**.
 Model Routing
-: the execution engine and model used when a run doesn't specify its own — Default CLI, Default Model, Reasoning Effort, and the per-mode Code and Audit model fields. For Code and Audit, model precedence is per-launch override, then the mode model when the selected backend is the configured default CLI, then backend model, shared model, and provider default. This section also carries the global Audits enabled toggle; per-audit applicability and overrides live on the Audits page.
+: the execution engine and model used when a run doesn't specify its own: Default CLI, Default Model, Reasoning Effort, and the per-mode Code and Audit model fields. For Code and Audit, model precedence is per-launch override, then the mode model when the selected backend is the configured default CLI, then backend model, shared model, and provider default. This section also carries the global Audits enabled toggle; per-audit applicability and overrides live on the Audits page.
 Providers
 : base URLs, models, reasoning effort, and write-only credentials for OpenAI-compatible providers used by native-family backends and Direct AI.
 Direct AI
@@ -48,7 +48,7 @@ Triumvirate Roles
 ## Integrations
 
 Telegram Channel
-: a bot token plus allowed chat IDs let you chat with the Director from your phone. The token stays in the local config file.
+: a bot token plus allowed chat IDs let you chat with the Director from your phone. The token is stored in the local config file and used to authenticate requests to Telegram.
 Source Control
 : read-only installation and authentication status for Git, GitHub CLI, GitLab CLI, and Azure CLI. Refreshing the panel does not change provider behavior.
 

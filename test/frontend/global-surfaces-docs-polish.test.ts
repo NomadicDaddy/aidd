@@ -256,13 +256,15 @@ describe('documentation local polish', () => {
 			read('frontend/content/docs/skills.md'),
 		]);
 
-		expect(faq).toContain('A run looks stuck — what do I do?');
+		expect(faq).toContain('What should I do if a run looks stuck?');
 		expect(faq).not.toContain('A run looks stuck - what do I do?');
 		expect(scheduled).not.toContain('- Choose a project scope.');
 		for (const item of ['Review only', 'Apply changes', 'Replace', 'Bundled IDs', 'Delete']) {
 			expect(skills).toContain(`${item}\n:`);
 		}
-		expect(skills).toContain('descriptions are required and must contain 1–1,024 characters');
+		expect(skills).toContain(
+			'descriptions are required and must contain 1 to 1,024 characters',
+		);
 		expect(skills).toContain('provider-specific truncation');
 	});
 

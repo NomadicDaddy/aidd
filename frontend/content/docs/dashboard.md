@@ -35,6 +35,10 @@ Feature Status
 : up to six feature records at a time, filterable by pending/completed state and by feature, remediation, or audit category.
 Project Health
 : up to six projects with priority health, artifact health, milestone progress, feature pass counts, and configured frontend/backend port status.
+Fleet Maturity
+: up to six projects, least mature first, with their maturity percentage, current stage, and next artifact. The header shows average maturity across the fleet.
+Recent Activity
+: recent runs and iterations across the fleet, with status, source, execution identity, duration, and a summary when recorded.
 
 The card layout starts locked. Unlock it from the page header to reorder cards, switch a card between half and full width, or resize its height. Lock it again when you're finished. Your order and sizes are saved in this browser.
 

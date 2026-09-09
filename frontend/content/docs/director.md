@@ -1,6 +1,6 @@
 # Director
 
-The **Director** is aidd's fleet-level advisor. It looks across all of your projects, produces recommendations, and can orchestrate work on your behalf.
+The **Director** is aidd's fleet-level advisor. It looks across your configured fleet, produces recommendations, and can orchestrate work on your behalf.
 
 ## Cycles and suggestions
 
@@ -13,15 +13,15 @@ Dismiss a pending suggestion when you decide not to launch it, or after handling
 
 Cycles can also start automatically from a built-in task on the **Scheduled** page called Director fleet cycle. The task is paused by default. Change its cadence, pause it, or resume it there; the Director page and Settings show its current state and link to it. Only one cycle runs at a time, so starting one by hand while another is running is refused, and an automatic occurrence that arrives during a cycle is recorded as skipped.
 
-**Suggestion Auto-Launch** is a separate, off-by-default setting. When enabled, a cycle started by an automatic scheduled occurrence can launch eligible suggestions as soon as the cycle completes; manual cycles, including **Run now**, never auto-launch. Configured limits bound unattended launches by cycle count, suggestion rank and risk, recipe allow-list, project availability, active work, and working-tree state, with at most one launch per project in a cycle. Recent Cycles records what was launched and why other suggestions were skipped.
+**Suggestion Auto-Launch** is a separate, off-by-default setting. When enabled, a cycle started by an automatic scheduled occurrence can launch eligible suggestions as soon as the cycle completes; manual cycles, including **Run now**, never auto-launch. Limits cover the number of launches per cycle, suggestion rank and risk, and the recipe allow-list. Eligibility also depends on project availability, active work, and working-tree state. A cycle can launch at most one suggestion per project. Recent Cycles records what was launched and why other suggestions were skipped.
 
 ## Director chat
 
-The chat is a persisted conversation with the Director that runs as an autonomous tool-calling agent. Within a turn it can inspect the fleet and orchestrate work: launch and inspect runs, stop or kill active runs, start cycles, and act on suggestions.
+Director chat can inspect the fleet and manage work for you: launch and inspect runs, stop or kill active runs, start cycles, and act on suggestions.
 
 Chats persist as separate conversations. Start one with **New chat**, switch between them in the **Chats** rail, or delete one to discard it and its message history.
 
-The Director receives the current recipe catalog and can inspect a recipe's exact steps before explaining or launching it. Recipe names are not treated as behavioral documentation.
+The Director receives the current recipe catalog and can inspect a recipe's exact steps before explaining or launching it.
 
 By default the chat does not edit project files itself; changes flow through supervised runs. An opt-in setting allows direct project file and shell access if you want it. When no compatible tool-calling provider is configured, the chat falls back to a read-only, text-only reply.
 

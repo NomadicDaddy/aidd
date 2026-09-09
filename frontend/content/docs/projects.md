@@ -21,7 +21,7 @@ Ingest Existing
 
 ## Maturity stage
 
-Each project shows its progress through `specified`, `structured`, `mapped`, `planned`, `engaged`, `audited`, and `shipped`. The current stage is computed from which artifacts exist and how fresh they are, and it comes with a recommended next action. Once all seven stages are complete, the project has no current stage. The final `shipped` stage is evidence-based — a deployment runbook, deploy configuration (when the project profile says the app leaves the local machine), and at least one tagged release.
+Each project shows its progress through `specified`, `structured`, `mapped`, `planned`, `engaged`, `audited`, and `shipped`. The current stage is computed from which artifacts exist and how fresh they are, and it comes with a recommended next action. Once all seven stages are complete, the project has no current stage. The final `shipped` stage requires evidence: a deployment runbook, deploy configuration (when the project profile says the app leaves the local machine), and at least one tagged release.
 
 ## Project detail
 
@@ -62,7 +62,7 @@ Management
 
 ## Tips
 
-- The maturity badge's recommended action is the fastest way to know what to do next for a given project.
+- The maturity badge recommends the next action based on the project's recorded evidence.
 - Use the project detail Runs tab to see history scoped to just that project, versus the global [Runs](/runs) page. <!-- check-docs-allow: app route rendered by the panel, not a file on disk; check-docs resolves link targets against the filesystem -->
 - **Profile Matrix** (linked from the Projects page header) shows every project's assurance profile side by side.
 - Toggle between card and table views from the page header.

@@ -56,7 +56,7 @@ export function NetworkAccessSection({
 							checked={form.allowRemote}
 							description={
 								form.allowRemote
-									? 'The next restart can expose the control panel beyond this machine.'
+									? 'Allows access beyond this machine. Saving a change to this setting restarts the panel.'
 									: 'Limited to this machine.'
 							}
 							label="Allow local network access"
@@ -110,8 +110,8 @@ export function NetworkAccessSection({
 				confirmLabel="Enable network access"
 				description={
 					form.authTokenConfigured
-						? 'Saving these settings will allow the next restart to expose the control panel beyond this machine. Remote callers must send the configured access token using the Authorization: Bearer scheme.'
-						: 'Saving these settings will generate an access token and allow the next restart to expose the control panel beyond this machine.'
+						? 'Saving restarts the panel with network access enabled. Remote API callers must send the configured access token as Authorization: Bearer <token>. Use a trusted network.'
+						: 'Saving generates an access token and restarts the panel with network access enabled. Remote API callers need that token. Use a trusted network.'
 				}
 				onClose={() => setConfirmRemoteOpen(false)}
 				onConfirm={confirmAllowRemote}

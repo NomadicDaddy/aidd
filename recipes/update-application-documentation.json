@@ -11,14 +11,14 @@
 		{
 			"configJson": {
 				"maxIterations": 1,
-				"prompt": "Review {application}'s current codebase state and update all documentation in the docs/ directory to accurately reflect the current implementation. Update API references, architecture docs, and any feature documentation. Do not create new documentation files that don't already exist — only update existing ones."
+				"prompt": "Review {application}'s current codebase and every document in docs/. Correct confirmed inaccuracies in API references, architecture docs, and feature documentation. Preserve accurate content and necessary technical detail. Update existing files only; do not create new documentation files."
 			},
 			"name": "Update docs",
 			"stepType": "aidd-cli"
 		},
 		{
 			"configJson": {
-				"args": "{application} docs/ — rewrite every Markdown file under docs/ in place, saving each humanized version back over its own file; do not return the rewrites as chat output",
+				"args": "{application} docs/ - review every Markdown file and make needed prose edits in place. Leave effective prose unchanged. Preserve factual scope, technical detail, commands, and links. Save edits to the existing files; report changed and unchanged files rather than returning rewrites as chat output",
 				"executionIntent": "apply-changes",
 				"skillId": "humanize-docs"
 			},
@@ -27,7 +27,7 @@
 		},
 		{
 			"configJson": {
-				"args": "{application} docs/ — correct every inaccuracy you confirm, saving each correction back over its own file",
+				"args": "{application} docs/ - correct every inaccuracy you confirm against the current codebase. Save corrections in place, preserve accurate passages, and update existing files only",
 				"executionIntent": "apply-changes",
 				"skillId": "review-or-create-doc"
 			},

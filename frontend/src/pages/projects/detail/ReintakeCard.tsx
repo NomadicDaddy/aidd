@@ -40,9 +40,9 @@ export function ReintakeCard({ project }: { project: ProjectDetail }) {
 			<CardHeader
 				description={
 					<>
-						Reconcile or repair existing <code className="font-mono">.aidd</code>{' '}
-						metadata and re-run the metadata-only project-intake pipeline. Refreshes
-						artifacts without touching app code.
+						Repair and refresh <code className="font-mono">.aidd</code> metadata by
+						re-running intake. Application code stays unchanged. Existing backlog and
+						in-progress features return to approval before coding can resume.
 					</>
 				}
 				headingLevel={3}

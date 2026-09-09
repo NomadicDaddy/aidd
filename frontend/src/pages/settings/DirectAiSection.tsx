@@ -221,7 +221,7 @@ export function DirectAiSection({
 					<FieldCheckbox
 						checked={directorChatAllowFileEdits}
 						className="self-start"
-						description="Off by default. When off, the Director only orchestrates supervised runs (visible on the Runs page, where you can stop or kill them). When on, the chat agent can write/edit files and run shell commands in your projects with no run-level supervision. Enable only if you understand the risk."
+						description="Off by default: file changes go through supervised runs that you can stop on the Runs page. Turning this on also lets Director chat edit files and run shell commands directly, outside that supervision. It applies to Telegram chat too."
 						label="Allow Director chat to edit project files directly"
 						onChange={(event) =>
 							setField('directorChatAllowFileEdits', event.target.checked)

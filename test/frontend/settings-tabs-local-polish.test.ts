@@ -149,7 +149,7 @@ describe('settings tab local design contracts', () => {
 
 		expect(network).toContain('An access token is configured.');
 		expect(network).toContain('An access token will be generated');
-		expect(network).toContain('configured access token using the Authorization: Bearer scheme');
+		expect(network).toContain('configured access token as Authorization: Bearer <token>');
 		expect(network).not.toContain('bearer token');
 		expect(dialog).toContain('Access token');
 		expect(layout).toContain('ariaLabel="Set access token"');

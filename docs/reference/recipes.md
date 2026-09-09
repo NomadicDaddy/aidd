@@ -221,7 +221,7 @@ Deploy the application with its own deploy script, gated by build and test valid
 
 The recipe refuses to start from a dirty tree, and the DEPLOYMENT audit runs before the deploy so its findings can inform the release rather than only recording it.
 
-Step 5 exists because steps 1 through 4 can all dirty the tree after step 1 vouched for it: validation runs with `apply-changes`, so `validate-build` and `validate-tests` are expected to fix what they find. Without a second check the deploy would ship those fixes while the tag step — which runs only afterward and carries `onFailure: continue` — quietly declined to tag, leaving deployed bytes that exist in no commit and no release tag, and a pipeline that still reported success. Checking before the deploy converts that into an actionable stop: commit the fixes, then rerun.
+Validation can fix files, and the audit can write metadata, after the initial clean-tree check. Step 5 checks again before deployment. If anything is uncommitted, commit the reviewed changes and rerun. This keeps deployment from using changes absent from the later tag.
 
 The deploy command runs on the web host in the project directory, exactly like other shell steps. aidd never holds deploy credentials: whatever `bun run deploy` (or the override) needs must already be configured for the user account running aidd. The `deployment-readiness` skill prepares a project for this recipe (deploy script, deploy config, `.aidd/deployment.md` runbook).
 
@@ -258,23 +258,23 @@ Observe every frontend surface at desktop and mobile and exercise the running ap
 11. `skill` - Verify mobile remediations (args: {application} --mode mobile; skillId: frontend-design-sweep)
 12. `skill` - Document changes (args: {application}; skillId: document-changes)
 
-The recipe runs in four phases: observe (1-3), file (4-5), remediate (6-8), verify (9-12). The phase boundaries are the design, and each one exists to close a specific way the earlier version lost work.
+The phases are observe (1-3), file (4-5), remediate (6-8), and verify (9-12).
 
-**Observation is separated from filing.** Steps 1 through 3 are pure observation against one build: two sweeps and a test run, none consuming another's output. Judging them against a single build is the point — a remediation between the desktop and mobile sweeps would leave the mobile run measuring a UI the desktop fixes had already changed, and every finding it filed would name a screenshot of a build that no longer exists. The same argument extends to the tester.
+Steps 1-3 inspect the same build without applying fixes between passes. The two sweeps and the test run gather their own evidence.
 
-But observation being safe to interleave is not the same as _filing_ being safe to interleave, and that distinction is why step 4 is its own step. A sweep run with `--features` hands its findings to `ui-redesign-planner`, which writes into `.aidd/features/`. The planner now requires a mode-qualified slug for a mode-specific finding, uses an unqualified slug only when the finding holds at every supplied viewport, and stops instead of overwriting an existing remediation directory. Those rules prevent silent same-day collisions, but only a planner holding both reports can decide whether two observations are one cross-viewport improvement or two mode-specific ones before it writes either record.
+Step 4 reads both sweep reports and files findings once. It decides whether an issue needs one cross-viewport feature or separate desktop and mobile features. Mode-specific features use mode-qualified slugs; existing remediation directories are not overwritten.
 
-Running both sweeps report-only and filing once from both reports makes that classification once instead of reconciling two independently written backlogs. It is also the sweep skill's own principle: _one writer — exactly one process writes the report and the feature metadata_. The `design-sweep:{mode}` selector resolves through the append-only index the sweeps write, since a recipe cannot know a run-stamped filename in advance.
+The `design-sweep:{mode}` selectors resolve the run-stamped reports through the sweep index. The recipe does not need to predict their filenames.
 
 **One remediation filter, because both writers use the same name.** Step 7 is an ordinary coding run narrowed by `filterBy`/`filterValue`, the same mechanism `remediate-bugs` and `remediate-audit-findings` use, and `buildAiddRequest` reads a single `filterBy`/`filterValue` pair per step. That is enough here because `ui-redesign-planner` and `bug2feature` both mint `remediation-{YYYYMMDD}-{slug}`: the prefix marks a non-standalone finding, not a template-owned one, so `remediation-*` selects the sweep findings and the converted defects together. This recipe carried a second filter pair until 2026-08-30, when the naming convention was relaxed to match what Spernakit's `resident.ts` had already permitted since 2026-08-26; before that, `bug2feature` gave app-owned defects clean slugs and a single `remediation-*` filter silently skipped every one of them, leaving them filed, validated as a no-op, and consolidated unremediated. The step no-ops cleanly when nothing was filed: a run with no matching work stops with `no_work`, which is a completed run, so the pipeline continues.
 
-**Consolidation runs once, at step 9**, immediately after the validate that closes the remediation phase — the position `remediate-bugs`, `remediate-audit-findings`, and `interview` all use. A sweep finding and a defect finding often fold into the same durable owning feature, and consolidating the sweep findings before the defects exist splits that fold across two passes. It sits ahead of the verification sweeps so it never operates on records those sweeps just filed and `feature-review` never saw.
+Step 9 consolidates the validated findings once, after remediation. This lets sweep findings and reported defects fold into the same owning features.
 
-**Steps 10 and 11 are the sweep skill's own verification pass**, which it requires of any run that filed features: remediation is finished when a sweep at the same mode shows the defects gone and nothing new in their place, not when the features close. Each re-sweep gets its own run id and report, diffs against the earlier run at its mode, and reports three counts — resolved, persisting, and introduced. They run without `--features`, so an introduced regression is reported in the diff rather than filed as a record no later step in this run can act on. Passing `--features` here instead files those regressions as backlog for a future run; that is a deliberate choice about whether this recipe ends clean or ends with an open queue, and it is the only thing the flag changes.
+Steps 10-11 repeat the visual review at the original viewport modes and report resolved, persisting, and introduced issues against the earlier runs. They omit `--features`, so new regressions are reported rather than filed into a backlog that no later step will remediate.
 
-The verification sweeps are unscoped, unlike the skill's own suggestion to scope them to the surfaces the remediation touched, because a recipe cannot know those surfaces before the run happens. A full re-sweep is a superset of the scoped one and catches the shared-component fixes that change surfaces nobody edited, at the cost of running long on a large application. Narrow it with a run-specific `--scope` if that matters more than the coverage.
+The verification sweeps cover the whole app because shared fixes can affect pages that were not edited. A run-specific `--scope` can reduce that work when narrower coverage is appropriate.
 
-Two things this order gives up. With the tester in the observation phase, a functional regression introduced by the remediation is caught by nothing — the verification sweeps are visual; add a second `tester` step alongside them if that coverage matters more than the pass it costs. And a Spernakit-derived application is no longer a special case here, but only since 2026-08-26: `resident.ts` judges a resident process record by provenance rather than by its name, so this recipe files and remediates sweep findings on derived apps like any other. What still fails that gate is a resident record carrying a `spernakit_version` stamp, which no step here writes.
+The recipe does not rerun functional testing after remediation: its verification sweeps are visual. Add a second `tester` step if that coverage is needed. Since August 26, 2026, Spernakit-derived apps accept app-owned resident findings by provenance; records carrying a `spernakit_version` stamp still fail that gate.
 
 ### generate-application-features
 
@@ -340,7 +340,7 @@ Steps 5 and 6 stop the pipeline on failure. With `onFailure: continue` a failed 
 
 ### project-intake
 
-Metadata-only intake for an existing codebase: analyze, interview, infer profile, check artifacts, generate feature coverage and testing scenarios, audit, park open generated features for approval, and produce an intake report. Understands the project; never mutates app code outside .aidd/.
+Review an existing codebase and build its .aidd metadata: analysis, interview, profile, artifact checks, feature coverage, testing scenarios, audits, and an intake report. Writes are scoped to .aidd/. All backlog and in-progress features are held for approval.
 
 - **Name:** project-intake
 - **Metadata-only:** yes
@@ -361,7 +361,7 @@ Feature review and audit-finding review are not separate steps: `generate applic
 
 ### project-reintake
 
-Re-ingest an already-managed project: reconcile or repair existing .aidd metadata (stale contract artifacts) and then re-run the metadata-only project-intake pipeline, refreshing artifacts without duplicating existing features. Intake ends by parking open features for approval, so a re-intake also moves this project's existing backlog and in-progress features back to waiting_approval.
+Repair and refresh an existing project's .aidd metadata, then re-run project intake without duplicating features. Existing backlog and in-progress features return to waiting_approval before coding can resume.
 
 - **Name:** project-reintake
 - **Metadata-only:** yes
@@ -503,7 +503,7 @@ Step 1 exists because every later step assumes the working directory is a derive
 
 Step 11 guards the commit with `git diff --cached --quiet ||` rather than committing unconditionally. Steps 5 through 9 routinely leave nothing to commit — an upgrade that found no drift, or a remediation pass that consolidated its own work — and `git commit` on an empty index exits non-zero, which would abort the pipeline before step 11 on the runs that went cleanest.
 
-Step 2 runs read-only on purpose: `spernakit-justify-diffs` only classifies each differing hunk as branding, an app-specific requirement, or unjustified drift, and writes nothing. Its classification does **not** reach step 3 — pipeline steps are independent runs with no data passing between them, and `spernakit-justify-diffs` persists nothing to disk, so its output lands in the run transcript and the operator's review, not in `spernakit-template-refactor`'s prompt. Read step 2 as a checkpoint a human can inspect when a propagate run goes wrong, not as a guard that constrains the refactor.
+Step 3 is read-only: `spernakit-justify-diffs` classifies differences as branding, application requirements, or unjustified drift. Its findings stay in the run transcript and are not passed to step 4, `spernakit-template-refactor`. Treat that review as an operator checkpoint, not as input that constrains the refactor.
 
 There is deliberately no `spernakit-diff-sync` step. Running one after step 3 looks justifiable as "the only skill of the three that executes backports rather than only flagging them" — which is not true: `spernakit-template-refactor` categorizes a bug fix as "port back to template" and applies the safe default of porting an enhancement to the template first, then refactoring. The two skills also divide by scope in their own contracts: `spernakit-diff-sync` is for "a specific fix, enhancement, or small file set," and `spernakit-template-refactor` for "when the goal is to assess and realign an entire derived application," which is exactly what propagate does. Running diff-sync immediately after a whole-app realignment leaves it building its worklist from `bun run check:drift` after that drift has just been eliminated. Use `spernakit-diff-sync` on its own, against a clean tree, for targeted drift work.
 
@@ -615,11 +615,11 @@ Review and update application documentation to match current implementation, hum
 - **Parameters:** application
 - **Steps:** 4
 
-1. `aidd-cli` - Update docs (maxIterations: 1; prompt: Review {application}'s current codebase state and update all documentation in the docs/ directory to accurately reflect the current implementation. Update API references, architec...)
-2. `skill` - Humanize doc prose (args: {application} docs/ — rewrite every Markdown file under docs/ in place...; skillId: humanize-docs)
-3. `skill` - Review and correct docs (args: {application} docs/ — correct every inaccuracy you confirm...; skillId: review-or-create-doc)
+1. `aidd-cli` - Update docs (maxIterations: 1; prompt: Review {application}'s current codebase and every document in docs/. Correct confirmed inaccuracies in API references, architecture docs, and feature documentation...)
+2. `skill` - Humanize doc prose (args: {application} docs/ - review every Markdown file and make needed prose edits in place. Leave effective prose unchanged...; skillId: humanize-docs)
+3. `skill` - Review and correct docs (args: {application} docs/ - correct every inaccuracy you confirm against the current codebase...; skillId: review-or-create-doc)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
-Step 2 rewrites the prose an agent just produced in step 1, which is the only place in the pipeline where that happens. It runs before the review, not after: humanizing is a structural rewrite and can introduce inaccuracy, so `review-or-create-doc` needs to check the text that will actually ship. `humanize-docs` rewrites _provided text_ rather than resolving an application on its own, so the step passes an explicit `docs/` scope alongside the application name — and its args go further, demanding the rewrites be saved back over each source file. The skill's own output contract is "provide the rewritten text only," which in a pipeline step means the rewrite lands in the run transcript and disappears; nothing later in the recipe reads that transcript, so the instruction to write in place is what makes the step change anything at all.
+Step 2 reviews every Markdown file under `docs/` and saves only needed prose edits. Effective text stays unchanged. It preserves factual scope, technical detail, commands, and links; a style pass is not a requirement to rewrite every document.
 
-Step 3 runs `apply-changes`, and its args carry an explicit correction request. The intent is what makes the step correct anything: `review-or-create-doc` ends by applying the corrections it confirmed, and only a `review-only` step would hold it to reporting. Nothing downstream applies its findings either — `document-changes` documents and commits work that already exists and states outright that it does not modify product code. Left read-only, the review would report inaccuracies into the run transcript and step 4 would then commit the very docs it had just faulted. Pipeline steps are independent runs with no data passing between them, so the correction has to happen inside the step that finds the problem — and for the same reason step 3 stops the recipe when it fails rather than continuing, since a failed correction pass followed by a successful commit ships exactly the documentation the review rejected.
+Step 3 checks the revised documents against the implementation and corrects confirmed inaccuracies in place. Both editing steps use `apply-changes` and stop the recipe on failure. The final `document-changes` step documents and commits the resulting work; it does not apply findings left only in a review transcript.

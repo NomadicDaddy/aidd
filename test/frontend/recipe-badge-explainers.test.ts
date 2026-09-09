@@ -37,6 +37,13 @@ describe('recipe badge explainers', () => {
 
 	test('metadata-only explainer scopes writes to .aidd/', () => {
 		expect(recipeMetadataOnlyExplainer).toContain('.aidd/');
+		expect(recipeMetadataOnlyExplainer).toContain('not a shell sandbox');
+	});
+
+	test('built-in recipes permit step edits but keep their identity', () => {
+		expect(recipeSystemExplainer).toContain('edit its steps');
+		expect(recipeSystemExplainer).toContain('cannot rename or delete');
+		expect(recipeSystemExplainer).not.toContain('cannot be edited');
 	});
 
 	test('policy explainers pluralize the step count', () => {

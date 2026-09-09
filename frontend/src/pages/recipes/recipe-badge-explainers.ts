@@ -9,7 +9,7 @@ import type { RecipeStepType } from '../../api/types.ts';
 export type RecipeTypeBadge = 'pipeline' | 'single-step';
 
 export const recipeTypeExplainer: Record<RecipeTypeBadge, string> = {
-	pipeline: 'Runs as a multi-step pipeline of ordered steps.',
+	pipeline: 'Runs several steps in order.',
 	'single-step': 'Runs a single step.',
 };
 
@@ -23,28 +23,24 @@ export const recipeStepTypeExplainer: Record<RecipeStepType, string> = {
 export const recipeStepCountExplainer = 'Total number of ordered steps in this recipe.';
 export const recipeParameterCountExplainer = 'Number of launch parameters this recipe accepts.';
 export const recipeSystemExplainer =
-	'Built-in recipe shipped with aidd. It is protected and cannot be edited or deleted.';
+	'Built-in recipe. You can edit its steps, but cannot rename or delete it.';
 export const recipeMetadataOnlyExplainer =
-	'Metadata-only recipe: writes are restricted to the .aidd/ folder and never touch application code.';
+	'Requests an .aidd/-only write allowlist for its steps. This is not a shell sandbox.';
 
 function stepWord(count: number): string {
 	return count === 1 ? 'step' : 'steps';
 }
 
 export function stopPolicyExplainer(count: number): string {
-	return `Failure policy: stop the pipeline. Applies to ${count} ${stepWord(count)} in this recipe.`;
+	return `Stop the pipeline if a step fails. Used by ${count} ${stepWord(count)}.`;
 }
 
 export function continuePolicyExplainer(count: number): string {
-	return `Failure policy: continue the pipeline after a failure. Applies to ${count} ${stepWord(
-		count,
-	)} in this recipe.`;
+	return `Continue after a step fails. Used by ${count} ${stepWord(count)}.`;
 }
 
 export function autoFixPolicyExplainer(count: number): string {
-	return `Failure policy: run an automatic remediation and retry on failure. Applies to ${count} ${stepWord(
-		count,
-	)} in this recipe.`;
+	return `Attempt a fix and retry a failed step. Used by ${count} ${stepWord(count)}.`;
 }
 
 export function retriesExplainer(count: number): string {
@@ -52,11 +48,9 @@ export function retriesExplainer(count: number): string {
 }
 
 export function reviewSkillExplainer(count: number): string {
-	return `Skill intent: review only, no changes written. Applies to ${count} ${stepWord(
-		count,
-	)} in this recipe.`;
+	return `Asks the skill to review without edits. Used by ${count} ${stepWord(count)}.`;
 }
 
 export function applySkillExplainer(count: number): string {
-	return `Skill intent: changes allowed. Applies to ${count} ${stepWord(count)} in this recipe.`;
+	return `Skill instructions allow changes. Used by ${count} ${stepWord(count)}.`;
 }

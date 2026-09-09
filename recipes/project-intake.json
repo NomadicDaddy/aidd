@@ -1,5 +1,5 @@
 {
-	"description": "Metadata-only intake for an existing codebase: analyze, interview, infer profile, check artifacts, generate feature coverage and testing scenarios, audit, park open generated features for approval, and produce an intake report. Understands the project; never mutates app code outside .aidd/.",
+	"description": "Review an existing codebase and build its .aidd metadata: analysis, interview, profile, artifact checks, feature coverage, testing scenarios, audits, and an intake report. Writes are scoped to .aidd/. All backlog and in-progress features are held for approval.",
 	"metadataOnly": true,
 	"name": "project-intake",
 	"parameters": [

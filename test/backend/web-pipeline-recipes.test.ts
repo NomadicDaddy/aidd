@@ -463,12 +463,18 @@ describe('file-backed pipeline recipes', () => {
 		);
 		const humanize = docs.steps.find((step) => step.configJson.skillId === 'humanize-docs');
 
-		// review-or-create-doc only corrects when the caller explicitly asks, and humanize-docs
-		// returns rewritten prose unless told to save it back over the source file.
+		// Review every file, but require a diff only where a correction or prose edit is needed.
 		expect(review?.configJson.executionIntent).toBe('apply-changes');
 		expect(String(review?.configJson.args ?? '')).toContain('correct every inaccuracy');
 		expect(review?.onFailure).toBeUndefined();
 		expect(String(humanize?.configJson.args ?? '')).toContain('in place');
+		expect(humanize?.configJson.executionIntent).toBe('apply-changes');
+		expect(humanize?.onFailure).toBeUndefined();
+		expect(String(humanize?.configJson.args ?? '')).toContain('review every Markdown file');
+		expect(String(humanize?.configJson.args ?? '')).toContain(
+			'Leave effective prose unchanged',
+		);
+		expect(String(humanize?.configJson.args ?? '')).not.toContain('rewrite every Markdown');
 
 		const newApp = await recipeService.readRecipe('new-app-from-idea');
 		const validators = newApp.steps.filter((step) =>

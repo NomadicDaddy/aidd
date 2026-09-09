@@ -1,5 +1,5 @@
 {
-	"description": "Re-ingest an already-managed project: reconcile or repair existing .aidd metadata (stale contract artifacts) and then re-run the metadata-only project-intake pipeline, refreshing artifacts without duplicating existing features. Intake ends by parking open features for approval, so a re-intake also moves this project's existing backlog and in-progress features back to waiting_approval.",
+	"description": "Repair and refresh an existing project's .aidd metadata, then re-run project intake without duplicating features. Existing backlog and in-progress features return to waiting_approval before coding can resume.",
 	"metadataOnly": true,
 	"name": "project-reintake",
 	"parameters": [

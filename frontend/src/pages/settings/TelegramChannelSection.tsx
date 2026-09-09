@@ -77,7 +77,7 @@ export function TelegramChannelSection({
 				// classifies the card, so the tab states its own taxonomy in one screenshot.
 				badge={<Badge tone="neutral">Configurable</Badge>}
 				className="mb-0"
-				description="Telegram bot integration for bridged mode. The bot token is write-only — the current configured state is shown without revealing the stored value."
+				description="Chat with the Director through Telegram. The saved bot token is not displayed here."
 				icon={<Send className="h-4 w-4" />}
 				title="Telegram Channel"
 			/>

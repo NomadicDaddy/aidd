@@ -44,7 +44,7 @@ export function SharedMetadataSection({
 				    field labels inside them. */}
 				<CardHeader
 					className="mb-0"
-					description="Directories copied into each project during metadata scaffolding."
+					description="Copied by basename into the project root during fresh-project scaffolding. Matching files can be overwritten."
 					title="Shared Directories"
 				/>
 				{/* The card title already names the list; the label survives only for the
@@ -62,7 +62,7 @@ export function SharedMetadataSection({
 			<Card className="flex flex-col gap-2">
 				<CardHeader
 					className="mb-0"
-					description="Files copied into each project during metadata scaffolding. Each entry is a source path with an optional target path (relative to the project directory)."
+					description="Copied during scaffolding to a project-relative target, or the source filename at the project root. Existing files can be overwritten; write allowlists limit the permitted targets."
 					title="Shared Files"
 				/>
 				<div className="space-y-3">

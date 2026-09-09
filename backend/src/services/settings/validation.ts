@@ -77,7 +77,7 @@ export function assertDirectAiResolvable(next: PartialAiddConfig, provider: stri
 		const apiKey = optionalString(providerConfig?.apiKey);
 		if (!apiKey && !hasProviderEnvCredential(provider)) {
 			throw new Error(
-				`Direct AI provider "${provider}" requires an API key. Provide one in the Direct AI section, or set the provider's API key environment variable.`,
+				`Direct AI provider "${provider}" requires an API key. Add it under Settings > AI & Director > Providers, or set the provider's API key environment variable.`,
 			);
 		}
 	}

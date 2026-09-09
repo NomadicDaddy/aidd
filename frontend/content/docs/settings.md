@@ -15,9 +15,9 @@ Ignored Folders
 Spernakit Scaffolding
 : the init script, template repository, template ref, and project-list visibility used by the From Template creation lane.
 Shared Directories
-: directories copied into newly scaffolded `.aidd/` metadata.
+: directories copied by basename into the project root during fresh-project scaffolding. These copies can overwrite matching files.
 Shared Files
-: individual source files and optional target paths copied into new metadata.
+: files copied during scaffolding to a project-relative target, or to the project root using the source filename when no target is set. Copies can overwrite existing files; a write allowlist, when present, limits the permitted targets.
 
 ## Run Engine
 
@@ -48,7 +48,7 @@ Triumvirate Roles
 ## Integrations
 
 Telegram Channel
-: a bot token plus allowed chat IDs let you chat with the Director from your phone. The token is stored in the local config file and used to authenticate requests to Telegram.
+: a bot token plus allowed chat IDs let you chat with the Director from your phone. Prefer `AIDD_TELEGRAM_BOT_TOKEN` to keep the token out of the config file. A token entered here is saved to `~/.aidd/config.json`; an environment token takes precedence and is not copied into that file. Saved token values are not returned to the browser.
 Source Control
 : read-only installation and authentication status for Git, GitHub CLI, GitLab CLI, and Azure CLI. Refreshing the panel does not change provider behavior.
 

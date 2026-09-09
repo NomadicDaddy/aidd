@@ -5,19 +5,24 @@
 		<meta content="width=device-width, initial-scale=1" name="viewport" />
 		<title>aidd: local control panel for AI coding work</title>
 		<meta
-			content="aidd plans work from specs, launches bounded runs with the agent you already use, and keeps features open until tests, lint, and browser gates pass. Local, agent-agnostic, every capability included, no account, no telemetry."
+			content="aidd is a local control panel for AI coding work: plan a backlog, run the agent you choose, record validation results, and review progress across projects."
 			name="description" />
 		<meta content="aidd: local control panel for AI coding work" property="og:title" />
 		<meta
-			content="Turn a spec into a backlog, run the agent locally, verify the result, and keep the receipts. Your agent, your keys, your machine. Free, with every capability included."
+			content="Turn a spec into a backlog, run your coding agent, and review the results. aidd keeps the work and its history on your machine, with no account or telemetry."
 			property="og:description" />
 		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="1440" property="og:image:width" />
+		<meta content="756" property="og:image:height" />
+		<meta
+			content="aidd dashboard showing project health, pending approvals, and the Director queue"
+			property="og:image:alt" />
+		<meta content="image/jpeg" property="og:image:type" />
 		<meta content="website" property="og:type" />
 		<meta content="https://nomadicdaddy.github.io/aidd/" property="og:url" />
 		<meta content="summary_large_image" name="twitter:card" />
 		<link href="favicon.svg" rel="icon" type="image/svg+xml" />
 		<link href="favicon.ico" rel="shortcut icon" />
-		<link as="image" href="og-image.jpg" rel="preload" />
 		<style>
 			:root {
 				--ink: #08111f;
@@ -131,20 +136,7 @@
 				overflow: hidden;
 				min-height: min(720px, 82svh);
 				padding: 142px 0 70px;
-				background:
-					linear-gradient(
-						90deg,
-						rgba(7, 17, 31, 0.96) 0%,
-						rgba(7, 17, 31, 0.82) 42%,
-						rgba(7, 17, 31, 0.24) 100%
-					),
-					linear-gradient(
-						0deg,
-						rgba(7, 17, 31, 0.86) 0%,
-						rgba(7, 17, 31, 0.18) 48%,
-						rgba(7, 17, 31, 0.76) 100%
-					),
-					url('og-image.jpg') center / cover;
+				background: linear-gradient(110deg, var(--night), #102b3b);
 				color: var(--night-text);
 			}
 			.hero::after {
@@ -360,6 +352,21 @@
 				color: var(--muted);
 				font-size: 18px;
 			}
+			.product-shot {
+				margin: 32px 0 0;
+			}
+			.product-shot img {
+				display: block;
+				width: 100%;
+				height: auto;
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+			}
+			.product-shot figcaption {
+				margin-top: 10px;
+				color: var(--muted);
+				font-size: 14px;
+			}
 			.loop-grid {
 				display: grid;
 				grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -544,9 +551,6 @@
 			.field-card .counter strong {
 				color: #0e7490;
 			}
-			.field-table {
-				margin-top: 26px;
-			}
 			.fit-grid {
 				grid-template-columns: repeat(2, minmax(0, 1fr));
 				margin-top: 26px;
@@ -626,11 +630,6 @@
 			.free-ledger dd {
 				margin: 0;
 				font-weight: 700;
-			}
-			.fine-print {
-				margin: 14px 0 0;
-				color: var(--muted);
-				font-size: 13px;
 			}
 			.trust-label {
 				display: inline-flex;
@@ -742,9 +741,6 @@
 				}
 			}
 			@media (max-width: 960px) {
-				.hero {
-					background-position: center top;
-				}
 				.signal-grid,
 				.loop-grid,
 				.receipts-layout,
@@ -862,17 +858,13 @@
 					<p class="eyebrow">Plan → run → audit → review</p>
 					<h1 id="hero-title">aidd</h1>
 					<p class="lede">
-						A local control panel for planning AI coding work and checking whether it
-						really passed.
+						A local control panel for planning AI coding work and reviewing the results.
 					</p>
 					<p class="hero-copy">
 						Point it at a codebase, give it a spec, and choose the agent or model you
-						already use. aidd builds the backlog, runs bounded agent sessions, keeps
-						features open until the gates pass, and leaves behind the run history you
-						need later. In current market language it is a local, agent-agnostic
-						<strong>agentic development environment</strong>: delegated work and durable
-						results are the primary units, not files in an editor. Your projects, your
-						keys, your machine.
+						already use. aidd builds the backlog, runs bounded agent sessions, records
+						validation results, and flags incomplete or blocked work for review. Manage
+						one project or several from the same local panel.
 					</p>
 					<div class="actions">
 						<a
@@ -898,11 +890,11 @@
 						</div>
 						<div>
 							<dt>Control</dt>
-							<dd>Time, iterations, budget</dd>
+							<dd>Time and iteration limits</dd>
 						</div>
 						<div>
 							<dt>Verification</dt>
-							<dd>Tests, lint, browser gates</dd>
+							<dd>Project checks and results</dd>
 						</div>
 						<div>
 							<dt>Cost</dt>
@@ -920,7 +912,7 @@
 						inspect.
 					</p>
 					<div class="proof-links">
-						<a href="#receipts">See receipts</a>
+						<a href="#receipts">See build results</a>
 						<a href="https://github.com/NomadicDaddy/aidd/blob/main/docs/CHANGELOG.md"
 							>Read changelog</a
 						>
@@ -928,172 +920,32 @@
 				</div>
 			</section>
 
-			<section class="section-block" id="field">
-				<div class="section-inner">
-					<p class="section-kicker">The field</p>
-					<h2>The missing piece is usually verification.</h2>
-					<p class="section-lede">
-						In 2026 you can rent a cloud agent by the task, put a board over your
-						terminal agents, or generate a clean spec. Those are useful pieces. aidd is
-						for the awkward part after that: turning the spec into work, running the
-						agent under limits, and making the result pass the project gate.
-					</p>
-					<div class="field-grid fit-grid">
-						<article class="field-card">
-							<span class="trust-label">Use aidd when</span>
-							<h3>You need to trust an outcome, not merely watch a terminal.</h3>
-							<p>
-								Your work spans real repositories, repeatable workflows, quality
-								gates, and human approval, on one project or across a fleet.
-							</p>
-						</article>
-						<article class="field-card">
-							<span class="trust-label">Skip aidd when</span>
-							<h3>
-								You want autocomplete, a replacement IDE, or one-click unattended
-								autonomy.
-							</h3>
-							<p>
-								aidd is not the coding agent. If you do not need an evidence trail,
-								it is more process than you need.
-							</p>
-						</article>
-					</div>
-					<div class="field-grid">
-						<article class="field-card">
-							<span class="trust-label">Cloud agents</span>
-							<h3>Hosted execution</h3>
-							<p>
-								Hosted agents make it easy to hand off work without keeping a local
-								machine running. Pricing, sandbox access, and the evidence returned
-								with a run vary by provider.
-							</p>
-							<p class="counter">
-								<strong>aidd:</strong> uses the agent subscription you already have,
-								on your machine, under iteration and wall-clock caps with the run
-								cost reported as it accrues.
-							</p>
-						</article>
-						<article class="field-card">
-							<span class="trust-label">Agent boards</span>
-							<h3>Session visibility</h3>
-							<p>
-								Kanban boards, worktree apps, and terminal managers provide useful
-								views of active sessions and diffs. Planning depth, automated gates,
-								and platform support depend on the product and configuration.
-							</p>
-							<p class="counter">
-								<strong>aidd:</strong> keeps a feature open until tests, typecheck,
-								lint, and browser verification pass.
-							</p>
-						</article>
-						<article class="field-card">
-							<span class="trust-label">Spec kits</span>
-							<h3>Requirements first</h3>
-							<p>
-								Spec-driven kits help turn an idea into structured requirements.
-								Execution and verification are usually handled by the agent workflow
-								that consumes those artifacts.
-							</p>
-							<p class="counter">
-								<strong>aidd:</strong> keeps the spec connected to
-								dependency-ordered work, acceptance criteria, gate checks, and a
-								decision queue for the calls a tool should not fake.
-							</p>
-						</article>
-					</div>
-					<div class="tablewrap field-table">
-						<table>
-							<thead>
-								<tr>
-									<th>What you need</th>
-									<th>Cloud agents</th>
-									<th>Agent boards</th>
-									<th>Spec kits</th>
-									<th>aidd</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td>Where the work runs</td>
-									<td>Provider-managed environment</td>
-									<td>Your machine</td>
-									<td>Your repo</td>
-									<td><strong>Your machine, your keys</strong></td>
-								</tr>
-								<tr>
-									<td>Spec becomes a backlog</td>
-									<td>Task or issue based</td>
-									<td>Often user-managed</td>
-									<td>Requirements and planning artifacts</td>
-									<td>
-										<strong
-											>Dependency-ordered, with acceptance criteria</strong
-										>
-									</td>
-								</tr>
-								<tr>
-									<td>&ldquo;Done&rdquo; means</td>
-									<td>Provider workflow completed</td>
-									<td>Project-defined review</td>
-									<td>Requirements are ready for execution</td>
-									<td>
-										<strong
-											>Tests, typecheck, lint, and browser gates
-											passed</strong
-										>
-									</td>
-								</tr>
-								<tr>
-									<td>Cost model</td>
-									<td>Per-task metering</td>
-									<td>Free, futures vary</td>
-									<td>Free CLI</td>
-									<td>
-										<strong
-											>aidd is free; your existing agent plan, metered per
-											run</strong
-										>
-									</td>
-								</tr>
-								<tr>
-									<td>Run receipts</td>
-									<td>Provider-dependent</td>
-									<td>Session history</td>
-									<td>Planning artifacts</td>
-									<td>
-										<strong>Commits, iterations, tool activity, cost</strong>
-									</td>
-								</tr>
-								<tr>
-									<td>Windows</td>
-									<td>Browser-accessible</td>
-									<td>Product-dependent</td>
-									<td>Varies</td>
-									<td><strong>Smoke-tested, first-class</strong></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<p class="fine-print">
-						High-level category snapshot, July 2026, rather than a feature-by-feature
-						comparison. Examples include Devin, OpenAI Codex cloud, Google Jules,
-						Copilot coding agent, Factory, Vibe Kanban, Conductor, Sculptor, Claude
-						Squad, GitHub Spec Kit, AWS Kiro, and BMAD. Capabilities and pricing change;
-						aidd is focused on the local planning, run, and verification loop.
-					</p>
-				</div>
-			</section>
-
 			<section class="section-block section-alt" id="how">
 				<div class="section-inner">
-					<p class="section-kicker">The loop</p>
-					<h2>From folder to verified feature.</h2>
+					<p class="section-kicker">How it works</p>
+					<h2>From codebase to reviewed changes.</h2>
 					<p class="section-lede">
-						aidd turns intent into backlog items, selects runnable work, launches
-						bounded agent sessions, checks the result, and parks anything that needs a
-						human call.
+						aidd turns a spec into backlog items, selects eligible work, launches
+						bounded agent sessions, and checks completion reports against feature
+						status. Blocked work is kept visible for review.
 					</p>
+					<figure class="product-shot">
+						<a
+							aria-label="View the full-size aidd dashboard screenshot"
+							href="og-image.jpg">
+							<img
+								alt="aidd dashboard with project health, waiting approvals, and the Director queue"
+								decoding="async"
+								height="756"
+								loading="lazy"
+								src="og-image.jpg"
+								width="1440" />
+						</a>
+						<figcaption>
+							The aidd dashboard, captured September 8, 2026. Project health and work
+							awaiting review in one view.
+						</figcaption>
+					</figure>
 					<div class="loop-grid">
 						<article class="loop-card">
 							<span class="step-index">01</span>
@@ -1114,7 +966,7 @@
 						</article>
 						<article class="loop-card">
 							<span class="step-index">03</span>
-							<h3>Launch gated runs</h3>
+							<h3>Run your coding agent</h3>
 							<p>
 								Use Claude Code, Cline, Codex, Grok, OpenCode, or KiloCode, or
 								OpenAI-compatible endpoints including OpenAI, LM Studio, and Ollama.
@@ -1122,19 +974,100 @@
 						</article>
 						<article class="loop-card">
 							<span class="step-index">04</span>
-							<h3>Prove the work</h3>
+							<h3>Check the results</h3>
 							<p>
-								Features complete only after the project gate passes: tests,
-								typecheck, lint, and browser-level verification when the project has
-								a UI to drive.
+								The agent is instructed to run the project's required checks and
+								report the results, including live browser verification when the
+								acceptance criteria call for it. Review the evidence and check
+								coverage.
 							</p>
 						</article>
 						<article class="loop-card">
 							<span class="step-index">05</span>
-							<h3>Review receipts</h3>
+							<h3>Review the run</h3>
 							<p>
-								Every run keeps commits, iterations, tool activity, cost, and an
-								honest summary. Unclear work lands in the decision queue.
+								Use the run history, iteration logs, and code diffs to review what
+								changed. Usage data is included when available. Resolve blocked work
+								and approval requests before continuing.
+							</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section-block" id="field">
+				<div class="section-inner">
+					<p class="section-kicker">Where it fits</p>
+					<h2>Manage the work across sessions and projects.</h2>
+					<p class="section-lede">
+						aidd brings a feature backlog, repeatable workflows, run history, and review
+						queues into one local application. Whether you need it depends on how you
+						want to manage the work.
+					</p>
+					<div class="field-grid fit-grid">
+						<article class="field-card">
+							<span class="trust-label">Use aidd when</span>
+							<h3>You want a shared view of planned work and run results.</h3>
+							<p>
+								You work across repositories or reuse workflows, and want to track
+								acceptance criteria, validation results, and work that needs
+								approval.
+							</p>
+						</article>
+						<article class="field-card">
+							<span class="trust-label">Skip aidd when</span>
+							<h3>
+								You want autocomplete, a replacement IDE, or one-click unattended
+								autonomy.
+							</h3>
+							<p>
+								aidd is not the coding agent. If your current sessions and project
+								tools already give you the tracking you need, it may add more
+								process than you want.
+							</p>
+						</article>
+					</div>
+					<div class="field-grid">
+						<article class="field-card">
+							<span class="trust-label">Cloud agents</span>
+							<h3>Hosted execution</h3>
+							<p>
+								Hosted agents make it easy to hand off work without keeping a local
+								machine running. Pricing, sandbox access, and the evidence returned
+								with a run vary by provider.
+							</p>
+							<p class="counter">
+								<strong>aidd:</strong> runs locally through your chosen CLI or model
+								backend, with iteration and wall-clock limits. Usage is recorded
+								when the backend reports it; provider charges still apply.
+							</p>
+						</article>
+						<article class="field-card">
+							<span class="trust-label">Agent boards</span>
+							<h3>Session visibility</h3>
+							<p>
+								Kanban boards, worktree apps, and terminal managers provide useful
+								views of active sessions and diffs. Planning depth, automated gates,
+								and platform support depend on the product and configuration.
+							</p>
+							<p class="counter">
+								<strong>aidd:</strong> ties runs to a feature backlog and acceptance
+								criteria, records validation results, and flags blocked work for
+								review.
+							</p>
+						</article>
+						<article class="field-card">
+							<span class="trust-label">Spec kits</span>
+							<h3>Requirements first</h3>
+							<p>
+								Spec-driven kits help turn an idea into structured requirements. How
+								those requirements reach an agent and how results are checked
+								depends on the kit and workflow.
+							</p>
+							<p class="counter">
+								<strong>aidd:</strong> connects the spec to dependency-ordered work,
+								acceptance criteria, coding runs, and a queue for decisions that
+								need you.
 							</p>
 						</article>
 					</div>
@@ -1143,7 +1076,7 @@
 
 			<section class="section-block" id="receipts">
 				<div class="section-inner">
-					<p class="section-kicker">Receipts</p>
+					<p class="section-kicker">Build results</p>
 					<h2>The proofs used real apps.</h2>
 					<div class="receipts-layout">
 						<div class="receipt-copy">
@@ -1201,10 +1134,10 @@
 										<td>Flask tutorial app</td>
 										<td>Python + Flask</td>
 										<td>
-											Profiled the foreign stack, produced a grounded security
-											audit, then fixed findings with pytest as the gate. Zero
-											writes outside
-											<code class="inline">.aidd/</code>.
+											Ingested and audited the existing Flask app, then
+											completed a separate security-remediation phase under
+											its pytest gate. The initial ingest was metadata-only;
+											remediation changed application code.
 										</td>
 									</tr>
 									<tr>
@@ -1242,7 +1175,7 @@
 			<section class="section-block section-alt" id="trust">
 				<div class="section-inner">
 					<p class="section-kicker">Trust model</p>
-					<h2>Built for people who let agents touch real repos.</h2>
+					<h2>Where data goes and what limits a run.</h2>
 					<p class="section-lede">
 						The default posture is deliberately plain: local data, no account, explicit
 						model backends, bounded runs, and documented write surfaces.
@@ -1250,21 +1183,21 @@
 					<div class="trust-grid">
 						<article class="trust-card">
 							<span class="trust-label">Local</span>
-							<h3>Your machine stays in charge</h3>
+							<h3>Records stay on your machine</h3>
 							<p>
 								The runtime, panel, ledger, and project metadata live locally.
-								Network traffic goes only to the model backends you configure.
+								Coding runs send prompts and relevant project content to the backend
+								you choose, which may be a cloud service or a local model.
 							</p>
 						</article>
 						<article class="trust-card">
 							<span class="trust-label">Quiet</span>
 							<h3>No account, no telemetry</h3>
 							<p>
-								There is no aidd account and no hosted control plane. It sends no
-								telemetry and does not phone home; network traffic comes only from
-								providers or integrations you configure, or downloads you initiate.
-								The write allowlist is documented, including what lives under
-								<code class="inline">.aidd/</code> and when source can change.
+								There is no aidd account or hosted control plane, and aidd sends no
+								telemetry. Configured integrations and downloads you initiate can
+								also make network requests. The write allowlist documents what lives
+								under <code class="inline">.aidd/</code> and when source can change.
 							</p>
 						</article>
 						<article class="trust-card">
@@ -1364,7 +1297,7 @@
 					<h2>Four commands. Nothing to sign up for.</h2>
 					<p class="section-lede">
 						Windows 11 + PowerShell 7 is the current smoke-tested path. Install Git and
-						Bun 1.4.0 or newer, then run aidd directly from its source checkout.
+						Bun 1.4.2 or newer, then run aidd directly from its source checkout.
 					</p>
 					<div class="download-layout">
 						<article class="release-panel">
@@ -1377,7 +1310,7 @@ bun run start:web
 # Open http://127.0.0.1:3210</code></pre>
 						</article>
 						<aside class="link-panel" aria-label="setup resources">
-							<h3>Bring a map</h3>
+							<h3>Setup guides</h3>
 							<a
 								class="resource-link"
 								href="https://github.com/NomadicDaddy/aidd/blob/main/docs/reference/deployment.md">
@@ -1388,10 +1321,7 @@ bun run start:web
 								class="resource-link"
 								href="https://github.com/NomadicDaddy/aidd/blob/main/docs/quickstart.md">
 								<strong>Quickstart</strong>
-								<span
-									>First launch, project setup, and the first verified
-									feature.</span
-								>
+								<span>First launch, project setup, and your first coding run.</span>
 							</a>
 							<a
 								class="resource-link"
@@ -1423,7 +1353,7 @@ bun run start:web
 
 		<footer class="site-footer">
 			<div class="footer-inner">
-				<strong>aidd - local runs, local receipts.</strong>
+				<strong>aidd - local control panel for AI coding work.</strong>
 				<div class="footer-links">
 					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
 					<a href="https://github.com/NomadicDaddy/aidd/tree/main/docs">Docs</a>

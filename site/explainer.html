@@ -5,13 +5,19 @@
 		<meta content="width=device-width, initial-scale=1" name="viewport" />
 		<title>What is aidd? A one-page explainer</title>
 		<meta
-			content="A plain-language, one-page explanation of aidd: a local control panel that turns AI coding assistants into a managed, verified workforce."
+			content="A plain-language tour of aidd: a local control panel for planning AI coding work, running the agent you choose, and reviewing results across projects."
 			name="description" />
 		<meta content="What is aidd? A one-page explainer" property="og:title" />
 		<meta
-			content="AI coding assistants are powerful but chaotic. aidd hands out the work, checks the results, and keeps the records - all on your own machine."
+			content="Plan work, run your coding agent, and review the results across projects. aidd keeps the backlog and run history on your own machine."
 			property="og:description" />
 		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="1440" property="og:image:width" />
+		<meta content="756" property="og:image:height" />
+		<meta
+			content="aidd dashboard showing project health, pending approvals, and the Director queue"
+			property="og:image:alt" />
+		<meta content="image/jpeg" property="og:image:type" />
 		<meta content="website" property="og:type" />
 		<meta content="https://nomadicdaddy.github.io/aidd/explainer.html" property="og:url" />
 		<meta content="summary_large_image" name="twitter:card" />
@@ -346,10 +352,9 @@
 			<p class="kicker">One-page explainer</p>
 			<h1>Manage AI coding work from one place.</h1>
 			<p class="lede">
-				AI coding assistants are powerful but chaotic - you chat with one in one window,
-				lose track of what it did, and start over tomorrow. <strong>aidd</strong> turns them
-				into a managed workforce: it hands out the work, checks the results, and keeps the
-				records.
+				<strong>aidd</strong> gives you one place to plan AI coding work, run the assistant
+				you choose, and review the results. It keeps a backlog and run history for each
+				project, on your own machine.
 			</p>
 
 			<section>
@@ -362,15 +367,15 @@
 					<a href="explainer-app-builders.html">
 						<h3>From app builders</h3>
 						<p>
-							<b>Bolt.new, Lovable, v0.</b> You've prompted an app into existence and
-							wonder what happens when it becomes a real project.
+							<b>Bolt.new, Lovable, v0.</b> You've built an app and want to continue
+							working on it locally.
 						</p>
 					</a>
 					<a href="explainer-cli-users.html">
 						<h3>From CLI agents</h3>
 						<p>
-							<b>claude-code, cline, codex, opencode.</b> You know what an agent does
-							in one session and want the management layer above it.
+							<b>Claude Code, Cline, Codex, OpenCode.</b> You already use a coding
+							agent and want to manage the work across projects.
 						</p>
 					</a>
 				</div>
@@ -379,32 +384,24 @@
 			<section>
 				<h2>The problem it solves</h2>
 				<p>
-					Using an AI assistant to build software today feels like supervising a brilliant
-					intern with no memory. Every session starts from scratch. Nothing forces the AI
-					to plan before it types, nobody reviews its work, and if you have several
-					projects, you're juggling several separate conversations with no overview of any
-					of them.
+					As work spreads across projects and agent sessions, you need somewhere to track
+					what's planned, what's running, and what still needs review. Conversations are
+					part of that record, alongside feature lists, test results, and decisions.
 				</p>
 				<p>
-					aidd adds the missing management layer. It's a small app that runs entirely on
-					your own computer and gives you one local control panel where you launch AI
-					work, watch it happen, and review what came out - across every project you own.
-					In current market language, it is a local, agent-agnostic
-					<strong>agentic development environment</strong>: delegated work and durable
-					results are the primary units, not files in an editor.
+					aidd brings those records into a local control panel. You can launch work, watch
+					a run, review its results, and move between the projects you've added. The
+					coding still happens through the agent or model you choose.
 				</p>
 			</section>
 
 			<section>
 				<h2>How it works</h2>
-				<p>
-					Instead of one long freeform chat, aidd pushes every piece of work through a
-					disciplined loop - the same one a good engineering team uses:
-				</p>
+				<p>The coding workflow has four parts:</p>
 				<div class="loop">
 					<div class="loop-step">
 						<h3>Plan</h3>
-						<p>The AI writes down what it intends to do before touching anything.</p>
+						<p>Turn a spec into features with acceptance criteria and dependencies.</p>
 					</div>
 					<div class="loop-step">
 						<h3>Build</h3>
@@ -413,16 +410,22 @@
 					<div class="loop-step">
 						<h3>Verify</h3>
 						<p>
-							Work only counts as done after tests and automated checks actually pass.
+							The agent runs the checks required by the project and reports the
+							results.
 						</p>
 					</div>
 					<div class="loop-step">
 						<h3>Record</h3>
-						<p>Every run keeps its receipts - what changed, what it cost, and why.</p>
+						<p>
+							Keep run logs, feature status, and usage data when the backend reports
+							it.
+						</p>
 					</div>
 				</div>
 				<p class="loop-caption">
-					Every run is recorded, so you can always answer "what changed, and why?"
+					aidd checks completion reports against feature status and flags blocked work for
+					review. A completed run still needs your judgment about the changes and whether
+					the checks covered enough.
 				</p>
 			</section>
 
@@ -433,7 +436,7 @@
 						<h3>One dashboard, all your projects</h3>
 						<p>
 							Projects, running jobs, results, and history live in a single local web
-							page - no more tab archaeology.
+							panel.
 						</p>
 					</div>
 					<div>
@@ -448,22 +451,21 @@
 						<h3>Repeatable playbooks</h3>
 						<p>
 							Save multi-step workflows as recipes - "review, fix, verify" - and rerun
-							them on any project with one click, or put them on a schedule and let
-							them run unattended, instead of re-explaining every time.
+							them on a project or put them on a schedule.
 						</p>
 					</div>
 					<div>
 						<h3>Built-in quality inspections</h3>
 						<p>
-							Ready-made audits scan for security holes, performance issues, and messy
-							architecture, and file what they find as tasks.
+							Built-in audits ask the agent to inspect security, performance, and
+							architecture, then record evidence-backed findings as tasks to review.
 						</p>
 					</div>
 					<div>
 						<h3>Bring your own AI</h3>
 						<p>
 							It works with the assistants and models you already use - ten backends
-							in all, including Claude Code, Codex, Cline and opencode,
+							in all, including Claude Code, Codex, Cline and OpenCode,
 							OpenAI-compatible services, and models running privately on your own
 							machine through Ollama or LM Studio.
 						</p>
@@ -481,11 +483,12 @@
 
 			<div class="callout">
 				<p>
-					<strong>Private by design.</strong> aidd has no account and no hosted control
-					plane; it sends no telemetry and does not phone home. Your projects, run
-					history, and settings stay on your computer - the usage dashboard inside the
-					panel reads a local database and nothing else - and network traffic comes only
-					from the AI providers or integrations you configure, or downloads you initiate.
+					<strong>Local records, your choice of backend.</strong> aidd stores project
+					metadata, run history, settings, and usage data locally. It has no account or
+					hosted control plane and sends no telemetry. Coding runs send prompts and
+					relevant project content to the backend you choose, which may be a cloud service
+					or a local model. Configured integrations and downloads you initiate can also
+					make network requests.
 				</p>
 			</div>
 
@@ -503,7 +506,7 @@
 
 			<div class="facts">
 				<span><b>Runs on</b> your own machine</span>
-				<span><b>Install</b> from source; needs Bun 1.4.0+</span>
+				<span><b>Install</b> from source; needs Bun 1.4.2+</span>
 				<span><b>Platform</b> Windows-first; Linux tested in CI, macOS by hand</span>
 				<span><b>Product</b> every capability included</span>
 				<span><b>AI usage</b> you pay only your own AI provider</span>
@@ -521,7 +524,7 @@
 
 		<footer class="site-footer">
 			<div class="footer-inner">
-				<strong>aidd - local runs, local receipts.</strong>
+				<strong>aidd - local control panel for AI coding work.</strong>
 				<div class="footer-links">
 					<a href="index.html">Home</a>
 					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>

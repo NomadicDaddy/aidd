@@ -3,17 +3,21 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta content="width=device-width, initial-scale=1" name="viewport" />
-		<title>aidd for app-builder users: what comes after Bolt.new?</title>
+		<title>aidd for app-builder users: a local coding workflow</title>
 		<meta
-			content="If you've built apps with Bolt.new, Lovable, or v0, here's what aidd is and why it matters once your prompt-built app becomes a real project."
+			content="Built an app with Bolt.new, Lovable, or v0? aidd helps you continue working locally with a feature backlog, your choice of coding assistant, and run history."
 			name="description" />
+		<meta content="aidd for app-builder users: a local coding workflow" property="og:title" />
 		<meta
-			content="aidd for app-builder users: what comes after Bolt.new?"
-			property="og:title" />
-		<meta
-			content="App builders turn a prompt into an app in minutes. aidd is for the day that app becomes a real project: AI work on your own machine, checked before it counts, with records you can revisit."
+			content="Continue working on your app locally. aidd helps you plan changes, run a coding assistant, and review its work."
 			property="og:description" />
 		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="1440" property="og:image:width" />
+		<meta content="756" property="og:image:height" />
+		<meta
+			content="aidd dashboard showing project health, pending approvals, and the Director queue"
+			property="og:image:alt" />
+		<meta content="image/jpeg" property="og:image:type" />
 		<meta content="website" property="og:type" />
 		<meta
 			content="https://nomadicdaddy.github.io/aidd/explainer-app-builders.html"
@@ -313,45 +317,41 @@
 
 		<main class="page">
 			<p class="kicker">If you've used Bolt.new, Lovable, or v0</p>
-			<h1>For when your prompt-built app becomes a real project.</h1>
+			<h1>Continue your app with a local coding workflow.</h1>
 			<p class="lede">
-				App builders turn a prompt into a working app in minutes, and that part is genuinely
-				great. <strong>aidd</strong> is for what comes after: the day that app picks up real
-				users, real data, and real bugs, and "regenerate and hope" stops being a maintenance
-				plan.
+				If you've built an app with Bolt.new, Lovable, or v0 and want to work on it locally,
+				<strong>aidd</strong> can help you plan changes, run the coding assistant you
+				choose, and review what it did.
 			</p>
 
 			<section>
-				<h2>The ceiling you eventually hit</h2>
+				<h2>Moving to a local workflow</h2>
 				<p>
-					You've probably felt some version of this. The app works, then you ask for one
-					more change and something unrelated breaks. You can't tell what the AI actually
-					changed, so you can't undo just the bad part. The project grows past what fits
-					in one prompt box. And the code lives on someone else's servers, in a format
-					shaped by their platform.
+					Once you have the project's source files on your machine, you need to get the
+					app running, decide what to change, and check that those changes work. aidd
+					gives you a place to keep that plan and manage the coding runs.
 				</p>
 				<p>
-					None of that is a flaw in the app builders. They're built to get you from idea
-					to demo as fast as possible, and if that's all you need, keep using them. The
-					ceiling only matters when a project outlives the demo.
+					This is a choice of workflow. If your current builder suits the project, you may
+					not need aidd. It is useful when you want to manage the source locally, choose
+					your coding assistant, or use the same process across several apps.
 				</p>
 			</section>
 
 			<section>
 				<h2>What aidd is</h2>
 				<p>
-					aidd is a small app that runs on your own computer and manages AI coding work
-					for you. You still describe what you want in plain language - there's a chat,
-					and a guided interview that asks about what you're building and keeps your
-					answers with the project. The difference is what happens next: aidd turns your
-					description into a written plan and a checklist of features, hands the work to
-					an AI coding assistant, and refuses to mark anything finished until automated
-					checks say it works.
+					aidd runs on your own computer and manages AI coding work. You describe what you
+					want in plain language through a chat or guided interview. It keeps your answers
+					with the project, turns the plan into a feature checklist, and hands the work to
+					your chosen coding assistant. The assistant is instructed to run the project's
+					checks and report the results.
 				</p>
 				<p>
-					You can start a project from scratch, from a template, or by pointing aidd at an
-					app you already have - including the one you exported from your app builder. It
-					reads what's there and builds the plan around it.
+					You can start from scratch, use a template, or point aidd at an existing app,
+					including source you've exported from an app builder. It reads what's there and
+					plans around it. This is not an automatic migration: the app may still need
+					dependencies, environment settings, and services configured to run locally.
 				</p>
 				<div class="loop">
 					<div class="loop-step">
@@ -364,16 +364,22 @@
 					</div>
 					<div class="loop-step">
 						<h3>Verify</h3>
-						<p>A feature only counts as done when tests and checks actually pass.</p>
+						<p>
+							The assistant runs the project's checks and reports what passed or
+							failed.
+						</p>
 					</div>
 					<div class="loop-step">
 						<h3>Record</h3>
-						<p>Every run is saved: what changed, what it cost, what passed.</p>
+						<p>
+							Run history keeps the logs, feature status, and any reported usage data.
+						</p>
 					</div>
 				</div>
 				<p class="loop-caption">
-					When something breaks, you can look up exactly which change did it - and when
-					something works, you can prove it.
+					Run history and diffs help you investigate regressions and review what the agent
+					changed. aidd flags blocked work for review; passing checks do not guarantee the
+					app is free of bugs.
 				</p>
 			</section>
 
@@ -381,40 +387,40 @@
 				<h2>What changes for you</h2>
 				<div class="grid">
 					<div>
-						<h3>Your code is actually yours</h3>
+						<h3>Local project files</h3>
 						<p>
-							The project lives on your machine as ordinary files. Open it in any
-							editor, host it anywhere, walk away from aidd anytime and keep
-							everything.
+							The project and its aidd records live on your machine as ordinary files.
+							Use your own editor and keep those files if you stop using aidd.
 						</p>
 					</div>
 					<div>
-						<h3>No more regenerate-and-hope</h3>
+						<h3>Reviewable changes</h3>
 						<p>
-							Work happens as small, checked steps against a plan, so one change
-							doesn't quietly rewrite the parts that already worked.
+							Work is tracked against a feature plan. The run logs and code diffs give
+							you a starting point for reviewing each change and checking for
+							unintended effects.
 						</p>
 					</div>
 					<div>
-						<h3>A memory that survives sessions</h3>
+						<h3>Context for later work</h3>
 						<p>
-							The spec, the feature list, and the history stay with the project. You
-							don't re-explain the app to the AI every time you come back.
+							The spec, feature list, and history stay with the project and provide
+							context for later runs. You can update the plan as the app changes.
 						</p>
 					</div>
 					<div>
 						<h3>Built-in inspections</h3>
 						<p>
-							Ready-made audits check for security holes, performance problems, and
-							messy structure, and file what they find as tasks on your list.
+							Built-in audits ask the agent to inspect security, performance, and code
+							structure, then record evidence-backed findings as tasks to review.
 						</p>
 					</div>
 					<div>
 						<h3>Still conversational</h3>
 						<p>
-							A built-in Director chat suggests what's worth doing next and can start
-							the work for you - even from your phone, through the built-in Telegram
-							bridge you point at your own bot.
+							A built-in Director chat suggests work and can start it for you. The
+							Telegram bridge lets you use it from your phone after you connect your
+							own bot and allow-list your chat.
 						</p>
 					</div>
 					<div>
@@ -428,35 +434,34 @@
 			</section>
 
 			<section>
-				<h2>Honest differences</h2>
+				<h2>What you'll need</h2>
 				<p>
-					aidd asks more of you up front than an app builder does. There's nothing to
-					download and double-click: aidd ships as source, so you install Git and Bun and
-					run it from a checkout. Windows 11 is the first-class, smoke-tested platform;
-					Linux runs the whole test suite automatically, and macOS is expected to work but
-					is only checked by hand. There's no hosted preview URL - the panel can start and
-					stop your app locally, but where it runs and how it deploys is your call. And
-					you connect an AI you already have access to: an agent CLI like Claude Code or
-					Codex, any OpenAI-compatible API key, or free models running privately on your
-					own machine through Ollama or LM Studio. In exchange, the project is built to
-					still make sense to you six months from now.
+					aidd ships as source rather than a double-click installer. You install Git and
+					Bun and run it from a checkout. Windows 11 is the first-class, smoke-tested
+					platform; Linux runs the whole test suite automatically, and macOS is expected
+					to work but is only checked by hand. There's no hosted preview URL - the panel
+					can start and stop your app locally, but where it runs and how it deploys is
+					your call. And you connect an AI you already have access to: an agent CLI like
+					Claude Code or Codex, an OpenAI-compatible API, or a model running locally
+					through Ollama or LM Studio.
 				</p>
 			</section>
 
 			<div class="callout">
 				<p>
-					<strong>Private by design.</strong> aidd has no account and no hosted control
-					plane, and no telemetry ever leaves your machine - the usage numbers it shows
-					you are read straight back out of a local database. It does not phone home. Your
-					projects, run history, and settings stay on your computer; the panel listens on
-					127.0.0.1, and network traffic comes only from the AI providers or integrations
-					you configure, or downloads you initiate.
+					<strong>Local records, your choice of backend.</strong> aidd stores project
+					metadata, run history, settings, and usage data locally. It has no account or
+					hosted control plane and sends no telemetry. The panel listens on
+					<code>127.0.0.1</code> by default. Coding runs send prompts and relevant project
+					content to your chosen backend, which may be a cloud service or a local model.
+					Configured integrations and downloads you initiate can also make network
+					requests.
 				</p>
 			</div>
 
 			<div class="facts">
 				<span><b>Runs on</b> your own machine</span>
-				<span><b>Install</b> from source; needs Bun 1.4.0+</span>
+				<span><b>Install</b> from source; needs Bun 1.4.2+</span>
 				<span><b>Platform</b> Windows-first; Linux tested in CI, macOS by hand</span>
 				<span><b>Product</b> every capability included</span>
 				<span><b>AI usage</b> you pay only your own AI provider</span>
@@ -474,7 +479,7 @@
 
 		<footer class="site-footer">
 			<div class="footer-inner">
-				<strong>aidd - local runs, local receipts.</strong>
+				<strong>aidd - local control panel for AI coding work.</strong>
 				<div class="footer-links">
 					<a href="index.html">Home</a>
 					<a href="explainer.html">Explainer</a>

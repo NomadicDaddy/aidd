@@ -3,15 +3,23 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta content="width=device-width, initial-scale=1" name="viewport" />
-		<title>aidd for CLI-agent users: the layer above claude-code</title>
+		<title>aidd for CLI users: manage coding work across projects</title>
 		<meta
-			content="If you already run claude-code, cline, codex, or opencode, here's what aidd adds: dependency-ordered backlogs, unattended runs, gates that decide done, and receipts on disk."
+			content="Keep using your CLI agent. aidd adds dependency-ordered backlogs, bounded runs, acceptance criteria, and local run history across projects."
 			name="description" />
-		<meta content="aidd for CLI-agent users: the layer above claude-code" property="og:title" />
 		<meta
-			content="Your CLI agent is a great engine and a poor manager. aidd orchestrates the agent you already use: backlogs with acceptance criteria, gates that decide done, and a run ledger in your repo."
+			content="aidd for CLI users: manage coding work across projects"
+			property="og:title" />
+		<meta
+			content="aidd runs the coding agent you already use against a shared backlog, records validation results, and keeps the run history with each project."
 			property="og:description" />
 		<meta content="https://nomadicdaddy.github.io/aidd/og-image.jpg" property="og:image" />
+		<meta content="1440" property="og:image:width" />
+		<meta content="756" property="og:image:height" />
+		<meta
+			content="aidd dashboard showing project health, pending approvals, and the Director queue"
+			property="og:image:alt" />
+		<meta content="image/jpeg" property="og:image:type" />
 		<meta content="website" property="og:type" />
 		<meta
 			content="https://nomadicdaddy.github.io/aidd/explainer-cli-users.html"
@@ -310,28 +318,24 @@
 		</header>
 
 		<main class="page">
-			<p class="kicker">If you already run claude-code, cline, codex, or opencode</p>
+			<p class="kicker">If you already use Claude Code, Cline, Codex, or OpenCode</p>
 			<h1>The management layer above your coding agent.</h1>
 			<p class="lede">
-				You already know what a CLI agent can do in one session. <strong>aidd</strong>
-				sits above it: dependency-ordered backlogs, unattended multi-iteration runs, gates
-				that decide what counts as done, and a run ledger in your repo - driving the same
-				agent you use today.
+				Keep using the coding agent you know. <strong>aidd</strong> adds dependency-ordered
+				backlogs, bounded multi-iteration runs, and a local panel for reviewing progress
+				across projects. Acceptance criteria and run history stay with each repo.
 			</p>
 
 			<section>
-				<h2>What your CLI doesn't do</h2>
+				<h2>When one project becomes several</h2>
 				<p>
-					A session is one repo, one context window, one conversation. The agent decides
-					for itself when it's finished, and you've seen how that goes: "I've completed
-					the implementation" over a diff with a stubbed function and a test that asserts
-					nothing. When the session ends, the transcript is the only record. CLAUDE.md
-					gives an agent standing instructions inside one repo, but nothing looks across
-					your projects, orders the work, or enforces completion.
+					Your CLI sessions can have their own instructions, plans, and history. Managing
+					several projects adds another set of questions: which feature is ready to run,
+					what is blocked, and which results still need review?
 				</p>
 				<p>
-					That's not a knock on the agent. It's an execution engine. It's just also been
-					doing its own project management, and it's bad at that job.
+					aidd keeps that work in a shared backlog and run view. You choose the agent for
+					each run and can reuse the same workflow across repositories.
 				</p>
 			</section>
 
@@ -356,7 +360,10 @@
 					</div>
 					<div class="loop-step">
 						<h3>Verify</h3>
-						<p>Tests, typecheck, lint, and browser-level checks gate every feature.</p>
+						<p>
+							The agent runs the project's required tests, lint, typecheck, or browser
+							checks and reports the results.
+						</p>
 					</div>
 					<div class="loop-step">
 						<h3>Record</h3>
@@ -364,8 +371,9 @@
 					</div>
 				</div>
 				<p class="loop-caption">
-					A feature the agent claims is done but that fails a gate stays open and goes
-					back around the loop. The model doesn't get a vote.
+					aidd checks completion claims against feature status and flags reports that
+					admit skipped live verification. It does not independently rerun every check:
+					you still need to review the results and their coverage.
 				</p>
 			</section>
 
@@ -375,25 +383,25 @@
 					<div>
 						<h3>Your CLI stays</h3>
 						<p>
-							claude-code, cline, codex, opencode, kilocode, grok, any
-							OpenAI-compatible API, or local Ollama / LM Studio. The CLI is a per-run
-							setting, so comparing agents on the same backlog is a dropdown.
+							Use Claude Code, Cline, Codex, OpenCode, KiloCode, Grok, an
+							OpenAI-compatible API, or local Ollama / LM Studio. The backend is a
+							per-run setting.
 						</p>
 					</div>
 					<div>
-						<h3>Receipts in the repo</h3>
+						<h3>Records in the repo</h3>
 						<p>
 							<code>.aidd/runs.jsonl</code>, per-iteration logs, feature status, and
-							audit reports live next to the code as plain files. Greppable, diffable,
-							and not hostage to aidd - the format is documented.
+							audit reports live next to the code as plain files. You can search and
+							diff them without aidd; the format is documented.
 						</p>
 					</div>
 					<div>
 						<h3>Audits with evidence</h3>
 						<p>
-							Security, architecture, performance, and integration audits (among ~45)
-							where every finding must cite current-code evidence - file and line -
-							before it lands in the backlog as work.
+							Built-in audits cover security, architecture, performance, and
+							integration. Findings must cite evidence from the current code before
+							they are recorded as backlog work.
 						</p>
 					</div>
 					<div>
@@ -406,7 +414,7 @@
 						</p>
 					</div>
 					<div>
-						<h3>Recipes, not re-prompting</h3>
+						<h3>Repeatable workflows</h3>
 						<p>
 							Multi-step workflows - review, fix, verify - saved as JSON files and
 							rerun on any project, from the panel or on a schedule.
@@ -416,9 +424,9 @@
 						<h3>MCP and Telegram</h3>
 						<p>
 							An MCP server (<code>bun run start -- --mcp</code>, alongside the
-							running panel) exposes it to other agent sessions, and a Telegram bridge
-							puts the fleet Director in your pocket - ask it what's going on from
-							your phone. Both are included with aidd.
+							running panel) exposes aidd to other agent sessions. The Telegram bridge
+							lets you talk to the Director from your phone after you connect your own
+							bot and allow-list your chat. Both are included.
 						</p>
 					</div>
 				</div>
@@ -427,9 +435,8 @@
 			<section>
 				<h2>What it isn't</h2>
 				<p>
-					It doesn't replace interactive sessions - you'll still drop into claude-code
-					directly for exploratory work, and aidd stays out of the way when you do. It's
-					not a cloud platform; there's no hosted anything. It is opinionated about
+					You can still use your CLI directly for interactive or exploratory work. aidd is
+					a local application with no hosted control plane. It is opinionated about
 					project state: work is tracked as features in <code>.aidd/</code>, and coding
 					runs select from that backlog rather than freeform prompts - a one-off
 					instruction is its own mode (<code>--prompt</code>), not the default. Windows 11
@@ -441,18 +448,19 @@
 
 			<div class="callout">
 				<p>
-					<strong>Your keys, your machine, your plan.</strong> Runs use the subscription
-					or API keys you already have, bounded per run by iteration and wall-clock
-					limits, with cost and token ceilings you set surfacing as warnings in the run
-					log. aidd has no hosted control plane or user account; it sends no telemetry and
-					does not phone home. Network traffic comes only from providers or integrations
-					you configure, or downloads you initiate.
+					<strong>Local runs, explicit limits.</strong> Runs use your existing
+					subscription or API keys, with iteration and wall-clock limits. Cost and token
+					ceilings surface as warnings in the run log; they do not stop a run. aidd stores
+					its records locally, has no account or hosted control plane, and sends no
+					telemetry. Coding runs send prompts and relevant project content to your chosen
+					backend. Configured integrations and downloads you initiate can also make
+					network requests.
 				</p>
 			</div>
 
 			<div class="facts">
 				<span><b>Runs on</b> your own machine</span>
-				<span><b>Install</b> from source; needs Bun 1.4.0+</span>
+				<span><b>Install</b> from source; needs Bun 1.4.2+</span>
 				<span><b>Platform</b> Windows-first; Linux tested in CI, macOS by hand</span>
 				<span><b>Product</b> every capability included</span>
 				<span><b>AI usage</b> you pay only your own AI provider</span>
@@ -470,7 +478,7 @@
 
 		<footer class="site-footer">
 			<div class="footer-inner">
-				<strong>aidd - local runs, local receipts.</strong>
+				<strong>aidd - local control panel for AI coding work.</strong>
 				<div class="footer-links">
 					<a href="index.html">Home</a>
 					<a href="explainer.html">Explainer</a>

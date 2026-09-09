@@ -1,6 +1,11 @@
 {
 	"$schema": "https://unpkg.com/knip@latest/schema.json",
 	"ignoreExportsUsedInFile": true,
+	"ignoreIssues": {
+		// Shared verbatim with Spernakit, whose setup branding pass consumes
+		// commandFileReferences. Preserve the owner's exported API here.
+		"scripts/check-script-targets.ts": ["exports"],
+	},
 	"includeEntryExports": true,
 	"rules": {
 		"enumMembers": "off",
@@ -26,15 +31,10 @@
 		},
 		"frontend": {
 			"entry": ["src/App.tsx"],
-			"ignore": ["src/components/ui/*.tsx"],
 			// Knip resolves JS import specifiers but not CSS url() targets. The Geist faces
 			// are referenced only from src/fonts.css, which declares @font-face by hand
 			// rather than importing the packages' own stylesheets.
 			"ignoreDependencies": ["@fontsource-variable/geist", "@fontsource-variable/geist-mono"],
-			"ignoreIssues": {
-				// Inputs and selects deliberately share the same base classes under semantic aliases.
-				"src/lib/formStyles.ts": ["duplicates"],
-			},
 			"project": ["src/**/*.{css,ts,tsx}"],
 		},
 		"shared": {},

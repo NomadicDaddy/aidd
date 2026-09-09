@@ -12,7 +12,7 @@ export {
 	selectLocalNetworkHost,
 } from './lib/crawltest/local-network.ts';
 export { isIgnorableConsoleError } from './lib/crawltest/page-assertions.ts';
-export { defaultBugProjectId, isAiddBugProject } from './lib/crawltest/projects.ts';
+export { defaultBugProjectId } from './lib/crawltest/projects.ts';
 
 if (import.meta.main) {
 	process.exit(await runCrawltest(parseCrawlArgs(Bun.argv.slice(2))));

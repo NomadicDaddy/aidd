@@ -89,18 +89,6 @@ export function CommandGroup({
 	);
 }
 
-export function CommandSeparator({
-	className,
-	...props
-}: ComponentProps<typeof CommandPrimitive.Separator>) {
-	return (
-		<CommandPrimitive.Separator
-			className={cn('-mx-1 my-1 h-px bg-border', className)}
-			{...props}
-		/>
-	);
-}
-
 export function CommandItem({ className, ...props }: ComponentProps<typeof CommandPrimitive.Item>) {
 	return (
 		<CommandPrimitive.Item

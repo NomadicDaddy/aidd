@@ -15,8 +15,8 @@ import {
 	waitForPortReleased,
 } from './lib/stop-web/process-control.ts';
 
-export { forceStopAllowed, parseStopWebArgs, type StopWebOptions } from './lib/stop-web/args.ts';
-export { isProcessAlive, parseNetstatListeningPids } from './lib/stop-web/process-control.ts';
+export { forceStopAllowed, parseStopWebArgs } from './lib/stop-web/args.ts';
+export { parseNetstatListeningPids } from './lib/stop-web/process-control.ts';
 
 /**
  * Stop the aidd web control panel.

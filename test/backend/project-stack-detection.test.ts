@@ -121,7 +121,7 @@ describe('project stack detection', () => {
 				}),
 				'package.json': JSON.stringify({
 					devDependencies: { typescript: '6.0.0' },
-					packageManager: 'bun@1.3.14',
+					packageManager: 'bun@1.4.2',
 					workspaces: ['backend', 'frontend'],
 				}),
 			},

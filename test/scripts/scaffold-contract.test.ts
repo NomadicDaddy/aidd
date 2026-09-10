@@ -17,13 +17,13 @@ describe('scaffold contract', () => {
 	test('dependency drift from the root manifest is rejected', () => {
 		const root = {
 			devDependencies: { eslint: '10.8.1' },
-			engines: { bun: '>=1.3.14' },
-			packageManager: 'bun@1.3.14',
+			engines: { bun: '>=1.4.2' },
+			packageManager: 'bun@1.4.2',
 		};
 		const scaffold = {
 			devDependencies: { eslint: '10.7.0' },
-			engines: { bun: '>=1.3.14' },
-			packageManager: 'bun@1.3.14',
+			engines: { bun: '>=1.4.2' },
+			packageManager: 'bun@1.4.2',
 			scripts: {
 				'format:check': 'prettier --check .',
 				lint: 'eslint .',
@@ -41,8 +41,8 @@ describe('scaffold contract', () => {
 	test('missing scaffold quality scripts are rejected', () => {
 		const manifest = {
 			devDependencies: {},
-			engines: { bun: '>=1.3.14' },
-			packageManager: 'bun@1.3.14',
+			engines: { bun: '>=1.4.2' },
+			packageManager: 'bun@1.4.2',
 			scripts: {},
 		};
 

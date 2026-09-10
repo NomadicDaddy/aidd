@@ -16,7 +16,7 @@ import { testTempDir } from '../_helpers/temp.ts';
  * the manifest by construction (`bun-version-file: package.json`) must produce no finding.
  */
 
-const PINNED = '1.3.14';
+const PINNED = '1.4.2';
 
 interface Fixture {
 	bunVersion?: string; // literal `bun-version:` in a workflow; omit for bun-version-file

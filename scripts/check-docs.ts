@@ -18,10 +18,11 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { gitIgnored, toPosixRelative } from './lib/docs/git-ignored.ts';
 import { type BadWaiver, badWaivers, reportWaivers, waiverReason } from './lib/docs/waivers.ts';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -61,39 +62,21 @@ const EXTERNAL_PREFIXES = ['http://', 'https://', 'mailto:', 'data:', 'tel:'];
 
 interface BrokenLink {
 	file: string;
+	/** The target exists in this working tree and is absent from the repository. */
+	ignored: boolean;
 	line: number;
 	linkText: string;
 	target: string;
 }
 
-/** Path from the project root, with forward slashes, so exclusions read the same on either OS. */
-function toPosixRelative(projectRoot: string, path: string): string {
-	return relative(projectRoot, path).split(sep).join('/');
-}
-
 /**
  * Drops the files git ignores. A doc-link checker has no business validating links inside
  * gitignored scratch or vendored trees: they are not shipped, and their markdown is frequently
- * third-party and malformed. Falls open (keeps everything) when git cannot answer — not a repo,
- * git missing — so scanning outside a repository is unchanged.
- *
- * One `--stdin` call over the whole list rather than one call per directory during the walk. The
- * per-directory form cost about nine seconds in the largest carrier, enough to exceed the default
- * per-test timeout; a file inside an ignored directory is itself ignored, so batching by file
- * gives the same answer for a single spawn.
+ * third-party and malformed.
  */
 function dropGitIgnored(projectRoot: string, files: string[]): string[] {
-	if (files.length === 0) return files;
 	const relatives = files.map((file) => toPosixRelative(projectRoot, file));
-	const result = Bun.spawnSync(['git', 'check-ignore', '-z', '--stdin'], {
-		cwd: projectRoot,
-		stderr: 'ignore',
-		stdin: Buffer.from(`${relatives.join('\0')}\0`),
-		windowsHide: true,
-	});
-	// 0 = some path is ignored, 1 = none are, anything else = git could not answer.
-	if (result.exitCode !== 0) return files;
-	const ignored = new Set(result.stdout.toString().split('\0').filter(Boolean));
+	const ignored = gitIgnored(projectRoot, relatives);
 	return files.filter((_, index) => !ignored.has(relatives[index]!));
 }
 
@@ -133,8 +116,16 @@ interface FileReport {
 
 /**
  * Extract inline markdown links from a file and validate each target.
+ *
+ * `isIgnored` answers whether a target that exists is nonetheless absent from the repository. It
+ * is a caller-supplied predicate rather than a call to git from here so that the whole scan can
+ * ask git once; see `runDocs`.
  */
-function checkFile(filePath: string, projectRoot: string): FileReport {
+function checkFile(
+	filePath: string,
+	projectRoot: string,
+	isIgnored: (relativeTarget: string) => boolean,
+): FileReport {
 	const content = readFileSync(filePath, 'utf-8');
 	const lines = content.split('\n');
 	const fileDir = dirname(filePath);
@@ -183,12 +174,14 @@ function checkFile(filePath: string, projectRoot: string): FileReport {
 				target = target.substring(0, queryIndex);
 			}
 
-			// Resolve relative to the file's directory
-			const resolved = resolve(fileDir, target);
-			if (existsSync(resolved)) continue;
-
-			// Also check if it resolves relative to project root (some docs use root-relative paths)
-			if (existsSync(resolve(projectRoot, target))) continue;
+			// Relative to the file's directory, or to the project root, since some docs use
+			// root-relative paths.
+			const resolved = [resolve(fileDir, target), resolve(projectRoot, target)].find((path) =>
+				existsSync(path),
+			);
+			const ignored =
+				resolved !== undefined && isIgnored(toPosixRelative(projectRoot, resolved));
+			if (resolved !== undefined && !ignored) continue;
 
 			// A marker on this line or the one above suppresses it, provided it says why.
 			const marker = waiverReason(line) ?? waiverReason(lines[i - 1] ?? '');
@@ -197,7 +190,7 @@ function checkFile(filePath: string, projectRoot: string): FileReport {
 				continue;
 			}
 
-			broken.push({ file: filePath, line: i + 1, linkText, target });
+			broken.push({ file: filePath, ignored, line: i + 1, linkText, target });
 		}
 	}
 
@@ -221,7 +214,23 @@ export function runDocs(projectRoot = DEFAULT_PROJECT_ROOT): number {
 		return 1;
 	}
 
-	const reports = mdFiles.map((file) => checkFile(file, projectRoot));
+	// The first pass collects every target that resolves; the second runs only when git says one of
+	// them is absent from the repository. Asking git once for the whole scan is what forces the two
+	// passes, and it keeps the cost off the fast path, where nothing is ignored and the second pass
+	// never happens. Targets outside the project root stay out of the question because git declines
+	// to answer for them, which would fall the whole call open.
+	const candidates = new Set<string>();
+	const collect = (relativeTarget: string): boolean => {
+		if (!relativeTarget.startsWith('..')) candidates.add(relativeTarget);
+		return false;
+	};
+	let reports = mdFiles.map((file) => checkFile(file, projectRoot, collect));
+	const ignoredTargets = gitIgnored(projectRoot, [...candidates]);
+	if (ignoredTargets.size > 0)
+		reports = mdFiles.map((file) =>
+			checkFile(file, projectRoot, (relativeTarget) => ignoredTargets.has(relativeTarget)),
+		);
+
 	const allBroken = reports.flatMap((report) => report.broken);
 	const badWaiverList = reports.flatMap((report) => report.waivers);
 
@@ -253,7 +262,10 @@ export function runDocs(projectRoot = DEFAULT_PROJECT_ROOT): number {
 	for (const [file, links] of grouped) {
 		console.error(`  ${file}`);
 		for (const link of links) {
-			console.error(`    Line ${link.line}: [${link.linkText}](${link.target})`);
+			const why = link.ignored
+				? '  (the target is here but git ignores it, so a fresh checkout has no such file)'
+				: '';
+			console.error(`    Line ${link.line}: [${link.linkText}](${link.target})${why}`);
 		}
 		console.error();
 	}

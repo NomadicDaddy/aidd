@@ -33,6 +33,23 @@ async function docTree(prefix: string, body: string): Promise<string> {
 	return tmp;
 }
 
+/** The same tree, in a repository whose gitignore hides the file the link points at. */
+async function ignoredTargetTree(prefix: string, body: string): Promise<string> {
+	const tmp = await docTree(prefix, body);
+	await writeFile(
+		join(tmp, 'docs', 'examples.md'),
+		'Present here, absent from the repository.\n',
+	);
+	await writeFile(join(tmp, '.gitignore'), 'docs/examples.md\n');
+	Bun.spawnSync(['git', 'init'], {
+		cwd: tmp,
+		stderr: 'ignore',
+		stdout: 'ignore',
+		windowsHide: true,
+	});
+	return tmp;
+}
+
 function isVariationSelector(character: string): boolean {
 	const codePoint = character.codePointAt(0);
 	return (
@@ -108,6 +125,39 @@ describe('check-docs tool', () => {
 			expect(exitCode).toBe(1);
 			expect(output).toContain('./nowhere.md');
 			expect(output).toContain('docs/page.md');
+		} finally {
+			await removeTempTree(tmp);
+		}
+	});
+
+	/**
+	 * The failure this rule exists for. `check:docs` reads the working tree, so a link to a
+	 * gitignored file resolves for the person who wrote it and for nobody else: CI clones a fresh
+	 * tree, and the target is not in it. Caught in v3.0.2 by CI rather than by the local gate.
+	 */
+	test('reports a link whose target exists but is gitignored', async () => {
+		const tmp = await ignoredTargetTree(
+			'aidd-docs-ignored-',
+			'See [the examples](./examples.md).\n',
+		);
+		try {
+			const { exitCode, output } = capture(() => runDocs(tmp));
+			expect(exitCode).toBe(1);
+			expect(output).toContain('./examples.md');
+			expect(output).toContain('git ignores it');
+		} finally {
+			await removeTempTree(tmp);
+		}
+	});
+
+	test('honors a marker on a link whose target is gitignored', async () => {
+		const tmp = await ignoredTargetTree(
+			'aidd-docs-ignored-waived-',
+			'See [the examples](./examples.md). <!-- check-docs-allow: staged into the workspace -->\n',
+		);
+		try {
+			const { exitCode } = capture(() => runDocs(tmp));
+			expect(exitCode).toBe(0);
 		} finally {
 			await removeTempTree(tmp);
 		}

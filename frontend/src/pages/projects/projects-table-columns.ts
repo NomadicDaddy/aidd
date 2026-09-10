@@ -5,10 +5,11 @@ import { contentSizedColumnClass } from '../../lib/tableStyles.ts';
 /**
  * Column model for the Projects table.
  *
- * Fourteen columns is roughly 1700px, which does not fit any card the app has. The default view is
- * the six that answer "what is this project and is it healthy right now"; the rest are real but
- * situational, so they are opt-in through the column chooser rather than always present and mostly
- * scrolled off.
+ * Fourteen columns measures about 1860px, which is a screen and a half of the desks this runs on.
+ * The default view is the six that answer "what is this project and is it healthy right now"; the
+ * rest are real but situational, so they are opt-in through the column chooser rather than always
+ * present and mostly scrolled off. The composition sits on the catalog rail, so the full set does
+ * fit outright once the content column reaches that measure, and scrolls under it.
  */
 export type ProjectColumnKey =
 	| 'activeRuns'

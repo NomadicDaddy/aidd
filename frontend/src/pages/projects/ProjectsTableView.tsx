@@ -122,9 +122,9 @@ export function ProjectsTableView({
 
 	return (
 		<div className="@container [--projects-table-cue-inset:0px] sm:[--projects-table-cue-inset:44ch]">
-			{/* ProjectsPage owns the active view's column, so this Card and the filter toolbar above
-			    inherit one right edge. Optional columns can overflow inside that declared column, but
-			    they cannot resize either piece of chrome. */}
+			{/* ProjectsPage owns the composition's width, so this Card and the filter toolbar above
+			    inherit one right edge from the catalog rail. Optional columns can overflow inside
+			    that width, but they cannot resize either piece of chrome. */}
 			<div ref={tableRef}>
 				<Card className="p-0">
 					<OverflowScroller

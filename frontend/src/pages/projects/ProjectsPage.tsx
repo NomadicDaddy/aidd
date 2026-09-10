@@ -11,9 +11,7 @@ import { PageRail } from '../../components/shared/PageRail.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useProjects, useProjectsGitStatus } from '../../hooks/useProjects.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
-import { cn } from '../../lib/cn.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
-import { tableColumnClass } from '../../lib/tableStyles.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { ProjectInitFailures } from './ProjectInitFailures.tsx';
 import { type IntakeLane, ProjectIntakePanel } from './ProjectIntakePanel.tsx';
@@ -204,11 +202,16 @@ export function ProjectsPage() {
 			) : null}
 
 			{intakeLane ? null : (
-				<div
-					className={cn(
-						'page-reveal space-y-5',
-						projectView === 'table' && tableColumnClass,
-					)}>
+				/* Both views leave the composition on the catalog rail, so the toolbar and the
+				   results below it inherit one right edge from the page rather than from a measure
+				   restated here. Table view used to declare `tableColumnClass` instead, and the
+				   80rem ceiling that constant carries is narrower than the content column from
+				   about 1568px of viewport up: past that the table went on scrolling its optional
+				   columns inside a 1280px box with the rest of the screen left empty beside it.
+				   The table's own cells already size for a container wider than the resting
+				   measure — that is what the `@min-[80rem]:w-auto` step in `projectTableCellClass`
+				   is for — so the ceiling was the only thing keeping the room out of reach. */
+				<div className="page-reveal space-y-5">
 					<ProjectsToolbar
 						actions={listActions}
 						allProjectsCount={allProjects.length}

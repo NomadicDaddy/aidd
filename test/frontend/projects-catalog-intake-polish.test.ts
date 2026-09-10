@@ -50,12 +50,15 @@ describe('projects catalog and intake polish', () => {
 		expect(toolbar).toContain('actions={actions}');
 		expect(toolbar).toContain("import { formGridMeasureClass } from '../../lib/formStyles.ts'");
 		expect(toolbar).toContain('${formGridMeasureClass}');
-		// The active results view owns the edge once. Table view declares the table column around
-		// both toolbar and results; card view leaves the same composition on the full catalog rail.
-		// Optional table columns therefore cannot resize either piece of chrome, while selecting
-		// card view cannot strand its toolbar at the narrower table measure.
+		// One edge for both views, taken from the catalog rail. Table view used to wrap the same
+		// composition in `tableColumnClass`, whose 80rem ceiling falls below the content column
+		// from about 1568px of viewport up — the optional columns went on scrolling inside a
+		// 1280px box while the rest of the screen sat empty beside it. Neither view may restate a
+		// measure here: the toolbar and the results keep taking their width from the page, and
+		// optional columns still cannot resize either piece of chrome.
 		expect(page).toContain('rail={pageRail}');
-		expect(page).toContain("projectView === 'table' && tableColumnClass");
+		expect(page).toContain('<div className="page-reveal space-y-5">');
+		expect(page).not.toContain("from '../../lib/tableStyles.ts'");
 		expect(toolbar).not.toContain('rail={rail}');
 		expect(table).toContain('<div ref={tableRef}>');
 		expect(table).not.toContain('contentRailClass');

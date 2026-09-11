@@ -332,6 +332,97 @@ describe('automatic phase detection routing', () => {
 		return projectDir;
 	}
 
+	/**
+	 * A project an initializer left mid-blueprint: one product feature, spec, and CHANGELOG (so
+	 * detectInitialPhase reads coding) but no roadmap, with the given phases in the run ledger.
+	 */
+	async function halfBlueprintProject(name: string, ledgerPhases: string[]): Promise<string> {
+		const projectDir = await unOnboardedProject(name);
+		const featureDir = join(projectDir, '.aidd', 'features', 'first-feature');
+		await mkdir(featureDir, { recursive: true });
+		await writeFile(
+			join(featureDir, 'feature.json'),
+			JSON.stringify({ id: 'first-feature', passes: false, status: 'backlog' }),
+		);
+		await writeFile(join(projectDir, '.aidd', 'spec.md'), '# Spec\n');
+		await writeFile(join(projectDir, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
+		const ledger = ledgerPhases.map((phase) => JSON.stringify({ mode: 'coding', phase }));
+		await writeFile(join(projectDir, '.aidd', 'runs.jsonl'), `${ledger.join('\n')}\n`);
+		return projectDir;
+	}
+
+	test('resumes an initializer that stopped before its blueprint was complete', async () => {
+		const projectDir = await halfBlueprintProject('resume-initializer', ['initializer']);
+		const plan = makePlan(projectDir);
+
+		await applyInitialPhaseDetection(plan);
+
+		expect(plan.prompt.phase).toBe('initializer');
+		expect(plan.prompt.fragments).toContainEqual({
+			id: 'initializer',
+			kind: 'phase',
+			path: 'prompts/initializer.md',
+		});
+	});
+
+	// The project's own repository, with nothing committed: the readiness verdict an initializer
+	// gets when it wrote a complete blueprint and stopped before committing it.
+	test('resumes an initializer whose complete blueprint is not yet committed', async () => {
+		const projectDir = await halfBlueprintProject('uncommitted-blueprint', ['initializer']);
+		Bun.spawnSync(['git', 'init', '-q'], { cwd: projectDir, windowsHide: true });
+		await writeFile(
+			join(projectDir, '.aidd', 'roadmap.json'),
+			JSON.stringify({
+				features: { 'first-feature': { milestone: 'MVP' } },
+				milestones: { MVP: { priority: 1 } },
+			}),
+		);
+		const plan = makePlan(projectDir);
+
+		await applyInitialPhaseDetection(plan);
+
+		expect(plan.prompt.phase).toBe('initializer');
+	});
+
+	test('codes after completed onboarding without an initializer blueprint', async () => {
+		const projectDir = await halfBlueprintProject('completed-onboarding', ['onboarding']);
+		const store = new FileAiddStore(projectDir);
+		await store.writeFeature({
+			id: 'first-feature',
+			passes: false,
+			status: 'waiting_approval',
+		});
+		const onboardingPlan = makePlan(projectDir);
+		onboardingPlan.prompt.phase = 'onboarding';
+		const result = await createModeHandler(onboardingPlan).processResult(
+			{ projectDir, store },
+			{ events: [], exitCode: 0, filesModified: [], transcript: '' },
+		);
+		expect(result.complete).toBe(true);
+
+		const nextPlan = makePlan(projectDir);
+		await applyInitialPhaseDetection(nextPlan);
+
+		expect(nextPlan.prompt.phase).toBe('coding');
+		expect(nextPlan.prompt.fragments).toContainEqual({
+			id: 'coding',
+			kind: 'phase',
+			path: 'prompts/coding.md',
+		});
+	});
+
+	test('codes a half-made blueprint once a coding run has followed the setup phase', async () => {
+		const projectDir = await halfBlueprintProject('coded-after-setup', [
+			'initializer',
+			'coding',
+		]);
+		const plan = makePlan(projectDir);
+
+		await applyInitialPhaseDetection(plan);
+
+		expect(plan.prompt.phase).toBe('coding');
+	});
+
 	test('keeps automatic phase detection for untargeted coding runs', () => {
 		const plan = makePlan(join(tmpRoot, 'untargeted'));
 

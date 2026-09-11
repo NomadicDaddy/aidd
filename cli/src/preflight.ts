@@ -1,11 +1,12 @@
 import type { ParsedArgs } from 'aidd-shared/args/index';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
-import { detectInitialPhase } from 'aidd-shared/metadata/onboarding';
+import { detectInitialPhase, type InitialPhase } from 'aidd-shared/metadata/onboarding';
 import { stopFilePath } from 'aidd-shared/metadata/paths';
 import { access, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+import { detectInterruptedSetupPhase } from './modes/coding/blueprint-resume.ts';
 import { explicitFeatureTarget } from './modes/coding/selection.ts';
 
 /**
@@ -41,9 +42,7 @@ export async function applyInitialPhaseDetection(plan: RunPlan): Promise<void> {
 	// A newly created template already contains source code, but an explicit create-time spec
 	// still needs the from-idea initializer contract (reviewed backlog + MVP roadmap), not the
 	// existing-codebase onboarding contract.
-	const detected = plan.scope.specFile
-		? 'initializer'
-		: await detectInitialPhase(plan.projectDir);
+	const detected = plan.scope.specFile ? 'initializer' : await detectRunPhase(plan.projectDir);
 	if (detected === 'coding') return;
 	plan.prompt.phase = detected;
 	plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
@@ -51,6 +50,14 @@ export async function applyInitialPhaseDetection(plan: RunPlan): Promise<void> {
 			? { id: detected, kind: 'phase', path: `prompts/${detected}.md` }
 			: fragment,
 	);
+}
+
+// Artifact-based detection, except that a setup phase which stopped before its blueprint was
+// complete is resumed rather than read as coding-ready (see detectInterruptedSetupPhase).
+async function detectRunPhase(projectDir: string): Promise<InitialPhase> {
+	const detected = await detectInitialPhase(projectDir);
+	if (detected !== 'coding') return detected;
+	return (await detectInterruptedSetupPhase(projectDir)) ?? 'coding';
 }
 
 export async function handleStopSignal(

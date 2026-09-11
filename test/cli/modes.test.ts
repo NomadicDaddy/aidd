@@ -8,7 +8,7 @@ import {
 	featureNeighborhoodSchema,
 } from 'aidd-shared/metadata/features';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
-import { parkedWorkMarker } from 'aidd-shared/runs/outcome';
+import { hasParkedWorkMarker, parkedWorkMarker } from 'aidd-shared/runs/outcome';
 import { createModeHandler } from '../../cli/src/modes/factory.ts';
 import { detectBlockedVerificationAdmission } from '../../cli/src/modes/coding/verification.ts';
 import {
@@ -401,6 +401,61 @@ describe('mode handlers', () => {
 		expect(result.complete).toBe(false);
 		expect(result.summary).toContain('roadmap.json must define an MVP milestone');
 		expect(runPlan.prompt.phase).toBe('initializer');
+	});
+
+	test('initializer stops when the agent parks the blueprint on a decision', async () => {
+		const { projectDir, store } = await makeProject('initializer-parked-blueprint');
+		await writeFile(join(projectDir, '.aidd', 'spec.md'), '# Spec\n');
+		await writeFile(join(projectDir, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
+		// The blocked-state procedure: the one record written so far is parked with the question.
+		// The agent cannot answer it, so iterating again only re-records the same park.
+		await store.writeFeature({
+			blockingContext: {
+				commands: [],
+				outcomeStatus: 'waiting_approval',
+				outputExcerpt: 'Spec fixes 11 feature IDs; initializer asks for 20.',
+				parkedAt: '2026-09-11T19:26:12.454Z',
+				reason: 'Blueprint decomposition requires product-owner decision',
+			},
+			id: 'first-feature',
+			passes: false,
+			priority: 1,
+			status: 'waiting_approval',
+		});
+		await initializeGitProject(projectDir);
+		const runPlan = plan(projectDir, ['--stop-before-implementation']);
+		runPlan.prompt.phase = 'initializer';
+		const result = await createModeHandler(runPlan).processResult(
+			{ projectDir, store },
+			{ events: [], exitCode: 0, filesModified: [], transcript: '' },
+		);
+
+		expect(result.complete).toBe(true);
+		expect(result.summary).toContain('Blueprint decomposition requires product-owner decision');
+		expect(hasParkedWorkMarker(result.summary)).toBe(true);
+		expect(runPlan.prompt.phase).toBe('initializer');
+	});
+
+	test('initializer keeps iterating past post-MVP records that are not parked', async () => {
+		const { projectDir, store } = await makeProject('initializer-unparked-waiting');
+		await writeFile(join(projectDir, '.aidd', 'spec.md'), '# Spec\n');
+		await writeFile(join(projectDir, '.aidd', 'CHANGELOG.md'), '# Changelog\n');
+		await store.writeFeature({
+			id: 'later-feature',
+			passes: false,
+			priority: 2,
+			status: 'waiting_approval',
+		});
+		await initializeGitProject(projectDir);
+		const runPlan = plan(projectDir, ['--stop-before-implementation']);
+		runPlan.prompt.phase = 'initializer';
+		const result = await createModeHandler(runPlan).processResult(
+			{ projectDir, store },
+			{ events: [], exitCode: 0, filesModified: [], transcript: '' },
+		);
+
+		expect(result.complete).toBe(false);
+		expect(hasParkedWorkMarker(result.summary)).toBe(false);
 	});
 
 	test('onboarding completes at coding-ready without the blueprint gate', async () => {

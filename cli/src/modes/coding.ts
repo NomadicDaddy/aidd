@@ -2,13 +2,13 @@ import type { FeatureNeighborhood } from 'aidd-shared/metadata/features';
 import type { ModeContext, ModeHandler, ModeResult, SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
-import { readPersistedBlueprintReadiness } from 'aidd-shared/metadata/blueprint';
 import { buildFeatureNeighborhood, featureNodeId } from 'aidd-shared/metadata/features';
 import { parkedWorkMarker } from 'aidd-shared/runs/outcome';
 
 import { createPlanBackedMode } from './base.ts';
 import { evaluateFeatureCompletion } from './coding/completion.ts';
 import { selectLeasableFeature } from './coding/lease-selection.ts';
+import { processPhaseResult } from './coding/phase-result.ts';
 import {
 	explicitFeatureTarget,
 	featureQuery,
@@ -56,15 +56,6 @@ async function resolveFeatureGraph(
 	return buildFeatureNeighborhood(selected, allFeatures);
 }
 
-export function advanceBlueprintRunToCoding(plan: RunPlan): void {
-	plan.prompt.phase = 'coding';
-	plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
-		fragment.kind === 'phase'
-			? { id: 'coding', kind: 'phase', path: 'prompts/coding.md' }
-			: fragment,
-	);
-}
-
 export function createCodingMode(plan: RunPlan): ModeHandler {
 	const base = createPlanBackedMode(plan);
 	return {
@@ -85,43 +76,7 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 		name: 'coding',
 		async processResult(context, result): Promise<ModeResult> {
 			if (plan.prompt.phase === 'initializer' || plan.prompt.phase === 'onboarding') {
-				const completedPhase = plan.prompt.phase;
-				const { detectInitialPhase } = await import('aidd-shared/metadata/onboarding');
-				const detected = await detectInitialPhase(plan.projectDir);
-
-				// Existing-code onboarding is complete at coding-ready; only from-idea initialization
-				// requires the persisted-blueprint gate before it can stop or enter implementation.
-				if (completedPhase === 'onboarding') {
-					const advanced = detected === 'coding';
-					return {
-						artifacts: { detectedAfter: detected, phase: completedPhase },
-						complete: advanced || result.skipped === true,
-						summary: advanced
-							? `${completedPhase} phase complete; project is ready for coding`
-							: `${completedPhase} phase iteration finished with exit code ${result.exitCode}; phase still '${detected}'`,
-					};
-				}
-
-				const readiness = await readPersistedBlueprintReadiness(plan.projectDir);
-				const advanced = detected === 'coding' && readiness.ready;
-				if (advanced && !plan.stopBeforeImplementation) {
-					advanceBlueprintRunToCoding(plan);
-				}
-				return {
-					artifacts: {
-						detectedAfter: detected,
-						phase: completedPhase,
-						readinessReason: readiness.reason,
-						stopBeforeImplementation: plan.stopBeforeImplementation,
-					},
-					complete:
-						(advanced && plan.stopBeforeImplementation) || result.skipped === true,
-					summary: advanced
-						? plan.stopBeforeImplementation
-							? `${completedPhase} phase complete; persisted blueprint is ready for implementation`
-							: `${completedPhase} phase complete; continuing with feature implementation`
-						: `${completedPhase} phase iteration finished with exit code ${result.exitCode}; ${readiness.reason ?? `phase still '${detected}'`}`,
-				};
+				return await processPhaseResult(plan, context, result);
 			}
 			const {
 				completionMarkerIgnored,

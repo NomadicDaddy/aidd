@@ -490,7 +490,7 @@ Start by orienting yourself with the project.
 
 ### STEP 3: CREATE FEATURE LIST
 
-**Based on `/.aidd/spec.md`, create individual feature files at `/.aidd/features/{feature-id}/feature.json`: minimum 20 features.**
+**Based on `/.aidd/spec.md`, create individual feature files at `/.aidd/features/{feature-id}/feature.json`: minimum 20 features, unless the spec defines its own feature inventory (see 3.4).**
 
 **CRITICAL: Each feature MUST be in its own directory and file!**
 
@@ -591,6 +591,7 @@ Use `"status": "waiting_approval"` instead of `"backlog"` for any feature planne
 **Minimum standards:**
 
 - Minimum 20 features total with testing steps for each
+- **Spec-defined inventory:** when `/.aidd/spec.md` enumerates its own feature inventory (named feature IDs, a feature table, or a stated feature count), materialize exactly that inventory instead: no more, no fewer. The spec author already decided the decomposition, so do not pad it with filler features, do not split its entries to reach 20, and do not park the run on the count. The step-count mix below is waived for those features too; use the spec's own acceptance clauses as each feature's steps.
 - Both "Core" and "UI" categories (or other valid categories)
 - Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
 - At least 2-5 tests MUST have 10+ steps each
@@ -605,7 +606,7 @@ Use `"status": "waiting_approval"` instead of `"backlog"` for any feature planne
 **After writing, immediately verify:**
 
 ```bash
-# Count feature directories (must be >= 20)
+# Count feature directories (must be >= 20, or exactly the spec's own inventory)
 ls .aidd/features/ | wc -l
 
 # Verify each feature.json is valid JSON (not an array)
@@ -841,7 +842,7 @@ git status
 # Auto-fix formatting if package.json scripts exist
 bun run format 2>/dev/null || true
 
-# Stage only the files you created/modified
+# Stage only the files you created/modified, including non-ignored .aidd/ blueprint files
 git status
 git add <path/to/file1> <path/to/file2>
 git diff --staged
@@ -869,7 +870,7 @@ git log -1
 
 - [ ] `/.aidd/features/` contains one directory per feature, each with its own `feature.json`
 - [ ] Each `feature.json` is a single JSON object (not an array)
-- [ ] Minimum 20 feature directories exist, all with `"passes": false`
+- [ ] Minimum 20 feature directories (or exactly the spec's own inventory) exist, all with `"passes": false`
 - [ ] `/.aidd/roadmap.json` includes MVP as the only pre-approval milestone (no step/phase sub-milestones) and maps every product feature
 - [ ] MVP features are backlog; post-MVP features are waiting_approval
 - [ ] `scripts/setup.ts` exists or was skipped (if already present)
@@ -884,7 +885,7 @@ git log -1
 #### 9.2 Run Verification Commands
 
 ```bash
-# Count feature directories (must be >= 20)
+# Count feature directories (must be >= 20, or exactly the spec's own inventory)
 ls .aidd/features/ | wc -l
 
 # Verify each is a JSON object, not an array
@@ -967,8 +968,13 @@ git diff --staged
 git commit -m "chore: complete blueprint - ready for implementation"
 ```
 
-The final commit must contain every non-ignored scaffold path, tracked blueprint artifact, and
-scaffold-only fix required by `bun run smoke:qc`. If the target repository ignores `.aidd/`, keep
+The final commit must contain every non-ignored scaffold path, every non-ignored blueprint artifact,
+and every scaffold-only fix required by `bun run smoke:qc`. An untracked `.aidd/` path is not
+an ignored one: run `git check-ignore -v <path>` on each `.aidd/` artifact you wrote. A path the
+repository does not ignore is part of the durable blueprint (spec, project notes, roadmap, feature
+records, CHANGELOG) and must be committed, so a `git status` line such as `?? .aidd/` means those
+files still need committing. Implementation cannot start until `git status --porcelain` prints
+nothing. If the target repository ignores `.aidd/`, keep
 the reviewed feature backlog, roadmap, and other metadata as validated local state; never force-add
 them or alter `.gitignore` to make them committable. If every deliverable is ignored metadata, do
 not create an empty commit. Do not run `validate-build`, a feature-targeted coding command, or any
@@ -1026,7 +1032,8 @@ This is an unattended onboarding workflow; keep the completion message short and
 - Feature list must align with spec
 - README must be comprehensive
 - Git repository must be initialized
-- All non-ignored scaffold and source work must be committed; ignored `.aidd/` metadata remains
+- All non-ignored scaffold, source, and `.aidd/` blueprint work must be committed, leaving
+  `git status --porcelain` empty; only `.aidd/` paths the repository actually ignores remain
   validated local state
 
 ---

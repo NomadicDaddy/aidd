@@ -743,6 +743,7 @@ Default ALL features to `"passes": false`. Only mark `"passes": true` if:
 **Minimum standards:**
 
 - Minimum 20 features total
+- **Spec-defined inventory:** when `/.aidd/spec.md` enumerates its own feature inventory (named feature IDs, a feature table, or a stated feature count), materialize exactly that inventory instead: no more, no fewer. The spec author already decided the decomposition, so do not pad it with filler features, do not split its entries to reach 20, and do not park the run on the count. The step-count mix below is waived for those features too; use the spec's own acceptance clauses as each feature's steps.
 - Both "Core" and "UI" categories (or other valid categories)
 - Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
 - At least 2-5 tests with 10+ steps each
@@ -980,8 +981,8 @@ git commit -m "chore(aidd): onboard project"
 - [ ] Feature coverage audit performed with `feature-coverage-audit <project-root> --apply` or the aidd-local skill workflow
 - [ ] Feature coverage matrix outcome and report path or summary recorded in `/.aidd/CHANGELOG.md`
 - [ ] Feature metadata validation result recorded in `/.aidd/CHANGELOG.md` if audit changed feature metadata
-- [ ] Individual feature files exist at `/.aidd/features/{feature-id}/feature.json` (minimum 20)
-- [ ] Feature list minimum 20 features, conservatively marked
+- [ ] Individual feature files exist at `/.aidd/features/{feature-id}/feature.json` (minimum 20, or exactly the spec's own inventory)
+- [ ] Feature list minimum 20 features (or exactly the spec's own inventory), conservatively marked
 - [ ] `/.aidd/project-structure.md` documents architecture
 - [ ] `/.aidd/todo.md` created if issues discovered
 - [ ] `/.aidd/CHANGELOG.md` created with onboarding summary
@@ -1068,8 +1069,9 @@ git diff
 - Feature list must accurately reflect codebase
 - Documentation must match reality (not generic boilerplate)
 - Git repository must be properly configured
-- All non-ignored source and documentation work must be committed; ignored `.aidd/` metadata
-  remains validated local state
+- All non-ignored source, documentation, and `.aidd/` blueprint work must be committed, leaving
+  `git status --porcelain` empty; only `.aidd/` paths the repository actually ignores remain
+  validated local state (untracked is not ignored: check with `git check-ignore -v <path>`)
 
 ---
 

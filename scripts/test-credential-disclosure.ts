@@ -77,6 +77,14 @@ try {
 		payload('{applicationsRoot:D:/applications,maxIterations:40,noClean:false}'),
 		call('~/.aidd/config.json'),
 		'{"type":"tool_result","tool":"read_file","result":""}',
+		// A committed dotenv template read back in full: it names variables and holds no values.
+		call('/app/.env.example'),
+		payload('DATABASE_URL= # path to the local sqlite file, see README for the default value'),
+		// A Codex edit that wrote a dotenv, then unrelated command output. The write record carries
+		// no content, so it must not claim the next result as its read.
+		'{"type":"file_change","changes":[{"path":"D:\\\\app\\\\.env","kind":"add"}]}',
+		'{"type":"command_execution","command":"bun run typecheck","status":"completed",' +
+			'"aggregated_output":"$ tsc --noEmit -p tsconfig.json finished without any diagnostics"}',
 	]);
 	result = runCheck();
 	assert(result.exitCode === 0, `A clean corpus must pass:\n${result.output}`);

@@ -22,7 +22,8 @@ export const BASELINE_PATH = '.aidd/evidence/credential-disclosure-baseline.json
  *
  * The separator class absorbs the doubling. Requiring `.aidd` immediately before `config.json`
  * keeps a project's `.aidd/aidd.config.json` out of it: that file carries no credentials and is
- * read constantly.
+ * read constantly. The dotenv pattern likewise skips the committed templates (`.env.example` and
+ * its siblings): they document which variables exist and never hold a value.
  */
 export const CREDENTIAL_PATHS: { label: string; pattern: RegExp }[] = [
 	{ label: 'aidd user config', pattern: /\.aidd[/\\]+config\.json/i },
@@ -30,7 +31,10 @@ export const CREDENTIAL_PATHS: { label: string; pattern: RegExp }[] = [
 	{ label: 'aws credentials', pattern: /\.aws[/\\]+credentials/i },
 	{ label: 'netrc', pattern: /[/\\]\.netrc\b/i },
 	{ label: 'npmrc', pattern: /[/\\]\.npmrc\b/i },
-	{ label: 'dotenv', pattern: /[/\\]\.env(?:\.[a-z]+)?["'\s]/i },
+	{
+		label: 'dotenv',
+		pattern: /[/\\]\.env(?:\.(?!(?:dist|example|sample|template)\b)[a-z]+)?["'\s]/i,
+	},
 ];
 
 /**
@@ -39,6 +43,13 @@ export const CREDENTIAL_PATHS: { label: string; pattern: RegExp }[] = [
  * `command_execution`), and Claude (`tool_result` / `tool_use_result`).
  */
 const RESULT_RECORD = /"(?:tool_result|aggregated_output|tool_use_result)"/;
+
+/**
+ * A Codex `file_change` record lists the paths an edit wrote. It carries no content and has no
+ * result of its own, so letting it arm the call/result pairing would blame whatever unrelated
+ * command output happened to come next.
+ */
+const WRITE_RECORD = /"type":"file_change"/;
 
 /** How much content counts as "something came back" rather than an empty read. */
 const MIN_DISCLOSED_BYTES = 40;
@@ -92,7 +103,7 @@ export function scanLines(lines: string[], file: string): Hit[] {
 			pending = undefined;
 			return;
 		}
-		if (matched) {
+		if (matched && !WRITE_RECORD.test(line)) {
 			pending = { label: matched.label, line: index + 1 };
 			return;
 		}

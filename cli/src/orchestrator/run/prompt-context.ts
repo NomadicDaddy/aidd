@@ -131,7 +131,7 @@ export class IterationPromptContext {
 		// Probed per iteration, not once per run: an app that was up at launch can be gone by
 		// iteration 5, and the whole point is that the prompt states the current truth.
 		const appUrlStatus = await probeAppUrl(this.appUrl);
-		// Whether .aidd is tracked cannot change mid-run, so probe once and reuse.
+		// Whether .aidd is gitignored does not change mid-run, so probe once and reuse.
 		this.aiddMetadataUntracked ??= (await aiddMetadataTracked(this.projectDir)) === false;
 		// Re-read per iteration, like the app probe: a concurrent run can start or finish between
 		// iterations, and a stale list would either hide a live claim or fence off a freed one.

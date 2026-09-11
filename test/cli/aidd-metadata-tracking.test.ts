@@ -43,6 +43,14 @@ describe('aiddMetadataTracked', () => {
 		expect(await aiddMetadataTracked(await makeRepo('tracked', 'node_modules/\n'))).toBe(true);
 	});
 
+	// A from-idea initializer runs before its blueprint is committed. Calling that "untracked" told
+	// it the metadata was gitignored, so it never committed the blueprint and never reached coding.
+	test('stays silent when the metadata is merely not committed yet', async () => {
+		const projectDir = await makeRepo('uncommitted', '.aidd/\n');
+		await writeFile(join(projectDir, '.gitignore'), '.aidd/runs.jsonl\n');
+		expect(await aiddMetadataTracked(projectDir)).toBeUndefined();
+	});
+
 	// No git means no answer: the prompt must stay silent rather than assert either way.
 	test('reports unknown outside a git repository', async () => {
 		const root = await testTempDir('aidd-metadata-tracking-no-repo');

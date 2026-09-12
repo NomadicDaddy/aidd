@@ -32,14 +32,16 @@ export function useSkills() {
 
 export function useSkillImports() {
 	const queryClient = useQueryClient();
+	// The sidebar count comes from its own endpoint, so it needs the same refresh the catalog gets.
+	const refreshSkills = () => {
+		void queryClient.invalidateQueries({ queryKey: ['skills'] });
+		void queryClient.invalidateQueries({ queryKey: ['nav-counts'] });
+	};
 	return {
-		deleteImport: useMutation({
-			mutationFn: deleteSkillImport,
-			onSuccess: () => queryClient.invalidateQueries({ queryKey: ['skills'] }),
-		}),
+		deleteImport: useMutation({ mutationFn: deleteSkillImport, onSuccess: refreshSkills }),
 		importSkill: useMutation({
 			mutationFn: (input: SkillImportRequest) => importSkill(input),
-			onSuccess: () => queryClient.invalidateQueries({ queryKey: ['skills'] }),
+			onSuccess: refreshSkills,
 		}),
 		previewImport: useMutation({
 			mutationFn: (input: SkillImportRequest) => previewSkillImport(input),

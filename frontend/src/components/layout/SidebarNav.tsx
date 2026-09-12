@@ -2,15 +2,12 @@ import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down
 import { type FocusEvent, useLayoutEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router';
 
+import type { NavBadge, NavBadges } from './navBadges.ts';
+
 import { cn } from '../../lib/cn.ts';
 import { observeOverflow } from '../../lib/observeOverflow.ts';
 import { revealElementWithinScroller } from '../../lib/revealWithinScroller.ts';
-import { toneBadge } from '../../lib/tones.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
-import {
-	activeExecutionCountAccessibleName,
-	projectCountAccessibleName,
-} from './appLayoutAccessibility.ts';
 import { navGroups } from './nav-items.ts';
 
 const MOBILE_NAV_FADE_PX = 32;
@@ -28,32 +25,20 @@ const MOBILE_NAV_MASK = [
  * The number itself is `aria-hidden`: out of context "39" says nothing, so the sr-only sibling
  * carries the reading instead.
  */
-function NavCountBadge({
-	accessibleName,
-	collapsed,
-	count,
-	tone,
-}: {
-	accessibleName: string | undefined;
-	collapsed: boolean;
-	count: number;
-	tone: string;
-}) {
-	if (count <= 0) return null;
+function NavCountBadge({ badge, collapsed }: { badge: NavBadge | undefined; collapsed: boolean }) {
+	if (!badge) return null;
 	return (
 		<>
 			<span
 				aria-hidden="true"
 				className={cn(
 					'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-2xs font-bold',
-					tone,
+					badge.tone,
 					collapsed ? 'hidden' : 'ml-auto hidden sm:inline-flex',
 				)}>
-				{count}
+				{badge.count}
 			</span>
-			{accessibleName === undefined ? null : (
-				<span className="sr-only">{accessibleName}</span>
-			)}
+			<span className="sr-only">{badge.accessibleName}</span>
 		</>
 	);
 }
@@ -66,15 +51,7 @@ function NavCountBadge({
  * as twelve undifferentiated links, and the visible group label that could name them is hidden on
  * mobile and in the collapsed rail.
  */
-export function SidebarNav({
-	activeExecutionCount,
-	collapsed,
-	projectCount,
-}: {
-	activeExecutionCount: number;
-	collapsed: boolean;
-	projectCount: null | number;
-}) {
+export function SidebarNav({ badges, collapsed }: { badges: NavBadges; collapsed: boolean }) {
 	const cleanupRef = useRef<(() => void) | null>(null);
 	const rootRef = useRef<HTMLDivElement | null>(null);
 	const location = useLocation();
@@ -198,28 +175,10 @@ export function SidebarNav({
 											}>
 											{item.label}
 										</span>
-										{item.to === '/runs' && (
-											<NavCountBadge
-												accessibleName={activeExecutionCountAccessibleName(
-													activeExecutionCount,
-												)}
-												collapsed={collapsed}
-												count={activeExecutionCount}
-												tone={toneBadge.amber}
-											/>
-										)}
-										{/* Runs counts live work and demands attention in amber;
-										    Projects counts inventory, so it stays neutral. */}
-										{item.to === '/projects' && (
-											<NavCountBadge
-												accessibleName={projectCountAccessibleName(
-													projectCount,
-												)}
-												collapsed={collapsed}
-												count={projectCount ?? 0}
-												tone={toneBadge.neutral}
-											/>
-										)}
+										<NavCountBadge
+											badge={badges[item.to]}
+											collapsed={collapsed}
+										/>
 									</>
 								)}
 							</NavLink>

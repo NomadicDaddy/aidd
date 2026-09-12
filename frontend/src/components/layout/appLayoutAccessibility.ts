@@ -1,19 +1,5 @@
-export function activeExecutionCountAccessibleName(
-	activeExecutionCount: number,
-): string | undefined {
-	if (activeExecutionCount === 0) return undefined;
-	return `${activeExecutionCount} active ${
-		activeExecutionCount === 1 ? 'execution' : 'executions'
-	}`;
-}
-
-// Null while the count is still loading; zero renders no badge, so neither state has anything
-// to announce.
-export function projectCountAccessibleName(projectCount: null | number): string | undefined {
-	if (projectCount === null || projectCount === 0) return undefined;
-	return `${projectCount} discovered project${projectCount === 1 ? '' : 's'}`;
-}
-
+// The sidebar's destination counts name themselves in navBadges.ts, beside the tone each one
+// carries; this module keeps the shell controls that have no count.
 export function searchControlAccessibleName(collapsed: boolean): string | undefined {
 	return collapsed ? 'Open command palette' : undefined;
 }

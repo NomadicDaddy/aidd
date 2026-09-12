@@ -16,6 +16,7 @@ import { createDiaryRoutes } from './routes/diary.ts';
 import { createDirectorRoutes } from './routes/director.ts';
 import { createHealthRoutes } from './routes/health.ts';
 import { createLaunchDefaultsRoutes } from './routes/launchDefaults.ts';
+import { createNavCountsRoutes } from './routes/navCounts.ts';
 import { createPipelineSessionsRoutes } from './routes/pipelineSessions.ts';
 import { createProjectCodeRoutes } from './routes/projectCode.ts';
 import { createProjectFeatureRoutes } from './routes/projectFeatures.ts';
@@ -76,6 +77,7 @@ export function createWebServer(context: WebContext) {
 			.use(createScheduledTaskRoutes(context))
 			.use(createDiaryRoutes(context))
 			.use(createDirectorRoutes(context))
+			.use(createNavCountsRoutes(context))
 			.use(createSkillsRoutes(context))
 			.use(createLaunchDefaultsRoutes(context))
 			.use(createRecipesRoutes(context))

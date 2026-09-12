@@ -16,7 +16,10 @@ import {
 
 export function useScheduledTasks() {
 	const queryClient = useQueryClient();
-	const refresh = () => queryClient.invalidateQueries({ queryKey: ['scheduled-tasks'] });
+	const refresh = () => {
+		void queryClient.invalidateQueries({ queryKey: ['scheduled-tasks'] });
+		void queryClient.invalidateQueries({ queryKey: ['nav-counts'] });
+	};
 	return {
 		action: useMutation({
 			mutationFn: ({

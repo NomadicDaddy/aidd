@@ -19,7 +19,7 @@ import { NAV_DESTINATION_GROUPS, type NavDestinationPath } from './nav-destinati
 export type NavItem = {
 	icon: ComponentType<SVGProps<SVGSVGElement>>;
 	label: string;
-	to: string;
+	to: NavDestinationPath;
 };
 
 export type NavGroup = {

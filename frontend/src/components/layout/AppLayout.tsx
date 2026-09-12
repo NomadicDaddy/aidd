@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router';
 import { useActiveExecutionCount } from '../../hooks/useActiveRunCount.ts';
 import { useDeferredMount } from '../../hooks/useDeferredMount.ts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.ts';
+import { useNavCounts } from '../../hooks/useNavCounts.ts';
 import { useProjectCount } from '../../hooks/useProjectCount.ts';
 import { cn } from '../../lib/cn.ts';
 import { linkFocusClass } from '../../lib/focusStyles.ts';
@@ -33,6 +34,7 @@ import {
 	TerminalPane,
 } from './deferredSurfaces.tsx';
 import { DirectiveLaunchButton } from './DirectiveLaunchButton.tsx';
+import { navBadges } from './navBadges.ts';
 import { ProjectReportButton } from './ProjectReportButton.tsx';
 import { observeShellTopBar } from './shellTopBar.ts';
 import { SidebarNav } from './SidebarNav.tsx';
@@ -57,6 +59,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	// Standalone running runs + active pipeline sessions, each execution counted once.
 	const activeExecutionCount = useActiveExecutionCount();
 	const projectCount = useProjectCount();
+	const navCounts = useNavCounts();
 	// Every overlay below is code-split. These flags decide when each one first renders, which is
 	// when its chunk is fetched; the two store-owned surfaces keep their open state in the store
 	// rather than here, so the shell reads it to know when to mount them.
@@ -211,9 +214,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
 						</Button>
 					</div>
 					<SidebarNav
-						activeExecutionCount={activeExecutionCount}
+						badges={navBadges({ activeExecutionCount, navCounts, projectCount })}
 						collapsed={collapsed}
-						projectCount={projectCount}
 					/>
 				</aside>
 				{/* tabIndex={-1} makes the landmark a programmatic focus target for the

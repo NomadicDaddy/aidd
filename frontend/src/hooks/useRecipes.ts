@@ -31,6 +31,7 @@ export function useRecipes() {
 	const recipes = useRecipeCatalog();
 	const refreshRecipes = () => {
 		void queryClient.invalidateQueries({ queryKey: ['recipes'] });
+		void queryClient.invalidateQueries({ queryKey: ['nav-counts'] });
 	};
 	return {
 		deleteRecipe: useMutation({ mutationFn: deleteRecipe, onSuccess: refreshRecipes }),

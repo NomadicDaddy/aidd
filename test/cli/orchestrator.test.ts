@@ -18,8 +18,10 @@ import {
 	createOrchestratorTestContext,
 	FakeBackend,
 	HangingAfterMarkerBackend,
+	initializeGitProject,
 	plan,
 	rootDir,
+	runGit,
 	SequencedBackend,
 	slowOrchestratorTestTimeoutMs,
 } from './_helpers/orchestrator-fixture.ts';
@@ -1261,6 +1263,56 @@ describe('orchestrator transitions and exit mapping', () => {
 			);
 			expect(structured).toContain('"iteration": 0');
 			expect(structured).toContain('completionMarkerIgnored');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});
+
+describe('orchestrator write-allowlist revert failures', () => {
+	test(
+		'does not spend a retry when the revert could not clean the worktree',
+		async () => {
+			// A retry over an un-reverted tree is a paid re-run of a run that cannot pass: the retry
+			// reads the violating content the revert failed to remove, the recheck finds the identical
+			// violation, and the iteration ends where it already was. Here the agent amends the
+			// baseline commit, so baseline HEAD is no longer an ancestor and the guard REFUSES the
+			// mixed reset rather than rewinding onto a divergent history.
+			const store = await makeStore('write-allowlist-revert-failed');
+			await initializeGitProject(store.projectDir);
+			const strayPath = join(store.projectDir, 'stray.ts');
+			const backend = new FakeBackend(
+				[
+					{
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+						type: 'assistant_text',
+					},
+					{ exitCode: 0, filesModified: ['stray.ts'], type: 'done' },
+				],
+				async () => {
+					await writeFile(strayPath, 'export const stray = 1;\n');
+					await runGit(store.projectDir, ['add', 'stray.ts']);
+					await runGit(store.projectDir, ['commit', '--amend', '--no-edit', '--quiet']);
+					await completeFeature(store, 'feature-core');
+				},
+			);
+			const runtimePlan = plan(store.projectDir, ['--write-allowlist', '.aidd']);
+
+			let exitCode = -1;
+			await captureStdout(async () => {
+				exitCode = await runOrchestrator(runtimePlan, { backend, rootDir, store });
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.writeAllowlistViolation);
+			// The retry is what this fix withholds: exactly one paid backend run.
+			expect(backend.calls).toBe(1);
+			// And the summary says the worktree is still dirty rather than 'writes reverted'.
+			expect(await Bun.file(strayPath).exists()).toBe(true);
+			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(runSummary?.summary).toContain('REVERT FAILED, still dirty: stray.ts');
+			expect(runSummary?.summary).toContain('not retrying over an un-reverted worktree');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);

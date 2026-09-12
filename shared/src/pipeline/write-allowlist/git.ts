@@ -22,6 +22,17 @@ export async function gitHead(projectDir: string): Promise<string | undefined> {
 	return out?.trim() || undefined;
 }
 
+// Whether `tree` (a commit sha, or any tree-ish) contains `path`. `cat-file -e` prints nothing and
+// answers with its exit code, so a successful call yields the empty string — check against null,
+// never for truthiness.
+export async function pathExistsInTree(
+	projectDir: string,
+	tree: string,
+	path: string,
+): Promise<boolean> {
+	return (await gitCapture(projectDir, ['cat-file', '-e', `${tree}:${path}`])) !== null;
+}
+
 export async function gitStatusEntries(projectDir: string): Promise<Map<string, string> | null> {
 	try {
 		const proc = Bun.spawn(['git', 'status', '--porcelain=v1', '--untracked-files=all'], {

@@ -198,15 +198,19 @@ export async function executeStep(
 				guardBaseline,
 				violations,
 			);
-			const failedSummary =
-				revertFailed.length > 0 ? ` (revert failed for: ${revertFailed.join(', ')})` : '';
+			// Never claim "writes reverted" over a revert that failed: the operator reads this
+			// message to decide whether their worktree still needs cleaning.
+			const revertSummary =
+				revertFailed.length > 0
+					? `REVERT FAILED, still dirty: ${revertFailed.join(', ')}`
+					: 'writes reverted';
 			const hasDestructive = violations.some((v) => v.destructivelyDiscarded);
 			const violationVerb = hasDestructive ? 'destructively modified' : 'wrote';
 			lastDispatch = {
 				...lastDispatch,
 				errorMessage: `Metadata-only session ${violationVerb} outside .aidd/: ${violations
 					.map((v) => v.path)
-					.join(', ')} — writes reverted${failedSummary}`,
+					.join(', ')} — ${revertSummary}`,
 				ok: false,
 			};
 		}

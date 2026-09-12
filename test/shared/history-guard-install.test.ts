@@ -209,4 +209,26 @@ describe('ensureHistoryGuard', () => {
 		expect(await Bun.file(join(dir, '.githooks', 'pre-commit')).text()).toContain('echo mine');
 		expect(indexMode(dir)).toBe('100755');
 	});
+
+	test('installs nothing when the run’s write allowlist excludes .githooks', async () => {
+		// The metadata-only project-intake failure: this installer copies five files into
+		// `.githooks/` and stages them, entirely outside the allowlist gate every other scaffold
+		// copy passes through. The write guard then charged aidd's own infrastructure writes to the
+		// agent and failed the run.
+		const dir = await makeRepo('allowlisted-out');
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT, { writeAllowlist: ['.aidd'] })).toBe(
+			'write-allowlist',
+		);
+		expect(existsSync(join(dir, '.githooks'))).toBe(false);
+		expect(git(dir, ['diff', '--cached', '--name-only'])).toBe('');
+		expect(git(dir, ['config', 'core.hooksPath'])).toBe('');
+	});
+
+	test('an allowlist that names .githooks still installs', async () => {
+		const dir = await makeRepo('allowlisted-in');
+		expect(
+			await ensureHistoryGuard(dir, AIDD_ROOT, { writeAllowlist: ['.aidd', '.githooks'] }),
+		).toBe('installed');
+		expect(indexMode(dir)).toBe('100755');
+	});
 });

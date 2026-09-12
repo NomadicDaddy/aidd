@@ -1,12 +1,6 @@
-import { rm } from 'node:fs/promises';
-import { join } from 'node:path';
+import type { WriteGuardSnapshot, WriteViolation } from './write-allowlist/types.ts';
 
-import {
-	committedPathsSince,
-	gitCapture,
-	gitHead,
-	gitStatusEntries,
-} from './write-allowlist/git.ts';
+import { committedPathsSince, gitHead, gitStatusEntries } from './write-allowlist/git.ts';
 
 // Shared write-allowlist guard: snapshot the worktree before a step/backend runs,
 // diff after, and revert anything written outside the allowlisted relative paths.
@@ -17,26 +11,8 @@ import {
 // This module is the canonical implementation shared by the CLI orchestrator's
 // --write-allowlist guard and the pipeline's metadata-only backstop.
 
-export interface WriteGuardSnapshot {
-	/** Porcelain status line per path (XY codes), for paths dirty at baseline. */
-	entries: Map<string, string>;
-	/** HEAD sha at baseline (undefined for a repo with no commits yet). Backends that
-	 * commit their work move HEAD, which hides the files from `git status`; comparing
-	 * HEAD before/after recovers those committed paths. */
-	head: string | undefined;
-}
-
-export interface WriteViolation {
-	/** True when the violation reached a commit (HEAD moved); revert needs history rewind. */
-	committed: boolean;
-	/** True when the path was dirty at baseline but is now clean — a destructive operation
-	 * (git reset --hard, git checkout ., etc.) discarded uncommitted operator work. The file
-	 * content is already gone; revert attempts to restore from the baseline HEAD. */
-	destructivelyDiscarded: boolean;
-	path: string;
-	/** True when the path did not exist in the baseline (a brand-new file/dir). */
-	untracked: boolean;
-}
+export { revertWriteViolations } from './write-allowlist/revert.ts';
+export type { WriteGuardSnapshot, WriteViolation } from './write-allowlist/types.ts';
 
 export async function captureWriteGuardSnapshot(
 	projectDir: string,
@@ -115,92 +91,6 @@ export async function diffWriteViolations(
 		});
 	}
 	return [...byPath.values()].sort((left, right) => left.path.localeCompare(right.path));
-}
-
-// Best-effort revert: brand-new untracked files are deleted; tracked modifications and
-// deletions are restored from HEAD. Committed violations are unwound by resetting HEAD to
-// the baseline commit with `--mixed` (which preserves all changes as uncommitted working
-// tree entries) but ONLY the violating paths are then reverted — legitimate committed
-// work for non-violating paths stays as uncommitted changes. The operation bails out
-// (returning all committed paths as failed) when the baseline HEAD is no longer an
-// ancestor of current HEAD (e.g. the agent rebased or amended), so it never resets to a
-// divergent tree. Failures are collected, not thrown — the caller surfaces them in the
-// violation summary either way.
-export async function revertWriteViolations(
-	projectDir: string,
-	baseline: WriteGuardSnapshot,
-	violations: WriteViolation[],
-): Promise<string[]> {
-	const failed: string[] = [];
-	let working = violations;
-	const committedViolations = violations.filter((violation) => violation.committed);
-	if (committedViolations.length > 0 && baseline.head) {
-		// Guard: bail out when the agent has rebased or amended such that baseline is
-		// no longer an ancestor of HEAD. A mixed reset against a non-ancestor would
-		// rewind to a divergent tree, so we refuse and report all committed paths as
-		// failed instead of silently corrupting the history.
-		const ancestor = await gitCapture(projectDir, [
-			'merge-base',
-			'--is-ancestor',
-			baseline.head,
-			'HEAD',
-		]);
-		if (ancestor === null) {
-			// is-ancestor exits non-zero when the first arg is NOT an ancestor → bail out.
-			return committedViolations.map((violation) => violation.path);
-		}
-		// Unwind HEAD to the baseline commit with `--mixed`: this moves HEAD back but
-		// leaves all file content in the working tree as uncommitted changes. Then only
-		// the violating paths are reverted in the loop below — legitimate committed work
-		// for non-violating paths is preserved as uncommitted changes.
-		const reset = await gitCapture(projectDir, ['reset', '--mixed', '--quiet', baseline.head]);
-		if (reset === null) {
-			return committedViolations.map((violation) => violation.path);
-		}
-		// After the reset the committed files are ordinary worktree changes; recompute
-		// untracked-ness from live status so each gets the right revert.
-		const status = await gitStatusEntries(projectDir);
-		working = violations.map((violation) =>
-			violation.committed
-				? {
-						...violation,
-						committed: false,
-						untracked: status?.get(violation.path) === '??',
-					}
-				: violation,
-		);
-	}
-	for (const violation of working) {
-		try {
-			if (violation.untracked) {
-				await rm(join(projectDir, violation.path), { force: true, recursive: true });
-				continue;
-			}
-			if (violation.destructivelyDiscarded) {
-				// A destructive operation (git reset --hard, etc.) discarded the baseline
-				// dirty state. Attempt to restore the file content from the baseline HEAD so
-				// the operator's uncommitted work is recovered. If there is no baseline HEAD
-				// (no commits yet) or checkout fails, record it as failed.
-				if (!baseline.head) {
-					failed.push(violation.path);
-					continue;
-				}
-				const out = await gitCapture(projectDir, [
-					'checkout',
-					baseline.head,
-					'--',
-					violation.path,
-				]);
-				if (out === null) failed.push(violation.path);
-				continue;
-			}
-			const out = await gitCapture(projectDir, ['checkout', '--', violation.path]);
-			if (out === null) failed.push(violation.path);
-		} catch {
-			failed.push(violation.path);
-		}
-	}
-	return failed;
 }
 
 export function formatViolationPaths(violations: WriteViolation[], limit = 8): string {

@@ -197,4 +197,69 @@ describe('write-allowlist guard', () => {
 		expect(prompt).toContain('- src/evil.ts');
 		expect(prompt.endsWith('original prompt')).toBe(true);
 	});
+
+	test('reverts a STAGED new file — unstages it and removes it from disk', async () => {
+		// `git checkout -- <path>` restores from the INDEX, so a path the run staged was
+		// "restored" to exactly what the run staged: a no-op reported as a success. That is how a
+		// metadata-only intake tripping over aidd's own `.githooks/*` was told "writes reverted"
+		// while all five files stayed staged (`A `) in the operator's repository.
+		const dir = await makeRepo('aidd-wal-staged-add-');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await mkdir(join(dir, '.githooks'), { recursive: true });
+		await writeFile(join(dir, '.githooks', 'pre-push'), '#!/usr/bin/env bash\n', 'utf8');
+		await git(dir, 'add', '.githooks/pre-push');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations.map((v) => v.path)).toEqual(['.githooks/pre-push']);
+
+		const failed = await revertWriteViolations(dir, baseline, violations);
+		expect(failed).toEqual([]);
+		expect(await Bun.file(join(dir, '.githooks', 'pre-push')).exists()).toBe(false);
+		expect(await diffWriteViolations(dir, ['.aidd'], baseline)).toEqual([]);
+	});
+
+	test('reverts a STAGED modification to a tracked file from the baseline commit', async () => {
+		const dir = await makeRepo('aidd-wal-staged-mod-');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await writeFile(join(dir, 'tracked.ts'), 'mutated\n', 'utf8');
+		await git(dir, 'add', 'tracked.ts');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations.map((v) => v.path)).toEqual(['tracked.ts']);
+
+		const failed = await revertWriteViolations(dir, baseline, violations);
+		expect(failed).toEqual([]);
+		// Both halves: worktree content AND the index entry the old revert never touched.
+		expect(await Bun.file(join(dir, 'tracked.ts')).text()).toBe('original\n');
+		expect(await diffWriteViolations(dir, ['.aidd'], baseline)).toEqual([]);
+	});
+
+	test('reports a revert it could not perform instead of claiming success', async () => {
+		// "writes reverted" is a claim about the operator's worktree, and callers print
+		// failed[] instead of it. A repo with no commits has no baseline content to restore
+		// from, so a destructively discarded path is unrecoverable, and must be SAID to be.
+		const dir = await testTempDir('aidd-wal-unreverted-');
+		await git(dir, 'init');
+		await git(dir, 'config', 'user.email', 'test@test');
+		await git(dir, 'config', 'user.name', 'test');
+		await writeFile(join(dir, 'scratch.txt'), 'operator scratch\n', 'utf8');
+
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+		expect(baseline.head).toBeUndefined();
+
+		await git(dir, 'clean', '-fd');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations.map((v) => v.path)).toEqual(['scratch.txt']);
+
+		expect(await revertWriteViolations(dir, baseline, violations)).toEqual(['scratch.txt']);
+	});
 });

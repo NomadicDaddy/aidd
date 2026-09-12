@@ -6,8 +6,20 @@ import { mkdir } from 'node:fs/promises';
 // but only some init git — so hooking git-init guards only those, and misses `Ingest Existing`
 // entirely (the lane that writes .aidd/ into a repo that already has a remote). See
 // shared/src/metadata/history-guard.ts.
-export async function ensureMetadata(projectDir: string, rootDir?: string): Promise<void> {
+//
+// `writeAllowlist` is the run's `--write-allowlist`, threaded so the guard install obeys the same
+// boundary as the rest of aidd's scaffolding. Under `.aidd` the hooks are simply not installed.
+export async function ensureMetadata(
+	projectDir: string,
+	rootDir?: string,
+	writeAllowlist?: string[],
+): Promise<void> {
 	await mkdir(metadataPath(projectDir, 'iterations'), { recursive: true });
 	await mkdir(metadataPath(projectDir, 'features'), { recursive: true });
-	if (rootDir !== undefined) await ensureHistoryGuard(projectDir, rootDir);
+	if (rootDir === undefined) return;
+	await ensureHistoryGuard(
+		projectDir,
+		rootDir,
+		writeAllowlist === undefined ? {} : { writeAllowlist },
+	);
 }

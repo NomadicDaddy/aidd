@@ -116,7 +116,7 @@ export async function run(argv: string[]): Promise<number> {
 			return 0;
 		}
 		const store = new FileAiddStore(plan.projectDir);
-		await ensureMetadata(plan.projectDir, rootDir);
+		await ensureMetadata(plan.projectDir, rootDir, plan.writeAllowlist);
 		if (plan.mode === 'coding') {
 			const completedCheck = await checkExplicitCompletedFeature(plan, store);
 			if (completedCheck !== undefined) {
@@ -171,7 +171,7 @@ export async function run(argv: string[]): Promise<number> {
 					: {}),
 			});
 			if (plan.initGitAfterScaffold) {
-				await initGitAfterScaffold(plan.projectDir);
+				await initGitAfterScaffold(plan.projectDir, plan.writeAllowlist);
 			}
 		}
 		await clearStaleStopFile(plan.projectDir, plan.stopPolicy.stopFile);

@@ -80,8 +80,35 @@ export async function enforceWriteAllowlistForIteration(
 	// swallow the violation. Revert and fail fast; retrying just the execution stage is a
 	// possible follow-up.
 	if (input.plan.triumvirate) {
-		await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, violations);
-		const summary = `write allowlist violated by triumvirate execution stage: ${formatViolationPaths(violations)} (writes reverted; no retry in triumvirate mode)`;
+		const failed = await revertWriteViolations(
+			runRepoDir(input.plan),
+			input.writeGuardBaseline,
+			violations,
+		);
+		const summary = `write allowlist violated by triumvirate execution stage: ${formatViolationPaths(violations)} (${describeRevert(failed)}; no retry in triumvirate mode)`;
+		console.error(`[orchestrator] ${summary}`);
+		endIterationWithViolation(input, summary);
+		await writeRunSummary(
+			input.deps,
+			input.plan,
+			input.acc,
+			'exit_error',
+			orchestratorExitCodes.writeAllowlistViolation,
+			summary,
+		);
+		return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
+	}
+	const revertFailed = await revertWriteViolations(
+		runRepoDir(input.plan),
+		input.writeGuardBaseline,
+		violations,
+	);
+	// A retry over an un-reverted tree is a paid re-run of a run that cannot pass: the retry reads
+	// the violating content the revert failed to remove, the recheck finds the identical violation,
+	// and the iteration ends where it already was — after a second full backend run. Fail here
+	// instead, and say which paths are still dirty so the operator can see what to clean.
+	if (revertFailed.length > 0) {
+		const summary = `write allowlist violated: ${formatViolationPaths(violations)} — ${describeRevert(revertFailed)}; not retrying over an un-reverted worktree`;
 		console.error(`[orchestrator] ${summary}`);
 		endIterationWithViolation(input, summary);
 		await writeRunSummary(
@@ -95,9 +122,8 @@ export async function enforceWriteAllowlistForIteration(
 		return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
 	}
 	console.warn(
-		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); reverting and retrying once.`,
+		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); writes reverted, retrying once.`,
 	);
-	await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, violations);
 	let state = toState(input);
 	if (!input.stopRequestedAfterRun) {
 		const retry = await runBackendStreamLoop(
@@ -138,8 +164,12 @@ export async function enforceWriteAllowlistForIteration(
 		input.writeGuardBaseline,
 	);
 	if (recheck === null || recheck.length === 0) return { kind: 'continue', state };
-	await revertWriteViolations(runRepoDir(input.plan), input.writeGuardBaseline, recheck);
-	const summary = `write allowlist violated after retry: ${formatViolationPaths(recheck)} (writes reverted)`;
+	const recheckFailed = await revertWriteViolations(
+		runRepoDir(input.plan),
+		input.writeGuardBaseline,
+		recheck,
+	);
+	const summary = `write allowlist violated after retry: ${formatViolationPaths(recheck)} (${describeRevert(recheckFailed)})`;
 	console.error(`[orchestrator] ${summary}`);
 	endIterationWithViolation(input, summary, state.result);
 	await writeRunSummary(
@@ -151,6 +181,16 @@ export async function enforceWriteAllowlistForIteration(
 		summary,
 	);
 	return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
+}
+
+// "writes reverted" is a claim about the operator's worktree, and for years it was printed
+// unconditionally while revertWriteViolations' failure list was discarded — so a violation aidd
+// could not clean up (a staged path, a locked index) read exactly like one it had.
+function describeRevert(failed: string[], limit = 8): string {
+	if (failed.length === 0) return 'writes reverted';
+	const shown = failed.slice(0, limit).join(', ');
+	const rest = failed.length > limit ? ` … and ${failed.length - limit} more` : '';
+	return `REVERT FAILED, still dirty: ${shown}${rest}`;
 }
 
 // The guard runs while the state machine still sits in run_agent, and run_agent -> complete

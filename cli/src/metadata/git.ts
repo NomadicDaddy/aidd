@@ -15,9 +15,12 @@ export type GitRunner = (projectDir: string, args: string[]) => Promise<GitComma
 
 // Best-effort git init for a freshly scaffolded project: a missing or failing git must never abort
 // the run, so this always resolves and only logs the outcome.
-export async function initGitAfterScaffold(projectDir: string): Promise<void> {
+export async function initGitAfterScaffold(
+	projectDir: string,
+	writeAllowlist?: string[],
+): Promise<void> {
 	try {
-		const status = await ensureProjectGitRepo(projectDir);
+		const status = await ensureProjectGitRepo(projectDir, gitOutput, writeAllowlist);
 		if (status === 'skipped') {
 			console.log(
 				`[setup] Git not found on PATH; skipped repository initialization: ${projectDir}`,
@@ -36,6 +39,7 @@ export async function initGitAfterScaffold(projectDir: string): Promise<void> {
 export async function ensureProjectGitRepo(
 	projectDir: string,
 	run: GitRunner = gitOutput,
+	writeAllowlist?: string[],
 ): Promise<EnsureProjectGitRepoResult> {
 	// `--show-prefix` is projectDir's path relative to the repository root, and is empty exactly
 	// when projectDir IS that root. Ask for it rather than comparing `--show-toplevel` against
@@ -53,7 +57,14 @@ export async function ensureProjectGitRepo(
 	// before this point, when there is no repository yet to guard. This is the second seam: the
 	// moment a fresh project's git actually exists. ensureHistoryGuard is idempotent, so a project
 	// that was already guarded via ensureMetadata simply re-confirms.
-	await ensureHistoryGuard(projectDir);
+	// The allowlist reaches here for the same reason it reaches scaffoldProjectAssets: whatever
+	// aidd writes during an allowlisted run is measured against that allowlist afterwards and
+	// charged to the agent. See EnsureHistoryGuardOptions.
+	await ensureHistoryGuard(
+		projectDir,
+		undefined,
+		writeAllowlist === undefined ? {} : { writeAllowlist },
+	);
 	return 'initialized';
 }
 

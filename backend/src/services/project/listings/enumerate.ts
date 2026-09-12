@@ -167,9 +167,21 @@ export async function listProjects(ctx: ListingsContext): Promise<ProjectsListRe
 export async function listProjectNames(ctx: ListingsContext): Promise<ProjectNamesResponseDto> {
 	const { projects, skippedRoots } = await discoverProjects(ctx);
 	const routeIds = buildProjectRouteIds(projects.map((project) => project.path));
+	// Same template detection the listing scan runs (name + portable generator), so the count
+	// derived from this endpoint can hide the template exactly as the projects page does. Only
+	// a directory actually named spernakit reaches the filesystem, so this stays one stat
+	// call across the whole fleet rather than one per project.
+	const templateFlags = await Promise.all(
+		projects.map(({ path }) =>
+			basename(path) === 'spernakit'
+				? fileExists(join(path, 'scripts', 'init.ts'))
+				: Promise.resolve(false),
+		),
+	);
 	return {
-		projects: projects.map(({ path }) => ({
+		projects: projects.map(({ path }, index) => ({
 			id: encodeProjectId(path),
+			...(templateFlags[index] ? { isSpernakitTemplate: true } : {}),
 			name: basename(path),
 			path,
 			routeId: routeIds.get(resolve(path)) ?? basename(path),

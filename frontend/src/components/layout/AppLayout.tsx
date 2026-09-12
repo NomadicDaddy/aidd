@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router';
 import { useActiveExecutionCount } from '../../hooks/useActiveRunCount.ts';
 import { useDeferredMount } from '../../hooks/useDeferredMount.ts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.ts';
+import { useProjectCount } from '../../hooks/useProjectCount.ts';
 import { cn } from '../../lib/cn.ts';
 import { linkFocusClass } from '../../lib/focusStyles.ts';
 import { commandPaletteShortcut, shortcutText } from '../../lib/keyboardShortcuts.ts';
@@ -55,6 +56,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	const openAuthPrompt = useAuthTokenStore((state) => state.openPrompt);
 	// Standalone running runs + active pipeline sessions, each execution counted once.
 	const activeExecutionCount = useActiveExecutionCount();
+	const projectCount = useProjectCount();
 	// Every overlay below is code-split. These flags decide when each one first renders, which is
 	// when its chunk is fetched; the two store-owned surfaces keep their open state in the store
 	// rather than here, so the shell reads it to know when to mount them.
@@ -208,7 +210,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
 							)}
 						</Button>
 					</div>
-					<SidebarNav activeExecutionCount={activeExecutionCount} collapsed={collapsed} />
+					<SidebarNav
+						activeExecutionCount={activeExecutionCount}
+						collapsed={collapsed}
+						projectCount={projectCount}
+					/>
 				</aside>
 				{/* tabIndex={-1} makes the landmark a programmatic focus target for the
 				    route-change focus reset in App.tsx's RootLayout (and the Skip to Content link).

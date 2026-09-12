@@ -16,7 +16,6 @@ import type {
 	ProjectInterviewDetail,
 	ProjectMoveRequest,
 	ProjectMoveResult,
-	ProjectNamesResponse,
 	ProjectRecommendInput,
 	ProjectRecommendResult,
 	ProjectReport,
@@ -185,10 +184,6 @@ export async function submitProjectReport(
 
 export async function listProjects(signal?: AbortSignal): Promise<ProjectsListResponse> {
 	return await apiGet<ProjectsListResponse>('/api/v1/projects', { signal });
-}
-
-export async function listProjectNames(signal?: AbortSignal): Promise<ProjectNamesResponse> {
-	return await apiGet<ProjectNamesResponse>('/api/v1/projects/names', { signal });
 }
 
 export async function getPortStatus(): Promise<PortStatusResponse> {

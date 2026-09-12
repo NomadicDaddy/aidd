@@ -7,7 +7,6 @@ import type { WebConfigSettings } from '../api/types.ts';
 import { ApiError } from '../api/client.ts';
 import {
 	getCliStatus,
-	getSettingsConfig,
 	getSourceControlStatus,
 	updateSettingsConfig,
 	validateApplicationRoots,
@@ -15,12 +14,9 @@ import {
 import { createToolStatusGate } from './toolStatusRefresh.ts';
 import { useDebouncedValue } from './useDebouncedValue.ts';
 
-export function useSettingsConfig() {
-	return useQuery({
-		queryFn: getSettingsConfig,
-		queryKey: ['settings-config'],
-	});
-}
+// Re-exported for the same reason as useProjectNames: one import path for the pages, and a
+// module the shell's project count can reach without this one's update and validation surface.
+export { useSettingsConfig } from './useSettingsConfig.ts';
 
 export function useUpdateSettingsConfig() {
 	const queryClient = useQueryClient();

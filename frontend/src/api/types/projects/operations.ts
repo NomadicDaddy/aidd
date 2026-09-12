@@ -32,6 +32,8 @@ export interface ProjectsListResponse {
 
 export interface ProjectNameSummary {
 	id: string;
+	/** Set only for the spernakit template checkout, which the projects page hides by default. */
+	isSpernakitTemplate?: boolean;
 	name: string;
 	path: string;
 	routeId: string;

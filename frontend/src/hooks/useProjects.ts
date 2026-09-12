@@ -28,7 +28,6 @@ import {
 	getProjectsGitStatus,
 	importProjects,
 	listProjectImportCandidates,
-	listProjectNames,
 	listProjects,
 	moveProject,
 	recommendProjectMode,
@@ -49,6 +48,9 @@ export {
 	useUpdateProjectFeatureStatus,
 	useUpdateProjectProfile,
 } from './useProjectFeatures.ts';
+// Re-exported so its many call sites keep one import path, while the shell's project count can
+// reach the query without dragging this module's mutation surface onto the critical path.
+export { useProjectNames } from './useProjectNames.ts';
 
 export function useProject(id: string | undefined) {
 	return useQuery({
@@ -136,17 +138,6 @@ export function useProjects() {
 	return useQuery({
 		queryFn: ({ signal }) => listProjects(signal),
 		queryKey: ['projects'],
-		staleTime: 30_000,
-	});
-}
-
-// Lightweight project list (id + name + path) for the report dialog's picker.
-// Backed by /api/v1/projects/names, which skips the heavy per-project metadata compute and keeps
-// the report dialog from blocking on a full project scan when the filesystem cache is cold.
-export function useProjectNames() {
-	return useQuery({
-		queryFn: ({ signal }) => listProjectNames(signal),
-		queryKey: ['projects', 'names'],
 		staleTime: 30_000,
 	});
 }

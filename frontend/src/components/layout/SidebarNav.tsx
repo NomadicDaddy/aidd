@@ -7,7 +7,10 @@ import { observeOverflow } from '../../lib/observeOverflow.ts';
 import { revealElementWithinScroller } from '../../lib/revealWithinScroller.ts';
 import { toneBadge } from '../../lib/tones.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
-import { activeExecutionCountAccessibleName } from './appLayoutAccessibility.ts';
+import {
+	activeExecutionCountAccessibleName,
+	projectCountAccessibleName,
+} from './appLayoutAccessibility.ts';
 import { navGroups } from './nav-items.ts';
 
 const MOBILE_NAV_FADE_PX = 32;
@@ -17,6 +20,43 @@ const MOBILE_NAV_MASK = [
 	'max-sm:data-[overflow-end=true]:[--fade-end:2rem]',
 	'max-sm:[mask-image:linear-gradient(to_right,transparent,black_var(--fade-start),black_calc(100%-var(--fade-end)),transparent)]',
 ].join(' ');
+
+/**
+ * A count pinned to the end of a destination row. Hidden in the collapsed rail and below `sm`,
+ * where the row is an icon with no room beside it.
+ *
+ * The number itself is `aria-hidden`: out of context "39" says nothing, so the sr-only sibling
+ * carries the reading instead.
+ */
+function NavCountBadge({
+	accessibleName,
+	collapsed,
+	count,
+	tone,
+}: {
+	accessibleName: string | undefined;
+	collapsed: boolean;
+	count: number;
+	tone: string;
+}) {
+	if (count <= 0) return null;
+	return (
+		<>
+			<span
+				aria-hidden="true"
+				className={cn(
+					'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-2xs font-bold',
+					tone,
+					collapsed ? 'hidden' : 'ml-auto hidden sm:inline-flex',
+				)}>
+				{count}
+			</span>
+			{accessibleName === undefined ? null : (
+				<span className="sr-only">{accessibleName}</span>
+			)}
+		</>
+	);
+}
 
 /**
  * The shell's primary destinations: a vertical rail from `sm` up, a single horizontally scrolling
@@ -29,9 +69,11 @@ const MOBILE_NAV_MASK = [
 export function SidebarNav({
 	activeExecutionCount,
 	collapsed,
+	projectCount,
 }: {
 	activeExecutionCount: number;
 	collapsed: boolean;
+	projectCount: null | number;
 }) {
 	const cleanupRef = useRef<(() => void) | null>(null);
 	const rootRef = useRef<HTMLDivElement | null>(null);
@@ -156,25 +198,27 @@ export function SidebarNav({
 											}>
 											{item.label}
 										</span>
-										{item.to === '/runs' && activeExecutionCount > 0 && (
-											<>
-												<span
-													aria-hidden="true"
-													className={cn(
-														'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-2xs font-bold',
-														toneBadge.amber,
-														collapsed
-															? 'hidden'
-															: 'ml-auto hidden sm:inline-flex',
-													)}>
-													{activeExecutionCount}
-												</span>
-												<span className="sr-only">
-													{activeExecutionCountAccessibleName(
-														activeExecutionCount,
-													)}
-												</span>
-											</>
+										{item.to === '/runs' && (
+											<NavCountBadge
+												accessibleName={activeExecutionCountAccessibleName(
+													activeExecutionCount,
+												)}
+												collapsed={collapsed}
+												count={activeExecutionCount}
+												tone={toneBadge.amber}
+											/>
+										)}
+										{/* Runs counts live work and demands attention in amber;
+										    Projects counts inventory, so it stays neutral. */}
+										{item.to === '/projects' && (
+											<NavCountBadge
+												accessibleName={projectCountAccessibleName(
+													projectCount,
+												)}
+												collapsed={collapsed}
+												count={projectCount ?? 0}
+												tone={toneBadge.neutral}
+											/>
 										)}
 									</>
 								)}

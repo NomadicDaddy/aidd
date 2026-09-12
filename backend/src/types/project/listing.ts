@@ -68,6 +68,12 @@ export interface ProjectsListResponseDto {
 
 export interface ProjectNameSummaryDto {
 	id: string;
+	/**
+	 * Set only for the spernakit template checkout, mirroring `ProjectSummaryDto`, so a caller
+	 * counting projects can apply the same `web.showSpernakitProject` filter the projects page
+	 * does without paying for the full listing scan.
+	 */
+	isSpernakitTemplate?: boolean;
 	name: string;
 	path: string;
 	routeId: string;

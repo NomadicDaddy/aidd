@@ -12,6 +12,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useProjects, useProjectsGitStatus } from '../../hooks/useProjects.ts';
 import { useSettingsConfig } from '../../hooks/useSettings.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
+import { visibleProjects } from '../../lib/projectVisibility.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { ProjectInitFailures } from './ProjectInitFailures.tsx';
 import { type IntakeLane, ProjectIntakePanel } from './ProjectIntakePanel.tsx';
@@ -43,9 +44,7 @@ export function ProjectsPage() {
 	const settingsConfig = useSettingsConfig();
 	const showSpernakitProject = settingsConfig.data?.showSpernakitProject ?? false;
 	const discoveredProjects = projects.data?.projects ?? [];
-	const allProjects = showSpernakitProject
-		? discoveredProjects
-		: discoveredProjects.filter((project) => !project.isSpernakitTemplate);
+	const allProjects = visibleProjects(discoveredProjects, showSpernakitProject);
 	const hiddenSpernakitCount = discoveredProjects.length - allProjects.length;
 	const skippedRoots = projects.data?.skippedRoots ?? [];
 	const initFailures = projects.data?.initFailures ?? [];

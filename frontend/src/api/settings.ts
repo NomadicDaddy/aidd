@@ -7,11 +7,6 @@ import type {
 
 import { apiGet, apiSend } from './client.ts';
 
-export async function getSettingsConfig(): Promise<WebConfigSettings> {
-	const response = await apiGet<{ config: WebConfigSettings }>('/api/v1/settings/config');
-	return response.config;
-}
-
 export async function updateSettingsConfig(request: WebConfigSettings): Promise<WebConfigSettings> {
 	const body = {
 		allowedOrigins: request.allowedOrigins,

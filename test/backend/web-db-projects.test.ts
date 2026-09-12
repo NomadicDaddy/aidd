@@ -794,6 +794,25 @@ describe('web database and project APIs', () => {
 		expect(byPath.get(resolve(ordinary))?.isSpernakitTemplate).toBeUndefined();
 	});
 
+	test('names endpoint carries the same template flag the full listing does', async () => {
+		// The sidebar count reads this endpoint and hides the template on the same setting the
+		// projects page uses. Without the flag here the badge reads one higher than the page.
+		const tmpDir = canonicalProjectPath(await testTempDir('aidd-web-project-names-spk-flag-'));
+		const allowedRoot = join(tmpDir, 'allowed');
+		const template = join(allowedRoot, 'spernakit');
+		const ordinary = join(allowedRoot, 'ordinary-app');
+		await mkdir(join(template, '.aidd'), { recursive: true });
+		await mkdir(join(template, 'scripts'), { recursive: true });
+		await Bun.write(join(template, 'scripts', 'init.ts'), '// portable generator');
+		await mkdir(join(ordinary, '.aidd'), { recursive: true });
+
+		const service = new ProjectService(webProjectConfig(allowedRoot));
+		const { projects } = await service.listProjectNames();
+		const byPath = new Map(projects.map((project) => [project.path, project]));
+		expect(byPath.get(resolve(template))?.isSpernakitTemplate).toBe(true);
+		expect(byPath.get(resolve(ordinary))?.isSpernakitTemplate).toBeUndefined();
+	});
+
 	test('project listing reports the spernakit template checkout version', async () => {
 		const tmpDir = canonicalProjectPath(await testTempDir('aidd-web-projects-spk-version-'));
 		const allowedRoot = join(tmpDir, 'allowed');

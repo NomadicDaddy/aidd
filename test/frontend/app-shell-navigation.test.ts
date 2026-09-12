@@ -20,7 +20,7 @@ import { SidebarNav } from './src/components/layout/SidebarNav.tsx';
 const view = createElement(
 	MemoryRouter,
 	{ initialEntries: [${JSON.stringify(pathname)}] },
-	createElement(SidebarNav, { activeExecutionCount: 0, collapsed: true }),
+	createElement(SidebarNav, { activeExecutionCount: 0, collapsed: true, projectCount: null }),
 );
 console.log(renderToStaticMarkup(view));
 `;

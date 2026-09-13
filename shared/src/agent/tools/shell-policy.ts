@@ -8,6 +8,7 @@ import {
 	stripSurroundingQuotes,
 } from './shell-policy-dest.ts';
 import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
+import { maskNullOutputRedirects } from './shell-policy-redirects.ts';
 
 /**
  * Environment variables that name a directory outside the project. Each one is supplied to the
@@ -109,7 +110,8 @@ const DESTRUCTIVE_GIT_PATTERN =
 	/(?:^|[\s;|&(`])git\s+(?:reset\s+(?:--hard|HEAD~\d+)|checkout\s+(?:--\s+)?\.(?:\s|$)|restore\s+(?:--\s+)?\.(?:\s|$)|clean\s+-[a-z]*f[a-z]*)/;
 
 export function checkBashWorkspacePolicy(command: string, cwd: string): null | string {
-	const violation = evaluateBashWorkspacePolicy(command, cwd);
+	// Policy sees literal >/dev/null output sinks blanked; runBash still executes `command`.
+	const violation = evaluateBashWorkspacePolicy(maskNullOutputRedirects(command), cwd);
 	return violation === null ? null : denialMessage(violation);
 }
 

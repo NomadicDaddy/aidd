@@ -1,0 +1,4 @@
+interface:
+    display_name: 'UI Redesign Planner'
+    short_description: 'Plan UI improvements from verified review evidence'
+    default_prompt: 'Use $ui-redesign-planner to review this application and plan evidence-backed UI improvements using a verified review source or the documented scoped replacement.'

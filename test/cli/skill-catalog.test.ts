@@ -591,7 +591,7 @@ describe('skill catalog', () => {
 		}
 		expect([...MATURITY_SKILL_IDS].sort()).toEqual([...maturitySkillIds].sort());
 		expect(MATURITY_INVOCATIONS['CONTEXT.md']).toEqual({
-			hint: 'Follow docs/reference/external-skills.md to create or refresh CONTEXT.md with an available upstream skill or the documented manual fallback.',
+			hint: 'Follow the Context maintenance procedure in docs/reference/external-skills.md; unresolved domain decisions require owner input, not an invented interview result.',
 			kind: 'manual',
 			target: 'CONTEXT.md',
 		});

@@ -500,7 +500,7 @@ describe('scaffoldProjectAssets', () => {
 		).toBe('---\ntype: reference\n---\n# Severity\n');
 	});
 
-	test('skill-contract staging tolerates missing sources and absent options', async () => {
+	test('skill-contract staging permits absent options but rejects missing required sources', async () => {
 		const root = await makeRoot();
 		const aiddRoot = join(root, 'aidd');
 		const projectDir = join(root, 'project');
@@ -510,16 +510,27 @@ describe('scaffoldProjectAssets', () => {
 		await scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'directive' }), aiddRoot);
 		expect(existsSync(join(projectDir, '.aidd', 'skills'))).toBe(false);
 
-		// A declared dependency that does not exist on disk is skipped, not fatal.
-		await scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'directive' }), aiddRoot, {
-			skillContracts: {
-				contracts: ['does-not-exist'],
-				references: ['audits/missing.md'],
-				spernakitReferences: [],
-			},
-		});
+		// A declared dependency must fail before an agent can use an invented procedure.
+		await expect(
+			scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'directive' }), aiddRoot, {
+				skillContracts: {
+					contracts: ['does-not-exist'],
+					references: ['audits/missing.md'],
+					spernakitReferences: [],
+				},
+			}),
+		).rejects.toThrow("Required skill contract 'does-not-exist' not found");
 		expect(existsSync(join(projectDir, '.aidd', 'skills', 'does-not-exist'))).toBe(false);
 		expect(existsSync(join(projectDir, '.aidd', 'audits', 'missing.md'))).toBe(false);
+		await expect(
+			scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'directive' }), aiddRoot, {
+				skillContracts: {
+					contracts: [],
+					references: ['audits/missing.md'],
+					spernakitReferences: [],
+				},
+			}),
+		).rejects.toThrow("Required skill aidd-reference 'audits/missing.md' not found");
 	});
 
 	test('stages a contract skill from the imported catalog when it is not bundled', async () => {

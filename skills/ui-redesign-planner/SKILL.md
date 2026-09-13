@@ -34,12 +34,18 @@ ui-redesign-planner <app> [--source <report-path>[,<report-path>...]]
 
 ## Design review source
 
-If a `frontend-design` skill is available to you, invoke it for the Phase 2 design review and use
-its findings as input to Phase 3. It is a richer aesthetic rubric than the fallback below.
+Resolve the exact `frontend-design` source and invocation permissions before selecting it. Read
+the permitted contract and compare its applicable coverage against the current Phase 2 criteria
+below. Select it only when it supplies a compatible review procedure with no missing or materially
+contradictory criteria; otherwise use the owned procedure and record the coverage gaps. A local
+adaptation with the same name does not establish current upstream coverage. Apply only the review
+instructions, never its implementation, report-writing, or feature-record phases.
 
-If it is not available — including on any backend without a skill mechanism — run the Phase 2
-fallback review yourself. The fallback is a complete procedure, not a degraded one; do not report
-reduced confidence merely because `frontend-design` was absent.
+When the skill is absent, unreadable, invocation-restricted, or incompatible with this review scope,
+use the aidd-owned Phase 2 procedure below. Record the observed reason and exact source; do not
+infer that it is uninstalled from an omitted catalog entry. This procedure covers review and
+planning, not upstream UI implementation. Judge confidence from evidence and coverage, not the
+presence of a skill name. Never bypass an invocation restriction by reproducing its steps.
 
 Either way, Phases 1 and 3-5 are aidd-owned and always run as written here. Never delegate feature
 metadata generation, roadmap assignment, or validation.
@@ -74,8 +80,10 @@ Evaluate the app as a product, not as a collection of components.
 
 #### Fallback design review
 
-Run this when `frontend-design` is unavailable. Judge visual design against these criteria and use
-them when writing recommended design directions:
+This is the documented scoped replacement when the optional source cannot supply this review.
+Its coverage was compared with Anthropic's `frontend-design` revision
+`41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f` on 2026-09-13. It is an aidd review procedure,
+not a claim that the upstream build workflow ran. Judge these criteria:
 
 - **Coherence**: Does the interface commit to a discernible point of view and execute it
   consistently across screens? Flag surfaces that read as assembled defaults rather than decisions.
@@ -97,6 +105,23 @@ them when writing recommended design directions:
 - **Context fit**: Does the visual language match what the app is for? An internal ops dashboard and
   a public marketing surface warrant different densities, tones, and levels of polish. Flag
   mismatches in either direction.
+- **Subject and brief**: Tie proposed visual choices to the actual audience, domain, content, and
+  existing design direction. Preserve an explicit brief. Identify what deserves emphasis and avoid
+  recommendations that could be transferred unchanged to an unrelated product.
+- **Design direction**: For a visual redesign, specify proposed palette values, type roles and
+  scale, and a layout sketch or concrete composition. Compare that plan with the brief before
+  recommending it. A targeted defect needs only the affected tokens or arrangement.
+- **Default-pattern review**: Check whether decorative numbering, excess labels, isolated word
+  emphasis, repeated card grids, or fashionable palettes and font combinations serve this product.
+  Neither a distinctive font pairing nor an elaborate entrance animation is automatically better.
+  Prefer restrained motion that explains interaction; flag decoration without a useful purpose.
+- **Product language**: Check user-facing vocabulary, consistent action labels, concise content,
+  and error/empty states that explain the next step. Internal implementation names should not leak
+  into the interface without a user need.
+- **Critique and evidence**: Recheck the proposed direction against the brief and the observed
+  screens; revise recommendations that reproduce the same generic defaults they criticize.
+  Record screenshots or other actual review evidence and disclose unreachable surfaces. Do not
+  imply new browser verification when consuming existing reports through `--source`.
 
 Match recommended complexity to the app's tone and the team's capacity to maintain it. Prefer
 changes expressible through the app's existing framework and component library.
@@ -131,7 +156,7 @@ The report must include:
 - For each improvement: affected routes/components, user impact, recommended design direction,
   accessibility concerns, implementation notes, and expected validation.
 - A final table mapping each recommendation to the generated feature ID.
-- A note recording whether the Phase 2 review used `frontend-design` or the fallback.
+- The exact Phase 2 source, selection reason, covered scope, omissions, and evidence limitations.
 - The viewport mode, viewports and commit the findings were observed at, so a later reader knows
   what this plan does and does not cover.
 
@@ -231,7 +256,7 @@ each other.
 Finish with:
 
 - Redesign report path.
-- Which Phase 2 review path ran (`frontend-design` or fallback).
+- The exact Phase 2 source, selection reason, covered scope, omissions, and evidence limitations.
 - Count and IDs of created feature JSONs.
 - Count and IDs of updated existing feature JSONs.
 - Roadmap assignment result.

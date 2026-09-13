@@ -88,6 +88,13 @@ Other modes carry their own marker shape: `{"todoCompleted":true}` for todo mode
 and `{"directorOutputWritten":true}` for director mode. The `initializer` and `onboarding` phases
 get no result contract at all, because their completion is detected rather than reported.
 
+Directive completion requires `directiveCompleted: true` and a successful backend exit; files,
+timestamps, commits, and unrelated JSON markers do not substitute for that result. Partial or
+blocked directives emit `{"directiveCompleted":false,"reason":"..."}` and end with a non-success
+blocked outcome. An explicitly documented scoped replacement may satisfy the requested work,
+but its source, omissions, and evidence limits must be disclosed. It does not certify that the
+upstream skill executed.
+
 Audit mode expects audit result JSON (`auditFindings[]` plus `reportMarkdown`). Batched audit mode
 expects `auditReports[]`, one entry per selected audit name.
 

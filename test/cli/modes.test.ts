@@ -561,6 +561,44 @@ describe('mode handlers', () => {
 		expect(feature.status).toBe('backlog');
 	});
 
+	test('directive processResult requires an explicit completion result', async () => {
+		const { projectDir, store } = await makeProject('directive-process-result');
+		const mode = createModeHandler(
+			plan(projectDir, ['--prompt', 'Review all requested artifacts.']),
+		);
+		const context = { projectDir, store };
+		const work = await mode.selectWork(context);
+		const baseRun = {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			selectedWork: work,
+			transcript: '',
+		};
+
+		const missing = await mode.processResult(context, baseRun);
+		expect(missing.complete).toBe(false);
+		expect(missing.fatal).toBeUndefined();
+
+		const partial = await mode.processResult(context, {
+			...baseRun,
+			structuredResult: {
+				directiveCompleted: false,
+				reason: 'Required review contract is unreadable',
+			},
+		});
+		expect(partial.complete).toBe(false);
+		expect(partial.fatal).toEqual({ exitCode: 1, stopReason: 'blocked' });
+		expect(partial.summary).toContain('Required review contract is unreadable');
+
+		const done = await mode.processResult(context, {
+			...baseRun,
+			structuredResult: { directiveCompleted: true },
+		});
+		expect(done.complete).toBe(true);
+		expect(done.fatal).toBeUndefined();
+	});
+
 	test('a bare custom prompt resolves to directive mode (covers direct --skill)', async () => {
 		const { projectDir, store } = await makeProject('directive-bare-prompt');
 		await store.writeFeature({

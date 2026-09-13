@@ -142,8 +142,8 @@ Do NOT restate the suggestions or fleet summary in this marker; put the complete
 		// completion signal; aidd only checks it was emitted, so the body is a fixed flag.
 		const readonly = plan.customDirectiveReadonly === true;
 		const closing = readonly
-			? 'This is a read-only directive: the findings or answer in your response ARE the deliverable, so deliver them in full and then emit the marker. Do not commit, write files, or otherwise alter the repository — the marker alone signals completion.'
-			: 'Before emitting the marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above.';
+			? 'This is a read-only directive: the findings or answer in your response ARE the deliverable. Do not commit, write files, or otherwise alter the repository. Emit the success marker only after delivering the full requested review or answer.'
+			: 'Before emitting the success marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above.';
 		return `## aidd RESULT CONTRACT
 
 When you have fully carried out the directive, include exactly one final result marker in your assistant response:
@@ -152,7 +152,15 @@ When you have fully carried out the directive, include exactly one final result 
 AIDD_RESULT: {"directiveCompleted":true}
 \`\`\`
 
-Emit this marker exactly once, at the very end, and only after the directive is genuinely complete — a delivered review, a delivered answer, or a completed set of changes all count. A clean "nothing to change / already correct / nothing to review" conclusion is itself a complete result: emit the marker. Do NOT emit it for partial work, or when you are blocked and reporting the blocker back for a human decision. ${closing}`;
+Emit this success marker exactly once, at the very end, and only after every required deliverable and applicable check is complete. A delivered review, a delivered answer, or a completed set of changes all count. A clean "nothing to change / already correct / nothing to review" conclusion is itself a complete result. An applicable documented fallback can satisfy its stated scope; disclose its source and omissions and never claim the upstream workflow ran.
+
+For partial or blocked work, report what remains and emit this result instead:
+
+\`\`\`text
+AIDD_RESULT: {"directiveCompleted":false,"reason":"<exact unresolved requirement>"}
+\`\`\`
+
+Never emit directiveCompleted:true with unresolved required work. Missing contracts, invocation restrictions without an applicable scoped replacement, and unverified required checks are blockers. Files, timestamps, or commits alone cannot substitute for this completion result. ${closing}`;
 	}
 	return '';
 }

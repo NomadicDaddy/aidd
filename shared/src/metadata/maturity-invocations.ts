@@ -15,7 +15,7 @@ export const MATURITY_INVOCATIONS: Readonly<Record<string, MaturityInvocation>> 
 		skillId: 'document-changes',
 	},
 	'CONTEXT.md': {
-		hint: 'Follow docs/reference/external-skills.md to create or refresh CONTEXT.md with an available upstream skill or the documented manual fallback.',
+		hint: 'Follow the Context maintenance procedure in docs/reference/external-skills.md; unresolved domain decisions require owner input, not an invented interview result.',
 		kind: 'manual',
 		target: 'CONTEXT.md',
 	},

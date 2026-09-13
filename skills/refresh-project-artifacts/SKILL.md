@@ -62,8 +62,10 @@ Process committed artifacts in dependency order:
 
 1. Review or create `CONTEXT.md`, `spec.md`, `assertions.md`, and `project-structure.md` from live
    evidence. Follow the staged `review-or-create-doc` contract for the three `.aidd` documents.
-   Apply the documented `grill-with-docs` workflow to `CONTEXT.md` only when that external contract
-   is locally available; otherwise review the file directly and record the unavailable producer.
+   For `CONTEXT.md`, follow the Context maintenance procedure in the staged
+   `docs/reference/external-skills.md` (or the repository copy inside aidd). It is the explicit
+   unattended maintenance scope, not an execution of the interactive `grill-with-docs` skill.
+   If that procedure cannot be read, mark this artifact blocked instead of improvising a review.
 2. Reconcile every feature record before `roadmap.json`. Use the specialized feature contracts only
    when their required input exists; never invent bugs, source documents, or feature history.
 3. Reconcile `roadmap.json`, then apply its milestone/dependency mapping as the staged
@@ -140,5 +142,10 @@ Report:
 - one concise outcome for every artifact row in both reference tables;
 - changed paths, timestamp-only renewals, validations, and remaining owner decisions;
 - whether the final artifact-status recalculation ran.
+
+For every external skill or scoped replacement considered, record its exact source, observed
+availability or invocation restriction, the procedure selected, and omitted work. Preserve unresolved
+domain decisions as blocked work; never mark their artifacts `reviewed-current` or renew their
+timestamps. Full completion requires all required rows to be resolved, not merely listed.
 
 Do not call the refresh complete if any catalog row is missing from the ledger.

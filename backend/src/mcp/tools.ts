@@ -123,7 +123,11 @@ export const TOOLS: ToolDefinition[] = [
 					description: 'Absolute path to the project directory.',
 					type: 'string',
 				},
-				prompt: { description: 'Custom directive prompt.', type: 'string' },
+				prompt: {
+					description:
+						'Custom directive prompt. Do not use this to simulate an existing recipe; launch its matching suggestion or report the recipe launch route.',
+					type: 'string',
+				},
 				reasoningEffort: { description: 'Reasoning effort hint.', type: 'string' },
 				simulation: {
 					description: 'Run in simulation mode without invoking a real backend.',

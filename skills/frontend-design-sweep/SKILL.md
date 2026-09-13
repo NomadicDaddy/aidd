@@ -181,10 +181,12 @@ and consolidation produces mush.
 
 The digest describes what the app **already is**. It is not the redesign; it is the ruler.
 
-Resolve the design-review lens once. If the optional `frontend-design` skill is available, reviewers
-apply only its UX and design-review instructions; they must not execute its report or feature-record
-phases. If it is unavailable, reviewers apply the complete Phase 2 fallback design review from the
-staged `ui-redesign-planner` contract. Absence of the optional skill does not reduce confidence.
+Resolve the design-review lens once using the staged `ui-redesign-planner` Design review source
+rules: verify the exact source, review coverage, and invocation permissions. Give every reviewer
+the same selected review instructions and source identity. Use its Phase 2 scoped replacement
+when the optional source cannot supply this review; never guess the missing procedure or bypass
+an invocation restriction. Record the selection reason, omissions, and evidence limitations.
+Reviewers must not execute the source's implementation, report-writing, or feature-record phases.
 
 ## Phase 3: Fan out — one subagent per surface
 

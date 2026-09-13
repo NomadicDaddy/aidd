@@ -46,7 +46,9 @@ Sections are joined with a `\n\n---\n\n` separator. Empty fragments are skipped.
    `prompts/_cli/native.md`.
 4. **Guardrails** (`applyGuardrails` in `compile/guardrails.ts`):
    `prompts/_common/hard-constraints.md`, `prompts/_common/forbidden-commands.md`, then
-   `prompts/_common/artifact-git-policy.md`, prepended. Audit-mode prompts additionally get an
+   `prompts/_common/artifact-git-policy.md` and `prompts/_common/skill-selection.md`, prepended.
+   Skill selection requires source and permission evidence and explicit scoped replacements in
+   ordinary directives as well as named skill runs. Audit-mode prompts additionally get an
    `AUDIT MODE ADJUSTMENT` section that overrides the blocked-state changelog-write flow for
    the read-only audit session.
 5. **`<app-url>` substitution** (`applyAppUrl`): replaces the placeholder when the launcher

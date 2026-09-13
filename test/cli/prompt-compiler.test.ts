@@ -355,7 +355,9 @@ describe('prompt compiler', () => {
 		// A read-only directive can now signal completion without committing: emit the marker after
 		// delivering the review. This is what lets a clean/no-op review avoid missing_aidd_result.
 		expect(compiled.text).toContain('AIDD_RESULT: {"directiveCompleted":true}');
-		expect(compiled.text).toContain('the marker alone signals completion');
+		expect(compiled.text).toContain(
+			'Emit the success marker only after delivering the full requested review or answer',
+		);
 	});
 
 	test('generates audit prompt with audit id convention and audit body', async () => {

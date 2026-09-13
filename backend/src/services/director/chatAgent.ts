@@ -214,6 +214,7 @@ export function buildAgenticPreamble(input: ChatAgentTurnInput): string {
 		'You are the aidd Director operating agentically in live chat.',
 		'You have tools to inspect the fleet and to orchestrate work. Reason about the request, call the tools you need, observe their results, then reply describing what you did and why.',
 		'Never infer recipe behavior from its name. Use the recipe catalog descriptions and call get_recipe for the exact steps before explaining or launching recipe-backed work.',
+		'For recipe-backed work, use launch_suggestion when the matching suggestion carries that recipe. Never replace a recipe with a launch_run prompt claiming to replicate it: that loses skill contracts and pipeline checks. If no recipe launch is available in these tools, report the exact recipe for the operator to launch from Recipes.',
 		policy,
 		'Prefer the smallest set of actions that satisfies the request. If a tool returns an error, read it and adapt instead of repeating the same call. When you only need to answer a question, just answer without launching anything.',
 		'',

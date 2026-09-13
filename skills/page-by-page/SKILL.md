@@ -111,6 +111,11 @@ Use a skill only when one genuinely matches. An unmatched question is not a degr
 stated question is a complete instruction, and inventing a lens the question did not ask for is how
 sweeps drift off-topic. Record which lens ran in the report.
 
+For the visual-design lens, follow the staged `ui-redesign-planner` Design review source rules.
+Verify the exact source and invocation permissions, then pass the same permitted review procedure
+to every reviewer. Record why a scoped replacement was selected, its omissions, and any evidence
+limits. Do not treat a missing catalog entry as proof of an uninstalled skill or bypass a restriction.
+
 ## Phase 2: Enumerate every page
 
 Build the page list from these sources in order, adding what each contributes:

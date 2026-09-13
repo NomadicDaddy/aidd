@@ -83,7 +83,7 @@ export async function classifyIterationOutcome(input: {
 	// Whether the .aidd-artifact fallback below is consulted at all. Feature work must emit
 	// AIDD_RESULT, so .aidd writes alone never stand in for a marker there — and the warning
 	// must not claim to have checked for artifacts it never looked at.
-	const aiddFallbackApplies = work.kind === 'generic';
+	const aiddFallbackApplies = work.kind === 'generic' && plan.mode !== 'directive';
 	// Coding mode confirmed the agent invoked the STOP-AND-PARK hatch: it reported blocked live
 	// verification and parked the selected feature as waiting_approval rather than claiming a
 	// completion it could not stand behind. The prompt's own result contract tells it not to emit
@@ -91,34 +91,35 @@ export async function classifyIterationOutcome(input: {
 	// exempt it the way completedAuditsArtifact exempts audit mode.
 	const verificationBlockedParked =
 		typeof modeResult.artifacts?.verificationBlockedParked === 'string';
-	const missingAiddResult =
-		!missingAuditArtifacts &&
-		!verificationBlockedParked &&
-		// Initializer/onboarding phase iterations run a phase prompt that never emits an
-		// AIDD_RESULT marker and complete no backlog feature, so the phase-agnostic
-		// missing-result heuristic must not classify a successful phase iteration as a failure
-		// (exit 73 / exit_error). Feature ('coding') iterations remain subject to the check.
+	const missingDirectiveResult =
+		plan.mode === 'directive' &&
 		work.kind !== 'phase' &&
-		// Interview mode owns its completion semantics entirely: question generation checks
-		// the questions file and answer iterations write response files, with the mode's own
-		// bounded retry + fatal path for repeated misses. Classifying a no-write generation
-		// attempt as missing_aidd_result would end the run at exit 73 before the mode's
-		// escalating retries ever run.
-		plan.mode !== 'interview' &&
-		structuredResult === undefined &&
 		exitCode === orchestratorExitCodes.success &&
-		completedResultFeature === undefined &&
-		iterationCommits.length === 0 &&
-		!completionFinalizedBeforeBackendExit &&
-		// Directive runs whose entire deliverable lives under .aidd/ (e.g. metadata-only
-		// pipeline steps like project-intake codebase analysis) may produce real artifacts
-		// without any commits: intake targets commonly gitignore .aidd/, so iterationCommits
-		// stays empty even when files were written. Check the filesystem for files modified
-		// since the iteration started — any such files under .aidd/ count as legitimate
-		// completion evidence, mirroring how completedAuditsArtifact exempts audit mode.
-		// Genuine no-op directive runs (no marker, no commits, no .aidd writes) still fall
-		// through to missing_aidd_result with exit 73 as before.
-		!(aiddFallbackApplies && (await hasFreshAiddArtifacts(runRepoDir(plan), startedAtMs)));
+		structuredResult?.directiveCompleted !== true &&
+		structuredResult?.directiveCompleted !== false;
+	const missingAiddResult =
+		missingDirectiveResult ||
+		(!missingAuditArtifacts &&
+			!verificationBlockedParked &&
+			// Initializer/onboarding phase iterations run a phase prompt that never emits an
+			// AIDD_RESULT marker and complete no backlog feature, so the phase-agnostic
+			// missing-result heuristic must not classify a successful phase iteration as a failure
+			// (exit 73 / exit_error). Feature ('coding') iterations remain subject to the check.
+			work.kind !== 'phase' &&
+			// Interview mode owns its completion semantics entirely: question generation checks
+			// the questions file and answer iterations write response files, with the mode's own
+			// bounded retry + fatal path for repeated misses. Classifying a no-write generation
+			// attempt as missing_aidd_result would end the run at exit 73 before the mode's
+			// escalating retries ever run.
+			plan.mode !== 'interview' &&
+			structuredResult === undefined &&
+			exitCode === orchestratorExitCodes.success &&
+			completedResultFeature === undefined &&
+			iterationCommits.length === 0 &&
+			!completionFinalizedBeforeBackendExit &&
+			// Non-directive generic work retains artifact detection. Directives require their
+			// explicit result even when every deliverable is gitignored metadata.
+			!(aiddFallbackApplies && (await hasFreshAiddArtifacts(runRepoDir(plan), startedAtMs))));
 	// Prose counts as well as the tool call: a CLI backend that ends its turn asking the operator to
 	// choose has stopped for input just as surely as a native loop that called AskUserQuestion, and
 	// the run must not be classified as though the agent simply produced no result.
@@ -145,6 +146,10 @@ export async function classifyIterationOutcome(input: {
 			console.warn(
 				`[orchestrator] Backend exited normally without emitting AIDD_RESULT, and still-running background tasks were killed at session teardown — the agent likely ended its turn while waiting on a backgrounded command (e.g. a quality gate) that can never notify a headless session; recording missing_aidd_result.`,
 			);
+		} else if (plan.mode === 'directive') {
+			console.warn(
+				'[orchestrator] Directive requires an explicit directiveCompleted result; files or commits alone do not prove complete workflow coverage. Recording missing_aidd_result.',
+			);
 		} else if (aiddFallbackApplies) {
 			console.warn(
 				`[orchestrator] Backend exited normally without emitting AIDD_RESULT and no fallback completion was detected (no commits, no .aidd artifacts); recording missing_aidd_result.`,
@@ -169,13 +174,15 @@ export async function classifyIterationOutcome(input: {
 	if (typeof findingsContractWarning === 'string') {
 		console.warn(`[audit-mode] ${findingsContractWarning}`);
 	}
-	const recordedExitCode = completedAfterBackendInterruption
-		? orchestratorExitCodes.success
-		: missingAuditArtifacts ||
-			  findingsContractDropped ||
-			  (missingAiddResult && !askedUserQuestion)
-			? orchestratorExitCodes.missingResult
-			: exitCode;
+	const recordedExitCode =
+		modeResult.fatal?.exitCode ??
+		(completedAfterBackendInterruption
+			? orchestratorExitCodes.success
+			: missingAuditArtifacts ||
+				  findingsContractDropped ||
+				  (missingAiddResult && !askedUserQuestion)
+				? orchestratorExitCodes.missingResult
+				: exitCode);
 
 	return {
 		askedUserQuestion,
@@ -213,16 +220,8 @@ function detectKilledBackgroundTasks(events: AgentEvent[]): boolean {
 // indicating the backend wrote artifacts during this iteration.
 // Entries under .aidd/ that are NOT evidence the agent did anything.
 //
-// aidd writes its own bookkeeping here on every single run — active-runs records, per-iteration
-// artifacts, and the runs.jsonl ledger (see metadata/active-runs/record.ts and
-// metadata/store/runHistory.ts). Counting those made this check structurally always true: it
-// measured that a run happened, never that the agent produced anything. A skill run that wrote no
-// map, no changelog, made no commit and emitted no marker still exited 0 as "finished with exit
-// code 0", because aidd's own telemetry had freshened .aidd/ underneath it.
-//
-// CHANGELOG.md is excluded for a different reason: every prompt instructs the agent to record what
-// happened there, so it appears on failure as readily as on success — "blocked, awaiting a
-// decision" is narration, not work.
+// Bookkeeping changes on every run, so it cannot establish delivered work. CHANGELOG.md also
+// appears on failure and must not count. Directives do not use artifact detection at all.
 //
 // reports/ is deliberately NOT excluded wholesale: skill deliverables land there
 // (commit-archaeology-*.md, feature-coverage-audit-*.md) alongside orchestrator session files, so

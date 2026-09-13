@@ -1,12 +1,14 @@
 import type { ModeContext, ModeHandler, ModeResult, SelectedWork } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
+import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
+
 import { createPlanBackedMode } from './base.ts';
 
 // Directive runs execute their supplied prompt verbatim, whether launched by a pipeline step,
 // skill, or operator. They deliberately do not select or claim a backlog feature: the
-// agent's directive is the unit of work, and completion is judged solely by the
-// backend exit code. Returning `generic` work keeps the backend running (unlike
+// agent's directive is the unit of work, and completion requires its explicit result as well as a
+// successful backend exit. Returning `generic` work keeps the backend running (unlike
 // `none`, which the orchestrator skips) while leaving every feature untouched.
 export function createDirectiveMode(plan: RunPlan): ModeHandler {
 	const base = createPlanBackedMode(plan);
@@ -22,8 +24,17 @@ export function createDirectiveMode(plan: RunPlan): ModeHandler {
 		},
 		name: 'directive',
 		async processResult(_context, result): Promise<ModeResult> {
+			if (result.structuredResult?.directiveCompleted === false) {
+				const reason = result.structuredResult.reason;
+				return {
+					complete: false,
+					fatal: { exitCode: orchestratorExitCodes.generalError, stopReason: 'blocked' },
+					summary: `${label} incomplete: ${typeof reason === 'string' ? reason : 'required work remains'}`,
+				};
+			}
 			return {
-				complete: result.exitCode === 0,
+				complete:
+					result.exitCode === 0 && result.structuredResult?.directiveCompleted === true,
 				summary: result.skipped
 					? `${label} skipped`
 					: `${label} finished with exit code ${result.exitCode}`,

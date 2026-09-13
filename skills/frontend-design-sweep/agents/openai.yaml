@@ -1,0 +1,4 @@
+interface:
+    display_name: 'Frontend Design Sweep'
+    short_description: 'Review every surface with a verified design lens'
+    default_prompt: 'Use $frontend-design-sweep to review every application surface using a verified design source or the documented scoped replacement, then consolidate the evidence.'

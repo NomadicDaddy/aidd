@@ -6,6 +6,7 @@ import {
 	DirectorChatAgent,
 	NoToolCallingProviderError,
 } from '../../backend/src/services/director/chatAgent.ts';
+import { buildChatPrompt } from '../../backend/src/services/director/helpers.ts';
 import type { ChatAgentToolContext } from '../../backend/src/services/director/chatAgentTools.ts';
 import type { FleetSummary, ProfileRow } from '../../backend/src/services/director/types.ts';
 
@@ -143,7 +144,17 @@ describe('DirectorChatAgent', () => {
 
 		expect(preamble).toContain('Never infer recipe behavior from its name');
 		expect(preamble).toContain('call get_recipe for the exact steps');
+		expect(preamble).toContain('Never replace a recipe with a launch_run prompt');
+		expect(preamble).toContain('use launch_suggestion');
 		expect(preamble).toContain('Validates artifact status; it does not edit artifacts.');
+	});
+
+	test('read-only chat recommends the recipe launch route instead of a prose substitute', () => {
+		const prompt = buildChatPrompt(profile, fleetSummary, [userMessage('Run check-artifacts')]);
+		expect(prompt).toContain('Recommend the actual recipe launch from Recipes');
+		expect(prompt).toContain(
+			'Do not replace an existing recipe with a prose directive claiming to replicate it',
+		);
 	});
 
 	test('runs a tool call then returns the final reply with an action trail', async () => {

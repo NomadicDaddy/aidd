@@ -6,6 +6,7 @@ const guardrailFragments = [
 	'prompts/_common/hard-constraints.md',
 	'prompts/_common/forbidden-commands.md',
 	'prompts/_common/artifact-git-policy.md',
+	'prompts/_common/skill-selection.md',
 ] as const;
 
 // The shared hard-constraints blocked-state flow (document the question in

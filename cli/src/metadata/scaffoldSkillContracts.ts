@@ -1,6 +1,6 @@
 import type { SkillDefinition } from 'aidd-shared/skills/catalog';
 
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import { copyFileWithRetry, copyTreeIfChanged } from './scaffoldCommon.ts';
@@ -44,8 +44,8 @@ export function skillContractDeps(skill: SkillDefinition): SkillContractDeps | u
 // SKILL.md` (outside the project) is unreadable; copying the referenced skills and files into
 // `.aidd/skills/` and `.aidd/<ref>` gives the agent a local, in-sandbox copy. Targets are always
 // under `.aidd/`, which is inside the write-allowlist for metadata-only runs, so no allowsTarget
-// gate is needed here (mirrors copyCommonModules/copyAuditFiles). A declared source that cannot be
-// found is warned about (not silently skipped) since the skill prose tells the agent it was staged.
+// gate is needed here (mirrors copyCommonModules/copyAuditFiles). Declared sources are required:
+// reject missing or unreadable contracts before launching an agent that would have to guess.
 export async function copySkillContracts(
 	deps: SkillContractDeps | undefined,
 	rootDir: string,
@@ -57,11 +57,12 @@ export async function copySkillContracts(
 	for (const id of deps.contracts) {
 		const source = await resolveSkillDir(rootDir, dataDir, id);
 		if (!source) {
-			console.warn(
-				`Warning: skill contract '${id}' not found; not staged into .aidd/skills/`,
+			throw new Error(
+				`Required skill contract '${id}' not found; cannot stage .aidd/skills/`,
 			);
-			continue;
 		}
+		const definition = await readFile(join(source, 'SKILL.md'), 'utf8');
+		if (!definition.trim()) throw new Error(`Required skill contract '${id}' is empty`);
 		const target = join(aiddDir, 'skills', id);
 		await mkdir(target, { recursive: true });
 		await copyTreeIfChanged(source, target);
@@ -101,11 +102,12 @@ async function copyReferenceFiles(
 	for (const ref of references) {
 		const source = join(sourceRoot, ref);
 		if (!(await pathExists(source))) {
-			console.warn(
-				`Warning: skill ${kind}-reference '${ref}' not found; not staged into .aidd/`,
+			throw new Error(
+				`Required skill ${kind}-reference '${ref}' not found; cannot stage .aidd/`,
 			);
-			continue;
 		}
+		// Check readability even when an old staged copy exists; never silently reuse that copy.
+		await readFile(source);
 		const target = join(aiddDir, ref);
 		await mkdir(dirname(target), { recursive: true });
 		await copyFileWithRetry(source, target);

@@ -61,6 +61,15 @@ describe('MCP tool dispatcher', () => {
 		for (const tool of createToolDispatcher(client).listings) {
 			expect(tool.inputSchema.type).toBe('object');
 		}
+		const launchRun = createToolDispatcher(client).listings.find(
+			(tool) => tool.name === 'launch_run',
+		);
+		const prompt = (
+			launchRun?.inputSchema as {
+				properties?: { prompt?: { description?: string } };
+			}
+		).properties?.prompt?.description;
+		expect(prompt).toContain('Do not use this to simulate an existing recipe');
 	});
 
 	test('list_projects proxies GET /api/v1/projects', async () => {

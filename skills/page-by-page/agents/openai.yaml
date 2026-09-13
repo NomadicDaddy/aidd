@@ -1,0 +1,4 @@
+interface:
+    display_name: 'Page by Page'
+    short_description: 'Review every page against one shared question'
+    default_prompt: 'Use $page-by-page to ask one review question of every page, verify any skill lens selected, and consolidate findings with evidence.'

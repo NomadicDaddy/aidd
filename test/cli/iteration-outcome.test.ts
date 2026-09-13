@@ -50,7 +50,7 @@ describe('classifyIterationOutcome', () => {
 		expect(result.recordedExitCode).toBe(73);
 	});
 
-	test('directive run with fresh .aidd/ files does not record missing_aidd_result', async () => {
+	test('partial directive artifacts cannot replace a completion result', async () => {
 		const projectDir = await makeProjectDir('with-artifacts');
 		// Simulate an artifact written during the run
 		const reportDir = join(projectDir, '.aidd', 'audit-reports');
@@ -75,11 +75,11 @@ describe('classifyIterationOutcome', () => {
 			work: baseWork,
 		});
 
-		expect(result.missingAiddResult).toBe(false);
-		expect(result.recordedExitCode).toBe(0);
+		expect(result.missingAiddResult).toBe(true);
+		expect(result.recordedExitCode).toBe(73);
 	});
 
-	test('directive run with fresh top-level .aidd/ file does not record missing_aidd_result', async () => {
+	test('a refreshed top-level artifact does not establish full directive coverage', async () => {
 		const projectDir = await makeProjectDir('top-level-artifact');
 		const startedAtMs = Date.now();
 		// A real deliverable, not CHANGELOG.md: this case exists to prove top-level entries are
@@ -103,8 +103,8 @@ describe('classifyIterationOutcome', () => {
 			work: baseWork,
 		});
 
-		expect(result.missingAiddResult).toBe(false);
-		expect(result.recordedExitCode).toBe(0);
+		expect(result.missingAiddResult).toBe(true);
+		expect(result.recordedExitCode).toBe(73);
 	});
 
 	test('placeholder AIDD_RESULT marker records missing_aidd_result and flags the malformed marker', async () => {
@@ -270,7 +270,7 @@ describe('classifyIterationOutcome', () => {
 
 	// reports/ holds real skill deliverables next to the session files, so it must not be excluded
 	// wholesale — only the orchestrator's own session JSON is filtered.
-	test('a real deliverable in reports/ still counts as completion', async () => {
+	test('a report deliverable alone does not establish full directive completion', async () => {
 		const projectDir = await makeProjectDir('report-deliverable');
 		const startedAtMs = Date.now();
 		await mkdir(join(projectDir, '.aidd', 'reports'), { recursive: true });
@@ -296,11 +296,11 @@ describe('classifyIterationOutcome', () => {
 			work: baseWork,
 		});
 
-		expect(result.missingAiddResult).toBe(false);
-		expect(result.recordedExitCode).toBe(0);
+		expect(result.missingAiddResult).toBe(true);
+		expect(result.recordedExitCode).toBe(73);
 	});
 
-	test('a changelog write alongside a real artifact still counts as completion', async () => {
+	test('a changelog and artifact still require an explicit directive result', async () => {
 		const projectDir = await makeProjectDir('changelog-plus-artifact');
 		const startedAtMs = Date.now();
 		await writeFile(
@@ -325,8 +325,8 @@ describe('classifyIterationOutcome', () => {
 			work: baseWork,
 		});
 
-		expect(result.missingAiddResult).toBe(false);
-		expect(result.recordedExitCode).toBe(0);
+		expect(result.missingAiddResult).toBe(true);
+		expect(result.recordedExitCode).toBe(73);
 	});
 
 	test('directive run with only stale .aidd/ files still records missing_aidd_result', async () => {
@@ -425,7 +425,7 @@ describe('classifyIterationOutcome', () => {
 			console.warn = originalWarn;
 		}
 
-		// Coding mode is NOT exempted by .aidd artifacts — only directive (generic) is
+		// Coding mode is NOT exempted by .aidd artifacts, and neither are directives.
 		expect(result.missingAiddResult).toBe(true);
 		expect(result.recordedExitCode).toBe(73);
 		// ...so the warning must not claim the .aidd check found nothing: it never ran, and
@@ -524,7 +524,54 @@ describe('classifyIterationOutcome', () => {
 		expect(result.recordedExitCode).toBe(0);
 	});
 
-	test('directive run with structured result does not record missing_aidd_result', async () => {
+	test('an explicit directiveCompleted true result is complete without artifacts or commits', async () => {
+		const projectDir = await makeProjectDir('directive-completed');
+
+		const result = await classifyIterationOutcome({
+			completedResultFeature: undefined,
+			completionFinalizedBeforeBackendExit: false,
+			events: [],
+			exitCode: 0,
+			iterationCommits: [],
+			modeResult: { complete: true, summary: 'directive run finished with exit code 0' },
+			plan: { ...basePlan, projectDir },
+			startedAtMs: Date.now(),
+			structuredResult: { directiveCompleted: true },
+			work: baseWork,
+		});
+
+		expect(result.missingAiddResult).toBe(false);
+		expect(result.recordedExitCode).toBe(0);
+	});
+
+	test('an explicit directiveCompleted false is blocked rather than a missing result', async () => {
+		const projectDir = await makeProjectDir('directive-partial');
+
+		const result = await classifyIterationOutcome({
+			completedResultFeature: undefined,
+			completionFinalizedBeforeBackendExit: false,
+			events: [],
+			exitCode: 0,
+			iterationCommits: [],
+			modeResult: {
+				complete: false,
+				fatal: { exitCode: 1, stopReason: 'blocked' },
+				summary: 'directive run incomplete: required work remains',
+			},
+			plan: { ...basePlan, projectDir },
+			startedAtMs: Date.now(),
+			structuredResult: {
+				directiveCompleted: false,
+				reason: 'Required review contract is unreadable',
+			},
+			work: baseWork,
+		});
+
+		expect(result.missingAiddResult).toBe(false);
+		expect(result.recordedExitCode).toBe(1);
+	});
+
+	test('an unrelated structured result cannot certify directive completion', async () => {
 		const projectDir = await makeProjectDir('structured-result');
 
 		const result = await classifyIterationOutcome({
@@ -540,11 +587,11 @@ describe('classifyIterationOutcome', () => {
 			work: baseWork,
 		});
 
-		expect(result.missingAiddResult).toBe(false);
-		expect(result.recordedExitCode).toBe(0);
+		expect(result.missingAiddResult).toBe(true);
+		expect(result.recordedExitCode).toBe(73);
 	});
 
-	test('directive run with commits does not record missing_aidd_result', async () => {
+	test('directive commits alone do not establish full completion', async () => {
 		const projectDir = await makeProjectDir('with-commits');
 
 		const result = await classifyIterationOutcome({
@@ -560,8 +607,8 @@ describe('classifyIterationOutcome', () => {
 			work: baseWork,
 		});
 
-		expect(result.missingAiddResult).toBe(false);
-		expect(result.recordedExitCode).toBe(0);
+		expect(result.missingAiddResult).toBe(true);
+		expect(result.recordedExitCode).toBe(73);
 	});
 
 	test('killed background tasks at teardown are flagged alongside missing_aidd_result', async () => {

@@ -31,6 +31,19 @@ function stubContext(overrides: Partial<ChatAgentToolContext> = {}): ChatAgentTo
 const dispatch = { allowFileEdits: false, sessionId: 's1' };
 
 describe('chat agent tool definitions', () => {
+	test('launch_run refuses to treat a custom prompt as a recipe substitute', () => {
+		const launchRun = buildToolDefinitions(false).find(
+			(tool) => tool.function.name === 'launch_run',
+		);
+		const prompt = (
+			launchRun?.function.parameters as {
+				properties?: { prompt?: { description?: string } };
+			}
+		).properties?.prompt?.description;
+		expect(prompt).toContain('Do not use this to simulate an existing recipe');
+		expect(prompt).toContain('launch its matching suggestion');
+	});
+
 	test('omits file tools unless file edits are enabled', () => {
 		const names = (allow: boolean) =>
 			buildToolDefinitions(allow).map((tool) => tool.function.name);

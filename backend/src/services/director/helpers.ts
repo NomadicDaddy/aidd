@@ -150,6 +150,7 @@ export function buildChatPrompt(
 		'This is a read-only chat turn. Do not modify files, launch runs, write suggestions, or emit AIDD_RESULT.',
 		'When the user asks for project action, explain what the next Director cycle should prioritize rather than starting work.',
 		'Never infer recipe behavior from its name. Use the recipe catalog description and distinguish validation recipes from recipes that edit project artifacts.',
+		'Recommend the actual recipe launch from Recipes. Do not replace an existing recipe with a prose directive claiming to replicate it; the recipe carries required skill contracts and pipeline checks.',
 		'',
 		'## Active Director Profile',
 		`Role: ${profile.role}`,

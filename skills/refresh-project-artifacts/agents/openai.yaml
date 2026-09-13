@@ -1,4 +1,4 @@
 interface:
     display_name: 'Refresh Project Artifacts'
     short_description: 'Refresh every documented aidd project artifact'
-    default_prompt: 'Use $refresh-project-artifacts to refresh every documented aidd artifact for this project.'
+    default_prompt: 'Use $refresh-project-artifacts to refresh every documented aidd artifact for this project using the exact producer contracts and Context maintenance procedure; report unresolved required work as blocked.'

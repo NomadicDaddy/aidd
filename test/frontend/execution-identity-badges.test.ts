@@ -123,7 +123,7 @@ describe('ExecutionIdentityBadges', () => {
 	test('the tooltip wrapper does not revoke the shrinking the badge asks for', () => {
 		const html = renderExecutionIdentity({
 			backend: 'codex',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			reasoningEffort: 'high',
 		});
 		const tooltip = readFileSync(
@@ -163,15 +163,15 @@ describe('ExecutionIdentityBadges', () => {
 		const html = renderExecutionIdentity({
 			backend: 'direct',
 			hint: 'Resolved Director target',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			provider: 'openai',
 			reasoningEffort: 'high',
 		});
 
-		expect(html.indexOf('Direct AI')).toBeLessThan(html.indexOf('gpt-5.6-sol'));
-		expect(html.indexOf('gpt-5.6-sol')).toBeLessThan(html.indexOf('high'));
+		expect(html.indexOf('Direct AI')).toBeLessThan(html.indexOf('gpt-6-astra'));
+		expect(html.indexOf('gpt-6-astra')).toBeLessThan(html.indexOf('high'));
 		expect(html).toContain(
-			'aria-label="CLI Direct AI, Model gpt-5.6-sol, Reasoning high, Provider OpenAI, Resolved Director target"',
+			'aria-label="CLI Direct AI, Model gpt-6-astra, Reasoning high, Provider OpenAI, Resolved Director target"',
 		);
 		expect(html).toContain('<svg');
 		expect(html).toContain('lucide-square-terminal');
@@ -197,12 +197,12 @@ describe('ExecutionIdentityBadges', () => {
 	test('separates human labels from raw identifiers by typeface at both boundaries', () => {
 		const badge = renderExecutionIdentity({
 			backend: 'direct',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			reasoningEffort: 'high',
 		});
 		const details = renderExecutionIdentityDetails({
 			backend: 'direct',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			provider: 'openai',
 			reasoningEffort: 'high',
 		});
@@ -215,10 +215,10 @@ describe('ExecutionIdentityBadges', () => {
 			/class="[^"]*font-medium text-muted-foreground[^"]*"[^>]*>[\s\S]*?Direct AI/u,
 		);
 		expect(badge).toMatch(
-			/class="[^"]*font-mono font-semibold[^"]*"[^>]*>[\s\S]*?gpt-5\.6-sol/u,
+			/class="[^"]*font-mono font-semibold[^"]*"[^>]*>[\s\S]*?gpt-6-astra/u,
 		);
 		expect(details).toContain('<dd class="min-w-0 break-all font-sans">Direct AI</dd>');
-		expect(details).toContain('<dd class="min-w-0 break-all font-mono">gpt-5.6-sol</dd>');
+		expect(details).toContain('<dd class="min-w-0 break-all font-mono">gpt-6-astra</dd>');
 		expect(details).toContain('<dd class="min-w-0 break-all font-sans">OpenAI</dd>');
 		expect(unknown).toContain('<dd class="min-w-0 break-all font-mono">custom-cli</dd>');
 		expect(unknown).toContain('<dd class="min-w-0 break-all font-mono">custom-provider</dd>');
@@ -227,7 +227,7 @@ describe('ExecutionIdentityBadges', () => {
 	test('an identity with nothing hidden is still recoverable by touch and keyboard', () => {
 		const html = renderExecutionIdentity({
 			backend: 'codex',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			reasoningEffort: 'high',
 		});
 
@@ -298,7 +298,7 @@ describe('ExecutionIdentityBadges', () => {
 	test('respects the explicit no-tooltip variant', () => {
 		const html = renderExecutionIdentity({
 			backend: 'codex',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			withTooltip: false,
 		});
 
@@ -323,7 +323,7 @@ describe('PipelineSessionIdentityBadges', () => {
 		const html = renderPipelineIdentities([
 			{
 				backend: 'codex',
-				model: 'gpt-5.6-sol',
+				model: 'gpt-6-astra',
 				provider: null,
 				reasoningEffort: 'high',
 			},
@@ -338,7 +338,7 @@ describe('PipelineSessionIdentityBadges', () => {
 		expect(html).toContain('Pipeline runtime 1 of 2');
 		expect(html).toContain('Pipeline runtime 2 of 2');
 		expect(html).toContain('Codex');
-		expect(html).toContain('gpt-5.6-sol');
+		expect(html).toContain('gpt-6-astra');
 		expect(html).toContain('Claude Code');
 		expect(html).toContain('claude-fable-5');
 	});

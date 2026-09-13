@@ -39,7 +39,7 @@ const representativeIdentities: readonly {
 }[] = [
 	{
 		description: 'A complete coding-run identity.',
-		identity: { backend: 'codex', model: 'gpt-5.6-sol', reasoningEffort: 'high' },
+		identity: { backend: 'codex', model: 'gpt-6-astra', reasoningEffort: 'high' },
 		label: 'Production run',
 	},
 	{

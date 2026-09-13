@@ -112,7 +112,7 @@ describe('benchmark harness', () => {
 			(candidate) => candidate.label === 'claude-code-opus48-max',
 		);
 		const codexXhigh = manifest.stacks.find(
-			(candidate) => candidate.label === 'codex-gpt56-sol-xhigh',
+			(candidate) => candidate.label === 'codex-gpt6-astra-xhigh',
 		);
 		const qwenThinking = manifest.stacks.find(
 			(candidate) => candidate.label === 'ollama-qwen36-latest-thinking',
@@ -564,11 +564,11 @@ describe('benchmark cost resolution', () => {
 
 	test('resolves pricing via cohort target model family', () => {
 		const glm = manifest.stacks.find((stack) => stack.label === 'native-glm53-high')!;
-		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt56-sol-high')!;
+		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt6-astra-high')!;
 		const claude = manifest.stacks.find((stack) => stack.label === 'claude-code-opus48-high')!;
 		const ollama = manifest.stacks.find((stack) => stack.label === 'ollama-gpt-oss-20b-low')!;
 		expect(pricingForStack(glm, manifest)?.inputPerMtok).toBe(1.4);
-		expect(pricingForStack(codex, manifest)?.inputPerMtok).toBe(4);
+		expect(pricingForStack(codex, manifest)?.inputPerMtok).toBe(10);
 		// claude and local ollama are intentionally unmetered (trusted/local).
 		expect(pricingForStack(claude, manifest)).toBeUndefined();
 		expect(pricingForStack(ollama, manifest)).toBeUndefined();
@@ -600,15 +600,15 @@ describe('benchmark cost resolution', () => {
 		expect(estimate).toBeCloseTo(1.4, 6);
 		// native/codex report zero dollars but real tokens -> estimate, not zero.
 		expect(resolveCost(0, usage(827_429, 6_462), pricing)).toBeGreaterThan(0);
-		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt56-sol-high')!;
+		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt6-astra-high')!;
 		const codexPricing = pricingForStack(codex, manifest)!;
-		// 1M codex input at $4/Mtok + small output at $20/Mtok.
-		expect(resolveCost(0, usage(1_013_545, 11_887), codexPricing)).toBeCloseTo(4.292, 2);
+		// Astra standard short-context input at $10/Mtok + output at $50/Mtok.
+		expect(resolveCost(0, usage(1_013_545, 11_887), codexPricing)).toBeCloseTo(10.7298, 4);
 	});
 
 	test('charges cached tokens as an input discount, not additively', () => {
-		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt56-sol-high')!;
-		const pricing = pricingForStack(codex, manifest)!; // input $4, cached $0.40
+		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt6-astra-high')!;
+		const pricing = pricingForStack(codex, manifest)!; // input $10, cached $1
 		const allCached = {
 			cachedTokens: 1_000_000,
 			inputTokens: 1_000_000,
@@ -616,8 +616,8 @@ describe('benchmark cost resolution', () => {
 			outputTokens: 0,
 			reasoningTokens: 0,
 		};
-		// 1M input, all cached -> billed at the cached rate only ($0.40), not $4+$0.40.
-		expect(estimateCostFromTokens(allCached, pricing)).toBeCloseTo(0.4, 6);
+		// 1M input, all cached -> billed at the cached rate only ($1), not $10+$1.
+		expect(estimateCostFromTokens(allCached, pricing)).toBeCloseTo(1, 6);
 		const halfCached = {
 			cachedTokens: 500_000,
 			inputTokens: 1_000_000,
@@ -625,8 +625,8 @@ describe('benchmark cost resolution', () => {
 			outputTokens: 0,
 			reasoningTokens: 0,
 		};
-		// 500k fresh @ $4 + 500k cached @ $0.40 = 2 + 0.2 = 2.2.
-		expect(estimateCostFromTokens(halfCached, pricing)).toBeCloseTo(2.2, 6);
+		// 500k fresh @ $10 + 500k cached @ $1 = 5 + 0.5 = 5.5.
+		expect(estimateCostFromTokens(halfCached, pricing)).toBeCloseTo(5.5, 6);
 	});
 
 	test('reports unknown when pricing exists but no token data', () => {

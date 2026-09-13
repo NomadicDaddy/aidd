@@ -77,14 +77,14 @@ describe('effective launch-target display', () => {
 		const display = launchTargetDefaultDisplay({
 			backend: 'codex',
 			isLoading: false,
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			modelSource: 'backend-config',
 			provider: 'zhipu',
 		});
 
-		expect(display.modelPlaceholder).toBe('Effective (gpt-5.6-sol)');
+		expect(display.modelPlaceholder).toBe('Effective (gpt-6-astra)');
 		expect(display.modelProvenance).toBe(
-			'Effective model: gpt-5.6-sol · CLI default from config · CLI Codex · Provider Zhipu',
+			'Effective model: gpt-6-astra · CLI default from config · CLI Codex · Provider Zhipu',
 		);
 	});
 

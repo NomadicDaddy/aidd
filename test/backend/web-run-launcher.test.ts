@@ -1590,9 +1590,9 @@ describe('web run launcher', () => {
 						execCli: 'native',
 						execModel: 'glm-5.3',
 						overseerCli: 'claude-code',
-						overseerModel: 'claude-opus-5',
+						overseerModel: 'claude-fable-5-1',
 						secondaryCli: 'codex',
-						secondaryModel: 'gpt-5.6-sol',
+						secondaryModel: 'gpt-6-astra',
 					},
 				},
 			);
@@ -1623,9 +1623,9 @@ describe('web run launcher', () => {
 					backend: 'native',
 					triumvirate: {
 						overseerCli: 'claude-code',
-						overseerModel: 'claude-opus-5',
+						overseerModel: 'claude-fable-5-1',
 						secondaryCli: 'codex',
-						secondaryModel: 'gpt-5.6-sol',
+						secondaryModel: 'gpt-6-astra',
 					},
 				},
 			);
@@ -1641,11 +1641,11 @@ describe('web run launcher', () => {
 				'--secondary-cli',
 				'codex',
 				'--secondary-model',
-				'gpt-5.6-sol',
+				'gpt-6-astra',
 				'--overseer-cli',
 				'claude-code',
 				'--overseer-model',
-				'claude-opus-5',
+				'claude-fable-5-1',
 			]);
 		} finally {
 			await removeTempTree(rootDir);
@@ -1732,7 +1732,7 @@ describe('web run launcher', () => {
 			backend: 'codex',
 			id: 'run_directive_1',
 			mode: 'directive',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			projectName: 'demo',
 			projectPath: 'd:/applications/demo',
 			startedAt: 123,
@@ -1773,7 +1773,7 @@ describe('web run launcher', () => {
 
 		const reviewResponse = await post('review-only', '  Inspect the current state.  ', {
 			backend: 'codex',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			reasoningEffort: 'high',
 		});
 		const applyResponse = await post('apply-changes', 'Fix the current issue.');
@@ -1786,7 +1786,7 @@ describe('web run launcher', () => {
 				directiveReadonly: true,
 				maxIterations: 1,
 				mode: 'directive',
-				model: 'gpt-5.6-sol',
+				model: 'gpt-6-astra',
 				projectDir: 'd:/applications/demo',
 				prompt: 'Inspect the current state.',
 				reasoningEffort: 'high',
@@ -3172,7 +3172,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				'--cli',
 				'codex',
 				'--model',
-				'gpt-5.6-sol',
+				'gpt-6-astra',
 				'--reasoning-effort',
 				'high',
 			];
@@ -3197,7 +3197,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 						'--filter-by id',
 						"--filter 'remediation-*'",
 						'--cli codex',
-						'--model gpt-5.6-sol',
+						'--model gpt-6-astra',
 						'--reasoning-effort high',
 					].join(' '),
 					source: 'exact',

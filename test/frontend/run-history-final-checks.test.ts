@@ -53,7 +53,7 @@ function makeRun(overrides: Partial<ProjectLocalRun> = {}): ProjectLocalRun {
 		filesEdited: 0,
 		mode: 'directive',
 		phase: 'directive',
-		model: 'gpt-5.6-sol',
+		model: 'gpt-6-astra',
 		provider: null,
 		reasoningEffort: 'high',
 		residualDirtySourceFiles: [],

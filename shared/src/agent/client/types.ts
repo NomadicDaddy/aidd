@@ -15,7 +15,7 @@ export const providerDefaults = {
 	openai: {
 		apiKeyRequired: true,
 		baseUrl: 'https://api.openai.com/v1',
-		model: 'gpt-5.6-sol',
+		model: 'gpt-6-astra',
 	},
 	xai: {
 		apiKeyRequired: true,

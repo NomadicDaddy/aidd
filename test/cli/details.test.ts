@@ -412,7 +412,7 @@ describe('extractIterationDetails', () => {
 				meta: {
 					type: 'error',
 					message:
-						'{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The \'gpt-5.6-sol\' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."}}',
+						'{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The \'gpt-6-astra\' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."}}',
 				},
 			},
 		];
@@ -420,7 +420,7 @@ describe('extractIterationDetails', () => {
 		const details = extractIterationDetails(events, orchestratorExitCodes.providerError);
 
 		expect(details.providerError?.message).toBe(
-			"The 'gpt-5.6-sol' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again.",
+			"The 'gpt-6-astra' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again.",
 		);
 	});
 
@@ -545,7 +545,7 @@ describe('codex stream end-to-end provider error', () => {
 				id: 'item_0',
 				type: 'error',
 				message:
-					'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata.',
+					'Model metadata for `gpt-6-astra` not found. Defaulting to fallback metadata.',
 			},
 		});
 		const events = parseCodexBackendOutput(stdout, 'Reading prompt from stdin...\n', 1);
@@ -631,7 +631,7 @@ describe('codex stream end-to-end provider error', () => {
 					id: 'item_0',
 					type: 'error',
 					message:
-						'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata.',
+						'Model metadata for `gpt-6-astra` not found. Defaulting to fallback metadata.',
 				},
 			}),
 			JSON.stringify({
@@ -660,20 +660,20 @@ describe('codex stream end-to-end provider error', () => {
 					id: 'item_0',
 					type: 'error',
 					message:
-						'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.',
+						'Model metadata for `gpt-6-astra` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.',
 				},
 			}),
 			JSON.stringify({ type: 'turn.started' }),
 			JSON.stringify({
 				type: 'error',
 				message:
-					'{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The \'gpt-5.6-sol\' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."}}',
+					'{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The \'gpt-6-astra\' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."}}',
 			}),
 			JSON.stringify({
 				type: 'turn.failed',
 				error: {
 					message:
-						'{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The \'gpt-5.6-sol\' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."}}',
+						'{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The \'gpt-6-astra\' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again."}}',
 				},
 			}),
 		].join('\n');

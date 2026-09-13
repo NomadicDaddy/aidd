@@ -27,9 +27,9 @@ export const executionIdentityCliCatalog = [
 
 export const executionIdentityModelCatalog = [
 	'claude-fable-5',
-	'claude-opus-5',
+	'claude-fable-5-1',
 	'glm-5.3',
-	'gpt-5.6-sol',
+	'gpt-6-astra',
 	'gpt-oss:20b',
 	'openai/gpt-oss-20b',
 	'zai-coding-plan/glm-5.3',

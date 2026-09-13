@@ -12,7 +12,7 @@ the preserved benchmark output files.
     - `kilocode-glm53-low`, `kilocode-glm53-medium`, `kilocode-glm53-high`
     - `opencode-glm53-low`, `opencode-glm53-medium`, `opencode-glm53-high`
     - `claude-code-opus48-low`, `claude-code-opus48-medium`, `claude-code-opus48-high`, `claude-code-opus48-xhigh`, `claude-code-opus48-max`
-    - `codex-gpt56-sol-low`, `codex-gpt56-sol-medium`, `codex-gpt56-sol-high`, `codex-gpt56-sol-xhigh`
+    - `codex-gpt6-astra-low`, `codex-gpt6-astra-medium`, `codex-gpt6-astra-high`, `codex-gpt6-astra-xhigh`
     - `ollama-qwen36-latest`, `ollama-qwen36-latest-thinking`, `ollama-qwen36-27b`, `ollama-qwen36-27b-thinking`
     - `ollama-gpt-oss-20b-low`, `ollama-gpt-oss-20b-medium`, `ollama-gpt-oss-20b-high`, `ollama-gemma4-12b`
     - `lmstudio-gpt-oss-20b`, `lmstudio-gemma-4-e4b`
@@ -21,6 +21,10 @@ the preserved benchmark output files.
 
 The benchmark schemas also accept `cline`. No default Cline stack is included because Cline owns
 provider and model selection; add an explicit stack only when the benchmark environment pins both.
+
+Astra token-cost estimates use standard short-context rates: $10 input, $1 cached input, and
+$50 output per million tokens, verified against [OpenAI pricing](https://developers.openai.com/api/docs/pricing)
+on 2026-09-13. The manifest's flat-rate estimator does not model long-context or Fast mode pricing.
 
 Local-model stacks (Ollama, LM Studio) need models loaded with a context window large enough for
 aidd's prompts (the audit task alone sends ~58-65k tokens) and typically run with

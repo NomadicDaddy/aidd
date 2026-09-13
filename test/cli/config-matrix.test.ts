@@ -16,7 +16,7 @@ describe('config matrix', () => {
 			reasoningEffort: 'high',
 			backends: {
 				codex: {
-					model: 'gpt-5.6-sol',
+					model: 'gpt-6-astra',
 				},
 			},
 			defaultProvider: 'zhipu',
@@ -42,13 +42,13 @@ describe('config matrix', () => {
 		expect(output).toContain('User config:    ');
 		expect(output).toContain('Project config: none');
 		expect(output).toContain(
-			'| Normal run / web Runs launch         | codex        | not configured | gpt-5.6-sol',
+			'| Normal run / web Runs launch         | codex        | not configured | gpt-6-astra',
 		);
 		expect(output).toContain(
 			'| Direct AI project advisor            | direct-ai    | zhipu          | glm-5.3',
 		);
 		expect(output).toContain(
-			'| Direct AI director chat              | direct-ai    | zhipu          | gpt-5.6-sol',
+			'| Direct AI director chat              | direct-ai    | zhipu          | gpt-6-astra',
 		);
 		expect(output).toContain('| Triumvirate                          | not runnable | n/a');
 		expect(output).toContain('Missing secondaryCli, overseerCli. No triumvirate config found.');

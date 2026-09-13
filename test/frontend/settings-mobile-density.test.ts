@@ -20,7 +20,7 @@ function renderDisclosure(defaults: BackendDefaultSettings): string {
 		`const defaults = ${JSON.stringify(defaults)};`,
 		'console.log(renderToStaticMarkup(createElement(BackendDefaultsDisclosureRow, {',
 		" backend: 'codex', defaults, identity: createElement('span', null, 'codex installed'),",
-		' savedDefaults: defaults, setBackendDefault: () => {}, sharedModel: "gpt-5.6-sol"',
+		' savedDefaults: defaults, setBackendDefault: () => {}, sharedModel: "gpt-6-astra"',
 		'})));',
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {
@@ -35,7 +35,7 @@ function renderDisclosure(defaults: BackendDefaultSettings): string {
 
 describe('Settings mobile backend disclosures', () => {
 	test('summarizes status, effective model, and local-default state while collapsed', () => {
-		const defaults = { ...emptyBackendDefault(), model: 'gpt-5.6-sol' };
+		const defaults = { ...emptyBackendDefault(), model: 'gpt-6-astra' };
 		const html = renderDisclosure(defaults);
 
 		expect(html).toContain('aria-expanded="false"');
@@ -45,7 +45,7 @@ describe('Settings mobile backend disclosures', () => {
 			'focus-visible:ring-2 focus-visible:ring-ring/80 focus-visible:outline-none focus-visible:ring-inset',
 		);
 		expect(html).toContain('codex installed');
-		expect(html).toContain('Model: gpt-5.6-sol');
+		expect(html).toContain('Model: gpt-6-astra');
 		expect(html).toContain('Local defaults');
 		expect(html).not.toContain('codex model');
 	});
@@ -54,10 +54,10 @@ describe('Settings mobile backend disclosures', () => {
 		const defaults = emptyBackendDefault();
 
 		expect(backendHasLocalDefaults(defaults)).toBe(false);
-		expect(effectiveBackendModel(defaults, 'gpt-5.6-sol')).toBe('gpt-5.6-sol');
+		expect(effectiveBackendModel(defaults, 'gpt-6-astra')).toBe('gpt-6-astra');
 		expect(effectiveBackendModel(defaults, null)).toBe('CLI default');
-		expect(effectiveBackendModel({ ...defaults, model: 'openai/gpt-5.6-sol' }, 'shared')).toBe(
-			'openai/gpt-5.6-sol',
+		expect(effectiveBackendModel({ ...defaults, model: 'openai/gpt-6-astra' }, 'shared')).toBe(
+			'openai/gpt-6-astra',
 		);
 	});
 

@@ -131,7 +131,7 @@ describe('CLI active-run heartbeat', () => {
 		const runtimePlan = resolveRunPlan(parseArgs(argv), {
 			...config,
 			cli: 'codex',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			projectDir: store.projectDir,
 			reasoningEffort: 'high',
 		});
@@ -147,7 +147,7 @@ describe('CLI active-run heartbeat', () => {
 			'--cli',
 			'codex',
 			'--model',
-			'gpt-5.6-sol',
+			'gpt-6-astra',
 			'--reasoning-effort',
 			'high',
 		]);

@@ -695,7 +695,7 @@ describe('DirectorService.persistCycleResult', () => {
 						cycleId,
 						{
 							directAiMeta: {
-								model: 'gpt-5.6-sol',
+								model: 'gpt-6-astra',
 								provider: 'openai',
 								reasoningEffort: 'high' as const,
 							},
@@ -707,7 +707,7 @@ describe('DirectorService.persistCycleResult', () => {
 
 			expect(record.stage).toBe('running_direct_ai');
 			expect(record.directAiMeta).toEqual({
-				model: 'gpt-5.6-sol',
+				model: 'gpt-6-astra',
 				provider: 'openai',
 				reasoningEffort: 'high',
 			});

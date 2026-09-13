@@ -9,18 +9,18 @@ import { toneText } from '../../lib/tones.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
 const modelPlaceholders: Record<BackendName, string> = {
-	'claude-code': 'e.g., claude-opus-5',
-	cline: 'e.g., claude-opus-5',
-	codex: 'e.g., gpt-5.6-sol',
+	'claude-code': 'e.g., claude-fable-5-1',
+	cline: 'e.g., claude-fable-5-1',
+	codex: 'e.g., gpt-6-astra',
 	grok: 'e.g., grok-4.6',
 	// kilocode and opencode reject a bare model name — they resolve `provider/model` and fail
 	// with ProviderModelNotFoundError otherwise, so their placeholders must teach that shape.
-	kilocode: 'e.g., anthropic/claude-opus-5',
+	kilocode: 'e.g., anthropic/claude-fable-5-1',
 	lmstudio: 'e.g., openai/gpt-oss-20b',
 	native: 'e.g., glm-5.3',
 	ollama: 'e.g., llama3.1',
-	openai: 'e.g., gpt-5.6-sol',
-	opencode: 'e.g., openai/gpt-5.6-sol',
+	openai: 'e.g., gpt-6-astra',
+	opencode: 'e.g., openai/gpt-6-astra',
 };
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 

@@ -745,7 +745,7 @@ describe('codex real error surfacing', () => {
 				id: 'item_0',
 				type: 'error',
 				message:
-					'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata.',
+					'Model metadata for `gpt-6-astra` not found. Defaulting to fallback metadata.',
 			},
 		});
 		const events = parseCodexBackendOutput(line, 'Reading prompt from stdin...\n', 1);
@@ -753,7 +753,7 @@ describe('codex real error surfacing', () => {
 		expect(error).toBeDefined();
 		if (error?.type !== 'error') throw new Error('expected error event');
 		expect(error.fatal).toBe(false);
-		expect(JSON.stringify(error.meta)).toContain('gpt-5.6-sol');
+		expect(JSON.stringify(error.meta)).toContain('gpt-6-astra');
 	});
 
 	test('recognized nonfatal diagnostics carry the resolving action as an advisory', () => {
@@ -770,7 +770,7 @@ describe('codex real error surfacing', () => {
 			{
 				expected: 'token accounting',
 				message:
-					'Model metadata for `gpt-5.6-sol` not found. Defaulting to fallback metadata.',
+					'Model metadata for `gpt-6-astra` not found. Defaulting to fallback metadata.',
 			},
 		];
 
@@ -871,7 +871,7 @@ describe('codex real error surfacing', () => {
 			status: 400,
 			error: {
 				type: 'invalid_request_error',
-				message: "The 'gpt-5.6-sol' model requires a newer version of Codex.",
+				message: "The 'gpt-6-astra' model requires a newer version of Codex.",
 			},
 		});
 		const line = JSON.stringify({ type: 'turn.failed', error: { message: nested } });

@@ -34,7 +34,7 @@ describe('global directive launcher API', () => {
 		const run = await launchDirectiveRun({
 			backend: 'codex',
 			executionIntent: 'review-only',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			projectDir: 'D:\\applications\\aidd',
 			prompt: 'Inspect the current implementation.',
 			reasoningEffort: 'high',
@@ -46,7 +46,7 @@ describe('global directive launcher API', () => {
 		expect(capturedBody).toEqual({
 			backend: 'codex',
 			executionIntent: 'review-only',
-			model: 'gpt-5.6-sol',
+			model: 'gpt-6-astra',
 			projectDir: 'D:\\applications\\aidd',
 			prompt: 'Inspect the current implementation.',
 			reasoningEffort: 'high',

@@ -41,7 +41,7 @@ function renderDetails(props: Record<string, null | string>): string {
 	return new TextDecoder().decode(result.stdout).trim();
 }
 
-const full = { backend: 'codex', model: 'gpt-5.6-sol', reasoningEffort: 'high' };
+const full = { backend: 'codex', model: 'gpt-6-astra', reasoningEffort: 'high' };
 
 describe('execution identity survives a narrow column', () => {
 	test('compact retains canonical CLI, model, and reasoning labels', () => {
@@ -50,21 +50,21 @@ describe('execution identity survives a narrow column', () => {
 		// Compact removes width floors, not facts. Each segment may truncate independently in a
 		// narrow cell, while its text remains present and the tooltip preserves the complete values.
 		expect(html).toContain('>Codex<');
-		expect(html).toContain('>gpt-5.6-sol<');
+		expect(html).toContain('>gpt-6-astra<');
 		expect(html).toContain('>high<');
 		expect(html).not.toContain('lucide-square-terminal');
 		expect(html).not.toContain('lucide-gauge');
 		expect(html).toContain('flex-auto');
 		expect(html.match(/flex-auto/gu)).toHaveLength(2);
 		expect(html).toContain('shrink-0');
-		expect(html).toContain('CLI Codex, Model gpt-5.6-sol, Reasoning high');
+		expect(html).toContain('CLI Codex, Model gpt-6-astra, Reasoning high');
 		expect(html).toContain('tabindex="0"');
 	});
 
 	test('compact can retain the reasoning label when its table column budgets for it', () => {
 		const html = render({ ...full, compactReasoningLabel: true, variant: 'compact' });
 
-		expect(html).toContain('>gpt-5.6-sol<');
+		expect(html).toContain('>gpt-6-astra<');
 		expect(html).toContain('>high<');
 		expect(html).toContain('>Codex<');
 		expect(html).toContain('px-0.5');
@@ -114,7 +114,7 @@ describe('execution identity survives a narrow column', () => {
 		for (const props of [full, { ...full, variant: 'compact' }]) {
 			const html = render(props);
 			expect(html).toContain('tabindex="0"');
-			expect(html).toContain('CLI Codex, Model gpt-5.6-sol, Reasoning high');
+			expect(html).toContain('CLI Codex, Model gpt-6-astra, Reasoning high');
 			// The mouse-only fallback is gone, not layered underneath.
 			expect(html).not.toContain('title=');
 		}
@@ -129,7 +129,7 @@ describe('execution identity survives a narrow column', () => {
 		expect(source).not.toContain('[direction:rtl]');
 		expect(render(full)).toContain('truncate text-left');
 		// The isolate keeps punctuation such as the hyphen in `glm-5.3` ordered correctly.
-		expect(render(full)).toContain('<bdi dir="ltr">gpt-5.6-sol</bdi>');
+		expect(render(full)).toContain('<bdi dir="ltr">gpt-6-astra</bdi>');
 	});
 
 	test('machine identifiers render in font-mono', () => {

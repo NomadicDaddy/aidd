@@ -28,13 +28,13 @@
 		},
 		{
 			"members": [
-				"codex-gpt56-sol-low",
-				"codex-gpt56-sol-medium",
-				"codex-gpt56-sol-high",
-				"codex-gpt56-sol-xhigh"
+				"codex-gpt6-astra-low",
+				"codex-gpt6-astra-medium",
+				"codex-gpt6-astra-high",
+				"codex-gpt6-astra-xhigh"
 			],
-			"name": "gpt-5.6-sol",
-			"targetModelFamily": "gpt-5.6-sol"
+			"name": "gpt-6-astra",
+			"targetModelFamily": "gpt-6-astra"
 		},
 		{
 			"members": [
@@ -62,10 +62,10 @@
 			"inputPerMtok": 1.4,
 			"outputPerMtok": 4.4
 		},
-		"gpt-5.6-sol": {
-			"cachedPerMtok": 0.4,
-			"inputPerMtok": 4,
-			"outputPerMtok": 20
+		"gpt-6-astra": {
+			"cachedPerMtok": 1,
+			"inputPerMtok": 10,
+			"outputPerMtok": 50
 		}
 	},
 	"scoring": {
@@ -190,29 +190,29 @@
 		},
 		{
 			"cli": "codex",
-			"label": "codex-gpt56-sol-low",
-			"model": "gpt-5.6-sol",
+			"label": "codex-gpt6-astra-low",
+			"model": "gpt-6-astra",
 			"reasoningEffort": "low",
 			"view": "native-best"
 		},
 		{
 			"cli": "codex",
-			"label": "codex-gpt56-sol-medium",
-			"model": "gpt-5.6-sol",
+			"label": "codex-gpt6-astra-medium",
+			"model": "gpt-6-astra",
 			"reasoningEffort": "medium",
 			"view": "native-best"
 		},
 		{
 			"cli": "codex",
-			"label": "codex-gpt56-sol-high",
-			"model": "gpt-5.6-sol",
+			"label": "codex-gpt6-astra-high",
+			"model": "gpt-6-astra",
 			"reasoningEffort": "high",
 			"view": "native-best"
 		},
 		{
 			"cli": "codex",
-			"label": "codex-gpt56-sol-xhigh",
-			"model": "gpt-5.6-sol",
+			"label": "codex-gpt6-astra-xhigh",
+			"model": "gpt-6-astra",
 			"reasoningEffort": "extra high",
 			"view": "native-best"
 		},

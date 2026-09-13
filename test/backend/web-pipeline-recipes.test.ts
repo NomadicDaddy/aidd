@@ -1414,7 +1414,7 @@ ${heartbeatTerminator()}
 							configJson: {
 								backend: 'codex',
 								maxIterations: 1,
-								model: 'gpt-5.6-sol',
+								model: 'gpt-6-astra',
 								prompt: 'first',
 								reasoningEffort: 'high',
 							},
@@ -1438,7 +1438,7 @@ ${heartbeatTerminator()}
 							configJson: {
 								backend: 'codex',
 								maxIterations: 1,
-								model: 'gpt-5.6-sol',
+								model: 'gpt-6-astra',
 								prompt: 'third',
 								reasoningEffort: 'high',
 							},
@@ -1456,7 +1456,7 @@ ${heartbeatTerminator()}
 				const mixedReport = await waitForReport(pipelineService, mixed.id);
 				const firstMixedIdentity = {
 					backend: 'codex',
-					model: 'gpt-5.6-sol',
+					model: 'gpt-6-astra',
 					provider: null,
 					reasoningEffort: 'high',
 				};

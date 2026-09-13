@@ -1918,7 +1918,7 @@ describe('web settings config', () => {
 					openai: {
 						apiKey: 'openai-secret',
 						baseUrl: 'https://api.openai.com/v1',
-						model: 'gpt-5.6-sol',
+						model: 'gpt-6-astra',
 						stream: false,
 						streamIdleTimeoutMs: 30_000,
 					},
@@ -1962,7 +1962,7 @@ describe('web settings config', () => {
 			providers: {
 				openai: {
 					baseUrl: 'https://api.openai.com/v1',
-					model: 'gpt-5.6-sol',
+					model: 'gpt-6-astra',
 					reasoningEffort: null,
 				},
 			},

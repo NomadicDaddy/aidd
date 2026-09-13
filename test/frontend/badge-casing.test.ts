@@ -23,7 +23,7 @@ function renderBadge(children: string, casing?: 'preserve' | 'title'): string {
 
 describe('Badge casing', () => {
 	test('preserves machine-supplied values by default', () => {
-		for (const value of ['claude-code', 'killed', 'gpt-5.6-sol', 'package.json']) {
+		for (const value of ['claude-code', 'killed', 'gpt-6-astra', 'package.json']) {
 			const html = renderBadge(value);
 
 			expect(html).toContain('normal-case');

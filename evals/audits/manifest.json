@@ -1,16 +1,16 @@
 {
 	"cohorts": [
 		{
-			"members": ["codex-gpt56-sol-high"],
+			"members": ["codex-gpt6-astra-high"],
 			"name": "audit-evals",
-			"targetModelFamily": "gpt-5.6-sol"
+			"targetModelFamily": "gpt-6-astra"
 		}
 	],
 	"pricing": {
-		"gpt-5.6-sol": {
-			"cachedPerMtok": 0.4,
-			"inputPerMtok": 4,
-			"outputPerMtok": 20
+		"gpt-6-astra": {
+			"cachedPerMtok": 1,
+			"inputPerMtok": 10,
+			"outputPerMtok": 50
 		}
 	},
 	"scoring": {
@@ -38,8 +38,8 @@
 	"stacks": [
 		{
 			"cli": "codex",
-			"label": "codex-gpt56-sol-high",
-			"model": "gpt-5.6-sol",
+			"label": "codex-gpt6-astra-high",
+			"model": "gpt-6-astra",
 			"reasoningEffort": "high",
 			"view": "audit-evals"
 		}

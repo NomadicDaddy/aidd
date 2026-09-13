@@ -156,7 +156,7 @@ Persisted reasoning efforts:
 		"codex": {
 			"idleNudgeTimeoutSeconds": 600,
 			"idleTimeoutSeconds": 900,
-			"model": "gpt-5.6-sol",
+			"model": "gpt-6-astra",
 			"reasoningEffort": "high",
 			"timeoutSeconds": 14400
 		}
@@ -225,7 +225,7 @@ Recognized provider names and their defaults:
 | ---------- | ------------------------------------- | -------------------- | ------------ |
 | `zhipu`    | `https://api.z.ai/api/coding/paas/v4` | `glm-5.3`            | yes          |
 | `xai`      | `https://api.x.ai/v1`                 | `grok-4.6`           | yes          |
-| `openai`   | `https://api.openai.com/v1`           | `gpt-5.6-sol`        | yes          |
+| `openai`   | `https://api.openai.com/v1`           | `gpt-6-astra`        | yes          |
 | `ollama`   | `http://localhost:11434/v1`           | `gpt-oss:20b`        | no           |
 | `lmstudio` | `http://localhost:1234/v1`            | `openai/gpt-oss-20b` | no           |
 

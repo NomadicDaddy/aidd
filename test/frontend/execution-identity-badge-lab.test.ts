@@ -63,7 +63,7 @@ describe('ExecutionIdentityBadgeLabPage', () => {
 		for (const reasoningEffort of executionIdentityReasoningCatalog) {
 			expect(html).toContain(`aria-label="Reasoning ${reasoningEffort}"`);
 		}
-		expect(html).toContain('CLI Codex, Model gpt-5.6-sol, Reasoning high');
+		expect(html).toContain('CLI Codex, Model gpt-6-astra, Reasoning high');
 		expect(html).toContain('CLI Native, Model glm-5.3, Reasoning medium, Provider Zhipu');
 		expect(html).toContain(
 			'organization/research-preview-model-with-an-intentionally-long-name',

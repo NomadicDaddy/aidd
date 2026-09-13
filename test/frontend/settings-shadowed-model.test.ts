@@ -6,7 +6,7 @@ import {
 } from '../../frontend/src/pages/settings/settingsUtils.ts';
 
 // Regression: with cli=codex, backends.codex.model="gpt-5.6-terra", and the shared Default Model
-// set to "gpt-5.6-sol", an override-free launch resolved gpt-5.6-terra (backend model outranks
+// set to "gpt-6-astra", an override-free launch resolved gpt-5.6-terra (backend model outranks
 // shared) while
 // the Settings UI gave no indication the shared field was dead. The hint exists so that config
 // state is visible before it costs a run.
@@ -14,7 +14,7 @@ describe('shadowingBackendModel', () => {
 	test('reports the default CLI backend model that outranks the shared default', () => {
 		const form = createBlankSettings();
 		form.cli = 'codex';
-		form.model = 'gpt-5.6-sol';
+		form.model = 'gpt-6-astra';
 		form.backends = {
 			codex: {
 				idleNudgeTimeoutSeconds: null,
@@ -43,7 +43,7 @@ describe('shadowingBackendModel', () => {
 	test('returns null when the default CLI row has no model of its own', () => {
 		const form = createBlankSettings();
 		form.cli = 'codex';
-		form.model = 'gpt-5.6-sol';
+		form.model = 'gpt-6-astra';
 		form.backends = {
 			// Another backend's model never shadows the default CLI's launches.
 			native: {

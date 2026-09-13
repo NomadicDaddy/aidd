@@ -73,7 +73,7 @@ const item = (overrides) =>
 			durationMs: 1080000,
 			executionIdentity: {
 				backend: 'claude-code',
-				model: 'claude-opus-5',
+				model: 'claude-fable-5-1',
 				provider: 'anthropic',
 				reasoningEffort: 'high',
 			},
@@ -200,7 +200,7 @@ describe('fleet activity card', () => {
 	test('rows carry the launch source, the duration and the execution identity', () => {
 		expect(cards.activityRows).toContain('CLI launch');
 		expect(cards.activityRows).toContain('18m');
-		expect(cards.activityRows).toContain('claude-opus-5');
+		expect(cards.activityRows).toContain('claude-fable-5-1');
 		// The preview is bounded, so the card states the count it is not showing.
 		expect(cards.activityRows).toContain('111');
 	});

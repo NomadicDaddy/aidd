@@ -54,9 +54,14 @@ The native backend calls an OpenAI-compatible provider directly. Five providers 
 | ----------------- | -------------------- | ------------------------------------- | --------------------------- |
 | `zhipu` (default) | `glm-5.3`            | `https://api.z.ai/api/coding/paas/v4` | required (`ZHIPU_API_KEY`)  |
 | `xai`             | `grok-4.6`           | `https://api.x.ai/v1`                 | required (`XAI_API_KEY`)    |
-| `openai`          | `gpt-5.6-sol`        | `https://api.openai.com/v1`           | required (`OPENAI_API_KEY`) |
+| `openai`          | `gpt-6-astra`        | `https://api.openai.com/v1`           | required (`OPENAI_API_KEY`) |
 | `ollama`          | `gpt-oss:20b`        | `http://localhost:11434/v1`           | none (local)                |
 | `lmstudio`        | `openai/gpt-oss-20b` | `http://localhost:1234/v1`            | none (local)                |
+
+The direct client currently uses Chat Completions. Astra supports that endpoint for text, but
+[Astra tool calls require the Responses API](https://developers.openai.com/api/docs/guides/latest-model/gpt-6-astra#migration-quickstart).
+Direct OpenAI workflows that use tools therefore require a client transport migration; replacing
+the default model name does not provide that compatibility.
 
 Configure it in `~/.aidd/config.json`:
 
@@ -90,7 +95,7 @@ to install or sign into. (The separate `codex` backend still exists for driving 
 harness.)
 
 ```json
-{ "cli": "openai", "providers": { "openai": { "apiKey": "sk-…", "model": "gpt-5.6-sol" } } }
+{ "cli": "openai", "providers": { "openai": { "apiKey": "sk-…", "model": "gpt-6-astra" } } }
 ```
 
 Supply the key via `providers.openai.apiKey`, or the `OPENAI_API_KEY` / `NATIVE_API_KEY` env var.

@@ -100,13 +100,17 @@ export class TelegramBridgeService {
 			);
 		}
 		const api = this.apiClientFactory(web);
-		const telegramClient: TelegramClient = this.telegramClientFactory(telegram.botToken);
+		const controller = new AbortController();
+		const telegramClient: TelegramClient = this.telegramClientFactory(telegram.botToken, {
+			logger: this.logger,
+		});
 		const handler = createBridgeHandler({
 			allowedChatIds: telegram.allowedChatIds,
 			api,
+			logger: this.logger,
+			signal: controller.signal,
 			telegram: telegramClient,
 		});
-		const controller = new AbortController();
 		this.activeKey = nextKey;
 		this.controller = controller;
 		this.logger.info(
@@ -115,6 +119,7 @@ export class TelegramBridgeService {
 		);
 		this.loop = this.runLoop({
 			handler,
+			logger: this.logger,
 			signal: controller.signal,
 			telegram: telegramClient,
 		})

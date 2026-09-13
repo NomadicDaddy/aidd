@@ -23,6 +23,10 @@ const SECRET_RULES: readonly SecretRule[] = [
 	{ pattern: /\bghp_[A-Za-z0-9]{20,}/g, replacement: SECRET_REDACTED },
 	{ pattern: /\bAIza[A-Za-z0-9_-]{20,}/g, replacement: SECRET_REDACTED },
 	{
+		pattern: /\bapi\.telegram\.org\/bot[^\s/"'\\]+/gi,
+		replacement: `api.telegram.org/bot${SECRET_REDACTED}`,
+	},
+	{
 		pattern: new RegExp(ASSIGNMENT, 'gi'),
 		replacement: `$1$2${SECRET_REDACTED}`,
 	},

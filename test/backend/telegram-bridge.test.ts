@@ -63,11 +63,20 @@ function chatResponder(path: string): unknown {
 	return { messages: { assistant: { content: 'hello from director' } } };
 }
 
+function silentLogger() {
+	return { error() {}, info() {}, warn() {} };
+}
+
 describe('Telegram bridge handler', () => {
 	test('forwards an allowed message and replies with the Director answer', async () => {
 		const { client, posts } = fakeApi(chatResponder);
 		const telegram = fakeTelegram();
-		const handler = createBridgeHandler({ api: client, telegram, allowedChatIds: [100] });
+		const handler = createBridgeHandler({
+			api: client,
+			logger: silentLogger(),
+			telegram,
+			allowedChatIds: [100],
+		});
 
 		await handler.handleUpdate(update(100, 'hi'));
 
@@ -80,7 +89,12 @@ describe('Telegram bridge handler', () => {
 	test('ignores messages from chats not on the allowlist', async () => {
 		const { client, posts } = fakeApi(chatResponder);
 		const telegram = fakeTelegram();
-		const handler = createBridgeHandler({ api: client, telegram, allowedChatIds: [100] });
+		const handler = createBridgeHandler({
+			api: client,
+			logger: silentLogger(),
+			telegram,
+			allowedChatIds: [100],
+		});
 
 		await handler.handleUpdate(update(999, 'hi'));
 
@@ -91,7 +105,12 @@ describe('Telegram bridge handler', () => {
 	test('ignores updates with no text', async () => {
 		const { client, posts } = fakeApi(chatResponder);
 		const telegram = fakeTelegram();
-		const handler = createBridgeHandler({ api: client, telegram, allowedChatIds: [100] });
+		const handler = createBridgeHandler({
+			api: client,
+			logger: silentLogger(),
+			telegram,
+			allowedChatIds: [100],
+		});
 
 		await handler.handleUpdate(update(100, undefined));
 		await handler.handleUpdate(update(100, '   '));
@@ -103,7 +122,12 @@ describe('Telegram bridge handler', () => {
 	test('reuses one chat session across messages from the same chat', async () => {
 		const { client, posts } = fakeApi(chatResponder);
 		const telegram = fakeTelegram();
-		const handler = createBridgeHandler({ api: client, telegram, allowedChatIds: [100] });
+		const handler = createBridgeHandler({
+			api: client,
+			logger: silentLogger(),
+			telegram,
+			allowedChatIds: [100],
+		});
 
 		await handler.handleUpdate(update(100, 'one', 1));
 		await handler.handleUpdate(update(100, 'two', 2));
@@ -120,7 +144,16 @@ describe('Telegram bridge handler', () => {
 			throw new Error('backend down');
 		});
 		const telegram = fakeTelegram();
-		const handler = createBridgeHandler({ api: client, telegram, allowedChatIds: [100] });
+		const events: Record<string, unknown>[] = [];
+		const record = (fields: unknown, msg?: string): void => {
+			events.push({ ...(fields as Record<string, unknown>), msg });
+		};
+		const handler = createBridgeHandler({
+			api: client,
+			logger: { error: record, info: record, warn: record },
+			telegram,
+			allowedChatIds: [100],
+		});
 
 		await handler.handleUpdate(update(100, 'hi'));
 
@@ -128,6 +161,12 @@ describe('Telegram bridge handler', () => {
 		expect(telegram.sent[0]?.chatId).toBe(100);
 		expect(telegram.sent[0]?.text).toContain('aidd error');
 		expect(telegram.sent[0]?.text).toContain('backend down');
+		expect(events.map((event) => event.msg)).toEqual([
+			'Telegram message received',
+			'Telegram message failed',
+			'Telegram error reply delivered',
+		]);
+		expect(events[1]).toMatchObject({ phase: 'director' });
 	});
 });
 
@@ -277,7 +316,12 @@ describe('Telegram bridge capability surface', () => {
 	test('forwards to the agent-backed chat endpoint, whose default tools orchestrate runs', async () => {
 		const { client, posts } = fakeApi(chatResponder);
 		const telegram = fakeTelegram();
-		const handler = createBridgeHandler({ api: client, telegram, allowedChatIds: [100] });
+		const handler = createBridgeHandler({
+			api: client,
+			logger: silentLogger(),
+			telegram,
+			allowedChatIds: [100],
+		});
 
 		await handler.handleUpdate(update(100, 'launch a run'));
 

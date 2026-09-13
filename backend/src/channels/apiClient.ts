@@ -4,11 +4,18 @@ import { assertSafeAgentBaseUrl } from 'aidd-shared';
 
 const API_REQUEST_TIMEOUT_MS = 10_000;
 const BACKEND_HEALTH_TIMEOUT_MS = 2000;
+/** Director chat can make twelve two-minute model calls, plus fleet/tool work. */
+export const DIRECTOR_CHAT_TIMEOUT_MS = 30 * 60_000;
 
 export interface ApiClientTransportOptions {
 	fetchImpl?: (input: string, init: RequestInit) => Promise<Response>;
 	healthTimeoutMs?: number;
 	requestTimeoutMs?: number;
+}
+
+interface ApiRequestOptions {
+	signal?: AbortSignal;
+	timeoutMs?: number;
 }
 
 /**
@@ -23,7 +30,7 @@ export interface ApiClientTransportOptions {
 export interface AiddApiClient {
 	readonly baseUrl: string;
 	get<T = unknown>(path: string): Promise<T>;
-	post<T = unknown>(path: string, body?: unknown): Promise<T>;
+	post<T = unknown>(path: string, body?: unknown, options?: ApiRequestOptions): Promise<T>;
 }
 
 export class ApiClientError extends Error {
@@ -60,13 +67,21 @@ export function createApiClient(
 		? { authorization: `Bearer ${web.authToken}` }
 		: {};
 
-	async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+	async function request<T>(
+		method: string,
+		path: string,
+		body?: unknown,
+		requestOptions: ApiRequestOptions = {},
+	): Promise<T> {
 		const headers: Record<string, string> = { ...authHeader };
+		const timeout = AbortSignal.timeout(requestOptions.timeoutMs ?? requestTimeoutMs);
 		const init: RequestInit = {
 			headers,
 			method,
 			redirect: 'error',
-			signal: AbortSignal.timeout(requestTimeoutMs),
+			signal: requestOptions.signal
+				? AbortSignal.any([requestOptions.signal, timeout])
+				: timeout,
 		};
 		if (body !== undefined) {
 			headers['content-type'] = 'application/json';
@@ -90,8 +105,12 @@ export function createApiClient(
 		get<T = unknown>(path: string): Promise<T> {
 			return request<T>('GET', path);
 		},
-		post<T = unknown>(path: string, body?: unknown): Promise<T> {
-			return request<T>('POST', path, body);
+		post<T = unknown>(
+			path: string,
+			body?: unknown,
+			requestOptions?: ApiRequestOptions,
+		): Promise<T> {
+			return request<T>('POST', path, body, requestOptions);
 		},
 	};
 }

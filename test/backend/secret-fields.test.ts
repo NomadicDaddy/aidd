@@ -64,6 +64,21 @@ describe('configured secret fields', () => {
 		expect(output).toBe('authToken=[REDACTED]&keep=visible\n');
 	});
 
+	test('redacts Telegram bot tokens embedded in API URLs', () => {
+		const token = '123456789:AAHfakeTokenValueForTests_123456';
+		const url = `https://api.telegram.org/bot${token}/sendMessage`;
+		const cleaned = scrubSecrets(`fetch failed ${url}`);
+		expect(cleaned).not.toContain(token);
+		expect(cleaned).toContain('api.telegram.org/bot[REDACTED]');
+		expect(
+			scrubSecrets(
+				JSON.stringify({
+					err: { message: `Unable to connect to ${url}` },
+				}),
+			),
+		).not.toContain(token);
+	});
+
 	test('scrubs pino output after Error serialization and message interpolation', () => {
 		const script = `import { webLogger } from './backend/src/logger.ts';
 			webLogger.info({ authToken: '${VALUE}', nested: { env: { XAI_API_KEY: '${VALUE}' } },

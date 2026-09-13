@@ -1,4 +1,4 @@
-import type { AiddApiClient } from '../channels/apiClient.ts';
+import { type AiddApiClient, DIRECTOR_CHAT_TIMEOUT_MS } from '../channels/apiClient.ts';
 
 /**
  * aidd MCP tool catalog. Every tool is a thin wrapper over an existing web API route via the
@@ -218,6 +218,7 @@ export const TOOLS: ToolDefinition[] = [
 			const result = await client.post<{ messages: { assistant: { content: string } } }>(
 				`/api/v1/director/chat/sessions/${encodeURIComponent(sessionId)}/messages`,
 				{ content: message },
+				{ timeoutMs: DIRECTOR_CHAT_TIMEOUT_MS },
 			);
 			return { reply: result.messages.assistant.content, sessionId };
 		},

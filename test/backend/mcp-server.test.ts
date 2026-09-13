@@ -1,11 +1,15 @@
 import { describe, expect, test } from 'bun:test';
-import type { AiddApiClient } from '../../backend/src/channels/apiClient.ts';
+import {
+	type AiddApiClient,
+	DIRECTOR_CHAT_TIMEOUT_MS,
+} from '../../backend/src/channels/apiClient.ts';
 import { createToolDispatcher } from '../../backend/src/mcp/server.ts';
 
 interface RecordedCall {
+	body?: unknown;
 	method: 'GET' | 'POST';
 	path: string;
-	body?: unknown;
+	timeoutMs?: number;
 }
 
 function fakeClient(responder: (method: 'GET' | 'POST', path: string, body?: unknown) => unknown): {
@@ -19,8 +23,17 @@ function fakeClient(responder: (method: 'GET' | 'POST', path: string, body?: unk
 			calls.push({ method: 'GET', path });
 			return Promise.resolve(responder('GET', path) as T);
 		},
-		post<T = unknown>(path: string, body?: unknown): Promise<T> {
-			calls.push({ method: 'POST', path, body });
+		post<T = unknown>(
+			path: string,
+			body?: unknown,
+			options?: { timeoutMs?: number },
+		): Promise<T> {
+			calls.push({
+				method: 'POST',
+				path,
+				body,
+				...(options?.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+			});
 			return Promise.resolve(responder('POST', path, body) as T);
 		},
 	};
@@ -113,6 +126,10 @@ describe('MCP tool dispatcher', () => {
 		expect(createCalls).toHaveLength(1);
 		expect(messageCalls).toHaveLength(2);
 		expect(messageCalls[0]?.path).toBe('/api/v1/director/chat/sessions/sess-1/messages');
+		expect(createCalls[0]?.timeoutMs).toBeUndefined();
+		expect(messageCalls.every((call) => call.timeoutMs === DIRECTOR_CHAT_TIMEOUT_MS)).toBe(
+			true,
+		);
 	});
 
 	test('propagates API errors as isError results', async () => {

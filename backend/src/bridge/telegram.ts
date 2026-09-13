@@ -1,6 +1,10 @@
 import { assertSafeAgentBaseUrl } from 'aidd-shared';
 
-import type { AiddApiClient } from '../channels/apiClient.ts';
+import { type AiddApiClient, DIRECTOR_CHAT_TIMEOUT_MS } from '../channels/apiClient.ts';
+import { webLogger } from '../logger.ts';
+import { redactTelegramUrlError, TelegramApiError, waitForTelegramRetry } from './telegramRetry.ts';
+
+export { runBridgeLoop } from './telegramLoop.ts';
 
 /**
  * Telegram <-> Director chat bridge.
@@ -19,13 +23,15 @@ import type { AiddApiClient } from '../channels/apiClient.ts';
  */
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
-const POLL_TIMEOUT_SECONDS = 30;
-const POLL_BACKOFF_MS = 3000;
 const TELEGRAM_LONG_POLL_GRACE_MS = 10_000;
 const TELEGRAM_REQUEST_TIMEOUT_MS = 15_000;
+const MAX_SEND_RATE_LIMIT_RETRIES = 2;
+
+type BridgeLogger = Pick<typeof webLogger, 'error' | 'info' | 'warn'>;
 
 export interface TelegramTransportOptions {
 	fetchImpl?: (input: string, init: RequestInit) => Promise<Response>;
+	logger?: BridgeLogger;
 	longPollGraceMs?: number;
 	requestTimeoutMs?: number;
 }
@@ -48,12 +54,14 @@ export interface TelegramClient {
 		timeoutSeconds: number,
 		signal?: AbortSignal,
 	): Promise<TelegramUpdate[]>;
-	sendMessage(chatId: number, text: string): Promise<void>;
+	sendMessage(chatId: number, text: string, signal?: AbortSignal): Promise<void>;
 }
 
 interface TelegramApiResponse<T> {
 	description?: string;
+	error_code?: unknown;
 	ok: boolean;
+	parameters?: { retry_after?: unknown };
 	result?: T;
 }
 
@@ -65,25 +73,35 @@ export function createTelegramClient(
 	const fetchImpl = options.fetchImpl ?? fetch;
 	const longPollGraceMs = options.longPollGraceMs ?? TELEGRAM_LONG_POLL_GRACE_MS;
 	const requestTimeoutMs = options.requestTimeoutMs ?? TELEGRAM_REQUEST_TIMEOUT_MS;
+	const logger = options.logger ?? webLogger;
 
 	async function call<T>(method: string, body: unknown, signal?: AbortSignal): Promise<T> {
 		const requestUrl = `${base}/${method}`;
 		assertSafeAgentBaseUrl(requestUrl, 'Telegram API request');
-		const init: RequestInit = {
-			body: JSON.stringify(body),
-			headers: { 'content-type': 'application/json' },
-			method: 'POST',
-			redirect: 'error',
-			signal: signal ?? AbortSignal.timeout(requestTimeoutMs),
-		};
-		const response = await fetchImpl(requestUrl, init);
-		const data = (await response.json()) as TelegramApiResponse<T>;
-		if (!data.ok) {
-			throw new Error(
-				`Telegram ${method} failed: ${data.description ?? response.statusText}`,
-			);
+		try {
+			const init: RequestInit = {
+				body: JSON.stringify(body),
+				headers: { 'content-type': 'application/json' },
+				method: 'POST',
+				redirect: 'error',
+				signal: signal ?? AbortSignal.timeout(requestTimeoutMs),
+			};
+			const response = await fetchImpl(requestUrl, init);
+			const data = (await response.json()) as TelegramApiResponse<T>;
+			if (!data.ok) {
+				throw new TelegramApiError(
+					method,
+					data.description ?? response.statusText,
+					response.status,
+					data.parameters?.retry_after,
+					data.error_code,
+				);
+			}
+			return data.result as T;
+		} catch (err) {
+			if (err instanceof TelegramApiError) throw err;
+			throw redactTelegramUrlError(err);
 		}
-		return data.result as T;
 	}
 
 	return {
@@ -98,13 +116,37 @@ export function createTelegramClient(
 				combined,
 			);
 		},
-		async sendMessage(chatId, text) {
+		async sendMessage(chatId, text, signal) {
 			const clipped =
 				text.length > TELEGRAM_MESSAGE_LIMIT ? text.slice(0, TELEGRAM_MESSAGE_LIMIT) : text;
-			await call('sendMessage', {
-				chat_id: chatId,
-				text: clipped.length > 0 ? clipped : '(no content)',
-			});
+			for (let attempt = 0; ; attempt++) {
+				signal?.throwIfAborted();
+				const timeout = AbortSignal.timeout(requestTimeoutMs);
+				try {
+					await call(
+						'sendMessage',
+						{
+							chat_id: chatId,
+							text: clipped.length > 0 ? clipped : '(no content)',
+						},
+						signal ? AbortSignal.any([signal, timeout]) : timeout,
+					);
+					return;
+				} catch (err) {
+					if (
+						!(err instanceof TelegramApiError) ||
+						err.retryAfterMs === null ||
+						attempt >= MAX_SEND_RATE_LIMIT_RETRIES ||
+						signal?.aborted
+					)
+						throw err;
+					logger.warn(
+						{ attempt: attempt + 1, chatId, retryAfterMs: err.retryAfterMs },
+						'Telegram delivery rate limited; waiting to retry',
+					);
+					await waitForTelegramRetry(err.retryAfterMs, signal);
+				}
+			}
 		},
 	};
 }
@@ -112,6 +154,8 @@ export function createTelegramClient(
 export interface BridgeHandlerDeps {
 	allowedChatIds: number[];
 	api: AiddApiClient;
+	logger?: BridgeLogger;
+	signal?: AbortSignal;
 	telegram: Pick<TelegramClient, 'sendMessage'>;
 }
 
@@ -122,6 +166,8 @@ export interface BridgeHandler {
 export function createBridgeHandler(deps: BridgeHandlerDeps): BridgeHandler {
 	const sessionByChat = new Map<number, string>();
 	const allowed = new Set(deps.allowedChatIds);
+	const logger = deps.logger ?? webLogger;
+	const requestOptions = deps.signal ? { signal: deps.signal } : {};
 
 	async function ensureSession(chatId: number): Promise<string> {
 		const existing = sessionByChat.get(chatId);
@@ -129,6 +175,7 @@ export function createBridgeHandler(deps: BridgeHandlerDeps): BridgeHandler {
 		const created = await deps.api.post<{ session: { id: string } }>(
 			'/api/v1/director/chat/sessions',
 			{ title: `Telegram ${chatId}` },
+			requestOptions,
 		);
 		sessionByChat.set(chatId, created.session.id);
 		return created.session.id;
@@ -136,26 +183,56 @@ export function createBridgeHandler(deps: BridgeHandlerDeps): BridgeHandler {
 
 	return {
 		async handleUpdate(update) {
+			if (deps.signal?.aborted) return;
 			const message = update.message;
 			const text = message?.text?.trim();
 			if (!message || !text) return;
 			const chatId = message.chat.id;
 			// Allowlist: silently ignore anyone who is not an approved chat.
 			if (!allowed.has(chatId)) return;
+			const started = performance.now();
+			const context = { chatId, messageId: message.message_id, updateId: update.update_id };
+			logger.info(context, 'Telegram message received');
+			let phase = 'director';
 			try {
 				const sessionId = await ensureSession(chatId);
 				const result = await deps.api.post<{
 					messages: { assistant: { content: string } };
-				}>(`/api/v1/director/chat/sessions/${encodeURIComponent(sessionId)}/messages`, {
-					content: text,
-				});
+				}>(
+					`/api/v1/director/chat/sessions/${encodeURIComponent(sessionId)}/messages`,
+					{
+						content: text,
+					},
+					{ ...requestOptions, timeoutMs: DIRECTOR_CHAT_TIMEOUT_MS },
+				);
+				deps.signal?.throwIfAborted();
+				phase = 'delivery';
 				await deps.telegram.sendMessage(
 					chatId,
 					result.messages.assistant.content || '(no reply)',
+					deps.signal,
+				);
+				logger.info(
+					{ ...context, durationMs: Math.round(performance.now() - started), sessionId },
+					'Telegram reply delivered',
 				);
 			} catch (err) {
+				if (deps.signal?.aborted) {
+					logger.info(
+						{ ...context, phase },
+						'Telegram message interrupted by bridge shutdown',
+					);
+					return;
+				}
+				logger.error(
+					{ ...context, durationMs: Math.round(performance.now() - started), err, phase },
+					'Telegram message failed',
+				);
+				// A failed send may already have arrived. Do not send a second message or rerun Director.
+				if (phase === 'delivery') return;
 				const detail = err instanceof Error ? err.message : String(err);
-				await deps.telegram.sendMessage(chatId, `⚠️ aidd error: ${detail}`);
+				await deps.telegram.sendMessage(chatId, `⚠️ aidd error: ${detail}`, deps.signal);
+				logger.info(context, 'Telegram error reply delivered');
 			}
 		},
 	};
@@ -163,52 +240,7 @@ export function createBridgeHandler(deps: BridgeHandlerDeps): BridgeHandler {
 
 export interface BridgeLoopDeps {
 	handler: BridgeHandler;
+	logger?: BridgeLogger;
 	signal: AbortSignal;
 	telegram: TelegramClient;
-}
-
-function delay(ms: number, signal: AbortSignal): Promise<void> {
-	return new Promise((resolve) => {
-		if (signal.aborted) {
-			resolve();
-			return;
-		}
-		const onAbort = () => {
-			clearTimeout(timer);
-			resolve();
-		};
-		const timer = setTimeout(() => {
-			signal.removeEventListener('abort', onAbort);
-			resolve();
-		}, ms);
-		signal.addEventListener('abort', onAbort, { once: true });
-	});
-}
-
-/** Long-poll Telegram and dispatch each update until the signal aborts. */
-export async function runBridgeLoop(deps: BridgeLoopDeps): Promise<void> {
-	let offset = 0;
-	while (!deps.signal.aborted) {
-		let updates: TelegramUpdate[];
-		try {
-			updates = await deps.telegram.getUpdates(offset, POLL_TIMEOUT_SECONDS, deps.signal);
-		} catch (err) {
-			if (deps.signal.aborted) break;
-			console.error(
-				`aidd Telegram bridge: getUpdates failed: ${err instanceof Error ? err.message : String(err)}`,
-			);
-			await delay(POLL_BACKOFF_MS, deps.signal);
-			continue;
-		}
-		for (const update of updates) {
-			offset = update.update_id + 1;
-			try {
-				await deps.handler.handleUpdate(update);
-			} catch (err) {
-				console.error(
-					`aidd Telegram bridge: handler err: ${err instanceof Error ? err.message : String(err)}`,
-				);
-			}
-		}
-	}
 }

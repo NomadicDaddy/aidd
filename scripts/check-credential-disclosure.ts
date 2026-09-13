@@ -17,7 +17,8 @@
  * passes the residue scan.
  *
  * So this gate looks at SHAPE, not at content: did a tool read a path that holds credentials, and
- * did anything come back? It never inspects, prints, or hashes a value.
+ * did anything come back? A narrowly typed port preview is verified against its returned output;
+ * credential values are never printed or hashed.
  *
  * Baseline-relative by design. The historical hits are a fact about artifacts already written;
  * failing on them forever would train everyone to ignore the gate. `--update-baseline` records the

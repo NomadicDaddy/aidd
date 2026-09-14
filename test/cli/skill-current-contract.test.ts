@@ -83,6 +83,20 @@ const REQUIRED_COMPATIBILITY_MARKERS = {
 	],
 } as const;
 
+const SPERNAKIT_RELEASE_ORDER = [
+	'run all non-capture validation while the prepared version and documentation changes are still',
+	'This includes `bun run smoke:qc`',
+	'git commit -m vX.Y.Z',
+	'Confirm `git status --short` is clean, then run `bun run supertest`',
+	'git push -u origin release/vX.Y.Z',
+	'gh pr merge <number> --squash --delete-branch',
+	'git pull',
+	'gh run watch <main-ci-run-id>',
+	'`bun run smoke:screenshots`',
+	'git tag vX.X.X',
+	'git push origin vX.X.X',
+] as const;
+
 const REQUIRED_UNATTENDED_MARKERS = {
 	'skills/audit-finding-review/SKILL.md': [
 		'return a usage error',
@@ -296,6 +310,34 @@ describe('bundled skill current-contract guidance', () => {
 			const body = await readFile(join(ROOT, path), 'utf8');
 			for (const marker of markers) expect(body).toContain(marker);
 		}
+	});
+
+	test('captures only clean committed Spernakit release candidates in shipping order', async () => {
+		const body = await readFile(join(ROOT, 'skills/spernakit-bump/SKILL.md'), 'utf8');
+		let previous = -1;
+		for (const marker of SPERNAKIT_RELEASE_ORDER) {
+			const current = body.indexOf(marker, previous + 1);
+			expect(current, `missing or out-of-order release step: ${marker}`).toBeGreaterThan(
+				previous,
+			);
+			previous = current;
+		}
+		expect(body).not.toContain('before anything is committed or tagged');
+		const fixCycle = body.slice(body.indexOf('If validation, supertest, or review'));
+		let previousFixStep = -1;
+		for (const marker of [
+			'`bun run smoke:qc` while the fix is dirty',
+			'Commit the tracked fix',
+			'Run `bun run supertest` again',
+		]) {
+			const current = fixCycle.indexOf(marker, previousFixStep + 1);
+			expect(current, `missing or out-of-order fix cycle step: ${marker}`).toBeGreaterThan(
+				previousFixStep,
+			);
+			previousFixStep = current;
+		}
+		expect(body).toContain('Never reuse a capture from before a tracked fix.');
+		expect(body).toContain('exact clean squash commit and tree that will be tagged');
 	});
 
 	test('contains no interactive execution gates', async () => {

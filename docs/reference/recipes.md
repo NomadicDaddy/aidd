@@ -439,7 +439,13 @@ Test, bug-fix, validate, and bump spernakit template version.
 3. `recipe-ref` - Remediate bugs (params: {"application":"spernakit"}; recipeName: remediate bugs)
 4. `skill` - Bump version (args: {bumpHint}; skillId: spernakit-bump)
 
-There is no separate supertest step: the `spernakit-bump` skill runs `bun run supertest` and `bun run smoke:qc` itself, and fixes what they report, before it stamps the version or tags the release. There is no separate consolidate step either — `remediate bugs` ends with one, and nothing runs between it and the version bump.
+There is no separate validation or capture step. The `spernakit-bump` skill prepares the version and
+documentation, runs `bun run smoke:qc` while those changes are dirty, commits the release-branch
+candidate, and then runs `bun run supertest` so capture can verify a clean committed source. After
+the PR is squash-merged and the exact main commit passes CI, the skill captures that clean main
+commit again before creating and pushing the tag. Any tracked fix repeats validation, commit, and
+capture before the next push. There is no separate consolidate step either: `remediate bugs` ends
+with one, and nothing runs between it and the version bump.
 
 The parameter is a bump _hint_, not a version. The `spernakit-bump` skill derives the new version itself; leave `bumpHint` blank to let it size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it. It defaults to empty, so the recipe launches without an argument.
 

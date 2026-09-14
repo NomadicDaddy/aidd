@@ -156,23 +156,27 @@ describe('Runs row consistency', () => {
 		expect(container).not.toContain('onKeyDown=');
 	});
 
-	test('Active and History share bounded auto-layout columns and selected steps stay visible', async () => {
+	test('Active and History share column widths and selected steps stay visible', async () => {
 		const table = await readRunSource('UnifiedExecutionTable.tsx');
 		const steps = await readRunSource('PipelineStepSubRows.tsx');
 
-		expect(table).toContain('contentSizedTableClass');
-		expect(table).toContain('min-w-[61.5rem]');
-		expect(table).not.toContain('table-fixed');
+		expect(table).toContain('min-w-[68rem] table-fixed');
 		expect(table).toContain('<colgroup>');
-		expect(table).toContain('<col className="w-full min-w-[13.75rem]" />');
-		expect(table).toContain('<col className={`${contentSizedColumnClass} min-w-52`} />');
-		// Fixed-vocabulary tracks size from their content while small floors keep sparse Active
-		// values readable. History Actions deliberately has no fixed floor because its lifecycle
-		// controls are absent; the heading or a real row action supplies the intrinsic width.
-		for (const width of ['min-w-16', 'min-w-20', 'min-w-24']) {
-			expect(table).toContain(`contentSizedColumnClass} ${width}`);
-		}
-		expect(table).toContain("showLifecycleControls && 'min-w-24'");
+		// Auto-layout let each feed choose different widths. Content and lifecycle controls must
+		// no longer move column boundaries; Name alone absorbs the remaining table width.
+		const columns = table.slice(table.indexOf('<colgroup>'), table.indexOf('</colgroup>'));
+		expect(columns.match(/<col(?: className="[^"]+")? \/>/g)).toEqual([
+			'<col />',
+			'<col className="w-28" />',
+			'<col className="w-48" />',
+			'<col className="w-52" />',
+			'<col className="w-48" />',
+			'<col className="w-22" />',
+			'<col className="w-32" />',
+		]);
+		expect(columns).not.toContain('showLifecycleControls');
+		expect(table).toContain('[&_td:nth-child(2)]:wrap-anywhere');
+		expect(table).toContain('[&_td:nth-child(5)>span]:whitespace-normal');
 		expect(table).not.toMatch(/w-\[\d+%\]/);
 		expect(table).toContain('Kind');
 		expect(table).toContain('<div key={entryKey(entry)} role="listitem">');

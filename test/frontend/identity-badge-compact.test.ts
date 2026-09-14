@@ -174,11 +174,10 @@ describe('execution identity survives a narrow column', () => {
 		const table = await read('pages', 'runs', 'UnifiedExecutionTable.tsx');
 		const steps = await read('pages', 'runs', 'PipelineStepSubRows.tsx');
 
-		// MODEL still keeps enough room for the discriminating label, but no longer gets that
-		// budget from an equal/percentage split. The table's auto layout sizes compact columns
-		// intrinsically while this minimum protects the execution identity at narrow widths.
-		expect(table).toContain('<col className={`${contentSizedColumnClass} min-w-52`} />');
-		expect(table).toContain('`${contentSizedColumnClass} min-w-24`');
+		// MODEL retains its 208px budget while Status gets 192px in both feeds. The table's
+		// minimum width preserves these tracks when a selected console narrows the viewport.
+		expect(table).toContain('<col className="w-52" />');
+		expect(table).toContain('<col className="w-48" />');
 		expect(table).not.toContain('w-[23%]');
 		expect(table).not.toContain('w-[20%]');
 		expect(table).not.toContain('w-[17%]');

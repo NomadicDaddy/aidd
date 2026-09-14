@@ -60,24 +60,20 @@ function columnClasses(html: string): string[] {
 }
 
 describe('Runs History column budget', () => {
-	test('renders intrinsic fixed tracks through the real execution table', () => {
+	test('renders shared column widths through the real execution table', () => {
 		const html = renderTable(false);
 
-		expect(columnClasses(html)).toEqual([
-			'w-full min-w-[13.75rem]',
-			'w-px min-w-20',
-			'w-px min-w-20',
-			'w-px min-w-52',
-			'w-px min-w-24',
-			'w-px min-w-16',
-			'w-px',
-		]);
+		expect(columnClasses(html)).toEqual(['w-28', 'w-48', 'w-52', 'w-48', 'w-22', 'w-32']);
 		expect(html).toContain('Feature Review');
 		expect(html).toContain('href="/pipeline-sessions/session-1"');
 	});
 
-	test('reserves the full Actions floor only when lifecycle controls can render', () => {
-		expect(columnClasses(renderTable(true)).at(-1)).toBe('w-px min-w-24');
-		expect(columnClasses(renderTable(false)).at(-1)).toBe('w-px');
+	test('keeps every track aligned when History omits lifecycle controls', () => {
+		const active = renderTable(true);
+		const history = renderTable(false);
+		expect(columnClasses(active)).toEqual(columnClasses(history));
+		expect(columnClasses(active).at(-1)).toBe('w-32');
+		expect(active).toContain('Stop unavailable: session completed');
+		expect(history).not.toContain('Stop unavailable: session completed');
 	});
 });

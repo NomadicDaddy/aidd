@@ -27,10 +27,10 @@ describe('runs, pipelines, identity lab, and diary desktop findings', () => {
 		const table = await source('pages', 'runs', 'UnifiedExecutionTable.tsx');
 		const runRow = await source('pages', 'runs', 'ActiveRunRow.tsx');
 
-		expect(table).toContain('<col className="w-full min-w-[13.75rem]" />');
-		expect(table).toContain('<col className={`${contentSizedColumnClass} min-w-52`} />');
-		expect(table).toContain('`${contentSizedColumnClass} min-w-24`');
-		expect(table).toContain("showLifecycleControls && 'min-w-24'");
+		expect(table).toContain('min-w-[68rem] table-fixed');
+		expect(table).toContain('<col className="w-52" />');
+		expect(table).toContain('<col className="w-48" />');
+		expect(table).toContain('<col className="w-32" />');
 		expect(runRow).toContain('flex-nowrap items-center gap-1.5 whitespace-nowrap');
 	});
 

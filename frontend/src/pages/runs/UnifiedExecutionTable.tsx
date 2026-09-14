@@ -8,12 +8,7 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { OverflowScroller } from '../../components/shared/OverflowScroller.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useNow } from '../../hooks/useNow.ts';
-import { cn } from '../../lib/cn.ts';
-import {
-	contentSizedColumnClass,
-	contentSizedTableClass,
-	tableHeadClass,
-} from '../../lib/tableStyles.ts';
+import { tableHeadClass } from '../../lib/tableStyles.ts';
 import { ActiveRunMobileCard, ActiveRunRow } from './ActiveRunRow.tsx';
 import { PipelineSessionMobileCard, PipelineSessionRow } from './PipelineSessionRow.tsx';
 import { PipelineStepSubRows } from './PipelineStepSubRows.tsx';
@@ -112,21 +107,17 @@ export function UnifiedExecutionTable(props: UnifiedExecutionTableProps) {
 					<OverflowScroller ariaLabel={title} className="hidden xl:block">
 						<table
 							aria-label={title}
-							className={`${contentSizedTableClass} min-w-[61.5rem]`}>
-							{/* Name takes the remainder; fixed columns keep only their useful intrinsic minimum. */}
+							className="w-full min-w-[68rem] table-fixed text-left text-sm [&_td:nth-child(2)]:wrap-anywhere [&_td:nth-child(5)>span]:whitespace-normal">
+							{/* Both feeds use the same tracks regardless of their rows or available actions.
+							    Name takes the remainder; Status has room for live activity and outcomes. */}
 							<colgroup>
-								<col className="w-full min-w-[13.75rem]" />
-								<col className={`${contentSizedColumnClass} min-w-20`} />
-								<col className={`${contentSizedColumnClass} min-w-20`} />
-								<col className={`${contentSizedColumnClass} min-w-52`} />
-								<col className={`${contentSizedColumnClass} min-w-24`} />
-								<col className={`${contentSizedColumnClass} min-w-16`} />
-								<col
-									className={cn(
-										contentSizedColumnClass,
-										showLifecycleControls && 'min-w-24',
-									)}
-								/>
+								<col />
+								<col className="w-28" />
+								<col className="w-48" />
+								<col className="w-52" />
+								<col className="w-48" />
+								<col className="w-22" />
+								<col className="w-32" />
 							</colgroup>
 							{/* Pinned per-cell rather than on the <thead>: a sticky thead leaves the cells
 							    transparent, so rows scrolled through the headings. Each th carries the

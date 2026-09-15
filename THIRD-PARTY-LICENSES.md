@@ -29,7 +29,7 @@ the repository material distributed outside the npm graph.
 | [drizzle-orm](https://www.npmjs.com/package/drizzle-orm)                             | 0.45.2  | Apache-2.0 |
 | [elysia](https://www.npmjs.com/package/elysia)                                       | 1.4.30  | MIT        |
 | [pino](https://www.npmjs.com/package/pino)                                           | 10.3.1  | MIT        |
-| [zod](https://www.npmjs.com/package/zod)                                             | 4.5.4   | MIT        |
+| [zod](https://www.npmjs.com/package/zod)                                             | 4.6.5   | MIT        |
 
 ## Frontend runtime dependencies
 
@@ -48,13 +48,13 @@ the repository material distributed outside the npm graph.
 | [@xterm/addon-webgl](https://www.npmjs.com/package/@xterm/addon-webgl)                                 | 0.19.0  | MIT        |
 | [@xterm/xterm](https://www.npmjs.com/package/@xterm/xterm)                                             | 6.0.0   | MIT        |
 | [cmdk](https://www.npmjs.com/package/cmdk)                                                             | 1.1.1   | MIT        |
-| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.43.0  | ISC        |
-| [react](https://www.npmjs.com/package/react)                                                           | 19.2.8  | MIT        |
-| [react-dom](https://www.npmjs.com/package/react-dom)                                                   | 19.2.8  | MIT        |
-| [react-router](https://www.npmjs.com/package/react-router)                                             | 8.3.1   | MIT        |
+| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.46.0  | ISC        |
+| [react](https://www.npmjs.com/package/react)                                                           | 19.3.0  | MIT        |
+| [react-dom](https://www.npmjs.com/package/react-dom)                                                   | 19.3.0  | MIT        |
+| [react-router](https://www.npmjs.com/package/react-router)                                             | 8.4.0   | MIT        |
 | [sonner](https://www.npmjs.com/package/sonner)                                                         | 2.0.8   | MIT        |
-| [tailwind-merge](https://www.npmjs.com/package/tailwind-merge)                                         | 3.6.0   | MIT        |
-| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.2.1   | Apache-2.0 |
+| [tailwind-merge](https://www.npmjs.com/package/tailwind-merge)                                         | 3.7.0   | MIT        |
+| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.2.2   | Apache-2.0 |
 | [zustand](https://www.npmjs.com/package/zustand)                                                       | 5.0.15  | MIT        |
 
 ## Non-package distributed material
@@ -139,13 +139,13 @@ are included in the distributed asset tree.
 ## Runtime dependency closure
 
 The tables above enumerate the direct production dependencies. Counting everything they
-pull in transitively, the runtime closure is **176** third-party
-packages (173 unique names). Development and build tooling is not part
+pull in transitively, the runtime closure is **177** third-party
+packages (174 unique names). Development and build tooling is not part
 of it and is not counted here. Its license distribution is:
 
 | License      | Packages |
 | ------------ | -------- |
-| MIT          | 157      |
+| MIT          | 158      |
 | ISC          | 9        |
 | BSD-3-Clause | 3        |
 | OFL-1.1      | 3        |

@@ -6,12 +6,18 @@ import { selectClass } from '../../../lib/formStyles.ts';
 import { nextPage, previousPage, totalPageCount } from './pagination-utils.ts';
 
 export function Pagination({
+	hasNextPage = false,
+	isLoadingNextPage = false,
 	onChange,
+	onLoadNextPage,
 	page,
 	pageSize,
 	total,
 }: {
+	hasNextPage?: boolean;
+	isLoadingNextPage?: boolean;
 	onChange: (page: number) => void;
+	onLoadNextPage?: (() => void) | undefined;
 	page: number;
 	pageSize: number;
 	total: number;
@@ -20,10 +26,18 @@ export function Pagination({
 	if (total === 0) return null;
 	const start = page * pageSize + 1;
 	const end = Math.min(total, (page + 1) * pageSize);
+	const hasLoadedNextPage = page + 1 < totalPages;
+	const canLoadNextPage = hasNextPage && onLoadNextPage !== undefined;
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground">
 			<span>
-				Showing {start}–{end} of {total} items
+				{hasNextPage ? (
+					`Showing ${start}–${end} of ${total}+ items`
+				) : (
+					<>
+						Showing {start}–{end} of {total} items
+					</>
+				)}
 			</span>
 			<div className="flex items-center gap-2">
 				<IconButton
@@ -45,12 +59,18 @@ export function Pagination({
 							</option>
 						))}
 					</select>
-					<span>of {totalPages}</span>
+					<span>
+						of {totalPages}
+						{hasNextPage ? '+' : ''}
+					</span>
 				</label>
 				<IconButton
 					ariaLabel="Next page"
-					disabled={page + 1 >= totalPages}
-					onClick={() => onChange(nextPage(page, totalPages))}
+					disabled={isLoadingNextPage || (!hasLoadedNextPage && !canLoadNextPage)}
+					onClick={() => {
+						if (hasLoadedNextPage) onChange(nextPage(page, totalPages));
+						else onLoadNextPage?.();
+					}}
 					variant="secondary">
 					<ChevronRight className="h-4 w-4" />
 				</IconButton>

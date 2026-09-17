@@ -3,13 +3,19 @@ import { resolve } from 'node:path';
 
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 
-function renderPagination(page: number, pageSize: number, total: number): string {
+function renderPagination(
+	page: number,
+	pageSize: number,
+	total: number,
+	options: { hasNextPage?: boolean; isLoadingNextPage?: boolean } = {},
+): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
 		"import { Pagination } from './src/pages/projects/detail/Pagination.tsx';",
 		'const onChange = () => undefined;',
-		`console.log(renderToStaticMarkup(createElement(Pagination, { onChange, page: ${page}, pageSize: ${pageSize}, total: ${total} })));`,
+		'const onLoadNextPage = () => undefined;',
+		`console.log(renderToStaticMarkup(createElement(Pagination, { hasNextPage: ${options.hasNextPage ?? false}, isLoadingNextPage: ${options.isLoadingNextPage ?? false}, onChange, onLoadNextPage, page: ${page}, pageSize: ${pageSize}, total: ${total} })));`,
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {
 		cwd: FRONTEND_ROOT,
@@ -39,5 +45,22 @@ describe('project detail pagination control', () => {
 		expect(markup).toContain('<span>of 7</span>');
 		expect(markup.match(/<option/gu)).toHaveLength(7);
 		expect(markup).toContain('<option value="2" selected="">3</option>');
+	});
+
+	test('keeps Next available at the loaded boundary when another cursor page exists', () => {
+		const markup = renderPagination(0, 5, 5, { hasNextPage: true });
+
+		expect(markup).toContain('Showing 1–5 of 5+ items');
+		expect(markup).toContain('<span>of 1+</span>');
+		expect(markup.match(/disabled=""/gu)).toHaveLength(1);
+	});
+
+	test('disables Next while another cursor page is loading', () => {
+		const markup = renderPagination(0, 5, 5, {
+			hasNextPage: true,
+			isLoadingNextPage: true,
+		});
+
+		expect(markup.match(/disabled=""/gu)).toHaveLength(2);
 	});
 });

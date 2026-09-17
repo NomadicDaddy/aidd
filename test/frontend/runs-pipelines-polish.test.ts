@@ -34,17 +34,25 @@ describe('runs and pipelines polish', () => {
 		expect(page).not.toContain('scrollBody');
 	});
 
-	test("puts 'Show more' inside the Card it grows", async () => {
+	test('paginates History inside its Card', async () => {
 		const page = await runs('RunsPage.tsx');
 		const table = await runs('UnifiedExecutionTable.tsx');
+		const pagination = await runs('useRunHistoryPagination.ts');
 
 		expect(page).toContain('footer={');
-		expect(page).toContain('page.hasMore && page.historyEntries.length > 0');
-		expect(table).toContain('{props.footer ? (');
+		expect(page).toContain('<Pagination');
+		expect(page).toContain('hasNextPage={page.hasMoreHistory}');
+		expect(page).toContain('onLoadNextPage={() => void page.fetchNextHistoryPage()}');
+		expect(page).toContain('pageSize={HISTORY_PAGE_SIZE}');
+		expect(pagination).toContain('export const HISTORY_PAGE_SIZE = 5;');
+		expect(pagination).toContain(
+			'clampedHistory.slice(historyStart, historyStart + HISTORY_PAGE_SIZE)',
+		);
+		expect(table).toContain('{props.footer}');
 		expect(table).toContain('filterReset="toolbar"');
-		expect(table).toContain('border-t border-border');
-		// The control sits inside the Card; nothing renders it on the page background beneath.
+		// The control sits inside the Card; the old expanding-list affordance is gone.
 		expect(page).not.toContain('<div className="flex justify-center">');
+		expect(page).not.toContain('Show more');
 	});
 
 	test('makes a failure reason readable and fully recoverable', async () => {
@@ -218,9 +226,11 @@ describe('runs and pipelines polish', () => {
 		const state = await runs('useRunsPage.ts');
 		const filters = await runs('RunFilters.tsx');
 
-		expect(state).toContain('const HISTORY_DEFAULT_VISIBLE = 13;');
+		expect(await runs('useRunHistoryPagination.ts')).toContain(
+			'export const HISTORY_PAGE_SIZE = 5;',
+		);
 		expect(state).toContain(
-			'displayedEntryCount: activeEntries.length + historyEntries.length',
+			'displayedEntryCount: activeEntries.length + historyPagination.historyEntries.length',
 		);
 		expect(state).toContain('filteredEntryCount: filteredEntries.length');
 		expect(page).toContain('filteredCount={page.filteredEntryCount}');

@@ -6,18 +6,17 @@ import { default as HistoryIcon } from 'lucide-react/dist/esm/icons/history';
 import { useEffect, useRef, useState } from 'react';
 
 import { DataFreshness } from '../../components/shared/DataFreshness.tsx';
-import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
 import { LaunchTargetControl } from '../../components/shared/LaunchTargetControl.tsx';
 import { SkeletonRows } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { PageRail } from '../../components/shared/PageRail.tsx';
-import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { tabButtonId, tabPanelId } from '../../components/ui/tabs.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useViewportFill } from '../../hooks/useViewportFill.ts';
 import { cn } from '../../lib/cn.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
+import { Pagination } from '../projects/detail/Pagination.tsx';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
 import { MobileRunLaunchDisclosure } from './MobileRunLaunchDisclosure.tsx';
 import { PipelineConsoleSummary } from './PipelineConsoleSummary.tsx';
@@ -28,6 +27,7 @@ import {
 	UnifiedExecutionTable,
 	type UnifiedExecutionTableProps,
 } from './UnifiedExecutionTable.tsx';
+import { HISTORY_PAGE_SIZE } from './useRunHistoryPagination.ts';
 import { useRunsPage } from './useRunsPage.ts';
 
 const PAGE_RAIL = pageRailByContentType.data;
@@ -271,15 +271,15 @@ export function RunsPage() {
 							emptyMessage="No runs or pipelines match the current filters."
 							entries={page.historyEntries}
 							footer={
-								page.hasMore && page.historyEntries.length > 0 ? (
-									<Button
-										disabled={page.isFetchingMore}
-										onClick={page.fetchMore}
-										variant="secondary">
-										<DisclosureMarker open />
-										{page.isFetchingMore ? 'Loading…' : 'Show more'}
-									</Button>
-								) : null
+								<Pagination
+									hasNextPage={page.hasMoreHistory}
+									isLoadingNextPage={page.isFetchingMore}
+									onChange={page.setHistoryPage}
+									onLoadNextPage={() => void page.fetchNextHistoryPage()}
+									page={page.historyPage}
+									pageSize={HISTORY_PAGE_SIZE}
+									total={page.historyTotal}
+								/>
 							}
 							icon={
 								<HistoryIcon aria-hidden="true" className="h-4 w-4 text-accent" />

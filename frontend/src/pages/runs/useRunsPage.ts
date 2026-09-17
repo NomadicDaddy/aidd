@@ -14,25 +14,18 @@ import {
 	buildProjectRouteIdByPath,
 	buildUnifiedEntries,
 	entryMatchesFilters,
-	entryStartedAt,
-	historyDisplayFloor,
 	initialSelection,
 	needsRunRecordFallback,
-	oldestStartedAt,
 	splitEntriesByLiveness,
 	type UnifiedSelection,
 } from './unifiedEntries.ts';
 import { runFilterRegister, useRunFilterState } from './useRunFilterState.ts';
+import { useRunHistoryPagination } from './useRunHistoryPagination.ts';
 import { useRunLaunchForm } from './useRunLaunchForm.ts';
 
 // Auto-expanded active sessions on first load; a bound so many simultaneously active
 // sessions don't each start a 3s report poll.
 const MAX_AUTO_EXPANDED_SESSIONS = 3;
-
-// History opens showing only the most recent entries; each "Show more" click widens the
-// visible window by a page worth while also fetching older server pages.
-const HISTORY_DEFAULT_VISIBLE = 13;
-const HISTORY_SHOW_MORE_STEP = 25;
 
 export function useRunsPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -62,8 +55,6 @@ export function useRunsPage() {
 	const { filters, resetFiltersForLaunchedRun, ...filterState } = useRunFilterState(
 		searchParams.get('project') ?? 'all',
 	);
-	const [historyLimit, setHistoryLimit] = useState(HISTORY_DEFAULT_VISIBLE);
-
 	function scrollConsoleIntoView(): void {
 		const node = liveConsoleRef.current;
 		if (!node) return;
@@ -138,18 +129,14 @@ export function useRunsPage() {
 	const loadedEntries = buildUnifiedEntries(runList, sessionList);
 	const filteredEntries = loadedEntries.filter((entry) => entryMatchesFilters(entry, filters));
 	const { active: activeEntries, history } = splitEntriesByLiveness(filteredEntries);
-	// Clamp History to the faithfully-merged window (see historyDisplayFloor): the denser
-	// source's unloaded range must not read as "nothing happened" while the sparser source
-	// still shows entries there. Active is exempt — live entries are shown wherever loaded.
-	const historyFloor = historyDisplayFloor([
-		{ hasMore: runs.hasNextPage === true, oldestLoaded: oldestStartedAt(runList) },
-		{
-			hasMore: pipelineSessions.sessions.hasNextPage === true,
-			oldestLoaded: oldestStartedAt(sessionList),
-		},
-	]);
-	const clampedHistory = history.filter((entry) => entryStartedAt(entry) >= historyFloor);
-	const historyEntries = clampedHistory.slice(0, historyLimit);
+	const historyPagination = useRunHistoryPagination({
+		filters,
+		history,
+		pipelineSessionsQuery: pipelineSessions.sessions,
+		runList,
+		runsQuery: runs,
+		sessionList,
+	});
 
 	// Auto-expand active sessions once when they first load (bounded), plus a ?pipeline=
 	// deep link (whether it arrived as the selection or as a step-run's session context).
@@ -238,38 +225,20 @@ export function useRunsPage() {
 		return results.every((result) => result.status === 'fulfilled');
 	}
 
-	// One shared "Show more" widens the visible history window and advances both
-	// startedAt-descending lists together; the historyDisplayFloor clamp above then extends the
-	// visible window only as far as both sources have actually loaded, so each click reveals a
-	// complete slice of the timeline.
-	const hasMore =
-		clampedHistory.length > historyLimit ||
-		runs.hasNextPage === true ||
-		pipelineSessions.sessions.hasNextPage === true;
-	const isFetchingMore = runs.isFetchingNextPage || pipelineSessions.sessions.isFetchingNextPage;
-	function fetchMore(): void {
-		setHistoryLimit((limit) => limit + HISTORY_SHOW_MORE_STEP);
-		if (runs.hasNextPage) void runs.fetchNextPage();
-		if (pipelineSessions.sessions.hasNextPage) void pipelineSessions.sessions.fetchNextPage();
-	}
-
 	return {
 		...filterState,
+		...historyPagination,
 		activeEntries,
 		continuedRunIds,
 		continueRun,
 		controls,
-		displayedEntryCount: activeEntries.length + historyEntries.length,
+		displayedEntryCount: activeEntries.length + historyPagination.historyEntries.length,
 		emptyFilters: runFilterRegister(filters, projectList, filterState.clearFilters),
 		expandedSessions,
-		fetchMore,
 		filteredEntryCount: filteredEntries.length,
 		handleSelectPipeline,
 		handleSelectRun,
 		handleSelectStepRun,
-		hasMore,
-		historyEntries,
-		isFetchingMore,
 		isLoading: runs.isLoading || pipelineSessions.sessions.isLoading,
 		launchForm,
 		liveConsoleRef,

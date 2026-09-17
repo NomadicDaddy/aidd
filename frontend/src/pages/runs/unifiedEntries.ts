@@ -172,7 +172,7 @@ export function oldestStartedAt(items: { startedAt: number }[]): number | undefi
 // The two sources paginate independently, so History can only faithfully interleave down
 // to the newest "oldest loaded" timestamp among sources that still have unloaded pages —
 // below that, one source has entries the other hasn't loaded yet and the timeline would
-// show gaps as if nothing happened. Entries under the floor stay hidden until "Show more"
+// show gaps as if nothing happened. Entries under the floor stay hidden until pagination
 // advances the lagging source (nothing is lost, only deferred). An exhausted source
 // (hasMore=false) imposes no floor.
 export function historyDisplayFloor(

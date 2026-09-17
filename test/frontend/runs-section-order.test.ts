@@ -31,15 +31,16 @@ describe('runs page section order', () => {
 		const activeIndex = source.indexOf('title="Active"');
 		const consoleIndex = source.indexOf('ref={liveConsoleRef}');
 		const historyIndex = source.indexOf('title="History"');
-		const showMoreIndex = source.indexOf("'Show more'");
+		const paginationIndex = source.indexOf('<Pagination');
 
 		expect(activeIndex).toBeGreaterThan(-1);
 		expect(consoleIndex).toBeGreaterThan(activeIndex);
 		expect(historyIndex).toBeGreaterThan(consoleIndex);
-		// 'Show more' is now the History card's own footer, so it sits inside that card rather
-		// than on the page background below it — after the console, before the card's title prop.
-		expect(showMoreIndex).toBeGreaterThan(consoleIndex);
-		expect(showMoreIndex).toBeLessThan(historyIndex);
+		// Pagination is the History card's own footer, so it sits inside that card rather than on
+		// the page background below it — after the console, before the card's title prop.
+		expect(paginationIndex).toBeGreaterThan(consoleIndex);
+		expect(paginationIndex).toBeLessThan(historyIndex);
+		expect(source).not.toContain("'Show more'");
 	});
 
 	test('places run lists left and a sticky console right once the region is wide enough', async () => {

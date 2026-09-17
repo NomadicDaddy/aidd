@@ -6,6 +6,7 @@ import type {
 	RunOutputWindowRequest,
 } from '../api/types.ts';
 
+import { listRuns, type RunsPage } from '../api/listRuns.ts';
 import {
 	continueRun,
 	getRun,
@@ -13,8 +14,6 @@ import {
 	killRun,
 	launchDirectiveRun,
 	launchRun,
-	listRuns,
-	type RunsPage,
 	stopRun,
 } from '../api/runs.ts';
 import { beginLaunch, endLaunch, trackLaunchedRun } from '../lib/launchedRuns.ts';

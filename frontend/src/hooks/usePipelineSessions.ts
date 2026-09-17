@@ -1,7 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
-	getActivePipelineSessionCount,
 	getPipelineSessionReport,
 	listPipelineSessions,
 	type PipelineSessionsPage,
@@ -45,23 +44,4 @@ export function usePipelineSessions() {
 		}),
 		stopSession: useMutation({ mutationFn: stopPipelineSession, onSuccess: refresh }),
 	};
-}
-
-/**
- * Lightweight count of active pipeline sessions (status `running` or `queued`)
- * for the navbar badge. Uses the `['pipeline-sessions']` query-key
- * prefix so it is automatically invalidated by WebSocket `pipeline_status`
- * events and reconnect handlers in useRealtimeInvalidation. Polls while active
- * sessions exist so the badge stays fresh even without WS connectivity.
- */
-export function useActivePipelineSessionCount() {
-	const query = useQuery({
-		queryFn: getActivePipelineSessionCount,
-		queryKey: ['pipeline-sessions', 'active-count'],
-		refetchInterval: (q) => {
-			return (q.state.data ?? 0) > 0 ? ACTIVE_SESSION_POLL_MS : false;
-		},
-		refetchIntervalInBackground: false,
-	});
-	return query.data ?? 0;
 }

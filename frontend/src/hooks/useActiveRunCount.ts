@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { listRuns } from '../api/runs.ts';
-import { useActivePipelineSessionCount } from './usePipelineSessions.ts';
+import { listRuns } from '../api/listRuns.ts';
+import { useActivePipelineSessionCount } from './useActivePipelineSessionCount.ts';
 
 // Backstop poll cadence for the navbar active-run badge. The steady-state
 // signal is the WebSocket run_status broadcast; this only self-heals a

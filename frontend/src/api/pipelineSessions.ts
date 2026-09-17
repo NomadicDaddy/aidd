@@ -12,11 +12,6 @@ export interface ListPipelineSessionsParams {
 	limit?: number;
 }
 
-export async function getActivePipelineSessionCount(): Promise<number> {
-	const response = await apiGet<{ count: number }>('/api/v1/pipeline-sessions/active-count');
-	return response.count;
-}
-
 export async function getPipelineSessionReport(id: string): Promise<PipelineSessionReport> {
 	const response = await apiGet<{ report: PipelineSessionReport }>(
 		`/api/v1/pipeline-sessions/${id}/report`,

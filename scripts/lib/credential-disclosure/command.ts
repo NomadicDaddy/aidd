@@ -1,4 +1,5 @@
 import { tokenizeShell } from '../../../shared/src/agent/tools/shell-policy-tokens.ts';
+import { isNonDisclosingInspection } from './inspection-output.ts';
 import { credentialLabel } from './paths.ts';
 
 /** Keep shell separators outside quoted arguments; a search expression is one argument. */
@@ -126,6 +127,7 @@ export function commandCredentialLabel(
 	command: string,
 	returnedOutput?: unknown,
 ): string | undefined {
+	if (isNonDisclosingInspection(command, returnedOutput)) return undefined;
 	for (const pipeline of pipelines(command)) {
 		const output = tokenizeShell(pipeline.at(-1) ?? '').map((token) => token.text);
 		const input = tokenizeShell(pipeline[0] ?? '')[0]?.text.toLowerCase();

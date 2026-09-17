@@ -14,7 +14,8 @@ import {
 	getRun as getRunRow,
 	listRunsPage,
 } from '../../backend/src/services/run/queries.ts';
-import { getRun, listRuns } from '../../frontend/src/api/runs.ts';
+import { listRuns } from '../../frontend/src/api/listRuns.ts';
+import { getRun } from '../../frontend/src/api/runs.ts';
 import {
 	initialSelection,
 	needsRunRecordFallback,

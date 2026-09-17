@@ -1,8 +1,13 @@
-import { type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
+import { type ButtonHTMLAttributes, lazy, type ReactNode, type Ref, Suspense } from 'react';
 
 import { cn } from '../../lib/cn.ts';
+import { controlFocusClass } from '../../lib/formStyles.ts';
 import { blockedDangerButtonHoverClass, dangerButtonClass } from '../../lib/tones.ts';
-import { Tooltip } from './tooltip.tsx';
+import { disabledTooltipLabel } from './tooltipLabel.ts';
+
+// Only blocked controls with an explanation use this surface. Ordinary shell buttons must not
+// pull the tooltip's portal, placement and interaction code into every initial page load.
+const Tooltip = lazy(() => import('./tooltip.tsx').then((module) => ({ default: module.Tooltip })));
 
 type ButtonVariant = 'danger' | 'ghost' | 'primary' | 'secondary';
 export type ButtonSize = 'compact' | 'default' | 'icon' | 'toolbar';
@@ -131,7 +136,27 @@ export function Button({
 		</button>
 	);
 
-	return isBlocked && title ? <Tooltip content={title}>{button}</Tooltip> : button;
+	if (!isBlocked || !title) return button;
+	const blockedLabel = disabledTooltipLabel({ ...props, children }, title);
+	const pendingTooltip = (
+		<span
+			aria-disabled={blockedLabel ? true : undefined}
+			aria-label={blockedLabel ?? undefined}
+			className={cn(
+				'relative inline-flex max-w-full min-w-0',
+				blockedLabel &&
+					`cursor-help rounded ${controlFocusClass} focus-visible:outline-none`,
+			)}
+			role={blockedLabel ? 'button' : undefined}
+			tabIndex={blockedLabel ? 0 : undefined}>
+			{button}
+		</span>
+	);
+	return (
+		<Suspense fallback={pendingTooltip}>
+			<Tooltip content={title}>{button}</Tooltip>
+		</Suspense>
+	);
 }
 
 interface IconButtonProps extends Omit<

@@ -11,15 +11,20 @@ import { join, resolve } from 'node:path';
 
 const FRONTEND = resolve(import.meta.dir, '../../frontend');
 
-function runInFrontend(lines: string[]): string {
-	const result = Bun.spawnSync([process.execPath, '-e', lines.join('\n')], {
+async function runInFrontend(lines: string[]): Promise<string> {
+	const child = Bun.spawn([process.execPath, '-e', lines.join('\n')], {
 		cwd: FRONTEND,
 		stderr: 'pipe',
 		stdout: 'pipe',
 		windowsHide: true,
 	});
-	if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
-	return new TextDecoder().decode(result.stdout).trim();
+	const [exitCode, stdout, stderr] = await Promise.all([
+		child.exited,
+		new Response(child.stdout).text(),
+		new Response(child.stderr).text(),
+	]);
+	if (exitCode !== 0) throw new Error(stderr || `Frontend subprocess exited ${exitCode}`);
+	return stdout.trim();
 }
 
 interface Markup {
@@ -32,9 +37,9 @@ interface Markup {
 let markup: Markup | undefined;
 
 /** Renders the real component through React itself, rather than reading its source for intent. */
-function renderDialogs(): Markup {
+async function renderDialogs(): Promise<Markup> {
 	markup ??= JSON.parse(
-		runInFrontend([
+		await runInFrontend([
 			"import { createElement } from 'react';",
 			"import { renderToStaticMarkup } from 'react-dom/server';",
 			"import { Dialog, DialogPanel } from './src/components/ui/dialog.tsx';",
@@ -97,9 +102,9 @@ const MODERN_FIXTURE = [
  * fixtures are linted as text: a file written into `frontend/src` would be seen by the sibling
  * suites that scan that tree, and `bun test` runs them in parallel.
  */
-function reportGuard(): GuardReport {
+async function reportGuard(): Promise<GuardReport> {
 	guard ??= JSON.parse(
-		runInFrontend([
+		await runInFrontend([
 			"import { ESLint } from 'eslint';",
 			"import tseslint from 'typescript-eslint';",
 			`const HOOK = ${JSON.stringify(HOOK_FIXTURE)};`,
@@ -138,8 +143,8 @@ function reportGuard(): GuardReport {
 }
 
 describe('the dialog panel reads its motion state through React 19 `use`', () => {
-	test('an open dialog renders its overlay and hands the panel the same motion state', () => {
-		const { open } = renderDialogs();
+	test('an open dialog renders its overlay and hands the panel the same motion state', async () => {
+		const { open } = await renderDialogs();
 
 		expect(open).toContain('role="dialog"');
 		expect(open).toContain('aria-modal="true"');
@@ -149,20 +154,20 @@ describe('the dialog panel reads its motion state through React 19 `use`', () =>
 		expect(open).toContain('>body</div>');
 	});
 
-	test('a closed dialog renders nothing, panel and all', () => {
-		expect(renderDialogs().closed).toBe('');
+	test('a closed dialog renders nothing, panel and all', async () => {
+		expect((await renderDialogs()).closed).toBe('');
 	});
 
-	test('a panel nested below the provider still reads the dialog state', () => {
+	test('a panel nested below the provider still reads the dialog state', async () => {
 		// Two elements deep rather than a direct child: a panel that only worked as `children` of
 		// the dialog would be reading a prop, not a context.
-		expect(renderDialogs().nested).toMatch(
+		expect((await renderDialogs()).nested).toMatch(
 			/<section><div><div [^>]*data-state="closed"[^>]*>deep<\/div><\/div><\/section>/u,
 		);
 	});
 
-	test('a panel with no dialog above it falls back to the declared default', () => {
-		const { defaulted } = renderDialogs();
+	test('a panel with no dialog above it falls back to the declared default', async () => {
+		const { defaulted } = await renderDialogs();
 
 		expect(defaulted).toContain('data-state="open"');
 		expect(defaulted).not.toContain('data-state="closed"');
@@ -180,24 +185,24 @@ describe('the dialog panel reads its motion state through React 19 `use`', () =>
 });
 
 describe('the frontend lint gate rejects a return to `useContext`', () => {
-	test('the rule covers every TypeScript source in the frontend tree', () => {
-		expect(reportGuard().files).toEqual(['**/*.{ts,tsx}']);
+	test('the rule covers every TypeScript source in the frontend tree', async () => {
+		expect((await reportGuard()).files).toEqual(['**/*.{ts,tsx}']);
 	});
 
-	test('a `useContext` call and its import are both reported', () => {
-		expect(reportGuard().hook).toEqual([
+	test('a `useContext` call and its import are both reported', async () => {
+		expect((await reportGuard()).hook).toEqual([
 			'Import `use` from react instead of `useContext`.',
 			"Read context with React 19's `use(Context)`, not `useContext(Context)`.",
 		]);
 	});
 
-	test('reaching for the namespaced spelling is reported too', () => {
-		expect(reportGuard().member).toEqual([
+	test('reaching for the namespaced spelling is reported too', async () => {
+		expect((await reportGuard()).member).toEqual([
 			"Read context with React 19's `use(Context)`, not `React.useContext(Context)`.",
 		]);
 	});
 
-	test('the React 19 spelling passes clean', () => {
-		expect(reportGuard().modern).toEqual([]);
+	test('the React 19 spelling passes clean', async () => {
+		expect((await reportGuard()).modern).toEqual([]);
 	});
 });

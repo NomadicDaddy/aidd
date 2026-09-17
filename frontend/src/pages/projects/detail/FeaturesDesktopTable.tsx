@@ -14,7 +14,7 @@ import { featurePassesDisagrees } from './featureLaunchEligibility.ts';
 import {
 	FeatureActions,
 	FeatureMilestoneControl,
-	FeaturePriorityBadge,
+	FeaturePriorityControl,
 } from './FeatureRowControls.tsx';
 import { featureSearchContext } from './featureSearchUtils.ts';
 import { FeaturesTableHeader } from './FeaturesTableHeader.tsx';
@@ -156,9 +156,15 @@ export function FeaturesDesktopTable({
 									/>
 								</td>
 								<td className="px-4 py-3">
-									<FeaturePriorityBadge
+									<FeaturePriorityControl
 										deemphasized={deemphasizePriority}
+										disabled={isMutating}
+										feature={feature}
+										onChange={(milestone) =>
+											onMilestoneChange(feature, milestone)
+										}
 										priority={feature.priority}
+										roadmap={roadmap}
 									/>
 								</td>
 								<td

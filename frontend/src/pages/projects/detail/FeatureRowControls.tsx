@@ -7,7 +7,9 @@ import type {
 } from './FeatureActionVariants.tsx';
 
 import { Badge } from '../../../components/ui/badge.tsx';
-import { quietSelectClass, selectClass } from '../../../lib/formStyles.ts';
+import { cn } from '../../../lib/cn.ts';
+import { controlFocusClass, quietSelectClass, selectClass } from '../../../lib/formStyles.ts';
+import { toneBadge } from '../../../lib/tones.ts';
 import {
 	BacklogFeatureActions,
 	InProgressFeatureActions,
@@ -19,23 +21,59 @@ import { FEATURE_STATUS_OPTIONS, featurePriorityTone } from './featuresUtils.ts'
 import { stringValue } from './shared.ts';
 
 /**
- * Priority, rendered the one way. Both the table and the stacked card below `xl` call this, so the
- * value does not change shape with the layout — a bare `PRIORITY / 3` in foreground text on the
- * card where the table shows a toned `P3`. A priority shared by every visible row stays neutral;
- * otherwise the tone carries the distinction (P1 red, P2 amber, P3 neutral).
+ * Priority, edited the one way. Both the table and the stacked card call this roadmap-backed
+ * selector, so changing P1/P2/etc. moves the feature to the matching milestone and lets the store
+ * keep the two values aligned. A priority shared by every visible row stays neutral; otherwise the
+ * tone carries the distinction (P1 red, P2 amber, P3 neutral).
  */
-export function FeaturePriorityBadge({
+export function FeaturePriorityControl({
 	deemphasized,
+	disabled,
+	feature,
+	onChange,
 	priority,
+	roadmap,
 }: {
 	deemphasized: boolean;
+	disabled: boolean;
+	feature: ProjectFeature;
+	onChange: (milestone: string) => void;
 	priority: number | string | undefined;
+	roadmap: null | ProjectRoadmapSummary;
 }) {
 	if (typeof priority !== 'number') {
 		return <span className="text-xs text-muted-foreground">—</span>;
 	}
+	const id = feature.id || stringValue(feature, 'id');
+	const milestone = typeof feature.milestone === 'string' ? feature.milestone : '';
+	const options =
+		roadmap?.milestoneOrder.map((name, index) => ({ name, priority: index + 1 })) ?? [];
+	if (!milestone || !options.some((option) => option.name === milestone)) {
+		return (
+			<Badge tone={deemphasized ? 'neutral' : featurePriorityTone(priority)}>
+				P{priority}
+			</Badge>
+		);
+	}
+	const tone = deemphasized ? 'neutral' : featurePriorityTone(priority);
 	return (
-		<Badge tone={deemphasized ? 'neutral' : featurePriorityTone(priority)}>P{priority}</Badge>
+		<select
+			aria-label={`Priority for ${id}`}
+			className={cn(
+				'min-h-11 w-20 cursor-pointer rounded-md border-0 px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 outline-none ring-inset sm:min-h-0',
+				controlFocusClass,
+				toneBadge[tone],
+			)}
+			disabled={disabled}
+			onChange={(event) => onChange(event.target.value)}
+			title={`Priority P${priority} (${milestone}); changing priority also changes the milestone`}
+			value={milestone}>
+			{options.map((option) => (
+				<option key={option.name} value={option.name}>
+					P{option.priority} — {option.name}
+				</option>
+			))}
+		</select>
 	);
 }
 

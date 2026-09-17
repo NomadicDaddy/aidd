@@ -12,7 +12,7 @@ import { featurePassesDisagrees } from './featureLaunchEligibility.ts';
 import {
 	FeatureActions,
 	FeatureMilestoneControl,
-	FeaturePriorityBadge,
+	FeaturePriorityControl,
 } from './FeatureRowControls.tsx';
 import { featureSearchContext } from './featureSearchUtils.ts';
 import { featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
@@ -93,9 +93,13 @@ export function FeatureMobileCard({
 				<div className="space-y-1">
 					<dt className={`text-muted-foreground ${microLabelClass}`}>Priority</dt>
 					<dd>
-						<FeaturePriorityBadge
+						<FeaturePriorityControl
 							deemphasized={deemphasizePriority}
+							disabled={disabled}
+							feature={feature}
+							onChange={(milestone) => onMilestoneChange(feature, milestone)}
 							priority={feature.priority}
+							roadmap={roadmap}
 						/>
 					</dd>
 				</div>

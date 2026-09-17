@@ -27,8 +27,8 @@ function source(...segments: string[]): string {
 
 describe('responsive image surfaces carry intrinsic dimensions', () => {
 	test('the shell favicon states the 40px box it occupies', () => {
-		const appLayout = source('components', 'layout', 'AppLayout.tsx');
-		const favicon = /<img\b[\s\S]*?favicon-96x96\.png[\s\S]*?\/>/.exec(appLayout)?.[0];
+		const appBrand = source('components', 'layout', 'AppBrand.tsx');
+		const favicon = /<img\b[\s\S]*?favicon-96x96\.png[\s\S]*?\/>/.exec(appBrand)?.[0];
 
 		expect(favicon).toBeDefined();
 		expect(favicon).toContain('height={40}');

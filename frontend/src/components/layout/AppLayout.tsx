@@ -23,6 +23,7 @@ import { useTerminalStore } from '../../stores/terminalStore.ts';
 import { useThemeStore } from '../../stores/themeStore.ts';
 import { ShortcutChord } from '../shared/KeyboardShortcut.tsx';
 import { Button, IconButton } from '../ui/button.tsx';
+import { AppBrand } from './AppBrand.tsx';
 import { searchControlAccessibleName } from './appLayoutAccessibility.ts';
 import {
 	AuthTokenDialog,
@@ -111,26 +112,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 								'flex min-w-0 flex-1 items-center gap-2 sm:mb-5 sm:flex-none',
 								collapsed ? 'sm:flex-col sm:gap-2' : 'sm:justify-between sm:gap-3',
 							)}>
-							<div className="flex min-w-0 items-center gap-2">
-								<img
-									alt=""
-									className="h-10 w-10 shrink-0 rounded-lg ring-1 ring-border/40"
-									// 40px, matching h-10/w-10. Stated intrinsically as well as
-									// in classes so the brand block reserves its width before the
-									// PNG arrives and the app title beside it does not jump.
-									height={40}
-									src="/favicon-96x96.png"
-									width={40}
-								/>
-								<div
-									className={cn(
-										'min-w-0 truncate font-display text-base font-semibold tracking-[0.18em] text-foreground',
-										collapsed && 'sm:hidden',
-									)}
-									translate="no">
-									aidd
-								</div>
-							</div>
+							<AppBrand collapsed={collapsed} />
 							<div className="hidden sm:block">
 								<IconButton
 									ariaLabel={

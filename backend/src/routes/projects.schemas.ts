@@ -139,6 +139,7 @@ export const milestoneDeleteBody = t.Object({
 export const milestoneReassignBody = t.Object({ dryRun: milestoneDryRunField });
 
 export const featureMetadataBody = t.Object({
+	category: t.Optional(t.Union([t.String({ maxLength: 200, minLength: 1 }), t.Null()])),
 	notes: t.Optional(t.Array(t.String({ maxLength: 5000 }), { maxItems: 100 })),
 	spec: t.Optional(t.String({ maxLength: 65536 })),
 });

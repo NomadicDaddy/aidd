@@ -73,15 +73,18 @@ export function useUpdateProjectFeatureMetadata(id: string | undefined) {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: ({
+			category,
 			featureId,
 			notes,
 			spec,
 		}: {
+			category?: null | string;
 			featureId: string;
 			notes?: string[];
 			spec?: string;
 		}) => {
-			const body: { notes?: string[]; spec?: string } = {};
+			const body: { category?: null | string; notes?: string[]; spec?: string } = {};
+			if (category !== undefined) body.category = category;
 			if (notes !== undefined) body.notes = notes;
 			if (spec !== undefined) body.spec = spec;
 			return updateProjectFeatureMetadata(id ?? '', featureId, body);

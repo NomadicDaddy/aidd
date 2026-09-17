@@ -159,6 +159,7 @@ export async function updateFeatureStatus(
 }
 
 export interface FeatureMetadataInput {
+	category?: null | string;
 	notes?: string[];
 	spec?: string;
 }
@@ -172,11 +173,14 @@ export async function updateFeatureMetadata(
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
 	const feature = await readFeatureForMutation(store, directory);
+	const category = input.category?.trim();
 	const updatedFeature: Feature = {
 		...feature,
+		...(category ? { category } : {}),
 		...(input.spec !== undefined ? { spec: input.spec } : {}),
 		...(input.notes !== undefined ? { notes: input.notes } : {}),
 	};
+	if (input.category !== undefined && !category) delete updatedFeature.category;
 	await store.writeFeature(updatedFeature);
 	recordDataMovement({
 		category: 'metadata',

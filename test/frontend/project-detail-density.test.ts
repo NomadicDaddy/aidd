@@ -59,7 +59,7 @@ describe('project detail density contracts', () => {
 		expect(featureTable).toContain('rootRef={tableRef}');
 		expect(featureTable).toContain('scrollerClassName={viewportFillScrollerClass}');
 		expect(featureTable).not.toContain('minHeightPx: 0');
-		expect(featureTable).toContain('featureSourceDisplayLabel(source)');
+		expect(featureTable).toContain('<FeatureSourceControl');
 		expect(artifacts).toContain('<div className="@container space-y-4">');
 		expect(artifacts).not.toContain('contentRailClass');
 		expect(artifacts).toContain('@min-[32rem]:grid-cols-4');

@@ -15,14 +15,15 @@ import {
 	FeatureActions,
 	FeatureMilestoneControl,
 	FeaturePriorityControl,
+	FeatureSourceControl,
 } from './FeatureRowControls.tsx';
 import { featureSearchContext } from './featureSearchUtils.ts';
 import { FeaturesTableHeader } from './FeaturesTableHeader.tsx';
-import { featureDirectory, featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
+import { featureDirectory, featureShippedVersion } from './featuresUtils.ts';
 import { featureActionEdgeClass, featureActionTrack } from './featureTableWidths.ts';
 import { featureAddedAt, featureCompletedAt } from './featureTimestamps.ts';
 import { projectDetailViewportGutterPx } from './projectDetailViewport.ts';
-import { featureSourceDisplayLabel, statusTone, stringValue } from './shared.ts';
+import { statusTone, stringValue } from './shared.ts';
 
 const dateCellClass = 'px-4 py-3 text-xs whitespace-nowrap text-muted-foreground';
 
@@ -39,6 +40,7 @@ export function FeaturesDesktopTable({
 	onLaunchRun,
 	onMilestoneChange,
 	onSelect,
+	onSourceChange,
 	onStatusChange,
 	onToggleSort,
 	query,
@@ -62,6 +64,7 @@ export function FeaturesDesktopTable({
 	onLaunchRun: (feature: ProjectFeature) => void;
 	onMilestoneChange: (feature: ProjectFeature, milestone: string) => void;
 	onSelect: (feature: ProjectFeature) => void;
+	onSourceChange: (feature: ProjectFeature, category: string) => void;
 	onStatusChange: (feature: ProjectFeature, status: ProjectFeatureStatus) => void;
 	onToggleSort: (key: FeatureSortKey) => void;
 	query: string;
@@ -96,8 +99,6 @@ export function FeaturesDesktopTable({
 						const id = feature.id || stringValue(feature, 'id');
 						const title = stringValue(feature, 'title') || id;
 						const status = stringValue(feature, 'status') || 'unknown';
-						const source = featureSourceLabel(feature);
-						const sourceDisplay = featureSourceDisplayLabel(source);
 						const directory = featureDirectory(feature);
 						const decision = decisions[directory] ?? '';
 						const searchContext = featureSearchContext(feature, query);
@@ -167,10 +168,14 @@ export function FeaturesDesktopTable({
 										roadmap={roadmap}
 									/>
 								</td>
-								<td
-									className="hidden px-4 py-3 text-xs text-muted-foreground @min-[88rem]:table-cell"
-									title={sourceDisplay}>
-									{sourceDisplay}
+								<td className="hidden px-4 py-3 text-xs text-muted-foreground @min-[88rem]:table-cell">
+									<FeatureSourceControl
+										disabled={isMutating}
+										feature={feature}
+										inventory={inventory}
+										onChange={(category) => onSourceChange(feature, category)}
+										quiet
+									/>
 								</td>
 								<td className={`hidden @min-[88rem]:table-cell ${dateCellClass}`}>
 									<RelativeAge value={featureAddedAt(feature)?.iso ?? null} />

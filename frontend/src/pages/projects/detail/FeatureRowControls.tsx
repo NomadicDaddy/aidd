@@ -17,8 +17,13 @@ import {
 	ReadOnlyFeatureActions,
 	WaitingApprovalFeatureActions,
 } from './FeatureActionVariants.tsx';
-import { FEATURE_STATUS_OPTIONS, featurePriorityTone } from './featuresUtils.ts';
-import { stringValue } from './shared.ts';
+import {
+	FEATURE_STATUS_OPTIONS,
+	featurePriorityTone,
+	featureSourceLabel,
+	sourceLabelCategory,
+} from './featuresUtils.ts';
+import { featureSourceDisplayLabel, stringValue } from './shared.ts';
 
 /**
  * Priority, edited the one way. Both the table and the stacked card call this roadmap-backed
@@ -71,6 +76,63 @@ export function FeaturePriorityControl({
 			{options.map((option) => (
 				<option key={option.name} value={option.name}>
 					P{option.priority} — {option.name}
+				</option>
+			))}
+		</select>
+	);
+}
+
+export function FeatureSourceControl({
+	disabled,
+	feature,
+	inventory,
+	onChange,
+	quiet = false,
+}: {
+	disabled: boolean;
+	feature: ProjectFeature;
+	inventory: ProjectFeature[];
+	onChange: (category: string) => void;
+	quiet?: boolean;
+}) {
+	const id = feature.id || stringValue(feature, 'id');
+	const label = featureSourceLabel(feature);
+	const sourceCategory = sourceLabelCategory(label);
+	if (sourceCategory !== 'feature') {
+		return (
+			<div className="space-y-0.5">
+				<div className="text-foreground">{featureSourceDisplayLabel(label)}</div>
+				<div className="text-[0.6875rem] text-muted-foreground">
+					{sourceCategory === 'audit' ? 'Audit provenance' : 'Remediation identity'}
+				</div>
+			</div>
+		);
+	}
+	const category = stringValue(feature, 'category');
+	const categories = [
+		...new Set(
+			inventory
+				.filter(
+					(candidate) => sourceLabelCategory(featureSourceLabel(candidate)) === 'feature',
+				)
+				.map((candidate) => stringValue(candidate, 'category'))
+				.filter(Boolean),
+		),
+	].sort((left, right) => left.localeCompare(right));
+	return (
+		<select
+			aria-label={`Source for ${id}`}
+			className={
+				quiet ? `${quietSelectClass} max-w-full px-2` : `${selectClass} max-w-full px-2`
+			}
+			disabled={disabled}
+			onChange={(event) => onChange(event.target.value)}
+			title="Source is stored as feature.category"
+			value={category}>
+			<option value="">Feature backlog</option>
+			{categories.map((option) => (
+				<option key={option} value={option}>
+					{featureSourceDisplayLabel(`Feature: ${option}`)}
 				</option>
 			))}
 		</select>

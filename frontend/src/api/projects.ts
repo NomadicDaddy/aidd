@@ -264,7 +264,7 @@ export async function updateProjectFeatureStatus(
 export async function updateProjectFeatureMetadata(
 	id: string,
 	featureId: string,
-	body: { notes?: string[]; spec?: string },
+	body: { category?: null | string; notes?: string[]; spec?: string },
 ): Promise<ProjectFeature> {
 	const response = await apiSend<{ feature: ProjectFeature }>(
 		`${projectApiPath(id)}/features/${encodeURIComponent(featureId)}/metadata`,

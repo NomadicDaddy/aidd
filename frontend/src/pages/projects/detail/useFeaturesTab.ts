@@ -29,6 +29,7 @@ import {
 } from './featuresUtils.ts';
 import { clampPage } from './pagination-utils.ts';
 import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
+import { useFeatureCategoryUpdate } from './useFeatureCategoryUpdate.ts';
 import { useFeatureDispositions } from './useFeatureDispositions.ts';
 import { useFeatureFilterParams } from './useFeatureFilterParams.ts';
 
@@ -81,6 +82,7 @@ export function useFeaturesTab({
 	} = dispositions;
 	const updateFeatureMilestone = useUpdateProjectFeatureMilestone(projectId);
 	const updateFeatureStatus = useUpdateProjectFeatureStatus(projectId);
+	const updateFeatureSource = useFeatureCategoryUpdate(projectId);
 	const launchRun = useLaunchRun();
 	const runs = useRuns(projectPath);
 	// A run launched from a feature row gives only a transient toast; without an on-row signal the
@@ -121,6 +123,7 @@ export function useFeaturesTab({
 		deleteFeature.isPending ||
 		dismissFeature.isPending ||
 		updateFeatureMilestone.isPending ||
+		updateFeatureSource.isPending ||
 		updateFeatureStatus.isPending ||
 		launchRun.isPending;
 
@@ -259,6 +262,7 @@ export function useFeaturesTab({
 		onDelete,
 		onLaunchRun,
 		onMilestoneChange,
+		onSourceChange: updateFeatureSource.onSourceChange,
 		onStatusChange,
 		onWorkAuditFindings,
 		page,

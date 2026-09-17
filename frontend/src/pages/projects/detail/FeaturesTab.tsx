@@ -55,6 +55,7 @@ export function FeaturesTab({
 		onDelete,
 		onLaunchRun,
 		onMilestoneChange,
+		onSourceChange,
 		onStatusChange,
 		onWorkAuditFindings,
 		page,
@@ -88,8 +89,6 @@ export function FeaturesTab({
 		{ filterMilestoneOptions, filterPriorityOptions, sourceOptions },
 		resetFilters,
 	);
-
-	// Keep both empty registers visually consistent through the shared component.
 	if (total === 0) {
 		return (
 			<EmptyState>
@@ -216,6 +215,7 @@ export function FeaturesTab({
 						onLaunchRun={onLaunchRun}
 						onMilestoneChange={onMilestoneChange}
 						onSelect={setSelectedFeature}
+						onSourceChange={onSourceChange}
 						onStatusChange={onStatusChange}
 						onToggleSort={toggleSort}
 						query={query}
@@ -234,7 +234,6 @@ export function FeaturesTab({
 							sortKey={sortKey}
 						/>
 						{slice.map((feature) => {
-							const id = feature.id || stringValue(feature, 'id');
 							const directory = featureDirectory(feature);
 							return (
 								<FeatureMobileCard
@@ -243,7 +242,7 @@ export function FeaturesTab({
 									disabled={isMutating}
 									feature={feature}
 									inventory={features}
-									key={id}
+									key={feature.id || stringValue(feature, 'id')}
 									launching={launchingFeature === directory}
 									milestoneOptions={milestoneOptions}
 									onApprove={onApprove}
@@ -257,6 +256,7 @@ export function FeaturesTab({
 									onLaunchRun={onLaunchRun}
 									onMilestoneChange={onMilestoneChange}
 									onSelect={setSelectedFeature}
+									onSourceChange={onSourceChange}
 									onStatusChange={onStatusChange}
 									query={query}
 									roadmap={roadmap}

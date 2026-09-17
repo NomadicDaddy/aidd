@@ -13,11 +13,12 @@ import {
 	FeatureActions,
 	FeatureMilestoneControl,
 	FeaturePriorityControl,
+	FeatureSourceControl,
 } from './FeatureRowControls.tsx';
 import { featureSearchContext } from './featureSearchUtils.ts';
-import { featureShippedVersion, featureSourceLabel } from './featuresUtils.ts';
+import { featureShippedVersion } from './featuresUtils.ts';
 import { featureAddedAt, featureCompletedAt } from './featureTimestamps.ts';
-import { featureSourceDisplayLabel, statusTone, stringValue } from './shared.ts';
+import { statusTone, stringValue } from './shared.ts';
 
 export function FeatureMobileCard({
 	decision,
@@ -33,6 +34,7 @@ export function FeatureMobileCard({
 	onLaunchRun,
 	onMilestoneChange,
 	onSelect,
+	onSourceChange,
 	onStatusChange,
 	query,
 	roadmap,
@@ -52,6 +54,7 @@ export function FeatureMobileCard({
 	onLaunchRun: (feature: ProjectFeature) => void;
 	onMilestoneChange: (feature: ProjectFeature, milestone: string) => void;
 	onSelect: (feature: ProjectFeature) => void;
+	onSourceChange: (feature: ProjectFeature, category: string) => void;
 	onStatusChange: (feature: ProjectFeature, status: ProjectFeatureStatus) => void;
 	query: string;
 	roadmap: null | ProjectRoadmapSummary;
@@ -60,7 +63,6 @@ export function FeatureMobileCard({
 	const id = feature.id || stringValue(feature, 'id');
 	const title = stringValue(feature, 'title') || id;
 	const status = stringValue(feature, 'status') || 'unknown';
-	const source = featureSourceDisplayLabel(featureSourceLabel(feature));
 	const searchContext = featureSearchContext(feature, query);
 	return (
 		<div className="@container rounded-md border border-border p-3">
@@ -111,7 +113,14 @@ export function FeatureMobileCard({
 				</div>
 				<div className="space-y-1">
 					<dt className={`text-muted-foreground ${microLabelClass}`}>Source</dt>
-					<dd className="text-foreground">{source}</dd>
+					<dd>
+						<FeatureSourceControl
+							disabled={disabled}
+							feature={feature}
+							inventory={inventory}
+							onChange={(category) => onSourceChange(feature, category)}
+						/>
+					</dd>
 				</div>
 				<div className="space-y-1">
 					<dt className={`text-muted-foreground ${microLabelClass}`}>Milestone</dt>

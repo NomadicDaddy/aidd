@@ -22,6 +22,7 @@ import type {
 } from './types.ts';
 
 import { BackendSafetyEnvelope } from '../backend-safety.ts';
+import { CompletionUsageDrain } from '../completion-usage-drain.ts';
 import {
 	formatBackendStarted,
 	formatIdleWarningLine,
@@ -80,10 +81,7 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	let acceptedCompletionFeature: string | undefined;
 	let completionCommittedDuringGrace = false;
 	let completionFinalizedBeforeBackendExit = false;
-	// The same safety envelope the single-agent stream loop runs inside (backend-safety.ts):
-	// wall-clock deadline keyed to the RUN start (not the stage start), flailing guard, child
-	// reaper, and run-signal relay. Every stage — including execution in the real worktree —
-	// gets the same protections a plain coding iteration has.
+	const completionUsageDrain = new CompletionUsageDrain();
 	const envelope = new BackendSafetyEnvelope({
 		controller,
 		onLogLine: (line) => {
@@ -116,7 +114,7 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	try {
 		while (true) {
 			const nextEvent = stream.next();
-			const stepResult =
+			let stepResult =
 				acceptedCompletionFeature !== undefined && input.completion !== undefined
 					? await Promise.race([
 							nextEvent,
@@ -130,6 +128,14 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 							}),
 						])
 					: await nextEvent;
+			if (stepResult === completionMarkerGrace) {
+				const drainedEvent = await completionUsageDrain.afterCommit(
+					input.role.backend,
+					completionCommittedDuringGrace,
+					nextEvent,
+				);
+				if (drainedEvent !== undefined) stepResult = drainedEvent;
+			}
 			if (stepResult === completionMarkerGrace) {
 				completionFinalizedBeforeBackendExit = true;
 				controller.abort('completion_marker_accepted');
@@ -159,8 +165,7 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 				break;
 			}
 			const event = stepResult.value;
-			// Live deltas duplicate the turn's final assistant_text — observer/progress only,
-			// never the persisted transcript (see backend-stream.ts for the same rule).
+			completionUsageDrain.record(event);
 			if (event.type !== 'assistant_delta') events.push(event);
 			progress.recordAgentEvent(event);
 			await input.onAgentEvent?.(event);

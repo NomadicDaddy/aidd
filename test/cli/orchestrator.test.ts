@@ -1,7 +1,8 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AgentEvent } from 'aidd-shared/backends/types';
+import { setTimeout as sleep } from 'node:timers/promises';
+import type { AgentEvent, CLIBackend } from 'aidd-shared/backends/types';
 import type { ResolvedConfig } from 'aidd-shared/config';
 import { exitCodeFromEvents, orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { parseArgs } from 'aidd-shared/args/index';
@@ -473,6 +474,58 @@ describe('orchestrator transitions and exit mapping', () => {
 		const runs = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
 		expect(runs).toContain('"stopReason":"completed"');
 		expect(runs).not.toContain('"stopReason":"stop_requested"');
+	});
+
+	test('drains trailing Codex usage after a committed completion marker', async () => {
+		const store = await makeStore('codex-usage-after-completion');
+		await initializeGitProject(store.projectDir);
+		const backend: CLIBackend = {
+			idleDefaults: { killMs: 1_000, nudgeMs: 500 },
+			name: 'codex',
+			async *runPrompt() {
+				await completeFeature(store, 'feature-core');
+				await runGit(store.projectDir, ['add', '.aidd/features/feature-core/feature.json']);
+				await runGit(store.projectDir, ['commit', '-m', 'feat: complete feature']);
+				yield {
+					chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					type: 'assistant_text',
+				};
+				await sleep(500);
+				yield {
+					cachedTokens: 80,
+					inputTokens: 100,
+					outputTokens: 20,
+					reasoningTokens: 5,
+					type: 'usage',
+				};
+				yield { exitCode: 0, filesModified: [], type: 'done' };
+			},
+		};
+		const codexPlan = resolveRunPlan(
+			parseArgs(['--project-dir', store.projectDir, '--cli', 'codex']),
+			{ ...config, cli: 'codex' },
+		);
+		expect(codexPlan.backend).toBe('codex');
+
+		const exitCode = await runOrchestrator(codexPlan, { backend, rootDir, store });
+
+		expect(exitCode).toBe(orchestratorExitCodes.success);
+		const iteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as {
+			metrics: {
+				cachedTokens: number;
+				inputTokens: number;
+				outputTokens: number;
+				reasoningTokens: number;
+			};
+		};
+		expect(iteration.metrics).toMatchObject({
+			cachedTokens: 80,
+			inputTokens: 100,
+			outputTokens: 20,
+			reasoningTokens: 5,
+		});
 	});
 
 	test('accepts completed feature metadata when abort arrives after AIDD_RESULT', async () => {

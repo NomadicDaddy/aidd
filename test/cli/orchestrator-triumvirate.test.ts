@@ -1739,6 +1739,62 @@ describe('orchestrator triumvirate safety envelope', () => {
 	);
 
 	test(
+		'execution drains trailing Codex usage after its completion commit',
+		async () => {
+			const store = await makeStore('safety-codex-usage-after-completion');
+			await initializeGitProject(store.projectDir);
+			const gitHeadBefore = (await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim();
+			const backend: CLIBackend = {
+				idleDefaults: { killMs: 1_000, nudgeMs: 500 },
+				name: 'codex',
+				async *runPrompt() {
+					await completeFeature(store, 'feature-core');
+					await runGit(store.projectDir, [
+						'add',
+						'.aidd/features/feature-core/feature.json',
+					]);
+					await runGit(store.projectDir, ['commit', '-m', 'complete feature']);
+					yield {
+						chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+						type: 'assistant_text',
+					};
+					await Bun.sleep(500);
+					yield {
+						cachedTokens: 80,
+						inputTokens: 100,
+						outputTokens: 20,
+						reasoningTokens: 5,
+						type: 'usage',
+					};
+					yield { exitCode: 0, filesModified: [], type: 'done' };
+				},
+			};
+			let stageResult: Awaited<ReturnType<typeof runStage>> | undefined;
+			await captureStdout(async () => {
+				stageResult = await runStage({
+					backend,
+					completion: { gitHeadBefore, graceMs: 2_000, store },
+					cwd: store.projectDir,
+					cwdKind: 'project',
+					plan: plan(store.projectDir, []),
+					prompt: 'work',
+					role: { backend: 'codex' },
+					stage: 'execution',
+					work: { description: 'run', id: 'feature-core', kind: 'feature' },
+				});
+			});
+
+			expect(stageResult?.metrics).toMatchObject({
+				cachedTokens: 80,
+				inputTokens: 100,
+				outputTokens: 20,
+				reasoningTokens: 5,
+			});
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
 		'execution completion waits for its commit then aborts the lingering backend',
 		async () => {
 			const store = await makeStore('safety-completion-grace');

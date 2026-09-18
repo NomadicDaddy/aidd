@@ -18,6 +18,7 @@ import type { CompiledPrompt } from '../../prompts/types.ts';
 import type { OrchestratorDeps } from './types.ts';
 
 import { BackendSafetyEnvelope } from '../backend-safety.ts';
+import { CompletionUsageDrain } from '../completion-usage-drain.ts';
 import { isAgentSignalEvent } from '../formatters.ts';
 import {
 	formatBackendStarted,
@@ -65,6 +66,7 @@ export async function runBackendStreamLoop(
 	let timeToFirstEventMs: number | undefined;
 	let completionFinalizedBeforeBackendExit = false;
 	let completionCommittedDuringGrace = false;
+	const completionUsageDrain = new CompletionUsageDrain();
 	// Wall-clock deadline, flailing guard, and child-process reaper — the shared safety
 	// envelope both this loop and triumvirate stages run inside (see backend-safety.ts).
 	const envelope = new BackendSafetyEnvelope({
@@ -100,7 +102,7 @@ export async function runBackendStreamLoop(
 	try {
 		while (true) {
 			const nextEvent = stream.next();
-			const stepResult =
+			let stepResult =
 				acceptedCompletionFeature !== undefined
 					? await Promise.race([
 							nextEvent,
@@ -114,6 +116,14 @@ export async function runBackendStreamLoop(
 							}),
 						])
 					: await nextEvent;
+			if (stepResult === completionMarkerGrace) {
+				const drainedEvent = await completionUsageDrain.afterCommit(
+					plan.backend,
+					completionCommittedDuringGrace,
+					nextEvent,
+				);
+				if (drainedEvent !== undefined) stepResult = drainedEvent;
+			}
 			if (stepResult === completionMarkerGrace) {
 				completionFinalizedBeforeBackendExit = true;
 				controller.abort('completion_marker_accepted');
@@ -150,6 +160,7 @@ export async function runBackendStreamLoop(
 			}
 
 			const event = stepResult.value;
+			completionUsageDrain.record(event);
 			// Live deltas are presentation-only duplicates of the turn's final assistant_text:
 			// they feed the observer (run-log tail) and progress, but persisting them in `events`
 			// would double the transcript and every marker/metrics scan over it.

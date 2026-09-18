@@ -133,7 +133,8 @@
 							"opencode",
 							"kilocode",
 							"codex",
-							"cline"
+							"cline",
+							"grok"
 						],
 						"type": "string"
 					},

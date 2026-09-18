@@ -84,6 +84,7 @@ local models is nothing. Rates are per 1M tokens, retrieved 2026-09-17.
 | claude-opus-5    |  $5.00 | $25.00 |      $0.50 |
 | claude-fable-5-1 | $10.00 | $50.00 |      $0.25 |
 | glm-5.3          |  $1.40 |  $4.40 |      $0.26 |
+| grok-4.6         |  $2.00 |  $6.00 |      $0.50 |
 
 `cachedPerMtok` is the cache **read** rate; cache writes are not modelled. `reasoningPerMtok`
 is deliberately absent - reasoning tokens are a subset of `outputTokens` and are already billed
@@ -115,13 +116,30 @@ Caveats that affect how cross-provider cost should be read:
   dollars per completed task, never dollars per token.
 - **claude-code reports real metered spend**, and `resolveCost` trusts a positive reported cost
   over the table. For those stacks these rates are a fallback only.
-- **Long-context tiers are not modelled.** OpenAI charges roughly 2x above its long-context
-  threshold. The heaviest task (audit-primary) sends ~58-65k tokens, which stays under it, but a
-  task that grows past the threshold would be under-costed here.
-- **gpt-5.6-sol pricing is promotional**, guaranteed only through 2026-11-21. Re-check before
-  comparing a later session against this one.
+- **Long-context tiers are not modelled, but only grok is at real risk.** gpt-6-astra switches to
+  $20/$75 above **272k tokens per request**. Observed agentic runs average ~90k per request with a
+  plausible worst case near 186k on the longest audit-primary loops, so the OpenAI stacks stay
+  comfortably inside the standard tier and their rates here are sound.
+- **grok-4.6 is the exception, and its rate is an assumption.** xAI's cliff is at **200k** and is
+  all-or-nothing: once a single request reaches it, $4/$12/$1 applies to every token in that
+  request, not just the excess. The table uses the short-context tier ($2/$6/$0.50) since task
+  prompts start far below it, but the ~186k worst case sits close enough to the cliff to matter.
+  The harness aggregates tokens per run and never records per-request sizes, so this cannot be
+  checked from the data. Treat grok cost as a **lower bound** - up to 2x understated if a run's
+  later turns crossed. Note this erases grok's apparent output-price edge over gpt-5.6-terra
+  ($6 vs $12) on exactly the heaviest tasks, where it would bill $12 too.
+- **grok-4.6 server-side tools are not used**, so their $5/1k-call charge (web search, X search,
+  code execution; $2.50/1k for collections search) does not apply. aidd invokes grok with only
+  `--output-format`, `--permission-mode`, `-m` and `--reasoning-effort`
+  (`shared/src/backends/commands.ts`). Re-check this if those flags ever change.
+- **Several of these rates are recent or temporary**, which matters when comparing against an
+  older or newer session rather than within one:
+    - gpt-5.6-sol $4/$20 is promotional through **2026-11-21** (was $5/$30 until 2026-08-21).
+    - gpt-5.6-terra was cut 20% on 2026-07-30; gpt-5.6-luna was cut 80% the same day.
+    - claude-fable-5.1's cache read was cut 75% to $0.25/M - the main change from Fable 5.
+    - grok-4.6 released 2026-08, us-east-1 / us-west-2, 500k context.
 - Batch and Flex discounts (50%) and fast-mode premiums (2x) are not modelled; the harness runs
-  the standard tier.
+  the standard tier. **Batch is not available on grok-4.6 at all.**
 
 ## Local models (LM Studio)
 

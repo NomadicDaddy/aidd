@@ -61,6 +61,11 @@
 			"targetModelFamily": "claude-fable-5-1"
 		},
 		{
+			"members": ["grok-46-low", "grok-46-medium", "grok-46-high"],
+			"name": "grok-4.6",
+			"targetModelFamily": "grok-4.6"
+		},
+		{
 			"members": ["native-glm53-low", "kilocode-glm53-low", "opencode-glm53-low"],
 			"name": "glm-5.3-low",
 			"targetModelFamily": "glm-5.3"
@@ -121,6 +126,11 @@
 			"cachedPerMtok": 1,
 			"inputPerMtok": 10,
 			"outputPerMtok": 50
+		},
+		"grok-4.6": {
+			"cachedPerMtok": 0.5,
+			"inputPerMtok": 2,
+			"outputPerMtok": 6
 		}
 	},
 	"scoring": {
@@ -308,6 +318,27 @@
 			"label": "claude-code-fable51-xhigh",
 			"model": "claude-fable-5-1",
 			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "grok",
+			"label": "grok-46-low",
+			"model": "grok-4.6",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "grok",
+			"label": "grok-46-medium",
+			"model": "grok-4.6",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "grok",
+			"label": "grok-46-high",
+			"model": "grok-4.6",
+			"reasoningEffort": "high",
 			"view": "native-best"
 		},
 		{

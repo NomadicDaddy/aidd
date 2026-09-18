@@ -9,6 +9,10 @@ export const defaultWorkspacesDir = path.join(repoRoot, 'benchmarks', 'workspace
 export const cliEntryPath = path.join(repoRoot, 'cli', 'src', 'index.ts');
 export const benchmarkDirtyTreeThreshold = '1000';
 
+// Mirrors the canonical backendNames in shared/src/plan/types.ts. This copy had drifted:
+// 'grok' and 'openai' existed as real aidd backends but were rejected here at manifest parse.
+// 'grok' added 2026-09-18 for the v3 matrix; 'openai' is still absent deliberately, as no
+// v3 stack targets it - add it here when one does.
 export const backendNames = [
 	'native',
 	'ollama',
@@ -18,4 +22,5 @@ export const backendNames = [
 	'kilocode',
 	'codex',
 	'cline',
+	'grok',
 ] as const;

@@ -69,7 +69,61 @@ aggregate, append its `runs.jsonl` to the master `benchmarks/results/runs.jsonl`
 **and** add its directory name to `SOURCE_DIRS` in `scripts/aggregate-composite-matrix.ts` (for the
 composite).
 
-## Local models (LM Studio / Ollama)
+## Pricing
+
+`manifest.pricing` is keyed by a cohort's `targetModelFamily`, not by stack label or model id.
+A family with no entry (the local stacks) keeps whatever cost the backend reported, which for
+local models is nothing. Rates are per 1M tokens, retrieved 2026-09-17.
+
+| Family           |  Input | Output | Cache read |
+| ---------------- | -----: | -----: | ---------: |
+| gpt-5.6-luna     |  $0.20 |  $1.20 |      $0.02 |
+| gpt-5.6-terra    |  $2.00 | $12.00 |      $0.20 |
+| gpt-5.6-sol      |  $4.00 | $20.00 |      $0.40 |
+| gpt-6-astra      | $10.00 | $50.00 |      $1.00 |
+| claude-opus-5    |  $5.00 | $25.00 |      $0.50 |
+| claude-fable-5-1 | $10.00 | $50.00 |      $0.25 |
+| glm-5.3          |  $1.40 |  $4.40 |      $0.26 |
+
+`cachedPerMtok` is the cache **read** rate; cache writes are not modelled. `reasoningPerMtok`
+is deliberately absent - reasoning tokens are a subset of `outputTokens` and are already billed
+at `outputPerMtok`, so setting it would double-count (see `scripts/lib/benchmark/pricing.ts`).
+
+## Reasoning effort support
+
+Manifest values are normalized by `normalizeReasoningEffort` in `shared/src/args/constants.ts`,
+so `extra high`, `extra-high`, `extra_high` and `x-high` all become `xhigh`. For the direct-AI
+(`native`) path the normalized value is sent verbatim as OpenAI-style `reasoning_effort`; there is
+no per-provider clamp (`shared/src/agent/client/request.ts`).
+
+Verified 2026-09-17 against the z.ai coding endpoint: an invalid value is rejected with
+`reasoning_effort must be one of: none, minimal, low, medium, high, xhigh, max`. Validation is
+therefore live, and **glm-5.3 genuinely supports `xhigh`** (and `max`, which the v3 matrix does
+not use). An `xhigh` GLM stack is real data, not a silent duplicate of `high`.
+
+Open question for the full matrix: whether the `opencode` and `kilocode` wrappers forward the
+effort at all. A high-vs-xhigh probe showed kilocode reasoning tokens rising 2135 -> 3361 while
+opencode was flat (2608 -> 2510) at n=1, which is within noise either way. If an `opencode` family
+shows statistically identical reasoning tokens across all four efforts, suspect the wrapper is
+dropping the flag rather than the model ignoring it - that would affect every opencode stack, not
+just `xhigh`.
+
+Caveats that affect how cross-provider cost should be read:
+
+- **Tokenizer skew.** Claude 4.7+ produces roughly 30% more tokens for the same text than the
+  OpenAI models. Per-token rates therefore understate Anthropic cost for identical work; compare
+  dollars per completed task, never dollars per token.
+- **claude-code reports real metered spend**, and `resolveCost` trusts a positive reported cost
+  over the table. For those stacks these rates are a fallback only.
+- **Long-context tiers are not modelled.** OpenAI charges roughly 2x above its long-context
+  threshold. The heaviest task (audit-primary) sends ~58-65k tokens, which stays under it, but a
+  task that grows past the threshold would be under-costed here.
+- **gpt-5.6-sol pricing is promotional**, guaranteed only through 2026-11-21. Re-check before
+  comparing a later session against this one.
+- Batch and Flex discounts (50%) and fast-mode premiums (2x) are not modelled; the harness runs
+  the standard tier.
+
+## Local models (LM Studio)
 
 Local models must be loaded with a **context window large enough for aidd's prompts**. The audit task
 sends ~58-65k tokens and remediation ~12k; a default 8k context makes those requests fail instantly
@@ -80,9 +134,14 @@ interview, validate, quiz) fit under 8k and pass, so the failure is easy to misr
 For LM Studio, reload each model with a large context before benchmarking (check fit first with
 `--estimate-only`, verify with `lms ps`):
 
-```bash
-lms load <model> --context-length 65536 -y
+```powershell
+# pinned, benchmarked loader configs - one model at a time
+D:\infra\lmstudio\load-gpt-oss-20b.ps1      # 98304 context
+D:\infra\lmstudio\load-gemma-4-e4b.ps1      # 131072 context
 ```
+
+The two local stacks cannot be co-resident in 16GB, so run them as separate sessions with
+`--stack`, loading the matching script first.
 
 Run large-context local stacks with **`--skip-preflight`**. The preflight readiness probe is gated by
 `settings.preflight.timeoutSeconds` (default 180s), and slower large-context inference can exceed it

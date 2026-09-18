@@ -75,6 +75,7 @@ nul/
 # mock/test data
 .lighthouseci/
 *.test.log
+benchmarks/archive/
 benchmarks/manifest.*-20*.json
 benchmarks/results/
 benchmarks/workspaces/

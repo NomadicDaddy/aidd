@@ -1,30 +1,34 @@
 {
 	"cohorts": [
 		{
-			"members": ["native-glm53-low", "opencode-glm53-low", "kilocode-glm53-low"],
-			"name": "glm-5.3-low",
-			"targetModelFamily": "glm-5.3"
-		},
-		{
-			"members": ["native-glm53-medium", "opencode-glm53-medium", "kilocode-glm53-medium"],
-			"name": "glm-5.3-medium",
-			"targetModelFamily": "glm-5.3"
-		},
-		{
-			"members": ["native-glm53-high", "opencode-glm53-high", "kilocode-glm53-high"],
-			"name": "glm-5.3-high",
-			"targetModelFamily": "glm-5.3"
+			"members": [
+				"codex-gpt56-luna-low",
+				"codex-gpt56-luna-medium",
+				"codex-gpt56-luna-high",
+				"codex-gpt56-luna-xhigh"
+			],
+			"name": "gpt-5.6-luna",
+			"targetModelFamily": "gpt-5.6-luna"
 		},
 		{
 			"members": [
-				"claude-code-opus48-low",
-				"claude-code-opus48-medium",
-				"claude-code-opus48-high",
-				"claude-code-opus48-xhigh",
-				"claude-code-opus48-max"
+				"codex-gpt56-terra-low",
+				"codex-gpt56-terra-medium",
+				"codex-gpt56-terra-high",
+				"codex-gpt56-terra-xhigh"
 			],
-			"name": "claude-opus-4-8",
-			"targetModelFamily": "claude-opus-4-8"
+			"name": "gpt-5.6-terra",
+			"targetModelFamily": "gpt-5.6-terra"
+		},
+		{
+			"members": [
+				"codex-gpt56-sol-low",
+				"codex-gpt56-sol-medium",
+				"codex-gpt56-sol-high",
+				"codex-gpt56-sol-xhigh"
+			],
+			"name": "gpt-5.6-sol",
+			"targetModelFamily": "gpt-5.6-sol"
 		},
 		{
 			"members": [
@@ -38,17 +42,43 @@
 		},
 		{
 			"members": [
-				"ollama-qwen36-latest",
-				"ollama-qwen36-latest-thinking",
-				"ollama-qwen36-27b",
-				"ollama-qwen36-27b-thinking",
-				"ollama-gpt-oss-20b-low",
-				"ollama-gpt-oss-20b-medium",
-				"ollama-gpt-oss-20b-high",
-				"ollama-gemma4-12b"
+				"claude-code-opus5-low",
+				"claude-code-opus5-medium",
+				"claude-code-opus5-high",
+				"claude-code-opus5-xhigh"
 			],
-			"name": "ollama-local",
-			"targetModelFamily": "local-ollama"
+			"name": "claude-opus-5",
+			"targetModelFamily": "claude-opus-5"
+		},
+		{
+			"members": [
+				"claude-code-fable51-low",
+				"claude-code-fable51-medium",
+				"claude-code-fable51-high",
+				"claude-code-fable51-xhigh"
+			],
+			"name": "claude-fable-5-1",
+			"targetModelFamily": "claude-fable-5-1"
+		},
+		{
+			"members": ["native-glm53-low", "kilocode-glm53-low", "opencode-glm53-low"],
+			"name": "glm-5.3-low",
+			"targetModelFamily": "glm-5.3"
+		},
+		{
+			"members": ["native-glm53-medium", "kilocode-glm53-medium", "opencode-glm53-medium"],
+			"name": "glm-5.3-medium",
+			"targetModelFamily": "glm-5.3"
+		},
+		{
+			"members": ["native-glm53-high", "kilocode-glm53-high", "opencode-glm53-high"],
+			"name": "glm-5.3-high",
+			"targetModelFamily": "glm-5.3"
+		},
+		{
+			"members": ["native-glm53-xhigh", "kilocode-glm53-xhigh", "opencode-glm53-xhigh"],
+			"name": "glm-5.3-xhigh",
+			"targetModelFamily": "glm-5.3"
 		},
 		{
 			"members": ["lmstudio-gpt-oss-20b", "lmstudio-gemma-4-e4b"],
@@ -57,10 +87,35 @@
 		}
 	],
 	"pricing": {
+		"claude-fable-5-1": {
+			"cachedPerMtok": 0.25,
+			"inputPerMtok": 10,
+			"outputPerMtok": 50
+		},
+		"claude-opus-5": {
+			"cachedPerMtok": 0.5,
+			"inputPerMtok": 5,
+			"outputPerMtok": 25
+		},
 		"glm-5.3": {
 			"cachedPerMtok": 0.26,
 			"inputPerMtok": 1.4,
 			"outputPerMtok": 4.4
+		},
+		"gpt-5.6-luna": {
+			"cachedPerMtok": 0.02,
+			"inputPerMtok": 0.2,
+			"outputPerMtok": 1.2
+		},
+		"gpt-5.6-sol": {
+			"cachedPerMtok": 0.4,
+			"inputPerMtok": 4,
+			"outputPerMtok": 20
+		},
+		"gpt-5.6-terra": {
+			"cachedPerMtok": 0.2,
+			"inputPerMtok": 2,
+			"outputPerMtok": 12
 		},
 		"gpt-6-astra": {
 			"cachedPerMtok": 1,
@@ -88,104 +143,87 @@
 	},
 	"stacks": [
 		{
-			"cli": "native",
-			"label": "native-glm53-low",
-			"model": "glm-5.3",
-			"provider": "zhipu",
+			"cli": "codex",
+			"label": "codex-gpt56-luna-low",
+			"model": "gpt-5.6-luna",
 			"reasoningEffort": "low",
 			"view": "native-best"
 		},
 		{
-			"cli": "native",
-			"label": "native-glm53-medium",
-			"model": "glm-5.3",
-			"provider": "zhipu",
+			"cli": "codex",
+			"label": "codex-gpt56-luna-medium",
+			"model": "gpt-5.6-luna",
 			"reasoningEffort": "medium",
 			"view": "native-best"
 		},
 		{
-			"cli": "native",
-			"label": "native-glm53-high",
-			"model": "glm-5.3",
-			"provider": "zhipu",
+			"cli": "codex",
+			"label": "codex-gpt56-luna-high",
+			"model": "gpt-5.6-luna",
 			"reasoningEffort": "high",
 			"view": "native-best"
 		},
 		{
-			"cli": "opencode",
-			"label": "opencode-glm53-low",
-			"model": "zai-coding-plan/glm-5.3",
-			"reasoningEffort": "low",
-			"view": "native-best"
-		},
-		{
-			"cli": "opencode",
-			"label": "opencode-glm53-medium",
-			"model": "zai-coding-plan/glm-5.3",
-			"reasoningEffort": "medium",
-			"view": "native-best"
-		},
-		{
-			"cli": "opencode",
-			"label": "opencode-glm53-high",
-			"model": "zai-coding-plan/glm-5.3",
-			"reasoningEffort": "high",
-			"view": "native-best"
-		},
-		{
-			"cli": "kilocode",
-			"label": "kilocode-glm53-low",
-			"model": "zai-coding-plan/glm-5.3",
-			"reasoningEffort": "low",
-			"view": "native-best"
-		},
-		{
-			"cli": "kilocode",
-			"label": "kilocode-glm53-medium",
-			"model": "zai-coding-plan/glm-5.3",
-			"reasoningEffort": "medium",
-			"view": "native-best"
-		},
-		{
-			"cli": "kilocode",
-			"label": "kilocode-glm53-high",
-			"model": "zai-coding-plan/glm-5.3",
-			"reasoningEffort": "high",
-			"view": "native-best"
-		},
-		{
-			"cli": "claude-code",
-			"label": "claude-code-opus48-low",
-			"model": "claude-opus-4-8",
-			"reasoningEffort": "low",
-			"view": "native-best"
-		},
-		{
-			"cli": "claude-code",
-			"label": "claude-code-opus48-medium",
-			"model": "claude-opus-4-8",
-			"reasoningEffort": "medium",
-			"view": "native-best"
-		},
-		{
-			"cli": "claude-code",
-			"label": "claude-code-opus48-high",
-			"model": "claude-opus-4-8",
-			"reasoningEffort": "high",
-			"view": "native-best"
-		},
-		{
-			"cli": "claude-code",
-			"label": "claude-code-opus48-xhigh",
-			"model": "claude-opus-4-8",
+			"cli": "codex",
+			"label": "codex-gpt56-luna-xhigh",
+			"model": "gpt-5.6-luna",
 			"reasoningEffort": "extra high",
 			"view": "native-best"
 		},
 		{
-			"cli": "claude-code",
-			"label": "claude-code-opus48-max",
-			"model": "claude-opus-4-8",
-			"reasoningEffort": "max",
+			"cli": "codex",
+			"label": "codex-gpt56-terra-low",
+			"model": "gpt-5.6-terra",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-terra-medium",
+			"model": "gpt-5.6-terra",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-terra-high",
+			"model": "gpt-5.6-terra",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-terra-xhigh",
+			"model": "gpt-5.6-terra",
+			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-low",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-medium",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-high",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "codex",
+			"label": "codex-gpt56-sol-xhigh",
+			"model": "gpt-5.6-sol",
+			"reasoningEffort": "extra high",
 			"view": "native-best"
 		},
 		{
@@ -217,59 +255,147 @@
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-qwen36-latest",
-			"model": "qwen3.6:latest",
-			"thinking": false,
+			"cli": "claude-code",
+			"label": "claude-code-opus5-low",
+			"model": "claude-opus-5",
+			"reasoningEffort": "low",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-qwen36-latest-thinking",
-			"model": "qwen3.6:latest",
-			"thinking": true,
+			"cli": "claude-code",
+			"label": "claude-code-opus5-medium",
+			"model": "claude-opus-5",
+			"reasoningEffort": "medium",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-qwen36-27b",
-			"model": "qwen3.6:27b",
-			"thinking": false,
+			"cli": "claude-code",
+			"label": "claude-code-opus5-high",
+			"model": "claude-opus-5",
+			"reasoningEffort": "high",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-qwen36-27b-thinking",
-			"model": "qwen3.6:27b",
-			"thinking": true,
+			"cli": "claude-code",
+			"label": "claude-code-opus5-xhigh",
+			"model": "claude-opus-5",
+			"reasoningEffort": "extra high",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-gpt-oss-20b-low",
-			"model": "gpt-oss:20b",
-			"thinkingLevel": "low",
+			"cli": "claude-code",
+			"label": "claude-code-fable51-low",
+			"model": "claude-fable-5-1",
+			"reasoningEffort": "low",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-gpt-oss-20b-medium",
-			"model": "gpt-oss:20b",
-			"thinkingLevel": "medium",
+			"cli": "claude-code",
+			"label": "claude-code-fable51-medium",
+			"model": "claude-fable-5-1",
+			"reasoningEffort": "medium",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-gpt-oss-20b-high",
-			"model": "gpt-oss:20b",
-			"thinkingLevel": "high",
+			"cli": "claude-code",
+			"label": "claude-code-fable51-high",
+			"model": "claude-fable-5-1",
+			"reasoningEffort": "high",
 			"view": "native-best"
 		},
 		{
-			"cli": "ollama",
-			"label": "ollama-gemma4-12b",
-			"model": "hf.co/unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
-			"thinking": false,
+			"cli": "claude-code",
+			"label": "claude-code-fable51-xhigh",
+			"model": "claude-fable-5-1",
+			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "native",
+			"label": "native-glm53-low",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "native",
+			"label": "native-glm53-medium",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "native",
+			"label": "native-glm53-high",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "native",
+			"label": "native-glm53-xhigh",
+			"model": "glm-5.3",
+			"provider": "zhipu",
+			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-low",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-medium",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-high",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "kilocode",
+			"label": "kilocode-glm53-xhigh",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "extra high",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-low",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "low",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-medium",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "medium",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-high",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "high",
+			"view": "native-best"
+		},
+		{
+			"cli": "opencode",
+			"label": "opencode-glm53-xhigh",
+			"model": "zai-coding-plan/glm-5.3",
+			"reasoningEffort": "extra high",
 			"view": "native-best"
 		},
 		{
@@ -335,7 +461,7 @@
 			"timeoutSeconds": 900
 		},
 		{
-			"category": "agentic",
+			"category": "control",
 			"command": "--validate --max-iterations 1",
 			"evaluation": "validate",
 			"fixture": "validate",

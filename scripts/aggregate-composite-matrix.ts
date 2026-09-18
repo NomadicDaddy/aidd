@@ -55,34 +55,31 @@ function parseResultsDir(args: string[]): string {
 }
 
 const RESULTS_DIR = parseResultsDir(process.argv.slice(2));
+// v3 sessions. The v2 set was archived on 2026-09-17 to benchmarks/archive/v2-20260917/;
+// its SOURCE_DIRS list is preserved there in aggregate-composite-matrix.v2-snapshot.ts.
 const SOURCE_DIRS = [
-	'first-pass-low-gpt-oss20b-no-opencode-20260524',
-	'set3-medium-no-opencode-20260524',
-	'set3-medium-opencode-20260524',
-	'sets4-8-bundled-20260525',
-	'set9-ollama-qwen36-latest-20260525-r2',
-	'set10-ollama-qwen36-latest-thinking-20260525',
-	'set11-ollama-qwen36-27b-20260525-r2',
-	'glm52-opencode-kilocode-20260622',
-	'lmstudio-gemma-e4b-64k',
-	'lmstudio-gpt-oss-20b-64k',
+	'v3-phase1-cloud-20260917',
+	'v3-phase1-fable-20260918',
+	'v3-phase1-local-gptoss-20260918',
+	'v3-phase1-local-gemma-20260918',
 ];
 
-const PRIMARY_AGENTIC_TASKS = ['interview', 'audit-primary', 'remediation', 'validate', 'quiz'];
+// `validate` is deliberately absent: --validate resolves to the same internal mode as
+// --check-features/--check-artifacts (cli/src/plan/resolve.ts), so it never invokes a model.
+// It scored exactly 1.000 on 30/30 runs at zero tokens across 10 stacks, which padded every
+// stack's agentic composite. It is categorised `control` in the manifest as of 2026-09-18.
+const PRIMARY_AGENTIC_TASKS = ['interview', 'audit-primary', 'remediation', 'quiz'];
 
-// Stacks whose backend (opencode/kilocode) could not record token usage at run time, so their
-// cost is unknown. The composite redistributes the cost weight into correctness/reliability for
-// unknown-cost stacks, which inflates their score relative to stacks that pay a real cost term —
-// so they are excluded here to avoid misrepresenting them on the leaderboard. The glm-5.2
-// opencode/kilocode stacks cover the same backends with full token + cost data.
-const EXCLUDE_STACKS = new Set([
-	'kilocode-glm51-high',
-	'kilocode-glm51-low',
-	'kilocode-glm51-medium',
-	'opencode-glm51-high',
-	'opencode-glm51-low',
-	'opencode-glm51-medium',
-]);
+// Stacks whose cost is unknown get the cost weight redistributed into correctness/reliability,
+// which inflates them against stacks that pay a real cost term. Exclude such stacks here when a
+// comparable fully-costed stack covers the same backend.
+//
+// Empty for v3: the v2 glm-5.1 entries are gone. NOTE the open gap - the gpt-5.6 family
+// (luna/terra/sol) records zero token usage on `remediation` (9/9 runs, aidd CLI side, while the
+// same stacks report normally on audit-primary and gpt-6-astra is unaffected). Their cost is
+// therefore understated rather than unknown-everywhere, and no duplicate stack covers them, so
+// they are left in rather than silently dropped. Revisit once that capture gap is fixed.
+const EXCLUDE_STACKS = new Set<string>([]);
 
 type StackAgg = {
 	cli: string;

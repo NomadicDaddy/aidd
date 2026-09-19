@@ -6,10 +6,17 @@
  * `cat "../out"side.txt` yields the single token `../outside.txt` — the concatenation that defeats
  * a regex over the raw string.
  *
- * Backslash is deliberately NOT treated as an escape. Under `bash -c` it is one, but honoring it
- * would erase the separator in Windows spellings like `..\outside.txt` and hand back the harmless
- * token `..outside.txt`. Leaving it literal can only over-split (an escaped space becomes two
- * tokens), and every extra token is one more thing that gets checked — the safe direction.
+ * Backslash is left literal rather than treated as an escape. Under `bash -c` it is one, but
+ * honoring it would erase the separator in Windows spellings like `..\outside.txt` and hand back
+ * the harmless token `..outside.txt`. Leaving it literal can only over-split (an escaped space
+ * becomes two tokens), and every extra token is one more thing that gets checked — the safe
+ * direction.
+ *
+ * The one exception is a backslash sitting immediately before a quote character outside quotes.
+ * Bash reads that as a literal quote, so opening a span on it leaves the span unterminated and
+ * swallows the rest of the line into a single token, command separators included. That is how
+ * `printf x \">/dev/null; cat ../outside.txt` hid its second command from every later pass. Both
+ * characters stay in the token, so no separator is erased and a Windows path keeps its backslash.
  */
 
 /**
@@ -40,6 +47,7 @@ const PROTECTED_DOLLAR = String.fromCharCode(1);
 
 export function tokenizeShell(command: string): ShellToken[] {
 	const tokens: ShellToken[] = [];
+	const chars = Array.from(command);
 	let text = '';
 	let unquoted = '';
 	let quote: '"' | "'" | null = null;
@@ -50,10 +58,19 @@ export function tokenizeShell(command: string): ShellToken[] {
 		unquoted = '';
 	};
 
-	for (const ch of command) {
+	for (let index = 0; index < chars.length; index += 1) {
+		const ch = chars[index];
+		if (ch === undefined) continue;
 		if (quote !== null) {
 			if (ch === quote) quote = null;
 			else text += quote === "'" && ch === '$' ? PROTECTED_DOLLAR : ch;
+			continue;
+		}
+		const next = chars[index + 1];
+		if (ch === '\\' && (next === '"' || next === "'")) {
+			text += ch + next;
+			unquoted += ch + next;
+			index += 1;
 			continue;
 		}
 		if (ch === '"' || ch === "'") {

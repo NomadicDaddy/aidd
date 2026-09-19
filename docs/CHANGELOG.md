@@ -2,6 +2,41 @@
 
 All notable public aidd releases are documented here.
 
+## [3.1.0] - 2026-09-19
+
+### Added
+
+- The sidebar shows a count beside Projects, Scheduled, Recipes, Skills, and Audits, matching the size of the list each page opens on. Scheduled counts active tasks because that is its default filter, and the three catalogs count everything because they open unfiltered. The numbers come from one `/api/v1/nav-counts` request, so mounting the shell no longer pulls the full audit applicability scan onto every page.
+- Feature priority is editable from a feature row. The choices come from roadmap order, and priority stays aligned with the milestone through the existing update flow.
+- A feature's category source is editable from the desktop and stacked feature rows. Audit and remediation sources stay read-only and say why.
+- The app brand shows the running version beneath the aidd wordmark. Collapsed navigation stays icon-only.
+- A spec that enumerates its own feature inventory, by naming IDs, listing a table, or stating a count, is materialized exactly. The initializer no longer pads the set to twenty, splits its entries, or parks the run over the count, and the spec's acceptance clauses become each feature's steps.
+
+### Changed
+
+- The Projects search bar filters by assurance profile instead of sync state, using the labels the cards already show. The URL parameter is `profile`, and old `?sync=` bookmarks resolve to the unfiltered list. Cards, the table's Sync column, and Project Detail still show live sync state.
+- The benchmark matrix moved to v3 cohorts covering gpt-5.6 luna, terra, and sol, claude-opus-5, claude-fable-5-1, glm-5.3 with a new xhigh split, and a new grok-4.6 cohort. Per-family pricing, reasoning-effort normalization, and the tokenizer and long-context cost caveats are documented in `benchmarks/README.md`. Local-model guidance covers LM Studio only, and `validate` is out of the primary agentic tasks because it resolves to a no-model control mode that padded every composite at zero cost.
+- Initializer completion requires a clean `git status --porcelain`, with non-ignored `.aidd/` blueprint files staged like any other work. The previous wording let a run treat its own uncommitted blueprint as validated local state.
+- Skill contracts require source evidence for a claimed workflow and explicit directive completion, so a partial artifact cannot certify a successful run. Recipe requests route through an actual recipe launch.
+- The `commit-bundles` skill works on a plain Git repository. Its metadata steps are conditional on `.aidd/` being present rather than refused outright.
+- Model references name Fable and Astra in place of Opus and Sol.
+- The first page load is smaller. Optional frontend UI is deferred while keeping its accessible fallbacks.
+
+### Fixed
+
+- `check:docs` reports a link to a gitignored file as broken. It resolved links against the working tree, so a link that passed locally failed in CI, which clones a fresh tree without the file. A waiver marker with a reason still suppresses the finding.
+- The Projects table uses the full content column. Table view capped the toolbar and the results card at 80rem, so from about 1568px of viewport up the table went on scrolling its optional columns inside a 1280px box with empty screen beside it.
+- An initializer that parks its blueprint on a product-owner question completes the run and names the parked records in its summary, instead of spending every remaining iteration re-reading the same open blocker.
+- An initializer interrupted mid-blueprint resumes that phase. Preflight read a project as coding-ready once one product feature, `spec.md`, and the changelog existed, all of which an initializer writes long before it has a roadmap, so the next run built its first feature on a half-made blueprint.
+- The prompt no longer tells a run that uncommitted `.aidd/` metadata is gitignored. A from-idea project has no `.aidd/` entries in the index until the initializer commits its blueprint, and the wrong answer kept those files out of every commit, so the tree never came clean.
+- Credential-disclosure detection drops two false positives. A committed dotenv template names variables and holds no values, so the dist, example, sample, and template suffixes are excluded, and a Codex `file_change` record lists paths without content, so pairing a call with a result on it blamed whatever command output came next. Disclosures are also matched to the tool result that produced them, so credential inspection metadata and source search hits are no longer reported.
+- Installing aidd's own history-guard hook is no longer charged to the agent's write allowlist. The install ran outside the gate every other scaffold copy passes through, so a metadata-only session failed on infrastructure writes it never made. Reverting a write violation now restores from the baseline commit rather than from the index, which had restored a staged path to exactly what the run staged, and both callers report which paths stayed dirty instead of printing that writes were reverted regardless.
+- Long Director replies reach Telegram, and the bridge honors flood waits.
+- Workspace shell policy allows a literal `>/dev/null` output sink, so commands like `grep ... 2>/dev/null` are no longer denied for resolving outside the workspace root. The masking is quote and backslash aware, and `>/dev/null/../x`, quoted suffixes, expansions, input redirects, and `/dev/null` as a plain argument stay denied.
+- Codex turn usage recorded after the completion marker reaches iteration metrics, including when the matching commit has not landed. Single-agent and triumvirate execution both drain it.
+- The runs page aligns the active and history column widths, and paginates execution history at five merged entries per page with previous, next, and direct page selection.
+- `spernakit-bump` orders its clean release captures.
+
 ## [3.0.2] - 2026-09-09
 
 ### Changed

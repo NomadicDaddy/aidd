@@ -41,14 +41,14 @@ the repository material distributed outside the npm graph.
 | [@fontsource-variable/geist](https://www.npmjs.com/package/@fontsource-variable/geist)                 | 5.3.0   | OFL-1.1    |
 | [@fontsource-variable/geist-mono](https://www.npmjs.com/package/@fontsource-variable/geist-mono)       | 5.3.0   | OFL-1.1    |
 | [@fontsource-variable/space-grotesk](https://www.npmjs.com/package/@fontsource-variable/space-grotesk) | 5.3.0   | OFL-1.1    |
-| [@tanstack/react-query](https://www.npmjs.com/package/@tanstack/react-query)                           | 5.102.8 | MIT        |
+| [@tanstack/react-query](https://www.npmjs.com/package/@tanstack/react-query)                           | 5.103.1 | MIT        |
 | [@xterm/addon-fit](https://www.npmjs.com/package/@xterm/addon-fit)                                     | 0.11.0  | MIT        |
 | [@xterm/addon-search](https://www.npmjs.com/package/@xterm/addon-search)                               | 0.16.0  | MIT        |
 | [@xterm/addon-web-links](https://www.npmjs.com/package/@xterm/addon-web-links)                         | 0.12.0  | MIT        |
 | [@xterm/addon-webgl](https://www.npmjs.com/package/@xterm/addon-webgl)                                 | 0.19.0  | MIT        |
 | [@xterm/xterm](https://www.npmjs.com/package/@xterm/xterm)                                             | 6.0.0   | MIT        |
 | [cmdk](https://www.npmjs.com/package/cmdk)                                                             | 1.1.1   | MIT        |
-| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.46.0  | ISC        |
+| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.47.0  | ISC        |
 | [react](https://www.npmjs.com/package/react)                                                           | 19.3.0  | MIT        |
 | [react-dom](https://www.npmjs.com/package/react-dom)                                                   | 19.3.0  | MIT        |
 | [react-router](https://www.npmjs.com/package/react-router)                                             | 8.4.0   | MIT        |

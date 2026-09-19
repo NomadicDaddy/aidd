@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { AuditService } from '../../backend/src/services/auditService.ts';
+import type { DirectiveLaunchService } from '../../backend/src/services/directiveLaunchService.ts';
 import type { PipelineService } from '../../backend/src/services/pipelineService.ts';
 import type { SkillLaunchService } from '../../backend/src/services/skillLaunchService.ts';
 
@@ -10,6 +11,7 @@ const FLEET_DIR = 'D:/applications';
 
 function dispatcher(input: {
 	audit?: AuditService;
+	directive?: DirectiveLaunchService;
 	pipeline?: PipelineService;
 	skill?: SkillLaunchService;
 }) {
@@ -26,6 +28,10 @@ function dispatcher(input: {
 			({
 				launchSkill: async () => ({ id: 'skill-session', status: 'queued' }),
 			} as unknown as SkillLaunchService),
+		input.directive ??
+			({
+				launchDirective: async () => ({ id: 'directive-run' }),
+			} as unknown as DirectiveLaunchService),
 		() => FLEET_DIR,
 	);
 }
@@ -99,6 +105,66 @@ describe('scheduled target dispatch', () => {
 		expect(result.children).toEqual([
 			{ id: 'skill-session', projectPath: 'D:/project', status: 'queued', type: 'session' },
 		]);
+	});
+
+	test('launches a directive per project and records each as a run child', async () => {
+		const received: Record<string, unknown>[] = [];
+		const directive = {
+			launchDirective: async (input: Record<string, unknown>) => {
+				received.push(input);
+				return { id: `directive-run-${received.length}` };
+			},
+		} as unknown as DirectiveLaunchService;
+		const result = await dispatcher({ directive }).dispatch({
+			executionId: 'execution',
+			projectPaths: ['D:/one', 'D:/two'],
+			scope: 'all',
+			target: {
+				executionIntent: 'apply-changes',
+				launchTarget: { backend: 'codex', model: 'gpt-5', reasoningEffort: 'high' },
+				prompt: 'Fix the failing lint rules.',
+				type: 'directive',
+			},
+			trigger: 'scheduled',
+		});
+		expect(received).toHaveLength(2);
+		expect(received[0]).toMatchObject({
+			backend: 'codex',
+			executionIntent: 'apply-changes',
+			initiator: 'automatic',
+			model: 'gpt-5',
+			projectDir: 'D:/one',
+			prompt: 'Fix the failing lint rules.',
+			reasoningEffort: 'high',
+			scheduledTaskExecutionId: 'execution',
+			source: 'scheduled',
+		});
+		expect(result.children).toEqual([
+			{ id: 'directive-run-1', projectPath: 'D:/one', status: 'running', type: 'run' },
+			{ id: 'directive-run-2', projectPath: 'D:/two', status: 'running', type: 'run' },
+		]);
+		expect(result.errors).toEqual([]);
+	});
+
+	test('keeps a failed directive launch as a per-project error', async () => {
+		const directive = {
+			launchDirective: async () => {
+				throw new Error('run ceiling reached');
+			},
+		} as unknown as DirectiveLaunchService;
+		const result = await dispatcher({ directive }).dispatch({
+			executionId: 'execution',
+			projectPaths: ['D:/one'],
+			scope: 'explicit',
+			target: {
+				executionIntent: 'review-only',
+				prompt: 'Report on the backlog.',
+				type: 'directive',
+			},
+			trigger: 'manual',
+		});
+		expect(result.children).toEqual([]);
+		expect(result.errors).toEqual(['D:/one: run ceiling reached']);
 	});
 
 	test('records audit run children and project-level failures', async () => {

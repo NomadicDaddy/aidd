@@ -11,9 +11,18 @@ export function buildScheduledTarget(input: {
 	args: string;
 	launchTarget: LaunchTargetValue;
 	parameters: Record<string, string>;
+	prompt: string;
 	targetId: string;
 	targetType: SelectableTargetType;
 }): ScheduledTaskTarget {
+	if (input.targetType === 'directive') {
+		return {
+			executionIntent: input.applyChanges ? 'apply-changes' : 'review-only',
+			launchTarget: input.launchTarget,
+			prompt: input.prompt.trim(),
+			type: 'directive',
+		};
+	}
 	if (input.targetType === 'skill') {
 		return {
 			args: input.args,

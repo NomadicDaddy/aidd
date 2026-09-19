@@ -8,7 +8,9 @@ import type { ScheduleIssue } from './scheduleBuilder.ts';
  * answering the question the scope rule asks of it.
  */
 export type ScheduledSaveTarget =
-	{ metadataOnly: boolean; type: 'recipe' } | { type: 'audit' | 'director' | 'skill' };
+	| { metadataOnly: boolean; type: 'recipe' }
+	| { prompt: string; type: 'directive' }
+	| { type: 'audit' | 'director' | 'skill' };
 
 interface ScheduledSaveReadinessInput {
 	applyChanges: boolean;
@@ -51,6 +53,10 @@ export function scopeTargetIssue(
 	if (target.type === 'audit') {
 		return 'Audits run against a project. Choose all projects or select the ones to audit.';
 	}
+	if (target.type === 'directive') {
+		// A directive run is launched against a project, exactly as the Directive modal launches one.
+		return 'Directives run against a project. Choose all projects or select the ones to run.';
+	}
 	if (target.type === 'recipe' && target.metadataOnly) {
 		// A metadata-only session enforces its .aidd/-only write boundary through git, which the
 		// applications root does not provide.
@@ -72,7 +78,13 @@ export function scheduledSaveReadiness({
 	targetId,
 }: ScheduledSaveReadinessInput): ScheduledSaveReadiness {
 	if (pending) return { blocked: true, reason: null };
-	if (!system && !targetId) return { blocked: true, reason: 'Choose a target.' };
+	// A directive has no catalog entry to choose: its prompt is what must be filled in instead.
+	if (!system && target.type === 'directive' && !target.prompt.trim()) {
+		return { blocked: true, reason: 'Enter the directive to run.' };
+	}
+	if (!system && target.type !== 'directive' && !targetId) {
+		return { blocked: true, reason: 'Choose a target.' };
+	}
 	// Ahead of the project picker's own complaint: where both apply, the incompatibility explains
 	// why no project selection would have helped.
 	const scopeIssue = scopeTargetIssue(projectScope, target);

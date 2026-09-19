@@ -52,6 +52,14 @@ const targetBody = t.Union([
 		review: t.Boolean(),
 		type: t.Literal('audit'),
 	}),
+	// A directive names no catalog entry: the prompt is the instruction, so it is the only
+	// required field beyond the intent the run is launched under.
+	t.Object({
+		executionIntent: t.Union([t.Literal('apply-changes'), t.Literal('review-only')]),
+		launchTarget: launchTargetBody,
+		prompt: t.String({ minLength: 1 }),
+		type: t.Literal('directive'),
+	}),
 ]);
 const writeFields = {
 	confirmUnattendedMutation: t.Optional(t.Boolean()),

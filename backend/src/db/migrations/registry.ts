@@ -7,6 +7,7 @@ import init0004 from './0004_director_json_constraints.sql' with { type: 'text' 
 import init0005 from './0005_run_json_domain_constraints.sql' with { type: 'text' };
 import init0006 from './0006_schedule_json_fk_constraints.sql' with { type: 'text' };
 import init0007 from './0007_metrics_diary_constraints.sql' with { type: 'text' };
+import init0008 from './0008_scheduled_directive_target.sql' with { type: 'text' };
 
 /**
  * Migration definitions bundled at module load time.
@@ -56,5 +57,9 @@ export const migrations: MigrationDefinition[] = [
 	{
 		sql: init0007,
 		version: '0007_metrics_diary_constraints',
+	},
+	{
+		sql: init0008,
+		version: '0008_scheduled_directive_target',
 	},
 ];

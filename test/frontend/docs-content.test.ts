@@ -153,6 +153,7 @@ describe('docs content', () => {
 
 		expect(markdownHeadings(markdown, { skipLeadingTitle: true })).toEqual([
 			{ depth: 0, id: 'choose-a-project-scope', text: 'Choose a project scope' },
+			{ depth: 0, id: 'choose-what-runs', text: 'Choose what runs' },
 			{ depth: 0, id: 'set-cadence-and-permissions', text: 'Set cadence and permissions' },
 			{ depth: 0, id: 'review-occurrences', text: 'Review occurrences' },
 			{ depth: 0, id: 'pause-resume-or-archive', text: 'Pause, resume, or archive' },

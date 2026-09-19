@@ -7,6 +7,7 @@ import type {
 import type { RunInitiator } from 'aidd-shared/metadata/active-runs';
 
 import type { AuditService } from '../auditService.ts';
+import type { DirectiveLaunchService } from '../directiveLaunchService.ts';
 import type { PipelineService } from '../pipelineService.ts';
 import type { SkillLaunchService } from '../skillLaunchService.ts';
 
@@ -68,6 +69,7 @@ export type DirectorCycleLauncher = (
 
 export class ScheduledTaskDispatcher {
 	private readonly auditService: AuditService;
+	private readonly directiveLaunchService: DirectiveLaunchService;
 	// Set after construction: the Director service does not exist yet when the scheduling services
 	// are built, and only the built-in system task ever needs it.
 	private launchDirectorCycle: DirectorCycleLauncher | null = null;
@@ -79,9 +81,11 @@ export class ScheduledTaskDispatcher {
 		auditService: AuditService,
 		pipelineService: PipelineService,
 		skillLaunchService: SkillLaunchService,
+		directiveLaunchService: DirectiveLaunchService,
 		getFleetDir: () => string,
 	) {
 		this.auditService = auditService;
+		this.directiveLaunchService = directiveLaunchService;
 		this.getFleetDir = getFleetDir;
 		this.pipelineService = pipelineService;
 		this.skillLaunchService = skillLaunchService;
@@ -191,6 +195,28 @@ export class ScheduledTaskDispatcher {
 						projectPath: recordedPath,
 						status: session.status,
 						type: 'session',
+					});
+				} else if (target.type === 'directive') {
+					const run = await this.directiveLaunchService.launchDirective({
+						...(target.launchTarget?.backend
+							? { backend: target.launchTarget.backend }
+							: {}),
+						executionIntent: target.executionIntent,
+						initiator,
+						...(target.launchTarget?.model ? { model: target.launchTarget.model } : {}),
+						projectDir: launchDir,
+						prompt: target.prompt,
+						...(target.launchTarget?.reasoningEffort
+							? { reasoningEffort: target.launchTarget.reasoningEffort }
+							: {}),
+						scheduledTaskExecutionId: executionId,
+						source: 'scheduled',
+					});
+					children.push({
+						id: run.id,
+						projectPath: recordedPath,
+						status: 'running',
+						type: 'run',
 					});
 				} else if (target.type === 'audit') {
 					const result = await this.auditService.launchAuditsForPaths({

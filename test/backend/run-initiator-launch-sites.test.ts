@@ -114,6 +114,10 @@ const DELEGATES: { file: string; why: string }[] = [
 		why: 'declares that context method and no initiator, so a tool cannot invent one',
 	},
 	{
+		file: 'services/directiveLaunchService.ts',
+		why: 'the one place a directive becomes a run; it stamps the caller answer, so the Directive button stays operator and a scheduled occurrence keeps the trigger it derived',
+	},
+	{
 		file: 'services/pipeline/autoFixRunner.ts',
 		why: 'an auto-fix inherits the session it is fixing, read from the execution context',
 	},
@@ -154,9 +158,11 @@ function backendSourceFiles(dir: string = BACKEND_SRC): string[] {
 }
 
 // Sessions as well as runs: a scheduled recipe, skill, or audit becomes runs only after a session
-// has already had to answer the question, so the session launchers belong inside the fence too.
+// has already had to answer the question, so the session launchers belong inside the fence too. A
+// directive is the one target that reaches a run without a session, so its launcher is named here
+// too rather than being visible only through the `launchRun` call inside it.
 const LAUNCH_CALLS =
-	/launchRun\(|launchRecipe\(|launchSkill\(|launchAudits\(|launchAuditsForPaths\(/;
+	/launchRun\(|launchRecipe\(|launchSkill\(|launchAudits\(|launchAuditsForPaths\(|launchDirective\(/;
 
 /** Every backend file that calls or declares a run or session launch. */
 function filesTouchingLaunches(): string[] {

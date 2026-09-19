@@ -5,6 +5,7 @@ import { useId } from 'react';
 
 import type { SelectableTargetType } from './targetBuilder.ts';
 
+import { DIRECTIVE_PROMPT_SAFETY_NOTICE } from '../../components/shared/directive-launch-policy.ts';
 import { Badge } from '../../components/ui/badge.tsx';
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
@@ -12,7 +13,7 @@ import { useAuditManager } from '../../hooks/useAudits.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useSkills } from '../../hooks/useSkills.ts';
 import { cn } from '../../lib/cn.ts';
-import { fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { fieldLabelClass, selectClass, textareaClass } from '../../lib/formStyles.ts';
 import { compactFieldMeasureClass } from '../../lib/typography.ts';
 import { autoParameters } from '../recipes/recipe-parameters.ts';
 import { findTargetRecipe } from './scheduledTargetRecipe.ts';
@@ -23,9 +24,11 @@ interface ScheduledTargetFieldsProps {
 	args: string;
 	nameField: ReactNode;
 	onArgsChange: (value: string) => void;
+	onPromptChange: (value: string) => void;
 	onTargetIdChange: (value: string) => void;
 	onTargetTypeChange: (value: TargetType) => void;
 	parameters: Record<string, string>;
+	prompt: string;
 	setParameters: Dispatch<SetStateAction<Record<string, string>>>;
 	targetId: string;
 	targetType: TargetType;
@@ -59,9 +62,11 @@ export function ScheduledTargetFields({
 	args,
 	nameField,
 	onArgsChange,
+	onPromptChange,
 	onTargetIdChange,
 	onTargetTypeChange,
 	parameters,
+	prompt,
 	setParameters,
 	targetId,
 	targetType,
@@ -105,22 +110,40 @@ export function ScheduledTargetFields({
 					<option value="skill">Skill</option>
 					<option value="recipe">Recipe</option>
 					<option value="audit">Audit</option>
+					<option value="directive">Directive</option>
 				</select>
 			</FieldRow>
-			<FieldRow label="Target" required>
-				<select
-					className={cn(selectClass, targetNameClass)}
-					onChange={(e) => onTargetIdChange(e.target.value)}
-					value={targetId}>
-					<option value="">Select target</option>
-					{targetType === 'audit' && <option value="*">All audits</option>}
-					{targetOptions.map((item) => (
-						<option className={targetOptionClass} key={item.id} value={item.id}>
-							{item.name}
-						</option>
-					))}
-				</select>
-			</FieldRow>
+			{/* A directive names no catalog entry, so the prompt takes the target slot instead. */}
+			{targetType === 'directive' ? (
+				<FieldRow
+					className="sm:col-span-2"
+					hint={DIRECTIVE_PROMPT_SAFETY_NOTICE}
+					label="Directive"
+					required>
+					<textarea
+						className={textareaClass}
+						onChange={(event) => onPromptChange(event.target.value)}
+						placeholder="Summarize the open findings and file the ones that still reproduce."
+						rows={5}
+						value={prompt}
+					/>
+				</FieldRow>
+			) : (
+				<FieldRow label="Target" required>
+					<select
+						className={cn(selectClass, targetNameClass)}
+						onChange={(e) => onTargetIdChange(e.target.value)}
+						value={targetId}>
+						<option value="">Select target</option>
+						{targetType === 'audit' && <option value="*">All audits</option>}
+						{targetOptions.map((item) => (
+							<option className={targetOptionClass} key={item.id} value={item.id}>
+								{item.name}
+							</option>
+						))}
+					</select>
+				</FieldRow>
+			)}
 			{nameField}
 			{targetType === 'skill' && (
 				<FieldRow label="Arguments">

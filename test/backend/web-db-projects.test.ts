@@ -97,6 +97,7 @@ const EXPECTED_MIGRATION_VERSIONS = [
 	'0005_run_json_domain_constraints',
 	'0006_schedule_json_fk_constraints',
 	'0007_metrics_diary_constraints',
+	'0008_scheduled_directive_target',
 ];
 
 describe('web database and project APIs', () => {

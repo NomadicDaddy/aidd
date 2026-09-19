@@ -6,6 +6,7 @@ import type { RunOutputWindowRequest } from '../services/run/output.ts';
 import type { RunLaunchRequest, WebRunMode } from '../types.ts';
 
 import { normalizeAuditNames } from '../services/audit/auditHelpers.ts';
+import { DirectiveLaunchService } from '../services/directiveLaunchService.ts';
 import { HttpError } from '../services/errors.ts';
 import { readRunCommits } from '../services/run/commits.ts';
 import { backendNameBody } from './schemas/backend.ts';
@@ -99,6 +100,9 @@ function outputWindow(query: {
 // files. Durable completed history is still read from project `.aidd` metadata by project
 // endpoints.
 export function createRunsRoutes(context: WebContext) {
+	// Stateless, and built here rather than injected so a context assembled without the execution
+	// services (tests, and any partially wired host) still serves the directive route.
+	const directives = new DirectiveLaunchService(context.runService, context.telemetryService);
 	return new Elysia({ prefix: '/api/v1/runs' })
 		.get(
 			'/',
@@ -139,26 +143,18 @@ export function createRunsRoutes(context: WebContext) {
 		.post(
 			'/directive',
 			async ({ body }) => {
-				const prompt = body.prompt.trim();
-				if (!prompt) {
-					throw new HttpError('Directive prompt is required', 400);
-				}
-				const run = await launchTrackedRun(
-					context,
-					{
-						...(body.backend !== undefined ? { backend: body.backend } : {}),
-						directiveReadonly: body.executionIntent === 'review-only',
-						maxIterations: 1,
-						mode: 'directive',
-						...(body.model !== undefined ? { model: body.model } : {}),
-						projectDir: body.projectDir,
-						prompt,
-						...(body.reasoningEffort !== undefined
-							? { reasoningEffort: body.reasoningEffort }
-							: {}),
-					},
-					'directive',
-				);
+				const run = await directives.launchDirective({
+					...(body.backend !== undefined ? { backend: body.backend } : {}),
+					executionIntent: body.executionIntent,
+					initiator: 'operator',
+					...(body.model !== undefined ? { model: body.model } : {}),
+					projectDir: body.projectDir,
+					prompt: body.prompt,
+					...(body.reasoningEffort !== undefined
+						? { reasoningEffort: body.reasoningEffort }
+						: {}),
+					source: 'web',
+				});
 				return { run };
 			},
 			{ body: directiveLaunchBody },

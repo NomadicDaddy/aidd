@@ -176,3 +176,48 @@ test('Run Now exposes an active-occurrence conflict as HTTP 409', async () => {
 	expect(response.status).toBe(409);
 	expect(await response.text()).toContain('active execution');
 });
+
+test('a directive task is created from its prompt and rejected without one', async () => {
+	let received: unknown;
+	const service = {
+		create: async (input: unknown) => {
+			received = input;
+			return { id: 'task' };
+		},
+	} as unknown as ScheduledTaskService;
+	const app = new Elysia()
+		.use(errorHandlerPlugin)
+		.use(createScheduledTaskRoutes({ scheduledTaskService: service } as unknown as WebContext));
+	const post = (target: unknown) =>
+		app.handle(
+			new Request('http://localhost/api/v1/scheduled-tasks', {
+				body: JSON.stringify({
+					name: 'Nightly sweep',
+					projects: [],
+					schedule: { expression: '0 9 * * *', kind: 'cron', timezone: 'UTC' },
+					target,
+				}),
+				headers: { 'content-type': 'application/json' },
+				method: 'POST',
+			}),
+		);
+
+	const accepted = await post({
+		executionIntent: 'review-only',
+		prompt: 'Summarize the open findings.',
+		type: 'directive',
+	});
+	expect(accepted.status).toBe(200);
+	expect(received).toMatchObject({
+		target: {
+			executionIntent: 'review-only',
+			prompt: 'Summarize the open findings.',
+			type: 'directive',
+		},
+	});
+
+	received = undefined;
+	const rejected = await post({ executionIntent: 'review-only', prompt: '', type: 'directive' });
+	expect(rejected.status).toBe(400);
+	expect(received).toBeUndefined();
+});

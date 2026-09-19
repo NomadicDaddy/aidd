@@ -11,6 +11,7 @@ import {
 	isScheduleDirty,
 } from '../../frontend/src/pages/scheduled/scheduledDraft.ts';
 import { countScheduledTasks } from '../../frontend/src/pages/scheduled/scheduledTaskCounts.ts';
+import { buildScheduledTarget } from '../../frontend/src/pages/scheduled/targetBuilder.ts';
 
 async function source(path: string): Promise<string> {
 	return await Bun.file(path).text();
@@ -526,6 +527,45 @@ test('Opening the form seeds the draft from the task, or from the launch query s
 	expect(recipe.targetType).toBe('recipe');
 	expect(recipe.targetId).toBe('hygiene');
 	expect(recipe.name).toBe('');
+});
+
+// A directive is the one target with nothing to select, so the prompt is what the draft carries,
+// what the form sends, and what an edit has to open with.
+test('A directive draft round-trips its prompt through the form target it builds', () => {
+	const directiveTask: ScheduledTask = {
+		...skillTask(),
+		target: {
+			executionIntent: 'review-only',
+			launchTarget: { backend: 'codex' },
+			prompt: 'Summarize the open findings.',
+			type: 'directive',
+		},
+	};
+	const draft = initialDraft(directiveTask, NO_PRESET);
+
+	expect(draft.targetType).toBe('directive');
+	expect(draft.targetId).toBe('');
+	expect(draft.prompt).toBe('Summarize the open findings.');
+	expect(draft.applyChanges).toBe(false);
+	// Editing only the prompt is a real edit, which a draft keyed on targetId alone would miss.
+	expect(isDraftDirty({ ...draft, prompt: 'Summarize the closed findings.' }, draft)).toBe(true);
+
+	expect(
+		buildScheduledTarget({
+			applyChanges: true,
+			args: 'ignored',
+			launchTarget: { backend: 'codex' },
+			parameters: { ignored: 'yes' },
+			prompt: '  Fix the failing lint rules.  ',
+			targetId: '',
+			targetType: 'directive',
+		}),
+	).toEqual({
+		executionIntent: 'apply-changes',
+		launchTarget: { backend: 'codex' },
+		prompt: 'Fix the failing lint rules.',
+		type: 'directive',
+	});
 });
 
 test('The scheduled draft provider resets on close and on switching tasks, without an effect', async () => {

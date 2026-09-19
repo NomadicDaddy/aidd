@@ -48,6 +48,15 @@ export type ScheduledTaskTarget =
 			review: boolean;
 			type: 'audit';
 	  }
+	// A free-form directive, typed by the operator rather than chosen from a catalog. It names no
+	// recipe, skill, or audit: the prompt is the whole instruction, and it runs as a single-iteration
+	// directive run against each project in scope.
+	| {
+			executionIntent: SkillExecutionIntent;
+			launchTarget?: LaunchTargetOverrides;
+			prompt: string;
+			type: 'directive';
+	  }
 	// The Director's fleet cycle. It carries no fields: the backend, model, and prompt all come from
 	// the Director profile, and the cycle is fleet-wide by definition so it never names a project.
 	// Only the built-in system task uses it; the create form cannot produce one.

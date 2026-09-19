@@ -220,6 +220,56 @@ describe('scheduled task validation', () => {
 		).rejects.toThrow('Confirm unattended changes');
 	});
 
+	test('a directive needs a prompt, a project, and consent before it changes anything', async () => {
+		const service = validator();
+		await expect(
+			service.resolveWrite({
+				name: 'Nightly sweep',
+				projects: ['D:/project'],
+				schedule,
+				target: {
+					executionIntent: 'review-only',
+					prompt: 'Summarize the open findings.',
+					type: 'directive',
+				},
+			}),
+		).resolves.toMatchObject({ projects: ['D:/project'] });
+		await expect(
+			service.resolveWrite({
+				name: 'Empty',
+				projects: ['D:/project'],
+				schedule,
+				target: { executionIntent: 'review-only', prompt: '   ', type: 'directive' },
+			}),
+		).rejects.toThrow('Enter the directive to run.');
+		await expect(
+			service.resolveWrite({
+				name: 'Unconfirmed',
+				projects: ['D:/project'],
+				schedule,
+				target: {
+					executionIntent: 'apply-changes',
+					prompt: 'Fix the lint errors.',
+					type: 'directive',
+				},
+			}),
+		).rejects.toThrow('Confirm unattended changes');
+		await expect(
+			service.resolveWrite({
+				confirmUnattendedMutation: true,
+				name: 'Fleet directive',
+				projects: [],
+				projectScope: 'none',
+				schedule,
+				target: {
+					executionIntent: 'apply-changes',
+					prompt: 'Fix the lint errors.',
+					type: 'directive',
+				},
+			}),
+		).rejects.toThrow('Directives run against a project');
+	});
+
 	test('rejects unsafe or unpersistable launch overrides', async () => {
 		const service = validator();
 		const target = {

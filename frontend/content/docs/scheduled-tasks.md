@@ -1,6 +1,6 @@
 # Scheduled tasks
 
-Use **Scheduled** to run a recipe, skill, or audit once or on a recurring local cadence.
+Use **Scheduled** to run a recipe, skill, audit, or free-form directive once or on a recurring local cadence.
 
 ## Choose a project scope
 
@@ -13,13 +13,17 @@ No project
 
 With no launch override, project-scoped work resolves the configured defaults for each destination.
 
-- Audits and metadata-only recipes need a project, so they cannot be saved with **No project**.
+## Choose what runs
+
+Skill, Recipe, and Audit name an entry from the matching catalog. **Directive** names nothing: you type the instruction, and each occurrence launches it as a single-iteration directive run against every project in scope — the same run the Directive button starts, on a cadence. Directive text is stored in run history and process arguments, so keep secrets out of it.
+
+- Audits, directives, and metadata-only recipes need a project, so they cannot be saved with **No project**.
 
 ## Set cadence and permissions
 
 - Choose Once, Daily, selected weekdays, or an advanced five-field cron expression.
 - Preview the next five times before saving.
-- Skills and audits default to review-only. Recipes always allow changes; any mutating target requires explicit unattended-change confirmation.
+- Skills, audits, and directives default to review-only. Recipes always allow changes; any mutating target requires explicit unattended-change confirmation.
 - Use **Run now** for an operator-started occurrence without changing the saved cadence or task state. It is refused while that task already has an active occurrence.
 
 ## Review occurrences

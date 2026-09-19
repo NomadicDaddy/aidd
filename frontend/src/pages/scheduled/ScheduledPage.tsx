@@ -105,7 +105,7 @@ function ScheduledTasks() {
 						{form.open ? 'Close form' : 'New task'}
 					</Button>
 				}
-				description="Durable recipe, skill, and audit tasks with reviewable occurrence history."
+				description="Durable recipe, skill, audit, and directive tasks with reviewable occurrence history."
 				helpSlug="scheduled-tasks"
 				title="Scheduled"
 			/>

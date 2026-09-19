@@ -48,6 +48,7 @@ function createService(): ScheduledTaskService {
 		{} as never,
 		{} as never,
 		{} as never,
+		{} as never,
 	);
 }
 

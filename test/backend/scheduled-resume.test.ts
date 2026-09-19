@@ -41,6 +41,7 @@ describe('scheduled task resume', () => {
 			{} as never,
 			{} as never,
 			{} as never,
+			{} as never,
 		);
 	});
 

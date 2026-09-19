@@ -86,6 +86,14 @@ export class ScheduledTaskValidator {
 				400,
 			);
 		}
+		if (target.type === 'directive') {
+			// A directive run is launched against a project the way an operator launches one from
+			// the Directive modal, which has no fleet-root equivalent to point it at.
+			throw new HttpError(
+				'Directives run against a project. Choose all projects or select the ones to run.',
+				400,
+			);
+		}
 		if (target.type === 'recipe') {
 			// A metadata-only session enforces its .aidd/-only write boundary through git, which the
 			// applications root does not provide.
@@ -145,6 +153,20 @@ export class ScheduledTaskValidator {
 			if (target.executionIntent === 'apply-changes' && !confirmed) {
 				throw new HttpError(
 					'Confirm unattended changes before saving this skill task.',
+					400,
+				);
+			}
+			return;
+		}
+		if (target.type === 'directive') {
+			// The prompt is the whole instruction: there is no catalog entry behind it to fall back
+			// on, so an empty one would schedule a run with nothing to do.
+			if (!target.prompt.trim()) {
+				throw new HttpError('Enter the directive to run.', 400);
+			}
+			if (target.executionIntent === 'apply-changes' && !confirmed) {
+				throw new HttpError(
+					'Confirm unattended changes before saving this directive task.',
 					400,
 				);
 			}

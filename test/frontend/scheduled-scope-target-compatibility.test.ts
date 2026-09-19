@@ -19,11 +19,13 @@ const TARGETS: { label: string; target: ScheduledSaveTarget }[] = [
 	{ label: 'skill', target: { type: 'skill' } },
 	{ label: 'metadata-only recipe', target: { metadataOnly: true, type: 'recipe' } },
 	{ label: 'ordinary recipe', target: { metadataOnly: false, type: 'recipe' } },
+	{ label: 'directive', target: { prompt: 'Summarize the findings.', type: 'directive' } },
 ];
 
 /** Exactly the combinations `assertScopeSupportsTarget` throws on, and nothing else. */
 const REFUSED = new Set([
 	'audit/none',
+	'directive/none',
 	'director/all',
 	'director/explicit',
 	'metadata-only recipe/none',
@@ -77,9 +79,10 @@ describe('scheduled scope/target compatibility', () => {
 			scopeTargetIssue('all', { type: 'director' }),
 			scopeTargetIssue('none', { type: 'audit' }),
 			scopeTargetIssue('none', { metadataOnly: true, type: 'recipe' }),
+			scopeTargetIssue('none', { prompt: 'Summarize the findings.', type: 'directive' }),
 		];
 
-		expect(messages.filter((message) => message !== null)).toHaveLength(3);
+		expect(messages.filter((message) => message !== null)).toHaveLength(4);
 		for (const message of messages) {
 			expect(validator).toContain(`'${message}'`);
 		}
@@ -96,7 +99,7 @@ describe('scheduled scope/target compatibility', () => {
 		expect(validator).toContain(
 			'await this.assertScopeSupportsTarget(projectScope, input.target)',
 		);
-		expect(guard.split('throw new HttpError(').length - 1).toBe(3);
+		expect(guard.split('throw new HttpError(').length - 1).toBe(4);
 		expect(guard).toContain('if (recipe.metadataOnly === true)');
 	});
 
@@ -136,6 +139,22 @@ describe('scheduled scope/target compatibility', () => {
 		};
 
 		expect(scheduledSaveReadiness({ ...base, targetId: '' }).reason).toBe('Choose a target.');
+		// A directive is gated on its prompt instead: it never names a catalog entry, so an empty
+		// target id must not read as an unmade choice.
+		expect(
+			scheduledSaveReadiness({
+				...base,
+				target: { prompt: '   ', type: 'directive' },
+				targetId: '',
+			}).reason,
+		).toBe('Enter the directive to run.');
+		expect(
+			scheduledSaveReadiness({
+				...base,
+				target: { prompt: 'Summarize the findings.', type: 'directive' },
+				targetId: '',
+			}),
+		).toEqual({ blocked: false, reason: null });
 		expect(
 			scheduledSaveReadiness({
 				...base,

@@ -27,6 +27,8 @@ export interface ScheduledDraft {
 	parameters: Record<string, string>;
 	projects: string[];
 	projectScope: ScheduledTaskProjectScope;
+	// Only a directive target uses this; every other target names a catalog entry instead.
+	prompt: string;
 	runAt: string;
 	targetId: string;
 	targetType: SelectableTargetType;
@@ -60,7 +62,7 @@ export function initialDraft(
 	const schedule = scheduleFormState(task?.schedule);
 	return {
 		applyChanges:
-			target?.type === 'skill'
+			target?.type === 'skill' || target?.type === 'directive'
 				? target.executionIntent === 'apply-changes'
 				: target?.type === 'recipe'
 					? target.applyChanges
@@ -76,6 +78,7 @@ export function initialDraft(
 		parameters: target?.type === 'recipe' ? (target.parameters ?? {}) : {},
 		projects: task?.projects ?? [],
 		projectScope: task?.projectScope ?? 'all',
+		prompt: target?.type === 'directive' ? target.prompt : '',
 		runAt: schedule.runAt,
 		targetId:
 			target?.type === 'recipe'
@@ -117,6 +120,7 @@ export function isDraftDirty(draft: ScheduledDraft, initial: ScheduledDraft): bo
 		JSON.stringify(draft.projects) !== JSON.stringify(initial.projects) ||
 		isScheduleDirty(draft, initial) ||
 		draft.args !== initial.args ||
+		draft.prompt !== initial.prompt ||
 		JSON.stringify(draft.parameters) !== JSON.stringify(initial.parameters) ||
 		draft.applyChanges !== initial.applyChanges ||
 		draft.confirmed !== initial.confirmed ||

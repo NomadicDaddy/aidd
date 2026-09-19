@@ -8,6 +8,7 @@ import type { RunService } from './runService.ts';
 import type { TelemetryService } from './telemetryService.ts';
 
 import { AuditService } from './auditService.ts';
+import { DirectiveLaunchService } from './directiveLaunchService.ts';
 import { PipelineService } from './pipelineService.ts';
 import { RecipeService } from './recipeService.ts';
 import { ScheduledTaskService } from './scheduledTaskService.ts';
@@ -58,6 +59,10 @@ export function createExecutionServices(input: {
 		telemetryService: input.telemetryService,
 	});
 	const skillLaunchService = new SkillLaunchService(pipelineService, skillService);
+	const directiveLaunchService = new DirectiveLaunchService(
+		input.runService,
+		input.telemetryService,
+	);
 	const scheduledTaskService = new ScheduledTaskService(
 		input.database,
 		input.projectService,
@@ -66,6 +71,7 @@ export function createExecutionServices(input: {
 		auditService,
 		pipelineService,
 		skillLaunchService,
+		directiveLaunchService,
 	);
 	return {
 		auditService,

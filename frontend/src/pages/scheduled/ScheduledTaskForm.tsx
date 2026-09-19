@@ -49,6 +49,7 @@ export function ScheduledTaskForm({
 		parameters,
 		projects,
 		projectScope,
+		prompt,
 		runAt,
 		targetId,
 		targetType,
@@ -80,9 +81,11 @@ export function ScheduledTaskForm({
 		? { type: 'director' }
 		: targetType === 'recipe'
 			? { metadataOnly: targetRecipe?.metadataOnly === true, type: 'recipe' }
-			: { type: targetType };
+			: targetType === 'directive'
+				? { prompt, type: 'directive' }
+				: { type: targetType };
 	const previewDisabled =
-		(!system && !targetId) ||
+		(!system && targetType !== 'directive' && !targetId) ||
 		!name ||
 		feedback.pending ||
 		(scheduleTouched && scheduleError !== null);
@@ -123,6 +126,7 @@ export function ScheduledTaskForm({
 								args,
 								launchTarget,
 								parameters,
+								prompt,
 								targetId,
 								targetType,
 							}),
@@ -179,6 +183,7 @@ export function ScheduledTaskForm({
 								</FieldRow>
 							}
 							onArgsChange={(value) => patch({ args: value })}
+							onPromptChange={(value) => patch({ prompt: value })}
 							onTargetIdChange={(value) => patch({ targetId: value })}
 							onTargetTypeChange={(nextType) =>
 								patch({
@@ -189,6 +194,7 @@ export function ScheduledTaskForm({
 								})
 							}
 							parameters={parameters}
+							prompt={prompt}
 							setParameters={setParameters}
 							targetId={targetId}
 							targetType={targetType}

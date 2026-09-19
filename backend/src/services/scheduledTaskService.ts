@@ -11,6 +11,7 @@ import type {
 
 import type { WebDatabaseHandle } from '../db/client.ts';
 import type { AuditService } from './auditService.ts';
+import type { DirectiveLaunchService } from './directiveLaunchService.ts';
 import type { PipelineService } from './pipelineService.ts';
 import type { ProjectService } from './projectService.ts';
 import type { RecipeService } from './recipeService.ts';
@@ -39,6 +40,7 @@ export class ScheduledTaskService {
 		auditService: AuditService,
 		pipelineService: PipelineService,
 		skillLaunchService: SkillLaunchService,
+		directiveLaunchService: DirectiveLaunchService,
 	) {
 		// A task with no project still needs a working directory. The applications root is the one
 		// directory that is always allowed and always contains the fleet, which is exactly the scope
@@ -60,6 +62,7 @@ export class ScheduledTaskService {
 			auditService,
 			pipelineService,
 			skillLaunchService,
+			directiveLaunchService,
 			getFleetDir,
 		);
 		this.runtime = new ScheduledTaskRuntime(

@@ -43,7 +43,7 @@ export const scheduledTasks = sqliteTable(
 		),
 		check(
 			'ck_scheduled_tasks_target_type',
-			sql`${table.targetType} IN ('audit','director','recipe','skill')`,
+			sql`${table.targetType} IN ('audit','directive','director','recipe','skill')`,
 		),
 		check(
 			'ck_scheduled_tasks_project_scope',

@@ -203,7 +203,7 @@ export interface WriteScheduledTaskArgs {
 	// erase a built-in task.
 	systemKey: null | string;
 	targetJson: string;
-	targetType: 'audit' | 'director' | 'recipe' | 'skill';
+	targetType: 'audit' | 'directive' | 'director' | 'recipe' | 'skill';
 	timezone: string;
 	updatedAt: number;
 }

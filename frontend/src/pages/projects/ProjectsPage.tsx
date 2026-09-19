@@ -56,6 +56,7 @@ export function ProjectsPage() {
 		milestoneFilter,
 		milestoneOptions,
 		phaseFilter,
+		profileFilter,
 		query,
 		resetFilters,
 		rootFilter,
@@ -63,7 +64,6 @@ export function ProjectsPage() {
 		sortDir,
 		sorted,
 		sortKey,
-		syncFilter,
 		toggleSort,
 		updateParam,
 	} = useProjectsPageFilters(
@@ -221,11 +221,11 @@ export function ProjectsPage() {
 						onResetFilters={resetFilters}
 						onUpdateParam={updateParam}
 						phaseFilter={phaseFilter}
+						profileFilter={profileFilter}
 						query={query}
 						rootFilter={rootFilter}
 						rootOptions={rootOptions}
 						sortedCount={sorted.length}
-						syncFilter={syncFilter}
 					/>
 
 					{hiddenSpernakitCount > 0 ? (

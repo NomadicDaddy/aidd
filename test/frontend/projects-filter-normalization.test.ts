@@ -8,7 +8,7 @@ import {
 import {
 	MATURITY_FILTERS,
 	PHASES,
-	SYNC_STATES,
+	PROFILE_BUCKETS,
 } from '../../frontend/src/pages/projects/projects-list-shared.ts';
 import { SORT_DIRS, SORT_KEYS } from '../../frontend/src/pages/projects/projects-list-sort.ts';
 import {
@@ -38,7 +38,7 @@ async function frontendSource(file: string): Promise<string> {
 // The stored copy then replayed onto the next bare /projects visit.
 describe('a filter value the surface cannot act on does not survive in the URL', () => {
 	test('an unrecognized value is dropped, and every recognized one is kept', () => {
-		expect(unrecognizedFilterKeys(params('sync=bogus'), ROOTS)).toEqual(['sync']);
+		expect(unrecognizedFilterKeys(params('profile=bogus'), ROOTS)).toEqual(['profile']);
 		expect(unrecognizedFilterKeys(params('phase=nope'), ROOTS)).toEqual(['phase']);
 		expect(unrecognizedFilterKeys(params('maturity=nope'), ROOTS)).toEqual(['maturity']);
 		expect(unrecognizedFilterKeys(params('sort=nope&dir=sideways'), ROOTS)).toEqual([
@@ -53,8 +53,8 @@ describe('a filter value the surface cannot act on does not survive in the URL',
 			['dir', SORT_DIRS],
 			['maturity', MATURITY_FILTERS],
 			['phase', PHASES],
+			['profile', PROFILE_BUCKETS],
 			['sort', SORT_KEYS],
-			['sync', SYNC_STATES],
 		] as const;
 		let checked = 0;
 		let expected = 0;
@@ -73,9 +73,9 @@ describe('a filter value the surface cannot act on does not survive in the URL',
 	});
 
 	test('the no-filter value is dropped, because the surface itself never writes it', () => {
-		// updateParam deletes a key rather than setting it to 'all', so a hand-typed ?sync=all is a
-		// filter the toolbar cannot show as active either — the same disagreement, one step milder.
-		expect(normalized('sync=all&q=aidd')).toBe('q=aidd');
+		// updateParam deletes a key rather than setting it to 'all', so a hand-typed ?profile=all is
+		// a filter the toolbar cannot show as active either — the same disagreement, one step milder.
+		expect(normalized('profile=all&q=aidd')).toBe('q=aidd');
 		expect(normalized('root=all')).toBe('');
 		// MATURITY_FILTERS lists 'all' as a member, so this one is dropped despite being in its set.
 		expect(normalized('maturity=all&q=aidd')).toBe('q=aidd');
@@ -101,9 +101,16 @@ describe('a filter value the surface cannot act on does not survive in the URL',
 	test('a clean URL normalizes to null, so nothing navigates', () => {
 		// The hook calls setSearchParams only on a non-null result. Returning fresh params for an
 		// already-clean URL would replace the history entry on every params change.
-		expect(normalizeFilterParams(params('q=aidd&sync=idle'), ROOTS)).toBeNull();
+		expect(normalizeFilterParams(params('q=aidd&profile=single_user_local'), ROOTS)).toBeNull();
 		expect(normalizeFilterParams(params(''), ROOTS)).toBeNull();
-		expect(normalizeFilterParams(params('sync=bogus'), ROOTS)).not.toBeNull();
+		expect(normalizeFilterParams(params('profile=bogus'), ROOTS)).not.toBeNull();
+	});
+
+	test('a retired filter key is stripped even when its value was once valid', () => {
+		// The toolbar used to filter on sync state. Bookmarks and stored URLs that still carry
+		// ?sync= must not keep a param the surface no longer reads.
+		expect(normalized('sync=idle&q=aidd')).toBe('q=aidd');
+		expect(normalizeFilterParams(params('sync=idle'), ROOTS)).not.toBeNull();
 	});
 });
 
@@ -118,7 +125,11 @@ describe('one allowlist, not two', () => {
 			.split(' as Set<string>).has(')
 			.slice(0, -1)
 			.map((chunk) => chunk.slice(chunk.lastIndexOf('(') + 1));
-		expect(readPathSets.slice().sort()).toEqual(['MATURITY_FILTERS', 'PHASES', 'SYNC_STATES']);
+		expect(readPathSets.slice().sort()).toEqual([
+			'MATURITY_FILTERS',
+			'PHASES',
+			'PROFILE_BUCKETS',
+		]);
 
 		const table = await frontendSource('pages/projects/projectsFilterParams.ts');
 		for (const set of readPathSets) {
@@ -157,10 +168,10 @@ describe('one allowlist, not two', () => {
 			'maturity',
 			'milestone',
 			'phase',
+			'profile',
 			'q',
 			'root',
 			'sort',
-			'sync',
 		]);
 	});
 });

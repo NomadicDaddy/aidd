@@ -30,7 +30,7 @@ export const FILTER_FIELD_ORDER = [
 	'Initiator',
 	'Health',
 	'Posture',
-	'Sync',
+	'Profile',
 	'Phase',
 	'Maturity',
 	'Root',

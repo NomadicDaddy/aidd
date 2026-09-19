@@ -49,7 +49,7 @@ function renderConsumerCounts(): Record<string, string> {
 		" allProjectsCount: 4, hasFilters: true, maturityFilter: 'all',",
 		" milestoneFilter: 'MVP', milestoneOptions: ['MVP'], onResetFilters: noop,",
 		" onUpdateParam: noop, phaseFilter: 'coding', query: '', rootFilter: 'all',",
-		" rootOptions: [], sortedCount: 2, syncFilter: 'all',",
+		" rootOptions: [], sortedCount: 2, profileFilter: 'all',",
 		'});',
 		'const features = createElement(FeatureFilters, {',
 		" filteredTotal: 2, hasFilters: true, milestoneFilter: 'MVP',",

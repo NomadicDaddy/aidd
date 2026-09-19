@@ -9,10 +9,10 @@ export interface ProjectsFiltersState {
 	maturity: string;
 	milestone: string;
 	phase: string;
+	profile: string;
 	q: string;
 	root: string;
 	sort: string;
-	sync: string;
 }
 
 const emptyProjectsFilters: ProjectsFiltersState = {
@@ -20,10 +20,10 @@ const emptyProjectsFilters: ProjectsFiltersState = {
 	maturity: '',
 	milestone: '',
 	phase: '',
+	profile: '',
 	q: '',
 	root: '',
 	sort: '',
-	sync: '',
 };
 
 interface PrefsState {

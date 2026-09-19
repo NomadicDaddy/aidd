@@ -1,11 +1,11 @@
-import { MATURITY_FILTERS, PHASES, SYNC_STATES } from './projects-list-shared.ts';
+import { MATURITY_FILTERS, PHASES, PROFILE_BUCKETS } from './projects-list-shared.ts';
 import { SORT_DIRS, SORT_KEYS } from './projects-list-sort.ts';
 
 export const PROJECT_FILTER_KEYS = [
 	'q',
 	'root',
 	'milestone',
-	'sync',
+	'profile',
 	'phase',
 	'maturity',
 	'sort',
@@ -22,8 +22,9 @@ export type ProjectFilterKey = (typeof PROJECT_FILTER_KEYS)[number];
  * `root` is absent for a different reason and handled separately below.
  *
  * `all` is not exempted. It is the value the UI itself never writes — `updateParam` deletes a key
- * rather than setting it to `all` — so a hand-typed `?sync=all` is a filter the surface cannot show
- * as active either, and leaving it in place would reproduce the same disagreement by a milder route.
+ * rather than setting it to `all` — so a hand-typed `?profile=all` is a filter the surface cannot
+ * show as active either, and leaving it in place would reproduce the same disagreement by a milder
+ * route.
  */
 /** The value every filter control uses for "no filter", and the one the URL never carries. */
 const NO_FILTER = 'all';
@@ -32,9 +33,12 @@ const ALLOWLISTS: readonly (readonly [ProjectFilterKey, ReadonlySet<string>])[] 
 	['dir', SORT_DIRS],
 	['maturity', MATURITY_FILTERS],
 	['phase', PHASES],
+	['profile', PROFILE_BUCKETS],
 	['sort', SORT_KEYS],
-	['sync', SYNC_STATES],
 ];
+
+/** Query keys the toolbar no longer reads; stripped so old bookmarks do not leave a dead param. */
+const RETIRED_FILTER_KEYS = ['sync'] as const;
 
 /**
  * The filter keys this URL carries that nothing downstream can act on.
@@ -74,8 +78,10 @@ export function normalizeFilterParams(
 	rootPaths: null | ReadonlySet<string>,
 ): null | URLSearchParams {
 	const unrecognized = unrecognizedFilterKeys(params, rootPaths);
-	if (unrecognized.length === 0) return null;
+	const retired = RETIRED_FILTER_KEYS.filter((key) => params.has(key));
+	if (unrecognized.length === 0 && retired.length === 0) return null;
 	const next = new URLSearchParams(params);
 	for (const key of unrecognized) next.delete(key);
+	for (const key of retired) next.delete(key);
 	return next;
 }

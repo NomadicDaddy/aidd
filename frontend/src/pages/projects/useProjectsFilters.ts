@@ -2,21 +2,22 @@ import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 
 import type {
+	ProjectAssuranceBucket,
 	ProjectDiscoverySkippedRoot,
 	ProjectGitStatusMapEntry,
 	ProjectPhase,
 	ProjectSummary,
-	ProjectSyncState,
 } from '../../api/types.ts';
 
 import { filterRegister } from '../../lib/filterFields.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import {
+	bucketLabels,
 	MATURITY_FILTERS,
 	type MaturityFilter,
 	maturityFilterLabels,
 	PHASES,
-	SYNC_STATES,
+	PROFILE_BUCKETS,
 } from './projects-list-shared.ts';
 import {
 	compareProjects,
@@ -64,10 +65,12 @@ export function useProjectsPageFilters(
 	const query = searchParams.get('q') ?? '';
 	const rootFilterRaw = searchParams.get('root') ?? 'all';
 	const milestoneFilter = searchParams.get('milestone') ?? 'all';
-	const syncFilterRaw = searchParams.get('sync') ?? 'all';
+	const profileFilterRaw = searchParams.get('profile') ?? 'all';
 	const phaseFilterRaw = searchParams.get('phase') ?? 'all';
-	const syncFilter: 'all' | ProjectSyncState = (SYNC_STATES as Set<string>).has(syncFilterRaw)
-		? (syncFilterRaw as ProjectSyncState)
+	const profileFilter: 'all' | ProjectAssuranceBucket = (PROFILE_BUCKETS as Set<string>).has(
+		profileFilterRaw,
+	)
+		? (profileFilterRaw as ProjectAssuranceBucket)
 		: 'all';
 	const phaseFilter: 'all' | ProjectPhase = (PHASES as Set<string>).has(phaseFilterRaw)
 		? (phaseFilterRaw as ProjectPhase)
@@ -185,10 +188,10 @@ export function useProjectsPageFilters(
 			maturity: stored.get('maturity') ?? '',
 			milestone: stored.get('milestone') ?? '',
 			phase: stored.get('phase') ?? '',
+			profile: stored.get('profile') ?? '',
 			q: stored.get('q') ?? '',
 			root: stored.get('root') ?? '',
 			sort: stored.get('sort') ?? '',
-			sync: stored.get('sync') ?? '',
 		});
 	}, [rootOptionsKnown, rootPathKey, searchParams, setProjectsFilters, setSearchParams]);
 
@@ -217,7 +220,9 @@ export function useProjectsPageFilters(
 			if ((project.metadata.roadmap?.currentMilestone ?? '') !== milestoneFilter)
 				return false;
 		}
-		if (syncFilter !== 'all' && project.metadata.sync.syncState !== syncFilter) return false;
+		if (profileFilter !== 'all' && project.metadata.profile.bucket !== profileFilter) {
+			return false;
+		}
 		if (phaseFilter !== 'all' && project.phase !== phaseFilter) return false;
 		if (maturityFilter !== 'all') {
 			const maturity = project.metadata.maturity;
@@ -238,7 +243,7 @@ export function useProjectsPageFilters(
 		query.trim().length > 0 ||
 		rootFilter !== 'all' ||
 		milestoneFilter !== 'all' ||
-		syncFilter !== 'all' ||
+		profileFilter !== 'all' ||
 		phaseFilter !== 'all' ||
 		maturityFilter !== 'all';
 
@@ -246,7 +251,7 @@ export function useProjectsPageFilters(
 	// is in force, the other says what, and a seventh filter added above has to reach both.
 	const emptyFilters = filterRegister(resetFilters, [
 		query.trim() !== '' && { label: 'Search', value: query.trim() },
-		syncFilter !== 'all' && { label: 'Sync', value: syncFilter },
+		profileFilter !== 'all' && { label: 'Profile', value: bucketLabels[profileFilter] },
 		phaseFilter !== 'all' && { label: 'Phase', value: phaseFilter },
 		maturityFilter !== 'all' && {
 			label: 'Maturity',
@@ -266,6 +271,7 @@ export function useProjectsPageFilters(
 		milestoneFilter,
 		milestoneOptions,
 		phaseFilter,
+		profileFilter,
 		query,
 		resetFilters,
 		rootFilter,
@@ -273,7 +279,6 @@ export function useProjectsPageFilters(
 		sortDir,
 		sorted,
 		sortKey,
-		syncFilter,
 		toggleSort,
 		updateParam,
 	};

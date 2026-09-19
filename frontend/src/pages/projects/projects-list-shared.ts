@@ -22,12 +22,6 @@ import { formatCompactNumber, formatUsd } from '../../lib/formatters.ts';
 export type ArtifactHealth = ProjectSummary['artifactHealth'];
 export type BadgeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
-export const SYNC_STATES: ReadonlySet<ProjectSyncState> = new Set([
-	'error',
-	'idle',
-	'syncing',
-	'unknown',
-]);
 export const PHASES: ReadonlySet<ProjectPhase> = new Set(['coding', 'initializer', 'onboarding']);
 
 export type MaturityFilter = 'all' | 'complete' | 'incomplete' | MaturityStageId;
@@ -138,6 +132,7 @@ export const bucketOptions: ProjectAssuranceBucket[] = [
 	'public_multi_tenant',
 	'critical_regulated',
 ];
+export const PROFILE_BUCKETS: ReadonlySet<ProjectAssuranceBucket> = new Set(bucketOptions);
 export const dataSensitivityOptions: ProjectDataSensitivity[] = [
 	'none',
 	'low',

@@ -1,12 +1,17 @@
 import type { ReactNode } from 'react';
 
-import type { ProjectPhase, ProjectSyncState } from '../../api/types.ts';
+import type { ProjectAssuranceBucket, ProjectPhase } from '../../api/types.ts';
 
 import { FilterSearch, FilterSelect } from '../../components/shared/FilterFields.tsx';
 import { FilterToolbar } from '../../components/shared/FilterToolbar.tsx';
 import { countActiveFilters } from '../../lib/filterFields.ts';
 import { formGridMeasureClass } from '../../lib/formStyles.ts';
-import { type MaturityFilter, maturityFilterLabels } from './projects-list-shared.ts';
+import {
+	bucketLabels,
+	bucketOptions,
+	type MaturityFilter,
+	maturityFilterLabels,
+} from './projects-list-shared.ts';
 
 const MATURITY_OPTIONS: MaturityFilter[] = [
 	'all',
@@ -31,11 +36,11 @@ export function ProjectsToolbar({
 	onResetFilters,
 	onUpdateParam,
 	phaseFilter,
+	profileFilter,
 	query,
 	rootFilter,
 	rootOptions,
 	sortedCount,
-	syncFilter,
 }: {
 	actions?: ReactNode;
 	allProjectsCount: number;
@@ -46,18 +51,18 @@ export function ProjectsToolbar({
 	onResetFilters: () => void;
 	onUpdateParam: (key: string, value: null | string) => void;
 	phaseFilter: 'all' | ProjectPhase;
+	profileFilter: 'all' | ProjectAssuranceBucket;
 	query: string;
 	rootFilter: string;
 	rootOptions: { label: string; path: string }[];
 	sortedCount: number;
-	syncFilter: 'all' | ProjectSyncState;
 }) {
 	return (
 		<FilterToolbar
 			actionRole="display"
 			actions={actions}
 			activeFilterCount={countActiveFilters(
-				syncFilter !== 'all',
+				profileFilter !== 'all',
 				phaseFilter !== 'all',
 				maturityFilter !== 'all',
 				rootFilter !== 'all',
@@ -82,16 +87,16 @@ export function ProjectsToolbar({
 				value={query}
 			/>
 			<FilterSelect
-				label="Sync"
-				onChange={(value) => onUpdateParam('sync', value)}
+				label="Profile"
+				onChange={(value) => onUpdateParam('profile', value)}
 				options={[
 					{ label: 'All', value: 'all' },
-					{ label: 'Idle', value: 'idle' },
-					{ label: 'Syncing', value: 'syncing' },
-					{ label: 'Error', value: 'error' },
-					{ label: 'Unknown', value: 'unknown' },
+					...bucketOptions.map((bucket) => ({
+						label: bucketLabels[bucket],
+						value: bucket,
+					})),
 				]}
-				value={syncFilter}
+				value={profileFilter}
 			/>
 			<FilterSelect
 				label="Phase"

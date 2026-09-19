@@ -131,7 +131,6 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 			if (stepResult === completionMarkerGrace) {
 				const drainedEvent = await completionUsageDrain.afterCommit(
 					input.role.backend,
-					completionCommittedDuringGrace,
 					nextEvent,
 				);
 				if (drainedEvent !== undefined) stepResult = drainedEvent;

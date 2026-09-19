@@ -5,18 +5,18 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 const CODEX_COMPLETION_USAGE_DRAIN_MS = 5_000;
 
-// Codex emits authoritative turn usage after the final assistant message. Once a completed
-// feature's commit is visible, briefly drain that trailing event before aborting the backend.
+// Codex emits authoritative turn usage after the final assistant message. When a completion
+// marker is about to abort the backend, briefly drain that trailing event whether or not the
+// matching commit has landed. Usage that already arrived in the main loop skips the wait.
 export class CompletionUsageDrain {
 	private deadlineMs?: number;
 	private usageCaptured = false;
 
 	async afterCommit(
 		backend: BackendName,
-		committed: boolean,
 		nextEvent: Promise<IteratorResult<AgentEvent>>,
 	): Promise<IteratorResult<AgentEvent> | undefined> {
-		if (backend !== 'codex' || !committed || this.usageCaptured) return undefined;
+		if (backend !== 'codex' || this.usageCaptured) return undefined;
 
 		this.deadlineMs ??= Date.now() + CODEX_COMPLETION_USAGE_DRAIN_MS;
 		const remainingMs = this.deadlineMs - Date.now();
@@ -26,6 +26,6 @@ export class CompletionUsageDrain {
 	}
 
 	record(event: AgentEvent): void {
-		if (event.type === 'usage' && this.deadlineMs !== undefined) this.usageCaptured = true;
+		if (event.type === 'usage') this.usageCaptured = true;
 	}
 }

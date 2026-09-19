@@ -528,6 +528,59 @@ describe('orchestrator transitions and exit mapping', () => {
 		});
 	});
 
+	test('drains trailing Codex usage after a completion marker without a commit', async () => {
+		const store = await makeStore('codex-usage-after-uncommitted-completion');
+		await initializeGitProject(store.projectDir);
+		const backend: CLIBackend = {
+			idleDefaults: { killMs: 1_000, nudgeMs: 500 },
+			name: 'codex',
+			async *runPrompt() {
+				await completeFeature(store, 'feature-core');
+				yield {
+					chunk: 'AIDD_RESULT: {"featureId":"feature-core","status":"completed","passes":true}\n',
+					type: 'assistant_text',
+				};
+				await sleep(50);
+				yield {
+					cachedTokens: 40,
+					inputTokens: 90,
+					outputTokens: 10,
+					reasoningTokens: 2,
+					type: 'usage',
+				};
+				yield { exitCode: 0, filesModified: [], type: 'done' };
+			},
+		};
+		const codexPlan = resolveRunPlan(
+			parseArgs(['--project-dir', store.projectDir, '--cli', 'codex']),
+			{ ...config, cli: 'codex' },
+		);
+
+		await runOrchestrator(codexPlan, {
+			backend,
+			completionMarkerGraceMs: 10,
+			rootDir,
+			store,
+		});
+
+		const iteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as {
+			metrics: {
+				cachedTokens: number;
+				inputTokens: number;
+				outputTokens: number;
+				reasoningTokens: number;
+			};
+		};
+		expect(iteration.metrics).toMatchObject({
+			cachedTokens: 40,
+			inputTokens: 90,
+			outputTokens: 10,
+			reasoningTokens: 2,
+		});
+	});
+
 	test('accepts completed feature metadata when abort arrives after AIDD_RESULT', async () => {
 		const store = await makeStore('abort-after-result');
 		const backend = new FakeBackend(

@@ -119,7 +119,6 @@ export async function runBackendStreamLoop(
 			if (stepResult === completionMarkerGrace) {
 				const drainedEvent = await completionUsageDrain.afterCommit(
 					plan.backend,
-					completionCommittedDuringGrace,
 					nextEvent,
 				);
 				if (drainedEvent !== undefined) stepResult = drainedEvent;

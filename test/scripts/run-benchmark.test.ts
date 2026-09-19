@@ -108,30 +108,57 @@ describe('benchmark harness', () => {
 
 	test('normalizes canonical benchmark stack controls', () => {
 		const manifest = loadManifest(path.join(repoRoot, 'benchmarks', 'manifest.json'));
-		const claudeMax = manifest.stacks.find(
-			(candidate) => candidate.label === 'claude-code-opus48-max',
+		const claudeXhigh = manifest.stacks.find(
+			(candidate) => candidate.label === 'claude-code-opus5-xhigh',
 		);
 		const codexXhigh = manifest.stacks.find(
 			(candidate) => candidate.label === 'codex-gpt6-astra-xhigh',
 		);
-		const qwenThinking = manifest.stacks.find(
-			(candidate) => candidate.label === 'ollama-qwen36-latest-thinking',
-		);
-		const gptOssLow = manifest.stacks.find(
-			(candidate) => candidate.label === 'ollama-gpt-oss-20b-low',
-		);
+		const grokHigh = manifest.stacks.find((candidate) => candidate.label === 'grok-46-high');
+		const grokXhigh = manifest.stacks.find((candidate) => candidate.label === 'grok-46-xhigh');
 		const task = manifest.tasks.find((candidate) => candidate.id === 'version');
-		expect(claudeMax?.reasoningEffort).toBe('max');
+		expect(claudeXhigh?.reasoningEffort).toBe('xhigh');
 		expect(codexXhigh?.reasoningEffort).toBe('xhigh');
-		expect(qwenThinking?.thinking).toBe(true);
-		expect(gptOssLow?.thinkingLevel).toBe('low');
+		expect(grokHigh?.reasoningEffort).toBe('high');
+		expect(grokXhigh).toBeUndefined();
 		expect(task).toBeDefined();
 
-		const qwenInvocation = buildAiddInvocation(qwenThinking!, task!, 'D:/tmp/workspace');
-		expect(qwenInvocation.args).toContain('--thinking');
-		const gptOssInvocation = buildAiddInvocation(gptOssLow!, task!, 'D:/tmp/workspace');
-		expect(gptOssInvocation.args).toContain('--thinking-level');
-		expect(gptOssInvocation.args).toContain('low');
+		const claudeInvocation = buildAiddInvocation(claudeXhigh!, task!, 'D:/tmp/workspace');
+		expect(claudeInvocation.args).toContain('--reasoning-effort');
+		expect(claudeInvocation.args).toContain('xhigh');
+	});
+
+	test('forwards thinking flags on benchmark invocations', () => {
+		const manifest = loadManifest(path.join(repoRoot, 'benchmarks', 'manifest.json'));
+		const task = manifest.tasks.find((candidate) => candidate.id === 'version');
+		expect(task).toBeDefined();
+
+		const thinkingInvocation = buildAiddInvocation(
+			{
+				cli: 'ollama',
+				label: 'thinking-probe',
+				model: 'probe',
+				thinking: true,
+				view: 'native-best',
+			},
+			task!,
+			'D:/tmp/workspace',
+		);
+		expect(thinkingInvocation.args).toContain('--thinking');
+
+		const thinkingLevelInvocation = buildAiddInvocation(
+			{
+				cli: 'lmstudio',
+				label: 'thinking-level-probe',
+				model: 'probe',
+				thinkingLevel: 'low',
+				view: 'native-best',
+			},
+			task!,
+			'D:/tmp/workspace',
+		);
+		expect(thinkingLevelInvocation.args).toContain('--thinking-level');
+		expect(thinkingLevelInvocation.args).toContain('low');
 	});
 
 	test('splits quoted benchmark command fragments', () => {
@@ -565,13 +592,12 @@ describe('benchmark cost resolution', () => {
 	test('resolves pricing via cohort target model family', () => {
 		const glm = manifest.stacks.find((stack) => stack.label === 'native-glm53-high')!;
 		const codex = manifest.stacks.find((stack) => stack.label === 'codex-gpt6-astra-high')!;
-		const claude = manifest.stacks.find((stack) => stack.label === 'claude-code-opus48-high')!;
-		const ollama = manifest.stacks.find((stack) => stack.label === 'ollama-gpt-oss-20b-low')!;
+		const claude = manifest.stacks.find((stack) => stack.label === 'claude-code-opus5-high')!;
+		const local = manifest.stacks.find((stack) => stack.label === 'lmstudio-gpt-oss-20b')!;
 		expect(pricingForStack(glm, manifest)?.inputPerMtok).toBe(1.4);
 		expect(pricingForStack(codex, manifest)?.inputPerMtok).toBe(10);
-		// claude and local ollama are intentionally unmetered (trusted/local).
-		expect(pricingForStack(claude, manifest)).toBeUndefined();
-		expect(pricingForStack(ollama, manifest)).toBeUndefined();
+		expect(pricingForStack(claude, manifest)?.inputPerMtok).toBe(5);
+		expect(pricingForStack(local, manifest)).toBeUndefined();
 	});
 
 	test('trusts authoritative metered cost over token estimate', () => {
@@ -583,7 +609,7 @@ describe('benchmark cost resolution', () => {
 				1.75,
 				usage(38, 15231),
 				pricingForStack(
-					manifest.stacks.find((stack) => stack.label === 'claude-code-opus48-high')!,
+					manifest.stacks.find((stack) => stack.label === 'claude-code-opus5-high')!,
 					manifest,
 				),
 			),
@@ -638,9 +664,9 @@ describe('benchmark cost resolution', () => {
 	});
 
 	test('keeps reported cost for unmetered families (local)', () => {
-		const ollama = manifest.stacks.find((stack) => stack.label === 'ollama-gpt-oss-20b-low')!;
+		const local = manifest.stacks.find((stack) => stack.label === 'lmstudio-gpt-oss-20b')!;
 		// no pricing -> local models stay at their reported (free) cost.
-		expect(resolveCost(0, usage(394_512, 1_839), pricingForStack(ollama, manifest))).toBe(0);
+		expect(resolveCost(0, usage(394_512, 1_839), pricingForStack(local, manifest))).toBe(0);
 	});
 
 	test('redistributes cost weight to correctness/reliability when cost is unknown', () => {

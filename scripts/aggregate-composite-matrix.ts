@@ -57,11 +57,18 @@ function parseResultsDir(args: string[]): string {
 const RESULTS_DIR = parseResultsDir(process.argv.slice(2));
 // v3 sessions. The v2 set was archived on 2026-09-17 to benchmarks/archive/v2-20260917/;
 // its SOURCE_DIRS list is preserved there in aggregate-composite-matrix.v2-snapshot.ts.
+// ORDER MATTERS: merging is last-write-wins per (stack, task) - see the loop below. The
+// gpt56 backfill deliberately overlaps v3-phase1-cloud on remediation for luna/terra/sol and
+// must stay AFTER it. Those phase-1 runs predate the codex usage fix (72275282) and recorded
+// zero tokens, so their cost is unknowable; the backfill re-ran the same task post-fix with
+// full token capture and supersedes them.
 const SOURCE_DIRS = [
 	'v3-phase1-cloud-20260917',
+	'v3-phase2-gpt56-backfill-20260918',
 	'v3-phase1-fable-20260918',
 	'v3-phase1-local-gptoss-20260918',
 	'v3-phase1-local-gemma-20260918',
+	'v3-phase2-low-20260918',
 ];
 
 // `validate` is deliberately absent: --validate resolves to the same internal mode as

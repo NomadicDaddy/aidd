@@ -80,17 +80,13 @@ export class ScheduledTaskValidator {
 			return;
 		}
 		if (projectScope !== 'none') return;
+		// Skills and free-form directives are both allowed here. Each becomes a single-iteration
+		// directive run in whatever directory it is handed, and an instruction that reads across
+		// the fleet — every repository's logs, every repository's recent commits — is exactly the
+		// work the applications root exists for. Fanning it out per project would run it N times.
 		if (target.type === 'audit') {
 			throw new HttpError(
 				'Audits run against a project. Choose all projects or select the ones to audit.',
-				400,
-			);
-		}
-		if (target.type === 'directive') {
-			// A directive run is launched against a project the way an operator launches one from
-			// the Directive modal, which has no fleet-root equivalent to point it at.
-			throw new HttpError(
-				'Directives run against a project. Choose all projects or select the ones to run.',
 				400,
 			);
 		}

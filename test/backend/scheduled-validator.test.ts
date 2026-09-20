@@ -220,7 +220,7 @@ describe('scheduled task validation', () => {
 		).rejects.toThrow('Confirm unattended changes');
 	});
 
-	test('a directive needs a prompt, a project, and consent before it changes anything', async () => {
+	test('a directive needs a prompt and consent before it changes anything', async () => {
 		const service = validator();
 		await expect(
 			service.resolveWrite({
@@ -254,6 +254,8 @@ describe('scheduled task validation', () => {
 				},
 			}),
 		).rejects.toThrow('Confirm unattended changes');
+		// A fleet-wide instruction — read every repository under the applications root — has no
+		// per-project form, so the no-project scope is the one that runs it once.
 		await expect(
 			service.resolveWrite({
 				confirmUnattendedMutation: true,
@@ -263,11 +265,11 @@ describe('scheduled task validation', () => {
 				schedule,
 				target: {
 					executionIntent: 'apply-changes',
-					prompt: 'Fix the lint errors.',
+					prompt: 'Review every repository log written in the past day.',
 					type: 'directive',
 				},
 			}),
-		).rejects.toThrow('Directives run against a project');
+		).resolves.toMatchObject({ projects: [], projectScope: 'none' });
 	});
 
 	test('rejects unsafe or unpersistable launch overrides', async () => {

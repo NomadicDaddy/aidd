@@ -17,7 +17,8 @@ With no launch override, project-scoped work resolves the configured defaults fo
 
 Skill, Recipe, and Audit name an entry from the matching catalog. **Directive** names nothing: you type the instruction, and each occurrence launches it as a single-iteration directive run against every project in scope — the same run the Directive button starts, on a cadence. Directive text is stored in run history and process arguments, so keep secrets out of it.
 
-- Audits, directives, and metadata-only recipes need a project, so they cannot be saved with **No project**.
+- Audits and metadata-only recipes need a project, so they cannot be saved with **No project**.
+- A directive with **No project** runs once from the applications root instead of per project, which is how you schedule an instruction that reads across the whole fleet.
 
 ## Set cadence and permissions
 

@@ -167,6 +167,34 @@ describe('scheduled target dispatch', () => {
 		expect(result.errors).toEqual(['D:/one: run ceiling reached']);
 	});
 
+	test('launches a no-project directive once from the applications root', async () => {
+		const dirs: string[] = [];
+		const directive = {
+			launchDirective: async (input: { projectDir: string }) => {
+				dirs.push(input.projectDir);
+				return { id: 'fleet-directive-run' };
+			},
+		} as unknown as DirectiveLaunchService;
+		const result = await dispatcher({ directive }).dispatch({
+			executionId: 'execution',
+			// The runtime resolves nothing for this scope, but a stray path must not fan it out:
+			// an instruction that reads the whole fleet would run once per repository.
+			projectPaths: ['D:/one', 'D:/two'],
+			scope: 'none',
+			target: {
+				executionIntent: 'review-only',
+				prompt: 'Review every repository log written in the past day.',
+				type: 'directive',
+			},
+			trigger: 'scheduled',
+		});
+		expect(dirs).toEqual([FLEET_DIR]);
+		expect(result.children).toEqual([
+			{ id: 'fleet-directive-run', projectPath: null, status: 'running', type: 'run' },
+		]);
+		expect(result.errors).toEqual([]);
+	});
+
 	test('records audit run children and project-level failures', async () => {
 		const audit = {
 			launchAuditsForPaths: async () => ({

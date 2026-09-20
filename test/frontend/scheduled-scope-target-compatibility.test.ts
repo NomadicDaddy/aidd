@@ -25,7 +25,6 @@ const TARGETS: { label: string; target: ScheduledSaveTarget }[] = [
 /** Exactly the combinations `assertScopeSupportsTarget` throws on, and nothing else. */
 const REFUSED = new Set([
 	'audit/none',
-	'directive/none',
 	'director/all',
 	'director/explicit',
 	'metadata-only recipe/none',
@@ -79,10 +78,9 @@ describe('scheduled scope/target compatibility', () => {
 			scopeTargetIssue('all', { type: 'director' }),
 			scopeTargetIssue('none', { type: 'audit' }),
 			scopeTargetIssue('none', { metadataOnly: true, type: 'recipe' }),
-			scopeTargetIssue('none', { prompt: 'Summarize the findings.', type: 'directive' }),
 		];
 
-		expect(messages.filter((message) => message !== null)).toHaveLength(4);
+		expect(messages.filter((message) => message !== null)).toHaveLength(3);
 		for (const message of messages) {
 			expect(validator).toContain(`'${message}'`);
 		}
@@ -99,8 +97,20 @@ describe('scheduled scope/target compatibility', () => {
 		expect(validator).toContain(
 			'await this.assertScopeSupportsTarget(projectScope, input.target)',
 		);
-		expect(guard.split('throw new HttpError(').length - 1).toBe(4);
+		expect(guard.split('throw new HttpError(').length - 1).toBe(3);
 		expect(guard).toContain('if (recipe.metadataOnly === true)');
+	});
+
+	test('lets a directive run from the applications root with no project', () => {
+		// The fleet-wide instruction the no-project scope exists for — read every repository under
+		// the root — is a directive more often than it is a skill, so this combination has to save.
+		const target: ScheduledSaveTarget = {
+			prompt: 'Review every repository log written in the past day.',
+			type: 'directive',
+		};
+
+		expect(scopeTargetIssue('none', target)).toBeNull();
+		expect(readiness('none', target)).toEqual({ blocked: false, reason: null });
 	});
 
 	test('reads metadataOnly off the resolved recipe rather than a list of ids', () => {

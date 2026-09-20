@@ -53,10 +53,6 @@ export function scopeTargetIssue(
 	if (target.type === 'audit') {
 		return 'Audits run against a project. Choose all projects or select the ones to audit.';
 	}
-	if (target.type === 'directive') {
-		// A directive run is launched against a project, exactly as the Directive modal launches one.
-		return 'Directives run against a project. Choose all projects or select the ones to run.';
-	}
 	if (target.type === 'recipe' && target.metadataOnly) {
 		// A metadata-only session enforces its .aidd/-only write boundary through git, which the
 		// applications root does not provide.

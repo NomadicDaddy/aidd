@@ -95,6 +95,9 @@ export const systemMetrics = sqliteTable(
 	},
 	(table) => [
 		index('idx_system_metrics_type_ts').on(table.metricType, table.timestamp),
+		// Reads all lead with metricType; the retention sweep deletes on timestamp alone and
+		// cannot use the composite, so it gets an index of its own.
+		index('idx_system_metrics_ts').on(table.timestamp),
 		check(
 			'ck_system_metrics_metric_type',
 			sql`${table.metricType} = 'system' OR ${table.metricType} IN ('web-vital-cls','web-vital-fcp','web-vital-inp','web-vital-lcp','web-vital-ttfb')`,

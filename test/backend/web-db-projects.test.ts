@@ -98,6 +98,7 @@ const EXPECTED_MIGRATION_VERSIONS = [
 	'0006_schedule_json_fk_constraints',
 	'0007_metrics_diary_constraints',
 	'0008_scheduled_directive_target',
+	'0009_system_metrics_timestamp_index',
 ];
 
 describe('web database and project APIs', () => {

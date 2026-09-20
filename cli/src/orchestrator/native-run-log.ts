@@ -44,6 +44,17 @@ function renderToolCall(tool: string, args: unknown): string {
 }
 
 /** Model prose is untrusted input to the log grammar; every line of it is escaped. */
+/**
+ * Render an error event's `meta` for a run-log line.
+ *
+ * Not `String()`: the idle monitor sends `{ killMs }` (shared/src/backends/monitor.ts) and the
+ * plain parser sends `{ exitCode, stderr }`, so stringifying reduced the one detail the line
+ * exists to carry to `[object Object]`. Same idiom as details/shared.ts.
+ */
+function describeErrorMeta(meta: unknown): string {
+	return typeof meta === 'string' ? meta : JSON.stringify(meta);
+}
+
 function escapeProse(text: string): string {
 	return text.split('\n').map(escapeNativeLogLine).join('\n');
 }
@@ -163,7 +174,7 @@ export function renderNativeRunLogLine(event: AgentEvent): null | string {
 		case 'done':
 			return `[done] exit ${event.exitCode}\n`;
 		case 'error': {
-			const meta = event.meta === undefined ? '' : `: ${String(event.meta)}`;
+			const meta = event.meta === undefined ? '' : `: ${describeErrorMeta(event.meta)}`;
 			return `[error] ${event.reason}${meta}\n`;
 		}
 		case 'idle_warning':

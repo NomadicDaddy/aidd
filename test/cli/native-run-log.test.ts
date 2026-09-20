@@ -43,6 +43,13 @@ describe('renderNativeRunLogLine', () => {
 		expect(renderNativeRunLogLine(event)).toBe('[error] provider: boom\n');
 	});
 
+	// The idle monitor's meta is `{ killMs }`, and String() rendered it as [object Object] —
+	// three times in one keystrike run, swallowing the only number the line carries.
+	test('renders object error meta as JSON rather than [object Object]', () => {
+		const event: AgentEvent = { meta: { killMs: 600_000 }, reason: 'idle', type: 'error' };
+		expect(renderNativeRunLogLine(event)).toBe('[error] idle: {"killMs":600000}\n');
+	});
+
 	test('renders run completion with the exit code', () => {
 		const event: AgentEvent = { type: 'done', exitCode: 0, filesModified: [] };
 		expect(renderNativeRunLogLine(event)).toBe('[done] exit 0\n');

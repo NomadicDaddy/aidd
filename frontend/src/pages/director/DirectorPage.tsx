@@ -20,6 +20,7 @@ import { DirectorChatSection } from './DirectorChatSection.tsx';
 import { useDirectorMobileLayout } from './directorDisclosure.ts';
 import { DirectorRecentCycles } from './DirectorRecentCycles.tsx';
 import { DirectorSuggestionsList } from './DirectorSuggestions.tsx';
+import { activeSessionMissing } from './directorUtils.ts';
 import { NextAutomaticCycle } from './NextAutomaticCycle.tsx';
 
 const PAGE_RAIL = pageRailByContentType.data;
@@ -73,9 +74,13 @@ export function DirectorPage() {
 			null)
 		: (profile?.reasoningEffort ?? null);
 
+	const sessionGone = activeSessionMissing(activeSessionId, director.chatSessions);
+
 	useEffect(() => {
-		if (!activeSessionId && firstSessionId) setActiveSessionId(firstSessionId);
-	}, [activeSessionId, firstSessionId]);
+		// Cleared rather than re-pointed, so the line below chooses from the refreshed list.
+		if (sessionGone) setActiveSessionId(undefined);
+		else if (!activeSessionId && firstSessionId) setActiveSessionId(firstSessionId);
+	}, [activeSessionId, firstSessionId, sessionGone]);
 
 	function startSession(): void {
 		director.createChatSession.mutate('Director Chat', {

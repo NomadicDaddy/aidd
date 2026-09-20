@@ -19,6 +19,8 @@ import {
 	runs,
 	suggestions,
 } from '../../backend/src/db/schema.ts';
+import { Elysia } from 'elysia';
+import { errorHandlerPlugin } from '../../backend/src/plugins/errorHandler.ts';
 import { createDirectorRoutes } from '../../backend/src/routes/director.ts';
 import type { DirectorChatService } from '../../backend/src/services/director/chatService.ts';
 import { DirectorSuggestionService } from '../../backend/src/services/director/suggestionService.ts';
@@ -1697,6 +1699,78 @@ describe('normalizeDirectDirectorOutput dedup', () => {
 });
 
 describe('director API routes', () => {
+	// The finding behind this test: four level-50 'unhandled web error' lines in backend.log, all
+	// from a tab still holding a chat session id that had been deleted. A bare Error reaches the
+	// global handler as a 500 and an error-level log line; the caller asked for something gone.
+	test('answers a missing chat session with 404 instead of an unhandled 500', async () => {
+		const {
+			commands,
+			config,
+			db,
+			hub,
+			projectService,
+			rootDir,
+			runService,
+			sqlite,
+			workspace,
+		} = await makeWorkspace();
+		try {
+			const service = new DirectorService(
+				config,
+				db,
+				commands,
+				hub,
+				projectService,
+				runService,
+				() => {
+					throw new Error('backend should not launch');
+				},
+			);
+			const app = new Elysia()
+				.use(errorHandlerPlugin)
+				.use(createDirectorRoutes({ directorService: service } as unknown as WebContext));
+
+			const messages = await app.handle(
+				new Request(
+					'http://localhost/api/v1/director/chat/sessions/dir_chat_gone/messages',
+				),
+			);
+			expect(messages.status).toBe(404);
+			expect(await messages.json()).toEqual({
+				error: 'Director chat session not found: dir_chat_gone',
+			});
+
+			const deleted = await app.handle(
+				new Request('http://localhost/api/v1/director/chat/sessions/dir_chat_gone', {
+					method: 'DELETE',
+				}),
+			);
+			expect(deleted.status).toBe(404);
+
+			// A whitespace-only body is the same mistake one line away: the route accepts any
+			// string, so the service has to answer it as a bad request, not an unhandled error.
+			const session = await service.createChatSession();
+			const blank = await app.handle(
+				new Request(
+					`http://localhost/api/v1/director/chat/sessions/${session.id}/messages`,
+					{
+						body: JSON.stringify({ content: '   ' }),
+						headers: { 'content-type': 'application/json' },
+						method: 'POST',
+					},
+				),
+			);
+			expect(blank.status).toBe(400);
+			expect(await blank.json()).toEqual({
+				error: 'Director chat message cannot be empty.',
+			});
+		} finally {
+			sqlite.close();
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
+
 	test('accepts empty cycle bodies and exposes profile/chat endpoints', async () => {
 		const cycleInputs: unknown[] = [];
 		const app = createDirectorRoutes({

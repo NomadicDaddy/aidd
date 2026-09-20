@@ -20,6 +20,7 @@ import type {
 } from './types.ts';
 
 import { directorChatMessages, directorChatSessions } from '../../db/schema.ts';
+import { HttpError } from '../errors.ts';
 import { type DirectorChatAgent, NoToolCallingProviderError } from './chatAgent.ts';
 import { runTextOnlyChatTurn } from './chatTextTurn.ts';
 import {
@@ -116,7 +117,9 @@ export class DirectorChatService {
 		const session = await this.requireChatSession(sessionId);
 		const profile = await this.profileService.ensureDefaultProfile();
 		const content = cleanText(input.content, maxChatMessageLength);
-		if (!content) throw new Error('Director chat message cannot be empty.');
+		// Same reason: the route accepts any string, so a whitespace-only message is a bad
+		// request the caller can fix, not an unhandled server error.
+		if (!content) throw new HttpError('Director chat message cannot be empty.', 400);
 		const now = Date.now();
 		const user = await this.insertChatMessage({
 			content,
@@ -226,7 +229,12 @@ export class DirectorChatService {
 				.from(directorChatSessions)
 				.where(eq(directorChatSessions.id, sessionId))
 		)[0];
-		if (!session) throw new Error(`Director chat session not found: ${sessionId}`);
+		// A stale session id in an open tab is a client asking for something that is gone, not
+		// a server fault: a bare Error reaches the global handler as a 500 and an error-level log
+		// line, which is how four of these ended up in backend.log looking like an outage.
+		if (!session) {
+			throw new HttpError(`Director chat session not found: ${sessionId}`, 404);
+		}
 		return session;
 	}
 

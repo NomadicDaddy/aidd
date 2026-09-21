@@ -1,3 +1,4 @@
+import { executionStatusPresentation } from 'aidd-shared/runs/outcome';
 import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { Link } from 'react-router';
@@ -39,7 +40,7 @@ export function ActiveRunsCard({
 						<ArrowRight className="h-3.5 w-3.5" />
 					</Link>
 				}
-				description="Up to four of the runs executing right now."
+				description="Up to four of the runs executing or queued right now, running first."
 				icon={
 					<Activity
 						className={`h-4 w-4 ${activeRuns.length > 0 ? toneText.amber : toneText.neutral}`}
@@ -64,7 +65,7 @@ export function ActiveRunsCard({
 				)}
 				{activeRuns.slice(0, 4).map((run) => (
 					<div
-						className={`grid grid-cols-[1fr_auto] gap-3 rounded-lg border p-3 transition-colors ${toneBorder.amber} ${toneSurface.amber}`}
+						className={`grid grid-cols-[1fr_auto] gap-3 rounded-lg border p-3 transition-colors ${run.status === 'queued' ? `${toneBorder.teal} ${toneSurface.teal}` : `${toneBorder.amber} ${toneSurface.amber}`}`}
 						key={run.id}>
 						<div className="min-w-0">
 							<div className="flex min-w-0 items-center gap-1.5">
@@ -74,7 +75,8 @@ export function ActiveRunsCard({
 								<RunCommandInfo command={run.launchCommand} runId={run.id} />
 							</div>
 							<div className="truncate text-xs text-muted-foreground">
-								{runSourceLabel(run)} / {run.mode} / started{' '}
+								{runSourceLabel(run)} / {run.mode} /{' '}
+								{run.status === 'queued' ? 'queued' : 'started'}{' '}
 								{formatDate(run.startedAt)}
 							</div>
 							<ExecutionIdentityBadges
@@ -86,9 +88,18 @@ export function ActiveRunsCard({
 							/>
 							<RunLivenessIndicator now={now} run={run} />
 						</div>
-						<Badge pulse showDot tone="amber">
-							{run.status}
-						</Badge>
+						{run.status === 'queued' ? (
+							<Badge
+								showDot
+								title={executionStatusPresentation.queued.title}
+								tone="teal">
+								{executionStatusPresentation.queued.label}
+							</Badge>
+						) : (
+							<Badge pulse showDot tone="amber">
+								{run.status}
+							</Badge>
+						)}
 					</div>
 				))}
 			</div>

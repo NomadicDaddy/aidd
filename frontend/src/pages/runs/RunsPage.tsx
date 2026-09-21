@@ -224,7 +224,7 @@ export function RunsPage() {
 						<SkeletonRows columns={4} count={2} label="Loading runs…" />
 					) : (
 						<UnifiedExecutionTable
-							description="Runs and recipe pipelines currently executing."
+							description="Runs and recipe pipelines executing now or queued to start."
 							emptyMessage="Nothing is running right now."
 							entries={page.activeEntries}
 							icon={<Activity aria-hidden="true" className="h-4 w-4 text-accent" />}

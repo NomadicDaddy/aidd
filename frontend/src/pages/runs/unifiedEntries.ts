@@ -19,9 +19,9 @@ export type UnifiedEntry =
 	{ kind: 'pipeline'; session: PipelineSessionRecord } | { kind: 'run'; run: RunRecord };
 
 // Filter vocabulary spanning both status enums. Values unique to one kind simply
-// filter the other kind out (e.g. 'killed' → runs only, 'queued' → sessions only).
+// filter the other kind out (e.g. 'killed' → runs only).
 export type UnifiedStatusFilter =
-	'all' | 'completed_with_failures' | 'queued' | PipelineSessionStatus | RunStatus;
+	'all' | 'completed_with_failures' | PipelineSessionStatus | RunStatus;
 
 // What kind of thing a row is, as the table already labels it. The feed merges three kinds under
 // one heading and the toolbar could filter by status, mode and project but not by the one axis the
@@ -39,7 +39,8 @@ export function entryStartedAt(entry: UnifiedEntry): number {
 }
 
 export function isEntryActive(entry: UnifiedEntry): boolean {
-	if (entry.kind === 'run') return entry.run.status === 'running';
+	if (entry.kind === 'run')
+		return entry.run.status === 'queued' || entry.run.status === 'running';
 	return entry.session.status === 'queued' || entry.session.status === 'running';
 }
 

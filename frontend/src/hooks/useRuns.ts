@@ -126,7 +126,7 @@ export function useRuns(projectPath?: string, options?: { topLevel?: boolean }) 
 		queryKey: ['runs', projectPath ?? 'all', topLevel ? 'top' : 'all'],
 		refetchInterval: (query) => {
 			const hasActiveRun = query.state.data?.pages.some((page) =>
-				page.runs.some((run) => run.status === 'running'),
+				page.runs.some((run) => run.status === 'queued' || run.status === 'running'),
 			);
 			return hasActiveRun ? ACTIVE_RUNS_POLL_MS : false;
 		},

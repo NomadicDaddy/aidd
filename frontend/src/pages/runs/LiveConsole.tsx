@@ -28,6 +28,7 @@ import { highlightLine } from './liveConsoleText.tsx';
 import { describeWindow } from './liveConsoleWindow.ts';
 import { LiveConsoleWindowNav } from './LiveConsoleWindowNav.tsx';
 import { RunDetailPanel } from './RunDetailPanel.tsx';
+import { isTerminalStatus } from './runsUtils.ts';
 import { useConsoleScroll } from './useConsoleScroll.ts';
 import { useLiveConsoleWindow } from './useLiveConsoleWindow.ts';
 
@@ -59,7 +60,7 @@ export function LiveConsole({
 	stopDetail: null | string;
 	windowLimitBytes?: null | number;
 }) {
-	const isTerminal = selectedRun !== undefined && selectedRun.status !== 'running';
+	const isTerminal = selectedRun !== undefined && isTerminalStatus(selectedRun.status);
 	const showPanel = isTerminal;
 	const collapsedByDefault = isTerminal;
 	const [consoleOpen, setConsoleOpen] = useState(!collapsedByDefault);

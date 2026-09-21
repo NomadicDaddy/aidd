@@ -1,3 +1,4 @@
+import { executionStatusPresentation } from 'aidd-shared/runs/outcome';
 import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 import { Link } from 'react-router';
 
@@ -11,15 +12,17 @@ import { cn } from '../../../lib/cn.ts';
 import { formatDate } from '../../../lib/formatters.ts';
 import { toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
 import { RunLivenessIndicator } from '../../runs/RunLivenessIndicator.tsx';
+import { inFlightBreakdown, inFlightRuns } from '../../runs/runsUtils.ts';
 
 // Surfaced above the project tabs so a run launched from anywhere on the project page (maturity
 // next-action, audit dispatch, feature launch) gives an immediate in-page indication that work is
-// running — not just a transient toast. Renders nothing while no run for this project is active.
+// running — not just a transient toast. Queued runs are listed too, after the running ones, so a
+// launch held by the run ceiling is visibly accepted. Renders nothing while nothing is in flight.
 export function ActiveRunsBanner({ projectPath }: { projectPath: string }) {
 	const runs = useRuns(projectPath);
-	const running = (runs.data?.pages.flatMap((page) => page.runs) ?? []).filter(
-		(run) => run.status === 'running',
-	);
+	const running = inFlightRuns(runs.data?.pages.flatMap((page) => page.runs) ?? []);
+	const breakdown = inFlightBreakdown(running);
+	const anyExecuting = running.some((run) => run.status === 'running');
 	const now = useNow(running.length > 0);
 	if (running.length === 0) return null;
 	return (
@@ -32,7 +35,10 @@ export function ActiveRunsBanner({ projectPath }: { projectPath: string }) {
 			<div className="flex shrink-0 items-center gap-2 text-sm font-semibold text-foreground">
 				<Activity className={cn('h-4 w-4', toneText.amber)} />
 				{running.length === 1 ? 'Run in progress' : `${running.length} runs in progress`}
-				<Badge pulse showDot tone="amber">
+				{breakdown ? (
+					<span className="text-xs font-normal text-muted-foreground">{breakdown}</span>
+				) : null}
+				<Badge pulse={anyExecuting} showDot tone="amber">
 					{running.length}
 				</Badge>
 			</div>
@@ -48,9 +54,18 @@ export function ActiveRunsBanner({ projectPath }: { projectPath: string }) {
 							<span className="inline-flex min-w-0 items-center gap-1.5">
 								<span className="font-mono text-xs text-foreground">{run.id}</span>
 								<RunCommandInfo command={run.launchCommand} runId={run.id} />
+								{run.status === 'queued' ? (
+									<Badge
+										showDot
+										title={executionStatusPresentation.queued.title}
+										tone="teal">
+										{executionStatusPresentation.queued.label}
+									</Badge>
+								) : null}
 							</span>
 							<span className="ml-2 text-xs text-muted-foreground">
-								{run.mode} · started {formatDate(run.startedAt)}
+								{run.mode} · {run.status === 'queued' ? 'queued' : 'started'}{' '}
+								{formatDate(run.startedAt)}
 							</span>
 							<RunLivenessIndicator now={now} run={run} />
 						</div>

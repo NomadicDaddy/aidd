@@ -25,13 +25,15 @@ export function useActiveRunCount() {
 		queryKey: ['runs', 'active-count'],
 		refetchInterval: (q) => {
 			const runs = q.state.data?.runs ?? [];
-			const hasActive = runs.some((r) => r.status === 'running');
+			const hasActive = runs.some((r) => r.status === 'queued' || r.status === 'running');
 			return hasActive ? ACTIVE_RUNS_POLL_MS : false;
 		},
 		refetchIntervalInBackground: false,
 	});
 	const runs = query.data?.runs ?? [];
-	return runs.filter((r) => r.status === 'running' && !r.pipelineSessionId).length;
+	return runs.filter(
+		(r) => (r.status === 'queued' || r.status === 'running') && !r.pipelineSessionId,
+	).length;
 }
 
 /**

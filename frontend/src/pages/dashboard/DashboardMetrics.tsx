@@ -16,6 +16,7 @@ const metricLinkClass =
 
 export function DashboardMetrics({
 	activeRunCount,
+	activeRunDetail,
 	featureHealthTone,
 	featureHealthValue,
 	fleetFeaturePassing,
@@ -30,6 +31,8 @@ export function DashboardMetrics({
 	suggestionsLoading,
 }: {
 	activeRunCount: number;
+	/** Running/queued split, present only while something is queued. */
+	activeRunDetail: string | undefined;
 	featureHealthTone: Tone;
 	featureHealthValue: number;
 	fleetFeaturePassing: number;
@@ -123,7 +126,10 @@ export function DashboardMetrics({
 				<Link className={metricLinkClass} to="/runs">
 					<Metric
 						compactOnMobile
-						detail={activeRunCount === 1 ? 'run in progress' : 'runs in progress'}
+						detail={
+							activeRunDetail ??
+							(activeRunCount === 1 ? 'run in progress' : 'runs in progress')
+						}
 						icon={<History className="h-5 w-5" />}
 						interactive
 						label="Active Runs"

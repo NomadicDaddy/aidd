@@ -39,7 +39,20 @@ export function isRunStopping(run: RunRecord, locallyRequested: boolean): boolea
 }
 
 export function isTerminalStatus(status: RunRecord['status']): boolean {
-	return status !== 'running';
+	return status !== 'queued' && status !== 'running';
+}
+
+// "Active" surfaces list queued runs beside running ones, so an admitted-later launch is visible
+// the moment it is accepted. Returned running-first so the executing work leads.
+export function inFlightRuns(runs: readonly RunRecord[]): RunRecord[] {
+	return runs.filter((run) => !isTerminalStatus(run.status)).sort(compareRunsByLiveness);
+}
+
+// "2 running · 3 queued" when anything is queued; undefined otherwise so callers keep their copy.
+export function inFlightBreakdown(runs: readonly RunRecord[]): string | undefined {
+	const queued = runs.filter((run) => run.status === 'queued').length;
+	if (queued === 0) return undefined;
+	return `${runs.length - queued} running · ${queued} queued`;
 }
 
 // Why the Continue button is offered, in operator language. Shared by the desktop row and the
@@ -55,9 +68,13 @@ export function continuationTitle(reason: RunContinuationReason): string {
 // order from the backend is preserved, so once a run finishes it settles back into its proper
 // chronological position without any jarring re-sort.
 export function compareRunsByLiveness(a: RunRecord, b: RunRecord): number {
-	const aRunning = a.status === 'running';
-	const bRunning = b.status === 'running';
-	if (aRunning !== bRunning) return aRunning ? -1 : 1;
+	const rank = (status: RunRecord['status']): number => {
+		if (status === 'running') return 0;
+		if (status === 'queued') return 1;
+		return 2;
+	};
+	const byLiveness = rank(a.status) - rank(b.status);
+	if (byLiveness !== 0) return byLiveness;
 	return b.startedAt - a.startedAt;
 }
 

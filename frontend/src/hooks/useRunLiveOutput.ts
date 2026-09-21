@@ -36,6 +36,11 @@ export interface RunLiveOutput {
 	windowLimitBytes: null | number;
 }
 
+// Queued is not terminal: an admitted run starts streaming later, so it must not latch the console.
+function isSettledStatus(status: string | undefined): boolean {
+	return status !== undefined && status !== 'queued' && status !== 'running';
+}
+
 export function useRunLiveOutput(
 	id: string | undefined,
 	status: RunStatus | undefined,
@@ -96,7 +101,7 @@ export function useRunLiveOutput(
 	useEffect(() => {
 		idRef.current = id;
 		textRef.current = '';
-		terminalRef.current = statusRef.current !== undefined && statusRef.current !== 'running';
+		terminalRef.current = isSettledStatus(statusRef.current);
 		snapshotWatermarkRef.current = 0;
 		cancelFlush();
 		setText('');
@@ -120,7 +125,7 @@ export function useRunLiveOutput(
 
 	useEffect(() => {
 		if (!id) return;
-		if (status !== undefined && status !== 'running' && !terminalRef.current) {
+		if (isSettledStatus(status) && !terminalRef.current) {
 			terminalRef.current = true;
 			cancelFlush();
 			setText(textRef.current);
@@ -174,7 +179,7 @@ export function useRunLiveOutput(
 		}
 		if (message.type === 'run_status') {
 			const status = readStatus(message.payload);
-			if (status !== null && status !== 'running') {
+			if (status !== null && isSettledStatus(status)) {
 				// Mark terminal first so any late-arriving chunk's flush cannot re-enter streaming,
 				// then flush the buffered tail synchronously so the final chunk is never dropped and
 				// drop any pending frame.

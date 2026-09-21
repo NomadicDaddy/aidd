@@ -13,6 +13,7 @@ import { useRuns } from '../../hooks/useRuns.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { percent } from '../../lib/formatters.ts';
+import { inFlightBreakdown, inFlightRuns } from '../runs/runsUtils.ts';
 import { ActiveCycleBanner } from './ActiveCycleBanner.tsx';
 import { ActiveRunsCard } from './ActiveRunsCard.tsx';
 import { getHealthTone } from './dashboard-shared.ts';
@@ -48,7 +49,7 @@ export function DashboardPage() {
 	const allProjects = summary.data?.projects ?? [];
 	const projectList = allProjects.filter((p) => !p.name.endsWith('.old'));
 	const runList = runs.data?.pages.flatMap((page) => page.runs) ?? [];
-	const activeRuns = runList.filter((run) => run.status === 'running');
+	const activeRuns = inFlightRuns(runList);
 	const totalFeatures = projectList.reduce((sum, project) => sum + project.featureTotal, 0);
 	const passingFeatures = projectList.reduce((sum, project) => sum + project.featurePassing, 0);
 	const fleet = fleetQuery.data;
@@ -255,6 +256,7 @@ export function DashboardPage() {
 			/>
 			<DashboardMetrics
 				activeRunCount={activeRuns.length}
+				activeRunDetail={inFlightBreakdown(activeRuns)}
 				featureHealthTone={featureHealthTone}
 				featureHealthValue={featureHealthValue}
 				fleetFeaturePassing={fleetFeaturePassing}

@@ -161,6 +161,7 @@ describe('unified execution entries', () => {
 			}),
 		).toBe(false);
 		expect(isEntryActive({ kind: 'run', run: makeRun({ status: 'running' }) })).toBe(true);
+		expect(isEntryActive({ kind: 'run', run: makeRun({ status: 'queued' }) })).toBe(true);
 		expect(isEntryActive({ kind: 'run', run: makeRun({ status: 'killed' }) })).toBe(false);
 	});
 

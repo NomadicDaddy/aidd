@@ -22,7 +22,7 @@ import { toneText } from '../../../lib/tones.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { RunLivenessIndicator } from '../../runs/RunLivenessIndicator.tsx';
 import { runSourceLabel } from '../../runs/runRowUtils.ts';
-import { classifyRunRecord } from '../../runs/runsUtils.ts';
+import { classifyRunRecord, inFlightBreakdown } from '../../runs/runsUtils.ts';
 
 function sourceTone(run: RunRecord): 'amber' | 'neutral' | 'teal' {
 	if (run.source === 'cli') return 'teal';
@@ -56,7 +56,10 @@ export function ActiveRunsPanel({
 		direction: 'asc' | 'desc';
 		key: ActiveRunSortKey;
 	}>({ direction: 'desc', key: 'started' });
+	// Running rows lead and queued rows follow; the chosen column sort applies within each group.
 	const orderedRuns = runs.toSorted((left, right) => {
+		const byLiveness = Number(left.status === 'queued') - Number(right.status === 'queued');
+		if (byLiveness !== 0) return byLiveness;
 		const leftValue = sort.key === 'started' ? left.startedAt : (left.durationMs ?? 0);
 		const rightValue = sort.key === 'started' ? right.startedAt : (right.durationMs ?? 0);
 		return sort.direction === 'asc' ? leftValue - rightValue : rightValue - leftValue;
@@ -68,10 +71,10 @@ export function ActiveRunsPanel({
 			key,
 		}));
 	}
-	// 1s clock so a running run's elapsed duration advances in realtime, instead of only
-	// re-computing when the ~15s websocket broadcast re-renders this panel. Scoped here and gated
-	// on an actually-running run so completed-only lists don't tick needlessly.
-	const now = useNow(orderedRuns.some((run) => run.status === 'running'));
+	// 1s clock so a running run's elapsed duration (and a queued run's wait) advances in realtime,
+	// instead of only re-computing when the ~15s websocket broadcast re-renders this panel.
+	const now = useNow(orderedRuns.length > 0);
+	const breakdown = inFlightBreakdown(runs);
 	// One message, rendered by whichever half is on screen. A colSpan={6} table row alone would
 	// leave the card stack, which has no equivalent, without it.
 	const placeholder = isLoading
@@ -89,11 +92,11 @@ export function ActiveRunsPanel({
 		<Card className={`overflow-hidden p-0 ${tableColumnClass}`}>
 			<CardHeader
 				className="mb-0 border-b border-border px-4 py-3"
-				description="Currently running aidd work for this project from UI launches and CLI sessions."
+				description="Running and queued aidd work for this project from UI launches and CLI sessions."
 				headingLevel={3}
 				status={
 					<span className="text-xs text-muted-foreground tabular-nums">
-						{runs.length} active {runs.length === 1 ? 'run' : 'runs'}
+						{breakdown ?? `${runs.length} active ${runs.length === 1 ? 'run' : 'runs'}`}
 					</span>
 				}
 				title="Active runs"

@@ -2,6 +2,7 @@ import type { RunRecord } from '../../api/types.ts';
 
 import { useRunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
 import { LiveConsole, type LiveConsoleBadge } from './LiveConsole.tsx';
+import { isTerminalStatus } from './runsUtils.ts';
 import { extractStopDetail } from './stopDetail.ts';
 
 // Owns the live-output subscription and all of its derived view state. Keeping this in its own
@@ -21,7 +22,7 @@ export function LiveConsolePanel({
 	// Drives whether the console's operator controls (find/copy/wrap/jump) render: they are only
 	// meaningful when there is real transcript text, not a placeholder/status message.
 	const liveConsoleHasOutput = Boolean(output.text);
-	const selectedRunIsTerminal = selectedRun !== undefined && selectedRun.status !== 'running';
+	const selectedRunIsTerminal = selectedRun !== undefined && isTerminalStatus(selectedRun.status);
 
 	const liveConsoleMessage = ((): string => {
 		if (!selectedRunId) return 'Select a run to view output.';

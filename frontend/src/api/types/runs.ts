@@ -17,7 +17,8 @@ export type RunMode =
 	| 'triumvirate'
 	| 'validate';
 
-export type RunStatus = 'completed' | 'failed' | 'killed' | 'running' | 'stopped';
+export type RunStatus =
+	'completed' | 'failed' | 'killed' | 'queued' | 'running' | 'stopped' | 'waiting_approval';
 
 export type RunSource = 'cli' | 'director' | 'scheduled' | 'web';
 

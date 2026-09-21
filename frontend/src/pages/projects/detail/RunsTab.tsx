@@ -10,7 +10,7 @@ import { LocalAiddHistoryPanel } from '../../../components/shared/LocalAiddHisto
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { useRuns } from '../../../hooks/useRuns.ts';
-import { compareRunsByLiveness } from '../../runs/runsUtils.ts';
+import { compareRunsByLiveness, inFlightRuns } from '../../runs/runsUtils.ts';
 import { ActiveRunsPanel } from './ActiveRunsPanel.tsx';
 import { ProjectUsagePanel } from './ProjectUsagePanel.tsx';
 
@@ -29,7 +29,7 @@ export function RunsTab({
 	const runList = (activeRuns.data?.pages.flatMap((page) => page.runs) ?? [])
 		.slice()
 		.sort(compareRunsByLiveness);
-	const activeRunList = runList.filter((run) => run.status === 'running');
+	const activeRunList = inFlightRuns(runList);
 	const localTotal = localIterations.length;
 	const localRunTotal = localRuns.length;
 	if (

@@ -213,9 +213,10 @@ export async function createWorkerWebDatabase(
 	const commands: DbCommands = {
 		claimScheduledTask: (args) => call('claimScheduledTask', args),
 		finishScheduledExecution: (args) => call('finishScheduledExecution', args),
-		insertRunIfUnderCeiling: (args) => call('insertRunIfUnderCeiling', args),
+		insertQueuedRun: (args) => call('insertQueuedRun', args),
 		markRunStale: (args) => call('markRunStale', args),
 		persistCycleResult: (args) => call('persistCycleResult', args),
+		promoteOldestQueuedRun: (args) => call('promoteOldestQueuedRun', args),
 		purgeProjectRuns: (args) => call('purgeProjectRuns', args),
 		reconcileDeadRun: (args) => call('reconcileDeadRun', args),
 		reconcileDiaryEntries: (args) => call('reconcileDiaryEntries', args),

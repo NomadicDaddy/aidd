@@ -9,7 +9,7 @@ export { decodeExitCode, isProcessExitCode } from './outcome-exit-code.ts';
 // derived label is ever persisted.
 
 export type WebRunOutcomeStatus =
-	'completed' | 'failed' | 'killed' | 'running' | 'stopped' | 'waiting_approval';
+	'completed' | 'failed' | 'killed' | 'queued' | 'running' | 'stopped' | 'waiting_approval';
 
 export type ExecutionStatus =
 	'completed_with_failures' | 'queued' | 'skipped' | WebRunOutcomeStatus;

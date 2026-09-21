@@ -28,22 +28,52 @@ function reservationValues(id: string, overrides: Record<string, unknown> = {}) 
 }
 
 async function insertReservation(
-	commands: ReturnType<typeof makeDb>['commands'],
+	harness: ReturnType<typeof makeDb>,
 	id: string,
 	overrides: Record<string, unknown> = {},
 ) {
-	const result = await commands.insertRunIfUnderCeiling({
-		maxConcurrentRuns: 10,
-		maxConcurrentRunsPerProject: 10,
-		values: reservationValues(id, overrides),
+	const result = await harness.commands.insertQueuedRun({
+		values: reservationValues(id),
 	});
 	expect(result.kind).toBe('inserted');
+	const status = overrides.status;
+	if (status !== undefined && status !== 'queued' && status !== 'running') {
+		await harness.db
+			.update(runs)
+			.set({ status: status as 'completed' | 'failed' })
+			.where(eq(runs.id, id));
+		return;
+	}
+	if (status !== 'queued' && overrides.pid === undefined && overrides.heartbeatAt === undefined) {
+		expect(
+			(
+				await harness.commands.promoteOldestQueuedRun({
+					dataDir: '/data',
+					maxConcurrentRuns: 10,
+					maxConcurrentRunsPerProject: 10,
+					useWorktrees: true,
+				})
+			).kind,
+		).toBe('promoted');
+	}
+	if (overrides.pid !== undefined || overrides.heartbeatAt !== undefined) {
+		await harness.db
+			.update(runs)
+			.set({
+				...(overrides.heartbeatAt !== undefined
+					? { heartbeatAt: overrides.heartbeatAt as number }
+					: {}),
+				...(overrides.pid !== undefined ? { pid: overrides.pid as number } : {}),
+			})
+			.where(eq(runs.id, id));
+	}
 }
 
 describe('setRunPid', () => {
 	test('stamps the spawned pid onto a run reserved before the spawn', async () => {
-		const { commands, db } = makeDb();
-		await insertReservation(commands, 'r1');
+		const harness = makeDb();
+		const { commands, db } = harness;
+		await insertReservation(harness, 'r1');
 
 		expect(await commands.setRunPid({ pid: 4242, runId: 'r1' })).toBe(1);
 
@@ -52,8 +82,9 @@ describe('setRunPid', () => {
 	});
 
 	test('refuses to stamp a pid onto a run that already went terminal', async () => {
-		const { commands, db } = makeDb();
-		await insertReservation(commands, 'r1', { status: 'failed' });
+		const harness = makeDb();
+		const { commands, db } = harness;
+		await insertReservation(harness, 'r1', { status: 'failed' });
 
 		expect(await commands.setRunPid({ pid: 4242, runId: 'r1' })).toBe(0);
 
@@ -64,40 +95,46 @@ describe('setRunPid', () => {
 
 describe('releaseRunReservation', () => {
 	test('removes a reservation whose child never started and frees the ceiling slot', async () => {
-		const { commands, db } = makeDb();
-		await insertReservation(commands, 'r1');
+		const harness = makeDb();
+		const { commands, db } = harness;
+		await insertReservation(harness, 'r1');
 
 		expect(await commands.releaseRunReservation({ runId: 'r1' })).toBe(1);
 		expect(await db.select().from(runs)).toHaveLength(0);
 
 		// The slot is genuinely free again: a ceiling of one admits the next launch.
-		const next = await commands.insertRunIfUnderCeiling({
+		await commands.insertQueuedRun({ values: reservationValues('r2') });
+		const next = await commands.promoteOldestQueuedRun({
+			dataDir: '/data',
 			maxConcurrentRuns: 1,
 			maxConcurrentRunsPerProject: 1,
-			values: reservationValues('r2'),
+			useWorktrees: true,
 		});
-		expect(next.kind).toBe('inserted');
+		expect(next.kind).toBe('promoted');
 	});
 
 	test('leaves a run alone once its child has a pid', async () => {
-		const { commands, db } = makeDb();
-		await insertReservation(commands, 'r1', { pid: 4242 });
+		const harness = makeDb();
+		const { commands, db } = harness;
+		await insertReservation(harness, 'r1', { pid: 4242 });
 
 		expect(await commands.releaseRunReservation({ runId: 'r1' })).toBe(0);
 		expect(await db.select().from(runs)).toHaveLength(1);
 	});
 
 	test('leaves a run alone once it has heartbeated', async () => {
-		const { commands, db } = makeDb();
-		await insertReservation(commands, 'r1', { heartbeatAt: Date.now() });
+		const harness = makeDb();
+		const { commands, db } = harness;
+		await insertReservation(harness, 'r1', { heartbeatAt: Date.now() });
 
 		expect(await commands.releaseRunReservation({ runId: 'r1' })).toBe(0);
 		expect(await db.select().from(runs)).toHaveLength(1);
 	});
 
 	test('leaves a terminal run alone', async () => {
-		const { commands, db } = makeDb();
-		await insertReservation(commands, 'r1', { status: 'completed' });
+		const harness = makeDb();
+		const { commands, db } = harness;
+		await insertReservation(harness, 'r1', { status: 'completed' });
 
 		expect(await commands.releaseRunReservation({ runId: 'r1' })).toBe(0);
 		expect(await db.select().from(runs)).toHaveLength(1);

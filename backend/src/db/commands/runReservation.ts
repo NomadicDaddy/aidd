@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 
 import type { LocalTransaction, ReleaseRunReservationArgs, SetRunPidArgs } from './types.ts';
 
@@ -33,9 +33,9 @@ export function setRunPid(tx: LocalTransaction, args: SetRunPidArgs): number {
  * still free. The cost of that ordering is this rollback: a spawn that throws must release the
  * slot or the ceiling leaks a phantom `running` row that nothing will ever terminalize.
  *
- * The guards make a blind call safe. Only a row that is still `running`, still pid-less and has
- * never been heartbeated is removed, so a reservation whose child did start — and is already
- * reporting — is left alone for the heartbeat watcher to own.
+ * The guards make a blind call safe. Only a row that is still `queued` or `running`, still
+ * pid-less and has never been heartbeated is removed, so a reservation whose child did start —
+ * and is already reporting — is left alone for the heartbeat watcher to own.
  *
  * Returns the number of rows deleted: 0 means the reservation was no longer eligible.
  */
@@ -49,7 +49,7 @@ export function releaseRunReservation(
 		.where(
 			and(
 				eq(runs.id, args.runId),
-				eq(runs.status, 'running'),
+				inArray(runs.status, ['queued', 'running']),
 				isNull(runs.pid),
 				isNull(runs.heartbeatAt),
 			),

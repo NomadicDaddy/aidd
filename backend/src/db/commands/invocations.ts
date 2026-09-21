@@ -8,7 +8,9 @@ import { invocationEvents, runs } from '../schema.ts';
 // run mirrors as 'stopped' — a neutral terminal — in the unified invocation/telemetry log; the
 // precise parked status lives on the runs row and the derived outcome (aidd-shared/runs/outcome).
 function invocationStatusFromRunStatus(status: string): string {
-	return status === 'waiting_approval' ? 'stopped' : status;
+	if (status === 'waiting_approval') return 'stopped';
+	if (status === 'queued') return 'running';
+	return status;
 }
 
 // Copy a run's authoritative terminal facts (status, exit code, timing, error) onto every
@@ -42,7 +44,7 @@ export function reconcileInvocationFromRun(
 	// already 'running'. Skip so a post-recordStart sync on a live run is a true no-op (no redundant
 	// write, no spurious data-movement trace). Terminal-transition callers run after the runs row is
 	// terminal, so they are unaffected.
-	if (run.status === 'running') return 0;
+	if (run.status === 'queued' || run.status === 'running') return 0;
 	const targets = tx
 		.select({ id: invocationEvents.id })
 		.from(invocationEvents)
@@ -109,7 +111,7 @@ export function reconcileStaleInvocations(tx: LocalTransaction, args: { now: num
 				.where(eq(runs.id, row.runId))
 				.get();
 			if (run) {
-				if (run.status === 'running') continue;
+				if (run.status === 'queued' || run.status === 'running') continue;
 				tx.update(invocationEvents)
 					.set({
 						completedAt: run.completedAt ?? now,

@@ -1,7 +1,12 @@
 import { webLogger } from '../../logger.ts';
-import { INGEST_INTERVAL_MS, ORPHAN_RUN_SWEEP_INTERVAL_MS } from './types.ts';
+import {
+	ADMISSION_INTERVAL_MS,
+	INGEST_INTERVAL_MS,
+	ORPHAN_RUN_SWEEP_INTERVAL_MS,
+} from './types.ts';
 
 export interface RunServiceTimerDeps {
+	admitQueuedRuns(): Promise<void>;
 	ingestCompletedCliRuns(): Promise<number>;
 	isDisposed(): boolean;
 	reconcileRunLedgerDrift(): Promise<number>;
@@ -10,6 +15,7 @@ export interface RunServiceTimerDeps {
 }
 
 export interface RunServiceTimers {
+	admissionTimer: ReturnType<typeof setInterval>;
 	ingestTimer: ReturnType<typeof setInterval>;
 	orphanSweepTimer: ReturnType<typeof setInterval>;
 }
@@ -43,5 +49,12 @@ export function startRunServiceTimers(deps: RunServiceTimerDeps): RunServiceTime
 		deps.requestRetentionSweep();
 	}, ORPHAN_RUN_SWEEP_INTERVAL_MS);
 	orphanSweepTimer.unref?.();
-	return { ingestTimer, orphanSweepTimer };
+	const admissionTimer = setInterval(() => {
+		if (deps.isDisposed()) return;
+		void deps.admitQueuedRuns().catch((error: unknown) => {
+			webLogger.error({ error }, 'Periodic queued-run admission failed');
+		});
+	}, ADMISSION_INTERVAL_MS);
+	admissionTimer.unref?.();
+	return { admissionTimer, ingestTimer, orphanSweepTimer };
 }

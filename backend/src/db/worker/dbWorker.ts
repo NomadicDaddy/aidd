@@ -58,14 +58,16 @@ async function runCommand(name: DbCommandName, args: unknown): Promise<unknown> 
 			return commands.finishScheduledExecution(
 				args as DbCommandMap['finishScheduledExecution']['args'],
 			);
-		case 'insertRunIfUnderCeiling':
-			return commands.insertRunIfUnderCeiling(
-				args as DbCommandMap['insertRunIfUnderCeiling']['args'],
-			);
+		case 'insertQueuedRun':
+			return commands.insertQueuedRun(args as DbCommandMap['insertQueuedRun']['args']);
 		case 'markRunStale':
 			return commands.markRunStale(args as DbCommandMap['markRunStale']['args']);
 		case 'persistCycleResult':
 			return commands.persistCycleResult(args as DbCommandMap['persistCycleResult']['args']);
+		case 'promoteOldestQueuedRun':
+			return commands.promoteOldestQueuedRun(
+				args as DbCommandMap['promoteOldestQueuedRun']['args'],
+			);
 		case 'purgeProjectRuns':
 			return commands.purgeProjectRuns(args as DbCommandMap['purgeProjectRuns']['args']);
 		case 'reconcileDeadRun':

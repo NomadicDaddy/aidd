@@ -2477,11 +2477,11 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				let capturedPid: number | null | undefined;
 				const serviceInternals = service as unknown as {
 					commands: {
-						insertRunIfUnderCeiling: (args: unknown) => Promise<unknown>;
+						insertQueuedRun: (args: unknown) => Promise<unknown>;
 					};
 				};
-				const originalInsert = serviceInternals.commands.insertRunIfUnderCeiling;
-				serviceInternals.commands.insertRunIfUnderCeiling = async (args: unknown) => {
+				const originalInsert = serviceInternals.commands.insertQueuedRun;
+				serviceInternals.commands.insertQueuedRun = async (args: unknown) => {
 					const typedArgs = args as { values: { pid?: null | number } };
 					capturedPid = typedArgs.values.pid;
 					throw new Error('forced insert failure');
@@ -2490,7 +2490,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				await expect(
 					service.launchRun({ projectDir }, { initiator: 'operator' }),
 				).rejects.toThrow('forced insert failure');
-				serviceInternals.commands.insertRunIfUnderCeiling = originalInsert;
+				serviceInternals.commands.insertQueuedRun = originalInsert;
 
 				// Admission runs before execution, so the row is reserved pid-less and a failed
 				// reservation never reaches the detached hop. That ordering is the whole fix: the
@@ -2575,7 +2575,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 		}
 	});
 
-	test('a ceiling-rejected launch spawns no second child into the same checkout', async () => {
+	test('a ceiling overflow queues the second launch instead of spawning it', async () => {
 		const workspace = await testTempDir('aidd-web-ceiling-');
 		const witnessDir = join(workspace, 'spawn-witness');
 		const dataDir = join(workspace, 'data');
@@ -2589,18 +2589,21 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				const admitted = await service.launchRun({ projectDir }, { initiator: 'operator' });
 				await waitForWitnessCount(witnessDir, 1);
 
-				// Both coding runs would edit the one checkout, and feature leases cover feature
-				// selection rather than source files or the git baseline, so the second is refused.
-				await expect(
-					service.launchRun({ projectDir }, { initiator: 'operator' }),
-				).rejects.toThrow('Maximum concurrent runs reached for this project: 1 (1 active)');
+				const queued = await service.launchRun({ projectDir }, { initiator: 'operator' });
 
 				await wait(400);
 				expect(await spawnWitnessCount(witnessDir)).toBe(1);
-				expect(await runTranscriptCount(dataDir)).toBe(1);
+				expect(queued.status).toBe('queued');
+				expect(queued.pid).toBeNull();
+				expect(queued.worktreePath).toBeNull();
 				const rows = await service.listRuns();
-				expect(rows).toHaveLength(1);
-				expect(rows[0]?.id).toBe(admitted.id);
+				expect(rows).toHaveLength(2);
+				expect(rows.some((row) => row.id === admitted.id && row.status === 'running')).toBe(
+					true,
+				);
+				expect(rows.some((row) => row.id === queued.id && row.status === 'queued')).toBe(
+					true,
+				);
 			} finally {
 				service.markDisposed();
 				sqlite.close();
@@ -2632,12 +2635,13 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				expect(second.worktreePath).not.toBeNull();
 				await waitForWitnessCount(witnessDir, 2);
 
-				// Each child owns its own checkout, so the clamp does not apply: the third launch is
-				// refused by the operator's configured ceiling instead.
-				await expect(
-					service.launchRun({ projectDir }, { initiator: 'operator' }),
-				).rejects.toThrow('Maximum concurrent runs reached for this project: 2 (2 active)');
-				expect(await service.listRuns()).toHaveLength(2);
+				const queued = await service.launchRun({ projectDir }, { initiator: 'operator' });
+				expect(queued.status).toBe('queued');
+				expect(queued.worktreePath).toBeNull();
+				const rows = await service.listRuns();
+				expect(rows).toHaveLength(3);
+				expect(rows.filter((row) => row.status === 'running')).toHaveLength(2);
+				expect(rows.filter((row) => row.status === 'queued')).toHaveLength(1);
 			} finally {
 				service.markDisposed();
 				sqlite.close();

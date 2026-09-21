@@ -11,6 +11,10 @@ Inside a run, aidd loops over **iterations**: each iteration selects work, compi
 3. Optionally adjust the **launch target** (the engine, model, and reasoning effort resolved from your configured defaults) or pass extra arguments.
 4. Launch.
 
+If `web.maxConcurrentRuns` or `web.maxConcurrentRunsPerProject` is already full, the launch still succeeds and the new row shows as **Queued**. It starts automatically (oldest first) when a running managed launch finishes, is stopped, or is killed. Queued rows do not start a process, do not create a worktree, and do not occupy a ceiling slot. CLI-launched runs are outside this queue.
+
+Stop on a queued row cancels it without spawning anything; the next eligible queued run is then admitted.
+
 ## Modes at a glance
 
 coding

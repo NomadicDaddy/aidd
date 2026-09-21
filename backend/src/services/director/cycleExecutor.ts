@@ -14,6 +14,7 @@ import type {
 import type { FleetSummary } from './types.ts';
 
 import { webLogger } from '../../logger.ts';
+import { IN_FLIGHT_RUN_STATUSES } from '../run/types.ts';
 import { type DirectorChatService } from './chatService.ts';
 import {
 	buildDirectCyclePrompt,
@@ -287,7 +288,8 @@ async function waitForCycleRun(
 		const row = await deps.runService.getRun(runId);
 		if (!row) throw new Error(`Cycle run not found: ${runId}`);
 		const status = row.status as WebRunStatus;
-		if (status !== 'running') return status;
+		// A queued cycle run is waiting for a ceiling slot, not finished.
+		if (!IN_FLIGHT_RUN_STATUSES.includes(status)) return status;
 		await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
 	}
 }

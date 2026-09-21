@@ -10,7 +10,9 @@ import type { HeartbeatWatcher } from './run/heartbeatWatcher.ts';
 import type { TelemetryService } from './telemetryService.ts';
 
 import { type runs } from '../db/schema.ts';
+import { webLogger } from '../logger.ts';
 import { type ProjectService } from './projectService.ts';
+import { admitQueuedRuns as admitQueuedRunsInternal } from './run/admission.ts';
 import { startRunServiceTimers } from './run/backgroundTimers.ts';
 import { createRunContinuationWiring } from './run/continuationWiring.ts';
 import {
@@ -19,7 +21,11 @@ import {
 	stopRun as stopRunInternal,
 } from './run/control.ts';
 import { ingestCompletedCliRuns as ingestCompletedCliRunsInternal } from './run/ingest.ts';
-import { launchRun as launchRunInternal, type LaunchRunOptions } from './run/launch.ts';
+import {
+	type LaunchContext,
+	launchRun as launchRunInternal,
+	type LaunchRunOptions,
+} from './run/launch.ts';
 import { reconcileRunLedgerDrift } from './run/ledgerBackfillSweep.ts';
 import {
 	readOutput as readOutputInternal,
@@ -46,6 +52,7 @@ export type { RunOutputResult };
 export class RunService extends RunQueryService {
 	private readonly heartbeatWatchers = new Map<string, HeartbeatWatcher>();
 	private readonly tailWatchers = new Map<string, RunTailWatcher>();
+	private readonly admissionTimer: null | ReturnType<typeof setInterval> = null;
 	private readonly ingestTimer: null | ReturnType<typeof setInterval> = null;
 	private readonly orphanSweepTimer: null | ReturnType<typeof setInterval> = null;
 	private readonly projectService: ProjectService;
@@ -79,12 +86,14 @@ export class RunService extends RunQueryService {
 		this.telemetryService = telemetryService;
 		this.retentionSweep = retentionSweep;
 		const timers = startRunServiceTimers({
+			admitQueuedRuns: () => this.admitQueuedRuns(),
 			ingestCompletedCliRuns: () => this.ingestCompletedCliRuns(),
 			isDisposed: () => this.disposed,
 			reconcileRunLedgerDrift: () => this.reconcileRunLedgerDrift(),
 			requestRetentionSweep: () => this.requestRetentionSweep(),
 			sweepOrphanedRuns: () => this.sweepOrphanedRuns(),
 		});
+		this.admissionTimer = timers.admissionTimer;
 		this.ingestTimer = timers.ingestTimer;
 		this.orphanSweepTimer = timers.orphanSweepTimer;
 	}
@@ -107,6 +116,7 @@ export class RunService extends RunQueryService {
 	markDisposed(): void {
 		this.disposed = true;
 		disposeRunRuntime({
+			admissionTimer: this.admissionTimer,
 			heartbeatWatchers: this.heartbeatWatchers,
 			ingestTimer: this.ingestTimer,
 			orphanSweepTimer: this.orphanSweepTimer,
@@ -120,6 +130,12 @@ export class RunService extends RunQueryService {
 		for (const info of resumable) {
 			await this.ensureHeartbeatWatcher(info.projectPath);
 		}
+		await this.admitQueuedRuns();
+	}
+
+	async admitQueuedRuns(): Promise<void> {
+		if (this.disposed) return;
+		await admitQueuedRunsInternal(this.launchContext());
 	}
 
 	// Periodic orphan sweep (see activeRunSweep.ts); returns the count reconciled. Each swept run
@@ -132,6 +148,7 @@ export class RunService extends RunQueryService {
 				info,
 			);
 		}
+		if (swept.length > 0) await this.admitQueuedRuns();
 		return swept.length;
 	}
 
@@ -145,23 +162,7 @@ export class RunService extends RunQueryService {
 		input: RunLaunchRequest,
 		options: LaunchRunOptions,
 	): Promise<typeof runs.$inferSelect> {
-		return launchRunInternal(
-			{
-				commands: this.commands,
-				config: this.config,
-				db: this.db,
-				heartbeatWatchers: this.heartbeatWatchers,
-				hub: this.hub,
-				onProjectChanged: this.onProjectChanged,
-				onRunContinuation: this.continuation.onRunContinuation,
-				resolveProjectPath: (path) => this.projectService.resolveProjectPath(path),
-				rootDir: this.rootDir,
-				tailWatchers: this.tailWatchers,
-				telemetry: this.telemetryService,
-			},
-			input,
-			options,
-		);
+		return launchRunInternal(this.launchContext(), input, options);
 	}
 
 	// Launch a follow-up run for a continuation-eligible terminal run (Continue affordance).
@@ -170,11 +171,13 @@ export class RunService extends RunQueryService {
 	}
 
 	async killRun(id: string): Promise<void> {
-		return killRunInternal(this.controlContext(), id);
+		await killRunInternal(this.controlContext(), id);
+		await this.admitQueuedRuns();
 	}
 
 	async stopRun(id: string): Promise<void> {
-		return stopRunInternal(this.controlContext(), id);
+		await stopRunInternal(this.controlContext(), id);
+		await this.admitQueuedRuns();
 	}
 
 	async readOutput(id: string, window?: RunOutputWindowRequest): Promise<RunOutputResult> {
@@ -204,9 +207,31 @@ export class RunService extends RunQueryService {
 			hub: this.hub,
 			onProjectChanged: this.onProjectChanged,
 			onRunContinuation: this.continuation.onRunContinuation,
+			onRunTerminal: () => {
+				void this.admitQueuedRuns().catch((error: unknown) => {
+					webLogger.error({ error }, 'Queued-run admission after a terminal run failed');
+				});
+			},
 			tailWatchers: this.tailWatchers,
 			telemetry: this.telemetryService,
 		});
+	}
+
+	private launchContext(): LaunchContext {
+		return {
+			commands: this.commands,
+			config: this.config,
+			db: this.db,
+			heartbeatWatchers: this.heartbeatWatchers,
+			hub: this.hub,
+			isDisposed: () => this.disposed,
+			onProjectChanged: this.onProjectChanged,
+			onRunContinuation: this.continuation.onRunContinuation,
+			resolveProjectPath: (path) => this.projectService.resolveProjectPath(path),
+			rootDir: this.rootDir,
+			tailWatchers: this.tailWatchers,
+			telemetry: this.telemetryService,
+		};
 	}
 
 	private controlContext(): ControlContext {

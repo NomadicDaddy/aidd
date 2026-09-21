@@ -19,22 +19,22 @@ import { webLogger } from '../../logger.ts';
 import { canonicalProjectPath } from '../../paths.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { buildLaunchCommand } from '../runLauncher.ts';
-import { HeartbeatWatcher } from './heartbeatWatcher.ts';
+import { admitQueuedRuns } from './admission.ts';
+import { type HeartbeatWatcher } from './heartbeatWatcher.ts';
 import { resolveLaunchConfig } from './launchConfig.ts';
-import { effectiveProjectRunCeiling, mayMutateProject } from './launchMutation.ts';
-import { failLaunch, recordSpawnedPid, releaseRunSlot } from './launchReservation.ts';
+import { failLaunch, releaseRunSlot } from './launchReservation.ts';
 import { guardPendingProjectStop } from './launchStopGuard.ts';
 import { getRun } from './queries.ts';
-import { spawnDetachedRun } from './spawnDetachedRun.ts';
-import { RunTailWatcher } from './tailWatcher.ts';
+import { type RunTailWatcher } from './tailWatcher.ts';
 import { canonicalRunProjectName } from './types.ts';
 
-interface LaunchContext {
+export interface LaunchContext {
 	commands: DbCommands;
 	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	db: WebDatabase;
 	heartbeatWatchers: Map<string, HeartbeatWatcher>;
 	hub: WebSocketHub;
+	isDisposed: () => boolean;
 	onProjectChanged?: (projectPath: string) => void;
 	onRunContinuation?: (runId: string, reason: RunContinuationReason) => void;
 	resolveProjectPath(path: string): Promise<string>;
@@ -67,20 +67,6 @@ async function removeRejectedRunTranscript(logPath: string, runId: string): Prom
 		// Preserve the launch error clients need while leaving an actionable cleanup signal.
 		webLogger.warn({ err, logPath, runId }, 'Failed to remove rejected Run transcript');
 	}
-}
-
-async function ensureHeartbeatWatcher(ctx: LaunchContext, projectPath: string): Promise<void> {
-	if (ctx.heartbeatWatchers.has(projectPath)) return;
-	const watcher = await HeartbeatWatcher.start(projectPath, {
-		commands: ctx.commands,
-		db: ctx.db,
-		hub: ctx.hub,
-		tailWatchers: ctx.tailWatchers,
-		telemetry: ctx.telemetry,
-		...(ctx.onProjectChanged ? { onProjectChanged: ctx.onProjectChanged } : {}),
-		...(ctx.onRunContinuation ? { onRunContinuation: ctx.onRunContinuation } : {}),
-	});
-	ctx.heartbeatWatchers.set(projectPath, watcher);
 }
 
 export async function launchRun(
@@ -134,11 +120,6 @@ export async function launchRun(
 	const runId = createRunId();
 	const startedAt = Date.now();
 	const source: CliActiveRunSource = options.source ?? 'web';
-	// Deterministic worktree location (matches the CLI's createRunWorktree, which uses the same
-	// runId via AIDD_EXT_RUN_ID + <dataDir>/worktrees). Stored on the row so the orphan sweeper
-	// can reap it without the CLI reporting back.
-	const worktreePath = useWorktree ? join(ctx.config.web.dataDir, 'worktrees', runId) : null;
-	const worktreeBranch = useWorktree ? `aidd/run-${runId}` : null;
 	// Refuse to launch over a stop still pending for a live sibling run; clear only a stale
 	// stop file (see launchStopGuard.ts for the shared-stop-file rationale). This guard precedes
 	// every launch-owned artifact so a refusal leaves no transcript behind.
@@ -148,29 +129,19 @@ export async function launchRun(
 	// scrubbed chunks (see scrubSecrets) to this same path via the AIDD_EXT_LOG_PATH
 	// env handoff, so high-confidence credential shapes are masked at write time.
 	const logPath = join(ctx.config.web.dataDir, 'run-logs', `${runId}.log`);
-	// Admission first, execution second. The reservation is an atomic count-and-insert on the
-	// worker connection, so parallel callers cannot both pass the count and then both insert,
-	// overshooting the ceiling — and because it runs before any child exists, a refusal is
-	// still free. The reverse order cannot be made safe: the detached hop is one-way (on
-	// Windows the pwsh bridge has usually already fired Start-Process and exited by the time we
-	// could kill it), so a spawn-then-check launch that loses the race leaves a live run with
-	// no row, invisible to the panel and to every sweeper that reads from `runs`.
+	// Queue first, execute on admission. Every managed launch inserts as queued; admitQueuedRuns
+	// then promotes rows to running inside one worker transaction that counts running rows, so
+	// parallel callers cannot overshoot either ceiling, and only a promoted row is ever spawned.
+	// The reverse order cannot be made safe: the detached hop is one-way (on Windows the pwsh
+	// bridge has usually already fired Start-Process and exited by the time we could kill it), so
+	// a spawn-then-check launch that loses the race leaves a live run with no row.
 	//
-	// The row is reserved pid-less. On POSIX recordSpawnedPid stamps the real child pid once it
+	// The row is inserted pid-less. On POSIX recordSpawnedPid stamps the real child pid once it
 	// exists; on Windows the spawned process is the transient bridge, so the pid stays null
 	// until the first heartbeat mirrors the CLI pid onto the row.
-	const reservation = await withSqliteRetry(
+	await withSqliteRetry(
 		() =>
-			ctx.commands.insertRunIfUnderCeiling({
-				maxConcurrentRuns: ctx.config.web.maxConcurrentRuns,
-				// Two mutating children in one checkout interleave edits and commit over each
-				// other; feature leases cover feature selection, not source files or the git
-				// baseline. See launchMutation.ts.
-				maxConcurrentRunsPerProject: effectiveProjectRunCeiling({
-					configured: ctx.config.web.maxConcurrentRunsPerProject,
-					isolated: useWorktree,
-					mutating: mayMutateProject(mode, input),
-				}),
+			ctx.commands.insertQueuedRun({
 				values: {
 					...aiddProvenance,
 					backend: effectiveBackend,
@@ -194,23 +165,11 @@ export async function launchRun(
 					scheduledTaskExecutionId: options.scheduledTaskExecutionId ?? null,
 					source,
 					startedAt,
-					status: 'running',
-					worktreeBranch,
-					worktreePath,
+					status: 'queued',
 				},
 			}),
-		{ label: 'run.launch.reserve' },
+		{ label: 'run.launch.queue' },
 	).catch((err: unknown) => failLaunch(ctx.hub, runId, err));
-	if (reservation.kind === 'rejected') {
-		const scope = reservation.scope === 'project' ? 'for this project' : 'across all projects';
-		failLaunch(
-			ctx.hub,
-			runId,
-			new Error(
-				`Maximum concurrent runs reached ${scope}: ${reservation.limit} (${reservation.activeCount} active)`,
-			),
-		);
-	}
 	try {
 		await mkdir(dirname(logPath), { recursive: true });
 		await writeFile(logPath, '');
@@ -233,56 +192,12 @@ export async function launchRun(
 		summary: { mode, runId },
 		target: 'runs',
 	});
-	// Detached spawn — the CLI heartbeat owns process lifetime from here on. The web
-	// process never holds a handle that would tie the child to its lifetime; the child
-	// resurfaces through the heartbeat watcher on restart.
-	//
-	// Platform split: on POSIX an orphaned child reparents to init, so spawning the run
-	// directly with ignored stdio lets it outlive us. On Windows we briefly run a hidden
-	// PowerShell bridge that calls Start-Process -WindowStyle Hidden for the relauncher
-	// and passes the real run argv through a payload file. Not using a
-	// `cmd.exe /c start /b` hop is load-bearing: that hop can inherit the web listener
-	// socket and pin the control panel port until the detached run exits.
-	//
-	// Stderr handling differs per platform. On Windows the relauncher opens the run log
-	// itself before spawning the real CLI, so the web process passes no file descriptor
-	// through the detached hop. On POSIX we spawn the run directly and append its stderr
-	// to the run log here: a CLI that dies during early startup — e.g. an arg-parse error
-	// thrown before CliActiveRunHeartbeat begins writing — would otherwise leave a 0-byte
-	// log and surface only as the generic "exited before writing a heartbeat" sweep
-	// message. The heartbeat appends its own streamed output to the same path; both are
-	// O_APPEND handles so neither clobbers.
-	const { recordPid } = await spawnDetachedRun({
-		command,
-		dataDir: ctx.config.web.dataDir,
-		...(input.driver ? { driver: input.driver } : {}),
-		hostname: ctx.config.web.hostname,
-		initiator: options.initiator,
-		logPath,
-		port: ctx.config.web.port,
-		projectDir,
-		rootDir: ctx.rootDir,
-		runId,
-		source,
-	}).catch(async (err: unknown) => {
-		// Nothing started, so the reservation is a phantom: give the slot back before the
-		// caller sees the error, or the ceiling counts a run that will never heartbeat. The
-		// transcript belongs to that reservation too, so remove it before reporting failure.
-		await releaseRunSlot(ctx.commands, runId);
-		await removeRejectedRunTranscript(logPath, runId);
-		return failLaunch(ctx.hub, runId, err);
-	});
-	if (recordPid !== null) await recordSpawnedPid(ctx.commands, runId, recordPid);
-	// Supervision before the read-back: the child is admitted and executing by now, so it has to
-	// be watched even if reading its own row back fails.
-	await ensureHeartbeatWatcher(ctx, projectDir);
-	if (!ctx.tailWatchers.has(runId)) {
-		const tail = await RunTailWatcher.start(runId, logPath, ctx.hub);
-		ctx.tailWatchers.set(runId, tail);
-	}
+	await admitQueuedRuns(ctx, runId);
 	const record = await getRun(ctx.db, runId);
 	if (!record) throw new Error(`Run was not persisted: ${runId}`);
-	if (mode === 'audit') ctx.onProjectChanged?.(projectDir);
-	ctx.hub.broadcast({ payload: { status: 'running' }, runId, type: 'run_status' });
+	if (record.status === 'queued') {
+		ctx.hub.broadcast({ payload: { status: 'queued' }, runId, type: 'run_status' });
+	}
+	if (mode === 'audit' && record.status === 'running') ctx.onProjectChanged?.(projectDir);
 	return record;
 }

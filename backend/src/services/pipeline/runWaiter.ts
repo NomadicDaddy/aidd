@@ -21,10 +21,13 @@ export class RunWaiter {
 	}
 
 	async waitForRun(runId: string, sessionId: string): Promise<RunRow> {
-		const deadline = Date.now() + RUN_WAIT_MAX_MS;
+		let deadline = Date.now() + RUN_WAIT_MAX_MS;
 		for (;;) {
 			const run = await this.runService.getRun(runId);
 			if (run && terminalRunStatuses.has(run.status as WebRunStatus)) return run;
+			// The backstop bounds execution, not admission: time spent queued behind the run
+			// ceiling must not fail the step, so the clock starts once the run is admitted.
+			if (run?.status === 'queued') deadline = Date.now() + RUN_WAIT_MAX_MS;
 			if (this.stopFlags.has(sessionId)) {
 				throw new Error(
 					`Pipeline session was stopped while waiting for run ${runId} to finish.`,

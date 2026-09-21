@@ -5,7 +5,7 @@ import { reconcileDiaryEntries } from './commands/diary.ts';
 import { startDirectorCycleIfIdle } from './commands/directorCycles.ts';
 import { reconcileInvocationFromRun, reconcileStaleInvocations } from './commands/invocations.ts';
 import { purgeProjectRuns, updateProjectPathReferences } from './commands/projectPaths.ts';
-import { insertRunIfUnderCeiling } from './commands/runCeiling.ts';
+import { insertQueuedRun, promoteOldestQueuedRun } from './commands/runCeiling.ts';
 import { markRunStale, reconcileDeadRun, terminalizeRun } from './commands/runHeartbeat.ts';
 import { releaseRunReservation, setRunPid } from './commands/runReservation.ts';
 import {
@@ -31,11 +31,13 @@ export function createInProcessCommands(db: LocalWebDatabase): DbCommands {
 			db.transaction((tx) => claimScheduledTask(tx, args), { behavior: 'immediate' }),
 		finishScheduledExecution: async (args) =>
 			db.transaction((tx) => finishScheduledExecution(tx, args), { behavior: 'immediate' }),
-		insertRunIfUnderCeiling: async (args) =>
-			db.transaction((tx) => insertRunIfUnderCeiling(tx, args), { behavior: 'immediate' }),
+		insertQueuedRun: async (args) =>
+			db.transaction((tx) => insertQueuedRun(tx, args), { behavior: 'immediate' }),
 		markRunStale: async (args) =>
 			db.transaction((tx) => markRunStale(tx, args), { behavior: 'immediate' }),
 		persistCycleResult: async (args) => db.transaction((tx) => persistCycleResult(tx, args)),
+		promoteOldestQueuedRun: async (args) =>
+			db.transaction((tx) => promoteOldestQueuedRun(tx, args), { behavior: 'immediate' }),
 		purgeProjectRuns: async (args) =>
 			db.transaction((tx) => purgeProjectRuns(tx, args), { behavior: 'immediate' }),
 		reconcileDeadRun: async (args) =>

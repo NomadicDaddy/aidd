@@ -130,8 +130,10 @@ export function createRunsRoutes(context: WebContext) {
 							t.Literal('completed'),
 							t.Literal('failed'),
 							t.Literal('killed'),
+							t.Literal('queued'),
 							t.Literal('running'),
 							t.Literal('stopped'),
+							t.Literal('waiting_approval'),
 						]),
 					),
 					// Query strings arrive as text, so accept literal 'true'/'false' rather

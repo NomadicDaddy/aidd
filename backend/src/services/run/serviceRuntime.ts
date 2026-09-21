@@ -4,6 +4,7 @@ import type { RunTailWatcher } from './tailWatcher.ts';
 import { HeartbeatWatcher } from './heartbeatWatcher.ts';
 
 interface RunRuntimeResources {
+	admissionTimer: null | ReturnType<typeof setInterval>;
 	heartbeatWatchers: Map<string, HeartbeatWatcher>;
 	ingestTimer: null | ReturnType<typeof setInterval>;
 	orphanSweepTimer: null | ReturnType<typeof setInterval>;
@@ -11,6 +12,7 @@ interface RunRuntimeResources {
 }
 
 export function disposeRunRuntime(resources: RunRuntimeResources): void {
+	if (resources.admissionTimer) clearInterval(resources.admissionTimer);
 	if (resources.ingestTimer) clearInterval(resources.ingestTimer);
 	if (resources.orphanSweepTimer) clearInterval(resources.orphanSweepTimer);
 	const tails = [...resources.tailWatchers.values()];

@@ -94,18 +94,21 @@ export interface PurgeProjectRunsArgs {
 	projectPath: string;
 }
 
-export interface InsertRunIfUnderCeilingArgs {
-	/** Maximum number of non-terminal runs allowed across all projects. */
-	maxConcurrentRuns: number;
-	/** Maximum number of non-terminal runs allowed for the row's projectPath. */
-	maxConcurrentRunsPerProject: number;
-	/** Full row values to insert if the ceiling has not been reached. */
+export interface InsertQueuedRunArgs {
 	values: typeof runs.$inferInsert;
 }
 
-export type InsertRunIfUnderCeilingResult =
-	| { activeCount: number; kind: 'rejected'; limit: number; scope: 'global' | 'project' }
-	| { kind: 'inserted' };
+export type InsertQueuedRunResult = { kind: 'inserted' };
+
+export interface PromoteOldestQueuedRunArgs {
+	dataDir: string;
+	maxConcurrentRuns: number;
+	maxConcurrentRunsPerProject: number;
+	useWorktrees: boolean;
+}
+
+export type PromoteOldestQueuedRunResult =
+	{ kind: 'none' } | { kind: 'promoted'; row: typeof runs.$inferSelect };
 
 export interface PersistCycleResultArgs {
 	/**
@@ -222,12 +225,13 @@ export interface ReleaseRunReservationArgs {
 export interface DbCommandMap {
 	claimScheduledTask: { args: ClaimScheduledTaskArgs; result: ClaimScheduledTaskResult };
 	finishScheduledExecution: { args: FinishScheduledExecutionArgs; result: void };
-	insertRunIfUnderCeiling: {
-		args: InsertRunIfUnderCeilingArgs;
-		result: InsertRunIfUnderCeilingResult;
-	};
+	insertQueuedRun: { args: InsertQueuedRunArgs; result: InsertQueuedRunResult };
 	markRunStale: { args: MarkRunStaleArgs; result: HeartbeatWriteOutcome };
 	persistCycleResult: { args: PersistCycleResultArgs; result: PersistCycleResultOutcome };
+	promoteOldestQueuedRun: {
+		args: PromoteOldestQueuedRunArgs;
+		result: PromoteOldestQueuedRunResult;
+	};
 	purgeProjectRuns: { args: PurgeProjectRunsArgs; result: number };
 	reconcileDeadRun: { args: ReconcileDeadRunArgs; result: HeartbeatWriteOutcome };
 	reconcileDiaryEntries: { args: ReconcileDiaryEntriesArgs; result: ReconcileDiaryEntriesResult };

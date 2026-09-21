@@ -43,9 +43,7 @@ export interface ControlContext {
 	telemetry: TelemetryService;
 }
 
-// Mirror a direct stop/kill onto the linked invocation telemetry. The `runs` row has already been
-// driven terminal by the caller, so this syncs the authoritative status (stopped/killed) instead
-// of leaving the invocation 'running' until the next startup sweep force-failed it.
+// Mirror a direct stop/kill onto linked invocation telemetry once the runs row is terminal.
 async function syncInvocationFromRun(
 	ctx: ControlContext,
 	runId: string,
@@ -69,6 +67,43 @@ async function readHeartbeat(
 	}
 }
 
+async function terminalizeQueuedRun(
+	ctx: ControlContext,
+	run: NonNullable<Awaited<ReturnType<typeof getRun>>>,
+	input: {
+		exitCode: number;
+		label: string;
+		status: 'killed' | 'stopped';
+		stopReason: string;
+	},
+): Promise<void> {
+	const completedAt = Date.now();
+	await withSqliteRetry(
+		() =>
+			ctx.db
+				.update(runs)
+				.set({
+					completedAt,
+					durationMs: completedAt - run.startedAt,
+					exitCode: input.exitCode,
+					status: input.status,
+					stopReason: input.stopReason,
+				})
+				.where(and(eq(runs.id, run.id), eq(runs.status, 'queued'))),
+		{ label: input.label },
+	);
+	await syncInvocationFromRun(ctx, run.id, run.source);
+	ctx.hub.broadcast({
+		payload: {
+			exitCode: input.exitCode,
+			status: input.status,
+			stopReason: input.stopReason,
+		},
+		runId: run.id,
+		type: 'run_status',
+	});
+}
+
 async function stopTailWatcher(ctx: ControlContext, runId: string): Promise<void> {
 	const tail = ctx.tailWatchers.get(runId);
 	if (!tail) return;
@@ -80,11 +115,7 @@ async function clearRunStopFile(projectPath: string, runId: string): Promise<voi
 	await rm(runStopFilePath(projectPath, runId), { force: true });
 }
 
-// Resolve the run's supervised pid and whether that process is genuinely still alive. A run with
-// no recorded pid, a dead pid, or a live pid paired with a stale heartbeat (most likely a reused
-// pid for a run whose original process already exited) is treated as dead, so an explicit
-// Stop/Kill drives the row terminal immediately instead of signalling an unrelated process or
-// waiting on a heartbeat that will never arrive.
+// A missing, dead, or stale-heartbeat pid is treated as dead so Stop/Kill never signals a reused pid.
 async function resolveRunProcess(
 	projectPath: string,
 	runId: string,
@@ -115,13 +146,21 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 			`Run is already in terminal status '${run.status}' and cannot be killed: ${id}`,
 		);
 	}
+	if (run.status === 'queued') {
+		await terminalizeQueuedRun(ctx, run, {
+			exitCode: -1,
+			label: 'run.kill.queued',
+			status: 'killed',
+			stopReason: 'killed',
+		});
+		return;
+	}
 	const { alive, pid } = await resolveRunProcess(run.projectPath, id, run.pid);
 	if (alive && pid !== null) {
 		try {
 			await killProcessTree(pid);
 		} catch {
-			// best-effort kill — the process may have already exited between the heartbeat
-			// write and this call. The DB row is force-driven terminal below regardless.
+			// Best-effort: the process may have exited; the row is forced terminal below.
 		}
 	}
 	// Drive the row terminal regardless of whether a live process was found: a stranded row whose
@@ -179,6 +218,15 @@ export async function stopRun(ctx: ControlContext, id: string): Promise<void> {
 		throw new RunControlError(
 			`Run is already in terminal status '${run.status}' and cannot be stopped: ${id}`,
 		);
+	}
+	if (run.status === 'queued') {
+		await terminalizeQueuedRun(ctx, run, {
+			exitCode: RECONCILED_EXIT_CODE,
+			label: 'run.stop.queued',
+			status: 'stopped',
+			stopReason: 'stop_requested',
+		});
+		return;
 	}
 	const stopFile = runStopFilePath(run.projectPath, id);
 	await mkdir(dirname(stopFile), { recursive: true });

@@ -179,7 +179,7 @@ export const runs = sqliteTable(
 		}).onDelete('set null'),
 		check(
 			'ck_runs_status',
-			sql`${table.status} IN ('completed','failed','killed','running','stopped','waiting_approval')`,
+			sql`${table.status} IN ('completed','failed','killed','queued','running','stopped','waiting_approval')`,
 		),
 		check(
 			'ck_runs_mode',

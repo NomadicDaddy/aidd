@@ -23,7 +23,7 @@ import { readRunHistorySources } from './historySourceReads.ts';
 import { dropLedgerPhantomRuns } from './ledgerReconcile.ts';
 import { toWebRunRecord } from './runRecordMapper.ts';
 import { annotateStopRequested } from './stopRequestedAnnotation.ts';
-import { NON_TERMINAL_RUN_STATUSES, RECENT_RUN_LOOKBACK_MS } from './types.ts';
+import { IN_FLIGHT_RUN_STATUSES, RECENT_RUN_LOOKBACK_MS } from './types.ts';
 
 export interface ListRunsPageOptions {
 	cursor?: string;
@@ -55,7 +55,7 @@ export async function listRuns(
 						status
 							? eq(runs.status, status)
 							: or(
-									inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
+									inArray(runs.status, [...IN_FLIGHT_RUN_STATUSES]),
 									gt(runs.startedAt, cutoff),
 								),
 					)
@@ -93,7 +93,7 @@ export async function listRunsForProject(
 							status
 								? eq(runs.status, status)
 								: or(
-										inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]),
+										inArray(runs.status, [...IN_FLIGHT_RUN_STATUSES]),
 										gt(runs.startedAt, cutoff),
 									),
 						),

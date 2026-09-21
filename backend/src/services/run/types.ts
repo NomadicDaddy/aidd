@@ -24,6 +24,13 @@ export const TERMINAL_STATUSES: ReadonlySet<WebRunStatus> = new Set([
 // heartbeat file: fresh records resume, missing/stale records are force-failed.
 export const NON_TERMINAL_RUN_STATUSES: readonly WebRunStatus[] = ['running'];
 
+// Rows that have been accepted but are not yet terminal: queued waits for a ceiling slot,
+// running has a child (or is about to spawn one). Boot/orphan sweeps must not treat queued
+// as a live process; waiters and the Runs page must treat both as in-flight.
+export const IN_FLIGHT_RUN_STATUSES: readonly WebRunStatus[] = ['queued', 'running'];
+
+export const ADMISSION_INTERVAL_MS = 30_000;
+
 // Exit-code sentinel recorded for runs force-failed by startup reconciliation or stale
 // heartbeat detection — a single sentinel for "the supervising path believes the process
 // died unexpectedly."

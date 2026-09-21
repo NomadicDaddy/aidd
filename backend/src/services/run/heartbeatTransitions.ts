@@ -145,6 +145,7 @@ export async function terminalize(
 	// itself on the branch where it finds the process gone.
 	await rm(activeRunFilePath(record.projectPath, record.id), { force: true }).catch(() => {});
 	await rm(runStopFilePath(record.projectPath, record.id), { force: true }).catch(() => {});
+	if (outcome.kind !== 'already-terminal') ctx.onRunTerminal?.();
 }
 
 export async function markStale(
@@ -188,6 +189,7 @@ export async function markStale(
 		broadcastInsertedRun(ctx, { ...staleRecord, summary }, 'failed', errorMessage);
 		await stopTail(ctx, record.id);
 		await rm(activeRunFilePath(record.projectPath, record.id), { force: true }).catch(() => {});
+		ctx.onRunTerminal?.();
 		return;
 	}
 	if (outcome.kind === 'already-terminal') {
@@ -216,6 +218,7 @@ export async function markStale(
 	// Stale detection drove the row to terminal 'failed'; remove its authoritative-dead on-disk
 	// heartbeat so later sweeps do not keep rescanning it.
 	await rm(activeRunFilePath(record.projectPath, record.id), { force: true }).catch(() => {});
+	ctx.onRunTerminal?.();
 }
 
 export async function reconcileRemovedRow(
@@ -256,4 +259,5 @@ export async function reconcileRemovedRow(
 	if (outcome.existing.mode === 'audit') {
 		ctx.onProjectChanged?.(outcome.existing.projectPath);
 	}
+	ctx.onRunTerminal?.();
 }

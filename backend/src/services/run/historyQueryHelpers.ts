@@ -4,7 +4,7 @@ import type { RunRecord, WebRunStatus } from '../../types.ts';
 
 import { runs } from '../../db/schema.ts';
 import { decodeCursor } from '../pagination.ts';
-import { NON_TERMINAL_RUN_STATUSES, RECENT_RUN_LOOKBACK_MS } from './types.ts';
+import { IN_FLIGHT_RUN_STATUSES, RECENT_RUN_LOOKBACK_MS } from './types.ts';
 
 export function topLevelFilter(topLevel: boolean | undefined): SQL | undefined {
 	return topLevel ? isNull(runs.pipelineSessionId) : undefined;
@@ -13,7 +13,7 @@ export function topLevelFilter(topLevel: boolean | undefined): SQL | undefined {
 export function statusOrRecentFilter(status: undefined | WebRunStatus): SQL | undefined {
 	if (status) return eq(runs.status, status);
 	const cutoff = Date.now() - RECENT_RUN_LOOKBACK_MS;
-	return or(inArray(runs.status, [...NON_TERMINAL_RUN_STATUSES]), gt(runs.startedAt, cutoff));
+	return or(inArray(runs.status, [...IN_FLIGHT_RUN_STATUSES]), gt(runs.startedAt, cutoff));
 }
 
 export function cursorFilter(cursor: string | undefined): SQL | undefined {

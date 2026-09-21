@@ -27,6 +27,8 @@ export interface HeartbeatWatcherContext {
 	 * remaining, or initializer completion). Fire-and-forget: the receiver owns auto-chain
 	 * gating and must never throw back into the watcher. */
 	onRunContinuation?: (runId: string, reason: RunContinuationReason) => void;
+	/** Fired after a run reaches a terminal status so admission can promote the next queued row. */
+	onRunTerminal?: () => void;
 	tailWatchers: Map<string, RunTailWatcher>;
 	telemetry: TelemetryService;
 }

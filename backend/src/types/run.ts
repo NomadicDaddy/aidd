@@ -14,7 +14,7 @@ export type WebRunMode =
 	| 'validate';
 
 export type WebRunStatus =
-	'completed' | 'failed' | 'killed' | 'running' | 'stopped' | 'waiting_approval';
+	'completed' | 'failed' | 'killed' | 'queued' | 'running' | 'stopped' | 'waiting_approval';
 
 export type RunSource = 'cli' | 'director' | 'scheduled' | 'web';
 

@@ -1,6 +1,7 @@
 import type { WebRunStatus } from '../../types.ts';
 
 import { type runs } from '../../db/schema.ts';
+import { IN_FLIGHT_RUN_STATUSES } from './types.ts';
 
 export async function waitForTerminalStatus(
 	getRun: (runId: string) => Promise<typeof runs.$inferSelect | undefined>,
@@ -14,7 +15,7 @@ export async function waitForTerminalStatus(
 		const row = await getRun(runId);
 		if (!row) throw new Error(`Run not found: ${runId}`);
 		const status = row.status as WebRunStatus;
-		if (status !== 'running') return status;
+		if (!IN_FLIGHT_RUN_STATUSES.includes(status)) return status;
 		if (Date.now() >= deadline) {
 			throw new Error(`Timed out waiting for terminal status: ${runId}`);
 		}

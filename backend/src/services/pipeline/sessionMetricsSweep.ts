@@ -1,6 +1,6 @@
 import { metadataPath } from 'aidd-shared/metadata/paths';
 import { inArray } from 'drizzle-orm';
-import { readdir, rm, rmdir } from 'node:fs/promises';
+import { readdir, readFile, rm, rmdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { WebDatabase } from '../../db/client.ts';
@@ -8,7 +8,7 @@ import type { WebDatabase } from '../../db/client.ts';
 import { pipelineSessions } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
-import { pipelineSessionRuntimeDir } from './sessionMetricsPath.ts';
+import { pipelineSessionRuntimeDir, RUNTIME_GITIGNORE } from './sessionMetricsPath.ts';
 
 // Historical location, before metrics moved under .aidd/runtime/. Matches the CLI's
 // ORCHESTRATOR_OWNED_CHILD filter so the sweep collects exactly the files that check was
@@ -90,10 +90,24 @@ async function sweepRuntimeDir(runtimeDir: string, active: ReadonlySet<string>):
 	// Leaving an empty pipeline-sessions/ (and runtime/) in every project the panel has ever
 	// touched would be a smaller version of the litter this sweep exists to remove.
 	if (removed > 0 && (await listDir(runtimeDir))?.length === 0) {
+		const runtimeRoot = join(runtimeDir, '..');
 		await rmdir(runtimeDir).catch(() => undefined);
-		await rmdir(join(runtimeDir, '..')).catch(() => undefined);
+		await removeOwnGitignore(runtimeRoot);
+		await rmdir(runtimeRoot).catch(() => undefined);
 	}
 	return removed;
+}
+
+/**
+ * Deletes the panel's own `.aidd/runtime/.gitignore` once it is all that is left, so the empty
+ * runtime directory can go too. A file with any other content is not the panel's to delete.
+ * @param runtimeRoot One project's `.aidd/runtime` directory.
+ */
+async function removeOwnGitignore(runtimeRoot: string): Promise<void> {
+	if ((await listDir(runtimeRoot))?.join() !== '.gitignore') return;
+	const ignorePath = join(runtimeRoot, '.gitignore');
+	const content = await readFile(ignorePath, 'utf8').catch(() => undefined);
+	if (content === RUNTIME_GITIGNORE) await remove(ignorePath);
 }
 
 /**

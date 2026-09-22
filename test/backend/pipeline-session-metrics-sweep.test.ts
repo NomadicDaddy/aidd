@@ -5,7 +5,11 @@ import { join } from 'node:path';
 
 import { wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
+import type { ReportBuilder } from '../../backend/src/services/pipeline/reportBuilder.ts';
+
 import { pipelineSessions } from '../../backend/src/db/schema.ts';
+import { dumpSessionMetrics } from '../../backend/src/services/pipeline/sessionMetricsDump.ts';
+import { RUNTIME_GITIGNORE } from '../../backend/src/services/pipeline/sessionMetricsPath.ts';
 import { sweepSessionMetrics } from '../../backend/src/services/pipeline/sessionMetricsSweep.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
@@ -114,6 +118,89 @@ describe('pipeline session-metrics sweep', () => {
 			}
 		} finally {
 			await removeTempTree(projectDir);
+		}
+	});
+
+	// Older projects predate the scaffold's `.aidd/runtime/` ignore rule, so the metrics file
+	// showed as untracked work and a run that noticed it was classified blocked_dirty_worktree.
+	test('keeps the metrics out of git status in a project whose .gitignore predates them', async () => {
+		const projectDir = await testTempDir('aidd-metrics-ignore-');
+		try {
+			const git = (...args: string[]) =>
+				Bun.spawnSync(['git', ...args], {
+					cwd: projectDir,
+					stderr: 'pipe',
+					stdout: 'pipe',
+					windowsHide: true,
+				});
+			expect(git('init', '-q').exitCode).toBe(0);
+			await writeFile(join(projectDir, '.gitignore'), 'node_modules/\n', 'utf8');
+			const report = {
+				getReport: async () => ({
+					session: {
+						completedAt: null,
+						durationMs: null,
+						recipeId: 'coding',
+						recipeName: 'coding',
+						startedAt: 1,
+						status: 'running',
+					},
+					stepResults: [],
+				}),
+			} as unknown as ReportBuilder;
+
+			await dumpSessionMetrics(report, 'pipe_live', projectDir);
+
+			expect(await exists(join(metricsDir(projectDir, 'pipe_live'), 'metrics.json'))).toBe(
+				true,
+			);
+			const status = new TextDecoder().decode(
+				git('status', '--porcelain', '--untracked-files=all').stdout,
+			);
+			expect(status.split('\n').filter((line) => line.includes('.aidd'))).toEqual([]);
+			// The project's own ignore file is not touched.
+			expect(await Bun.file(join(projectDir, '.gitignore')).text()).toBe('node_modules/\n');
+		} finally {
+			await removeTempTree(projectDir);
+		}
+	});
+
+	test('removes its own runtime .gitignore with the last session, and no other', async () => {
+		const ownProject = await testTempDir('aidd-metrics-own-ignore-');
+		const foreignProject = await testTempDir('aidd-metrics-foreign-ignore-');
+		try {
+			const { db, sqlite } = makeDb();
+			try {
+				await insertSession(db, 'pipe_own', ownProject, 'completed');
+				await insertSession(db, 'pipe_foreign', foreignProject, 'completed');
+				await writeMetrics(ownProject, 'pipe_own');
+				await writeMetrics(foreignProject, 'pipe_foreign');
+				await writeFile(
+					join(ownProject, '.aidd', 'runtime', '.gitignore'),
+					RUNTIME_GITIGNORE,
+					'utf8',
+				);
+				await writeFile(
+					join(foreignProject, '.aidd', 'runtime', '.gitignore'),
+					'hand-written\n',
+					'utf8',
+				);
+
+				expect(await sweepSessionMetrics(db)).toBe(2);
+
+				expect(await exists(join(ownProject, '.aidd', 'runtime', '.gitignore'))).toBe(
+					false,
+				);
+				expect(await readdir(join(ownProject, '.aidd'))).toEqual([]);
+				expect(
+					await Bun.file(join(foreignProject, '.aidd', 'runtime', '.gitignore')).text(),
+				).toBe('hand-written\n');
+			} finally {
+				sqlite.close();
+			}
+		} finally {
+			await removeTempTree(ownProject);
+			await removeTempTree(foreignProject);
 		}
 	});
 

@@ -13,6 +13,26 @@ import { METADATA_DIR, metadataPath } from 'aidd-shared/metadata/paths';
 const RUNTIME_SEGMENTS = ['runtime', 'pipeline-sessions'] as const;
 
 /**
+ * What the panel writes to `.aidd/runtime/.gitignore`. The `*` matches the file itself, so the
+ * whole directory disappears from `git status` without touching the project's own .gitignore.
+ *
+ * The scaffold ignores `.aidd/runtime/` too, but only for projects scaffolded after that rule was
+ * added. In every older project the metrics file showed up as untracked work, the agent rightly
+ * declined to commit a file it did not recognise and asked about it, and the run was classified
+ * `blocked_dirty_worktree` over a file the panel itself had written.
+ */
+export const RUNTIME_GITIGNORE = '# Written by the aidd web panel: transient pipeline state.\n*\n';
+
+/**
+ * Absolute path of the self-ignoring `.gitignore` at the root of a project's runtime directory.
+ * @param projectDir The project root.
+ * @returns The path to `.aidd/runtime/.gitignore`.
+ */
+export function runtimeGitignorePath(projectDir: string): string {
+	return metadataPath(projectDir, RUNTIME_SEGMENTS[0], '.gitignore');
+}
+
+/**
  * Absolute path of the directory holding every session's metrics for one project.
  * @param projectDir The project root.
  * @returns The project's pipeline-session runtime directory.

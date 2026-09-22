@@ -4,7 +4,11 @@ import { dirname } from 'node:path';
 import type { ReportBuilder } from './reportBuilder.ts';
 
 import { summarizeSessionOutcome } from './outcomeSummary.ts';
-import { sessionMetricsFilePath } from './sessionMetricsPath.ts';
+import {
+	RUNTIME_GITIGNORE,
+	runtimeGitignorePath,
+	sessionMetricsFilePath,
+} from './sessionMetricsPath.ts';
 
 // Terminal session fields, supplied at session end so the dump reflects the final state
 // even though it is written *before* finishSession persists that state (so consumers can
@@ -70,6 +74,12 @@ export async function dumpSessionMetrics(
 		};
 		const target = sessionMetricsFilePath(projectDir, sessionId);
 		await mkdir(dirname(target), { recursive: true });
+		// 'wx' writes it once and leaves an existing one alone; a failure there must not cost the
+		// metrics themselves.
+		await writeFile(runtimeGitignorePath(projectDir), RUNTIME_GITIGNORE, {
+			encoding: 'utf8',
+			flag: 'wx',
+		}).catch(() => undefined);
 		await writeFile(target, JSON.stringify(payload, null, '\t'), 'utf8');
 	} catch {
 		// Best-effort instrumentation; never fail a session over its metrics dump.

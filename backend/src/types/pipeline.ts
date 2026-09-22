@@ -82,6 +82,13 @@ export interface PipelineSessionRecord {
 	recipeName: string;
 	recipeSha256: null | string;
 	scheduledTaskExecutionId?: null | string;
+	/**
+	 * Top-level steps that were recorded as skipped instead of running: a `when` condition that did
+	 * not match, or the steps after a coding step that found no work. Counted apart from
+	 * `completedTopLevelSteps`, which stays a count of steps that actually ran, so a session that
+	 * ended early reads as "1 of 4 completed, 3 skipped" rather than as a stalled one.
+	 */
+	skippedTopLevelSteps: number;
 	startedAt: number;
 	status: PipelineSessionStatus;
 	totalSteps: number;

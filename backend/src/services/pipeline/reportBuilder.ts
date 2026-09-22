@@ -30,6 +30,11 @@ interface PipelineIdentityIndexes {
 interface PipelineProgressIndexes {
 	activeBySessionId: Map<string, PipelineActiveTopLevelStep>;
 	completedBySessionId: Map<string, number>;
+	skippedBySessionId: Map<string, number>;
+}
+
+function sequenceCounts(bySessionId: Map<string, Set<number>>): Map<string, number> {
+	return new Map([...bySessionId].map(([sessionId, sequences]) => [sessionId, sequences.size]));
 }
 
 function indexTopLevelStepProgress(
@@ -37,13 +42,18 @@ function indexTopLevelStepProgress(
 ): PipelineProgressIndexes {
 	const activeBySessionId = new Map<string, PipelineActiveTopLevelStep>();
 	const completedSequencesBySessionId = new Map<string, Set<number>>();
+	const skippedSequencesBySessionId = new Map<string, Set<number>>();
 	const displayOrderBySessionId = new Map<string, number>();
 	for (const row of rows) {
 		if (row.depth !== 0 || row.parentStepResultId !== null || row.phase !== 'step') continue;
-		if (row.status === 'completed') {
-			const sequences = completedSequencesBySessionId.get(row.sessionId) ?? new Set<number>();
+		if (row.status === 'completed' || row.status === 'skipped') {
+			const bySessionId =
+				row.status === 'completed'
+					? completedSequencesBySessionId
+					: skippedSequencesBySessionId;
+			const sequences = bySessionId.get(row.sessionId) ?? new Set<number>();
 			sequences.add(row.sequenceNumber);
-			completedSequencesBySessionId.set(row.sessionId, sequences);
+			bySessionId.set(row.sessionId, sequences);
 			continue;
 		}
 		if (row.status !== 'queued' && row.status !== 'running') continue;
@@ -58,12 +68,8 @@ function indexTopLevelStepProgress(
 	}
 	return {
 		activeBySessionId,
-		completedBySessionId: new Map(
-			[...completedSequencesBySessionId].map(([sessionId, sequences]) => [
-				sessionId,
-				sequences.size,
-			]),
-		),
+		completedBySessionId: sequenceCounts(completedSequencesBySessionId),
+		skippedBySessionId: sequenceCounts(skippedSequencesBySessionId),
 	};
 }
 
@@ -128,7 +134,10 @@ export class ReportBuilder {
 		]);
 		return toSessionRecord(
 			row,
-			progress.completedBySessionId.get(id) ?? 0,
+			{
+				completed: progress.completedBySessionId.get(id) ?? 0,
+				skipped: progress.skippedBySessionId.get(id) ?? 0,
+			},
 			identities.bySessionId.get(id),
 			progress.activeBySessionId.get(id) ?? null,
 			identities.parkedWorkBySessionId.get(id) ?? 0,
@@ -170,7 +179,10 @@ export class ReportBuilder {
 			items: page.map((row) =>
 				toSessionRecord(
 					row,
-					progress.completedBySessionId.get(row.id) ?? 0,
+					{
+						completed: progress.completedBySessionId.get(row.id) ?? 0,
+						skipped: progress.skippedBySessionId.get(row.id) ?? 0,
+					},
 					identities.bySessionId.get(row.id),
 					progress.activeBySessionId.get(row.id) ?? null,
 					identities.parkedWorkBySessionId.get(row.id) ?? 0,
@@ -198,7 +210,10 @@ export class ReportBuilder {
 			recipeSteps,
 			session: toSessionRecord(
 				row,
-				progress.completedBySessionId.get(id) ?? 0,
+				{
+					completed: progress.completedBySessionId.get(id) ?? 0,
+					skipped: progress.skippedBySessionId.get(id) ?? 0,
+				},
 				identities.bySessionId.get(id),
 				progress.activeBySessionId.get(id) ?? null,
 				identities.parkedWorkBySessionId.get(id) ?? 0,
@@ -255,7 +270,12 @@ export class ReportBuilder {
 					eq(pipelineStepResults.depth, 0),
 					isNull(pipelineStepResults.parentStepResultId),
 					eq(pipelineStepResults.phase, 'step'),
-					inArray(pipelineStepResults.status, ['completed', 'queued', 'running']),
+					inArray(pipelineStepResults.status, [
+						'completed',
+						'queued',
+						'running',
+						'skipped',
+					]),
 				),
 			)
 			.orderBy(desc(pipelineStepResults.displayOrder));

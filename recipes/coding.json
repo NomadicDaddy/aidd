@@ -15,7 +15,8 @@
 	"steps": [
 		{
 			"configJson": {
-				"feature": "{feature}"
+				"feature": "{feature}",
+				"skipRemainingOnNoWork": true
 			},
 			"name": "Run coding",
 			"stepType": "aidd-cli"

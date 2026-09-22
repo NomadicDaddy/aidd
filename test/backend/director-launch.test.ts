@@ -2009,6 +2009,7 @@ describe('DirectorService.launchSuggestion', () => {
 							recipeId: input.recipeId,
 							recipeName: 'coding',
 							recipeSha256: null,
+							skippedTopLevelSteps: 0,
 							startedAt: Date.now(),
 							status: 'queued',
 							totalSteps: 1,

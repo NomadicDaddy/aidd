@@ -26,6 +26,7 @@ function session(overrides: Partial<PipelineSessionRecord> = {}): PipelineSessio
 		recipeId: 'coding',
 		recipeName: 'Coding',
 		recipeSha256: null,
+		skippedTopLevelSteps: 0,
 		startedAt: 1_000,
 		status: 'completed',
 		totalSteps: 4,
@@ -113,6 +114,31 @@ describe('Runs and pipeline local remediation', () => {
 				}),
 			),
 		).toBe('1 completed · step 2 active — Apply · 2 remaining');
+	});
+
+	// A coding step that found no work ends its recipe and skips the rest. Read against completed
+	// steps alone, that green session said "1 of 4 steps completed", as though it had stalled.
+	test('names the steps a session skipped instead of leaving them unaccounted for', () => {
+		expect(
+			pipelineSessionStepSummary(
+				session({
+					completedTopLevelSteps: 1,
+					skippedTopLevelSteps: 3,
+					status: 'completed',
+				}),
+			),
+		).toBe('Completed: 1 of 4 steps completed · 3 skipped');
+		expect(
+			pipelineSessionStepSummary(
+				session({
+					activeTopLevelStep: { sequenceNumber: 3, stepName: 'Apply' },
+					completedAt: null,
+					completedTopLevelSteps: 1,
+					skippedTopLevelSteps: 1,
+					status: 'running',
+				}),
+			),
+		).toBe('1 completed · 1 skipped · step 3 active — Apply · 1 remaining');
 	});
 
 	test('makes nested step hierarchy and run qualifications explicit', async () => {

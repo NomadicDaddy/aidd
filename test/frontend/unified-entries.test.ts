@@ -77,6 +77,7 @@ function makeSession(overrides: Partial<PipelineSessionRecord> = {}): PipelineSe
 		recipeId: 'full-build',
 		recipeName: 'Full Build',
 		recipeSha256: null,
+		skippedTopLevelSteps: 0,
 		startedAt: 2_000,
 		status: 'running',
 		totalSteps: 5,

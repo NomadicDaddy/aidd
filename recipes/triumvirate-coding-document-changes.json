@@ -10,6 +10,7 @@
 	"steps": [
 		{
 			"configJson": {
+				"skipRemainingOnNoWork": true,
 				"triumvirate": true
 			},
 			"name": "Run Triumvirate coding",

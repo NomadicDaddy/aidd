@@ -11,6 +11,7 @@ import type { ExecutionContext, StepDispatchResult } from './types.ts';
 
 import { SKILL_RECIPE_PREFIX } from '../recipeService.ts';
 import { configString, requestFromAiddCliStep, runFailureNarrative } from './helpers.ts';
+import { noWorkSummary } from './noWork.ts';
 
 interface NestedRecord {
 	resourceId: string;
@@ -162,13 +163,15 @@ export class ManagedStepHandler {
 			});
 		}
 		const completed = await this.runWaiter.waitForRun(run.id, context.sessionId);
+		const noWork = noWorkSummary(completed);
 		return {
 			agentMessage: await this.runWaiter.agentMessageForRun(run.id),
 			errorMessage:
 				completed.status === 'completed' ? undefined : runFailureNarrative(completed),
 			exitCode: completed.exitCode ?? undefined,
+			...(noWork === undefined ? {} : { noWork: true }),
 			ok: completed.status === 'completed',
-			outputSummary: await this.runWaiter.outputForRun(run.id),
+			outputSummary: noWork ?? (await this.runWaiter.outputForRun(run.id)),
 		};
 	}
 }

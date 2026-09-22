@@ -67,15 +67,12 @@ export function SessionSummaryCard({
 	const hasFullStatus = report.session.errorMessage !== null;
 	const gridMetricCount = hasFullStatus ? metricCount - 1 : metricCount;
 	const progressLabel = pipelineStepsCompletedLabel(report.session);
+	// Skipped steps are finished too; leaving them out left an early-ended session's bar part-full.
+	const finishedSteps =
+		report.session.completedTopLevelSteps + report.session.skippedTopLevelSteps;
 	const progressPercent =
 		report.session.totalSteps > 0
-			? Math.min(
-					100,
-					Math.max(
-						0,
-						(report.session.completedTopLevelSteps / report.session.totalSteps) * 100,
-					),
-				)
+			? Math.min(100, Math.max(0, (finishedSteps / report.session.totalSteps) * 100))
 			: 0;
 	return (
 		<div className="@container">
@@ -161,10 +158,10 @@ export function SessionSummaryCard({
 						detail={pipelineActiveStepLabel(report.session) ?? undefined}
 						footer={
 							<div
-								aria-label="Top-level steps completed"
+								aria-label="Top-level steps finished"
 								aria-valuemax={report.session.totalSteps}
 								aria-valuemin={0}
-								aria-valuenow={report.session.completedTopLevelSteps}
+								aria-valuenow={finishedSteps}
 								aria-valuetext={progressLabel}
 								className="h-1 w-full overflow-hidden rounded-full bg-muted"
 								role="progressbar">

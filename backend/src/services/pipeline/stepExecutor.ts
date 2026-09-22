@@ -5,16 +5,19 @@ import type { RunService } from '../runService.ts';
 import type { SkillService } from '../skillService.ts';
 import type { TelemetryService } from '../telemetryService.ts';
 import type { SessionLifecycle } from './sessionLifecycle.ts';
+import type { SkippedStepDeps } from './skippedSteps.ts';
 
 import { AutoFixRunner } from './autoFixRunner.ts';
 import { HookRunner } from './hookRunner.ts';
 import { resolveInFlightStep } from './inFlightStepResolver.ts';
 import { ManagedStepHandler } from './managedStepHandler.ts';
+import { endsRecipeOnNoWork } from './noWork.ts';
 import { RecipeRefHandler } from './recipeRefHandler.ts';
 import { resumeRecipeRefStep } from './recipeRefResumer.ts';
 import { RunWaiter } from './runWaiter.ts';
 import { ShellCommandRunner } from './shellCommandRunner.ts';
 import { ShellStepHandler } from './shellStepHandler.ts';
+import { finishNoWorkEnd, recordSkippedStep, skipRemainingSteps } from './skippedSteps.ts';
 import { StepDispatcher } from './stepDispatcher.ts';
 import { executeStep } from './stepRunner.ts';
 import {
@@ -35,6 +38,7 @@ export function shouldRunRecipeStep(
 // hooks, run-waiting) to focused, independently-testable units. The constructor
 // signature is unchanged so PipelineService wiring does not change.
 export class StepExecutor {
+	private readonly db: WebDatabase;
 	private readonly lifecycle: SessionLifecycle;
 	private readonly stopFlags: Set<string>;
 	private readonly dispatcher: StepDispatcher;
@@ -59,6 +63,7 @@ export class StepExecutor {
 		stopFlags: Set<string>;
 		telemetryService: TelemetryService;
 	}) {
+		this.db = input.db;
 		this.lifecycle = input.lifecycle;
 		this.stopFlags = input.stopFlags;
 		this.afterTopLevelStep = input.afterTopLevelStep;
@@ -118,6 +123,15 @@ export class StepExecutor {
 		// overwrite it; a resumed session starts with none, since the prior run's output is not
 		// re-read from the step-result row.
 		context.priorStepOutput = undefined;
+		// Only a resumed frame starts past step 1, and it may be resuming a recipe that already ended.
+		const alreadyEnded = await finishNoWorkEnd(
+			this.skipDeps(),
+			recipe,
+			context,
+			parentStepResultId,
+			startSequenceNumber,
+		);
+		if (alreadyEnded) return alreadyEnded;
 		for (const [index, step] of recipe.steps.entries()) {
 			const sequenceNumber = index + 1;
 			if (sequenceNumber < startSequenceNumber) continue;
@@ -125,29 +139,14 @@ export class StepExecutor {
 			if (!shouldRunRecipeStep(step, context.parameters)) {
 				const condition = step.when;
 				if (!condition) throw new Error('Skipped recipe step is missing its condition');
-				const skippedAt = Date.now();
-				const skipped = await this.lifecycle.createStepResult({
+				await recordSkippedStep(
+					this.skipDeps(),
+					step,
+					sequenceNumber,
 					context,
 					parentStepResultId,
-					phase: 'step',
-					sequenceNumber,
-					stepDefinitionId: step.id,
-					stepName: step.name,
-					stepType: step.stepType,
-				});
-				await this.lifecycle.completeStep({
-					completedAt: skippedAt,
-					outputSummary: `Skipped: ${condition.parameter} did not equal ${condition.equals}`,
-					resultId: skipped.id,
-					startedAt: skippedAt,
-					status: 'skipped',
-				});
-				if (context.depth === 0) {
-					await this.lifecycle.progress.refreshCompleted(context.sessionId);
-					if (this.afterTopLevelStep) {
-						await this.afterTopLevelStep(context.sessionId, context.projectDir);
-					}
-				}
+					`Skipped: ${condition.parameter} did not equal ${condition.equals}`,
+				);
 				continue;
 			}
 			// The persisted completed count is intentionally NOT bumped before executeStep.
@@ -189,6 +188,18 @@ export class StepExecutor {
 			}
 			if (result.stopped) return result;
 			if (!result.ok && (step.onFailure ?? 'stop') !== 'continue') return result;
+			if (endsRecipeOnNoWork(step, result)) {
+				return await skipRemainingSteps(
+					this.skipDeps(),
+					recipe,
+					context,
+					parentStepResultId,
+					{
+						name: step.name,
+						sequenceNumber,
+					},
+				);
+			}
 		}
 		return { ok: true, stopped: false };
 	}
@@ -252,11 +263,25 @@ export class StepExecutor {
 		}
 		if (inFlightResult.stopped) return inFlightResult;
 		if (!inFlightResult.ok && (step.onFailure ?? 'stop') !== 'continue') return inFlightResult;
+		if (endsRecipeOnNoWork(step, inFlightResult)) {
+			return await skipRemainingSteps(this.skipDeps(), recipe, context, parentStepResultId, {
+				name: step.name,
+				sequenceNumber: inFlightStep.sequenceNumber,
+			});
+		}
 		return await this.executeRecipeSteps(
 			recipe,
 			context,
 			parentStepResultId,
 			inFlightStep.sequenceNumber + 1,
 		);
+	}
+
+	private skipDeps(): SkippedStepDeps {
+		return {
+			afterTopLevelStep: this.afterTopLevelStep,
+			db: this.db,
+			lifecycle: this.lifecycle,
+		};
 	}
 }

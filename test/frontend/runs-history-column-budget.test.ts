@@ -20,6 +20,7 @@ const session: PipelineSessionRecord = {
 	recipeId: 'skill:feature-review',
 	recipeName: 'Feature Review',
 	recipeSha256: null,
+	skippedTopLevelSteps: 0,
 	startedAt: 1_000,
 	status: 'completed',
 	totalSteps: 1,

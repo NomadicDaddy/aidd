@@ -31,6 +31,7 @@ function makeSession(overrides: Partial<PipelineSessionRecord> = {}): PipelineSe
 		recipeId: 'review-and-remediate',
 		recipeName: 'Review and remediate',
 		recipeSha256: null,
+		skippedTopLevelSteps: 0,
 		startedAt: 1,
 		status: 'running',
 		totalSteps: 3,

@@ -21,7 +21,7 @@ function sessionLaunchIdentities(row: PipelineSessionRow): PipelineExecutionIden
 
 export function toSessionRecord(
 	row: PipelineSessionRow,
-	completedTopLevelSteps: number,
+	progress: { completed: number; skipped: number },
 	executionIdentities: PipelineExecutionIdentity[] = [],
 	activeTopLevelStep: null | PipelineActiveTopLevelStep = null,
 	parkedWorkRuns = 0,
@@ -29,7 +29,7 @@ export function toSessionRecord(
 	return {
 		activeTopLevelStep,
 		completedAt: row.completedAt,
-		completedTopLevelSteps,
+		completedTopLevelSteps: progress.completed,
 		durationMs: row.durationMs,
 		errorMessage: row.errorMessage,
 		executionIdentities:
@@ -43,6 +43,7 @@ export function toSessionRecord(
 		recipeName: row.recipeName,
 		recipeSha256: row.recipeSha256,
 		scheduledTaskExecutionId: row.scheduledTaskExecutionId,
+		skippedTopLevelSteps: progress.skipped,
 		startedAt: row.startedAt,
 		status: row.status as PipelineSessionStatus,
 		totalSteps: row.totalSteps,

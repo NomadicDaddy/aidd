@@ -240,6 +240,7 @@ export async function executeStep(
 	return {
 		agentMessage: lastDispatch.agentMessage,
 		errorMessage: lastDispatch.errorMessage,
+		...(lastDispatch.ok && lastDispatch.noWork === true ? { noWork: true } : {}),
 		ok: lastDispatch.ok || (step.onFailure ?? 'stop') === 'continue',
 		outputSummary: lastDispatch.outputSummary,
 		stopped: false,

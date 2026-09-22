@@ -63,6 +63,8 @@ export interface StepDispatchResult {
 	agentMessage?: string | undefined;
 	errorMessage?: string | undefined;
 	exitCode?: number | undefined;
+	/** The run completed without selecting anything to work on (`stopReason: no_work`). */
+	noWork?: boolean | undefined;
 	ok: boolean;
 	outputSummary?: string | undefined;
 }
@@ -70,6 +72,7 @@ export interface StepDispatchResult {
 export interface StepExecutionResult {
 	agentMessage?: string | undefined;
 	errorMessage?: string | undefined;
+	noWork?: boolean | undefined;
 	ok: boolean;
 	outputSummary?: string | undefined;
 	stopped: boolean;

@@ -77,6 +77,7 @@ function report(
 			recipeId: 'outer-recipe',
 			recipeName: 'Outer recipe',
 			recipeSha256: null,
+			skippedTopLevelSteps: 0,
 			startedAt: 1_000,
 			status: 'running',
 			totalSteps: recipeSteps.length,

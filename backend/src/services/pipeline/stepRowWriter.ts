@@ -33,6 +33,12 @@ export interface InsertStepResultInput {
 	parentStepResultId?: string | undefined;
 	phase: PipelineStepPhase;
 	sequenceNumber: number;
+	/**
+	 * Inserts the row already terminal as `skipped`, carrying this summary. One write rather than
+	 * insert-then-complete: a restart between the two left a `queued` row that reconciliation reads
+	 * as a step in flight, and a managed step with no run id is failed on resume.
+	 */
+	skippedSummary?: string | undefined;
 	stepDefinitionId?: string | undefined;
 	stepName: string;
 	stepType: string;
@@ -54,6 +60,7 @@ export async function insertStepResult(
 ): Promise<PipelineStepResultRecord> {
 	const id = createPipelineStepResultId();
 	input.context.displayOrder += 1;
+	const skippedAt = input.skippedSummary === undefined ? undefined : Date.now();
 	await db.insert(pipelineStepResults).values({
 		attemptKind: input.attemptKind ?? null,
 		attemptNumber: input.attemptNumber ?? null,
@@ -64,7 +71,15 @@ export async function insertStepResult(
 		phase: input.phase,
 		sequenceNumber: input.sequenceNumber,
 		sessionId: input.context.sessionId,
-		status: 'queued',
+		...(skippedAt === undefined
+			? { status: 'queued' as const }
+			: {
+					completedAt: skippedAt,
+					durationMs: 0,
+					outputSummary: input.skippedSummary,
+					startedAt: skippedAt,
+					status: 'skipped' as const,
+				}),
 		stepDefinitionId: input.stepDefinitionId ?? null,
 		stepName: input.stepName,
 		stepType: input.stepType,

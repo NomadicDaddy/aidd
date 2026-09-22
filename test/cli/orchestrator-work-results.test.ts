@@ -918,16 +918,30 @@ describe('orchestrator work results', () => {
 			expect(runSummary.commitsCreated).toHaveLength(1);
 			expect(runSummary.commitsCreated[0]?.subject).toBe('feat: complete feature');
 			expect(runSummary.runLedgerDirty).toBe(false);
-			// HEAD is the agent's own commit. aidd adds no follow-up ledger commit on top: the
-			// ledger is raw run output that may carry sensitive strings and is never committed.
+			// The run's own follow-up commit carries only the records aidd wrote once the agent had
+			// stopped — never the ledger, which is raw run output that may carry sensitive strings.
 			const headSubject = (
 				await gitText(store.projectDir, ['log', '-1', '--format=%s'])
 			).trim();
-			expect(headSubject).toBe('feat: complete feature');
-			// The attributed hash is reachable because nothing rewrote or followed it.
+			expect(headSubject).toBe('chore(aidd): record run metadata');
+			const headFiles = (
+				await gitText(store.projectDir, ['show', '--name-only', '--format=', 'HEAD'])
+			)
+				.split(/\r?\n/)
+				.map((line) => line.trim().replaceAll('\\', '/'))
+				.filter((line) => line !== '');
+			expect(headFiles.length).toBeGreaterThan(0);
+			for (const file of headFiles) {
+				expect(file === '.aidd/roadmap.json' || file.endsWith('/feature.json')).toBe(true);
+			}
+			// The agent's commit is untouched beneath it, and the attributed hash still resolves.
+			const parentSubject = (
+				await gitText(store.projectDir, ['log', '-1', '--format=%s', 'HEAD~1'])
+			).trim();
+			expect(parentSubject).toBe('feat: complete feature');
 			const recordedHash = runSummary.commitsCreated[0]?.hash ?? '';
-			const headHash = (await gitText(store.projectDir, ['rev-parse', 'HEAD'])).trim();
-			expect(recordedHash).toBe(headHash);
+			const parentHash = (await gitText(store.projectDir, ['rev-parse', 'HEAD~1'])).trim();
+			expect(recordedHash).toBe(parentHash);
 			// .aidd/runs.jsonl is absent from the committed tree. This fixture's .gitignore covers
 			// only iterations/, so the ledger shows as untracked dirt rather than a commit.
 			const tracked = await gitText(store.projectDir, ['ls-files', '.aidd/runs.jsonl']);

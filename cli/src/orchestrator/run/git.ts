@@ -225,8 +225,12 @@ export async function captureDirtySourceBaseline(
 	acc: RunAccumulator,
 	projectDir: string,
 ): Promise<void> {
-	const baseline = await gitDirtySourcePaths(projectDir);
-	if (baseline !== undefined) acc.dirtySourcePathsAtStart = new Set(baseline);
+	// One status call for both baselines: the source paths the run-end check diffs against, and
+	// the .aidd paths the run-end metadata commit must leave to the operator.
+	const baseline = await gitDirtySourcePaths(projectDir, { includeAiddMetadata: true });
+	if (baseline === undefined) return;
+	acc.dirtySourcePathsAtStart = new Set(baseline.filter((path) => !isAiddMetadataPath(path)));
+	acc.dirtyMetadataPathsAtStart = new Set(baseline.filter((path) => isAiddMetadataPath(path)));
 }
 
 // Paths of dirty files (modified, staged, or untracked), with forward slashes; aidd-owned

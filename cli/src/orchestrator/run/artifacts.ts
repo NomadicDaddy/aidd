@@ -19,6 +19,7 @@ import {
 	gitUntrackedFeatureDirectories,
 	gitWorktreeClean,
 } from './git.ts';
+import { commitOwnedMetadata } from './metadata-commit.ts';
 import { reconcileRunMetadata } from './metadata-reconcile.ts';
 import { type OrchestratorDeps, type RunAccumulator, runRuntimeFields } from './types.ts';
 
@@ -58,8 +59,19 @@ export async function writeRunSummary(
 		residualDirtySourceFiles = classification.attributed;
 		unattributedDirtySourceFiles = classification.unattributed;
 	}
+	// After reconciliation, so one commit carries every record the run wrote once the agent had
+	// stopped. A read-only directive is exempt: it promised to change nothing, and a commit of its
+	// own would break that promise even over metadata.
+	const metadataCommit = plan.prompt.customDirectiveReadonly
+		? undefined
+		: await commitOwnedMetadata(runRepoDir(plan), acc.dirtyMetadataPathsAtStart);
 	const runEndSummaryParts = [finalSummary];
 	if (reconcileNote !== null) runEndSummaryParts.push(reconcileNote);
+	if (metadataCommit !== undefined) {
+		runEndSummaryParts.push(
+			`committed ${metadataCommit.paths.length} aidd metadata record(s) written after the run's own commits (${metadataCommit.hash.slice(0, 10)})`,
+		);
+	}
 	if (residualDirtySourceFiles.length > 0) {
 		runEndSummaryParts.push(
 			`${uncommittedSourceMarker} this run left ${residualDirtySourceFiles.length} source file(s) uncommitted at run end`,

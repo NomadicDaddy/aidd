@@ -1,5 +1,22 @@
+import { join } from 'node:path';
+
 import { gitSuccess, readGitHead } from './git-exec.ts';
 import { gitDirtySourcePaths } from './git.ts';
+
+/**
+ * SHA-256 of a file's bytes, for comparison against the run-start baseline.
+ * @param projectDir The repository root.
+ * @param path A repository-relative path.
+ * @returns The hash, or undefined when the file cannot be read.
+ */
+async function hashFile(projectDir: string, path: string): Promise<string | undefined> {
+	try {
+		const bytes = await Bun.file(join(projectDir, path)).arrayBuffer();
+		return Bun.SHA256.hash(new Uint8Array(bytes), 'hex');
+	} catch {
+		return undefined;
+	}
+}
 
 export interface OwnedMetadataCommit {
 	hash: string;
@@ -34,23 +51,30 @@ function isCommittableRecord(path: string): boolean {
  * run, and the next run opened on a dirty worktree it had not made.
  *
  * Scope is deliberately narrow: only the records listed in isCommittableRecord, never source and
- * never the run's own output. A path dirty at run start is the operator's and is left alone, so an
- * edit made to a feature record while a run was going is never swept into aidd's commit. A
- * repository that gitignores `.aidd/` reports nothing dirty there, so it is a no-op.
+ * never the run's own output. A record that is byte-identical to how the run found it is left
+ * alone — that is dirt the run did not make. A repository that gitignores `.aidd/` reports nothing
+ * dirty there, so it is a no-op.
  * @param projectDir The repository the run worked in.
- * @param dirtyAtStart Metadata paths already dirty when the run began.
+ * @param dirtyAtStart Content of the records already dirty when the run began.
  * @returns The commit, or undefined when there was nothing to commit or git refused.
  */
 export async function commitOwnedMetadata(
 	projectDir: string,
-	dirtyAtStart: ReadonlySet<string> | undefined,
+	dirtyAtStart: ReadonlyMap<string, string> | undefined,
 ): Promise<OwnedMetadataCommit | undefined> {
 	// An unknown baseline cannot separate the run's writes from the operator's, and guessing wrong
 	// means committing someone else's work. Leave the tree as it is.
 	if (dirtyAtStart === undefined) return undefined;
 	const dirty = await gitDirtySourcePaths(projectDir, { includeAiddMetadata: true });
 	if (dirty === undefined) return undefined;
-	const paths = dirty.filter((path) => isCommittableRecord(path) && !dirtyAtStart.has(path));
+	const candidates = dirty.filter((path) => isCommittableRecord(path));
+	const paths: string[] = [];
+	for (const path of candidates) {
+		const before = dirtyAtStart.get(path);
+		// Unchanged since the run started: nobody wrote it this run, so it stays where it was.
+		if (before !== undefined && before === (await hashFile(projectDir, path))) continue;
+		paths.push(path);
+	}
 	if (paths.length === 0) return undefined;
 	const headBefore = await readGitHead(projectDir);
 	// Explicit pathspecs, and `-A` scoped to them so a record the run deleted is staged too.

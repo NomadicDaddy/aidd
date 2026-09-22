@@ -64,7 +64,7 @@ export async function writeRunSummary(
 	// own would break that promise even over metadata.
 	const metadataCommit = plan.prompt.customDirectiveReadonly
 		? undefined
-		: await commitOwnedMetadata(runRepoDir(plan), acc.dirtyMetadataPathsAtStart);
+		: await commitOwnedMetadata(runRepoDir(plan), acc.dirtyMetadataAtStart);
 	const runEndSummaryParts = [finalSummary];
 	if (reconcileNote !== null) runEndSummaryParts.push(reconcileNote);
 	if (metadataCommit !== undefined) {

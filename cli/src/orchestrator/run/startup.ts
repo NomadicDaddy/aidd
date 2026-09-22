@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import type { MoveFn, OrchestratorDeps, RunAccumulator } from './types.ts';
 
 import { createModeHandler } from '../../modes/factory.ts';
-import { captureDirtySourceBaseline } from './git.ts';
+import { captureDirtySourceBaseline } from './dirty-baseline.ts';
 import { finalizePreRunCheck } from './pre-run-final-summary.ts';
 import { IterationPromptContext } from './prompt-context.ts';
 import { handlePromptEncodingGuard } from './prompt-encoding-guard.ts';

@@ -4,7 +4,7 @@ import type { RunPlan } from 'aidd-shared/plan/types';
 import { runRepoDir } from 'aidd-shared/plan/types';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import type { CommitDiffStat, GitCommitSummary, RunAccumulator } from './types.ts';
+import type { CommitDiffStat, GitCommitSummary } from './types.ts';
 
 import { gitOutput, readGitHead } from './git-exec.ts';
 
@@ -215,22 +215,6 @@ export async function gitDirtyFileCount(
 		const path = porcelainEntryPath(line);
 		return path === undefined || !isAiddMetadataPath(path);
 	}).length;
-}
-
-/** Capture the run-start baseline for writeRunSummary's run-end dirty-source check: any
- * non-.aidd path already dirty here is operator state the run must neither flag nor commit.
- * When git status fails (not a repository) the baseline stays unset and the check is skipped
- * rather than misattributing all existing dirt to the run. */
-export async function captureDirtySourceBaseline(
-	acc: RunAccumulator,
-	projectDir: string,
-): Promise<void> {
-	// One status call for both baselines: the source paths the run-end check diffs against, and
-	// the .aidd paths the run-end metadata commit must leave to the operator.
-	const baseline = await gitDirtySourcePaths(projectDir, { includeAiddMetadata: true });
-	if (baseline === undefined) return;
-	acc.dirtySourcePathsAtStart = new Set(baseline.filter((path) => !isAiddMetadataPath(path)));
-	acc.dirtyMetadataPathsAtStart = new Set(baseline.filter((path) => isAiddMetadataPath(path)));
 }
 
 // Paths of dirty files (modified, staged, or untracked), with forward slashes; aidd-owned

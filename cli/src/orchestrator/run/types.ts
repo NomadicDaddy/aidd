@@ -144,10 +144,10 @@ export interface RunAccumulator {
 	 * single-iteration directive: it never compiles another prompt, so the note is never drained
 	 * and the run would otherwise finalize with no trace of the damage (writeRunSummary). */
 	destroyedLeasedFeatures: { featureId: string; runId: string }[];
-	/** Dirty `.aidd` paths present when the run started: the operator's, not the run's. Run end
-	 * commits the metadata aidd wrote after the agent's last commit, and diffs against this so an
-	 * operator edit made while the run was going is never swept into that commit. */
-	dirtyMetadataPathsAtStart?: ReadonlySet<string>;
+	/** Dirty `.aidd` records present when the run started, by content. Run end commits the
+	 * records aidd wrote after the agent's last commit; a record whose content is unchanged since
+	 * this snapshot was nobody's work this run and is left where it was found. */
+	dirtyMetadataAtStart?: ReadonlyMap<string, string>;
 	/** Dirty non-.aidd paths present when the run started. writeRunSummary diffs run-end status
 	 * against this baseline before classifying newly dirty paths by run evidence. Undefined when
 	 * the baseline could not be captured (not a git repository); the run-end check is then skipped

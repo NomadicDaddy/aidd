@@ -77,6 +77,64 @@ async function taskkill(pids: number[], timeoutMs: number): Promise<void> {
 	]);
 }
 
+/** A descendant and the token that says it is still the same process. */
+export interface CapturedDescendant {
+	pid: number;
+	startId?: string | undefined;
+}
+
+/**
+ * The descendants of `pid`, captured while the parent links still exist.
+ *
+ * Enumerate before signalling, never after. On POSIX an orphan reparents to init the moment its
+ * parent dies, so it is no longer reachable from the root. On Windows the table keeps reporting the
+ * dead parent's number, but only until the system reissues it — and a tree walked from a reissued
+ * number describes an unrelated process. Capturing first sidesteps both: the snapshot names the
+ * processes, and killCapturedDescendants rechecks their identity before killing anything.
+ * @param pid The root process.
+ * @returns Its descendants, deepest first, or an empty list when the table cannot be read.
+ */
+export async function captureDescendants(pid: number): Promise<CapturedDescendant[]> {
+	const table = await listProcessTable().catch(() => null);
+	if (table === null) return [];
+	const rows = new Map(table.map((entry) => [entry.pid, entry]));
+	return collectTreePids(table, pid)
+		.filter((candidate) => candidate !== pid && candidate !== process.pid)
+		.map((candidate) => {
+			const startId = rows.get(candidate)?.startId;
+			return startId === undefined ? { pid: candidate } : { pid: candidate, startId };
+		});
+}
+
+/**
+ * Kills what a captured tree left behind, skipping any pid the operating system has since handed
+ * to someone else: a captured start token that no longer matches the live one is a different
+ * process wearing a recycled number, and killing it would be the reuse bug this guards against.
+ * A descendant captured without a token is still killed — the snapshot is the evidence.
+ * @param captured Descendants from captureDescendants, taken before the root was signalled.
+ * @param timeoutMs Budget for each kill.
+ * @returns How many processes were killed.
+ */
+export async function killCapturedDescendants(
+	captured: readonly CapturedDescendant[],
+	timeoutMs = 1000,
+): Promise<number> {
+	const alive = captured.filter((entry) => isProcessAlive(entry.pid));
+	if (alive.length === 0) return 0;
+	const table = await listProcessTable().catch(() => null);
+	const rows = new Map((table ?? []).map((entry) => [entry.pid, entry]));
+	let killed = 0;
+	for (const entry of alive) {
+		const live = rows.get(entry.pid);
+		if (entry.startId !== undefined && live?.startId !== undefined) {
+			if (live.startId !== entry.startId) continue;
+		}
+		await killProcessTree(entry.pid, timeoutMs);
+		killed += 1;
+	}
+	return killed;
+}
+
 /**
  * Cross-platform process tree termination.
  *

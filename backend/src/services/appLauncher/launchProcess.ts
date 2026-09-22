@@ -1,4 +1,8 @@
-import { killProcessTree } from 'aidd-shared/lib/processTree';
+import {
+	captureDescendants,
+	killCapturedDescendants,
+	killProcessTree,
+} from 'aidd-shared/lib/processTree';
 import { closeSync, mkdtempSync, openSync, readSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -147,25 +151,43 @@ export async function runStopCommand(projectPath: string, command: CommandArgs):
 	return false;
 }
 
+/**
+ * Stops a launched app: the process the launcher started, and whatever it started in turn.
+ *
+ * A launch command is usually a script that starts the real servers detached, so they outlive it
+ * (`bun run dev` starting Vite). A signal reaches only the process it names: the named process
+ * died, this function returned satisfied, and the dev server kept the port — twice observed, each
+ * time needing the port holder killed by hand before the app could start again. The tree is
+ * captured before the first signal, since afterwards the link to it is gone or unreliable.
+ * @param pid The launched process.
+ */
 export async function stopTrackedPid(pid: number): Promise<void> {
 	if (pid === process.pid) {
 		webLogger.error({ pid }, 'app launcher refused to signal own pid');
 		return;
 	}
+	const descendants = await captureDescendants(pid);
 	try {
 		process.kill(pid, 'SIGINT');
 	} catch {
 		// already exited
 	}
 	await sleep(SIGNAL_GRACE_MS);
-	if (!isPidAlive(pid)) return;
-	try {
-		process.kill(pid, 'SIGTERM');
-	} catch {
-		// already exited
-	}
-	await sleep(SIGNAL_GRACE_MS);
 	if (isPidAlive(pid)) {
-		await killProcessTree(pid);
+		try {
+			process.kill(pid, 'SIGTERM');
+		} catch {
+			// already exited
+		}
+		await sleep(SIGNAL_GRACE_MS);
+		if (isPidAlive(pid)) await killProcessTree(pid);
+	}
+	// Graceful shutdown normally takes the children with it, so this usually kills nothing.
+	const orphaned = await killCapturedDescendants(descendants);
+	if (orphaned > 0) {
+		webLogger.info(
+			{ orphaned, pid },
+			'app launcher killed processes the stopped app left holding resources',
+		);
 	}
 }

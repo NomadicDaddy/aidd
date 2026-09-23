@@ -22,12 +22,24 @@ export class RunWaiter {
 
 	async waitForRun(runId: string, sessionId: string): Promise<RunRow> {
 		let deadline = Date.now() + RUN_WAIT_MAX_MS;
+		let lastHeartbeat: null | number = null;
 		for (;;) {
 			const run = await this.runService.getRun(runId);
 			if (run && terminalRunStatuses.has(run.status as WebRunStatus)) return run;
 			// The backstop bounds execution, not admission: time spent queued behind the run
 			// ceiling must not fail the step, so the clock starts once the run is admitted.
 			if (run?.status === 'queued') deadline = Date.now() + RUN_WAIT_MAX_MS;
+			// What the bound is actually for is a row nothing is working on any more — an orphan
+			// left 'running' by a process kill. A live run writes its heartbeat every few seconds,
+			// so an advancing heartbeat restarts the clock. Measuring elapsed time instead aborted
+			// a coding run that was working the whole time and had an hour left to go: the step
+			// failed, the run carried on detached, and the review and documentation steps behind it
+			// never ran.
+			const heartbeat = run?.heartbeatAt ?? null;
+			if (heartbeat !== null && heartbeat !== lastHeartbeat) {
+				lastHeartbeat = heartbeat;
+				deadline = Date.now() + RUN_WAIT_MAX_MS;
+			}
 			if (this.stopFlags.has(sessionId)) {
 				throw new Error(
 					`Pipeline session was stopped while waiting for run ${runId} to finish.`,
@@ -35,8 +47,9 @@ export class RunWaiter {
 			}
 			if (Date.now() >= deadline) {
 				throw new Error(
-					`Run ${runId} did not reach a terminal state within ${RUN_WAIT_MAX_MS} ms; ` +
-						'aborting the waiting step instead of blocking the pipeline session forever.',
+					`Run ${runId} has not reached a terminal state or written a heartbeat in ` +
+						`${RUN_WAIT_MAX_MS} ms; aborting the waiting step instead of blocking the ` +
+						'pipeline session forever.',
 				);
 			}
 			await sleep(200);

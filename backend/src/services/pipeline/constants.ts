@@ -9,5 +9,6 @@ export const STEP_CLEANUP_TIMEOUT_MS = 1000;
 // The session stop flag is the primary cancellation path; this bound only exists so a step
 // cannot block a pipeline session forever on a run row that never becomes terminal (e.g. an
 // orphaned 'running' row left by an out-of-band process kill that startup reconciliation did
-// not catch). Deliberately generous so it never aborts a legitimately long coding run.
+// not catch). It bounds silence, not duration: RunWaiter restarts the clock whenever the run's
+// heartbeat advances, so a legitimately long run is never aborted for taking its time.
 export const RUN_WAIT_MAX_MS = 6 * 60 * 60 * 1000;

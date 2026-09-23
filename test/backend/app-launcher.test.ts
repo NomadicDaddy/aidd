@@ -3,6 +3,7 @@ import { mkdir, readFile, rm, utimes } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { describe, expect, test } from 'bun:test';
+import { isProcessAlive, killProcessTree } from 'aidd-shared/lib/processTree';
 import { wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { canonicalProjectPath, encodeProjectId } from '../../backend/src/paths.ts';
@@ -324,6 +325,62 @@ describe('app launcher service', () => {
 			sqlite.close();
 		}
 	});
+
+	// A launch command starts its real servers detached so they outlive it. When it dies on its
+	// own nothing has signalled them: an orphaned Vite kept port 5173 after a crash, and every
+	// restart afterwards failed in milliseconds on the occupied port until it was killed by hand.
+	test('kills the detached servers a crashed app left running', async () => {
+		const root = canonicalProjectPath(await testTempDir('aidd-app-launcher-'));
+		const projectDir = join(root, 'demo-generic-app');
+		await writeGenericProject(projectDir);
+		// The shape that stranded a port: a detached server that outlives its launcher, an app
+		// that serves for a while, and then a non-zero exit — a crash, not a stop. The delay is
+		// what makes it that shape rather than a start-up failure; see the sampler's own note on
+		// a command that dies before its tree can be seen.
+		await Bun.write(
+			join(projectDir, 'dev-script.ts'),
+			[
+				"import { spawn } from 'node:child_process';",
+				"import { writeFileSync } from 'node:fs';",
+				"import { join } from 'node:path';",
+				"const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], {",
+				"\tdetached: true, stdio: 'ignore', windowsHide: true,",
+				'});',
+				'child.unref();',
+				"writeFileSync(join(process.cwd(), 'child-pid.txt'), String(child.pid), 'utf8');",
+				'setTimeout(() => process.exit(1), 2500);',
+			].join('\n'),
+		);
+		const projectService = new ProjectService(webProjectConfig(root));
+		const { db, sqlite } = createDb();
+		const service = new AppLauncherService({ db, projectService });
+		let childPid = 0;
+		try {
+			const launch = await service.start(encodeProjectId(projectDir));
+			expect(launch.status).toBe('running');
+			childPid = Number(await waitForFile(join(projectDir, 'child-pid.txt')));
+			expect(childPid).toBeGreaterThan(0);
+
+			// The app serves for a couple of seconds first, which waitForStatus does not outlast.
+			let crashed = await service.getStatus(encodeProjectId(projectDir));
+			for (let attempt = 0; attempt < 60 && crashed.status !== 'crashed'; attempt += 1) {
+				await sleep(100);
+				crashed = await service.getStatus(encodeProjectId(projectDir));
+			}
+
+			expect(crashed.status).toBe('crashed');
+			// The sweep runs after the status is published, so give it a moment to land.
+			let alive = true;
+			for (let attempt = 0; attempt < 40 && alive; attempt += 1) {
+				await sleep(100);
+				alive = isProcessAlive(childPid);
+			}
+			expect(alive).toBe(false);
+		} finally {
+			await killProcessTree(childPid);
+			sqlite.close();
+		}
+	}, 20_000);
 
 	test('broadcasts app_launch lifecycle events for WebSocket-driven invalidation', async () => {
 		const root = canonicalProjectPath(await testTempDir('aidd-app-launcher-'));

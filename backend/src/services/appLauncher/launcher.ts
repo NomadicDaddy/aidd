@@ -1,3 +1,4 @@
+import { killCapturedDescendants } from 'aidd-shared/lib/processTree';
 import { eq } from 'drizzle-orm';
 
 import type { WebDatabase } from '../../db/client.ts';
@@ -8,6 +9,7 @@ import { appLaunches } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import { encodeProjectId } from '../../paths.ts';
 import { HttpError } from '../errors.ts';
+import { DescendantSampler } from './descendantSampler.ts';
 import {
 	lastMeaningfulLines,
 	runProjectCommand,
@@ -57,6 +59,8 @@ export class AppLauncherService {
 	 * when the killed `bun run dev` exits non-zero without a signal (typical on Windows).
 	 */
 	private readonly stopping = new Set<string>();
+	/** What each running app spawned, so an exit can sweep what it left behind. */
+	private readonly descendants = new DescendantSampler((path) => this.children.has(path));
 
 	constructor(deps: LauncherDeps) {
 		this.db = deps.db;
@@ -172,9 +176,14 @@ export class AppLauncherService {
 		const pid = child.pid;
 		const startedAt = Date.now();
 		this.children.set(projectPath, child);
-		void child.exited.then(() => {
+		this.descendants.start(projectPath, pid);
+		void child.exited.then(async () => {
 			const code = child.exitCode;
 			const signal = child.signalCode;
+			// A launch command starts its servers detached, and when it dies on its own nothing has
+			// signalled them: an orphaned Vite kept port 5173 after a crash and failed every
+			// restart after it. stopTrackedPid sweeps a stop; this is the exit nobody asked for.
+			const orphans = this.descendants.stop(projectPath);
 			this.children.delete(projectPath);
 			const intentionalStop = this.stopping.delete(projectPath);
 			const stoppedAt = Date.now();
@@ -187,6 +196,15 @@ export class AppLauncherService {
 				.run();
 			webLogger.info({ code, pid, projectPath, signal, status }, 'app launcher child exited');
 			this.broadcastStatus(projectPath, status);
+			// After the status is published, so a stop still reports promptly. An intentional stop
+			// has already swept, so this normally finds nothing.
+			const killed = await killCapturedDescendants(orphans);
+			if (killed > 0) {
+				webLogger.info(
+					{ killed, pid, projectPath, status },
+					'app launcher killed processes the exited app left holding resources',
+				);
+			}
 		});
 		return await this.persistRunning(projectPath, commandLabel(command), pid, startedAt);
 	}

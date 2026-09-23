@@ -1,9 +1,10 @@
 import type { ParsedArgs } from 'aidd-shared/args/index';
 import type { RunPlan } from 'aidd-shared/plan/types';
+import type { Stats } from 'node:fs';
 
 import { detectInitialPhase, type InitialPhase } from 'aidd-shared/metadata/onboarding';
 import { stopFilePath } from 'aidd-shared/metadata/paths';
-import { access, mkdir, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 import { detectInterruptedSetupPhase } from './modes/coding/blueprint-resume.ts';
@@ -79,7 +80,26 @@ export async function handleStopSignal(
 export async function assertProjectForRun(args: ParsedArgs): Promise<void> {
 	if (args.directorMode || args.help || args.version || args.stopSignal || args.webMode) return;
 	if (!args.projectDir) throw new Error('--project-dir is required');
+	// A run scaffolds `.aidd/` and (in the initializer lane) the root contract into whatever path
+	// it is handed, creating every missing parent on the way. Without this check a mistyped
+	// --project-dir silently produced a whole scaffolded project tree at the typo and reported
+	// success. Creating the directory is the caller's step; aidd only creates the metadata in it.
+	await assertProjectDirectory(args.projectDir);
 	if (args.specFile) await access(args.specFile);
+}
+
+async function assertProjectDirectory(projectDir: string): Promise<void> {
+	let entry: Stats;
+	try {
+		entry = await stat(projectDir);
+	} catch {
+		throw new Error(
+			`--project-dir does not exist: ${projectDir}. Create the directory first, or check the path for a typo.`,
+		);
+	}
+	if (!entry.isDirectory()) {
+		throw new Error(`--project-dir is not a directory: ${projectDir}`);
+	}
 }
 
 export async function clearStaleStopFile(projectDir: string, stopFile?: string): Promise<void> {

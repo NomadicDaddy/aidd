@@ -12,6 +12,7 @@ import {
 } from '../../cli/src/preflight-completed.ts';
 import {
 	applyInitialPhaseDetection,
+	assertProjectForRun,
 	clearStaleStopFile,
 	handleStopSignal,
 	shouldDetectInitialPhase,
@@ -545,5 +546,46 @@ describe('automatic phase detection routing', () => {
 		// prompt that would scaffold a project the caller never asked to scaffold.
 		const work = await createModeHandler(plan).selectWork({ projectDir, store });
 		expect(work.kind).toBe('none');
+	});
+});
+
+// A run scaffolds .aidd/ and, in the initializer lane, the root contract into whatever path it is
+// handed, creating every missing parent on the way. A mistyped --project-dir therefore produced a
+// whole scaffolded project tree at the typo and reported success.
+describe('assertProjectForRun project directory', () => {
+	test('rejects a project directory that does not exist', async () => {
+		const missing = join(await testTempDir('aidd-preflight-missing-'), 'nope', 'deeper');
+		await expect(assertProjectForRun(parseArgs(['--project-dir', missing]))).rejects.toThrow(
+			'--project-dir does not exist',
+		);
+	});
+
+	test('rejects a project directory that is a file', async () => {
+		const root = await testTempDir('aidd-preflight-file-');
+		const file = join(root, 'not-a-dir.txt');
+		await writeFile(file, 'x');
+		try {
+			await expect(assertProjectForRun(parseArgs(['--project-dir', file]))).rejects.toThrow(
+				'--project-dir is not a directory',
+			);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('accepts an existing project directory', async () => {
+		const root = await testTempDir('aidd-preflight-ok-');
+		try {
+			await expect(
+				assertProjectForRun(parseArgs(['--project-dir', root])),
+			).resolves.toBeUndefined();
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	// --web and --director never target a project, so they must not be gated on one existing.
+	test('skips the check for modes that do not target a project', async () => {
+		await expect(assertProjectForRun(parseArgs(['--web']))).resolves.toBeUndefined();
 	});
 });

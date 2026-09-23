@@ -5,6 +5,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import type { ProjectDiscoverySkippedRootDto, ProjectImportCandidateDto } from '../../types.ts';
 
 import { canonicalProjectPath, encodeProjectId } from '../../paths.ts';
+import { HttpError } from '../errors.ts';
 
 export interface RootScanResult {
 	projects: { path: string; root: string }[];
@@ -34,6 +35,37 @@ export async function fileExists(path: string): Promise<boolean> {
 
 export async function hasAiddMetadata(path: string): Promise<boolean> {
 	return await directoryExists(metadataPath(path));
+}
+
+function samePath(left: string, right: string): boolean {
+	return process.platform === 'win32'
+		? left.toLowerCase() === right.toLowerCase()
+		: left === right;
+}
+
+/**
+ * An allowed root holds projects; it is not itself one. `assertAllowedPath` accepts the root
+ * exactly (pathIsInside is true for an identical path), so a path one segment short of the intended
+ * project — `d:\applications` for `d:\applications\aidd` — resolved cleanly, and a run launched
+ * there would scaffold `.aidd/` and the root contract across the whole fleet directory.
+ *
+ * Metadata is what tells the two cases apart: a root someone has pointed at a single project has
+ * `.aidd/` of its own and stays usable. A bare root does not, and cannot be a launch target.
+ *
+ * @param allowedRoots Configured project roots, as `assertAllowedPath` receives them.
+ * @param resolved An already-resolved absolute path.
+ * @returns Nothing; throws when the path is a bare root.
+ */
+export async function assertNotBareAllowedRoot(
+	allowedRoots: string[],
+	resolved: string,
+): Promise<void> {
+	const isRoot = allowedRoots.some((root) => samePath(resolve(root), resolved));
+	if (!isRoot || (await hasAiddMetadata(resolved))) return;
+	throw new HttpError(
+		`${resolved} is a configured project root, not a project. Name the project directory inside it.`,
+		400,
+	);
 }
 
 function globToRegExp(pattern: string): RegExp {

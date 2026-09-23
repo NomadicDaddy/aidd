@@ -209,3 +209,46 @@ describe('project path identity backfill version 2', () => {
 		}
 	});
 });
+
+// A path one segment short of the intended project resolves to the configured root, which
+// assertAllowedPath accepts exactly. A run launched there scaffolds .aidd/ and the root contract
+// across the whole fleet directory, so the root is refused unless it is itself a project.
+describe('bare allowed root as a launch target', () => {
+	test('refuses a configured root that holds projects', async () => {
+		const { root } = await projectFixture();
+		try {
+			const service = new ProjectService(webProjectConfig(root));
+			await expect(service.resolveProjectPath(root)).rejects.toThrow(
+				'is a configured project root, not a project',
+			);
+			await expect(service.resolveProjectPath(otherSpelling(root))).rejects.toThrow(
+				'is a configured project root, not a project',
+			);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('still resolves a project inside that root', async () => {
+		const { canonical, project, root } = await projectFixture();
+		try {
+			const service = new ProjectService(webProjectConfig(root));
+			expect(await service.resolveProjectPath(project)).toBe(canonical);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	// Pointing a root straight at one project is a supported setup; its own .aidd/ is what tells
+	// that case apart from the fleet root.
+	test('accepts a root that is itself a project', async () => {
+		const root = await testTempDir('aidd-single-project-root-');
+		try {
+			await mkdir(join(root, '.aidd'), { recursive: true });
+			const service = new ProjectService(webProjectConfig(root));
+			expect(await service.resolveProjectPath(root)).toBe(canonicalProjectPath(root));
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+});

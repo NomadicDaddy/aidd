@@ -16,6 +16,7 @@ import {
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { HttpError } from '../errors.ts';
 import {
+	assertNotBareAllowedRoot,
 	createIgnoredDirectoryMatcher,
 	directoryExists,
 	hasAiddMetadata,
@@ -109,6 +110,7 @@ export async function resolveProjectPath(ctx: LifecycleContext, path: string): P
 	if (!(await directoryExists(resolved))) {
 		throw new ProjectNotFoundError(`Project directory does not exist: ${path}`);
 	}
+	await assertNotBareAllowedRoot(ctx.config.allowedRoots, resolved);
 	return canonicalProjectPath(resolved);
 }
 

@@ -95,6 +95,7 @@ Thumbs.db
 # personal voice
 skills/humanize-docs/examples.md
 skills/humanize-docs/personal-voice.md
+skills/humanize-docs/confirmed.md
 
 # local config
 # Roster for the aidd-owned shared-core group. Gitignored because it names sibling repositories

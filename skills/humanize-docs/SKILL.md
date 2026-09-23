@@ -20,11 +20,20 @@ An old publication date does not prove the current text is original. Check relev
 the corpus has already been rewritten. Do not treat this task's agent-written revisions as approved
 voice samples unless the author accepts them.
 
-For first-person work, read `personal-voice.md` beside this skill when present, or its staged copy
-at `.aidd/skills/humanize-docs/personal-voice.md`. Use it only for the author it describes. Follow
-its source references and read a few relevant passages in context. If no reliable samples are
-available, preserve the voice in the supplied text and state the limitation when voice matching
-matters. Do not substitute a generic casual persona.
+When updating a corpus or voice reference, record authorship confirmations with their date and scope.
+Use them instead of continuing to treat the same unsigned material as unverified. Keep authorship,
+permission to include, editorial usefulness, and approval of a modern rewrite separate; confirmation
+does not require including duplicates or attributing embedded third-party material to the author.
+
+For first-person work or an explicit request to match the named author's explanatory voice, read
+`personal-voice.md` beside this skill when present, or its staged copy at
+`.aidd/skills/humanize-docs/personal-voice.md`. Use it only for the author it describes. Apply the
+author's current preferences before inferring habits from historical samples. Read two or three
+relevant source excerpts from the companion references; consult their originals when more context
+or provenance is needed. A discovery catalog's editorial judgments are not the author's prose.
+Do not load a whole archive for routine matching. If no reliable samples are available, preserve
+the voice in the supplied text and state the limitation when voice matching matters. Do not
+substitute a generic casual persona.
 
 Choose the document's purpose before applying the editing guidance:
 
@@ -50,7 +59,9 @@ less grammatical, or harder to follow. Smooth writing is not itself a defect.
 
 Read `examples.md` beside this skill when present, or its staged copy at
 `.aidd/skills/humanize-docs/examples.md`, when deciding between a useful edit and overcorrection.
-The examples illustrate editorial decisions, not phrases or paragraph shapes to reuse.
+The examples distinguish historical source excerpts from proposed edits and invented
+counterexamples. Use the relevant cases to judge decisions, not as phrases or paragraph shapes
+to reuse. Disclose any authorized normalization of a source excerpt.
 
 ## Check facts and claim strength
 

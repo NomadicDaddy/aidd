@@ -11,6 +11,7 @@ import type {
 
 import { evaluateAuditEval } from '../audit-eval/scorer.ts';
 import { listFiles, runCommand } from './execution.ts';
+import { scoreExpectedCoverage } from './expected-tokens.ts';
 import {
 	clampScore,
 	commandSucceeded,
@@ -132,6 +133,13 @@ function evaluateInterview(
 			score: 0,
 		};
 	}
+	// Still pass-on-presence, and that is a known limitation rather than an oversight: this task
+	// has no discriminating power, so it contributes a near-constant to the composite. An answer
+	// key was measured against all 44 response artifacts on disk and produced only two scores,
+	// 32 at 1.000 and 12 at 0.000 — every capable model names every required fact, so the ceiling
+	// is in the QUESTION, not in the scoring. Grading needs a harder question, which changes what
+	// the task measures and restales every recorded row (the answer key is part of the fixture
+	// hash), so it is a deliberate decision rather than a tightening to slip in here.
 	return { notes: [`response files: ${present.join(', ')}`], score: 1 };
 }
 
@@ -144,23 +152,7 @@ function evaluateQuiz(
 		.map((filePath) => readTextIfExists(path.join(workspaceDir, filePath)))
 		.join('\n');
 	if (!corpus.trim()) return { notes: ['quiz response was not written'], score: 0 };
-	const questionsRaw = Array.isArray(expectation.questions) ? expectation.questions : [];
-	let earned = 0;
-	let total = 0;
-	const notes: string[] = [];
-	for (const questionRaw of questionsRaw) {
-		if (!isRecord(questionRaw)) continue;
-		const weight = numberValue(questionRaw.weight) ?? 0;
-		const expected = stringArray(questionRaw.expected);
-		const id = stringValue(questionRaw.id) ?? 'unknown';
-		total += weight;
-		const lowerCorpus = corpus.toLowerCase();
-		const matches = expected.filter((token) => lowerCorpus.includes(token.toLowerCase()));
-		const ratio = expected.length > 0 ? matches.length / expected.length : 0;
-		earned += weight * ratio;
-		notes.push(`${id}: ${matches.length}/${expected.length} expected tokens`);
-	}
-	return { notes, score: total > 0 ? clampScore(earned / total) : 0 };
+	return scoreExpectedCoverage(corpus, expectation);
 }
 
 function evaluateAudit(

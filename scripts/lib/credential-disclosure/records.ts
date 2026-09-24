@@ -161,6 +161,32 @@ export function parseDisclosureRecords(lines: string[]): DisclosureRecord[] {
 	return records;
 }
 
+/**
+ * The permission layer's refusal, which means the tool never ran — so there is no file content
+ * for the result to be carrying and nothing was disclosed.
+ *
+ * `hasReturnedContent` asks only whether the payload is longer than a threshold, and a refusal
+ * sentence clears it easily ("Permission to use Bash with command sed -n '1,60p' .env has been
+ * denied." is 72 characters). Two denied reads of a `.env` therefore scored identically to two
+ * successful ones and the gate asked for a rotation that nothing had exposed.
+ *
+ * Anchored at both ends, and `every` rather than `some` for composite payloads: a result is
+ * excused only when the refusal is the whole of it. File content that merely quotes the sentence,
+ * or a multi-part result with one real payload beside a refusal, still counts as returned content.
+ * Every one of the 38 refusals across this install's 1,094 retained artifacts ends exactly here.
+ */
+export function isRefusedResult(value: unknown): boolean {
+	if (typeof value === 'string')
+		return /^Permission to use \S.*has been denied\.$/s.test(value.trim());
+	if (Array.isArray(value)) return value.length > 0 && value.every(isRefusedResult);
+	const record = object(value);
+	if (!record) return false;
+	const present = ['text', 'content', 'output', 'result', 'stdout'].filter(
+		(key) => record[key] !== undefined,
+	);
+	return present.length > 0 && present.every((key) => isRefusedResult(record[key]));
+}
+
 /** Measure returned payloads only, never command strings, IDs, or protocol envelopes. */
 export function hasReturnedContent(value: unknown): boolean {
 	if (typeof value === 'string') return value.trim().length > 40;

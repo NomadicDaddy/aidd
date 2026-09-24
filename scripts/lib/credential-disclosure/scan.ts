@@ -10,7 +10,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
 import { commandCredentialLabel } from './command.ts';
-import { hasReturnedContent, parseDisclosureRecords } from './records.ts';
+import { hasReturnedContent, isRefusedResult, parseDisclosureRecords } from './records.ts';
 
 /** Where retained agent artifacts accumulate. Both are gitignored and machine-local. */
 export const SCAN_ROOTS = ['.aidd/iterations', 'data/run-logs'];
@@ -49,6 +49,8 @@ export function scanLines(lines: string[], file: string): Hit[] {
 		if (
 			call &&
 			hasReturnedContent(record.output) &&
+			// A refused call never ran, so its result is the refusal rather than the file.
+			!isRefusedResult(record.output) &&
 			(!call.command || commandCredentialLabel(call.command, record.output))
 		) {
 			hits.push({ file, label: call.label, line: call.line });

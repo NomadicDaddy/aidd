@@ -127,6 +127,38 @@ try {
 		`The finding must name the ssh store:\n${result.output}`,
 	);
 
+	// A refused call never ran, so its result is the permission layer's sentence rather than the
+	// file. That sentence is well past the returned-content length threshold, so two denied reads
+	// of a `.env` scored as disclosures and the gate asked for a rotation of something nothing had
+	// exposed. The refusal must not be read as content; the surrounding corpus must still fail.
+	write('data/run-logs/refused.log', [
+		call('.env'),
+		payload("Permission to use Bash with command sed -n '1,60p' .env has been denied."),
+	]);
+	result = runCheck();
+	assert(
+		!result.output.includes('refused.log'),
+		`A refused read is not a disclosure:\n${result.output}`,
+	);
+	assert(
+		result.output.includes('3 artifact(s) scanned'),
+		`The refused artifact must still be examined:\n${result.output}`,
+	);
+	// Anchoring, not substring matching: real content that quotes the sentence still discloses.
+	write('data/run-logs/quoted.log', [
+		call('.env'),
+		payload(
+			`Permission to use Bash with command x has been denied. TOKEN=${FAKE_SECRET} and more`,
+		),
+	]);
+	result = runCheck();
+	assert(
+		result.output.includes('quoted.log'),
+		`Content that merely quotes a refusal still discloses:\n${result.output}`,
+	);
+	remove('data/run-logs/quoted.log');
+	remove('data/run-logs/refused.log');
+
 	// Baselining accepts what has already happened, and the accepted set then passes.
 	result = runCheck('--update-baseline');
 	assert(result.exitCode === 0, `Baselining must succeed:\n${result.output}`);

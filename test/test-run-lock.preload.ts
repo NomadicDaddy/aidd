@@ -10,11 +10,21 @@
 // the lock; a worker whose parent IS that pid belongs to the owned run and skips lock,
 // sweep, and cleanup entirely.
 import { afterAll } from 'bun:test';
+import { disableAiCallLog } from 'aidd-shared/lib/aiCallLog';
 
 import { acquireTestRunLock, readActiveTestRun } from '../scripts/lib/test-run-lock.ts';
 import { sweepOrphanTestTempTrees } from '../scripts/lib/test-temp-root.ts';
 import { removeTempTree } from '../shared/src/lib/remove-temp-tree.ts';
 import { testTempRoot } from './_helpers/temp.ts';
+
+// The AI-call log resolves to `logs/ai-calls.jsonl` relative to cwd when no startup has set a
+// directory, which for `bun test` is this repository's own operational log. Any suite that drives
+// an agent client against a stubbed fetch therefore appended fabricated calls to it: 14,609 of the
+// 51,931 entries in the rotated log were `provider":"test"`, and nearly every `director_chat` row
+// in it was a test. Disabled here rather than per-suite so a suite added later cannot reintroduce
+// it — this runs in every worker, including those the parallel wrapper owns, because it sits
+// outside the lock block below.
+disableAiCallLog();
 
 async function wrapperOwnsThisRun(): Promise<boolean> {
 	for (let attempt = 0; attempt < 2; attempt++) {

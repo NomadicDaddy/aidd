@@ -59,23 +59,31 @@ export function aggregate(
 	for (const [key, group] of groups.entries()) {
 		const [stackLabel = '', taskId = ''] = key.split('\t');
 		const task = taskById.get(taskId);
-		const successful = group.filter((run) => run.status === 'success');
-		const averageDuration = average(group.map((run) => run.durationSeconds));
-		const costs = group
+		// A run the provider refused to serve is not a measurement. Keeping it in the denominator
+		// scored a quota wall as a wrong answer and as an unreliable stack at the same time, which
+		// is how 37 quota-killed logs became quality evidence in the September reports.
+		const measured = group.filter((run) => run.status !== 'provider_unavailable');
+		const unavailable = group.length - measured.length;
+		const successful = measured.filter((run) => run.status === 'success');
+		const averageDuration = average(measured.map((run) => run.durationSeconds));
+		const costs = measured
 			.map((run) => run.costUsd)
 			.filter((value): value is number => typeof value === 'number');
 		const row: AggregateRow = {
-			averageCorrectness: average(group.map((run) => run.correctnessScore)),
+			averageCorrectness: average(measured.map((run) => run.correctnessScore)),
 			averageCost: costs.length > 0 ? average(costs) : null,
 			averageDuration,
 			category: task?.category ?? 'agentic',
 			compositeScore: 0,
 			costScore: 1,
-			reliability: group.length > 0 ? successful.length / group.length : 0,
-			runs: group.length,
+			// No served run means no evidence either way, so the row reports zero rather than a
+			// perfect or a failing score, and `runs: 0` marks it as unmeasured for every reader.
+			reliability: measured.length > 0 ? successful.length / measured.length : 0,
+			runs: measured.length,
 			stackLabel,
 			taskId,
 			timeScore: 1 - averageDuration / maxDuration,
+			...(unavailable > 0 ? { providerUnavailableRuns: unavailable } : {}),
 		};
 		row.timeScore = clampScore(row.timeScore);
 		row.costScore = computeCostScore(row);
@@ -109,6 +117,16 @@ function formatScore(value: number): string {
 	return value.toFixed(3);
 }
 
+/**
+ * Runs column. A bare count is a served count; a parenthesised count names runs the provider
+ * refused, which no average above includes. "0 (3 refused)" is the case worth being loud about:
+ * it reads as a measurement until you know nothing was served.
+ */
+function formatRuns(row: AggregateRow): string {
+	const refused = row.providerUnavailableRuns ?? 0;
+	return refused > 0 ? `${row.runs} (${refused} refused)` : String(row.runs);
+}
+
 export function renderReport(aggregateResult: BenchmarkAggregate): string {
 	const lines = [
 		'# aidd Benchmark Report',
@@ -121,7 +139,7 @@ export function renderReport(aggregateResult: BenchmarkAggregate): string {
 		'| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |',
 		...aggregateResult.agenticRows.map(
 			(row) =>
-				`| ${row.stackLabel} | ${row.taskId} | ${row.runs} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} | ${row.averageCost === null ? 'unknown' : row.averageCost.toFixed(4)} | ${formatScore(row.compositeScore)} |`,
+				`| ${row.stackLabel} | ${row.taskId} | ${formatRuns(row)} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} | ${row.averageCost === null ? 'unknown' : row.averageCost.toFixed(4)} | ${formatScore(row.compositeScore)} |`,
 		),
 		'',
 		'## Control Tasks',
@@ -130,7 +148,7 @@ export function renderReport(aggregateResult: BenchmarkAggregate): string {
 		'| --- | --- | ---: | ---: | ---: | ---: |',
 		...aggregateResult.controlRows.map(
 			(row) =>
-				`| ${row.stackLabel} | ${row.taskId} | ${row.runs} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} |`,
+				`| ${row.stackLabel} | ${row.taskId} | ${formatRuns(row)} | ${formatScore(row.averageCorrectness)} | ${formatScore(row.reliability)} | ${row.averageDuration.toFixed(1)} |`,
 		),
 		'',
 		'## Cohorts',

@@ -793,3 +793,134 @@ describe('benchmark cost resolution', () => {
 		expect('AIDD_TELEGRAM_BOT_TOKEN' in bare).toBe(false);
 	});
 });
+
+// The September reports mixed quota deaths into quality scores and every one of the 66 interview
+// rows scored 1.000. These two tests are the ones that would have caught each half.
+describe('benchmark scoring separates provider failures from quality', () => {
+	function interviewWorkspace(responseBody: string): string {
+		const workspace = testTempDirSync('aidd-benchmark-interview-');
+		mkdirSync(path.join(workspace, '.aidd', 'responses'), { recursive: true });
+		writeFileSync(
+			path.join(workspace, '.benchmark.expectations.json'),
+			JSON.stringify({ responseFiles: ['.aidd/responses/response1.md'], type: 'interview' }),
+		);
+		writeFileSync(
+			path.join(workspace, '.aidd', 'responses', 'response1.md'),
+			`# Question 1: which files define the score inputs?\n\n## Response\n\n${responseBody}`,
+		);
+		return workspace;
+	}
+
+	function scoreInterview(workspace: string): number {
+		const task = {
+			category: 'agentic',
+			command: '--interview',
+			evaluation: 'interview',
+			fixture: 'interview',
+			id: 'interview',
+			timeoutSeconds: 60,
+		} satisfies BenchmarkTask;
+		return evaluateTask({
+			artifacts: {
+				auditReports: [],
+				rawLogs: [],
+				responses: [],
+				runsLedger: [],
+				structuredLogs: [],
+				workspace,
+			},
+			metrics: parseBenchmarkMetrics({ rawLogs: [], structuredLogs: [] }),
+			task,
+			workspaceDir: workspace,
+		}).score;
+	}
+
+	// The exact shape found in all eleven contaminated artifacts: a valid markdown scaffold whose
+	// Response body is the agent's own JSONL, including an error envelope. Non-empty, so the old
+	// presence-only check scored it a correct answer.
+	test('an agent protocol dump is not an interview answer', () => {
+		const dump = [
+			'{"type":"thread.started","thread_id":"01a0b632-3117-7ba2-9815-6c9a084e2c17"}',
+			'{"type":"turn.started"}',
+			'{"type":"item.completed","item":{"id":"item_0","type":"error","message":"usage limit reached"}}',
+			'',
+		].join('\n');
+		expect(scoreInterview(interviewWorkspace(dump))).toBe(0);
+	});
+
+	test('prose still scores, including prose that quotes one envelope', () => {
+		expect(
+			scoreInterview(
+				interviewWorkspace('Two files define it: `src/tasks.js` and `src/scoring.js`.\n'),
+			),
+		).toBe(1);
+		// A real answer explaining the stream necessarily quotes it; one envelope among prose is
+		// well under the majority threshold and must not be read as a dump.
+		const explaining = [
+			'The backend emits one envelope per line, for example:',
+			'',
+			'{"type":"turn.started"}',
+			'',
+			'`scoring.js` then weights correctness, reliability and time.',
+			'',
+		].join('\n');
+		expect(scoreInterview(interviewWorkspace(explaining))).toBe(1);
+	});
+
+	test('a refused run is dropped from the averages rather than scored zero', () => {
+		const manifest = loadManifest(
+			path.join(repoRoot, 'test', 'fixtures', 'benchmark', 'manifest.simulation.json'),
+		);
+		const stack = manifest.stacks[0]!;
+		const task = manifest.tasks[0]!;
+		const baseRun = {
+			artifactPaths: {
+				auditReports: [],
+				rawLogs: [],
+				responses: [],
+				runsLedger: [],
+				structuredLogs: [],
+				workspace: '',
+			},
+			command: ['bun'],
+			costUsd: null,
+			durationSeconds: 5,
+			fixtureHash: 'f',
+			iterations: 1,
+			notes: [],
+			replicate: 0,
+			stack,
+			taskId: task.id,
+			tokenUsage: {
+				cachedTokens: 0,
+				inputTokens: 0,
+				known: false,
+				outputTokens: 0,
+				reasoningTokens: 0,
+			},
+			workspaceHash: 'w',
+		};
+		const served = { ...baseRun, correctnessScore: 1, status: 'success' } as BenchmarkRun;
+		const refused = {
+			...baseRun,
+			correctnessScore: 0,
+			status: 'provider_unavailable',
+		} as BenchmarkRun;
+
+		const mixed = aggregate(manifest, [served, refused, refused], {});
+		const row = [...mixed.agenticRows, ...mixed.controlRows][0]!;
+		// One served run at 1.0: correctness and reliability read 1.0, not 0.333.
+		expect(row.averageCorrectness).toBe(1);
+		expect(row.reliability).toBe(1);
+		expect(row.runs).toBe(1);
+		expect(row.providerUnavailableRuns).toBe(2);
+		expect(renderReport(mixed)).toContain('1 (2 refused)');
+
+		// Nothing served at all is no evidence, and the row must not look like a measurement.
+		const noneServed = aggregate(manifest, [refused, refused], {});
+		const emptyRow = [...noneServed.agenticRows, ...noneServed.controlRows][0]!;
+		expect(emptyRow.runs).toBe(0);
+		expect(emptyRow.providerUnavailableRuns).toBe(2);
+		expect(renderReport(noneServed)).toContain('0 (2 refused)');
+	});
+});

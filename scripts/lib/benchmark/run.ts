@@ -12,7 +12,6 @@ import type {
 	BenchmarkTask,
 	CommandResult,
 	RunMatrixItem,
-	RunStatus,
 } from './types.ts';
 
 import { aggregate } from './aggregate.ts';
@@ -44,7 +43,7 @@ import {
 	writeOutputs,
 	writeRuns,
 } from './results.ts';
-import { commandSucceeded, controlCommandSucceeded, readTextIfExists } from './shared.ts';
+import { readTextIfExists, resolveRunStatus } from './shared.ts';
 
 function buildRun(
 	manifest: BenchmarkManifest,
@@ -79,11 +78,7 @@ function buildRun(
 		task: item.task,
 		workspaceDir,
 	});
-	const succeeded =
-		item.task.category === 'control'
-			? controlCommandSucceeded(result, metrics)
-			: commandSucceeded(result, metrics);
-	const status: RunStatus = result.timedOut ? 'timeout' : succeeded ? 'success' : 'failure';
+	const status = resolveRunStatus(result, metrics, item.task.category);
 	return {
 		artifactPaths: artifacts,
 		...(evaluation.auditEval ? { auditEval: evaluation.auditEval } : {}),

@@ -1,6 +1,12 @@
 export type BenchmarkBackendName =
 	'claude-code' | 'cline' | 'codex' | 'kilocode' | 'lmstudio' | 'native' | 'ollama' | 'opencode';
-export type RunStatus = 'failure' | 'preflight_failed' | 'skipped' | 'success' | 'timeout';
+/**
+ * `provider_unavailable` is not a grade. It marks a run the provider refused to serve (quota wall
+ * or transport failure), which carries no evidence about the model, so aggregation drops it from
+ * both the correctness and the reliability populations instead of scoring it zero.
+ */
+export type RunStatus =
+	'failure' | 'preflight_failed' | 'provider_unavailable' | 'skipped' | 'success' | 'timeout';
 
 export interface BenchmarkStack {
 	cli: BenchmarkBackendName;
@@ -206,7 +212,14 @@ export interface AggregateRow {
 	category: 'agentic' | 'control';
 	compositeScore: number;
 	costScore: null | number;
+	/**
+	 * Runs the provider refused to serve, excluded from every average above. Present only when
+	 * nonzero, so a reader can tell "scored badly" from "was never measured" — `runs: 0` with a
+	 * count here means the row rests on no served run at all.
+	 */
+	providerUnavailableRuns?: number;
 	reliability: number;
+	/** Served runs behind the averages, not attempted runs. */
 	runs: number;
 	stackLabel: string;
 	taskId: string;

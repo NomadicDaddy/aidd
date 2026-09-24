@@ -271,6 +271,14 @@ function isTransientProviderError(message: string): boolean {
 		/\bHTTP\s+(?:408|500|502|503|504)\b/i.test(message) ||
 		/\b(?:network error|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|temporarily unavailable|try again later|service unavailable|bad gateway|gateway timeout)\b/i.test(
 			message,
-		)
+		) ||
+		// Bun's own wording when a provider drops the connection mid-request: "The socket
+		// connection was closed unexpectedly. For more information, pass `verbose: true` …".
+		// It carries no errno and no HTTP status, so none of the patterns above see it, and the
+		// 19 occurrences in this install's ai-calls log were all runs that stopped instead of
+		// continuing. `ConnectionClosed` is the matching Bun error code.
+		/\bsocket connection was closed\b/i.test(message) ||
+		/\bConnectionClosed\b/.test(message) ||
+		/\bconnection closed mid-stream\b/i.test(message)
 	);
 }

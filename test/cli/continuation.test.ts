@@ -184,6 +184,43 @@ describe('determineRunContinuation — provider-timeout retries', () => {
 		}
 	});
 
+	// Bun's socket-disconnect wording carries no errno and no HTTP status, so it read as a
+	// permanent provider failure and the run stopped instead of continuing.
+	test.each([
+		'The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()',
+		'zhipu request failed: ConnectionClosed',
+		'zhipu streaming response ended before completion (connection closed mid-stream)',
+	])('retries a dropped connection: %s', (message) => {
+		const result = determineRunContinuation(
+			baseInput({
+				consecutiveContinuableInterruptions: 1,
+				details: {
+					outcome: { status: 'provider_error' },
+					providerError: { message },
+				} as IterationDetails,
+				exitCode: orchestratorExitCodes.providerError,
+			}),
+		);
+		expect(result.kind).toBe('continue');
+		if (result.kind === 'continue') {
+			expect(result.reason).toBe('continuable_backend_interruption');
+		}
+	});
+
+	test('does not retry a permanent provider rejection', () => {
+		const result = determineRunContinuation(
+			baseInput({
+				consecutiveContinuableInterruptions: 0,
+				details: {
+					outcome: { status: 'provider_error' },
+					providerError: { message: 'zhipu request failed: HTTP 401 unauthorized' },
+				} as IterationDetails,
+				exitCode: orchestratorExitCodes.providerError,
+			}),
+		);
+		expect(result.kind).toBe('final');
+	});
+
 	test('stops once the consecutive-timeout cap is reached', () => {
 		const result = determineRunContinuation(
 			baseInput({

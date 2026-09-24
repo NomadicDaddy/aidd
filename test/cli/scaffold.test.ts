@@ -596,3 +596,49 @@ describe('scaffoldProjectAssets', () => {
 		).toBe('# Stack rules\n');
 	});
 });
+
+// The configured sharedFiles source sits at the fleet root, so a run whose projectDir IS that root
+// copies the file onto itself. fs.cp rejects that with ERR_FS_CP_EINVAL, and the caught warning
+// reads like a scaffold failure even though the file is already exactly where it belongs.
+describe('scaffoldProjectAssets shared-file self-copy', () => {
+	test('skips a shared file whose source is already the target', async () => {
+		const root = await makeRoot();
+		const aiddRoot = join(root, 'aidd');
+		const sharedAgents = join(root, 'AGENTS.md');
+		await mkdir(join(aiddRoot, 'scaffolding', '.aidd'), { recursive: true });
+		await writeFile(sharedAgents, '# Agents\n');
+
+		const warnings: string[] = [];
+		const realWarn = console.warn;
+		console.warn = (...args: unknown[]): void => {
+			warnings.push(args.map(String).join(' '));
+		};
+		try {
+			// projectDir === dirname(sharedAgents), so the target resolves to the source.
+			await scaffoldProjectAssets(scaffoldPlan(root, { phase: 'audit' }), aiddRoot, {
+				sharedFiles: [sharedAgents],
+			});
+		} finally {
+			console.warn = realWarn;
+		}
+
+		expect(warnings.filter((line) => line.includes('failed to copy shared file'))).toEqual([]);
+		expect(await readFile(sharedAgents, 'utf8')).toBe('# Agents\n');
+	});
+
+	test('still copies a shared file into a project below the source', async () => {
+		const root = await makeRoot();
+		const aiddRoot = join(root, 'aidd');
+		const projectDir = join(root, 'project');
+		const sharedAgents = join(root, 'AGENTS.md');
+		await mkdir(join(aiddRoot, 'scaffolding', '.aidd'), { recursive: true });
+		await mkdir(projectDir, { recursive: true });
+		await writeFile(sharedAgents, '# Agents\n');
+
+		await scaffoldProjectAssets(scaffoldPlan(projectDir, { phase: 'audit' }), aiddRoot, {
+			sharedFiles: [sharedAgents],
+		});
+
+		expect(await readFile(join(projectDir, 'AGENTS.md'), 'utf8')).toBe('# Agents\n');
+	});
+});

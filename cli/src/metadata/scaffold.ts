@@ -167,6 +167,10 @@ async function copySharedFiles(
 			);
 			continue;
 		}
+		// A shared file configured at a project's own root copies onto itself, which fs.cp rejects
+		// with ERR_FS_CP_EINVAL. Nothing is lost by skipping it — the file is already in place —
+		// and the warning it otherwise produces reads like a scaffold failure.
+		if (sameResolvedPath(source, targetPath)) continue;
 		await mkdir(join(targetPath, '..'), { recursive: true });
 		try {
 			await cp(source, targetPath, { dereference: true, force: true });

@@ -848,6 +848,50 @@ describe('benchmark scoring separates provider failures from quality', () => {
 		expect(scoreInterview(interviewWorkspace(dump))).toBe(0);
 	});
 
+	// The real fixture lists TWO response files: the per-question answer and a generated
+	// .aidd/responses.md index of links. The index is written whether or not the model answered,
+	// so it is never a dump - and an all-files-must-be-dumped rule let it rescue every
+	// contaminated run. This is the shape the first fix missed.
+	test('a generated index alongside a dumped answer does not rescue the run', () => {
+		const workspace = testTempDirSync('aidd-benchmark-interview-index-');
+		mkdirSync(path.join(workspace, '.aidd', 'responses'), { recursive: true });
+		writeFileSync(
+			path.join(workspace, '.benchmark.expectations.json'),
+			JSON.stringify({
+				responseFiles: ['.aidd/responses/response1.md', '.aidd/responses.md'],
+				type: 'interview',
+			}),
+		);
+		writeFileSync(
+			path.join(workspace, '.aidd', 'responses', 'response1.md'),
+			[
+				'# Question 1: which files define the score inputs?',
+				'',
+				'## Response',
+				'',
+				'{"type":"thread.started","thread_id":"t1"}',
+				'{"type":"turn.started"}',
+				'{"type":"item.completed","item":{"type":"error","message":"usage limit reached"}}',
+				'',
+			].join('\n'),
+		);
+		// The index the harness always writes: a table of links, never a dump.
+		writeFileSync(
+			path.join(workspace, '.aidd', 'responses.md'),
+			[
+				'# Interview Responses',
+				'',
+				'| # | Question | Status | Response |',
+				'|---|----------|--------|----------|',
+				'| 1 | which files define the score inputs? | Done | [response1.md](responses/response1.md) |',
+				'',
+				'**Progress:** 1 / 1 questions answered',
+				'',
+			].join('\n'),
+		);
+		expect(scoreInterview(workspace)).toBe(0);
+	});
+
 	test('prose still scores, including prose that quotes one envelope', () => {
 		expect(
 			scoreInterview(

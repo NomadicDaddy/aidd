@@ -120,7 +120,13 @@ function evaluateInterview(
 		const body = responseBody(readTextIfExists(path.join(workspaceDir, filePath)));
 		return protocolEnvelopeShare(body) >= 0.5;
 	});
-	if (dumped.length === present.length) {
+	// ANY dumped file fails the task, not only an all-dumped set. The interview expectation lists
+	// both the per-question answer and `.aidd/responses.md`, a generated index of links that the
+	// harness writes whether or not the model answered — so it is never a dump and, under an
+	// all-must-be-dumped rule, silently rescued every contaminated run. A transcript written into
+	// a response file means this run did not produce a clean answer set; a generated index cannot
+	// make it one.
+	if (dumped.length > 0) {
 		return {
 			notes: [`response is the agent protocol stream, not an answer: ${dumped.join(', ')}`],
 			score: 0,

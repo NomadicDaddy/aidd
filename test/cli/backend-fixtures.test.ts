@@ -23,10 +23,6 @@ const parsers: Record<BackendName, typeof parsePlainBackendOutput> = {
 	openai: parsePlainBackendOutput,
 };
 
-// Grok Build's headless output surfaces no tool_use/tool_result events (tools run silently),
-// so its success fixture yields assistant_text + usage + done but never tool events.
-const surfacesToolEvents = (backend: BackendName): boolean => backend !== 'grok';
-
 async function readFixture(backend: BackendName, name: string): Promise<AgentEvent[]> {
 	const dir = join(fixturesRoot, backend, name);
 	const stdout = await readFile(join(dir, 'stdout.txt'), 'utf8').catch(() => '');
@@ -41,10 +37,8 @@ describe('backend parser fixtures', () => {
 			const events = await readFixture(backend, 'success');
 
 			expect(events.some((event) => event.type === 'assistant_text')).toBe(true);
-			if (surfacesToolEvents(backend)) {
-				expect(events.some((event) => event.type === 'tool_call')).toBe(true);
-				expect(events.some((event) => event.type === 'tool_result')).toBe(true);
-			}
+			expect(events.some((event) => event.type === 'tool_call')).toBe(true);
+			expect(events.some((event) => event.type === 'tool_result')).toBe(true);
 			expect(events.some((event) => event.type === 'usage')).toBe(true);
 			expect(events.at(-1)).toMatchObject({ type: 'done', exitCode: 0 });
 		});

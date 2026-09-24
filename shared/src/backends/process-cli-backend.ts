@@ -3,7 +3,7 @@ import type { AgentEvent, CLIBackend, PromptInput } from './types.ts';
 import { buildBackendCommand } from './commands.ts';
 import { compactClineLogLine, createClineBackendParser } from './parsers/cline.ts';
 import { finalizeCodexBackend, parseCodexBackendLine } from './parsers/codex.ts';
-import { finalizeGrokBackend, parseGrokLine } from './parsers/grok.ts';
+import { createGrokBackendParser } from './parsers/grok.ts';
 import {
 	finalizeOpencodeFamilyBackend,
 	parseOpencodeFamilyLine,
@@ -25,7 +25,7 @@ export function createProcessCliBackend(name: ProcessCliBackendName): CLIBackend
 					: name === 'codex'
 						? { finalize: finalizeCodexBackend, parseLine: parseCodexBackendLine }
 						: name === 'grok'
-							? { finalize: finalizeGrokBackend, parseLine: parseGrokLine }
+							? createGrokBackendParser()
 							: name === 'kilocode' || name === 'opencode'
 								? {
 										finalize: finalizeOpencodeFamilyBackend,

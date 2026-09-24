@@ -2,7 +2,7 @@ import type { AgentEvent } from 'aidd-shared/backends/types';
 
 import { createClineBackendParser } from 'aidd-shared/backends/parsers/cline';
 import { parseCodexBackendLine } from 'aidd-shared/backends/parsers/codex';
-import { parseGrokLine } from 'aidd-shared/backends/parsers/grok';
+import { createGrokBackendParser, parseGrokLine } from 'aidd-shared/backends/parsers/grok';
 import { parseNativeLine } from 'aidd-shared/backends/parsers/native';
 import { parseOpencodeFamilyLine } from 'aidd-shared/backends/parsers/opencode-family';
 import { createPlainBackendParser } from 'aidd-shared/backends/parsers/plain';
@@ -16,9 +16,15 @@ const ownsCodexLine: OwnsLine = (json) =>
 // Grok's deltas carry their payload in `data`; the OpenCode family also uses `{"type":"text"}` but
 // puts the payload in `part`. Matching on the type alone made grok claim OpenCode's text envelopes
 // and, claiming them, suppress the foreign fallback that would have rendered them.
+// `tool_call`/`tool_call_update` and the `available_commands` session preamble are matched on their
+// grok-specific id/tools fields rather than the bare type, so a foreign envelope sharing a name is
+// not claimed and silenced here.
 const ownsGrokLine: OwnsLine = (json) =>
 	((json.type === 'thought' || json.type === 'text') && typeof json.data === 'string') ||
-	json.type === 'end';
+	json.type === 'end' ||
+	((json.type === 'tool_call' || json.type === 'tool_call_update') &&
+		typeof json.toolCallId === 'string') ||
+	(json.type === 'available_commands' && Array.isArray(json.tools));
 const ownsOpencodeFamilyLine: OwnsLine = (json) =>
 	(typeof json.type === 'string' &&
 		['error', 'step_finish', 'text', 'tool_use'].includes(json.type)) ||
@@ -52,7 +58,13 @@ export interface ConsoleLineParser {
 
 export function selectParser(backend: null | string | undefined): ConsoleLineParser {
 	if (backend === 'codex') return { ownsLine: ownsCodexLine, parseLine: parseCodexBackendLine };
-	if (backend === 'grok') return { ownsLine: ownsGrokLine, parseLine: parseGrokLine };
+	// Stateful across lines (tool-call id → tool name, so a tool_call_update renders as a result of
+	// the tool it belongs to); a fresh instance per parse pass is correct because
+	// parseConsoleEntries always consumes the transcript from the top. No finalize: grok's would
+	// re-emit the concatenated answer the deltas have already rendered live.
+	if (backend === 'grok') {
+		return { ownsLine: ownsGrokLine, parseLine: createGrokBackendParser().parseLine };
+	}
 	if (backend === 'kilocode' || backend === 'opencode') {
 		return { ownsLine: ownsOpencodeFamilyLine, parseLine: parseOpencodeFamilyLine };
 	}

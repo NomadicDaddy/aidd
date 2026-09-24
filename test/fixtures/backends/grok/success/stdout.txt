@@ -1,4 +1,10 @@
+{"type":"available_commands","tools":["list_dir","read_file"],"commands":["compact"]}
 {"type":"thought","data":"The user wants a short greeting."}
+{"type":"tool_call","toolCallId":"call-1-0","title":"list_dir","kind":"list","status":"pending","toolName":"list_dir","rawInput":{"target_directory":"/tmp/demo"},"content":[],"locations":[]}
+{"type":"tool_call_update","toolCallId":"call-1-0","status":null,"content":[],"rawOutput":null,"locations":[{"path":"/tmp/demo"}]}
+{"type":"tool_call_update","toolCallId":"call-1-0","status":"completed","content":[],"rawOutput":{"type":"ListDir","Content":{"content":"- /tmp/demo/\n  - a.txt","absolute_root_path":"/tmp/demo"}},"locations":[]}
+{"type":"usage","usage":{"input_tokens":60,"output_tokens":4,"cache_read_input_tokens":20,"cache_creation_input_tokens":0,"reasoning_tokens":2}}
 {"type":"text","data":"Hello"}
 {"type":"text","data":", world."}
-{"type":"end","stopReason":"EndTurn","sessionId":"s1","requestId":"r1","usage":{"input_tokens":100,"cache_read_input_tokens":50,"output_tokens":10,"reasoning_tokens":4,"total_tokens":160},"num_turns":1,"modelUsage":{"grok-4.6":{"inputTokens":100,"outputTokens":10,"cacheReadInputTokens":50,"modelCalls":1}}}
+{"type":"usage","usage":{"input_tokens":40,"output_tokens":6,"cache_read_input_tokens":30,"cache_creation_input_tokens":0,"reasoning_tokens":2}}
+{"type":"end","stopReason":"EndTurn","sessionId":"s1","requestId":"r1","usage":{"input_tokens":100,"cache_read_input_tokens":50,"output_tokens":10,"reasoning_tokens":4,"total_tokens":160},"num_turns":1,"total_cost_usd":0.0125,"modelUsage":{"grok-4.6":{"inputTokens":100,"outputTokens":10,"cacheReadInputTokens":50,"modelCalls":1}}}

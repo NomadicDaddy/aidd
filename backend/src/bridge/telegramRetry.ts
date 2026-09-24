@@ -36,12 +36,33 @@ export class TelegramApiError extends Error {
 	}
 }
 
-/** Fetch failures often embed the request URL, which includes the bot token. */
+/**
+ * Fetch failures often embed the request URL, which includes the bot token.
+ *
+ * `DOMException` — what an aborted or timed-out fetch rejects with, and an `instanceof Error` in
+ * Bun — exposes `message` as a getter with no setter, so assigning to it throws
+ * "Attempted to assign to readonly property". Thrown from inside a redactor, that TypeError
+ * replaced the diagnostic it was called to sanitize. Redact into a copy when the original cannot
+ * be edited in place, keeping the `name` callers triage on (`AbortError`, `TimeoutError`).
+ *
+ * The copy deliberately carries no `cause`: the original still holds the unredacted URL, and
+ * anything that walks a cause chain — the AI-call log flattens one into `errorCause` — would write
+ * the bot token straight back out.
+ */
 export function redactTelegramUrlError(err: unknown): unknown {
 	if (!(err instanceof Error)) return err;
-	err.message = hideTelegramBotUrl(err.message);
-	if (typeof err.stack === 'string') err.stack = hideTelegramBotUrl(err.stack);
-	return err;
+	const message = hideTelegramBotUrl(err.message);
+	const stack = typeof err.stack === 'string' ? hideTelegramBotUrl(err.stack) : undefined;
+	try {
+		err.message = message;
+		if (stack !== undefined) err.stack = stack;
+		return err;
+	} catch {
+		const copy = new Error(message);
+		copy.name = err.name;
+		if (stack !== undefined) copy.stack = stack;
+		return copy;
+	}
 }
 
 /** Cancellation resolves the wait; callers check the signal before attempting more work. */

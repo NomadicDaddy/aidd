@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
 import { createBridgeHandler, runBridgeLoop } from '../../backend/src/bridge/telegram.ts';
-import { TelegramApiError } from '../../backend/src/bridge/telegramRetry.ts';
+import {
+	redactTelegramUrlError,
+	TelegramApiError,
+} from '../../backend/src/bridge/telegramRetry.ts';
 import { createApiClient, DIRECTOR_CHAT_TIMEOUT_MS } from '../../backend/src/channels/apiClient.ts';
 
 function captureLogs() {
@@ -386,5 +389,39 @@ describe('Telegram polling reliability', () => {
 			clearTimeout(timer);
 			controller.abort();
 		}
+	});
+});
+
+describe('Telegram error redaction', () => {
+	test('hides the bot token in an editable error', () => {
+		const err = new Error('fetch to api.telegram.org/bot12345:SECRET/getUpdates failed');
+		const redacted = redactTelegramUrlError(err);
+		expect(redacted).toBe(err);
+		expect((redacted as Error).message).toBe(
+			'fetch to api.telegram.org/bot[REDACTED]/getUpdates failed',
+		);
+	});
+
+	// An aborted or timed-out fetch rejects with a DOMException, whose `message` is a getter with
+	// no setter: assigning to it threw and the TypeError replaced the diagnostic entirely.
+	test.each(['AbortError', 'TimeoutError'])('redacts a %s without throwing', (name) => {
+		const err = new DOMException(
+			'Unable to reach api.telegram.org/bot12345:SECRET/getUpdates',
+			name,
+		);
+		const redacted = redactTelegramUrlError(err);
+		expect(redacted).toBeInstanceOf(Error);
+		expect((redacted as Error).name).toBe(name);
+		expect((redacted as Error).message).toBe(
+			'Unable to reach api.telegram.org/bot[REDACTED]/getUpdates',
+		);
+		expect((redacted as Error).message).not.toContain('SECRET');
+		// No cause: the original still holds the unredacted URL, and anything that walks a
+		// cause chain would write the bot token back out.
+		expect((redacted as Error).cause).toBeUndefined();
+	});
+
+	test('passes a non-Error rejection through untouched', () => {
+		expect(redactTelegramUrlError('plain string')).toBe('plain string');
 	});
 });

@@ -2,6 +2,7 @@ import type { Feature } from './features.ts';
 import type { FeatureValidationResult } from './features/types.ts';
 import type { AiddStore } from './store.ts';
 
+import { describeRoadmapError, isMissingRoadmap } from './roadmap.ts';
 import { isTemplateOwnedFeature, isTemplateRepo } from './template-ownership.ts';
 
 /**
@@ -31,25 +32,6 @@ export interface MetadataReconcileOptions {
 
 function featureDirectory(feature: Feature): string {
 	return feature.directory ?? feature.id;
-}
-
-/** A project that has never had a roadmap, as distinct from one whose roadmap is broken. */
-function isMissingRoadmap(error: unknown): boolean {
-	return (
-		typeof error === 'object' &&
-		error !== null &&
-		(error as { code?: unknown }).code === 'ENOENT'
-	);
-}
-
-/**
- * A one-line rendering of a roadmap failure. Zod reports a multi-line JSON blob and the JSON parser
- * embeds a snippet, either of which would swamp the run summary this lands in.
- */
-function describeRoadmapError(error: unknown): string {
-	const message = error instanceof Error ? error.message : String(error);
-	const flattened = message.replaceAll(/\s+/g, ' ').trim();
-	return flattened.length > 200 ? `${flattened.slice(0, 197)}...` : flattened;
 }
 
 function dependenciesMatch(current: unknown, expected: string[]): boolean {

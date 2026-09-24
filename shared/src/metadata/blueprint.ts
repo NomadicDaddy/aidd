@@ -10,7 +10,12 @@ import {
 	type InitialPhase,
 	listMissingOnboardingArtifacts,
 } from './onboarding.ts';
-import { evaluateRoadmapCodingGate, type Roadmap } from './roadmap.ts';
+import {
+	describeRoadmapError,
+	evaluateRoadmapCodingGate,
+	isMissingRoadmap,
+	type Roadmap,
+} from './roadmap.ts';
 import { FileAiddStore } from './store.ts';
 import { isTemplateOwnedFeature, isTemplateRepo } from './template-ownership.ts';
 
@@ -25,6 +30,13 @@ export interface BlueprintReadiness {
 }
 
 export interface BlueprintReadinessOptions {
+	/**
+	 * Why `roadmap.json` could not be read, when it exists but is unusable. A missing roadmap and
+	 * a malformed one are both `roadmap === undefined` here, and reporting the malformed case as
+	 * "must define an MVP milestone" sent the agent looking for a milestone in a file it could not
+	 * parse — every iteration, because the reason never changed.
+	 */
+	roadmapError?: string;
 	/**
 	 * What is on disk and what is executing for a project that has not reached the coding phase.
 	 * Omitted by callers with no view of live execution state, which reads as "nothing is running":
@@ -93,7 +105,10 @@ export function evaluateBlueprintReadiness(
 		return {
 			firstFeature: null,
 			ready: false,
-			reason: 'roadmap.json must define an MVP milestone.',
+			reason:
+				options.roadmapError === undefined
+					? 'roadmap.json must define an MVP milestone.'
+					: `roadmap.json could not be read: ${options.roadmapError}`,
 			state: 'blocked',
 		};
 	}
@@ -180,10 +195,14 @@ export async function readPersistedBlueprintReadiness(
 		isTemplateRepo(projectDir),
 	]);
 	let roadmap: Roadmap | undefined;
+	let roadmapError: string | undefined;
 	try {
 		roadmap = await store.readRoadmap();
-	} catch {
-		roadmap = undefined;
+	} catch (err) {
+		// No roadmap.json yet is an ordinary pre-blueprint state. One that exists and cannot be
+		// parsed or validated is a defect, and the verdict has to name it or the run has nothing
+		// new to act on next iteration.
+		if (!isMissingRoadmap(err)) roadmapError = describeRoadmapError(err);
 	}
 	const setup =
 		phase === 'coding' ? undefined : await readBlueprintSetupContext(projectDir, activity);
@@ -191,6 +210,7 @@ export async function readPersistedBlueprintReadiness(
 		projectDir,
 		evaluateBlueprintReadiness(phase, features, roadmap, {
 			templateRepo,
+			...(roadmapError !== undefined ? { roadmapError } : {}),
 			...(setup ? { setup } : {}),
 		}),
 	);

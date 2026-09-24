@@ -35,6 +35,25 @@ export function serializeRoadmap(roadmap: Roadmap): string {
 	return printJson(roadmap);
 }
 
+/** A project that has never had a roadmap, as distinct from one whose roadmap is broken. */
+export function isMissingRoadmap(error: unknown): boolean {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { code?: unknown }).code === 'ENOENT'
+	);
+}
+
+/**
+ * A one-line rendering of a roadmap failure. Zod reports a multi-line JSON blob and the JSON parser
+ * embeds a snippet, either of which would swamp the run summary or readiness reason this lands in.
+ */
+export function describeRoadmapError(error: unknown): string {
+	const message = error instanceof Error ? error.message : String(error);
+	const flattened = message.replaceAll(/\s+/g, ' ').trim();
+	return flattened.length > 200 ? `${flattened.slice(0, 197)}...` : flattened;
+}
+
 export type RoadmapCodingGateBlockReason = 'invalid_milestone_mapping' | 'unmapped_features';
 
 export interface RoadmapCodingGate {

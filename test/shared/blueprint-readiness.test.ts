@@ -206,3 +206,24 @@ describe('pre-coding readiness separates missing setup from live activity', () =
 		expect(readiness.ready).toBe(true);
 	});
 });
+
+// A missing roadmap.json and an unparseable one both arrive here as `roadmap === undefined`.
+// Reporting the second as "must define an MVP milestone" sent the agent looking for a milestone in
+// a file it could not parse, and the reason never changed, so every iteration repeated it.
+describe('blueprint readiness and an unreadable roadmap', () => {
+	test('names the parse failure when one was reported', () => {
+		const readiness = evaluateBlueprintReadiness('coding', [productFirst], undefined, {
+			roadmapError: 'Unexpected token } in JSON at position 42',
+		});
+		expect(readiness.state).toBe('blocked');
+		expect(readiness.reason).toBe(
+			'roadmap.json could not be read: Unexpected token } in JSON at position 42',
+		);
+	});
+
+	test('still asks for an MVP milestone when the roadmap is simply absent', () => {
+		const readiness = evaluateBlueprintReadiness('coding', [productFirst], undefined);
+		expect(readiness.state).toBe('blocked');
+		expect(readiness.reason).toBe('roadmap.json must define an MVP milestone.');
+	});
+});

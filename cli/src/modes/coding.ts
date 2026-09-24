@@ -8,7 +8,7 @@ import { parkedWorkMarker } from 'aidd-shared/runs/outcome';
 import { createPlanBackedMode } from './base.ts';
 import { evaluateFeatureCompletion } from './coding/completion.ts';
 import { selectLeasableFeature } from './coding/lease-selection.ts';
-import { processPhaseResult } from './coding/phase-result.ts';
+import { createSetupProgressTracker, processPhaseResult } from './coding/phase-result.ts';
 import {
 	explicitFeatureTarget,
 	featureQuery,
@@ -58,6 +58,9 @@ async function resolveFeatureGraph(
 
 export function createCodingMode(plan: RunPlan): ModeHandler {
 	const base = createPlanBackedMode(plan);
+	// One per run: the setup phases stop when two consecutive iterations reach the same verdict,
+	// which needs the previous iteration's verdict to compare against.
+	const setupProgress = createSetupProgressTracker();
 	return {
 		...base,
 		async buildPromptPlan(context: ModeContext, work: SelectedWork) {
@@ -76,7 +79,7 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 		name: 'coding',
 		async processResult(context, result): Promise<ModeResult> {
 			if (plan.prompt.phase === 'initializer' || plan.prompt.phase === 'onboarding') {
-				return await processPhaseResult(plan, context, result);
+				return await processPhaseResult(plan, context, result, setupProgress);
 			}
 			const {
 				completionMarkerIgnored,

@@ -338,6 +338,7 @@ describe('worktree-manager', () => {
 		const root = await testTempDir('aidd-wt-test-');
 		try {
 			const { projectDir, wt } = await makeConflict(root);
+			const liveHead = await runGit(projectDir, ['rev-parse', 'HEAD']);
 			const resolver = async (dir: string) => {
 				await writeFile(join(dir, 'file.txt'), 'resolved\n');
 				await runGit(dir, ['add', 'file.txt']);
@@ -349,6 +350,67 @@ describe('worktree-manager', () => {
 			const merged = await readFile(join(projectDir, 'file.txt'), 'utf8');
 			expect(merged).toContain('resolved');
 			expect(merged).not.toContain('<<<<<<<');
+			// Same shape as a merge made in place: live tip first, run branch second.
+			const parents = await runGit(projectDir, ['rev-list', '--parents', '-n', '1', 'HEAD']);
+			expect(parents.split(' ').slice(1)).toEqual([
+				liveHead,
+				await runGit(wt.dir, ['rev-parse', 'HEAD']),
+			]);
+			await removeRunWorktree(projectDir, wt);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('merge-back resolves a conflict outside the live checkout', async () => {
+		const root = await testTempDir('aidd-wt-test-');
+		try {
+			const { projectDir, wt } = await makeConflict(root);
+			let resolvedIn = '';
+			let liveDuringResolve = '';
+			let liveMergeInProgress = true;
+			const resolver = async (dir: string) => {
+				resolvedIn = dir;
+				// While the agent works, the operator's checkout must hold no merge state and no
+				// conflict markers.
+				liveDuringResolve = await readFile(join(projectDir, 'file.txt'), 'utf8');
+				liveMergeInProgress = existsSync(join(projectDir, '.git', 'MERGE_HEAD'));
+				await writeFile(join(dir, 'file.txt'), 'resolved\n');
+				await runGit(dir, ['add', 'file.txt']);
+				await runGit(dir, ['commit', '--no-edit']);
+				return true;
+			};
+			expect((await mergeRunBack(projectDir, wt, resolver)).status).toBe('merged');
+			expect(resolvedIn).not.toBe(projectDir);
+			expect(resolvedIn).not.toBe(wt.dir);
+			expect(liveDuringResolve).toBe('project side\n');
+			expect(liveMergeInProgress).toBe(false);
+			// The scratch merge worktree is gone once the merge lands.
+			expect(existsSync(resolvedIn)).toBe(false);
+			await removeRunWorktree(projectDir, wt);
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
+	test('merge-back parks when the live tip moves while the conflict is resolved', async () => {
+		const root = await testTempDir('aidd-wt-test-');
+		try {
+			const { projectDir, wt } = await makeConflict(root);
+			const resolver = async (dir: string) => {
+				await writeFile(join(dir, 'file.txt'), 'resolved\n');
+				await runGit(dir, ['add', 'file.txt']);
+				await runGit(dir, ['commit', '--no-edit']);
+				// The operator commits to the live branch before the resolution lands.
+				await writeFile(join(projectDir, 'other.txt'), 'operator\n');
+				await runGit(projectDir, ['add', 'other.txt']);
+				await runGit(projectDir, ['commit', '-m', 'operator change']);
+				return true;
+			};
+			expect((await mergeRunBack(projectDir, wt, resolver)).status).toBe('conflict');
+			// The operator's commit is the live tip, untouched by the stale resolution.
+			expect(await runGit(projectDir, ['log', '-1', '--format=%s'])).toBe('operator change');
+			expect(await readFile(join(projectDir, 'file.txt'), 'utf8')).toBe('project side\n');
 			await removeRunWorktree(projectDir, wt);
 		} finally {
 			await removeTempTree(root);

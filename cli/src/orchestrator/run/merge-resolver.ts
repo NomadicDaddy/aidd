@@ -50,7 +50,8 @@ Rules:
   for manual resolution.`;
 }
 
-/** Build a resolver that runs the backend agent against the conflicted, mid-merge project tree.
+/** Build a resolver that runs the backend agent against the conflicted, mid-merge tree it is
+ * given — the scratch merge worktree `mergeRunBack` creates, never the operator's checkout.
  * Conservative: it returns true only after verifying the merge actually completed (MERGE_HEAD
  * gone and no unmerged paths remain), so a wandering or failed agent falls back to parking. */
 export function createMergeResolver(options: MergeResolverOptions): MergeConflictResolver {

@@ -107,17 +107,45 @@ export interface MergeBackResult {
 	status: MergeBackStatus;
 }
 
+// Build the merge commit in a scratch worktree pinned to the live tip, so a conflict and any
+// agent resolving it never touch the operator's checkout. Returns the merge commit's SHA, or
+// undefined when the merge conflicted and was not resolved.
+async function buildMergeCommit(
+	projectDir: string,
+	worktree: WorktreePlan,
+	liveHead: string,
+	resolveConflict: MergeConflictResolver | undefined,
+): Promise<string | undefined> {
+	const scratch = `${worktree.dir}-merge`;
+	if (!(await gitSuccess(projectDir, ['worktree', 'add', '--detach', scratch, liveHead]))) {
+		return undefined;
+	}
+	try {
+		const clean = await gitSuccess(scratch, ['merge', '--no-ff', '--no-edit', worktree.branch]);
+		if (!clean && !(resolveConflict && (await resolveConflict(scratch, worktree.branch)))) {
+			return undefined;
+		}
+		return (await gitOutput(scratch, ['rev-parse', '--verify', 'HEAD']))?.trim() || undefined;
+	} finally {
+		await gitSuccess(projectDir, ['worktree', 'remove', '--force', scratch]);
+		await removeTempTree(scratch).catch(() => {});
+	}
+}
+
 /** Merge a run's worktree branch back into the project branch.
  *
  * - `noop`     — the branch never advanced past its base (nothing to merge).
  * - `blocked`  — the live project tree is dirty; merging is skipped to protect operator work.
  * - `merged`   — fast-forwarded, a clean `--no-ff` merge, or an AI-resolved conflict.
- * - `conflict` — a real merge conflict that wasn't resolved; the merge is aborted and the branch
- *                is left intact for manual resolution (the caller parks the run, exit 77).
+ * - `conflict` — a real merge conflict that wasn't resolved; the branch is left intact for
+ *                manual resolution (the caller parks the run, exit 77).
  *
- * An optional `resolveConflict` callback gets a chance to resolve an in-progress conflict before
- * it's aborted. Always merges, never rebases/squashes — the run ledger records commit SHAs on the
- * worktree branch and a rebase would make them unreachable. */
+ * The live checkout only ever fast-forwards: a `--no-ff` merge, and any conflict an optional
+ * `resolveConflict` agent works through, happen in a scratch worktree, and the live tree then
+ * fast-forwards onto the finished commit. If the live tip moved meanwhile, that fast-forward
+ * fails and the run parks rather than merging onto work it never saw. Always merges, never
+ * rebases/squashes — the run ledger records commit SHAs on the worktree branch and a rebase
+ * would make them unreachable. */
 export async function mergeRunBack(
 	projectDir: string,
 	worktree: WorktreePlan,
@@ -138,13 +166,11 @@ export async function mergeRunBack(
 	if (await gitSuccess(projectDir, ['merge', '--ff-only', worktree.branch])) {
 		return { status: 'merged' };
 	}
-	if (await gitSuccess(projectDir, ['merge', '--no-ff', '--no-edit', worktree.branch])) {
+	const liveHead = await readGitHead(projectDir);
+	if (liveHead === undefined) return { status: 'conflict' };
+	const mergeCommit = await buildMergeCommit(projectDir, worktree, liveHead, resolveConflict);
+	if (mergeCommit && (await gitSuccess(projectDir, ['merge', '--ff-only', mergeCommit]))) {
 		return { status: 'merged' };
 	}
-	// Conflict: the merge is now in progress. Give the AI resolver a chance before parking.
-	if (resolveConflict && (await resolveConflict(projectDir, worktree.branch))) {
-		return { status: 'merged' };
-	}
-	await gitSuccess(projectDir, ['merge', '--abort']);
 	return { status: 'conflict' };
 }

@@ -397,9 +397,11 @@ describe('runGit', () => {
 		const repoDir = await makeRepo();
 		try {
 			// Every repository surface bounds its git calls with this runner, and readRepositoryRefs
-			// turns a timed-out probe into the 'error' state. Spawning a process alone costs far
-			// more than a millisecond, so this is the timeout branch rather than a race.
-			const output = await runGit(repoDir, ['log', '--format=%H'], 1);
+			// turns a timed-out probe into the 'error' state. The command has to outlast the timeout
+			// by construction: a real `git log` against a tiny repository finished inside a 1 ms
+			// timeout on a fast Linux runner and failed the v3.2.0 tag build. A shell alias that
+			// sleeps (git's own shell provides sleep on Windows too) cannot win the race.
+			const output = await runGit(repoDir, ['-c', 'alias.stall=!sleep 2', 'stall'], 50);
 			expect(output.timedOut).toBe(true);
 			expect(output.ok).toBe(false);
 			expect(output.stdout).toBe('');

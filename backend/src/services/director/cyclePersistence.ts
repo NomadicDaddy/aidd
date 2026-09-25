@@ -29,7 +29,7 @@ import { webLogger } from '../../logger.ts';
 import { buildAutoLaunchDecision } from './autoLaunchDecision.ts';
 import { type DirectorChatService } from './chatService.ts';
 import { isDirectorOutput, SUGGESTION_DEDUP_WINDOW_MS } from './helpers.ts';
-import { stampSuggestionRanks } from './suggestionRank.ts';
+import { capSuggestions, stampSuggestionRanks } from './suggestionRank.ts';
 
 const DIRECTOR_MISSING_MARKER = 'director_output_missing';
 const DIRECTOR_INVALID_MARKER = 'director_output_invalid';
@@ -204,7 +204,9 @@ export async function persistCycleResult(
 	const ranked =
 		cycleFailed || !output
 			? []
-			: stampSuggestionRanks(output.suggestions, fleetSummary.prioritizedWork ?? []);
+			: capSuggestions(
+					stampSuggestionRanks(output.suggestions, fleetSummary.prioritizedWork ?? []),
+				);
 	const status: DirectorCycleRecord['status'] = cycleFailed ? 'failed' : 'completed';
 	const totalSuggestions = cycleFailed ? 0 : (output?.suggestions.length ?? 0);
 	const resolvedReason = cycleFailed

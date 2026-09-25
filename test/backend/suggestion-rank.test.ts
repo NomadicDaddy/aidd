@@ -10,7 +10,11 @@ import type { DirectorPrioritizedWork } from '../../backend/src/services/directo
 import { wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { directorCycles, suggestions } from '../../backend/src/db/schema.ts';
-import { stampSuggestionRanks } from '../../backend/src/services/director/suggestionRank.ts';
+import {
+	capSuggestions,
+	MAX_SUGGESTIONS_PER_CYCLE,
+	stampSuggestionRanks,
+} from '../../backend/src/services/director/suggestionRank.ts';
 import { DirectorSuggestionService } from '../../backend/src/services/director/suggestionService.ts';
 
 /**
@@ -236,5 +240,45 @@ describe('listSuggestions ordering', () => {
 		} finally {
 			sqlite.close();
 		}
+	});
+});
+
+describe('capSuggestions', () => {
+	function numbered(
+		count: number,
+		rankOf: (index: number) => null | number,
+	): DirectorSuggestion[] {
+		return Array.from({ length: count }, (_, index) =>
+			suggestion({ rank: rankOf(index), title: `s${index}` }),
+		);
+	}
+
+	test('leaves a cycle at or under the ceiling untouched', () => {
+		const batch = numbered(MAX_SUGGESTIONS_PER_CYCLE, (index) => index + 1);
+		expect(capSuggestions(batch)).toBe(batch);
+	});
+
+	test('drops the worst-ranked overflow and keeps the model order of the survivors', () => {
+		// 31 suggestions, the size one real cycle produced, ranked in reverse of output order.
+		const batch = numbered(31, (index) => 31 - index);
+		const kept = capSuggestions(batch);
+		expect(kept).toHaveLength(MAX_SUGGESTIONS_PER_CYCLE);
+		expect(kept.map((entry) => entry.rank)).toEqual(
+			Array.from({ length: 20 }, (_, index) => 20 - index),
+		);
+	});
+
+	test('unranked suggestions, rollups included, are the first to go', () => {
+		const batch = numbered(25, (index) => (index % 5 === 0 ? null : index));
+		const kept = capSuggestions(batch);
+		expect(kept).toHaveLength(MAX_SUGGESTIONS_PER_CYCLE);
+		expect(kept.every((entry) => entry.rank !== null)).toBe(true);
+	});
+
+	test('ties keep the order the model gave them', () => {
+		const batch = numbered(22, () => null);
+		expect(capSuggestions(batch).map((entry) => entry.title)).toEqual(
+			Array.from({ length: 20 }, (_, index) => `s${index}`),
+		);
 	});
 });

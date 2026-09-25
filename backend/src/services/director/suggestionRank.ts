@@ -31,6 +31,32 @@ export function stampSuggestionRanks(
 	}));
 }
 
+/** The per-cycle ceiling `prompts/director.md` states; the prompt asks, and this enforces it. */
+export const MAX_SUGGESTIONS_PER_CYCLE = 20;
+
+/**
+ * Keeps the best-ranked suggestions when a cycle produced more than the ceiling.
+ *
+ * The model is told to truncate and does not reliably do it: cycles have landed 25, 27 and 31.
+ * This applies the prompt's own rule — the prioritized-work rank decides, and a suggestion with no
+ * rank (including a "+ N more" rollup, which `ancestorRanks` never ranks) goes last, in the order
+ * the model gave it. The survivors keep the model's order; only the overflow is dropped.
+ *
+ * @param suggestions Suggestions already stamped by `stampSuggestionRanks`.
+ * @returns At most `MAX_SUGGESTIONS_PER_CYCLE` suggestions.
+ */
+export function capSuggestions(suggestions: DirectorSuggestion[]): DirectorSuggestion[] {
+	if (suggestions.length <= MAX_SUGGESTIONS_PER_CYCLE) return suggestions;
+	const keep = new Set(
+		suggestions
+			.map((suggestion, index) => ({ index, rank: suggestion.rank ?? Infinity }))
+			.sort((left, right) => left.rank - right.rank || left.index - right.index)
+			.slice(0, MAX_SUGGESTIONS_PER_CYCLE)
+			.map((entry) => entry.index),
+	);
+	return suggestions.filter((_, index) => keep.has(index));
+}
+
 /**
  * The rank each work identity can claim, or null where it can claim none.
  *

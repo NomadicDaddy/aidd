@@ -17,6 +17,12 @@ import type { EvaluationResult } from './types.ts';
 import { clampScore } from './shared.ts';
 import { isRecord, numberValue, stringArray, stringValue } from './validation.ts';
 
+/** Whether an expectation carries an answer key. Absent means the caller keeps its ungraded
+ * behaviour rather than scoring zero against questions nobody wrote. */
+export function hasExpectedQuestions(expectation: Record<string, unknown>): boolean {
+	return Array.isArray(expectation.questions) && expectation.questions.length > 0;
+}
+
 /**
  * Score `corpus` against the expectation's weighted questions.
  *

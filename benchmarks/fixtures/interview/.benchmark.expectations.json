@@ -1,4 +1,26 @@
 {
+	"questions": [
+		{
+			"expected": ["weightedScore", "compositeScore", "scoring.js"],
+			"id": "Q0-located-the-code",
+			"weight": 0.1
+		},
+		{
+			"expected": ["0.36", "0.21", "0.08", "0.65"],
+			"id": "Q1-computed-the-score",
+			"weight": 0.3
+		},
+		{
+			"expected": ["cost", "1.1"],
+			"id": "Q2-unapplied-cost-weight",
+			"weight": 0.25
+		},
+		{
+			"expected": ["results.length", "0.5"],
+			"id": "Q3-control-tasks-dilute-composite",
+			"weight": 0.35
+		}
+	],
 	"responseFiles": [".aidd/responses/response1.md", ".aidd/responses.md"],
 	"type": "interview"
 }

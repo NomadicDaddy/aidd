@@ -7,3 +7,10 @@ export function weightedScore(result) {
 		result.time * TASK_WEIGHTS.time
 	);
 }
+
+// Average weighted score across agentic tasks; control tasks are excluded.
+export function compositeScore(results) {
+	const agentic = results.filter((result) => result.category === 'agentic');
+	const total = agentic.reduce((sum, result) => sum + weightedScore(result), 0);
+	return total / results.length;
+}

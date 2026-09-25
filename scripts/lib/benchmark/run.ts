@@ -90,6 +90,7 @@ function buildRun(
 			pricingForStack(item.stack, manifest),
 		),
 		durationSeconds: metrics.durationSeconds || result.durationSeconds,
+		exitCode: result.status,
 		fixtureHash: sourceHash,
 		iterations: metrics.iterations,
 		notes: evaluation.notes,

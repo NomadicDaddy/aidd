@@ -14,6 +14,7 @@ import { evaluateTask } from './evaluation.ts';
 import { detectArtifacts, hashFixture } from './execution.ts';
 import { parseBenchmarkMetrics } from './metrics.ts';
 import { pricingForStack, resolveCost } from './pricing.ts';
+import { isProviderUnavailableExit } from './shared.ts';
 import { booleanValue, isRecord, numberValue, readJsonUnknown, stringValue } from './validation.ts';
 
 export function loadRuns(runsPath: string): BenchmarkRun[] {
@@ -93,59 +94,75 @@ export function preflightFromSession(
 	return result;
 }
 
+/**
+ * Status is otherwise left as recorded: a timeout or a success is a fact about the run, not a
+ * grade. The one reclassification the saved exit code supports is a failure that was really the
+ * provider refusing to serve. It needs no workspace, which matters because the runs it exists for
+ * are old ones whose workspaces are often gone.
+ */
+function reclassifyProviderRefusal(run: BenchmarkRun): BenchmarkRun {
+	if (run.status !== 'failure' || run.exitCode === undefined) return run;
+	if (!isProviderUnavailableExit(run.exitCode)) return run;
+	return { ...run, status: 'provider_unavailable' };
+}
+
 export function regradeRuns(
 	manifest: BenchmarkManifest,
 	runs: BenchmarkRun[],
 ): { changed: number; runs: BenchmarkRun[] } {
-	const taskById = new Map(manifest.tasks.map((task) => [task.id, task]));
 	let changed = 0;
 	const regraded = runs.map((run): BenchmarkRun => {
-		const pricing = pricingForStack(run.stack, manifest);
-		if (run.status === 'preflight_failed' || run.status === 'skipped') {
-			const resolvedCost = resolveCost(run.costUsd, run.tokenUsage, pricing);
-			if (resolvedCost === run.costUsd) return run;
-			changed += 1;
-			return { ...run, costUsd: resolvedCost };
-		}
-		const task = taskById.get(run.taskId);
-		const workspaceDir = run.artifactPaths.workspace;
-		if (!task || !workspaceDir || !existsSync(workspaceDir)) {
-			// Workspace gone: correctness cannot be re-evaluated, but cost can still be
-			// refreshed from the saved token usage.
-			const resolvedCost = resolveCost(run.costUsd, run.tokenUsage, pricing);
-			if (resolvedCost === run.costUsd) return run;
-			changed += 1;
-			return { ...run, costUsd: resolvedCost };
-		}
-		const artifacts = detectArtifacts(workspaceDir);
-		const metrics = parseBenchmarkMetrics({
-			rawLogs: artifacts.rawLogs,
-			structuredLogs: artifacts.structuredLogs,
-		});
-		const evaluation = evaluateTask({ artifacts, metrics, task, workspaceDir });
-		const resolvedCost = resolveCost(metrics.costUsd, metrics.tokenUsage, pricing);
-		if (
-			JSON.stringify(evaluation.auditEval) !== JSON.stringify(run.auditEval) ||
-			evaluation.score !== run.correctnessScore ||
-			JSON.stringify(evaluation.notes) !== JSON.stringify(run.notes) ||
-			resolvedCost !== run.costUsd
-		) {
-			changed += 1;
-		}
-		const updated: BenchmarkRun = {
-			...run,
-			artifactPaths: artifacts,
-			correctnessScore: evaluation.score,
-			costUsd: resolvedCost,
-			durationSeconds: metrics.durationSeconds || run.durationSeconds,
-			iterations: metrics.iterations,
-			notes: evaluation.notes,
-			tokenUsage: metrics.tokenUsage,
-			workspaceHash: hashFixture(workspaceDir),
-		};
-		if (evaluation.auditEval) updated.auditEval = evaluation.auditEval;
-		else delete updated.auditEval;
-		return updated;
+		const graded = regradeRun(manifest, run);
+		const reclassified = reclassifyProviderRefusal(graded.run);
+		if (graded.changed || reclassified !== graded.run) changed += 1;
+		return reclassified;
 	});
 	return { changed, runs: regraded };
+}
+
+function regradeRun(
+	manifest: BenchmarkManifest,
+	run: BenchmarkRun,
+): { changed: boolean; run: BenchmarkRun } {
+	const pricing = pricingForStack(run.stack, manifest);
+	if (run.status === 'preflight_failed' || run.status === 'skipped') {
+		const resolvedCost = resolveCost(run.costUsd, run.tokenUsage, pricing);
+		if (resolvedCost === run.costUsd) return { changed: false, run };
+		return { changed: true, run: { ...run, costUsd: resolvedCost } };
+	}
+	const task = manifest.tasks.find((candidate) => candidate.id === run.taskId);
+	const workspaceDir = run.artifactPaths.workspace;
+	if (!task || !workspaceDir || !existsSync(workspaceDir)) {
+		// Workspace gone: correctness cannot be re-evaluated, but cost can still be
+		// refreshed from the saved token usage.
+		const resolvedCost = resolveCost(run.costUsd, run.tokenUsage, pricing);
+		if (resolvedCost === run.costUsd) return { changed: false, run };
+		return { changed: true, run: { ...run, costUsd: resolvedCost } };
+	}
+	const artifacts = detectArtifacts(workspaceDir);
+	const metrics = parseBenchmarkMetrics({
+		rawLogs: artifacts.rawLogs,
+		structuredLogs: artifacts.structuredLogs,
+	});
+	const evaluation = evaluateTask({ artifacts, metrics, task, workspaceDir });
+	const resolvedCost = resolveCost(metrics.costUsd, metrics.tokenUsage, pricing);
+	const changed =
+		JSON.stringify(evaluation.auditEval) !== JSON.stringify(run.auditEval) ||
+		evaluation.score !== run.correctnessScore ||
+		JSON.stringify(evaluation.notes) !== JSON.stringify(run.notes) ||
+		resolvedCost !== run.costUsd;
+	const updated: BenchmarkRun = {
+		...run,
+		artifactPaths: artifacts,
+		correctnessScore: evaluation.score,
+		costUsd: resolvedCost,
+		durationSeconds: metrics.durationSeconds || run.durationSeconds,
+		iterations: metrics.iterations,
+		notes: evaluation.notes,
+		tokenUsage: metrics.tokenUsage,
+		workspaceHash: hashFixture(workspaceDir),
+	};
+	if (evaluation.auditEval) updated.auditEval = evaluation.auditEval;
+	else delete updated.auditEval;
+	return { changed, run: updated };
 }

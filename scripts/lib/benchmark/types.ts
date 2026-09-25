@@ -179,6 +179,11 @@ export interface BenchmarkRun {
 	correctnessScore: number;
 	costUsd: null | number;
 	durationSeconds: number;
+	/**
+	 * The aidd process's exit code. Recorded so a regrade can tell a provider refusal from a wrong
+	 * answer; runs recorded before it existed lack it and cannot be reclassified.
+	 */
+	exitCode?: number;
 	fixtureHash: string;
 	iterations: number;
 	notes: string[];

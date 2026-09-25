@@ -36,11 +36,15 @@ export function controlCommandSucceeded(
  * Deliberately narrow. `providerFlagged` (a content-policy refusal) IS a result about the model
  * and stays in the quality population, as do timeouts, flailing and validation failures.
  */
-export function isProviderUnavailable(commandResult: CommandResult): boolean {
+export function isProviderUnavailableExit(exitCode: number): boolean {
 	return (
-		commandResult.status === orchestratorExitCodes.rateLimited ||
-		commandResult.status === orchestratorExitCodes.providerError
+		exitCode === orchestratorExitCodes.rateLimited ||
+		exitCode === orchestratorExitCodes.providerError
 	);
+}
+
+export function isProviderUnavailable(commandResult: CommandResult): boolean {
+	return isProviderUnavailableExit(commandResult.status);
 }
 
 /**

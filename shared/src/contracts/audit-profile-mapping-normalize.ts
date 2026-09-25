@@ -162,6 +162,23 @@ export function normalizeAuditProfileMapping(value: unknown): AuditProfileMappin
 	}
 	const result: AuditProfileMapping = { rules, version: 1 };
 	if (typeof raw.$schema === 'string') result.$schema = raw.$schema;
+	if (raw.requiresPackages !== undefined) {
+		result.requiresPackages = normalizeRequiresPackages(raw.requiresPackages);
+	}
+	return result;
+}
+
+function normalizeRequiresPackages(value: unknown): Record<string, string[]> {
+	const table = ensureObject(value, 'Audit profile mapping requiresPackages');
+	const result: Record<string, string[]> = {};
+	for (const [auditName, packages] of Object.entries(table)) {
+		const names = ensureStringArray(packages, `requiresPackages.${auditName}`);
+		// An empty list would make the audit apply nowhere, which is what `excluded` is for.
+		if (names.length === 0) {
+			throw new Error(`requiresPackages.${auditName} must name at least one package.`);
+		}
+		result[auditName.toUpperCase()] = names;
+	}
 	return result;
 }
 

@@ -167,6 +167,25 @@ export function isAuditApplicableToProfile(
 	return resolveAuditEffect(profile, auditName, mapping, overrides).applies;
 }
 
+/**
+ * Applicability for one concrete project. The profile decides first, and a `required` effect
+ * stands on its own; otherwise an audit listed in `requiresPackages` applies only where the
+ * project's manifests depend on one of those packages.
+ */
+export function isAuditApplicableToProject(
+	profile: ProjectAssuranceProfile,
+	projectPackages: ReadonlySet<string>,
+	auditName: string,
+	mapping: AuditProfileMapping,
+	overrides?: AuditProfileOverrides | null,
+): boolean {
+	const cell = resolveAuditEffect(profile, auditName, mapping, overrides);
+	if (!cell.applies) return false;
+	if (cell.effect === 'required') return true;
+	const packages = mapping.requiresPackages?.[auditName.toUpperCase()];
+	return packages === undefined || packages.some((name) => projectPackages.has(name));
+}
+
 export function resolveBucketAuditEffect(
 	bucket: ProjectAssuranceBucket,
 	auditName: string,

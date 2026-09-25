@@ -6,6 +6,7 @@ export {
 export {
 	buildApplicabilityMatrix,
 	isAuditApplicableToProfile,
+	isAuditApplicableToProject,
 	isLowExposureLocalProfile,
 	requiresFullHardening,
 	resolveAuditEffect,

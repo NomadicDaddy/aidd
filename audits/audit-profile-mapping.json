@@ -1,5 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"requiresPackages": {
+		"COMPOSITION_PATTERNS": ["react"],
+		"CONVEX": ["convex"],
+		"REACT_BEST_PRACTICES": ["react"]
+	},
 	"rules": [
 		{
 			"audits": ["*"],
@@ -86,6 +91,13 @@
 					"critical_regulated"
 				]
 			}
+		},
+		{
+			"audits": ["SPERNAKIT"],
+			"description": "The Spernakit audit measures drift from the template, so only apps derived from it run it.",
+			"effect": "disabled",
+			"id": "non-derived-skip-spernakit",
+			"match": { "derivesFromTemplate": ["none"] }
 		}
 	],
 	"version": 1

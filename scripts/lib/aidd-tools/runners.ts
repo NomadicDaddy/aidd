@@ -179,6 +179,11 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 			}
 		}
 	}
+	for (const audit of Object.keys(mapping.requiresPackages ?? {})) {
+		if (!knownAudits.has(audit)) {
+			errors.push(`requiresPackages references unknown audit: ${audit}`);
+		}
+	}
 
 	const ruleIds = mapping.rules.map((rule) => rule.id);
 	const duplicateRuleIds = ruleIds.filter((id, index) => ruleIds.indexOf(id) !== index);

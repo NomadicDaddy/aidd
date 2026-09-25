@@ -56,6 +56,12 @@ export interface AuditProfileRule {
 
 export interface AuditProfileMapping {
 	$schema?: string;
+	/**
+	 * Audits that only make sense for code built on a given package, keyed by audit name. Such an
+	 * audit applies to a project only where one of its manifests depends on a listed package. The
+	 * profile cannot express this: whether a project uses React says nothing about its exposure.
+	 */
+	requiresPackages?: Record<string, string[]>;
 	rules: AuditProfileRule[];
 	version: 1;
 }

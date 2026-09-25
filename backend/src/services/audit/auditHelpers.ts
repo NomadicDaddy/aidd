@@ -1,7 +1,7 @@
 import {
 	type AuditApplicabilityRow,
 	type AuditProfileMapping,
-	isAuditApplicableToProfile,
+	isAuditApplicableToProject,
 	type ProjectAssuranceBucket,
 	projectAssuranceBuckets,
 } from 'aidd-shared';
@@ -19,6 +19,7 @@ import {
 	loadAuditPriorities,
 	scoreAudit,
 } from 'aidd-shared/metadata/audit-scoring';
+import { projectDependencyNames } from 'aidd-shared/metadata/project-packages';
 import { readProjectAssuranceProfile } from 'aidd-shared/metadata/project-profile';
 import { stat } from 'node:fs/promises';
 
@@ -40,6 +41,7 @@ export function normalizeAuditNames(names: string[]): string[] {
 
 export interface ProjectProfileEntry {
 	overrides: Awaited<ReturnType<typeof loadAuditProfileOverrides>>;
+	packages: Set<string>;
 	profile: Awaited<ReturnType<typeof readProjectAssuranceProfile>>;
 }
 
@@ -54,11 +56,12 @@ async function resolveProfileEntry(
 ): Promise<ProjectProfileEntry> {
 	const cached = cache.get(projectPath);
 	if (cached) return cached;
-	const [profile, overrides] = await Promise.all([
+	const [profile, overrides, packages] = await Promise.all([
 		readProjectAssuranceProfile(projectPath),
 		loadAuditProfileOverrides(projectPath),
+		projectDependencyNames(projectPath),
 	]);
-	const entry: ProjectProfileEntry = { overrides, profile };
+	const entry: ProjectProfileEntry = { overrides, packages, profile };
 	cache.set(projectPath, entry);
 	return entry;
 }
@@ -122,8 +125,13 @@ async function computeApplicability(
 	}
 	let applicableProjectCount = 0;
 	for (const project of projects) {
-		const { overrides, profile } = await resolveProfileEntry(profileCache, project.path);
-		if (isAuditApplicableToProfile(profile, name, mapping, overrides)) applicableProjectCount++;
+		const { overrides, packages, profile } = await resolveProfileEntry(
+			profileCache,
+			project.path,
+		);
+		if (isAuditApplicableToProject(profile, packages, name, mapping, overrides)) {
+			applicableProjectCount++;
+		}
 	}
 	return {
 		applicableBucketCount,
@@ -151,8 +159,11 @@ async function computeReportHealth(
 		// Equivalent to filterApplicableAuditNames(rootDir, project.path, [name]) but using
 		// the shared profile/overrides cache and the already-loaded mapping instead of
 		// re-reading all three from disk for every audit × project.
-		const { overrides, profile } = await resolveProfileEntry(profileCache, project.path);
-		if (!isAuditApplicableToProfile(profile, name, mapping, overrides)) continue;
+		const { overrides, packages, profile } = await resolveProfileEntry(
+			profileCache,
+			project.path,
+		);
+		if (!isAuditApplicableToProject(profile, packages, name, mapping, overrides)) continue;
 		let context = freshnessContexts.get(project.path);
 		if (!context) {
 			context = createAuditFreshnessContext();

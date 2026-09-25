@@ -2,6 +2,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import {
+	isAuditApplicableToProject,
 	isLowExposureLocalProfile,
 	normalizeProjectAssuranceProfileFile,
 	normalizeProjectAssuranceProfileInput,
@@ -11,11 +12,11 @@ import {
 	type ProjectContainerImage,
 	type ProjectTemplateOrigin,
 	requiresFullHardening,
-	isAuditApplicableToProfile as resolverIsAuditApplicableToProfile,
 } from '../index.ts';
 import { loadAuditProfileMapping, loadAuditProfileOverrides } from './audit-profile-mapping.ts';
 import { printJson } from './json-format.ts';
 import { metadataPath } from './paths.ts';
+import { projectDependencyNames } from './project-packages.ts';
 import { readProjectPackage } from './project-stack-evidence.ts';
 import { detectProjectStack } from './project-stack.ts';
 
@@ -77,8 +78,9 @@ export async function filterApplicableAuditNames(
 	const profile = await readProjectAssuranceProfile(projectDir);
 	const mapping = await loadAuditProfileMapping(catalogDir);
 	const overrides = await loadAuditProfileOverrides(projectDir);
+	const packages = await projectDependencyNames(projectDir);
 	return auditNames.filter((auditName) =>
-		resolverIsAuditApplicableToProfile(profile, auditName, mapping, overrides),
+		isAuditApplicableToProject(profile, packages, auditName, mapping, overrides),
 	);
 }
 

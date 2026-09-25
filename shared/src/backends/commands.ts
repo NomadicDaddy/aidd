@@ -87,6 +87,10 @@ export function buildBackendCommand(backend: BackendName, input: PromptInput): B
 					'--verbose',
 					'--dangerously-skip-permissions',
 					'--no-session-persistence',
+					// Load no MCP servers. Without this every run inherits the operator's claude.ai
+					// connectors (Gmail alone is about 30 tool schemas, re-sent every turn), and no aidd
+					// prompt, skill or recipe calls any of them.
+					'--strict-mcp-config',
 					...modelArgs(input),
 					...claudeEffortArgs(input),
 				],

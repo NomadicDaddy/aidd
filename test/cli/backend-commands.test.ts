@@ -24,6 +24,15 @@ describe('backend command builders', () => {
 		expect(command.args).toContain('low');
 	});
 
+	test('Claude Code runs load no MCP servers', () => {
+		// Without --strict-mcp-config a run inherits the operator's claude.ai connectors (Docs,
+		// Gmail, Drive, Calendar), re-sending their tool schemas on every turn. No aidd prompt, skill
+		// or recipe uses them. There is no --mcp-config either, so the strict list is empty.
+		const command = buildBackendCommand('claude-code', input);
+		expect(command.args).toContain('--strict-mcp-config');
+		expect(command.args).not.toContain('--mcp-config');
+	});
+
 	test('builds OpenCode and KiloCode command names', () => {
 		const opencode = buildBackendCommand('opencode', input);
 		expect(opencode.args[0]).toBe('run');

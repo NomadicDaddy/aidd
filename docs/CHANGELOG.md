@@ -2,6 +2,41 @@
 
 All notable public aidd releases are documented here.
 
+## [3.2.0] - 2026-09-25
+
+### Added
+
+- Scheduled tasks can target a free-form Directive: a prompt with its own launch overrides and execution intent, run against one project, all projects, or no project at all. A directive a timer starts is shaped and recorded exactly like one started from the Directive dialog.
+- A launch that would exceed the concurrent-run limits is queued instead of failing, and starts in order as slots free. A queued run spawns nothing and holds no worktree until it is admitted, and it appears beside running runs on the Runs page, the dashboard, the project run banner, and the sidebar count.
+- A coding recipe whose coding step finds no work ends there. The review, remediation, and documentation steps behind it are recorded as skipped instead of re-reviewing an earlier session's commits, and a session reports skipped steps separately from completed ones.
+- The benchmark interview task asks a question with planted defects and grades only the answer text, so a run that restates the question or dumps its transcript no longer scores.
+
+### Changed
+
+- A worktree run's merge conflicts are resolved outside the live checkout. The merge, and any agent resolving it, runs in a scratch worktree at the live branch tip, and the live tree only fast-forwards onto the finished result. A run whose live branch moved in the meantime parks for review.
+- `--audit-all` skips audits a project's template or packages rule out. The Spernakit audit runs only on apps derived from the template, and the React and Convex audits only where a project manifest depends on `react` or `convex`. Audit health counts, the project audit list, and maturity scoring apply the same rule, so a project no longer loses maturity for an audit it cannot use.
+- The Director keeps at most 20 suggestions per cycle, dropping the lowest-ranked first. The limit was previously an instruction to the model that cycles regularly exceeded.
+- The run token budget counts cache reads at a tenth of their weight, which is how providers bill them, so a long run that mostly re-reads its context no longer looks like a runaway. The `audit-finding-review` skill keeps its parallel reviewers lean and re-checks only removals itself.
+- A pipeline step waiting on its run is bounded by how long the run has been silent rather than how long it has been running, so a run that stays busy for seven hours is no longer abandoned at six.
+- An initializer or onboarding phase stops once two consecutive iterations reach the same verdict. A roadmap that exists but cannot be read is now reported as unreadable instead of as a missing milestone.
+- Benchmark runs record their exit code, and a provider refusal is scored as the provider being unavailable rather than as a wrong answer, including when older runs that recorded one are regraded.
+
+### Fixed
+
+- A run given a project directory that does not exist, or a configured root that has no `.aidd/` of its own, is refused instead of scaffolding a project at the mistyped path.
+- A run continues after the provider connection drops mid-request, which Bun reports with no error code or HTTP status.
+- Grok 1.x tool calls and results are parsed, which restores tool activity and flailing protection on that backend, and its token usage is counted once instead of twice.
+- Stopping a launched app, or the app crashing, also stops the detached servers it started, so a dev server no longer keeps its port after the app is gone.
+- Records a run writes after its agent stops, such as a parked feature's context and roadmap stamps, are committed at run end in projects that track `.aidd/`. Records the operator already had changed are left alone.
+- Pipeline session metrics no longer appear as untracked files in projects scaffolded before `.aidd/runtime/` was ignored.
+- A stale Director chat session returns 404 instead of an error the panel retried three times, a blank chat message returns 400, and a tab whose session was deleted elsewhere moves to the current list.
+- Run logs print object error details as JSON rather than `[object Object]`.
+- The system metrics retention sweep uses an index instead of scanning the whole table at every backend start.
+- The Telegram bridge no longer crashes while redacting an error whose message is read-only.
+- Scaffolding no longer tries to copy a shared file onto itself.
+- The credential-disclosure gate no longer reports a permission-denied read as a disclosure.
+- Test suites no longer write into the live AI-call log.
+
 ## [3.1.0] - 2026-09-19
 
 ### Added

@@ -100,6 +100,33 @@ For each file referenced in audit findings, determine its origin:
 
 For every audit finding, perform the following evaluation:
 
+#### Parallel review
+
+When you split the findings across subagents, keep each reviewer small. On summon, 76 findings
+across 8 general-purpose reviewers spent about a third of the run's tokens on harness overhead
+each reviewer re-sent every turn, and more on reading outside the target repository. None of it
+served the review.
+
+- **Use a read-only agent type.** Pick one limited to reading and searching files and running
+  read-only shell commands. A general-purpose agent carries every tool and connector schema
+  into every turn of its context, and a reviewer needs none of them.
+- **Put the finding in the prompt.** Phase 1 already read every feature.json, so give each
+  reviewer its findings inline: id, title, auditSource, severity, description, spec and
+  affectedFiles, plus the ids of related findings elsewhere that it should weigh for
+  consolidation. A reviewer should read code, not re-read records you already hold.
+- **Stay in the target repository.** Reviewers read the target app, and `<spernakit-root>` only
+  when Phase 2b applies. They do not inspect other repositories, installed binaries or package
+  registries. Read-only measurements inside the target, such as counting records or checking a
+  file's size to judge necessity, are in scope.
+- **Stop when the disposition is settled.** One piece of decisive evidence is enough to
+  classify; do not keep investigating a finding once its classification is clear.
+- **Return edit-ready results.** Each reviewer returns, per finding: the disposition, the
+  reason code, `file:line` evidence, and for DOWNGRADE the new severity plus the narrowed
+  description and spec text, or for CONSOLIDATE the group and merged title. Phase 6 then applies
+  them without re-reading.
+- **Do not trust the finding's own verification.** Reviewers check the code themselves; this is
+  the point of the step and is not a trim.
+
 #### 3a. Accuracy Check
 
 Verify the finding against the CURRENT codebase (not assumptions):
@@ -269,6 +296,10 @@ Use these `reason_code` values:
 ### Phase 6: Execute Changes
 
 After presenting the report, apply every disposition directly in the same run.
+
+Re-verify REMOVE claims yourself before dismissing, because a dismissal writes a permanent ledger
+event. Apply KEEP, DOWNGRADE and CONSOLIDATE from the reviewers' returned fields without
+re-reading their findings or code.
 
 #### Execute:
 

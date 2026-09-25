@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { evaluateRunBudget } from '../../shared/src/orchestrator/budget.ts';
+import { budgetTokens, evaluateRunBudget } from '../../shared/src/orchestrator/budget.ts';
 
 const totals = (costUsd: number, inputTokens: number, outputTokens: number) => ({
 	costUsd,
@@ -39,5 +39,38 @@ describe('evaluateRunBudget', () => {
 		});
 		expect(verdict.exceeded).toBe(true);
 		expect(verdict.reasons).toHaveLength(2);
+	});
+});
+
+describe('budgetTokens', () => {
+	test('discounts the cache-read share of input and counts the rest in full', () => {
+		// The summon review step: 374 fresh + 13,437,047 cache-read + 831,619 cache-creation input,
+		// 66,442 output. At full weight that was 14.3M against a 10M ceiling.
+		const input = 374 + 13_437_047 + 831_619;
+		const counted = budgetTokens({
+			cachedTokens: 13_437_047,
+			costUsd: 11.15,
+			inputTokens: input,
+			outputTokens: 66_442,
+		});
+		expect(counted).toBe(Math.round(374 + 831_619 + 13_437_047 * 0.1 + 66_442));
+		expect(
+			evaluateRunBudget(
+				{
+					cachedTokens: 13_437_047,
+					costUsd: 11.15,
+					inputTokens: input,
+					outputTokens: 66_442,
+				},
+				{ maxTokens: 10_000_000 },
+			).exceeded,
+		).toBe(false);
+	});
+
+	test('without a cache share it is the plain sum, and a cache claim never exceeds input', () => {
+		expect(budgetTokens(totals(0, 600, 400))).toBe(1000);
+		expect(
+			budgetTokens({ cachedTokens: 5000, costUsd: 0, inputTokens: 1000, outputTokens: 0 }),
+		).toBe(100);
 	});
 });

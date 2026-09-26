@@ -64,14 +64,16 @@ Dormant repos (no commits in >12 months) and `*.old` archives are out of scope.
 
 ### 1. Tool versions
 
-Compare the target's devDependencies against the baseline recorded in this audit:
+Compare the target's devDependencies against the baseline. Spernakit's current `package.json` is
+the baseline; the table below is a snapshot taken 2026-09-26, and the manifest wins wherever they
+differ.
 
 | Tool                         | Baseline |
 | ---------------------------- | -------- |
 | typescript                   | 6.0.3    |
-| eslint                       | 10.10.0  |
-| typescript-eslint            | 8.69.0   |
-| prettier                     | 3.9.6    |
+| eslint                       | 10.11.0  |
+| typescript-eslint            | 8.70.1   |
+| prettier                     | 3.9.9    |
 | bun (engines/packageManager) | 1.4.2    |
 
 ```bash

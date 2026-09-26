@@ -25,7 +25,7 @@ reproduced in the summary document; the copyright holder is the package author.
 - `@tokenizer/token@0.3.0` (MIT)
 - `@xterm/addon-serialize@0.14.0` (MIT)
 - `@xterm/headless@6.0.0` (MIT)
-- `drizzle-orm@0.45.2` (Apache-2.0)
+- `drizzle-orm@0.45.3` (Apache-2.0)
 - `react-remove-scroll-bar@2.3.8` (MIT)
 
 ## Non-package notices
@@ -596,7 +596,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### @modelcontextprotocol/sdk@1.30.0
+### @modelcontextprotocol/sdk@1.30.1
 
 License: MIT
 
@@ -1160,7 +1160,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### @tanstack/query-core@5.103.1
+### @tanstack/query-core@5.104.0
 
 License: MIT
 
@@ -1188,7 +1188,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### @tanstack/react-query@5.103.1
+### @tanstack/react-query@5.104.0
 
 License: MIT
 
@@ -2074,7 +2074,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### drizzle-orm@0.45.2
+### drizzle-orm@0.45.3
 
 License: Apache-2.0
 
@@ -3187,7 +3187,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### lucide-react@1.47.0
+### lucide-react@1.48.0
 
 License: ISC
 

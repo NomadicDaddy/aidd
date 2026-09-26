@@ -108,6 +108,16 @@ element the app actually animates. Record both in the baseline and pass the resu
 subagent prompt. A stale assumption here silently suppresses a whole finding category: reviewers told
 motion is forced off stop reporting motion at all.
 
+**Sweep only against non-real secrets.** A screenshot is an ordinary file in a directory that
+backup mirrors carry, and `.gitignore` does not exclude it from them. Nothing scans it either:
+pre-commit secret guards read staged git additions, and a screenshot is never staged, so it is out
+of their scope by construction rather than by failure. The rule that actually closes this is
+upstream of the capture — sweep an instance whose credentials are throwaway: fake API keys, a local
+database login that exists nowhere else, test accounts. **If a surface can only be rendered using a
+real external credential, do not sweep it.** Record it as unreached with that reason. A screenshot
+of a fake key is harmless on any number of disks; a screenshot of a real one is not recoverable by
+deleting the file, because the mirrors already have it.
+
 **Never write to a path that already exists.** The work directory and report carry both `{RUN}` and
 `{MODE}`; screenshots use the unique `{YYYYMMDD}{ID}` directory resolved above. If the work directory
 exists, stop and report it rather than overwriting: `.aidd/` is gitignored in many projects, so an
@@ -216,6 +226,15 @@ Judge "consistent" against this baseline, not against your own taste:
 {baseline digest}
 
 Evidence for this surface, before judging anything:
+  - BEFORE each capture, scan the page for secret material: the rendered text, every
+    input's VALUE, and the URL. Look for the generic secret formats — long random
+    tokens, PEM headers, key-shaped assignments. On a hit, DO NOT WRITE THE PNG.
+    Record the surface as withheld, name what matched by SHAPE not by value, and
+    review what you can from the DOM instead. Scan the DOM, never the image: reading
+    the page is reliable where OCR is not, and by the time a PNG exists the file is
+    already on disk and inside the backup set.
+  - never reveal a masked field to capture it. A password or token input renders
+    masked by design; unmasking it to see the value puts the value in the image.
   - screenshot at each viewport into {screenshots}/{surface-id}-{tab}-{viewport}.png
   - an interactive snapshot
   - console and error output
@@ -286,9 +305,11 @@ The report contains:
 
 - **Run header** — URL, theme, mode, viewports, role, date, commit under test, surfaces enumerated,
   reviewed, unreached.
-- **Coverage table** — every surface with its tabs, marked `visited`, `partial`, or `unreached` with
-  a reason. List the unreached ones explicitly; a sweep that hides its gaps is worse than a smaller
-  sweep that names them.
+- **Coverage table** — every surface with its tabs, marked `visited`, `partial`, `unreached`, or
+  `withheld` with a reason. List the unreached and withheld ones explicitly; a sweep that hides its
+  gaps is worse than a smaller sweep that names them. `withheld` means a reviewer found secret
+  material on the surface and declined to write the image — that is the guard working, and it
+  belongs in the report as a result rather than as a gap.
 - **Baseline digest** — carried from Phase 2, so later readers know what "consistent" meant here.
 - **Systemic findings** — for each: the component, the surfaces affected, the observation, the
   proposed change in existing tokens and components, and acceptance criteria a implementer can check.

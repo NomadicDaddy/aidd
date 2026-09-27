@@ -44,10 +44,12 @@ library, or a single-screen tool has nothing for this skill to do — say so and
 
 This skill never edits product code.
 
-**Probe for browser automation before concluding it is missing.** Run `agent-browser --version`.
-It is a CLI reached through the `agent-browser` skill, not a registered tool. This review cannot
-substitute source inspection for observed browser evidence, so stop with the installation guidance
-if the probe genuinely fails.
+**Probe the browser tool against the target, not for its presence.** A `--version` answer proves
+only that a binary exists. Open one real page and require it to return within 60 seconds, or
+switch tools; name the tool that drove the run in the report. Prefer spernakit-browser
+(`bun <applications-root>/spernakit-browser/src/sb.ts`) where installed, and size each capture
+with `set viewport`, never an `open --viewport` flag. Never substitute source inspection
+for observed browser evidence; stop only when no browser tool can open the target.
 
 ## Phase 0: Resolve the target and fix the run conditions
 

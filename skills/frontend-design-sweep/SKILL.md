@@ -47,12 +47,25 @@ library, or a single-screen tool has nothing for this skill to do — say so and
 This skill never edits frontend code. Hand approved changes to `ui-playground-apply`,
 `spernakit-apply-ui`, or ordinary implementation work.
 
-**Probe for browser automation before concluding it is missing.** Run `agent-browser --version`. It
-is a CLI reached through the `agent-browser` skill, **not a registered tool** — a search of the tool
-registry finds nothing and proves nothing. A sweep cannot run without it, so establish this in Phase
-0 and stop with the install instruction if the probe genuinely fails. Never substitute reading
-source for looking at the screen: a visual claim derived from source is a hypothesis, and this skill
-exists to test hypotheses against pixels.
+**Probe the browser tool against the actual target, not for its presence.** Browser automation is a
+CLI, **not a registered tool**, so a search of the tool registry finds nothing and proves nothing;
+and a `--version` check answers instantly on a tool that cannot open your page. On 2026-09-27
+agent-browser 0.38.1 reported its version and then took about an hour to return from an `open`
+against a locally served React app. Presence is not capability.
+
+In Phase 0, open ONE real surface of the target and require it to return within 60 seconds. If it
+does not, switch tools, and **record which tool drove the run in the report**: a sweep's findings
+are only comparable to another sweep's if both name their instrument. Where it is installed, the
+default is spernakit-browser, invoked as `bun <applications-root>/spernakit-browser/src/sb.ts`;
+agent-browser is acceptable on a target where it has been measured to work. Never pass
+`--viewport` to `sb open` (older builds silently discarded it): set the size with
+`set viewport <width> <height>` (two integers) before EVERY capture and confirm the geometry
+actually changed between viewports: a stuck viewport and a fixed-width layout produce the same
+screenshot. It has no `eval`, so computed geometry or accessible names need Puppeteer driven
+directly. Stop only when no browser tool can open the target.
+
+Never substitute reading source for looking at the screen: a visual claim derived from source is a
+hypothesis, and this skill exists to test hypotheses against pixels.
 
 ## Phase 0: Resolve the target and fix the run conditions
 

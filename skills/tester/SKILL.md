@@ -10,8 +10,9 @@ metadata:
 # Test an Application
 
 Exercise a running application as a user, collect reproducible evidence, and report defects
-through whatever intake the project provides. Combine the project's own automated gates with the
-canonical `agent-browser` skill for interactive testing.
+through whatever intake the project provides. Combine the project's own automated gates with an
+interactive browser driver: spernakit-browser (`sb`) where it is installed, otherwise whichever
+browser automation CLI the workspace provides.
 
 Do not inspect product source to invent findings. Read configuration, test output, and logs only
 to prepare the run or explain an observed failure.
@@ -129,18 +130,31 @@ a reset-capable or destructive gate unless the user explicitly requests that bro
 
 ### Exploratory coverage
 
-Use the canonical `agent-browser` skill for interactive browser automation. Load its current
-instructions before issuing commands because its CLI is maintained outside aidd.
+Where spernakit-browser is installed, it is the default driver; another CLI such as agent-browser
+is acceptable on a target where it has been measured to work. sb is a standalone repository at
+`<applications-root>/spernakit-browser`, not on PATH, so invoke its entry file from any directory:
+`bun <applications-root>/spernakit-browser/src/sb.ts` (written `sb` below); its README lists the
+commands. Elsewhere, use the browser automation CLI the workspace provides, with its equivalents.
+
+Probe the tool against the actual target, not for its presence: a `--version` answer proves only
+that a binary exists. Open one real surface and require it to return within 60 seconds. If it does
+not, switch tools. Name the tool that drove the run in the results, because findings are only
+comparable between runs that name their instrument.
 
 Start an isolated session and preserve existing evidence:
 
 ```text
-agent-browser --session {SESSION} open {TARGET_URL}
-agent-browser --session {SESSION} set viewport 2250 1309
-agent-browser --session {SESSION} wait --load networkidle
-agent-browser --session {SESSION} snapshot -i
-agent-browser --session {SESSION} screenshot --annotate {EVIDENCE_DIR}/orientation.png
+sb --session {SESSION} open {TARGET_URL}
+sb --session {SESSION} set viewport 2250 1309
+sb --session {SESSION} wait --load networkidle
+sb --session {SESSION} snapshot -i
+sb --session {SESSION} screenshot {EVIDENCE_DIR}/orientation.png
 ```
+
+Never pass `--viewport` to `open` (older builds silently discarded it). Set the size with
+`set viewport <width> <height>` after opening and before every capture, then confirm the image
+dimensions match. A stuck viewport and a fixed-width layout produce the same screenshot. `sb` has
+no `eval`; read computed values through Puppeteer directly when a finding depends on them.
 
 Explore these areas systematically:
 
@@ -160,8 +174,8 @@ product defects. Refresh the interactive snapshot after navigation or any signif
 Check browser and application logs at orientation, after important workflows, and at wrap-up:
 
 ```text
-agent-browser --session {SESSION} errors
-agent-browser --session {SESSION} console
+sb --session {SESSION} errors
+sb --session {SESSION} console
 ```
 
 Correlate each error with the page and action that produced it. Ignore normal startup messages,
@@ -184,22 +198,22 @@ later case, record the dependency and mark dependent cases `BLOCKED` when setup 
 ## Capture Evidence
 
 Create the new session-specific `{EVIDENCE_DIR}` resolved in Inputs; never clear a previous run.
-Automated suites may keep their own tool-controlled artifacts, but every screenshot or short video
-captured directly by this skill goes in `{EVIDENCE_DIR}`. Capture at least one screenshot for every
-failed assertion or reported defect. Use a short video when timing or a sequence of interactions is
-essential to reproduce the problem.
+Automated suites may keep their own tool-controlled artifacts, but every screenshot captured
+directly by this skill goes in `{EVIDENCE_DIR}`. Capture at least one screenshot for every failed
+assertion or reported defect. `sb` cannot record video, so when timing or a sequence of
+interactions is essential, capture a numbered screenshot at each step and write the steps down.
 
 ```text
-agent-browser --session {SESSION} screenshot --annotate {EVIDENCE_DIR}/{CASE}-failure.png
-agent-browser --session {SESSION} record start {EVIDENCE_DIR}/{CASE}-repro.webm
-# Reproduce the interaction at a readable pace.
-agent-browser --session {SESSION} record stop
+sb --session {SESSION} screenshot {EVIDENCE_DIR}/{CASE}-failure.png
+sb --session {SESSION} screenshot {EVIDENCE_DIR}/{CASE}-step-01.png
 ```
 
 Record the URL, role, viewport when relevant, reproduction steps, expected result, actual result,
 and evidence path. Confirm suspected click or submission failures with a fresh snapshot and a
-second deliberate attempt before reporting them. Do not attribute failures to the automation
-harness without evidence.
+second deliberate attempt before reporting them. When a second driver is available, cross-check
+any claim that an interaction did or did not work, and any release-blocking finding, in that
+driver as well; appearance findings need no cross-check. If the drivers disagree, a real browser
+decides, not a vote. Do not attribute failures to the automation harness without evidence.
 
 ## Report Findings
 
@@ -225,7 +239,7 @@ Before finishing:
 
 1. Reconcile visited pages and executed cases with captured evidence.
 2. Recheck browser errors, console output, and relevant application logs.
-3. Close the browser session with `agent-browser --session {SESSION} close`.
+3. Close the browser session with `sb --session {SESSION} close`.
 4. If this run started the application, stop it with the command found in Phase 0 from
    `{APP_DIR}`. Leave a pre-existing application process running.
 5. Report every command executed and whether it passed, failed, or was blocked.

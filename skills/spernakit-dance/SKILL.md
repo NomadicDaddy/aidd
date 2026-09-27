@@ -260,14 +260,15 @@ Each unblocked worker then:
   `{ app, pagesVisited, baselineReportIds, submittedReportIds, sessionReports, blockers }`.
   `sessionReports` contains complete post-baseline API rows; do not parse values from prose.
 
-**Prove the tool before filing a keyboard finding.** `agent-browser key` can report success while
-the page receives no event, which turns every keyboard-accessibility check into a false positive:
-Escape "does not close" the dialog, Enter "does not submit" the form, Tab "does not move" focus.
-Before recording any keyboard finding, run a self-test on a control whose keyboard behaviour is
-already known to work in that app, and confirm the page observed the key. If the self-test fails,
-the tool is not delivering keystrokes — fall back to an in-page `dispatchEvent` with the equivalent
-`KeyboardEvent`, or mark keyboard coverage as not-tested for that app. Never file a keyboard finding
-on a run whose self-test did not pass; a retracted report costs more than an untested surface.
+**Prove the tool before filing a keyboard finding.** Testers drive spernakit-browser
+(`bun <applications-root>/spernakit-browser/src/sb.ts --session {app}`) and name it in results. A
+key press can report success while the page receives no event, which turns every keyboard check
+into a false positive: Escape "does not close" the dialog, Tab "does not move" focus. `sb press`
+takes single keys only; a chord fails with `Unknown key`. Before recording any keyboard finding,
+self-test a control whose keyboard behaviour already works in that app and confirm the page saw
+the key. If it did not, drive Puppeteer directly (`sb` has no `eval`) or mark keyboard coverage
+not-tested for that app. Never file a keyboard finding on a run whose self-test did not pass; a
+retracted report costs more than an untested surface.
 
 ### B2. Cluster bugs across the fleet
 

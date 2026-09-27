@@ -212,8 +212,9 @@ Record the URL, role, viewport when relevant, reproduction steps, expected resul
 and evidence path. Confirm suspected click or submission failures with a fresh snapshot and a
 second deliberate attempt before reporting them. When a second driver is available, cross-check
 any claim that an interaction did or did not work, and any release-blocking finding, in that
-driver as well; appearance findings need no cross-check. If the drivers disagree, a real browser
-decides, not a vote. Do not attribute failures to the automation harness without evidence.
+driver as well; appearance findings need no cross-check. Agreement counts only once both drivers
+have detected a known-positive control on that target, since two tools blind in the same way
+agree. If the drivers disagree, a real browser decides, not a vote. Do not attribute failures to the automation harness without evidence.
 
 ## Report Findings
 

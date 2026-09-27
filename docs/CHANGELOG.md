@@ -2,6 +2,27 @@
 
 All notable public aidd releases are documented here.
 
+## [3.3.0] - 2026-09-27
+
+### Added
+
+- A repository can list private names it is allowed to publish in a tracked `.githooks/leak-guard-publishes`, so a public site can advertise sibling products whose names the leak guard keeps private everywhere else. The list is read from the staged index, an entry must match a private pattern in full, it never exempts the secret or home-path checks, and every commit it clears says so.
+- Design sweeps no longer photograph secrets. A sweep runs against non-real credentials only, skips a surface that needs a real external credential to render, scans the page, its input values and its URL before each capture, and withholds the screenshot on a hit. A withheld surface is reported as a result rather than as missing coverage.
+
+### Changed
+
+- The tester, design-sweep, page-by-page and Spernakit dance skills use spernakit-browser as their default browser driver where it is installed, keeping agent-browser for targets where it has been measured to work. Each checks the tool by opening a real page of the target within 60 seconds instead of asking for its version, names the tool it used in its report, and cross-checks interaction claims in a second driver, with a real browser deciding when the two disagree.
+- The TS_STANDARDS audit treats Spernakit's `package.json` as the toolchain version baseline, and its version table is now a dated snapshot rather than a second source of truth.
+- Dependencies updated, including drizzle-orm 0.45.3, @tanstack/react-query 5.104.0, vite 8.3.1, puppeteer 25.12.0 and typescript-eslint 8.70.1. The scaffold and third-party notices follow them.
+
+### Fixed
+
+- Claude Code runs start with no MCP servers. They had inherited the operator's claude.ai connectors, adding roughly 30k tokens of unused tool definitions to every turn of every run and subagent.
+
+### Security
+
+- The leak guard finds its private pattern file through the Windows user environment when a session did not inherit the variable, and refuses the commit when a configured pattern file is missing or unreadable instead of warning and passing. `LEAK_GUARD_ALLOW_NO_PRIVATE=1` lets a single commit through on purpose, and the guard no longer suggests `--no-verify`.
+
 ## [3.2.0] - 2026-09-25
 
 ### Added

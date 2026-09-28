@@ -38,8 +38,13 @@ export async function copyScaffoldFiles(
 	const source = join(rootDir, 'scaffolding');
 	if (!(await pathExists(source))) return;
 
+	// A project that already has a root package.json owns its root contract. Copying aidd's files
+	// in wherever one is missing leaves a Spernakit-derived app, which deliberately has no root
+	// tsconfig.json, with a stray one after every initializer run. Checked before anything is
+	// copied, so a fresh project, which gets its package.json from this same scaffold, is unaffected.
+	const ownsRootContract = await pathExists(join(projectDir, 'package.json'));
 	await mkdir(projectDir, { recursive: true });
-	if (isInitializer) {
+	if (isInitializer && !ownsRootContract) {
 		await copyMissingEntries(source, projectDir, rootScaffoldFiles.filter(allowsTarget));
 		await copyMissingDirEntries(source, projectDir, rootScaffoldDirs.filter(allowsTarget));
 	}

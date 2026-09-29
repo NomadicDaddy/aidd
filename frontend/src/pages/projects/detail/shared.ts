@@ -19,11 +19,21 @@ export function stringValue(record: Record<string, unknown>, key: string): strin
 	return typeof value === 'string' ? value : '';
 }
 
+/**
+ * A source category on its own, humanized but unprefixed.
+ *
+ * An acronym stays as authored — `HYGIENE`, not `Hygiene` — which is the same rule
+ * `featureSourceDisplayLabel` applies after stripping its prefix, kept in one place so the two
+ * cannot drift.
+ */
+export function featureSourceCategoryLabel(category: string): string {
+	return /^[A-Z0-9]+$/.test(category) ? category : humanizeEnum(category);
+}
+
 export function featureSourceDisplayLabel(label: string): string {
 	for (const prefix of ['Audit: ', 'Feature: ']) {
 		if (label.startsWith(prefix)) {
-			const source = label.slice(prefix.length);
-			return `${prefix}${/^[A-Z0-9]+$/.test(source) ? source : humanizeEnum(source)}`;
+			return `${prefix}${featureSourceCategoryLabel(label.slice(prefix.length))}`;
 		}
 	}
 	return label;

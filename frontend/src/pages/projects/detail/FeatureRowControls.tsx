@@ -23,7 +23,7 @@ import {
 	featureSourceLabel,
 	sourceLabelCategory,
 } from './featuresUtils.ts';
-import { featureSourceDisplayLabel, stringValue } from './shared.ts';
+import { featureSourceCategoryLabel, featureSourceDisplayLabel, stringValue } from './shared.ts';
 
 /**
  * Priority, edited the one way. Both the table and the stacked card call this roadmap-backed
@@ -129,10 +129,24 @@ export function FeatureSourceControl({
 			onChange={(event) => onChange(event.target.value)}
 			title="Source is stored as feature.category"
 			value={category}>
-			<option value="">Feature backlog</option>
+			{/*
+			 * P1-1: the options carry the category alone, not `Feature: <category>`.
+			 *
+			 * This control only renders when the row IS a feature, and every option is built from
+			 * feature-sourced candidates, so the prefix was constant across the whole select - it
+			 * repeated the column header once per row and spent the track saying so. A native
+			 * select cannot wrap, and the header's own note sized this 8rem track on the
+			 * assumption that it would ("wraps by design"), so the prefix pushed the part that
+			 * varies out of view: every feature row read a bare "Feature", while the audit rows
+			 * beside them - which render as a wrapping div rather than a select - read
+			 * "Audit: HYGIENE" and told you something.
+			 *
+			 * The width was never the problem. "Devops" fits where "Feature: Devops" did not.
+			 */}
+			<option value="">No category</option>
 			{categories.map((option) => (
 				<option key={option} value={option}>
-					{featureSourceDisplayLabel(`Feature: ${option}`)}
+					{featureSourceCategoryLabel(option)}
 				</option>
 			))}
 		</select>

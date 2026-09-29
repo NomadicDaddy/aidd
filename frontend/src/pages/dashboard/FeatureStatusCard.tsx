@@ -79,7 +79,7 @@ export function FeatureStatusCard({
 					</Link>
 				}
 				badge={
-					<Badge showDot tone={bucket.total > 0 ? 'amber' : 'emerald'}>
+					<Badge showDot tone="neutral">
 						{bucket.total} {stateFilter}
 					</Badge>
 				}

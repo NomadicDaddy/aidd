@@ -99,7 +99,7 @@ export function FeatureQueueCard({
 					</Link>
 				}
 				badge={
-					<Badge showDot tone={total > 0 ? 'amber' : 'emerald'}>
+					<Badge showDot tone="neutral">
 						{visibleQueue.length} of {total} queued
 					</Badge>
 				}

@@ -168,7 +168,7 @@ export function FeatureProgressCell({
 		<div className="min-w-[6rem] space-y-1">
 			<div className="text-xs tabular-nums">
 				{passing}/{total}
-				{failing > 0 ? <span className={`ml-1 ${toneText.amber}`}>({failing})</span> : null}
+				{failing > 0 ? <span className={`ml-1 ${toneText.red}`}>({failing})</span> : null}
 			</div>
 			<div
 				aria-label={`${pct}% passing`}

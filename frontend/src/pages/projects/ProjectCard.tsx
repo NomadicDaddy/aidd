@@ -199,9 +199,7 @@ export function ProjectCard({
 				<div>
 					{passing}/{totalFeatures} features passing
 					{failing > 0 ? (
-						<span className={`ml-2 text-xs ${toneText.amber}`}>
-							({failing} failing)
-						</span>
+						<span className={`ml-2 text-xs ${toneText.red}`}>({failing} failing)</span>
 					) : null}
 				</div>
 				<div className="h-2 overflow-hidden rounded-full bg-muted">

@@ -68,7 +68,7 @@ export function DirectorSuggestionsList({
 			<Card>
 				<CardHeader
 					badge={
-						<Badge showDot tone={openCount > 0 ? 'amber' : 'emerald'}>
+						<Badge showDot tone="neutral">
 							{openCount} open
 						</Badge>
 					}

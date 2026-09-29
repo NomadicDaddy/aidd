@@ -71,7 +71,7 @@ export function WaitingApprovalCard({
 				}
 				badge={
 					<>
-						<Badge showDot tone={totalItems > 0 ? 'amber' : 'emerald'}>
+						<Badge showDot tone="neutral">
 							{totalItems} waiting
 						</Badge>
 						{/* One statement of where approvals launch, instead of the same immutable

@@ -64,7 +64,13 @@ export function FeatureSummaryCard({
 }) {
 	const rows = projectSummaryRows(projects);
 	const totals = aggregateFeatureSummary(projects);
-	const pendingTone = totals.pending > 0 ? 'amber' : 'emerald';
+	/*
+	 * A pending count is an ordinary count, so it is neutral at every value. This read
+	 * `pending > 0 ? 'amber' : 'emerald'`, which breaks the tone contract at both ends: amber
+	 * invents severity from the presence of data, and emerald asserts a healthy state from its
+	 * absence. Nothing here is healthy or actionable — there are some pending features, or none.
+	 */
+	const pendingTone = 'neutral';
 
 	return (
 		<Card className="overflow-hidden" variant="panel">

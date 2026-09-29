@@ -22,12 +22,13 @@ import {
 } from '../../hooks/useTelemetry.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { humanizeEnum } from '../../lib/formatters.ts';
+import { CliMixCard } from './CliMixCard.tsx';
 import { invocationOutcomeBucket } from './invocationOutcome.ts';
 import { InvocationsTable } from './InvocationsTable.tsx';
 import { LeaderboardCard } from './LeaderboardCard.tsx';
 import { type OutputMetric, OutputTimeseriesChart } from './OutputTimeseriesChart.tsx';
 import { ProjectCostSection } from './ProjectCostSection.tsx';
-import { BackendBreakdownCard, TimeseriesChart } from './TelemetryComponents.tsx';
+import { TimeseriesChart } from './TelemetryComponents.tsx';
 import { TelemetryDisclosure } from './TelemetryDisclosure.tsx';
 import {
 	telemetryTypeParam,
@@ -37,6 +38,7 @@ import {
 	type WindowKey,
 } from './telemetryFilters.ts';
 import { TelemetryFilterToolbar } from './TelemetryFilterToolbar.tsx';
+import { TelemetryFreshness } from './TelemetryFreshness.tsx';
 import { TelemetrySummary } from './TelemetrySummary.tsx';
 import { sumTelemetryTotals } from './telemetryTotals.ts';
 import { useTelemetryResourceAvailability } from './useTelemetryResourceAvailability.ts';
@@ -55,6 +57,7 @@ export function TelemetryPage() {
 	const [outputMetric, setOutputMetric] = useState<OutputMetric>('lines');
 	const [outcomeFilter, setOutcomeFilter] = useState<null | TelemetryOutcomeBucket>(null);
 	const availableResources = useTelemetryResourceAvailability();
+
 	const windowMs = telemetryWindowMs(windowFilter);
 	const typeParam = telemetryTypeParam(typeFilter);
 	const bucket: 'day' | 'hour' = windowFilter === '24h' ? 'hour' : 'day';
@@ -124,6 +127,14 @@ export function TelemetryPage() {
 	return (
 		<PageRail className="page-reveal @container space-y-5" rail={PAGE_RAIL}>
 			<PageHeader
+				actions={
+					<TelemetryFreshness
+						backends={backendsQuery}
+						invocations={invocationsQuery}
+						timeseries={timeseriesQuery}
+						top={topQuery}
+					/>
+				}
 				description="Local usage, outcome, output, and health telemetry across skills, recipes, and runs."
 				helpSlug="telemetry"
 				title="Telemetry"
@@ -201,18 +212,7 @@ export function TelemetryPage() {
 							<TimeseriesChart bucket={bucket} points={timeseriesPoints} />
 						)}
 					</Card>
-					<Card className="@container flex flex-col gap-3">
-						<CardHeader
-							className="mb-0"
-							description="All invocations in the selected filters."
-							title="CLI mix"
-						/>
-						{backendsQuery.isLoading && backendRows.length === 0 ? (
-							<SkeletonLines count={4} label="Loading CLI mix…" />
-						) : (
-							<BackendBreakdownCard rows={backendRows} />
-						)}
-					</Card>
+					<CliMixCard isLoading={backendsQuery.isLoading} rows={backendRows} />
 					<Card className="@container flex flex-col gap-3">
 						<CardHeader
 							action={

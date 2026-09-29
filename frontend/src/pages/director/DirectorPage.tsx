@@ -18,6 +18,7 @@ import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
 import { ActiveCycleLoading, ActiveCyclePanel } from './ActiveCyclePanel.tsx';
 import { DirectorChatSection } from './DirectorChatSection.tsx';
 import { useDirectorMobileLayout } from './directorDisclosure.ts';
+import { DirectorFreshness } from './DirectorFreshness.tsx';
 import { DirectorRecentCycles } from './DirectorRecentCycles.tsx';
 import { DirectorSuggestionsList } from './DirectorSuggestions.tsx';
 import { activeSessionMissing } from './directorUtils.ts';
@@ -37,6 +38,7 @@ export function DirectorPage() {
 	const [deleteSessionId, setDeleteSessionId] = useState<string>();
 	const isMobileLayout = useDirectorMobileLayout();
 	const director = useDirector(activeSessionId);
+
 	const suggestions = director.suggestions.data ?? [];
 	const cycles = director.cycles.data ?? [];
 	const cyclesLoading = director.cycles.isLoading && director.cycles.data === undefined;
@@ -186,6 +188,7 @@ export function DirectorPage() {
 	return (
 		<PageRail className="page-reveal @container space-y-5" rail={PAGE_RAIL}>
 			<PageHeader
+				actions={<DirectorFreshness director={director} />}
 				description="Run a fleet analysis cycle, then act on the suggestions it produces."
 				helpSlug="director"
 				title="Director"

@@ -41,9 +41,16 @@ describe('feature source control', () => {
 		const markup = renderSourceControl('feature');
 
 		expect(markup).toContain('aria-label="Source for feature-core"');
-		expect(markup).toContain('<option value="">Feature backlog</option>');
-		expect(markup).toContain('<option value="Core" selected="">Feature: Core</option>');
-		expect(markup).toContain('<option value="UI">Feature: UI</option>');
+		// The options carry the category alone. This control only renders when the row IS a
+		// feature and every option is built from feature-sourced candidates, so a `Feature: `
+		// prefix was constant down the whole select — it repeated the column header once per row
+		// and spent the 8rem track doing it. A native select cannot wrap, so the prefix pushed the
+		// part that varies out of view: every feature row read a bare "Feature" while the audit
+		// rows beside them, which render as a wrapping div, read "Audit: HYGIENE" and said
+		// something. An acronym stays as authored; anything else is humanized.
+		expect(markup).toContain('<option value="">No category</option>');
+		expect(markup).toContain('<option value="Core" selected="">Core</option>');
+		expect(markup).toContain('<option value="UI">UI</option>');
 	});
 
 	test('explains why audit and remediation sources are read-only', () => {

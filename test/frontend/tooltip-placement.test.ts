@@ -62,7 +62,11 @@ describe('tooltip placement', () => {
 		expect(html).toContain('aria-label="2h ago. Exact timestamp"');
 		expect(html).toContain('role="button"');
 		expect(html).toContain('tabindex="0"');
-		expect(html).toContain('decoration-dotted underline-offset-2 max-sm:underline');
+		// The dotted underline is the disclosure cue, and it is unconditional. It used to be
+		// `max-sm:underline`, which put the only visible sign that the text hides something behind
+		// a viewport test: on a desktop the trigger rendered as plain text and nothing said it was
+		// interactive. Hover is not a cue a reader can discover without already suspecting one.
+		expect(html).toContain('underline decoration-dotted underline-offset-2');
 		expect(html).toContain('max-sm:min-h-11 max-sm:min-w-11');
 		expect(html).toContain('max-sm:items-center max-sm:justify-center');
 		expect(html).toContain('<time dateTime="2026-09-01T12:00:00.000Z">2h ago</time>');

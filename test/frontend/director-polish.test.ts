@@ -294,8 +294,14 @@ describe('header counts share one form', () => {
 
 		expect(html).toContain('1 open');
 		// The `showDot` swatch is the same primitive used by the risk badge beneath it.
+		//
+		// The fill is `neutral`, not amber. `lib/tones.ts` defines neutral as "no status assertion:
+		// identity, taxonomy, ORDINARY COUNTS, and inert state", and an open-suggestion count is an
+		// ordinary count: a raw non-zero number never establishes the band amber is for. This
+		// assertion used to pin `bg-amber-500` and so contradicted the scale it was testing —
+		// every count on the surface read as a warning the moment it was not zero.
 		expect(html).toContain(
-			'<span aria-hidden="true" class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"',
+			'<span aria-hidden="true" class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground"',
 		);
 	});
 

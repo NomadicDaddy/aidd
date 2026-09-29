@@ -71,7 +71,11 @@ describe('status tones carry dark variants', () => {
 		expect(catalog).toContain(
 			'<span className="text-muted-foreground">{definition.freshReportCount}</span>',
 		);
-		expect(card).toContain('`ml-2 text-xs ${toneText.amber}`');
+		// A failing feature is a failure, so the count beside it is red rather than amber. Amber is
+		// the degraded band — stale, at risk, needs attention soon — and `DashboardMetrics` already
+		// rendered this same quantity red, so the two surfaces disagreed about what a failing
+		// feature is. The projects table cell takes the same tone for the same reason.
+		expect(card).toContain('`ml-2 text-xs ${toneText.red}`');
 		expect(card).toContain('`flex min-w-0 flex-col gap-0.5 text-xs ${toneText.red}`');
 		expect(card).toContain('<span>{syncError.message}</span>');
 		// The port dots read their fill from the same scale — through `StatusDot`, which is the

@@ -230,7 +230,10 @@ describe('documentation local polish', () => {
 			read('frontend/src/lib/typography.ts'),
 		]);
 
-		expect(outline).toContain("cn('pl-3', sectionCaptionClass)");
+		// Same override, same reason as the sidebar caption in `docs-sidebar-nav-parity`: these two
+		// rails are the app's only navigation whose links carry no icon, so the caption cannot also
+		// take the links' colour and stay legible as a heading.
+		expect(outline).toContain("cn('pl-3', sectionCaptionClass, 'text-foreground')");
 		expect(page).toContain('<Card className="min-w-0 p-3 sm:p-6 @min-[61rem]:col-start-2');
 		expect(renderer).toContain('markdownRunningProseMeasureClass');
 		expect(typography).toContain('export const markdownRunningProseMeasureClass');

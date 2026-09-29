@@ -34,7 +34,27 @@ export function DocsSidebar({ framed = false, instance }: { framed?: boolean; in
 						aria-label={instance ? `${group.label} (${instance})` : group.label}
 						key={group.label}>
 						{sections.length > 1 ? (
-							<div className={cn('mb-1.5 px-3', sectionCaptionClass)}>
+							/*
+							 * `text-foreground` over the token's muted default, because muted is
+							 * exactly what the links beside it are. Measured at 2250x1309, the
+							 * caption and an unselected link shared a colour (#9ca3af), a left
+							 * edge (277px) and a width (198px), and differed only by 2px of type
+							 * size and one weight step — the caption being the heavier of the two.
+							 * Two of the four rows in this rail were captions, and the owner read
+							 * them as the most prominent links in the list and clicked them.
+							 *
+							 * Every other navigation group in the app uses this same token and is
+							 * legible anyway, because its links carry icons: the shell rail and the
+							 * docs pager are 100% icon-bearing, and a caption has no icon. These
+							 * two docs rails are the app's only icon-less consumers, so the colour
+							 * is the whole separation and it was not being spent.
+							 */
+							<div
+								className={cn(
+									'mb-1.5 px-3',
+									sectionCaptionClass,
+									'text-foreground',
+								)}>
 								{group.label}
 							</div>
 						) : null}

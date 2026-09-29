@@ -136,8 +136,18 @@ describe('docs sidebar navigation contract', () => {
 		]);
 
 		expect(typography).toContain('sectionCaptionClass');
-		expect(sidebar).toContain("cn('mb-1.5 px-3', sectionCaptionClass)");
+		expect(sidebar).toContain('sectionCaptionClass');
+		expect(sidebar).toContain("'mb-1.5 px-3'");
 		expect(sidebar).not.toMatch(/text-\[0\.\d+rem\]/);
+
+		// The caption overrides the token's muted colour, which is the one thing about it that is
+		// local to this rail. Measured at 2250x1309, the caption and an unselected link were the
+		// same colour (#9ca3af) on the same left edge (277px) at the same width (198px), and the
+		// owner clicked REFERENCE expecting a destination. Every other consumer of this token
+		// survives the shared colour because its links carry icons and a caption does not; the two
+		// docs rails are the app's only icon-less consumers, so here the colour is the whole
+		// separation. The assertion is on the override, not on the exact `cn` argument order.
+		expect(sidebar).toContain("'text-foreground'");
 	});
 
 	test('names each rendered instance so the two copies are distinguishable', async () => {

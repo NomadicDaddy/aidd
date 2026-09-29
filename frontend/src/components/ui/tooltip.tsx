@@ -200,7 +200,17 @@ export function Tooltip({
 				'relative inline-flex max-w-full min-w-0',
 				wrapperIsFocusable &&
 					`cursor-help rounded ${controlFocusClass} focus-visible:outline-none`,
-				disclosure && 'decoration-dotted underline-offset-2 max-sm:underline',
+				/*
+				 * The disclosure cue paints at every width, not only below `sm`.
+				 *
+				 * `decoration-dotted` and `underline-offset-2` were already unconditional while the
+				 * `underline` itself was gated behind `max-sm:`, so above 640px there was a
+				 * decoration with nothing to decorate and no affordance at all. The element is a
+				 * disclosure control at every width — `wrapperIsFocusable` makes it a tab stop,
+				 * Enter and Space open it, and it carries `aria-describedby` — so a reader on a
+				 * desktop was being given the keyboard contract without the visual one.
+				 */
+				disclosure && 'underline decoration-dotted underline-offset-2',
 				disclosure && touchTargetMode === 'flow' && 'max-sm:min-h-11 max-sm:min-w-11',
 				disclosure &&
 					(touchAlignment === 'start'

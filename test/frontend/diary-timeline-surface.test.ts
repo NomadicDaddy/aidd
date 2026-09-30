@@ -99,7 +99,10 @@ describe('diary timeline rows', () => {
 		expect(html).toContain('relative z-10 mt-1 items-end gap-2');
 		expect(html).toContain('line-clamp-2');
 		// Narrative detail keeps the prose measure even while the row and clamp own its placement.
-		expect(html).toContain('max-w-[46ch]');
+		// 56ch since the running-prose measure was calibrated against the docs article track; the
+		// row is narrower than that cap and two-line clamped, so the change is inert here and this
+		// assertion is tracking the shared token rather than a decision about the diary.
+		expect(html).toContain('max-w-[56ch]');
 		expect(html).not.toContain('[&amp;&gt;p]:max-w-none');
 		expect(html).toContain('text-muted-foreground');
 		expect(html).toContain('The run rewrote the importer');

@@ -88,9 +88,34 @@ export const proseMeasureClass = 'max-w-[46ch]';
  *
  * The definition selector names the component's real `dl > div > dd` shape. Projecting onto the
  * description rather than the `dl` preserves the full document track for terms and row structure.
+ *
+ * This is 56ch where `proseMeasureClass` is 46ch, and the difference is the article track it sits
+ * in. A rendered document gets the docs composition's middle column, which the 71rem reading rail
+ * makes 590px wide; the 46ch cap put 427px of text in it and left 163px of empty card to the right
+ * of every line. The owner read that as the text being hard-wrapped, which is exactly what it looks
+ * like: headings and the FAQ section rules span the full 590px while the paragraphs stop short, so
+ * the block has no relationship to the box around it.
+ *
+ * 56ch is calibrated rather than guessed. Measured on /docs/faq at 2250x1309, 46ch renders 427px
+ * and about 59 characters per line, which is already at the SHORT end of the comfortable range
+ * rather than the long end. 56ch is roughly 521px and about 72 characters, inside the conventional
+ * 45-75 band and close to the usual ideal. Letting prose fill the whole 590px would be about 82
+ * characters, past the point this cap exists to stay inside, so the remaining ~69px is deliberate
+ * margin rather than the stranded gap it replaces.
+ *
+ * This moves every `measure="prose"` markdown surface, not only docs - the diary row, the help
+ * drawer, the artifact viewer, the skill definition card, the interview rows. That is the right
+ * blast radius rather than an accepted cost: a cap only ever caps, so in a container already
+ * narrower than 520px nothing changes at all, and the surfaces where it does change are the wide
+ * ones with the same stranded-gap problem docs had. The skill definition card is the clearest of
+ * them, running to 36rem.
+ *
+ * `proseMeasureClass` deliberately does NOT move. Its ~35 callers are form hints, page-header
+ * descriptions, chat bubbles and suggestion rows - single paragraphs beside controls rather than
+ * documents, none of them in a 590px track.
  */
 export const markdownRunningProseMeasureClass =
-	'[&>blockquote]:max-w-[46ch] [&>dl>div>dd]:max-w-[46ch] [&>ol>li]:max-w-[46ch] [&>p]:max-w-[46ch] [&>ul>li]:max-w-[46ch]';
+	'[&>blockquote]:max-w-[56ch] [&>dl>div>dd]:max-w-[56ch] [&>ol>li]:max-w-[56ch] [&>p]:max-w-[56ch] [&>ul>li]:max-w-[56ch]';
 
 /**
  * The same measure for a container that *wraps* the prose rather than being it — a card with its

@@ -82,10 +82,13 @@ console.log(JSON.stringify({
 describe('toolbar rail ownership', () => {
 	test('renders each shared component with one rail on its outer Card', () => {
 		const markup = renderRailComponents();
+		// These mirror `contentRailClass`; reading is 71rem since room #3365. This test is about a
+		// component carrying exactly one rail, not about which width the tier is, so the literals
+		// exist only to be counted.
 		const railClass: Record<ContentRail, string> = {
 			bounded: 'max-w-[80rem]',
 			full: 'max-w-none',
-			reading: 'max-w-[61rem]',
+			reading: 'max-w-[71rem]',
 		};
 
 		for (const component of Object.values(markup)) {

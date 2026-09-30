@@ -108,10 +108,21 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 					</IconButton>
 				</div>
 
+				{/* The transcript is a grid row, not a bare flex item, because the panel's
+				    height is a cap (`max-h-[80vh]`), not a definite height. A flexed child
+				    of a max-height column resolves its children's `h-full` against an
+				    indefinite basis, so the scroller fell back to content height (measured
+				    964px inside a 566px wrapper at 1440x900) and the clip hid the reply end
+				    with scrollTop pinned at 0 — nothing inside could scroll. A definite
+				    `minmax(0,1fr)` track gives the scroller's `h-full` something to
+				    resolve against, the same treatment the Director page's conversation
+				    column uses. The `min-h-[160px]` floor keeps the empty state from
+				    collapsing; `minmax(0,1fr)` — not `1fr` — is what stops a long reply
+				    from re-inflating the row past the panel cap. */}
 				<OverflowScroller
 					ariaLabel="Director chat conversation"
 					ariaLive="polite"
-					className="min-h-[160px] flex-1"
+					className="grid min-h-[160px] flex-1 grid-rows-[minmax(0,1fr)]"
 					role="log"
 					scrollerClassName="h-full space-y-3 px-4 py-3"
 					scrollerRef={transcriptRef}

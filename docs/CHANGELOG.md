@@ -14,6 +14,7 @@ All notable public aidd releases are documented here.
 - Status badges no longer infer severity from a count. Five badges showed amber whenever a count was non-zero and emerald when it was zero, which the tone rules forbid at both ends. They now take their state from the data they describe.
 - The dotted underline that marks a tooltip trigger now shows at every width. Above 640px it was hidden, so on a desktop a tooltip trigger looked like plain text even though it was focusable and opened with the keyboard.
 - The Features table's Source column names the feature's category instead of repeating "Feature" on every row. A native select truncates rather than wrapping, so the category never fit.
+- A command bounded by `timeout` is judged by the command it runs, not as a server probe. A run that read ten articles through `timeout 500 bun ...` was aborted as diagnostic thrash, although every call fetched something different. A bare `timeout` that only waits still counts as a probe.
 - The docs outline highlights the section you chose. After following an outline link it usually highlighted a later section, and the last few links all resolved to the same heading.
 
 ## [3.3.0] - 2026-09-27

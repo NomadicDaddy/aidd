@@ -30,7 +30,14 @@ describe('projects catalog and intake polish', () => {
 		expect(card).toContain('flex flex-1 flex-col gap-2 text-sm text-foreground');
 		expect(card).toContain('flex min-w-0 flex-col gap-0.5 text-xs');
 		expect(card).toContain('className="min-w-0 break-all"');
-		expect(metrics).toContain('grid h-full grid-cols-1 content-between');
+		// `content-start`, not a space-between content distribution: the card grid stretches every
+		// card in a row to the tallest one, and distributing that surplus between the metric bands
+		// scattered the same label 170px apart on adjacent cards at 1920x1200 (LOC-2). The rows
+		// group at the top on the gap-y-1 rhythm and the surplus falls after the block, above the
+		// flexed footer. The guard is scoped to the class-list context because the source comment
+		// names the rejected utility when it explains this.
+		expect(metrics).toContain('grid h-full grid-cols-1 content-start');
+		expect(metrics).not.toContain('content-between gap-x');
 		expect(stack).toContain('font-medium text-foreground');
 		expect(stack).toContain('disclosureLabel={`${stack.label} stack details`}');
 		expect(stack).toContain('disclosure');

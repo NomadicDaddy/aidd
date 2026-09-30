@@ -102,7 +102,17 @@ export function ProjectCardMetrics({
 		// four-line wrap the 22rem step was chosen to prevent. Lowering the step would reintroduce
 		// it on a phone and at 1024 alike.
 		<div className="@container flex-1">
-			<div className="grid h-full grid-cols-1 content-between gap-x-3 gap-y-1 text-xs text-muted-foreground @min-[22rem]:grid-cols-2">
+			{/* `content-start`, never `content-between` and never the default: the card grid stretches
+			 * every card in a row to the tallest one, so this grid is regularly taller than its rows.
+			 * Spacing that surplus *between* the metric bands scattered the same label 170px apart
+			 * on adjacent cards at 1920x1200 (the pair adminware.com / adminware.com.dev held
+			 * Version/Profile at y402 against aidd state at y550 and y573), weakening grouping and
+			 * cross-card comparison (LOC-2). The default is no better: `align-content: normal`
+			 * resolves to stretch, which grows the auto rows themselves. `content-start` keeps every
+			 * row at its content height on the gap-y-1 rhythm and puts the whole surplus after the
+			 * block, where the wrapper's `flex-1` growth already seats the `Last aidd run` line and
+			 * the footer at the card's foot. */}
+			<div className="grid h-full grid-cols-1 content-start gap-x-3 gap-y-1 text-xs text-muted-foreground @min-[22rem]:grid-cols-2">
 				<MetricRow label="Version">
 					<span className="font-medium text-foreground">
 						{formatAppVersion(metadata.appVersion)}

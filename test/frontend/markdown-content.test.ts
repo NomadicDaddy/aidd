@@ -613,8 +613,12 @@ describe('running prose owns its measure', () => {
 		// surfaces that wanted their container's width cancelled it with `max-w-none` overrides
 		// instead — a width decision expressed as an undo of another width decision. `measure` is
 		// required precisely so neither answer is the silent one.
-		expect(prose).toContain('max-w-[46ch]');
-		expect(container).not.toContain('max-w-[46ch]');
+		//
+		// Running prose is 56ch where `proseMeasureClass` stays 46ch, because a rendered document
+		// sits in the docs composition's middle column and a single paragraph beside a control does
+		// not. See the derivation on `markdownRunningProseMeasureClass`.
+		expect(prose).toContain('max-w-[56ch]');
+		expect(container).not.toContain('max-w-[56ch]');
 		expect(container).toContain('A paragraph of prose.');
 	});
 
@@ -664,11 +668,17 @@ describe('running prose owns its measure', () => {
 		)?.[1];
 		if (projection === undefined) throw new Error('Running-prose measure is not declared.');
 
+		// 56ch, calibrated against the track this prose actually lands in rather than carried over
+		// from `proseMeasureClass`. Measured on /docs/faq at 2250x1309 with the 71rem reading rail:
+		// the article track is 590px, 46ch rendered 427px and ~59 characters per line — already at
+		// the short end of the comfortable band — and left 163px of empty card to the right of every
+		// line, which reads as hard-wrapped text rather than as a measure. 56ch renders 520px and
+		// ~71 characters, and the ~70px that remains is margin instead of a gap.
 		for (const selector of ['blockquote', 'ol>li', 'p', 'ul>li']) {
-			expect(projection).toContain(`[&>${selector}]:max-w-[46ch]`);
+			expect(projection).toContain(`[&>${selector}]:max-w-[56ch]`);
 		}
-		expect(projection).toContain('[&>dl>div>dd]:max-w-[46ch]');
-		expect(projection).not.toContain('[&>dl]:max-w-[46ch]');
+		expect(projection).toContain('[&>dl>div>dd]:max-w-[56ch]');
+		expect(projection).not.toContain('[&>dl]:max-w-[56ch]');
 
 		const html = renderMarkdownContent('Term\n: Definition text.', 2);
 		expect(html).toContain('<dl');

@@ -66,7 +66,7 @@ describe('content rail contract', () => {
 		expect(contentRailClass).toEqual({
 			bounded: 'mr-auto w-full max-w-[80rem]',
 			full: 'mr-auto w-full max-w-none',
-			reading: 'mr-auto w-full max-w-[61rem]',
+			reading: 'mr-auto w-full max-w-[71rem]',
 		});
 	});
 
@@ -84,7 +84,7 @@ describe('content rail contract', () => {
 
 		expect(markup.full).toContain('class="mr-auto w-full max-w-none" data-content-rail="full"');
 		expect(markup.reading).toContain(
-			'class="mr-auto w-full max-w-[61rem]" data-content-rail="reading"',
+			'class="mr-auto w-full max-w-[71rem]" data-content-rail="reading"',
 		);
 		expect(markup.bounded).toContain(
 			'class="mr-auto w-full max-w-[80rem]" data-content-rail="bounded"',
@@ -162,19 +162,33 @@ describe('content rail contract', () => {
 		expect(owners.sort()).toEqual(['components/shared/PageRail.tsx', 'lib/contentRails.ts']);
 	});
 
-	test('sizes the docs outline grid from the rail the page actually declares', async () => {
+	test('opens the docs outline grid at the width the composition needs, inside a wider rail', async () => {
 		const docs = await source('pages/docs/DocsPage.tsx');
 		const rail =
 			contentRailClass[pageRailByContentType[pageCompositions['pages/docs/DocsPage.tsx']]];
-		const railRem = /max-w-\[(\d+)rem\]/u.exec(rail)?.[1];
+		const railRem = Number(/max-w-\[(\d+)rem\]/u.exec(rail)?.[1]);
 
-		// The three-track outline grid is sized from 224 + 480 + 224 and two 24px gaps = 976px, and
-		// it is a container query, so the container it measures is the rail element itself. Tuned
-		// for 61rem and mounted on the 80rem tier, that arithmetic was correct about a width the
-		// page never had, and the article track spent the surplus on bare card beside 427px of
-		// prose. The breakpoint and the rail are one decision, so one is derived from the other.
-		expect(railRem).toBe('61');
-		expect(docs).toContain(`DOCS_OUTLINE_GRID_CLASS = '@min-[${railRem}rem]:`);
+		// These were one number and are now two, deliberately, on the owner's decision at room
+		// #3365. They answer different questions.
+		//
+		// 61rem is the MINIMUM the three-track composition needs: 224 + 480 + 224 and two 24px gaps
+		// = 976px, the narrowest width at which a second 14rem column still leaves the article the
+		// ~480px its own measure asks for. It is a container query measuring the rail element, so
+		// below that width the outline has nowhere to go and the disclosure carries it instead.
+		//
+		// 71rem is what the rail GIVES it. The middle track is `minmax(0,1fr)`, so the surplus lands
+		// on the article and the card runs 640px rather than 480px. That is the point rather than a
+		// side effect: it is the first width at which the article clears the 36rem container query
+		// in MarkdownDefinitionList, so a glossary entry renders as a term beside its definition
+		// instead of stacking.
+		//
+		// The original coupling existed to stop surplus arriving as bare card beside 427px of
+		// prose. That failure mode is closed at its real cause instead: running prose is now 56ch
+		// rather than 46ch, so it fills 520px of the 590px article and the remainder is margin. A
+		// rail wider than the composition's minimum is therefore safe, and this asserts the
+		// ordering rather than equality.
+		expect(railRem).toBeGreaterThanOrEqual(61);
+		expect(docs).toContain("DOCS_OUTLINE_GRID_CLASS = '@min-[61rem]:");
 	});
 
 	test('lets the pipeline session report take every right edge from its rail', async () => {

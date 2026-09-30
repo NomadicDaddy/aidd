@@ -96,13 +96,33 @@ function programName(token: string): string {
 	return base.replace(/\.(?:exe|cmd|bat|ps1)$/i, '').toLowerCase();
 }
 
+// `timeout [-k DUR] [-s SIG] [--flag] DURATION COMMAND...` bounds a command; the command after the
+// duration is what runs. Returns undefined when nothing is wrapped (cmd.exe's `timeout /t 5`, or a
+// bare `timeout 5`), which is a wait and stays diagnostic.
+function timeoutInner(tokens: string[]): string[] | undefined {
+	let index = 1;
+	while (index < tokens.length && tokens[index]!.startsWith('-')) {
+		index += tokens[index] === '-k' || tokens[index] === '-s' ? 2 : 1;
+	}
+	if (!/^\d+(?:\.\d+)?[smhd]?$/.test(tokens[index] ?? '')) return undefined;
+	const inner = tokens.slice(index + 1);
+	return inner.length > 0 ? inner : undefined;
+}
+
 function leadingProgram(command: string): string {
 	const trimmed = command.trim();
 	if (lifecycleRunPattern.test(trimmed)) return 'lifecycle';
 	let tokens = tokenizeCommand(trimmed);
-	// Unwrap at most one nested shell wrapper, so `pwsh -Command 'curl ...'` classifies on `curl`.
-	for (let depth = 0; depth < 2; depth++) {
+	// Unwrap a shell wrapper (`pwsh -Command 'curl ...'` classifies on `curl`) and a `timeout`
+	// bound (`timeout 500 bun x.ts` classifies on `bun`), up to three layers deep.
+	for (let depth = 0; depth < 3; depth++) {
 		const program = tokens.length > 0 ? programName(tokens[0]!) : '';
+		if (program === 'timeout') {
+			const bounded = timeoutInner(tokens);
+			if (bounded === undefined) return program;
+			tokens = bounded;
+			continue;
+		}
 		if (!shellWrappers.has(program)) return program;
 		const inner = tokens.slice(1).find((token) => !isWrapperSwitch(token));
 		if (inner === undefined) return program;

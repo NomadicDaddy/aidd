@@ -116,7 +116,13 @@ export async function run(argv: string[]): Promise<number> {
 			return 0;
 		}
 		const store = new FileAiddStore(plan.projectDir);
-		await ensureMetadata(plan.projectDir, rootDir, plan.writeAllowlist);
+		// A validate run must not change the project's git state (BEH-006): rootDir installs the history
+		// guard, which staged .githooks and set core.hooksPath in a repo only being checked (2026-09-30).
+		await ensureMetadata(
+			plan.projectDir,
+			plan.mode === 'validate' ? undefined : rootDir,
+			plan.writeAllowlist,
+		);
 		if (plan.mode === 'coding') {
 			const completedCheck = await checkExplicitCompletedFeature(plan, store);
 			if (completedCheck !== undefined) {

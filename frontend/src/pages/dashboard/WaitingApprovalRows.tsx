@@ -32,6 +32,9 @@ const WAITING_KIND_LABEL: Record<WaitingApprovalKind, string> = {
 
 const ROW_CLASS = 'rounded-md border border-border bg-card/75 p-3 ';
 
+/** The suggestion row reads its own width, so it is its own query container. */
+const SUGGESTION_ROW_CLASS = `${ROW_CLASS}@container`;
+
 /**
  * The identity line every row shares.
  *
@@ -102,22 +105,29 @@ export function SuggestionRow({
 	const isFleetWide = suggestion.projectId === null;
 	const pending = launchSuggestion.isPending || dismissSuggestion.isPending;
 	return (
-		<li className={ROW_CLASS}>
-			<div className="flex flex-wrap items-start gap-3">
-				<div className="min-w-48 flex-1">
+		<li className={SUGGESTION_ROW_CLASS}>
+			{/* `@container` on the row itself, not a viewport step: this card is one of the dashboard
+			    grid's two columns above `xl` and full width below it, and AppLayout's rail swaps
+			    make viewport width a bad proxy for content width. The row's own width is the honest
+			    signal. Below 44rem of it the summary takes the row and the decision controls move
+			    below it on the `gap-2` rhythm — the same 8px the card's rows already use; at
+			    1440x900 the row is 508px and the inline rail left the title 208px to wrap in. From
+			    44rem up the row is wide enough for both (748px at 1920x1200) and the rail returns
+			    to its edge. */}
+			<div className="flex flex-col gap-2 @min-[44rem]:flex-row @min-[44rem]:items-start @min-[44rem]:gap-3">
+				<div className="@min-[44rem]:min-w-48 @min-[44rem]:flex-1">
 					<SuggestionSummary
 						description={suggestion.description}
 						meta={`${suggestion.projectId ?? 'fleet'} · ${formatRelativeAge(new Date(suggestion.createdAt).toISOString())}`}
 						title={suggestion.title}
 					/>
 				</div>
-				{/* The summary is `min-w-48`, so below `sm` this rail wraps under it and takes the
-				    whole card. `justify-end` then has nothing to sit opposite and packs the group
-				    right anyway: at 360 the badge and Approve filled one line and Dismiss dropped to
-				    a line of its own 182px into a 268px card, the only element on the row not
-				    starting where the title, meta and description all start. Above `sm` the rail is
-				    beside the summary again and keeps the edge it is aligning to. */}
-				<div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+				{/* Stacked below the summary the group starts where the title, meta and description
+				    start, which is what the narrow card read as missing; beside the summary again
+				    from 44rem it keeps the edge it is aligning to. Either way `flex-wrap` lets the
+				    buttons drop to a second rail line rather than clip: at 360 the card is 268px
+				    and badge + Approve + Dismiss need 288. */}
+				<div className="flex flex-wrap items-center justify-start gap-2 @min-[44rem]:justify-end">
 					<Badge showDot tone={riskTone(suggestion.riskLevel)}>
 						{riskLabel(suggestion.riskLevel)}
 					</Badge>

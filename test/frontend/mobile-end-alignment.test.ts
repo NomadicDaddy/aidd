@@ -176,10 +176,16 @@ const GATED: readonly {
 	{
 		// The only site measured at 360 and not at 390: at 390 the badge and both buttons still fit
 		// on one line of the rail, so nothing was stranded and the earlier pass saw nothing wrong.
+		// LOC-4 later stacked this rail below the summary whenever the row itself is under 44rem
+		// (the dashboard card is one of the grid's two xl columns, so the row's width — not the
+		// viewport — is where the layout changes axis). The gate moved with that axis change, from
+		// the viewport `sm` step to the row's own `@min-[44rem]:` step: below it the stacked rail
+		// starts at the summary's left edge, and a viewport-gated `justify-end` would right-pack
+		// the stacked rail at 768x1024 exactly the way 360 was measured wrong.
 		absent: [],
 		file: 'pages/dashboard/WaitingApprovalRows.tsx',
 		measured: 'Dismiss alone 182px of a 268px card at 360x800, below a right-packed Approve',
-		present: ['justify-start gap-2 sm:justify-end'],
+		present: ['justify-start gap-2 @min-[44rem]:justify-end'],
 	},
 	{
 		absent: ['"text-right text-muted-foreground"'],

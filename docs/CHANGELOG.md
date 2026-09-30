@@ -8,6 +8,10 @@ All notable public aidd releases are documented here.
 
 - The Director and Telemetry pages show how fresh their data is and can refresh it, like the Dashboard, Projects, Profile Matrix and Runs pages already did. Before this they looked the same whether their numbers were current or an hour old.
 
+### Changed
+
+- Reading pages use a wider column: the docs rail grows from 61rem to 71rem, and running prose widens from about 46 to 56 characters a line to fill it.
+
 ### Fixed
 
 - An initializer run on a project that already has its own `package.json` no longer copies aidd's root scaffold into it. Runs on Spernakit-derived apps left a stray untracked root `tsconfig.json` behind. A fresh project still gets the full root scaffold.
@@ -16,6 +20,10 @@ All notable public aidd releases are documented here.
 - The Features table's Source column names the feature's category instead of repeating "Feature" on every row. A native select truncates rather than wrapping, so the category never fit.
 - A command bounded by `timeout` is judged by the command it runs, not as a server probe. A run that read ten articles through `timeout 500 bun ...` was aborted as diagnostic thrash, although every call fetched something different. A bare `timeout` that only waits still counts as a probe.
 - The docs outline highlights the section you chose. After following an outline link it usually highlighted a later section, and the last few links all resolved to the same heading.
+
+### Security
+
+- Transitive dependencies updated past current advisories: fast-uri 3.1.8, ip-address 10.7.1 and brace-expansion 5.0.12.
 
 ## [3.3.0] - 2026-09-27
 

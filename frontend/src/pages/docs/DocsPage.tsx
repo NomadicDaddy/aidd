@@ -85,20 +85,19 @@ export function DocsPage() {
 			    and the prose gets the whole column. Only `@min-` variants, so nothing has to be
 			    decided at the boundary twice.
 
-			    61rem adds the on-this-page rail, at the width where a second 14rem column still
-			    leaves the article its measure (224 + 480 + 224 + two 24px gaps = 976px = 61rem).
-			    A real multi-section outline claims that track consistently. Viewport height cannot add
-			    or remove 224px of article width when the window changes by one pixel.
+			    61rem adds the on-this-page rail: the narrowest width at which a second 14rem column
+			    still leaves the article the ~480px its own measure asks for (224 + 480 + 224 + two
+			    24px gaps = 976px = 61rem). A real multi-section outline claims that track
+			    consistently. Viewport height cannot add or remove 224px of article width when the
+			    window changes by one pixel.
 
-			    The page stops at the reading tier, which is that same 976px. It used to stop at the
-			    80rem bounded tier, and the mismatch is what this whole block was quietly working
-			    around: three tracks sized for 976px laid out inside 1280px gave the article a 784px
-			    card holding 427px of prose, so the surplus arrived as bare card rather than as page.
-			    Declaring the content type instead of a width tier is what keeps the arithmetic above
-			    and the rail below the same number. Its equal 24px grid gaps keep the outline beside
-			    the card while the article track gives definitions, tables and code the room they
-			    need. Running prose carries its own measure inside that track, so the composition
-			    never turns into a longer line. */}
+			    That 61rem is where the third track starts, not where the page stops. The reading
+			    rail caps this page at 71rem, so the middle `minmax(0,1fr)` track takes the surplus
+			    and the article card is 640px rather than 480px. The two numbers are allowed to
+			    differ because they answer different questions: 61rem is the minimum the composition
+			    needs, 71rem is what it is given. Running prose is capped at 46ch on the paragraph
+			    itself, so the wider track lengthens no line — it goes to the definitions, tables and
+			    code that the reading measure was never meant to constrain. */}
 			{/* The grid is the outer route reveal's direct nested reveal. Its composition regions
 			    consume the existing nested ladder instead of arriving as one block, while the slug key
 			    above remounts the route reveal when one document replaces another. */}

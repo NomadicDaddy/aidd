@@ -20,8 +20,12 @@ pages runs out of attention long before the last one. This skill splits those jo
 
 ```
 frontend-design-sweep [app] [url] [--mode <desktop|tablet|mobile>] [--viewports <WxH,...>]
-                      [--scope <nav-group|route-prefix>] [--features]
+                      [--scope <nav-group|route-prefix>] [--features] [--runtime <web|electron>]
 ```
+
+- `--runtime` → `web` (default) reviews a URL in a browser. `electron` reviews a desktop Electron
+  app through its real main, preload and renderer; read
+  [the Electron runtime rules](references/ELECTRON-RUNTIME.md) before Phase 0.
 
 - Zero args → infer the app from the current repository, and the URL from its dev configuration.
 - `--mode` → the viewport class this sweep runs at. Default `desktop`. A run at one mode is not
@@ -41,7 +45,8 @@ takes the question as an argument and reviews one page at a time rather than one
 ## Applicability
 
 Applies to any project that serves a browsable interface, whatever the stack. The two genuine
-preconditions are a **reachable running URL** and **more than one surface** to compare. A CLI, a
+preconditions are a **reachable rendered target** (a running URL, or an Electron app launched
+through the adapter in `references/ELECTRON-RUNTIME.md`) and **more than one surface** to compare. A CLI, a
 library, or a single-screen tool has nothing for this skill to do — say so and stop.
 
 This skill never edits frontend code. Hand approved changes to `ui-playground-apply`,

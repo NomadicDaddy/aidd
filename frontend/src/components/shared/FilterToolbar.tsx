@@ -92,13 +92,27 @@ export function FilterToolbar({
 					{header}
 					<div
 						className={cn(
-							'flex flex-col @min-[64rem]:flex-row @min-[64rem]:items-end',
+							'flex flex-col flex-wrap @min-[64rem]:flex-row @min-[64rem]:items-end',
 							gapClass,
 						)}>
-						{/* The Card owns the rail; this grid and the readout share its padding box. */}
+						{/* The Card owns the rail; this grid and the readout share its padding box. In the
+						    64rem row the grid takes the width its own `columns` template asks for —
+						    `min-w-min` makes the template's track minimums the floor — and the readout
+						    wraps below it whenever the row cannot seat it beside those controls. The
+						    outer toolbar width is not the controls' budget: the readout is `shrink-0`,
+						    so before this floor the grid was squeezed under its template's minimums
+						    and painted over (intake) or clamped its selects below readable values
+						    (Runs). Both utilities are unscoped deliberately — the critical-path budget
+						    charges for a scoped copy of each — and safely so: below 64rem the row is
+						    a column whose height is auto, where `flex-wrap` has no line to break and
+						    never moves anything, and `min-w-min` only binds where a caller's own
+						    track floors do, because every caller steps into its multi-column
+						    template at a width those floors already fit. `cn()` drops the old
+						    `min-w-0` here (same group), which is fine: a grid's min-content floor
+						    cannot be zero. */}
 						<div
 							className={cn(
-								'grid min-w-0 flex-1',
+								'grid min-w-min flex-1',
 								gapClass,
 								hasSecondaryControls &&
 									'@max-[36rem]:grid-cols-[minmax(0,1fr)_auto] @max-[36rem]:items-end @max-[36rem]:gap-2',

@@ -197,12 +197,24 @@ describe('the readout is mounted before the filter changes', () => {
 		const toolbar = source('components/shared/FilterToolbar.tsx');
 		const stackedActionsSource = source('components/shared/FilterToolbarStackedActions.tsx');
 		const catalog = source('pages/audits/tabs/CatalogToolbar.tsx');
-		const row = toolbar.indexOf("'flex flex-col @min-[64rem]:flex-row @min-[64rem]:items-end'");
-		const controls = toolbar.indexOf("'grid min-w-0 flex-1'", row);
+		const row = toolbar.indexOf(
+			"'flex flex-col flex-wrap @min-[64rem]:flex-row @min-[64rem]:items-end'",
+		);
+		const controls = toolbar.indexOf("'grid min-w-min flex-1'", row);
 		const readout = toolbar.indexOf('<FilterToolbarReadout', controls);
 		const stackedActions = toolbar.indexOf("actions && actionLayout === 'stacked'", readout);
 
-		expect(toolbar).toContain("'flex flex-col @min-[64rem]:flex-row @min-[64rem]:items-end'");
+		expect(toolbar).toContain(
+			"'flex flex-col flex-wrap @min-[64rem]:flex-row @min-[64rem]:items-end'",
+		);
+		// The readout wraps below the controls rather than squeezing them under their own
+		// template's track minimums: the grid declares that template as its min-content floor,
+		// so the row's wrap is the pressure valve the 1440px intake and Runs rows needed. Both
+		// utilities are the unscoped base classes: the critical-path budget charges for a
+		// scoped copy of each, and below 64rem neither can move anything (a column whose
+		// height is auto has no line for `flex-wrap` to break, and the callers' track floors
+		// only bind where their own multi-column steps already fit).
+		expect(toolbar).toContain("'grid min-w-min flex-1'");
 		expect(toolbar).toContain('gapClass,');
 		expect(controls).toBeGreaterThan(row);
 		expect(readout).toBeGreaterThan(controls);

@@ -111,7 +111,12 @@ export function RunFilters({
 				initiatorFilter !== 'all',
 				historyProject !== 'all',
 			)}
-			columns="@min-[36rem]:grid-cols-2 @min-[64rem]:grid-cols-[2fr_repeat(4,minmax(7.5rem,1fr))_1.5fr]"
+			// The six tracks declare the widths their default values need — 12rem for the search
+			// hint, 8rem for a select's longest default plus its padding/arrow reserve — so the
+			// shared row wraps the readout below the controls instead of squeezing the tracks
+			// under those floors (SYS-1). Where the row seats the readout beside the controls the
+			// floors do not bind and the split is unchanged.
+			columns="@min-[36rem]:grid-cols-2 @min-[64rem]:grid-cols-[minmax(12rem,2fr)_repeat(4,minmax(8rem,1fr))_minmax(7.5rem,1.5fr)]"
 			filtered={filteredCount}
 			hasFilters={
 				query.trim() !== '' ||

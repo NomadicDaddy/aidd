@@ -39,7 +39,14 @@ describe('Runs and pipeline local remediation', () => {
 		const filters = await runs('RunFilters.tsx');
 		const table = await runs('UnifiedExecutionTable.tsx');
 
-		expect(filters).toContain('repeat(4,minmax(7.5rem,1fr))');
+		// The tracks declare the widths their default values need: 12rem covers the search's
+		// placeholder, 8rem a select's longest default plus its padding and arrow reserve, and
+		// 7.5rem the Project default. Floors, not ceilings — where the row has room the fr
+		// split is unchanged — but at 1440px they are what keeps the shared toolbar from
+		// squeezing the row under readable values (SYS-1).
+		expect(filters).toContain(
+			'@min-[64rem]:grid-cols-[minmax(12rem,2fr)_repeat(4,minmax(8rem,1fr))_minmax(7.5rem,1.5fr)]',
+		);
 		// History is in page flow at every width now, not only when stacked: the table imposes no
 		// height budget of its own at any breakpoint.
 		expect(table).not.toContain('var(--fill-height)');

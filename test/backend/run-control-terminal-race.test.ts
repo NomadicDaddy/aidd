@@ -78,3 +78,60 @@ test.each(['kill', 'stop'])(
 		}
 	},
 );
+
+// The queued cancel guards its write on status = queued but never looked at whether the write
+// matched, so a run admitted between the read and the write was announced as cancelled while it
+// started.
+test.each(['kill', 'stop'])(
+	'%s of a queued run that admission wins reports the loss instead of a cancel',
+	async (action) => {
+		const sqlite = new Database(':memory:');
+		migrateWebDatabase(sqlite);
+		let raced = false;
+		const db = drizzle(
+			async (sql, params, method) => {
+				if (sql.startsWith('update "runs"') && !raced) {
+					raced = true;
+					sqlite.run("UPDATE runs SET status='running' WHERE id='race'");
+				}
+				return { rows: executeStatement(sqlite, sql, params, method).rows as unknown[] };
+			},
+			{ schema },
+		);
+		const broadcasts: unknown[] = [];
+		let reconciliations = 0;
+		const ctx = {
+			db,
+			heartbeatWatchers: new Map(),
+			hub: { broadcast: (event: unknown) => broadcasts.push(event) },
+			tailWatchers: new Map(),
+			telemetry: {
+				reconcileInvocationFromRun: async () => {
+					reconciliations++;
+				},
+			},
+		} as unknown as ControlContext;
+		try {
+			await db.insert(schema.runs).values({
+				backend: 'codex',
+				id: 'race',
+				mode: 'coding',
+				projectName: 'test',
+				projectPath: '/proj/race',
+				source: 'web',
+				startedAt: 1,
+				status: 'queued',
+			});
+			const attempt = action === 'kill' ? killRun(ctx, 'race') : stopRun(ctx, 'race');
+			await expect(attempt).rejects.toThrow('started while it was being cancelled');
+			expect(raced).toBe(true);
+			expect(sqlite.query('SELECT status FROM runs WHERE id = ?').get('race')).toEqual({
+				status: 'running',
+			});
+			expect(broadcasts).toEqual([]);
+			expect(reconciliations).toBe(0);
+		} finally {
+			sqlite.close();
+		}
+	},
+);

@@ -26,6 +26,7 @@ import { recordDataMovement } from '../dataMovementTrace.ts';
 import { findCliActiveRun, killCliRun, requestCliRunStop } from './cliActiveRuns.ts';
 import { readLedgerTerminalEntries } from './ledgerReconcile.ts';
 import { getRun } from './queries.ts';
+import { terminalizeQueuedRun } from './queuedRunControl.ts';
 import {
 	RECONCILED_EXIT_CODE,
 	RunControlError,
@@ -65,43 +66,6 @@ async function readHeartbeat(
 	} catch {
 		return undefined;
 	}
-}
-
-async function terminalizeQueuedRun(
-	ctx: ControlContext,
-	run: NonNullable<Awaited<ReturnType<typeof getRun>>>,
-	input: {
-		exitCode: number;
-		label: string;
-		status: 'killed' | 'stopped';
-		stopReason: string;
-	},
-): Promise<void> {
-	const completedAt = Date.now();
-	await withSqliteRetry(
-		() =>
-			ctx.db
-				.update(runs)
-				.set({
-					completedAt,
-					durationMs: completedAt - run.startedAt,
-					exitCode: input.exitCode,
-					status: input.status,
-					stopReason: input.stopReason,
-				})
-				.where(and(eq(runs.id, run.id), eq(runs.status, 'queued'))),
-		{ label: input.label },
-	);
-	await syncInvocationFromRun(ctx, run.id, run.source);
-	ctx.hub.broadcast({
-		payload: {
-			exitCode: input.exitCode,
-			status: input.status,
-			stopReason: input.stopReason,
-		},
-		runId: run.id,
-		type: 'run_status',
-	});
 }
 
 async function stopTailWatcher(ctx: ControlContext, runId: string): Promise<void> {
@@ -147,12 +111,15 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 		);
 	}
 	if (run.status === 'queued') {
-		await terminalizeQueuedRun(ctx, run, {
+		const cancel = {
 			exitCode: -1,
 			label: 'run.kill.queued',
 			status: 'killed',
 			stopReason: 'killed',
-		});
+		} as const;
+		await terminalizeQueuedRun(ctx, run, cancel, () =>
+			syncInvocationFromRun(ctx, id, run.source),
+		);
 		return;
 	}
 	const { alive, pid } = await resolveRunProcess(run.projectPath, id, run.pid);
@@ -220,12 +187,15 @@ export async function stopRun(ctx: ControlContext, id: string): Promise<void> {
 		);
 	}
 	if (run.status === 'queued') {
-		await terminalizeQueuedRun(ctx, run, {
+		const cancel = {
 			exitCode: RECONCILED_EXIT_CODE,
 			label: 'run.stop.queued',
 			status: 'stopped',
 			stopReason: 'stop_requested',
-		});
+		} as const;
+		await terminalizeQueuedRun(ctx, run, cancel, () =>
+			syncInvocationFromRun(ctx, id, run.source),
+		);
 		return;
 	}
 	const stopFile = runStopFilePath(run.projectPath, id);

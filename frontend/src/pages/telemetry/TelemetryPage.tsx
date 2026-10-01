@@ -156,7 +156,6 @@ export function TelemetryPage() {
 				windowFilter={windowFilter}
 			/>
 			<TelemetryDisclosure />
-
 			<TelemetrySummary
 				activeOutcome={outcomeFilter}
 				onOutcomeChange={(outcome) =>
@@ -166,8 +165,12 @@ export function TelemetryPage() {
 				windowLabel={telemetryWindowLabel(windowFilter)}
 			/>
 
-			{/* Keep independent columns top-aligned and split by page width, after the sidebar. */}
-			<section className="grid items-start gap-4 @min-[61rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+			{/* Keep independent columns top-aligned, split by page width after the sidebar. The step waits
+			 * until the 1.1fr track can feed the nested grids' own 45rem columnisation — first possible at
+			 * 86.68rem of section width; the ladder's 88.375rem step is the one above that minimum, so
+			 * narrower widths flow one full-width column whose cards columnise internally rather than
+			 * splitting into halves they cannot fill (design-sweep LOC-5). */}
+			<section className="grid items-start gap-4 @min-[88.375rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 				<div className="space-y-4">
 					<Card className="@container flex flex-col gap-3">
 						<CardHeader

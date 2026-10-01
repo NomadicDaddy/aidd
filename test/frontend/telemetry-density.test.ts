@@ -230,9 +230,17 @@ describe('telemetry lets the data lead', () => {
 		// sidebar had already taken 240px out of, so the two columns appeared 240px before the page
 		// had room for them.
 		expect(page).toContain(
-			'grid items-start gap-4 @min-[61rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]',
+			'grid items-start gap-4 @min-[88.375rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]',
 		);
 		expect(page).not.toContain('xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]');
+		// The step also has to clear what the split asks its own contents to do. Most used and Cost
+		// by project columnise from 45rem of card content; the 1.1fr track first delivers that above
+		// 86.68rem of section width (1.1/2 × (W − 16) − 34px of card chrome ≥ 720px). The ladder's
+		// existing 88.375rem step is the one above that minimum. At the earlier 61rem step both
+		// nested grids stayed single-column at 1440, and the left stack left a nearly full blank
+		// viewport beside it (design-sweep LOC-5). Below the step the section stays one full-width
+		// column rather than a split whose halves cannot fill.
+		expect(page).not.toContain('@min-[61rem]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]');
 	});
 
 	test('the leaderboard columnises rather than leaving a void beside its lower half', async () => {

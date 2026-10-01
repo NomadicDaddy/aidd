@@ -10,10 +10,12 @@ const CANONICAL_PATH_CACHE_LIMIT = 512;
 /** Canonical spellings of paths whose every segment was found on disk, keyed case-insensitively. */
 const canonicalPathCache = new Map<string, string>();
 
-function onDiskName(directory: string, segment: string): null | string {
+type DirectoryLister = (directory: string) => string[];
+
+function onDiskName(list: DirectoryLister, directory: string, segment: string): null | string {
 	let entries: string[];
 	try {
-		entries = readdirSync(directory);
+		entries = list(directory);
 	} catch {
 		return null;
 	}
@@ -21,7 +23,14 @@ function onDiskName(directory: string, segment: string): null | string {
 	return entries.find((entry) => entry.toLowerCase() === wanted) ?? null;
 }
 
-function canonicalWindowsPath(resolved: string): { onDisk: boolean; value: string } {
+// Each segment is looked up on its own. A directory that cannot be listed (a restricted profile
+// folder, a sandbox) costs that one segment its casing; the segments below it are still read,
+// because Windows opens them whatever case the ancestor was spelled in. Stopping at the first
+// failure gave one project two spellings, depending on which code path had read the leaf.
+export function canonicalWindowsPath(
+	resolved: string,
+	list: DirectoryLister = readdirSync,
+): { onDisk: boolean; value: string } {
 	const { root } = parse(resolved);
 	const segments = resolved
 		.slice(root.length)
@@ -30,7 +39,7 @@ function canonicalWindowsPath(resolved: string): { onDisk: boolean; value: strin
 	let value = root.toLowerCase();
 	let onDisk = true;
 	for (const segment of segments) {
-		const name = onDisk ? onDiskName(value, segment) : null;
+		const name = onDiskName(list, value, segment);
 		if (name === null) onDisk = false;
 		value = join(value, name ?? segment.toLowerCase());
 	}

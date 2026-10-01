@@ -4,7 +4,11 @@ import { describe, expect, test } from 'bun:test';
 import { eq, like } from 'drizzle-orm';
 
 import { invocationEvents, runs, settings } from '../../backend/src/db/schema.ts';
-import { canonicalProjectPath, encodeProjectId } from '../../backend/src/paths.ts';
+import {
+	canonicalProjectPath,
+	canonicalWindowsPath,
+	encodeProjectId,
+} from '../../backend/src/paths.ts';
 import { AuditOutcomeCache } from '../../backend/src/services/outcome/auditOutcomeCache.ts';
 import { collectAuditOutcomes } from '../../backend/src/services/outcome/auditOutcomes.ts';
 import {
@@ -68,6 +72,25 @@ describe('canonicalProjectPath', () => {
 		} finally {
 			await removeTempTree(root);
 		}
+	});
+
+	// A sandboxed session could not list one ancestor of the temp directory. The walk gave up on
+	// on-disk casing for everything below it, so the same project had a lowercased spelling here
+	// and its real one where the leaf was read directly, and two tests failed on the difference.
+	test.skipIf(!onWindows)('keeps on-disk casing below an ancestor that cannot be listed', () => {
+		const listing = new Map([
+			['c:\\', ['Top']],
+			[String.raw`c:\Top\hidden`, ['Mixed-Case']],
+		]);
+		const list = (directory: string): string[] => {
+			const entries = listing.get(directory);
+			if (entries === undefined) throw new Error(`EPERM: ${directory}`);
+			return entries;
+		};
+		expect(canonicalWindowsPath(String.raw`C:\TOP\HIDDEN\MIXED-CASE`, list)).toEqual({
+			onDisk: false,
+			value: String.raw`c:\Top\hidden\Mixed-Case`,
+		});
 	});
 
 	test('lowercases segments that do not exist so a missing directory still has one spelling', async () => {

@@ -284,6 +284,31 @@
 				font-size: 18px;
 				font-weight: 850;
 			}
+			@media (min-width: 1040px) {
+				.hero-inner {
+					display: grid;
+					grid-template-columns: minmax(0, 1fr) minmax(0, 330px);
+					column-gap: 64px;
+					align-content: start;
+					align-items: start;
+				}
+				.hero-copy-column {
+					display: flex;
+					flex-direction: column;
+					align-items: start;
+					gap: 26px;
+				}
+				.signal-grid {
+					align-self: center;
+					width: 100%;
+					grid-template-columns: minmax(0, 1fr);
+					margin: 0;
+				}
+				.signal-grid div + div {
+					border-top: 1px solid rgba(255, 255, 255, 0.13);
+					border-left: 0;
+				}
+			}
 			.proofbar {
 				background: var(--night);
 				color: var(--night-text);
@@ -806,7 +831,11 @@
 					grid-template-columns: 1fr;
 				}
 				.signal-grid {
-					display: none;
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.signal-grid div + div {
+					border-top: 1px solid rgba(255, 255, 255, 0.13);
+					border-left: 0;
 				}
 				.signal-grid div + div {
 					border-top: 1px solid rgba(255, 255, 255, 0.13);
@@ -839,8 +868,8 @@
 					<span class="brand-name">aidd</span>
 				</a>
 				<nav aria-label="Primary navigation">
-					<a href="#field">Why aidd</a>
-					<a href="explainer.html">What is aidd?</a>
+					<a href="#field">Where it fits</a>
+					<a href="explainer.html">Explainer</a>
 					<a href="#free">Free</a>
 					<a href="https://github.com/NomadicDaddy/aidd">GitHub</a>
 					<a href="https://github.com/NomadicDaddy/aidd/tree/main/docs">Docs</a>
@@ -855,34 +884,37 @@
 		<main id="top">
 			<section class="hero" aria-labelledby="hero-title">
 				<div class="hero-inner">
-					<p class="eyebrow">Plan → run → audit → review</p>
-					<h1 id="hero-title">aidd</h1>
-					<p class="lede">
-						A local control panel for planning AI coding work and reviewing the results.
-					</p>
-					<p class="hero-copy">
-						Point it at a codebase, give it a spec, and choose the agent or model you
-						already use. aidd builds the backlog, runs bounded agent sessions, records
-						validation results, and flags incomplete or blocked work for review. Manage
-						one project or several from the same local panel.
-					</p>
-					<div class="actions">
-						<a
-							class="button button-primary"
-							href="https://github.com/NomadicDaddy/aidd/releases/latest"
-							>Get latest source</a
-						>
-						<a
-							class="button button-secondary"
-							href="https://github.com/NomadicDaddy/aidd"
-							>View source</a
-						>
+					<div class="hero-copy-column">
+						<p class="eyebrow">Plan → run → audit → review</p>
+						<h1 id="hero-title">aidd</h1>
+						<p class="lede">
+							A local control panel for planning AI coding work and reviewing the
+							results.
+						</p>
+						<p class="hero-copy">
+							Point it at a codebase, give it a spec, and choose the agent or model
+							you already use. aidd builds the backlog, runs bounded agent sessions,
+							records validation results, and flags incomplete or blocked work for
+							review. Manage one project or several from the same local panel.
+						</p>
+						<div class="actions">
+							<a
+								class="button button-primary"
+								href="https://github.com/NomadicDaddy/aidd/releases/latest"
+								>Get latest source</a
+							>
+							<a
+								class="button button-secondary"
+								href="https://github.com/NomadicDaddy/aidd"
+								>View source</a
+							>
+						</div>
+						<ul class="hero-facts" aria-label="Product facts">
+							<li>Every capability included</li>
+							<li>No account</li>
+							<li>No telemetry sent. No phone home.</li>
+						</ul>
 					</div>
-					<ul class="hero-facts" aria-label="Product facts">
-						<li>Every capability included</li>
-						<li>No account</li>
-						<li>No telemetry sent. No phone home.</li>
-					</ul>
 					<dl class="signal-grid" aria-label="aidd operating signals">
 						<div>
 							<dt>Backends</dt>

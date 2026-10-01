@@ -44,6 +44,7 @@ async function queueAndPromote(
 		}),
 	});
 	return commands.promoteOldestQueuedRun({
+		admittedAt: Date.now(),
 		dataDir: '/data',
 		maxConcurrentRuns: input.maxConcurrentRuns ?? 10,
 		maxConcurrentRunsPerProject: input.configured,
@@ -192,5 +193,26 @@ describe('admission through the mutation clamp', () => {
 		expect(await queueAndPromote(commands, { configured: 2, id: 'r2' })).toEqual({
 			kind: 'none',
 		});
+	});
+
+	// The orphan sweep spares a run with no heartbeat for a startup window measured from
+	// startedAt. That was queue time, so a run that waited longer than the window was already
+	// past it when admitted and could be failed before its first heartbeat.
+	test('admission restarts the clock the startup grace window is measured from', async () => {
+		const commands = makeCommands();
+		const queuedAt = Date.now() - 10 * 60_000;
+		await commands.insertQueuedRun({
+			values: runValues('waited', '/proj/a', { startedAt: queuedAt }),
+		});
+		const admittedAt = Date.now();
+		const promoted = await commands.promoteOldestQueuedRun({
+			admittedAt,
+			dataDir: '/data',
+			maxConcurrentRuns: 10,
+			maxConcurrentRunsPerProject: 10,
+			useWorktrees: false,
+		});
+		if (promoted.kind !== 'promoted') throw new Error('expected a promotion');
+		expect(promoted.row.startedAt).toBe(admittedAt);
 	});
 });

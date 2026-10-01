@@ -48,6 +48,7 @@ async function insertReservation(
 		expect(
 			(
 				await harness.commands.promoteOldestQueuedRun({
+					admittedAt: Date.now(),
 					dataDir: '/data',
 					maxConcurrentRuns: 10,
 					maxConcurrentRunsPerProject: 10,
@@ -105,6 +106,7 @@ describe('releaseRunReservation', () => {
 		// The slot is genuinely free again: a ceiling of one admits the next launch.
 		await commands.insertQueuedRun({ values: reservationValues('r2') });
 		const next = await commands.promoteOldestQueuedRun({
+			admittedAt: Date.now(),
 			dataDir: '/data',
 			maxConcurrentRuns: 1,
 			maxConcurrentRunsPerProject: 1,

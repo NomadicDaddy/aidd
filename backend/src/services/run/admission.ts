@@ -154,6 +154,7 @@ export async function admitQueuedRuns(ctx: LaunchContext, launchedRunId = ''): P
 			const promoted = await withSqliteRetry(
 				() =>
 					ctx.commands.promoteOldestQueuedRun({
+						admittedAt: Date.now(),
 						dataDir: ctx.config.web.dataDir,
 						maxConcurrentRuns: ctx.config.web.maxConcurrentRuns,
 						maxConcurrentRunsPerProject: ctx.config.web.maxConcurrentRunsPerProject,

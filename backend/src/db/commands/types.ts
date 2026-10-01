@@ -101,6 +101,8 @@ export interface InsertQueuedRunArgs {
 export type InsertQueuedRunResult = { kind: 'inserted' };
 
 export interface PromoteOldestQueuedRunArgs {
+	/** When the run leaves the queue. It becomes the row's startedAt. */
+	admittedAt: number;
 	dataDir: string;
 	maxConcurrentRuns: number;
 	maxConcurrentRunsPerProject: number;

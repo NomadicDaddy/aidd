@@ -87,7 +87,10 @@ export function promoteOldestQueuedRun(
 		const worktreeBranch = isolated ? `aidd/run-${row.id}` : null;
 		const updated = tx
 			.update(runs)
-			.set({ status: 'running', worktreeBranch, worktreePath })
+			// startedAt moves from queue time to admission: the orphan sweep measures its startup
+			// grace from it, and a run that queued past that window was failed before its first
+			// heartbeat. Queue order is unaffected because only a promoted row is restamped.
+			.set({ startedAt: args.admittedAt, status: 'running', worktreeBranch, worktreePath })
 			.where(and(eq(runs.id, row.id), eq(runs.status, 'queued')))
 			.returning()
 			.all();

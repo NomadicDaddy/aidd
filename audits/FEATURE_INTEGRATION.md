@@ -490,4 +490,3 @@ Prevention rules derived from this audit are enforced as architectural constrain
 
 **Version**: 1.4
 **Last Updated**: 2026-06-28
-**Next Review**: 2026-09-28

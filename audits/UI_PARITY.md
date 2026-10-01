@@ -1,7 +1,7 @@
 ---
 title: 'UI Parity Comparison Audit'
-last_updated: '2026-06-28'
-version: '1.2'
+last_updated: '2026-10-01'
+version: '1.3'
 category: 'Architecture'
 priority: 'High'
 estimated_time: '2-3 hours'
@@ -144,6 +144,15 @@ For each page, catalog:
 
 Perform the identical inventory (Steps 2a - 2d) on the **current** codebase.
 
+#### 3a. Record the Build Identity (BLOCKING)
+
+Parity evidence is valid only for the build it was taken from. Before any gap is classified or filed, record what was actually inspected:
+
+- **Source inventory**: the commit hash of the current tree and whether it has uncommitted changes. Record the same for the reference when it is a git checkout; otherwise record the archive or baseline artifact name and date.
+- **Running app, preview, deployment, or screenshots**: the identity of the build that served the pages - a commit hash, version string, or content marker exposed by the build (a build stamp, an asset hash, or text that exists only after the change under review). Show that this build includes the change under review by matching that identity against the current tree.
+
+A running instance is not proof of a current build: a built preview, a cached bundle, or a deployment that has not picked up the latest commit keeps serving the old UI. If the build identity cannot be established, or it does not include the change under review, rebuild or redeploy and capture again. Do not file gaps from that evidence - a stale build reports gaps that are already fixed.
+
 ### Step 4: Compare and Classify
 
 For each item in the reference inventory, classify its status in the current app:
@@ -233,6 +242,8 @@ Write the report to `/.aidd/audit-reports/UI_PARITY-{YYYY-MM-DD}.md`. The pipeli
 
 - **Reference codebase**: {path}
 - **Current codebase**: {path}
+- **Reference identity**: {commit hash, or archive/baseline name and date}
+- **Current build identity**: {commit hash + clean/dirty; for a running build, the marker observed and how it was matched to the tree}
 - **Audit date**: {date}
 
 ## Executive Summary
@@ -313,6 +324,7 @@ Before completing the audit, confirm every generated `feature.json` is valid:
 
 ### Critical Checks 🚨
 
+- [ ] Build identity recorded for the reference and the current app, and any running build shown to include the change under review, before any gap was filed
 - [ ] All routes in reference app have corresponding routes in current app
 - [ ] Core CRUD operations exist for all primary entities
 - [ ] Primary user workflows are complete end-to-end
@@ -354,6 +366,7 @@ See Step 7 above for the full report template.
 ### Success Criteria
 
 - [ ] A reference codebase or documented baseline was resolved, or the audit exited cleanly as SKIPPED / not-applicable with no score, issue counts, recommendations, or simulated comparison
+- [ ] The report records the build identity of the reference and the current app; no gap rests on evidence from a build not shown to include the change under review
 - [ ] Every reference route/page/component was classified (MISSING/DEGRADED/RELOCATED/NEW)
 - [ ] No duplicate feature.json files for gaps already covered by an existing `"passes": false` feature
 - [ ] All generated feature.json files pass `--check-features` and are prettier-normalized

@@ -1,7 +1,7 @@
 ---
 title: 'Testing Strategy, Coverage, and Verification Audit'
-last_updated: '2026-06-28'
-version: '2.2'
+last_updated: '2026-10-01'
+version: '2.3'
 category: 'Quality'
 priority: 'High'
 estimated_time: '2-3 hours'
@@ -128,6 +128,23 @@ At minimum, a Spernakit-family `smoke:qc` gate should be check-only and cover th
 
 Flag any **missing expected step**, **reordered step that changes required dependencies**, **write-capable step** (`lint:fix`, `format`) in the check-only gate, or **step added without justification** as **High**. Re-read the live smoke source before judging shape - the step list evolves, and a correct pipeline must not be penalized for differing from stale prose.
 
+#### Classifying a Red Gate
+
+This rule applies to every gate this audit runs or reads (`smoke:qc`, `crawltest`, `supertest`, the integration scripts). A gate that exits non-zero is a **code failure** unless the auditor shows otherwise. Class it **environmental** only when both of these are recorded:
+
+- **A named mechanism**: the specific missing service, tool, or OS condition that stopped the gate. Examples: a database that refuses connections on its configured port, a required runtime or CLI that is not installed, a server that did not start inside the gate's timeout. "Flaky", "passes elsewhere", and "probably the environment" are not mechanisms.
+- **Evidence**: the quoted error line, plus the check that ties it to the mechanism (the failed service probe, the missing binary, or the same step passing once the condition is supplied).
+
+If the mechanism lives in the repository - a dependency the gate uses but the manifest does not declare, or a script that only works in one shell on a project that supports several - it is a code failure and a finding, even though it first looks environmental.
+
+An environmental failure is reported as a **hold**, never as a pass:
+
+- Record the gate, the mechanism, the evidence, and what must be supplied to re-run it.
+- Report its status as `HELD (environmental)`. Do not count it in pass totals and do not leave it out of the report.
+- Treat everything that gate would have checked as unverified. Per the methodology gate, output from a gate that did not run cannot be cited or scored.
+
+Flag a red gate recorded as passing, waived, or environmental without a named mechanism and evidence as **High** (bypassed check).
+
 ### 3. Verify `crawltest` Coverage
 
 Run `bun scripts/crawltest.ts --mode dev --screenshot-pages` and confirm:
@@ -148,6 +165,20 @@ Flag gaps:
 - Missing `--404` verification → **Medium**
 - Missing Web Vitals capture on a route → **Medium**
 - Crawltest login credentials not present in `config/{slug}.json` `testing.crawlLoginEmail`/`crawlLoginPassword` for apps that require auth → **High**
+
+#### Viewport Coverage
+
+Route coverage and Web Vitals capture do not show which screen sizes were checked. Every piece of visual or acceptance evidence this audit produces or relies on (crawltest screenshots, manual browser verification, recorded `manualTests` results) must state the **mode** (desktop, tablet, or mobile) and the **viewports actually checked**.
+
+- The target's own stated viewport policy wins. Look for it in the project's agent-instruction file and its testing docs.
+- Where the target states none, use this default desktop set: `2250x1309` (primary), `2560x1440`, `1920x1200`, `1440x900`. Tablet (`1024x768`, `768x1024`) and mobile (`390x844`, `360x800`) are checked only when they are in scope for the target or the change.
+- A desktop-only check does not establish mobile coverage. A single-viewport check does not establish coverage of the rest of its set.
+- Read the viewport the crawl script actually sets instead of assuming one. A screenshot whose dimensions do not match the stated viewport is not evidence for that viewport.
+
+Flag gaps:
+
+- Visual or acceptance evidence with no stated mode and viewports → **Low**
+- A coverage claim for a mode or viewport that was not checked (for example responsive or mobile behavior passed from a desktop-only run) → **Medium**
 
 ### 4. Verify `supertest` Full Chain
 
@@ -209,10 +240,21 @@ Missing script referenced in `smoke.json` → **High** (broken smoke chain).
 
 For frontend/UI changes, the project convention requires browser verification before merge. Confirm the project has:
 
-- A documented workflow (in `DEVELOPMENT.md` or `CLAUDE.md`) for running crawltest against affected pages after UI changes: `bun scripts/crawltest.ts --page <route>` or `--start-from <prefix>`
-- The `tester` or `dogfood` skill workflow (if applicable) is discoverable
+- A documented workflow, in `DEVELOPMENT.md` or the project's agent-instruction file (`AGENTS.md`, or `CLAUDE.md` where a project uses that), for running crawltest against affected pages after UI changes: `bun scripts/crawltest.ts --page <route>` or `--start-from <prefix>`
+- A discoverable pointer from that same file to any browser-testing skill or workflow the project uses (for example a `tester` or `dogfood` skill), if applicable. Check that the pointer resolves; do not assume a skill directory
 
-Missing documented manual verification workflow → **Low**.
+A documented workflow is not enough on its own. Browser verification evidence, whether the project's or the auditor's, must meet these properties:
+
+- **Driver named**: every verification report names the browser driver that produced it
+- **Independent confirmation**: a claim that an interaction did or did not work, and any blocker, is confirmed with a second, independent driver or a real browser before it is filed. Appearance findings need no second driver. When two drivers disagree, a real browser decides
+- **Known-positive control**: a claim that something is absent (an element, a request, an error) is valid only after the same driver has detected a comparable thing known to be present on that target. Two drivers that are blind in the same way agree, so agreement counts only once each has passed that control
+- **Viewports stated**: the report states the mode and viewports checked, per [Viewport Coverage](#viewport-coverage)
+
+Flag gaps:
+
+- Missing documented manual verification workflow → **Low**
+- Verification report that does not name its driver → **Low**
+- Interaction claim or blocker filed on one driver's word, or an absence claim with no known-positive control → **Medium** (the evidence is unverified; re-check before relying on it)
 
 ## Audit Checklist
 
@@ -234,6 +276,7 @@ Missing documented manual verification workflow → **Low**.
 - [ ] Crawltest login credentials configured in `config/{slug}.json` (for auth-required apps)
 - [ ] `scripts/check-auth-reset-*.ts` integration scripts exist and are wired into smoke modes
 - [ ] Every route in `routes.tsx` shows up in `logs/crawltest.json` `visitedUrls`
+- [ ] Every red gate is classed as a code failure, or as environmental with a named mechanism and evidence; environmental holds are reported as holds and never counted as passes
 
 ### Medium Priority Checks 📋
 
@@ -242,10 +285,14 @@ Missing documented manual verification workflow → **Low**.
 - [ ] Crawltest `--bug` path passes (if app has bug reporting)
 - [ ] Console errors and network errors are asserted zero on clean crawls (ignoring known patterns in `IGNORED_WARNING_PATTERNS`)
 - [ ] Screenshots are written to versioned `screenshots/v{version}[-sv{spernakit_version}]/` (if screenshot capture is configured)
+- [ ] No coverage is claimed for a mode or viewport that was not checked (a desktop-only check does not establish mobile coverage)
+- [ ] Interaction claims and blockers are confirmed with a second, independent driver or a real browser; absence claims follow a known-positive control
 
 ### Low Priority Checks 💡
 
-- [ ] `DEVELOPMENT.md` documents the targeted crawl workflow (`--page`, `--start-from`)
+- [ ] `DEVELOPMENT.md` or the project's agent-instruction file documents the targeted crawl workflow (`--page`, `--start-from`)
+- [ ] Visual and acceptance evidence states the mode and the viewports actually checked
+- [ ] Every browser verification report names the driver it used
 - [ ] Sub-tab screenshots are captured for in-page view switchers (if screenshot capture is configured)
 - [ ] Pre-login pages (`/register`, etc.) are screenshotted before login (if screenshot capture is configured)
 - [ ] Screenshot baseline (`tester/` or similar) is regenerated after feature-affecting changes
@@ -261,9 +308,10 @@ Missing documented manual verification workflow → **Low**.
 ## Executive Summary
 
 - Architectural Compliance: [PASS / FAIL - any unit-test frameworks found?]
-- `smoke:qc` Status: [PASS / FAIL / NOT RUN]
+- `smoke:qc` Status: [PASS / FAIL / HELD (environmental) / NOT RUN]
 - Crawltest Route Coverage: [N of M routes, %]
-- Supertest Chain Status: [PASS / FAIL / PARTIAL]
+- Supertest Chain Status: [PASS / FAIL / PARTIAL / HELD (environmental)]
+- Environmental Holds: [none / count - each listed below with its mechanism]
 - Critical Gaps: [List]
 
 ## Detailed Findings
@@ -279,6 +327,12 @@ Missing documented manual verification workflow → **Low**.
 - Pipeline shape matches current repo-specific smoke implementation: [yes / no - diff]
 - Any bypassed or skipped steps: [none / list with justification]
 
+### Red Gates and Environmental Holds
+
+| Gate   | Class                | Mechanism                               | Evidence                     | Needed to re-run |
+| ------ | -------------------- | --------------------------------------- | ---------------------------- | ---------------- |
+| [gate] | [code/environmental] | [missing service, tool or OS condition] | [quoted error + tying check] | [what to supply] |
+
 ### Crawltest Coverage
 
 - Routes in `routes.tsx`: N
@@ -286,6 +340,13 @@ Missing documented manual verification workflow → **Low**.
 - Uncovered routes: [list]
 - Web Vitals captured per route: [yes / no / partial]
 - Console/network errors on clean run: [count]
+- Mode and viewports actually checked: [mode - list of viewports; source of the policy used]
+
+### Browser Verification
+
+- Driver(s) used: [name each]
+- Interaction claims and blockers confirmed by a second driver or a real browser: [yes / no / none filed]
+- Known-positive control run before each absence claim: [yes / no / none filed]
 
 ### Supertest Chain
 
@@ -326,5 +387,7 @@ The audit should produce:
 - Testing audit report at `.aidd/audit-reports/TESTING-YYYY-MM-DD.md`.
 - Verification-surface inventory covering `smoke:*`, `crawltest*`, `check:*`, `check-*`, and integration scripts.
 - `smoke:qc` parity record showing the live step source and whether the gate is check-only.
+- Red-gate classification table, with a named mechanism and evidence for every environmental hold.
+- The mode and viewports actually checked, and the driver(s) used for any browser verification.
 - Route/crawl coverage summary with any uncovered routes or missing scenario/assertion coverage.
 - Feature JSON remediation files for confirmed Critical/High/Medium findings.

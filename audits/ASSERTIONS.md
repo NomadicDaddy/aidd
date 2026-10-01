@@ -1,7 +1,7 @@
 ---
 title: 'Project Assertions / Invariants Audit'
-last_updated: '2026-08-30'
-version: '1.4'
+last_updated: '2026-10-01'
+version: '1.5'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -162,8 +162,11 @@ Before creating a finding for `Unenforced` or `Partially upheld`:
 
 1. **Read the relevant files** you believe lack enforcement
 2. **Record the exact grep commands** run and their results as evidence in the finding description
-3. **Check for indirect enforcement**: plugins, framework defaults, database constraints applied via migrations, scheduled jobs
-4. If enforcement is found via any mechanism, upgrade the classification to `Upheld` and do not create a finding
+3. **Run a known-positive control for every absence claim**: before a search that returned nothing counts as evidence, run the same search (same tool, same paths, same flags) for something known to be present in that tree, and record that command and its match beside the empty result. A search that scanned zero files, used the wrong path, or had a broken pattern also returns nothing; without the control an empty result proves only that the command ran
+4. **Check for indirect enforcement**: plugins, framework defaults, database constraints applied via migrations, scheduled jobs
+5. If enforcement is found via any mechanism, upgrade the classification to `Upheld` and do not create a finding
+
+An absence claim with no control is not evidence. If the control itself finds nothing, the search is broken - fix it and re-run before classifying.
 
 Failure to verify produces false positives that erode trust in the audit system.
 
@@ -173,6 +176,7 @@ Failure to verify produces false positives that erode trust in the audit system.
 
 - [ ] Every invariant in `/.aidd/assertions.md` has been located and classified
 - [ ] Every `Unenforced` finding includes concrete evidence (grep commands + results) showing the absence
+- [ ] Every absence claim is paired with a known-positive control: the same search, run for something known to be present, with its match recorded
 - [ ] No invariant tagged with a future milestone is reported as a gap
 - [ ] `assertions.md` exists - if missing, a single `audit-assertions-missing-assertions-file` finding is emitted
 
@@ -255,6 +259,7 @@ Create report: `.aidd/audit-reports/ASSERTIONS-YYYY-MM-DD.md`.
 
 - **ASSERT-002**: [invariant text]
     - Evidence of absence: `grep -rn "..." backend/src/` returned 0 matches
+    - Known-positive control: `grep -rn "<term known to be present>" backend/src/` returned [N] matches
     - Missing layer(s): backend guard
     - Finding: `audit-assertions-<slug>`
 
@@ -315,13 +320,13 @@ Create report: `.aidd/audit-reports/ASSERTIONS-YYYY-MM-DD.md`.
 2. **Classification counts** with percentages: Upheld, Partially upheld, Unenforced, Ambiguous, Stale, Deferred
 3. **Feature.json files** for every `Unenforced`, `Partially upheld`, and `Stale` finding
 4. **Executive summary** with total invariants, in-scope count, and critical/high/medium/low issue counts
-5. **Concrete grep evidence** recorded for every `Unenforced` finding (commands + results)
+5. **Concrete grep evidence** recorded for every `Unenforced` finding (commands + results), each with its known-positive control
 
 ### Success Criteria
 
 - [ ] 100% of in-scope invariants classified with supporting evidence
 - [ ] Zero deferred invariants misreported as gaps
-- [ ] Zero false positives on `Unenforced` classifications (indirect enforcement verified)
+- [ ] Zero false positives on `Unenforced` classifications (indirect enforcement verified, known-positive control recorded for every absence claim)
 - [ ] `assertions.md` stale claims identified and corrected values provided
 - [ ] Report reviewed and signed off by lead developer or tech lead
 

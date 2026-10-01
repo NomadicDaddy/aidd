@@ -1,16 +1,8 @@
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 import type { CliActiveRunSource } from 'aidd-shared/metadata/active-runs';
 
-import { isProcessAlive, killProcessTree } from 'aidd-shared/lib/processTree';
-import {
-	activeRunFilePath,
-	CLI_ACTIVE_RUN_STALE_MS,
-	type CliActiveRunRecord,
-} from 'aidd-shared/metadata/active-runs';
-import { runStopFilePath } from 'aidd-shared/metadata/paths';
+import { killProcessTree } from 'aidd-shared/lib/processTree';
 import { and, eq } from 'drizzle-orm';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
 
 import type { WebDatabase } from '../../db/client.ts';
 import type { WebRunStatus } from '../../types.ts';
@@ -27,6 +19,7 @@ import { findCliActiveRun, killCliRun, requestCliRunStop } from './cliActiveRuns
 import { readLedgerTerminalEntries } from './ledgerReconcile.ts';
 import { getRun } from './queries.ts';
 import { terminalizeQueuedRun } from './queuedRunControl.ts';
+import { clearRunStopFile, leaveStopRequest, resolveRunProcess } from './runProcessState.ts';
 import {
 	RECONCILED_EXIT_CODE,
 	RunControlError,
@@ -56,43 +49,11 @@ async function syncInvocationFromRun(
 	});
 }
 
-async function readHeartbeat(
-	projectPath: string,
-	runId: string,
-): Promise<CliActiveRunRecord | undefined> {
-	try {
-		const raw = await readFile(activeRunFilePath(projectPath, runId), 'utf8');
-		return JSON.parse(raw) as CliActiveRunRecord;
-	} catch {
-		return undefined;
-	}
-}
-
 async function stopTailWatcher(ctx: ControlContext, runId: string): Promise<void> {
 	const tail = ctx.tailWatchers.get(runId);
 	if (!tail) return;
 	ctx.tailWatchers.delete(runId);
 	await tail.stop();
-}
-
-async function clearRunStopFile(projectPath: string, runId: string): Promise<void> {
-	await rm(runStopFilePath(projectPath, runId), { force: true });
-}
-
-// A missing, dead, or stale-heartbeat pid is treated as dead so Stop/Kill never signals a reused pid.
-async function resolveRunProcess(
-	projectPath: string,
-	runId: string,
-	fallbackPid: null | number,
-): Promise<{ alive: boolean; pid: null | number }> {
-	const heartbeat = await readHeartbeat(projectPath, runId);
-	const pid = heartbeat?.pid ?? fallbackPid ?? null;
-	if (pid === null) return { alive: false, pid: null };
-	if (!isProcessAlive(pid)) return { alive: false, pid };
-	if (heartbeat && Date.now() - heartbeat.heartbeatAt > CLI_ACTIVE_RUN_STALE_MS) {
-		return { alive: false, pid };
-	}
-	return { alive: true, pid };
 }
 
 export async function killRun(ctx: ControlContext, id: string): Promise<void> {
@@ -122,7 +83,12 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 		);
 		return;
 	}
-	const { alive, pid } = await resolveRunProcess(run.projectPath, id, run.pid);
+	const { alive, pid, starting } = await resolveRunProcess(
+		run.projectPath,
+		id,
+		run.pid,
+		run.startedAt,
+	);
 	if (alive && pid !== null) {
 		try {
 			await killProcessTree(pid);
@@ -130,6 +96,9 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 			// Best-effort: the process may have exited; the row is forced terminal below.
 		}
 	}
+	// There is no pid to kill yet. The row still goes terminal, and the stop request stays behind
+	// so the child ends itself when it comes up instead of running under a row that says killed.
+	if (starting) await leaveStopRequest(run.projectPath, id);
 	// Drive the row terminal regardless of whether a live process was found: a stranded row whose
 	// process already exited (or never recorded a pid) must still clear instead of appearing inert.
 	const completedAt = Date.now();
@@ -149,11 +118,11 @@ export async function killRun(ctx: ControlContext, id: string): Promise<void> {
 		{ label: 'run.kill' },
 	);
 	if (updated.length === 0) {
-		await clearRunStopFile(run.projectPath, id);
+		if (!starting) await clearRunStopFile(run.projectPath, id);
 		await stopTailWatcher(ctx, id);
 		return;
 	}
-	await clearRunStopFile(run.projectPath, id);
+	if (!starting) await clearRunStopFile(run.projectPath, id);
 	recordDataMovement({
 		category: 'database',
 		operation: 'run.kill',
@@ -198,9 +167,7 @@ export async function stopRun(ctx: ControlContext, id: string): Promise<void> {
 		);
 		return;
 	}
-	const stopFile = runStopFilePath(run.projectPath, id);
-	await mkdir(dirname(stopFile), { recursive: true });
-	await writeFile(stopFile, `${new Date().toISOString()}\n`);
+	const stopFile = await leaveStopRequest(run.projectPath, id);
 	recordDataMovement({
 		category: 'file',
 		operation: 'run.stop-file.write',
@@ -208,8 +175,16 @@ export async function stopRun(ctx: ControlContext, id: string): Promise<void> {
 		summary: { runId: id },
 		target: stopFile,
 	});
-	const { alive } = await resolveRunProcess(run.projectPath, id, run.pid);
-	if (!alive) {
+	const { alive, starting } = await resolveRunProcess(
+		run.projectPath,
+		id,
+		run.pid,
+		run.startedAt,
+	);
+	// A run that is still starting keeps its stop file and its row: the child reads the request
+	// before its first iteration and its own heartbeat ends the row. If it never comes up, the
+	// orphan sweep reconciles the row once the startup window has passed.
+	if (!alive && !starting) {
 		// The process has already exited, so the stop file will never be consumed and no heartbeat
 		// will arrive to terminalize the row. Drive it to 'stopped' now instead of leaving it
 		// 'running' with stopRequested forever. If the CLI already finalized and wrote its ledger

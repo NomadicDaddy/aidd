@@ -218,7 +218,8 @@ export async function run(argv: string[]): Promise<number> {
 		if (heartbeat) installCrashFinalizer(heartbeat);
 		const runId = heartbeat?.id ?? `cli-${Date.now()}`;
 		plan.stopPolicy.stopFile = runStopFilePath(plan.projectDir, runId);
-		await clearStaleStopFile(plan.projectDir, plan.stopPolicy.stopFile);
+		// Not cleared here: named for this run alone, so if it exists it is a request to stop this
+		// run made while it was starting, and the pre-run check honours it.
 		// Cross-run feature leases (coding runs, worktree AND live-tree): concurrent runs against
 		// one project coordinate selection through exclusive lease files under git's common dir,
 		// so two runs can never claim the same feature. Rooted at the CANONICAL projectDir — the

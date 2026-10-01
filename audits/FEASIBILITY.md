@@ -1,7 +1,7 @@
 ---
 title: 'Feasibility and Decision Readiness Audit'
-last_updated: '2026-06-28'
-version: '1.2'
+last_updated: '2026-10-01'
+version: '1.3'
 category: 'Planning and Governance'
 priority: 'High'
 estimated_time: '2-4 hours'
@@ -33,7 +33,7 @@ shipped codebase. Before running, confirm there is an actual pending decision:
   one-line result instead: _"FEASIBILITY N/A: no pending proposal or decision; the target is an
   implemented system with no go/no-go question. Run an implementation audit (ARCHITECTURE,
   SECURITY, TESTING, …) for post-launch quality."_
-- **A decision already captured elsewhere** (a `waiting-approval` backlog feature, a prior
+- **A decision already captured elsewhere** (a feature with status `waiting_approval`, a prior
   `.aidd/audit-reports/*` finding, or a roadmap entry) is **existing evidence**, not a new gap.
   Do not re-open it as a feasibility proposal.
 
@@ -44,14 +44,19 @@ shipped codebase. Before running, confirm there is an actual pending decision:
 
 **Critical Priorities**
 
-- **Decision readiness**: The proposal has a named owner, decision owner, approvers,
-  recommendation, and explicit go/no-go criteria.
+- **Decision readiness**: The proposal has an accountable decision owner, a recommendation, and
+  explicit go/no-go criteria. Further roles (product owner, technical owner, sponsor, approvers)
+  are required only where the organization really has them; see
+  [Decision Ownership by Target](#decision-ownership-by-target).
 - **Evidence over optimism**: Each feasibility claim is backed by a source artifact, current
   system evidence, stakeholder input, prototype, benchmark, contract, or documented assumption.
-- **Risk ownership**: Material risks, assumptions, dependencies, and unresolved questions have
-  owners, due dates, and validation paths.
+- **Risk ownership**: Material risks, assumptions, dependencies, and unresolved questions each
+  have a validation path and a place where they are tracked. In an aidd-managed project that
+  place is a feature record, not a named assignee with a due date.
 - **Scope discipline**: MVP, non-goals, rollback, operational ownership, and lifecycle cost are
   explicit before implementation begins.
+- **Options obey the target's rules**: A recommendation, mitigation or rollout plan must be one
+  the target's own rules permit; see [Target Rules Constrain the Options](#target-rules-constrain-the-options).
 
 **Essential Standards**
 
@@ -69,19 +74,21 @@ shipped codebase. Before running, confirm there is an actual pending decision:
 1. [Applicability (Conditional Audit): Run Only Against a Proposal](#applicability-conditional-audit-run-only-against-a-proposal)
 2. [Scope](#scope)
 3. [Right-Sizing the Audit](#right-sizing-the-audit)
-4. [Feasibility Evidence Model](#feasibility-evidence-model)
-5. [Pre-Audit Setup](#pre-audit-setup)
-6. [Methodology](#methodology)
-7. [Decision Scoring](#decision-scoring)
-8. [Severity Guidance](#severity-guidance)
-9. [Audit Categories](#audit-categories)
-10. [Greenfield-Specific Checks](#greenfield-specific-checks)
-11. [Brownfield-Specific Checks](#brownfield-specific-checks)
-12. [Consolidated Audit Checklist](#consolidated-audit-checklist)
-13. [Finding Rules](#finding-rules)
-14. [Report Template](#report-template)
-15. [Deliverables](#deliverables)
-16. [Success Criteria](#success-criteria)
+4. [Decision Ownership by Target](#decision-ownership-by-target)
+5. [Target Rules Constrain the Options](#target-rules-constrain-the-options)
+6. [Feasibility Evidence Model](#feasibility-evidence-model)
+7. [Pre-Audit Setup](#pre-audit-setup)
+8. [Methodology](#methodology)
+9. [Decision Scoring](#decision-scoring)
+10. [Severity Guidance](#severity-guidance)
+11. [Audit Categories](#audit-categories)
+12. [Greenfield-Specific Checks](#greenfield-specific-checks)
+13. [Brownfield-Specific Checks](#brownfield-specific-checks)
+14. [Consolidated Audit Checklist](#consolidated-audit-checklist)
+15. [Finding Rules](#finding-rules)
+16. [Report Template](#report-template)
+17. [Deliverables](#deliverables)
+18. [Success Criteria](#success-criteria)
 
 ## Scope
 
@@ -125,17 +132,68 @@ point escalate to the full audit for the affected categories only.
 external data, vendor/build-vs-buy decisions, or any proposal with committed spend or deadlines.
 Run the complete methodology, scoring, and category checks.
 
+## Decision Ownership by Target
+
+This audit asks who decides and who carries each risk. How that is recorded depends on the
+target. Do not file a finding for a role or a tracking field the target's way of working does
+not have.
+
+**aidd-managed projects** (aidd itself, the Spernakit template, derived apps, and any other
+project with an `.aidd/` directory):
+
+- The **project owner** is the decision owner and the approver. Where a project has one owner,
+  the product owner, technical owner, sponsor and approver rows of the Decision Record all name
+  that owner; write it once and do not file findings for the roles that collapse into it.
+- An open decision is recorded as a feature with status `waiting_approval`, with the reason in
+  its `blockingContext`, or as a decision in `.aidd/project.md`. That record is the evidence of
+  ownership. A proposal with no such record and no stated decision owner has no accountable
+  owner, and that is still a finding.
+- Risks, assumptions, dependencies and open questions that need work are tracked as feature
+  records (`.aidd/features/*/feature.json`) placed on the roadmap (`.aidd/roadmap.json`). The
+  milestone is the timing. Do not require a named assignee or a calendar due date, and do not
+  file a finding for their absence.
+- Acceptance: findings from this audit land as feature records, and the project owner accepts
+  the work that carries a mitigation or remediation. The audit report does not approve its own
+  recommendation.
+
+**Other targets**: use the roles and tracking the organization really has. Where it assigns
+named owners and due dates, their absence on a material risk is a finding as described in
+[Finding Rules](#finding-rules).
+
+## Target Rules Constrain the Options
+
+Read the target's agent-instruction file (`AGENTS.md`, or `CLAUDE.md` where a project uses
+that, including any parent-directory file that covers it) before recommending a path. A
+recommendation that breaks a stated rule is not a feasible option for that target. The file
+that covers Spernakit, its derived apps and aidd states these rules, and each one removes
+options this audit would otherwise list:
+
+| Target rule                                                                           | Effect on the feasibility assessment                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No new feature-flag surface unless explicitly requested                               | Do not propose a flagged or staged rollout as a mitigation. A proposal that depends on a new flag needs the owner's explicit request on record                                                                                     |
+| No transitional, backward-compatibility or legacy code unless explicitly approved     | "Preserve backward compatibility" is not a default goal. Assess whether every consumer can move in the same change; a compatibility period needs explicit approval                                                                 |
+| Schema migrations only in development, applied with the aligned code                  | A plan that needs a production migration with a compatibility window, or an expand-then-contract sequence, conflicts with the rule. Say so; do not present it as a routine mitigation                                              |
+| Every feature wired end to end; every new endpoint has an immediate real consumer     | A phase that ships a backend with no consumer, or library code for a later phase, is not a valid increment. Check that each proposed phase is complete in itself                                                                   |
+| No abstractions, services or utilities for future use                                 | Do not credit a proposal for "extensibility" it has no present consumer for; treat speculative generality as cost                                                                                                                  |
+| Application databases under `data/` at the application root                           | A proposal that places a database elsewhere conflicts with the rule                                                                                                                                                                |
+| Derived Spernakit apps record deliberate template differences in `.templateoverrides` | A proposal to realign, overwrite or restructure a recorded path, or to restructure a template-managed file inside the app, is not feasible as stated; the change belongs to the template or needs the entry revisited by the owner |
+
+If the only workable path conflicts with a rule, record that as the finding: name the rule,
+explain the conflict, propose the alternative that fits the rule, and state that the exception
+needs the project owner's written approval. For a target that states no such rule, flags,
+compatibility periods and staged migrations remain ordinary options.
+
 ## Feasibility Evidence Model
 
 Classify each major claim with one of these evidence states:
 
-| State        | Meaning                                                                               | Treatment                                     |
-| ------------ | ------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Proven       | Verified by code, tests, prototype, benchmark, contract, or committed decision record | Strong evidence                               |
-| Supported    | Backed by stakeholder input, analytics, ticket history, prior art, or current docs    | Usually acceptable                            |
-| Assumed      | Plausible, documented, and assigned to an owner for validation                        | Acceptable only when risk is low or mitigated |
-| Unknown      | Important question has no evidence or owner                                           | Finding if decision-relevant                  |
-| Contradicted | Evidence conflicts with the proposal or stated assumptions                            | Finding; often blocker                        |
+| State        | Meaning                                                                                | Treatment                                     |
+| ------------ | -------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Proven       | Verified by code, tests, prototype, benchmark, contract, or committed decision record  | Strong evidence                               |
+| Supported    | Backed by stakeholder input, analytics, ticket history, prior art, or current docs     | Usually acceptable                            |
+| Assumed      | Plausible, documented, and tracked for validation (a feature record, or a named owner) | Acceptable only when risk is low or mitigated |
+| Unknown      | Important question has no evidence or owner                                            | Finding if decision-relevant                  |
+| Contradicted | Evidence conflicts with the proposal or stated assumptions                             | Finding; often blocker                        |
 
 Evidence may come from:
 
@@ -145,8 +203,9 @@ Evidence may come from:
 - Customer commitments, support tickets, analytics, interview notes, sales feedback, or contracts.
 - Vendor documentation, pricing, API limits, security notes, and sandbox results.
 - aidd-native decision signals: prior `.aidd/audit-reports/*` (feasibility, security, architecture
-  findings), backlog feature status (e.g. `waiting-approval`, claimed, or failed features), the runs
-  ledger / `runs.jsonl`, and `roadmap` entries.
+  findings), feature status in `.aidd/features/*/feature.json` (`backlog`, `in_progress`,
+  `completed`, `waiting_approval`), the runs ledger `.aidd/runs.jsonl`, and `.aidd/roadmap.json`
+  entries.
 
 ## Pre-Audit Setup
 
@@ -185,14 +244,24 @@ git log --oneline --decorate -20
 git status --short
 ```
 
-For Spernakit-based applications, also review (where present; some targets are CLI-only or use a
-different layout):
+For the Spernakit template and derived apps, also review (where present):
 
-- Target app `docs/template/STACK.md`
-- Target app `docs/template/DEVELOPMENT.md`
+- `docs/template/STACK.md` and `docs/template/DEVELOPMENT.md`. Not every derived app carries a
+  copy; read them from the Spernakit checkout the project registers when the app has none
 - Target app `.aidd/project.md`
 - Target app `.aidd/features/`
-- `package.json`, `config/`, `backend/src/db/schema/`, `backend/src/routes/`, `frontend/src/routes.tsx`
+- Target app `.templateoverrides` (derived apps): the recorded differences from the template
+- `package.json`, `config/`, `backend/src/db/schema/`, `backend/src/routes/`,
+  `backend/src/create-api-app.ts` (route registration), and the frontend route files:
+  `frontend/src/routes/lazyPages.ts` (page imports), `frontend/src/routes/routeGroups.tsx` and
+  `settingsRoutes.tsx` (route objects). `frontend/src/routes.tsx` only assembles those groups
+
+For aidd, the equivalents are `backend/src/server.ts` (route registration),
+`backend/src/db/commands.ts` (where every database transaction is defined), `frontend/src/App.tsx` (pages
+and routes), `cli/src/` and `docs/architecture/`.
+
+Other targets (a CLI, a static site, a mobile app) use their own layout; start from the entry
+point and the project's own documentation.
 
 ## Methodology
 
@@ -225,9 +294,10 @@ For each major feasibility category:
 1. Locate evidence in the proposal, repo, docs, tests, history, stakeholder artifacts, or vendor
    references.
 2. Consult aidd-native decision signals before filing or duplicating a finding: prior
-   `.aidd/audit-reports/*`, backlog feature status (e.g. `waiting-approval`, claimed, or failed),
-   the runs ledger / `runs.jsonl`, and `roadmap` entries. A decision already captured as a
-   waiting-approval feature or a prior audit finding is existing evidence, not a new gap.
+   `.aidd/audit-reports/*`, feature status (`backlog`, `in_progress`, `completed`,
+   `waiting_approval`), the runs ledger `.aidd/runs.jsonl`, and `.aidd/roadmap.json` entries. A
+   decision already captured as a `waiting_approval` feature or a prior audit finding is existing
+   evidence, not a new gap.
 3. Classify evidence as Proven, Supported, Assumed, Unknown, or Contradicted.
 4. Record only decision-relevant gaps.
 5. Cross-reference implementation audits when the feasibility question depends on specific
@@ -240,6 +310,12 @@ For each major feasibility category:
     - Deployment and operations: [DEPLOYMENT.md](./DEPLOYMENT.md), [DEVOPS.md](./DEVOPS.md)
     - UX and accessibility: [WEB_DESIGN_GUIDELINES.md](./WEB_DESIGN_GUIDELINES.md)
     - Maintainability and debt: [TECHDEBT.md](./TECHDEBT.md)
+6. Check each option the proposal relies on against
+   [Target Rules Constrain the Options](#target-rules-constrain-the-options). An option the
+   target's rules forbid is Contradicted evidence for that part of the proposal.
+7. When the audit names code as evidence, cite the symbol, the file, and the live `file:line`
+   read during this audit. Do not copy a location from the proposal or an earlier report
+   without re-reading the file.
 
 ### 4. Score Feasibility Risk
 
@@ -286,23 +362,23 @@ High blocker surfaces. Reserve full-table scoring for genuine greenfield or majo
 
 Score these categories when applicable:
 
-| Category                        | Evidence to seek                                          |
-| ------------------------------- | --------------------------------------------------------- |
-| Strategic fit                   | Roadmap, OKRs, customer commitment, business sponsor      |
-| User and market feasibility     | Interviews, support tickets, analytics, sales feedback    |
-| Business feasibility            | Value case, KPI, cost of delay, support and GTM impact    |
-| Technical feasibility           | Architecture sketch, current code, prototype, spike, docs |
-| Data feasibility                | Data model, source systems, quality, ownership, retention |
-| Integration feasibility         | Internal/external systems, API contracts, limits, sandbox |
-| Security feasibility            | Threat model, auth design, secrets, logging, secure SDLC  |
-| Privacy, legal, and compliance  | Data classification, consent, retention, frameworks       |
-| Operational feasibility         | Support model, runbooks, monitoring, SLOs, DR             |
-| Delivery feasibility            | Scope, estimates, dependencies, staffing, sequencing      |
-| UX and design feasibility       | Journeys, prototypes, edge states, accessibility, content |
-| Quality and testing feasibility | Test strategy, environments, test data, quality gates     |
-| Cost and financial feasibility  | Build cost, run cost, licensing, budget, lifecycle cost   |
-| Release and rollout feasibility | Flags, pilot, rollback, migrations, launch monitoring     |
-| Maintainability and lifecycle   | Ownership, standards, dependencies, upgrades, deprecation |
+| Category                        | Evidence to seek                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Strategic fit                   | Roadmap, OKRs, customer commitment, business sponsor                                                |
+| User and market feasibility     | Interviews, support tickets, analytics, sales feedback                                              |
+| Business feasibility            | Value case, KPI, cost of delay, support and GTM impact                                              |
+| Technical feasibility           | Architecture sketch, current code, prototype, spike, docs                                           |
+| Data feasibility                | Data model, source systems, quality, ownership, retention                                           |
+| Integration feasibility         | Internal/external systems, API contracts, limits, sandbox                                           |
+| Security feasibility            | Threat model, auth design, secrets, logging, secure SDLC                                            |
+| Privacy, legal, and compliance  | Data classification, consent, retention, frameworks                                                 |
+| Operational feasibility         | Support model, runbooks, monitoring, SLOs, DR                                                       |
+| Delivery feasibility            | Scope, estimates, dependencies, staffing, sequencing                                                |
+| UX and design feasibility       | Journeys, prototypes, edge states, accessibility, content                                           |
+| Quality and testing feasibility | Test strategy, environments, test data, quality gates                                               |
+| Cost and financial feasibility  | Build cost, run cost, licensing, budget, lifecycle cost                                             |
+| Release and rollout feasibility | Rollback, migrations, launch monitoring; flags and pilots only where the target's rules permit them |
+| Maintainability and lifecycle   | Ownership, standards, dependencies, upgrades, deprecation                                           |
 
 ## Severity Guidance
 
@@ -327,7 +403,9 @@ Verify:
 - Greenfield, brownfield, or hybrid classification is documented.
 - Target users or customers are named.
 - Problem statement, expected outcome, success metric, and non-goals are explicit.
-- Decision owner, product owner, technical owner, sponsor, and approvers are named.
+- The decision owner is named, along with the product owner, technical owner, sponsor, and
+  approvers where the target has those roles (see
+  [Decision Ownership by Target](#decision-ownership-by-target)).
 
 File findings when:
 
@@ -447,6 +525,11 @@ Verify:
 - Testing strategy, automated test feasibility, unit/integration/contract/E2E/load/security/
   accessibility coverage, test environments, test data, mocks/stubs/simulators, testable acceptance
   criteria, regression risk, quality gates, and non-functional testability are understood.
+- The test strategy fits the target. The Spernakit template and derived apps deliberately have no
+  unit-test framework: their verification is `crawltest`, `smoke:qc` and integration scripts, so
+  a proposal there is not weaker for lacking unit tests and must not plan to add a unit-test
+  framework. aidd runs `bun:test` unit tests in `smoke:qc` and CI, so a proposal there should
+  name the tests it adds. For other targets, read the project's own test setup.
 
 File findings when:
 
@@ -462,7 +545,9 @@ Verify:
   decommissioning, migration, budget approval, and benefit justification are understood.
 - Incremental release, phased rollout, feature flags when explicitly approved, beta/pilot/limited
   availability, rollback, reversible migrations, deployment windows, launch metrics, alerts,
-  go/no-go criteria, and hypercare are planned.
+  go/no-go criteria, and hypercare are planned, within what the target's rules permit (see
+  [Target Rules Constrain the Options](#target-rules-constrain-the-options)). Each increment is
+  complete in itself: wired end to end, with a real consumer.
 - Maintenance owner, future-team documentation, standards, dependency support, upgrade path,
   deprecation strategy, observability, debugging, extensibility, and technical debt are addressed.
 
@@ -494,19 +579,27 @@ Apply when the proposal changes an existing system:
 - Which components, workflows, APIs, reports, integrations, data models, and customers are
   impacted?
 - Are hidden dependencies, legacy behaviors, fragile areas, and defect history understood?
-- Is test coverage adequate around impacted areas?
-- Does the change preserve backward compatibility?
+- Is verification adequate around impacted areas, by the target's own means (tests where the
+  target has them; `crawltest` and integration scripts in Spernakit and derived apps)?
+- How do existing consumers move? Where the target's rules forbid backward-compatibility code,
+  confirm that every consumer can change in the same change, and treat a plan that depends on a
+  compatibility layer as needing explicit approval. Where the target has outside consumers and
+  no such rule, does the change preserve backward compatibility?
 - Are migrations, schema changes, rollout strategy, rollback, and SLA/SLO risk understood?
 - Does the change conflict with ongoing refactors, migrations, releases, or platform work?
+- In a derived Spernakit app: does the change touch a template-managed file or a path recorded
+  in `.templateoverrides`? If so, the change belongs to the template or needs the recorded
+  entry revisited, and the proposal must say which.
 
 ## Consolidated Audit Checklist
 
 ### Critical Checks
 
-- [ ] Proposal, classification, owner, approvers, and decision owner are explicit.
+- [ ] Proposal, classification and decision owner are explicit, with the further roles the target really has (see [Decision Ownership by Target](#decision-ownership-by-target)).
 - [ ] Success metric, scope boundaries, and non-goals are clear enough to constrain work.
 - [ ] Recommendation and go/no-go criteria are defined or the audit explains why not.
-- [ ] Material risks, assumptions, dependencies, and open questions have owners.
+- [ ] Material risks, assumptions, dependencies, and open questions are each tracked: as feature records in an aidd-managed project, or with named owners elsewhere.
+- [ ] No recommended option, mitigation or rollout step breaks a rule the target states (see [Target Rules Constrain the Options](#target-rules-constrain-the-options)); a conflict is reported as needing the project owner's written approval.
 - [ ] Security, privacy, legal, compliance, data, and operational blockers are identified.
 - [ ] Rollback or rejection path exists for high-risk implementation or migration work.
 
@@ -538,10 +631,12 @@ Apply when the proposal changes an existing system:
 
 - A missing answer blocks or materially weakens the feasibility decision.
 - Evidence contradicts the proposal.
-- A high-risk assumption has no owner, validation method, or due date.
+- A high-risk assumption has no validation method and is tracked nowhere: no feature record in
+  an aidd-managed project; no owner or due date in a target that assigns them.
 - A dependency, legal review, vendor contract, migration, or staffing need affects timing and is
   unowned.
 - The proposal needs a prototype, benchmark, or spike before responsible commitment.
+- The proposal, or its only workable path, depends on something the target's rules forbid.
 
 ### Do Not File Findings
 
@@ -550,6 +645,8 @@ Apply when the proposal changes an existing system:
 - The gap is only documentation polish and does not affect the decision.
 - Another audit already covers the implementation detail and the feasibility decision only needs
   that audit as a dependency.
+- A role, assignee or due-date field is empty because the target does not work that way (see
+  [Decision Ownership by Target](#decision-ownership-by-target)).
 
 ### Feature Output Guidance
 
@@ -563,6 +660,19 @@ If this audit produces `.aidd/features/*/feature.json` findings:
   checklist item.
 
 ## Report Template
+
+The Average Feasibility Risk Score is the mean of the category scores assigned under
+[Score Feasibility Risk](#4-score-feasibility-risk), over the categories actually scored. It is
+a risk score with a defined scale, not a quality score; do not convert it to a mark out of 100.
+In Lightweight Mode, where the table is skipped, write `N/A (Lightweight Mode)`.
+
+In the tables below, the Owner, Due Date, Required By and Needed By columns hold a person and a
+date only where the target assigns them. In an aidd-managed project write the feature record id
+and its milestone instead.
+
+The report must also carry the sections [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) requires:
+the instrument validation table for any gate or script whose output is cited, the methodology
+validity summary and the falsification records.
 
 ```markdown
 # Feasibility Audit Report - YYYY-MM-DD
@@ -689,7 +799,11 @@ If this audit produces `.aidd/features/*/feature.json` findings:
 ## Success Criteria
 
 - A decision owner can make or defer the decision using the audit report alone.
-- All Critical and High feasibility risks have owners, mitigations, and due dates.
+- All Critical and High feasibility risks have mitigations and are tracked: as feature records
+  on the roadmap in an aidd-managed project, or with owners and due dates in a target that
+  assigns them.
+- No recommended option breaks a rule the target states; any conflict is named and marked as
+  needing the project owner's written approval.
 - The recommendation is traceable to evidence rather than unverified assumptions.
 - Greenfield and brownfield applicability is explicit.
 - The implementation team knows what must be validated before build, launch, or scale.

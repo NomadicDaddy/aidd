@@ -1,7 +1,7 @@
 ---
 title: 'Architecture, API Design, and Code Complexity Audit'
-last_updated: '2026-06-28'
-version: '3.2'
+last_updated: '2026-10-01'
+version: '3.3'
 category: 'Core Architecture'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -20,7 +20,7 @@ consolidates: 'API_DESIGN.md'
 **Critical Architecture Priorities**
 
 - **API Consistency**: Uniform patterns for API functions (read operations, write operations, actions)
-- **Code Complexity**: Functions score ≤7 cyclomatic complexity, ≤40 lines, ≤5 parameters
+- **Code Complexity**: Functions score ≤7 cyclomatic complexity, ≤40 lines, ≤5 parameters (measured and scored by [COMPLICATION.md](./COMPLICATION.md); only complexity over 10 is a Critical check here)
 - **Route/Handler Standards**: Explicit status codes and consistent response shapes (Elysia handlers, not controller classes)
 - **Logic Quality**: Clear control flow, minimal nesting, appropriate algorithms
 - **Documentation**: 100% API documentation coverage for public endpoints
@@ -30,9 +30,9 @@ consolidates: 'API_DESIGN.md'
 
 - **API Functions**: All functions have proper input validation and type safety
 - **Naming Conventions**: Consistent naming across all API functions
-- **Response Formats**: Consistent response shape across all endpoints (the `{ success, message?, data? }` envelope in full Spernakit apps; see [Stack Applicability](#stack-applicability))
+- **Response Formats**: Consistent response shape across all endpoints (the `{ data }` success envelope and the `{ code, error, message }` error body in Spernakit and derived apps; see [Stack Applicability](#stack-applicability))
 - **Error Handling**: Appropriate status codes and clear error messages
-- **Complexity Limits**: Cyclomatic complexity ≤7, function length ≤40 lines
+- **Complexity Limits**: Cyclomatic complexity ≤7, function length ≤40 lines (orientation targets; COMPLICATION owns the measurement)
 
 **Architecture Requirements**
 
@@ -47,10 +47,11 @@ consolidates: 'API_DESIGN.md'
 2. [API Design Standards](#api-design-standards)
 3. [Elysia Route Conventions](#elysia-route-conventions)
 4. [Stack Applicability](#stack-applicability)
-5. [Code Complexity Assessment](#code-complexity-assessment)
-6. [Logic Quality Evaluation](#logic-quality-evaluation)
-7. [Audit Checklist](#audit-checklist)
-8. [Report Template](#report-template)
+5. [Target Architectural Rules](#target-architectural-rules)
+6. [Code Complexity Assessment](#code-complexity-assessment)
+7. [Logic Quality Evaluation](#logic-quality-evaluation)
+8. [Audit Checklist](#audit-checklist)
+9. [Report Template](#report-template)
 
 ## Pre-Audit Setup
 
@@ -60,23 +61,28 @@ Consult these before forming findings; they anchor what "correct" architecture m
 
 - `/.aidd/spec.md` - product source of truth. Architectural decisions that contradict the spec (e.g. introducing layers the spec rules out) are high-priority findings.
 - `/.aidd/project-structure.md` - declared module boundaries and responsibilities. Architectural drift findings should cite a specific deviation from this file rather than abstract "best practice".
-- `/.aidd/assertions.md` - architectural invariants (e.g. "no databases outside `data/`", "every route registered in `create-api-app.ts`"). Every architecture finding should be checked against assertions before being filed.
+- `/.aidd/assertions.md` - architectural invariants (e.g. "no databases outside `data/`", "every route file registered in the API app assembly"). Every architecture finding should be checked against assertions before being filed.
+- The target's agent-instruction file (`AGENTS.md`, or `CLAUDE.md` where a project uses that), including any parent-directory file that applies to it. Where it states architectural rules, they are the authority for [Target Architectural Rules](#target-architectural-rules).
+- `/.templateoverrides` (derived Spernakit apps only) - the app's recorded differences from the template. Read it in full before recommending any structural change (see [Derived Spernakit Apps](#derived-spernakit-apps-recorded-differences-and-template-managed-files)).
 - `/.aidd/roadmap.json` - milestone scope gate. Architectural patterns intended for unshipped milestones are out-of-scope; do not flag missing scaffolding that is roadmapped for later.
 - `/CONTEXT.md` (if present) - domain vocabulary and entity relationships. Architectural findings should use the glossary's entity names when describing modules or boundaries; mismatched naming between code and glossary is itself a finding.
 
 ### Required Tools
 
 ```bash
-# API documentation (Elysia generates OpenAPI spec automatically)
-# Access at /api/v1/docs/json in development mode
+# API documentation (Spernakit and derived apps only): the swagger plugin mounted in
+# createApiApp serves the OpenAPI spec at /api/v1/docs/json in development mode.
+# aidd mounts no OpenAPI endpoint; read its route files and check:api-types instead.
 
-# Code quality tools (already configured in Spernakit)
+# Code quality tools (Spernakit, derived apps and aidd all define these scripts)
 bun run lint          # ESLint with perfectionist plugin
 bun run typecheck     # TypeScript type checking
-bun run smoke:qc      # Full quality gate (runs check:max-lines — see below)
+bun run smoke:qc      # Full quality gate (runs check:max-lines - see below)
 ```
 
-> **File-size gate**: `bun run smoke:qc` runs `check:max-lines`, a hard **300-line cap with no exemptions**. This is the authoritative file-size gate. File-size findings belong to **REORG**, not ARCHITECTURE - preserve the no-double-count boundary with REORG/COMPLICATION (architecture covers structure and boundaries; raw line counts do not move here).
+For any other target, read its `package.json` (or equivalent) for the real script names before running anything. Per the methodology gate, a script this audit names is not evidence that the target has it.
+
+> **File-size gate**: `bun run smoke:qc` runs `check:max-lines` (`scripts/check-max-lines.ts`, `MAX_LINES`). This is the authoritative file-size gate. In Spernakit, derived apps and aidd it is a hard 300-line cap with no grandfather list. Some other repositories keep a baseline of files that were over the cap when the gate landed; there the baseline is part of the gate. File-size findings belong to **REORG**, not ARCHITECTURE - preserve the no-double-count boundary with REORG/COMPLICATION (architecture covers structure and boundaries; raw line counts do not move here).
 
 ### Verification Commands
 
@@ -84,13 +90,18 @@ bun run smoke:qc      # Full quality gate (runs check:max-lines — see below)
 # API route inventory (rg shown; plain grep -r works identically)
 rg "new Elysia|\.get\(|\.post\(|\.put\(|\.patch\(|\.delete\(" backend/src/routes/ -g "*.ts"
 
-# Lint warnings (not a complexity report — per-function cyclomatic/length
+# Lint warnings (not a complexity report - per-function cyclomatic/length
 # metrics come from the COMPLICATION audit tooling, not raw eslint)
 bun run lint
 
-# Check route registration against the app's API-app assembly file
-# (create-api-app.ts in canonical Spernakit, server.ts in spernakit-web apps)
-rg "\.use\(" backend/src/create-api-app.ts backend/src/server.ts
+# Check route registration against the target's API app assembly
+# Spernakit and derived apps: the routePlugins chain in create-api-app.ts
+rg "\.use\(" backend/src/create-api-app.ts
+# aidd: the route chain in server.ts
+rg "\.use\(" backend/src/server.ts
+
+# The enforcing gate in all three (reads the same assembly file)
+bun run check:feature-integration
 ```
 
 ## API Design Standards
@@ -165,12 +176,18 @@ async function sendNotification(userId: string, message: string): Promise<void> 
 
 ### Response Format Standards
 
-**Use the shared response types from `shared/` workspace consistently across all endpoints.**
+**Use one response shape consistently across all endpoints.**
 
-- `dataResponse(data)` - wraps data in `{ success: true, data }`
-- `paginatedResponse(data, pagination)` - includes pagination metadata
-- `successResponse(message)` - for operations without return data
-- `errorResponse(code, message)` - standardized error format
+In Spernakit and derived apps the shape is fixed. The types live in the shared workspace (`shared/src/apiTypes.ts`) and the builders in the backend (`backend/src/utils/apiResponse.ts` and `backend/src/utils/errorResponse.ts`):
+
+- `dataResponse(data)` - returns `{ data }`
+- `paginatedResponse(result)` - returns `{ data, limit, page, total }`
+- `successResponse()` - returns `{ data: null }` for operations without return data
+- Error builders (`notFoundError`, `badRequestError`, `validationError`, `internalError` and the others exported from `errorResponse.ts`) - return `{ code, error, message }` with optional `details` and `requestId`. `code` is an `ErrorCode` value from the shared workspace.
+
+There is no `success` flag in this envelope. A handler that hand-builds an object in one of these shapes instead of calling the builder is a finding; so is a route that returns a different shape.
+
+aidd returns bare typed objects and has no such builders. The requirement there is consistency within the app (see [Stack Applicability](#stack-applicability)).
 
 See the [Elysia Route Conventions](#elysia-route-conventions) section for implementation examples.
 
@@ -178,7 +195,9 @@ See the [Elysia Route Conventions](#elysia-route-conventions) section for implem
 
 **Route handlers delegate to a service; non-trivial business logic does not live inline in `routes/`.**
 
-Per the Spernakit service-layer pattern, business logic is separated from route handlers. Route files own request/response shaping and validation wiring; the actual work (queries, mutations, external calls, multi-step orchestration) belongs in `services/`. A route handler that performs database access and business rules inline - rather than delegating to a named service function - is an architecture finding.
+Business logic is separated from route handlers. This holds for Spernakit, derived apps and aidd, all of which keep a `backend/src/services/` directory. Route files own request/response shaping and validation wiring; the actual work (queries, mutations, external calls, multi-step orchestration) belongs in `services/`. A route handler that performs database access and business rules inline - rather than delegating to a named service function - is an architecture finding.
+
+In aidd one more boundary applies: the database runs in a Bun worker and `backend/src/db/commands.ts` is the only place a transaction is opened. Every multi-statement transaction is a command registered there (`createInProcessCommands`, implemented under `backend/src/db/commands/`). A `db.transaction()` call in a route or service is a finding in aidd. A single-statement write through the Drizzle client in a service (`db.insert(...)`, `db.update(...)`, `db.delete(...)`) is normal there and is not a finding: the client forwards each statement to the worker. Spernakit and derived apps have no worker and no command layer; do not look for one there.
 
 ```typescript
 // ✅ GOOD: route delegates to a service
@@ -198,13 +217,20 @@ app.post('/products', ({ body }) => {
 
 **Cross-workspace types (response envelopes, enums, error codes) are defined once in the `shared/` workspace; no duplicate divergent definitions exist in backend or frontend.**
 
-The `shared/` workspace is the canonical type-contract source consumed by both backend and frontend. `bun run check:api-types` is the enforcing gate (mandatory in `smoke:qc`) - it validates enum/union consistency between the OpenAPI spec (backend TypeBox schemas) and frontend type definitions. Duplicated, drifting copies of `ErrorCode`, role enums, or response envelope types across workspaces are findings.
+The `shared/` workspace is the canonical type-contract source consumed by both backend and frontend. `bun run check:api-types` is the enforcing gate and runs in `smoke:qc`. It is a different check in each repository, so read `scripts/check-api-types.ts` in the target before citing it:
+
+- **Spernakit and derived apps**: it extracts the OpenAPI spec from the Elysia app and validates enum/union consistency between the backend TypeBox schemas and the frontend type definitions.
+- **aidd**: it compares the browser API modules with their backend endpoints against an inventory (`scripts/api-type-inventory.json`).
+
+Duplicated, drifting copies of `ErrorCode`, role enums, or response envelope types across workspaces are findings.
 
 ### Module Export Standard
 
-**Modules use named exports (no `export default`); barrel files follow the STACK.md convention.**
+**Modules use named exports (no `export default`); barrel files follow the target's documented convention.**
 
-Per Module Export Standards, all modules use named exports exclusively. Barrels (`index.ts`) re-export in subdirectories where the convention calls for them (e.g., `services/auth/`, `routes/auth/`), with documented exceptions (`components/ui/` uses direct file imports; top-level `hooks/`/`services/` have no barrels). `export default` and undocumented barrels are findings. This is enforced by lint.
+All modules use named exports exclusively. This is enforced by lint in Spernakit, derived apps and aidd. `export default` is a finding.
+
+Barrel rules are a Spernakit convention, stated in the template documents (`docs/template/STACK.md` and `DEVELOPMENT.md` in the Spernakit checkout the project registers): route subdirectories re-export through `index.ts` (e.g. `routes/auth/index.ts`); `components/ui/` uses direct file imports; top-level `hooks/` and `services/` have no barrels. The two documents differ on service subdirectories: STACK.md still lists `services/auth/index.ts` as an example, while DEVELOPMENT.md says new service subdirectories must not add an `index.ts` barrel because the facade file is the public entry point. Apply the DEVELOPMENT.md rule to new code, accept the older service barrels it names, and record the document mismatch once as a template finding. For aidd and other targets, check barrels against the target's own documented convention; where it documents none, do not import Spernakit's.
 
 ### Input Validation
 
@@ -253,18 +279,19 @@ async function createUser(data: CreateUserData): Promise<{ userId: string }> {
 
 ## Elysia Route Conventions
 
-> **Note**: Spernakit uses Elysia (NOT Express, NOT Fastify). Handlers return values directly - there is no `res` object.
+> **Note**: Spernakit, derived apps and aidd all use Elysia (NOT Express, NOT Fastify). Handlers return values directly - there is no `res` object. This section does not apply to a target with a different HTTP framework or none (a CLI, a static site, a mobile app); mark it N/A there with the falsification record the methodology requires.
 
 ### Response Standards
 
-**Use a consistent response shape and Elysia's built-in status handling.** Full Spernakit apps use the shared `dataResponse`/`errorResponse` envelope; spernakit-web / minimal-API apps that return bare typed objects are exempt from the specific envelope shape (see [Stack Applicability](#stack-applicability)). The universal requirement is consistency within the app.
+**Use a consistent response shape and Elysia's built-in status handling.** Spernakit and derived apps use the `dataResponse` builder and the error builders; aidd returns bare typed objects and is exempt from the specific envelope shape (see [Stack Applicability](#stack-applicability)). The universal requirement is consistency within the app.
 
-✅ **Good: Elysia handler with TypeBox validation**:
+✅ **Good: Elysia handler with TypeBox validation** (Spernakit shape; the import paths are relative to a file in `backend/src/routes/`):
 
 ```typescript
 import { Elysia, t } from 'elysia';
-// from the app's shared workspace package (e.g. spernakit-shared, aidd-shared)
-import { dataResponse, errorResponse } from '~shared';
+
+import { dataResponse } from '../utils/apiResponse.ts';
+import { notFoundError } from '../utils/errorResponse.ts';
 
 app.get(
 	'/users/:id',
@@ -272,7 +299,7 @@ app.get(
 		const user = await userService.getById(params.id);
 		if (!user) {
 			set.status = 404;
-			return errorResponse('USER_NOT_FOUND', 'User not found');
+			return notFoundError('User');
 		}
 		return dataResponse(user);
 	},
@@ -295,20 +322,22 @@ app.get('/users/:id', (req, res) => {
 
 ### Response Envelope
 
-**Spernakit uses standardized response types from `shared/` workspace:**
+**Spernakit and derived apps use the response types defined in the shared workspace (`shared/src/apiTypes.ts`, imported as `spernakit-shared`; derived apps keep that package name):**
 
-- `DataResponse<T>` - `{ success: true, data: T }`
-- `PaginatedResponse<T>` - `{ success: true, data: T[], pagination: {...} }`
-- `SuccessResponse` - `{ success: true, message: string }`
-- `ErrorResponse` - `{ success: false, error: { code, message } }`
+- `DataResponse<T>` - `{ data: T }`
+- `PaginatedResponse<T>` - `{ data: T[], limit, page, total }`
+- `SuccessResponse` - `{ data: null }`
+- `ErrorResponse` - `{ code, error, message, details?, requestId? }`
+
+Read the live file before scoring; these shapes have changed before and this list is a guide, not the source.
 
 ### Error Handling
 
-**Consistent Error Responses with Elysia**:
+**Consistent Error Responses with Elysia** (Spernakit shape). `ErrorCode` is a type, not an object: the code values come from the constant groups in `shared/src/errorCodes.ts` (`AUTH_ERROR_CODES`, `RESOURCE_ERROR_CODES`, `SERVER_ERROR_CODES` and the others), and each error builder supplies a default code.
 
 ```typescript
-// from the app's shared workspace package (e.g. spernakit-shared, aidd-shared)
-import { ErrorCode } from '~shared';
+import { dataResponse } from '../utils/apiResponse.ts';
+import { internalError } from '../utils/errorResponse.ts';
 
 app.post(
 	'/posts',
@@ -319,7 +348,7 @@ app.post(
 			return dataResponse(post);
 		} catch (err) {
 			set.status = 500;
-			return errorResponse(ErrorCode.INTERNAL_ERROR, 'Failed to create post');
+			return internalError();
 		}
 	},
 	{
@@ -356,20 +385,22 @@ class PostController {
 
 ### API Versioning
 
-**Canonical Spernakit API endpoints use the `/api/v1` prefix**:
+**Spernakit, derived apps and aidd all serve their API under the `/api/v1` prefix**:
 
 ```typescript
 const apiApp = new Elysia({ prefix: '/api/v1' }).use(authRoutes).use(userRoutes).use(postRoutes);
 ```
 
-> **Applicability**: The `/api/v1` prefix is the canonical-Spernakit convention, not a universal requirement. The universal requirement is a stable, documented API surface. Do not flag spernakit-web / minimal-API apps that omit the prefix by design (see [Stack Applicability](#stack-applicability)).
+Where the prefix is set differs. Spernakit and derived apps set it once on the app built by `createApiApp`. aidd sets it on each route plugin (`new Elysia({ prefix: '/api/v1/...' })` inside each `create*Routes` function), so in aidd a route plugin that omits the prefix is the thing to look for. A nested route group that takes its prefix as a parameter from the `create*Routes` plugin that mounts it (the `*RouteGroup` functions in `backend/src/routes/`) is not a finding.
+
+> **Applicability**: The `/api/v1` prefix is the convention of these repositories, not a universal requirement. The universal requirement is a stable, documented API surface. Do not flag another target that omits the prefix by design (see [Stack Applicability](#stack-applicability)).
 
 When evolving the API:
 
-- Add new fields to existing endpoints (backward compatible)
-- Mark deprecated fields in OpenAPI schema annotations
-- Only introduce `/api/v2` when breaking changes are unavoidable
-- The OpenAPI spec at `/api/v1/docs/json` is the source of truth for the API contract
+- Add new fields to existing endpoints without changing the meaning of existing ones
+- Where the target's rules forbid backward-compatibility code (see [Target Architectural Rules](#target-architectural-rules)), a breaking change moves every consumer in the same change. Do not recommend a deprecated-field period, a parallel `/api/v2`, or a compatibility alias for such a target unless its owner has approved one in writing
+- For a target with outside consumers and no such rule, mark deprecated fields in the OpenAPI schema annotations and introduce `/api/v2` only when breaking changes are unavoidable
+- Spernakit and derived apps: the OpenAPI spec at `/api/v1/docs/json` (development mode only) is the source of truth for the API contract
 
 ### REST Resource Design
 
@@ -395,39 +426,88 @@ app.post('/posts/:id/publish', publishPost);
 
 ### Route Registration
 
-**Every route file in `routes/` MUST be registered in the app's API-app assembly file** (`create-api-app.ts` in canonical Spernakit; `server.ts` in spernakit-web apps). The invariant is the same - no orphaned, unregistered route files; only the filename differs by app type.
+**Every route file in `routes/` MUST be registered through the target's API app assembly.** The invariant is the same everywhere - no orphaned, unregistered route files. Where the assembly lives depends on the target:
+
+- **Spernakit and derived apps**: `backend/src/create-api-app.ts`. Route plugins are `.use()`'d on the `routePlugins` chain there, or reached from it through a registered domain route aggregator (a route `index.ts` that itself `.use()`s the files in its directory, e.g. `routes/auth/index.ts`). A file reachable only through an aggregator is registered; trace the chain before filing.
+- **aidd**: `backend/src/server.ts`. Route plugins are exported as `create*Routes` functions and the server `.use()`s each one. Files in `routes/` that export only schemas or helpers for a plugin are not route plugins.
+- **Other targets**: find the composition root by reading the entry point. Do not assume either filename.
 
 ```typescript
-// backend/src/create-api-app.ts
-export function createApiApp() {
-	return new Elysia({ prefix: '/api/v1' })
-		.use(authRoutes)
-		.use(userRoutes)
-		.use(postRoutes) // Every route file must be .use()'d here
-		.use(settingsRoutes);
-}
+// Spernakit and derived apps: backend/src/create-api-app.ts
+const routePlugins = new Elysia({ name: 'routes' })
+	.use(authRoutes)
+	.use(userRoutes)
+	.use(postRoutes) // Every route plugin is .use()'d here or by an aggregator that is
+	.use(settingsRoutes);
 ```
+
+### Page Registration
+
+**Every frontend page in `pages/` MUST be registered through the target's router and reachable from a user path.**
+
+- **Spernakit and derived apps**: page imports live in `frontend/src/routes/lazyPages.ts`; route objects live in `frontend/src/routes/routeGroups.tsx` (settings routes in `frontend/src/routes/settingsRoutes.tsx`). `frontend/src/routes.tsx` only assembles those groups into the browser router, plus the default redirect and the not-found route it already carries. Any other page entry added directly to `routes.tsx` is a finding even though the page renders: it sits outside `ProtectedRoute` and `AppShell`, so it is unguarded and has no app chrome. A derived app on an older template version may not have `routeGroups.tsx` yet; read the app's own `frontend/src/routes/` directory, and treat the gap as release-level template drift owned by [SPERNAKIT.md](./SPERNAKIT.md), not as an architecture finding.
+- **aidd**: page imports and routes live in `frontend/src/App.tsx`. Top-level destinations belong in `frontend/src/components/layout/nav-items.ts`; detail, create, report and not-found pages may be reachable through in-page links, redirects or route parameters instead.
+
+`bun run check:feature-integration` enforces the route-file and page-import halves in all three. It does not check that a Spernakit route object sits in the right file, so read `routes.tsx` for stray page entries. Detailed reachability analysis is owned by [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md).
 
 ## Stack Applicability
 
-Several rules in this audit are conventions of **canonical Spernakit** (the full template). **spernakit-web / minimal-API derivatives** (e.g. `aidd`) deliberately diverge from some of them. Apply stack-divergent rules according to the app type below; do not file findings against a derivative for omitting a convention it never adopted.
+This audit is applied to three kinds of target: the **Spernakit template and the apps derived from it**, **aidd**, and **other projects** (CLIs, static sites, mobile apps, services on another stack). Several rules are conventions of one target only. Identify the target first, apply the column that fits, and do not file findings against a target for omitting a convention it never adopted.
 
-| Rule                                               | Canonical Spernakit                            | spernakit-web / minimal-API                                             |
-| -------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| Response envelope (`dataResponse`/`errorResponse`) | Required - shared `{ success, data }` envelope | Exempt - bare typed objects allowed; require only intra-app consistency |
-| `/api/v1` prefix                                   | Required                                       | Exempt if omitted by design; require a stable documented surface        |
-| Shared workspace package name                      | `spernakit-shared`                             | App-renamed (e.g. `aidd-shared`); use the `~shared` alias generically   |
-| API-app assembly file                              | `backend/src/create-api-app.ts`                | `backend/src/server.ts`                                                 |
+| Rule                          | Spernakit and derived apps                                                                     | aidd                                                                      | Other targets                                     |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------- |
+| Response envelope             | Required - `dataResponse` and the error builders (`{ data }`, `{ code, error, message }`)      | Exempt - bare typed objects; require consistency within the app           | Require consistency within the app                |
+| `/api/v1` prefix              | Required - set once in `createApiApp`                                                          | Used - set on each route plugin                                           | Not required; require a stable documented surface |
+| Shared workspace package      | `spernakit-shared` (derived apps keep the name; `shared/package.json` is a pure template file) | `aidd-shared`                                                             | Whatever the target declares                      |
+| API app assembly              | `backend/src/create-api-app.ts` or a registered route aggregator                               | `backend/src/server.ts`                                                   | The target's own composition root                 |
+| Page registration             | `routes/lazyPages.ts` + `routes/routeGroups.tsx` + `routes/settingsRoutes.tsx`                 | `frontend/src/App.tsx` + `components/layout/nav-items.ts`                 | The target's own router                           |
+| Database write surface        | Drizzle in process, called from services                                                       | Bun worker; transactions only as commands in `backend/src/db/commands.ts` | The target's own data layer                       |
+| OpenAPI document              | `/api/v1/docs/json` in development mode                                                        | None mounted                                                              | Only if the target ships one                      |
+| Automated tests               | No unit-test framework by design; `crawltest`, `smoke:qc` and integration scripts              | `bun:test` unit tests run in `smoke:qc` and CI                            | The target's own test setup                       |
+| Recorded template differences | `.templateoverrides` in each derived app                                                       | Not applicable                                                            | Not applicable                                    |
 
-**Universal rules** (apply to all app types regardless of stack): input validation and type safety, naming conventions, route-registration invariant (in whichever assembly file the app uses), service-layer boundary, shared-contract single-source-of-truth, named-export standard, TypeBox route validation, handler extraction (>30 lines as named functions, never controller classes), and all complexity/logic-quality thresholds.
+There is no separate registered "web" variant of Spernakit. Earlier versions of this audit used that label for aidd alone; treat any report that uses it as describing aidd.
+
+**Universal rules** (apply to every Elysia target): input validation and type safety, naming conventions, route-registration invariant (in whichever assembly the target uses), service-layer boundary, shared-contract single-source-of-truth, named-export standard, TypeBox route validation, handler extraction (>30 lines as named functions, never controller classes), and all complexity/logic-quality thresholds. For a target that is not an Elysia application, apply the rules that have a real counterpart (validation at boundaries, naming, one composition root, named exports where the target requires them, complexity and logic quality) and mark the rest N/A with a falsification record.
+
+### Derived Spernakit Apps: Recorded Differences and Template-Managed Files
+
+A derived app records every deliberate difference from the template in `.templateoverrides` at its root. Each line is `ACTION  PATH  # REASON`, where the action is `KEEP`, `SKIP` or `DELETED` (parsed by `loadTemplateOverrides` in the template's `scripts/lib/template/overrides.ts`; the parser accepts an entry with no reason, and no gate requires one). Read the file in full before recommending any structural change to a derived app.
+
+- **A path with an entry is a recorded decision.** Do not recommend overwriting it from the template, moving it, or "realigning" it. Doing so destroys work the app's owner chose to keep. If the reason no longer holds, the finding is against the entry (stale or unjustified reason), and it is owned by [SPERNAKIT.md](./SPERNAKIT.md).
+- **A template-managed file is not the app's to restructure.** `check:drift` compares every file the template ships with the app's copy. The classification lives in the template: `scripts/template-manifest.json` lists the `branded` and `infrastructure` files, everything else the template ships is `pure`, and `SECURITY_INFRASTRUCTURE_FILES` in `scripts/lib/template/security.ts` names the security set, which takes precedence over the manifest's `infrastructure` list. Pure files must be byte-identical, branded files identical after name and port substitution, and security infrastructure (`backend/src/routes/auth/index.ts`, `backend/src/create-api-app.ts` and `backend/src/config/configSchemas/security.ts`) fails the gate on drift or removal unless a `.templateoverrides` entry acknowledges it. Infrastructure files (for example `backend/src/app.ts`, `frontend/src/routes.tsx`, navigation) are expected to carry the app's own extensions, but their structure is still the template's. An architecture problem in the template's part of any of these files is a finding against the template. File it once, name the template as the owner, and do not recommend that the derived app split, move or rewrite its copy. The app's own additions inside an infrastructure file are the app's to change.
+- **App-owned files** (domain routes, services, pages, schema the app added) are the app's to change. Architecture findings and restructuring recommendations for a derived app belong here.
+
+To tell the three apart, compare the path with the template checkout the project registers and with `.templateoverrides`. Do not infer ownership from the file's content.
 
 ### aidd context (Class B)
 
-aidd is a single-user **local CLI + embedded Elysia control panel + spawned agent subprocesses + SQLite single-writer**, with NO multi-tenant / workspace / container / cloud layer. Architecture rules that presuppose multi-tenant request routing, workspace-scoped service boundaries, or a horizontally-scaled API tier are **N/A (by design)** for aidd and should be scored as such rather than as Pass/finding - but only after confirming no degenerate equivalent exists. Marking a SaaS-only control N/A is permitted ONLY after confirming it truly does not exist in aidd; if a degenerate equivalent exists (e.g. the web bearer token in place of RBAC, or the single-writer SQLite handle in place of a connection pool), audit that equivalent.
+aidd is a single-user **local CLI + embedded Elysia control panel + spawned agent subprocesses + SQLite single-writer**, with NO multi-tenant / workspace / container / cloud layer. The backend database runs inside a Bun worker and every multi-statement transaction is a command registered in `backend/src/db/commands.ts`. Architecture rules that presuppose multi-tenant request routing, workspace-scoped service boundaries, or a horizontally-scaled API tier are **N/A (by design)** for aidd and should be scored as such rather than as Pass/finding - but only after confirming no degenerate equivalent exists. Marking a SaaS-only control N/A is permitted ONLY after confirming it truly does not exist in aidd; if a degenerate equivalent exists (e.g. the web bearer token in place of RBAC, or the single-writer SQLite handle in place of a connection pool), audit that equivalent.
+
+## Target Architectural Rules
+
+Many targets state architectural rules in their agent-instruction file. Where the target states them, they are requirements, and this audit must agree with them. Read the file, including any parent-directory instruction file that covers the target; do not assume the list below applies to a target that does not state it. The instruction file that covers Spernakit, its derived apps and aidd states all of these:
+
+| Rule                                                                                                 | What to verify                                                                                                                                          | Detailed detection owned by                        |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Application databases live under `data/` at the application root, never `backend/data/`              | The resolved database path in the config loader or database client, not only the directory listing (Spernakit also gates this with `check:db-location`) | [REORG.md](./REORG.md)                             |
+| No placeholder, transitional, dead, backward-compatibility or legacy code unless explicitly approved | Compatibility aliases, dual code paths and "remove later" branches have a recorded approval or are findings                                             | [TECHDEBT.md](./TECHDEBT.md)                       |
+| Schema migrations only in development, applied with the aligned code                                 | No transitional or compatibility layer bridges an old and a new schema                                                                                  | [DATABASE.md](./DATABASE.md)                       |
+| No new feature-flag surface unless explicitly requested; any flag is wired end to end                | A new flag has a recorded request and a reader on every path it claims to control                                                                       | This audit                                         |
+| Every feature is wired end to end; no library code without an immediate consumer                     | Each new service, utility or abstraction has a caller in the same change                                                                                | [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md) |
+| Every backend route file is registered through the API app assembly                                  | See [Route Registration](#route-registration)                                                                                                           | [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md) |
+| Every frontend page is registered through the router and reachable from a user path                  | See [Page Registration](#page-registration)                                                                                                             | [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md) |
+| Every new endpoint has an immediate real consumer (frontend, CLI, webhook sender or integration)     | Each route has a caller; each frontend call has a working backend counterpart                                                                           | [FEATURE_INTEGRATION.md](./FEATURE_INTEGRATION.md) |
+| No abstractions, services or utilities built for future use                                          | Single-implementation interfaces and one-caller frameworks with no second consumer                                                                      | [REFACTOR.md](./REFACTOR.md)                       |
+| Source files stay under 300 lines                                                                    | Read the `check:max-lines` gate and any baseline it carries; do not re-count                                                                            | [REORG.md](./REORG.md)                             |
+
+This audit records an architecture-level violation of a rule (for example a design that depends on a compatibility layer, or a second composition root that bypasses the assembly) and routes instance-level detection to the owning audit so the same issue is not filed twice.
+
+A recommendation this audit makes must itself obey the target's rules. Do not recommend a feature flag, a compatibility shim, a staged dual-path rollout or an abstraction "for later" to a target whose rules forbid them. If the only sound fix conflicts with a rule, say so in the finding and state that it needs the project owner's written approval.
 
 ## Code Complexity Assessment
 
-> **Detailed Metrics**: See [COMPLICATION.md](./COMPLICATION.md) for comprehensive complexity analysis including cyclomatic complexity thresholds, function length limits, parameter count guidelines, nesting depth standards, and optimization decision frameworks.
+> **Detailed Metrics**: See [COMPLICATION.md](./COMPLICATION.md) for comprehensive complexity analysis including cyclomatic complexity thresholds, function length limits, parameter count guidelines, nesting depth standards, and optimization decision frameworks. COMPLICATION owns the measurement and the compliance targets; the values below are orientation only and are not scored here.
 
 **Quick Reference Targets**:
 
@@ -500,20 +580,29 @@ Is the complexity necessary?
 - [ ] **Critical**: All API functions have proper input validation
 - [ ] **Critical**: All API functions have proper type safety
 - [ ] **Critical**: Consistent naming conventions (get*, create*, sync\*)
-- [ ] **Critical**: Consistent response shape across endpoints (shared envelope in full Spernakit; see [Stack Applicability](#stack-applicability))
+- [ ] **Critical**: Consistent response shape across endpoints (the `dataResponse` and error-builder envelope in Spernakit and derived apps; see [Stack Applicability](#stack-applicability))
 - [ ] **Critical**: Complete input validation
 - [ ] **Critical**: Route handlers delegate to a service; non-trivial business logic is not inline in `routes/`
-- [ ] **Critical**: Cross-workspace types defined once in `shared/`; no duplicate divergent definitions (`check:api-types` passes)
+- [ ] **Critical**: Cross-workspace types defined once in `shared/`; no duplicate divergent definitions (`check:api-types` passes, and the auditor has read what that gate checks in this target)
+- [ ] **Critical** (aidd): Every multi-statement transaction is a command in `backend/src/db/commands.ts`; no `db.transaction()` in a route or service
 
 #### Elysia Route Standards
 
-- [ ] **Applicability**: Response-envelope and `/api/v1` checks below apply to full Spernakit apps; spernakit-web / minimal-API apps are exempt per [Stack Applicability](#stack-applicability)
-- [ ] **Critical**: Responses use a consistent shape (shared `dataResponse`/`errorResponse` in full Spernakit apps)
+- [ ] **Applicability**: The target is identified per [Stack Applicability](#stack-applicability) before any check below is scored; the response-envelope check applies to Spernakit and derived apps, and aidd is exempt from the envelope shape only
+- [ ] **Critical**: Responses use a consistent shape (`dataResponse` and the error builders in Spernakit and derived apps)
 - [ ] **Critical**: All routes use TypeBox schemas for input validation (`t.Object()`)
-- [ ] **Critical**: Consistent error handling with `ErrorCode` from the shared workspace
+- [ ] **Critical**: Consistent error handling (Spernakit and derived apps: the error builders, with `ErrorCode` values from the shared workspace)
 - [ ] **Critical**: Handlers >30 lines extracted as named functions (NOT controller classes)
-- [ ] **Critical**: Every route file registered in the app's API-app assembly file (`create-api-app.ts`, or `server.ts` in spernakit-web apps)
-- [ ] **Critical**: Endpoints use the `/api/v1` prefix (canonical Spernakit; exempt for spernakit-web apps that omit it by design)
+- [ ] **Critical**: Every route file registered through the target's API app assembly (Spernakit and derived apps: `create-api-app.ts` or a registered route aggregator; aidd: `server.ts`)
+- [ ] **Critical**: Every page registered through the target's router and reachable from a user path (Spernakit and derived apps: `routes/lazyPages.ts` and `routes/routeGroups.tsx` or `settingsRoutes.tsx`, with no stray page entry in `routes.tsx`; aidd: `App.tsx`)
+- [ ] **Critical**: Endpoints use the `/api/v1` prefix (Spernakit, derived apps and aidd; not required of other targets)
+
+#### Target Rules and Ownership
+
+- [ ] **Critical**: The target's stated architectural rules were read, and each architecture-level violation is recorded or routed to its owning audit (see [Target Architectural Rules](#target-architectural-rules))
+- [ ] **Critical** (derived Spernakit apps): `.templateoverrides` was read in full; no recommendation overwrites, moves or realigns a path that has an entry
+- [ ] **Critical** (derived Spernakit apps): No recommendation restructures the template's part of a template-managed file; such findings name the template as owner
+- [ ] **High**: No recommendation in the report proposes a feature flag, compatibility layer or future-use abstraction to a target whose rules forbid it
 
 #### Backend Function Standards
 
@@ -525,11 +614,10 @@ Is the complexity necessary?
 
 #### Code Complexity
 
-- [ ] **Critical**: All functions ≤7 cyclomatic complexity
-- [ ] **Critical**: All functions ≤40 lines
-- [ ] **Critical**: All functions ≤5 parameters (or use object)
-- [ ] **Critical**: Nesting depth ≤3 levels
-- [ ] **Critical**: No functions with complexity >10
+Measured and scored by [COMPLICATION.md](./COMPLICATION.md), which sets the compliance targets. Record here only what an architecture reader needs:
+
+- [ ] **Critical**: No functions with complexity >10 (cite the COMPLICATION finding where one exists)
+- [ ] **High**: Functions outside the orientation targets (≤7 cyclomatic complexity, ≤40 lines, ≤5 parameters, nesting ≤3) are routed to COMPLICATION, not filed here
 
 ### **High Priority Architecture Checks**
 
@@ -538,8 +626,8 @@ Is the complexity necessary?
 - [ ] **High**: 100% API documentation coverage
 - [ ] **High**: Clear error messages for all failure cases
 - [ ] **High**: Consistent parameter structures across similar functions
-- [ ] **High**: API performance <100ms for queries
-- [ ] **High**: Proper authentication/authorization checks
+- [ ] **High**: API performance <100ms for queries. This needs a measurement with an instrument record (methodology Phase 0); without one, report it as not measured and do not tick it
+- [ ] **High**: Proper authentication/authorization checks (aidd: the bearer-token guard and the loopback-versus-forwarded decision stand in for role checks)
 
 #### Code Organization
 
@@ -548,7 +636,7 @@ Is the complexity necessary?
 - [ ] **High**: No duplicate logic across functions
 - [ ] **High**: Clear separation of concerns
 - [ ] **High**: Consistent patterns across similar code
-- [ ] **High**: Named exports only (no `export default`); barrels follow the STACK.md convention
+- [ ] **High**: Named exports only (no `export default`); barrels follow the target's documented convention (Spernakit and derived apps: the template documents)
 - [ ] **High**: Manual `React.memo`/`useMemo`/`useCallback` not used unless profiling proves a React Compiler miss - detailed enforcement DEFERS to [REACT_BEST_PRACTICES.md](./REACT_BEST_PRACTICES.md)
 
 #### Logic Quality
@@ -579,16 +667,20 @@ Is the complexity necessary?
 
 ## Report Template
 
+This audit defines no rubric for an overall score or for per-area scores out of 25, so it does not produce them. Write the overall score as `N/A` and let the severity counts and the findings carry the result. Do not derive a number from checklist ticks or from a green gate. The two Logic Quality scores keep their 1-5 scale because [Logic Quality Evaluation](#logic-quality-evaluation) defines how to assign them.
+
+Every location in the report is the live `file:line` read during this audit, with the symbol name beside it. This document names symbols and files, not line numbers, because line numbers move; do not copy a location from an earlier report without re-reading the file.
+
+The report must also carry the sections [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) requires: the instrument validation table, the methodology validity summary and the falsification records. Every "not applicable" disposition, including each Spernakit-specific rule set aside for another target, needs a falsification record.
+
 ```markdown
 # Architecture Audit Report - YYYY-MM-DD
 
 ## Executive Summary
 
-**Overall Architecture Score**: [Score]/100
-**API Design Score**: [Score]/25
-**Code Complexity Score**: [Score]/25
-**Logic Quality Score**: [Score]/25
-**Route/Handler Standards Score**: [Score]/25
+**Target**: [Spernakit template | derived Spernakit app | aidd | other - name it]
+**Overall Architecture Score**: N/A (this audit defines no scoring rubric)
+**Logic Quality**: Control Flow [1-5], Branching [1-5]
 
 **Critical Issues Found**: [Number]
 **High Priority Issues Found**: [Number]
@@ -673,7 +765,12 @@ Report a quick-reference complexity snapshot against the targets (≤7 CC, ≤40
 
 1. [Architecture pattern standardization]
 2. [Complexity monitoring automation]
-3. [Team training on best practices]
+
+## Template-Owned Findings (derived Spernakit apps)
+
+| Issue | Template file | Why it belongs to the template | `.templateoverrides` entry |
+| ----- | ------------- | ------------------------------ | -------------------------- |
+| [ID]  | [path]        | [reason]                       | [none / ACTION + reason]   |
 
 ## Next Steps
 

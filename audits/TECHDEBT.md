@@ -1,7 +1,7 @@
 ---
 title: 'Technical Debt Audit Specification'
-last_updated: '2026-08-30'
-version: '2.4'
+last_updated: '2026-10-01'
+version: '2.5'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '30-60 min'
@@ -14,9 +14,13 @@ lifecycle: 'any'
 > **Severity Reference**: See [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md) for issue prioritization.
 > **Methodology gate**: See [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) - read the enforcing implementation (cite file:line), falsify every "by design"/"N/A" rationale, never score from a green gate.
 
-> **Validated against the current Spernakit v3 manifests (React 19.2, Vite 8, Bun 1.4).**
+> **Versions**: This audit does not pin library versions. Read the target's own `package.json` files for the versions in use; the stack named in the examples (React with the React Compiler, Vite, Elysia, Drizzle, TanStack Query, Zustand) is the Spernakit stack.
 
-> **Applicability tiers**: This audit serves two app shapes. **Full-stack apps** (ship the Spernakit auth/RBAC/workspace/notification layer) apply every rule, including the auth/admin/role-check remediation examples. **Web-layer apps** (e.g. aidd - no auth/RBAC/workspace surface) skip all auth/RBAC/workspace/role-check examples entirely; they are guidance for full-stack apps, not universal detection rules. Determine the tier before scoring and do not file findings for surfaces the app does not ship.
+> **Applicability tiers**: This audit serves three kinds of target. **Full-stack apps** (the Spernakit template and the apps derived from it, which ship the auth/RBAC/workspace/notification layer) apply every rule, including the auth/admin/role-check remediation examples. **Web-layer apps** (aidd - no auth/RBAC/workspace surface) skip all auth/RBAC/workspace/role-check examples entirely; they are guidance for full-stack apps, not universal detection rules. **Other targets** (CLIs, static sites, mobile apps, services on another stack) apply Categories 1 and 4 in full and skip every Spernakit-specific pattern, path and library rule. Determine the tier before scoring and do not file findings for surfaces the target does not ship.
+
+> **Derived Spernakit apps**: read `.templateoverrides` at the app root before recommending any change to a file the template also ships. A path with an entry (`KEEP`, `SKIP` or `DELETED`, normally with a written reason, which the parser does not require) is a recorded decision: do not report its difference from the template as debt and do not recommend overwriting or realigning it. Debt found in a template-managed file with no entry belongs to the template; file it once against the template, not per app (see [Known False Positive Patterns](#known-false-positive-patterns)).
+
+> **Target rules**: where the target's agent-instruction file states a rule against placeholder, transitional, dead, backward-compatibility or legacy code (the one covering Spernakit, its derived apps and aidd does), that rule is the standard for Categories 1 and 4. Such code is debt unless the project owner approved it explicitly, and the approval is on record.
 
 ## Executive Summary
 
@@ -29,7 +33,7 @@ lifecycle: 'any'
 **📋 Essential Standards (Required)**
 
 - **Categorization boundaries**: Every finding must fit exactly one of the 6 categories - if it could fit multiple, use the highest-priority match
-- **Evidence-backed findings**: Every finding must include file path, line number, the specific pattern detected, and the recommended remediation
+- **Evidence-backed findings**: Every finding must include file path, line number, the specific pattern detected, and the recommended remediation. Cite the live `file:line` read during this audit, with the symbol name; do not copy a location from an earlier report
 - **Cross-audit awareness**: TECHDEBT focuses on manual pattern detection; defer automated dead code detection to [HYGIENE](./HYGIENE.md), manual file tracing to [DEAD_CODE](./DEAD_CODE.md), and stack drift to [SPERNAKIT](./SPERNAKIT.md)
 
 **Detection Categories**
@@ -124,7 +128,8 @@ Identify and catalog technical debt for removal or refactoring. This specificati
 - ✅ **Include (gated)**: A `TODO`/`FIXME` marker ONLY when it carries a removal deadline OR names a canonical replacement (same gate as the Legacy Alias Threshold below). A bare `TODO`/`FIXME` is a backlog note, not CRITICAL tech debt.
 - ❌ **Exclude**: Bare `TODO`/`FIXME` with no removal deadline and no canonical replacement - track in the backlog, do not file as a CRITICAL finding
 - ❌ **Exclude**: Working code that uses older but still supported patterns
-- ❌ **Exclude**: Rename-only churn, harmless compatibility aliases, and names containing "legacy" that do not preserve a past-due migration, duplicate a canonical type/source, or create concrete drift risk
+- ❌ **Exclude**: Rename-only churn and names containing "legacy" that do not preserve a past-due migration, duplicate a canonical type/source, or create concrete drift risk
+- ❌ **Exclude**: A compatibility alias or shim the project owner approved explicitly, where the approval is on record (the feature record, the spec, or a comment naming the decision). In a target whose rules forbid backward-compatibility code, an alias or shim with no recorded approval is a finding however harmless it looks; in a target with no such rule, a harmless alias is excluded
 
 **Detection Patterns**:
 
@@ -135,7 +140,7 @@ Identify and catalog technical debt for removal or refactoring. This specificati
  */
 function oldFunction() { }
 
-// TODO: Remove after the v2 cutover ships (2026-Q3) — has a deadline, so DETECT
+// TODO: Remove after the v2 cutover ships (2026-Q3) - has a deadline, so DETECT
 const legacyAuth = useOldAuth();
 
 // ❌ DON'T DETECT as CRITICAL: bare marker, no deadline, no canonical replacement → backlog note
@@ -162,6 +167,8 @@ at least one of these is true:
 - The alias preserves a compatibility surface after its documented migration deadline.
 - The alias causes cross-workspace, API-contract, or schema drift because consumers keep importing the old name.
 - The alias blocks removal of deprecated code or forces new code to support two names for the same concept.
+- The target's rules forbid backward-compatibility or transitional code and the alias exists
+  only to keep an old name or old call shape working, with no recorded approval.
 
 Default severity is LOW for rename-only cleanup with no runtime impact. Escalate to
 MEDIUM/HIGH only when the alias causes real source-of-truth drift, blocks migration
@@ -179,7 +186,12 @@ completion, or creates security/authorization ambiguity.
 
 > **Defer-stub**: Automated bulk detection of unused files, exports, and dependencies is owned by [HYGIENE.md](./HYGIENE.md) (Knip) and file-by-file import tracing by [DEAD_CODE.md](./DEAD_CODE.md). TECHDEBT does **not** re-run this detection.
 
-**TECHDEBT covers only the manual edge cases automated tools miss**: ambiguous dynamic/conditional imports, and framework registration patterns (`.use()` in `create-api-app.ts`, `lazy()` in `routes.tsx`) that Knip cannot statically resolve. If you suspect dead code outside those edge cases, route it to HYGIENE/DEAD_CODE rather than filing it here.
+**TECHDEBT covers only the manual edge cases automated tools miss**: ambiguous dynamic/conditional imports, and framework registration patterns that Knip cannot statically resolve. The registration points differ by target:
+
+- **Spernakit and derived apps**: `.use()` on the `routePlugins` chain in `backend/src/create-api-app.ts` or in a registered route aggregator; `lazyNamed()` page imports in `frontend/src/routes/lazyPages.ts`, with the route objects in `frontend/src/routes/routeGroups.tsx` and `settingsRoutes.tsx`.
+- **aidd**: `.use(create*Routes(...))` in `backend/src/server.ts`; `lazy()` page imports and routes in `frontend/src/App.tsx`.
+
+`bun run check:feature-integration` enforces both registrations in all three. If you suspect dead code outside those edge cases, route it to HYGIENE/DEAD_CODE rather than filing it here.
 
 ### 3. Duplicated Functionality (defer-stub → HYGIENE)
 
@@ -252,7 +264,7 @@ function handleErrorB(error: Error) {
 }
 
 // ✅ DETECT: Manual fetch + useState + useEffect for server data alongside useQuery
-// This is the actual anti-pattern — mixing two server-data strategies in the same codebase
+// This is the actual anti-pattern - mixing two server-data strategies in the same codebase
 const ComponentA = () => {
 	const [data, setData] = useState(null);
 	useEffect(() => {
@@ -267,7 +279,7 @@ const ComponentB = () => {
 
 // ❌ DON'T DETECT: useState for local UI state (this is NOT tech debt)
 const ComponentC = () => {
-	const [isOpen, setIsOpen] = useState(false); // Local UI state — perfectly valid
+	const [isOpen, setIsOpen] = useState(false); // Local UI state - perfectly valid
 	const { data } = useQuery({ queryKey: ['items'], queryFn: fetchItems });
 };
 
@@ -321,7 +333,7 @@ const data: any = fetchData(); // Explicit any type
 const result = value as any; // Type assertion to any
 function process<any>(input: any) {} // Generic any
 
-// npm/npx-vs-bun is a single checklist item, not a TECHDEBT detection block —
+// npm/npx-vs-bun is a single checklist item, not a TECHDEBT detection block -
 // see the Low Priority Checks in the Audit Checklist.
 ```
 
@@ -443,6 +455,8 @@ const { data: user } = useQuery({
 
 > **Reference table - owned by SPERNAKIT / CODE_QUALITY**: This consolidated table is retained as a quick reference for the audits that actually own stack-drift detection ([SPERNAKIT.md](./SPERNAKIT.md), [CODE_QUALITY.md](./CODE_QUALITY.md)). It is **not** a TECHDEBT detection mandate - TECHDEBT routes these findings to those audits (see Category 5 defer-stub). Database-location is structural and routes to [REORG.md](./REORG.md).
 
+> **Applies to**: Spernakit and derived apps in full. For aidd, the library rows that match its stack (Elysia, Drizzle, React with the React Compiler, named exports, ESM, no `any`, bun) apply; the `.env` row does not, because aidd has no `configSecrets.ts` and reads its own documented environment variables. For other targets, apply only the rows the target's own stack rules state.
+
 | Pattern                     | Detection                                                                                                                                                                                                                                            | Category / Owner   | Priority |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------- |
 | Database in `backend/data/` | Directory exists                                                                                                                                                                                                                                     | Structural → REORG | CRITICAL |
@@ -459,7 +473,7 @@ const { data: user } = useQuery({
 | Manual memoization          | `React.memo`, `useMemo`, `useCallback` without `'use no memo'` directive or a narrow `// eslint-disable-next-line react-hooks/incompatible-library` escape hatch for third-party libraries (e.g. `@tanstack/react-virtual`, `@tanstack/react-table`) | 5 (Architectural)  | HIGH     |
 | CommonJS patterns           | `require()`, `module.exports`, `__dirname`, `__filename`                                                                                                                                                                                             | 5 (Architectural)  | MEDIUM   |
 | Default exports             | `export default` (stack mandates named exports only)                                                                                                                                                                                                 | 5 (Architectural)  | MEDIUM   |
-| .env files                  | `.env`, `.env.local`, `dotenv` import, `process.env.*` outside the approved `configLoader.ts` / `SECRET_CONFIG_KEYS` exception                                                                                                                       | 5 (Architectural)  | HIGH     |
+| .env files                  | `.env`, `.env.local`, `dotenv` import, `process.env.*` outside the two approved files (`configSecrets.ts` for `SECRET_CONFIG_KEYS`, `configLogger.ts` for `NODE_ENV`), enforced by `check:process-env`                                               | 5 (Architectural)  | HIGH     |
 | Cross-workspace imports     | Frontend importing from backend or vice versa outside `shared/`                                                                                                                                                                                      | 5 (Architectural)  | HIGH     |
 | `any` types                 | `as any`, `: any`, `<any>` - zero tolerance                                                                                                                                                                                                          | 6 (Code Quality)   | HIGH     |
 | npm/npx usage               | `npm run`, `npx`, `npm install` in scripts or docs                                                                                                                                                                                                   | 6 (Code Quality)   | MEDIUM   |
@@ -468,23 +482,24 @@ const { data: user } = useQuery({
 
 These patterns are consistently flagged during tech debt audits but are not actual issues. Verify before dismissing, but expect these to be false positives:
 
-| Pattern                                                                       | Why it's a false positive                                                                                                                                                                           |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@fontsource-variable/*` reported unused                                      | Imported in CSS (`@import`), not in JS - static analysis only scans JS imports                                                                                                                      |
-| `tw-animate-css` reported unused                                              | Referenced via CSS `@import` - static analysis only scans JS imports                                                                                                                                |
-| `pino-pretty` reported unused                                                 | Used as a runtime pino transport (`transport: 'pino-pretty'`), not a static import                                                                                                                  |
-| `babel-plugin-*` reported unused                                              | Referenced in `vite.config.ts` plugins array, not directly imported                                                                                                                                 |
-| `tailwindcss` reported unused                                                 | Imported in CSS (`@import "tailwindcss"`) or via `@tailwindcss/vite` plugin                                                                                                                         |
-| `@tailwindcss/vite` reported unused                                           | Referenced in `vite.config.ts` plugins array                                                                                                                                                        |
-| SQLite/PostgreSQL dual schema duplication                                     | `schema/*.ts` and `schema-pg/*.ts` produce expected structural duplication - exclude from clone detection                                                                                           |
-| Frontend/backend type mirroring                                               | `frontend/src/api/types/` mirrors backend types by design (workspace isolation)                                                                                                                     |
-| Template-origin files                                                         | Files that also exist in `spernakit/` are template infrastructure - fix belongs in template, not derived app                                                                                        |
-| Barrel file re-exports                                                        | `index.ts` re-exports may appear unused if consumers import from the barrel                                                                                                                         |
-| `useMemo`/`useCallback` in files with `'use no memo'`                         | Opted out of React Compiler - manual memoization is intentional                                                                                                                                     |
-| Re-export shim files from `shared/`                                           | Thin re-exports are alive by definition (consumed by workspace imports)                                                                                                                             |
-| `process.env.*` in `configLoader.ts` for `SECRET_CONFIG_KEYS`                 | Approved exception - single loader path responsible for reading configured Docker secret injection variables                                                                                        |
-| `config/{slug}.secrets.json` + `*Ref` pointers / `getSecret('dot.path')`      | Approved split-secrets pattern for operator-provided third-party credentials (resolved in `configSecretsFile.ts`) - an allowed config read path, not a banned `.env`/`process.env` pattern          |
-| Deprecation markers / `@deprecated` in `dist/` or other compiled build output | Build artifacts, not source. A deprecated method inside `dist/` is the classic lure here. Only score source; never file findings against generated/compiled output (see [Exclusions](#exclusions)). |
+| Pattern                                                                                         | Why it's a false positive                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@fontsource-variable/*` reported unused                                                        | Imported in CSS (`@import`), not in JS - static analysis only scans JS imports                                                                                                                                            |
+| `tw-animate-css` reported unused                                                                | Referenced via CSS `@import` - static analysis only scans JS imports                                                                                                                                                      |
+| `pino-pretty` reported unused                                                                   | Used as a runtime pino transport (`transport: 'pino-pretty'`), not a static import                                                                                                                                        |
+| `babel-plugin-*` reported unused                                                                | Referenced in `vite.config.ts` plugins array, not directly imported                                                                                                                                                       |
+| `tailwindcss` reported unused                                                                   | Imported in CSS (`@import "tailwindcss"`) or via `@tailwindcss/vite` plugin                                                                                                                                               |
+| `@tailwindcss/vite` reported unused                                                             | Referenced in `vite.config.ts` plugins array                                                                                                                                                                              |
+| SQLite/PostgreSQL dual schema duplication                                                       | `schema/*.ts` and `schema-pg/*.ts` produce expected structural duplication - exclude from clone detection                                                                                                                 |
+| Frontend/backend type mirroring                                                                 | `frontend/src/api/types/` mirrors backend types by design (workspace isolation)                                                                                                                                           |
+| Template-origin files in a derived app                                                          | A file the template also ships, with no `.templateoverrides` entry, is template-managed: the fix belongs in the template, filed once, not in the derived app. Compare against the template checkout the project registers |
+| A derived app's file that differs from the template and has a `.templateoverrides` entry        | A recorded decision (`KEEP` / `SKIP` / `DELETED`, normally with a reason), not drift and not debt. Do not recommend overwriting or realigning it. Debt inside the app's own content of that file is still reportable      |
+| Barrel file re-exports                                                                          | `index.ts` re-exports may appear unused if consumers import from the barrel                                                                                                                                               |
+| `useMemo`/`useCallback` in files with `'use no memo'`                                           | Opted out of React Compiler - manual memoization is intentional                                                                                                                                                           |
+| Re-export shim files from `shared/`                                                             | Thin re-exports are alive by definition (consumed by workspace imports)                                                                                                                                                   |
+| `process.env.*` in `configSecrets.ts` (`SECRET_CONFIG_KEYS`) and `configLogger.ts` (`NODE_ENV`) | Approved exception in Spernakit and derived apps - the only two files `check:process-env` allows to read the environment                                                                                                  |
+| `config/{slug}.secrets.json` + `*Ref` pointers / `getSecret('dot.path')`                        | Approved split-secrets pattern for operator-provided third-party credentials (resolved in `configSecretsFile.ts`) - an allowed config read path, not a banned `.env`/`process.env` pattern                                |
+| Deprecation markers / `@deprecated` in `dist/` or other compiled build output                   | Build artifacts, not source. A deprecated method inside `dist/` is the classic lure here. Only score source; never file findings against generated/compiled output (see [Exclusions](#exclusions)).                       |
 
 ## Pre-Audit Setup
 
@@ -493,9 +508,11 @@ These patterns are consistently flagged during tech debt audits but are not actu
 Run these commands before beginning the audit to establish a clean baseline:
 
 ```bash
-# Run full quality gate — fix any failures before auditing.
-# smoke:qc runs the steps defined in scripts/smoke.json (canonical source of the
-# gate pipeline — do not hardcode a step count; read that file for the current list).
+# Run full quality gate - fix any failures before auditing.
+# Read the step list from its source instead of hardcoding a count:
+#   Spernakit and derived apps: scripts/smoke.json (the "qc" mode)
+#   aidd: scripts/lib/smoke-qc/steps.ts
+#   other targets: the project's own qc script, if it has one
 bun run smoke:qc
 
 # Verify codebase is clean
@@ -504,9 +521,9 @@ bun run typecheck && bun run lint
 
 ### Quick Detection Sweep
 
-Run these verification commands before beginning the audit to quickly identify banned technology markers.
+Run these verification commands before beginning the audit to quickly identify banned technology markers. They are written for the Spernakit layout (`backend/src`, `frontend/src`); aidd adds `cli/src` and `shared/src`, and other targets have their own source roots. A sweep that searches a directory the target does not have returns nothing and proves nothing: before reading an empty result as clean, run the same search for something known to be present in that directory.
 
-> **Shell**: The primary dev host is Windows/PowerShell. Prefer the Claude Code `Grep` tool (it accepts these patterns verbatim) or PowerShell `Select-String -Path ... -Pattern ...` (and `Get-ChildItem -Recurse -Filter ...` in place of `find`). The `grep -r` / `find` forms below are the bash alternate (Git Bash, WSL, or macOS/Linux).
+> **Shell**: The `grep -r` / `find` forms below are for a POSIX shell (Git Bash, WSL, macOS, Linux). In Windows PowerShell they are not reliable: `find` resolves to a different Windows command, `2>/dev/null` is an error, and `grep` works only where one is on the path. Use the agent's own search tool (it accepts these patterns verbatim), `rg`, or PowerShell `Select-String -Path ... -Pattern ...` (and `Get-ChildItem -Recurse -Filter ...` in place of `find`) there.
 
 ```bash
 # Check for CommonJS patterns
@@ -562,6 +579,8 @@ grep -r "from 'daisyui'\|from 'react-hot-toast'\|from 'axios'" frontend/src/ --i
 - [ ] All `@deprecated` marked code has removal plan
 - [ ] Bare `TODO`/`FIXME` (no deadline, no canonical replacement) tracked in backlog, not filed as CRITICAL
 - [ ] Database-location violations (`backend/data/`) routed to REORG (structural, not TECHDEBT)
+- [ ] Where the target's rules forbid transitional, backward-compatibility or legacy code: every compatibility alias, shim and dual code path has a recorded approval or is filed
+- [ ] Derived Spernakit apps: `.templateoverrides` read in full; no finding or recommendation targets the difference a recorded entry preserves, and debt in template-managed files is filed against the template
 
 ### High Priority Checks ⚠️
 
@@ -569,7 +588,7 @@ grep -r "from 'daisyui'\|from 'react-hot-toast'\|from 'axios'" frontend/src/ --i
 - [ ] No placeholder/mock data in production code paths
 - [ ] No hardcoded credentials or secrets
 - [ ] Legacy real-time patterns replaced with modern subscriptions
-- [ ] No spernakit stack violations (wrong libraries: Express, Prisma, Winston, DaisyUI, Axios, react-hot-toast)
+- [ ] No stack violations against the target's own stack rules (Spernakit and derived apps: wrong libraries such as Express, Prisma, Winston, DaisyUI, Axios, react-hot-toast; routed to SPERNAKIT)
 - [ ] No manual memoization in React Compiler-compiled files
 - [ ] No `any` types in the codebase (zero tolerance)
 
@@ -581,7 +600,7 @@ grep -r "from 'daisyui'\|from 'react-hot-toast'\|from 'axios'" frontend/src/ --i
 - [ ] State management approach unified (Zustand for global, TanStack Query for server)
 - [ ] No cross-workspace import violations
 - [ ] No CommonJS patterns in ESM codebase
-- [ ] No `.env` files or `dotenv` usage (JSON-only config)
+- [ ] No `.env` files or `dotenv` usage (JSON-only config; Spernakit and derived apps)
 
 ### Low Priority Checks 💡
 
@@ -647,6 +666,8 @@ Create feature.json files in `.aidd/features/` for each high-priority finding:
 
 ### Priority Directories
 
+These are the Spernakit and derived-app directories. aidd shares `backend/src/routes/`, `backend/src/services/`, `backend/src/plugins/`, `frontend/src/` and `shared/src/`, has no `backend/src/guards/`, and adds `cli/src/` and `backend/src/db/commands/`. For another target, list its own source roots first.
+
 - `backend/src/routes/` - Route handlers (highest priority for lint compliance and type safety)
 - `backend/src/services/` - Business logic and service layer
 - `backend/src/plugins/` and `backend/src/guards/` - Cross-cutting concerns (auth, cors, logging, rate limit, audit, workspace)
@@ -656,7 +677,7 @@ Create feature.json files in `.aidd/features/` for each high-priority finding:
 - `frontend/src/stores/` - Zustand stores (with persist for auth, theme, sidebar, workspace)
 - `frontend/src/api/` - API modules (one file per domain, independently defined types)
 - `shared/src/` - Cross-workspace types (the ONLY allowed bridge between frontend and backend)
-- Configuration files (`config.json`, `bunfig.toml`) as needed
+- Configuration files (`config/{slug}.json`, `backend/src/config/defaults.json`, `bunfig.toml`) as needed
 
 ### Exclusions
 
@@ -665,7 +686,8 @@ Create feature.json files in `.aidd/features/` for each high-priority finding:
 - Don't flag legitimate fallback patterns or error handling code
 - Don't flag test helper patterns and mock implementations
 - Don't flag JSDoc comments and legitimate documentation
-- Don't flag template-origin files (evaluate at template level, escalate to Spernakit)
+- Don't flag template-managed files in a derived app (evaluate at template level and file the finding once against the template)
+- Don't flag, or recommend realigning, a path recorded in a derived app's `.templateoverrides`
 - Don't flag known false positive patterns (see [Known False Positive Patterns](#known-false-positive-patterns))
 
 ## Success Criteria
@@ -682,13 +704,18 @@ The audit should result in actionable items that can improve codebase quality wh
 
 Create report at: `.aidd/audit-reports/TECHDEBT-YYYY-MM-DD.md`
 
+This audit defines no scoring rubric, so it does not produce a numeric score. Write the score as `N/A` and let the category counts and the findings carry the result. Do not derive a number from checklist ticks or from a green gate.
+
+The report must also carry the sections [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) requires: the instrument validation table, the methodology validity summary and the falsification records. Every "false positive", "deferred" and "not applicable" disposition needs a falsification record.
+
 ```markdown
 # Technical Debt Audit Report - YYYY-MM-DD
 
 ## Executive Summary
 
 **Application**: {app-name} v{version}
-**Overall Tech Debt Score**: [Score]/100
+**Target tier**: [Full-stack (Spernakit template or derived app) | Web-layer (aidd) | Other]
+**Overall Tech Debt Score**: N/A (this audit defines no scoring rubric)
 **Critical Issues Found**: [Number]
 **High Priority Issues Found**: [Number]
 **Estimated Cleanup Effort**: [Hours/Days]
@@ -789,6 +816,5 @@ Create report at: `.aidd/audit-reports/TECHDEBT-YYYY-MM-DD.md`
 
 ---
 
-**Version**: 2.4
-**Last Updated**: 2026-08-30
-**Next Review**: 2026-11-30
+**Version**: 2.5
+**Last Updated**: 2026-10-01

@@ -1,7 +1,7 @@
 ---
 title: 'Unified Severity Classification System'
-last_updated: '2026-06-28'
-version: '2.2'
+last_updated: '2026-10-01'
+version: '2.3'
 category: 'Reference'
 priority: 'Medium'
 type: 'reference'
@@ -188,6 +188,21 @@ This document defines the standardized 4-level severity classification system us
 - Frequency of code path execution
 - Number of users affected
 
+#### **Findings About the Audit's Own Evidence**
+
+[AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) defines findings that are about the evidence, not the code. Classify them as it states:
+
+- A named instrument that is absent, unwired, or unfaithful is **High**: the target has no working measurement for a dimension the audit requires.
+- A red gate with no named mechanism and no evidence is a finding against the target. Classify it by what the gate protects.
+- A red gate classed environmental is a **hold**, not a finding. It gets no severity and no feature.json. It is reported, and it is never counted as a pass.
+- A missing falsification record, or an absence claim with no known-positive control, makes a report incomplete. In your own report, supply the missing record before scoring. Found in an earlier report, it is an incomplete-audit finding: classify it by the control that was left unverified.
+
+#### **What Severity Must Not Depend On**
+
+- How many findings the audit has already raised at that level. The distribution figures below describe a typical result. They are not a quota.
+- How hard the fix is. Effort belongs in `spec`.
+- Whether a gate is green. A passing gate does not lower the severity of a defect it failed to catch.
+
 ## Feature.json Output
 
 ### **Severity to Priority Mapping**
@@ -225,7 +240,10 @@ Each audit finding produces a feature.json file with these fields:
 ```
 
 The `description` MUST carry the verification evidence: a `file:line` reference plus the
-concrete pattern or behavior observed in the current codebase. There is no separate
+concrete pattern or behavior observed in the current codebase. The line is the one read in the
+live file during this audit, never a line number copied from an audit definition or an earlier
+report. Never put a credential value in `description`, `spec`, or `title`: name the file and the
+kind of secret, and give at most a redacted marker. There is no separate
 `verificationEvidence` field; the runtime contract and the live findings keep evidence in
 `description`. `category` is `"Audit"` for audit findings, and `dependencies` is present (an
 empty array when the fix has no prerequisites).
@@ -236,11 +254,17 @@ empty array when the fix has no prerequisites).
 > rebuild). You do not write this clause yourself (it is injected if absent), but the persisted
 > `spec` will always carry it.
 
-> **Runtime note (duplicate detection)**: The runtime treats `title` plus `affectedFiles` as the
-> duplicate-detection key. A new finding is skipped as a duplicate when it shares the same
-> `auditSource` and either the same `title` or an overlapping `affectedFiles` entry with an
-> existing finding that has not yet passed. Keep `title` and `affectedFiles` specific so distinct
-> issues are not collapsed.
+> **Runtime note (duplicate detection)**: The runtime gives each finding a fingerprint computed
+> from `auditSource`, the normalized `title`, and the sorted set of `affectedFiles` (path
+> separators and a leading `./` are normalized). See `findingFingerprint` and `matchingFeature` in
+> `shared/src/modes/audit-findings.ts`. A new finding whose fingerprint matches a record that is
+> still open (`passes` not true and `status` not `completed`) is skipped as a duplicate. One that
+> matches a record already resolved, or a ledger entry marked remediated, is recorded as a
+> recurrence of the earlier finding. One that matches a ledger entry dismissed as a false positive
+> is suppressed. Records written before fingerprints existed are matched the older way: same
+> `auditSource` and either the same `title` or any shared `affectedFiles` entry. Keep `title` and
+> `affectedFiles` specific and stable: rewording a title or changing the file list produces a new
+> fingerprint and a second record for the same issue.
 
 **CRITICAL: The `id` field MUST:**
 
@@ -312,8 +336,3 @@ When classifying severity, ask these questions:
 2. Would this issue significantly impact users or development? → **High**
 3. Would this issue affect maintainability or best practices? → **Medium**
 4. Is this primarily a minor improvement or cleanup? → **Low**
-
----
-
-**Version**: 2.1
-**Last Updated**: 2026-06-09

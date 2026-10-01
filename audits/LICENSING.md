@@ -1,7 +1,7 @@
 ---
 title: 'Third-Party Software Licensing Audit'
-last_updated: '2026-07-13'
-version: '2.0'
+last_updated: '2026-10-01'
+version: '2.1'
 category: 'Compliance'
 priority: 'High'
 estimated_time: '3-6 hours'
@@ -16,11 +16,18 @@ lifecycle: 'pre-release'
 >
 > **Methodology gate:** Follow [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md). Read the
 > enforcing implementation, cite `file:line`, falsify every "by design" or "N/A" rationale,
-> and never score a control from a green gate alone.
+> and never score a control from a green gate alone. A "not distributed" or "no such component"
+> conclusion is an absence claim and needs a known-positive control (Rule 5).
 
 This audit determines what third-party material a project actually distributes and whether each
 distributed artifact carries the notices, permissions, source, and relink materials its licenses
-require. Package metadata is supporting evidence; the final artifact is the primary evidence.
+require. It also checks that the project states its own license consistently. Package metadata is
+supporting evidence; the final artifact is the primary evidence.
+
+Citations in this audit name a script, symbol, or file, not a line. Locate each one in the live
+target, then cite the `file:line` you actually read in the report. A named script or symbol that
+does not exist in the target is resolved before scoring: decide whether it moved, was removed, or
+never applied to this kind of target, and record which.
 
 This is an engineering compliance review, not legal advice. Escalate novel license combinations,
 custom terms, and disputed derivative-work questions for qualified legal review.
@@ -42,7 +49,10 @@ custom terms, and disputed derivative-work questions for qualified legal review.
 
 ### Essential standards
 
-- The project's own license and real distribution posture are documented.
+- The project's own license and real distribution posture are documented, and the `LICENSE` file
+  and every package manifest's `license` field say the same thing.
+- The project's own choice of license is not a finding. Proprietary (`UNLICENSED`, all rights
+  reserved) and source-available (for example `FSL-1.1-ALv2`) are valid choices.
 - Every shipped component is identified by name, version, source, license, and inclusion path.
 - Build-only tools are separated from code or assets that enter a distributed artifact.
 - SPDX expressions are interpreted, not flattened to a convenient single label.
@@ -122,35 +132,70 @@ mere aggregation separately.
 
 ### Source-available and restrictive licenses
 
-These terms are not open-source licenses and require individual review.
+These terms are not open-source licenses and require individual review when they cover a
+**third-party component** the project distributes. The same terms on the **project's own** code are
+the owner's choice, not a finding; see Step 0.
 
-| License family          | Typical concern                                                         |
-| ----------------------- | ----------------------------------------------------------------------- |
-| SSPL                    | Service-side conditions extend beyond ordinary open-source copyleft     |
-| BSL / BUSL              | Use restrictions apply until the stated change date                     |
-| Elastic License 2.0     | Managed-service and circumvention restrictions                          |
-| Commons Clause          | Selling or commercial-hosting restrictions layered onto another license |
-| CC-BY-NC                | Commercial use prohibited                                               |
-| Proprietary or custom   | Rights depend entirely on the supplied terms or commercial agreement    |
-| `SEE LICENSE IN <file>` | Read the referenced file; package metadata alone is not the license     |
+| License family                      | Typical concern                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| SSPL                                | Service-side conditions extend beyond ordinary open-source copyleft                                                      |
+| BSL / BUSL                          | Use restrictions apply until the stated change date                                                                      |
+| FSL (`FSL-1.1-ALv2`, `FSL-1.1-MIT`) | Competing use is restricted until each version converts to the named future license two years after it is made available |
+| Elastic License 2.0                 | Managed-service and circumvention restrictions                                                                           |
+| Commons Clause                      | Selling or commercial-hosting restrictions layered onto another license                                                  |
+| CC-BY-NC                            | Commercial use prohibited                                                                                                |
+| Proprietary or custom               | Rights depend entirely on the supplied terms or commercial agreement                                                     |
+| `SEE LICENSE IN <file>`             | Read the referenced file; package metadata alone is not the license                                                      |
 
 ### Unknown and missing information
 
-| Observation                          | Required action                                                             |
-| ------------------------------------ | --------------------------------------------------------------------------- |
-| Missing `package.json` license field | Inspect packaged license files and exact-version upstream source            |
-| Non-SPDX or ambiguous string         | Read the actual terms and normalize only after manual review                |
-| `UNLICENSED` metadata                | Determine whether it is a private-package marker or genuinely lacks a grant |
-| No packaged license file             | Check registry provenance and the exact tagged source release               |
-| No license grant found after review  | Block distribution, replace the component, or obtain permission             |
+| Observation                          | Required action                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Missing `package.json` license field | Inspect packaged license files and exact-version upstream source                                                   |
+| Non-SPDX or ambiguous string         | Read the actual terms and normalize only after manual review                                                       |
+| `UNLICENSED` on a dependency         | Determine whether it is a private-package marker or genuinely lacks a grant                                        |
+| `UNLICENSED` on the project itself   | Not a defect. It is the manifest value for "no license granted"; confirm the `LICENSE` file says the same (Step 0) |
+| No packaged license file             | Check registry provenance and the exact tagged source release                                                      |
+| No license grant found after review  | Block distribution, replace the component, or obtain permission                                                    |
 
 ## Pre-Audit Setup
 
 ### Step 0: Establish the project's own license
 
 Read the root `LICENSE` or equivalent legal file first. Treat a package manifest's `license` field
-as metadata that should agree with it. `private: true` prevents accidental registry publication;
+as metadata that must agree with it. `private: true` prevents accidental registry publication;
 it does not make a project proprietary and it is not sticky licensing metadata for derived work.
+
+**The owner's choice of license is not a finding.** Do not report any of these as a defect:
+
+- `"license": "UNLICENSED"` with an all-rights-reserved `LICENSE` file. `UNLICENSED` is the
+  manifest value for "no license is granted". It is not the same as a missing field, and it is not
+  the public-domain `Unlicense`.
+- A source-available license on the project's own code. `FSL-1.1-ALv2` is a valid SPDX identifier.
+- A license that differs from the license of the template, framework, or starter the project was
+  created from. A derived application is not obliged to carry its template's license on its own
+  code. It is obliged to keep the template's notice for the template material it copied, which is
+  a third-party notice question (Section 5), not the project's own license.
+
+**What is a finding** is disagreement or absence:
+
+| Observation                                                                                           | Disposition                                                          |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `LICENSE` file and the root manifest `license` field name different terms                             | Finding. Quote both. The owner decides which is right                |
+| A workspace manifest declares a license that conflicts with the root                                  | Finding                                                              |
+| The manifest `license` value is not a valid SPDX expression, `UNLICENSED`, or `SEE LICENSE IN <file>` | Finding                                                              |
+| No `LICENSE` file and no manifest `license` field, in a project that is distributed                   | Finding. Recipients have no stated terms                             |
+| README, documentation, or an in-app notice names a different license from `LICENSE`                   | Finding                                                              |
+| The `LICENSE` file is another project's text, unchanged, that the owner did not choose                | Finding to raise with the owner. See "Inherited license files" below |
+| A workspace manifest has no `license` field while the root has one, in a private monorepo             | Not a finding by itself. Record it                                   |
+
+**Inherited license files.** A project created by copying a template can carry the template's
+`LICENSE` without anyone having chosen it. Compare the file with the template's and check who the
+copyright line names. An inherited file is raised with the owner as a decision to make. The audit
+does not rewrite a `LICENSE` file, change a `license` field, or pick a license: that is a legal
+decision, and for already-published versions a changed file does not withdraw a grant recipients
+received. See [Spernakit and derived applications](#spernakit-and-derived-applications) for the
+template-specific case.
 
 Record:
 
@@ -185,15 +230,22 @@ Run existing checks before introducing a generic scanner. Read their implementat
 cover the expected artifact. A check that exits successfully because its input directory is absent
 is not evidence.
 
-Typical Bun repository commands, when present:
+Read the target's `package.json` scripts and use the ones it has. Script names differ by target,
+and a name listed in this audit that the target lacks is not a finding by itself: establish
+whether the target has the distribution surface that script would check. Examples seen in Bun
+repositories:
 
 ```text
 bun run check:licenses
-bun run release:package
-bun run check:release-notices
 bun run check:image-licenses
+bun run check:image-publication
 bun pm ls --all
 ```
+
+Run only checks that read. A script that regenerates inventory files, builds or pushes an image,
+packages a release, or syncs files into other repositories changes state: read its source
+instead, and do not run it as part of a read-only audit. Do not assume an unknown flag such as
+`--help` is safe; read the script's argument handling first.
 
 Then use a generic scanner as a cross-check when needed:
 
@@ -277,6 +329,10 @@ For every potentially significant component, record how it reaches the artifact.
 
 ### Bun standalone executables
 
+This subsection applies only to a target that distributes a compiled executable. Confirm that
+first from the build scripts, release workflow, and published release assets. A target distributed
+as source does not convey the Bun runtime, and these checks are N/A for it with that evidence.
+
 `bun build --compile` embeds the Bun runtime and bundles code reachable through the selected entry
 point. It does not prove that every installed package is embedded, and an npm-only scan does not
 inventory Bun's own linked libraries. The audit must:
@@ -326,12 +382,13 @@ that selection.
 
 ### Repository material
 
-| Check | Criterion                                                                                    |
-| ----- | -------------------------------------------------------------------------------------------- |
-| `[ ]` | Project license agrees across `LICENSE`, package metadata, documentation, and UI notices     |
-| `[ ]` | Generated third-party summary matches the exact resolved production closure                  |
-| `[ ]` | Per-package copyright, license text, and applicable upstream `NOTICE` material are preserved |
-| `[ ]` | Fonts and other non-code assets retain their required license and notices                    |
+| Check | Criterion                                                                                                                 |
+| ----- | ------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | Project license agrees across `LICENSE`, every package manifest that declares one, documentation, and UI notices (Step 0) |
+| `[ ]` | Material copied from a template or starter keeps that template's copyright and license notice                             |
+| `[ ]` | Generated third-party summary matches the exact resolved production closure                                               |
+| `[ ]` | Per-package copyright, license text, and applicable upstream `NOTICE` material are preserved                              |
+| `[ ]` | Fonts and other non-code assets retain their required license and notices                                                 |
 
 ### Final-artifact material
 
@@ -432,34 +489,110 @@ terms.
 
 ### aidd
 
-aidd is `FSL-1.1-ALv2`, converting each released version to Apache-2.0 after two years. It is a
-distributed CLI/control panel, not a relaxed internal-only application.
+aidd is licensed `FSL-1.1-ALv2`: the root `LICENSE` is the Functional Source License 1.1 with the
+Apache 2.0 future license, and the root `package.json` `license` field carries the same
+identifier. Each version becomes available under Apache-2.0 on the second anniversary of the date
+it was made available. Confirm both files still agree. FSL on aidd's own code is not a finding.
+aidd is a distributed tool, not a relaxed internal-only application.
 
-Mandatory aidd surfaces:
+**How aidd is distributed, as last verified.** Verify each statement against the live repository
+and its public releases before relying on it; this paragraph is a starting point, not evidence.
 
-- Standalone GitHub release archives containing Bun-compiled CLI and web executables
-- Browser assets packaged beside the web executable
-- Bun itself and its statically linked JavaScriptCore/WebKit and TinyCC components
-- aidd's container image whenever it is published or provided to another party
-- Debian base packages, Node/npm runtime files, and any baked-in agent tools in that image
+- aidd is distributed as **source**: a git clone, or the source archive the hosting service
+  generates for a release tag. The release workflow (`.github/workflows/release.yml`) creates a
+  release from notes only and attaches no built asset.
+- The npm dependency graph is not redistributed. The recipient's own `bun install` fetches it, and
+  the frontend is built on the recipient's machine during that install.
+- The repository defines no compiled executable and no container image.
 
-Run and inspect the implementations of:
+Under that model the mandatory aidd surfaces are:
+
+- The tracked source tree at each release tag, including the catalog directories it publishes
+  (`audits`, `skills`, `scaffolding`, `prompts`, `recipes`) and any material vendored into them
+- `licenses/distributed-materials.json`, the exact-path registry that classifies repository
+  material distributed outside the npm graph, and the registry code under
+  `scripts/lib/third-party-licenses/`
+- The generated `THIRD-PARTY-LICENSES.md` and `THIRD-PARTY-NOTICES.md`
+- Every public release and its assets, checked on the hosting service, not inferred from the
+  workflow file
+
+Read the implementations of, and run only the read-only forms of:
 
 ```text
-bun run check:licenses
-bun run release:package
-bun run check:release-notices
-bun run release:check
-bun run check:image-licenses
+bun run check:licenses        # check:license-core, then the generator with --check
+bun run check:fresh-release
+bun run check:source-install
 ```
 
-Confirm that release checks target `dist/release`, inspect the final ZIP, and fail if the expected
-artifact does not exist. Confirm that current licensing fixes have reached every still-downloadable
-public release.
+`bun run licenses:generate` rewrites the committed documents; do not run it in an audit. The
+license core (`scripts/check-license-core.ts` and `scripts/lib/license-core/`) is synchronized
+from Spernakit and must not be edited in aidd. A defect in it is reported against Spernakit.
+
+Checks specific to this model:
+
+| Check | Criterion                                                                                                                              |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | Every tracked file under a published catalog directory is classified in `licenses/distributed-materials.json`; none is unclassified    |
+| `[ ]` | Third-party material vendored into the tree (skills, scaffolding, prompts, fonts, images) carries its license and notice in the tree   |
+| `[ ]` | `check:licenses` fails when a new dependency has an unreviewed license; read the generator's handling of flagged packages to confirm   |
+| `[ ]` | No public release carries a binary asset. Record the release list and each release's asset count as the evidence                       |
+| `[ ]` | No workflow, script, or documented step builds or pushes an executable or an image. This is an absence claim: run the control (Rule 5) |
+
+**If the model has changed.** If aidd ships a compiled executable, a packaged release archive, or
+a container image, whether now or in any release still publicly downloadable, the "source only"
+conclusion is void for that artifact. Then the Bun standalone executable checks (Section 3), the
+container checks, and the copyleft source and relink checks (Section 6) all apply to it: the
+embedded Bun runtime and its statically linked components, the browser assets packaged beside it,
+the image's base-system packages, and any tools baked into the image. A release check must then
+target the real packaged artifact and fail when that artifact does not exist.
 
 ### Spernakit and derived applications
 
-Spernakit is an MIT-licensed source template. Separate these cases:
+Spernakit, the template, is MIT-licensed: its `LICENSE` is the MIT text and its `package.json`
+`license` field is `MIT`. **A derived application owns its own license** and is not expected to
+carry the template's.
+
+**What initialization does, from the template release that follows v3.47.4.** Setup calls
+`claimAppLicense` (`scripts/lib/setup/license-materials.ts`, reached through
+`updateLicenseFiles`). When the app's `LICENSE` is still the template's MIT text, it writes an
+all-rights-reserved `LICENSE` and sets the `package.json` `license` field to `UNLICENSED`. It
+leaves the app alone when either of these is true:
+
+- the app's `.templateoverrides` carries a `KEEP LICENSE` line, or
+- the `LICENSE` file no longer begins with the MIT text.
+
+Initialization then seeds `KEEP LICENSE` into `.templateoverrides` (`seedTemplateOverrides` in
+`scripts/lib/init/scaffold.ts`), so later template upgrades do not restore MIT over the app's
+file. Confirm this behavior in the Spernakit checkout the app registers, and record which
+template version the app was created from and last upgraded to.
+
+**Release timing.** This behavior is in the template's main branch after tag v3.47.4. Until a
+template release includes it, and for every app created before that release, initialization
+copied the template's MIT `LICENSE` unchanged. Such an app can still carry an MIT file and
+`"license": "MIT"` that nobody chose.
+
+Checks for a derived application:
+
+| Check | Criterion                                                                                                                                                                        |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | `LICENSE` and the `package.json` `license` field agree (Step 0). `UNLICENSED` with an all-rights-reserved file is a pass                                                         |
+| `[ ]` | An app with an owner-chosen license (any license, including MIT chosen on purpose) has `KEEP LICENSE` in `.templateoverrides`, so an upgrade cannot overwrite it                 |
+| `[ ]` | An inherited MIT file is identified: the text matches the template's and nothing records that the owner chose it. Raise it with the owner. Do not rewrite it                     |
+| `[ ]` | The copyright line names the app's actual owner. `claimAppLicense` carries the holder over from the template's copyright line, which is right only when the same party owns both |
+| `[ ]` | Where the app's owner is not the template's copyright holder, the template's MIT copyright and permission notice is kept for the template material the app contains (Section 5)  |
+| `[ ]` | The generated third-party documents describe the app's own terms the way `LICENSE` does (an `UNLICENSED` app is described as proprietary, not as MIT)                            |
+| `[ ]` | `licenses/SOURCE-OFFER.md` has no placeholders before any image is published; an app that never publishes may have removed it and the publication scripts                        |
+
+Do not report any of these as a defect: a derived app that is `UNLICENSED`; a derived app whose
+license differs from the template's; a `KEEP LICENSE` line.
+
+For an inherited MIT file, the finding states the facts and leaves the decision with the owner:
+which versions were published under MIT and to whom, whether the owner wants to keep MIT or
+choose other terms, and that replacing the file changes the terms for future versions only.
+Severity is Medium when the app has not been distributed outside its owner, and High when copies
+or a public repository went out under the unintended license.
+
+Separate these distribution cases:
 
 - Publishing template source distributes source and vendored material.
 - Building an image locally as proof does not distribute that image.
@@ -469,7 +602,17 @@ Spernakit is an MIT-licensed source template. Separate these cases:
   source; verify that compiler code is not copied into the artifact.
 
 Do not mark a template image "not distributed" solely because the package manifest is private.
-Verify registry visibility, workflows, documentation, and actual push behavior.
+Verify registry visibility, workflows, documentation, and actual push behavior. In a derived app,
+read `check:image-publication` and the image push script to confirm both refuse to ship while the
+source offer is missing or still has placeholders.
+
+### Other projects
+
+For a CLI, static site, mobile app, or library that is neither aidd nor Spernakit-derived, none of
+the script or file names above are expected. Apply Step 0 and Sections 1-8 to what the project
+actually ships: a registry tarball, a deployed static bundle, an app-store binary, or a source
+archive. A mobile binary conveys every bundled native and JavaScript dependency to its users, and
+a static site conveys its bundled scripts, styles, and fonts.
 
 ## Audit Checklist
 
@@ -492,6 +635,9 @@ Verify registry visibility, workflows, documentation, and actual push behavior.
 
 ### Medium-priority checks
 
+- [ ] The project's `LICENSE` file and every manifest `license` field agree; the owner's choice
+      itself (`UNLICENSED`, FSL, or any other) is not reported as a defect
+- [ ] An inherited, unchosen license file is raised with the owner and left unmodified
 - [ ] SPDX expressions and selected license branches are documented
 - [ ] Build/development dependencies are separated from distributed closures
 - [ ] Package metadata agrees with packaged license files and upstream provenance
@@ -513,6 +659,7 @@ Verify registry visibility, workflows, documentation, and actual push behavior.
 
 **Application:** {name}
 **Project license:** {license and evidence}
+**LICENSE file and manifest `license` field agree:** yes / no - {both values quoted}
 **Compliance status:** PASS / FAIL / REQUIRES REVIEW
 **Critical findings:** {count}
 **High findings:** {count}
@@ -562,6 +709,7 @@ Verify registry visibility, workflows, documentation, and actual push behavior.
 - Falsification records required: {count}
 - Falsification records present: {count}
 - Green-gate-only controls found: {none/list}
+- Absence claims and their known-positive controls: {list}
 
 ## Findings
 
@@ -603,6 +751,7 @@ inventory. Reference it from the report and record the command that verified it.
 
 ## Success Criteria
 
+- [ ] The project's own license is stated consistently, and no owner's choice was reported as a defect
 - [ ] Every distributed artifact and historical public artifact is accounted for
 - [ ] Every shipped component has an identified license and provenance record
 - [ ] No incompatible license combination remains unresolved

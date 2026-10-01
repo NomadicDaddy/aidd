@@ -7,6 +7,7 @@ import {
 	parseTeeDestination,
 	stripSurroundingQuotes,
 } from './shell-policy-dest.ts';
+import { usesDestructiveGit } from './shell-policy-git.ts';
 import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
 import { maskNullOutputRedirects } from './shell-policy-redirects.ts';
 
@@ -92,23 +93,6 @@ const ENCODING_UTILITY_PATTERN = /\b(?:base64|base32|xxd|od)\b/;
 const EVAL_CONSTRUCT_PATTERN =
 	/\beval\b|\b(?:bash|sh|dash|zsh|ksh)\s+-c\b|\|\s*(?:bash|sh|dash|zsh|ksh)\b/;
 
-/**
- * Destructive git commands that discard uncommitted work without taking a path
- * argument (or with a bare `.` that means "everything"). These make the worktree
- * CLEANER rather than dirtier, so the write-allowlist diff (which compares dirty-path
- * sets) cannot detect them via path changes alone. Denied because they can silently
- * discard operator work outside the allowlisted paths.
- *
- * Matched forms:
- * - `git reset --hard [target]`     — discards all working-tree changes
- * - `git reset HEAD~N`              — rewinds HEAD without preserving changes as staged
- * - `git checkout .` / `git checkout -- .` — discards working-tree changes in cwd tree
- * - `git restore .` / `git restore -- .`   — same
- * - `git clean -f [-d] [-x] [.]`    — deletes untracked files
- */
-const DESTRUCTIVE_GIT_PATTERN =
-	/(?:^|[\s;|&(`])git\s+(?:reset\s+(?:--hard|HEAD~\d+)|checkout\s+(?:--\s+)?\.(?:\s|$)|restore\s+(?:--\s+)?\.(?:\s|$)|clean\s+-[a-z]*f[a-z]*)/;
-
 export function checkBashWorkspacePolicy(command: string, cwd: string): null | string {
 	// Policy sees literal >/dev/null output sinks blanked; runBash still executes `command`.
 	const violation = evaluateBashWorkspacePolicy(maskNullOutputRedirects(command), cwd);
@@ -126,10 +110,9 @@ function evaluateBashWorkspacePolicy(command: string, cwd: string): null | strin
 	const stripped = command.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
 
 	// --- Destructive git command deny-list (Critical: silent worktree destruction) ---
-	// git reset --hard, git checkout ., git restore ., git clean -fdx discard
-	// uncommitted work without taking a path argument, so the write-allowlist guard's
-	// dirty-path diff cannot detect them (they make the tree cleaner, not dirtier).
-	if (DESTRUCTIVE_GIT_PATTERN.test(stripped)) {
+	// These discard uncommitted work without naming a path, so the write-allowlist guard's
+	// dirty-path diff cannot detect them. See shell-policy-git.ts for the forms recognised.
+	if (usesDestructiveGit(command)) {
 		return 'ERROR: bash command uses a destructive git operation (e.g. git reset --hard, git checkout ., git clean) that can silently discard uncommitted work outside the write-allowlist boundary';
 	}
 

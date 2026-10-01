@@ -70,19 +70,39 @@ export async function readConfig(path: string): Promise<PartialAiddConfig> {
  * error: an untrusted repo declaring them is exactly the case this exists to neutralize.
  * Provider credentials and endpoint selection are also operator-only: a repository must not
  * redirect Direct AI to its own host while inheriting the operator's provider key.
+ * Who may reach the panel is the operator's too. `channels` carries the Telegram bot token and the
+ * chats allowed to drive it, and inside `web` the auth token, the remote switch, the listen
+ * address and the allowed origins decide who gets in. A project file that set them was merged
+ * over the user config, so it beat the environment-supplied token that exists to keep it out of
+ * files. The rest of `web` (port, data directory, roots, run limits) stays a project's to set.
  */
 export function restrictProjectConfig(config: PartialAiddConfig): PartialAiddConfig {
 	const {
+		channels: _channels,
 		defaultProvider: _defaultProvider,
 		directAi,
 		providers: _providers,
 		sharedDirs: _sharedDirs,
 		sharedFiles: _sharedFiles,
+		web,
 		...rest
 	} = config;
-	if (!directAi) return rest;
-	const { baseUrl: _baseUrl, provider: _provider, ...safeDirectAi } = directAi;
-	return { ...rest, directAi: safeDirectAi };
+	const restricted: PartialAiddConfig = { ...rest };
+	if (web) {
+		const {
+			allowedOrigins: _allowedOrigins,
+			allowRemote: _allowRemote,
+			authToken: _authToken,
+			hostname: _hostname,
+			...safeWeb
+		} = web;
+		restricted.web = safeWeb;
+	}
+	if (directAi) {
+		const { baseUrl: _baseUrl, provider: _provider, ...safeDirectAi } = directAi;
+		restricted.directAi = safeDirectAi;
+	}
+	return restricted;
 }
 
 export function applyConfig(base: PartialAiddConfig, next: PartialAiddConfig): PartialAiddConfig {

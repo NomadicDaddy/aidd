@@ -14,7 +14,7 @@ export { stripAnsi } from 'aidd-shared/text/ansi';
 // transformation. The marker's mtime is what lets a repeat scan skip untouched logs; without a
 // version alongside it, logs written before a new pass existed would be skipped forever on their
 // mtime alone. A mismatch forces one full re-sweep, which is what backfills them.
-const CLEANER_VERSION = 'v3-secret-fields';
+const CLEANER_VERSION = 'v4-url-userinfo';
 
 // ANSI first: an escape sequence sitting inside a token would otherwise split it and defeat every
 // secret rule. Scrubbing second sees the reassembled text.

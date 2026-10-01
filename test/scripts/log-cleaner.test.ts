@@ -148,7 +148,7 @@ describe('cleanIterationLogs', () => {
 		// And the refreshed marker claims the version that actually did the work, so the next run
 		// goes back to skipping on mtime instead of re-reading every log forever.
 		expect((await readFile(join(iterationsDir, '.cleaned'), 'utf8')).trim()).toBe(
-			'v3-secret-fields',
+			'v4-url-userinfo',
 		);
 	});
 

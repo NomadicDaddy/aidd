@@ -20,8 +20,35 @@ const SECRET_RULES: readonly SecretRule[] = [
 	{ pattern: /Authorization:\s*\S+/g, replacement: SECRET_REDACTED },
 	{ pattern: /\bAKIA[0-9A-Z]{16}/g, replacement: SECRET_REDACTED },
 	{ pattern: /\bgithub_pat_[A-Za-z0-9_]{20,}/g, replacement: SECRET_REDACTED },
-	{ pattern: /\bghp_[A-Za-z0-9]{20,}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bgh[pousr]_[A-Za-z0-9]{20,}/g, replacement: SECRET_REDACTED },
 	{ pattern: /\bAIza[A-Za-z0-9_-]{20,}/g, replacement: SECRET_REDACTED },
+	{ pattern: /\bxai-[A-Za-z0-9_-]{20,}/g, replacement: SECRET_REDACTED },
+	// The password in a URL's userinfo, any scheme: `scheme://user:<password>@host`. The scheme,
+	// the user and the host stay readable. A password cannot contain `/`, which is what keeps a
+	// port (`://host:8080/a@b`) from matching; a `git@host:path` remote has no `://` at all. Two
+	// database passwords sat in retained run transcripts for a week because this rule was missing.
+	{
+		pattern: /\b([a-z][a-z0-9+.-]*:\/\/[^\s:/@"'\\]+:)[^\s@"'\\/]+(?=@)/gi,
+		replacement: `$1${SECRET_REDACTED}`,
+	},
+	// A bare `key` query parameter. The assignment rule below already covers `token=`,
+	// `api_key=` and `access_token=`; `key` alone is too common a word to add to it.
+	{ pattern: /([?&]key=)[^\s&#"'\\]+/gi, replacement: `$1${SECRET_REDACTED}` },
+	// A flag whose value follows a space: `--api-key <value>`. The flag name must be a secret key
+	// in full, so `--max-tokens 100` and `--token-budget 5000` are left alone.
+	{
+		pattern: new RegExp(
+			String.raw`(--${SECRET_KEY})(?![\w-])(\s+)[^\s"'\\,;&-][^\s"'\\,;&]*`,
+			'gi',
+		),
+		replacement: `$1$2${SECRET_REDACTED}`,
+	},
+	// A cookie header carries its session in the rest of the line. Stopping at a quote or a
+	// backslash keeps the match inside a JSON string, so a transcript line stays parseable.
+	{
+		pattern: /\b((?:Set-)?Cookie:\s*)[^\r\n"\\]+/gi,
+		replacement: `$1${SECRET_REDACTED}`,
+	},
 	{
 		pattern: /\bapi\.telegram\.org\/bot[^\s/"'\\]+/gi,
 		replacement: `api.telegram.org/bot${SECRET_REDACTED}`,
@@ -78,10 +105,12 @@ const STREAM_HOLD_MAX = 256;
 // a trailing non-whitespace run (a possibly partial token), or a Bearer / Authorization / key-
 // value trigger whose value has not fully streamed yet. Everything before such a suffix is safe
 // to emit: every rule ends in a contiguous non-whitespace token, and the only whitespace a
-// match can contain sits between one of these triggers and its value. Keep in lockstep with
-// SECRET_RULES — a new rule shape needs a corresponding alternative here.
+// match can contain sits between one of these triggers and its value. The key-value trigger
+// takes its leading dashes with it, or the `--` of a flag is emitted before its value arrives and
+// the flag rule can no longer see it; a cookie header is held to the end of its line. Keep in
+// lockstep with SECRET_RULES — a new rule shape needs a corresponding alternative here.
 const DANGEROUS_SUFFIX = new RegExp(
-	String.raw`(?:Bearer\s*\S*|Authorization:?\s*\S*|\b(?:${SECRET_KEY})(?:\\*["']?\s*[:=]?\s*\\*["']?\S*)?|\S+)$`,
+	String.raw`(?:Bearer\s*\S*|Authorization:?\s*\S*|(?:Set-)?Cookie:?[^\r\n"\\]*|-{0,2}\b(?:${SECRET_KEY})(?:\\*["']?\s*[:=]?\s*\\*["']?\S*)?|\S+)$`,
 	'i',
 );
 

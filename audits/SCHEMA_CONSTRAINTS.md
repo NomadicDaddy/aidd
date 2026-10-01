@@ -1,7 +1,7 @@
 ---
 title: 'Schema Constraints and Integrity Audit'
-last_updated: '2026-06-28'
-version: '1.5'
+last_updated: '2026-10-01'
+version: '1.6'
 category: 'Core Architecture'
 priority: 'Critical'
 estimated_time: '1-2 hours'
@@ -64,12 +64,15 @@ Conduct a systematic analysis of database schema files to identify:
 5. **Template-origin vs app-specific** files for proper escalation decisions
 6. **Index/FK naming convention** compliance (`idx_{table}_{columns}`, `fk_{table}_{column}_{target}`; the column qualifier disambiguates multiple FKs to the same target, e.g. `created_by`/`updated_by`/`deleted_by` → users)
 7. **Auto-migration safety**: new constraints that could fail on startup with existing duplicate data
+8. **Table-rebuild copy safety**: constraint changes delivered as a SQLite table rebuild whose copy statement silently corrupts data
 
 ## Pre-Audit Setup
 
 ### Required Tools and Access
 
 Read all schema files in the target application's `backend/src/db/schema/` directory. For derived applications, also read the base template's schema directory for origin comparison.
+
+File names used as examples in this audit (`apiKeyNonces.ts`, `rateLimitEntries.ts`, `mfaSettings.ts`, `users.ts`, `dashboards.ts`, `oauthAccounts.ts`) are files of the **auth-bearing Spernakit template**. They do not exist in every target, and none of them exists in aidd. Treat them as the pattern to look for, never as a path to cite: every path in a finding must be a file you opened in the target.
 
 ### Schema File Inventory
 
@@ -88,19 +91,68 @@ This is expected for single-team tools derived from spernakit that strip the aut
 
 ### Dialect Awareness
 
-Spernakit supports **SQLite** (default) and **PostgreSQL** (via `config.database.dialect`). All constraint rules apply regardless of dialect. Spernakit apps carry **both** schema directories simultaneously (`backend/src/db/schema/` for SQLite and `backend/src/db/schema-pg/` for PostgreSQL); derived applications do not choose a dialect at build time. Examples in this audit use `sqliteTable()`; the parallel `schema-pg/` files use `pgTable()` with identical logical structure. The same uniqueness, foreign key, and index naming conventions apply to both dialects.
+**Detect the database profile before applying any rule in this audit that names a dialect, a directory, or a migration file.** Do not assume the full-stack shape. Run the detection block in [DATABASE.md, "Detection: Which Migration Profile?"](./DATABASE.md#detection-which-migration-profile) and record its output; that block is the single source for this classification and is not restated here. Then confirm the two facts this audit depends on:
+
+```bash
+ls -d backend/src/db/schema-pg 2>/dev/null || echo "no schema-pg: SQLite only"
+ls backend/src/db/autoMigrate.ts backend/drizzle 2>/dev/null
+ls backend/src/db/migrate.ts backend/src/db/migrations/registry.ts 2>/dev/null
+```
+
+| Profile                                 | What the target has                                                                                                                                                                                                                                                 | Consequence for this audit                                                                                                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Full-stack Spernakit, dual dialect**  | `config.database.dialect`; `backend/src/db/schema/` (SQLite, `sqliteTable()`) **and** `backend/src/db/schema-pg/` (PostgreSQL, `pgTable()`) carried together; `autoMigrate.ts`; drizzle-kit migrations under `backend/drizzle/`                                     | All constraint rules apply to both directories. Schema Parity applies. A remediation "writes the migration" by changing the schema and running the repo's `db:generate`                                               |
+| **spernakit-web variant** (aidd itself) | `backend/src/db/schema/` only; no `schema-pg/`, no `pgTable`, no `config.database.dialect`, no `autoMigrate.ts`, no `backend/drizzle/`; hand-written SQL in `backend/src/db/migrations/*.sql` registered in `migrations/registry.ts` and applied by `db/migrate.ts` | All constraint rules apply to `schema/`. Every check that names `schema-pg/`, PostgreSQL, or dual-dialect parity is **N/A**. A remediation "writes the migration" by adding a numbered `.sql` file and registering it |
+| **Anything else**                       | Record what was found                                                                                                                                                                                                                                               | Apply the constraint rules to the schema that exists; decide each dialect-specific check from the evidence                                                                                                            |
+
+A missing `schema-pg/` in a single-dialect target is **not** a finding. Do not report "the PostgreSQL mirror is missing" against an app that never declared a second dialect. Marking the dual-dialect checks N/A is permitted ONLY after confirming a second dialect truly does not exist in the target (no `schema-pg/`, no `pgTable` import, no dialect switch); if a degenerate equivalent exists (e.g. a second database opened by another process, or raw SQL DDL that duplicates the Drizzle schema), audit that equivalent.
+
+Examples in this audit use `sqliteTable()`. Where `schema-pg/` exists, its files use `pgTable()` with identical logical structure, and the same uniqueness, foreign key, and index naming conventions apply to both dialects.
 
 ### Schema Parity (SQLite ↔ PostgreSQL)
 
-Spernakit maintains parallel schema directories (`schema/` for SQLite, `schema-pg/` for PostgreSQL). The automated `check:schema-parity` CI check validates structural parity between them. During audit, spot-check that unique constraints present in SQLite schemas are mirrored in PostgreSQL schemas and vice versa. Flag any divergence as a finding.
+> **Applies to**: the dual-dialect full-stack profile only. N/A where `schema-pg/` does not exist (see Dialect Awareness).
+
+Dual-dialect apps maintain parallel schema directories (`schema/` for SQLite, `schema-pg/` for PostgreSQL), and their `check:schema-parity` check validates structural parity between them. During audit, spot-check that unique constraints present in SQLite schemas are mirrored in PostgreSQL schemas and vice versa. Flag any divergence as a finding.
+
+**The script name is not evidence of what it compares.** aidd also has a `check:schema-parity` script, and it checks something else: it runs the migration chain into an in-memory SQLite database and compares the result against the Drizzle schema (`scripts/check-schema-parity.ts`). Open the target's script and record which comparison it performs before citing it (AUDIT_METHODOLOGY Phase 0, assertion 3). In a single-dialect target, that migrations-versus-schema comparison is the parity surface to audit: a constraint declared in `schema/` that no migration creates, or the reverse, is a finding.
 
 ### Auto-Migration Safety
 
-SQLite databases auto-apply pending migrations on startup (`autoMigrate.ts`). When adding a new unique constraint via migration, verify that **existing data does not violate the constraint** before the migration runs; otherwise the application will fail to start. Check this by:
+Both profiles apply pending SQLite migrations on startup. In the full-stack profile the runner is `runAutoMigrations` (`autoMigrate.ts`, implemented in `db/migrate/runner.ts`), and it runs only when the configured dialect is SQLite: a PostgreSQL deployment is not migrated at startup, so record how its migrations are applied; in the spernakit-web variant it is `migrateWebDatabase` in `backend/src/db/migrate.ts`, called when the database worker initializes. Confirm which runner the target has from the detection above; a missing `autoMigrate.ts` in the variant is not a finding. When adding a new unique constraint via migration, verify that **existing data does not violate the constraint** before the migration runs; otherwise the application will fail to start. Check this by:
 
 1. Querying for duplicate values in the target column before writing the migration
 2. Adding a data-fixup step in the migration if duplicates exist
-3. Testing the migration against a copy of the production database
+3. Testing the migration against a copy of the production database brought to **head-minus-one and seeded**, as described under Table Rebuild Copy Safety below. A plain copy of production is not sufficient: a near-empty table passes anything, and a live database is often behind head
+
+### Table Rebuild Copy Safety
+
+SQLite cannot add or change most constraints in place, so a constraint change usually lands as a table rebuild: create a temporary new table, copy the rows across with `INSERT ... SELECT`, drop the old table, rename the new one. The temporary name is a convention, not a rule: drizzle-kit writes `__new_<table>`, and aidd's hand-written migrations write `<table>__new`. The failure in Auto-Migration Safety is loud and happens at startup. This one is quiet and permanent.
+
+**The hazard.** If the copy statement's `SELECT` list names a column the **old** table does not have, SQLite does not raise. It treats an unresolvable double-quoted identifier as a string literal and writes that text into every row:
+
+```sql
+-- "new_col" does not exist in t. SQLite stores the text 'new_col' in every row.
+INSERT INTO __new_t ("a", "b", "new_col") SELECT "a", "b", "new_col" FROM t;
+```
+
+`drizzle-kit generate` has been reported, from a derived app, to emit rebuilds of exactly this shape for a newly added column, so in the full-stack profile the fault can come from the generator rather than the author. A hand-written rebuild can make the same mistake. A check that only inspects the resulting schema passes either way, because the schema is correct and the data is not.
+
+**Audit every table rebuild in the migration set**, in both profiles:
+
+- For each rebuild copy with a column list (`INSERT INTO <new> (...) SELECT ... FROM <table>`), confirm every identifier in the `SELECT` list is a column the table had **before** this migration (the preceding snapshot in the full-stack profile; the schema produced by the earlier migrations in the hand-written profile). A new column must be filled by an explicit literal, default, or expression, never by its own name.
+- A copy written as `INSERT INTO <new> SELECT * FROM <table>` is positional. Confirm the new table declares the same columns in the same order as the old one; where a column was added, removed or moved, require an explicit column list. A mismatch that happens to type-check shifts every later column into its neighbour without an error.
+- Confirm whether the target gates this mechanically (a script that reads each rebuild against the prior schema, wired into `smoke:qc`). Where none exists, record that the property is held by review alone.
+
+**Testing a rebuild.** "Test against a copy of the production database" is not sufficient by itself, for two reasons that recur: the table under change may hold one row or none, and the live database may be several migrations behind head, so a straight copy tests a transition that will never happen. The test that proves a rebuild is:
+
+1. Copy the live database.
+2. Apply every pending migration **except** the one under test (head-minus-one).
+3. Seed representative rows at that schema, covering every column the rebuild touches.
+4. Apply the migration under test.
+5. Compare every column of every row before and after.
+
+Read the "after" rows on a **fresh connection**. `bun:sqlite`'s `db.query()` caches the prepared statement by SQL text, and a cached `SELECT *` run again after a rebuild returns the new values under the old column names, so every column past an inserted one reads as its neighbour. That looks exactly like the corruption above and is not. Reopen the database, or use a statement prepared after the rebuild (a `Statement` held from before it is just as stale), before reading the result.
 
 ### Verification Commands
 
@@ -126,12 +178,19 @@ grep -r "references.*users\.id" backend/src/db/schema/ | grep -v "\.unique()"
 #    fk_{table}_{column}_{target} format and MUST be declared via
 #    foreignKey({...}).onDelete(...) in the constraints array. This is
 #    enforced across BOTH dialects — flag inline `.references()` and
-#    unnamed FKs as findings in SQLite (schema/) and PostgreSQL (schema-pg/).
+#    unnamed FKs as findings in SQLite (schema/) and, where it exists,
+#    PostgreSQL (schema-pg/).
 grep -r "index\|foreignKey\|\.references" backend/src/db/schema/ | grep -v "idx_\|fk_"
 
 # Find any remaining inline .references() (banned — anonymous constraints).
 # Every hit is a finding: the FK must move to a named foreignKey({...}) entry.
-grep -rn "\.references(" backend/src/db/schema/ backend/src/db/schema-pg/
+# The second path is the PostgreSQL mirror; it is absent in a single-dialect target.
+grep -rn "\.references(" backend/src/db/schema/ backend/src/db/schema-pg/ 2>/dev/null
+
+# Find every table rebuild in the migration set (see Table Rebuild Copy Safety).
+# Search whichever migration directory the target has.
+# The temporary table name varies (`__new_<table>`, `<table>__new`), so search the rename too.
+grep -rnE "__new|RENAME TO" backend/drizzle/ backend/src/db/migrations/ 2>/dev/null
 ```
 
 ## Security-Critical Constraint Checks
@@ -142,7 +201,7 @@ grep -rn "\.references(" backend/src/db/schema/ backend/src/db/schema-pg/
 
 **Required Constraint**: `nonce` column MUST have `.unique()`
 
-_Examples are simplified for illustration. Actual template files use the two-argument `sqliteTable` form with a constraints callback for indexes and include comprehensive JSDoc docstrings. See `apiKeyNonces.ts` for the complete pattern._
+_Examples are simplified for illustration. Actual template files use the two-argument `sqliteTable` form with a constraints callback for indexes and include comprehensive JSDoc docstrings. See `apiKeyNonces.ts` in the auth-bearing Spernakit template for the complete pattern; a target without that file (aidd has none) has no nonce table to check._
 
 ```typescript
 // ❌ VULNERABLE: Missing unique constraint
@@ -245,7 +304,7 @@ export const dashboards = sqliteTable(
 
 ### CRITICAL: Real-World Template Unique Columns (Reference Inventory)
 
-The following columns on canonical spernakit tables MUST carry `.unique()` (or `uniqueIndex()` for composites). Derived applications that remove or weaken these constraints are regressing the template's security posture. Treat divergence as **CRITICAL**.
+The following columns on canonical spernakit tables MUST carry `.unique()` (or `uniqueIndex()` for composites). Derived applications that remove or weaken these constraints are regressing the template's security posture. Treat divergence as **CRITICAL**. This inventory applies only to files that exist in the target: a row whose file is absent is **N/A** under [Applicability](#applicability-auth-less-and-schema-less-apps), not a missing-file finding. Confirm the absence by listing `backend/src/db/schema/` before marking the row.
 
 | File                                        | Column                           | Why Unique                                                 |
 | ------------------------------------------- | -------------------------------- | ---------------------------------------------------------- |
@@ -654,6 +713,7 @@ Escalate finding to template if ALL of:
 - [ ] **API key columns** have `.unique()` constraint where semantically required
 - [ ] **Share tokens and public access tokens** have `.unique()` or `uniqueIndex()` constraint
 - [ ] **New unique constraints** tested against existing data before auto-migration (no startup failures)
+- [ ] **Table rebuilds**: every rebuild copy with a column list selects only columns the table had before that migration (no column name silently stored as a string literal), and every `SELECT *` copy is between tables with the same columns in the same order
 
 ### High Priority Checks
 
@@ -663,9 +723,10 @@ Escalate finding to template if ALL of:
 - [ ] **Session token columns** have `.unique()` constraint
 - [ ] **Enum-like text columns** (`status`, `backend`, `type`, etc.) use `text({ enum: [...] })` or carry a CHECK constraint; **JSON columns** carry a `json_valid()` CHECK
 - [ ] **Sequence/ordering columns** (`displayOrder`, `sortOrder`, `position`) have a composite `uniqueIndex(parentId, order)`
-- [ ] **Foreign keys** declared via named `foreignKey({...}).onDelete(...)` in the constraints array (no inline `.references()`), in both `schema/` and `schema-pg/`
+- [ ] **Foreign keys** declared via named `foreignKey({...}).onDelete(...)` in the constraints array (no inline `.references()`), in `schema/` and, where it exists, `schema-pg/`
 - [ ] **Overlapping tables** documented or flagged for consolidation
-- [ ] **SQLite ↔ PostgreSQL schema parity**: unique constraints mirrored between `schema/` and `schema-pg/` (spot-check; automated via `check:schema-parity` in CI)
+- [ ] **SQLite ↔ PostgreSQL schema parity** (dual-dialect targets only; N/A where `schema-pg/` does not exist): unique constraints mirrored between `schema/` and `schema-pg/` (spot-check; automated via `check:schema-parity` in CI). Single-dialect targets: the migrations produce the constraints the Drizzle schema declares
+- [ ] **Rebuild migrations tested at head-minus-one** with seeded rows and a row-by-row before/after comparison read on a fresh connection
 
 ### Medium Priority Checks
 
@@ -682,21 +743,23 @@ Escalate finding to template if ALL of:
 - [ ] Index coverage adequate for query patterns
 - [ ] Soft delete patterns consistent (core entities only; ephemeral/security tables use hard delete)
 - [ ] Index names follow `idx_{table}_{columns}` convention
-- [ ] Foreign key names follow `fk_{table}_{column}_{target}` convention, declared via `foreignKey({...}).onDelete(...)` in the constraints array; required in the schema source for **both** dialects. Flag inline `.references()` and unnamed/anonymous FKs in SQLite schemas as findings, not just PostgreSQL.
+- [ ] Foreign key names follow `fk_{table}_{column}_{target}` convention, declared via `foreignKey({...}).onDelete(...)` in the constraints array; required in the schema source for every dialect the target carries. Flag inline `.references()` and unnamed/anonymous FKs in SQLite schemas as findings, not just PostgreSQL.
 - [ ] Soft-delete + unique constraint interaction handled (partial indexes or application-level enforcement)
-- [ ] Boolean `isDefault` flags have documented enforcement strategy (partial unique index for PostgreSQL, application-layer enforcement for SQLite with docstring note)
+- [ ] Boolean `isDefault` flags have documented enforcement strategy (application-layer enforcement for SQLite with docstring note; partial unique index for PostgreSQL where the target carries that dialect)
 
 ## Feature.json Generation
 
 ### Output Format
 
-For each finding, generate a feature.json in `.aidd/features/audit-database-{timestamp}-{slug}/`:
+For each finding, generate a feature.json in `.aidd/features/audit-database-{timestamp}-{slug}/`.
+
+The example below shows the shape. Its table and column are illustrative, taken from an auth-bearing Spernakit target, and its paths are placeholders. `auditFinding.evidence` and every path in `spec` MUST be a file and line you opened in the target; a finding whose affected file does not resolve is invalid. Write the migration step for the profile you detected under [Dialect Awareness](#dialect-awareness): regenerate with drizzle-kit in the full-stack profile, or add and register a numbered SQL file in the spernakit-web variant.
 
 ```json
 {
 	"auditFinding": {
 		"column": "nonce",
-		"evidence": "backend/src/db/schema/apiKeyNonces.ts:14",
+		"evidence": "backend/src/db/schema/{schema-file}.ts:{line}",
 		"issue": "missing_unique_constraint",
 		"risk": "replay_attack_bypass",
 		"table": "api_key_nonces"
@@ -708,7 +771,7 @@ For each finding, generate a feature.json in `.aidd/features/audit-database-{tim
 	"description": "AUDIT FINDING [Critical]: The `apiKeyNonces` table is missing a unique constraint on the `nonce` column...",
 	"id": "audit-database-{timestamp}-{slug}",
 	"priority": 1,
-	"spec": "1. Modify backend/src/db/schema/apiKeyNonces.ts to add .unique() to the nonce column\n2. Create database migration...",
+	"spec": "1. Modify backend/src/db/schema/{schema-file}.ts to add .unique() to the nonce column\n2. Create the database migration for the detected profile...",
 	"status": "backlog",
 	"title": "Fix Missing Unique Constraint on apiKeyNonces.nonce",
 	"updatedAt": "2026-03-01T00:00:00.000Z"
@@ -719,15 +782,16 @@ For each finding, generate a feature.json in `.aidd/features/audit-database-{tim
 
 ### Severity Mapping
 
-| Issue Type                                       | Severity | Priority |
-| ------------------------------------------------ | -------- | -------- |
-| Missing unique on security nonce/token           | Critical | 1        |
-| Missing unique on rate-limit key                 | High     | 2        |
-| Missing unique on 1:1 relationship               | Critical | 1        |
-| Missing unique on public share token             | High     | 2        |
-| Overlapping tables                               | Medium   | 3        |
-| Duplicate systems                                | Medium   | 3        |
-| Boolean isDefault without documented enforcement | Low      | 4        |
+| Issue Type                                        | Severity | Priority |
+| ------------------------------------------------- | -------- | -------- |
+| Missing unique on security nonce/token            | Critical | 1        |
+| Missing unique on rate-limit key                  | High     | 2        |
+| Missing unique on 1:1 relationship                | Critical | 1        |
+| Missing unique on public share token              | High     | 2        |
+| Overlapping tables                                | Medium   | 3        |
+| Duplicate systems                                 | Medium   | 3        |
+| Table rebuild copies a column the old table lacks | Critical | 1        |
+| Boolean isDefault without documented enforcement  | Low      | 4        |
 
 ### Template Escalation
 

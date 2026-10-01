@@ -106,9 +106,9 @@ grep -r "\.all()" --include="*.ts" backend/src/ | grep -v "count()\|sum()\|avg()
 
 **Step 1: Enumerate Authorities by Domain**
 
-Create an authority map for each data domain:
+Create an authority map for each data domain. The rows below are a worked example of the shape; their paths are illustrative; do not cite them:
 
-| Domain        | Authority   | Files/Tables                                        | Consumers                                  |
+| Domain        | Authority   | Files/Tables (example)                              | Consumers (example)                        |
 | ------------- | ----------- | --------------------------------------------------- | ------------------------------------------ |
 | AI Providers  | Database    | `backend/src/routes/ai-providers.ts`, `aiProviders` | `frontend/src/hooks/useProviders.ts`       |
 | Feature Flags | JSON Config | `config/{slug}.json`, `bunfig.toml`                 | `backend/src/config/`, `import.meta.env`   |
@@ -252,7 +252,7 @@ Where a deployment uses a single-writer or worker-isolated database model (e.g.,
 - Proper index ordering for query patterns
 
 ```typescript
-// Drizzle schema with proper indexes and foreign keys (backend/src/db/schema/ai-providers.ts)
+// Drizzle schema with proper indexes and foreign keys (illustrative path: backend/src/db/schema/ai-providers.ts)
 import { sqliteTable, text, integer, index, foreignKey } from 'drizzle-orm/sqlite-core';
 import { organizations } from './organizations';
 
@@ -324,7 +324,7 @@ function useAvailableModels() {
 	});
 }
 
-// API: Query function with proper indexing (backend/src/routes/models.ts)
+// API: Query function with proper indexing (illustrative path: backend/src/routes/models.ts)
 import { eq } from 'drizzle-orm';
 import { models } from '../db/schema/models';
 

@@ -97,7 +97,8 @@ Legitimate application-specific differences:
 - Application-specific database schemas
 - Custom features not suitable for templating
 - Application identity (names, descriptions, branding)
-- Port numbers (33x0/33x1 pattern)
+- Port numbers - each app owns one port decade, frontend on `Nx0` and backend on `Nx1` (e.g. 3430/3431); the registered values are in `spernakit.psd1`
+- Files and lines the app withholds from the template on purpose, recorded with a reason in `.templateoverrides` (see Section 8.1)
 
 ---
 
@@ -144,6 +145,7 @@ Before running the checklist, collect the target-specific context that controls 
 - Read the repo's live `smoke:qc` source: Spernakit uses `scripts/smoke.json` mode `qc`; aidd uses `scripts/smoke-qc.ts` `SMOKE_QC_STEPS`.
 - Run or inspect `bun run check:feature-integration`, `bun run check:schema-parity`, and the relevant smoke/crawl scripts before filing integration or verification findings.
 - For derived apps, generate or inspect the current template drift evidence before recommending overwrites or merges.
+- For derived apps, read `.templateoverrides` at the app root in full. It lists every file the app deliberately keeps different from the template, with the reason (see Section 8.1).
 
 ---
 
@@ -639,13 +641,16 @@ export const auditLogs = sqliteTable(
 
 **Spernakit does not use third-party unit test frameworks** (no vitest, jest, @testing-library, jsdom, happy-dom, or similar). The base-template verification strategy is `smoke:qc` + crawltest (end-to-end page traversal in the running app). Bun's built-in `bun:test` is permitted for documented Spernakit-family variants such as aidd; do not flag it unless a forbidden third-party runner dependency is present.
 
-| Check | Criteria                                                                                                            | Remediation                                  |
-| ----- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `[ ]` | **No third-party test framework dependencies** in frontend/package.json or backend/package.json                     | Remove vitest, @testing-library, jsdom, etc. |
-| `[ ]` | Test files are absent in base apps or use only permitted `bun:test` in documented variants                          | Remove orphaned or third-party-backed tests  |
-| `[ ]` | **No `[test]` section in bunfig.toml** files unless the variant documents a deliberate `bun:test` verification flow | Remove stale test sections                   |
-| `[ ]` | `bun run smoke:qc` passes clean                                                                                     | Fix quality gate failures                    |
-| `[ ]` | `bun run crawltest` verifies critical pages end-to-end                                                              | Use `--page` or `--start-from` after changes |
+| Check | Criteria                                                                                                            | Remediation                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `[ ]` | **No third-party test framework dependencies** in frontend/package.json or backend/package.json                     | Remove vitest, @testing-library, jsdom, etc.                                                     |
+| `[ ]` | Test files are absent in base apps or use only permitted `bun:test` in documented variants                          | Remove orphaned or third-party-backed tests                                                      |
+| `[ ]` | **No `[test]` section in bunfig.toml** files unless the variant documents a deliberate `bun:test` verification flow | Remove stale test sections                                                                       |
+| `[ ]` | `bun run smoke:qc` passes clean                                                                                     | Fix quality gate failures                                                                        |
+| `[ ]` | `bun run crawltest` verifies critical pages end-to-end                                                              | Use `--page` or `--start-from` after changes                                                     |
+| `[ ]` | Pre-commit hook active: `git config core.hooksPath` is `.githooks` and `.githooks/pre-commit` matches the template  | Run `bun install` (the `prepare` script sets the hooks path); restore the hook from the template |
+
+**Pre-commit is the first gate every commit hits.** `.githooks/pre-commit` runs `leak-guard.sh` on the staged diff, then `bun run smoke:qc:fast`, and adds `bun run check:licenses` only when a `package.json` or `bun.lock` is staged. `smoke:qc:fast` is the subset named by `FAST_QC_COMMANDS` in `scripts/lib/smoke/fast-subset.ts` (max-lines, typecheck, format check, lint) and stops at the first failure, so one red check in that subset blocks every commit in the app. It is not a full `smoke:qc`: `check:drift` and the other qc steps run only in the full gate. Do not score a passing hook as a passing `smoke:qc`, and treat a recommendation that leaves the fast subset red as blocking all other work in the app.
 
 **Detection commands:**
 
@@ -683,6 +688,36 @@ grep -rn "^\[test\]" bunfig.toml backend/bunfig.toml 2>/dev/null
 | `frontend/src/stores/`        | `[ ]` | Verify Zustand store patterns                        |
 | `frontend/src/components/ui/` | `[ ]` | Install missing shadcn/ui components                 |
 
+### Template Overrides (`.templateoverrides`)
+
+A derived app records every deliberate difference from the template in `.templateoverrides` at its root. Each line is `ACTION  PATH  # REASON` (parsed by `loadTemplateOverrides` in `scripts/lib/template/overrides.ts`):
+
+| Action    | Meaning                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------ |
+| `KEEP`    | The app's version of a template-managed file stands; drift on this path is suppressed      |
+| `SKIP`    | Same suppression as `KEEP`; the path is not drift-checked                                  |
+| `DELETED` | The path is absent from one side on purpose (the app dropped it, or kept what was removed) |
+
+`bun run check:drift` reports two things: live drift, which fails the gate, and a `Suppressed (N, per .templateoverrides)` list, which does not. A suppressed path is a recorded decision, not unexplained drift.
+
+**Cross-check every drift finding against `.templateoverrides` before recommending an overwrite, merge, or restore.** A file that differs from the template and has an entry is withheld on purpose. Do not classify it [FIX] and do not recommend copying the template over it; doing so destroys app-owned work the owner chose to keep. Example: an app that adds one app-only qc step carries `KEEP scripts/smoke.json`, and overwriting that file from the template removes the step from the gate.
+
+| Check | Criteria                                                                                                            | Action if Not Met                                                             |
+| ----- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `[ ]` | Every file that differs from the template is either live drift in `check:drift` or has a `.templateoverrides` entry | Unlisted difference on a template-managed path is the real drift finding      |
+| `[ ]` | Every entry has a written reason that says what is withheld now, not only why the override was first taken          | File the weak or stale reason; do not file the divergence itself              |
+| `[ ]` | No entry is wider than its reason (the reason names a few lines, the file withholds more)                           | Run `check:override-deltas` (below) and file the unaccounted template content |
+| `[ ]` | No entry whose delta against the app's template version is empty                                                    | Recommend deleting the entry                                                  |
+| `[ ]` | `DELETED` paths are absent from the app (or, for a path the template removed, still present by design)              | File the mismatch between the entry and the tree                              |
+
+**What an entry hides.** A `KEEP` or `SKIP` suppresses the whole path, so later template changes to that file are invisible to `check:drift`, including changes unrelated to the reason. `bun run check:override-deltas -- --target-version <version>` prints the template content each entry withholds at that version. Use its output, not the reason text alone, when judging an entry. A file the template classifies as `branded` is suppressed the same way without an entry.
+
+**Each entry has a recurring cost.** Every dance (Section 10.2) re-reads each entry against the new template version through `check:override-deltas`: the owner diffs the app's file against the target, accounts for every hunk, hand-merges what the template changed, and rewrites the reason. That work repeats for every entry at every release. So:
+
+- Do not recommend adding an override as a cheap way to clear a drift finding. State the dance-time cost in the recommendation.
+- Prefer a fix that removes the entry: move app code into an app-owned file the template does not ship and keep only the smallest hook in the template file, or propose the change to the template as an [ENHANCEMENT].
+- A long or growing override list is a legitimate finding about upgrade cost. Individual entries with sound reasons are not findings.
+
 ## 8.2 Technology Verification
 
 | Technology        | Status | Check Command                                                                                            |
@@ -716,7 +751,7 @@ Read the repo's live `smoke:qc` source before judging pipeline shape. Spernakit 
 | Check | Criteria                                        | Purpose                                                               |
 | ----- | ----------------------------------------------- | --------------------------------------------------------------------- |
 | `[ ]` | `bun run check:drift` passes                    | Template drift detection against spernakit source                     |
-| `[ ]` | `bun run check:fresh-release` passes            | Public baseline excludes release-history material (template)          |
+| `[ ]` | `bun run check:fresh-release` passes            | Public baseline excludes release-history material (template only)     |
 | `[ ]` | `bun run check:config` passes                   | Config invariants (required sections, types)                          |
 | `[ ]` | `bun run check:schema-drift` passes             | Config schema artifact drift (codegen outputs match source)           |
 | `[ ]` | `bun run config:validate` passes                | Config schema validation (defaults + example + instance)              |
@@ -735,6 +770,10 @@ Read the repo's live `smoke:qc` source before judging pipeline shape. Spernakit 
 | `[ ]` | `bun run format:check` passes                   | Prettier formatting check                                             |
 | `[ ]` | `bun run check-deps` passes                     | Dependency version check                                              |
 
+**Template-only steps.** A step marked `templateOnly: true` in `scripts/smoke.json` runs only in the Spernakit repository; `scripts/smoke.ts` prints `[SKIP] ... (spernakit-only step)` for it in a derived app, and the app may withhold the script key itself. `check:fresh-release` is one of these. Mark such rows N/A for a derived app and do not file the missing script or the skip as a finding.
+
+**Arriving with the next template release.** Template releases after v3.47.4 add `check:gates-wired`: every `test:*` script in `package.json` must be run by a smoke step, or be excused by name with a reason under `excusedTests` in `scripts/smoke.json`. An app that has not yet absorbed that release does not have the check; do not file its absence.
+
 ### Additional Quality Scripts
 
 These scripts may exist in `package.json` but are not universal across all apps. Run them as targeted checks when present or when the changed surface makes them relevant.
@@ -750,15 +789,15 @@ These scripts may exist in `package.json` but are not universal across all apps.
 
 ## 9.1 Authentication & Authorization
 
-| Check | Criteria                                                                                                                                                                                                      | Anti-Patterns to Detect                                 |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `[ ]` | Using `authPlugin` for authentication logic                                                                                                                                                                   | Custom JWT implementation, manual token signing         |
-| `[ ]` | Using Elysia guards (`roleGuard`, `workspaceAccessGuard`)                                                                                                                                                     | Manual role checking in routes, custom permission logic |
-| `[ ]` | Using HTTP-only cookies for sessions                                                                                                                                                                          | Custom session storage, localStorage for auth tokens    |
-| `[ ]` | CSRF protection: CSRF cookie + Origin header validation - applies to apps exposed beyond localhost; loopback-only single-origin tools (Tier 3) may document a reduced CSRF/CORS posture in `.aidd/project.md` | Missing CSRF configuration, custom CSRF implementation  |
-| `[ ]` | Session correlation: X-Request-ID + X-Session-ID headers                                                                                                                                                      | Missing correlation ID implementation                   |
-| `[ ]` | Using `useAuthStore` for frontend auth state                                                                                                                                                                  | React Context for auth, manual state management         |
-| `[ ]` | Using `ProtectedRoute` component for route protection                                                                                                                                                         | Manual auth checks in page components                   |
+| Check | Criteria                                                                                                                                                                                                              | Anti-Patterns to Detect                                 |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `[ ]` | Using `authPlugin` for authentication logic                                                                                                                                                                           | Custom JWT implementation, manual token signing         |
+| `[ ]` | Using the template guards: `requireAuth` / `requireRole` route options from `authPlugin` (backed by `requireAuth` and `requireRoleFresh` in `guards/role.ts`) and the workspace guards in `guards/workspaceAccess.ts` | Manual role checking in routes, custom permission logic |
+| `[ ]` | Using HTTP-only cookies for sessions                                                                                                                                                                                  | Custom session storage, localStorage for auth tokens    |
+| `[ ]` | CSRF protection: CSRF cookie + Origin header validation - applies to apps exposed beyond localhost; loopback-only single-origin tools (Tier 3) may document a reduced CSRF/CORS posture in `.aidd/project.md`         | Missing CSRF configuration, custom CSRF implementation  |
+| `[ ]` | Session correlation: X-Request-ID + X-Session-ID headers                                                                                                                                                              | Missing correlation ID implementation                   |
+| `[ ]` | Using `useAuthStore` for frontend auth state                                                                                                                                                                          | React Context for auth, manual state management         |
+| `[ ]` | Using `ProtectedRoute` component for route protection                                                                                                                                                                 | Manual auth checks in page components                   |
 
 **Validation Commands:**
 
@@ -1011,28 +1050,37 @@ Compare-Object $template $target -Property Name, Length |
     Select-Object Name, Length
 ```
 
-2. Classify differences:
-    - **[KEEP]**: App-specific logic, schemas, domain routes, unique UI
+2. Read `.templateoverrides` and the `Suppressed` list from `bun run check:drift`. A path with an entry is already adjudicated by the app owner: classify it [KEEP] and audit the entry (Section 8.1), not the divergence. Only paths with no entry go through the classification below.
+
+3. Classify differences:
+    - **[KEEP]**: App-specific logic, schemas, domain routes, unique UI, and every path recorded in `.templateoverrides`
     - **[FIX]**: Unintended drift in shared utils, tooling, build configs
     - **[MIXED]**: Files needing partial merge (package.json, configs)
     - **[ENHANCEMENT]**: Improved implementation in target
 
 ## 10.2 Execution Phase
 
-Derived apps at Spernakit v3.28.2 or later sync template changes using a manual cherry-pick
+**The dance is how the registered fleet absorbs a template release.** Apps registered in `spernakit.psd1` are upgraded together by the `spernakit-dance` skill: it ships the template, syncs each app with a three-way comparison against the app's base version, re-reads every `.templateoverrides` entry, runs `supertest`, tags locally, and syncs the fleet manifest. It requires a clean working tree in every scoped app. For a registered app, recommend "absorb at the next dance" for release-level drift; do not advise hand-syncing files the dance owns, and do not recommend sync work in an app while a dance is in progress.
+
+The per-app path below is the alternative for a single app outside a dance. Derived apps at Spernakit v3.28.2 or later sync template changes using a manual cherry-pick
 workflow driven by the `/spernakit-template-upgrade` slash command. Earlier sources are unsupported and
 must be initialized from the current template. Do not auto-apply changes: domain-extended template
 files require individual review. Drift detection (`bun run check:drift`) is the source of truth
-for sync status. Before applying changes, run
-`bun run template:sync-plan -- --app ../<app>` to generate a read-only review packet in
+for sync status. Before applying changes, generate a read-only review packet in
 `upgrade-review/{app}/`.
 
+Run the packet script from the template checkout, not from the app. The copy shipped into a derived app looks for the template tags in the app's own history and exits with `Template tag v{from} was not found.`, so the app's `bun run template:sync-plan` cannot work.
+
 ```powershell
-# Generate the read-only review packet before applying any changes
-bun run template:sync-plan -- --app ../{app} --from v{source} --to v{target}
+# From the spernakit checkout: generate the read-only review packet before applying any changes
+bun scripts/template-sync-plan.ts --app ../{app} --from {source} --to {target}
 ```
 
+The packet compares the app with the target version only, so it also lists files the app diverged from on purpose. Apply only inside the set of files the release changed (`git diff --name-only v{source} v{target}` in the template), and skip every path recorded in `.templateoverrides` unless its entry is being re-merged.
+
 ### Full Overwrites ([FIX])
+
+Never overwrite a path that has a `.templateoverrides` entry; re-merge it by hand as an infrastructure file or leave it.
 
 For pure template files (build configs, `scripts/*.ts`, `docs/template/*`, `shared/src/*.ts`, `components/ui/*`): copy from spernakit and overwrite - but always diff against the source version first to detect silent domain extensions (e.g., custom helpers in response examples, domain re-exports in seed files). If extensions exist, treat as infrastructure.
 
@@ -1090,6 +1138,7 @@ If validation fails:
 - [ ] Section 7 verification checks completed against the repo's actual `smoke:qc` and crawltest scripts.
 - [ ] Section 8 template-sync and technology-version checks completed against live Spernakit references.
 - [ ] Section 9 feature-utilization and anti-pattern checks completed.
+- [ ] Every drift finding cross-checked against `.templateoverrides` before any overwrite or merge is recommended.
 - [ ] Section 10 remediation workflow followed for any recommended sync or merge.
 - [ ] Findings cite concrete files, commands, and tier/applicability rationale.
 

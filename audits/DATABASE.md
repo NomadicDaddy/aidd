@@ -745,7 +745,7 @@ In the spernakit-web variant, SQLite runs inside a Bun worker behind a writer lo
 The variant's migration model is a hand-written, append-only SQL registry applied by a custom runner. Audit the following:
 
 - [ ] **Append-only, monotonic versions**: migration version strings are ordered and never reused or reordered; new migrations append only.
-- [ ] **Static `{ type: 'file' }` imports**: `.sql` files are imported in `registry.ts` with `{ type: 'file' }` so `bun build --compile` embeds them. Dynamic `readFileSync` silently breaks compiled binaries and MUST be flagged.
+- [ ] **Static `{ type: 'text' }` imports**: `.sql` files are imported in `registry.ts` with `{ type: 'text' }` so Bun embeds their contents as strings. Dynamic `readFileSync` silently breaks compiled binaries and MUST be flagged.
 - [ ] **`schema_migrations` ledger present**: a `schema_migrations(version, applied_at)` table tracks applied migrations; the runner consults it for idempotency.
 - [ ] **FK-disable/restore correctness around rebuilds**: table-rebuild migrations toggle foreign-key enforcement OFF then restore it; verify the toggle is balanced and scoped.
 - [ ] **Integrity re-check after apply**: the runner re-validates integrity after applying (e.g., `assertNoForeignKeyViolations`) so a rebuild cannot leave dangling references.
@@ -886,12 +886,13 @@ Spernakit uses **Drizzle ORM** (NOT Prisma) because:
 - [ ] Database naming conventions followed (snake_case columns, plural tables)
 - [ ] Foreign keys named `fk_{table}_{column}_{target}` and declared via `foreignKey({...})` (never inline `.references()`)
 - [ ] Status/enum and JSON columns backed by CHECK constraints
+- [ ] Every SQLite table rebuild (`__new_<table>` or `<table>__new`) copies only columns the old table had, keeps column order where it copies with `SELECT *`, and was tested at head-minus-one with seeded rows; see [SCHEMA_CONSTRAINTS.md, Table Rebuild Copy Safety](./SCHEMA_CONSTRAINTS.md#table-rebuild-copy-safety). Applies to both profiles
 
 ### spernakit-web Variant Checks (when applicable)
 
 - [ ] All writes serialized through the worker/command layer (no `db.transaction()` in request handlers)
 - [ ] Busy-timeout + retry on `SQLITE_BUSY` present
-- [ ] Migration registry is append-only with monotonic versions and static `{ type: 'file' }` imports
+- [ ] Migration registry is append-only with monotonic versions and static `{ type: 'text' }` imports
 - [ ] `schema_migrations` ledger present; integrity re-checked after apply
 - [ ] No false flags for missing `db:*` scripts / `autoMigrate.ts` / `config.database.dialect`
 

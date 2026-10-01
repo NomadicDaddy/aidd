@@ -1,7 +1,7 @@
 ---
 title: 'Deployment, Monitoring, and Infrastructure Audit'
-last_updated: '2026-06-28'
-version: '3.2'
+last_updated: '2026-10-01'
+version: '3.3'
 category: 'Infrastructure'
 priority: 'Medium'
 estimated_time: '1-2 hours'
@@ -23,18 +23,58 @@ consolidates: 'DEPLOYMENT.md, MONITORING.md'
 
 This audit is written against apps deployed as the **Spernakit monolithic container** (nginx + supervisord + Bun backend + built frontend). The container, reverse-proxy, TLS, rollback, and backup-volume sections all assume that deployment shape.
 
-For apps that are **not** deployed as the Spernakit container (local-runtime CLI tools, dev-only utilities, or standalone binaries with no `Dockerfile`/`docker-compose.production.yml`), the container/reverse-proxy/TLS/rollback sections are **N/A** and should be scored as such (not as findings). For those apps the audit reduces to:
+For apps that are **not** deployed as the Spernakit container (local-runtime CLI tools, dev-only utilities, or standalone binaries with no `Dockerfile`/`docker-compose.production.yml`), the container/reverse-proxy/TLS/rollback sections are **N/A** and should be scored as such (not as findings). Confirm the absence first (`ls Dockerfile docker-compose*.yml`); do not assume it. For those apps the audit reduces to:
 
 - **Loopback binding by default** (`127.0.0.1`), with an explicit warning required before binding to a remote interface (`allowRemote` or equivalent).
 - **Secret handling** (no plaintext secrets committed or logged).
 - **Log rotation** (bounded log growth).
 - **Data-directory backup** (the app's data directory is backed up and restorable).
 
+Each of these four is a retained, required check. The numbered sections later in this audit verify them with container commands (`docker exec`, `/app/logs`, `/app/backups`, `database.backup.*` config), none of which can be run against a non-container app. Use the procedures under [Reduced Audit for Non-Container Apps](#reduced-audit-for-non-container-apps) instead. A retained check with no evidence is **not a pass**: record it as a finding or as unverified, never as satisfied because this section listed it.
+
 A missing container shape is only a finding for apps that are _intended_ to ship as the Spernakit container. Confirm the deployment target before scoring the container/proxy/TLS sections.
+
+### Reduced Audit for Non-Container Apps
+
+Run this subsection in place of the container sections when the target has no container shape. Symbols named for aidd are the current locations; find them by name and cite the `file:line` you read.
+
+**Loopback binding by default**
+
+| Check | Criteria                                                               | Verification                                                                                                                                                                                                                                                                                      |
+| ----- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | The listener binds loopback unless remote access is explicitly enabled | Read the code that produces the bind address and the code that calls `listen`. aidd: the default web config sets `hostname: '127.0.0.1'` and `allowRemote: false`; the web config resolver (`shared/src/config/resolve.ts`) throws when `web.hostname` is not loopback and `allowRemote` is false |
+| `[ ]` | Enabling remote access produces an explicit warning                    | aidd: `startWebServer` (`backend/src/start.ts`) calls `warnRemoteAccess` (`backend/src/startHelpers.ts`) when `allowRemote` is set, on both the structured log and stderr                                                                                                                         |
+| `[ ]` | A remote-bound app cannot start unauthenticated                        | Delegate to [PROXY_AUTH_BOUNDARY.md](./PROXY_AUTH_BOUNDARY.md) §3 (`assertWebAuthTokenPresent`); record its result here, do not re-derive it                                                                                                                                                      |
+
+**Secret handling**
+
+| Check | Criteria                                              | Verification                                                                                                                                                                                                                                                                                                                          |
+| ----- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | No plaintext secrets are committed or written to logs | Delegate the depth to [SECURITY.md](./SECURITY.md). Here, confirm only the deployment-side facts: where the app reads its secrets from at start (environment, user config file), that none of those locations is inside the repository, and that the start-up log lines do not print them. Never print a secret value into the report |
+
+**Log rotation**
+
+| Check | Criteria                                                                     | Verification                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | Every file or directory the running app appends to is enumerated             | List the app's log and data directories and identify the writer of each growing file. aidd: `logs/backend.log` and `logs/backend.error.log`, the AI call log under `logs/`, and run transcripts under `data/run-logs/`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `[ ]` | Each one has an enforcing bound, cited at the code that deletes or truncates | A bound is a size cap with an archive limit, or an age and total-bytes sweep. A constant alone is not a bound; cite the code that applies it and where that code is scheduled. aidd: `rotateLiveBackendLog` started by `startBackendLogRotation` (`backend/src/services/backendLogRotation.ts`); `rotateSync` in `shared/src/lib/aiCallLog.ts`; `sweepTranscripts` in `backend/src/services/retention/cleanup.ts`, run by `createRetentionScheduler` at start and after each run reaches a terminal state. The limits are constants in `shared/src/retention.ts` (backend log, transcripts) and `shared/src/lib/aiCallLog.ts` (AI call log) |
+| `[ ]` | The bound covers what is actually on disk                                    | Measure the directories and compare against the stated limits. For a sweep that selects files through database rows (aidd's transcript sweep reads `runs.logPath`), compare the directory listing against those rows: a file with no row, or belonging to a run that never reaches a terminal state, is outside the sweep and grows without limit. Files outside every bound are a finding                                                                                                                                                                                                                                                  |
+
+**Data-directory backup**
+
+| Check | Criteria                                                         | Verification                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]` | The data directory is identified from code, not assumed          | aidd: the SQLite database is `data/aidd-panel.db` under the install root (`createWorkerWebDatabase` / `assertRootDataDirectory`, `backend/src/db/client.ts`), with run transcripts beside it in `data/run-logs/`. `~/.aidd/` holds user configuration, not the database                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `[ ]` | The mechanism that backs up that directory is named              | Record what copies the directory, where to, and on what schedule: an in-app backup job, or an external one (host backup script, file sync, snapshot). aidd has no in-app backup; the mechanism is whatever the operator's host runs, so ask the operator and record the script and destination in the report. "It is on a backed-up drive" with no named mechanism is unverified                                                                                                                                                                                                                                                                                             |
+| `[ ]` | The backup is stored off the primary disk                        | Confirm the destination is a different device or host from the data directory                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `[ ]` | There is evidence of a **restore**, not only of files existing   | Copy the backed-up database file, with its `-wal` file if one was captured, to a scratch path. Run `PRAGMA integrity_check` and one real query against the copy. Record the date and the result. Presence of backup files proves nothing about restorability                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `[ ]` | For a WAL-mode SQLite database, the backup is taken consistently | Read the journal mode from code (aidd: `applyConnectionPragmas`, `backend/src/db/pragmas.ts`, sets `journal_mode = WAL`). Then state which of these the backup is: taken with the writer stopped; taken through `VACUUM INTO` or the SQLite backup API; or a file-level copy of a live database. A file-level copy (robocopy, rsync, sync client) of a running WAL database copies the main file, `-wal`, and `-shm` at different moments and can produce a torn snapshot that will often restore and is not guaranteed to. That last case is the common one: record it as a finding unless a dated restore test (row above) covers a backup taken while the app was running |
+
+The health, metrics, alerting, audit-log, scheduled-task, and resource sections below describe Spernakit services (`healthService`, `metricsService`, the `alerting` config, supervisord, container limits). They are **N/A** for a non-container app only after confirming it has no equivalent; where one exists, audit it (aidd: the `/api/v1/health` route, `MetricsService`, and the retention scheduler).
 
 ### aidd context (Class B)
 
-aidd is a single-user **local CLI + embedded Elysia control panel + spawned agent subprocesses + SQLite single-writer**, with NO multi-tenant / workspace / container / cloud layer. The container/image, orchestrator, TLS-termination, and multi-node rollback sections are **N/A (by design)** for aidd and should be scored as such rather than as Pass/finding, but only after confirming no degenerate equivalent exists. Marking a SaaS-only control N/A is permitted ONLY after confirming it truly does not exist in aidd; if a degenerate equivalent exists (e.g. the web bearer token in place of RBAC, or the `~/.aidd/` data directory in place of a backup volume), audit that equivalent.
+aidd is a single-user **local CLI + embedded Elysia control panel + spawned agent subprocesses + SQLite single-writer**, with NO multi-tenant / workspace / container / cloud layer. The container/image, orchestrator, TLS-termination, and multi-node rollback sections are **N/A (by design)** for aidd and should be scored as such rather than as Pass/finding, but only after confirming no degenerate equivalent exists. Marking a SaaS-only control N/A is permitted ONLY after confirming it truly does not exist in aidd; if a degenerate equivalent exists (e.g. the web bearer token in place of RBAC, or the install root's `data/` directory in place of a backup volume), audit that equivalent using [Reduced Audit for Non-Container Apps](#reduced-audit-for-non-container-apps).
 
 The reverse-proxy posture remains IN SCOPE even for local tools: delegate it to PROXY_AUTH_BOUNDARY.md; do not skip it.
 
@@ -80,6 +120,8 @@ The reverse-proxy posture remains IN SCOPE even for local tools: delegate it to 
 ## Pre-Audit Setup
 
 ### Required Access
+
+> **Applies to**: container deployments. A non-container app has no container runtime or host proxy to inspect; the access it needs is read access to the repository, the running app's log and data directories, and the operator's answer on how the data directory is backed up.
 
 ```bash
 # Verify container runtime access
@@ -259,6 +301,8 @@ Audit checks:
 
 ## Structured Logging and Log Rotation
 
+> **Applies to**: container deployments. For a non-container app, use the log-rotation checks in [Reduced Audit for Non-Container Apps](#reduced-audit-for-non-container-apps).
+
 Spernakit logs through `backend/src/utils/logger.ts` (pino). Logs go to console and to rotating files under `/app/logs`, which is a mounted volume.
 
 Audit checks:
@@ -319,6 +363,8 @@ Audit checks:
 
 ## Database Backup Verification
 
+> **Applies to**: container deployments with the Spernakit backup service (`database.backup.*` config). For a non-container app, none of the commands or config keys below exist; use the data-directory backup checks in [Reduced Audit for Non-Container Apps](#reduced-audit-for-non-container-apps).
+
 The Spernakit backup service writes SQLite snapshots to `/app/backups`.
 
 ```bash
@@ -334,7 +380,8 @@ Audit checks:
 - `database.backup.enabled: true`.
 - `intervalHours` and `retentionDays` set and files match (count and age).
 - `encrypt: true` in production (and you know where the decryption key lives).
-- At least one **restore drill** within the review cycle: copy a backup to a test environment, verify the app starts against it.
+- At least one **restore drill** within the review cycle: copy a backup to a test environment, run `PRAGMA integrity_check` against it, and verify the app starts against it.
+- The snapshot is taken consistently. Confirm the backup service copies through `VACUUM INTO` or the SQLite backup API rather than a plain file copy of a live WAL database, which can produce a torn snapshot.
 - Backups are stored off the primary host (host-side rsync, S3, restic, etc.); mounting `/app/backups` to the same disk as `/app/data` provides no disaster protection.
 
 ## Resource Utilization
@@ -425,6 +472,18 @@ Audit checks:
 - [ ] **Medium**: `audit.enabled: true` in production
 - [ ] **Medium**: `audit_logs` size tracked; archival or pruning strategy in place
 
+### **Non-Container Checks**
+
+Use these in place of the container, proxy, and backup-service items above when the target has no container shape (see [Reduced Audit for Non-Container Apps](#reduced-audit-for-non-container-apps)).
+
+- [ ] **Critical**: Listener binds loopback by default; a non-loopback bind requires the explicit remote-access setting
+- [ ] **Critical**: No plaintext secrets committed to the repo or written to logs
+- [ ] **High**: Enabling remote access emits an explicit warning
+- [ ] **High**: Every growing log or transcript location has an enforcing, scheduled bound, and nothing on disk sits outside it
+- [ ] **High**: The data-directory backup mechanism is named and stores off the primary disk
+- [ ] **High**: Restore evidence exists within the audit window (`PRAGMA integrity_check` plus a real query against a restored copy)
+- [ ] **High**: A WAL-mode database is backed up with the writer stopped or through `VACUUM INTO` / the backup API, not by file-level copy of a live database
+
 ### **Low Priority Checks**
 
 #### Documentation
@@ -509,6 +568,16 @@ Audit checks:
 - **`/app/logs` size**: [value]
 - **`/app/backups` size**: [value]
 - **OOMKilled in window**: [Yes/No]
+
+## Non-Container Reduced Audit (when applicable)
+
+- **Bind default / remote warning**: [loopback by default: Yes/No] / [warning on remote: Yes/No]
+- **Log locations and bounds**: [location → enforcing code → measured size]
+- **Unbounded locations**: [None / list]
+- **Data directory**: [path]
+- **Backup mechanism and destination**: [named mechanism / Unverified]
+- **Backup consistency for WAL**: [writer stopped / VACUUM INTO or backup API / file-level copy of live database]
+- **Restore evidence**: [date, integrity_check result, query run / None]
 
 ## Critical Findings 🚨
 

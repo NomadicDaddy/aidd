@@ -83,6 +83,15 @@ const DANGEROUS_CONSTRUCT_PATTERN =
 	/(?:^|[\s;|&(`])eval\s|(?:^|[\s;|&(`])(?:bash|sh|dash|zsh|ksh)\s+-c\s|(?:^|[\s;|&(`])exec\s|(?:^|[\s;|&(`])source\s/;
 
 /**
+ * A shell that reads its commands as data: from a pipe (`... | sh`, also through `env` or by
+ * path), from a redirect (`sh < file`), from a heredoc or here-string. The text it runs is never
+ * inspected as a command, so every check in this file is bypassed at once. A shell given a
+ * script file as an argument (`bash scripts/build.sh`) is not matched.
+ */
+const SHELL_FROM_STDIN_PATTERN =
+	/\|\s*(?:env\s+)?(?:\S*\/)?(?:bash|sh|dash|zsh|ksh)(?:\s|$)|(?:^|[\s;|&(`/])(?:bash|sh|dash|zsh|ksh)\s*<|(?:^|[\s;|&(`/])(?:bash|sh|dash|zsh|ksh)\s+-s(?:\s|$)/;
+
+/**
  * Encoding+eval chains: base64/base32/xxd/od piped into eval/bash/sh are the
  * standard bypass for static filters. Detected as the encoding command
  * appearing before an eval/subshell construct. Rather than trying to parse the
@@ -119,8 +128,8 @@ function evaluateBashWorkspacePolicy(command: string, cwd: string): null | strin
 	// --- Dangerous construct deny-list (Critical: eval/subshell/base64 bypass) ---
 	// Block eval, bash -c, sh -c, exec, source, and dotted sourcing. These
 	// constructs allow runtime string expansion that bypasses static filtering.
-	if (DANGEROUS_CONSTRUCT_PATTERN.test(command)) {
-		return 'ERROR: bash command uses a disallowed shell construct (eval, bash -c, exec, source) that bypasses static safety checks';
+	if (DANGEROUS_CONSTRUCT_PATTERN.test(command) || SHELL_FROM_STDIN_PATTERN.test(stripped)) {
+		return 'ERROR: bash command uses a disallowed shell construct (eval, bash -c, exec, source, or a shell fed its commands through a pipe or redirect) that bypasses static safety checks';
 	}
 
 	// Block encoding+eval chains: base64 piped into eval/bash etc.

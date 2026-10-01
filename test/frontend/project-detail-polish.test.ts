@@ -138,6 +138,14 @@ describe('per-row action cells', () => {
 		expect(header).toContain('<col className="w-auto" />');
 		expect(header).toContain('<col className="hidden w-[7.5rem] @min-[88rem]:table-column" />');
 		expect(header).toContain('<col className="w-[6.5rem]" />');
+		// LOC-6: both select tracks are floored by their widest option, because a native select
+		// cannot wrap. Priority's `P2 — v2.0` select with its arrow needs 94px of content, so the
+		// old 6.5rem track (72px) forced the control's fixed w-20 to clip it; Source's widest
+		// option `No category` needs 125px where 8rem left 96 — truncating `Security` itself.
+		expect(header).toContain('<col className="w-[8rem]" />');
+		expect(header).toContain('<col className="hidden w-[10rem] @min-[88rem]:table-column" />');
+		expect(controls).not.toContain("'min-h-11 w-20 ");
+		expect(controls).toContain("'min-h-11 max-w-full ");
 		expect(header).toContain('<col className={featureActionTrack(rows).column} />');
 
 		// The action track still moves with the statuses on the page, and the table's floor moves

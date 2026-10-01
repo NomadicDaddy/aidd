@@ -65,7 +65,11 @@ export function FeaturePriorityControl({
 		<select
 			aria-label={`Priority for ${id}`}
 			className={cn(
-				'min-h-11 w-20 cursor-pointer rounded-md border-0 px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 outline-none ring-inset sm:min-h-0',
+				// No fixed width: the select sizes to its widest option and yields to the track
+				// through max-w-full, the same contract the Milestone and Source selectors beside
+				// it already carry. A fixed w-20 clipped every roadmap label longer than a bare
+				// `P1` — the selected `P2 — v2.0` needed 94px against 80.
+				'min-h-11 max-w-full cursor-pointer rounded-md border-0 px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 outline-none ring-inset sm:min-h-0',
 				controlFocusClass,
 				toneBadge[tone],
 			)}
@@ -142,6 +146,12 @@ export function FeatureSourceControl({
 			 * "Audit: HYGIENE" and told you something.
 			 *
 			 * The width was never the problem. "Devops" fits where "Feature: Devops" did not.
+			 *
+			 * LOC-6 later measured the residual that commit named: with the prefix gone, the track
+			 * was still sized for the wrapping audit rows rather than the select. "Security" plus
+			 * its arrow needs 97px against the 96px an 8rem track leaves, and the widest option
+			 * "No category" needs 125px - so this control's max-w-full clamp truncated the value
+			 * the column exists to carry. The track is 10rem now; this control is unchanged.
 			 */}
 			<option value="">No category</option>
 			{categories.map((option) => (

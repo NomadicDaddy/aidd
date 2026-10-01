@@ -19,7 +19,9 @@ import { featureActionEdgeClass, featureActionTrack } from './featureTableWidths
  * columns make that unworkable: every column but Feature is floored by content that cannot shrink,
  * and a floor is a rem. So the fixed tracks are rem and Feature takes the remainder. Source and
  * timestamp tracks yield below the 88rem content tier, where lifecycle and action controls matter
- * more; `OverflowScroller` remains the fallback below the reduced table floor.
+ * more; `OverflowScroller` remains the fallback below the reduced table floor. Both select columns
+ * are floored by their widest OPTION, not their widest visible value: a select cannot wrap, so a
+ * track narrower than the widest choice truncates the selection the moment it is made.
  *
  * ## The floors
  *
@@ -33,12 +35,12 @@ import { featureActionEdgeClass, featureActionTrack } from './featureTableWidths
  * | Status | 90 | 160 — the `waiting_approval` badge | 10rem, cell-floored |
  * | Shipped | 97 | 96 | 6.5rem |
  * | Milestone | 112 | 136 — the milestone `<select>` | 8.5rem, cell-floored |
- * | Priority | 100 | 64 | 6.5rem |
- * | Source | 95 | wraps by design (`Feature: Documentation`) | 8rem |
+ * | Priority | 100 | 94 — the `P2 — v2.0` select with its arrow | 8rem, cell-floored |
+ * | Source | 95 | 125 — the `No category` option (a select cannot wrap) | 10rem |
  * | Added | 87 | 70 | 6rem |
  * | Completed | 117 — the widest header here | 70 | 7.5rem |
  *
- * The sum matters more than any one track. At a narrow desktop width, the 21.5rem of lower-priority
+ * The sum matters more than any one track. At a narrow desktop width, the 23.5rem of lower-priority
  * Source and timestamp columns disappear and the action-aware floor drops with them. At 88rem the
  * full inventory returns without making one exceptional approval row dictate a 27rem action track.
  */
@@ -60,8 +62,8 @@ export function FeaturesTableHeader({
 				<col className="w-[10rem]" />
 				<col className="w-[6.5rem]" />
 				<col className="w-[8.5rem]" />
-				<col className="w-[6.5rem]" />
-				<col className="hidden w-[8rem] @min-[88rem]:table-column" />
+				<col className="w-[8rem]" />
+				<col className="hidden w-[10rem] @min-[88rem]:table-column" />
 				<col className="hidden w-[6rem] @min-[88rem]:table-column" />
 				<col className="hidden w-[7.5rem] @min-[88rem]:table-column" />
 				<col className={featureActionTrack(rows).column} />

@@ -9,6 +9,7 @@ import type { ActiveCycleState, DirectorConfigProvider, FleetSummary } from './t
 
 import { directorCycles } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
+import { IN_FLIGHT_RUN_STATUSES } from '../run/types.ts';
 import { resumableAutoLaunchCycleIds } from './autoLaunchDecision.ts';
 import { advanceCycle, type CycleExecutorDeps } from './cycleExecutor.ts';
 import { failCycle } from './cycleFailure.ts';
@@ -111,7 +112,10 @@ async function reconcileOneCycle(
 		);
 		return 'failed';
 	}
-	if (run.status === 'running') {
+	// A queued run is as much in flight as a running one: it waits for a ceiling slot and is
+	// admitted after this pass. Advancing its cycle now would fail the cycle and leave the run to
+	// execute with nothing waiting for its result.
+	if (IN_FLIGHT_RUN_STATUSES.includes(run.status as WebRunStatus)) {
 		ctx.setCycleStage(cycle.id, 'running_backend');
 		void ctx
 			.awaitAndPersistCycle(cycle.id, run.id, artifacts.outputPath, fleetSummary)

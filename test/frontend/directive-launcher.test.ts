@@ -80,6 +80,41 @@ describe('global directive launcher API', () => {
 		expect(DIRECTIVE_PROMPT_SAFETY_NOTICE).toContain('run history');
 		expect(DIRECTIVE_PROMPT_SAFETY_NOTICE).toContain('process arguments');
 	});
+
+	test('renders the persistence warning as its own hint row beside the shortcut tip', async () => {
+		// LOC-7: adjacent inline spans with no whitespace between them rendered the Directive
+		// hint as "launch.Do not include secrets" at every size. The warning is the dialog's
+		// disclosure that directive text persists in run history and process arguments, so it
+		// owns a row on the field hint's gap-1 rhythm instead of clinging to the shortcut
+		// sentence; the shortcut sentence keeps the muted hint tone.
+		const modal = await readFile(
+			join(
+				process.cwd(),
+				'frontend',
+				'src',
+				'components',
+				'shared',
+				'DirectiveLaunchModal.tsx',
+			),
+			'utf8',
+		);
+		const start = modal.indexOf('error={promptError}');
+		const end = modal.indexOf('label="Directive"', start);
+		expect(start).toBeGreaterThan(-1);
+		expect(end).toBeGreaterThan(start);
+		const hint = modal
+			.slice(start, end)
+			.replaceAll(/\/\*[\s\S]*?\*\//g, '')
+			.replaceAll(/\/\/[^\n]*/g, '');
+		// The grid wrapper is the whole fix: it makes each span its own row on the field hint's
+		// gap-1 rhythm. Reverting to a bare fragment keeps the spans adjacent and inline, which
+		// is the run-on "launch.Do not include secrets" the sweep measured. The regex pins the
+		// wrapper as the hint's only child, the shortcut row first, and the notice inside the
+		// amber row.
+		expect(hint).toMatch(
+			/hint=\{\s*<span className="grid gap-1">\s*<span>Press Ctrl\+Enter or Cmd\+Enter to launch\.<\/span>\s*<span className=\{toneText\.amber\}>\s*\{DIRECTIVE_PROMPT_SAFETY_NOTICE\}\s*<\/span>\s*<\/span>\s*\}/u,
+		);
+	});
 });
 
 describe('directive launcher form policy', () => {

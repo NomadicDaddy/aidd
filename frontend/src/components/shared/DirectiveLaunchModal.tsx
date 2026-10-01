@@ -194,12 +194,18 @@ export function DirectiveLaunchModal({ onClose, open }: DirectiveLaunchModalProp
 							<FieldRow
 								error={promptError}
 								hint={
-									<>
+									// Two hint rows, not one run-on line: adjacent inline spans with no
+									// whitespace between them rendered the shortcut tip and the persistence
+									// warning as "launch.Do not include secrets" at every size (LOC-7). The
+									// warning is the dialog's disclosure that directive text persists in run
+									// history and process arguments, so it gets its own row on the field
+									// hint's gap-1 rhythm instead of clinging to the shortcut sentence.
+									<span className="grid gap-1">
 										<span>Press Ctrl+Enter or Cmd+Enter to launch.</span>
 										<span className={toneText.amber}>
 											{DIRECTIVE_PROMPT_SAFETY_NOTICE}
 										</span>
-									</>
+									</span>
 								}
 								label="Directive"
 								required>

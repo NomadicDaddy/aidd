@@ -1,7 +1,7 @@
 ---
 title: 'Control Flow and Logic Evaluation Framework'
-last_updated: '2026-08-30'
-version: '1.5'
+last_updated: '2026-10-01'
+version: '1.6'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -81,6 +81,8 @@ Before beginning the audit, ensure the following:
     - `rg` (ripgrep) or `grep` for cross-file pattern searches
     - `bun` (package manager and runtime)
     - Access to the audit report template at the end of this file
+
+    Run a positive control before trusting an empty search. A pattern search that returns nothing is evidence of absence only if it could have matched: confirm the search root is the target's real source root, that it scanned a non-zero number of files, and that the same pattern finds a known occurrence. A zero-file scan or a wrong-path search reads as "none found" and is an instrument error, not a clean result (see Phase 0, "Faithful", in [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md)).
 
 4. **Scope boundaries**:
     - Complexity-only findings (cyclomatic complexity, function length, nesting depth) should be deferred to the [COMPLICATION.md](./COMPLICATION.md) audit.
@@ -262,7 +264,7 @@ This framework provides a systematic approach to evaluating code logic and contr
 
 ## **Testing & Debugging (Weight: 2%)**
 
-> **No unit test frameworks**: Spernakit-derived apps do not use vitest/jest/@testing-library. "Testability" here means structuring code for verification via `bun run smoke:qc`, crawltest, and integration scripts, not unit-test coverage. Do not flag the absence of unit tests as a logic defect.
+> **Unit tests depend on the target**: Spernakit and its derived apps deliberately have no unit-test framework (no vitest/jest/@testing-library). For those targets, "testability" means structuring code for verification via `bun run smoke:qc`, crawltest, and integration scripts, and the absence of unit tests is not a logic defect. This exemption does not extend to other targets. aidd runs `bun:test` unit tests, so when auditing aidd, or any target that has a unit-test framework, missing or vacuous unit coverage of critical logic is in scope. Read the target's package scripts to see which case applies.
 
 **Testability:**
 
@@ -321,7 +323,7 @@ current **Spernakit v3** stack (React 19 + Vite 8 + Elysia + Drizzle ORM + TanSt
 | State management                     | Adapt            | Server state → TanStack Query. Client state → Zustand. Never React Context for state.                                                                                                                                                                                                                                                                                           |
 | Cache consistency                    | Conditional      | Only for apps with workspace/tenant scoping: tenant-scoped TanStack Query keys must include the active-tenant id; global/admin queries appropriately omit it. Apps with no workspace/tenant concept are exempt.                                                                                                                                                                 |
 | Database transactions                | Directly applies | Multi-step mutations must be atomic: via `db.transaction()` in standard Spernakit deployments; via the worker command layer (`db/commands.ts`) where the DB runs in a Bun worker, never raw `db.transaction()` across the worker boundary. Where the app ships both dialects, SQLite (`schema/`) and PostgreSQL (`schema-pg/`) definitions must remain structurally consistent. |
-| Testing philosophy                   | Adapt            | No unit test frameworks (vitest, jest, etc.). Verification is via `bun run smoke:qc`, crawltest, and integration scripts.                                                                                                                                                                                                                                                       |
+| Testing philosophy                   | Adapt            | Spernakit and derived apps only: no unit test frameworks (vitest, jest, etc.); verification is via `bun run smoke:qc`, crawltest, and integration scripts. Not a global rule: aidd runs `bun:test` unit tests.                                                                                                                                                                  |
 | Package manager                      | Directly applies | Bun (`bun`/`bunx`). No `npm` or `npx` in scripts or documentation.                                                                                                                                                                                                                                                                                                              |
 
 ## Audit Checklist
@@ -514,7 +516,8 @@ These evaluation frameworks should be applied systematically during code reviews
 - [ ] No floating promises or unguarded fire-and-forget async work.
 - [ ] _(Apps with workspace/tenant scoping only)_ All tenant-scoped TanStack Query keys include the active-tenant id.
 - [ ] All multi-step database mutations are atomic (`db.transaction()`, or the worker command layer where the DB runs in a Bun worker).
-- [ ] Report is reviewed and signed off by the lead developer or tech lead.
+- [ ] Confirmed findings land as feature records (`.aidd/features/audit-logic-*/feature.json`), not only as report prose.
+- [ ] Acceptance follows the commit-review boundary: the commits that carry a remediation are reviewed before they are eligible to push, and the project owner accepts the work. The audit report does not sign off its own remediation.
 
 ## Report Template
 

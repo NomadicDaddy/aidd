@@ -66,4 +66,16 @@ describe('credential-disclosure: a credential path that is only text', () => {
 		const command = "cat > notes.txt <<'EOF'\nhello\nEOF\ncat ~/.aidd/config.json";
 		expect(commandCredentialLabel(command, '{}')).toBe('aidd user config');
 	});
+
+	// A run log truncates a long command, so the terminator can be missing from the artifact. The
+	// shell reads every remaining line as the body, so nothing after the operator is a command.
+	test('a quoted heredoc with no terminator is all body', () => {
+		const command = "cat > probe.ts <<'EOF'\nconst cmds = ['cat ~/.aidd/config.json',";
+		expect(commandCredentialLabel(command, 'ok')).toBeUndefined();
+	});
+
+	test('an unquoted heredoc with no terminator is still judged', () => {
+		const command = 'cat > out.txt <<EOF\n$(cat ~/.aidd/config.json)';
+		expect(commandCredentialLabel(command, 'x')).toBe('aidd user config');
+	});
 });

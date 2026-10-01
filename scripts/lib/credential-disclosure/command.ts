@@ -1,4 +1,5 @@
 import { tokenizeShell } from '../../../shared/src/agent/tools/shell-policy-tokens.ts';
+import { searchReturnedOnlyFlags } from './flag-search.ts';
 import { loopVariableIsRead, stripInertHeredocs } from './inert-text.ts';
 import { isNonDisclosingInspection } from './inspection-output.ts';
 import { credentialLabel } from './paths.ts';
@@ -129,10 +130,12 @@ export function commandCredentialLabel(
 	returnedOutput?: unknown,
 ): string | undefined {
 	if (isNonDisclosingInspection(rawCommand, returnedOutput)) return undefined;
-	// A path inside a heredoc that is written to a file as data was never opened.
-	const command = stripInertHeredocs(rawCommand);
-	const allSegments = pipelines(command).flat();
-	for (const pipeline of pipelines(command)) {
+	// A path inside a heredoc that is written to a file as data was never opened. `2>&1` names no
+	// file, and its `&` would otherwise split the command it belongs to away from its own pipe.
+	const command = stripInertHeredocs(rawCommand).replace(/\s*2>&1/g, '');
+	const allPipelines = pipelines(command);
+	const allSegments = allPipelines.flat();
+	for (const pipeline of allPipelines) {
 		const output = tokenizeShell(pipeline.at(-1) ?? '').map((token) => token.text);
 		const input = tokenizeShell(pipeline[0] ?? '')[0]?.text.toLowerCase();
 		const filteredPipeline =
@@ -140,7 +143,7 @@ export function commandCredentialLabel(
 			['cat', 'get-content', 'grep', 'rg', 'sed'].includes(input ?? '') &&
 			!/[<>]/.test((pipeline[0] ?? '').replace(/2\s*>\s*\/dev\/null/g, '')) &&
 			filtersDotenvValues(output[0] ?? '', output.slice(1), true);
-		for (const segment of pipeline) {
+		for (const [position, segment] of pipeline.entries()) {
 			const tokens = tokenizeShell(segment).map((token) => token.text);
 			const executable = tokens.shift()?.toLowerCase();
 			if (!executable) continue;
@@ -216,6 +219,23 @@ export function commandCredentialLabel(
 				: gitArgs[0] === 'grep'
 					? searchOperands(gitArgs.slice(1))
 					: tokens;
+			// A search that returned only boolean settings from a credential file disclosed nothing.
+			// The tokenizer drops redirection operators, so a redirect is looked for in the text.
+			if (
+				!expandsCommand &&
+				!/[<>]/.test(segment.replace(/2\s*>\s*\/dev\/null/g, '')) &&
+				searchReturnedOnlyFlags(
+					executable,
+					tokens,
+					argumentsToCheck,
+					pipeline
+						.slice(position + 1)
+						.map((stage) => tokenizeShell(stage).map((token) => token.text)),
+					returnedOutput,
+					allPipelines.length > 1,
+				)
+			)
+				continue;
 			for (const argument of argumentsToCheck) {
 				const label = credentialLabel(argument);
 				if (

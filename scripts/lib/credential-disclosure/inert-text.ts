@@ -78,8 +78,8 @@ export function stripInertHeredocs(command: string): string {
 			if ((stripTabs ? candidate.replace(/^\t+/, '') : candidate) === delimiter) break;
 			end += 1;
 		}
-		// An unterminated heredoc is not a shape this recognises; leave it judged.
-		if (end >= lines.length) continue;
+		// With no terminator, the shell reads every remaining line as the body, so nothing after
+		// the operator is a command. A run log that truncates a long command produces this shape.
 		index = end;
 	}
 	return kept.join('\n');

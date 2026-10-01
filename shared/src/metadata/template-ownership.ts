@@ -1,4 +1,4 @@
-import { stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import type { Feature } from './features/types.ts';
@@ -16,6 +16,28 @@ export async function isTemplateRepo(projectDir: string): Promise<boolean> {
 		() => true,
 		() => false,
 	);
+}
+
+/**
+ * The version a record created inside the template repository must declare, or undefined anywhere
+ * else. The template requires `spernakit_version` on every feature record it holds
+ * (`check:template-feature-versions`), and a record written there without one reddens that gate
+ * for everyone until someone stamps it by hand: an audit of the template filed 26 such records.
+ */
+export async function templateRepoVersion(projectDir: string): Promise<string | undefined> {
+	if (!(await isTemplateRepo(projectDir))) return undefined;
+	try {
+		const manifest: unknown = JSON.parse(
+			await readFile(join(projectDir, 'package.json'), 'utf8'),
+		);
+		const version =
+			typeof manifest === 'object' && manifest !== null && 'version' in manifest
+				? manifest.version
+				: undefined;
+		return typeof version === 'string' && version !== '' ? version : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 /**

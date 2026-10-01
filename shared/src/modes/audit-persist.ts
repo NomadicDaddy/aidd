@@ -1,6 +1,7 @@
 import type { AiddStore } from '../metadata/store.ts';
 import type { InvalidAuditReport, NormalizedAuditFinding } from './audit-shared.ts';
 
+import { templateRepoVersion } from '../metadata/template-ownership.ts';
 import {
 	createModeFileChanges,
 	type ModeFileChanges,
@@ -85,6 +86,7 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 	const takenIds = new Set(existing.map((feature) => feature.id));
 	const findingLedgerExistedBefore = await snapshotFindingLedger(ledgerStore.projectDir);
 	const roadmapBefore = await snapshotRoadmap(projectDir);
+	const templateVersion = await templateRepoVersion(projectDir);
 
 	for (const report of parsed.reports) {
 		const findings = structuredFindings(report.structured);
@@ -137,6 +139,10 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 			}
 			finding.feature.id = disambiguateFeatureId(finding.feature.id, takenIds);
 			takenIds.add(finding.feature.id);
+			// Inside the template repository every feature record declares the template version
+			// that owns it, and the template's own gate fails on one that does not.
+			if (templateVersion !== undefined)
+				finding.feature['spernakit_version'] = templateVersion;
 			await store.writeFeature(finding.feature);
 			await ledgerStore.appendFindingEvent({
 				auditSource: report.auditName,

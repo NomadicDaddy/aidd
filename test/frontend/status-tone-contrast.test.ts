@@ -83,6 +83,29 @@ describe('status tones carry dark variants', () => {
 		expect(metrics).toContain("<StatusDot tone={listening ? 'emerald' : 'red'} />");
 	});
 
+	test('labels the failing feature count instead of leaving a bare parenthesized number', async () => {
+		// The table's Features cell used to render `(12)` with nothing but its red tone to explain
+		// it (design sweep LOC-1), while the Cards view already said `(12 failing)`. Both surfaces
+		// now carry the word, at text-xs, in the shared red semantic tone — never color alone.
+		const cells = await Bun.file(join(pagesRoot, 'projects', 'ProjectsTableCells.tsx')).text();
+		const card = await Bun.file(join(pagesRoot, 'projects', 'ProjectCard.tsx')).text();
+
+		expect(cells).toContain('`ml-1 ${toneText.red}`');
+		expect(cells).toContain('({failing} failing)');
+		expect(cells).not.toContain('({failing})');
+		expect(card).toContain('({failing} failing)');
+		// Zero failures invent no exception: the label only exists on the failing > 0 branch.
+		expect(cells).toContain('failing > 0 ? (');
+		// The counts stay readable without color: the cell's progressbar names passing, total and
+		// failing counts through its accessible name and value text.
+		expect(cells).toContain(
+			'aria-label={`${passing} passing of ${total} features, ${failing} failing`}',
+		);
+		expect(cells).toContain(
+			'aria-valuetext={`${passing} passing of ${total} features, ${failing} failing`}',
+		);
+	});
+
 	test('never leaves status to color alone', async () => {
 		const cells = await Bun.file(join(pagesRoot, 'audits', 'tabs', 'catalogCells.tsx')).text();
 		const utils = await Bun.file(join(pagesRoot, 'audits', 'auditsUtils.ts')).text();

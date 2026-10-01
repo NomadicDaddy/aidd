@@ -168,13 +168,19 @@ export function FeatureProgressCell({
 		<div className="min-w-[6rem] space-y-1">
 			<div className="text-xs tabular-nums">
 				{passing}/{total}
-				{failing > 0 ? <span className={`ml-1 ${toneText.red}`}>({failing})</span> : null}
+				{failing > 0 ? (
+					// The word, not the parentheses, carries the meaning — the Cards view already says
+					// "(12 failing)", so the table says the same thing instead of leaving a bare (12)
+					// that only the red tone explains.
+					<span className={`ml-1 ${toneText.red}`}>({failing} failing)</span>
+				) : null}
 			</div>
 			<div
-				aria-label={`${pct}% passing`}
+				aria-label={`${passing} passing of ${total} features, ${failing} failing`}
 				aria-valuemax={100}
 				aria-valuemin={0}
 				aria-valuenow={pct}
+				aria-valuetext={`${passing} passing of ${total} features, ${failing} failing`}
 				className="h-1.5 overflow-hidden rounded-full bg-muted"
 				role="progressbar">
 				{total > 0 ? (

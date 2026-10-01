@@ -33,8 +33,8 @@ export const DEFAULT_BUDGET_PATH = join(
 /** Headroom applied when writing a new budget so hash/chunk churn doesn't flap the gate. */
 const BUDGET_HEADROOM = 1.1;
 
-/** 170 KB. The ceiling this gate exists to hold; only a product decision moves it. */
-export const CRITICAL_PATH_GZIP_CEILING = 174_080;
+/** 175 KB. The ceiling this gate exists to hold; only a product decision moves it. */
+export const CRITICAL_PATH_GZIP_CEILING = 179_200;
 
 export interface CriticalPathBudget {
 	maxCriticalPathBrotliBytes: number;

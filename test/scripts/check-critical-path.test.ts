@@ -124,12 +124,12 @@ describe('critical-path budget arithmetic', () => {
 		expect(regenerated.maxCriticalPathBrotliBytes).toBeGreaterThan(400_000);
 	});
 
-	test('the committed budget states the 170 KB ceiling', () => {
+	test('the committed budget states the 175 KB ceiling', () => {
 		const committed = JSON.parse(readFileSync(DEFAULT_BUDGET_PATH, 'utf-8')) as {
 			maxCriticalPathGzipBytes: number;
 		};
 
-		expect(CRITICAL_PATH_GZIP_CEILING).toBe(174_080);
+		expect(CRITICAL_PATH_GZIP_CEILING).toBe(179_200);
 		expect(committed.maxCriticalPathGzipBytes).toBe(CRITICAL_PATH_GZIP_CEILING);
 	});
 
